@@ -1,4 +1,5 @@
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_inscription_presentation.h"
 #include "font_m11.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,31 @@ static uint8_t *load_file(const char *path, size_t *out_size) {
 
 static uint16_t rd16le(const uint8_t *p) {
     return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static void assert_real_f31_inventory_layout(const uint8_t *data, size_t size,
+                                              const char *edition)
+{
+    uint8_t raw[10000];
+    CSB_V1_FmtownsItemDecodeReceipt item;
+    CSB_V1_F31InventorySlotRectangle rectangles[30];
+    int index;
+    ASSERT(csb_v1_fmtowns_graphics_copy_raw_item(
+               data, size, 696u, raw, sizeof(raw), &item) == 1 &&
+           item.valid && item.stream_byte_count == 9160u,
+           edition);
+    ASSERT(csb_v1_media720_f0635_f31_inventory_rectangles(
+               raw, item.stream_byte_count, 0, rectangles) == 1,
+           "retail F31 C696 resolves all C507..C536 pointer rectangles");
+    ASSERT(rectangles[0].x == 6 && rectangles[0].y == 53 &&
+           rectangles[1].x == 62 && rectangles[1].y == 53 &&
+           rectangles[2].x == 34 && rectangles[2].y == 26 &&
+           rectangles[29].x == 202 && rectangles[29].y == 33,
+           "retail F31 inventory pointer origins match C696 records");
+    for (index = 0; index < 30; ++index) {
+        ASSERT(rectangles[index].width == 16 && rectangles[index].height == 16,
+               "retail F31 C105 owns each 16x16 inventory pointer box");
+    }
 }
 
 static void test_probe_null(void) {
@@ -177,6 +203,8 @@ static void test_real_data(void) {
     ASSERT(receipt.image_item_count > 650, "EN has >650 image items");
     ASSERT(receipt.header_fnv1a != 0, "EN header hash non-zero");
     ASSERT(receipt.payload_fnv1a != 0, "EN payload hash non-zero");
+    assert_real_f31_inventory_layout(data, size,
+                                     "EN retail C696 is a 9160-byte raw record");
 
     /* ReDMCSB TEXT.C:2019-2022 opens M653 with NOT_EXPANDED.  Exercise the
      * same raw record path M11 uses rather than accidentally covering it via
@@ -311,6 +339,8 @@ static void test_real_data(void) {
         ASSERT(csb_v1_fmtowns_graphics_receipt(data, size, &receipt) == 0,
                "receipt succeeds for JP");
         ASSERT(receipt.item_count == 728, "JP has 728 items");
+        assert_real_f31_inventory_layout(data, size,
+                                         "JP retail C696 is a 9160-byte raw record");
         {
             uint8_t raw_font[768];
             CSB_V1_FmtownsItemDecodeReceipt raw_receipt;

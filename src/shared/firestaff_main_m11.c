@@ -76,6 +76,7 @@ static void usage(const char* prog) {
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
             "  --platform <name>   Select source platform: auto, pc, amiga, atari-st, fm-towns, mac, pce, saturn\n"
             "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
+            "  --dm1-fmtowns-ja    Select DM1's verified Japanese FM Towns edition\n"
             "  --csb-fmtowns-ja    Select CSB's verified Japanese FM Towns edition\n"
             "  --amiga             Select the verified Amiga edition (including DM2 Amiga English)\n"
             "  --retroachievements Enable RetroAchievements runtime bridge\n"
@@ -631,6 +632,11 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--csb-fmtowns-ja") == 0) {
             opts.csbFmtownsJapanese = 1;
+            opts.architectureOverride = M12_ARCH_FM_TOWNS;
+            continue;
+        }
+        if (strcmp(a, "--dm1-fmtowns-ja") == 0) {
+            opts.dm1FmtownsJapanese = 1;
             opts.architectureOverride = M12_ARCH_FM_TOWNS;
             continue;
         }

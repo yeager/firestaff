@@ -1,9 +1,8 @@
 # Chaos Strikes Back (CSB) Technical Reference
 
-> **Status reviewed 2026-08-31.** CSB has native Amiga, Atari ST and FM Towns
+> **Status reviewed 2026-09-04.** CSB has native Amiga, Atari ST and FM Towns
 > media paths, broad source-locked engine coverage and ongoing end-to-end
-> runtime hardening. It has no original DOS release, so PC-shaped CSB data is
-> source/disassembly evidence only, never a PC runtime route.
+> runtime hardening.
 
 ## Scope
 

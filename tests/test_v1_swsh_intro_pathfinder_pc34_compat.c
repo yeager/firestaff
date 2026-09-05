@@ -41,6 +41,7 @@ const M12_AssetVersionStatus *M12_StartupMenu_AssetVersion(
 #include <direct.h>
 #include <process.h>
 #define TEST_MKDIR(path) _mkdir(path)
+#define TEST_RMDIR(path) _rmdir(path)
 #define TEST_GETPID() _getpid()
 #define TEST_SEP "\\"
 #define TEST_SETENV(name, value) _putenv_s((name), (value))
@@ -49,6 +50,7 @@ const M12_AssetVersionStatus *M12_StartupMenu_AssetVersion(
 #include <sys/stat.h>
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_RMDIR(path) rmdir(path)
 #define TEST_GETPID() getpid()
 #define TEST_SEP "/"
 #define TEST_SETENV(name, value) setenv((name), (value), 1)
@@ -156,6 +158,37 @@ static int copy_file(const char *src, const char *dst)
     return 1;
 }
 
+static void cleanup_test_tree(const char *dm1_swsh,
+                              const char *csb_swsh,
+                              const char *extras_swsh,
+                              const char *arbitrary_swsh,
+                              const char *renamed_real_swsh,
+                              const char *dm1_dir,
+                              const char *csb_dir,
+                              const char *extras_legacy_pc34_dir,
+                              const char *extras_legacy_dir,
+                              const char *extras_dir,
+                              const char *scan_nested_dir,
+                              const char *scan_root,
+                              const char *real_hash_dir,
+                              const char *root)
+{
+    (void)remove(dm1_swsh);
+    (void)remove(csb_swsh);
+    (void)remove(extras_swsh);
+    (void)remove(arbitrary_swsh);
+    (void)remove(renamed_real_swsh);
+    (void)TEST_RMDIR(dm1_dir);
+    (void)TEST_RMDIR(csb_dir);
+    (void)TEST_RMDIR(extras_legacy_pc34_dir);
+    (void)TEST_RMDIR(extras_legacy_dir);
+    (void)TEST_RMDIR(extras_dir);
+    (void)TEST_RMDIR(scan_nested_dir);
+    (void)TEST_RMDIR(scan_root);
+    (void)TEST_RMDIR(real_hash_dir);
+    (void)TEST_RMDIR(root);
+}
+
 int main(void)
 {
     char root[512];
@@ -175,14 +208,22 @@ int main(void)
     char found[512];
     char archive_member[1024];
     const char *pc34_archive;
+    const char *nested_dos_archive;
+    const char *test_workdir;
     const char *real_swsh =
         "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/"
         "ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH";
 
+    /* Keep test scratch data inside the configured build/test work directory.
+     * The project must not depend on /tmp being present or writable. */
+    test_workdir = getenv("FIRESTAFF_TEST_WORKDIR");
+    if (!test_workdir || test_workdir[0] == '\0') {
+        test_workdir = ".";
+    }
     snprintf(root,
              sizeof(root),
              "%s%sfirestaff_swsh_path_%ld",
-             getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
+             test_workdir,
              TEST_SEP,
              (long)TEST_GETPID());
     snprintf(dm1_dir, sizeof(dm1_dir), "%s%sdm1", root, TEST_SEP);
@@ -207,7 +248,7 @@ int main(void)
     snprintf(real_hash_dir,
              sizeof(real_hash_dir),
              "%s%sfirestaff_swsh_real_hash_%ld",
-             getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
+             test_workdir,
              TEST_SEP,
              (long)TEST_GETPID());
     snprintf(dm1_swsh, sizeof(dm1_swsh), "%s%sSWOOSH", dm1_dir, TEST_SEP);
@@ -311,6 +352,13 @@ int main(void)
                  pc34_archive);
         expect_true(V1_SWSH_Intro_PayloadLooksValid(archive_member) == 1,
                     "authentic PC3.4 ZIP SWOOSH validates in memory");
+        memset(found, 0, sizeof(found));
+        expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL, pc34_archive,
+                                                       "dm1", found,
+                                                       sizeof(found)) == 1,
+                    "direct authentic PC3.4 ZIP resolves without override");
+        expect_true(strcmp(found, archive_member) == 0,
+                    "direct archive launch preserves the ZIP SWOOSH locator");
         TEST_SETENV("FIRESTAFF_SWOOSH", archive_member);
         memset(found, 0, sizeof(found));
         expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL, root, "dm1",
@@ -323,6 +371,33 @@ int main(void)
         printf("skip: FIRESTAFF_DM1_PC34_ARCHIVE not set\n");
     }
 
+    /* The retail DOS collection has the same authentic executable below an
+     * install directory in the ZIP.  Its result must retain the discovered
+     * virtual member name rather than assuming ``archive::SWOOSH``.  This is
+     * the normal selected-archive path, not a deep scan or extracted copy. */
+    nested_dos_archive = getenv("FIRESTAFF_DM1_DOS_EN_ARCHIVE");
+    if (nested_dos_archive && nested_dos_archive[0] != '\0') {
+        memset(found, 0, sizeof(found));
+        expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL,
+                                                       nested_dos_archive,
+                                                       "dm1",
+                                                       found,
+                                                       sizeof(found)) == 1,
+                    "nested authentic DOS ZIP resolves without override");
+        expect_true(strncmp(found, nested_dos_archive,
+                            strlen(nested_dos_archive)) == 0 &&
+                    strstr(found + strlen(nested_dos_archive), "::") != NULL,
+                    "nested archive result retains a virtual member locator");
+        expect_true(V1_SWSH_Intro_PayloadLooksValid(found) == 1,
+                    "nested authentic DOS ZIP SWOOSH validates in memory");
+    } else {
+        printf("skip: FIRESTAFF_DM1_DOS_EN_ARCHIVE not set\n");
+    }
+
+    cleanup_test_tree(dm1_swsh, csb_swsh, extras_swsh, arbitrary_swsh,
+                      renamed_real_swsh, dm1_dir, csb_dir,
+                      extras_legacy_pc34_dir, extras_legacy_dir, extras_dir,
+                      scan_nested_dir, scan_root, real_hash_dir, root);
     if (g_failures) {
         return 1;
     }

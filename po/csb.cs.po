@@ -1,132 +1,915 @@
-# Firestaff — csb domain, Czech catalog.
-# Czech translation of Chaos Strikes Back runtime strings.
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
 #
-# Domain: csb
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
 #
-# Based on po/dm1.cs.po + CSB-specific keys from csb.pot.
-# Translated 2026-07-19, consistent with the reviewed sv/de/fr
-# catalogs (proper nouns and brand strings keep source spelling).
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-07-19 12:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
-"Language-Team: Czech\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-04-22 05:45+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "Verze enginu CSB"
+#. Source-owned C699 action name
+msgid "N"
+msgstr ""
 
-# Reincarnation panel
-msgid "csb.reincarnate.title"
-msgstr "REINKARNACE"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr ""
 
-msgid "csb.reincarnate.chaos"
-msgstr "Chaotický boj."
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr ""
 
-msgid "csb.reincarnate.choose"
-msgstr "Vyber nové bojovníky pro reinkarnaci."
+#. Source-owned C699 action name
+msgid "X"
+msgstr ""
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "Hoď kostkou na statistiky"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr ""
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "VZKŘÍŠENÍ"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr ""
 
-msgid "csb.resurrect.altar"
-msgstr "Obětuj krev na oltáři k probuzení bojovníků."
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr ""
 
-msgid "csb.resurrect.choose"
-msgstr "Vyber bojovníky k probuzení."
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr ""
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "Chaotická magie chladne"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr ""
 
-msgid "csb.chaos.energy"
-msgstr "Energie chaosu"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr ""
 
-msgid "csb.chaos.recharge"
-msgstr "Dobíjení"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr ""
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "Šedý lord šeptá: Vyber."
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr ""
 
-msgid "csb.greylord.choose"
-msgstr "Učiň svou volbu."
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr ""
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "VĚŠTÍRNA"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr ""
 
-msgid "csb.oracle.prompt"
-msgstr "Ptej se a věštírna odpoví."
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr ""
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "Max 4 bojovníci"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr ""
 
-msgid "csb.party.slot"
-msgstr "Místo v družině"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr ""
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "Importovat uloženou hru CSB"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr ""
 
-msgid "csb.save.csb-st-v20"
-msgstr "Uložená hra CSB Atari ST 2.0"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr ""
 
-msgid "csb.save.csb-st-v21"
-msgstr "Uložená hra CSB Atari ST 2.1"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr ""
 
-msgid "csb.save.amiga-v35"
-msgstr "Uložená hra CSB Amiga 3.5"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr ""
 
-msgid "csb.save.pc34"
-msgstr "Uložená hra CSB PC 3.4"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr ""
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "REŽIM NOVÁČKA"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr ""
 
-msgid "csb.neophyte.desc"
-msgstr "Sníží poškození pastí, snazší začátek."
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr ""
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "Engine DM1 v2.0"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr ""
 
-msgid "csb.engine.csb"
-msgstr "Engine CSB v2.1"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr ""
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr ""
 
-msgid "csb.launcher.subtitle"
-msgstr "Pokračování Dungeon Master II"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr ""
 
-msgid "csb.launcher.lore-shape"
-msgstr "Lord Chaos se tyčí..."
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr ""
 
-msgid "csb.launcher.lore-line-1"
-msgstr "Lord Chaos ukradl Plamen."
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr ""
 
-msgid "csb.launcher.lore-line-2"
-msgstr "Ohnivý kámen je ztracen."
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr ""
 
-msgid "csb.launcher.lore-line-3"
-msgstr "Šedý lord vás volá, abyste jej získali zpět."
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr ""
 
-msgid "csb.launcher.lore-line-4"
-msgstr "Vstupte do chaosu."
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "KOMPASS"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "POCHODEŇ"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "VODNÍ VAK"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "DRAHOKAMOVÝ SYMBOL"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "OSVĚTLOVAČ"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "PLAMÍNEK"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "OKO ČASU"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "BOUŘKRUH"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "HŮL DRÁPŮ"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "OHNIVÁ HŮL"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "SVITEK"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "DÝKA"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALCATA"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "MEČ"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "KORD"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "SAMURAJSKÝ MEČ"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "DIAMANTOVÉ OSTŘÍ"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "VORPÁLNÍ ČEPELE"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "SEKERA"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "PALCÁT"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "PALCÁT ŘÁDU"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "KYJ"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "KAMENNÝ KYJ"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "KUŠE"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "ŠÍP"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "ZABIJÁK"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "PRAK"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "KÁMEN"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "JEDOVATÝ OŠTĚP"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "VRHANÁ HVĚZDA"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "TYČ"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "HŮL"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "HOŘKÁ HŮLKA"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "TEOHŮLKA"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "TISOVÁ HŮL"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "DRÁČÍ SLINA"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "ŽEZLO LYFU"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "KOŽENÝ KABÁTEC"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "PLÁŠŤ"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "PLÁŠŤ NOCI"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "KOŽENÉ KALHOTY"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "MODRÉ KALHOTY"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "GHI KALHOTY"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "STEHNÍ BRNĚNÍ"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "MITHRILNÍ BRNĚNÍ"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "BERSERKEROVA PŘILBA"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "PŘILBICE"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BASCINET"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "NERRINA KORUNA"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "MALÝ ŠTÍT"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "DŘEVĚNÝ ŠTÍT"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SANDÁLY"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "SEMŠOVÉ BOTY"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "KOŽENÉ BOTY"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "PLÁTOVÉ BOTY"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "ELFÍ BOTY"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "DRAHOKAM VĚKŮ"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "EKKHARDŮV KŘÍŽ"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "MĚSÍČNÍ KÁMEN"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "HELION"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "FERAL PŘÍVĚSEK"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR MINCE"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "BALVAN"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "MODRÝ DRAHOKAM"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "ORANŽOVÝ DRAHOKAM"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "ZELENÝ DRAHOKAM"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "MAGICKÁ KRABICE"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "ZRCADLO ÚSVITU"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "ROH STRACHU"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "LANO"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "OBUŠEK"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEXOVÁ PŘILBA"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "TRUHLA"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "OTEVŘÍT TRUHLU"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "POPEL"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "KOSTI"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON LÉK"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM LÉK"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES LÉK"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN LÉK"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR LÉK"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO LÉK"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS LÉK"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU LÉK"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE LÉK"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA LÉK"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA LÉK"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE LÉK"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI LÉK"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "LÁHEV VODY"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "JABLKO"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "KUKUŘICE"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "CHLÉB"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "SÝR"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "PLÁTEK KŘIČÍKA"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "ČERVÍ KULATINA"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "DRAČÍ STEAK"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "ŽELEZNÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "KLÍČ B"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "PLNÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "ČTVERCOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "TYRKYSOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "KŘÍŽOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "ONYXOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "KOSTERNÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "ZLATÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "OKŘÍDLENÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "TOPASOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "ZAFÍROVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "SMARAGDOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "RUBÍNOVÝ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA KLÍČ"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "HLAVNÍ KLÍČ"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "PACKY NA ZÁMKY"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "LUPA"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "PRÁZDNÁ LÁHEV"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "KOUZLO ZOKATHRA"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""

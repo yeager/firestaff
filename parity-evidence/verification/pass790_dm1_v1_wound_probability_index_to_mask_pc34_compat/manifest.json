@@ -18,7 +18,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:30",
       "line": 30,
       "lineText": "unsigned char G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask[4];",
@@ -26,7 +26,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:243",
       "line": 243,
       "lineText": "unsigned char G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask[4] = { MASK0x0020_WOUND_FEET, MASK0x0010_WOUND_LEGS, MASK0x0008_WOUND_TORSO, MASK0x0004_WOUND_HEAD };",
@@ -34,7 +34,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
       "id": "PROJEXPL.C:1378",
       "line": 1378,
       "lineText": "#ifdef MEDIA178_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_G14ED /* CHANGE7_11_OPTIMIZATION Comma removed */",
@@ -42,7 +42,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
       "id": "PROJEXPL.C:1386",
       "line": 1386,
       "lineText": "                        AL0561_ui_AllowedWound = G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask[AL0561_ui_WoundProbabilityIndex];",
@@ -50,7 +50,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
       "id": "PROJEXPL.C:1389",
       "line": 1389,
       "lineText": "                }",
@@ -58,7 +58,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass790_dm1_v1_wound_probability_index_to_mask_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init vars: G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask[4] is the 4-byte table that maps a wound-probability index (0..3) to a body-location mask ({FEET=0x20, LEGS=0x10, TORSO=0x08, HEAD=0x04}). PROJEXPL.C:1386 reads it after a wound-test branch. The fallback branch (PROJEXPL.C:1389) uses MASK0x0001_WOUND_READY_HAND when the test-mask bits 4,5,6 are all clear. Disjoint from pass784-789 mirror-candidate C040 gates; this gate is the first non-mirror-candidate contract in the wound/projexpl namespace.",
   "sourceChecks": [
@@ -94,11 +94,11 @@
     }
   ],
   "status": "PASS790_DM1_V1_WOUND_PROBABILITY_INDEX_TO_MASK_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:10.934321+00:00",
+  "timestampUtc": "2026-09-04T18:07:10.398339+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_wound_probability_index_to_mask_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_wound_probability_index_to_mask_pc34_compat"
       ],
       "outputTail": "dm1_v1_wound_probability_index_to_mask: 36/36 assertions passed",
       "passed": true,

@@ -55,7 +55,7 @@
     "pass2ObjectsInFrontOfFrame": "DUNVIEW.C:7910-7937",
     "viewSquare": "DM1_V2_VIEW_SQUARE_D1C"
   },
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 viewport D1C front-door two-pass occlusion source lock",
   "sourceAnchors": [
     {

@@ -5075,6 +5075,8 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.event73_count_thieves_eye = cfg->event73_count_thieves_eye;
     vp.wall_ornament_ordinal_callback = cfg->wall_ornament_ordinal_callback;
     vp.wall_ornament_ordinal_user_data = cfg->wall_ornament_ordinal_user_data;
+    vp.wall_aspect_callback = cfg->wall_aspect_callback;
+    vp.wall_aspect_user_data = cfg->wall_aspect_user_data;
 
     /* Wire dungeon grid for CSB back-wall rendering (D3L2/D3R2/D2L2/D2R2).
      * The dungeon grid enables element-specific routing for CSB four-sided

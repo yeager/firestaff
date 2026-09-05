@@ -3,28 +3,28 @@
     {
       "hits": [
         {
-          "line": 982,
+          "line": 1018,
           "needle": "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349"
         },
         {
-          "line": 982,
+          "line": 1018,
           "needle": "DUNVIEW.C:7874-7875 pass1 rear cells before frame"
         },
         {
-          "line": 982,
+          "line": 1018,
           "needle": "DUNVIEW.C:7877-7902 top/side frame and button draw"
         },
         {
-          "line": 982,
+          "line": 1018,
           "needle": "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament"
         },
         {
-          "line": 982,
+          "line": 1018,
           "needle": "DUNVIEW.C:7910-7937 pass2 front cells after door"
         }
       ],
       "id": "firestaff-d1c-door-front-metadata",
-      "lines": "982-982",
+      "lines": "1008-1022",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -32,28 +32,28 @@
     {
       "hits": [
         {
-          "line": 1748,
+          "line": 1768,
           "needle": "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\""
         },
         {
-          "line": 1761,
+          "line": 1781,
           "needle": "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);"
         },
         {
-          "line": 1762,
+          "line": 1782,
           "needle": "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);"
         },
         {
-          "line": 1770,
+          "line": 1790,
           "needle": "rear.cells[0] == expected[i].rear_cells[0]"
         },
         {
-          "line": 1774,
+          "line": 1794,
           "needle": "front.cells[0] == expected[i].front_cells[0]"
         }
       ],
       "id": "firestaff-d1c-runtime-test",
-      "lines": "1744-1775",
+      "lines": "1743-1810",
       "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"

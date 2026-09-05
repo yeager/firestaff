@@ -14,7 +14,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:92",
       "line": 92,
       "lineText": "int16_t G0054_ai_Graphic562_Box_ChampionIcons[16]; /* Array of 4 boxes */",
@@ -22,7 +22,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:431",
       "line": 431,
       "lineText": "int16_t G0054_ai_Graphic562_Box_ChampionIcons[16] = { /* Array of 4 boxes */",
@@ -30,7 +30,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1112",
       "line": 1112,
       "lineText": "int16_t G0054_ai_Graphic562_Box_ChampionIcons[16] = { /* Array of 4 boxes */",
@@ -38,7 +38,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:830",
       "line": 830,
       "lineText": "                        M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[M026_CHAMPION_ICON_INDEX(L0865_ps_Champion->Cell, G0308_i_PartyDirection) << 2], C00_COLOR_BLACK); /* BUG0_36 A champion icon may be missing in the upper right corner of the screen after loading a saved game where at least one champion is dead. When a dead champion is reborn at a Vi Altar, the champion cell is set to the first available cell where there is no champion alive. It is then possible that the cell of the reborn champion is the same as the cell of another dead champion in the party. If the index of the dead champion is higher than the index of the reborn champion and the game is saved then when restarting the game from the saved game the icon of the reborn champion will not appear on screen. This is only a graphic glitch and you only need to click on the black area where the missing icon should be to make it appear again. When the game is loaded, the state of each champion is drawn. For a dead champion, this erases the champion icon according to the cell of the dead champion, even if another champion is at the same cell */",
@@ -46,7 +46,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:1022",
       "line": 1022,
       "lineText": "                M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[AL0864_i_ChampionIconIndex << 2], G0046_auc_Graphic562_ChampionColor[P0615_ui_ChampionIndex]);",
@@ -54,7 +54,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:1025",
       "line": 1025,
       "lineText": "                F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C028_GRAPHIC_CHAMPION_ICONS), G0348_Bitmap_Screen, &G0054_ai_Graphic562_Box_ChampionIcons[AL0864_i_ChampionIconIndex << 2], M026_CHAMPION_ICON_INDEX(L0865_ps_Champion->Direction, G0308_i_PartyDirection) * 19, 0, C040_BYTE_WIDTH, C160_BYTE_WIDTH_SCREEN, C12_COLOR_DARKEST_GRAY);",
@@ -62,7 +62,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:1028",
       "line": 1028,
       "lineText": "                F0132_VIDEO_Blit(F0489_MEMORY_GetNativeBitmapOrGraphic(C028_GRAPHIC_CHAMPION_ICONS), G0348_Bitmap_Screen, &G0054_ai_Graphic562_Box_ChampionIcons[AL0864_i_ChampionIconIndex << 2], M026_CHAMPION_ICON_INDEX(L0865_ps_Champion->Direction, G0308_i_PartyDirection) * 19, 0, C040_BYTE_WIDTH, C160_BYTE_WIDTH_SCREEN, C12_COLOR_DARKEST_GRAY, 14, C200_HEIGHT_SCREEN);",
@@ -70,7 +70,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:1656",
       "line": 1656,
       "lineText": "        M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[AL0962_ui_ChampionIconIndex << 2], C00_COLOR_BLACK);",
@@ -78,7 +78,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2433",
       "line": 2433,
       "lineText": "                L0055_pi_ChampionIconBox = &G0054_ai_Graphic562_Box_ChampionIcons[P0094_ui_ChampionIconIndex << 2];",
@@ -86,7 +86,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2619",
       "line": 2619,
       "lineText": "                                M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[L0052_ui_ChampionIconIndex << 2], C00_COLOR_BLACK);",
@@ -94,7 +94,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2677",
       "line": 2677,
       "lineText": "        M520_F0021_MAIN_BlitToScreen(G0613_puc_Bitmap_MousePointerOriginalColorsChampionIcon, &G0054_ai_Graphic562_Box_ChampionIcons[L0058_ui_ChampionIconIndex << 2], C016_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 18);",
@@ -102,7 +102,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass860_dm1_v1_box_champion_icons_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [
@@ -138,11 +138,11 @@
     }
   ],
   "status": "PASS860_DM1_V1_BOX_CHAMPION_ICONS_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:14.314684+00:00",
+  "timestampUtc": "2026-09-04T18:35:08.416218+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_champion_icons_pc34_compat"
+        "/dev/shm/current/test_dm1_v1_box_champion_icons_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_champion_icons: 73/73 assertions passed",
       "passed": true,

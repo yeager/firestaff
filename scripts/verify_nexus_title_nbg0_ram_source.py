@@ -39,8 +39,11 @@ def main() -> int:
                 (address, size, value, source, source_value, lba, pc))
             source_word = (int(source_word_text, 16)
                            if source_word_text is not None else None)
+            # A same-session LBA-filtered producer can legitimately observe
+            # other RAM consumers of these sectors.  They are unrelated, not
+            # malformed title rows, so select the bounded title lane here.
             if not RAM_START <= address < RAM_END or size != 4:
-                raise ValueError("trace row lies outside bounded four-byte RAM lane")
+                continue
             if TITLE_BIN_LBA_START <= lba <= TITLE_BIN_LBA_END:
                 if pc != 0x06090D04:
                     raise ValueError("TITLE.BIN source row has an unexpected SH-2 PC")

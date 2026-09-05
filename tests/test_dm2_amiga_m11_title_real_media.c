@@ -100,6 +100,53 @@ int main(void)
     expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) != 0u,
            "Amiga TITL hands off to original Amiga GDAT menu pixels");
     {
+        const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(
+            (DM2_V1_BootProfile *)view.dm2BootProfile);
+        DM2_V1_QueryGdatSummaryImageReceipt image;
+        const uint8_t *palette_raw;
+        uint8_t expected_rgb8[256][3];
+        uint8_t presented_rgb8[256][3];
+        size_t palette_size = 0u;
+        int color;
+        int lossy_vga_round_trip = 0;
+        memset(&image, 0, sizeof(image));
+        memset(expected_rgb8, 0, sizeof(expected_rgb8));
+        memset(presented_rgb8, 0, sizeof(presented_rgb8));
+        palette_raw = dm2_v1_asset_load_typed_sized(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0,
+            DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 4, &palette_size);
+        expect(palette_raw && palette_size == 16u * 4u &&
+                   dm2_v1_query_gdat_summary_image_receipt(
+                       loader, DM2_GDAT_CATEGORY_TITLE, 0, 4, &image) &&
+                   image.accepted && image.colors == 16u,
+               "Amiga menu exposes its real field-4 IRGB and Palette16 pair");
+        for (color = 0; palette_raw && color < 16; ++color) {
+            const uint8_t physical = image.palette16[color];
+            expect(palette_raw[(size_t)color * 4u] == (uint8_t)color,
+                   "Amiga menu IRGB retains its source row index");
+            expected_rgb8[physical][0] = palette_raw[(size_t)color * 4u + 1u];
+            expected_rgb8[physical][1] = palette_raw[(size_t)color * 4u + 2u];
+            expected_rgb8[physical][2] = palette_raw[(size_t)color * 4u + 3u];
+            if (palette_raw[(size_t)color * 4u + 1u] !=
+                    (uint8_t)(((palette_raw[(size_t)color * 4u + 1u] >> 2u) << 2u) |
+                              (palette_raw[(size_t)color * 4u + 1u] >> 6u)) ||
+                palette_raw[(size_t)color * 4u + 2u] !=
+                    (uint8_t)(((palette_raw[(size_t)color * 4u + 2u] >> 2u) << 2u) |
+                              (palette_raw[(size_t)color * 4u + 2u] >> 6u)) ||
+                palette_raw[(size_t)color * 4u + 3u] !=
+                    (uint8_t)(((palette_raw[(size_t)color * 4u + 3u] >> 2u) << 2u) |
+                              (palette_raw[(size_t)color * 4u + 3u] >> 6u))) {
+                lossy_vga_round_trip = 1;
+            }
+        }
+        expect(lossy_vga_round_trip,
+               "Amiga menu contains components changed by a VGA six-bit round trip");
+        expect(M11_Render_CopyIndexedPaletteRgb8(presented_rgb8) &&
+                   memcmp(expected_rgb8, presented_rgb8,
+                          sizeof(expected_rgb8)) == 0,
+               "Amiga menu presents exact full-byte GDAT IRGB components");
+    }
+    {
         DM2_V1_StartupMenuPointerLayout layout;
         M11_GameInputResult input_result;
         memset(&layout, 0, sizeof(layout));

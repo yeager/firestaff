@@ -1,11 +1,11 @@
 # Pass 173 / pass 4 — gated source portrait route probe
 
-- run base: `<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe`
+- run base: `/dev/shm/firestaff-pass173-runs/20260905-173237-pass173-source-portrait-route-gate-probe`
 - evidence root: `parity-evidence/verification/pass173_source_portrait_route_gate_probe`
-- completed: 2
-- errors: 0
-- buckets: blocked/static-no-party-after-gate=2
-- ReDMCSB source root: `<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- completed: 0
+- errors: 2
+- buckets: none
+- ReDMCSB source root: `~/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source`
 
 ## ReDMCSB source audit
 
@@ -30,5 +30,8 @@ This pass is source-first. The runtime clicks below are derived from these ReDMC
 
 ## Results
 
-- `gate_click_portrait_then_resurrect`: **blocked/static-no-party-after-gate** — known no-party hash present after gate: 48ed3743ab6a — `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect`
-- `gate_click_portrait_then_reincarnate`: **blocked/static-no-party-after-gate** — known no-party hash present after gate: 48ed3743ab6a — `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate`
+
+## Errors
+
+- `gate_click_portrait_then_resurrect`: timed out waiting for screenshot initial; before=[] latest=None
+- `gate_click_portrait_then_reincarnate`: timed out waiting for screenshot initial; before=[] latest=None

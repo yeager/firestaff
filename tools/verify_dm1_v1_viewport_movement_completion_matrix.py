@@ -19,10 +19,24 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE = Path(os.environ.get(
-    "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
-))
+
+
+def default_redmcsb_source() -> Path:
+    """Resolve the optional ReDMCSB evidence checkout without a user path."""
+    configured = os.environ.get("FIRESTAFF_REDMCSB_SOURCE")
+    candidates = [Path(configured)] if configured else []
+    candidates.extend((
+        ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+    ))
+    for candidate in candidates:
+        if (candidate / "DUNVIEW.C").is_file():
+            return candidate
+    # Preserve a deterministic diagnostic for a checkout without the optional
+    # reference rather than silently reading unrelated host data.
+    return candidates[0] if candidates else ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+
+
+DEFAULT_SOURCE = default_redmcsb_source()
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "dm1_v1_viewport_movement_completion_matrix"
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / "dm1_v1_viewport_movement_completion_matrix.md"
@@ -173,7 +187,7 @@ CHAINED_GATES: list[dict[str, Any]] = [
     {"id": "pass406_movement_legality_completion_gate", "cmd": [sys.executable, "tools/verify_pass406_dm1_v1_movement_legality_completion_gate.py"], "covers": "party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain"},
     {"id": "pass406_game_loop_redraw_cadence", "cmd": [sys.executable, "tools/verify_pass406_dm1_v1_game_loop_redraw_cadence.py"], "covers": "game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering"},
     {"id": "pass395_viewport_walls_source_runtime_lock", "cmd": [sys.executable, "scripts/verify_pass395_dm1_v1_viewport_walls_source_runtime_lock.py"], "covers": "wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract"},
-    {"id": "pass405_projectile_explosion_layer_occlusion", "cmd": [sys.executable, "tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py"], "covers": "projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards"},
+    {"id": "pass405_projectile_explosion_layer_occlusion", "cmd": [sys.executable, "tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py"], "covers": "projectile/explosion layer split, callback-owned per-square explosion restart, and center/side occlusion guards"},
     {"id": "viewport_square_collision_source_lock", "cmd": [sys.executable, "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py"], "covers": "visible viewport cells are map-backed and agree with movement collision square state"},
     {"id": "viewport_field_zone_aspect_clip_gate", "cmd": [sys.executable, "tools/verify_v1_viewport_field_zone_aspect_clip_gate.py"], "covers": "field/teleporter zone/aspect clipping behind nearer blockers"},
     {"id": "viewport_palette_source_lock_gate", "cmd": [sys.executable, "tools/verify_v1_viewport_palette_source_lock_gate.py"], "covers": "single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming"},

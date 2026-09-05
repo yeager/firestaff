@@ -13,45 +13,27 @@
       "path": "parity-evidence/pass507_dm1_v1_movement_stairs_group_timing_source_lock.md"
     }
   ],
-  "greatstoneAnchor": {
-    "diff": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json",
-    "indexedPages": [
-      "http://greatstone.free.fr/dm/g_dm.html",
-      "http://greatstone.free.fr/dm/index.html"
-    ],
-    "pc34DungeonUrl": "http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html",
-    "pc34GraphicsUrl": "http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html",
-    "summary": {
-      "note": "Graphics names/order come from GreatStone HTML image labels; local inventory is matched by exact SHA256 variant and zero-based item index/count. DUNGEON.DAT is matched by exact SHA256 and GreatStone map-page order/count.",
-      "pc34_dungeon_maps": 14,
-      "pc34_graphics_items": 713,
-      "pc34_multi_graphics_items": 748,
-      "result": "PASS",
-      "total_mismatches": 0
-    }
-  },
-  "greatstoneRoot": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
   "notClaimed": [
     "original DOS keyboard-buffer transcript",
     "representative original movement/HUD/viewport overlay parity",
     "viewport/wall or pass435 route promotion"
   ],
+  "originalArchive": "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
   "originalDm1Anchors": [
     {
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "path": "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::TITLE",
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     }
   ],
-  "originalsRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "reference/redmcsb-20210206/Toolchains/Common/Source",
   "redmcsbSourceAudit": [
     {
       "claim": "PC-34 shifted cursor input is normalized into K/L/M/P command-table codes before command enqueue.",

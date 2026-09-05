@@ -11,11 +11,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import struct
+import zlib
 from pathlib import Path
 from typing import Any
+from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 
-DEFAULT_SOURCE = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DEFAULT_DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SOURCE = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DEFAULT_DM1 = Path("~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip").expanduser()
 
 CHECKS: list[dict[str, Any]] = [
     {
@@ -158,10 +162,9 @@ CHECKS: list[dict[str, Any]] = [
     },
 ]
 
-ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE", "README.md"]
+ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE"]
 ALLOWED_PREFIXES = [
-    Path("~/.openclaw/data/firestaff-redmcsb-source").expanduser().resolve(),
-    Path("~/.openclaw/data/firestaff-original-games/DM").expanduser().resolve(),
+    ROOT,
 ]
 
 
@@ -171,6 +174,19 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+def archive_member(path: Path, name: str) -> bytes:
+    raw = path.read_bytes()
+    with ZipFile(path) as archive:
+        info = archive.getinfo(name)
+    offset = info.header_offset
+    name_len, extra_len = struct.unpack_from("<HH", raw, offset + 26)
+    start = offset + 30 + name_len + extra_len
+    packed = raw[start:start + info.compress_size]
+    data = packed if info.compress_type == ZIP_STORED else zlib.decompress(packed, -15) if info.compress_type == ZIP_DEFLATED else None
+    if data is None or len(data) != info.file_size or (zlib.crc32(data) & 0xffffffff) != info.CRC:
+        raise ValueError(f"invalid authentic ZIP member {name}")
+    return data
 
 
 def ensure_local(path: Path) -> Path:
@@ -189,7 +205,7 @@ def slice_lines(text: str, spec: str) -> str:
 
 def verify(source: Path, dm1: Path) -> tuple[dict[str, Any], list[str]]:
     source = ensure_local(source)
-    dm1 = ensure_local(dm1)
+    dm1 = dm1.expanduser().resolve()
     failures: list[str] = []
     source_hashes: dict[str, str] = {}
     checks: list[dict[str, Any]] = []
@@ -222,13 +238,19 @@ def verify(source: Path, dm1: Path) -> tuple[dict[str, Any], list[str]]:
         })
 
     anchors: list[dict[str, Any]] = []
-    for name in ANCHORS:
-        path = ensure_local(dm1 / name)
-        if not path.exists():
-            failures.append(f"missing canonical dm1 anchor {path}")
-            anchors.append({"name": name, "status": "missing", "path": str(path)})
-            continue
-        anchors.append({"name": name, "status": "found", "path": str(path), "bytes": path.stat().st_size, "sha256": sha256(path)})
+    if not dm1.is_file():
+        failures.append(f"missing authentic PC 3.4 archive {dm1}")
+    else:
+        with ZipFile(dm1) as archive:
+            for name in ANCHORS:
+                member = name if name == "TITLE" else "DATA/" + name
+                try:
+                    data = archive_member(dm1, member)
+                except KeyError:
+                    failures.append(f"missing authentic PC 3.4 member {member}")
+                    anchors.append({"name": name, "status": "missing", "archive": str(dm1), "member": member})
+                    continue
+                anchors.append({"name": name, "status": "found", "archive": str(dm1), "member": member, "readMode": "in-memory/no-extraction", "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
 
     result = {
         "gate": "pass495-dm1-v1-viewport-walls-occlusion-source-lock",

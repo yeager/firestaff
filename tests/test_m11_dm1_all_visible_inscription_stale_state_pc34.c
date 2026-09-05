@@ -11,6 +11,7 @@
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "firestaff_po_loader.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -359,6 +360,77 @@ int main(void)
             M11_GameView_Shutdown(&state);
             return 1;
         }
+    }
+
+    /* TextString 4 is real PC34 "HALL OF\nCHAMPIONS" material. Its Swedish
+     * final presentation is "HJÄLTARNAS\nSAL": prove the U+00C4 cell while
+     * retaining the original receipt and M648 palette ownership. */
+    for (i = 0; i < poseCount; ++i) {
+        if (poses[i].textStringIndex == 4) {
+            static const unsigned char capital_a_diaeresis[7] = {
+                0x04u, 0x04u, 0x0eu, 0x11u, 0x11u, 0x1fu, 0x11u
+            };
+            M11_Dm1InscriptionHostPresentationReceipt translatedReceipt;
+            unsigned char ink = 0u;
+            int pixel;
+            int row;
+            int col;
+            if (fs_po_load(FIRESTAFF_SOURCE_DIR "/po/dm1.sv.po") <= 0) {
+                fprintf(stderr, "Swedish DM1 catalog unavailable\n");
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            for (pixel = 0; pixel < (int)font->width * (int)font->height;
+                 ++pixel) {
+                if (font->pixels[pixel] !=
+                    DM1_V1_INSCRIPTION_TRANSPARENT_COLOR) {
+                    ink = font->pixels[pixel];
+                    break;
+                }
+            }
+            state.world.party.mapIndex = poses[i].mapIndex;
+            state.world.party.mapX = poses[i].partyX;
+            state.world.party.mapY = poses[i].partyY;
+            state.world.party.direction = poses[i].direction;
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&state, framebuffer, kFramebufferWidth,
+                              kFramebufferHeight);
+            memset(&translatedReceipt, 0, sizeof(translatedReceipt));
+            M11_GameView_GetDm1InscriptionHostPresentationReceipt(
+                &translatedReceipt);
+            if (!translatedReceipt.valid ||
+                translatedReceipt.textStringIndex != 4 ||
+                translatedReceipt.fontGraphicIndex !=
+                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
+                translatedReceipt.glyphBytesFNV1a == 0u) {
+                fprintf(stderr, "translated presentation lost F0168/M648 owner\n");
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
+            /* HJÄLTARNAS is 10 cells: centered x=72; Ä is cell 2 and its
+             * five-pixel raster is inset one pixel in the 8x8 M648 cell. */
+            for (row = 0; row < 7; ++row) {
+                for (col = 0; col < 5; ++col) {
+                    unsigned char want =
+                        (capital_a_diaeresis[row] & (1u << (4 - col)))
+                            ? ink : framebuffer[(kViewportY + 41 + row) * 320 +
+                                                89 + col];
+                    if ((capital_a_diaeresis[row] & (1u << (4 - col))) &&
+                        framebuffer[(kViewportY + 41 + row) * 320 + 89 + col] !=
+                            want) {
+                        fprintf(stderr, "Swedish U+00C4 inscription raster mismatch\n");
+                        M11_GameView_Shutdown(&state);
+                        return 1;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    if (i == poseCount) {
+        fprintf(stderr, "real PC34 TextString 4 pose unavailable\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
     }
     state.world.party.mapIndex = noTextPose.mapIndex;
     state.world.party.mapX = noTextPose.partyX;

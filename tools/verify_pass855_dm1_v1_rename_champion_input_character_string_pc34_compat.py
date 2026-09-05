@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_executable
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass855_dm1_v1_rename_champion_input_character_string_pc34_compat"
@@ -17,7 +21,7 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / 'parity-evidence/verification' / PASS
 MANIFEST = OUT_DIR / 'manifest.json'
 REPORT = ROOT / 'parity-evidence' / f'{PASS}.md'
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 ANCHORS = [
     "DATA.C:90/429/1105",
@@ -100,18 +104,6 @@ def run(cmd):
     }
 
 
-def resolve_build_dir(binary_name=""):
-    candidates = [ROOT / "build", ROOT / "builds" / "nv1-build",
-                  ROOT / "builds" / "n2-build"]
-    for c in candidates:
-        if (c / "CMakeCache.txt").exists() and (c / binary_name).exists():
-            return c
-    for c in candidates:
-        if (c / "CMakeCache.txt").exists():
-            return c
-    return candidates[0]
-
-
 def write_outputs(local_checks, redmcsb_checks, runs):
     ok = (all(r["status"] == "PASS" for r in local_checks)
           and all(r["passed"] for r in runs))
@@ -162,8 +154,8 @@ def main():
     ]
     redmcsb_checks = check_redmcsb_windows()
     binary = CMAKE_NEEDLES[0]
-    build_dir = resolve_build_dir(binary)
-    runs = [run([str(build_dir / binary)])]
+    executable = resolve_build_executable(ROOT, binary, ROOT / "build")
+    runs = [run([str(executable)])]
     write_outputs(local_checks, redmcsb_checks, runs)
     ok = all(r["status"] == "PASS" for r in local_checks) and all(r["passed"] for r in runs)
     print(f"{PASS}: {'PASS' if ok else 'FAIL'}")

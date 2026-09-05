@@ -6,6 +6,7 @@
 #include "firestaff/dm1/v1/G0184_pc34_compat.h"
 #include "firestaff/dm1/v1/G0185_pc34_compat.h"
 #include "firestaff/dm1/v1/G0187_pc34_compat.h"
+#include "dm1_v1_center_door_render_pc34_compat.h"
 
 #include <string.h>
 
@@ -218,6 +219,44 @@ int dm1_v1_side_door_panel_blits_for_draw_pc34(
             }
         }
     }
+    return 1;
+}
+
+int dm1_v1_side_door_f0111_composition_pc34(
+    const DM1_SideDoorRenderPlanPc34* plan,
+    int doorState,
+    int doorVertical,
+    int ornamentOrdinal,
+    int doorSet,
+    int random4,
+    DM1_SideDoorF0111CompositionPc34* outComposition,
+    DM1_SideDoorBlitPc34 outPanelBlits[2])
+{
+    DM1_SideDoorF0111CompositionPc34 composition;
+    int consumed = 0;
+    int panelCount;
+    if (!outComposition) return 0;
+    memset(outComposition, 0, sizeof(*outComposition));
+    if (!plan || !outPanelBlits || doorState == 0 || ornamentOrdinal < 0)
+        return 0;
+    panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+        plan, doorState, doorVertical, outPanelBlits);
+    if (panelCount <= 0) return 0;
+    memset(&composition, 0, sizeof(composition));
+    composition.flipMask = dm1_v1_f0111_animated_door_flip_mask_pc34(
+        doorSet, doorState, random4, &consumed);
+    if (composition.flipMask < 0) return 0;
+    composition.valid = 1;
+    composition.bitmapOriginX = plan->panel.dstX - plan->panel.srcX;
+    composition.bitmapOriginY = plan->panel.dstY - plan->panel.srcY;
+    composition.panelCount = panelCount;
+    composition.ordinaryOrnamentBeforeClip = ornamentOrdinal > 0;
+    composition.destroyedMaskBeforeClip = doorState == 5;
+    /* Side F0111 zones are never M631_ZONE_DOOR_D1C. */
+    composition.thievesEyeMaskBeforeClip = 0;
+    composition.wholeBitmapFlipBeforeClip = 1;
+    composition.random4Consumed = consumed;
+    *outComposition = composition;
     return 1;
 }
 

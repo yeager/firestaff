@@ -55,6 +55,8 @@ int main(void) {
     DM1_V1_EndgamePresentationDecisionPc34 output;
     DM1_V1_EndgameFinalPresentationInputPc34 finalInput;
     DM1_V1_EndgameFinalPresentationReceiptPc34 receipt;
+    DM1_V1_EndgameRestartLoadInputPc34 restartInput;
+    DM1_V1_EndgameRestartLoadDecisionPc34 restartDecision;
 
     memset(&input, 0, sizeof(input));
     dm1_v1_endgame_presentation_decide_pc34(&input, &output);
@@ -109,6 +111,24 @@ int main(void) {
     check("original GRAPHICS.DAT route is required", receipt.originalGraphicsDatRoute);
     check("F0444 source material is bound", receipt.f0444MaterialBound);
     check("credits palette route is source-bound", receipt.creditsPaletteRoute);
+
+    memset(&restartInput, 0, sizeof(restartInput));
+    restartInput.restartRequested = 1;
+    restartInput.loadSucceeded = 1;
+    dm1_v1_endgame_restart_load_decide_pc34(&restartInput, &restartDecision);
+    check("successful F0435 resumes in place", restartDecision.resumeLoadedGame &&
+          !restartDecision.returnToTheEnd && !restartDecision.failClosed);
+    restartInput.loadSucceeded = 0;
+    restartInput.f0444MaterialBound = 1;
+    dm1_v1_endgame_restart_load_decide_pc34(&restartInput, &restartDecision);
+    check("failed F0435 returns to retained THE END material",
+          !restartDecision.resumeLoadedGame && restartDecision.returnToTheEnd &&
+          !restartDecision.failClosed);
+    restartInput.f0444MaterialBound = 0;
+    dm1_v1_endgame_restart_load_decide_pc34(&restartInput, &restartDecision);
+    check("failed F0435 without authentic material fails closed",
+          !restartDecision.resumeLoadedGame && !restartDecision.returnToTheEnd &&
+          restartDecision.failClosed);
     check("THE END graphic id is C006", receipt.theEndGraphicId == 6);
     check("endgame champion mirror id is C346",
           receipt.championMirrorGraphicId == 346);

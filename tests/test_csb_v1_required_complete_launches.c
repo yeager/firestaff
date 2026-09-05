@@ -133,7 +133,7 @@ static void check_csb_metadata_does_not_cross_boot_runtime_boundary(
     profile.graphics_verified = 1;
     profile.dungeon_verified = 1;
     profile.assets_verified = 1;
-    profile.variant_id = CSB_V1_VARIANT_PC34_EN;
+    profile.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     profile.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     profile.entrance_map_index = 255U;
     profile.start_map_index = 0U;

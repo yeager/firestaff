@@ -53,6 +53,12 @@ static const char* graphics_dat_path(void) {
             fclose(f);
             return homePath;
         }
+        /* Keep the source-lock gate on the production no-extraction route. */
+        snprintf(homePath, sizeof(homePath),
+                 "%s/.firestaff/data/dm1/"
+                 "Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT",
+                 home);
+        return homePath;
     }
     return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
 }
@@ -87,6 +93,7 @@ static void seed_food_mouth_state(M11_GameViewState* state,
                                   struct DungeonThings_Compat* things,
                                   struct DungeonJunk_Compat* junk) {
     unsigned short cheeseThing = (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+    static unsigned char rawJunk[4];
     memset(junk, 0, sizeof(*junk));
     junk->next = THING_ENDOFLIST;
     junk->type = 32; /* Cheese: C171 icon, food amount 820. */
@@ -94,6 +101,13 @@ static void seed_food_mouth_state(M11_GameViewState* state,
     seed_base_inventory_state(state, things);
     things->junks = junk;
     things->junkCount = 1;
+    memset(rawJunk, 0, sizeof(rawJunk));
+    rawJunk[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawJunk[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawJunk[2] = 32;
+    things->loaded = 1;
+    things->rawThingData[THING_TYPE_JUNK] = rawJunk;
+    things->thingCounts[THING_TYPE_JUNK] = 1;
     ASSERT_TRUE(M11_GameView_SetV1LeaderHandObject(state, cheeseThing),
                 "leader hand accepts cheese junk");
 }
@@ -118,6 +132,7 @@ static void seed_waterskin_mouth_state(M11_GameViewState* state,
     rawJunks[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
     rawJunks[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
     rawJunks[2] = 1;
+    rawJunks[3] = (unsigned char)(3u << 6);
     things->loaded = 1;
     things->rawThingData[THING_TYPE_JUNK] = rawJunks;
     things->thingCounts[THING_TYPE_JUNK] = 1;
@@ -129,6 +144,7 @@ static void seed_water_flask_mouth_state(M11_GameViewState* state,
                                          struct DungeonThings_Compat* things,
                                          struct DungeonPotion_Compat* potion) {
     unsigned short potionThing = (unsigned short)((THING_TYPE_POTION << 10) | 0);
+    static unsigned char rawPotion[4];
     memset(potion, 0, sizeof(*potion));
     potion->next = THING_ENDOFLIST;
     potion->power = 80;
@@ -137,6 +153,14 @@ static void seed_water_flask_mouth_state(M11_GameViewState* state,
     seed_base_inventory_state(state, things);
     things->potions = potion;
     things->potionCount = 1;
+    memset(rawPotion, 0, sizeof(rawPotion));
+    rawPotion[0] = (unsigned char)(THING_ENDOFLIST & 0xFFu);
+    rawPotion[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xFFu);
+    rawPotion[2] = 80;
+    rawPotion[3] = 15;
+    things->loaded = 1;
+    things->rawThingData[THING_TYPE_POTION] = rawPotion;
+    things->thingCounts[THING_TYPE_POTION] = 1;
     ASSERT_TRUE(M11_GameView_SetV1LeaderHandObject(state, potionThing),
                 "leader hand accepts water flask potion");
 }

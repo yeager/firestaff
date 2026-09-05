@@ -2,8 +2,8 @@
  * csb_v1_engine_version_display_pc34_compat.c
  *
  * Source-locked per ReDMCSB DIALOG.C:2014-2023 + CHANGE7_36 +
- * CHANGE8_13 (CSB engine version 2.1 hardcoded).  DM1 PC
- * 3.4 uses engine version 2.0; CSB PC 3.4 uses 2.1.
+ * CHANGE8_13 (CSB engine version 2.1 hardcoded). DM1 PC 3.4 uses engine
+ * version 2.0; original CSB builds display 2.1.
  *
  * The version string format is "v<major>.<minor>".  v1
  * defaults to "v2.0" (DM1) and switches to "v2.1" when

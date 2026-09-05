@@ -105,6 +105,32 @@ retail asset-to-VDP join; STABG stays no-draw until that separate proof exists.
 The full 512×256 indexed NBG1 span and its 256-entry CRAM are also decoded
 from that authentic capture in native code, but remain capture-only evidence.
 
+The 2026-09-04 `nexus-title-end-to-end-r6` session adds one hash-bound execution
+window for retail disc identity, the exact 17,408 Track 1 FIFO words belonging
+to `TITLE.BIN` LBAs 6039–6055, 7,904 CD-labelled writes into the bounded title
+Work-RAM lane, all 31,616 frame-12596 instruction reads, their matching VDP2
+writes/writer registers, and ten contiguous frames (12590–12599) containing
+VDP1 registers/VRAM/both framebuffers plus VDP2 registers/VRAM/CRAM. Across
+those frames the receipt observes five VDP2 register states, two VDP2 VRAM
+states, five CRAM states, eight VDP1 VRAM states and four VDP1 framebuffer
+states. This closes the observed Work-RAM-to-VDP2 value transport in the same
+session. It does not assign that corridor to MAPD: MAPD begins at LBA 6063,
+outside the authenticated 6039–6055 producer extent. MAPD transformation and
+display ownership therefore remain fail-closed. A separate PC-filtered
+producer receipt now proves MAPD/palette CD→RAM ownership: LBAs 6063–6088 map
+contiguously to `0x060b7d80–0x060c4d7f`, placing MAPD at `0x060b7ff8` and its
+palette at `0x060c0c4c`. Authenticated capture r27 closes the palette half of
+the consumer boundary in the same frame: retail PC `0x060856ec` reads those
+32 bytes with physical destination `0x25f00400`, and the paired VDP2 trace
+writes the exact words to CRAM `0x100400–0x10041e` at absolute frame 12592.
+The capture manifest hash-binds the read/register/write sidecars and complete
+VDP1/VDP2 hardware state. The follow-up r33 receipt closes the MAPD transfer:
+N/E/X/U/S are selected at absolute frames 13294, 13334, 13375, 13415 and
+13455, then 17,920 big-endian words match the five real 64×28 planes exactly
+at VDP2 VRAM `0x05c000–0x05dbff`. The fail-closed verifier binds the retail
+Track 1 member, cached SH-2 selector trace, VDP2 writer trace and raw state to
+their manifest hashes.
+
 ## Naming Convention
 
 ```

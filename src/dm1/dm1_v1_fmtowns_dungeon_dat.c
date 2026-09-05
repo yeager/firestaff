@@ -12,8 +12,8 @@ static uint32_t rd32le(const uint8_t *p) {
 
 int dm1_v1_fmtowns_dungeon_probe(const uint8_t *data, size_t size) {
     if (!data || size < 64) return 0;
-    uint16_t map_count = rd16le(data);
-    if (map_count != DM1_FMTOWNS_DUNGEON_MAP_COUNT) return 0;
+    if (rd16le(data) != DM1_FMTOWNS_DUNGEON_ORNAMENT_SEED ||
+        data[4] != DM1_FMTOWNS_DUNGEON_MAP_COUNT) return 0;
     if (size != DM1_FMTOWNS_DUNGEON_EN_SIZE &&
         size != DM1_FMTOWNS_DUNGEON_JP_SIZE) return 0;
     return 1;
@@ -111,7 +111,7 @@ int dm1_v1_fmtowns_dungeon_receipt(const uint8_t *data, size_t size,
 
     out->is_fmtowns = 1;
     out->file_size = (uint32_t)size;
-    out->map_count = rd16le(data);
+    out->map_count = data[4];
 
     MD5Ctx_D md5;
     md5_init_d(&md5);

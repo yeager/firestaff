@@ -60,9 +60,9 @@
     {
       "kind": "pass373_prerequisite",
       "manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-      "ok": false,
+      "ok": true,
       "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
-      "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
+      "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
     },
     {
       "kind": "completion_matrix_credit",
@@ -83,15 +83,16 @@
       "ok": true
     },
     {
-      "kind": "firestaff_completion_matrix_verifier",
+      "globalVerifierPassed": false,
+      "kind": "completion_matrix_global_advisory",
       "ok": true,
       "result": {
         "cmd": [
-          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/usr/bin/python3",
           "tools/verify_firestaff_completion_matrix.py"
         ],
-        "outputTail": "firestaff completion matrix verifier OK\n",
-        "returncode": 0
+        "outputTail": "Traceback (most recent call last):\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_firestaff_completion_matrix.py\", line 50, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_firestaff_completion_matrix.py\", line 41, in main\n    assert f\"| {target} | {percent}% | {percent}/100 |\" in doc, target\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: CSB V1\n",
+        "returncode": 1
       }
     },
     {
@@ -99,7 +100,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/opt/homebrew/opt/python@3.14/bin/python3.14",
+          "/usr/bin/python3",
           "tools/firestaff_completion_status.py"
         ],
         "outputTail": "DM1 V1 | completionPercent=78% | points=78/100 | status=playable_verified_partial | primaryBlocker=Representative original-vs-Firestaff overlay parity remains incomplete. Current DM1 blocker is the pass162 stock-original C080/F0377/F0275/F0280 live transcript gate: FIRES.MAP provides candidate addresses, DOSBox-debug break-start accepts the BP/BPM packet, and the surface-backend HoC, movement-click, movement double-click, autolock, keyboard-capture, external cliclick, System Events, and direct postToPid live probes now record FIRES startup, DATA\\DUNGEON.DAT load, mapped native macOS input, and 34 stock-original memory stops each, but no C080-chain code breakpoint fires. Pre-move, cursor-warp, first-click focus/capture, DOSBox-X autolock/mouse_emulation defaults, Ctrl-F10 capture toggling, replacing the Swift/CGEvent helper with cliclick, macOS Accessibility/System Events clicking, and direct CGEvent postToPid are now insufficient explanations. The OpenGL-output control is a separate harness/readiness blocker, not comparable F0359 evidence. The mouse=debug logs on the proven surface path show MOUSE/INT33 initialization but no route-click motion/button event. The generated pass162 manifest now makes this machine-readable with dosbox_mouse_log_summary and route_motion_button_line_count=0 on the proven surface controls. Next work is DOSBox-X SDL/Cocoa event ingestion or debugger event-pump work before pass435 six-shot promotion can continue.\nDM1 V2 | completionPercent=51% | points=51/100 | status=runtime_presentation_verified_partial | primaryBlocker=V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open.\nCSB V1 | completionPercent=43% | points=43/100 | status=runtime_boundary_verified_partial | primaryBlocker=CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened.\nCSB V2 | completionPercent=31% | points=31/100 | status=presentation_verified_partial | primaryBlocker=CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open.\nDM2 V1 | completionPercent=36% | points=36/100 | status=runtime_slices_verified_partial | primaryBlocker=Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work.\nDM2 V2 | completionPercent=16% | points=16/100 | status=presentation_scaffold_partial | primaryBlocker=V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete.\nDM Nexus V1 | completionPercent=37% | points=37/100 | status=runtime_slices_verified_partial | primaryBlocker=DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work.\nDM Nexus V2 | completionPercent=20% | points=20/100 | status=presentation_scaffold_partial | primaryBlocker=V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete.\nTheron V1 | completionPercent=72% | points=72/100 | status=hw_config_cd_play_vdc_joypad_proven | primaryBlocker=Original overlay regression (0/10) is the largest remaining gap. Real menu implementation needed.\n",
@@ -107,15 +108,15 @@
       }
     }
   ],
-  "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
+  "completionImpact": "Credits the current pass373 direct launcher-to-movement-to-F0128 callback redraw proof without changing the independently maintained completion score.",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "DOS keyboard-buffer true-stop proof"
   ],
   "pass373Manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass374_dm1_v1_completion_viewport_wall_credit.v1",
   "sourceLocks": [
     {
@@ -130,7 +131,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "transparent wall, opaque wall, and door bitmap routines target the viewport bitmap",
@@ -145,7 +146,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "contents are replayed by ordered cell nibbles rather than by a flat depth sort",
@@ -160,7 +161,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "D3 wall/door branches draw wall layers, door passes, and return/occlude as source order dictates",
@@ -175,7 +176,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "center wall/door branches layer opaque wall/door graphics before ordered contents",
@@ -190,7 +191,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "main viewport pass redraws floor/ceiling, replays visible squares far-to-near, then requests viewport presentation",
@@ -208,7 +209,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "viewport redraw request is presented and synchronized after composition",
@@ -222,10 +223,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT",
-  "timestampUtc": "2026-08-12T01:28:17.985097+00:00"
+  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "status": "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED",
+  "timestampUtc": "2026-09-04T18:21:49.471659+00:00"
 }

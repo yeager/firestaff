@@ -1,24 +1,23 @@
 {
   "claims": [
     "Door-with-buttons, TITLE cadence, and end animation seams are source-locked to ReDMCSB anchors.",
-    "Greatstone atlas and canonical DM1 data are present as supporting reference identity checks.",
+    "Original PC 3.4 members are authenticated in memory from the supplied ZIP.",
     "No pixel parity, video parity, or stock runtime promotion is claimed by this pass."
   ],
-  "dm1_canonical_root": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "dm1_original_archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
   "external_refs": {
+    "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
     "dm1_dungeon_dat_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "dm1_graphics_dat_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "dm1_title_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-    "greatstone_files_index_entries": 24,
-    "greatstone_keyword_hit_entries": 22
+    "read_mode": "in-memory/no-extraction"
   },
   "firestaff_audit": {
     "door_layer_order_locked": true,
     "endgame_source_schedule_locked": true,
     "title_runtime_cadence_helpers_locked": true
   },
-  "greatstone_atlas_root": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
-  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_root": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "source_audit": {
     "ANIM.C:ANIMDESC_line": 442,
     "ANIM.C:F1208_line": 481,

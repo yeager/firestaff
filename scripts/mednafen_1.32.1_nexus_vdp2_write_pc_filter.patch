@@ -1,11 +1,16 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -196,4 +196,8 @@
+@@ -196,4 +196,13 @@
   uint32 pc0 = CPU[0].GetRegister(SH7095::GSREG_RPC, NULL, 0);
   FirestaffTraceVdp2WriterCode(pc0);
   FirestaffTraceVdp2WriterRegisters(address, pc0);
 + {
 +  const char *pc_filter = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_PC");
-+  if(pc_filter && *pc_filter && strtoul(pc_filter, NULL, 0) != pc0) return;
++  if(pc_filter && *pc_filter)
++  {
++   const uint32 requested = strtoul(pc_filter, NULL, 0);
++   const uint32 pc1 = CPU[1].GetRegister(SH7095::GSREG_RPC, NULL, 0);
++   if(requested != pc0 && requested != pc1) return;
++  }
 + }
   if(!FirestaffVdp2WriteTraceConfigured)

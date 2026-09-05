@@ -94,39 +94,42 @@ def main() -> int:
         ok.append(f"{label} gate before sampling: m11_game_view.c:{line_no(text, start)}")
 
     start, _end, body = find_function(text, "m11_draw_viewport")
-    # 2026-07-20 round 15 re-anchor (same-drift-family): maxVisibleForward
-    # now comes from the lane-visibility receipt, and the round-14
-    # architecture reconciliation deliberately gives the primary pit and
-    # field passes the full D3..D1 range ("geometry is hidden by later
-    # source panels, not pre-culled by a host visibility shortcut").  The
-    # final stair replay is different: it follows the late center-wall
-    # envelope and must retain the nearest-center visibility bound, or a
-    # D2/D3 stair panel would reappear through a nearer closed center cell.
+    # F0128 now owns raster order through its verified per-square callback.
+    # The viewport may sample visibility and admit the plan, but must not
+    # revive the former primitive-family batches after source dispatch.
     if "maxVisibleForward = visibility.max_visible_forward;" not in body:
         raise AssertionError("m11_draw_viewport does not derive maxVisibleForward from the lane-visibility receipt")
-    FULL_RANGE_TARGETS = {"pits", "teleporter fields"}
-    if "not pre-culled by a host visibility shortcut" not in body:
-        raise AssertionError("primary floor passes lost the no-pre-cull rationale")
-    for label, fn in TARGETS.items():
-        if label in FULL_RANGE_TARGETS:
-            call = re.search(re.escape(fn) + r"\s*\([^;]*\b1, 3, cells\)", body, flags=re.S)
-            if not call:
-                raise AssertionError(f"m11_draw_viewport does not pass the full D3..D1 range to {label}")
-            continue
-        if label == "floor ornaments":
-            call = re.search(re.escape(fn) + r"\s*\([^;]*\b3, cells\)", body, flags=re.S)
-            if not call:
-                raise AssertionError("m11_draw_viewport does not pass the full D3..D1 range to floor ornaments")
-            continue
-        if label == "stairs":
-            call = re.search(re.escape(fn) + r"\s*\([^;]*\b1, maxVisibleForward, cells\)", body, flags=re.S)
-            if not call:
-                raise AssertionError("m11_draw_viewport does not bind the late stair replay to maxVisibleForward")
-            continue
-        call = re.search(re.escape(fn) + r"\s*\([^;]*maxVisibleForward", body, flags=re.S)
-        if not call:
-            raise AssertionError(f"m11_draw_viewport does not pass maxVisibleForward to {label}")
-    ok.append(f"viewport call-site wiring: m11_game_view.c:{line_no(text, start)}")
+    require_before(body, "m11_dm1_f0128_build_live_view_plan",
+                   "m11_dm1_f0128_dispatch_live_view_plan", "F0128 admission")
+    require_before(body, "m11_dm1_f0128_dispatch_live_view_plan",
+                   "if (!dm1F0128PlanDispatched)", "F0128 fail-closed gate")
+    callback_start, _callback_end, callback = find_function(
+        text, "m11_dm1_f0128_execute_source_step")
+    callback_owner = {
+        "pits": "m11_draw_dm1_floor_pits",
+        "floor ornaments": "m11_draw_dm1_floor_ornaments",
+        "stairs": "m11_draw_dm1_stairs",
+        "teleporter fields": "m11_draw_dm1_teleporter_field_at",
+        "side walls": "m11_draw_dm1_side_walls",
+        "side doors": "m11_draw_dm1_side_doors",
+        # Ornament and destroyed-mask pixels are substeps of the complete
+        # side-door transaction, rather than independently replayed batches.
+        "side door ornaments": "m11_draw_dm1_side_doors",
+        "side destroyed-door masks": "m11_draw_dm1_side_doors",
+    }
+    for label, fn in callback_owner.items():
+        if fn not in callback:
+            raise AssertionError(f"{label}: F0128 callback no longer owns {fn}")
+    for forbidden in (
+        "m11_draw_dm1_floor_pits(state, framebuffer",
+        "m11_draw_dm1_floor_ornaments(state, framebuffer",
+        "m11_draw_dm1_side_walls(state, framebuffer",
+        "m11_draw_dm1_side_doors(state, framebuffer",
+        "m11_draw_dm1_teleporter_fields(state, framebuffer",
+    ):
+        if forbidden in body:
+            raise AssertionError(f"viewport revived old broad replay: {forbidden}")
+    ok.append(f"F0128 callback owns occluded material: m11_game_view.c:{line_no(text, callback_start)}")
 
     print("V1 viewport occlusion gate source-shape verification passed")
     for line in ok:

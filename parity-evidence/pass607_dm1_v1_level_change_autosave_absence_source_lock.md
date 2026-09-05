@@ -22,12 +22,6 @@
 
 - Exact `F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF();` locations across ReDMCSB Common/Source `*.C`: [{'file': 'COMMAND.C', 'line': 2368}]
 
-## Canonical Asset Hashes
-
-- DUNGEON.DAT: d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- GRAPHICS.DAT: 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- TITLE: adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-
 ## Conclusion
 
 ReDMCSB does not show an ordinary DM1 V1 autosave on stairs, pits, teleporters, or chained level-change movement. The source-lock result is absence, not an implementation task: save writes are routed through command C140 only.

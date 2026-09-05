@@ -37,9 +37,14 @@ int main(void)
                  "source-owned Atari SND1 accepts at its Timer-A period");
     ok &= expect(state.csbAtariStSoundAccepted &&
                      state.csbAtariStSoundPeriod == 112 &&
+                     state.csbAtariStSoundSourceVolume == 1 &&
                      state.csbAtariStSoundHash == hash &&
                      state.csbAtariStPsg.sampleCount > 0,
                  "decoded PSG stream retains source identity and output");
+    ok &= expect(M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+                     &state, snd1, (int)sizeof(snd1), 112, hash, 0) &&
+                     state.csbAtariStSoundSourceVolume == 0,
+                 "soft-distance SND1 selects the original soft PSG table");
     snd1[2] ^= 0x80u;
     ok &= expect(!M11_Audio_PlayCsbAtariStPsg(&state, snd1,
                      (int)sizeof(snd1), 112, hash),

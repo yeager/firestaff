@@ -220,16 +220,29 @@ def main() -> int:
         ("wall blit", "m11_draw_dm1_side_wall_host_receipt(state"),
     ], "Firestaff side wall depth/occlusion")
     view_start, _view_end, view = find_function(fire, "m11_draw_viewport")
+    callback_start, _callback_end, callback = find_function(
+        fire, "m11_dm1_f0128_execute_source_step")
     require_in_order(view, [
         ("sample viewport cells", "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])"),
         ("derive max visible", "maxVisibleForward = visibility.max_visible_forward;"),
-        ("draw side walls", "m11_draw_dm1_side_walls"),
-        ("draw front walls", "m11_draw_dm1_front_walls"),
-        ("center blocker replay", "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;"),
-    ], "Firestaff viewport draw wiring")
+        ("build source schedule", "m11_dm1_f0128_build_live_view_plan"),
+        ("dispatch source schedule", "m11_dm1_f0128_dispatch_live_view_plan"),
+        ("fail closed", "if (!dm1F0128PlanDispatched)"),
+        ("center blocker transaction", "int blockingCenterDepth =\n            visibility.nearest_blocking_center_depth_index;"),
+    ], "Firestaff viewport F0128 ownership wiring")
+    require_in_order(callback, [
+        ("wall material phase", "M11_DM1_F0128_EXECUTE_WALL_MATERIAL"),
+        ("owning square", "step->square != dispatch->targetSquare"),
+        ("F0104 wall operation", "DM1_V1_F0128_STEP_F0104_WALL_MATERIAL"),
+        ("front wall callback", "m11_draw_dm1_front_walls("),
+        ("side wall callback", "m11_draw_dm1_side_walls("),
+    ], "Firestaff exact-square wall callback")
+    if "m11_draw_dm1_side_walls(state, framebuffer" in view or \
+            "m11_draw_dm1_front_walls(state, framebuffer" in view:
+        raise AssertionError("Firestaff viewport revived old broad wall replay")
     ok.append(
         "Firestaff wall depth/occlusion wiring: "
-        f"m11_game_view.c:{line_no(fire, lane_start)}, {line_no(fire, front_blit_start)}, {line_no(fire, front_start)}, {line_no(fire, side_start)}, {line_no(fire, view_start)}"
+        f"m11_game_view.c:{line_no(fire, lane_start)}, {line_no(fire, front_blit_start)}, {line_no(fire, front_start)}, {line_no(fire, side_start)}, {line_no(fire, callback_start)}, {line_no(fire, view_start)}"
     )
 
     print("V1 viewport wall depth/source-lock gate passed")

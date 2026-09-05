@@ -52,7 +52,7 @@
 +{
 + return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
 +}
-@@ -554,0 +554,65 @@
+@@ -554,0 +554,72 @@
 +static uint32 FirestaffLastSH2ReadAddress;
 +static uint32 FirestaffLastSH2ReadValue;
 +static uint32 FirestaffLastSH2ReadLBA;
@@ -81,6 +81,8 @@
 + static uint32 maximum;
 + static uint32 source_lba_minimum;
 + static uint32 source_lba_maximum = 0xFFFFFFFF;
++ static uint32 pc_minimum;
++ static uint32 pc_maximum = 0xFFFFFFFF;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITES");
 + const char *limit_text;
 + if(!configured)
@@ -89,10 +91,14 @@
 +  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MAX");
 +  const char *source_lba_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_LBA_MIN");
 +  const char *source_lba_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_LBA_MAX");
++  const char *pc_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MIN");
++  const char *pc_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MAX");
 +  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
 +  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
 +  source_lba_minimum = source_lba_min_text && *source_lba_min_text ? strtoul(source_lba_min_text, NULL, 0) : 0;
 +  source_lba_maximum = source_lba_max_text && *source_lba_max_text ? strtoul(source_lba_max_text, NULL, 0) : 0xFFFFFFFF;
++  pc_minimum = pc_min_text && *pc_min_text ? strtoul(pc_min_text, NULL, 0) : 0;
++  pc_maximum = pc_max_text && *pc_max_text ? strtoul(pc_max_text, NULL, 0) : 0xFFFFFFFF;
 +  configured = true;
 + }
 + if(!path || !*path || !FirestaffLastSH2ReadValid ||
@@ -100,6 +106,7 @@
 +      (address >= 0x06000000 && address < 0x08000000)) ||
 +    (maximum > minimum && (address < minimum || address >= maximum)) ||
 +    FirestaffLastSH2ReadLBA < source_lba_minimum || FirestaffLastSH2ReadLBA >= source_lba_maximum ||
++    FirestaffGetSH2PC(0) < pc_minimum || FirestaffGetSH2PC(0) > pc_maximum ||
 +    FirestaffLastSH2ReadWord == 0xFFFFFFFF ||
 +    count >= limit)
 +  return;

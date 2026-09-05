@@ -1,6 +1,7 @@
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_bpx_bpk.h"
 #include "nexus_v1_dmdf_model.h"
+#include "nexus_v1_iso_reader.h"
 
 #include <stdio.h>
 #include <limits.h>
@@ -1261,8 +1262,40 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     return 1;
 }
 
+static int read_menu_bpk_from_cue(const char *cue_path,
+                                  uint8_t **out_data,
+                                  size_t *out_size) {
+    Nexus_ISOReader reader;
+    const Nexus_ISOFile *menu;
+    uint8_t *data;
+    memset(&reader, 0, sizeof(reader));
+    if (!cue_path || !cue_path[0] ||
+        nexus_iso_open_cue(&reader, cue_path) <= 0 ||
+        !nexus_iso_is_nexus(&reader)) {
+        nexus_iso_close(&reader);
+        return 0;
+    }
+    menu = nexus_iso_find(&reader, "MENU.BPK");
+    if (!menu || menu->size == 0U || menu->size > (uint32_t)INT_MAX) {
+        nexus_iso_close(&reader);
+        return 0;
+    }
+    data = (uint8_t *)malloc((size_t)menu->size);
+    if (!data || nexus_iso_read_file(&reader, menu, data, (int)menu->size) !=
+                     (int)menu->size) {
+        free(data);
+        nexus_iso_close(&reader);
+        return 0;
+    }
+    *out_data = data;
+    *out_size = (size_t)menu->size;
+    nexus_iso_close(&reader);
+    return 1;
+}
+
 static int test_optional_local_menu_bpk(int require_real_data) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *cue_path = getenv("FIRESTAFF_NEXUS_CUE");
     const char *home = getenv("HOME");
     char path[2048];
     uint8_t *data = NULL;
@@ -1289,8 +1322,10 @@ static int test_optional_local_menu_bpk(int require_real_data) {
         puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
         return require_real_data ? 77 : 0;
     }
-    if (!read_file(path, &data, &size)) {
-        printf("SKIP: local Nexus MENU.BPK not present at %s\n", path);
+    if (!read_file(path, &data, &size) &&
+        !read_menu_bpk_from_cue(cue_path, &data, &size)) {
+        printf("SKIP: Nexus MENU.BPK is absent from %s and the retail CUE\n",
+               path);
         return require_real_data ? 77 : 0;
     }
 

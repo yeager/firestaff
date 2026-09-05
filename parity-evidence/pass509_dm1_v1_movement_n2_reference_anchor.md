@@ -1,8 +1,8 @@
-# Pass509 - DM1 V1 movement N2 reference anchor
+# Pass509 - DM1 V1 movement reference anchor
 
 Status: PASS509_DM1_V1_MOVEMENT_N2_REFERENCE_ANCHORED
 
-Scope: movement/forflyttning only. This binds the input->command->movement source-lock lane to N2-local ReDMCSB, Greatstone, and original DM1 PC34 anchors.
+Scope: DM1 V1 movement only. This binds the input-to-command-to-movement lane to repository ReDMCSB and authentic PC 3.4 ZIP members.
 
 ## ReDMCSB source audit
 
@@ -13,14 +13,11 @@ Scope: movement/forflyttning only. This binds the input->command->movement sourc
 - PASS DUNGEON.C:1371-1391 - F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement: Relative stepping applies forward deltas, then a simulated-right-turn strafe delta.
 - PASS MOVESENS.C:738-818 - F0267_MOVE_GetMoveResult_CPSCE: Accepted party movement records the result tuple, scent/timing state, and source-before-destination sensor order.
 
-## N2-local reference anchors
+## Authentic PC 3.4 ZIP anchors
 
-- PASS /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- PASS /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- PASS /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE sha256 adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-- PASS /Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json result PASS with 0 mismatches.
-- PASS Greatstone PC34 graphics URL: http://greatstone.free.fr/dm/db_data/dm_pc_34/graphics.dat/graphics.dat.html
-- PASS Greatstone PC34 dungeon URL: http://greatstone.free.fr/dm/db_data/dm_pc_34/dungeon.dat/dungeon.html
+- PASS ~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- PASS ~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- PASS ~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::TITLE sha256 adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
 
 ## Firestaff evidence consumed
 

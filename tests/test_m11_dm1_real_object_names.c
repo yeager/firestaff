@@ -175,11 +175,11 @@ int main(void)
     state.pointerY = 80;
     M11_GameView_DrawLeaderHandCursor(&state, framebuffer,
                                       320, 200);
-    for (y = state.pointerY;
-         y < state.pointerY + 18 && y < 200; ++y) {
+    for (y = state.pointerY - 6;
+         y < state.pointerY - 6 + 18 && y < 200; ++y) {
         int x;
-        for (x = state.pointerX;
-             x < state.pointerX + 18 && x < 320; ++x) {
+        for (x = state.pointerX - 8;
+             x < state.pointerX - 8 + 18 && x < 320; ++x) {
             if (framebuffer[y * 320 + x] != 0u) {
                 ++cursorPixels;
             }

@@ -361,6 +361,10 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                     explosion->maxFrames > 0 ? explosion->maxFrames : 1;
                 decision.liveRenderableExplosionAttacks[renderIndex] =
                     explosion->attack;
+                decision.liveRenderableExplosionCells[renderIndex] =
+                    explosion->cell;
+                decision.liveRenderableExplosionCentered[renderIndex] =
+                    explosion->centered ? 1 : 0;
             }
         }
     }

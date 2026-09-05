@@ -46,6 +46,6 @@
     "F0366_successful_step": "sets G0321 stop-wait true, decrements living champion stamina before resolution, computes relative destination, rejects blockers before mutation, calls F0267 for accepted non-stairs move, sets G0310 disabled movement ticks, clears G0311 projectile cooldown",
     "viewport_redraw_trigger": "main loop calls F0128_DUNGEONVIEW_Draw_CPSF with current G0308/G0306/G0307 after command effects and stop-wait/tick gating"
   },
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS394_DISPATCH_TO_MOVEMENT_STATE_PROVEN"
 }

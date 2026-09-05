@@ -56,7 +56,7 @@
       "orig - blur"
     ]
   },
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "dm1_v2 V2.0 post-process filter chain",
   "status": "passed"
 }

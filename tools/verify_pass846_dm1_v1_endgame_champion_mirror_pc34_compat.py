@@ -2,7 +2,7 @@
 """DM1 V1 endgame_champion_mirror contract (PASS846)."""
 from __future__ import annotations
 
-import json, subprocess, sys
+import json, os, subprocess, sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -16,7 +16,7 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / (PASS + ".md")
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 ANCHORS = [
     "DATA.C:21/149/569",
@@ -60,7 +60,8 @@ def main():
         check_needles('test', TEST, ['test_table_values', 'test_components_non_negative']),
         check_needles('cmake', CMAKE, CMAKE_NEEDLES),
     ]
-    runs = [run([str(ROOT / "build" / "test_dm1_v1_endgame_champion_mirror_pc34_compat")])]
+    build_dir = Path(os.environ.get("FIRESTAFF_BUILD_DIR", ROOT / "build"))
+    runs = [run([str(build_dir / "test_dm1_v1_endgame_champion_mirror_pc34_compat")])]
     ok = all(c['status'] == 'PASS' for c in checks) and all(r['passed'] for r in runs)
     manifest = {
         'schema': 'firestaff.parity.' + PASS + '.v1',

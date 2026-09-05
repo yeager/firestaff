@@ -8,6 +8,11 @@ if [ "$#" -ne 1 ]; then
     exit 2
 fi
 
+cue="${FIRESTAFF_NEXUS_CUE:-$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue}"
+if [ -f "$cue" ]; then
+    exec "$1" "$cue::TITLE.BIN"
+fi
+
 root="${FIRESTAFF_NEXUS_DATA_DIR:-$HOME/.firestaff/data/nexus}"
 asset="$root/TITLE.BIN"
 expected_sha256_canonical="51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"

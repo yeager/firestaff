@@ -121,6 +121,12 @@ typedef struct DM2_V1_GfxStrCallbacks {
     const uint8_t *(*query_gdat_text_override)(void *ctx, int32_t cls,
                                                int32_t sub, int32_t idx,
                                                size_t *out_size);
+    /* Optional gettext-domain bridge at the final player-presentation
+     * boundary.  It receives authenticated, decoded GDAT source text before
+     * FORMAT_SKSTR substitutes hero names/numbers.  NULL or an empty return
+     * preserves the original source string exactly. */
+    const char *(*translate_presented_text)(void *ctx,
+                                            const char *source_text);
 
     /* ---- Numeric conversion ---- */
     void (*ltoa10)(void *ctx, int32_t value, char *buf);

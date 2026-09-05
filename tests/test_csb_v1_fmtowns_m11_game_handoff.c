@@ -20,6 +20,7 @@
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "redmcsb_f7062_save_header_pc34_compat.h"
+#include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -293,6 +294,7 @@ int main(void)
     M11_GameViewState view;
     M11_BootProbeReceipt boot_probe;
     unsigned char framebuffer[320 * 200];
+    uint8_t presented_palette[256][3];
     unsigned int tick;
     int result;
     int door_frame_seen = 0;
@@ -1839,6 +1841,35 @@ int main(void)
               view.csbState.startup_entrance_active &&
               !view.csbState.startup_title_active,
           "Game click opens only the verified language-owned entrance owner");
+    {
+        const CSB_V1_BootProfile *text_profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        CHECK(text_profile && text_profile->runtime.object_name_table_valid &&
+                  text_profile->runtime.action_name_table_valid &&
+                  text_profile->runtime.object_names[0][0] != '\0' &&
+                  strcmp(csb_v1_runtime_action_name_c699(
+                             &text_profile->runtime, 0u), "N") == 0 &&
+                  strcmp(csb_v1_runtime_action_name_c699(
+                             &text_profile->runtime, 3u), "X") == 0 &&
+                  (language != CSB_FMTOWNS_SWITCH_JAPANESE ||
+                   (unsigned char)csb_v1_runtime_action_name_c699(
+                       &text_profile->runtime, 1u)[0] >= 0x80u) &&
+                  (language == CSB_FMTOWNS_SWITCH_JAPANESE ||
+                   strcmp(csb_v1_runtime_action_name_c699(
+                              &text_profile->runtime, 1u), "BLOCK") == 0),
+              "F31 live runtime owns edition-native M564 and DYNA_BUTTONS text");
+    }
+    CHECK(view.csbFmtownsGameHandoffReceipt.entrance_palette_verified &&
+              view.csbFmtownsGameHandoffReceipt.dungeon_palettes_verified &&
+              view.csbFmtownsEntrancePaletteValid &&
+              view.csbFmtownsDungeonPalettesValid &&
+              view.csbFmtownsEntrancePaletteRgb6[1][0] == 0x1bu &&
+              view.csbFmtownsEntrancePaletteRgb6[1][1] == 0x1bu &&
+              view.csbFmtownsEntrancePaletteRgb6[1][2] == 0x1bu &&
+              view.csbFmtownsEntrancePaletteRgb6[8][2] == 0x13u &&
+              view.csbFmtownsEntrancePaletteRgb6[8][2] !=
+                  view.csbFmtownsSwitchReceipt.palette[8].blue6,
+          "F31 Game replaces SWITCHTW C26 with source C28_ENTRANCE_CSB");
     live_frame_nonblack = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -1849,9 +1880,8 @@ int main(void)
                      .pixels,
                  sizeof(framebuffer)) == 0,
           "F31 Game handoff draws the authenticated C004 entrance raster");
-    CHECK(M11_GameView_GetPresentationSpecialPalette(&view) ==
-              VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE,
-          "F31 C004 uses the source-owned entrance palette");
+    CHECK(M11_GameView_GetPresentationSpecialPalette(&view) == -1,
+          "F31 C004 rejects the PC3.4 special palette and retains its native DAC state");
     /* CHTWE/CHTWJ reaches the native C004 Entrance page without the PC
      * TITLE.C session.  Its C407 box is nevertheless the original C200
      * primary-mouse command (COMMAND.C:342; layout-696 (244,45) 55x14).
@@ -1902,6 +1932,28 @@ int main(void)
           "F31 title, Switch and Game handoff reaches the real C017/C040 terminal session");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
+    {
+        int level;
+        int matched_level = -1;
+        CHECK(M11_Render_CopyIndexedPaletteRgb6(presented_palette),
+              "F31 live dungeon publishes an indexed source palette");
+        for (level = 0; level < 6; ++level) {
+            int color;
+            for (color = 0; color < 16; ++color) {
+                if (memcmp(presented_palette[color],
+                           view.csbFmtownsDungeonPaletteRgb6[level][color],
+                           3u) != 0) break;
+            }
+            if (color == 16) {
+                matched_level = level;
+                break;
+            }
+        }
+        CHECK(matched_level >= 0 &&
+                  memcmp(presented_palette[8],
+                         view.csbFmtownsEntrancePaletteRgb6[8], 3u) != 0,
+              "F31 post-Entrance frame selects LIGHT0--LIGHT5, not C28");
+    }
     for (tick = 0u; tick < sizeof(framebuffer); ++tick) {
         if (framebuffer[tick] != 0u) {
             live_frame_nonblack = 1;

@@ -16,10 +16,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <unistd.h>
+#include <limits.h>
 
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_game.h"
+#include "nexus_v1_iso_reader.h"
 #include "nexus_v1_squares.h"
 
 static int g_pass = 0;
@@ -61,6 +62,59 @@ static const char *resolve_data_dir(void)
     if (!home || !home[0]) home = ".";
     snprintf(path, sizeof(path), "%s/.firestaff/data/nexus", home);
     return path;
+}
+
+static int open_retail_iso_if_present(const char *data_dir,
+                                      Nexus_ISOReader *out_iso)
+{
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    char path[2048];
+    int i;
+
+    if (!data_dir || !data_dir[0] || !out_iso) return 0;
+    memset(out_iso, 0, sizeof(*out_iso));
+    for (i = 0; cue_names[i]; ++i) {
+        snprintf(path, sizeof(path), "%s/%s", data_dir, cue_names[i]);
+        if (nexus_iso_open_cue(out_iso, path) > 0 &&
+            nexus_iso_is_nexus(out_iso)) return 1;
+        nexus_iso_close(out_iso);
+    }
+    return 0;
+}
+
+static uint8_t *read_retail_dgn(const char *data_dir,
+                                Nexus_ISOReader *iso,
+                                int iso_open,
+                                int level_index,
+                                int *out_size)
+{
+    char name[16];
+    char path[2048];
+    const Nexus_ISOFile *member;
+    uint8_t *data;
+
+    if (out_size) *out_size = 0;
+    if (!data_dir || !out_size || level_index < 0 || level_index > 15)
+        return NULL;
+    snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
+    snprintf(path, sizeof(path), "%s/%s", data_dir, name);
+    data = read_file(path, out_size);
+    if (data || !iso_open || !iso) return data;
+
+    member = nexus_iso_find(iso, name);
+    if (!member || member->size == 0U || member->size > INT_MAX) return NULL;
+    data = (uint8_t *)malloc(member->size);
+    if (!data || nexus_iso_read_file(iso, member, data, (int)member->size) !=
+                     (int)member->size) {
+        free(data);
+        return NULL;
+    }
+    *out_size = (int)member->size;
+    return data;
 }
 
 static int count_squares(const Nexus_V1_Level *level, int type)
@@ -134,34 +188,29 @@ static int flood_fill_reachable(const Nexus_V1_Level *level, int sx, int sy)
 int main(void)
 {
     const char *data_dir = resolve_data_dir();
+    Nexus_ISOReader iso;
+    int iso_open;
     int level_index;
     int any_present = 0;
 
     printf("Nexus V1 multi-level DGN playability regression test\n");
     printf("Data dir: %s\n", data_dir);
+    iso_open = open_retail_iso_if_present(data_dir, &iso);
 
     for (level_index = 0; level_index < 16; level_index++) {
-        char path[2048];
         uint8_t *dgn_data;
         int dgn_size;
         Nexus_V1_Level level;
         int start_x, start_y;
         int floor_count, reachable;
 
-        snprintf(path, sizeof(path), "%s/LEV%02d.DGN",
-                 data_dir, level_index);
-        if (access(path, R_OK) != 0) {
+        dgn_data = read_retail_dgn(data_dir, &iso, iso_open, level_index,
+                                   &dgn_size);
+        if (!dgn_data) {
             printf("  [SKIP] LEV%02d.DGN not present\n", level_index);
             continue;
         }
         any_present = 1;
-
-        dgn_data = read_file(path, &dgn_size);
-        if (!dgn_data) {
-            printf("  [FAIL] LEV%02d.DGN could not be read\n", level_index);
-            g_fail++;
-            continue;
-        }
 
         memset(&level, 0, sizeof(level));
         if (nexus_v1_level_load(&level, dgn_data, dgn_size, level_index) != 0 ||
@@ -212,10 +261,12 @@ int main(void)
     }
 
     if (!any_present) {
+        if (iso_open) nexus_iso_close(&iso);
         printf("SKIP: no retail Nexus LEV*.DGN files available\n");
         return 77;
     }
 
+    if (iso_open) nexus_iso_close(&iso);
     printf("Results: %d PASS, %d FAIL\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
 }

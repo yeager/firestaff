@@ -129,7 +129,7 @@ static void test_startup_receipt_clears_graphics_md5_drift(void)
               "fixture-root", "fixture-root/GRAPHICS.DAT", "fixture-root/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de", 123u, 456u,
-              CSB_V1_VARIANT_PC34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
+              CSB_V1_VARIANT_REFERENCE_I34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
               1, 1, 1, &receipt) && receipt.receipt_hash != 0u);
     receipt.graphics_md5[0] = receipt.graphics_md5[0] == '0' ? '1' : '0';
     CHECK(!csb_v1_startup_real_receipt_recompute_hash(&receipt) &&
@@ -144,7 +144,7 @@ static void test_startup_receipt_dungeon_drift_requires_reissue(void)
               "fixture-root", "fixture-root/GRAPHICS.DAT", "fixture-root/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de", 123u, 456u,
-              CSB_V1_VARIANT_PC34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
+              CSB_V1_VARIANT_REFERENCE_I34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
               1, 1, 1, &receipt) && receipt.receipt_hash != 0u);
     receipt.dungeon_md5[0] = receipt.dungeon_md5[0] == '0' ? '1' : '0';
     CHECK(!csb_v1_startup_real_receipt_recompute_hash(&receipt) &&
@@ -155,7 +155,7 @@ static void test_startup_receipt_dungeon_drift_requires_reissue(void)
               "fixture-root", "fixture-root/GRAPHICS.DAT", "fixture-root/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de", 123u, 456u,
-              CSB_V1_VARIANT_PC34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
+              CSB_V1_VARIANT_REFERENCE_I34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
               1, 1, 1, &receipt) && !receipt.invalidated &&
           receipt.receipt_hash != 0u);
 }

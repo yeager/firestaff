@@ -1,6 +1,6 @@
 {
   "status": "pass",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "sourceLock": "DM1 V1 input->command->move->sensor->timing pipeline",
   "movementIntegrationGate": "blocked vs successful movement, command queue dispatch, relative coordinate update, party coordinate update order, leave/enter sensor order, movement ticks",
   "citations": [

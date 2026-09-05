@@ -81,7 +81,7 @@ int main(void)
     boot.graphics_verified = 1;
     boot.assets_verified = 1;
     boot.state = CSB_V1_BOOT_STATE_ASSETS_READY;
-    boot.variant_id = CSB_V1_VARIANT_PC34_EN;
+    boot.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
 
     CHECK(csb_v1_boot_profile_m11_entry_gate(&boot, reason, sizeof(reason)) == 0 &&
               strstr(reason, "GRAPHICS bytes changed after scan") != NULL,

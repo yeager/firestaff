@@ -8,8 +8,8 @@
   "link_audit": {
     "expected_map_path_dos": "C:\\BUILD\\I34E\\FIRES.MAP",
     "expected_map_path_dosbox_mount": "<HARDDISK_MOUNT>/BUILD/I34E/FIRES.MAP",
-    "i34e_lnk_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK",
-    "mkii_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT",
+    "i34e_lnk_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/I34E.LNK",
+    "mkii_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/MKII.BAT",
     "object_count": 36,
     "objects": [
       "GAMELOOP.OBJ",
@@ -75,13 +75,13 @@
       "Error dunview.c 4849: \u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff\u00ff"
     ],
     "fires_map_size": 0,
-    "manifest": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
+    "manifest": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit/manifest.json",
     "present": true,
     "returncode": 0,
     "status": "BLOCKED_NO_PROMOTED_CSIP",
     "symbol_file_hits": 0
   },
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass240_dm1_v1_fires_map_public_symbol_path.v1",
   "source_audit": [
     {
@@ -89,108 +89,108 @@
       "function": "F0380_COMMAND_ProcessQueue_CPSC",
       "line": 1497,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "CLIKMENU.C",
       "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
       "line": 142,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "CLIKMENU.C",
       "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
       "line": 180,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "MOVESENS.C",
       "function": "F0267_MOVE_GetMoveResult_CPSCE",
       "line": 152,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
       "line": 2962,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap",
       "line": 3113,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0108_DUNGEONVIEW_DrawFloorOrnament",
       "line": 3940,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0109_DUNGEONVIEW_DrawDoorOrnament",
       "line": 4013,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
       "line": 4547,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0128_DUNGEONVIEW_Draw_CPSF",
       "line": 7155,
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     }
   ],
   "status": "VERIFIED_NEGATIVE_FIRES_MAP_PUBLIC_SYMBOLS_MISSING",
   "symbol_hits": [],
   "symbol_search_roots": [
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E",
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E",
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-    "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+    "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/I34E",
+    "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E",
+    "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+    "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "/home/yeager/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+    "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
   ],
   "tool_inventory": {
     "dos_tool_files": {
       "CL.LIB": [
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/LIB/CL.LIB",
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/LIB/CL.LIB"
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/LIB/CL.LIB",
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/LIB/CL.LIB"
       ],
       "LZEXE.EXE": [
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/LZEXE91/LZEXE.EXE"
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/LZEXE91/LZEXE.EXE"
       ],
       "TASM.EXE": [
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TASM101/TASM.EXE",
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TASM20/TASM.EXE"
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TASM101/TASM.EXE",
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TASM20/TASM.EXE"
       ],
       "TCC.EXE": [
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/TCC.EXE",
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/BIN/TCC.EXE"
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/TCC.EXE",
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/BIN/TCC.EXE"
       ],
       "TLINK.EXE": [
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/TLINK.EXE",
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/BIN/TLINK.EXE"
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TC20/TLINK.EXE",
+        "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Base/HARDDISK/TCPP101/BIN/TLINK.EXE"
       ]
     },
     "native_path": {
-      "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
-      "dosbox-x": "/opt/homebrew/bin/dosbox-x",
-      "wine": "/opt/homebrew/bin/wine"
+      "dosbox-debug": null,
+      "dosbox-x": "/usr/bin/dosbox-x",
+      "wine": null
     }
   }
 }

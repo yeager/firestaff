@@ -1,6 +1,6 @@
 # Pass624 - DM1 V1 original transcript row preflight
 
-Status: FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT
+Status: PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED
 
 This gate narrows the pass622 blocker to one original runtime transcript row for `02_turn_right_west_1_3`. It does not run DOSBox and does not promote original-vs-Firestaff parity.
 
@@ -19,10 +19,10 @@ This gate narrows the pass622 blocker to one original runtime transcript row for
 - PASS TITLE bytes=12002 sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
 - PASS GRAPHICS.DAT bytes=363417 sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - PASS DUNGEON.DAT bytes=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- PASS DungeonMasterPC34/DM.EXE bytes=11471 sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
-- PASS DungeonMasterPC34/VGA bytes=4503 sha256=4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b
-- PASS DungeonMasterPC34/SELECTOR bytes=15474 sha256=1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4
-- PASS Dungeon-Master_DOS_EN.zip bytes=896553 sha256=aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275
+- PASS DM.EXE bytes=11471 sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
+- PASS VGA bytes=4503 sha256=4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b
+- PASS SELECTOR bytes=15474 sha256=1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4
+- PASS Dungeon-Master_DOS_EN_Version-34.zip bytes=892111 sha256=6d9ce72e827e066d5dd4a9294f0258801bbb32e7cdbe09a20e6b47308fd46a33
 
 ## Target transcript row
 - label=02_turn_right_west_1_3 input=M12_MENU_INPUT_RIGHT command=2 C002_COMMAND_TURN_RIGHT
@@ -32,7 +32,7 @@ This gate narrows the pass622 blocker to one original runtime transcript row for
 ## Consumed gates
 - PASS pass608_same_viewport_blocker observed=BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
 - PASS pass622_viewport_wall_capture_gap observed=BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED
-- FAIL pass623_input_capture_bridge observed=FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE
+- PASS pass623_input_capture_bridge observed=PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED
 
 ## Required original transcript fields
 - runId
@@ -86,6 +86,3 @@ The next original capture attempt has a machine-checked, source-backed target ro
 - no renderer, movement, or input behavior is changed
 - no non-N2 original asset path is used
 - no push, tag, package, or release action
-
-## Problems
-- gate status drifted: pass623_input_capture_bridge

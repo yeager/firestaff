@@ -158,13 +158,13 @@ int main(void)
 
     /* DM1-owned F0107 projection list. */
     expect_int("view_spec.count",
-               dm1_v1_wall_ornament_view_spec_count_pc34(), 13);
+               dm1_v1_wall_ornament_view_spec_count_pc34(), 15);
     expect_int("view_spec.null",
                dm1_v1_wall_ornament_view_spec_pc34(0, NULL), 0);
     expect_int("view_spec.bad_low",
                dm1_v1_wall_ornament_view_spec_pc34(-1, &spec), 0);
     expect_int("view_spec.bad_high",
-               dm1_v1_wall_ornament_view_spec_pc34(13, &spec), 0);
+               dm1_v1_wall_ornament_view_spec_pc34(15, &spec), 0);
     expect_int("view_spec.0.ok",
                dm1_v1_wall_ornament_view_spec_pc34(0, &spec), 1);
     expect_int("view_spec.0.forward", spec.relForward, 3);
@@ -176,24 +176,54 @@ int main(void)
     expect_int("view_spec.12.forward", spec.relForward, 1);
     expect_int("view_spec.12.side", spec.relSide, 0);
     expect_int("view_spec.12.view", spec.viewWallIndex, 12);
+    expect_int("view_spec.13.ok",
+               dm1_v1_wall_ornament_view_spec_pc34(13, &spec), 1);
+    expect_int("view_spec.13.forward", spec.relForward, 3);
+    expect_int("view_spec.13.side", spec.relSide, -2);
+    expect_int("view_spec.13.view", spec.viewWallIndex, 13);
+    expect_int("view_spec.14.ok",
+               dm1_v1_wall_ornament_view_spec_pc34(14, &spec), 1);
+    expect_int("view_spec.14.side", spec.relSide, 2);
+    expect_int("view_spec.14.view", spec.viewWallIndex, 14);
     expect_int("view_draw_order.0",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(0), 0);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(0), 13);
     expect_int("view_draw_order.1",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(1), 2);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(1), 14);
     expect_int("view_draw_order.2",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(2), 1);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(2), 0);
     expect_int("view_draw_order.4",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(4), 3);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(4), 1);
     expect_int("view_draw_order.5",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(5), 5);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(5), 4);
     expect_int("view_draw_order.6",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(6), 7);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(6), 3);
     expect_int("view_draw_order.9",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(9), 8);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(9), 6);
     expect_int("view_draw_order.bad_low",
                dm1_v1_wall_ornament_view_draw_order_at_pc34(-1), -1);
     expect_int("view_draw_order.bad_high",
-               dm1_v1_wall_ornament_view_draw_order_at_pc34(13), -1);
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(15), -1);
+
+    {
+        static const int expected[8][2][3] = {
+            {{0,31,42},{0,192,43}}, {{0,22,48},{0,202,50}},
+            {{7,30,67},{7,191,66}}, {{0,22,51},{0,202,51}},
+            {{0,22,42},{0,202,43}}, {{0,24,45},{0,202,44}},
+            {{7,19,75},{7,206,75}}, {{5,18,41},{5,205,38}}
+        };
+        int set, side;
+        for (set = 0; set < 8; ++set) for (side = 0; side < 2; ++side) {
+            int type = -1, x = -1, y = -1;
+            expect_int("outer.anchor.ok",
+                dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
+                    set, 13 + side, &type, &x, &y), 1);
+            expect_int("outer.anchor.type", type, expected[set][side][0]);
+            expect_int("outer.anchor.x", x, expected[set][side][1]);
+            expect_int("outer.anchor.y", y, expected[set][side][2]);
+        }
+        expect_int("outer.anchor.bad_set",
+            dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(-1,13,NULL,NULL,NULL),0);
+    }
 
     /* Render plans own native graphic binding, palette, transparency,
      * flip, and optional unreadable-inscription height clamp. */
@@ -204,7 +234,18 @@ int main(void)
     expect_int("plan.bad_global.after_g0194",
                dm1_v1_wall_ornament_render_plan_pc34(60, 12, 0, &plan), 0);
     expect_int("plan.bad_view",
-               dm1_v1_wall_ornament_render_plan_pc34(0, 13, 0, &plan), 0);
+               dm1_v1_wall_ornament_render_plan_pc34(0, 15, 0, &plan), 0);
+    expect_int("plan.outer_d3l2.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(0, 13, 0, &plan), 1);
+    expect_int("plan.outer_d3l2.graphic", plan.graphicIndex, 259);
+    expect_int("plan.outer_d3l2.anchor_x", plan.dstX, 18);
+    expect_int("plan.outer_d3l2.anchor_y", plan.dstY, 41);
+    expect_int("plan.outer_d3l2.scale_x", plan.sourceScaleX32, 30);
+    expect_int("plan.outer_d3l2.scale_y", plan.sourceScaleY32, 14);
+    expect_int("plan.outer_d3l2.flip", plan.flipHorizontal, 0);
+    expect_int("plan.outer_d3r2.ok",
+               dm1_v1_wall_ornament_render_plan_pc34(0, 14, 0, &plan), 1);
+    expect_int("plan.outer_d3r2.flip", plan.flipHorizontal, 1);
 
     expect_int("plan.inscription.d1c.ok",
                dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, &plan), 1);

@@ -79,11 +79,9 @@ Current truth:
   deterministic tick -> Utility NEW_GAME handoff.
 - The fast CSB runtime/viewport smoke suite is green and no longer pulls the
   broad `firestaff_m10` library into these probe builds:
-  `csb_v1_pc_real_asset_launch`, `csb_v1_pc34_quickplay_dungeon_handle`,
   `csb_v1_first_viewport_frame`, `csb_v1_boot_runtime_handoff`, and
   `csb_v1_runtime_route_first_frame_movement_utility_gate`. It proves
-  skip-safe PC real-asset scan/boot/tick, dungeon-handle survival and rescan
-  cleanup, first M11 viewport-frame render entry, the composed
+  original-media scan/boot/tick, first M11 viewport-frame render entry, the composed
   runtime/Utility handoff, and one Utility `NEW_GAME` -> runtime -> repeated
   queued movement route with a wall-blocked forward step, post-route viewport
   render, and bounded save-prefix roundtrip. It is still not full playability,

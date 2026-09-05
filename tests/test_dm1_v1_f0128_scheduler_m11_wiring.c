@@ -224,8 +224,8 @@ static void test_door_front_scene_matches_contract_plan(void)
                DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
                    &expected, DM1_V1_F0128_VIEW_SQUARE_D1C, &start, &count),
                1, "D1C door-front span resolves in the expected plan");
-    expect_int("door.d1c_span_count", count, 5,
-               "ReDMCSB DUNVIEW.C:7873-7937 D1C F0108/pass1/frame/door/pass2");
+    expect_int("door.d1c_span_count", count, 6,
+               "ReDMCSB DUNVIEW.C:7873-7937 D1C F0108/pass1/frame/button/door/pass2");
     expect_int("door.no_fallback_content_count", receipt.f0115ContentSquareCount, 0,
                "no legacy door content loop executes without source material");
     M11_GameView_Shutdown(&state);

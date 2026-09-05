@@ -6,11 +6,11 @@
     "no TODO.md update"
   ],
   "ok": true,
-  "probeStdoutTail": "PASS dm1_v1_wall_collision_runtime_capture rows=4 out=build-dm1-csb-native/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+  "probeStdoutTail": "PASS dm1_v1_wall_collision_runtime_capture rows=4 out=build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
   "problems": [],
   "runtime": {
     "distinctViewportCropHashes": 3,
-    "outDir": "build-dm1-csb-native/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+    "outDir": "build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
     "rows": [
       {
         "label": "01_start_south_1_3",

@@ -1,4 +1,5 @@
 #include "csb_v1_fmtowns_switch.h"
+#include "csb_v1_boot.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,10 @@ int main(int argc, char **argv)
 {
     const char *path = argc == 2 ? argv[1] : getenv("FIRESTAFF_CSB_FMTOWNS_SWITCH");
     const char *data_dir;
+    const char *home;
     char inferred_path[1024];
+    char default_archive[1024];
+    CSB_V1_BootStartupLaunch_PC34 launch;
     CSB_V1_FmtownsSwitchReceipt receipt;
     CSB_V1_FmtownsItemDecodeReceipt page;
     CSB_V1_FmtownsSwitchInputReceipt click;
@@ -42,6 +46,9 @@ int main(int argc, char **argv)
     uint8_t *bytes;
     size_t byte_count;
     size_t index;
+    int packed_launch = 0;
+
+    memset(&launch, 0, sizeof(launch));
 
     /* The native CLI and M11 real-media tests already use this selected F31
      * root.  Reuse it when a stand-alone SWITCHTW path was not supplied so a
@@ -54,14 +61,30 @@ int main(int argc, char **argv)
                  data_dir) > 0 && strlen(inferred_path) < sizeof(inferred_path)) {
         path = inferred_path;
     }
-    if (!path) {
-        puts("SKIP: set FIRESTAFF_CSB_FMTOWNS_SWITCH or "
-             "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR to original F31 media");
-        return 77;
+    bytes = path ? read_file(path, &byte_count) : NULL;
+    data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE");
+    home = getenv("HOME");
+    if (!bytes && (!data_dir || data_dir[0] == '\0') && home && home[0] != '\0' &&
+        snprintf(default_archive, sizeof(default_archive),
+                 "%s/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip",
+                 home) > 0 && strlen(default_archive) < sizeof(default_archive)) {
+        data_dir = default_archive;
     }
-    bytes = read_file(path, &byte_count);
+    if (!bytes && data_dir && data_dir[0] != '\0' &&
+        csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+            data_dir, NULL, NULL, NULL, NULL, CSB_V1_VARIANT_FMTOWNS_EN,
+            &launch) && launch.profile && launch.profile->fmtowns_switch_bytes &&
+        launch.profile->fmtowns_switch_size > 0u) {
+        byte_count = launch.profile->fmtowns_switch_size;
+        bytes = (uint8_t *)malloc(byte_count);
+        if (bytes) {
+            memcpy(bytes, launch.profile->fmtowns_switch_bytes, byte_count);
+            packed_launch = 1;
+        }
+    }
     if (!bytes) {
-        puts("SKIP: original SWITCHTW.EXP unavailable");
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        puts("SKIP: original SWITCHTW.EXP unavailable in loose or packed F31 media");
         return 77;
     }
     CHECK(csb_v1_fmtowns_switch_parse(bytes, byte_count, &receipt),
@@ -118,6 +141,7 @@ int main(int argc, char **argv)
     CHECK(!csb_v1_fmtowns_switch_parse(bytes, 100u, &receipt),
           "rejects truncated executable");
     free(bytes);
+    if (packed_launch) csb_v1_boot_startup_launch_cleanup_pc34(&launch);
     printf("csb_v1_fmtowns_switch: %d/%d assertions passed\n", passed, passed + failed);
     return failed ? 1 : 0;
 }

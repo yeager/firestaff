@@ -1,9 +1,20 @@
 #include "nexus_v1_stmp.h"
+#include "nexus_v1_test_retail_member.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 static uint8_t *load_file(const char *path, int *out_size) {
+    char hash[65];
+    size_t member_size;
+    uint8_t *member;
+    if (strstr(path, "::")) {
+        member = nexus_v1_test_read_retail_member(path, &member_size, hash);
+        if (!member || member_size > (size_t)INT_MAX) { free(member); return NULL; }
+        *out_size = (int)member_size;
+        return member;
+    }
     FILE *f = fopen(path, "rb");
     uint8_t *buf;
     long sz;
@@ -40,8 +51,11 @@ static int test_stabg(int require_real_data) {
     uint8_t *data;
     int size = 0, i;
     Nexus_V1_StmpDecodeResult r;
+    const char *cue = getenv("FIRESTAFF_NEXUS_CUE");
 
-    if (data_dir && data_dir[0]) {
+    if (cue && cue[0]) {
+        snprintf(path, sizeof(path), "%s::STABG.BIN", cue);
+    } else if (data_dir && data_dir[0]) {
         snprintf(path, sizeof(path), "%s/STABG.BIN", data_dir);
     } else if (home && home[0]) {
         snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/STABG.BIN", home);

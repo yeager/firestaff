@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Turkish\n"
@@ -18,155 +18,155 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-#. Direction / compass
 
+#. Direction / compass
 msgid "NORTH"
 msgstr "KUZEY"
-#. Direction / compass
 
+#. Direction / compass
 msgid "EAST"
 msgstr "DOĞU"
-#. Direction / compass
 
+#. Direction / compass
 msgid "SOUTH"
 msgstr "GÜNEY"
-#. Direction / compass
 
+#. Direction / compass
 msgid "WEST"
 msgstr "BATI"
-#. Stairs
 
+#. Stairs
 msgid "STAIRS"
 msgstr "MERDİVEN"
-#. Pit
 
+#. Pit
 msgid "PIT"
 msgstr "ÇUKUR"
-#. Teleporter
 
+#. Teleporter
 msgid "TELEPORTER"
 msgstr "TELEPORTER"
-#. Door
 
+#. Door
 msgid "DOOR"
 msgstr "KAPI"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "PICK UP"
 msgstr "AL"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "DROP"
 msgstr "BIRAK"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "USE"
 msgstr "KULLAN"
-#. Combat action
 
+#. Combat action
 msgid "ATTACK"
 msgstr "SALDIR"
-#. Combat action
 
+#. Combat action
 msgid "DEFEND"
 msgstr "SAVUN"
-#. Combat action
 
+#. Combat action
 msgid "CAST SPELL"
 msgstr "BÜYÜ YAP"
-#. Status label
 
+#. Status label
 msgid "NO FOCUS"
 msgstr "ODAK YOK"
-#. Status label
 
+#. Status label
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
 msgstr "GERÇEK BİR ÖN HEDEFTE ENTER'A BAS"
-#. Generic
 
+#. Generic
 msgid "UNKNOWN"
 msgstr "BİLİNMEYEN"
-#. Generic
 
+#. Generic
 msgid "NONE"
 msgstr "YOK"
-#. Save / load
 
+#. Save / load
 msgid "SAVE GAME"
 msgstr "OYUNU KAYDET"
-#. Save / load
 
+#. Save / load
 msgid "LOAD GAME"
 msgstr "OYUNU YÜKLE"
-#. Shop
 
+#. Shop
 msgid "SHOP"
 msgstr "DÜKKÂN"
-#. Shop
 
+#. Shop
 msgid "NOT ENOUGH GOLD"
 msgstr "YETERSİZ ALTIN"
-#. Shop
 
+#. Shop
 msgid "PURCHASED %s FOR %d GOLD"
 msgstr "%s, %d ALTIN'A SATIN ALINDI"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: ASCENDED TO LEVEL %d"
 msgstr "T%u: %d. SEVİYEYE YÜKSELDİ"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: DESCENDED TO LEVEL %d"
 msgstr "T%u: %d. SEVİYEYE İNDİ"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: FELL INTO PIT"
 msgstr "T%u: ÇUKURA DÜŞTÜ"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
 msgstr "T%u: HARİTA %d (%d,%d)'YE IŞINLANDI"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER HAS NO THING DATA"
 msgstr "T%u: IŞINLAYICIDA NESNE VERİSİ YOK"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
 msgstr "T%u: IŞINLAYICI HEDEF HARİTASI %d MENZİL DIŞI"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
 msgstr "T%u: %s SEVİYE ATLADI! (%s %d -> %d)"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s CASTS %s"
 msgstr "T%u: %s, %s YAPIYOR"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s HITS %s FOR %d"
 msgstr "T%u: %s, %s'E %d VURUYOR"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s MISSES %s"
 msgstr "T%u: %s, %s'I ISKALIYOR"
-#. Altar
 
+#. Altar
 msgid "OFFERING ACCEPTED"
 msgstr "ADAK KABUL EDİLDİ"
-#. Inventory capacity
 
+#. Inventory capacity
 msgid "INVENTORY FULL"
 msgstr "ENVANTER DOLU"
-#. Sound / feedback
 
+#. Sound / feedback
 msgid "OUT OF RANGE"
 msgstr "MENZİL DIŞI"
-#. Generic message
 
+#. Generic message
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
 msgstr "ÖN HÜCREYİ OKUMAK İÇİN ENTER'A BAS VEYA GÖRÜNÜME TIKLA"
-#. Status footer
 
+#. Status footer
 msgid "HP AND STAMINA RECOVER SLOWLY"
 msgstr "HP VE DAYANIKLILIK YAVAŞ YENİLENİR"

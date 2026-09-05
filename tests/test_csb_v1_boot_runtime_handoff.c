@@ -892,7 +892,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     p.entrance_map_index = 255U;
     p.start_map_index = 0U;
@@ -903,7 +903,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "boot state advances to RUNTIME_READY after enter_game");
     CHECK(p.runtime.state == CSB_STATE_TITLE,
           "runtime state machine is CSB_STATE_TITLE (ReDMCSB ENTRANCE.C F0806)");
-    CHECK(p.runtime.variant_id == CSB_V1_VARIANT_PC34_EN,
+    CHECK(p.runtime.variant_id == CSB_V1_VARIANT_REFERENCE_I34_EN,
           "runtime inherits the boot profile variant id");
     CHECK(p.runtime.difficulty == 0,
           "runtime binds the source map difficulty");
@@ -1238,7 +1238,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
     CHECK(csb_v1_boot_set_imported_party(&p, &imported) == 0,
@@ -1444,7 +1444,7 @@ static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
              "6695d2acebce49f95db1d8f3a5c733de");
     receipt.graphics_size_bytes = 123456u;
     receipt.dungeon_size_bytes = 654321u;
-    receipt.variant_id = CSB_V1_VARIANT_PC34_EN;
+    receipt.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     receipt.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     receipt.max_depth = 4;
     receipt.assets_verified = 1;
@@ -1500,7 +1500,7 @@ static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
               "6695d2acebce49f95db1d8f3a5c733de",
               0u,
               0u,
-              CSB_V1_VARIANT_PC34_EN,
+              CSB_V1_VARIANT_REFERENCE_I34_EN,
               CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
               4,
               1,
@@ -1540,7 +1540,7 @@ static void test_enter_game_loads_m564_object_names_from_graphics_dat(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     p.entrance_map_index = 255U;
     p.start_map_index = 0U;
@@ -1578,7 +1578,7 @@ static void test_enter_game_loads_real_m564_object_names_when_supplied(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     p.entrance_map_index = 255U;
     p.start_map_index = 0U;
@@ -1673,7 +1673,7 @@ static void test_enter_game_rotate_party_aligns_champion_state(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
     CHECK(csb_v1_boot_set_imported_party(&p, &imported) == 0,
@@ -1871,7 +1871,7 @@ static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
     CHECK(csb_v1_boot_enter_game(&p) == -1,
@@ -1905,7 +1905,7 @@ static void test_enter_game_rejects_legacy_fixture_dungeon(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
     CHECK(csb_v1_boot_enter_game(&p) == -1,
@@ -1935,7 +1935,7 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     p.entrance_map_index = 255U;
     p.start_map_index = 0U;
@@ -2375,7 +2375,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                 launch.profile->assets_verified = 1;
                 launch.profile->graphics_verified = 1;
                 launch.profile->dungeon_verified = 1;
-                launch.profile->variant_id = CSB_V1_VARIANT_PC34_EN;
+                launch.profile->variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
                 launch.profile->graphics_kind =
                     CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
                 launch.receipts.launch_host_receipt.status_scope = "BOOT";
@@ -2841,7 +2841,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
     boot.assets_verified = 1;
     boot.graphics_verified = 1;
     boot.dungeon_verified = 1;
-    boot.variant_id = CSB_V1_VARIANT_PC34_EN;
+    boot.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     boot.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     CHECK(!csb_v1_boot_startup_visual_sequence_capture_receipt_from_profile_pc34(
               &boot, &no_party_sequence) &&
@@ -5354,8 +5354,6 @@ static void test_runtime_variant_hint_identity(void)
         const char *hint;
         CSB_V1_VariantId expected;
     } cases[] = {
-        { "pc34_en", CSB_V1_VARIANT_PC34_EN },
-        { "PC34_MULTI", CSB_V1_VARIANT_PC34_MULTI },
         { "st20_en", CSB_V1_VARIANT_ST20_EN },
         { "st21_en", CSB_V1_VARIANT_ST21_EN },
         { "amiga35_en", CSB_V1_VARIANT_AMIGA35_EN },
@@ -5395,8 +5393,8 @@ static void test_runtime_variant_hint_identity(void)
               "CSB graphics-hint fixture writes unverified archive bytes");
         fclose(file);
         memset(&result, 0, sizeof(result));
-        CHECK(csb_v1_runtime_find_graphics(tmp_dir, "pc34_en", &result) == NULL,
-              "CSB selected PC3.4 variant rejects filename-only graphics substitute");
+        CHECK(csb_v1_runtime_find_graphics(tmp_dir, "unsupported_platform", &result) == NULL,
+              "CSB unsupported platform hint rejects filename-only graphics substitute");
         memset(&result, 0, sizeof(result));
         CHECK(csb_v1_runtime_find_graphics(tmp_dir, "custom_dungeon", &result) == NULL,
               "CSB unknown variant rejects filename-only graphics substitute");
@@ -5411,7 +5409,7 @@ static void test_runtime_boot_rejects_unmaterialized_media(void)
     csb_v1_runtime_init(&runtime, TEST_TMP_ROOT "/runtime-no-media");
     CHECK(csb_v1_runtime_boot(&runtime,
                               TEST_TMP_ROOT "/runtime-no-media",
-                              "pc34_en") == -1,
+                              "unsupported_platform") == -1,
           "runtime_boot rejects a missing CSB source-media pair");
     CHECK(runtime.dungeon_handle == NULL &&
               csb_v1_dungeon_get_current() == NULL,

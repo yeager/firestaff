@@ -44,6 +44,19 @@ typedef struct DM1_SideDoorOriginalMaterialReceiptPc34 {
     uint32_t sourcePixelsFNV1a[DM1_SIDE_DOOR_HOST_MATERIAL_MAX_BLITS];
 } DM1_SideDoorOriginalMaterialReceiptPc34;
 
+typedef struct DM1_SideDoorF0111CompositionPc34 {
+    int valid;
+    int bitmapOriginX;
+    int bitmapOriginY;
+    int panelCount;
+    int ordinaryOrnamentBeforeClip;
+    int destroyedMaskBeforeClip;
+    int thievesEyeMaskBeforeClip;
+    int wholeBitmapFlipBeforeClip;
+    int flipMask;
+    int random4Consumed;
+} DM1_SideDoorF0111CompositionPc34;
+
 int dm1_v1_side_door_render_plan_count_pc34(void);
 
 int dm1_v1_side_door_render_plan_at_pc34(
@@ -75,6 +88,16 @@ int dm1_v1_side_door_original_material_receipt_pc34(
     const DM1_V1_DoorSourceMaterialPc34* materials,
     int materialCount,
     DM1_SideDoorOriginalMaterialReceiptPc34* outReceipt);
+
+int dm1_v1_side_door_f0111_composition_pc34(
+    const DM1_SideDoorRenderPlanPc34* plan,
+    int doorState,
+    int doorVertical,
+    int ornamentOrdinal,
+    int doorSet,
+    int random4,
+    DM1_SideDoorF0111CompositionPc34* outComposition,
+    DM1_SideDoorBlitPc34 outPanelBlits[2]);
 
 #ifdef __cplusplus
 }

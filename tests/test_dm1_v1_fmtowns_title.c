@@ -67,6 +67,26 @@ int main(void)
                                              19u, frame, sizeof(frame)));
     CHECK(frame[118u * 320u] == source[80u * 320u]);
     CHECK(frame[90u * 320u] == source[137u * 320u]);
+    {
+        unsigned int titleFrame;
+        unsigned int waits = 0u;
+        unsigned int elapsed = 0u;
+        CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(0u) == 0u);
+        CHECK(dm1_v1_fmtowns_title_frame_wait_vblanks(19u) == 0u);
+        for (titleFrame = 0u; titleFrame <= 19u; ++titleFrame)
+            waits += dm1_v1_fmtowns_title_frame_wait_vblanks(titleFrame);
+        CHECK(waits == 18u);
+        for (titleFrame = 1u; titleFrame <= waits; ++titleFrame) {
+            unsigned int delay =
+                dm1_v1_fmtowns_title_vblank_delay_ms(titleFrame);
+            CHECK(delay == 16u || delay == 17u);
+            elapsed += delay;
+        }
+        CHECK(elapsed == 300u);
+        elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 1u);
+        elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 2u);
+        CHECK(elapsed == 333u);
+    }
     puts("PASS: dm1_v1_fmtowns_title");
     return 0;
 }

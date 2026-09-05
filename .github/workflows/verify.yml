@@ -19,6 +19,24 @@ env:
   SDL3_TAG: release-3.2.14
 
 jobs:
+  localization-catalogs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install GNU gettext
+        run: sudo apt-get update && sudo apt-get install -y gettext
+      - name: Verify source-generated and canonical POT/PO catalogs
+        run: bash po/update.sh --check
+      - name: Verify build-tree MO catalog generation
+        run: |
+          python3 tests/test_compile_gettext_catalogs.py
+          python3 tools/compile_gettext_catalogs.py \
+            --source-dir po --output-dir build/po-ci --verify-template
+          if find po -type f -name '*.mo' -print -quit | grep -q .; then
+            echo "::error::compiled gettext catalogs must not be stored in po/"
+            exit 1
+          fi
+
   repository-media-policy:
     runs-on: ubuntu-24.04
     steps:

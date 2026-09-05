@@ -32,6 +32,15 @@ int dm1_v1_fmtowns_title_compose_frame(
     const uint8_t *title_pixels, uint16_t title_width, uint16_t title_height,
     unsigned int frame, uint8_t *out_pixels, size_t out_capacity);
 
+/* EDM.EXP waits one 60 Hz VBlank after each of the 18 zoom frames only.
+ * PRESENTS is flipped immediately before DO_TITLE_ANIMATION and TITLE_MASTER
+ * is followed by its separate two-VBlank return guard. */
+unsigned int dm1_v1_fmtowns_title_frame_wait_vblanks(unsigned int frame);
+
+/* Convert a cumulative 60 Hz VBlank ordinal to an integer host delay without
+ * accumulating the +2% drift produced by rounding every blank to 17 ms. */
+unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal);
+
 #ifdef __cplusplus
 }
 #endif

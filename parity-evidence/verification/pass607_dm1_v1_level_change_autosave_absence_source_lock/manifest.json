@@ -1,10 +1,5 @@
 {
   "branchAtVerification": "main",
-  "canonicalAssetsSha256": {
-    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-    "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
-  },
   "conclusion": "No ordinary DM1 V1 stairs, pit, or teleporter level-change path directly saves the game; the audited save write path is reached through command C140 only.",
   "directSaveCallLocations": [
     {
@@ -12,7 +7,7 @@
       "line": 2368
     }
   ],
-  "gitHeadAtVerification": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
+  "gitHeadAtVerification": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "schema": "firestaff.parity.pass607.level_change_autosave_absence.v1",
   "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
   "sourceAudit": {
@@ -103,6 +98,6 @@
     }
   },
   "status": "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-08-12T01:28:15.207917+00:00",
-  "worktree": "/Volumes/Extern-disk/firestaff"
+  "timestampUtc": "2026-09-04T18:01:00.568405+00:00",
+  "worktree": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824"
 }

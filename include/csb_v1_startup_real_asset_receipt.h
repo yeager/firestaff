@@ -8,8 +8,8 @@
  * data tree. It is intentionally narrow: paths, sizes, MD5 hashes,
  * variant id, archive kind, and a deterministic FNV-1a receipt
  * hash computed over those fields. The receipt is the
- * "real-asset side" of the CSB startup handoff; the existing
- * `csb_v1_pc_real_asset_launch` probe is the "boot handoff" side.
+ * "real-asset side" of the CSB startup handoff; the supported Atari ST,
+ * Amiga and FM Towns probes are the "boot handoff" side.
  *
  * Skip-safe by design. When no verified CSB pair is staged the
  * receipt stays cleared (md5 paths empty, file_size == 0,
@@ -33,9 +33,8 @@
  *     receipt layer sits above).
  *   - include/csb_v1_runtime_pc34_compat.h (the runtime handoff
  *     target the boot profile ultimately enters).
- *   - probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
- *     (the live-boot companion; this receipt is the
- *     pre-boot metadata handoff).
+ *   - supported Atari ST, Amiga and FM Towns live-boot probes (this receipt
+ *     is the pre-boot metadata handoff).
  */
 
 #ifndef FIRESTAFF_CSB_V1_STARTUP_REAL_ASSET_RECEIPT_H

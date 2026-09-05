@@ -12,7 +12,7 @@ pixel-parity or finished V2.2 art claim.
 | Mode | Status | Runtime source | Presentation mode | Source BMP | Presented BMP |
 |---|---:|---|---:|---:|---:|
 
-Skipped: missing DM1 data in /Users/bosse/.firestaff/data/dm1
+Skipped: missing DM1 data in /home/yeager/.firestaff/data/dm1
 
 ## Non-claims
 

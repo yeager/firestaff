@@ -1,43 +1,76 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 
 #include "asset_find_by_hash.h"
 #include "nexus_v1_hud_hit_rects.h"
+#include "nexus_v1_iso_reader.h"
 
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *cue_path = getenv("FIRESTAFF_NEXUS_CUE");
     char path[1024];
-    FILE *file;
-    long size;
-    uint8_t *data;
+    FILE *file = NULL;
+    long size = 0;
+    uint8_t *data = NULL;
+    int source_is_cue = 0;
     Nexus_HitRect rects[NEXUS_HIT_RECT_COUNT];
     size_t count = 0U;
 
-    if (!root || !root[0]) {
+    if ((!root || !root[0]) && (!cue_path || !cue_path[0])) {
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not mounted");
         return 77;
     }
-    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >= (int)sizeof(path) ||
-        !(file = fopen(path, "rb")) || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        puts("SKIP: real DM.BIN is unavailable");
-        return 77;
-    }
-    data = (uint8_t *)malloc((size_t)size);
-    if (!data || fread(data, 1, (size_t)size, file) != (size_t)size) {
-        free(data);
+    if (cue_path && cue_path[0]) {
+        Nexus_ISOReader iso;
+        const Nexus_ISOFile *dm_bin;
+        memset(&iso, 0, sizeof(iso));
+        if (nexus_iso_open_cue(&iso, cue_path) <= 0 ||
+            !nexus_iso_is_nexus(&iso) ||
+            !(dm_bin = nexus_iso_find(&iso, "DM.BIN")) ||
+            dm_bin->size == 0U || dm_bin->size > (size_t)LONG_MAX) {
+            nexus_iso_close(&iso);
+            puts("SKIP: real Nexus CUE/DM.BIN is unavailable");
+            return 77;
+        }
+        data = (uint8_t *)malloc(dm_bin->size);
+        if (!data || nexus_iso_read_file(&iso, dm_bin, data,
+                                         (int)dm_bin->size) !=
+                         (int)dm_bin->size) {
+            free(data);
+            nexus_iso_close(&iso);
+            puts("SKIP: real Nexus CUE DM.BIN could not be read");
+            return 77;
+        }
+        size = (long)dm_bin->size;
+        nexus_iso_close(&iso);
+        source_is_cue = 1;
+    } else {
+        if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >=
+                (int)sizeof(path) || !(file = fopen(path, "rb")) ||
+            fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+            fseek(file, 0, SEEK_SET) != 0) {
+            if (file) fclose(file);
+            puts("SKIP: real DM.BIN is unavailable");
+            return 77;
+        }
+        data = (uint8_t *)malloc((size_t)size);
+        if (!data || fread(data, 1, (size_t)size, file) != (size_t)size) {
+            free(data);
+            fclose(file);
+            puts("SKIP: real DM.BIN could not be read");
+            return 77;
+        }
         fclose(file);
-        puts("SKIP: real DM.BIN could not be read");
-        return 77;
-    }
-    fclose(file);
-    if (!asset_file_matches_md5(path,
-                                "e88d60859f65f08fa622e1992b02280f")) {
-        free(data);
-        fprintf(stderr, "FAIL: DM.BIN is not the authenticated retail source\n");
-        return 1;
+        if (!asset_file_matches_md5(path,
+                                    "e88d60859f65f08fa622e1992b02280f")) {
+            free(data);
+            fprintf(stderr,
+                    "FAIL: DM.BIN is not the authenticated retail source\n");
+            return 1;
+        }
     }
     if (nexus_v1_hud_hit_rects_parse_dm_bin(
             data, (size_t)size, rects, NEXUS_HIT_RECT_COUNT, &count) != 0 ||
@@ -89,6 +122,8 @@ int main(void)
         return 1;
     }
     free(data);
-    puts("PASS: real DM.BIN HUD hit rectangles parsed (40 entries)");
+    puts(source_is_cue
+             ? "PASS: real CUE/BIN DM.BIN HUD hit rectangles parsed in memory (40 entries)"
+             : "PASS: real DM.BIN HUD hit rectangles parsed (40 entries)");
     return 0;
 }

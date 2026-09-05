@@ -39,8 +39,21 @@ typedef struct DM1_CenterDoorHostMaterialReceiptPc34 {
     int panelVisible;
     int frameCount;
     int blitCount;
+    int panelFlipMask;
     DM1_CenterDoorBlitPc34 blits[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
 } DM1_CenterDoorHostMaterialReceiptPc34;
+
+int dm1_v1_f0111_animated_door_flip_mask_pc34(
+    int currentMapDoorSet, int doorState, int random4,
+    int* outRandomDrawConsumed);
+
+/* Map a door-state clipped source coordinate through F0111's final
+ * whole-temporary-bitmap flip.  The flip is intentionally relative to the
+ * complete native panel, never to the visible opening segment. */
+int dm1_v1_f0111_composed_source_xy_pc34(
+    int bitmapWidth, int bitmapHeight,
+    int clippedSourceX, int clippedSourceY, int flipMask,
+    int* outSourceX, int* outSourceY);
 
 typedef struct DM1_CenterDoorOriginalMaterialReceiptPc34 {
     DM1_CenterDoorHostMaterialReceiptPc34 plan;

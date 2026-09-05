@@ -30,7 +30,7 @@
       "lines": "27-61",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "file": "COMMAND.C",
@@ -38,7 +38,7 @@
       "lines": "636-685",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "COMMAND.C",
@@ -46,7 +46,7 @@
       "lines": "1734-1812",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "COMMAND.C",
@@ -54,7 +54,7 @@
       "lines": "2075-2156",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -62,7 +62,7 @@
       "lines": "8318-8611",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -70,33 +70,33 @@
       "lines": "709-858",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_ORIGINAL_I34E_KEYBOARD_BUFFER_LIVE_DEBUGGER_OBSERVATION_MISSING",
-  "timestampUtc": "2026-08-12T01:38:16.135449+00:00",
+  "timestampUtc": "2026-09-04T18:05:04.540932+00:00",
   "toolAudit": {
-    "allRequiredToolsAvailable": true,
+    "allRequiredToolsAvailable": false,
     "debuggerHarness": "tools/run_dosbox_debug_pty.py",
     "debuggerHarnessExists": true,
     "debuggerHarnessMissingNeedles": [],
     "debuggerHarnessOk": true,
     "requiredTools": [
       {
-        "available": true,
+        "available": false,
         "name": "dosbox-debug",
-        "path": "/opt/homebrew/bin/dosbox-debug"
+        "path": null
       },
       {
         "available": true,
         "name": "Xvfb",
-        "path": "/opt/homebrew/bin/Xvfb"
+        "path": "/usr/bin/Xvfb"
       },
       {
         "available": true,
         "name": "xdotool",
-        "path": "/opt/homebrew/bin/xdotool"
+        "path": "/usr/bin/xdotool"
       }
     ]
   },

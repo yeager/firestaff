@@ -63,26 +63,20 @@ Status: PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE
 ## Firestaff hooks
 
 - src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 209 ok=True: firestaff-draw-order-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 1197 ok=True: firestaff-wall-spec-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 928 ok=True: firestaff-thing-layer-table
-- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 971 ok=True: firestaff-door-front-occlusion-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 1233 ok=True: firestaff-wall-spec-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 964 ok=True: firestaff-thing-layer-table
+- src/dm1/dm1_v1_viewport_3d_pc34_compat.c line 1007 ok=True: firestaff-door-front-occlusion-table
 - tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py line 17 ok=True: pass496-matrix-gate-present
 - parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line 38 ok=True: pass502-blocker-doc-present
 
 ## DM1 anchors
 
-- GRAPHICS.DAT exists=True sha256=2c3aa836925c
-- DUNGEON.DAT exists=True sha256=d90b6b1c38fd
+- DATA/GRAPHICS.DAT exists=True sha256=2c3aa836925c
+- DATA/DUNGEON.DAT exists=True sha256=d90b6b1c38fd
 - TITLE exists=True sha256=adc7f1916eee
-- README.md exists=True sha256=6bffffe6a147
 
-## N2-local secondary references
+## Optional historical secondary references
 
-- /Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/pages.json lines 1-120 ok=True: Greatstone local atlas is present as data-extraction context for DM/CSB graphics and dungeon assets.
-- /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp lines 935-1938 ok=True: CSBWin carries a table-driven viewport cell/draw-order model with door-facing two-phase object/door/object rows.
-- /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp lines 6694-6819 ok=True: CSBWin DrawViewport summarizes each relative cell and interprets the selected draw script in cell order.
-- /Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp lines 935-1938 ok=True: CSB lineage source mirrors the same viewport cell/draw-order and door-facing script structure.
-- /Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md lines 1-220 ok=True: DM originals include a local PC34-vs-Greatstone manifest for asset provenance cross-checking.
 
 ## Non-claims
 

@@ -19,8 +19,8 @@ ORCH = ROOT / "src/memory/memory_tick_orchestrator_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 RED_ROOT = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-)).expanduser()
+    str(ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"),
+))
 RED_PANEL = RED_ROOT / "PANEL.C"
 RED_DRAWVIEW = RED_ROOT / "DRAWVIEW.C"
 RED_DATA = RED_ROOT / "DATA.C"

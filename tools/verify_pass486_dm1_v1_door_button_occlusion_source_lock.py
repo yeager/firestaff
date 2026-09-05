@@ -136,7 +136,10 @@ def firestaff_audit() -> dict[str, int]:
     v3d = read(ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c")
     center = function_body(m11, "m11_draw_dm1_center_door_buttons")
     d3r = function_body(m11, "m11_draw_dm1_d3r_door_button")
+    callback = function_body(m11, "m11_dm1_f0128_execute_source_step")
     viewport = function_body(m11, "m11_draw_viewport")
+    center_doors = function_body(m11, "m11_draw_dm1_center_doors")
+    side_doors = function_body(m11, "m11_draw_dm1_side_doors")
 
     require_order(center, [
         "for (depth = 2; depth >= 0; --depth)",
@@ -172,15 +175,39 @@ def firestaff_audit() -> dict[str, int]:
         "dm1_v1_viewport_get_door_button_palette_remap_pc34(",
     ], "Firestaff D3R side-door button guard")
     require(v3d, "{ 199, 204, 41, 44, 8, 4", "Firestaff D3R button coordinate row")
-    require_order(viewport, [
-        "m11_dm1_f0128_replay_door_pass1_square",
+    require_order(callback, [
+        "M11_DM1_F0128_EXECUTE_DOOR_FRAME",
+        "DM1_V1_F0128_STEP_F0104_DOOR_FRAME",
+        "m11_draw_dm1_center_door_frames",
+        "m11_draw_dm1_side_door_frames",
+        "M11_DM1_F0128_EXECUTE_DOOR_BUTTON",
+        "DM1_V1_F0128_STEP_F0110_DOOR_BUTTON",
         "m11_draw_dm1_d3r_door_button",
-        "m11_draw_dm1_side_doors",
         "m11_draw_dm1_center_door_buttons",
-        "m11_draw_dm1_center_doors",
-        "m11_draw_dm1_center_door_ornaments",
+    ], "Firestaff callback-owned F0110 routes")
+    require_order(viewport, [
+        "m11_dm1_f0128_dispatch_door_pass1_square",
+        "m11_dm1_f0128_dispatch_door_frame_square",
+        "m11_dm1_f0128_dispatch_door_button_square",
+        "m11_dm1_f0128_dispatch_door_material_square",
     ], "Firestaff source-order door button placement")
-    return {"centerButtonChecks": 9, "centerCoordinateChecks": 3, "d3rButtonChecks": 11, "viewportOrderChecks": 6}
+    if ("m11_draw_dm1_d3r_door_button(" in viewport or
+            "m11_draw_dm1_center_door_buttons(" in viewport):
+        raise AssertionError("direct F0110 replay remains outside scheduler callback")
+    if "m11_draw_dm1_center_door_material_receipt(" in center_doors:
+        raise AssertionError("F0111 center panel helper still replays frame raster")
+    if ("m11_draw_dm1_zone_blit(" in side_doors and
+            ("frameA" in side_doors or "frameB" in side_doors)):
+        raise AssertionError("F0111 side panel helper still replays frame raster")
+    composite = function_body(m11, "m11_draw_dm1_center_door_composite")
+    require_order(composite, [
+        "memcpy(pixels, panelSlot->pixels",
+        "cell->doorOrnamentOrdinal > 0",
+        "M11_GFX_DOOR_MASK_THIEVES_EYE",
+        "M11_GFX_DOOR_MASK_DESTROYED",
+        "dm1_v1_f0111_composed_source_xy_pc34",
+    ], "Firestaff F0111 temporary-bitmap composition")
+    return {"centerButtonChecks": 9, "centerCoordinateChecks": 3, "d3rButtonChecks": 11, "callbackRouteChecks": 8, "viewportOrderChecks": 4, "duplicateReplayRejectChecks": 4, "f0111CompositionChecks": 5}
 
 
 def main() -> int:

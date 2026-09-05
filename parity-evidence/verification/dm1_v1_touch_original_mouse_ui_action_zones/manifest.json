@@ -6,7 +6,7 @@
     "runtime_probe_covers_touch_item_mouse_queue",
     "touch_pointer_uses_mouse_queue_not_keyboard"
   ],
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "sourceAudits": [
     "action_child_mouse_rows_and_resolution",
     "primary_interface_mouse_rows",
@@ -14,6 +14,6 @@
     "source_lookup_and_raw_mouse_dispatch",
     "zone_names_for_action_ui"
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "DM1_V1_TOUCH_ORIGINAL_MOUSE_UI_ACTION_ZONES_SOURCE_LOCK_VERIFIED"
 }

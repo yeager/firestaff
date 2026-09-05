@@ -1,10 +1,10 @@
 # pass897_dm1_v1_dm_title_palette_silicon_pc34_compat
 
-- Status: PASS897_DM1_V1_DM_TITLE_PALETTE_SILICON_LOCKED
+- Status: FAILED_PASS897_DM1_V1_DM_TITLE_PALETTE_SILICON_LOCKED
 
 ## Host
 
-- Apple Silicon host (__APPLE__ + __arm64__) detected.
+- Non-Apple-Silicon host; probe will skip with PASS at runtime (runtime sysctl fallback in probe.c handles edge cases).
 
 ## Anchors
 
@@ -14,4 +14,4 @@
 - VGA_PALETTE_PC34_SPECIAL_CREDITS
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff/build/firestaff_v1_dm_title_palette_silicon_probe`: rc=0 (PASS)
+- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_v1_dm_title_palette_silicon_probe`: rc=-1 (FAIL)

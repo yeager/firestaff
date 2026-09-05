@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/Volumes/Extern-disk/firestaff/build",
+        "/dev/shm/firestaff-dm1",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -15,26 +15,26 @@
         "-j2"
       ],
       "outputTail": [
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "Built target firestaff_zlib",
-        "Built target firestaff_fmtowns_disc",
-        "Built target firestaff_zip_extract",
-        "Built target firestaff_dm2",
-        "[ 81%] Built target firestaff_m10",
-        "[ 81%] Built target test_dm1_v1_movement_core_pc34_compat",
-        "Built target firestaff_fmtowns_disc",
-        "Built target firestaff_zlib",
-        "Built target firestaff_zip_extract",
-        "Built target firestaff_dm2",
-        "[ 90%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_turning_presentation_pc34_compat",
-        "Built target firestaff_fmtowns_disc",
-        "Built target firestaff_zlib",
-        "Built target firestaff_zip_extract",
-        "Built target firestaff_dm2",
-        "Built target firestaff_m10",
-        "Built target test_dm1_v1_movement_pipeline_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/csb/csb_v1_chaos_magic_pc34_compat.c:2112:22: note: \u2018*(__int128 unsigned *)(&source_missile_values[0])\u2019 was declared here",
+        " 2112 |             uint32_t source_missile_values[4];",
+        "      |                      ^~~~~~~~~~~~~~~~~~~~~",
+        "[22/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_character_pc34_compat.c.o",
+        "[23/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_save_load_pc34_compat.c.o",
+        "[24/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_champion_stats_pc34_compat.c.o",
+        "[25/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_inventory_pc34_compat.c.o",
+        "[26/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o",
+        "[27/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o",
+        "[28/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o",
+        "[29/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o",
+        "[30/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o",
+        "[31/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o",
+        "[32/39] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[33/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o",
+        "[34/39] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "[35/39] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
+        "[36/39] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[37/39] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[38/39] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -43,11 +43,11 @@
   "chainedGates": [
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py",
         "--json",
         "--source",
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source"
       ],
       "covers": "command queue -> movement/turn state -> viewport wall redraw and presentation source chain",
       "expectedStatus": null,
@@ -71,7 +71,7 @@
         "  ],",
         "  \"gate\": \"pass381_dm1_v1_movement_viewport_walls_source_lock\",",
         "  \"passed\": true,",
-        "  \"sourceRoot\": \"/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source\"",
+        "  \"sourceRoot\": \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source\"",
         "}"
       ],
       "passed": true,
@@ -80,14 +80,14 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py"
       ],
       "covers": "PC34 input, queue, F0380, F0365/F0366 and command-core regressions",
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
       "passed": true,
       "returncode": 0,
@@ -95,7 +95,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "scripts/verify_pass402_dm1_v1_movement_cooldown_order.py"
       ],
       "covers": "cooldown ageing before F0380 and no same-tick post-decrement",
@@ -129,7 +129,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass406_dm1_v1_movement_legality_completion_gate.py"
       ],
       "covers": "party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain",
@@ -148,7 +148,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass406_dm1_v1_game_loop_redraw_cadence.py"
       ],
       "covers": "game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering",
@@ -157,7 +157,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:27255-27470; main_loop_m11.c:7056-7073; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:29907-30122; main_loop_m11.c:7593-7610; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -167,7 +167,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "scripts/verify_pass395_dm1_v1_viewport_walls_source_runtime_lock.py"
       ],
       "covers": "wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract",
@@ -201,17 +201,17 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion.py"
       ],
-      "covers": "projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards",
+      "covers": "projectile/explosion layer split, callback-owned per-square explosion restart, and center/side occlusion guards",
       "expectedStatus": null,
       "id": "pass405_projectile_explosion_layer_occlusion",
       "outputTail": [
         "status=PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION",
         "source=DUNVIEW.C:4547-4582,4820-4860,5195-5202,5679-5683,5915-5933",
         "door_occlusion=DUNVIEW.C:6443-6459,6722-6746,7314-7341,7874-7937",
-        "firestaff=m11_draw_wall_contents/m11_draw_dm1_side_contents projectiles before deferred m11_draw_dm1_deferred_explosion_pass"
+        "firestaff=each F0115 scheduler callback draws objects/creatures/projectiles then restarts ordinary C15 explosions"
       ],
       "passed": true,
       "returncode": 0,
@@ -219,7 +219,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "scripts/verify_dm1_v1_viewport_square_collision_source_lock.py"
       ],
       "covers": "visible viewport cells are map-backed and agree with movement collision square state",
@@ -248,7 +248,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_v1_viewport_field_zone_aspect_clip_gate.py"
       ],
       "covers": "field/teleporter zone/aspect clipping behind nearer blockers",
@@ -256,8 +256,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones (DM1-owned): /Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
-        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c:54401",
+        "- Firestaff field rows/zones (DM1-owned): /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
+        "- Firestaff source viewport draw order: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:59569",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -265,10 +265,10 @@
         "- ReDMCSB DUNVIEW.C:6831 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M600_VIEW_SQUARE_D3C]], C704_ZONE_WALL_D3C);",
         "- ReDMCSB DUNVIEW.C:7554 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M607_VIEW_SQUARE_D1L]], C713_ZONE_WALL_D1L);",
         "- ReDMCSB DUNVIEW.C:8159 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);",
-        "- ReDMCSB F0113 field clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4382",
-        "- ReDMCSB F0791 source-zone bitmap clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:3394",
-        "- ReDMCSB F0635 layout-zone clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C:2052",
-        "- ReDMCSB DEFS wall zones: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
+        "- ReDMCSB F0113 field clip: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C:4382",
+        "- ReDMCSB F0791 source-zone bitmap clip: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C:3394",
+        "- ReDMCSB F0635 layout-zone clip: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COORD.C:2052",
+        "- ReDMCSB DEFS wall zones: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
       ],
       "passed": true,
       "returncode": 0,
@@ -276,7 +276,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_v1_viewport_palette_source_lock_gate.py"
       ],
       "covers": "single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming",
@@ -284,11 +284,11 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c:18721",
-        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c:37814",
-        "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
-        "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
-        "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
+        "- Firestaff palette compute: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:20735",
+        "- Firestaff palette apply: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:40962",
+        "- ReDMCSB F0337: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C:329",
+        "- ReDMCSB light tables: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C:45",
+        "- ReDMCSB DRAWVIEW palette install: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
       ],
       "passed": true,
       "returncode": 0,
@@ -296,7 +296,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass434_dm1_v1_original_viewport_crop_readiness_gate.py"
       ],
       "covers": "original viewport crop/source readiness is available",
@@ -318,7 +318,7 @@
   "expectedBlockerGates": [
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py"
       ],
       "covers": "remaining original semantic route blocker: F0365/F0366 dispatch + six non-duplicate semantic route states not yet proven",
@@ -342,7 +342,7 @@
   "gate": "dm1_v1_viewport_movement_completion_matrix",
   "passed": true,
   "schema": "firestaff.dm1_v1_viewport_movement_completion_matrix.v2",
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "sourceRows": [
     {
       "function": "GAMELOOP main input/redraw loop",
@@ -417,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-08-12T01:37:36.506378+00:00"
+  "timestampUtc": "2026-09-04T18:24:40.009751+00:00"
 }

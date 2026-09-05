@@ -2,13 +2,22 @@
 
 ## Goal
 
-Move Firestaff toward a translation layout that is simple, explicit, and product-aligned:
+Firestaff's localization contract is product-wide and applies equally to
+Original and Modern presentation:
 
 - one catalog per game or front-end surface
 - all catalogs stored under `po/`
 - filenames follow **`<domain>.<lang>.po`**
 - English source templates live as **one `.pot` per domain**
 - the startup menu is treated as its own domain, not mixed into a game catalog
+- every player-presented string is translatable, including media-derived item,
+  creature, action, skill and spell names; messages; inscriptions; scrolls;
+  dialog; errors; accessibility text; and every startup-menu label/status
+- Original preserves media bytes, simulation, timing, layout and graphics; it
+  does not force the source language
+- media-derived text is decoded first, translated only at the final presentation
+  boundary, and retained verbatim as the fallback; catalogs never replace or
+  mutate game data
 
 This matches the product split better than a single monolithic `firestaff.po` file.
 
@@ -33,6 +42,14 @@ po/
   dm2.pot
   dm2.en.po
   dm2.sv.po
+
+  nexus.pot
+  nexus.en.po
+  nexus.sv.po
+
+  theron.pot
+  theron.en.po
+  theron.sv.po
 ```
 
 Optional later:
@@ -57,6 +74,8 @@ Use these stable domain names:
 - `dm1`
 - `csb`
 - `dm2`
+- `nexus`
+- `theron`
 
 These names should be used consistently in:
 - filenames
@@ -133,6 +152,16 @@ Contains strings for:
 - DM2-specific runtime/UI content once DM2 is implemented
 - keep the domain present early so the structure is stable, even if content is initially minimal
 
+### 5. `nexus`
+
+Contains every player-presented string from the native Saturn runtime. Japanese
+media text is decoded before catalog lookup and remains the fallback.
+
+### 6. `theron`
+
+Contains every player-presented PC Engine/TurboGrafx-CD runtime string. CD data
+remains authoritative and is never rewritten for localization.
+
 ---
 
 ## English Strategy
@@ -176,9 +205,9 @@ with internal state like:
 ### Recommended behavior
 
 - launcher loads `startup-menu.<lang>.po`
-- entering DM1 loads `dm1.<lang>.po`
-- entering CSB loads `csb.<lang>.po`
-- entering DM2 loads `dm2.<lang>.po`
+- startup loads `startup-menu.<lang>.po`
+- normal runtime loads `dm1`, `csb`, `dm2`, `nexus`, and `theron` catalogs for
+  the explicitly selected UI language (AUTO is resolved once from the host)
 
 ### Fallback chain
 
@@ -234,7 +263,10 @@ Responsibilities:
 
 ## String Key Conventions
 
-Use stable semantic keys, not raw English as keys.
+Use exact source strings as keys for media-derived presentation text so a
+missing catalog entry provably falls back to the decoded game text. Semantic
+keys may be used for Firestaff-owned UI only when the English catalog supplies
+the complete player-facing fallback.
 
 Examples:
 

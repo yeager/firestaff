@@ -1,9 +1,9 @@
 {
   "capture_route_unblocked": true,
   "inputs": {
-    "pass249_report": "/Volumes/Extern-disk/firestaff/parity-evidence/dm1_v1_original_runtime_route_unblock_20260506.md",
-    "pass273_manifest": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
-    "pass278_manifest": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
+    "pass249_report": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/dm1_v1_original_runtime_route_unblock_20260506.md",
+    "pass273_manifest": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
+    "pass278_manifest": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
   },
   "proof_predicates": {
     "cpu_memdump_after_stops": true,
@@ -70,7 +70,7 @@
         1641,
         1812
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "COMMAND.C",
@@ -94,7 +94,7 @@
         2045,
         2160
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -116,7 +116,7 @@
         142,
         179
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -140,7 +140,7 @@
         180,
         347
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "GAMELOOP.C",
@@ -160,7 +160,7 @@
         55,
         95
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -184,7 +184,7 @@
         8318,
         8611
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -208,9 +208,9 @@
         709,
         858
       ],
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_EVIDENCE_CAPTURE_SOURCE_LOCKED_F0380_RUNTIME_HIT_REMAINS"
 }

@@ -3,6 +3,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import struct
+import zlib
+import zipfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -11,10 +15,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ORIGINAL_PC34 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-GREATSTONE_ATLAS = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-GREATSTONE_DIFF = Path.home() / ".openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+ORIGINAL_PC34_ZIP = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ZIP",
+    str(Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")))
+ORIGINAL_PC34_ZIP_DISPLAY = \
+    "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 VERIFY_DIR = ROOT / "parity-evidence/verification/pass508_dm1_v1_original_route_capture_blocker_evidence"
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence/pass508_dm1_v1_original_route_capture_blocker_evidence.md"
@@ -39,10 +45,10 @@ SOURCE_LOCKS = [
     {"id": "pc34_viewport_blit_present", "file": "DRAWVIEW.C", "lines": "709-858", "needles": ["void F0097_DUNGEONVIEW_DrawViewport", "G0296_puc_Bitmap_Viewport", "F0638_GetZone(C007_ZONE_VIEWPORT", "VIDRV_09_BlitViewPort"], "claim": "the crop/pixel seam must be the PC34 viewport present path"},
 ]
 ASSET_LOCKS = [
-    {"id": "pc34_executable", "path": ORIGINAL_PC34 / "DM.EXE", "variant": "dm-pc34/DungeonMasterPC34", "claim": "capture route must launch the N2-local PC34 executable variant"},
-    {"id": "pc34_dungeon_dat", "path": ORIGINAL_PC34 / "DATA/DUNGEON.DAT", "variant": "dm-pc34/DungeonMasterPC34 DATA", "claim": "route state and map tuple evidence must bind to this exact dungeon.dat"},
-    {"id": "pc34_graphics_dat", "path": ORIGINAL_PC34 / "DATA/GRAPHICS.DAT", "variant": "dm-pc34/DungeonMasterPC34 DATA", "claim": "viewport/crop evidence must bind to this exact graphics.dat"},
-    {"id": "pc34_title", "path": ORIGINAL_PC34 / "TITLE", "variant": "dm-pc34/DungeonMasterPC34", "claim": "startup/entrance handoff must bind to this exact TITLE asset"},
+    {"id": "pc34_executable", "member": "DM.EXE", "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4", "claim": "capture route must launch this exact PC 3.4 executable"},
+    {"id": "pc34_dungeon_dat", "member": "DATA/DUNGEON.DAT", "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85", "claim": "route state and map tuple evidence must bind to this exact DUNGEON.DAT"},
+    {"id": "pc34_graphics_dat", "member": "DATA/GRAPHICS.DAT", "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e", "claim": "viewport/crop evidence must bind to this exact GRAPHICS.DAT"},
+    {"id": "pc34_title", "member": "TITLE", "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745", "claim": "startup/entrance handoff must bind to this exact TITLE asset"},
 ]
 
 def norm(text: str) -> str:
@@ -59,14 +65,23 @@ def source_window(path: Path, spec: str) -> str:
         chunks.append("\n".join(lines[start - 1:end]))
     return "\n".join(chunks)
 
-def sha256(path: Path) -> str | None:
-    if not path.exists():
-        return None
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
+def zip_member_bytes(raw: bytes, info: zipfile.ZipInfo) -> bytes:
+    fields = struct.unpack(
+        "<IHHHHHIIIHH", raw[info.header_offset:info.header_offset + 30])
+    if fields[0] != 0x04034B50:
+        raise AssertionError(f"{info.filename}: invalid local ZIP header")
+    start = info.header_offset + 30 + fields[9] + fields[10]
+    compressed = raw[start:start + info.compress_size]
+    if info.compress_type == zipfile.ZIP_STORED:
+        payload = compressed
+    elif info.compress_type == zipfile.ZIP_DEFLATED:
+        payload = zlib.decompress(compressed, -15)
+    else:
+        raise AssertionError(
+            f"{info.filename}: unsupported ZIP method {info.compress_type}")
+    if len(payload) != info.file_size:
+        raise AssertionError(f"{info.filename}: decoded size mismatch")
+    return payload
 
 def audit_sources():
     rows = []
@@ -74,39 +89,28 @@ def audit_sources():
         path = RED / lock["file"]
         text = source_window(path, lock["lines"]) if path.exists() else ""
         missing = [needle for needle in lock["needles"] if norm(needle) not in norm(text)]
-        rows.append({**lock, "path": str(path), "ok": path.exists() and not missing, "missing": missing})
+        rows.append({**lock,
+                     "path": str(path.relative_to(ROOT)),
+                     "ok": path.exists() and not missing,
+                     "missing": missing})
     return rows
 
 def audit_assets():
+    if not ORIGINAL_PC34_ZIP.is_file():
+        raise AssertionError(f"missing authentic PC 3.4 ZIP: {ORIGINAL_PC34_ZIP}")
+    raw = ORIGINAL_PC34_ZIP.read_bytes()
     rows = []
-    for lock in ASSET_LOCKS:
-        path = lock["path"]
-        rows.append({
-            **lock,
-            "path": str(path),
-            "exists": path.exists(),
-            "bytes": path.stat().st_size if path.exists() else None,
-            "sha256": sha256(path),
-            "ok": path.exists() and path.is_file(),
-        })
+    with zipfile.ZipFile(ORIGINAL_PC34_ZIP) as archive:
+        infos = {info.filename.replace("\\", "/"): info
+                 for info in archive.infolist()}
+        for lock in ASSET_LOCKS:
+            info = infos.get(lock["member"])
+            payload = zip_member_bytes(raw, info) if info else b""
+            got = hashlib.sha256(payload).hexdigest() if payload else None
+            rows.append({**lock, "archive": ORIGINAL_PC34_ZIP_DISPLAY,
+                         "bytes": len(payload), "actualSha256": got,
+                         "ok": info is not None and got == lock["sha256"]})
     return rows
-
-def audit_greatstone():
-    pages = GREATSTONE_ATLAS / "index/pages.json"
-    files = GREATSTONE_ATLAS / "index/files.json"
-    diff = GREATSTONE_DIFF
-    return {
-        "atlasRoot": str(GREATSTONE_ATLAS),
-        "pagesIndex": str(pages),
-        "filesIndex": str(files),
-        "pc34DiffManifest": str(diff),
-        "pagesIndexExists": pages.exists(),
-        "filesIndexExists": files.exists(),
-        "pc34DiffManifestExists": diff.exists(),
-        "pc34DiffManifestSha256": sha256(diff),
-        "ok": GREATSTONE_ATLAS.exists() and pages.exists() and files.exists() and diff.exists(),
-        "claim": "Greatstone remains a local secondary atlas/provenance reference; ReDMCSB source and N2-local PC34 asset hashes are the promotion boundary.",
-    }
 
 def read_json(path: Path):
     if not path.exists():
@@ -136,11 +140,9 @@ def build():
     }
     source_audit = audit_sources()
     asset_audit = audit_assets()
-    greatstone_audit = audit_greatstone()
     required = {
         "source_audit_ok": all(row["ok"] for row in source_audit),
         "asset_audit_ok": all(row["ok"] for row in asset_audit),
-        "greatstone_local_reference_ok": greatstone_audit["ok"],
         "pass304_still_blocks_route_promotion": p304.get("status") == "BLOCKED_ORIGINAL_PC34_VIEWPORT_CAPTURE_NOT_ROUTE_PROVEN",
         "pass308_records_execution_without_state_oracle": p308.get("status") == "PASS_CAPTURE_EXECUTED_STATE_ORACLE_PENDING",
         "pass435_semantic_route_not_ready": p435.get("status") == "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
@@ -150,7 +152,7 @@ def build():
     }
     problems = [name for name, ok in required.items() if not ok]
     problems.extend("source lock failed {0}:{1} {2}".format(row["file"], row["lines"], row["missing"]) for row in source_audit if not row["ok"])
-    return {"schema": "firestaff.parity.pass508_dm1_v1_original_route_capture_blocker_evidence.v1", "status": STATUS if not problems else "FAIL_PASS508_ORIGINAL_ROUTE_CAPTURE_BLOCKER_EVIDENCE", "ok": not problems, "sourceRoot": str(RED), "sourceAudit": source_audit, "originalAssetAudit": asset_audit, "greatstoneAudit": greatstone_audit, "inputs": {"pass304": str(PASS304.relative_to(ROOT)), "pass308": str(PASS308.relative_to(ROOT)), "pass435": str(PASS435.relative_to(ROOT)), "pass487": str(PASS487.relative_to(ROOT)), "pass497": str(PASS497.relative_to(ROOT)), "pass498": str(PASS498.relative_to(ROOT))}, "observed": observed, "required": required, "blocker": "Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay from the hash-locked N2 PC34 asset set, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.", "nextEvidenceRequired": ["capture each route shot at or after the F0097/VIDRV present boundary following the matching command", "record the F0380 command id/X/Y and the F0365 or F0366 handler reached for that shot", "record the later F0128 direction/X/Y tuple consumed for the same shot", "reject repeated 48ed static gameplay hashes unless source state proves the command was intentionally blocked/no-op"], "nonClaims": ["no DOSBox run launched", "no original-vs-Firestaff pixel parity", "no promotion of pass487 static frames", "no movement or viewport implementation change"], "problems": problems}
+    return {"schema": "firestaff.parity.pass508_dm1_v1_original_route_capture_blocker_evidence.v2", "status": STATUS if not problems else "FAIL_PASS508_ORIGINAL_ROUTE_CAPTURE_BLOCKER_EVIDENCE", "ok": not problems, "sourceRoot": "reference/redmcsb-20210206/Toolchains/Common/Source", "sourceAudit": source_audit, "originalAssetAudit": asset_audit, "inputs": {"pass304": str(PASS304.relative_to(ROOT)), "pass308": str(PASS308.relative_to(ROOT)), "pass435": str(PASS435.relative_to(ROOT)), "pass487": str(PASS487.relative_to(ROOT)), "pass497": str(PASS497.relative_to(ROOT)), "pass498": str(PASS498.relative_to(ROOT))}, "observed": observed, "required": required, "blocker": "Original DM1 V1 overlay/crop promotion remains blocked only at source-visible post-command state-delta proof. The route reaches gameplay from the hash-locked authentic PC 3.4 ZIP, but current post-entry frames repeat the same static hash/region fingerprint and are not bound to F0380 -> F0365/F0366 -> subsequent F0128 -> F0097/VIDRV for each route label.", "nextEvidenceRequired": ["capture each route shot at or after the F0097/VIDRV present boundary following the matching command", "record the F0380 command id/X/Y and the F0365 or F0366 handler reached for that shot", "record the later F0128 direction/X/Y tuple consumed for the same shot", "reject repeated 48ed static gameplay hashes unless source state proves the command was intentionally blocked/no-op"], "nonClaims": ["no DOSBox run launched", "no original-vs-Firestaff pixel parity", "no promotion of pass487 static frames", "no movement or viewport implementation change"], "problems": problems}
 
 def write_report(data):
     lines = [
@@ -165,18 +167,9 @@ def write_report(data):
     ]
     for row in data["sourceAudit"]:
         lines.append("- {file}:{lines} - ok={ok}; {claim}".format(**row))
-    lines += ["", "## N2 original asset locks", ""]
+    lines += ["", "## Authentic PC 3.4 ZIP member locks", ""]
     for row in data["originalAssetAudit"]:
-        lines.append("- {id}: ok={ok}; bytes={bytes}; sha256={sha256}; {claim}".format(**row))
-    gs = data["greatstoneAudit"]
-    lines += [
-        "",
-        "## Greatstone local reference",
-        "",
-        "- atlasRoot: {0}".format(gs["atlasRoot"]),
-        "- pagesIndexExists={0}; filesIndexExists={1}; pc34DiffManifestExists={2}; pc34DiffManifestSha256={3}".format(gs["pagesIndexExists"], gs["filesIndexExists"], gs["pc34DiffManifestExists"], gs["pc34DiffManifestSha256"]),
-        "- {0}".format(gs["claim"]),
-    ]
+        lines.append("- {id}: ok={ok}; {archive}::{member}; bytes={bytes}; sha256={actualSha256}; {claim}".format(**row))
     observed = data["observed"]
     lines += [
         "",

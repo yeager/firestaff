@@ -6,13 +6,13 @@
     "No public screenshot promotion."
   ],
   "pass": "dm1_v2_source_owned_screenshot_receipts",
-  "receipts": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/source_owned_screenshot_receipts.json",
+  "receipts": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/source_owned_screenshot_receipts.json",
   "rowCount": 12,
   "rows": [
     {
       "actual_fnv1a": "0x15996561",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-north-v1.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-north-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -32,7 +32,7 @@
     {
       "actual_fnv1a": "0x15996561",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-north-v20.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-north-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -52,7 +52,7 @@
     {
       "actual_fnv1a": "0xd7d3567b",
       "actual_size": 768054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-north-v21.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-north-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -72,7 +72,7 @@
     {
       "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-east-v1.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-east-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -92,7 +92,7 @@
     {
       "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-east-v20.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-east-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -112,7 +112,7 @@
     {
       "actual_fnv1a": "0x117f8cf3",
       "actual_size": 768054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-east-v21.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-east-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -132,7 +132,7 @@
     {
       "actual_fnv1a": "0x54e723c1",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-south-v1.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-south-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -152,7 +152,7 @@
     {
       "actual_fnv1a": "0x54e723c1",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-south-v20.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-south-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -172,7 +172,7 @@
     {
       "actual_fnv1a": "0x727d952b",
       "actual_size": 768054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-south-v21.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-south-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -192,7 +192,7 @@
     {
       "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-west-v1.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-west-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -212,7 +212,7 @@
     {
       "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-west-v20.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-west-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -232,7 +232,7 @@
     {
       "actual_fnv1a": "0x117f8cf3",
       "actual_size": 768054,
-      "bmp_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/.firestaff-probe-dm1-v2-source-owned/dir-west-v21.bmp",
+      "bmp_path": "/dev/shm/firestaff-dm1/.firestaff-probe-dm1-v2-source-owned/dir-west-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,

@@ -15,7 +15,7 @@ This gate fingerprints the pass513 deterministic transcript and keeps the origin
 
 ## Host Prerequisites
 
-- dosbox-debug: available
+- dosbox-debug: missing
 - Xvfb: available
 - xdotool: available
 

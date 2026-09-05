@@ -8,63 +8,63 @@
   },
   "firestaffLocks": [
     {
-      "file": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
-      "line": 1197,
+      "line": 1233,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 2774,
+      "line": 2810,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 2299,
+      "line": 2335,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
-      "line": 971,
+      "line": 1007,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_expected_matrix",
       "line": 30,
       "needle": "struct ExpectedWallContract",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_source_output",
       "line": 66,
       "needle": "wallCompositionMatrix source=",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "door_contract_probe_output",
       "line": 128,
       "needle": "doorFrontComposition source=",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_wall_spec_type",
-      "line": 715,
+      "line": 721,
       "needle": "DM1_ViewportWallDrawSpec",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_door_front_spec_type",
       "line": 357,
       "needle": "DM1_ViewportDoorFrontOcclusionSpec",
@@ -86,14 +86,14 @@
     "cmd": [
       "ctest",
       "--test-dir",
-      "/Volumes/Extern-disk/firestaff/build",
+      "/dev/shm/firestaff-dm1",
       "-R",
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
     "ok": true,
     "returncode": 0,
-    "tail": "Test project /Volumes/Extern-disk/firestaff/build\n    Start 1647: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1647: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.02 sec\n    Start 2373: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2373: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.06 sec\n    Start 2391: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2391: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.12 sec\n    Start 2408: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2408: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.05 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.30 sec\n"
+    "tail": "Test project /dev/shm/firestaff-dm1\n    Start 1702: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1702: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 2432: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2432: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.10 sec\n    Start 2450: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2450: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.24 sec\n    Start 2467: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2467: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.06 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.52 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [],
@@ -102,7 +102,7 @@
   "sourceLocks": [
     {
       "claim": "F0128 composes floor/ceiling and wall squares in far-to-near order, then hands the composed viewport to F0097.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "dunview_f0128_far_to_near_then_present",
       "lines": [
         8318,
@@ -146,7 +146,7 @@
     },
     {
       "claim": "F0097 marks the redraw request and reaches the PC34 viewport blit boundary for G0296.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "drawview_f0097_present_boundary",
       "lines": [
         709,
@@ -167,7 +167,7 @@
       ]
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-08-12T01:38:16.889493+00:00"
+  "timestampUtc": "2026-09-04T18:24:26.350810+00:00"
 }

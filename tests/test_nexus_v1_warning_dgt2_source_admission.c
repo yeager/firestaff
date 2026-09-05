@@ -1,7 +1,8 @@
 #include "nexus_v1_warning_dgt2_source_admission.h"
+#include "nexus_v1_test_retail_member.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 static uint64_t fnv(const uint8_t *p,size_t n){uint64_t h=UINT64_C(1469598103934665603);size_t i;for(i=0;i<n;++i){h^=p[i];h*=UINT64_C(1099511628211);}return h;}
-static uint8_t *read_file(const char *p,size_t *s){FILE*f;long n;uint8_t*b;*s=0;f=fopen(p,"rb");if(!f||fseek(f,0,SEEK_END)||(n=ftell(f))<=0||fseek(f,0,SEEK_SET)){if(f)fclose(f);return NULL;}b=malloc((size_t)n);if(!b||fread(b,1,(size_t)n,f)!=(size_t)n){free(b);fclose(f);return NULL;}fclose(f);*s=(size_t)n;return b;}
+static uint8_t *read_file(const char *p,size_t *s){FILE*f;long n;uint8_t*b;char h[65];if(strstr(p,"::"))return nexus_v1_test_read_retail_member(p,s,h);*s=0;f=fopen(p,"rb");if(!f||fseek(f,0,SEEK_END)||(n=ftell(f))<=0||fseek(f,0,SEEK_SET)){if(f)fclose(f);return NULL;}b=malloc((size_t)n);if(!b||fread(b,1,(size_t)n,f)!=(size_t)n){free(b);fclose(f);return NULL;}fclose(f);*s=(size_t)n;return b;}
 int main(int argc,char**argv){const char*p=argc==2?argv[1]:getenv("FIRESTAFF_NEXUS_WARNING_PATH");Nexus_V1_WarningDgt2SourceIdentity i;Nexus_V1_WarningDgt2SourceAdmissionReceipt r;uint8_t*b;size_t s;uint8_t old;uint32_t pixel_offset;if(!p||!*p||!(b=read_file(p,&s)))return 77;memset(&i,0,sizeof(i));i.sha256_verified=1;i.sha256_hex=NEXUS_V1_WARNING_BIN_SHA256;i.source_fnv1a64=fnv(b,s);if(!nexus_v1_warning_dgt2_source_admit(b,s,&i,&r)||!r.valid||r.clut_semantics_proven||r.pixel_decode_permitted||r.draw_permitted||!r.clut_fnv1a64||!r.pixel_fnv1a64||!r.pixel_length){free(b);return 1;}pixel_offset=r.pixel_offset;old=b[pixel_offset];b[pixel_offset]^=1U;if(nexus_v1_warning_dgt2_source_admit(b,s,&i,&r)){free(b);return 1;}b[pixel_offset]=old;i.sha256_verified=0;if(nexus_v1_warning_dgt2_source_admit(b,s,&i,&r)){free(b);return 1;}free(b);puts("WARNING.BIN DGT2 source admission: PASS");return 0;}

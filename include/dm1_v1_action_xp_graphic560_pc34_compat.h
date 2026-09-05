@@ -449,6 +449,7 @@ typedef struct {
     int valid;
     int performed;
     int comesUpHeads;
+    const char* sourceMessage;
 } DM1_ActionFlipPlanPc34;
 
 typedef struct {

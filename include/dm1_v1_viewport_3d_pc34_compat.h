@@ -207,6 +207,15 @@ typedef int (*DM1_ViewportWallOrnamentOrdinalCallback)(
     void *user_data,
     int map_x, int map_y);
 
+/* F0172-aware variant used by CSB.  Unlike the legacy cell-only callback,
+ * this receives the exact F0107 view wall and can therefore select the
+ * right/front/left C02 face.  out_inscription_line_count is zero for an
+ * ordinary ornament and 1..4 for the selected unreadable inscription. */
+typedef int (*DM1_ViewportWallAspectCallback)(
+    void *user_data,
+    int map_x, int map_y, int view_wall_index,
+    int *out_inscription_line_count);
+
 /* Wall set bitmap indices — from DUNVIEW.C G2107_WallSet[15] (I34E) */
 typedef enum {
     DM1_WALL_D0R = 0,
@@ -1005,6 +1014,8 @@ typedef struct {
      * for a given map cell and draws the ornament via the graphic provider. */
     DM1_ViewportWallOrnamentOrdinalCallback wall_ornament_ordinal_callback;
     void *wall_ornament_ordinal_user_data;
+    DM1_ViewportWallAspectCallback wall_aspect_callback;
+    void *wall_aspect_user_data;
 
     /* Last D3L2/D3R2 source-ordered F0115/door/field runtime decision.
      * Metadata only: this does not claim original pixel parity or install

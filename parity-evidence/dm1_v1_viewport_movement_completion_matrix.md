@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
 Status: `PASS`
-Generated: `2026-08-12T01:37:36.506378+00:00`
+Generated: `2026-09-04T18:24:40.009751+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -21,7 +21,7 @@ Generated: `2026-08-12T01:37:36.506378+00:00`
 - `PASS` `pass406_movement_legality_completion_gate` rc=`0`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
 - `PASS` `pass406_game_loop_redraw_cadence` rc=`0` status `PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
 - `PASS` `pass395_viewport_walls_source_runtime_lock` rc=`0`: wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract
-- `PASS` `pass405_projectile_explosion_layer_occlusion` rc=`0` status `PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION`: projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards
+- `PASS` `pass405_projectile_explosion_layer_occlusion` rc=`0` status `PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION`: projectile/explosion layer split, callback-owned per-square explosion restart, and center/side occlusion guards
 - `PASS` `viewport_square_collision_source_lock` rc=`0`: visible viewport cells are map-backed and agree with movement collision square state
 - `PASS` `viewport_field_zone_aspect_clip_gate` rc=`0`: field/teleporter zone/aspect clipping behind nearer blockers
 - `PASS` `viewport_palette_source_lock_gate` rc=`0`: single ReDMCSB dungeon palette cadence; rejects invented depth palette dimming

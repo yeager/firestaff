@@ -1,93 +1,135 @@
 # Firestaff UI — ko
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: ko\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "접근성"
 
+#. AUDIO
 msgid "Audio"
 msgstr "오디오"
 
+#. BACK
 msgid "Back"
 msgstr "뒤로"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "도감"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "변경 로그"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "곧 출시"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "저장 게임 계속"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "조작"
 
+#. DISPLAY
 msgid "Display"
 msgstr "표시"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "추가"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "아이템 도감"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "언어"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "지도 뷰어"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "전승 박물관"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "새 게임 (V1 오리지널)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "새 게임 (V2.1 업스케일)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "새 게임 (V2.2 강화)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "데이터 파일 없음"
 
+#. OFF
 msgid "Off"
 msgstr "끔"
 
+#. ON
 msgid "On"
 msgstr "켬"
 
+#. PLAY
 msgid "PLAY"
 msgstr "플레이"
 
+#. QUIT
 msgid "QUIT"
 msgstr "종료"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "스크린샷 갤러리"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "게임 선택"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "설정"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "주문 참조"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "게임 데이터 검증"
 
+#. VERSION
 msgid "Version"
 msgstr "버전"
 
+#. VIDEO
 msgid "Video"
 msgstr "비디오"
 
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""

@@ -73,6 +73,12 @@ int main(void)
              "m11_front_mirror_hit_test(state, localX, localY, &mirror_ordinal)") &&
          has_between(csbClickRoute, csbClickRouteEnd,
              "m11_select_mirror_candidate_by_ordinal(state,") &&
+         /* Original and Modern share COMMAND.C input ownership.  Gating
+          * C080 on the optional chrome renderer made HoC mirrors inert in
+          * otherwise valid DM1 presentation modes. */
+         strstr(source,
+             "if ((m11_is_dm1_source_kind(state->sourceKind) ||\n"
+             "             state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&") &&
          !has_between(clickRoute, clickRouteEnd,
              "localX >= 96 && localX <= 127") &&
          strstr(source,

@@ -16,7 +16,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:93",
       "line": 93,
       "lineText": "unsigned int16_t G0055_aaaui_Graphic562_BarGraphMasks[4][3][2]; /* = {",
@@ -24,7 +24,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:98",
       "line": 98,
       "lineText": "{ { 0x0007, 0x8000 }, { 0x0F00, 0x0000 }, { 0x001E, 0x0000 } } }; Champion 3 */",
@@ -32,7 +32,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:204",
       "line": 204,
       "lineText": "                        lea     G0056_aaui_Graphic562_BarGraphByteOffsets(A4),A1",
@@ -40,7 +40,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:207",
       "line": 207,
       "lineText": "                        lea     G0055_aaaui_Graphic562_BarGraphMasks(A4),A1",
@@ -48,7 +48,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:208",
       "line": 208,
       "lineText": "/* G0055_aaaui_Graphic562_BarGraphMasks contains the following 16 bits masks: 3 pairs of masks (for each bar graph) for each champion:",
@@ -56,7 +56,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass861_dm1_v1_bar_graph_masks_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [
@@ -92,11 +92,11 @@
     }
   ],
   "status": "PASS861_DM1_V1_BAR_GRAPH_MASKS_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:14.307772+00:00",
+  "timestampUtc": "2026-09-04T18:35:08.450467+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_bar_graph_masks_pc34_compat"
+        "/dev/shm/current/test_dm1_v1_bar_graph_masks_pc34_compat"
       ],
       "outputTail": "dm1_v1_bar_graph_masks: 104/104 assertions passed",
       "passed": true,

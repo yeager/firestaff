@@ -1,0 +1,5 @@
+{
+  "schema": "pass453_dm1_v1_hall_panel_visible_delta_classification.v1",
+  "status": "BLOCKED_EXTERNAL_HALL_DELTA_ARTIFACT_MISSING",
+  "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-comparator-diff-20260509/panel_visible_delta_manifest.json"
+}

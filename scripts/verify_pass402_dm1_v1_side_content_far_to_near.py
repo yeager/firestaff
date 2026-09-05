@@ -9,9 +9,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_SOURCE = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 
 def read_slice(path: Path, line_range: str) -> str:
@@ -35,7 +33,7 @@ def ordered_missing(text: str, needles: list[str]) -> list[str]:
 
 
 def local_function(text: str, name: str) -> str:
-    m = re.search(rf"^static void {re.escape(name)}\s*\(", text, re.M)
+    m = re.search(rf"^static\s+\w+\s+{re.escape(name)}\s*\(", text, re.M)
     if not m:
         raise AssertionError(f"missing function {name}")
     brace = text.find("{", m.end())
@@ -101,38 +99,30 @@ def main() -> int:
         "why": "Side contents are not a free overlay pass; visible squares hand objects/creatures/projectiles to F0115 while that square is replayed.",
     })
 
-    # `m11_draw_dm1_side_contents` was split: the outer function now
-    # dispatches into `m11_draw_dm1_side_contents_at_depth`, and the
-    # side-lane guard moved with the per-depth work. Read both bodies as
-    # one text blob so the "far-to-near loop AND side/center lane guards
-    # AND F0115 handoff sprites" contract is satisfied across the split.
+    # F0115 content is now owned by the same authenticated per-square F0128
+    # callback stream as wall and door material.  Lock that ownership rather
+    # than the removed global side-content replay.
     fire_text = (ROOT / "src/engine/m11_game_view.c").read_text(errors="replace")
     local = (
-        local_function(fire_text, "m11_draw_dm1_side_contents")
-        + local_function(fire_text, "m11_draw_dm1_side_contents_at_depth")
+        local_function(fire_text, "m11_dm1_f0128_dispatch_raster_phase")
+        + local_function(fire_text, "m11_dm1_f0128_dispatch_foreground_square")
+        + local_function(fire_text, "m11_draw_viewport")
     )
     local_needles = [
-        "for (depth = 2; depth >= 0; --depth)",
-        # The side-lane predicate was renamed from `_before_depth(cells,
-        # depth, sideIndex)` to `_for_rel(cells, depth + 1, side)`. Same
-        # forward-occlusion semantics under a new per-square-relative
-        # naming convention. The center-line predicate kept its `_before_depth`
-        # spelling. Update only the needle that actually changed.
-        "m11_dm1_center_line_clear_before_depth(cells, depth)",
-        "m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)",
-        "m11_draw_item_sprite",
-        "m11_draw_creature_sprite_ex",
-        "m11_draw_projectile_sprite",
+        "DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(",
+        "M11_DM1_F0128_EXECUTE_FOREGROUND",
+        ".foregroundCallbackStepCount",
+        "m11_dm1_f0128_dispatch_foreground_square(",
     ]
     missing = [n for n in local_needles if n not in local]
     passed = not missing
     ok = ok and passed
     checks.append({
-        "id": "firestaff-side-content-far-to-near-and-occlusion-guards",
+        "id": "firestaff-f0128-per-square-foreground-callback-ownership",
         "passed": passed,
-        "source": "m11_game_view.c:m11_draw_dm1_side_contents",
+        "source": "m11_game_view.c:m11_dm1_f0128_dispatch_foreground_square",
         "missing": missing,
-        "why": "Firestaff side content now paints D3 before D2 before D1 and retains center/side blocker guards, preventing far side items/creatures/projectiles from overdrawing nearer side content.",
+        "why": "Firestaff consumes F0115 foreground from the authenticated F0128 per-square scheduler callback, so later global replay cannot overdraw nearer wall or door material.",
     })
 
     payload = {"gate": "pass402_dm1_v1_side_content_far_to_near", "passed": ok, "source_root": str(args.source), "checks": checks}

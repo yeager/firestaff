@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Italian\n"
@@ -18,155 +18,155 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-#. Direction / compass
 
+#. Direction / compass
 msgid "NORTH"
 msgstr "NORD"
-#. Direction / compass
 
+#. Direction / compass
 msgid "EAST"
 msgstr "EST"
-#. Direction / compass
 
+#. Direction / compass
 msgid "SOUTH"
 msgstr "SUD"
-#. Direction / compass
 
+#. Direction / compass
 msgid "WEST"
 msgstr "OVEST"
-#. Stairs
 
+#. Stairs
 msgid "STAIRS"
 msgstr "SCALE"
-#. Pit
 
+#. Pit
 msgid "PIT"
 msgstr "FOSSA"
-#. Teleporter
 
+#. Teleporter
 msgid "TELEPORTER"
 msgstr "TELETRASPORTO"
-#. Door
 
+#. Door
 msgid "DOOR"
 msgstr "PORTA"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "PICK UP"
 msgstr "RACCOGLI"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "DROP"
 msgstr "LASCIA"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "USE"
 msgstr "USA"
-#. Combat action
 
+#. Combat action
 msgid "ATTACK"
 msgstr "ATTACCA"
-#. Combat action
 
+#. Combat action
 msgid "DEFEND"
 msgstr "DIFENDI"
-#. Combat action
 
+#. Combat action
 msgid "CAST SPELL"
 msgstr "LANCIA INCANTESIMO"
-#. Status label
 
+#. Status label
 msgid "NO FOCUS"
 msgstr "NESSUN FOCUS"
-#. Status label
 
+#. Status label
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
 msgstr "PREMI INVIO SU UN VERO BERSAGLIO FRONTALE"
-#. Generic
 
+#. Generic
 msgid "UNKNOWN"
 msgstr "SCONOSCIUTO"
-#. Generic
 
+#. Generic
 msgid "NONE"
 msgstr "NESSUNO"
-#. Save / load
 
+#. Save / load
 msgid "SAVE GAME"
 msgstr "SALVA PARTITA"
-#. Save / load
 
+#. Save / load
 msgid "LOAD GAME"
 msgstr "CARICA PARTITA"
-#. Shop
 
+#. Shop
 msgid "SHOP"
 msgstr "NEGOZIO"
-#. Shop
 
+#. Shop
 msgid "NOT ENOUGH GOLD"
 msgstr "ORO INSUFFICIENTE"
-#. Shop
 
+#. Shop
 msgid "PURCHASED %s FOR %d GOLD"
 msgstr "ACQUISTATO %s PER %d ORO"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: ASCENDED TO LEVEL %d"
 msgstr "T%u: SALITO AL LIVELLO %d"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: DESCENDED TO LEVEL %d"
 msgstr "T%u: DISCESO AL LIVELLO %d"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: FELL INTO PIT"
 msgstr "T%u: CADUTO NELLA FOSSA"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
 msgstr "T%u: TELETRASPORTATO ALLA MAPPA %d (%d,%d)"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER HAS NO THING DATA"
 msgstr "T%u: IL TELETRASPORTO NON HA DATI"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
 msgstr "T%u: MAPPA DESTINAZIONE %d FUORI PORTATA"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
 msgstr "T%u: %s È SALITO DI LIVELLO! (%s %d -> %d)"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s CASTS %s"
 msgstr "T%u: %s LANCIA %s"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s HITS %s FOR %d"
 msgstr "T%u: %s COLPISCE %s PER %d"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s MISSES %s"
 msgstr "T%u: %s MANCA %s"
-#. Altar
 
+#. Altar
 msgid "OFFERING ACCEPTED"
 msgstr "OFFERTA ACCETTATA"
-#. Inventory capacity
 
+#. Inventory capacity
 msgid "INVENTORY FULL"
 msgstr "INVENTARIO PIENO"
-#. Sound / feedback
 
+#. Sound / feedback
 msgid "OUT OF RANGE"
 msgstr "FUORI PORTATA"
-#. Generic message
 
+#. Generic message
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
 msgstr "PREMI INVIO O CLICCA SULLA VISTA PER LEGGERE LA CELLA FRONTALE"
-#. Status footer
 
+#. Status footer
 msgid "HP AND STAMINA RECOVER SLOWLY"
 msgstr "PV E RESISTENZA RECUPERANO LENTAMENTE"

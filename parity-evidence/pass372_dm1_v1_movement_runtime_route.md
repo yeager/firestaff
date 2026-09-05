@@ -1,6 +1,6 @@
 # Pass372 — DM1 V1 movement runtime route
 
-Status: `PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED`
+Status: `BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE`
 
 ## Decision
 
@@ -42,6 +42,6 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 
 ## Gates
 
-- `ctest --test-dir build -R 'dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock' --output-on-failure` ok=`True`
+- `ctest --test-dir build -R 'dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock' --output-on-failure` ok=`False`
 - `add_executable(test_dm1_v2_movement_command_adapter_pc34)` wiring present in `CMakeLists.txt` ok=`True`
 - Manifest: `parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json`

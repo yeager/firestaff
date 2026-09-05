@@ -125,25 +125,40 @@ def main() -> int:
 
         body = function_body(ROOT / "src/engine/m11_game_view.c", "m11_draw_viewport")
         require("if (state->showDebugHUD)" in body, "debug-only procedural corridor guard missing")
-        require("nearer side layers" in body and "farther center doors/buttons/items cannot" in body,
-                "near-side occlusion replay rationale missing")
+        require("F0128 completes each DnL2 route before DnR2" in body,
+                "per-square source-order rationale missing")
         assert_order(body, [
             ("viewport clear", "m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,"),
             ("source background", "m11_draw_viewport_background(state,"),
-            ("floor pits", "m11_draw_dm1_floor_pits(state,"),
-            ("side walls", "m11_draw_dm1_side_walls(state,"),
-            ("front walls", "m11_draw_dm1_front_walls(state,"),
-            ("center doors", "m11_draw_dm1_center_doors(state,"),
-            # 2026-07-20 round 16 re-anchor (same-drift-family): the replay
-            # trigger and the side contents pass now read the shared
-            # lane-visibility receipt / per-depth pass names.
-            ("blocking center replay", "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;"),
-            ("side contents", "m11_draw_dm1_side_contents_at_depth("),
-            ("center contents fallback", "m11_draw_wall_contents(framebuffer,"),
+            ("blocking center receipt", "int blockingCenterDepth ="),
+            ("wall callback dispatch", "m11_dm1_f0128_dispatch_wall_material_square("),
+            ("ornament callback dispatch", "m11_dm1_f0128_dispatch_wall_ornament_square("),
+            ("rear things callback dispatch", "m11_dm1_f0128_dispatch_door_pass1_square("),
+            ("door frame callback dispatch", "m11_dm1_f0128_dispatch_door_frame_square("),
+            ("door callback dispatch", "m11_dm1_f0128_dispatch_door_material_square("),
+            ("foreground callback dispatch", "m11_dm1_f0128_dispatch_foreground_square("),
             ("debug procedural renderer", "if (state->showDebugHUD)"),
         ])
-        replay = re.search(r"if \(blockingCenterDepth > 0\).*?m11_draw_dm1_side_destroyed_door_masks\(", body, re.S)
-        require(replay, "blocking center replay does not redraw nearer side occluder stack")
+        callback = function_body(
+            ROOT / "src/engine/m11_game_view.c",
+            "m11_dm1_f0128_execute_source_step")
+        assert_order(callback, [
+            ("wall", "M11_DM1_F0128_EXECUTE_WALL_MATERIAL"),
+            ("wall ornament", "M11_DM1_F0128_EXECUTE_WALL_ORNAMENT"),
+            ("door floor ornament", "M11_DM1_F0128_EXECUTE_PRE_DOOR_FLOOR_ORNAMENT"),
+            ("rear things", "M11_DM1_F0128_EXECUTE_DOOR_PASS1"),
+            ("door frame", "M11_DM1_F0128_EXECUTE_DOOR_FRAME"),
+            ("door button", "M11_DM1_F0128_EXECUTE_DOOR_BUTTON"),
+            ("door panel", "M11_DM1_F0128_EXECUTE_DOOR_MATERIAL"),
+            ("front things", "M11_DM1_F0128_EXECUTE_FOREGROUND"),
+        ])
+        for primitive in (
+            "m11_draw_dm1_side_walls(", "m11_draw_dm1_front_walls(",
+            "m11_draw_dm1_wall_ornaments(", "m11_draw_dm1_side_doors(",
+            "m11_draw_dm1_center_doors(",
+        ):
+            require(primitive not in body,
+                    f"viewport revives callback-owned primitive {primitive}")
 
         run_gate([sys.executable, "tools/verify_pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep.py"])
         print(f"status={EXPECTED_STATUS}")

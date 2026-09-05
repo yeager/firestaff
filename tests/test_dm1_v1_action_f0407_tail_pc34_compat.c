@@ -605,10 +605,10 @@ static void test_light_and_window_plans(void) {
     memset(&in, 0, sizeof(in));
     in.earthSkillLevel = 1;
     in.randomDraw = 100;
-    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 1,
-             "window plan clamps draw");
-    CHECK_EQ(out.randomRange, 9, "window clamp range");
-    CHECK_EQ(out.durationTicks, 6, "window clamped duration");
+    CHECK_EQ(dm1_v1_action_window_plan_f0407_pc34(&in, &out), 0,
+             "window rejects draw outside M002_RANDOM(skill+8)");
+    CHECK_EQ(out.valid, 0, "rejected window plan stays invalid");
+    CHECK_EQ(out.durationTicks, 0, "rejected window plan has no duration");
 }
 
 static void test_shield_plan(void) {
@@ -890,11 +890,17 @@ static void test_flip_and_direction_plans(void) {
              "flip tails plan builds");
     CHECK_EQ(flipOut.performed, 1, "flip tails performed");
     CHECK_EQ(flipOut.comesUpHeads, 0, "flip random zero tails");
+    CHECK_EQ(flipOut.sourceMessage &&
+                 strcmp(flipOut.sourceMessage, "IT COMES UP TAILS.") == 0,
+             1, "flip zero owns exact F0381 tails source message");
 
     flipIn.randomDraw = 1;
     CHECK_EQ(dm1_v1_action_flip_plan_f0407_pc34(&flipIn, &flipOut), 1,
              "flip heads plan builds");
     CHECK_EQ(flipOut.comesUpHeads, 1, "flip random one heads");
+    CHECK_EQ(flipOut.sourceMessage &&
+                 strcmp(flipOut.sourceMessage, "IT COMES UP HEADS.") == 0,
+             1, "flip one owns exact F0381 heads source message");
 
     memset(&dirIn, 0, sizeof(dirIn));
     dirIn.actionIndex = DM1_ACTION_FLUXCAGE;

@@ -110,7 +110,7 @@
     },
     {
       "kind": "narrow_ctest",
-      "ok": true,
+      "ok": false,
       "regex": "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock"
     }
   ],
@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Test project /Volumes/Extern-disk/firestaff/build\n    Start 1474: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1474: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.04 sec\n    Start 1483: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1483: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.04 sec\n    Start 1803: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1803: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.02 sec\n    Start 2125: dm1_v1_input_command_queue_source_lock\n4/4 Test #2125: dm1_v1_input_command_queue_source_lock .....   Passed    0.06 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.23 sec",
+  "ctestTail": "home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nhome/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUnable to find executable: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1856: dm1_v1_movement_pipeline_pc34_compat .......***Not Run   0.00 sec\n    Start 2178: dm1_v1_input_command_queue_source_lock\n4/4 Test #2178: dm1_v1_input_command_queue_source_lock .....   Passed    0.03 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.08 sec\n\nThe following tests FAILED:\n\t1856 - dm1_v1_movement_pipeline_pc34_compat (Not Run)\nErrors while running CTest",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -196,7 +196,7 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -215,7 +215,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "residualScope": {
     "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
     "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
@@ -242,7 +242,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "claim": "The game loop drains buffered keyboard characters through F0361, then processes the command queue through F0380.",
@@ -256,7 +256,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "claim": "I34E movement keyboard table binds K/L/M/O/P/Q to C001..C006.",
@@ -274,7 +274,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "F0361 scans primary then secondary keyboard tables and enqueues the matched command.",
@@ -289,7 +289,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "F0380 locks/dequeues the queue, gates movement ticks, and dispatches turns to F0365 and steps to F0366.",
@@ -305,7 +305,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "F0365 turns the party and fires leave/enter sensors around F0284_CHAMPION_SetPartyDirection.",
@@ -318,7 +318,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "F0366 maps C003..C006 to relative step deltas, validates collision, moves, and applies movement timing.",
@@ -334,7 +334,7 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "After dungeon load, secondary keyboard input is installed to the movement table.",
@@ -347,10 +347,10 @@
       ],
       "missingMarkers": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/STARTUP2.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED",
-  "timestampUtc": "2026-08-12T01:36:46.280342+00:00"
+  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
+  "timestampUtc": "2026-09-04T18:05:00.438762+00:00"
 }

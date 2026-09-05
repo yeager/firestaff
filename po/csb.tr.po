@@ -1,132 +1,915 @@
-# Firestaff — csb domain, Turkish catalog.
-# Turkish translation of Chaos Strikes Back runtime strings.
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
 #
-# Domain: csb
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
 #
-# Based on po/dm1.tr.po + CSB-specific keys from csb.pot.
-# Translated 2026-07-19, consistent with the reviewed sv/de/fr
-# catalogs (proper nouns and brand strings keep source spelling).
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-07-19 12:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
-"Language-Team: Turkish\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-04-22 05:45+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "CSB motor sürümü"
+#. Source-owned C699 action name
+msgid "N"
+msgstr ""
 
-# Reincarnation panel
-msgid "csb.reincarnate.title"
-msgstr "YENİDEN DOĞUŞ"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr ""
 
-msgid "csb.reincarnate.chaos"
-msgstr "Kaos savaşı."
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr ""
 
-msgid "csb.reincarnate.choose"
-msgstr "Yeniden doğuş için yeni savaşçılar seç."
+#. Source-owned C699 action name
+msgid "X"
+msgstr ""
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "İstatistik için zar at"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr ""
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "DİRİLİŞ"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr ""
 
-msgid "csb.resurrect.altar"
-msgstr "Savaşçıları uyandırmak için sunakta kan sun."
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr ""
 
-msgid "csb.resurrect.choose"
-msgstr "Uyandırılacak savaşçıları seç."
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr ""
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "Kaos büyüsü soğuyor"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr ""
 
-msgid "csb.chaos.energy"
-msgstr "Kaos enerjisi"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr ""
 
-msgid "csb.chaos.recharge"
-msgstr "Şarj oluyor"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr ""
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "Gri Lord fısıldıyor: Seç."
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr ""
 
-msgid "csb.greylord.choose"
-msgstr "Seçimini yap."
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr ""
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "KAHİN"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr ""
 
-msgid "csb.oracle.prompt"
-msgstr "Sor ve kahin yanıtlasın."
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr ""
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "En fazla 4 savaşçı"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr ""
 
-msgid "csb.party.slot"
-msgstr "Grup yuvası"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr ""
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "CSB kaydını içe aktar"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr ""
 
-msgid "csb.save.csb-st-v20"
-msgstr "CSB Atari ST 2.0 kaydı"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr ""
 
-msgid "csb.save.csb-st-v21"
-msgstr "CSB Atari ST 2.1 kaydı"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr ""
 
-msgid "csb.save.amiga-v35"
-msgstr "CSB Amiga 3.5 kaydı"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr ""
 
-msgid "csb.save.pc34"
-msgstr "CSB PC 3.4 kaydı"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr ""
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "ÇAYLAK MODU"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr ""
 
-msgid "csb.neophyte.desc"
-msgstr "Tuzak hasarını azaltır, daha kolay başlangıç."
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr ""
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "DM1 motoru v2.0"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr ""
 
-msgid "csb.engine.csb"
-msgstr "CSB motoru v2.1"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr ""
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr ""
 
-msgid "csb.launcher.subtitle"
-msgstr "Dungeon Master II'nin devamı"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr ""
 
-msgid "csb.launcher.lore-shape"
-msgstr "Lord Chaos yükseliyor..."
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr ""
 
-msgid "csb.launcher.lore-line-1"
-msgstr "Lord Chaos Alevi çaldı."
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr ""
 
-msgid "csb.launcher.lore-line-2"
-msgstr "Ateş Taşı kayboldu."
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr ""
 
-msgid "csb.launcher.lore-line-3"
-msgstr "Gri Lord onu geri almanız için sizi çağırıyor."
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr ""
 
-msgid "csb.launcher.lore-line-4"
-msgstr "Kaosa adım at."
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "PUSULA"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "MEŞALE"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "SU TULUMU"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "MÜCEVHER SEMBOL"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "AYDINLATAN"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "KÜÇÜK ALEV"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "ZAMANIN GÖZÜ"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "FIRTINA YÜZÜĞÜ"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "PENÇE ASA"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "ATEŞ DEYNEĞİ"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "PARŞÖMEN"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "Hançer"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALÇATA"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "KILıç"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "RAPIR"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "SAMURAY KILICI"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "ELMAS KENAR"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "VORPAL KILıç"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "BALTA"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "TOPUZ"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "DÜZEN TOPUZU"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "SOPA"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "TAŞ SOPA"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "ARBALET"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "OK"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "KATİL"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "SAPANCA"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "TAŞ"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "ZEHİR DART"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "FIRLATA TILAN YILDIZ"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "ÇUBUK"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "ASA"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "ASAY"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "TEO ASAY"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "PORSUK ASA"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "EJDER TÜKÜRÜĞÜ"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "LYF ASASI"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "DERİ CEKET"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "PELERİN"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "GECE PELERİNİ"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "DERİ PANTOLON"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "MAVİ PANTOLON"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "GHI PANTOLON"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "BACAK ZINCİRİ"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "MITHRIL ZINCİR"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "BERSERKER MIĞFERİ"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "MIĞFER"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BASINET"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "NERRA'NIN TACI"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "KÜÇÜK KALKAN"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "AHŞAP KALKAN"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SANDALET"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "SÜET ÇİZME"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "DERİ ÇİZME"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "AYAK PLAĞI"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "ELF ÇİZMESİ"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "ÇAĞLARIN MÜCEVHERİ"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "EKKHARD HAÇI"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "AY TAŞI"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "HELLION"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "FERAL KOLYE"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR MADENİ PARA"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "KAYA BLOK"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "MAVİ MÜCEVHER"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "TURUNCU MÜCEVHER"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "YEŞİL MÜCEVHER"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "BÜYÜLÜ KUTU"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "ŞAFAK AYNASI"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "KORKU BOYNUZU"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "İP"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "BOĞUCU"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEX MIĞFER"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "SANDIK"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "SANDIĞI AÇ"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "KÜL"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "KEMİKLER"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI İKSİRİ"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "SU ŞİŞESİ"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "ELMA"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "MISIR"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "EKMEK"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "PEYNİR"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "ÇIĞLIKÇI DİLİM"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "KURT YUVARLAK"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "EJDER BİFTEK"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "DEMİR ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "B ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "KATI ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "KARE ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "TURKUAZ ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "HAÇ ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "ONİKS ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "İSKELET ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "ALTIN ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "KANATLI ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "TOPAZ ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "YAKUT ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "ZÜMRÜT ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "RUBİN ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "ANA ANAHTAR"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "MAYMUNCU"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "BÜYÜTEÇ"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "BOŞ ŞİŞE"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "ZOKATHRA BÜYÜSÜ"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""

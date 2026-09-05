@@ -6,9 +6,9 @@
     "present": false
   },
   "inputs": {
-    "fires_exenew": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
-    "runtime_image": "/Volumes/Extern-disk/firestaff/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/Volumes/Extern-disk/firestaff/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "fires_exenew": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "runtime_image": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "non_claims": [
     "does not commit FIRES.EXENEW",
@@ -43,7 +43,7 @@
       "turn_dispatch": 2151,
       "unlock_queue": 2126
     },
-    "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    "source_root": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
   },
   "schema": "pass231_dm1_v1_fires_exenew_runtime_hit_probe.v1"
 }

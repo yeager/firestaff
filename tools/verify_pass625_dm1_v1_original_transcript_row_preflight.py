@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import struct
+import zipfile
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -17,8 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-CANON_DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+PC34_ARCHIVE = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 PASS = "pass625_dm1_v1_original_transcript_row_preflight"
 STATUS = "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
@@ -38,13 +41,13 @@ SOURCE_LOCKS: list[dict[str, Any]] = [
 ]
 
 ASSET_LOCKS = [
-    {"relative": "TITLE", "bytes": 12002, "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"},
-    {"relative": "GRAPHICS.DAT", "bytes": 363417, "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"},
-    {"relative": "DUNGEON.DAT", "bytes": 33357, "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"},
-    {"relative": "DungeonMasterPC34/DM.EXE", "bytes": 11471, "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"},
-    {"relative": "DungeonMasterPC34/VGA", "bytes": 4503, "sha256": "4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b"},
-    {"relative": "DungeonMasterPC34/SELECTOR", "bytes": 15474, "sha256": "1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4"},
-    {"relative": "Dungeon-Master_DOS_EN.zip", "bytes": 896553, "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"},
+    {"relative": "TITLE", "member": "TITLE", "bytes": 12002, "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"},
+    {"relative": "GRAPHICS.DAT", "member": "DATA/GRAPHICS.DAT", "bytes": 363417, "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"},
+    {"relative": "DUNGEON.DAT", "member": "DATA/DUNGEON.DAT", "bytes": 33357, "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"},
+    {"relative": "DM.EXE", "member": "DM.EXE", "bytes": 11471, "sha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"},
+    {"relative": "VGA", "member": "VGA", "bytes": 4503, "sha256": "4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b"},
+    {"relative": "SELECTOR", "member": "SELECTOR", "bytes": 15474, "sha256": "1f32014376b90bd958d5c6bff7c67cb6378b47de4416d7206ea7e27bfc3c07c4"},
+    {"relative": "Dungeon-Master_DOS_EN_Version-34.zip", "bytes": 892111, "sha256": "6d9ce72e827e066d5dd4a9294f0258801bbb32e7cdbe09a20e6b47308fd46a33"},
 ]
 
 GATES = [
@@ -103,6 +106,31 @@ def sha256(path: Path) -> str | None:
     return h.hexdigest()
 
 
+def archive_member_bytes(archive: Path, wanted: str) -> bytes:
+    """Read a PC3.4 member in memory, tolerating DOS backslashes in local headers."""
+    raw = archive.read_bytes()
+    with zipfile.ZipFile(archive) as zf:
+        info = next((item for item in zf.infolist()
+                     if item.filename.replace("\\", "/") == wanted), None)
+    if info is None:
+        raise KeyError(wanted)
+    offset = info.header_offset
+    fields = struct.unpack("<IHHHHHIIIHH", raw[offset:offset + 30])
+    if fields[0] != 0x04034B50:
+        raise ValueError(f"invalid local ZIP header for {wanted}")
+    start = offset + 30 + fields[9] + fields[10]
+    compressed = raw[start:start + info.compress_size]
+    if info.compress_type == zipfile.ZIP_STORED:
+        payload = compressed
+    elif info.compress_type == zipfile.ZIP_DEFLATED:
+        payload = zlib.decompress(compressed, -15)
+    else:
+        raise ValueError(f"unsupported ZIP method {info.compress_type} for {wanted}")
+    if len(payload) != info.file_size:
+        raise ValueError(f"decoded size mismatch for {wanted}")
+    return payload
+
+
 def audit_sources() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for lock in SOURCE_LOCKS:
@@ -119,10 +147,15 @@ def audit_sources() -> list[dict[str, Any]]:
 def audit_assets() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for lock in ASSET_LOCKS:
-        path = CANON_DM1 / lock["relative"]
-        actual_sha = sha256(path)
-        actual_bytes = path.stat().st_size if path.exists() and path.is_file() else None
-        rows.append({"relative": lock["relative"], "path": str(path), "realpath": str(path.resolve()) if path.exists() else None, "exists": path.exists(), "bytes": actual_bytes, "expectedBytes": lock["bytes"], "sha256": actual_sha, "expectedSha256": lock["sha256"], "ok": path.exists() and actual_bytes == lock["bytes"] and actual_sha == lock["sha256"]})
+        try:
+            payload = (archive_member_bytes(PC34_ARCHIVE, lock["member"])
+                       if "member" in lock else PC34_ARCHIVE.read_bytes())
+        except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+            rows.append({"relative": lock["relative"], "archive": str(PC34_ARCHIVE), "member": lock.get("member"), "exists": False, "bytes": None, "expectedBytes": lock["bytes"], "sha256": None, "expectedSha256": lock["sha256"], "ok": False, "error": str(exc)})
+            continue
+        actual_sha = hashlib.sha256(payload).hexdigest()
+        actual_bytes = len(payload)
+        rows.append({"relative": lock["relative"], "archive": str(PC34_ARCHIVE), "member": lock.get("member"), "exists": True, "bytes": actual_bytes, "expectedBytes": lock["bytes"], "sha256": actual_sha, "expectedSha256": lock["sha256"], "ok": actual_bytes == lock["bytes"] and actual_sha == lock["sha256"]})
     return rows
 
 
@@ -247,8 +280,8 @@ def main() -> int:
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "status": status,
         "ok": not problems,
-        "sourceRoot": str(RED),
-        "canonicalOriginalRoot": str(CANON_DM1),
+        "sourceRoot": str(RED.relative_to(ROOT)),
+        "originalArchive": str(PC34_ARCHIVE),
         "sourceAudit": source,
         "originalAssetLocks": assets,
         "gateStatusChecks": gates,

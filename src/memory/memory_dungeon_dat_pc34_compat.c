@@ -3,6 +3,7 @@
 #include <string.h>
 #include "dungeon_decompressor_ftl.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_fmtowns_dungeon_dat.h"
 
 /* ---- low-level I/O helpers (same pattern as graphics_dat seams) ---- */
 
@@ -912,7 +913,8 @@ static int load_tail_buffer_compat_endian(
         int byteCount,
         struct DungeonDatState_Compat* state,
         struct DungeonThings_Compat* things,
-        int sourceBigEndian)
+        int sourceBigEndian,
+        int checksumTrailerBytes)
 {
         int off;
         int mapIndex;
@@ -925,17 +927,21 @@ static int load_tail_buffer_compat_endian(
         unsigned short expectedChecksum;
         unsigned short actualChecksum;
 
-        if (!bytes || byteCount < DUNGEON_HEADER_SIZE + 2 || !state || !things) {
+        if (!bytes || (checksumTrailerBytes != 0 && checksumTrailerBytes != 2) ||
+            byteCount < DUNGEON_HEADER_SIZE + checksumTrailerBytes ||
+            !state || !things) {
                 return 0;
         }
         memset(state, 0, sizeof(*state));
         memset(things, 0, sizeof(*things));
 
-        expectedChecksum = read_u16_tail_mem(bytes + byteCount - 2,
-                                             sourceBigEndian);
-        actualChecksum = dungeon_tail_checksum(bytes, byteCount - 2);
-        if (expectedChecksum != actualChecksum) {
-                return 0;
+        if (checksumTrailerBytes == 2) {
+                expectedChecksum = read_u16_tail_mem(bytes + byteCount - 2,
+                                                     sourceBigEndian);
+                actualChecksum = dungeon_tail_checksum(bytes, byteCount - 2);
+                if (expectedChecksum != actualChecksum) {
+                        return 0;
+                }
         }
 
         state->header.ornamentRandomSeed = read_u16_tail_mem(bytes + 0, sourceBigEndian);
@@ -955,7 +961,8 @@ static int load_tail_buffer_compat_endian(
         }
 
         off = DUNGEON_HEADER_SIZE;
-        if (off + (int)state->header.mapCount * DUNGEON_MAP_DESC_SIZE + 2 >
+        if (off + (int)state->header.mapCount * DUNGEON_MAP_DESC_SIZE +
+            checksumTrailerBytes >
             byteCount) {
                 goto fail;
         }
@@ -988,7 +995,7 @@ static int load_tail_buffer_compat_endian(
                 totalColumns += (int)m->width;
         }
         off += (int)state->header.mapCount * DUNGEON_MAP_DESC_SIZE;
-        if (off + totalColumns * 2 + 2 > byteCount) goto fail;
+        if (off + totalColumns * 2 + checksumTrailerBytes > byteCount) goto fail;
         /* DUNGEON.C F0160 indexes SquareFirstThings through this compact
          * per-column prefix table.  The file-backed loader retains it, but
          * the archive-buffer path used to skip it entirely and then fell
@@ -1010,7 +1017,8 @@ static int load_tail_buffer_compat_endian(
 
         things->squareFirstThingCount =
                 (int)state->header.squareFirstThingCount;
-        if (off + things->squareFirstThingCount * 2 + 2 > byteCount) goto fail;
+        if (off + things->squareFirstThingCount * 2 + checksumTrailerBytes >
+            byteCount) goto fail;
         if (things->squareFirstThingCount > 0) {
                 things->squareFirstThings = (unsigned short*)calloc(
                         things->squareFirstThingCount, sizeof(unsigned short));
@@ -1025,7 +1033,8 @@ static int load_tail_buffer_compat_endian(
 
         textDataOffset = off;
         things->textDataWordCount = (int)state->header.textDataWordCount;
-        if (off + things->textDataWordCount * 2 + 2 > byteCount) goto fail;
+        if (off + things->textDataWordCount * 2 + checksumTrailerBytes >
+            byteCount) goto fail;
         if (things->textDataWordCount > 0) {
                 things->textData = (unsigned short*)calloc(
                         things->textDataWordCount, sizeof(unsigned short));
@@ -1045,7 +1054,7 @@ static int load_tail_buffer_compat_endian(
                 int dataBytes = count * (int)s_thingDataByteCount[type];
                 things->thingCounts[type] = count;
                 if (count < 0 || dataBytes < 0 ||
-                    off + dataBytes + 2 > byteCount) {
+                    off + dataBytes + checksumTrailerBytes > byteCount) {
                         goto fail;
                 }
                 if (dataBytes > 0) {
@@ -1063,7 +1072,8 @@ static int load_tail_buffer_compat_endian(
 
         rawMapOffset = off;
         rawMapByteCount = (int)state->header.rawMapDataByteCount;
-        if (rawMapByteCount < 0 || off + rawMapByteCount + 2 != byteCount) {
+        if (rawMapByteCount < 0 ||
+            off + rawMapByteCount + checksumTrailerBytes != byteCount) {
                 goto fail;
         }
 
@@ -1228,7 +1238,27 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
         struct DungeonThings_Compat* things)
 {
         return load_tail_buffer_compat_endian(bytes, byteCount, state, things,
-                                              0);
+                                              0, 2);
+}
+
+int F0504J_DUNGEON_LoadTailBufferFmTownsJp_Compat(
+        const unsigned char* bytes,
+        int byteCount,
+        struct DungeonDatState_Compat* state,
+        struct DungeonThings_Compat* things)
+{
+        DM1_V1_FmtownsDungeonReceipt receipt;
+        /* The admitted retail JDATA/DUNGEON.DAT is the raw F20J dungeon
+         * body.  Unlike DATA/DUNGEON.DAT it ends at RawMapData and carries
+         * no F0434 two-byte checksum trailer.  This exact-size entry point
+         * prevents the exception from weakening the generic/save reader. */
+        if (byteCount != (int)DM1_FMTOWNS_DUNGEON_JP_SIZE ||
+            dm1_v1_fmtowns_dungeon_receipt(bytes, (size_t)byteCount,
+                                            &receipt) != 0 ||
+            receipt.lang != 2 ||
+            receipt.map_count != DM1_FMTOWNS_DUNGEON_MAP_COUNT) return 0;
+        return load_tail_buffer_compat_endian(bytes, byteCount, state, things,
+                                              0, 0);
 }
 
 int F0505_DUNGEON_LoadTailBufferAmigaBE_Compat(
@@ -1238,7 +1268,7 @@ int F0505_DUNGEON_LoadTailBufferAmigaBE_Compat(
         struct DungeonThings_Compat* things)
 {
         return load_tail_buffer_compat_endian(bytes, byteCount, state, things,
-                                              1);
+                                              1, 2);
 }
 
 int F0504_DUNGEON_LoadThingData_Compat(

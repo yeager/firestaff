@@ -90,6 +90,17 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     CSB_V1_VariantId variant_id;
     uint32_t executable_size;
     uint32_t executable_fnv1a;
+    /* ENTRANCE.C F0806 selects C28_ENTRANCE_CSB after SWITCHTW exits.
+     * These are authenticated G8174 COLOR_DEF bytes from this exact
+     * CHTWE/CHTWJ executable, not the preceding C26_SWITCH DAC state. */
+    int entrance_palette_verified;
+    uint32_t entrance_palette_source_offset;
+    uint8_t entrance_palette_rgb6[16][3];
+    /* PALETTE.C F0390 selects one of C00_LIGHT0..C05_LIGHT5 after Entrance.
+     * F31 stores their G8151..G8156 COLOR_DEF rows contiguously. */
+    int dungeon_palettes_verified;
+    uint32_t dungeon_palettes_source_offset;
+    uint8_t dungeon_palette_rgb6[6][16][3];
     char executable_name[16];
     char executable_path[512];
     /* Non-owning view for packed FM Towns media.  Loose development trees

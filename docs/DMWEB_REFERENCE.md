@@ -233,7 +233,7 @@ A probe that downloads greatstone's hash-sums of known-good assets and compares 
 
 ### 4. `docs/PLATFORM_MATRIX.md` (already partially in our internal docs)
 
-A canonical "Firestaff supports these game versions" matrix, derived from dmweb/greatstone's coverage. Currently our AGENTS.md says "DM1 PC 3.4 English, CSB PC 3.4 English, DM2 Amiga, Theron's Quest, DM Nexus" but doesn't list all the variants we *could* support if we had the data.
+A canonical "Firestaff supports these game versions" matrix is derived from dmweb/greatstone's coverage. CSB support is limited to its original Atari ST, Amiga and FM Towns editions; the unofficial CSBWin port is reference material, not a Windows/DOS game-data target.
 
 ### 5. i18n-friendly item names
 

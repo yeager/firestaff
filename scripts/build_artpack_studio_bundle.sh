@@ -74,7 +74,10 @@ else
 fi
 "$PYTHON" -c 'import tkinter; from PIL import ImageTk'
 
-LOCALE_DIR="$ROOT/po/locale"
+GETTEXT_BUILD_DIR="$OUT_DIR/gettext"
+"$PYTHON" "$ROOT/tools/compile_gettext_catalogs.py" \
+  --source-dir "$ROOT/po" --output-dir "$GETTEXT_BUILD_DIR" --verify-template
+LOCALE_DIR="$GETTEXT_BUILD_DIR/locale"
 ADD_DATA_ARGS=()
 if [[ -d "$LOCALE_DIR" ]]; then
   case "$(uname -s)" in

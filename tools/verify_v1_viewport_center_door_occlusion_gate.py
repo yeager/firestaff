@@ -16,7 +16,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
 
 
 def line_no(text: str, offset: int) -> int:
@@ -136,14 +136,30 @@ def main() -> int:
         "m11_sample_viewport_cell(state, 3, 1, &cell)",
     ], "Firestaff D3R door-button side-lane occlusion")
 
+    callback_start, callback = find_function(
+        fire, "m11_dm1_f0128_execute_source_step")
+    require_in_order(callback, [
+        "M11_DM1_F0128_EXECUTE_DOOR_FRAME",
+        "M11_DM1_F0128_EXECUTE_DOOR_BUTTON",
+        "m11_draw_dm1_d3r_door_button(",
+        "m11_draw_dm1_center_door_buttons(",
+        "M11_DM1_F0128_EXECUTE_DOOR_MATERIAL",
+    ], "Firestaff callback-owned F0110 order")
+    require(callback,
+            "m11_draw_dm1_d3r_door_button(\n"
+            "                dispatch->state, dispatch->framebuffer,\n"
+            "                dispatch->framebufferWidth, dispatch->framebufferHeight,\n"
+            "                relForward, dispatch->cells);",
+            "Firestaff callback-owned D3R button call")
     draw_start, draw = find_function(fire, "m11_draw_viewport")
-    require(draw, "m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  maxVisibleForward, cells);", "Firestaff D3R button call")
+    if "m11_draw_dm1_d3r_door_button(" in draw:
+        raise AssertionError("viewport revives direct D3R F0110 replay")
     require(cmake, "NAME v1_viewport_center_door_occlusion_gate", "CMake test registration")
 
     print("V1 viewport center-door occlusion gate passed")
     print(f"- Firestaff nearest center-door helper: src/dm1/dm1_v1_viewport_3d_pc34_compat.c:{line_no(contract, helper_start)}")
     print(f"- Firestaff D3R side-button guard: {SRC}:{line_no(fire, d3r_start)}")
-    print(f"- Firestaff viewport call-site: {SRC}:{line_no(fire, draw_start)}")
+    print(f"- Firestaff callback call-site: {SRC}:{line_no(fire, callback_start)}")
     for pos, needle in [
         (red_d1_start, "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C("),
         (red_d2_start, "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C("),

@@ -909,7 +909,6 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
         requestedFilter);
     int restoreFilter = 0;
     int result;
-    int dm1_v20_active = m11_dm1_v20_presentation_active(gameView);
     const unsigned char* presented_frame = M11_Render_GetFramebuffer();
     int csb_v20_active = gameView &&
         gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
@@ -928,6 +927,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
             gameView, &csb_fmtowns_japanese_frame,
             &csb_fmtowns_japanese_width, &csb_fmtowns_japanese_height)) {
         M11_Render_SetV2PresentationActive(0);
+        M11_Render_SetModernPresentationActive(0);
         if (effectiveFilter != requestedFilter) {
             M11_Render_SetScaleFilter(effectiveFilter);
             restoreFilter = 1;
@@ -983,7 +983,13 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
 
     /* M12 persists V2.0 preferences globally, but those post-filters are
      * only valid for the DM1 V2.0 framebuffer route. */
-    M11_Render_SetV2PresentationActive(dm1_v20_active);
+    /* The renderer must retain the selected Modern render target instead of
+     * CPU-expanding it to the host drawable.  That keeps F10's resolution
+     * choice observable and bounds the filter chain on HiDPI displays.  The
+     * per-game filter owner still decides which effects are enabled. */
+    M11_Render_SetV2PresentationActive(m11_dm1_v20_presentation_active(gameView));
+    M11_Render_SetModernPresentationActive(
+        gameView && gameView->presentationMode != M12_PRESENTATION_V1_ORIGINAL);
     /* ReDMCSB DUNVIEW.C:3619-3638 draws DM1 inscriptions as hard-edged
      * M648 8x8 glyphs into the 320x200 viewport.  If the launcher's global
      * scaling filter is LINEAR, SDL smooths those glyphs during window
@@ -1170,6 +1176,34 @@ static int m11_running_from_macos_app_bundle(void)
 #else
     return 0;
 #endif
+}
+
+/* Resolve tracked runtime PO sources independently of the game-data tree.
+ * Installed packages set FIRESTAFF_LOCALE_DIR (or use the FHS location),
+ * while developer builds retain relative/source-tree fallbacks. */
+static int m11_load_po_domain(const char* domain,
+                              const char* language,
+                              const char* dataDir) {
+    char path[512];
+    const char* localeDir = getenv("FIRESTAFF_LOCALE_DIR");
+    if (!domain || !domain[0] || !language || !language[0]) return 0;
+    if (localeDir && localeDir[0] &&
+        snprintf(path, sizeof(path), "%s/%s.%s.po", localeDir,
+                 domain, language) > 0 && fs_po_load(path) > 0) return 1;
+    if (snprintf(path, sizeof(path), "/usr/share/firestaff/po/%s.%s.po",
+                 domain, language) > 0 && fs_po_load(path) > 0) return 1;
+    if (snprintf(path, sizeof(path), "po/%s.%s.po", domain, language) > 0 &&
+        fs_po_load(path) > 0) return 1;
+#ifdef FIRESTAFF_SOURCE_DIR
+    if (snprintf(path, sizeof(path), FIRESTAFF_SOURCE_DIR "/po/%s.%s.po",
+                 domain, language) > 0 && fs_po_load(path) > 0) return 1;
+#endif
+    /* Compatibility for older portable trees that placed po/ beside their
+     * selected data directory. New packages never install catalogs there. */
+    if (dataDir && dataDir[0] &&
+        snprintf(path, sizeof(path), "%s/po/%s.%s.po", dataDir,
+                 domain, language) > 0 && fs_po_load(path) > 0) return 1;
+    return 0;
 }
 
 /* Opt-in evidence capture for the actual post-present SDL surface. The
@@ -1672,6 +1706,49 @@ static int m11_wait_for_entrance_credits_done(unsigned int wait_ticks,
     return M11_ENTRANCE_COMMAND_NONE;
 }
 
+/* TITLE.C/ENTRANCE.C compose their authentic indexed page before scaling.
+ * Route that completed page through the selected presentation target while
+ * retaining the source palette.  Calling the 320x200 presenter directly
+ * made Original correct but silently ignored Modern's resolution choice. */
+static int m11_present_dm1_startup_special_palette(
+    const M11_GameViewState* gameView,
+    const unsigned char* framebuffer,
+    int specialPalette) {
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    int result;
+
+    if (!gameView || !framebuffer || specialPalette < 0) return 0;
+    M11_Render_SetV2PresentationActive(
+        m11_dm1_v20_presentation_active(gameView));
+    M11_Render_SetModernPresentationActive(
+        gameView->presentationMode != M12_PRESENTATION_V1_ORIGINAL);
+    if (gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        (void)M11_GameView_PresentationTarget(
+            gameView->presentationMode,
+            gameView->presentationWidth,
+            gameView->presentationHeight,
+            &targetW,
+            &targetH);
+        result = M11_Render_PresentEpxIndexedToResolutionWithSpecialPalette(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+            targetW, targetH, specialPalette);
+    } else if (M11_GameView_PresentationTarget(
+                   gameView->presentationMode,
+                   gameView->presentationWidth,
+                   gameView->presentationHeight,
+                   &targetW,
+                   &targetH)) {
+        result = M11_Render_PresentIndexedToResolutionWithSpecialPalette(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
+            targetW, targetH, specialPalette);
+    } else {
+        result = M11_Render_PresentIndexedWithSpecialPalette(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, specialPalette);
+    }
+    return result == M11_RENDER_OK;
+}
+
 static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
                                              unsigned char* framebuffer,
                                              const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
@@ -1695,10 +1772,10 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     M11_AssetLoader_Blit(credits, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
                          0, 0, -1);
     presentationStartedMs = SDL_GetTicks();
-    M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
-                                                M11_FB_WIDTH,
-                                                M11_FB_HEIGHT,
-                                                command.special_palette);
+    if (!m11_present_dm1_startup_special_palette(
+            gameView, framebuffer, command.special_palette)) {
+        return M11_ENTRANCE_COMMAND_NONE;
+    }
     waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
                                                     command.vblank_delay_ms,
                                                     presentationStartedMs);
@@ -1776,6 +1853,14 @@ static EntranceCompatKey m11_entrance_compat_key_from_sdl_key(int keyCode) {
 
 static int m11_entrance_dispatch_source_locked_key_command(int keyCode) {
     return ENTRANCE_Compat_DispatchKeyCommand(m11_entrance_compat_key_from_sdl_key(keyCode));
+}
+
+/* Public focused-test and host-input entry point. Keep this wrapper on the
+ * SDL-keycode translation route used by the entrance wait loop; linking a
+ * test directly to ENTRANCE_Compat_DispatchKeyCommand would incorrectly pass
+ * SDLK_RETURN/SDLK_ESCAPE values as EntranceCompatKey enum values. */
+int M11_Entrance_DispatchSourceLockedKeyCommand(int keyCode) {
+    return m11_entrance_dispatch_source_locked_key_command(keyCode);
 }
 
 static M11_EntranceCommand m11_entrance_command_path_from_source_command(int commandId) {
@@ -1906,10 +1991,11 @@ static int m11_play_redmcsb_entrance_transition(
                 return 0;
             }
             presentationStartedMs = SDL_GetTicks();
-            M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
-                                                        M11_FB_WIDTH,
-                                                        M11_FB_HEIGHT,
-                                                        command.entrance_palette);
+            if (!m11_present_dm1_startup_special_palette(
+                    gameView, framebuffer, command.entrance_palette)) {
+                free(dungeonFrame);
+                return 0;
+            }
         }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
             M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
@@ -2226,6 +2312,14 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
     if (skipSwoosh) return;
+    /* SWSH is a source-owned prelude, not a V2 post-process input.  A prior
+     * Modern session can otherwise leave its target/palette state latched
+     * until the first ordinary game frame, causing this 320x200 RGBA logo to
+     * be scaled or filtered through stale presentation state and occasionally
+     * disappear during the immediate title handoff.  The selected V2 mode is
+     * restored by m11_present_game_frame once the game view is active. */
+    M11_Render_SetV2PresentationActive(0);
+    M11_Render_SetModernPresentationActive(0);
     memset(&logoPayload, 0, sizeof(logoPayload));
     memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&csbBoot, 0, sizeof(csbBoot));
@@ -2531,10 +2625,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         if (command.palette_before_pre_present_delay &&
             titlePalette != stepPalette) {
             presentationStartedMs = SDL_GetTicks();
-            if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
-                                                            M11_FB_WIDTH,
-                                                            M11_FB_HEIGHT,
-                                                            stepPalette) != M11_RENDER_OK) {
+            if (!m11_present_dm1_startup_special_palette(
+                    gameView, framebuffer, stepPalette)) {
                 break;
             }
         }
@@ -2589,10 +2681,8 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
          * VGA_PALETTE_PC34_SPECIAL_TITLE for every step and painted
          * the "PRESENTS" word red instead of plain white. */
         presentationStartedMs = SDL_GetTicks();
-        if (M11_Render_PresentIndexedWithSpecialPalette(framebuffer,
-                                                        M11_FB_WIDTH,
-                                                        M11_FB_HEIGHT,
-                                                        stepPalette) != M11_RENDER_OK) {
+        if (!m11_present_dm1_startup_special_palette(
+                gameView, framebuffer, stepPalette)) {
             break;
         }
         if (outPlayedAnyFrame) {
@@ -3039,10 +3129,10 @@ static int m11_dm1_selected_launch_mark_failed(void* user) {
 /* The HMA-240 FM Towns executable owns DO_TITLE_ANIMATION and DYNAMENU.
  * It must never enter the PC34 SWSH -> TITLE -> ENTRANCE transaction merely
  * because both releases share the dm1 catalog slot.  The selected Towns
- * data is opened through the native route; English EDM title frames are
- * consumed by the verified legacy runtime path, while Japanese P3/TBIOS and
- * the native DYNAMENU remain fail-closed until their own consumers exist.
- * See dm1_v1_fmtowns_startup.c and TODO DM1-FMTOWNS-STARTUP-ANIMATION-MENU. */
+ * data is opened through the native route. Both EDM and JDM title frames use
+ * their hash/fingerprint-admitted executable owners; the selected edition's
+ * DATA/JDATA dungeon is then consumed directly from the same ZIP-held disc.
+ * See dm1_v1_fmtowns_startup.c and the FM Towns parity evidence. */
 static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
                                        const M12_MenuEntry* entry) {
     const M12_AssetVersionStatus* version;
@@ -3095,11 +3185,14 @@ static int m11_play_dm1_fmtowns_title_if_available(
     const DM1_V1_FmtownsStartupReceipt *plan;
     const M11_AssetSlot *title;
     unsigned char *framebuffer;
+    uint8_t titlePaletteRgb6[256][3];
     unsigned int frame;
+    unsigned int waitedVblanks = 0u;
     if (outPlayedAnyFrame) *outPlayedAnyFrame = 0;
     if (!gameView || !gameView->dm1FmtownsStartupReceiptValid ||
         !gameView->assetLoader.legacyDm1 ||
-        !gameView->dm1FmtownsStartupReceipt.game_title_animation_plan_verified) {
+        !gameView->dm1FmtownsStartupReceipt.game_title_animation_plan_verified ||
+        !gameView->dm1FmtownsStartupReceipt.game_title_palettes_verified) {
         return 0;
     }
     plan = &gameView->dm1FmtownsStartupReceipt;
@@ -3120,22 +3213,39 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * receipt-bound compositor for M11 as well, so the PRESENTS strip and
      * final TITLE_MASTER cannot diverge from the exact P3 plan verified in
      * dm1_v1_fmtowns_title.c.  EDM.EXP +0xc3f0 first flips PRESENTS by
-     * itself; +0xc563 then waits once per prepared zoom bitmap.  FM Towns
-     * video is 60 Hz, so 17 ms is the nearest whole-millisecond host wait.
+     * itself; +0xc563 then waits once per prepared zoom bitmap. PRESENTS
+     * and TITLE_MASTER do not add another per-frame wait. Cumulative 60 Hz
+     * deadlines avoid the drift from rounding every blank to 17 ms.
      */
     for (frame = 0u; frame <= DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
+        const uint8_t (*titlePalette)[3] =
+            frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME
+                ? plan->game_title_presents_palette_rgb6
+                : plan->game_title_zoom_palette_rgb6;
         if (!dm1_v1_fmtowns_title_compose_frame(
                 plan, title->pixels, title->width, title->height, frame,
                 framebuffer, (size_t)M11_FB_BYTES)) {
             return 0;
         }
+        memset(titlePaletteRgb6, 0, sizeof(titlePaletteRgb6));
+        memcpy(titlePaletteRgb6, titlePalette, 16u * 3u);
+        if (M11_Render_SetIndexedPaletteRgb6(titlePaletteRgb6) != M11_RENDER_OK)
+            return 0;
         if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                       M11_FB_HEIGHT) != M11_RENDER_OK) return 0;
         if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
-        if (m11_delay_ms_with_intro_event_pump(17u)) return 1;
+        if (dm1_v1_fmtowns_title_frame_wait_vblanks(frame)) {
+            ++waitedVblanks;
+            if (m11_delay_ms_with_intro_event_pump(
+                    dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
+                return 1;
+            }
+        }
     }
     /* EDM.EXP +0xc5b9 performs two final VBlank waits before returning. */
-    (void)m11_delay_ms_with_intro_event_pump(34u);
+    (void)m11_delay_ms_with_intro_event_pump(
+        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks + 1u) +
+        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks + 2u));
     return 1;
 }
 
@@ -3606,6 +3716,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->gameId         = NULL;
     opts->architectureOverride = -1;
     opts->csbFmtownsJapanese = 0;
+    opts->dm1FmtownsJapanese = 0;
     opts->directLaunch   = 0;
     /* --menu is an explicit CLI opt-out from direct launch.  Leaving this
      * field uninitialised made an ordinary `--game dm1` depend on stack
@@ -3759,6 +3870,26 @@ static int m11_apply_csb_fmtowns_japanese_override(
             strcmp(version->versionId, "fmtowns-ja") != 0) continue;
         menuState->gameOptions[game_index].architectureIndex = M12_ARCH_FM_TOWNS;
         menuState->gameOptions[game_index].versionIndex = (int)version_index;
+        return 1;
+    }
+    return 0;
+}
+
+static int m11_apply_dm1_fmtowns_japanese_override(
+    M12_StartupMenuState* menuState)
+{
+    size_t version_count;
+    size_t version_index;
+    if (!menuState) return 0;
+    version_count = M12_AssetStatus_GetVersionCount("dm1");
+    for (version_index = 0u; version_index < version_count; ++version_index) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                       version_index);
+        if (!version || !version->matched || !version->versionId ||
+            strcmp(version->versionId, "fmtowns-ja") != 0) continue;
+        menuState->gameOptions[0].architectureIndex = M12_ARCH_FM_TOWNS;
+        menuState->gameOptions[0].versionIndex = (int)version_index;
         return 1;
     }
     return 0;
@@ -3980,7 +4111,9 @@ static void m11_phase_a_print_boot_probe_receipt(
     if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
         dm1_v1_fmtowns_startup_receipt_is_native(
             &gameView->dm1FmtownsStartupReceipt)) {
-        platformHandoff = "fmtowns-tmenu-edm";
+        platformHandoff =
+            gameView->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP
+                ? "fmtowns-tmenu-jdm" : "fmtowns-tmenu-edm";
         fmtownsProgram = gameView->dm1FmtownsStartupReceipt.game_program_name;
         fmtownsProgramMd5 = gameView->dm1FmtownsStartupReceipt.game_program_md5;
         fmtownsMenuSelectsProgram =
@@ -6639,6 +6772,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 2;
         }
     }
+    if (o->dm1FmtownsJapanese) {
+        if (!o->gameId || strcmp(o->gameId, "dm1") != 0 ||
+            !m11_apply_dm1_fmtowns_japanese_override(&menuState)) {
+            fprintf(stderr,
+                    "firestaff: --dm1-fmtowns-ja requires matched DM1 FM Towns Japanese media\n");
+            free(launcherFramebuffer);
+            M11_Render_Shutdown();
+            return 2;
+        }
+    }
     if (o->dm2EnglishCompanionPath && o->dm2EnglishCompanionPath[0] != '\0') {
         snprintf(menuState.dm2EnglishCompanionPath,
                  sizeof(menuState.dm2EnglishCompanionPath), "%s",
@@ -6697,22 +6840,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             "ko", "nl", "no", "pl", "pt", "ru", "tr", "id"
         };
         const char* langCode = "en";
-        int langIdx = M12_Config_GetAutoLanguageIndex();
+        /* The menu state already resolves AUTO to the host locale and stores
+         * an explicit user selection verbatim. Using GetAutoLanguageIndex()
+         * here ignored a language chosen in the startup menu for every
+         * in-game domain. */
+        int langIdx = menuState.settings.languageIndex;
         if (langIdx >= 0 && langIdx < 20) langCode = langCodes[langIdx];
+        (void)m11_load_po_domain("startup-menu", langCode, o->dataDir);
+        /* The startup catalog cannot serve in-game strings: the loader is
+         * intentionally domain-isolated. Load every native game domain once
+         * so Original and Modern can translate source-owned presentation text
+         * without tying localization availability to the selected launch
+         * route. Missing or empty entries fall through to the exact retail
+         * source msgid. */
         {
-            char poPath[512];
-            snprintf(poPath, sizeof(poPath), "%s/po/startup-menu.%s.po",
-                     o->dataDir ? o->dataDir : ".", langCode);
-            if (fs_po_load(poPath) <= 0) {
-                char relPath[128];
-                snprintf(relPath, sizeof(relPath), "po/startup-menu.%s.po", langCode);
-                if (fs_po_load(relPath) <= 0) {
-#ifdef FIRESTAFF_SOURCE_DIR
-                    snprintf(poPath, sizeof(poPath),
-                             FIRESTAFF_SOURCE_DIR "/po/startup-menu.%s.po", langCode);
-                    fs_po_load(poPath);
-#endif
-                }
+            static const char* gameDomains[] = {
+                "dm1", "csb", "dm2", "nexus", "theron"
+            };
+            size_t domainIndex;
+            for (domainIndex = 0;
+                 domainIndex < sizeof(gameDomains) / sizeof(gameDomains[0]);
+                 ++domainIndex) {
+                (void)m11_load_po_domain(gameDomains[domainIndex], langCode,
+                                         o->dataDir);
             }
         }
     }

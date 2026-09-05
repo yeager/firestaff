@@ -333,6 +333,60 @@ int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
     }
 }
 
+int F0708_MOVEMENT_IsSquarePassableForCreature_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int creatureAttributes,
+    int doorVertical,
+    int allowImaginary)
+{
+    const struct DungeonMapDesc_Compat* map;
+    unsigned char squareByte;
+    int elementType;
+    int doorState;
+    int creatureHeight;
+
+    if (!dungeon || !dungeon->tilesLoaded || !dungeon->tiles) return 0;
+    if (mapIndex < 0 || mapIndex >= (int)dungeon->header.mapCount) return 0;
+    map = &dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) return 0;
+    if (!dungeon->tiles[mapIndex].squareData) return 0;
+
+    squareByte = dungeon->tiles[mapIndex].squareData[mapX * map->height + mapY];
+    elementType = (squareByte & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    switch (elementType) {
+        case DUNGEON_ELEMENT_CORRIDOR:
+        case DUNGEON_ELEMENT_TELEPORTER:
+            return 1;
+        case DUNGEON_ELEMENT_WALL:
+        case DUNGEON_ELEMENT_STAIRS:
+            return 0;
+        case DUNGEON_ELEMENT_PIT:
+            /* GROUP.C F0203:1497-1503: a closed pit is floor; an open pit
+             * admits only levitating creatures (or an explicitly allowed
+             * imaginary-pit route). */
+            if ((squareByte & 0x08u) == 0u) return 1;
+            if ((creatureAttributes & 0x0020) != 0) return 1;
+            return allowImaginary && ((squareByte & 0x01u) != 0u);
+        case DUNGEON_ELEMENT_FAKEWALL:
+            if ((squareByte & 0x04u) != 0u) return 1;
+            return allowImaginary && ((squareByte & 0x01u) != 0u);
+        case DUNGEON_ELEMENT_DOOR:
+            /* GROUP.C F0203:1540-1551: horizontal doors use threshold 1;
+             * vertical doors use M051_CREATURE_HEIGHT (Attributes bits 7-8).
+             * Non-material creatures ignore the aperture entirely. */
+            if ((creatureAttributes & 0x0040) != 0) return 1;
+            doorState = squareByte & 0x07;
+            if (doorState == 5) return 1;
+            creatureHeight = (creatureAttributes >> 7) & 0x03;
+            return doorState <= (doorVertical ? creatureHeight : 1);
+        default:
+            return 0;
+    }
+}
+
 
 int F0709_MOVEMENT_BuildIntermediaryProjectileImpactCells_Compat(
     int sourceMapX,

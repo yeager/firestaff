@@ -50,7 +50,7 @@ static void prime_verified_profile(CSB_V1_BootProfile *profile,
     profile->assets_verified = 1;
     profile->graphics_verified = 1;
     profile->dungeon_verified = 1;
-    profile->variant_id = CSB_V1_VARIANT_PC34_EN;
+    profile->variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 }
 

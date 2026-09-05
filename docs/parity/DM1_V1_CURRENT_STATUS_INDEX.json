@@ -79,12 +79,14 @@
       "id": "dm1_v1_resurrection_rename_live_ui",
       "priority": "P3",
       "status": "ACTIVE_BOUNDED",
-      "summary": "F0281 rename-panel contract is source-locked, but live M11 prompt wiring, real C027 panel rendering/input handoff, duplicate-name feedback, and paired evidence remain open.",
+      "summary": "The live M11 C161-to-F0281 route, authentic C027 panel, M653 text/cursor rendering, keyboard/pointer input handoff, duplicate-name rejection, confirmation, reincarnation effects, and transient-panel cleanup are runtime-tested. Only an authenticated same-state original pixel/cadence pair remains open.",
       "latestEvidence": [
-        "TODO.md",
-        "docs/FINAL_GAPS.md"
+        "tests/test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34.c",
+        "tests/test_m11_dm1_hoc_no_fallback_panel.c",
+        "tests/test_m11_dm1_hoc_rename_font_source_gate.c",
+        "tests/test_m11_overlay_command_queue_block.c"
       ],
-      "nextAction": "Wire the live M11 C161->F0281 prompt path and add runtime/pixel evidence after capture routing is stable."
+      "nextAction": "Capture the authenticated original C161/F0281 C027 panel at the same name/title/cursor states and promote only exact paired pixel and cadence results."
     },
     {
       "id": "dm1_v1_original_save_roundtrip",

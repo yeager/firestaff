@@ -74,7 +74,6 @@ data files.
 | Amiga | 3.5 | EN/FR/GE | ⚪ | — | — | DMWeb lists multilingual v3.5 media, v3.5 language-choice/entrance screenshots with Quit button, and v3.5 multilingual Ctrl-Q/Ctrl-A entrance quit behavior; needs separate canonical hash classification |
 | FM-Towns | 3.1 | EN | 🔵 | `c_csb_fmtowns_en/` | — | 728-item GRAPHICS.DAT; DMWeb page: Japan BIN/CUE CD line, English screenshots, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow input |
 | FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | DMWeb page: Japan v3.1, release 1990-12-14, ¥9800, Japanese screenshots, Champion Editor/portrait-loading screens, redump.org and DMFiles BIN/CUE sources |
-| PC | 3.4 | EN | ✅ | — | yes (435,076 B) | Paul Stevens' unofficial Windows port (`CSBwin`) is what our `src/csb/` is based on; the underlying game is Atari ST 2.0. The PC "version" is a port, not a separate FTL release. |
 | PC-9801 | 3.1 | JP | ❌ | `c_csb_pc98/` | — | Preservation only. No CSB scanner selection, startup, game-view or input route; the row retains the DMWeb HDM/floppy provenance. |
 | Apple IIGS | — | — | ❌ | not released | — | FTL never ported CSB to IIGS |
 
@@ -132,11 +131,11 @@ future hashes or launch profiles.
 | Game | Verified working | Source-locked | Greatstone-extracted | Publicly documented | Total known |
 |---|---|---|---|---|---|
 | DM1 | 2 (PC 3.4 EN + Multilingual) | 5 (Atari ST) | 22 (Amiga/PC-98/Apple IIGS/FM-Towns/X68000/SNES) | 0 | 22+ |
-| CSB | 2 (CSBwin PC port + Amiga 3.5 EN hash set) | 2 (Atari ST, with local v2.0 hashes) | 7 (Amiga 3.1/3.3, PC-98, FM-Towns, X68000) | 1 (Amiga 3.5 multilingual) | 12 |
+| CSB | 1 (Amiga 3.5 EN hash set) | 2 (Atari ST, with local v2.0 hashes) | 7 (Amiga 3.1/3.3, PC-98, FM-Towns, X68000) | 1 (Amiga 3.5 multilingual) | 11 |
 | DM2 | 1 (PC EN) | 0 | 13 (Amiga/Mac/PC-98/PS/V/PC-9821/Sega-CD/FM-Towns/Demo/Beta) | 0 | 13+ |
 | TQ | 2 (JP + EN Track 02 launch/readiness) | 0 | 0 | 0 | 2 |
 | Nexus | 0 | 0 | 1 (Saturn JP) | 0 | 1 |
-| **Total** | **7** | **7** | **43** | **1** | **50+** |
+| **Total** | **6** | **7** | **43** | **1** | **49+** |
 
 ## What we'd need to unlock more 1️⃣/2️⃣ coverage
 

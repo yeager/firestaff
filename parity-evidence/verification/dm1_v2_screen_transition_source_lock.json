@@ -44,7 +44,7 @@
     "g_trans",
     "g_screen_fade"
   ],
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "dm1_v2_screen_transition compatibility bridge",
   "status": "passed"
 }

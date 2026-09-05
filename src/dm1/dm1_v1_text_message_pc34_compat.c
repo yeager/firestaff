@@ -80,6 +80,32 @@ static void dm1_v1_text_create_new_row(DM1_V1_TextMessageState* state) {
 }
 
 /* ── Internal: F0046 PrintString ────────────────────────────────────── */
+static size_t dm1_v1_text_utf8_glyph_count(const char* text) {
+    size_t count = 0u;
+    const unsigned char* cursor = (const unsigned char*)text;
+    if (!cursor) return 0u;
+    while (*cursor) {
+        size_t bytes = 1u;
+        if ((*cursor & 0xe0u) == 0xc0u && cursor[1] != 0u &&
+            (cursor[1] & 0xc0u) == 0x80u) {
+            bytes = 2u;
+        } else if ((*cursor & 0xf0u) == 0xe0u && cursor[1] != 0u &&
+                   cursor[2] != 0u && (cursor[1] & 0xc0u) == 0x80u &&
+                   (cursor[2] & 0xc0u) == 0x80u) {
+            bytes = 3u;
+        } else if ((*cursor & 0xf8u) == 0xf0u && cursor[1] != 0u &&
+                   cursor[2] != 0u && cursor[3] != 0u &&
+                   (cursor[1] & 0xc0u) == 0x80u &&
+                   (cursor[2] & 0xc0u) == 0x80u &&
+                   (cursor[3] & 0xc0u) == 0x80u) {
+            bytes = 4u;
+        }
+        cursor += bytes;
+        ++count;
+    }
+    return count;
+}
+
 static void dm1_v1_text_print_string(DM1_V1_TextMessageState* state,
                                      int color, const char* text) {
     DM1_V1_MessageRow* row;
@@ -102,7 +128,9 @@ static void dm1_v1_text_print_string(DM1_V1_TextMessageState* state,
 
     row->color = color;
     row->expirationTime = state->gameTime + DM1_V1_MESSAGE_ROW_EXPIRATION_TICKS;
-    state->cursorColumn += (int)addLen * DM1_V1_TEXT_CHARACTER_WIDTH;
+    state->cursorColumn +=
+        (int)dm1_v1_text_utf8_glyph_count(text) *
+        DM1_V1_TEXT_CHARACTER_WIDTH;
 }
 
 /* ── Public API ─────────────────────────────────────────────────────── */
@@ -212,7 +240,8 @@ void dm1_v1_text_print_message(DM1_V1_TextMessageState* state,
             }
             word[wordIdx] = '\0';
 
-            if (state->cursorColumn / DM1_V1_TEXT_CHARACTER_WIDTH + wordIdx > maxCol) {
+            if (state->cursorColumn / DM1_V1_TEXT_CHARACTER_WIDTH +
+                    (int)dm1_v1_text_utf8_glyph_count(word) > maxCol) {
                 state->cursorColumn = DM1_V1_MESSAGE_CONTINUATION_INDENT;
                 dm1_v1_text_create_new_row(state);
             }
@@ -232,6 +261,136 @@ void dm1_v1_text_print_character(DM1_V1_TextMessageState* state,
 
 void dm1_v1_text_print_linefeed(DM1_V1_TextMessageState* state) {
     dm1_v1_text_print_message(state, DM1_V1_COLOR_BLACK, "\n");
+}
+
+int dm1_v1_text_print_spell_failure_f0410(
+    DM1_V1_TextMessageState* state,
+    long gameTime,
+    int color,
+    int printsLineFeed,
+    const char* championName,
+    const char* messageBeforeSkill,
+    const char* baseSkillName,
+    const char* messageAfterSkill) {
+    if (!state || !championName || championName[0] == '\0' ||
+        !messageBeforeSkill) {
+        return 0;
+    }
+    dm1_v1_text_set_game_time(state, gameTime);
+    if (printsLineFeed) dm1_v1_text_print_linefeed(state);
+    dm1_v1_text_print_message(state, color, championName);
+    if (messageBeforeSkill[0] != '\0')
+        dm1_v1_text_print_message(state, color, messageBeforeSkill);
+    if (baseSkillName && baseSkillName[0] != '\0')
+        dm1_v1_text_print_message(state, color, baseSkillName);
+    if (messageAfterSkill && messageAfterSkill[0] != '\0')
+        dm1_v1_text_print_message(state, color, messageAfterSkill);
+    return 1;
+}
+
+int dm1_v1_text_print_message_after_replacements_f0381(
+    DM1_V1_TextMessageState* state,
+    long gameTime,
+    const char* sourceText,
+    const char* championName) {
+    char output[DM1_V1_MESSAGE_MAX_LENGTH];
+    size_t sourceIndex = 0u;
+    size_t outputIndex = 0u;
+
+    if (!state || !sourceText || sourceText[0] == '\0') return 0;
+    while (sourceText[sourceIndex] != '\0') {
+        if (sourceText[sourceIndex] == '@') {
+            size_t nameLength;
+            if (sourceText[sourceIndex + 1u] != 'p' || !championName ||
+                championName[0] == '\0') {
+                return 0;
+            }
+            nameLength = strlen(championName);
+            if (outputIndex != 0u && output[outputIndex - 1u] != '\n') {
+                if (outputIndex + 1u >= sizeof(output)) return 0;
+                output[outputIndex++] = ' ';
+            }
+            if (nameLength + outputIndex + 1u >= sizeof(output)) return 0;
+            memcpy(output + outputIndex, championName, nameLength);
+            outputIndex += nameLength;
+            output[outputIndex++] = ' ';
+            sourceIndex += 2u;
+            continue;
+        }
+        if (outputIndex + 1u >= sizeof(output)) return 0;
+        output[outputIndex++] = sourceText[sourceIndex++];
+    }
+    output[outputIndex] = '\0';
+    dm1_v1_text_set_game_time(state, gameTime);
+    dm1_v1_text_print_linefeed(state);
+    dm1_v1_text_print_message(state, DM1_V1_COLOR_CYAN, output);
+    return 1;
+}
+
+int dm1_v1_text_expand_l10n_template(
+    const char* textTemplate,
+    const char* championName,
+    const char* skillName,
+    char* output,
+    size_t outputSize) {
+    static const char championToken[] = "{champion}";
+    static const char skillToken[] = "{skill}";
+    size_t inputIndex = 0u;
+    size_t outputIndex = 0u;
+
+    if (!textTemplate || !output || outputSize == 0u) return 0;
+    while (textTemplate[inputIndex] != '\0') {
+        const char* replacement = NULL;
+        size_t tokenLength = 0u;
+        size_t replacementLength;
+        if (strncmp(textTemplate + inputIndex, championToken,
+                    sizeof(championToken) - 1u) == 0) {
+            replacement = championName;
+            tokenLength = sizeof(championToken) - 1u;
+        } else if (strncmp(textTemplate + inputIndex, skillToken,
+                           sizeof(skillToken) - 1u) == 0) {
+            replacement = skillName;
+            tokenLength = sizeof(skillToken) - 1u;
+        } else if (textTemplate[inputIndex] == '{') {
+            output[0] = '\0';
+            return 0;
+        }
+        if (replacement) {
+            if (replacement[0] == '\0') {
+                output[0] = '\0';
+                return 0;
+            }
+            replacementLength = strlen(replacement);
+            if (outputIndex + replacementLength >= outputSize) {
+                output[0] = '\0';
+                return 0;
+            }
+            memcpy(output + outputIndex, replacement, replacementLength);
+            outputIndex += replacementLength;
+            inputIndex += tokenLength;
+        } else {
+            if (outputIndex + 1u >= outputSize) {
+                output[0] = '\0';
+                return 0;
+            }
+            output[outputIndex++] = textTemplate[inputIndex++];
+        }
+    }
+    output[outputIndex] = '\0';
+    return 1;
+}
+
+int dm1_v1_text_print_localized_message(
+    DM1_V1_TextMessageState* state,
+    long gameTime,
+    int color,
+    int printsLineFeed,
+    const char* text) {
+    if (!state || !text || text[0] == '\0') return 0;
+    dm1_v1_text_set_game_time(state, gameTime);
+    if (printsLineFeed) dm1_v1_text_print_linefeed(state);
+    dm1_v1_text_print_message(state, color, text);
+    return 1;
 }
 
 void dm1_v1_text_set_game_time(DM1_V1_TextMessageState* state, long gameTime) {

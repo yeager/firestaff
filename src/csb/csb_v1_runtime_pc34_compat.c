@@ -17,6 +17,8 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_inscription_presentation.h"
+#include "csb_v1_f0145_f0148_effective_group_owner_pc34_compat.h"
 #include "csb_v1_f0247_launcher_materialization_pc34_compat.h"
 #include "csb_v1_f0247_launcher_rng_pc34_compat.h"
 #include "csb_v1_f0248_endgame_runtime_pc34_compat.h"
@@ -986,7 +988,7 @@ static int csb_v1_runtime_skin_cache_record_lookup(
  * hash-based so files in arbitrary subdirs (e.g. Meynaf FR hard-disk
  * layouts, CSB expansion sets) are found. */
 static const char *const g_csb_graphics_hashes[] = {
-    "61fbfd56887c94adc26888a9491c6611", /* CSB PC 3.4 English GRAPHICS.DAT */
+    "61fbfd56887c94adc26888a9491c6611", /* CSB Amiga 3.1 multilingual GRAPHICS.DAT */
     "21197b1d4994fd835c403d5a33dcac2b", /* CSB Amiga 3.1 English GRAPHICS.DAT */
     "ebf6a57af3f27782e358c0490bfd2f2e", /* CSB Atari ST 2.0/2.1 English */
     "e0ce7ac5160ca5540e90cf09ab9fad49", /* CSB Atari ST 2.x hard-disk */
@@ -1017,17 +1019,17 @@ static const CSB_V1_VariantInfo g_csb_variants[CSB_V1_VARIANT_COUNT] = {
         "",
         "6695d2acebce49f95db1d8f3a5c733de"
     },
-    [CSB_V1_VARIANT_PC34_EN] = {
-        CSB_V1_VARIANT_PC34_EN,
-        "PC DOS 3.4 English",
+    [CSB_V1_VARIANT_REFERENCE_I34_EN] = {
+        CSB_V1_VARIANT_REFERENCE_I34_EN,
+        "Legacy PC-shaped reference fixture (not a CSB release)",
         "MEDIA278:P20JA_P20JB",
         "61fbfd56887c94adc26888a9491c6611",
         "61fbfd56887c94adc26888a9491c6611",
         "6695d2acebce49f95db1d8f3a5c733de"
     },
-    [CSB_V1_VARIANT_PC34_MULTI] = {
-        CSB_V1_VARIANT_PC34_MULTI,
-        "PC DOS 3.4 Multilanguage",
+    [CSB_V1_VARIANT_REFERENCE_I34_MULTI] = {
+        CSB_V1_VARIANT_REFERENCE_I34_MULTI,
+        "Legacy multilingual reference fixture (not a CSB release)",
         "MEDIA278:I34E_I34M",
         "cefaddfdf5651df2c91f61b5611a8362",
         "cefaddfdf5651df2c91f61b5611a8362",
@@ -1379,8 +1381,6 @@ CSB_V1_VariantId csb_v1_runtime_variant_from_hint(const char *version_hint)
         const char *hint;
         CSB_V1_VariantId id;
     } known_hints[] = {
-        { "pc34_en",      CSB_V1_VARIANT_PC34_EN },
-        { "pc34_multi",   CSB_V1_VARIANT_PC34_MULTI },
         { "st20_en",      CSB_V1_VARIANT_ST20_EN },
         { "st21_en",      CSB_V1_VARIANT_ST21_EN },
         { "amiga35_en",   CSB_V1_VARIANT_AMIGA35_EN },
@@ -4100,6 +4100,21 @@ static int csb_v1_runtime_stage_openroom_text_message(
     return 1;
 }
 
+int csb_v1_runtime_text_message_active_pc34(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    const CSB_V1_RuntimeTextMessageReceipt *receipt;
+    uint32_t age;
+    if (!profile) return 0;
+    receipt = &profile->csbwin_text_message_receipt;
+    if (!receipt->valid || !receipt->text[0]) return 0;
+    /* ReDMCSB TEXT.C F0046 assigns GameTime + 70 for all supported CSB
+     * Atari, Amiga and FM Towns media. Unsigned subtraction preserves the
+     * original timer behavior across the 32-bit game-time wrap. */
+    age = profile->game_time - receipt->source_game_time;
+    return age < 70u;
+}
+
 /* DSA.cpp TEXT@ decodes a DB2 thing directly, irrespective of its show bit.
  * Keep that distinct from the OpenRoom visibility receipt above. */
 static int csb_v1_runtime_dsa_read_text(void *user, uint32_t object_index,
@@ -4610,23 +4625,65 @@ static int csb_v1_runtime_creature_movement_sound_index(int creature_type)
     return (int)creature_sounds_movement[ordinal - 1];
 }
 
-/* ReDMCSB PC3.4 SOUND.C F0064 uses a three-step distance domain: loud is 3,
- * then one level falls for each square until SoftDistance.  Compute it at
- * the source-runtime boundary so the completed event retains the same value
- * that F0709 would receive; host audio never reconstructs distance later. */
+/* ReDMCSB SOUND.C F0064 is compiled differently for each original target.
+ * Resolve that platform-owned distance domain here; host audio must never
+ * reconstruct it from a generic PC-shaped value later.
+ *
+ * Atari ST (MEDIA413) passes 1 for the loud table and 0 for the soft table.
+ * CsbV1AudioRuntime reserves zero for an invalid request, so the shared event
+ * queue stores those as 2/1 respectively. M11 maps 2 -> source 1 and 1 ->
+ * source 0 before selecting the exact PSG amplitude table.
+ *
+ * FM Towns F31 passes a 1..127 scalar. Its source expression deliberately
+ * performs the division before multiplication; preserve that integer order.
+ * The I34 branch below exists only for non-product ReDMCSB reference fixtures.
+ */
 static int csb_v1_runtime_request_source_sound(
     CSB_V1_RuntimeProfile *profile,
     CsbV1AudioRequest *request)
 {
     const CsbV1Pc34SoundSpec *spec;
+    const CsbV1AtariStSoundSpec *st_spec;
     int distance;
     int volume;
 
     if (!profile || !request) return 0;
-    spec = csb_v1_audio_runtime_pc34_sound_spec(request->soundIndex);
-    if (!spec) return 0;
     distance = abs((int)request->mapX - profile->party_x) +
                abs((int)request->mapY - profile->party_y);
+
+    if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST21_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST_F20E ||
+        profile->variant_id == CSB_V1_VARIANT_ST_F20J) {
+        st_spec = csb_v1_audio_runtime_atari_st_sound_spec(
+            request->soundIndex);
+        if (!st_spec || distance >= (int)st_spec->softDistance) return 0;
+        request->volume = (int16_t)(
+            distance < (int)st_spec->loudDistance ? 2 : 1);
+        request->priority = st_spec->priority;
+        return csb_v1_audio_runtime_request(&profile->audio_runtime, request);
+    }
+
+    spec = csb_v1_audio_runtime_pc34_sound_spec(request->soundIndex);
+    if (!spec) return 0;
+
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        if (distance > (int)spec->softDistance) return 0;
+        if (distance < (int)spec->loudDistance) {
+            volume = 127;
+        } else {
+            int divisor = (int)spec->softDistance + 2 -
+                          (int)spec->loudDistance;
+            volume = (127 / divisor) *
+                     ((int)spec->softDistance + 1 - distance);
+        }
+        if (volume < 1) return 0;
+        request->volume = (int16_t)volume;
+        request->priority = spec->priority;
+        return csb_v1_audio_runtime_request(&profile->audio_runtime, request);
+    }
+
     if (distance > (int)spec->softDistance) return 0;
     volume = distance < (int)spec->loudDistance
         ? 3
@@ -12229,8 +12286,8 @@ int csb_v1_runtime_reincarnate_pending_mirror_candidate_source_compat(
             quarter_vitals = 1;
             reduce_statistics = 1;
             break;
-        case CSB_V1_VARIANT_PC34_EN:
-        case CSB_V1_VARIANT_PC34_MULTI:
+        case CSB_V1_VARIANT_REFERENCE_I34_EN:
+        case CSB_V1_VARIANT_REFERENCE_I34_MULTI:
             break;
         default:
             return 0;
@@ -12485,6 +12542,92 @@ int csb_v1_runtime_thing_type_is_floor_object(int thing_type)
            thing_type == THING_TYPE_JUNK;
 }
 
+int csb_v1_runtime_grab_floor_object_for_view_cell_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int view_cell,
+    uint16_t *out_thing)
+{
+    static const int step_east[4] = { 0, 1, 0, -1 };
+    static const int step_north[4] = { -1, 0, 1, 0 };
+    CSB_V1_DungeonData *dungeon;
+    uint16_t thing;
+    uint16_t pile_top = THING_NONE;
+    int map_x;
+    int map_y;
+    int wanted_cell;
+    int guard;
+
+    if (out_thing) *out_thing = THING_NONE;
+    if (!profile || !profile->dungeon_handle || !profile->party_state_valid ||
+        profile->leader_index < 0 || view_cell < 0 || view_cell > 3 ||
+        csb_v1_runtime_export_leader_hand_thing(profile) != THING_NONE) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    map_x = profile->party_x;
+    map_y = profile->party_y;
+    if (view_cell >= 2) {
+        CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+        CSB_V1_F0176CreatureOrdinalReceiptPc34 cell_receipt;
+
+        map_x += step_east[profile->party_dir & 3];
+        map_y += step_north[profile->party_dir & 3];
+        /* ReDMCSB CLIKVIEW.C F0373 performs three source-owned operations:
+         * F0175 finds the real C04 on the front square, F0264 reads the
+         * creature's G0243 MASK0x0020_LEVITATION attribute through F0144,
+         * and F0176 tests the clicked absolute cell.  Those exact receipts
+         * already belong to the CSB runtime, so a levitating group does not
+         * block the object while a non-levitating creature blocks only the
+         * cell it actually occupies. */
+        if (csb_v1_runtime_square_has_group(
+                dungeon, profile->current_level, map_x, map_y)) {
+            if (!csb_v1_runtime_f0175_group_thing_receipt_pc34(
+                    dungeon, profile->current_level, map_x, map_y,
+                    &group_receipt)) {
+                return 0;
+            }
+            if ((group_receipt.creature_attributes.attributes &
+                 CREATURE_ATTR_MASK_LEVITATION) == 0) {
+                wanted_cell = (profile->party_dir + view_cell) & 3;
+                if (!csb_v1_runtime_f0176_effective_creature_ordinal_receipt_pc34(
+                        profile, group_receipt.group_thing,
+                        profile->current_level, map_x, map_y, wanted_cell,
+                        &cell_receipt)) {
+                    return 0;
+                }
+                if (cell_receipt.creature_ordinal != 0) return 0;
+            }
+        }
+    }
+    wanted_cell = (profile->party_dir + view_cell) & 3;
+    thing = (uint16_t)csb_v1_dungeon_get_first_thing(
+        dungeon, profile->current_level, map_x, map_y);
+    for (guard = 0;
+         guard < 128 && thing != THING_NONE && thing != THING_ENDOFLIST;
+         ++guard) {
+        if (csb_v1_runtime_thing_type_is_floor_object(THING_GET_TYPE(thing)) &&
+            (int)THING_GET_CELL(thing) == wanted_cell &&
+            csb_v1_runtime_object_icon_index(profile, thing) >= 0) {
+            /* DUNVIEW.C F0115 overwrites G0292 for every drawn object, so
+             * the final matching chain member is the pile-top owner. */
+            pile_top = thing;
+        }
+        thing = csb_v1_runtime_next_thing(dungeon, thing);
+    }
+    if (pile_top == THING_NONE ||
+        !csb_v1_runtime_unlink_thing_from_square(
+            dungeon, pile_top, profile->current_level, map_x, map_y)) {
+        return 0;
+    }
+    profile->party_state.LeaderHandThing =
+        csb_v1_runtime_normalize_leader_hand_thing(pile_top);
+    if (profile->csbwin_gameblock2_summary_valid) {
+        profile->csbwin_object_in_hand = profile->party_state.LeaderHandThing;
+    }
+    if (out_thing) *out_thing = profile->party_state.LeaderHandThing;
+    return 1;
+}
+
 int csb_v1_runtime_object_overlay_info(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t object_thing,
@@ -12513,6 +12656,519 @@ int csb_v1_runtime_object_overlay_info(
         csb_v1_runtime_object_icon_index(profile, object_thing);
     out_info->subtype_index =
         csb_v1_runtime_object_subtype_index(profile, object_thing);
+    return 1;
+}
+
+int csb_v1_runtime_decode_scroll_text_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t scroll_thing,
+    char *out,
+    int out_size)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *scroll_record;
+    const uint8_t *text_record;
+    struct DungeonTextString_Compat text_string;
+    struct DungeonThings_Compat things;
+    uint16_t scroll_word;
+    uint16_t text_thing;
+    uint16_t text_word;
+    int scroll_type;
+    int scroll_size;
+    int text_type;
+    int text_size;
+    int text_index;
+    int text_offset;
+    int decoded;
+
+    if (out && out_size > 0) out[0] = '\0';
+    if (!profile || !out || out_size < 2 || !profile->dungeon_handle ||
+        THING_GET_TYPE(scroll_thing) != THING_TYPE_SCROLL) return 0;
+    dungeon = profile->dungeon_handle;
+    scroll_record = csb_v1_dungeon_get_thing_record(
+        dungeon, scroll_thing, &scroll_type, NULL, &scroll_size);
+    if (!scroll_record || scroll_type != THING_TYPE_SCROLL || scroll_size < 4) {
+        return 0;
+    }
+    scroll_word = csb_v1_runtime_read_u16(scroll_record + 2);
+    /* DEFS.H SCROLL reverses the Closed/TextStringThingIndex bitfield for
+     * X30/A31/A33/A35. Supported CSB Amiga media therefore owns bits 6..15;
+     * Atari and F31 own bits 0..9. */
+    if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+        text_index = (int)((scroll_word >> 6) & 0x03ffu);
+    } else {
+        text_index = (int)(scroll_word & 0x03ffu);
+    }
+    text_thing = (uint16_t)(((uint16_t)THING_TYPE_TEXTSTRING << 10) |
+                            (uint16_t)text_index);
+    text_record = csb_v1_dungeon_get_thing_record(
+        dungeon, text_thing, &text_type, NULL, &text_size);
+    if (!text_record || text_type != THING_TYPE_TEXTSTRING || text_size < 4 ||
+        dungeon->text_data_base < 0 || dungeon->text_word_count <= 0 ||
+        !dungeon->raw_data) return 0;
+    text_word = csb_v1_runtime_read_u16(text_record + 2);
+    if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+        text_offset = (int)(text_word & 0x1fffu);
+    } else {
+        text_offset = (int)((text_word >> 3) & 0x1fffu);
+    }
+    if (text_offset < 0 || text_offset >= dungeon->text_word_count ||
+        (long)dungeon->text_data_base +
+            (long)dungeon->text_word_count * 2L > dungeon->raw_size) return 0;
+    memset(&text_string, 0, sizeof(text_string));
+    memset(&things, 0, sizeof(things));
+    text_string.visible = 1;
+    text_string.textDataWordOffset = (unsigned short)text_offset;
+    things.textData = (unsigned short *)(void *)(dungeon->raw_data +
+                                                 dungeon->text_data_base);
+    things.textDataWordCount = dungeon->text_word_count;
+    things.textStrings = &text_string;
+    things.textStringCount = 1;
+    decoded = F0508_DUNGEON_DecodeTextStringThing_Compat(
+        &things, 0, DUNGEON_TEXT_TYPE_SCROLL | 0x8000, out, out_size);
+    if (decoded < 0 || !out[0]) {
+        out[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+int csb_v1_runtime_decode_visible_inscription_text_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t text_thing,
+    char *out,
+    int out_size)
+{
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *record;
+    struct DungeonTextString_Compat text_string;
+    struct DungeonThings_Compat things;
+    unsigned char glyphs[256];
+    uint16_t word;
+    int type, size, visible, offset, decoded, i, used = 0;
+    if (!out || out_size <= 0) return 0;
+    out[0] = '\0';
+    if (!profile || !(dungeon = profile->dungeon_handle) ||
+        THING_GET_TYPE(text_thing) != THING_TYPE_TEXTSTRING) return 0;
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, text_thing, &type, NULL, &size);
+    if (!record || type != THING_TYPE_TEXTSTRING || size < 4) return 0;
+    word = csb_v1_runtime_read_u16(record + 2);
+    if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+        visible = (word & 0x8000u) != 0;
+        offset = word & 0x1fffu;
+    } else {
+        visible = (word & 0x0001u) != 0;
+        offset = (word >> 3) & 0x1fffu;
+    }
+    if (!visible || offset < 0 || offset >= dungeon->text_word_count ||
+        dungeon->text_data_base < 0) return 0;
+    memset(&text_string, 0, sizeof(text_string));
+    memset(&things, 0, sizeof(things));
+    memset(glyphs, 0, sizeof(glyphs));
+    text_string.visible = 1;
+    text_string.textDataWordOffset = (uint16_t)offset;
+    things.textData = (uint16_t *)(void *)(dungeon->raw_data +
+                                           dungeon->text_data_base);
+    things.textDataWordCount = dungeon->text_word_count;
+    things.textStrings = &text_string;
+    things.textStringCount = 1;
+    decoded = F0508_DUNGEON_DecodeTextStringThing_Compat(
+        &things, 0, DUNGEON_TEXT_TYPE_INSCRIPTION, (char *)glyphs,
+        (int)sizeof(glyphs));
+    if (decoded < 0) return 0;
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        uint8_t unpacked[256];
+        size_t unpacked_size = 0u;
+        if (!csb_v1_f31j_unpack_f0168_text(
+                glyphs, (size_t)decoded + 1u, unpacked, sizeof(unpacked),
+                &unpacked_size) || unpacked_size + 1u > (size_t)out_size)
+            return 0;
+        memcpy(out, unpacked, unpacked_size + 1u);
+        return unpacked_size > 0u;
+    }
+    for (i = 0; i < (int)sizeof(glyphs) && used + 1 < out_size; ++i) {
+        unsigned int glyph = glyphs[i];
+        if (glyph == 0x81u || glyph == 0u) break;
+        if (glyph == 0x80u) out[used++] = '\n';
+        else if (glyph >= 0x20u && glyph < 0x7fu)
+            out[used++] = (char)glyph;
+        else return 0;
+    }
+    out[used] = '\0';
+    return used > 0;
+}
+
+int csb_v1_runtime_consume_water_potion_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index)
+{
+    CSB_V1_Champion *champion;
+    CSB_V1_Champion *leader;
+    CsbV1AudioRequest swallow;
+    uint16_t thing;
+    uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int old_weight;
+    int new_weight;
+    int water;
+
+    if (!profile || !profile->party_state_valid ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        profile->leader_index < 0 ||
+        profile->leader_index >= profile->party_state.ChampionCount ||
+        profile->leader_index >= CSB_V1_MAX_CHAMPIONS) return 0;
+    champion = &profile->party_state.Champions[champion_index];
+    leader = &profile->party_state.Champions[profile->leader_index];
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+        return 0;
+    }
+    thing = csb_v1_runtime_export_leader_hand_thing(profile);
+    if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_POTION ||
+        (csb_v1_runtime_object_allowed_slots(profile, thing) & 0x0001u) == 0) {
+        return 0;
+    }
+    record = csb_v1_runtime_mutable_thing_record(
+        profile->dungeon_handle, thing, &thing_type, &record_size);
+    if (!record || thing_type != THING_TYPE_POTION || record_size < 4) return 0;
+    word = csb_v1_runtime_read_u16(record + 2);
+    /* ReDMCSB PANEL.C F0349 C15 is the complete, non-random water-potion
+     * branch: +1600 water capped at 2048, then transform the same C08 record
+     * to C20 empty flask without clearing its retained Power byte. */
+    if (((word >> 8) & 0x7fu) != 15u) return 0;
+    old_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
+    if (old_weight <= 0 || leader->Load < old_weight) return 0;
+    water = champion->Water + 1600;
+    if (water > 2048) water = 2048;
+    champion->Water = (int16_t)water;
+    word = (uint16_t)((word & 0x80ffu) | (20u << 8));
+    csb_v1_runtime_write_u16(record + 2, word);
+    /* DUNGEON.C F0140: every non-empty potion weighs 3 and C20 weighs 1. */
+    new_weight = 1;
+    leader->Load = (uint16_t)(leader->Load - (old_weight - new_weight));
+    leader->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_LOAD;
+    champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS;
+    memset(&swallow, 0, sizeof(swallow));
+    swallow.soundIndex = CSB_V1_SOUND_SWALLOW;
+    swallow.mapX = (int16_t)profile->party_x;
+    swallow.mapY = (int16_t)profile->party_y;
+    swallow.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
+    (void)csb_v1_runtime_request_source_sound(profile, &swallow);
+    return 1;
+}
+
+int csb_v1_runtime_drink_waterskin_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index)
+{
+    CSB_V1_Champion *champion;
+    CSB_V1_Champion *leader;
+    CsbV1AudioRequest swallow;
+    uint16_t thing;
+    uint8_t *record;
+    uint16_t word;
+    int thing_type;
+    int record_size;
+    int icon_index;
+    int old_weight;
+    int new_weight;
+    int charge_count;
+    int water;
+
+    if (!profile || !profile->party_state_valid ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        profile->leader_index < 0 ||
+        profile->leader_index >= profile->party_state.ChampionCount ||
+        profile->leader_index >= CSB_V1_MAX_CHAMPIONS) return 0;
+    champion = &profile->party_state.Champions[champion_index];
+    leader = &profile->party_state.Champions[profile->leader_index];
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+        return 0;
+    }
+    thing = csb_v1_runtime_export_leader_hand_thing(profile);
+    if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_JUNK ||
+        (csb_v1_runtime_object_allowed_slots(profile, thing) & 0x0001u) == 0) {
+        return 0;
+    }
+    record = csb_v1_runtime_mutable_thing_record(
+        profile->dungeon_handle, thing, &thing_type, &record_size);
+    if (!record || thing_type != THING_TYPE_JUNK || record_size < 4) return 0;
+    icon_index = csb_v1_runtime_object_icon_index(profile, thing);
+    word = csb_v1_runtime_read_u16(record + 2);
+    charge_count = (int)((word >> 14) & 0x03u);
+    /* ReDMCSB OBJECT.C F0033 exposes C008 empty/C009 charged waterskin;
+     * PANEL.C F0349 rejects zero ChargeCount before any mutation. */
+    if ((word & 0x007fu) != 1u || icon_index < 8 || icon_index > 9 ||
+        charge_count <= 0) return 0;
+    old_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
+    if (old_weight <= 0 || leader->Load < old_weight) return 0;
+
+    word = (uint16_t)((word & 0x3fffu) |
+                      ((uint16_t)(charge_count - 1) << 14));
+    csb_v1_runtime_write_u16(record + 2, word);
+    new_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
+    if (new_weight < 0 || new_weight > old_weight) {
+        csb_v1_runtime_write_u16(record + 2,
+                                 (uint16_t)((word & 0x3fffu) |
+                                     ((uint16_t)charge_count << 14)));
+        return 0;
+    }
+    water = champion->Water + 800;
+    if (water > 2048) water = 2048;
+    champion->Water = (int16_t)water;
+    leader->Load = (uint16_t)(leader->Load - (old_weight - new_weight));
+    leader->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_LOAD;
+    champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS;
+
+    memset(&swallow, 0, sizeof(swallow));
+    swallow.soundIndex = CSB_V1_SOUND_SWALLOW;
+    swallow.mapX = (int16_t)profile->party_x;
+    swallow.mapY = (int16_t)profile->party_y;
+    swallow.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
+    (void)csb_v1_runtime_request_source_sound(profile, &swallow);
+    return 1;
+}
+
+static void csb_v1_runtime_f0348_adjust_stat(
+    CSB_V1_Champion *champion, int stat, int delta)
+{
+    int current = champion->Statistics[stat][CSB_V1_STAT_CUR];
+    int applied = delta;
+    if (current > 120) {
+        applied >>= 1;
+        if (current > 150) applied >>= 1;
+        ++applied;
+    }
+    if (applied > 170 - current) applied = 170 - current;
+    champion->Statistics[stat][CSB_V1_STAT_CUR] =
+        (uint16_t)(current + applied);
+}
+
+int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index)
+{
+    CSB_V1_Champion *champion;
+    CSB_V1_Champion *leader;
+    CsbV1AudioRequest swallow;
+    struct DM1_Event_V1 shield_event;
+    uint8_t *record;
+    uint16_t thing;
+    uint16_t word;
+    uint32_t random_state;
+    int thing_type, record_size, type, power, counter, adjusted;
+    int old_weight, new_weight = 1, event_index, i;
+
+    if (!profile || !profile->party_state_valid ||
+        champion_index < 0 || champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        profile->leader_index < 0 ||
+        profile->leader_index >= profile->party_state.ChampionCount ||
+        profile->leader_index >= CSB_V1_MAX_CHAMPIONS) return 0;
+    champion = &profile->party_state.Champions[champion_index];
+    leader = &profile->party_state.Champions[profile->leader_index];
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0)
+        return 0;
+    thing = csb_v1_runtime_export_leader_hand_thing(profile);
+    if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_POTION ||
+        (csb_v1_runtime_object_allowed_slots(profile, thing) & 1u) == 0)
+        return 0;
+    record = csb_v1_runtime_mutable_thing_record(
+        profile->dungeon_handle, thing, &thing_type, &record_size);
+    if (!record || thing_type != THING_TYPE_POTION || record_size < 4) return 0;
+    word = csb_v1_runtime_read_u16(record + 2);
+    type = (word >> 8) & 0x7f;
+    power = word & 0xff;
+    if (type < 0 || type > 14) return 0; /* C15 is handled by the complete water path. */
+    old_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
+    if (old_weight <= 0 || leader->Load < old_weight) return 0;
+    counter = ((511 - power) / (32 + (power + 1) / 8)) >> 1;
+    if (counter <= 0) return 0;
+    adjusted = power / 25 + 8;
+    if (type == 12 && profile->timeline_queue.eventCount >=
+            profile->timeline_queue.maxEvents) return 0;
+    if (type == 14 && !profile->csbwin_random_seed_valid) return 0;
+
+    switch (type) {
+    case 6:
+        csb_v1_runtime_f0348_adjust_stat(champion, CSB_V1_STAT_DEX, adjusted);
+        break;
+    case 7:
+        csb_v1_runtime_f0348_adjust_stat(champion, CSB_V1_STAT_STR,
+                                         power / 35 + 5);
+        break;
+    case 8:
+        csb_v1_runtime_f0348_adjust_stat(champion, CSB_V1_STAT_WIS, adjusted);
+        break;
+    case 9:
+        csb_v1_runtime_f0348_adjust_stat(champion, CSB_V1_STAT_VIT, adjusted);
+        break;
+    case 10:
+        for (i = 0; i < profile->timeline_queue.maxEvents; ++i) {
+            struct DM1_Event_V1 *event = &profile->timeline_queue.events[i];
+            if (event->type == DM1_EVENT_POISON_CHAMPION &&
+                event->priority == (uint8_t)champion_index)
+                (void)dm1v1_event_delete(&profile->timeline_queue, i);
+        }
+        champion->PoisonEventCount = 0;
+        break;
+    case 11: {
+        int gain = champion->MaximumStamina / counter;
+        int missing = champion->MaximumStamina - champion->CurrentStamina;
+        if (gain > missing) gain = missing;
+        champion->CurrentStamina = (int16_t)(champion->CurrentStamina + gain);
+        break;
+    }
+    case 12:
+        adjusted += adjusted >> 1;
+        if (champion->ShieldStrength > 50) adjusted >>= 2;
+        memset(&shield_event, 0, sizeof(shield_event));
+        shield_event.map_time = DM1_MAP_TIME_MAKE(
+            profile->current_level, profile->game_time + adjusted * adjusted);
+        shield_event.type = DM1_EVENT_CHAMPION_SHIELD;
+        shield_event.priority = (uint8_t)champion_index;
+        /* EVENT.B.Defense aliases the two-byte B.Location union. */
+        shield_event.b_mapX = (uint8_t)(adjusted & 0xff);
+        shield_event.b_mapY = (uint8_t)((adjusted >> 8) & 0xff);
+        event_index = csb_v1_runtime_add_timeline_event(profile, &shield_event);
+        if (event_index < 0) return 0;
+        champion->ShieldStrength = (uint16_t)(champion->ShieldStrength + adjusted);
+        champion->Attributes |= 0x1000u;
+        break;
+    case 13: {
+        int mana = champion->CurrentMana + adjusted + (adjusted - 8);
+        int baseline;
+        if (mana > 900) mana = 900;
+        if (mana > champion->MaximumMana) {
+            baseline = champion->CurrentMana > champion->MaximumMana
+                ? champion->CurrentMana : champion->MaximumMana;
+            mana -= (mana - baseline) >> 1;
+        }
+        champion->CurrentMana = (int16_t)mana;
+        break;
+    }
+    case 14: {
+        int iterations = power / 42;
+        uint16_t old_wounds = champion->Wounds;
+        int retries = 10;
+        if (iterations < 1) iterations = 1;
+        champion->CurrentHealth = (int16_t)(champion->CurrentHealth +
+                                             champion->MaximumHealth / counter);
+        random_state = profile->csbwin_random_seed;
+        if (old_wounds) {
+            do {
+                for (i = 0; i < iterations; ++i) {
+                    random_state = random_state * UINT32_C(0xbb40e62d) +
+                                   UINT32_C(11);
+                    champion->Wounds &= (uint16_t)(random_state >> 8);
+                }
+                iterations = 1;
+            } while (champion->Wounds == old_wounds && --retries);
+        }
+        profile->csbwin_random_seed = random_state;
+        champion->Attributes |= 0x2200u;
+        break;
+    }
+    default:
+        break;
+    }
+    if (champion->CurrentStamina > champion->MaximumStamina)
+        champion->CurrentStamina = champion->MaximumStamina;
+    if (champion->CurrentHealth > champion->MaximumHealth)
+        champion->CurrentHealth = champion->MaximumHealth;
+    csb_v1_runtime_write_u16(record + 2,
+                             (uint16_t)((word & 0x80ffu) | (20u << 8)));
+    leader->Load = (uint16_t)(leader->Load - (old_weight - new_weight));
+    leader->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_LOAD;
+    champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS;
+    memset(&swallow, 0, sizeof(swallow));
+    swallow.soundIndex = CSB_V1_SOUND_SWALLOW;
+    swallow.mapX = (int16_t)profile->party_x;
+    swallow.mapY = (int16_t)profile->party_y;
+    swallow.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
+    (void)csb_v1_runtime_request_source_sound(profile, &swallow);
+    return 1;
+}
+
+int csb_v1_runtime_consume_food_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index)
+{
+    static const int16_t kFoodAmounts[8] = {
+        500, 600, 650, 820, 550, 350, 990, 1400
+    };
+    CSB_V1_Champion *champion;
+    CSB_V1_Champion *leader;
+    CsbV1AudioRequest swallow;
+    uint16_t thing;
+    uint8_t *record;
+    int thing_type;
+    int record_size;
+    int icon_index;
+    int object_weight;
+    int food;
+
+    if (!profile || !profile->party_state_valid ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        profile->leader_index < 0 ||
+        profile->leader_index >= profile->party_state.ChampionCount ||
+        profile->leader_index >= CSB_V1_MAX_CHAMPIONS) return 0;
+    champion = &profile->party_state.Champions[champion_index];
+    leader = &profile->party_state.Champions[profile->leader_index];
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+        return 0;
+    }
+    thing = csb_v1_runtime_export_leader_hand_thing(profile);
+    if (thing == THING_NONE || THING_GET_TYPE(thing) != THING_TYPE_JUNK ||
+        (csb_v1_runtime_object_allowed_slots(profile, thing) & 0x0001u) == 0) {
+        return 0;
+    }
+    record = csb_v1_runtime_mutable_thing_record(
+        profile->dungeon_handle, thing, &thing_type, &record_size);
+    if (!record || thing_type != THING_TYPE_JUNK || record_size < 4) return 0;
+    icon_index = csb_v1_runtime_object_icon_index(profile, thing);
+    if (icon_index < 168 || icon_index > 175) return 0;
+    object_weight = csb_v1_runtime_get_object_weight_pc34_compat(profile, thing);
+    if (object_weight <= 0 || leader->Load < object_weight) return 0;
+
+    /* ReDMCSB PANEL.C F0349 consumes C168..C175 through the exact G0242
+     * calories table. F0298 removes the held weight from G0411 and clears
+     * G4055, while the detached C09 record remains allocated with Next NONE. */
+    food = champion->Food + kFoodAmounts[icon_index - 168];
+    if (food > 2048) food = 2048;
+    champion->Food = (int16_t)food;
+    csb_v1_runtime_write_u16(record, THING_NONE);
+    profile->party_state.LeaderHandThing = THING_NONE;
+    if (profile->csbwin_gameblock2_summary_valid) {
+        profile->csbwin_object_in_hand = THING_NONE;
+    }
+    leader->Load = (uint16_t)(leader->Load - object_weight);
+    leader->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_LOAD;
+    champion->Attributes |= CSB_V1_CHAMPION_ATTRIBUTE_STATISTICS;
+
+    memset(&swallow, 0, sizeof(swallow));
+    swallow.soundIndex = CSB_V1_SOUND_SWALLOW;
+    swallow.mapX = (int16_t)profile->party_x;
+    swallow.mapY = (int16_t)profile->party_y;
+    swallow.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
+    (void)csb_v1_runtime_request_source_sound(profile, &swallow);
     return 1;
 }
 
@@ -14161,6 +14817,80 @@ int csb_v1_runtime_f0176_creature_ordinal_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_f0176_effective_creature_ordinal_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int requested_cell,
+    CSB_V1_F0176CreatureOrdinalReceiptPc34 *out_receipt)
+{
+    CsbV1F0145F0148EffectiveGroupOwnerPc34Compat owner;
+    CsbV1F0145F0148EffectiveGroupValuesPc34Compat values;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *group_record;
+    int record_size = 0;
+    int creature_index;
+    int compare_cell;
+    int creature_size;
+
+    if (!profile || !out_receipt || !profile->dungeon_handle ||
+        !csb_v1_runtime_f0176_creature_ordinal_receipt_pc34(
+            profile->dungeon_handle, group_thing, map_index, map_x, map_y,
+            requested_cell, out_receipt)) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    group_record = csb_v1_runtime_mutable_thing_record(
+        dungeon, group_thing, NULL, &record_size);
+    if (!group_record || record_size < 16) return 0;
+
+    memset(&owner, 0, sizeof(owner));
+    owner.group_record = group_record;
+    owner.record_size = (size_t)record_size;
+    owner.group_thing = group_thing;
+    owner.map_index = (uint16_t)map_index;
+    owner.party_map_index = (uint16_t)profile->current_level;
+    owner.active_groups = (CSB_V1_RuntimeActiveGroupState *)
+        profile->active_group_state;
+    owner.active_group_count = CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+    if (!csb_v1_f0145_f0148_effective_group_read_pc34_compat(
+            &owner, &values)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+
+    out_receipt->group_cells = values.cells;
+    out_receipt->group_directions = values.directions;
+    out_receipt->creature_ordinal = 0;
+    if (values.cells == 0xffu) {
+        out_receipt->creature_ordinal = 1;
+    } else {
+        compare_cell = requested_cell;
+        creature_size = out_receipt->creature_attributes.attributes & 0x0003;
+        if (creature_size == 1 &&
+            ((values.directions & 0x0001u) ==
+             (unsigned int)(requested_cell & 1))) {
+            compare_cell = (requested_cell + 3) & 3;
+        }
+        for (creature_index = out_receipt->creature_count - 1;
+             creature_index >= 0; --creature_index) {
+            const int creature_cell = csb_v1_runtime_group_cell_value(
+                values.cells, creature_index);
+            if (creature_cell == compare_cell ||
+                (creature_size == 1 &&
+                 creature_cell == ((compare_cell + 1) & 3))) {
+                out_receipt->creature_ordinal = creature_index + 1;
+                break;
+            }
+        }
+    }
+    out_receipt->source_evidence =
+        "ReDMCSB GROUP1.C F0176 -> DUNGEON.C F0145/F0147 effective ACTIVE_GROUP";
+    return 1;
+}
+
 int csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
     const CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
@@ -15430,9 +16160,10 @@ int csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
     return 1;
 }
 
-int csb_v1_runtime_throw_action_hand(
+static int csb_v1_runtime_throw_action_hand_impl(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
+    int source_throw_side,
     int *out_projectile_slot)
 {
     CSB_V1_Champion *champion;
@@ -15488,8 +16219,12 @@ int csb_v1_runtime_throw_action_hand(
     }
 
     party_dir = profile->party_dir & 3;
-    throw_side = (((int)champion->Cell == ((party_dir + 1) & 3)) ||
-                  ((int)champion->Cell == ((party_dir + 2) & 3))) ? 1 : 0;
+    throw_side = source_throw_side;
+    if (throw_side < 0) {
+        throw_side = (((int)champion->Cell == ((party_dir + 1) & 3)) ||
+                      ((int)champion->Cell == ((party_dir + 2) & 3))) ? 1 : 0;
+    }
+    if (throw_side > 1) return 0;
     F0730_COMBAT_RngInit_Compat(
         &rng,
         profile->dungeon_seed ^
@@ -15558,6 +16293,25 @@ int csb_v1_runtime_throw_action_hand(
     champion->Slots[CSB_V1_SLOT_ACTION_HAND] = THING_NONE;
     if (out_projectile_slot) *out_projectile_slot = slot;
     return 1;
+}
+
+int csb_v1_runtime_throw_action_hand(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int *out_projectile_slot)
+{
+    return csb_v1_runtime_throw_action_hand_impl(
+        profile, champion_index, -1, out_projectile_slot);
+}
+
+int csb_v1_runtime_throw_action_hand_from_side_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int throw_side,
+    int *out_projectile_slot)
+{
+    return csb_v1_runtime_throw_action_hand_impl(
+        profile, champion_index, throw_side, out_projectile_slot);
 }
 
 int csb_v1_runtime_shoot_ready_hand(
@@ -16348,6 +17102,39 @@ int csb_v1_runtime_load_object_names_m564(
         }
     }
 
+    profile->object_name_table_valid = 1;
+    return 1;
+}
+
+int csb_v1_runtime_load_object_names_m564_f31j(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *bytes,
+    size_t byte_count)
+{
+    size_t offset = 0u;
+    int name_index;
+    if (!profile || !bytes || byte_count == 0u) return 0;
+    memset(profile->object_names, 0, sizeof(profile->object_names));
+    profile->object_name_table_valid = 0;
+    for (name_index = 0; name_index < CSB_V1_OBJECT_NAME_COUNT; ++name_index) {
+        size_t written = 0u;
+        int display_ended = 0;
+        int terminated = 0;
+        while (offset < byte_count) {
+            unsigned char c = bytes[offset++];
+            if (c == 0u) { terminated = 1; break; }
+            if (c == 1u) { display_ended = 1; continue; }
+            if (!display_ended &&
+                written < (size_t)CSB_V1_OBJECT_NAME_MAX_CHARS) {
+                profile->object_names[name_index][written++] = (char)c;
+            }
+        }
+        profile->object_names[name_index][written] = '\0';
+        if (!terminated) {
+            memset(profile->object_names, 0, sizeof(profile->object_names));
+            return 0;
+        }
+    }
     profile->object_name_table_valid = 1;
     return 1;
 }
@@ -19526,9 +20313,16 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             profile->csbwin_character_tail_invisible = 0;
             break;
         case DM1_EVENT_CHAMPION_SHIELD:
-            if (record->cell >= 0 && record->cell < CSB_V1_MAX_CHAMPIONS &&
-                record->cell < profile->party_state.ChampionCount) {
-                profile->party_state.Champions[record->cell].ShieldStrength = 0;
+            if (record->aux0 >= 0 && record->aux0 < CSB_V1_MAX_CHAMPIONS &&
+                record->aux0 < profile->party_state.ChampionCount) {
+                CSB_V1_Champion *shielded =
+                    &profile->party_state.Champions[record->aux0];
+                unsigned int defense = (unsigned int)(record->mapX & 0xff) |
+                    ((unsigned int)(record->mapY & 0xff) << 8);
+                shielded->ShieldStrength = defense >= shielded->ShieldStrength
+                    ? 0u
+                    : (uint16_t)(shielded->ShieldStrength - defense);
+                shielded->Attributes |= 0x1000u;
             }
             break;
         case DM1_EVENT_THIEVES_EYE:
@@ -31869,13 +32663,10 @@ const char *csb_v1_runtime_source_evidence(void)
         "ReDMCSB F0417: F0417_SAVEUTIL_GetChecksumAndObfuscate\n"
         "ReDMCSB COMPILE.H MEDIA332 (S20E/S21E Atari ST 2.0/2.1)\n"
         "ReDMCSB COMPILE.H MEDIA529 (A35E/A35M Amiga 3.5)\n"
-        "ReDMCSB COMPILE.H MEDIA278 (P20JA/P20JB PC DOS 3.4)\n"
-        "ReDMCSB COMPILE.H MEDIA278_I34E_I34M (PC DOS multilanguage)\n"
         "CSBWin SaveGame.cpp: LoadGame() / SaveGame() (2953 lines)\n"
         "CSBWin Character.cpp: Character::import_dm1_save()\n"
         "CSBWin Magic.cpp: ChaosMagic namespace\n"
-        "CSBWin AssetCache: variant_id mapping for all platforms\n"
-        "asset_status_m12.c: g_csbVersions[] MD5 table (all 4 variants)\n"
+        "asset_status_m12.c: g_csbVersions[] original-release MD5 table\n"
         "asset_find_by_hash.c: hash-based asset discovery API\n"
         "\n"
         "CSB vs DM1 runtime differences:\n"

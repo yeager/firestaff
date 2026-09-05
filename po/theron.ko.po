@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Korean\n"
@@ -18,155 +18,155 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-#. Direction / compass
 
+#. Direction / compass
 msgid "NORTH"
 msgstr "북"
-#. Direction / compass
 
+#. Direction / compass
 msgid "EAST"
 msgstr "동"
-#. Direction / compass
 
+#. Direction / compass
 msgid "SOUTH"
 msgstr "남"
-#. Direction / compass
 
+#. Direction / compass
 msgid "WEST"
 msgstr "서"
-#. Stairs
 
+#. Stairs
 msgid "STAIRS"
 msgstr "계단"
-#. Pit
 
+#. Pit
 msgid "PIT"
 msgstr "구덩이"
-#. Teleporter
 
+#. Teleporter
 msgid "TELEPORTER"
 msgstr "텔레포터"
-#. Door
 
+#. Door
 msgid "DOOR"
 msgstr "문"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "PICK UP"
 msgstr "줍기"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "DROP"
 msgstr "놓기"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "USE"
 msgstr "사용"
-#. Combat action
 
+#. Combat action
 msgid "ATTACK"
 msgstr "공격"
-#. Combat action
 
+#. Combat action
 msgid "DEFEND"
 msgstr "방어"
-#. Combat action
 
+#. Combat action
 msgid "CAST SPELL"
 msgstr "주문 시전"
-#. Status label
 
+#. Status label
 msgid "NO FOCUS"
 msgstr "초점 없음"
-#. Status label
 
+#. Status label
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
 msgstr "실제 전방 목표에서 ENTER를 누르십시오"
-#. Generic
 
+#. Generic
 msgid "UNKNOWN"
 msgstr "알 수 없음"
-#. Generic
 
+#. Generic
 msgid "NONE"
 msgstr "없음"
-#. Save / load
 
+#. Save / load
 msgid "SAVE GAME"
 msgstr "게임 저장"
-#. Save / load
 
+#. Save / load
 msgid "LOAD GAME"
 msgstr "게임 불러오기"
-#. Shop
 
+#. Shop
 msgid "SHOP"
 msgstr "상점"
-#. Shop
 
+#. Shop
 msgid "NOT ENOUGH GOLD"
 msgstr "금 부족"
-#. Shop
 
+#. Shop
 msgid "PURCHASED %s FOR %d GOLD"
 msgstr "%s을(를) 금 %d에 구매"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: ASCENDED TO LEVEL %d"
 msgstr "T%u: %d 레벨로 상승"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: DESCENDED TO LEVEL %d"
 msgstr "T%u: %d 레벨로 하강"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: FELL INTO PIT"
 msgstr "T%u: 구덩이에 빠짐"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
 msgstr "T%u: 맵 %d (%d,%d)(으)로 텔레포트"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER HAS NO THING DATA"
 msgstr "T%u: 텔레포터에 물체 데이터 없음"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
 msgstr "T%u: 텔레포터 대상 맵 %d 범위 초과"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
 msgstr "T%u: %s 레벨 업! (%s %d -> %d)"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s CASTS %s"
 msgstr "T%u: %s이(가) %s 시전"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s HITS %s FOR %d"
 msgstr "T%u: %s이(가) %s에 %d 피해"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s MISSES %s"
 msgstr "T%u: %s이(가) %s을(를) 빗맞힘"
-#. Altar
 
+#. Altar
 msgid "OFFERING ACCEPTED"
 msgstr "제물 수락됨"
-#. Inventory capacity
 
+#. Inventory capacity
 msgid "INVENTORY FULL"
 msgstr "인벤토리 가득 참"
-#. Sound / feedback
 
+#. Sound / feedback
 msgid "OUT OF RANGE"
 msgstr "범위 벗어남"
-#. Generic message
 
+#. Generic message
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
 msgstr "ENTER를 누르거나 뷰를 클릭해 전방 칸을 읽으십시오"
-#. Status footer
 
+#. Status footer
 msgid "HP AND STAMINA RECOVER SLOWLY"
 msgstr "HP와 스태미나는 천천히 회복된다"

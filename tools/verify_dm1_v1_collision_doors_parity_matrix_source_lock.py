@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 OUT_DIR = ROOT / "parity-evidence/verification/dm1_v1_collision_doors_parity_matrix_source_lock"
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence/dm1_v1_collision_doors_parity_matrix_source_lock.md"

@@ -204,6 +204,7 @@ int main(void)
         M11_GameView_Draw(&state, baseline, 320, 200);
         CHECK(!message_area_is_color(baseline, 0u),
               "M653 draws decoded TEXT.C source rows");
+
         memcpy(foreignFont, state.originalFont.bitmap, sizeof(foreignFont));
         CHECK(M11_Font_LoadFromRawBitmap(&state.originalFont, 694,
                                          foreignFont, sizeof(foreignFont)),

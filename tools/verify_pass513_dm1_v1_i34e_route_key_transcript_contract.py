@@ -14,7 +14,7 @@ PASS = "pass513_dm1_v1_i34e_route_key_transcript_contract"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
+RED = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source")))
 STATUS = "BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED"
 PROMOTED_STATUS = "PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_PROMOTABLE"
 TRANSCRIPT_ENV = "FIRESTAFF_PASS513_TRANSCRIPT"
@@ -34,7 +34,7 @@ PRIOR_GATES = {
     "pass504_keyboard_buffer_state_delta_blocker": ("parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json", "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED"),
     "pass509_original_overlay_keyboard_buffer_blocker": ("parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json", "PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED"),
     "pass511_movement_original_route_contract": ("parity-evidence/verification/pass511_dm1_v1_movement_original_route_contract/manifest.json", "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"),
-    "pass512_movement_cross_reference_audit": ("parity-evidence/verification/pass512_dm1_v1_movement_cross_reference_audit/manifest.json", "PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT"),
+    "pass512_movement_cross_reference_audit": ("parity-evidence/verification/pass512_dm1_v1_movement_cross_reference_audit/manifest.json", "BLOCKED_PASS512_DM1_V1_MOVEMENT_RUNTIME_CAPTURE_MISSING"),
 }
 REQUIRED_TRANSCRIPT_FIELDS = ["routeId","sampleIndex","inputSource","rawKeyCode","normalizedKeyCode","m527WasNonEmpty","m528Value","f0361Table","f0361Command","f0361QueueSlot","g0434Before","g0434After","g2153BeforeEnqueue","g2153AfterEnqueue","f0380Command","g0433Before","g0433After","g2153BeforePop","g2153AfterPop","dispatchHandler","partyBeforeMap","partyBeforeX","partyBeforeY","partyBeforeDir","partyAfterMap","partyAfterX","partyAfterY","partyAfterDir","blockedOrNoopReason","f0128Direction","f0128MapX","f0128MapY","f0097Presented","capturePath","captureSha256"]
 ACCEPTED_KEY_ROWS = [

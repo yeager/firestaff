@@ -152,10 +152,12 @@ from pathlib import Path
 
 Path(sys.argv[1]).write_text(
     "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
-    "printf '%s,%s,%s,%s' \"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC\" "
+    "printf '%s,%s,%s,%s,%s,%s' \"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC\" "
     "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN\" "
     "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX\" "
-    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_LIMIT\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_LIMIT\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MAX\" > "
     "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
     encoding="utf-8",
 )
@@ -166,12 +168,14 @@ FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC=0x06011860 \
 FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN=0x0 \
 FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX=0x40000 \
 FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_LIMIT=20000 \
+FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MIN=12596 \
+FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MAX=12596 \
 "$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-vdp2-env.raw" --validator /usr/bin/true \
   --manifest "$tmp_dir/manifest-vdp2-env.txt" >/dev/null
-grep -Fq '0x06011860,0x0,0x40000,20000' "$tmp_dir/trace-vdp2-env.raw"
+grep -Fq '0x06011860,0x0,0x40000,20000,12596,12596' "$tmp_dir/trace-vdp2-env.raw"
 source_read_fake="$tmp_dir/fake-mednafen-source-read"
 python3 - "$source_read_fake" <<'PY'
 import os

@@ -224,11 +224,15 @@ int main(void)
             DM2_V1_QueryGdatSummaryImageReceipt credits_image;
             uint8_t expected_palette[256][3];
             uint8_t presented_palette[256][3];
+            uint8_t expected_palette_rgb8[256][3];
+            uint8_t presented_palette_rgb8[256][3];
             size_t palette_size = 0u;
             int color;
 
             memset(expected_palette, 0, sizeof(expected_palette));
             memset(presented_palette, 0, sizeof(presented_palette));
+            memset(expected_palette_rgb8, 0, sizeof(expected_palette_rgb8));
+            memset(presented_palette_rgb8, 0, sizeof(presented_palette_rgb8));
             memset(&credits_image, 0, sizeof(credits_image));
             palette_raw = dm2_v1_asset_load_typed_sized(
                 loader, DM2_GDAT_CATEGORY_TITLE, 0,
@@ -252,12 +256,22 @@ int main(void)
                     (uint8_t)(palette_raw[(size_t)color * 4u + 2u] >> 2u);
                 expected_palette[credits_image.palette16[color]][2] =
                     (uint8_t)(palette_raw[(size_t)color * 4u + 3u] >> 2u);
+                expected_palette_rgb8[credits_image.palette16[color]][0] =
+                    palette_raw[(size_t)color * 4u + 1u];
+                expected_palette_rgb8[credits_image.palette16[color]][1] =
+                    palette_raw[(size_t)color * 4u + 2u];
+                expected_palette_rgb8[credits_image.palette16[color]][2] =
+                    palette_raw[(size_t)color * 4u + 3u];
             }
             expect(palette_raw && palette_size == 16u * 4u &&
                        M11_Render_CopyIndexedPaletteRgb6(presented_palette) &&
                        memcmp(expected_palette, presented_palette,
                               sizeof(expected_palette)) == 0,
                    "FM Towns credits select TITLE field-1's real local palette");
+            expect(M11_Render_CopyIndexedPaletteRgb8(presented_palette_rgb8) &&
+                       memcmp(expected_palette_rgb8, presented_palette_rgb8,
+                              sizeof(expected_palette_rgb8)) == 0,
+                   "FM Towns credits preserve TITLE field-1's full-byte IRGB components");
         }
         x = aux_layout.dismiss_credits.x + aux_layout.dismiss_credits.w / 2;
         y = aux_layout.dismiss_credits.y + aux_layout.dismiss_credits.h / 2;
@@ -278,11 +292,16 @@ int main(void)
             const uint8_t *menu_palette_raw;
             uint8_t expected_palette[256][3];
             uint8_t presented_palette[256][3];
+            uint8_t expected_palette_rgb8[256][3];
+            uint8_t presented_palette_rgb8[256][3];
             size_t menu_palette_size = 0u;
             int color;
+            int lossy_vga_round_trip = 0;
 
             memset(expected_palette, 0, sizeof(expected_palette));
             memset(presented_palette, 0, sizeof(presented_palette));
+            memset(expected_palette_rgb8, 0, sizeof(expected_palette_rgb8));
+            memset(presented_palette_rgb8, 0, sizeof(presented_palette_rgb8));
             menu_palette_raw = dm2_v1_asset_load_typed_sized(
                 loader, DM2_GDAT_CATEGORY_TITLE, 0,
                 DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 4, &menu_palette_size);
@@ -296,7 +315,26 @@ int main(void)
                     (uint8_t)(menu_palette_raw[(size_t)color * 4u + 2u] >> 2u);
                 expected_palette[color][2] =
                     (uint8_t)(menu_palette_raw[(size_t)color * 4u + 3u] >> 2u);
+                expected_palette_rgb8[color][0] =
+                    menu_palette_raw[(size_t)color * 4u + 1u];
+                expected_palette_rgb8[color][1] =
+                    menu_palette_raw[(size_t)color * 4u + 2u];
+                expected_palette_rgb8[color][2] =
+                    menu_palette_raw[(size_t)color * 4u + 3u];
+                if (menu_palette_raw[(size_t)color * 4u + 1u] !=
+                        (uint8_t)(((menu_palette_raw[(size_t)color * 4u + 1u] >> 2u) << 2u) |
+                                  (menu_palette_raw[(size_t)color * 4u + 1u] >> 6u)) ||
+                    menu_palette_raw[(size_t)color * 4u + 2u] !=
+                        (uint8_t)(((menu_palette_raw[(size_t)color * 4u + 2u] >> 2u) << 2u) |
+                                  (menu_palette_raw[(size_t)color * 4u + 2u] >> 6u)) ||
+                    menu_palette_raw[(size_t)color * 4u + 3u] !=
+                        (uint8_t)(((menu_palette_raw[(size_t)color * 4u + 3u] >> 2u) << 2u) |
+                                  (menu_palette_raw[(size_t)color * 4u + 3u] >> 6u))) {
+                    lossy_vga_round_trip = 1;
+                }
             }
+            expect(lossy_vga_round_trip,
+                   "FM Towns menu contains components changed by a VGA six-bit round trip");
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
             expect(menu_palette_raw && menu_palette_size == 16u * 4u &&
@@ -305,6 +343,10 @@ int main(void)
                        memcmp(expected_palette, presented_palette,
                               sizeof(expected_palette)) == 0,
                    "FM Towns credits return restores TITLE field-4 pixels and palette");
+            expect(M11_Render_CopyIndexedPaletteRgb8(presented_palette_rgb8) &&
+                       memcmp(expected_palette_rgb8, presented_palette_rgb8,
+                              sizeof(expected_palette_rgb8)) == 0,
+                   "FM Towns menu preserves TITLE field-4's full-byte IRGB components");
         }
         x = aux_layout.quit_game.x + aux_layout.quit_game.w / 2;
         y = aux_layout.quit_game.y + aux_layout.quit_game.h / 2;

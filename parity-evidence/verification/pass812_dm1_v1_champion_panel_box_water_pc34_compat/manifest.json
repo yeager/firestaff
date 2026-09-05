@@ -15,7 +15,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:42",
       "line": 42,
       "lineText": "int16_t G0036_ai_Graphic562_Box_Water[4];",
@@ -23,7 +23,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:318",
       "line": 318,
       "lineText": "int16_t G0036_ai_Graphic562_Box_Water[4] = { 112, 159, 83, 91 };",
@@ -31,7 +31,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1036",
       "line": 1036,
       "lineText": "int16_t G0036_ai_Graphic562_Box_Water[4] = { 112, 159, 83, 91 };",
@@ -39,7 +39,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1586",
       "line": 1586,
       "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C031_GRAPHIC_WATER_LABEL), G0036_ai_Graphic562_Box_Water, C024_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
@@ -47,7 +47,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1590",
       "line": 1590,
       "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C031_GRAPHIC_WATER_LABEL), G0036_ai_Graphic562_Box_Water, C032_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
@@ -55,7 +55,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1594",
       "line": 1594,
       "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C031_GRAPHIC_WATER_LABEL), G0036_ai_Graphic562_Box_Water, C024_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
@@ -63,7 +63,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass812_dm1_v1_champion_panel_box_water_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0036_ai_Graphic562_Box_Water[4] = {112, 159, 83, 91}. The {X, Y, W, H} pixel-coordinate rectangle for the water status label blit (paired with food label G0035 which shares the same X). Read sites: PANEL.C:1586/1590/1594 F0344_INVENTORY_DrawPanel \u2014 blit C031_GRAPHIC_WATER_LABEL into G0036's box with byte widths C024/C032/C024 for English/German/French localizations.",
   "sourceChecks": [
@@ -99,11 +99,11 @@
     }
   ],
   "status": "PASS812_DM1_V1_CHAMPION_PANEL_BOX_WATER_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:12.734393+00:00",
+  "timestampUtc": "2026-09-04T18:35:08.535446+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_champion_panel_box_water_pc34_compat"
+        "/dev/shm/current/test_dm1_v1_champion_panel_box_water_pc34_compat"
       ],
       "outputTail": "dm1_v1_champion_panel_box_water: 48/48 assertions passed",
       "passed": true,

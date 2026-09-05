@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path('~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source').expanduser()
+RED = ROOT / 'reference/redmcsb-20210206/Toolchains/Common/Source'
 OUT = ROOT / 'parity-evidence' / 'verification' / 'dm1_v1_command_movement_sensor_timing_source_lock.json'
 
 

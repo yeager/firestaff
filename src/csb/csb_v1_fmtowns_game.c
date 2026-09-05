@@ -98,6 +98,36 @@ enum {
     CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_FNV1A = 0x3faffb70u
 };
 
+/* ReDMCSB DRAWVIEW.C:383-407 / VIDEODRV.C:765-782,
+ * MEDIA670_F31E_F31J. C28_ENTRANCE_CSB is sixteen indexed native six-bit
+ * RGB entries plus the COLOR_DEF terminator in each retail Game program. */
+static const uint8_t k_fmtowns_c28_entrance_palette[17u * 4u] = {
+    0x00,0x00,0x00,0x00, 0x01,0x1b,0x1b,0x1b,
+    0x02,0x23,0x23,0x23, 0x03,0x23,0x13,0x03,
+    0x04,0x33,0x2b,0x23, 0x05,0x13,0x0b,0x0b,
+    0x06,0x03,0x03,0x23, 0x07,0x03,0x03,0x2b,
+    0x08,0x23,0x1b,0x13, 0x09,0x3f,0x03,0x03,
+    0x0a,0x2b,0x23,0x1b, 0x0b,0x1b,0x13,0x0b,
+    0x0c,0x13,0x13,0x13, 0x0d,0x2b,0x2b,0x2b,
+    0x0e,0x1b,0x0b,0x03, 0x0f,0x3f,0x3f,0x3f,
+    0xff,0x00,0x00,0x00
+};
+
+/* First row of the contiguous G8151_LIGHT0..G8156_LIGHT5 corpus. The whole
+ * executable is already edition-hash verified; this exact source signature
+ * locates the tables and the structural checks below admit all six rows. */
+static const uint8_t k_fmtowns_c00_light0_palette[17u * 4u] = {
+    0x10,0x00,0x00,0x00, 0x11,0x1b,0x1b,0x1b,
+    0x12,0x24,0x24,0x24, 0x13,0x1b,0x09,0x00,
+    0x14,0x00,0x36,0x36, 0x15,0x24,0x12,0x00,
+    0x16,0x00,0x24,0x00, 0x17,0x00,0x36,0x00,
+    0x18,0x3f,0x00,0x00, 0x19,0x3f,0x2d,0x00,
+    0x1a,0x36,0x24,0x1b, 0x1b,0x3f,0x3f,0x00,
+    0x1c,0x12,0x12,0x12, 0x1d,0x2d,0x2d,0x2d,
+    0x1e,0x00,0x00,0x3f, 0x1f,0x3f,0x3f,0x3f,
+    0xff,0x00,0x00,0x00
+};
+
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size);
 static int csb_v1_fmtowns_utility_read_span(
@@ -271,6 +301,96 @@ static int csb_v1_fmtowns_game_read_executable_span(
     }
     return csb_v1_fmtowns_game_read_span(receipt->executable_path, offset,
                                           bytes, size);
+}
+
+static int csb_v1_fmtowns_game_bind_entrance_palette(
+    CSB_V1_FmtownsGameHandoffReceipt *receipt)
+{
+    uint8_t *image;
+    uint32_t offset;
+    uint32_t color;
+    if (!receipt || receipt->executable_size <
+            sizeof(k_fmtowns_c28_entrance_palette)) return 0;
+    image = (uint8_t *)malloc(receipt->executable_size);
+    if (!image || !csb_v1_fmtowns_game_read_executable_span(
+            receipt, 0u, image, receipt->executable_size)) {
+        free(image);
+        return 0;
+    }
+    for (offset = 0u; offset <= receipt->executable_size -
+             sizeof(k_fmtowns_c28_entrance_palette); ++offset) {
+        if (memcmp(image + offset, k_fmtowns_c28_entrance_palette,
+                   sizeof(k_fmtowns_c28_entrance_palette)) != 0) continue;
+        for (color = 0u; color < 16u; ++color) {
+            receipt->entrance_palette_rgb6[color][0] =
+                image[offset + color * 4u + 1u];
+            receipt->entrance_palette_rgb6[color][1] =
+                image[offset + color * 4u + 2u];
+            receipt->entrance_palette_rgb6[color][2] =
+                image[offset + color * 4u + 3u];
+        }
+        receipt->entrance_palette_source_offset = offset;
+        receipt->entrance_palette_verified = 1;
+        free(image);
+        return 1;
+    }
+    free(image);
+    return 0;
+}
+
+static int csb_v1_fmtowns_game_bind_dungeon_palettes(
+    CSB_V1_FmtownsGameHandoffReceipt *receipt)
+{
+    enum { PALETTE_BYTES = 17 * 4, CORPUS_BYTES = 6 * PALETTE_BYTES };
+    uint8_t *image;
+    uint32_t offset;
+    uint32_t level;
+    uint32_t color;
+    if (!receipt || receipt->executable_size < CORPUS_BYTES) return 0;
+    image = (uint8_t *)malloc(receipt->executable_size);
+    if (!image || !csb_v1_fmtowns_game_read_executable_span(
+            receipt, 0u, image, receipt->executable_size)) {
+        free(image);
+        return 0;
+    }
+    for (offset = 0u; offset <= receipt->executable_size - CORPUS_BYTES;
+         ++offset) {
+        if (memcmp(image + offset, k_fmtowns_c00_light0_palette,
+                   sizeof(k_fmtowns_c00_light0_palette)) != 0) continue;
+        for (level = 0u; level < 6u; ++level) {
+            const uint8_t *row = image + offset + level * PALETTE_BYTES;
+            for (color = 0u; color < 16u; ++color) {
+                /* The original F31 LIGHT3 row contains its documented
+                 * duplicate 0x18 index at slot 7; preserve it exactly. */
+                uint8_t expected = (uint8_t)(0x10u + color);
+                if (level == 3u && color == 7u) expected = 0x18u;
+                if (row[color * 4u] != expected ||
+                    row[color * 4u + 1u] > 0x3fu ||
+                    row[color * 4u + 2u] > 0x3fu ||
+                    row[color * 4u + 3u] > 0x3fu) break;
+            }
+            if (color != 16u || row[64] != 0xffu || row[65] != 0u ||
+                row[66] != 0u || row[67] != 0u) break;
+        }
+        if (level != 6u) continue;
+        for (level = 0u; level < 6u; ++level) {
+            const uint8_t *row = image + offset + level * PALETTE_BYTES;
+            for (color = 0u; color < 16u; ++color) {
+                receipt->dungeon_palette_rgb6[level][color][0] =
+                    row[color * 4u + 1u];
+                receipt->dungeon_palette_rgb6[level][color][1] =
+                    row[color * 4u + 2u];
+                receipt->dungeon_palette_rgb6[level][color][2] =
+                    row[color * 4u + 3u];
+            }
+        }
+        receipt->dungeon_palettes_source_offset = offset;
+        receipt->dungeon_palettes_verified = 1;
+        free(image);
+        return 1;
+    }
+    free(image);
+    return 0;
 }
 
 static int csb_v1_fmtowns_game_resolve_active_group_owners(
@@ -2156,6 +2276,11 @@ int csb_v1_fmtowns_game_handoff_open(
     out_receipt->executable_bytes_size = packed_media
         ? profile->fmtowns_executable_size : 0u;
     out_receipt->executable_size = actual_size;
+    if (!csb_v1_fmtowns_game_bind_entrance_palette(out_receipt) ||
+        !csb_v1_fmtowns_game_bind_dungeon_palettes(out_receipt)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
     if (!csb_v1_fmtowns_game_read_executable_span(
             out_receipt, music_table_offset, music_table,
             sizeof(music_table)) ||
@@ -2226,6 +2351,8 @@ int csb_v1_fmtowns_game_handoff_open(
         "lines 211-255; CEDTINC6.C F7061/F7057/F7059; CEDTINCA.C F7063; "
         "CEDTINCT.C F7054; "
         "DEFS.H C5/F7/F8/C13; "
+        "ENTRANCE.C F0806 lines 409-443/C28_ENTRANCE_CSB; "
+        "DRAWVIEW.C lines 97-208 G8151-G8156 and lines 383-444 G8174/G8176; "
         "ENTRANCE.C F0807 line 85; "
         "MUSIC.C G4099 line 6/F0743 lines 632-646";
     out_receipt->valid = 1;

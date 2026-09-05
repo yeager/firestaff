@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.327 LANGUAGES C)
+project(Firestaff VERSION 3.0.328 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+file(GLOB FIRESTAFF_STUDIO_PO_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/po/studio/*.po")
 
 # .po/.pot are the sole tracked gettext sources.  Build .mo catalogs below
 # the binary tree for Python gettext consumers; never regenerate them in po/.
@@ -14,6 +17,7 @@ add_custom_target(firestaff_gettext_catalogs ALL
     DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/tools/compile_gettext_catalogs.py
         ${CMAKE_CURRENT_SOURCE_DIR}/po/firestaff_studio.pot
+        ${FIRESTAFF_STUDIO_PO_SOURCES}
     COMMENT "Compiling gettext catalogs from PO sources")
 
 # Resolve the canonical user-data root before any test or probe declaration
@@ -273,7 +277,7 @@ target_include_directories(test_nexus_v1_hud_hit_rects PRIVATE
 target_link_libraries(test_nexus_v1_hud_hit_rects PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_hit_rects COMMAND test_nexus_v1_hud_hit_rects)
 set_tests_properties(nexus_v1_hud_hit_rects PROPERTIES
-    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     LABELS "nexus;hud;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
@@ -4501,7 +4505,11 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;amiga;real-media;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
-        TIMEOUT 45
+        # This route intentionally performs fresh native ZIP -> ZIP -> ADF
+        # launches for CLI, card flow, save resume and seven input rows.
+        # A complete verified run is about 62 seconds on the reference host;
+        # use the same bounded allowance as the neighbouring Amiga HD matrix.
+        TIMEOUT 120
     )
     add_test(
         NAME dm1_v1_fmtowns_archive_cli_boot
@@ -6660,6 +6668,10 @@ list(REMOVE_ITEM M10_SOURCES
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    # Native game presentation domains share one process-wide catalog owner.
+    # DM2_QUERY_GDAT_TEXT lives in M10, so the loader must live here rather
+    # than only in the downstream M11 renderer.
+    src/shared/firestaff_po_loader.c
     src/shared/firestaff_x68k_media_receipt.c
     src/shared/firestaff_x68k_media_classify.c
     src/shared/fs_portable_compat.c
@@ -6688,6 +6700,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_magic_rune_cost_pc34_compat.c
     src/csb/csb_v1_pc34_wallset_graphics_map.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
+    src/csb/csb_v1_inscription_presentation.c
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_utility_flow_pc34.c
     src/csb/csb_v1_utility_import_pc34.c
@@ -7441,7 +7454,6 @@ set(M11_SOURCES
     src/dm1/dm1_v1_sound_pc34_compat.c
     src/dm1/dm1_v1_click_routing_pc34_compat.c
     src/dm1/dm1_v1_action_spell_source_frame_m11_lifecycle_pc34_compat.c
-    src/shared/firestaff_po_loader.c
     src/dm1/dm1_v1_engine_pc34_compat.c
     src/engine/firestaff_touch.c
     src/engine/firestaff_input.c
@@ -7756,6 +7768,15 @@ if(NOT MSVC)
         target_compile_options(firestaff_m12 PRIVATE -Wall -Wextra -O2
             -Wno-format-truncation -Wno-array-bounds -Wno-unused-variable)
     endif()
+endif()
+
+# GCC 15 currently crashes while optimizing the large startup-menu translation
+# unit (PR pending upstream). Restrict the workaround to that compiler family
+# and source file; release compilers and every other M12 source retain O2.
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND
+   CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
+    set_source_files_properties(src/ui/menu_startup_m12.c PROPERTIES
+        COMPILE_OPTIONS "-O0")
 endif()
 
 # ── Main executable ──────────────────────────────────────────────────
@@ -10557,145 +10578,6 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
-# CSB V1 PC real-asset launch probe (PC 3.4 English GRAPHICS.DAT +
-# DUNGEON.DAT pair). This is the canonical PC CSB real-data gate
-# that proves csb_v1_boot_scan_assets() recognises the PC CSB
-# graphics MD5 (61fbfd56887c94adc26888a9491c6611), hands the
-# verified pair off to the CSB V1 runtime, owns the dungeon
-# singleton, and runs one source-locked tick. Skip-safe on hosts
-# without user-supplied game data (exits 0 with SKIP).
-#
-# Source-lock boundary:
-#   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
-#   - ReDMCSB LOADSAVE.C F0435 lines 1936-1944 (new-game map 0).
-#   - ReDMCSB DUNGEON.C F0237 (dungeon load entry).
-add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
-    probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
-    src/csb/csb_v1_runtime_pc34_compat.c
-    src/csb/csb_v1_boot.c
-    src/csb/csb_v1_fmtowns_game.c
-    src/csb/csb_v1_fmtowns_portrait.c
-    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
-    src/csb/redmcsb_f7061_save_header_pc34_compat.c
-    src/csb/csb_v1_graphics_lzw_pc34_compat.c
-    src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
-    src/csb/csb_v1_fmtowns_graphics_dat.c
-    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/csb_v1_startup_real_asset_receipt.c
-    src/csb/csb_v1_dungeon_loader_pc34_compat.c
-    src/csb/csb_v1_character_pc34_compat.c
-    src/dm1/dm1_v1_input_command_queue_pc34_compat.c
-    src/dm1/dm1_v1_event_timer_pc34_compat.c
-    src/memory/memory_timeline_pc34_compat.c
-    src/shared/asset_find_by_hash.c
-    src/shared/dungeon_decompressor_ftl.c
-    src/shared/fs_portable_compat.c
-)
-target_include_directories(firestaff_csb_v1_pc_real_asset_launch_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-if(NOT MSVC)
-    target_compile_options(firestaff_csb_v1_pc_real_asset_launch_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-
-add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
-    probes/csb/firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe.c
-    src/csb/csb_v1_boot.c
-    src/csb/csb_v1_fmtowns_game.c
-    src/csb/csb_v1_fmtowns_portrait.c
-    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
-    src/csb/redmcsb_f7061_save_header_pc34_compat.c
-    src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
-    src/csb/csb_v1_fmtowns_graphics_dat.c
-    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/csb_v1_runtime_pc34_compat.c
-    src/csb/csb_v1_dungeon_loader_pc34_compat.c
-    src/csb/csb_v1_character_pc34_compat.c
-    src/shared/firestaff_cmp_decode.c
-    src/shared/asset_find_by_hash.c
-    src/shared/fs_portable_compat.c
-)
-target_include_directories(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
-    PRIVATE firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-
-# Opt-in canonical PC package presentation proof. This does not use generated
-# art, palette fixtures, or the CSBWin custom-graphics override path: it drives
-# the production C001-C005/C017/C040 session from a hash-verified PC package.
-add_executable(firestaff_csb_v1_pc_package_presentation_probe
-    probes/csb/firestaff_csb_v1_pc_package_presentation_probe.c
-    src/csb/csb_v1_boot.c
-    src/csb/csb_v1_fmtowns_game.c
-    src/csb/csb_v1_fmtowns_portrait.c
-    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
-    src/csb/redmcsb_f7061_save_header_pc34_compat.c
-    src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
-    src/csb/csb_v1_fmtowns_graphics_dat.c
-    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/csb_v1_startup_real_asset_receipt.c
-    src/csb/csb_v1_runtime_pc34_compat.c
-    src/csb/csb_v1_dungeon_loader_pc34_compat.c
-    src/csb/csb_v1_character_pc34_compat.c
-    src/shared/asset_find_by_hash.c
-    src/shared/fs_portable_compat.c
-)
-target_include_directories(firestaff_csb_v1_pc_package_presentation_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_pc_package_presentation_probe
-    PRIVATE firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_csb_v1_pc_package_presentation_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-
-# CSB V1 quickplay/startup dungeon-handle probe.
-# Narrow runtime-boundary probe that proves the verified DUNGEON.DAT
-# handle survives boot handoff into the runtime AND is cleared on a
-# failed rescan. It accepts any hash-verified original CSB package from
-# argv[1], FIRESTAFF_CSB_DATA, or the legacy FIRESTAFF_CSB_PC_DATA. Without
-# original data it exits successfully with SKIP; it never fabricates a
-# verified profile or dungeon from fixture bytes.
-#
-# Source-lock boundary:
-#   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
-#   - ReDMCSB LOADSAVE.C F0435 lines 1936-1944 (new-game map 0).
-#   - ReDMCSB DUNGEON.C F0237 (dungeon load entry).
-#   - ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 (dungeon release).
-add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
-    probes/csb/firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe.c
-    src/csb/csb_v1_runtime_pc34_compat.c
-    src/csb/csb_v1_boot.c
-    src/csb/csb_v1_fmtowns_game.c
-    src/csb/csb_v1_fmtowns_portrait.c
-    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
-    src/csb/redmcsb_f7061_save_header_pc34_compat.c
-    src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
-    src/csb/csb_v1_fmtowns_graphics_dat.c
-    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
-    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
-    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
-    src/csb/csb_v1_startup_real_asset_receipt.c
-    src/csb/csb_v1_dungeon_loader_pc34_compat.c
-    src/csb/csb_v1_character_pc34_compat.c
-    src/dm1/dm1_v1_input_command_queue_pc34_compat.c
-    src/dm1/dm1_v1_event_timer_pc34_compat.c
-    src/shared/asset_find_by_hash.c
-    src/shared/dungeon_decompressor_ftl.c
-    src/shared/fs_portable_compat.c
-)
-target_include_directories(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-if(NOT MSVC)
-    target_compile_options(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-
 # CSB V1 first-viewport-frame startup probe (pass for
 # docs/FIRESTAFF_GAP_LIST.md C5 / TODO.md "first-frame M11/viewport
 # startup proof for CSB" follow-up).  The probe proves the full
@@ -10752,6 +10634,7 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     src/dm1/dm1_v1_input_command_queue_pc34_compat.c
     src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
+    src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
     src/shared/asset_find_by_hash.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/fs_portable_compat.c
@@ -10760,61 +10643,6 @@ target_include_directories(firestaff_csb_v1_first_viewport_frame_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_first_viewport_frame_probe
-        PRIVATE -Wall -Wextra -O2)
-endif()
-
-# CSB V1 PC real-asset ornament blit probe (pass for
-# docs/FIRESTAFF_GAP_LIST.md C5 "live real-asset ornament blits,
-# broader viewport/HUD captures, and pixel parity evidence"). The
-# probe parses the DMCSB1 BE (sig 0x8001) GRAPHICS.DAT header from
-# the verified PC CSB pair, finds a real ornament bitmap whose
-# inline BE w/h header matches the source-locked F0108 floor-band
-# fingerprint, drives the source-locked CSB V1 D1C ornament math
-# (csb_v1_viewport_d1c_f0108_zone_for_coordinate_set_pc34 +
-# csb_v1_viewport_d1c_f0108_blend_c10_pc34 + F0115 decode) against
-# the real bytes, and computes an in-memory 320x200 fingerprint. A PPM,
-# SHA256 sidecar, and manifest are exported only when the caller explicitly
-# supplies FIRESTAFF_CSB_EVIDENCE_DIR; CTest does not write game-derived
-# material to /tmp. Skip-safe on hosts without user-supplied PC CSB game
-# data (exits 0 with SKIP).
-#
-# Source-lock boundary:
-#   - ReDMCSB DUNVIEW.C F0108:3940-4011 (floor ornament ordinal
-#     gate, MASK 0x8000 footprint recursion, C10 blit transparency,
-#     C1500 + CoordinateSet * 11 + ViewFloor zone math).
-#   - ReDMCSB DUNVIEW.C F0115:4547-4581, 4923, 5180-5188,
-#     5211-5214, 5458-5570, 5668-5671 (D1C thing-pass cell order).
-#   - ReDMCSB DEFS.H:2088 (C10_COLOR_FLESH), 2596-2611 (view
-#     squares), 2668-2677 (cell orders), 4045-4046 (C705/C706),
-#     4223 (C1500_ZONE_FLOOR_ORNAMENT).
-#   - dmweb Data Files page: PC CSB GRAPHICS.DAT = DMCSB1 BE.
-add_executable(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
-    probes/csb/firestaff_csb_v1_pc_real_asset_ornament_blit_probe.c
-    src/csb/csb_v1_runtime_pc34_compat.c
-    src/csb/csb_v1_boot.c
-    src/csb/csb_v1_fmtowns_game.c
-    src/csb/csb_v1_fmtowns_portrait.c
-    src/csb/redmcsb_f7055_saveutil_pc34_compat.c
-    src/csb/redmcsb_f7061_save_header_pc34_compat.c
-    src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
-    src/csb/csb_v1_fmtowns_graphics_dat.c
-    src/csb/csb_v1_startup_img3_decode_pc34_compat.c
-    src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
-    src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
-    src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
-    src/csb/csb_v1_dungeon_loader_pc34_compat.c
-    src/csb/csb_v1_character_pc34_compat.c
-    src/csb/csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_pc34_compat.c
-    src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
-    src/shared/asset_find_by_hash.c
-    src/shared/fs_portable_compat.c
-)
-target_include_directories(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
-    PRIVATE firestaff_m10)
-if(NOT MSVC)
-    target_compile_options(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
         PRIVATE -Wall -Wextra -O2)
 endif()
 
@@ -12375,6 +12203,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_inscription_presentation.c")
+        add_executable(test_csb_v1_inscription_presentation
+            tests/test_csb_v1_inscription_presentation.c)
+        target_include_directories(test_csb_v1_inscription_presentation PRIVATE include)
+        target_link_libraries(test_csb_v1_inscription_presentation PRIVATE firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(test_csb_v1_inscription_presentation PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME csb_v1_inscription_presentation
+            COMMAND test_csb_v1_inscription_presentation
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_floor_item_host_presentation_receipt.c")
         add_executable(test_m11_dm1_floor_item_host_presentation_receipt
             tests/test_m11_dm1_floor_item_host_presentation_receipt.c)
@@ -12723,6 +12566,8 @@ if(BUILD_TESTING)
         add_executable(test_m11_dm1_all_visible_inscription_stale_state_pc34
             tests/test_m11_dm1_all_visible_inscription_stale_state_pc34.c)
         target_link_libraries(test_m11_dm1_all_visible_inscription_stale_state_pc34 PRIVATE firestaff_m12 firestaff_m11)
+        target_compile_definitions(test_m11_dm1_all_visible_inscription_stale_state_pc34 PRIVATE
+            FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         if(NOT MSVC)
             target_compile_options(test_m11_dm1_all_visible_inscription_stale_state_pc34 PRIVATE -Wall -Wextra -O2)
         endif()
@@ -12731,6 +12576,9 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_all_visible_inscription_stale_state_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_all_visible_inscription_stale_state_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;inscription;unicode;real-media;in-memory")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_inscription_corridor_invalidation_pc34.c")
@@ -12847,6 +12695,9 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_hoc_orientation_runtime_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_hoc_orientation_runtime_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;in-memory;hoc;pointer")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_front_mirror_asset_fail_closed.c")
@@ -14017,7 +13868,8 @@ endif()
 # DM1 V1 viewport wall visual capture probe — takes DATA_DIR OUT_DIR.
 # Sibling to the champion-mirror capture probe; addresses the
 # 'missing or incorrect viewport walls' P1 visual bug ticket by
-# capturing 24 poses (6 cells x 4 directions) plus per-pose grey
+# capturing 28 poses (7 cells x 4 directions), including pass1055's
+# source-bound closed-door pose, plus per-pose grey
 # pixel count + non-black pixel count + texture-diversity heuristics
 # from the rendered viewport.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_viewport_wall_capture_probe.c")
@@ -14029,7 +13881,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m11/firestaff_dm1_v1_viewport_wall
         target_compile_options(firestaff_dm1_v1_viewport_wall_capture_probe PRIVATE -Wall -Wextra -O2)
     endif()
     # NOTE: no add_test() — this probe writes files and takes an OUT_DIR
-    # arg. Manual run: ./build/firestaff_dm1_v1_viewport_wall_capture_probe ~/.firestaff/data/dm1 /tmp/captures
+    # arg. Manual run: ./build/firestaff_dm1_v1_viewport_wall_capture_probe ~/.firestaff/data/dm1 "$PWD/verification-screens/local-dm1-wall-captures"
 endif()
 
 # DM1 V1 Hall of Champions portrait-12 front_north_entry runtime probe.
@@ -17666,20 +17518,6 @@ endif()
         SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
         LABELS "csb;real_data;m11;hud")
-    # The stock CSBWin corpus is optional.  Its wrapper stages only explicitly
-    # supplied user media and otherwise skips; unlike the title-only row above,
-    # it proves the F0435 resume page contains the source-owned C0128 viewport
-    # and the complete C232 HUD composition.
-    add_test(
-        NAME csb_v1_csbwin_f0435_runtime_frame
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_csbwin_f0435_runtime_frame.sh"
-            "$<TARGET_FILE:test_csb_v1_m11_prison_runtime_hud_pc34>"
-    )
-    set_tests_properties(csb_v1_csbwin_f0435_runtime_frame PROPERTIES
-        SKIP_RETURN_CODE 77
-        LABELS "tier2;csb;csbwin;save;runtime;hud;viewport;real_data;skip_safe"
-        TIMEOUT 45
-    )
     add_test(
         NAME csb_v1_real_media_hash_lock
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_real_media_hash_lock.sh"
@@ -17765,16 +17603,6 @@ endif()
         LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
         TIMEOUT 45
-    )
-    # CSB has no original DOS release.  Keep the CLI from treating a shared
-    # Atari ST graphics hash or stale cache as a PC compatibility launch.
-    add_test(
-        NAME csb_v1_pc_platform_rejected
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_pc_platform_rejected.sh"
-            "$<TARGET_FILE:firestaff>"
-    )
-    set_tests_properties(csb_v1_pc_platform_rejected PROPERTIES
-        LABELS "csb;cli;platform;dos;closed"
     )
     add_test(
         NAME csb_v1_fmtowns_native_cli_boot
@@ -21089,7 +20917,7 @@ endif()
     )
     set_tests_properties(csb_v1_amiga31_m12_m11_real_media_handoff PROPERTIES
         LABELS "tier2;csb;amiga;m12;m11;launcher;startup;real_data;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_ONLY=1;FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_ONLY=1;FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip;FIRESTAFF_CSB_SV_PO=${CMAKE_CURRENT_SOURCE_DIR}/po/csb.sv.po"
         TIMEOUT 120
     )
     # The Atari ST title is a separate ANIMATE.SCR/DAT owner.  Keep its
@@ -22861,10 +22689,13 @@ endif()
     add_executable(test_dm2_v1_gfx_str_pc34_compat
         tests/test_dm2_v1_gfx_str_pc34_compat.c
         src/dm2/dm2_v1_gfx_str_pc34_compat.c
+        src/shared/firestaff_po_loader.c
     )
     target_include_directories(test_dm2_v1_gfx_str_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_dm2_v1_gfx_str_pc34_compat PRIVATE
+        FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_gfx_str_pc34_compat
             PRIVATE -Wall -Wextra -O2)
@@ -26143,6 +25974,24 @@ endif()
         LABELS "dm1;fmtowns;startup;animation"
     )
 
+    add_executable(test_dm1_v1_fmtowns_jdm_title_real_media
+        tests/test_dm1_v1_fmtowns_jdm_title_real_media.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_jdm_title_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_fmtowns_jdm_title_real_media PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_jdm_title_real_media PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_jdm_title_real_media
+        COMMAND test_dm1_v1_fmtowns_jdm_title_real_media
+    )
+    set_tests_properties(dm1_v1_fmtowns_jdm_title_real_media PROPERTIES
+        LABELS "dm1;fmtowns;startup;animation;real_data;skip_safe"
+    )
+
     add_executable(test_dm1_v1_fmtowns_pc34_presentation_boundary
         tests/test_dm1_v1_fmtowns_pc34_presentation_boundary.c
     )
@@ -28761,7 +28610,7 @@ endif()
             NAME pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.py
         )
-        set_tests_properties(pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live PROPERTIES DEPENDS "dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat")
+        set_tests_properties(pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live PROPERTIES DEPENDS "dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat" ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
     endif()
 
     # Bulk-wire all remaining DM1 V1 mirror-candidate contract tests.
@@ -34997,13 +34846,6 @@ endif()
     target_compile_definitions(test_entrance_runtime_dispatch_source_lock PRIVATE
         M11_Entrance_DispatchSourceLockedPointerCommand=ENTRANCE_Compat_DispatchMouseRouteCommand
         M11_Entrance_ResolveDm1ResumeSavePath=ENTRANCE_Compat_ResolveDm1ResumeSavePath)
-    if(APPLE)
-        target_link_options(test_entrance_runtime_dispatch_source_lock PRIVATE
-            "-Wl,-alias,_ENTRANCE_Compat_DispatchKeyCommand,_M11_Entrance_DispatchSourceLockedKeyCommand")
-    elseif(NOT MSVC)
-        target_link_options(test_entrance_runtime_dispatch_source_lock PRIVATE
-            "-Wl,--defsym=M11_Entrance_DispatchSourceLockedKeyCommand=ENTRANCE_Compat_DispatchKeyCommand")
-    endif()
     if(NOT MSVC)
         target_compile_options(test_entrance_runtime_dispatch_source_lock PRIVATE -Wall -Wextra -O2)
     endif()
@@ -35815,6 +35657,27 @@ if(NOT TARGET test_dm1_v1_text_message_pc34_compat)
     )
 endif()
 
+if(NOT TARGET test_dm1_v1_runtime_l10n_pc34_compat)
+    add_executable(test_dm1_v1_runtime_l10n_pc34_compat
+        tests/test_dm1_v1_runtime_l10n_pc34_compat.c
+        src/dm1/dm1_v1_text_message_pc34_compat.c
+        src/shared/firestaff_po_loader.c
+    )
+    target_include_directories(test_dm1_v1_runtime_l10n_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_compile_definitions(test_dm1_v1_runtime_l10n_pc34_compat PRIVATE
+        FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_runtime_l10n_pc34_compat PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_runtime_l10n_source_lock
+        COMMAND test_dm1_v1_runtime_l10n_pc34_compat)
+    add_test(NAME dm1_m11_presented_catalog_source_lock
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_m11_presented_catalog.py)
+endif()
+
 # ── DUNGEON.C F0168 scroll TextString source-lock gate ───────────────
 if(NOT TARGET test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat)
     add_executable(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
@@ -36207,6 +36070,19 @@ if(NOT TARGET test_m11_dm1_status_aux_source_gate)
     add_test(NAME m11_dm1_status_aux_source_gate
         COMMAND test_m11_dm1_status_aux_source_gate)
 endif()
+
+add_executable(test_dm1_v1_c015_unicode_real_pc34
+    tests/test_dm1_v1_c015_unicode_real_pc34.c)
+target_link_libraries(test_dm1_v1_c015_unicode_real_pc34 PRIVATE
+    firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10
+    firestaff_zip_extract SDL3::SDL3)
+target_compile_definitions(test_dm1_v1_c015_unicode_real_pc34 PRIVATE
+    FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_test(NAME dm1_v1_c015_unicode_real_pc34
+    COMMAND test_dm1_v1_c015_unicode_real_pc34)
+set_tests_properties(dm1_v1_c015_unicode_real_pc34 PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    LABELS "dm1;dos;pc34;text;unicode;real-media;in-memory")
 
 if(NOT TARGET test_m11_dm1_food_water_source_gate)
     add_executable(test_m11_dm1_food_water_source_gate
@@ -37540,6 +37416,20 @@ if(NOT TARGET test_m11_dm1_endgame_final_presentation_receipt_pc34)
     )
 endif()
 
+if(NOT TARGET test_m11_dm1_endgame_delay_order_pc34)
+    add_executable(test_m11_dm1_endgame_delay_order_pc34
+        tests/test_m11_dm1_endgame_delay_order_pc34.c
+    )
+    target_link_libraries(test_m11_dm1_endgame_delay_order_pc34
+        PRIVATE firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_endgame_delay_order_pc34
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_dm1_endgame_delay_order_pc34
+        COMMAND test_m11_dm1_endgame_delay_order_pc34)
+endif()
+
 
 # ── DM1 V1 Room Transition source-lock gate ──────────────────────────
 if(NOT TARGET test_dm1_v1_room_transition_pc34_compat)
@@ -38082,6 +37972,8 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
             NAME dm1_v1_viewport_wall_render_plan_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_wall_render_plan_gate.py
         )
+        set_tests_properties(dm1_v1_viewport_wall_render_plan_gate
+                             PROPERTIES SKIP_RETURN_CODE 77)
         add_test(
             NAME dm1_v1_side_wall_dispatch_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_side_wall_dispatch_gate.py
@@ -38241,7 +38133,10 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat.py
     )
-    set_tests_properties(pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat PROPERTIES DEPENDS dm1_v1_champion_panel_disabled_icon_state_pc34_compat)
+    set_tests_properties(pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat PROPERTIES
+        DEPENDS dm1_v1_champion_panel_disabled_icon_state_pc34_compat
+        ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}"
+    )
 endif()
 
 # -- DM1 V1 PC/I34E runtime transcript capture path gate --------------
@@ -38329,6 +38224,9 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
         NAME pass499_dm1_v1_wall_occlusion_runtime_evidence_gate
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py
+    )
+    set_tests_properties(pass499_dm1_v1_wall_occlusion_runtime_evidence_gate PROPERTIES
+        ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}"
     )
 endif()
 
@@ -38481,7 +38379,13 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass608_dm1_v1_d0c_current_square_occlusion_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass608_dm1_v1_d0c_current_square_occlusion_source_lock.py
     )
-    set_tests_properties(pass608_dm1_v1_d0c_current_square_occlusion_source_lock PROPERTIES TIMEOUT 75)
+    set_tests_properties(
+        pass608_dm1_v1_d0c_current_square_occlusion_source_lock
+        PROPERTIES
+            TIMEOUT 75
+            DEPENDS dm1_v1_viewport_3d_pc34_compat
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+    )
 endif()
 
 # -- DM1 V1 D1C door-front field source lock --
@@ -38781,7 +38685,8 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass512_dm1_v1_movement_cross_reference_audit
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass512_dm1_v1_movement_cross_reference_audit.py
     )
-    set_tests_properties(pass512_dm1_v1_movement_cross_reference_audit PROPERTIES DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;pass374_dm1_v1_completion_viewport_wall_credit;pass508_dm1_v1_movement_remaining_gap_after_pass374")
+    # Pass512 reads repository ReDMCSB and authentic PC 3.4 ZIP members
+    # directly; generated pass373/374/508 manifests are not truth inputs.
 endif()
 
 # -- DM1 V1 movement follow-up source-lock gate ---------------------
@@ -39015,7 +38920,7 @@ if(BUILD_TESTING)
         COMMAND test_v1_swsh_intro_pathfinder_pc34_compat
     )
     set_tests_properties(v1_swsh_intro_pathfinder_pc34_compat PROPERTIES
-        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_DM1_DOS_EN_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip;FIRESTAFF_TEST_WORKDIR=${CMAKE_CURRENT_BINARY_DIR}"
     )
 
     add_executable(test_v1_title_intro_pathfinder_pc34_compat
@@ -39164,11 +39069,19 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(firestaff_v1_dm_title_palette_regression_probe PRIVATE -std=c99 -Wall -Wextra -O2)
     endif()
-    add_test(
-        NAME dm_title_palette_regression
-        COMMAND firestaff_v1_dm_title_palette_regression_probe
-                $ENV{HOME}/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE
-    )
+    # TITLE is normally held in the user's original PC 3.4 ZIP.  The loader
+    # accepts Firestaff virtual archive locators, so exercise that real-media
+    # route when the optional game archive is present; CI without proprietary
+    # game data simply does not register a fictitious loose-file test.
+    set(_firestaff_dm1_pc34_archive
+        "$ENV{HOME}/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")
+    if(EXISTS "${_firestaff_dm1_pc34_archive}")
+        add_test(
+            NAME dm_title_palette_regression
+            COMMAND firestaff_v1_dm_title_palette_regression_probe
+                    "${_firestaff_dm1_pc34_archive}::TITLE"
+        )
+    endif()
 endif()
 
 # -- Apple Silicon DM V2.0 filtered renderer Metal-path probe --------
@@ -39632,6 +39545,9 @@ if(BUILD_TESTING)
     target_include_directories(test_nexus_v1_bpk_surface_class PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_bpk_surface_class PRIVATE
+        firestaff_nexus
+    )
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_bpk_surface_class PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
@@ -39644,7 +39560,7 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_bpk_surface_class --real-only
     )
     set_tests_properties(nexus_v1_bpk_surface_class_real PROPERTIES
-        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
         SKIP_RETURN_CODE 77
         LABELS "nexus;prs3;real_data;skip_safe"
     )
@@ -39900,6 +39816,60 @@ add_executable(test_nexus_v1_dgn_material_raster
     set_tests_properties(nexus_v1_vdp2_nbg1_bitmap_hardware_real PROPERTIES
         LABELS "nexus;saturn;real-capture;hardware"
         SKIP_RETURN_CODE 77
+    )
+    add_test(
+        NAME nexus_v1_vdp1_vram_hardware_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp1_vram_hardware_real.sh
+            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/validate_nexus_saturn_runtime_capture.py
+    )
+    set_tests_properties(nexus_v1_vdp1_vram_hardware_real PROPERTIES
+        LABELS "nexus;saturn;real-capture;hardware;vdp1;vram;timing"
+        SKIP_RETURN_CODE 77
+    )
+    add_test(
+        NAME nexus_v1_authenticated_hardware_capture_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_authenticated_hardware_capture_real.sh
+    )
+    set_tests_properties(nexus_v1_authenticated_hardware_capture_real PROPERTIES
+        LABELS "nexus;saturn;real_data;real-capture;hardware;vdp1;vdp2;vram;cram;registers;timing"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 1500
+    )
+    add_test(
+        NAME nexus_v1_title_same_session_capture_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_same_session_capture_real.sh
+    )
+    set_tests_properties(nexus_v1_title_same_session_capture_real PROPERTIES
+        LABELS "nexus;saturn;title;real_data;real-capture;vdp1;vdp2;cram;registers;timing"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 1500
+    )
+    add_test(
+        NAME nexus_v1_title_mapd_cd_ram_source_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_mapd_cd_ram_source_real.sh
+    )
+    set_tests_properties(nexus_v1_title_mapd_cd_ram_source_real PROPERTIES
+        LABELS "nexus;saturn;title;mapd;palette;cd;ram;real_data;real-capture"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 1500
+    )
+    add_test(
+        NAME nexus_v1_title_mapd_cram_same_session_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_mapd_cram_same_session_real.sh
+    )
+    set_tests_properties(nexus_v1_title_mapd_cram_same_session_real PROPERTIES
+        LABELS "nexus;saturn;title;mapd;palette;ram;cram;registers;timing;real_data;real-capture"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 1500
+    )
+    add_test(
+        NAME nexus_v1_title_mapd_vdp2_transfer_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_mapd_vdp2_transfer_real.sh
+    )
+    set_tests_properties(nexus_v1_title_mapd_vdp2_transfer_real PROPERTIES
+        LABELS "nexus;saturn;title;mapd;vdp2;vram;timing;real_data;real-capture"
+        SKIP_RETURN_CODE 77
+        TIMEOUT 1500
     )
     # Decode the raw NBG1 512x256 indexed plane and CRAM from the same
     # authentic capture. It remains an observation-only VDP2 consumer.
@@ -42203,151 +42173,13 @@ if(BUILD_TESTING)
         #       <atari_st_dir> <amiga_dir>
     endif()
 
-    # ── CSB V1 PC real-asset launch probe ctest entry ─────────────
-    # Tier 2 / Skip-safe: hosts without user-supplied PC CSB data
-    # (e.g. ~/.firestaff/data/csb/GRAPHICS.DAT + DUNGEON.DAT) exit
-    # 0 with a SKIP message; hosts that DO have it run the boot
-    # handoff + one source-locked tick + cleanup. The probe is the
-    # canonical evidence path for the TODO.md "Runtime handoff"
-    # item and the docs/FIRESTAFF_GAP_LIST.md Tier 1 row.
-    if(TARGET firestaff_csb_v1_pc_real_asset_launch_probe)
-        add_test(
-            NAME csb_v1_pc_real_asset_launch
-            COMMAND firestaff_csb_v1_pc_real_asset_launch_probe
-        )
-        set_tests_properties(csb_v1_pc_real_asset_launch PROPERTIES
-            LABELS "tier1;csb;real_data;skip_safe;launch;boot_handoff"
-            TIMEOUT 120
-        )
-    endif()
 
-    if(TARGET firestaff_csb_v1_pc_package_presentation_probe)
-        add_test(
-            NAME csb_v1_pc_package_presentation
-            COMMAND firestaff_csb_v1_pc_package_presentation_probe
-        )
-        set_tests_properties(csb_v1_pc_package_presentation PROPERTIES
-            LABELS "tier1;csb;real_data;skip_safe;presentation;package"
-            TIMEOUT 120
-        )
-    endif()
+    # CSB never had a DOS/Windows retail edition.  The former loose
+    # GRAPHICS.DAT/DUNGEON.DAT capture scripts modeled a fictitious PC3.4
+    # route and could only skip against the supported archive corpus.  CSB
+    # startup/presentation coverage is owned by the explicit Atari ST,
+    # Amiga and FM Towns archive tests below and elsewhere in this file.
 
-    # Real-data, end-to-end pointer regression for the source-owned Prison
-    # entrance command.  The boot probe must present the V2 surface before
-    # it maps the click, otherwise V2.0/V2.1 divide source coordinates twice.
-    if(TARGET firestaff)
-        add_test(
-            NAME csb_v2_entrance_pointer_boot_probe
-            COMMAND sh
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v2_entrance_pointer_boot_probe.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v2_entrance_pointer_boot_probe PROPERTIES
-            LABELS "tier1;csb;v2;input;startup;real_data;skip_safe"
-            TIMEOUT 45
-        )
-        add_test(
-            NAME csb_v2_title_boot_probe
-            COMMAND sh
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v2_title_boot_probe.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v2_title_boot_probe PROPERTIES
-            LABELS "tier1;csb;v2;startup;title;real_data;skip_safe"
-            TIMEOUT 20
-        )
-        add_test(
-            NAME csb_v21_presented_startup_capture
-            COMMAND sh
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v21_presented_startup_capture.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v21_presented_startup_capture PROPERTIES
-            LABELS "tier1;csb;v21;startup;presentation;real_data;skip_safe"
-            TIMEOUT 20
-        )
-        add_test(
-            NAME csb_v2_explicit_mode_artpack_isolation
-            COMMAND sh
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v2_explicit_mode_artpack_isolation.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v2_explicit_mode_artpack_isolation PROPERTIES
-            LABELS "tier1;csb;v2;v21;v22;startup;presentation;real_data;skip_safe"
-            SKIP_RETURN_CODE 77
-            TIMEOUT 45
-        )
-        add_test(
-            NAME csb_v20_filtered_startup_capture
-            COMMAND sh
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v20_filtered_startup_capture.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v20_filtered_startup_capture PROPERTIES
-            LABELS "tier1;csb;v20;startup;presentation;real_data;skip_safe"
-            TIMEOUT 20
-        )
-        add_test(
-            NAME csb_v1_title_entrance_visual_contract
-            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_title_entrance_visual_contract.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v1_title_entrance_visual_contract PROPERTIES
-            LABELS "tier2;csb;v1;startup;title;entrance;real_data;skip_safe"
-            TIMEOUT 30
-        )
-        add_test(
-            NAME csb_v22_source_artpack_runtime
-            COMMAND sh
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v22_source_artpack_runtime.sh"
-                "$<TARGET_FILE:firestaff>"
-        )
-        set_tests_properties(csb_v22_source_artpack_runtime PROPERTIES
-            LABELS "tier1;csb;v22;startup;presentation;real_data;skip_safe"
-            SKIP_RETURN_CODE 77
-            TIMEOUT 20
-        )
-    endif()
-
-    # ── CSB V1 quickplay/startup dungeon-handle probe ────────────
-    # Tier 1 / Skip-safe. CTest explicitly opts out of recursive default-root
-    # scanning. Operators pass a hash-verified original package with argv[1]
-    # or FIRESTAFF_CSB_DATA to exercise the full handoff end-to-end.
-    if(TARGET firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe)
-        add_test(
-            NAME csb_v1_pc34_quickplay_dungeon_handle
-            COMMAND firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
-        )
-        set_tests_properties(csb_v1_pc34_quickplay_dungeon_handle PROPERTIES
-            LABELS "tier1;csb;quickplay;boot_handoff;dungeon_handle;rescan;skip_safe"
-            ENVIRONMENT "FIRESTAFF_CSB_DATA="
-            TIMEOUT 60
-        )
-    endif()
-
-    # ── CSB V1 PC real-asset ornament blit probe ctest entry ──────
-    # Tier 1 / Skip-safe: hosts without user-supplied PC CSB data
-    # exit 0 with a SKIP message; hosts that DO have it parse the
-    # DMCSB1 BE GRAPHICS.DAT header, find a real ornament bitmap,
-    # drive the source-locked F0108 zone + C10 transparency +
-    # F0115 cell-order math against real bytes, and compute a deterministic
-    # in-memory 320x200 fingerprint. An optional PPM + SHA256 sidecar is
-    # written only to caller-selected evidence storage. The
-    # probe is the canonical evidence path for the
-    # docs/FIRESTAFF_GAP_LIST.md "live real-asset ornament blits,
-    # broader viewport/HUD captures, and pixel parity evidence"
-    # gap and the TODO.md "richer CSB-specific viewport/HUD
-    # evidence" follow-up.
-    if(TARGET firestaff_csb_v1_pc_real_asset_ornament_blit_probe)
-        add_test(
-            NAME csb_v1_pc_real_asset_ornament_blit
-            COMMAND firestaff_csb_v1_pc_real_asset_ornament_blit_probe
-        )
-        set_tests_properties(csb_v1_pc_real_asset_ornament_blit PROPERTIES
-            LABELS "tier1;csb;real_data;skip_safe;viewport;ornament;f0108;f0115"
-            TIMEOUT 120
-        )
-    endif()
 
     # ── CSB V1 first-viewport-frame startup probe ctest entry ────
     # Tier 1 / real-data and skip-safe: runs only against a
@@ -43274,10 +43106,71 @@ add_test(NAME nexus_v1_warning_dgt2_resource_corpus
         $<TARGET_FILE:test_nexus_v1_warning_dgt2_resource_corpus>)
 set_tests_properties(nexus_v1_warning_dgt2_resource_corpus PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;warning;m11;real_data;skip_safe")
+add_library(nexus_v1_test_retail_member OBJECT
+    tests/nexus_v1_test_retail_member.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
+target_include_directories(nexus_v1_test_retail_member PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+foreach(_nexus_member_target test_nexus_v1_stmp test_nexus_v1_mns)
+    target_sources(${_nexus_member_target} PRIVATE
+        $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
+    target_include_directories(${_nexus_member_target} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+endforeach()
+set_property(TEST nexus_v1_stmp_real APPEND PROPERTY ENVIRONMENT
+    "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+set_property(TEST nexus_v1_mns APPEND PROPERTY ENVIRONMENT
+    "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+foreach(_nexus_warning_target
+        test_nexus_v1_warning_dgt2_source_admission
+        test_nexus_v1_warning_dgt2_descriptor_admission
+        test_nexus_v1_warning_dgt2_pp_payload_admission
+        test_nexus_v1_warning_dgt2_pp_execution
+        test_nexus_v1_warning_dgt2_m11_presentation
+        test_nexus_v1_warning_dgt2_resource_corpus)
+    target_sources(${_nexus_warning_target} PRIVATE
+        $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
+    target_include_directories(${_nexus_warning_target} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+endforeach()
+foreach(_nexus_warning_test
+        nexus_v1_warning_dgt2_source_admission
+        nexus_v1_warning_dgt2_descriptor_admission
+        nexus_v1_warning_dgt2_pp_payload_admission
+        nexus_v1_warning_dgt2_pp_execution
+        nexus_v1_warning_dgt2_m11_presentation
+        nexus_v1_warning_dgt2_resource_corpus)
+    set_property(TEST ${_nexus_warning_test} APPEND PROPERTY ENVIRONMENT
+        "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+endforeach()
+foreach(_nexus_font_target
+        test_nexus_v1_font256_s2d_admission
+        test_nexus_v1_font256_s2d_section_witness
+        test_nexus_v1_font256_s2d_first_section_capture
+        test_nexus_v1_font256_s2d_section_corpus_receipt
+        test_nexus_v1_font256_s2d_subrecord_grammar)
+    target_sources(${_nexus_font_target} PRIVATE
+        $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
+    target_include_directories(${_nexus_font_target} PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+endforeach()
+foreach(_nexus_font_test
+        nexus_v1_font256_s2d_admission
+        nexus_v1_font256_s2d_section_witness
+        nexus_v1_font256_s2d_first_section_capture
+        nexus_v1_font256_s2d_section_corpus_receipt_real
+        nexus_v1_font256_s2d_subrecord_grammar_real)
+    set_property(TEST ${_nexus_font_test} APPEND PROPERTY ENVIRONMENT
+        "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+endforeach()
+
 add_executable(test_nexus_v1_title_res_corpus_receipt
     tests/test_nexus_v1_title_res_corpus_receipt.c)
+target_sources(test_nexus_v1_title_res_corpus_receipt PRIVATE
+    $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
 target_include_directories(test_nexus_v1_title_res_corpus_receipt PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_nexus_v1_title_res_corpus_receipt PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_res_corpus_receipt
     COMMAND test_nexus_v1_title_res_corpus_receipt)
@@ -43287,11 +43180,14 @@ add_test(NAME nexus_v1_title_res_corpus_receipt_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_res_corpus_receipt_real.sh
         $<TARGET_FILE:test_nexus_v1_title_res_corpus_receipt>)
 set_tests_properties(nexus_v1_title_res_corpus_receipt_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_title_titl_pp_payload_admission
     tests/test_nexus_v1_title_titl_pp_payload_admission.c)
+target_sources(test_nexus_v1_title_titl_pp_payload_admission PRIVATE
+    $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
 target_include_directories(test_nexus_v1_title_titl_pp_payload_admission PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_nexus_v1_title_titl_pp_payload_admission PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_titl_pp_payload_admission
     COMMAND test_nexus_v1_title_titl_pp_payload_admission)
@@ -43301,11 +43197,14 @@ add_test(NAME nexus_v1_title_titl_pp_payload_admission_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_titl_pp_payload_admission_real.sh
         $<TARGET_FILE:test_nexus_v1_title_titl_pp_payload_admission>)
 set_tests_properties(nexus_v1_title_titl_pp_payload_admission_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_title_dgt2_pp_payload_admission
     tests/test_nexus_v1_title_dgt2_pp_payload_admission.c)
+target_sources(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE
+    $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
 target_include_directories(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_dgt2_pp_payload_admission
     COMMAND test_nexus_v1_title_dgt2_pp_payload_admission)
@@ -43315,11 +43214,14 @@ add_test(NAME nexus_v1_title_dgt2_pp_payload_admission_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_dgt2_pp_payload_admission_real.sh
         $<TARGET_FILE:test_nexus_v1_title_dgt2_pp_payload_admission>)
 set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_title_mapd_tibg_admission
     tests/test_nexus_v1_title_mapd_tibg_admission.c)
+target_sources(test_nexus_v1_title_mapd_tibg_admission PRIVATE
+    $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
 target_include_directories(test_nexus_v1_title_mapd_tibg_admission PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_nexus_v1_title_mapd_tibg_admission PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_mapd_tibg_admission
     COMMAND test_nexus_v1_title_mapd_tibg_admission)
@@ -43329,11 +43231,14 @@ add_test(NAME nexus_v1_title_mapd_tibg_admission_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_mapd_tibg_admission_real.sh
         $<TARGET_FILE:test_nexus_v1_title_mapd_tibg_admission>)
 set_tests_properties(nexus_v1_title_mapd_tibg_admission_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_title_cnfd_payload_admission
     tests/test_nexus_v1_title_cnfd_payload_admission.c)
+target_sources(test_nexus_v1_title_cnfd_payload_admission PRIVATE
+    $<TARGET_OBJECTS:nexus_v1_test_retail_member>)
 target_include_directories(test_nexus_v1_title_cnfd_payload_admission PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(test_nexus_v1_title_cnfd_payload_admission PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_cnfd_payload_admission
     COMMAND test_nexus_v1_title_cnfd_payload_admission)
@@ -43343,6 +43248,7 @@ add_test(NAME nexus_v1_title_cnfd_payload_admission_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_cnfd_payload_admission_real.sh
         $<TARGET_FILE:test_nexus_v1_title_cnfd_payload_admission>)
 set_tests_properties(nexus_v1_title_cnfd_payload_admission_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_0dmstrt_structure_admission
     tests/test_nexus_v1_0dmstrt_structure_admission.c
@@ -44865,7 +44771,6 @@ if(TEST pass563_dm1_v1_pc34_original_c254_boundary)
 endif()
 
 
-# csb_v1_m11_runtime_capture_boundary: WILL_FAIL removed 2026-06-21 - positive CSB launch handoff + PC real-asset boot/tick evidence now PASSES (csb_v1_pc_real_asset_launch_probe covers it). Marker kept as no-op.
 # pass547_csb_v1_runtime_readiness_backfill: WILL_FAIL removed 2026-06-21 - same retirement as csb_v1_m11_runtime_capture_boundary. Marker kept as no-op.
 # pass395_touch_queue_integration_source_lock: WILL_FAIL removed (2026-06-19)
 # after fixing the verifier's include-path convention (the local touch
@@ -47672,7 +47577,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.py
         )
-        set_tests_properties(pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat)
+        set_tests_properties(pass785_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.py
@@ -47682,7 +47587,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.py
         )
-        set_tests_properties(pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat)
+        set_tests_properties(pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass789_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.py
@@ -47983,7 +47888,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass855_dm1_v1_rename_champion_input_character_string
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass855_dm1_v1_rename_champion_input_character_string_pc34_compat.py
         )
-        set_tests_properties(pass855_dm1_v1_rename_champion_input_character_string PROPERTIES DEPENDS dm1_v1_rename_champion_input_character_string_pc34_compat)
+        set_tests_properties(pass855_dm1_v1_rename_champion_input_character_string PROPERTIES
+            DEPENDS dm1_v1_rename_champion_input_character_string_pc34_compat
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}"
+        )
         add_test(
             NAME pass856_dm1_v1_reincarnate_special_characters
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass856_dm1_v1_reincarnate_special_characters_pc34_compat.py
@@ -48220,52 +48128,52 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass887_dm1_v1_animtown_color_swoosh1
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass887_dm1_v1_animtown_color_swoosh1_pc34_compat.py
         )
-        set_tests_properties(pass887_dm1_v1_animtown_color_swoosh1 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh1_pc34_compat)
+        set_tests_properties(pass887_dm1_v1_animtown_color_swoosh1 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh1_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass888_dm1_v1_animtown_color_swoosh2
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass888_dm1_v1_animtown_color_swoosh2_pc34_compat.py
         )
-        set_tests_properties(pass888_dm1_v1_animtown_color_swoosh2 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh2_pc34_compat)
+        set_tests_properties(pass888_dm1_v1_animtown_color_swoosh2 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh2_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass889_dm1_v1_animtown_color_swoosh3
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass889_dm1_v1_animtown_color_swoosh3_pc34_compat.py
         )
-        set_tests_properties(pass889_dm1_v1_animtown_color_swoosh3 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh3_pc34_compat)
+        set_tests_properties(pass889_dm1_v1_animtown_color_swoosh3 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh3_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass890_dm1_v1_animtown_color_swoosh4
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass890_dm1_v1_animtown_color_swoosh4_pc34_compat.py
         )
-        set_tests_properties(pass890_dm1_v1_animtown_color_swoosh4 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh4_pc34_compat)
+        set_tests_properties(pass890_dm1_v1_animtown_color_swoosh4 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh4_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass891_dm1_v1_animtown_color_swoosh5
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass891_dm1_v1_animtown_color_swoosh5_pc34_compat.py
         )
-        set_tests_properties(pass891_dm1_v1_animtown_color_swoosh5 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh5_pc34_compat)
+        set_tests_properties(pass891_dm1_v1_animtown_color_swoosh5 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh5_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass892_dm1_v1_animtown_color_swoosh6
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass892_dm1_v1_animtown_color_swoosh6_pc34_compat.py
         )
-        set_tests_properties(pass892_dm1_v1_animtown_color_swoosh6 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh6_pc34_compat)
+        set_tests_properties(pass892_dm1_v1_animtown_color_swoosh6 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh6_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass893_dm1_v1_animtown_color_swoosh7
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass893_dm1_v1_animtown_color_swoosh7_pc34_compat.py
         )
-        set_tests_properties(pass893_dm1_v1_animtown_color_swoosh7 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh7_pc34_compat)
+        set_tests_properties(pass893_dm1_v1_animtown_color_swoosh7 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh7_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass894_dm1_v1_animtown_color_swoosh8
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass894_dm1_v1_animtown_color_swoosh8_pc34_compat.py
         )
-        set_tests_properties(pass894_dm1_v1_animtown_color_swoosh8 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh8_pc34_compat)
+        set_tests_properties(pass894_dm1_v1_animtown_color_swoosh8 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh8_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass895_dm1_v1_animtown_color_swoosh9
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass895_dm1_v1_animtown_color_swoosh9_pc34_compat.py
         )
-        set_tests_properties(pass895_dm1_v1_animtown_color_swoosh9 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh9_pc34_compat)
+        set_tests_properties(pass895_dm1_v1_animtown_color_swoosh9 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh9_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass896_dm1_v1_animtown_color_swoosh10
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass896_dm1_v1_animtown_color_swoosh10_pc34_compat.py
         )
-        set_tests_properties(pass896_dm1_v1_animtown_color_swoosh10 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh10_pc34_compat)
+        set_tests_properties(pass896_dm1_v1_animtown_color_swoosh10 PROPERTIES DEPENDS dm1_v1_animtown_color_swoosh10_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass870_dm1_v1_palette_changes_cursor_mask
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass870_dm1_v1_palette_changes_cursor_mask_pc34_compat.py
@@ -48333,6 +48241,30 @@ endif()
 
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────
 add_executable(extract_all_sprites tools/extract_all_sprites.c src/engine/firestaff_graphics_dat_reader.c)
+
+add_executable(firestaff_csb_source_text_dump
+    tools/firestaff_csb_source_text_dump.c
+    src/shared/firestaff_pak_decode.c)
+target_include_directories(firestaff_csb_source_text_dump PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_source_text_dump PRIVATE firestaff_m11)
+add_executable(test_csb_v1_atari_source_text_runtime_real
+    tests/test_csb_v1_atari_source_text_runtime_real.c)
+target_include_directories(test_csb_v1_atari_source_text_runtime_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_atari_source_text_runtime_real PRIVATE
+    firestaff_m11)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_atari_source_text_runtime_real PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME csb_v1_atari_source_text_runtime_real
+    COMMAND test_csb_v1_atari_source_text_runtime_real)
+set_tests_properties(csb_v1_atari_source_text_runtime_real PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "csb;atari;runtime;real_data;no_synthesis"
+    ENVIRONMENT
+        "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx")
 target_include_directories(extract_all_sprites PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/tools)
 target_link_libraries(extract_all_sprites PRIVATE firestaff_m10)
 if(NOT MSVC)
@@ -53098,6 +53030,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_game_presentation_target_p
     )
 endif()
 
+# DM1 player-facing text translation is applied at M11's final presentation
+# boundary, never to authentic world/save records or stable debug receipts.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_player_text_l10n.c")
+    add_executable(test_m11_dm1_player_text_l10n
+        tests/test_m11_dm1_player_text_l10n.c
+    )
+    target_link_libraries(test_m11_dm1_player_text_l10n PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_m11_dm1_player_text_l10n PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_dm1_player_text_l10n
+        COMMAND test_m11_dm1_player_text_l10n
+                ${CMAKE_CURRENT_SOURCE_DIR}/po/dm1.sv.po
+    )
+endif()
+
 # M11 asset-loader blit helper contract. The test uses a synthetic
 # M11_AssetSlot so it covers clipping, nearest scaling, mirroring,
 # transparent pixels, replacement colors, and the champion-portrait-style
@@ -54590,11 +54539,7 @@ endif()
 
 foreach(_firestaff_csb_boot_target
         firestaff_csb_v1_real_asset_launch_probe
-        firestaff_csb_v1_pc_real_asset_launch_probe
-        firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
-        firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
         firestaff_csb_v1_first_viewport_frame_probe
-        firestaff_csb_v1_pc_real_asset_ornament_blit_probe
         test_csb_v1_boot_profile_smoke
         test_csb_v1_required_complete_launches
         test_csb_v1_boot_title_import_ui_gate_pc34_compat
@@ -55438,12 +55383,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_switch.c")
         src/csb/csb_v1_fmtowns_switch.c
         src/csb/csb_v1_fmtowns_graphics_dat.c)
     target_include_directories(test_csb_v1_fmtowns_switch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_switch PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_fmtowns_switch PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_fmtowns_switch COMMAND test_csb_v1_fmtowns_switch)
     set_tests_properties(csb_v1_fmtowns_switch PROPERTIES
-        SKIP_RETURN_CODE 77 LABELS "csb;fmtowns;real_data")
+        SKIP_RETURN_CODE 77 LABELS "csb;fmtowns;real_data;in-memory"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_switch_dat.c")
@@ -55482,13 +55430,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handof
     add_test(NAME csb_v1_fmtowns_en_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_en_m11_real_media_handoff PROPERTIES
-        LABELS "csb;fmtowns;english;m11;handoff;legacy-loose-media;manual-data-root;skip-safe"
+        LABELS "csb;fmtowns;english;m11;handoff;packed-archive;in-memory;real-data;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120)
     add_test(NAME csb_v1_fmtowns_ja_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_ja_m11_real_media_handoff PROPERTIES
-        LABELS "csb;fmtowns;japanese;m11;handoff;legacy-loose-media;manual-data-root;skip-safe"
+        LABELS "csb;fmtowns;japanese;m11;handoff;packed-archive;in-memory;real-data;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120)
 endif()
@@ -58546,6 +58494,8 @@ target_include_directories(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_comp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
 target_link_libraries(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat COMMAND test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat)
+set_tests_properties(test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat
+                     PROPERTIES SKIP_RETURN_CODE 77)
 add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat
     tests/test_dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c
     src/dm1/dm1_v1_viewport_d0l2_d0r2_f0107_wall_ornament_pc34_compat.c)
@@ -59563,6 +59513,30 @@ set_tests_properties(test_dm1_v1_dos_pc34_real_data_manifest PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
     LABELS "dm1;dos;pc34;identity;real-media;in-memory")
 
+add_executable(test_dm1_v1_creature_terrain_passability_pc34_compat
+    tests/test_dm1_v1_creature_terrain_passability_pc34_compat.c)
+target_include_directories(test_dm1_v1_creature_terrain_passability_pc34_compat
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_creature_terrain_passability_pc34_compat
+    PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_creature_terrain_passability_pc34_compat
+    COMMAND test_dm1_v1_creature_terrain_passability_pc34_compat)
+set_tests_properties(test_dm1_v1_creature_terrain_passability_pc34_compat PROPERTIES
+    LABELS "dm1;pc34;creature-ai;movement;source-lock")
+
+# MENU.C F0401/F0407 bounded RNG domains, including the complete two-result
+# C005 FLIP -> F0381 player-message producer set.
+add_executable(test_dm1_v1_action_random_domain_pc34_compat
+    tests/test_dm1_v1_action_random_domain_pc34_compat.c)
+target_include_directories(test_dm1_v1_action_random_domain_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_action_random_domain_pc34_compat PRIVATE
+    firestaff_m10)
+add_test(NAME dm1_v1_action_random_domain_pc34_compat
+    COMMAND test_dm1_v1_action_random_domain_pc34_compat)
+set_tests_properties(dm1_v1_action_random_domain_pc34_compat PROPERTIES
+    LABELS "dm1;dos;pc34;action;message;source-lock")
+
 # Native macOS host smoke: unlike the asset-free CI matrix this opt-in gate
 # runs the production M11 boot path against the user's authenticated DM1 data.
 # The script is skip-safe when no licensed corpus is installed and never
@@ -60116,6 +60090,21 @@ add_executable(test_dm1_v1_sound_pc34_compat tests/test_dm1_v1_sound_pc34_compat
 target_include_directories(test_dm1_v1_sound_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_sound_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_sound_pc34_compat COMMAND test_dm1_v1_sound_pc34_compat)
+
+add_executable(test_dm1_v1_audio_source_closure_real_pc34
+    tests/test_dm1_v1_audio_source_closure_real_pc34.c
+    src/shared/sound_event_snd3_map_v1.c)
+target_include_directories(test_dm1_v1_audio_source_closure_real_pc34 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_audio_source_closure_real_pc34 PRIVATE
+    firestaff_m10)
+target_compile_definitions(test_dm1_v1_audio_source_closure_real_pc34 PRIVATE
+    FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_test(NAME dm1_v1_audio_source_closure_real_pc34
+    COMMAND test_dm1_v1_audio_source_closure_real_pc34)
+set_tests_properties(dm1_v1_audio_source_closure_real_pc34 PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=$ENV{HOME}/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    LABELS "dm1;pc34;real-data;audio;source-lock;packed-archive")
 
 add_executable(test_dm1_v1_combat_pc34_compat tests/test_dm1_v1_combat_pc34_compat.c)
 target_include_directories(test_dm1_v1_combat_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -60738,6 +60727,14 @@ endforeach()
 # targets in their normal release mode while explicitly restoring assertions
 # for the CTest programs and focused runtime probes.
 if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v1_startup_special_palette_presentation_source_lock
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_startup_special_palette_presentation_source_lock.py
+    )
+    set_tests_properties(dm1_v1_startup_special_palette_presentation_source_lock PROPERTIES
+        LABELS "dm1;startup;palette;presentation;source-lock"
+    )
     get_property(_firestaff_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
     foreach(_firestaff_test_target IN LISTS _firestaff_all_targets)
         if(_firestaff_test_target MATCHES "^test_" OR

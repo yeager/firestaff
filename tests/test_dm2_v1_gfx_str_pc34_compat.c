@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "dm2_v1_gfx_str_pc34_compat.h"
+#include "firestaff_po_loader.h"
 
 /* ── Mock tracking ─────────────────────────────────────────────────── */
 
@@ -570,11 +571,27 @@ static const uint8_t *mock_query_gdat_text_override(void *ctx,
                                                      size_t *out_size)
 {
     static const uint8_t english[] = "FIGHTER";
+    static const uint8_t multiline[] =
+        "NO WATER\nCHECK PUMP\nOPERATION ON\nLEVEL BELOW";
     (void)ctx;
     if (out_size) *out_size = 0u;
-    if (cls != 0x07 || sub != 0x00 || idx != 0x00) return NULL;
-    if (out_size) *out_size = sizeof(english);
-    return english;
+    if (cls == 0x07 && sub == 0x00 && idx == 0x00) {
+        if (out_size) *out_size = sizeof(english);
+        return english;
+    }
+    if (cls == 0x03 && sub == 0x00 && idx == 0x11) {
+        if (out_size) *out_size = sizeof(multiline);
+        return multiline;
+    }
+    return NULL;
+}
+
+static const char *mock_translate_presented_text(void *ctx,
+                                                  const char *source_text)
+{
+    (void)ctx;
+    if (strcmp(source_text, "FIGHTER") == 0) return "KRIGARE";
+    return source_text;
 }
 
 static void test_query_gdat_text_authentic_override(void)
@@ -586,12 +603,37 @@ static void test_query_gdat_text_authentic_override(void)
     dm2_v1_gfx_str_init(&state);
     memset(&cb, 0, sizeof(cb));
     cb.query_gdat_text_override = mock_query_gdat_text_override;
+    cb.translate_presented_text = mock_translate_presented_text;
     assert(dm2_v1_gfx_str_query_gdat_text(&state, 0x07, 0x00, 0x00,
                                            text, &cb, NULL));
-    assert(strcmp(text, "FIGHTER") == 0);
+    assert(strcmp(text, "KRIGARE") == 0);
     assert(!dm2_v1_gfx_str_query_gdat_text(&state, 0x07, 0x00, 0x01,
                                             text, &cb, NULL));
-    printf("  PASS: authenticated GDAT text override\n");
+    printf("  PASS: authenticated GDAT text override reaches l10n boundary\n");
+}
+
+static void test_query_gdat_text_loaded_swedish_domain(void)
+{
+    DM2_V1_GfxStrState state;
+    DM2_V1_GfxStrCallbacks cb;
+    char catalog[1024];
+    char text[256];
+
+    snprintf(catalog, sizeof(catalog), "%s/po/dm2.sv.po",
+             FIRESTAFF_SOURCE_DIR);
+    assert(fs_po_load(catalog) == 309);
+    dm2_v1_gfx_str_init(&state);
+    memset(&cb, 0, sizeof(cb));
+    cb.query_gdat_text_override = mock_query_gdat_text_override;
+    assert(dm2_v1_gfx_str_query_gdat_text(&state, 0x07, 0x00, 0x00,
+                                          text, &cb, NULL));
+    assert(strcmp(text, "KRIGARE") == 0);
+    assert(dm2_v1_gfx_str_query_gdat_text(&state, 0x03, 0x00, 0x11,
+                                          text, &cb, NULL));
+    assert(strcmp(text,
+                  "INGET VATTEN\nKONTROLLERA PUMPENS\nDRIFT PÅ\n"
+                  "VÅNINGEN UNDER") == 0);
+    printf("  PASS: loaded dm2 Swedish domain reaches presentation\n");
 }
 
 /* ── Main ──────────────────────────────────────────────────────────── */
@@ -626,7 +668,8 @@ int main(void)
     test_print_syserr_text();
     test_draw_uppercase();
     test_query_gdat_text_authentic_override();
+    test_query_gdat_text_loaded_swedish_domain();
 
-    printf("All 26 tests passed.\n");
+    printf("All 27 tests passed.\n");
     return 0;
 }

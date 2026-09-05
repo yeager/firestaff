@@ -214,25 +214,46 @@ def main() -> int:
                     "m11_game_view.c:m11_draw_dm1_side_door_ornaments",
                     "Side door ornaments obey max-visible/side-lane blockers and compose against the same panel state as the door bitmap.", missing)
 
+    callback = local_function(local_text, "m11_dm1_f0128_execute_source_step")
+    missing = ordered_missing(callback, [
+        "M11_DM1_F0128_EXECUTE_WALL_MATERIAL",
+        "m11_draw_dm1_side_walls",
+        "M11_DM1_F0128_EXECUTE_WALL_ORNAMENT",
+        "m11_draw_dm1_wall_ornaments",
+        "M11_DM1_F0128_EXECUTE_DOOR_PASS1",
+        "M11_DM1_F0128_EXECUTE_DOOR_FRAME",
+        "M11_DM1_F0128_EXECUTE_DOOR_BUTTON",
+        "M11_DM1_F0128_EXECUTE_DOOR_MATERIAL",
+        "m11_draw_dm1_center_doors",
+        "m11_draw_dm1_side_doors",
+        "M11_DM1_F0128_EXECUTE_FOREGROUND",
+    ])
     local = local_function(local_text, "m11_draw_viewport")
-    missing = ordered_missing(local, [
+    missing += ordered_missing(local, [
         "int blockingCenterDepth =",
         "visibility.nearest_blocking_center_depth_index",
         "for (replayForward = 3; replayForward >= 1; --replayForward)",
-        "m11_draw_dm1_side_walls",
-        "m11_draw_dm1_wall_ornaments",
-        "m11_draw_dm1_side_doors",
-        "m11_draw_dm1_side_door_ornaments",
-        "m11_draw_dm1_side_destroyed_door_masks",
-        "m11_draw_dm1_front_walls",
-        "m11_draw_dm1_wall_ornaments",
-        "m11_draw_dm1_center_doors",
-        "m11_draw_dm1_center_door_ornaments",
-        "m11_draw_dm1_center_destroyed_door_masks",
+        "m11_dm1_f0128_dispatch_wall_material_square",
+        "m11_dm1_f0128_dispatch_wall_ornament_square",
+        "m11_dm1_f0128_dispatch_door_pass1_square",
+        "m11_dm1_f0128_dispatch_door_frame_square",
+        "m11_dm1_f0128_dispatch_door_button_square",
+        "m11_dm1_f0128_dispatch_door_material_square",
+        "m11_dm1_f0128_dispatch_foreground_square",
     ])
-    ok &= add_check(checks, "firestaff-viewport-replays-near-side-wall-door-ornaments-after-center-blockers", not missing,
-                    "m11_game_view.c:m11_draw_viewport",
-                    "The F0128 square replay preserves source order: each side wall/ornament/door transaction completes before its center square, with the shared center blocker receipt passed to foreground replay.", missing)
+    # Broad primitive calls here would reintroduce a second, source-invalid
+    # draw pass after the callback-owned square transaction.
+    missing += [f"forbidden viewport primitive: {needle}" for needle in (
+        "m11_draw_dm1_side_walls", "m11_draw_dm1_front_walls",
+        "m11_draw_dm1_wall_ornaments", "m11_draw_dm1_side_doors",
+        "m11_draw_dm1_center_doors", "m11_draw_dm1_side_door_ornaments",
+        "m11_draw_dm1_center_door_ornaments",
+        "m11_draw_dm1_side_destroyed_door_masks",
+        "m11_draw_dm1_center_destroyed_door_masks",
+    ) if needle in local]
+    ok &= add_check(checks, "firestaff-callback-owns-near-side-wall-door-ornament-order", not missing,
+                    "m11_game_view.c:m11_dm1_f0128_execute_source_step + m11_draw_viewport",
+                    "Each F0128 side/center square dispatches its source-ordered wall, ornament, door transaction through the scheduler callback; the viewport contains no broad primitive replay.", missing)
 
     payload = {
         "gate": "dm1_v1_viewport_door_wall_ornament_source_lock",

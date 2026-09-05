@@ -133,14 +133,15 @@ if printf '%s\n' "$menu_output" | grep -q 'handoffHash=00000000'; then
     exit 1
 fi
 
-# Atari ST is the first card on the platform picker's second row.  Select
+# With the nonexistent PC edition removed, Atari ST is the third card on the
+# platform picker's first row. Select
 # CSB, that card, and Original solely through pointer events on the explicit
 # launcher canvas, then require the ordinary native launch exit.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --width 1920 --height 1080 --menu --game csb --platform atari-st \
     --data-dir "$media_path" \
-    --script 'wait20,click:1173:262,wait20,click:410:679,wait20,click:450:405,wait20' \
+    --script 'wait20,click:1173:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
 echo "PASS: native CSB Atari ST campaign title, complete input matrix, and start-menu launch"

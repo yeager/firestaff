@@ -1402,11 +1402,12 @@ fail:
     return 0;
 }
 
-int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+static int world_init_from_dungeon_dat_buffer_compat(
     const unsigned char* dungeonBytes,
     int dungeonByteCount,
     uint32_t seed,
-    struct GameWorld_Compat* outWorld)
+    struct GameWorld_Compat* outWorld,
+    int fmtownsJapanese)
 {
     struct DungeonDatState_Compat* dungeon = NULL;
     struct DungeonThings_Compat* things = NULL;
@@ -1416,8 +1417,11 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
     things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
     if (!dungeon || !things) goto fail;
-    if (!F0504_DUNGEON_LoadTailBuffer_Compat(
-            dungeonBytes, dungeonByteCount, dungeon, things)) goto fail;
+    if (!(fmtownsJapanese
+              ? F0504J_DUNGEON_LoadTailBufferFmTownsJp_Compat(
+                    dungeonBytes, dungeonByteCount, dungeon, things)
+              : F0504_DUNGEON_LoadTailBuffer_Compat(
+                    dungeonBytes, dungeonByteCount, dungeon, things))) goto fail;
     (void)F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(dungeon, things);
     memset(outWorld, 0, sizeof(*outWorld));
     outWorld->dungeon = dungeon;
@@ -1447,6 +1451,26 @@ fail:
         free(things);
     }
     return 0;
+}
+
+int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld)
+{
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 0);
+}
+
+int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld)
+{
+    return world_init_from_dungeon_dat_buffer_compat(
+        dungeonBytes, dungeonByteCount, seed, outWorld, 1);
 }
 
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world) {
@@ -11625,6 +11649,7 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     int destinationPassable;
     int destinationBlocked;
     struct DungeonGroup_Compat* group;
+    struct DM1CreatureInfo_Compat creatureInfo;
     struct TimelineEvent_Compat nextEvent;
     DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
@@ -11648,9 +11673,30 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     destMapX = movePlan.destinationMapX;
     destMapY = movePlan.destinationMapY;
 
-    destinationPassable = F0707_MOVEMENT_IsSquarePassableForContext_Compat(
-        world->dungeon, ev->mapIndex, destMapX, destMapY,
-        MOVEMENT_PASS_CTX_CREATURE);
+    memset(&creatureInfo, 0, sizeof(creatureInfo));
+    if (!orch_get_dm1_creature_info_pc34_compat(
+            (int)group->creatureType, &creatureInfo)) {
+        return 0;
+    }
+    {
+        unsigned short firstThing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            world->dungeon, world->things, ev->mapIndex, destMapX, destMapY);
+        int doorVertical = 0;
+        if (firstThing != THING_NONE && firstThing != THING_ENDOFLIST &&
+            THING_GET_TYPE(firstThing) == THING_TYPE_DOOR &&
+            THING_GET_INDEX(firstThing) >= 0 &&
+            THING_GET_INDEX(firstThing) < world->things->doorCount &&
+            world->things->doors) {
+            doorVertical = world->things->doors[THING_GET_INDEX(firstThing)].vertical;
+        }
+        /* ReDMCSB GROUP.C F0203:1491-1551 owns terrain legality.  The
+         * previous context-only check admitted every creature onto an open
+         * pit and used a universal door threshold, bypassing the authentic
+         * G0243 Attributes word and destination DOOR orientation. */
+        destinationPassable = F0708_MOVEMENT_IsSquarePassableForCreature_Compat(
+            world->dungeon, ev->mapIndex, destMapX, destMapY,
+            creatureInfo.attributes, doorVertical, 1);
+    }
     destinationBlocked = orch_square_has_group_or_party_compat(
         world, ev->mapIndex, destMapX, destMapY);
     if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(

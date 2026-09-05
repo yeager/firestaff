@@ -55,6 +55,8 @@ typedef struct {
                                  M12_ARCH_FM_TOWNS. */
     int csbFmtownsJapanese; /* Select the verified CSB F31J package rather
                                than the architecture's default F31E row. */
+    int dm1FmtownsJapanese; /* Select the verified DM1 JDM.EXP/JDATA package
+                               rather than the default EDM.EXP/DATA row. */
     int directLaunch;      /* Non-zero when --game should bypass M12. */
     int menuRequested;     /* --menu wins over --game regardless of CLI order. */
     int bootProbe;         /* Non-zero for deterministic --game boot smoke:

@@ -9,6 +9,13 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- FM Towns and Amiga startup menu/credits palettes now preserve the exact
+  eight-bit RGB components in their authenticated GDAT `dtPalIRGB` rows.
+  The DOS-only `DM2_CONVERT_DRIVERPALETTE` six-bit VGA conversion is no
+  longer applied to those platform routes. Real-media tests compare all 256
+  presented entries against each selected ZIP's raw palette and prove the
+  old conversion changed at least one source component.
+
 - Macintosh retail `Cmd-O` now reaches a native **Open Game** owner rather
   than being dropped or treated as Back/quickload. The modal lists only
   complete original `SKSave` candidates, two per page, from the configured

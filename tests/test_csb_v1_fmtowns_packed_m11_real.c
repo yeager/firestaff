@@ -1,4 +1,6 @@
 #include "m11_game_view.h"
+#include "csb_v1_audio_runtime_pc34_compat.h"
+#include "csb_v1_boot.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +13,8 @@ int main(void)
     const int japanese = language && strcmp(language, "ja") == 0;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
+    CsbV1FmtownsSoundPayload sound;
+    const CSB_V1_BootProfile *profile;
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set");
@@ -45,6 +49,39 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    profile = (const CSB_V1_BootProfile*)view.csbBootProfile;
+    memset(&sound, 0, sizeof(sound));
+    if (!csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+            profile->fmtowns_graphics_bytes, profile->fmtowns_graphics_size,
+            0, &sound) ||
+        sound.byteCount == 0u || sound.spec.graphicIndex != 671u) {
+        fprintf(stderr, "FAIL: packed CSB FM Towns authentic runtime sound: %s\n",
+                profile->graphics_path);
+        csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    {
+        unsigned int hash = 2166136261u;
+        size_t index;
+        for (index = 0u; index < sound.byteCount; ++index) {
+            hash ^= sound.bytes[index];
+            hash *= 16777619u;
+        }
+        if (!M11_Audio_PlayCsbFmtownsRuntimePcm(
+                &view.audioState, (const int8_t*)sound.bytes,
+                (int)sound.byteCount, 3, hash) ||
+            !view.audioState.csbFmtownsRuntimeSoundAccepted ||
+            view.audioState.csbFmtownsRuntimeSoundByteCount !=
+                (int)sound.byteCount) {
+            fprintf(stderr, "FAIL: packed CSB FM Towns 5500 Hz PCM transport\n");
+            csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+    }
+    csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+    puts("PASS: packed CSB FM Towns runtime sound uses original GRAPHICS.DAT PCM");
     puts("PASS: packed CSB FM Towns M11 starts from original ZIP");
     M11_GameView_Shutdown(&view);
     return 0;

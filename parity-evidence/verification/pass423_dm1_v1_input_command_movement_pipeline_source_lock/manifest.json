@@ -1,10 +1,10 @@
 {
   "schema": "firestaff.parity.pass423_dm1_v1_input_command_movement_pipeline_source_lock.v1",
-  "timestampUtc": "2026-08-12T01:38:43.046019+00:00",
+  "timestampUtc": "2026-09-04T18:24:38.941243+00:00",
   "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED",
   "branch": "main",
-  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "scope": "PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 turn/move dispatch",
   "sourceAudit": [
     {
@@ -97,7 +97,7 @@
       "command": [
         "cmake",
         "--build",
-        "/Volumes/Extern-disk/firestaff/build",
+        "/dev/shm/firestaff-dm1",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -105,19 +105,19 @@
         "-j2"
       ],
       "returncode": 0,
-      "tail": "[  0%] Built target firestaff_zlib\n[  0%] Built target firestaff_fmtowns_disc\n[  0%] Built target firestaff_zip_extract\n[ 10%] Built target firestaff_dm2\n[100%] Built target firestaff_m10\n[100%] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\nBuilt target firestaff_fmtowns_disc\nBuilt target firestaff_zlib\nBuilt target firestaff_zip_extract\nBuilt target firestaff_dm2\nBuilt target firestaff_m10\nLinking C executable test_dm1_v1_movement_command_core_pc34_compat\nBuilt target test_dm1_v1_movement_command_core_pc34_compat\nBuilt target firestaff_fmtowns_disc\nBuilt target firestaff_zlib\nBuilt target firestaff_zip_extract\nBuilt target firestaff_dm2\nBuilt target firestaff_m10\nLinking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\nBuilt target test_dm1_v1_command_movement_sensor_timing_pc34_compat\n"
+      "tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n"
     },
     {
       "command": [
         "ctest",
         "--test-dir",
-        "/Volumes/Extern-disk/firestaff/build",
+        "/dev/shm/firestaff-dm1",
         "--output-on-failure",
         "-R",
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /Volumes/Extern-disk/firestaff/build\n    Start 1474: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1474: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.27 sec\n    Start 1483: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1483: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.33 sec\n    Start 1626: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1626: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.33 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   1.00 sec\n"
+      "tail": "Test project /dev/shm/firestaff-dm1\n    Start 1529: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1529: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.00 sec\n    Start 1538: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1538: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.00 sec\n    Start 1681: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1681: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   0.08 sec\n"
     },
     {
       "command": [

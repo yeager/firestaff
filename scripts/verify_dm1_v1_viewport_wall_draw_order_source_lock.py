@@ -12,9 +12,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-DEFAULT_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SOURCE = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 CHECKS: list[dict[str, Any]] = [
     {

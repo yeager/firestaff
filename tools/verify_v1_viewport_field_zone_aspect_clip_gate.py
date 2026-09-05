@@ -17,10 +17,21 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
 DM1_SRC = ROOT / "src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path(os.environ.get(
-    "FIRESTAFF_REDMCSB_SOURCE",
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-)).expanduser()
+
+
+def redmcsb_source_root() -> Path:
+    configured = os.environ.get("FIRESTAFF_REDMCSB_SOURCE")
+    roots = [Path(configured).expanduser()] if configured else []
+    roots.extend((
+        ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+    ))
+    for root in roots:
+        if (root / "DUNVIEW.C").is_file():
+            return root
+    return roots[0]
+
+
+RED_ROOT = redmcsb_source_root()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 RED_DEFS = RED_ROOT / "DEFS.H"
 RED_COORD = RED_ROOT / "COORD.C"
@@ -206,15 +217,29 @@ def main() -> int:
     ], "DM1 field mask/phase animation")
 
     order_pos, order_body = find_function(fire, "m11_draw_viewport")
+    _, callback_body = find_function(fire, "m11_dm1_f0128_execute_source_step")
+    _, foreground_body = find_function(
+        fire, "m11_dm1_f0128_dispatch_foreground_square")
     require_in_order(order_body, [
         "visibility = m11_dm1_lane_visibility(cells);",
         "maxVisibleForward = visibility.max_visible_forward;",
-        "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,",
-        "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);",
-        "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,",
-        "m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,",
-        "m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);",
+        "kSideReplayOrder",
+        "m11_dm1_f0128_dispatch_wall_material_square(",
+        "m11_dm1_f0128_dispatch_door_material_square(",
+        "m11_dm1_f0128_dispatch_foreground_square(",
     ], "Firestaff field/wall/door source draw order")
+    require_in_order(callback_body, [
+        "M11_DM1_F0128_EXECUTE_FOREGROUND",
+        "DM1_V1_F0128_STEP_F0113_FIELD",
+        "m11_draw_dm1_teleporter_field_at(",
+        "DM1_V1_F0128_STEP_F0115_MAIN",
+    ], "Firestaff callback-owned field/F0115 consumers")
+    require(foreground_body, "M11_DM1_F0128_EXECUTE_FOREGROUND",
+            "Firestaff per-square foreground callback phase")
+    require(foreground_body, "m11_dm1_f0128_dispatch_raster_phase(",
+            "Firestaff per-square foreground callback dispatch")
+    if "m11_dm1_f0128_replay_foreground_square" in fire:
+        raise AssertionError("removed broad foreground replay must not return")
 
     require(cmake, "NAME v1_viewport_field_zone_aspect_clip_gate", "CMake test registration")
 

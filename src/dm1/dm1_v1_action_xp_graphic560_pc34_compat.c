@@ -732,9 +732,10 @@ int dm1_v1_action_window_plan_f0407_pc34(
     out->decrementsActionHandCharges = 0;
     range = dm1_v1_action_window_random_range_f0407_pc34(in->earthSkillLevel);
     draw = in->randomDraw;
-    if (draw < 0) draw = 0;
     if (range <= 0) range = 1;
-    if (draw >= range) draw %= range;
+    /* This parameter is the result of M002_RANDOM(range), not an arbitrary
+     * host value. Preserve the exact source domain at the plan boundary. */
+    if (draw < 0 || draw >= range) return 0;
     out->valid = 1;
     out->randomRange = range;
     out->durationTicks = draw + 5;
@@ -837,8 +838,9 @@ int dm1_v1_action_fright_plan_f0401_pc34(
     total = base + (in->influenceSkillLevel < 0 ? 0 : in->influenceSkillLevel);
     if (total <= 0) total = 1;
     draw = in->randomDraw;
-    if (draw < 0) draw = 0;
-    if (draw >= total) draw %= total;
+    /* F0401 consumes M002_RANDOM(FrightAmount), whose output is necessarily
+     * in [0,FrightAmount). Fail closed on impossible caller input. */
+    if (draw < 0 || draw >= total) return 0;
     fearResistance = in->fearResistance;
     if (fearResistance < 0) fearResistance = 0;
     movementTicks = in->movementTicks;
@@ -1078,12 +1080,19 @@ int dm1_v1_action_flip_plan_f0407_pc34(
     int draw;
     if (!in || !out) return 0;
     draw = in->randomDraw;
-    if (draw < 0) draw = 0;
+    memset(out, 0, sizeof(*out));
+    /* M005_RANDOM(2) has the exact domain {0,1}.  Reject values that cannot
+     * have come from the source RNG instead of folding host input into a
+     * plausible-looking result. */
+    if (draw < 0 || draw > 1) return 0;
     out->valid = 1;
     out->performed = 1;
     /* ReDMCSB: MENU.C F0407 C005_ACTION_FLIP lines 1398-1440 prints HEADS
      * when M005_RANDOM(2) is nonzero and TAILS when it is zero. */
     out->comesUpHeads = (draw & 1) ? 1 : 0;
+    out->sourceMessage = out->comesUpHeads
+        ? "IT COMES UP HEADS."
+        : "IT COMES UP TAILS.";
     return 1;
 }
 

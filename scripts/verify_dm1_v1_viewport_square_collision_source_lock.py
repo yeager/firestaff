@@ -14,9 +14,10 @@ import os
 from pathlib import Path
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    str(ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"),
 )).expanduser()
 
 CHECKS: list[dict[str, Any]] = [

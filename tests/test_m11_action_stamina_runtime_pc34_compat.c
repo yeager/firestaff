@@ -1550,7 +1550,9 @@ static void test_empty_hand_war_cry_frightens_front_group(void) {
               "WAR CRY switches group behavior to FLEE");
     ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
               "WAR CRY switches active group state to FLEE");
-    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+    /* MENU.C F0401: ((16 - fearResistance) << 2) / movementTicks;
+     * real Giggler profile values 0 and 3 yield 21. */
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 21,
               "WAR CRY sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
@@ -1700,7 +1702,7 @@ static void test_blow_horn_frightens_front_group_with_f0401_values(void) {
               "BLOW HORN switches group behavior to FLEE");
     ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
               "BLOW HORN switches active group state to FLEE");
-    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 21,
               "BLOW HORN sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
@@ -1775,7 +1777,7 @@ static void test_calm_frightens_front_group_with_f0401_values(void) {
               "CALM switches group behavior to FLEE");
     ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
               "CALM switches active group state to FLEE");
-    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 21,
               "CALM sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
@@ -1850,7 +1852,7 @@ static void test_brandish_frightens_front_group_with_f0401_values(void) {
               "BRANDISH switches group behavior to FLEE");
     ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
               "BRANDISH switches active group state to FLEE");
-    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 21,
               "BRANDISH sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
@@ -1935,7 +1937,7 @@ static void test_confuse_decrements_charges_and_frightens_front_group(void) {
               "CONFUSE switches group behavior to FLEE");
     ASSERT_EQ(state.world.creatureAI[0].stateKind, AI_STATE_FLEE,
               "CONFUSE switches active group state to FLEE");
-    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 5,
+    ASSERT_EQ(state.world.creatureAI[0].fearCounter, 21,
               "CONFUSE sets source DelayFleeingFromTarget");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_INFLUENCE].experience,
@@ -2204,9 +2206,11 @@ static void test_flip_action_prints_source_message_and_keeps_common_tail(void) {
     DM1_ActionXpRoute route;
     const char* message;
     int expectedStaminaCost;
+    uint32_t actionTick;
 
     seed_state(&state, 100, 62);
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
+    actionTick = state.world.gameTick;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 3u);
     expectedStaminaCost =
         dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_FLIP) +
@@ -2247,6 +2251,23 @@ static void test_flip_action_prints_source_message_and_keeps_common_tail(void) {
                    strstr(message, "IT COMES UP TAILS.") != NULL),
               1,
               "FLIP prints the ReDMCSB heads/tails message");
+    {
+        const DM1_V1_MessageRow* visible = dm1_v1_text_get_row(
+            &state.dm1V1TextMessage, DM1_V1_MESSAGE_AREA_ROW_COUNT - 1);
+        ASSERT_EQ(visible != NULL &&
+                      (strcmp(visible->text, "IT COMES UP HEADS.") == 0 ||
+                       strcmp(visible->text, "IT COMES UP TAILS.") == 0),
+                  1,
+                  "FLIP publishes the exact F0381 result in C015");
+        ASSERT_EQ(visible ? visible->color : -1, DM1_V1_COLOR_CYAN,
+                  "FLIP publishes the F0381 result in C04 cyan");
+        /* F0381 snapshots G0301_l_GameTime when the message is published;
+         * the common action tail advances the host tick afterward. */
+        ASSERT_EQ(visible ? visible->expirationTime : -1,
+                  (long)actionTick +
+                      DM1_V1_MESSAGE_ROW_EXPIRATION_TICKS,
+                  "FLIP C015 message expires 70 ticks after the action");
+    }
 }
 
 static void test_throw_action_removes_action_hand_object(void) {
@@ -2316,8 +2337,10 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW uses F0407 side-derived launch cell");
     ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
               "THROW keeps projectile direction at party direction");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 82,
-              "THROW passes F0328 kinetic energy to projectile create");
+    /* CHAMPION.C F0328 awards F0304 Throw XP only after the first F0312
+     * strength calculation; the authenticated RNG 6/7/20 seed yields 75. */
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 75,
+              "THROW passes source-ordered F0328 kinetic energy to projectile create");
     ASSERT_EQ(state.world.projectiles.entries[0].attack, 40,
               "THROW passes F0328 bounded attack to projectile create");
     ASSERT_EQ(state.world.projectiles.entries[0].launcherStrength, 40,
@@ -2570,7 +2593,7 @@ static void test_throw_ven_potion_launches_removepotion_projectile(void) {
     ASSERT_EQ(state.world.projectiles.entries[0].projectileSubtype,
               PROJECTILE_SUBTYPE_POISON_CLOUD,
               "THROW Ven potion stores poison-cloud impact subtype");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 43,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 36,
               "THROW Ven potion includes F0140 potion weight in F0312 throw strength");
     ASSERT_EQ(state.world.projectiles.entries[0].associatedPotionPower, 0,
               "THROW zero-power Ven potion carries source potion power");
@@ -2938,7 +2961,7 @@ static void test_throw_projectile_advances_after_scheduled_tick(void) {
               "first scheduled F0811 advance preserves y");
     ASSERT_EQ(state.world.projectiles.entries[0].cell, 3,
               "first scheduled F0811 advance applies source cell parity");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 82,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 75,
               "first grace advance does not decay kinetic energy");
     ASSERT_EQ(state.world.projectiles.entries[0].attack, 40,
               "first grace advance does not decay attack");
@@ -2951,7 +2974,7 @@ static void test_throw_projectile_advances_after_scheduled_tick(void) {
               "second scheduled F0811 advance stays in square on intra-cell flip");
     ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
               "second scheduled F0811 advance flips cell by source parity");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 72,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 65,
               "second scheduled F0811 advance decays kinetic energy by step");
     ASSERT_EQ(state.world.projectiles.entries[0].attack, 30,
               "second scheduled F0811 advance decays attack by step");
@@ -3075,16 +3098,20 @@ static void test_projectile_creature_impact_at_zero_zero_applies_damage(void) {
 
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
               "F0811 creature impact at (0,0) despawns projectile");
-    ASSERT_EQ(groups[0].health[0], 2,
-              "M11 applies defense-scaled plus randomized resistance-adjusted poison projectile creature damage at real zero coordinate");
+    /* PROJEXPL.C F0217 uses Attack=40, G0243 C00 Defense=55 and then
+     * F0192 poison.  With this seed: (40<<6)/55 + 4 = 50 damage. */
+    ASSERT_EQ(groups[0].health[0], 50,
+              "M11 applies source defense and poison damage at real zero coordinate");
     ASSERT_EQ(read_u16_le_for_test(rawGroupData + 6), groups[0].health[0],
               "M11 projectile creature damage mirrors decoded HP to raw group record");
     ASSERT_EQ(state.world.timeline.count, 1,
               "projectile creature hit schedules one C30 reaction event");
     ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_CREATURE_REACTION,
               "projectile creature hit schedules a creature reaction");
-    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 105,
-              "projectile creature hit uses F0209 CM2 reaction delay");
+    /* GROUP.C F0209: ((MovementTicks+2)>>2)-TicksSinceLastMove, min 1.
+     * C00 movement 8 and the fixture's one elapsed tick therefore give 1. */
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 101,
+              "projectile creature hit uses source F0209 CM2 reaction delay");
     ASSERT_EQ(state.world.timeline.events[0].mapIndex, 0,
               "projectile creature hit reaction stores impact map");
     ASSERT_EQ(state.world.timeline.events[0].mapX, 0,
@@ -3222,8 +3249,10 @@ static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
     ASSERT_EQ(state.world.explosions.entries[0].explosionType,
               C040_EXPLOSION_SMOKE,
               "killing creature projectile uses C040 death smoke");
-    ASSERT_EQ(state.world.explosions.entries[0].attack, 110,
-              "C00 quarter-square death smoke uses F0190 attack 110");
+    /* Real G0243 attributes 0x0482 classify Giant Scorpion as full-square;
+     * F0190 therefore emits centered C040 smoke with attack 255. */
+    ASSERT_EQ(state.world.explosions.entries[0].attack, 255,
+              "C00 full-square death smoke uses F0190 attack 255");
     ASSERT_EQ(state.world.explosions.entries[0].cell,
               3,
               "creature death smoke uses killed creature cell");
@@ -3978,16 +4007,28 @@ static void test_projectile_harm_non_material_hits_non_material_creature(void) {
 
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
               "harm non-material projectile despawns on non-material creature hit");
-    ASSERT_EQ(groups[0].health[0], 27,
-              "harm non-material projectile applies defense-scaled damage to ghost");
-    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 1,
-              "harm non-material projectile spawns impact explosion");
-    ASSERT_EQ(state.world.timeline.count, 1,
-              "harm non-material creature hit schedules C30 reaction");
-    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_CREATURE_REACTION,
-              "harm non-material creature hit schedules creature reaction");
-    ASSERT_EQ(state.world.timeline.events[0].aux2, DM1_EVENT_REACTION_HIT_BY_PROJECTILE,
-              "harm non-material creature hit stores C30 event type");
+    /* G0243 C08 Ghost Defense=15, so F0217 damage is (40<<6)/15=170:
+     * the 100-HP creature dies. F0190 consequently adds quarter-square
+     * C040 smoke to the C003 Harm Non Material impact, and F0209 is skipped
+     * for the C2 killed-all outcome (PROJEXPL.C:535-537). */
+    ASSERT_EQ(groups[0].health[0], 0,
+              "harm non-material projectile kills source-defense ghost");
+    ASSERT_EQ(M11_GameView_CountCellExplosions(&state.world, 0, 0, 0), 2,
+              "harm non-material kill creates impact plus F0190 smoke");
+    ASSERT_EQ(state.world.explosions.entries[0].explosionType,
+              C003_EXPLOSION_HARM_NON_MATERIAL,
+              "harm non-material kill retains its C003 impact explosion");
+    ASSERT_EQ(state.world.explosions.entries[1].explosionType,
+              C040_EXPLOSION_SMOKE,
+              "harm non-material kill creates F0190 C040 smoke");
+    ASSERT_EQ(state.world.timeline.count, 2,
+              "harm non-material kill schedules both explosion advances");
+    ASSERT_EQ(state.world.timeline.events[0].kind,
+              TIMELINE_EVENT_EXPLOSION_ADVANCE,
+              "harm non-material impact schedules its C25 advance");
+    ASSERT_EQ(state.world.timeline.events[1].kind,
+              TIMELINE_EVENT_EXPLOSION_ADVANCE,
+              "harm non-material death smoke schedules its C25 advance");
 }
 
 static void test_projectile_fireball_heals_black_flame_without_explosion(void) {
@@ -4309,8 +4350,10 @@ static void test_projectile_door_hit_schedules_and_dispatches_destruction(void) 
      * non-explosion impact thud before the projectile is deleted. */
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_METALLIC_THUD,
               "blocking weapon projectile door impact emits metallic thud");
-    ASSERT_EQ(state.audioState.lastMarker, M11_AUDIO_MARKER_COMBAT,
-              "blocking weapon projectile door impact maps thud to combat marker");
+    /* A DM1 event index owns an authenticated SND3 record. Missing source
+     * audio stays silent and must not synthesize a procedural combat cue. */
+    ASSERT_EQ(state.audioState.lastMarker, M11_AUDIO_MARKER_NONE,
+              "blocking weapon projectile door impact does not synthesize a marker");
     ASSERT_EQ(state.world.timeline.count, 1,
               "M11 schedules projectile door destruction event");
     ASSERT_EQ(state.world.timeline.events[0].kind,
@@ -4526,32 +4569,44 @@ static void test_projectile_champion_hit_applies_poison_dose(void) {
               "poison projectile champion impact marks poison cloud centered");
     ASSERT_EQ(state.world.party.champions[1].poisonDose, 12,
               "poison projectile champion impact applies poison dose after RNG gate");
-    ASSERT_EQ(state.world.timeline.count, 1,
-              "poison projectile champion impact schedules C75 poison event");
-    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_STATUS_TIMEOUT,
+    /* ReDMCSB PROJEXPL.C F0217 calls F0213 for the poison cloud before
+     * applying the champion hit/poison path. F0213 schedules the cloud's
+     * C25 at +1; CHAMPION.C F0322 then schedules C75 at +36. */
+    ASSERT_EQ(state.world.timeline.count, 2,
+              "poison projectile champion impact schedules C25 and C75 events");
+    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_EXPLOSION_ADVANCE,
+              "poison projectile champion impact schedules poison-cloud advance first");
+    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 101,
+              "poison projectile champion impact schedules poison-cloud advance at +1");
+    ASSERT_EQ(state.world.timeline.events[1].kind, TIMELINE_EVENT_STATUS_TIMEOUT,
               "poison projectile champion impact schedules status timeout");
-    ASSERT_EQ((int)state.world.timeline.events[0].fireAtTick, 136,
+    ASSERT_EQ((int)state.world.timeline.events[1].fireAtTick, 136,
               "poison projectile champion impact schedules C75 after 36 ticks");
-    ASSERT_EQ(state.world.timeline.events[0].aux0, LIFECYCLE_STATUS_POISON,
+    ASSERT_EQ(state.world.timeline.events[1].aux0, LIFECYCLE_STATUS_POISON,
               "poison projectile champion impact stores C75 status kind");
-    ASSERT_EQ(state.world.timeline.events[0].aux1, 11,
+    ASSERT_EQ(state.world.timeline.events[1].aux1, 11,
               "poison projectile champion impact stores remaining poison attack");
-    ASSERT_EQ(state.world.timeline.events[0].aux4, 1,
+    ASSERT_EQ(state.world.timeline.events[1].aux4, 1,
               "poison projectile champion impact stores champion index in priority byte");
     ASSERT_EQ(state.world.lifecycle.champions[1].poisonEventCount, 1,
               "poison projectile champion impact increments lifecycle poison event count");
 
     memset(&input, 0, sizeof(input));
     memset(&tickResult, 0, sizeof(tickResult));
-    state.world.gameTick = 136;
-    input.tick = state.world.gameTick;
+    /* Drive every intervening tick: F0213's poison cloud has its own C25
+     * lifecycle and the original main loop does not jump directly from the
+     * impact tick to C75. */
     input.command = CMD_NONE;
-    ASSERT_EQ(F0884_ORCH_AdvanceOneTick_Compat(
-                  &state.world, &input, &tickResult) >= 0,
-              1,
-              "poison projectile C75 dispatch succeeds");
-    ASSERT_EQ(state.world.party.champions[1].hp.current, 66,
-              "poison projectile C75 dispatch applies poison tick damage");
+    for (i = 101; i <= 136; ++i) {
+        state.world.gameTick = (unsigned long)i;
+        input.tick = state.world.gameTick;
+        ASSERT_EQ(F0884_ORCH_AdvanceOneTick_Compat(
+                      &state.world, &input, &tickResult) >= 0,
+                  1,
+                  "poison projectile C25/C75 dispatch succeeds");
+    }
+    ASSERT_EQ(state.world.party.champions[1].hp.current, 60,
+              "poison projectile lifecycle applies C25 cloud ticks and C75 poison damage");
     ASSERT_EQ(state.world.party.champions[1].poisonDose, 10,
               "poison projectile C75 dispatch carries remaining attack");
     ASSERT_EQ(state.world.timeline.count, 1,
@@ -5240,7 +5295,7 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw uses explicit right-side launch cell");
     ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
               "leader-hand throw keeps projectile direction at party direction");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 82,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 75,
               "leader-hand throw passes F0328 kinetic energy to projectile create");
     ASSERT_EQ(state.world.projectiles.entries[0].attack, 40,
               "leader-hand throw passes F0328 bounded attack to projectile create");
@@ -5373,7 +5428,7 @@ static void test_leader_hand_throw_waterskin_uses_f0140_charge_weight(void) {
               "leader-hand waterskin throw creates one live projectile");
     ASSERT_EQ(state.world.party.champions[0].stamina.current, 96,
               "leader-hand waterskin throw spends F0305 from F0140 base+charge weight");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 48,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 41,
               "leader-hand waterskin throw includes F0140 charge weight in F0312 strength");
     ASSERT_EQ(state.world.projectiles.entries[0].reserved1, thrownThing,
               "leader-hand waterskin throw preserves Thing identity on projectile");
@@ -5437,7 +5492,7 @@ static void test_leader_hand_throw_container_uses_f0140_recursive_weight(void) {
               "leader-hand container throw creates one live projectile");
     ASSERT_EQ(state.world.party.champions[0].stamina.current, 77,
               "leader-hand container throw spends F0305 from recursive F0140 weight");
-    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 16,
+    ASSERT_EQ(state.world.projectiles.entries[0].kineticEnergy, 9,
               "leader-hand container throw includes recursive F0140 weight in F0312 strength");
     ASSERT_EQ(state.world.projectiles.entries[0].reserved1, chestThing,
               "leader-hand container throw preserves Thing identity on projectile");
@@ -7105,6 +7160,24 @@ static void test_failed_practice_spell_awards_shifted_f0412_xp(void) {
     ASSERT_STR_EQ(state.inspectDetail,
                   "HALK NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.",
                   "practice failure retains F0410 champion and base-skill text");
+    ASSERT_EQ(dm1_v1_text_get_active_row_count(&state.dm1V1TextMessage), 1,
+              "F0410 practice failure reaches one visible C015 row");
+    ASSERT_STR_EQ(dm1_v1_text_get_row(
+                      &state.dm1V1TextMessage,
+                      DM1_V1_MESSAGE_AREA_ROW_COUNT - 1)->text,
+                  "HALK NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.",
+                  "F0410 practice failure publishes exact visible source text");
+    ASSERT_EQ(dm1_v1_text_get_row(
+                  &state.dm1V1TextMessage,
+                  DM1_V1_MESSAGE_AREA_ROW_COUNT - 1)->color,
+              DM1_V1_COLOR_CYAN,
+              "F0410 practice failure publishes source C04 cyan");
+    ASSERT_EQ(dm1_v1_text_get_row(
+                  &state.dm1V1TextMessage,
+                  DM1_V1_MESSAGE_AREA_ROW_COUNT - 1)->expirationTime,
+              (long)state.world.gameTick +
+                  DM1_V1_MESSAGE_ROW_EXPIRATION_TICKS,
+              "F0410 visible failure expires 70 ticks after its cast");
     ASSERT_EQ(state.world.party.champions[0].mana.current, manaBefore,
               "practice failure does not spend spell mana");
     ASSERT_EQ(state.world.projectiles.count, 0,
@@ -7793,6 +7866,7 @@ static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
     DM1_ActionXpRoute route;
     int i;
     int expectedXp;
+    int expectedStamina;
 
     seed_state(&state, 100, 37);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -7845,6 +7919,10 @@ static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
               "CLIMB DOWN open pit has a source G0496/G0497 route");
     expectedXp = route.experienceGain * 2;
+    expectedStamina = 100 -
+        dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_CLIMB_DOWN) -
+        (int)((state.world.gameTick + (uint32_t)DM1_ACTION_CLIMB_DOWN) & 1u) -
+        1; /* MOVESENS.C F0267 rope cost at zero load. */
 
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
               "CLIMB DOWN in front of an open pit returns success");
@@ -7856,8 +7934,10 @@ static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
               "successful CLIMB DOWN first moves party forward onto pit x");
     ASSERT_EQ(state.world.party.mapY, 1,
               "successful CLIMB DOWN preserves pit y after fall");
-    ASSERT_EQ(state.world.party.champions[0].hp.current, 81,
-              "successful CLIMB DOWN applies source pit-fall damage");
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 100,
+              "successful CLIMB DOWN suppresses generic pit-fall damage");
+    ASSERT_EQ(state.world.party.champions[0].stamina.current, expectedStamina,
+              "successful CLIMB DOWN applies rope plus common action stamina costs");
     ASSERT_EQ(state.actionDisabledTicks[0],
               action_disabled_ticks_for_test(DM1_ACTION_CLIMB_DOWN),
               "successful CLIMB DOWN keeps full disabled-tick tail");
@@ -9140,9 +9220,16 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete ignores BACK before final endgame presentation");
     ASSERT_EQ(state.world.gameTick, gameTickAtWin,
               "FUSE complete F0445 replay does not advance source game time");
-    for (i = 0; i < 44; ++i) {
+    /* ENDGAME.C F0446 performs Delay(780) immediately after each of the two
+     * text-message F0445 redraws.  Drain event-local waits in source order;
+     * a fixed 44-call loop incorrectly assumes all redraws are contiguous. */
+    for (i = 0;
+         state.endgameFuseSequenceFrameReplayRemainingTicks > 0 && i < 2000;
+         ++i) {
         (void)M11_GameView_AdvanceIdleTick(&state);
     }
+    ASSERT_EQ(i < 2000, 1,
+              "FUSE complete drains replay frames and first text delay within source bound");
     ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCursor(&state), 45,
               "FUSE complete drains the full presentation event cursor");
     ASSERT_EQ(M11_GameView_GetEndgameFuseReplayCurrentEvent(
@@ -9153,15 +9240,20 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
               "FUSE complete last replay event is the final source text-message redraw");
     ASSERT_EQ(state.endgameFuseSequenceFrameReplayRemainingTicks, 0,
               "FUSE complete drains all F0445 replay frames before delay");
-    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2160,
-              "FUSE complete still has full delay after frame replay drains");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 1380,
+              "FUSE complete consumed first F0446 text delay before second message redraw");
+    for (i = 0; i < 780; ++i) {
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    }
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 600,
+              "FUSE complete consumes second F0446 text delay after its redraw");
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
-              "FUSE complete first delay countdown tick requests redraw");
-    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 2159,
-              "FUSE complete starts delay countdown after replay frames");
+              "FUSE complete first final-delay countdown tick requests redraw");
+    ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 599,
+              "FUSE complete starts final F0446 Delay(600) after both text waits");
     ASSERT_EQ(state.world.gameTick, gameTickAtWin,
               "FUSE complete delay countdown still does not advance source game time");
-    for (i = 0; i < 2159; ++i) {
+    for (i = 0; i < 599; ++i) {
         (void)M11_GameView_AdvanceIdleTick(&state);
     }
     ASSERT_EQ(state.endgameFuseSequenceDelayRemainingTicks, 0,
@@ -9181,8 +9273,8 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     ASSERT_STR_EQ(M11_GameView_GetMessageLogEntry(&state, 2), "\nSECOND",
                   "FUSE complete prints F0446 text strings in A/B order without sort key");
     ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK),
-              M11_GAME_INPUT_RETURN_TO_MENU,
-              "FUSE complete accepts BACK after final endgame presentation");
+              M11_GAME_INPUT_IGNORED,
+              "FUSE complete fails closed without authentic F0444 presentation material");
 }
 
 static void test_endgame_restart_controls_respect_restart_allowed(void) {
@@ -9249,16 +9341,16 @@ static void test_endgame_restart_controls_respect_restart_allowed(void) {
                                          restartX + restartW / 2,
                                          restartY + restartH / 2,
                                          1),
-              M11_GAME_INPUT_RESTART_GAME,
-              "F0444 restart click requests the main-loop restart handoff");
-    ASSERT_EQ(M11_GameView_GetEndgameRestartRequested(&state), 1,
-              "F0444 restart click mirrors G0523_B_RestartGameRequested");
+              M11_GAME_INPUT_IGNORED,
+              "F0444 restart click fails closed without authentic presentation material");
+    ASSERT_EQ(M11_GameView_GetEndgameRestartRequested(&state), 0,
+              "F0444 material rejection does not synthesize G0523 restart state");
     ASSERT_EQ(M11_GameView_HandlePointer(&state,
                                          quitX + quitW / 2,
                                          quitY + quitH / 2,
                                          1),
-              M11_GAME_INPUT_RETURN_TO_MENU,
-              "F0444 quit click returns to the launcher");
+              M11_GAME_INPUT_IGNORED,
+              "F0444 quit click fails closed without authentic presentation material");
 }
 
 static void test_dm1_d2_side_walls_sample_and_use_source_rects(void) {

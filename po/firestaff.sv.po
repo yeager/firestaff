@@ -1,96 +1,126 @@
 # Firestaff UI — sv
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: sv\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "Tillgänglighet"
 
+#. AUDIO
 msgid "Audio"
 msgstr "Ljud"
 
+#. BACK
 msgid "Back"
 msgstr "Tillbaka"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "Bestiarium"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "Ändringslogg"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "Kommer snart"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "Fortsätt sparat spel"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "Kontroller"
 
+#. DISPLAY
 msgid "Display"
 msgstr "Bildskärm"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "EXTRAS"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "Föremålsencyklopedi"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "Språk"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "Kartvisare"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "Lore-museum"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "Nytt spel (V1 Original)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "Nytt spel (V2.1 Uppskalad)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "Nytt spel (V2.2 Förbättrad)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "Inga datafiler"
 
+#. OFF
 msgid "Off"
 msgstr "Av"
 
+#. ON
 msgid "On"
 msgstr "På"
 
+#. PLAY
 msgid "PLAY"
 msgstr "SPELA"
 
+#. QUIT
 msgid "QUIT"
 msgstr "AVSLUTA"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "Skärmbildsgalleri"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "VÄLJ SPEL"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "INSTÄLLNINGAR"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "Besvärjelsereferens"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "Validera speldata"
 
+#. VERSION
 msgid "Version"
 msgstr "Version"
 
+#. VIDEO
 msgid "Video"
 msgstr "Video"
-
 
 #: src/engine/m11_game_view.c
 msgid "RETURN TO START MENU?"

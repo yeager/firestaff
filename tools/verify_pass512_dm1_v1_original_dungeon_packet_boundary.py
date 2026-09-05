@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 from typing import Any
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -17,11 +18,12 @@ VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
-DM_ROOT = Path(os.environ.get("FIRESTAFF_ORIGINAL_DM_ROOT", str(Path.home() / ".openclaw/data/firestaff-original-games/DM")))
-CANONICAL_DUNGEON = DM_ROOT / "_canonical/dm1/DUNGEON.DAT"
-EXTRACTED_PC34_DUNGEON = DM_ROOT / "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
-GREATSTONE_ATLAS = Path(os.environ.get("FIRESTAFF_GREATSTONE_ATLAS", str(Path.home() / ".openclaw/data/firestaff-greatstone-atlas")))
-REDMCSB = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
+DM1_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    str(Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")))
+REDMCSB = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source")))
 
 EXPECTED_SHA256 = "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
 EXPECTED_MD5 = "766450c940651fc021c92fe5d0d0b3a6"
@@ -129,23 +131,38 @@ def source_audit() -> list[dict[str, Any]]:
     return rows
 
 
-def asset_row(label: str, path: Path) -> dict[str, Any]:
-    exists = path.is_file()
-    return {"label": label, "path": str(path), "exists": exists, "bytes": path.stat().st_size if exists else None, "sha256": sha(path, "sha256") if exists else None, "md5": sha(path, "md5") if exists else None, "matchesExpected": exists and path.stat().st_size == EXPECTED_SIZE and sha(path, "sha256") == EXPECTED_SHA256 and sha(path, "md5") == EXPECTED_MD5}
+def zip_member(path: Path, name: str) -> bytes:
+    result = subprocess.run(["unzip", "-p", str(path), name], check=False,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode not in (0, 1) or not result.stdout:
+        raise AssertionError(f"cannot read retail ZIP member {name}")
+    return result.stdout
+
+
+def asset_row(label: str, archive: Path, member: str, data: bytes) -> dict[str, Any]:
+    digest_sha256 = hashlib.sha256(data).hexdigest()
+    digest_md5 = hashlib.md5(data).hexdigest()
+    return {"label": label, "archive": str(archive), "member": member,
+            "exists": True, "bytes": len(data), "sha256": digest_sha256,
+            "md5": digest_md5,
+            "matchesExpected": len(data) == EXPECTED_SIZE and digest_sha256 == EXPECTED_SHA256 and digest_md5 == EXPECTED_MD5}
 
 
 def build() -> dict[str, Any]:
     errors: list[str] = []
     source = source_audit()
     errors.extend(f"source lock failed: {row['id']} missing={row['missing']}" for row in source if not row["ok"])
-    assets = [asset_row("canonical_dm1_dungeon_dat", CANONICAL_DUNGEON), asset_row("extracted_dm1_pc34_dungeon_dat", EXTRACTED_PC34_DUNGEON)]
+    if not DM1_ARCHIVE.is_file():
+        raise AssertionError(f"missing retail PC34 archive: {DM1_ARCHIVE}")
+    dungeon_data = zip_member(DM1_ARCHIVE, "DATA/DUNGEON.DAT")
+    assets = [asset_row("retail_zip_dm1_pc34_dungeon_dat", DM1_ARCHIVE, "DATA/DUNGEON.DAT", dungeon_data)]
     for row in assets:
         if not row["matchesExpected"]:
             errors.append(f"asset identity failed: {row['label']} bytes={row['bytes']} sha256={row['sha256']} md5={row['md5']}")
     packet_boundaries: list[dict[str, Any]] = []
     facts: dict[str, Any] = {}
-    if CANONICAL_DUNGEON.is_file():
-        data = CANONICAL_DUNGEON.read_bytes()
+    if dungeon_data:
+        data = dungeon_data
         packet_boundaries, facts = packet_rows(data)
         expected = {"payloadBytes": EXPECTED_PAYLOAD_BYTES, "expectedChecksumLe16": EXPECTED_CHECKSUM, "calculatedChecksum16": EXPECTED_CHECKSUM, "trailingBytesAfterChecksum": 0, "columnCount": EXPECTED_COLUMN_COUNT}
         for key, value in expected.items():
@@ -157,10 +174,7 @@ def build() -> dict[str, Any]:
         raw_rows = [row for row in packet_boundaries if row["name"] == "raw_map_data"]
         if not raw_rows or raw_rows[0]["offset"] != EXPECTED_RAW_MAP_OFFSET:
             errors.append(f"raw map packet offset mismatch: {raw_rows[0]['offset'] if raw_rows else None!r} != {EXPECTED_RAW_MAP_OFFSET!r}")
-    greatstone = {"path": str(GREATSTONE_ATLAS), "exists": GREATSTONE_ATLAS.exists(), "indexPagesExists": (GREATSTONE_ATLAS / "index/pages.json").exists(), "indexFilesExists": (GREATSTONE_ATLAS / "index/files.json").exists(), "claim": "Greatstone is a secondary local atlas/provenance reference; this gate's source of truth is ReDMCSB plus N2 original DUNGEON.DAT bytes."}
-    if not (greatstone["exists"] and greatstone["indexPagesExists"] and greatstone["indexFilesExists"]):
-        errors.append("Greatstone atlas local reference is missing")
-    return {"schema": "firestaff.parity.pass512_dm1_v1_original_dungeon_packet_boundary.v1", "pass": not errors, "status": "PASS512_DM1_V1_ORIGINAL_DUNGEON_PACKET_BOUNDARY_LOCKED" if not errors else "FAIL_PASS512_DM1_V1_ORIGINAL_DUNGEON_PACKET_BOUNDARY", "scope": "DM1 V1 original DUNGEON.DAT packet/order/checksum evidence only; no movement, viewport, runtime, or pixel-parity claim.", "redmcsbSource": str(REDMCSB), "originalDmRoot": str(DM_ROOT), "sourceLocks": source, "assetLocks": assets, "packetFacts": facts, "packetBoundaries": packet_boundaries, "greatstoneReference": greatstone, "nonClaims": ["Does not execute DOSBox or original Dungeon Master.", "Does not modify or verify movement, viewport drawing, or Firestaff runtime state.", "Does not promote any original capture artifact to parity evidence."], "errors": errors}
+    return {"schema": "firestaff.parity.pass512_dm1_v1_original_dungeon_packet_boundary.v1", "pass": not errors, "status": "PASS512_DM1_V1_ORIGINAL_DUNGEON_PACKET_BOUNDARY_LOCKED" if not errors else "FAIL_PASS512_DM1_V1_ORIGINAL_DUNGEON_PACKET_BOUNDARY", "scope": "DM1 V1 original DUNGEON.DAT packet/order/checksum evidence only; no movement, viewport, runtime, or pixel-parity claim.", "redmcsbSource": str(REDMCSB), "dm1Archive": str(DM1_ARCHIVE), "sourceLocks": source, "assetLocks": assets, "packetFacts": facts, "packetBoundaries": packet_boundaries, "nonClaims": ["Does not execute DOSBox or original Dungeon Master.", "Reads DUNGEON.DAT directly from the retail ZIP without extraction.", "Does not modify or verify movement, viewport drawing, or Firestaff runtime state.", "Does not promote any original capture artifact to parity evidence."], "errors": errors}
 
 
 def write_report(data: dict[str, Any]) -> None:

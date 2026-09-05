@@ -101,6 +101,18 @@ int main(void)
         receipt.game_title_presents_rect[3] != 105u ||
         receipt.game_title_master_rect[2] != 118u ||
         receipt.game_title_master_rect[3] != 174u ||
+        !receipt.game_title_palettes_verified ||
+        receipt.game_title_presents_palette_rgb6[3][0] != 0u ||
+        receipt.game_title_presents_palette_rgb6[15][0] != 0x3fu ||
+        receipt.game_title_presents_palette_rgb6[15][1] != 0x3fu ||
+        receipt.game_title_presents_palette_rgb6[15][2] != 0x3fu ||
+        receipt.game_title_zoom_palette_rgb6[3][0] != 0x2fu ||
+        receipt.game_title_zoom_palette_rgb6[3][1] != 0x27u ||
+        receipt.game_title_zoom_palette_rgb6[3][2] != 0x0fu ||
+        receipt.game_title_zoom_palette_rgb6[12][0] != 0x3fu ||
+        receipt.game_title_zoom_palette_rgb6[15][0] != 0x3fu ||
+        receipt.game_title_zoom_palette_rgb6[15][1] != 0u ||
+        receipt.game_title_zoom_palette_rgb6[15][2] != 0u ||
         receipt.game_action_name_count != 44u ||
         strcmp(receipt.game_action_names[6], "PUNCH") ||
         strcmp(receipt.game_action_names[8], "WAR CRY") ||

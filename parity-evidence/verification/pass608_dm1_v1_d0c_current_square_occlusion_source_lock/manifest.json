@@ -5,27 +5,27 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1141,
+          "line": 1177,
           "needle": "{ DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, true, false,"
         },
         {
-          "line": 1143,
+          "line": 1179,
           "needle": "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115"
         },
         {
-          "line": 1144,
+          "line": 1180,
           "needle": "DUNVIEW.C:8274-8292 pit floor/ceiling bitmap before F0115"
         },
         {
-          "line": 1146,
+          "line": 1182,
           "needle": "DUNVIEW.C:8294 F0115 object/creature/projectile/explosion handoff with C0x0021"
         },
         {
-          "line": 1147,
+          "line": 1183,
           "needle": "DUNVIEW.C:8295-8308 teleporter field after F0115"
         },
         {
-          "line": 1148,
+          "line": 1184,
           "needle": "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C"
         }
       ],
@@ -37,27 +37,27 @@
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1840,
+          "line": 1864,
           "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
         },
         {
-          "line": 1896,
+          "line": 1920,
           "needle": "test_floor_field_stairs_pit_teleporter_order"
         },
         {
-          "line": 1927,
+          "line": 1951,
           "needle": "DM1_VIEW_SQUARE_D0C"
         },
         {
-          "line": 1954,
+          "line": 1978,
           "needle": "d0c_foreground_before_things"
         },
         {
-          "line": 4265,
+          "line": 4289,
           "needle": "test_d0_d1_visible_square_draw_order_gate"
         },
         {
-          "line": 4341,
+          "line": 4365,
           "needle": "dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0C)"
         }
       ],
@@ -69,11 +69,11 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 4538,
+          "line": 4574,
           "needle": "DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order"
         },
         {
-          "line": 4553,
+          "line": 4589,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],
@@ -90,13 +90,11 @@
     "Does not change renderer behavior.",
     "No DANNESBURK use."
   ],
-  "problems": [
-    "test_dm1_v1_viewport_3d_pc34_compat"
-  ],
+  "problems": [],
   "redmcsbChecks": [
     {
       "claim": "F0128 draws D0L and D0R before the current-square D0C pass.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8537,
@@ -118,7 +116,7 @@
     },
     {
       "claim": "D0C door-side foreground frame work completes and breaks before the common F0115 current-square content pass.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8184,
@@ -160,7 +158,7 @@
     },
     {
       "claim": "D0C stairs-front foreground breaks; pit falls through to ceiling, F0115 with C0x0021, then teleporter field in C715.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8241,
@@ -214,7 +212,7 @@
     },
     {
       "claim": "F0115 draws objects, creatures, and projectiles per ordered cell, then explosions after ordered cells.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 4561,
@@ -248,7 +246,7 @@
     },
     {
       "claim": "PC34 MEDIA720 view-square and cell ordinals make D0C id 0 and define the back-left/back-right cell names used by C0x0021.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 2596,
@@ -278,7 +276,7 @@
     },
     {
       "claim": "PC34/I34E zone ids bind D0C field, frame, thieves-eye, stairs, floor pit, and ceiling pit draw destinations.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 4055,
@@ -323,18 +321,18 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "pass608_dm1_v1_d0c_current_square_occlusion_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS608_DM1_V1_D0C_CURRENT_SQUARE_OCCLUSION_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS608_DM1_V1_D0C_CURRENT_SQUARE_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/dev/shm/firestaff-dm1/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=2",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

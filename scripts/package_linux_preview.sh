@@ -45,7 +45,9 @@ cp "$ARTPACK_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$SAVEGAME_EDITOR_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$DEB_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
-cp "$ROOT"/po/startup-menu.*.po "$DEB_ROOT/usr/share/firestaff/po/"
+for domain in startup-menu dm1 csb dm2 firestaff nexus theron; do
+  cp "$ROOT"/po/"$domain".*.po "$DEB_ROOT/usr/share/firestaff/po/"
+done
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
@@ -123,7 +125,9 @@ cp "$ARTPACK_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$SAVEGAME_EDITOR_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RPM_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
-cp "$ROOT"/po/startup-menu.*.po "$RPM_ROOT/usr/share/firestaff/po/"
+for domain in startup-menu dm1 csb dm2 firestaff nexus theron; do
+  cp "$ROOT"/po/"$domain".*.po "$RPM_ROOT/usr/share/firestaff/po/"
+done
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"

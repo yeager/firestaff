@@ -131,14 +131,14 @@
     ],
     "rows_all_224x136": true
   },
-  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "not_claimed": [
     "DOSBox/live original runtime capture",
     "semantic original route promotion",
     "original-vs-Firestaff pixel parity",
     "HUD/overlay parity"
   ],
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
   "source_audit": [
     {
@@ -158,7 +158,7 @@
         "G0310_i_DisabledMovementTicks"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "the 224x136 crop is meaningful only after F0128 draws G0296 for direction/X/Y",
@@ -179,7 +179,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "capture readiness is locked to the PC34 viewport-present seam, not setup echo/menu text",
@@ -196,12 +196,12 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-  "timestamp_utc": "2026-08-12T01:38:15.548838+00:00",
+  "timestamp_utc": "2026-09-04T18:24:39.965274+00:00",
   "tooling": {
     "capture_script_crop_lock": {
       "has_imagemagick_crop": true,
@@ -210,7 +210,7 @@
       "has_pillow_crop_0_33_224_169": true,
       "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
     },
-    "dm1_pc34_stage_exists": true,
+    "dm1_pc34_stage_exists": false,
     "dosbox_available": true,
     "dosbox_required_for_this_gate": false,
     "original_dm_root_exists": true,
@@ -255,6 +255,6 @@
         "path": "verification-screens/pass376-original-dm1-viewports/pass86_original_viewport_crop_manifest.json"
       }
     ],
-    "xvfb_run_available": false
+    "xvfb_run_available": true
   }
 }

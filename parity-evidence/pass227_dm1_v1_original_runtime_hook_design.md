@@ -112,12 +112,12 @@ Use the existing N2 original stage plus DOSBox-X/dosbox-debug as the first imple
 
 ## Asset/tool audit
 
-- tools: `{'dosbox': '/opt/homebrew/bin/dosbox', 'dosbox-debug': '/opt/homebrew/bin/dosbox-debug', 'dosbox-x': '/opt/homebrew/bin/dosbox-x', 'xvfb-run': None, 'xdotool': '/opt/homebrew/bin/xdotool', 'gdb': None, 'objdump': '/usr/bin/objdump', 'strings': '/usr/bin/strings'}`
-- `DM.EXE` exists=`True` sha256=`4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4`
-- `FIRES` exists=`True` sha256=`ebf84045c3edbce7690b826eadbea2e278fbb4c0a3cc19a470552586f37712eb`
-- `VGA` exists=`True` sha256=`4d9815e777e135bf69e3575fea533128b6073ae8c6b5282c24529c606f95af3b`
-- `DATA/DUNGEON.DAT` exists=`True` sha256=`d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`
-- `DATA/GRAPHICS.DAT` exists=`True` sha256=`2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`
+- tools: `{'dosbox': '/usr/bin/dosbox', 'dosbox-debug': None, 'dosbox-x': '/usr/bin/dosbox-x', 'xvfb-run': '/usr/bin/xvfb-run', 'xdotool': '/usr/bin/xdotool', 'gdb': '/usr/bin/gdb', 'objdump': '/usr/bin/objdump', 'strings': '/usr/bin/strings'}`
+- `DM.EXE` exists=`False` sha256=`None`
+- `FIRES` exists=`False` sha256=`None`
+- `VGA` exists=`False` sha256=`None`
+- `DATA/DUNGEON.DAT` exists=`False` sha256=`None`
+- `DATA/GRAPHICS.DAT` exists=`False` sha256=`None`
 
 ## Decision
 

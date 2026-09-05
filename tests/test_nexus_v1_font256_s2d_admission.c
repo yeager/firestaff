@@ -1,8 +1,11 @@
 #include "nexus_v1_font256_s2d_admission.h"
+#include "nexus_v1_test_retail_member.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static char real_sha256[65];
 
 static uint64_t fnv1a64(const uint8_t *bytes, size_t size)
 {
@@ -20,6 +23,8 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     FILE *file;
     long length;
     uint8_t *bytes;
+    if (strstr(path, "::"))
+        return nexus_v1_test_read_retail_member(path, out_size, real_sha256);
     *out_size = 0;
     file = fopen(path, "rb");
     if (!file || fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
@@ -58,7 +63,8 @@ int main(int argc, char **argv)
     }
     memset(&identity, 0, sizeof(identity));
     identity.sha256_verified = 1;
-    identity.sha256_hex = getenv("FIRESTAFF_NEXUS_FONT256_SHA256");
+    identity.sha256_hex = real_sha256[0] ? real_sha256 :
+        getenv("FIRESTAFF_NEXUS_FONT256_SHA256");
     if (!identity.sha256_hex) {
         identity.sha256_hex = NEXUS_V1_FONT256_S2D_SHA256;
     }

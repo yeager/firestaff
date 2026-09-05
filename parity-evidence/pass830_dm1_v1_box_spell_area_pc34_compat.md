@@ -24,6 +24,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_spell_area_pc34_compat`: rc=0
+- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_box_spell_area_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass830_dm1_v1_box_spell_area_pc34_compat/manifest.json`

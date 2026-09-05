@@ -45,6 +45,21 @@ CSB passed Atari ST, Amiga and FM Towns. The checked tests are
 `csb_v1_{atari_stx,amiga,fmtowns}_native_cli_boot`. These results reaffirm
 native, in-memory startup and bounded first-runtime behavior only.
 
+On 2026-09-05 the CSB Atari ST, Amiga and FM Towns maintained real-media
+routes were run again on the current tree: `csb_v1_atari_stx_native_cli_boot`,
+`csb_v1_amiga_native_cli_boot`, and `csb_v1_fmtowns_native_cli_boot` passed.
+The FM Towns Japanese selection was also run explicitly against its supplied
+archive, traversing the same title, switch, prison and `MINI.DAT` route. This
+is fresh evidence for in-memory startup and the first source-owned movement;
+it is not a claim of complete campaign, save, audio or pixel parity.
+
+The same 2026-09-05 revalidation passed DM2's maintained native launch matrix:
+`dm2_v1_dos_native_cli_boot`, `dm2_v1_amiga_native_cli_boot`,
+`dm2_v1_fmtowns_native_cli_boot`, and `dm2_v1_mac_native_cli_boot`. The
+Macintosh route specifically covers the retail ZIP's native title, mirror
+selection and observed input matrix. As elsewhere in this document, this is
+bounded startup/runtime evidence rather than a complete parity assertion.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |
@@ -65,7 +80,6 @@ native, in-memory startup and bounded first-runtime behavior only.
 | Atari ST | **Verified route** | Native STX title, 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title path, FTLCODE handoff, first runtime HUD/viewport frame and start-menu CLI route are tested against supplied campaign media. The Atari presenter emits a nonzero FNV-1a receipt for its completed source-owned 224×136 indexed viewport; it remains separate from the PC F0128 session gate. The supplied nested retail archive is read directly as ZIP → ZIP → STX in memory; its `GRAPHICS.DAT` is hash-locked. | Broader campaign and capture parity. |
 | Amiga | **Verified route** | Native A31E and A31M ZIP → ADF routes read graphics, dungeon and required launcher/language programs in RAM. A31E verifies `APPB.FTL` / `BJELoad_R` and reaches `csb-entrance-0`; A31M now binds `TITL.DAT` as a sibling in the same selected virtual ADF, not a nearby host file. Its start-menu receipt reports that source-owned title boundary and hash before the language-selection route to `APPB.FTL`/`KAOS.FTL`. | Full campaign, save and visual parity. |
 | FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. The authentic F31 title runs through `SWITCHTW`, the selected `CHTWE`/`CHTWJ` Game owner and the visible C004 Prison transition before `MINI.DAT` publishes its live party pose; the first source-owned turn is tested in both languages. Start-menu launch reports the source-bound `TITLE.ANM` palette/frame handoff and nonzero frame hash; an explicit F0435 save instead reports its verified C03 executable handoff. | Wider gameplay, Champion Editor and CD-audio parity. |
-| DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is source/disassembly evidence only. | No PC runtime route is planned from CSBWin; it must not be presented as DOS support. |
 | PC-9801 | **Unsupported** | Preservation reference only. | None. |
 | X68000 | **Unsupported** | Preservation reference only. | None. |
 
@@ -84,7 +98,7 @@ native, in-memory startup and bounded first-runtime behavior only.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Source route (blocked)** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests are native. A pointer-only launcher route (game card → Saturn → Original) retains the real CUE/BIN transport and reaches the native title boundary. The public title route remains fail-closed at `title-vdp-capture-required`. | A same-revision title-state capture must bind TITLE.CG, active MAPD span, palette, VDP register/layer state and title consumer/timing before any title/menu/gameplay claim. |
+| Sega Saturn Japanese | **Source route (blocked)** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests are native. A pointer-only launcher route (game card → Saturn → Original) retains the real CUE/BIN transport and reaches the native title boundary. Same-revision captures bind TITLE.BIN FIFO/RAM provenance, the complete 31,616-byte Work-RAM→VDP2 corridor, VDP writer registers, and contiguous VDP1/VDP2 state. The r27 frame binds the MAPD palette byte-for-byte to CRAM at frame 12592. The r33 receipt binds N/E/X/U/S selection at frames 13294/13334/13375/13415/13455 and all 17,920 MAPD words byte-for-byte to VDP2 VRAM `0x05c000–0x05dbff`. The public title route remains fail-closed at `title-vdp-capture-required`. | Promote the now capture-complete title composition into the native public route, then verify menu/input transition without BIOS or emulator at runtime. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest

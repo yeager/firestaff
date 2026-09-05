@@ -446,8 +446,9 @@ typedef struct {
  * CSB ships on many platforms, each with different media layouts.
  * Runtime variant diagnostics identify platform for bug-for-bug fixes.
  *
- * CSBWin AssetCache + ReDMCSB COMPILE.H MEDIA_* tags:
- *   MEDIA278 / P20JA / P20JB  = PC DOS 3.4 (EN/Multi)
+ * CSBWin AssetCache + ReDMCSB COMPILE.H MEDIA_* tags. The I34 identifiers
+ * below are non-product compatibility fixtures used to exercise shared
+ * decompiled logic; they are not CSB editions or launchable platforms:
  *   MEDIA332 / S20E / S21E    = Atari ST 2.0 / 2.1 English
  *   MEDIA529 / A35E / A35M    = Amiga 3.5 (EN/Multi)
  *   MEDIA529 / F20J / F20E    = Atari ST TT variant (F20J = 060)
@@ -457,8 +458,8 @@ typedef struct {
  */
 typedef enum {
     CSB_V1_VARIANT_UNKNOWN           = 0,
-    CSB_V1_VARIANT_PC34_EN          = 1,   /* PC DOS 3.4 English       MEDIA278 */
-    CSB_V1_VARIANT_PC34_MULTI        = 2,   /* PC DOS 3.4 Multilanguage MEDIA278 */
+    CSB_V1_VARIANT_REFERENCE_I34_EN    = 1, /* non-product reference fixture */
+    CSB_V1_VARIANT_REFERENCE_I34_MULTI = 2, /* non-product reference fixture */
     CSB_V1_VARIANT_ST20_EN           = 3,   /* Atari ST 2.0 English   MEDIA332 */
     CSB_V1_VARIANT_ST21_EN           = 4,   /* Atari ST 2.1 English   MEDIA332 */
     CSB_V1_VARIANT_AMIGA35_EN         = 5,   /* Amiga 3.5 English       MEDIA529 */
@@ -819,6 +820,11 @@ typedef struct {
      * accessor stubs in csb_v1_dungeon_world_pc34_compat.c. */
     CSB_V1_DungeonData *dungeon_handle;
 } CSB_V1_RuntimeProfile;
+
+/* ReDMCSB TEXT.C F0046: Atari/Amiga/FM Towns C015 rows expire at the
+ * source game time plus 70 ticks. */
+int csb_v1_runtime_text_message_active_pc34(
+    const CSB_V1_RuntimeProfile *profile);
 
 typedef struct {
     const uint8_t *portrait;
@@ -2477,6 +2483,17 @@ int csb_v1_runtime_f0176_creature_ordinal_receipt_pc34(
     int requested_cell,
     CSB_V1_F0176CreatureOrdinalReceiptPc34 *out_receipt);
 
+/* Profile-aware F0176 for the party map. ReDMCSB F0145/F0147 store Cells
+ * and Directions in ACTIVE_GROUP while raw C04 byte 5 is an index there. */
+int csb_v1_runtime_f0176_effective_creature_ordinal_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int requested_cell,
+    CSB_V1_F0176CreatureOrdinalReceiptPc34 *out_receipt);
+
 /* Compute F0178's packed-cell compaction for one F0190 partial group kill.
  * This only computes the authenticated raw rewrite; its runtime owner commits
  * the byte after all other F0190 data is ready. */
@@ -2629,10 +2646,45 @@ uint16_t csb_v1_runtime_next_thing(
 
 int csb_v1_runtime_thing_type_is_floor_object(int thing_type);
 
+/* ReDMCSB CLIKVIEW.C F0373: move the last-rendered floor object in one of
+ * G0292's four near view cells from its real dungeon chain to G4055. */
+int csb_v1_runtime_grab_floor_object_for_view_cell_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int view_cell,
+    uint16_t *out_thing);
+
 int csb_v1_runtime_object_overlay_info(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t object_thing,
     CSB_V1_RuntimeObjectOverlayInfo *out_info);
+
+/* PANEL.C F0341: decode a real C07 scroll through its referenced C02 text
+ * record and the loaded dungeon text pool. */
+int csb_v1_runtime_decode_scroll_text_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t scroll_thing,
+    char *out,
+    int out_size);
+int csb_v1_runtime_decode_visible_inscription_text_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t text_thing,
+    char *out,
+    int out_size);
+
+/* PANEL.C F0349 bounded native mouth transaction. Returns 1 only after an
+ * authentic, fully supported object effect commits atomically. */
+int csb_v1_runtime_consume_water_potion_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index);
+int csb_v1_runtime_consume_potion_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index);
+int csb_v1_runtime_drink_waterskin_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index);
+int csb_v1_runtime_consume_food_from_leader_hand_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index);
 
 int csb_v1_runtime_group_record_creature_type(
     const uint8_t *record,
@@ -2670,6 +2722,11 @@ int csb_v1_runtime_group_overlay_info(
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
+    int *out_projectile_slot);
+int csb_v1_runtime_throw_action_hand_from_side_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    int champion_index,
+    int throw_side,
     int *out_projectile_slot);
 
 /* Bounded champion ready-hand SHOOT boundary for M11 CSB playability.
@@ -2746,6 +2803,13 @@ int csb_v1_runtime_perform_melee_action(
 /* Load ReDMCSB OBJECT.C F0031 PC object names from M564_GRAPHIC_OBJECT_NAMES.
  * The PC stream terminates each name by setting bit 7 on the final byte. */
 int csb_v1_runtime_load_object_names_m564(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *bytes,
+    size_t byte_count);
+/* F31J OBJECT.C MEDIA689 walks 199 NUL-terminated Shift-JIS rows and turns
+ * its optional byte-1 display marker into a terminator.  High Shift-JIS
+ * bytes must never be mistaken for the older high-bit row delimiters. */
+int csb_v1_runtime_load_object_names_m564_f31j(
     CSB_V1_RuntimeProfile *profile,
     const uint8_t *bytes,
     size_t byte_count);
@@ -3091,6 +3155,7 @@ int csb_v1_runtime_throw_leader_hand_from_boot_profile_pc34(
     void *boot_profile,
     int champion_index,
     unsigned short leader_thing,
+    int throw_side,
     unsigned short *out_restored_action_hand,
     int *out_projectile_slot);
 int csb_v1_runtime_write_champion_vitals_from_boot_profile_pc34(

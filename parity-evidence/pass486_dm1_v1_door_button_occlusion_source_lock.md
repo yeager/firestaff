@@ -15,10 +15,13 @@ Status: `PASS486_DM1_V1_DOOR_BUTTON_OCCLUSION_SOURCE_LOCKED`
 
 ## Firestaff seams
 {
+  "callbackRouteChecks": 8,
   "centerButtonChecks": 9,
   "centerCoordinateChecks": 3,
   "d3rButtonChecks": 11,
-  "viewportOrderChecks": 6
+  "duplicateReplayRejectChecks": 4,
+  "f0111CompositionChecks": 5,
+  "viewportOrderChecks": 4
 }
 
 No original-runtime/pixel parity claim is made by this gate.

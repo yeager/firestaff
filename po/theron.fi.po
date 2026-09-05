@@ -9,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Finnish\n"
@@ -18,155 +18,155 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-#. Direction / compass
 
+#. Direction / compass
 msgid "NORTH"
 msgstr "POHJOINEN"
-#. Direction / compass
 
+#. Direction / compass
 msgid "EAST"
 msgstr "ITÄ"
-#. Direction / compass
 
+#. Direction / compass
 msgid "SOUTH"
 msgstr "ETELÄ"
-#. Direction / compass
 
+#. Direction / compass
 msgid "WEST"
 msgstr "LÄNSI"
-#. Stairs
 
+#. Stairs
 msgid "STAIRS"
 msgstr "PORTAAT"
-#. Pit
 
+#. Pit
 msgid "PIT"
 msgstr "KUOPPA"
-#. Teleporter
 
+#. Teleporter
 msgid "TELEPORTER"
 msgstr "TELEPORTTI"
-#. Door
 
+#. Door
 msgid "DOOR"
 msgstr "OVI"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "PICK UP"
 msgstr "POIMI"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "DROP"
 msgstr "PUDOTA"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "USE"
 msgstr "KÄYTÄ"
-#. Combat action
 
+#. Combat action
 msgid "ATTACK"
 msgstr "HYÖKKÄÄ"
-#. Combat action
 
+#. Combat action
 msgid "DEFEND"
 msgstr "PUOLUSTU"
-#. Combat action
 
+#. Combat action
 msgid "CAST SPELL"
 msgstr "LOIHI TAIIKA"
-#. Status label
 
+#. Status label
 msgid "NO FOCUS"
 msgstr "EI FOKUSTA"
-#. Status label
 
+#. Status label
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
 msgstr "PAINA ENTER AIDOSSA EDESSÄ OLEVASSA MAALISSA"
-#. Generic
 
+#. Generic
 msgid "UNKNOWN"
 msgstr "TUNTEMATON"
-#. Generic
 
+#. Generic
 msgid "NONE"
 msgstr "EI MITÄÄN"
-#. Save / load
 
+#. Save / load
 msgid "SAVE GAME"
 msgstr "TALLENNA PELI"
-#. Save / load
 
+#. Save / load
 msgid "LOAD GAME"
 msgstr "LATAA PELI"
-#. Shop
 
+#. Shop
 msgid "SHOP"
 msgstr "KAUPPA"
-#. Shop
 
+#. Shop
 msgid "NOT ENOUGH GOLD"
 msgstr "EI TARPEEKSI KULTAA"
-#. Shop
 
+#. Shop
 msgid "PURCHASED %s FOR %d GOLD"
 msgstr "OSTETTU %s HINTAAN %d KULTAA"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: ASCENDED TO LEVEL %d"
 msgstr "T%u: NOUSI TASOLLE %d"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: DESCENDED TO LEVEL %d"
 msgstr "T%u: LASKEUTUI TASOLLE %d"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: FELL INTO PIT"
 msgstr "T%u: PUTOSI KUOPPAAN"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
 msgstr "T%u: TELEPORTOITU KARTALLE %d (%d,%d)"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER HAS NO THING DATA"
 msgstr "T%u: TELEPORTILLA EI OLE TIETOA"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
 msgstr "T%u: TELEPORTIN KOHDEKARTTA %d ALUEEN ULKOPUOLELLA"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
 msgstr "T%u: %s KEHITTYI! (%s %d -> %d)"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s CASTS %s"
 msgstr "T%u: %s LOIHI %s"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s HITS %s FOR %d"
 msgstr "T%u: %s OSUU %s TEHOLLA %d"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s MISSES %s"
 msgstr "T%u: %s OHI: %s"
-#. Altar
 
+#. Altar
 msgid "OFFERING ACCEPTED"
 msgstr "UHRI HYVÄKSYTTY"
-#. Inventory capacity
 
+#. Inventory capacity
 msgid "INVENTORY FULL"
 msgstr "REPPU TÄYNNÄ"
-#. Sound / feedback
 
+#. Sound / feedback
 msgid "OUT OF RANGE"
 msgstr "KANTAMAN ULKOPUOLELLA"
-#. Generic message
 
+#. Generic message
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
 msgstr "PAINA ENTER TAI NÄPSÄYTÄ NÄKYMÄÄ LUE AKSESI ETURUUDUN"
-#. Status footer
 
+#. Status footer
 msgid "HP AND STAMINA RECOVER SLOWLY"
 msgstr "HP JA KESTÄVYYS PALAUTUVAT HITAASTI"

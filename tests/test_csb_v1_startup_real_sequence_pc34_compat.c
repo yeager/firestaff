@@ -186,14 +186,14 @@ int main(void)
     if (!root || csb_v1_boot_scan_assets(&profile, root) != 0 ||
         !profile.assets_verified || !profile.graphics_verified ||
         !profile.dungeon_verified ||
-        profile.variant_id != CSB_V1_VARIANT_PC34_EN) {
+        profile.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN) {
         printf("SKIP: no verified PC34 CSB startup corpus was found.\n");
         return 0;
     }
     if (csb_v1_startup_real_scan_and_receipt(root, 6, &real_receipt) !=
             CSB_V1_STARTUP_REAL_OK ||
         !real_receipt.matched ||
-        real_receipt.variant_id != CSB_V1_VARIANT_PC34_EN) {
+        real_receipt.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN) {
         printf("SKIP: CSB startup real-asset receipt did not match PC34.\n");
         return 0;
     }

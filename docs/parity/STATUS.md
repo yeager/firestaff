@@ -1,4 +1,7 @@
-# ReDMCSB PC 3.4 status
+# ReDMCSB source-reference status
+
+This page tracks compatibility work derived from ReDMCSB. It does not describe
+a DOS or Windows edition of Chaos Strikes Back; no such original release exists.
 
 ## Product direction
 

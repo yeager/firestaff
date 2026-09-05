@@ -1186,6 +1186,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->csbAtariStPsg);
         m11_sound_free(&state->csbPc34RuntimePcm);
         m11_sound_free(&state->csbAmigaRuntimePcm);
+        m11_sound_free(&state->csbFmtownsRuntimePcm);
         m11_sound_free(&state->csbFmtownsAnmPcm);
         m11_sound_free(&state->dm2FmtownsTitlePcm);
         m11_sound_free(&state->dm2MacSndPcm);
@@ -1561,11 +1562,9 @@ int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
     return 1;
 }
 
-int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
-                                const unsigned char* source,
-                                int sourceBytes,
-                                int sourcePeriod,
-                                unsigned int sourceHash) {
+int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+    M11_AudioState* state, const unsigned char* source, int sourceBytes,
+    int sourcePeriod, unsigned int sourceHash, int sourceVolume) {
     CsbV1StSoundDecodeResult decoded;
     uint8_t* levels = NULL;
     size_t level_count;
@@ -1575,6 +1574,7 @@ int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
 
     if (!state || !state->initialized || !source || sourceBytes < 3 ||
         sourcePeriod <= 10 || sourceHash == 0u ||
+        (sourceVolume != 0 && sourceVolume != 1) ||
         m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
         return 0;
     }
@@ -1597,8 +1597,11 @@ int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
         CsbV1PsgChannelAmplitudes amplitudes;
         int summed;
         if (source_index >= level_count) source_index = level_count - 1u;
-        amplitudes = csb_v1_audio_runtime_channel_amplitudes(
-            (int16_t)levels[source_index]);
+        amplitudes = sourceVolume
+            ? csb_v1_audio_runtime_channel_amplitudes(
+                  (int16_t)levels[source_index])
+            : csb_v1_audio_runtime_channel_amplitudes_soft(
+                  (int16_t)levels[source_index]);
         summed = (int)amplitudes.channelA + (int)amplitudes.channelB +
             (int)amplitudes.channelC;
         /* F0061 writes all three original PSG amplitude registers. The host
@@ -1609,6 +1612,7 @@ int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
     state->csbAtariStPsg.sampleCount = (int)output_count;
     state->csbAtariStSoundAccepted = 1;
     state->csbAtariStSoundPeriod = sourcePeriod;
+    state->csbAtariStSoundSourceVolume = sourceVolume;
     state->csbAtariStSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
@@ -1625,6 +1629,15 @@ done:
     free(levels);
     m11_sound_clear(&state->csbAtariStPsg);
     return 0;
+}
+
+int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
+                                const unsigned char* source,
+                                int sourceBytes,
+                                int sourcePeriod,
+                                unsigned int sourceHash) {
+    return M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+        state, source, sourceBytes, sourcePeriod, sourceHash, 1);
 }
 
 int M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
@@ -1799,6 +1812,61 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
         return 0;
     }
     state->csbAmigaRuntimeSoundSourceVolume = paulaVolume;
+    return 1;
+}
+
+int M11_Audio_PlayCsbFmtownsRuntimePcm(
+    M11_AudioState* state, const int8_t* source, int sourceBytes,
+    int sourceVolume, unsigned int sourceHash)
+{
+    const unsigned int sourceRate = 5500u;
+    unsigned int outputCount;
+    unsigned int outputIndex;
+
+    /* ReDMCSB TOWNSIO.C F0709 reads the record's BE16 sample count and
+     * F0060 feeds those signed bytes to the Towns PCM driver at 5500 Hz. */
+    if (!state || !state->initialized || !source || sourceBytes <= 0 ||
+        sourceVolume <= 0 || sourceVolume > 127 || sourceHash == 0u ||
+        m11_fnv1a_bytes((const unsigned char*)source, sourceBytes) != sourceHash) {
+        if (state) {
+            m11_sound_clear(&state->csbFmtownsRuntimePcm);
+            state->csbFmtownsRuntimeSoundAccepted = 0;
+        }
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   sourceRate - 1u) / sourceRate;
+    if (outputCount == 0u || outputCount > 262144u ||
+        !m11_sound_reserve(&state->csbFmtownsRuntimePcm, (int)outputCount)) {
+        m11_sound_clear(&state->csbFmtownsRuntimePcm);
+        state->csbFmtownsRuntimeSoundAccepted = 0;
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex =
+            (outputIndex * sourceRate) / M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceBytes) {
+            sourceIndex = (unsigned int)sourceBytes - 1u;
+        }
+        state->csbFmtownsRuntimePcm.samples[outputIndex] =
+            (float)source[sourceIndex] / 128.0f;
+    }
+    state->csbFmtownsRuntimePcm.sampleCount = (int)outputCount;
+    state->csbFmtownsRuntimeSoundAccepted = 1;
+    state->csbFmtownsRuntimeSoundByteCount = sourceBytes;
+    state->csbFmtownsRuntimeSoundSourceVolume = sourceVolume;
+    state->csbFmtownsRuntimeSoundHash = sourceHash;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        int scaledVolume = (state->sfxVolume * sourceVolume + 1) / 3;
+        if (scaledVolume > state->sfxVolume) scaledVolume = state->sfxVolume;
+        if (m11_sdl_queue_samples(state, state->csbFmtownsRuntimePcm.samples,
+                                  state->csbFmtownsRuntimePcm.sampleCount,
+                                  scaledVolume)) {
+            ++state->csbFmtownsRuntimeSoundQueuedCount;
+        }
+    }
+#endif
     return 1;
 }
 

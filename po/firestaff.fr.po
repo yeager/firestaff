@@ -1,93 +1,135 @@
 # Firestaff UI — fr
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: fr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "Accessibilité"
 
+#. AUDIO
 msgid "Audio"
 msgstr "Audio"
 
+#. BACK
 msgid "Back"
 msgstr "Retour"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "Bestiaire"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "Journal des modifications"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "Bientôt disponible"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "Continuer sauvegarde"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "Contrôles"
 
+#. DISPLAY
 msgid "Display"
 msgstr "Affichage"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "EXTRAS"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "Encyclopédie des objets"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "Langue"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "Visionneuse de carte"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "Musée du Lore"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "Nouvelle partie (V1 Originale)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "Nouvelle partie (V2.1 Mise à l'échelle)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "Nouvelle partie (V2.2 Améliorée)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "Aucun fichier de données"
 
+#. OFF
 msgid "Off"
 msgstr "Off"
 
+#. ON
 msgid "On"
 msgstr "On"
 
+#. PLAY
 msgid "PLAY"
 msgstr "JOUER"
 
+#. QUIT
 msgid "QUIT"
 msgstr "QUITTER"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "Galerie de captures"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "SÉLECTIONNER JEU"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "PARAMÈTRES"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "Référence des sorts"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "Valider données du jeu"
 
+#. VERSION
 msgid "Version"
 msgstr "Version"
 
+#. VIDEO
 msgid "Video"
 msgstr "Vidéo"
 
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""

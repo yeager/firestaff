@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -18,10 +19,7 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = (
-    Path.home()
-    / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 ANCHORS = [
     "DATA.C:28",
@@ -125,7 +123,8 @@ def run(cmd: list[str]) -> dict[str, object]:
 
 
 def resolve_build_dir(binary_name: str = "") -> Path:
-    candidates = [
+    configured = os.environ.get("FIRESTAFF_BUILD_DIR", "")
+    candidates = ([Path(configured)] if configured else []) + [
         ROOT / "build",
         ROOT / "builds" / "nv1-build",
         ROOT / "builds" / "n2-build",

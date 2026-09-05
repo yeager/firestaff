@@ -1,11 +1,49 @@
 # Firestaff TODO — CSB
 
-Reviewed 2026-08-29. Only open work is listed here.
+Reviewed 2026-09-05. Only open work is listed here.
+
+- Add authentic inscription-bearing Atari, Amiga and F31E runtime fixtures or
+  captures and assert the candidate framebuffer pixel delta for the now-wired
+  C02/M648/F0635 paths, including the now-wired distant/side zones. Obtain an
+  allowed authentic F31J glyph-raster strategy: its exact F0168 second decode
+  and F0646 substring route are wired, but F0644 pixels remain fail-closed
+  because the retail CD delegates them to the FM Towns EGB system font and
+  contains no font ROM. English M648 is never borrowed. Original-capture pixel
+  parity remains unclaimed.
 
 - Obtain checksum-verified DSA-bearing saves and per-edition save corpora;
   use them to extend native gameplay, timer and transaction coverage.
 - Add original-data HUD, viewport, title, door and audio capture comparisons
   for Atari ST, Amiga and FM Towns. Do not use CSBWin as a PC game route.
+  Amiga RGB4 register expansion is now compared and fixed from an authentic
+  FS-UAE/Kickstart 1.3 title route; retain as open only a same-source-VBlank
+  image pair plus the remaining HUD/viewport/door/audio comparisons. Atari
+  still needs genuine compatible TOS capture firmware: the staged EmuTOS
+  image reproducibly trips the protected retail program's Bus Error handler.
+  Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
+  replacements must name and authenticate one of the three supported retail
+  platforms.
+- Extend source-text extraction beyond the now-bound object/action names and
+  reviewed Utility Disk DB2 instruction. Atari ST now
+  supplies M564 from item 556 and the G0490 subtable from C560 item 560 to
+  both the live runtime and catalog generator;
+  FM Towns also binds English/Japanese M564 and DYNA_BUTTONS to its live
+  runtime directly from the packed CD. Amiga A31M binds M564/C699 from its
+  selected big-endian DMCSB2 media, while A31E/A35E bind compiled G0490 only
+  from the hash-locked APPB on the same admitted disk. The live selected
+  dungeon now promotes the reviewed utility instruction to the CSB POT while
+  rejecting structured champion records and their encoded statistics. The
+  native Eye path now walks a real C07 scroll to its platform-specific C02
+  reference and authentic text pool without consulting DM1 `world.things`.
+  Continue walking square-chain relations at their native presentation
+  consumers before promoting further messages and inscriptions.
+  Add executable-owned dialogs and Hint Oracle text the same way; never restore
+  invented semantic keys or translate encoded champion-stat payloads.
+  The final main-draw message-area pass now preserves the live F0168-decoded
+  C02/DSA receipt and cannot overwrite it with M11 telemetry; extend the same
+  source ownership to the remaining inscription consumers.
+  Its persistence is also source-timed: supported Atari/Amiga/FM Towns rows
+  remain visible for 70 game ticks and disappear at the F0046 deadline.
 - Keep V2.2 presentation closed until a real source-owned material/pixel
   binding exists.
 ## Deferred original-data corpus

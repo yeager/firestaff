@@ -154,7 +154,6 @@ coverage**, not registry correctness.
 | Amiga 3.5 English | ✅ `3af5396f…` (435,076) | ✅ `3cafd2fb…` (2,098) | runtime target; DMWeb Amiga page lists 3.5 English protected original ADF/IPF media, Amiga intro+ending video provenance, and the Amiga keypad/Del/Help/Ctrl-S command table |
 | Amiga 3.1/3.3/3.5 Multilingual | 🟡 `cefaddfd…`? | 🟡 | DMWeb page splits 3.1/3.3/3.5 EN/FR/GE game disks, unofficial IPFs, protected original ADFs, cracked ADFs, v3.5 Quit-button presentation, and Meynaf's v3.3 French hard-disk/accelerator hack; archive/local-extra variants need canonical classification |
 | Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | Supplied campaign and Utility Disk STX media are exercised by native in-memory startup/Hint Oracle tests. Version/release classification, additional language variants and DSA-save provenance remain open. Keep original STX separate from cracked Automation ST, MSA, hard-disk and RamDisk derivatives. |
-| DOS / PC | ⚪ | ⚪ | No original DOS/PC release exists. CSBWin is reverse-engineering evidence only and must never become a Firestaff PC game-data or runtime target. |
 | X68000 Japanese | ⚫ intentionally unsupported | n/a | Preservation reference only. No CSB X68000 import, runtime, presentation, or input work is planned. |
 | FM-Towns English/Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 BIN/CUE CD media, English/Japanese screenshot sets, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow command table; local `csb-extras/fm-towns/` is extracted but still awaits canonical hash classification |
 | PC-98 Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 HDM/floppy media, original image without copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor and portrait-loading screens, and PC-98 keypad / Alt-S input; local `csb-extras/pc98-3.1-jp/` is extracted but still awaits canonical hash classification |
@@ -359,14 +358,13 @@ coverage**, not registry correctness.
 If we get to acquire more files this quarter, the highest-impact
 picks (most unblocked downstream work) are:
 
-1. **CSB PC 3.4 EN** (full CSB runtime target #2).
-2. **CSB Utility Disk** (CMP + HTC + AMG runtime).
-3. **DM2 PC German/English JewelCase** (advanced CCM + remaining
+1. **CSB Utility Disk** (CMP + HTC + AMG runtime).
+2. **DM2 PC German/English JewelCase** (advanced CCM + remaining
    PC retail-variant runtime).
-4. **Atari ST DM1 GRAPHICS.DAT** (real LZW regression).
-5. **Atari ST CSB GRAPHICS.DAT** (real hidden-code skip
+3. **Atari ST DM1 GRAPHICS.DAT** (real LZW regression).
+4. **Atari ST CSB GRAPHICS.DAT** (real hidden-code skip
    regression).
-6. **DM2 Sega CD / Macintosh .moov / Amiga MOD+Smacker** (animations + audio).
+5. **DM2 Sega CD / Macintosh .moov / Amiga MOD+Smacker** (animations + audio).
 
 Tier 1 is closed by what we already have. Tier 2 work continues
 unblocked even without any of the above. Tier 3 work is where

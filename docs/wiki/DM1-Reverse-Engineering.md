@@ -761,7 +761,7 @@ TextString thing is marked invisible.
 
 ## 4. GRAPHICS.DAT Format
 
-DM1 PC 3.4 and CSB PC 3.4 both use GRAPHICS.DAT, but the on-disk
+DM1 PC 3.4 and the CSB reference/source lineage both use GRAPHICS.DAT, but the on-disk
 compression differs by platform port in the ReDMCSB source tree:
 
 - **PC IMG3** — the PC 3.4 (DOS) graphic entry format. Entries are

@@ -1,93 +1,135 @@
 # Firestaff UI — tr
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: tr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "Erişilebilirlik"
 
+#. AUDIO
 msgid "Audio"
 msgstr "Ses"
 
+#. BACK
 msgid "Back"
 msgstr "Geri"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "Yaratık Kitabı"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "Değişiklikler"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "Çok yakında"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "Kayıtlı Oyuna Devam"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "Kontroller"
 
+#. DISPLAY
 msgid "Display"
 msgstr "Ekran"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "EKSTRALAR"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "Eşya Ansiklopedisi"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "Dil"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "Harita Görüntüleyici"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "Lore Müzesi"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "Yeni Oyun (V1 Orijinal)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "Yeni Oyun (V2.1 Yükseltilmiş)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "Yeni Oyun (V2.2 Geliştirilmiş)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "Veri dosyası yok"
 
+#. OFF
 msgid "Off"
 msgstr "Kapalı"
 
+#. ON
 msgid "On"
 msgstr "Açık"
 
+#. PLAY
 msgid "PLAY"
 msgstr "OYNA"
 
+#. QUIT
 msgid "QUIT"
 msgstr "ÇIK"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "Ekran Görüntüsü Galerisi"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "OYUN SEÇ"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "AYARLAR"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "Büyü Referansı"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "Oyun verisini doğrula"
 
+#. VERSION
 msgid "Version"
 msgstr "Sürüm"
 
+#. VIDEO
 msgid "Video"
 msgstr "Video"
 
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""

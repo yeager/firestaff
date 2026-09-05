@@ -2,14 +2,14 @@
   "schema": "v1_hud_status_source_lock.v1",
   "pass": true,
   "scope": "DM1 PC 3.4 V1 champion top-row/status panel source-lock gate; no original-runtime screenshot claim.",
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceRanges": [
     {
       "file": "DEFS.H",
       "start": 3779,
       "end": 3803,
       "locks": "top-row status/icon/name/bar/hand zone identifiers",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "missing": []
     },
     {
@@ -17,7 +17,7 @@
       "start": 307,
       "end": 346,
       "locks": "F0287 type-7 bar zones C195/C199/C203 per champion",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "missing": []
     },
     {
@@ -25,7 +25,7 @@
       "start": 771,
       "end": 815,
       "locks": "F0292 live status-box fill, shield borders, and dirty-bit scheduling",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "missing": []
     },
     {
@@ -33,7 +33,7 @@
       "start": 833,
       "end": 905,
       "locks": "dead/name path, live name clear/text, statistics -> F0287 order",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "missing": []
     },
     {
@@ -41,7 +41,7 @@
       "start": 1038,
       "end": 1052,
       "locks": "top-right champion icon clear/blit zones C113..C116",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "missing": []
     },
     {
@@ -49,7 +49,7 @@
       "start": 1117,
       "end": 1139,
       "locks": "F0293 walks party champions and calls F0292",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "missing": []
     },
     {
@@ -57,7 +57,7 @@
       "start": 1817,
       "end": 1830,
       "locks": "F0260 marks MASK0x1000_STATUS_BOX then refreshes all champions",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
+      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
       "missing": []
     }
   ],

@@ -14,23 +14,13 @@
   },
   "debugger_inventory": {
     "probes": {
-      "dosbox_debug_help_probe": {
-        "cmd": [
-          "bash",
-          "-lc",
-          "TERM=xterm timeout 3 dosbox-debug -help 2>&1 | head -40"
-        ],
-        "returncode": 0,
-        "stderr_tail": "",
-        "stdout_tail": "\nDOSBox-X version 2026.07.02 SDL2, copyright 2011-2026 The DOSBox-X Team.\nDOSBox-X project maintainer: joncampbell123 (The Great Codeholio)\n\ndosbox-x [name] [options]\n\nOptions can be started with either \"-\" or \"/\" (e.g. \"-help\" or \"/help\"):\n\n  -?, -h, -help                           Show this help screen\n  -v, -ver, -version                      Display DOSBox-X version information\n  -fs, -fullscreen                        Start DOSBox-X in fullscreen mode\n  -conf <configfile>                      Start DOSBox-X with the specific config file\n  -editconf <editor>                      Edit the config file with the specific editor\n  -userconf                               Create user level config file\n  -printconf                              Print config file location\n  -eraseconf (or -resetconf)              Erase loaded config file (or user config file and exit)\n  -erasemapper (or -resetmapper)          Erase loaded mapper file (or user mapper file and exit)\n  -opencaptures <param>                   Launch captures\n  -opensaves <param>                      Launch saves\n  -startui, -startgui, -starttool         Start DOSBox-X with GUI configuration tool\n  -startmapper                            Start DOSBox-X with the mapper editor\n  -promptfolder                           Prompt for the working directory when DOSBox-X starts\n  -nopromptfolder                         Do not prompt for the working directory when DOSBox-X starts\n  -nogui                                  Do not show GUI\n  -nomenu                                 Do not show menu\n  -showcycles                             Show cycles count (FPS) in the title\n  -showrt                                 Show emulation speed relative to realtime in the title\n  -socket <socketnum>                     Specify the socket number for null-modem emulation\n  -savedir <path>                         Set path for the save slots\n  -defaultdir <path>                      Set the default working path for DOSBox-X\n  -defaultconf                            Use the default config settings for DOSBox-X\n  -defaultmapper                          Use the default key mappings for DOSBox-X\n  -date-host-forced                       Force synchronization of date with host\n  -display2 <color>                       Enable standard & monochrome dual-screen mode with <color>\n  -lang (or -langcp) <message file>       Use specific message file instead of language= setting\n  -machine <type>                         Start DOSBox-X with a specific machine <type>\n  -nodpiaware                             Ignore (do not signal) Windows DPI awareness\n  -securemode                             Enable secure mode (no drive mounting etc)\n  -prerun                                 If [name] is given, run it before AUTOEXEC.BAT config section\n  -hostrun                                Enable running host program via START command and LFN support\n"
-      },
       "dosbox_x_version_probe": {
         "cmd": [
           "dosbox-x",
           "-version"
         ],
         "returncode": 1,
-        "stderr_tail": "\nDOSBox-X version 2026.07.02 SDL2, copyright 2011-2026 The DOSBox-X Team.\nDOSBox-X project maintainer: joncampbell123 (The Great Codeholio)\n\nDOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,\nand you are welcome to redistribute it under certain conditions;\nplease read the COPYING file thoroughly before doing so.\n\n",
+        "stderr_tail": "\nDOSBox-X version 2026.01.02 SDL2, copyright 2011-2026 The DOSBox-X Team.\nDOSBox-X project maintainer: joncampbell123 (The Great Codeholio)\n\nDOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,\nand you are welcome to redistribute it under certain conditions;\nplease read the COPYING file thoroughly before doing so.\n\n",
         "stdout_tail": ""
       },
       "fires_exenew_probe": {
@@ -39,22 +29,21 @@
           "-lc",
           "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
         ],
-        "returncode": 0,
-        "stderr_tail": "",
-        "stdout_tail": ""
+        "error": "TimeoutExpired",
+        "message": "Command '['bash', '-lc', 'find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f']' timed out after 6 seconds"
       }
     },
     "symbol_map_exists": true,
     "toolchain_root_exists": true,
     "tools": {
-      "dosbox": "/opt/homebrew/bin/dosbox",
-      "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",
-      "dosbox-x": "/opt/homebrew/bin/dosbox-x",
+      "dosbox": "/usr/bin/dosbox",
+      "dosbox-debug": null,
+      "dosbox-x": "/usr/bin/dosbox-x",
       "objdump": "/usr/bin/objdump",
-      "wine": "/opt/homebrew/bin/wine"
+      "wine": null
     }
   },
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {
@@ -71,7 +60,7 @@
       },
       "observable": "main loop consumes G0308_i_PartyDirection/G0306_i_PartyMapX/G0307_i_PartyMapY in the F0128 draw call",
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -90,7 +79,7 @@
       },
       "observable": "I34E-family F0128 composes G0296_puc_Bitmap_Viewport from direction/X/Y before calling F0097",
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -106,10 +95,10 @@
       },
       "observable": "PC I34E-family F0097 resolves C007_ZONE_VIEWPORT and blits G0296_puc_Bitmap_Viewport via VIDRV_09_BlitViewPort",
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_RUNTIME_HITS_REQUIRED",
   "symbol_map_guardrail": {
     "entries": [

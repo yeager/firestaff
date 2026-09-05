@@ -32,6 +32,9 @@ static int expected_backing_graphic_for_f0107_view(int viewWallIndex)
     static const int increments[14] = {
         0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4
     };
+    /* Internal rows 13/14 are MEDIA720 item-696 C1004 anchors, not G0205
+     * indices. Both consume the base D3 derived ornament C345. */
+    if (viewWallIndex == 13 || viewWallIndex == 14) return 345;
     if (viewWallIndex < 0 || viewWallIndex >= 14) return 345;
     return 345 + increments[viewWallIndex];
 }

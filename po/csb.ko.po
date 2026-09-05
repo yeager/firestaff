@@ -1,132 +1,915 @@
-# Firestaff — csb domain, Korean catalog.
-# Korean translation of Chaos Strikes Back runtime strings.
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
 #
-# Domain: csb
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
 #
-# Based on po/dm1.ko.po + CSB-specific keys from csb.pot.
-# Translated 2026-07-19, consistent with the reviewed sv/de/fr
-# catalogs (proper nouns and brand strings keep source spelling).
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-07-19 12:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
-"Language-Team: Korean\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-04-22 05:45+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "CSB 엔진 버전"
+#. Source-owned C699 action name
+msgid "N"
+msgstr ""
 
-# Reincarnation panel
-msgid "csb.reincarnate.title"
-msgstr "환생"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr ""
 
-msgid "csb.reincarnate.chaos"
-msgstr "혼돈의 전투."
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr ""
 
-msgid "csb.reincarnate.choose"
-msgstr "환생할 새 전사를 선택하십시오."
+#. Source-owned C699 action name
+msgid "X"
+msgstr ""
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "능력치 주사위 굴리기"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr ""
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "부활"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr ""
 
-msgid "csb.resurrect.altar"
-msgstr "제단에 피를 바쳐 전사를 깨우십시오."
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr ""
 
-msgid "csb.resurrect.choose"
-msgstr "깨울 전사를 선택하십시오."
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr ""
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "혼돈 마법 냉각 중"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr ""
 
-msgid "csb.chaos.energy"
-msgstr "혼돈 에너지"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr ""
 
-msgid "csb.chaos.recharge"
-msgstr "충전 중"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr ""
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "회색 군주가 속삭인다: 선택하라."
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr ""
 
-msgid "csb.greylord.choose"
-msgstr "선택하십시오."
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr ""
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "신탁"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr ""
 
-msgid "csb.oracle.prompt"
-msgstr "물으면 신탁이 답할 것이다."
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr ""
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "최대 전사 4명"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr ""
 
-msgid "csb.party.slot"
-msgstr "파티 슬롯"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr ""
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "CSB 세이브 가져오기"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr ""
 
-msgid "csb.save.csb-st-v20"
-msgstr "CSB Atari ST 2.0 세이브"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr ""
 
-msgid "csb.save.csb-st-v21"
-msgstr "CSB Atari ST 2.1 세이브"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr ""
 
-msgid "csb.save.amiga-v35"
-msgstr "CSB Amiga 3.5 세이브"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr ""
 
-msgid "csb.save.pc34"
-msgstr "CSB PC 3.4 세이브"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr ""
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "초보자 모드"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr ""
 
-msgid "csb.neophyte.desc"
-msgstr "함정 피해 감소, 더 쉬운 시작."
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr ""
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "DM1 엔진 v2.0"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr ""
 
-msgid "csb.engine.csb"
-msgstr "CSB 엔진 v2.1"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr ""
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr ""
 
-msgid "csb.launcher.subtitle"
-msgstr "던전 마스터 II 후속작"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr ""
 
-msgid "csb.launcher.lore-shape"
-msgstr "혼돈의 군주가 일어난다..."
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr ""
 
-msgid "csb.launcher.lore-line-1"
-msgstr "혼돈의 군주가 불꽃을 훔쳤다."
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr ""
 
-msgid "csb.launcher.lore-line-2"
-msgstr "불의 돌이 사라졌다."
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr ""
 
-msgid "csb.launcher.lore-line-3"
-msgstr "회색 군주가 되찾아오라 부른다."
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr ""
 
-msgid "csb.launcher.lore-line-4"
-msgstr "혼돈 속으로 들어가라."
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "나침반"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "횃불"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "물주머니"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "보석 심볼"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "일루뮬렛"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "플레미트"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "시간의 눈"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "폭풍 반지"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "발톱의 지팡이"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "파이어스태프"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "두루마리"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "단검"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "팔션"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "검"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "레이피어"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "사무라이 검"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "다이아몬드 엣지"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "보팔 블레이드"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "도끼"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "철퇴"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "질서의 철퇴"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "곤봉"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "돌 곤봉"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "석궁"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "화살"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "슬레이어"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "새총"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "돌"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "독 다트"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "투척 별"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "막대"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "지팡이"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "완드"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "테오 완드"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "주목 지팡이"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "드래곤 스핏"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "라이프의 홀"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "가죽 재킷"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "망토"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "밤의 망토"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "가죽 바지"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "파란 바지"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "GHI 바지"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "다리 사슬갑옷"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "미스릴 사슬"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "버서커 투구"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "투구"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "바시넷"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "칼리스타"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "네라의 왕관"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "작은 방패"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "나무 방패"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "샌들"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "스웨이드 부츠"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "가죽 부츠"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "발판"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "엘프 부츠"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "시대의 보석"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "에크하르트 십자"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "문스톤"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "헬리온"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "페랄 펜던트"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR 동전"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "바위"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "파란 보석"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "주황 보석"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "초록 보석"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "마법의 상자"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "여명의 거울"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "공포의 뿔"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "밧줄"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "초커"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "덱스 투구"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "상자"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "상자 열기"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "재"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "뼈"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON 물약"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM 물약"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES 물약"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN 물약"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR 물약"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO 물약"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS 물약"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU 물약"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE 물약"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA 물약"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA 물약"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE 물약"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI 물약"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "물 플라스크"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "사과"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "옥수수"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "빵"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "치즈"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "비명꾼 조각"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "벌레 둥근"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "용 스테이크"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "철 열쇠"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "B 열쇠"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "단단한 열쇠"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "사각 열쇠"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "터키석 열쇠"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "십자 열쇠"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "오닉스 열쇠"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "스켈레톤 열쇠"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "금 열쇠"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "날개 열쇠"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "토파즈 열쇠"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "사파이어 열쇠"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "에메랄드 열쇠"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "루비 열쇠"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA 열쇠"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "마스터 열쇠"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "자물쇠 따개"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "돋보기"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "빈 플라스크"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "조카스라 주문"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""

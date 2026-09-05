@@ -40,7 +40,7 @@
   "candidateTranscriptLikeArtifacts": [
     {
       "path": "parity-evidence/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.md",
-      "size": 1457
+      "size": 1455
     },
     {
       "path": "parity-evidence/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof.md",
@@ -96,7 +96,7 @@
     },
     {
       "path": "parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md",
-      "size": 1298
+      "size": 989
     },
     {
       "path": "parity-evidence/pass93_original_route_key_explore_diagnostic.md",
@@ -104,7 +104,7 @@
     },
     {
       "path": "parity-evidence/verification/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness/manifest.json",
-      "size": 8662
+      "size": 8618
     },
     {
       "path": "parity-evidence/verification/pass232_command_f0380_source_seam.json",
@@ -296,7 +296,7 @@
     },
     {
       "path": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-      "size": 8513
+      "size": 8262
     },
     {
       "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift",
@@ -413,6 +413,18 @@
     {
       "path": "verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys_xdotool.sh",
       "size": 3664
+    },
+    {
+      "path": "verification-screens/passH2313-dm2-original-overlays/dm2-overlay-route-keys.log",
+      "size": 294
+    },
+    {
+      "path": "verification-screens/passH2313-dm2-original-overlays/dm2_original_overlay_route_keys.swift",
+      "size": 5739
+    },
+    {
+      "path": "verification-screens/passH2313-dm2-original-overlays/dm2_original_overlay_route_keys_xdotool.sh",
+      "size": 3645
     }
   ],
   "decision": "The remaining blocker is not another Firestaff movement implementation patch. It is a missing original PC/I34E route-key transcript with enough source-visible state to bind keyboard-buffer token, command queue delta, F0380 pop/dispatch, party tuple delta, and viewport present boundary.",
@@ -459,10 +471,10 @@
       "status": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
     },
     "pass512_movement_cross_reference_audit": {
-      "expectedStatus": "PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT",
+      "expectedStatus": "BLOCKED_PASS512_DM1_V1_MOVEMENT_RUNTIME_CAPTURE_MISSING",
       "ok": true,
       "path": "parity-evidence/verification/pass512_dm1_v1_movement_cross_reference_audit/manifest.json",
-      "status": "PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT"
+      "status": "BLOCKED_PASS512_DM1_V1_MOVEMENT_RUNTIME_CAPTURE_MISSING"
     }
   },
   "problems": [],
@@ -521,7 +533,7 @@
       "lines": "27-61",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "claim": "F0361 can queue movement only after the drained key matches the active I34E secondary keyboard table",
@@ -531,7 +543,7 @@
       "lines": "636-685",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "the original route chain is keyboard-buffer drain, queue processing, then wait-loop boundary",
@@ -541,7 +553,7 @@
       "lines": "164-219",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "claim": "a transcript must include F0361's table match, queue slot write, last-index write, and G2153 increment",
@@ -551,7 +563,7 @@
       "lines": "1734-1812",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "the same command must be observed leaving F0380 with first-index/count delta and turn/move dispatch",
@@ -561,7 +573,7 @@
       "lines": "2075-2127,2150-2156",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "post-dispatch evidence must distinguish turn mutation, blocked-step discard, and successful-step movement/cooldown side effects",
@@ -571,7 +583,7 @@
       "lines": "142-174,237-270,293-347",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "successful movement transcripts must bind the source-committed tuple and timing/sensor side effects",
@@ -581,7 +593,7 @@
       "lines": "738-818",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "claim": "viewport/HUD captures are promotable only after F0128 consumes the post-command direction/X/Y tuple",
@@ -591,7 +603,7 @@
       "lines": "8318-8611",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "route-labeled screenshots must be tied to the PC34 viewport present/blit boundary",
@@ -601,12 +613,12 @@
       "lines": "709-858",
       "missing": [],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED",
-  "timestampUtc": "2026-08-12T01:38:16.111849+00:00",
+  "timestampUtc": "2026-09-04T18:24:26.074733+00:00",
   "transcriptValidation": {
     "counts": {
       "blockedOrNoopRows": 0,

@@ -47,13 +47,13 @@ static const DM1_V1_F0128SquareClassPc34 kClasses[DM1_V1_F0128_VIEW_SQUARE_COUNT
     { DM1_V1_F0128_VIEW_SQUARE_D4C,  "D4C",  "ReDMCSB DUNVIEW.C:8485-8490 F0128 early F0115", 1, 0, 0, DM1_V1_F0128_ORDER_BACKLEFT, 0, 0, 0, 0 },
     { DM1_V1_F0128_VIEW_SQUARE_D3L2, "D3L2", "ReDMCSB DUNVIEW.C:6226-6292 F0676_DrawD3L2", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTRIGHT, 1, 0, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D3R2, "D3R2", "ReDMCSB DUNVIEW.C:6293-6360 F0677_DrawD3R2", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTLEFT, 1, 0, 1 },
-    { DM1_V1_F0128_VIEW_SQUARE_D3L,  "D3L",  "ReDMCSB DUNVIEW.C:6361-6499 F0116_DrawSquareD3L", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTRIGHT, 1, 0, 1 },
-    { DM1_V1_F0128_VIEW_SQUARE_D3R,  "D3R",  "ReDMCSB DUNVIEW.C:6500-6641 F0117_DrawSquareD3R", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTLEFT, 1, 0, 1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3L,  "D3L",  "ReDMCSB DUNVIEW.C:6361-6499 F0116_DrawSquareD3L", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTRIGHT, 2, 0, 1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3R,  "D3R",  "ReDMCSB DUNVIEW.C:6500-6641 F0117_DrawSquareD3R", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTLEFT, 2, 0, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D3C,  "D3C",  "ReDMCSB DUNVIEW.C:6642-6836 F0118_DrawSquareD3C", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, 0, 1, 0, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D2L2, "D2L2", "ReDMCSB DUNVIEW.C:6837-6867 F0678_DrawD2L2", 0, 0, 0, 0, 0, 0, 1, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D2R2, "D2R2", "ReDMCSB DUNVIEW.C:6868-6899 F0679_DrawD2R2", 0, 0, 0, 0, 0, 0, 1, 1 },
-    { DM1_V1_F0128_VIEW_SQUARE_D2L,  "D2L",  "ReDMCSB DUNVIEW.C:6900-7050 F0119_DrawSquareD2L", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKRIGHT_FRONTLEFT_FRONTRIGHT, 1, 0, 1 },
-    { DM1_V1_F0128_VIEW_SQUARE_D2R,  "D2R",  "ReDMCSB DUNVIEW.C:7051-7243 F0120_DrawSquareD2R", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKLEFT_FRONTRIGHT_FRONTLEFT, 1, 0, 1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2L,  "D2L",  "ReDMCSB DUNVIEW.C:6900-7050 F0119_DrawSquareD2L", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKRIGHT_FRONTLEFT_FRONTRIGHT, 2, 0, 1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2R,  "D2R",  "ReDMCSB DUNVIEW.C:7051-7243 F0120_DrawSquareD2R", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKRIGHT_BACKLEFT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKRIGHT_BACKLEFT_FRONTRIGHT_FRONTLEFT, DM1_V1_F0128_ORDER_BACKLEFT_FRONTRIGHT_FRONTLEFT, 2, 0, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D2C,  "D2C",  "ReDMCSB DUNVIEW.C:7244-7390 F0121_DrawSquareD2C", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKLEFT_BACKRIGHT_FRONTLEFT_FRONTRIGHT, 0, 1, 0, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D1L,  "D1L",  "ReDMCSB DUNVIEW.C:7391-7558 F0122_DrawSquareD1L", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKRIGHT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTRIGHT, DM1_V1_F0128_ORDER_BACKRIGHT_FRONTRIGHT, 0, 1, 0, 1 },
     { DM1_V1_F0128_VIEW_SQUARE_D1R,  "D1R",  "ReDMCSB DUNVIEW.C:7559-7726 F0123_DrawSquareD1R", 0, DM1_V1_F0128_ORDER_DOORPASS1_BACKLEFT, DM1_V1_F0128_ORDER_DOORPASS2_FRONTLEFT, DM1_V1_F0128_ORDER_BACKLEFT_FRONTLEFT, 0, 1, 0, 1 },
@@ -122,6 +122,9 @@ static int step_shape_is_valid(const DM1_V1_F0128SchedulerStepPc34 *step) {
     case DM1_V1_F0128_STEP_F0111_DOOR:
         return step->cellOrderWord == 0 && !step->behindDoor &&
                step->occluder && !step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0110_DOOR_BUTTON:
+        return step->cellOrderWord == 0 && !step->behindDoor &&
+               !step->occluder && !step->fieldAfterThings;
     case DM1_V1_F0128_STEP_F0113_FIELD:
         return step->cellOrderWord == 0 && !step->behindDoor &&
                !step->occluder && step->fieldAfterThings;
@@ -168,6 +171,30 @@ static int square_reaches_f0112(const DM1_V1_F0128SquareClassPc34 *cls,
     return frontAlcove &&
            (cls->square == DM1_V1_F0128_VIEW_SQUARE_D2L ||
             cls->square == DM1_V1_F0128_VIEW_SQUARE_D2R);
+}
+
+/* Only these wall functions test the front F0107 return and branch into an
+ * alcove F0115 pass. F0676/F0677 and F0122/F0123 call their sole side-wall
+ * projection for drawing only, ignore its return, then return immediately. */
+static int wall_front_alcove_enters_f0115(int square)
+{
+    return square == DM1_V1_F0128_VIEW_SQUARE_D3L ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D3R ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D2L ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D2R ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D1C;
+}
+
+/* DUNVIEW.C emits F0110 only for the right D3 side door and the three
+ * centre door-front views. The other door functions contain no button call. */
+static int door_front_has_f0110(int square)
+{
+    return square == DM1_V1_F0128_VIEW_SQUARE_D3R ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
+           square == DM1_V1_F0128_VIEW_SQUARE_D1C;
 }
 
 static int push_f0112_then_main(DM1_V1_F0128SchedulerPlanPc34 *plan,
@@ -262,14 +289,17 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                 return 0;
             }
             if (cls->alcoveChecks) {
-                if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK,
-                               0, 0, 0, 0) ||
-                    !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK,
-                               0, 0, 0, 0)) {
-                    return 0;
+                int check;
+                for (check = 0; check < cls->alcoveChecks; ++check) {
+                    if (!push_step(outPlan, cls->square,
+                                   DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK,
+                                   0, 0, 0, 0)) {
+                        return 0;
+                    }
                 }
             }
-            if (sq->frontWallOrnamentIsAlcove) {
+            if (sq->frontWallOrnamentIsAlcove &&
+                wall_front_alcove_enters_f0115(cls->square)) {
                 if (!push_f0112_then_main(outPlan, cls, sq->element, 1,
                                           DM1_V1_F0128_ORDER_ALCOVE)) {
                     return 0;
@@ -364,8 +394,16 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
             if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_DOOR_PASS1,
                            cls->doorPass1Order, 1, 0, 0) ||
                 !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0104_DOOR_FRAME,
-                           0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0111_DOOR,
+                           0, 0, 0, 0)) {
+                return 0;
+            }
+            if (door_front_has_f0110(cls->square) &&
+                !push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0110_DOOR_BUTTON,
+                           0, 0, 0, 0)) {
+                return 0;
+            }
+            if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0111_DOOR,
                            0, 0, 1, 0) ||
                 !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_DOOR_PASS2,
                            cls->doorPass2Order, 0, 0, 0)) {

@@ -1,3 +1,37 @@
+# Firestaff v3.0.328
+
+## DM1
+
+### Fixed
+
+- `native original-data parity`: Corrected source-locked viewport, interaction,
+  palette, and startup validation across the supported DM1 and CSB media
+  families without bundling game data or adding runtime emulator dependencies.
+## CSB
+
+### Fixed
+
+- `FM Towns archive startup`: Fixed verified title and dungeon reads in memory
+  when the original disc is supplied as an archive, avoiding extracted game
+  payloads while preserving the selected-media receipt.
+
+## Fixed
+
+- `gettext build inputs`: Updated all Studio PO inputs as build dependencies so
+  release catalogs are regenerated from the current PO sources rather than
+  retained MO files.
+- `release validation`: Updated the bounded Amiga original-media startup
+  allowance to cover the complete native CLI, card-flow, resume, and input
+  checks on slower runners.
+
+## Verification
+
+### Verified
+
+- Re-ran release-note, localization-layout, native executable, and focused
+  original-media startup gates. Nexus remains explicitly capture-gated where
+  an authenticated same-session Saturn VDP capture is required.
+
 # Firestaff v3.0.327
 
 ## DM1

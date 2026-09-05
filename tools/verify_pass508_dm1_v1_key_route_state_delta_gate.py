@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib, json
+import hashlib, json, os, subprocess
 from pathlib import Path
+from zipfile import ZipFile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass508_dm1_v1_key_route_state_delta_gate"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM1_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"))
 OUT = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUT / "manifest.json"
 REPORT = ROOT / "parity-evidence" / (PASS + ".md")
@@ -65,14 +66,20 @@ def sha(path):
     with path.open("rb") as fh:
         for chunk in iter(lambda: fh.read(1048576), b""): h.update(chunk)
     return h.hexdigest()
+def zip_bytes(path, name):
+    result=subprocess.run(["unzip","-p",str(path),name],check=False,
+                          stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    if result.returncode not in (0,1) or not result.stdout:
+        raise AssertionError("cannot read retail ZIP member "+name)
+    return result.stdout
 def secondary():
-    expected={"DUNGEON.DAT":"d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85","GRAPHICS.DAT":"2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e","TITLE":"adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"}
-    hashes={k:sha(DM1/k) for k in expected}
+    expected={"DATA/DUNGEON.DAT":"d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85","DATA/GRAPHICS.DAT":"2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e","TITLE":"adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"}
+    if not DM1_ARCHIVE.is_file(): raise AssertionError("missing retail PC34 archive "+str(DM1_ARCHIVE))
+    with ZipFile(DM1_ARCHIVE) as archive: members={x.filename for x in archive.infolist()}
+    hashes={k:hashlib.sha256(zip_bytes(DM1_ARCHIVE,k)).hexdigest() for k in expected if k in members}
     for k,v in expected.items():
-        if hashes[k] != v: raise AssertionError("DM1 hash mismatch "+k)
-    require("Greatstone SUMMARY",(GREATSTONE/"index/SUMMARY.md").read_text(encoding="utf-8", errors="replace"),["http://greatstone.free.fr/dm/g_dm.html","dungeon.dat","graphics.dat"])
-    require("CSBWin Code11f52.cpp",(CSBWIN/"Code11f52.cpp").read_text(encoding="utf-8", errors="replace"),["i16 MoveObject","d.partyX = sw(newX);","d.partyY = sw(newY);","d.LastPartyMoveTime = d.Time;"])
-    return {"canonicalDm1Sha256":hashes,"greatstoneSummary":str(GREATSTONE/"index/SUMMARY.md"),"csbwinMoveObject":str(CSBWIN/"Code11f52.cpp")}
+        if hashes.get(k) != v: raise AssertionError("DM1 hash mismatch "+k)
+    return {"retailArchive":str(DM1_ARCHIVE),"archiveSha256":sha(DM1_ARCHIVE),"memberSha256":hashes}
 def main():
     src=verify_sources(); sec=secondary(); m={k:read_json(v) for k,v in INPUTS.items()}
     p391=m["pass391"].get("proofPredicates",{}); p487=m["pass487"].get("blockerFindings",{}); p497=m["pass497"].get("observed",{}); p498=m["pass498"].get("requiredObserved",{})
@@ -93,8 +100,8 @@ def main():
     lines=["# Pass508 - DM1 V1 key-route state-delta gate","",status,"",manifest["narrowedBlocker"],"","## ReDMCSB source audit"]
     lines += ["- "+x["file"]+":"+x["lines"]+" - "+x["claim"] for x in src]
     lines += ["","## Promotion rule"] + ["- "+x for x in rule] + ["","## Secondary references"]
-    lines += ["- canonical DM1 "+k+" sha256 "+v for k,v in sec["canonicalDm1Sha256"].items()]
-    lines += ["- Greatstone atlas: "+sec["greatstoneSummary"],"- CSBWin movement cross-check: "+sec["csbwinMoveObject"],"","## Gate","- python3 tools/verify_pass508_dm1_v1_key_route_state_delta_gate.py"]
+    lines += ["- retail PC34 member "+k+" sha256 "+v for k,v in sec["memberSha256"].items()]
+    lines += ["- retail archive: "+sec["retailArchive"],"","## Gate","- python3 tools/verify_pass508_dm1_v1_key_route_state_delta_gate.py"]
     REPORT.write_text("\n".join(lines)+"\n")
     print(json.dumps({"status":status,"manifest":str(MANIFEST.relative_to(ROOT)),"report":str(REPORT.relative_to(ROOT)),"problems":problems}, indent=2, sort_keys=True))
     return 0 if not problems else 1

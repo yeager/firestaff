@@ -1,135 +1,907 @@
-# Firestaff — csb domain, English catalog.
-# Explicit English translations for Chaos Strikes Back.
-#
-# Domain: csb
-#
-# CSB-specific keys: engine version, reincarnation panel,
-# resurrection panel, chaos cooldown, grey lord encounter,
-# hint oracle, champion pool, save import variants, neophyte
-# mode, launcher entry text.
-#
-# Source-locked to ReDMCSB DIALOG.C, CSBWin/Chaos.cpp,
-# CHANGE7_28, CHANGE7_36, CHANGE8_13.
-#
+# Generated only from the CSB media selected by csb_v1_boot.
+# graphics-md5: 61fbfd56887c94adc26888a9491c6611
+# dungeon-md5: 6695d2acebce49f95db1d8f3a5c733de
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-06-15 17:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
-"Language-Team: English\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "csb.engine.version"
+#. Source-owned C699 action name
+msgid "N"
+msgstr "N"
 
-# Reincarnation panel (CSB-specific feature)
-msgid "csb.reincarnate.title"
-msgstr "csb.reincarnate.title"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr "BLOCK"
 
-msgid "csb.reincarnate.chaos"
-msgstr "csb.reincarnate.chaos"
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr "CHOP"
 
-msgid "csb.reincarnate.choose"
-msgstr "csb.reincarnate.choose"
+#. Source-owned C699 action name
+msgid "X"
+msgstr "X"
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "csb.reincarnate.stat-roll"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr "BLOW HORN"
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "csb.resurrect.title"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr "FLIP"
 
-msgid "csb.resurrect.altar"
-msgstr "csb.resurrect.altar"
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr "PUNCH"
 
-msgid "csb.resurrect.choose"
-msgstr "csb.resurrect.choose"
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr "KICK"
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "csb.chaos.cooldown"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr "WAR CRY"
 
-msgid "csb.chaos.energy"
-msgstr "csb.chaos.energy"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr "STAB"
 
-msgid "csb.chaos.recharge"
-msgstr "csb.chaos.recharge"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr "CLIMB DOWN"
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "csb.greylord.intro"
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr "FREEZE LIFE"
 
-msgid "csb.greylord.choose"
-msgstr "csb.greylord.choose"
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr "HIT"
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "csb.oracle.title"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr "SWING"
 
-msgid "csb.oracle.prompt"
-msgstr "csb.oracle.prompt"
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr "THRUST"
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "csb.party.max"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr "JAB"
 
-msgid "csb.party.slot"
-msgstr "csb.party.slot"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr "PARRY"
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "csb.save.import"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr "HACK"
 
-msgid "csb.save.csb-st-v20"
-msgstr "csb.save.csb-st-v20"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr "BERZERK"
 
-msgid "csb.save.csb-st-v21"
-msgstr "csb.save.csb-st-v21"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr "FIREBALL"
 
-msgid "csb.save.amiga-v35"
-msgstr "csb.save.amiga-v35"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr "DISPELL"
 
-msgid "csb.save.pc34"
-msgstr "csb.save.pc34"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr "CONFUSE"
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "csb.neophyte.title"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr "LIGHTNING"
 
-msgid "csb.neophyte.desc"
-msgstr "csb.neophyte.desc"
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr "DISRUPT"
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "csb.engine.dm1"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr "MELEE"
 
-msgid "csb.engine.csb"
-msgstr "csb.engine.csb"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr "INVOKE"
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "csb.launcher.title"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr "SLASH"
 
-msgid "csb.launcher.subtitle"
-msgstr "csb.launcher.subtitle"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr "CLEAVE"
 
-msgid "csb.launcher.lore-shape"
-msgstr "csb.launcher.lore-shape"
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr "BASH"
 
-msgid "csb.launcher.lore-line-1"
-msgstr "csb.launcher.lore-line-1"
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr "STUN"
 
-msgid "csb.launcher.lore-line-2"
-msgstr "csb.launcher.lore-line-2"
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr "SHOOT"
 
-msgid "csb.launcher.lore-line-3"
-msgstr "csb.launcher.lore-line-3"
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr "SPELLSHIELD"
 
-msgid "csb.launcher.lore-line-4"
-msgstr "csb.launcher.lore-line-4"
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr "FIRESHIELD"
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr "FLUXCAGE"
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr "HEAL"
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr "CALM"
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr "LIGHT"
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr "WINDOW"
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr "SPIT"
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr "BRANDISH"
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr "THROW"
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr "FUSE"
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "COMPASS"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "TORCH"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "WATERSKIN"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr "WATER"
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "JEWEL SYMAL"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "ILLUMULET"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "FLAMITT"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "EYE OF TIME"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "STORMRING"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "STAFF OF CLAWS"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr "STORM"
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr "RA BLADE"
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "THE FIRESTAFF"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr "OPEN SCROLL"
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "SCROLL"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "DAGGER"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALCHION"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "SWORD"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "RAPIER"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr "BITER"
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "SAMURAI SWORD"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr "SIDE SPLITTER"
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "DIAMOND EDGE"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "VORPAL BLADE"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr "DRAGON FANG"
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "AXE"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr "EXECUTIONER"
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "MACE"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "MACE OF ORDER"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr "MORNINGSTAR"
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "CLUB"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "STONE CLUB"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr "CLAW BOW"
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "CROSSBOW"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "ARROW"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "SLAYER"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "SLING"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "ROCK"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "POISON DART"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "THROWING STAR"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "STICK"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "STAFF"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "WAND"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "TEOWAND"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "YEW STAFF"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr "STAFF OF IRRA"
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr "CROSS OF NETA"
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr "SERPENT STAFF"
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "DRAGON SPIT"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "SCEPTRE OF LYF"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr "TATTERED SHIRT"
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr "FINE ROBE"
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr "KIRTLE"
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr "SILK SHIRT"
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr "ELVEN DOUBLET"
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "LEATHER JERKIN"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr "TUNIC"
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr "MAIL AKETON"
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr "MITHRAL AKETON"
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr "TORSO PLATE"
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr "PLATE OF RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr "DRAGON PLATE"
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "CAPE"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "CLOAK OF NIGHT"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr "TATTERED PANTS"
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr "ROBE"
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr "TABARD"
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr "GUNNA"
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr "ELVEN HUKE"
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "LEATHER PANTS"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "BLUE PANTS"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "GHI TROUSERS"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "LEG MAIL"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "MITHRAL MAIL"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr "LEG PLATE"
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr "POLEYN OF RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr "DRAGON POLEYN"
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "BEZERKER HELM"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "HELMET"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BASINET"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr "CASQUE 'N COIF"
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr "ARMET"
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr "HELM OF RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr "DRAGON HELM"
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "CROWN OF NERRA"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr "NETA SHIELD"
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr "CRYSTAL SHIELD"
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "SMALL SHIELD"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "WOODEN SHIELD"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr "SAR SHIELD"
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr "SHIELD OF RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr "DRAGON SHIELD"
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SANDALS"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "SUEDE BOOTS"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "LEATHER BOOTS"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr "HOSEN"
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "FOOT PLATE"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr "GREAVE OF RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr "DRAGON GREAVE"
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "ELVEN BOOTS"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "GEM OF AGES"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "EKKHARD CROSS"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "MOONSTONE"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "THE HELLION"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "PENDANT FERAL"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR COIN"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr "SILVER COIN"
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr "GOR COIN"
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "BOULDER"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "BLUE GEM"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "ORANGE GEM"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "GREEN GEM"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "MAGICAL BOX"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "MIRROR OF DAWN"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "HORN OF FEAR"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "ROPE"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr "RABBIT'S FOOT"
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr "CORBUM"
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "CHOKER"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEXHELM"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr "FLAMEBAIN"
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr "POWERTOWERS"
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr "SPEEDBOW"
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "CHEST"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "OPEN CHEST"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "ASHES"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "BONES"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON POTION"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM POTION"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES POTION"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN POTION"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR POTION"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO POTION"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS POTION"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU POTION"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE POTION"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA POTION"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr "ANTIVENIN"
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA POTION"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE POTION"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI POTION"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "WATER FLASK"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr "KATH BOMB"
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr "PEW BOMB"
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr "RA BOMB"
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr "FUL BOMB"
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "APPLE"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "CORN"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "BREAD"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "CHEESE"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "SCREAMER SLICE"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "WORM ROUND"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr "SHANK"
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "DRAGON STEAK"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "IRON KEY"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "KEY OF B"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "SOLID KEY"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "SQUARE KEY"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "TOURQUOISE KEY"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "CROSS KEY"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "ONYX KEY"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "SKELETON KEY"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "GOLD KEY"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "WINGED KEY"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "TOPAZ KEY"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "SAPPHIRE KEY"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "EMERALD KEY"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "RUBY KEY"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA KEY"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "MASTER KEY"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "LOCK PICKS"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "MAGNIFIER"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr "BOOTS OF SPEED"
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "EMPTY FLASK"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr "HALTER"
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "ZOKATHRA SPELL"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""

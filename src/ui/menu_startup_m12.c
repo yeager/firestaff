@@ -5583,7 +5583,11 @@ static int m12_collect_card_platforms(const M12_StartupMenuState* state,
         int seen = 0;
         int j;
         if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
-            architecture == M12_ARCH_X68000) continue;
+            architecture == M12_ARCH_X68000 ||
+            /* CSB shipped for Atari ST, Amiga and FM Towns; its PC3.4
+             * compatibility source is a reference implementation, never a
+             * retail DOS platform.  Do not advertise an unshipped card. */
+            (strcmp(gameId, "csb") == 0 && architecture == M12_ARCH_PC)) continue;
         for (j = 0; j < count; ++j) if (out[j] == architecture) seen = 1;
         if (!seen && count < M12_ARCH_COUNT) out[count++] = architecture;
     }

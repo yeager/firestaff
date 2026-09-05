@@ -14,7 +14,7 @@ CMAKE = ROOT / 'CMakeLists.txt'
 EVIDENCE = ROOT / 'parity-evidence/pass506_dm1_v1_alcove_wall_item_occlusion_evidence.md'
 OUT_DIR = ROOT / 'parity-evidence/verification/pass506_dm1_v1_alcove_wall_item_occlusion_evidence'
 MANIFEST = OUT_DIR / 'manifest.json'
-RED_ROOT = Path('~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source').expanduser()
+RED_ROOT = ROOT / 'reference/redmcsb-20210206/Toolchains/Common/Source'
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open('rb') as f:
@@ -115,7 +115,7 @@ def main() -> int:
     require(evidence, 'DUNVIEW.C:7840-7844', 'evidence D1C source citation')
     require(evidence, 'DUNVIEW.C:4555-4582', 'evidence F0115 source citation')
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    manifest = {'pass': 'pass506_dm1_v1_alcove_wall_item_occlusion_evidence', 'status': 'passed', 'scope': 'DM1 V1 viewport/world visuals: alcove wall-item occlusion evidence', 'redmcsbRoot': str(RED_ROOT), 'sourceHashes': {'DUNVIEW.C': sha256(RED_ROOT / 'DUNVIEW.C'), 'DUNGEON.C': sha256(RED_ROOT / 'DUNGEON.C'), 'm11_game_view.c': sha256(FIRE), 'CMakeLists.txt': sha256(CMAKE), 'evidence': sha256(EVIDENCE)}, 'redmcsbChecks': red_checks, 'firestaffChecks': fire_checks, 'notClaimed': ['pixel parity', 'new original runtime capture', 'movement-route ownership']}
+    manifest = {'pass': 'pass506_dm1_v1_alcove_wall_item_occlusion_evidence', 'status': 'passed', 'scope': 'DM1 V1 viewport/world visuals: alcove wall-item occlusion evidence', 'redmcsbRoot': str(RED_ROOT.relative_to(ROOT)), 'sourceHashes': {'DUNVIEW.C': sha256(RED_ROOT / 'DUNVIEW.C'), 'DUNGEON.C': sha256(RED_ROOT / 'DUNGEON.C'), 'm11_game_view.c': sha256(FIRE), 'CMakeLists.txt': sha256(CMAKE), 'evidence': sha256(EVIDENCE)}, 'redmcsbChecks': red_checks, 'firestaffChecks': fire_checks, 'notClaimed': ['pixel parity', 'new original runtime capture', 'movement-route ownership']}
     MANIFEST.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
     print('pass506 DM1 V1 alcove wall-item occlusion evidence passed')
     for check in red_checks:

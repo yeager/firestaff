@@ -17,10 +17,10 @@
         617
       ]
     },
-    "testExecutable": "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat",
+    "testExecutable": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "403 passed, 0 failed"
   },
-  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-08-12T01:38:23.082003+00:00",
-  "worktree": "/Volumes/Extern-disk/firestaff"
+  "timestampUtc": "2026-09-04T18:07:09.590786+00:00",
+  "worktree": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824"
 }

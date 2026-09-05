@@ -58,80 +58,47 @@ case "$title_output" in
         ;;
 esac
 
-runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+switch_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
-    --boot-probe-frames 2000 --boot-probe-expect-phase inactive \
-    --boot-probe-expect-runtime --boot-probe-expect-party 9,0,2 \
+    --boot-probe-frames 700 --boot-probe-expect-phase csb-fmtowns-switch \
+    --boot-probe-expect-startup-active 1 \
     --duration 0 2>&1)" || {
+    printf '%s\n' "$switch_output" >&2
+    exit 1
+}
+
+case "$switch_output" in
+    *"phase=csb-fmtowns-switch"*"startupActive=1"*"levelLoaded=0"*"party=-1,-1,-1"*"champions=-1"*) ;;
+    *)
+        echo "FAIL: native FM Towns CSB CLI mislabeled modal SWITCHTW as a dungeon" >&2
+        printf '%s\n' "$switch_output" >&2
+        exit 1
+        ;;
+esac
+
+# Drive the actual 320x200 SWITCHTW Game rectangle and C004 Enter rectangle.
+# Only that source path may promote the checksum-verified MINI.DAT state to a
+# live dungeon.  The retail seed is HALK at map 4/(22,18), not the map-0
+# bootstrap dungeon which used to leak through the CLI receipt.
+runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --width 320 --height 200 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --boot-probe --boot-probe-frames 1200 \
+    --script 'wait700,click:52:110,wait10,click:250:50,wait240' \
+    --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
+    --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 4 \
+    --boot-probe-expect-party 22,18,2 --duration 0 2>&1)" || {
     printf '%s\n' "$runtime_output" >&2
     exit 1
 }
 
 case "$runtime_output" in
-    *"phase=inactive"*"startupActive=0"*"levelLoaded=1"*"party=9,0,2"*) ;;
+    *"phase=inactive"*"levelLoaded=1"*"map=4"*"party=22,18,2"*"champions=1"*"csbViewportHash="*) ;;
     *)
-        echo "FAIL: native FM Towns CSB CLI boot did not reach MINI.DAT runtime" >&2
+        echo "FAIL: native FM Towns CSB CLI did not retain authentic MINI.DAT state" >&2
         printf '%s\n' "$runtime_output" >&2
         exit 1
         ;;
 esac
-
-# F31's native MINI.DAT route must leave the title/utility program chain and
-# feed its first real movement command into the shared CSB runtime. The stock
-# English corpus starts at (9,0), facing south; one source UP command reaches
-# (9,1) without a fabricated save or a PC/Atari fallback.
-movement_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
-    --width 320 --height 200 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
-    --boot-probe --boot-probe-frames 2000 --script up \
-    --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
-    --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
-    printf '%s\n' "$movement_output" >&2
-    exit 1
-}
-
-case "$movement_output" in
-    *"phase=inactive"*"levelLoaded=1"*"party=9,1,2"*"dm1WorldTick="*) ;;
-    *)
-        echo "FAIL: native FM Towns CSB runtime did not consume its first UP command" >&2
-        printf '%s\n' "$movement_output" >&2
-        exit 1
-        ;;
-esac
-
-# Start each command from the authenticated F31 MINI.DAT session.  Run this
-# for EN and JP independently through the test's language-selected program
-# chain; neither set of observed receipts is borrowed from the other edition.
-# The blank strafe/action outcomes are deliberate source observations, not
-# permission to invent an object, a door, or a user save when one is absent.
-probe_runtime_input() {
-    input=$1
-    party=$2
-    input_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
-        --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
-        --boot-probe-frames 2000 --script "$input" \
-        --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
-        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 0 \
-        --boot-probe-expect-party "$party" \
-        --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
-        printf '%s\n' "$input_output" >&2
-        exit 1
-    }
-    case "$input_output" in
-        *"phase=inactive"*"levelLoaded=1"*"party=$party"*"champions=0"*) ;;
-        *)
-            echo "FAIL: native FM Towns $language input $input did not preserve its observed runtime receipt" >&2
-            printf '%s\n' "$input_output" >&2
-            exit 1
-            ;;
-    esac
-}
-probe_runtime_input up 9,1,2
-probe_runtime_input down 9,0,2
-probe_runtime_input left 9,0,1
-probe_runtime_input right 9,0,3
-probe_runtime_input strafe-left 9,0,2
-probe_runtime_input strafe-right 9,0,2
-probe_runtime_input action 9,0,2
 
 # An explicit F31 save is a distinct C03/F0435 route.  It must not replay
 # TITLE.ANM or pass the bytes to the Atari/CSBWin importer merely because the

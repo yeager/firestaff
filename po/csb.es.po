@@ -1,132 +1,915 @@
-# Firestaff — csb domain, Spanish catalog.
-# Spanish translation of Chaos Strikes Back runtime strings.
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
 #
-# Domain: csb
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
 #
-# Based on po/dm1.es.po + CSB-specific keys from csb.pot.
-# Translated 2026-07-19, consistent with the reviewed sv/de/fr
-# catalogs (proper nouns and brand strings keep source spelling).
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-07-19 12:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
-"Language-Team: Spanish\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-04-22 05:45+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "Versión del motor CSB"
+#. Source-owned C699 action name
+msgid "N"
+msgstr ""
 
-# Reincarnation panel
-msgid "csb.reincarnate.title"
-msgstr "REENCARNACIÓN"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr ""
 
-msgid "csb.reincarnate.chaos"
-msgstr "Combate del Caos."
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr ""
 
-msgid "csb.reincarnate.choose"
-msgstr "Elige nuevos guerreros para la reencarnación."
+#. Source-owned C699 action name
+msgid "X"
+msgstr ""
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "Tira los dados para las estadísticas"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr ""
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "RESURRECCIÓN"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr ""
 
-msgid "csb.resurrect.altar"
-msgstr "Ofrece sangre en el altar para despertar guerreros."
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr ""
 
-msgid "csb.resurrect.choose"
-msgstr "Elige guerreros para despertar."
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr ""
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "La magia del Caos se enfría"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr ""
 
-msgid "csb.chaos.energy"
-msgstr "Energía del Caos"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr ""
 
-msgid "csb.chaos.recharge"
-msgstr "Recargando"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr ""
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "El Señor Gris susurra: Elige."
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr ""
 
-msgid "csb.greylord.choose"
-msgstr "Haz tu elección."
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr ""
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "ORÁCULO"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr ""
 
-msgid "csb.oracle.prompt"
-msgstr "Pregunta y el oráculo responderá."
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr ""
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "Máx. 4 guerreros"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr ""
 
-msgid "csb.party.slot"
-msgstr "Hueco del grupo"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr ""
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "Importar partida de CSB"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr ""
 
-msgid "csb.save.csb-st-v20"
-msgstr "Partida de CSB Atari ST 2.0"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr ""
 
-msgid "csb.save.csb-st-v21"
-msgstr "Partida de CSB Atari ST 2.1"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr ""
 
-msgid "csb.save.amiga-v35"
-msgstr "Partida de CSB Amiga 3.5"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr ""
 
-msgid "csb.save.pc34"
-msgstr "Partida de CSB PC 3.4"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr ""
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "MODO NOVATO"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr ""
 
-msgid "csb.neophyte.desc"
-msgstr "Reduce el daño de trampas, inicio más fácil."
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr ""
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "Motor DM1 v2.0"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr ""
 
-msgid "csb.engine.csb"
-msgstr "Motor CSB v2.1"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr ""
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr ""
 
-msgid "csb.launcher.subtitle"
-msgstr "La secuela de Dungeon Master II"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr ""
 
-msgid "csb.launcher.lore-shape"
-msgstr "Lord Chaos se alza..."
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr ""
 
-msgid "csb.launcher.lore-line-1"
-msgstr "Lord Chaos ha robado la Llama."
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr ""
 
-msgid "csb.launcher.lore-line-2"
-msgstr "La Piedra de Fuego está perdida."
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr ""
 
-msgid "csb.launcher.lore-line-3"
-msgstr "El Señor Gris os llama a recuperarla."
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr ""
 
-msgid "csb.launcher.lore-line-4"
-msgstr "Entrad en el Caos."
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "BRÚJULA"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "ANTORCHA"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "ODRE DE AGUA"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "SIMAL DE JOYA"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "ILLUMULETO"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "FLAMITA"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "OJO DEL TIEMPO"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "ANILLO DE TORMENTA"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "BASTÓN DE GARRAS"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "EL BASTÓN DE FUEGO"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "PERGAMINO"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "DAGA"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALCÓN"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "ESPADA"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "RAPIER"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "ESPADA SAMURÁI"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "FILO DE DIAMANTE"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "HOJA VORPAL"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "HACHA"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "MAZA"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "MAZA DEL ORDEN"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "GARROTE"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "GARROTE DE PIEDRA"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "BALLESTA"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "FLECHA"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "ASESINO"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "HONDA"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "PIEDRA"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "DARDO VENENOSO"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "ESTRELLA ARROJADIZA"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "PALO"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "BASTÓN"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "VARITA"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "VARITA TEO"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "BASTÓN DE TEJO"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "ESCUPE DRAGÓN"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "CETRO DE LYF"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "JERKIN DE CUERO"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "CAPA"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "CAPA DE NOCHE"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "PANTALONES DE CUERO"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "PANTALONES AZULES"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "PANTALONES GHI"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "MALLA DE PIERNAS"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "MITHRIL DE MALLA"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "YELMO BERSERKER"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "CASCO"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BACINETE"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "CORONA DE NERRA"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "ESCUDO PEQUEÑO"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "ESCUDO DE MADERA"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SANDALIAS"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "BOTAS DE GAMUZA"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "BOTAS DE CUERO"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "PLACA DE PIES"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "BOTAS ÉLFICAS"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "GEMA DE LAS EDADES"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "CRUZ DE EKKHARD"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "PIEDRA LUNAR"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "HELLION"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "PENDIENTE FERAL"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR-MONEDA"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "ROCA"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "GEMA AZUL"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "GEMA NARANJA"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "GEMA VERDE"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "CAJA MÁGICA"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "ESPEJO DEL AMANECER"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "CUERNO DEL MIEDO"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "CUERDA"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "AHORCADOR"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEXYELMO"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "COFRE"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "ABRIR COFRE"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "CENIZAS"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "HUESOS"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI-POCIÓN"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "FRASCO DE AGUA"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "MANZANA"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "MAÍZ"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "PAN"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "QUESO"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "REBANADA DE CHILLÓN"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "REDONDO DE GUSANO"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "FILETE DE DRAGÓN"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "LLAVE DE HIERRO"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "LLAVE B"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "LLAVE SÓLIDA"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "LLAVE CUADRADA"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "LLAVE TURQUESA"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "LLAVE CRUZ"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "LLAVE ÓNIX"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "LLAVE ESQUELETO"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "LLAVE DE ORO"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "LLAVE ALADA"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "LLAVE TOPACIO"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "LLAVE ZAFIRO"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "LLAVE ESMERALDA"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "LLAVE RUBÍ"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "LLAVE RA"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "LLAVE MAESTRA"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "GANZÚAS"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "LUPA"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "FRASCO VACÍO"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "HECHIZO ZOKATHRA"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""

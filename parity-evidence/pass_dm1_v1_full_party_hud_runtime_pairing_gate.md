@@ -1,16 +1,16 @@
 # pass_dm1_v1_full_party_hud_runtime_pairing_gate
 
-Status: `PASS_RUNTIME_PAIRING_EVIDENCE`
+Status: `FAIL_PROBE_BINARY_MISSING`
 
-Detail: Probe exercised full4 HUD, single1 status panel, two-/three-champion intermediate cases, and all transitions against real Firestaff V1 assets.
+Detail: Probe binary was not built; check the CMake build.
 
 ## Probe
 
 - Source: `probes/m11/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe.c`
-- Binary: `/Volumes/Extern-disk/firestaff/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
-- Data dir: `/Users/bosse/.firestaff/data/dm1`
-- Return code: `0`
-- Pass count: `276`
+- Binary: `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
+- Data dir: `/home/yeager/.firestaff/data/dm1`
+- Return code: `None`
+- Pass count: `0`
 - Fail count: `0`
 
 ## Companion Pass
@@ -23,13 +23,13 @@ These 64-bit FNV-1a hashes cover the 274x29 party panel region (C151..C154 statu
 
 | Case | Panel-region FNV-1a64 |
 |---|---:|
-| `full4_panel_fnv1a64` | `0xdd51e4447ca3c2bb` |
-| `single1_panel_fnv1a64` | `0x6d54fee738362618` |
-| `two2_panel_fnv1a64` | `0x0732711eaf5a53f1` |
-| `three3_panel_fnv1a64` | `0xcb3d7710c10fa93a` |
-| `single1_to_full4_panel_fnv1a64` | `0xdd51e4447ca3c2bb` |
-| `full4_to_single1_panel_fnv1a64` | `0x6d54fee738362618` |
-| `two2_to_full4_panel_fnv1a64` | `0xdd51e4447ca3c2bb` |
+| `full4_panel_fnv1a64` | `0x<missing>` |
+| `single1_panel_fnv1a64` | `0x<missing>` |
+| `two2_panel_fnv1a64` | `0x<missing>` |
+| `three3_panel_fnv1a64` | `0x<missing>` |
+| `single1_to_full4_panel_fnv1a64` | `0x<missing>` |
+| `full4_to_single1_panel_fnv1a64` | `0x<missing>` |
+| `two2_to_full4_panel_fnv1a64` | `0x<missing>` |
 
 ## Honesty Boundary
 

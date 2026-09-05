@@ -1,4 +1,5 @@
 #include "nexus_v1_warning_dgt2_pp_execution.h"
+#include "nexus_v1_test_retail_member.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +25,9 @@ static uint8_t *read_file(const char *path, size_t *size)
     FILE *file;
     long length;
     uint8_t *bytes;
+    char hash[65];
+    if (strstr(path, "::"))
+        return nexus_v1_test_read_retail_member(path, size, hash);
     *size = 0U;
     file = fopen(path, "rb");
     if (!file || fseek(file, 0, SEEK_END) || (length = ftell(file)) <= 0 ||

@@ -9,4 +9,4 @@
 - DIALOG.C F0436_STARTEND_FadeToPalette
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_palette_top_and_bottom_screen_pc34_compat`: rc=0
+- `/dev/shm/current/test_dm1_v1_palette_top_and_bottom_screen_pc34_compat`: rc=0

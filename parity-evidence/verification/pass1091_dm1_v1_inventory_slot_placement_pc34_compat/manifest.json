@@ -23,7 +23,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1049",
       "line": 1049,
       "lineText": "int16_t G0038_ai_Graphic562_SlotMasks[38] = { /* 30 for champion inventory, 8 for chest */",
@@ -31,7 +31,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1056",
       "line": 1056,
       "lineText": "        MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS, /* Pouch 2 */",
@@ -39,7 +39,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1061",
       "line": 1061,
       "lineText": "        MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS, /* Pouch 1 */",
@@ -47,7 +47,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1079",
       "line": 1079,
       "lineText": "        MASK0xFFFF_ANY_SLOT,                     /* Backpack Line1 9 */",
@@ -55,7 +55,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:436",
       "line": 436,
       "lineText": "int16_t G0057_ai_Graphic562_SlotDropOrder[30] = {",
@@ -63,7 +63,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:466",
       "line": 466,
       "lineText": "        C01_SLOT_ACTION_HAND };",
@@ -71,7 +71,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:684",
       "line": 684,
       "lineText": "        } else {",
@@ -79,7 +79,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:697",
       "line": 697,
       "lineText": "        if ((L0905_T_LeaderHandObject != C0xFFFF_THING_NONE) && (!(G0237_as_Graphic559_ObjectInfo[F0141_DUNGEON_GetObjectInfoIndex(L0905_T_LeaderHandObject)].AllowedSlots & G0038_ai_Graphic562_SlotMasks[L0904_ui_SlotIndex]))) {",
@@ -87,7 +87,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:701",
       "line": 701,
       "lineText": "        if (L0905_T_LeaderHandObject != C0xFFFF_THING_NONE) {",
@@ -95,7 +95,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:1546",
       "line": 1546,
       "lineText": "                if ((L0960_T_Thing = F0300_CHAMPION_GetObjectRemovedFromSlot(P0660_ui_ChampionIndex, G0057_ai_Graphic562_SlotDropOrder[L0961_ui_SlotIndex])) != C0xFFFF_THING_NONE) {",
@@ -103,7 +103,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass1091_dm1_v1_inventory_slot_placement_pc34_compat.v1",
   "scope": "DM1 V1 inventory hand/sheathe/backpack placement rules (six rules: hand / body / pouch / quiver / backpack / container-reject) routed through DATA.C G0038 SlotMasks + DATA.C G0057 SlotDropOrder reverse priority + CHAMPION.C F0302:684-710 leader-hand/slot swap contract.",
   "sourceChecks": [
@@ -139,11 +139,11 @@
     }
   ],
   "status": "PASS1091_DM1_V1_INVENTORY_SLOT_PLACEMENT_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:14.442823+00:00",
+  "timestampUtc": "2026-09-04T18:01:01.883105+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_inventory_slot_placement_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_inventory_slot_placement_pc34_compat"
       ],
       "outputTail": "PASS dm1_v1_inventory_slot_placement_pc34_compat 156/156 assertions",
       "passed": true,

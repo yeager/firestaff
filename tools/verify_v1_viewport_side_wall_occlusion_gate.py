@@ -244,34 +244,27 @@ def main() -> int:
         ok.append(f'Firestaff side door/ornament/mask guard in {fn}: m11_game_view.c:{line_no(text, fn_start)}')
 
     draw_start, _draw_end, draw = find_function(text, 'm11_draw_viewport')
-    # 2026-07-20 round 16 re-anchor (same-drift-family): the primary side
-    # wall pass now receives the shared lane-visibility receipt (bounded by
-    # dm1_viewport_3d_primary_side_wall_max_forward_pc34) instead of the raw
-    # sampled cells.
-    for call, arg in [
-        ('m11_draw_dm1_side_walls', '&visibility, 99);'),
-        ('m11_draw_dm1_side_doors', 'maxVisibleForward, cells, 99'),
-        ('m11_draw_dm1_side_door_ornaments', 'maxVisibleForward, cells, 99'),
-        ('m11_draw_dm1_side_destroyed_door_masks', 'maxVisibleForward, cells, 99'),
+    callback_start, _callback_end, callback = find_function(
+        text, 'm11_dm1_f0128_execute_source_step')
+    require_in_order(callback, [
+        ('wall scheduler phase', 'M11_DM1_F0128_EXECUTE_WALL_MATERIAL'),
+        ('owning square check', 'step->square != dispatch->targetSquare'),
+        ('F0104 operation check', 'DM1_V1_F0128_STEP_F0104_WALL_MATERIAL'),
+        ('side wall callback', 'm11_draw_dm1_side_walls('),
+    ], 'Firestaff F0128 side-wall callback ownership')
+    if 'relForward, relForward, dispatch->visibility, relSide' not in callback:
+        raise AssertionError('F0128 side-wall callback lost exact-square visibility/side bounds')
+    for forbidden in [
+        'm11_draw_dm1_side_walls(state, framebuffer',
+        'm11_draw_dm1_side_doors(state, framebuffer',
+        'm11_draw_dm1_side_door_ornaments(state, framebuffer',
+        'm11_draw_dm1_side_destroyed_door_masks(state, framebuffer',
     ]:
-        pos = draw.find(call + '(state, framebuffer, framebufferWidth, framebufferHeight,')
-        if pos < 0:
-            raise AssertionError(f'Firestaff draw viewport missing side feature call {call}')
-        # The primary wall route has a nested source-bound max-forward
-        # expression; keep the inspection span wide enough to reach its
-        # explicit any-side filter.
-        snippet = draw[pos:pos + 360]
-        if arg not in snippet:
-            raise AssertionError(f'Firestaff draw viewport missing side occlusion argument {arg!r} for {call}')
-    normal_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,')
-    if normal_orn < 0 or 'maxVisibleForward, cells, 99' not in draw[normal_orn:normal_orn + 180]:
-        raise AssertionError('Firestaff draw viewport missing normal wall ornament maxVisibleForward/cells arguments')
-    replay_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,', normal_orn + 1)
-    if replay_orn < 0 or 'nearMaxVisibleForward, cells, 99' not in draw[replay_orn:replay_orn + 180]:
-        raise AssertionError('Firestaff center-occluder replay does not bound wall ornaments to nearer side layers')
-    if 'int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;' not in draw:
-        raise AssertionError('Firestaff draw viewport missing nearest blocking center replay trigger')
-    ok.append(f'Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:{line_no(text, draw_start)}')
+        if forbidden in draw:
+            raise AssertionError(f'Firestaff revived old broad side replay: {forbidden}')
+    if 'int blockingCenterDepth =\n            visibility.nearest_blocking_center_depth_index;' not in draw:
+        raise AssertionError('Firestaff source transaction lost nearest center blocker receipt')
+    ok.append(f'Firestaff side material is owned by exact-square F0128 callbacks, without broad replay: m11_game_view.c:{line_no(text, callback_start)}, {line_no(text, draw_start)}')
 
     print('V1 viewport side-wall occlusion source-shape verification passed')
     for line in ok:

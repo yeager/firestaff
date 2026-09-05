@@ -29,14 +29,22 @@ def main() -> int:
     source = M11.read_text(encoding="utf-8")
     legacy = function_body(source, "static int m11_draw_floor_ornament")
     source_route = function_body(source, "static void m11_draw_dm1_floor_ornaments")
+    callback = function_body(source, "static void m11_dm1_f0128_execute_source_step")
     viewport = function_body(source, "static void m11_draw_viewport")
 
     assert "m11_is_dm1_source_kind(state->sourceKind)" in legacy
     assert "m11_draw_dm1_floor_ornaments()" in legacy
     assert "m11_draw_dm1_zone_blit_maybe_flip" in source_route
     assert "dm1_v1_floor_ornament_render_plan_at_pc34" in source_route
-    assert viewport.find("m11_draw_dm1_floor_ornaments") < viewport.find(
-        "m11_draw_dm1_side_contents"), "F0108 must precede F0115"
+    assert callback.find("M11_DM1_F0128_EXECUTE_PRE_DOOR_FLOOR_ORNAMENT") < callback.find(
+        "M11_DM1_F0128_EXECUTE_DOOR_PASS1"), "door-front F0108 must precede F0115 pass 1"
+    assert viewport.find("m11_dm1_f0128_dispatch_pre_door_floor_ornament_square") < viewport.find(
+        "m11_dm1_f0128_dispatch_door_pass1_square"), "viewport must dispatch door-front F0108 before F0115"
+    assert viewport.find("M11_DM1_F0128_EXECUTE_D0C_THINGS") < viewport.find(
+        "M11_DM1_F0128_EXECUTE_D0C_FIELD_AFTER_THINGS"), "D0C F0115 must precede F0113"
+    assert "m11_draw_dm1_d0c_floor_item_pass(state" not in viewport
+    assert "m11_draw_dm1_d0c_projectile_pass(state" not in viewport
+    assert "m11_draw_dm1_d0c_deferred_explosion_pass(state" not in viewport
     print("ok: DM1 F0108 floor ornaments have one source-owned zone renderer")
     return 0
 

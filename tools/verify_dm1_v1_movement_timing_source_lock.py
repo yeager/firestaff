@@ -4,7 +4,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB_SOURCE = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 CHAMPION_C = REDMCSB_SOURCE / "CHAMPION.C"

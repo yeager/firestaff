@@ -377,6 +377,14 @@ int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
 
+/* F20J retail JDATA handoff.  Kept separate so checksumless Japanese CD
+ * media cannot relax validation for any generic dungeon/save buffer. */
+int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld);
+
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world);
 
 int F0880b_WORLD_Clone_Compat(

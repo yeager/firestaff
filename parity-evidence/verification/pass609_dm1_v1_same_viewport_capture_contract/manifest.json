@@ -45,7 +45,7 @@
   "pass505Manifest": "parity-evidence/verification/pass505_dm1_v1_same_viewport_capture_blocker/manifest.json",
   "pass505Prerequisite": {
     "command": [
-      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/usr/bin/python3",
       "tools/verify_pass505_dm1_v1_same_viewport_capture_blocker.py"
     ],
     "outputTail": "PASS505_SAME_VIEWPORT_CAPTURE_BLOCKER_LOCKED\nmanifest=parity-evidence/verification/pass505_dm1_v1_same_viewport_capture_blocker/manifest.json\nreport=parity-evidence/pass505_dm1_v1_same_viewport_capture_blocker.md",
@@ -96,6 +96,6 @@
       "ok": true
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED"
 }

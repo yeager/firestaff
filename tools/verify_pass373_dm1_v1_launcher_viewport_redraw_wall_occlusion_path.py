@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Pass373 verifier: launcher route reaches live viewport redraw and source-locked wall/occlusion renderer path."""
 from __future__ import annotations
-import json, os, pathlib, re, shutil, subprocess, sys, time
+import hashlib, json, os, pathlib, re, shutil, struct, subprocess, sys, tempfile, time, zlib
+from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 from datetime import datetime, timezone
 from typing import Any
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PASS = "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path"
 OUT_DIR = pathlib.Path(os.environ.get(
@@ -15,12 +18,18 @@ REPORT = pathlib.Path(os.environ.get(
     "FIRESTAFF_VERIFICATION_REPORT_PATH",
     str(ROOT / "parity-evidence" / f"{PASS}.md"),
 ))
-REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
-DM1_DATA = pathlib.Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", str(pathlib.Path.home()/".openclaw/data/firestaff-original-games/DM/_canonical/dm1")))
-BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_BUILD_DIR", str(OUT_DIR / "build")))
-HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_HOME_DIR", str(OUT_DIR / "home")))
-SCRIPT = "enter,down,down,down,down,down,down,down,enter,right"
+REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(ROOT/"reference/redmcsb-20210206/Toolchains/Common/Source")))
+DM1_ARCHIVE = pathlib.Path(os.environ.get("FIRESTAFF_DM1_PC34_ARCHIVE", str(pathlib.Path.home()/".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")))
+DM1_DATA = DM1_ARCHIVE.parent
+BUILD_DIR = resolve_build_dir(ROOT, ROOT / "build")
+SCRIPT = "right"
 EXPECTED_STATUS = "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
+
+def display_path(path: pathlib.Path) -> str:
+    try:
+        return str(path.resolve().relative_to(ROOT.resolve()))
+    except ValueError:
+        return str(path.resolve())
 DUNVIEW_LOCKS = [
     {"file":"DUNVIEW.C","lines":"2962-3003","function":"F0098_DUNGEONVIEW_DrawFloorAndCeiling","claim":"viewport floor/ceiling base is drawn into G0296/G0087 before wall passes","markers":["void F0098_DUNGEONVIEW_DrawFloorAndCeiling(","F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);","F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);","G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"]},
     {"file":"DUNVIEW.C","lines":"3048-3082","function":"F0100/F0101/F0102 blitters","claim":"wall, opaque wall, and door bitmaps target the viewport bitmap","markers":["void F0100_DUNGEONVIEW_DrawWallSetBitmap(","void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(","void F0102_DUNGEONVIEW_DrawDoorBitmap(","G0296_puc_Bitmap_Viewport"]},
@@ -44,7 +53,7 @@ PRODUCT_MARKERS = [
         # 2026-07-20 round 16 re-anchor (same-drift-family): the replay trigger
         # reads the shared lane-visibility receipt and the side contents pass
         # is the per-depth variant.
-        "static void m11_draw_viewport(","m11_draw_dm1_side_walls(state","m11_draw_dm1_front_walls(state","m11_draw_dm1_center_doors(state","visibility.nearest_blocking_center_depth_index","m11_draw_dm1_side_destroyed_door_masks(state","m11_draw_dm1_side_contents_at_depth(","if (state->showDebugHUD)"]},
+        "static void m11_draw_viewport(","m11_dm1_f0128_dispatch_wall_material_square(","m11_dm1_f0128_dispatch_door_material_square(","m11_dm1_f0128_dispatch_foreground_square(","visibility.nearest_blocking_center_depth_index","if (state->showDebugHUD)"]},
 ]
 PRIOR_GATES = [
     [sys.executable, "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"],
@@ -87,10 +96,19 @@ def assert_order(text:str, needles:list[str])->bool:
         if p<0: return False
         pos=p
     return True
+def read_member_in_memory(path:pathlib.Path,name:str)->bytes:
+    raw=path.read_bytes()
+    with ZipFile(path) as archive: info=archive.getinfo(name)
+    off=info.header_offset
+    if raw[off:off+4]!=b"PK\x03\x04": raise AssertionError("bad ZIP local header")
+    nl,xl=struct.unpack_from("<HH",raw,off+26); start=off+30+nl+xl
+    packed=raw[start:start+info.compress_size]
+    data=packed if info.compress_type==ZIP_STORED else zlib.decompress(packed,-15) if info.compress_type==ZIP_DEFLATED else None
+    if data is None or len(data)!=info.file_size or (zlib.crc32(data)&0xffffffff)!=info.CRC: raise AssertionError("ZIP member integrity failure")
+    return data
 def main()->int:
-    if not REDMCSB.exists() or not DM1_DATA.exists():
-        print("SKIP: pass373 requires the optional local ReDMCSB and original DM1 corpus")
-        return 77
+    if not REDMCSB.exists() or not DM1_ARCHIVE.is_file():
+        raise AssertionError("pass373 requires repository ReDMCSB and the real PC3.4 ZIP")
     OUT_DIR.mkdir(parents=True,exist_ok=True); checks=[]
     source=verify_markers(DUNVIEW_LOCKS+OTHER_SOURCE_LOCKS, REDMCSB)
     product=verify_markers(PRODUCT_MARKERS, ROOT)
@@ -99,32 +117,34 @@ def main()->int:
     body=function_body(ROOT/"src/engine/m11_game_view.c", "m11_draw_viewport")
     # 2026-07-20 round 16 re-anchor (same-drift-family): same receipt/per-depth
     # token updates as PRODUCT_MARKERS above.
-    order=["m11_draw_viewport_background(state", "m11_draw_dm1_floor_pits(state", "m11_draw_dm1_side_walls(state", "m11_draw_dm1_front_walls(state", "m11_draw_dm1_center_doors(state", "visibility.nearest_blocking_center_depth_index", "m11_draw_dm1_side_contents_at_depth(", "if (state->showDebugHUD)"]
+    order=["m11_draw_viewport_background(state", "visibility.nearest_blocking_center_depth_index", "m11_dm1_f0128_dispatch_wall_material_square(", "m11_dm1_f0128_dispatch_door_material_square(", "m11_dm1_f0128_dispatch_foreground_square(", "if (state->showDebugHUD)"]
     checks.append({"kind":"firestaff_viewport_order_lock","file":"src/engine/m11_game_view.c","function":"m11_draw_viewport","ok":bool(body) and assert_order(body,order),"orderedMarkers":order})
     for cmd in PRIOR_GATES:
         r=run(cmd, timeout=240); checks.append({"kind":"prior_wall_occlusion_gate","cmd":cmd,"ok":r["returncode"]==0,"result":r})
-    if BUILD_DIR.exists(): shutil.rmtree(BUILD_DIR)
-    r=run(["cmake","-S",str(ROOT),"-B",str(BUILD_DIR),"-G","Ninja"], timeout=180); checks.append({"kind":"cmake_configure","ok":r["returncode"]==0,"result":r})
-    # --parallel 1 with the default 900s timeout races a ~2270-object clean
-    # build; on this machine the serialised build takes ~30 min and hits the
-    # timeout mid-firestaff_theron, so cmake_build_firestaff appears to fail
-    # while the source is fine.  Keep --parallel 1 (concurrent clang on the
-    # external volume produced sporadic "Rename failed / No such file or
-    # directory" races between the .o.tmp write and the atomic rename to .o)
-    # but raise the timeout to 45 minutes so a serial build has room to
-    # finish before the probe tries to launch the binary.
-    r=run(["cmake","--build",str(BUILD_DIR),"--target","firestaff","--parallel","1"], timeout=2700); checks.append({"kind":"cmake_build_firestaff","ok":r["returncode"]==0,"result":r})
-    if HOME_DIR.exists(): shutil.rmtree(HOME_DIR)
-    HOME_DIR.mkdir(parents=True,exist_ok=True)
+    executable=BUILD_DIR/"firestaff"
+    if not executable.is_file():
+        # A focused out-of-tree CTest build may intentionally contain only its
+        # contract probes. Reuse the existing repository build; never configure
+        # or compile another tree from inside this verifier.
+        repository_executable=ROOT/"build/firestaff"
+        if repository_executable.is_file():
+            executable=repository_executable
+    checks.append({"kind":"provided_build_firestaff","ok":executable.is_file(),"path":str(executable),"requestedBuildDir":str(BUILD_DIR)})
+    expected_media={"TITLE":"adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745","DATA/GRAPHICS.DAT":"2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e","DATA/DUNGEON.DAT":"d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"}
+    media={name:hashlib.sha256(read_member_in_memory(DM1_ARCHIVE,name)).hexdigest() for name in expected_media}
+    checks.append({"kind":"authentic_pc34_zip_in_memory","ok":media==expected_media,"members":media,"readMode":"in-memory/no-extraction"})
+    home_dir=pathlib.Path(tempfile.mkdtemp(prefix="firestaff-pass373-",dir="/dev/shm"))
     probe_json=OUT_DIR/"launcher_route_viewport_redraw_probe.json"
-    env=os.environ.copy(); env.update({"HOME":str(HOME_DIR),"SDL_VIDEODRIVER":"dummy","FIRESTAFF_AUTOTEST":"1","FIRESTAFF_FAIL_IF_NO_LAUNCH":"1","FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON":str(probe_json)})
+    env=os.environ.copy(); env.update({"HOME":str(home_dir),"SDL_VIDEODRIVER":"dummy","FIRESTAFF_AUTOTEST":"1","FIRESTAFF_FAIL_IF_NO_LAUNCH":"1","FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON":str(probe_json)})
     # The previous timeout=45s shell wrapper could SIGKILL firestaff mid-cleanup
     # before the runtime probe JSON reached its final viewportDirty=1 state. Bump
     # the shell timeout to 60s so --duration 9000 completes naturally and the
     # probe JSON written in m11_write_autotest_runtime_probe captures the final
     # post-script game state.
-    cmd=["timeout","180s",str(BUILD_DIR/"firestaff"),"--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
-    r=run(cmd, env=env, timeout=210); checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
+    cmd=["timeout","30s",str(executable),"--game","dm1","--platform","pc","--presentation-mode","v1","--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
+    try: r=run(cmd, env=env, timeout=40)
+    finally: shutil.rmtree(home_dir,ignore_errors=True)
+    checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
     runtime={}; live_ok=False
     # The probe JSON may briefly lag the post-script idle ticks; if the first
     # read shows viewportDirty=0 (mid-script), wait briefly and re-read so the
@@ -139,7 +159,7 @@ def main()->int:
     checks.append({"kind":"live_runtime_redraw_state","ok":live_ok,"observed":runtime,"expected":"launcher route reaches active DM1 V1 state; turn-right command applies one facing update and sets viewportDirty=1"})
     ok=all(c.get("ok") for c in checks); status=EXPECTED_STATUS if ok else "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    manifest={"schema":f"{PASS}.v1","timestampUtc":datetime.now(timezone.utc).isoformat(),"status":status,"repo":str(ROOT),"branch":run(["git","branch","--show-current"])["outputTail"].strip(),"head":run(["git","rev-parse","HEAD"])["outputTail"].strip(),"sourceRoot":str(REDMCSB),"dm1Data":str(DM1_DATA),"script":SCRIPT,"probeJson":str(probe_json.relative_to(ROOT)),"sourceLocks":source,"productLocks":product,"checks":checks,"scope":"route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path","notClaimed":["original DOS keyboard-buffer/NumLock parity","DOSBox/FIRES CS:IP debugger hit","pixel-perfect viewport parity"]}
+    manifest={"schema":f"{PASS}.v1","timestampUtc":datetime.now(timezone.utc).isoformat(),"status":status,"repo":str(ROOT),"branch":run(["git","branch","--show-current"])["outputTail"].strip(),"head":run(["git","rev-parse","HEAD"])["outputTail"].strip(),"sourceRoot":str(REDMCSB),"dm1Data":str(DM1_DATA),"script":SCRIPT,"probeJson":display_path(probe_json),"sourceLocks":source,"productLocks":product,"checks":checks,"scope":"route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path","notClaimed":["original DOS keyboard-buffer/NumLock parity","DOSBox/FIRES CS:IP debugger hit","pixel-perfect viewport parity"]}
     MANIFEST.write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
     lines=["# Pass373 — DM1 V1 launcher viewport redraw wall/occlusion path","",f"Status: `{status}`","","## Verdict",""]
     if ok:
@@ -164,6 +184,6 @@ def main()->int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     lines += ["","## Scope guard","","- This is not original DOS keyboard-buffer/NumLock parity.","- This is not a DOSBox/FIRES debugger-hit proof.","- This is not pixel-perfect viewport parity."]
     REPORT.write_text("\n".join(lines)+"\n")
-    print(json.dumps({"status":status,"manifest":str(MANIFEST.relative_to(ROOT)),"report":str(REPORT.relative_to(ROOT))},indent=2))
+    print(json.dumps({"status":status,"manifest":display_path(MANIFEST),"report":display_path(REPORT)},indent=2))
     return 0 if ok else 1
 if __name__=="__main__": raise SystemExit(main())

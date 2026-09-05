@@ -1,68 +1,25 @@
 {
-  "afterEvidence": [
-    "pass373",
-    "pass374"
-  ],
-  "branch": "main",
-  "currentEvidenceChecks": [
+  "authenticMedia": [
     {
-      "id": "pass373-live-route-wall-redraw-green",
-      "ok": false,
-      "path": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-      "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH"
+      "bytes": 33357,
+      "member": "DATA/DUNGEON.DAT",
+      "readMode": "in-memory/no-extraction",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
-      "id": "pass374-completion-credit-green",
-      "ok": false,
-      "path": "parity-evidence/verification/pass374_dm1_v1_completion_viewport_wall_credit/manifest.json",
-      "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT"
+      "bytes": 363417,
+      "member": "DATA/GRAPHICS.DAT",
+      "readMode": "in-memory/no-extraction",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
-      "id": "completion-matrix-current-after-pass374",
-      "observed": {
-        "completionPercent": 78,
-        "core_input_movement": 15,
-        "original_overlay_regression": 0,
-        "points": 78,
-        "viewport_ui_render": 17
-      },
-      "ok": true
-    },
-    {
-      "coreNote": "Input command queue, keypad route, movement timing/legal-target gates, touch/mouse queue routes, stairs transitions, and cooldown/F0380 ordering are source/runtime-gated.",
-      "id": "completion-notes-name-next-gap",
-      "ok": true,
-      "originalOverlayNote": "Original overlay/capture work has partial artifacts and exact wall matches, but representative movement/HUD/viewport parity is not yet promoted."
-    },
-    {
-      "id": "docs-carry-narrowed-nonclaim",
-      "ok": true
-    },
-    {
-      "id": "prior-original-route-blocker-consulted",
-      "ok": true,
-      "path": "parity-evidence/verification/pass207_dm1_v1_original_movement_viewport_blocker_gate/manifest.json",
-      "status": "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
+      "bytes": 12002,
+      "member": "TITLE",
+      "readMode": "in-memory/no-extraction",
+      "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     }
   ],
-  "gates": [
-    {
-      "cmd": [
-        "python3",
-        "tools/verify_firestaff_completion_matrix.py"
-      ],
-      "outputTail": "firestaff completion matrix verifier OK\n",
-      "returncode": 0
-    },
-    {
-      "cmd": [
-        "python3",
-        "tools/firestaff_completion_status.py"
-      ],
-      "outputTail": "DM1 V1 | completionPercent=78% | points=78/100 | status=playable_verified_partial | primaryBlocker=Representative original-vs-Firestaff overlay parity remains incomplete. Current DM1 blocker is the pass162 stock-original C080/F0377/F0275/F0280 live transcript gate: FIRES.MAP provides candidate addresses, DOSBox-debug break-start accepts the BP/BPM packet, and the surface-backend HoC, movement-click, movement double-click, autolock, keyboard-capture, external cliclick, System Events, and direct postToPid live probes now record FIRES startup, DATA\\DUNGEON.DAT load, mapped native macOS input, and 34 stock-original memory stops each, but no C080-chain code breakpoint fires. Pre-move, cursor-warp, first-click focus/capture, DOSBox-X autolock/mouse_emulation defaults, Ctrl-F10 capture toggling, replacing the Swift/CGEvent helper with cliclick, macOS Accessibility/System Events clicking, and direct CGEvent postToPid are now insufficient explanations. The OpenGL-output control is a separate harness/readiness blocker, not comparable F0359 evidence. The mouse=debug logs on the proven surface path show MOUSE/INT33 initialization but no route-click motion/button event. The generated pass162 manifest now makes this machine-readable with dosbox_mouse_log_summary and route_motion_button_line_count=0 on the proven surface controls. Next work is DOSBox-X SDL/Cocoa event ingestion or debugger event-pump work before pass435 six-shot promotion can continue.\nDM1 V2 | completionPercent=51% | points=51/100 | status=runtime_presentation_verified_partial | primaryBlocker=V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open.\nCSB V1 | completionPercent=43% | points=43/100 | status=runtime_boundary_verified_partial | primaryBlocker=CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened.\nCSB V2 | completionPercent=31% | points=31/100 | status=presentation_verified_partial | primaryBlocker=CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open.\nDM2 V1 | completionPercent=36% | points=36/100 | status=runtime_slices_verified_partial | primaryBlocker=Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work.\nDM2 V2 | completionPercent=16% | points=16/100 | status=presentation_scaffold_partial | primaryBlocker=V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete.\nDM Nexus V1 | completionPercent=37% | points=37/100 | status=runtime_slices_verified_partial | primaryBlocker=DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work.\nDM Nexus V2 | completionPercent=20% | points=20/100 | status=presentation_scaffold_partial | primaryBlocker=V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete.\nTheron V1 | completionPercent=72% | points=72/100 | status=hw_config_cd_play_vdc_joypad_proven | primaryBlocker=Original overlay regression (0/10) is the largest remaining gap. Real menu implementation needed.\n",
-      "returncode": 0
-    }
-  ],
+  "dm1Archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
   "redmcsbSourceAudit": [
     {
       "claim": "original route proof must show keyboard/click queue reaching the turn/move dispatch boundary",
@@ -110,7 +67,7 @@
       "ok": true
     }
   ],
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "reference/redmcsb-20210206/Toolchains/Common/Source",
   "remainingGap": {
     "id": "original_runtime_movement_overlay_and_keyboard_buffer_transcript",
     "missingArtifacts": [
@@ -124,7 +81,11 @@
       "binary-level direct F0380 body proof"
     ]
   },
-  "repo": "/Volumes/Extern-disk/firestaff",
-  "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
-  "status": "FAIL_PASS508_DM1_V1_MOVEMENT_REMAINING_GAP_AUDIT"
+  "removedStaleDependencies": [
+    "generated completion score",
+    "historical pass manifests",
+    "extracted original-media tree"
+  ],
+  "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v2",
+  "status": "BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED"
 }

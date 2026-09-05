@@ -1,6 +1,6 @@
 # Pass377 — DM1 V1 paired diff artifact blocker narrowing
 
-Status: `BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED`
+Status: `FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT`
 
 ## Decision
 
@@ -18,7 +18,7 @@ Blocker #4 is narrowed to review-only pairing metadata: all six Firestaff viewpo
 - `blocker_1_original_true_stop_transcript` `BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED` — strict original FIRES F0128 -> F0097/VIDRV true-stop is still required before original frames are promotable ok=`True`
 - `blocker_2_labelled_original_full_frames` `BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED` — labels/raw original 320x200 frames and 224x136 crops exist, but duplicate hashes/pass86 mismatches still block semantic promotion ok=`True`
 - `blocker_3_original_viewport_crops` `BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING` — 224x136 original crops are present as review-only inputs, but cannot be promoted until pass86/semantic route succeeds ok=`True`
-- `firestaff_route_source_locked` `PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_SOURCE_LOCKED` — Firestaff movement/capture side is not the active route blocker ok=`True`
+- `firestaff_route_source_locked` `BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE` — Firestaff movement/capture side is not the active route blocker ok=`False`
 
 ## Firestaff-side artifacts
 

@@ -34,6 +34,7 @@
 #define FIRESTAFF_DM1_V1_TEXT_MESSAGE_PC34_COMPAT_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -138,6 +139,47 @@ void dm1_v1_text_print_message(DM1_V1_TextMessageState* state,
 void dm1_v1_text_print_character(DM1_V1_TextMessageState* state,
                                  int color, char ch);
 void dm1_v1_text_print_linefeed(DM1_V1_TextMessageState* state);
+
+/* ReDMCSB SPELFAIL.C F0410: publish the source-owned spell failure through
+ * TEXT.C F0051/F0047, preserving its segmented wrapping and C015 lifetime. */
+int dm1_v1_text_print_spell_failure_f0410(
+    DM1_V1_TextMessageState* state,
+    long gameTime,
+    int color,
+    int printsLineFeed,
+    const char* championName,
+    const char* messageBeforeSkill,
+    const char* baseSkillName,
+    const char* messageAfterSkill);
+
+/* ReDMCSB MENU.C F0381: prepend its source linefeed, replace the bounded @p
+ * token with the acting champion name, and publish in C04 cyan. */
+int dm1_v1_text_print_message_after_replacements_f0381(
+    DM1_V1_TextMessageState* state,
+    long gameTime,
+    const char* sourceText,
+    const char* championName);
+
+/* Expand the named placeholders used by translated DM1 presentation text.
+ * Named fields deliberately avoid printf positional arguments, which are not
+ * portable to every Firestaff target and prevent translators from safely
+ * changing word order.  The source English template remains the fallback. */
+int dm1_v1_text_expand_l10n_template(
+    const char* textTemplate,
+    const char* championName,
+    const char* skillName,
+    char* output,
+    size_t outputSize);
+
+/* Presentation-only localized C015 writer. It preserves the source caller's
+ * time, linefeed and color contract without borrowing another gameplay
+ * function's semantics. */
+int dm1_v1_text_print_localized_message(
+    DM1_V1_TextMessageState* state,
+    long gameTime,
+    int color,
+    int printsLineFeed,
+    const char* text);
 
 void dm1_v1_text_set_game_time(DM1_V1_TextMessageState* state, long gameTime);
 void dm1_v1_text_tick(DM1_V1_TextMessageState* state, int deltaTicks);

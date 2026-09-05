@@ -1,6 +1,6 @@
 # Pass508 - DM1 V1 movement remaining gap after pass373/pass374
 
-Status: FAIL_PASS508_DM1_V1_MOVEMENT_REMAINING_GAP_AUDIT
+Status: BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED
 
 Scope: movement/forflyttning evidence only. This pass consumes pass373/pass374 and proves the next remaining gap; it does not promote pixel parity.
 
@@ -12,14 +12,11 @@ Scope: movement/forflyttning evidence only. This pass consumes pass373/pass374 a
 - PASS MOVESENS.C:738-818 - F0267_MOVE_GetMoveResult_CPSCE: movement parity must observe committed original party tuple and timing side effects.
 - PASS GAMELOOP.C:35-97,215-219 - F0002_MAIN_GameLoop_CPSDF: original overlay comparison must use post-command viewport redraw from mutated source party state.
 
-## Current completion evidence consumed
+## Authentic PC 3.4 media
 
-- FAIL pass373-live-route-wall-redraw-green
-- FAIL pass374-completion-credit-green
-- PASS completion-matrix-current-after-pass374
-- PASS completion-notes-name-next-gap
-- PASS docs-carry-narrowed-nonclaim
-- PASS prior-original-route-blocker-consulted
+- PASS DATA/DUNGEON.DAT bytes=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- PASS DATA/GRAPHICS.DAT bytes=363417 sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- PASS TITLE bytes=12002 sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
 
 ## Remaining movement parity gap
 

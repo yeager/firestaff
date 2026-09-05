@@ -1,7 +1,7 @@
 {
   "cases": [
     {
-      "capture_gate": "BLOCKED_NO_SATURN_PRESENTATION",
+      "capture_gate": null,
       "command": {
         "cmd": [
           "<build-firestaff>",
@@ -14,26 +14,26 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "nexus: Saturn start pose is not source-bound\nNEXUS STARTUP RECEIPT READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260812-033516.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260812-033516.bmp",
-        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus sound: initialized (event dispatch capture-gated, SAL PCM diagnostic decode enabled, playback capture-gated)\nNexus font: FONT256.S2D CG source retained (242 tiles); text consumer gated\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus launcher: failed to load level 0",
+        "stderr": "NEXUS STARTUP RECEIPT: status=blocked gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue title=1 levelLoaded=0 menu=0 blocker=title-vdp-capture-required\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260903-202721.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260903-202721.bmp",
+        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus sound: initialized (event dispatch capture-gated, SAL PCM diagnostic decode enabled, playback capture-gated)\nNexus font: FONT256.S2D CG source retained (242 tiles); text consumer gated\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue')",
         "timed_out": false
       },
       "geometry_ok": true,
       "id": "canonical_extracted_root",
       "label": "Nexus canonical extracted Track 1 root",
-      "marker_found": true,
+      "marker_found": false,
       "ok": true,
       "present": true,
       "presented_screenshots": [
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260812-033516.bmp",
+          "name": "firestaff-presented-20260903-202721.bmp",
           "non_black_pixels": 0,
-          "sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
-          "size": 1555254,
+          "sha256": "c2776312c531382df52ec6576b3e2eae6d7afd4f991b2d6c1bacb2c2f8b389b9",
+          "size": 1399734,
           "valid": true,
-          "width": 960
+          "width": 864
         }
       ],
       "probe": {
@@ -44,10 +44,10 @@
         "launchedEver": 1,
         "party": {
           "championCount": 0,
-          "direction": 0,
-          "mapIndex": 0,
-          "mapX": 0,
-          "mapY": 0
+          "direction": -1,
+          "mapIndex": -1,
+          "mapX": -1,
+          "mapY": -1
         },
         "pipeline": {
           "anyMovementOccurred": 0,
@@ -73,13 +73,13 @@
         "sourceId": "nexus",
         "title": "DUNGEON MASTER NEXUS"
       },
-      "reason": "LEV00 startup refused: Saturn start pose is not source-bound",
-      "runtime_ok": true,
+      "reason": "real Nexus title and asset boot succeeded, but the authenticated Saturn LEV01 start pose and presentation handoff are still required",
+      "runtime_ok": false,
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260812-033516.bmp",
+          "name": "firestaff-20260903-202721.bmp",
           "non_black_pixels": 0,
           "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
@@ -105,8 +105,8 @@
       "status": "SKIP"
     }
   ],
-  "firestaff": "build/firestaff",
-  "generated_at": "2026-08-12T01:35:14.499515+00:00",
+  "firestaff": "build-dm1-csb-native/firestaff",
+  "generated_at": "2026-09-03T20:27:18.573743+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",

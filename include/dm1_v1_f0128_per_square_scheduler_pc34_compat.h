@@ -70,6 +70,7 @@ enum {
     DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK,  /* F0107 wall-ornament alcove predicate */
     DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,/* F0108 floor ornament under door back things */
     DM1_V1_F0128_STEP_F0115_DOOR_PASS1,    /* F0115 back cells behind the door */
+    DM1_V1_F0128_STEP_F0110_DOOR_BUTTON,   /* source-specific button immediately before F0111 */
     DM1_V1_F0128_STEP_F0111_DOOR,          /* F0111 door draw (object occluder) */
     DM1_V1_F0128_STEP_F0115_DOOR_PASS2,    /* F0115 front cells in front of the door */
     DM1_V1_F0128_STEP_F0112_CEILING_PIT,   /* F0112 upper-level open-pit overlay */
@@ -155,7 +156,7 @@ typedef struct {
     int doorPass2Order;
     int corridorOrder;           /* main F0115 order for corridor/pit/teleporter */
     int doorSideOrder;           /* door_side/stairs_side main order, 0 = corridorOrder */
-    int alcoveChecks;            /* wall case runs the F0107 right/front predicates */
+    int alcoveChecks;            /* exact F0107 call count: side right/front=2, centre/near/outer=1 */
     int noThingPass;             /* F0678/F0679 D2L2/D2R2: wall/field only */
     int fieldCapable;            /* teleporter F0113 allowed on this square */
 } DM1_V1_F0128SquareClassPc34;

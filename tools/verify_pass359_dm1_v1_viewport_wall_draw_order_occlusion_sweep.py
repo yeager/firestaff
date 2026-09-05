@@ -175,10 +175,29 @@ def main() -> int:
             # side contents pass with the center-line receipt guard.
             "m11_draw_dm1_side_contents_at_depth", "Source-bound side-cell F0115 pass", "dm1_viewport_3d_center_line_clear_from_visibility_pc34",
         ], "m11_game_view.c:m11_draw_dm1_side_contents_at_depth")
-        require_all(function_body(view_path, "m11_draw_viewport"), [
-            "m11_draw_viewport", "m11_sample_viewport_cell", "m11_draw_dm1_side_walls", "m11_draw_dm1_front_walls",
-            "replay only", "m11_draw_dm1_side_contents",
+        viewport = function_body(view_path, "m11_draw_viewport")
+        callback = function_body(view_path, "m11_dm1_f0128_execute_source_step")
+        require_all(viewport, [
+            "m11_draw_viewport", "m11_sample_viewport_cell",
+            "m11_dm1_f0128_dispatch_wall_material_square",
+            "m11_dm1_f0128_dispatch_wall_ornament_square",
+            "m11_dm1_f0128_dispatch_door_pass1_square",
+            "m11_dm1_f0128_dispatch_door_material_square",
+            "m11_dm1_f0128_dispatch_foreground_square",
         ], "m11_game_view.c:m11_draw_viewport")
+        require_all(callback, [
+            "M11_DM1_F0128_EXECUTE_WALL_MATERIAL",
+            "m11_draw_dm1_side_walls", "m11_draw_dm1_front_walls",
+            "M11_DM1_F0128_EXECUTE_WALL_ORNAMENT",
+            "M11_DM1_F0128_EXECUTE_DOOR_PASS1",
+            "M11_DM1_F0128_EXECUTE_DOOR_FRAME",
+            "M11_DM1_F0128_EXECUTE_DOOR_MATERIAL",
+            "M11_DM1_F0128_EXECUTE_FOREGROUND",
+        ], "m11_game_view.c:m11_dm1_f0128_execute_source_step")
+        for primitive in ("m11_draw_dm1_side_walls(",
+                          "m11_draw_dm1_front_walls("):
+            require(primitive not in viewport,
+                    f"viewport revives callback-owned primitive {primitive}")
 
         run_gate([sys.executable, "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"])
         for gate in [

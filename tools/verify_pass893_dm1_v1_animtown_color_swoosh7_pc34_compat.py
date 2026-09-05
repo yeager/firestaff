@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -104,7 +105,8 @@ def run(cmd):
 
 
 def resolve_build_dir(binary_name=""):
-    candidates = [ROOT / "build", ROOT / "builds" / "nv1-build",
+    configured = os.environ.get("FIRESTAFF_BUILD_DIR", "")
+    candidates = ([Path(configured)] if configured else []) + [ROOT / "build", ROOT / "builds" / "nv1-build",
                   ROOT / "builds" / "n2-build"]
     for c in candidates:
         if (c / "CMakeCache.txt").exists() and (c / binary_name).exists():

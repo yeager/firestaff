@@ -123,8 +123,8 @@ records and pixel verification exist.
 ### Real source
 
 Original CSB data exists under `~/.firestaff/data/csb`, including Atari STX,
-Amiga ADF, and FM Towns archives. CSB has no original DOS/PC release; real-data
-probes must use the selected original platform's `GRAPHICS.DAT`/`DUNGEON.DAT`.
+Amiga ADF, and FM Towns archives. Real-data probes must use the selected
+original platform's `GRAPHICS.DAT`/`DUNGEON.DAT`.
 
 ### Decision
 

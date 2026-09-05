@@ -15,6 +15,13 @@ missing capture or a presentation claim from these disc files.
   binds the active NBG0 source, CRAM palette, VDP1/VDP2 layers, priorities and
   timing. The observed NBG0 span remains unowned; do not admit a native title
   renderer or substitute inferred assets until this consumer is identified.
+  The current native integration has an additional fail-closed ownership gap:
+  `Nexus_V1_Engine.startup_title_vdp_capture_verified` is consumed by the
+  launcher receipts but has no assignment site. Add an authenticated capture
+  loader that verifies the selected retail-disc identity, frame/timing,
+  VDP1/VDP2, VRAM and CRAM records, then assigns this flag only after the
+  compositor's complete receipt succeeds. Do not set it from TITLE.CG,
+  manifests, a BIOS, or a host-generated frame.
 - Capture the actual interactive title/menu transition and its input contract.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native

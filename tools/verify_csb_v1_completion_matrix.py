@@ -109,13 +109,9 @@ def main() -> int:
     cmake = CMAKE.read_text(encoding="utf-8", errors="replace") if CMAKE.exists() else ""
     handoff = HANDOFF_TEST.read_text(encoding="utf-8", errors="replace") if HANDOFF_TEST.exists() else ""
     runtime_spine_cmake_needles = [
-        "firestaff_csb_v1_pc_real_asset_launch_probe",
-        "firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe",
         "firestaff_csb_v1_first_viewport_frame_probe",
         "test_csb_v1_boot_runtime_handoff",
         "test_csb_v1_runtime_route_first_frame_movement_utility_gate",
-        "csb_v1_pc_real_asset_launch",
-        "csb_v1_pc34_quickplay_dungeon_handle",
         "csb_v1_first_viewport_frame",
         "csb_v1_boot_runtime_handoff",
         "csb_v1_runtime_route_first_frame_movement_utility_gate",
@@ -126,8 +122,6 @@ def main() -> int:
         "one deterministic tick -> Utility NEW_GAME handoff",
     ]
     forbidden_cmake_needles = [
-        "target_link_libraries(firestaff_csb_v1_pc_real_asset_launch_probe\n    PRIVATE firestaff_m10)",
-        "target_link_libraries(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe\n    PRIVATE firestaff_m10)",
         "target_link_libraries(firestaff_csb_v1_first_viewport_frame_probe\n    PRIVATE firestaff_m10)",
         "target_link_libraries(test_csb_v1_runtime_route_first_frame_movement_utility_gate\n    PRIVATE firestaff_m10)",
     ]
@@ -222,15 +216,11 @@ def main() -> int:
         "criteria": [{"id": k, "score": v[0], "status": v[1]} for k, v in CRITERIA.items()],
         "runtime_spine": {
             "cmake_targets": [
-                "firestaff_csb_v1_pc_real_asset_launch_probe",
-                "firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe",
                 "firestaff_csb_v1_first_viewport_frame_probe",
                 "test_csb_v1_boot_runtime_handoff",
                 "test_csb_v1_runtime_route_first_frame_movement_utility_gate",
             ],
             "ctest_names": [
-                "csb_v1_pc_real_asset_launch",
-                "csb_v1_pc34_quickplay_dungeon_handle",
                 "csb_v1_first_viewport_frame",
                 "csb_v1_boot_runtime_handoff",
                 "csb_v1_runtime_route_first_frame_movement_utility_gate",

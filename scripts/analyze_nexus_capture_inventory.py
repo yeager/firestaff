@@ -107,7 +107,7 @@ def main() -> int:
             path
             for path in (
                 [args.capture_root / "runtime-vdp12.raw"]
-                + list(args.capture_root.glob("run-*/runtime-vdp12.raw"))
+                + list(args.capture_root.glob("*/runtime-vdp12.raw"))
             )
             if path.is_file()
         }

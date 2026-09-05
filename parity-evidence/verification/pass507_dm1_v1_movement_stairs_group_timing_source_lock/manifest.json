@@ -2,36 +2,36 @@
   "chainedStaticGates": [
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_dm1_v1_command_movement_sensor_timing_source_lock.py"
       ],
       "id": "dm1_v1_command_movement_sensor_timing_source_lock",
       "returncode": 0,
       "summary": [
-        "dm1_v1_command_movement_sensor_timing_source_lock=pass citations=38 output=/Volumes/Extern-disk/firestaff/parity-evidence/verification/dm1_v1_command_movement_sensor_timing_source_lock.json"
+        "dm1_v1_command_movement_sensor_timing_source_lock=pass citations=38 output=/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/dm1_v1_command_movement_sensor_timing_source_lock.json"
       ]
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_dm1_v1_party_movement_sensor_order_source_lock.py"
       ],
       "id": "dm1_v1_party_movement_sensor_order_source_lock",
       "returncode": 0,
       "summary": [
-        "dm1_v1_party_movement_sensor_order_source_lock=pass citations=9 output=/Volumes/Extern-disk/firestaff/parity-evidence/verification/dm1_v1_party_movement_sensor_order_source_lock.json"
+        "dm1_v1_party_movement_sensor_order_source_lock=pass citations=9 output=/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/dm1_v1_party_movement_sensor_order_source_lock.json"
       ]
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_dm1_v1_movement_timing_source_lock.py"
       ],
       "id": "dm1_v1_movement_timing_source_lock",
       "returncode": 0,
       "summary": [
         "probe=dm1_v1_movement_timing_source_lock",
-        "sourceRoot=/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+        "sourceRoot=/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
         "- COMMAND.C:2095-2100 movement commands remain queued while cadence/projectile gates are active",
         "- COMMAND.C:2118-2127 one command is dequeued before turn/move dispatch",
         "- CLIKMENU.C:256-269 source-locks forward/right/back/left relative step mapping",
@@ -42,7 +42,7 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_v1_movement_legality_source_lock.py"
       ],
       "id": "v1_movement_legality_source_lock",
@@ -93,7 +93,7 @@
       "source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"
     }
   ],
-  "generatedAt": "2026-08-12T01:38:23.525788+00:00",
+  "generatedAt": "2026-09-04T18:00:57.441871+00:00",
   "lane": "Lane A movement/stairs/group-collision/timing only; no viewport/pass435 dependency",
   "redmcsbEvidence": [
     {
@@ -154,6 +154,6 @@
     }
   ],
   "schema": "firestaff.parity.pass507.dm1_v1_movement_stairs_group_timing_source_lock.v1",
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS507_DM1_V1_MOVEMENT_STAIRS_GROUP_TIMING_SOURCE_LOCKED"
 }

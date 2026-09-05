@@ -15,7 +15,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$SCRIPT_DIR"
+if [ "${1:-}" = "--po-dir" ]; then
+    [ "$#" -eq 2 ] || { echo "usage: $0 [--po-dir DIRECTORY]" >&2; exit 2; }
+    PO_DIR="$2"
+else
+    [ "$#" -eq 0 ] || { echo "usage: $0 [--po-dir DIRECTORY]" >&2; exit 2; }
+    PO_DIR="$SCRIPT_DIR"
+fi
+cd "$PO_DIR"
 
 # All i18n domains Firestaff ships (added: firestaff + nexus + theron
 # to the original startup-menu/dm1/csb/dm2 quartet).
@@ -38,15 +45,10 @@ WARNINGS=0
 # mode = "native" -> print number of entries whose non-empty msgstr differs
 #                  from msgid (fallback/scaffold msgstr values excluded)
 #
-# Implementation: write the awk program to a temp file (because we cannot
-# safely interpolate multi-line awk with BEGIN blocks into a bash string
-# without escaping headaches) and invoke it with awk -f.
 po_count() {
     local mode="$1"
     local file="$2"
-    local awk_tmp
-    awk_tmp="$(mktemp -t po_validate_awk.XXXXXX)"
-    cat > "$awk_tmp" <<'AWK_EOF'
+    awk -v count_mode="$mode" '
 BEGIN {
     msgid = ""
     msgstr = ""
@@ -101,11 +103,7 @@ END {
     else if (count_mode == "native") print native
     else print total
 }
-AWK_EOF
-    awk -v count_mode="$mode" -f "$awk_tmp" "$file"
-    local rc=$?
-    rm -f "$awk_tmp"
-    return $rc
+' "$file"
 }
 
 echo "=== po/ layout validation ==="
@@ -123,6 +121,18 @@ for domain in "${DOMAINS[@]}"; do
         ERRORS=$((ERRORS + 1))
     else
         echo "OK:   $pot exists"
+        if command -v msgfmt >/dev/null 2>&1 &&
+           ! msgfmt --check --check-format -o /dev/null "$pot"; then
+            echo "FAIL: $pot is not a valid gettext template"
+            ERRORS=$((ERRORS + 1))
+        fi
+        # A POT is the English source template, never a translation catalog.
+        # Every non-header msgstr must remain empty.
+        pot_translated=$(po_count translated "$pot" || echo 0)
+        if [ "$pot_translated" -ne 0 ]; then
+            echo "FAIL: $pot contains ${pot_translated} translated msgstr value(s)"
+            ERRORS=$((ERRORS + 1))
+        fi
     fi
 
     # Required: .en.po
@@ -160,6 +170,16 @@ for domain in "${DOMAINS[@]}"; do
     for loc in "${KNOWN_LOCALES[@]}"; do
         f="${domain}.${loc}.po"
         if [ -f "$f" ]; then
+            # A catalog must identify its own domain. This catches copied PO
+            # headers that otherwise compile but belong to another game.
+            if grep -q 'Project-Id-Version:' "$f" &&
+               ! grep -q "Project-Id-Version: firestaff-${domain}" "$f"; then
+                if [ "$domain" != "firestaff" ] ||
+                   ! grep -q 'Project-Id-Version: firestaff' "$f"; then
+                    echo "FAIL: $f Project-Id-Version does not identify ${domain}"
+                    ERRORS=$((ERRORS + 1))
+                fi
+            fi
             tot=$(po_count total "$f" || echo 0)
             tra=$(po_count translated "$f" || echo 0)
             native=$(po_count native "$f" || echo 0)

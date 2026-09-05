@@ -10,6 +10,7 @@
  */
 
 #include "title_dat_loader_v1.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,48 +29,26 @@ static unsigned int be16(const unsigned char* p) {
     return ((unsigned int)p[0] << 8) | (unsigned int)p[1];
 }
 
-static long file_size(FILE* f) {
-    long cur = ftell(f);
-    long end;
-    if (cur < 0) return -1;
-    if (fseek(f, 0, SEEK_END) != 0) return -1;
-    end = ftell(f);
-    if (fseek(f, cur, SEEK_SET) != 0) return -1;
-    return end;
-}
-
 static unsigned char* read_file_bytes(const char* path, long* outBytes,
                                       char* errMsg, size_t errMsgBytes) {
-    FILE* f;
-    long bytes;
-    unsigned char* data;
+    size_t bytes = 0U;
+    unsigned char* data = NULL;
 
     if (outBytes) *outBytes = 0;
-    f = fopen(path, "rb");
-    if (!f) {
+    /* TITLE belongs to the selected original data root and is commonly an
+     * archive member.  The same bounded reader used by runtime assets keeps
+     * the virtual `archive.zip::TITLE` path intact; do not require a loose
+     * copy or materialise it beside the game archive. */
+    if (!asset_read_path_alloc(path, &data, &bytes) || !data) {
         set_err(errMsg, errMsgBytes, "cannot open TITLE");
         return NULL;
     }
-    bytes = file_size(f);
-    if (bytes <= 0 || bytes > 65535L) {
-        fclose(f);
+    if (bytes == 0U || bytes > 65535U) {
+        free(data);
         set_err(errMsg, errMsgBytes, "unexpected TITLE file size");
         return NULL;
     }
-    data = (unsigned char*)malloc((size_t)bytes);
-    if (!data) {
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "out of memory");
-        return NULL;
-    }
-    if (fread(data, 1, (size_t)bytes, f) != (size_t)bytes) {
-        free(data);
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "TITLE read failed");
-        return NULL;
-    }
-    fclose(f);
-    if (outBytes) *outBytes = bytes;
+    if (outBytes) *outBytes = (long)bytes;
     return data;
 }
 
@@ -188,7 +167,6 @@ int V1_Title_ParseManifest(const char* titleDatPath,
                            V1_TitleManifest* outManifest,
                            char* errMsg,
                            size_t errMsgBytes) {
-    FILE* f;
     long bytes;
     unsigned char* data;
     unsigned int positions[V1_TITLE_DAT_ITEM_COUNT];
@@ -203,30 +181,8 @@ int V1_Title_ParseManifest(const char* titleDatPath,
     }
     memset(outManifest, 0, sizeof(*outManifest));
 
-    f = fopen(titleDatPath, "rb");
-    if (!f) {
-        set_err(errMsg, errMsgBytes, "cannot open TITLE");
-        return 0;
-    }
-    bytes = file_size(f);
-    if (bytes <= 0 || bytes > 65535L) {
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "unexpected TITLE file size");
-        return 0;
-    }
-    data = (unsigned char*)malloc((size_t)bytes);
-    if (!data) {
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "out of memory");
-        return 0;
-    }
-    if (fread(data, 1, (size_t)bytes, f) != (size_t)bytes) {
-        free(data);
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "TITLE read failed");
-        return 0;
-    }
-    fclose(f);
+    data = read_file_bytes(titleDatPath, &bytes, errMsg, errMsgBytes);
+    if (!data) return 0;
 
     for (i = 0; i + 3u < (unsigned int)bytes; ++i) {
         if (is_known_tag(data + i)) {

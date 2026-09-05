@@ -1,6 +1,9 @@
 #include "nexus_v1_mns.h"
 #include "nexus_v1_dmdf_model.h"
 #include "asset_find_by_hash.h"
+#include "firestaff_x68k_media_receipt.h"
+#include "nexus_v1_test_retail_member.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +11,15 @@
 static int g_no_retail_mns_corpus;
 
 static uint8_t *load_file(const char *path, int *out_size) {
+    char hash[65];
+    size_t member_size;
+    uint8_t *member;
+    if (strstr(path, "::")) {
+        member = nexus_v1_test_read_retail_member(path, &member_size, hash);
+        if (!member || member_size > (size_t)INT_MAX) { free(member); return NULL; }
+        *out_size = (int)member_size;
+        return member;
+    }
     FILE *f = fopen(path, "rb");
     uint8_t *buf;
     long sz;
@@ -103,6 +115,7 @@ static int test_synthetic(void) {
 
 static int test_all_mns(void) {
     const char *dirpath = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *cue = getenv("FIRESTAFF_NEXUS_CUE");
     char home_path[512];
     int decoded = 0, rendered = 0, fail = 0;
     int text_material_models = 0, text_material_surfaces = 0;
@@ -120,10 +133,11 @@ static int test_all_mns(void) {
     }
     {
         size_t i;
-        int available = 0;
+        int available = cue && cue[0] ? (int)(sizeof(g_retail_mns) / sizeof(g_retail_mns[0])) : 0;
         for (i = 0; i < sizeof(g_retail_mns) / sizeof(g_retail_mns[0]); ++i) {
             char path[768];
             FILE *f;
+            if (cue && cue[0]) break;
             snprintf(path, sizeof(path), "%s/%s", dirpath, g_retail_mns[i].name);
             f = fopen(path, "rb");
             if (f) { ++available; fclose(f); }
@@ -145,14 +159,25 @@ static int test_all_mns(void) {
         Nexus_DMDFTextureSection text_section;
         Nexus_DMDFMaterialBank text_bank;
 
-        snprintf(path, sizeof(path), "%s/%s", dirpath, name);
+        snprintf(path, sizeof(path), cue && cue[0] ? "%s::%s" : "%s/%s",
+                 cue && cue[0] ? cue : dirpath, name);
         data = load_file(path, &size);
         if (!data) {
             printf("  FAIL %s: missing retail file\n", name);
             ++fail;
             continue;
         }
-        if (!asset_file_matches_md5(path, g_retail_mns[corpus_index].md5)) {
+        if (strstr(path, "::")) {
+            char md5[33];
+            if (firestaff_x68k_media_receipt_md5_hex(data, (size_t)size,
+                                                      md5, sizeof(md5)) != 0 ||
+                strcmp(md5, g_retail_mns[corpus_index].md5) != 0) {
+                printf("  FAIL %s: retail MD5 mismatch\n", name);
+                free(data);
+                ++fail;
+                continue;
+            }
+        } else if (!asset_file_matches_md5(path, g_retail_mns[corpus_index].md5)) {
             printf("  FAIL %s: retail MD5 mismatch\n", name);
             free(data);
             ++fail;
@@ -467,6 +492,7 @@ static int test_anim_transform(void) {
 
 static int test_anim_real_mns(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *cue = getenv("FIRESTAFF_NEXUS_CUE");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
@@ -477,7 +503,9 @@ static int test_anim_real_mns(void) {
     Nexus_V1_MnsVertex verts[2048];
     int count, i;
 
-    if (data_dir && data_dir[0]) {
+    if (cue && cue[0]) {
+        snprintf(path, sizeof(path), "%s::OBAKE.MNS", cue);
+    } else if (data_dir && data_dir[0]) {
         snprintf(path, sizeof(path), "%s/OBAKE.MNS", data_dir);
     } else if (home && home[0]) {
         snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/OBAKE.MNS", home);

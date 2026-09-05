@@ -42,7 +42,7 @@ def main() -> int:
     # F0128 no longer has global D3..D1 or D0 primitive batches.  The D0
     # terminal squares are replayed from their individual scheduler spans,
     # preserving F0125 (left), F0126 (right), F0127 (centre) order.
-    d0 = function_body(source, "static void m11_dm1_f0128_replay_d0_primitives")
+    d0 = function_body(source, "static void m11_dm1_f0128_execute_source_step")
     for step, call in (
         ("DM1_V1_F0128_STEP_F0104_PIT", "m11_draw_dm1_floor_pits"),
         ("DM1_V1_F0128_STEP_F0104_STAIRS", "m11_draw_dm1_stairs"),
@@ -53,18 +53,30 @@ def main() -> int:
             f"missing scheduler-owned D0 material pass: {call}"
         )
 
-    effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
-    final = viewport.find("m11_dm1_f0128_replay_d0_primitives")
-    mirror = viewport.find("m11_draw_dm1_front_mirror_route")
-    # C127 is a F0107 D1C wall overlay; it remains before F0115/effects.
-    # Only the D0 pit/stair/field pass is deferred until after those effects.
-    assert mirror >= 0 and effect >= 0 and mirror < effect < final
-    assert viewport.count("m11_dm1_f0128_replay_d0_primitives(") >= 4
-    d0_left = viewport.find("DM1_V1_F0128_VIEW_SQUARE_D0L", final)
-    d0_right = viewport.find("DM1_V1_F0128_VIEW_SQUARE_D0R", d0_left)
-    d0_center = viewport.find("DM1_V1_F0128_VIEW_SQUARE_D0C", d0_right)
-    assert final >= 0 and d0_left < d0_right < d0_center
-    print("ok: scheduler-owned DM1 D0 material follows D1 content and effects")
+    final = viewport.find("M11_DM1_F0128_EXECUTE_D0_BEFORE_THINGS")
+    # C127 is a F0107 D1C wall overlay and now executes inside the owning
+    # scheduler callback. Each D3..D1 F0115 step also completes its own C15
+    # restart before the terminal D0 pit/stair/field phases begin.
+    assert "m11_draw_dm1_front_mirror_route" in d0
+    assert viewport.find("m11_draw_dm1_front_mirror_route") < 0
+    assert d0.count("m11_draw_dm1_f0115_explosions_for_square") >= 2
+    assert "m11_draw_dm1_deferred_explosion_pass(state" not in viewport
+    assert final >= 0
+    assert viewport.count("M11_DM1_F0128_EXECUTE_D0_BEFORE_THINGS") == 3
+    after = viewport[final:]
+    d0l = after.index("DM1_V1_F0128_VIEW_SQUARE_D0L")
+    d0r = after.index("DM1_V1_F0128_VIEW_SQUARE_D0R")
+    d0c = after.index("DM1_V1_F0128_VIEW_SQUARE_D0C")
+    assert d0l < d0r < d0c
+    assert "M11_DM1_F0128_EXECUTE_D0C_THINGS" in after
+    assert "M11_DM1_F0128_EXECUTE_D0C_FIELD_AFTER_THINGS" in after
+    assert after.index("M11_DM1_F0128_EXECUTE_D0_BEFORE_THINGS") < after.index(
+        "M11_DM1_F0128_EXECUTE_D0C_THINGS") < after.index(
+        "M11_DM1_F0128_EXECUTE_D0C_FIELD_AFTER_THINGS")
+    assert "m11_draw_dm1_d0c_floor_item_pass" in d0
+    assert viewport.find("m11_draw_dm1_d0c_floor_item_pass") < 0
+    assert "m11_draw_dm1_stairs(state" not in viewport
+    print("ok: scheduler-owned DM1 D0L, D0R and D0C transactions follow D1 in source order")
     return 0
 
 

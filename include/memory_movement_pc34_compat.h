@@ -241,6 +241,21 @@ int F0707_MOVEMENT_IsSquarePassableForContext_Compat(
     int mapY,
     int passContext);
 
+/* ReDMCSB GROUP.C F0203 (lines 1491-1551) creature-specific terrain gate.
+ * Unlike the coarse context helper above, this consumes the source creature
+ * Attributes word and the destination DOOR Thing orientation.  It therefore
+ * preserves levitation over open pits and the vertical-door height test.
+ * allowImaginary matches F0203's caller-owned permission for imaginary pits
+ * and fake walls. */
+int F0708_MOVEMENT_IsSquarePassableForCreature_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int creatureAttributes,
+    int doorVertical,
+    int allowImaginary);
+
 /*
  * Source-locked party/group collision gate.
  *

@@ -16,14 +16,14 @@
   "pass503SourceLocks": {
     "file": "parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json",
     "requiredSourceIdsPresent": true,
-    "sha256": "036c2ef9b6fb6af8c03ec3e520ff13763c4162475c1cdc00a15359bb8f1193e8",
+    "sha256": "cc60ca1352f9e21a11b7b3278500aa77e549debe24e9b29f29ab9f39164f5f65",
     "sourceCheckCount": 7,
     "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
   },
   "prerequisites": [
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_pass503_dm1_v1_viewport_wall_draw_order_evidence.py"
       ],
       "returncode": 0,
@@ -32,12 +32,12 @@
     },
     {
       "cmd": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/usr/bin/python3",
         "tools/verify_dm1_v1_viewport_wall_render_plan_gate.py"
       ],
       "returncode": 0,
       "stderrTail": "",
-      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /Volumes/Extern-disk/firestaff/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
+      "stdoutTail": "PASS dm1_v1_viewport_wall_render_plan_gate wrote /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json\n"
     }
   ],
   "promotionBlocker": "Do not claim pixel parity until one exact original DM1 V1 viewport frame and matching Firestaff frame are captured for the same map/x/y/direction/wall-door state and tied to the F0128-to-F0097 present boundary.",

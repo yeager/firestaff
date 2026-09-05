@@ -4,11 +4,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 DATA_DIR="${FIRESTAFF_DATA:-$HOME/.firestaff/data}"
+DM1_PC34_ARCHIVE="${FIRESTAFF_DM1_PC34_ARCHIVE:-$DATA_DIR/dm1/Dungeon-Master_DOS_EN_Version-34.zip}"
 CAPTURE_BIN="$BUILD_DIR/capture_ingame_series"
-OUT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-ingame-capture.XXXXXX")"
+OUT_DIR="${FIRESTAFF_CAPTURE_WORK_DIR:-$BUILD_DIR/firestaff-ingame-capture-$$}"
+mkdir -p "$OUT_DIR"
 
 cleanup() {
-  rm -rf "$OUT_DIR"
+  find "$OUT_DIR" -depth -delete
 }
 trap cleanup EXIT
 
@@ -31,8 +33,19 @@ if [[ ! -d "$DATA_DIR" ]]; then
   exit 1
 fi
 
-"$CAPTURE_BIN" "$OUT_DIR" "$DATA_DIR" >/tmp/firestaff-ingame-capture-smoke.log 2>&1 || {
-  cat /tmp/firestaff-ingame-capture-smoke.log >&2
+# This capture asserts the PC 3.4 VGA palette and G0498 action-icon rewrite.
+# A shared data root can legitimately contain Atari, Amiga and FM Towns media
+# that the scanner discovers first, so it is not a valid owner for this
+# PC-specific visual contract.  Bind the real selected archive directly; the
+# capture binary reads its members in memory and never extracts it.
+if [[ ! -f "$DM1_PC34_ARCHIVE" ]]; then
+  echo "authentic DM1 PC 3.4 archive not found: $DM1_PC34_ARCHIVE" >&2
+  exit 77
+fi
+
+CAPTURE_LOG="$OUT_DIR/firestaff-ingame-capture-smoke.log"
+"$CAPTURE_BIN" "$OUT_DIR" "$DM1_PC34_ARCHIVE" >"$CAPTURE_LOG" 2>&1 || {
+  cat "$CAPTURE_LOG" >&2
   exit 1
 }
 
@@ -168,15 +181,17 @@ if inv_dark_gray < 180:
         f"inventory fixture dagger icon did not preserve source dark gray: {inv_dark_gray}/256"
     )
 
-# After the scripted first rune input, normal V1 should keep spell feedback
-# inside the DM1 right-column spell area, not Firestaff's old modal viewport
-# workbench.  The selected source C011 rune-label cell currently appears in
-# the top-right spell-panel strip at x=248..261, y=43..55 and keeps the native
-# brown/red pattern.
+# After the scripted first rune input, normal V1 must keep spell feedback in
+# the DM1 right-column spell area, not Firestaff's old modal viewport
+# workbench.  CASTER.C F0394 places C011's selected-symbol source row at
+# x=224..319, y=62..73; the first entered rune occupies its first 14x12 cell
+# (x=224..237, y=62..73).  C009's smaller x=233..319 background is not the
+# C011 placement box, and asserting against it hid a real source-faithful
+# frame behind a stale host-UI coordinate.
 dm_brown = (219, 146, 109)
 dm_red = (255, 0, 0)
-selected_brown = count_rgb(spell_pixels, spell_w, 248, 43, 262, 56, dm_brown)
-selected_red = count_rgb(spell_pixels, spell_w, 248, 43, 262, 56, dm_red)
+selected_brown = count_rgb(spell_pixels, spell_w, 224, 62, 238, 74, dm_brown)
+selected_red = count_rgb(spell_pixels, spell_w, 224, 62, 238, 74, dm_red)
 if selected_brown < 40 or selected_red < 20:
     raise SystemExit(
         "spell fixture did not show right-column native C011 selected-rune cell "

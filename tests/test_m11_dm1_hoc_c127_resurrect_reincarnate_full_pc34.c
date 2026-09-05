@@ -11,6 +11,7 @@
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_movement_pc34_compat.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -147,6 +148,79 @@ static int find_two_mirrors(const M11_GameViewState* state,
         }
     }
     return 0;
+}
+
+/* Derive, then replay, a route from the retail PC34 launch tuple.  BFS uses
+ * F0702 against the loaded DUNGEON.DAT; replay uses only the public M11 input
+ * owner, so no test teleport can conceal a production movement failure. */
+static int drive_from_pc34_launch_to_mirror(M11_GameViewState* state,
+                                            const HocMirrorPosePc34* target,
+                                            unsigned char* framebuffer) {
+    enum { MAX_NODES = 32 * 32 * 4, MAX_ROUTE = MAX_NODES };
+    static const int moves[6] = { MOVE_FORWARD, MOVE_RIGHT, MOVE_BACKWARD,
+                                  MOVE_LEFT, MOVE_TURN_RIGHT, MOVE_TURN_LEFT };
+    static const M12_MenuInput inputs[6] = {
+        M12_MENU_INPUT_UP, M12_MENU_INPUT_STRAFE_RIGHT, M12_MENU_INPUT_DOWN,
+        M12_MENU_INPUT_STRAFE_LEFT, M12_MENU_INPUT_TURN_RIGHT,
+        M12_MENU_INPUT_TURN_LEFT };
+    int queue[MAX_NODES], prev[MAX_NODES], via[MAX_NODES], route[MAX_ROUTE];
+    const struct DungeonMapDesc_Compat* map;
+    int width, height, head = 0, tail = 0, goal = -1, routeCount = 0, node;
+    if (!state || !target || !state->world.dungeon || !framebuffer) return 0;
+    map = &state->world.dungeon->maps[0]; width = map->width; height = map->height;
+    if (width > 32 || height > 32) return 0;
+    for (node = 0; node < MAX_NODES; ++node) { prev[node] = -2; via[node] = -1; }
+#define NODE_ID(px, py, pd) ((((py) * width + (px)) << 2) | ((pd) & 3))
+    node = NODE_ID(1, 3, DIR_SOUTH); prev[node] = -1; queue[tail++] = node;
+    while (head < tail) {
+        struct PartyState_Compat party = state->world.party;
+        int x, y, d, mi;
+        node = queue[head++]; d = node & 3; x = (node >> 2) % width;
+        y = (node >> 2) / width;
+        if (x == target->x && y == target->y && d == target->direction) {
+            goal = node; break;
+        }
+        party.mapIndex = 0; party.mapX = x; party.mapY = y; party.direction = d;
+        for (mi = 0; mi < 6; ++mi) {
+            struct MovementResult_Compat mr;
+            int next;
+            if (!F0702_MOVEMENT_TryMove_Compat(state->world.dungeon, &party,
+                                                moves[mi], &mr)) continue;
+            if (mr.newMapIndex != 0 || mr.newMapX < 0 || mr.newMapY < 0 ||
+                mr.newMapX >= width || mr.newMapY >= height) continue;
+            next = NODE_ID(mr.newMapX, mr.newMapY, mr.newDirection);
+            if (prev[next] != -2) continue;
+            prev[next] = node; via[next] = mi; queue[tail++] = next;
+        }
+    }
+    if (goal < 0) return 0;
+    while (prev[goal] >= 0 && routeCount < MAX_ROUTE) {
+        route[routeCount++] = via[goal]; goal = prev[goal];
+    }
+    state->world.party.mapIndex = 0; state->world.party.mapX = 1;
+    state->world.party.mapY = 3; state->world.party.direction = DIR_SOUTH;
+    DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
+    while (routeCount > 0) {
+        int expectedAction = route[--routeCount];
+        struct PartyState_Compat before = state->world.party;
+        int ticks;
+        (void)M11_GameView_HandleInput(state, inputs[expectedAction]);
+        for (ticks = 0; ticks < 8 &&
+             state->world.party.mapX == before.mapX &&
+             state->world.party.mapY == before.mapY &&
+             state->world.party.direction == before.direction; ++ticks) {
+            (void)M11_GameView_AdvanceIdleTick(state);
+        }
+        if (state->world.party.mapX == before.mapX &&
+            state->world.party.mapY == before.mapY &&
+            state->world.party.direction == before.direction) return 0;
+        M11_GameView_Draw(state, framebuffer, kFramebufferWidth,
+                          kFramebufferHeight);
+    }
+#undef NODE_ID
+    return state->world.party.mapX == target->x &&
+           state->world.party.mapY == target->y &&
+           state->world.party.direction == target->direction;
 }
 
 /* Walk the original map-0 thing chains instead of maintaining a coordinate
@@ -508,11 +582,23 @@ int main(void) {
           "every source-owned HoC C127 candidate should reach F0280 by pointer");
     if (failures) goto done_state;
 
-    draw_at(&state, &mirrorA, framebuffer);
+    CHECK(drive_from_pc34_launch_to_mirror(&state, &mirrorA, framebuffer),
+          "real collision/input route should reach mirror A from PC34 launch");
     CHECK(M11_GameView_GetFrontMirrorOrdinal(&state) == mirrorA.ordinal,
           "front mirror A ordinal should come from source sensorData");
-    CHECK(M11_GameView_SelectFrontMirrorCandidate(&state) == 1,
-          "mirror A C127 should open the live candidate panel");
+    {
+        M11_Dm1HoCMirrorHostPresentationReceipt presented;
+        memset(&presented, 0, sizeof(presented));
+        M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(&presented);
+        CHECK(presented.valid && presented.portraitWidth > 0 &&
+              presented.portraitHeight > 0 &&
+              M11_GameView_HandlePointerButton(
+                  &state,
+                  presented.portraitDestinationX + presented.portraitWidth / 2,
+                  presented.portraitDestinationY + presented.portraitHeight / 2,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW,
+              "rendered C026 rectangle should open live C040 through pointer input");
+    }
     candidateA = state.candidateMirrorPartyIndex;
     CHECK(state.candidateMirrorPanelActive == 1 &&
           state.candidateMirrorOrdinal == mirrorA.ordinal &&
@@ -523,8 +609,10 @@ int main(void) {
     (void)expect_recruited_portrait_matches_c026(
         &state, candidateA, mirrorA.ordinal,
         "mirror A candidate should receive C026 portrait bytes");
-    CHECK(M11_GameView_ConfirmMirrorCandidate(&state, 0) == 1,
-          "C160 should resurrect mirror A into the party");
+    CHECK(M11_GameView_HandlePointerButton(&state, 130, 114,
+                                           DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+              M11_GAME_INPUT_REDRAW,
+          "C160 pointer command should resurrect mirror A into the party");
     CHECK(state.candidateMirrorPanelActive == 0 &&
           state.candidateMirrorOrdinal == -1 &&
           state.world.party.championCount == 1 &&

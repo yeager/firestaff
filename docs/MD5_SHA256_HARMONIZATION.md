@@ -13,7 +13,7 @@ Firestaff identifies game data files by hash in two independent places:
 
    These drive the M12 launcher's "which DM version is this?" prompt
    and runtime version detection (DM1 PC 3.4 EN vs ML vs Atari 1.2,
-   CSB PC 3.4 vs Atari ST 2.0/2.1 vs Amiga 3.5, etc.). MD5 is small
+   CSB Atari ST 2.0/2.1 vs Amiga 3.1/3.5 vs FM Towns, etc.). MD5 is small
    enough to inline as 32-char strings and fast enough to compute
    during filesystem scans.
 

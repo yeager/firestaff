@@ -32,6 +32,18 @@ int M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]) {
     return 1;
 }
 
+int M11_Render_CopyIndexedPaletteRgb8(uint8_t out_rgb8[256][3]) {
+    if (!s_indexed_palette_active || !out_rgb8) return 0;
+    memset(out_rgb8, 0, 256 * 3);
+    out_rgb8[3][0] = 255;
+    out_rgb8[3][1] = 125;
+    out_rgb8[3][2] = 0;
+    out_rgb8[0x83][0] = 28;
+    out_rgb8[0x83][1] = 190;
+    out_rgb8[0x83][2] = 255;
+    return 1;
+}
+
 const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight) {
     if (outWidth) *outWidth = 0;
     if (outHeight) *outHeight = 0;
@@ -39,7 +51,7 @@ const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight) 
 }
 
 int main(void) {
-    char root[] = "/tmp/firestaff-screenshot-delivery-XXXXXX";
+    char root[] = "/dev/shm/firestaff-screenshot-delivery-XXXXXX";
     char outputDir[1024];
     char first[1280];
     char second[1280];

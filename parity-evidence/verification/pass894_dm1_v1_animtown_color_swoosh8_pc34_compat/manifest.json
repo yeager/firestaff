@@ -10,7 +10,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:422",
       "line": 422,
       "lineText": "unsigned char G4013_auc_PaletteChanges_CursorMask[16] = { 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 0, 15, 15, 15 };",
@@ -18,7 +18,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2151",
       "line": 2151,
       "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(L0051_puc_Bitmap, L0051_puc_Bitmap + M075_BITMAP_BYTE_COUNT(32, 18), 32, 18, 32, 18, G4013_auc_PaletteChanges_CursorMask);",
@@ -26,7 +26,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2453",
       "line": 2453,
       "lineText": "                F0129_VIDEO_BlitShrinkWithPaletteChanges(L0056_puc_Bitmap, L0056_puc_Bitmap + M075_BITMAP_BYTE_COUNT(32, 18), 32, 16, 32, 16, G4013_auc_PaletteChanges_CursorMask);",
@@ -34,7 +34,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass894_dm1_v1_animtown_color_swoosh8_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [
@@ -70,11 +70,11 @@
     }
   ],
   "status": "PASS894_DM1_V1_ANIMTOWN_COLOR_SWOOSH8_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:49.704706+00:00",
+  "timestampUtc": "2026-09-04T18:35:08.713779+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_animtown_color_swoosh8_pc34_compat"
+        "/dev/shm/current/test_dm1_v1_animtown_color_swoosh8_pc34_compat"
       ],
       "outputTail": "dm1_v1_animtown_color_swoosh8: 83/83 assertions passed",
       "passed": true,

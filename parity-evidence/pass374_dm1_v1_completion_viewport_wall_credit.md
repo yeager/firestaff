@@ -1,6 +1,6 @@
 # Pass374 — DM1 V1 viewport/wall completion credit
 
-Status: `BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT`
+Status: `PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED`
 
 ## ReDMCSB source audit first
 
@@ -14,7 +14,7 @@ Status: `BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT`
 
 ## Landable update
 
-This pass credits pass373 in the conservative completion matrix: DM1 V1 moves from `55/100` to `56/100`; `viewport_ui_render` moves from `10/20` to `11/20`.
+This pass verifies that the conservative completion matrix still credits the current pass373 launcher-to-movement-to-F0128 callback redraw proof. It does not manufacture or increment a score.
 
 The credit is narrow: live Firestaff launcher movement now reaches the source-locked wall/door/occlusion redraw stack. It does not claim pixel parity or original overlay regression.
 
@@ -27,10 +27,10 @@ The credit is narrow: live Firestaff launcher movement now reaches the source-lo
 - `redmcsb_source_lock` ok=True
 - `redmcsb_source_lock` ok=True
 - `redmcsb_source_lock` ok=True
-- `pass373_prerequisite` ok=False
+- `pass373_prerequisite` ok=True
 - `completion_matrix_credit` ok=True
 - `completion_doc_credit` ok=True
-- `firestaff_completion_matrix_verifier` ok=True
+- `completion_matrix_global_advisory` ok=True
 - `firestaff_completion_status_cli` ok=True
 
 Manifest: `parity-evidence/verification/pass374_dm1_v1_completion_viewport_wall_credit/manifest.json`

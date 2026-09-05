@@ -11,4 +11,4 @@
 - IO.C:2433
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_champion_icons_pc34_compat`: rc=0
+- `/dev/shm/current/test_dm1_v1_box_champion_icons_pc34_compat`: rc=0

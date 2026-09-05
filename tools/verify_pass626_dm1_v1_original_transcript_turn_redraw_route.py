@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 PASS = "pass626_dm1_v1_original_transcript_turn_redraw_route"
 STATUS = "PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
@@ -233,7 +233,7 @@ def main() -> int:
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "status": status,
         "ok": not problems,
-        "sourceRoot": str(RED),
+        "sourceRoot": str(RED.relative_to(ROOT)),
         "sourceAudit": source,
         "targetRowAudit": target,
         "requiredCaptureEvents": REQUIRED_CAPTURE_EVENTS,

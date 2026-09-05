@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,7 +27,7 @@ SCAFFOLD = EVIDENCE_DIR / "pass513_i34e_route_key_transcript_scaffold.json"
 REPORT = ROOT / "parity-evidence/pass1055_dm1_v1_original_closed_door_collision_gate.md"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
-PROBE = ROOT / "build/firestaff_dm1_v1_pass1055_closed_door_pair_probe"
+PROBE_NAME = "firestaff_dm1_v1_pass1055_closed_door_pair_probe"
 
 RAW_START_SHA = "40c678403d8f772822c1301bafa373adb0862915a8239d2bdb15f71fccf4b750"
 RAW_CLOSED_SHA = "a0d3a9cdbddc310e3ef195c9c7719508a5141fbd66e1acb6a8dbe4b14ebc0dd6"
@@ -62,9 +63,16 @@ def parse_tsv(path: Path) -> list[dict[str, str]]:
 
 
 def run_probe() -> dict[str, Any]:
-    if not PROBE.exists():
+    configured = os.environ.get("FIRESTAFF_BUILD_DIR") or os.environ.get("BUILD_DIR")
+    candidates = [Path(configured) / PROBE_NAME] if configured else []
+    candidates += [
+        ROOT / "build" / PROBE_NAME,
+        ROOT / "build-dm1-csb-native" / PROBE_NAME,
+    ]
+    probe = next((candidate for candidate in candidates if candidate.is_file()), candidates[0])
+    if not probe.exists():
         return {"exists": False, "ok": False, "returncode": None, "stdout": "", "stderr": "probe executable missing"}
-    proc = subprocess.run([str(PROBE)], cwd=ROOT, text=True, capture_output=True, check=False)
+    proc = subprocess.run([str(probe)], cwd=ROOT, text=True, capture_output=True, check=False)
     stdout = proc.stdout
     ok = (
         proc.returncode == 0
@@ -74,6 +82,7 @@ def run_probe() -> dict[str, Any]:
     )
     return {
         "exists": True,
+        "path": str(probe.relative_to(ROOT)),
         "ok": ok,
         "returncode": proc.returncode,
         "stdout": stdout,

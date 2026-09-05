@@ -106,6 +106,7 @@ typedef struct {
     int v2_motion_blur_strength;    /* 0..100 percent of previous frame */
     int v2_movement_active;
     int v2_presentation_active;
+    int modern_presentation_active;
 
     /* DM1 V2 Phase 5 smooth movement camera offset (pixels in 320x200 logical space).
      * These are the presentation-layer interpolation deltas produced by
@@ -620,36 +621,56 @@ static void m11_framebuffer_to_rgba_resampled(const unsigned char* src,
     unsigned char* dst = g_state.presentBuffer;
     const int globalLevel = g_state.paletteLevel;
     const int useV2Palette = (g_state.v2_palette_enabled && g_state.v2_palette_lut_built);
+    int xAdvance;
+    int xRemainder;
+    int yAdvance;
+    int yRemainder;
+    int srcY = 0;
+    int yError = 0;
+    unsigned char rgbaLut[256][4];
+    int lutIndex;
     int y;
     if (!dst || !src ||
         logicalWidth <= 0 || logicalHeight <= 0 ||
         targetWidth <= 0 || targetHeight <= 0) {
         return;
     }
+    xAdvance = logicalWidth / targetWidth;
+    xRemainder = logicalWidth % targetWidth;
+    yAdvance = logicalHeight / targetHeight;
+    yRemainder = logicalHeight % targetHeight;
+    for (lutIndex = 0; lutIndex < 256; ++lutIndex) {
+        int level = globalLevel;
+        const unsigned char* rgb;
+        (void)useV2Palette;
+        rgb = m11_palette_rgb_for_pixel((unsigned char)lutIndex, &level);
+        rgbaLut[lutIndex][0] = rgb[0];
+        rgbaLut[lutIndex][1] = rgb[1];
+        rgbaLut[lutIndex][2] = rgb[2];
+        rgbaLut[lutIndex][3] = 0xffu;
+    }
     for (y = 0; y < targetHeight; ++y) {
+        const unsigned char* srcRow = src + (size_t)srcY * (size_t)logicalWidth;
+        unsigned char* dstRow = dst + (size_t)y * (size_t)targetWidth * 4u;
+        int srcX = 0;
+        int xError = 0;
         int x;
-        int srcY = (y * logicalHeight) / targetHeight;
-        if (srcY >= logicalHeight) {
-            srcY = logicalHeight - 1;
-        }
         for (x = 0; x < targetWidth; ++x) {
-            int srcX = (x * logicalWidth) / targetWidth;
-            unsigned char raw;
-            int level;
-            const unsigned char* rgb;
-            unsigned char* px;
-            if (srcX >= logicalWidth) {
-                srcX = logicalWidth - 1;
+            unsigned char raw = srcRow[srcX];
+            unsigned char* px = dstRow + (size_t)x * 4u;
+            memcpy(px, rgbaLut[raw], 4u);
+            srcX += xAdvance;
+            xError += xRemainder;
+            if (xError >= targetWidth) {
+                ++srcX;
+                xError -= targetWidth;
             }
-            raw = src[srcY * logicalWidth + srcX];
-            level = globalLevel;
-            (void)useV2Palette;
-            rgb = m11_palette_rgb_for_pixel(raw, &level);
-            px = dst + ((y * targetWidth + x) * 4);
-            px[0] = rgb[0];
-            px[1] = rgb[1];
-            px[2] = rgb[2];
-            px[3] = 0xFF;
+        }
+        srcY += yAdvance;
+        yError += yRemainder;
+        if (yError >= targetHeight) {
+            ++srcY;
+            yError -= targetHeight;
         }
     }
 }
@@ -673,70 +694,37 @@ static void m11_apply_v2_filters_indexed_pre(unsigned char* fb,
     }
 }
 
-/* Phosphor persistence: bright pixels from the previous frame bleed
- * through using max(current, previous * decay).  Operates on the RGBA
- * present buffer at logical resolution. */
-static void m11_apply_phosphor_persistence(int w, int h) {
+/* Apply both temporal effects and publish their next-frame history in one
+ * traversal.  The previous implementation made one full-resolution pass for
+ * motion blur, another for phosphor and a third memcpy for the snapshot.  At
+ * a 4K Modern target that needlessly touched almost 100 MiB per frame.
+ *
+ * Ordering is unchanged: motion uses the unmodified previous pixel, phosphor
+ * then compares against that same previous pixel, and only the final result is
+ * stored as next frame's history.  We still snapshot idle frames whenever a
+ * temporal effect is enabled, so the first movement frame blends with the
+ * immediately preceding presented frame rather than stale history. */
+static void m11_apply_temporal_filters_and_snapshot(int w, int h) {
     unsigned char* cur;
     unsigned char* prev;
     int pixelCount;
     int i;
-    int decayNum;
-    if (!g_state.v2_phosphor_enabled || g_state.v2_phosphor_decay <= 0) {
-        return;
-    }
+    int motionStrength = g_state.v2_motion_blur_strength;
+    int phosphorDecay = g_state.v2_phosphor_decay;
+    int applyMotion;
+    int applyPhosphor;
+    if (!g_state.v2_phosphor_enabled && !g_state.v2_motion_blur_enabled) return;
     cur = g_state.presentBuffer;
-    if (!cur) {
-        return;
-    }
-    if (m11_ensure_prev_frame_buffer(w, h) != 0) {
-        return;
-    }
+    if (!cur || m11_ensure_prev_frame_buffer(w, h) != 0) return;
     prev = g_state.previousFrameBuffer;
     pixelCount = w * h;
-    decayNum = g_state.v2_phosphor_decay;
-    if (decayNum > 100) decayNum = 100;
-    for (i = 0; i < pixelCount; ++i) {
-        int o = i * 4;
-        int pr = (prev[o + 0] * decayNum) / 100;
-        int pg = (prev[o + 1] * decayNum) / 100;
-        int pb = (prev[o + 2] * decayNum) / 100;
-        int cr = cur[o + 0];
-        int cg = cur[o + 1];
-        int cb = cur[o + 2];
-        cur[o + 0] = (unsigned char)(pr > cr ? pr : cr);
-        cur[o + 1] = (unsigned char)(pg > cg ? pg : cg);
-        cur[o + 2] = (unsigned char)(pb > cb ? pb : cb);
-        /* alpha unchanged */
-    }
-}
-
-/* Motion blur during active movement: output = current * (1-s) +
- * previous * s, applied only when v2_movement_active is set.  Reuses
- * the same previousFrameBuffer as the phosphor effect. */
-static void m11_apply_motion_blur(int w, int h) {
-    unsigned char* cur;
-    unsigned char* prev;
-    int pixelCount;
-    int i;
-    int s;
-    if (!g_state.v2_motion_blur_enabled || g_state.v2_motion_blur_strength <= 0) {
-        return;
-    }
-    if (!g_state.v2_movement_active) {
-        return;
-    }
-    cur = g_state.presentBuffer;
-    if (!cur) {
-        return;
-    }
-    if (m11_ensure_prev_frame_buffer(w, h) != 0) {
-        return;
-    }
-    prev = g_state.previousFrameBuffer;
-    pixelCount = w * h;
-    s = g_state.v2_motion_blur_strength;
-    if (s > 100) s = 100;
+    if (motionStrength < 0) motionStrength = 0;
+    if (motionStrength > 100) motionStrength = 100;
+    if (phosphorDecay < 0) phosphorDecay = 0;
+    if (phosphorDecay > 100) phosphorDecay = 100;
+    applyMotion = g_state.v2_motion_blur_enabled &&
+                  g_state.v2_movement_active && motionStrength > 0;
+    applyPhosphor = g_state.v2_phosphor_enabled && phosphorDecay > 0;
     for (i = 0; i < pixelCount; ++i) {
         int o = i * 4;
         int cr = cur[o + 0];
@@ -745,30 +733,27 @@ static void m11_apply_motion_blur(int w, int h) {
         int pr = prev[o + 0];
         int pg = prev[o + 1];
         int pb = prev[o + 2];
-        int outR = (cr * (100 - s) + pr * s) / 100;
-        int outG = (cg * (100 - s) + pg * s) / 100;
-        int outB = (cb * (100 - s) + pb * s) / 100;
-        cur[o + 0] = (unsigned char)outR;
-        cur[o + 1] = (unsigned char)outG;
-        cur[o + 2] = (unsigned char)outB;
+        int outR = cr;
+        int outG = cg;
+        int outB = cb;
+        if (applyMotion) {
+            outR = (cr * (100 - motionStrength) + pr * motionStrength) / 100;
+            outG = (cg * (100 - motionStrength) + pg * motionStrength) / 100;
+            outB = (cb * (100 - motionStrength) + pb * motionStrength) / 100;
+        }
+        if (applyPhosphor) {
+            int persistedR = (pr * phosphorDecay) / 100;
+            int persistedG = (pg * phosphorDecay) / 100;
+            int persistedB = (pb * phosphorDecay) / 100;
+            if (persistedR > outR) outR = persistedR;
+            if (persistedG > outG) outG = persistedG;
+            if (persistedB > outB) outB = persistedB;
+        }
+        cur[o + 0] = prev[o + 0] = (unsigned char)outR;
+        cur[o + 1] = prev[o + 1] = (unsigned char)outG;
+        cur[o + 2] = prev[o + 2] = (unsigned char)outB;
+        prev[o + 3] = cur[o + 3];
     }
-}
-
-/* Snapshot the current present buffer into previousFrameBuffer so the
- * next frame can read it.  Called once per present, after all RGBA
- * filters but before the SDL upload. */
-static void m11_snapshot_prev_frame(int w, int h) {
-    if (!g_state.v2_phosphor_enabled && !g_state.v2_motion_blur_enabled) {
-        return;
-    }
-    if (!g_state.presentBuffer) {
-        return;
-    }
-    if (m11_ensure_prev_frame_buffer(w, h) != 0) {
-        return;
-    }
-    memcpy(g_state.previousFrameBuffer, g_state.presentBuffer,
-           (size_t)w * (size_t)h * 4U);
 }
 
 static void m11_apply_v2_filters_rgba_post(int w, int h) {
@@ -796,9 +781,7 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
             && M11_ColorPreset_IsValid(g_state.v2_color_preset)) {
         M11_ColorPreset_ApplyRGBA(g_state.v2_color_preset, rgba, w, h);
     }
-    m11_apply_motion_blur(w, h);
-    m11_apply_phosphor_persistence(w, h);
-    m11_snapshot_prev_frame(w, h);
+    m11_apply_temporal_filters_and_snapshot(w, h);
     /* Movement flag is one-shot per present so the gameplay code does
      * not need to clear it after every tick. */
     g_state.v2_movement_active = 0;
@@ -979,36 +962,57 @@ static void m11_framebuffer_to_rgba_special_resampled(const unsigned char* src,
                                                       int targetHeight,
                                                       int specialPalette) {
     unsigned char* dst = g_state.presentBuffer;
+    int xAdvance;
+    int xRemainder;
+    int yAdvance;
+    int yRemainder;
+    int srcY = 0;
+    int yError = 0;
+    unsigned char rgbaLut[16][4];
+    int lutIndex;
     int y;
     if (!dst || !src ||
         logicalWidth <= 0 || logicalHeight <= 0 ||
         targetWidth <= 0 || targetHeight <= 0) {
         return;
     }
-    for (y = 0; y < targetHeight; ++y) {
-        int x;
-        int srcY = (y * logicalHeight) / targetHeight;
-        if (srcY >= logicalHeight) {
-            srcY = logicalHeight - 1;
+    xAdvance = logicalWidth / targetWidth;
+    xRemainder = logicalWidth % targetWidth;
+    yAdvance = logicalHeight / targetHeight;
+    yRemainder = logicalHeight % targetHeight;
+    for (lutIndex = 0; lutIndex < 16; ++lutIndex) {
+        const unsigned char* rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            (unsigned int)lutIndex, (unsigned int)specialPalette);
+        if (!rgb) {
+            rgb = G9010_auc_VgaPaletteAll_Compat[g_state.paletteLevel][lutIndex];
         }
+        rgbaLut[lutIndex][0] = rgb[0];
+        rgbaLut[lutIndex][1] = rgb[1];
+        rgbaLut[lutIndex][2] = rgb[2];
+        rgbaLut[lutIndex][3] = 0xffu;
+    }
+    for (y = 0; y < targetHeight; ++y) {
+        const unsigned char* srcRow = src + (size_t)srcY * (size_t)logicalWidth;
+        unsigned char* dstRow = dst + (size_t)y * (size_t)targetWidth * 4u;
+        int srcX = 0;
+        int xError = 0;
+        int x;
         for (x = 0; x < targetWidth; ++x) {
-            int srcX = (x * logicalWidth) / targetWidth;
-            unsigned char idx;
-            const unsigned char* rgb;
-            unsigned char* px;
-            if (srcX >= logicalWidth) {
-                srcX = logicalWidth - 1;
+            unsigned char idx = srcRow[srcX] & M11_FB_INDEX_MASK;
+            unsigned char* px = dstRow + (size_t)x * 4u;
+            memcpy(px, rgbaLut[idx], 4u);
+            srcX += xAdvance;
+            xError += xRemainder;
+            if (xError >= targetWidth) {
+                ++srcX;
+                xError -= targetWidth;
             }
-            idx = src[srcY * logicalWidth + srcX] & M11_FB_INDEX_MASK;
-            rgb = F9011_VGA_GetSpecialColorRgb_Compat(idx, (unsigned int)specialPalette);
-            if (!rgb) {
-                rgb = G9010_auc_VgaPaletteAll_Compat[g_state.paletteLevel][idx];
-            }
-            px = dst + ((y * targetWidth + x) * 4);
-            px[0] = rgb[0];
-            px[1] = rgb[1];
-            px[2] = rgb[2];
-            px[3] = 0xFF;
+        }
+        srcY += yAdvance;
+        yError += yRemainder;
+        if (yError >= targetHeight) {
+            ++srcY;
+            yError -= targetHeight;
         }
     }
 }
@@ -1278,6 +1282,47 @@ int M11_Render_SetIndexedPaletteRgb6(const uint8_t rgb6[256][3]) {
     return M11_RENDER_OK;
 }
 
+int M11_Render_SetIndexedPaletteRgb8(const uint8_t rgb8[256][3]) {
+    int color;
+    int channel;
+
+    if (!rgb8) return M11_RENDER_ERR_INVALID_ARG;
+    memcpy(g_state.indexed_palette_rgb8, rgb8,
+           sizeof(g_state.indexed_palette_rgb8));
+    /* Retain the corresponding VGA-DAC receipt for existing diagnostics,
+     * but never reconstruct the presented value from that lossy copy. */
+    for (color = 0; color < 256; ++color) {
+        for (channel = 0; channel < 3; ++channel) {
+            g_state.indexed_palette_rgb6[color][channel] =
+                (uint8_t)(rgb8[color][channel] >> 2u);
+        }
+    }
+    g_state.indexed_palette_rgb6_active = 1;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_SetIndexedPaletteRgb4(const uint8_t rgb4[256][3]) {
+    int color;
+    int channel;
+
+    if (!rgb4) return M11_RENDER_ERR_INVALID_ARG;
+    /* Amiga color registers are 0x0RGB.  Expanding them through the VGA
+     * six-bit setter used to turn 0xf into 0xf3 and 0x8 into 0x82.  Keep a
+     * compatible six-bit receipt for diagnostics, but derive presented
+     * pixels directly from the authentic four-bit register value. */
+    for (color = 0; color < 256; ++color) {
+        for (channel = 0; channel < 3; ++channel) {
+            const uint8_t value = (uint8_t)(rgb4[color][channel] & 0x0fu);
+            g_state.indexed_palette_rgb6[color][channel] =
+                (uint8_t)(value << 2);
+            g_state.indexed_palette_rgb8[color][channel] =
+                (uint8_t)((value << 4) | value);
+        }
+    }
+    g_state.indexed_palette_rgb6_active = 1;
+    return M11_RENDER_OK;
+}
+
 void M11_Render_ClearIndexedPaletteRgb6(void) {
     g_state.indexed_palette_rgb6_active = 0;
     memset(g_state.indexed_palette_rgb6, 0,
@@ -1290,6 +1335,13 @@ int M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]) {
     if (!out_rgb6 || !g_state.indexed_palette_rgb6_active) return 0;
     memcpy(out_rgb6, g_state.indexed_palette_rgb6,
            sizeof(g_state.indexed_palette_rgb6));
+    return 1;
+}
+
+int M11_Render_CopyIndexedPaletteRgb8(uint8_t out_rgb8[256][3]) {
+    if (!out_rgb8 || !g_state.indexed_palette_rgb6_active) return 0;
+    memcpy(out_rgb8, g_state.indexed_palette_rgb8,
+           sizeof(g_state.indexed_palette_rgb8));
     return 1;
 }
 
@@ -1352,7 +1404,15 @@ int M11_Render_PresentScaledIndexed(const unsigned char* framebuffer,
      * Retina/non-integer drawable.  Build that final nearest image on the
      * CPU so Metal/SDL cannot soften inscription strokes during the last
      * presentation stretch. */
-    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+    /* V1 is deliberately CPU-nearest-scaled to protect its original pixel
+     * grid on HiDPI backends.  Doing that in Modern turns a Retina drawable
+     * into the post-process working surface (often several million pixels),
+     * which makes every enabled filter run at display resolution and also
+     * erases the user-selected internal-resolution boundary.  Modern keeps
+     * its selected texture size and lets the GPU perform the final nearest
+     * or linear presentation. */
+    if (!g_state.modern_presentation_active &&
+        g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
         destW > 0 && destH > 0 &&
         (destW != scaledWidth || destH != scaledHeight)) {
         uploadW = destW;
@@ -1505,7 +1565,8 @@ int M11_Render_PresentIndexedToResolution(const unsigned char* framebuffer,
      * current drawable, CPU-resample to the exact destination size and render
      * 1:1. This keeps ReDMCSB's hard 8x8 wall-inscription glyphs readable on
      * HiDPI/non-integer window sizes that use the explicit-resolution path. */
-    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+    if (!g_state.modern_presentation_active &&
+        g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
         destW > 0 && destH > 0 &&
         (destW != targetWidth || destH != targetHeight)) {
         uploadW = destW;
@@ -1650,7 +1711,8 @@ int M11_Render_PresentIndexedToResolutionWithSpecialPalette(
     m11_compute_present_rect(&destX, &destY, &destW, &destH);
     uploadW = targetWidth;
     uploadH = targetHeight;
-    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+    if (!g_state.modern_presentation_active &&
+        g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
         destW > 0 && destH > 0 &&
         (destW != targetWidth || destH != targetHeight)) {
         uploadW = destW;
@@ -1779,7 +1841,8 @@ int M11_Render_PresentIndexed(const unsigned char* framebuffer,
      * stretching it to the drawable.  For plain nearest presentations with no
      * active V2 post-processing, build the stretched RGBA frame ourselves with
      * integer nearest sampling, then ask SDL to render that texture 1:1. */
-    if (g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
+    if (!g_state.modern_presentation_active &&
+        g_state.scaleFilter == M11_SCALE_FILTER_NEAREST &&
         destW > 0 && destH > 0 &&
         (destW != logicalWidth || destH != logicalHeight)) {
         uploadW = destW;
@@ -2965,4 +3028,8 @@ int M11_Render_GetMovementActive(void) {
 
 void M11_Render_SetV2PresentationActive(int active) {
     g_state.v2_presentation_active = active ? 1 : 0;
+}
+
+void M11_Render_SetModernPresentationActive(int active) {
+    g_state.modern_presentation_active = active ? 1 : 0;
 }

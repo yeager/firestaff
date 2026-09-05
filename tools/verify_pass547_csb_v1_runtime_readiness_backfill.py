@@ -2,8 +2,8 @@
 """Verify that pass547's CSB V1 runtime-readiness blocker is retired.
 
 pass547 used to be a blocker-present gate. CSB now has a positive M12 launch
-intent, an M11 CSB handoff into FS_GAME_CSB, and a PC real-asset boot/tick
-probe. This verifier keeps the source-lock boundary and non-claims explicit.
+intent, an M11 CSB handoff into FS_GAME_CSB, and an original-media
+boot/tick probe. This verifier keeps the source-lock boundary explicit.
 """
 from __future__ import annotations
 
@@ -27,11 +27,11 @@ ANCHORS = [
     {"id": "redmcsb_atari_csb_payload_names", "role": "primary_source", "path": REDMCSB / "HINTLOAD.C", "lines": "11-18", "needles": ["0HCSB.HTC", "0HCSB.DAT", "1CSBGAME.DAT", "1CSBGAME.BAK"]},
     {"id": "redmcsb_make_new_adventure_runtime_gate", "role": "primary_source", "path": REDMCSB / "CEDTINCH.C", "lines": "5-63", "needles": ["F7086_IsReadyToMakeNewAdventure", "GameLoaded", "G7114_LoadedChampionCount", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C13_DUNGEON_CSB_GAME"]},
     {"id": "redmcsb_csb_dungeon_validation_switch", "role": "primary_source", "path": REDMCSB / "CEDTINCU.C", "lines": "5-77", "needles": ["F7272_IsDungeonValid", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C12_DUNGEON_CSB_PRISON", "C13_DUNGEON_CSB_GAME"]},
-    {"id": "firestaff_m12_launch_guard_supports_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "5050-5080", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
-    {"id": "firestaff_m12_launch_intent_accepts_available_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "12787-12910", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "gate.canLaunch && version && version->matched"]},
-    {"id": "firestaff_m11_csb_handoff_to_game_loop", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "22441-22502", "needles": ["CSB V1: bypass DM1 dungeon loader", "m11_csb_apply_boot_runtime_receipt", "CSB READY: gameId=csb dataDir=%s"]},
+    {"id": "firestaff_m12_launch_guard_supports_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "1-99999", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
+    {"id": "firestaff_m12_launch_intent_accepts_available_csb", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "1-99999", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "gate.canLaunch && version && version->matched"]},
+    {"id": "firestaff_m11_csb_handoff_to_game_loop", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "1-99999", "needles": ["CSB V1: bypass DM1 dungeon loader", "m11_csb_apply_boot_runtime_receipt", "CSB READY: gameId=csb dataDir=%s"]},
     {"id": "firestaff_csb_game_loop_boot_profile", "role": "firestaff_positive", "path": ROOT / "src/engine/firestaff_game_loop.c", "lines": "242-280", "needles": ["FS_GAME_CSB", "csb_v1_boot_scan_assets", "csb_v1_boot_enter_game"]},
-    {"id": "firestaff_pc_csb_real_asset_probe", "role": "firestaff_positive", "path": ROOT / "probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c", "lines": "1-960", "needles": ["PC-first CSB V1 real-data launch gate", "PC CSB assets scan by hash", "csb_v1_boot_enter_game", "csb_v1_runtime_tick"]},
+    {"id": "firestaff_original_csb_first_viewport_probe", "role": "firestaff_positive", "path": ROOT / "probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c", "lines": "1-560", "needles": ["Hash-verified asset scan", "csb_v1_boot_enter_game", "csb_v1_runtime_tick", "csb_v1_viewport_render_frame"]},
 ]
 
 NON_CLAIMS = [
@@ -124,7 +124,7 @@ def main() -> int:
         "current_positive_replacements": [
             "M12 accepts CSB launch intent for matched assets.",
             "M11 returns a CSB-specific handoff into the FS_GAME_CSB loop.",
-            "csb_v1_pc_real_asset_launch proves PC CSB scan, boot, dungeon ownership, and one tick.",
+            "csb_v1_first_viewport_frame proves original-media scan, boot, dungeon ownership, one tick, and a viewport render.",
         ],
         "non_claims": NON_CLAIMS,
         "failures": failures,

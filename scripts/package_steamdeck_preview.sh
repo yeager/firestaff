@@ -87,7 +87,9 @@ chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-dungeon-studio-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-savegame-editor-bin"
 cp -L "$SDL3_LIB" "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
-cp "$ROOT"/po/startup-menu.*.po "$PKG_ROOT/usr/share/firestaff/po/"
+for domain in startup-menu dm1 csb dm2 firestaff nexus theron; do
+  cp "$ROOT"/po/"$domain".*.po "$PKG_ROOT/usr/share/firestaff/po/"
+done
 cat > "$PKG_ROOT/usr/bin/firestaff" <<'WRAPPER'
 #!/usr/bin/env sh
 set -eu

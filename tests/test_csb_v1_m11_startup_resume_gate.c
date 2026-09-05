@@ -1233,7 +1233,7 @@ int main(void) {
      * PC34 source.  Leave the real-data gate open until a matching PC34
      * package is installed instead of producing hundreds of misleading
      * parity failures against the wrong port. */
-    if (preflight.variant_id != CSB_V1_VARIANT_PC34_EN) {
+    if (preflight.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN) {
         printf("skip: verified CSB profile is variant %d, not PC34\n",
                (int)preflight.variant_id);
         csb_v1_boot_cleanup(&preflight);
@@ -2181,7 +2181,7 @@ int main(void) {
                     "CSB runtime restored magic caster from savePath");
         expect_true(profile->runtime.game_time == expected.game_time,
                     "CSB runtime restored game time from savePath");
-        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
+        if (profile->variant_id == CSB_V1_VARIANT_REFERENCE_I34_EN) {
             const M11_AssetSlot* title;
             expect_true(view.assetsAvailable == 1,
                         "M11 CSB PC34 start exposes GRAPHICS.DAT to shared render paths");

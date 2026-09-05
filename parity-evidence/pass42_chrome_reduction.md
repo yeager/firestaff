@@ -4,9 +4,11 @@ Last updated: 2026-04-24
 Scope: **DM1 / PC 3.4 / English / V1 original-faithful mode** — invented
 UI chrome surfaces and notification routing.  Closes out
 `V1_BLOCKERS.md` §6 ("Firestaff-invented UI chrome ...") by landing a
-bounded V1 chrome-mode switch that hides the invented control strip
-and reroutes `m11_set_status` / `m11_set_inspect_readout`
-notifications into the source-faithful message-log surface.
+bounded V1 chrome-mode switch that hides the invented control strip.
+The original pass also rerouted `m11_set_status` /
+`m11_set_inspect_readout` notifications into Firestaff's internal log; later
+TEXT.C work correctly prevented that host telemetry from being presented on
+DM1's source-owned C015 surface.
 
 Pass 42 does **not** change the viewport rectangle, M10 semantics,
 any V1 runtime movement / combat / sensor / door behavior, or any V2
@@ -31,9 +33,9 @@ in `m11_game_view.c`.  Default is **V1 chrome mode ON** unless:
   forced OFF when V2 is enabled.  V1 chrome mode cannot re-enable
   over V2.
 
-The helper caches its decision on first call (same pattern as
-pass-41's `m11_party_slot_step()` / `m11_party_slot_w()`), so the
-runtime cost is a single integer compare per call.
+The helper is state-aware so V2 presentation policy can be evaluated for
+the active game source while the environment opt-out remains available for
+bounded A/B measurements.
 
 ### 1.2 Suppressed surface: Firestaff control strip at y=165
 
@@ -54,23 +56,22 @@ and the feedback strip were **already** guarded behind
 `state->showDebugHUD` before pass 42 (and remain so; V1 chrome
 mode does not reintroduce any of them).
 
-### 1.3 Rerouted surface: message log picks up status + inspect payloads
+### 1.3 Internal routing: diagnostic log picks up status + inspect payloads
 
 `m11_set_status` and `m11_set_inspect_readout` gain a pass-42 reroute
-path.  When V1 chrome mode is on and the payload is player-facing
-(same filter used by the existing V1 bottom-line scan —
-`m11_v1_message_is_player_facing`), the payload is additionally
-pushed into the rolling message log with these forms:
+path. When V1 chrome mode is on and the payload passes the bounded filter,
+it is additionally pushed into Firestaff's internal rolling log with these
+forms:
 
 - `"ACTION - OUTCOME"` for `m11_set_status(action, outcome)` calls
   (color `M11_COLOR_YELLOW`).
 - `"TITLE: DETAIL"` for `m11_set_inspect_readout(title, detail)`
   calls (color `M11_COLOR_LIGHT_CYAN`).
 
-The invented surfaces (`state->lastOutcome`, `state->inspectTitle`,
+This internal routing is diagnostic state, not authority to paint host text
+onto source-owned C015. The invented surfaces (`state->lastOutcome`, `state->inspectTitle`,
 `state->inspectDetail`) are still written, so `showDebugHUD`
-renderers still see them verbatim; only the user-visible V1 path is
-rerouted.
+renderers still see them verbatim.
 
 ### 1.4 Dedup against `m11_log_event` companions
 
@@ -91,16 +92,12 @@ setters with identical strings across frames does not flood the
 log.  These fields are zero-initialised by the existing `memset` in
 `M11_GameView_Init` and are not part of any save format.
 
-### 1.5 Expanded message surface at the screen bottom
+### 1.5 Source-owned message surface at the screen bottom
 
-The bottom V1 message line previously rendered a single
-player-facing log entry at `y=149`.  In V1 chrome mode the surface
-is widened to **3 lines** at `y=149, 157, 165` (stride 8 px,
-matching the DM1 TEXT.C message-log stride).  The third line at
-`y=165` occupies the band vacated by the suppressed control strip.
-
-When V1 chrome mode is OFF (`FIRESTAFF_V1_CHROME=0`) the original
-1-line behavior at `y=149` is preserved.
+The temporary Firestaff log strip described by the original pass has since
+been retired. Normal DM1 V1 now renders the source-owned C015 message area at
+`(0,173,320,27)` with four seven-pixel rows, using decoded TEXT.C state. Host
+telemetry and inspect/status scaffolding are not admitted to that surface.
 
 ### 1.6 Diagnostic probe `firestaff_m11_pass42_chrome_reduction_probe.c`
 
@@ -114,27 +111,28 @@ When V1 chrome mode is OFF (`FIRESTAFF_V1_CHROME=0`) the original
 - **INV_P42_13..21** — player-facing suppress list (BOOT, PARTY
   MOVED, SPELL PANEL OPENED, RUNE ..., IDLE TICK ..., …).
 - **INV_P42_22..23** — dedup against recent log entries.
-- **INV_P42_24..26** — pass-40 / pass-41 / control-strip enum
-  values preserved (no regression, pass 42 does not rename any
-  rectangle).
+- **INV_P42_24..26** — pass-40 viewport anchors, source-locked pass-41
+  champion status geometry, and control-strip enum values remain preserved.
 - **INV_P42_27..29** — pass-42 symbols present in the source
   (`m11_v1_chrome_mode_enabled`, `m11_chrome_reroute_push_pass42`,
   `chromeRerouteLast{Status,Inspect}` state fields).
 - **INV_P42_30** — renderer call-site guard: the single
   `m11_draw_control_strip(...)` call is preceded by a
-  `!m11_v1_chrome_mode_enabled()` check and no unguarded call
+  `showDebugHUD && !m11_v1_chrome_mode_enabled(state)` check and no unguarded call
   remains.
-- **INV_P42_31** — bottom message surface renders 3 lines in V1
-  chrome mode, 1 otherwise (`maxLines = chromeMode ? 3 : 1`).
+- **INV_P42_31** — the bottom message surface is the source C015 four-row
+  path, not the superseded Firestaff log strip.
 - **INV_P42_32** — runtime/probe policy mirror is identical.
 
 Probe runs standalone via:
 
 ```
-./run_firestaff_m11_pass42_chrome_reduction_probe.sh
+./scripts/probes/run_firestaff_m11_pass42_chrome_reduction_probe.sh
 ```
 
-Artifact: `verification-m11/pass42-chrome-reduction/pass42_chrome_reduction_probe.log`.
+The default artifact is written below the existing build directory at
+`build-dm1-csb-native/verification-m11/pass42-chrome-reduction/`; callers may
+pass another output directory explicitly.
 
 ---
 

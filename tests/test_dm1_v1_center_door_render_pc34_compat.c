@@ -1,4 +1,5 @@
 #include "dm1_v1_center_door_render_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
 
@@ -50,6 +51,9 @@ int main(void)
 {
     DM1_CenterDoorRenderPlanPc34 plan;
     DM1_CenterDoorBlitPc34 blits[2];
+    int consumed = -1;
+    struct DungeonMapDesc_Compat maps[2] = {{0}};
+    struct DungeonDatState_Compat dungeon = {0};
 
     expect_int("plan.count", dm1_v1_center_door_render_plan_count_pc34(), 3);
 
@@ -92,6 +96,44 @@ int main(void)
                dm1_v1_door_panel_graphic_for_set_depth_pc34(2, 0), 254);
     expect_int("doorSet2.d3.graphic",
                dm1_v1_door_panel_graphic_for_set_depth_pc34(2, 2), 252);
+    expect_int("ra.h", dm1_v1_f0111_animated_door_flip_mask_pc34(3, 4, 1, &consumed), 1);
+    expect_int("ra.consume", consumed, 1);
+    expect_int("ra.v", dm1_v1_f0111_animated_door_flip_mask_pc34(3, 2, 2, &consumed), 2);
+    expect_int("ra.hv", dm1_v1_f0111_animated_door_flip_mask_pc34(3, 5, 3, &consumed), 3);
+    expect_int("ordinary", dm1_v1_f0111_animated_door_flip_mask_pc34(2, 4, 3, &consumed), 0);
+    expect_int("ordinary.consume", consumed, 0);
+    expect_int("open.ra", dm1_v1_f0111_animated_door_flip_mask_pc34(3, 0, 3, &consumed), 0);
+    expect_int("open.ra.consume", consumed, 0);
+
+    /* The retail PC 3.4 DUNGEON.DAT descriptor stream contains both the
+     * common 0/1 pair and a real DoorSet0=3 map (raw bitfield D 0x1300).
+     * Lock F0174's Type-as-selector rule so that the latter reaches the Ra
+     * graphics at M633 + 3*3 instead of silently reusing set 0. */
+    dungeon.header.mapCount = 2;
+    dungeon.maps = maps;
+    maps[0].doorSet0 = 0;
+    maps[0].doorSet1 = 1;
+    maps[1].doorSet0 = 3;
+    maps[1].doorSet1 = 1;
+    expect_int("map0.type0.portcullis.d1",
+               dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 0, 0, 0), 248);
+    expect_int("map0.type1.wood.d3",
+               dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 0, 1, 2), 249);
+    expect_int("retail.map.type0.ra.d1",
+               dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 1, 0, 0), 257);
+    expect_int("retail.map.type0.ra.d3",
+               dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 1, 0, 2), 255);
+    expect_int("retail.map.type1.wood.d2",
+               dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 1, 1, 1), 250);
+    expect_int("bad.map", dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 2, 0, 0), -1);
+    expect_int("bad.type", dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
+                   &dungeon, 0, 2, 0), -1);
 
     expect_int("bad.depth", dm1_v1_center_door_render_plan_for_depth_pc34(3, &plan), 0);
     expect_int("bad.index", dm1_v1_center_door_render_plan_at_pc34(-1, &plan), 0);
@@ -113,6 +155,28 @@ int main(void)
                    dm1_v1_center_door_host_material_receipt_pc34(
                        0, 0, 1, 248, &receipt), 1);
         expect_int("open.host.panelVisible", receipt.panelVisible, 0);
+    }
+    {
+        int sx = -1;
+        int sy = -1;
+        expect_int("compose.clip.no_flip",
+                   dm1_v1_f0111_composed_source_xy_pc34(
+                       96, 88, 7, 43, 0, &sx, &sy), 1);
+        expect_int("compose.clip.no_flip.x", sx, 7);
+        expect_int("compose.clip.no_flip.y", sy, 43);
+        expect_int("compose.clip.whole_hflip",
+                   dm1_v1_f0111_composed_source_xy_pc34(
+                       96, 88, 7, 43, 1, &sx, &sy), 1);
+        expect_int("compose.clip.whole_hflip.x", sx, 88);
+        expect_int("compose.clip.whole_hflip.y", sy, 43);
+        expect_int("compose.clip.whole_vflip",
+                   dm1_v1_f0111_composed_source_xy_pc34(
+                       96, 88, 7, 43, 2, &sx, &sy), 1);
+        expect_int("compose.clip.whole_vflip.x", sx, 7);
+        expect_int("compose.clip.whole_vflip.y", sy, 44);
+        expect_int("compose.clip.bad_coordinate",
+                   dm1_v1_f0111_composed_source_xy_pc34(
+                       96, 88, 96, 0, 0, &sx, &sy), 0);
     }
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);

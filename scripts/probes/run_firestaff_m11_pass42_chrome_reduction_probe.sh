@@ -2,18 +2,18 @@
 set -eu
 
 HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
-OUT_DIR=${1:-$HERE/verification-m11/pass42-chrome-reduction}
+REPO_ROOT="$(cd -- "$HERE/../.." >/dev/null 2>&1 && pwd)"
+OUT_DIR=${1:-$REPO_ROOT/build-dm1-csb-native/verification-m11/pass42-chrome-reduction}
 mkdir -p "$OUT_DIR"
 
-PROBE_BIN="$HERE/firestaff_m11_pass42_chrome_reduction_probe_bin"
+PROBE_BIN="$OUT_DIR/firestaff_m11_pass42_chrome_reduction_probe_bin"
 LOG="$OUT_DIR/pass42_chrome_reduction_probe.log"
 
 cc -std=c99 -Wall -Wextra -O1 \
-    -I "$HERE" \
     -o "$PROBE_BIN" \
-    "$HERE/firestaff_m11_pass42_chrome_reduction_probe.c"
+    "$REPO_ROOT/probes/firestaff_m11_pass42_chrome_reduction_probe.c"
 
-( cd "$HERE" && "$PROBE_BIN" ) | tee "$LOG"
+( cd "$REPO_ROOT" && "$PROBE_BIN" ) | tee "$LOG"
 
 SUMMARY=$(grep '^# summary: ' "$LOG" | tail -n 1)
 PASSED=$(printf '%s\n' "$SUMMARY" | awk '{print $3}' | cut -d/ -f1)

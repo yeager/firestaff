@@ -128,6 +128,14 @@ typedef struct CSB_V1_BootProfile {
     size_t fmtowns_portrait_sizes[24];
     char fmtowns_portrait_names[24][13];
     uint16_t fmtowns_portrait_count;
+    /* Same-session COORD.C F0639/F0635 receipt decoded from the selected,
+     * hash-verified F31 GRAPHICS.DAT C696.  C017 input/render consumers must
+     * fail closed when this receipt is absent; no PC/Atari geometry fallback. */
+    int fmtowns_inventory_rectangles_valid;
+    int16_t fmtowns_inventory_rectangle_x[30];
+    int16_t fmtowns_inventory_rectangle_y[30];
+    int16_t fmtowns_inventory_rectangle_width[30];
+    int16_t fmtowns_inventory_rectangle_height[30];
 
     /* Optional raw PC34 SWSHSND.C G0746 payload.  It is accepted only from
      * the selected CSB asset root, at the original byte count; callers must
@@ -2108,6 +2116,10 @@ int csb_v1_boot_runtime_trigger_front_wall_ornament_click_pc34(
 int csb_v1_boot_runtime_trigger_front_door_button_click_pc34(
     CSB_V1_BootProfile *profile,
     unsigned short leader_hand_thing);
+int csb_v1_boot_runtime_grab_floor_object_pc34(
+    CSB_V1_BootProfile *profile,
+    int view_cell,
+    unsigned short *out_thing);
 
 /* ── Launch→runtime assumption gate ─────────────────────────────────────
  *

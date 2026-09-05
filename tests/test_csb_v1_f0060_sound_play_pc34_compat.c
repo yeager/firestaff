@@ -85,6 +85,16 @@ static void test_f0061_loud_table_and_index_mask(void)
     CHECK(amplitudes.channelA == 14);
     CHECK(amplitudes.channelB == 14);
     CHECK(amplitudes.channelC == 14);
+
+    amplitudes = csb_v1_audio_runtime_channel_amplitudes_soft(8);
+    CHECK(amplitudes.channelA == 11);
+    CHECK(amplitudes.channelB == 3);
+    CHECK(amplitudes.channelC == 1);
+
+    amplitudes = csb_v1_audio_runtime_channel_amplitudes_soft(15);
+    CHECK(amplitudes.channelA == 12);
+    CHECK(amplitudes.channelB == 9);
+    CHECK(amplitudes.channelC == 0);
 }
 
 static CsbV1AudioRequest make_request(int16_t soundIndex,
@@ -174,6 +184,28 @@ static void test_load_snapshot_restarts_transient_audio_state(void)
     CHECK(runtime.lastPlayedSoundIndex == CSB_V1_SOUND_NONE);
 }
 
+static void test_atari_st_source_table_stops_before_absent_sounds(void)
+{
+    const CsbV1AtariStSoundSpec *first;
+    const CsbV1AtariStSoundSpec *last;
+
+    first = csb_v1_audio_runtime_atari_st_sound_spec(0);
+    last = csb_v1_audio_runtime_atari_st_sound_spec(
+        CSB_V1_ATARI_ST_SOUND_COUNT - 1);
+    CHECK(first != NULL);
+    CHECK(first && first->graphicIndex == 533u && first->period == 112u &&
+          first->priority == 11u && first->loudDistance == 3u &&
+          first->softDistance == 6u);
+    CHECK(last != NULL);
+    CHECK(last && last->graphicIndex == 555u && last->priority == 96u);
+    CHECK(csb_v1_audio_runtime_atari_st_sound_spec(-1) == NULL);
+    CHECK(csb_v1_audio_runtime_atari_st_sound_spec(
+              CSB_V1_ATARI_ST_SOUND_COUNT) == NULL);
+    /* ReDMCSB's next cross-platform row names graphic 563 explicitly as
+     * absent on Atari ST. It is also the first index after the 563-item file. */
+    CHECK(csb_v1_audio_runtime_atari_st_sound_spec(22) == NULL);
+}
+
 int main(void)
 {
     test_high_nibble_first_and_repeat_runs();
@@ -182,6 +214,7 @@ int main(void)
     test_f0061_loud_table_and_index_mask();
     test_f0064_f0065_pending_sound_runtime();
     test_load_snapshot_restarts_transient_audio_state();
+    test_atari_st_source_table_stops_before_absent_sounds();
     printf("test_csb_v1_f0060_sound_play_pc34_compat: %d failures\n", failures);
     return failures != 0;
 }

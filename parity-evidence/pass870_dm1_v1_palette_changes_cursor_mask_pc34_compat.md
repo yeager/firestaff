@@ -8,4 +8,4 @@
 - IO.C cursor blit path
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_palette_changes_cursor_mask_pc34_compat`: rc=0
+- `/dev/shm/current/test_dm1_v1_palette_changes_cursor_mask_pc34_compat`: rc=0

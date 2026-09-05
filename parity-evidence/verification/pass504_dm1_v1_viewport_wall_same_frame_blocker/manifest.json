@@ -10,14 +10,14 @@
     {
       "file": "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py",
       "id": "pass500_source_gate",
-      "line": 233,
+      "line": 241,
       "needle": "pass500-dm1-v1-viewport-walls-blocker-cleanup-source-lock",
       "ok": true
     },
     {
       "file": "tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py",
       "id": "pass499_runtime_predicate",
-      "line": 165,
+      "line": 160,
       "needle": "same viewport",
       "ok": true
     },
@@ -42,6 +42,16 @@
     "no movement-core change"
   ],
   "ok": true,
+  "originalMediaEvidence": {
+    "available": true,
+    "path": "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+    "requiredMembers": [
+      "DATA/DUNGEON.DAT",
+      "DATA/GRAPHICS.DAT"
+    ],
+    "sha256": "6d9ce72e827e066d5dd4a9294f0258801bbb32e7cdbe09a20e6b47308fd46a33",
+    "usableForCapture": true
+  },
   "preciseBlocker": "Viewport/walls source and Firestaff spec/probe evidence are locked, but parity still lacks one same-frame original DM1 V1 and Firestaff wall/door occlusion capture tied to the F0128 composition and F0097 present boundary.",
   "problems": [],
   "promotionPredicate": [
@@ -119,6 +129,6 @@
       }
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER_LOCKED"
 }

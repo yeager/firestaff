@@ -6,9 +6,9 @@ Focused source-lock for the Firestaff M11 split renderer:
   packed cell order; explosions restart only after every packed cell finishes.
 * Door-front squares split F0115 around door frame/panel: rear cells first,
   then frame/door, then front cells.
-* Firestaff keeps projectile drawing in the side/center contents passes, keeps
-  explosions out of those passes, and routes explosions through the deferred
-  after-all-cells pass with center/side occlusion guards.
+* Firestaff keeps projectile drawing in each side/center F0115 transaction,
+  then restarts that same square's thing list for ordinary explosions before
+  the scheduler advances to the next source operation.
 """
 from __future__ import annotations
 
@@ -20,10 +20,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path(os.environ.get(
-    "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
-)) / "DUNVIEW.C"
+
+
+def redmcsb_dunview_path() -> Path:
+    configured = os.environ.get("FIRESTAFF_REDMCSB_SOURCE")
+    roots = [Path(configured)] if configured else []
+    roots.extend((
+        ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+    ))
+    for root in roots:
+        candidate = root / "DUNVIEW.C"
+        if candidate.is_file():
+            return candidate
+    return roots[0] / "DUNVIEW.C"
+
+
+REDMCSB = redmcsb_dunview_path()
 VIEW = ROOT / "src/engine/m11_game_view.c"
 META = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 
@@ -180,39 +192,25 @@ def verify_renderer(view: str) -> None:
         "cell->floorItemCount > 0",
         "cell->creatureGroupCount > 0",
         "cell->renderableProjectileCount > 0",
-        "Explosions are deferred to m11_draw_dm1_deferred_explosion_pass()",
+        "Explosions are intentionally not drawn",
     ], "side contents object/creature/projectile/defer stack")
     if "m11_draw_explosion_sprite" in side or "m11_draw_explosion_cue" in side:
         raise AssertionError("side contents must not draw explosions inline")
 
-    deferred = function_body(view, "static void m11_draw_dm1_deferred_explosion_pass(")
-    require_all(deferred, [
-        "DUNVIEW.C:5915 exits the packed-cell",
-        "DUNVIEW.C:5916-5933 starts",
-        "m11_dm1_nearest_blocking_center_depth_index(cells)",
-        # 2026-07-20 round 16 re-anchor (same-drift-family): lane occlusion now
-        # reads the shared PC34 visibility receipt helpers instead of the old
-        # m11_dm1_center_line_clear_before_depth / side_lane_clear_before_depth
-        # rescan helpers.
-        "dm1_viewport_3d_center_line_clear_from_visibility_pc34(&visibility, depth)",
-        "m11_draw_dm1_deferred_center_explosion",
-        "blockingCenterDepth >= 0 && depth >= blockingCenterDepth",
-        "m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)",
-        "m11_draw_dm1_deferred_side_explosion",
-    ], "deferred explosion pass occlusion guards")
-
     viewport = function_body(view, "static void m11_draw_viewport(")
-    # 2026-07-20 round 16 re-anchor (same-drift-family): the F0128 per-square
-    # plan loop (kContentSquares D3L,D3R,D3C,...) owns the runtime
-    # side-before-center dispatch, so the textual lock now follows the code
-    # layout: doors, then the plan-driven center/side contents calls, then the
-    # deferred explosion pass last.
-    require_order(viewport, [
-        "m11_draw_dm1_center_doors(",
-        "m11_draw_wall_contents(framebuffer",
-        "m11_draw_dm1_side_contents_at_depth(",
-        "m11_draw_dm1_deferred_explosion_pass(",
-    ], "viewport wall/door -> projectile contents -> deferred explosions order")
+    callback = function_body(view, "static void m11_dm1_f0128_execute_source_step(")
+    require_all(callback, [
+        "M11_DM1_F0128_EXECUTE_DOOR_PASS1",
+        "DM1_V1_F0128_STEP_F0115_DOOR_PASS1",
+        "M11_DM1_F0128_EXECUTE_FOREGROUND",
+        "DM1_V1_F0128_STEP_F0115_MAIN",
+        "DM1_V1_F0128_STEP_F0115_DOOR_PASS2",
+        "m11_draw_dm1_f0115_explosions_for_square(",
+    ], "per-square F0115 scheduler callback")
+    if callback.count("m11_draw_dm1_f0115_explosions_for_square(") < 2:
+        raise AssertionError("both rear and main/front F0115 callbacks must restart C15")
+    if "m11_draw_dm1_deferred_explosion_pass(state" in viewport:
+        raise AssertionError("viewport still invokes source-invalid once-per-frame explosion replay")
 
 
 def main() -> int:
@@ -226,7 +224,7 @@ def main() -> int:
         print("status=PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION")
         print("source=DUNVIEW.C:4547-4582,4820-4860,5195-5202,5679-5683,5915-5933")
         print("door_occlusion=DUNVIEW.C:6443-6459,6722-6746,7314-7341,7874-7937")
-        print("firestaff=m11_draw_wall_contents/m11_draw_dm1_side_contents projectiles before deferred m11_draw_dm1_deferred_explosion_pass")
+        print("firestaff=each F0115 scheduler callback draws objects/creatures/projectiles then restarts ordinary C15 explosions")
         return 0
     except (AssertionError, OSError) as exc:
         return fail(str(exc))

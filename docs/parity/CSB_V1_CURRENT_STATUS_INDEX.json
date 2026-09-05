@@ -1,12 +1,13 @@
 {
   "schema": "firestaff.csb_v1.current_status_index.v1",
-  "generatedDate": "2026-08-11",
+  "generatedDate": "2026-09-05",
   "target": {
     "game": "Chaos Strikes Back",
     "primaryLane": "Atari ST v2.x",
     "runtimeLanes": [
-      "Atari ST v2.0/v2.1 source-era lane",
-      "PC real-asset launch/readiness lane where locally staged"
+      "Atari ST v2.0/v2.1 retail lane",
+      "Amiga v3.1/v3.5 retail lane",
+      "FM Towns English/Japanese retail lane"
     ],
     "mode": "V1 original-compatible"
   },
@@ -14,11 +15,11 @@
     "cleanRoomRewrite": true,
     "functionalTemplate": "ReDMCSB_WIP20210206",
     "functionalTemplateArchive": "http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z",
-    "localFunctionalTemplateRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+    "localFunctionalTemplateRoot": "reference/redmcsb-20210206/Toolchains/Common/Source/",
     "supportingReferences": [
-      "~/.openclaw/data/firestaff-csb-source/CSB/src/",
-      "~/.openclaw/data/firestaff-csbwin-source/CSBWin/",
-      "~/.openclaw/data/firestaff-original-games/DM/_canonical/csb/",
+      "reference/redmcsb-20210206/Toolchains/Common/Source/",
+      "${HOME}/.firestaff/data/csb/",
+      "parity-evidence/verification/",
       "docs/REDMCSB_REFERENCE.md",
       "docs/DMWEB_REFERENCE.md"
     ],
@@ -36,7 +37,7 @@
       "id": "csb_v1_runtime_playability",
       "priority": "P1",
       "status": "ACTIVE_BLOCKER",
-      "summary": "Launch/profile routing, PC real-asset boot/tick evidence, quickplay dungeon-handle survival, first viewport-frame render entry, a bounded multi-step Utility-to-runtime movement route with wall-blocked step and save-prefix roundtrip, and a CSB-owned runtime spine are proven, but full CSB playability is not proven.",
+      "summary": "Original-platform launch/profile routing, quickplay dungeon-handle survival, first viewport-frame render entry, a bounded multi-step Utility-to-runtime movement route with wall-blocked step and save-prefix roundtrip, and a CSB-owned runtime spine are proven, but full CSB playability is not proven.",
       "latestEvidence": [
         "docs/parity/PARITY_MATRIX_CSB_V1.md",
         "TODO.md",
@@ -46,8 +47,6 @@
         "CTest csb_v1_movement_command_rotation_between_steps_runtime_pc34_compat",
         "CTest csb_v1_runtime_champion_inventory_handoff_pc34_compat",
         "CTest csb_v1_runtime_tick_accumulator",
-        "CTest csb_v1_pc_real_asset_launch",
-        "CTest csb_v1_pc34_quickplay_dungeon_handle",
         "CTest csb_v1_first_viewport_frame",
         "CTest csb_v1_boot_runtime_handoff",
         "CTest csb_v1_runtime_route_first_frame_movement_utility_gate"
@@ -199,7 +198,7 @@
     {
       "criterion": "core_input_movement",
       "currentStatus": "RUNTIME_SLICE_VERIFIED_PARTIAL",
-      "requiredForFullSupport": "CTest now covers CSB-owned boot-to-runtime handoff, PC real-asset launch/tick, quickplay dungeon-handle survival, Utility NEW_GAME-to-runtime bounded multi-step movement route with wall-blocked step and save-prefix roundtrip, input queue binding, queued movement, rotation between movement steps, runtime ticks, champion/inventory handoff, and MOVE/ATTACK/CAST command-chain semantics. Full support still needs a wider real-data CSB adventuring route through launch, interaction, CSBGAME.DAT save/reload, and capture proof."
+      "requiredForFullSupport": "CTest now covers CSB-owned boot-to-runtime handoff on supported Atari ST, Amiga and FM Towns retail media, quickplay dungeon-handle survival, Utility NEW_GAME-to-runtime bounded multi-step movement with a wall-blocked step and save-prefix roundtrip, input queue binding, queued movement, rotation between movement steps, runtime ticks, champion/inventory handoff, and MOVE/ATTACK/CAST command-chain semantics. Full support still needs a wider real-data CSB adventuring route through launch, interaction, CSBGAME.DAT save/reload, and capture proof."
     },
     {
       "criterion": "viewport_ui_render",

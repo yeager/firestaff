@@ -9,6 +9,8 @@ app=${1:?usage: test_dm1_v1_fmtowns_archive_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 expected_md5=c10c512f63461ebe79b5ac365115b61b
 expected_edm_md5=c27e7b984df9753912c3375dc121919f
+expected_japanese_md5=edf47d7da5de8184604d6d80477ef01f
+expected_jdm_md5=acfbcfa5d65032a4bcabc8d5ea062dcc
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 FM Towns archive is not staged'
@@ -35,6 +37,35 @@ probe --game dm1 --platform fm-towns --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --menu --game dm1 --platform fm-towns --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
+
+japanese_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform fm-towns --dm1-fmtowns-ja --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
+    printf '%s\n' "$japanese_output" >&2
+    exit 1
+}
+grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$japanese_output"
+grep -Fq "assetMd5=$expected_japanese_md5" <<<"$japanese_output"
+grep -Fq 'platformHandoff=fmtowns-tmenu-jdm' <<<"$japanese_output"
+grep -Fq 'fmtownsProgram=JDM.EXP' <<<"$japanese_output"
+grep -Fq "fmtownsProgramMd5=$expected_jdm_md5" <<<"$japanese_output"
+grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$japanese_output"
+grep -Fq 'phase=dm1-runtime' <<<"$japanese_output"
+grep -Fq 'levelLoaded=1' <<<"$japanese_output"
+
+japanese_menu_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform fm-towns --dm1-fmtowns-ja \
+    --data-dir "$archive" --script enter,enter,enter \
+    --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
+    printf '%s\n' "$japanese_menu_output" >&2
+    exit 1
+}
+grep -Fq "assetMd5=$expected_japanese_md5" <<<"$japanese_menu_output"
+grep -Fq 'platformHandoff=fmtowns-tmenu-jdm' <<<"$japanese_menu_output"
+grep -Fq 'fmtownsProgram=JDM.EXP' <<<"$japanese_menu_output"
+grep -Fq "fmtownsProgramMd5=$expected_jdm_md5" <<<"$japanese_menu_output"
+grep -Fq 'phase=dm1-runtime' <<<"$japanese_menu_output"
+grep -Fq 'levelLoaded=1' <<<"$japanese_menu_output"
 
 # The public launcher is also fully pointer-navigable.  Use the native
 # 1920x1080 card canvas explicitly so scripted physical coordinates do not
@@ -81,4 +112,4 @@ expect_gameplay_input strafe-left  1,3,2
 expect_gameplay_input strafe-right 1,3,2
 expect_gameplay_input action       1,3,2
 
-printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM handoff, and complete native input matrix in memory'
+printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM and TMENU/JDM handoffs, plus complete native English input matrix in memory'

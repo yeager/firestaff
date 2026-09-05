@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D0C Thieves Eye door-frame occlusion
 
-Status: failed
+Status: passed
 
 Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door frame into a temporary bitmap, composites the hole-in-wall graphic into that temporary frame, blits the temporary frame to C728, then reaches the common D0C F0115 pass with C0x0021. This is a source-lock only.
 
@@ -27,28 +27,28 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 ## Firestaff Evidence
 
 - PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 997: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 998: DUNVIEW.C:8185-8188
-  - line 999: DUNVIEW.C:8199-8201
-  - line 1000: DUNVIEW.C:8206-8210
-  - line 1001: DUNVIEW.C:8215-8216
-  - line 1002: DUNVIEW.C:8240,8294
+  - line 1033: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 1034: DUNVIEW.C:8185-8188
+  - line 1035: DUNVIEW.C:8199-8201
+  - line 1036: DUNVIEW.C:8206-8210
+  - line 1037: DUNVIEW.C:8215-8216
+  - line 1038: DUNVIEW.C:8240,8294
 
 - PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 1840: test_d0c_thieves_eye_door_frame_occlusion_order
-  - line 1843: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
-  - line 1850: spec->door_frame_zone, 728
-  - line 1851: spec->hole_zone, 736
-  - line 1855: 8215-8216
-  - line 1856: 8294
+  - line 1864: test_d0c_thieves_eye_door_frame_occlusion_order
+  - line 1867: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
+  - line 1874: spec->door_frame_zone, 728
+  - line 1875: spec->hole_zone, 736
+  - line 1879: 8215-8216
+  - line 1880: 8294
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4553: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 4553: copy front frame, composite hole, blit temporary frame before common F0115
+  - line 4589: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 4589: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -65,10 +65,10 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=2
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
+- /usr/bin/python3 /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
 ~~~
 PASS pass565 check-only
 ~~~

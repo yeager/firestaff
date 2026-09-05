@@ -31,6 +31,7 @@
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
+#include "firestaff_po_loader.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -74,6 +75,39 @@ static void expect_true(int condition, const char* message) {
     } else {
         ++g_passed;
     }
+}
+
+static int real_runtime_contains_db2_text(const CSB_V1_RuntimeProfile *runtime,
+                                          const char *expected)
+{
+    const CSB_V1_DungeonData *dungeon;
+    int index;
+    if (!runtime || !expected || !(dungeon = runtime->dungeon_handle) ||
+        !dungeon->raw_data || dungeon->text_data_base < 0)
+        return 0;
+    for (index = 0; index < dungeon->thing_type_counts[2]; ++index) {
+        const uint8_t *record;
+        int type;
+        int size;
+        int text_word;
+        int offset;
+        char decoded[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)((2u << 10) | (unsigned int)index),
+            &type, NULL, &size);
+        if (!record || type != 2 || size < 4) return 0;
+        text_word = (int)record[2] | ((int)record[3] << 8);
+        offset = (text_word >> 3) & 0x1fff;
+        if (offset >= dungeon->text_word_count ||
+            F0507_DUNGEON_DecodeTextAtOffset_Compat(
+                (const unsigned short *)(const void *)(
+                    dungeon->raw_data + dungeon->text_data_base),
+                dungeon->text_word_count, offset, decoded,
+                (int)sizeof(decoded)) < 0)
+            return 0;
+        if (strcmp(decoded, expected) == 0) return 1;
+    }
+    return 0;
 }
 
 static void expect_skip(const char* message) {
@@ -312,14 +346,27 @@ static void expect_amiga_dungeon_palette(const char *label)
         { 60u, 60u, 60u }
     };
     uint8_t palette[256][3];
+    uint8_t presented[256][3];
     int color;
-    int matches = M11_Render_CopyIndexedPaletteRgb6(palette) ? 1 : 0;
+    int matches = M11_Render_CopyIndexedPaletteRgb6(palette) &&
+                  M11_Render_CopyIndexedPaletteRgb8(presented) ? 1 : 0;
 
     for (color = 0; color < 16 && matches; ++color) {
         if (memcmp(palette[color], expected[color], sizeof(expected[color])) != 0 ||
             memcmp(palette[color + 16], expected[color],
                    sizeof(expected[color])) != 0) {
             matches = 0;
+        } else {
+            int channel;
+            for (channel = 0; channel < 3; ++channel) {
+                const uint8_t expected_rgb8 =
+                    (uint8_t)((expected[color][channel] >> 2u) * 17u);
+                if (presented[color][channel] != expected_rgb8 ||
+                    presented[color + 16][channel] != expected_rgb8) {
+                    matches = 0;
+                    break;
+                }
+            }
         }
     }
     expect_true(matches, label);
@@ -467,6 +514,7 @@ static void expect_amiga_c005_credits_source_frame(M11_GameViewState *view,
     unsigned char framebuffer[320 * 200];
     const M11_AssetSlot *c005;
     uint8_t palette[256][3];
+    uint8_t presented[256][3];
     int palette_matches;
     int color;
 
@@ -479,13 +527,25 @@ static void expect_amiga_c005_credits_source_frame(M11_GameViewState *view,
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(view, framebuffer, 320, 200);
     c005 = M11_AssetLoader_Load(&view->assetLoader, 5u);
-    palette_matches = M11_Render_CopyIndexedPaletteRgb6(palette) ? 1 : 0;
+    palette_matches = M11_Render_CopyIndexedPaletteRgb6(palette) &&
+                      M11_Render_CopyIndexedPaletteRgb8(presented) ? 1 : 0;
     for (color = 0; color < 16 && palette_matches; ++color) {
         if (memcmp(palette[color], expected_palette[color],
                    sizeof(expected_palette[color])) != 0 ||
             memcmp(palette[color + 16], expected_palette[color],
                    sizeof(expected_palette[color])) != 0) {
             palette_matches = 0;
+        } else {
+            int channel;
+            for (channel = 0; channel < 3; ++channel) {
+                const uint8_t expected_rgb8 = (uint8_t)(
+                    (expected_palette[color][channel] >> 2u) * 17u);
+                if (presented[color][channel] != expected_rgb8 ||
+                    presented[color + 16][channel] != expected_rgb8) {
+                    palette_matches = 0;
+                    break;
+                }
+            }
         }
     }
     expect_true(c005 && c005->loaded && c005->pixels &&
@@ -1287,7 +1347,7 @@ static void run_real_launcher_handoff_if_available(void) {
     if (csb_v1_startup_real_scan_and_receipt(data_dir, 4, &real_package) !=
             CSB_V1_STARTUP_REAL_OK ||
         !real_package.matched ||
-        real_package.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        real_package.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN ||
         real_package.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS ||
         real_package.receipt_hash == 0u) {
         expect_skip("no hash-verified PC34 CSB package under default data root");
@@ -2299,7 +2359,7 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
     if (csb_v1_startup_real_scan_and_receipt(data_dir, 4, &real_package) !=
             CSB_V1_STARTUP_REAL_OK ||
         !real_package.matched || !real_package.assets_verified ||
-        real_package.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        real_package.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN ||
         real_package.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS) {
         expect_skip("no hash-verified PC34 CSB package for V2 launcher handoff");
         return;
@@ -2709,6 +2769,8 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const M12_MenuEntry *entry;
     const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
+    unsigned char title_frame[320u * 200u];
+    uint8_t title_rgb8[256][3];
     int version_index;
 
     if (!data_dir || !data_dir[0]) {
@@ -2756,6 +2818,25 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                 view.csbAmigaTitlAppliedDeltaCount == 0u &&
                 view.csbAmigaTitlPixels[89u * 320u + 186u] == 7u,
                 "M11 binds real Amiga title pixels without a mixed-platform session");
+    memset(title_frame, 0, sizeof(title_frame));
+    M11_GameView_Draw(&view, title_frame, 320, 200);
+    {
+        int color;
+        int exact_rgb4 = M11_Render_CopyIndexedPaletteRgb8(title_rgb8) ? 1 : 0;
+        for (color = 0; color < 256 && exact_rgb4; ++color) {
+            int channel;
+            for (channel = 0; channel < 3; ++channel) {
+                const uint8_t nibble = view.csbAmigaTitlPalette[color & 15][channel];
+                if (title_rgb8[color][channel] !=
+                    (uint8_t)((nibble << 4u) | nibble)) {
+                    exact_rgb4 = 0;
+                    break;
+                }
+            }
+        }
+        expect_true(exact_rgb4,
+                    "A31M TITL.DAT RGB4 registers reach host pixels without VGA quantization");
+    }
     /* The native title has one VBlank clock owner.  The first M11 idle call
      * arms the clock and the next two 55 ms M11 ticks yield floor(110*50/1000)
      * = 5 VBlanks, rather than advancing both an inherited PC34 receipt and
@@ -2786,6 +2867,37 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
                 profile->amiga_language_index == 0u &&
                 profile->runtime.state == CSB_STATE_GAME,
                 "A31M English APPB release hands off through KAOS.FTL to C03_GAME");
+    profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+    expect_true(profile != NULL &&
+                    profile->runtime.object_name_table_valid &&
+                    profile->runtime.action_name_table_valid &&
+                    profile->runtime.object_names[0][0] != '\0' &&
+                    strcmp(profile->runtime.action_names[1], "BLOCK") == 0 &&
+                    strcmp(profile->runtime.action_names[2], "CHOP") == 0 &&
+                    strcmp(profile->runtime.action_names[43], "FUSE") == 0,
+                "A31M M11 binds M564/C699 directly from its retained big-endian DMCSB2 media");
+    expect_true(profile != NULL && real_runtime_contains_db2_text(
+                    &profile->runtime,
+                    "THERE IS ONLY ONE\nLEVEL HERE.      \n                 \n"
+                    "FIRST CHOOSE YOUR\nCHAMPIONS...THEN\nSAVE THE GAME...\n"
+                    "THEN RESTART WITH\nTHE UTILITY DISK."),
+                "A31M M11 retains the authentic DUNGEON.DAT DB2 utility instruction for CSB PO presentation");
+    {
+        const char *sv_po = getenv("FIRESTAFF_CSB_SV_PO");
+        const char *source =
+            "THERE IS ONLY ONE\nLEVEL HERE.      \n                 \n"
+            "FIRST CHOOSE YOUR\nCHAMPIONS...THEN\nSAVE THE GAME...\n"
+            "THEN RESTART WITH\nTHE UTILITY DISK.";
+        expect_true(strcmp(fs_po_gettext_in_domain("csb", source), source) == 0,
+                    "A31M utility DB2 keeps its source text when no CSB locale is loaded");
+        expect_true(sv_po && fs_po_load(sv_po) > 0 &&
+                        strcmp(fs_po_gettext_in_domain("csb", source),
+                               "DET FINNS BARA EN\nNIVÅ HÄR.         \n"
+                               "                  \nVÄLJ FÖRST DINA\n"
+                               "HJÄLTAR... SPARA\nSEDAN SPELET...\n"
+                               "STARTA DÄREFTER OM\nMED VERKTYGSDISKEN.") == 0,
+                    "A31M authentic utility DB2 reaches Swedish CSB-domain final presentation");
+    }
     expect_amiga_prison_entrance_handoff(
         &view, "A31M enters native C004 Prison after KAOS.FTL");
     expect_amiga_c013_source_frame(
@@ -3111,6 +3223,14 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
                     !view.csbAmigaAppbSelectionActive &&
                     view.csbAmigaTitlBytes == NULL,
                 "A31E reaches C03_GAME and its native F0441 entrance without an A31M/A35M/PC34 replacement screen");
+    expect_true(profile != NULL &&
+                    profile->runtime.object_name_table_valid &&
+                    profile->runtime.action_name_table_valid &&
+                    profile->runtime.object_names[0][0] != '\0' &&
+                    strcmp(profile->runtime.action_names[1], "BLOCK") == 0 &&
+                    strcmp(profile->runtime.action_names[2], "CHOP") == 0 &&
+                    strcmp(profile->runtime.action_names[43], "FUSE") == 0,
+                "A31E M11 binds M564 from DMCSB2 and G0490 from its hash-locked APPB without another platform fallback");
     expect_amiga_prison_entrance_handoff(
         &view, "A31E enters native C004 Prison after its direct C03 handoff");
     expect_amiga_c013_source_frame(

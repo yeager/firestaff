@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+cue="${FIRESTAFF_NEXUS_CUE:-$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue}"
+if [[ -f "$cue" ]]; then exec "$1" "$cue::FONT256.S2D"; fi
 root="${FIRESTAFF_NEXUS_DATA_DIR:-$HOME/.firestaff/data/nexus}"
 font="$root/FONT256.S2D"
 expected_canonical="b820d606b4de4fbaa21d4e32f1df56b4cce6898939fb04f73cb6f55f4ebd13af"

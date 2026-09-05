@@ -22,6 +22,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_champion_panel_box_water_pc34_compat`: rc=0
+- `/dev/shm/current/test_dm1_v1_champion_panel_box_water_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass812_dm1_v1_champion_panel_box_water_pc34_compat/manifest.json`

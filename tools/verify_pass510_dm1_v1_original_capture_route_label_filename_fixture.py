@@ -23,8 +23,12 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+RED = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"))
+DM1_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"))
 VERIFY_DIR = ROOT / "parity-evidence/verification/pass510_dm1_v1_original_capture_route_label_filename_fixture"
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence/pass510_dm1_v1_original_capture_route_label_filename_fixture.md"
@@ -82,13 +86,7 @@ SOURCE_REFS = [
         "why": "the capture seam must be the PC34 viewport present path, not menu/setup echoes",
     },
 ]
-ASSET_REFS = [
-    ORIG / "DM.EXE",
-    ORIG / "DATA/DUNGEON.DAT",
-    ORIG / "DATA/GRAPHICS.DAT",
-    ORIG / "TITLE",
-]
-GREATSTONE_MANIFEST = Path.home() / ".openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json"
+ASSET_REFS = ["DM.EXE", "DATA/DUNGEON.DAT", "DATA/GRAPHICS.DAT", "TITLE"]
 
 
 def norm(text: str) -> str:
@@ -167,37 +165,30 @@ def audit_sources() -> list[dict[str, object]]:
     return rows
 
 
-def asset_rows(paths: Iterable[Path]) -> list[dict[str, object]]:
+def zip_member(name: str) -> bytes:
+    result = subprocess.run(["unzip", "-p", str(DM1_ARCHIVE), name], check=False,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode not in (0, 1) or not result.stdout:
+        raise AssertionError(f"cannot read retail ZIP member {name}")
+    return result.stdout
+
+
+def asset_rows(names: Iterable[str]) -> list[dict[str, object]]:
     rows = []
-    for path in paths:
+    for name in names:
+        data = zip_member(name)
         rows.append({
-            "path": str(path),
-            "exists": path.exists(),
-            "size": path.stat().st_size if path.exists() else None,
-            "sha256": sha256(path) if path.exists() else None,
+            "archive": str(DM1_ARCHIVE),
+            "member": name,
+            "exists": bool(data),
+            "size": len(data),
+            "sha256": hashlib.sha256(data).hexdigest(),
         })
     return rows
 
 
-def greatstone_row() -> dict[str, object]:
-    if not GREATSTONE_MANIFEST.exists():
-        return {"path": str(GREATSTONE_MANIFEST), "exists": False}
-    data = json.loads(GREATSTONE_MANIFEST.read_text(encoding="utf-8"))
-    summary = data.get("summary", {})
-    return {
-        "path": str(GREATSTONE_MANIFEST),
-        "exists": True,
-        "sha256": sha256(GREATSTONE_MANIFEST),
-        "result": summary.get("result"),
-        "pc34GraphicsItems": summary.get("pc34_graphics_items"),
-        "pc34DungeonMaps": summary.get("pc34_dungeon_maps"),
-        "totalMismatches": summary.get("total_mismatches"),
-        "note": summary.get("note"),
-    }
-
-
 def run_fixture() -> dict[str, object]:
-    with tempfile.TemporaryDirectory(prefix="pass510-original-labels-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pass510-original-labels-", dir="/dev/shm") as tmp:
         out = Path(tmp) / "capture"
         out.mkdir()
         colors = [(16, 16, 16), (32, 16, 16), (16, 32, 16), (16, 16, 32), (48, 48, 16), (16, 48, 48)]
@@ -244,8 +235,9 @@ def run_fixture() -> dict[str, object]:
 
 def main() -> int:
     source_rows = audit_sources()
+    if not DM1_ARCHIVE.is_file():
+        raise AssertionError(f"missing retail PC34 archive: {DM1_ARCHIVE}")
     assets = asset_rows(ASSET_REFS)
-    greatstone = greatstone_row()
     fixture = run_fixture()
     problems = []
     if fixture["returncode"] != 0:
@@ -257,9 +249,7 @@ def main() -> int:
     if fixture["legacyFilenameDrift"]:
         problems.append(f"legacy filename drift remains: {fixture['legacyFilenameDrift']}")
     problems += [f"source lock failed {row['file']}:{row['lines']}" for row in source_rows if not row["ok"]]
-    problems += [f"missing original asset {row['path']}" for row in assets if not row["exists"]]
-    if greatstone.get("result") != "PASS" or greatstone.get("totalMismatches") != 0:
-        problems.append("GreatStone PC34 item-by-item manifest is not a zero-mismatch PASS")
+    problems += [f"missing original ZIP member {row['member']}" for row in assets if not row["exists"]]
 
     payload = {
         "status": STATUS,
@@ -268,7 +258,6 @@ def main() -> int:
         "fixture": fixture,
         "sourceRefs": source_rows,
         "originalAssets": assets,
-        "greatstonePc34Manifest": greatstone,
         "decision": "capture-route filename drift is fixed: shot labels now name normalized crop artifacts, so pass304/pass435/pass487 can reason over required labels without hard-coded legacy filename mismatch",
         "problems": problems,
         "nonClaims": ["no original-vs-Firestaff pixel parity", "no proof of a fresh semantic six-state DOSBox route", "no tracked screenshot promotion"],
@@ -293,11 +282,7 @@ def main() -> int:
             *[f"- `{row['file']}:{row['lines']}` ok={row['ok']} - {row['why']}" for row in source_rows],
             "",
             "## Original assets checked",
-            *[f"- `{Path(row['path']).name}` exists={row['exists']} sha256={row['sha256']}" for row in assets],
-            "",
-            "## GreatStone cross-check",
-            f"- manifest: `{GREATSTONE_MANIFEST}`",
-            f"- result: `{greatstone.get('result')}`; pc34 graphics items: `{greatstone.get('pc34GraphicsItems')}`; dungeon maps: `{greatstone.get('pc34DungeonMaps')}`; mismatches: `{greatstone.get('totalMismatches')}`",
+            *[f"- `{row['member']}` exists={row['exists']} sha256={row['sha256']} (read from retail ZIP without extraction)" for row in assets],
             "",
             "## Non-claims",
             "This fixture does not launch DOSBox, does not promote screenshots, and does not claim pixel parity.",

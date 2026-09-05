@@ -59,16 +59,25 @@ static void test_flip_domain(void)
     assert(dm1_v1_action_flip_plan_f0407_pc34(&input, &plan) == 1);
     assert(plan.valid == 1);
     assert(plan.comesUpHeads == 0);
+    assert(strcmp(plan.sourceMessage, "IT COMES UP TAILS.") == 0);
 
     input.randomDraw = 1;
     assert(dm1_v1_action_flip_plan_f0407_pc34(&input, &plan) == 1);
     assert(plan.valid == 1);
     assert(plan.comesUpHeads == 1);
+    assert(strcmp(plan.sourceMessage, "IT COMES UP HEADS.") == 0);
 
     input.randomDraw = 2;
     memset(&plan, 0xA5, sizeof(plan));
     assert(dm1_v1_action_flip_plan_f0407_pc34(&input, &plan) == 0);
     assert(plan.valid == 0);
+    assert(plan.sourceMessage == NULL);
+
+    input.randomDraw = -1;
+    memset(&plan, 0xA5, sizeof(plan));
+    assert(dm1_v1_action_flip_plan_f0407_pc34(&input, &plan) == 0);
+    assert(plan.valid == 0);
+    assert(plan.sourceMessage == NULL);
 }
 
 int main(void)

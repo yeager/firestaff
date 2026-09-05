@@ -24,6 +24,7 @@ extern "C" {
 
 #define CSB_V1_SOUND_NONE (-1)
 #define CSB_V1_SOUND_COUNT 35
+#define CSB_V1_ATARI_ST_SOUND_COUNT 22
 /* SOUND.C may complete more than one immediate F0064 request before M11's
  * next host sync. Keep a bounded ordered history so the transport does not
  * collapse those source-owned writes into the last sound index. */
@@ -35,6 +36,7 @@ extern "C" {
 #define CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM 4
 #define CSB_V1_SOUND_STRONG_EXPLOSION 5
 #define CSB_V1_SOUND_SCREAM 7
+#define CSB_V1_SOUND_SWALLOW 8
 #define CSB_V1_SOUND_COMBAT 13
 #define CSB_V1_SOUND_BUZZ 14
 #define CSB_V1_SOUND_PARTY_DAMAGED 15
@@ -109,6 +111,23 @@ typedef struct CsbV1Pc34SoundPayload {
     CsbV1Pc34SoundSpec spec;
 } CsbV1Pc34SoundPayload;
 
+/* ReDMCSB DATA.C MEDIA413 (A20/A21/A22): the 22 sounds actually present in
+ * Atari ST GRAPHICS.DAT. Later table rows explicitly name absent ST data and
+ * must remain silent instead of addressing the following hidden-code items. */
+typedef struct CsbV1AtariStSoundSpec {
+    uint16_t graphicIndex;
+    uint8_t period;
+    uint8_t priority;
+    uint8_t loudDistance;
+    uint8_t softDistance;
+} CsbV1AtariStSoundSpec;
+
+typedef struct CsbV1AtariStSoundPayload {
+    uint8_t *bytes;
+    size_t byteCount;
+    CsbV1AtariStSoundSpec spec;
+} CsbV1AtariStSoundPayload;
+
 /* ReDMCSB SOUND.C F0060 supplies a u16be output-count followed by packed
  * high-nibble-first amplitude commands. A zero command repeats initialLevel
  * or the previous nonzero command for a variable-length run. */
@@ -138,6 +157,12 @@ typedef struct CsbV1AmigaSoundPayload {
     size_t byteCount;
     CsbV1AmigaSoundSpec spec;
 } CsbV1AmigaSoundPayload;
+
+typedef struct CsbV1FmtownsSoundPayload {
+    uint8_t *bytes;
+    size_t byteCount;
+    CsbV1Pc34SoundSpec spec;
+} CsbV1FmtownsSoundPayload;
 
 /* F0061 selects all three PSG amplitude registers from its loud table. */
 typedef struct CsbV1PsgChannelAmplitudes {
@@ -187,11 +212,25 @@ int csb_v1_audio_runtime_load_pc34_sound_payload(
 void csb_v1_audio_runtime_pc34_sound_payload_free(
     CsbV1Pc34SoundPayload *payload);
 
+const CsbV1AtariStSoundSpec*
+csb_v1_audio_runtime_atari_st_sound_spec(int16_t soundIndex);
+/* Load one authentic Atari ST SND1 record from GRAPHICS.DAT. Archive-member
+ * virtual paths are consumed in RAM by the native loader; nothing is
+ * extracted to disk. Missing/malformed records fail closed. */
+int csb_v1_audio_runtime_load_atari_st_sound_payload(
+    const char *graphicsDatPath,
+    int16_t soundIndex,
+    CsbV1AtariStSoundPayload *outPayload);
+void csb_v1_audio_runtime_atari_st_sound_payload_free(
+    CsbV1AtariStSoundPayload *payload);
+
 /* Resolves the three writes made by F0061_SOUND_SetChannelAmplitudes. The
  * original routine masks amplitudeIndex with 0x000f before indexing its loud
  * PSG table, so negative and oversized inputs wrap identically. */
 CsbV1PsgChannelAmplitudes
 csb_v1_audio_runtime_channel_amplitudes(int16_t amplitudeIndex);
+CsbV1PsgChannelAmplitudes
+csb_v1_audio_runtime_channel_amplitudes_soft(int16_t amplitudeIndex);
 
 /* Expands F0060's Atari ST packed stream into the PSG amplitude indices that
  * its Timer-A handler would apply. Returns 0 on success, -1 for invalid
@@ -222,6 +261,18 @@ int csb_v1_audio_runtime_load_amiga_sound_payload(
     CsbV1AmigaSoundPayload* outPayload);
 void csb_v1_audio_runtime_amiga_sound_payload_free(
     CsbV1AmigaSoundPayload* payload);
+
+/* ReDMCSB TOWNSIO.C F0709/F0060: F31 records contain a BE16 sample count
+ * followed by signed 8-bit PCM played at 5500 Hz. The GRAPHICS.DAT container
+ * itself remains F31 little-endian. */
+int csb_v1_audio_runtime_load_fmtowns_sound_payload(
+    const char* graphicsDatPath, int16_t soundIndex,
+    CsbV1FmtownsSoundPayload* outPayload);
+int csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+    const uint8_t* graphicsDat, size_t graphicsDatSize, int16_t soundIndex,
+    CsbV1FmtownsSoundPayload* outPayload);
+void csb_v1_audio_runtime_fmtowns_sound_payload_free(
+    CsbV1FmtownsSoundPayload* payload);
 
 const char* csb_v1_audio_runtime_source_evidence(void);
 

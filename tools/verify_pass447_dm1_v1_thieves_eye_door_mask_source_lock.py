@@ -154,22 +154,21 @@ def main() -> int:
         raise AssertionError("Firestaff destroyed-door mask must stay on GRAPHICS.DAT 439")
     if enum_value(fire, "M11_GFX_DOOR_MASK_THIEVES_EYE") != "440":
         raise AssertionError("Firestaff thieves-eye mask must map to GRAPHICS.DAT 440")
-    func_start, func = find_function(fire, "m11_draw_dm1_center_thieves_eye_mask")
+    func_start, func = find_function(fire, "m11_draw_dm1_center_door_composite")
     for needle in [
-        "state->world.lifecycle.status.thievesEyeCount == 0",
-        "cells[0][1].elementType != DUNGEON_ELEMENT_DOOR",
+        "depthIndex == 0 && state->world.lifecycle.status.thievesEyeCount > 0",
         "M11_GFX_DOOR_MASK_THIEVES_EYE",
         "M11_AssetLoader_BlitScaled",
     ]:
-        require(func, needle, "Firestaff D1C thieves-eye mask renderer")
+        require(func, needle, "Firestaff F0111 temporary-bitmap compositor")
     render_match = re.search(
-        r"m11_draw_dm1_center_thieves_eye_mask\s*\(\s*state\s*,\s*"
-        r"framebuffer\s*,\s*framebufferWidth\s*,\s*framebufferHeight\s*,\s*"
-        r"cells\s*\)\s*;",
+        r"m11_draw_dm1_center_door_composite\s*\(\s*"
+        r"state\s*,\s*framebuffer\s*,\s*fbW\s*,\s*fbH\s*,\s*"
+        r"cell\s*,\s*depth\s*,\s*&material\s*\)\s*;",
         fire,
     )
     if not render_match:
-        raise AssertionError("Firestaff viewport pass order: missing D1C thieves-eye mask call")
+        raise AssertionError("Firestaff viewport pass order: missing F0111 composite call")
     require(cmake, "NAME pass447_dm1_v1_thieves_eye_door_mask_source_lock", "CMake gate registration")
 
     print("PASS pass447 DM1 V1 thieves-eye door-mask source lock")
@@ -177,8 +176,8 @@ def main() -> int:
     print(f"- ReDMCSB DUNVIEW F0111 C16 D1C draw: {RED_DUNVIEW.name}:{line_no(dunview, dunview_anchor)}")
     for label, archive, member, _md5, sha256, _count in GRAPHICS_VARIANTS:
         print(f"- {label}: {archive.name}!{member}; sha256={sha256}; entry 439=96x88 destroyed mask; entry 440=80x74 thieves-eye mask")
-    print(f"- Firestaff maps C16 to GRAPHICS.DAT 440: {FIRE.name}:{line_no(fire, func_start)}")
-    print(f"- Firestaff viewport order calls thieves-eye mask pass: {FIRE.name}:{line_no(fire, render_match.start())}")
+    print(f"- Firestaff composes C16/440 before door-state clipping: {FIRE.name}:{line_no(fire, func_start)}")
+    print(f"- Firestaff viewport order calls the F0111 composite transaction: {FIRE.name}:{line_no(fire, render_match.start())}")
     return 0
 
 

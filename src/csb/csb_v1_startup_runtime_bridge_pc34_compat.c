@@ -404,6 +404,7 @@ int csb_v1_runtime_throw_leader_hand_from_boot_profile_pc34(
     void *boot_profile,
     int champion_index,
     unsigned short leader_thing,
+    int throw_side,
     unsigned short *out_restored_action_hand,
     int *out_projectile_slot)
 {
@@ -427,9 +428,8 @@ int csb_v1_runtime_throw_leader_hand_from_boot_profile_pc34(
     champion = &runtime->party_state.Champions[champion_index];
     saved_action_hand = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
     champion->Slots[CSB_V1_SLOT_ACTION_HAND] = leader_thing;
-    if (!csb_v1_runtime_throw_action_hand(runtime,
-                                          champion_index,
-                                          out_projectile_slot)) {
+    if (!csb_v1_runtime_throw_action_hand_from_side_pc34(
+            runtime, champion_index, throw_side, out_projectile_slot)) {
         champion->Slots[CSB_V1_SLOT_ACTION_HAND] = saved_action_hand;
         if (out_restored_action_hand) {
             *out_restored_action_hand = saved_action_hand;

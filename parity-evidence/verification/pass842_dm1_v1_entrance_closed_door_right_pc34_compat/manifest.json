@@ -3,7 +3,7 @@
     "DATA.C:17/141/561",
     "ENTRANCE.C:575/579"
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass842_dm1_v1_entrance_closed_door_right_pc34_compat.v1",
   "scope": "DM1 V1 entrance_closed_door_right contract.",
   "sourceChecks": [
@@ -33,11 +33,11 @@
     }
   ],
   "status": "PASS842_DM1_V1_ENTRANCE_CLOSED_DOOR_RIGHT_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:13.690389+00:00",
+  "timestampUtc": "2026-08-31T23:28:34.728800+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_entrance_closed_door_right_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_entrance_closed_door_right_pc34_compat"
       ],
       "outputTail": "dm1_v1_entrance_closed_door_right: 53/53 assertions passed",
       "passed": true,

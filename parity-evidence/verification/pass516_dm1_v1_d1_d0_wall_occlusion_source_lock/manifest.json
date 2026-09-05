@@ -4,51 +4,51 @@
       "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.",
       "hits": [
         {
-          "line": 1208,
+          "line": 1244,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 1208,
+          "line": 1244,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 1209,
+          "line": 1245,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 1209,
+          "line": 1245,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 1210,
+          "line": 1246,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 1210,
+          "line": 1246,
           "needle": "DUNVIEW.C:7842-7843 front alcove draws F0115"
         },
         {
-          "line": 1211,
+          "line": 1247,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 1211,
+          "line": 1247,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 1212,
+          "line": 1248,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 1212,
+          "line": 1248,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
       "id": "local-d1-d0-wall-specs-present",
-      "lines": "1200-1215",
+      "lines": "1244-1248",
       "missing": [],
       "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
+      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -76,7 +76,7 @@
       "lines": "215-230",
       "missing": [],
       "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
+      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -84,35 +84,35 @@
       "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
       "hits": [
         {
-          "line": 831,
+          "line": 851,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 832,
+          "line": 852,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 833,
+          "line": 853,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 834,
+          "line": 854,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 835,
+          "line": 855,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 905,
+          "line": 925,
           "needle": "test_wall_item_occlusion_alcove_exception"
         }
       ],
       "id": "local-runtime-test-covers-d1-d0-wall-occlusion",
-      "lines": "825-910",
+      "lines": "851-946",
       "missing": [],
       "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "72e859c51e9f9026d9ef40300484f20ac66c1f0b1fb0941e9527fdc82a17d4d5",
+      "sha256": "00713e64d2e224845ee9766cc2e3fe12e65c72556d3c23e049b00ffd40dad5af",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }

@@ -23,7 +23,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_wound_probability_index_to_mask_pc34_compat`: rc=0
+- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_wound_probability_index_to_mask_pc34_compat`: rc=0
 
 ## TODO
 

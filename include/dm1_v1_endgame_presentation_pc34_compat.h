@@ -29,6 +29,18 @@ typedef struct DM1_V1_EndgamePresentationDecisionPc34 {
     DM1_V1_EndgamePresentationActionPc34 action;
 } DM1_V1_EndgamePresentationDecisionPc34;
 
+typedef struct DM1_V1_EndgameRestartLoadInputPc34 {
+    int restartRequested;
+    int loadSucceeded;
+    int f0444MaterialBound;
+} DM1_V1_EndgameRestartLoadInputPc34;
+
+typedef struct DM1_V1_EndgameRestartLoadDecisionPc34 {
+    int resumeLoadedGame;
+    int returnToTheEnd;
+    int failClosed;
+} DM1_V1_EndgameRestartLoadDecisionPc34;
+
 typedef struct DM1_V1_EndgameFinalPresentationInputPc34 {
     int gameWon;
     int finalPresentationReady;
@@ -86,6 +98,10 @@ typedef struct DM1_V1_EndgameFinalPresentationReceiptPc34 {
 void dm1_v1_endgame_presentation_decide_pc34(
     const DM1_V1_EndgamePresentationInputPc34* input,
     DM1_V1_EndgamePresentationDecisionPc34* output);
+
+void dm1_v1_endgame_restart_load_decide_pc34(
+    const DM1_V1_EndgameRestartLoadInputPc34* input,
+    DM1_V1_EndgameRestartLoadDecisionPc34* output);
 
 int dm1_v1_endgame_final_presentation_receipt_pc34(
     const DM1_V1_EndgameFinalPresentationInputPc34* input,

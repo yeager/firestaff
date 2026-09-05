@@ -32,16 +32,21 @@ STATUS = "PASS_PASS449_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-REDMCSB = Path(os.environ.get(
-    "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+REDMCSB_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_ARCHIVE",
+    str(Path.home() / ".firestaff/devtools/references/ReDMCSB_WIP20210206.7z"),
 ))
-CANON_DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+REDMCSB_SOURCE_PREFIX = "Toolchains/Common/Source"
+DM1_DOS_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_DOS_ARCHIVE",
+    str(Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"),
+))
 
 LOCKED_DATA = [
     {
         "label": "dm1_pc34_english_graphics",
-        "path": CANON_DM1 / "GRAPHICS.DAT",
+        "archive": DM1_DOS_ARCHIVE,
+        "member": "DATA/GRAPHICS.DAT",
         "filename": "GRAPHICS.DAT",
         "variant": "DM PC 3.4 English / I34E",
         "bytes": 363417,
@@ -50,7 +55,8 @@ LOCKED_DATA = [
     },
     {
         "label": "dm1_pc34_english_dungeon",
-        "path": CANON_DM1 / "DUNGEON.DAT",
+        "archive": DM1_DOS_ARCHIVE,
+        "member": "DATA/DUNGEON.DAT",
         "filename": "DUNGEON.DAT",
         "variant": "DM PC 3.4 English / I34E",
         "bytes": 33357,
@@ -937,7 +943,11 @@ def audit_framebuffer_manifest(data_rows: list[dict[str, Any]]) -> dict[str, Any
 
 
 def run(cmd: list[str]) -> dict[str, Any]:
-    proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT)
+    except OSError as exc:
+        return {"cmd": cmd, "returncode": 127, "outputTail": str(exc)}
     return {"cmd": cmd, "returncode": proc.returncode, "outputTail": proc.stdout[-4000:]}
 
 
@@ -1013,17 +1023,29 @@ def audit_sources() -> tuple[list[dict[str, Any]], list[str]]:
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for lock in SOURCE_LOCKS:
-        path = REDMCSB / lock["file"]
-        text = line_block(path, lock["lines"]) if path.exists() else ""
+        member = f"{REDMCSB_SOURCE_PREFIX}/{lock['file']}"
+        result = subprocess.run(
+            ["7z", "x", "-so", str(REDMCSB_ARCHIVE), member],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        ) if REDMCSB_ARCHIVE.is_file() else None
+        source_lines = (result.stdout.decode("latin-1", errors="replace").splitlines()
+                        if result and result.returncode == 0 else [])
+        chunks: list[str] = []
+        for part in lock["lines"].split(","):
+            start, _, end = part.partition("-")
+            first = int(start)
+            last = int(end) if end else first
+            chunks.append("\n".join(source_lines[first - 1:last]))
+        text = "\n".join(chunks)
         compact = norm(text)
         missing = [needle for needle in lock["needles"] if norm(needle) not in compact]
-        ok = path.exists() and not missing
+        ok = bool(source_lines) and not missing
         if not ok:
-            errors.append(f"source lock {lock['id']} failed: {missing or ['missing file']}")
+            errors.append(f"source lock {lock['id']} failed: {missing or ['missing archive member']}")
         rows.append({
             **lock,
             "function": SOURCE_FUNCTIONS.get(lock["id"], ""),
-            "path": str(path),
+            "path": f"{REDMCSB_ARCHIVE}::{member}",
             "ok": ok,
             "missing": missing,
         })
@@ -1034,15 +1056,27 @@ def audit_data() -> tuple[list[dict[str, Any]], list[str]]:
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for item in LOCKED_DATA:
-        path: Path = item["path"]
         row = {k: (str(v) if isinstance(v, Path) else v) for k, v in item.items()}
-        if not path.is_file():
+        archive: Path = item["archive"]
+        member = item["member"]
+        row["resolvedPath"] = f"{archive.resolve()}::{member}" if archive.exists() else None
+        if not archive.is_file():
             row.update({"exists": False, "ok": False})
-            errors.append(f"missing locked data {item['label']}: {path}")
+            errors.append(f"missing locked data archive {item['label']}: {archive}")
         else:
-            actual_sha = sha(path, "sha256")
-            actual_md5 = sha(path, "md5")
-            actual_bytes = path.stat().st_size
+            result = subprocess.run(
+                ["unzip", "-p", str(archive), member],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            if not result.stdout:
+                row.update({"exists": False, "ok": False,
+                            "readError": result.stderr.decode("utf-8", errors="replace").strip()})
+                errors.append(f"unable to read {item['label']} from {archive}::{member}")
+                rows.append(row)
+                continue
+            actual_sha = hashlib.sha256(result.stdout).hexdigest()
+            actual_md5 = hashlib.md5(result.stdout).hexdigest()
+            actual_bytes = len(result.stdout)
             ok = actual_sha == item["sha256"] and actual_md5 == item["md5"] and actual_bytes == item["bytes"]
             row.update({"exists": True, "actualSha256": actual_sha, "actualMd5": actual_md5, "actualBytes": actual_bytes, "ok": ok})
             if not ok:
@@ -1124,7 +1158,7 @@ def write_report(manifest: dict[str, Any]) -> None:
         f"# {PASS}",
         "",
         f"- status: `{manifest['status']}`",
-        f"- redmcsb: `{manifest['redmcsbRoot']}`",
+        f"- redmcsb archive: `{manifest['redmcsbArchive']}`",
         "- parity claim: **not made**; this is a source-locked evidence path and blocker gate.",
         "",
         "## Locked original data",
@@ -1183,7 +1217,7 @@ def write_report(manifest: dict[str, Any]) -> None:
     lines += [
         "",
         "## Remaining blocker",
-        "Corrected original `candidate_select`, `panel_visible`, `cancel`, `resurrect_confirm`, `reincarnate_confirm`, generic `hud_status_after`, and terminal-scoped HUD crops are now staged from initial-south corrected runs. Remaining work is pixel-delta parity triage, not missing framebuffer/HUD inputs.",
+        manifest["activeBlocker"],
         "",
         "## Non-claims",
         "No original-vs-Firestaff pixel parity, no candidate panel framebuffer parity, and no HUD/status pixel parity is claimed by this pass.",
@@ -1201,19 +1235,33 @@ def main() -> int:
     framebuffer = audit_framebuffer_manifest(data_rows)
     n2_panel_visible = audit_n2_panel_visible_artifact()
     existing_gate = run(["python3", "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py"])
-    panel_gate = run(["./run_firestaff_resurrect_reincarnate_cancel_routes_probe.sh"])
+    panel_gate = run(["./scripts/probes/run_firestaff_resurrect_reincarnate_cancel_routes_probe.sh"])
     errors = source_errors + data_errors + n2_panel_visible.get("errors", [])
     if existing_gate["returncode"] != 0:
         errors.append("existing Hall source lock gate failed")
     if panel_gate["returncode"] != 0:
         errors.append("resurrect/reincarnate/cancel route probe failed")
+    comparator_complete = framebuffer.get("status") == "COMPARE_COMPLETE"
+    if errors:
+        status = "FAIL_PASS449_SOURCE_OR_DATA_LOCK"
+        active_blocker = "A source/data/probe lock failed; inspect errors before interpreting framebuffer evidence."
+    elif not comparator_complete:
+        status = "PARTIAL_PASS449_FRAMEBUFFER_COMPARATOR_INCOMPLETE"
+        active_blocker = (
+            "Authentic source/data locks pass, but the framebuffer comparator is "
+            f"`{framebuffer.get('status')}`. Original and Firestaff paired "
+            "true-stop frames must be captured and hash-validated before pixel-delta parity triage."
+        )
+    else:
+        status = STATUS
+        active_blocker = "Comparator inputs are complete; remaining work is pixel-delta parity triage."
     manifest = {
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
-        "status": "FAIL_PASS449_SOURCE_OR_DATA_LOCK" if errors else STATUS,
+        "status": status,
         "repo": str(ROOT),
         "head": run(["git", "rev-parse", "HEAD"])["outputTail"].strip(),
-        "redmcsbRoot": str(REDMCSB),
+        "redmcsbArchive": str(REDMCSB_ARCHIVE),
         "dataHashLock": data_rows,
         "sourceLocks": source_rows,
         "priorBlockers": priors,
@@ -1225,7 +1273,7 @@ def main() -> int:
             "hallFullSourceLock": existing_gate,
             "resurrectReincarnateCancelRoutes": panel_gate,
         },
-        "activeBlocker": "No missing corrected terminal framebuffer/HUD input blocker remains; pass449 now records complete comparator inputs. Remaining work is pixel-delta parity triage, not capture inventory.",
+        "activeBlocker": active_blocker,
         "notClaimed": ["full pixel parity", "zero-delta parity for non-zero terminal HUD crops"],
         "errors": errors,
     }
@@ -1236,7 +1284,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}")
         return 1
-    print(f"PASS {PASS}: {STATUS}")
+    print(f"PASS {PASS}: {manifest['status']}")
     print(f"wrote {MANIFEST}")
     print(f"wrote {REPORT}")
     return 0

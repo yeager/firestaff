@@ -155,6 +155,12 @@ int dm1_v1_wall_ornament_view_spec_pc34(
  * renderer must consume its rows in the owning square's source order:
  * D3L, D3R, D3C, D2L, D2R, D2C, D1L, D1R, D1C. */
 int dm1_v1_wall_ornament_view_draw_order_at_pc34(int drawIndex);
+/* MEDIA720/I34E outer-D3 layout records from authentic GRAPHICS.DAT item
+ * 696.  Firestaff uses internal view ids 13/14 so they cannot be confused
+ * with the legacy 13-row G0205 indices 0/1. */
+int dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
+    int coordinateSet, int internalViewWallIndex,
+    int* outRecordType, int* outAnchorX, int* outAnchorY);
 int dm1_v1_wall_ornament_render_plan_pc34(
     int globalIndex,
     int viewWallIndex,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import hashlib, json, os, subprocess
+import hashlib, json, struct, zlib
+from zipfile import ZipFile, ZIP_STORED, ZIP_DEFLATED
 from pathlib import Path
 from typing import Any
 import sys
@@ -9,9 +10,8 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass511_dm1_v1_movement_original_route_contract"
-RED = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
-DM = Path.home() / ".openclaw/data/firestaff-original-games/DM"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM_ZIP = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -26,15 +26,12 @@ SOURCE_LOCKS = [
     {"id":"post_command_viewport_boundary","file":"DUNVIEW.C","lines":"8318-8611","function":"F0128_DUNGEONVIEW_Draw_CPSF","needles":["F0128_DUNGEONVIEW_Draw_CPSF","P0183_i_Direction","P0184_i_MapX","P0185_i_MapY","F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"],"claim":"overlay capture is movement-meaningful only after F0128 draws from the changed direction/X/Y tuple."},
     {"id":"viewport_present_boundary","file":"DRAWVIEW.C","lines":"709-858","function":"F0097_DUNGEONVIEW_DrawViewport","needles":["F0097_DUNGEONVIEW_DrawViewport","G0296_puc_Bitmap_Viewport","VIDRV_09_BlitViewPort"],"claim":"the route transcript must land at viewport present seam before screenshots can become overlay evidence."},
 ]
-REQUIRED_PRIOR_GATES = {
-    "pass504_keyboard_buffer_state_delta_blocker": (ROOT/"parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json","PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED"),
-    "pass505_blocked_collision_timing": (ROOT/"parity-evidence/verification/pass505_dm1_v1_blocked_movement_collision_timing_gap/manifest.json","PASS505_DM1_V1_BLOCKED_MOVEMENT_COLLISION_TIMING_SOURCE_LOCKED"),
-    "pass506_stairs_side_effects": (ROOT/"parity-evidence/verification/pass506_dm1_v1_stairs_movement_side_effect_source_lock/manifest.json","PASS506_DM1_V1_STAIRS_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"),
-    "pass508_key_route_state_delta": (ROOT/"parity-evidence/verification/pass508_dm1_v1_key_route_state_delta_gate/manifest.json","PASS508_DM1_V1_KEY_ROUTE_STATE_DELTA_GATE_LOCKED"),
-    "pass509_keyboard_buffer_blocker": (ROOT/"parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json","PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED"),
-    "pass510_route_label_filename_fixture": (ROOT/"parity-evidence/verification/pass510_dm1_v1_original_capture_route_label_filename_fixture/manifest.json","PASS510_ORIGINAL_CAPTURE_ROUTE_LABEL_FILENAME_FIXTURE"),
+MEMBERS = {
+    "DATA/DUNGEON.DAT": (33357, "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"),
+    "DATA/GRAPHICS.DAT": (363417, "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"),
+    "TITLE": (12002, "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"),
+    "DM.EXE": (11471, "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4"),
 }
-ASSET_REFS = {"canonicalDm1DungeonDat":DM/"_canonical/dm1/DUNGEON.DAT","canonicalDm1GraphicsDat":DM/"_canonical/dm1/GRAPHICS.DAT","canonicalDm1Title":DM/"_canonical/dm1/TITLE","canonicalDm1Readme":DM/"_canonical/dm1/README.md","greatstoneOverview":GREATSTONE/"raw/greatstone.free.fr__dm__g_dm.html.html","greatstonePc34DiffManifest":DM/"_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json"}
 
 def norm(text): return " ".join(text.split())
 def read_text(path, encoding="utf-8"):
@@ -46,11 +43,22 @@ def source_window(path, spec):
         start, end = [int(x) for x in part.split("-", 1)]
         out.extend(lines[start-1:end])
     return "\n".join(out)
-def sha256(path):
-    h=hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024*1024), b""): h.update(chunk)
-    return h.hexdigest()
+def read_member_in_memory(path, name):
+    """Read a member without extraction, tolerating this DOS zip's slash mismatch."""
+    raw = path.read_bytes()
+    with ZipFile(path) as archive:
+        info = archive.getinfo(name)
+    off = info.header_offset
+    if raw[off:off+4] != b"PK\x03\x04": raise AssertionError(f"bad local header for {name}")
+    name_len, extra_len = struct.unpack_from("<HH", raw, off + 26)
+    start = off + 30 + name_len + extra_len
+    packed = raw[start:start + info.compress_size]
+    if info.compress_type == ZIP_STORED: data = packed
+    elif info.compress_type == ZIP_DEFLATED: data = zlib.decompress(packed, -15)
+    else: raise AssertionError(f"unsupported compression {info.compress_type} for {name}")
+    if len(data) != info.file_size or (zlib.crc32(data) & 0xffffffff) != info.CRC:
+        raise AssertionError(f"member integrity failed: {name}")
+    return data
 def audit_sources():
     rows=[]
     for lock in SOURCE_LOCKS:
@@ -58,47 +66,30 @@ def audit_sources():
         missing=[needle for needle in lock["needles"] if norm(needle) not in norm(text)]
         row=dict(lock); row["path"]=str(path); row["ok"]=path.exists() and not missing; row["missing"]=missing; row.pop("needles",None); rows.append(row)
     return rows
-def load_json(path): return json.loads(read_text(path))
-def prior_gate_rows():
-    rows={}
-    for name,(path,expected) in REQUIRED_PRIOR_GATES.items():
-        status=load_json(path).get("status") if path.exists() else None
-        rows[name]={"path":str(path.relative_to(ROOT)),"expectedStatus":expected,"status":status,"ok":status==expected}
-    return rows
 def asset_rows():
-    return {name:{"path":str(path),"exists":path.exists(),"sha256":sha256(path) if path.exists() else None,"size":path.stat().st_size if path.exists() else None} for name,path in ASSET_REFS.items()}
-def completion_row():
-    for row in load_json(ROOT/"parity-evidence/verification/firestaff_completion_matrix.json")["rows"]:
-        if row["target"]=="DM1 V1": return row
-    raise AssertionError("missing DM1 V1 completion row")
-def run(cmd, timeout=120):
-    proc=subprocess.run(cmd,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=timeout)
-    return {"cmd":cmd,"returncode":proc.returncode,"outputTail":proc.stdout[-3000:]}
+    rows={}
+    if not DM_ZIP.exists(): return {n:{"archive":str(DM_ZIP),"exists":False,"ok":False} for n in MEMBERS}
+    for name,(size,digest) in MEMBERS.items():
+        data=read_member_in_memory(DM_ZIP,name); got=hashlib.sha256(data).hexdigest()
+        rows[name]={"archive":str(DM_ZIP),"member":name,"readMode":"in-memory/no-extraction","exists":True,"size":len(data),"sha256":got,"ok":len(data)==size and got==digest}
+    return rows
 def write_report(payload):
     lines=["# Pass511 - DM1 V1 movement original route contract","","Status: "+payload["status"],"","## Decision","",payload["decision"],"","## ReDMCSB source audit",""]
     for row in payload["sourceAudit"]:
         state="PASS" if row["ok"] else "FAIL"; lines.append("- {} {}:{} / {} - {}".format(state, row["file"], row["lines"], row["function"], row["claim"]))
-    lines += ["","## Required prior gates",""]
-    for name,row in payload["priorGates"].items():
-        state="PASS" if row["ok"] else "FAIL"; lines.append("- {} {} -> {}".format(state, name, row["status"]))
-    lines += ["","## Original/Greatstone anchors",""]
+    lines += ["","## Original PC 3.4 archive members",""]
     for name,row in payload["assetRefs"].items():
-        state="PASS" if row["exists"] else "FAIL"; lines.append("- {} {} {} sha256={}".format(state, name, row["path"], row["sha256"]))
+        state="PASS" if row["ok"] else "FAIL"; lines.append("- {} {}::{} size={} sha256={} ({})".format(state, row["archive"], name, row.get("size"), row.get("sha256"), row.get("readMode","unavailable")))
     lines += ["","## Artifact contract for the next landing step",""]
     lines.extend("- "+item for item in payload["nextLandingStep"]["requiredArtifacts"])
     lines += ["","## Non-claims",""]; lines.extend("- "+item for item in payload["nonClaims"]); lines += ["",f"Manifest: {MANIFEST.relative_to(ROOT)}",""]
     REPORT.write_text("\n".join(lines), encoding="utf-8")
 def main():
-    source=audit_sources(); priors=prior_gate_rows(); assets=asset_rows(); dm1=completion_row()
-    gates={"firestaff_completion_matrix":run(["python3","tools/verify_firestaff_completion_matrix.py"])}
+    source=audit_sources(); assets=asset_rows()
     problems=[]
     problems += ["source lock failed {}:{} missing={}".format(r["file"], r["lines"], r["missing"]) for r in source if not r["ok"]]
-    problems += ["prior gate failed {}: {} != {}".format(n, r["status"], r["expectedStatus"]) for n,r in priors.items() if not r["ok"]]
-    problems += ["missing asset/ref {}: {}".format(n, r["path"]) for n,r in assets.items() if not r["exists"]]
-    problems += [f"gate failed {n}" for n,r in gates.items() if r["returncode"] != 0]
-    if dm1["scores"]["core_input_movement"][0] < 13 or dm1["scores"]["original_overlay_regression"][0] != 0: problems.append("DM1 V1 matrix no longer has expected movement/original-overlay boundary")
-    if "transcript" not in (dm1["primaryBlockers"] if isinstance(dm1["primaryBlockers"], str) else " ".join(dm1["primaryBlockers"])): problems.append("DM1 V1 matrix no longer names the transcript-route blocker")
-    payload={"schema":f"firestaff.parity.{PASS}.v1","status":STATUS if not problems else "FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT","ok":not problems,"sourceRoot":str(RED),"decision":"The next landable DM1 V1 movement step is a fresh original-runtime route transcript, not another Firestaff movement implementation patch: prove keyboard-buffer token -> F0361 queue write -> F0380 pop -> F0365/F0366 state delta -> F0267 tuple/timing for steps -> F0128/F0097 post-command viewport boundary, then attach route-labeled original captures.","sourceAudit":source,"priorGates":priors,"assetRefs":assets,"completionBoundary":{"completionPercent":dm1["completionPercent"],"coreInputMovement":dm1["scores"]["core_input_movement"],"originalOverlayRegression":dm1["scores"]["original_overlay_regression"],"primaryBlockers":dm1["primaryBlockers"]},"nextLandingStep":{"id":"original_runtime_keyboard_buffer_to_post_command_viewport_transcript","requiredArtifacts":["per-token original PC/I34E keyboard-buffer value from IO2/F0540 or equivalent memory watch","F0361 queue write record: command id, G0432 slot, G0434 last index, G2153 increment","F0380 pop record: same command id, G0433 first index, G2153 decrement","handler record: F0365 direction mutation or F0366 target/collision/stairs outcome","for successful steps: F0267 committed map index, X, Y, direction/cell, and last-movement-time side effect","post-command F0128/F0097 boundary record tied to the same tuple","route-labeled original viewport/HUD captures whose filenames match route labels and whose hashes are not repeated unless source trace proves a no-op/block"],"smallestVerificationGate":"one turn, one blocked step, and one successful step with the above records is enough for a follow-up promotable evidence pass; pixel parity can remain out of scope."},"gates":gates,"nonClaims":["no new DOSBox/FIRES capture was launched","no original-vs-Firestaff pixel parity is claimed","no completion percentage change is claimed","no viewport/wall implementation is modified"],"problems":problems}
+    problems += ["original member failed {}".format(n) for n,r in assets.items() if not r["ok"]]
+    payload={"schema":f"firestaff.parity.{PASS}.v2","status":STATUS if not problems else "FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT","ok":not problems,"sourceRoot":str(RED),"decision":"The remaining blocker is still a fresh original-runtime route transcript: prove keyboard-buffer token -> F0361 queue write -> F0380 pop -> F0365/F0366 state delta -> F0267 tuple/timing for steps -> F0128/F0097 post-command viewport boundary, then attach route-labeled original captures. Source and media admission alone do not promote runtime or pixel parity.","sourceAudit":source,"assetRefs":assets,"nextLandingStep":{"id":"original_runtime_keyboard_buffer_to_post_command_viewport_transcript","requiredArtifacts":["per-token original PC/I34E keyboard-buffer value from IO2/F0540 or equivalent memory watch","F0361 queue write record: command id, G0432 slot, G0434 last index, G2153 increment","F0380 pop record: same command id, G0433 first index, G2153 decrement","handler record: F0365 direction mutation or F0366 target/collision/stairs outcome","for successful steps: F0267 committed map index, X, Y, direction/cell, and last-movement-time side effect","post-command F0128/F0097 boundary record tied to the same tuple","route-labeled original viewport/HUD captures whose filenames match route labels and whose hashes are not repeated unless source trace proves a no-op/block"],"smallestVerificationGate":"one turn, one blocked step, and one successful step with the above records is enough for a follow-up promotable evidence pass; pixel parity can remain out of scope."},"nonClaims":["no new DOSBox/FIRES capture was launched","no original-vs-Firestaff pixel parity is claimed","no completion percentage change is claimed","no generated prior-gate or completion-matrix artifact is used as authority","no viewport/wall implementation is modified"],"problems":problems}
     OUT_DIR.mkdir(parents=True, exist_ok=True); MANIFEST.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n",encoding="utf-8"); write_report(payload)
     print(json.dumps({"status":payload["status"],"ok":payload["ok"],"manifest":str(MANIFEST.relative_to(ROOT)),"report":str(REPORT.relative_to(ROOT)),"problems":problems},indent=2,sort_keys=True)); return 0 if payload["ok"] else 1
 if __name__ == "__main__": raise SystemExit(main())

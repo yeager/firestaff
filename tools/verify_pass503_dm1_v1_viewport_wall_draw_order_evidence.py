@@ -3,19 +3,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
 from typing import Any
+from zipfile import ZipFile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
-DM_ORIGINALS = Path("~/.openclaw/data/firestaff-original-games/DM").expanduser()
-GREATSTONE = Path("~/.openclaw/data/firestaff-greatstone-atlas").expanduser()
-CSBWIN = Path("~/.openclaw/data/firestaff-csbwin-source/CSBWin").expanduser()
-CSB = Path("~/.openclaw/data/firestaff-csb-source/CSB").expanduser()
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM1_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"))
 MANIFEST = ROOT / "parity-evidence/verification/pass503_dm1_v1_viewport_wall_draw_order_evidence/manifest.json"
 REPORT = ROOT / "parity-evidence/pass503_dm1_v1_viewport_wall_draw_order_evidence.md"
 
@@ -150,50 +151,9 @@ LOCAL_CHECKS = [
     ("pass502-blocker-doc-present", ROOT / "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md", "Required next evidence before parity promotion:"),
 ]
 
-ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE", "README.md"]
+ANCHORS = ["DATA/GRAPHICS.DAT", "DATA/DUNGEON.DAT", "TITLE"]
 
-SECONDARY_REF_CHECKS: list[dict[str, Any]] = [
-    {
-        "id": "greatstone-local-atlas-index",
-        "root": GREATSTONE,
-        "file": "index/pages.json",
-        "lines": "1-120",
-        "needles": ["sck", "viewport information", "dungeon.dat", "graphics.dat"],
-        "claim": "Greatstone local atlas is present as data-extraction context for DM/CSB graphics and dungeon assets.",
-    },
-    {
-        "id": "csbwin-viewport-cell-script-order",
-        "root": CSBWIN,
-        "file": "Viewport.cpp",
-        "lines": "935-1938",
-        "needles": ["StdDrawRoomObjects", "roomSTONE", "roomDOORFACING", "StdDrawDoor", "DrawOrder349"],
-        "claim": "CSBWin carries a table-driven viewport cell/draw-order model with door-facing two-phase object/door/object rows.",
-    },
-    {
-        "id": "csbwin-drawviewport-present-loop",
-        "root": CSBWIN,
-        "file": "Viewport.cpp",
-        "lines": "6694-6819",
-        "needles": ["void DrawViewport", "SummarizeRoomInfo", "Interpret(pStdDrawCode", "roomData[userCellNum].graphicRoomType"],
-        "claim": "CSBWin DrawViewport summarizes each relative cell and interprets the selected draw script in cell order.",
-    },
-    {
-        "id": "csb-source-viewport-cell-script-order",
-        "root": CSB,
-        "file": "src/Viewport.cpp",
-        "lines": "935-1938",
-        "needles": ["StdDrawRoomObjects", "roomSTONE", "roomDOORFACING", "StdDrawDoor", "DrawOrder349"],
-        "claim": "CSB lineage source mirrors the same viewport cell/draw-order and door-facing script structure.",
-    },
-    {
-        "id": "dm-originals-manifest-pc34-greatstone-diff",
-        "root": DM_ORIGINALS,
-        "file": "_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md",
-        "lines": "1-220",
-        "needles": ["GRAPHICS.DAT", "GreatStone", "PC34"],
-        "claim": "DM originals include a local PC34-vs-Greatstone manifest for asset provenance cross-checking.",
-    },
-]
+SECONDARY_REF_CHECKS: list[dict[str, Any]] = []
 
 
 def sha256(path: Path) -> str:
@@ -202,6 +162,21 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def read_zip_member(path: Path, name: str) -> bytes:
+    """Read in memory, tolerating the retail ZIP's DOS slash headers."""
+    result = subprocess.run(
+        ["unzip", "-p", str(path), name], check=False,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode not in (0, 1) or not result.stdout:
+        raise RuntimeError(
+            f"cannot read ZIP member {name}: rc={result.returncode}")
+    return result.stdout
 
 
 def slice_text(path: Path, spec: str) -> str:
@@ -293,17 +268,29 @@ def main() -> int:
     local_results = [check_local(*item) for item in LOCAL_CHECKS]
     secondary_results = [check_secondary_ref(spec) for spec in SECONDARY_REF_CHECKS]
     anchors = []
-    for name in ANCHORS:
-        path = DM1 / name
-        anchors.append({
-            "name": name,
-            "path": str(path),
-            "exists": path.exists(),
-            "bytes": path.stat().st_size if path.exists() else None,
-            "sha256": sha256(path) if path.exists() else None,
-        })
+    if DM1_ARCHIVE.is_file():
+        with ZipFile(DM1_ARCHIVE) as archive:
+            members = {item.filename: item for item in archive.infolist()}
+            for name in ANCHORS:
+                item = members.get(name)
+                data = read_zip_member(DM1_ARCHIVE, name) if item is not None else None
+                anchors.append({
+                    "name": name,
+                    "archive": str(DM1_ARCHIVE),
+                    "exists": item is not None,
+                    "bytes": item.file_size if item is not None else None,
+                    "sha256": sha256_bytes(data) if data is not None else None,
+                })
+    else:
+        anchors = [{"name": name, "archive": str(DM1_ARCHIVE),
+                    "exists": False, "bytes": None, "sha256": None}
+                   for name in ANCHORS]
 
-    problems = [row["id"] for row in source_results + local_results + secondary_results if not row["ok"]]
+    # ReDMCSB and the selected retail PC 3.4 archive are authoritative for
+    # this gate. Historical GreatStone/CSBWin mirrors remain useful context,
+    # but their absence must not invalidate real-media evidence.
+    problems = [row["id"] for row in source_results + local_results
+                if not row["ok"]]
     problems.extend(f"missing-anchor-{row['name']}" for row in anchors if not row["exists"])
     status = "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE" if not problems else "FAIL_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
 
@@ -312,11 +299,8 @@ def main() -> int:
         "status": status,
         "ok": not problems,
         "redmcsbSourceRoot": str(RED),
-        "dm1CanonicalRoot": str(DM1),
-        "dmOriginalsRoot": str(DM_ORIGINALS),
-        "greatstoneAtlasRoot": str(GREATSTONE),
-        "csbwinRoot": str(CSBWIN),
-        "csbRoot": str(CSB),
+        "dm1Archive": str(DM1_ARCHIVE),
+        "dm1ArchiveSha256": sha256(DM1_ARCHIVE) if DM1_ARCHIVE.is_file() else None,
         "sourceChecks": source_results,
         "firestaffChecks": local_results,
         "dm1Anchors": anchors,
@@ -344,7 +328,7 @@ def main() -> int:
     for row in anchors:
         digest = row["sha256"][:12] if row["sha256"] else "missing"
         report.append(f"- {row['name']} exists={row['exists']} sha256={digest}")
-    report += ["", "## N2-local secondary references", ""]
+    report += ["", "## Optional historical secondary references", ""]
     for row in secondary_results:
         report.append(f"- {row['file']} lines {row['lineRange']} ok={row['ok']}: {row['claim']}")
     report += ["", "## Non-claims", "", "- This is source/probe evidence only.", "- Pixel parity still needs the same-viewport original/Firestaff runtime capture described by pass502."]

@@ -1,4 +1,5 @@
 #include "nexus_v1_title_dgt2_pp_payload_admission.h"
+#include "nexus_v1_test_retail_member.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +65,7 @@ static const uint16_t k_flag[22] = {
 };
 
 static int failures = 0;
+static char real_sha256[65];
 
 #define CHECK(cond) do { \
     if (!(cond)) { \
@@ -97,6 +99,8 @@ static void put_be32(uint8_t *p, uint32_t value)
 static uint8_t *read_file(const char *path, size_t *out_size)
 {
     FILE *file; long length; uint8_t *bytes;
+    if (strstr(path, "::"))
+        return nexus_v1_test_read_retail_member(path, out_size, real_sha256);
     *out_size = 0; file = fopen(path, "rb");
     if (!file || fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) { if (file) fclose(file); return NULL; }
     bytes = (uint8_t *)malloc((size_t)length);
@@ -187,7 +191,7 @@ static void make_identity(const uint8_t *bytes, size_t size,
 {
     memset(out_identity, 0, sizeof(*out_identity));
     out_identity->sha256_verified = 1;
-    out_identity->sha256_hex = NEXUS_V1_TITLE_BIN_SHA256;
+    out_identity->sha256_hex = real_sha256[0] ? real_sha256 : NEXUS_V1_TITLE_BIN_SHA256;
     out_identity->source_fnv1a64 = fnv1a64(bytes, size);
 }
 

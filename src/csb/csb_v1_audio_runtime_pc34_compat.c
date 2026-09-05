@@ -1,13 +1,16 @@
 /*
  * CSB V1 audio runtime boundary.
  *
- * This module mirrors the ReDMCSB PC/Atari pending-sound runtime contract only.
- * It deliberately does not decode or mix real audio payloads.
+ * This module mirrors ReDMCSB sound arbitration and decodes authenticated
+ * original-platform payloads. PC34-named entry points remain reference ABI
+ * only; CSB had no DOS/Windows release and production must not call them.
  */
 
 #include "csb_v1_audio_runtime_pc34_compat.h"
 
 #include "csb_v1_amiga_graphics_dat.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
 #include "asset_find_by_hash.h"
 
 #include "memory_graphics_dat_header_pc34_compat.h"
@@ -41,6 +44,24 @@ static const CsbV1Pc34SoundSpec csb_v1_pc34_sound_specs[CSB_V1_SOUND_COUNT] = {
     {712u, 150u,  22u, 0u, 4u}
 };
 
+/* ReDMCSB DATA.C MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G.
+ * M513_SOUND_COUNT is 22 for these editions. DATA.C prints 12 additional
+ * cross-platform rows only to identify them as "Atari ST: not present". */
+static const CsbV1AtariStSoundSpec
+csb_v1_atari_st_sound_specs[CSB_V1_ATARI_ST_SOUND_COUNT] = {
+    {533u, 112u,  11u, 3u, 6u}, {534u, 112u,  15u, 0u, 3u},
+    {535u, 112u,  72u, 3u, 6u}, {550u, 112u,  60u, 3u, 5u},
+    {536u, 112u,  10u, 3u, 6u}, {537u, 112u,  99u, 3u, 7u},
+    {539u, 112u, 110u, 3u, 6u}, {551u, 112u,  55u, 3u, 5u},
+    {540u, 112u,   2u, 3u, 6u}, {541u, 112u,  80u, 3u, 6u},
+    {542u, 112u,  82u, 3u, 6u}, {543u, 112u,  84u, 3u, 6u},
+    {544u, 112u,  86u, 3u, 6u}, {545u, 112u,  95u, 3u, 6u},
+    {552u, 112u,  57u, 3u, 5u}, {553u, 112u,  52u, 3u, 5u},
+    {546u, 112u,  40u, 2u, 4u}, {547u, 112u,  70u, 1u, 4u},
+    {549u, 138u,  75u, 3u, 6u}, {554u, 112u,  50u, 3u, 5u},
+    {537u, 112u,  98u, 0u, 4u}, {555u, 112u,  96u, 2u, 4u}
+};
+
 /* ReDMCSB DATA.C:1264-1310 (MEDIA746 A31E/A31M/A33M/A35E/A35M).
  * F0709 uses ioa_Period = 72800 / period, not the IBM PC PIT route. */
 static const CsbV1AmigaSoundSpec csb_v1_amiga_sound_specs[CSB_V1_SOUND_COUNT] = {
@@ -58,6 +79,11 @@ static const CsbV1AmigaSoundSpec csb_v1_amiga_sound_specs[CSB_V1_SOUND_COUNT] = 
 static uint16_t csb_v1_audio_read_be16(const uint8_t* bytes)
 {
     return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+static uint16_t csb_v1_audio_read_le16(const uint8_t* bytes)
+{
+    return (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8));
 }
 
 static int csb_v1_audio_valid_index(int16_t soundIndex);
@@ -140,6 +166,79 @@ int csb_v1_audio_runtime_load_amiga_sound_payload(
 cleanup:
     free(graphics);
     if (!result) csb_v1_audio_runtime_amiga_sound_payload_free(outPayload);
+    return result;
+}
+
+void csb_v1_audio_runtime_fmtowns_sound_payload_free(
+    CsbV1FmtownsSoundPayload* payload)
+{
+    if (!payload) return;
+    free(payload->bytes);
+    memset(payload, 0, sizeof(*payload));
+}
+
+int csb_v1_audio_runtime_load_fmtowns_sound_payload(
+    const char* graphicsDatPath, int16_t soundIndex,
+    CsbV1FmtownsSoundPayload* outPayload)
+{
+    uint8_t* graphics = NULL;
+    size_t graphicsSize = 0u;
+    int result;
+
+    if (!graphicsDatPath || !outPayload) return 0;
+    memset(outPayload, 0, sizeof(*outPayload));
+    if (!asset_read_path_alloc(graphicsDatPath, &graphics, &graphicsSize)) {
+        return 0;
+    }
+    result = csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+        graphics, graphicsSize, soundIndex, outPayload);
+    free(graphics);
+    return result;
+}
+
+int csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+    const uint8_t* graphics, size_t graphicsSize, int16_t soundIndex,
+    CsbV1FmtownsSoundPayload* outPayload)
+{
+    const CsbV1Pc34SoundSpec* spec;
+    size_t dataOffset;
+    size_t index;
+    uint16_t storedBytes;
+    uint16_t decodedBytes;
+    uint16_t sampleBytes;
+    int result = 0;
+
+    if (!graphics || !outPayload) return 0;
+    memset(outPayload, 0, sizeof(*outPayload));
+    spec = csb_v1_audio_runtime_pc34_sound_spec(soundIndex);
+    if (!spec || !csb_v1_fmtowns_graphics_probe(graphics, graphicsSize) ||
+        spec->graphicIndex >= CSB_FMTOWNS_GRAPHICS_ITEM_COUNT) goto cleanup;
+
+    storedBytes = csb_v1_audio_read_le16(
+        graphics + 4u + (size_t)spec->graphicIndex * 2u);
+    decodedBytes = csb_v1_audio_read_le16(
+        graphics + 4u + CSB_FMTOWNS_GRAPHICS_ITEM_COUNT * 2u +
+        (size_t)spec->graphicIndex * 2u);
+    if (storedBytes < 4u || storedBytes != decodedBytes) goto cleanup;
+    dataOffset = 4u + CSB_FMTOWNS_GRAPHICS_ITEM_COUNT * 8u;
+    for (index = 0u; index < spec->graphicIndex; ++index) {
+        dataOffset += csb_v1_audio_read_le16(graphics + 4u + index * 2u);
+    }
+    if (dataOffset > graphicsSize || storedBytes > graphicsSize - dataOffset) {
+        goto cleanup;
+    }
+    sampleBytes = csb_v1_audio_read_be16(graphics + dataOffset);
+    /* F31 retains the same two unused GRAPHICS.DAT tail bytes after the
+     * BE-length-prefixed PCM that TOWNSIO.C F0709 passes to F0060. */
+    if ((size_t)sampleBytes + 4u != storedBytes) goto cleanup;
+    outPayload->bytes = (uint8_t*)malloc(sampleBytes);
+    if (!outPayload->bytes) goto cleanup;
+    memcpy(outPayload->bytes, graphics + dataOffset + 2u, sampleBytes);
+    outPayload->byteCount = sampleBytes;
+    outPayload->spec = *spec;
+    result = 1;
+cleanup:
+    if (!result) csb_v1_audio_runtime_fmtowns_sound_payload_free(outPayload);
     return result;
 }
 
@@ -256,6 +355,65 @@ cleanup:
     return result;
 }
 
+const CsbV1AtariStSoundSpec*
+csb_v1_audio_runtime_atari_st_sound_spec(int16_t soundIndex)
+{
+    if (soundIndex < 0 || soundIndex >= CSB_V1_ATARI_ST_SOUND_COUNT) {
+        return NULL;
+    }
+    return &csb_v1_atari_st_sound_specs[soundIndex];
+}
+
+void csb_v1_audio_runtime_atari_st_sound_payload_free(
+    CsbV1AtariStSoundPayload *payload)
+{
+    if (!payload) return;
+    free(payload->bytes);
+    memset(payload, 0, sizeof(*payload));
+}
+
+int csb_v1_audio_runtime_load_atari_st_sound_payload(
+    const char *graphicsDatPath,
+    int16_t soundIndex,
+    CsbV1AtariStSoundPayload *outPayload)
+{
+    const CsbV1AtariStSoundSpec *spec;
+    CSB_AtariStLoader loader;
+    size_t byteCount;
+    int loaded;
+
+    if (!graphicsDatPath || !outPayload) return 0;
+    memset(outPayload, 0, sizeof(*outPayload));
+    csb_atari_st_graphics_loader_init(&loader);
+    spec = csb_v1_audio_runtime_atari_st_sound_spec(soundIndex);
+    if (!spec || !csb_atari_st_graphics_loader_open(&loader,
+                                                     graphicsDatPath) ||
+        spec->graphicIndex >= loader.item_count) {
+        csb_atari_st_graphics_loader_close(&loader);
+        return 0;
+    }
+    byteCount = loader.items[spec->graphicIndex].decompressed_size;
+    if (byteCount < 2u) {
+        csb_atari_st_graphics_loader_close(&loader);
+        return 0;
+    }
+    outPayload->bytes = (uint8_t *)malloc(byteCount);
+    if (!outPayload->bytes) {
+        csb_atari_st_graphics_loader_close(&loader);
+        return 0;
+    }
+    loaded = csb_atari_st_graphics_loader_read_item(
+        &loader, spec->graphicIndex, outPayload->bytes, byteCount);
+    csb_atari_st_graphics_loader_close(&loader);
+    if (loaded != (int)byteCount) {
+        csb_v1_audio_runtime_atari_st_sound_payload_free(outPayload);
+        return 0;
+    }
+    outPayload->byteCount = byteCount;
+    outPayload->spec = *spec;
+    return 1;
+}
+
 CsbV1PsgChannelAmplitudes
 csb_v1_audio_runtime_channel_amplitudes(int16_t amplitudeIndex)
 {
@@ -278,6 +436,30 @@ csb_v1_audio_runtime_channel_amplitudes(int16_t amplitudeIndex)
     amplitudes.channelA = channel_a_loud[index];
     amplitudes.channelB = channel_b_loud[index];
     amplitudes.channelC = channel_c_loud[index];
+    return amplitudes;
+}
+
+CsbV1PsgChannelAmplitudes
+csb_v1_audio_runtime_channel_amplitudes_soft(int16_t amplitudeIndex)
+{
+    static const uint8_t channel_a_soft[16] = {
+        0, 5, 7, 8, 9, 9, 10, 10,
+        11, 11, 12, 12, 12, 12, 12, 12
+    };
+    static const uint8_t channel_b_soft[16] = {
+        0, 0, 1, 2, 2, 5, 2, 6,
+        3, 6, 7, 8, 4, 6, 8, 9
+    };
+    static const uint8_t channel_c_soft[16] = {
+        0, 0, 0, 0, 0, 2, 2, 1,
+        1, 2, 4, 5, 1, 2, 0, 0
+    };
+    CsbV1PsgChannelAmplitudes amplitudes;
+    uint16_t index = (uint16_t)amplitudeIndex & 0x000fu;
+
+    amplitudes.channelA = channel_a_soft[index];
+    amplitudes.channelB = channel_b_soft[index];
+    amplitudes.channelC = channel_c_soft[index];
     return amplitudes;
 }
 

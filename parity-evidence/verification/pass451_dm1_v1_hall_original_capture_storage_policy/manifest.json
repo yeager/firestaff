@@ -1,13 +1,13 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-08-12T01:36:41.399524+00:00",
-  "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/Volumes/Extern-disk/firestaff",
+  "timestampUtc": "2026-09-04T18:04:52.621025+00:00",
+  "status": "FAIL_PASS451_CAPTURE_STORAGE_POLICY",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "branch": "main",
-  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
-  "externalParentExists": true,
+  "externalParentExists": false,
   "envOverrides": [
     "FIRESTAFF_DOSBOX",
     "FIRESTAFF_PASS173_RUN_BASE",
@@ -15,38 +15,23 @@
   ],
   "n2HallDosboxArtifactRoot": {
     "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-    "exists": true,
+    "exists": false,
     "manifestCandidates": [
       "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
       "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
     ],
     "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-    "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
-    "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-    "entryCount": 11,
-    "ok": true,
-    "errors": [],
+    "ok": false,
+    "errors": [
+      "missing manifest.json or final_candidate_frames/manifest.json"
+    ],
     "candidates": [
       {
         "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-        "exists": true,
+        "exists": false,
         "manifestCandidates": [
           "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
           "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
-        ],
-        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-        "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
-        "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-        "entryCount": 11,
-        "ok": true,
-        "errors": []
-      },
-      {
-        "root": "/Users/bosse/openclaw-artifacts/dm1-hall-dosbox-20260509",
-        "exists": false,
-        "manifestCandidates": [
-          "/Users/bosse/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
-          "/Users/bosse/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
         ],
         "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
         "ok": false,
@@ -55,11 +40,24 @@
         ]
       },
       {
-        "root": "/Users/bosse/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
+        "root": "/home/yeager/openclaw-artifacts/dm1-hall-dosbox-20260509",
         "exists": false,
         "manifestCandidates": [
-          "/Users/bosse/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/manifest.json",
-          "/Users/bosse/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+          "/home/yeager/openclaw-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/home/yeager/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
+        ],
+        "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+        "ok": false,
+        "errors": [
+          "missing manifest.json or final_candidate_frames/manifest.json"
+        ]
+      },
+      {
+        "root": "/home/yeager/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
+        "exists": false,
+        "manifestCandidates": [
+          "/home/yeager/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/manifest.json",
+          "/home/yeager/.openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/manifest.json"
         ],
         "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
         "ok": false,
@@ -75,11 +73,13 @@
       "python3",
       "-m",
       "py_compile",
-      "/Volumes/Extern-disk/firestaff/tools/pass173_source_portrait_route_gate_probe.py"
+      "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""
   },
   "missing": [],
-  "errors": []
+  "errors": [
+    "missing manifest.json or final_candidate_frames/manifest.json"
+  ]
 }

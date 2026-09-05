@@ -89,7 +89,7 @@ static void test_rescan_missing_data_clears_stale_handoff(void)
     p.graphics_verified = 1;
     p.dungeon_verified = 1;
     p.state = CSB_V1_BOOT_STATE_RUNTIME_READY;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
     snprintf(p.graphics_path, sizeof(p.graphics_path),
              "%s", "/tmp/firestaff-csb-stale/CSBGRAPH.DAT");
@@ -195,7 +195,7 @@ static void test_enter_handoff_state(void)
     p.graphics_verified = 1;
     p.dungeon_verified = 1;
     p.state = CSB_V1_BOOT_STATE_ASSETS_READY;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
     snprintf(p.asset_root, sizeof(p.asset_root), "%s", "/tmp/firestaff-csb-v1-data");
     snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", "/tmp/firestaff-csb-v1-data/CSBGRAPH.DAT");
@@ -208,7 +208,7 @@ static void test_enter_handoff_state(void)
           "failed materialization leaves the boot profile at ASSETS_READY");
     CHECK(p.runtime.state == CSB_STATE_TITLE,
           "runtime starts at the CSB title/entrance state");
-    CHECK(p.runtime.variant_id == CSB_V1_VARIANT_PC34_EN,
+    CHECK(p.runtime.variant_id == CSB_V1_VARIANT_REFERENCE_I34_EN,
           "runtime receives the verified CSB variant");
     CHECK(p.runtime.difficulty == CSB_V1_DIFFICULTY_UNBOUND,
           "failed runtime handoff leaves map difficulty source-unbound");
@@ -252,7 +252,7 @@ static void test_enter_loads_verified_dungeon_context(void)
     p.graphics_verified = 1;
     p.dungeon_verified = 1;
     p.state = CSB_V1_BOOT_STATE_ASSETS_READY;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     snprintf(p.asset_root, sizeof(p.asset_root), "%s", ".");
     snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", "GRAPHICS.DAT");

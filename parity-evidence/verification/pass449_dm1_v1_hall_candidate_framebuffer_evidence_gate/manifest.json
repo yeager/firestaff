@@ -1,19 +1,21 @@
 {
   "schema": "pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.v1",
-  "timestampUtc": "2026-05-24T10:22:30.251558+00:00",
-  "status": "PASS_PASS449_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE",
-  "repo": "/Users/bosse/workspace-main/firestaff",
-  "head": "8a412c05d8e188d2a4fec3a9e3a2108a4eff5009",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "timestampUtc": "2026-09-05T17:30:30.027785+00:00",
+  "status": "PARTIAL_PASS449_FRAMEBUFFER_COMPARATOR_INCOMPLETE",
+  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "redmcsbArchive": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z",
   "dataHashLock": [
     {
       "label": "dm1_pc34_english_graphics",
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "member": "DATA/GRAPHICS.DAT",
       "filename": "GRAPHICS.DAT",
       "variant": "DM PC 3.4 English / I34E",
       "bytes": 363417,
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "md5": "fa6b1aa29e191418713bf2cda93d962e",
+      "resolvedPath": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT",
       "exists": true,
       "actualSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "actualMd5": "fa6b1aa29e191418713bf2cda93d962e",
@@ -22,12 +24,14 @@
     },
     {
       "label": "dm1_pc34_english_dungeon",
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "member": "DATA/DUNGEON.DAT",
       "filename": "DUNGEON.DAT",
       "variant": "DM PC 3.4 English / I34E",
       "bytes": 33357,
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "resolvedPath": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT",
       "exists": true,
       "actualSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "actualMd5": "766450c940651fc021c92fe5d0d0b3a6",
@@ -49,7 +53,7 @@
       ],
       "claim": "Candidate panel uses graphic 40 and transparent palette index 6; PC34 route blits it into C101_ZONE_PANEL.",
       "function": "F0346_INVENTORY_DrawPanel_ResurrectReincarnate",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/PANEL.C",
       "ok": true,
       "missing": []
     },
@@ -62,7 +66,7 @@
       ],
       "claim": "Resurrect/reincarnate panel graphic identity is the numbered C040 asset, not filename-only evidence.",
       "function": "C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/DEFS.H",
       "ok": true,
       "missing": []
     },
@@ -75,7 +79,7 @@
       ],
       "claim": "Transparent color is palette index 6 (dark green).",
       "function": "C06_COLOR_DARK_GREEN",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/DEFS.H",
       "ok": true,
       "missing": []
     },
@@ -88,7 +92,7 @@
       ],
       "claim": "The PC34 panel target is zone C101.",
       "function": "C101_ZONE_PANEL",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/DEFS.H",
       "ok": true,
       "missing": []
     },
@@ -101,7 +105,7 @@
       ],
       "claim": "The old PC panel bitmap box is viewport-relative x=80..223 y=52..124; when lifted to full screen this is x=80..223 y=85..157 because viewport y origin is 33.",
       "function": "G0032_ai_Graphic562_Box_Panel",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/DATA.C",
       "ok": true,
       "missing": []
     },
@@ -116,7 +120,7 @@
       ],
       "claim": "Any candidate inventory redraw must show the Hall decision panel.",
       "function": "F0347_INVENTORY_DrawPanel",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/PANEL.C",
       "ok": true,
       "missing": []
     },
@@ -133,7 +137,7 @@
       ],
       "claim": "Candidate mode redraws inventory/panel but suppresses save/rest/close affordances.",
       "function": "F0355_INVENTORY_Toggle_CPSE",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/PANEL.C",
       "ok": true,
       "missing": []
     },
@@ -150,7 +154,7 @@
       ],
       "claim": "Portrait click appends a temporary candidate champion and updates leader/action UI according to party count.",
       "function": "F0280_CHAMPION_AddCandidateChampionToParty",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     },
@@ -168,7 +172,7 @@
       ],
       "claim": "Cancel closes inventory, clears candidate ordinal, removes the candidate status/HUD slot, and redraws menus.",
       "function": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     },
@@ -185,7 +189,7 @@
       ],
       "claim": "Resurrect/reincarnate confirmation clears candidate mode, unlinks possessions, disables the mirror sensor, and branches to reincarnation rename.",
       "function": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/REVIVE.C",
       "ok": true,
       "missing": []
     },
@@ -201,7 +205,7 @@
       ],
       "claim": "Panel choice commands dispatch only from the decision panel and only while the leader hand is empty.",
       "function": "F0445_COMMAND_ProcessCommands160To162_ClickInPanel",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "missing": []
     },
@@ -217,7 +221,7 @@
       ],
       "claim": "The Hall decision set is exactly resurrect/reincarnate/cancel.",
       "function": "G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "missing": []
     },
@@ -234,7 +238,7 @@
       ],
       "claim": "Status box/inventory toggles and inventory close are blocked while the candidate panel is active.",
       "function": "F0446_COMMAND_ProcessCommands12To27_ClickInChampionStatusBox / F0448_COMMAND_ProcessCommands7To11_ToggleInventory",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "missing": []
     },
@@ -251,7 +255,7 @@
       ],
       "claim": "Rest/wake/save menu paths cannot escape the Hall candidate modal.",
       "function": "F0449_COMMAND_ProcessCommands100To149_ClickInMenu",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "missing": []
     },
@@ -266,7 +270,7 @@
       ],
       "claim": "Slot drawing is candidate-aware and prevents unrelated champion slots from overwriting candidate UI.",
       "function": "F0323_CHAMPION_DrawSlot",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/CHAMDRAW.C",
       "ok": true,
       "missing": []
     },
@@ -281,7 +285,7 @@
       ],
       "claim": "Changed leader-hand object drawing is suppressed if candidate mode has no inventory champion.",
       "function": "F0333_CHAMPION_DrawChangedObjectIcons",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/CHAMDRAW.C",
       "ok": true,
       "missing": []
     },
@@ -297,7 +301,7 @@
       ],
       "claim": "Hall/prison map loads panel and portrait graphics together when map creature types allow it.",
       "function": "F0136_DUNGEONVIEW_LoadViewportGraphics",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/DUNVIEW.C",
       "ok": true,
       "missing": []
     },
@@ -313,7 +317,7 @@
       ],
       "claim": "Zone blit passes the requested transparent palette index through to the video blitter.",
       "function": "F0658_BlitBitmapIndexToZoneIndexWithTransparency",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BASE.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/BASE.C",
       "ok": true,
       "missing": []
     },
@@ -329,7 +333,7 @@
       ],
       "claim": "Panel graphic bytes enter the bitmap path through the original memory/graphic expansion routines.",
       "function": "F0488_MEMORY_ExpandGraphicToBitmap / F0489_MEMORY_GetNativeBitmapOrGraphic",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "path": "/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source/MEMORY.C",
       "ok": true,
       "missing": []
     }
@@ -351,8 +355,8 @@
       "expected_status": "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED",
       "why": "Paired Firestaff/original review metadata exists for movement, but original semantic promotion is still blocked.",
       "exists": true,
-      "status": "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED",
-      "ok": true,
+      "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
+      "ok": false,
       "activeBlocker": null
     }
   ],
@@ -422,8 +426,8 @@
     {
       "path": "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json",
       "exists": true,
-      "bytes": 13803,
-      "sha256": "a201d9b199fe143a70429f2233c0b7dcbc58d0a8212b9ee5399bb653d36594be",
+      "bytes": 13853,
+      "sha256": "655db842fed4debc3fcc67881eeef48c22dca28e244a803c452e40bef096cda8",
       "parityUse": "review_only_not_promotable"
     }
   ],
@@ -511,7 +515,7 @@
   },
   "framebufferComparator": {
     "schema": "pass449_hall_candidate_framebuffer_comparator.v1",
-    "status": "COMPARE_COMPLETE",
+    "status": "PARTIAL_COMPARE_WITH_ERRORS",
     "manifestPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
     "schemaPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json",
     "scenes": [
@@ -570,46 +574,16 @@
       }
     },
     "materialization": {
-      "status": "MATERIALIZED_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE",
+      "status": "NOT_MATERIALIZED",
       "firestaffRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
       "firestaffManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
       "originalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
       "correctedOriginalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
-      "materialized": [
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
-        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png"
-      ],
+      "materialized": [],
       "missing": [],
-      "errors": [],
-      "manifest": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json"
+      "errors": [
+        "missing Firestaff frame root: /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
+      ]
     },
     "expectedArtifacts": [
       {
@@ -1364,7 +1338,9 @@
       }
     ],
     "missing": [],
-    "errors": [],
+    "errors": [
+      "missing Firestaff frame root: /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
+    ],
     "compareExecuted": true,
     "comparisons": [
       {
@@ -3927,83 +3903,15 @@
   },
   "n2PanelVisibleOriginalArtifact": {
     "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-    "exists": true,
+    "exists": false,
     "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
     "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
     "promotableLabel": "03_panel_visible_north_front_mirror",
     "parityUse": "original Hall/front-mirror visible context only; not a candidate panel framebuffer comparator input",
     "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after original true-stop frames and Firestaff-paired comparator inputs are still missing; N2 candidate clicks did not transition visibly.",
-    "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
-    "host": "firestaff-worker",
-    "created": "2026-05-09T14:15:00+02:00",
-    "entryCount": 11,
-    "sourceProvenance": {
-      "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-      "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-      "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-      "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
-    },
-    "requiredSourceProvenance": {
-      "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-      "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-      "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
-    },
-    "findings": [
-      "front Hall mirror/panel visible after two left turns from fresh ENTER route",
-      "source-locked portrait click center and visual mirror-center clicks did not produce a visible candidate panel in stock original under DOSBox-X",
-      "resurrect/reincarnate/hud_status_after frames therefore not promotable from this run"
-    ],
-    "promotableEntry": {
-      "root": "raw_root/03_panel_visible_north_front_mirror.png",
-      "root_sha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
-      "pc320": "pc320/03_panel_visible_north_front_mirror_pc320.png",
-      "pc320_sha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
-      "viewport224x136": "viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
-      "viewport_sha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f"
-    },
-    "pc320File": {
-      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/03_panel_visible_north_front_mirror_pc320.png",
-      "rel": "pc320/03_panel_visible_north_front_mirror_pc320.png",
-      "expectedSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
-      "exists": true,
-      "actualSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
-      "bytes": 9391,
-      "pngDims": [
-        320,
-        200
-      ],
-      "ok": true
-    },
-    "viewport224x136File": {
-      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
-      "rel": "viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
-      "expectedSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
-      "exists": true,
-      "actualSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
-      "bytes": 8145,
-      "pngDims": [
-        224,
-        136
-      ],
-      "ok": true
-    },
-    "rootFile": {
-      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/03_panel_visible_north_front_mirror.png",
-      "rel": "raw_root/03_panel_visible_north_front_mirror.png",
-      "expectedSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
-      "exists": true,
-      "actualSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
-      "bytes": 6555,
-      "pngDims": [
-        800,
-        600
-      ],
-      "ok": true
-    },
-    "sha256SumsExists": true,
-    "readmeExists": true,
-    "ok": true,
-    "errors": []
+    "ok": false,
+    "errors": [],
+    "externalArtifactMissing": "missing N2 Hall artifact root /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"
   },
   "probes": {
     "hallFullSourceLock": {
@@ -4012,17 +3920,17 @@
         "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py"
       ],
       "returncode": 0,
-      "outputTail": "PASS wrote /Users/bosse/workspace-main/firestaff/parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json\n"
+      "outputTail": "PASS wrote /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json\n"
     },
     "resurrectReincarnateCancelRoutes": {
       "cmd": [
-        "./run_firestaff_resurrect_reincarnate_cancel_routes_probe.sh"
+        "./scripts/probes/run_firestaff_resurrect_reincarnate_cancel_routes_probe.sh"
       ],
       "returncode": 0,
       "outputTail": "probe=firestaff_resurrect_reincarnate_cancel_routes\nsourceEvidence=COMMAND.C:508 onward defines G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel for candidate champion panel choices; related dispatch gates candidate champion state before inventory/rest actions.\nresurrectReincarnateCancelRoutesInvariantOk=1\n"
     }
   },
-  "activeBlocker": "No missing corrected terminal framebuffer/HUD input blocker remains; pass449 now records complete comparator inputs. Remaining work is pixel-delta parity triage, not capture inventory.",
+  "activeBlocker": "Authentic source/data locks pass, but the framebuffer comparator is `PARTIAL_COMPARE_WITH_ERRORS`. Original and Firestaff paired true-stop frames must be captured and hash-validated before pixel-delta parity triage.",
   "notClaimed": [
     "full pixel parity",
     "zero-delta parity for non-zero terminal HUD crops"

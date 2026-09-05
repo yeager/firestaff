@@ -15,10 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED_ROOT = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+RED_ROOT = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 DUNVIEW = RED_ROOT / "DUNVIEW.C"
 COMPAT = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 COMPAT_H = ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h"
@@ -26,7 +23,7 @@ TEST = ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 EVIDENCE = ROOT / "parity-evidence/pass507_dm1_v1_viewport_wall_alcove_draw_order_source_lock.md"
 
-ALLOWED_REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source").expanduser().resolve()
+ALLOWED_REDMCSB = (ROOT / "reference/redmcsb-20210206").resolve()
 
 
 def read(path: Path, encoding: str = "utf-8") -> str:

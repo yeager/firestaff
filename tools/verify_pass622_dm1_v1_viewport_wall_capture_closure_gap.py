@@ -9,7 +9,6 @@ transcript paired with a Firestaff viewport frame for the same tuple.
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -18,28 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
-
-
-def first_existing(env_name: str, candidates: list[Path]) -> Path:
-    env = os.environ.get(env_name)
-    if env:
-        return Path(env)
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
-
-
-RED = first_existing(
-    "FIRESTAFF_REDMCSB_SOURCE",
-    [
-        DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-        EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-        Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
-    ],
-)
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 PASS = "pass622_dm1_v1_viewport_wall_capture_closure_gap"
 STATUS = "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED"
@@ -225,7 +203,7 @@ def main() -> int:
         "schema": f"firestaff.parity.{PASS}.v1",
         "status": STATUS if not problems else "FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP",
         "ok": not problems,
-        "sourceRoot": str(RED),
+        "sourceRoot": str(RED.relative_to(ROOT)),
         "sourceAudit": source,
         "pass608SameViewportBlocker": pass608,
         "pass609Contract": pass609,

@@ -71,6 +71,32 @@ static void strip_quotes(char *s) {
     }
 }
 
+static void append_po_quoted(char *dst, size_t dst_size, const char *quoted)
+{
+    char part[FS_PO_MAX_LEN];
+    size_t used;
+    if (!dst || dst_size == 0u || !quoted) return;
+    strncpy(part, quoted, sizeof(part) - 1u);
+    part[sizeof(part) - 1u] = '\0';
+    strip_quotes(part);
+    used = strlen(dst);
+    if (used + strlen(part) < dst_size) {
+        strncat(dst, part, dst_size - 1u - used);
+    }
+}
+
+static void commit_po_entry(FS_POCatalog *cat, const char *msgid,
+                            const char *msgstr, int fuzzy)
+{
+    if (!cat || !msgid || !msgstr || fuzzy || !msgid[0] || !msgstr[0] ||
+        cat->count >= FS_PO_MAX_STRINGS) return;
+    strncpy(cat->entries[cat->count].msgid, msgid, FS_PO_MAX_LEN - 1);
+    cat->entries[cat->count].msgid[FS_PO_MAX_LEN - 1] = '\0';
+    strncpy(cat->entries[cat->count].msgstr, msgstr, FS_PO_MAX_LEN - 1);
+    cat->entries[cat->count].msgstr[FS_PO_MAX_LEN - 1] = '\0';
+    cat->count++;
+}
+
 /* Derive domain from path: e.g. "po/dm1.sv.po" -> "dm1". */
 static void extract_domain_from_path(const char* path, char* out, size_t outSize) {
     const char* base;
@@ -132,6 +158,9 @@ int fs_po_load(const char *path) {
     FILE* f;
     char line[1024];
     char current_msgid[FS_PO_MAX_LEN] = {0};
+    char current_msgstr[FS_PO_MAX_LEN] = {0};
+    int field = 0; /* 1 = msgid, 2 = msgstr */
+    int fuzzy = 0;
     int slot;
     char domain[FS_PO_DOMAIN_NAME_MAX];
     char lang[8];
@@ -164,38 +193,36 @@ int fs_po_load(const char *path) {
         while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
             line[--len] = 0;
 
-        if (strncmp(line, "msgid ", 6) == 0) {
+        if (strncmp(line, "#,", 2) == 0) {
+            if (strstr(line, "fuzzy") != NULL) fuzzy = 1;
+        } else if (strncmp(line, "msgid ", 6) == 0) {
+            commit_po_entry(cat, current_msgid, current_msgstr, fuzzy);
+            current_msgid[0] = '\0';
+            current_msgstr[0] = '\0';
             strncpy(current_msgid, line + 6, FS_PO_MAX_LEN - 1);
             current_msgid[FS_PO_MAX_LEN - 1] = '\0';
             strip_quotes(current_msgid);
+            field = 1;
         } else if (strncmp(line, "msgstr ", 7) == 0) {
-            char msgstr[FS_PO_MAX_LEN];
-            strncpy(msgstr, line + 7, FS_PO_MAX_LEN - 1);
-            msgstr[FS_PO_MAX_LEN - 1] = '\0';
-            strip_quotes(msgstr);
-
-            if (current_msgid[0] && msgstr[0] && cat->count < FS_PO_MAX_STRINGS) {
-                strncpy(cat->entries[cat->count].msgid, current_msgid, FS_PO_MAX_LEN - 1);
-                cat->entries[cat->count].msgid[FS_PO_MAX_LEN - 1] = '\0';
-                strncpy(cat->entries[cat->count].msgstr, msgstr, FS_PO_MAX_LEN - 1);
-                cat->entries[cat->count].msgstr[FS_PO_MAX_LEN - 1] = '\0';
-                cat->count++;
-            }
-            current_msgid[0] = '\0';
+            strncpy(current_msgstr, line + 7, FS_PO_MAX_LEN - 1);
+            current_msgstr[FS_PO_MAX_LEN - 1] = '\0';
+            strip_quotes(current_msgstr);
+            field = 2;
         } else if (line[0] == '"') {
-            /* Continuation line — append to current msgid or msgstr. */
-            if (current_msgid[0]) {
-                char tmp[FS_PO_MAX_LEN];
-                size_t curLen = strlen(current_msgid);
-                strncpy(tmp, line, sizeof(tmp) - 1);
-                tmp[sizeof(tmp) - 1] = '\0';
-                strip_quotes(tmp);
-                if (curLen + strlen(tmp) < FS_PO_MAX_LEN - 1) {
-                    strncat(current_msgid, tmp, FS_PO_MAX_LEN - 1 - curLen);
-                }
-            }
+            if (field == 1)
+                append_po_quoted(current_msgid, sizeof(current_msgid), line);
+            else if (field == 2)
+                append_po_quoted(current_msgstr, sizeof(current_msgstr), line);
+        } else if (line[0] == '\0') {
+            commit_po_entry(cat, current_msgid, current_msgstr, fuzzy);
+            current_msgid[0] = '\0';
+            current_msgstr[0] = '\0';
+            field = 0;
+            fuzzy = 0;
         }
     }
+
+    commit_po_entry(cat, current_msgid, current_msgstr, fuzzy);
 
     fclose(f);
     cat->loaded = 1;

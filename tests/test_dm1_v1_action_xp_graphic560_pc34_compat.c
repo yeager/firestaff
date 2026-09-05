@@ -433,6 +433,7 @@ static void test_flip_plan(void)
     assert(rc == 1);
     assert(out.valid == 1);
     assert(out.performed == 1);
+    assert(strcmp(out.sourceMessage, "IT COMES UP TAILS.") == 0);
 }
 
 static void test_heal_plan_full_health(void)

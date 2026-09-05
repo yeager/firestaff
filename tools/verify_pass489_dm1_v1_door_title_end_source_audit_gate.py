@@ -2,28 +2,34 @@
 """Pass489: source-lock Daniel DM1 V1 door/TITLE/end audit seam.
 
 Evidence/source-lock gate only. It ties the current Firestaff seams for the
-button door, TITLE cadence, and end animation to ReDMCSB, the local original-data
-anchors, and the Greatstone atlas cache without promoting pixel or stock-runtime
-parity.
+button door, TITLE cadence, and end animation to the repository ReDMCSB source
+and authentic in-place PC 3.4 ZIP members without promoting pixel parity.
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import re
+import struct
+import zlib
 from pathlib import Path
+from zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ATLAS = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM1_ZIP = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 OUT_DIR = ROOT / "parity-evidence/verification/pass489_dm1_v1_door_title_end_source_audit"
 OUT_JSON = OUT_DIR / "manifest.json"
 OUT_MD = ROOT / "parity-evidence/pass489_dm1_v1_door_title_end_source_audit.md"
 STATUS = "PASS489_DM1_V1_DOOR_TITLE_END_SOURCE_AUDIT_LOCKED"
+MEMBER_SHA256 = {
+    "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    "DATA/GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "DATA/DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+}
 
 
 def read(path: Path, enc: str = "utf-8") -> str:
@@ -71,6 +77,28 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: f.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def read_member_in_memory(path: Path, name: str) -> bytes:
+    """Read the original member without extraction, tolerating DOS slash names."""
+    raw = path.read_bytes()
+    with ZipFile(path) as archive:
+        info = archive.getinfo(name)
+    off = info.header_offset
+    if raw[off:off + 4] != b"PK\x03\x04":
+        raise AssertionError(f"bad local header for {name}")
+    name_len, extra_len = struct.unpack_from("<HH", raw, off + 26)
+    start = off + 30 + name_len + extra_len
+    packed = raw[start:start + info.compress_size]
+    if info.compress_type == ZIP_STORED:
+        data = packed
+    elif info.compress_type == ZIP_DEFLATED:
+        data = zlib.decompress(packed, -15)
+    else:
+        raise AssertionError(f"unsupported compression for {name}")
+    if len(data) != info.file_size or (zlib.crc32(data) & 0xffffffff) != info.CRC:
+        raise AssertionError(f"member integrity failed for {name}")
+    return data
 
 
 def slice_digest(path: Path, start: int, end: int, enc: str = "latin-1") -> str:
@@ -177,12 +205,19 @@ def firestaff_audit() -> dict[str, object]:
     title = read(ROOT / "src/frontend/title_frontend_v1.c")
     endgame = read(ROOT / "src/frontend/endgame_frontend_pc34_compat.c")
 
+    callback = function_body(view, "m11_dm1_f0128_execute_source_step")
+    require_order(callback, [
+        "M11_DM1_F0128_EXECUTE_DOOR_FRAME",
+        "M11_DM1_F0128_EXECUTE_DOOR_BUTTON",
+        "M11_DM1_F0128_EXECUTE_DOOR_MATERIAL",
+    ], "Firestaff callback door phase ownership")
+    require(callback, "m11_draw_dm1_center_door_buttons", "center F0110 callback")
+    require(callback, "m11_draw_dm1_d3r_door_button", "D3R F0110 callback")
     require_order(function_body(view, "m11_draw_viewport"), [
-        "m11_draw_dm1_center_doors",
-        "m11_draw_dm1_center_door_ornaments",
-        "m11_draw_dm1_center_door_buttons",
-        "m11_draw_dm1_d3r_door_button",
-    ], "Firestaff door/button layer order")
+        "m11_dm1_f0128_dispatch_door_frame_square",
+        "m11_dm1_f0128_dispatch_door_button_square",
+        "m11_dm1_f0128_dispatch_door_material_square",
+    ], "Firestaff per-square door callback order")
     require_order(function_body(view, "m11_draw_dm1_center_door_buttons"), [
         "m11_dm1_nearest_blocking_center_door_depth(cells)",
         "hasDoorThing",
@@ -241,26 +276,24 @@ def firestaff_audit() -> dict[str, object]:
 
 
 def external_refs() -> dict[str, object]:
-    atlas_files = ATLAS / "index/files.json"
-    atlas_hits = ATLAS / "index/keyword_hits.json"
-    files = json.loads(read(atlas_files))
-    hits = json.loads(read(atlas_hits))
-    title = DM1 / "TITLE"
-    graphics = DM1 / "GRAPHICS.DAT"
-    dungeon = DM1 / "DUNGEON.DAT"
-    for p in [atlas_files, atlas_hits, title, graphics, dungeon]:
-        if not p.exists():
-            raise AssertionError(f"missing external reference {p}")
-    joined_hits = json.dumps(hits).lower()
-    for needle in ["dungeon.dat", "graphics.dat", "viewport"]:
-        if needle not in joined_hits:
-            raise AssertionError(f"Greatstone atlas missing keyword evidence for {needle}")
+    if not DM1_ZIP.is_file():
+        raise AssertionError(f"missing original archive {DM1_ZIP}")
+    title = read_member_in_memory(DM1_ZIP, "TITLE")
+    graphics = read_member_in_memory(DM1_ZIP, "DATA/GRAPHICS.DAT")
+    dungeon = read_member_in_memory(DM1_ZIP, "DATA/DUNGEON.DAT")
+    if len(title) != 12002 or len(graphics) != 363417 or len(dungeon) != 33357:
+        raise AssertionError("original archive member size mismatch")
+    members = {"TITLE": title, "DATA/GRAPHICS.DAT": graphics,
+               "DATA/DUNGEON.DAT": dungeon}
+    for name, data in members.items():
+        if hashlib.sha256(data).hexdigest() != MEMBER_SHA256[name]:
+            raise AssertionError(f"original archive member hash mismatch: {name}")
     return {
-        "greatstone_files_index_entries": len(files),
-        "greatstone_keyword_hit_entries": len(hits),
-        "dm1_title_sha256": sha256(title),
-        "dm1_graphics_dat_sha256": sha256(graphics),
-        "dm1_dungeon_dat_sha256": sha256(dungeon),
+        "archive": str(DM1_ZIP),
+        "read_mode": "in-memory/no-extraction",
+        "dm1_title_sha256": hashlib.sha256(title).hexdigest(),
+        "dm1_graphics_dat_sha256": hashlib.sha256(graphics).hexdigest(),
+        "dm1_dungeon_dat_sha256": hashlib.sha256(dungeon).hexdigest(),
     }
 
 
@@ -268,14 +301,13 @@ def main() -> int:
     payload = {
         "status": STATUS,
         "redmcsb_root": str(RED),
-        "greatstone_atlas_root": str(ATLAS),
-        "dm1_canonical_root": str(DM1),
+        "dm1_original_archive": str(DM1_ZIP),
         "source_audit": source_audit(),
         "firestaff_audit": firestaff_audit(),
         "external_refs": external_refs(),
         "claims": [
             "Door-with-buttons, TITLE cadence, and end animation seams are source-locked to ReDMCSB anchors.",
-            "Greatstone atlas and canonical DM1 data are present as supporting reference identity checks.",
+            "Original PC 3.4 members are authenticated in memory from the supplied ZIP.",
             "No pixel parity, video parity, or stock runtime promotion is claimed by this pass.",
         ],
     }

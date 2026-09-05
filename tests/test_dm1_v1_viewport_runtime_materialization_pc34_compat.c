@@ -55,6 +55,8 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
     explosions->entries[0].currentFrame = 2;
     explosions->entries[0].maxFrames = 4;
     explosions->entries[0].attack = 96;
+    explosions->entries[0].cell = 1;
+    explosions->entries[0].centered = 0;
     input->mapIndex = 2;
     input->mapX = 11;
     input->mapY = 12;
@@ -155,6 +157,9 @@ int main(void)
                   (unsigned short)((THING_TYPE_WEAPON << 10) | 12) &&
               d1c.liveExplosionCount == 1 && d1c.liveExplosionSlot == 4 &&
               d1c.liveExplosionFrame == 2 && d1c.liveExplosionAttack == 96 &&
+              d1c.liveRenderableExplosionCount == 1 &&
+              d1c.liveRenderableExplosionCells[0] == 1 &&
+              d1c.liveRenderableExplosionCentered[0] == 0 &&
               d1c.admittedLiveProjectileCount == 0 &&
               d1c.admittedLiveExplosionCount == 1 && d1c.projectileZone < 0,
               "live C14/C15 records retain identity while missing C14 material fails closed");

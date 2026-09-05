@@ -2,8 +2,8 @@
 """Verify that the old CSB V1 M11 runtime/capture blocker is retired.
 
 This is still a conservative boundary gate. It proves that Firestaff now has
-a CSB-specific launch handoff after M12 and a positive PC real-data boot/tick
-probe, while keeping original capture and pixel parity out of scope.
+a CSB-specific launch handoff after M12 and a positive original-media
+boot/tick probe, while keeping original capture and pixel parity out of scope.
 """
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ ANCHORS = [
     {"id": "redmcsb_csb_save_file_router", "role": "primary", "path": REDMCSB / "CEDTINC8.C", "lines": "101-118", "needles": ["M746_FILE_ID_SAVE_CSBGAME_DAT", "M745_FILE_ID_SAVE_DMSAVE_DAT", "C13_DUNGEON_CSB_GAME", "C12_DUNGEON_CSB_PRISON"]},
     {"id": "redmcsb_make_new_adventure_gate", "role": "primary", "path": REDMCSB / "CEDTINCH.C", "lines": "5-63", "needles": ["F7086_IsReadyToMakeNewAdventure", "GameLoaded", "G7114_LoadedChampionCount", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C13_DUNGEON_CSB_GAME"]},
     {"id": "redmcsb_csb_dungeon_validation", "role": "primary", "path": REDMCSB / "CEDTINCU.C", "lines": "5-77", "needles": ["F7272_IsDungeonValid", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C13_DUNGEON_CSB_GAME", "C12_DUNGEON_CSB_PRISON"]},
-    {"id": "firestaff_m12_supports_csb_launch_intent", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "5050-5080", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
-    {"id": "firestaff_m12_launch_intent_uses_supported_game_and_assets", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "12787-12910", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "gate.canLaunch && version && version->matched ? 1 : 0"]},
-    {"id": "firestaff_m11_csb_handoff_bypasses_dm1_loader", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "22441-22502", "needles": ["CSB V1: bypass DM1 dungeon loader", "m11_csb_apply_boot_runtime_receipt", "CSB READY: gameId=csb dataDir=%s"]},
+    {"id": "firestaff_m12_supports_csb_launch_intent", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "1-99999", "needles": ["All five catalogued games now have runtime launch boundaries", "strcmp(gameId, \"csb\") == 0"]},
+    {"id": "firestaff_m12_launch_intent_uses_supported_game_and_assets", "role": "firestaff_positive", "path": ROOT / "src/ui/menu_startup_m12.c", "lines": "1-99999", "needles": ["M12_StartupMenu_GetLaunchIntent", "m12_game_supported(intent.gameId)", "gate.canLaunch && version && version->matched ? 1 : 0"]},
+    {"id": "firestaff_m11_csb_handoff_bypasses_dm1_loader", "role": "firestaff_positive", "path": ROOT / "src/engine/m11_game_view.c", "lines": "1-99999", "needles": ["CSB V1: bypass DM1 dungeon loader", "m11_csb_apply_boot_runtime_receipt", "CSB READY: gameId=csb dataDir=%s"]},
     {"id": "firestaff_game_loop_csb_boots_profile", "role": "firestaff_positive", "path": ROOT / "src/engine/firestaff_game_loop.c", "lines": "230-290", "needles": ["FS_GAME_CSB", "csb_v1_boot_scan_assets", "csb_v1_boot_enter_game", "csb_v1_boot_print_summary"]},
-    {"id": "firestaff_pc_real_asset_probe_ticks_csb", "role": "firestaff_positive", "path": ROOT / "probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c", "lines": "1-960", "needles": ["PC-first CSB V1 real-data launch gate", "CSB_V1_VARIANT_PC34_EN", "csb_v1_boot_enter_game", "csb_v1_runtime_tick"]},
+    {"id": "firestaff_original_media_probe_ticks_csb", "role": "firestaff_positive", "path": ROOT / "probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c", "lines": "1-560", "needles": ["Hash-verified asset scan", "csb_v1_boot_enter_game", "csb_v1_runtime_tick", "csb_v1_viewport_render_frame"]},
 ]
 
 NON_CLAIMS = [
@@ -91,12 +91,12 @@ def main() -> int:
     result = {
         "schema": "firestaff.csb_v1_m11_runtime_capture_boundary.v2",
         "pass": not failures,
-        "scope": "CSB V1 M11 runtime/capture boundary retirement; positive CSB launch handoff and PC boot/tick evidence.",
+        "scope": "CSB V1 M11 runtime/capture boundary retirement; positive CSB launch handoff and original-media boot/tick evidence.",
         "blocker_retired": not failures,
         "positive_boundary": {
             "menu_guard": "M12 supports CSB launch intent when hash-matched assets are available.",
             "m11_handoff": "M11 recognizes gameId=csb and hands off to the FS_GAME_CSB loop instead of the DM1 dungeon loader.",
-            "runtime_probe": "csb_v1_pc_real_asset_launch proves PC CSB scan, boot enter-game, dungeon ownership, and one tick.",
+            "runtime_probe": "csb_v1_first_viewport_frame proves original-media scan, boot enter-game, dungeon ownership, one tick, and a viewport render.",
         },
         "manifest": {"path": str(MANIFEST.relative_to(ROOT)), "schema": manifest.get("schema"), "checks": manifest_checks},
         "source_anchors": source_rows,

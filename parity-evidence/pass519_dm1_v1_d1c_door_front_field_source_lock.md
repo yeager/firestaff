@@ -34,9 +34,9 @@ Claim: D1C door-front renders rear cells before frame/button/door, composes door
 
 ## Firestaff Evidence
 
-- PASS firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:982-982)
+- PASS firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1008-1022)
 
-- PASS firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1744-1775)
+- PASS firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1743-1810)
 
 ## Verification
 

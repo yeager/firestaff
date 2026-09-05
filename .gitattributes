@@ -1,2 +1,3 @@
 # Unified diffs intentionally retain source indentation in context lines.
 scripts/dosbox-x-2026.01.02-linux-screenshot-heap-fix.patch whitespace=-space-before-tab,-blank-at-eol
+scripts/mednafen_1.32.1_nexus_sh2_cached_ram_read_trace.patch whitespace=-space-before-tab,-blank-at-eol

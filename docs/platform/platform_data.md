@@ -17,7 +17,8 @@ validating game data files. Called during startup to scan for original files.
 #### CSB
 | Version ID | Label | Required Files |
 |---|---|---|
-| pc34-en | PC 3.4 English | GRAPHICS.DAT, CSBGRAPH.DAT |
+| fmtowns-en / fmtowns-ja | FM Towns English / Japanese | Original CD package |
+| amiga31-en / amiga31-multi | Amiga 3.1 English / Multilanguage | Original Amiga package |
 | st20-21-en | Atari ST 2.0/2.1 English | GRAPHICS.DAT, CSBGRAPH.DAT |
 | amiga35-en | Amiga 3.5 English | GRAPHICS.DAT, CSBGRAPH.DAT |
 | amiga35-multi | Amiga 3.5 Multilanguage | GRAPHICS.DAT, CSBGRAPH.DAT |

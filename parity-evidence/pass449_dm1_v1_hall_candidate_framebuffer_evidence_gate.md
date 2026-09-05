@@ -1,7 +1,7 @@
 # pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate
 
-- status: `PASS_PASS449_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE`
-- redmcsb: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- status: `PARTIAL_PASS449_FRAMEBUFFER_COMPARATOR_INCOMPLETE`
+- redmcsb archive: `/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z`
 - parity claim: **not made**; this is a source-locked evidence path and blocker gate.
 
 ## Locked original data
@@ -40,39 +40,61 @@
 ## Exact framebuffer comparator manifest
 - manifest: `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json`
 - schema: `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json`
-- comparator result: `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` status=`PENDING_FRAMEBUFFER_ARTIFACTS_OR_MANIFEST_MISSING`
+- comparator result: `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` status=`PARTIAL_COMPARE_WITH_ERRORS`
 - required original data provenance: `GRAPHICS.DAT` and `DUNGEON.DAT` must include exact variant, file/path, bytes, and SHA256; filename-only identity is rejected.
 - materialization: `NOT_MATERIALIZED` from Firestaff root `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs` and original root `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509`
-- `candidate_select` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png` hashField=`scenes.candidate_select.firestaff.fullframe.sha256` exists=False
-- `candidate_select` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png` hashField=`scenes.candidate_select.firestaff.hud_status_crop.sha256` exists=False
-- `candidate_select` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png` hashField=`scenes.candidate_select.original.fullframe.sha256` exists=False
-- `candidate_select` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png` hashField=`scenes.candidate_select.original.hud_status_crop.sha256` exists=False
-- `panel_visible` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png` hashField=`scenes.panel_visible.firestaff.fullframe.sha256` exists=False
-- `panel_visible` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png` hashField=`scenes.panel_visible.firestaff.panel_crop.sha256` exists=False
-- `panel_visible` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png` hashField=`scenes.panel_visible.original.fullframe.sha256` exists=False
-- `panel_visible` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png` hashField=`scenes.panel_visible.original.panel_crop.sha256` exists=False
-- `cancel` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png` hashField=`scenes.cancel.firestaff.fullframe.sha256` exists=False
-- `cancel` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png` hashField=`scenes.cancel.firestaff.panel_crop.sha256` exists=False
-- `cancel` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png` hashField=`scenes.cancel.firestaff.hud_status_crop.sha256` exists=False
-- `cancel` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png` hashField=`scenes.cancel.original.fullframe.sha256` exists=False
-- `cancel` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png` hashField=`scenes.cancel.original.panel_crop.sha256` exists=False
-- `cancel` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png` hashField=`scenes.cancel.original.hud_status_crop.sha256` exists=False
-- `resurrect_confirm` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png` hashField=`scenes.resurrect_confirm.firestaff.fullframe.sha256` exists=False
-- `resurrect_confirm` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png` hashField=`scenes.resurrect_confirm.firestaff.panel_crop.sha256` exists=False
-- `resurrect_confirm` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png` hashField=`scenes.resurrect_confirm.firestaff.hud_status_crop.sha256` exists=False
-- `resurrect_confirm` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png` hashField=`scenes.resurrect_confirm.original.fullframe.sha256` exists=False
-- `resurrect_confirm` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png` hashField=`scenes.resurrect_confirm.original.panel_crop.sha256` exists=False
-- `resurrect_confirm` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png` hashField=`scenes.resurrect_confirm.original.hud_status_crop.sha256` exists=False
-- `reincarnate_confirm` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png` hashField=`scenes.reincarnate_confirm.firestaff.fullframe.sha256` exists=False
-- `reincarnate_confirm` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png` hashField=`scenes.reincarnate_confirm.firestaff.panel_crop.sha256` exists=False
-- `reincarnate_confirm` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png` hashField=`scenes.reincarnate_confirm.firestaff.hud_status_crop.sha256` exists=False
-- `reincarnate_confirm` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png` hashField=`scenes.reincarnate_confirm.original.fullframe.sha256` exists=False
-- `reincarnate_confirm` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png` hashField=`scenes.reincarnate_confirm.original.panel_crop.sha256` exists=False
-- `reincarnate_confirm` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png` hashField=`scenes.reincarnate_confirm.original.hud_status_crop.sha256` exists=False
-- `hud_status_after` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png` hashField=`scenes.hud_status_after.firestaff.fullframe.sha256` exists=False
-- `hud_status_after` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png` hashField=`scenes.hud_status_after.firestaff.hud_status_crop.sha256` exists=False
-- `hud_status_after` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png` hashField=`scenes.hud_status_after.original.fullframe.sha256` exists=False
-- `hud_status_after` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png` hashField=`scenes.hud_status_after.original.hud_status_crop.sha256` exists=False
+- partial comparisons executed (diagnostic only; no full pixel parity claim):
+  - `candidate_select` `fullframe` differingPixels=58965/64000 maxChannelDelta=255 meanAbsDeltaRgb=104.875698
+  - `candidate_select` `hud_status_crop` differingPixels=8174/10560 maxChannelDelta=255 meanAbsDeltaRgb=80.281503
+  - `panel_visible` `fullframe` differingPixels=58965/64000 maxChannelDelta=255 meanAbsDeltaRgb=104.878286
+  - `panel_visible` `panel_crop` differingPixels=9692/10512 maxChannelDelta=255 meanAbsDeltaRgb=114.116787
+  - `cancel` `fullframe` differingPixels=52937/64000 maxChannelDelta=255 meanAbsDeltaRgb=108.546599
+  - `cancel` `panel_crop` differingPixels=9738/10512 maxChannelDelta=255 meanAbsDeltaRgb=131.599157
+  - `cancel` `hud_status_crop` differingPixels=7225/10560 maxChannelDelta=219 meanAbsDeltaRgb=77.220644
+  - `resurrect_confirm` `fullframe` differingPixels=6960/64000 maxChannelDelta=255 meanAbsDeltaRgb=12.779141
+  - `resurrect_confirm` `panel_crop` differingPixels=1079/10512 maxChannelDelta=255 meanAbsDeltaRgb=11.379313
+  - `resurrect_confirm` `hud_status_crop` differingPixels=2054/10560 maxChannelDelta=255 meanAbsDeltaRgb=19.956881
+  - `reincarnate_confirm` `fullframe` differingPixels=54020/64000 maxChannelDelta=255 meanAbsDeltaRgb=109.378255
+  - `reincarnate_confirm` `panel_crop` differingPixels=9738/10512 maxChannelDelta=255 meanAbsDeltaRgb=131.599157
+  - `reincarnate_confirm` `hud_status_crop` differingPixels=8174/10560 maxChannelDelta=255 meanAbsDeltaRgb=80.281503
+  - `hud_status_after` `fullframe` differingPixels=6960/64000 maxChannelDelta=255 meanAbsDeltaRgb=12.779141
+  - `hud_status_after` `hud_status_crop` differingPixels=2054/10560 maxChannelDelta=255 meanAbsDeltaRgb=19.956881
+- delta buckets: `DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM`
+  - highest-impact finding: HUD/status crop deltas for cancel/resurrect/reincarnate are dominated by compared visual-state buckets: Firestaff/original inputs alternate between all-black, Firestaff gray status HUD, and original brown Hall top band. This is a capture/semantic-stop alignment blocker before renderer pixel parity can be interpreted.
+  - HUD/status summary: rows=5 bucketMismatches=5 zeroDeltaRows=0
+  - parity eligibility: eligibleRows=12 maskedRows=3 maskedRowKeys=['cancel.hud_status_crop', 'reincarnate_confirm.hud_status_crop', 'resurrect_confirm.hud_status_crop']
+  - semantic-stop mask: `FIRESTAFF_HUD_STATUS_SIDE_MASKED_PENDING_SOURCE_STOP_ALIGNMENT` policy=exclude affected HUD/status crop rows from renderer parity interpretation until Firestaff source-stop-aligned terminal HUD inputs exist
+  - source refs: `REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294`, `REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807`, `PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385`, `COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991`
+- `candidate_select` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png` hashField=`scenes.candidate_select.firestaff.fullframe.sha256` exists=True
+- `candidate_select` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png` hashField=`scenes.candidate_select.firestaff.hud_status_crop.sha256` exists=True
+- `candidate_select` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png` hashField=`scenes.candidate_select.original.fullframe.sha256` exists=True
+- `candidate_select` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png` hashField=`scenes.candidate_select.original.hud_status_crop.sha256` exists=True
+- `panel_visible` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png` hashField=`scenes.panel_visible.firestaff.fullframe.sha256` exists=True
+- `panel_visible` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png` hashField=`scenes.panel_visible.firestaff.panel_crop.sha256` exists=True
+- `panel_visible` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png` hashField=`scenes.panel_visible.original.fullframe.sha256` exists=True
+- `panel_visible` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png` hashField=`scenes.panel_visible.original.panel_crop.sha256` exists=True
+- `cancel` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png` hashField=`scenes.cancel.firestaff.fullframe.sha256` exists=True
+- `cancel` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png` hashField=`scenes.cancel.firestaff.panel_crop.sha256` exists=True
+- `cancel` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png` hashField=`scenes.cancel.firestaff.hud_status_crop.sha256` exists=True
+- `cancel` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png` hashField=`scenes.cancel.original.fullframe.sha256` exists=True
+- `cancel` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png` hashField=`scenes.cancel.original.panel_crop.sha256` exists=True
+- `cancel` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png` hashField=`scenes.cancel.original.hud_status_crop.sha256` exists=True
+- `resurrect_confirm` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png` hashField=`scenes.resurrect_confirm.firestaff.fullframe.sha256` exists=True
+- `resurrect_confirm` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png` hashField=`scenes.resurrect_confirm.firestaff.panel_crop.sha256` exists=True
+- `resurrect_confirm` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png` hashField=`scenes.resurrect_confirm.firestaff.hud_status_crop.sha256` exists=True
+- `resurrect_confirm` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png` hashField=`scenes.resurrect_confirm.original.fullframe.sha256` exists=True
+- `resurrect_confirm` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png` hashField=`scenes.resurrect_confirm.original.panel_crop.sha256` exists=True
+- `resurrect_confirm` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png` hashField=`scenes.resurrect_confirm.original.hud_status_crop.sha256` exists=True
+- `reincarnate_confirm` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png` hashField=`scenes.reincarnate_confirm.firestaff.fullframe.sha256` exists=True
+- `reincarnate_confirm` `firestaff` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png` hashField=`scenes.reincarnate_confirm.firestaff.panel_crop.sha256` exists=True
+- `reincarnate_confirm` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png` hashField=`scenes.reincarnate_confirm.firestaff.hud_status_crop.sha256` exists=True
+- `reincarnate_confirm` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png` hashField=`scenes.reincarnate_confirm.original.fullframe.sha256` exists=True
+- `reincarnate_confirm` `original` `panel_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png` hashField=`scenes.reincarnate_confirm.original.panel_crop.sha256` exists=True
+- `reincarnate_confirm` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png` hashField=`scenes.reincarnate_confirm.original.hud_status_crop.sha256` exists=True
+- `hud_status_after` `firestaff` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png` hashField=`scenes.hud_status_after.firestaff.fullframe.sha256` exists=True
+- `hud_status_after` `firestaff` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png` hashField=`scenes.hud_status_after.firestaff.hud_status_crop.sha256` exists=True
+- `hud_status_after` `original` `fullframe` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png` hashField=`scenes.hud_status_after.original.fullframe.sha256` exists=True
+- `hud_status_after` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png` hashField=`scenes.hud_status_after.original.hud_status_crop.sha256` exists=True
 
 ## N2 DOSBox original Hall panel-visible artifact
 - root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=False ok=False
@@ -91,7 +113,7 @@
 - `parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json` exists=True use=`review_only_not_promotable`
 
 ## Remaining blocker
-Corrected original `candidate_select`, `panel_visible`, `cancel`, `resurrect_confirm`, `reincarnate_confirm`, generic `hud_status_after`, and terminal-scoped HUD crops are now staged from initial-south corrected runs. Remaining work is pixel-delta parity triage, not missing framebuffer/HUD inputs.
+Authentic source/data locks pass, but the framebuffer comparator is `PARTIAL_COMPARE_WITH_ERRORS`. Original and Firestaff paired true-stop frames must be captured and hash-validated before pixel-delta parity triage.
 
 ## Non-claims
 No original-vs-Firestaff pixel parity, no candidate panel framebuffer parity, and no HUD/status pixel parity is claimed by this pass.

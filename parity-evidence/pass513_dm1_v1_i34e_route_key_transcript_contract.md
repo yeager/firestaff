@@ -23,7 +23,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - PASS pass504_keyboard_buffer_state_delta_blocker: PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED
 - PASS pass509_original_overlay_keyboard_buffer_blocker: PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED
 - PASS pass511_movement_original_route_contract: PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED
-- PASS pass512_movement_cross_reference_audit: PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT
+- PASS pass512_movement_cross_reference_audit: BLOCKED_PASS512_DM1_V1_MOVEMENT_RUNTIME_CAPTURE_MISSING
 
 ## Accepted I34E key rows
 
@@ -98,7 +98,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 
 ## Candidate transcript-like artifacts
 
-- parity-evidence/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.md size=1457
+- parity-evidence/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.md size=1455
 - parity-evidence/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof.md size=1401
 - parity-evidence/pass284_dm1_v1_f0380_dequeue_ordering_proof.md size=3103
 - parity-evidence/pass289_dm1_v1_f0380_dispatch_equivalent_proof.md size=4305
@@ -112,9 +112,9 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/pass387_dm1_v1_f0380_queue_pop_eligibility.md size=2792
 - parity-evidence/pass504_dm1_v1_keyboard_buffer_state_delta_blocker.md size=2441
 - parity-evidence/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.md size=3153
-- parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md size=1298
+- parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md size=989
 - parity-evidence/pass93_original_route_key_explore_diagnostic.md size=3781
-- parity-evidence/verification/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness/manifest.json size=8662
+- parity-evidence/verification/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness/manifest.json size=8618
 - parity-evidence/verification/pass232_command_f0380_source_seam.json size=3267
 - parity-evidence/verification/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt/route_keylog.txt size=305
 - parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt size=500000
@@ -162,7 +162,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_route_keylog.json size=1951
 - parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json size=5057
 - parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10565
-- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8513
+- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8262
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift size=6062
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/pass513_i34e_route_key_transcript_scaffold.json size=8229
@@ -192,6 +192,9 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - verification-screens/pass513-dm1-v1-promoted-transcript/promoted_transcript.json size=7764
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys.swift size=5604
 - verification-screens/pass94-hall-map-enter-diagnostic/original_viewport_route_keys_xdotool.sh size=3664
+- verification-screens/passH2313-dm2-original-overlays/dm2-overlay-route-keys.log size=294
+- verification-screens/passH2313-dm2-original-overlays/dm2_original_overlay_route_keys.swift size=5739
+- verification-screens/passH2313-dm2-original-overlays/dm2_original_overlay_route_keys_xdotool.sh size=3645
 
 ## Non-claims
 

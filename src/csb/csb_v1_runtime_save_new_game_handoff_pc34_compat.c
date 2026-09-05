@@ -26,7 +26,7 @@ int csb_v1_runtime_save_new_game_handoff_after_input_pc34(
      * resumes against an owned dungeon, never a host-made replacement. */
     if (!profile || !first_input || !save_path || !out_receipt ||
         profile->state != CSB_V1_BOOT_STATE_RUNTIME_READY ||
-        profile->variant_id != CSB_V1_VARIANT_PC34_EN ||
+        profile->variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN ||
         !profile->assets_verified || !profile->dungeon_verified ||
         !profile->runtime.dungeon_handle ||
         csb_v1_dungeon_get_current() != profile->runtime.dungeon_handle ||

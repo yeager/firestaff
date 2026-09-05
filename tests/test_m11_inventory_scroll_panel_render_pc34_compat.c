@@ -59,6 +59,13 @@ static const char* graphics_dat_path(void) {
             fclose(f);
             return homePath;
         }
+        /* Production reads original game data in place. Exercise the same
+         * archive-member path instead of requiring a test-only extraction. */
+        snprintf(homePath, sizeof(homePath),
+                 "%s/.firestaff/data/dm1/"
+                 "Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT",
+                 home);
+        return homePath;
     }
     return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
 }
@@ -484,7 +491,7 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     struct DungeonThings_Compat things;
     struct DungeonContainer_Compat containers[2];
     struct DungeonJunk_Compat junks[2];
-    unsigned char rawContainers[12] = {0};
+    unsigned char rawContainers[16] = {0};
     unsigned char rawJunks[8] = {0};
     const unsigned short leaderHandChest =
         (unsigned short)(THING_TYPE_CONTAINER << 10);
@@ -497,7 +504,16 @@ static void test_eye_click_chest_opens_panel_without_action_hand_icon_swap(void)
     int zx = 0, zy = 0, zw = 0, zh = 0;
 
     M11_GameView_Init(&state);
-    rawJunks[2] = 4;
+    rawContainers[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawContainers[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawContainers[2] = (unsigned char)(firstChestItem & 0xffu);
+    rawContainers[3] = (unsigned char)(firstChestItem >> 8);
+    rawContainers[8] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawContainers[9] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawContainers[10] = 0xff; rawContainers[11] = 0xff;
+    rawJunks[0] = 1; rawJunks[1] = 0x28; rawJunks[2] = 4;
+    rawJunks[4] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawJunks[5] = (unsigned char)(THING_ENDOFLIST >> 8);
     rawJunks[6] = 5;
     seed_chest_world(&state, &things, containers, junks, rawContainers,
                      rawJunks);

@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
 from typing import Any
+from zipfile import ZipFile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM1_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"))
 PASS = "pass504_dm1_v1_viewport_present_capture_contract"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
@@ -20,8 +25,8 @@ REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 STATUS = "PASS504_DM1_V1_VIEWPORT_PRESENT_CAPTURE_CONTRACT_LOCKED"
 
 EXPECTED_DM1_HASHES = {
-    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "DATA/DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "DATA/GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
 }
 
@@ -113,6 +118,18 @@ def file_sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def zip_member_bytes(path: Path, name: str) -> bytes:
+    # The retail archive has DOS backslashes in two local headers while its
+    # central directory correctly uses slashes. unzip reads those members in
+    # memory and returns rc=1 only for that harmless filename warning.
+    result = subprocess.run(["unzip", "-p", str(path), name], check=False,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode not in (0, 1) or not result.stdout:
+        raise AssertionError(
+            f"cannot read retail ZIP member {name}: rc={result.returncode}")
+    return result.stdout
+
+
 def slice_lines(text: str, span: str) -> str:
     start_s, end_s = span.split("-", 1)
     start, end = int(start_s), int(end_s)
@@ -168,19 +185,21 @@ def audit_local(lock: dict[str, Any]) -> dict[str, Any]:
 
 def audit_original_data() -> list[dict[str, Any]]:
     rows = []
+    if not DM1_ARCHIVE.is_file():
+        raise AssertionError(f"missing retail PC34 archive: {DM1_ARCHIVE}")
+    with ZipFile(DM1_ARCHIVE) as archive:
+        members = {item.filename for item in archive.infolist()}
     for name, expected in EXPECTED_DM1_HASHES.items():
-        path = DM1 / name
-        actual = file_sha256(path)
-        rows.append(
-            {
-                "name": name,
-                "path": str(path),
-                "resolvedPath": str(path.resolve()),
-                "sha256": actual,
-                "expectedSha256": expected,
-                "ok": actual == expected,
-            }
-        )
+        data = zip_member_bytes(DM1_ARCHIVE, name) if name in members else b""
+        actual = hashlib.sha256(data).hexdigest() if data else None
+        rows.append({
+            "name": name,
+            "archive": str(DM1_ARCHIVE),
+            "bytes": len(data),
+            "sha256": actual,
+            "expectedSha256": expected,
+            "ok": actual == expected,
+        })
     return rows
 
 
@@ -199,7 +218,8 @@ def main() -> int:
         "status": STATUS if not problems else "FAIL_PASS504_DM1_V1_VIEWPORT_PRESENT_CAPTURE_CONTRACT",
         "ok": not problems,
         "sourceRoot": str(RED),
-        "canonicalDm1Root": str(DM1),
+        "dm1Archive": str(DM1_ARCHIVE),
+        "dm1ArchiveSha256": file_sha256(DM1_ARCHIVE),
         "sourceLocks": source,
         "localLocks": local,
         "originalData": original,

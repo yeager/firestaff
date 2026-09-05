@@ -57,6 +57,13 @@ typedef struct {
     uint16_t game_title_swoosh_rect[4];
     uint16_t game_title_presents_rect[4];
     uint16_t game_title_master_rect[4];
+    /* TITLE.C installs C12 PRESENTS while the first strip is visible, then
+     * applies C13 DUNGEON followed by C14 MASTER before the zoom frames.
+     * These RGB6 values are decoded from the selected hash-verified EDM/JDM
+     * load image; they are never a host/default palette. */
+    int game_title_palettes_verified;
+    uint8_t game_title_presents_palette_rgb6[16][3];
+    uint8_t game_title_zoom_palette_rgb6[16][3];
     /* EDM's native DRAW_DMENU indexes this source string table directly.
      * Keep the admitted bytes with the startup receipt so the host action
      * rows cannot silently fall back to a different game's labels. */

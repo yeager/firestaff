@@ -53,7 +53,7 @@ def main() -> int:
     # a second material pass after an owning square had already completed.
     # F0128 now admits the primitive directly from each scheduler step.
     foreground = function_body(
-        source, "static void m11_dm1_f0128_replay_foreground_square")
+        source, "static void m11_dm1_f0128_execute_source_step")
     for step, call in (
         ("DM1_V1_F0128_STEP_F0104_PIT", "m11_draw_dm1_floor_pits"),
         ("DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT",
@@ -68,33 +68,62 @@ def main() -> int:
     # F0113 is no longer a global D3..D1 batch: F0128 invokes it after the
     # current square's F0115 route.  The scheduler-owned replay is the
     # authoritative D3..D1 dispatch, while the direct call below remains D0.
-    assert "m11_dm1_f0128_replay_foreground_square" in viewport
+    assert "m11_dm1_f0128_dispatch_foreground_square" in viewport
     assert "DM1_V1_F0128_STEP_F0113_FIELD" in foreground
 
     # F0115's first door partition must be consumed inside the completed
     # source-square route, after its wall/ornament envelope and before F0111.
     # A global content walk cannot preserve that relation for overlapping
     # side lanes or a closed center door.
-    pass1 = function_body(source, "static void m11_dm1_f0128_replay_door_pass1_square")
+    pass1 = function_body(source, "static void m11_dm1_f0128_execute_source_step")
     assert "DM1_V1_F0128_STEP_F0115_DOOR_PASS1" in pass1
     assert "step->cellOrderWord" in pass1
-    assert "DM1_V1_F0128_STEP_F0115_MAIN" not in pass1
+    assert "M11_DM1_F0128_EXECUTE_DOOR_PASS1" in pass1
+    # Ornament and door raster primitives must only be called by the owning
+    # scheduler callback.  The viewport loop may dispatch phases, but must not
+    # revive either of the former broad primitive-class replay paths.
+    assert "M11_DM1_F0128_EXECUTE_WALL_ORNAMENT" in foreground
+    assert "m11_draw_dm1_wall_ornaments" in foreground
+    assert viewport.count("m11_draw_dm1_wall_ornaments") == 0
+    assert viewport.count("m11_draw_dm1_side_doors") == 0
+    assert viewport.count("m11_draw_dm1_center_doors") == 0
+
     side_start = viewport.index("/* F0128 completes DnL's structural route")
     side_replay = viewport[side_start:]
-    side_ornament = side_replay.index("m11_draw_dm1_wall_ornaments")
-    side_pass1 = side_replay.index("m11_dm1_f0128_replay_door_pass1_square")
-    side_door = side_replay.index("m11_draw_dm1_side_doors")
-    assert side_ornament < side_pass1 < side_door
-    center_replay = viewport[viewport.index("m11_draw_dm1_front_walls", side_start):]
-    center_ornament = center_replay.index("m11_draw_dm1_wall_ornaments")
-    center_pass1 = center_replay.index("m11_dm1_f0128_replay_door_pass1_square")
-    center_door = center_replay.index("m11_draw_dm1_center_doors")
-    assert center_ornament < center_pass1 < center_door
+    side_ornament = side_replay.index(
+        "m11_dm1_f0128_dispatch_wall_ornament_square")
+    side_pass1 = side_replay.index(
+        "m11_dm1_f0128_dispatch_door_pass1_square")
+    side_frame = side_replay.index(
+        "m11_dm1_f0128_dispatch_door_frame_square")
+    side_door = side_replay.index(
+        "m11_dm1_f0128_dispatch_door_material_square")
+    assert side_ornament < side_pass1 < side_frame < side_door
 
-    effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
-    d0 = viewport.find("m11_dm1_f0128_replay_d0_primitives")
-    mirror = viewport.find("m11_draw_dm1_front_mirror_route")
-    assert mirror >= 0 and effect >= 0 and mirror < effect < d0
+    center_start = side_replay.index(
+        "m11_dm1_f0128_dispatch_wall_material_square", side_door)
+    center_replay = side_replay[center_start:]
+    center_ornament = center_replay.index(
+        "m11_dm1_f0128_dispatch_wall_ornament_square")
+    center_pass1 = center_replay.index(
+        "m11_dm1_f0128_dispatch_door_pass1_square")
+    center_frame = center_replay.index(
+        "m11_dm1_f0128_dispatch_door_frame_square")
+    center_door = center_replay.index(
+        "m11_dm1_f0128_dispatch_door_material_square")
+    assert center_ornament < center_pass1 < center_frame < center_door
+
+    d0 = viewport.find("M11_DM1_F0128_EXECUTE_D0_BEFORE_THINGS")
+    final_d1_foreground = viewport.rfind(
+        "m11_dm1_f0128_dispatch_foreground_square", 0, d0)
+    # D1C's mirror is part of its F0107 callback and each D3..D1 F0115
+    # callback restarts C15 before returning. No once-per-frame explosion
+    # replay may remain between D1C and the terminal D0 phases.
+    assert "m11_draw_dm1_front_mirror_route" in foreground
+    assert viewport.find("m11_draw_dm1_front_mirror_route") < 0
+    assert foreground.count("m11_draw_dm1_f0115_explosions_for_square") >= 2
+    assert "m11_draw_dm1_deferred_explosion_pass(state" not in viewport
+    assert final_d1_foreground >= 0 and final_d1_foreground < d0
     print("ok: F0128 scheduler owns D3..D1 material and D0 is final")
     return 0
 

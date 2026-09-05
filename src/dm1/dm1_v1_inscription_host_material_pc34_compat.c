@@ -169,6 +169,25 @@ static int dm1_v1_inscription_host_material_from_selected_offset_pc34(
         receipt.glyphByteCount >= (int)sizeof(receipt.glyphBytes)) {
         return 0;
     }
+    {
+        int glyph;
+        for (glyph = 0; glyph < receipt.glyphByteCount; ++glyph) {
+            const unsigned char source = receipt.glyphBytes[glyph];
+            char decoded;
+            if (source < 26u) decoded = (char)('A' + source);
+            else if (source == 26u) decoded = ' ';
+            else if (source == 27u) decoded = '.';
+            else if (source == 0x80u) decoded = '\n';
+            else {
+                /* Escape-symbol cells have no stable Unicode spelling.
+                 * Their authentic M648 byte path remains the only owner. */
+                receipt.sourceText[0] = '\0';
+                break;
+            }
+            receipt.sourceText[glyph] = decoded;
+            receipt.sourceText[glyph + 1] = '\0';
+        }
+    }
     /* ReDMCSB DUNGEON.C F0168 decodes the selected TextString; DUNVIEW.C
      * F0107:3619-3706 owns M648, line position, C10 transparency, and the
      * raw byte << 3 source-cell selection. Fail closed on malformed bytes. */

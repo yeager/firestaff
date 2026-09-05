@@ -87,7 +87,6 @@ matching data is present:
 | Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. Native startup, entrance, supported HUD and viewport material use the Amiga data path. |
 | Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
 | FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
-| DOS / PC | No original CSB release exists. `--platform pc` fails closed. CSBWin is a source/disassembly reference only, not a game edition or runtime route. |
 | PC-9801 Japanese 3.1 | Not supported. The media is retained only as preservation reference and cannot select an M11 data, startup, gameplay or input route. |
 | X68000 Japanese 3.1 | Not supported. The media is retained only as preservation reference and does not select an M11 data, startup or gameplay route. |
 
@@ -162,7 +161,7 @@ game media and every user-local input.
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
 |---|---|---|---|---|
 | DM1 | PC DOS 3.4 | Bounded Atari ST, Amiga and FM Towns start/runtime routes | PC-9801 preservation | X68000 |
-| CSB | — | Bounded Atari ST, Amiga and FM Towns title/start-menu/runtime routes | CSBWin source/disassembly reference | PC-9801, X68000 |
+| CSB | — | Bounded Atari ST, Amiga and FM Towns title/start-menu/runtime routes | — | PC-9801, X68000 |
 | DM2 | Bounded DOS, Amiga, FM Towns and Macintosh routes | New Game/startup, source-owned runtime slices and real-media resume where supplied | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
 | Theron's Quest | — | Bounded native PC Engine/TurboGrafx US CloneCD ZIP and Japanese CUE/Track 02 startup routes | Source-only dungeon loading; gameplay, save, and presentation consumers remain capture-gated | — |
@@ -196,6 +195,7 @@ Useful command-line options:
 firestaff --game <dm1|csb|dm2|nexus|theron>
           --data-dir <path>
           --platform <auto|pc|amiga|atari-st|fm-towns|pce|saturn>
+          --dm1-fmtowns-ja
           --csb-fmtowns-ja
           --csb-utility-disk
           --scan-data
@@ -212,11 +212,10 @@ is used only outside the product to obtain and validate capture evidence.
 `--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
 hash-verified Japanese FM Towns package and fails if that original package is
 not present; it never guesses from the host language or falls back to F31E.
-CSB has no original DOS/PC edition: `--game csb --platform pc` is deliberately
-rejected and cannot reuse Atari ST material that happens to share a graphics
-hash. CSBWin is source/disassembly evidence only, not a substitute DOS release
-or a Firestaff data/runtime route.
 
+`--dm1-fmtowns-ja` is the corresponding explicit DM1 request. It selects the
+hash-verified JDM.EXP/JDATA edition and fails closed if those original members
+are unavailable; the default FM Towns selection remains EDM.EXP/DATA.
 ### Theron's Quest (PC Engine CD)
 
 Place the original US Track 02 BIN in `.firestaff/data/theron/` (or pass a

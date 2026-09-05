@@ -281,6 +281,62 @@ ordered sequence rather than assuming a synthetic single-instruction loop.
 WorkRAM-to-VDP2 value receipt. It binds neither the earlier CDB/CD producer nor
 the display consumer, and therefore does not admit native composition.
 
+The authenticated `nexus-title-end-to-end-r6` capture places these component
+receipts in one hash-bound session. Its manifest binds the JP retail CUE, raw
+frames 12590--12599, CDB FIFO words for TITLE.BIN LBAs 6039--6055, their
+CD-labelled Work-RAM writes, the complete 31,616-byte instruction-read
+sequence at frame 12596, matching VDP2 writes/writer registers, and the raw
+VDP1/VDP2 register, VRAM, framebuffer and CRAM domains. The instruction bytes
+equal the VDP2 byte lanes in order, closing the observed Work-RAM-to-VDP2
+transport in the same session.
+
+This still does **not** identify those bytes as MAPD. MAPD begins at LBA 6063,
+its palette reaches LBA 6080, and TITLE.CG occupies LBAs 6090--6172. The MAPD
+transform and display consumer therefore remain fail-closed rather than being
+inferred from the earlier TITLE.BIN extent.
+
+A follow-up PC-filtered producer capture closes that next input boundary.
+Authentic Track 1 FIFO words for LBAs 6063--6088 (plus the observed partial
+LBA 6089 read) feed only retail loader PC `0x06090d04`; each complete sector
+maps through 512 ordered four-byte writes into contiguous Work RAM
+`0x060b7d80--0x060c4d7f`. Consequently the source MAPD record is resident at
+`0x060b7ff8` and its 32-byte palette at `0x060c0c4c`.
+`scripts/verify_nexus_title_mapd_cd_ram_source.py` checks the FIFO values
+against raw Track 1, all loader PCs/LBAs/addresses, and the `MAPD`/`TIBG`
+signature. The MAPD palette consumer is now closed by authenticated capture
+r27. At absolute frame 12592, retail master SH-2 PC `0x060856ec` reads the 32
+bytes at Work RAM `0x060c0c4c--0x060c0c6b` while `r4` selects physical VDP2
+CRAM `0x25f00400`. The paired writer trace records the exact 16 big-endian
+words at CRAM offsets `0x100400--0x10041e`; that same session contains complete
+VDP1 registers/VRAM/framebuffer and VDP2 registers/VRAM/CRAM state. The new
+same-session verifier binds all sidecars to manifest hashes and raw Track 1.
+The MAPD tile-index transfer into the active VDP2 plane is now closed by the
+authenticated r33 capture; palette placement and timing were already closed.
+
+Two additional authenticated timing receipts narrow that boundary. The retail
+loader begins the MAPD signature write at absolute frame 12573 and completes
+the palette bytes at frame 12580; the captured CRAM consumer follows at frame
+12592. At that frame, master SH-2 PCs `0x0603fa2c` and `0x0603fa38` read the
+last MAPD descriptor offsets (`0x7028` and the terminating zero) and retain the
+five plane bases derived from the `TIBG` descriptor. A CPU-symmetric cache-read
+probe then observed the real animation scheduler consuming the five 64×28
+plane headers at frames 13294, 13334, 13375, 13415 and 13455. Master SH-2 PCs
+`0x0603f61a` and `0x0603f620` read width `0x0040` and height `0x001c`; `r4`
+advances through animation states `0xff10`--`0xff14`, while `r6` holds VDP2
+bus address `0x25e7c2b4`. The payload does not pass through an ordinary cached
+CPU read, which identifies the next boundary as a DMA/transfer route rather
+than a CPU tile-index loop. The cache trace, frame window and both CPUs are
+manifest-hash-bound. This proves plane-selection order and timing, but the
+payload-to-VRAM transfer is value-bound by the matching writer trace. Each
+plane contributes exactly 3,584 big-endian words, written sequentially to
+VDP2 VRAM `0x05c000--0x05dbff` by retail PCs `0x0608b564`/`0x0608b568`.
+Across N, E, X, U and S, all 17,920 observed words equal the corresponding
+real MAPD bytes without substitution. The same capture includes the final raw
+VDP1/VDP2 register, VRAM, framebuffer and CRAM state. The fail-closed verifier
+`scripts/verify_nexus_title_mapd_vdp2_transfer.py` binds the CUE-derived
+`TITLE.BIN`, plane geometry/order, selection frames, every destination address
+and value, sidecar hashes, and raw state.
+
 The focused writer-code capture establishes static code identity without
 widening that semantic claim. Its 48-word windows at `0x060230ac`,
 `0x060856f0` and the observed PC tag `0x0602312c` occur byte-for-byte in the authenticated
@@ -367,8 +423,8 @@ the title is a 3D animation or that a particular DMV file precedes it.
 
 ### Original Saturn
 - `TITLE.CG` is a source asset in the retail corpus
-- `TITLE.CG` VRAM and the MAPD palette CRAM upload are capture-proven; map
-  transform, placement and ordering remain capture-gated
+- `TITLE.CG` VRAM and the MAPD palette CRAM upload, placement and absolute
+  frame are capture-proven; the MAPD tile-index transform remains capture-gated
 - FONT256/SLEV text ownership remains separate and unproven
 
 ### Firestaff PC

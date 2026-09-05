@@ -104,7 +104,7 @@
     "F0400_MENUS_DeleteChampionSymbol",
     "F0408_MENUS_GetClickOnSpellCastResult"
   ],
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "dm1_v2_hud_interaction champion/action overlay command mirror",
   "status": "passed"
 }

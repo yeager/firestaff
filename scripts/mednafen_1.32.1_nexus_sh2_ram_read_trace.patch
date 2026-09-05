@@ -19,7 +19,7 @@
  }
  
  //
-@@ -579,6 +581,69 @@
+@@ -579,6 +581,68 @@
   }
  }
  
@@ -32,6 +32,8 @@
 + static uint32 minimum;
 + static uint32 maximum;
 + static uint32 required_pc;
++ static uint32 required_pc_min;
++ static uint32 required_pc_max;
 + static uint64 frame_min;
 + static uint64 frame_max = UINT64_MAX;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS");
@@ -40,48 +42,45 @@
 +  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN");
 +  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX");
 +  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC");
++  const char *pc_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC_MIN");
++  const char *pc_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC_MAX");
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
 +  const char *frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_FRAME_MIN");
 +  const char *frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_FRAME_MAX");
 +  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
 +  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
 +  required_pc = pc_text && *pc_text ? strtoul(pc_text, NULL, 0) : 0;
++  required_pc_min = pc_min_text && *pc_min_text ? strtoul(pc_min_text, NULL, 0) : 0;
++  required_pc_max = pc_max_text && *pc_max_text ? strtoul(pc_max_text, NULL, 0) : 0;
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
 +  if(frame_min_text && *frame_min_text) frame_min = strtoull(frame_min_text, NULL, 0);
 +  if(frame_max_text && *frame_max_text) frame_max = strtoull(frame_max_text, NULL, 0);
 +  configured = true;
 + }
++ const uint32 pc0 = FirestaffGetSH2PC(0);
++ const uint32 pc1 = FirestaffGetSH2PC(1);
++ const bool pc0_in_range = required_pc_max > required_pc_min && pc0 >= required_pc_min && pc0 <= required_pc_max;
++ const bool pc1_in_range = required_pc_max > required_pc_min && pc1 >= required_pc_min && pc1 <= required_pc_max;
++ const unsigned owner = (required_pc && pc1 == required_pc) || pc1_in_range ? 1U : 0U;
 + if(!path || !*path || count >= limit ||
 +    (maximum > minimum && (address < minimum || address >= maximum)) ||
 +    SMPC_FirestaffCurrentFrame() < frame_min || SMPC_FirestaffCurrentFrame() > frame_max ||
-+    (required_pc && FirestaffGetSH2PC(0) != required_pc))
++    (required_pc && pc0 != required_pc && pc1 != required_pc) ||
++    (required_pc_max > required_pc_min && !pc0_in_range && !pc1_in_range))
 +  return;
 + if(!file)
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V1\n", file);
++  fputs("FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V2\n", file);
 + }
-+ fprintf(file, "frame=%llu addr=0x%08x size=%u value=0x%08x pc0=0x%08x pc1=0x%08x r0=0x%08x r1=0x%08x r2=0x%08x r3=0x%08x r4=0x%08x r5=0x%08x r6=0x%08x r7=0x%08x r8=0x%08x r9=0x%08x r10=0x%08x r11=0x%08x r12=0x%08x r13=0x%08x r14=0x%08x r15=0x%08x pr=0x%08x\n",
++ fprintf(file, "frame=%llu addr=0x%08x size=%u value=0x%08x pc0=0x%08x pc1=0x%08x cpu=%u",
 +  (unsigned long long)SMPC_FirestaffCurrentFrame(), (unsigned)address, size, (unsigned)value,
-+  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R0, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R1, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R2, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R3, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R4, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R5, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R6, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R7, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R8, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R9, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R10, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R11, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R12, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R13, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R14, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_R15, NULL, 0),
-+  (unsigned)CPU[0].GetRegister(SH7095::GSREG_PR, NULL, 0));
++  (unsigned)pc0, (unsigned)pc1, owner);
++ for(unsigned i = 0; i < 16; i++)
++  fprintf(file, " r%u=0x%08x", i,
++   (unsigned)CPU[owner].GetRegister(SH7095::GSREG_R0 + i, NULL, 0));
++ fputc('\n', file);
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}

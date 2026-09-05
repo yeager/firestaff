@@ -10,8 +10,8 @@ The next viewport/walls parity promotion must be a same-frame capture contract t
 - DRAWVIEW.C:709-858 / F0097_DUNGEONVIEW_DrawViewport - ok=True; PC34 present boundary blits G0296_puc_Bitmap_Viewport through C007_ZONE_VIEWPORT.
 
 ## Canonical DM1 PC34 data
-- DUNGEON.DAT - ok=True; sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- GRAPHICS.DAT - ok=True; sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- DATA/DUNGEON.DAT - ok=True; sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- DATA/GRAPHICS.DAT - ok=True; sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - TITLE - ok=True; sha256 adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
 
 ## Capture contract

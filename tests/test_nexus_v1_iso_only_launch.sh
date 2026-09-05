@@ -14,17 +14,25 @@ for candidate in "$root"/*.cue "$root"/*.CUE; do
 done
 [[ -n "$cue" ]] || exit 77
 
-iso_name="$(sed -nE 's/^[[:space:]]*FILE[[:space:]]+"([^"]+\.iso)".*/\1/ip' "$cue" | head -n 1)"
-[[ -n "$iso_name" ]] || exit 77
-iso="$(dirname "$cue")/$iso_name"
-[[ -f "$iso" ]] || exit 77
+# The retail disc is a MODE1/2352 data BIN followed by CDDA BIN tracks.
+# Identify the data track from CUE semantics, never from a misleading .iso
+# filename convention.
+grep -Eq '^[[:space:]]*TRACK[[:space:]]+01[[:space:]]+MODE1/(2048|2352)' "$cue" || exit 77
+mapfile -t media_names < <(sed -nE 's/^[[:space:]]*FILE[[:space:]]+"([^"]+)".*/\1/p' "$cue")
+[[ ${#media_names[@]} -gt 0 ]] || exit 77
+for media_name in "${media_names[@]}"; do
+    [[ "$media_name" != */* && "$media_name" != *\\* ]] || exit 77
+    [[ -f "$(dirname "$cue")/$media_name" ]] || exit 77
+done
 
 runtime_root=${FIRESTAFF_TEST_RUNTIME_DIR:-"$(pwd)/test-runtime"}
 mkdir -p "$runtime_root"
 tmpdir="$(mktemp -d "$runtime_root/firestaff-nexus-iso-only.XXXXXX")"
 trap 'rm -rf "$tmpdir"' EXIT
 ln -s "$cue" "$tmpdir/$(basename "$cue")"
-ln -s "$iso" "$tmpdir/$(basename "$iso")"
+for media_name in "${media_names[@]}"; do
+    ln -s "$(dirname "$cue")/$media_name" "$tmpdir/$media_name"
+done
 
-echo "Nexus ISO-only root: $tmpdir"
+echo "Nexus CUE/BIN-only root: $tmpdir"
 exec "$probe" "$tmpdir"

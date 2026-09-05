@@ -12,6 +12,7 @@
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_inscription_presentation.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -177,11 +178,15 @@ static void init_csb_dungeon(CSB_V1_DungeonData *dungeon,
     dungeon->thing_type_counts[THING_TYPE_WEAPON] = 3;
     dungeon->thing_type_counts[THING_TYPE_POTION] = 1;
     dungeon->thing_type_counts[THING_TYPE_CONTAINER] = 1;
+    dungeon->thing_type_counts[THING_TYPE_JUNK] = 1;
+    dungeon->thing_type_counts[THING_TYPE_TEXTSTRING] = 1;
     dungeon->thing_data_bases[THING_TYPE_DOOR] = 112;
     dungeon->thing_data_bases[THING_TYPE_GROUP] = 96;
     dungeon->thing_data_bases[THING_TYPE_WEAPON] = 0;
     dungeon->thing_data_bases[THING_TYPE_POTION] = 12;
     dungeon->thing_data_bases[THING_TYPE_CONTAINER] = 16;
+    dungeon->thing_data_bases[THING_TYPE_JUNK] = 24;
+    dungeon->thing_data_bases[THING_TYPE_TEXTSTRING] = 28;
 
     write_u16(raw + 60, 0u);
     write_u16(raw + 62, 0u);
@@ -299,6 +304,12 @@ int main(void)
         write_u16(raw + 18, THING_ENDOFLIST); /* CONTAINER.Slot. */
         write_u16(raw + 20, 0u); /* Chest subtype 0; ObjectInfo idx 1. */
         write_u16(raw + 22, 0u);
+        write_u16(raw + 24, THING_ENDOFLIST);
+        write_u16(raw + 26, 1u); /* Empty waterskin: subtype 1, charge 0. */
+        write_u16(raw + 28, THING_ENDOFLIST);
+        dungeon.text_data_base = 60;
+        dungeon.text_word_count = 1;
+        write_u16(raw + 60, 31u); /* inscription glyphs A, A, terminator */
 
         profile.runtime.dungeon_handle = &dungeon;
         profile.runtime.dungeon_seed = 0x1234u;
@@ -401,11 +412,137 @@ int main(void)
               "CSB runtime resolves bow subtype for overlay sprite routing");
         check(csb_v1_runtime_object_subtype_index(&profile.runtime, ven_potion) == 3,
               "CSB runtime resolves potion subtype high byte for overlay sprite routing");
+        {
+            const unsigned short potion_word =
+                (unsigned short)(raw[14] | ((unsigned short)raw[15] << 8));
+            const short water = profile.runtime.party_state.Champions[0].Water;
+            profile.runtime.party_state.LeaderHandThing = ven_potion;
+            check(!csb_v1_runtime_consume_water_potion_from_leader_hand_pc34(
+                      &profile.runtime, 0),
+                  "CSB mouth transaction fails closed for potion effects not yet source-owned");
+            check(profile.runtime.party_state.LeaderHandThing == ven_potion &&
+                      profile.runtime.party_state.Champions[0].Water == water &&
+                      (unsigned short)(raw[14] |
+                          ((unsigned short)raw[15] << 8)) == potion_word,
+                  "failed CSB mouth transaction leaves hand, vitals, and real record atomic");
+            profile.runtime.party_state.LeaderHandThing = THING_NONE;
+        }
         check(csb_v1_runtime_object_subtype_index(&profile.runtime, chest) == 0,
               "CSB runtime resolves chest subtype from CONTAINER.Type for overlays");
         check(csb_v1_runtime_object_subtype_index(&profile.runtime,
                                                   (unsigned short)((THING_TYPE_GROUP << 10) | 0)) == -1,
               "CSB runtime rejects non-object subtype requests");
+        {
+            const unsigned short floor_dagger =
+                (unsigned short)(dagger | (3u << 14));
+            unsigned short grabbed = THING_NONE;
+
+            /* Party faces east, so view cell 2 maps to absolute cell 3 on
+             * the front square.  This source-layout C04 chain owns both the
+             * group and floor object; only the creature type changes between
+             * the two F0264 cases. Authentic positive media admission remains
+             * covered separately by the Atari runtime test. */
+            profile.runtime.leader_index = 0;
+            write_u16(raw + 80,
+                      (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+            write_u16(raw + 96, floor_dagger);
+            write_u16(raw + 0, THING_ENDOFLIST);
+            /* On the party map C04 byte 5 is an ACTIVE_GROUP index, not the
+             * packed cells. Use slot 2 deliberately: its 0xff effective
+             * cells prove F0373 does not reinterpret the raw index 2. */
+            raw[101] = 2u;
+            profile.runtime.active_group_state[2].valid = 1;
+            profile.runtime.active_group_state[2].group_thing =
+                (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+            profile.runtime.active_group_state[2].map_index = 0;
+            profile.runtime.active_group_state[2].map_x = 1;
+            profile.runtime.active_group_state[2].map_y = 0;
+            profile.runtime.active_group_state[2].cells = 0xffu;
+            profile.runtime.active_group_state[2].directions = 0u;
+            profile.runtime.active_group_state_count = 1u;
+            raw[100] = 6u; /* Screamer: no G0243 levitation attribute. */
+            check(!csb_v1_runtime_grab_floor_object_for_view_cell_pc34(
+                      &profile.runtime, 2, &grabbed) &&
+                      grabbed == THING_NONE &&
+                      profile.runtime.party_state.LeaderHandThing == THING_NONE,
+                  "CSB F0373 blocks a floor pickup under a non-levitating front-cell creature");
+
+            raw[100] = 3u; /* Wizard Eye: G0243 MASK0x0020_LEVITATION. */
+            check(csb_v1_runtime_grab_floor_object_for_view_cell_pc34(
+                      &profile.runtime, 2, &grabbed) &&
+                      grabbed == floor_dagger &&
+                      profile.runtime.party_state.LeaderHandThing == floor_dagger,
+                  "CSB F0373 permits the same real-chain pickup under a levitating creature");
+
+            profile.runtime.party_state.LeaderHandThing = THING_NONE;
+            memset(&profile.runtime.active_group_state[2], 0,
+                   sizeof(profile.runtime.active_group_state[2]));
+            profile.runtime.active_group_state_count = 0u;
+            raw[101] = 0xffu;
+            write_u16(raw + 80,
+                      (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+            write_u16(raw + 96, THING_ENDOFLIST);
+            write_u16(raw + 0, THING_ENDOFLIST);
+            raw[100] = 6u;
+        }
+        {
+            const unsigned short inscription =
+                (unsigned short)((THING_TYPE_TEXTSTRING << 10) | 0);
+            const unsigned short front_inscription =
+                (unsigned short)(inscription | (3u << 14));
+            char decoded_inscription[16];
+            CSB_V1_VisibleInscriptionReceipt receipt;
+            profile.runtime.variant_id = CSB_V1_VARIANT_ST20_EN;
+            write_u16(raw + 30, 1u); /* Atari/F31: Visible bit 0, offset bits 3..15. */
+            decoded_inscription[0] = '\0';
+            check(csb_v1_runtime_decode_visible_inscription_text_pc34(
+                      &profile.runtime, inscription, decoded_inscription,
+                      sizeof(decoded_inscription)) &&
+                      strcmp(decoded_inscription, "AA") == 0,
+                  "CSB inscription decoder owns Atari/F31 TextString bitfields");
+            raw[69] = 0x10u; /* Front wall with native Thing-list entry. */
+            write_u16(raw + 80, front_inscription);
+            write_u16(raw + 28, THING_ENDOFLIST);
+            check(csb_v1_visible_front_inscription_receipt(
+                      &profile.runtime, &receipt) && receipt.valid &&
+                      receipt.front_wall_has_inscription &&
+                      receipt.selected_text_thing == front_inscription &&
+                      strcmp(receipt.source_text, "AA") == 0,
+                  "CSB F0172 publishes selected native front C02 without DM1 state");
+            write_u16(raw + 80,
+                      (unsigned short)((THING_TYPE_GROUP << 10) | 0));
+            raw[69] = (unsigned char)((1u << 5) | 0x10u);
+            profile.runtime.variant_id = CSB_V1_VARIANT_AMIGA31_MULTI;
+            write_u16(raw + 30, 0x8000u); /* Amiga: Visible bit 15, offset bits 0..12. */
+            check(csb_v1_runtime_decode_visible_inscription_text_pc34(
+                      &profile.runtime, inscription, decoded_inscription,
+                      sizeof(decoded_inscription)) &&
+                      strcmp(decoded_inscription, "AA") == 0,
+                  "CSB inscription decoder owns reversed Amiga TextString bitfields");
+            write_u16(raw + 30, 0u);
+            check(!csb_v1_runtime_decode_visible_inscription_text_pc34(
+                      &profile.runtime, inscription, decoded_inscription,
+                      sizeof(decoded_inscription)),
+                  "CSB invisible inscription fails closed without DM1 text fallback");
+            profile.runtime.variant_id = CSB_V1_VARIANT_ST20_EN;
+        }
+        {
+            const unsigned short empty_waterskin =
+                (unsigned short)((THING_TYPE_JUNK << 10) | 0);
+            const unsigned short waterskin_word =
+                (unsigned short)(raw[26] | ((unsigned short)raw[27] << 8));
+            const short water = profile.runtime.party_state.Champions[0].Water;
+            profile.runtime.party_state.LeaderHandThing = empty_waterskin;
+            check(!csb_v1_runtime_drink_waterskin_from_leader_hand_pc34(
+                      &profile.runtime, 0),
+                  "CSB F0349 rejects an empty waterskin before mutation");
+            check(profile.runtime.party_state.LeaderHandThing == empty_waterskin &&
+                      profile.runtime.party_state.Champions[0].Water == water &&
+                      (unsigned short)(raw[26] |
+                          ((unsigned short)raw[27] << 8)) == waterskin_word,
+                  "empty-waterskin rejection preserves hand, water, and C09 record");
+            profile.runtime.party_state.LeaderHandThing = THING_NONE;
+        }
         check(csb_v1_viewport_runtime_square_allows_thing_overlay(&dungeon, 0, 1, 0),
               "CSB viewport permits corridor thing overlays");
         raw[69] = 0x10u;
@@ -478,6 +615,14 @@ int main(void)
               "CSB leader-hand name resolves through CSB runtime object binding");
         check(strcmp(name, "DAGGER") == 0,
               "CSB leader-hand name comes from CSB runtime resolver");
+        {
+            char scroll_text[64];
+            memset(scroll_text, 0x7f, sizeof(scroll_text));
+            check(!DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+                      &state, scroll_text, (int)sizeof(scroll_text)) &&
+                      scroll_text[0] == '\0',
+                  "CSB Eye decoder rejects a non-C07 runtime Thing without DM1 fallback");
+        }
         check(M11_GameView_HandlePointerButton(
                   &state,
                   12 + 8,
@@ -1145,8 +1290,62 @@ int main(void)
                       .entries[projectile_count_before_m11]
                       .reserved1 == chest,
                   "CSB leader-hand throw projectile preserves chest identity");
+            check(profile.runtime.projectiles
+                      .entries[projectile_count_before_m11].cell ==
+                      profile.runtime.party_dir,
+                  "CSB left viewport throw preserves F0329 side-zero cell");
             check(state.world.projectiles.count == 0,
                   "CSB leader-hand throw does not allocate DM1 projectiles");
+
+            projectile_count_before_m11 = profile.runtime.projectiles.count;
+            check(M11_GameView_SetV1LeaderHandObject(&state, chest),
+                  "CSB leader hand can be rebound for right viewport throw");
+            check(M11_GameView_HandlePointerButton(
+                      &state, 150, 33 + 20, M11_DM1_MOUSE_MASK_LEFT) ==
+                      M11_GAME_INPUT_REDRAW,
+                  "CSB right viewport leader-hand throw routes through F0329");
+            check(profile.runtime.projectiles.count ==
+                      projectile_count_before_m11 + 1 &&
+                      profile.runtime.projectiles
+                        .entries[projectile_count_before_m11].cell ==
+                      ((profile.runtime.party_dir + 1) & 3),
+                  "CSB right viewport throw preserves F0329 side-one cell");
+            check(M11_GameView_GetV1LeaderHandThing(&state) == THING_NONE &&
+                      profile.runtime.party_state.LeaderHandThing == THING_NONE,
+                  "CSB right throw clears both M11 and runtime leader hand");
+            check(profile.runtime.party_state.Champions[0]
+                      .Slots[CSB_V1_SLOT_ACTION_HAND] == dagger,
+                  "CSB right throw restores the source action-hand Thing");
+        }
+        {
+            struct DM1_Event_V1 first;
+            struct DM1_Event_V1 second;
+            CSB_V1_Champion *shielded = &profile.runtime.party_state.Champions[0];
+            dm1v1_event_queue_init(&profile.runtime.timeline_queue, 0);
+            profile.runtime.game_time = 0;
+            profile.runtime.state = CSB_STATE_GAME;
+            profile.runtime.paused = 0;
+            shielded->ShieldStrength = 39;
+            memset(&first, 0, sizeof(first));
+            first.map_time = DM1_MAP_TIME_MAKE(0, 1);
+            first.type = DM1_EVENT_CHAMPION_SHIELD;
+            first.priority = 0;
+            first.b_mapX = 12;
+            second = first;
+            second.map_time = DM1_MAP_TIME_MAKE(0, 2);
+            second.b_mapX = 27;
+            check(csb_v1_runtime_add_timeline_event(&profile.runtime, &first) >= 0 &&
+                      csb_v1_runtime_add_timeline_event(&profile.runtime, &second) >= 0,
+                  "stacked YA shield expiries enter the source timeline independently");
+            check(csb_v1_runtime_tick_v1(&profile.runtime) == 1 &&
+                      shielded->ShieldStrength == 39,
+                  "YA shield remains stacked before its first source deadline");
+            check(csb_v1_runtime_tick_v1(&profile.runtime) == 1 &&
+                      shielded->ShieldStrength == 27,
+                  "first YA expiry subtracts only its own B.Defense");
+            check(csb_v1_runtime_tick_v1(&profile.runtime) == 1 &&
+                      shielded->ShieldStrength == 0,
+                  "second YA expiry subtracts the remaining stacked defense");
         }
     }
 

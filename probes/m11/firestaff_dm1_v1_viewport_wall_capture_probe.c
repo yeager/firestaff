@@ -8,7 +8,8 @@
  * the full viewport each time.
  *
  * What it does:
- * - Visits 24 poses: 6 map cells (1,2)..(1,5) + (2,3) + (0,3) x 4
+ * - Visits 28 poses: 7 map cells (1,2)..(1,5) + (2,3) + (0,3) +
+ *   the pass1055 source-bound closed-door party cell (6,9), x 4
  *   directions N/E/S/W. For each pose, calls M11_GameView_Draw
  *   and saves a full-frame PPM + a 224x136 viewport-crop PPM.
  * - Records the cell type (WALL / CORRIDOR / DOOR / STAIRS / PIT /
@@ -86,6 +87,7 @@ static const struct { const char* label; int x; int y; } kCells[] = {
     {"hall_1_5",  1, 5},
     {"hall_2_3",  2, 3},
     {"hall_0_3",  0, 3},
+    {"pass1055_closed_door_6_9", 6, 9},
 };
 static const int kNumCells = (int)(sizeof(kCells) / sizeof(kCells[0]));
 
@@ -284,11 +286,11 @@ static int write_manifest(const char* outDir,
     fprintf(js, "    \"DUNVIEW.C:8318-8618 F0128 viewport redraw from party pose\",\n");
     fprintf(js, "    \"COORD.C:1693-1722 PC34 viewport origin/224x136 dimensions\"\n");
     fprintf(js, "  ],\n");
-    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs. For each of 24 poses (6 cells x 4 directions), we save the rendered viewport and compute grey-pixel + non-black + texture-diversity heuristics on the (0,33)-(224,136) viewport. The grey_pixel_count is the primary indicator of wall texture presence: > 10000 grey pixels = wall fills the viewport; < 1000 grey pixels = corridor floor / open view dominates. This is NOT pixel parity with original DM1 PC 3.4 — it is visual-evidence readiness for the 'missing or incorrect viewport walls' P1 bug ticket.\",\n");
+    fprintf(js, "  \"honesty\": \"Firestaff deterministic runtime capture with exact state coordinates, full-frame PPM screenshots, and source-geometry viewport crop PPMs. For each of 28 poses (7 cells x 4 directions), we save the rendered viewport and compute grey-pixel + non-black + texture-diversity heuristics on the (0,33)-(224,136) viewport. The grey_pixel_count is the primary indicator of wall texture presence: > 10000 grey pixels = wall fills the viewport; < 1000 grey pixels = corridor floor / open view dominates. The pass1055 cell is included for exact-state closed-door pairing. This probe alone does NOT claim pixel parity with original DM1 PC 3.4.\",\n");
     fprintf(js, "  \"captures\": [\n");
 
     fprintf(md, "# DM1 V1 viewport wall visual capture\n\n");
-    fprintf(md, "Deterministic Firestaff runtime captures for 24 poses (6 cells × 4 directions N/E/S/W) in the Hall of Champions area. Each row records exact map/x/y/direction, the cell type at the party's position (read from `world.dungeon->squareData[y*width + x]` via `M034_SQUARE_TYPE(square)>>5`), the grey-pixel/non-black-pixel/texture-diversity heuristics on the (0,33)-(224,136) viewport, a full-frame PPM, and a source-geometry viewport crop PPM.\n\n");
+    fprintf(md, "Deterministic Firestaff runtime captures for 28 poses (7 cells × 4 directions N/E/S/W) in the Hall of Champions area, including the pass1055 source-bound closed-door party pose. Each row records exact map/x/y/direction, the cell type at the party's position (read from `world.dungeon->squareData[x*height + y]` via `M034_SQUARE_TYPE(square)>>5`), the grey-pixel/non-black-pixel/texture-diversity heuristics on the (0,33)-(224,136) viewport, a full-frame PPM, and a source-geometry viewport crop PPM.\n\n");
     fprintf(md, "## Source evidence\n\n");
     fprintf(md, "- DUNGEON.C:1371-1421 F0150 — read M034_SQUARE_TYPE\n");
     fprintf(md, "- DUNGEON.C:2573 — map M011_CELL(sensor) against view direction\n");
@@ -352,7 +354,8 @@ int main(int argc, char** argv) {
     if (argc < 3) {
         fprintf(stderr,
                 "usage: %s DATA_DIR OUT_DIR\n"
-                "  captures 24 Hall-of-Champions poses (6 cells x 4 dirs)\n"
+                "  captures 28 Hall-of-Champions poses (7 cells x 4 dirs),\n"
+                "  including the pass1055 source-bound closed-door pose,\n"
                 "  and saves PPMs + manifest under OUT_DIR\n",
                 argv[0]);
         return 2;

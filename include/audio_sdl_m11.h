@@ -77,6 +77,7 @@ typedef struct {
     M11_SoundBuffer csbAtariStPsg;
     M11_SoundBuffer csbPc34RuntimePcm;
     M11_SoundBuffer csbAmigaRuntimePcm;
+    M11_SoundBuffer csbFmtownsRuntimePcm;
     M11_SoundBuffer csbFmtownsAnmPcm;
     M11_SoundBuffer dm2FmtownsTitlePcm;
     M11_SoundBuffer dm2MacSndPcm;
@@ -93,6 +94,7 @@ typedef struct {
     int csbAtariStSoundAccepted;
     int csbAtariStSoundQueuedCount;
     int csbAtariStSoundPeriod;
+    int csbAtariStSoundSourceVolume;
     unsigned int csbAtariStSoundHash;
     int csbPc34RuntimeSoundAccepted;
     int csbPc34RuntimeSoundByteCount;
@@ -106,6 +108,11 @@ typedef struct {
     int csbAmigaRuntimeSoundSourceVolume;
     unsigned int csbAmigaRuntimeSoundHash;
     int csbAmigaRuntimeSoundQueuedCount;
+    int csbFmtownsRuntimeSoundAccepted;
+    int csbFmtownsRuntimeSoundByteCount;
+    int csbFmtownsRuntimeSoundSourceVolume;
+    unsigned int csbFmtownsRuntimeSoundHash;
+    int csbFmtownsRuntimeSoundQueuedCount;
     int csbFmtownsAnmSoundAccepted;
     int csbFmtownsAnmSoundByteCount;
     int csbFmtownsAnmSoundSampleRateHz;
@@ -174,6 +181,13 @@ int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
                                 int sourceBytes,
                                 int sourcePeriod,
                                 unsigned int sourceHash);
+int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
+    M11_AudioState* state,
+    const unsigned char* source,
+    int sourceBytes,
+    int sourcePeriod,
+    unsigned int sourceHash,
+    int sourceVolume);
 /* ReDMCSB PC3.4 IO.C F0060 passes signed 8-bit GRAPHICS.DAT samples to the
  * IBMIO driver. The original driver uses a PIT timer divisor, so this helper
  * preserves the source bytes and divisor during host resampling. It rejects
@@ -214,6 +228,14 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
     int sourcePeriod,
     unsigned int sourceHash,
     int paulaVolume);
+/* F31 TOWNSIO.C F0709/F0060 plays signed GRAPHICS.DAT samples at 5500 Hz
+ * with the distance volume already resolved by SOUND.C. */
+int M11_Audio_PlayCsbFmtownsRuntimePcm(
+    M11_AudioState* state,
+    const int8_t* source,
+    int sourceBytes,
+    int sourceVolume,
+    unsigned int sourceHash);
 /* F31 ANIM.C F2275 SD/SO selects a BE-length-prefixed source record. The
  * caller passes only the source bytes selected by SO; F31 F0060 owns its
  * fixed 5500 Hz cadence and volume 100. No fallback sound is emitted. */

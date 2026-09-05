@@ -5,7 +5,7 @@
     "presentationOnly": true,
     "v2MetadataMutatesGameplayState": false
   },
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 field/projectile effect presentation metadata source-lock",
   "sourceAnchors": [
     {

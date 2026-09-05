@@ -636,6 +636,8 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
 
     DM1_ViewportWallOrnamentOrdinalCallback wall_ornament_ordinal_callback;
     void *wall_ornament_ordinal_user_data;
+    DM1_ViewportWallAspectCallback wall_aspect_callback;
+    void *wall_aspect_user_data;
 
     /* Optional CSBgraphics.dat CustomBackgrounds bridge. The CSB boot layer
      * owns the plan/cache/skin-def bytes; the viewport can select a

@@ -45,6 +45,20 @@ static void test_sound_constants(void) {
 }
 
 static void test_sound_data(void) {
+    static const DM1_SoundData expected[DM1_SND_COUNT] = {
+        {671,112,11,3,6},{672,112,15,0,3},{673,112,72,3,6},
+        {673,145,72,3,6},{674,112,10,3,6},{675,112,99,3,7},
+        {675,112,98,0,4},{677,112,110,3,6},{678,112,2,3,6},
+        {679,112,80,3,6},{680,112,82,3,6},{681,112,84,3,6},
+        {682,112,86,3,6},{684,112,40,2,4},{685,112,70,1,4},
+        {687,138,75,3,6},{683,112,95,3,6},{707,138,106,0,4},
+        {704,138,105,0,4},{690,112,57,3,5},{691,112,52,3,5},
+        {692,112,50,3,5},{693,112,96,2,4},{688,112,60,3,5},
+        {708,138,56,0,4},{689,112,55,3,5},{709,138,58,0,4},
+        {710,112,53,0,4},{701,138,24,0,4},{702,138,21,0,4},
+        {703,138,23,0,4},{705,138,27,0,4},{706,138,28,0,4},
+        {711,138,29,0,4},{712,150,22,0,4}
+    };
     DM1_SoundSystem sys;
     DM1_Sound_Init(&sys);
     for (int i = 0; i < DM1_SND_COUNT; i++) {
@@ -53,7 +67,8 @@ static void test_sound_data(void) {
         if (d) {
             CHECK(d->graphicIndex >= 671 && d->graphicIndex <= 712,
                   "graphic index in SND3 range");
-            CHECK(d->priority > 0, "priority > 0");
+            CHECK(memcmp(d, &expected[i], sizeof(*d)) == 0,
+                  "exact I34E SOUND_DATA row");
             CHECK(d->loudDistance <= d->softDistance, "loud <= soft distance");
         }
     }
@@ -253,6 +268,13 @@ static void test_tick_emission_audio_plan(void) {
           "source request preserves source route");
     CHECK(plan.sourceSoundIndex == DM1_SND_BUZZ,
           "source request preserves sound index");
+
+    emission.payload[0] = DM1_SND_NONE;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "negative source sound request is rejected");
+    emission.payload[0] = DM1_SND_COUNT;
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "out-of-range source sound request is rejected");
 
     emission.kind = 0xff;
     CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,

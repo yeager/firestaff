@@ -17,14 +17,10 @@ The capture normalizer now uses each `shot:<label>` token as the normalized crop
 - `DRAWVIEW.C:709-858` ok=True - the capture seam must be the PC34 viewport present path, not menu/setup echoes
 
 ## Original assets checked
-- `DM.EXE` exists=True sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
-- `DUNGEON.DAT` exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- `GRAPHICS.DAT` exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- `TITLE` exists=True sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-
-## GreatStone cross-check
-- manifest: `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json`
-- result: `PASS`; pc34 graphics items: `713`; dungeon maps: `14`; mismatches: `0`
+- `DM.EXE` exists=True sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4 (read from retail ZIP without extraction)
+- `DATA/DUNGEON.DAT` exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 (read from retail ZIP without extraction)
+- `DATA/GRAPHICS.DAT` exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e (read from retail ZIP without extraction)
+- `TITLE` exists=True sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745 (read from retail ZIP without extraction)
 
 ## Non-claims
 This fixture does not launch DOSBox, does not promote screenshots, and does not claim pixel parity.

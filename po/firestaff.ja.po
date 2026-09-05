@@ -1,93 +1,135 @@
 # Firestaff UI — ja
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: ja\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "アクセシビリティ"
 
+#. AUDIO
 msgid "Audio"
 msgstr "オーディオ"
 
+#. BACK
 msgid "Back"
 msgstr "戻る"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "魔物図鑑"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "更新履歴"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "近日公開"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "セーブから続ける"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "操作"
 
+#. DISPLAY
 msgid "Display"
 msgstr "表示"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "EXTRAS"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "アイテム図鑑"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "言語"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "マップビューア"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "ロア博物館"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "新規ゲーム (V1 オリジナル)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "新規ゲーム (V2.1 アップスケール)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "新規ゲーム (V2.2 エンハンスド)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "データファイルなし"
 
+#. OFF
 msgid "Off"
 msgstr "オフ"
 
+#. ON
 msgid "On"
 msgstr "オン"
 
+#. PLAY
 msgid "PLAY"
 msgstr "プレイ"
 
+#. QUIT
 msgid "QUIT"
 msgstr "終了"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "スクリーンショットギャラリー"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "ゲーム選択"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "設定"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "呪文リファレンス"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "ゲームデータ検証"
 
+#. VERSION
 msgid "Version"
 msgstr "バージョン"
 
+#. VIDEO
 msgid "Video"
 msgstr "ビデオ"
 
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""

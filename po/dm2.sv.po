@@ -1,0 +1,1651 @@
+# Swedish translation catalog for Firestaff's Dungeon Master 2 domain.
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm2\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-09-04 00:00+0000\n"
+"Last-Translator: Firestaff contributors\n"
+"Language-Team: Swedish\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. GDAT 0x07/0x00/0x0a
+#: po/dm2_source_strings.c:10
+msgid "ADEPT 1"
+msgstr "ADEPT 1"
+
+#. GDAT 0x07/0x00/0x26
+#: po/dm2_source_strings.c:11
+msgid "ANTI-FIRE"
+msgstr "ELDMOTSTÅND"
+
+#. GDAT 0x07/0x00/0x25
+#: po/dm2_source_strings.c:12
+msgid "ANTI-MAGIC"
+msgstr "MAGIMOTSTÅND"
+
+#. GDAT 0x15/0x1d/0x18
+#: po/dm2_source_strings.c:13
+msgid "APPLE"
+msgstr "ÄPPLE"
+
+#. GDAT 0x07/0x00/0x06
+#: po/dm2_source_strings.c:14
+msgid "APPRENTICE 1"
+msgstr "LÄRLING 1"
+
+#. GDAT 0x0f/0x1d/0x00
+#: po/dm2_source_strings.c:15
+msgid "ARCHER-GUARD"
+msgstr "BÅGSKYTTEVAKT"
+
+#. GDAT 0x07/0x00/0x12
+#: po/dm2_source_strings.c:16
+msgid "ARCHMASTER 1"
+msgstr "ÄRKEMÄSTARE 1"
+
+#. GDAT 0x11/0x26/0x18
+#: po/dm2_source_strings.c:17
+msgid "ARMET"
+msgstr "SLUTEN HJÄLM"
+
+#. GDAT 0x10/0x1b/0x18
+#: po/dm2_source_strings.c:18
+msgid "ARROW"
+msgstr "PIL"
+
+#. GDAT 0x07/0x00/0x09
+#: po/dm2_source_strings.c:19
+msgid "ARTISAN 1"
+msgstr "HANTVERKARE 1"
+
+#. GDAT 0x0f/0x31/0x00, 0x15/0x3f/0x18
+#: po/dm2_source_strings.c:20
+msgid "ATTACK MINION"
+msgstr "ATTACKTJÄNARE"
+
+#. GDAT 0x10/0x12/0x18
+#: po/dm2_source_strings.c:21
+msgid "AXE"
+msgstr "YXA"
+
+#. GDAT 0x0f/0x42/0x00
+#: po/dm2_source_strings.c:22
+msgid "AXEMAN"
+msgstr "YXMAN"
+
+#. GDAT 0x0f/0x48/0x00
+#: po/dm2_source_strings.c:23
+msgid "AXEMAN THIEF"
+msgstr "YXMANSTJUV"
+
+#. GDAT 0x0f/0x43/0x00
+#: po/dm2_source_strings.c:24
+msgid "BAD MERCHANT"
+msgstr "OND KÖPMAN"
+
+#. GDAT 0x14/0x01/0x18
+#: po/dm2_source_strings.c:25
+msgid "BAG"
+msgstr "PÅSE"
+
+#. GDAT 0x10/0x29/0x18
+#: po/dm2_source_strings.c:26
+msgid "BAINBLOOM"
+msgstr "BAINBLOMMA"
+
+#. GDAT 0x11/0x17/0x18
+#: po/dm2_source_strings.c:27
+msgid "BANDANA"
+msgstr "BANDANA"
+
+#. GDAT 0x0f/0x2d/0x00
+#: po/dm2_source_strings.c:28
+msgid "BARREL"
+msgstr "TUNNA"
+
+#. GDAT 0x11/0x1b/0x18
+#: po/dm2_source_strings.c:29
+msgid "BASCINET"
+msgstr "BASINET"
+
+#. GDAT 0x03/0x00/0x13
+#: po/dm2_source_strings.c:30
+msgid ""
+"BEFORE USING\n"
+"BOILER TURN ON\n"
+"WATER VALVES\n"
+"TWO LEVELS UP"
+msgstr ""
+"INNAN ANVÄNDNING\n"
+"SLÅ PÅ PANNANS\n"
+"VATTENVENTILER\n"
+"TVÅ VÅNINGAR UPP"
+
+#. GDAT 0x11/0x04/0x18
+#: po/dm2_source_strings.c:31
+msgid "BLACK BOOTS"
+msgstr "SVARTA STÖVLAR"
+
+#. GDAT 0x11/0x06/0x18
+#: po/dm2_source_strings.c:32
+msgid "BLACK SKIRT"
+msgstr "SVART KJOL"
+
+#. GDAT 0x11/0x05/0x18
+#: po/dm2_source_strings.c:33
+msgid "BLACK TOP"
+msgstr "SVART ÖVERDEL"
+
+#. GDAT 0x15/0x0a/0x18
+#: po/dm2_source_strings.c:34
+msgid "BLOOD KEY"
+msgstr "BLODNYCKEL"
+
+#. GDAT 0x15/0x1a/0x18
+#: po/dm2_source_strings.c:35
+msgid "BLUE GEM"
+msgstr "BLÅ ÄDELSTEN"
+
+#. GDAT 0x11/0x02/0x18
+#: po/dm2_source_strings.c:36
+msgid "BLUE PANTS"
+msgstr "BLÅ BYXOR"
+
+#. GDAT 0x10/0x0f/0x18
+#: po/dm2_source_strings.c:37
+msgid "BLUE STEELE"
+msgstr "BLÅ STEELE"
+
+#. GDAT 0x11/0x0a/0x18
+#: po/dm2_source_strings.c:38
+msgid "BODICE"
+msgstr "LIVSTYCKE"
+
+#. GDAT 0x0f/0x2f/0x00
+#: po/dm2_source_strings.c:39
+msgid "BOILER"
+msgstr "PANNA"
+
+#. GDAT 0x15/0x3d/0x18
+#: po/dm2_source_strings.c:40
+msgid "BONE"
+msgstr "BEN"
+
+#. GDAT 0x15/0x34/0x18
+#: po/dm2_source_strings.c:41
+msgid "BONES"
+msgstr "BENKNOTOR"
+
+#. GDAT 0x15/0x01/0x18
+#: po/dm2_source_strings.c:42
+msgid "BOTA"
+msgstr "BOTA"
+
+#. GDAT 0x0f/0x07/0x00, 0x15/0x19/0x18
+#: po/dm2_source_strings.c:43
+msgid "BOULDER"
+msgstr "STENBLOCK"
+
+#. GDAT 0x10/0x19/0x18
+#: po/dm2_source_strings.c:44
+msgid "BOW"
+msgstr "PILBÅGE"
+
+#. GDAT 0x10/0x21/0x18
+#: po/dm2_source_strings.c:45
+msgid "BRANCH"
+msgstr "GREN"
+
+#. GDAT 0x15/0x1f/0x18
+#: po/dm2_source_strings.c:46
+msgid "BREAD "
+msgstr "BRÖD "
+
+#. GDAT 0x11/0x20/0x18
+#: po/dm2_source_strings.c:47
+msgid "BREASTPLATE"
+msgstr "BRÖSTHARNESK"
+
+#. GDAT 0x11/0x13/0x18
+#: po/dm2_source_strings.c:48
+msgid "BRIGANDINE"
+msgstr "BRIGANDIN"
+
+#. GDAT 0x0f/0x04/0x00
+#: po/dm2_source_strings.c:49
+msgid "BUSH"
+msgstr "BUSKE"
+
+#. GDAT 0x1a/0x09/0x00
+#: po/dm2_source_strings.c:50
+msgid "CANCEL"
+msgstr "AVBRYT"
+
+#. GDAT 0x11/0x00/0x18
+#: po/dm2_source_strings.c:51
+msgid "CAPE"
+msgstr "SLÄNGKAPPA"
+
+#. GDAT 0x0f/0x32/0x00
+#: po/dm2_source_strings.c:52
+msgid "CARRY MINION"
+msgstr "BÄRTJÄNARE"
+
+#. GDAT 0x0f/0x18/0x00
+#: po/dm2_source_strings.c:53
+msgid "CAVE IN"
+msgstr "RAS"
+
+#. GDAT 0x0f/0x23/0x00
+#: po/dm2_source_strings.c:54
+msgid "CAVERN BAT"
+msgstr "GROTTFLADDERMUS"
+
+#. GDAT 0x0f/0x01/0x00, 0x0f/0x4d/0x00, 0x0f/0x53/0x00
+#: po/dm2_source_strings.c:55
+msgid "CAVERN TABLE"
+msgstr "GROTTBORD"
+
+#. GDAT 0x15/0x20/0x18
+#: po/dm2_source_strings.c:56
+msgid "CHEESE"
+msgstr "OST"
+
+#. GDAT 0x0f/0x54/0x00, 0x14/0x00/0x18
+#: po/dm2_source_strings.c:57
+msgid "CHEST"
+msgstr "KISTA"
+
+#. GDAT 0x15/0x29/0x18
+#: po/dm2_source_strings.c:58
+msgid "CLAN CHIEF GEM"
+msgstr "KLANHÖVDINGENS STEN"
+
+#. GDAT 0x15/0x31/0x18
+#: po/dm2_source_strings.c:59
+msgid "CLAN KEY PIECE"
+msgstr "KLANNYCKELDEL"
+
+#. GDAT 0x11/0x01/0x18
+#: po/dm2_source_strings.c:60
+msgid "CLOAK OF NIGHT"
+msgstr "NATTENS MANTEL"
+
+#. GDAT 0x10/0x17/0x18
+#: po/dm2_source_strings.c:61
+msgid "CLUB"
+msgstr "KLUBBA"
+
+#. GDAT 0x10/0x26/0x18
+#: po/dm2_source_strings.c:62
+msgid "COMBAT STAFF"
+msgstr "STRIDSSTAV"
+
+#. GDAT 0x15/0x05/0x18
+#: po/dm2_source_strings.c:63
+msgid "COMPASS"
+msgstr "KOMPASS"
+
+#. GDAT 0x15/0x06/0x18
+#: po/dm2_source_strings.c:64
+msgid "COPPER COIN"
+msgstr "KOPPARMYNT"
+
+#. GDAT 0x15/0x36/0x18
+#: po/dm2_source_strings.c:65
+msgid "COVER PLATE"
+msgstr "TÄCKPLÅT"
+
+#. GDAT 0x07/0x00/0x08
+#: po/dm2_source_strings.c:66
+msgid "CRAFTSMAN 1"
+msgstr "GESELL 1"
+
+#. GDAT 0x15/0x0e/0x18
+#: po/dm2_source_strings.c:67
+msgid "CROSS KEY"
+msgstr "KORSNYCKEL"
+
+#. GDAT 0x10/0x1a/0x18
+#: po/dm2_source_strings.c:68
+msgid "CROSSBOW"
+msgstr "ARMBORST"
+
+#. GDAT 0x11/0x1d/0x18
+#: po/dm2_source_strings.c:69
+msgid "CRYSTAL SHIELD"
+msgstr "KRISTALLSKÖLD"
+
+#. GDAT 0x10/0x08/0x18
+#: po/dm2_source_strings.c:70
+msgid "DAGGER"
+msgstr "DOLK"
+
+#. GDAT 0x0f/0x20/0x00
+#: po/dm2_source_strings.c:71
+msgid "DARK VEXIRK"
+msgstr "MÖRK VEXIRK"
+
+#. GDAT 0x15/0x3b/0x18
+#: po/dm2_source_strings.c:72
+msgid "DEAD BAT"
+msgstr "DÖD FLADDERMUS"
+
+#. GDAT 0x14/0x0f/0x18
+#: po/dm2_source_strings.c:73
+msgid "DEBUG MAP"
+msgstr "DEBUGKARTA"
+
+#. GDAT 0x07/0x00/0x22
+#: po/dm2_source_strings.c:74
+msgid "DEXTERITY"
+msgstr "SMIDIGHET"
+
+#. GDAT 0x0f/0x38/0x00
+#: po/dm2_source_strings.c:75
+msgid "DIGGER WORM"
+msgstr "GRÄVMASK"
+
+#. GDAT 0x0f/0x4e/0x00
+#: po/dm2_source_strings.c:76
+msgid "DOOR GHOST"
+msgstr "DÖRRSPÖKE"
+
+#. GDAT 0x11/0x0d/0x18
+#: po/dm2_source_strings.c:77
+msgid "DOUBLET"
+msgstr "TRÖJA"
+
+#. GDAT 0x0f/0x17/0x00
+#: po/dm2_source_strings.c:78
+msgid "DRAGOTH"
+msgstr "DRAGOTH"
+
+#. GDAT 0x0f/0x4c/0x00
+#: po/dm2_source_strings.c:79
+msgid "DRAGOTH ATTACK MINION"
+msgstr "DRAGOTHS ATTACKTJÄNARE"
+
+#. GDAT 0x0f/0x52/0x00
+#: po/dm2_source_strings.c:80
+msgid "DRU TAN"
+msgstr "DRU TAN"
+
+#. GDAT 0x10/0x25/0x18
+#: po/dm2_source_strings.c:81
+msgid "EMERALD ORB"
+msgstr "SMARAGDKLOT"
+
+#. GDAT 0x0f/0x1b/0x00, 0x0f/0x57/0x00
+#: po/dm2_source_strings.c:82
+msgid "EVIL ATTACK MINION"
+msgstr "OND ATTACKTJÄNARE"
+
+#. GDAT 0x0f/0x25/0x00
+#: po/dm2_source_strings.c:83
+msgid "EVIL FOUNTAIN"
+msgstr "OND FONTÄN"
+
+#. GDAT 0x0f/0x45/0x00
+#: po/dm2_source_strings.c:84
+msgid "EVIL GUARD MINION"
+msgstr "OND VAKTTJÄNARE"
+
+#. GDAT 0x0f/0x2b/0x00
+#: po/dm2_source_strings.c:85
+msgid "EVIL SCOUT MINION"
+msgstr "OND SPANARTJÄNARE"
+
+#. GDAT 0x10/0x0e/0x18
+#: po/dm2_source_strings.c:86
+msgid "EXCSYMYR"
+msgstr "EXCSYMYR"
+
+#. GDAT 0x07/0x00/0x0b
+#: po/dm2_source_strings.c:87
+msgid "EXPERT 1"
+msgstr "EXPERT 1"
+
+#. GDAT 0x10/0x00/0x18
+#: po/dm2_source_strings.c:88
+msgid "EYE OF TIME"
+msgstr "TIDENS ÖGA"
+
+#. GDAT 0x0f/0x08/0x00
+#: po/dm2_source_strings.c:89
+msgid "FACE PILLAR"
+msgstr "ANSIKTSPELARE"
+
+#. GDAT 0x15/0x33/0x18
+#: po/dm2_source_strings.c:90
+msgid "FAIRY CUSHION"
+msgstr "ÄLVKUDDE"
+
+#. GDAT 0x0f/0x33/0x00
+#: po/dm2_source_strings.c:91
+msgid "FETCH MINION"
+msgstr "HÄMTTJÄNARE"
+
+#. GDAT 0x07/0x00/0x00
+#: po/dm2_source_strings.c:92
+msgid "FIGHTER"
+msgstr "KRIGARE"
+
+#. GDAT 0x11/0x08/0x18
+#: po/dm2_source_strings.c:93
+msgid "FINE ROBE "
+msgstr "FIN ROB "
+
+#. GDAT 0x11/0x07/0x18
+#: po/dm2_source_strings.c:94
+msgid "FINE ROBE TOP"
+msgstr "FIN ROBÖVERDEL"
+
+#. GDAT 0x11/0x38/0x18
+#: po/dm2_source_strings.c:95
+msgid "FIRE GREAVE"
+msgstr "ELDSKENBEN"
+
+#. GDAT 0x11/0x35/0x18
+#: po/dm2_source_strings.c:96
+msgid "FIRE HELM"
+msgstr "ELDHJÄLM"
+
+#. GDAT 0x11/0x09/0x18, 0x11/0x36/0x18
+#: po/dm2_source_strings.c:97
+msgid "FIRE PLATE"
+msgstr "ELDHARNESK"
+
+#. GDAT 0x11/0x37/0x18
+#: po/dm2_source_strings.c:98
+msgid "FIRE POLEYN"
+msgstr "ELDKNÄSKYDD"
+
+#. GDAT 0x0f/0x37/0x00
+#: po/dm2_source_strings.c:99
+msgid "FLAME ORB"
+msgstr "ELDKLOT"
+
+#. GDAT 0x13/0x14/0x18
+#: po/dm2_source_strings.c:100
+msgid "FLASK"
+msgstr "FLASKA"
+
+#. GDAT 0x11/0x29/0x18
+#: po/dm2_source_strings.c:101
+msgid "FOOT PLATE"
+msgstr "FOTPLÅT"
+
+#. GDAT 0x0f/0x13/0x00
+#: po/dm2_source_strings.c:102
+msgid "FOUNTAIN"
+msgstr "FONTÄN"
+
+#. GDAT 0x03/0x00/0x14
+#: po/dm2_source_strings.c:103
+msgid ""
+"FURNACE ON\n"
+"LEVEL BELOW\n"
+"MUST BE STOKED\n"
+"AND BURNING"
+msgstr ""
+"UGNEN PÅ\n"
+"VÅNINGEN UNDER\n"
+"MÅSTE VARA MATAD\n"
+"OCH BRINNA"
+
+#. GDAT 0x10/0x06/0x18
+#: po/dm2_source_strings.c:104
+msgid "FURY"
+msgstr "RASERI"
+
+#. GDAT 0x01/0x00/0x12
+#: po/dm2_source_strings.c:105
+msgid "GAME PAUSED"
+msgstr "SPELET ÄR PAUSAT"
+
+#. GDAT 0x0f/0x49/0x00
+#: po/dm2_source_strings.c:106
+msgid "GHOST"
+msgstr "SPÖKE"
+
+#. GDAT 0x0f/0x0d/0x00
+#: po/dm2_source_strings.c:107
+msgid "GIGGLER"
+msgstr "FNITTRARE"
+
+#. GDAT 0x0f/0x09/0x00
+#: po/dm2_source_strings.c:108
+msgid "GLOP"
+msgstr "GLOP"
+
+#. GDAT 0x15/0x08/0x18
+#: po/dm2_source_strings.c:109
+msgid "GOLD COIN"
+msgstr "GULDMYNT"
+
+#. GDAT 0x15/0x11/0x18
+#: po/dm2_source_strings.c:110
+msgid "GOLD KEY"
+msgstr "GULDNYCKEL"
+
+#. GDAT 0x11/0x18/0x18
+#: po/dm2_source_strings.c:111
+msgid "GREAT HELM"
+msgstr "STORHJÄLM"
+
+#. GDAT 0x11/0x25/0x18
+#: po/dm2_source_strings.c:112
+msgid "GREAVES"
+msgstr "SKENBENSSKYDD"
+
+#. GDAT 0x15/0x1c/0x18
+#: po/dm2_source_strings.c:113
+msgid "GREEN GEM"
+msgstr "GRÖN ÄDELSTEN"
+
+#. GDAT 0x0f/0x34/0x00, 0x15/0x40/0x18
+#: po/dm2_source_strings.c:114
+msgid "GUARD MINION"
+msgstr "VAKTTJÄNARE"
+
+#. GDAT 0x11/0x0c/0x18
+#: po/dm2_source_strings.c:115
+msgid "GUNNA"
+msgstr "GUNNA"
+
+#. GDAT 0x07/0x00/0x27
+#: po/dm2_source_strings.c:116
+msgid "HEALTH"
+msgstr "HÄLSA"
+
+#. GDAT 0x11/0x1a/0x18
+#: po/dm2_source_strings.c:117
+msgid "HELMET"
+msgstr "HJÄLM"
+
+#. GDAT 0x11/0x19/0x18
+#: po/dm2_source_strings.c:118
+msgid "HORNED HELM"
+msgstr "HORNPRYDD HJÄLM"
+
+#. GDAT 0x11/0x0e/0x18
+#: po/dm2_source_strings.c:119
+msgid "HUKE"
+msgstr "HUKE"
+
+#. GDAT 0x15/0x03/0x18
+#: po/dm2_source_strings.c:120
+msgid "ILLUMULET"
+msgstr "LJUSAMULETT"
+
+#. GDAT 0x03/0x00/0x28
+#: po/dm2_source_strings.c:121
+msgid ""
+"INVOKE ZO TO\n"
+"CLOSE PORTALS\n"
+"THAT THE\n"
+"EVIL MINIONS\n"
+"HAVE OPENED"
+msgstr ""
+"ÅKALLA ZO FÖR ATT\n"
+"STÄNGA PORTALER\n"
+"SOM DE ONDA\n"
+"TJÄNARNA HAR\n"
+"ÖPPNAT"
+
+#. GDAT 0x03/0x00/0x16
+#: po/dm2_source_strings.c:122
+msgid ""
+"INVOKE\n"
+"ZO EW KU\n"
+"TO CREATE A\n"
+"MINION THAT\n"
+"WILL ATTACK\n"
+"YOUR ENEMIES"
+msgstr ""
+"ÅKALLA\n"
+"ZO EW KU\n"
+"FÖR ATT SKAPA EN\n"
+"TJÄNARE SOM\n"
+"ATTACKERAR\n"
+"DINA FIENDER"
+
+#. GDAT 0x03/0x00/0x17
+#: po/dm2_source_strings.c:123
+msgid ""
+"INVOKE\n"
+"ZO EW NETA\n"
+"TO CREATE A\n"
+"GUARDIAN\n"
+"MINION"
+msgstr ""
+"ÅKALLA\n"
+"ZO EW NETA\n"
+"FÖR ATT SKAPA EN\n"
+"VAKTANDE\n"
+"TJÄNARE"
+
+#. GDAT 0x15/0x09/0x18
+#: po/dm2_source_strings.c:124
+msgid "IRON KEY"
+msgstr "JÄRNNYCKEL"
+
+#. GDAT 0x15/0x02/0x18
+#: po/dm2_source_strings.c:125
+msgid "JEWEL OF SYMAL"
+msgstr "SYMALS JUVEL"
+
+#. GDAT 0x15/0x1e/0x18
+#: po/dm2_source_strings.c:126
+msgid "JICAMA"
+msgstr "JICAMA"
+
+#. GDAT 0x07/0x00/0x07
+#: po/dm2_source_strings.c:127
+msgid "JOURNEYMAN 1"
+msgstr "GESÄLL 1"
+
+#. GDAT 0x10/0x03/0x18
+#: po/dm2_source_strings.c:128
+msgid "KALAN GAUNTLET"
+msgstr "KALAN-HANDSKE"
+
+#. GDAT 0x10/0x0d/0x18
+#: po/dm2_source_strings.c:129
+msgid "KATANA"
+msgstr "KATANA"
+
+#. GDAT 0x15/0x2c/0x18
+#: po/dm2_source_strings.c:130
+msgid "LARGE GEAR"
+msgstr "STORT KUGGHJUL"
+
+#. GDAT 0x11/0x12/0x18
+#: po/dm2_source_strings.c:131
+msgid "LEATHER BOOTS"
+msgstr "LÄDERSTÖVLAR"
+
+#. GDAT 0x11/0x10/0x18
+#: po/dm2_source_strings.c:132
+msgid "LEATHER JERKIN"
+msgstr "LÄDERVÄST"
+
+#. GDAT 0x11/0x11/0x18
+#: po/dm2_source_strings.c:133
+msgid "LEATHER PANTS"
+msgstr "LÄDERBYXOR"
+
+#. GDAT 0x11/0x28/0x18
+#: po/dm2_source_strings.c:134
+msgid "LEG PLATE"
+msgstr "BENPLÅT"
+
+#. GDAT 0x15/0x0d/0x18
+#: po/dm2_source_strings.c:135
+msgid "LIGHTNING KEY"
+msgstr "BLIXTNYCKEL"
+
+#. GDAT 0x0f/0x29/0x00
+#: po/dm2_source_strings.c:136
+msgid "LIGHTNING ROD"
+msgstr "ÅSKLEDARE"
+
+#. GDAT 0x07/0x00/0x1e, 0x1a/0x0f/0x00, 0x1a/0x80/0x00
+#: po/dm2_source_strings.c:137
+msgid "LOAD"
+msgstr "LÄS IN"
+
+#. GDAT 0x10/0x14/0x18
+#: po/dm2_source_strings.c:138
+msgid "MACE"
+msgstr "STRIDSKLUBBA"
+
+#. GDAT 0x10/0x09/0x18
+#: po/dm2_source_strings.c:139
+msgid "MACHETE"
+msgstr "MACHETE"
+
+#. GDAT 0x14/0x08/0x18, 0x14/0x0b/0x18
+#: po/dm2_source_strings.c:140
+msgid "MAGIC MAP"
+msgstr "MAGISK KARTA"
+
+#. GDAT 0x0f/0x44/0x00
+#: po/dm2_source_strings.c:141
+msgid "MAGIC MERCHANT"
+msgstr "MAGISK KÖPMAN"
+
+#. GDAT 0x0f/0x1a/0x00
+#: po/dm2_source_strings.c:142
+msgid "MAGIK CAULDRON"
+msgstr "MAGISK KITTEL"
+
+#. GDAT 0x0f/0x2e/0x00
+#: po/dm2_source_strings.c:143
+msgid "MAGIK REFLECTOR"
+msgstr "MAGISK REFLEKTOR"
+
+#. GDAT 0x15/0x2b/0x18
+#: po/dm2_source_strings.c:144
+msgid "MAGIKAL BOX"
+msgstr "MAGISK LÅDA"
+
+#. GDAT 0x11/0x24/0x18
+#: po/dm2_source_strings.c:145
+msgid "MAIL HELMET"
+msgstr "RINGBRYNJEHJÄLM"
+
+#. GDAT 0x07/0x00/0x29
+#: po/dm2_source_strings.c:146
+msgid "MANA"
+msgstr "MANA"
+
+#. GDAT 0x15/0x2f/0x18
+#: po/dm2_source_strings.c:147
+msgid "MANA BLOSSOM"
+msgstr "MANABLOMMA"
+
+#. GDAT 0x15/0x18/0x18
+#: po/dm2_source_strings.c:148
+msgid "MASTER KEY"
+msgstr "HUVUDNYCKEL"
+
+#. GDAT 0x0f/0x22/0x00
+#: po/dm2_source_strings.c:149
+msgid "MERCHANT"
+msgstr "KÖPMAN"
+
+#. GDAT 0x0f/0x2c/0x00
+#: po/dm2_source_strings.c:150
+msgid "MERCHANT GUARD"
+msgstr "KÖPMANNSVAKT"
+
+#. GDAT 0x0f/0x3a/0x00
+#: po/dm2_source_strings.c:151
+msgid "MERCHANT TOMB"
+msgstr "KÖPMANSGRAV"
+
+#. GDAT 0x10/0x2d/0x18, 0x15/0x2a/0x18
+#: po/dm2_source_strings.c:152
+msgid "METEOR METAL"
+msgstr "METEORMETALL"
+
+#. GDAT 0x15/0x25/0x18
+#: po/dm2_source_strings.c:153
+msgid "MEZMAR"
+msgstr "MEZMAR"
+
+#. GDAT 0x14/0x0a/0x18
+#: po/dm2_source_strings.c:154
+msgid "MINION MAP"
+msgstr "TJÄNARKARTA"
+
+#. GDAT 0x11/0x0f/0x18
+#: po/dm2_source_strings.c:155
+msgid "MITHRAL HOSEN"
+msgstr "MITHRALHOSOR"
+
+#. GDAT 0x11/0x23/0x18
+#: po/dm2_source_strings.c:156
+msgid "MITHRAL HUKE"
+msgstr "MITHRAL-HUKE"
+
+#. GDAT 0x11/0x22/0x18
+#: po/dm2_source_strings.c:157
+msgid "MITHRAL MAIL"
+msgstr "MITHRALBRYNJA"
+
+#. GDAT 0x14/0x02/0x18
+#: po/dm2_source_strings.c:158
+msgid "MONEY BOX"
+msgstr "PENGASK"
+
+#. GDAT 0x15/0x0c/0x18
+#: po/dm2_source_strings.c:159
+msgid "MOON KEY"
+msgstr "MÅNNYCKEL"
+
+#. GDAT 0x15/0x27/0x18
+#: po/dm2_source_strings.c:160
+msgid "MOONSTONE"
+msgstr "MÅNSTEN"
+
+#. GDAT 0x10/0x16/0x18
+#: po/dm2_source_strings.c:161
+msgid "MORNINGSTAR"
+msgstr "MORGONSTJÄRNA"
+
+#. GDAT 0x0f/0x26/0x00
+#: po/dm2_source_strings.c:162
+msgid "MUMMY"
+msgstr "MUMIE"
+
+#. GDAT 0x07/0x00/0x04
+#: po/dm2_source_strings.c:163
+msgid "NEOPHYTE 1"
+msgstr "NYBÖRJARE 1"
+
+#. GDAT 0x07/0x00/0x01
+#: po/dm2_source_strings.c:164
+msgid "NINJA"
+msgstr "NINJA"
+
+#. GDAT 0x01/0xfe/0x05
+#: po/dm2_source_strings.c:165
+msgid "NO CREATURE"
+msgstr "INGEN VARELSE"
+
+#. GDAT 0x03/0x00/0x11
+#: po/dm2_source_strings.c:166
+msgid ""
+"NO WATER\n"
+"CHECK PUMP\n"
+"OPERATION ON\n"
+"LEVEL BELOW"
+msgstr ""
+"INGET VATTEN\n"
+"KONTROLLERA PUMPENS\n"
+"DRIFT PÅ\n"
+"VÅNINGEN UNDER"
+
+#. GDAT 0x07/0x00/0x05
+#: po/dm2_source_strings.c:167
+msgid "NOVICE 1"
+msgstr "NOVIS 1"
+
+#. GDAT 0x10/0x2a/0x18
+#: po/dm2_source_strings.c:168
+msgid "NUMENSTAFF"
+msgstr "NUMENSTAV"
+
+#. GDAT 0x0f/0x3d/0x00, 0x0f/0x3e/0x00, 0x0f/0x3f/0x00
+#: po/dm2_source_strings.c:169
+msgid "OBELISK"
+msgstr "OBELISK"
+
+#. GDAT 0x1a/0x00/0x00, 0x1a/0x01/0x00, 0x1a/0x02/0x00, 0x1a/0x03/0x00, 0x1a/0x04/0x00, 0x1a/0x05/0x00, 0x1a/0x06/0x00, 0x1a/0x07/0x00, 0x1a/0x08/0x00, 0x1a/0x13/0x00, 0x1a/0x14/0x00, 0x1a/0x1a/0x00, 0x1a/0x87/0x00
+#: po/dm2_source_strings.c:170
+msgid "OK"
+msgstr "OK"
+
+#. GDAT 0x15/0x0f/0x18
+#: po/dm2_source_strings.c:171
+msgid "ONYX KEY"
+msgstr "ONYXNYCKEL"
+
+#. GDAT 0x15/0x32/0x18
+#: po/dm2_source_strings.c:172
+msgid "PALMAPPLE"
+msgstr "PALMÄPPLE"
+
+#. GDAT 0x0f/0x55/0x00
+#: po/dm2_source_strings.c:173
+msgid "PEDISTAL"
+msgstr "PIEDESTAL"
+
+#. GDAT 0x0f/0x05/0x00
+#: po/dm2_source_strings.c:174
+msgid "PILLAR"
+msgstr "PELARE"
+
+#. GDAT 0x0f/0x27/0x00
+#: po/dm2_source_strings.c:175
+msgid "PIPE SHAFT"
+msgstr "RÖRSCHAKT"
+
+#. GDAT 0x0f/0x21/0x00
+#: po/dm2_source_strings.c:176
+msgid "PIT GHOST"
+msgstr "GROPPSPÖKE"
+
+#. GDAT 0x15/0x35/0x18
+#: po/dm2_source_strings.c:177
+msgid "PLANK"
+msgstr "PLANKE"
+
+#. GDAT 0x10/0x1f/0x18
+#: po/dm2_source_strings.c:178
+msgid "POISON DART"
+msgstr "GIFTPIL"
+
+#. GDAT 0x0f/0x11/0x00
+#: po/dm2_source_strings.c:179
+msgid "POWER CRYSTAL"
+msgstr "KRAFTKRISTALL"
+
+#. GDAT 0x07/0x00/0x02
+#: po/dm2_source_strings.c:180
+msgid "PRIEST"
+msgstr "PRÄST"
+
+#. GDAT 0x15/0x3a/0x18
+#: po/dm2_source_strings.c:181
+msgid "PYRO"
+msgstr "PYRO"
+
+#. GDAT 0x14/0x03/0x18
+#: po/dm2_source_strings.c:182
+msgid "QUIVER"
+msgstr "KOGER"
+
+#. GDAT 0x10/0x23/0x18
+#: po/dm2_source_strings.c:183
+msgid "RAINBOW WAND"
+msgstr "REGNBÅGSSTAV"
+
+#. GDAT 0x10/0x0b/0x18
+#: po/dm2_source_strings.c:184
+msgid "RAPIER"
+msgstr "VÄRJA"
+
+#. GDAT 0x15/0x1b/0x18
+#: po/dm2_source_strings.c:185
+msgid "RED GEM"
+msgstr "RÖD ÄDELSTEN"
+
+#. GDAT 0x03/0x00/0x12
+#: po/dm2_source_strings.c:186
+msgid ""
+"REFLECTOR\n"
+"PRACTICE"
+msgstr ""
+"REFLEKTOR\n"
+"ÖVNING"
+
+#. GDAT 0x03/0x00/0x19
+#: po/dm2_source_strings.c:187
+msgid ""
+"RENEW THE LIFE\n"
+"OF A FALLEN\n"
+"CHAMPION"
+msgstr ""
+"ÅTERGE LIVET\n"
+"TILL EN FALLEN\n"
+"HJÄLTE"
+
+#. GDAT 0x1a/0x10/0x00
+#: po/dm2_source_strings.c:188
+msgid "RESTART GAME"
+msgstr "STARTA OM SPELET"
+
+#. GDAT 0x10/0x1e/0x18
+#: po/dm2_source_strings.c:189
+msgid "ROCK"
+msgstr "STEN"
+
+#. GDAT 0x0f/0x0c/0x00
+#: po/dm2_source_strings.c:190
+msgid "ROCKY"
+msgstr "ROCKY"
+
+#. GDAT 0x10/0x04/0x18
+#: po/dm2_source_strings.c:191
+msgid "ROGUE STAVE"
+msgstr "SKURKSTAV"
+
+#. GDAT 0x15/0x2d/0x18
+#: po/dm2_source_strings.c:192
+msgid "ROPE"
+msgstr "REP"
+
+#. GDAT 0x15/0x28/0x18
+#: po/dm2_source_strings.c:193
+msgid "RUNE CHARM"
+msgstr "RUNAMULETT"
+
+#. GDAT 0x10/0x0c/0x18
+#: po/dm2_source_strings.c:194
+msgid "SABRE"
+msgstr "SABEL"
+
+#. GDAT 0x11/0x03/0x18
+#: po/dm2_source_strings.c:195
+msgid "SANDALS"
+msgstr "SANDALER"
+
+#. GDAT 0x0f/0x2a/0x00
+#: po/dm2_source_strings.c:196
+msgid "SARDES MINION"
+msgstr "SARDES TJÄNARE"
+
+#. GDAT 0x1a/0x0b/0x00, 0x1a/0x11/0x00, 0x1a/0x12/0x00, 0x1a/0x1b/0x00, 0x1a/0x81/0x00
+#: po/dm2_source_strings.c:197
+msgid "SAVE"
+msgstr "SPARA"
+
+#. GDAT 0x11/0x15/0x18
+#: po/dm2_source_strings.c:198
+msgid "SCALE HAUBERK"
+msgstr "FJÄLLBRYNJA"
+
+#. GDAT 0x11/0x16/0x18
+#: po/dm2_source_strings.c:199
+msgid "SCALE MAIL"
+msgstr "FJÄLLPANSAR"
+
+#. GDAT 0x10/0x2b/0x18
+#: po/dm2_source_strings.c:200
+msgid "SCARAB"
+msgstr "SKARABÉ"
+
+#. GDAT 0x14/0x09/0x18
+#: po/dm2_source_strings.c:201
+msgid "SCOUT MAP"
+msgstr "SPANARKARTA"
+
+#. GDAT 0x0f/0x30/0x00
+#: po/dm2_source_strings.c:202
+msgid "SCOUT MINION"
+msgstr "SPANARTJÄNARE"
+
+#. GDAT 0x12/0x00/0x18
+#: po/dm2_source_strings.c:203
+msgid "SCROLL"
+msgstr "SKRIFTRULLE"
+
+#. GDAT 0x10/0x07/0x18
+#: po/dm2_source_strings.c:204
+msgid "SCYTHE"
+msgstr "LIE"
+
+#. GDAT 0x10/0x28/0x18
+#: po/dm2_source_strings.c:205
+msgid "SERPENT STAFF"
+msgstr "ORMSTAV"
+
+#. GDAT 0x15/0x23/0x18
+#: po/dm2_source_strings.c:206
+msgid "SHANK"
+msgstr "KÖTTSTYCKE"
+
+#. GDAT 0x11/0x1c/0x18
+#: po/dm2_source_strings.c:207
+msgid "SHIELD OF FIRE"
+msgstr "ELDSKÖLD"
+
+#. GDAT 0x10/0x20/0x18
+#: po/dm2_source_strings.c:208
+msgid "SHURIKEN"
+msgstr "SHURIKEN"
+
+#. GDAT 0x15/0x38/0x18
+#: po/dm2_source_strings.c:209
+msgid "SILVER COIN"
+msgstr "SILVERMYNT"
+
+#. GDAT 0x0f/0x41/0x00
+#: po/dm2_source_strings.c:210
+msgid "SKELETON"
+msgstr "SKELETT"
+
+#. GDAT 0x0f/0x16/0x00
+#: po/dm2_source_strings.c:211
+msgid "SKULL BRAZIER"
+msgstr "DÖDSKALLEFYRFAT"
+
+#. GDAT 0x15/0x10/0x18
+#: po/dm2_source_strings.c:212
+msgid "SKULL KEY"
+msgstr "DÖDSKALLENYCKEL"
+
+#. GDAT 0x01/0xfe/0x00
+#: po/dm2_source_strings.c:213
+msgid "SKULLKEEP"
+msgstr "SKULLKEEP"
+
+#. GDAT 0x01/0xfe/0x06
+#: po/dm2_source_strings.c:214
+msgid "SKULLKEEP C"
+msgstr "SKULLKEEP C"
+
+#. GDAT 0x10/0x1c/0x18
+#: po/dm2_source_strings.c:215
+msgid "SLAYER ARROW"
+msgstr "DRÄPARPIL"
+
+#. GDAT 0x10/0x1d/0x18
+#: po/dm2_source_strings.c:216
+msgid "SLING"
+msgstr "SLUNGA"
+
+#. GDAT 0x15/0x07/0x18
+#: po/dm2_source_strings.c:217
+msgid "SMALL PLANK"
+msgstr "LITEN PLANKE"
+
+#. GDAT 0x11/0x1f/0x18
+#: po/dm2_source_strings.c:218
+msgid "SMALL SHIELD"
+msgstr "LITEN SKÖLD"
+
+#. GDAT 0x03/0x00/0x1b
+#: po/dm2_source_strings.c:219
+msgid ""
+"SNAKE STAFF\n"
+"\n"
+"ADD 1 MANA\n"
+"BLOSSOM\n"
+"\n"
+"ADD 1 STAFF"
+msgstr ""
+"ORMSTAV\n"
+"\n"
+"LÄGG TILL 1 MANA-\n"
+"BLOMMA\n"
+"\n"
+"LÄGG TILL 1 STAV"
+
+#. GDAT 0x15/0x0b/0x18
+#: po/dm2_source_strings.c:220
+msgid "SOLID KEY"
+msgstr "MASSIV NYCKEL"
+
+#. GDAT 0x0f/0x10/0x00
+#: po/dm2_source_strings.c:221
+msgid "SPECTRE"
+msgstr "VÅLNAD"
+
+#. GDAT 0x10/0x2c/0x18
+#: po/dm2_source_strings.c:222
+msgid "SPEEDBOW"
+msgstr "SNABBBÅGE"
+
+#. GDAT 0x0f/0x24/0x00
+#: po/dm2_source_strings.c:223
+msgid "SPIKED CAPSTAN"
+msgstr "SPIKFÖRSEDD GÅNGSPEL"
+
+#. GDAT 0x0f/0x51/0x00
+#: po/dm2_source_strings.c:224
+msgid "SPIKED WALL"
+msgstr "SPIKFÖRSEDD VÄGG"
+
+#. GDAT 0x10/0x24/0x18
+#: po/dm2_source_strings.c:225
+msgid "SPIRAL STAFF"
+msgstr "SPIRALSTAV"
+
+#. GDAT 0x15/0x22/0x18
+#: po/dm2_source_strings.c:226
+msgid "SPIRIT CAP"
+msgstr "ANDESVAMP"
+
+#. GDAT 0x10/0x22/0x18
+#: po/dm2_source_strings.c:227
+msgid "STAFF"
+msgstr "STAV"
+
+#. GDAT 0x10/0x27/0x18
+#: po/dm2_source_strings.c:228
+msgid "STAFF OF u"
+msgstr "u-STAV"
+
+#. GDAT 0x0f/0x06/0x00
+#: po/dm2_source_strings.c:229
+msgid "STALAGMITE"
+msgstr "STALAGMIT"
+
+#. GDAT 0x07/0x00/0x28
+#: po/dm2_source_strings.c:230
+msgid "STAMINA"
+msgstr "UTHÅLLIGHET"
+
+#. GDAT 0x15/0x24/0x18
+#: po/dm2_source_strings.c:231
+msgid "STEAK"
+msgstr "KÖTTBIT"
+
+#. GDAT 0x0f/0x47/0x00
+#: po/dm2_source_strings.c:232
+msgid "STEAM ENGINE"
+msgstr "ÅNGMASKIN"
+
+#. GDAT 0x10/0x01/0x18
+#: po/dm2_source_strings.c:233
+msgid "STORMRING"
+msgstr "STORMRING"
+
+#. GDAT 0x07/0x00/0x21
+#: po/dm2_source_strings.c:234
+msgid "STRENGTH"
+msgstr "STYRKA"
+
+#. GDAT 0x15/0x30/0x18
+#: po/dm2_source_strings.c:235
+msgid "SUN CREST"
+msgstr "SOLVAPEN"
+
+#. GDAT 0x15/0x26/0x18
+#: po/dm2_source_strings.c:236
+msgid "SUZERAIN"
+msgstr "SUZERAIN"
+
+#. GDAT 0x10/0x0a/0x18
+#: po/dm2_source_strings.c:237
+msgid "SWORD"
+msgstr "SVÄRD"
+
+#. GDAT 0x11/0x0b/0x18
+#: po/dm2_source_strings.c:238
+msgid "TABARD"
+msgstr "VAPENROCK"
+
+#. GDAT 0x15/0x3c/0x18
+#: po/dm2_source_strings.c:239
+msgid "TANKARD"
+msgstr "STOP"
+
+#. GDAT 0x15/0x37/0x18
+#: po/dm2_source_strings.c:240
+msgid "TAPESTRY"
+msgstr "GOBELÄNG"
+
+#. GDAT 0x11/0x33/0x18
+#: po/dm2_source_strings.c:241
+msgid "TECHBOOTS"
+msgstr "TEKNIKSTÖVLAR"
+
+#. GDAT 0x11/0x30/0x18
+#: po/dm2_source_strings.c:242
+msgid "TECHELM"
+msgstr "TEKNIKHJÄLM"
+
+#. GDAT 0x15/0x42/0x18
+#: po/dm2_source_strings.c:243
+msgid "TECHEYE"
+msgstr "TEKNIKÖGA"
+
+#. GDAT 0x10/0x15/0x18
+#: po/dm2_source_strings.c:244
+msgid "TECHMACE"
+msgstr "TEKNIKKLUBBA"
+
+#. GDAT 0x11/0x31/0x18
+#: po/dm2_source_strings.c:245
+msgid "TECHPLATE"
+msgstr "TEKNIKHARNESK"
+
+#. GDAT 0x11/0x32/0x18
+#: po/dm2_source_strings.c:246
+msgid "TECHPOLEYN "
+msgstr "TEKNIKKNÄSKYDD "
+
+#. GDAT 0x11/0x34/0x18
+#: po/dm2_source_strings.c:247
+msgid "TECHSHIELD"
+msgstr "TEKNIKSKÖLD"
+
+#. GDAT 0x10/0x05/0x18
+#: po/dm2_source_strings.c:248
+msgid "TEMPEST"
+msgstr "TEMPEST"
+
+#. GDAT 0x0f/0x0e/0x00
+#: po/dm2_source_strings.c:249
+msgid "THICKET THEIF"
+msgstr "SNÅRTTJUV"
+
+#. GDAT 0x11/0x21/0x18
+#: po/dm2_source_strings.c:250
+msgid "THIGH PLATES"
+msgstr "LÅRPLÅTAR"
+
+#. GDAT 0x0f/0x00/0x00
+#: po/dm2_source_strings.c:251
+msgid "THORN DEMON"
+msgstr "TAGGDEMON"
+
+#. GDAT 0x0f/0x0f/0x00
+#: po/dm2_source_strings.c:252
+msgid "TIGER STRIPED WORM"
+msgstr "TIGERRANDIG MASK"
+
+#. GDAT 0x03/0x00/0x1c
+#: po/dm2_source_strings.c:253
+msgid ""
+"TO OPEN THE\n"
+"CASTLE DOOR\n"
+"YOU MUST GET\n"
+"A KEY PIECE\n"
+"FROM EACH OF\n"
+"THE FOUR CLANS\n"
+"OF "
+msgstr ""
+"FÖR ATT ÖPPNA\n"
+"SLOTTSPORTEN\n"
+"MÅSTE DU HÄMTA\n"
+"EN NYCKELDEL\n"
+"FRÅN VAR OCH EN AV\n"
+"DE FYRA KLANERNA\n"
+"I "
+
+#. GDAT 0x0f/0x39/0x00
+#: po/dm2_source_strings.c:254
+msgid "TOMBSTONE"
+msgstr "GRAVSTEN"
+
+#. GDAT 0x10/0x02/0x18
+#: po/dm2_source_strings.c:255
+msgid "TORCH"
+msgstr "FACKLA"
+
+#. GDAT 0x11/0x27/0x18
+#: po/dm2_source_strings.c:256
+msgid "TORSO PLATE"
+msgstr "BÅLPLÅT"
+
+#. GDAT 0x0f/0x1c/0x00
+#: po/dm2_source_strings.c:257
+msgid "TOWER BAT"
+msgstr "TORNFLADDERMUS"
+
+#. GDAT 0x0f/0x3c/0x00
+#: po/dm2_source_strings.c:258
+msgid "TRADING TABLE (BUYS)"
+msgstr "HANDELSBORD (KÖPER)"
+
+#. GDAT 0x0f/0x3b/0x00
+#: po/dm2_source_strings.c:259
+msgid "TRADING TABLE (SELLS)"
+msgstr "HANDELSBORD (SÄLJER)"
+
+#. GDAT 0x0f/0x14/0x00
+#: po/dm2_source_strings.c:260
+msgid "TREE"
+msgstr "TRÄD"
+
+#. GDAT 0x0f/0x12/0x00
+#: po/dm2_source_strings.c:261
+msgid "TREE GORGON"
+msgstr "TRÄDGORGON"
+
+#. GDAT 0x11/0x14/0x18
+#: po/dm2_source_strings.c:262
+msgid "TUNIC"
+msgstr "TUNIKA"
+
+#. GDAT 0x0f/0x35/0x00
+#: po/dm2_source_strings.c:263
+msgid "U-HAUL MINION"
+msgstr "BÄRTJÄNARE"
+
+#. GDAT 0x15/0x21/0x18
+#: po/dm2_source_strings.c:264
+msgid "VACUUM FUSE"
+msgstr "VAKUUMSÄKRING"
+
+#. GDAT 0x0f/0x1f/0x00
+#: po/dm2_source_strings.c:265
+msgid "VEXIRK KING"
+msgstr "VEXIRKKUNG"
+
+#. GDAT 0x07/0x00/0x24
+#: po/dm2_source_strings.c:266
+msgid "VITALITY"
+msgstr "LIVSKRAFT"
+
+#. GDAT 0x0f/0x46/0x00
+#: po/dm2_source_strings.c:267
+msgid "VOID DOOR"
+msgstr "TOMRUMSDÖRR"
+
+#. GDAT 0x10/0x13/0x18
+#: po/dm2_source_strings.c:268
+msgid "VORAX"
+msgstr "VORAX"
+
+#. GDAT 0x10/0x10/0x18
+#: po/dm2_source_strings.c:269
+msgid "VORPAL BLADE"
+msgstr "VORPALSVÄRD"
+
+#. GDAT 0x0f/0x02/0x00
+#: po/dm2_source_strings.c:270
+msgid "VORTEX"
+msgstr "VIRVEL"
+
+#. GDAT 0x01/0x00/0x11
+#: po/dm2_source_strings.c:271
+msgid "WAKE UP"
+msgstr "VAKNA"
+
+#. GDAT 0x10/0x18/0x18
+#: po/dm2_source_strings.c:272
+msgid "WAR CLUB"
+msgstr "STRIDSKLUBBA"
+
+#. GDAT 0x13/0x0f/0x18
+#: po/dm2_source_strings.c:273
+msgid "WATER FLASK"
+msgstr "VATTENFLASKA"
+
+#. GDAT 0x07/0x00/0x23
+#: po/dm2_source_strings.c:274
+msgid "WISDOM"
+msgstr "VISDOM"
+
+#. GDAT 0x07/0x00/0x03
+#: po/dm2_source_strings.c:275
+msgid "WIZARD"
+msgstr "MAGIKER"
+
+#. GDAT 0x0f/0x4a/0x00
+#: po/dm2_source_strings.c:276
+msgid "WOLF"
+msgstr "VARG"
+
+#. GDAT 0x11/0x1e/0x18
+#: po/dm2_source_strings.c:277
+msgid "WOOD SHIELD"
+msgstr "TRÄSKÖLD"
+
+#. GDAT 0x0f/0x19/0x00
+#: po/dm2_source_strings.c:278
+msgid "WOOD TABLE"
+msgstr "TRÄBORD"
+
+#. GDAT 0x15/0x39/0x18
+#: po/dm2_source_strings.c:279
+msgid "WORM ROUND"
+msgstr "MASKSKIVA"
+
+#. GDAT 0x01/0x00/0x0e
+#: po/dm2_source_strings.c:280
+msgid "' AWAKENED."
+msgstr "' VAKNADE."
+
+#. GDAT 0x01/0x00/0x06
+#: po/dm2_source_strings.c:281
+msgid "' JUST GAINED A FIGHTER LEVEL."
+msgstr "' FICK JUST EN KRIGARNIVÅ."
+
+#. GDAT 0x01/0x00/0x07
+#: po/dm2_source_strings.c:282
+msgid "' JUST GAINED A NINJA LEVEL."
+msgstr "' FICK JUST EN NINJANIVÅ."
+
+#. GDAT 0x01/0x00/0x08
+#: po/dm2_source_strings.c:283
+msgid "' JUST GAINED A PRIEST LEVEL."
+msgstr "' FICK JUST EN PRÄSTNIVÅ."
+
+#. GDAT 0x01/0x00/0x09
+#: po/dm2_source_strings.c:284
+msgid "' JUST GAINED A WIZARD LEVEL."
+msgstr "' FICK JUST EN MAGIKERNIVÅ."
+
+#. GDAT 0x15/0x00/0x18
+#: po/dm2_source_strings.c:285
+msgid "'BONES"
+msgstr "'BENKNOTOR"
+
+#. GDAT 0x07/0x00/0x1f
+#: po/dm2_source_strings.c:286
+msgid "*.+ KG."
+msgstr "*.+ KG."
+
+#. GDAT 0x07/0x00/0x2a
+#: po/dm2_source_strings.c:287
+msgid ",.-/..0 KG"
+msgstr ",.-/..0 KG"
+
+#. GDAT 0x07/0x00/0x0c
+#: po/dm2_source_strings.c:288
+msgid "` MASTER 1"
+msgstr "` MÄSTARE 1"
+
+#. GDAT 0x07/0x00/0x0d
+#: po/dm2_source_strings.c:289
+msgid "a MASTER 1"
+msgstr "a MÄSTARE 1"
+
+#. GDAT 0x07/0x00/0x0e
+#: po/dm2_source_strings.c:290
+msgid "b MASTER 1"
+msgstr "b MÄSTARE 1"
+
+#. GDAT 0x07/0x00/0x0f
+#: po/dm2_source_strings.c:291
+msgid "c MASTER 1"
+msgstr "c MÄSTARE 1"
+
+#. GDAT 0x07/0x00/0x10
+#: po/dm2_source_strings.c:292
+msgid "d MASTER 1"
+msgstr "d MÄSTARE 1"
+
+#. GDAT 0x07/0x00/0x11
+#: po/dm2_source_strings.c:293
+msgid "e MASTER 1"
+msgstr "e MÄSTARE 1"
+
+#. GDAT 0x15/0x13/0x18
+#: po/dm2_source_strings.c:294
+msgid "f KEY"
+msgstr "f-NYCKEL"
+
+#. GDAT 0x13/0x0b/0x18
+#: po/dm2_source_strings.c:295
+msgid "f POTION"
+msgstr "f-DRYCK"
+
+#. GDAT 0x15/0x3e/0x18
+#: po/dm2_source_strings.c:296
+msgid "f m"
+msgstr "f m"
+
+#. GDAT 0x13/0x0c/0x18
+#: po/dm2_source_strings.c:297
+msgid "f p POTION"
+msgstr "f p-DRYCK"
+
+#. GDAT 0x13/0x08/0x18
+#: po/dm2_source_strings.c:298
+msgid "f p t POTION"
+msgstr "f p t-DRYCK"
+
+#. GDAT 0x13/0x09/0x18
+#: po/dm2_source_strings.c:299
+msgid "f p u POTION"
+msgstr "f p u-DRYCK"
+
+#. GDAT 0x15/0x15/0x18
+#: po/dm2_source_strings.c:300
+msgid "g KEY"
+msgstr "g-NYCKEL"
+
+#. GDAT 0x13/0x0e/0x18
+#: po/dm2_source_strings.c:301
+msgid "g POTION"
+msgstr "g-DRYCK"
+
+#. GDAT 0x13/0x0a/0x18
+#: po/dm2_source_strings.c:302
+msgid "g p POTION"
+msgstr "g p-DRYCK"
+
+#. GDAT 0x15/0x14/0x18
+#: po/dm2_source_strings.c:303
+msgid "h KEY"
+msgstr "h-NYCKEL"
+
+#. GDAT 0x13/0x06/0x18
+#: po/dm2_source_strings.c:304
+msgid "h p s POTION"
+msgstr "h p s-DRYCK"
+
+#. GDAT 0x13/0x13/0x18
+#: po/dm2_source_strings.c:305
+msgid "i BOMB"
+msgstr "i-BOMB"
+
+#. GDAT 0x15/0x16/0x18
+#: po/dm2_source_strings.c:306
+msgid "i KEY"
+msgstr "i-NYCKEL"
+
+#. GDAT 0x13/0x07/0x18
+#: po/dm2_source_strings.c:307
+msgid "i p r POTION"
+msgstr "i p r-DRYCK"
+
+#. GDAT 0x10/0x11/0x18
+#: po/dm2_source_strings.c:308
+msgid "k BLADE"
+msgstr "k-KLINGA"
+
+#. GDAT 0x13/0x0d/0x18
+#: po/dm2_source_strings.c:309
+msgid "k p v POTION"
+msgstr "k p v-DRYCK"
+
+#. GDAT 0x13/0x03/0x18
+#: po/dm2_source_strings.c:310
+msgid "l BOMB"
+msgstr "l-BOMB"
+
+#. GDAT 0x15/0x12/0x18
+#: po/dm2_source_strings.c:311
+msgid "o KEY"
+msgstr "o-NYCKEL"
+
+#. GDAT 0x15/0x17/0x18
+#: po/dm2_source_strings.c:312
+msgid "v KEY"
+msgstr "v-NYCKEL"
+
+#. GDAT 0x11/0x2e/0x18
+#: po/dm2_source_strings.c:313
+msgid "vw GREAVE"
+msgstr "vw-SKENBENSSKYDD"
+
+#. GDAT 0x11/0x2b/0x18
+#: po/dm2_source_strings.c:314
+msgid "vw HELM"
+msgstr "vw-HJÄLM"
+
+#. GDAT 0x11/0x2c/0x18
+#: po/dm2_source_strings.c:315
+msgid "vw PLATE"
+msgstr "vw-HARNESK"
+
+#. GDAT 0x11/0x2d/0x18
+#: po/dm2_source_strings.c:316
+msgid "vw POLEYN"
+msgstr "vw-KNÄSKYDD"
+
+#. GDAT 0x11/0x2f/0x18
+#: po/dm2_source_strings.c:317
+msgid "vw SHIELD"
+msgstr "vw-SKÖLD"
+
+#. GDAT 0x11/0x2a/0x18
+#: po/dm2_source_strings.c:318
+msgid "w SHIELD"
+msgstr "w-SKÖLD"

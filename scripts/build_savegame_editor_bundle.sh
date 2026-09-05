@@ -7,7 +7,10 @@ WORK_DIR="$OUT_DIR/work"
 SPEC_DIR="$OUT_DIR/spec"
 SCRIPT="$ROOT/scripts/firestaff_savegame_editor.py"
 VENV_DIR="$OUT_DIR/venv"
-LOCALE_DIR="$ROOT/po/locale"
+GETTEXT_BUILD_DIR="$OUT_DIR/gettext"
+"$PYTHON" "$ROOT/tools/compile_gettext_catalogs.py" \
+  --source-dir "$ROOT/po" --output-dir "$GETTEXT_BUILD_DIR" --verify-template
+LOCALE_DIR="$GETTEXT_BUILD_DIR/locale"
 
 if [[ ! -f "$SCRIPT" ]]; then
   echo "Missing Savegame Editor source: $SCRIPT" >&2

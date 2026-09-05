@@ -8,6 +8,7 @@
  */
 
 #include "dm2_v1_gfx_str_pc34_compat.h"
+#include "firestaff_po_loader.h"
 
 #include <string.h>
 
@@ -493,6 +494,20 @@ void dm2_v1_gfx_str_format_skstr(const char *src, char *dest,
  * Queries game data for a text entry, decrypts it with XOR decryption
  * loop, then passes through FORMAT_SKSTR. */
 
+static const char *dm2_v1_gfx_str_presented_text(
+    const char *source_text, const DM2_V1_GfxStrCallbacks *cb, void *ctx)
+{
+    if (cb->translate_presented_text != NULL) {
+        const char *translated =
+            cb->translate_presented_text(ctx, source_text);
+        if (translated != NULL && translated[0] != '\0' &&
+            strlen(translated) < 256u) {
+            return translated;
+        }
+    }
+    return fs_po_gettext_in_domain("dm2", source_text);
+}
+
 bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
                                      int32_t cls, int32_t sub,
                                      int32_t idx, char *buf,
@@ -506,6 +521,7 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
     int32_t len;
     int32_t i;
     uint8_t key;
+    const char *presented;
 
     if (buf == NULL) return false;
     buf[0] = '\0';
@@ -525,7 +541,9 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
             }
             memcpy(raw, override_text, override_size);
             raw[override_size] = '\0';
-            dm2_v1_gfx_str_format_skstr((const char *)raw, formatted, cb, ctx);
+            presented = dm2_v1_gfx_str_presented_text(
+                (const char *)raw, cb, ctx);
+            dm2_v1_gfx_str_format_skstr(presented, formatted, cb, ctx);
             memcpy(buf, formatted, strlen(formatted) + 1u);
             return true;
         }
@@ -548,8 +566,11 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
     }
     raw[len] = '\0';
 
-    /* Pass through FORMAT_SKSTR for variable substitution */
-    dm2_v1_gfx_str_format_skstr((const char *)raw, formatted, cb, ctx);
+    /* Translate the complete source template before FORMAT_SKSTR. This keeps
+     * the original 0x01 placeholder/control bytes meaningful in localized
+     * level messages, weights, potion/key names and champion ranks. */
+    presented = dm2_v1_gfx_str_presented_text((const char *)raw, cb, ctx);
+    dm2_v1_gfx_str_format_skstr(presented, formatted, cb, ctx);
 
     /* Copy to output buffer */
     {

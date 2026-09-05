@@ -114,7 +114,7 @@ static void test_complete_runtime_save_is_resumable(void)
 
     remove(path);
     csb_v1_runtime_init(&runtime, NULL);
-    runtime.variant_id = CSB_V1_VARIANT_PC34_EN;
+    runtime.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     runtime.dungeon_game_id = 0x1234u;
     runtime.party_x = 12;
     runtime.party_y = 7;

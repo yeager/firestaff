@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 PASS = "pass623_dm1_v1_input_capture_readiness_bridge"
 STATUS = "PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE_LOCKED"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
@@ -31,8 +31,8 @@ SOURCE_LOCKS: list[dict[str, Any]] = [
 ]
 
 FIRESTAFF_LOCKS: list[dict[str, Any]] = [
-    {"id":"m11_input_maps_to_dm1_v1_commands","file":"src/engine/m11_game_view.c","lines":"26174-26450","needles":["case M12_MENU_INPUT_LEFT:","return DM1_V1_COMMAND_TURN_LEFT;","case M12_MENU_INPUT_RIGHT:","return DM1_V1_COMMAND_TURN_RIGHT;","case M12_MENU_INPUT_UP:","return DM1_V1_COMMAND_MOVE_FORWARD;","DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(","DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("],"claim":"Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick"},
-    {"id":"m11_records_movement_pipeline_capture_state","file":"src/engine/m11_game_view.c","lines":"26174-26450","needles":["state->world.gameTick++;","state->lastDm1V1MovementPipelineResult.core.turnApplied","state->lastDm1V1MovementPipelineResult.anyMovementOccurred","state->lastDm1V1MovementPipelineResult.core.movementBlocked","return state->lastDm1V1MovementPipelineResult.viewportDirty ||","state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"],"claim":"capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command"},
+    {"id":"m11_input_maps_to_dm1_v1_commands","file":"src/engine/m11_game_view.c","lines":"29890-30120","needles":["case M12_MENU_INPUT_LEFT:","return DM1_V1_COMMAND_TURN_LEFT;","case M12_MENU_INPUT_RIGHT:","return DM1_V1_COMMAND_TURN_RIGHT;","case M12_MENU_INPUT_UP:","return DM1_V1_COMMAND_MOVE_FORWARD;","DM1_V1_MovementPipeline_EnqueueCommandPc34Compat(","DM1_V1_MovementPipeline_ProcessOneTickPc34Compat("],"claim":"Firestaff route tokens enter the DM1 V1 queue as source command ids and process one compat tick"},
+    {"id":"m11_records_movement_pipeline_capture_state","file":"src/engine/m11_game_view.c","lines":"29890-30125","needles":["state->world.gameTick++;","state->lastDm1V1MovementPipelineResult.core.turnApplied","state->lastDm1V1MovementPipelineResult.anyMovementOccurred","state->lastDm1V1MovementPipelineResult.core.movementBlocked","return state->lastDm1V1MovementPipelineResult.viewportDirty ||","state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"],"claim":"capture rows can distinguish turn, step, blocked no-op, dirty viewport, and dequeued command"},
     {"id":"wall_collision_probe_emits_input_script_and_viewport_crops","file":"probes/m11/firestaff_m11_wall_collision_capture_probe.c","lines":"20-174,210-236","needles":["VIEWPORT_X = 0","VIEWPORT_Y = 33","VIEWPORT_W = 224","VIEWPORT_H = 136","out->command = game->lastDm1V1MovementPipelineResult.core.queue.command;","out->movementBlocked = game->lastDm1V1MovementPipelineResult.core.movementBlocked;","out->viewportDirty = game->lastDm1V1MovementPipelineResult.viewportDirty;","result = M11_GameView_HandleInput(&game, M12_MENU_INPUT_TURN_RIGHT);","M11_GameView_HandleInput(&game, M12_MENU_INPUT_UP);","M11_GameView_HandleInput(&game, M12_MENU_INPUT_TURN_LEFT);","03_blocked_west_wall_1_3","04_forward_south_1_4"],"claim":"the Firestaff-side probe is an input-script capture manifest, not only a screenshot dumper"},
 ]
 

@@ -29,8 +29,8 @@
     ]
   },
   "greatstoneReference": "tests/fixtures/greatstone_db_data_paths/index.json: verified dm_pc_34 GRAPHICS.DAT mapfile record; no journal/minimap/tooltip material record",
-  "pc34Archive": "/Users/bosse/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "pc34Archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 journal, minimap and tooltip compatibility surfaces",
   "sourceOwnedRoutes": [
     "GAMELOOP.C:F0128_DUNGEONVIEW_Draw_CPSF",

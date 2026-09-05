@@ -111,6 +111,10 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
         DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
     int liveRenderableExplosionAttacks[
         DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
+    int liveRenderableExplosionCells[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
+    int liveRenderableExplosionCentered[
+        DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_EXPLOSIONS];
     const char *sourceAnchor;
 } DM1_V1_ViewportRuntimeMaterializationDecisionPc34;
 

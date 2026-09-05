@@ -28,13 +28,20 @@ static int amiga_program_locator(const char* graphics_path, const char* name,
 int main(void) {
     M12_AssetStatus status;
     const char* root = getenv("FIRESTAFF_CSB_A31E_DATA_DIR");
+    const char* home = getenv("HOME");
+    char default_root[M12_ASSET_DATA_DIR_CAPACITY];
     const M12_AssetVersionStatus* a31e;
     char appb_path[M12_ASSET_DATA_DIR_CAPACITY];
     char launcher_path[M12_ASSET_DATA_DIR_CAPACITY];
     int a31eIndex;
 
+    if ((!root || root[0] == '\0') && home && home[0] != '\0' &&
+        snprintf(default_root, sizeof(default_root), "%s/.firestaff/data/csb", home) > 0 &&
+        strlen(default_root) < sizeof(default_root)) {
+        root = default_root;
+    }
     if (!root || root[0] == '\0') {
-        puts("SKIP: set FIRESTAFF_CSB_A31E_DATA_DIR to original A31E media");
+        puts("SKIP: original A31E media root is unavailable");
         return 77;
     }
     M12_AssetStatus_ScanGame(&status, root, "csb");

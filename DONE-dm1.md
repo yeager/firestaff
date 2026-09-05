@@ -1,5 +1,118 @@
 # Firestaff DONE — DM1
 
+- Bound the stripped Japanese FM Towns `JDM.EXP` title path to its unique
+  disassembly fingerprints at `0xc428`, recovered rectangle/data owners, and
+  exact C12/C13/C14 RGB6 records. The native title presenter now accepts the
+  Japanese title only through the real in-memory ZIP/BIN/ISO receipt; it has
+  no default/VGA palette fallback. See
+  `parity-evidence/dm1_fmtowns_jdm_title_palette_binding.md`.
+
+- Fixed the native English FM Towns title palette handoff. The authenticated
+  EDM.EXP P3 load image now supplies the exact C12 PRESENTS and combined C13
+  DUNGEON/C14 MASTER RGB6 transactions used at their original title-frame
+  boundaries; stale host/PC palettes are no longer allowed. See
+  `parity-evidence/dm1_v1_fmtowns_title_palette_transactions.md`.
+
+## 2026-09-04 — F0125–F0127 targeted D0 transactions
+
+- Replaced the class-wide terminal D0 callback pass with three explicitly
+  targeted scheduler transactions in ReDMCSB order: D0L, D0R, then D0C.
+  Each side square now completes its F0104/F0115/F0113 tail before the next
+  square begins; D0C retains its split around F0115 and the final F0113 field.
+- The implementation continues to use the mounted PC 3.4 GRAPHICS.DAT
+  consumers. No generated bitmap, extracted runtime asset, or second replay
+  was introduced.
+
+## 2026-09-04 — Removed broad post-scheduler stairs ownership
+
+- Deleted the remaining broad D3--D1 stairs fallback after square replay.
+  The authenticated-plan failure path already returns before viewport
+  background composition, so that branch was unreachable; retaining it gave
+  F0104 stairs a second, source-invalid ownership path.
+- D3--D1 stairs are now exclusively consumed from each owning square's
+  authenticated foreground callback using mounted retail GRAPHICS.DAT data.
+
+## 2026-09-04 — F0128-owned F0104 door frames
+
+- Split native centre and side door-frame material out of F0111 into the
+  scheduler's explicit F0104 door-frame callback phase. The live order is now
+  F0108, DOORPASS1, frame, optional F0110, F0111 panel, DOORPASS2.
+- F0111 no longer redraws frame pixels. Open doors retain their frames, and
+  the same source plan covers normal side, centre, and D3L2/D3R2 routes. The
+  real PC 3.4 HoC probe requires separate frame and panel receipts.
+
+- Modern temporal post-processing now applies movement blur, phosphor
+  persistence, and the next-frame history snapshot in one full-resolution
+  traversal. The operation order and idle-frame history semantics are
+  unchanged, while the all-effects path no longer performs three separate
+  high-resolution memory passes per presented frame. Original mode never
+  enters this optional filter path.
+
+## 2026-09-04 — F0128-owned F0110 door-button routes
+
+- Added an explicit F0110 scheduler step only to the four ReDMCSB call sites:
+  F0117 D3R and the centre F0118/F0121/F0124 routes. The callback consumes it
+  between the plan's frame and F0111 steps; D3L, D2L/D2R and D1L/D1R remain
+  source-authentic no-button-call routes.
+- Deleted the direct D3R and centre button replay. The real PC 3.4 HoC probe
+  finds retail map 0 door `(1,2)` from party `(0,2)` facing east and proves
+  one callback-owned F0108, DOORPASS1, F0110 and F0111 step in that order.
+
+## 2026-09-04 — Door-front F0108 source boundary
+
+- Split door-front floor ornaments out of the generic post-door foreground
+  phase. Their authenticated scheduler step now rasterizes before
+  `DOORPASS1`, followed by the source frame/F0111/DOORPASS2 transaction.
+  Corridor, pit and stair F0108 steps remain in their ordinary plan-ordered
+  foreground path; no primitive-class batch or second ornament draw exists.
+- The real PC 3.4 HoC test finds an unmodified retail door and requires one
+  pre-door F0108 callback receipt before accepting its DOORPASS1 and F0111
+  receipts. F0113 remains owned by the same square after its final F0115
+  consumer.
+
+## 2026-09-04 — F0128-owned F0107 ornament projections
+
+- Moved the authenticated 13-row D3--D1 wall-ornament family into the
+  per-square callback. D3/D2 side routes consume their side-facing F0107
+  projection followed by their front-facing projection; centre and D1 routes
+  consume their sole projection. The three broad hand-written ornament
+  replay calls are gone.
+- Corrected the scheduler's F0107 cardinality from an unconditional pair to
+  the exact ReDMCSB function bodies: two calls only for D3/D2 normal side
+  squares, one for outer, centre, and D1 walls. The real PC 3.4 HoC gate now
+  requires callback-owned F0107 material alongside wall, D0, and foreground
+  work. F0676/F0677 outer walls and F0122/F0123 D1 side walls now also ignore
+  the F0107 return exactly as source does, preventing a false alcove Thing
+  pass on routes that immediately return. MEDIA720 D3L2/D3R2 now use the
+  separately authenticated item-696 C1004 layout anchors; they do not index
+  or infer nonexistent rows from the legacy 13-row G0205 source table.
+
+## 2026-09-04 — F0128-owned F0111 door transactions
+
+- Moved every D3--D1 F0111 door transaction from the hand-written viewport
+  replay into the authenticated per-square scheduler callback. Center, side,
+  and exceptional D3L2/D3R2 routes now consume their native frame, panel,
+  ornament, mask, flip and opening-state material only when the owning plan
+  span emits `F0111_DOOR`; no duplicate F0111 raster path remains.
+- Preserved F0110 exactly where ReDMCSB places it before F0111, including the
+  exceptional D3R button; it is now owned by its explicit scheduler step.
+  The real PC 3.4 HoC runtime test searches the
+  unmodified mounted dungeon for a door and now requires both `DOORPASS1` and
+  F0111 callback receipts from that original square.
+
+## 2026-09-04 — PC 3.4 SND3 event-table source closure
+
+- Replaced the guessed priority, distance and period fields in the 35-entry
+  DM1 sound table with the exact ReDMCSB I34E `DATA.C` MEDIA719/MEDIA712
+  rows. This includes the distinct period for entrance-door event 3 and the
+  source periods for party damage, War Cry, Blow Horn and movement sounds.
+- The real-media gate reads `DATA/GRAPHICS.DAT` directly inside the supplied
+  PC 3.4 ZIP, proves every event maps to its source `SND3` item, and decodes
+  all 35 event aliases from the authentic 33-sample bank at 6000 Hz. Invalid
+  host emission indices now fail closed instead of entering the audio route.
+  No game-data member is extracted and no procedural sound is accepted as
+  proof.
+
 ## 2026-09-03 — Real-media startup regression audit
 
 - Re-ran the native direct-CLI and start-menu matrix against the staged
@@ -130,6 +243,28 @@ Reviewed 2026-08-29. Completed work only.
   matrix through fresh native archive sessions. Its authenticated IMG3 title,
   dungeon and party state are retained in memory for every direction, strafe
   and action check; no extracted fixture or generated save is used.
+- The complete PC34 `F0381_MENUS_PrintMessageAfterReplacements` producer set is
+  now closed. ReDMCSB `MENU.C` has exactly two calls for `C005_ACTION_FLIP`;
+  the bounded F0407 plan owns their exact HEADS/TAILS source strings, rejects
+  values outside `M005_RANDOM(2)`, and passes the selected msgid through the
+  DM1 translation domain into the cyan C015 message area with the original
+  70-tick lifetime. Both outcomes, Swedish translations, the live M11 action
+  tail, and the original PC 3.4 in-memory media identity are regression-gated.
+- Original-mode C015 presentation is Unicode-capable without replacing its
+  preservation font. ASCII cells still come from hash-identified PC34 M653;
+  translated Latin glyphs are decoded once per UTF-8 codepoint into the same
+  six-pixel TEXT.C advance. A real in-memory PC 3.4 ZIP regression combines
+  the retail GRAPHICS.DAT/M653 owner with Swedish U+00C5 and proves its exact
+  raster and single-cell placement on the bottom C015 row.
+- Original-mode wall inscriptions now have the same bounded final-presentation
+  boundary. F0168's packed TextString span, decoded glyph bytes, hashes and
+  M648 raster receipt remain untouched and are always the fallback. A
+  media-and-index-qualified gettext key may replace only the final readable
+  text; supported UTF-8 Latin glyphs occupy centered 8x8 cells while ASCII
+  continues to come from retail M648, using M648's own opaque palette index.
+  The canonical PC 3.4 ZIP test visits all 56 visible inscriptions, then proves
+  TextString 4 `HALL OF / CHAMPIONS` as Swedish `HJÄLTARNAS / SAL`, including
+  the exact U+00C4 raster and retained original material receipt.
 - The DM1 V2 side-by-side viewport comparison now accepts the decoded
   original PC 3.4 dungeon state and renders its actual initial composition
   into both lanes. The real-data viewport regression no longer promotes the
@@ -151,8 +286,68 @@ Reviewed 2026-08-29. Completed work only.
   F0435 against its supplied original French `EUDATA`, staged through F0433,
   exported, reloaded through F0435, and checked for party, C03/C04 timeline,
   active-group and dungeon ownership preservation. No save fixture is used.
+- DM1 PC 3.4 F0446 endgame cadence now follows `ENDGAME.C`: every ordered
+  victory-message F0445 redraw owns its immediately following 780-tick wait,
+  and the final 600-tick wait runs only after the last message. These waits
+  freeze gameplay time. Victory music fails closed unless the selected
+  installation's authentic `SONG.DAT` is admitted, and the victory path keeps
+  restart disabled exactly as F0446 requires. A focused runtime test locks the
+  event/delay order and the 780 + 780 + 600 total.
+- The authenticated PC 3.4 F0444 victory presentation now has distinct
+  source-ordered phases: champion mirrors/portraits wait for input, accepted
+  input starts authentic SONG.DAT C3 and C006 `THE END`, the 300-tick hold
+  freezes gameplay time, and the victory route then presents authentic C005
+  credits. All phases own the full logical screen, and missing F0444 material
+  or SONG.DAT fails closed instead of selecting synthetic presentation.
+- The separate PC 3.4 F0444 restart request no longer escapes to a generic
+  host relaunch. It invokes the native F0435-compatible quick-load consumer
+  in place: a valid admitted save clears the terminal/death state and resumes
+  the restored world, while a failed load clears the request and returns to
+  C3/C006 `THE END` for the source 300-tick hold using retained authenticated
+  endgame material. If that material is unavailable the failure path stops
+  closed. Focused decisions cover load success, load failure/re-entry, and
+  missing-material rejection.
+- M11 DM1 status/readout localization now has an explicit extraction
+  boundary. Six live pickup/drop/spell literals are marked as DM1-owned,
+  included in the 578-entry template, and translated into Swedish. The CI
+  gate checks catalog presence, nonblank Swedish coverage, and active-game
+  domain dispatch so shared CSB/DM2/Nexus/Theron literals cannot inflate the
+  DM1 completion number.
+- The next explicit M11 localization group covers the source-locked DM1
+  CLIKVIEW.C fountain path: `FOUNTAIN`, `DRANK WATER`, `CONTAINER FILLED`,
+  and `FLASK FILLED WITH WATER`. All four runtime literals are marker-gated,
+  Swedish-translated, and included in the now 581-entry DM1 template without
+  importing shared-file strings owned only by another game.
 - The shared required-file catalog retains the verified Amiga 2.0
   `DUNGEON.DAT` identity alongside the Atari additions.  The post-scan
   recovery now republishes a selected ZIP → ZIP → ADF source owner before
   calculating availability, so an Atari preservation scan cannot make a
   valid Amiga launch unavailable.
+## DM1 PC 3.4 MEDIA720 outer-D3 wall ornaments
+
+- Recovered all sixteen authentic D3L2/D3R2 layout records directly from
+  real `GRAPHICS.DAT` item 696 and wired them into F0128's per-square F0107
+  callbacks. The native route preserves record alignment types, C30/C14
+  scaling, D3 palette mapping, C10 transparency, and D3R2 horizontal flip.
+- Ruled out item 558 rather than guessing from D3L/D3R: the admitted PC 3.4
+  file has SHA256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`;
+  entry 558 starts at `0x25eed`, is 38 bytes compressed/decompressed, has a
+  16x7 header, and hashes to
+  `df28c5d26e9a7b87903ac817a21675c65ad52216e5deede4148f5286f4223e23`.
+- Corrected Hall of Champions mirror admission for the source-owned outer
+  D3 records. Internal view indices 13/14 now admit authentic C127 mirrors
+  and consume base ornament C345 at the item-696 anchors; they are no longer
+  suppressed as invalid aliases of G0205 rows 0/1. The real PC 3.4 archive
+  regression covers all 15 matching mirror placements without fixtures.
+
+## DM1 FM Towns Japanese native ZIP start
+
+- Added an explicit `--dm1-fmtowns-ja` selection backed by the canonical
+  FM Towns retail disc identities. The native in-memory route now selects
+  TMENU -> `JDM.EXP`, reports its exact executable and Japanese GRAPHICS MD5,
+  applies the recovered JDM title/palette owners, and reaches the runtime.
+- Added the source-specific F20J `JDATA/DUNGEON.DAT` reader. The authentic
+  33,931-byte Japanese file ends exactly after raw map data and has no F0434
+  checksum trailer; all ordinary dungeon and save readers remain strictly
+  checksum-validating. Real-media tests prove both the rejection boundary
+  and successful 14-map Japanese materialization without extracting to disk.

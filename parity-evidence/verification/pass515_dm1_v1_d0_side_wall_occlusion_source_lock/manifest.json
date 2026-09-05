@@ -5,19 +5,19 @@
       "claim": "Existing runtime metadata records direct D0 side-wall return evidence.",
       "hits": [
         {
-          "line": 1211,
+          "line": 1247,
           "needle": "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, 0, -1, 0,   0,  33,  136, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8016-8033\", \"DUNVIEW.C:8036-8038 wall case returns\" },"
         },
         {
-          "line": 1212,
+          "line": 1248,
           "needle": "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, 0,  1, 191, 0,  33,  136, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8126-8139\", \"DUNVIEW.C:8142-8144 wall case returns\" },"
         }
       ],
       "id": "firestaff_existing_d0_side_wall_specs_cite_return_lines",
-      "lines": "1205-1215",
+      "lines": "1244-1248",
       "missing": [],
       "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
+      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -25,19 +25,19 @@
       "claim": "Open D0 side lanes use one back cell each; wall is a separate return path.",
       "hits": [
         {
-          "line": 992,
+          "line": 1028,
           "needle": "{ DM1_VIEW_SQUARE_D0L, 0x0002, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8000-8005 door-side/teleporter branch\", \"DUNVIEW.C:8005 F0115 with C0x0002\" },"
         },
         {
-          "line": 993,
+          "line": 1029,
           "needle": "{ DM1_VIEW_SQUARE_D0R, 0x0001, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8110-8115 door-side/teleporter branch\", \"DUNVIEW.C:8115 F0115 with C0x0001\" },"
         }
       ],
       "id": "firestaff_existing_d0_side_occlusion_orders_are_single_back_cells",
-      "lines": "986-995",
+      "lines": "1026-1029",
       "missing": [],
       "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
+      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -45,19 +45,19 @@
       "claim": "Focused runtime test asserts D0 side return lines and zone/wall pairing.",
       "hits": [
         {
-          "line": 834,
+          "line": 854,
           "needle": "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, 0, -1, 0,   0,  33,  136, \"8038\" },"
         },
         {
-          "line": 835,
+          "line": 855,
           "needle": "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, 0,  1, 191, 0,  33,  136, \"8144\" },"
         }
       ],
       "id": "firestaff_viewport_test_covers_d0_side_wall_specs",
-      "lines": "830-840",
+      "lines": "851-855",
       "missing": [],
       "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "72e859c51e9f9026d9ef40300484f20ac66c1f0b1fb0941e9527fdc82a17d4d5",
+      "sha256": "00713e64d2e224845ee9766cc2e3fe12e65c72556d3c23e049b00ffd40dad5af",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }

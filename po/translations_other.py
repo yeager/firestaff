@@ -828,47 +828,14 @@ NEXUS['tr'] = {k: v for k, v in {
     'Party is full': 'Grup dolu', 'Use Item': 'Eşya kullan',
 }.items() if k in NEXUS_EN}
 
-if __name__ == '__main__':
-    import sys
-    # NOTE: NEXUS is defined later in this file (after the NEXUS_<lang> dicts).
-    # We resolve the globals at runtime so the order doesn't matter.
-    DOMAINS = {
-        'firestaff': globals().get('FIRESTAFF', {}),
-        'nexus': globals().get('NEXUS', {}),
-        'csb': globals().get('CSB', {}),
-        'theron': globals().get('THERON', {}),
-        'startup-menu': globals().get('STARTUP_MENU', {}),
-    }
-    if len(sys.argv) > 1:
-        for arg in sys.argv[1:]:
-            if arg in DOMAINS:
-                DOMAINS = {arg: DOMAINS[arg]}
-            else:
-                print(f"Unknown domain: {arg}")
-                sys.exit(1)
-    for d, table in DOMAINS.items():
-        n = apply_other_translations(d, table)
-        print(f"{d}: applied {n} translations across {len(table)} locales")
-
-
-
 # =========================================================================
-# CSB (33 strings) - 19 locales
+# CSB translations are generated from the authenticated C699/M564 msgids in
+# po/csb.pot.  Do not seed invented semantic/lore/save keys here: this script
+# previously reintroduced a nonexistent PC release and player text that was
+# never read from CSB media.  Locale dictionaries below consequently filter to
+# empty until a translator supplies entries for the extracted source msgids.
 # =========================================================================
-CSB_EN = {k: k for k in [
-    'csb.engine.version', 'csb.reincarnate.title', 'csb.reincarnate.chaos',
-    'csb.reincarnate.choose', 'csb.reincarnate.stat-roll', 'csb.resurrect.title',
-    'csb.resurrect.altar', 'csb.resurrect.choose', 'csb.chaos.cooldown',
-    'csb.chaos.energy', 'csb.chaos.recharge', 'csb.greylord.intro',
-    'csb.greylord.choose', 'csb.oracle.title', 'csb.oracle.prompt',
-    'csb.party.max', 'csb.party.slot', 'csb.save.import',
-    'csb.save.csb-st-v20', 'csb.save.csb-st-v21', 'csb.save.amiga-v35',
-    'csb.save.pc34', 'csb.neophyte.title', 'csb.neophyte.desc',
-    'csb.engine.dm1', 'csb.engine.csb', 'csb.launcher.title',
-    'csb.launcher.subtitle', 'csb.launcher.lore-shape',
-    'csb.launcher.lore-line-1', 'csb.launcher.lore-line-2',
-    'csb.launcher.lore-line-3', 'csb.launcher.lore-line-4',
-]}
+CSB_EN = {}
 
 CSB = {'en': CSB_EN}
 
@@ -1554,3 +1521,26 @@ STARTUP_MENU.update({
     'ko': {k: k for k in STARTUP_MENU_EN},
     'tr': {k: k for k in STARTUP_MENU_EN},
 })
+
+
+if __name__ == '__main__':
+    import sys
+    domains = {
+        'firestaff': FIRESTAFF,
+        'nexus': NEXUS,
+        'csb': CSB,
+        'theron': THERON,
+        'startup-menu': STARTUP_MENU,
+    }
+    if len(sys.argv) > 1:
+        selected = {}
+        for arg in sys.argv[1:]:
+            if arg not in domains:
+                print(f"Unknown domain: {arg}")
+                sys.exit(1)
+            selected[arg] = domains[arg]
+        domains = selected
+    for domain, table in domains.items():
+        count = apply_other_translations(domain, table)
+        print(f"{domain}: applied {count} translations across "
+              f"{len(table)} locales")

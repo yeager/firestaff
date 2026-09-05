@@ -7,7 +7,7 @@ sensor 16 on wall square (1,4), then gates on an actual dungeon_gameplay frame a
 only then clicks the ReDMCSB portrait center x=111,y=82 followed by C160/C161.
 """
 from __future__ import annotations
-import json, os, shutil, subprocess, sys, time
+import json, os, shutil, subprocess, sys, tempfile, time
 from pathlib import Path
 from typing import Any
 from PIL import Image, ImageChops, ImageStat
@@ -17,15 +17,16 @@ sys.path.insert(0, str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original  # noqa: E402
 from tools.pass80_original_frame_classifier import sha256  # noqa: E402
 
-STAGE = Path.home()/".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+DM1_DOS_ARCHIVE = Path(os.environ.get(
+ "FIRESTAFF_DM1_DOS_ARCHIVE",
+ str(Path.home()/".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")))
 DOSBOX = os.environ.get("FIRESTAFF_DOSBOX", shutil.which("dosbox") or "/usr/bin/dosbox")
 OUT_ROOT = Path("parity-evidence/verification/pass173_source_portrait_route_gate_probe")
-DEFAULT_EXTERNAL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
-DEFAULT_RUN_BASE_ROOT = DEFAULT_EXTERNAL_ARTIFACT_ROOT if DEFAULT_EXTERNAL_ARTIFACT_ROOT.parent.exists() else Path.home()/".openclaw/data/firestaff-n2-runs"
+DEFAULT_RUN_BASE_ROOT = Path("/dev/shm/firestaff-pass173-runs")
 RUN_BASE_ROOT = Path(os.environ.get("FIRESTAFF_PASS173_RUN_BASE", os.environ.get("FIRESTAFF_ARTIFACT_ROOT", str(DEFAULT_RUN_BASE_ROOT))))
 STATIC_NO_PARTY_HASHES={"48ed3743ab6a","082b4d249740"}
 CROPS={"viewport":(0,0,224,136),"right_panel":(224,0,320,136),"lower_panel":(0,136,320,200),"candidate_buttons":(70,80,225,148)}
-SOURCE_ROOT="~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT="~/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source"
 SOURCE_LOCKS=[
  {"file":"DUNGEON.DAT via pass4 helper","lines":"n/a","point":"initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."},
  {"file":"COMMAND.C","lines":"397-403,2322-2323","point":"left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW and calls F0377_COMMAND_ProcessType80_ClickInDungeonView."},
@@ -41,8 +42,17 @@ SOURCE_LOCKS=[
 SCENARIOS=[("gate_click_portrait_then_resurrect",130,115,"C160 resurrect"),("gate_click_portrait_then_reincarnate",186,115,"C161 reincarnate")]
 
 def slug(s:str)->str: return ''.join(c.lower() if c.isalnum() else '_' for c in s).strip('_')
-def conf(out:Path)->Path:
- p=out/"dosbox-pass173.conf"; p.write_text(f"""[sdl]\nfullscreen=false\noutput=opengl\n[dosbox]\nmachine=svga_paradise\nmemsize=4\ncaptures={out}\n[cpu]\ncore=normal\ncputype=386\ncpu_cycles=3000\n[render]\naspect=false\ninteger_scaling=false\n[mixer]\nnosound=true\n[speaker]\npcspeaker=false\ntandy=off\n[capture]\ncapture_dir={out}\ndefault_image_capture_formats=raw\n[autoexec]\nmount c \"{STAGE}\"\nc:\nDM -vv -sn\n"""); return p
+def stage_original_media()->Path:
+ if not DM1_DOS_ARCHIVE.is_file(): raise RuntimeError(f"missing original archive: {DM1_DOS_ARCHIVE}")
+ stage=Path(tempfile.mkdtemp(prefix="firestaff-pass173-dm1-",dir="/dev/shm"))
+ result=subprocess.run(["unzip","-qq",str(DM1_DOS_ARCHIVE),"-d",str(stage)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+ if not (stage/"DM.EXE").is_file() or not (stage/"DATA/GRAPHICS.DAT").is_file():
+  shutil.rmtree(stage,ignore_errors=True)
+  raise RuntimeError("unable to stage complete original PC34 archive in /dev/shm")
+ return stage
+
+def conf(out:Path,stage:Path)->Path:
+ p=out/"dosbox-pass173.conf"; p.write_text(f"""[sdl]\nfullscreen=false\noutput=opengl\n[dosbox]\nmachine=svga_paradise\nmemsize=4\ncaptures={out}\n[cpu]\ncore=normal\ncputype=386\ncpu_cycles=3000\n[render]\naspect=false\ninteger_scaling=false\n[mixer]\nnosound=true\n[speaker]\npcspeaker=false\ntandy=off\n[capture]\ncapture_dir={out}\ndefault_image_capture_formats=raw\n[autoexec]\nmount c \"{stage}\"\nc:\nDM -vv -sn\n"""); return p
 
 def shot(out:Path,log:list[str],label:str,idx:int)->dict[str,Any]:
  raw=capture_new(wait_window(log,timeout=5.0),out,label,log); dst=out/f"image{idx:04d}-{slug(label)}.png"
@@ -86,8 +96,8 @@ def classify(rows:list[dict[str,Any]])->tuple[str,str,dict[str,Any]]:
  if not choice or choice[0]['changed_ratio']<0.001: return 'blocked/choice-no-visible-delta','C160/C161 choice produced no visible transition',ev
  return 'candidate-transition-visible','gated dungeon portrait click and choice both produced visible transitions',ev
 
-def run_one(base:Path,name:str,cx:int,cy:int,choice_name:str)->dict[str,Any]:
- out=base/slug(name); out.mkdir(parents=True,exist_ok=True); log=[]; rows=[]; proc=subprocess.Popen([DOSBOX,'-conf',str(conf(out))],stdout=(out/'dosbox.log').open('w'),stderr=subprocess.STDOUT,text=True)
+def run_one(base:Path,stage:Path,name:str,cx:int,cy:int,choice_name:str)->dict[str,Any]:
+ out=base/slug(name); out.mkdir(parents=True,exist_ok=True); log=[]; rows=[]; proc=subprocess.Popen([DOSBOX,'-conf',str(conf(out,stage))],stdout=(out/'dosbox.log').open('w'),stderr=subprocess.STDOUT,text=True)
  try:
   wait_window(log,timeout=8.0); time.sleep(7.0); idx=1
   rows.append({"phase":"initial",**shot(out,log,'initial',idx)}); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
@@ -105,19 +115,21 @@ def run_one(base:Path,name:str,cx:int,cy:int,choice_name:str)->dict[str,Any]:
  (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n'); return summary
 
 def main()->int:
- OUT_ROOT.mkdir(parents=True,exist_ok=True); run_base=RUN_BASE_ROOT/(time.strftime('%Y%m%d-%H%M%S')+'-pass173-source-portrait-route-gate-probe'); run_base.mkdir(parents=True,exist_ok=True)
+ OUT_ROOT.mkdir(parents=True,exist_ok=True); RUN_BASE_ROOT.mkdir(parents=True,exist_ok=True); run_base=RUN_BASE_ROOT/(time.strftime('%Y%m%d-%H%M%S')+'-pass173-source-portrait-route-gate-probe'); run_base.mkdir(parents=True,exist_ok=True); stage=stage_original_media()
  results=[]; errors=[]
  for name,cx,cy,choice in SCENARIOS:
   try:
-   r=run_one(run_base,name,cx,cy,choice); ev=OUT_ROOT/slug(name)
+   r=run_one(run_base,stage,name,cx,cy,choice); ev=OUT_ROOT/slug(name)
    if ev.exists(): shutil.rmtree(ev)
    shutil.copytree(Path(r['evidence_dir']),ev); r['evidence_dir']=str(ev); (ev/'summary.json').write_text(json.dumps(r,indent=2)+'\n'); results.append(r)
   except Exception as e: errors.append({"scenario":name,"error":str(e)})
  buckets={}
  for r in results: buckets[r['classification']]=buckets.get(r['classification'],0)+1
- manifest={"schema":"pass173_source_portrait_route_gate_probe.v2","run_base":str(run_base),"evidence_root":str(OUT_ROOT),"completed":len(results),"errors":errors,"buckets":buckets,"source_root":SOURCE_ROOT,"source_locks":SOURCE_LOCKS,"results":results}
+ shutil.rmtree(stage,ignore_errors=True)
+ manifest={"schema":"pass173_source_portrait_route_gate_probe.v3","originalArchive":str(DM1_DOS_ARCHIVE),"staging":"/dev/shm (removed after capture)","run_base":str(run_base),"evidence_root":str(OUT_ROOT),"completed":len(results),"errors":errors,"buckets":buckets,"source_root":SOURCE_ROOT,"source_locks":SOURCE_LOCKS,"results":results}
  (OUT_ROOT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
- lines=["# Pass 173 / pass 4 — gated source portrait route probe","",f"- run base: `{run_base}`",f"- evidence root: `{OUT_ROOT}`",f"- completed: {len(results)}",f"- errors: {len(errors)}",f"- buckets: {', '.join(f'{k}={v}' for k,v in sorted(buckets.items()))}",f"- ReDMCSB source root: `{SOURCE_ROOT}`","","## ReDMCSB source audit","", "This pass is source-first. The runtime clicks below are derived from these ReDMCSB anchors, not from emulator guessing.",""]
+ bucket_text=', '.join(f'{k}={v}' for k,v in sorted(buckets.items())) or 'none'
+ lines=["# Pass 173 / pass 4 — gated source portrait route probe","",f"- run base: `{run_base}`",f"- evidence root: `{OUT_ROOT}`",f"- completed: {len(results)}",f"- errors: {len(errors)}",f"- buckets: {bucket_text}",f"- ReDMCSB source root: `{SOURCE_ROOT}`","","## ReDMCSB source audit","", "This pass is source-first. The runtime clicks below are derived from these ReDMCSB anchors, not from emulator guessing.",""]
  for s in SOURCE_LOCKS: lines.append(f"- `{s['file']}:{s['lines']}` — {s['point']}")
  lines += ["","## Route precondition","","- DM1 V1 initial party: map0 x=1 y=3 dir=South.","- Front wall square: map0 x=1 y=4 contains sensor 16 type C127 wall champion portrait.","- Therefore no movement is required; only entrance gate must be passed before clicking x=111,y=82.","","## Results",""]
  for r in results: lines.append(f"- `{r['name']}`: **{r['classification']}** — {r['reason']} — `{r['evidence_dir']}`")

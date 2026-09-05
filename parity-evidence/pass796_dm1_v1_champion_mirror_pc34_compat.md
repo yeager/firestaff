@@ -2,6 +2,6 @@
 
 Source-locked: COMMAND.C:484-488 (PC-98/PC C159..C162 champion-name rows); COMMAND.C:1437-1449 F0358 (inclusive match); COMMAND.C F0380:2158-2162 (status-box click dispatch); DEFS.H C159..C162
 
-Result: PASS
-Tests: {'passes': 1, 'fails': 0}
-Failures: []
+Result: FAIL
+Tests: {'passes': 0, 'fails': 0}
+Failures: ['binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_mirror_pc34_compat']

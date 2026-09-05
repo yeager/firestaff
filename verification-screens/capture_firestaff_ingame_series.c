@@ -199,7 +199,6 @@ static void ensure_deterministic_capture_champion(M11_GameViewState* game) {
 int main(int argc, char** argv) {
     const char* outDir;
     const char* dataDir;
-    M12_StartupMenuState menu;
     M11_GameViewState game;
     unsigned int paletteLevel;
 
@@ -210,11 +209,13 @@ int main(int argc, char** argv) {
     outDir = argv[1];
     dataDir = argv[2];
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
-    paletteLevel = (unsigned int)M12_StartupMenu_GetRenderPaletteLevel(&menu);
     M11_GameView_Init(&game);
-    if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) {
-        fprintf(stderr, "failed to open DM1 game view\n");
+    /* This capture's palette assertions are specifically PC 3.4 facts.
+     * Do not route through the shared launcher scan, which legitimately
+     * chooses another installed DM1 platform first.  Start the supplied
+     * original archive directly through M11's native virtual-media reader. */
+    if (!M11_GameView_StartDm1(&game, dataDir)) {
+        fprintf(stderr, "failed to open selected DM1 PC media\n");
         return 1;
     }
     /* Match the real launcher path: once DM1 opens, main_loop_m11.c

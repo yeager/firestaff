@@ -5,9 +5,12 @@ import argparse
 import hashlib
 import json
 import os
+import struct
+import zlib
 from collections import Counter
 from pathlib import Path
 from typing import Any
+from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
@@ -20,8 +23,8 @@ TRANSCRIPT_ENV = "FIRESTAFF_PASS608_RUNTIME_TRANSCRIPT"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
-DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM1_ZIP = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 FIRESTAFF_CAPTURE_MANIFEST = ROOT / "verification-screens/capture_manifest_sha256.tsv"
 FIRESTAFF_STATE_PROBE = ROOT / "parity-evidence/verification/pass76_capture_route_state_probe.json"
 EXPECTED_ORIGINAL = {
@@ -99,12 +102,39 @@ def audit_source() -> list[dict[str, Any]]:
     return rows
 
 
+def read_original_member(name: str) -> bytes:
+    """Read directly from the zip; tolerate its local backslash filenames."""
+    raw = DM1_ZIP.read_bytes()
+    with ZipFile(DM1_ZIP) as archive:
+        info = archive.getinfo("DATA/" + name if name in ("GRAPHICS.DAT", "DUNGEON.DAT") else name)
+    offset = info.header_offset
+    if raw[offset:offset + 4] != b"PK\x03\x04":
+        raise AssertionError(f"bad local header for {name}")
+    name_len, extra_len = struct.unpack_from("<HH", raw, offset + 26)
+    start = offset + 30 + name_len + extra_len
+    packed = raw[start:start + info.compress_size]
+    if info.compress_type == ZIP_STORED:
+        data = packed
+    elif info.compress_type == ZIP_DEFLATED:
+        data = zlib.decompress(packed, -15)
+    else:
+        raise AssertionError(f"unsupported compression for {name}")
+    if len(data) != info.file_size or (zlib.crc32(data) & 0xffffffff) != info.CRC:
+        raise AssertionError(f"member integrity failure for {name}")
+    return data
+
+
 def audit_original_files() -> list[dict[str, Any]]:
     rows = []
     for name, expected in EXPECTED_ORIGINAL.items():
-        path = DM1 / name
-        actual = sha256(path) if path.exists() else None
-        rows.append({"file": name, "path": str(path), "exists": path.exists(), "sha256": actual, "expectedSha256": expected, "ok": actual == expected})
+        data = read_original_member(name) if DM1_ZIP.exists() else None
+        actual = hashlib.sha256(data).hexdigest() if data is not None else None
+        rows.append({"file": name, "archive": str(DM1_ZIP),
+                     "member": "DATA/" + name if name in ("GRAPHICS.DAT", "DUNGEON.DAT") else name,
+                     "readMode": "in-memory/no-extraction", "exists": data is not None,
+                     "size": len(data) if data is not None else None,
+                     "sha256": actual, "expectedSha256": expected,
+                     "ok": actual == expected})
     return rows
 
 
@@ -249,6 +279,11 @@ def write_report(payload: dict[str, Any]) -> None:
     lines = ["# Pass608 - DM1 V1 same-viewport capture blocker", "", f"Status: {payload['status']}", "", "## Decision", "", payload["decision"], "", "## Source audit", ""]
     for row in payload["sourceAudit"]:
         lines.append(f"- {row['file']}:{row['lines']} {row['function']} ok={row['ok']} - {row['claim']}")
+    lines += ["", "## Original PC 3.4 archive members", ""]
+    for row in payload["originalAssetAudit"]:
+        lines.append(
+            f"- {'PASS' if row['ok'] else 'FAIL'} {row['archive']}::{row['member']} "
+            f"size={row['size']} sha256={row['sha256']} ({row['readMode']})")
     lines += ["", "## Firestaff fixture", ""]
     for state in payload["firestaffEvidence"]["states"]:
         lines.append(f"- {state['capture']}: map={state['mapIndex']} x={state['mapX']} y={state['mapY']} dir={state['direction']} tick={state['tick']} spell={state['spellPanelOpen']} inventory={state['inventoryPanelActive']}")

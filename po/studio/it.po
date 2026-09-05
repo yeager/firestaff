@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Firestaff Studio 3.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-08-02 18:49+0200\n"
 "Last-Translator: Firestaff Team\n"
 "Language-Team: Italian\n"
@@ -14,192 +14,152 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: scripts/firestaff_dungeon_studio.py:411
-#: scripts/firestaff_artpack_studio.py:1674
+#: scripts/firestaff_artpack_studio.py:1715
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1729
+#: scripts/firestaff_savegame_editor.py:427
+msgid "Ready"
+msgstr "Pronto"
+
+#: scripts/firestaff_artpack_studio.py:1730
+msgid "No game data imported"
+msgstr "Nessun dato di gioco importato"
+
+#: scripts/firestaff_artpack_studio.py:1747
+#: scripts/firestaff_dungeon_studio.py:429
+#: scripts/firestaff_savegame_editor.py:596
 msgid "Game"
 msgstr "Gioco"
 
-#: scripts/firestaff_dungeon_studio.py:418
-msgid "New"
-msgstr "Nuovo"
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Pack"
+msgstr "Pacchetto"
 
-#: scripts/firestaff_dungeon_studio.py:419
-#: scripts/firestaff_dungeon_studio.py:995
-msgid "Open .fsdung"
-msgstr "Apri .fsdung"
+#: scripts/firestaff_artpack_studio.py:1753
+#: scripts/firestaff_artpack_studio.py:1788
+msgid "Browse"
+msgstr "Sfoglia"
 
-#: scripts/firestaff_dungeon_studio.py:420
-#: scripts/firestaff_dungeon_studio.py:1024
-msgid "Save .fsdung"
-msgstr "Salva .fsdung"
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "Open/Create"
+msgstr "Apri/Crea"
 
-#: scripts/firestaff_dungeon_studio.py:421
-msgid "Save As..."
-msgstr "Salva come..."
-
-#: scripts/firestaff_dungeon_studio.py:425
-msgid "Add Level"
-msgstr "Aggiungi livello"
-
-#: scripts/firestaff_dungeon_studio.py:426
-#: scripts/firestaff_dungeon_studio.py:1047
-msgid "Map Settings"
-msgstr "Impostazioni mappa"
-
-#: scripts/firestaff_dungeon_studio.py:427
-msgid "Statistics"
-msgstr "Statistiche"
-
-#: scripts/firestaff_dungeon_studio.py:428
-#: scripts/firestaff_artpack_studio.py:1682
+#: scripts/firestaff_artpack_studio.py:1755
+#: scripts/firestaff_dungeon_studio.py:446
 msgid "Validate"
 msgstr "Convalida"
 
-#: scripts/firestaff_dungeon_studio.py:430
-#: scripts/firestaff_dungeon_studio.py:1191
-msgid "Test View"
-msgstr "Vista di prova"
+#: scripts/firestaff_artpack_studio.py:1756
+msgid "Build Runtime Cache"
+msgstr "Crea cache di runtime"
 
-#: scripts/firestaff_dungeon_studio.py:452
-msgid "Tools"
-msgstr "Strumenti"
+#: scripts/firestaff_artpack_studio.py:1757
+msgid "Write Receipt"
+msgstr "Scrivi ricevuta"
 
-#: scripts/firestaff_dungeon_studio.py:454
-msgid "Select"
-msgstr "Seleziona"
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Import .fsart"
+msgstr "Importa .fsart"
 
-#: scripts/firestaff_dungeon_studio.py:454
-msgid "Paint"
-msgstr "Disegna"
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Export .fsart"
+msgstr "Esporta .fsart"
 
-#: scripts/firestaff_dungeon_studio.py:454
-msgid "Place Thing"
-msgstr "Posiziona oggetto"
+#: scripts/firestaff_artpack_studio.py:1760
+#: scripts/firestaff_artpack_studio.py:1882
+#, fuzzy
+msgid "Settings"
+msgstr "Impostazioni mappa"
 
-#: scripts/firestaff_dungeon_studio.py:455
-msgid "Erase"
-msgstr "Cancella"
+#: scripts/firestaff_artpack_studio.py:1782
+msgid "V1 assets / V2.2 targets"
+msgstr "Risorse V1 / Obiettivi V2.2"
 
-#: scripts/firestaff_dungeon_studio.py:455
-msgid "Fill"
-msgstr "Riempi"
+#: scripts/firestaff_artpack_studio.py:1783
+msgid "Rescan"
+msgstr "Riscansiona"
 
-#: scripts/firestaff_dungeon_studio.py:455
-msgid "Set Party Start"
-msgstr "Imposta partenza gruppo"
+#: scripts/firestaff_artpack_studio.py:1786
+msgid "V1 root"
+msgstr "Radice V1"
 
-#: scripts/firestaff_dungeon_studio.py:463
-msgid "Tile Types"
-msgstr "Tipi di casella"
+#: scripts/firestaff_artpack_studio.py:1791
+msgid "Import game data"
+msgstr "Importa dati di gioco"
 
-#: scripts/firestaff_dungeon_studio.py:474
-msgid "Thing Type"
-msgstr "Tipo di oggetto"
+#: scripts/firestaff_artpack_studio.py:1792
+#: scripts/firestaff_artpack_studio.py:2173
+msgid "Warnings"
+msgstr "Avvisi"
 
-#: scripts/firestaff_dungeon_studio.py:481
-msgid "View"
-msgstr "Vista"
+#: scripts/firestaff_artpack_studio.py:1810
+msgid "Current asset"
+msgstr "Risorsa corrente"
 
-#: scripts/firestaff_dungeon_studio.py:483
-msgid "Show Grid"
-msgstr "Mostra griglia"
+#: scripts/firestaff_artpack_studio.py:1812
+msgid "Category"
+msgstr "Categoria"
 
-#: scripts/firestaff_dungeon_studio.py:485
-msgid "Show Things"
-msgstr "Mostra oggetti"
+#: scripts/firestaff_artpack_studio.py:1815
+msgid "Asset id"
+msgstr "ID risorsa"
 
-#: scripts/firestaff_dungeon_studio.py:489
-msgid "Zoom"
-msgstr "Zoom"
+#: scripts/firestaff_artpack_studio.py:1817
+msgid "Generator"
+msgstr "Generatore"
 
-#: scripts/firestaff_dungeon_studio.py:492
-msgid "Fit"
-msgstr "Adatta"
+#: scripts/firestaff_artpack_studio.py:1823
+msgid "Load V1/ref"
+msgstr "Carica V1/rif"
 
-#: scripts/firestaff_dungeon_studio.py:518
-msgid "Map Properties"
-msgstr "Proprietà mappa"
+#: scripts/firestaff_artpack_studio.py:1824
+msgid "Load V2.2 target"
+msgstr "Carica obiettivo V2.2"
 
-#: scripts/firestaff_dungeon_studio.py:522
-msgid "Name"
-msgstr "Nome"
+#: scripts/firestaff_artpack_studio.py:1825
+msgid "Import target to pack"
+msgstr "Importa obiettivo nel pacchetto"
 
-#: scripts/firestaff_dungeon_studio.py:525
-msgid "Size"
-msgstr "Dimensione"
+#: scripts/firestaff_artpack_studio.py:1826
+msgid "Save edited target"
+msgstr "Salva obiettivo modificato"
 
-#: scripts/firestaff_dungeon_studio.py:531
-msgid "Wall Set"
-msgstr "Set muri"
+#: scripts/firestaff_artpack_studio.py:1828
+msgid "AI generation hook"
+msgstr "Hook di generazione IA"
 
-#: scripts/firestaff_dungeon_studio.py:534
-msgid "Floor Set"
-msgstr "Set pavimenti"
+#: scripts/firestaff_artpack_studio.py:1832
+msgid "Write prompt"
+msgstr "Scrivi prompt"
 
-#: scripts/firestaff_dungeon_studio.py:537
-msgid "Difficulty"
-msgstr "Difficoltà"
+#: scripts/firestaff_artpack_studio.py:1833
+msgid "Run AI command"
+msgstr "Esegui comando IA"
 
-#: scripts/firestaff_dungeon_studio.py:543
-msgid "Tile"
-msgstr "Casella"
+#: scripts/firestaff_artpack_studio.py:1836
+msgid "AI selected"
+msgstr "IA selezionato"
 
-#: scripts/firestaff_dungeon_studio.py:547
-msgid "Position"
-msgstr "Posizione"
+#: scripts/firestaff_artpack_studio.py:1837
+msgid "AI missing/all"
+msgstr "IA mancante/tutti"
 
-#: scripts/firestaff_dungeon_studio.py:549
-#: scripts/firestaff_dungeon_studio.py:572
-msgid "Type"
-msgstr "Tipo"
+#: scripts/firestaff_artpack_studio.py:1867
+msgid "Drag-and-drop enabled"
+msgstr "Trascina e rilascia attivato"
 
-#: scripts/firestaff_dungeon_studio.py:553
-msgid "Things at Tile"
-msgstr "Oggetti sulla casella"
-
-#: scripts/firestaff_dungeon_studio.py:565
-msgid "Delete Thing"
-msgstr "Elimina oggetto"
-
-#: scripts/firestaff_dungeon_studio.py:568
-msgid "Thing Properties"
-msgstr "Proprietà oggetto"
-
-#: scripts/firestaff_dungeon_studio.py:574
-msgid "Cell"
-msgstr "Cella"
-
-#: scripts/firestaff_dungeon_studio.py:581
-msgid "Graphics Override"
-msgstr "Sostituzione grafica"
-
-#: scripts/firestaff_dungeon_studio.py:587
-#, python-brace-format
-msgid "Import {}..."
-msgstr "Importa {}..."
-
-#: scripts/firestaff_dungeon_studio.py:624
-#: scripts/firestaff_dungeon_studio.py:982
-#: scripts/firestaff_dungeon_studio.py:1038
-msgid "Coming soon"
-msgstr "Prossimamente"
-
-#: scripts/firestaff_dungeon_studio.py:653
-msgid "New Level"
-msgstr "Nuovo livello"
-
-#: scripts/firestaff_dungeon_studio.py:653
-msgid "Level name:"
-msgstr "Nome del livello:"
-
-#: scripts/firestaff_dungeon_studio.py:975
-#: scripts/firestaff_artpack_studio.py:1803
+#: scripts/firestaff_artpack_studio.py:1877
+#: scripts/firestaff_dungeon_studio.py:993
+#: scripts/firestaff_savegame_editor.py:483
+#: scripts/firestaff_savegame_editor.py:920
 msgid "Language"
 msgstr "Lingua"
 
-#: scripts/firestaff_dungeon_studio.py:976
-#: scripts/firestaff_artpack_studio.py:1804
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:1878
+#: scripts/firestaff_dungeon_studio.py:994
+#: scripts/firestaff_savegame_editor.py:921
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -207,475 +167,233 @@ msgstr ""
 "Lingua impostata su {}.\n"
 "Riavvia l'app per l'effetto completo."
 
-#: scripts/firestaff_dungeon_studio.py:982
-#: scripts/firestaff_dungeon_studio.py:1038
+#: scripts/firestaff_artpack_studio.py:1891
+#, fuzzy
+msgid "AI Command Template"
+msgstr "Inserire prima un modello di comando IA."
+
+#: scripts/firestaff_artpack_studio.py:1893
 #, python-brace-format
-msgid "{} support coming in a future update"
-msgstr "Supporto {} in un futuro aggiornamento"
+msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
+msgstr ""
 
-#: scripts/firestaff_dungeon_studio.py:991
-msgid "New dungeon created"
-msgstr "Nuovo dungeon creato"
+#: scripts/firestaff_artpack_studio.py:1897
+msgid "Command"
+msgstr ""
 
-#: scripts/firestaff_dungeon_studio.py:996
-#: scripts/firestaff_dungeon_studio.py:1026
-#: scripts/firestaff_artpack_studio.py:1987
-#: scripts/firestaff_artpack_studio.py:1997
-#: scripts/firestaff_artpack_studio.py:2010
-#: scripts/firestaff_artpack_studio.py:2249
-#: scripts/firestaff_artpack_studio.py:2264
-msgid "All files"
-msgstr "Tutti i file"
+#: scripts/firestaff_artpack_studio.py:1900
+msgid "API Key"
+msgstr ""
 
-#: scripts/firestaff_dungeon_studio.py:1008
-#, python-brace-format
-msgid "Opened: {}"
-msgstr "Aperto: {}"
+#: scripts/firestaff_artpack_studio.py:1904
+msgid "Stored in ~/.firestaff/studio_settings.json"
+msgstr ""
 
-#: scripts/firestaff_dungeon_studio.py:1010
-#: scripts/firestaff_dungeon_studio.py:1020
-#: scripts/firestaff_dungeon_studio.py:1148
-#: scripts/firestaff_dungeon_studio.py:1153
-msgid "Error"
-msgstr "Errore"
+#: scripts/firestaff_artpack_studio.py:1904
+msgid "Stored securely in system keychain"
+msgstr ""
 
-#: scripts/firestaff_dungeon_studio.py:1018
-#, python-brace-format
-msgid "Saved: {}"
+#: scripts/firestaff_artpack_studio.py:1909
+#: scripts/firestaff_savegame_editor.py:698
+msgid "Key"
+msgstr ""
+
+#: scripts/firestaff_artpack_studio.py:1913
+msgid "API Provider"
+msgstr ""
+
+#: scripts/firestaff_artpack_studio.py:1929
+#, fuzzy
+msgid "Settings saved"
+msgstr "Impostazioni mappa"
+
+#: scripts/firestaff_artpack_studio.py:1933
+#: scripts/firestaff_savegame_editor.py:474
+#: scripts/firestaff_savegame_editor.py:493
+#, fuzzy
+msgid "Save"
 msgstr "Salvato: {}"
 
-#: scripts/firestaff_dungeon_studio.py:1059
-msgid "Width (1-64)"
-msgstr "Larghezza (1-64)"
-
-#: scripts/firestaff_dungeon_studio.py:1061
-msgid "Height (1-64)"
-msgstr "Altezza (1-64)"
-
-#: scripts/firestaff_dungeon_studio.py:1083
-msgid "Apply"
-msgstr "Applica"
-
-#: scripts/firestaff_dungeon_studio.py:1101
-#, python-brace-format
-msgid "Maps: {}"
-msgstr "Mappe: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1102
-#, python-brace-format
-msgid "Current: {} ({}×{})"
-msgstr "Attuale: {} ({}×{})"
-
-#: scripts/firestaff_dungeon_studio.py:1104
-msgid "Tiles:"
-msgstr "Caselle:"
-
-#: scripts/firestaff_dungeon_studio.py:1108
-#, python-brace-format
-msgid "Things: {}"
-msgstr "Oggetti: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1113
-msgid "Dungeon Statistics"
-msgstr "Statistiche del dungeon"
-
-#: scripts/firestaff_dungeon_studio.py:1122
-#, python-brace-format
-msgid "Map {} \"{}\": all walls"
-msgstr "Mappa {} \"{}\": tutti muri"
-
-#: scripts/firestaff_dungeon_studio.py:1128
-msgid "Party start is inside a wall"
-msgstr "La partenza del gruppo è dentro un muro"
-
-#: scripts/firestaff_dungeon_studio.py:1130
-msgid "Party start is outside map bounds"
-msgstr "La partenza del gruppo è fuori dai limiti della mappa"
-
-#: scripts/firestaff_dungeon_studio.py:1133
-#: scripts/firestaff_dungeon_studio.py:1135
-msgid "Validation"
-msgstr "Convalida"
-
-#: scripts/firestaff_dungeon_studio.py:1133
-msgid "Issues found:"
-msgstr "Problemi trovati:"
-
-#: scripts/firestaff_dungeon_studio.py:1135
-msgid "Dungeon is valid!"
-msgstr "Il dungeon è valido!"
-
-#: scripts/firestaff_dungeon_studio.py:1142
-#, python-brace-format
-msgid "Import {}"
-msgstr "Importa {}"
-
-#: scripts/firestaff_dungeon_studio.py:1143
-msgid "All"
-msgstr "Tutti"
-
-#: scripts/firestaff_dungeon_studio.py:1148
-msgid "Pillow is required for graphics import"
-msgstr "Pillow è necessario per l'importazione grafica"
-
-#: scripts/firestaff_dungeon_studio.py:1153
-#, python-brace-format
-msgid "Could not load image: {}"
-msgstr "Impossibile caricare l'immagine: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1156
-msgid "Resize?"
-msgstr "Ridimensionare?"
-
-#: scripts/firestaff_dungeon_studio.py:1157
-#, python-brace-format
-msgid ""
-"Image is {}×{}, expected {}×{}.\n"
-"Resize to fit?"
+#: scripts/firestaff_artpack_studio.py:1934
+msgid "Cancel"
 msgstr ""
-"L'immagine è {}×{}, previsto {}×{}.\n"
-"Ridimensionare per adattare?"
 
-#: scripts/firestaff_dungeon_studio.py:1169
-#, python-brace-format
-msgid "{} imported from {}"
-msgstr "{} importato da {}"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "North"
-msgstr "Nord"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "East"
-msgstr "Est"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "South"
-msgstr "Sud"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "West"
-msgstr "Ovest"
-
-#: scripts/firestaff_dungeon_studio.py:1210
-msgid "Turn L"
-msgstr "Sinistra"
-
-#: scripts/firestaff_dungeon_studio.py:1212
-msgid "Fwd"
-msgstr "Avanti"
-
-#: scripts/firestaff_dungeon_studio.py:1214
-msgid "Back"
-msgstr "Indietro"
-
-#: scripts/firestaff_dungeon_studio.py:1216
-msgid "Turn R"
-msgstr "Destra"
-
-#: scripts/firestaff_artpack_studio.py:1646
-msgid "Firestaff V2.2 Artpack Studio"
-msgstr "Firestaff V2.2 Artpack Studio"
-
-#: scripts/firestaff_artpack_studio.py:1656
-msgid "Ready"
-msgstr "Pronto"
-
-#: scripts/firestaff_artpack_studio.py:1657
-msgid "No game data imported"
-msgstr "Nessun dato di gioco importato"
-
-#: scripts/firestaff_artpack_studio.py:1678
-msgid "Pack"
-msgstr "Pacchetto"
-
-#: scripts/firestaff_artpack_studio.py:1680
-#: scripts/firestaff_artpack_studio.py:1714
-msgid "Browse"
-msgstr "Sfoglia"
-
-#: scripts/firestaff_artpack_studio.py:1681
-msgid "Open/Create"
-msgstr "Apri/Crea"
-
-#: scripts/firestaff_artpack_studio.py:1683
-msgid "Build Runtime Cache"
-msgstr "Crea cache di runtime"
-
-#: scripts/firestaff_artpack_studio.py:1684
-msgid "Write Receipt"
-msgstr "Scrivi ricevuta"
-
-#: scripts/firestaff_artpack_studio.py:1685
-msgid "Import .fsart"
-msgstr "Importa .fsart"
-
-#: scripts/firestaff_artpack_studio.py:1686
-msgid "Export .fsart"
-msgstr "Esporta .fsart"
-
-#: scripts/firestaff_artpack_studio.py:1708
-msgid "V1 assets / V2.2 targets"
-msgstr "Risorse V1 / Obiettivi V2.2"
-
-#: scripts/firestaff_artpack_studio.py:1709
-msgid "Rescan"
-msgstr "Riscansiona"
-
-#: scripts/firestaff_artpack_studio.py:1712
-msgid "V1 root"
-msgstr "Radice V1"
-
-#: scripts/firestaff_artpack_studio.py:1717
-msgid "Import game data"
-msgstr "Importa dati di gioco"
-
-#: scripts/firestaff_artpack_studio.py:1718
-#: scripts/firestaff_artpack_studio.py:2043
-msgid "Warnings"
-msgstr "Avvisi"
-
-#: scripts/firestaff_artpack_studio.py:1736
-msgid "Current asset"
-msgstr "Risorsa corrente"
-
-#: scripts/firestaff_artpack_studio.py:1738
-msgid "Category"
-msgstr "Categoria"
-
-#: scripts/firestaff_artpack_studio.py:1741
-msgid "Asset id"
-msgstr "ID risorsa"
-
-#: scripts/firestaff_artpack_studio.py:1743
-msgid "Generator"
-msgstr "Generatore"
-
-#: scripts/firestaff_artpack_studio.py:1749
-msgid "Load V1/ref"
-msgstr "Carica V1/rif"
-
-#: scripts/firestaff_artpack_studio.py:1750
-msgid "Load V2.2 target"
-msgstr "Carica obiettivo V2.2"
-
-#: scripts/firestaff_artpack_studio.py:1751
-msgid "Import target to pack"
-msgstr "Importa obiettivo nel pacchetto"
-
-#: scripts/firestaff_artpack_studio.py:1752
-msgid "Save edited target"
-msgstr "Salva obiettivo modificato"
-
-#: scripts/firestaff_artpack_studio.py:1754
-msgid "AI generation hook"
-msgstr "Hook di generazione IA"
-
-#: scripts/firestaff_artpack_studio.py:1758
-msgid "Write prompt"
-msgstr "Scrivi prompt"
-
-#: scripts/firestaff_artpack_studio.py:1759
-msgid "Run AI command"
-msgstr "Esegui comando IA"
-
-#: scripts/firestaff_artpack_studio.py:1762
-msgid "AI selected"
-msgstr "IA selezionato"
-
-#: scripts/firestaff_artpack_studio.py:1763
-msgid "AI missing/all"
-msgstr "IA mancante/tutti"
-
-#: scripts/firestaff_artpack_studio.py:1793
-msgid "Drag-and-drop enabled"
-msgstr "Trascina e rilascia attivato"
-
-#: scripts/firestaff_artpack_studio.py:1816
-#: scripts/firestaff_artpack_studio.py:2271
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:1946
+#: scripts/firestaff_artpack_studio.py:2401
 msgid "Imported .fsart: {}"
 msgstr ".fsart importato: {}"
 
-#: scripts/firestaff_artpack_studio.py:1821
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:1951
 msgid "Loaded dropped target: {}"
 msgstr "Obiettivo rilasciato caricato: {}"
 
-#: scripts/firestaff_artpack_studio.py:1852
+#: scripts/firestaff_artpack_studio.py:1982
 msgid "Select V2.2 modern artpack directory"
 msgstr "Seleziona directory artpack V2.2 moderno"
 
-#: scripts/firestaff_artpack_studio.py:1858
+#: scripts/firestaff_artpack_studio.py:1988
 msgid "Select V1/reference asset root"
 msgstr "Seleziona radice risorse V1/riferimento"
 
-#: scripts/firestaff_artpack_studio.py:1870
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2000
 msgid "Opened {} artpack: {}"
 msgstr "Artpack {} aperto: {}"
 
-#: scripts/firestaff_artpack_studio.py:1872
+#: scripts/firestaff_artpack_studio.py:2002
 msgid "Open artpack failed"
 msgstr "Apertura artpack fallita"
 
-#: scripts/firestaff_artpack_studio.py:1919
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2049
 msgid "Scanned {} V1/reference assets"
 msgstr "{} risorse V1/riferimento scansionate"
 
-#: scripts/firestaff_artpack_studio.py:1986
+#: scripts/firestaff_artpack_studio.py:2116
 msgid "Load V1/reference image"
 msgstr "Carica immagine V1/riferimento"
 
-#: scripts/firestaff_artpack_studio.py:1987
-#: scripts/firestaff_artpack_studio.py:1997
-#: scripts/firestaff_artpack_studio.py:2009
+#: scripts/firestaff_artpack_studio.py:2117
+#: scripts/firestaff_artpack_studio.py:2127
+#: scripts/firestaff_artpack_studio.py:2140
+#: scripts/firestaff_artpack_studio.py:2379
+#: scripts/firestaff_artpack_studio.py:2394
+#: scripts/firestaff_dungeon_studio.py:1014
+#: scripts/firestaff_dungeon_studio.py:1044
+msgid "All files"
+msgstr "Tutti i file"
+
+#: scripts/firestaff_artpack_studio.py:2117
+#: scripts/firestaff_artpack_studio.py:2127
+#: scripts/firestaff_artpack_studio.py:2139
 msgid "Images"
 msgstr "Immagini"
 
-#: scripts/firestaff_artpack_studio.py:1992
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2122
 msgid "Loaded reference: {}"
 msgstr "Riferimento caricato: {}"
 
-#: scripts/firestaff_artpack_studio.py:1996
+#: scripts/firestaff_artpack_studio.py:2126
 msgid "Load V2.2 target image"
 msgstr "Carica immagine obiettivo V2.2"
 
-#: scripts/firestaff_artpack_studio.py:2002
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2132
 msgid "Loaded target: {}"
 msgstr "Obiettivo caricato: {}"
 
-#: scripts/firestaff_artpack_studio.py:2006
+#: scripts/firestaff_artpack_studio.py:2136
 msgid "Import original game data"
 msgstr "Importa dati di gioco originali"
 
-#: scripts/firestaff_artpack_studio.py:2008
+#: scripts/firestaff_artpack_studio.py:2138
 msgid "Game data"
 msgstr "Dati di gioco"
 
-#: scripts/firestaff_artpack_studio.py:2035
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2165
 msgid "Imported game data: {} ({})"
 msgstr "Dati di gioco importati: {} ({})"
 
-#: scripts/firestaff_artpack_studio.py:2037
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2167
 msgid "Warnings: {}"
 msgstr "Avvisi: {}"
 
-#: scripts/firestaff_artpack_studio.py:2039
+#: scripts/firestaff_artpack_studio.py:2169
 msgid "Game data import failed"
 msgstr "Importazione dati di gioco fallita"
 
-#: scripts/firestaff_artpack_studio.py:2043
+#: scripts/firestaff_artpack_studio.py:2173
 msgid "No game data imported."
 msgstr "Nessun dato di gioco importato."
 
-#: scripts/firestaff_artpack_studio.py:2048
+#: scripts/firestaff_artpack_studio.py:2178
 msgid "No warnings."
 msgstr "Nessun avviso."
 
-#: scripts/firestaff_artpack_studio.py:2049
+#: scripts/firestaff_artpack_studio.py:2179
 msgid "Game data warnings"
 msgstr "Avvisi dati di gioco"
 
-#: scripts/firestaff_artpack_studio.py:2074
-msgid "No target image"
-msgstr "Nessuna immagine obiettivo"
-
-#: scripts/firestaff_artpack_studio.py:2074
+#: scripts/firestaff_artpack_studio.py:2204
 msgid "Load or generate a V2.2 target first."
 msgstr "Carica o genera prima un obiettivo V2.2."
 
-#: scripts/firestaff_artpack_studio.py:2089
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2204
+msgid "No target image"
+msgstr "Nessuna immagine obiettivo"
+
+#: scripts/firestaff_artpack_studio.py:2219
 msgid "Imported {}/{}"
 msgstr "Importato {}/{}"
 
-#: scripts/firestaff_artpack_studio.py:2091
-#: scripts/firestaff_artpack_studio.py:2273
+#: scripts/firestaff_artpack_studio.py:2221
+#: scripts/firestaff_artpack_studio.py:2403
 msgid "Import failed"
 msgstr "Importazione fallita"
 
-#: scripts/firestaff_artpack_studio.py:2104
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2234
 msgid "Saved edited image: {}"
 msgstr "Immagine modificata salvata: {}"
 
-#: scripts/firestaff_artpack_studio.py:2132
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2262
 msgid "Wrote AI prompt: {}"
 msgstr "Prompt IA scritto: {}"
 
-#: scripts/firestaff_artpack_studio.py:2138
-#: scripts/firestaff_artpack_studio.py:2178
+#: scripts/firestaff_artpack_studio.py:2268
+#: scripts/firestaff_artpack_studio.py:2308
 msgid "AI command not configured"
 msgstr "Comando IA non configurato"
 
-#: scripts/firestaff_artpack_studio.py:2139
+#: scripts/firestaff_artpack_studio.py:2269
 msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
 msgstr "Impostare FIRESTAFF_ARTPACK_AI_COMMAND o inserire prima un modello di comando."
 
-#: scripts/firestaff_artpack_studio.py:2169
+#: scripts/firestaff_artpack_studio.py:2299
 msgid "AI command generated target image"
 msgstr "Il comando IA ha generato l'immagine obiettivo"
 
-#: scripts/firestaff_artpack_studio.py:2171
+#: scripts/firestaff_artpack_studio.py:2301
 msgid "AI generation failed"
 msgstr "Generazione IA fallita"
 
-#: scripts/firestaff_artpack_studio.py:2178
+#: scripts/firestaff_artpack_studio.py:2308
 msgid "Enter an AI command template first."
 msgstr "Inserire prima un modello di comando IA."
 
-#: scripts/firestaff_artpack_studio.py:2186
+#: scripts/firestaff_artpack_studio.py:2316
 msgid "AI batch"
 msgstr "Batch IA"
 
-#: scripts/firestaff_artpack_studio.py:2187
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2317
 msgid "Generate how many assets? {} available."
 msgstr "Quante risorse generare? {} disponibili."
 
-#: scripts/firestaff_artpack_studio.py:2210
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2340
 msgid "AI batch generated/imported {} assets"
 msgstr "Batch IA ha generato/importato {} risorse"
 
-#: scripts/firestaff_artpack_studio.py:2217
+#: scripts/firestaff_artpack_studio.py:2347
 msgid "Validation failed:"
 msgstr "Validazione fallita:"
 
-#: scripts/firestaff_artpack_studio.py:2218
+#: scripts/firestaff_artpack_studio.py:2348
 msgid "Validation failed"
 msgstr "Validazione fallita"
 
-#: scripts/firestaff_artpack_studio.py:2220
+#: scripts/firestaff_artpack_studio.py:2350
 msgid "Validation passed for required slots"
 msgstr "Validazione superata per gli slot richiesti"
 
-#: scripts/firestaff_artpack_studio.py:2221
-msgid "Validation passed"
-msgstr "Validazione superata"
-
-#: scripts/firestaff_artpack_studio.py:2221
+#: scripts/firestaff_artpack_studio.py:2351
 msgid "Required slots are complete."
 msgstr "Gli slot richiesti sono completi."
 
-#: scripts/firestaff_artpack_studio.py:2228
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2351
+msgid "Validation passed"
+msgstr "Validazione superata"
+
+#: scripts/firestaff_artpack_studio.py:2358
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Cache di runtime V2.2 creato: {} ({} byte)"
 
-#: scripts/firestaff_artpack_studio.py:2229
-msgid "Runtime cache"
-msgstr "Cache di runtime"
-
-#: scripts/firestaff_artpack_studio.py:2229
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2359
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -683,45 +401,978 @@ msgstr ""
 "Creato {}\n"
 "{} byte"
 
-#: scripts/firestaff_artpack_studio.py:2231
+#: scripts/firestaff_artpack_studio.py:2359
+msgid "Runtime cache"
+msgstr "Cache di runtime"
+
+#: scripts/firestaff_artpack_studio.py:2361
 msgid "Runtime cache failed"
 msgstr "Cache di runtime fallito"
 
-#: scripts/firestaff_artpack_studio.py:2236
+#: scripts/firestaff_artpack_studio.py:2366
 msgid "Reviewer"
 msgstr "Revisore"
 
-#: scripts/firestaff_artpack_studio.py:2236
+#: scripts/firestaff_artpack_studio.py:2366
 msgid "Reviewer name:"
 msgstr "Nome revisore:"
 
-#: scripts/firestaff_artpack_studio.py:2239
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2369
 msgid "Wrote receipt: {}"
 msgstr "Ricevuta scritta: {}"
 
-#: scripts/firestaff_artpack_studio.py:2241
+#: scripts/firestaff_artpack_studio.py:2371
 msgid "Receipt failed"
 msgstr "Ricevuta fallita"
 
-#: scripts/firestaff_artpack_studio.py:2247
+#: scripts/firestaff_artpack_studio.py:2377
 msgid "Export Firestaff artpack"
 msgstr "Esporta artpack Firestaff"
 
-#: scripts/firestaff_artpack_studio.py:2249
-#: scripts/firestaff_artpack_studio.py:2264
+#: scripts/firestaff_artpack_studio.py:2379
+#: scripts/firestaff_artpack_studio.py:2394
 msgid "Firestaff artpack"
 msgstr "Artpack Firestaff"
 
-#: scripts/firestaff_artpack_studio.py:2255
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2385
 msgid "Exported .fsart: {}"
 msgstr ".fsart esportato: {}"
 
-#: scripts/firestaff_artpack_studio.py:2257
+#: scripts/firestaff_artpack_studio.py:2387
 msgid "Export failed"
 msgstr "Esportazione fallita"
 
-#: scripts/firestaff_artpack_studio.py:2263
+#: scripts/firestaff_artpack_studio.py:2393
 msgid "Import Firestaff artpack"
 msgstr "Importa artpack Firestaff"
+
+#: scripts/firestaff_dungeon_studio.py:436
+msgid "New"
+msgstr "Nuovo"
+
+#: scripts/firestaff_dungeon_studio.py:437
+#: scripts/firestaff_dungeon_studio.py:1013
+msgid "Open .fsdung"
+msgstr "Apri .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:438
+#: scripts/firestaff_dungeon_studio.py:1042
+msgid "Save .fsdung"
+msgstr "Salva .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:439
+#: scripts/firestaff_savegame_editor.py:475
+msgid "Save As..."
+msgstr "Salva come..."
+
+#: scripts/firestaff_dungeon_studio.py:443
+msgid "Add Level"
+msgstr "Aggiungi livello"
+
+#: scripts/firestaff_dungeon_studio.py:444
+#: scripts/firestaff_dungeon_studio.py:1065
+msgid "Map Settings"
+msgstr "Impostazioni mappa"
+
+#: scripts/firestaff_dungeon_studio.py:445
+msgid "Statistics"
+msgstr "Statistiche"
+
+#: scripts/firestaff_dungeon_studio.py:448
+#: scripts/firestaff_dungeon_studio.py:1209
+msgid "Test View"
+msgstr "Vista di prova"
+
+#: scripts/firestaff_dungeon_studio.py:470
+msgid "Tools"
+msgstr "Strumenti"
+
+#: scripts/firestaff_dungeon_studio.py:472
+msgid "Paint"
+msgstr "Disegna"
+
+#: scripts/firestaff_dungeon_studio.py:472
+msgid "Place Thing"
+msgstr "Posiziona oggetto"
+
+#: scripts/firestaff_dungeon_studio.py:472
+msgid "Select"
+msgstr "Seleziona"
+
+#: scripts/firestaff_dungeon_studio.py:473
+msgid "Erase"
+msgstr "Cancella"
+
+#: scripts/firestaff_dungeon_studio.py:473
+msgid "Fill"
+msgstr "Riempi"
+
+#: scripts/firestaff_dungeon_studio.py:473
+msgid "Set Party Start"
+msgstr "Imposta partenza gruppo"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "Tile Types"
+msgstr "Tipi di casella"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Thing Type"
+msgstr "Tipo di oggetto"
+
+#: scripts/firestaff_dungeon_studio.py:499
+msgid "View"
+msgstr "Vista"
+
+#: scripts/firestaff_dungeon_studio.py:501
+msgid "Show Grid"
+msgstr "Mostra griglia"
+
+#: scripts/firestaff_dungeon_studio.py:503
+msgid "Show Things"
+msgstr "Mostra oggetti"
+
+#: scripts/firestaff_dungeon_studio.py:507
+msgid "Zoom"
+msgstr "Zoom"
+
+#: scripts/firestaff_dungeon_studio.py:510
+msgid "Fit"
+msgstr "Adatta"
+
+#: scripts/firestaff_dungeon_studio.py:536
+msgid "Map Properties"
+msgstr "Proprietà mappa"
+
+#: scripts/firestaff_dungeon_studio.py:540
+#: scripts/firestaff_savegame_editor.py:218
+msgid "Name"
+msgstr "Nome"
+
+#: scripts/firestaff_dungeon_studio.py:543
+#: scripts/firestaff_savegame_editor.py:606
+#: scripts/firestaff_savegame_editor.py:697
+msgid "Size"
+msgstr "Dimensione"
+
+#: scripts/firestaff_dungeon_studio.py:549
+msgid "Wall Set"
+msgstr "Set muri"
+
+#: scripts/firestaff_dungeon_studio.py:552
+msgid "Floor Set"
+msgstr "Set pavimenti"
+
+#: scripts/firestaff_dungeon_studio.py:555
+msgid "Difficulty"
+msgstr "Difficoltà"
+
+#: scripts/firestaff_dungeon_studio.py:561
+msgid "Tile"
+msgstr "Casella"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Position"
+msgstr "Posizione"
+
+#: scripts/firestaff_dungeon_studio.py:567
+#: scripts/firestaff_dungeon_studio.py:590
+msgid "Type"
+msgstr "Tipo"
+
+#: scripts/firestaff_dungeon_studio.py:571
+msgid "Things at Tile"
+msgstr "Oggetti sulla casella"
+
+#: scripts/firestaff_dungeon_studio.py:583
+msgid "Delete Thing"
+msgstr "Elimina oggetto"
+
+#: scripts/firestaff_dungeon_studio.py:586
+msgid "Thing Properties"
+msgstr "Proprietà oggetto"
+
+#: scripts/firestaff_dungeon_studio.py:592
+msgid "Cell"
+msgstr "Cella"
+
+#: scripts/firestaff_dungeon_studio.py:599
+msgid "Graphics Override"
+msgstr "Sostituzione grafica"
+
+#: scripts/firestaff_dungeon_studio.py:605
+msgid "Import {}..."
+msgstr "Importa {}..."
+
+#: scripts/firestaff_dungeon_studio.py:642
+#: scripts/firestaff_dungeon_studio.py:1000
+#: scripts/firestaff_dungeon_studio.py:1056
+msgid "Coming soon"
+msgstr "Prossimamente"
+
+#: scripts/firestaff_dungeon_studio.py:671
+msgid "Level name:"
+msgstr "Nome del livello:"
+
+#: scripts/firestaff_dungeon_studio.py:671
+msgid "New Level"
+msgstr "Nuovo livello"
+
+#: scripts/firestaff_dungeon_studio.py:1000
+#: scripts/firestaff_dungeon_studio.py:1056
+msgid "{} support coming in a future update"
+msgstr "Supporto {} in un futuro aggiornamento"
+
+#: scripts/firestaff_dungeon_studio.py:1009
+msgid "New dungeon created"
+msgstr "Nuovo dungeon creato"
+
+#: scripts/firestaff_dungeon_studio.py:1026
+msgid "Opened: {}"
+msgstr "Aperto: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1028
+#: scripts/firestaff_dungeon_studio.py:1038
+#: scripts/firestaff_dungeon_studio.py:1166
+#: scripts/firestaff_dungeon_studio.py:1171
+#: scripts/firestaff_savegame_editor.py:530
+#: scripts/firestaff_savegame_editor.py:533
+#: scripts/firestaff_savegame_editor.py:543
+#: scripts/firestaff_savegame_editor.py:552
+msgid "Error"
+msgstr "Errore"
+
+#: scripts/firestaff_dungeon_studio.py:1036
+#: scripts/firestaff_savegame_editor.py:542
+msgid "Saved: {}"
+msgstr "Salvato: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1077
+msgid "Width (1-64)"
+msgstr "Larghezza (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1079
+msgid "Height (1-64)"
+msgstr "Altezza (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+msgid "Apply"
+msgstr "Applica"
+
+#: scripts/firestaff_dungeon_studio.py:1119
+msgid "Maps: {}"
+msgstr "Mappe: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1120
+msgid "Current: {} ({}×{})"
+msgstr "Attuale: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+msgid "Tiles:"
+msgstr "Caselle:"
+
+#: scripts/firestaff_dungeon_studio.py:1126
+msgid "Things: {}"
+msgstr "Oggetti: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1131
+msgid "Dungeon Statistics"
+msgstr "Statistiche del dungeon"
+
+#: scripts/firestaff_dungeon_studio.py:1140
+msgid "Map {} \"{}\": all walls"
+msgstr "Mappa {} \"{}\": tutti muri"
+
+#: scripts/firestaff_dungeon_studio.py:1146
+msgid "Party start is inside a wall"
+msgstr "La partenza del gruppo è dentro un muro"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Party start is outside map bounds"
+msgstr "La partenza del gruppo è fuori dai limiti della mappa"
+
+#: scripts/firestaff_dungeon_studio.py:1151
+msgid "Issues found:"
+msgstr "Problemi trovati:"
+
+#: scripts/firestaff_dungeon_studio.py:1151
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Validation"
+msgstr "Convalida"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Dungeon is valid!"
+msgstr "Il dungeon è valido!"
+
+#: scripts/firestaff_dungeon_studio.py:1160
+msgid "Import {}"
+msgstr "Importa {}"
+
+#: scripts/firestaff_dungeon_studio.py:1161
+msgid "All"
+msgstr "Tutti"
+
+#: scripts/firestaff_dungeon_studio.py:1166
+msgid "Pillow is required for graphics import"
+msgstr "Pillow è necessario per l'importazione grafica"
+
+#: scripts/firestaff_dungeon_studio.py:1171
+msgid "Could not load image: {}"
+msgstr "Impossibile caricare l'immagine: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1174
+msgid "Resize?"
+msgstr "Ridimensionare?"
+
+#: scripts/firestaff_dungeon_studio.py:1175
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"L'immagine è {}×{}, previsto {}×{}.\n"
+"Ridimensionare per adattare?"
+
+#: scripts/firestaff_dungeon_studio.py:1187
+msgid "{} imported from {}"
+msgstr "{} importato da {}"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "East"
+msgstr "Est"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "North"
+msgstr "Nord"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "South"
+msgstr "Sud"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "West"
+msgstr "Ovest"
+
+#: scripts/firestaff_dungeon_studio.py:1228
+msgid "Turn L"
+msgstr "Sinistra"
+
+#: scripts/firestaff_dungeon_studio.py:1230
+msgid "Fwd"
+msgstr "Avanti"
+
+#: scripts/firestaff_dungeon_studio.py:1232
+msgid "Back"
+msgstr "Indietro"
+
+#: scripts/firestaff_dungeon_studio.py:1234
+msgid "Turn R"
+msgstr "Destra"
+
+#: scripts/firestaff_savegame_editor.py:140
+msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:141
+msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:142
+msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:143
+msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:144
+msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:184
+msgid "Random Words [0-148]"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:185
+msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:186
+msgid "Format Version"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:187
+msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:188
+#, fuzzy
+msgid "Game ID"
+msgstr "Gioco"
+
+#: scripts/firestaff_savegame_editor.py:189
+msgid "Identifies which game created this save"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:190
+msgid "Key: GLOBAL_DATA"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:191
+msgid "XOR deobfuscation key for GLOBAL_DATA"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:192
+msgid "Key: ACTIVE_GROUP"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:193
+msgid "XOR deobfuscation key for ACTIVE_GROUP"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:194
+msgid "Key: PARTY"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:195
+msgid "XOR deobfuscation key for PARTY"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:196
+msgid "Key: EVENTS"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:197
+msgid "XOR deobfuscation key for EVENTS"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:198
+msgid "Key: TIMELINE"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:199
+msgid "XOR deobfuscation key for TIMELINE"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:200
+msgid "Checksum: GLOBAL_DATA"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:201
+msgid "F0418 checksum for GLOBAL_DATA validation"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:202
+msgid "Checksum: ACTIVE_GROUP"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:203
+msgid "F0418 checksum for ACTIVE_GROUP validation"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:204
+msgid "Checksum: PARTY"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:205
+msgid "F0418 checksum for PARTY validation"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:206
+msgid "Checksum: EVENTS"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:207
+msgid "F0418 checksum for EVENTS validation"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:208
+msgid "Checksum: TIMELINE"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:209
+msgid "F0418 checksum for TIMELINE validation"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:210
+#: scripts/firestaff_savegame_editor.py:598
+msgid "Platform"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:211
+msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:212
+msgid "Dungeon ID"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:213
+msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:219
+msgid "Title"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:220
+#, fuzzy
+msgid "Direction"
+msgstr "Posizione"
+
+#: scripts/firestaff_savegame_editor.py:221
+msgid "Action Index"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:222
+msgid "Poison"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:223
+#, fuzzy
+msgid "HP Current"
+msgstr "Risorsa corrente"
+
+#: scripts/firestaff_savegame_editor.py:224
+msgid "HP Max"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:225
+#, fuzzy
+msgid "Stamina Current"
+msgstr "Risorsa corrente"
+
+#: scripts/firestaff_savegame_editor.py:226
+msgid "Stamina Max"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:227
+#, fuzzy
+msgid "Mana Current"
+msgstr "Risorsa corrente"
+
+#: scripts/firestaff_savegame_editor.py:228
+msgid "Mana Max"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:229
+#: scripts/firestaff_savegame_editor.py:635
+msgid "Food"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:230
+#: scripts/firestaff_savegame_editor.py:635
+msgid "Water"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:231
+msgid "Load"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:235
+msgid "Fighter"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:236
+msgid "Ninja"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:237
+msgid "Priest"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:238
+msgid "Wizard"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:239
+msgid "Swing"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:240
+msgid "Thrust"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:241
+msgid "Club"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:242
+msgid "Parry"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:243
+msgid "Steal"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:244
+msgid "Fight"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:245
+msgid "Throw"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:246
+msgid "Shoot"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:247
+msgid "Identify"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:248
+msgid "Heal"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:249
+msgid "Influence"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:250
+msgid "Defend"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:251
+msgid "Fire"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:252
+msgid "Air"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:253
+msgid "Earth"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:254
+msgid "Water (spell)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:258
+msgid "Event Count"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:259
+msgid "Number of active events"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:260
+msgid "First Unused Event"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:261
+msgid "Index of first free event slot"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:262
+msgid "Event Max Count"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:263
+msgid "Max events (determines EVENTS part size)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:264
+msgid "Active Group Count"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:265
+msgid "Number of active creature/item groups"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:266
+msgid "Max Active Group Count"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:267
+msgid "Max active groups (determines ACTIVE_GROUP size)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:271
+msgid "Magical Light"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:272
+msgid "Light spell intensity (0=dark)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:273
+msgid "Thief's Eye"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:274
+msgid "Thief's Eye active (0/1)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:275
+msgid "Footprints"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:276
+msgid "Footprints active (0/1)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:277
+msgid "Shield"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:278
+msgid "Shield spell strength"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:279
+msgid "Fire Shield"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:280
+msgid "Fire Shield strength"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:281
+msgid "Spell Shield"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:282
+msgid "Spell Shield (Antimagic) strength"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:283
+msgid "Calming Scent"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:284
+msgid "Calming influence active"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:285
+msgid "Freeze Life"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:286
+msgid "Freeze Life active (0/1)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:379
+#: scripts/firestaff_savegame_editor.py:382
+#: scripts/firestaff_savegame_editor.py:733
+msgid "Champion {}"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:423
+msgid "Firestaff Savegame Editor"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:473
+msgid "Open..."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:477
+msgid "Quit"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:478
+#: scripts/firestaff_savegame_editor.py:595
+#, fuzzy
+msgid "File"
+msgstr "Tutti i file"
+
+#: scripts/firestaff_savegame_editor.py:492
+msgid "Open"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:494
+#: scripts/firestaff_savegame_editor.py:548
+#, fuzzy
+msgid "Save As"
+msgstr "Salva come..."
+
+#: scripts/firestaff_savegame_editor.py:496
+msgid "No file loaded"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:523
+msgid "Open Savegame"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:524
+msgid "All Savegames"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:525
+#, fuzzy
+msgid "All Files"
+msgstr "Tutti i file"
+
+#: scripts/firestaff_savegame_editor.py:533
+msgid "Unrecognized savegame format."
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:536
+#, fuzzy
+msgid "Loaded: {}"
+msgstr "Obiettivo caricato: {}"
+
+#: scripts/firestaff_savegame_editor.py:541
+#: scripts/firestaff_savegame_editor.py:547
+msgid "No savegame loaded"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:541
+#: scripts/firestaff_savegame_editor.py:547
+#, fuzzy
+msgid "Warning"
+msgstr "Avvisi"
+
+#: scripts/firestaff_savegame_editor.py:551
+#, fuzzy
+msgid "Saved as: {}"
+msgstr "Salvato: {}"
+
+#: scripts/firestaff_savegame_editor.py:587
+msgid "File Overview"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:589
+msgid "File Information"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:597
+msgid "Format"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:597
+#: scripts/firestaff_savegame_editor.py:598
+#: scripts/firestaff_savegame_editor.py:599
+#: scripts/firestaff_savegame_editor.py:666
+#: scripts/firestaff_savegame_editor.py:668
+#: scripts/firestaff_savegame_editor.py:670
+msgid "Unknown"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:599
+msgid "Dungeon"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:604
+#, fuzzy
+msgid "Save Parts"
+msgstr "Salva come..."
+
+#: scripts/firestaff_savegame_editor.py:606
+#: scripts/firestaff_savegame_editor.py:696
+msgid "Offset"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:606
+msgid "Part"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:606
+#, fuzzy
+msgid "Status"
+msgstr "Statistiche"
+
+#: scripts/firestaff_savegame_editor.py:616
+#: scripts/firestaff_savegame_editor.py:705
+msgid "MISMATCH"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:616
+#, fuzzy
+msgid "Valid"
+msgstr "Convalida"
+
+#: scripts/firestaff_savegame_editor.py:620
+msgid "Champions"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:647
+msgid "Header Fields"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:649
+#, fuzzy
+msgid "Description"
+msgstr "Posizione"
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Field"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Hex"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Value"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:682
+msgid "DM1 PC34 Save Parts (F0417/F0418)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:699
+msgid "Expected"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:700
+msgid "Actual"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:705
+msgid "VALID"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:728
+#, fuzzy
+msgid "No champion data"
+msgstr "Importa dati di gioco"
+
+#: scripts/firestaff_savegame_editor.py:753
+msgid "Combat & Vitals"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:769
+msgid "Skills"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:790
+msgid "No party info available"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:793
+msgid "Party Info"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:816
+#, fuzzy
+msgid "No global data"
+msgstr "Importa dati di gioco"
+
+#: scripts/firestaff_savegame_editor.py:819
+#, fuzzy
+msgid "Global Data"
+msgstr "Importa dati di gioco"
+
+#: scripts/firestaff_savegame_editor.py:833
+msgid "Raw Data"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:853
+msgid "Header Words"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:859
+msgid "Random Words"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:860
+msgid "Part Keys"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:861
+msgid "Checksums"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:862
+msgid "Format/Platform/Dungeon"
+msgstr ""

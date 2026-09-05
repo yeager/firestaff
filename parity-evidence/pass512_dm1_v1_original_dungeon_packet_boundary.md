@@ -15,8 +15,7 @@ DM1 V1 original DUNGEON.DAT packet/order/checksum evidence only; no movement, vi
 
 ## Asset Locks
 
-- canonical_dm1_dungeon_dat ok=True bytes=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 md5=766450c940651fc021c92fe5d0d0b3a6
-- extracted_dm1_pc34_dungeon_dat ok=True bytes=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 md5=766450c940651fc021c92fe5d0d0b3a6
+- retail_zip_dm1_pc34_dungeon_dat ok=True bytes=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 md5=766450c940651fc021c92fe5d0d0b3a6
 
 ## Packet Facts
 
@@ -53,5 +52,6 @@ DM1 V1 original DUNGEON.DAT packet/order/checksum evidence only; no movement, vi
 ## Non-claims
 
 - Does not execute DOSBox or original Dungeon Master.
+- Reads DUNGEON.DAT directly from the retail ZIP without extraction.
 - Does not modify or verify movement, viewport drawing, or Firestaff runtime state.
 - Does not promote any original capture artifact to parity evidence.

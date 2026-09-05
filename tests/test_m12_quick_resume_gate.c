@@ -293,7 +293,7 @@ static int write_serialized_csb_quicksave(const char* path) {
     int rc;
 
     csb_v1_runtime_init(&runtime, NULL);
-    runtime.variant_id = CSB_V1_VARIANT_PC34_EN;
+    runtime.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     runtime.party_x = CSB_V1_START_PARTY_X + 3;
     runtime.party_y = CSB_V1_START_PARTY_Y + 2;
     runtime.party_dir = CSB_V1_DIR_EAST;

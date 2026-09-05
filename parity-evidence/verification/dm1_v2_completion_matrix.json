@@ -43,7 +43,6 @@
     "dm1_v2_camera_controller_source_lock",
     "dm1_v2_camera_turn_edge_cases_pc34",
     "dm1_v2_creature_render_pc34",
-    "dm1_v2_d0_d3_draw_list_comparator_gate",
     "dm1_v2_dungeon_view_asset_bindings_source_lock",
     "dm1_v2_enhanced_effects_runtime_pc34",
     "dm1_v2_entry_bitmap_materialization_blocker_gate",
@@ -92,7 +91,6 @@
     "dm1_v2_v1_v2_side_by_side_seed_pc34",
     "dm1_v2_viewport_composition_source_lock",
     "dm1_v2_viewport_d1c_door_occlusion_source_lock",
-    "dm1_v2_viewport_pixel_capture_fixture_gate",
     "dm1_v2_viewport_wall_occlusion_source_lock",
     "firestaff_dm1_v22_finished_art_material_gate_probe",
     "firestaff_dm1_v22_finished_pack_receipt_probe",
@@ -100,7 +98,10 @@
     "m11_v22_render_overlay_pc34",
     "m11_v22_shape_cache_pc34"
   ],
-  "errors": [],
+  "errors": [
+    "missing required CTest V2 gate dm1_v2_d0_d3_draw_list_comparator_gate",
+    "missing required CTest V2 gate dm1_v2_viewport_pixel_capture_fixture_gate"
+  ],
   "manifestCount": 17,
   "matrix": [
     {
@@ -464,7 +465,7 @@
     "m11_v22_render_overlay_pc34",
     "m11_v22_shape_cache_pc34"
   ],
-  "status": "passed",
+  "status": "failed",
   "testCount": 55,
   "toolCount": 57
 }

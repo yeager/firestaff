@@ -357,7 +357,7 @@ int csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
     checked_receipt = *real_asset_receipt;
     if (!checked_receipt.matched || !checked_receipt.assets_verified ||
         !checked_receipt.graphics_verified || !checked_receipt.dungeon_verified ||
-        checked_receipt.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        checked_receipt.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN ||
         checked_receipt.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS ||
         !csb_v1_startup_real_receipt_recompute_hash(&checked_receipt) ||
         !csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(

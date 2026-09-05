@@ -2,6 +2,6 @@
   "schema": "pass241_dm1_v1_runtime_csip_candidate_bridge.v1",
   "status": "BLOCKED_PASS241_ENTRY_CAPTURE_MISSING",
   "reason": "pass235 entry_capture.entry_runtime_cs_ip is not yet captured (requires live DOSBox debugger run).",
-  "pass235_manifest": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
-  "pass237_manifest": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json"
+  "pass235_manifest": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow/manifest.json",
+  "pass237_manifest": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk/manifest.json"
 }

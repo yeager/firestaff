@@ -37,22 +37,22 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
 
 ## Firestaff Evidence
 
-- PASS firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:968-982)
-  - line 975: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
-  - line 975: DUNVIEW.C:6579 floor ornament under mirrored rear pass
-  - line 975: DUNVIEW.C:6592-6593 optional button before door panel
-  - line 977: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
-  - line 977: DUNVIEW.C:6988 floor ornament under rear pass
-  - line 978: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
-  - line 978: DUNVIEW.C:7181 floor ornament under mirrored rear pass
+- PASS firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1008-1022)
+  - line 1011: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
+  - line 1011: DUNVIEW.C:6579 floor ornament under mirrored rear pass
+  - line 1011: DUNVIEW.C:6592-6593 optional button before door panel
+  - line 1013: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
+  - line 1013: DUNVIEW.C:6988 floor ornament under rear pass
+  - line 1014: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
+  - line 1014: DUNVIEW.C:7181 floor ornament under mirrored rear pass
 
-- PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1730-1775)
-  - line 1741: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 1743: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
-  - line 1744: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 1751: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);
-  - line 1770: rear.cells[0] == expected[i].rear_cells[0]
-  - line 1774: front.cells[0] == expected[i].front_cells[0]
+- PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1743-1810)
+  - line 1761: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
+  - line 1763: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
+  - line 1764: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
+  - line 1771: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);
+  - line 1790: rear.cells[0] == expected[i].rear_cells[0]
+  - line 1794: front.cells[0] == expected[i].front_cells[0]
 
 ## Verification
 

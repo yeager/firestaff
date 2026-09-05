@@ -1,17 +1,98 @@
 {
   "honesty": "Readiness/provenance gate only. No original-vs-Firestaff pixel parity claim is made by this verifier.",
-  "ok": true,
+  "ok": false,
   "original": {
     "attempt_dir": "verification-screens/passH2313-dm2-original-overlays",
+    "capture_count": 4,
     "crop_manifest": "verification-screens/passH2313-dm2-original-overlays/dm2_viewport_224x136_manifest.tsv",
     "health_manifest": "verification-screens/passH2313-dm2-original-overlays/dm2_raw_frame_health.json",
     "labels_manifest": "verification-screens/passH2313-dm2-original-overlays/dm2_original_overlay_shot_labels.tsv",
     "ok": false,
-    "present": false,
-    "problems": [
-      "operator-local H2313 original capture manifests are absent"
-    ],
-    "rows": []
+    "present": true,
+    "problems": [],
+    "raw_health_pass": true,
+    "rows": [
+      {
+        "crop_x": "0",
+        "crop_y": "40",
+        "dims": [
+          224,
+          136
+        ],
+        "exists": true,
+        "filename": "01_unlabeled_dm2_original_viewport_224x136.ppm",
+        "index": "01",
+        "manifest_sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d",
+        "ok": false,
+        "path": "verification-screens/passH2313-dm2-original-overlays/viewport_224x136/01_unlabeled_dm2_original_viewport_224x136.ppm",
+        "problems": [
+          "route_label is empty; row cannot be promoted as same-state evidence"
+        ],
+        "route_label": "",
+        "route_token": "shot",
+        "sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d"
+      },
+      {
+        "crop_x": "0",
+        "crop_y": "40",
+        "dims": [
+          224,
+          136
+        ],
+        "exists": true,
+        "filename": "02_unlabeled_dm2_original_viewport_224x136.ppm",
+        "index": "02",
+        "manifest_sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d",
+        "ok": false,
+        "path": "verification-screens/passH2313-dm2-original-overlays/viewport_224x136/02_unlabeled_dm2_original_viewport_224x136.ppm",
+        "problems": [
+          "route_label is empty; row cannot be promoted as same-state evidence"
+        ],
+        "route_label": "",
+        "route_token": "shot",
+        "sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d"
+      },
+      {
+        "crop_x": "0",
+        "crop_y": "40",
+        "dims": [
+          224,
+          136
+        ],
+        "exists": true,
+        "filename": "03_unlabeled_dm2_original_viewport_224x136.ppm",
+        "index": "03",
+        "manifest_sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d",
+        "ok": false,
+        "path": "verification-screens/passH2313-dm2-original-overlays/viewport_224x136/03_unlabeled_dm2_original_viewport_224x136.ppm",
+        "problems": [
+          "route_label is empty; row cannot be promoted as same-state evidence"
+        ],
+        "route_label": "",
+        "route_token": "shot",
+        "sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d"
+      },
+      {
+        "crop_x": "0",
+        "crop_y": "40",
+        "dims": [
+          224,
+          136
+        ],
+        "exists": true,
+        "filename": "04_unlabeled_dm2_original_viewport_224x136.ppm",
+        "index": "04",
+        "manifest_sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d",
+        "ok": false,
+        "path": "verification-screens/passH2313-dm2-original-overlays/viewport_224x136/04_unlabeled_dm2_original_viewport_224x136.ppm",
+        "problems": [
+          "route_label is empty; row cannot be promoted as same-state evidence"
+        ],
+        "route_label": "",
+        "route_token": "shot",
+        "sha256": "035953ecca1ff4c138a97f52a4203d797da32ba3d421daec0f62b332bc587e5d"
+      }
+    ]
   },
   "pairs": {
     "dungeon_gameplay_pair_count": 0,
@@ -25,5 +106,5 @@
   },
   "schema": "firestaff.dm2_v1_original_overlay_pair_readiness.v1",
   "scope": "DM2 original-overlay pair readiness. Requires H2313 original 224x136 viewport crops and a Firestaff pair manifest with at least one dungeon_gameplay same-label 224x136 Firestaff crop before promotion.",
-  "status": "OPEN_BOUNDED_NO_ORIGINAL_CAPTURE"
+  "status": "FAIL_ORIGINAL_CAPTURE_INCOMPLETE"
 }

@@ -577,7 +577,7 @@ static void test_runtime_champion_load_attrs_post_handoff(void)
     p.dungeon_verified = 1;
     p.graphics_verified = 1;
     p.assets_verified = 1;
-    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
     CHECK(csb_v1_boot_set_imported_party(&p, &imported) == 0,

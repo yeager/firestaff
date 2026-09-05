@@ -11,7 +11,15 @@
   {
 --- src/ss/sh7095.inc
 +++ src/ss/sh7095.inc
-@@ -2658,6 +2658,7 @@
+@@ -2651,6 +2651,7 @@
+ 	 if(CCR & CCR_CE)											\
+ 	 {												\
+ 	  CPUM[which].CacheBypass[IsInstr][sizeof(T) >> 1]++;							\
++          if(!IsInstr) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);\
+ 	  goto MemReturn;											\
+ 	 }												\
+ 	 way_match = LRU_Replace_Tab[cent->LRU];									\
+@@ -2658,6 +2659,7 @@
  	 }													\
  														\
    	 retval = MDFN_densb<T, true>(&cent->Data[way_match][NE32ASU8_IDX_ADJ(T, A & 0x0F)]);			\
@@ -21,7 +29,7 @@
  	/* Fall-through, no break here */									\
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -620,6 +620,45 @@
+@@ -620,6 +620,57 @@
   if((count & 0x3ffU) == 0) fflush(file);
  }
  
@@ -35,6 +43,8 @@
 + static uint32 minimum;
 + static uint32 maximum;
 + static uint32 required_pc;
++ static uint64 frame_min;
++ static uint64 frame_max = UINT64_MAX;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_CACHED_RAM_READS");
 + if(!configured)
 + {
@@ -42,13 +52,18 @@
 +  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX");
 +  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC");
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
++  const char *frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_FRAME_MIN");
++  const char *frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_FRAME_MAX");
 +  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
 +  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
 +  required_pc = pc_text && *pc_text ? strtoul(pc_text, NULL, 0) : 0;
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  if(frame_min_text && *frame_min_text) frame_min = strtoull(frame_min_text, NULL, 0);
++  if(frame_max_text && *frame_max_text) frame_max = strtoull(frame_max_text, NULL, 0);
 +  configured = true;
 + }
-+ if(!path || !*path || count >= limit || which ||
++ if(!path || !*path || count >= limit ||
++    SMPC_FirestaffCurrentFrame() < frame_min || SMPC_FirestaffCurrentFrame() > frame_max ||
 +    (maximum > minimum && (address < minimum || address >= maximum)) ||
 +    (required_pc && pc != required_pc))
 +  return;
@@ -56,10 +71,15 @@
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SH2_CACHED_RAM_READ_TRACE_V1\n", file);
++  fputs("FIRESTAFF_NEXUS_SH2_CACHED_RAM_READ_TRACE_V2\n", file);
 + }
-+ fprintf(file, "addr=0x%08x size=%u value=0x%08x pc=0x%08x\n",
++ fprintf(file, "frame=%llu cpu=%u addr=0x%08x size=%u value=0x%08x pc=0x%08x",
++  (unsigned long long)SMPC_FirestaffCurrentFrame(), which,
 +  (unsigned)address, size, (unsigned)value, (unsigned)pc);
++ for(unsigned i = 0; i < 16; i++)
++  fprintf(file, " r%u=0x%08x", i,
++   (unsigned)CPU[which & 1U].GetRegister(SH7095::GSREG_R0 + i, NULL, 0));
++ fputc('\n', file);
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}

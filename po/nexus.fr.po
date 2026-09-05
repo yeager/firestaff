@@ -1,6 +1,8 @@
 # Nexus — fr
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: fr\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
@@ -93,4 +95,3 @@ msgstr "Groupe complet"
 
 msgid "Use Item"
 msgstr "Utiliser un objet"
-

@@ -380,7 +380,7 @@ static void test_door_occlusion_capture(void)
 {
     DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
     DM1_V1_F0128SchedulerPlanPc34 plan;
-    int ornIdx, pass1Idx, frameIdx, doorIdx, pass2Idx;
+    int ornIdx, pass1Idx, frameIdx, buttonIdx, doorIdx, pass2Idx;
 
     all_corridor(squares);
     squares[DM1_V1_F0128_VIEW_SQUARE_D1C].element = DM1_V1_F0128_ELEMENT_DOOR_FRONT;
@@ -398,6 +398,8 @@ static void test_door_occlusion_capture(void)
                            DM1_V1_F0128_STEP_F0115_DOOR_PASS1);
     frameIdx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
                            DM1_V1_F0128_STEP_F0104_DOOR_FRAME);
+    buttonIdx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
+                            DM1_V1_F0128_STEP_F0110_DOOR_BUTTON);
     doorIdx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
                           DM1_V1_F0128_STEP_F0111_DOOR);
     pass2Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
@@ -412,6 +414,8 @@ static void test_door_occlusion_capture(void)
                "ReDMCSB DUNVIEW.C:7875 back cells behind the door");
     expect_int("door.frame_between", frameIdx > pass1Idx && frameIdx < doorIdx, 1,
                "ReDMCSB DUNVIEW.C:7877-7910 door frame between pass1 and door");
+    expect_int("door.button_between", buttonIdx > frameIdx && buttonIdx < doorIdx, 1,
+               "ReDMCSB F0124 emits F0110 after the frame and before F0111");
     expect_int("door.f0111.occluder", plan.steps[doorIdx].occluder, 1,
                "ReDMCSB DUNVIEW.C:7877-7910 F0111 door occludes pass1");
     expect_int("door.pass2_order",
@@ -441,6 +445,20 @@ static void test_door_occlusion_capture(void)
     expect_int("verify.door_d2r.ok",
                DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(&plan),
                1, "D2R door-front plan passes invariants");
+    expect_int("door_d2r.no_f0110",
+               first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D2R,
+                           DM1_V1_F0128_STEP_F0110_DOOR_BUTTON),
+               -1, "F0120 contains no F0110 call");
+
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D3R].element = DM1_V1_F0128_ELEMENT_DOOR_FRONT;
+    expect_int("build.door_d3r.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "D3R door-front view builds");
+    expect_int("door_d3r.has_f0110",
+               first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D3R,
+                           DM1_V1_F0128_STEP_F0110_DOOR_BUTTON) >= 0,
+               1, "F0117 contains the exceptional side-door F0110 call");
 
     /* Door-front on a square with no source door pass (D0C) fails
      * closed rather than inventing a route. */
@@ -497,8 +515,53 @@ static void test_wall_alcove_and_far_lanes(void)
                DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(&plan),
                1, "D3L wall plan passes invariants");
 
+    /* ReDMCSB does not call two predicates for every wall route. D3/D2
+     * side squares own right/left then front; outer, centre and D1 routes
+     * own one projection only. Keep those counts explicit so a renderer
+     * callback cannot duplicate the sole centre/near ornament. */
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D3C].element =
+        DM1_V1_F0128_ELEMENT_WALL;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D1L].element =
+        DM1_V1_F0128_ELEMENT_WALL;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D3L2].element =
+        DM1_V1_F0128_ELEMENT_WALL;
+    expect_int("build.wall_single_projection.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "centre, D1 and outer wall routes build");
+    expect_int("wall.d3c.one_f0107",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D3C,
+                                   DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK),
+               1, "ReDMCSB F0118 calls only D3C front F0107");
+    expect_int("wall.d1l.one_f0107",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D1L,
+                                   DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK),
+               1, "ReDMCSB F0122 calls only D1L right F0107");
+    expect_int("wall.d3l2.one_f0107",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D3L2,
+                                   DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK),
+               1, "ReDMCSB F0676 calls only D3L2 right F0107");
+    expect_int("verify.wall_single_projection.ok",
+               DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(&plan),
+               1, "single-projection wall plan passes invariants");
+    squares[DM1_V1_F0128_VIEW_SQUARE_D3L2].frontWallOrnamentIsAlcove = 1;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D1L].frontWallOrnamentIsAlcove = 1;
+    expect_int("build.side_only_alcove_flags.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "ignored side-only F0107 results remain schedulable");
+    expect_int("wall.d3l2.no_alcove_things",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D3L2,
+                                   DM1_V1_F0128_STEP_F0115_MAIN),
+               0, "F0676 ignores F0107 return and exits");
+    expect_int("wall.d1l.no_alcove_things",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D1L,
+                                   DM1_V1_F0128_STEP_F0115_MAIN),
+               0, "F0122 ignores F0107 return and exits");
+
     /* Front alcove: wall jumps to the thing pass with the alcove
      * order word (F0116:6433-6436 goto T0116017). */
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D3L].element = DM1_V1_F0128_ELEMENT_WALL;
     squares[DM1_V1_F0128_VIEW_SQUARE_D3L].frontWallOrnamentIsAlcove = 1;
     expect_int("build.alcove.ok",
                DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
@@ -671,13 +734,13 @@ static void test_span_and_observed_match(void)
     expect_int("span.d4l.count", count, 1,
                "ReDMCSB DUNVIEW.C:8479-8481 one early D4L F0115 step");
 
-    /* D1C door-front: F0108, pass1, door frame, F0111, pass2 in one span. */
+    /* D1C door-front: F0108, pass1, frame, F0110, F0111, pass2. */
     expect_int("span.d1c.ok",
                DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
                    &plan, DM1_V1_F0128_VIEW_SQUARE_D1C, &start, &count),
                1, "D1C span resolves");
-    expect_int("span.d1c.count", count, 5,
-               "ReDMCSB DUNVIEW.C:7873-7937 D1C F0108/pass1/frame/door/pass2");
+    expect_int("span.d1c.count", count, 6,
+               "ReDMCSB DUNVIEW.C:7873-7937 D1C F0108/pass1/frame/button/door/pass2");
     pass1Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
                            DM1_V1_F0128_STEP_F0115_DOOR_PASS1);
     pass2Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,

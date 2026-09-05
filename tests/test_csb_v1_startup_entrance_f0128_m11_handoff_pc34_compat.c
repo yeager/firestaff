@@ -72,7 +72,7 @@ int main(void)
     csb_v1_boot_profile_init(&profile);
     if (!root || csb_v1_boot_scan_assets(&profile, root) != 0 ||
         !profile.assets_verified || !profile.graphics_verified ||
-        !profile.dungeon_verified || profile.variant_id != CSB_V1_VARIANT_PC34_EN) {
+        !profile.dungeon_verified || profile.variant_id != CSB_V1_VARIANT_REFERENCE_I34_EN) {
         printf("SKIP: no verified PC34 CSB GRAPHICS.DAT/DUNGEON.DAT corpus was found.\n");
         return 0;
     }

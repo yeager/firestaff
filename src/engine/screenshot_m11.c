@@ -216,7 +216,7 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
                                   char* outPath, int outPathCap) {
     unsigned char* fb;
     static unsigned char palette[256 * 3];
-    uint8_t indexed_palette_rgb6[256][3];
+    uint8_t indexed_palette_rgb8[256][3];
     static unsigned char masked[M11_FB_BYTES];
     int level, i;
     int n = M11_FB_BYTES;
@@ -235,15 +235,12 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
      * present the original TITLE BPP8 page as physical dtPalIRGB indices.
      * Masking those bytes to four bits made an external screenshot disagree
      * with the presented DM2 menu/credits palette. */
-    if (M11_Render_CopyIndexedPaletteRgb6(indexed_palette_rgb6)) {
+    if (M11_Render_CopyIndexedPaletteRgb8(indexed_palette_rgb8)) {
         memcpy(masked, fb, (size_t)n);
         for (i = 0; i < 256; i++) {
-            palette[i * 3 + 0] = (unsigned char)((indexed_palette_rgb6[i][0] << 2) |
-                                                   (indexed_palette_rgb6[i][0] >> 4));
-            palette[i * 3 + 1] = (unsigned char)((indexed_palette_rgb6[i][1] << 2) |
-                                                   (indexed_palette_rgb6[i][1] >> 4));
-            palette[i * 3 + 2] = (unsigned char)((indexed_palette_rgb6[i][2] << 2) |
-                                                   (indexed_palette_rgb6[i][2] >> 4));
+            palette[i * 3 + 0] = indexed_palette_rgb8[i][0];
+            palette[i * 3 + 1] = indexed_palette_rgb8[i][1];
+            palette[i * 3 + 2] = indexed_palette_rgb8[i][2];
         }
     } else {
         /* Legacy 16-colour frames still encode palette-level bits in the

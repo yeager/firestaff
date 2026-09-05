@@ -161,33 +161,59 @@ def main() -> int:
         ("wall panel before alcove item handoff", "if (plan->isAlcove)"),
     ], "Firestaff wall ornament occlusion envelope")
 
+    callback_fn = c_function(fire, "m11_dm1_f0128_execute_source_step")
+    require_order(callback_fn, [
+        ("wall material callback phase", "M11_DM1_F0128_EXECUTE_WALL_MATERIAL"),
+        ("wall material plan operation", "DM1_V1_F0128_STEP_F0104_WALL_MATERIAL"),
+        ("wall ornament callback phase", "M11_DM1_F0128_EXECUTE_WALL_ORNAMENT"),
+        ("F0107 plan operation", "DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK"),
+        ("source projection occurrence", "m11_dm1_f0128_f0107_view_wall_index("),
+        ("single projection draw", "m11_draw_dm1_wall_ornaments("),
+    ], "Firestaff callback-owned F0104 then F0107 transaction")
+
+    projection_fn = c_function(fire, "m11_dm1_f0128_f0107_view_wall_index")
+    for needle, label in [
+        ("if (relSide == -1) return occurrence == 0 ? 0", "D3L side-first row"),
+        ("(occurrence == 1 ? 2 : -1)", "D3L front-second row"),
+        ("if (relSide == 1) return occurrence == 0 ? 1", "D3R side-first row"),
+        ("(occurrence == 1 ? 4 : -1)", "D3R front-second row"),
+        ("if (relSide == -1) return occurrence == 0 ? 5", "D2L side-first row"),
+        ("(occurrence == 1 ? 7 : -1)", "D2L front-second row"),
+        ("if (relSide == 1) return occurrence == 0 ? 6", "D2R side-first row"),
+        ("(occurrence == 1 ? 9 : -1)", "D2R front-second row"),
+    ]:
+        require(projection_fn, needle, label)
+
     viewport_fn = c_function(fire, "m11_draw_viewport")
-    # Each F0128 square is now replayed as one far-to-near transaction.  Do
-    # not regress this to the former primitive-class batches: a global side
-    # wall pass followed by a global ornament pass cannot preserve DnL before
-    # DnR nor protect an already-completed D3/D2 route from overpaint.
+    # The viewport may invoke only scheduler dispatch wrappers.  A direct
+    # ornament call here would revive the obsolete broad replay and duplicate
+    # callback-owned F0107 pixels.
+    if "m11_draw_dm1_wall_ornaments(" in viewport_fn:
+        raise AssertionError("direct F0107 ornament replay survived in m11_draw_viewport")
     replay = viewport_fn[require(
         viewport_fn,
         "int blockingCenterDepth =\n            visibility.nearest_blocking_center_depth_index;",
-        "F0128 square replay block",
+        "F0128 square transaction block",
     ):]
     require_order(replay, [
         ("far-to-near depth loop", "for (replayForward = 3; replayForward >= 1; --replayForward)"),
-        ("outer-side wall envelope", "m11_draw_dm1_side_walls("),
-        ("outer-side ornament follows wall", "m11_draw_dm1_wall_ornaments("),
-        ("D3 outer door-front stays in square", "m11_draw_dm1_d3l2_d3r2_f0111_door_fronts("),
-        ("outer foreground closes square", "m11_dm1_f0128_replay_foreground_square("),
-        ("regular side wall transaction", "m11_draw_dm1_side_doors("),
-        ("regular side door ornament", "m11_draw_dm1_side_door_ornaments("),
-        ("regular side destroyed mask", "m11_draw_dm1_side_destroyed_door_masks("),
-        ("center wall begins after sides", "m11_draw_dm1_front_walls("),
-    ], "Firestaff F0128 D3/D2 per-square replay order")
-    center_replay = replay[require(replay, "m11_draw_dm1_front_walls(",
-                                   "center replay wall") :]
-    require_order(center_replay, [
-        ("center ornament follows center wall", "m11_draw_dm1_wall_ornaments("),
-        ("center door transaction", "m11_draw_dm1_center_doors("),
-    ], "Firestaff F0128 center-square replay order")
+        ("outer wall callback", "m11_dm1_f0128_dispatch_wall_material_square("),
+        ("outer F0107 callback", "m11_dm1_f0128_dispatch_wall_ornament_square("),
+        ("outer pre-door callback", "m11_dm1_f0128_dispatch_door_pass1_square("),
+        ("outer F0111 callback", "m11_dm1_f0128_dispatch_door_material_square("),
+        ("outer foreground callback", "m11_dm1_f0128_dispatch_foreground_square("),
+    ], "Firestaff outer square callback order")
+    regular = replay[require(replay, "for (sideReplayIndex = 0; sideReplayIndex < 2; ++sideReplayIndex)",
+                             "regular side transaction") :]
+    require_order(regular, [
+        ("side wall callback", "m11_dm1_f0128_dispatch_wall_material_square("),
+        ("side F0107 callback", "m11_dm1_f0128_dispatch_wall_ornament_square("),
+        ("side pre-door callback", "m11_dm1_f0128_dispatch_door_pass1_square("),
+        ("side F0111 callback", "m11_dm1_f0128_dispatch_door_material_square("),
+        ("side foreground callback", "m11_dm1_f0128_dispatch_foreground_square("),
+        ("center wall callback after sides", "m11_dm1_f0128_dispatch_wall_material_square("),
+        ("center F0107 callback", "m11_dm1_f0128_dispatch_wall_ornament_square("),
+    ], "Firestaff regular-side then center callback order")
     door_button_fn = c_function(fire, "m11_dm1_nearest_blocking_center_door_depth")
     require_order(door_button_fn, [
         ("nearest D1-first scan", "for (d = 0; d < 3; ++d)"),
@@ -205,8 +231,8 @@ def main() -> int:
     print("- DUNVIEW.C:7289-7312 F0121 D2C wall: center panel -> front ornament/alcove -> return")
     print("- DUNVIEW.C:8488-8521 F0128 D3L,D3R,D3C,D2L,D2R,D2C traversal")
     print("Firestaff anchors:")
-    print("- m11_game_view.c:m11_draw_dm1_wall_ornaments D3/D2 spec order and visibility guards")
-    print("- m11_game_view.c:m11_draw_viewport wall panels before wall ornaments, then near-side replay after D2/D3 center blockers")
+    print("- m11_game_view.c:m11_dm1_f0128_execute_source_step owns F0104/F0107 projection dispatch")
+    print("- m11_game_view.c:m11_draw_viewport contains callback wrappers and no direct F0107 replay")
     print("- m11_game_view.c:m11_dm1_nearest_blocking_center_door_depth selects D1 before D2/D3 for door-button occlusion")
     return 0
 

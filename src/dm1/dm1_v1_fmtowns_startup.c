@@ -218,6 +218,7 @@ static int bytes_equal_at(const uint8_t *bytes, size_t size, size_t offset,
 static int parse_title_animation_plan(const uint8_t *program, size_t size,
                                       uint32_t load_offset,
                                       uint32_t load_size,
+                                      int japanese,
                                       DM1_V1_FmtownsStartupReceipt *out) {
     static const uint8_t k_get_title_graphic[] = {
         0x6a, 0x00, 0x6a, 0x00, 0x50, 0x6a, 0x01
@@ -235,32 +236,36 @@ static int parse_title_animation_plan(const uint8_t *program, size_t size,
     static const uint16_t k_presents_rect[4] = {0u, 319u, 90u, 105u};
     static const uint16_t k_master_rect[4] = {0u, 319u, 118u, 174u};
     size_t base;
+    size_t function = japanese ? 0xc428u : 0xc3b0u;
+    size_t master = japanese ? 0x291c4u : 0x28f50u;
+    size_t swoosh = japanese ? 0x291ccu : 0x28f58u;
+    size_t presents = japanese ? 0x291d4u : 0x28f60u;
     size_t i;
     if (!program || !out || load_offset > size || load_size > size - load_offset ||
         load_size < 0xc600u) return 0;
     base = (size_t)load_offset;
-    if (!bytes_equal_at(program, size, base + 0xc3d1u,
+    if (!bytes_equal_at(program, size, base + function + 0x21u,
                         k_get_title_graphic, sizeof(k_get_title_graphic)) ||
-        !bytes_equal_at(program, size, base + 0xc3f9u,
+        !bytes_equal_at(program, size, base + function + 0x49u,
                         k_presents_source, sizeof(k_presents_source)) ||
-        !bytes_equal_at(program, size, base + 0xc440u,
+        !bytes_equal_at(program, size, base + function + 0x90u,
                         k_master_source, sizeof(k_master_source)) ||
-        !bytes_equal_at(program, size, base + 0xc45fu,
+        !bytes_equal_at(program, size, base + function + 0xafu,
                         k_zoom_count, sizeof(k_zoom_count)) ||
-        !bytes_equal_at(program, size, base + 0xc522u,
+        !bytes_equal_at(program, size, base + function + 0x172u,
                         k_zoom_width_step, sizeof(k_zoom_width_step)) ||
-        !bytes_equal_at(program, size, base + 0xc526u,
+        !bytes_equal_at(program, size, base + function + 0x176u,
                         k_zoom_height_step, sizeof(k_zoom_height_step))) return 0;
     for (i = 0; i < 4u; ++i) {
-        size_t rect_base = base + 0x28f50u + i * 2u;
+        size_t rect_base = base + master + i * 2u;
         if (rect_base > size || sizeof(uint16_t) > size - rect_base) return 0;
         /* The verified FM Towns P3 image is little-endian. */
         if (read_le16(program + rect_base) != k_master_rect[i]) return 0;
         out->game_title_master_rect[i] = k_master_rect[i];
     }
     for (i = 0; i < 4u; ++i) {
-        size_t swoosh_base = base + 0x28f58u + i * 2u;
-        size_t presents_base = base + 0x28f60u + i * 2u;
+        size_t swoosh_base = base + swoosh + i * 2u;
+        size_t presents_base = base + presents + i * 2u;
         if (swoosh_base > size || presents_base > size ||
             sizeof(uint16_t) > size - swoosh_base ||
             sizeof(uint16_t) > size - presents_base ||
@@ -280,6 +285,91 @@ static int parse_title_animation_plan(const uint8_t *program, size_t size,
     out->game_title_zoom_width_step = 16u;
     out->game_title_zoom_height_step = 4u;
     out->game_title_zoom_step_count = 18u;
+    return 1;
+}
+
+static int apply_rgb6_records(const uint8_t *records, size_t record_count,
+                              uint8_t palette[16][3]) {
+    size_t i;
+    if (!records || !palette || record_count == 0u) return 0;
+    for (i = 0u; i < record_count; ++i) {
+        const uint8_t *row = records + i * 4u;
+        if (row[0] == 0xffu) return i + 1u == record_count;
+        if (row[0] >= 16u || row[1] > 0x3fu || row[2] > 0x3fu ||
+            row[3] > 0x3fu) return 0;
+        palette[row[0]][0] = row[1];
+        palette[row[0]][1] = row[2];
+        palette[row[0]][2] = row[3];
+    }
+    return 0;
+}
+
+static int find_unique_bytes(const uint8_t *bytes, size_t begin, size_t end,
+                             const uint8_t *pattern, size_t pattern_size,
+                             size_t *out_offset) {
+    size_t found = (size_t)-1;
+    size_t i;
+    if (!bytes || !pattern || !out_offset || begin > end ||
+        pattern_size == 0u || pattern_size > end - begin) return 0;
+    for (i = begin; i + pattern_size <= end; ++i) {
+        if (memcmp(bytes + i, pattern, pattern_size) != 0) continue;
+        if (found != (size_t)-1) return 0;
+        found = i;
+    }
+    if (found == (size_t)-1) return 0;
+    *out_offset = found;
+    return 1;
+}
+
+static int parse_title_palettes(const uint8_t *program, size_t size,
+                                uint32_t load_offset, uint32_t load_size,
+                                DM1_V1_FmtownsStartupReceipt *out) {
+    /* Exact MEDIA488 F20E/F20J COLOR_DEF records from TITLE.C/ANIMTOWN.C.
+     * They are admission signatures only: published values are copied from
+     * the selected retail executable itself. */
+    static const uint8_t presents[17u * 4u] = {
+        0,0,0,0, 1,0,0,0, 2,0,0,0, 3,0,0,0,
+        4,0,0,0, 5,0,0,0, 6,0,0,0, 7,0,0,0,
+        8,0,0,0, 9,0,0,0, 10,0,0,0, 11,0,0,0,
+        12,0,0,0, 13,0,0,0, 14,0,0,0, 15,0x3f,0x3f,0x3f,
+        0xff,0,0,0
+    };
+    static const uint8_t dungeon[9u * 4u] = {
+        3,0x2f,0x27,0x0f, 4,0x27,0x17,0x0f,
+        5,0x37,0x2f,0x0f, 6,0x2f,0x17,0x0f,
+        7,0x37,0x37,0x17, 8,0x3f,0x3f,0x0f,
+        11,0x1f,0x0f,0x07, 12,0x3f,0,0, 0xff,0,0,0
+    };
+    static const uint8_t master[2u * 4u] = {
+        15,0x3f,0,0, 0xff,0,0,0
+    };
+    size_t begin;
+    size_t end;
+    size_t presents_offset;
+    size_t dungeon_offset;
+    size_t master_offset;
+    if (!program || !out || load_offset > size || load_size > size - load_offset)
+        return 0;
+    begin = (size_t)load_offset;
+    end = begin + (size_t)load_size;
+    if (!find_unique_bytes(program, begin, end, presents, sizeof(presents),
+                           &presents_offset) ||
+        !find_unique_bytes(program, begin, end, dungeon, sizeof(dungeon),
+                           &dungeon_offset) ||
+        !find_unique_bytes(program, begin, end, master, sizeof(master),
+                           &master_offset)) return 0;
+    memset(out->game_title_presents_palette_rgb6, 0,
+           sizeof(out->game_title_presents_palette_rgb6));
+    if (!apply_rgb6_records(program + presents_offset, 17u,
+                            out->game_title_presents_palette_rgb6)) return 0;
+    memcpy(out->game_title_zoom_palette_rgb6,
+           out->game_title_presents_palette_rgb6,
+           sizeof(out->game_title_zoom_palette_rgb6));
+    if (!apply_rgb6_records(program + dungeon_offset, 9u,
+                            out->game_title_zoom_palette_rgb6) ||
+        !apply_rgb6_records(program + master_offset,
+                            2u, out->game_title_zoom_palette_rgb6)) return 0;
+    out->game_title_palettes_verified = 1;
     return 1;
 }
 
@@ -419,7 +509,8 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
                   contains_ascii(menu_program, menu_program_size, "\\TMENU.ICN") &&
                   contains_ascii(menu_program, menu_program_size, "TownsOS") &&
                   contains_ascii(menu_program, menu_program_size, "TOWNS MOUSE LIBRARY");
-    gameSymbols = contains_ascii(game_program, game_program_size, "DO_TITLE_ANIMATION") &&
+    gameSymbols = english &&
+                  contains_ascii(game_program, game_program_size, "DO_TITLE_ANIMATION") &&
                   contains_ascii(game_program, game_program_size, "TITLE_MASTER") &&
                   contains_ascii(game_program, game_program_size, "TITLE_PRESENTS") &&
                   contains_ascii(game_program, game_program_size, "SHOW_DUNGEON") &&
@@ -446,7 +537,7 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
         strcmp(iconHash,k_tmenu_icn_md5) || strcmp(infoHash,k_tmenu_inf_md5) || (!english && !japanese) ||
         game_program[0] != 'P' || game_program[1] != '3' || game_program[2] != 1 || game_program[3] != 0 ||
         menu_program[0] != 'P' || menu_program[1] != '3' || menu_program[2] != 1 || menu_program[3] != 0 ||
-        !menuSymbols || !gameSymbols ||
+        !menuSymbols || (english && !gameSymbols) ||
         (english && (!titleAnimation.found || !titlePresents.found ||
                      !titleDungeon.found || !drawDmenu.found ||
                      !dynamenu.found || !menuIcons.found ||
@@ -475,10 +566,28 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     out->game_dynamenu_entry = dynamenu.value;
     out->game_menu_icons_entry = menuIcons.value;
     out->game_cd_level_song_entry = cdLevelSong.value;
-    if (english && !parse_title_animation_plan(
-            game_program, game_program_size, gameLoadOffset, gameLoadSize, out)) {
+    if (!parse_title_animation_plan(
+            game_program, game_program_size, gameLoadOffset, gameLoadSize,
+            japanese, out)) {
         memset(out, 0, sizeof(*out));
         return 0;
+    }
+    if (!parse_title_palettes(game_program, game_program_size,
+                              gameLoadOffset, gameLoadSize, out)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (japanese) {
+        /* JDM.EXP is stripped. These recovered owners become admissible only
+         * after the hash, complete title-body fingerprints, geometry and
+         * exact palette records above all match the retail load image. */
+        out->game_program_symbols_verified = 1;
+        out->game_do_title_animation_entry = 0x0000c428u;
+        out->game_title_presents_entry = 0x000291beu;
+        out->game_title_dungeon_entry = 0x000291c0u;
+        out->game_draw_dmenu_entry = 0x000046e0u;
+        out->game_dynamenu_entry = 0x000243b4u;
+        out->game_menu_icons_entry = 0x00024384u;
     }
     if (english && !parse_native_action_names(
             game_program, game_program_size, gameLoadOffset, gameLoadSize, out)) {

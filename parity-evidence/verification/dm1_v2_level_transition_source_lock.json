@@ -39,7 +39,7 @@
     "V22_TRANS_TELEPORT_TICKS",
     "V1_TICK_MS"
   ],
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "dm1_v2 level-transition compatibility bridge",
   "status": "passed"
 }

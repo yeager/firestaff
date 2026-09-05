@@ -114,7 +114,7 @@ Required game data must block launch:
 ### Supported Game Versions (hash-verified)
 
 **DM1:** PC 3.4 English, PC 3.4 Multilanguage
-**CSB:** PC 3.4 English, Atari ST 2.0/2.1, Amiga 3.5, Amiga 3.5 Multilanguage
+**CSB:** Atari ST 2.0/2.1, Amiga 3.1/3.5, FM Towns English/Japanese. CSBWin/ReDMCSB are reference lineages, not Windows/DOS game editions.
 **DM2:** PC English, PC French, PC German/English JewelCase
 **Nexus:** Saturn DMDF/DGN format (138 files)
 **Theron:** PC Engine CD JP/US Track 02 provenance

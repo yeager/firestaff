@@ -82,3 +82,19 @@ int dm1_v1_fmtowns_title_compose_frame(
                 (int)startup->game_title_master_source_y, 320, 57);
     return 1;
 }
+
+unsigned int dm1_v1_fmtowns_title_frame_wait_vblanks(unsigned int frame)
+{
+    return frame >= DM1_FMTOWNS_TITLE_ZOOM_FIRST_FRAME &&
+           frame < DM1_FMTOWNS_TITLE_FINAL_FRAME ? 1u : 0u;
+}
+
+unsigned int dm1_v1_fmtowns_title_vblank_delay_ms(unsigned int ordinal)
+{
+    unsigned int previous;
+    unsigned int current;
+    if (ordinal == 0u) return 0u;
+    previous = ((ordinal - 1u) * 1000u + 30u) / 60u;
+    current = (ordinal * 1000u + 30u) / 60u;
+    return current - previous;
+}

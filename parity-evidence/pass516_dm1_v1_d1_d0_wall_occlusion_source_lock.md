@@ -55,13 +55,13 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Firestaff Evidence
 
-- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1200-1215)
+- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1244-1248)
   - Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.
 
 - PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:215-230)
   - Open side branches keep their source cell-order contracts separate from wall-return blockers.
 
-- PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:825-910)
+- PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:851-946)
   - The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.
 
 ## Verification

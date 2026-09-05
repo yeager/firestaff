@@ -29,7 +29,7 @@
     "qemu_log": {
       "present": false
     },
-    "run_dir": "/Users/bosse/.openclaw/data/firestaff-qemu-dunview-20260506g"
+    "run_dir": "/home/yeager/.openclaw/data/firestaff-qemu-dunview-20260506g"
   },
   "schema": "pass244_dm1_v1_qemu_freedos_dunview_path.v1",
   "source_lines": {

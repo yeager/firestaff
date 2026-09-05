@@ -6,95 +6,56 @@
       "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling",
       "kind": "redmcsb_source_lock",
       "lines": "2962-3003",
-      "missingMarkers": [
-        "void F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
-        "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);",
-        "F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);",
-        "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0100/F0101/F0102 blitters",
       "kind": "redmcsb_source_lock",
       "lines": "3048-3082",
-      "missingMarkers": [
-        "void F0100_DUNGEONVIEW_DrawWallSetBitmap(",
-        "void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(",
-        "void F0102_DUNGEONVIEW_DrawDoorBitmap(",
-        "G0296_puc_Bitmap_Viewport"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
       "kind": "redmcsb_source_lock",
       "lines": "4547-4910",
-      "missingMarkers": [
-        "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(",
-        "P0146_ui_OrderedViewCellOrdinals >>= 4;",
-        "L0139_i_Cell = M021_NORMALIZE(AL0126_i_ViewCell + P0142_i_Direction);",
-        "P0141_T_Thing = L0146_T_FirstThingToDraw;"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0116/F0117/F0118 D3 side/center squares",
       "kind": "redmcsb_source_lock",
       "lines": "6400-6835",
-      "missingMarkers": [
-        "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0698_puc_Bitmap_WallSet_Wall_D3LCR",
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
-        "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
-        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
-        "return;"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0121/F0124 D2C/D1C center squares",
       "kind": "redmcsb_source_lock",
       "lines": "7244-7937",
-      "missingMarkers": [
-        "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C(",
-        "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C(",
-        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G3013_i_WallSet_Wall_D1C",
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
-        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "file": "DUNVIEW.C",
       "function": "F0128_DUNGEONVIEW_Draw_CPSF",
       "kind": "redmcsb_source_lock",
       "lines": "8318-8618",
-      "missingMarkers": [
-        "void F0128_DUNGEONVIEW_Draw_CPSF(",
-        "F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
-        "F0116_DUNGEONVIEW_DrawSquareD3L(",
-        "F0121_DUNGEONVIEW_DrawSquareD2C(",
-        "F0124_DUNGEONVIEW_DrawSquareD1C(",
-        "F0127_DUNGEONVIEW_DrawSquareD0C(",
-        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "file": "DRAWVIEW.C",
       "function": "F0097_DUNGEONVIEW_DrawViewport",
       "kind": "redmcsb_source_lock",
       "lines": "709-722",
-      "missingMarkers": [
-        "void F0097_DUNGEONVIEW_DrawViewport(",
-        "G0324_B_DrawViewportRequested = C1_TRUE;",
-        "M526_WaitVerticalBlank();"
-      ],
-      "ok": false
+      "missingMarkers": [],
+      "ok": true
     },
     {
       "claim": "script token route feeds the active game view and redraw result calls M11_GameView_Draw",
@@ -131,12 +92,10 @@
       "ok": true,
       "orderedMarkers": [
         "m11_draw_viewport_background(state",
-        "m11_draw_dm1_floor_pits(state",
-        "m11_draw_dm1_side_walls(state",
-        "m11_draw_dm1_front_walls(state",
-        "m11_draw_dm1_center_doors(state",
         "visibility.nearest_blocking_center_depth_index",
-        "m11_draw_dm1_side_contents_at_depth(",
+        "m11_dm1_f0128_dispatch_wall_material_square(",
+        "m11_dm1_f0128_dispatch_door_material_square(",
+        "m11_dm1_f0128_dispatch_foreground_square(",
         "if (state->showDebugHUD)"
       ]
     },
@@ -146,14 +105,14 @@
         "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": false,
+      "ok": true,
       "result": {
         "cmd": [
           "/usr/bin/python3",
           "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"
         ],
-        "outputTail": "status=FAIL_PASS361_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE reason=missing ReDMCSB source /home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C\n",
-        "returncode": 1
+        "outputTail": "status=PASS_DM1_V1_VIEWPORT_OCCLUSION_REDRAW_ORDER_GATE\nsourceAnchors=5\npass359ChainOk=1\nnormalViewportRedrawOrderOk=1\n",
+        "returncode": 0
       }
     },
     {
@@ -162,14 +121,14 @@
         "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": false,
+      "ok": true,
       "result": {
         "cmd": [
           "/usr/bin/python3",
           "scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py"
         ],
-        "outputTail": "Traceback (most recent call last):\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py\", line 204, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py\", line 154, in main\n    text = slice_text(path, check[\"range\"])\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/scripts/verify_dm1_v1_viewport_wall_draw_order_source_lock.py\", line 140, in slice_text\n    lines = path.read_text(errors=\"replace\").splitlines()\n            ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/pathlib/__init__.py\", line 788, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:\n         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/pathlib/__init__.py\", line 772, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C'\n",
-        "returncode": 1
+        "outputTail": "PASS drawview-presents-after-dungeonview-buffer DRAWVIEW.C:709-900 F0097_DUNGEONVIEW_DrawViewport\n  Presentation is a final blit of G0296 after DUNVIEW has replayed walls/objects into the viewport buffer.\nPASS floor-ceiling-base-before-wall-replay DUNVIEW.C:2962-3003 F0098_DUNGEONVIEW_DrawFloorAndCeiling\n  The renderer starts from a clean floor/ceiling buffer before replaying visible wall zones and contents.\nPASS f0128-far-to-near-square-replay DUNVIEW.C:8318-8618 F0128_DUNGEONVIEW_Draw_CPSF\n  DUNVIEW replays cells from far D4 through D0 before presentation; PC34/I34E D3L2/R2 and D2L2/R2 lanes are explicitly kept in the audited order.\nPASS d3-side-wall-occludes-by-early-return DUNVIEW.C:6400-6835 F0116_DUNGEONVIEW_DrawSquareD3L / F0117_DUNGEONVIEW_DrawSquareD3R / F0118_DUNGEONVIEW_DrawSquareD3C_CPSF\n  A wall square draws its wall zone and normally returns before open-cell content; only alcove wall ornaments intentionally replay contained items.\nPASS f0115-ordered-cell-pass-not-depth-sort DUNVIEW.C:4547-4910 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF\n  Within each visible square, F0115 consumes encoded cell order nibbles and rescans the thing list per cell; primitive batching would lose this source order.\nPASS door-front-two-pass-near-side-replay DUNVIEW.C:6428-6816 F0116/F0117/F0118 door-front branches\n  Door-front squares draw rear-side contents, then the door/frame, then replay front-side contents; this is explicit near-side replay, not a flat depth batch.\n",
+        "returncode": 0
       }
     },
     {
@@ -184,7 +143,7 @@
           "/usr/bin/python3",
           "tools/verify_v1_viewport_occlusion_gate.py"
         ],
-        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:64764\n- pits gate before sampling: m11_game_view.c:41009\n- floor ornaments gate before sampling: m11_game_view.c:41069\n- stairs gate before sampling: m11_game_view.c:42333\n- teleporter fields gate before sampling: m11_game_view.c:42392\n- side walls gate before sampling: m11_game_view.c:42431\n- side doors gate before sampling: m11_game_view.c:42949\n- side door ornaments gate before sampling: m11_game_view.c:43026\n- side destroyed-door masks gate before sampling: m11_game_view.c:43097\n- viewport call-site wiring: m11_game_view.c:56613\n",
+        "outputTail": "V1 viewport occlusion gate source-shape verification passed\n- maxVisibleForward source: m11_game_view.c:67977\n- pits gate before sampling: m11_game_view.c:42061\n- floor ornaments gate before sampling: m11_game_view.c:42228\n- stairs gate before sampling: m11_game_view.c:43687\n- teleporter fields gate before sampling: m11_game_view.c:43753\n- side walls gate before sampling: m11_game_view.c:43858\n- side doors gate before sampling: m11_game_view.c:44732\n- side door ornaments gate before sampling: m11_game_view.c:44792\n- side destroyed-door masks gate before sampling: m11_game_view.c:44869\n- F0128 callback owns occluded material: m11_game_view.c:58873\n",
         "returncode": 0
       }
     },
@@ -194,58 +153,45 @@
         "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
       ],
       "kind": "prior_wall_occlusion_gate",
-      "ok": false,
+      "ok": true,
       "result": {
         "cmd": [
           "/usr/bin/python3",
           "tools/verify_v1_viewport_side_wall_occlusion_gate.py"
         ],
-        "outputTail": "Traceback (most recent call last):\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_v1_viewport_side_wall_occlusion_gate.py\", line 281, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_v1_viewport_side_wall_occlusion_gate.py\", line 94, in main\n    red = REDMCSB_DUNVIEW.read_text(encoding='utf-8')\n  File \"/usr/lib/python3.14/pathlib/__init__.py\", line 788, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:\n         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.14/pathlib/__init__.py\", line 772, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C'\n",
-        "returncode": 1
-      }
-    },
-    {
-      "kind": "cmake_configure",
-      "ok": true,
-      "result": {
-        "cmd": [
-          "cmake",
-          "-S",
-          "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
-          "-B",
-          "/home/yeager/.openclaw/data/firestaff-builds/pass373-verify",
-          "-G",
-          "Ninja"
-        ],
-        "outputTail": "-- The C compiler identification is GNU 15.2.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Found Python3: /usr/bin/python3 (found version \"3.14.4\") found components: Interpreter\n-- Performing Test HAS_WNO_FORMAT_TRUNCATION\n-- Performing Test HAS_WNO_FORMAT_TRUNCATION - Success\n-- Performing Test HAS_WNO_STRINGOP_TRUNCATION\n-- Performing Test HAS_WNO_STRINGOP_TRUNCATION - Success\n-- Performing Test HAS_WNO_UNUSED_BUT_SET_VARIABLE\n-- Performing Test HAS_WNO_UNUSED_BUT_SET_VARIABLE - Success\n-- Found PkgConfig: /usr/bin/pkg-config (found version \"2.5.1\")\n-- Found ALSA: /usr/lib/aarch64-linux-gnu/libasound.so (found version \"1.2.15.3\")\n-- Found X11: /usr/include\n-- Looking for XOpenDisplay in /usr/lib/aarch64-linux-gnu/libX11.so;/usr/lib/aarch64-linux-gnu/libXext.so\n-- Looking for XOpenDisplay in /usr/lib/aarch64-linux-gnu/libX11.so;/usr/lib/aarch64-linux-gnu/libXext.so - found\n-- Looking for gethostbyname\n-- Looking for gethostbyname - found\n-- Looking for connect\n-- Looking for connect - found\n-- Looking for remove\n-- Looking for remove - found\n-- Looking for shmat\n-- Looking for shmat - found\n-- Looking for IceConnectionNumber in ICE\n-- Looking for IceConnectionNumber in ICE - found\n-- Found SDL3\n-- Found zlib via bundled miniz - ZIP/gzip inflate paths enabled\n-- Configuring done (1.0s)\n-- Generating done (1.6s)\n-- Build files have been written to: /home/yeager/.openclaw/data/firestaff-builds/pass373-verify\n",
+        "outputTail": "V1 viewport side-wall occlusion source-shape verification passed\n- ReDMCSB F0128 far-to-near side order: DUNVIEW.C:8318\n- ReDMCSB D1L/D1R wall-return evidence: DUNVIEW.C:7391, 7559\n- Firestaff side-lane non-open occlusion helpers: m11_game_view.c:42370, dm1_v1_viewport_3d_pc34_compat.c:401\n- Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:46214\n- Firestaff side-wall C10-keyed far-to-near blits with visibility-aware receipts: dm1_v1_viewport_3d_pc34_compat.c:1233, m11_game_view.c:43858\n- Firestaff wall ornament/alcove item bounded same-lane guard: m11_game_view.c:43381\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_doors: m11_game_view.c:44732\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_door_ornaments: m11_game_view.c:44792\n- Firestaff side door/ornament/mask guard in m11_draw_dm1_side_destroyed_door_masks: m11_game_view.c:44869\n- Firestaff side material is owned by exact-square F0128 callbacks, without broad replay: m11_game_view.c:58873, 59569\n",
         "returncode": 0
       }
     },
     {
-      "kind": "cmake_build_firestaff",
+      "kind": "provided_build_firestaff",
       "ok": true,
-      "result": {
-        "cmd": [
-          "cmake",
-          "--build",
-          "/home/yeager/.openclaw/data/firestaff-builds/pass373-verify",
-          "--target",
-          "firestaff",
-          "--parallel",
-          "1"
-        ],
-        "outputTail": "nder_pc34_compat.c.o\n[2252/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_stairs_render_pc34_compat.c.o\n[2253/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_wall_ornament_pc34_compat.c.o\n[2254/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c.o\n[2255/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c.o\n[2256/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_game_loop_integration_pc34_compat.c.o\n[2257/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c.o\n[2258/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_save_load_system_pc34_compat.c.o\n[2259/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_blit_fill_pc34_compat.c.o\n[2260/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_scroll_pc34_compat.c.o\n[2261/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_dialog_layout_pc34_compat.c.o\n[2262/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[2263/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_inventory_consumables_pc34_compat.c.o\n[2264/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_endgame_layout_pc34_compat.c.o\n[2265/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_endgame_presentation_pc34_compat.c.o\n[2266/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c.o\n[2267/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0180_pc34_compat.c.o\n[2268/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0179_pc34_compat.c.o\n[2269/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0181_pc34_compat.c.o\n[2270/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0182_pc34_compat.c.o\n[2271/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0183_pc34_compat.c.o\n[2272/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0184_pc34_compat.c.o\n[2273/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0185_pc34_compat.c.o\n[2274/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0186_pc34_compat.c.o\n[2275/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_g0187_pc34_compat.c.o\n[2276/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[2277/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_click_routing_pc34_compat.c.o\n[2278/2302] Building C object CMakeFiles/firestaff_m11.dir/src/shared/firestaff_po_loader.c.o\n[2279/2302] Building C object CMakeFiles/firestaff_m11.dir/src/dm1/dm1_v1_engine_pc34_compat.c.o\n[2280/2302] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_touch.c.o\n[2281/2302] Building C object CMakeFiles/firestaff_m11.dir/src/engine/firestaff_input.c.o\n[2282/2302] Building C object CMakeFiles/firestaff_m11.dir/src/engine/runtime_gesture_navigation_gate_pc34_compat.c.o\n[2283/2302] Building C object CMakeFiles/firestaff_m11.dir/src/frontend/v1_swsh_intro_pathfinder_pc34_compat.c.o\n[2284/2302] Building C object CMakeFiles/firestaff_m11.dir/src/frontend/v1_title_intro_pathfinder_pc34_compat.c.o\n[2285/2302] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_game_input_mapping.c.o\n[2286/2302] Building C object CMakeFiles/firestaff_m11.dir/src/shared/session_timer_runtime.c.o\n[2287/2302] Building C object CMakeFiles/firestaff_m11.dir/src/engine/runtime_gesture_navigation_gate.c.o\n[2288/2302] Building C object CMakeFiles/firestaff_m11.dir/src/engine/m11_dm2_runtime_frame_receipt_gate.c.o\n[2289/2302] Building C object CMakeFiles/firestaff_m11.dir/src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c.o\n[2290/2302] Linking C static library libfirestaff_m12.a\n[2291/2302] Linking C static library libfirestaff_m11.a\n[2292/2302] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_main_m11.c.o\n[2293/2302] Building C object CMakeFiles/firestaff.dir/src/shared/firestaff_game_data_fingerprint.c.o\n[2294/2302] Building C object CMakeFiles/firestaff.dir/src/nexus/nexus_v1_light_runtime_noop.c.o\n[2295/2302] Building C object CMakeFiles/firestaff.dir/src/nexus/nexus_v1_rasterizer_runtime_noop.c.o\n[2296/2302] Building C object CMakeFiles/firestaff.dir/src/nexus/nexus_v1_saturn_font_runtime_noop.c.o\n[2297/2302] Building C object CMakeFiles/firestaff.dir/src/nexus/nexus_v2_hud_runtime_noop.c.o\n[2298/2302] Building C object CMakeFiles/firestaff.dir/src/nexus/nexus_v2_lighting_runtime_noop.c.o\n[2299/2302] Building C object CMakeFiles/firestaff.dir/src/theron/theron_v1_combat_runtime_source.c.o\n[2300/2302] Building C object CMakeFiles/firestaff.dir/src/theron/theron_v2_texture_upscale_pc34.c.o\n[2301/2302] Linking C executable firestaff\n",
-        "returncode": 0
-      }
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff"
+    },
+    {
+      "kind": "authentic_pc34_zip_in_memory",
+      "members": {
+        "DATA/DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+        "DATA/GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+        "TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+      },
+      "ok": true,
+      "readMode": "in-memory/no-extraction"
     },
     {
       "kind": "launcher_route_runtime_probe",
-      "ok": false,
+      "ok": true,
       "result": {
         "cmd": [
           "timeout",
-          "180s",
-          "/home/yeager/.openclaw/data/firestaff-builds/pass373-verify/firestaff",
+          "30s",
+          "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff",
+          "--game",
+          "dm1",
+          "--platform",
+          "pc",
+          "--presentation-mode",
+          "v1",
           "--duration",
           "9000",
           "--width",
@@ -253,60 +199,60 @@
           "--height",
           "1080",
           "--data-dir",
-          "/home/yeager/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+          "/home/yeager/.firestaff/data/dm1",
           "--script",
-          "enter,down,down,down,down,down,down,down,enter,right"
+          "right"
         ],
-        "outputTail": "firestaff: launch smoke failed: no launch reached before exit\nfirestaff: phase-a run failed (rc=3)\n",
-        "returncode": 1
+        "outputTail": "DM1 READY: gameId=dm1 dataDir=/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT handoff=pc-img3 graphicsPath=/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT\n",
+        "returncode": 0
       },
-      "script": "enter,down,down,down,down,down,down,down,enter,right"
+      "script": "right"
     },
     {
       "expected": "launcher route reaches active DM1 V1 state; turn-right command applies one facing update and sets viewportDirty=1",
       "kind": "live_runtime_redraw_state",
       "observed": {
-        "active": 0,
-        "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "GAME VIEW NOT STARTED",
-        "launchedEver": 0,
+        "active": 1,
+        "gameTick": 6,
+        "lastAction": "WAIT",
+        "lastOutcome": "IDLE TICK ADVANCED",
+        "launchedEver": 1,
         "party": {
           "championCount": 0,
-          "direction": 0,
+          "direction": 3,
           "mapIndex": 0,
-          "mapX": 0,
-          "mapY": 0
+          "mapX": 1,
+          "mapY": 3
         },
         "pipeline": {
           "anyMovementOccurred": 0,
-          "anyTurnOccurred": 0,
-          "command": 0,
-          "dequeued": 0,
+          "anyTurnOccurred": 1,
+          "command": 2,
+          "dequeued": 1,
           "movementBlocked": 0,
           "stepApplied": 0,
-          "turnApplied": 0,
-          "viewportDirty": 0
+          "turnApplied": 1,
+          "viewportDirty": 1
         },
         "presentation": {
-          "height": 0,
+          "height": 200,
           "mode": 0,
-          "width": 0
+          "width": 320
         },
         "redraw": {
-          "inputRedrawAfterViewportDirtyCount": 0,
-          "inputRedrawDrawCount": 0,
-          "lastInputRedrawAfterViewportDirty": 0
+          "inputRedrawAfterViewportDirtyCount": 1,
+          "inputRedrawDrawCount": 1,
+          "lastInputRedrawAfterViewportDirty": 1
         },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
-        "sourceId": "",
-        "title": ""
+        "sourceId": "dm1",
+        "title": "DUNGEON MASTER"
       },
-      "ok": false
+      "ok": true
     }
   ],
-  "dm1Data": "/home/yeager/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "46f66013cdc5c7ff9ceb928261bb290b1f1e8413",
+  "dm1Data": "/home/yeager/.firestaff/data/dm1",
+  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -358,12 +304,10 @@
       "file": "src/engine/m11_game_view.c",
       "markers": [
         "static void m11_draw_viewport(",
-        "m11_draw_dm1_side_walls(state",
-        "m11_draw_dm1_front_walls(state",
-        "m11_draw_dm1_center_doors(state",
+        "m11_dm1_f0128_dispatch_wall_material_square(",
+        "m11_dm1_f0128_dispatch_door_material_square(",
+        "m11_dm1_f0128_dispatch_foreground_square(",
         "visibility.nearest_blocking_center_depth_index",
-        "m11_draw_dm1_side_destroyed_door_masks(state",
-        "m11_draw_dm1_side_contents_at_depth(",
         "if (state->showDebugHUD)"
       ],
       "missingMarkers": [],
@@ -374,7 +318,7 @@
   "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.v1",
   "scope": "route-token launcher input -> M11_GameView_HandleInput -> DM1 V1 movement pipeline viewportDirty -> M11_GameView_Draw -> source-locked wall/occlusion renderer path",
-  "script": "enter,down,down,down,down,down,down,down,enter,right",
+  "script": "right",
   "sourceLocks": [
     {
       "claim": "viewport floor/ceiling base is drawn into G0296/G0087 before wall passes",
@@ -387,14 +331,9 @@
         "F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);",
         "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"
       ],
-      "missingMarkers": [
-        "void F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
-        "F0674_F0128_sub(G2109_Ceiling, G0296_puc_Bitmap_Viewport);",
-        "F0674_F0128_sub(G2108_Floor, G0087_puc_Bitmap_ViewportFloorArea);",
-        "G0297_B_DrawFloorAndCeilingRequested = C0_FALSE;"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "wall, opaque wall, and door bitmaps target the viewport bitmap",
@@ -407,14 +346,9 @@
         "void F0102_DUNGEONVIEW_DrawDoorBitmap(",
         "G0296_puc_Bitmap_Viewport"
       ],
-      "missingMarkers": [
-        "void F0100_DUNGEONVIEW_DrawWallSetBitmap(",
-        "void F0101_DUNGEONVIEW_DrawWallSetBitmapWithoutTransparency(",
-        "void F0102_DUNGEONVIEW_DrawDoorBitmap(",
-        "G0296_puc_Bitmap_Viewport"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "ordered cell contents use source cell-order nibbles and normalized view cells",
@@ -427,14 +361,9 @@
         "L0139_i_Cell = M021_NORMALIZE(AL0126_i_ViewCell + P0142_i_Direction);",
         "P0141_T_Thing = L0146_T_FirstThingToDraw;"
       ],
-      "missingMarkers": [
-        "STATICFUNCTION void F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(",
-        "P0146_ui_OrderedViewCellOrdinals >>= 4;",
-        "L0139_i_Cell = M021_NORMALIZE(AL0126_i_ViewCell + P0142_i_Direction);",
-        "P0141_T_Thing = L0146_T_FirstThingToDraw;"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "D3 wall/doorpass branches draw wall panels and return to enforce occlusion",
@@ -448,15 +377,9 @@
         "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
         "return;"
       ],
-      "missingMarkers": [
-        "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0698_puc_Bitmap_WallSet_Wall_D3LCR",
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
-        "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
-        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
-        "return;"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "center wall/door branches draw opaque/door layers before ordered contents",
@@ -470,15 +393,9 @@
         "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
         "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
       ],
-      "missingMarkers": [
-        "STATICFUNCTION void F0121_DUNGEONVIEW_DrawSquareD2C(",
-        "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C(",
-        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G3013_i_WallSet_Wall_D1C",
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
-        "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "main viewport pass samples view squares, draws far-to-near D3/D2/D1/D0, then requests viewport blit",
@@ -494,17 +411,9 @@
         "F0127_DUNGEONVIEW_DrawSquareD0C(",
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
       ],
-      "missingMarkers": [
-        "void F0128_DUNGEONVIEW_Draw_CPSF(",
-        "F0098_DUNGEONVIEW_DrawFloorAndCeiling(",
-        "F0116_DUNGEONVIEW_DrawSquareD3L(",
-        "F0121_DUNGEONVIEW_DrawSquareD2C(",
-        "F0124_DUNGEONVIEW_DrawSquareD1C(",
-        "F0127_DUNGEONVIEW_DrawSquareD0C(",
-        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "source draw pass flips the viewport redraw request and waits for vblank",
@@ -516,16 +425,12 @@
         "G0324_B_DrawViewportRequested = C1_TRUE;",
         "M526_WaitVerticalBlank();"
       ],
-      "missingMarkers": [
-        "void F0097_DUNGEONVIEW_DrawViewport(",
-        "G0324_B_DrawViewportRequested = C1_TRUE;",
-        "M526_WaitVerticalBlank();"
-      ],
-      "ok": false,
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "missingMarkers": [],
+      "ok": true,
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
-  "timestampUtc": "2026-08-30T06:51:01.957631+00:00"
+  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "status": "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED",
+  "timestampUtc": "2026-09-04T18:19:54.203132+00:00"
 }

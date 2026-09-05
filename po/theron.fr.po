@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-20 06:50+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-06-20+00:00\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: French\n"
@@ -13,155 +13,155 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-#. Direction / compass
 
+#. Direction / compass
 msgid "NORTH"
 msgstr "NORD"
-#. Direction / compass
 
+#. Direction / compass
 msgid "EAST"
 msgstr "EST"
-#. Direction / compass
 
+#. Direction / compass
 msgid "SOUTH"
 msgstr "SUD"
-#. Direction / compass
 
+#. Direction / compass
 msgid "WEST"
 msgstr "OUEST"
-#. Stairs
 
+#. Stairs
 msgid "STAIRS"
 msgstr "ESCALIER"
-#. Pit
 
+#. Pit
 msgid "PIT"
 msgstr "GOUFFRE"
-#. Teleporter
 
+#. Teleporter
 msgid "TELEPORTER"
 msgstr "TÉLÉPORTEUR"
-#. Door
 
+#. Door
 msgid "DOOR"
 msgstr "PORTE"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "PICK UP"
 msgstr "RAMASSER"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "DROP"
 msgstr "LÂCHER"
-#. Inventory / item action
 
+#. Inventory / item action
 msgid "USE"
 msgstr "UTILISER"
-#. Combat action
 
+#. Combat action
 msgid "ATTACK"
 msgstr "ATTAQUER"
-#. Combat action
 
+#. Combat action
 msgid "DEFEND"
 msgstr "DÉFENDRE"
-#. Combat action
 
+#. Combat action
 msgid "CAST SPELL"
 msgstr "LANCER SORT"
-#. Status label
 
+#. Status label
 msgid "NO FOCUS"
 msgstr "AUCUNE CIBLE"
-#. Status label
 
+#. Status label
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
 msgstr "APPUYEZ SUR ENTRÉE SUR UNE VRAIE CIBLE AVANT"
-#. Generic
 
+#. Generic
 msgid "UNKNOWN"
 msgstr "INCONNU"
-#. Generic
 
+#. Generic
 msgid "NONE"
 msgstr "AUCUN"
-#. Save / load
 
+#. Save / load
 msgid "SAVE GAME"
 msgstr "SAUVEGARDER"
-#. Save / load
 
+#. Save / load
 msgid "LOAD GAME"
 msgstr "CHARGER"
-#. Shop
 
+#. Shop
 msgid "SHOP"
 msgstr "BOUTIQUE"
-#. Shop
 
+#. Shop
 msgid "NOT ENOUGH GOLD"
 msgstr "PAS ASSEZ D'OR"
-#. Shop
 
+#. Shop
 msgid "PURCHASED %s FOR %d GOLD"
 msgstr "ACHETÉ %s POUR %d OR"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: ASCENDED TO LEVEL %d"
 msgstr "T%u: MONTÉ AU NIVEAU %d"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: DESCENDED TO LEVEL %d"
 msgstr "T%u: DESCENDU AU NIVEAU %d"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: FELL INTO PIT"
 msgstr "T%u: TOMBÉ DANS LE GOUFFRE"
-#. Dungeon progression
 
+#. Dungeon progression
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
 msgstr "T%u: TÉLÉPORTÉ À LA CARTE %d (%d,%d)"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER HAS NO THING DATA"
 msgstr "T%u: LE TÉLÉPORTEUR N'A PAS DE DONNÉES"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
 msgstr "T%u: CARTE CIBLE DU TÉLÉPORTEUR %d HORS PORTÉE"
-#. Teleporter chain
 
+#. Teleporter chain
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
 msgstr "T%u: %s MONTE DE NIVEAU! (%s %d -> %d)"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s CASTS %s"
 msgstr "T%u: %s LANCE %s"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s HITS %s FOR %d"
 msgstr "T%u: %s FRAPPE %s POUR %d"
-#. Combat log
 
+#. Combat log
 msgid "T%u: %s MISSES %s"
 msgstr "T%u: %s RATE %s"
-#. Altar
 
+#. Altar
 msgid "OFFERING ACCEPTED"
 msgstr "OFFRANDE ACCEPTÉE"
-#. Inventory capacity
 
+#. Inventory capacity
 msgid "INVENTORY FULL"
 msgstr "INVENTAIRE PLEIN"
-#. Sound / feedback
 
+#. Sound / feedback
 msgid "OUT OF RANGE"
 msgstr "HORS PORTÉE"
-#. Generic message
 
+#. Generic message
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
 msgstr "APPUYEZ SUR ENTRÉE OU CLIQUEZ SUR LA VUE"
-#. Status footer
 
+#. Status footer
 msgid "HP AND STAMINA RECOVER SLOWLY"
 msgstr "PV ET ENDURANCE RÉCUPÈRENT LENTEMENT"

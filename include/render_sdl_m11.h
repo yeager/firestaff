@@ -112,8 +112,17 @@ int  M11_Render_GetPaletteLevel(void);
  * DM2's GDAT title/menu images use full byte indices, unlike the packed
  * 4-bit/brightness encoding used by the DM1 renderer. */
 int  M11_Render_SetIndexedPaletteRgb6(const uint8_t rgb6[256][3]);
+/* Install source-owned full-byte RGB channels without VGA-DAC
+ * quantisation.  GDAT dtPalIRGB rows are alpha,R,G,B byte tuples; only the
+ * DOS driver converts those bytes to six-bit DAC values. */
+int  M11_Render_SetIndexedPaletteRgb8(const uint8_t rgb8[256][3]);
+/* Install an Amiga-style 4-bit-per-channel palette without routing it
+ * through the VGA DAC quantizer.  RGB4 registers expand exactly as
+ * (nibble << 4) | nibble, matching the original 12-bit display hardware. */
+int  M11_Render_SetIndexedPaletteRgb4(const uint8_t rgb4[256][3]);
 void M11_Render_ClearIndexedPaletteRgb6(void);
 int  M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]);
+int  M11_Render_CopyIndexedPaletteRgb8(uint8_t out_rgb8[256][3]);
 
 /* Clear the framebuffer to a single 4-bit palette index value.
    Returns the number of bytes written, or -1 if not initialised. */
@@ -291,6 +300,10 @@ int  M11_Render_GetIntegerScaling(void);
 int  M11_Render_SetScaleFilter(int filterIndex);
 int  M11_Render_GetScaleFilter(void);
 void M11_Render_SetV2PresentationActive(int active);
+/* Modern target presentation is independent of V2.0 post-processing.
+ * It keeps V2.1/V2.2 target resolution from being CPU-expanded to a HiDPI
+ * drawable while leaving source palette correction owned by V2.0 only. */
+void M11_Render_SetModernPresentationActive(int active);
 int  M11_Render_SetVSync(int vsyncIndex);
 int  M11_Render_GetVSync(void);
 /* Host-wide presentation brightness.  It affects launcher and every game

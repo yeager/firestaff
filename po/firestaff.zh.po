@@ -1,93 +1,135 @@
 # Firestaff UI — zh
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: zh\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "无障碍"
 
+#. AUDIO
 msgid "Audio"
 msgstr "音频"
 
+#. BACK
 msgid "Back"
 msgstr "返回"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "怪物图鉴"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "更新日志"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "即将推出"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "继续存档"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "控制"
 
+#. DISPLAY
 msgid "Display"
 msgstr "显示"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "附加"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "物品百科"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "语言"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "地图查看器"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "传说博物馆"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "新游戏 (V1 原始)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "新游戏 (V2.1 升频)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "新游戏 (V2.2 增强)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "无数据文件"
 
+#. OFF
 msgid "Off"
 msgstr "关"
 
+#. ON
 msgid "On"
 msgstr "开"
 
+#. PLAY
 msgid "PLAY"
 msgstr "开始"
 
+#. QUIT
 msgid "QUIT"
 msgstr "退出"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "截图画廊"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "选择游戏"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "设置"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "咒语参考"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "验证游戏数据"
 
+#. VERSION
 msgid "Version"
 msgstr "版本"
 
+#. VIDEO
 msgid "Video"
 msgstr "视频"
 
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""

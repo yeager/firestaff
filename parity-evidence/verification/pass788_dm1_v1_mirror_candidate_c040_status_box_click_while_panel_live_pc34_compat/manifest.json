@@ -19,7 +19,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "COMMAND.C:2159",
       "line": 2159,
       "lineText": "                if (((AL1159_i_ChampionIndex = L1160_i_Command - C012_COMMAND_CLICK_IN_CHAMPION_0_STATUS_BOX) < G0305_ui_PartyChampionCount) && !G0299_ui_CandidateChampionOrdinal) {",
@@ -27,7 +27,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "COMMAND.C:2160",
       "line": 2160,
       "lineText": "                        F0367_COMMAND_ProcessTypes12To27_ClickInChampionStatusBox(AL1159_i_ChampionIndex, L1161_i_CommandX, L1162_i_CommandY);",
@@ -35,7 +35,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:124",
       "line": 124,
       "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
@@ -43,7 +43,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:744",
       "line": 744,
       "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
@@ -51,7 +51,7 @@
       "status": "DRIFT"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass788_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.v1",
   "scope": "DM1 V1 mirror-candidate C040: while the candidate panel is live (G0299 set), COMMAND.C F0380:2159-2161 drops the C012..C015 champion-status-box click. After F0282(C162) clears G0299 the click fires F0367. Disjoint from pass787 (C111), pass786 (C100 with G0514), pass785 (C007..C011), and pass784 (cancel-then-reopen same-tick).",
   "sourceChecks": [
@@ -87,11 +87,11 @@
     }
   ],
   "status": "PASS788_DM1_V1_MIRROR_CANDIDATE_C040_STATUS_BOX_CLICK_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-08-12T01:34:10.616919+00:00",
+  "timestampUtc": "2026-09-04T18:00:59.932811+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live: 46/46 assertions passed",
       "passed": true,

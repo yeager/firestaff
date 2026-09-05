@@ -245,6 +245,19 @@ static int v1_swsh_intro_find_logo_path_for_suffixes(
         effectiveDataDir = ".";
     }
 
+    /* A selected original archive is itself a media root.  It cannot be
+     * addressed as ``archive.zip/SWOOSH``: SWOOSH is an archive member and
+     * must retain the virtual ``archive.zip::SWOOSH`` locator.  The old
+     * suffix-only path therefore skipped the authentic PC 3.4 FTL prelude
+     * for normal direct-ZIP launches (unless FIRESTAFF_SWOOSH_DEEP_SCAN or an
+     * environment override happened to be set).  The bounded MD5 inventory
+     * scans just this selected container and returns the member locator, so
+     * it neither extracts media nor walks the shared game-data tree during
+     * startup. */
+    if (v1_swsh_intro_find_known_hash(effectiveDataDir, outPath, outPathBytes)) {
+        return 1;
+    }
+
     /* 2. Start from the selected game's catalog path.  Do not recursively
      * hash the full shared data root during launch: it can include large ISO,
      * BIN and archive payloads for every game and stalls the title handoff.

@@ -1,132 +1,915 @@
-# Firestaff — csb domain, Hungarian catalog.
-# Hungarian translation of Chaos Strikes Back runtime strings.
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
 #
-# Domain: csb
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
 #
-# Based on po/dm1.hu.po + CSB-specific keys from csb.pot.
-# Translated 2026-07-19, consistent with the reviewed sv/de/fr
-# catalogs (proper nouns and brand strings keep source spelling).
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-07-19 12:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
-"Language-Team: Hungarian\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-04-22 05:45+0200\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "CSB-motor verziója"
+#. Source-owned C699 action name
+msgid "N"
+msgstr ""
 
-# Reincarnation panel
-msgid "csb.reincarnate.title"
-msgstr "ÚJJÁSZÜLETÉS"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr ""
 
-msgid "csb.reincarnate.chaos"
-msgstr "Káoszcsata."
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr ""
 
-msgid "csb.reincarnate.choose"
-msgstr "Válassz új harcosokat az újjászületéshez."
+#. Source-owned C699 action name
+msgid "X"
+msgstr ""
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "Dobj a statisztikákért"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr ""
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "FELTÁMADÁS"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr ""
 
-msgid "csb.resurrect.altar"
-msgstr "Áldozz vért az oltáron a harcosok felébresztéséhez."
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr ""
 
-msgid "csb.resurrect.choose"
-msgstr "Válaszd ki a felébresztendő harcosokat."
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr ""
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "A káoszmágia lehűl"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr ""
 
-msgid "csb.chaos.energy"
-msgstr "Káoszenergia"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr ""
 
-msgid "csb.chaos.recharge"
-msgstr "Töltődik"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr ""
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "A Szürke Úr suttog: Válassz."
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr ""
 
-msgid "csb.greylord.choose"
-msgstr "Hozd meg a döntésed."
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr ""
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "JÓSDA"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr ""
 
-msgid "csb.oracle.prompt"
-msgstr "Kérdezz, és a jósda válaszol."
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr ""
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "Max. 4 harcos"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr ""
 
-msgid "csb.party.slot"
-msgstr "Csapathely"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr ""
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "CSB-mentés importálása"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr ""
 
-msgid "csb.save.csb-st-v20"
-msgstr "CSB Atari ST 2.0-mentés"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr ""
 
-msgid "csb.save.csb-st-v21"
-msgstr "CSB Atari ST 2.1-mentés"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr ""
 
-msgid "csb.save.amiga-v35"
-msgstr "CSB Amiga 3.5-mentés"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr ""
 
-msgid "csb.save.pc34"
-msgstr "CSB PC 3.4-mentés"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr ""
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "KEZDŐ MÓD"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr ""
 
-msgid "csb.neophyte.desc"
-msgstr "Csökkenti a csapdák sebzését, könnyebb kezdés."
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr ""
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "DM1-motor v2.0"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr ""
 
-msgid "csb.engine.csb"
-msgstr "CSB-motor v2.1"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr ""
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr ""
 
-msgid "csb.launcher.subtitle"
-msgstr "A Dungeon Master II folytatása"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr ""
 
-msgid "csb.launcher.lore-shape"
-msgstr "Káosz Ura tornyosul..."
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr ""
 
-msgid "csb.launcher.lore-line-1"
-msgstr "Káosz Ura ellopta a Lángot."
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr ""
 
-msgid "csb.launcher.lore-line-2"
-msgstr "A Tűzkő elveszett."
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr ""
 
-msgid "csb.launcher.lore-line-3"
-msgstr "A Szürke Úr hív, hogy visszaszerezzétek."
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr ""
 
-msgid "csb.launcher.lore-line-4"
-msgstr "Lépj be a káoszba."
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr ""
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "IRÁNYTŰ"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "FÁKLYA"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "VÍZES TÖMLŐ"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "ÉKSZER-SYMBOL"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "VILÁGÍTÓ"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "FLAMITT"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "IDŐ SZEME"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "VIHARGYŰRŰ"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "KAROMBOT"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "A TŰZBOT"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "TEKERCS"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "TŐR"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALCHION"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "KARD"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "RAPIÉR"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "SZAMURÁJKARD"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "GYÉMÁNT ÉL"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "VORPAL PENGE"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "FEJSZE"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "BUZOGÁNY"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "REND BUZOGÁNYA"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "BUBAKALÁCS"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "KŐBUBAKALÁCS"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "SZÁMSZERÍJ"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "NYÍL"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "GYILKOS"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "PARittyA"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "KŐ"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "MÉREGNYÍL"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "DOBÓCSILLAG"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "BOT"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "BOT"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "VARÁZSPÁLC A"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "TEO PÁLC A"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "TISZAFABOT"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "SÁRKÁNYNYÁL"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "LYF JOGARA"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "BŐR MELLÉNY"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "KÖPENY"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "ÉJSZAKA KÖPENYE"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "BŐRNADRÁG"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "KÉK NADRÁG"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "GHI NADRÁG"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "LÁBSZÁR LÁNCVÉRT"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "MITHRIL LÁNCVÉRT"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "BERSERKER SISAK"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "SISAK"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BASCINET"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "NERRA KORONÁJA"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "KIS PAJZS"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "FA PAJZS"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SZANDÁL"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "VELÚR CSIZMA"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "BŐRCSIZMA"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "LÁBLEMEZ"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "TÜNDE CSIZMA"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "KORSZAKOK DRÁGAKÖVE"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "EKKHARD KERESZTJE"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "HOLDKŐ"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "HELLION"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "FERAL FÜGGŐ"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR ÉRME"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "SZIKLATÖMB"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "KÉK DRÁGAKŐ"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "NARANCS DRÁGAKŐ"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "ZÖLD DRÁGAKŐ"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "VARÁZSDOBOZ"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "HAJNALI TÜKÖR"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "FÉLELEM KÜRTJE"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "KÖTÉL"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "FOJTÓ"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEX SISAK"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "LÁDA"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "LÁDA NYITÁSA"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "HAMU"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "CSONT"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI-BÁJITAL"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "VÍZPALAC K"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "ALMA"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "KUKORICA"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "KENYÉR"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "SAJT"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "Sikoltó SZelet"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "FÉRGE KEREK"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "SÁRKÁNY STEAK"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "VAS KULCS"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "B KULCS"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "TÖMÖR KULCS"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "NÉGYZET KULCS"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "TÜRKIZ KULCS"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "KERESZT KULCS"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "ONIX KULCS"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "CSONT KULCS"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "ARANY KULCS"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "SZÁRNYAS KULCS"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "TOPÁZ KULCS"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "ZAFÍR KULCS"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "SMARAGD KULCS"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "RUBIN KULCS"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA KULCS"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "FŐKULCS"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "ZÁRTÜRÉS"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "NAGYÍTÓ"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "ÜRES PALAC K"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr ""
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "ZOKATHRA Varázslat"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""

@@ -27,14 +27,15 @@ STATUS = "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-CANON_DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-STAGE = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+REDMCSB_ARCHIVE = Path.home() / ".firestaff/devtools/references/ReDMCSB_WIP20210206.7z"
+REDMCSB_SOURCE_PREFIX = "Toolchains/Common/Source"
+DM1_DOS_ARCHIVE = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
 
 LOCKED_DATA = [
     {
         "label": "dm1_pc34_english_graphics",
-        "path": CANON_DM1 / "GRAPHICS.DAT",
+        "archive": DM1_DOS_ARCHIVE,
+        "member": "DATA/GRAPHICS.DAT",
         "filename": "GRAPHICS.DAT",
         "variant": "DM PC 3.4 English / I34E",
         "bytes": 363417,
@@ -43,7 +44,8 @@ LOCKED_DATA = [
     },
     {
         "label": "dm1_pc34_english_dungeon",
-        "path": CANON_DM1 / "DUNGEON.DAT",
+        "archive": DM1_DOS_ARCHIVE,
+        "member": "DATA/DUNGEON.DAT",
         "filename": "DUNGEON.DAT",
         "variant": "DM PC 3.4 English / I34E",
         "bytes": 33357,
@@ -135,14 +137,41 @@ def audit_data() -> tuple[list[dict[str, Any]], list[str]]:
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for item in LOCKED_DATA:
-        path = item["path"]
         row = {k: (str(v) if isinstance(v, Path) else v) for k, v in item.items()}
-        row["resolvedPath"] = str(path.resolve()) if path.exists() else None
-        if not path.is_file():
+        archive = item["archive"]
+        member = item["member"]
+        row["resolvedPath"] = f"{archive.resolve()}::{member}" if archive.exists() else None
+        if not archive.is_file():
             row.update({"exists": False, "ok": False})
-            errors.append(f"missing {item['label']} at {path}")
+            errors.append(f"missing {item['label']} archive at {archive}")
         else:
-            actual = {"sha256": sha(path), "md5": sha(path, "md5"), "bytes": path.stat().st_size}
+            result = subprocess.run(
+                ["unzip", "-p", str(archive), member],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            # The supplied preservation ZIP records DOS backslashes in local
+            # headers and slashes in central-directory names. Info-ZIP emits
+            # a warning/non-zero status while still returning the exact
+            # central-directory member bytes; those bytes are authenticated
+            # below, so reject only an empty stream.
+            if not result.stdout:
+                row.update({
+                    "exists": False,
+                    "ok": False,
+                    "readError": result.stderr.decode("utf-8", errors="replace").strip(),
+                })
+                errors.append(
+                    f"unable to read {item['label']} from {archive}::{member}: "
+                    f"{result.stderr.decode('utf-8', errors='replace').strip()}"
+                )
+                rows.append(row)
+                continue
+            payload = result.stdout
+            actual = {
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "md5": hashlib.md5(payload).hexdigest(),
+                "bytes": len(payload),
+            }
             ok = actual["sha256"] == item["sha256"] and actual["md5"] == item["md5"] and actual["bytes"] == item["bytes"]
             row.update({"exists": True, "ok": ok, "actual": actual})
             if not ok:
@@ -155,13 +184,28 @@ def audit_sources() -> tuple[list[dict[str, Any]], list[str]]:
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for file, lines, needles, claim in SOURCE_LOCKS:
-        path = REDMCSB / file
-        text = line_block(path, lines) if path.exists() else ""
+        member = f"{REDMCSB_SOURCE_PREFIX}/{file}"
+        result = subprocess.run(
+            ["7z", "x", "-so", str(REDMCSB_ARCHIVE), member],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        ) if REDMCSB_ARCHIVE.is_file() else None
+        source_text = (result.stdout.decode("latin-1", errors="replace")
+                       if result and result.returncode == 0 else "")
+        text = ""
+        if source_text:
+            source_lines = source_text.splitlines()
+            blocks: list[str] = []
+            for part in lines.split(","):
+                start, _, end = part.partition("-")
+                first = int(start)
+                last = int(end) if end else first
+                blocks.append("\n".join(source_lines[first - 1:last]))
+            text = "\n".join(blocks)
         missing = [n for n in needles if norm(n) not in norm(text)]
-        ok = path.exists() and not missing
+        ok = bool(source_text) and not missing
         rows.append({
             "file": file,
-            "path": str(path),
+            "path": f"{REDMCSB_ARCHIVE}::{member}",
             "lines": lines,
             "claim": claim,
             "needles": needles,
@@ -170,7 +214,7 @@ def audit_sources() -> tuple[list[dict[str, Any]], list[str]]:
             "lineBlockSha256": hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest() if text else None,
         })
         if not ok:
-            errors.append(f"source lock failed {file}:{lines}: {missing or 'missing file'}")
+            errors.append(f"source lock failed {file}:{lines}: {missing or 'missing archive member'}")
     return rows, errors
 
 
@@ -328,8 +372,8 @@ def audit_environment() -> dict[str, Any]:
         missing_tools.append("dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox")
     if needs_xvfb and not xvfb:
         missing_tools.append("xvfb-run for headless Linux capture")
-    if not STAGE.is_dir():
-        missing_tools.append(f"staged original PC34 directory {STAGE}")
+    if not DM1_DOS_ARCHIVE.is_file():
+        missing_tools.append(f"original PC34 archive {DM1_DOS_ARCHIVE}")
     if not capture_tool.is_file():
         missing_tools.append(f"capture tool {capture_tool.relative_to(ROOT)}")
 
@@ -357,8 +401,8 @@ def audit_environment() -> dict[str, Any]:
         "dosboxX": cmd_available("dosbox-x"),
         "xvfbRun": xvfb,
         "needsXvfb": needs_xvfb,
-        "stageDir": str(STAGE),
-        "stageExists": STAGE.is_dir(),
+        "sourceArchive": str(DM1_DOS_ARCHIVE),
+        "sourceArchiveExists": DM1_DOS_ARCHIVE.is_file(),
         "captureTool": "tools/pass173_source_portrait_route_gate_probe.py",
         "captureToolExists": capture_tool.is_file(),
         "externalArtifactRoot": str(external_root),
@@ -422,7 +466,7 @@ def write_report(manifest: dict[str, Any]) -> None:
         f"- dosbox-x: `{env['dosboxX']}`",
         f"- selected DOSBox: `{(env['selectedDosbox'] or {}).get('path')}`",
         f"- xvfb-run: `{env['xvfbRun']}` needsXvfb=`{env['needsXvfb']}` display=`{env['display']}`",
-        f"- stage exists: `{env['stageExists']}` `{env['stageDir']}`",
+        f"- source archive exists: `{env['sourceArchiveExists']}` `{env['sourceArchive']}`",
         f"- external artifact root: `{env['externalArtifactRoot']}` parentExists=`{env['externalParentExists']}`",
         f"- configured run base: `{env['configuredRunBase']}`",
         f"- missing tools/data: `{env['missingTools']}`",
@@ -469,7 +513,7 @@ def main() -> int:
         "repo": str(ROOT),
         "branch": run_git(["branch", "--show-current"]),
         "head": run_git(["rev-parse", "HEAD"]),
-        "redmcsbRoot": str(REDMCSB),
+        "redmcsbArchive": str(REDMCSB_ARCHIVE),
         "dataHashLock": data_rows,
         "sourceLocks": source_rows,
         "pass173Summaries": pass173_summaries,
@@ -504,7 +548,7 @@ def main() -> int:
         for e in errors:
             print(f"- {e}")
         return 1
-    print(f"PASS {PASS}: {STATUS}")
+    print(f"PASS {PASS}: {manifest['status']}")
     print(f"wrote {MANIFEST}")
     print(f"wrote {REPORT}")
     return 0

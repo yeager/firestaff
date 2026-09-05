@@ -15,14 +15,33 @@ static table assertions.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
-from typing import Any
+from typing import Any, Optional
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS127 = ROOT / "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json"
 LOCAL = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
-REDMCSB_DUNVIEW = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C")
+def redmcsb_source_root() -> Optional[Path]:
+    """Resolve an optional, external ReDMCSB checkout without pinning a user path."""
+    candidates = []
+    configured = os.environ.get("FIRESTAFF_REDMCSB_SOURCE_ROOT")
+    if configured:
+        candidates.append(Path(configured))
+    candidates.extend((
+        ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+        Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+    ))
+    for candidate in candidates:
+        if (candidate / "DUNVIEW.C").is_file():
+            return candidate
+    return None
+
+
+REDMCSB_SOURCE_ROOT = redmcsb_source_root()
+REDMCSB_DUNVIEW = (REDMCSB_SOURCE_ROOT / "DUNVIEW.C"
+                   if REDMCSB_SOURCE_ROOT is not None else None)
 OUT = ROOT / "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json"
 REPORT = ROOT / "parity-evidence/dm1_v1_viewport_wall_render_plan_gate.md"
 
@@ -175,6 +194,8 @@ def pixel_region_descriptor(row_name: str, spec: dict[str, Any], selected_wall: 
 
 
 def require_d4_source_has_no_wall_draws() -> dict[str, Any]:
+    if REDMCSB_DUNVIEW is None:
+        raise RuntimeError("ReDMCSB source root was not resolved")
     text = REDMCSB_DUNVIEW.read_text(encoding="utf-8", errors="replace")
     lines = text.splitlines()
     d4_window = "\n".join(lines[8465:8477])
@@ -280,6 +301,10 @@ def compare_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 def main() -> int:
+    if REDMCSB_DUNVIEW is None:
+        print("SKIP: ReDMCSB source is unavailable; set "
+              "FIRESTAFF_REDMCSB_SOURCE_ROOT to verify source lines")
+        return 77
     require_local_table_matches()
     d4_source_audit = require_d4_source_has_no_wall_draws()
     doc = json.loads(PASS127.read_text(encoding="utf-8"))

@@ -484,6 +484,15 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
     struct DungeonDatState_Compat* state,
     struct DungeonThings_Compat* things);
 
+/* Exact retail FM Towns Japanese F20J JDATA/DUNGEON.DAT reader.  That
+ * 33,931-byte source ends after raw map data and has no checksum trailer;
+ * other releases and save-game tails remain checksum-mandatory. */
+int F0504J_DUNGEON_LoadTailBufferFmTownsJp_Compat(
+    const unsigned char* bytes,
+    int byteCount,
+    struct DungeonDatState_Compat* state,
+    struct DungeonThings_Compat* things);
+
 /*
  * A20 Amiga F0434 save-tail reader.  The source byte stream is big-endian,
  * including every 16-bit field and Generic.Next word.  This entry point

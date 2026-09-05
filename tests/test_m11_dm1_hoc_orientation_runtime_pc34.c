@@ -128,6 +128,151 @@ static int count_real_hoc_f0115_items(const M11_GameViewState *state)
     return item_count;
 }
 
+/* Find a real door in the mounted PC 3.4 dungeon, place the presentation
+ * tuple one square in front of it, and prove that F0128's authenticated
+ * DOORPASS1 step reached the scheduler callback.  No dungeon byte is
+ * changed: the temporary party tuple is only a viewport probe over the
+ * original DUNGEON.DAT. */
+static int exercise_real_f0128_door_pass1(
+    M11_GameViewState *state, unsigned char *framebuffer)
+{
+    int mapIndex;
+    if (!state || !state->world.dungeon) return 0;
+    for (mapIndex = 0;
+         mapIndex < (int)state->world.dungeon->header.mapCount;
+         ++mapIndex) {
+        const struct DungeonMapDesc_Compat *map =
+            &state->world.dungeon->maps[mapIndex];
+        const unsigned char *squares =
+            state->world.dungeon->tiles[mapIndex].squareData;
+        int x;
+        if (!squares) continue;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                int direction;
+                unsigned char square = squares[x * (int)map->height + y];
+                if (((square & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+                    DUNGEON_ELEMENT_DOOR) continue;
+                for (direction = 0; direction < 4; ++direction) {
+                    M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+                    int partyX = x - step_x(direction);
+                    int partyY = y - step_y(direction);
+                    if (partyX < 0 || partyY < 0 ||
+                        partyX >= (int)map->width ||
+                        partyY >= (int)map->height) continue;
+                    state->world.party.mapIndex = mapIndex;
+                    state->world.party.mapX = partyX;
+                    state->world.party.mapY = partyY;
+                    state->world.party.direction = direction;
+                    memset(framebuffer, 0,
+                           FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                    M11_GameView_Draw(state, framebuffer,
+                                      FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
+                    memset(&receipt, 0, sizeof(receipt));
+                    M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
+                        &receipt);
+                    if (receipt.sourcePlanDispatched &&
+                        receipt.preDoorFloorOrnamentCallbackStepCount > 0 &&
+                        receipt.doorPass1CallbackStepCount > 0 &&
+                        receipt.doorFrameCallbackStepCount > 0 &&
+                        receipt.doorButtonCallbackStepCount > 0 &&
+                        receipt.doorMaterialCallbackStepCount > 0) {
+                        printf("real_f0128_door: map=%d door=%d,%d party=%d,%d dir=%d f0108_steps=%d pass1_steps=%d frame_steps=%d f0110_steps=%d f0111_steps=%d\n",
+                               mapIndex, x, y, partyX, partyY, direction,
+                               receipt.preDoorFloorOrnamentCallbackStepCount,
+                               receipt.doorPass1CallbackStepCount,
+                               receipt.doorFrameCallbackStepCount,
+                               receipt.doorButtonCallbackStepCount,
+                               receipt.doorMaterialCallbackStepCount);
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+/* Locate a real PC 3.4 square whose F0127 span admits D0C F0115_MAIN.
+ * Only the transient party presentation tuple changes; dungeon bytes remain
+ * untouched and the callback receipt proves consumption of the mounted map. */
+static int exercise_real_f0128_d0c_f0115(
+    M11_GameViewState *state, unsigned char *framebuffer)
+{
+    int mapIndex;
+    if (!state || !state->world.dungeon) return 0;
+    for (mapIndex = 0;
+         mapIndex < (int)state->world.dungeon->header.mapCount;
+         ++mapIndex) {
+        const struct DungeonMapDesc_Compat *map =
+            &state->world.dungeon->maps[mapIndex];
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+                state->world.party.mapIndex = mapIndex;
+                state->world.party.mapX = x;
+                state->world.party.mapY = y;
+                state->world.party.direction = DIR_NORTH;
+                memset(framebuffer, 0,
+                       FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                M11_GameView_Draw(state, framebuffer,
+                                  FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
+                memset(&receipt, 0, sizeof(receipt));
+                M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(&receipt);
+                if (receipt.sourcePlanDispatched &&
+                    receipt.d0ThingCallbackStepCount > 0) {
+                    printf("real_f0127_d0c_f0115: map=%d x=%d y=%d steps=%d\n",
+                           mapIndex, x, y,
+                           receipt.d0ThingCallbackStepCount);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static int exercise_real_f0128_d0_side_transaction(
+    M11_GameViewState *state, unsigned char *framebuffer)
+{
+    int mapIndex;
+    if (!state || !state->world.dungeon) return 0;
+    for (mapIndex = 0;
+         mapIndex < (int)state->world.dungeon->header.mapCount;
+         ++mapIndex) {
+        const struct DungeonMapDesc_Compat *map =
+            &state->world.dungeon->maps[mapIndex];
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int y;
+            for (y = 0; y < (int)map->height; ++y) {
+                M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+                state->world.party.mapIndex = mapIndex;
+                state->world.party.mapX = x;
+                state->world.party.mapY = y;
+                state->world.party.direction = DIR_NORTH;
+                memset(framebuffer, 0,
+                       FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                M11_GameView_Draw(state, framebuffer,
+                                  FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
+                memset(&receipt, 0, sizeof(receipt));
+                M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(&receipt);
+                if (receipt.sourcePlanDispatched &&
+                    receipt.d0SideThingFieldCallbackStepCount > 0) {
+                    printf("real_f0125_f0126_side_transaction: map=%d x=%d y=%d steps=%d\n",
+                           mapIndex, x, y,
+                           receipt.d0SideThingFieldCallbackStepCount);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static int collect_real_hoc_f0115_graphics(const M11_GameViewState *state,
                                            unsigned char seen[512])
 {
@@ -264,6 +409,57 @@ int main(void)
                                     expected_hoc_graphics)) {
         fprintf(stderr,
                 "one or more real PC34 HoC F0115 item graphics never reached an F0791 draw\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    {
+        M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+        memset(&receipt, 0, sizeof(receipt));
+        M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(&receipt);
+        if (!receipt.sourcePlanDispatched ||
+            receipt.d0PrimitiveCallbackStepCount <= 0 ||
+            receipt.wallMaterialCallbackStepCount <= 0 ||
+            receipt.wallOrnamentCallbackStepCount <= 0 ||
+            receipt.frontMirrorCallbackStepCount <= 0 ||
+            receipt.thievesEyeRestoreCallbackStepCount <= 0 ||
+            receipt.foregroundCallbackStepCount <= 0) {
+            fprintf(stderr,
+                    "real PC34 F0104/F0107/F0125-F0127/foreground material did not execute through the F0128 callback: dispatched=%d wall_steps=%d ornament_steps=%d mirror_steps=%d eye_restore_steps=%d d0_steps=%d d0_thing_steps=%d foreground_steps=%d\n",
+                    receipt.sourcePlanDispatched,
+                    receipt.wallMaterialCallbackStepCount,
+                    receipt.wallOrnamentCallbackStepCount,
+                    receipt.frontMirrorCallbackStepCount,
+                    receipt.thievesEyeRestoreCallbackStepCount,
+                    receipt.d0PrimitiveCallbackStepCount,
+                    receipt.d0ThingCallbackStepCount,
+                    receipt.foregroundCallbackStepCount);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        printf("real_f0128_wall_material: wall_steps=%d f0107_steps=%d mirror_steps=%d eye_restore_steps=%d d0_steps=%d d0_thing_steps=%d foreground_steps=%d\n",
+               receipt.wallMaterialCallbackStepCount,
+               receipt.wallOrnamentCallbackStepCount,
+               receipt.frontMirrorCallbackStepCount,
+               receipt.thievesEyeRestoreCallbackStepCount,
+               receipt.d0PrimitiveCallbackStepCount,
+               receipt.d0ThingCallbackStepCount,
+               receipt.foregroundCallbackStepCount);
+    }
+    if (!exercise_real_f0128_d0c_f0115(&state, framebuffer)) {
+        fprintf(stderr,
+                "real PC34 F0127 D0C F0115 never executed through the F0128 callback\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!exercise_real_f0128_d0_side_transaction(&state, framebuffer)) {
+        fprintf(stderr,
+                "real PC34 F0125/F0126 F0115/F0113 never executed through the F0128 callback\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!exercise_real_f0128_door_pass1(&state, framebuffer)) {
+        fprintf(stderr,
+                "real PC34 door pass 1/F0111 material never executed through the F0128 callback\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }

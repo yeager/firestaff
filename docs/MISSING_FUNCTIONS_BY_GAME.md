@@ -145,9 +145,7 @@ in memory and performs the original title → runtime → first movement sequenc
 as well as the start-menu launch handoff, for Atari ST (raw STX and nested
 ZIP), Amiga ADF archives, and FM Towns CD archives (English and Japanese
 program chains). `csb_v1_{atari_stx,atari_nested_zip,amiga,fmtowns_{en,ja}}_native_cli_*`
-proves these routes. CSB had no DOS edition; a request for `--platform pc` is
-therefore rejected fail-closed and must not reuse Atari or CSBWin data. Startup
-evidence does not replace the open original-capture and DSA/save-parity
+proves these routes. Startup evidence does not replace the open original-capture and DSA/save-parity
 requirements above.
 
 ## Nexus

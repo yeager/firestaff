@@ -1,22 +1,20 @@
-# Firestaff — csb domain, Swedish catalog.
-# Svensk översättning för Chaos Strikes Back runtime-strängar.
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
 #
-# Domain: csb
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
 #
-# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
-# från csb.pot.  CSB delar många gränssnittstermer med DM1
-# (FOOD/WATER, HUD-meters, inventory labels) men har unika
-# strängar för: engine version 2.1 (CHANGE7_36/8_13),
-# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
-# grey lord encounter, hint oracle, neophyte mode.
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-06-15 17:00+0200\n"
-"Last-Translator: Firestaff Contributors\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-04-22 12:05+0200\n"
+"Last-Translator: OpenClaw GPT-5.4 pass\n"
 "Language-Team: Swedish\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -24,112 +22,886 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
-msgid "csb.engine.version"
-msgstr "CSB-motorns version"
+#. Source-owned C699 action name
+msgid "N"
+msgstr "N"
 
-# Reincarnation panel
-msgid "csb.reincarnate.title"
-msgstr "ÅTERFÖDAS"
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr "BLOCKERA"
 
-msgid "csb.reincarnate.chaos"
-msgstr "Kaosstrid."
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr "HUGG"
 
-msgid "csb.reincarnate.choose"
-msgstr "Välj nya krigare för återfödelse."
+#. Source-owned C699 action name
+msgid "X"
+msgstr "X"
 
-msgid "csb.reincarnate.stat-roll"
-msgstr "Slå tärning för statistik"
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr "BLÅS I HORN"
 
-# Resurrection panel
-msgid "csb.resurrect.title"
-msgstr "ÅTERUPPSTÅ"
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr "VÄND"
 
-msgid "csb.resurrect.altar"
-msgstr "Offra blod vid altaret för att väcka krigare."
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr "SLAG"
 
-msgid "csb.resurrect.choose"
-msgstr "Välj krigare att väcka."
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr "SPARK"
 
-# Chaos magic cooldown (CHANGE7_28)
-msgid "csb.chaos.cooldown"
-msgstr "Kaosmagi svalnar"
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr "STRIDSROP"
 
-msgid "csb.chaos.energy"
-msgstr "Kaosenergi"
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr "STICK"
 
-msgid "csb.chaos.recharge"
-msgstr "Laddar"
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr "KLÄTTRA NER"
 
-# Grey Lord encounter
-msgid "csb.greylord.intro"
-msgstr "Den grå lorden viskar: Välj."
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr "FRYS LIV"
 
-msgid "csb.greylord.choose"
-msgstr "Gör ditt val."
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr "SLÅ"
 
-# Hint Oracle
-msgid "csb.oracle.title"
-msgstr "SPÅDOMSORAKLET"
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr "SVINGA"
 
-msgid "csb.oracle.prompt"
-msgstr "Fråga och oraklet ska svara."
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr "STÖT"
 
-# Champion pool (CSB has 4 max in active party vs 16 candidates)
-msgid "csb.party.max"
-msgstr "Max 4 krigare"
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr "STÖT"
 
-msgid "csb.party.slot"
-msgstr "Parti-plats"
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr "PARERA"
 
-# Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
-msgid "csb.save.import"
-msgstr "Importera CSB-sparning"
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr "HUGG"
 
-msgid "csb.save.csb-st-v20"
-msgstr "CSB Atari ST 2.0-sparning"
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr "BÄRSÄRK"
 
-msgid "csb.save.csb-st-v21"
-msgstr "CSB Atari ST 2.1-sparning"
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr "ELDKLOT"
 
-msgid "csb.save.amiga-v35"
-msgstr "CSB Amiga 3.5-sparning"
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr "FÖRDRIV"
 
-msgid "csb.save.pc34"
-msgstr "CSB PC 3.4-sparning"
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr "FÖRVIRRA"
 
-# Neophyte mode (CSB-only training option)
-msgid "csb.neophyte.title"
-msgstr "NYBÖRJARLÄGE"
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr "BLIXT"
 
-msgid "csb.neophyte.desc"
-msgstr "Minska fällornas skada, lättare start."
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr "SKINGRA"
 
-# Engine version (CHANGE7_36, CHANGE8_13)
-msgid "csb.engine.dm1"
-msgstr "DM1-motor v2.0"
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr "NÄRKAMP"
 
-msgid "csb.engine.csb"
-msgstr "CSB-motor v2.1"
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr "ÅKALLA"
 
-# CSB launcher entry
-msgid "csb.launcher.title"
-msgstr "CHAOS STRIKES BACK"
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr "SKÄR"
 
-msgid "csb.launcher.subtitle"
-msgstr "Dungeon Master II-uppföljaren"
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr "KLYV"
 
-msgid "csb.launcher.lore-shape"
-msgstr "Lord Chaos tornar upp sig..."
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr "SMÄLL"
 
-msgid "csb.launcher.lore-line-1"
-msgstr "Lord Chaos har stulit eld personifikationen."
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr "BEDÖVA"
 
-msgid "csb.launcher.lore-line-2"
-msgstr "Flamsten är förlorad."
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr "SKJUT"
 
-msgid "csb.launcher.lore-line-3"
-msgstr "Den grå lorden kallar er att hämta den."
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr "MAGISKÖLD"
 
-msgid "csb.launcher.lore-line-4"
-msgstr "Stig in i kaoset."
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr "ELDSKÖLD"
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr "FLÖDESBUR"
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr "HELA"
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr "LUGNA"
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr "LJUS"
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr "FÖNSTER"
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr "SPOTTA"
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr "SVINGA"
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr "KASTA"
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr "FÖRENA"
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "KOMPASS"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "FAKLA"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "VATTENSÄCK"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr "VATTEN"
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "JUVELSYMBOL"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "ILLUMULETT"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "FLAMITT"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "TIDENS ÖGA"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "STORMRING"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "KLORSTAV"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr "STORM"
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr "RA-KLINGA"
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "ELDSTAVEN"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr "ÖPPEN SKRIFTRULLE"
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "SKRIFTRULLE"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "DOLK"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALKJON"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "SVÄRD"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "RAPIER"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr "BITARE"
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "SAMURAJSVÄRD"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr "SIDA-KLYVARE"
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "DIAMANTEGG"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "VORPALBLAD"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr "DRAKTAND"
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "YXA"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr "BÖDEL"
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "STRIDSHAMMARE"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "ORDENS STRIDSHAMMARE"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr "MORGONSTJÄRNA"
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "KÖLLE"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "STENKÖLLE"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr "KLOBÅGE"
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "ARMBORST"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "PIL"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "DRÄPARE"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "SLINGA"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "STEN"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "GIFTKASTPIL"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "KASTSTJÄRNA"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "KÄPP"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "STAV"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "TROLLSTAV"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "TEOSTAV"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "IDEGRANSSTAV"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr "IRRAS STAV"
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr "NETAS KORS"
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr "ORMSTAV"
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "DRACHSPOTT"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "LYFS SPIRA"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr "TRASIG SKJORTA"
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr "FIN ROB"
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr "KJORTEL"
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr "SILKESSKJORTA"
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr "ALVTRÖJA"
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "LÄDERJACKA"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr "TUNIKA"
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr "RINGBRYNJEJACKA"
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr "MITHRALJACKA"
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr "BRÖSTPLÅT"
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr "RAS BRÖSTPLÅT"
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr "DRAKPLÅT"
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "KAPPA"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "NATTENS MANTEL"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr "TRASIGA BYXOR"
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr "ROB"
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr "VAPENROCK"
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr "GUNNA"
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr "ALVMANTEL"
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "LÄDERBYXOR"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "BLÅ BYXOR"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "GHI-BYXOR"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "BENPANSAR"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "MITHRILPANSAR"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr "BENPLÅT"
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr "RAS KNÄSKYDD"
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr "DRAKKNÄSKYDD"
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "BESERKERHJÄLM"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "HJÄLM"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BASCINET"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr "HJÄLM OCH HÄTTA"
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr "SLUTEN HJÄLM"
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr "RAS HJÄLM"
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr "DRAKHJÄLM"
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "NERRAS KRONA"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr "NETA-SKÖLD"
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr "KRISTALLSKÖLD"
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "LITEN SKÖLD"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "TRÄSKÖLD"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr "SAR-SKÖLD"
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr "RAS SKÖLD"
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr "DRAKSKÖLD"
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SANDALER"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "MOCKASTÖVLAR"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "LÄDERSTÖVLAR"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr "HOSOR"
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "FOTPLÅT"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr "RAS BENSKENA"
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr "DRAKBENSKENA"
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "ÄLVSTÖVLAR"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "TIDERNAS ÄDELSTEN"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "EKKHARD KORS"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "MÅNSTEN"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "HELLION"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "FERAL-BERLOCK"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "SAR-MYNT"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr "SILVERMYNT"
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr "GOR-MYNT"
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "KLETTBLOCK"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "BLÅ ÄDELSTEN"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "ORANGE ÄDELSTEN"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "GRÖN ÄDELSTEN"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "MAGISK LÅDA"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "GRYNINGSPEGELETT"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "RÄDSLANS HORN"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "REP"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr "HARTASS"
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr "CORBUM"
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "STRYPNING"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEXHJÄLM"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr "FLAMMBANE"
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr "KRAFTTORN"
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr "SNABBBÅGE"
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "KISTA"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "ÖPPNA KISTA"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "ASKA"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "BEN"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "MON-DRYCK"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "UM-DRYCK"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "DES-DRYCK"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "VEN-DRYCK"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "SAR-DRYCK"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "ZO-DRYCK"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "ROS-DRYCK"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "KU-DRYCK"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "DANE-DRYCK"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "NETA-DRYCK"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr "MOTGIFT"
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "YA-DRYCK"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "EE-DRYCK"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI-DRYCK"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "VATTENFLASKA"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr "KATH-BOMB"
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr "PEW-BOMB"
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr "RA-BOMB"
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr "FUL-BOMB"
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "ÄPPLE"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "MAJS"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "BRÖD"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "OST"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "SKRIKARBIT"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "MASKRUND"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr "SKÄRVA"
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "DRAKSTEK"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "JÄRNNYCKEL"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "B-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "MASSIV NYCKEL"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "FYRKANTIG NYCKEL"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "TURKOS NYCKEL"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "KORSNYCKEL"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "ONYX-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "SKELETTNYCKKEL"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "GULDNYCKKEL"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "BEVINGAD NYCKEL"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "TOPAS-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "SAFIR-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "SMARAGD-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "RUBIN-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA-NYCKEL"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "HUVUDNYCKKEL"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "DIKOL"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "FÖRSTORINGSGLAS"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr "SNABBHETSSTÖVLAR"
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "TOM FLASKA"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr "GRIMMA"
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "ZOKATHRA-BESVÄRJELSE"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid "THERE IS ONLY ONE\nLEVEL HERE.      \n                 \nFIRST CHOOSE YOUR\nCHAMPIONS...THEN\nSAVE THE GAME...\nTHEN RESTART WITH\nTHE UTILITY DISK."
+msgstr "DET FINNS BARA EN\nNIVÅ HÄR.         \n                  \nVÄLJ FÖRST DINA\nHJÄLTAR... SPARA\nSEDAN SPELET...\nSTARTA DÄREFTER OM\nMED VERKTYGSDISKEN."

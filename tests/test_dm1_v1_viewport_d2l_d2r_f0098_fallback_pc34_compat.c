@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -7,6 +8,7 @@
 
 static int g_assertions = 0;
 static int g_failures = 0;
+static int g_real_asset_fixture_skipped = 0;
 
 static void expect_int(const char *id, int got, int want, const char *anchor)
 {
@@ -47,21 +49,33 @@ find_step(const DM1_V1_D2LD2RF0098OrderStepPc34 *steps,
 static int graphics_dat_available(void)
 {
     const char *env = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char *path = env ? env :
-        "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT";
-    unsigned char first[4];
-    FILE *f = fopen(path, "rb");
-    long size = 0;
-    size_t got;
+    char default_path[1024];
+    const char *home;
+    const char *path;
+    unsigned char *bytes = NULL;
+    size_t byte_count = 0U;
+    int available;
 
-    if (!f) return 0;
-    got = fread(first, 1, sizeof(first), f);
-    if (fseek(f, 0, SEEK_END) == 0) {
-        size = ftell(f);
+    if (env && env[0] != '\0') {
+        path = env;
+    } else {
+        home = getenv("HOME");
+        if (!home || home[0] == '\0' ||
+            snprintf(default_path, sizeof(default_path),
+                     "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT",
+                     home) >= (int)sizeof(default_path)) {
+            return 0;
+        }
+        path = default_path;
     }
-    fclose(f);
-    return got == sizeof(first) && size == 363417L &&
-        first[0] == 0x01 && first[1] == 0x80 && first[2] == 0xc9 && first[3] == 0x02;
+    /* Original-data fixture may be a virtual ZIP member.  Read it through
+     * Firestaff's bounded archive reader; tests must never require a loose
+     * extracted GRAPHICS.DAT copy. */
+    available = asset_read_path_alloc(path, &bytes, &byte_count) && bytes &&
+        byte_count == 363417U && bytes[0] == 0x01 && bytes[1] == 0x80 &&
+        bytes[2] == 0xc9 && bytes[3] == 0x02;
+    free(bytes);
+    return available;
 }
 
 static void test_specs(void)
@@ -222,7 +236,12 @@ static void test_f0098_precondition_and_evidence(void)
 
 static void test_real_asset_fixture_is_reachable(void)
 {
-    expect_int("asset.graphics_dat_reachable", graphics_dat_available(), 1,
+    if (!graphics_dat_available()) {
+        g_real_asset_fixture_skipped = 1;
+        puts("SKIP: canonical DM1 PC34 GRAPHICS.DAT fixture unavailable");
+        return;
+    }
+    expect_int("asset.graphics_dat_reachable", 1, 1,
                "canonical DM1 PC34 GRAPHICS.DAT real-asset fixture");
 }
 
@@ -237,6 +256,9 @@ int main(void)
         printf("FAIL dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat failures=%d assertions=%d\n",
                g_failures, g_assertions);
         return 1;
+    }
+    if (g_real_asset_fixture_skipped) {
+        return 77;
     }
     printf("PASS dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat %d/%d assertions\n",
            g_assertions, g_assertions);

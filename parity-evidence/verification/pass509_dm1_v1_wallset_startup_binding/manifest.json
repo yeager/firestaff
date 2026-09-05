@@ -3,7 +3,7 @@
     "ReDMCSB STARTUP2.C binds all fifteen PC34 wall slots to GRAPHICS.DAT 93..107 before viewport rendering.",
     "The flipped wall-set table repeats the same source binding, so parity flip may swap geometry without changing asset identity.",
     "Firestaff default_wall_set stores the same negative slots relative to M646/M647 for C00..C14.",
-    "Greatstone/local PC34 audit and canonical hashes identify the exact GRAPHICS.DAT/DUNGEON.DAT variant used by this evidence."
+    "Canonical member hashes identify the exact GRAPHICS.DAT/DUNGEON.DAT variant read directly from the supplied retail ZIP."
   ],
   "dm1Anchors": {
     "DUNGEON.DAT": {
@@ -15,6 +15,7 @@
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     }
   },
+  "dm1Archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
   "expectedDefaultWallSet": [
     -17,
     -16,
@@ -51,8 +52,7 @@
     -5
   ],
   "gate": "pass509_dm1_v1_wallset_startup_binding",
-  "greatstoneManifest": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md",
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "rows": [
     {
       "firestaffNegativeSlot": -17,

@@ -3,16 +3,21 @@
 from __future__ import annotations
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
+import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md"
+RED = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"))
+DM1_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"))
 LOCAL = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 OUT_DIR = ROOT / "parity-evidence/verification/pass509_dm1_v1_wallset_startup_binding"
 OUT_JSON = OUT_DIR / "manifest.json"
@@ -53,6 +58,17 @@ def sha256(path: Path) -> str:
             h.update(chunk)
     return h.hexdigest()
 
+def zip_member(path: Path, name: str) -> bytes:
+    result = subprocess.run(
+        ["unzip", "-p", str(path), name],
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if result.returncode not in (0, 1) or not result.stdout:
+        raise AssertionError(f"cannot read retail ZIP member {name}")
+    return result.stdout
+
 def line_of(text: str, needle: str) -> int:
     pos = text.find(needle)
     if pos < 0:
@@ -84,7 +100,6 @@ def verify() -> dict[str, object]:
     startup = read(RED / "STARTUP2.C")
     defs = read(RED / "DEFS.H")
     local = read(LOCAL)
-    greatstone = read(GREATSTONE)
     defs_values = parse_defs_values(defs)
     failures: list[str] = []
     rows: list[dict[str, object]] = []
@@ -101,21 +116,13 @@ def verify() -> dict[str, object]:
     expected_local = [EXPECTED_WALL_GRAPHICS[name][2] for name in LOCAL_ARRAY_ORDER]
     if local_values != expected_local:
         failures.append(f"default_wall_set mismatch got={local_values!r} want={expected_local!r}")
-    for needle in [
-        "Result: **PASS**",
-        "PC34 GRAPHICS.DAT",
-        "SHA256: " + chr(96) + "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e" + chr(96),
-        "| 93 | Dungeon Graphics - Wall (Right Side 0)",
-        "| 107 | Dungeon Graphics - Wall (Front 3)",
-        "Mismatches: 0",
-    ]:
-        if needle not in greatstone:
-            failures.append(f"Greatstone manifest missing {needle!r}")
-    graphics = DM1 / "GRAPHICS.DAT"
-    dungeon = DM1 / "DUNGEON.DAT"
+    if not DM1_ARCHIVE.is_file():
+        raise AssertionError(f"missing retail PC34 archive: {DM1_ARCHIVE}")
+    graphics = zip_member(DM1_ARCHIVE, "DATA/GRAPHICS.DAT")
+    dungeon = zip_member(DM1_ARCHIVE, "DATA/DUNGEON.DAT")
     anchors = {
-        "GRAPHICS.DAT": {"sha256": sha256(graphics), "bytes": graphics.stat().st_size},
-        "DUNGEON.DAT": {"sha256": sha256(dungeon), "bytes": dungeon.stat().st_size},
+        "GRAPHICS.DAT": {"sha256": hashlib.sha256(graphics).hexdigest(), "bytes": len(graphics)},
+        "DUNGEON.DAT": {"sha256": hashlib.sha256(dungeon).hexdigest(), "bytes": len(dungeon)},
     }
     if anchors["GRAPHICS.DAT"]["sha256"] != "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e":
         failures.append("canonical GRAPHICS.DAT hash mismatch")
@@ -135,12 +142,12 @@ def verify() -> dict[str, object]:
         "firestaffDefaultWallSet": local_values,
         "expectedDefaultWallSet": expected_local,
         "dm1Anchors": anchors,
-        "greatstoneManifest": str(GREATSTONE),
+        "dm1Archive": str(DM1_ARCHIVE),
         "claims": [
             "ReDMCSB STARTUP2.C binds all fifteen PC34 wall slots to GRAPHICS.DAT 93..107 before viewport rendering.",
             "The flipped wall-set table repeats the same source binding, so parity flip may swap geometry without changing asset identity.",
             "Firestaff default_wall_set stores the same negative slots relative to M646/M647 for C00..C14.",
-            "Greatstone/local PC34 audit and canonical hashes identify the exact GRAPHICS.DAT/DUNGEON.DAT variant used by this evidence.",
+            "Canonical member hashes identify the exact GRAPHICS.DAT/DUNGEON.DAT variant read directly from the supplied retail ZIP.",
         ],
         "failures": failures,
     }
@@ -164,7 +171,7 @@ def write_evidence(manifest: dict[str, object]) -> None:
     for name, item in anchors.items():
         lines.append(f"- {name} - sha256 {item['sha256']}, bytes {item['bytes']}")
     lines += [
-        "- Greatstone manifest: DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md (Result: PASS, PC34 GRAPHICS.DAT mismatches 0).",
+        f"- Retail archive: {manifest['dm1Archive']} (members read in memory without extraction).",
         "",
         "No original-runtime or pixel parity claim is made by this gate.",
     ]

@@ -61,6 +61,10 @@ def parse_po(path: Path) -> dict[str, str]:
             plural = _quoted(line[13:])
             active = ("plural", None)
         elif line.startswith("msgid "):
+            # GNU PO permits the next entry to start without a separating
+            # blank line. Several native catalogs use that compact form.
+            if msgid is not None:
+                flush()
             msgid = _quoted(line[6:])
             active = ("id", None)
         elif line.startswith("msgstr["):
@@ -159,20 +163,26 @@ def verify_template(template: Path, english: Path) -> None:
 
 
 def compile_catalogs(source_dir: Path, output_dir: Path) -> int:
+    catalogs = sorted((source_dir / "studio").glob("*.po"))
+    expected = {
+        output_dir / "locale" / po.stem / "LC_MESSAGES" / "firestaff_studio.mo"
+        for po in catalogs
+    }
+    # A removed PO must not survive in a later package as a stale compiled
+    # catalog.  Delete only this compiler's own domain files; callers may
+    # legitimately share the locale tree with other gettext domains.
+    for stale in (output_dir / "locale").glob(
+            "*/LC_MESSAGES/firestaff_studio.mo"):
+        if stale not in expected:
+            stale.unlink()
     count = 0
-    for po in sorted((source_dir / "studio").glob("*.po")):
+    for po in catalogs:
         lang = po.stem
         output = output_dir / "locale" / lang / "LC_MESSAGES" / "firestaff_studio.mo"
         entries = parse_po(po)
         write_mo(entries, output)
         with output.open("rb") as handle:
             gettext.GNUTranslations(handle)
-        count += 1
-    # Keep legacy flat catalogs available as build outputs too.  The native
-    # launcher reads its PO source directly; these are for gettext consumers.
-    for po in sorted(source_dir.glob("??.po")):
-        entries = parse_po(po)
-        write_mo(entries, output_dir / f"{po.stem}.mo")
         count += 1
     return count
 

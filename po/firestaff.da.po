@@ -1,93 +1,135 @@
 # Firestaff UI — da
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "Language: da\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 
+#. ACCESSIBILITY
 msgid "Accessibility"
 msgstr "Tilgængelighed"
 
+#. AUDIO
 msgid "Audio"
 msgstr "Lyd"
 
+#. BACK
 msgid "Back"
 msgstr "Tilbage"
 
+#. BESTIARY
 msgid "Bestiary"
 msgstr "Bestiarium"
 
+#. CHANGELOG
 msgid "Changelog"
 msgstr "Ændringslog"
 
+#. COMING_SOON
 msgid "Coming soon"
 msgstr "Kommer snart"
 
+#. CONTINUE
 msgid "Continue Saved Game"
 msgstr "Fortsæt gemt spil"
 
+#. CONTROLS
 msgid "Controls"
 msgstr "Kontrol"
 
+#. DISPLAY
 msgid "Display"
 msgstr "Skærm"
 
+#. EXTRAS
 msgid "EXTRAS"
 msgstr "EKSTRA"
 
+#. ITEMS
 msgid "Item Encyclopedia"
 msgstr "Genstandsleksikon"
 
+#. LANGUAGE
 msgid "Language"
 msgstr "Sprog"
 
+#. MAP_VIEWER
 msgid "Map Viewer"
 msgstr "Kortfremviser"
 
+#. MUSEUM
 msgid "Museum of Lore"
 msgstr "Lore-museum"
 
+#. NEW_GAME_V1
 msgid "New Game (V1 Original)"
 msgstr "Nyt spil (V1 Original)"
 
+#. NEW_GAME_V21
 msgid "New Game (V2.1 Upscaled)"
 msgstr "Nyt spil (V2.1 Opskaleret)"
 
+#. NEW_GAME_V22
 msgid "New Game (V2.2 Enhanced)"
 msgstr "Nyt spil (V2.2 Forbedret)"
 
+#. NO_DATA
 msgid "No data files"
 msgstr "Ingen datafiler"
 
+#. OFF
 msgid "Off"
 msgstr "Fra"
 
+#. ON
 msgid "On"
 msgstr "Til"
 
+#. PLAY
 msgid "PLAY"
 msgstr "SPIL"
 
+#. QUIT
 msgid "QUIT"
 msgstr "AFSLUT"
 
+#. SCREENSHOTS
 msgid "Screenshot Gallery"
 msgstr "Skærmbilledgalleri"
 
+#. SELECT_GAME
 msgid "SELECT GAME"
 msgstr "VÆLG SPIL"
 
+#. SETTINGS
 msgid "SETTINGS"
 msgstr "INDSTILLINGER"
 
+#. SPELLS
 msgid "Spell Reference"
 msgstr "Besværgelsesreference"
 
+#. VALIDATE
 msgid "Validate game data"
 msgstr "Validér spildata"
 
+#. VERSION
 msgid "Version"
 msgstr "Version"
 
+#. VIDEO
 msgid "Video"
 msgstr "Video"
 
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr ""
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr ""

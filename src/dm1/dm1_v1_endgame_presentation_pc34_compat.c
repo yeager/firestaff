@@ -63,6 +63,21 @@ void dm1_v1_endgame_presentation_decide_pc34(
     }
 }
 
+void dm1_v1_endgame_restart_load_decide_pc34(
+    const DM1_V1_EndgameRestartLoadInputPc34* input,
+    DM1_V1_EndgameRestartLoadDecisionPc34* output) {
+    if (!output) return;
+    memset(output, 0, sizeof(*output));
+    if (!input || !input->restartRequested) return;
+    if (input->loadSucceeded) {
+        output->resumeLoadedGame = 1;
+    } else if (input->f0444MaterialBound) {
+        output->returnToTheEnd = 1;
+    } else {
+        output->failClosed = 1;
+    }
+}
+
 int dm1_v1_endgame_final_presentation_receipt_pc34(
     const DM1_V1_EndgameFinalPresentationInputPc34* input,
     DM1_V1_EndgameFinalPresentationReceiptPc34* output) {

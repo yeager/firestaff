@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CMAKE = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
 ENTRIES = (
     ("csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c",
-     "firestaff_csb_v1_pc_real_asset_ornament_blit_probe"),
+     "firestaff_csb_v1_first_viewport_frame_probe"),
     ("csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat.c",
      "test_csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat"),
     ("csb_v1_viewport_d2l2_d2r2_f0111_partly_open_pc34_compat.c",

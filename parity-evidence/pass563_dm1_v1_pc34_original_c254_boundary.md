@@ -1,17 +1,17 @@
 # Pass563 - DM1 V1 PC34 original C254 boundary
 
-- Status: BLOCKED_PASS563_PC34_C254_CHAIN_INCOMPLETE
+- Status: FAIL_PASS563_PC34_ORIGINAL_PAYLOAD_MISMATCH
 - Manifest: parity-evidence/verification/pass563_dm1_v1_pc34_original_c254_boundary/manifest.json
 
 ## Decision
 
-Existing pass514/pass558/pass560/pass562 evidence chain is incomplete in this checkout.
+Canonical N2 PC34 original payload did not match expected hashes.
 
 ## Canonical original payload
-- DM.EXE: PASS sha256 4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4
-- DATA/GRAPHICS.DAT: PASS sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- DATA/DUNGEON.DAT: PASS sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- original manifest: PASS /Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json
+- DM.EXE: FAIL sha256 None
+- DATA/GRAPHICS.DAT: FAIL sha256 None
+- DATA/DUNGEON.DAT: FAIL sha256 None
+- original manifest: FAIL /home/yeager/.openclaw/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json
 
 ## ReDMCSB locks
 - PASS GAMELOOP.C:166-215 pc34_game_loop_consumes_io_before_queue_dispatch - DM1 PC/I34E consumes keyboard-present/read before F0361 enqueue and F0380 dispatch.

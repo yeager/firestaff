@@ -4,10 +4,10 @@
  * Scope: V1_BLOCKERS.md §6 ("Firestaff-invented UI chrome ...").
  * Pass 42 lands a V1 chrome-mode switch (default ON) that (a) hides
  * the Firestaff-invented control strip at y=165, and (b) reroutes
- * player-facing notifications from m11_set_status /
- * m11_set_inspect_readout into the rolling message log (the
- * source-faithful TEXT.C message-log surface in DM1 PC 3.4),
- * rendered by the bottom multi-line surface at y=149, 157, 165.
+ * status/inspect notifications from m11_set_status /
+ * m11_set_inspect_readout into Firestaff's internal rolling log.
+ * Later TEXT.C work keeps this host telemetry out of DM1's source-owned
+ * C015 surface and renders only decoded original message state there.
  *
  * This probe verifies:
  *
@@ -192,7 +192,7 @@ static int source_has_guarded_control_strip(const char* path) {
     while (fgets(line, sizeof(line), f)) {
         if (strstr(line, "if (") != NULL &&
             strstr(line, "showDebugHUD") != NULL &&
-            strstr(line, "!m11_v1_chrome_mode_enabled()") != NULL) {
+            strstr(line, "!m11_v1_chrome_mode_enabled(state)") != NULL) {
             inGuard = 1;
             continue;
         }
@@ -213,8 +213,9 @@ static int source_has_guarded_control_strip(const char* path) {
 }
 
 int main(void) {
-    const char* src = "m11_game_view.c";
-    const char* hdr = "m11_game_view.h";
+    const char* src = "src/engine/m11_game_view.c";
+    const char* hdr = "include/m11_game_view.h";
+    const char* status_hdr = "include/champion_status_slotbox_pc34_compat.h";
 
     printf("# firestaff_m11_pass42_chrome_reduction_probe\n");
 
@@ -339,9 +340,9 @@ int main(void) {
 
     /* 9. Pass-41 champion status-box constants remain literal. */
     rec("INV_P42_25",
-        file_contains(src, "M11_V1_PARTY_SLOT_W    = 67") == 1 &&
-        file_contains(src, "M11_V1_PARTY_SLOT_STEP = 69") == 1,
-        "pass-41 M11_V1_PARTY_SLOT_* constants preserved");
+        file_contains(status_hdr, "CHAMPION_STATUS_COMPAT_SLOT_W = 67") == 1 &&
+        file_contains(status_hdr, "CHAMPION_STATUS_COMPAT_SLOT_STEP = 69") == 1,
+        "pass-41 source-locked champion status-slot constants preserved");
 
     /* 10. Control-strip enum block remains literal in m11_game_view.c. */
     rec("INV_P42_26",
@@ -353,7 +354,7 @@ int main(void) {
 
     /* 11. Pass-42 switch symbol present. */
     rec("INV_P42_27",
-        file_contains(src, "static int m11_v1_chrome_mode_enabled(void)") == 1,
+        file_contains(src, "static int m11_v1_chrome_mode_enabled(const M11_GameViewState* state)") == 1,
         "m11_v1_chrome_mode_enabled() defined in m11_game_view.c");
 
     /* 12. Pass-42 reroute helper present. */
@@ -378,7 +379,7 @@ int main(void) {
      * that source-faithful top-row/HUD behavior instead of the superseded
      * debug-band implementation. */
     rec("INV_P42_31",
-        file_contains(src, "M11_V1_MESSAGE_ROW_COUNT = 4") == 1 &&
+        file_contains(src, "sourceRow < DM1_V1_MESSAGE_AREA_ROW_COUNT") == 1 &&
         file_contains(src, "m11_draw_v1_message_area(state, framebuffer") == 1,
         "bottom message surface renders the source C015 four-row V1 message area");
 

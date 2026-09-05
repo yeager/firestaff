@@ -376,9 +376,6 @@ static const M12_VersionSpec g_csbVersions[] = {
      * is the game program.  It shares the PC34 graphics payload, so TITL.DAT
      * is the package discriminator in m12_admit_csb_amiga31_title_package(). */
     {"csb", "amiga31-multi", "Amiga 3.1 Multilanguage", "Amiga 3.1 ML", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_AMIGA},
-    /* ReDMCSB PC34 boot handoff and the authenticated dungeon pair use the
-     * same GRAPHICS.DAT payload as the PC 3.4 English package. */
-    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
     {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},
@@ -4730,70 +4727,30 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
     return 0;
 }
 
-static void m12_separate_csb_pc34_from_amiga31_package(
-    M12_AssetStatus* status, int gameIndex,
-    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-    size_t rootCount) {
-    enum { M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT = 8 };
-    const char* const graphicsMd5 = "61fbfd56887c94adc26888a9491c6611";
-    int pcIndex;
+static void m12_require_csb_amiga31_package_identity(
+    M12_AssetStatus* status, int gameIndex) {
     int amigaIndex;
-    size_t rootIndex;
-    M12_AssetVersionStatus* pc;
-    const M12_AssetVersionStatus* amiga;
+    M12_AssetVersionStatus* amiga;
 
     if (!status || gameIndex < 0 ||
         strcmp(g_games[gameIndex].gameId, "csb") != 0) {
         return;
     }
-    pcIndex = M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
     amigaIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
-    if (pcIndex < 0 || amigaIndex < 0) {
+    if (amigaIndex < 0) {
         return;
     }
-    pc = &status->versions[gameIndex][pcIndex];
     amiga = &status->versions[gameIndex][amigaIndex];
-    if (!pc->matched || !amiga->matched ||
-        !m12_csb_graphics_has_amiga31_title(pc->matchedPath)) {
+    if (!amiga->matched ||
+        m12_csb_graphics_has_amiga31_title(amiga->matchedPath)) {
         return;
     }
-
-    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        const char* hashes[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT + 1U];
-        char paths[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT][ASSET_PATH_MAX];
-        int matched[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT];
-        int candidateIndex;
-        for (candidateIndex = 0;
-             candidateIndex < M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT;
-             ++candidateIndex) {
-            hashes[candidateIndex] = graphicsMd5;
-        }
-        hashes[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT] = NULL;
-        memset(paths, 0, sizeof(paths));
-        memset(matched, 0, sizeof(matched));
-        (void)asset_find_all_by_md5_list(
-            roots[rootIndex], hashes, paths, matched,
-            M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT, 32);
-        for (candidateIndex = 0;
-             candidateIndex < M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT;
-             ++candidateIndex) {
-            if (matched[candidateIndex] && paths[candidateIndex][0] != '\0' &&
-                !m12_csb_graphics_has_amiga31_title(paths[candidateIndex])) {
-                m12_copy_string(pc->matchedPath, sizeof(pc->matchedPath),
-                                paths[candidateIndex]);
-                m12_copy_string(pc->matchedMd5, sizeof(pc->matchedMd5),
-                                graphicsMd5);
-                return;
-            }
-        }
-    }
-
-    /* The only common-hash receipt belongs to the authenticated A31E disk.
-     * Keeping it in PC34 would make the launcher promise a platform whose
-     * package was not found. */
-    pc->matched = 0;
-    pc->matchedPath[0] = '\0';
-    pc->matchedMd5[0] = '\0';
+    /* This digest also appears in development/reference corpora.  CSB had
+     * no DOS/Windows release, so graphics bytes alone must never create a
+     * playable catalogue row.  Same-package TITL.DAT is the A31M identity. */
+    amiga->matched = 0;
+    amiga->matchedPath[0] = '\0';
+    amiga->matchedMd5[0] = '\0';
 }
 
 static size_t m12_required_file_count_for_game(const char* gameId) {
@@ -6537,8 +6494,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
-            m12_separate_csb_pc34_from_amiga31_package(
-                status, i, roots, rootCount);
+            m12_require_csb_amiga31_package_identity(status, i);
         }
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount,
@@ -6907,8 +6863,7 @@ void M12_AssetStatus_ScanGameWithOptions(
              * --game csb --fm-towns report the game as unavailable even
              * though --scan-data had verified both FM Towns editions.
              * ReDMCSB COMPILE.H 199-243 keeps these media families apart. */
-            m12_separate_csb_pc34_from_amiga31_package(
-                status, gameIndex, roots, rootCount);
+            m12_require_csb_amiga31_package_identity(status, gameIndex);
         }
         /* m12_fill_game_versions retains the verified nested-CD rows, so a
          * direct CSB scan does not reopen the selected multi-hundred-megabyte

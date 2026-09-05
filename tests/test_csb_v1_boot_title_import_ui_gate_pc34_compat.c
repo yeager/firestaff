@@ -20,7 +20,7 @@
  *      the helper retained its data-free DM1 default ("v2.0")
  *      and the CSB launch fell back to DM1-only behavior on
  *      the version-display surface even though the runtime
- *      variant was CSB_V1_VARIANT_PC34_EN.
+ *      variant was CSB_V1_VARIANT_REFERENCE_I34_EN.
  *
  *   3. csb_v1_boot_cleanup() resets the engine-version display
  *      helper back to "v2.0" so a follow-up DM1 launch does
@@ -166,7 +166,7 @@ static void prime_verified_profile(CSB_V1_BootProfile *p)
     p->graphics_verified = 1;
     p->dungeon_verified = 1;
     p->state = CSB_V1_BOOT_STATE_ASSETS_READY;
-    p->variant_id = CSB_V1_VARIANT_PC34_EN;
+    p->variant_id = CSB_V1_VARIANT_REFERENCE_I34_EN;
     p->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
     snprintf(p->asset_root, sizeof(p->asset_root), "%s", s_gate_tmp);
     snprintf(p->graphics_path, sizeof(p->graphics_path), "%s/GRAPHICS.DAT", s_gate_tmp);

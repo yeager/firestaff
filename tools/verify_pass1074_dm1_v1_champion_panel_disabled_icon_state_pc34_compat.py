@@ -38,6 +38,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_executable
+
 ROOT = Path(__file__).resolve().parent.parent
 PASS = "pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
 STATUS = "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED"
@@ -110,23 +113,7 @@ def check_needles(label, path, needles):
     }
 
 
-def resolve_build_dir():
-    candidates = [
-        ROOT / "build",
-        ROOT / "builds" / "nv1-build",
-        ROOT / "builds" / "n2-build",
-    ]
-    for c in candidates:
-        if (c / "CMakeCache.txt").exists() and (c / BINARY_NAME).exists():
-            return c
-    for c in candidates:
-        if (c / "CMakeCache.txt").exists():
-            return c
-    return candidates[0]
-
-
-def run_test(build_dir):
-    binary = build_dir / BINARY_NAME
+def run_test(binary):
     if not binary.exists():
         return None, f"binary not found: {binary}"
     proc = subprocess.run(
@@ -261,11 +248,11 @@ def main():
         ]),
         check_needles("cmake_registration", CMAKE, CMAKE_NEEDLES),
     ]
-    build_dir = resolve_build_dir()
-    proc, err = run_test(build_dir)
+    binary = resolve_build_executable(ROOT, BINARY_NAME, ROOT / "build")
+    proc, err = run_test(binary)
     if proc is None:
         runs = [{
-            "command": [repo_relative_command(build_dir / BINARY_NAME)],
+            "command": [repo_relative_command(binary)],
             "returncode": -1,
             "passed": False,
             "passes": 0,
@@ -278,7 +265,7 @@ def main():
             proc.stdout + proc.stderr
         )
         runs = [{
-            "command": [repo_relative_command(build_dir / BINARY_NAME)],
+            "command": [repo_relative_command(binary)],
             "returncode": proc.returncode,
             "passed": proc.returncode == 0 and fails == 0,
             "passes": passes,

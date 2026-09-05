@@ -246,12 +246,19 @@ def title_sh2_copy_plan(path: Path, title_cg_raw: bytes) -> tuple[int, int, int,
         rows.append((int(match["frame"], 10), int(match["address"], 16), registers))
     if len(rows) < 8:
         raise ValueError("fewer than eight title writer-register samples")
-    frame, _, first = rows[0]
+    # The hardware writer is shared by multiple uploads in the same frame
+    # window. Select the source-authenticated TITLE.CG plan instead of
+    # assuming that the first observed invocation owns the title.
+    candidates = [row for row in rows if row[2][6] == len(title_cg_raw)]
+    if not candidates:
+        raise ValueError("no copy-plan length equals TITLE.CG")
+    frame, _, first = candidates[0]
     source_base = first[14]
     destination_base = first[4]
     length = first[6]
-    if length != len(title_cg_raw):
-        raise ValueError("copy-plan length does not equal TITLE.CG")
+    rows = [row for row in candidates
+            if row[0] == frame and row[2][14] == source_base and
+            row[2][4] == destination_base]
     source_byte_rows = 0
     for row_frame, address, registers in rows:
         if (row_frame != frame or registers[14] != source_base or

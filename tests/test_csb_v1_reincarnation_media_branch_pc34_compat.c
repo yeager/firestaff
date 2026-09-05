@@ -86,7 +86,7 @@ static void check_variant(CSB_V1_VariantId variant, int expected_vitals,
 
 int main(void)
 {
-    check_variant(CSB_V1_VARIANT_PC34_EN, 100, 80, 80,
+    check_variant(CSB_V1_VARIANT_REFERENCE_I34_EN, 100, 80, 80,
                   "PC I34 keeps vitals/statistics before boosts");
     check_variant(CSB_V1_VARIANT_ST20_EN, 50, 70, 80,
                   "Atari ST halves vitals and reduces non-Luck stats");

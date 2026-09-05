@@ -3,10 +3,9 @@
 
 ReDMCSB F0115 draws objects/creatures/projectiles while consuming packed
 view-cell ordinals, exits that loop at DUNVIEW.C:5915, then restarts the
-thing list to draw explosions at DUNVIEW.C:5916-5933.  This gate keeps the
-Firestaff M11 viewport implementation locked to that separation: no explosion
-bitmap/cue inside per-cell effect drawing; all explosions route through the
-single deferred pass called after side and center contents.
+thing list to draw explosions at DUNVIEW.C:5916-5933. This gate keeps that
+separation inside every scheduler-owned F0115 callback, including both door
+partitions, rather than accepting a source-invalid once-per-frame replay.
 """
 from __future__ import annotations
 
@@ -94,7 +93,7 @@ def main() -> int:
     # m11_draw_explosion_material() (which keeps the m11_draw_explosion_sprite
     # bitmap path) instead of a separate m11_draw_explosion_cue() wrapper.
     _, side_body = body_span(view, "static void m11_draw_dm1_side_contents_at_depth(")
-    _, deferred_body = body_span(view, "static void m11_draw_dm1_deferred_explosion_pass(")
+    _, callback_body = body_span(view, "static void m11_dm1_f0128_execute_source_step(")
     _, viewport_body = body_span(view, "static void m11_draw_viewport(")
     _, explosion_cue_body = body_span(view, "static int m11_draw_explosion_material(")
 
@@ -107,30 +106,24 @@ def main() -> int:
         raise AssertionError("per-cell effect cue lacks explicit ReDMCSB deferred-pass marker")
 
     projectile_pos = side_body.find("cell->renderableProjectileCount > 0")
-    deferred_comment_pos = side_body.find("Explosions are deferred to m11_draw_dm1_deferred_explosion_pass")
-    if projectile_pos < 0 or deferred_comment_pos < 0 or projectile_pos >= deferred_comment_pos:
-        raise AssertionError("side contents must draw projectiles before deferring explosions")
+    if projectile_pos < 0:
+        raise AssertionError("side contents lost its projectile phase")
     if "m11_draw_explosion_sprite" in side_body or "m11_draw_explosion_cue" in side_body:
         raise AssertionError("side contents still draws explosions inline")
 
-    for required in [
-        "DUNVIEW.C:5915",
-        "DUNVIEW.C:5916-5933",
-        "m11_draw_dm1_deferred_center_explosion",
-        "m11_draw_dm1_deferred_side_explosion",
-        "m11_draw_explosion_material",
-    ]:
-        if required not in deferred_body and required not in view:
-            raise AssertionError(f"deferred pass missing {required!r}")
+    if callback_body.count("m11_draw_dm1_f0115_explosions_for_square(") < 2:
+        raise AssertionError("door-pass and foreground F0115 callbacks must each restart C15")
+    if "m11_draw_dm1_deferred_explosion_pass(state" in viewport_body:
+        raise AssertionError("viewport still replays explosions globally after F0128 squares")
+    for required in ["m11_dm1_item696_explosion_anchor", "C3014", "C3031"]:
+        if required not in view:
+            raise AssertionError(f"callback explosion path missing {required!r}")
     if "m11_draw_explosion_sprite" not in explosion_cue_body:
         raise AssertionError("deferred explosion cue must keep source-backed bitmap path")
-    require_order(viewport_body, "m11_draw_dm1_side_contents_at_depth(", "m11_draw_dm1_deferred_explosion_pass(", "viewport side contents before deferred explosions")
-    require_order(viewport_body, "m11_draw_wall_contents(framebuffer", "m11_draw_dm1_deferred_explosion_pass(", "viewport center contents before deferred explosions")
-
     for required in [
         "DUNVIEW.C:5915-5933",
         "after-all-packed-cells explosion pass",
-        "m11_draw_dm1_deferred_explosion_pass()",
+        "scheduler-owned F0115 callback",
         "m11_draw_effect_cue() no longer draws explosions",
     ]:
         if required not in evidence:
@@ -142,7 +135,7 @@ def main() -> int:
     print(f"redmcsb_packed_cell_loop_end_line={lines['per_cell_loop_end']}")
     print(f"redmcsb_explosion_phase_line={lines['explosion_phase']}")
     print(f"redmcsb_explosion_restart_line={lines['explosion_restart']}")
-    print("implementation=m11_draw_dm1_deferred_explosion_pass after side+center contents")
+    print("implementation=scheduler-owned F0115 callbacks restart C15 after packed cells")
     return 0
 
 

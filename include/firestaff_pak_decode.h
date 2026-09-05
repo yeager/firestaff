@@ -31,9 +31,9 @@
  *     output = HIGH(most_frequent_words[value])
  *     output = LOW(most_frequent_words[value])
  *
- * Total output bytes = uncompressed text-segment size from
- * the Atari ST header. The iteration count comes from the
- * PAK header: (file_size_in_words * 2) - 28.
+ * Total output bytes = (file_size_in_words * 2) - 28 from
+ * the PAK header. This is the flat compressed PRG body after
+ * its already-uncompressed 28-byte Atari executable header.
  *
  * Provenance:
  *   - Spec: greatstone d_pak.html (DM/CSB technical doc)
@@ -44,7 +44,8 @@
  *   * Read-only decoder. We never WRITE Atari ST executables.
  *   * Validates magic (0x601A) and bounds before decoding.
  *   * Does NOT execute the decoded Atari ST code; we only
- *     extract the raw 68000 machine code + relocation table
+ *     extract the raw 68000 machine code, initialized data,
+ *     symbol data and relocation stream
  *     for static analysis / asset extraction.
  *   * For DM/CSB execution we already use ReDMCSB as a
  *     source-locked reference and never launch START.PAK
@@ -93,12 +94,8 @@ typedef struct {
 
 /* Decoded output from FirestaffPak_Decode. */
 typedef struct {
-    uint8_t* text;                   /* uncompressed text segment (code) */
-    size_t   text_size;
-    /* NOTE: data/bss/symbol-table segments are stored after
-     * text in the file; we do not currently extract them
-     * because they are loaded into RAM at runtime by the
-     * Atari ST itself, not interpreted as assets. */
+    uint8_t* text;                   /* complete F0913 flat PRG image */
+    size_t   text_size;              /* word count * 2 minus 28-byte header */
 } FirestaffPakDecoded;
 
 /*
@@ -113,17 +110,18 @@ int FirestaffPak_ReadHeader(const uint8_t* data, size_t data_size,
 
 /*
  * Decode a PAK file to a flat buffer containing the
- * uncompressed Atari ST text segment.
+ * uncompressed Atari ST PRG body after its 28-byte header.
  *
  * Returns 0 on success and fills *out (caller must
  * FirestaffPak_Free when done). Returns -1 on failure
  * (truncated input, bad magic, allocation failure, or
- * the decoded output would exceed text_size).
+ * the decoded output would exceed the header-derived body size).
  *
- * On success, out->text_size == header.text_size.
+ * On success, out->text_size == header.file_size_words * 2 - 28 and contains
+ * text, initialized data, symbols and relocation stream in source order.
  *
  * The decoder validates every nibble boundary against
- * data_size and every write against text_size, so a
+ * data_size and every write against the derived body size, so a
  * hostile or corrupt PAK cannot read or write out of
  * bounds.
  */

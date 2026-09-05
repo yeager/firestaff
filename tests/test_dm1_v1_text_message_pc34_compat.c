@@ -433,6 +433,136 @@ static void test_constants(void) {
     ASSERT_EQ(DM1_V1_MESSAGE_CONTINUATION_INDENT, 12, "ContIndent=12");
 }
 
+/* ── Test: SPELFAIL.C F0410 publishes through visible C015 ────────── */
+static void test_spell_failure_f0410(void) {
+    static const struct {
+        const char* before;
+        const char* skill;
+        const char* after;
+        const char* expected;
+    } cases[] = {
+        {" NEEDS MORE PRACTICE WITH THIS ", "WIZARD", " SPELL.",
+         "HALK NEEDS MORE PRACTICE WITH THIS WIZARD SPELL."},
+        {" MUMBLES A MEANINGLESS SPELL.", "", "",
+         "HALK MUMBLES A MEANINGLESS SPELL."},
+        {" NEEDS AN EMPTY FLASK IN HAND FOR POTION.", "", "",
+         "HALK NEEDS AN EMPTY FLASK IN HAND FOR POTION."}
+    };
+    size_t i;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        DM1_V1_TextMessageState state;
+        const DM1_V1_MessageRow* row;
+        dm1_v1_text_init(&state);
+        ASSERT_EQ(dm1_v1_text_print_spell_failure_f0410(
+                      &state, 47, DM1_V1_COLOR_CYAN, 1, "HALK",
+                      cases[i].before, cases[i].skill, cases[i].after),
+                  1, "F0410 accepts authenticated source fragments");
+        ASSERT_EQ(dm1_v1_text_get_active_row_count(&state), 1,
+                  "F0410 writes exactly one visible row for stock text");
+        row = dm1_v1_text_get_row(
+            &state, DM1_V1_MESSAGE_AREA_ROW_COUNT - 1);
+        ASSERT_NONNULL(row, "F0410 bottom row exists");
+        ASSERT_STR_EQ(row->text, cases[i].expected,
+                      "F0410 assembles exact stock English text");
+        ASSERT_EQ(row->color, DM1_V1_COLOR_CYAN,
+                  "F0410 writes C04 cyan");
+        ASSERT_EQ(row->expirationTime, 117,
+                  "F0410 expiration is current tick plus 70");
+    }
+
+    {
+        DM1_V1_TextMessageState state;
+        dm1_v1_text_init(&state);
+        ASSERT_EQ(dm1_v1_text_print_spell_failure_f0410(
+                      &state, 47, DM1_V1_COLOR_CYAN, 1, "", "bad", "", ""),
+                  0, "F0410 rejects a missing champion name");
+        ASSERT_EQ(dm1_v1_text_get_active_row_count(&state), 0,
+                  "rejected F0410 input cannot mutate C015");
+    }
+}
+
+static void test_message_after_replacements_f0381(void) {
+    DM1_V1_TextMessageState state;
+    const DM1_V1_MessageRow* row;
+
+    dm1_v1_text_init(&state);
+    ASSERT_EQ(dm1_v1_text_print_message_after_replacements_f0381(
+                  &state, 23, "IT COMES UP HEADS.", "HALK"),
+              1, "F0381 accepts the stock HEADS message");
+    row = dm1_v1_text_get_row(&state, DM1_V1_MESSAGE_AREA_ROW_COUNT - 1);
+    ASSERT_STR_EQ(row->text, "IT COMES UP HEADS.",
+                  "F0381 publishes exact HEADS text");
+    ASSERT_EQ(row->color, DM1_V1_COLOR_CYAN,
+              "F0381 publishes C04 cyan");
+    ASSERT_EQ(row->expirationTime, 93,
+              "F0381 expiry is source tick plus 70");
+
+    dm1_v1_text_init(&state);
+    ASSERT_EQ(dm1_v1_text_print_message_after_replacements_f0381(
+                  &state, 24, "@pFLIPS THE COIN.", "HALK"),
+              1, "F0381 accepts its bounded champion replacement");
+    row = dm1_v1_text_get_row(&state, DM1_V1_MESSAGE_AREA_ROW_COUNT - 1);
+    ASSERT_STR_EQ(row->text, "HALK FLIPS THE COIN.",
+                  "F0381 replaces @p with champion name and source space");
+
+    dm1_v1_text_init(&state);
+    ASSERT_EQ(dm1_v1_text_print_message_after_replacements_f0381(
+                  &state, 24, "BAD @x TOKEN", "HALK"),
+              0, "F0381 fails closed on unsupported replacement token");
+    ASSERT_EQ(dm1_v1_text_get_active_row_count(&state), 0,
+              "rejected F0381 replacement cannot mutate C015");
+}
+
+static void test_l10n_named_template_expansion(void) {
+    char output[128];
+
+    ASSERT_EQ(dm1_v1_text_expand_l10n_template(
+                  "{champion} NEEDS PRACTICE WITH {skill}.",
+                  "HALK", "WIZARD", output, sizeof(output)),
+              1, "DM1 l10n template accepts named fields");
+    ASSERT_STR_EQ(output, "HALK NEEDS PRACTICE WITH WIZARD.",
+                  "DM1 l10n template expands the English order");
+    ASSERT_EQ(dm1_v1_text_expand_l10n_template(
+                  "{skill}: PRACTICE NEEDED BY {champion}.",
+                  "HALK", "WIZARD", output, sizeof(output)),
+              1, "DM1 l10n template permits translated word order");
+    ASSERT_STR_EQ(output, "WIZARD: PRACTICE NEEDED BY HALK.",
+                  "translated order is independent of source order");
+    ASSERT_EQ(dm1_v1_text_expand_l10n_template(
+                  "BAD {unknown}", "HALK", "WIZARD",
+                  output, sizeof(output)),
+              0, "unknown fields fail closed");
+    ASSERT_STR_EQ(output, "", "failed expansion cannot leak partial text");
+
+    {
+        DM1_V1_TextMessageState state;
+        const DM1_V1_MessageRow* row;
+        dm1_v1_text_init(&state);
+        ASSERT_EQ(dm1_v1_text_print_localized_message(
+                      &state, 31, DM1_V1_COLOR_CYAN, 1,
+                      "WIZARD: PRACTICE NEEDED BY HALK."),
+                  1, "localized C015 writer accepts reordered text");
+        row = dm1_v1_text_get_row(
+            &state, DM1_V1_MESSAGE_AREA_ROW_COUNT - 1);
+        ASSERT_STR_EQ(row->text, "WIZARD: PRACTICE NEEDED BY HALK.",
+                      "localized C015 writer publishes expanded text");
+        ASSERT_EQ(row->color, DM1_V1_COLOR_CYAN,
+                  "localized C015 writer preserves caller color");
+        ASSERT_EQ(row->expirationTime, 101,
+                  "localized C015 writer preserves source lifetime");
+
+        dm1_v1_text_init(&state);
+        ASSERT_EQ(dm1_v1_text_print_localized_message(
+                      &state, 31, DM1_V1_COLOR_CYAN, 0,
+                      "ÅÄÖ"),
+                  1, "localized C015 writer accepts UTF-8 text");
+        ASSERT_EQ(state.cursorColumn,
+                  3 * DM1_V1_TEXT_CHARACTER_WIDTH,
+                  "C015 advances once per Unicode codepoint, not UTF-8 byte");
+    }
+}
+
 /* ── Test: Legacy DM1_V1_LegacyTextStatePc34 compatibility ───────────────────────── */
 static void test_legacy_compat(void) {
     DM1_V1_LegacyTextStatePc34 s;
@@ -464,6 +594,9 @@ int main(void) {
     printf("ReDMCSB: TEXT.C F0042-F0054, DRAWMSGA.C F0696, DEFS.H\n\n");
 
     test_constants();
+    test_spell_failure_f0410();
+    test_message_after_replacements_f0381();
+    test_l10n_named_template_expansion();
     test_init();
     test_cursor_movement();
     test_clear_all_rows();

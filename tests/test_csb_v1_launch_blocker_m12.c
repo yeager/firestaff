@@ -14,7 +14,7 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->entries[1].available = 1;
     /* Suppress the NO GAME DATA FOUND popup that m12_show_no_game_data_popup()
      * raised during M12_StartupMenu_InitWithDataDir() because the test data
-     * dir (/tmp/firestaff-test-no-assets) is empty. The fixture manually
+     * dir (/dev/shm/firestaff-test-no-assets) is empty. The fixture manually
      * arranges CSB availability, so we treat it as if a candidate was found,
      * then return the view to MAIN so the card-click path is reachable. */
     state->assetStatus.originalFileCandidateFound = 1;
@@ -98,10 +98,11 @@ int main(void) {
     const int cardH = ((1080 - 130) - 40 - 22) / 2;
     const int csbCardCenterX = gridLeft + 1 * (cardW + 22) + cardW / 2;
     const int cardCenterY = 40 + cardH / 2;
-    const int launchCenterX = 960;
-    const int launchCenterY = 190 + 780 - 54 - 24 + 27;
+    const int platformCardCenterX = 160 + 250;
+    const int choiceCardCenterY = 280 + 125;
+    const int originalCardCenterX = 210 + 240;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "/dev/shm/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
 
     changed = M12_ModernMenu_HandlePointer(&state, csbCardCenterX, cardCenterY, 1, NULL);
@@ -149,7 +150,10 @@ int main(void) {
                 "CSB ready card detail should use active startup capture proof")) return 1;
     if (!render_smoke_nonblank(&state, "CSB options")) return 1;
 
-    changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
+    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX, choiceCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 1,
+                "CSB Atari ST platform card should open presentation choices")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, originalCardCenterX, choiceCardCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB Launch direct click should be handled")) return 1;
     if (!expect(state.launchRequested == 1, "CSB hash-matched assets should request runtime launch")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "CSB launch blocker should show message")) return 1;
@@ -164,7 +168,7 @@ int main(void) {
     puts("ok: CSB V1 hash-matched launcher path renders options/ready views and exposes a launch intent");
     puts("sourceEvidence=ReDMCSB ENTRANCE.C F0806 launch state and LOADSAVE.C F0435 new-game load boundary");
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "/dev/shm/firestaff-test-no-assets", NULL);
     force_csb_version_only_missing_required(&state);
 
     changed = M12_ModernMenu_HandlePointer(&state, csbCardCenterX, cardCenterY, 1, NULL);
@@ -203,7 +207,10 @@ int main(void) {
                        "FILES ARE MISSING") != NULL,
                 "CSB missing-data card detail should use launch gate detail")) return 1;
 
-    changed = M12_ModernMenu_HandlePointer(&state, launchCenterX, launchCenterY, 1, NULL);
+    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX, choiceCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 1,
+                "CSB missing-data platform card should open presentation choices")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, originalCardCenterX, choiceCardCenterY, 1, NULL);
     if (!expect(changed == 1, "CSB V2.1 launch click should be handled")) return 1;
     if (!expect(state.launchRequested == 0,
                 "CSB V2.1 version match must not bypass missing required-file gating")) return 1;
@@ -219,7 +226,7 @@ int main(void) {
                 strstr(state.messageLine2, "DUNGEON.DAT"),
                 "CSB V2.1 missing-data popup names both required V1 runtime files")) return 1;
     if (!expect(state.messageLine3 &&
-                strstr(state.messageLine3, "/tmp/firestaff-test-no-assets"),
+                strstr(state.messageLine3, "/dev/shm/firestaff-test-no-assets"),
                 "CSB V2.1 missing-data popup names the searched data directory")) return 1;
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);

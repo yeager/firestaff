@@ -11,7 +11,7 @@
     "stillUnprovenStub": false
   },
   "problems": [],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "repoLocks": [
     {
       "needle": "dm1_v1_movement_command_core_pc34_compat",
@@ -97,7 +97,7 @@
         "F0267_MOVE_GetMoveResult_CPSCE"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "Viewport door-button clicks require the source DOOR->Button path and otherwise fall through to wall/front-sensor handling.",
@@ -126,7 +126,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C"
     },
     {
       "claim": "Accepted collision outcomes mutate the party map tuple in the move-result path, not in a renderer-only helper.",
@@ -153,7 +153,7 @@
         "G0362_l_LastPartyMovementTime = G0313_ul_GameTime;"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "claim": "Collision/door movement state is observable through the same direction/x/y tuple used by the viewport draw.",
@@ -182,7 +182,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     }
   ],
   "status": "DM1_V1_COLLISION_DOORS_PARITY_MATRIX_SOURCE_LOCKED"

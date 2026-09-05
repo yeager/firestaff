@@ -35,8 +35,8 @@ enum {
 };
 
 static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
-    /* PC34 G0205 has 13 wall rows. D3L2/D3R2 are separate F0676/F0677
-     * square passes; they do not consume the G0205 wall-ornament table. */
+    /* Internal 13/14 identify MEDIA720's C00/C01 layout-696 rows without
+     * colliding with the legacy G0205 row numbers. */
     {3, -1,  0, 0}, /* D3L right */
     {3,  1,  1, 0}, /* D3R left */
     {3, -1,  2, 0}, /* D3L front */
@@ -49,7 +49,9 @@ static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
     {2,  1,  9, 0}, /* D2R front */
     {1, -1, 10, 0}, /* D1L right */
     {1,  1, 11, 0}, /* D1R left */
-    {1,  0, 12, 0}  /* D1C front */
+    {1,  0, 12, 0}, /* D1C front */
+    {3, -2, 13, 0}, /* D3L2 right: MEDIA720 C00 */
+    {3,  2, 14, 0}  /* D3R2 left: MEDIA720 C01 */
 };
 
 /* G0205's row numbering interleaves the left/right side-wall entries with
@@ -59,10 +61,36 @@ static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
  * table's native indices intact (they are part of the graphic contract),
  * and publish the distinct source traversal for render consumers. */
 static const unsigned char s_wallOrnamentDrawOrderPc34[] = {
+    13, 14,          /* F0676 D3L2, F0677 D3R2 */
     0, 2, 1, 4, 3,  /* D3L right/front, D3R left/front, D3C front */
     5, 7, 6, 9, 8,  /* D2L right/front, D2R left/front, D2C front */
     10, 11, 12       /* D1L right, D1R left, D1C front */
 };
+
+/* Authentic DM1 PC 3.4 English GRAPHICS.DAT item-696 records 1004 +
+ * set*15 + {0,1}. Each tuple is {RecordType, Data1, Data2}; ParentRecord 4
+ * is common to all sixteen records. SHA256 of the containing GRAPHICS.DAT:
+ * 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e. */
+static const short s_outerD3LayoutAnchorsPc34[8][2][3] = {
+    {{0,31,42}, {0,192,43}}, {{0,22,48}, {0,202,50}},
+    {{7,30,67}, {7,191,66}}, {{0,22,51}, {0,202,51}},
+    {{0,22,42}, {0,202,43}}, {{0,24,45}, {0,202,44}},
+    {{7,19,75}, {7,206,75}}, {{5,18,41}, {5,205,38}}
+};
+
+int dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
+    int coordinateSet, int internalViewWallIndex,
+    int* outRecordType, int* outAnchorX, int* outAnchorY)
+{
+    int side;
+    if (coordinateSet < 0 || coordinateSet >= 8 ||
+        (internalViewWallIndex != 13 && internalViewWallIndex != 14)) return 0;
+    side = internalViewWallIndex - 13;
+    if (outRecordType) *outRecordType = s_outerD3LayoutAnchorsPc34[coordinateSet][side][0];
+    if (outAnchorX) *outAnchorX = s_outerD3LayoutAnchorsPc34[coordinateSet][side][1];
+    if (outAnchorY) *outAnchorY = s_outerD3LayoutAnchorsPc34[coordinateSet][side][2];
+    return 1;
+}
 
 /* ReDMCSB DUNVIEW.C G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement
  * for PC34/I34E.  This is indexed by the 13 G0205 view-wall rows; it is not
@@ -309,6 +337,27 @@ int dm1_v1_wall_ornament_render_plan_pc34(
         return 0;
     }
     coordSet = dm1_v1_wall_ornament_coord_set_index_pc34(globalIndex);
+    if (viewWallIndex == 13 || viewWallIndex == 14) {
+        int recordType, anchorX, anchorY;
+        if (!dm1_v1_wall_ornament_outer_d3_layout_anchor_pc34(
+                coordSet, viewWallIndex, &recordType, &anchorX, &anchorY)) return 0;
+        (void)recordType;
+        memset(outPlan, 0, sizeof(*outPlan));
+        outPlan->graphicIndex = DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2;
+        outPlan->dstX = anchorX;
+        outPlan->dstY = anchorY;
+        outPlan->width = 224;
+        outPlan->height = 136;
+        outPlan->transparentColor = DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34;
+        outPlan->flipHorizontal = viewWallIndex == 14;
+        outPlan->paletteMapValid = 1;
+        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD3);
+        outPlan->isAlcove = dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+        outPlan->sourceScaleX32 = 30;
+        outPlan->sourceScaleY32 = 14;
+        outPlan->usesDerivedBitmap = 1;
+        return 1;
+    }
     if (!dm1_v1_wall_ornament_zone_pc34(coordSet, viewWallIndex, &blit)) {
         return 0;
     }

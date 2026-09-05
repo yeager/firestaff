@@ -54,8 +54,8 @@
  *      drops the runtime back to PROFILE_READY.
  *
  * This is a real-data probe. Pass a directory through argv[1] or
- * $FIRESTAFF_CSB_DATA (the legacy $FIRESTAFF_CSB_PC_DATA is also accepted).
- * It accepts the hash-recognised PC 3.4, Atari ST and Amiga packages. Hosts
+ * $FIRESTAFF_CSB_DATA. It accepts hash-recognised Atari ST, Amiga and FM
+ * Towns packages. Hosts
  * without such material report SKIP and exit zero; they never fabricate a
  * dungeon or GRAPHICS.DAT just to exercise a rendering path.
  *
@@ -89,9 +89,9 @@
  *   exit 0 PASS when all checks hold, or SKIP when no real package is given.
  *
  * Disjoint from:
- *   - probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
- *       (scan + enter_game + one tick; this probe adds the
- *       first-viewport-frame render entry as the next link in the chain)
+ *   - the supported-platform launch probes
+ *       (scan + enter_game + one tick; this probe adds the first-viewport
+ *       render entry as the next link in the chain)
  *   - tests/test_csb_v1_boot_viewport_render_gate.c
  *       (test_csb_v1_boot_viewport_render_gate is the data-free CTest unit;
  *       this probe proves the separately scoped real-package handoff)
@@ -207,8 +207,6 @@ static const char *probe_data_dir(int argc, char **argv,
     env = getenv("FIRESTAFF_CSB_DATA");
     if (env && env[0] != '\0') return env;
 
-    env = getenv("FIRESTAFF_CSB_PC_DATA");
-    if (env && env[0] != '\0') return env;
     return NULL;
 }
 
@@ -317,7 +315,7 @@ static void probe_first_viewport_frame(CSB_V1_BootProfile *profile,
      * rather than a zero grid (which would render a no-op frame).
      *
      * For the synthetic CSB V1 fixture, cell (1,1) holds FLOOR=2.
-     * For real CSB PC 3.4 EN, level 0 (the prison) carries 121
+     * For the original CSB prison dungeon, level 0 carries 121
      * corridor cells in the 32x32 viewport; cell (1,1) just
      * happens to be a WALL=0 cell, so the marker check has to
      * look at the population, not a specific cell.

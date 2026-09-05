@@ -1,7 +1,7 @@
 {
   "status": "pass",
   "sourceLock": "DM1 V1 party successful movement sensor order",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "focus": "after a successful party movement, ReDMCSB updates party coords, processes source-square removal/leave sensors, then destination-square addition/enter sensors; F0276 traverses sensors in thing-list order",
   "citations": [
     "party coords updated before leave/enter sensor calls: MOVESENS.C:442-818",

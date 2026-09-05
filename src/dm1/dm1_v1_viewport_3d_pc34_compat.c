@@ -27,6 +27,7 @@
 #include "firestaff/dm1/v1/G0176_pc34_compat.h"
 #include "firestaff/dm1/v1/G0177_pc34_compat.h"
 #include "firestaff/dm1/v1/G0178_pc34_compat.h"
+#include "firestaff/dm1/v1/G0204_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
@@ -4164,18 +4165,29 @@ static void dm1_viewport_3d_draw_wall_ornament_f0107(
     int map_x, int map_y)
 {
     int ordinal;
+    int inscription_line_count = 0;
+    int plan_view_wall_index;
     DM1_V1_WallOrnamentOrdinalInputPc34 input;
     DM1_V1_WallOrnamentOrdinalResultPc34 result;
     int coord_set;
     DM1_WallOrnamentRenderPlanPc34 plan;
 
-    if (!state || !state->wall_ornament_ordinal_callback ||
-        !state->graphic_provider_callback) {
+    if (!state || !state->graphic_provider_callback ||
+        (!state->wall_aspect_callback &&
+         !state->wall_ornament_ordinal_callback)) {
         return;
     }
 
-    ordinal = state->wall_ornament_ordinal_callback(
-        state->wall_ornament_ordinal_user_data, map_x, map_y);
+    ordinal = state->wall_aspect_callback
+        ? state->wall_aspect_callback(state->wall_aspect_user_data,
+                                      map_x, map_y, view_wall_index,
+                                      &inscription_line_count)
+        : -1;
+    if (ordinal < 0 && state->wall_ornament_ordinal_callback) {
+        ordinal = state->wall_ornament_ordinal_callback(
+            state->wall_ornament_ordinal_user_data, map_x, map_y);
+        inscription_line_count = 0;
+    }
     if (ordinal < 0) return;
 
     coord_set = dm1_v1_wall_ornament_coord_set_index_pc34(ordinal);
@@ -4192,8 +4204,28 @@ static void dm1_viewport_3d_draw_wall_ornament_f0107(
     }
     if (!result.draws_ornament) return;
 
+    /* The shared viewport's public F0107 enum includes CSB's two C00/C01
+     * outer-wall rows before the ordinary G0205 rows.  The legacy material
+     * planner stores those outer rows after its 13 G0205 rows. */
+    plan_view_wall_index = view_wall_index <= 1
+        ? view_wall_index + 13
+        : view_wall_index - 2;
+
+    {
+        int max_height = 136;
+        if (inscription_line_count > 0 && inscription_line_count < 4 &&
+            view_wall_index >= 0 && view_wall_index < 15) {
+            static const unsigned char increment[15] = {
+                0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4, 4, 4
+            };
+            max_height = dm1_v1_g0204_get_pc34(
+                increment[view_wall_index] * 3 +
+                inscription_line_count - 1);
+            if (max_height <= 0) return;
+        }
     if (dm1_v1_wall_ornament_render_plan_pc34(
-            result.wall_ornament_index, view_wall_index, 136, &plan) && plan.graphicIndex >= 0) {
+            result.wall_ornament_index, plan_view_wall_index,
+            max_height, &plan) && plan.graphicIndex >= 0) {
         const uint8_t *pixels = NULL;
         int gfx_w = 0, gfx_h = 0;
         if (state->graphic_provider_callback(
@@ -4225,6 +4257,7 @@ static void dm1_viewport_3d_draw_wall_ornament_f0107(
                 }
             }
         }
+    }
     }
 }
 

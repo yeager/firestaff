@@ -37,8 +37,8 @@
       "status": "SKIP"
     }
   ],
-  "firestaff": "build/firestaff",
-  "generated_at": "2026-08-13T22:15:37.569871+00:00",
+  "firestaff": "build-dm1-csb-native/firestaff",
+  "generated_at": "2026-09-03T20:27:54.562202+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",

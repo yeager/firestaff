@@ -1,5 +1,7 @@
 #include "dm1_v1_center_door_render_pc34_compat.h"
 
+#include "memory_dungeon_dat_pc34_compat.h"
+
 #include "firestaff/dm1/v1/G0180_pc34_compat.h"
 #include "firestaff/dm1/v1/G0183_pc34_compat.h"
 #include "firestaff/dm1/v1/G0186_pc34_compat.h"
@@ -214,10 +216,30 @@ int dm1_v1_door_panel_graphic_for_current_map_depth_pc34(
     int doorType,
     int depthIndex)
 {
-    (void)dungeon;
-    (void)mapIndex;
+    const struct DungeonDatState_Compat* source =
+        (const struct DungeonDatState_Compat*)dungeon;
+    const struct DungeonMapDesc_Compat* map;
+    int doorSet;
+
+    if (!source || !source->maps ||
+        mapIndex < 0 || mapIndex >= (int)source->header.mapCount ||
+        (doorType != 0 && doorType != 1)) {
+        return -1;
+    }
+    map = &source->maps[mapIndex];
+
+    /* ReDMCSB DUNGEON.C F0174 copies Map.DoorSet0 and Map.DoorSet1 into
+     * G0275_as_CurrentMapDoorInfo.  A DOOR Thing's one-bit Type selects
+     * between those two map-owned sets; it is not itself the set number.
+     * F0095/F0111 then select M633 + DoorSet * 3 + depth.  Treating Type as
+     * DoorSet happened to work on DoorSet0/1 maps but replaced real iron
+     * and Ra panels (sets 2/3) with portcullis/wood graphics. */
+    doorSet = doorType ? (int)map->doorSet1 : (int)map->doorSet0;
+    if (doorSet < 0 || doorSet > 3) {
+        return -1;
+    }
     return dm1_v1_door_panel_graphic_for_set_depth_pc34(
-        doorType, depthIndex);
+        doorSet, depthIndex);
 }
 
 int dm1_v1_center_door_host_material_receipt_pc34(
@@ -258,6 +280,36 @@ int dm1_v1_center_door_host_material_receipt_pc34(
         }
     }
     return outReceipt->blitCount >= outReceipt->frameCount;
+}
+
+int dm1_v1_f0111_animated_door_flip_mask_pc34(
+    int currentMapDoorSet, int doorState, int random4,
+    int* outRandomDrawConsumed)
+{
+    if (outRandomDrawConsumed) *outRandomDrawConsumed = 0;
+    if (currentMapDoorSet < 0 || currentMapDoorSet > 3 ||
+        doorState < 0 || doorState > 5 || random4 < 0 || random4 > 3) return -1;
+    /* G0254 makes set 3 alone animated; F0111:4272-4273 consumes exactly
+     * one M004_RANDOM(4), whose bits are horizontal and vertical flip. */
+    if (currentMapDoorSet != 3 || doorState == 0) return 0;
+    if (outRandomDrawConsumed) *outRandomDrawConsumed = 1;
+    return random4;
+}
+
+int dm1_v1_f0111_composed_source_xy_pc34(
+    int bitmapWidth, int bitmapHeight,
+    int clippedSourceX, int clippedSourceY, int flipMask,
+    int* outSourceX, int* outSourceY)
+{
+    if (!outSourceX || !outSourceY || bitmapWidth <= 0 || bitmapHeight <= 0 ||
+        clippedSourceX < 0 || clippedSourceX >= bitmapWidth ||
+        clippedSourceY < 0 || clippedSourceY >= bitmapHeight ||
+        flipMask < 0 || flipMask > 3) return 0;
+    *outSourceX = (flipMask & 1)
+        ? bitmapWidth - 1 - clippedSourceX : clippedSourceX;
+    *outSourceY = (flipMask & 2)
+        ? bitmapHeight - 1 - clippedSourceY : clippedSourceY;
+    return 1;
 }
 
 int dm1_v1_center_door_original_material_receipt_pc34(

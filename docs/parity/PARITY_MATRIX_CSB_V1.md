@@ -7,9 +7,10 @@ Scope: conservative CSB V1 definition-of-done matrix for the Atari ST v2.x lane.
 Primary references are audit-only and are never runtime dependencies:
 
 - ReDMCSB WIP source: `reference/redmcsb-20210206/Toolchains/Common/Source/` (or an operator-maintained override through `FIRESTAFF_REDMCSB_SOURCE`)
-- CSB lineage: `~/.openclaw/data/firestaff-csb-source/CSB/src/`
-- CSBWin mirror: `~/.openclaw/data/firestaff-csbwin-source/CSBWin/`
-- Original anchors: `~/.openclaw/data/firestaff-original-games/DM/_canonical/csb/`
+- Checked-in ReDMCSB source: `reference/redmcsb-20210206/Toolchains/Common/Source/`
+- Supplied original media: `${HOME}/.firestaff/data/csb/` (external test input,
+  never copied into the repository)
+- Checked-in media identities and receipts: `parity-evidence/verification/`
 
 ## Completion criteria
 
@@ -21,7 +22,7 @@ Primary references are audit-only and are never runtime dependencies:
 | `core_input_movement` | 5/15 | `RUNTIME_SLICE_VERIFIED_PARTIAL` | CSB input must prove mode-specific mouse/keyboard routing from CSB state. Current proof covers CTest-wired command-chain, input queue, movement step/rotation, runtime tick, reincarnation-adjacent gates, compatibility-fixture launch, quickplay dungeon-handle survival against hash-recognised media (otherwise explicit skip), composed boot/runtime handoff, and a bounded Utility NEW_GAME -> runtime -> repeated queued movement route with a wall-blocked step and save-prefix roundtrip. It is not yet broad adventuring playability. | Drive a wider real-data CSB route through Utility/reincarnate/adventuring input, interactions beyond movement, and CSBGAME.DAT save/reload. |
 | `viewport_ui_render` | 7/20 | `SOURCE_SLICE_VERIFIED_PARTIAL` | Viewport/HUD/UI parity must use stable CSB original capture/state anchors tied to the Atari ST v2.x renderer lane. Current proof covers CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, portrait render handoff, first viewport-frame render entry, and a post-movement viewport render without panel bleed; real original-vs-Firestaff pixel captures remain open. | Build capture/overlay fixtures and compare original CSB frames against Firestaff output. |
 | `gameplay_systems` | 4/15 | `RUNTIME_SLICE_VERIFIED_PARTIAL` | Prison/champion/new-adventure/combat/creature/item/save behavior cannot inherit DM1 points. Current proof covers dungeon loader/world slices, DSA trigger, save runtime boundary, Utility/CMP import, imported party handoff, leader/rotation state, and related Grey Lord/Zokathra/chaos slices; broad mechanics parity remains open. | Prove a real CSB prison/new-adventure/combat/creature/item/save route with representative source/runtime gates. |
-| `audio_timing` | 2/10 | `DATA_DECODE_VERIFIED_PARTIAL` | CSB audio/timing must prove trigger cadence and overlap from CSB references. Current proof fixes AMG Utility Disk sound decoding for documented SND2 files; runtime playback/rate binding and timing proof remain open. | Add CSB-specific audio/timing source and runtime evidence. |
+| `audio_timing` | 5/10 | `NATIVE_TRANSPORT_VERIFIED_PARTIAL` | CSB audio/timing must prove trigger cadence and overlap from CSB references. The runtime now uses edition-owned transports: Atari ST reads only the 22 present SND1 records, applies F0064's strict loud/soft distance boundary, and selects the corresponding PSG amplitude table; Amiga reads direct signed PCM with Paula period/volume semantics; FM Towns reads the 35-entry F31 table, applies its source-ordered 1..127 distance formula, and plays BE-length-prefixed signed PCM at 5500 Hz. English and Japanese FM Towns retail ZIP/CD images prove the GRAPHICS.DAT-to-host path entirely in RAM. AMG Utility Disk SND2 decoding remains separately covered. | Capture trigger cadence, overlap and attenuation against original Atari ST, Amiga and FM Towns runtimes; add real gameplay-event receipts beyond the current payload/transport gates. |
 | `original_overlay_regression` | 0/10 | `BLOCKED_CAPTURE` | Representative CSB original overlays are required before regression points count. | Produce original-vs-Firestaff overlay regression fixtures. |
 
 ## CSB front-door render smoke and launch blocker gate
@@ -29,9 +30,8 @@ Primary references are audit-only and are never runtime dependencies:
 - `csb_v1_launch_blocker_m12` forces a matched CSB Atari ST version in the M12 launcher, clicks into the CSB options view, verifies both the options and ready-message views render nonblank startup/menu pixels, then clicks the CSB launch row. It verifies `launchRequested == 1` plus `M12_StartupMenu_GetLaunchIntent(...).valid == 1` for the CSB game ID. This is a positive front-door render smoke for the launcher/profile boundary, not a full gameplay claim.
 - `csb_v1_experimental_launch_intent_fixture` is the reviewed CSB launch-intent fixture. It consumes `csb_v1_atari_asset_pair_manifest.json`, requires the selected Atari ST `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus `HCSB.DAT`, `HCSB.HTC`, and `MINI.DAT`, audits ReDMCSB primary CSB dungeon/new-adventure gates, and verifies `menu_startup_m12.c` includes CSB in the production launch-intent guard. It keeps full runtime/render/gameplay parity as non-claims.
 - `csb_v1_quickplay_load_route_source_lock` source-locks the CSB/CSBWin reference QuickPlay route as replay playback only (`PlayfileIsOpen()` gates `OPT_QUICKPLAY`) and the shared load path as dungeon/signature/graphics/timer setup (`_ReadEntireGame`, `openGraphicsFile`, `HandleMouseEvents`). It also audits ReDMCSB primary CSB save/new-adventure routing so this launch evidence cannot be misread as full CSB runtime parity in Firestaff.
-- pass547_csb_v1_runtime_readiness_backfill now verifies the retired launch-readiness blocker: M12 admits CSB launch intent for matched assets, M11 hands CSB to `FS_GAME_CSB`, and the legacy-named `csb_v1_pc_real_asset_launch` test proves only a PC34-compatible fixture boundary. It must not be read as a PC CSB media claim; it remains a readiness boundary, not a full runtime/render/gameplay/pixel-parity claim.
 - `csb_v1_boot_runtime_handoff` is the composed CTest spine for the current partial runtime score. It proves verified profile -> runtime dungeon handle -> imported party -> leader/rotation runtime state -> one deterministic tick -> Utility `NEW_GAME` handoff. It remains synthetic-data evidence; it does not claim real-data CSB playability, original capture, or pixel parity.
-- The current fast CSB runtime/viewport smoke suite is `csb_v1_pc_real_asset_launch`, `csb_v1_pc34_quickplay_dungeon_handle`, `csb_v1_first_viewport_frame`, `csb_v1_boot_runtime_handoff`, and `csb_v1_runtime_route_first_frame_movement_utility_gate`. These CTests are self-contained instead of linking the broad `firestaff_m10` library. Together they prove compatibility-fixture scan/boot/tick, verified dungeon-handle survival/rescan cleanup, first M11 viewport-frame render entry, composed runtime/Utility handoff, and rejection of a hand-written dungeon plus marker-only graphics fixture. They must never be treated as a CSB PC release or playable original-media route. They still do not claim end-to-end CSB playability, original capture, full save compatibility, or pixel parity.
+- The current fast CSB runtime/viewport smoke suite is `csb_v1_first_viewport_frame`, `csb_v1_boot_runtime_handoff`, and `csb_v1_runtime_route_first_frame_movement_utility_gate`. Product verification uses Atari ST, Amiga, and FM Towns media only.
 
 ## Verified real Atari Prison and cold-resume route
 
@@ -78,8 +78,8 @@ python3 -m py_compile tools/verify_csb_v1_quickplay_load_route_source_lock.py
 python3 tools/verify_csb_v1_quickplay_load_route_source_lock.py
 python3 -m py_compile tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
 python3 tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
-cmake --build "$FIRESTAFF_BUILD_DIR" --target firestaff_csb_v1_pc_real_asset_launch_probe firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe firestaff_csb_v1_first_viewport_frame_probe test_csb_v1_boot_runtime_handoff test_csb_v1_runtime_route_first_frame_movement_utility_gate
-ctest --test-dir "$FIRESTAFF_BUILD_DIR" -R "csb_v1_(pc_real_asset_launch|pc34_quickplay_dungeon_handle|first_viewport_frame|boot_runtime_handoff|runtime_route_first_frame_movement_utility_gate)" --output-on-failure
+cmake --build "$FIRESTAFF_BUILD_DIR" --target firestaff_csb_v1_first_viewport_frame_probe test_csb_v1_boot_runtime_handoff test_csb_v1_runtime_route_first_frame_movement_utility_gate
+ctest --test-dir "$FIRESTAFF_BUILD_DIR" -R "csb_v1_(first_viewport_frame|boot_runtime_handoff|runtime_route_first_frame_movement_utility_gate)" --output-on-failure
 python3 tools/firestaff_completion_status.py
 ```
 

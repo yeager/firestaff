@@ -19,7 +19,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "COMMAND.C:2309",
       "line": 2309,
       "lineText": "                if (!G0299_ui_CandidateChampionOrdinal) {",
@@ -27,7 +27,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "COMMAND.C:2310",
       "line": 2310,
       "lineText": "                        F0371_COMMAND_ProcessType111To115_ClickInActionArea_CPSE(L1161_i_CommandX, L1162_i_CommandY);",
@@ -35,7 +35,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:124",
       "line": 124,
       "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
@@ -43,7 +43,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:744",
       "line": 744,
       "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
@@ -51,7 +51,7 @@
       "status": "DRIFT"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.v1",
   "scope": "DM1 V1 mirror-candidate C040: while the candidate panel is live (G0299 set), COMMAND.C F0380:2309-2311 drops the C111 action-area click. After F0282(C162) clears G0299 the click fires F0371. Disjoint from pass786 (C100 with G0514 magic-caster gate), pass785 (C007..C011 inventory-toggle), and pass784 (cancel-then-reopen same-tick).",
   "sourceChecks": [
@@ -87,11 +87,11 @@
     }
   ],
   "status": "PASS787_DM1_V1_MIRROR_CANDIDATE_C040_ACTION_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:10.767758+00:00",
+  "timestampUtc": "2026-09-04T18:01:00.247213+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live: 42/42 assertions passed",
       "passed": true,

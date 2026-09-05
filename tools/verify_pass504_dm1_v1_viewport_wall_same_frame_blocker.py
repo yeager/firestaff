@@ -4,14 +4,19 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
+import zipfile
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+DM1_DATA = Path(os.environ.get(
+    "FIRESTAFF_DM1_DATA_DIR", str(Path.home() / ".firestaff/data/dm1")))
+PC34_ZIP = DM1_DATA / "Dungeon-Master_DOS_EN_Version-34.zip"
 OUT_DIR = ROOT / "parity-evidence/verification/pass504_dm1_v1_viewport_wall_same_frame_blocker"
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence/pass504_dm1_v1_viewport_wall_same_frame_blocker.md"
@@ -58,6 +63,28 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def original_media_evidence() -> dict[str, Any]:
+    """Inventory authentic media without promoting the missing frame capture."""
+    display_path = "~/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    if not PC34_ZIP.is_file():
+        return {"available": False, "path": display_path}
+    digest_state = hashlib.sha256()
+    with PC34_ZIP.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest_state.update(chunk)
+    with zipfile.ZipFile(PC34_ZIP) as archive:
+        members = sorted(
+            name for name in archive.namelist()
+            if Path(name).name.upper() in {"GRAPHICS.DAT", "DUNGEON.DAT"})
+    return {
+        "available": True,
+        "path": display_path,
+        "sha256": digest_state.hexdigest(),
+        "requiredMembers": members,
+        "usableForCapture": len(members) == 2,
+    }
+
+
 def check_source(row: dict[str, Any]) -> dict[str, Any]:
     excerpt = slice_lines(read(RED / row["file"]), row["lines"])
     missing = [needle for needle in row["needles"] if needle not in excerpt]
@@ -89,8 +116,9 @@ def main() -> int:
         "schema": "firestaff.parity.pass504_dm1_v1_viewport_wall_same_frame_blocker.v1",
         "status": STATUS if not problems else "FAIL_PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER",
         "ok": not problems,
-        "sourceRoot": str(RED),
+        "sourceRoot": str(RED.relative_to(ROOT)),
         "sourceLocks": source,
+        "originalMediaEvidence": original_media_evidence(),
         "localLocks": local,
         "preciseBlocker": "Viewport/walls source and Firestaff spec/probe evidence are locked, but parity still lacks one same-frame original DM1 V1 and Firestaff wall/door occlusion capture tied to the F0128 composition and F0097 present boundary.",
         "promotionPredicate": PROMOTION_PREDICATE,

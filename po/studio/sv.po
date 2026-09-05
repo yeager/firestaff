@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Firestaff Studio 3.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-08-02 18:49+0200\n"
 "Last-Translator: Firestaff Team\n"
 "Language-Team: Swedish\n"
@@ -14,192 +14,151 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: scripts/firestaff_dungeon_studio.py:411
-#: scripts/firestaff_artpack_studio.py:1674
+#: scripts/firestaff_artpack_studio.py:1715
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1729
+#: scripts/firestaff_savegame_editor.py:427
+msgid "Ready"
+msgstr "Redo"
+
+#: scripts/firestaff_artpack_studio.py:1730
+msgid "No game data imported"
+msgstr "Ingen speldata importerad"
+
+#: scripts/firestaff_artpack_studio.py:1747
+#: scripts/firestaff_dungeon_studio.py:429
+#: scripts/firestaff_savegame_editor.py:596
 msgid "Game"
 msgstr "Spel"
 
-#: scripts/firestaff_dungeon_studio.py:418
-msgid "New"
-msgstr "Nytt"
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Pack"
+msgstr "Paket"
 
-#: scripts/firestaff_dungeon_studio.py:419
-#: scripts/firestaff_dungeon_studio.py:995
-msgid "Open .fsdung"
-msgstr "Öppna .fsdung"
+#: scripts/firestaff_artpack_studio.py:1753
+#: scripts/firestaff_artpack_studio.py:1788
+msgid "Browse"
+msgstr "Bläddra"
 
-#: scripts/firestaff_dungeon_studio.py:420
-#: scripts/firestaff_dungeon_studio.py:1024
-msgid "Save .fsdung"
-msgstr "Spara .fsdung"
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "Open/Create"
+msgstr "Öppna/Skapa"
 
-#: scripts/firestaff_dungeon_studio.py:421
-msgid "Save As..."
-msgstr "Spara som..."
-
-#: scripts/firestaff_dungeon_studio.py:425
-msgid "Add Level"
-msgstr "Lägg till nivå"
-
-#: scripts/firestaff_dungeon_studio.py:426
-#: scripts/firestaff_dungeon_studio.py:1047
-msgid "Map Settings"
-msgstr "Kartinställningar"
-
-#: scripts/firestaff_dungeon_studio.py:427
-msgid "Statistics"
-msgstr "Statistik"
-
-#: scripts/firestaff_dungeon_studio.py:428
-#: scripts/firestaff_artpack_studio.py:1682
+#: scripts/firestaff_artpack_studio.py:1755
+#: scripts/firestaff_dungeon_studio.py:446
 msgid "Validate"
 msgstr "Validera"
 
-#: scripts/firestaff_dungeon_studio.py:430
-#: scripts/firestaff_dungeon_studio.py:1191
-msgid "Test View"
-msgstr "Testvy"
+#: scripts/firestaff_artpack_studio.py:1756
+msgid "Build Runtime Cache"
+msgstr "Bygg körtidscache"
 
-#: scripts/firestaff_dungeon_studio.py:452
-msgid "Tools"
-msgstr "Verktyg"
+#: scripts/firestaff_artpack_studio.py:1757
+msgid "Write Receipt"
+msgstr "Skriv kvitto"
 
-#: scripts/firestaff_dungeon_studio.py:454
-msgid "Select"
-msgstr "Markera"
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Import .fsart"
+msgstr "Importera .fsart"
 
-#: scripts/firestaff_dungeon_studio.py:454
-msgid "Paint"
-msgstr "Måla"
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Export .fsart"
+msgstr "Exportera .fsart"
 
-#: scripts/firestaff_dungeon_studio.py:454
-msgid "Place Thing"
-msgstr "Placera objekt"
+#: scripts/firestaff_artpack_studio.py:1760
+#: scripts/firestaff_artpack_studio.py:1882
+msgid "Settings"
+msgstr "Inställningar"
 
-#: scripts/firestaff_dungeon_studio.py:455
-msgid "Erase"
-msgstr "Radera"
+#: scripts/firestaff_artpack_studio.py:1782
+msgid "V1 assets / V2.2 targets"
+msgstr "V1-resurser / V2.2-mål"
 
-#: scripts/firestaff_dungeon_studio.py:455
-msgid "Fill"
-msgstr "Fyll"
+#: scripts/firestaff_artpack_studio.py:1783
+msgid "Rescan"
+msgstr "Skanna om"
 
-#: scripts/firestaff_dungeon_studio.py:455
-msgid "Set Party Start"
-msgstr "Ange gruppstart"
+#: scripts/firestaff_artpack_studio.py:1786
+msgid "V1 root"
+msgstr "V1-rot"
 
-#: scripts/firestaff_dungeon_studio.py:463
-msgid "Tile Types"
-msgstr "Ruttyper"
+#: scripts/firestaff_artpack_studio.py:1791
+msgid "Import game data"
+msgstr "Importera speldata"
 
-#: scripts/firestaff_dungeon_studio.py:474
-msgid "Thing Type"
-msgstr "Objekttyp"
+#: scripts/firestaff_artpack_studio.py:1792
+#: scripts/firestaff_artpack_studio.py:2173
+msgid "Warnings"
+msgstr "Varningar"
 
-#: scripts/firestaff_dungeon_studio.py:481
-msgid "View"
-msgstr "Vy"
+#: scripts/firestaff_artpack_studio.py:1810
+msgid "Current asset"
+msgstr "Aktuell resurs"
 
-#: scripts/firestaff_dungeon_studio.py:483
-msgid "Show Grid"
-msgstr "Visa rutnät"
+#: scripts/firestaff_artpack_studio.py:1812
+msgid "Category"
+msgstr "Kategori"
 
-#: scripts/firestaff_dungeon_studio.py:485
-msgid "Show Things"
-msgstr "Visa objekt"
+#: scripts/firestaff_artpack_studio.py:1815
+msgid "Asset id"
+msgstr "Resurs-id"
 
-#: scripts/firestaff_dungeon_studio.py:489
-msgid "Zoom"
-msgstr "Zoom"
+#: scripts/firestaff_artpack_studio.py:1817
+msgid "Generator"
+msgstr "Generator"
 
-#: scripts/firestaff_dungeon_studio.py:492
-msgid "Fit"
-msgstr "Anpassa"
+#: scripts/firestaff_artpack_studio.py:1823
+msgid "Load V1/ref"
+msgstr "Ladda V1/ref"
 
-#: scripts/firestaff_dungeon_studio.py:518
-msgid "Map Properties"
-msgstr "Kartegenskaper"
+#: scripts/firestaff_artpack_studio.py:1824
+msgid "Load V2.2 target"
+msgstr "Ladda V2.2-mål"
 
-#: scripts/firestaff_dungeon_studio.py:522
-msgid "Name"
-msgstr "Namn"
+#: scripts/firestaff_artpack_studio.py:1825
+msgid "Import target to pack"
+msgstr "Importera mål till paket"
 
-#: scripts/firestaff_dungeon_studio.py:525
-msgid "Size"
-msgstr "Storlek"
+#: scripts/firestaff_artpack_studio.py:1826
+msgid "Save edited target"
+msgstr "Spara redigerat mål"
 
-#: scripts/firestaff_dungeon_studio.py:531
-msgid "Wall Set"
-msgstr "Väggset"
+#: scripts/firestaff_artpack_studio.py:1828
+msgid "AI generation hook"
+msgstr "AI-genereringskoppling"
 
-#: scripts/firestaff_dungeon_studio.py:534
-msgid "Floor Set"
-msgstr "Golvset"
+#: scripts/firestaff_artpack_studio.py:1832
+msgid "Write prompt"
+msgstr "Skriv prompt"
 
-#: scripts/firestaff_dungeon_studio.py:537
-msgid "Difficulty"
-msgstr "Svårighetsgrad"
+#: scripts/firestaff_artpack_studio.py:1833
+msgid "Run AI command"
+msgstr "Kör AI-kommando"
 
-#: scripts/firestaff_dungeon_studio.py:543
-msgid "Tile"
-msgstr "Ruta"
+#: scripts/firestaff_artpack_studio.py:1836
+msgid "AI selected"
+msgstr "AI markerade"
 
-#: scripts/firestaff_dungeon_studio.py:547
-msgid "Position"
-msgstr "Position"
+#: scripts/firestaff_artpack_studio.py:1837
+msgid "AI missing/all"
+msgstr "AI saknade/alla"
 
-#: scripts/firestaff_dungeon_studio.py:549
-#: scripts/firestaff_dungeon_studio.py:572
-msgid "Type"
-msgstr "Typ"
+#: scripts/firestaff_artpack_studio.py:1867
+msgid "Drag-and-drop enabled"
+msgstr "Dra-och-släpp aktiverat"
 
-#: scripts/firestaff_dungeon_studio.py:553
-msgid "Things at Tile"
-msgstr "Objekt vid ruta"
-
-#: scripts/firestaff_dungeon_studio.py:565
-msgid "Delete Thing"
-msgstr "Ta bort objekt"
-
-#: scripts/firestaff_dungeon_studio.py:568
-msgid "Thing Properties"
-msgstr "Objektegenskaper"
-
-#: scripts/firestaff_dungeon_studio.py:574
-msgid "Cell"
-msgstr "Cell"
-
-#: scripts/firestaff_dungeon_studio.py:581
-msgid "Graphics Override"
-msgstr "Grafiköverstyrning"
-
-#: scripts/firestaff_dungeon_studio.py:587
-#, python-brace-format
-msgid "Import {}..."
-msgstr "Importera {}..."
-
-#: scripts/firestaff_dungeon_studio.py:624
-#: scripts/firestaff_dungeon_studio.py:982
-#: scripts/firestaff_dungeon_studio.py:1038
-msgid "Coming soon"
-msgstr "Kommer snart"
-
-#: scripts/firestaff_dungeon_studio.py:653
-msgid "New Level"
-msgstr "Ny nivå"
-
-#: scripts/firestaff_dungeon_studio.py:653
-msgid "Level name:"
-msgstr "Nivånamn:"
-
-#: scripts/firestaff_dungeon_studio.py:975
-#: scripts/firestaff_artpack_studio.py:1803
+#: scripts/firestaff_artpack_studio.py:1877
+#: scripts/firestaff_dungeon_studio.py:993
+#: scripts/firestaff_savegame_editor.py:483
+#: scripts/firestaff_savegame_editor.py:920
 msgid "Language"
 msgstr "Språk"
 
-#: scripts/firestaff_dungeon_studio.py:976
-#: scripts/firestaff_artpack_studio.py:1804
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:1878
+#: scripts/firestaff_dungeon_studio.py:994
+#: scripts/firestaff_savegame_editor.py:921
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -207,475 +166,230 @@ msgstr ""
 "Språk inställt på {}.\n"
 "Starta om appen för full effekt."
 
-#: scripts/firestaff_dungeon_studio.py:982
-#: scripts/firestaff_dungeon_studio.py:1038
+#: scripts/firestaff_artpack_studio.py:1891
+msgid "AI Command Template"
+msgstr "AI-kommandomall"
+
+#: scripts/firestaff_artpack_studio.py:1893
 #, python-brace-format
-msgid "{} support coming in a future update"
-msgstr "{}-stöd kommer i en framtida uppdatering"
-
-#: scripts/firestaff_dungeon_studio.py:991
-msgid "New dungeon created"
-msgstr "Ny dungeon skapad"
-
-#: scripts/firestaff_dungeon_studio.py:996
-#: scripts/firestaff_dungeon_studio.py:1026
-#: scripts/firestaff_artpack_studio.py:1987
-#: scripts/firestaff_artpack_studio.py:1997
-#: scripts/firestaff_artpack_studio.py:2010
-#: scripts/firestaff_artpack_studio.py:2249
-#: scripts/firestaff_artpack_studio.py:2264
-msgid "All files"
-msgstr "Alla filer"
-
-#: scripts/firestaff_dungeon_studio.py:1008
-#, python-brace-format
-msgid "Opened: {}"
-msgstr "Öppnad: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1010
-#: scripts/firestaff_dungeon_studio.py:1020
-#: scripts/firestaff_dungeon_studio.py:1148
-#: scripts/firestaff_dungeon_studio.py:1153
-msgid "Error"
-msgstr "Fel"
-
-#: scripts/firestaff_dungeon_studio.py:1018
-#, python-brace-format
-msgid "Saved: {}"
-msgstr "Sparad: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1059
-msgid "Width (1-64)"
-msgstr "Bredd (1-64)"
-
-#: scripts/firestaff_dungeon_studio.py:1061
-msgid "Height (1-64)"
-msgstr "Höjd (1-64)"
-
-#: scripts/firestaff_dungeon_studio.py:1083
-msgid "Apply"
-msgstr "Verkställ"
-
-#: scripts/firestaff_dungeon_studio.py:1101
-#, python-brace-format
-msgid "Maps: {}"
-msgstr "Kartor: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1102
-#, python-brace-format
-msgid "Current: {} ({}×{})"
-msgstr "Aktuell: {} ({}×{})"
-
-#: scripts/firestaff_dungeon_studio.py:1104
-msgid "Tiles:"
-msgstr "Rutor:"
-
-#: scripts/firestaff_dungeon_studio.py:1108
-#, python-brace-format
-msgid "Things: {}"
-msgstr "Objekt: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1113
-msgid "Dungeon Statistics"
-msgstr "Dungeon-statistik"
-
-#: scripts/firestaff_dungeon_studio.py:1122
-#, python-brace-format
-msgid "Map {} \"{}\": all walls"
-msgstr "Karta {} \"{}\": alla väggar"
-
-#: scripts/firestaff_dungeon_studio.py:1128
-msgid "Party start is inside a wall"
-msgstr "Gruppstarten är inuti en vägg"
-
-#: scripts/firestaff_dungeon_studio.py:1130
-msgid "Party start is outside map bounds"
-msgstr "Gruppstarten är utanför kartgränserna"
-
-#: scripts/firestaff_dungeon_studio.py:1133
-#: scripts/firestaff_dungeon_studio.py:1135
-msgid "Validation"
-msgstr "Validering"
-
-#: scripts/firestaff_dungeon_studio.py:1133
-msgid "Issues found:"
-msgstr "Problem hittade:"
-
-#: scripts/firestaff_dungeon_studio.py:1135
-msgid "Dungeon is valid!"
-msgstr "Dungeon är giltig!"
-
-#: scripts/firestaff_dungeon_studio.py:1142
-#, python-brace-format
-msgid "Import {}"
-msgstr "Importera {}"
-
-#: scripts/firestaff_dungeon_studio.py:1143
-msgid "All"
-msgstr "Alla"
-
-#: scripts/firestaff_dungeon_studio.py:1148
-msgid "Pillow is required for graphics import"
-msgstr "Pillow krävs för grafikimport"
-
-#: scripts/firestaff_dungeon_studio.py:1153
-#, python-brace-format
-msgid "Could not load image: {}"
-msgstr "Kunde inte ladda bild: {}"
-
-#: scripts/firestaff_dungeon_studio.py:1156
-msgid "Resize?"
-msgstr "Ändra storlek?"
-
-#: scripts/firestaff_dungeon_studio.py:1157
-#, python-brace-format
-msgid ""
-"Image is {}×{}, expected {}×{}.\n"
-"Resize to fit?"
-msgstr ""
-"Bilden är {}×{}, förväntad {}×{}.\n"
-"Ändra storlek för att passa?"
-
-#: scripts/firestaff_dungeon_studio.py:1169
-#, python-brace-format
-msgid "{} imported from {}"
-msgstr "{} importerad från {}"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "North"
-msgstr "Norr"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "East"
-msgstr "Öst"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "South"
-msgstr "Syd"
-
-#: scripts/firestaff_dungeon_studio.py:1204
-msgid "West"
-msgstr "Väst"
-
-#: scripts/firestaff_dungeon_studio.py:1210
-msgid "Turn L"
-msgstr "Vänd V"
-
-#: scripts/firestaff_dungeon_studio.py:1212
-msgid "Fwd"
-msgstr "Fram"
-
-#: scripts/firestaff_dungeon_studio.py:1214
-msgid "Back"
-msgstr "Bak"
-
-#: scripts/firestaff_dungeon_studio.py:1216
-msgid "Turn R"
-msgstr "Vänd H"
-
-#: scripts/firestaff_artpack_studio.py:1646
-msgid "Firestaff V2.2 Artpack Studio"
-msgstr "Firestaff V2.2 Artpack Studio"
-
-#: scripts/firestaff_artpack_studio.py:1656
-msgid "Ready"
-msgstr "Redo"
-
-#: scripts/firestaff_artpack_studio.py:1657
-msgid "No game data imported"
-msgstr "Ingen speldata importerad"
-
-#: scripts/firestaff_artpack_studio.py:1678
-msgid "Pack"
-msgstr "Paket"
-
-#: scripts/firestaff_artpack_studio.py:1680
-#: scripts/firestaff_artpack_studio.py:1714
-msgid "Browse"
-msgstr "Bläddra"
-
-#: scripts/firestaff_artpack_studio.py:1681
-msgid "Open/Create"
-msgstr "Öppna/Skapa"
-
-#: scripts/firestaff_artpack_studio.py:1683
-msgid "Build Runtime Cache"
-msgstr "Bygg körtidscache"
-
-#: scripts/firestaff_artpack_studio.py:1684
-msgid "Write Receipt"
-msgstr "Skriv kvitto"
-
-#: scripts/firestaff_artpack_studio.py:1685
-msgid "Import .fsart"
-msgstr "Importera .fsart"
-
-#: scripts/firestaff_artpack_studio.py:1686
-msgid "Export .fsart"
-msgstr "Exportera .fsart"
-
-#: scripts/firestaff_artpack_studio.py:1708
-msgid "V1 assets / V2.2 targets"
-msgstr "V1-resurser / V2.2-mål"
-
-#: scripts/firestaff_artpack_studio.py:1709
-msgid "Rescan"
-msgstr "Skanna om"
-
-#: scripts/firestaff_artpack_studio.py:1712
-msgid "V1 root"
-msgstr "V1-rot"
-
-#: scripts/firestaff_artpack_studio.py:1717
-msgid "Import game data"
-msgstr "Importera speldata"
-
-#: scripts/firestaff_artpack_studio.py:1718
-#: scripts/firestaff_artpack_studio.py:2043
-msgid "Warnings"
-msgstr "Varningar"
-
-#: scripts/firestaff_artpack_studio.py:1736
-msgid "Current asset"
-msgstr "Aktuell resurs"
-
-#: scripts/firestaff_artpack_studio.py:1738
-msgid "Category"
-msgstr "Kategori"
-
-#: scripts/firestaff_artpack_studio.py:1741
-msgid "Asset id"
-msgstr "Resurs-id"
-
-#: scripts/firestaff_artpack_studio.py:1743
-msgid "Generator"
-msgstr "Generator"
-
-#: scripts/firestaff_artpack_studio.py:1749
-msgid "Load V1/ref"
-msgstr "Ladda V1/ref"
-
-#: scripts/firestaff_artpack_studio.py:1750
-msgid "Load V2.2 target"
-msgstr "Ladda V2.2-mål"
-
-#: scripts/firestaff_artpack_studio.py:1751
-msgid "Import target to pack"
-msgstr "Importera mål till paket"
-
-#: scripts/firestaff_artpack_studio.py:1752
-msgid "Save edited target"
-msgstr "Spara redigerat mål"
-
-#: scripts/firestaff_artpack_studio.py:1754
-msgid "AI generation hook"
-msgstr "AI-genereringskoppling"
-
-#: scripts/firestaff_artpack_studio.py:1758
-msgid "Write prompt"
-msgstr "Skriv prompt"
-
-#: scripts/firestaff_artpack_studio.py:1759
-msgid "Run AI command"
-msgstr "Kör AI-kommando"
-
-#: scripts/firestaff_artpack_studio.py:1762
-msgid "AI selected"
-msgstr "AI markerade"
-
-#: scripts/firestaff_artpack_studio.py:1763
-msgid "AI missing/all"
-msgstr "AI saknade/alla"
-
-#: scripts/firestaff_artpack_studio.py:1793
-msgid "Drag-and-drop enabled"
-msgstr "Dra-och-släpp aktiverat"
-
-#: scripts/firestaff_artpack_studio.py:1816
-#: scripts/firestaff_artpack_studio.py:2271
-#, python-brace-format
+msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
+msgstr "Platshållare: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
+
+#: scripts/firestaff_artpack_studio.py:1897
+msgid "Command"
+msgstr "Kommando"
+
+#: scripts/firestaff_artpack_studio.py:1900
+msgid "API Key"
+msgstr "API-nyckel"
+
+#: scripts/firestaff_artpack_studio.py:1904
+msgid "Stored in ~/.firestaff/studio_settings.json"
+msgstr "Lagras i ~/.firestaff/studio_settings.json"
+
+#: scripts/firestaff_artpack_studio.py:1904
+msgid "Stored securely in system keychain"
+msgstr "Lagras säkert i systemets nyckelring"
+
+#: scripts/firestaff_artpack_studio.py:1909
+#: scripts/firestaff_savegame_editor.py:698
+msgid "Key"
+msgstr "Nyckel"
+
+#: scripts/firestaff_artpack_studio.py:1913
+msgid "API Provider"
+msgstr "API-leverantör"
+
+#: scripts/firestaff_artpack_studio.py:1929
+msgid "Settings saved"
+msgstr "Inställningarna sparades"
+
+#: scripts/firestaff_artpack_studio.py:1933
+#: scripts/firestaff_savegame_editor.py:474
+#: scripts/firestaff_savegame_editor.py:493
+msgid "Save"
+msgstr "Spara"
+
+#: scripts/firestaff_artpack_studio.py:1934
+msgid "Cancel"
+msgstr "Avbryt"
+
+#: scripts/firestaff_artpack_studio.py:1946
+#: scripts/firestaff_artpack_studio.py:2401
 msgid "Imported .fsart: {}"
 msgstr "Importerad .fsart: {}"
 
-#: scripts/firestaff_artpack_studio.py:1821
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:1951
 msgid "Loaded dropped target: {}"
 msgstr "Inläst släppt mål: {}"
 
-#: scripts/firestaff_artpack_studio.py:1852
+#: scripts/firestaff_artpack_studio.py:1982
 msgid "Select V2.2 modern artpack directory"
 msgstr "Välj V2.2 modern artpack-katalog"
 
-#: scripts/firestaff_artpack_studio.py:1858
+#: scripts/firestaff_artpack_studio.py:1988
 msgid "Select V1/reference asset root"
 msgstr "Välj V1/referens-resursrot"
 
-#: scripts/firestaff_artpack_studio.py:1870
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2000
 msgid "Opened {} artpack: {}"
 msgstr "Öppnade {} artpack: {}"
 
-#: scripts/firestaff_artpack_studio.py:1872
+#: scripts/firestaff_artpack_studio.py:2002
 msgid "Open artpack failed"
 msgstr "Öppning av artpack misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:1919
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2049
 msgid "Scanned {} V1/reference assets"
 msgstr "Skannade {} V1/referensresurser"
 
-#: scripts/firestaff_artpack_studio.py:1986
+#: scripts/firestaff_artpack_studio.py:2116
 msgid "Load V1/reference image"
 msgstr "Ladda V1/referensbild"
 
-#: scripts/firestaff_artpack_studio.py:1987
-#: scripts/firestaff_artpack_studio.py:1997
-#: scripts/firestaff_artpack_studio.py:2009
+#: scripts/firestaff_artpack_studio.py:2117
+#: scripts/firestaff_artpack_studio.py:2127
+#: scripts/firestaff_artpack_studio.py:2140
+#: scripts/firestaff_artpack_studio.py:2379
+#: scripts/firestaff_artpack_studio.py:2394
+#: scripts/firestaff_dungeon_studio.py:1014
+#: scripts/firestaff_dungeon_studio.py:1044
+msgid "All files"
+msgstr "Alla filer"
+
+#: scripts/firestaff_artpack_studio.py:2117
+#: scripts/firestaff_artpack_studio.py:2127
+#: scripts/firestaff_artpack_studio.py:2139
 msgid "Images"
 msgstr "Bilder"
 
-#: scripts/firestaff_artpack_studio.py:1992
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2122
 msgid "Loaded reference: {}"
 msgstr "Inläst referens: {}"
 
-#: scripts/firestaff_artpack_studio.py:1996
+#: scripts/firestaff_artpack_studio.py:2126
 msgid "Load V2.2 target image"
 msgstr "Ladda V2.2-målbild"
 
-#: scripts/firestaff_artpack_studio.py:2002
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2132
 msgid "Loaded target: {}"
 msgstr "Inläst mål: {}"
 
-#: scripts/firestaff_artpack_studio.py:2006
+#: scripts/firestaff_artpack_studio.py:2136
 msgid "Import original game data"
 msgstr "Importera original speldata"
 
-#: scripts/firestaff_artpack_studio.py:2008
+#: scripts/firestaff_artpack_studio.py:2138
 msgid "Game data"
 msgstr "Speldata"
 
-#: scripts/firestaff_artpack_studio.py:2035
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2165
 msgid "Imported game data: {} ({})"
 msgstr "Importerad speldata: {} ({})"
 
-#: scripts/firestaff_artpack_studio.py:2037
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2167
 msgid "Warnings: {}"
 msgstr "Varningar: {}"
 
-#: scripts/firestaff_artpack_studio.py:2039
+#: scripts/firestaff_artpack_studio.py:2169
 msgid "Game data import failed"
 msgstr "Import av speldata misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2043
+#: scripts/firestaff_artpack_studio.py:2173
 msgid "No game data imported."
 msgstr "Ingen speldata importerad."
 
-#: scripts/firestaff_artpack_studio.py:2048
+#: scripts/firestaff_artpack_studio.py:2178
 msgid "No warnings."
 msgstr "Inga varningar."
 
-#: scripts/firestaff_artpack_studio.py:2049
+#: scripts/firestaff_artpack_studio.py:2179
 msgid "Game data warnings"
 msgstr "Varningar för speldata"
 
-#: scripts/firestaff_artpack_studio.py:2074
-msgid "No target image"
-msgstr "Ingen målbild"
-
-#: scripts/firestaff_artpack_studio.py:2074
+#: scripts/firestaff_artpack_studio.py:2204
 msgid "Load or generate a V2.2 target first."
 msgstr "Ladda eller generera ett V2.2-mål först."
 
-#: scripts/firestaff_artpack_studio.py:2089
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2204
+msgid "No target image"
+msgstr "Ingen målbild"
+
+#: scripts/firestaff_artpack_studio.py:2219
 msgid "Imported {}/{}"
 msgstr "Importerad {}/{}"
 
-#: scripts/firestaff_artpack_studio.py:2091
-#: scripts/firestaff_artpack_studio.py:2273
+#: scripts/firestaff_artpack_studio.py:2221
+#: scripts/firestaff_artpack_studio.py:2403
 msgid "Import failed"
 msgstr "Import misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2104
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2234
 msgid "Saved edited image: {}"
 msgstr "Sparad redigerad bild: {}"
 
-#: scripts/firestaff_artpack_studio.py:2132
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2262
 msgid "Wrote AI prompt: {}"
 msgstr "Skrev AI-prompt: {}"
 
-#: scripts/firestaff_artpack_studio.py:2138
-#: scripts/firestaff_artpack_studio.py:2178
+#: scripts/firestaff_artpack_studio.py:2268
+#: scripts/firestaff_artpack_studio.py:2308
 msgid "AI command not configured"
 msgstr "AI-kommando ej konfigurerat"
 
-#: scripts/firestaff_artpack_studio.py:2139
+#: scripts/firestaff_artpack_studio.py:2269
 msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
 msgstr "Ställ in FIRESTAFF_ARTPACK_AI_COMMAND eller ange en kommandomall först."
 
-#: scripts/firestaff_artpack_studio.py:2169
+#: scripts/firestaff_artpack_studio.py:2299
 msgid "AI command generated target image"
 msgstr "AI-kommando genererade målbild"
 
-#: scripts/firestaff_artpack_studio.py:2171
+#: scripts/firestaff_artpack_studio.py:2301
 msgid "AI generation failed"
 msgstr "AI-generering misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2178
+#: scripts/firestaff_artpack_studio.py:2308
 msgid "Enter an AI command template first."
 msgstr "Ange en AI-kommandomall först."
 
-#: scripts/firestaff_artpack_studio.py:2186
+#: scripts/firestaff_artpack_studio.py:2316
 msgid "AI batch"
 msgstr "AI-batch"
 
-#: scripts/firestaff_artpack_studio.py:2187
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2317
 msgid "Generate how many assets? {} available."
 msgstr "Generera hur många resurser? {} tillgängliga."
 
-#: scripts/firestaff_artpack_studio.py:2210
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2340
 msgid "AI batch generated/imported {} assets"
 msgstr "AI-batch genererade/importerade {} resurser"
 
-#: scripts/firestaff_artpack_studio.py:2217
+#: scripts/firestaff_artpack_studio.py:2347
 msgid "Validation failed:"
 msgstr "Validering misslyckades:"
 
-#: scripts/firestaff_artpack_studio.py:2218
+#: scripts/firestaff_artpack_studio.py:2348
 msgid "Validation failed"
 msgstr "Validering misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2220
+#: scripts/firestaff_artpack_studio.py:2350
 msgid "Validation passed for required slots"
 msgstr "Validering godkänd för obligatoriska platser"
 
-#: scripts/firestaff_artpack_studio.py:2221
-msgid "Validation passed"
-msgstr "Validering godkänd"
-
-#: scripts/firestaff_artpack_studio.py:2221
+#: scripts/firestaff_artpack_studio.py:2351
 msgid "Required slots are complete."
 msgstr "Obligatoriska platser är klara."
 
-#: scripts/firestaff_artpack_studio.py:2228
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2351
+msgid "Validation passed"
+msgstr "Validering godkänd"
+
+#: scripts/firestaff_artpack_studio.py:2358
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Byggde V2.2 körtidscache: {} ({} byte)"
 
-#: scripts/firestaff_artpack_studio.py:2229
-msgid "Runtime cache"
-msgstr "Körtidscache"
-
-#: scripts/firestaff_artpack_studio.py:2229
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2359
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -683,45 +397,960 @@ msgstr ""
 "Byggde {}\n"
 "{} byte"
 
-#: scripts/firestaff_artpack_studio.py:2231
+#: scripts/firestaff_artpack_studio.py:2359
+msgid "Runtime cache"
+msgstr "Körtidscache"
+
+#: scripts/firestaff_artpack_studio.py:2361
 msgid "Runtime cache failed"
 msgstr "Körtidscache misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2236
+#: scripts/firestaff_artpack_studio.py:2366
 msgid "Reviewer"
 msgstr "Granskare"
 
-#: scripts/firestaff_artpack_studio.py:2236
+#: scripts/firestaff_artpack_studio.py:2366
 msgid "Reviewer name:"
 msgstr "Granskarens namn:"
 
-#: scripts/firestaff_artpack_studio.py:2239
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2369
 msgid "Wrote receipt: {}"
 msgstr "Skrev kvitto: {}"
 
-#: scripts/firestaff_artpack_studio.py:2241
+#: scripts/firestaff_artpack_studio.py:2371
 msgid "Receipt failed"
 msgstr "Kvitto misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2247
+#: scripts/firestaff_artpack_studio.py:2377
 msgid "Export Firestaff artpack"
 msgstr "Exportera Firestaff artpack"
 
-#: scripts/firestaff_artpack_studio.py:2249
-#: scripts/firestaff_artpack_studio.py:2264
+#: scripts/firestaff_artpack_studio.py:2379
+#: scripts/firestaff_artpack_studio.py:2394
 msgid "Firestaff artpack"
 msgstr "Firestaff artpack"
 
-#: scripts/firestaff_artpack_studio.py:2255
-#, python-brace-format
+#: scripts/firestaff_artpack_studio.py:2385
 msgid "Exported .fsart: {}"
 msgstr "Exporterad .fsart: {}"
 
-#: scripts/firestaff_artpack_studio.py:2257
+#: scripts/firestaff_artpack_studio.py:2387
 msgid "Export failed"
 msgstr "Export misslyckades"
 
-#: scripts/firestaff_artpack_studio.py:2263
+#: scripts/firestaff_artpack_studio.py:2393
 msgid "Import Firestaff artpack"
 msgstr "Importera Firestaff artpack"
+
+#: scripts/firestaff_dungeon_studio.py:436
+msgid "New"
+msgstr "Nytt"
+
+#: scripts/firestaff_dungeon_studio.py:437
+#: scripts/firestaff_dungeon_studio.py:1013
+msgid "Open .fsdung"
+msgstr "Öppna .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:438
+#: scripts/firestaff_dungeon_studio.py:1042
+msgid "Save .fsdung"
+msgstr "Spara .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:439
+#: scripts/firestaff_savegame_editor.py:475
+msgid "Save As..."
+msgstr "Spara som..."
+
+#: scripts/firestaff_dungeon_studio.py:443
+msgid "Add Level"
+msgstr "Lägg till nivå"
+
+#: scripts/firestaff_dungeon_studio.py:444
+#: scripts/firestaff_dungeon_studio.py:1065
+msgid "Map Settings"
+msgstr "Kartinställningar"
+
+#: scripts/firestaff_dungeon_studio.py:445
+msgid "Statistics"
+msgstr "Statistik"
+
+#: scripts/firestaff_dungeon_studio.py:448
+#: scripts/firestaff_dungeon_studio.py:1209
+msgid "Test View"
+msgstr "Testvy"
+
+#: scripts/firestaff_dungeon_studio.py:470
+msgid "Tools"
+msgstr "Verktyg"
+
+#: scripts/firestaff_dungeon_studio.py:472
+msgid "Paint"
+msgstr "Måla"
+
+#: scripts/firestaff_dungeon_studio.py:472
+msgid "Place Thing"
+msgstr "Placera objekt"
+
+#: scripts/firestaff_dungeon_studio.py:472
+msgid "Select"
+msgstr "Markera"
+
+#: scripts/firestaff_dungeon_studio.py:473
+msgid "Erase"
+msgstr "Radera"
+
+#: scripts/firestaff_dungeon_studio.py:473
+msgid "Fill"
+msgstr "Fyll"
+
+#: scripts/firestaff_dungeon_studio.py:473
+msgid "Set Party Start"
+msgstr "Ange gruppstart"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "Tile Types"
+msgstr "Ruttyper"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Thing Type"
+msgstr "Objekttyp"
+
+#: scripts/firestaff_dungeon_studio.py:499
+msgid "View"
+msgstr "Vy"
+
+#: scripts/firestaff_dungeon_studio.py:501
+msgid "Show Grid"
+msgstr "Visa rutnät"
+
+#: scripts/firestaff_dungeon_studio.py:503
+msgid "Show Things"
+msgstr "Visa objekt"
+
+#: scripts/firestaff_dungeon_studio.py:507
+msgid "Zoom"
+msgstr "Zoom"
+
+#: scripts/firestaff_dungeon_studio.py:510
+msgid "Fit"
+msgstr "Anpassa"
+
+#: scripts/firestaff_dungeon_studio.py:536
+msgid "Map Properties"
+msgstr "Kartegenskaper"
+
+#: scripts/firestaff_dungeon_studio.py:540
+#: scripts/firestaff_savegame_editor.py:218
+msgid "Name"
+msgstr "Namn"
+
+#: scripts/firestaff_dungeon_studio.py:543
+#: scripts/firestaff_savegame_editor.py:606
+#: scripts/firestaff_savegame_editor.py:697
+msgid "Size"
+msgstr "Storlek"
+
+#: scripts/firestaff_dungeon_studio.py:549
+msgid "Wall Set"
+msgstr "Väggset"
+
+#: scripts/firestaff_dungeon_studio.py:552
+msgid "Floor Set"
+msgstr "Golvset"
+
+#: scripts/firestaff_dungeon_studio.py:555
+msgid "Difficulty"
+msgstr "Svårighetsgrad"
+
+#: scripts/firestaff_dungeon_studio.py:561
+msgid "Tile"
+msgstr "Ruta"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Position"
+msgstr "Position"
+
+#: scripts/firestaff_dungeon_studio.py:567
+#: scripts/firestaff_dungeon_studio.py:590
+msgid "Type"
+msgstr "Typ"
+
+#: scripts/firestaff_dungeon_studio.py:571
+msgid "Things at Tile"
+msgstr "Objekt vid ruta"
+
+#: scripts/firestaff_dungeon_studio.py:583
+msgid "Delete Thing"
+msgstr "Ta bort objekt"
+
+#: scripts/firestaff_dungeon_studio.py:586
+msgid "Thing Properties"
+msgstr "Objektegenskaper"
+
+#: scripts/firestaff_dungeon_studio.py:592
+msgid "Cell"
+msgstr "Cell"
+
+#: scripts/firestaff_dungeon_studio.py:599
+msgid "Graphics Override"
+msgstr "Grafiköverstyrning"
+
+#: scripts/firestaff_dungeon_studio.py:605
+msgid "Import {}..."
+msgstr "Importera {}..."
+
+#: scripts/firestaff_dungeon_studio.py:642
+#: scripts/firestaff_dungeon_studio.py:1000
+#: scripts/firestaff_dungeon_studio.py:1056
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+#: scripts/firestaff_dungeon_studio.py:671
+msgid "Level name:"
+msgstr "Nivånamn:"
+
+#: scripts/firestaff_dungeon_studio.py:671
+msgid "New Level"
+msgstr "Ny nivå"
+
+#: scripts/firestaff_dungeon_studio.py:1000
+#: scripts/firestaff_dungeon_studio.py:1056
+msgid "{} support coming in a future update"
+msgstr "{}-stöd kommer i en framtida uppdatering"
+
+#: scripts/firestaff_dungeon_studio.py:1009
+msgid "New dungeon created"
+msgstr "Ny dungeon skapad"
+
+#: scripts/firestaff_dungeon_studio.py:1026
+msgid "Opened: {}"
+msgstr "Öppnad: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1028
+#: scripts/firestaff_dungeon_studio.py:1038
+#: scripts/firestaff_dungeon_studio.py:1166
+#: scripts/firestaff_dungeon_studio.py:1171
+#: scripts/firestaff_savegame_editor.py:530
+#: scripts/firestaff_savegame_editor.py:533
+#: scripts/firestaff_savegame_editor.py:543
+#: scripts/firestaff_savegame_editor.py:552
+msgid "Error"
+msgstr "Fel"
+
+#: scripts/firestaff_dungeon_studio.py:1036
+#: scripts/firestaff_savegame_editor.py:542
+msgid "Saved: {}"
+msgstr "Sparad: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1077
+msgid "Width (1-64)"
+msgstr "Bredd (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1079
+msgid "Height (1-64)"
+msgstr "Höjd (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+msgid "Apply"
+msgstr "Verkställ"
+
+#: scripts/firestaff_dungeon_studio.py:1119
+msgid "Maps: {}"
+msgstr "Kartor: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1120
+msgid "Current: {} ({}×{})"
+msgstr "Aktuell: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+msgid "Tiles:"
+msgstr "Rutor:"
+
+#: scripts/firestaff_dungeon_studio.py:1126
+msgid "Things: {}"
+msgstr "Objekt: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1131
+msgid "Dungeon Statistics"
+msgstr "Dungeon-statistik"
+
+#: scripts/firestaff_dungeon_studio.py:1140
+msgid "Map {} \"{}\": all walls"
+msgstr "Karta {} \"{}\": alla väggar"
+
+#: scripts/firestaff_dungeon_studio.py:1146
+msgid "Party start is inside a wall"
+msgstr "Gruppstarten är inuti en vägg"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Party start is outside map bounds"
+msgstr "Gruppstarten är utanför kartgränserna"
+
+#: scripts/firestaff_dungeon_studio.py:1151
+msgid "Issues found:"
+msgstr "Problem hittade:"
+
+#: scripts/firestaff_dungeon_studio.py:1151
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Validation"
+msgstr "Validering"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Dungeon is valid!"
+msgstr "Dungeon är giltig!"
+
+#: scripts/firestaff_dungeon_studio.py:1160
+msgid "Import {}"
+msgstr "Importera {}"
+
+#: scripts/firestaff_dungeon_studio.py:1161
+msgid "All"
+msgstr "Alla"
+
+#: scripts/firestaff_dungeon_studio.py:1166
+msgid "Pillow is required for graphics import"
+msgstr "Pillow krävs för grafikimport"
+
+#: scripts/firestaff_dungeon_studio.py:1171
+msgid "Could not load image: {}"
+msgstr "Kunde inte ladda bild: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1174
+msgid "Resize?"
+msgstr "Ändra storlek?"
+
+#: scripts/firestaff_dungeon_studio.py:1175
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Bilden är {}×{}, förväntad {}×{}.\n"
+"Ändra storlek för att passa?"
+
+#: scripts/firestaff_dungeon_studio.py:1187
+msgid "{} imported from {}"
+msgstr "{} importerad från {}"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "East"
+msgstr "Öst"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "North"
+msgstr "Norr"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "South"
+msgstr "Syd"
+
+#: scripts/firestaff_dungeon_studio.py:1222
+msgid "West"
+msgstr "Väst"
+
+#: scripts/firestaff_dungeon_studio.py:1228
+msgid "Turn L"
+msgstr "Vänd V"
+
+#: scripts/firestaff_dungeon_studio.py:1230
+msgid "Fwd"
+msgstr "Fram"
+
+#: scripts/firestaff_dungeon_studio.py:1232
+msgid "Back"
+msgstr "Bak"
+
+#: scripts/firestaff_dungeon_studio.py:1234
+msgid "Turn R"
+msgstr "Vänd H"
+
+#: scripts/firestaff_savegame_editor.py:140
+msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
+msgstr "Fängelsehålans globala tillstånd: händelseantal, gränser för aktiva grupper och slumptalsfrö. Fast storlek på 128 byte."
+
+#: scripts/firestaff_savegame_editor.py:141
+msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
+msgstr "Aktiva varelse-/föremålsgrupper i fängelsehålan. Variabel storlek från GLOBAL_DATA @46."
+
+#: scripts/firestaff_savegame_editor.py:142
+msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
+msgstr "Hjälteposter (4 × 319 byte) + gruppinformation (128 byte). Hälsa, egenskaper, färdigheter och inventarie."
+
+#: scripts/firestaff_savegame_editor.py:143
+msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
+msgstr "Fängelsehålans händelselista: tidtagare, utlösare och sensorer. Variabel storlek från GLOBAL_DATA @28."
+
+#: scripts/firestaff_savegame_editor.py:144
+msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
+msgstr "Tidslinje/tidtagarkö för schemalagda händelser. Återstoden av filen efter övriga delar."
+
+#: scripts/firestaff_savegame_editor.py:184
+msgid "Random Words [0-148]"
+msgstr "Slumpord [0–148]"
+
+#: scripts/firestaff_savegame_editor.py:185
+msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
+msgstr "XOR-maskeringsblock — 149 slumpmässiga 16-bitarsord (298 byte)"
+
+#: scripts/firestaff_savegame_editor.py:186
+msgid "Format Version"
+msgstr "Formatversion"
+
+#: scripts/firestaff_savegame_editor.py:187
+msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
+msgstr "Sparformatets version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
+
+#: scripts/firestaff_savegame_editor.py:188
+msgid "Game ID"
+msgstr "Spel-ID"
+
+#: scripts/firestaff_savegame_editor.py:189
+msgid "Identifies which game created this save"
+msgstr "Identifierar vilket spel som skapade sparfilen"
+
+#: scripts/firestaff_savegame_editor.py:190
+msgid "Key: GLOBAL_DATA"
+msgstr "Nyckel: GLOBAL_DATA"
+
+#: scripts/firestaff_savegame_editor.py:191
+msgid "XOR deobfuscation key for GLOBAL_DATA"
+msgstr "XOR-nyckel för avmaskering av GLOBAL_DATA"
+
+#: scripts/firestaff_savegame_editor.py:192
+msgid "Key: ACTIVE_GROUP"
+msgstr "Nyckel: ACTIVE_GROUP"
+
+#: scripts/firestaff_savegame_editor.py:193
+msgid "XOR deobfuscation key for ACTIVE_GROUP"
+msgstr "XOR-nyckel för avmaskering av ACTIVE_GROUP"
+
+#: scripts/firestaff_savegame_editor.py:194
+msgid "Key: PARTY"
+msgstr "Nyckel: PARTY"
+
+#: scripts/firestaff_savegame_editor.py:195
+msgid "XOR deobfuscation key for PARTY"
+msgstr "XOR-nyckel för avmaskering av PARTY"
+
+#: scripts/firestaff_savegame_editor.py:196
+msgid "Key: EVENTS"
+msgstr "Nyckel: EVENTS"
+
+#: scripts/firestaff_savegame_editor.py:197
+msgid "XOR deobfuscation key for EVENTS"
+msgstr "XOR-nyckel för avmaskering av EVENTS"
+
+#: scripts/firestaff_savegame_editor.py:198
+msgid "Key: TIMELINE"
+msgstr "Nyckel: TIMELINE"
+
+#: scripts/firestaff_savegame_editor.py:199
+msgid "XOR deobfuscation key for TIMELINE"
+msgstr "XOR-nyckel för avmaskering av TIMELINE"
+
+#: scripts/firestaff_savegame_editor.py:200
+msgid "Checksum: GLOBAL_DATA"
+msgstr "Kontrollsumma: GLOBAL_DATA"
+
+#: scripts/firestaff_savegame_editor.py:201
+msgid "F0418 checksum for GLOBAL_DATA validation"
+msgstr "F0418-kontrollsumma för validering av GLOBAL_DATA"
+
+#: scripts/firestaff_savegame_editor.py:202
+msgid "Checksum: ACTIVE_GROUP"
+msgstr "Kontrollsumma: ACTIVE_GROUP"
+
+#: scripts/firestaff_savegame_editor.py:203
+msgid "F0418 checksum for ACTIVE_GROUP validation"
+msgstr "F0418-kontrollsumma för validering av ACTIVE_GROUP"
+
+#: scripts/firestaff_savegame_editor.py:204
+msgid "Checksum: PARTY"
+msgstr "Kontrollsumma: PARTY"
+
+#: scripts/firestaff_savegame_editor.py:205
+msgid "F0418 checksum for PARTY validation"
+msgstr "F0418-kontrollsumma för validering av PARTY"
+
+#: scripts/firestaff_savegame_editor.py:206
+msgid "Checksum: EVENTS"
+msgstr "Kontrollsumma: EVENTS"
+
+#: scripts/firestaff_savegame_editor.py:207
+msgid "F0418 checksum for EVENTS validation"
+msgstr "F0418-kontrollsumma för validering av EVENTS"
+
+#: scripts/firestaff_savegame_editor.py:208
+msgid "Checksum: TIMELINE"
+msgstr "Kontrollsumma: TIMELINE"
+
+#: scripts/firestaff_savegame_editor.py:209
+msgid "F0418 checksum for TIMELINE validation"
+msgstr "F0418-kontrollsumma för validering av TIMELINE"
+
+#: scripts/firestaff_savegame_editor.py:210
+#: scripts/firestaff_savegame_editor.py:598
+msgid "Platform"
+msgstr "Plattform"
+
+#: scripts/firestaff_savegame_editor.py:211
+msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
+msgstr "Målplattform. 1=PC, 2=Amiga, 9=PC Engine osv."
+
+#: scripts/firestaff_savegame_editor.py:212
+msgid "Dungeon ID"
+msgstr "Fängelsehålans ID"
+
+#: scripts/firestaff_savegame_editor.py:213
+msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
+msgstr "Fängelsehåla. 0=DM1, 1=CSB, 10=Theron"
+
+#: scripts/firestaff_savegame_editor.py:219
+msgid "Title"
+msgstr "Titel"
+
+#: scripts/firestaff_savegame_editor.py:220
+msgid "Direction"
+msgstr "Riktning"
+
+#: scripts/firestaff_savegame_editor.py:221
+msgid "Action Index"
+msgstr "Åtgärdsindex"
+
+#: scripts/firestaff_savegame_editor.py:222
+msgid "Poison"
+msgstr "Gift"
+
+#: scripts/firestaff_savegame_editor.py:223
+msgid "HP Current"
+msgstr "Nuvarande hälsa"
+
+#: scripts/firestaff_savegame_editor.py:224
+msgid "HP Max"
+msgstr "Maxhälsa"
+
+#: scripts/firestaff_savegame_editor.py:225
+msgid "Stamina Current"
+msgstr "Nuvarande uthållighet"
+
+#: scripts/firestaff_savegame_editor.py:226
+msgid "Stamina Max"
+msgstr "Maximal uthållighet"
+
+#: scripts/firestaff_savegame_editor.py:227
+msgid "Mana Current"
+msgstr "Nuvarande mana"
+
+#: scripts/firestaff_savegame_editor.py:228
+msgid "Mana Max"
+msgstr "Maxmana"
+
+#: scripts/firestaff_savegame_editor.py:229
+#: scripts/firestaff_savegame_editor.py:635
+msgid "Food"
+msgstr "Mat"
+
+#: scripts/firestaff_savegame_editor.py:230
+#: scripts/firestaff_savegame_editor.py:635
+msgid "Water"
+msgstr "Vatten"
+
+#: scripts/firestaff_savegame_editor.py:231
+msgid "Load"
+msgstr "Läs in"
+
+#: scripts/firestaff_savegame_editor.py:235
+msgid "Fighter"
+msgstr "Krigare"
+
+#: scripts/firestaff_savegame_editor.py:236
+msgid "Ninja"
+msgstr "Ninja"
+
+#: scripts/firestaff_savegame_editor.py:237
+msgid "Priest"
+msgstr "Präst"
+
+#: scripts/firestaff_savegame_editor.py:238
+msgid "Wizard"
+msgstr "Magiker"
+
+#: scripts/firestaff_savegame_editor.py:239
+msgid "Swing"
+msgstr "Svinga"
+
+#: scripts/firestaff_savegame_editor.py:240
+msgid "Thrust"
+msgstr "Stöt"
+
+#: scripts/firestaff_savegame_editor.py:241
+msgid "Club"
+msgstr "Klubba"
+
+#: scripts/firestaff_savegame_editor.py:242
+msgid "Parry"
+msgstr "Parera"
+
+#: scripts/firestaff_savegame_editor.py:243
+msgid "Steal"
+msgstr "Stjäl"
+
+#: scripts/firestaff_savegame_editor.py:244
+msgid "Fight"
+msgstr "Strid"
+
+#: scripts/firestaff_savegame_editor.py:245
+msgid "Throw"
+msgstr "Kasta"
+
+#: scripts/firestaff_savegame_editor.py:246
+msgid "Shoot"
+msgstr "Skjut"
+
+#: scripts/firestaff_savegame_editor.py:247
+msgid "Identify"
+msgstr "Identifiera"
+
+#: scripts/firestaff_savegame_editor.py:248
+msgid "Heal"
+msgstr "Hela"
+
+#: scripts/firestaff_savegame_editor.py:249
+msgid "Influence"
+msgstr "Påverkan"
+
+#: scripts/firestaff_savegame_editor.py:250
+msgid "Defend"
+msgstr "Försvara"
+
+#: scripts/firestaff_savegame_editor.py:251
+msgid "Fire"
+msgstr "Eld"
+
+#: scripts/firestaff_savegame_editor.py:252
+msgid "Air"
+msgstr "Luft"
+
+#: scripts/firestaff_savegame_editor.py:253
+msgid "Earth"
+msgstr "Jord"
+
+#: scripts/firestaff_savegame_editor.py:254
+msgid "Water (spell)"
+msgstr "Vatten (besvärjelse)"
+
+#: scripts/firestaff_savegame_editor.py:258
+msgid "Event Count"
+msgstr "Antal händelser"
+
+#: scripts/firestaff_savegame_editor.py:259
+msgid "Number of active events"
+msgstr "Antal aktiva händelser"
+
+#: scripts/firestaff_savegame_editor.py:260
+msgid "First Unused Event"
+msgstr "Första oanvända händelse"
+
+#: scripts/firestaff_savegame_editor.py:261
+msgid "Index of first free event slot"
+msgstr "Index för första lediga händelseplats"
+
+#: scripts/firestaff_savegame_editor.py:262
+msgid "Event Max Count"
+msgstr "Maximalt antal händelser"
+
+#: scripts/firestaff_savegame_editor.py:263
+msgid "Max events (determines EVENTS part size)"
+msgstr "Maximalt antal händelser (bestämmer storleken på delen EVENTS)"
+
+#: scripts/firestaff_savegame_editor.py:264
+msgid "Active Group Count"
+msgstr "Antal aktiva grupper"
+
+#: scripts/firestaff_savegame_editor.py:265
+msgid "Number of active creature/item groups"
+msgstr "Antal aktiva varelse-/föremålsgrupper"
+
+#: scripts/firestaff_savegame_editor.py:266
+msgid "Max Active Group Count"
+msgstr "Maximalt antal aktiva grupper"
+
+#: scripts/firestaff_savegame_editor.py:267
+msgid "Max active groups (determines ACTIVE_GROUP size)"
+msgstr "Maximalt antal aktiva grupper (bestämmer storleken på ACTIVE_GROUP)"
+
+#: scripts/firestaff_savegame_editor.py:271
+msgid "Magical Light"
+msgstr "Magiskt ljus"
+
+#: scripts/firestaff_savegame_editor.py:272
+msgid "Light spell intensity (0=dark)"
+msgstr "Ljusbesvärjelsens intensitet (0=mörkt)"
+
+#: scripts/firestaff_savegame_editor.py:273
+msgid "Thief's Eye"
+msgstr "Tjuvens öga"
+
+#: scripts/firestaff_savegame_editor.py:274
+msgid "Thief's Eye active (0/1)"
+msgstr "Tjuvens öga aktivt (0/1)"
+
+#: scripts/firestaff_savegame_editor.py:275
+msgid "Footprints"
+msgstr "Fotspår"
+
+#: scripts/firestaff_savegame_editor.py:276
+msgid "Footprints active (0/1)"
+msgstr "Fotspår aktiva (0/1)"
+
+#: scripts/firestaff_savegame_editor.py:277
+msgid "Shield"
+msgstr "Sköld"
+
+#: scripts/firestaff_savegame_editor.py:278
+msgid "Shield spell strength"
+msgstr "Sköldbesvärjelsens styrka"
+
+#: scripts/firestaff_savegame_editor.py:279
+msgid "Fire Shield"
+msgstr "Eldsköld"
+
+#: scripts/firestaff_savegame_editor.py:280
+msgid "Fire Shield strength"
+msgstr "Eldsköldens styrka"
+
+#: scripts/firestaff_savegame_editor.py:281
+msgid "Spell Shield"
+msgstr "Magisköld"
+
+#: scripts/firestaff_savegame_editor.py:282
+msgid "Spell Shield (Antimagic) strength"
+msgstr "Magisköldens (antimagi) styrka"
+
+#: scripts/firestaff_savegame_editor.py:283
+msgid "Calming Scent"
+msgstr "Lugnande doft"
+
+#: scripts/firestaff_savegame_editor.py:284
+msgid "Calming influence active"
+msgstr "Lugnande påverkan aktiv"
+
+#: scripts/firestaff_savegame_editor.py:285
+msgid "Freeze Life"
+msgstr "Frys liv"
+
+#: scripts/firestaff_savegame_editor.py:286
+msgid "Freeze Life active (0/1)"
+msgstr "Frys liv aktivt (0/1)"
+
+#: scripts/firestaff_savegame_editor.py:379
+#: scripts/firestaff_savegame_editor.py:382
+#: scripts/firestaff_savegame_editor.py:733
+msgid "Champion {}"
+msgstr "Hjälte {}"
+
+#: scripts/firestaff_savegame_editor.py:423
+msgid "Firestaff Savegame Editor"
+msgstr "Firestaffs sparfilsredigerare"
+
+#: scripts/firestaff_savegame_editor.py:473
+msgid "Open..."
+msgstr "Öppna..."
+
+#: scripts/firestaff_savegame_editor.py:477
+msgid "Quit"
+msgstr "Avsluta"
+
+#: scripts/firestaff_savegame_editor.py:478
+#: scripts/firestaff_savegame_editor.py:595
+msgid "File"
+msgstr "Fil"
+
+#: scripts/firestaff_savegame_editor.py:492
+msgid "Open"
+msgstr "Öppna"
+
+#: scripts/firestaff_savegame_editor.py:494
+#: scripts/firestaff_savegame_editor.py:548
+msgid "Save As"
+msgstr "Spara som"
+
+#: scripts/firestaff_savegame_editor.py:496
+msgid "No file loaded"
+msgstr "Ingen fil inläst"
+
+#: scripts/firestaff_savegame_editor.py:523
+msgid "Open Savegame"
+msgstr "Öppna sparfil"
+
+#: scripts/firestaff_savegame_editor.py:524
+msgid "All Savegames"
+msgstr "Alla sparfiler"
+
+#: scripts/firestaff_savegame_editor.py:525
+msgid "All Files"
+msgstr "Alla filer"
+
+#: scripts/firestaff_savegame_editor.py:533
+msgid "Unrecognized savegame format."
+msgstr "Okänt sparfilsformat."
+
+#: scripts/firestaff_savegame_editor.py:536
+msgid "Loaded: {}"
+msgstr "Inläst: {}"
+
+#: scripts/firestaff_savegame_editor.py:541
+#: scripts/firestaff_savegame_editor.py:547
+msgid "No savegame loaded"
+msgstr "Ingen sparfil inläst"
+
+#: scripts/firestaff_savegame_editor.py:541
+#: scripts/firestaff_savegame_editor.py:547
+msgid "Warning"
+msgstr "Varning"
+
+#: scripts/firestaff_savegame_editor.py:551
+msgid "Saved as: {}"
+msgstr "Sparad som: {}"
+
+#: scripts/firestaff_savegame_editor.py:587
+msgid "File Overview"
+msgstr "Filöversikt"
+
+#: scripts/firestaff_savegame_editor.py:589
+msgid "File Information"
+msgstr "Filinformation"
+
+#: scripts/firestaff_savegame_editor.py:597
+msgid "Format"
+msgstr "Format"
+
+#: scripts/firestaff_savegame_editor.py:597
+#: scripts/firestaff_savegame_editor.py:598
+#: scripts/firestaff_savegame_editor.py:599
+#: scripts/firestaff_savegame_editor.py:666
+#: scripts/firestaff_savegame_editor.py:668
+#: scripts/firestaff_savegame_editor.py:670
+msgid "Unknown"
+msgstr "Okänt"
+
+#: scripts/firestaff_savegame_editor.py:599
+msgid "Dungeon"
+msgstr "Fängelsehåla"
+
+#: scripts/firestaff_savegame_editor.py:604
+msgid "Save Parts"
+msgstr "Sparfilsdelar"
+
+#: scripts/firestaff_savegame_editor.py:606
+#: scripts/firestaff_savegame_editor.py:696
+msgid "Offset"
+msgstr "Förskjutning"
+
+#: scripts/firestaff_savegame_editor.py:606
+msgid "Part"
+msgstr "Del"
+
+#: scripts/firestaff_savegame_editor.py:606
+msgid "Status"
+msgstr "Status"
+
+#: scripts/firestaff_savegame_editor.py:616
+#: scripts/firestaff_savegame_editor.py:705
+msgid "MISMATCH"
+msgstr "STÄMMER INTE"
+
+#: scripts/firestaff_savegame_editor.py:616
+msgid "Valid"
+msgstr "Giltig"
+
+#: scripts/firestaff_savegame_editor.py:620
+msgid "Champions"
+msgstr "Hjältar"
+
+#: scripts/firestaff_savegame_editor.py:647
+msgid "Header Fields"
+msgstr "Rubrikfält"
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Description"
+msgstr "Beskrivning"
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Field"
+msgstr "Fält"
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Hex"
+msgstr "Hex"
+
+#: scripts/firestaff_savegame_editor.py:649
+msgid "Value"
+msgstr "Värde"
+
+#: scripts/firestaff_savegame_editor.py:682
+msgid "DM1 PC34 Save Parts (F0417/F0418)"
+msgstr "DM1 PC34-sparfilsdelar (F0417/F0418)"
+
+#: scripts/firestaff_savegame_editor.py:699
+msgid "Expected"
+msgstr "Förväntat"
+
+#: scripts/firestaff_savegame_editor.py:700
+msgid "Actual"
+msgstr "Faktiskt"
+
+#: scripts/firestaff_savegame_editor.py:705
+msgid "VALID"
+msgstr "GILTIG"
+
+#: scripts/firestaff_savegame_editor.py:728
+msgid "No champion data"
+msgstr "Inga hjältedata"
+
+#: scripts/firestaff_savegame_editor.py:753
+msgid "Combat & Vitals"
+msgstr "Strid och livsvärden"
+
+#: scripts/firestaff_savegame_editor.py:769
+msgid "Skills"
+msgstr "Färdigheter"
+
+#: scripts/firestaff_savegame_editor.py:790
+msgid "No party info available"
+msgstr "Ingen gruppinformation tillgänglig"
+
+#: scripts/firestaff_savegame_editor.py:793
+msgid "Party Info"
+msgstr "Gruppinformation"
+
+#: scripts/firestaff_savegame_editor.py:816
+msgid "No global data"
+msgstr "Inga globala data"
+
+#: scripts/firestaff_savegame_editor.py:819
+msgid "Global Data"
+msgstr "Globala data"
+
+#: scripts/firestaff_savegame_editor.py:833
+msgid "Raw Data"
+msgstr "Rådata"
+
+#: scripts/firestaff_savegame_editor.py:853
+msgid "Header Words"
+msgstr "Rubrikord"
+
+#: scripts/firestaff_savegame_editor.py:859
+msgid "Random Words"
+msgstr "Slumpord"
+
+#: scripts/firestaff_savegame_editor.py:860
+msgid "Part Keys"
+msgstr "Delnycklar"
+
+#: scripts/firestaff_savegame_editor.py:861
+msgid "Checksums"
+msgstr "Kontrollsummor"
+
+#: scripts/firestaff_savegame_editor.py:862
+msgid "Format/Platform/Dungeon"
+msgstr "Format/plattform/fängelsehåla"

@@ -5,10 +5,14 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_csbgraphics_dat_real_scan.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_cd.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_inscription_presentation.h"
+#include "csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
@@ -37,10 +41,10 @@
  */
 
 static const char *const g_csb_boot_graphics_hashes[] = {
-    "61fbfd56887c94adc26888a9491c6611",
     /* ReDMCSB COMPILE.H:199-243: original A31E media family. */
     "21197b1d4994fd835c403d5a33dcac2b",
-    /* ReDMCSB COMPILE.H:246-269: A31M shares PC34 graphics bytes. */
+    /* ReDMCSB COMPILE.H:246-269: A31M shares the I34 reference byte set;
+     * TITL.DAT below is required to prove the original Amiga package. */
     "61fbfd56887c94adc26888a9491c6611",
     "ebf6a57af3f27782e358c0490bfd2f2e",
     "e0ce7ac5160ca5540e90cf09ab9fad49",
@@ -52,7 +56,6 @@ static const char *const g_csb_boot_graphics_hashes[] = {
 };
 
 static const CSB_V1_VariantId g_csb_boot_graphics_variants[] = {
-    CSB_V1_VARIANT_PC34_EN,
     CSB_V1_VARIANT_AMIGA31_EN,
     CSB_V1_VARIANT_AMIGA31_MULTI,
     CSB_V1_VARIANT_ST21_EN,
@@ -1174,6 +1177,50 @@ static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
     if (!profile || profile->graphics_path[0] == '\0') {
         return 0;
     }
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        if (!profile->fmtowns_graphics_bytes ||
+            profile->fmtowns_graphics_size == 0u) return 0;
+        decoded = (uint8_t *)malloc(CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES);
+        if (!decoded) return 0;
+        if (csb_v1_graphics_decode_raw_entry_pc34(
+                profile->fmtowns_graphics_bytes,
+                profile->fmtowns_graphics_size,
+                CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX, decoded,
+                CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES, &decoded_size) == 0) {
+            ok = profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA
+                ? csb_v1_runtime_load_object_names_m564_f31j(
+                    &profile->runtime, decoded, decoded_size)
+                : csb_v1_runtime_load_object_names_m564(
+                    &profile->runtime, decoded, decoded_size);
+        }
+        free(decoded);
+        return ok;
+    }
+    if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+        CSB_AtariStLoader loader;
+        int read_size;
+        csb_atari_st_graphics_loader_init(&loader);
+        if (!csb_atari_st_graphics_loader_open(&loader,
+                                                profile->graphics_path) ||
+            loader.item_count <= 556u ||
+            loader.items[556u].decompressed_size == 0u) {
+            csb_atari_st_graphics_loader_close(&loader);
+            return 0;
+        }
+        decoded_size = loader.items[556u].decompressed_size;
+        decoded = (uint8_t *)malloc(decoded_size);
+        read_size = decoded ? csb_atari_st_graphics_loader_read_item(
+            &loader, 556u, decoded, decoded_size) : -1;
+        if (read_size == (int)decoded_size) {
+            ok = csb_v1_runtime_load_object_names_m564(
+                &profile->runtime, decoded, decoded_size);
+        }
+        free(decoded);
+        csb_atari_st_graphics_loader_close(&loader);
+        return ok;
+    }
     if (!asset_read_path_alloc(profile->graphics_path, &file_bytes,
                                &file_bytes_count) ||
         !file_bytes || file_bytes_count == 0u) {
@@ -1205,6 +1252,92 @@ static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
     return ok == 1 ? 1 : 0;
 }
 
+/* English A31/A35 compile G0490 into C03_GAME rather than GRAPHICS.DAT.
+ * Resolve APPB through the already-admitted GRAPHICS.DAT disk context so a
+ * neighbouring host file or another edition can never supply presentation
+ * text.  Nested ZIP::ADF locators remain read-only in-memory views. */
+static int csb_v1_boot_amiga_program_locator(const CSB_V1_BootProfile *profile,
+                                             const char *program_name,
+                                             char *out, size_t out_size)
+{
+    const char *last_separator = NULL;
+    const char *cursor;
+    size_t prefix_size;
+
+    if (!profile || !program_name || !program_name[0] || !out || out_size == 0u)
+        return 0;
+    for (cursor = profile->graphics_path; (cursor = strstr(cursor, "::")) != NULL;
+         cursor += 2) last_separator = cursor;
+    if (last_separator) {
+        prefix_size = (size_t)(last_separator - profile->graphics_path) + 2u;
+        if (prefix_size + strlen(program_name) + 1u > out_size) return 0;
+        memcpy(out, profile->graphics_path, prefix_size);
+        strcpy(out + prefix_size, program_name);
+        return 1;
+    }
+    return profile->asset_root[0] &&
+        FSP_JoinPath(out, out_size, profile->asset_root, program_name);
+}
+
+static int csb_v1_boot_load_amiga_english_action_names(CSB_V1_BootProfile *profile)
+{
+    const char *expected_md5;
+    char path[1024];
+    char actual_md5[33];
+    uint8_t *program = NULL;
+    size_t program_size = 0u;
+    size_t start;
+    unsigned int matches = 0u;
+    size_t match_start = 0u;
+    size_t match_size = 0u;
+    int ok = 0;
+
+    if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN)
+        expected_md5 = "af50ff33c61c22e20784d74266d81d1e";
+    else if (profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN)
+        expected_md5 = "11d8d059cd8f241d6f68ec09c5c8b66d";
+    else
+        return 0;
+    if (!csb_v1_boot_amiga_program_locator(profile, "APPB.FTL", path,
+                                             sizeof(path)) ||
+        !asset_file_md5_hex(path, actual_md5) ||
+        strcmp(actual_md5, expected_md5) != 0 ||
+        !asset_read_path_alloc(path, &program, &program_size))
+        return 0;
+
+    /* MENU.C declares G0490[44][13] but only the NUL-terminated source rows
+     * are significant.  Require the sole complete BLOCK..FUSE table and its
+     * two X sentinels; incidental executable strings therefore fail closed. */
+    for (start = 0u; start + 2u < program_size; ++start) {
+        size_t row_start[44];
+        size_t pos = start;
+        unsigned int row;
+        if (program[start] != 'N' || program[start + 1u] != 0u) continue;
+        for (row = 0u; row < 44u; ++row) {
+            row_start[row] = pos;
+            while (pos < program_size && program[pos] != 0u &&
+                   pos - start < 300u) ++pos;
+            if (pos >= program_size || pos - start >= 300u) break;
+            ++pos;
+        }
+        if (row != 44u ||
+            strcmp((const char *)program + row_start[1], "BLOCK") != 0 ||
+            strcmp((const char *)program + row_start[2], "CHOP") != 0 ||
+            strcmp((const char *)program + row_start[3], "X") != 0 ||
+            strcmp((const char *)program + row_start[26], "X") != 0 ||
+            strcmp((const char *)program + row_start[43], "FUSE") != 0)
+            continue;
+        ++matches;
+        match_start = start;
+        match_size = pos - start;
+    }
+    if (matches == 1u)
+        ok = csb_v1_runtime_load_action_names_c699(
+            &profile->runtime, program + match_start, match_size);
+    free(program);
+    return ok;
+}
+
 static int csb_v1_boot_load_action_names_c699(CSB_V1_BootProfile *profile)
 {
     uint8_t *file_bytes = NULL;
@@ -1215,6 +1348,99 @@ static int csb_v1_boot_load_action_names_c699(CSB_V1_BootProfile *profile)
 
     if (!profile || !profile->graphics_verified || !profile->graphics_path[0]) {
         return 0;
+    }
+    if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+        profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN)
+        return csb_v1_boot_load_amiga_english_action_names(profile);
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        const size_t expected_offset =
+            profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA
+                ? 0x2a0ecu : 0x29f50u;
+        size_t cursor = expected_offset;
+        unsigned int row;
+        if (!profile->fmtowns_executable_bytes ||
+            expected_offset >= profile->fmtowns_executable_size) return 0;
+        /* FMTOWNS.H aliases G0490 to CHTWE/CHTWJ's DYNA_BUTTONS. These
+         * edition-hash-locked offsets are shared with the catalog reader;
+         * validate all 44 bounded rows and both X sentinels before the live
+         * runtime may consume the original English or Shift-JIS bytes. */
+        for (row = 0u; row < 44u; ++row) {
+            size_t row_start = cursor;
+            while (cursor < profile->fmtowns_executable_size &&
+                   profile->fmtowns_executable_bytes[cursor] != 0u &&
+                   cursor - expected_offset < 360u) ++cursor;
+            if (cursor >= profile->fmtowns_executable_size ||
+                cursor == row_start || cursor - expected_offset >= 360u)
+                return 0;
+            if ((row == 0u &&
+                 (cursor - row_start != 1u ||
+                  profile->fmtowns_executable_bytes[row_start] != 'N')) ||
+                ((row == 3u || row == 26u) &&
+                 (cursor - row_start != 1u ||
+                  profile->fmtowns_executable_bytes[row_start] != 'X')))
+                return 0;
+            ++cursor;
+        }
+        return csb_v1_runtime_load_action_names_c699(
+            &profile->runtime,
+            profile->fmtowns_executable_bytes + expected_offset,
+            cursor - expected_offset);
+    }
+    if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+        CSB_AtariStLoader loader;
+        size_t start;
+        unsigned int matches = 0u;
+        size_t match_start = 0u;
+        size_t match_size = 0u;
+        int read_size;
+        csb_atari_st_graphics_loader_init(&loader);
+        if (!csb_atari_st_graphics_loader_open(&loader,
+                                                profile->graphics_path) ||
+            loader.item_count <= 560u ||
+            loader.items[560u].decompressed_size == 0u) {
+            csb_atari_st_graphics_loader_close(&loader);
+            return 0;
+        }
+        decoded_size = loader.items[560u].decompressed_size;
+        decoded = (uint8_t *)malloc(decoded_size);
+        read_size = decoded ? csb_atari_st_graphics_loader_read_item(
+            &loader, 560u, decoded, decoded_size) : -1;
+        if (read_size != (int)decoded_size) goto atari_done;
+        /* STARTUP2.C F0750 expands C560 over G0485..G0505. Admit only the
+         * sole complete G0490 subtable; do not borrow the PC/F31 record 699
+         * or a compiled DM1 string array. */
+        for (start = 0u; start + 2u < decoded_size; ++start) {
+            size_t row_start[44];
+            size_t cursor = start;
+            unsigned int row;
+            if (decoded[start] != 'N' || decoded[start + 1u] != 0u) continue;
+            for (row = 0u; row < 44u; ++row) {
+                row_start[row] = cursor;
+                while (cursor < decoded_size && decoded[cursor] != 0u &&
+                       cursor - start < 300u) ++cursor;
+                if (cursor >= decoded_size || cursor - start >= 300u) break;
+                ++cursor;
+            }
+            if (row != 44u ||
+                strcmp((const char *)decoded + row_start[1], "BLOCK") != 0 ||
+                strcmp((const char *)decoded + row_start[2], "CHOP") != 0 ||
+                strcmp((const char *)decoded + row_start[3], "X") != 0 ||
+                strcmp((const char *)decoded + row_start[43], "FUSE") != 0)
+                continue;
+            ++matches;
+            match_start = start;
+            match_size = cursor - start;
+        }
+        if (matches == 1u) {
+            ok = csb_v1_runtime_load_action_names_c699(
+                &profile->runtime, decoded + match_start, match_size);
+        }
+atari_done:
+        free(decoded);
+        csb_atari_st_graphics_loader_close(&loader);
+        return ok;
     }
     if (!asset_read_path_alloc(profile->graphics_path, &file_bytes,
                                &file_bytes_count) ||
@@ -1894,6 +2120,7 @@ int csb_v1_boot_render_viewport_frame_pc34(
     uint8_t dungeon_stairs_up_grid[32 * 32];
     uint8_t dungeon_pit_invisible_grid[32 * 32];
     uint8_t custom_background_cell_skins[32 * 32];
+    CSB_V1_WallOrnamentOrdinalResolverPc34 wall_ornament_resolver;
 
     if (out_counts) {
         csb_v1_viewport_runtime_draw_counts_reset(out_counts);
@@ -1948,6 +2175,21 @@ int csb_v1_boot_render_viewport_frame_pc34(
     cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
         profile->runtime.current_level];
     cfg.runtime_profile = &profile->runtime;
+    /* F0172 owns a different C01 ordinal for each visible wall face.  The
+     * view-wall-aware callback admits the real C02 inscription as M615 in
+     * the ordinary F0107 transaction; front M648 remains M11's later
+     * readable-text consumer of the same source receipt. */
+    cfg.wall_aspect_callback =
+        csb_v1_wall_aspect_inscription_ordinal_callback;
+    cfg.wall_aspect_user_data = &profile->runtime;
+    memset(&wall_ornament_resolver, 0, sizeof(wall_ornament_resolver));
+    wall_ornament_resolver.dungeon = profile->runtime.dungeon_handle;
+    wall_ornament_resolver.level = profile->runtime.current_level;
+    wall_ornament_resolver.ornamentRandomSeed =
+        profile->runtime.dungeon_handle->ornament_random_seed;
+    cfg.wall_ornament_ordinal_callback =
+        csb_v1_viewport_wall_ornament_ordinal_resolve_pc34;
+    cfg.wall_ornament_ordinal_user_data = &wall_ornament_resolver;
     /* ReDMCSB DUNVIEW.C F0127:8185-8216 gates the D0C temporary-frame
      * composition on G0407.Event73Count_ThievesEye. CSBWin's authenticated
      * character tail owns that same persisted counter. */
@@ -8873,6 +9115,17 @@ int csb_v1_boot_runtime_trigger_front_door_button_click_pc34(
         : 0;
 }
 
+int csb_v1_boot_runtime_grab_floor_object_pc34(
+    CSB_V1_BootProfile *profile,
+    int view_cell,
+    unsigned short *out_thing)
+{
+    return profile
+        ? csb_v1_runtime_grab_floor_object_for_view_cell_pc34(
+              &profile->runtime, view_cell, out_thing)
+        : 0;
+}
+
 int csb_v1_boot_set_imported_party(CSB_V1_BootProfile *profile,
                                    const CSB_V1_PartyState *party)
 {
@@ -9068,24 +9321,25 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
                          g_csb_boot_graphics_hashes[graphics_match]);
         profile->graphics_kind = csb_v1_boot_graphics_kind(graphics_path);
         profile->variant_id = g_csb_boot_graphics_variants[graphics_match];
-        /* A31E shares PC34's GRAPHICS.DAT digest. M12 admits it only after
-         * proving TITL.DAT from the same original ADF, then materializes the
-         * selected package in its own cache leaf. A generic/shared root may
-         * contain both unrelated originals, so a nearby title must not
-         * rewrite the verified PC34 pair. ReDMCSB APPA.C:51-53 enters
-         * SWSH/ANIM FTL_TITL only for the selected A31M package. */
-        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
+        if (profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI) {
             char amigaTitlePath[ASSET_PATH_MAX];
-            int title_is_same_selected_package =
+            int samePackageTitle =
                 csb_v1_boot_root_is_selected_amiga31_cache(root)
                     ? FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
                                    "TITL.DAT")
                     : csb_v1_boot_selected_virtual_amiga31_title_path(
                         graphics_path, amigaTitlePath, sizeof(amigaTitlePath));
-            if (title_is_same_selected_package &&
-                asset_file_matches_md5(amigaTitlePath,
-                                       "5b590ea3a6f5eed513b5678b01468ee4")) {
-                profile->variant_id = CSB_V1_VARIANT_AMIGA31_MULTI;
+            if (!samePackageTitle ||
+                !asset_file_matches_md5(amigaTitlePath,
+                                        "5b590ea3a6f5eed513b5678b01468ee4")) {
+                /* The shared bytes are not an edition identity.  In
+                 * particular they must never resurrect the nonexistent
+                 * DOS/Windows CSB catalogue entry. */
+                profile->graphics_verified = 0;
+                profile->graphics_path[0] = '\0';
+                profile->graphics_md5[0] = '\0';
+                profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
+                profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
             }
         }
     }
@@ -9138,6 +9392,10 @@ int csb_v1_boot_probe_available(const char *data_dir)
 
 int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 {
+    uint8_t f31_layout[10000];
+    CSB_V1_FmtownsItemDecodeReceipt f31_layout_receipt;
+    CSB_V1_F31InventorySlotRectangle f31_rectangles[30];
+    int f31_rectangle_index;
     if (!profile || !profile->assets_verified) return -1;
     /* The launcher may carry several game profiles at once.  Do not let an
      * aggregate READY bit alone hand a non-CSB or partial profile to the CSB
@@ -9166,6 +9424,34 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     }
     if (profile->save_root[0] == '\0') {
         csb_v1_boot_set_save_root(profile, NULL);
+    }
+    profile->fmtowns_inventory_rectangles_valid = 0;
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        /* F0641 loads C696 only after the selected F31 graphics package is
+         * admitted. Preserve that exact ownership at the host boundary. */
+        if (!profile->fmtowns_graphics_bytes ||
+            !csb_v1_fmtowns_graphics_copy_raw_item(
+                profile->fmtowns_graphics_bytes, profile->fmtowns_graphics_size,
+                696u, f31_layout, sizeof(f31_layout), &f31_layout_receipt) ||
+            !f31_layout_receipt.valid ||
+            !csb_v1_media720_f0635_f31_inventory_rectangles(
+                f31_layout, f31_layout_receipt.stream_byte_count, 0,
+                f31_rectangles)) {
+            return -1;
+        }
+        for (f31_rectangle_index = 0; f31_rectangle_index < 30;
+             ++f31_rectangle_index) {
+            profile->fmtowns_inventory_rectangle_x[f31_rectangle_index] =
+                (int16_t)f31_rectangles[f31_rectangle_index].x;
+            profile->fmtowns_inventory_rectangle_y[f31_rectangle_index] =
+                (int16_t)f31_rectangles[f31_rectangle_index].y;
+            profile->fmtowns_inventory_rectangle_width[f31_rectangle_index] =
+                (int16_t)f31_rectangles[f31_rectangle_index].width;
+            profile->fmtowns_inventory_rectangle_height[f31_rectangle_index] =
+                (int16_t)f31_rectangles[f31_rectangle_index].height;
+        }
+        profile->fmtowns_inventory_rectangles_valid = 1;
     }
     /* Re-entering the CSB profile replaces the live dungeon context just as
      * ReDMCSB's global dungeon/map state is replaced when a new game is
@@ -9423,7 +9709,7 @@ void csb_v1_boot_print_summary(const CSB_V1_BootProfile *profile)
  * Source: ReDMCSB LOADSAVE.C F0435 lines 1936-1944 (new-game dungeon
  *   load is gated on a hash-known dungeon header). */
 static const char *const g_csb_m11_entry_graphics_hashes[] = {
-    "61fbfd56887c94adc26888a9491c6611", /* PC DOS 3.4 English         MEDIA278 */
+    "61fbfd56887c94adc26888a9491c6611", /* Amiga 3.1 Multilanguage    MEDIA37 */
     "21197b1d4994fd835c403d5a33dcac2b", /* Amiga 3.1 English          MEDIA37 */
     "ebf6a57af3f27782e358c0490bfd2f2e", /* Atari ST 2.0/2.1 English   MEDIA332 */
     "e0ce7ac5160ca5540e90cf09ab9fad49", /* Atari ST 2.x hard-disk     MEDIA332 */
@@ -9500,7 +9786,7 @@ int csb_v1_boot_graphics_dungeon_m11_entry_gate(const char *graphics_md5,
     if (!csb_v1_md5_is_canonical_graphics(graphics_md5)) {
         csb_v1_boot_gate_set_reason(reason, reason_size,
             "CSB M11 entry guard: GRAPHICS md5 %s is not in the canonical "
-            "CSB V1 media registry (PC3.4EN / Atari ST 2.x / Amiga 3.x)",
+            "CSB V1 media registry (Atari ST 2.x / Amiga 3.x / FM Towns)",
             graphics_md5);
         return 0;
     }

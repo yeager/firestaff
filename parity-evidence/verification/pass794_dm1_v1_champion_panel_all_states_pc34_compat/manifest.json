@@ -1,10 +1,12 @@
 {
   "pass": "pass794_dm1_v1_champion_panel_all_states_pc34_compat",
-  "status": "PASS",
-  "failures": [],
+  "status": "FAIL",
+  "failures": [
+    "binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_panel_all_states_pc34_compat"
+  ],
   "redmcsb": "CHAMDRAW.C F0293:1117-1143 (all-champion redraw dispatcher with dirty-mask OR, F0292 call order, G2149_ clear after loop on PC34); DEFS.H:724-732 (dirty flags 0x0080..0x8000); DEFS.H:8090-8100 (C00..C03 champion indices, G0305, G2149)",
   "tests": {
-    "passes": 53,
+    "passes": 0,
     "fails": 0
   }
 }

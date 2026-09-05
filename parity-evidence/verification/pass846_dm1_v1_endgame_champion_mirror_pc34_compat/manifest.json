@@ -3,7 +3,7 @@
     "DATA.C:21/149/569",
     "ENDGAME.C:347/389/390"
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass846_dm1_v1_endgame_champion_mirror_pc34_compat.v1",
   "scope": "DM1 V1 endgame_champion_mirror contract.",
   "sourceChecks": [
@@ -33,11 +33,11 @@
     }
   ],
   "status": "PASS846_DM1_V1_ENDGAME_CHAMPION_MIRROR_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:13.802030+00:00",
+  "timestampUtc": "2026-09-04T18:35:08.657191+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_endgame_champion_mirror_pc34_compat"
+        "/dev/shm/current/test_dm1_v1_endgame_champion_mirror_pc34_compat"
       ],
       "outputTail": "dm1_v1_endgame_champion_mirror: 53/53 assertions passed",
       "passed": true,

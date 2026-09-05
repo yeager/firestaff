@@ -11,8 +11,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-SOURCE_LABEL = "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SRC = REPO / "reference/redmcsb-20210206/Toolchains/Common/Source"
+SOURCE_LABEL = "reference/redmcsb-20210206/Toolchains/Common/Source"
 OUT = REPO / "parity-evidence/verification/pass165_champion_portrait_click_geometry"
 
 CHECKS = [

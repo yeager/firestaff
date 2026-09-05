@@ -1017,6 +1017,11 @@ typedef struct {
     int endgameFuseSequenceDelayRemainingTicks;
     int endgameFinalDelayPendingTicks;
     int endgameFinalHandoffReady;
+    /* I34E ENDGAME.C F0444 post-F0446 presentation lifecycle:
+     * 0 = waiting for F0446, 1 = champion screen/wait input,
+     * 2 = C3 THE END/300-tick hold, 3 = credits/wait input. */
+    int endgameF0444PresentationPhase;
+    int endgameTheEndDelayRemainingTicks;
     int endgameBuzzRequestCount;
 
     /* Dialog box overlay for text-plaque inspection.
@@ -1623,6 +1628,14 @@ typedef struct {
     size_t csbFmtownsSwitchByteCount;
     CSB_V1_FmtownsSwitchReceipt csbFmtownsSwitchReceipt;
     uint8_t csbFmtownsSwitchPixels[CSB_FMTOWNS_SWITCH_PIXELS];
+    /* SWITCHTW owns the last hardware palette before CHTWE/CHTWJ enters
+     * ENTRANCE.C.  Retain the source six-bit values across release of the
+     * switch executable; the F31 entrance/runtime must never fall back to a
+     * PC VGA special palette. */
+    uint8_t csbFmtownsEntrancePaletteRgb6[16][3];
+    int csbFmtownsEntrancePaletteValid;
+    uint8_t csbFmtownsDungeonPaletteRgb6[6][16][3];
+    int csbFmtownsDungeonPalettesValid;
     CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchLanguage;
     CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchReturnLanguage;
     uint16_t csbFmtownsSwitchVblanksRemaining;
@@ -2183,7 +2196,7 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
                                                   int x,
                                                   int y,
                                                   uint32_t nowMs);
-void M11_GameView_Draw(const M11_GameViewState* state,
+void M11_GameView_Draw(M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
@@ -3487,6 +3500,19 @@ typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
     int stepCount;                /* merged plan step count */
     unsigned long scheduleHash;   /* plan FNV-1a receipt hash */
     int f0115ContentSquareCount;  /* of D3L..D1C, squares with an F0115 step */
+    int d0PrimitiveCallbackStepCount; /* F0125-F0127 primitives rasterized by the scheduler callback */
+    int d0SideThingFieldCallbackStepCount; /* F0125/F0126 F0115 creature and F0113 field steps */
+    int d0ThingCallbackStepCount; /* F0127 D0C F0115 item/projectile/explosion transaction */
+    int wallMaterialCallbackStepCount; /* D3-D1 F0104 wall material rasterized by the scheduler callback */
+    int wallOrnamentCallbackStepCount; /* supported D3-D1 F0107 projections rasterized by the scheduler callback */
+    int frontMirrorCallbackStepCount; /* D1C C346/C026 mirror route invoked by its F0107 callback step */
+    int thievesEyeRestoreCallbackStepCount; /* D1C F0124 post-F0115 wall restore owned by callback */
+    int preDoorFloorOrnamentCallbackStepCount; /* door-front F0108 steps consumed before DOORPASS1 */
+    int doorPass1CallbackStepCount; /* pre-F0111 F0115 partitions rasterized by the scheduler callback */
+    int doorFrameCallbackStepCount; /* F0104 door-frame transactions rasterized before F0110/F0111 */
+    int doorButtonCallbackStepCount; /* source-routed F0110 calls consumed before F0111 */
+    int doorMaterialCallbackStepCount; /* D3-D1 F0111 door transactions rasterized by the scheduler callback */
+    int foregroundCallbackStepCount; /* per-square F0104/F0108/F0112/F0113/F0115 foreground tail rasterized by the scheduler callback */
 } M11_Dm1F0128PerSquareSchedulerReceipt;
 
 void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(

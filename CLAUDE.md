@@ -5,7 +5,7 @@
 Firestaff is a C application that reimplements five classic Dungeon Master game engines with source-level parity to the originals:
 
 - **Dungeon Master (DM1)** — PC 3.4 release. Reference: **ReDMCSB** (reconstructed C source).
-- **Chaos Strikes Back (CSB)** — PC 3.4 release. Reference: **ReDMCSB**.
+- **Chaos Strikes Back (CSB)** — Atari ST, Amiga and FM Towns releases. **ReDMCSB/CSBWin are technical references, not original Windows/DOS editions.**
 - **Dungeon Master II (DM2)** — Reference: **skproject** (reconstructed C source).
 - **Theron's Quest** — PC Engine. No reference source code available.
 - **DM Nexus** — Sega Saturn. No reference source code available.
@@ -75,7 +75,7 @@ parity-evidence/ - Source-lock evidence documents (pass NNN)
 | Game | Platform | Reference source | Status |
 |------|----------|-----------------|--------|
 | DM1 | DOS PC 3.4 | ReDMCSB | Active development |
-| CSB | DOS PC 3.4 | ReDMCSB | Active development |
+| CSB | Atari ST / Amiga / FM Towns | ReDMCSB and CSBWin (reference only) | Active development |
 | DM2 | DOS | skproject | Separate runtime path |
 | Theron's Quest | PC Engine | None | No reference source |
 | DM Nexus | Sega Saturn | None | No reference source |

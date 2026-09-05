@@ -102,6 +102,22 @@ static M12_RGB COLOR_V1(void)          { return rgb(232, 184, 88); }
 static M12_RGB COLOR_V2(void)          { return rgb(120, 196, 236); }
 static M12_RGB COLOR_SHADOW(void)      { return rgb(6, 6, 14); }
 
+/* Keep the renderer ignorant of catalog storage.  Every semantic string
+ * crosses this final presentation boundary; missing translations retain the
+ * exact source/game string as the fallback. */
+static const char* modern_tr(const M12_StartupMenuState* state,
+                             const char* source_text) {
+    return M12_StartupMenu_Translate(state, source_text ? source_text : "");
+}
+
+/* Optional message rows are absent, not translatable empty strings. Keeping
+ * that distinction here also prevents xgettext from treating "" as a real
+ * catalog key (the empty msgid is reserved for gettext metadata). */
+static const char* modern_tr_optional(const M12_StartupMenuState* state,
+                                      const char* source_text) {
+    return (source_text && source_text[0]) ? modern_tr(state, source_text) : "";
+}
+
 /* -------------------------------------------------------------------------- */
 /* Pixel plotting                                                             */
 /* -------------------------------------------------------------------------- */
@@ -1034,6 +1050,7 @@ static const M12_GeneratedCardArt* generated_card_art_for_game(const char* gameI
 }
 
 static void draw_box_art_panel(M12_ModernCanvas* c,
+                               const M12_StartupMenuState* state,
                                const char* gameId,
                                int slotIdx,
                                int x, int y, int w, int h,
@@ -1173,7 +1190,8 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
                            (slotIdx == 1 ? "CSB BOX ART" :
                             (slotIdx == 2 ? "DM2 BOX ART" :
                              (slotIdx == 3 ? "CAPTURE LOCKED" : "SOURCE ART")));
-        draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
+        draw_text_centered(c, x + w / 2, y + h - 28,
+                           modern_tr(state, text), &lbl);
     }
 
     if (disabled) {
@@ -1185,7 +1203,8 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         fill_rounded_rect(c, x + 18, y + h / 2 - 18, w - 36, 36, 8, rgb(42, 42, 48));
         stroke_rounded_rect(c, x + 18, y + h / 2 - 18, w - 36, 36, 8, rgb(180, 180, 188));
         ModernTextStyle soon = text_style_make(2, rgb(220, 220, 224), 1);
-        draw_text_centered(c, x + w / 2, y + h / 2 - 6, "COMING SOON", &soon);
+        draw_text_centered(c, x + w / 2, y + h / 2 - 6,
+                           modern_tr(state, "COMING SOON"), &soon);
     }
 }
 
@@ -1294,7 +1313,8 @@ static void draw_card(M12_ModernCanvas* c,
 
     ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
     title.tracking = 1;
-    const char* cardTitle = isSettings ? "FIRESTAFF" : entry->title;
+    const char* cardTitle = modern_tr(state,
+                                      isSettings ? "FIRESTAFF" : entry->title);
     /* If title is too wide, fall back to scale 2. */
     if (text_width_px(cardTitle, &title) > w - 32) {
         title = text_style_make(2, COLOR_TEXT(), 1);
@@ -1308,11 +1328,15 @@ static void draw_card(M12_ModernCanvas* c,
         draw_readme_logo_image(c, x + w - 148, y + 64, 112, 112);
         ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
         draw_text(c, x + 16, y + 66,  fs_l10n_get(FS_STR_SETTINGS), &p);
-        draw_text(c, x + 16, y + 96,  "DISPLAY  CONTROLS  AUDIO", &p);
+        draw_text(c, x + 16, y + 96,
+                  modern_tr(state, "DISPLAY  CONTROLS  AUDIO"), &p);
         draw_text(c, x + 16, y + 126, fs_l10n_get(FS_STR_LANGUAGE), &p);
-        draw_text(c, x + 16, y + 170, "THANKS TO CHRISTOPHE FONTANEL", &p);
-        draw_text(c, x + 16, y + 200, "AND THE PRESERVATION PROJECTS", &p);
-        draw_text(c, x + 16, y + 230, "DANIEL NYLANDER", &p);
+        draw_text(c, x + 16, y + 170,
+                  modern_tr(state, "THANKS TO CHRISTOPHE FONTANEL"), &p);
+        draw_text(c, x + 16, y + 200,
+                  modern_tr(state, "AND THE PRESERVATION PROJECTS"), &p);
+        draw_text(c, x + 16, y + 230,
+                  modern_tr(state, "DANIEL NYLANDER"), &p);
 
         static const char* grf[]   = {"V1", "V2.0", "V2.1", "V2.2"};
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
@@ -1326,21 +1350,21 @@ static void draw_card(M12_ModernCanvas* c,
 
         ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
         draw_text(c, x + 16, y + h - 32,
-                  "OPEN FIRESTAFF SETTINGS AND CREDITS", &hint);
+                  modern_tr(state, "OPEN FIRESTAFF SETTINGS AND CREDITS"), &hint);
         return;
     }
 
     if (isMuseum) {
         ModernTextStyle p = text_style_make(2, COLOR_TEXT_DIM(), 1);
         ModernTextStyle v = text_style_make(2, COLOR_ACCENT(), 1);
-        draw_text(c, x + 16, y + 72,  "DUNGEON MASTER", &p);
-        draw_text(c, x + 16, y + 108, "CHAOS STRIKES BACK", &p);
-        draw_text(c, x + 16, y + 144, "DUNGEON MASTER II", &p);
-        draw_text(c, x + 16, y + 180, "CREDITS AND ARCHIVE", &p);
-        draw_text(c, x + 16, y + 222, "5 SECTIONS", &v);
+        draw_text(c, x + 16, y + 72, modern_tr(state, "DUNGEON MASTER"), &p);
+        draw_text(c, x + 16, y + 108, modern_tr(state, "CHAOS STRIKES BACK"), &p);
+        draw_text(c, x + 16, y + 144, modern_tr(state, "DUNGEON MASTER II"), &p);
+        draw_text(c, x + 16, y + 180, modern_tr(state, "CREDITS AND ARCHIVE"), &p);
+        draw_text(c, x + 16, y + 222, modern_tr(state, "5 SECTIONS"), &v);
         ModernTextStyle hint = text_style_make(1, COLOR_TEXT_FAINT(), 0);
         draw_text(c, x + 16, y + h - 32,
-                  "PRESS ENTER TO OPEN THE LORE MUSEUM", &hint);
+                  modern_tr(state, "PRESS ENTER TO OPEN THE LORE MUSEUM"), &hint);
         return;
     }
 
@@ -1418,7 +1442,8 @@ static void draw_card(M12_ModernCanvas* c,
         int artW = w - 44;
         int artH = h - 150;
         if (artH < 180) artH = 180;
-        draw_box_art_panel(c, entry->gameId, slotIdx, artX, artY, artW, artH, !game_supported(entry->gameId));
+        draw_box_art_panel(c, state, entry->gameId, slotIdx, artX, artY,
+                           artW, artH, !game_supported(entry->gameId));
     }
 
     (void)selected;
@@ -1430,7 +1455,9 @@ static void draw_card(M12_ModernCanvas* c,
 
 /* Top-left back button, visible on every non-main view. Coords must
  * match M12_HIT_BACK_* in menu_hit_m12.c. */
-static void draw_back_button(M12_ModernCanvas* c, int highlight) {
+static void draw_back_button(M12_ModernCanvas* c,
+                             const M12_StartupMenuState* state,
+                             int highlight) {
     int x = 24;
     int y = 120;
     int w = 110;
@@ -1440,7 +1467,7 @@ static void draw_back_button(M12_ModernCanvas* c, int highlight) {
     fill_rounded_rect(c, x, y, w, h, 10, fill);
     stroke_rounded_rect(c, x, y, w, h, 10, edge);
     ModernTextStyle t = text_style_make(2, COLOR_TEXT(), 1);
-    draw_text(c, x + 14, y + 14, "< BACK", &t);
+    draw_text(c, x + 14, y + 14, modern_tr(state, "< BACK"), &t);
 }
 
 /* Launch button is now drawn inline by draw_game_options_view() for
@@ -1725,7 +1752,7 @@ static void draw_modern_settings_tabs(M12_ModernCanvas* c,
 }
 
 static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    draw_back_button(c, 0);
+    draw_back_button(c, state, 0);
     draw_modern_settings_tabs(c, state);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
     draw_text(c, 160, 130, fs_l10n_get(FS_STR_SETTINGS), &h);
@@ -1806,7 +1833,7 @@ static void draw_extras_view(M12_ModernCanvas* c,
     ModernTextStyle hint = text_style_make(2, COLOR_TEXT_DIM(), 1);
     int item;
 
-    draw_back_button(c, 0);
+    draw_back_button(c, state, 0);
     draw_panel(c, panelX, panelY, panelW, 70 + M12_EXTRAS_COUNT * rowH,
                rgb(14, 16, 36), COLOR_PANEL_EDGE(), 16);
     draw_text(c, panelX + 26, panelY + 20,
@@ -1880,11 +1907,14 @@ static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* st
     if (page < 0) page = 0;
     if (page >= section->pageCount) page = section->pageCount - 1;
 
-    draw_back_button(c, 0);
+    draw_back_button(c, state, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 160, 130, "MUSEUM OF LORE", &h);
+    draw_text(c, 160, 130, modern_tr(state, "MUSEUM OF LORE"), &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 160, 210, "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS", &sub);
+    draw_text(c, 160, 210,
+              modern_tr(state,
+                        "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"),
+              &sub);
 
     int panelX = 96;
     int panelY = 260;
@@ -1895,7 +1925,8 @@ static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* st
 
     int leftW = 330;
     ModernTextStyle label = text_style_make(1, COLOR_TEXT_FAINT(), 0);
-    draw_text(c, panelX + 30, panelY + 28, "ARCHIVE SECTIONS", &label);
+    draw_text(c, panelX + 30, panelY + 28,
+              modern_tr(state, "ARCHIVE SECTIONS"), &label);
     for (int i = 0; i < CAT_COUNT; ++i) {
         int y = panelY + 54 + i * 56;
         int selected = (i == cat);
@@ -1904,18 +1935,22 @@ static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* st
         stroke_rounded_rect(c, panelX + 24, y, leftW, 42, 10,
                             selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE());
         ModernTextStyle row = text_style_make(2, selected ? COLOR_ACCENT_HI() : COLOR_TEXT_DIM(), 1);
-        draw_text(c, panelX + 42, y + 13, g_modernMuseumCategories[i].title, &row);
+        draw_text(c, panelX + 42, y + 13,
+                  modern_tr(state, g_modernMuseumCategories[i].title), &row);
     }
 
     int contentX = panelX + leftW + 70;
     int contentW = panelW - leftW - 100;
     ModernTextStyle title = text_style_make(3, COLOR_TEXT(), 2);
-    draw_text(c, contentX, panelY + 34, section->title, &title);
+    draw_text(c, contentX, panelY + 34,
+              modern_tr(state, section->title), &title);
     ModernTextStyle subtitle = text_style_make(2, COLOR_ACCENT(), 1);
-    draw_text(c, contentX, panelY + 78, section->subtitle, &subtitle);
+    draw_text(c, contentX, panelY + 78,
+              modern_tr(state, section->subtitle), &subtitle);
 
     char pageLine[32];
-    snprintf(pageLine, sizeof(pageLine), "PAGE %d/%d", page + 1, section->pageCount);
+    snprintf(pageLine, sizeof(pageLine), modern_tr(state, "PAGE %d/%d"),
+             page + 1, section->pageCount);
     ModernTextStyle pageStyle = text_style_make(1, COLOR_TEXT_FAINT(), 0);
     draw_text(c, contentX + contentW - 120, panelY + 40, pageLine, &pageStyle);
 
@@ -1923,11 +1958,13 @@ static void draw_museum_view(M12_ModernCanvas* c, const M12_StartupMenuState* st
         ModernTextStyle line = text_style_make(i == 0 ? 2 : 2,
                                                i == 0 ? COLOR_TEXT() : COLOR_TEXT_DIM(),
                                                1);
-        draw_text(c, contentX, panelY + 132 + i * 40, section->pages[page][i], &line);
+        draw_text(c, contentX, panelY + 132 + i * 40,
+                  modern_tr(state, section->pages[page][i]), &line);
     }
 }
 
 static void draw_mode_choice_card(M12_ModernCanvas* c,
+                                  const M12_StartupMenuState* state,
                                   int x, int y, int w, int h,
                                   const char* label,
                                   const char* line1,
@@ -1952,13 +1989,14 @@ static void draw_mode_choice_card(M12_ModernCanvas* c,
         }
     }
     ModernTextStyle title = text_style_make(4, active ? COLOR_ACCENT_HI() : COLOR_TEXT(), 2);
-    draw_text_centered(c, x + w / 2, y + 24, label, &title);
+    draw_text_centered(c, x + w / 2, y + 24, modern_tr(state, label), &title);
     ModernTextStyle detail = text_style_make(2, active ? COLOR_TEXT() : COLOR_TEXT_DIM(), 1);
-    draw_text_centered(c, x + w / 2, y + 88, line1, &detail);
-    draw_text_centered(c, x + w / 2, y + 120, line2, &detail);
+    draw_text_centered(c, x + w / 2, y + 88, modern_tr(state, line1), &detail);
+    draw_text_centered(c, x + w / 2, y + 120, modern_tr(state, line2), &detail);
 }
 
 static void draw_info_tile(M12_ModernCanvas* c,
+                           const M12_StartupMenuState* state,
                            int x, int y, int w, int h,
                            const char* label,
                            const char* value,
@@ -1974,6 +2012,8 @@ static void draw_info_tile(M12_ModernCanvas* c,
     stroke_rounded_rect(c, x, y, w, h, 10, edge);
     ModernTextStyle lab = text_style_make(1, muted ? COLOR_TEXT_FAINT() : COLOR_TEXT_DIM(), 0);
     ModernTextStyle val = text_style_make(2, muted ? COLOR_TEXT_FAINT() : (selected ? COLOR_ACCENT_HI() : COLOR_TEXT()), 1);
+    label = modern_tr(state, label);
+    value = modern_tr(state, value);
     draw_text(c, x + 16, y + 14, label, &lab);
     if (value && value[0] != '\0') {
         int vw = text_width_px(value, &val);
@@ -1992,7 +2032,11 @@ static int card_platforms_for_game(const char* gameId, int out[M12_ARCH_COUNT]) 
         size_t j;
         int seen = 0;
         if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
-            architecture == M12_ARCH_X68000) continue;
+            architecture == M12_ARCH_X68000 ||
+            /* ReDMCSB's PC3.4 material is a compatibility reference, not
+             * an original CSB DOS release. */
+            (gameId && strcmp(gameId, "csb") == 0 &&
+             architecture == M12_ARCH_PC)) continue;
         for (j = 0; j < count; ++j) if (out[j] == architecture) seen = 1;
         if (!seen && count < M12_ARCH_COUNT) out[count++] = architecture;
     }
@@ -2007,35 +2051,39 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
     int rowX = 160, rowY = 280, gap = 24, cardW = 500, cardH = 250;
     ModernTextStyle title = text_style_make(4, COLOR_ACCENT(), 3);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_back_button(c, 0);
-    draw_text(c, 160, 74, entry->title, &title);
+    draw_back_button(c, state, 0);
+    draw_text(c, 160, 74, modern_tr(state, entry->title), &title);
     if (stage == 0) {
         int platforms[M12_ARCH_COUNT];
         int count = card_platforms_for_game(entry->gameId, platforms);
-        draw_text(c, 160, 140, "CHOOSE PLATFORM", &sub);
+        draw_text(c, 160, 140, modern_tr(state, "CHOOSE PLATFORM"), &sub);
         for (int i = 0; i < count; ++i) {
             int col = i % 3, row = i / 3;
             int x = rowX + col * (cardW + gap), y = rowY + row * (cardH + gap);
             int ready = M12_AssetStatus_GameHasMatchedArchitecture(
                 &state->assetStatus, entry->gameId, platforms[i]);
             const M12_GeneratedCardArt* art = generated_card_art_for_game(entry->gameId);
-            draw_mode_choice_card(c, x, y, cardW, cardH, M12_Architecture_Label(platforms[i]),
+            draw_mode_choice_card(c, state, x, y, cardW, cardH, M12_Architecture_Label(platforms[i]),
                                   ready ? "GAME DATA VERIFIED" : "GAME DATA NOT FOUND",
                                   ready ? "SELECT TO CONTINUE" : "CANNOT START", i == selected,
                                   ready ? COLOR_V2() : rgb(96, 92, 104));
             if (art) draw_generated_card_art(c, art, x + cardW - 128, y + 70, 112, 150, !ready);
         }
-        if (count == 0) draw_text(c, 160, 260, "NO SUPPORTED NATIVE PLATFORM", &sub);
+        if (count == 0) {
+            draw_text(c, 160, 260,
+                      modern_tr(state, "NO SUPPORTED NATIVE PLATFORM"), &sub);
+        }
     } else {
         static const char* const labels[] = {"ORIGINAL", "MODERN", "CUSTOM"};
         static const char* const line1[] = {"V1 PRESERVATION", "V2.X IMPROVEMENTS", "FINE-TUNE SETTINGS"};
         static const char* const line2[] = {"START WITH ORIGINAL RULES", "START WITH MODERN PRESET", "OPEN DETAILED OPTIONS"};
         cardW = 480;
         rowX = 210;
-        draw_text(c, 160, 140, "CHOOSE PRESENTATION", &sub);
+        draw_text(c, 160, 140,
+                  modern_tr(state, "CHOOSE PRESENTATION"), &sub);
         for (int i = 0; i < 3; ++i) {
             int x = rowX + i * (cardW + gap);
-            draw_mode_choice_card(c, x, rowY, cardW, cardH, labels[i], line1[i], line2[i],
+            draw_mode_choice_card(c, state, x, rowY, cardW, cardH, labels[i], line1[i], line2[i],
                                   i == selected, i == 0 ? COLOR_V1() : COLOR_V2());
         }
     }
@@ -2070,11 +2118,12 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         }
     }
 
-    draw_back_button(c, 0);
+    draw_back_button(c, state, 0);
     ModernTextStyle h = text_style_make(4, COLOR_ACCENT(), 3);
-    draw_text(c, 160, 74, entry->title, &h);
+    draw_text(c, 160, 74, modern_tr(state, entry->title), &h);
     ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
-    draw_text(c, 160, 132, game_description(entry->gameId), &sub);
+    draw_text(c, 160, 132,
+              modern_tr(state, game_description(entry->gameId)), &sub);
 
     int panelX = 96;
     int panelY = 190;
@@ -2134,12 +2183,12 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     int choiceW = (rowW - choiceGap) / 2;
     int choiceH = 156;
 
-    draw_mode_choice_card(c, rowX, choiceY, choiceW, choiceH,
+    draw_mode_choice_card(c, state, rowX, choiceY, choiceW, choiceH,
                           "ORIGINAL",
                           "SOURCE-FAITHFUL RULES",
                           "LOCKED DISPLAY PARITY",
                           isV1, COLOR_V1());
-    draw_mode_choice_card(c, rowX + choiceW + choiceGap, choiceY, choiceW, choiceH,
+    draw_mode_choice_card(c, state, rowX + choiceW + choiceGap, choiceY, choiceW, choiceH,
                           "CUSTOM",
                           "ENHANCED GRAPHICS",
                           "ADJUSTABLE DISPLAY",
@@ -2153,43 +2202,43 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         int tileH = 64;
         int x0 = rowX;
         int y0 = gridY;
-        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "VERSION", verLabel,
+        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "VERSION", verLabel,
                        sel == M12_GAME_OPT_ROW_VERSION, 0);
-        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "DATA", ver && ver->matched ? "VERIFIED" : "MISSING",
+        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "DATA", ver && ver->matched ? "VERIFIED" : "MISSING",
                        sel == M12_GAME_OPT_ROW_VERSION, ver && ver->matched ? 0 : 1);
-        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "PATCH", patchLabel,
+        draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "PATCH", patchLabel,
                        sel == M12_GAME_OPT_ROW_PATCH, 0);
-        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "LANGUAGE", langLabel,
+        draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "LANGUAGE", langLabel,
                        sel == M12_GAME_OPT_ROW_LANGUAGE, 0);
 
         y0 += tileH + tileGap;
-        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CHEATS", cheatsLabel,
+        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CHEATS", cheatsLabel,
                        sel == M12_GAME_OPT_ROW_CHEATS, 0);
-        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SPEED", speeds[speedIdx],
+        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SPEED", speeds[speedIdx],
                        sel == M12_GAME_OPT_ROW_SPEED, !opts->cheatsEnabled);
-        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "SPEED HOTKEYS", hotkeysLabel,
+        draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "SPEED HOTKEYS", hotkeysLabel,
                        sel == M12_GAME_OPT_ROW_SPEED, !opts->cheatsEnabled);
-        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "QUICK RESUME",
+        draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "QUICK RESUME",
                        state->settings.quickResumeEnabled ? "ON" : "OFF", 0, 0);
 
         y0 += tileH + tileGap;
-        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "ASPECT", aspects[aspIdx],
+        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "ASPECT", aspects[aspIdx],
                        sel == M12_GAME_OPT_ROW_ASPECT, isV1);
-        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "RESOLUTION", res[resIdx],
+        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "RESOLUTION", res[resIdx],
                        sel == M12_GAME_OPT_ROW_RESOLUTION, isV1);
-        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "RENDERER", renderer[rendererIdx],
+        draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "RENDERER", renderer[rendererIdx],
                        0, 0);
-        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "WINDOW", windows[windowIdx],
+        draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "WINDOW", windows[windowIdx],
                        0, 0);
 
         y0 += tileH + tileGap;
-        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "MINIMAP",
+        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "MINIMAP",
                        state->settings.minimapEnabled ? "ON" : "OFF", 0, 0);
-        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "AUTOMAP",
+        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "AUTOMAP",
                        state->settings.autoMapEnabled ? "ON" : "OFF", 0, 0);
-        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "COMBAT LOG",
+        draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "COMBAT LOG",
                        state->settings.combatLogEnabled ? "ON" : "OFF", 0, 0);
-        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "SOUNDTRACK",
+        draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "SOUNDTRACK",
                        soundtracks[soundtrackIdx], 0, 0);
 
         y0 += tileH + tileGap;
@@ -2197,25 +2246,26 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
             char amb[24];
             char ui[24];
             snprintf(amb, sizeof(amb), "%s %d%%",
-                     state->settings.ambientEnabled ? "ON" : "OFF",
+                     modern_tr(state,
+                               state->settings.ambientEnabled ? "ON" : "OFF"),
                      state->settings.ambientVolume);
             snprintf(ui, sizeof(ui), "%d%%", state->settings.uiScale);
-            draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "AMBIENT", amb, 0, 0);
-            draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "UI SCALE", ui, 0, 0);
-            draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "STREAMER",
+            draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "AMBIENT", amb, 0, 0);
+            draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "UI SCALE", ui, 0, 0);
+            draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "STREAMER",
                            state->settings.streamerMode ? "ON" : "OFF", 0, 0);
-            draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM MUSIC",
+            draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM MUSIC",
                            state->settings.customMusicPath[0] ? "SET" : "NONE", 0, 0);
         }
 
         y0 += tileH + tileGap;
-        draw_info_tile(c, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM DUNGEON",
+        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM DUNGEON",
                        state->settings.customDungeonPath[0] ? "SET" : "NONE", 0, 0);
-        draw_info_tile(c, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SCREENSHOTS",
+        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SCREENSHOTS",
                        state->settings.screenshotPath[0] ? "CUSTOM" : "DEFAULT", 0, 0);
-        draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "AUDIO",
+        draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "AUDIO",
                        state->settings.audioMuted ? "MUTED" : "ON", 0, 0);
-        draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "STATUS",
+        draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "STATUS",
                        nexusV22CaptureLocked
                            ? "CAPTURE LOCKED"
                            : (mode == M12_PRESENTATION_V22_MODERN
@@ -2253,8 +2303,9 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         fill_rounded_rect(c, btnX, btnY, btnW, btnH, 12, btnFill);
         stroke_rounded_rect(c, btnX, btnY, btnW, btnH, 12, btnEdge);
         ModernTextStyle t = text_style_make(3, COLOR_ACCENT_HI(), 2);
-        int tw = text_width_px("LAUNCH >", &t);
-        draw_text(c, btnX + (btnW - tw) / 2, btnY + 12, "LAUNCH >", &t);
+        const char* launch = modern_tr(state, "LAUNCH >");
+        int tw = text_width_px(launch, &t);
+        draw_text(c, btnX + (btnW - tw) / 2, btnY + 12, launch, &t);
     }
 }
 
@@ -2280,9 +2331,9 @@ static void draw_missing_data_message_view(M12_ModernCanvas* c,
     int panelY = (c->h - panelH) / 2;
     const char* gameId = state->messageGameId[0] ? state->messageGameId : NULL;
     const M12_GeneratedCardArt* generated = generated_card_art_for_game(gameId);
-    const char* line1 = state->messageLine1 ? state->messageLine1 : "";
-    const char* line2 = state->messageLine2 ? state->messageLine2 : "";
-    const char* line3 = state->messageLine3 ? state->messageLine3 : "";
+    const char* line1 = modern_tr_optional(state, state->messageLine1);
+    const char* line2 = modern_tr_optional(state, state->messageLine2);
+    const char* line3 = modern_tr_optional(state, state->messageLine3);
     ModernTextStyle brand = text_style_make(3, COLOR_ACCENT_HI(), 2);
     ModernTextStyle title = text_style_make(3, rgb(248, 238, 218), 2);
     ModernTextStyle mid = text_style_make(2, COLOR_TEXT(), 1);
@@ -2303,7 +2354,8 @@ static void draw_missing_data_message_view(M12_ModernCanvas* c,
     stroke_rounded_rect(c, panelX, panelY, panelW, panelH, 24, COLOR_ACCENT());
 
     draw_readme_logo_image(c, panelX + 54, panelY + 42, 106, 106);
-    draw_text(c, panelX + 176, panelY + 54, "FIRESTAFF", &brand);
+    draw_text(c, panelX + 176, panelY + 54,
+              modern_tr(state, "FIRESTAFF"), &brand);
     draw_text_centered_fit(c, panelX + panelW / 2, panelY + 136,
                            line1, &title, panelW - 150);
 
@@ -2319,12 +2371,13 @@ static void draw_missing_data_message_view(M12_ModernCanvas* c,
     stroke_rounded_rect(c, okX, okY, okW, okH, 8, COLOR_ACCENT());
     {
         ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
-        draw_text_centered(c, okX + okW / 2, okY + 12, "OK", &ok);
+        draw_text_centered(c, okX + okW / 2, okY + 12,
+                           modern_tr(state, "OK"), &ok);
     }
 }
 
 static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
-    draw_back_button(c, 0);
+    draw_back_button(c, state, 0);
     dim_message_background(c);
     if (state && state->messageIsMissingGameData) {
         draw_missing_data_message_view(c, state);
@@ -2336,9 +2389,9 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
         int panelX = (c->w - panelW) / 2;
         int panelY = (c->h - panelH) / 2;
         ModernTextStyle big = text_style_make(3, COLOR_ACCENT(), 2);
-        const char* line1 = state->messageLine1 ? state->messageLine1 : "";
-        const char* line2 = state->messageLine2 ? state->messageLine2 : "";
-        const char* line3 = state->messageLine3 ? state->messageLine3 : "";
+        const char* line1 = modern_tr_optional(state, state->messageLine1);
+        const char* line2 = modern_tr_optional(state, state->messageLine2);
+        const char* line3 = modern_tr_optional(state, state->messageLine3);
         ModernTextStyle mid = text_style_make(2, COLOR_TEXT(), 1);
         ModernTextStyle sm = text_style_make(2, COLOR_TEXT_DIM(), 1);
         int okW = 108;
@@ -2380,8 +2433,11 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
         stroke_rounded_rect(c, okX, okY, okW, okH, 6, COLOR_ACCENT());
         {
             ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
-            draw_text_centered(c, okX + okW / 2, okY + 10,
-                               state->dataDirScanActive ? "CANCEL" : "OK", &ok);
+            draw_text_centered(
+                c, okX + okW / 2, okY + 10,
+                modern_tr(state,
+                          state->dataDirScanActive ? "CANCEL" : "OK"),
+                &ok);
         }
     }
 }
@@ -2414,6 +2470,7 @@ static void draw_sparse_background(M12_ModernCanvas* c) {
 }
 
 static void draw_sparse_center_box_modern(M12_ModernCanvas* c,
+                                          const M12_StartupMenuState* state,
                                           int boxW,
                                           int boxH,
                                           const char* line1,
@@ -2426,16 +2483,20 @@ static void draw_sparse_center_box_modern(M12_ModernCanvas* c,
     ModernTextStyle l1 = text_style_make(2, line1Color, 0);
     ModernTextStyle l2 = text_style_make(2, rgb(210, 210, 210), 0);
     ModernTextStyle l3 = text_style_make(2, rgb(120, 120, 120), 0);
-    if (line1 && line1[0]) draw_text_centered(c, c->w / 2, y + 18, line1, &l1);
-    if (line2 && line2[0]) draw_text_centered(c, c->w / 2, y + 42, line2, &l2);
-    if (line3 && line3[0]) draw_text_centered(c, c->w / 2, y + 66, line3, &l3);
+    line1 = modern_tr(state, line1);
+    line2 = modern_tr(state, line2);
+    line3 = modern_tr(state, line3);
+    if (line1[0]) draw_text_centered(c, c->w / 2, y + 18, line1, &l1);
+    if (line2[0]) draw_text_centered(c, c->w / 2, y + 42, line2, &l2);
+    if (line3[0]) draw_text_centered(c, c->w / 2, y + 66, line3, &l3);
     if (line1 && line1[0]) {
         int okW = 64;
         int okH = 22;
         int okX = c->w / 2 - okW / 2;
         int okY = y + boxH - 34;
         stroke_rounded_rect(c, okX, okY, okW, okH, 3, rgb(230, 210, 120));
-        draw_text_centered(c, c->w / 2, okY + 5, "OK", &l1);
+        draw_text_centered(c, c->w / 2, okY + 5,
+                           modern_tr(state, "OK"), &l1);
     }
 }
 
@@ -2448,9 +2509,11 @@ static void draw_sparse_main_view_modern(M12_ModernCanvas* c, const M12_StartupM
     int centerX = c->w / 2;
     int baseY = c->h / 2 - 36;
 
-    draw_text_centered(c, centerX, baseY, "DUNGEON MASTER", &title);
+    draw_text_centered(c, centerX, baseY,
+                       modern_tr(state, "DUNGEON MASTER"), &title);
     if (phase >= 1) {
-        draw_text_centered(c, centerX, baseY + 26, "CHAOS STRIKES BACK", &sub);
+        draw_text_centered(c, centerX, baseY + 26,
+                           modern_tr(state, "CHAOS STRIKES BACK"), &sub);
     }
     if (phase >= 2) {
         int rows = phase >= 3 ? M12_StartupMenu_GetEntryCount() : 2;
@@ -2460,7 +2523,8 @@ static void draw_sparse_main_view_modern(M12_ModernCanvas* c, const M12_StartupM
             if (i == state->selectedIndex) {
                 draw_text(c, centerX - 160, y, ">", style);
             }
-            draw_text(c, centerX - 132, y, state->entries[i].title, style);
+            draw_text(c, centerX - 132, y,
+                      modern_tr(state, state->entries[i].title), style);
         }
     }
 }
@@ -2481,12 +2545,13 @@ static void draw_sparse_view_modern(M12_ModernCanvas* c, const M12_StartupMenuSt
                          "LANGUAGE"),
                      language ? language : "EN");
             snprintf(line3, sizeof(line3), "GRAPHICS  V1 ORIGINAL");
-            draw_sparse_center_box_modern(c, 420, 110, "SETTINGS", line2, line3, rgb(240, 240, 240));
+            draw_sparse_center_box_modern(c, state, 420, 110, "SETTINGS",
+                                          line2, line3, rgb(240, 240, 240));
             break;
         }
         case M12_MENU_VIEW_GAME_OPTIONS: {
             const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
-            draw_sparse_center_box_modern(c,
+            draw_sparse_center_box_modern(c, state,
                                           520,
                                           110,
                                           entry->title,
@@ -2499,14 +2564,16 @@ static void draw_sparse_view_modern(M12_ModernCanvas* c, const M12_StartupMenuSt
             M12_RGB line1Color = rgb(120, 210, 120);
             const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
             if (entry && !entry->available) line1Color = rgb(210, 120, 120);
-            draw_sparse_center_box_modern(c, 540, 120, state->messageLine1, state->messageLine2, state->messageLine3, line1Color);
+            draw_sparse_center_box_modern(
+                c, state, 540, 120, state->messageLine1,
+                state->messageLine2, state->messageLine3, line1Color);
             break;
         }
         case M12_MENU_VIEW_MUSEUM: {
             int cat = state->museumSelectedIndex;
             if (cat < 0) cat = 0;
             if (cat >= 5) cat = 4;
-            draw_sparse_center_box_modern(c, 560, 120,
+            draw_sparse_center_box_modern(c, state, 560, 120,
                                           g_modernMuseumCategories[cat].title,
                                           g_modernMuseumCategories[cat].pages[0][0],
                                           "ARROWS NAVIGATE   ESC BACK",

@@ -47,6 +47,9 @@ typedef struct DM1_V1_InscriptionHostMaterialReceiptPc34 {
     int glyphByteCount;
     uint32_t glyphBytesFNV1a;
     int lineCount;
+    /* Stable printable fallback decoded from the authenticated F0168 bytes.
+     * Newlines correspond exactly to raw 0x80 line separators. */
+    char sourceText[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
     unsigned char glyphBytes[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
     DM1_V1_InscriptionFrontWallLineDrawPlanPc34
         lines[DM1_V1_INSCRIPTION_MAX_LINES];

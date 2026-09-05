@@ -89,6 +89,8 @@ int main(void)
 {
     DM1_SideDoorRenderPlanPc34 plan;
     DM1_SideDoorBlitPc34 blits[2];
+    DM1_SideDoorF0111CompositionPc34 composition;
+    int i;
 
     expect_int("plan.count", dm1_v1_side_door_render_plan_count_pc34(), 8);
     expect_plan("plan.d3l2", 0, 3, -2, 2, 246, 35, 0, 28, 9, 38, 0);
@@ -108,6 +110,41 @@ int main(void)
     expect_int("no.open.panel", dm1_v1_side_door_panel_blits_for_draw_pc34(&plan, 0, 1, blits), 0);
     expect_int("bad.panel.null", dm1_v1_side_door_panel_blits_for_draw_pc34(0, 1, 1, blits), 0);
     expect_int("bad.out.null", dm1_v1_side_door_panel_blits_for_draw_pc34(&plan, 1, 1, 0), 0);
+
+    /* Every lateral F0111 caller uses the same complete temporary-bitmap
+     * transaction as center doors.  Exercise all eight real zone routes,
+     * including the exceptional D3L2/D3R2 slices. */
+    for (i = 0; i < dm1_v1_side_door_render_plan_count_pc34(); ++i) {
+        expect_int("composition.plan", dm1_v1_side_door_render_plan_at_pc34(i, &plan), 1);
+        expect_int("composition.accepted",
+                   dm1_v1_side_door_f0111_composition_pc34(
+                       &plan, 5, 1, 2, 3, i & 3, &composition, blits), 1);
+        expect_int("composition.valid", composition.valid, 1);
+        expect_int("composition.origin.x", composition.bitmapOriginX,
+                   plan.panel.dstX - plan.panel.srcX);
+        expect_int("composition.origin.y", composition.bitmapOriginY,
+                   plan.panel.dstY - plan.panel.srcY);
+        expect_int("composition.ornament.before.clip",
+                   composition.ordinaryOrnamentBeforeClip, 1);
+        expect_int("composition.destroyed.before.clip",
+                   composition.destroyedMaskBeforeClip, 1);
+        expect_int("composition.no.thieves.eye",
+                   composition.thievesEyeMaskBeforeClip, 0);
+        expect_int("composition.flip.before.clip",
+                   composition.wholeBitmapFlipBeforeClip, 1);
+        expect_int("composition.flip.mask", composition.flipMask, i & 3);
+        expect_int("composition.one.random4", composition.random4Consumed, 1);
+    }
+    expect_int("composition.open.rejected",
+               dm1_v1_side_door_f0111_composition_pc34(
+                   &plan, 0, 1, 1, 3, 0, &composition, blits), 0);
+    expect_int("composition.no.ornament",
+               dm1_v1_side_door_f0111_composition_pc34(
+                   &plan, 4, 1, 0, 0, 0, &composition, blits), 1);
+    expect_int("composition.no.ornament.flag",
+               composition.ordinaryOrnamentBeforeClip, 0);
+    expect_int("composition.nonanimated.no.random",
+               composition.random4Consumed, 0);
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;

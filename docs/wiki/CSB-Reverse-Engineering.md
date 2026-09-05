@@ -27,7 +27,7 @@ ls include/csb_v1_* | sort # 245 files
 | `redmcsb_fNNNN_*` | ReDMCSB functions shared verbatim between DM1 and CSB (text, video primitives, IMG3, save headers) | `redmcsb_f0684_blit_pc34_compat.c`, `redmcsb_f7061_save_header_pc34_compat.c` |
 | `csb_v1_viewport_*` | Per-element/per-depth viewport decomposition (D0-D3 walls, doors, ornaments, projectiles, custom backgrounds) | `csb_v1_viewport_d2l_d2r_wall_pc34_compat.c`, `csb_v1_viewport_d1c_f0095_floor_ornament_pc34_compat.c` |
 | `csb_v1_csbgraphics_*` / `csb_v1_csbwin_*` | CSBWin-specific extensions: custom `CSBgraphics.dat`, XOR-padded saves, DSA runtime admission, save-loader boundary | `csb_v1_csbwin_dsa_runtime_admission_pc34_compat.c`, `csb_v1_csbwin_save_loader_boundary_pc34_compat.c` |
-| `csb_v1_atari_*` / `csb_v1_fmtowns_*` / `csb_v1_amiga_*` / `csb_v1_amg_*` | Non-DOS platform ports (Atari ST saves/animation, FM Towns CD/ANM/portrait, Amiga IMG1 graphics, Amiga sound) | `csb_v1_atari_save_decode_pc34_compat.c`, `csb_v1_fmtowns_cd.c` |
+| `csb_v1_atari_*` / `csb_v1_fmtowns_*` / `csb_v1_amiga_*` / `csb_v1_amg_*` | Original-platform ports (Atari ST saves/animation, FM Towns CD/ANM/portrait, Amiga IMG1 graphics, Amiga sound) | `csb_v1_atari_save_decode_pc34_compat.c`, `csb_v1_fmtowns_cd.c` |
 | `csb_v1_startup_*` | Presentation chain: C001-C005 raster phases, SWSH, entrance, credits | `csb_v1_startup_raster_present_pc34_compat.c`, `csb_v1_f0806_entrance_loop_runtime_handoff_pc34_compat.c` |
 | `csb_v1_save_*` / `csb_v1_utility_*` | Original save read/write, export/import, Utility Disk transaction path | `csb_v1_save_export_import_pc34_compat.c`, `csb_v1_utility_save_transaction_pc34_compat.c` |
 | `csb_v2_*` / `csb_v22_*` | Modern presentation layer: filters, HUD overlay, minimap, dynamic lighting, VFX, touch controls (non-parity, opt-in) | `csb_v2_filter_crt_scanlines_pc34.c`, `csb_v22_inplace_draw_pc34.c` |
@@ -35,11 +35,10 @@ ls include/csb_v1_* | sort # 245 files
 
 ## 2. IMG1 Graphics Format (Amiga)
 
-CSB has no original PC/DOS release. `CSBgraphics.dat` is a CSBWin custom
-override file, not an original PC data file. The original Amiga v3.1 graphic
-stream uses **IMG1 nibble-RLE**, wrapped in a big-endian `DMCSB2` container;
-it is deliberately kept distinct from DM1 PC `GRAPHICS.DAT` and from the
-CSBWin override format.
+The original Amiga v3.1 graphic stream uses **IMG1 nibble-RLE**, wrapped in a
+big-endian `DMCSB2` container. It is deliberately kept distinct from the
+optional CSBWin custom-graphics override format used only as a source-study
+fixture.
 
 ### Container header
 
@@ -388,6 +387,4 @@ For the full pass index and evidence-document conventions, see
   Q-CSB-10 status and verification commands
 - [CSB-DSA-and-Save-Internals](CSB-DSA-and-Save-Internals) — authenticated
   DSA/save/raster contract detail
-- [DM1-PC34-Internals](DM1-PC34-Internals) — the shared ReDMCSB PC 3.4
-  reference model that CSB inherits
 - [Architecture-Overview](Architecture-Overview) — project-wide module map

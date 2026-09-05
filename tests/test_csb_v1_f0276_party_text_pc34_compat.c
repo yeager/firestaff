@@ -85,6 +85,12 @@ int main(void)
     CHECK(profile.csbwin_text_message_receipt.valid &&
               strcmp(profile.csbwin_text_message_receipt.text, "HEL") == 0,
           "F0276 uses F0168 bytes for the visible party-arrival message");
+    profile.game_time = profile.csbwin_text_message_receipt.source_game_time + 69u;
+    CHECK(csb_v1_runtime_text_message_active_pc34(&profile),
+          "F0046 retains the authentic C015 message through tick 69");
+    profile.game_time = profile.csbwin_text_message_receipt.source_game_time + 70u;
+    CHECK(!csb_v1_runtime_text_message_active_pc34(&profile),
+          "F0046 expires the authentic C015 message exactly at tick 70");
 
     make_dungeon(&dungeon, raw, 0);
     prepare_party(&profile, &dungeon);

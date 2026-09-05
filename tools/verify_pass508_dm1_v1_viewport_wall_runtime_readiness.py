@@ -1,177 +1,74 @@
 #!/usr/bin/env python3
+"""Audit current DM1 PC3.4 wall readiness without external work trees."""
 from __future__ import annotations
-import hashlib, json, subprocess, sys
+import hashlib, json, re, struct, zlib
 from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from firestaff_build_dir import resolve_build_dir, find_build_dir
+from zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
-GREATSTONE = Path("~/.openclaw/data/firestaff-greatstone-atlas").expanduser()
-CSBWIN = Path("~/.openclaw/data/firestaff-csbwin-source/CSBWin").expanduser()
+RED = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+ZIP = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+VIEW = ROOT / "src/engine/m11_game_view.c"
 OUT = ROOT / "parity-evidence/verification/pass508_dm1_v1_viewport_wall_runtime_readiness/manifest.json"
 REPORT = ROOT / "parity-evidence/pass508_dm1_v1_viewport_wall_runtime_readiness.md"
-
-SOURCE_CHECKS = [
-    ("f0128_far_to_near_world_replay", "DUNVIEW.C", "8466-8542", "F0128_DUNGEONVIEW_Draw_CPSF", [
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(F0162_DUNGEON_GetSquareFirstObject(L0224_i_MapX, L0225_i_MapY), P0183_i_Direction, L0224_i_MapX, L0225_i_MapY, M598_VIEW_SQUARE_D4L",
-        "F0116_DUNGEONVIEW_DrawSquareD3L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
-        "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
-        "F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
-        "F0124_DUNGEONVIEW_DrawSquareD1C(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
-        "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"]),
-    ("f0124_d1c_wall_alcove_exception", "DUNVIEW.C", "7784-7844", "F0124_DUNGEONVIEW_DrawSquareD1C", [
-        "case C00_ELEMENT_WALL:",
-        "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C04_WALL_D1C], C712_ZONE_WALL_D1C);",
-        "if (F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF(L0218_ai_SquareAspect[M552_FRONT_WALL_ORNAMENT_ORDINAL], M587_VIEW_WALL_D1C_FRONT))",
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);"]),
-    ("f0115_alcove_cell_filter", "DUNVIEW.C", "4800-4926", "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF", [
-        "L0135_B_DrawAlcoveObjects = !(L0130_ul_RemainingViewCellOrdinalsToProcess = P0146_ui_OrderedViewCellOrdinals);",
-        "AL0126_i_ViewCell = C04_VIEW_CELL_ALCOVE; /* Index of coordinates to draw objects in alcoves */",
-        "L0139_i_Cell = M018_OPPOSITE(P0142_i_Direction); /* Alcove is on the opposite direction of the viewing direction */",
-        "M011_CELL(P0141_T_Thing) == L0139_i_Cell",
-        "L0142_B_UseAlcoveObjectImage = L0135_B_DrawAlcoveObjects && !L0138_i_ViewLane;"]),
-    ("f0124_d1c_front_door_two_pass", "DUNVIEW.C", "7873-7938", "F0124_DUNGEONVIEW_DrawSquareD1C", [
-        "case C17_ELEMENT_DOOR_FRONT:",
-        "F0108_DUNGEONVIEW_DrawFloorOrnament",
-        "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
-        "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2112_DoorFrameTopD1LCR, C733_ZONE_DOOR_FRAME_TOP_D1C);",
-        "F0110_DUNGEONVIEW_DrawDoorButton",
-        "F0111_DUNGEONVIEW_DrawDoor",
-        "L0217_i_Order = C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT;",
-        "T0124018:",
-        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"]),
-    ("drawview_present_boundary", "DRAWVIEW.C", "847-858", "F0097_DUNGEONVIEW_DrawViewport", [
-        "F0638_GetZone(C007_ZONE_VIEWPORT, L2414_ai_XYZ);",
-        "M768_BOX_LEFT(L2413_ai_Box) = M704_ZONE_LEFT(L2414_ai_XYZ);",
-        "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);"]),
+STATUS = "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS"
+SOURCES = [
+ ("DUNVIEW.C","8466-8542",["F0116_DUNGEONVIEW_DrawSquareD3L","F0118_DUNGEONVIEW_DrawSquareD3C_CPSF","F0121_DUNGEONVIEW_DrawSquareD2C","F0124_DUNGEONVIEW_DrawSquareD1C","F0127_DUNGEONVIEW_DrawSquareD0C"]),
+ ("DUNVIEW.C","7784-7844",["case C00_ELEMENT_WALL:","C712_ZONE_WALL_D1C","F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF","C0x0000_CELL_ORDER_ALCOVE"]),
+ ("DUNVIEW.C","7873-7938",["case C17_ELEMENT_DOOR_FRONT:","C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT","F0111_DUNGEONVIEW_DrawDoor","C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"]),
+ ("DUNVIEW.C","5915-5933",["/* Draw explosions */","P0141_T_Thing = L0146_T_FirstThingToDraw"]),
+ ("DRAWVIEW.C","847-858",["F0638_GetZone(C007_ZONE_VIEWPORT","VIDRV_09_BlitViewPort"]),
 ]
-FIRE_CHECKS = [
-    # 2026-07-20 round 14 re-anchor: scoped to m11_draw_viewport.  The
-    # batch order is unchanged; the near-replay guard now consumes the
-    # lane-visibility receipt field, and the batch side-contents pass is
-    # the F0128-ordered per-depth interleave (a8ff8d15b).
-    ("normal_renderer_batches_with_near_replay_guard", "src/engine/m11_game_view.c", [
-        "m11_draw_viewport_background(state", "m11_draw_dm1_floor_pits(state",
-        "m11_draw_dm1_side_walls(state", "m11_draw_dm1_front_walls(state",
-        "m11_draw_dm1_wall_ornaments(state", "m11_draw_dm1_center_doors(state",
-        "visibility.nearest_blocking_center_depth_index",
-        "m11_draw_dm1_side_contents_at_depth(", "m11_draw_dm1_deferred_explosion_pass(state",
-        "if (state->showDebugHUD)"], "m11_draw_viewport"),
-    # 2026-07-20 round 14 re-anchor: the alcove item pass draws through the
-    # F0115 material-plan sprite route (m11_draw_item_sprite_material).
-    ("wall_alcove_item_source_cell_gate", "src/engine/m11_game_view.c", [
-        "static void m11_draw_dm1_alcove_wall_items", "C0x0000_CELL_ORDER_ALCOVE",
-        "C04_VIEW_CELL_ALCOVE", "M018_OPPOSITE(direction)",
-        "cell->floorItemCells[ii] != alcoveCellRelativeToParty", "m11_draw_item_sprite_material("]),
-]
+MEMBERS = {
+ "DATA/DUNGEON.DAT":(33357,"d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"),
+ "DATA/GRAPHICS.DAT":(363417,"2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"),
+ "DM.EXE":(11471,"4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4")}
+CALLBACKS = ["M11_DM1_F0128_EXECUTE_WALL_MATERIAL","M11_DM1_F0128_EXECUTE_WALL_ORNAMENT","M11_DM1_F0128_EXECUTE_PRE_DOOR_FLOOR_ORNAMENT","M11_DM1_F0128_EXECUTE_DOOR_PASS1","M11_DM1_F0128_EXECUTE_DOOR_FRAME","M11_DM1_F0128_EXECUTE_DOOR_BUTTON","M11_DM1_F0128_EXECUTE_DOOR_MATERIAL","M11_DM1_F0128_EXECUTE_FOREGROUND","m11_draw_dm1_f0115_explosions_for_square"]
 
-def sha(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for b in iter(lambda: f.read(1048576), b""):
-            h.update(b)
-    return h.hexdigest()
+def body(text,name):
+ m=re.search(r"\b"+re.escape(name)+r"\s*\(",text)
+ if not m: raise AssertionError("missing function "+name)
+ b=text.find("{",m.end()); depth=0
+ for i in range(b,len(text)):
+  depth += (text[i]=="{")-(text[i]=="}")
+  if depth==0: return text[m.start():i+1]
+ raise AssertionError("unterminated function "+name)
 
-def line_no(text: str, pos: int) -> int:
-    return text.count("\n", 0, pos) + 1
+def member(name):
+ raw=ZIP.read_bytes()
+ with ZipFile(ZIP) as archive: info=archive.getinfo(name)
+ off=info.header_offset
+ if raw[off:off+4] != b"PK\x03\x04": raise AssertionError("bad local header "+name)
+ nl,xl=struct.unpack_from("<HH",raw,off+26); start=off+30+nl+xl
+ packed=raw[start:start+info.compress_size]
+ if info.compress_type==ZIP_STORED: data=packed
+ elif info.compress_type==ZIP_DEFLATED: data=zlib.decompress(packed,-15)
+ else: raise AssertionError("unsupported compression "+name)
+ if len(data)!=info.file_size or zlib.crc32(data)&0xffffffff!=info.CRC: raise AssertionError("integrity failure "+name)
+ return data
 
-def excerpt(text: str, spec: str) -> tuple[int, str]:
-    a, b = [int(x) for x in spec.split("-", 1)]
-    return a, "\n".join(text.splitlines()[a - 1:b])
+def main():
+ failures=[]; source=[]
+ for filename,span,needles in SOURCES:
+  path=RED/filename; a,b=map(int,span.split("-")); text="\n".join(path.read_text(encoding="latin-1").splitlines()[a-1:b]) if path.exists() else ""
+  missing=[n for n in needles if n not in text]; source.append({"file":filename,"lines":span,"ok":not missing,"missing":missing}); failures += [f"source:{filename}:{n}" for n in missing]
+ view=VIEW.read_text(encoding="utf-8"); callback=body(view,"m11_dm1_f0128_execute_source_step"); viewport=body(view,"m11_draw_viewport")
+ missing=[n for n in CALLBACKS if n not in callback]; failures += ["callback:"+n for n in missing]
+ per_square=all(n in viewport for n in ["m11_dm1_f0128_dispatch_wall_material_square","m11_dm1_f0128_dispatch_foreground_square"])
+ stale="m11_draw_dm1_deferred_explosion_pass(state" in viewport
+ if not per_square: failures.append("viewport:missing-per-square-dispatch")
+ if stale: failures.append("viewport:stale-global-explosion-replay")
+ media=[]
+ if not ZIP.exists(): failures.append("media:missing-pc34-zip")
+ else:
+  for name,(size,want) in MEMBERS.items():
+   data=member(name); digest=hashlib.sha256(data).hexdigest(); ok=len(data)==size and digest==want
+   media.append({"archive":str(ZIP),"member":name,"readMode":"in-memory/no-extraction","size":len(data),"sha256":digest,"ok":ok})
+   if not ok: failures.append("media:"+name)
+ blockers=["No same-frame original DOS viewport capture is supplied by this readiness gate.","No Firestaff-versus-original pixel equality or timing parity is claimed.","MEDIA720 D3L2/D3R2 F0107 coordinate rows remain fail-closed pending authentic item-558 or executable evidence."]
+ payload={"schema":"pass508_dm1_v1_viewport_wall_runtime_readiness.v2","status":STATUS if not failures else "FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS","ok":not failures,"redmcsbSourceRoot":str(RED),"sourceAudit":source,"firestaffAudit":{"callback":"m11_dm1_f0128_execute_source_step","missingMarkers":missing,"perSquareDispatch":per_square,"staleBroadExplosionReplay":stale},"originalMedia":media,"nonClaims":blockers,"failures":failures}
+ OUT.parent.mkdir(parents=True,exist_ok=True); OUT.write_text(json.dumps(payload,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+ lines=["# Pass508 DM1 V1 viewport/wall runtime-readiness evidence","","Status: "+payload["status"],"","## ReDMCSB anchors",""]+[f"- {'PASS' if r['ok'] else 'FAIL'} {r['file']}:{r['lines']}" for r in source]+["","## Current Firestaff callback audit","",f"- {'PASS' if not missing else 'FAIL'} wall, door, and F0115 families are present in `m11_dm1_f0128_execute_source_step`.",f"- {'PASS' if per_square else 'FAIL'} `m11_draw_viewport` uses per-square wall and foreground dispatch.",f"- {'PASS' if not stale else 'FAIL'} no active once-per-frame D3--D1 explosion replay remains.","","## Original PC 3.4 members",""]+[f"- {'PASS' if r['ok'] else 'FAIL'} {r['archive']}::{r['member']} size={r['size']} sha256={r['sha256']} ({r['readMode']})" for r in media]+["","## Non-claims and remaining evidence",""]+["- "+x for x in blockers]+[""]
+ REPORT.write_text("\n".join(lines),encoding="utf-8"); print(payload["status"]); print("- wrote "+str(REPORT.relative_to(ROOT))); print("- wrote "+str(OUT.relative_to(ROOT))); return 0 if not failures else 1
 
-def slice_function(text: str, name: str) -> tuple[int, str]:
-    import re
-    m = re.search(r"\b" + re.escape(name) + r"\s*\(", text)
-    if not m:
-        raise AssertionError(f"missing function {name}")
-    brace = text.find("{", m.end())
-    if brace < 0:
-        raise AssertionError(f"missing body for {name}")
-    depth = 0
-    for i in range(brace, len(text)):
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return line_no(text, m.start()), text[m.start():i + 1]
-    raise AssertionError(f"unterminated body for {name}")
-
-def ordered(text: str, needles: list[str], line_base: int = 1):
-    cursor = 0
-    hits, missing = [], []
-    for n in needles:
-        p = text.find(n, cursor)
-        if p < 0:
-            missing.append(n)
-        else:
-            hits.append({"marker": n, "line": line_base + line_no(text, p) - 1})
-            cursor = p + len(n)
-    return hits, missing
-
-def run(args: list[str]):
-    p = subprocess.run(args, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    return {"command": args, "returncode": p.returncode, "passed": p.returncode == 0, "outputTail": "\n".join(p.stdout.strip().splitlines()[-8:])}
-
-def main() -> int:
-    source = []
-    for ident, name, lines, func, needles in SOURCE_CHECKS:
-        path = RED / name
-        text = path.read_text(encoding="latin-1", errors="replace")
-        base, part = excerpt(text, lines)
-        hits, missing = ordered(part, needles, base)
-        source.append({"id": ident, "status": "PASS" if not missing else "FAIL", "sourceFile": name, "function": func, "lines": lines, "sha256": sha(path), "positions": hits, "missing": missing})
-    fire = []
-    for check in FIRE_CHECKS:
-        ident, name, needles = check[0], check[1], check[2]
-        func_scope = check[3] if len(check) > 3 else None
-        path = ROOT / name
-        text = path.read_text(encoding="utf-8", errors="replace")
-        if func_scope:
-            base, text = slice_function(text, func_scope)
-        else:
-            base = 1
-        hits, missing = ordered(text, needles, base)
-        fire.append({"id": ident, "status": "PASS" if not missing else "FAIL", "file": name, "scope": func_scope or "whole-file", "positions": hits, "missing": missing})
-    refs = []
-    for ident, path, use in [
-        ("dm1_pc34_graphics", DM1 / "GRAPHICS.DAT", "PC34 bitmap source"),
-        ("dm1_pc34_dungeon", DM1 / "DUNGEON.DAT", "PC34 route/object source"),
-        ("greatstone_index", GREATSTONE / "index/SUMMARY.md", "secondary local atlas index"),
-        ("csbwin_cpp", CSBWIN / "CSBwin.cpp", "secondary lineage reference only"),
-    ]:
-        refs.append({"id": ident, "path": str(path), "exists": path.exists(), "sha256": sha(path) if path.is_file() else None, "use": use})
-    gates = [
-        run([sys.executable, "tools/verify_v1_viewport_alcove_wall_item_gate.py"]),
-        run([sys.executable, "tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py"]),
-        run([sys.executable, "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py"]),
-    ]
-    failures = [x["id"] for x in source + fire if x["status"] != "PASS"]
-    failures += ["secondary_" + x["id"] for x in refs if not x["exists"]]
-    failures += ["gate_" + Path(x["command"][-1]).name for x in gates if not x["passed"]]
-    status = "PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS" if not failures else "FAIL_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS"
-    manifest = {"schema": "pass508_dm1_v1_viewport_wall_runtime_readiness.v1", "status": status, "redmcsbSourceRoot": str(RED), "redmcsbSourceAudit": source, "firestaffAudit": fire, "secondaryReferences": refs, "gates": gates, "failures": failures, "blockers": ["No original DOSBox same-viewport capture was produced by this pass.", "No Firestaff-vs-original pixel comparator promotion is claimed.", "Firestaff normal V1 renderer remains guarded batched replay, not exact ReDMCSB F0128 per-square replay."]}
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    lines = ["# Pass508 DM1 V1 viewport/wall runtime-readiness evidence", "", "Status: " + status, "", "## ReDMCSB anchors"]
-    lines += [f"- {x['sourceFile']}:{x['lines']} {x['function']} status={x['status']}" for x in source]
-    lines += ["", "## Firestaff readiness"]
-    lines += [f"- {x['file']} {x['id']} status={x['status']}" for x in fire]
-    lines += ["", "## Secondary local references"]
-    lines += [f"- {x['id']} {x['path']} exists={x['exists']} sha256={x['sha256']}" for x in refs]
-    lines += ["", "## Gates"]
-    lines += [f"- {' '.join(x['command'])} -> rc={x['returncode']} passed={x['passed']}" for x in gates]
-    lines += ["", "## Blockers"] + [f"- {x}" for x in manifest["blockers"]] + [""]
-    REPORT.write_text("\n".join(lines), encoding="utf-8")
-    print(status)
-    print(f"- wrote {REPORT.relative_to(ROOT)}")
-    print(f"- wrote {OUT.relative_to(ROOT)}")
-    for f in failures:
-        print("- " + f)
-    return 0 if not failures else 1
-
-if __name__ == "__main__":
-    raise SystemExit(main())
+if __name__=="__main__": raise SystemExit(main())

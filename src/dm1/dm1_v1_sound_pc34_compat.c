@@ -49,41 +49,44 @@ static const uint8_t kVolumeTable[25][25] = {
 /* ReDMCSB DATA.C G0060_as_Graphic562_Sounds for I34E.
  * Fields: graphicIndex, period, priority, loudDistance, softDistance */
 static const DM1_SoundData kDefaultSoundData[DM1_SND_COUNT] = {
-    /* 0  C00_SOUND_METALLIC_THUD */           { 671, 112, 80, 3, 7 },
-    /* 1  C01_SOUND_SWITCH */                  { 672, 112, 90, 4, 8 },
-    /* 2  C02_SOUND_DOOR_RATTLE */             { 673, 112, 85, 4, 9 },
-    /* 3  C03_SOUND_DOOR_RATTLE_ENTRANCE */    { 673, 112, 85, 4, 9 },
-    /* 4  C04_SOUND_WOODEN_THUD */             { 674, 112, 70, 3, 7 },
-    /* 5  C05_SOUND_STRONG_EXPLOSION */        { 675, 112,100, 5,10 },
-    /* 6  M541_SOUND_WEAK_EXPLOSION */         { 675, 112, 60, 3, 8 },
-    /* 7  M561_SOUND_SCREAM */                 { 677, 112, 95, 5,10 },
-    /* 8  C08_SOUND_SWALLOW */                 { 678, 112, 50, 1, 3 },
-    /* 9  C09_SOUND_CHAMPION_0_DAMAGED */      { 679, 112, 85, 1, 3 },
-    /*10  C10_SOUND_CHAMPION_1_DAMAGED */      { 680, 112, 85, 1, 3 },
-    /*11  C11_SOUND_CHAMPION_2_DAMAGED */      { 681, 112, 85, 1, 3 },
-    /*12  C12_SOUND_CHAMPION_3_DAMAGED */      { 682, 112, 85, 1, 3 },
-    /*13  M563_SOUND_COMBAT */                 { 684, 112, 90, 4, 8 },
-    /*14  M560_SOUND_BUZZ */                   { 685, 112, 75, 3, 7 },
-    /*15  M562_SOUND_PARTY_DAMAGED */          { 687, 112, 85, 1, 4 },
-    /*16  M542_SOUND_SPELL */                  { 683, 112, 80, 4, 9 },
-    /*17  M619_SOUND_WAR_CRY */                { 707, 112, 70, 1, 3 },
-    /*18  M620_SOUND_BLOW_HORN */              { 704, 112, 70, 4, 8 },
-    /*19  ATTACK_SCREAMER_OITU */              { 690, 112, 80, 4, 8 },
-    /*20  ATTACK_SCORPION */                   { 691, 112, 80, 4, 8 },
-    /*21  ATTACK_WORM */                       { 692, 112, 80, 4, 8 },
-    /*22  ATTACK_GIGGLER */                    { 693, 112, 80, 4, 8 },
-    /*23  ATTACK_PAIN_RAT */                   { 688, 112, 80, 4, 8 },
-    /*24  ATTACK_ROCK */                       { 708, 112, 80, 4, 8 },
-    /*25  ATTACK_MUMMY_GHOST */                { 689, 112, 80, 4, 8 },
-    /*26  ATTACK_WATER_ELEMENTAL */            { 709, 112, 80, 4, 8 },
-    /*27  ATTACK_COUATL */                     { 710, 112, 80, 4, 8 },
-    /*28  MOVE_ANIMATED_ARMOUR */              { 701, 112, 40, 3, 7 },
-    /*29  MOVE_COUATL_WASP */                  { 702, 112, 40, 3, 7 },
-    /*30  MOVE_MUMMY_TROLIN */                 { 703, 112, 40, 3, 7 },
-    /*31  MOVE_SCREAMER_ROCK */                { 705, 112, 40, 3, 7 },
-    /*32  MOVE_SLIME_WATER */                  { 706, 112, 40, 3, 7 },
-    /*33  MOVE_RED_DRAGON */                   { 711, 112, 40, 3, 7 },
-    /*34  MOVE_SKELETON */                     { 712, 112, 40, 3, 7 },
+    /* Exact DATA.C MEDIA719 + MEDIA712 I34E rows.  Do not replace Priority,
+     * LoudDistance or SoftDistance with guessed host mixing values: F0064
+     * uses all three to decide which one of a tick's real samples survives. */
+    /* 0  C00_SOUND_METALLIC_THUD */           { 671, 112,  11, 3, 6 },
+    /* 1  C01_SOUND_SWITCH */                  { 672, 112,  15, 0, 3 },
+    /* 2  C02_SOUND_DOOR_RATTLE */             { 673, 112,  72, 3, 6 },
+    /* 3  C03_SOUND_DOOR_RATTLE_ENTRANCE */    { 673, 145,  72, 3, 6 },
+    /* 4  C04_SOUND_WOODEN_THUD */             { 674, 112,  10, 3, 6 },
+    /* 5  C05_SOUND_STRONG_EXPLOSION */        { 675, 112,  99, 3, 7 },
+    /* 6  M541_SOUND_WEAK_EXPLOSION */         { 675, 112,  98, 0, 4 },
+    /* 7  M561_SOUND_SCREAM */                 { 677, 112, 110, 3, 6 },
+    /* 8  C08_SOUND_SWALLOW */                 { 678, 112,   2, 3, 6 },
+    /* 9  C09_SOUND_CHAMPION_0_DAMAGED */      { 679, 112,  80, 3, 6 },
+    /*10  C10_SOUND_CHAMPION_1_DAMAGED */      { 680, 112,  82, 3, 6 },
+    /*11  C11_SOUND_CHAMPION_2_DAMAGED */      { 681, 112,  84, 3, 6 },
+    /*12  C12_SOUND_CHAMPION_3_DAMAGED */      { 682, 112,  86, 3, 6 },
+    /*13  M563_SOUND_COMBAT */                 { 684, 112,  40, 2, 4 },
+    /*14  M560_SOUND_BUZZ */                   { 685, 112,  70, 1, 4 },
+    /*15  M562_SOUND_PARTY_DAMAGED */          { 687, 138,  75, 3, 6 },
+    /*16  M542_SOUND_SPELL */                  { 683, 112,  95, 3, 6 },
+    /*17  M619_SOUND_WAR_CRY */                { 707, 138, 106, 0, 4 },
+    /*18  M620_SOUND_BLOW_HORN */              { 704, 138, 105, 0, 4 },
+    /*19  ATTACK_SCREAMER_OITU */              { 690, 112,  57, 3, 5 },
+    /*20  ATTACK_SCORPION */                   { 691, 112,  52, 3, 5 },
+    /*21  ATTACK_WORM */                       { 692, 112,  50, 3, 5 },
+    /*22  ATTACK_GIGGLER */                    { 693, 112,  96, 2, 4 },
+    /*23  ATTACK_PAIN_RAT */                   { 688, 112,  60, 3, 5 },
+    /*24  ATTACK_ROCK */                       { 708, 138,  56, 0, 4 },
+    /*25  ATTACK_MUMMY_GHOST */                { 689, 112,  55, 3, 5 },
+    /*26  ATTACK_WATER_ELEMENTAL */            { 709, 138,  58, 0, 4 },
+    /*27  ATTACK_COUATL */                     { 710, 112,  53, 0, 4 },
+    /*28  MOVE_ANIMATED_ARMOUR */              { 701, 138,  24, 0, 4 },
+    /*29  MOVE_COUATL_WASP */                  { 702, 138,  21, 0, 4 },
+    /*30  MOVE_MUMMY_TROLIN */                 { 703, 138,  23, 0, 4 },
+    /*31  MOVE_SCREAMER_ROCK */                { 705, 138,  27, 0, 4 },
+    /*32  MOVE_SLIME_WATER */                  { 706, 138,  28, 0, 4 },
+    /*33  MOVE_RED_DRAGON */                   { 711, 138,  29, 0, 4 },
+    /*34  MOVE_SKELETON */                     { 712, 150,  22, 0, 4 },
 };
 
 /* ReDMCSB MUSIC.C G2039_ai_MapIndexToMusicTrack (I34E) */
@@ -385,6 +388,10 @@ int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission
                 DM1_SND_CHAMPION_0_DAMAGED + emission->payload[0]);
             break;
         case EMIT_SOUND_REQUEST:
+            if (emission->payload[0] < 0 ||
+                emission->payload[0] >= DM1_SND_COUNT) {
+                return 0;
+            }
             outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND;
             outPlan->sourceSoundIndex = (int16_t)emission->payload[0];
             break;
