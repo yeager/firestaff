@@ -369,6 +369,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 }
 #include "firestaff_po_loader.h"
 #include "firestaff_cp932.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
@@ -17855,17 +17856,31 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     size_t offset = 0u;
     int nameIndex;
     int highBitTerminated = 0;
+    DM1_V1_FmtownsGraphicsReceipt townsNames;
+    int japaneseNames = 0;
 
     if (!state || !state->assetLoader.graphicsDatPath[0]) return 0;
     state->dm1ObjectNameTableValid = 0;
     memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
-    if (!asset_read_path_alloc(state->assetLoader.graphicsDatPath,
-                               &fileBytes, &fileByteCount) ||
-        !fileBytes || fileByteCount == 0u) {
+    if (state->assetLoader.legacyDm1 && state->assetLoader.legacyData &&
+        state->assetLoader.legacyDataSize > 0) {
+        /* Archive startup already owns the original bytes. Its display path
+         * is not a reopenable filesystem path. */
+        fileByteCount = (size_t)state->assetLoader.legacyDataSize;
+        fileBytes = malloc(fileByteCount);
+        if (fileBytes) memcpy(fileBytes, state->assetLoader.legacyData, fileByteCount);
+    } else {
+        (void)asset_read_path_alloc(state->assetLoader.graphicsDatPath,
+                                   &fileBytes, &fileByteCount);
+    }
+    if (!fileBytes || fileByteCount == 0u) {
         free(fileBytes);
         return 0;
     }
     decoded = (unsigned char*)malloc(65535u);
+    japaneseNames = dm1_v1_fmtowns_graphics_receipt(
+        fileBytes, fileByteCount, &townsNames) == 0 &&
+        townsNames.lang == DM1_FMTOWNS_LANG_JP;
     if (!decoded) {
         free(decoded);
         free(fileBytes);
@@ -17874,7 +17889,12 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     /* ReDMCSB's M564 number is media-dependent: current PC3.4 data uses
      * record 694, while older DM1 layouts use 556.  Admit only a complete
      * C199 stream, never a raster record that happens to decode. */
-    if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, fileByteCount,
+    if (state->assetLoader.legacyDm1 &&
+        dm1_v1_legacy_graphics_read_raw(fileBytes, fileByteCount,
+            state->assetLoader.legacyBigEndian, M11_DM1_M564_LEGACY,
+            decoded, 65535u, &decodedSize)) {
+        /* F0031 requests M564 without bitmap expansion on legacy media. */
+    } else if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, fileByteCount,
                                                M11_DM1_M564_PC34, decoded, 65535u,
                                                &decodedSize) != 0) {
         if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, fileByteCount,
@@ -17885,7 +17905,10 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
             return 0;
         }
     }
-    for (offset = 0u; offset < decodedSize; ++offset) {
+    /* OBJECT.C F0031, MEDIA574/F20J (lines 110-116): Japanese names
+     * are NUL-terminated. Their CP932 high bits are characters, not the
+     * MEDIA060/F20E end marker. Select this by the authenticated bytes. */
+    for (offset = 0u; !japaneseNames && offset < decodedSize; ++offset) {
         if ((decoded[offset] & 0x80u) != 0u) {
             highBitTerminated = 1;
             break;
@@ -17895,15 +17918,18 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     for (nameIndex = 0; nameIndex < M11_DM1_OBJECT_NAME_COUNT; ++nameIndex) {
         size_t written = 0u;
         int terminated = 0;
+        int overflow = 0;
         while (offset < decodedSize) {
             unsigned char ch = decoded[offset++];
             if (highBitTerminated) {
                 if (written + 1u < sizeof(state->dm1ObjectNames[nameIndex])) {
                     state->dm1ObjectNames[nameIndex][written++] = (char)(ch & 0x7fu);
-                }
+                } else overflow = 1;
             } else if (ch != 0u &&
                        written + 1u < sizeof(state->dm1ObjectNames[nameIndex])) {
                 state->dm1ObjectNames[nameIndex][written++] = (char)ch;
+            } else if (ch != 0u) {
+                overflow = 1;
             }
             if ((highBitTerminated && (ch & 0x80u) != 0u) ||
                 (!highBitTerminated && ch == 0u)) {
@@ -17911,11 +17937,23 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
                 break;
             }
         }
-        if (!terminated) {
+        if (!terminated || overflow) {
             memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
             free(decoded);
             free(fileBytes);
             return 0;
+        }
+        if (japaneseNames) {
+            char utf8[sizeof(state->dm1ObjectNames[nameIndex])];
+            if (firestaff_cp932_to_utf8(state->dm1ObjectNames[nameIndex],
+                    written, utf8, sizeof(utf8)) < 0) {
+                memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
+                free(decoded);
+                free(fileBytes);
+                return 0;
+            }
+            snprintf(state->dm1ObjectNames[nameIndex],
+                     sizeof(state->dm1ObjectNames[nameIndex]), "%s", utf8);
         }
     }
     free(decoded);

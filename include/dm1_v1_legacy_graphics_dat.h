@@ -20,6 +20,11 @@ int dm1_v1_legacy_graphics_probe(const uint8_t *data, size_t size,
  * IMG2 bitmaps in the original DM1 data files. */
 int dm1_v1_legacy_graphics_is_bitmap_index(uint16_t graphic_index);
 
+/* Copy an unexpanded original record, including non-raster M564 text.
+ * Returns 1 on success, 0 for invalid media/index or insufficient capacity. */
+int dm1_v1_legacy_graphics_read_raw(const uint8_t *data, size_t size,
+    int big_endian, uint16_t index, uint8_t *out, size_t capacity, size_t *length);
+
 int dm1_v1_legacy_graphics_query(const uint8_t *data, size_t size,
                                  int big_endian, uint16_t graphic_index,
                                  uint16_t *out_width, uint16_t *out_height);

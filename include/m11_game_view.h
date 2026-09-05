@@ -888,7 +888,7 @@ typedef struct {
     int assetsAvailable; /* 1 if assetLoader is ready */
     /* ReDMCSB OBJECT.C F0031: raw M564 stream, indexed by F0033 icon. */
     int dm1ObjectNameTableValid;
-    char dm1ObjectNames[199][32];
+    char dm1ObjectNames[199][96]; /* UTF-8 presentation keys; CP932 may expand 3x. */
     M11_FontState originalFont; /* DM1 font from GRAPHICS.DAT */
     int originalFontAvailable;
     M11_AudioState audioState;

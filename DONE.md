@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Fixed DM1 legacy M564 binding to read the already-owned original
+  GRAPHICS bytes instead of reopening a diagnostic display path through the
+  PC3.4 container decoder. Authenticated Japanese FM Towns now uses F0031's
+  NUL framing and native CP932-to-UTF-8 keys with expansion capacity and
+  overflow rejection. All 199 JDATA names match their original indices;
+  real PC3.4 hand/pickup tests and both-endian raw-record bounds tests pass.
+
 - 2026-09-05: Corrected the historical pass627 capture guidance: accept an
   authenticated same-state original reference independently of whether its
   pixels match Firestaff. Removed the unsupported assertion that no renderer

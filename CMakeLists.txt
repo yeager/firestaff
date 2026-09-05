@@ -12266,6 +12266,14 @@ if(BUILD_TESTING)
         )
     endif()
 
+    add_executable(test_dm1_fmtowns_jp_names_real tests/test_dm1_fmtowns_jp_names_real.c)
+    target_link_libraries(test_dm1_fmtowns_jp_names_real PRIVATE firestaff_m12 firestaff_m11)
+    add_test(NAME dm1_fmtowns_jp_names_real COMMAND test_dm1_fmtowns_jp_names_real)
+    set_tests_properties(dm1_fmtowns_jp_names_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip"
+        LABELS "dm1;fmtowns;real-media;objects;skip-safe")
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_object_names.c")
         add_executable(test_m11_dm1_real_object_names
             tests/test_m11_dm1_real_object_names.c)

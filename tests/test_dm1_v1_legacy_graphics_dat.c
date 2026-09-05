@@ -44,6 +44,21 @@ static void check_one(int be)
                                           sizeof(pixels), &width, &height));
     assert(width == 2u && height == 1u);
     assert(pixels[0] == 10u && pixels[1] == 10u);
+    {
+        unsigned char raw[5];
+        size_t length = 99;
+        assert(dm1_v1_legacy_graphics_read_raw(data, size, be, 556,
+                                              raw, sizeof(raw), &length));
+        assert(length == sizeof(raw));
+        assert(memcmp(raw, data + 2u + 575u * 4u + 556u * 5u, length) == 0);
+        assert(!dm1_v1_legacy_graphics_read_raw(data, size, be, 556,
+                                               raw, sizeof(raw) - 1, &length));
+        assert(length == 0);
+        assert(!dm1_v1_legacy_graphics_read_raw(data, size, be, 575,
+                                               raw, sizeof(raw), &length));
+        assert(!dm1_v1_legacy_graphics_read_raw(data, size - 1, be, 556,
+                                               raw, sizeof(raw), &length));
+    }
 }
 
 int main(void)

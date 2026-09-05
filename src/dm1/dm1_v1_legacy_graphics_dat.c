@@ -85,6 +85,19 @@ int dm1_v1_legacy_graphics_query(const uint8_t *data, size_t size, int be,
     return 1;
 }
 
+int dm1_v1_legacy_graphics_read_raw(const uint8_t *data, size_t size,
+    int be, uint16_t index, uint8_t *out, size_t capacity, size_t *length)
+{
+    size_t offset, count;
+    if (length) *length = 0;
+    if (!out || !length || !dm1_v1_legacy_graphics_probe(data, size, be) ||
+        !record_bounds(data, size, be, index, &offset, &count) ||
+        count > capacity) return 0;
+    memcpy(out, data + offset, count);
+    *length = count;
+    return 1;
+}
+
 static int read_nibble(const uint8_t *data, size_t offset, size_t length,
                        size_t *nibble_pos, uint8_t *out)
 {

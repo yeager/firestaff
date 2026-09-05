@@ -2,13 +2,9 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Fix M564 name framing for Japanese FM Towns: `m11_dm1_load_object_names_m564`
-  currently selects high-bit termination whenever any decoded byte has bit 7
-  set. ReDMCSB `OBJECT.C` F0031, lines 81–116, explicitly uses NUL-terminated
-  names for MEDIA574/F20J, not the MEDIA060/F20E high-bit stream. Select the
-  framing from authenticated media, retain complete CP932 source names, and
-  convert at the presentation boundary. Add real-JDATA name assertions;
-  successful JDM startup/input tests do not exercise name correctness.
+- Complete Japanese FM Towns M564 catalog translations and rendered-glyph
+  verification. All 199 names now pass original-JDATA framing/index/UTF-8
+  checks, but these checks do not prove translated inventory/hand-label pixels.
 
 - Complete l10n coverage for every player-facing string in Original and
   Modern/Custom: remaining item/action/spell names and dialog,
