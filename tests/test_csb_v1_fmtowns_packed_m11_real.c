@@ -256,6 +256,7 @@ int main(void)
             }
             /* CHEST.C F0333/F0334 retains the hole until close. Returning
              * the object must empty the hand, not swap with its neighbour. */
+            if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view)) return 1;
             (void)M11_GameView_HandlePointer(&view, x + w / 2, 33 + y + h / 2, 1);
             (void)M11_GameView_HandlePointerButtonRelease(&view,
                 x + w / 2, 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
@@ -287,6 +288,36 @@ int main(void)
                 uint16_t after[8];
                 if (csb_v1_runtime_read_container_slots(&profile->runtime, chest, after) != count ||
                     memcmp(after, slots, sizeof(after)) != 0) return 1;
+            }
+            /* CHEST.C F0333:30-38: switching G0426 closes the old panel
+             * before initializing the next. Preserve both original lists
+             * and the picked-up resident across this owner transition. */
+            if (containers > 1) {
+                uint16_t other = (uint16_t)((9 << 10) | ((chestIndex + 1) % containers));
+                uint16_t otherBefore[8], otherAfter[8], after[8];
+                int otherCount = csb_v1_runtime_read_container_slots(&profile->runtime, other, otherBefore);
+                if (otherCount < 0 || !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view)) return 1;
+                x = rectangles[0].x; y = rectangles[0].y;
+                (void)M11_GameView_HandlePointer(&view, x + 8, 33 + y + 8, 1);
+                (void)M11_GameView_HandlePointerButtonRelease(&view, x + 8, 33 + y + 8,
+                    DM1_V1_MOUSE_MASK_LEFT_PC34);
+                if (!csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                        view.csbBootProfile, 0, 1, other) ||
+                    !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view) ||
+                    DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(&view) != other ||
+                    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) != slots[0] ||
+                    csb_v1_runtime_read_container_slots(&profile->runtime, chest, after) != count - 1 ||
+                    memcmp(after, slots + 1, (size_t)(count - 1) * sizeof(slots[0])) != 0) {
+                    fputs("FAIL: F31 chest owner switch lost original contents\n", stderr);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
+                DM1_V1_M11Runtime_CloseOpenChestPc34Compat(&view);
+                if (csb_v1_runtime_read_container_slots(&profile->runtime, other, otherAfter) != otherCount ||
+                    memcmp(otherBefore, otherAfter, sizeof(otherAfter)) != 0) return 1;
+                DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+                if (!csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+                        view.csbBootProfile, chest, slots)) return 1;
             }
         }
     }

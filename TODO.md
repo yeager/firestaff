@@ -1,5 +1,9 @@
 # Firestaff TODO — active cross-game work
 
+- Extend original-media chest interaction verification to CSB Atari and
+  Amiga, including panel geometry, same-owner refresh and owner switching;
+  successful startup alone does not establish inventory interaction parity.
+
 Reviewed 2026-08-25. This file contains only work that is still open. Game
 details and acceptance evidence belong in `TODO-<game>.md`; completed work is
 recorded in `DONE-<game>.md`. Historical mixed logs are retained as

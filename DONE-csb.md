@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — F31 chest owner transitions
+
+- Original EN/JP archive tests pass same-owner reopening with an empty slot
+  and switching to another chest while holding the first chest's resident.
+  They compare both original linked lists and the held Thing in Original
+  and V2.1, using controlled in-memory placement of original records.
+- The expected behavior follows ReDMCSB CHEST.C F0333, lines 30–75:
+  retain same-owner slots, close the previous owner before loading another.
+  These checks do not establish save/resume or pixel-level parity.
+
 ## 2026-09-05 — F31J F0168/F0646 inscription byte pipeline
 
 - Implemented the distinct ReDMCSB F31J second decoding pass that restores the

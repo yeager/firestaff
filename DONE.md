@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Original CSB FM Towns EN/JP tests also verify reopening an
+  already-open chest with a hole and switching chest owners while holding
+  an original resident. Both container lists and the held item survive in
+  Original and V2.1; save/resume is outside this interaction check.
+
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
