@@ -4,8 +4,9 @@ Reviewed 2026-09-05. Only open work is listed here.
 
 - Verify FM Towns distance-volume production in the shared audio runtime.
   Transport now scales the native 1..127 driver domain correctly, and direct
-  local events use 127; completed-event history must also carry the MEDIA551
-  distance formula rather than PC's 1..3 scale. Compare original captures.
+  local events use 127. The runtime request branch already implements the
+  MEDIA551 division-before-multiplication distance formula; add end-to-end
+  coverage through completed-event history and compare original captures.
 
 - Close the authenticated FM Towns Japanese catalog gap: extraction from
   graphics MD5 `761d6fc588b31aeaaa9caf3725e111b9` and dungeon MD5

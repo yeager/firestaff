@@ -93,6 +93,42 @@ int main(void)
         }
     }
     csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+    for (int event = 0; event < CSB_V1_SOUND_COUNT; ++event) {
+        unsigned int hash = 2166136261u;
+        if (!csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+                profile->fmtowns_graphics_bytes, profile->fmtowns_graphics_size,
+                (int16_t)event, &sound)) {
+            fprintf(stderr, "FAIL: original F31 sound event %d\n", event);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (size_t b = 0; b < sound.byteCount; ++b) {
+            hash ^= sound.bytes[b];
+            hash *= 16777619u;
+        }
+        if (!M11_Audio_PlayCsbFmtownsRuntimePcm(&view.audioState,
+                (const int8_t*)sound.bytes, (int)sound.byteCount, 127, hash) ||
+            view.audioState.csbFmtownsRuntimePcm.sampleCount !=
+                (int)((sound.byteCount * M11_AUDIO_SAMPLE_RATE + 5499u) / 5500u)) {
+            csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+            M11_GameView_Shutdown(&view);
+            return 1;
+        }
+        for (int p = 0; p < view.audioState.csbFmtownsRuntimePcm.sampleCount; ++p) {
+            size_t source = (size_t)p * 5500u / M11_AUDIO_SAMPLE_RATE;
+            int value;
+            if (source >= sound.byteCount) source = sound.byteCount - 1u;
+            value = sound.bytes[source];
+            if (value >= 128) value -= 256;
+            if (view.audioState.csbFmtownsRuntimePcm.samples[p] != value / 128.0f) {
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
+        csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+    }
+    puts("PASS: all 35 F31 sound events match original signed PCM at 5500 Hz");
     puts("PASS: packed CSB FM Towns runtime sound uses original GRAPHICS.DAT PCM");
     puts("PASS: packed CSB FM Towns M11 starts from original ZIP");
     M11_GameView_Shutdown(&view);

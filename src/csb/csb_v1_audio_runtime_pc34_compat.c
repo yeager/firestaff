@@ -219,7 +219,7 @@ int csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
     decodedBytes = csb_v1_audio_read_le16(
         graphics + 4u + CSB_FMTOWNS_GRAPHICS_ITEM_COUNT * 2u +
         (size_t)spec->graphicIndex * 2u);
-    if (storedBytes < 4u || storedBytes != decodedBytes) goto cleanup;
+    if (storedBytes < 2u || storedBytes != decodedBytes) goto cleanup;
     dataOffset = 4u + CSB_FMTOWNS_GRAPHICS_ITEM_COUNT * 8u;
     for (index = 0u; index < spec->graphicIndex; ++index) {
         dataOffset += csb_v1_audio_read_le16(graphics + 4u + index * 2u);
@@ -228,9 +228,10 @@ int csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
         goto cleanup;
     }
     sampleBytes = csb_v1_audio_read_be16(graphics + dataOffset);
-    /* F31 retains the same two unused GRAPHICS.DAT tail bytes after the
-     * BE-length-prefixed PCM that TOWNSIO.C F0709 passes to F0060. */
-    if ((size_t)sampleBytes + 4u != storedBytes) goto cleanup;
+    /* TOWNSIO.C F0709:79-83 passes precisely the BE16 sample count,
+     * not the record's remaining length. Original F31 record 675 has one
+     * tail byte; other records have two. Padding is not part of the PCM. */
+    if (!sampleBytes || (size_t)sampleBytes > (size_t)storedBytes - 2u) goto cleanup;
     outPayload->bytes = (uint8_t*)malloc(sampleBytes);
     if (!outPayload->bytes) goto cleanup;
     memcpy(outPayload->bytes, graphics + dataOffset + 2u, sampleBytes);

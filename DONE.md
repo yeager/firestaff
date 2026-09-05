@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB FM Towns reads the BE16 PCM sample count without requiring
+  exactly two unused tail bytes. Original explosion record 675 has 3970
+  samples in 3973 bytes and was incorrectly rejected. EN/JP original-media
+  tests now cover all 35 sound events and compare every host output sample;
+  declared samples must still fit entirely within the source record.
+
 - 2026-09-05: DM1 Amiga local sound events select original PCM records,
   skipping the two-byte header as SOUND.C requires. Original 2.0/HD tests
   compare every resampled byte value and period across all 35 engine events.
