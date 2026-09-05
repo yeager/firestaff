@@ -2,10 +2,11 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Extend original-media inventory interaction verification to occupied-slot swaps,
-  chest contents, and scroll/eye interactions across supported editions.
+- Extend original-media inventory interaction verification to chest contents,
+  scroll/eye interactions and supported editions beyond PC3.4.
   The 611-record PC3.4 Original/V2.1 press/release corpus covers all 30 empty
-  slots, source-mask rejections and identity preservation, not complete
+  slots, a distinct admissible resident per occupied-slot swap, source-mask
+  rejections and identity preservation, not complete
   inventory or pixel parity.
 
 - Complete legacy gameplay sound parity. Atari now selects original SND1

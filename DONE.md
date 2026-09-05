@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The 611-record PC3.4 inventory matrix additionally seeds a
+  distinct, slot-admissible original resident in every slot. Original and
+  V2.1 swaps preserve both Thing identities in both directions; denied
+  incoming objects preserve the resident and held Thing across press/release.
+  The combined empty/occupied 30-slot matrix passes. This uses controlled
+  in-memory placements, not a proof of floor/chest ownership or all item pairs.
+
 - 2026-09-05: Expanded the 611-record PC3.4 mouse corpus to all 30 inventory
   slots in Original and V2.1 (36,660 object/slot/mode combinations). Source
   G0038 masks determine admission; permitted placements roundtrip and denied

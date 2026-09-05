@@ -7,6 +7,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+static unsigned short find_slot_resident(const M11_GameViewState *state,
+                                         unsigned short excluded,
+                                         unsigned int mask)
+{
+    static const int types[] = { THING_TYPE_WEAPON, THING_TYPE_ARMOUR,
+        THING_TYPE_SCROLL, THING_TYPE_POTION, THING_TYPE_CONTAINER,
+        THING_TYPE_JUNK };
+    size_t t;
+    for (t = 0; t < sizeof(types) / sizeof(types[0]); ++t) {
+        int i;
+        for (i = 0; i < state->world.things->thingCounts[types[t]]; ++i) {
+            unsigned short candidate = (unsigned short)((types[t] << 10) | i);
+            if (candidate != excluded &&
+                (dm1_v1_dungeon_get_object_allowed_slots_pc34(
+                    state->world.things, candidate) & mask)) return candidate;
+        }
+    }
+    return THING_NONE;
+}
+
 /* ReDMCSB CHAMPION.C F0302:689-711 exchanges G4055 and the selected
  * slot. A mouse release must not undo the press-owned exchange. Use each
  * original decoded Thing, including scrolls and containers, in both modes. */
@@ -58,6 +78,30 @@ static int check_inventory_roundtrip(M11_GameViewState *state,
             if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
                 state->world.party.champions[0].inventory[hostSlot] != slot)
                 return 0;
+        }
+        /* F0302 tests the incoming object's mask before removing either
+         * Thing. Seed a distinct admissible original resident to check both
+         * swap directions and rejection without manufacturing object data. */
+        {
+            unsigned short resident = find_slot_resident(state, thing,
+                                                         slotMasks[inventorySlot]);
+            if (resident == THING_NONE) return 0;
+            state->world.party.champions[0].inventory[hostSlot] = resident;
+            for (step = 0; step < (admitted ? 2 : 1); ++step) {
+                unsigned short hand = (step || !admitted) ? thing : resident;
+                unsigned short slot = (step || !admitted) ? resident : thing;
+                (void)M11_GameView_HandlePointer(state, x + w / 2,
+                                                33 + y + h / 2, 1);
+                if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
+                    state->world.party.champions[0].inventory[hostSlot] != slot)
+                    return 0;
+                (void)M11_GameView_HandlePointerButtonRelease(state, x + w / 2,
+                    33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
+                    state->world.party.champions[0].inventory[hostSlot] != slot)
+                    return 0;
+            }
+            state->world.party.champions[0].inventory[hostSlot] = THING_NONE;
         }
       }
     }
