@@ -48617,8 +48617,7 @@ static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
     int i;
     if (!outSlots) return 0;
     for (i = 0; i < 8; ++i) outSlots[i] = THING_NONE;
-    if (state && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
-        state->v1OpenChestSlotsValid &&
+    if (state && state->v1OpenChestSlotsValid &&
         state->v1OpenChestSlotsOwner == state->v1OpenChestThing) {
         memcpy(outSlots, state->v1OpenChestSlots, sizeof(state->v1OpenChestSlots));
         for (i = 0; i < 8; ++i) if (outSlots[i] != THING_NONE) ++count;
@@ -55210,7 +55209,7 @@ int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state) {
         state->v1OpenChestOpenedByEye = 0;
         return 0;
     }
-    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+    {
         (void)m11_v1_read_open_chest_slots(state, state->v1OpenChestSlots);
         state->v1OpenChestSlotsOwner = thing;
         state->v1OpenChestSlotsValid = 1;
@@ -55244,7 +55243,7 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
         state->v1OpenChestOpenedByEye = 0;
         return 0;
     }
-    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+    {
         (void)m11_v1_read_open_chest_slots(state, state->v1OpenChestSlots);
         state->v1OpenChestSlotsOwner = thing;
         state->v1OpenChestSlotsValid = 1;
@@ -56221,11 +56220,15 @@ static int m11_process_v1_chest_slot_box_click(M11_GameViewState* state,
         if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, slotThing)) return 0;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* Keep CSB's runtime-owned linked storage current for its consumers
+         * and native saves, but do not reconstruct G0425 from that packed
+         * projection while the panel remains open (CHEST.C F0333/F0334). */
         if (!m11_v1_write_open_chest_slots(state, slots)) return 0;
-    } else {
-        /* CHAMPION.C F0302 changes G0425; only CHEST.C F0334 rebuilds
-         * the linked list. Rebuilding here moves every following item into
-         * the newly empty visual slot and turns replacement into a swap. */
+    }
+    {
+        /* CHAMPION.C F0302 changes G0425; CHEST.C F0334 consumes it on
+         * close. Keep this visual ordering independent of linked storage,
+         * otherwise every following item moves into the newly empty slot. */
         memcpy(state->v1OpenChestSlots, slots, sizeof(slots));
         state->v1OpenChestSlotsOwner = state->v1OpenChestThing;
         state->v1OpenChestSlotsValid = 1;

@@ -241,6 +241,8 @@ int main(void)
                 return 1;
             }
             for (int slot = 0; slot < count; ++slot) {
+            for (int mode = 0; mode < 2; ++mode) {
+            view.presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED : M12_PRESENTATION_V1_ORIGINAL;
             x = rectangles[slot].x; y = rectangles[slot].y;
             w = rectangles[slot].width; h = rectangles[slot].height;
             (void)M11_GameView_HandlePointer(&view, x + w / 2, 33 + y + h / 2, 1);
@@ -252,13 +254,40 @@ int main(void)
                 M11_GameView_Shutdown(&view);
                 return 1;
             }
-            /* Restore original chain for an independent geometry probe.
-             * This is not a claim that live replacement preserves holes. */
-            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
-            if (!csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
-                    view.csbBootProfile, chest, slots)) return 1;
+            /* CHEST.C F0333/F0334 retains the hole until close. Returning
+             * the object must empty the hand, not swap with its neighbour. */
+            (void)M11_GameView_HandlePointer(&view, x + w / 2, 33 + y + h / 2, 1);
+            (void)M11_GameView_HandlePointerButtonRelease(&view,
+                x + w / 2, 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            int canReturn = (csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+                view.csbBootProfile, slots[slot]) & 0x0400u) != 0;
+            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) !=
+                    (canReturn ? THING_NONE : slots[slot])) {
+                fprintf(stderr, "FAIL: F31 replacement chest=%d slot=%d hand=%04x\n",
+                    chestIndex, slot, DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view));
+                fprintf(stderr, "source allowed slots=%04x original=%04x\n",
+                    csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(view.csbBootProfile, slots[slot]), slots[slot]);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            if (!canReturn) {
+                /* Original dungeons can pre-place oversized equipment in
+                 * chests. F0302 still rejects inserting it (G0038=0x0400).
+                 * Preserve that rejection, then reset this test placement. */
+                DM1_V1_M11Runtime_CloseOpenChestPc34Compat(&view);
+                DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+                if (!csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+                        view.csbBootProfile, chest, slots) ||
+                    !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view)) return 1;
+            }
+            }
             }
             DM1_V1_M11Runtime_CloseOpenChestPc34Compat(&view);
+            {
+                uint16_t after[8];
+                if (csb_v1_runtime_read_container_slots(&profile->runtime, chest, after) != count ||
+                    memcmp(after, slots, sizeof(after)) != 0) return 1;
+            }
         }
     }
     M11_GameView_Shutdown(&view);

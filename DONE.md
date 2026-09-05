@@ -3,6 +3,14 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB M11 now retains open G0425 slot positions while keeping
+  runtime-linked container contents synchronized. Original F31 EN/JP tests
+  pass pickup, same-slot release, permitted replacement and close-order
+  checks for all 60 residents in Original and V2.1. Pre-placed equipment
+  lacking the container mask remains correctly rejected on reinsertion;
+  only those rejected test placements are reset. The eye-close regression
+  also passes. Atari/Amiga geometry and native save-resume remain separate.
+
 - 2026-09-05: Fixed CSB FM Towns chest pointer admission. Boot retains
   C537..C544 from the original item-696 C106/C101/C100 graph alongside the
   30 inventory boxes; input admits chest children only for an open chest,
