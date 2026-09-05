@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Rebuilt Firestaff after the shared CSB chest-slot change and
+  passed six original-media regressions: DM1 object names/full inventory
+  corpus plus CSB Atari ST, Amiga, FM Towns English and Japanese startup
+  paths. Startup success does not establish Atari/Amiga chest-click parity.
+
 - 2026-09-05: CSB M11 now retains open G0425 slot positions while keeping
   runtime-linked container contents synchronized. Original F31 EN/JP tests
   pass pickup, same-slot release, permitted replacement and close-order
