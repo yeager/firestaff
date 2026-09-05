@@ -4,6 +4,7 @@
 #include "firestaff_cp932.h"
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_fmtowns_dyna_buttons_ja.h"
+#include "csb_v1_audio_runtime_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,6 +104,51 @@ int main(void) {
         length != M11_FONT_BITMAP_BYTES ||
         memcmp(raw, state->originalFont.bitmap, M11_FONT_BITMAP_BYTES)) goto done;
     puts("PASS: FM Towns M653 interface font bytes match original media (not system Kanji glyphs)");
+    if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
+    for (int language = 0; language < 2; ++language) {
+      if (language == 1) {
+        free(bytes);
+        bytes = NULL;
+        M11_GameView_Shutdown(state);
+        M11_GameView_Init(state);
+        spec.dm1FmtownsJapanese = 0;
+        if (!M11_GameView_Start(state, &spec) ||
+            !state->dm1FmtownsStartupReceiptValid ||
+            state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_EN) goto done;
+        size = (size_t)state->assetLoader.legacyDataSize;
+        bytes = malloc(size);
+        if (!bytes) goto done;
+        memcpy(bytes, state->assetLoader.legacyData, size);
+        if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
+      }
+      for (int event = 0; event < 35; ++event) {
+        int index = M11_Audio_Dm1AtariSoundIndex(event);
+        int accepted = M11_Audio_EmitDm1FmtownsSound(&state->audioState,
+            bytes, size, event, 127);
+        const CsbV1AtariStSoundSpec* sound =
+            csb_v1_audio_runtime_atari_st_sound_spec((int16_t)index);
+        size_t samples;
+        if (accepted != (index >= 0)) {
+            fprintf(stderr, "FAIL: F20 PCM event %d\n", event);
+            goto done;
+        }
+        if (!accepted) continue;
+        if (!sound || !dm1_v1_legacy_graphics_read_raw(bytes, size, 0,
+                sound->graphicIndex, raw, sizeof(raw), &length) || length < 2) goto done;
+        samples = ((size_t)raw[0] << 8) | raw[1];
+        if (samples > 31936) samples = 31936;
+        if (samples > length - 2 || state->audioState.csbFmtownsRuntimePcm.sampleCount !=
+                (int)((samples * M11_AUDIO_SAMPLE_RATE + 5499) / 5500)) goto done;
+        for (int p = 0; p < state->audioState.csbFmtownsRuntimePcm.sampleCount; ++p) {
+            size_t source = (size_t)p * 5500 / M11_AUDIO_SAMPLE_RATE;
+            float expected;
+            if (source >= samples) source = samples - 1;
+            expected = ((int)raw[source + 2] - 128) / 128.0f;
+            if (state->audioState.csbFmtownsRuntimePcm.samples[p] != expected) goto done;
+        }
+    }
+      }
+    puts("PASS: original F20 EN/JP unsigned PCM matches every resampled output sample at 5500 Hz");
     result = 0;
 done:
     free(bytes);

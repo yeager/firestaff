@@ -5,6 +5,7 @@
 #include "sound_event_snd3_map_v1.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 
 #include <math.h>
 #include <stdint.h>
@@ -1593,6 +1594,37 @@ int M11_Audio_EmitDm1AtariSound(M11_AudioState* state,
         sourceVolume > 1 ? 1 : 0);
     csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
     if (accepted) state->lastSoundIndex = pc34Index;
+    return accepted;
+}
+
+int M11_Audio_EmitDm1FmtownsSound(M11_AudioState* state,
+    const unsigned char* graphics, size_t graphicsSize, int pc34Index,
+    int sourceVolume)
+{
+    unsigned char* raw;
+    size_t length = 0, samples;
+    int accepted = 0;
+    int index = M11_Audio_Dm1AtariSoundIndex(pc34Index);
+    const CsbV1AtariStSoundSpec* spec =
+        csb_v1_audio_runtime_atari_st_sound_spec((int16_t)index);
+    /* DATA.C:1203-1227 MEDIA507/F20 has the same 22 record indices as
+     * Atari. TOWNSIO.C:29-49 F20 reads unsigned PCM after a BE16 count;
+     * F31 instead adds 0x80 to signed PCM before the same driver coding. */
+    if (!state || !spec || !graphics || sourceVolume < 1 || sourceVolume > 127)
+        return 0;
+    raw = (unsigned char*)malloc(65535u);
+    if (!raw) return 0;
+    if (!dm1_v1_legacy_graphics_read_raw(graphics, graphicsSize, 0,
+            spec->graphicIndex, raw, 65535u, &length) || length < 2u) goto done;
+    samples = ((size_t)raw[0] << 8) | raw[1];
+    if (samples > 31936u) samples = 31936u; /* Original PLAY_BUF limit. */
+    if (!samples || samples > length - 2u) goto done;
+    for (size_t i = 0; i < samples; ++i) raw[i] = raw[i + 2u] ^ 0x80u;
+    accepted = M11_Audio_PlayCsbFmtownsRuntimePcm(state, (const int8_t*)raw,
+        (int)samples, sourceVolume, m11_fnv1a_bytes(raw, (int)samples));
+    if (accepted) state->lastSoundIndex = pc34Index;
+done:
+    free(raw);
     return accepted;
 }
 

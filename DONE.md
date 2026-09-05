@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 FM Towns local effects use retained F20 unsigned PCM,
+  not the PC SND3 bank or F31 signed bytes. DATA.C MEDIA507 selects the
+  22 original records; TOWNSIO.C supplies BE16 length, the 31936-sample
+  limit and 5500 Hz cadence. EN/JP original-media checks compare every
+  host output sample to the selected source record. No BIOS or extraction
+  is required; original channel/timing/distance parity remains open.
+
 - 2026-09-05: CSB FM Towns PCM host gain uses the original 1..127 driver
   domain instead of saturating it with PC's 1..3 divisor. Original EN/JP
   archive tests cover all 127 gain steps; direct local effects request 127.
