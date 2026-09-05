@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Original DOS DM1 archive boot checks now explicitly select
+  V1, V2.0 and V2.1 through both CLI and menu, asserting the resulting mode,
+  original graphics fingerprint and loaded runtime. This closes a test gap
+  where a successful default-mode launch did not prove mode selection;
+  it does not establish filter/rendering parity or other-platform coverage.
+
 - 2026-09-05: Rebuilt CSB startup regressions pass with original Atari STX,
   Amiga and FM Towns EN/JP media after the audio fixes. These cover their
   existing CLI/runtime and, where included, menu/input assertions; they do
