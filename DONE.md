@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Added 216 authentic FM Towns Japanese CSB catalog keys to
+  every CSB locale, including 39 reviewed Swedish action translations.
+  All 218 extracted keys pass the native PO loader lookup/fallback check;
+  catalog regeneration and completion statistics are current.
+
 - 2026-09-05: CSB object-name presentation obtains the complete original
   name before converting its encoding and looking it up in the catalog.
   Small UI buffers can no longer change the lookup key or split a UTF-8

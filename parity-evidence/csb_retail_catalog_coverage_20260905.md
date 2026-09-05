@@ -20,3 +20,15 @@ DYNA_BUTTONS at source offset `0x2a0ec` (336 bytes). The next implementation
 step is to bind translation entries to these actual source indices and test
 the selected Japanese media's live presentation path. Do not infer complete
 retail coverage from the completion percentage of an English-source catalog.
+
+## Catalog admission and native lookup verification
+
+The initial comparison above preceded admission of 216 missing Japanese keys
+to every CSB locale. The shared template now contains 437 messages. Swedish
+adds 39 reviewed action translations using the corresponding existing English
+action translations; the extracted Japanese corpus has 41 nonempty Swedish
+entries and 177 untranslated entries (including object names awaiting review).
+All 218 authentic keys were checked through `fs_po_load` and
+`fs_po_gettext_in_domain`: translated values and untranslated source fallbacks
+match the catalog. `po/update.sh --check` passes. These checks do not establish
+rendered glyph parity or complete dungeon-text coverage.

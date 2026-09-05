@@ -5,11 +5,11 @@ Reviewed 2026-09-05. Only open work is listed here.
 - Close the authenticated FM Towns Japanese catalog gap: extraction from
   graphics MD5 `761d6fc588b31aeaaa9caf3725e111b9` and dungeon MD5
   `7ca51c17ef8bd542ca5f0273672ec1a5` produces 218 non-header msgids;
-  `msgcmp --use-untranslated` reports 216 missing from `po/csb.sv.po`.
+  all keys are now present in `po/csb.sv.po`, with 177 still untranslated.
   The Atari ST corpus (221 msgids) passes the same comparison. Existing
   catalog completion statistics must not be interpreted as coverage of all
-  retail editions. Bind Japanese entries to their original M564/C699 indices
-  and verify decoding at the live consumer before adding translations.
+  retail editions. Review remaining Japanese M564 object-name translations
+  against their original indices and verify displayed live-consumer text.
   M11's object/action consumers and the extractor now share native CP932 to
   UTF-8 conversion. Add and verify the missing translations at the live
   Japanese consumers; Japanese glyph-raster parity remains separate work.
