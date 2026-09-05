@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Rebuilt CSB startup regressions pass with original Atari STX,
+  Amiga and FM Towns EN/JP media after the audio fixes. These cover their
+  existing CLI/runtime and, where included, menu/input assertions; they do
+  not establish complete gameplay or emulator audiovisual parity.
+
 - 2026-09-05: The data-free Amiga audio regression now locks byte-sample
   cadence and signed amplitude timing, catching the previous extra clock
   division independently of availability of original game media.
