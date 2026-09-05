@@ -2,11 +2,12 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Bind gameplay sound effects to the selected legacy edition. The DM1 branch
-  of `m11_audio_emit_source_sound_with_volume` unconditionally calls the PC
-  SND3 bank; startup also binds that bank through `graphicsDatPath`, which is
-  only a display label for some retained legacy buffers. Atari SND1/PSG,
-  Amiga SND2/Paula and FM Towns PCM need their original record maps, timing
+- Complete legacy gameplay sound parity. Atari now selects original SND1
+  records through a source-locked event map; verify live event timing,
+  arbitration and PSG output against original captures. Amiga and FM Towns
+  still call the PC SND3 bank; startup also binds that bank through
+  `graphicsDatPath`, which is only a display label for some retained legacy
+  buffers. Amiga SND2/Paula and FM Towns PCM need their original maps, timing
   and volume semantics. Consult SOUND.C MEDIA007/MEDIA413/MEDIA488 and each
   DATA.C sound table before reusing any CSB transport: CSB's later sound
   indices and sample maps are not interchangeable with DM1's. Preserve the

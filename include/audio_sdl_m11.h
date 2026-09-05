@@ -34,6 +34,10 @@ typedef enum {
 #define M11_AUDIO_ORIGINAL_SOUND_COUNT 35
 #define M11_AUDIO_SOURCE_MUSIC_GAME_WON 2
 
+/* Translate the engine's PC34 event numbering to the original Atari bank.
+ * Returns -1 for effects absent from the Atari edition. */
+int M11_Audio_Dm1AtariSoundIndex(int pc34Index);
+
 typedef struct {
     float* samples;
     int sampleCount;
@@ -133,6 +137,10 @@ typedef struct {
     int dm2MacSndPlayCount;
     int dm2MacSndQueuedCount;
 } M11_AudioState;
+
+int M11_Audio_EmitDm1AtariSound(M11_AudioState* state,
+                               const char* graphicsPath, int pc34Index,
+                               int sourceVolume);
 
 int M11_Audio_Init(M11_AudioState* state);
 /* Empty selects SDL's system default.  The name is matched against the live

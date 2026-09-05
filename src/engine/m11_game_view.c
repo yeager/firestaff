@@ -14555,6 +14555,11 @@ static void m11_audio_emit_source_sound_with_volume(
         return;
     }
     if (m11_is_dm1_source_kind(state->sourceKind)) {
+        if (state->assetLoader.atariStDm1) {
+            (void)M11_Audio_EmitDm1AtariSound(&state->audioState,
+                state->assetLoader.graphicsDatPath, soundIndex, sourceVolume);
+            return;
+        }
         /* DM1 SOUND.C F0060 owns the event's SND3 sample.  A missing or
          * malformed source record is silent; a generated marker would make
          * an unverified effect sound plausible while being wrong. */

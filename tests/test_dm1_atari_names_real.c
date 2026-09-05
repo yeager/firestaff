@@ -139,6 +139,31 @@ int main(int argc, char **argv) {
         csb_v1_audio_runtime_atari_st_sound_payload_free(&sound);
     }
     puts("PASS: 22 Atari sound entries preserve source bytes; 19 decode, 3 known short streams reject safely (not playback parity)");
+    {
+        static const int expected[35] = {
+            0, 1, 2, 2, 4, 5, 20, 6, 8, 9, 10, 11, 12, 16, 17, 18,
+            13, -1, -1, 14, 15, 19, 21, 3, -1, 7, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1
+        };
+        if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
+        for (int i = 0; i < 35; ++i) {
+            int index = expected[i];
+            int playable = index >= 0 && index != 1 && index != 12 && index != 16;
+            int markers = state->audioState.playedMarkerCount;
+            if (M11_Audio_Dm1AtariSoundIndex(i) != index ||
+                M11_Audio_EmitDm1AtariSound(&state->audioState,
+                    state->assetLoader.graphicsDatPath, i, 3) != playable ||
+                state->audioState.playedMarkerCount != markers) {
+                fprintf(stderr, "FAIL: original Atari event transport %d\n", i);
+                goto done;
+            }
+            if (playable && (state->audioState.lastSoundIndex != i ||
+                state->audioState.csbAtariStSoundPeriod != (i == 3 ? 145 : i == 15 ? 138 : 112))) goto done;
+        }
+        if (M11_Audio_Dm1AtariSoundIndex(-1) != -1 ||
+            M11_Audio_Dm1AtariSoundIndex(35) != -1) goto done;
+    }
+    puts("PASS: DM1 event indices select original Atari samples and Timer-A periods without generated markers");
     result = 0;
 done:
     free(pixels);

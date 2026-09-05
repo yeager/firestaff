@@ -1562,6 +1562,40 @@ int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
     return 1;
 }
 
+int M11_Audio_Dm1AtariSoundIndex(int pc34Index)
+{
+    /* ReDMCSB DEFS.H:73-127, MEDIA019 versus MEDIA485. DATA.C:478
+     * contains only 22 Atari effects: later movement/horn/cry samples are
+     * absent. Entrance doors reuse C02 at a separately selected period. */
+    static const signed char indices[35] = {
+        0, 1, 2, 2, 4, 5, 20, 6, 8, 9, 10, 11, 12, 16, 17, 18,
+        13, -1, -1, 14, 15, 19, 21, 3, -1, 7, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1
+    };
+    return pc34Index >= 0 && pc34Index < 35 ? indices[pc34Index] : -1;
+}
+
+int M11_Audio_EmitDm1AtariSound(M11_AudioState* state,
+                               const char* graphicsPath, int pc34Index,
+                               int sourceVolume)
+{
+    CsbV1AtariStSoundPayload payload = {0};
+    int index = M11_Audio_Dm1AtariSoundIndex(pc34Index);
+    int accepted;
+    if (!state || index < 0 || !graphicsPath ||
+        !csb_v1_audio_runtime_load_atari_st_sound_payload(
+            graphicsPath, (int16_t)index, &payload)) return 0;
+    /* SOUND.C F0060: Timer A period 145 for entrance, table period for
+     * gameplay; zero volume selects the original soft PSG register table. */
+    accepted = M11_Audio_PlayCsbAtariStPsgAtSourceVolume(state, payload.bytes,
+        (int)payload.byteCount, pc34Index == 3 ? 145 : payload.spec.period,
+        m11_fnv1a_bytes(payload.bytes, (int)payload.byteCount),
+        sourceVolume > 1 ? 1 : 0);
+    csb_v1_audio_runtime_atari_st_sound_payload_free(&payload);
+    if (accepted) state->lastSoundIndex = pc34Index;
+    return accepted;
+}
+
 int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
     M11_AudioState* state, const unsigned char* source, int sourceBytes,
     int sourcePeriod, unsigned int sourceHash, int sourceVolume) {

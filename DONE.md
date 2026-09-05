@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 Atari gameplay dispatch selects original SND1/PSG instead
+  of the PC SND3 bank. ReDMCSB event-index translation preserves missing
+  Atari effects as silence and the entrance Timer-A period as 145. Original
+  EN/DE/FR transport checks cover every engine sound index and reject the
+  three known short streams without generated markers. Original-emulator
+  timing, arbitration and electrical-output parity remain unproven.
+
 - 2026-09-05: Original Atari EN/DE/FR audio characterization verifies all
   22 transport payloads byte-for-byte against the DM1 graphics reader.
   Nineteen decode within their record boundaries; three known short streams
