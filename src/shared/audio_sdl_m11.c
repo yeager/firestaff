@@ -1671,6 +1671,15 @@ int M11_Audio_PlayCsbAtariStPsgAtSourceVolume(
     unsigned int output_count;
     unsigned int output_index;
 
+    /* This receipt describes the current request, not a previous accepted
+     * sound. Do not retain successful provenance when validation fails. */
+    if (state) {
+        state->csbAtariStSoundAccepted = 0;
+        state->csbAtariStSoundPeriod = 0;
+        state->csbAtariStSoundSourceVolume = 0;
+        state->csbAtariStSoundHash = 0;
+        m11_sound_clear(&state->csbAtariStPsg);
+    }
     if (!state || !state->initialized || !source || sourceBytes < 3 ||
         sourcePeriod <= 10 || sourceHash == 0u ||
         (sourceVolume != 0 && sourceVolume != 1) ||

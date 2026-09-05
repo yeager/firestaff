@@ -49,6 +49,21 @@ int main(void)
     ok &= expect(!M11_Audio_PlayCsbAtariStPsg(&state, snd1,
                      (int)sizeof(snd1), 112, hash),
                  "changed SND1 stream is rejected rather than substituted");
+    ok &= expect(!state.csbAtariStSoundAccepted &&
+                     state.csbAtariStPsg.sampleCount == 0 &&
+                     state.csbAtariStSoundHash == 0 &&
+                     state.csbAtariStSoundPeriod == 0,
+                 "rejected Atari sound clears earlier successful provenance");
+    snd1[2] ^= 0x80u;
+    ok &= expect(M11_Audio_PlayCsbAtariStPsg(&state, snd1,
+                     (int)sizeof(snd1), 112, hash),
+                 "valid sound recovers after rejection");
+    snd1[0] = 0xffu;
+    snd1[1] = 0xffu;
+    ok &= expect(!M11_Audio_PlayCsbAtariStPsg(&state, snd1,
+                     (int)sizeof(snd1), 112, fnv1a(snd1, (int)sizeof(snd1))) &&
+                     !state.csbAtariStSoundAccepted && state.csbAtariStPsg.sampleCount == 0,
+                 "truncated SND1 decoding cannot inherit an accepted receipt");
     ok &= expect(!M11_Audio_PlayCsbAtariStPsg(&state, snd1,
                      (int)sizeof(snd1), 10, fnv1a(snd1, (int)sizeof(snd1))),
                  "invalid Timer-A period is rejected");

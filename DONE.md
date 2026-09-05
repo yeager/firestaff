@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Atari audio rejection clears the previous accepted flag,
+  hash, period and sample count. Regression tests cover invalid fingerprints,
+  short SND1 streams and recovery on the next valid request; original DM1
+  Atari EN/DE/FR audio corpus tests continue to pass.
+
 - 2026-09-05: Original/Modern CLI/menu coverage extends to original Atari
   DE/FR and FM Towns JP (12 additional combinations). Japanese launches
   must retain both JDATA and JDM fingerprints, preventing an English
