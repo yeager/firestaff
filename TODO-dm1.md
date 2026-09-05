@@ -2,6 +2,12 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Extend the Atari original M564/all-record regression to explicit German
+  and French edition selection. The generic `M11_GameView_StartDm1` test
+  helper does not admit those archives; use the version-selected launcher
+  route already covered by their CLI startup tests. Compare original pixel
+  captures after the corrected F0497/F0496 decoder, beyond record lengths.
+
 - Complete Japanese FM Towns M564 catalog translations and rendered-glyph
   verification. All 199 names now pass original-JDATA framing/index/UTF-8
   checks, but these checks do not prove translated inventory/hand-label pixels.

@@ -6711,6 +6711,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_atari_msa.c
     src/dm1/dm1_v1_atari_st_stx.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_graphics_dat.c
@@ -12267,6 +12268,12 @@ if(BUILD_TESTING)
     endif()
 
     add_executable(test_dm1_fmtowns_jp_names_real tests/test_dm1_fmtowns_jp_names_real.c)
+    add_executable(test_dm1_atari_names_real tests/test_dm1_atari_names_real.c)
+    target_link_libraries(test_dm1_atari_names_real PRIVATE firestaff_m12 firestaff_m11)
+    add_test(NAME dm1_atari_names_real COMMAND test_dm1_atari_names_real)
+    set_tests_properties(dm1_atari_names_real PROPERTIES SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+        LABELS "dm1;atari;real-media;objects;skip-safe")
     target_link_libraries(test_dm1_fmtowns_jp_names_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME dm1_fmtowns_jp_names_real COMMAND test_dm1_fmtowns_jp_names_real)
     set_tests_properties(dm1_fmtowns_jp_names_real PROPERTIES
@@ -59134,6 +59141,7 @@ add_test(NAME test_dm1_v1_legacy_graphics_dat COMMAND test_dm1_v1_legacy_graphic
 
 add_executable(test_dm1_v1_atari_st_graphics_dat
     tests/test_dm1_v1_atari_st_graphics_dat.c
+    src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c)
@@ -59142,6 +59150,7 @@ add_test(NAME test_dm1_v1_atari_st_graphics_dat COMMAND test_dm1_v1_atari_st_gra
 
 add_executable(test_dm1_v1_atari_st_stx
     tests/test_dm1_v1_atari_st_stx.c
+    src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/dm1/dm1_v1_atari_st_stx.c
     src/dm1/dm1_v1_atari_st_graphics_dat.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c

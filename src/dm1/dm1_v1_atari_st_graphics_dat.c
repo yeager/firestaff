@@ -1,4 +1,5 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
+#include "csb_v1_graphics_lzw_pc34_compat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
 
@@ -50,13 +51,13 @@ int dm1_v1_atari_st_graphics_read(const DM1_V1_AtariStGraphicsDat *dat,
         return (int)record->expanded_size;
     }
     {
-        DM1_V1_GFX_LZWStatePc34 lzw;
-        int decoded;
-        memset(&lzw, 0, sizeof(lzw));
-        decoded = DM1_V1_GFX_LzwDecompressPc34Compat(&lzw,
+        size_t decoded = 0;
+        /* ReDMCSB LZW.C F0497 starts dictionary entries at 257 (not an
+         * end code); F0496 also expands the 0x90 repetition stream. */
+        int status = csb_v1_graphics_lzw_decode_pc34_compat(
             dat->data + record->offset, record->compressed_size,
-            out, record->expanded_size);
-        return decoded == (int)record->expanded_size ? decoded : 0;
+            out, record->expanded_size, &decoded);
+        return status == 0 && decoded == record->expanded_size ? (int)decoded : 0;
     }
 }
 

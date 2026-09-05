@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 Atari raw graphics now use ReDMCSB F0497's dictionary
+  convention and F0496 repetition output instead of the incompatible generic
+  LZW end-code route. M564 binds from the retained original Atari bytes.
+  The authentic English 1.2 archive verifies all 199 object-name indices and
+  all 563 expanded record lengths; Atari container and STX unit tests pass.
+  Expanded-length checks are not a pixel-parity claim.
+
 - 2026-09-05: CSB's public hand-name accessor preserves UTF-8 boundaries
   when copying the already-localized cached label into a smaller UI buffer.
   The hand/no-DM1-fallback regression passes with additional empty-output,

@@ -370,6 +370,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include "firestaff_po_loader.h"
 #include "firestaff_cp932.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_atari_st_graphics_dat.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
@@ -17862,7 +17863,12 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     if (!state || !state->assetLoader.graphicsDatPath[0]) return 0;
     state->dm1ObjectNameTableValid = 0;
     memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
-    if (state->assetLoader.legacyDm1 && state->assetLoader.legacyData &&
+    if (state->assetLoader.atariStDm1 && state->assetLoader.atariStData &&
+        state->assetLoader.atariStDataSize > 0) {
+        fileByteCount = (size_t)state->assetLoader.atariStDataSize;
+        fileBytes = malloc(fileByteCount);
+        if (fileBytes) memcpy(fileBytes, state->assetLoader.atariStData, fileByteCount);
+    } else if (state->assetLoader.legacyDm1 && state->assetLoader.legacyData &&
         state->assetLoader.legacyDataSize > 0) {
         /* Archive startup already owns the original bytes. Its display path
          * is not a reopenable filesystem path. */
@@ -17889,7 +17895,21 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     /* ReDMCSB's M564 number is media-dependent: current PC3.4 data uses
      * record 694, while older DM1 layouts use 556.  Admit only a complete
      * C199 stream, never a raster record that happens to decode. */
-    if (state->assetLoader.legacyDm1 &&
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat original;
+        int count = 0;
+        /* OBJECT.C F0031/MEDIA009 requests raw M564, not its IMG1 raster.
+         * The Atari container owns the LZW envelope and expanded length. */
+        if (dm1_v1_atari_st_graphics_open(fileBytes, fileByteCount, &original))
+            count = dm1_v1_atari_st_graphics_read(&original,
+                M11_DM1_M564_LEGACY, decoded, 65535u);
+        if (count <= 0) {
+            free(decoded);
+            free(fileBytes);
+            return 0;
+        }
+        decodedSize = (size_t)count;
+    } else if (state->assetLoader.legacyDm1 &&
         dm1_v1_legacy_graphics_read_raw(fileBytes, fileByteCount,
             state->assetLoader.legacyBigEndian, M11_DM1_M564_LEGACY,
             decoded, 65535u, &decodedSize)) {
