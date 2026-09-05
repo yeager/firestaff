@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 translated/Japanese object labels clip only at complete
+  UTF-8 boundaries after full-source catalog lookup. The real JDATA first
+  weapon hand-label test checks every output capacity and its guard byte;
+  all original Japanese names/actions and the PC3.4 pickup/cursor regression
+  pass. Original non-UTF-8 fallback labels retain their existing byte encoding.
+
 - 2026-09-05: DM1 Japanese FM Towns actions now consume the authenticated
   JDM.EXP load-image pool at `0x243bc`, instead of falling through to PC3.4
   English action names. The receipt retains original CP932 bytes; M11 converts

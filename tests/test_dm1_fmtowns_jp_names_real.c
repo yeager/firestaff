@@ -64,6 +64,28 @@ int main(void) {
         offset = (size_t)(end - raw) + 1;
     }
     if (!state->dm1ObjectNameTableValid) goto done;
+    {
+        char full[96], clipped[97];
+        unsigned short thing = (unsigned short)(THING_TYPE_WEAPON << 10);
+        if (!state->world.things || state->world.things->weaponCount <= 0 ||
+            !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing) ||
+            !DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(state, full, sizeof(full)))
+            goto done;
+        for (size_t capacity = 1; capacity <= strlen(full) + 1; ++capacity) {
+            size_t expected = capacity - 1;
+            while (expected && ((unsigned char)full[expected] & 0xc0u) == 0x80u)
+                --expected;
+            memset(clipped, 0x55, sizeof(clipped));
+            (void)DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(
+                state, clipped, (int)capacity);
+            if (strlen(clipped) != expected || memcmp(clipped, full, expected) ||
+                clipped[capacity] != 0x55) {
+                fprintf(stderr, "FAIL: Japanese hand name clipping at capacity %zu\n", capacity);
+                goto done;
+            }
+        }
+        puts("PASS: original Japanese weapon hand label clips only at UTF-8 boundaries");
+    }
     if (state->dm1FmtownsStartupReceipt.game_action_name_count != 44) goto done;
     for (unsigned int i = 0; i < 44; ++i) {
         char utf8[48];

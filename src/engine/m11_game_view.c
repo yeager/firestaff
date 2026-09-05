@@ -17985,9 +17985,22 @@ static void m11_get_source_item_name(const M11_GameViewState* state,
              * DM1 catalog is consulted only at the final presentation
              * boundary, so Original mode can localize labels without
              * rewriting or shadowing the loaded retail data. */
-            snprintf(out, outSize, "%s",
-                     fs_po_gettext_in_domain(
-                         "dm1", state->dm1ObjectNames[icon]));
+            const char *source = state->dm1ObjectNames[icon];
+            const char *presented = fs_po_gettext_in_domain("dm1", source);
+            size_t length = strlen(presented);
+            if (!out || outSize == 0u) return;
+            if (length >= outSize) {
+                length = outSize - 1u;
+                if (presented != source ||
+                    (state->dm1FmtownsStartupReceiptValid &&
+                     state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP)) {
+                    while (length &&
+                           ((unsigned char)presented[length] & 0xc0u) == 0x80u)
+                        --length;
+                }
+            }
+            memcpy(out, presented, length);
+            out[length] = '\0';
             return;
         }
         if (outSize > 0u) out[0] = '\0';
