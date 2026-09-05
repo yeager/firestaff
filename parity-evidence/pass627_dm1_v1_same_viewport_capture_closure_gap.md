@@ -8,7 +8,9 @@ The remaining "wall/viewport parity gaps still need promotable original/Firestaf
 
 **Case (c) — Missing comparator evidence (original DOS runtime transcript).**
 
-The Firestaff side of the same-viewport capture contract is fully implemented and source-contract backed. No Firestaff renderer change is required to close this gap.
+The historical source-contract checks below cover capture plumbing, not renderer
+correctness. Without a same-state original comparator, whether additional
+Firestaff renderer changes are required remains unknown.
 
 ## Firestaff-side closure (complete)
 
@@ -48,7 +50,7 @@ Required for promotable original:
 2. F0365/F0366 state mutation proof (direction committed to 3 at map 0 x=1 y=3)
 3. F0128 direction/mapX/mapY tuple consumption proof (direction=3 x=1 y=3)
 4. F0097/VIDRV present boundary evidence for the captured viewport frame
-5. One original viewport crop `.ppm` with same hash as Firestaff `1e71ed87...` (224x136, PC/I34E)
+5. One original viewport crop `.ppm` (224x136, PC/I34E) authenticated to the same state as the Firestaff crop. Record both hashes and the pixel differences; equality is an outcome to test, never a condition for accepting the original reference.
 6. No duplicate viewport crop hash across different semantic labels
 
 pass622 already identified this gap and correctly classified it as the missing original transcript.
@@ -64,6 +66,8 @@ pass622 already identified this gap and correctly classified it as the missing o
 
 ## Conclusion
 
-The "remaining wall/viewport parity gaps" referenced in TODO.md line 16 are now fully classified: the Firestaff same-viewport capture combine/dedupe logic is source-contract complete and CTest-locked. The gap is exclusively on the original DOS capture side — a runtime transcript proving the command→mutation→redraw→present route for the `02_turn_right_west_1_3` labeled frame. No Firestaff code change can promote this; it requires a paired original DOS capture session.
-
-This is the correct and only remaining gap. No further Firestaff pass is needed until an original DOS capture is available.
+The original command→mutation→redraw→present transcript is still required for
+the `02_turn_right_west_1_3` reference. Once obtained, compare the actual pixels
+and fix any observed divergence. This historical report does not establish
+that capture provenance is the only remaining DM1 renderer gap, nor does it
+justify suspending other source-backed runtime fixes.

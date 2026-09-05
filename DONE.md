@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Corrected the historical pass627 capture guidance: accept an
+  authenticated same-state original reference independently of whether its
+  pixels match Firestaff. Removed the unsupported assertion that no renderer
+  changes could be needed. Source review also identified the open F20J M564
+  name-framing defect, now recorded in the DM1 work list.
+
 - 2026-09-05: Original-media startup/input regressions pass for DM1 DOS 3.4,
   Atari EN/DE/FR, Amiga 2.0/HD, FM Towns EN/JP, and CSB Atari/Amiga/FM Towns
   English. The FM Towns DM1 gate now independently checks all seven input
