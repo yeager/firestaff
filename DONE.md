@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Rebuilt Firestaff passes Atari/Amiga CSB CLI startup; original
+  Amiga ZIP/ADF C025 admission now verifies exact dimensions and pixel range.
+
 - 2026-09-05: Atari CSB chest comparisons now include all 10,512 panel-area
   pixels and the 848 transparency-key positions; three presentation modes
   pass against original materials and the pre-open viewport.

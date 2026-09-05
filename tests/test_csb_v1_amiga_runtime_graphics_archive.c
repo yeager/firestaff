@@ -83,6 +83,26 @@ int main(void)
         return 1;
     }
 
+    /* CHEST.C F0333:47 and DATA.C G0032:314 bind C025's 144x73
+     * panel; do not accept arbitrary positive dimensions as admission. */
+    {
+        unsigned char panel[144u * 73u];
+        uint16_t width = 0, height = 0;
+        if (!csb_v1_amiga_graphics_decode_item(graphics.bytes, graphics.size,
+                25u, panel, sizeof(panel), &width, &height) ||
+            width != 144u || height != 73u) {
+            fputs("FAIL: original Amiga C025 chest panel dimensions\n", stderr);
+            free(graphics.bytes);
+            return 1;
+        }
+        for (size_t pixel = 0; pixel < sizeof(panel); ++pixel) {
+            if (panel[pixel] > 15u) {
+                fputs("FAIL: original Amiga C025 index outside four-bit palette\n", stderr);
+                free(graphics.bytes);
+                return 1;
+            }
+        }
+    }
     if (!decode_range(graphics.bytes, graphics.size, 1u, 4u, "title/entrance") ||
         !decode_range(graphics.bytes, graphics.size, 17u, 17u, "inventory") ||
         !decode_range(graphics.bytes, graphics.size, 40u, 41u, "panel") ||

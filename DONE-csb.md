@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Amiga chest material admission
+
+- The original ZIP/ADF graphics test now requires C025 to decode to exactly
+  144x73 four-bit indexed pixels, matching CHEST.C F0333 and DATA.C G0032.
+  The supplied preservation archive passes without disk extraction.
+- Rebuilt Firestaff also passes Atari STX and Amiga CLI startup regressions
+  after the Atari chest compositor change. Neither check establishes Amiga
+  chest interaction or complete visual parity.
+
 ## 2026-09-05 — Atari chest transparency preservation
 
 - Expanded the panel comparison to all 10,512 C025-area pixels, including
