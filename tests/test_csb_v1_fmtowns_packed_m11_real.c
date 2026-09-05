@@ -102,6 +102,49 @@ int main(void)
             M11_GameView_Shutdown(&view);
             return 1;
         }
+        {
+            const unsigned char* original = profile->fmtowns_graphics_bytes;
+            size_t offset = 4u + 728u * 8u;
+            size_t count;
+            unsigned char* damaged;
+            CsbV1FmtownsSoundPayload rejected = {0};
+            for (unsigned int record = 0; record < sound.spec.graphicIndex; ++record)
+                offset += original[4u + record * 2u] |
+                          ((unsigned int)original[5u + record * 2u] << 8);
+            if (offset + 2u > profile->fmtowns_graphics_size) {
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            count = ((size_t)original[offset] << 8) | original[offset + 1u];
+            if (count != sound.byteCount || count > profile->fmtowns_graphics_size - offset - 2u ||
+                memcmp(sound.bytes, original + offset + 2u, count)) {
+                fputs("FAIL: F31 PCM does not match original container bytes\n", stderr);
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            /* Damage only a private RAM copy of authenticated media. The
+             * loader must reject a count that runs beyond the sound record. */
+            damaged = malloc(profile->fmtowns_graphics_size);
+            if (!damaged) {
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            memcpy(damaged, original, profile->fmtowns_graphics_size);
+            damaged[offset] = damaged[offset + 1u] = 0xffu;
+            int accepted = csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
+                damaged, profile->fmtowns_graphics_size, (int16_t)event, &rejected);
+            free(damaged);
+            if (accepted || rejected.bytes || rejected.byteCount) {
+                fputs("FAIL: out-of-record F31 sample count accepted\n", stderr);
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&rejected);
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+        }
         for (size_t b = 0; b < sound.byteCount; ++b) {
             hash ^= sound.bytes[b];
             hash *= 16777619u;

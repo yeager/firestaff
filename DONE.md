@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: F31 EN/JP audio corpus tests independently locate each of
+  the 35 selected records in the original container and compare payload
+  bytes. Oversized sample counts in private RAM copies are rejected for
+  every event with empty output; original archives are never modified.
+
 - 2026-09-05: CSB FM Towns reads the BE16 PCM sample count without requiring
   exactly two unused tail bytes. Original explosion record 675 has 3970
   samples in 3973 bytes and was incorrectly rejected. EN/JP original-media
