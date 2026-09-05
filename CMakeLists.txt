@@ -4521,7 +4521,8 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;fmtowns;real-media;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip"
-        TIMEOUT 150
+        # Both original programs now run independent seven-command matrices.
+        TIMEOUT 240
     )
 endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)

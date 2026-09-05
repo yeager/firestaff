@@ -130,7 +130,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   now has its own unique disassembly fingerprint, recovered geometry/data
   owners, real-media C12/C13/C14 palette binding, and a native checksumless
   F20J JDATA dungeon handoff that reaches `levelLoaded=1` directly from the
-  retail ZIP. An authentic gameplay capture is still required before visual
+  retail ZIP. Independent seven-command English/Japanese input matrices now
+  pass against each edition's graphics and executable fingerprints. An
+  authentic gameplay capture is still required before visual
   parity beyond those startup routes can be claimed.
 - Bind an authenticated Amiga gameplay RGB4 table to the native renderer.
   The original v2.0 `dm` producer is implemented and source-gated: its

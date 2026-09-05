@@ -80,23 +80,35 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 
 expect_gameplay_input() {
     local input=$1 expected_party=$2 gameplay_output
+    local language=${3:-en} program=EDM.EXP handoff=fmtowns-tmenu-edm
+    local program_md5=$expected_edm_md5 graphics_md5=$expected_md5
+    local language_args=()
+    if [[ $language == ja ]]; then
+        language_args=(--dm1-fmtowns-ja)
+        program=JDM.EXP
+        handoff=fmtowns-tmenu-jdm
+        program_md5=$expected_jdm_md5
+        graphics_md5=$expected_japanese_md5
+    fi
     gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --menu --game dm1 --platform fm-towns --data-dir "$archive" \
+        "${language_args[@]}" \
         --boot-probe --boot-probe-frames 100 --script "$input" --duration 0 2>&1) || {
         printf '%s\n' "$gameplay_output" >&2
         return 1
     }
     if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
        ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
-       ! grep -Fq 'platformHandoff=fmtowns-tmenu-edm' <<<"$gameplay_output" ||
-       ! grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$gameplay_output" ||
-       ! grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$gameplay_output" ||
+       ! grep -Fq "assetMd5=$graphics_md5" <<<"$gameplay_output" ||
+       ! grep -Fq "platformHandoff=$handoff" <<<"$gameplay_output" ||
+       ! grep -Fq "fmtownsProgram=$program" <<<"$gameplay_output" ||
+       ! grep -Fq "fmtownsProgramMd5=$program_md5" <<<"$gameplay_output" ||
        ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaTrack=2' <<<"$gameplay_output" ||
        ! grep -Fq "map=0 party=$expected_party" <<<"$gameplay_output"; then
         printf '%s\n' "$gameplay_output" >&2
-        printf 'FAIL: authentic DM1 FM Towns %s input did not reach native runtime\n' "$input" >&2
+        printf 'FAIL: authentic DM1 FM Towns %s %s input did not reach native runtime\n' "$language" "$input" >&2
         return 1
     fi
 }
@@ -112,4 +124,14 @@ expect_gameplay_input strafe-left  1,3,2
 expect_gameplay_input strafe-right 1,3,2
 expect_gameplay_input action       1,3,2
 
-printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM and TMENU/JDM handoffs, plus complete native English input matrix in memory'
+# Independently reload the Japanese JDATA route for each input. Its own
+# graphics/program fingerprints prevent an English fallback from passing.
+expect_gameplay_input up           1,4,2 ja
+expect_gameplay_input down         1,3,2 ja
+expect_gameplay_input left         1,3,1 ja
+expect_gameplay_input right        1,3,3 ja
+expect_gameplay_input strafe-left  1,3,2 ja
+expect_gameplay_input strafe-right 1,3,2 ja
+expect_gameplay_input action       1,3,2 ja
+
+printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM and TMENU/JDM handoffs, plus native English and Japanese input matrices in memory'
