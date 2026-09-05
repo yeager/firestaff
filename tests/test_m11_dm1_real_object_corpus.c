@@ -153,6 +153,33 @@ static int check_type(M11_GameViewState *state, int thingType,
         } else if (!check_inventory_roundtrip(state, thing)) {
             fprintf(stderr, "real %s[%d] inventory roundtrip failed\n", label, i);
             ++failures;
+        } else if (thingType == THING_TYPE_SCROLL) {
+            int mode;
+            int scrollOk = 1;
+            /* PANEL.C F0342:1126-1131 routes original scrolls to F0341,
+             * not the generic object-description dialog. Reading is not
+             * an inventory transfer. Test real scroll records in both modes. */
+            for (mode = 0; mode < 2; ++mode) {
+                unsigned char framebuffer[320 * 200];
+                state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED :
+                                                M12_PRESENTATION_V1_ORIGINAL;
+                state->inventoryPanelActive = 1;
+                if (M11_GameView_HandlePointer(state, 20, 54, 1) !=
+                        M11_GAME_INPUT_REDRAW ||
+                    !state->v1ScrollPanelActive || state->v1ScrollPanelThing != thing ||
+                    state->v1ObjectDescriptionPanelActive ||
+                    M11_GameView_IsDialogOverlayActive(state)) scrollOk = 0;
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(state, framebuffer, 320, 200);
+                (void)M11_GameView_HandlePointerButtonRelease(state, 20, 54,
+                    DM1_V1_MOUSE_MASK_LEFT_PC34);
+                if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != thing)
+                    scrollOk = 0;
+            }
+            if (!scrollOk) {
+                fprintf(stderr, "real scroll[%d] eye route failed\n", i);
+                ++failures;
+            } else ++*outChecked;
         } else {
             ++*outChecked;
         }

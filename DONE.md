@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Original PC3.4 scroll records now exercise the live inventory
+  eye route in Original and V2.1 after the full slot matrix. Each opens its
+  own scroll panel, not a generic object dialog, renders through M11 and
+  retains the held Thing after release. The combined corpus passes; this
+  checks routing and ownership, not text/pixel equality with an emulator.
+
 - 2026-09-05: The 611-record PC3.4 inventory matrix additionally seeds a
   distinct, slot-admissible original resident in every slot. Original and
   V2.1 swaps preserve both Thing identities in both directions; denied

@@ -3,7 +3,8 @@
 Reviewed 2026-08-29. Only open work is listed here.
 
 - Extend original-media inventory interaction verification to chest contents,
-  scroll/eye interactions and supported editions beyond PC3.4.
+  scroll text/pixel equality and supported editions beyond PC3.4. Original
+  PC3.4 scroll-eye panel routing and held-object preservation pass in both modes.
   The 611-record PC3.4 Original/V2.1 press/release corpus covers all 30 empty
   slots, a distinct admissible resident per occupied-slot swap, source-mask
   rejections and identity preservation, not complete
