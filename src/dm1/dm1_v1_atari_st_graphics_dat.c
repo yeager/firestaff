@@ -71,7 +71,8 @@ int dm1_v1_atari_st_graphics_decode(const DM1_V1_AtariStGraphicsDat *dat,
     uint8_t *item;
     int decoded;
 
-    if (!dat || !indexed_pixels || index >= DM1_V1_ATARI_ST_GRAPHICS_COUNT)
+    if (!dat || !indexed_pixels || index >= DM1_V1_ATARI_ST_GRAPHICS_COUNT ||
+        !dm1_v1_legacy_graphics_is_bitmap_index(index))
         return 0;
     record = &dat->records[index];
     if (record->expanded_size < 4u) return 0;

@@ -79,7 +79,14 @@ int main(int argc, char **argv) {
     if (!pixels) goto done;
     for (unsigned int i = 0; i < DM1_V1_ATARI_ST_GRAPHICS_COUNT; ++i) {
         uint16_t width = 0, height = 0;
-        if (!dm1_v1_legacy_graphics_is_bitmap_index((uint16_t)i)) continue;
+        if (!dm1_v1_legacy_graphics_is_bitmap_index((uint16_t)i)) {
+            if (dm1_v1_atari_st_graphics_decode(&dat, (uint16_t)i, pixels,
+                    1024u * 1024u, &width, &height)) {
+                fprintf(stderr, "FAIL: non-raster Atari record %u accepted as image\n", i);
+                goto done;
+            }
+            continue;
+        }
         if (!dm1_v1_atari_st_graphics_decode(&dat, (uint16_t)i, pixels,
                 1024u * 1024u, &width, &height)) {
             fprintf(stderr, "FAIL: original Atari bitmap %u\n", i);
