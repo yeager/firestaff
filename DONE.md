@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: The independent original C559 inventory oracle also passes in
+  V2.0 and V2.1. Rebuilt Firestaff passes the original Atari STX CLI startup
+  and scripted native runtime-input regression after the mouse-release fix.
+
 - 2026-09-05: Independently verified Atari CSB allowed-slot values for all
   447 allocated objects against original C559 bytes; Original mode passes
   the full 30-slot input sweep using those bytes as the acceptance oracle.

@@ -7,9 +7,8 @@
   ObjectInfo entry. A separate F0141 index calculation uses original dungeon
   record fields rather than the runtime's ObjectInfo helper.
 - All 447 allocated objects agree with the runtime's allowed-slot values.
-  Original mode passes all 13,410 object/slot checks with this byte-derived
-  oracle. The earlier three-mode interaction run used the runtime oracle;
-  the expanded independent oracle has so far been rerun in Original only.
+  Original, V2.0 and V2.1 each pass all 13,410 object/slot checks with this
+  byte-derived oracle (40,230 total).
 
 ## 2026-09-05 — Atari equipment-slot input coverage
 
