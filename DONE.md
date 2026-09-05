@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 legacy/Atari startup binds the raw original M653 font from
+  retained media bytes instead of attempting the PC3.4 file-state loader.
+  All 768 bytes match original Atari EN/DE/FR, Amiga 2.0/HD and FM Towns JP
+  records; the PC3.4 object/pickup regression also passes. FM Towns system
+  Kanji glyphs are a separate route and are not supplied by this M653 fix.
+
 - 2026-09-05: The Atari bitmap API now enforces the same source-record
   classification as the production asset loader. Text, sound, font and code
   records remain available through raw reads but cannot enter raster decode.

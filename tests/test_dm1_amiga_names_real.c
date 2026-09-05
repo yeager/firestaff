@@ -48,6 +48,12 @@ int main(void) {
         if (state->dm1ObjectNames[i][ch]) goto done;
     }
     puts("PASS: 199 original Amiga M564 names through the selected-edition launcher handoff");
+    if (!state->originalFontAvailable ||
+        !dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+            (size_t)state->assetLoader.legacyDataSize, 1, 557, raw, sizeof(raw), &length) ||
+        length != M11_FONT_BITMAP_BYTES ||
+        memcmp(raw, state->originalFont.bitmap, M11_FONT_BITMAP_BYTES)) goto done;
+    puts("PASS: Amiga interface font matches original M653 bytes");
     result = 0;
 done:
     if (result) fputs("FAIL: original Amiga name/media selection gate\n", stderr);

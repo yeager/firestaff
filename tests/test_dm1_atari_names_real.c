@@ -75,6 +75,12 @@ int main(int argc, char **argv) {
         }
     }
     puts("PASS: all 563 authentic Atari graphics records decode to original table lengths");
+    if (!state->originalFontAvailable ||
+        dm1_v1_atari_st_graphics_read(&dat, 557, raw, sizeof(raw)) != M11_FONT_BITMAP_BYTES ||
+        memcmp(raw, state->originalFont.bitmap, M11_FONT_BITMAP_BYTES)) {
+        fputs("FAIL: Atari interface font does not match original M653\n", stderr);
+        goto done;
+    }
     pixels = malloc(1024u * 1024u);
     if (!pixels) goto done;
     for (unsigned int i = 0; i < DM1_V1_ATARI_ST_GRAPHICS_COUNT; ++i) {

@@ -98,6 +98,11 @@ int main(void) {
     }
     puts("PASS: all 44 original JDM action names match the reviewed source pool");
     puts("PASS: all 199 authentic F20J names retain their source indices and UTF-8 keys");
+    if (!state->originalFontAvailable ||
+        !dm1_v1_legacy_graphics_read_raw(bytes, size, 0, 557, raw, sizeof(raw), &length) ||
+        length != M11_FONT_BITMAP_BYTES ||
+        memcmp(raw, state->originalFont.bitmap, M11_FONT_BITMAP_BYTES)) goto done;
+    puts("PASS: FM Towns M653 interface font bytes match original media (not system Kanji glyphs)");
     result = 0;
 done:
     free(bytes);

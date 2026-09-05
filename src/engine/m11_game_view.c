@@ -7517,6 +7517,37 @@ static void m11_dm1_rebind_source_song(M11_GameViewState *state,
         state->audioState.originalSongDatPath, &state->dm1MusicSource);
 }
 
+static int m11_dm1_bind_original_font(M11_GameViewState *state) {
+    unsigned char raw[M11_FONT_BITMAP_BYTES];
+    size_t length = 0;
+    M11_Font_Init(&state->originalFont);
+    state->originalFontAvailable = 0;
+    /* TEXT.C:2013-2022 loads M653 with NOT_EXPANDED. The legacy and
+     * Atari asset owners retain original bytes without a PC34 fileState. */
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        int count;
+        if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
+                (size_t)state->assetLoader.atariStDataSize, &dat)) return 0;
+        count = dm1_v1_atari_st_graphics_read(&dat, 557, raw, sizeof(raw));
+        if (count != M11_FONT_BITMAP_BYTES) return 0;
+        length = (size_t)count;
+    } else if (state->assetLoader.legacyDm1) {
+        if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+                (size_t)state->assetLoader.legacyDataSize,
+                state->assetLoader.legacyBigEndian, 557, raw, sizeof(raw), &length))
+            return 0;
+    } else {
+        state->originalFontAvailable = M11_Font_LoadFromGraphicsDat(
+            &state->originalFont, state->assetLoader.fileState,
+            state->assetLoader.runtimeState);
+        return state->originalFontAvailable;
+    }
+    state->originalFontAvailable = M11_Font_LoadFromRawBitmap(
+        &state->originalFont, M11_FONT_GRAPHIC_INDEX_LEGACY, raw, length);
+    return state->originalFontAvailable;
+}
+
 static int m11_apply_dm1_startup_graphics_bind_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt) {
@@ -7536,14 +7567,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
             &state->audioState, state->assetLoader.graphicsDatPath);
         m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
         (void)m11_dm1_load_object_names_m564(state);
-        M11_Font_Init(&state->originalFont);
-        if (state->assetLoader.fileState && state->assetLoader.runtimeState &&
-            M11_Font_LoadFromGraphicsDat(
-                &state->originalFont,
-                state->assetLoader.fileState,
-                state->assetLoader.runtimeState)) {
-            state->originalFontAvailable = 1;
-        }
+        (void)m11_dm1_bind_original_font(state);
         return 1;
     }
     /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
@@ -7598,13 +7622,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         &state->audioState, state->assetLoader.graphicsDatPath);
     m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
     (void)m11_dm1_load_object_names_m564(state);
-    M11_Font_Init(&state->originalFont);
-    if (M11_Font_LoadFromGraphicsDat(
-            &state->originalFont,
-            state->assetLoader.fileState,
-            state->assetLoader.runtimeState)) {
-        state->originalFontAvailable = 1;
-    }
+    (void)m11_dm1_bind_original_font(state);
     return 1;
 }
 
