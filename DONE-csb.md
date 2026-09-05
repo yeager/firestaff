@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari equipment-slot input coverage
+
+- Extended the allocated original-object corpus to all 30 inventory slots:
+  13,410 object/slot checks per presentation, passing in Original, V2.0 and
+  V2.1 (40,230 total). Both permitted replacement and rejected replacement
+  retain the expected inventory/leader-hand ownership.
+- Expected slot masks are transcribed independently from ReDMCSB DATA.C
+  G0038; object allowed-slot values still use the runtime media decoder.
+  This is input/ownership evidence, not independent proof of that decoder.
+
 ## 2026-09-05 — Original Atari backpack corpus
 
 - Expanded the original STX/MINI.DAT pointer regression to all 447 allocated

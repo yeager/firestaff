@@ -928,19 +928,24 @@ int main(void)
                     /* DUNGEON.C F0166:2115: Next=NONE denotes an unused
                      * allocation, not an original gameplay object. */
                     if (!recordBytes || (recordBytes[0] == 0xff && recordBytes[1] == 0xff)) continue;
-                    for (int slot = 13; slot < 30; ++slot) {
+                    for (int slot = 0; slot < 30; ++slot) {
+                        static const uint16_t equipmentMasks[13] = {
+                            0xffff, 0xffff, 2, 8, 16, 32, 256, 128, 128, 128, 4, 256, 64
+                        }; /* ReDMCSB DATA.C G0038:320-333. */
                         int host = csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(slot);
                         unsigned short original;
+                        int canReturn;
                         int px, py;
                         if (host < 0 || host >= CHAMPION_SLOT_COUNT) continue;
-                        /* All seventeen backpack slots accept these source
-                         * object categories (DATA.C G0038, mask 0xffff).
-                         * Place original records only in this disposable
+                        /* DATA.C G0038 restricts equipment, while backpack
+                         * slots use mask 0xffff. Place original records in this disposable
                          * runtime, then restore the utility's empty slot. */
                         original = (unsigned short)((type << 10) | record);
+                        canReturn = (csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+                            view.csbBootProfile, original) & (slot < 13 ? equipmentMasks[slot] : 0xffff)) != 0;
                         CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                                   view.csbBootProfile, 0, slot, original),
-                              "Atari backpack accepts controlled original-record placement");
+                              "Atari inventory accepts controlled original-record placement");
                         (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
                         (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
                         px = 48 + layout.icon_display[8 + slot].pixel_x + 7;
@@ -955,9 +960,12 @@ int main(void)
                         (void)M11_GameView_HandlePointer(&view, px, py, 1);
                         (void)M11_GameView_HandlePointerButtonRelease(
                             &view, px, py, DM1_V1_MOUSE_MASK_LEFT_PC34);
-                        CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == THING_NONE &&
-                                  view.world.party.champions[0].inventory[host] == original,
-                              "Atari replacement restores the original inventory resident");
+                        CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) ==
+                                  (canReturn ? THING_NONE : original) &&
+                                  view.world.party.champions[0].inventory[host] ==
+                                  (canReturn ? original : THING_NONE),
+                              "Atari replacement obeys the original equipment mask");
+                        if (!canReturn) DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
                         ++tested;
                         CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                                   view.csbBootProfile, 0, slot, THING_NONE),
@@ -972,7 +980,7 @@ int main(void)
                     }
                     }
                     CHECK(tested > 0, "original Atari MINI.DAT inventory sweep is nonempty");
-                    printf("PASS: original Atari backpack corpus: %d object/slot roundtrips\n", tested);
+                    printf("PASS: original Atari inventory corpus: %d object/slot checks\n", tested);
                 }
             }
             CHECK(M11_GameView_HandleInput(

@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Atari CSB original-object input coverage now spans all 30
+  inventory slots, including equipment rejection: 40,230 checks pass across
+  Original, V2.0 and V2.1. Independent object-mask decoding remains separate.
+
 - 2026-09-05: Original Atari CSB backpack verification now covers 447
   allocated original objects across 17 slots in three presentation modes;
   all 22,797 pickup/replacement roundtrips pass.
