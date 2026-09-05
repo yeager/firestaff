@@ -7564,7 +7564,9 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         state->assetLoader.initialized) {
         state->assetsAvailable = 1;
         (void)M11_Audio_BindOriginalSnd3Path(
-            &state->audioState, state->assetLoader.graphicsDatPath);
+            &state->audioState,
+            state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1
+                ? NULL : state->assetLoader.graphicsDatPath);
         m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
         (void)m11_dm1_load_object_names_m564(state);
         (void)m11_dm1_bind_original_font(state);
@@ -7619,7 +7621,9 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
      * before this startup receipt is applied, so explicitly bind the audio
      * bank here instead of allowing a different default search root to win. */
     (void)M11_Audio_BindOriginalSnd3Path(
-        &state->audioState, state->assetLoader.graphicsDatPath);
+        &state->audioState,
+        state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1
+            ? NULL : state->assetLoader.graphicsDatPath);
     m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
     (void)m11_dm1_load_object_names_m564(state);
     (void)m11_dm1_bind_original_font(state);

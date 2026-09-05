@@ -122,6 +122,7 @@ int main(void) {
         if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
       }
       for (int event = 0; event < 35; ++event) {
+        if (state->audioState.originalSnd3Available || state->audioState.originalSnd3LoadedCount) goto done;
         int index = M11_Audio_Dm1AtariSoundIndex(event);
         int accepted = M11_Audio_EmitDm1FmtownsSound(&state->audioState,
             bytes, size, event, 127);

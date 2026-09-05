@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
         if (state->dm1ObjectNames[i][ch]) goto done;
     }
     puts("PASS: all 199 authentic Atari DM1 names retain M564 source indices");
+    if (state->audioState.originalSnd3Available || state->audioState.originalSnd3LoadedCount) goto done;
     for (unsigned int i = 0; i < DM1_V1_ATARI_ST_GRAPHICS_COUNT; ++i) {
         int expanded = dm1_v1_atari_st_graphics_read(&dat, (uint16_t)i, raw, sizeof(raw));
         if (expanded != dat.records[i].expanded_size) {

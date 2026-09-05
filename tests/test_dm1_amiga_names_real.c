@@ -54,6 +54,7 @@ int main(void) {
         length != M11_FONT_BITMAP_BYTES ||
         memcmp(raw, state->originalFont.bitmap, M11_FONT_BITMAP_BYTES)) goto done;
     puts("PASS: Amiga interface font matches original M653 bytes");
+    if (state->audioState.originalSnd3Available || state->audioState.originalSnd3LoadedCount) goto done;
     {
         static const unsigned short records[35] = {
             533,534,535,535,536,537,537,539,540,541,542,543,544,

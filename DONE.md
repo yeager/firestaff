@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Legacy DM1 startup clears the PC SND3 bank without attempting
+  to parse Atari/Amiga/FM Towns media as PC audio. Original-media startup
+  tests assert an empty PC bank for these editions; the PC3.4 regression
+  continues to require all original SND3 entries.
+
 - 2026-09-05: F31 EN/JP audio corpus tests independently locate each of
   the 35 selected records in the original container and compare payload
   bytes. Oversized sample counts in private RAM copies are rejected for

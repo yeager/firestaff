@@ -9,7 +9,6 @@ Reviewed 2026-08-29. Only open work is listed here.
   attenuation, channel scheduling and original-driver output. Amiga local
   effects now read original signed PCM with the native period; verify
   PAL/NTSC selection, stereo distance volumes and two-pair channel arbitration.
-  Remove redundant PC-bank startup attempts for retained legacy buffers.
   Consult SOUND.C MEDIA007/MEDIA413/MEDIA488 and each
   DATA.C sound table before reusing any CSB transport: CSB's later sound
   indices and sample maps are not interchangeable with DM1's. Preserve the
