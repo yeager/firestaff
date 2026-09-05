@@ -80,7 +80,10 @@ esac
 # Only that source path may promote the checksum-verified MINI.DAT state to a
 # live dungeon.  The retail seed is HALK at map 4/(22,18), not the map-0
 # bootstrap dungeon which used to leak through the CLI receipt.
+for mode in v1 v21; do
+case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --presentation-mode "$mode" \
     --width 320 --height 200 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
     --boot-probe --boot-probe-frames 1200 \
     --script 'wait700,click:52:110,wait10,click:250:50,wait240' \
@@ -99,6 +102,11 @@ case "$runtime_output" in
         exit 1
         ;;
 esac
+
+if ! printf '%s\n' "$runtime_output" | grep -Fq "presentationMode=$expected_mode "; then
+    printf '%s\n' "$runtime_output" >&2; exit 1
+fi
+done
 
 # An explicit F31 save is a distinct C03/F0435 route.  It must not replay
 # TITLE.ANM or pass the bytes to the Atari/CSBWin importer merely because the

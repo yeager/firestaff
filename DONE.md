@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB Amiga and FM Towns EN/JP runtime-transition tests now
+  explicitly cover V1 and V2.1. Both modes retain Amiga's first UP movement
+  and the Towns original MINI.DAT map/party seed through Game/Enter input.
+  All three original-media scripts pass; complete rendering parity is open.
+
 - 2026-09-05: CSB Atari ST original STX regression explicitly checks both
   V1 and V2.1 through CLI and menu to a loaded dungeon, retaining the
   requested presentation mode. Existing title, input and pointer-launch

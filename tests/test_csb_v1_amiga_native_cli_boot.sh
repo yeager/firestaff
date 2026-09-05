@@ -51,7 +51,10 @@ echo "PASS: native CSB Amiga CLI boot reaches its source startup phase"
 # point is inert.  Both original routes then accept the bounded
 # continue/move sequence and must cross into the verified runtime without a
 # generated save or a PC34 title substitution.
+for mode in v1 v21; do
+case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --presentation-mode "$mode" \
     --width 320 --height 200 --game csb --data-dir "$data_dir" --platform amiga --boot-probe \
     --boot-probe-frames 800 --script 'click:100:100,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 \
@@ -70,7 +73,11 @@ case "$runtime_output" in
         ;;
 esac
 
-echo "PASS: native CSB Amiga CLI title input reaches verified runtime movement"
+if ! printf '%s\n' "$runtime_output" | grep -Fq "presentationMode=$expected_mode "; then
+    printf '%s\n' "$runtime_output" >&2; exit 1
+fi
+done
+echo "PASS: native CSB Amiga Original/Modern title input reaches verified runtime movement"
 
 # Run each initial runtime action through a fresh, scanner-owned A31 launch.
 # This deliberately does not reuse a mutable process or fabricate a save: the
