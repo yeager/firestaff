@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Atari CSB passes 22,797 original-object backpack drags across
+  Original, V2.0 and V2.1, checking source/destination/leader-hand ownership.
+
 - 2026-09-05: Atari CSB passes 40,230 occupied-slot exchange/rejection checks
   using distinct original objects and original C559 acceptance masks, across
   Original, V2.0 and V2.1, in addition to empty-slot checks.

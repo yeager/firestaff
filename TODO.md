@@ -1,7 +1,7 @@
 # Firestaff TODO — active cross-game work
 
-- Extend Atari CSB's original-object inventory corpus to cross-slot dragging
-  and native chest-panel interactions.
+- Extend Atari CSB's original-object inventory corpus to equipment/chest
+  drag destinations and native chest-panel interactions.
 
 - Extend original-media chest interaction verification to CSB Atari and
   Amiga, including panel geometry, same-owner refresh and owner switching;

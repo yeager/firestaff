@@ -1031,6 +1031,28 @@ int main(void)
                         CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                                   view.csbBootProfile, 0, slot, THING_NONE),
                               "Atari interaction restores the utility champion's empty slot");
+                        if (slot >= 13) {
+                            int destination = 13 + ((slot - 13 + 1) % 17);
+                            int targetHost = csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(destination);
+                            int tx = 48 + layout.icon_display[8 + destination].pixel_x + 7;
+                            int ty = 33 + layout.icon_display[8 + destination].pixel_y + 7;
+                            CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                      view.csbBootProfile, 0, slot, original),
+                                  "Atari drag starts from an original object");
+                            (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                            (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                            (void)M11_GameView_HandlePointer(&view, px, py, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(
+                                &view, tx, ty, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            CHECK(targetHost >= 0 && targetHost < CHAMPION_SLOT_COUNT &&
+                                      DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == THING_NONE &&
+                                      view.world.party.champions[0].inventory[host] == THING_NONE &&
+                                      view.world.party.champions[0].inventory[targetHost] == original,
+                                  "Atari cross-slot drag uses the native destination rectangle");
+                            CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                      view.csbBootProfile, 0, destination, THING_NONE),
+                                  "Atari drag restores the empty destination");
+                        }
                         if (failures) {
                             fprintf(stderr, "Atari corpus failure: type=%d record=%d slot=%d\n",
                                     type, record, slot);

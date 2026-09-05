@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari cross-slot backpack dragging
+
+- Original, V2.0 and V2.1 pass 7,599 cross-slot drags each: every allocated
+  original object is picked up in each backpack slot and released into the
+  next slot (wrapping the seventeenth back to the first). Both source and
+  destination ownership and the empty leader hand are asserted.
+- The complete input corpus still passes its empty-slot and occupied-slot
+  checks. Drag coverage is this 17-edge route, not every possible slot pair
+  or equipment/chest destination.
+
 ## 2026-09-05 — Atari occupied-slot exchanges
 
 - All 447 allocated original objects now also undergo occupied-slot input
