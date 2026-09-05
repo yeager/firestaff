@@ -19,6 +19,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   these original EN/DE/FR streams as short. Record 534 declares 100 samples
   but its 37-byte nibble stream describes 99. Do not invent a final sample
   or read beyond the allocated record to make playback appear complete.
+  Hatari 2.6.1 can mount the original English 1.2 ZIP/STX read-only and
+  capture RAM/screens through a VBL breakpoint, but the ReDMCSB bundle's
+  `tos.img` is EmuTOS (SHA256
+  `5393932066f3199a6a653dfd1f1524bb52375ae0ad0831720743c2e015360a2b`).
+  The ST/1 MiB run reaches an EmuTOS bus-error screen at PC `00e14aac`,
+  not the game sound consumer. Do not admit that dump as gameplay evidence;
+  establish a compatible reference boot before taking the SND1 trace.
 
 - Compare original Atari pixel captures after the corrected F0497/F0496
   decoder. English, German and French original-media name/all-record checks
