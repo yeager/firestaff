@@ -62,6 +62,15 @@ int main(void)
                  "Amiga F0709 Paula full-scale volume accepts source PCM");
     ok &= expect(state.csbAmigaRuntimeSoundSourceVolume == 64,
                  "Amiga F0709 preserves its native 0..64 volume receipt");
+    for (int volume = 0; volume <= 64; ++volume) {
+        ok &= expect(M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
+                         &state, source, (int)sizeof(source), 112, hash, volume) &&
+                     state.csbAmigaRuntimeSoundSourceVolume == volume &&
+                     state.csbAmigaRuntimeSoundMixerVolume ==
+                         (state.sfxVolume * volume + 32) / 64 &&
+                     state.csbAmigaRuntimePcm.sampleCount == 17,
+                     "native Paula gain retains every level including silence");
+    }
     ok &= expect(!M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
                      &state, source, (int)sizeof(source), 112, hash, 65),
                  "Amiga F0709 rejects an out-of-domain Paula volume");

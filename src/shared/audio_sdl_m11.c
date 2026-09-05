@@ -1817,9 +1817,10 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
         state, source, sourceBytes, timerDivisor, sourceHash, 3);
 }
 
-int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
+static int m11_play_amiga_runtime_pcm(
     M11_AudioState* state, const unsigned char* source, int sourceBytes,
-    int sourcePeriod, unsigned int sourceHash, int sourceVolume)
+    int sourcePeriod, unsigned int sourceHash, int sourceVolume,
+    int volumeMinimum, int volumeMaximum)
 {
     const unsigned int amigaClockHz = 3579545u;
     const unsigned int sourcePeriodNumerator = 72800u;
@@ -1830,10 +1831,10 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
 
     /* ReDMCSB SOUND.C F0709 lines 404-416 assigns the same signed source
      * bytes to left/right and calculates ioa_Period = 72800 / Period.
-     * Paula consumes one signed byte per two colour-clock ticks. */
+     * Paula consumes one signed byte per audio period. */
     if (!state || !state->initialized || !source || sourceBytes <= 0 ||
         sourcePeriod <= 0 || sourcePeriod > (int)sourcePeriodNumerator ||
-        sourceHash == 0u || sourceVolume < 1 || sourceVolume > 3 ||
+        sourceHash == 0u || sourceVolume < volumeMinimum || sourceVolume > volumeMaximum ||
         m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
         if (state) {
             m11_sound_clear(&state->csbAmigaRuntimePcm);
@@ -1877,14 +1878,14 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
     state->csbAmigaRuntimeSoundByteCount = sourceBytes;
     state->csbAmigaRuntimeSoundPeriod = sourcePeriod;
     state->csbAmigaRuntimeSoundSourceVolume = sourceVolume;
+    state->csbAmigaRuntimeSoundMixerVolume =
+        (state->sfxVolume * sourceVolume + volumeMaximum / 2) / volumeMaximum;
     state->csbAmigaRuntimeSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-        int sourceScaledVolume =
-            (state->sfxVolume * sourceVolume + 1) / 3;
         if (m11_sdl_queue_samples(state, state->csbAmigaRuntimePcm.samples,
                                   state->csbAmigaRuntimePcm.sampleCount,
-                                  sourceScaledVolume)) {
+                                  state->csbAmigaRuntimeSoundMixerVolume)) {
             ++state->csbAmigaRuntimeSoundQueuedCount;
         }
     }
@@ -1892,29 +1893,23 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
     return 1;
 }
 
+int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
+    M11_AudioState* state, const unsigned char* source, int sourceBytes,
+    int sourcePeriod, unsigned int sourceHash, int sourceVolume)
+{
+    return m11_play_amiga_runtime_pcm(state, source, sourceBytes,
+        sourcePeriod, sourceHash, sourceVolume, 1, 3);
+}
+
 int M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(
     M11_AudioState* state, const unsigned char* source, int sourceBytes,
     int sourcePeriod, unsigned int sourceHash, int paulaVolume)
 {
-    /* ReDMCSB SOUND.C F0709 receives an audio.device volume in the native
-     * 0..64 domain.  This is intentionally not folded into the F0064 1..3
-     * distance-domain entry point above: a receipt with 64 must not claim
-     * that original A31/A35 asked for volume 3.  The known entrance owner is
-     * {64,64}, i.e. the full-scale transport already represented by 3/3. */
-    if (paulaVolume < 0 || paulaVolume > 64) {
-        if (state) {
-            m11_sound_clear(&state->csbAmigaRuntimePcm);
-            state->csbAmigaRuntimeSoundAccepted = 0;
-        }
-        return 0;
-    }
-    if (paulaVolume != 64 ||
-        !M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
-            state, source, sourceBytes, sourcePeriod, sourceHash, 3)) {
-        return 0;
-    }
-    state->csbAmigaRuntimeSoundSourceVolume = paulaVolume;
-    return 1;
+    /* SOUND.C F0060:1108-1109 and F0709:417-418 pass native Paula
+     * channel volumes. Equal left/right values must retain all 65 steps,
+     * including silence; asymmetric stereo remains a separate path. */
+    return m11_play_amiga_runtime_pcm(state, source, sourceBytes,
+        sourcePeriod, sourceHash, paulaVolume, 0, 64);
 }
 
 int M11_Audio_PlayCsbFmtownsRuntimePcm(

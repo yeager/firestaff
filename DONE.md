@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The native Paula-volume PCM entry point supports all 0..64
+  levels instead of rejecting everything except 64. Tests lock all 65 gains,
+  including silence, without changing sample cadence; original DM1 Amiga
+  2.0/HD transport regressions pass. Asymmetric stereo remains unimplemented.
+
 - 2026-09-05: DM1 Amiga uses an explicit MEDIA413 sound table instead of
   deriving periods from the PC table. Water elemental attack record 571
   now uses source period 138 rather than PC's 112. Original 2.0/HD corpus

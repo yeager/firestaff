@@ -110,6 +110,7 @@ typedef struct {
     int csbAmigaRuntimeSoundByteCount;
     int csbAmigaRuntimeSoundPeriod;
     int csbAmigaRuntimeSoundSourceVolume;
+    int csbAmigaRuntimeSoundMixerVolume;
     unsigned int csbAmigaRuntimeSoundHash;
     int csbAmigaRuntimeSoundQueuedCount;
     int csbFmtownsRuntimeSoundAccepted;
