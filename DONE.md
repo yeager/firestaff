@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 original Atari English, Amiga 2.0 and FM Towns English
+  media pass explicit V1/V2.1 launches through CLI and menu (12 combinations).
+  The new real-media tests check selected mode and loaded runtime rather
+  than accepting a default-mode launch as evidence for both presentations.
+
 - 2026-09-05: Original DOS DM1 archive boot checks now explicitly select
   V1, V2.0 and V2.1 through both CLI and menu, asserting the resulting mode,
   original graphics fingerprint and loaded runtime. This closes a test gap

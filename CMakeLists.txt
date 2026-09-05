@@ -4524,6 +4524,22 @@ if(BUILD_TESTING)
         # Both original programs now run independent seven-command matrices.
         TIMEOUT 240
     )
+    foreach(legacy_platform IN ITEMS atari-st amiga fm-towns)
+        if(legacy_platform STREQUAL "atari-st")
+            set(legacy_archive "Dungeon-Master_Atari-ST_EN_Version-12.zip")
+        elseif(legacy_platform STREQUAL "amiga")
+            set(legacy_archive "Dungeon-Master_Amiga_EN_Version-20.zip")
+        else()
+            set(legacy_archive "Dungeon-Master_FM-Towns_JA-EN.zip")
+        endif()
+        add_test(NAME dm1_${legacy_platform}_presentation_cli_real
+            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_legacy_presentation_cli_real.sh
+                $<TARGET_FILE:firestaff> ${legacy_platform}
+                "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/${legacy_archive}")
+        set_tests_properties(dm1_${legacy_platform}_presentation_cli_real PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 120
+            LABELS "dm1;${legacy_platform};real-media;cli;menu;presentation;skip-safe")
+    endforeach()
 endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)
     add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)
