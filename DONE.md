@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB Atari ST original STX regression explicitly checks both
+  V1 and V2.1 through CLI and menu to a loaded dungeon, retaining the
+  requested presentation mode. Existing title, input and pointer-launch
+  assertions pass in the same run; audiovisual parity remains separate.
+
 - 2026-09-05: Atari audio rejection clears the previous accepted flag,
   hash, period and sample count. Regression tests cover invalid fingerprints,
   short SND1 streams and recovery on the next valid request; original DM1

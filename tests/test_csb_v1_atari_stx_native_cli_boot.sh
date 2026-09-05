@@ -144,4 +144,26 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --script 'wait20,click:1173:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
-echo "PASS: native CSB Atari ST campaign title, complete input matrix, and start-menu launch"
+for mode in v1 v21; do
+    case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
+    for route in cli menu; do
+        if [ "$route" = menu ]; then
+            set -- --menu --script enter,enter,enter,enter
+        else
+            set -- --script enter
+        fi
+        mode_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+            --game csb --platform atari-st --data-dir "$media_path" "$@" \
+            --presentation-mode "$mode" --boot-probe --boot-probe-frames 180 \
+            --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+            --duration 0 2>&1)" || {
+            printf '%s\n' "$mode_output" >&2; exit 1;
+        }
+        if ! printf '%s\n' "$mode_output" | grep -Fq "presentationMode=$expected_mode "; then
+            printf '%s\n' "$mode_output" >&2
+            printf 'FAIL: CSB Atari %s did not preserve %s\n' "$route" "$mode" >&2
+            exit 1
+        fi
+    done
+done
+echo "PASS: native CSB Atari ST campaign title, input matrix, and Original/Modern CLI/menu launch"
