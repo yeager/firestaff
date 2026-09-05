@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+## 2026-09-05 — Japanese title media failure classification
+
+- Missing archives skip explicitly, but unreadable existing archives or
+  archives without a readable BIN now fail the JDM title test. Verified
+  original media passes, an existing non-archive returns 1, and a missing
+  path returns 77. No new game data or extracted files were created.
+
 ## 2026-09-05 — FM Towns launch and Japanese title evidence
 
 - Rebuilt Firestaff passes the original ZIP CLI/menu English and Japanese

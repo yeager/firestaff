@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: DM1 JDM title verification distinguishes absent optional media
+  from invalid supplied media; positive, failure and skip paths are checked.
+
 - 2026-09-05: DM1 FM Towns original EN/JP launch/input matrix passes;
   Japanese title-receipt assertions remain active in Release test builds,
   and unavailable media no longer counts as a successful title test.

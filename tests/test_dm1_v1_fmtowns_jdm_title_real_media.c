@@ -9,6 +9,7 @@
 #undef NDEBUG
 #endif
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,9 +47,21 @@ int main(void)
         }
         zip = default_zip;
     }
+    {
+        FILE *archive = fopen(zip, "rb");
+        if (!archive) {
+            if (errno == ENOENT) {
+                puts("SKIP: DM1 FM Towns retail ZIP is not available");
+                return 77;
+            }
+            perror("FAIL: cannot read selected DM1 FM Towns archive");
+            return 1;
+        }
+        fclose(archive);
+    }
     if (firestaff_zip_extract_by_suffix(zip, ".bin", &image, &image_size) != 0) {
-        puts("SKIP: DM1 FM Towns retail ZIP is not available");
-        return 77;
+        fputs("FAIL: selected DM1 FM Towns archive has no readable BIN image\n", stderr);
+        return 1;
     }
     if (fmtowns_disc_probe(image, image_size, FMTOWNS_SECTOR_2048, &disc) != 0 ||
         !extract(image, image_size, &disc, "AUTOEXEC.BAT", &autoexec, &autoexec_size) ||
