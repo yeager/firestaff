@@ -914,26 +914,35 @@ int main(void)
                           profile->graphics_path, &layout) && layout.valid,
                       "real Atari inventory exposes its original slot coordinates");
                 if (layout.valid) {
-                    /* The utility champion starts unequipped. Place an
-                     * existing dungeon weapon in a free backpack slot for
-                     * this disposable interaction, without editing media. */
-                    CHECK(profile->runtime.dungeon_handle &&
-                              profile->runtime.dungeon_handle->thing_type_counts[5] > 0 &&
-                              csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
-                                  view.csbBootProfile, 0, 13, (5u << 10)),
-                          "original Atari dungeon supplies the interaction weapon");
-                    (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
-                    (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                    CHECK(profile->runtime.dungeon_handle != NULL,
+                          "original Atari dungeon supplies the interaction corpus");
                     /* CHAMPION.C F0302:662ff exchanges the selected slot
                      * with the leader hand. Use original dungeon records,
                      * not generated equipment or a replacement party. */
-                    for (int slot = 0; slot < 30; ++slot) {
+                    for (int type = 5; profile->runtime.dungeon_handle && type <= 10; ++type) {
+                    for (int record = 0; record < profile->runtime.dungeon_handle->thing_type_counts[type]; ++record) {
+                    const uint8_t *recordBytes = csb_v1_dungeon_get_thing_record(
+                        profile->runtime.dungeon_handle, (uint16_t)((type << 10) | record),
+                        NULL, NULL, NULL);
+                    CHECK(recordBytes != NULL, "original Atari object record is readable");
+                    /* DUNGEON.C F0166:2115: Next=NONE denotes an unused
+                     * allocation, not an original gameplay object. */
+                    if (!recordBytes || (recordBytes[0] == 0xff && recordBytes[1] == 0xff)) continue;
+                    for (int slot = 13; slot < 30; ++slot) {
                         int host = csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(slot);
                         unsigned short original;
                         int px, py;
                         if (host < 0 || host >= CHAMPION_SLOT_COUNT) continue;
-                        original = view.world.party.champions[0].inventory[host];
-                        if (original == THING_NONE || original == THING_ENDOFLIST) continue;
+                        /* All seventeen backpack slots accept these source
+                         * object categories (DATA.C G0038, mask 0xffff).
+                         * Place original records only in this disposable
+                         * runtime, then restore the utility's empty slot. */
+                        original = (unsigned short)((type << 10) | record);
+                        CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                  view.csbBootProfile, 0, slot, original),
+                              "Atari backpack accepts controlled original-record placement");
+                        (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                        (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
                         px = 48 + layout.icon_display[8 + slot].pixel_x + 7;
                         py = 33 + layout.icon_display[8 + slot].pixel_y + 7;
                         CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == THING_NONE,
@@ -950,11 +959,20 @@ int main(void)
                                   view.world.party.champions[0].inventory[host] == original,
                               "Atari replacement restores the original inventory resident");
                         ++tested;
+                        CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                  view.csbBootProfile, 0, slot, THING_NONE),
+                              "Atari interaction restores the utility champion's empty slot");
+                        if (failures) {
+                            fprintf(stderr, "Atari corpus failure: type=%d record=%d slot=%d\n",
+                                    type, record, slot);
+                            M11_GameView_Shutdown(&view);
+                            return 1;
+                        }
+                    }
+                    }
                     }
                     CHECK(tested > 0, "original Atari MINI.DAT inventory sweep is nonempty");
-                    CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
-                              view.csbBootProfile, 0, 13, THING_NONE),
-                          "Atari interaction restores the utility champion's empty slot");
+                    printf("PASS: original Atari backpack corpus: %d object/slot roundtrips\n", tested);
                 }
             }
             CHECK(M11_GameView_HandleInput(

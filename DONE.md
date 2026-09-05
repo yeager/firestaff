@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Original Atari CSB backpack verification now covers 447
+  allocated original objects across 17 slots in three presentation modes;
+  all 22,797 pickup/replacement roundtrips pass.
+
 - 2026-09-05: Fixed an original-media Atari CSB inventory regression where
   releasing the mouse undid pickup. The new original-weapon roundtrip failed
   before the fix and passes in Original, V2.0 and V2.1 afterward.

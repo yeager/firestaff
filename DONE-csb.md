@@ -1,5 +1,17 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Original Atari backpack corpus
+
+- Expanded the original STX/MINI.DAT pointer regression to all 447 allocated
+  weapons, armour, scrolls, potions, containers and junk records across all
+  17 backpack slots: 7,599 pickup/replacement roundtrips per presentation,
+  passing in Original, V2.0 and V2.1 (22,797 total).
+- Unused allocations are excluded using ReDMCSB DUNGEON.C F0166's
+  `Next == THING_NONE` rule. Controlled placement is confined to the test
+  runtime and each slot is restored; original media remains unchanged.
+- Equipment restrictions, occupied-slot swaps, chest-panel interactions and
+  pixel comparison with the original executable are separate coverage.
+
 ## 2026-09-05 — Atari inventory mouse release
 
 - Fixed same-slot release undoing an Atari inventory pickup. The release
