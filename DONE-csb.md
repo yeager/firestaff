@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari chest transparency preservation
+
+- Expanded the panel comparison to all 10,512 C025-area pixels, including
+  its 848 transparency-key pixels. The oracle retains the pre-open viewport
+  underneath key 8, then overlays original atlas crops and M653 text.
+- Original, V2.0 and V2.1 pass. The Modern runs each cover 15 nonempty
+  original containers. This establishes composition against supplied media
+  and background preservation, not same-state emulator pixel parity.
+
 ## 2026-09-05 — Atari chest material composition
 
 - Added the original C025 panel and eight original atlas-icon crops to the

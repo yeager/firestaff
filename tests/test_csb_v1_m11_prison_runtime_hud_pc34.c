@@ -1077,13 +1077,16 @@ int main(void)
                             uint16_t residents[8];
                             int count = csb_v1_runtime_read_container_slots(&profile->runtime, chest, residents);
                             if (count <= 0) continue;
+                            unsigned char beforeChest[320 * 200];
+                            memset(beforeChest, 0, sizeof(beforeChest));
+                            M11_GameView_Draw(&view, beforeChest, 320, 200);
                             CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                                       view.csbBootProfile, 0, 1, chest) &&
                                       DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view),
                                   "original Atari chest opens from the action hand");
                             {
                                 unsigned char *panel = NULL;
-                                int pw = 0, ph = 0, checked = 0;
+                                int pw = 0, ph = 0, checked = 0, transparent = 0;
                                 unsigned char expectedPanel[224 * 136] = {0};
                                 CSB_V1_StartupGraphicDecodeReceipt_PC34 panelReceipt;
                                 memset(&panelReceipt, 0, sizeof(panelReceipt));
@@ -1094,8 +1097,15 @@ int main(void)
                                 memset(framebuffer, 0, sizeof(framebuffer));
                                 M11_GameView_Draw(&view, framebuffer, 320, 200);
                                 if (panel && pw == 144 && ph == 73) {
-                                    for (int cy = 0; cy < ph; ++cy)
-                                        memcpy(expectedPanel + (52 + cy) * 224 + 80, panel + cy * pw, 144);
+                                    /* CHEST.C F0333 preserves the underlying
+                                     * viewport wherever C025 has key 8. Test
+                                     * preservation, not a fabricated fill. */
+                                    for (int cy = 0; cy < 136; ++cy)
+                                        memcpy(expectedPanel + cy * 224, beforeChest + (33 + cy) * 320 + 48, 224);
+                                    for (int cy = 0; cy < ph; ++cy) for (int cx = 0; cx < pw; ++cx)
+                                        if (panel[cy * pw + cx] != 8u)
+                                            expectedPanel[(52 + cy) * 224 + 80 + cx] = panel[cy * pw + cx];
+                                        else ++transparent;
                                     for (int iconSlot = 0; iconSlot < 8; ++iconSlot) {
                                         int icon = iconSlot < count ? csb_v1_boot_runtime_object_icon_index_pc34(
                                             profile, residents[iconSlot]) : 204;
@@ -1122,17 +1132,14 @@ int main(void)
                                               &view.world.party.champions[0], expectedPanel),
                                           "original M653 life-force text overlays the chest panel");
                                     for (int cy = 0; cy < ph; ++cy) for (int cx = 0; cx < pw; ++cx) {
-                                        int sx = 128 + cx, sy = 85 + cy, covered = 0;
-                                        for (int icon = 0; icon < 8; ++icon)
-                                            if (sx >= 48 + left[icon] && sx < 48 + left[icon] + 16 &&
-                                                sy >= top[icon] && sy < top[icon] + 16) covered = 1;
-                                        if (!covered && panel[cy * pw + cx] == 8u) continue;
+                                        int sx = 128 + cx, sy = 85 + cy;
                                         CHECK(framebuffer[sy * 320 + sx] == expectedPanel[(sy - 33) * 224 + sx - 48],
                                               "Atari chest background matches original C025 pixels");
                                         ++checked;
                                     }
                                 }
                                 CHECK(checked > 0, "Atari chest panel comparison is nonempty");
+                                printf("Atari C025 comparison: pixels=%d transparent=%d\n", checked, transparent);
                                 free(panel);
                                 if (failures) { M11_GameView_Shutdown(&view); return 1; }
                             }

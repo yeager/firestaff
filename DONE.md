@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Atari CSB chest comparisons now include all 10,512 panel-area
+  pixels and the 848 transparency-key positions; three presentation modes
+  pass against original materials and the pre-open viewport.
+
 - 2026-09-05: Atari CSB chest composition now uses C025 and original icon
   atlas crops. Source-material pixel checks pass in Original, V2.0 and V2.1;
   transparency-background and emulator parity are not yet established.

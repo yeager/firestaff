@@ -1,7 +1,7 @@
 # Firestaff TODO — active cross-game work
 
-- Verify Atari CSB chest transparency against the underlying original
-  inventory pixels and compare the full composition with the original runtime.
+- Compare Atari CSB's full chest composition with a same-state original
+  runtime capture; source-material composition tests are not emulator parity.
 
 - Extend Atari CSB's original-object inventory corpus to equipment/chest
   drag destinations and native chest-panel interactions.
