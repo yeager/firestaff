@@ -48804,6 +48804,7 @@ static int m11_csb_runtime_object_name_for_thing(
     char *out,
     size_t out_size)
 {
+    char original[CSB_V1_OBJECT_NAME_MAX_CHARS + 1u];
     if (!out || out_size == 0u) {
         return 0;
     }
@@ -48815,14 +48816,14 @@ static int m11_csb_runtime_object_name_for_thing(
     }
     if (csb_v1_boot_runtime_object_name_pc34(
             (const CSB_V1_BootProfile*)state->csbBootProfile,
-            thingId, out, out_size)) {
+            thingId, original, sizeof(original))) {
         char utf8[3u * CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
         const CSB_V1_BootProfile *profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
-        const char *source = out;
+        const char *source = original;
         const char *translated;
         if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
-            if (firestaff_cp932_to_utf8(out, strlen(out), utf8,
+            if (firestaff_cp932_to_utf8(original, strlen(original), utf8,
                                        sizeof(utf8)) < 0) {
                 out[0] = '\0';
                 return 0;
@@ -48830,7 +48831,21 @@ static int m11_csb_runtime_object_name_for_thing(
             source = utf8;
         }
         translated = fs_po_gettext_in_domain("csb", source);
-        if (translated != out) snprintf(out, out_size, "%s", translated);
+        {
+            size_t length = strlen(translated);
+            if (length >= out_size) {
+                length = out_size - 1u;
+                /* Decode and look up the complete original name before UI
+                 * clipping. A UTF-8 continuation byte is not a valid cut. */
+                if (source == utf8 || translated != original) {
+                    while (length &&
+                           ((unsigned char)translated[length] & 0xc0u) == 0x80u)
+                        --length;
+                }
+            }
+            memcpy(out, translated, length);
+            out[length] = '\0';
+        }
         return 1;
     }
     return 0;

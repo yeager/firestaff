@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB object-name presentation obtains the complete original
+  name before converting its encoding and looking it up in the catalog.
+  Small UI buffers can no longer change the lookup key or split a UTF-8
+  character during final clipping. The native engine builds and Japanese
+  FM Towns CLI/menu startup passes with the original CD archive.
+
 - 2026-09-05: Native CP932 conversion now binds CSB Japanese object/action
   names to UTF-8 catalog keys. The same decoder serves the source extractor,
   removing its iconv dependency. All 65,792 one/two-byte inputs match Python's
