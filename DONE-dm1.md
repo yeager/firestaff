@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+## 2026-09-05 — FM Towns launch and Japanese title evidence
+
+- Rebuilt Firestaff passes the original ZIP CLI/menu English and Japanese
+  launch/input matrix, including selected program/graphics hashes and CDDA
+  track status. This is not an emulator timing or full-frame comparison.
+- The original JDM title-receipt test passes. Its assertions now stay active
+  under NDEBUG, and unavailable media returns CTest's skip code 77 instead
+  of a false pass. CMake recognizes that skip explicitly.
+
 ## 2026-09-05 — Original chest owner transitions
 
 - The original PC3.4 corpus now refreshes the same open chest after each

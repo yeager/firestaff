@@ -26062,6 +26062,7 @@ endif()
         COMMAND test_dm1_v1_fmtowns_jdm_title_real_media
     )
     set_tests_properties(dm1_v1_fmtowns_jdm_title_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "dm1;fmtowns;startup;animation;real_data;skip_safe"
     )
 

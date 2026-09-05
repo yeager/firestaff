@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: DM1 FM Towns original EN/JP launch/input matrix passes;
+  Japanese title-receipt assertions remain active in Release test builds,
+  and unavailable media no longer counts as a successful title test.
+
 - 2026-09-05: DM1 PC3.4 passes same-chest refresh and cross-chest owner
   transitions in Original/V2.1 alongside the full original-object corpus.
 

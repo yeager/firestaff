@@ -3,6 +3,11 @@
 #include "firestaff_zip_extract.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
+/* These assertions execute the original-media checks, including parser
+ * calls; keep them active in Release test builds as well. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,13 +42,13 @@ int main(void)
                 "%s/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip",
                 home) >= (int)sizeof(default_zip)) {
             puts("SKIP: no DM1 FM Towns retail ZIP path");
-            return 0;
+            return 77;
         }
         zip = default_zip;
     }
     if (firestaff_zip_extract_by_suffix(zip, ".bin", &image, &image_size) != 0) {
         puts("SKIP: DM1 FM Towns retail ZIP is not available");
-        return 0;
+        return 77;
     }
     if (fmtowns_disc_probe(image, image_size, FMTOWNS_SECTOR_2048, &disc) != 0 ||
         !extract(image, image_size, &disc, "AUTOEXEC.BAT", &autoexec, &autoexec_size) ||
