@@ -12271,6 +12271,14 @@ if(BUILD_TESTING)
     add_executable(test_dm1_atari_names_real tests/test_dm1_atari_names_real.c)
     target_link_libraries(test_dm1_atari_names_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME dm1_atari_names_real COMMAND test_dm1_atari_names_real)
+    add_test(NAME dm1_atari_de_names_real COMMAND test_dm1_atari_names_real 2bdc5f431f84c0ece738f54dbd787c3b)
+    add_test(NAME dm1_atari_fr_names_real COMMAND test_dm1_atari_names_real 0d7af44dd14f383464288abdcec76afc)
+    set_tests_properties(dm1_atari_de_names_real PROPERTIES SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12.zip"
+        LABELS "dm1;atari;real-media;objects;skip-safe")
+    set_tests_properties(dm1_atari_fr_names_real PROPERTIES SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_FR_Version-13.zip"
+        LABELS "dm1;atari;real-media;objects;skip-safe")
     set_tests_properties(dm1_atari_names_real PROPERTIES SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
         LABELS "dm1;atari;real-media;objects;skip-safe")

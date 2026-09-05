@@ -1,12 +1,16 @@
 #include "m11_game_view.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int main(void) {
+int main(int argc, char **argv) {
     const char *path = getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
     M11_GameViewState *state;
+    M11_GameLaunchSpec spec = {0};
+    char selected[ASSET_PATH_MAX];
+    char container[ASSET_PATH_MAX];
     DM1_V1_AtariStGraphicsDat dat;
     unsigned char raw[65535];
     int count, result = 1;
@@ -17,7 +21,24 @@ int main(void) {
     state = calloc(1, sizeof(*state));
     if (!state) return 1;
     M11_GameView_Init(state);
-    if (!M11_GameView_StartDm1(state, path) || !state->assetLoader.atariStDm1) {
+    spec.title = "Dungeon Master";
+    spec.gameId = "dm1";
+    spec.sourceId = "dm1";
+    spec.dataDir = path;
+    if (argc == 2) {
+        if (!asset_find_by_md5(path, argv[1], selected, sizeof(selected), 8)) goto done;
+        spec.verifiedAssetPath = selected;
+        spec.verifiedAssetMd5 = argv[1];
+        snprintf(container, sizeof(container), "%s", selected);
+        {
+            char *part = container, *last = NULL;
+            while ((part = strstr(part, "::")) != NULL) { last = part; part += 2; }
+            if (!last) goto done;
+            *last = '\0';
+        }
+        spec.dataDir = container;
+    }
+    if (!M11_GameView_Start(state, &spec) || !state->assetLoader.atariStDm1) {
         fputs("FAIL: authentic Atari M564 name binding\n", stderr);
         goto done;
     }

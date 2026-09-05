@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Extended the Atari name/all-record gate to hash-selected German
+  1.2 and French 1.3 original disk containers. Both verify all 199 names and
+  563 expanded lengths, alongside English 1.2. Rebuilt native CLI/menu/input
+  regression scripts pass for all three editions after the decoder change.
+
 - 2026-09-05: DM1 Atari raw graphics now use ReDMCSB F0497's dictionary
   convention and F0496 repetition output instead of the incompatible generic
   LZW end-code route. M564 binds from the retained original Atari bytes.
