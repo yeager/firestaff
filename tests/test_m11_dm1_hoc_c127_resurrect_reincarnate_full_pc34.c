@@ -417,7 +417,7 @@ static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
     }
     CHECK(sourceC127Count > 0,
           "real HoC map must retain original C127 sensor owners");
-    CHECK(candidateCount > 0 && selectedCount == candidateCount,
+    CHECK(candidateCount == 24 && selectedCount == candidateCount,
           "every source-visible C127 candidate must reach F0280 by pointer click");
     CHECK(rejectedCount > 0,
           "source D1C route should retain a C127 rejection path");
@@ -517,7 +517,8 @@ static int choose_data_dir(char* defaultDataDir, size_t defaultDataDirSize,
 int main(void) {
     char defaultDataDir[1024];
     const char* dataDir = NULL;
-    char saveTemplate[] = "/tmp/firestaff-dm1-hoc-c127-full-XXXXXX";
+    char saveTemplate[384];
+    const char* temporaryRoot = getenv("TMPDIR");
     char savePath[512];
     M11_GameLaunchSpec spec;
     M11_GameViewState state;
@@ -536,7 +537,14 @@ int main(void) {
 
     if (!choose_data_dir(defaultDataDir, sizeof(defaultDataDir), &dataDir)) {
         puts("skip: DM1 PC34 data dir not available");
-        return 0;
+        return 77;
+    }
+    if (!temporaryRoot || !temporaryRoot[0]) temporaryRoot = ".";
+    if (snprintf(saveTemplate, sizeof(saveTemplate),
+                 "%s/firestaff-dm1-hoc-c127-full-XXXXXX", temporaryRoot) >=
+        (int)sizeof(saveTemplate)) {
+        fprintf(stderr, "temporary directory path is too long\n");
+        return 1;
     }
     if (!mkdtemp(saveTemplate)) {
         perror("mkdtemp");
@@ -580,6 +588,14 @@ int main(void) {
     }
     CHECK(i,
           "every source-owned HoC C127 candidate should reach F0280 by pointer");
+    if (failures) goto done_state;
+
+    /* Modern presentation must retain the same COMMAND.C/F0280 pointer
+     * ownership. Exercise the live renderer/input path, not source text. */
+    state.presentationMode = M12_PRESENTATION_V21_UPSCALED;
+    CHECK(sweep_all_source_c127_pointer_routes(&state, framebuffer) == 1,
+          "Modern HoC must retain Original C127 pointer ownership");
+    state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     if (failures) goto done_state;
 
     CHECK(drive_from_pc34_launch_to_mirror(&state, &mirrorA, framebuffer),

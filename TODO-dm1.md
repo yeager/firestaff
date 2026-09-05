@@ -53,10 +53,11 @@ Reviewed 2026-08-29. Only open work is listed here.
 - Validate the completed F0128 source-order executor against authenticated
   same-state original captures. HoC sensor/material-plan checks pass with
   French DOS original data (24 directional portraits), but do not render
-  pixels or establish end-to-end mouse interaction parity. Missing-media
+  pixels. The PC3.4 live pointer sweep separately selects all 24 mirrors
+  in Original and V2.1; host window scaling and emulator comparisons remain
+  to be verified. Missing-media
   skips must not be counted as completed original-data verification.
-  Validate against authenticated
-  same-state original captures when those captures become available. The live
+  The live
   scheduler validates and dispatches every source step; D3--D1 wall, ornament,
   door, both F0115 partitions and foreground material are callback-owned at
   their square-local boundaries, and the hand-written scheduler-span and broad

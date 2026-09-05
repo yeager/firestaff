@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The original PC3.4 archive's live HoC pointer sweep now runs
+  in both Original and V2.1, requiring all 24 candidates rather than any
+  nonempty subset. Both modes select all 24 through the rendered input path;
+  the existing resurrection/reincarnation regression and side/depth viewport
+  material sweep pass. The test now honors TMPDIR instead of hardcoding a
+  temporary location. This does not establish emulator pixel parity.
+
 - 2026-09-05: Both optional real-media HoC mirror tests now return CTest's
   explicit skip code when no data directory is selected, rather than a false
   pass. With the existing French DOS original files selected, the directional
