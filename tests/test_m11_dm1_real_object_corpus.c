@@ -27,6 +27,74 @@ static unsigned short find_slot_resident(const M11_GameViewState *state,
     return THING_NONE;
 }
 
+static int check_original_chests(M11_GameViewState *state)
+{
+    int c, mode, checked = 0;
+    for (c = 0; c < state->world.things->containerCount; ++c) {
+        unsigned short contents[8], next = state->world.things->containers[c].slot;
+        unsigned short chest = (unsigned short)((THING_TYPE_CONTAINER << 10) | c);
+        int count = 0;
+        while (next != THING_ENDOFLIST && next != THING_NONE && count < 8) {
+            contents[count++] = next;
+            next = F0512_DUNGEON_GetThingNext_Compat(state->world.things, next);
+        }
+        /* Do not silently truncate an unexpected original chain. */
+        if (next != THING_ENDOFLIST) {
+            fprintf(stderr, "chest=%d original chain count=%d tail=%04x\n", c, count, next);
+            return 0;
+        }
+        for (mode = 0; mode < 2; ++mode) {
+            int i;
+            state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED :
+                                            M12_PRESENTATION_V1_ORIGINAL;
+            state->inventoryPanelActive = 1;
+            state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chest;
+            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+            if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state)) {
+                fprintf(stderr, "chest=%d open rejected\n", c); return 0;
+            }
+            for (i = 0; i < count; ++i) {
+                int x, y, w, h, step;
+                if (!M11_GameView_GetV1ChestSlotBoxZone(i, &x, &y, &w, &h)) {
+                    fprintf(stderr, "chest=%d zone=%d rejected\n", c, i); return 0;
+                }
+                /* CHEST.C F0333/F0334 and CHAMPION.C F0302: take each
+                 * original resident and return it to the same visible slot. */
+                for (step = 0; step < 2; ++step) {
+                    unsigned short expected = step ? THING_NONE : contents[i];
+                    (void)M11_GameView_HandlePointer(state, x + w / 2, 33 + y + h / 2, 1);
+                    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != expected) {
+                        fprintf(stderr, "chest=%d slot=%d step=%d got=%04x expected=%04x\n",
+                            c, i, step, DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state), expected);
+                        return 0;
+                    }
+                    (void)M11_GameView_HandlePointerButtonRelease(state,
+                        x + w / 2, 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != expected) {
+                        fprintf(stderr, "chest=%d slot=%d release step=%d got=%04x expected=%04x\n",
+                            c, i, step, DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state), expected);
+                        return 0;
+                    }
+                }
+            }
+            DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+            next = state->world.things->containers[c].slot;
+            for (i = 0; i < count; ++i) {
+                if (next != contents[i]) {
+                    fprintf(stderr, "chest=%d closed slot=%d got=%04x expected=%04x\n", c, i, next, contents[i]);
+                    return 0;
+                }
+                next = F0512_DUNGEON_GetThingNext_Compat(state->world.things, next);
+            }
+            if (next != THING_ENDOFLIST) return 0;
+        }
+        checked += count;
+    }
+    state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = THING_NONE;
+    printf("ok: original chest contents roundtripped (%d residents)\n", checked);
+    return checked > 0;
+}
+
 /* ReDMCSB CHAMPION.C F0302:689-711 exchanges G4055 and the selected
  * slot. A mouse release must not undo the press-owned exchange. Use each
  * original decoded Thing, including scrolls and containers, in both modes. */
@@ -214,6 +282,11 @@ int main(void)
     state.world.party.champions[0].present = 1;
     state.world.party.champions[0].hp.current = 100;
     state.world.party.champions[0].hp.maximum = 100;
+    if (!check_original_chests(&state)) {
+        fprintf(stderr, "original chest content/ownership roundtrip failed\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     /* ReDMCSB G0237 has 180 rows.  The key/junk tail is easy to shift when
      * hand-copying the aspect table: a missing row silently selects a later
      * object's art while C still accepts the initializer. */

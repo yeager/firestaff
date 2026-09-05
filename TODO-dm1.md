@@ -2,6 +2,19 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Deferred savegame gap: native quicksave does not serialize dungeon Thing
+  tables; dm1_v1_original_save_pc34_handoff_adopt_runtime_world reuses the
+  original dungeon when the loaded blob lacks one. A chest-0 pickup of 28f1
+  correctly leaves head 28f0 before serialization, but resume restores head
+  28f1 while the hand also retains 28f1. Preserve changed Thing ownership in
+  a future save-format repair; current chest interaction tests do not prove
+  full save/resume fidelity. This existing limitation is separate from the
+  corrected live G0425 slot persistence and same-slot release handling.
+
+- Review CSB's separate open-chest runtime for equivalent slot persistence,
+  and verify DM1 chest owner-change/shutdown paths beyond the existing eye
+  close and original-content roundtrip checks.
+
 - Extend original-media inventory interaction verification to chest contents,
   scroll text/pixel equality and supported editions beyond PC3.4. Original
   PC3.4 scroll-eye panel routing and held-object preservation pass in both modes.

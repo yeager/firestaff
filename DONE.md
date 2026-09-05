@@ -3,6 +3,15 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Fixed two live DM1 chest interaction faults: same-slot release
+  now resolves C101/G0456 without repeating the press exchange, and open
+  G0425 slots retain holes until F0334 relinks on close. The original PC3.4
+  corpus preserves all 43 chest residents through pickup/replacement/close
+  in Original and V2.1, and the full 611-record inventory matrix passes.
+  Eye-close and HoC regressions pass; snapshot preparation closes the chest
+  and publishes its current chain. Full changed-dungeon save persistence
+  remains an explicitly deferred, separately reproduced limitation.
+
 - 2026-09-05: Original PC3.4 scroll records now exercise the live inventory
   eye route in Original and V2.1 after the full slot matrix. Each opens its
   own scroll panel, not a generic object dialog, renders through M11 and

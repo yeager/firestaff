@@ -534,6 +534,8 @@ int main(void) {
     unsigned short bHpMaxBefore;
     unsigned short bStaMaxBefore;
     unsigned short bManaMaxBefore;
+    unsigned short chestPickup = THING_NONE;
+    unsigned short chestRemainder = THING_ENDOFLIST;
 
     if (!choose_data_dir(defaultDataDir, sizeof(defaultDataDir), &dataDir)) {
         puts("skip: DM1 PC34 data dir not available");
@@ -698,14 +700,42 @@ int main(void) {
               DM1_SENSOR_DISABLED,
           "C161 should disable mirror B's original sensor owner");
 
+    /* CHEST.C F0334 must publish the open G0425 slots before the host
+     * snapshot serializes the world chain. Use original chest residents. */
+    CHECK(state.world.things->containerCount > 0,
+          "original chest required for snapshot ownership regression");
+    if (state.world.things->containerCount > 0) {
+        int x, y, w, h;
+        chestPickup = state.world.things->containers[0].slot;
+        chestRemainder = F0512_DUNGEON_GetThingNext_Compat(state.world.things, chestPickup);
+        state.inventoryPanelActive = 1;
+        state.world.party.activeChampionIndex = 0;
+        state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            (unsigned short)(THING_TYPE_CONTAINER << 10);
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&state);
+        CHECK(DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&state), "open original chest");
+        if (M11_GameView_GetV1ChestSlotBoxZone(0, &x, &y, &w, &h)) {
+            (void)M11_GameView_HandlePointer(&state, x + w / 2, 33 + y + h / 2, 1);
+            (void)M11_GameView_HandlePointerButtonRelease(&state,
+                x + w / 2, 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        }
+        CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) == chestPickup,
+              "original resident remains held before snapshot");
+    }
     CHECK(M11_GameView_QuickSave(&state) == 1,
           "confirmed HoC party should quicksave through the real state path");
+    CHECK(state.world.things->containers[0].slot == chestRemainder &&
+          state.v1OpenChestThing == THING_NONE && !state.v1OpenChestSlotsValid,
+          "snapshot boundary closes and publishes the current chest contents");
     M11_GameView_Shutdown(&state);
 
     spec.savePath = savePath;
     M11_GameView_Init(&resumed);
     CHECK(M11_GameView_Start(&resumed, &spec),
           "DM1 quick-resume should load the confirmed HoC party");
+    /* Native quicksave currently reuses original dungeon Thing tables in
+     * adopt_runtime_world. Full changed-container persistence is a known
+     * separate gap; this test does not claim that resume preserves it. */
     CHECK(resumed.candidateMirrorPanelActive == 0 &&
           resumed.candidateMirrorRenameActive == 0 &&
           resumed.world.party.championCount == 2,

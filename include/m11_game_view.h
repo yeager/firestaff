@@ -1113,6 +1113,10 @@ typedef struct {
      * opens the C025 chest panel without drawing C145 into C09. */
     unsigned short v1OpenChestThing;
     int v1OpenChestOpenedByEye;
+    /* CHEST.C F0333/F0334: G0425 preserves holes until close-time relinking. */
+    unsigned short v1OpenChestSlots[8];
+    unsigned short v1OpenChestSlotsOwner;
+    int v1OpenChestSlotsValid;
     /* ReDMCSB PANEL.C F0352/F0353 distinguishes the short-lived pressed-eye
      * presentation from the durable chest-panel state.  This is deliberately
      * transient: a mouse release redraws F0347's normal action-hand panel and

@@ -7919,6 +7919,7 @@ static int m11_load_quicksave_v1_runtime(M11_GameViewState *state,
     state->leaderHandIconIndex = -1;
     state->leaderHandObjectName[0] = '\0';
     state->v1OpenChestThing = sidecar.openChestThing;
+    state->v1OpenChestSlotsValid = 0;
     state->v1OpenChestOpenedByEye = sidecar.openChestOpenedByEye;
     memset(&hocResume, 0, sizeof(hocResume));
     hocResume.candidate_mirror_ordinal = sidecar.candidateMirrorOrdinal;
@@ -23407,6 +23408,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;
     state->v1OpenChestThing = THING_NONE;
+    state->v1OpenChestSlotsValid = 0;
     state->v1ObjectDescriptionThing = THING_NONE;
     state->v1ObjectDescriptionIconIndex = -1;
     state->v1FoodWaterPanelActive = 0;
@@ -29075,6 +29077,11 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
      * Firestaff keeps the explored-cell presentation state in a sidecar so
      * quick-resume can restore reveal progress alongside the source-locked
      * world blob. */
+    /* CHEST.C F0334:112-133 materializes G0425 into the container chain.
+     * The host snapshot serializes that chain, not the transient panel.
+     * Close it before snapshotting so removed or inserted residents cannot
+     * be duplicated or omitted by a stale container link. */
+    DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
     m11_mark_explored(state);
     blobSize = F0899_WORLD_SerializedSize_Compat(&state->world);
     if (blobSize <= 0) {
@@ -35105,13 +35112,23 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
                 DM1_V1_MOUSE_MASK_LEFT_PC34,
                 &destinationSpace, &destinationZone);
 
-        /* The normal C507..C536 slot path is known before its transaction
+        /* F0378 reaches G0456 chest children through the C101 parent. */
+        if (destinationCommand == 81 && destinationZone == 101 &&
+            m11_v1_open_chest_valid(state)) {
+            destinationCommand = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34, x, y,
+                DM1_V1_MOUSE_MASK_LEFT_PC34, &destinationSpace, &destinationZone);
+        }
+
+        /* The C507..C544 inventory/chest path is known before its transaction
          * is entered, so reject a mouse-up over the original source slot.
          * This must happen before m11_process_v1_inventory_pointer_target:
          * that helper intentionally commits a slot exchange. */
-        if (destinationCommand >= 28 && destinationCommand <= 57 &&
+        /* CHAMPION.C F0302:689-711 also owns C537..C544 chest exchanges.
+         * Releasing over the pressed chest slot must not run F0302 twice. */
+        if (destinationCommand >= 28 && destinationCommand <= 65 &&
             destinationSpace == DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 &&
-            destinationZone >= 507 && destinationZone <= 536) {
+            destinationZone >= 507 && destinationZone <= 544) {
             destinationSlotBox = destinationCommand - 20;
             if (destinationSlotBox == sourceSlotBox) {
                 return M11_GAME_INPUT_REDRAW;
@@ -48595,6 +48612,13 @@ static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
     int i;
     if (!outSlots) return 0;
     for (i = 0; i < 8; ++i) outSlots[i] = THING_NONE;
+    if (state && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+        state->v1OpenChestSlotsValid &&
+        state->v1OpenChestSlotsOwner == state->v1OpenChestThing) {
+        memcpy(outSlots, state->v1OpenChestSlots, sizeof(state->v1OpenChestSlots));
+        for (i = 0; i < 8; ++i) if (outSlots[i] != THING_NONE) ++count;
+        return count;
+    }
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         if (!state->csbBootProfile) return 0;
         count = csb_v1_boot_runtime_read_container_slots_pc34(
@@ -55174,11 +55198,17 @@ int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state) {
     }
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 0;
+    state->v1OpenChestSlotsValid = 0;
     state->v1FoodWaterPanelActive = 0;
     if (!m11_v1_open_chest_valid(state)) {
         state->v1OpenChestThing = THING_NONE;
         state->v1OpenChestOpenedByEye = 0;
         return 0;
+    }
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        (void)m11_v1_read_open_chest_slots(state, state->v1OpenChestSlots);
+        state->v1OpenChestSlotsOwner = thing;
+        state->v1OpenChestSlotsValid = 1;
     }
     return 1;
 }
@@ -55202,11 +55232,17 @@ static int m11_open_v1_chest_panel_for_thing(M11_GameViewState* state,
     }
     state->v1OpenChestThing = thing;
     state->v1OpenChestOpenedByEye = 1;
+    state->v1OpenChestSlotsValid = 0;
     state->v1FoodWaterPanelActive = 0;
     if (!m11_v1_open_chest_valid(state)) {
         state->v1OpenChestThing = THING_NONE;
         state->v1OpenChestOpenedByEye = 0;
         return 0;
+    }
+    if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        (void)m11_v1_read_open_chest_slots(state, state->v1OpenChestSlots);
+        state->v1OpenChestSlotsOwner = thing;
+        state->v1OpenChestSlotsValid = 1;
     }
     return 1;
 }
@@ -55231,6 +55267,7 @@ void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state) {
     }
     state->v1OpenChestThing = THING_NONE;
     state->v1OpenChestOpenedByEye = 0;
+    state->v1OpenChestSlotsValid = 0;
 }
 
 /* ReDMCSB PANEL.C F0353:2162-2193 restores the normal inventory panel as
@@ -56178,7 +56215,16 @@ static int m11_process_v1_chest_slot_box_click(M11_GameViewState* state,
         (void)m11_v1_set_state_thing_next(state, slotThing, THING_ENDOFLIST);
         if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, slotThing)) return 0;
     }
-    if (!m11_v1_write_open_chest_slots(state, slots)) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        if (!m11_v1_write_open_chest_slots(state, slots)) return 0;
+    } else {
+        /* CHAMPION.C F0302 changes G0425; only CHEST.C F0334 rebuilds
+         * the linked list. Rebuilding here moves every following item into
+         * the newly empty visual slot and turns replacement into a swap. */
+        memcpy(state->v1OpenChestSlots, slots, sizeof(slots));
+        state->v1OpenChestSlotsOwner = state->v1OpenChestThing;
+        state->v1OpenChestSlotsValid = 1;
+    }
     m11_refresh_hash(state);
     return 1;
 }
