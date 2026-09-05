@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: DM1 legacy original-media launch matrix now covers V2.0 as
+  well as Original/V2.1: all 36 CLI/menu launches across six editions pass.
+
 - 2026-09-05: DM1 JDM title verification distinguishes absent optional media
   from invalid supplied media; positive, failure and skip paths are checked.
 

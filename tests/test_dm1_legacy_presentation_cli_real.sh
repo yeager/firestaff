@@ -6,8 +6,8 @@ platform=${2:?platform required}
 archive=${3:?original archive required}
 edition_args=("${@:4}")
 [[ -x "$app" && -f "$archive" ]] || exit 77
-for mode in v1 v21; do
-    case "$mode" in v1) expected=0;; v21) expected=2;; esac
+for mode in v1 v20 v21; do
+    case "$mode" in v1) expected=0;; v20) expected=1;; v21) expected=2;; esac
     for route in cli menu; do
         args=()
         [[ "$route" != menu ]] || args=(--menu --script enter,enter,enter)

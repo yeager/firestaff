@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+## 2026-09-05 — Three-mode legacy launch matrix
+
+- Added V2.0 to the existing Original/V2.1 original-media CLI/menu matrix.
+  All 36 launches pass across Atari EN/DE/FR, Amiga EN and FM Towns EN/JP,
+  retaining the requested presentation and reaching a loaded dungeon.
+- Japanese FM Towns also asserts its own program/graphics fingerprints.
+  These checks do not establish full gameplay, animation timing or pixel
+  parity, and do not cover every historical edition of these platforms.
+
 ## 2026-09-05 — Japanese title media failure classification
 
 - Missing archives skip explicitly, but unreadable existing archives or
