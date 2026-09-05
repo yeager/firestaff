@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Rebuilt CLI/menu/input regressions pass after the legacy audio
+  changes: original DM1 DOS English, Atari EN/DE/FR, Amiga 2.0/HD and FM
+  Towns EN/JP. The Towns check independently reloads both language programs
+  for all seven directional/action commands. These are startup/input checks,
+  not emulator pixel, audio-waveform or complete gameplay parity proofs.
+
 - 2026-09-05: Legacy DM1 startup clears the PC SND3 bank without attempting
   to parse Atari/Amiga/FM Towns media as PC audio. Original-media startup
   tests assert an empty PC bank for these editions; the PC3.4 regression
