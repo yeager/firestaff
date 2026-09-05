@@ -40,6 +40,18 @@ int main(void)
                      state.csbAmigaRuntimeSoundHash == hash &&
                      state.csbAmigaRuntimePcm.sampleCount > 0,
                  "Amiga source identity and period survive transport");
+    /* SOUND.C F0060: 72800/112 = 650 Paula ticks per byte sample.
+     * NTSC 3579545/650 = 5506 Hz, so four bytes occupy 17 host samples,
+     * not 33 (the former erroneous extra clock division by two). */
+    ok &= expect(state.csbAmigaRuntimePcm.sampleCount == 17,
+                 "Paula byte cadence is not halved at a DMA word boundary");
+    if (state.csbAmigaRuntimePcm.sampleCount == 17) {
+        ok &= expect(state.csbAmigaRuntimePcm.samples[0] == -1.0f &&
+                     state.csbAmigaRuntimePcm.samples[5] == 0.0f &&
+                     state.csbAmigaRuntimePcm.samples[9] == 127.0f / 128.0f &&
+                     state.csbAmigaRuntimePcm.samples[16] == -1.0f / 128.0f,
+                     "each signed source byte reaches its correct host time");
+    }
     ok &= expect(M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
                      &state, source, (int)sizeof(source), 79, hash, 1),
                  "Amiga variant-specific period is accepted");

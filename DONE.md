@@ -3,6 +3,10 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The data-free Amiga audio regression now locks byte-sample
+  cadence and signed amplitude timing, catching the previous extra clock
+  division independently of availability of original game media.
+
 - 2026-09-05: Rebuilt CLI/menu/input regressions pass after the legacy audio
   changes: original DM1 DOS English, Atari EN/DE/FR, Amiga 2.0/HD and FM
   Towns EN/JP. The Towns check independently reloads both language programs
