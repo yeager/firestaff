@@ -8,9 +8,6 @@ SPEC_DIR="$OUT_DIR/spec"
 SCRIPT="$ROOT/scripts/firestaff_dungeon_studio.py"
 VENV_DIR="$OUT_DIR/venv"
 GETTEXT_BUILD_DIR="$OUT_DIR/gettext"
-"$PYTHON" "$ROOT/tools/compile_gettext_catalogs.py" \
-  --source-dir "$ROOT/po" --output-dir "$GETTEXT_BUILD_DIR" --verify-template
-LOCALE_DIR="$GETTEXT_BUILD_DIR/locale"
 EXAMPLE_FILE="$ROOT/assets/examples/example_dungeon.fsdung"
 
 if [[ ! -f "$SCRIPT" ]]; then
@@ -40,6 +37,10 @@ else
   echo "Python 3 is required to bundle Dungeon Studio" >&2
   exit 1
 fi
+
+"$PYTHON" "$ROOT/tools/compile_gettext_catalogs.py" \
+  --source-dir "$ROOT/po" --output-dir "$GETTEXT_BUILD_DIR" --verify-template
+LOCALE_DIR="$GETTEXT_BUILD_DIR/locale"
 
 rm -rf "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR" "$VENV_DIR"
 mkdir -p "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR"
