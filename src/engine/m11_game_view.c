@@ -55052,7 +55052,20 @@ int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState*
          * CSBWin/ReDMCSB leader-hand thing and show only a CSB-owned runtime
          * name resolved from CSB dungeon records. */
         if (state->leaderHandObjectName[0] == '\0') return 0;
-        snprintf(out, (size_t)outSize, "%s", state->leaderHandObjectName);
+        {
+            size_t length = strlen(state->leaderHandObjectName);
+            if (length >= (size_t)outSize) {
+                length = (size_t)outSize - 1u;
+                /* The cached presentation label has already crossed the
+                 * catalog boundary. Do not split its UTF-8 on this second
+                 * copy into the caller's potentially smaller buffer. */
+                while (length &&
+                       ((unsigned char)state->leaderHandObjectName[length] & 0xc0u) == 0x80u)
+                    --length;
+            }
+            memcpy(out, state->leaderHandObjectName, length);
+            out[length] = '\0';
+        }
         return out[0] != '\0';
     }
     m11_get_source_item_name(state, state ? state->world.things : NULL, thing, out, (size_t)outSize);

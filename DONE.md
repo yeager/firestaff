@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB's public hand-name accessor preserves UTF-8 boundaries
+  when copying the already-localized cached label into a smaller UI buffer.
+  The hand/no-DM1-fallback regression passes with additional empty-output,
+  exact-fit multibyte-character and buffer-guard checks.
+
 - 2026-09-05: DM1 translated/Japanese object labels clip only at complete
   UTF-8 boundaries after full-source catalog lookup. The real JDATA first
   weapon hand-label test checks every output capacity and its guard byte;

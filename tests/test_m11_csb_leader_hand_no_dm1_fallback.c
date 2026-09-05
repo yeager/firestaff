@@ -241,6 +241,19 @@ int main(void)
     check(strcmp(name, "DAGGER") == 0,
           "CSB explicit runtime name is returned");
 
+    /* Presentation-buffer regression, not synthetic game-media evidence.
+     * APPLE's shipped Swedish catalog spelling begins with a two-byte Ä. */
+    snprintf(state.leaderHandObjectName, sizeof(state.leaderHandObjectName),
+             "%s", "\xc3\x84" "PPLE");
+    memset(name, 0x55, sizeof(name));
+    check(!M11_GameView_GetV1LeaderHandObjectName(&state, name, 2),
+          "CSB buffer too small for first UTF-8 character returns empty");
+    check(name[0] == '\0' && name[2] == 0x55,
+          "CSB short UTF-8 output is terminated and bounded");
+    check(M11_GameView_GetV1LeaderHandObjectName(&state, name, 3) &&
+          strcmp(name, "\xc3\x84") == 0,
+          "CSB exact-fit UTF-8 character is preserved");
+
     memset(name, 0, sizeof(name));
     state.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     state.leaderHandIconIndex = 77;
