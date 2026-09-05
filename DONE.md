@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: DM1 PC3.4 passes same-chest refresh and cross-chest owner
+  transitions in Original/V2.1 alongside the full original-object corpus.
+
 - 2026-09-05: Rebuilt Firestaff passes Atari/Amiga CSB CLI startup; original
   Amiga ZIP/ADF C025 admission now verifies exact dimensions and pixel range.
 

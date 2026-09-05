@@ -11,9 +11,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   full save/resume fidelity. This existing limitation is separate from the
   corrected live G0425 slot persistence and same-slot release handling.
 
-- Review CSB's separate open-chest runtime for equivalent slot persistence,
-  and verify DM1 chest owner-change/shutdown paths beyond the existing eye
-  close and original-content roundtrip checks.
+- Verify DM1 chest shutdown paths and extend owner-transition evidence
+  beyond the original PC3.4 corpus; save/resume remains separately deferred.
 
 - Extend original-media inventory interaction verification to chest contents,
   scroll text/pixel equality and supported editions beyond PC3.4. Original

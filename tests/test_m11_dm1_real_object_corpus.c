@@ -61,6 +61,9 @@ static int check_original_chests(M11_GameViewState *state)
                 /* CHEST.C F0333/F0334 and CHAMPION.C F0302: take each
                  * original resident and return it to the same visible slot. */
                 for (step = 0; step < 2; ++step) {
+                    /* CHEST.C F0333:30-33: refreshing the same owner
+                     * must preserve the visual hole after pickup. */
+                    if (step && !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state)) return 0;
                     unsigned short expected = step ? THING_NONE : contents[i];
                     (void)M11_GameView_HandlePointer(state, x + w / 2, 33 + y + h / 2, 1);
                     if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != expected) {
@@ -87,6 +90,38 @@ static int check_original_chests(M11_GameViewState *state)
                 next = F0512_DUNGEON_GetThingNext_Compat(state->world.things, next);
             }
             if (next != THING_ENDOFLIST) return 0;
+            if (count && state->world.things->containerCount > 1) {
+                int otherIndex = (c + 1) % state->world.things->containerCount;
+                unsigned short other = (unsigned short)((THING_TYPE_CONTAINER << 10) | otherIndex);
+                unsigned short otherHead = state->world.things->containers[otherIndex].slot;
+                int x, y, w, h;
+                if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state) ||
+                    !M11_GameView_GetV1ChestSlotBoxZone(0, &x, &y, &w, &h)) return 0;
+                (void)M11_GameView_HandlePointer(state, x + w / 2, 33 + y + h / 2, 1);
+                (void)M11_GameView_HandlePointerButtonRelease(state,
+                    x + w / 2, 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = other;
+                /* F0333:34-41 closes G0426 before changing owner. */
+                if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state) ||
+                    DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) != other ||
+                    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != contents[0]) return 0;
+                next = state->world.things->containers[c].slot;
+                for (i = 1; i < count; ++i) {
+                    if (next != contents[i]) return 0;
+                    next = F0512_DUNGEON_GetThingNext_Compat(state->world.things, next);
+                }
+                if (next != THING_ENDOFLIST) return 0;
+                DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+                if (state->world.things->containers[otherIndex].slot != otherHead) return 0;
+                /* Restore the disposable test placement through G0425's
+                 * close transaction; no original media is modified. */
+                state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chest;
+                if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state)) return 0;
+                for (i = 0; i < 8; ++i)
+                    state->v1OpenChestSlots[i] = i < count ? contents[i] : THING_NONE;
+                DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+            }
         }
         checked += count;
     }

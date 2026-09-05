@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+## 2026-09-05 — Original chest owner transitions
+
+- The original PC3.4 corpus now refreshes the same open chest after each
+  pickup, requiring holes to survive, and switches to another chest while
+  holding the first resident. It verifies the held Thing, old owner's full
+  remaining chain and unchanged next owner's head after close.
+- Original and V2.1 pass together with the complete original-object corpus.
+  Test placements are restored in memory; save/resume remains out of scope.
+
 - Bound the stripped Japanese FM Towns `JDM.EXP` title path to its unique
   disassembly fingerprints at `0xc428`, recovered rectangle/data owners, and
   exact C12/C13/C14 RGB6 records. The native title presenter now accepts the
