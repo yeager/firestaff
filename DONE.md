@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Atari CSB passes 40,230 occupied-slot exchange/rejection checks
+  using distinct original objects and original C559 acceptance masks, across
+  Original, V2.0 and V2.1, in addition to empty-slot checks.
+
 - 2026-09-05: The independent original C559 inventory oracle also passes in
   V2.0 and V2.1. Rebuilt Firestaff passes the original Atari STX CLI startup
   and scripted native runtime-input regression after the mouse-release fix.

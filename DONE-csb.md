@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari occupied-slot exchanges
+
+- All 447 allocated original objects now also undergo occupied-slot input
+  checks across all 30 slots in Original, V2.0 and V2.1. A distinct allocated
+  original weapon occupies the destination; C559 bytes decide whether the
+  incoming object swaps with it or leaves both owners unchanged.
+- All 40,230 occupied-slot checks pass alongside the existing empty-slot
+  pickup/replacement checks. Controlled placements are test-only; this does
+  not claim all possible object pairs, drag destinations or chest panels.
+
 ## 2026-09-05 — Independent Atari allowed-slot oracle
 
 - The original-object inventory test now expands selected GRAPHICS.DAT C559

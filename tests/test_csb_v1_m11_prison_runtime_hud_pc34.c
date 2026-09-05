@@ -993,6 +993,40 @@ int main(void)
                                   (canReturn ? original : THING_NONE),
                               "Atari replacement obeys the original equipment mask");
                         if (!canReturn) DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+                        {
+                            uint16_t resident = THING_NONE;
+                            for (int candidate = 0;
+                                 candidate < profile->runtime.dungeon_handle->thing_type_counts[5];
+                                 ++candidate) {
+                                uint16_t thing = (uint16_t)((5 << 10) | candidate);
+                                const uint8_t *bytes = csb_v1_dungeon_get_thing_record(
+                                    profile->runtime.dungeon_handle, thing, NULL, NULL, NULL);
+                                if (thing != original && bytes &&
+                                    !(bytes[0] == 0xff && bytes[1] == 0xff)) {
+                                    resident = thing;
+                                    break;
+                                }
+                            }
+                            CHECK(resident != THING_NONE &&
+                                      csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                          view.csbBootProfile, 0, slot, resident) &&
+                                      csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+                                          view.csbBootProfile, original),
+                                  "occupied-slot test uses two distinct original objects");
+                            (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                            (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                            /* CHAMPION.C F0302:697-711 checks the incoming
+                             * mask before removing either existing object. */
+                            (void)M11_GameView_HandlePointer(&view, px, py, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(
+                                &view, px, py, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) ==
+                                      (canReturn ? resident : original) &&
+                                      view.world.party.champions[0].inventory[host] ==
+                                      (canReturn ? original : resident),
+                                  "Atari occupied-slot exchange preserves both original objects");
+                            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+                        }
                         ++tested;
                         CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                                   view.csbBootProfile, 0, slot, THING_NONE),
