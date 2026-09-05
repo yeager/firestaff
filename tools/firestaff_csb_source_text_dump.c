@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <iconv.h>
+#include "firestaff_cp932.h"
 
 #include "csb_v1_boot.h"
 #include "asset_find_by_hash.h"
@@ -304,21 +304,12 @@ static int print_entry(const char* source, const char* owner) {
     const char *presented = source;
     if (!source || source[0] == '\0') return 0;
     if (g_source_is_shift_jis) {
-        iconv_t conversion = iconv_open("UTF-8", "CP932");
-        char *input = (char *)source;
-        char *output = utf8;
-        size_t input_left = strlen(source);
-        size_t output_left = sizeof(utf8) - 1u;
-        if (conversion == (iconv_t)-1 ||
-            iconv(conversion, &input, &input_left, &output, &output_left) ==
-                (size_t)-1 || input_left != 0u) {
-            if (conversion != (iconv_t)-1) iconv_close(conversion);
+        if (firestaff_cp932_to_utf8(source, strlen(source), utf8,
+                                   sizeof(utf8)) < 0) {
             fprintf(stderr, "Cannot convert authenticated %s from CP932 to UTF-8\n",
                     owner);
             return -1;
         }
-        *output = '\0';
-        iconv_close(conversion);
         presented = utf8;
     }
     printf("#. Source-owned %s\nmsgid ", owner);

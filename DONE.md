@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Native CP932 conversion now binds CSB Japanese object/action
+  names to UTF-8 catalog keys. The same decoder serves the source extractor,
+  removing its iconv dependency. All 65,792 one/two-byte inputs match Python's
+  standard CP932 codec; buffer/error tests pass, and the 218-message original
+  Japanese FM Towns corpus is byte-identical to the prior iconv extraction.
+
 - 2026-09-05: CSB source-text extraction now propagates CP932 conversion
   failure instead of silently omitting an entry and reporting success. Its
   UTF-8 buffer covers the runtime text bound's worst-case expansion. The

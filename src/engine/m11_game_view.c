@@ -368,6 +368,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
     return 1;
 }
 #include "firestaff_po_loader.h"
+#include "firestaff_cp932.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
 #include "dm1_v2_shape_runtime_pc34.h"
@@ -48815,7 +48816,20 @@ static int m11_csb_runtime_object_name_for_thing(
     if (csb_v1_boot_runtime_object_name_pc34(
             (const CSB_V1_BootProfile*)state->csbBootProfile,
             thingId, out, out_size)) {
-        const char* translated = fs_po_gettext_in_domain("csb", out);
+        char utf8[3u * CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        const char *source = out;
+        const char *translated;
+        if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+            if (firestaff_cp932_to_utf8(out, strlen(out), utf8,
+                                       sizeof(utf8)) < 0) {
+                out[0] = '\0';
+                return 0;
+            }
+            source = utf8;
+        }
+        translated = fs_po_gettext_in_domain("csb", source);
         if (translated != out) snprintf(out, out_size, "%s", translated);
         return 1;
     }
@@ -49045,11 +49059,22 @@ static const char *m11_action_name_for_state(
     const CSB_V1_BootProfile *profile;
 
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+#if defined(_MSC_VER)
+        static __declspec(thread) char action_utf8[44][3u * 13u];
+#else
+        static _Thread_local char action_utf8[44][3u * 13u];
+#endif
+        const char *source;
         profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-        return fs_po_gettext_in_domain(
-            "csb",
-            csb_v1_runtime_action_name_c699(
-                profile ? &profile->runtime : NULL, action_index));
+        source = csb_v1_runtime_action_name_c699(
+            profile ? &profile->runtime : NULL, action_index);
+        if (profile && profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA &&
+            source && action_index < 44u) {
+            if (firestaff_cp932_to_utf8(source, strlen(source), action_utf8[action_index],
+                                       sizeof(action_utf8[action_index])) < 0) return "";
+            source = action_utf8[action_index];
+        }
+        return fs_po_gettext_in_domain("csb", source);
     }
     /* FM Towns EDM's DRAW_DMENU indexes the authenticated native string
      * table at load-image + 0x24194.  Consume that receipt for the selected
