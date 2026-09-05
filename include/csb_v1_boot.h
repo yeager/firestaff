@@ -132,10 +132,10 @@ typedef struct CSB_V1_BootProfile {
      * hash-verified F31 GRAPHICS.DAT C696.  C017 input/render consumers must
      * fail closed when this receipt is absent; no PC/Atari geometry fallback. */
     int fmtowns_inventory_rectangles_valid;
-    int16_t fmtowns_inventory_rectangle_x[30];
-    int16_t fmtowns_inventory_rectangle_y[30];
-    int16_t fmtowns_inventory_rectangle_width[30];
-    int16_t fmtowns_inventory_rectangle_height[30];
+    int16_t fmtowns_inventory_rectangle_x[38];
+    int16_t fmtowns_inventory_rectangle_y[38];
+    int16_t fmtowns_inventory_rectangle_width[38];
+    int16_t fmtowns_inventory_rectangle_height[38];
 
     /* Optional raw PC34 SWSHSND.C G0746 payload.  It is accepted only from
      * the selected CSB asset root, at the original byte count; callers must

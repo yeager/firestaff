@@ -90,6 +90,11 @@ int csb_v1_media720_f0635_f31_inventory_rectangles(
     const uint8_t *layout, size_t size, int big_endian,
     CSB_V1_F31InventorySlotRectangle out_rectangles[30]);
 
+/* C537..C544 chest children of C106, relative to centered C101/C100. */
+int csb_v1_media720_f0635_f31_chest_rectangles(
+    const uint8_t *layout, size_t size, int big_endian,
+    CSB_V1_F31InventorySlotRectangle out_rectangles[8]);
+
 int csb_v1_wall_aspect_inscription_receipt(
     const CSB_V1_RuntimeProfile *runtime, int map_x, int map_y,
     int view_wall_index, CSB_V1_WallAspectInscriptionReceipt *out);

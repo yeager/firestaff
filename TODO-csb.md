@@ -11,6 +11,9 @@ Reviewed 2026-09-05. Only open work is listed here.
   runtime ownership, then cover pickup, replacement, chest switches, eye
   release and native save boundaries. Do not reuse the DM1 host cache without
   verifying CSB runtime synchronization and each platform's pointer geometry.
+  F31 native pickup/release now passes for all 60 original chest residents
+  in EN/JP using item-696 C537..C544 rectangles. That test restores each
+  original chain between probes, so it does not prove replacement/holes.
 
 - Verify FM Towns distance-volume production in the shared audio runtime.
   Transport now scales the native 1..127 driver domain correctly, and direct

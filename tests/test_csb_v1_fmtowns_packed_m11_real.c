@@ -1,6 +1,8 @@
 #include "m11_game_view.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_inscription_presentation.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -206,6 +208,58 @@ int main(void)
             residents += count;
         }
         printf("original F31 inventory: containers=%d residents=%d\n", containers, residents);
+        for (int chestIndex = 0; chestIndex < containers; ++chestIndex) {
+            uint16_t chest = (uint16_t)((9 << 10) | chestIndex);
+            uint16_t slots[8];
+            int x, y, w, h;
+            uint8_t layout[10000];
+            CSB_V1_FmtownsItemDecodeReceipt layoutReceipt;
+            CSB_V1_F31InventorySlotRectangle rectangles[8];
+            if (!csb_v1_fmtowns_graphics_copy_raw_item(profile->fmtowns_graphics_bytes,
+                    profile->fmtowns_graphics_size, 696u, layout, sizeof(layout), &layoutReceipt) ||
+                !csb_v1_media720_f0635_f31_chest_rectangles(layout,
+                    layoutReceipt.stream_byte_count, 0, rectangles)) {
+                fputs("FAIL: original F31 chest rectangle graph\n", stderr);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            x = rectangles[0].x; y = rectangles[0].y;
+            w = rectangles[0].width; h = rectangles[0].height;
+            fprintf(stderr, "original F31 C537: %d,%d %dx%d\n", x, y, w, h);
+            int count = csb_v1_runtime_read_container_slots(&profile->runtime, chest, slots);
+            if (count == 0) continue;
+            view.inventoryPanelActive = 1;
+            view.world.party.activeChampionIndex = 0;
+            if (count <= 0 ||
+                !csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                    view.csbBootProfile, 0, 1, chest) ||
+                !csb_v1_runtime_write_leader_hand_from_boot_profile_pc34(
+                    view.csbBootProfile, THING_NONE) ||
+                !DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view)) {
+                fputs("FAIL: original F31 chest input setup\n", stderr);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            for (int slot = 0; slot < count; ++slot) {
+            x = rectangles[slot].x; y = rectangles[slot].y;
+            w = rectangles[slot].width; h = rectangles[slot].height;
+            (void)M11_GameView_HandlePointer(&view, x + w / 2, 33 + y + h / 2, 1);
+            (void)M11_GameView_HandlePointerButtonRelease(&view,
+                x + w / 2, 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) != slots[slot]) {
+                fprintf(stderr, "FAIL: F31 chest pickup got=%04x expected=%04x\n",
+                    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view), slots[slot]);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            /* Restore original chain for an independent geometry probe.
+             * This is not a claim that live replacement preserves holes. */
+            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+            if (!csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+                    view.csbBootProfile, chest, slots)) return 1;
+            }
+            DM1_V1_M11Runtime_CloseOpenChestPc34Compat(&view);
+        }
     }
     M11_GameView_Shutdown(&view);
     return 0;

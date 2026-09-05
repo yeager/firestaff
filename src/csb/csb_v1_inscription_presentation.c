@@ -156,9 +156,9 @@ static int layout_record(const uint8_t *layout, size_t size, int be,
     return 0;
 }
 
-int csb_v1_media720_f0635_f31_inventory_rectangles(
+static int f31_slot_rectangles(
     const uint8_t *layout, size_t size, int be,
-    CSB_V1_F31InventorySlotRectangle out_rectangles[30])
+    int first, int count, CSB_V1_F31InventorySlotRectangle *out_rectangles)
 {
     CSB_V1_LayoutRecordView parent;
     int i;
@@ -166,12 +166,46 @@ int csb_v1_media720_f0635_f31_inventory_rectangles(
         !layout_record(layout, size, be, 105u, &parent) ||
         parent.type != 9u || parent.parent != 4u ||
         parent.data1 != 16 || parent.data2 != 16) return 0;
-    for (i = 0; i < 30; ++i) {
+    for (i = 0; i < count; ++i) {
         CSB_V1_LayoutRecordView slot;
-        if (!layout_record(layout, size, be, (uint16_t)(507 + i), &slot) ||
+        if (!layout_record(layout, size, be, (uint16_t)(first + i), &slot) ||
             slot.type != 1u || slot.parent != 105u) return 0;
         out_rectangles[i].x = slot.data1;
         out_rectangles[i].y = slot.data2;
+        out_rectangles[i].width = parent.data1;
+        out_rectangles[i].height = parent.data2;
+    }
+    return 1;
+}
+
+int csb_v1_media720_f0635_f31_inventory_rectangles(
+    const uint8_t *layout, size_t size, int be,
+    CSB_V1_F31InventorySlotRectangle out_rectangles[30])
+{
+    return f31_slot_rectangles(layout, size, be, 507, 30, out_rectangles);
+}
+
+int csb_v1_media720_f0635_f31_chest_rectangles(
+    const uint8_t *layout, size_t size, int be,
+    CSB_V1_F31InventorySlotRectangle out_rectangles[8])
+{
+    CSB_V1_LayoutRecordView size_record, panel, parent;
+    int i, left, top;
+    /* COORD.C F0635:2225-2234, centered C101 panel plus C106 children. */
+    if (!out_rectangles || !layout_record(layout, size, be, 100, &size_record) ||
+        size_record.type != 9 || size_record.parent != 4 ||
+        size_record.data1 <= 0 || size_record.data2 <= 0 ||
+        !layout_record(layout, size, be, 101, &panel) || panel.type != 0 || panel.parent != 100 ||
+        !layout_record(layout, size, be, 106, &parent) || parent.type != 9 || parent.parent != 101 ||
+        parent.data1 != 16 || parent.data2 != 16) return 0;
+    left = panel.data1 - ((size_record.data1 + 1) >> 1);
+    top = panel.data2 - ((size_record.data2 + 1) >> 1);
+    for (i = 0; i < 8; ++i) {
+        CSB_V1_LayoutRecordView slot;
+        if (!layout_record(layout, size, be, (uint16_t)(537 + i), &slot) ||
+            slot.type != 1 || slot.parent != 106) return 0;
+        out_rectangles[i].x = left + slot.data1;
+        out_rectangles[i].y = top + slot.data2;
         out_rectangles[i].width = parent.data1;
         out_rectangles[i].height = parent.data2;
     }

@@ -9394,7 +9394,7 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
 {
     uint8_t f31_layout[10000];
     CSB_V1_FmtownsItemDecodeReceipt f31_layout_receipt;
-    CSB_V1_F31InventorySlotRectangle f31_rectangles[30];
+    CSB_V1_F31InventorySlotRectangle f31_rectangles[38];
     int f31_rectangle_index;
     if (!profile || !profile->assets_verified) return -1;
     /* The launcher may carry several game profiles at once.  Do not let an
@@ -9437,10 +9437,13 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
             !f31_layout_receipt.valid ||
             !csb_v1_media720_f0635_f31_inventory_rectangles(
                 f31_layout, f31_layout_receipt.stream_byte_count, 0,
-                f31_rectangles)) {
+                f31_rectangles) ||
+            !csb_v1_media720_f0635_f31_chest_rectangles(
+                f31_layout, f31_layout_receipt.stream_byte_count, 0,
+                f31_rectangles + 30)) {
             return -1;
         }
-        for (f31_rectangle_index = 0; f31_rectangle_index < 30;
+        for (f31_rectangle_index = 0; f31_rectangle_index < 38;
              ++f31_rectangle_index) {
             profile->fmtowns_inventory_rectangle_x[f31_rectangle_index] =
                 (int16_t)f31_rectangles[f31_rectangle_index].x;

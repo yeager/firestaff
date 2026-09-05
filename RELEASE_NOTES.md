@@ -1,5 +1,9 @@
 # Unreleased
 
+- CSB FM Towns: chest slots now respond to clicks using their original
+  panel-relative geometry; releasing over the clicked slot does not repeat
+  the transfer. Continuous chest rearrangement remains under verification.
+
 - DM1: chest pickups no longer exchange items again on mouse release.
   Empty chest slots remain in place until the chest closes, so returning an
   item does not unexpectedly swap it with the next item. Verified with

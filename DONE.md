@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Fixed CSB FM Towns chest pointer admission. Boot retains
+  C537..C544 from the original item-696 C106/C101/C100 graph alongside the
+  30 inventory boxes; input admits chest children only for an open chest,
+  and same-slot release does not repeat the exchange. Both original EN/JP
+  tests pick up all 60 residents across 14 containers with independent chain
+  restoration. Continuous replacement and open-slot persistence remain open.
+
 - 2026-09-05: The CSB FM Towns original-media M11 test now traverses
   GAME/Enter into the original MINI.DAT party/dungeon before inventory
   inspection. Both English and Japanese pass with one original champion,

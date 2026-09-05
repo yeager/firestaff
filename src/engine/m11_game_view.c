@@ -35078,6 +35078,11 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     if (!state->inventoryPanelActive || state->showDebugHUD) {
         return M11_GAME_INPUT_IGNORED;
     }
+    {
+        int nativeSlot = -1;
+        if (m11_csb_fmtowns_inventory_source_slot_at_point(state, x, y, &nativeSlot) &&
+            nativeSlot + 8 == sourceSlotBox) return M11_GAME_INPUT_REDRAW;
+    }
     /* The C211..C218 status-hand boxes are a separate ReDMCSB COMMAND.C
      * route from the C507..C544 inventory boxes. The mouse-down path already
      * handled them, but mouse-up used to consult only the inventory list, so
@@ -56362,7 +56367,9 @@ static int m11_csb_fmtowns_inventory_source_slot_at_point(
          profile->variant_id != CSB_V1_VARIANT_FMTOWNS_JA) ||
         !profile->graphics_verified ||
         !profile->fmtowns_inventory_rectangles_valid) return 0;
-    for (slot = 0; slot < 30; ++slot) {
+    /* CHEST.C F0333 / COMMAND.C G0456: C537..C544 are active only
+     * while their source chest panel is open, not over ordinary panels. */
+    for (slot = 0; slot < (m11_v1_open_chest_valid(state) ? 38 : 30); ++slot) {
         int left = profile->fmtowns_inventory_rectangle_x[slot];
         int top = 33 + profile->fmtowns_inventory_rectangle_y[slot];
         int width = profile->fmtowns_inventory_rectangle_width[slot];
