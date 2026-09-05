@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Rebuilt post-M653-fix startup regressions pass on original
+  Amiga 2.0/HD and FM Towns EN/JP media, including CLI/menu handoffs and
+  the English/Japanese input matrices. The legacy corpus test additionally
+  decodes all 532 admitted images for each FM Towns language and Amiga 2.0.
+
 - 2026-09-05: DM1 legacy/Atari startup binds the raw original M653 font from
   retained media bytes instead of attempting the PC3.4 file-state loader.
   All 768 bytes match original Atari EN/DE/FR, Amiga 2.0/HD and FM Towns JP
