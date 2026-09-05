@@ -56345,6 +56345,20 @@ static int m11_csb_atari_st_inventory_source_slot_at_point(
         !layout.valid) {
         return 0;
     }
+    /* COMMAND.C G0456:217-227 uses 16x16 chest icons, not the 18x18
+     * champion frames. C232 retains their viewport-relative locations;
+     * translate through the same Atari viewport origin as the inventory. */
+    if (m11_v1_open_chest_valid(state)) {
+        for (int slot = 0; slot < 8; ++slot) {
+            const CSB_V1_CSBWinIconDisplay0232 *icon = &layout.icon_display[38 + slot];
+            int left = VIEWPORT_X + icon->pixel_x;
+            int top = VIEWPORT_Y + icon->pixel_y;
+            if (x >= left && x < left + 16 && y >= top && y < top + 16) {
+                if (out_source_slot) *out_source_slot = 30 + slot;
+                return 1;
+            }
+        }
+    }
     if (!csb_v1_csbwin_layout_0232_inventory_slot_at_point(
             &layout, VIEWPORT_X, VIEWPORT_Y, x, y,
             &source_slot) ||

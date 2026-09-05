@@ -1064,6 +1064,43 @@ int main(void)
                     }
                     CHECK(tested > 0, "original Atari MINI.DAT inventory sweep is nonempty");
                     printf("PASS: original Atari inventory corpus: %d object/slot checks\n", tested);
+                    {
+                        int chestChecks = 0;
+                        /* COMMAND.C G0456:217-227: Atari's eight screen
+                         * rectangles are 16x16, not inventory's 18x18. */
+                        static const int left[8] = {117,106,111,128,145,162,179,196};
+                        static const int top[8] = {92,109,126,131,134,136,137,138};
+                        for (int chestIndex = 0;
+                             chestIndex < profile->runtime.dungeon_handle->thing_type_counts[9];
+                             ++chestIndex) {
+                            uint16_t chest = (uint16_t)((9 << 10) | chestIndex);
+                            uint16_t residents[8];
+                            int count = csb_v1_runtime_read_container_slots(&profile->runtime, chest, residents);
+                            if (count <= 0) continue;
+                            CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                      view.csbBootProfile, 0, 1, chest) &&
+                                      DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view),
+                                  "original Atari chest opens from the action hand");
+                            for (int position = 0; position < count; ++position) {
+                                (void)M11_GameView_HandlePointer(&view, 48 + left[position] + 8, top[position] + 8, 1);
+                                (void)M11_GameView_HandlePointerButtonRelease(&view,
+                                    48 + left[position] + 8, top[position] + 8, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                                CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == residents[position],
+                                      "Atari chest click picks up its original resident");
+                                DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+                                ++chestChecks;
+                                if (failures) { M11_GameView_Shutdown(&view); return 1; }
+                            }
+                            DM1_V1_M11Runtime_CloseOpenChestPc34Compat(&view);
+                            CHECK(csb_v1_runtime_write_container_slots_from_boot_profile_pc34(
+                                      view.csbBootProfile, chest, residents),
+                                  "Atari chest test restores the original linked contents");
+                        }
+                        CHECK(chestChecks > 0, "Atari chest corpus contains original residents");
+                        CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                  view.csbBootProfile, 0, 1, THING_NONE),
+                              "Atari chest test restores the original empty action hand");
+                    }
                 }
             }
             CHECK(M11_GameView_HandleInput(

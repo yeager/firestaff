@@ -1,5 +1,8 @@
 # Unreleased
 
+- CSB Atari: open-chest input now resolves the original viewport-relative
+  slot positions. The chest rendering layer remains incomplete.
+
 - CSB Atari: releasing the mouse over the selected inventory slot no longer
   undoes the pickup. Verified with an original dungeon weapon in Original,
   V2.0 and V2.1 presentation.

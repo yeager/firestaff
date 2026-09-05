@@ -1,5 +1,8 @@
 # Firestaff TODO — active cross-game work
 
+- Complete Atari CSB's inventory compositor with the original C025 chest
+  panel and resident icons; pickup routing alone is not visible chest parity.
+
 - Extend Atari CSB's original-object inventory corpus to equipment/chest
   drag destinations and native chest-panel interactions.
 

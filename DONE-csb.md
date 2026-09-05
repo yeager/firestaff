@@ -1,5 +1,17 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari native chest pickup routing
+
+- Added the eight open-chest input slots using the selected C232 icon
+  coordinates and the Atari viewport origin (48,33). Chest boxes use their
+  original 16x16 area, not the 18x18 champion-slot frames, and are inactive
+  without an open chest.
+- The original STX/MINI.DAT corpus picks up each resident of every nonempty
+  container, retaining visible holes until close. This passes with the full
+  inventory corpus in Original, V2.0 and V2.1.
+- This is input evidence only: the Atari inventory compositor still needs
+  its C025 chest background and resident-icon drawing layer.
+
 ## 2026-09-05 — Atari cross-slot backpack dragging
 
 - Original, V2.0 and V2.1 pass 7,599 cross-slot drags each: every allocated

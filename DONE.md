@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Original Atari CSB chest pickups pass in three presentation
+  modes using C232-relative native input geometry. Chest rendering remains
+  a separate open requirement.
+
 - 2026-09-05: Atari CSB passes 22,797 original-object backpack drags across
   Original, V2.0 and V2.1, checking source/destination/leader-hand ownership.
 
