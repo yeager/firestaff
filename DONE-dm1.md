@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Source explosion group damage now uses the shared world F0191
+  transaction: descending slots, individual randomized damage and raw C04
+  writeback. Its surviving active cells, directions and aspects are compacted
+  with the live group. A two-worm fixture verifies exact HP and final RNG;
+  a lethal-first-slot variant verifies the survivor. Raw HP and active cells
+  failed before their respective corrections. Fifteen focused/regression
+  tests pass, including five original DOS spells; executable rebuilt.
+  Complete group death, drops and source death-smoke allocation remain open.
+
 - 2026-09-06: Lethal half-square fixtures now assert exact surviving cell
   bytes in both decoded and raw C04: 08 when removing slot one, 0A when
   shifting slot one over slot zero. Both pass. F0190:892-904 preserves unused

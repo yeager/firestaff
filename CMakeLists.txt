@@ -16291,6 +16291,10 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat peer)
     add_test(NAME dm1_v1_projectile_fluxcage_passage_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat fluxcage)
+    add_test(NAME dm1_v1_explosion_group_f0191_rng_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat burst)
+    add_test(NAME dm1_v1_explosion_group_f0191_lethal_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat burst-lethal)
     foreach(fake_wall_case IN ITEMS fake-open fake-imaginary fake-closed stairs-entry stairs-pair)
         add_test(NAME dm1_v1_projectile_${fake_wall_case}_pc34_compat
             COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat ${fake_wall_case})

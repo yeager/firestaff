@@ -1,5 +1,8 @@
 # Unreleased
 
+- Original-data explosions apply individually randomized monster damage in
+  the original order and keep raw health and surviving active state in sync.
+
 - Monsters surviving a projectile kill retain their own facing and aspect
   state when the defeated creature is removed from the front of the group.
 

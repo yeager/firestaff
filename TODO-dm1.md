@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+- Extend explosion F0191 verification to complete group death, possession
+  drops and original death-smoke C15 ownership. The shared F0191 transaction
+  still creates smoke through the host explosion list, not the source C15
+  allocator. Nonlethal RNG/raw writeback and one active survivor are verified;
+  neither establishes full death aftermath or emulator parity.
+
 - Pair source-projectile Fluxcage passage with original emulator captures.
   The raw C14/C15 RAM regression and F0219 source audit do not establish
   full endgame or cross-platform parity. Extend real Lord Chaos/fusion

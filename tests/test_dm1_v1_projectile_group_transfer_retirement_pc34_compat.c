@@ -22,6 +22,8 @@ int main(int argc, char** argv)
     int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
+    int burstLethal = argc == 2 && strcmp(argv[1], "burst-lethal") == 0;
+    int burst = burstLethal || (argc == 2 && strcmp(argv[1], "burst") == 0);
     int fakeOpen = argc == 2 && strcmp(argv[1], "fake-open") == 0;
     int fakeImaginary = argc == 2 && strcmp(argv[1], "fake-imaginary") == 0;
     int fakeClosed = argc == 2 && strcmp(argv[1], "fake-closed") == 0;
@@ -113,6 +115,59 @@ int main(int argc, char** argv)
     world.dungeon = &dungeon; world.things = &things; world.ownsDungeon = 0;
     world.gameTick = 40; world.partyMapIndex = world.party.mapIndex = 0;
     world.newPartyMapIndex = -1; world.party.mapX = 2; world.party.mapY = 2;
+    if (burst) {
+        struct ExplosionCreateInput_Compat blast = {0};
+        struct RngState_Compat expectedRng = world.masterRng;
+        int attack, spread, expectedHp[2], i;
+        group.creatureType = rawGroup[4] = 15;
+        group.count = 1; rawGroup[14] = 1 << 5;
+        group.cells = rawGroup[5] = 8;
+        group.health[1] = 1000; word(rawGroup + 8, 1000);
+        if (burstLethal) {
+            group.health[0] = 1; word(rawGroup + 6, 1);
+            world.creatureAICount = world.pc34ActiveGroupSourceCount = 1;
+            world.creatureAI[0].reserved0 = 0;
+            world.creatureAI[0].creatureType = 15;
+            world.creatureAI[0].groupCells = 8;
+            world.creatureAI[0].groupDirection = world.pc34ActiveGroupDirections[0] = 8;
+            world.creatureAI[0].aspect[1] = 2;
+        }
+        /* F0213 attack 80, original C15 worm fire resistance 9; F0191
+         * draws independently in descending slot order. */
+        attack = 42 + F0732_COMBAT_RngRandom_Compat(&expectedRng, 41);
+        attack -= F0732_COMBAT_RngRandom_Compat(&expectedRng, 19);
+        spread = (attack >> 3) + 1;
+        for (i = 1; i >= 0; --i)
+            expectedHp[i] = 1000 - (attack - spread +
+                F0732_COMBAT_RngRandom_Compat(&expectedRng, spread * 2));
+        c15.next = THING_NONE;
+        word(rawC15, THING_NONE);
+        things.explosions = &c15;
+        things.explosionCount = things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+        things.rawThingData[THING_TYPE_EXPLOSION] = rawC15;
+        blast.explosionType = C000_EXPLOSION_FIREBALL;
+        blast.attack = 80;
+        blast.mapX = 1; blast.mapY = 0;
+        blast.centered = 1; blast.cell = 255; blast.currentTick = 40;
+        blast.creatorProjectileSlot = -1;
+        CHECK(F0887_ORCH_CreateSourceExplosion_Compat(&world, &blast, 0));
+        if (burstLethal) {
+            CHECK(group.count == 0 && group.health[0] == expectedHp[1]);
+            CHECK(group.cells == 10 && world.creatureAI[0].groupCells == 10);
+            CHECK((world.pc34ActiveGroupDirections[0] & 3) == 2);
+            CHECK(world.creatureAI[0].aspect[0] == 2);
+            CHECK(readword(rawGroup + 6) == group.health[0]);
+            puts("ok: source explosion compacts the active survivor");
+            return 0;
+        }
+        CHECK(group.health[0] < 1000 && group.health[0] > 0);
+        CHECK(readword(rawGroup + 6) == group.health[0]);
+        CHECK(group.health[0] == expectedHp[0] && group.health[1] == expectedHp[1]);
+        CHECK(readword(rawGroup + 8) == group.health[1]);
+        CHECK(world.masterRng.seed == expectedRng.seed);
+        puts("ok: source explosion group damage updates raw and decoded HP");
+        return 0;
+    }
     world.creatureAICount = 1;
     world.creatureAI[0].groupMapIndex = 0;
     world.creatureAI[0].groupMapX = 1;

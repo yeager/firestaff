@@ -9203,6 +9203,9 @@ static int orch_build_explosion_digest_compat(
     return 1;
 }
 
+static int orch_apply_door_group_damage_f0191_compat(
+    struct GameWorld_Compat* world, int groupIndex, int mapIndex,
+    int mapX, int mapY, int attack, int* outKilledAll);
 static int orch_apply_explosion_group_action_compat(
     struct GameWorld_Compat* world,
     const struct CombatAction_Compat* action);
@@ -9405,6 +9408,13 @@ static int orch_apply_explosion_group_action_compat(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
 
+    if (world->things->rawThingData[THING_TYPE_GROUP]) {
+        /* PROJEXPL.C F0213/F0220 uses GROUP.C F0191:956-980, the
+         * same per-creature randomized transaction as door damage. */
+        return orch_apply_door_group_damage_f0191_compat(world, groupIndex,
+            action->targetMapIndex, action->targetMapX, action->targetMapY,
+            action->rawAttackValue, NULL);
+    }
     if (!dm1_v1_explosion_group_apply_pc34(action, group, &applyPlan)) {
         return 0;
     }
@@ -9480,6 +9490,27 @@ static int orch_apply_door_group_damage_f0191_compat(
             return 0;
         }
         outcome = damageApplyPlan.outcome;
+        if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+            int activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+            if (activeIndex >= 0) {
+                struct CreatureAIState_Compat* ai = &world->creatureAI[activeIndex];
+                unsigned int directions = activeIndex < world->pc34ActiveGroupSourceCount
+                    ? world->pc34ActiveGroupDirections[activeIndex] : ai->groupDirection;
+                int i;
+                /* GROUP.C F0190:892-904: F0191 deaths must compact
+                 * active directions/aspects along with the decoded cells. */
+                for (i = creatureIndex; i < damageApplyPlan.originalGroupCount; ++i) {
+                    unsigned int value = (directions >> ((i + 1) * 2)) & 3u;
+                    directions = (directions & ~(3u << (i * 2))) | (value << (i * 2));
+                    ai->aspect[i] = ai->aspect[i + 1];
+                }
+                ai->groupCells = group->cells;
+                ai->groupDirection = (int)directions;
+                if (activeIndex < world->pc34ActiveGroupSourceCount)
+                    world->pc34ActiveGroupDirections[activeIndex] = (unsigned char)directions;
+                group->direction = directions & 3u;
+            }
+        }
         if (outcome == COMBAT_OUTCOME_KILLED_SOME_CREATURES ||
             outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
             DM1_MeleeF0190DeathSmokeInputPc34 smokeIn;
