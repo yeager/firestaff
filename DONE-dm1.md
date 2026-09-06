@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Documented the exact local legacy inventory test selection,
+  media/skip requirements, oracle dependencies and public CI exclusion in
+  `parity-evidence/dm1-legacy-inventory-verification-scope.md`.
+
 ## 2026-09-06 — Legacy occupied action-hand exchanges
 
 - Each of the 606 allocated original objects now exchanges with a distinct
