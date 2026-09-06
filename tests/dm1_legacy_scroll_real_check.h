@@ -360,7 +360,17 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].load = (unsigned short)(otherWeight + extraWeight);
                         }
                         state->world.party.champions[1].hp.current = 0;
+                        if (getenv("FIRESTAFF_VERIFY_LEADER_DEATH")) {
+                            state->world.party.activeChampionIndex = 1;
+                            state->world.party.champions[0].direction =
+                                (unsigned char)((state->world.party.direction + 1) & 3);
+                        }
                         M11_GameView_ProbeCheckPartyDeath(state);
+                        if (getenv("FIRESTAFF_VERIFY_LEADER_DEATH") &&
+                            state->world.party.champions[0].direction != state->world.party.direction) {
+                            fprintf(stderr, "FAIL: surviving leader direction not aligned\n");
+                            return 0;
+                        }
                         if (state->world.party.champions[1].load != 0) {
                             fprintf(stderr, "FAIL: death retained load=%u\n", state->world.party.champions[1].load);
                             return 0;

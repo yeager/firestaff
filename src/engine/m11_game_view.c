@@ -19070,6 +19070,10 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     }
     if (aliveIndex >= 0 && state->world.party.activeChampionIndex == championIndex) {
         state->world.party.activeChampionIndex = aliveIndex;
+        /* CHAMPION.C F0319:1676 calls CLIKCHAM.C F0368:67, which
+         * aligns the replacement leader with the party direction. */
+        state->world.party.champions[aliveIndex].direction =
+            (unsigned char)(state->world.party.direction & 3);
     }
     /* CHAMPION.C F0318/F0300:582 removes dropped inventory weight.
      * Publish after leader fallback so held weight follows the survivor. */

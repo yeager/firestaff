@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Reproduced missing survivor direction alignment in five
+  original-media leader-death probes. F0319 now applies F0368's direction
+  rule to the replacement leader. Both default non-leader death and
+  FIRESTAFF_VERIFY_LEADER_DEATH=1 variants pass for all five editions.
+  Held-item transfer and full tick scheduling are not covered by this case.
+
 - 2026-09-06: Reproduced stale load 2 after two-object death drops in all
   five Atari/Amiga editions. F0319 now refreshes carried load/hash after
   drop and leader fallback. All five regressions now reach load 0 and
