@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- Corrected the standalone F0183 helper's LastMoveTime to byte-wrapped game
+  time minus 127 (GROUP.C:438), matching runtime admission. The registered
+  active-state test pins stored value and receipt to 0xb5 at time 0x1234 and
+  passes. This helper currently has test callers, not a newly proven live path.
+
 - Extended the F0194/F0195 runtime regression to reject a second-column owner
   after the first group has consumed admission RNG and scheduled its event.
   The caller world (including RNG/aspects/timeline/history) remains byte-for-byte

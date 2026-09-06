@@ -121,10 +121,11 @@ int main(void)
               active_groups[0].cells == 0xe4 &&
               active_groups[0].directions == 0x0a,
           "F0183 copies C04 cells and packs the source direction");
-    check(active_groups[0].lastMoveTime == 0x34 &&
+    check(active_groups[0].lastMoveTime == 0xb5 &&
+          add_receipt.last_move_time == 0xb5 &&
               active_groups[0].targetMapX == 7 &&
               active_groups[0].homeMapY == 8,
-          "F0183 stores source square and low game-time byte");
+          "F0183 stores source square and byte-wrapped game time minus 127");
     check(add_receipt.source_symbol &&
               strcmp(add_receipt.source_symbol,
                      "F0183_GROUP_AddActiveGroup") == 0,

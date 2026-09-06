@@ -5,9 +5,13 @@
   beyond the bounded multi-group scan-order and partial-admission rollback tests.
   Check Couatl sound emission and edition-specific metadata beyond I34.
   F0180:333 event priority (255-MovementTicks) and raw behavior>=4 reset at
-  :328-330 also need integration. The standalone active-state helper's
-  lastMoveTime still uses game_time instead of game_time-127; runtime history
-  already uses the latter. Do not treat the seeded two-event regression as
+  :328-330 also need integration. Timeline scheduling currently sorts only by
+  time and preserves insertion order on ties; TIMELINE.C:143-151 requires
+  time, descending original event type, descending priority, then source-slot
+  order. The 44-byte serialized event has no dedicated priority/slot fields.
+  Audit all event mappings and persistence before changing this shared queue;
+  adding only a C37 priority would not establish original ordering.
+  Do not treat the seeded two-event regression as
   proof of this complete admission sequence.
 
 - Extend the new shared prior-square history to full original-runtime

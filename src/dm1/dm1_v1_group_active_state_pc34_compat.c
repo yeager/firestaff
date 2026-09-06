@@ -243,7 +243,9 @@ int F0183_DM1_GROUP_AddActiveGroup_Compat(
     active->groupThingIndex = group_index;
     active->directions = directions;
     active->cells = group->cells;
-    active->lastMoveTime = (int)(game_time & 0xffu);
+    /* ReDMCSB GROUP.C F0183:438 initializes the elapsed-move window to
+     * 127 ticks, with ACTIVE_GROUP's unsigned byte wrap. */
+    active->lastMoveTime = (int)((game_time - 127u) & 0xffu);
     active->targetMapX = map_x;
     active->targetMapY = map_y;
     active->priorMapX = map_x;
