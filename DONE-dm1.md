@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Real-media read-error reporting
+
+- Atari/Amiga media tests no longer convert every fopen failure into a
+  missing-data skip. Only an unset/empty path or ENOENT returns 77;
+  other open errors report failure and return 1.
+- Rebuilt both binaries and verified missing-file and ENOTDIR paths.
+  No game media was created, extracted or modified for these checks.
+
 ## 2026-09-06 — Legacy original-object hand/backpack corpus
 
 - Extended the five original-media tests beyond scrolls to every allocated

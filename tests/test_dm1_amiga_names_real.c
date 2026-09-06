@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "dm1_legacy_scroll_real_check.h"
 
 int main(void) {
@@ -17,7 +18,13 @@ int main(void) {
     size_t length = 0, cursor = 0;
     int result = 1, index;
     FILE *media;
-    if (!path || !(media = fopen(path, "rb"))) return 77;
+    if (!path || !path[0]) return 77;
+    media = fopen(path, "rb");
+    if (!media) {
+        if (errno == ENOENT) return 77;
+        perror("FAIL: cannot read selected Amiga archive");
+        return 1;
+    }
     fclose(media);
     scan = calloc(1, sizeof(*scan));
     state = calloc(1, sizeof(*state));

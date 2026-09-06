@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "dm1_legacy_scroll_real_check.h"
 
 int main(int argc, char **argv) {
@@ -20,7 +21,13 @@ int main(int argc, char **argv) {
     int count, result = 1;
     size_t cursor = 0;
     FILE *media;
-    if (!path || !(media = fopen(path, "rb"))) return 77;
+    if (!path || !path[0]) return 77;
+    media = fopen(path, "rb");
+    if (!media) {
+        if (errno == ENOENT) return 77;
+        perror("FAIL: cannot read selected Atari archive");
+        return 1;
+    }
     fclose(media);
     state = calloc(1, sizeof(*state));
     if (!state) return 1;

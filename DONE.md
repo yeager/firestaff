@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Atari/Amiga real-media verification skips only absent paths;
+  archive-open errors now fail. Negative checks confirm ENOENT returns 77
+  and ENOTDIR returns 1 for both test binaries.
+
 - 2026-09-06: Five original DM1 Atari/Amiga editions pass 230,280
   place/pickup transactions across both hands and all 17 backpack slots
   in Original/V2.1, including identity checks after mouse release.
