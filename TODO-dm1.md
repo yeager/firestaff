@@ -10,9 +10,10 @@
   verify final-death UI and redraw against
   the original. Savegames remain deferred.
 
-- Verify cross-owner consumption with original water/potions after
-  the mouth-owner migration. Check recipient stats, leader held weight,
-  consumed Thing removal, potion event ownership and release behavior.
+- Extend cross-owner consumption to original potions and uncapped water
+  gain. Capped waterskin depletion, empty rejection, hand retention and
+  leader held weight pass on five editions. Check potion recipient stats,
+  consumed Thing removal, event ownership and release behavior.
 
 - Complete the broader regression of the now-enabled inventory/leader
   separation: full original-media corpus, application startup, Modern input,

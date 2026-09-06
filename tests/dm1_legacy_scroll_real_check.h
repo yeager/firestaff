@@ -340,6 +340,45 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE)) return 0;
                         /* Drive the real death handler after a controlled
                          * zero-health transition of the inventory owner. */
+                        {
+                            unsigned short water = THING_NONE;
+                            int charges = 0;
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_JUNK]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_JUNK << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff) &&
+                                    (bytes[2] & 127) == 1 && (bytes[3] >> 6) > 0) {
+                                    water = candidate;
+                                    charges = bytes[3] >> 6;
+                                    break;
+                                }
+                            }
+                            if (water == THING_NONE) { fprintf(stderr, "FAIL: no original charged waterskin\n"); return 0; }
+                            state->world.party.champions[0].water = 0;
+                            state->world.party.champions[1].water = 1800;
+                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, water)) return 0;
+                            /* PANEL.C F0346:1832-1838 caps water at 2048,
+                             * decrements charges and retains the leader hand. */
+                            for (int drink = 0; drink <= charges; ++drink) {
+                                int heldWeight;
+                                (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                                (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, water);
+                                int remaining = charges - drink - 1;
+                                if (remaining < 0) remaining = 0;
+                                if (!bytes || (bytes[3] >> 6) != remaining ||
+                                    state->world.party.champions[0].water != 0 ||
+                                    state->world.party.champions[1].water != 2048 ||
+                                    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != water ||
+                                    !dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, water, &heldWeight) ||
+                                    state->world.party.champions[0].load != heldWeight ||
+                                    state->world.party.champions[1].load != otherWeight) {
+                                    fprintf(stderr, "FAIL: cross-owner waterskin charges/water/load\n");
+                                    return 0;
+                                }
+                            }
+                            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                        }
                         unsigned short deathExtra = THING_NONE;
                         for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
                             unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);

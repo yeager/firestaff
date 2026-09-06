@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Original DM1 waterskins pass cross-owner drinking/depletion
+  checks across five Atari/Amiga editions using normal mouse input.
+
 - 2026-09-06: DM1 lethal poison reaches final-death cleanup through the
   normal idle update in twenty original-media regression cases.
 

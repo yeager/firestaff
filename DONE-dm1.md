@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Twenty original-media cases now drain a genuinely allocated,
+  charged waterskin through mouse press/release into the non-leader's
+  inventory mouth. Verified the 2048 water cap, unchanged leader water,
+  one charge per click, empty-skin rejection, retained held Thing and
+  leader-owned changing weight. Expected weight still shares F0140;
+  the capped fixture does not independently prove the uncapped +800 amount.
+
 - 2026-09-06: Final champion death now runs through an actual due C75
   and AdvanceIdleTick in all twenty original-media regressions, rather
   than setting zero HP and calling the death probe. Verified zero HP,
