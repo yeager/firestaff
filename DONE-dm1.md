@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- F0183 runtime admission now preserves C04 attack/approach/flee behavior in
+  the active AI owner instead of unconditionally assigning wander. GROUP.C
+  F0180:328-330 only resets behavior values >=4. The two-move C29/C37 test
+  now also runs from F0195-published state, without manual sidecar receipts;
+  its behavior assertion failed before the fix. Both selected events remain
+  explicitly scheduled and RNG is reset before them, so this is not proof
+  of the complete natural admission RNG/timeline sequence.
+
 - Fixed F0183 runtime admission to publish packed directions and home coordinates
   together with movement history, extending contiguous source-row coverage.
   Previously F0195 map entry left SourceCount zero, causing authenticated

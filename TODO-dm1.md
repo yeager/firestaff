@@ -1,5 +1,16 @@
 # Firestaff TODO — DM1
 
+- Complete F0183/F0180 admission fidelity: GROUP.C:444-447 calls F0179 after
+  clearing live aspects; runtime admission currently omits its aspect/RNG
+  initialization. Use authentic creature graphics/animation metadata and
+  shared RNG, and publish staged.masterRng only on successful map transition.
+  Verify literal RNG/aspects, multi-group scan order and failure rollback.
+  F0180:333 event priority (255-MovementTicks) and raw behavior>=4 reset at
+  :328-330 also need integration. The standalone active-state helper's
+  lastMoveTime still uses game_time instead of game_time-127; runtime history
+  already uses the latter. Do not treat the seeded two-event regression as
+  proof of this complete admission sequence.
+
 - Extend the new shared prior-square history to full original-runtime
   capture verification: compare consecutive live M11 wander moves and exact
   RNG with original execution and deferred

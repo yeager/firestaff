@@ -252,7 +252,7 @@ static int test_m10_c38_preserves_packed_active_group_directions(void)
 /* ReDMCSB GROUP.C F0209 sends a danger reaction through F0267 after its
  * direction decision.  C37 has a separate tick path; this locks the missing
  * C29 physical relink without involving spell or action-menu state. */
-static int test_m10_c29_reaction_moves_group_through_f0267(void)
+static int test_m10_c29_reaction_moves_group_through_f0267(int useAdmission)
 {
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
@@ -326,25 +326,33 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     world.partyMapIndex = 0;
     world.party.mapX = 2;
     world.party.mapY = 2;
-    world.creatureAICount = 1;
-    world.creatureAI[0].stateKind = AI_STATE_ATTACK;
-    world.creatureAI[0].reserved0 = 0;
-    world.creatureAI[0].creatureType = groups[0].creatureType;
-    world.creatureAI[0].groupMapIndex = 0;
-    world.creatureAI[0].groupMapX = 1;
-    world.creatureAI[0].groupMapY = 1;
-    world.creatureAI[0].groupCells = groups[0].cells;
-    world.creatureAI[0].lastSeenPartyTick = 0;
-    /* C29-C37 now require the same source-published packed direction
-     * receipt as a restored ACTIVE_GROUP. This is a fixture obligation,
-     * not a synthetic runtime fallback. */
-    world.pc34ActiveGroupSourceCount = 1;
-    world.pc34ActiveGroupDirections[0] = groups[0].direction;
-    world.pc34ActiveGroupHistory[0].valid = 1;
-    world.pc34ActiveGroupHistory[0].groupThingIndex = 0;
-    world.pc34ActiveGroupHistory[0].priorMapX = 2;
-    world.pc34ActiveGroupHistory[0].priorMapY = 1;
-    world.pc34ActiveGroupHistory[0].lastMoveTime = 0;
+    if (useAdmission) {
+        /* Exercise the runtime publisher, not hand-written sidecar receipts.
+         * F0195/F0183 must admit a group usable by the subsequent F0209. */
+        if (!expect(F0195_DM1_GROUP_AddAllActiveGroups_Compat(&world) == 1,
+                    "F0195 admits corridor group for live reactions")) return 1;
+        /* Isolate the two explicitly scheduled C29/C37 decisions below. */
+        memset(&world.timeline, 0, sizeof(world.timeline));
+        world.timeline.nowTick = world.gameTick;
+    } else {
+        world.creatureAICount = 1;
+        world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+        world.creatureAI[0].reserved0 = 0;
+        world.creatureAI[0].creatureType = groups[0].creatureType;
+        world.creatureAI[0].groupMapIndex = 0;
+        world.creatureAI[0].groupMapX = 1;
+        world.creatureAI[0].groupMapY = 1;
+        world.creatureAI[0].groupCells = groups[0].cells;
+        world.creatureAI[0].lastSeenPartyTick = 0;
+        /* Hand-published context retained as an independent baseline. */
+        world.pc34ActiveGroupSourceCount = 1;
+        world.pc34ActiveGroupDirections[0] = groups[0].direction;
+        world.pc34ActiveGroupHistory[0].valid = 1;
+        world.pc34ActiveGroupHistory[0].groupThingIndex = 0;
+        world.pc34ActiveGroupHistory[0].priorMapX = 2;
+        world.pc34ActiveGroupHistory[0].priorMapY = 1;
+        world.pc34ActiveGroupHistory[0].lastMoveTime = 0;
+    }
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
 
     memset(&reaction, 0, sizeof(reaction));
@@ -1342,7 +1350,8 @@ int main(void)
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
-    if (test_m10_c29_reaction_moves_group_through_f0267() != 0) return 1;
+    if (test_m10_c29_reaction_moves_group_through_f0267(0) != 0) return 1;
+    if (test_m10_c29_reaction_moves_group_through_f0267(1) != 0) return 1;
     if (test_m10_off_party_map_c29_is_consumed_without_group_mutation() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c39_to_c41_turn_their_own_packed_slots() != 0) return 1;

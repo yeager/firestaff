@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 preserves attack, approach and flee behavior when activating groups,
+  rather than forcing their runtime AI into wander mode.
+
 - DM1 initializes active-group direction/home ownership on map admission so
   later authenticated creature reactions can use newly admitted groups.
 

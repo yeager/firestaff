@@ -11402,6 +11402,15 @@ static int orch_add_generated_group_active_state_compat(
     ai = &world->creatureAI[world->creatureAICount++];
     memset(ai, 0, sizeof(*ai));
     ai->stateKind = plan.activeStateKind;
+    /* GROUP.C F0183 preserves C04 behavior; F0180:328-330 only resets
+     * values >= C4_BEHAVIOR_USELESS. Do not turn an admitted attacking,
+     * approaching or fleeing group into a wandering one. */
+    switch (group->behavior) {
+        case DM1_BEHAVIOR_ATTACK: ai->stateKind = AI_STATE_ATTACK; break;
+        case DM1_BEHAVIOR_APPROACH: ai->stateKind = AI_STATE_APPROACH; break;
+        case DM1_BEHAVIOR_FLEE: ai->stateKind = AI_STATE_FLEE; break;
+        default: break;
+    }
     ai->creatureType = plan.activeCreatureType;
     ai->groupMapIndex = plan.activeMapIndex;
     ai->groupMapX = plan.activeMapX;
