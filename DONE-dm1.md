@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- Extended C33-C36 Freeze Life checks with original Lord Chaos attributes:
+  all four selected slots continue updating and consuming RNG while ordinary
+  groups defer. The 12-case ordinary/frozen/immune matrix passes. Read-only
+  audit also confirms the outer LoS admission previews a copied RNG rather
+  than changing the caller's stream; no speculative change was made there.
+
 - M10 timed reaction handling now applies the PC34 Freeze Life gate before
   visibility RNG and F0179 aspect work (GROUP.C:1962-1968). Non-archenemy
   events retain their payload and retry at gameTick+4. All four C33-C36

@@ -1372,6 +1372,10 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     if (!build_world(&world)) return 1;
     world.pc34ActiveGroupSourceCount = 1;
     world.things->groups[0].count = 3;
+    if (frozen == 2) {
+        world.things->groups[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
+        world.creatureAI[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
+    }
     for (i = 0; i < 4; ++i) world.things->groups[0].health[i] = 100;
     authenticate_group_c04(world.things, &world.things->groups[0],
                            world.things->rawThingData[THING_TYPE_GROUP]);
@@ -1384,11 +1388,12 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     event.fireAtTick = world.gameTick;
     event.mapX = event.mapY = 1;
     event.aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + slot;
+    event.aux1 = world.things->groups[0].creatureType;
     event.aux4 = 0x100;
     memset(&result, 0, sizeof(result));
     ok = F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) &&
          F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
-    if (frozen) {
+    if (frozen == 1) {
         ok &= expect(world.masterRng.seed == seedBefore &&
                      world.creatureAI[0].aspect[slot] == 0xff,
                      "Freeze Life defers C33-C36 before aspect and RNG changes");
@@ -1401,6 +1406,9 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     } else {
         ok &= expect(world.creatureAI[0].aspect[slot] != 0xff,
                      "C33-C36 actually updates selected creature aspect");
+        if (frozen == 2)
+            ok &= expect(world.masterRng.seed != seedBefore,
+                         "Lord Chaos remains immune to Freeze Life");
     }
     for (i = 0; i < 4; ++i) {
         if (i != slot)
@@ -1416,7 +1424,8 @@ int main(void)
     int slot;
     for (slot = 0; slot < 4; ++slot)
         if (test_c33_to_c36_aspect_slot_conversion(slot, 0) != 0 ||
-            test_c33_to_c36_aspect_slot_conversion(slot, 1) != 0) return 1;
+            test_c33_to_c36_aspect_slot_conversion(slot, 1) != 0 ||
+            test_c33_to_c36_aspect_slot_conversion(slot, 2) != 0) return 1;
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
