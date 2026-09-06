@@ -154,7 +154,7 @@ static void test_m11_cast_spell_validation_uses_f0303_skill_query(void) {
     assert(M11_GameView_EnterRune(&state, 3) == 1); /* Ful */
     assert(M11_GameView_EnterRune(&state, 3) == 1); /* Ir */
     assert(M11_GameView_CastSpell(&state) == 1);
-    assert(state.spellPanelOpen == 0);
+    assert(state.spellPanelOpen == 1);
     assert(state.spellBuffer.runeCount == 0);
     assert(champ->mana.current == 0); /* Paid runes cast at zero remaining mana. */
 }
@@ -182,7 +182,7 @@ static void test_m11_cast_spell_validation_failure_stops_cast(void) {
     assert(M11_GameView_EnterRune(&state, 3) == 1); /* Ful */
     assert(M11_GameView_EnterRune(&state, 3) == 1); /* Ir */
     assert(M11_GameView_CastSpell(&state) == 1);
-    assert(state.spellPanelOpen == 0);
+    assert(state.spellPanelOpen == 1);
     assert(state.spellBuffer.runeCount == 0);
     assert(champ->mana.current == 73); /* Failed practice cannot refund runes. */
     assert(M11_GameView_GetProjectileCount(&state) == 0);

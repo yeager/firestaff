@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Corrected F0370/F0408 cast UI lifecycle. A lone power rune
+  now reaches F0410's meaningless-spell feedback through mouse, keyboard
+  and API, clearing symbols without a refund or practice RNG draw. Successful
+  and source-feedback failed DM1 casts retain the caster's spell controls.
+  Twenty original-media cases and four focused runtime tests pass (24 total).
+  This is input/state evidence, not a final-frame visual parity claim.
+
 - 2026-09-06: Corrected native DM1 F0399 rune charging and modulo-four
   SymbolStep, including fifth-rune replacement. F0412 now uses a separate
   paid-rune validation entry point, retaining legacy callers and serialized

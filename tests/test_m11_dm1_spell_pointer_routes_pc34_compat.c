@@ -169,6 +169,32 @@ int main(void)
     CHECK_EQ(state.spellBuffer.runes[0], 101, "new power symbol is Mon");
     CHECK_EQ(state.world.party.champions[0].mana.current, 12,
              "Vi Bro Ra Ra Mon consume 3+7+6+6+6 without refund");
+    /* F0370 accepts any nonempty Symbols; F0412/F0410 reject a lone
+     * power rune, and F0408 clears symbols without closing the panel. */
+    for (int route = 0; route < 3; ++route) {
+        if (route) CHECK_EQ(M11_GameView_EnterRune(&state, 0), 1,
+                            "next single rune needs no panel reopen");
+        int mana = state.world.party.champions[0].mana.current;
+        unsigned int seed = state.world.masterRng.seed;
+        if (route == 0)
+            CHECK_EQ(M11_GameView_HandlePointerButton(&state, 250, 68, 0x0002),
+                     M11_GAME_INPUT_REDRAW, "mouse consumes lone power cast");
+        else if (route == 1)
+            CHECK_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_SPELL_CAST),
+                     M11_GAME_INPUT_REDRAW, "keyboard consumes lone power cast");
+        else
+            CHECK_EQ(M11_GameView_CastSpell(&state), 1,
+                     "API consumes lone power cast");
+        CHECK_EQ(state.spellPanelOpen, 1, "meaningless cast keeps controls");
+        CHECK_EQ(state.spellBuffer.runeCount, 0, "meaningless cast clears symbols");
+        CHECK_EQ(state.spellRuneRow, 0, "meaningless cast resets symbol row");
+        CHECK_EQ(state.world.party.champions[0].mana.current, mana,
+                 "meaningless cast does not refund or recharge mana");
+        CHECK_EQ(state.world.masterRng.seed, seed,
+                 "meaningless lookup fails before practice RNG");
+        CHECK_EQ(strstr(state.lastOutcome, "MEANINGLESS SPELL") != NULL, 1,
+                 "F0410 supplies source failure message");
+    }
     M11_GameView_Shutdown(&state);
 
     /* CSB shares the C100/C101 geometry, but the rune path also consumes

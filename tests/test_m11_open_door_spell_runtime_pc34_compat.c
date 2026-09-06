@@ -213,7 +213,7 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 1, "ZO element rune entered");
 
     ASSERT_EQ(M11_GameView_CastSpell(&state), 1, "ZO/Open Door cast consumed");
-    ASSERT_EQ(state.spellPanelOpen, 0, "cast closes source spell panel");
+    ASSERT_EQ(state.spellPanelOpen, 1, "F0408 retains source spell panel");
     ASSERT_EQ(state.spellBuffer.runeCount, 0, "cast clears source rune buffer");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
               "Open Door UI cast launches one live projectile");

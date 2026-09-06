@@ -20280,7 +20280,8 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
     }
     if (zone.commandId == DM1_V1_CPSAO_CMD_CAST_PC34) {
         if (state->sourceKind != M11_GAME_SOURCE_DM2_BOOT &&
-            state->spellBuffer.runeCount < 2) {
+            state->spellBuffer.runeCount <
+                (m11_is_dm1_source_kind(state->sourceKind) ? 1 : 2)) {
             return M11_GAME_INPUT_IGNORED;
         }
         (void)M11_GameView_CastSpell(state);
@@ -20580,7 +20581,8 @@ static int m11_apply_dm1_spell_failure_feedback_f0412(
     m11_set_inspect_readout(state, "SPELL FAILED", line);
     if (receipt.clearsSymbolsOnCastClick) {
         M11_GameView_ClearSpell(state);
-        state->spellPanelOpen = 0;
+        /* MENU.C F0408:1655-1659 redraws both symbol rows, not a close. */
+        if (!m11_is_dm1_source_kind(state->sourceKind)) state->spellPanelOpen = 0;
     }
     return 1;
 }
@@ -20604,8 +20606,11 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     if (!dm1_v1_spell_panel_command_allowed_pc34(&panel)) {
         return 0;
     }
+    /* CLIKMENU.C F0370:485 rejects only the empty incantation; F0409/
+     * F0412 report a lone power symbol as meaningless through F0410. */
     if (state->sourceKind != M11_GAME_SOURCE_DM2_BOOT &&
-        state->spellBuffer.runeCount < 2) {
+        state->spellBuffer.runeCount <
+            (m11_is_dm1_source_kind(state->sourceKind) ? 1 : 2)) {
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: NEED AT LEAST 2 RUNES",
                       (unsigned int)state->world.gameTick);
         m11_set_status(state, "CAST", "NOT ENOUGH RUNES");
@@ -20884,7 +20889,8 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
                               tableIndex, manaCost, (int)champ->mana.current);
 
     M11_GameView_ClearSpell(state);
-    state->spellPanelOpen = 0;
+    /* MENU.C F0408:1655-1659 retains the selected caster and controls. */
+    if (!m11_is_dm1_source_kind(state->sourceKind)) state->spellPanelOpen = 0;
     m11_refresh_hash(state);
     return 1;
 }
@@ -34576,7 +34582,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         case M12_MENU_INPUT_SPELL_CAST:
             if (state->spellPanelOpen &&
-                ((state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+                (((state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
+                   m11_is_dm1_source_kind(state->sourceKind)) &&
                   state->spellBuffer.runeCount >= 1) ||
                  state->spellBuffer.runeCount >= 2)) {
                 M11_GameView_CastSpell(state);

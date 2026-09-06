@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 keeps its spell controls available after casting. A lone power rune
+  now produces the original meaningless-spell feedback instead of being ignored.
+
 - DM1 now spends mana when selecting each rune, preserves that cost on
   recant or failed casts, and allows paid spells at zero remaining mana.
   The fourth rune wraps the symbol row; a fifth begins a new incantation.
