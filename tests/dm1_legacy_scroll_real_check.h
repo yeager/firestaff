@@ -136,13 +136,24 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         state->inventoryPanelActive = 0;
                         /* CLIKCHAM.C F0368:55-76 transfers only held weight
                          * when the leader changes, then transfers it back. */
+                        for (int pointer = 0; pointer < 2; ++pointer)
                         for (int leader = 1; leader >= 0; --leader) {
-                            (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_CYCLE_CHAMPION);
+                            if (pointer) {
+                                (void)M11_GameView_HandlePointer(state, leader * 69 + 10, 2, 1);
+                                if (state->inventoryPanelActive ||
+                                    state->world.party.activeChampionIndex != leader ||
+                                    state->world.party.champions[0].load != (leader ? 0 : weight) ||
+                                    state->world.party.champions[1].load != otherWeight + (leader ? weight : 0)) return 0;
+                                (void)M11_GameView_HandlePointerButtonRelease(state,
+                                    leader * 69 + 10, 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            } else {
+                                (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_CYCLE_CHAMPION);
+                            }
                             if (state->world.party.activeChampionIndex != leader ||
                                 state->world.party.champions[0].load != (leader ? 0 : weight) ||
                                 state->world.party.champions[1].load != otherWeight + (leader ? weight : 0)) {
-                                fprintf(stderr, "FAIL: leader switch %d loads=%u/%u expected=%d/%d\n",
-                                    leader, state->world.party.champions[0].load,
+                                fprintf(stderr, "FAIL: leader switch %d pointer=%d loads=%u/%u expected=%d/%d\n",
+                                    leader, pointer, state->world.party.champions[0].load,
                                     state->world.party.champions[1].load,
                                     leader ? 0 : weight, otherWeight + (leader ? weight : 0));
                                 return 0;

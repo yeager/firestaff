@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Restored DM1 source-layout name-click leader selection;
+  five original Atari/Amiga tests verify press/release weight ownership.
+
 - 2026-09-06: Fixed delayed DM1 held-weight transfer on leader selection;
   two-way keyboard cycling passes five original Atari/Amiga regressions.
 

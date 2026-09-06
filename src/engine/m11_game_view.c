@@ -36265,6 +36265,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 int hand;
                 if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect) &&
                     dm1_v1_champion_status_name_rect_pc34(slot, &nameRect)) {
+                    /* ReDMCSB CLIKCHAM.C F0367:24-29 routes the name
+                     * to F0368 leader selection, not inventory toggling. */
+                    if (m11_is_dm1_source_kind(state->sourceKind) &&
+                        m11_point_in_rect(x, y, nameRect.x, nameRect.y,
+                                          nameRect.w, nameRect.h)) {
+                        return m11_set_active_champion(state, slot)
+                            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+                    }
                     for (hand = 0; hand < 2; ++hand) {
                         if (dm1_v1_champion_status_hand_rect_pc34(
                                 slot, hand, &handRect) &&

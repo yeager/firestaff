@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed DM1 source-layout champion name clicks opening inventory
+  instead of selecting the leader (CLIKCHAM.C F0367). Five Atari/Amiga
+  original-media regressions now pass two-way mouse selection, checking
+  immediate load transfer on press and stability on release, without
+  opening inventory. Modern composed-HUD geometry remains separate.
+
 - 2026-09-06: Reproduced stale held-object load after keyboard leader
   cycling in all five Atari/Amiga editions. Leader selection now publishes
   a refreshed load/hash immediately, following CLIKCHAM.C F0368. All five

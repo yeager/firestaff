@@ -1,5 +1,8 @@
 # Unreleased
 
+- Clicking a champion name in DM1's original-layout HUD selects the leader
+  rather than unexpectedly opening inventory.
+
 - DM1 now transfers held-object weight immediately when selecting another
   leader, instead of leaving the old leader's displayed load stale.
 
