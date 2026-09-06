@@ -29965,9 +29965,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         return M11_GAME_INPUT_REDRAW;
     }
-    /* No idle gameplay ticks during overlays, completed endgame, or dialog. */
+    /* ReDMCSB GAMELOOP.C:81-128 changes painting for G0423 inventory,
+     * but still applies pending damage and advances G0313 game time.
+     * Keep other games' overlay policy until their loops are verified. */
     if (state->gameWon || state->dialogOverlayActive ||
-        state->mapOverlayActive || state->inventoryPanelActive) {
+        state->mapOverlayActive ||
+        (state->inventoryPanelActive && !m11_is_dm1_source_kind(state->sourceKind))) {
         return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {

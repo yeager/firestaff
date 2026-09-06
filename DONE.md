@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 no longer pauses idle simulation merely because its
+  inventory is open; original-media tick/owner regressions pass.
+
 - 2026-09-06: DM1 removes pending poison events when their champion dies;
   twenty original-media death regressions preserve unrelated queue entries.
 

@@ -359,6 +359,16 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, deathExtra, &extraWeight)) return 0;
                             state->world.party.champions[1].load = (unsigned short)(otherWeight + extraWeight);
                         }
+                        {
+                            uint32_t tickBefore = state->world.gameTick;
+                            (void)M11_GameView_AdvanceIdleTick(state);
+                            if (state->world.gameTick <= tickBefore ||
+                                !state->inventoryPanelActive ||
+                                state->dm1InventoryChampionOrdinal != 2) {
+                                fprintf(stderr, "FAIL: inventory pauses source simulation\n");
+                                return 0;
+                            }
+                        }
                         state->world.party.champions[1].hp.current = 0;
                         unsigned short inheritedHand = THING_NONE;
                         int inheritedWeight = 0;

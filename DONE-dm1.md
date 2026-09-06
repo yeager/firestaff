@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed the DM1 inventory overlay incorrectly stopping idle
+  simulation. GAMELOOP.C:81-128 changes rendering while inventory is open
+  but still applies damage and advances game time. Five original-media
+  cases reproduced the pause; all twenty death-owner regressions now pass
+  with an ordinary idle tick advancing while the owner panel stays open.
+  Other games' overlay policy is unchanged; full damage/timeline and
+  Modern presentation sequences still need broader verification.
+
 - 2026-09-06: Reproduced retained C75 events after death on all five
   Atari/Amiga editions. F0319 now removes the dead champion's poison
   events using stable queue compaction, following F0323. All twenty
