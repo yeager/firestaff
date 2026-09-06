@@ -56,6 +56,12 @@ different living caster's UI and cached input. A final death checks both
 party-dead flags, cleared runes and unchanged caster selection. This is not
 complete timeline, death-screen, revival or emulator-rendering parity.
 
+Controlled C75 events additionally verify death-time cancellation by owner.
+The queue check preserves every unrelated event byte-for-byte and in order,
+including equal-time events, a survivor's poison, another status kind and
+an unrelated event kind carrying the same auxiliary value. These injected
+pending events live only in memory; no original archive is modified.
+
 ```sh
 ctest --test-dir BUILD_DIR --output-on-failure --parallel 2 --no-tests=error \
   -R '^dm1_.*_death_leader[01]_livingcaster[01]_real$'

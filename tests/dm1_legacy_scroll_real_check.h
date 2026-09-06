@@ -394,7 +394,38 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->spellBuffer.runes[0] = 98;
                             state->spellRuneRow = 2;
                         }
+                        /* Real dungeon, controlled pending C75 events in RAM.
+                         * Different owners and event kinds must survive. */
+                        struct TimelineQueue_Compat beforeDeathTimeline;
+                        for (int poisonCase = 0; poisonCase < 5; ++poisonCase) {
+                            struct TimelineEvent_Compat event = {0};
+                            event.kind = poisonCase == 4 ? TIMELINE_EVENT_PLAY_SOUND : TIMELINE_EVENT_STATUS_TIMEOUT;
+                            event.fireAtTick = state->world.gameTick + 100;
+                            event.aux0 = poisonCase == 2 ? LIFECYCLE_STATUS_INVISIBILITY : LIFECYCLE_STATUS_POISON;
+                            event.aux1 = 20;
+                            event.aux4 = poisonCase == 1 ? 0 : 1;
+                            if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &event)) return 0;
+                        }
+                        state->world.lifecycle.champions[1].poisonEventCount = 2;
+                        beforeDeathTimeline = state->world.timeline;
                         M11_GameView_ProbeCheckPartyDeath(state);
+                        {
+                            int retained = 0;
+                            for (int e = 0; e < beforeDeathTimeline.count; ++e) {
+                                const struct TimelineEvent_Compat *event = &beforeDeathTimeline.events[e];
+                                if (event->kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                                    event->aux0 == LIFECYCLE_STATUS_POISON && event->aux4 == 1) continue;
+                                if (retained >= state->world.timeline.count ||
+                                    memcmp(event, &state->world.timeline.events[retained], sizeof(*event))) {
+                                    fprintf(stderr, "FAIL: death poison queue ownership/order\n");
+                                    return 0;
+                                }
+                                ++retained;
+                            }
+                            if (retained != state->world.timeline.count ||
+                                state->world.timeline.nowTick != beforeDeathTimeline.nowTick ||
+                                state->world.lifecycle.champions[1].poisonEventCount != 0) return 0;
+                        }
                         if (state->dm1SpellCasting.magicCasterIndex != 0 ||
                             state->dm1SpellCasting.input[1].symbols[0] != 0 ||
                             state->dm1SpellCasting.input[1].symbolStep != 0 ||

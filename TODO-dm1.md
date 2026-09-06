@@ -1,7 +1,7 @@
 # Firestaff TODO — DM1
 
-- Verify poison-event removal on death against CHAMPION.C F0323:1986-1990;
-  clearing poisonEventCount alone does not establish timeline cancellation.
+- Verify poison-triggered death through actual timeline dispatch and
+  cross-map events; direct death-dispatch cancellation is covered.
 
 - Extend death spell-input coverage to actual timeline dispatch;
   verify final-death UI and redraw against

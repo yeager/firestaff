@@ -19063,6 +19063,27 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     memset(&state->dm1SpellCasting.input[championIndex], 0,
            sizeof(state->dm1SpellCasting.input[championIndex]));
     champion->direction = (unsigned char)(state->world.party.direction & 3);
+    /* ReDMCSB CHAMPION.C F0319:1651-1653 calls F0323:1986-1990:
+     * remove every C75 owned by this champion, not just its counter.
+     * The host queue is sorted/packed; stable compaction preserves all
+     * unrelated event payloads and their equal-time dispatch order. */
+    {
+        struct TimelineQueue_Compat* queue = &state->world.timeline;
+        if (queue->count >= 0 && queue->count <= TIMELINE_QUEUE_CAPACITY) {
+            int readIndex, retained = 0;
+            int oldCount = queue->count;
+            for (readIndex = 0; readIndex < oldCount; ++readIndex) {
+                const struct TimelineEvent_Compat* event = &queue->events[readIndex];
+                if (event->kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                    event->aux0 == LIFECYCLE_STATUS_POISON &&
+                    event->aux4 == championIndex) continue;
+                queue->events[retained++] = *event;
+            }
+            memset(&queue->events[retained], 0,
+                   (size_t)(oldCount - retained) * sizeof(queue->events[0]));
+            queue->count = retained;
+        }
+    }
     state->world.lifecycle.champions[championIndex].poisonEventCount = 0;
     state->championDeathHandledMask |= (unsigned char)(1u << championIndex);
     for (slot = 0; slot < state->world.party.championCount; ++slot) {

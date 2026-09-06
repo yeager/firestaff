@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Reproduced retained C75 events after death on all five
+  Atari/Amiga editions. F0319 now removes the dead champion's poison
+  events using stable queue compaction, following F0323. All twenty
+  death-owner tests pass, checking unrelated payloads and equal-time
+  ordering as well as the cleared poison counter. Pending events are
+  controlled RAM-only fixtures on original game media, not emulator traces.
+
 - 2026-09-06: Registered twenty original-media death tests covering
   independent leader/caster ownership on five Atari/Amiga editions. All
   pass, including preserved living-caster input and final-death spell

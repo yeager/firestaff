@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 cancels pending poison events belonging to a champion who has died.
+
 - DM1 preserves the original magic-caster selection when the whole party
   dies, while clearing pending runes.
 

@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 removes pending poison events when their champion dies;
+  twenty original-media death regressions preserve unrelated queue entries.
+
 - 2026-09-06: DM1 death ownership now has twenty registered original-media
   regressions across five Atari/Amiga editions, including living-caster
   preservation and final-death spell state. All passed locally.
