@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Extended original antivenin tests to require accepted C08
+  swallow transport and no generated-marker fallback for both consumption
+  routes. All twenty Atari/Amiga cases pass; waveform/timing remains unproven.
+
 - 2026-09-06: Rebuilt and reran the broader thirteen-test original-media
   suite after the consumable changes: PC3.4 native boot, six edition launch
   profiles through CLI/menu in v1/v20/v21, and six original object corpora
