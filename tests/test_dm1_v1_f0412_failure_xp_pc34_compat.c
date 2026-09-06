@@ -25,10 +25,10 @@ int main(void)
     memset(&result, 0, sizeof(result));
     world.things = &things;
     world.newPartyMapIndex = -1;
-    world.masterRng.seed = 1; /* First raw low-7 value is 38 > Wisdom+15. */
+    world.masterRng.seed = 1;
     expectedRng = world.masterRng;
     (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng); /* F0412 XP sample. */
-    assert((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) & 127u) > 15u);
+    assert(((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 127u) > 15u);
     world.party.championCount = 1;
     world.party.champions[0].present = 1;
     world.party.champions[0].hp.current = 100;
@@ -115,7 +115,7 @@ int main(void)
             expectedRng.seed = seed;
             (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng);
             for (probe = 0; probe < 9; ++probe)
-                if ((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) & 127u) > 115u)
+                if (((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 127u) > 115u)
                     break;
             if (probe == 8) break;
         }
@@ -144,7 +144,7 @@ int main(void)
             expectedRng.seed = seed;
             (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng);
             for (probe = 0; probe < 9; ++probe)
-                if ((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) & 127u) > 115u)
+                if (((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 127u) > 115u)
                     break;
             if (probe == 9) break;
         }

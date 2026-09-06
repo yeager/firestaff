@@ -13769,7 +13769,7 @@ cmd_attack_legacy_marker:
          * discarded in that case. Do not consume a second sample before
          * :1853's potion power draw. Direct M10 callers keep their draw. */
         spellRngRaw = (input->reserved2 & CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP)
-            ? 0u : F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
+            ? 0u : (F0731_COMBAT_RngNextRaw_Compat(&world->masterRng) >> 8);
         emit(result, EMIT_SOUND_REQUEST, tableIdx,
              world->party.mapX, world->party.mapY, 0);
 
@@ -13826,7 +13826,9 @@ cmd_attack_legacy_marker:
                  probeIndex < needsPracticeProbeCount; ++probeIndex) {
                 uint32_t raw =
                     F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
-                needsPracticeProbes[probeIndex] = (uint8_t)(raw & 0x7Fu);
+                /* BASE.C F0027:1688-1695 returns state >> 8;
+                 * DEFS.H M003 masks that sample, never the raw state. */
+                needsPracticeProbes[probeIndex] = (uint8_t)((raw >> 8) & 0x7Fu);
                 /* MENU.C F0412:1836-1841 returns at the first failed
                  * wisdom probe. Do not consume the remaining level draws. */
                 if (needsPracticeProbes[probeIndex] > needsPracticeThreshold) {

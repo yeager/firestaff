@@ -1480,11 +1480,18 @@ Reviewed 2026-08-29. Completed work only.
   pending the integration and edition-routing work recorded in TODO-dm1.md.
 # F0412 potion practice boundary regression (2026-09-06)
 
+- Corrected M10 F0412 XP/practice samples from raw state to `state >> 8`,
+  matching BASE.C F0027:1688-1695 and DEFS.H M003. The existing multiplier
+  0xBB40E62D is correct for that game routine; CEDT002 is not its replacement.
+  Both focused F0412 tests and all five original DOS C15 integration cases
+  pass after rebuilding their targets. Updated stream expectations retain
+  first/ninth failure, all-nine-pass flask gating, and raw potion mutation.
+
 - Extended the runtime fixture with nine passing practice draws: absent
   flask consumes no potion sample or XP; a C08 flask in hand consumes one
   additional sample and updates decoded and raw potion type/power. Focused
   CTest passes. This verifies current-stream ordering and RAM mutation only;
-  the newly identified raw-versus-shifted RNG discrepancy remains in TODO.
+  original execution trace comparisons remain in TODO.
 
 - Corrected the failure-XP fixture's Wisdom Potion table index from 16
   (Stamina Potion) to 17. Added source-shaped receipt checks for nine

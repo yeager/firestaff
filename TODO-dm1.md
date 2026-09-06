@@ -1,14 +1,10 @@
 # Firestaff TODO — DM1
 
-- Correct and verify F0412 RNG sample extraction across M10/M11. M10
-  currently masks raw LCG state for XP/practice, whereas potion power uses
-  F0732's shifted `(state >> 8)` sample. ReDMCSB DEFS.H M003 and
-  CEDT002.C F0027:143-159 use the returned 16-bit sample, not raw state.
-  Verify the edition's generator as well: CEDT002 uses multiplier 314159,
-  while the shared combat helper uses 0xBB40E62D. Do not globally replace
-  the generator without auditing edition bindings and live consumers.
-  Existing F0412 draw-count regressions pin current stream consumption;
-  they do not establish original RNG values or complete stream parity.
+- Extend F0412 RNG verification to M11's prevalidated XP/gate handoff and
+  original execution traces. M10 XP/practice extraction is now corrected to
+  BASE.C F0027's shifted sample; the shared multiplier matches BASE.C, not
+  the distinct CEDT002 routine. The bounded fixtures and five original DOS
+  media integrations do not establish complete cross-platform stream parity.
 
 - Extend verification of newly allocated fixed drops through F0267's off-square source path.
   GROUP.C F0186:643 passes source X=-1; retain this distinction without relaxing

@@ -5874,3 +5874,5 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 | Windows | x86_64 | ZIP, Installer (EXE) |
 | Linux | x86_64 | DEB, RPM |
 | Linux | ARM64 | DEB, RPM |
+- DM1: correct direct-runtime spell XP and wisdom-check random samples to
+  use the original shifted 16-bit RNG output instead of raw generator state.
