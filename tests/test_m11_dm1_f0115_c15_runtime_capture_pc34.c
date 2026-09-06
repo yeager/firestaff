@@ -322,6 +322,21 @@ int main(int argc, char** argv)
         }
         if (advances > 86) return 1;
     }
+    {
+        int i;
+        /* This fresh-game scenario launches exactly one projectile.
+         * Its retirement must leave both the runtime and original pool
+         * unused; a rendering-only disappearance does not prove cleanup. */
+        if (state.world.projectiles.count != 0) return 1;
+        for (i = 0; i < state.world.things->projectileCount; ++i) {
+            const unsigned char* raw = state.world.things->rawThingData[THING_TYPE_PROJECTILE] + i * 8;
+            if (state.world.things->projectiles[i].next != THING_NONE ||
+                raw[0] != 0xff || raw[1] != 0xff) {
+                fprintf(stderr, "%s leaked original C14 slot %d\n", spell->name, i);
+                return 1;
+            }
+        }
+    }
     if (spell->explosionType == 0 || spell->explosionType == 2) {
         struct ExplosionCreateInput_Compat input;
         struct TickResult_Compat result;

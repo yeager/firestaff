@@ -4,8 +4,8 @@
   consumers; their previous delayed burst remains isolated from the fixed
   source-bound DM1 transaction. Verify packed source/target MapXCombo damage
   coordinates, group kill cleanup and original emulator RNG/damage traces.
-- Extend source C14 retirement verification to GROUP.Slot transfers,
-  thrown-potion consumption, projectile collisions and allocation failures;
+- Extend source C14 retirement verification to original-media GROUP.Slot
+  transfers, thrown-potion consumption, projectile collisions and allocation failures;
   audit all remaining host unlink paths against F0164. Verify complete
   original-emulator flight timing beyond the authentic DOS regression lane.
 

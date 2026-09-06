@@ -7840,7 +7840,9 @@ static int orch_materialize_projectile_associated_thing_compat(
     int mapY;
     int associatedIndex;
 
-    if (!world || !projectile || associatedThingMovedToGroup) return 1;
+    /* F0215:248-260 still frees C14 after Slot transfers to a group.
+     * The receipt suppresses a floor drop, not projectile retirement. */
+    if (!world || !projectile) return 1;
     if (!world->things || !world->dungeon) return 1;
 
     mapIndex = projectile->mapIndex;

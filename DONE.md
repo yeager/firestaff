@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: F0215 no longer skips C14 retirement when a surviving
+  monster retains the thrown weapon in GROUP.Slot. A source-shaped RAM
+  timeline regression proves the dagger has one group owner, the raw and
+  decoded carrier is free, and the launch-square SFT is compacted. The test
+  fails specifically on C14 retirement with the old early return and passes
+  with the fix. Five authentic DOS spell tests now also require the whole
+  fresh C14 pool to be unused after impact. All six tests and the production
+  build pass. This fixture is not an emulator or full gameplay parity claim.
+
 - 2026-09-06: Pending source C48/C49 events now prevent premature M11
   projectile stepping, not just repeat stepping after M10 dispatch. The
   source M10 terminal path unlinks C14 before clearing Next, preserving

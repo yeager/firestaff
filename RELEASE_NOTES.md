@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 frees the projectile carrier when a monster retains a thrown weapon,
+  without dropping or duplicating the retained item.
+
 - Source-backed DM1 projectiles no longer move early in the presentation
   layer. Their removal preserves following explosion records and leaves
   emptied squares usable for subsequent effects and object placement.
