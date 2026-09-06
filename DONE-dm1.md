@@ -1,5 +1,19 @@
 # Firestaff DONE — DM1
 
+- Reordered C32-C36 continuation animation after the visibility decision
+  (GROUP.C F0209:2051-2088,2452-2463). Existing attack updates its selected
+  slot; near nonattack updates the whole group; distant nonattack skips
+  F0179 and uses the fixed cadence. Actual aspect and behavior deadlines
+  reach F0208 separately, and a zero-delay event is no longer discarded.
+  Four-slot runtime checks verify whole-group versus selected scope and
+  exact distant RNG (one F0228 draw, no F0179 draws). I34 type-zero timing
+  verifies +5 animation and 15 remaining ticks from a +20 behavior deadline.
+  All 21 selected tests pass, including five original-DOS-media tests.
+  Earlier nonattack sibling-preservation checks have corrected attack-mode
+  preconditions: they were byte-conversion evidence, not source branch parity.
+  Attack-entry fanout, full transaction rollback and original captures remain
+  outside this completed continuation change.
+
 - Restored I34 AttackTicks=255 admission guards for C31, C32-C36 adjacency,
   and the shared wander/approach range decision (GROUP.C F0209 MEDIA720,
   lines 2009, 2057, 2104, 2240). Fourteen boundary cases cover 254 versus

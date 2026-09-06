@@ -2405,7 +2405,9 @@ int F0810b_DM1_GROUP_PlanReactionApply_Compat(
     out->lastSeenPartyTick = (int)currentTick;
     out->groupBehavior = behavior->newBehavior & 0xFF;
 
-    if (behavior->nextEventDelayTicks > 0 && behavior->nextEventType > 0) {
+    /* GROUP.C F0209 T0209136 permits a behavior deadline of now when
+     * EVENT.C.Ticks is zero. A missing event is represented by type zero. */
+    if (behavior->nextEventDelayTicks >= 0 && behavior->nextEventType > 0) {
         out->shouldScheduleNextEvent = 1;
         out->nextEventFireAtTick =
             currentTick + (uint32_t)behavior->nextEventDelayTicks;

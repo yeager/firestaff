@@ -1,27 +1,19 @@
 # Firestaff TODO — DM1
 
-- Complete the C32-C36 source decision tree around F0179. GROUP.C
-  F0209:2051-2085 resolves visibility/behavior changes before animation and
-  skips non-attacking distant-group aspect mutation; the runtime currently
-  invokes F0179 before the broader behavior resolver. Preserve the source
-  timing/RNG ordering when integrating these branches. Audit C32's lack of
-  an individual slot without reproducing an out-of-bounds Aspect[-1] read.
+- Complete attack entry in the C32-C36 source decision tree. Audit C32's lack
+  of an individual slot without reproducing an out-of-bounds Aspect[-1] read.
   F0179 also lacks Couatl movement and Animated Armour ongoing-attack sound
   requests (GROUP.C:242, 270-280); implement edition-specific sound mapping
   and prioritized dispatch, not an unconditional generic audio effect.
-  Integration requirements from the source audit:
-  - Near nonattacking C33-C36 updates the whole group via T0209135, not just
-    the selected slot. Existing nonattack slot-preservation regressions prove
-    byte conversion only and must not be treated as source behavior parity.
-  - Pass the actual F0179 deadline to F0208; it is currently discarded for
-    C32-C36. The behavior deadline is now+eventTicks, including zero, while
-    PlanReactionApply currently requires a positive delay.
+  Remaining integration requirements:
   - Attack entry must fan out descending C38-C41 slots with source F0205
     directions, delay RNG, F0179(false), and F0208 scheduling. The current
     adjacent transition produces no continuation and must not be replaced
     with an immediate F0207 attack. Rollback must cover the whole fanout.
-  - Approach entry uses now+1 plus incoming eventTicks and a whole-group
-    aspect update. Preserve off-map handling and the separate priority gap.
+  - Obtain original traces for approach entry and zero-tick chained dispatch.
+    Preserve off-map handling and the separate priority gap. Consolidate the
+    pure behavior helper's inferred cadence with the source deadline now
+    resolved by M10, so standalone decisions cannot imply different timing.
 
 - Deferred savegame regression: `dm1_v1_g0377_active_group_count_pc34_compat`
   passes F0196 initialization and F0195 live-count admission, then fails

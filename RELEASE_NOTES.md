@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 distinguishes whole-group idle animation from individual attack
+  animation, skips distant idle animation work, and preserves separate
+  animation/behavior deadlines instead of replacing their timing.
+
 - DM1 respects the original disabled-attack timing marker when deciding
   whether adjacent or visible creatures should enter attack behavior.
 

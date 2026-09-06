@@ -1804,8 +1804,10 @@ static void test_reaction_apply_plan_no_event_and_wander_default(void) {
               1, "reaction_apply_no_event: helper succeeds");
     EXPECT_EQ(plan.newAiStateKind, 201,
               "reaction_apply_no_event: unknown behavior maps to wander");
-    EXPECT_EQ(plan.shouldScheduleNextEvent, 0,
-              "reaction_apply_no_event: zero delay suppresses schedule");
+    EXPECT_EQ(plan.shouldScheduleNextEvent, 1,
+              "reaction_apply_now: zero delay retains source event");
+    EXPECT_EQ((int)plan.nextEventFireAtTick, 99,
+              "reaction_apply_now: zero delay schedules at current tick");
 
     behavior.nextEventDelayTicks = 5;
     behavior.nextEventType = 0;

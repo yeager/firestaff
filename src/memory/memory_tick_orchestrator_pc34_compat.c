@@ -12542,8 +12542,9 @@ static int orch_f0209_authenticate_reaction_source_compat(
 
 /* ReDMCSB GROUP.C F0208 prepares EVENT.Map_Time/C.Ticks and TIMELINE.C
  * F0238 inserts that exact event. A C38-C41 dispatch passes its already
- * applied F0179 timestamp for the delayed C33-C36 handoff; C32-C36 retain
- * their F0209 decision time. Queue failure restores the source aspect state. */
+ * applied F0179 timestamp for the delayed C33-C36 handoff; C32-C36 pass
+ * their separately resolved aspect deadline. Queue failure restores the
+ * state captured at insertion entry, not the whole F0209 transaction. */
 static int orch_f0209_insert_next_event_f0238_compat(
     struct GameWorld_Compat* world,
     const struct DM1BehaviorReactionApplyPlan_Compat* applyPlan,
@@ -12948,31 +12949,6 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.eventType = ev->aux2;
     ctx.eventTicks = (ev->aux4 & 0x100) ? ev->aux3 : (int)ev->fireAtTick;
 
-    /* ReDMCSB GROUP.C F0209:2051-2075 routes C32-C36 through F0179 before
-     * it resolves behavior. C32 carries the group-wide update (-1), while
-     * C33-C36 select one C04 creature slot. The C04 and ACTIVE_GROUP
-     * receipts above are already authenticated, so this updates only
-     * source-backed aspect state and never creates an event of its own. */
-    if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP &&
-        ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3) {
-        DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
-        int creatureIndex = ev->aux2 == DM1_EVENT_UPDATE_ASPECT_GROUP
-            ? -1
-            : ev->aux2 - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
-
-        if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
-                &activeGroup, group, &ctx.creatureInfo, creatureIndex,
-                /* GROUP.C F0209:2070-2073 preserves the selected
-                 * creature's ongoing attack animation in attack behavior.
-                 * C32 has no selected slot; never index Aspect[-1]. */
-                creatureIndex >= 0 && group->behavior == DM1_BEHAVIOR_ATTACK
-                    && (activeGroup.aspect[creatureIndex] & 0x80),
-                world->gameTick, &world->masterRng, &aspectReceipt) ||
-            !aspectReceipt.valid) {
-            return 0;
-        }
-    }
-
     cellsBeforeBehavior = activeGroup.cells;
     creatureCountBeforeBehavior = (int)group->count;
 
@@ -13035,6 +13011,40 @@ static int orch_handle_creature_reaction_event_compat(
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return 0;
+    }
+
+    /* GROUP.C F0209:2051-2088,2452-2463: visibility transitions precede
+     * animation. Attack entry owns a separate per-creature fanout; this
+     * continuation handles existing attack and nonattack aspect updates. */
+    if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP &&
+        ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3 &&
+        !(behavior.newBehavior == DM1_BEHAVIOR_ATTACK &&
+          ctx.groupBehavior != DM1_BEHAVIOR_ATTACK)) {
+        int attacking = behavior.newBehavior == DM1_BEHAVIOR_ATTACK;
+        int approachEntry = behavior.newBehavior == DM1_BEHAVIOR_APPROACH &&
+            ctx.groupBehavior != DM1_BEHAVIOR_APPROACH;
+        int dx = abs(ctx.currentGroupMapX - ctx.partyMapX);
+        int dy = abs(ctx.currentGroupMapY - ctx.partyMapY);
+        if (!attacking && !approachEntry && (dx > 3 || dy > 3)) {
+            f0179UpdateTime = world->gameTick +
+                DM1_NON_ATTACK_ASPECT_TICKS(ctx.creatureInfo.animationTicks);
+        } else {
+            DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
+            /* T0209135 updates the whole nonattacking group, including
+             * C33-C36. Never reproduce the original C32 Aspect[-1] read. */
+            int creatureIndex = attacking && ev->aux2 != DM1_EVENT_UPDATE_ASPECT_GROUP
+                ? ev->aux2 - DM1_EVENT_UPDATE_ASPECT_CREATURE_0 : -1;
+            if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+                    &activeGroup, group, &ctx.creatureInfo, creatureIndex,
+                    attacking && creatureIndex >= 0 &&
+                        (activeGroup.aspect[creatureIndex] & 0x80),
+                    world->gameTick, &world->masterRng, &aspectReceipt) ||
+                !aspectReceipt.valid) return 0;
+            f0179UpdateTime = aspectReceipt.next_update_time;
+        }
+        behavior.nextEventType = approachEntry ? DM1_EVENT_UPDATE_BEHAVIOR_GROUP
+            : ev->aux2 + 5;
+        behavior.nextEventDelayTicks = ctx.eventTicks + (approachEntry ? 1 : 0);
     }
 
     /* GROUP.C F0209 calls F0182 whenever this source decision abandons an

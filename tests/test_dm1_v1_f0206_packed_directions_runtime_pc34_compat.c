@@ -1383,11 +1383,35 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                            world.things->rawThingData[THING_TYPE_GROUP]);
     memcpy(world.creatureAI[0].aspect, siblings, sizeof(siblings));
     world.creatureAI[0].aspect[slot] = 0xff;
-    if (frozen == 4) {
-        world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
-        world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    {
+        /* Selected-slot updates belong to existing attack behavior.
+         * Nonattack modes exercise the source whole-group/distant paths. */
+        world.things->groups[0].behavior = frozen >= 5
+            ? DM1_BEHAVIOR_FLEE : DM1_BEHAVIOR_ATTACK;
+        world.creatureAI[0].stateKind = frozen >= 5 ? AI_STATE_FLEE : AI_STATE_ATTACK;
         authenticate_group_c04(world.things, &world.things->groups[0],
                                world.things->rawThingData[THING_TYPE_GROUP]);
+    }
+    if (frozen == 6) {
+        unsigned char* squares = calloc(21, 1);
+        unsigned short* columns = calloc(7, sizeof(*columns));
+        if (!squares || !columns) {
+            free(squares); free(columns);
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+        for (i = 0; i < 21; ++i) squares[i] = DUNGEON_ELEMENT_CORRIDOR << 5;
+        squares[4] |= DUNGEON_SQUARE_MASK_THING_LIST;
+        for (i = 2; i < 7; ++i) columns[i] = 1;
+        free(world.dungeon->tiles[0].squareData);
+        free(world.dungeon->columnsCumulativeSquareFirstThingCount);
+        world.dungeon->tiles[0].squareData = squares;
+        world.dungeon->tiles[0].squareCount = 21;
+        world.dungeon->columnsCumulativeSquareFirstThingCount = columns;
+        world.dungeon->dungeonColumnCount = 7;
+        world.dungeon->maps[0].width = 7;
+        world.party.mapX = 5;
+        world.party.mapY = 1;
     }
     world.freezeLifeTicks = (frozen > 0 && frozen < 4) ? 8 : 0;
     world.gameWon = frozen == 3;
@@ -1401,6 +1425,7 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
     event.aux2 = eventType;
     event.aux1 = world.things->groups[0].creatureType;
     event.aux4 = 0x100;
+    event.aux3 = 20; /* Keep behavior dispatch outside this single-tick check. */
     /* Nonzero source timing fields must survive the GROUP.C F0209
      * Freeze Life retry (1962-1968), not merely zero-initialized payloads. */
     if (frozen == 1) {
@@ -1428,6 +1453,22 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                      world.timeline.events[0].aux3 == event.aux3 &&
                      world.timeline.events[0].aux4 == event.aux4,
                      "Freeze Life retains event type and source ticks on four-tick retry");
+    } else if (frozen == 6) {
+        struct RngState_Compat expectedRng;
+        F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
+        /* F0228 still chooses the secondary direction for this same-row
+         * party; only the subsequent F0179 draws are suppressed. */
+        (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536);
+        ok &= expect(world.creatureAI[0].aspect[slot] == 0xff &&
+                     world.masterRng.seed == expectedRng.seed,
+                     "distant nonattack group skips F0179 and its RNG draws");
+        /* I34 type zero AnimationTicks=0x0254: nonattack cadence five.
+         * F0208 promotes the earlier aspect and retains 20-5 ticks. */
+        ok &= expect(world.timeline.count == 1 &&
+                     world.timeline.events[0].fireAtTick == world.gameTick + 5u &&
+                     world.timeline.events[0].aux2 == eventType &&
+                     world.timeline.events[0].aux3 == 15,
+                     "distant cadence and deferred behavior deadline reach F0208");
     } else {
         if (frozen == 4)
             ok &= expect((world.creatureAI[0].aspect[slot] & 0x80) != 0,
@@ -1437,11 +1478,21 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
         if (frozen == 2)
             ok &= expect(world.masterRng.seed != seedBefore,
                          "Lord Chaos remains immune to Freeze Life");
+        if (frozen == 5)
+            ok &= expect(world.timeline.count == 1 &&
+                         world.timeline.events[0].aux2 == eventType &&
+                         world.timeline.events[0].fireAtTick >= world.gameTick + 5u &&
+                         world.timeline.events[0].fireAtTick <= world.gameTick + 6u &&
+                         world.timeline.events[0].fireAtTick +
+                             world.timeline.events[0].aux3 == world.gameTick + 20u,
+                         "whole-group F0179 deadline preserves deferred behavior time");
     }
     for (i = 0; i < 4; ++i) {
         if (i != slot)
-            ok &= expect(world.creatureAI[0].aspect[i] == siblings[i],
-                         "C33-C36 writeback preserves sibling aspect bytes");
+            ok &= expect(frozen == 5
+                             ? world.creatureAI[0].aspect[i] != siblings[i]
+                             : world.creatureAI[0].aspect[i] == siblings[i],
+                         "aspect update follows source selected versus whole-group scope");
     }
     F0883_WORLD_Free_Compat(&world);
     return ok ? 0 : 1;
@@ -1456,7 +1507,9 @@ int main(void)
             test_timed_aspect_and_freeze_gate(slot, 1, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 2, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 3, 33 + slot) != 0 ||
-            test_timed_aspect_and_freeze_gate(slot, 4, 33 + slot) != 0) return 1;
+            test_timed_aspect_and_freeze_gate(slot, 4, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 5, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 6, 33 + slot) != 0) return 1;
     for (eventType = 32; eventType <= 41; ++eventType) {
         if (eventType >= 33 && eventType <= 36) continue;
         if (test_timed_aspect_and_freeze_gate(0, 1, eventType) != 0) return 1;
