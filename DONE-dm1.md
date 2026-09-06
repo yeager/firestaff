@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Extended original-flask spell/consumption coverage to MON
+  and EE at all six power runes: 240 creation/consumption sequences across
+  twenty Atari/Amiga cases pass. Checks include raw subtype conversion,
+  stamina clamp, EE over-maximum diminishing gains and the 900 mana bound
+  before reduction. Formula checks use runtime-generated potion power;
+  independent RNG/power provenance remains open.
+
 - 2026-09-06: Created MON through OpenSpellPanel/EnterRune/CastSpell (Lo Ya)
   in an original flask, then consumed it through mouth input. Twenty
   Atari/Amiga cases pass subtype creation, source-derived stamina recovery,

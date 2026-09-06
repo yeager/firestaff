@@ -1,8 +1,8 @@
 # Firestaff TODO — DM1
 
-- Extend spell-created restorative potion evidence to EE and multiple power
-  levels, with full rune mouse input and independent RNG/XP receipts. MON
-  creation/consumption now has original-flask API-route coverage.
+- Extend spell-created restorative potion evidence with full rune mouse
+  input and independent RNG/XP receipts. MON/EE at all six power runes
+  now have original-flask API-route creation/consumption coverage.
 
 - Fix food command timing: defer swallow until all four source mouth delays
   complete, including release/input lifecycle and simulation ordering. See
