@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Added four seeded mixed-direction C37 attack-entry regressions. A bounded
+  I34 type-zero fixture starts one creature facing the party and three
+  opposite. Independent source-ordered RNG accounting checks packed turns,
+  each behavior deadline and remaining aspect ticks (GROUP.C:2114-2128).
+  The packed-direction runtime target passes all four seeds. This extends
+  already-facing coverage; it is not emulator evidence or half-square pair
+  synchronization verification.
+
 - Rechecked the rebuilt public executable (runtime 537ca520c) against
   authentic Atari ST nested ZIP/STX, Amiga nested ZIP/ADF and FM Towns
   Japanese/English archives. All three CLI/menu/input scripts pass without

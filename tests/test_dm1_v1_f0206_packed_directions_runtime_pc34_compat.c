@@ -1392,12 +1392,12 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
         authenticate_group_c04(world.things, &world.things->groups[0],
                                world.things->rawThingData[THING_TYPE_GROUP]);
     }
-    if (frozen == 7 || frozen == 8) {
+    if (frozen == 7 || frozen == 8 || frozen == 9) {
         world.things->groups[0].behavior = DM1_BEHAVIOR_WANDER;
         world.things->groups[0].direction = 2;
         world.creatureAI[0].stateKind = AI_STATE_WANDER;
         world.creatureAI[0].groupDirection = 2;
-        world.pc34ActiveGroupDirections[0] = 0xaa;
+        world.pc34ActiveGroupDirections[0] = frozen == 9 ? 0x02 : 0xaa;
         authenticate_group_c04(world.things, &world.things->groups[0],
                                world.things->rawThingData[THING_TYPE_GROUP]);
     }
@@ -1424,6 +1424,7 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
     }
     world.freezeLifeTicks = (frozen > 0 && frozen < 4) ? 8 : 0;
     world.gameWon = frozen == 3;
+    if (frozen == 9) F0730_COMBAT_RngInit_Compat(&world.masterRng, (uint32_t)slot + 1u);
     seedBefore = world.masterRng.seed;
     memcpy(aiBefore, &world.creatureAI[0], sizeof(aiBefore));
     memcpy(groupBefore, &world.things->groups[0], sizeof(groupBefore));
@@ -1490,6 +1491,39 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                      world.timeline.events[0].aux3 == event.aux3 &&
                      world.timeline.events[0].aux4 == event.aux4,
                      "Freeze Life retains event type and source ticks on four-tick retry");
+    } else if (frozen == 9) {
+        struct RngState_Compat expected;
+        unsigned directions = 0x02;
+        unsigned delay[4], aspectDelay[4];
+        int j;
+        F0730_COMBAT_RngInit_Compat(&expected, seedBefore);
+        (void)F0732_COMBAT_RngRandom_Compat(&expected, 65536); /* F0228 */
+        /* GROUP.C:2114-2128, F0205: opposite-facing slots turn sideways.
+         * I34 type zero F0179 draws four offsets, flip and cadence. */
+        for (i = 3; i >= 0; --i) {
+            delay[i] = 1;
+            if (((directions >> (i * 2)) & 3) != 2 &&
+                !(i && F0732_COMBAT_RngRandom_Compat(&expected, 2))) {
+                unsigned dir = ((F0732_COMBAT_RngRandom_Compat(&expected, 65536) & 2) + 3) & 3;
+                directions = (directions & ~(3u << (i * 2))) | (dir << (i * 2));
+                delay[i] = F0732_COMBAT_RngRandom_Compat(&expected, 4) + 2;
+            }
+            for (j = 0; j < 5; ++j)
+                (void)F0732_COMBAT_RngRandom_Compat(&expected, 65536);
+            aspectDelay[i] = 5 + F0732_COMBAT_RngRandom_Compat(&expected, 2);
+        }
+        ok &= expect(world.timeline.count == 4 &&
+                     world.pc34ActiveGroupDirections[0] == directions &&
+                     world.masterRng.seed == expected.seed,
+                     "C37 mixed directions retain source turn order and exact RNG");
+        for (j = 0; j < world.timeline.count; ++j) {
+            int index = world.timeline.events[j].aux2 - 38;
+            ok &= expect(index >= 0 && index < 4, "turning C37 retains behavior event family");
+            if (index >= 0 && index < 4)
+                ok &= expect(world.timeline.events[j].fireAtTick == world.gameTick + delay[index] &&
+                             world.timeline.events[j].aux3 == (int)(aspectDelay[index] - delay[index]),
+                             "turning C37 retains per-slot turn and aspect deadlines");
+        }
     } else if (frozen == 7) {
         unsigned mask = 0;
         struct RngState_Compat expectedRng;
@@ -1552,7 +1586,7 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
     }
     for (i = 0; i < 4; ++i) {
         if (i != slot)
-            ok &= expect(frozen == 5 || frozen == 7
+            ok &= expect(frozen == 5 || frozen == 7 || frozen == 9
                              ? world.creatureAI[0].aspect[i] != siblings[i]
                              : world.creatureAI[0].aspect[i] == siblings[i],
                          "aspect update follows source selected versus whole-group scope");
@@ -1565,6 +1599,8 @@ int main(void)
 {
     int slot;
     int eventType;
+    for (slot = 0; slot < 4; ++slot)
+        if (test_timed_aspect_and_freeze_gate(slot, 9, 37) != 0) return 1;
     if (test_timed_aspect_and_freeze_gate(0, 7, 31) != 0 ||
         test_timed_aspect_and_freeze_gate(0, 7, 32) != 0 ||
         test_timed_aspect_and_freeze_gate(0, 7, 37) != 0 ||
