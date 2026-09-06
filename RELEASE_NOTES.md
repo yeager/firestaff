@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 rotating thrown weapons select and mirror their original projectile
+  graphics using map parity, camera-relative cells and view lane, correcting
+  front/back bitmap selection and horizontal/vertical orientation.
+
 - DM1 projectile placement and view-cell ordering now follow camera rotation
   instead of using absolute dungeon cells. Original, V2.0 and V2.1 share
   the corrected source-coordinate handoff.

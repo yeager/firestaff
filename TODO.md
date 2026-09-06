@@ -3,16 +3,14 @@
 - Bind the legacy M11 C15 runtime-capture regression to available original
   archives and report missing media as CTest skip, not exit-zero success.
 
-- Correct projectile-art weapon orientation against DUNVIEW.C F0115:
-  perpendicular type-0 horizontal flip uses view cells 0/3 (:5755), parallel
-  vertical flip uses view cell < 2 (:5791), SIDE uses view lane/cell and
-  parallel type-0 bitmap selection also depends on map parity. Existing
-  direction-only helpers do not model all these inputs. Add authentic
-  projectile-art orientation coverage; object-art evidence is not a substitute.
+- Extend the complete projectile-orientation query to CSB's live material
+  owner with original edition-specific weapon aspects and view lanes;
+  its legacy sprite query still uses subtype and direction-only bitmap
+  selection. Verify all authentic projectile-art families, side/deep lanes,
+  both map parities and kinetic-energy scaling through full runtime captures.
 
 - Extend DM1 thrown-object capture coverage to the separate Hall of Champions
-  renderer, all visible flight cells, direction-specific projectile-art
-  variants and natural-play emulator comparisons.
+  renderer, all visible flight cells and natural-play emulator comparisons.
   The DOS PC34 D0C real-media regression uses a RAM-configured party/camera
   and mastery threshold; it does not establish complete flight/render parity.
 

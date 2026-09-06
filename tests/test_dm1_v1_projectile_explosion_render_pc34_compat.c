@@ -895,6 +895,81 @@ static void test_projectile_sprite_blit_plan(void) {
 
 /* ── Test: Flip flags basic sanity ───────────────────────────────── */
 
+static void test_projectile_orientation_source_contract(void) {
+    /* Independent literal oracle for ReDMCSB DUNVIEW.C F0115:5730-5805.
+     * Cells are view-relative (0=front-left, 3=back-left); MEDIA720's
+     * signed view lanes include the two outer lanes. Do not derive this
+     * oracle from the production aspect/bitmap/flip query helpers. */
+    static const int first[14] = {
+        454,457,460,463,465,468,471,474,477,480,482,483,484,485
+    };
+    static const int type[14] = {1,1,0,2,1,0,0,1,1,2,3,3,3,3};
+    static const int delta[4][2][4] = {
+        {{1,2,1,2}, {0,2,0,2}},
+        {{1,2,0,2}, {1,2,0,2}},
+        {{0,1,0,1}, {0,1,0,1}},
+        {{0,0,0,0}, {0,0,0,0}}
+    };
+    static const int perpendicularType0[2][4] = {
+        {0,1,1,0}, {3,2,2,3}
+    };
+    static const int parallelType0[4] = {2,2,0,0};
+    static const int parallelSide[5][4] = {
+        {1,1,1,1}, {1,1,1,1}, {1,0,0,1}, {0,0,0,0}, {0,0,0,0}
+    };
+    int a, parity, d, c, lane;
+    printf("  full F0115 projectile orientation truth table...\n");
+    for (a = 0; a < 14; ++a) for (parity = 0; parity < 2; ++parity)
+    for (d = 0; d < 4; ++d) for (c = 0; c < 4; ++c)
+    for (lane = -2; lane <= 2; ++lane) {
+        int gfx = -101, flags = -102, expectedFlags = 0;
+        char label[112];
+        if (type[a] != 3) {
+            if (d == 1 || d == 3) {
+                expectedFlags = type[a] == 0
+                    ? perpendicularType0[parity][c] : (d == 1 ? 1 : 0);
+            } else {
+                expectedFlags = parallelSide[lane + 2][c];
+                if (type[a] == 0) expectedFlags |= parallelType0[c];
+            }
+        }
+        snprintf(label, sizeof(label), "orientation aspect=%d parity=%d dir=%d cell=%d lane=%d",
+                 a, parity, d, c, lane);
+        ASSERT_EQ(dm1_v1_projectile_orientation_pc34(a, d, c, lane,
+                      10, 8 + parity, &gfx, &flags), 1, label);
+        ASSERT_EQ(gfx, first[a] + delta[type[a]][parity][d], label);
+        ASSERT_EQ(flags, expectedFlags, label);
+        if (lane == 0) {
+            ASSERT_EQ(dm1_v1_projectile_flip_flags(a, d, c, 10, 8 + parity),
+                      expectedFlags, "legacy center-lane flip shares source result");
+        }
+    }
+    {
+        static const int bad[8][4] = {
+            {-1,0,0,0}, {14,0,0,0}, {2,-1,0,0}, {2,4,0,0},
+            {2,0,-1,0}, {2,0,4,0}, {2,0,0,-3}, {2,0,0,3}
+        };
+        int i, gfx, flags;
+        for (i = 0; i < 8; ++i) {
+            gfx = 123; flags = 456;
+            ASSERT_EQ(dm1_v1_projectile_orientation_pc34(bad[i][0], bad[i][1],
+                          bad[i][2], bad[i][3], 10, 8, &gfx, &flags),
+                      0, "invalid orientation input rejected");
+            ASSERT_EQ(gfx, 123, "invalid input preserves graphic output");
+            ASSERT_EQ(flags, 456, "invalid input preserves flip output");
+        }
+        gfx = 123; flags = 456;
+        ASSERT_EQ(dm1_v1_projectile_orientation_pc34(2, 0, 0, 0, 10, 8,
+                      NULL, &flags), 0, "null graphic output rejected");
+        ASSERT_EQ(flags, 456, "null graphic output preserves flips");
+        ASSERT_EQ(dm1_v1_projectile_orientation_pc34(2, 0, 0, 0, 10, 8,
+                      &gfx, NULL), 0, "null flip output rejected");
+        ASSERT_EQ(gfx, 123, "null flip output preserves graphic");
+        ASSERT_EQ(dm1_v1_projectile_orientation_pc34(2, 0, 0, 0, 10, 8,
+                      NULL, NULL), 0, "both null outputs rejected");
+    }
+}
+
 static void test_projectile_flip_flags(void) {
     printf("  projectile flip flags...\n");
     /* Type 3 (fireball etc): no flipping ever */
@@ -1687,6 +1762,7 @@ int main(void) {
     test_f0144_raw_group_attributes();
     test_projectile_sprite_blit_plan();
     test_projectile_flip_flags();
+    test_projectile_orientation_source_contract();
     test_explosion_type_to_aspect();
     test_explosion_aspect_to_graphic();
     test_explosion_size_class();

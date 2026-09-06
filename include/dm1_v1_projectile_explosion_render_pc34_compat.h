@@ -157,6 +157,13 @@ extern const unsigned char DM1_ExplosionBaseScales[4];
 int dm1_v1_projectile_aspect_type(int aspectIndex);
 int dm1_v1_projectile_aspect_first_native(int aspectIndex);
 unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex);
+/* Complete MEDIA720 F0115 orientation. Cells/directions are camera-relative;
+ * viewLane is -2..2. Invalid arguments leave both outputs untouched. */
+int dm1_v1_projectile_orientation_pc34(int aspectIndex, int relativeDir,
+    int relativeCell, int viewLane, int mapX, int mapY,
+    int *outGraphicIndex, int *outFlipFlags);
+/* Direction-only queries describe the even-map-parity bitmap; live drawing
+ * must use the complete orientation query above. */
 int dm1_v1_projectile_graphic_index(int aspectIndex, int relativeDir);
 int dm1_v1_projectile_subtype_graphic_index(int subtype);
 int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir);
@@ -212,6 +219,7 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
     int viewportH,
     int spriteW,
     int spriteH);
+/* Compatibility query for the center lane; live side lanes use orientation. */
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY);
 int dm1_v1_projectile_scale_units(int depthIndex, int relativeCell);

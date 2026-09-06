@@ -36,15 +36,15 @@ const unsigned char DM1_ProjectileScales[7] = {32, 27, 21, 18, 14, 12, 9};
  *
  * Cross-checked against m11_game_view.c kFirstNative[14] and kGraphicInfo[14]. */
 const DM1_ProjectileAspect DM1_ProjectileAspects[DM1_PROJECTILE_ASPECT_COUNT] = {
-    { 0, 0, 0x0011}, /*  0: Arrow/dart/shuriken — type0, SIDE */
-    { 3, 0, 0x0011}, /*  1: Sword/axe/club      — type0, SIDE */
-    { 6, 0, 0x0010}, /*  2: Dagger              — type0, no-SIDE? (SIDE=0x0010 set) */
+    { 0, 0, 0x0011}, /*  0: type1, SIDE */
+    { 3, 0, 0x0011}, /*  1: type1, SIDE */
+    { 6, 0, 0x0010}, /*  2: type0, SIDE */
     { 9, 0, 0x0112}, /*  3: Lightning bolt      — type2, SCALE_KE */
-    {11, 0, 0x0011}, /*  4: weapon #1           — type0, SIDE */
+    {11, 0, 0x0011}, /*  4: weapon #1           — type1, SIDE */
     {14, 0, 0x0010}, /*  5: weapon #2           — type0, SIDE=0x0010 */
     {17, 0, 0x0010}, /*  6: weapon #3           — type0 */
-    {20, 0, 0x0011}, /*  7: weapon #4           — type0, SIDE */
-    {23, 0, 0x0011}, /*  8: weapon #5           — type0, SIDE */
+    {20, 0, 0x0011}, /*  7: weapon #4           — type1, SIDE */
+    {23, 0, 0x0011}, /*  8: weapon #5           — type1, SIDE */
     {26, 0, 0x0012}, /*  9: weapon #6           — type2 */
     {28, 0, 0x0103}, /* 10: Fireball            — type3, SCALE_KE */
     {29, 0, 0x0103}, /* 11: Default spell       — type3, SCALE_KE */
@@ -77,7 +77,46 @@ unsigned int dm1_v1_projectile_aspect_graphic_info(int aspectIndex) {
     return (unsigned int)DM1_ProjectileAspects[aspectIndex].graphicInfo;
 }
 
-/* DUNVIEW.C:5746-5786, L0183_i_ProjectileBitmapIndexDelta. */
+int dm1_v1_projectile_orientation_pc34(int aspectIndex, int relativeDir,
+    int relativeCell, int viewLane, int mapX, int mapY,
+    int *outGraphicIndex, int *outFlipFlags)
+{
+    unsigned int info;
+    int type, delta = 0, flags = 0;
+    /* ReDMCSB DUNVIEW.C F0115:5731-5805, MEDIA720. Bitmap selection
+     * and flips share the same map parity, view cell and view lane. */
+    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT ||
+        relativeDir < 0 || relativeDir > 3 || relativeCell < 0 ||
+        relativeCell > 3 || viewLane < -2 || viewLane > 2 ||
+        !outGraphicIndex || !outFlipFlags) return 0;
+    info = DM1_ProjectileAspects[aspectIndex].graphicInfo;
+    type = info & 3u;
+    if (type != 3) {
+        /* XOR of low bits equals source sum parity without signed overflow. */
+        int odd = ((unsigned int)mapX ^ (unsigned int)mapY) & 1u;
+        if (relativeDir & 1) {
+            delta = type == 2 ? 1 : 2;
+            if (type == 0) {
+                flags = (relativeCell == 0 || relativeCell == 3) ? 1 : 0;
+                if (odd) flags |= 2;
+                else flags ^= 1;
+            } else if (relativeDir == 1) flags = 1;
+        } else {
+            delta = (type >= 2 || (type == 1 && relativeDir != 0) ||
+                     (type == 0 && odd)) ? 0 : 1;
+            if (type == 0 && relativeCell < 2) flags |= 2;
+            if ((info & 0x0010u) &&
+                !(viewLane >= 1 || (viewLane == 0 &&
+                    (relativeCell == 1 || relativeCell == 2)))) flags |= 1;
+        }
+    }
+    *outGraphicIndex = DM1_GFX_FIRST_PROJECTILE +
+        DM1_ProjectileAspects[aspectIndex].firstNativeBitmapRelativeIndex + delta;
+    *outFlipFlags = flags;
+    return 1;
+}
+
+/* DUNVIEW.C:5746-5786, even-map-parity query without live lane inputs. */
 int dm1_v1_projectile_bitmap_delta(int aspectIndex, int relativeDir) {
     int aspectType;
     if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0;
@@ -311,40 +350,13 @@ int dm1_v1_thrown_object_projectile_blit_plan_pc34(
  * bit0 = horizontal, bit1 = vertical. */
 int dm1_v1_projectile_flip_flags(int aspectIndex, int relativeDir,
                                  int relativeCell, int mapX, int mapY) {
-    unsigned int info;
-    int aspectType;
+    int graphic;
     int flags = 0;
-    if (aspectIndex < 0 || aspectIndex >= DM1_PROJECTILE_ASPECT_COUNT) return 0;
-    info = (unsigned int)DM1_ProjectileAspects[aspectIndex].graphicInfo;
-    aspectType = (int)(info & 0x0003u);
     if (relativeDir < 0) relativeDir = 0;
     relativeDir &= 3;
-
-    /* Type 3 (no back, no rotation): no flipping ever. */
-    if (aspectType == 3) return 0;
-
-    /* Type 0 (has back + rotation) */
-    if (aspectType == 0) {
-        int parityVertical = ((mapX + mapY) & 1) ? 1 : 0;
-        if (relativeDir == 1 || relativeDir == 3) {
-            /* Perpendicular: flip based on sub-cell and parity. */
-            if (relativeCell == 0 || relativeCell == 2) flags |= 0x01;
-            if (parityVertical) flags |= 0x02;
-            else flags ^= 0x01;
-        } else {
-            /* Parallel: vertical flip based on parity + back row. */
-            if (parityVertical && relativeCell < 2) flags |= 0x02;
-        }
-    } else if (relativeDir == 1) {
-        /* Type 1/2: horizontal flip when flying right. */
-        flags |= 0x01;
-    }
-
-    /* SIDE flag: horizontal flip when flying left. */
-    if ((info & 0x0010u) && relativeDir == 3) {
-        flags |= 0x01;
-    }
-
+    /* Legacy callers have no lane parameter and therefore mean center. */
+    (void)dm1_v1_projectile_orientation_pc34(aspectIndex, relativeDir,
+        relativeCell, 0, mapX, mapY, &graphic, &flags);
     return flags;
 }
 

@@ -37662,13 +37662,21 @@ static int m11_admit_live_object_projectile(const void* owner,
     const M11_GameViewState* state = (const M11_GameViewState*)owner;
     DM1_ProjectileMaterialResolutionPc34 material;
     const M11_AssetSlot* slot;
-    int type, subtype, ordinal;
+    int type, subtype, ordinal, flags;
     if (!state || !projectile || !state->assetsAvailable ||
         !m11_is_dm1_source_kind(state->sourceKind) ||
         !m11_projectile_associated_thing_material(state,
             (unsigned short)projectile->reserved1, &type, &subtype, &ordinal) ||
         !dm1_v1_projectile_material_resolve_pc34(projectile->projectileSubtype,
             type, subtype, ordinal, &material) || !material.valid) return 0;
+    /* Lane affects flips only, not bitmap identity. Admission checks the
+     * actual directional/parity bitmap; the draw owner supplies its lane. */
+    if (!material.uses_object_aspect &&
+        !dm1_v1_projectile_orientation_pc34(material.aspect_index,
+            (projectile->direction - state->world.party.direction) & 3,
+            (projectile->cell - state->world.party.direction) & 3,
+            0, projectile->mapX, projectile->mapY, &material.graphic_index,
+            &flags)) return 0;
     /* DUNGEON.C F0142 and DUNVIEW.C F0115:5896-5900: the live Slot's
      * source object selects G0209/G0210 and its actual mounted bitmap.
      * Do not pretend a new throw came from an F0248 saved-C14 receipt. */
@@ -37783,14 +37791,14 @@ static int m11_build_dm1_viewport_materialization_decision(
             cell->projectileCells[renderIndex] = sourceCell;
             cell->projectileFlipFlags[renderIndex] = 0;
             if (!material.uses_object_aspect) {
-                cell->projectileGfxIndices[renderIndex] =
-                    dm1_v1_projectile_graphic_index(material.aspect_index,
-                                                     projectileRelDir);
-                cell->projectileFlipFlags[renderIndex] =
-                    dm1_v1_projectile_flip_flags(material.aspect_index,
-                                                  projectileRelDir,
-                                                  sourceCell,
-                                                  cell->mapX, cell->mapY);
+                if (!dm1_v1_projectile_orientation_pc34(material.aspect_index,
+                        projectileRelDir, sourceCell, cell->relSide,
+                        cell->mapX, cell->mapY,
+                        &cell->projectileGfxIndices[renderIndex],
+                        &cell->projectileFlipFlags[renderIndex])) {
+                    --cell->renderableProjectileCount;
+                    continue;
+                }
             }
             (void)sourceX;
             (void)sourceY;

@@ -118,6 +118,7 @@ static int find_real_open_launch_pose(const struct DungeonDatState_Compat* dunge
 }
 
 static int find_real_throwable_weapon(const struct DungeonThings_Compat* things,
+                                      int projectileArt,
                                       int* outIndex,
                                       int* outType,
                                       DM1_ProjectileMaterialResolutionPc34* outMaterial)
@@ -145,14 +146,17 @@ static int find_real_throwable_weapon(const struct DungeonThings_Compat* things,
         aspectOrdinal = (info.attributes >> 8) & 0x1f;
         /* F0142: nonzero M066 selects projectile art, not the object-art
          * C2900 path checked below. The old opposite gate skipped all data. */
-        if (aspectOrdinal != 0) continue;
+        if (projectileArt) {
+            /* G0210 type zero has both a back graphic and rotation. */
+            if (aspectOrdinal != 3 && aspectOrdinal != 6 && aspectOrdinal != 7) continue;
+        } else if (aspectOrdinal != 0) continue;
         if (!dm1_v1_projectile_material_resolve_pc34(
                 PROJECTILE_SUBTYPE_KINETIC_ARROW,
                 THING_TYPE_WEAPON,
                 weaponType,
                 aspectOrdinal,
                 &material) ||
-            !material.uses_object_aspect ||
+            material.uses_object_aspect != !projectileArt ||
             material.graphic_index < 0) {
             continue;
         }
@@ -179,8 +183,9 @@ static const struct ProjectileInstance_Compat* first_live_projectile(
     return NULL;
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
+    const int projectileArt = argc == 2 && !strcmp(argv[1], "--projectile-art");
     const char* dataDir = resolve_data_dir();
     M11_GameViewState state;
     unsigned char framebuffer[320 * 200];
@@ -219,7 +224,7 @@ int main(void)
     }
     if (!find_real_open_launch_pose(state.world.dungeon, &mapIndex, &mapX,
                                     &mapY, &direction) ||
-        !find_real_throwable_weapon(state.world.things, &weaponIndex,
+        !find_real_throwable_weapon(state.world.things, projectileArt, &weaponIndex,
                                     &weaponType, &material)) {
         puts("skip: real DM1 data lacks an open throw lane or projectile weapon");
         M11_GameView_Shutdown(&state);
@@ -297,9 +302,9 @@ int main(void)
     memset(&capture, 0, sizeof(capture));
     M11_GameView_GetDm1F0115C2900RuntimeCaptureReceipt(&capture);
     if (!receipt.valid || !receipt.projectileLane ||
-        receipt.objectMaterial != 1 ||
-        receipt.graphicsId != material.graphic_index ||
-        receipt.objectAspectIndex != material.aspect_index ||
+        receipt.objectMaterial != !projectileArt ||
+        (!projectileArt && (receipt.graphicsId != material.graphic_index ||
+                           receipt.objectAspectIndex != material.aspect_index)) ||
         receipt.destinationW <= 0 || receipt.destinationH <= 0 ||
         receipt.assetWidth <= 0 || receipt.assetHeight <= 0) {
         fprintf(stderr,
@@ -332,8 +337,14 @@ int main(void)
         for (mode = M12_PRESENTATION_V1_ORIGINAL;
              mode <= M12_PRESENTATION_V21_UPSCALED; ++mode) {
             for (relativeCell = 0; relativeCell < 4; ++relativeCell) {
+                int expectedGraphic = material.graphic_index, expectedFlip = 0;
                 state.presentationMode = mode;
                 state.world.party.direction = (projectile->cell - relativeCell) & 3;
+                if (projectileArt && !dm1_v1_projectile_orientation_pc34(
+                        material.aspect_index,
+                        (projectile->direction - state.world.party.direction) & 3,
+                        relativeCell, 0, projectile->mapX, projectile->mapY,
+                        &expectedGraphic, &expectedFlip)) return 1;
                 ++state.world.gameTick;
                 memset(framebuffer, 0, sizeof(framebuffer));
                 M11_GameView_Draw(&state, framebuffer, 320, 200);
@@ -346,10 +357,12 @@ int main(void)
                         M11_GameView_Shutdown(&state);
                         return 1;
                     }
-                } else if (!receipt.valid || !receipt.objectMaterial ||
-                           receipt.graphicsId != material.graphic_index ||
+                } else if (!receipt.valid || receipt.objectMaterial != !projectileArt ||
+                           receipt.graphicsId != expectedGraphic ||
+                           (projectileArt && receipt.flipFlags != expectedFlip) ||
                            receipt.sourceZoneRow != 11 ||
-                           receipt.destinationY + receipt.destinationH - 1 != 33 + 47 ||
+                           receipt.destinationY + (projectileArt ? receipt.destinationH / 2 :
+                               receipt.destinationH - 1) != 33 + 47 ||
                            receipt.destinationX + receipt.destinationW / 2 !=
                                (relativeCell == 0 ? 66 : 158)) {
                     fprintf(stderr, "D0C source position mismatch: mode=%d cell=%d valid=%d object=%d row=%d x=%d w=%d\n",

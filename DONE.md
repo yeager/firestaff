@@ -1,5 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 F0115 live projectile-art selection now binds camera
+  direction/cell, view lane and map parity together. Corrected rotating
+  weapons' front/back bitmap choice, perpendicular cell-dependent flips,
+  parallel vertical flips and SIDE lane behavior (DUNVIEW.C:5731-5805).
+  Admission loads the actual directional bitmap instead of direction zero.
+  Independent literal oracle covers 2,240 combinations plus 448 center-lane
+  wrapper checks and invalid-output immutability. The original DOS archive
+  supplies both an object-art weapon and a rotating projectile-art weapon
+  to public THROW, original bitmap capture and raw-record rejection tests
+  across V1/V2.0/V2.1. Three focused tests pass (0.20s); four CSB viewport,
+  DM1 presentation/spell and FM Towns regressions pass (12.04s). Camera and
+  mastery fixtures remain RAM-only; this is not emulator flight parity.
+
 - 2026-09-06: DM1 live projectile presentation now passes camera-relative
   cells to C2900, packed F0115 ordering and flip selection, not absolute
   dungeon cells. The original DOS throw regression exposed the wrong-side
