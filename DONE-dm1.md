@@ -1482,6 +1482,13 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Added four blocked-direction regressions for zero through three walls.
+  A fixed source seed chooses west; fallback visits north, east and south
+  in that order without extra direction draws (GROUP.C:2155,2199). All
+  four cases retain the same final stream state. The rebuilt AI test now
+  reports 2509 passed checks. Prior-square rejection, fully blocked groups
+  and original-capture movement timing are outside these four cases.
+
 - Corrected the inverted random-movement condition in the DM1 behavior
   dispatcher: GROUP.C:2153 moves on a nonzero one-bit sample. Two source-seed
   regressions (1: stay, 6: move) both fail before the correction and pass

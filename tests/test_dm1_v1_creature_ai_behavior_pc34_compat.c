@@ -140,6 +140,33 @@ static void test_wander_random_gate(void) {
     }
 }
 
+static void test_wander_clockwise_fallback(void) {
+    int blocked;
+    /* GROUP.C:2155,2199 chooses once, then advances M017_NEXT. Seed 6
+     * passes movement and selects west; blocked candidates draw no RNG
+     * unless they coincide with the prior square (not this fixture). */
+    for (blocked = 0; blocked < 4; ++blocked) {
+        int i;
+        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+        struct DM1ActiveGroup_Compat ag = make_default_ag();
+        struct RngState_Compat rng = make_rng(6);
+        struct DM1BehaviorResult_Compat result;
+        ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+        ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+        ctx.distanceToVisibleParty = 0;
+        ctx.creatureInfo.ranges = 0;
+        for (i = 0; i < blocked; ++i)
+            ctx.groupMovementFacts[(3 + i) & 3].isWall = 1;
+        EXPECT_EQ(F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result),
+                  1, "clockwise wander dispatch");
+        EXPECT_EQ(result.actionKind, DM1_ACTION_MOVE, "open fallback is used");
+        EXPECT_EQ(result.moveDirection, (3 + blocked) & 3,
+                  "blocked wander directions advance clockwise");
+        EXPECT_EQ(rng.seed == UINT32_C(2737574587), 1,
+                  "fallback does not redraw direction");
+    }
+}
+
 static void test_wander_to_attack(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
     struct DM1ActiveGroup_Compat ag = make_default_ag();
@@ -1979,6 +2006,7 @@ int main(void) {
 
     test_wander_to_attack();
     test_wander_random_gate();
+    test_wander_clockwise_fallback();
     test_wander_to_approach();
     test_freeze_life();
     test_archenemy_ignores_freeze();
