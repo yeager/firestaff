@@ -7,7 +7,10 @@
 
 - Complete projectile occupancy parity for destination squares and active
   group overlays. The F0176 selector currently receives decoded group cells
-  and direction; verify F0145/F0147 active-map overrides with original
+  and uses the normalized representation documented in
+  `docs/parity/DM1_ACTIVE_GROUP_CELL_OWNERSHIP.md`. Resolve raw C04 byte-5
+  ownership before introducing an active-index dereference. It also receives
+  the decoded primary direction; verify F0145/F0147 active-map overrides with original
   captures. Source C14 landing occupancy is now deferred to the next event,
   using its raw source-square lookup rather than active AI rows. Expand
   timing verification to party landings, teleporter exits and original
