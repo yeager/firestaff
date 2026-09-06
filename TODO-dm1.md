@@ -6,7 +6,7 @@
   requests (GROUP.C:242, 270-280); implement edition-specific sound mapping
   and prioritized dispatch, not an unconditional generic audio effect.
   Remaining integration requirements:
-  - Extend attack-entry fanout beyond C32-C36 to C31/C37 and other source
+  - Extend attack-entry fanout beyond C32-C37 to C31 and other source
     transitions with their own deletion/delay rules. Obtain turning-pair
     and emulator-trace coverage beyond the four already-facing slots.
   - Propagate failed fanout scheduling through the outer dispatcher: it

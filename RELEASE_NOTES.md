@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1's regular group update now starts every creature's attack continuation
+  with the original behavior-event timing and random-number consumption.
+
 - DM1 groups entering attack during an animation update now schedule each
   creature's continuation instead of stopping after the behavior change.
 

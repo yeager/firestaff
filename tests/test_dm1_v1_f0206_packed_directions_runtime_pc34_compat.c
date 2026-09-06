@@ -1488,7 +1488,7 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
         F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
         /* One F0228 draw, then each already-facing slot draws one bounded
          * attack delay and six F0179 values for original I34 GI=0x623D. */
-        for (i = 0; i < 29; ++i)
+        for (i = 0; i < (eventType == 37 ? 25 : 29); ++i)
             (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536);
         for (i = 0; i < world.timeline.count; ++i) {
             int type = world.timeline.events[i].aux2;
@@ -1500,6 +1500,11 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                      world.masterRng.seed == expectedRng.seed &&
                      world.party.champions[0].hp.current == 100,
                      "aspect attack entry schedules every slot without immediate damage");
+        if (eventType == 37)
+            for (i = 0; i < world.timeline.count; ++i)
+                ok &= expect(world.timeline.events[i].fireAtTick == world.gameTick + 1u &&
+                             world.timeline.events[i].aux2 == 41 - i,
+                             "C37 aligned attack entry schedules descending slots at next tick");
     } else if (frozen == 6) {
         struct RngState_Compat expectedRng;
         F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
@@ -1549,6 +1554,9 @@ int main(void)
 {
     int slot;
     int eventType;
+    if (test_timed_aspect_and_freeze_gate(0, 7, 32) != 0 ||
+        test_timed_aspect_and_freeze_gate(0, 7, 37) != 0 ||
+        test_timed_aspect_and_freeze_gate(0, 8, 37) != 0) return 1;
     for (slot = 0; slot < 4; ++slot)
         if (test_timed_aspect_and_freeze_gate(slot, 0, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 1, 33 + slot) != 0 ||

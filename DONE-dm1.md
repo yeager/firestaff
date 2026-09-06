@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- C37 attack entry now uses the staged per-creature fanout too. Unlike
+  C32-C36, GROUP.C:2094,2123 omits the incoming-event delay draw/addition.
+  The already-facing four-creature regression failed before integration;
+  it now verifies C41-C38 at now+1 and exactly 25 RNG draws, versus 29 for
+  the tested aspect-entry path. Added C32 entry and C37 partial-capacity
+  coverage; all 21 selected tests pass, including five original-DOS tests.
+  Turning, C31 entry and failure retry remain distinct open verification.
+
 - Added C32-C36 attack-entry fanout from GROUP.C T0209044: descending
   per-creature F0205/delay/F0179/F0208 processing, without immediate F0207
   damage. Queue/RNG/group publication is staged together. Four-slot runtime

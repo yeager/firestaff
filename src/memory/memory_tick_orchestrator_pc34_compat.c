@@ -12610,7 +12610,7 @@ static int orch_f0209_insert_next_event_f0238_compat(
  * M10 bridge owns only the live projectile/champion mutation and receipt. */
 /* GROUP.C F0209 T0209044: prepare every creature's first attack event in
  * descending slot order. Publish the queue, RNG and group only together. */
-static int orch_f0209_begin_aspect_attack_compat(
+static int orch_f0209_begin_attack_compat(
     struct GameWorld_Compat* world, const struct TimelineEvent_Compat* ev,
     struct DungeonGroup_Compat* group, struct CreatureAIState_Compat* ai,
     int activeIndex, const struct DM1GroupBehaviorContext_Compat* ctx,
@@ -12625,7 +12625,6 @@ static int orch_f0209_begin_aspect_attack_compat(
         struct DM1GroupAddEventPlan_Compat plan;
         struct TimelineEvent_Compat next;
         uint32_t time = world->gameTick + 1u;
-        int delay;
         if (((staged.directions >> (i * 2)) & 3) != ctx->currentGroupPrimaryDirToParty &&
             !(i && F0732_COMBAT_RngRandom_Compat(&rng, 2))) {
             if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
@@ -12633,11 +12632,14 @@ static int orch_f0209_begin_aspect_attack_compat(
                     ctx->creatureSize, group->count, &rng)) return 0;
             time = world->gameTick + F0732_COMBAT_RngRandom_Compat(&rng, 4) + 2u;
         }
-        /* C32-C36 always takes CurrentEventTypeIsNotUpdateBehavior. */
-        delay = (ctx->creatureInfo.attackTicks >> 1) +
-            F0732_COMBAT_RngRandom_Compat(&rng, 4);
-        if (delay > ctx->eventTicks) delay = ctx->eventTicks;
-        time += delay;
+        /* GROUP.C:2094,2123: C37 does not draw or add the incoming
+         * non-behavior-event delay. C32-C36 does, even for zero ticks. */
+        if (ev->aux2 < DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+            int delay = (ctx->creatureInfo.attackTicks >> 1) +
+                F0732_COMBAT_RngRandom_Compat(&rng, 4);
+            if (delay > ctx->eventTicks) delay = ctx->eventTicks;
+            time += delay;
+        }
         if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
                 &staged, group, &ctx->creatureInfo, i, 0, world->gameTick,
                 &rng, &aspect) || !aspect.valid ||
@@ -13076,10 +13078,10 @@ static int orch_handle_creature_reaction_event_compat(
         return 0;
     }
     if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP &&
-        ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3 &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
         behavior.newBehavior == DM1_BEHAVIOR_ATTACK &&
         ctx.groupBehavior != DM1_BEHAVIOR_ATTACK) {
-        return orch_f0209_begin_aspect_attack_compat(
+        return orch_f0209_begin_attack_compat(
             world, ev, group, ai, activeIndex, &ctx, &activeGroup);
     }
 
