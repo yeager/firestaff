@@ -73,6 +73,33 @@ languages and all three presentation modes. This proves final composition
 and receipt consistency, not emulator raster parity. Authentic C080
 edge/pickup/throw/sensor sequences remain a separate verification task.
 
+## Spell-area source layout
+
+An in-memory C696 walk of the same original media confirms C012=(9,2,87,33)
+in both languages; C013=(3,12,319,74) EN or (3,12,319,82) JP. All 45
+records 220..264 are identical between languages. The 87x8 control strip,
+45x8 selected tab, 12x7 other tabs, 13x11 available-symbol cells and
+type-10/type-18 text anchors match the late DM1 layout. The Japanese parent
+therefore shifts the whole spell surface and its clicks down eight pixels.
+
+C696 SHA-256: EN `2e14e0ff83bf72ecb1290db2976d24c571615822fccb489d003dcae08c674f9f`,
+JP `27c24ac5696f070fb4fcd44609f695e70b215d3f3bf1ea6167e4dd7242b7af8c`.
+F31 C009 is 87x25 and requires no F20 nine-pixel crop. CASTER.C:75-98
+uses C009, controls and glyphs; it does not copy the legacy C011 strips.
+SPELDRAW.C:85-95 selects living tabs; MENUDRAW.C F0397/F0398 consumes
+SymbolStep and the champion's four-symbol incantation. TEXT.C F0818:93-109
+routes names beginning with ESC or containing high bytes to the Japanese
+renderer; ASCII rune cells remain on M653. Japanese-name glyph parity and
+the CSB cast execution owner remain separate open requirements.
+
+The final-frame tests compare original C009 borders and packed M653 glyph
+bits for six available and four selected cells in all three modes/languages.
+Public clicks open the panel, enter a rune into the original champion and
+recant it. A RAM-only perturbation sets the host caster mirror to -1 and
+checks that the entire 87x33 panel remains unchanged; the source party is
+not modified by that perturbation. These are raster/input integration
+checks, not successful casts or original-emulator timing comparisons.
+
 ## Idle action cells
 
 ACTIDRAW.C F0386:247-288 selects the original object icon or C201 for an

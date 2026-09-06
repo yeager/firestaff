@@ -1,5 +1,10 @@
 # Unreleased
 
+- CSB FM Towns spell panels use original C009 artwork and rune glyphs,
+  with Japanese controls shifted to their original screen coordinates.
+  Rune display reads current CSB champion data. Spell execution and
+  Japanese caster-name glyphs remain incomplete.
+
 - CSB FM Towns idle action cells now display original object/empty-hand
   icons. Japanese icon clicks use the full original-height cells.
 

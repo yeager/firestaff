@@ -20302,8 +20302,12 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
     /* JDM C013=(3,12,319,82), versus EDM/I34's bottom Y74.
      * Normalize only this local pointer before resolving its parent,
      * child commands and caster tabs; other dispatchers keep screen Y. */
-    if (state->dm1FmtownsStartupReceiptValid &&
-        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+    if ((state->dm1FmtownsStartupReceiptValid &&
+         state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) ||
+        (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+         m11_csb_is_fmtowns_profile((const CSB_V1_BootProfile *)state->csbBootProfile) &&
+         ((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+             CSB_V1_VARIANT_FMTOWNS_JA)) {
         y -= 8;
     }
     parent = dm1_v1_spell_area_click_rect_pc34();
@@ -59145,7 +59149,10 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     int i;
     int legacySpellPanel;
     int townsSpellPanel;
+    int csbTownsSpellPanel;
     int spellYOffset;
+    M11_GameViewState sourceMirror;
+    const M11_GameViewState *sourceState = state;
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
@@ -59160,13 +59167,38 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian);
     townsSpellPanel = state->assetLoader.legacyDm1 &&
         !state->assetLoader.legacyBigEndian && state->dm1FmtownsStartupReceiptValid;
+    csbTownsSpellPanel = state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        m11_csb_is_fmtowns_profile((const CSB_V1_BootProfile *)state->csbBootProfile);
+    if (csbTownsSpellPanel) {
+        const CSB_V1_BootProfile *profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (!m11_csb_startup_package_identity_current(state) ||
+            !m11_csb_install_runtime_source_graphic(state, 9)) return 0;
+        sourceState = m11_csb_v1_party_hud_source_state(state, &sourceMirror);
+        if (!sourceState || !profile->runtime.party_state_valid) return 0;
+        sourceMirror.dm1SpellCasting.magicCasterIndex = profile->runtime.magic_caster_index;
+        /* CASTER.C:88-98/MENUDRAW.C F0397/F0398 read the live champion's
+         * SymbolStep/Incantation, not a potentially stale M11 UI buffer. */
+        for (i = 0; i < sourceMirror.world.party.championCount && i < CHAMPION_MAX_PARTY; ++i) {
+            const CSB_V1_Champion *champ = &profile->runtime.party_state.Champions[i];
+            DM1_ChampionSpellInput *input = &sourceMirror.dm1SpellCasting.input[i];
+            size_t symbol;
+            memset(input->symbols, 0, sizeof(input->symbols));
+            for (symbol = 0; symbol < sizeof(champ->Incantation) &&
+                 symbol < sizeof(input->symbols) - 1 && champ->Incantation[symbol]; ++symbol)
+                input->symbols[symbol] = (char)champ->Incantation[symbol];
+            input->symbolStep = champ->SymbolStep;
+        }
+    }
     /* Original JDM.EXP C013 ends at Y82; EDM.EXP ends at Y74.
      * Child records220..264 are identical, but inherit that displacement. */
     spellYOffset = townsSpellPanel && state->dm1FmtownsStartupReceipt.language ==
         DM1_FMTOWNS_LANG_JP ? 8 : 0;
+    if (csbTownsSpellPanel && ((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+        CSB_V1_VARIANT_FMTOWNS_JA) spellYOffset = 8;
     if (!state->spellPanelOpen) {
         DM1_V1_SpellAreaRectPc34 sourceBox =
             dm1_v1_spell_area_source_box_rect_pc34();
+        if (csbTownsSpellPanel) { sourceBox.x = 233; sourceBox.w = 87; }
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       sourceBox.x, sourceBox.y + spellYOffset, sourceBox.w, sourceBox.h,
                       M11_COLOR_BLACK);
@@ -59195,21 +59227,24 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                 0, 24 + inset, 96, 12 - inset, 224, 62 + inset)) {
             return 0;
         }
-    } else if (townsSpellPanel) {
+    } else if (townsSpellPanel || csbTownsSpellPanel) {
         /* F20 C009 is stored as96x25. BASE.C F0660:1493-1500 and
          * COORD.C F0635:2307-2338 anchor it at224,50; C012's87x33
          * parent clips to233..319 and advances sourceX by9 (2363-2382).
          * Never treat the nine source columns as host-side padding. */
+        const int storedWidth = csbTownsSpellPanel ? 87 : 96;
+        /* F31 C009 is87x25; C696 C013 retains F20's EN/JP anchor but
+         * requires no nine-pixel source crop. C011 is not used by F0394. */
         if (!m11_dm1_pc34_hud_font_is_source_bound(state) ||
-            !m11_build_dm1_spell_area_overlay_plan(state, &plan) ||
-            !m11_panel_asset_source_loaded(state, 9, 96, 25, NULL, NULL)) {
+            !m11_build_dm1_spell_area_overlay_plan(sourceState, &plan) ||
+            !m11_panel_asset_source_loaded(state, 9, storedWidth, 25, NULL, NULL)) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           233, 42 + spellYOffset, 87, 33, M11_COLOR_BLACK);
             return 0;
         }
         if (!m11_blit_panel_asset_region_native(state, framebuffer,
-                framebufferWidth, framebufferHeight, 9, 96, 25,
-                9, 0, 87, 25, 233, 50 + spellYOffset)) return 0;
+                framebufferWidth, framebufferHeight, 9, storedWidth, 25,
+                csbTownsSpellPanel ? 0 : 9, 0, 87, 25, 233, 50 + spellYOffset)) return 0;
     } else {
     {
         /* ReDMCSB CASTER.C F0394 clears the physical G0000 box
@@ -59288,15 +59323,23 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         }
     }
     {
-        const int caster = state->dm1SpellCasting.magicCasterIndex;
-        const unsigned char* name = state->world.party.champions[caster].name;
+        const int caster = sourceState->dm1SpellCasting.magicCasterIndex;
+        const unsigned char* name = sourceState->world.party.champions[caster].name;
+        int japaneseName = 0;
+        if (csbTownsSpellPanel && spellYOffset) {
+            /* TEXT.C F0818:93-109 chooses the Japanese renderer for the
+             * entire string. Do not substitute M653 for unavailable glyphs. */
+            japaneseName = name[0] == 0x1b;
+            for (i = 0; i < CHAMPION_NAME_LENGTH && name[i]; ++i)
+                if (name[i] & 0x80) japaneseName = 1;
+        }
         /* SPELDRAW.C F0393:94 calls F0650 on C228+5*caster. Authentic
          * I34E layout-696 records (COORD.C:337-360) resolve these type-18
          * name zones at x=235+14*caster, baseline=48 for F0645's height5.
          * Despite F0650's name, this zone is left-anchored, not centered.
          * Use the selected caster's source bytes, never the party leader
          * or a generated placeholder. F0644 clips against the screen. */
-        for (i = 0; i < CHAMPION_NAME_LENGTH && name[i]; ++i) {
+        for (i = 0; !japaneseName && i < CHAMPION_NAME_LENGTH && name[i]; ++i) {
             (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
                 g_activeOriginalFont, framebuffer, framebufferWidth,
                 framebufferHeight, 235 + 14 * caster + 6 * i, 48 + spellYOffset, name[i],
@@ -67483,6 +67526,9 @@ void M11_GameView_Draw(M11_GameViewState* state,
                  * do not enable the unrelated PC-sized HUD material gate. */
                 (void)m11_draw_csb_fmtowns_active_menu(state, framebuffer,
                     framebufferWidth, framebufferHeight);
+                if (m11_csb_is_fmtowns_profile((const CSB_V1_BootProfile *)state->csbBootProfile))
+                    (void)m11_draw_v1_spell_area_overlay(state, framebuffer,
+                        framebufferWidth, framebufferHeight);
                 m11_draw_csb_fmtowns_idle_icons(state, framebuffer,
                     framebufferWidth, framebufferHeight);
                 m11_draw_csb_fmtowns_movement(state, framebuffer,

@@ -4,6 +4,12 @@
   blocking and exact damage/XP comparisons against original emulator traces.
   The relocated-party original-group tests do not prove a natural play route.
 
+- Complete CSB's source-owned cast execution. M11 currently preserves the
+  rune line and reports the unavailable CSB cast owner rather than executing
+  DM1 effects against CSB state. Spell-panel raster/input verification does
+  not close this gap. Verify Japanese caster names through their authentic
+  whole-string glyph path and compare spell-panel timing with an emulator.
+
 - Complete CSB FM Towns action-menu pixel parity and all row boundaries.
   Source C696 now owns language-specific action/Pass pointer geometry;
   remaining Japanese glyph and visual-composition gaps are independent.

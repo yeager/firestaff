@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: CSB FM Towns spell-area rendering consumes original C009
+  87x25 and M653, with the C696 Japanese eight-pixel vertical offset also
+  applied to pointer input. Caster, incantation and symbol step come from
+  the source runtime; a deliberately stale host caster cannot alter pixels.
+  EN/JP original-media tests cover panel borders, available/selected glyphs,
+  public rune entry and recant in Original/V2.0/V2.1. Production build and
+  seven combined regressions pass (26.97 seconds, no skips). Japanese-name
+  system glyphs, spell execution and emulator timing parity remain open.
+
 - 2026-09-06: CSB FM Towns idle action cells render original C042..C048
   atlas icons through a fresh source-party mirror after viewport restoration.
   EN/JP placement follows C089..C096; Japanese pointer admission uses the

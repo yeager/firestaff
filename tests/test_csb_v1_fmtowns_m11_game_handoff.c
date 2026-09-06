@@ -2380,6 +2380,110 @@ int main(void)
             free(graphics);
             view.presentationMode = savedMode;
         }
+        {
+            static const int modes[] = {M12_PRESENTATION_V1_ORIGINAL,
+                M12_PRESENTATION_V20_FILTERED, M12_PRESENTATION_V21_UPSCALED};
+            const int savedMode = view.presentationMode;
+            const int offsetY = language == CSB_FMTOWNS_SWITCH_JAPANESE ? 8 : 0;
+            size_t graphicsSize = 0;
+            uint8_t *graphics = load_profile_graphics(live_profile, &graphicsSize);
+            uint8_t background[87 * 25];
+            CSB_V1_FmtownsItemDecodeReceipt decoded;
+            memset(&decoded, 0, sizeof(decoded));
+            CHECK(graphics && csb_v1_fmtowns_graphics_decode_item(graphics, graphicsSize,
+                      9, background, sizeof(background), &decoded) && decoded.valid &&
+                      decoded.width == 87 && decoded.height == 25,
+                  "F31 spell oracle independently decodes authentic C009 87x25");
+            if (!view.spellPanelOpen)
+                (void)M11_GameView_HandlePointerButton(&view, 319, 74 + offsetY,
+                    DM1_V1_MOUSE_MASK_LEFT_PC34);
+            CHECK(view.spellPanelOpen && view.originalFontAvailable,
+                  "F31 source spell-area parent opens its original font-backed panel");
+            for (int mode = 0; decoded.valid && view.spellPanelOpen &&
+                 view.originalFontAvailable && mode < 3; ++mode) {
+                int mismatch = 0;
+                int caster = view.dm1SpellCasting.magicCasterIndex;
+                CHECK(caster >= 0 && caster < view.world.party.championCount && caster < 4,
+                      "F31 spell raster has an admitted living source caster");
+                if (caster < 0 || caster >= view.world.party.championCount || caster >= 4) break;
+                view.presentationMode = modes[mode];
+                {
+                    int before = view.spellBuffer.runeCount;
+                    (void)M11_GameView_HandlePointerButton(&view, 239, 58 + offsetY,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34);
+                    CHECK(before >= 0 && before < 4 && view.spellBuffer.runeCount == before + 1 &&
+                              live_profile->runtime.party_state.Champions[caster].Incantation[before] != 0,
+                          "F31 public rune click reaches the original champion incantation");
+                }
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                /* CASTER.C:90 blits C009 at C013's bottom-right. C696
+                 * 220..264 are identical in CDATA/CJDATA; root C013's
+                 * bottom is74/82. Border excludes all name/rune text. */
+                for (int y = 0; y < 25; ++y)
+                    for (int x = 0; x < 87; ++x) {
+                        if (x >= 2 && x < 85 && y < 23) continue;
+                        if (framebuffer[(50 + offsetY + y) * 320 + 233 + x] !=
+                            background[y * 87 + x]) ++mismatch;
+                    }
+                CHECK(mismatch == 0, "F31 final spell border matches original C009 in every mode");
+                mismatch = 0;
+                /* MENUDRAW.C:62-78 and105-119 draw six available/four
+                 * selected cells. The original M653 bitmap is the oracle,
+                 * not M11's glyph renderer. These low-byte rune strings
+                 * do not enter F0818's Japanese system-font path. */
+                for (int line = 0; line < 2; ++line) {
+                    int cells = line ? 4 : 6;
+                    for (int cell = 0; cell < cells; ++cell) {
+                        unsigned char ch = line ?
+                            (unsigned char)live_profile->runtime.party_state.Champions[caster].Incantation[cell] :
+                            (unsigned char)(96 + 6 * live_profile->runtime.party_state.Champions[caster].SymbolStep + cell);
+                        int px = line ? 241 + 9 * cell : 239 + 14 * cell;
+                        int py = (line ? 66 : 54) + offsetY;
+                        if (line)
+                            for (int prior = 0; prior <= cell; ++prior)
+                                if (!live_profile->runtime.party_state.Champions[caster].Incantation[prior]) ch = ' ';
+                        for (int y = 0; y < 6; ++y)
+                            for (int x = 0; x < 6; ++x) {
+                                int bit = y * 1024 + ch * 8 + 3 + x;
+                                uint8_t expected = view.originalFont.bitmap[bit / 8] &
+                                    (0x80u >> (bit % 8)) ? 4 : 0;
+                                if (framebuffer[(py + y) * 320 + px + x] != expected) ++mismatch;
+                            }
+                    }
+                }
+                CHECK(mismatch == 0, "F31 source available/selected rune glyphs match M653 in every mode");
+                {
+                    uint8_t sourcePanel[87 * 33];
+                    int savedCaster = view.dm1SpellCasting.magicCasterIndex;
+                    for (int y = 0; y < 33; ++y)
+                        memcpy(sourcePanel + y * 87,
+                            framebuffer + (42 + offsetY + y) * 320 + 233, 87);
+                    /* Perturb only the host presentation mirror. The
+                     * original party, G0514 and incantation remain intact. */
+                    view.dm1SpellCasting.magicCasterIndex = -1;
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    mismatch = 0;
+                    for (int y = 0; y < 33; ++y)
+                        if (memcmp(sourcePanel + y * 87,
+                            framebuffer + (42 + offsetY + y) * 320 + 233, 87)) ++mismatch;
+                    CHECK(mismatch == 0,
+                          "F31 source caster owns the panel even with a stale host caster mirror");
+                    view.dm1SpellCasting.magicCasterIndex = savedCaster;
+                }
+                {
+                    int before = view.spellBuffer.runeCount;
+                    (void)M11_GameView_HandlePointerButton(&view, 311, 70 + offsetY,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34);
+                    CHECK(before > 0 && before <= 4 && view.spellBuffer.runeCount == before - 1 &&
+                              live_profile->runtime.party_state.Champions[caster].Incantation[before - 1] == 0,
+                          "F31 public recant removes the source rune without casting");
+                }
+            }
+            free(graphics);
+            view.presentationMode = savedMode;
+            /* This proves presentation only, not a successful spell cast.
+             * The independent CSB cast-owner gap remains explicitly open. */
+        }
         /* F31 G0447 keeps C012 (status selection) separate from C007
          * (inventory): a named status rectangle must never inherit the
          * convenient host inventory behavior.  C187's adjacent source bar
