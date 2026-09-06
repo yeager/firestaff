@@ -129,6 +129,22 @@ int main(void)
                      dm1_inventory_consumables_route_swallow_sound_pc34(&r, &soundSystem, 0, 0), 0);
 
     c = base_champion();
+    {
+        const int starts[] = {120,121,150,151,169,170};
+        const int expected[] = {132,128,157,155,170,170};
+        const int expectedKu[] = {127,125,154,153,170,170};
+        const int stats[] = {DM1_CONSUMABLE_STAT_DEXTERITY, DM1_CONSUMABLE_STAT_STRENGTH,
+                             DM1_CONSUMABLE_STAT_WISDOM, DM1_CONSUMABLE_STAT_VITALITY};
+        for (int potion = 6; potion <= 9; ++potion) {
+            for (int v = 0; v < 6; ++v) {
+                DM1ConsumableChampionPc34 high = base_champion();
+                high.statistic[stats[potion - 6]] = (int16_t)starts[v];
+                ok &= expect_int("stat potion accepted", dm1_inventory_consume_potion_pc34(&high, potion, 100, 0, 0, &r), 1);
+                ok &= expect_int("F0348 diminishing gain/cap", high.statistic[stats[potion - 6]],
+                                 potion == 7 ? expectedKu[v] : expected[v]);
+            }
+        }
+    }
     ok &= expect_int("ROS potion", dm1_inventory_consume_potion_pc34(&c, 6, 80, 0, 0, &r), 1);
     ok &= expect_int("ROS dexterity delta", c.statistic[DM1_CONSUMABLE_STAT_DEXTERITY], 42);
     ok &= expect_int("potion type becomes empty flask", r.potionTypeAfter, 20);

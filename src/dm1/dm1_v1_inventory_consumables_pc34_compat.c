@@ -34,6 +34,18 @@ static int clamp_max_pc34(int value, int maximum)
     return value > maximum ? maximum : value;
 }
 
+static int16_t adjust_statistic_f0348_pc34(int current, int delta)
+{
+    /* ReDMCSB PANEL.C F0348:1713-1741, PC3.4 and S1.2+:
+     * thresholds are strict; add one after the positive-delta shifts. */
+    if (current > 120) {
+        delta >>= 1;
+        if (current > 150) delta >>= 1;
+        ++delta;
+    }
+    return (int16_t)clamp_max_pc34(current + delta, 170);
+}
+
 static int max_int_pc34(int a, int b)
 {
     return a > b ? a : b;
@@ -154,16 +166,16 @@ int dm1_inventory_consume_potion_pc34(DM1ConsumableChampionPc34* champion,
 
     switch (potionType) {
     case DM1_POTION_ROS_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY] += (int16_t)adjusted;
+        champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_DEXTERITY], adjusted);
         break;
     case DM1_POTION_KU_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH] += (int16_t)((potionPower / 35) + 5);
+        champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_STRENGTH], (potionPower / 35) + 5);
         break;
     case DM1_POTION_DANE_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_WISDOM] += (int16_t)adjusted;
+        champion->statistic[DM1_CONSUMABLE_STAT_WISDOM] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_WISDOM], adjusted);
         break;
     case DM1_POTION_NETA_PC34:
-        champion->statistic[DM1_CONSUMABLE_STAT_VITALITY] += (int16_t)adjusted;
+        champion->statistic[DM1_CONSUMABLE_STAT_VITALITY] = adjust_statistic_f0348_pc34(champion->statistic[DM1_CONSUMABLE_STAT_VITALITY], adjusted);
         break;
     case DM1_POTION_ANTIVENIN_PC34:
         champion->poisonDose = 0;

@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 statistic potions now apply the original diminishing returns and
+  maximum statistic value instead of adding their full strength indefinitely.
+
 - DM1 combat keeps individual/body shielding separate from fire and
   magic attack reduction.
 

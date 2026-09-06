@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed ROS/KU/DANE/NETA statistic gains to use F0348's
+  PC3.4/S1.2+ diminishing returns above 120 and 150 and cap at 170.
+  Twenty-four explicit potion/boundary cases pass alongside existing
+  consumable tests and twenty original-media regressions. High-stat
+  potion consumption through original-media mouse input remains unproven.
+
 - 2026-09-06: Expanded the existing live M11 lightning impact regression
   to both party and individual recipient shield. Both reach projectile
   consumption and the expected 86 HP through AdvanceProjectilesOnce;

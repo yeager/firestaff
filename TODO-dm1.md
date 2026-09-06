@@ -1,5 +1,9 @@
 # Firestaff TODO — DM1
 
+- Verify high-stat ROS/KU/DANE/NETA consumption through original-media
+  mouse input. If early S1.0/S1.1 media are enabled, dispatch their distinct
+  F0348 thresholds/caps rather than applying the PC3.4/S1.2+ rule.
+
 - Verify the now-separated body/elemental shield layers through actual
   M10/M11 attacks with original YA and independently derived damage.
   See `parity-evidence/dm1-shield-damage-layer-audit.md`; primitive tests
