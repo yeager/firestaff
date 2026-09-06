@@ -1,7 +1,10 @@
 # Firestaff TODO — DM1
 
-- Extend death spell-input coverage to an unaffected living caster,
-  all-party death and actual timeline dispatch; verify UI redraw against
+- Verify poison-event removal on death against CHAMPION.C F0323:1986-1990;
+  clearing poisonEventCount alone does not establish timeline cancellation.
+
+- Extend death spell-input coverage to actual timeline dispatch;
+  verify final-death UI and redraw against
   the original. Savegames remain deferred.
 
 - Verify cross-owner consumption with original water/potions after

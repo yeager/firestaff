@@ -12346,6 +12346,23 @@ if(BUILD_TESTING)
             SKIP_RETURN_CODE 77
             ENVIRONMENT "${load_media_env};FIRESTAFF_VERIFY_LEGACY_LOAD=1"
             LABELS "dm1;real-media;inventory;load;skip-safe")
+        foreach(death_leader 0 1)
+            foreach(living_caster 0 1)
+                set(death_env "${load_media_env};FIRESTAFF_VERIFY_LEGACY_LOAD=1")
+                if(death_leader)
+                    list(APPEND death_env "FIRESTAFF_VERIFY_LEADER_DEATH=1")
+                endif()
+                if(living_caster)
+                    list(APPEND death_env "FIRESTAFF_VERIFY_LIVING_CASTER=1")
+                endif()
+                set(death_test dm1_${load_edition}_death_leader${death_leader}_livingcaster${living_caster}_real)
+                add_test(NAME ${death_test} COMMAND ${load_target} ${load_args})
+                set_tests_properties(${death_test} PROPERTIES
+                    SKIP_RETURN_CODE 77
+                    ENVIRONMENT "${death_env}"
+                    LABELS "dm1;real-media;inventory;death;spells;skip-safe")
+            endforeach()
+        endforeach()
     endforeach()
     target_link_libraries(test_dm1_fmtowns_jp_names_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME dm1_fmtowns_jp_names_real COMMAND test_dm1_fmtowns_jp_names_real)

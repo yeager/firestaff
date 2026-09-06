@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Registered twenty original-media death tests covering
+  independent leader/caster ownership on five Atari/Amiga editions. All
+  pass, including preserved living-caster input and final-death spell
+  clearance. Final death now preserves caster selection as F0319 does.
+  The preceding 13-test full object/startup regression also passed before
+  this final-death-only adjustment; the rebuilt adjustment passed the
+  twenty targeted cases. No emulator pixel-parity claim is implied.
+
 - 2026-09-06: F0319 now clears the dead champion's spell input and
   independently transfers magic-caster selection to a survivor, restoring
   that survivor's pending runes instead of retaining the dead UI buffer.

@@ -1,7 +1,8 @@
 # Firestaff TODO — active cross-game work
 
-- Fix reproduced DM1 inventory/leader index conflation; opening another
-  champion's inventory must not select that champion as party leader.
+- Complete DM1 inventory-owner regression for Modern composed-HUD input
+  and remaining consumers; the source-layout owner/leader separation is
+  implemented and covered by original-media tests.
 
 - Verify DM1 death/resurrection leader ownership with original-media
   runtime sequences, beyond isolated leader-selection admission checks.

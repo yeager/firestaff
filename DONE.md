@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 death ownership now has twenty registered original-media
+  regressions across five Atari/Amiga editions, including living-caster
+  preservation and final-death spell state. All passed locally.
+
 - 2026-09-06: DM1 PC3.4 startup and 36 legacy-edition CLI/menu launches
   pass with the rebuilt application after leader-input fixes.
 

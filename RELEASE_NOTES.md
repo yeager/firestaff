@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 preserves the original magic-caster selection when the whole party
+  dies, while clearing pending runes.
+
 - DM1 selects a surviving magic caster after death and restores their
   pending runes, clearing the dead champion's spell input.
 

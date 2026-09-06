@@ -19086,8 +19086,12 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     if (state->dm1SpellCasting.magicCasterIndex == championIndex) {
         memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
         state->spellRuneRow = 0;
-        state->dm1SpellCasting.magicCasterIndex = aliveIndex;
-        if (aliveIndex >= 0) m11_dm1_spell_sync_caster_to_legacy(state);
+        /* F0319:1665-1680 takes the party-dead path without selecting
+         * a different caster when no champion survives. */
+        if (aliveIndex >= 0) {
+            state->dm1SpellCasting.magicCasterIndex = aliveIndex;
+            m11_dm1_spell_sync_caster_to_legacy(state);
+        }
     }
     m11_refresh_hash(state);
 }

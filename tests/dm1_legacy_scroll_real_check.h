@@ -387,13 +387,24 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                sizeof(state->dm1SpellCasting.input[0]));
                         state->dm1SpellCasting.input[0].symbols[0] = 97;
                         state->dm1SpellCasting.input[0].symbolStep = 1;
+                        if (getenv("FIRESTAFF_VERIFY_LIVING_CASTER")) {
+                            /* F0319 leaves a different living caster selected;
+                             * distinguish the live UI from its cached input. */
+                            state->dm1SpellCasting.magicCasterIndex = 0;
+                            state->spellBuffer.runes[0] = 98;
+                            state->spellRuneRow = 2;
+                        }
                         M11_GameView_ProbeCheckPartyDeath(state);
                         if (state->dm1SpellCasting.magicCasterIndex != 0 ||
                             state->dm1SpellCasting.input[1].symbols[0] != 0 ||
                             state->dm1SpellCasting.input[1].symbolStep != 0 ||
                             state->spellBuffer.runeCount != 1 ||
-                            state->spellBuffer.runes[0] != 97 ||
-                            state->spellRuneRow != 1) {
+                            state->spellBuffer.runes[0] !=
+                                (getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 98 : 97) ||
+                            state->spellRuneRow !=
+                                (getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 2 : 1) ||
+                            state->dm1SpellCasting.input[0].symbols[0] != 97 ||
+                            state->dm1SpellCasting.input[0].symbolStep != 1) {
                             fprintf(stderr, "FAIL: death caster/rune handoff\n");
                             return 0;
                         }
@@ -440,6 +451,19 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             dropped = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, other);
                             if (!dropped || !F0891_ORCH_WorldHash_Compat(&state->world, &after) || before != after ||
                                 next != (unsigned short)(dropped[0] | ((unsigned int)dropped[1] << 8))) return 0;
+                        }
+                        /* F0319's final death sets PartyDead and does not
+                         * run the surviving-caster selection branch. */
+                        state->world.party.champions[0].hp.current = 0;
+                        M11_GameView_ProbeCheckPartyDeath(state);
+                        if (!state->partyDead || !state->world.partyDead ||
+                            state->dm1SpellCasting.magicCasterIndex != 0 ||
+                            state->dm1SpellCasting.input[0].symbols[0] != 0 ||
+                            state->dm1SpellCasting.input[0].symbolStep != 0 ||
+                            state->spellBuffer.runeCount != 0 ||
+                            state->spellRuneRow != 0) {
+                            fprintf(stderr, "FAIL: final death spell state\n");
+                            return 0;
                         }
                         fprintf(stderr, "death owner panel=%d ordinal=%d handled=%u\n",
                             state->inventoryPanelActive, state->dm1InventoryChampionOrdinal,

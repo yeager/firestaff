@@ -46,6 +46,24 @@ Modern composed-HUD input, or death/resurrection lifecycle parity.
 
 ## Current evidence
 
+The twenty `dm1_*_death_leader[01]_livingcaster[01]_real` tests cover
+five original editions with independent leader-death and living-caster
+switches. They enter the existing death-dispatch probe after controlled
+RAM-only party setup. Assertions cover inventory closure, original weapon
+drop identity/cell/order, load transfer, repeated dispatch, dead rune
+clearance, replacement-caster rune restoration and preservation of a
+different living caster's UI and cached input. A final death checks both
+party-dead flags, cleared runes and unchanged caster selection. This is not
+complete timeline, death-screen, revival or emulator-rendering parity.
+
+```sh
+ctest --test-dir BUILD_DIR --output-on-failure --parallel 2 --no-tests=error \
+  -R '^dm1_.*_death_leader[01]_livingcaster[01]_real$'
+```
+
+These tests also require local user-supplied media and are not selected by
+the public production/source-boundary labels.
+
 The shared test helper `tests/dm1_legacy_scroll_real_check.h` exercises:
 
 - Original scroll panel and font raster in Original/V2.1.
