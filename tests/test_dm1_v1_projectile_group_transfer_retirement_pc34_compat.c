@@ -37,7 +37,8 @@ int main(int argc, char** argv)
     int burstFixed = burstFixedEmpty || burstFixedOne || burstFixedTeleport ||
         (argc == 2 && strcmp(argv[1], "burst-fixed") == 0);
     int foodCapacity = burstFixedEmpty ? 0 : ((burstFixedOne || burstFixedSensor) ? 1 : 6);
-    int burstAll = burstFixed || burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
+    int burstCompact = argc == 2 && strcmp(argv[1], "burst-compact") == 0;
+    int burstAll = burstCompact || burstFixed || burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
     int burstSmoke = argc == 2 && strcmp(argv[1], "burst-smoke") == 0;
     int burstLethal = burstAll || burstSmoke || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
     int burst = burstLethal || (argc == 2 && strcmp(argv[1], "burst") == 0);
@@ -156,6 +157,18 @@ int main(int argc, char** argv)
             world.creatureAI[0].groupCells = 8;
             world.creatureAI[0].groupDirection = world.pc34ActiveGroupDirections[0] = 8;
             world.creatureAI[0].aspect[1] = 2;
+            world.pc34ActiveGroupHomeMapX[0] = 17;
+            world.pc34ActiveGroupHomeMapY[0] = 23;
+            if (burstCompact) {
+                /* A nonparticipating active-row sentinel verifies that
+                 * retiring row zero preserves the neighboring owner. */
+                world.creatureAICount = world.pc34ActiveGroupSourceCount = 2;
+                world.creatureAI[1].reserved0 = 1;
+                world.creatureAI[1].groupMapX = 9;
+                world.pc34ActiveGroupDirections[1] = 0x55;
+                world.pc34ActiveGroupHomeMapX[1] = 31;
+                world.pc34ActiveGroupHomeMapY[1] = 47;
+            }
         }
         /* F0213 attack 80, original C15 worm fire resistance 9; F0191
          * draws independently in descending slot order. */
@@ -263,7 +276,18 @@ int main(int argc, char** argv)
         }
         if (burstAll) {
             CHECK(group.next == THING_NONE && readword(rawGroup) == THING_NONE);
-            CHECK(world.creatureAICount == 0);
+            CHECK(world.creatureAICount == (burstCompact ? 1 : 0));
+            CHECK(world.pc34ActiveGroupSourceCount == (burstCompact ? 1 : 0));
+            CHECK(world.pc34ActiveGroupDirections[0] == (burstCompact ? 0x55 : 0));
+            CHECK(world.pc34ActiveGroupHomeMapX[0] == (burstCompact ? 31 : 0));
+            CHECK(world.pc34ActiveGroupHomeMapY[0] == (burstCompact ? 47 : 0));
+            if (burstCompact) {
+                CHECK(world.creatureAI[0].reserved0 == 1);
+                CHECK(world.creatureAI[0].groupMapX == 9);
+                CHECK(world.pc34ActiveGroupDirections[1] == 0);
+                CHECK(world.pc34ActiveGroupHomeMapX[1] == 0);
+                CHECK(world.pc34ActiveGroupHomeMapY[1] == 0);
+            }
             CHECK((sft[0] & 0x3fff) != (THING_TYPE_GROUP << 10));
             if (burstFixed) {
                 int allocated = 0, visited = 0, links = 0;

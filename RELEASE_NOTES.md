@@ -5881,3 +5881,5 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
   original movement decision for the same random stream.
   Stationary C37 groups also consume the original look-around admission
   sample before selecting their new facing.
+- DM1: retain the correct direction and home-coordinate owner when active
+  creature rows are compacted after group removal; clear retired side data.

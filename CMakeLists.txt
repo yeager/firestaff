@@ -16299,6 +16299,8 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat burst-all)
     add_test(NAME dm1_v1_explosion_group_source_death_smoke_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat burst-smoke)
+    add_test(NAME dm1_v1_explosion_group_active_owner_compaction_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat burst-compact)
     add_test(NAME dm1_v1_explosion_group_carried_drop_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat burst-drop)
     add_test(NAME dm1_v1_explosion_group_fixed_drop_pc34_compat

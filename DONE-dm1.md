@@ -1482,6 +1482,14 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Fixed active-row retirement to compact direction/home sidecars together
+  with creatureAI, clear retired tail data and update the admitted source
+  count. The last-group death regression failed before the fix. Added a
+  neighboring-row sentinel regression through the real explosion death
+  path; it verifies retained identity, direction/home data and cleared tail.
+  All 14 explosion/group CTests pass. The sentinel is a bounded ownership
+  fixture, not a second naturally loaded creature or emulator capture.
+
 - Reconciled stale packed-direction runtime fixtures with PROJEXPL.C
   F0219:720-739: source C14 projectiles pass Fluxcage, and wall-impact
   explosions are published on the source square, not inside the wall.

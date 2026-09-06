@@ -7091,19 +7091,32 @@ static void orch_remove_active_group_state_compat(
     int writeIndex = 0;
     int oldCount;
     int retainedCount;
+    int retainedSourceCount = 0;
     if (!world || groupIndex < 0) return;
     oldCount = world->creatureAICount;
     for (i = 0; i < oldCount; ++i) {
         if (world->creatureAI[i].reserved0 == groupIndex) continue;
-        if (writeIndex != i) world->creatureAI[writeIndex] = world->creatureAI[i];
+        /* GROUP.C F0189 retires the whole ACTIVE_GROUP owner. Keep our
+         * split runtime arrays aligned when its active row is compacted. */
+        if (writeIndex != i) {
+            world->creatureAI[writeIndex] = world->creatureAI[i];
+            world->pc34ActiveGroupDirections[writeIndex] = world->pc34ActiveGroupDirections[i];
+            world->pc34ActiveGroupHomeMapX[writeIndex] = world->pc34ActiveGroupHomeMapX[i];
+            world->pc34ActiveGroupHomeMapY[writeIndex] = world->pc34ActiveGroupHomeMapY[i];
+        }
+        if (i < world->pc34ActiveGroupSourceCount) ++retainedSourceCount;
         ++writeIndex;
     }
     retainedCount = writeIndex;
     while (writeIndex < oldCount) {
         memset(&world->creatureAI[writeIndex], 0, sizeof(world->creatureAI[writeIndex]));
+        world->pc34ActiveGroupDirections[writeIndex] = 0;
+        world->pc34ActiveGroupHomeMapX[writeIndex] = 0;
+        world->pc34ActiveGroupHomeMapY[writeIndex] = 0;
         ++writeIndex;
     }
     world->creatureAICount = retainedCount;
+    world->pc34ActiveGroupSourceCount = retainedSourceCount;
 }
 
 static int orch_group_creature_cell_compat(
