@@ -1,5 +1,10 @@
 # Unreleased
 
+- DM1 level gains now apply bonuses and publish live champion maxima from
+  spell, attack, parry, sensor, throw and action XP paths. Spell XP is owned
+  by the engine and is not repeated by presentation; level-up does not refill
+  current health, stamina or mana.
+
 - Admitted DM1 FM Towns magic/influence level-up paths use their original
   antimagic rule instead of the PC34 two-bit rule.
 

@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static unsigned short make_thing(int type, int index) {
@@ -512,6 +513,81 @@ static void test_f0304_levelup_bonuses_and_random_order(void)
     }
 }
 
+static void test_world_f0304_transaction_publication(void)
+{
+    struct GameWorld_Compat *world = calloc(1, sizeof(*world));
+    struct GameWorld_Compat *snapshot = malloc(sizeof(*snapshot));
+    int edition;
+    assert(world && snapshot);
+    /* RAM-only threshold fixtures. F0304:896-989 oracle is calculated
+     * independently, including source draw order and edition antimagic. */
+    for (edition = 0; edition < 3; ++edition) {
+        struct ChampionState_Compat *champion;
+        struct LevelUpMarker_Compat marker;
+        uint32_t seed = 31459u;
+        unsigned int draws[8];
+        int i, modulus = edition == 1 ? 3 : 4;
+        memset(world, 0, sizeof(*world));
+        world->party.championCount = 1;
+        world->levelUpAntimagicModulus = (uint8_t)(edition == 0 ? 0 : modulus);
+        world->gameTick = 500;
+        world->masterRng.seed = seed;
+        champion = &world->party.champions[0];
+        champion->present = 1;
+        champion->hp.current = 50; champion->hp.maximum = 123;
+        champion->stamina.current = 400; champion->stamina.maximum = 987;
+        champion->mana.current = 75; champion->mana.maximum = 234;
+        for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+            champion->attributes[i] = 40;
+            /* Alternate explicit maxima and the legacy current fallback. */
+            champion->attributeMaximums[i] = (unsigned short)(i & 1 ? 40 : 0);
+        }
+        world->lifecycle.champions[0].skills20[3].experience = 499;
+        world->lifecycle.champions[0].skills20[16].experience = 499;
+        for (i = 0; i < 8; ++i) {
+            seed = seed * UINT32_C(0xbb40e62d) + 11u;
+            draws[i] = (seed >> 8) & 0xffffu;
+        }
+        assert(F0884_WORLD_AwardSkillExperience_Compat(world, 0, 16, 1, 0, &marker) == 1);
+        assert(world->masterRng.seed == seed);
+        assert(champion->hp.maximum == 125 + draws[6] % 2u);
+        assert(champion->stamina.maximum == 1017 + draws[7] % 16u);
+        assert(champion->mana.maximum == 237 + ((draws[4] & 3u) != 0u));
+        assert(champion->attributeMaximums[CHAMPION_ATTR_WISDOM] == 41 + (draws[1] & 1u));
+        assert(champion->attributeMaximums[CHAMPION_ATTR_ANTIMAGIC] == 40 + draws[5] % (unsigned int)modulus);
+        assert(champion->attributeMaximums[CHAMPION_ATTR_ANTIFIRE] == 40 + (draws[3] & 1u));
+        assert(champion->attributeMaximums[CHAMPION_ATTR_VITALITY] == 40);
+        assert(champion->hp.current == 50 && champion->stamina.current == 400 && champion->mana.current == 75);
+        for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) assert(champion->attributes[i] == 40);
+        assert(champion->skillExperience[3] == 500 && champion->skillLevels[3] == 2);
+        assert(marker.championIndex == 0 && marker.baseSkillIndex == 3 && marker.newLevel == 2);
+        *snapshot = *world;
+        assert(F0884_WORLD_AwardSkillExperience_Compat(world, 0, 16, 1, 0, NULL) == 0);
+        assert(world->masterRng.seed == seed && champion->skillExperience[3] == 501);
+        assert(champion->hp.maximum == snapshot->party.champions[0].hp.maximum &&
+               champion->stamina.maximum == snapshot->party.champions[0].stamina.maximum &&
+               champion->mana.maximum == snapshot->party.champions[0].mana.maximum);
+        *snapshot = *world;
+        assert(F0884_WORLD_AwardSkillExperience_Compat(world, -1, 16, 1, 0, NULL) == -1);
+        assert(F0884_WORLD_AwardSkillExperience_Compat(world, 1, 16, 1, 0, NULL) == -1);
+        assert(F0884_WORLD_AwardSkillExperience_Compat(world, 0, 20, 1, 0, NULL) == -1);
+        assert(memcmp(world, snapshot, sizeof(*world)) == 0);
+        world->lifecycle.champions[0].skills20[3].experience = 499;
+        world->lifecycle.champions[0].skills20[16].experience = 499;
+        world->lifecycle.rest.isResting = 1;
+        *snapshot = *world;
+        assert(F0884_WORLD_AwardSkillExperience_Compat(world, 0, 16, 1, 0, NULL) == 0);
+        assert(world->lifecycle.champions[0].skills20[3].experience == 500);
+        assert(world->masterRng.seed == snapshot->masterRng.seed);
+        assert(champion->hp.maximum == snapshot->party.champions[0].hp.maximum &&
+               champion->stamina.maximum == snapshot->party.champions[0].stamina.maximum &&
+               champion->mana.maximum == snapshot->party.champions[0].mana.maximum);
+    }
+    assert(F0884_WORLD_AwardSkillExperience_Compat(NULL, 0, 16, 1, 0, NULL) == -1);
+    free(snapshot);
+    free(world);
+}
+
 int main(void) {
     {
         struct LifecycleState_Compat lifecycle;
@@ -526,6 +602,7 @@ int main(void) {
     }
     test_f0303_has_no_artificial_level_cap();
     test_f0304_levelup_bonuses_and_random_order();
+    test_world_f0304_transaction_publication();
     test_f0304_award_word_width();
     test_f0304_level_gain_ignores_temporary_xp();
     test_f0304_temporary_xp_destination_and_threshold();

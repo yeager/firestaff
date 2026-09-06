@@ -1,8 +1,9 @@
 # Firestaff TODO — active cross-game work
 
-- Complete DM1 XP-to-level-up publication across orchestrator spell,
-  melee, parry and sensor paths: several call F0849 but drop the level
-  transition result instead of applying F0850 and publishing source UI.
+- Extend the [DM1 world XP transaction](docs/parity/DM1_ORIGINAL_XP_TRANSACTION.md)
+  evidence to original-emulator level crossings for melee, parry, sensors,
+  throw and actions; finish original recently-upgraded flags and localized
+  message-area timing. Audit XP saturation and maximum-stat edge semantics.
 - Bind edition-specific level-up antimagic behavior for remaining early
   DM1 editions (modulo 3 versus PC34/late-Amiga two bits) and compare complete
   level transitions against original emulator traces, including source UI.

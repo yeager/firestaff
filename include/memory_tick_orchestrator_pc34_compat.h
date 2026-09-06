@@ -171,6 +171,7 @@ struct DM1GroupSmellDirectionPlan_Compat;
 #define EMIT_TEXT_MESSAGE     0x12
 #define EMIT_ACTION_ENABLED   0x13
 #define EMIT_CREATURE_MOVED   0x14  /* payload: groupIndex, creatureType, newMapX, newMapY */
+#define EMIT_LEVEL_UP         0x15  /* champion, base skill, previous level, new level */
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the
@@ -298,6 +299,7 @@ struct GameWorld_Compat {
     struct SensorEffectList_Compat     pendingSensorEffects; /* Phase 11 */
     struct TimelineQueue_Compat        timeline;           /* Phase 12 */
     struct RngState_Compat             masterRng;          /* Phase 13 */
+    uint8_t levelUpAntimagicModulus; /* Edition configuration: 0/4 PC34, 3 F20. */
     struct CombatResult_Compat         pendingCombat;      /* Phase 13 */
     /* ReDMCSB CHAMPION.C F0321 adds each hit to G0409/G0410 by champion;
      * F0320 drains all four entries at the game-loop boundary.  Keep the
@@ -359,6 +361,12 @@ struct GameWorld_Compat {
  * ================================================================ */
 
 struct GameWorld_Compat* F0880_WORLD_AllocDefault_Compat(void);
+
+/* Complete numeric F0304 award/publication, using the live master stream.
+ * Returns -1 invalid, 0 no level gain, 1 level gain. Presentation is separate. */
+int F0884_WORLD_AwardSkillExperience_Compat(
+    struct GameWorld_Compat* world, int championIndex, int skillIndex,
+    int experience, int mapDifficulty, struct LevelUpMarker_Compat* marker);
 
 int F0881_WORLD_InitDefault_Compat(
     struct GameWorld_Compat* world,

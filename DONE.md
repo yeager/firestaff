@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Unified live DM1 XP-to-level-up mutation/publication across
+  spell success/failure, parry, melee, sensors, throw, actions and influence.
+  Success XP moved into M10 before cooldown; M11 no longer awards it again.
+  Original I34E public Mon Light casts cross a RAM-configured threshold in
+  all three modes, publish maxima without refilling current vitals and
+  survive animation/redraw without XP/stat/RNG replay. Production build and
+  five final regressions pass (0.49s), following four expanded checks (16.30s).
+  See the XP transaction document for fixture and remaining parity boundaries.
+
 - 2026-09-06: Level-up exposes an explicitly validated antimagic rule;
   admitted DM1 F20 M11 magic/influence awards select modulo 3, while the
   PC34 wrapper retains modulo 4. The independent oracle now covers 48

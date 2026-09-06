@@ -102,6 +102,69 @@ int main(void) {
         printf("I34E Mon Light mode=%d recent=%d award=%u: passed\n",
                mode, recent, expected);
     }
+    for (mode = 0; mode < 3; ++mode) {
+        struct ChampionState_Compat *champion = &state->world.party.champions[0];
+        struct ChampionLifecycleState_Compat *life = &state->world.lifecycle.champions[0];
+        struct ChampionLifecycleState_Compat afterLife;
+        struct ChampionState_Compat afterChampion;
+        uint32_t afterSeed, afterTick;
+        int manaBefore;
+        /* Original spell and original map, RAM-only mastery threshold fixture.
+         * High hidden Air XP guarantees sufficient F0303 mastery while base
+         * Wizard XP crosses 500 once. No original object/dungeon bytes change. */
+        state->presentationMode = modes[mode];
+        F0600_CHAMPION_InitEmpty_Compat(champion);
+        memset(life, 0, sizeof(*life));
+        state->world.party.championCount = 1;
+        state->world.party.activeChampionIndex = 0;
+        state->world.party.mapIndex = 0; /* Actual map difficulty zero. */
+        champion->present = 1;
+        champion->hp.current = 50; champion->hp.maximum = 123;
+        champion->stamina.current = 400; champion->stamina.maximum = 987;
+        champion->mana.current = 800; champion->mana.maximum = 800;
+        for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+            champion->attributes[i] = 40;
+            champion->attributeMaximums[i] = 40;
+        }
+        life->skills20[3].experience = 499;
+        life->skills20[17].experience = 1000000;
+        state->world.gameTick = 2000 + mode;
+        state->world.lifecycle.lastCreatureAttackTime = state->world.gameTick - 200;
+        state->world.magic.magicalLightAmount = 0;
+        state->inventoryPanelActive = 0;
+        CHECK(M11_GameView_OpenSpellPanel(state));
+        for (i = 0; i < 4; ++i) CHECK(M11_GameView_EnterRune(state, runes[i]));
+        manaBefore = champion->mana.current;
+        state->world.masterRng.seed = 1;
+        CHECK(M11_GameView_CastSpell(state));
+        CHECK(state->world.magic.magicalLightAmount > 0);
+        CHECK(life->skills20[3].experience == 925);
+        CHECK(life->skills20[17].experience == 1000426);
+        CHECK(champion->skillExperience[3] == 925 && champion->skillLevels[3] == 2);
+        CHECK(champion->hp.maximum > 123 && champion->hp.maximum == life->maxHealth);
+        CHECK(champion->stamina.maximum > 987 && champion->stamina.maximum == life->maxStamina);
+        CHECK(champion->mana.maximum > 800 && champion->mana.maximum == life->maxMana);
+        CHECK(champion->hp.current == 50 && champion->stamina.current == 400 &&
+              champion->mana.current == manaBefore);
+        for (i = 0; i < CHAMPION_ATTR_COUNT; ++i) {
+            CHECK(champion->attributes[i] == 40);
+            CHECK(champion->attributeMaximums[i] ==
+                  life->statistics[i + 1][LIFECYCLE_STAT_MAXIMUM]);
+        }
+        afterLife = *life;
+        afterChampion = *champion;
+        afterSeed = state->world.masterRng.seed;
+        afterTick = state->world.gameTick;
+        /* Presentation-only tick avoids timed regeneration while proving the
+         * UI does not replay the already-committed spell XP/level-up effect. */
+        M11_GameView_TickAnimation(state);
+        M11_GameView_Draw(state, rendered, 320, 200);
+        M11_GameView_Draw(state, reference, 320, 200);
+        CHECK(state->world.gameTick == afterTick && state->world.masterRng.seed == afterSeed);
+        CHECK(memcmp(life, &afterLife, sizeof(afterLife)) == 0);
+        CHECK(memcmp(champion, &afterChampion, sizeof(afterChampion)) == 0);
+        printf("I34E public Mon Light level-up mode=%d: one award, published maxima, no UI replay\n", mode);
+    }
     M11_GameView_Shutdown(state); free(state); return 0;
 fail:
     M11_GameView_Shutdown(state); free(state); return 1;

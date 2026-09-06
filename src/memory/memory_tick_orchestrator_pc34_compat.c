@@ -13,6 +13,58 @@
 #include <string.h>
 #include <ctype.h>
 
+int F0884_WORLD_AwardSkillExperience_Compat(
+    struct GameWorld_Compat* world, int championIndex, int skillIndex,
+    int experience, int mapDifficulty, struct LevelUpMarker_Compat* marker)
+{
+    struct ChampionState_Compat* party;
+    struct ChampionLifecycleState_Compat* life;
+    int before, after, base, attribute, modulus, gained;
+    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        skillIndex < 0 || skillIndex >= LIFECYCLE_SKILL_COUNT || experience < 0)
+        return -1;
+    modulus = world->levelUpAntimagicModulus ? world->levelUpAntimagicModulus : 4;
+    if (modulus != 3 && modulus != 4) return -1;
+    party = &world->party.champions[championIndex];
+    if (!party->present) return -1;
+    life = &world->lifecycle.champions[championIndex];
+    base = skillIndex < 4 ? skillIndex : (skillIndex - 4) >> 2;
+    gained = F0849_LIFECYCLE_AddSkillExperience_Compat(life, skillIndex,
+        experience, mapDifficulty, world->gameTick,
+        world->lifecycle.lastCreatureAttackTime, &before, &after);
+    /* CHAMPION.C F0303:742 and F0304:882-895: resting mastery is one
+     * on both sides, so practice does not trigger a level-up while asleep. */
+    if (world->partyIsResting || world->lifecycle.rest.isResting) gained = 0;
+    if (gained) {
+        /* F0304:904-975 uses the champion's actual maxima. Lifecycle owns
+         * skill rows; the live party owns vitals/inventory-facing maxima. */
+        life->maxHealth = party->hp.maximum;
+        life->maxStamina = party->stamina.maximum;
+        life->maxMana = party->mana.maximum;
+        for (attribute = 0; attribute < CHAMPION_ATTR_COUNT; ++attribute)
+            life->statistics[attribute + 1][LIFECYCLE_STAT_MAXIMUM] =
+                (uint8_t)(party->attributeMaximums[attribute]
+                    ? party->attributeMaximums[attribute] : party->attributes[attribute]);
+        (void)F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+            life, base, after, modulus, &world->masterRng, marker);
+        party->hp.maximum = life->maxHealth;
+        party->stamina.maximum = life->maxStamina;
+        party->mana.maximum = life->maxMana;
+        for (attribute = 0; attribute < CHAMPION_ATTR_COUNT; ++attribute)
+            party->attributeMaximums[attribute] =
+                life->statistics[attribute + 1][LIFECYCLE_STAT_MAXIMUM];
+    }
+    party->skillExperience[base] = (unsigned long)life->skills20[base].experience;
+    party->skillLevels[base] = (unsigned short)after;
+    if (marker) {
+        marker->championIndex = championIndex;
+        marker->baseSkillIndex = base;
+        marker->previousLevel = before;
+        marker->newLevel = after;
+    }
+    return gained;
+}
+
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
 #include "memory_champion_stamina_adjusted_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
@@ -220,6 +272,17 @@ static void emit(struct TickResult_Compat* r, uint8_t kind,
     e->payload[1] = b;
     e->payload[2] = c;
     e->payload[3] = d;
+}
+
+static void orch_award_skill_experience_compat(
+    struct GameWorld_Compat* world, int champion, int skill, int experience,
+    int difficulty, struct TickResult_Compat* result)
+{
+    struct LevelUpMarker_Compat marker;
+    if (F0884_WORLD_AwardSkillExperience_Compat(
+            world, champion, skill, experience, difficulty, &marker) == 1)
+        emit(result, EMIT_LEVEL_UP, champion, marker.baseSkillIndex,
+             marker.previousLevel, marker.newLevel);
 }
 
 struct OrchTeleporterBuzz_Compat {
@@ -599,10 +662,9 @@ int F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
 
     baseSkillIndex = dm1_skill_get_base_index(DM1_SKILL_IDX_PARRY);
     if (baseSkillIndex < 0 || baseSkillIndex >= CHAMPION_SKILL_COUNT) return 0;
-    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
-        &world->lifecycle.champions[championIndex], DM1_SKILL_IDX_PARRY,
-        receipt.experience, orch_cmd_attack_map_difficulty_compat(world),
-        world->gameTick, world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    orch_award_skill_experience_compat(
+        world, championIndex, DM1_SKILL_IDX_PARRY,
+        receipt.experience, orch_cmd_attack_map_difficulty_compat(world), result);
     world->party.champions[championIndex].skillExperience[baseSkillIndex] =
         (unsigned long)world->lifecycle.champions[championIndex]
             .skills20[baseSkillIndex].experience;
@@ -2961,10 +3023,9 @@ static void orch_cmd_cast_spell_award_f0412_experience_compat(
      * shifted experience before returning NEEDS_MORE_PRACTICE.  Use the
      * same live lifecycle/F0304 bridge as command-side action XP; a failed
      * spell must not silently discard the receipt's source-owned partial XP. */
-    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
-        &world->lifecycle.champions[championIndex], skillIndex, experience,
-        orch_cmd_attack_map_difficulty_compat(world), world->gameTick,
-        world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    orch_award_skill_experience_compat(
+        world, championIndex, skillIndex, experience,
+        orch_cmd_attack_map_difficulty_compat(world), result);
     world->party.champions[championIndex].skillExperience[baseSkillIndex] =
         (unsigned long)world->lifecycle.champions[championIndex]
             .skills20[baseSkillIndex].experience;
@@ -3067,15 +3128,12 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
         return;
     }
     if (plan.shouldAwardXp) {
-        (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
-            &world->lifecycle.champions[plan.xpChampionIndex],
+        orch_award_skill_experience_compat(
+            world, plan.xpChampionIndex,
             plan.skillIndex,
             plan.experienceGain,
             plan.xpMapDifficulty,
-            plan.xpCurrentTick,
-            plan.xpLastCreatureAttackTime,
-            0,
-            0);
+            result);
     }
     if (plan.shouldWriteChampionState) {
         world->party.champions[plan.championIndex].stamina.current =
@@ -5192,10 +5250,9 @@ static int orch_f0248_award_steal_skill_xp_compat(
     champion = &world->party.champions[championIndex];
     lifecycleChampion = &world->lifecycle.champions[championIndex];
     if (!champion->present) return 0;
-    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
-        lifecycleChampion, DM1_SKILL_IDX_STEAL, 300,
-        orch_cmd_attack_map_difficulty_compat(world), world->gameTick,
-        world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    orch_award_skill_experience_compat(
+        world, championIndex, DM1_SKILL_IDX_STEAL, 300,
+        orch_cmd_attack_map_difficulty_compat(world), result);
     champion->skillExperience[DM1_SKILL_IDX_NINJA] =
         (unsigned long)lifecycleChampion->skills20[DM1_SKILL_IDX_NINJA].experience;
     emit(result, EMIT_XP_AWARD, championIndex, DM1_SKILL_IDX_STEAL, 300, 1);
@@ -13629,6 +13686,10 @@ cmd_attack_legacy_marker:
                 }
             }
 
+            /* F0412:2034-2039 awards XP before disabling the caster.
+             * M11 presents the effect without repeating this mutation. */
+            orch_cmd_cast_spell_award_f0412_experience_compat(
+                world, champIdx, spell.skillIndex, spellExperience, 1, result);
             /* Emit spell effect notification:
              *   payload[0] = champIdx
              *   payload[1] = spellKind

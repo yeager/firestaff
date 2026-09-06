@@ -22949,7 +22949,6 @@ static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
                                int skillIndex,
                                int experience) {
-    struct ChampionLifecycleState_Compat* lc;
     struct LevelUpMarker_Compat marker;
     int levelBefore = 0;
     int levelAfter = 0;
@@ -22962,16 +22961,16 @@ static void m11_award_magic_xp(M11_GameViewState* state,
     if (!state->world.party.champions[championIndex].present) return;
     if (skillIndex < 0 || skillIndex >= LIFECYCLE_SKILL_COUNT) return;
 
-    lc = &state->world.lifecycle.champions[championIndex];
     memset(&marker, 0, sizeof(marker));
-    xpAmount = experience > 0 ? experience : 1;
+    xpAmount = experience;
+    state->world.levelUpAntimagicModulus = state->dm1FmtownsStartupReceiptValid ? 3 : 4;
 
-    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
-            lc, skillIndex, xpAmount,
+    if (F0884_WORLD_AwardSkillExperience_Compat(
+            &state->world, championIndex, skillIndex, xpAmount,
             m11_current_xp_map_difficulty(state),
-            state->world.gameTick,
-            state->world.lifecycle.lastCreatureAttackTime,
-            &levelBefore, &levelAfter)) {
+            &marker) == 1) {
+        levelBefore = marker.previousLevel;
+        levelAfter = marker.newLevel;
         baseIdx = dm1_skill_get_base_index(skillIndex);
         if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT) {
             if (levelAfter > 0) {
@@ -22980,12 +22979,6 @@ static void m11_award_magic_xp(M11_GameViewState* state,
             }
         }
         if (levelAfter > levelBefore && levelAfter > 0) {
-            /* F0304 CHAMPION.C:963-967: admitted F20 uses modulo 3,
-             * while the PC34 lifecycle default uses two random bits. */
-            (void)F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
-                lc, baseIdx, levelAfter,
-                state->dm1FmtownsStartupReceiptValid ? 3 : 4,
-                &state->world.masterRng, &marker);
             m11_format_champion_name(
                 state->world.party.champions[championIndex].name,
                 name, sizeof(name));
@@ -23472,6 +23465,21 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 }
                 break;
             }
+            case EMIT_LEVEL_UP: {
+                int champion = (int)e->payload[0];
+                int skill = (int)e->payload[1];
+                char name[16];
+                if (champion < 0 || champion >= CHAMPION_MAX_PARTY ||
+                    skill < 0 || skill >= 4) break;
+                m11_format_champion_name(state->world.party.champions[champion].name,
+                                         name, sizeof(name));
+                m11_log_event(state, M11_COLOR_LIGHT_GREEN,
+                              "T%u: %s LEVELED UP! (%s %d -> %d)",
+                              (unsigned int)state->world.gameTick, name,
+                              dm1_skill_base_name(skill),
+                              (int)e->payload[2], (int)e->payload[3]);
+                break;
+            }
             case EMIT_XP_AWARD:
                 m11_log_event(state, M11_COLOR_YELLOW,
                               "T%u: EXPERIENCE GAINED",
@@ -23590,8 +23598,6 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 int sKind = (int)e->payload[1];
                 int sType = (int)e->payload[2];
                 int sPow  = (int)EMIT_SPELL_EFFECT_UNPACK_POWER(e->payload[3]);
-                int sSkill = (int)EMIT_SPELL_EFFECT_UNPACK_SKILL(e->payload[3]);
-                int sXp = (int)EMIT_SPELL_EFFECT_UNPACK_XP(e->payload[3]);
                 const char* kindStr = "SPELL";
                 m11_materialize_action_result(
                     state, DM1_V1_LIVE_ACTION_EFFECT_SPELL_PC34,
@@ -23607,7 +23613,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                  * experience from G0487 Spell.SkillIndex, then lines
                  * 2034-2039 award it once and disable the caster after
                  * the spell effect succeeds. */
-                m11_award_magic_xp(state, sChamp, sSkill, sXp);
+                /* XP and level-up are already committed by M10. */
                 break;
             }
             case EMIT_ACTION_DISABLED:
@@ -25616,6 +25622,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 return 0;
             }
             DM1_V1_VBlankTiming_ConfigureFmTowns(&state->vblankTiming);
+            state->world.levelUpAntimagicModulus = 3;
         }
     } else {
         state->active = 1;
@@ -50331,29 +50338,15 @@ static int m11_dm1_f0140_object_weight_for_throw(
 static void m11_dm1_award_throw_xp(M11_GameViewState* state,
                                    int championIndex,
                                    int experience) {
-    struct ChampionLifecycleState_Compat* lc;
-    int levelBefore = 0;
-    int levelAfter = 0;
-    int baseIdx;
 
     if (!state) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
     if (!state->world.party.champions[championIndex].present) return;
     if (experience <= 0) return;
 
-    lc = &state->world.lifecycle.champions[championIndex];
-    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
-            lc, LIFECYCLE_SKILL_THROW, experience,
-            m11_current_xp_map_difficulty(state),
-            state->world.gameTick,
-            state->world.lifecycle.lastCreatureAttackTime,
-            &levelBefore, &levelAfter)) {
-        baseIdx = (LIFECYCLE_SKILL_THROW - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
-        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT && levelAfter > 0) {
-            state->world.party.champions[championIndex].skillLevels[baseIdx] =
-                (unsigned short)levelAfter;
-        }
-    }
+    (void)F0884_WORLD_AwardSkillExperience_Compat(
+        &state->world, championIndex, LIFECYCLE_SKILL_THROW, experience,
+        m11_current_xp_map_difficulty(state), NULL);
 }
 
 static void m11_award_action_xp_f0407(M11_GameViewState* state,
@@ -50362,9 +50355,6 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
                                       int experience) {
     DM1_ActionXpAwardInputPc34 in;
     DM1_ActionXpAwardPlanPc34 plan;
-    int levelBefore = 0;
-    int levelAfter = 0;
-    int baseIdx;
     int mapDifficulty = 0;
 
     if (!state) return;
@@ -50394,19 +50384,9 @@ static void m11_award_action_xp_f0407(M11_GameViewState* state,
     /* ReDMCSB MENU.C F0407 lines 1254-1255 and 1623-1624 award the
      * G0497 action XP to the G0496 skill through F0304 after the action
      * switch, with callers adjusting experience before the common tail. */
-    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
-            &state->world.lifecycle.champions[championIndex],
-            plan.skillIndex, plan.experienceGain,
-            mapDifficulty,
-            state->world.gameTick,
-            state->world.lifecycle.lastCreatureAttackTime,
-            &levelBefore, &levelAfter)) {
-        baseIdx = plan.baseSkillIndex;
-        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT && levelAfter > 0) {
-            state->world.party.champions[championIndex].skillLevels[baseIdx] =
-                (unsigned short)levelAfter;
-        }
-    }
+    (void)F0884_WORLD_AwardSkillExperience_Compat(
+        &state->world, championIndex, plan.skillIndex, plan.experienceGain,
+        mapDifficulty, NULL);
 }
 
 static int m11_dm1_f0328_spawn_thrown_thing(M11_GameViewState* state,
@@ -52029,17 +52009,11 @@ static int m11_apply_party_shield_f0403(M11_GameViewState* state,
 static int m11_add_influence_experience(M11_GameViewState* state,
                                         int championIndex,
                                         int experience) {
-    struct ChampionLifecycleState_Compat* lifecycleChampion;
-    struct LevelUpMarker_Compat marker;
     int mapDifficulty = 0;
-    int priestLevel;
-    int levelBefore, levelAfter;
     if (!state || championIndex < 0 ||
         championIndex >= CHAMPION_MAX_PARTY || experience <= 0) {
         return 0;
     }
-    lifecycleChampion = &state->world.lifecycle.champions[championIndex];
-    memset(&marker, 0, sizeof(marker));
     if (state->world.dungeon && state->world.dungeon->maps &&
         state->world.party.mapIndex >= 0 &&
         state->world.party.mapIndex < state->world.dungeon->header.mapCount) {
@@ -52049,22 +52023,10 @@ static int m11_add_influence_experience(M11_GameViewState* state,
     /* ReDMCSB MENU.C F0401 line 987 calls CHAMPION.C F0304 with
      * C14_SKILL_INFLUENCE.  Use the lifecycle F0304 wrapper so the award
      * also updates temporary XP, the Priest base skill and level-up state. */
-    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
-            lifecycleChampion, LIFECYCLE_SKILL_INFLUENCE,
-            experience, mapDifficulty, state->world.gameTick,
-            state->world.lifecycle.lastCreatureAttackTime,
-            &levelBefore, &levelAfter)) {
-        (void)F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
-            lifecycleChampion, LIFECYCLE_SKILL_PRIEST, levelAfter,
-            state->dm1FmtownsStartupReceiptValid ? 3 : 4,
-            &state->world.masterRng, &marker);
-        priestLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-            lifecycleChampion, LIFECYCLE_SKILL_PRIEST, 0);
-        if (priestLevel > 0) {
-            state->world.party.champions[championIndex]
-                .skillLevels[LIFECYCLE_SKILL_PRIEST] = (unsigned short)priestLevel;
-        }
-    }
+    state->world.levelUpAntimagicModulus = state->dm1FmtownsStartupReceiptValid ? 3 : 4;
+    (void)F0884_WORLD_AwardSkillExperience_Compat(
+        &state->world, championIndex, LIFECYCLE_SKILL_INFLUENCE,
+        experience, mapDifficulty, NULL);
     return 1;
 }
 
