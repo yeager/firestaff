@@ -11,12 +11,7 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-N2_DM1_STAGE_DEFAULT="${HOME}/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-if [[ -z "${DM1_ORIGINAL_STAGE_DIR:-}" && -f "${N2_DM1_STAGE_DEFAULT}/DM.EXE" ]]; then
-    SRC_STAGE="${N2_DM1_STAGE_DEFAULT}"
-else
-    SRC_STAGE="${DM1_ORIGINAL_STAGE_DIR:-${REPO}/verification-screens/dm1-dosbox-capture/DungeonMasterPC34}"
-fi
+SRC_STAGE="${DM1_ORIGINAL_STAGE_DIR:-${REPO}/verification-screens/dm1-dosbox-capture/DungeonMasterPC34}"
 OUT_DIR="${OUT_DIR:-${REPO}/verification-screens/pass70-original-dm1-viewports}"
 DOSBOX="${DOSBOX:-/Applications/DOSBox Staging.app/Contents/MacOS/dosbox}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
@@ -91,9 +86,8 @@ Outputs:
 Optional environment:
   DM1_ORIGINAL_STAGE_DIR=/path/to/DM1-PC34-tree-with-DM.EXE
                     override the default staged tree path
-                    On N2, the default is the local original stage at
-                    ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34
-                    when it exists; otherwise the legacy in-repo stage is used.
+                    Defaults to verification-screens/dm1-dosbox-capture/DungeonMasterPC34
+                    under the repository. No machine-specific hidden stage is selected.
   DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
                     skip legacy graphics/sound/input selector keystrokes when
                     the DOSBox config launches 'DM VGA' directly
@@ -197,7 +191,7 @@ print_pass435_hoc_route() {
 # -> confirm -> party/spell/inventory six-shot route.
 
 OUT_DIR=\$PWD/verification-screens/pass376-original-route \\
-DM1_ORIGINAL_STAGE_DIR=\$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \\
+DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
 DOSBOX=/usr/bin/dosbox \\
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
