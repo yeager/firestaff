@@ -1,5 +1,8 @@
 # Unreleased
 
+- Projectiles pass through open and imaginary fake walls instead of treating
+  every fake wall as solid.
+
 - Original-data projectiles no longer disappear through invented collisions
   with other projectiles occupying the same cell.
 

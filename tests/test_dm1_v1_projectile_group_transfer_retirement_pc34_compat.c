@@ -21,6 +21,9 @@ int main(int argc, char** argv)
     int partyFirst = argc == 2 && strcmp(argv[1], "party-first") == 0;
     int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
+    int fakeOpen = argc == 2 && strcmp(argv[1], "fake-open") == 0;
+    int fakeImaginary = argc == 2 && strcmp(argv[1], "fake-imaginary") == 0;
+    int fakeClosed = argc == 2 && strcmp(argv[1], "fake-closed") == 0;
     int halfSquare = argc == 2 && strcmp(argv[1], "half-square") == 0;
     int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
@@ -42,6 +45,10 @@ int main(int argc, char** argv)
     CHECK(F0881_WORLD_InitDefault_Compat(&world, 1));
     memset(squares, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squares));
     squares[sameSquare ? 4 : 3] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    if (fakeOpen || fakeImaginary || fakeClosed) {
+        squares[3] = (DUNGEON_ELEMENT_FAKEWALL << 5) |
+            DUNGEON_SQUARE_MASK_THING_LIST | (fakeOpen ? 4 : fakeImaginary ? 1 : 0);
+    }
     dungeon.loaded = dungeon.tilesLoaded = 1;
     dungeon.header.mapCount = 1; dungeon.header.squareFirstThingCount = 3;
     dungeon.maps = &map; dungeon.tiles = &tile;
@@ -126,6 +133,13 @@ int main(int argc, char** argv)
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (fakeOpen || fakeImaginary || fakeClosed) {
+        CHECK((world.projectiles.entries[0].reserved3 != 0) == !fakeClosed);
+        if (!fakeClosed) CHECK(world.projectiles.entries[0].mapY == 0);
+        CHECK(group.health[0] == 1000);
+        puts("ok: fake wall flags control source projectile passage");
+        return 0;
+    }
     if (peer) {
         CHECK(world.projectiles.entries[0].reserved3 != 0);
         CHECK(world.projectiles.entries[0].mapY == 0);

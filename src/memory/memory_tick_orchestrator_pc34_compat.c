@@ -7662,6 +7662,10 @@ static int orch_build_projectile_digest_compat(
     }
 
     out->destSquareType = (destSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+    /* PROJEXPL.C F0219:721-724: imaginary (01) or open (04) fake
+     * walls allow passage. Preserve both flags from the original tile. */
+    out->destFakeWallIsImaginaryOrOpen =
+        out->destSquareType == PROJECTILE_ELEMENT_FAKEWALL && (destSquare & 0x05);
     if (world->things && world->things->loaded &&
         (destSquare & DUNGEON_SQUARE_MASK_THING_LIST) &&
         !dm1_v1_f0221_fluxcage_on_square_pc34(

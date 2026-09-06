@@ -16289,6 +16289,10 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat party-landing)
     add_test(NAME dm1_v1_projectile_source_peer_no_collision_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat peer)
+    foreach(fake_wall_case IN ITEMS fake-open fake-imaginary fake-closed)
+        add_test(NAME dm1_v1_projectile_${fake_wall_case}_pc34_compat
+            COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat ${fake_wall_case})
+    endforeach()
     add_test(NAME dm1_v1_projectile_same_square_half_square_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat half-square)
     target_include_directories(test_dm1_v1_f0213_f0220_explosion_runtime_pc34_compat PRIVATE

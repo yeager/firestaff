@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Native projectile destination digests preserve imaginary/open
+  fake-wall bits (01/04), following PROJEXPL.C F0219:721-724. The omitted
+  flags previously made open fake walls stop projectiles. A source-shaped
+  RAM regression failed before the fix; open, imaginary and closed cases
+  now pass. Sixteen focused tests include five authentic DOS spell tests;
+  five shared movement/teleporter regressions also pass. Executable rebuilt.
+  Original emulator comparisons and wider platform parity remain open.
+
 - 2026-09-06: Source-backed C14 projectiles no longer collide with another
   projectile. PROJEXPL.C F0219:687-764 checks party, groups and geometry,
   not peer C14 records. A bounded two-record RAM fixture reproduced the
