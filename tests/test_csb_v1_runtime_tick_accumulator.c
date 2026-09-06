@@ -3203,6 +3203,7 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     uint16_t group_hp_after;
     uint16_t group_flags;
     int expected_fixed_cells[6] = {0};
+    int expected_survivor_hp = 0;
     int i;
 
     printf("\n-- CSB C25 party/group damage writeback --\n");
@@ -3341,7 +3342,8 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     test_put_le16(raw, 96, (uint16_t)((1u << 5) | 6u)); /* two C6 creatures */
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
-    profile.dungeon_seed = 0xC5B10700u;
+    /* Preserve the flee-branch fixture after F0191's descending damage draws. */
+    profile.dungeon_seed = 0xC5B10701u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
     profile.csbwin_body_runtime_summary_valid = 1;
@@ -3507,8 +3509,10 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
             &digest, profile.explosions.entries[slot].scheduledAtTick,
             &rng, &next, &result), "reference explosion attack advances caller RNG");
         attack = result.outActionGroup.rawAttackValue;
-        /* F0191 first damage draw, then F0186's first mandatory armour cell.
+        /* F0191 damages slot 1 first, then kills slot 0 and enters F0186.
          * This asserts shared call ordering, not authentic global seed ownership. */
+        expected_survivor_hp = 500 - (attack - ((attack >> 3) + 1) +
+            F0732_COMBAT_RngRandom_Compat(&rng, ((attack >> 3) + 1) * 2));
         (void)F0732_COMBAT_RngRandom_Compat(&rng, ((attack >> 3) + 1) * 2);
         for (i = 0; i < 6; ++i)
             if (!F0732_COMBAT_RngRandom_Compat(&rng, 4))
@@ -3531,6 +3535,8 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     CHECK(group_hp_after > 0u && group_hp_after < 500u &&
               (uint16_t)(raw[90] | ((uint16_t)raw[91] << 8)) == 0u,
           "C25 group kill packs surviving Health down to slot 0");
+    CHECK(group_hp_after == expected_survivor_hp,
+          "F0191 damages last slot first and does not re-hit its compacted survivor");
     CHECK((raw[87] & 0x03u) == 1u,
           "C25 group kill packs surviving cell down to slot 0");
     CHECK(profile.active_group_state[0].cells == 0x01u &&

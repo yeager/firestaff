@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-09-06: The C25 group-damage owner now visits creature slots from Count
+  down to zero (ReDMCSB GROUP.C F0191:961-967). The runtime test checks exact
+  surviving HP and subsequent fixed-drop cells, including lower-slot death
+  and survivor compaction. The existing flee-branch fixture uses seed
+  `0xC5B10701` to reach that branch with the corrected draw order; its three
+  behavior/active-state assertions remain intact. Runtime, F0191 fall receipt,
+  F0266 move/projectile receipt and F0247 teleporter impact tests pass after
+  rebuilding. AArch64 debugger rollback observation still passes. These checks
+  do not establish original-media campaign or cross-platform parity.
+
 ## 2026-09-06 — Fixed and carried drop RNG ordering
 
 - F0186 now allocates before cell RNG and publishes floor effects before the

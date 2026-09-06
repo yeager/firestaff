@@ -10247,12 +10247,13 @@ static int csb_v1_runtime_apply_explosion_group_action(
              * mutates GROUP.Health[4] and calls pack_dead_group_creature
              * for killed creatures (fixed possessions, slot drops, smoke,
              * active-group compaction). */
-            for (i = 0; i < creature_count; ) {
+            /* F0191:961-967 visits Count down to zero. Compaction after
+             * killing a lower slot must not damage an already visited survivor. */
+            for (i = creature_count - 1; i >= 0; --i) {
                 uint8_t *hp_ptr = thing_record + 6 + i * 2;
                 uint16_t hp = csb_v1_runtime_read_u16(hp_ptr);
                 int damage;
                 if (hp == 0) {
-                    i++;
                     continue;
                 }
                 damage = base_attack +
@@ -10280,7 +10281,6 @@ static int csb_v1_runtime_apply_explosion_group_action(
                     csb_v1_runtime_write_u16(
                         hp_ptr,
                         (uint16_t)((int)hp - damage));
-                    i++;
                 }
                 applied++;
             }

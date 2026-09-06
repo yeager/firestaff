@@ -1,5 +1,8 @@
 # Unreleased
 
+- CSB explosion damage visits group members in the original last-to-first
+  order, preserving survivor damage and subsequent drop decisions.
+
 - CSB fixed and carried monster drops share their damage caller's random
   sequence; rejected death transactions also restore that sequence.
 
