@@ -12627,6 +12627,7 @@ static int orch_f0209_begin_attack_compat(
     struct RngState_Compat rng = world->masterRng;
     struct DM1ActiveGroup_Compat staged = *active;
     int i;
+    int halfPairTurned = 0;
     /* GROUP.C:2012: C31 removes this square's old C29-C41 events
      * before attack entry. Keep deletion inside the staged transaction. */
     if (ev->aux2 == DM1_EVENT_REACTION_PARTY_IS_ADJACENT &&
@@ -12639,9 +12640,16 @@ static int orch_f0209_begin_attack_compat(
         uint32_t time = world->gameTick + 1u;
         if (((staged.directions >> (i * 2)) & 3) != ctx->currentGroupPrimaryDirToParty &&
             !(i && F0732_COMBAT_RngRandom_Compat(&rng, 2))) {
-            if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
-                    &staged, ctx->currentGroupPrimaryDirToParty, i,
-                    ctx->creatureSize, group->count, &rng)) return 0;
+            /* GROUP.C F0205:1606-1620 suppresses repeated pair turns at
+             * the same game time. All calls in this fanout share a tick.
+             * F0209 still draws the turn delay after a suppressed call. */
+            if (!halfPairTurned) {
+                if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+                        &staged, ctx->currentGroupPrimaryDirToParty, i,
+                        ctx->creatureSize, group->count, &rng)) return 0;
+                halfPairTurned = ctx->creatureSize == DM1_SIZE_HALF_SQUARE &&
+                    group->count > 0;
+            }
             time = world->gameTick + F0732_COMBAT_RngRandom_Compat(&rng, 4) + 2u;
         }
         /* GROUP.C:2094,2123: C37 does not draw or add the incoming

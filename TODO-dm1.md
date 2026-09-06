@@ -1,5 +1,10 @@
 # Firestaff TODO — DM1
 
+- Integrate F0205's G0395/G0396 same-tick half-square turn owner across
+  separate dispatches, not just within one attack-entry fanout. Original
+  ownership is the last active-group pointer plus game time; preserve its
+  behavior across group compaction and map transitions without save changes.
+
 - Complete attack entry in the C32-C36 source decision tree. Audit C32's lack
   of an individual slot without reproducing an out-of-bounds Aspect[-1] read.
   F0179 also lacks Couatl movement and Animated Armour ongoing-attack sound

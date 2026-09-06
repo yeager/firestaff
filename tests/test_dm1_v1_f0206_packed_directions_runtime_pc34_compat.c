@@ -1595,10 +1595,45 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
     return ok ? 0 : 1;
 }
 
+static int test_half_pair_attack_turn(unsigned seed)
+{
+    struct GameWorld_Compat world;
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    unsigned directions;
+    int ok;
+    if (!build_world(&world)) return 1;
+    world.pc34ActiveGroupSourceCount = 1;
+    /* Original I34 type five Attributes=0x0581: half-square creature. */
+    world.things->groups[0].creatureType = 5;
+    world.creatureAI[0].creatureType = 5;
+    authenticate_group_c04(world.things, &world.things->groups[0],
+                           world.things->rawThingData[THING_TYPE_GROUP]);
+    F0730_COMBAT_RngInit_Compat(&world.masterRng, seed);
+    memset(&event, 0, sizeof(event));
+    memset(&result, 0, sizeof(result));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapX = event.mapY = 1;
+    event.aux1 = 5;
+    event.aux2 = 31;
+    event.aux3 = 20;
+    event.aux4 = 0x100;
+    ok = F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) &&
+         F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    directions = world.pc34ActiveGroupDirections[0] & 15;
+    ok &= expect(world.timeline.count == 2 && (directions == 5 || directions == 15),
+                 "half-square attack pair takes only one sideways turn in this tick");
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 int main(void)
 {
     int slot;
     int eventType;
+    for (slot = 1; slot <= 128; ++slot)
+        if (test_half_pair_attack_turn((unsigned)slot) != 0) return 1;
     for (slot = 0; slot < 4; ++slot)
         if (test_timed_aspect_and_freeze_gate(slot, 9, 37) != 0) return 1;
     if (test_timed_aspect_and_freeze_gate(0, 7, 31) != 0 ||

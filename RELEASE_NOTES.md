@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 half-square creature pairs no longer turn twice during one attack start.
+
 - DM1's party-adjacent reaction replaces old group events with per-creature
   attack continuations while retaining unrelated events.
 

@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Prevented a half-square pair from turning twice inside one attack-entry
+  fanout, following F0205's same-time suppression (GROUP.C:1606-1620).
+  The caller still draws its F0209 turn delay after a suppressed turn.
+  An I34 type-five two-creature regression across 128 seeds fails before
+  the guard and passes afterward; the first eight seeds alone missed it.
+  Verified in the packed-direction runtime target. Cross-event same-tick
+  suppression remains separate from this within-fanout fix.
+
 - Added four seeded mixed-direction C37 attack-entry regressions. A bounded
   I34 type-zero fixture starts one creature facing the party and three
   opposite. Independent source-ordered RNG accounting checks packed turns,
