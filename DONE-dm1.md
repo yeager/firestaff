@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Created MON through OpenSpellPanel/EnterRune/CastSpell (Lo Ya)
+  in an original flask, then consumed it through mouth input. Twenty
+  Atari/Amiga cases pass subtype creation, source-derived stamina recovery,
+  maximum clamp and empty-flask conversion. Party skill/mana/placement are
+  controlled RAM fixtures; potion type/power are produced only by runtime
+  spell execution. This is not emulator or complete spell parity.
+
 - 2026-09-06: Extended original antivenin tests to require accepted C08
   swallow transport and no generated-marker fallback for both consumption
   routes. All twenty Atari/Amiga cases pass; waveform/timing remains unproven.

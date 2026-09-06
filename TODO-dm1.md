@@ -1,9 +1,8 @@
 # Firestaff TODO — DM1
 
-- Obtain MON/EE consumption evidence by creating potions through authentic
-  spell execution. The five tested Atari/Amiga initial dungeons contain no
-  allocated MON (type 11) record, so direct original-record consumption
-  testing cannot cover it. Do not substitute a fabricated potion record.
+- Extend spell-created restorative potion evidence to EE and multiple power
+  levels, with full rune mouse input and independent RNG/XP receipts. MON
+  creation/consumption now has original-flask API-route coverage.
 
 - Fix food command timing: defer swallow until all four source mouth delays
   complete, including release/input lifecycle and simulation ordering. See
