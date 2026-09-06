@@ -1,5 +1,7 @@
 # Unreleased
 
+- CSB explosion damage now preserves creatures marked immune to damage.
+
 - CSB explosion damage visits group members in the original last-to-first
   order, preserving survivor damage and subsequent drop decisions.
 

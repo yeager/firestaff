@@ -4086,7 +4086,7 @@ static void test_f0190_death_transaction_rolls_back_bad_slot_chain(void)
           "F0190 rollback removes staged C15 smoke and C14 follow-up state");
     /* A valid carried chain must consume the same damage stream, rather
      * than a coordinate-derived F0188 seed. This is a source-shaped fixture. */
-    for (int seed = 1; seed <= 8; ++seed) {
+    for (int seed = 1; seed <= 9; ++seed) {
         struct CellContentDigest_Compat digest = {0};
         struct ExplosionInstance_Compat next;
         struct ExplosionTickResult_Compat result;
@@ -4095,6 +4095,7 @@ static void test_f0190_death_transaction_rolls_back_bad_slot_chain(void)
         uint16_t first;
         memcpy(raw, before, sizeof(raw));
         test_put_le16(raw, 98, 0xfffeu);
+        if (seed == 9) raw[86] = 23u; /* G0243 Lord Chaos: Defense=255. */
         csb_v1_runtime_init(&profile, NULL);
         profile.chaos_magic.magic_initialized = 1;
         profile.dungeon_handle = &dungeon;
@@ -4109,7 +4110,7 @@ static void test_f0190_death_transaction_rolls_back_bad_slot_chain(void)
         digest.destTeleporterNewDirection = -1;
         digest.destDoorState = PROJECTILE_DOOR_STATE_NONE;
         digest.destHasCreatureGroup = 1;
-        digest.destCreatureType = 9;
+        digest.destCreatureType = raw[86];
         digest.destCreatureCellMask = 15;
         F0730_COMBAT_RngInit_Compat(&rng, (uint32_t)seed ^
             (uint32_t)profile.explosions.entries[slot].scheduledAtTick ^ 0x100u ^ 0x10000u);
@@ -4122,6 +4123,15 @@ static void test_f0190_death_transaction_rolls_back_bad_slot_chain(void)
         queue_explosion_advance_event(&profile, &first_advance);
         CHECK(csb_v1_runtime_tick_v1(&profile) == 1 &&
               csb_v1_runtime_tick_v1(&profile) == 1, "carried drop death dispatches");
+        if (seed == 9) {
+            CHECK(raw[88] == 1u && raw[89] == 0u,
+                  "F0190 damage immunity preserves health");
+            CHECK(raw[84] == 0u && raw[85] == 0x14u && raw[82] == 0xfeu,
+                  "immune group retains carried weapon without floor drops");
+            CHECK(find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE) < 0,
+                  "immune group produces no death smoke");
+            continue;
+        }
         first = (uint16_t)(raw[66] | ((uint16_t)raw[67] << 8));
         CHECK((first & 0x3fffu) == (5u << 10), "carried weapon is the floor chain owner");
         CHECK((first >> 14) == expected_cell, "F0188 continues caller RNG without reseeding");

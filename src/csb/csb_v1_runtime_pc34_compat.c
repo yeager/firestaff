@@ -10250,6 +10250,8 @@ static int csb_v1_runtime_apply_explosion_group_action(
             /* F0191:961-967 visits Count down to zero. Compaction after
              * killing a lower slot must not damage an already visited survivor. */
             for (i = creature_count - 1; i >= 0; --i) {
+                const struct CreatureBehaviorProfile_Compat *creature_profile =
+                    CREATURE_GetProfile_Compat(thing_record[4]);
                 uint8_t *hp_ptr = thing_record + 6 + i * 2;
                 uint16_t hp = csb_v1_runtime_read_u16(hp_ptr);
                 int damage;
@@ -10258,6 +10260,10 @@ static int csb_v1_runtime_apply_explosion_group_action(
                 }
                 damage = base_attack +
                     F0732_COMBAT_RngRandom_Compat(rng, random_window);
+                /* GROUP.C F0191:965 draws before F0190:826-829 rejects
+                 * Defense=255 in the MEDIA720 CSB editions. */
+                if (creature_profile && creature_profile->baseDefense == 255)
+                    continue;
                 if (damage < 1) damage = 1;
                 if (damage >= (int)hp) {
                     if (!csb_v1_runtime_pack_dead_group_creature(

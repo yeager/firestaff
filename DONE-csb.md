@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-06: C25 group damage honors Defense=255 after the F0191 random
+  damage draw (GROUP.C F0190:826-829, MEDIA720). A bounded Lord Chaos record
+  retains health and carried possessions and emits no death smoke. Disabling
+  the guard fails all three checks; restoring it and rebuilding passes the
+  runtime regression. This does not verify other damage owners or original
+  platform captures; the legacy C25 burst timing remains a separate boundary.
+
 - 2026-09-06: The C25 group-damage owner now visits creature slots from Count
   down to zero (ReDMCSB GROUP.C F0191:961-967). The runtime test checks exact
   surviving HP and subsequent fixed-drop cells, including lower-slot death
