@@ -9,8 +9,10 @@ This is a synchronous source command; advancing ordinary gameplay while
 waiting must not be assumed equivalent to the source delay.
 
 `BASE.C` F0022_MAIN_Delay, lines 1584-1593, confirms that each delay unit
-calls M526_WaitVerticalBlank. Thus the food loop consumes 32 source VBlanks,
-not 32 simulation ticks. The platform-specific M526 implementation remains
+calls M526_WaitVerticalBlank. Thus the four explicit delays consume 32 source
+VBlank waits, not 32 simulation ticks. This is not necessarily the total
+command duration: viewport presentation may add synchronization. The
+platform-specific M526 implementation remains
 the authority for the actual interrupt/refresh clock.
 
 ## Current runtime gap
@@ -19,7 +21,9 @@ At commit `637318a85`, `m11_process_v1_mouth_click` requests swallow before
 starting `m11_start_v1_mouth_animation`. Alternative food UseItem requests
 swallow immediately without starting that animation. The animation countdown
 is driven by `M11_GameView_AdvanceIdleTick` and does not establish source
-VBlank timing. Releasing/clearing the mouth visual resets the animation state.
+VBlank timing. The explicit mouth-visual clear resets the animation state;
+current callers include inventory switching/toggling. Button release alone
+has not been established as a caller and must be tested separately.
 
 `main_loop_m11.c` dispatches AdvanceIdleTick from the accumulator using
 M11_GameView_IdleTickIntervalMs (around lines 7444-7450 and 7705-7713).
@@ -27,6 +31,19 @@ Its normal game-tick default is 200 ms. This establishes a clock-domain
 mismatch in the animation countdown; simply moving the sound to the last
 existing animation tick would retain that mismatch. Boot probes directly
 call AdvanceIdleTick and therefore cannot prove wall-clock duration.
+
+## Platform dispatch evidence
+
+`DEFS.H:3134-3166` maps Atari ST waits to Vsync(), early Amiga to WaitTOF(),
+and later/platform-specific builds to F0693. Do not select an unrelated
+F0693 implementation just because its function name matches: for example,
+`VBLANK.C:626` contains a 6809 implementation, whereas
+`DRAWVIEW.C:700-706` uses the FM Towns EGB palette service. The per-edition
+preprocessor selection is part of the reference contract.
+
+`PANEL.C:1934-1936` invokes F0097_DrawViewport inside the frame loop for
+later editions. Its platform-specific synchronization must be included in
+the wall-clock proof rather than equating every edition to a flat 640 ms.
 
 The original-media tests establish accepted sound selection and reject
 generated-marker substitution. They intentionally do not establish the
