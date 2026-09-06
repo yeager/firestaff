@@ -18989,7 +18989,15 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
 
     champion->hp.current = 0;
     if (state->inventoryPanelActive &&
-        state->world.party.activeChampionIndex == championIndex) {
+        m11_inventory_champion_index(state) == championIndex) {
+        /* CHAMPION.C F0319:1575-1597 closes G0423, not G0411,
+         * and clears transient eye panels before dropping inventory. */
+        DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+        state->dm1InventoryChampionOrdinal = 0;
+        state->v1EyePressActive = 0;
+        state->v1ChampionStatsPanelActive = 0;
+        state->v1ScrollPanelActive = 0;
+        state->v1ObjectDescriptionPanelActive = 0;
         state->inventoryPanelActive = 0;
     }
     state->spellPanelOpen = 0;

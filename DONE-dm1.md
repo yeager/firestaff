@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Corrected F0319 inventory-close selection to use G0423's
+  owner rather than the leader. Close the chest cache before dropping the
+  dead owner's inventory and clear transient eye panels. Build and five
+  existing ownership regressions pass; actual death/drop sequence coverage
+  is still open and is not proved by these tests.
+
 - 2026-09-06: Corrected the remaining inventory damage-overlay lookup to
   use the displayed inventory owner. Five original Atari/Amiga viewport
   comparisons pass with different leader/inventory damage timers. This
