@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Simplified agent instructions, moved architecture and historical
+  statistics into docs/PROJECT_GUIDE.md, corrected the reference path and
+  consolidated verification/push rules while retaining data/runtime/security
+  boundaries and explicit approval for releases.
+
 - 2026-09-06: DM1 original YA protection expires on the correct live tick
   for only its recipient in twenty real-media regression cases.
 
