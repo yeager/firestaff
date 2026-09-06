@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 PC3.4 scroll eye tests now check original C023 border
+  pixels in Original/V2.1; the complete original-object corpus passes.
+
 - 2026-09-06: DM1 original-scroll eye checks now assert source text equality
   against each scroll's C02 reference, not merely successful panel routing.
 

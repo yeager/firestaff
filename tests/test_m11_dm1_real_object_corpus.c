@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "asset_loader_m11.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
@@ -290,6 +291,22 @@ static int check_type(M11_GameViewState *state, int thingType,
                 }
                 memset(framebuffer, 0, sizeof(framebuffer));
                 M11_GameView_Draw(state, framebuffer, 320, 200);
+                {
+                    const M11_AssetSlot *panel = M11_AssetLoader_Load(&state->assetLoader, 23u);
+                    int checkedPixels = 0;
+                    /* PANEL.C F0341 uses original C023 at DATA.C G0032's
+                     * (80,52). Check its outer edge independently of text
+                     * layout; this does not claim glyph pixel parity. */
+                    if (!panel || !panel->loaded || !panel->pixels ||
+                        panel->width != 144 || panel->height != 73) scrollOk = 0;
+                    else for (int py = 0; py < 73; ++py) for (int px = 0; px < 144; ++px) {
+                        unsigned char source = panel->pixels[py * 144 + px];
+                        if ((px > 1 && px < 142 && py > 1 && py < 71) || source == 8) continue;
+                        if (framebuffer[(33 + 52 + py) * 320 + 80 + px] != source) scrollOk = 0;
+                        ++checkedPixels;
+                    }
+                    if (!checkedPixels) scrollOk = 0;
+                }
                 (void)M11_GameView_HandlePointerButtonRelease(state, 20, 54,
                     DM1_V1_MOUSE_MASK_LEFT_PC34);
                 if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != thing)

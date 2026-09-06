@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Original scroll panel border
+
+- Every PC3.4 original scroll eye transaction now compares the visible
+  two-pixel C023 outer border with the loaded original panel at its native
+  destination. Original and V2.1 pass with the full object corpus.
+- This is border/material evidence only: transparent pixels and the inner
+  text area are excluded, and glyph parity remains open.
+
 ## 2026-09-06 — Original scroll text ownership
 
 - Every original PC3.4 scroll tested through the eye now requires M11's
