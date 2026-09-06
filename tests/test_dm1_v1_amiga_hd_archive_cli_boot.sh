@@ -74,4 +74,25 @@ probe_runtime_input strafe-left 1,3,2
 probe_runtime_input strafe-right 1,3,2
 probe_runtime_input action 1,3,2
 
-printf '%s\n' 'PASS: authentic DM1 Amiga ZIP -> ZIP -> ADF reaches CLI, menu, and complete native input runtime matrix in memory'
+for mode in v1 v20 v21; do
+    case "$mode" in v1) mode_index=0;; v20) mode_index=1;; v21) mode_index=2;; esac
+    for route in cli menu; do
+        route_args=()
+        if [[ "$route" == menu ]]; then route_args=(--menu --script enter,enter,enter); fi
+        mode_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+            --game dm1 --platform amiga --data-dir "$archive" \
+            "${route_args[@]}" --presentation-mode "$mode" \
+            --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
+            printf '%s\n' "$mode_output" >&2; exit 1;
+        }
+        if ! grep -Fq "presentationMode=$mode_index " <<<"$mode_output" ||
+           ! grep -Fq "assetMd5=$expected_md5" <<<"$mode_output" ||
+           ! grep -Fq 'phase=dm1-runtime' <<<"$mode_output" ||
+           ! grep -Fq 'levelLoaded=1' <<<"$mode_output"; then
+            printf '%s\n' "$mode_output" >&2
+            printf 'FAIL: Amiga %s did not retain requested %s presentation\n' "$route" "$mode" >&2
+            exit 1
+        fi
+    done
+done
+printf '%s\n' 'PASS: authentic DM1 Amiga ZIP reaches CLI/menu in Original, Filtered and Upscaled modes, plus native input matrix in memory'

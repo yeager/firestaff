@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Rechecked the rebuilt public executable (runtime 537ca520c) against
+  authentic Atari ST nested ZIP/STX, Amiga nested ZIP/ADF and FM Towns
+  Japanese/English archives. All three CLI/menu/input scripts pass without
+  missing-media skips; FM Towns covers both EDM and JDM handoffs. Extended
+  Amiga with six explicit Original/Filtered/Upscaled CLI/menu checks, all
+  passing with the expected original graphics hash. These remain headless
+  startup/input tests, not original pixel/audio or campaign parity evidence.
+
 - Post-attack-entry integration recheck at runtime revision 537ca520c:
   rebuilt the public executable and passed the authentic English DOS ZIP
   CLI/menu test in Original, Filtered and Upscaled modes, including native
