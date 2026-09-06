@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- F0183 admission now runs F0179 with original I34 creature metadata and the
+  shared RNG, publishing per-creature aspects. Successful staged map entry
+  publishes the advanced RNG; failure leaves the caller's stream unchanged.
+  The Skeleton regression pins aspect 7 and RNG 3257846826 from seed 7
+  (five original draws), while the first behavior deadline remains tick+1.
+  All 21 selected tests pass, including five original-DOS-media tests.
+  Multi-group ordering, later staged failures and all-edition original traces
+  remain open; this bounded evidence is not complete admission parity.
+
 - F0183 runtime admission now preserves C04 attack/approach/flee behavior in
   the active AI owner instead of unconditionally assigning wander. GROUP.C
   F0180:328-330 only resets behavior values >=4. The two-move C29/C37 test

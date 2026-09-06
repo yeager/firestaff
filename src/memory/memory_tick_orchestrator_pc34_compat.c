@@ -11396,11 +11396,34 @@ static int orch_add_generated_group_active_state_compat(
     }
     if (!plan.shouldCreateActiveState) return 1;
 
+    /* GROUP.C F0183:444-447 clears live aspects and calls F0179(-1,false).
+     * Use I34 metadata and the shared stream, never an independent seed.
+     * Validate before publishing either the row or its RNG consumption. */
+    {
+        struct DM1ActiveGroup_Compat active;
+        struct DM1CreatureInfo_Compat info;
+        struct RngState_Compat rng = world->masterRng;
+        DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 receipt;
+        int creature;
+        memset(&active, 0, sizeof(active));
+        active.groupThingIndex = groupIndex;
+        if (!orch_get_dm1_creature_info_pc34_compat(group->creatureType, &info) ||
+            !F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+                &active, group, &info, -1, 0, world->gameTick, &rng, &receipt) ||
+            !receipt.valid) return 0;
+        /* F0183 discards the returned aspect deadline; F0180 independently
+         * schedules the first behavior event at game time plus one. */
+        world->masterRng = rng;
+        ai = &world->creatureAI[world->creatureAICount];
+        memset(ai, 0, sizeof(*ai));
+        for (creature = 0; creature < 4; ++creature)
+            ai->aspect[creature] = (uint8_t)active.aspect[creature];
+    }
+
     /* ReDMCSB GROUP.C:414-447/F0183 creates ACTIVE_GROUP state for a
      * group that arrives on the party map.  Phase 20 stores the closest
      * persistent active-group analogue in creatureAI[]. */
     ai = &world->creatureAI[world->creatureAICount++];
-    memset(ai, 0, sizeof(*ai));
     ai->stateKind = plan.activeStateKind;
     /* GROUP.C F0183 preserves C04 behavior; F0180:328-330 only resets
      * values >= C4_BEHAVIOR_USELESS. Do not turn an admitted attacking,
@@ -11713,6 +11736,7 @@ static int orch_transition_party_map_f0194_f0195_compat(
            sizeof(world->pc34ActiveGroupHomeMapY));
     world->pc34ActiveGroupSourceCount = staged.pc34ActiveGroupSourceCount;
     world->timeline = staged.timeline;
+    world->masterRng = staged.masterRng;
     return 1;
 }
 

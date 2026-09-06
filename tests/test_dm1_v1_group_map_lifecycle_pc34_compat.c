@@ -75,6 +75,7 @@ int main(void)
     world.dungeon = &dungeon;
     world.things = &things;
     world.gameTick = 100u;
+    world.masterRng.seed = 7u;
     world.partyMapIndex = 0;
     world.party.mapIndex = 0;
     world.newPartyMapIndex = 1;
@@ -116,6 +117,12 @@ int main(void)
           "map transition commits party map before F0195 scan");
     CHECK(world.creatureAICount == 1,
           "F0195 adds current-map group after empty-map retirement");
+    /* I34 Skeleton GraphicInfo=0x6038: X offset/sign, Y offset/sign,
+     * then the deadline draw. BASE.C F0027 from seed 7 yields five draws. */
+    CHECK(world.masterRng.seed == UINT32_C(3257846826) &&
+          world.creatureAI[0].aspect[0] == 7 &&
+          world.creatureAI[0].aspect[1] == 0,
+          "F0183 publishes original aspect and exact admission RNG");
     CHECK(world.pc34ActiveGroupSourceCount >= 1 &&
           world.pc34ActiveGroupDirections[0] == 2 &&
           world.pc34ActiveGroupHomeMapX[0] == 1 &&

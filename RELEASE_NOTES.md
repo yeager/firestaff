@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 initializes creature animation aspects and advances the shared original
+  random stream when groups become active, including successful map entry.
+
 - DM1 preserves attack, approach and flee behavior when activating groups,
   rather than forcing their runtime AI into wander mode.
 
