@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: A two-creature lethal explosion fixture verifies that F0191
+  frees the raw/decoded C04 group, removes its active AI entry and unlinks
+  the group from its square. This passes without another runtime change.
+  The fixture does not provide free possession pools or source death-smoke
+  capacity; drops and C15 smoke remain separate open verification work.
+
 - 2026-09-06: Source explosion group damage now uses the shared world F0191
   transaction: descending slots, individual randomized damage and raw C04
   writeback. Its surviving active cells, directions and aspects are compacted

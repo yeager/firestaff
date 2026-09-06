@@ -22,7 +22,8 @@ int main(int argc, char** argv)
     int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
-    int burstLethal = argc == 2 && strcmp(argv[1], "burst-lethal") == 0;
+    int burstAll = argc == 2 && strcmp(argv[1], "burst-all") == 0;
+    int burstLethal = burstAll || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
     int burst = burstLethal || (argc == 2 && strcmp(argv[1], "burst") == 0);
     int fakeOpen = argc == 2 && strcmp(argv[1], "fake-open") == 0;
     int fakeImaginary = argc == 2 && strcmp(argv[1], "fake-imaginary") == 0;
@@ -125,6 +126,7 @@ int main(int argc, char** argv)
         group.health[1] = 1000; word(rawGroup + 8, 1000);
         if (burstLethal) {
             group.health[0] = 1; word(rawGroup + 6, 1);
+            if (burstAll) { group.health[1] = 1; word(rawGroup + 8, 1); }
             world.creatureAICount = world.pc34ActiveGroupSourceCount = 1;
             world.creatureAI[0].reserved0 = 0;
             world.creatureAI[0].creatureType = 15;
@@ -151,6 +153,13 @@ int main(int argc, char** argv)
         blast.centered = 1; blast.cell = 255; blast.currentTick = 40;
         blast.creatorProjectileSlot = -1;
         CHECK(F0887_ORCH_CreateSourceExplosion_Compat(&world, &blast, 0));
+        if (burstAll) {
+            CHECK(group.next == THING_NONE && readword(rawGroup) == THING_NONE);
+            CHECK(world.creatureAICount == 0);
+            CHECK((sft[0] & 0x3fff) != (THING_TYPE_GROUP << 10));
+            puts("ok: source explosion removes the dead group and active AI");
+            return 0;
+        }
         if (burstLethal) {
             CHECK(group.count == 0 && group.health[0] == expectedHp[1]);
             CHECK(group.cells == 10 && world.creatureAI[0].groupCells == 10);
