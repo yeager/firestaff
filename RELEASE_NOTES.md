@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 routes newly activated groups' first scheduled update through original
+  C37 behavior logic instead of the legacy direct-movement path.
+
 - DM1 initializes creature animation aspects and advances the shared original
   random stream when groups become active, including successful map entry.
 

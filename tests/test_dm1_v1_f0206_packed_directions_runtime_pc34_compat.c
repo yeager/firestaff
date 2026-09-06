@@ -331,6 +331,14 @@ static int test_m10_c29_reaction_moves_group_through_f0267(int useAdmission)
          * F0195/F0183 must admit a group usable by the subsequent F0209. */
         if (!expect(F0195_DM1_GROUP_AddAllActiveGroups_Compat(&world) == 1,
                     "F0195 admits corridor group for live reactions")) return 1;
+        if (useAdmission == 2) {
+            uint32_t seedBefore = world.masterRng.seed;
+            world.gameTick = world.timeline.nowTick = 102;
+            memset(&result, 0, sizeof(result));
+            if (!F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result)) return 1;
+            return expect(world.masterRng.seed != seedBefore,
+                          "natural first C37 reaches F0209 RNG consumer") ? 0 : 1;
+        }
         /* Isolate the two explicitly scheduled C29/C37 decisions below. */
         memset(&world.timeline, 0, sizeof(world.timeline));
         world.timeline.nowTick = world.gameTick;
@@ -1352,6 +1360,7 @@ int main(void)
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
     if (test_m10_c29_reaction_moves_group_through_f0267(0) != 0) return 1;
     if (test_m10_c29_reaction_moves_group_through_f0267(1) != 0) return 1;
+    if (test_m10_c29_reaction_moves_group_through_f0267(2) != 0) return 1;
     if (test_m10_off_party_map_c29_is_consumed_without_group_mutation() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c39_to_c41_turn_their_own_packed_slots() != 0) return 1;

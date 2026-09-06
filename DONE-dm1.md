@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Runtime F0180 publication now emits CREATURE_REACTION/C37 with explicit
+  C.Ticks=0 (GROUP.C:332-334), rather than an AI-state-tagged legacy movement
+  tick. The natural first-event regression consumes the event published by
+  F0195 without replacing it or reseeding RNG, and verifies F0209 consumes RNG.
+  Map-lifecycle tests pin the event fields; 21 selected regressions pass,
+  including five original-DOS-media tests. Exact natural C37 outcome traces
+  and original priority ordering remain unverified.
+
 - Corrected the standalone F0183 helper's LastMoveTime to byte-wrapped game
   time minus 127 (GROUP.C:438), matching runtime admission. The registered
   active-state test pins stored value and receipt to 0xb5 at time 0x1234 and

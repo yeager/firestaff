@@ -1,4 +1,5 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -140,7 +141,10 @@ int main(void)
           world.creatureAI[0].groupMapY == 1,
           "F0195 materializes current-map C04 active state");
     CHECK(world.timeline.count == 1 &&
-          world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
+          world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_REACTION &&
+          world.timeline.events[0].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+          world.timeline.events[0].aux3 == 0 &&
+          (world.timeline.events[0].aux4 & 0x100) != 0 &&
           world.timeline.events[0].aux0 == 0 &&
           world.timeline.events[0].mapIndex == 1 &&
           world.timeline.events[0].fireAtTick == 101u,

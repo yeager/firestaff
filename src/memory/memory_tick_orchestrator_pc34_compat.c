@@ -11490,14 +11490,18 @@ static void orch_schedule_generated_group_wandering_event_compat(
         return;
     }
     memset(&wander, 0, sizeof(wander));
-    wander.kind = TIMELINE_EVENT_CREATURE_TICK;
+    wander.kind = TIMELINE_EVENT_CREATURE_REACTION;
     wander.fireAtTick = plan.wanderFireAtTick;
     wander.mapIndex = plan.wanderMapIndex;
     wander.mapX = plan.wanderMapX;
     wander.mapY = plan.wanderMapY;
     wander.aux0 = plan.wanderGroupIndex;
     wander.aux1 = plan.wanderCreatureType;
-    wander.aux2 = plan.wanderEventType;
+    /* GROUP.C F0180:332-334 publishes C37, not the WANDER AI state.
+     * Mark C.Ticks=0 explicitly so F0209 does not substitute fireAtTick. */
+    wander.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    wander.aux3 = 0;
+    wander.aux4 = 0x100;
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
 }
 

@@ -1,5 +1,10 @@
 # Firestaff TODO — DM1
 
+- Align standalone F0180 and generated-placement receipt event descriptors
+  with the corrected runtime C37 publisher. They still describe legacy AI
+  wander ticks; update their callers/tests without confusing AI state with
+  original event type. The runtime publisher already uses C37 and C.Ticks=0.
+
 - Complete F0183/F0180 admission fidelity beyond the implemented F0179 aspect/RNG
   initialization and successful staged RNG publication. Obtain original traces
   beyond the bounded multi-group scan-order and partial-admission rollback tests.
