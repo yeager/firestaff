@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: After enabling inventory/leader separation, all 13 broad
+  regressions pass without skips: six original object/scroll corpora,
+  PC3.4 application startup and six legacy presentation suites covering
+  36 CLI/menu launches. This is regression coverage, not full-game parity.
+
 - 2026-09-06: Promoted inventory/leader isolation into the default five
   original-media ownership tests. Normal mouse input opens, switches,
   closes and reopens both inventory owners; every press/release preserves
