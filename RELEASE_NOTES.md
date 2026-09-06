@@ -5879,3 +5879,5 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
   Unknown spell indices no longer consume an XP sample before rejection.
 - DM1: correct an inverted monster wandering RNG condition to match the
   original movement decision for the same random stream.
+  Stationary C37 groups also consume the original look-around admission
+  sample before selecting their new facing.

@@ -137,6 +137,13 @@ static void test_wander_random_gate(void) {
                   1, "random wander dispatch");
         EXPECT_EQ(result.actionKind, attempt ? DM1_ACTION_MOVE : DM1_ACTION_NONE,
                   "source nonzero bit admits wandering movement");
+        if (!attempt) {
+            EXPECT_EQ(result.setDirectionOnly, 1, "stationary wander looks around");
+            EXPECT_EQ(result.newDirectionForGroup, 0,
+                      "look-around direction follows separate admission draw");
+            EXPECT_EQ(rng.seed == UINT32_C(1393040021), 1,
+                      "stationary wander consumes gate, look gate, direction, delay");
+        }
     }
 }
 

@@ -1482,6 +1482,13 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Corrected the ordinary C37 stationary look-around path to consume the
+  admission draw before the smell-distance test, then a separate direction
+  draw when last-move timing permits (GROUP.C:2217-2222). The seed-1
+  regression previously failed facing and final-state checks; the rebuilt
+  AI test passes all 2512 checks after correction. Negative reaction events
+  and original emulator traces are not covered by this C37 fixture.
+
 - Added four blocked-direction regressions for zero through three walls.
   A fixed source seed chooses west; fallback visits north, east and south
   in that order without extra direction draws (GROUP.C:2155,2199). All

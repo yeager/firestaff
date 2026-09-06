@@ -2013,13 +2013,19 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                 } while (startDir != refDir);
             }
 
-            /* Set direction and schedule next behavior tick */
+            /* GROUP.C F0209:2217-2222: with no completed move, draw
+             * the look-around gate before testing smell distance. A second
+             * sample selects facing only when the last-move time permits it.
+             * This branch handles C37, not the negative reaction events. */
             if (result->actionKind == DM1_ACTION_NONE &&
-                result->newDirectionForGroup == 0 &&
-                result->moveDirection < 0) {
-                result->newDirectionForGroup =
-                    F0732_COMBAT_RngRandom_Compat(rng, 4);
-                result->setDirectionOnly = 1;
+                (F0732_COMBAT_RngRandom_Compat(rng, 4) == 0 ||
+                 ctx->distanceToVisibleParty <=
+                     DM1_SMELL_RANGE(ctx->creatureInfo.ranges))) {
+                if (ctx->ticksSinceLastMove >= 0) {
+                    result->newDirectionForGroup =
+                        F0732_COMBAT_RngRandom_Compat(rng, 4);
+                    result->setDirectionOnly = 1;
+                }
             }
             result->newBehavior = DM1_BEHAVIOR_WANDER;
             result->nextEventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
