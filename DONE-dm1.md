@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Migrated empty-hand eye selection and statistics rendering
+  to the explicit inventory owner. Five original Atari/Amiga tests pass
+  cross-owner eye press/release and invalid-owner rejection. This verifies
+  panel activation, not independent pixel comparison of another owner's
+  statistics. Normal inventory opening remains on the migration backlog.
+
 - 2026-09-06: Migrated action-hand scroll text selection to the explicit
   inventory owner while retaining leader-hand eye inspection. Five original
   Atari/Amiga tests decode all original scrolls from champion 1's action

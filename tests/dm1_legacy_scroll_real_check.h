@@ -175,6 +175,17 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].inventory[20] = THING_NONE;
                             state->dm1InventoryChampionOrdinal = 0;
                         }
+                        (void)M11_GameView_HandlePointerButtonRelease(state, x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        state->dm1InventoryChampionOrdinal = 2;
+                        (void)M11_GameView_HandlePointer(state, 20, 54, 1);
+                        if (!state->v1ChampionStatsPanelActive || state->world.party.activeChampionIndex != 0) return 0;
+                        (void)M11_GameView_HandlePointerButtonRelease(state, 20, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        if (state->v1ChampionStatsPanelActive) return 0;
+                        state->dm1InventoryChampionOrdinal = CHAMPION_MAX_PARTY + 1;
+                        (void)M11_GameView_HandlePointer(state, 20, 54, 1);
+                        if (state->v1ChampionStatsPanelActive) return 0;
+                        (void)M11_GameView_HandlePointerButtonRelease(state, 20, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        state->dm1InventoryChampionOrdinal = 0;
                         if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, thing, &weight)) return 0;
                         if (weight <= 0) return 0;
                         state->world.party.champions[0].load = (unsigned short)weight;

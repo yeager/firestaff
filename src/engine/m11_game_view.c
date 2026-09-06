@@ -55902,8 +55902,7 @@ static int m11_draw_v1_inventory_champion_stats_panel(
 
     if (!state || !framebuffer || !state->v1ChampionStatsPanelActive ||
         DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE ||
-        state->world.party.activeChampionIndex < 0 ||
-        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY ||
+        m11_inventory_champion_index(state) < 0 ||
         !dm1_v1_inventory_panel_zone_id_pc34()) {
         return 0;
     }
@@ -55917,7 +55916,7 @@ static int m11_draw_v1_inventory_champion_stats_panel(
         panelH = panelRect.h;
     }
 
-    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    champ = &state->world.party.champions[m11_inventory_champion_index(state)];
     if (!champ->present) return 0;
 
     /* PANEL.C F0351 owns C020/C101 followed by C557/C559 M653 text.
@@ -56028,7 +56027,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
 
     if (!state || !state->inventoryPanelActive) return 0;
 
-    championIndex = state->world.party.activeChampionIndex;
+    championIndex = m11_inventory_champion_index(state);
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present) return 0;

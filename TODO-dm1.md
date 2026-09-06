@@ -4,7 +4,8 @@
   using the new dm1InventoryChampionOrdinal/accessor. Icon lookup and ordinary
   inventory slot transactions, action-hand chest opening and eye-release
   action-hand lookup and action-hand scroll decoding are migrated;
-  cross-owner eye-release remains unverified;
+  empty-hand eye selection/statistics rendering are migrated. Empty-eye
+  press/release is covered; chest-restoring eye-release remains unverified;
   normal input must remain on the legacy owner until other consumers follow.
   Separate it from party leader
   (CLIKCHAM.C G0411). Reproduced on all five Atari/Amiga editions: opening
