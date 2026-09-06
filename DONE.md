@@ -1,5 +1,19 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Japanese FM Towns spell pointer coordinates now follow C013's
+  eight-pixel displacement. Caster selection visits all four absolute slots.
+  Original-media DOS/EN/JP tests cover parent opening, sparse slot-3 caster
+  selection, rune mana debit and recant without refund in all three source-HUD
+  modes. The three targeted tests passed without skips (14.90 seconds).
+
+- 2026-09-06: DM1 FM Towns spell rendering consumes the original 96x25
+  C009 with its source-owned nine-column clip. Japanese C013 placement is
+  eight pixels below English; the Japanese idle action clear no longer
+  overwrites its bottom six rows. Original-media EN/JP and DOS spell-panel
+  tests plus DOS XP regression passed (3/3, no skips). This establishes
+  ASCII/rune panel rendering in Original/V2.0/V2.1, not Japanese text,
+  action-icon/input geometry or full emulator parity.
+
 - 2026-09-06: Simplified agent instructions, moved architecture and historical
   statistics into docs/PROJECT_GUIDE.md, corrected the reference path and
   consolidated verification/push rules while retaining data/runtime/security

@@ -5,6 +5,7 @@
 #include "dm1_v1_legacy_graphics_dat.h"
 #include "dm1_v1_fmtowns_dyna_buttons_ja.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
+#include "dm1_late_spell_panel_real_check.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,6 +153,26 @@ int main(void) {
     }
       }
     puts("PASS: original F20 EN/JP unsigned PCM matches every resampled output sample at 5500 Hz");
+    for (int japanese = 0; japanese < 2; ++japanese) {
+        M11_GameViewState *spellState = calloc(1, sizeof(*spellState));
+        int spellOk;
+        if (!spellState) goto done;
+        M11_GameView_Init(spellState);
+        spec.dm1FmtownsJapanese = japanese;
+        spellOk = M11_GameView_Start(spellState, &spec) &&
+                  spellState->originalFontAvailable &&
+                  spellState->originalFont.graphicIndex == 557 &&
+                  check_late_spell_panel_real(spellState);
+        M11_GameView_Shutdown(spellState);
+        free(spellState);
+        if (!spellOk) {
+            fprintf(stderr, "FAIL: F20 %s ASCII/rune spell panel\n",
+                    japanese ? "JP" : "EN");
+            goto done;
+        }
+        printf("PASS: F20 %s original ASCII-name/rune spell panel (not Japanese text parity)\n",
+               japanese ? "JP" : "EN");
+    }
     result = 0;
 done:
     free(bytes);

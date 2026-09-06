@@ -1,5 +1,11 @@
 # Unreleased
 
+- DM1 FM Towns uses the original spell bitmap's clipped source region.
+  The Japanese spell panel now follows its original vertical position,
+  and idle action-area clearing no longer erases its lower rows.
+  Its spell clicks follow the same vertical displacement; later caster tabs
+  remain selectable when earlier champions are dead.
+
 - DM1 spell controls now use the selected caster's tab layout and name,
   retain later living tabs when earlier champions are dead, and use the
   original cyan highlight operation. Filtered/upscaled DM1 modes retain

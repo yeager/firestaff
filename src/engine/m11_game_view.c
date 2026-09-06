@@ -20292,6 +20292,13 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
      * input list. COMMAND.C:78-102 keeps C100 on the primary interface,
      * so opening a DM1 inventory must not disable the spell controls.
      * Other games retain their separately verified input policy. */
+    /* JDM C013=(3,12,319,82), versus EDM/I34's bottom Y74.
+     * Normalize only this local pointer before resolving its parent,
+     * child commands and caster tabs; other dispatchers keep screen Y. */
+    if (state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+        y -= 8;
+    }
     parent = dm1_v1_spell_area_click_rect_pc34();
     if (!m11_point_in_rect(x, y, parent.x, parent.y, parent.w, parent.h)) {
         return M11_GAME_INPUT_IGNORED;
@@ -20340,7 +20347,7 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
         }
         /* C109 owns only the coarse top strip.  F0393 owns the exact
          * per-champion inclusive tab boxes, including the wider leader tab. */
-        for (i = 0; i < plan.tab_count; ++i) {
+        for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
             const DM1_V1_ChampionPanelSpellAreaOverlayLine1Pc34* tab =
                 &plan.line1[i];
             if (tab->present && x >= tab->tab_x0 && x <= tab->tab_x1 &&
@@ -58460,6 +58467,18 @@ static void m11_draw_v1_action_area_overlay(const M11_GameViewState* state,
 
     {
         DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
+        /* ReDMCSB ACTIDRAW.C F0387:323 clears C011. F20J's original
+         * JDM.EXP root registry defines C010=(9,2,87,72) and
+         * C011=(2,10,319,85), unlike the DOS/English rectangle.
+         * See parity-evidence/dm1-fmtowns-spell-panel-registry.md.
+         * Clearing at DOS y=77 destroys the last six spell-panel rows. */
+        if (state->dm1FmtownsStartupReceiptValid &&
+            state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+            action.x = 233;
+            action.y = 85;
+            action.w = 87;
+            action.h = 72;
+        }
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       action.x, action.y, action.w, action.h,
                       (unsigned char)dm1_v1_action_area_clear_color_pc34());
@@ -58832,6 +58851,8 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     int spellW, spellH;
     int i;
     int legacySpellPanel;
+    int townsSpellPanel;
+    int spellYOffset;
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
@@ -58844,11 +58865,17 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
      * source branches despite sharing a legacy container decoder. */
     legacySpellPanel = state->assetLoader.atariStDm1 ||
         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian);
+    townsSpellPanel = state->assetLoader.legacyDm1 &&
+        !state->assetLoader.legacyBigEndian && state->dm1FmtownsStartupReceiptValid;
+    /* Original JDM.EXP C013 ends at Y82; EDM.EXP ends at Y74.
+     * Child records220..264 are identical, but inherit that displacement. */
+    spellYOffset = townsSpellPanel && state->dm1FmtownsStartupReceipt.language ==
+        DM1_FMTOWNS_LANG_JP ? 8 : 0;
     if (!state->spellPanelOpen) {
         DM1_V1_SpellAreaRectPc34 sourceBox =
             dm1_v1_spell_area_source_box_rect_pc34();
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
+                      sourceBox.x, sourceBox.y + spellYOffset, sourceBox.w, sourceBox.h,
                       M11_COLOR_BLACK);
         return 1;
     }
@@ -58875,6 +58902,21 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                 0, 24 + inset, 96, 12 - inset, 224, 62 + inset)) {
             return 0;
         }
+    } else if (townsSpellPanel) {
+        /* F20 C009 is stored as96x25. BASE.C F0660:1493-1500 and
+         * COORD.C F0635:2307-2338 anchor it at224,50; C012's87x33
+         * parent clips to233..319 and advances sourceX by9 (2363-2382).
+         * Never treat the nine source columns as host-side padding. */
+        if (!m11_dm1_pc34_hud_font_is_source_bound(state) ||
+            !m11_build_dm1_spell_area_overlay_plan(state, &plan) ||
+            !m11_panel_asset_source_loaded(state, 9, 96, 25, NULL, NULL)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          233, 42 + spellYOffset, 87, 33, M11_COLOR_BLACK);
+            return 0;
+        }
+        if (!m11_blit_panel_asset_region_native(state, framebuffer,
+                framebufferWidth, framebufferHeight, 9, 96, 25,
+                9, 0, 87, 25, 233, 50 + spellYOffset)) return 0;
     } else {
     {
         /* ReDMCSB CASTER.C F0394 clears the physical G0000 box
@@ -58940,7 +58982,7 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     /* SPELDRAW.C F0393 clears C221 before visiting tabs. Authentic item696
      * defines that control strip as (233,42,87,8), independent of C009. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  233, 42, 87, 8, M11_COLOR_BLACK);
+                  233, 42 + spellYOffset, 87, 8, M11_COLOR_BLACK);
     /* SPELDRAW.C F0393:87-94 visits all four champion slots. Rows retain
      * slot indices, so a count of living champions is not an iteration
      * bound when an earlier slot is dead. Invert each admitted living tab. */
@@ -58948,8 +58990,8 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         if (plan.line1[i].highlighted) {
             (void)m11_invert_dm1_pc34_indexed_box(
                 framebuffer, framebufferWidth, framebufferHeight,
-                plan.line1[i].tab_x0, plan.line1[i].tab_y0,
-                plan.line1[i].tab_x1, plan.line1[i].tab_y1);
+                plan.line1[i].tab_x0, plan.line1[i].tab_y0 + spellYOffset,
+                plan.line1[i].tab_x1, plan.line1[i].tab_y1 + spellYOffset);
         }
     }
     {
@@ -58964,7 +59006,7 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         for (i = 0; i < CHAMPION_NAME_LENGTH && name[i]; ++i) {
             (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
                 g_activeOriginalFont, framebuffer, framebufferWidth,
-                framebufferHeight, 235 + 14 * caster + 6 * i, 48, name[i],
+                framebufferHeight, 235 + 14 * caster + 6 * i, 48 + spellYOffset, name[i],
                 0, DM1_V1_CPSAO_COLOR_CYAN_PC34,
                 0, 0, framebufferWidth, framebufferHeight);
         }
@@ -58975,10 +59017,10 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight, plan.line2[i].screen_x,
-            plan.line2[i].screen_y, (unsigned char)plan.line2[i].character,
+            plan.line2[i].screen_y + spellYOffset, (unsigned char)plan.line2[i].character,
             (unsigned char)plan.line2[i].color_cyan,
             (unsigned char)plan.line2[i].color_black,
-            DM1_V1_CPSAO_LINE2_X0_PC34, DM1_V1_CPSAO_LINE2_Y0_PC34,
+            DM1_V1_CPSAO_LINE2_X0_PC34, DM1_V1_CPSAO_LINE2_Y0_PC34 + spellYOffset,
             DM1_V1_CPSAO_LINE2_X1_PC34 - DM1_V1_CPSAO_LINE2_X0_PC34 + 1,
             DM1_V1_CPSAO_LINE2_Y1_PC34 - DM1_V1_CPSAO_LINE2_Y0_PC34 + 1);
     }
@@ -58993,11 +59035,11 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight, plan.line3[i].screen_x,
-            plan.line3[i].screen_y,
+            plan.line3[i].screen_y + spellYOffset,
             (unsigned char)plan.line3[i].drawn_character,
             DM1_V1_CPSAO_COLOR_CYAN_PC34,
             DM1_V1_CPSAO_COLOR_BLACK_PC34,
-            DM1_V1_CPSAO_LINE3_X0_PC34, DM1_V1_CPSAO_LINE3_Y0_PC34,
+            DM1_V1_CPSAO_LINE3_X0_PC34, DM1_V1_CPSAO_LINE3_Y0_PC34 + spellYOffset,
             DM1_V1_CPSAO_LINE3_X1_PC34 - DM1_V1_CPSAO_LINE3_X0_PC34 + 1,
             DM1_V1_CPSAO_LINE3_Y1_PC34 - DM1_V1_CPSAO_LINE3_Y0_PC34 + 1);
     }
@@ -59321,8 +59363,7 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
     /* These receipts describe I34's C009-only material. MEDIA009's
      * original C009/C011 compositor runs separately, not through forged
      * PC34 asset identities or dimensions. Simulation effects are intact. */
-    if (state->assetLoader.atariStDm1 ||
-        (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian))
+    if (state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1)
         return 0;
     memset(&presentation, 0, sizeof(presentation));
     for (index = 0; index < state->dm1LiveActionEffects.count; ++index) {
