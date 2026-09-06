@@ -110,6 +110,27 @@ static void test_plan_ordinary_group_move_apply_null(void)
     assert(rc == 0);
 }
 
+static void test_blocked_move_preserves_source(void)
+{
+    int direction, occupied;
+    for (direction = 0; direction < 4; ++direction) {
+        for (occupied = 0; occupied < 2; ++occupied) {
+            DM1_V1_OrdinaryGroupMovePlanPc34 move;
+            DM1_V1_OrdinaryGroupMoveApplyPlanPc34 apply;
+            /* GROUP.C:2174-2185: a denied move never publishes a new
+             * position. Test terrain and occupancy rejection separately. */
+            assert(DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
+                5, 7, direction, occupied, occupied, 0, 100, &move));
+            assert(DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
+                &move, 2, 5, 7, direction, 0xff, 100, &apply));
+            assert(apply.shouldRequeue && !apply.shouldUnlinkSource &&
+                   !apply.shouldLinkDestination && !apply.shouldRemoveActiveGroup);
+            assert(apply.activeMapIndex == 2 && apply.activeMapX == 5 && apply.activeMapY == 7);
+            assert(apply.nextEventMapIndex == 2 && apply.nextEventMapX == 5 && apply.nextEventMapY == 7);
+        }
+    }
+}
+
 static void test_plan_pit_fall_square_null(void)
 {
     int rc = DM1_V1_PlanGroupPitFallSquareF0267Pc34Compat(
@@ -191,6 +212,7 @@ int main(void)
     test_plan_deferred_group_move_route_null();
     test_plan_ordinary_group_move_null();
     test_plan_ordinary_group_move_apply_null();
+    test_blocked_move_preserves_source();
     test_plan_pit_fall_square_null();
     test_plan_pit_fall_square_open();
     test_plan_teleporter_destination_null();
@@ -200,6 +222,6 @@ int main(void)
     test_group_move_removal_source_evidence();
     test_direction_constants();
 
-    puts("ok: DM1 teleporter/pit (Q-DM1-04) 19 tests passed");
+    puts("ok: DM1 teleporter/pit (Q-DM1-04) 20 tests passed");
     return 0;
 }

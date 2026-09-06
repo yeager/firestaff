@@ -1482,6 +1482,10 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Added eight blocked-move cases (four directions, terrain versus occupied
+  destination) asserting no unlink/link and preserved active/event source
+  coordinates. The teleporter/pit test passes with this added matrix.
+
 - Added nonserialized group prior-square/time history shared by M10/M11,
   initialized at admission and source-row publication, retained through
   compaction and cleared at retirement/staged map replacement. History reads
