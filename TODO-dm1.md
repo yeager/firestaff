@@ -3,8 +3,8 @@
 - Extend verification of newly allocated fixed drops through F0267's off-square source path.
   GROUP.C F0186:643 passes source X=-1; retain this distinction without relaxing
   source membership on `F0267_MOVE_MoveThingOnLoadedChain_Compat`.
-  Extend the bounded M10 teleporter/plate regression to direct falling,
-  then pair the behavior with original captures.
+  Pair the bounded direct-pit and teleporter/plate regressions with original
+  captures; include multi-level falls and sensors at the landing square.
   Successful floor linking or event publication alone is not full move parity.
   Preserve failure ownership: the existing loaded-chain mover restores a
   failed destination link to its source, which is impossible for X=-1.

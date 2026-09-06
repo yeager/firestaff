@@ -347,6 +347,23 @@ static void test_fixed_drops_do_not_append_when_pool_exhausted(void) {
               0, "red dragon does not grow exhausted junk pool");
     ASSERT_EQ(things.squareFirstThings[0], THING_NONE,
               "exhausted pool leaves square chain unchanged");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_WOODEN_THUD,
+              "F0186 requests wooden sound even when all allocations fail");
+    for (i = 0; i < 8; ++i) {
+        weapons[i].next = THING_ENDOFLIST;
+        weaponRaw[i][0] = 0xFEu;
+        weaponRaw[i][1] = 0xFFu;
+    }
+    ASSERT_EQ(M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+                  &state, DM1_CREATURE_TYPE_TROLIN, 0, 0, 0, 0),
+              0, "Trolin does not grow exhausted weapon pool");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_METALLIC_THUD,
+              "F0186 classifies metallic sound before failed allocation");
+    ASSERT_EQ(M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+                  &state, 10 /* Mummy */, 0, 0, 0, 0),
+              0, "creature without fixed possessions has no fixed drops");
+    ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_METALLIC_THUD,
+              "no fixed-drop attribute means no new fixed-drop sound");
 }
 
 static void test_dead_group_runtime_materializes_and_removes_group(void) {

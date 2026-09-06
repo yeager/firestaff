@@ -7,6 +7,80 @@
     if (!(condition)) { fprintf(stderr, "FAIL: %s\n", message); return 1; } \
 } while (0)
 
+static int test_f0186_fresh_drop_pits(void)
+{
+    int variant;
+    /* MOVESENS.C F0267:538 admits only open, non-imaginary pits for
+     * non-levitating things. A fresh F0186 object has no source-square
+     * removal; an unrelated weapon already on the pit must stay there. */
+    for (variant = 0; variant < 3; ++variant) {
+        struct GameWorld_Compat world = {0};
+        struct DungeonDatState_Compat dungeon = {0};
+        struct DungeonThings_Compat things = {0};
+        struct DungeonMapDesc_Compat maps[2] = {{0}};
+        struct DungeonMapTiles_Compat tiles[2] = {{0}};
+        struct DungeonWeapon_Compat weapon = {0};
+        struct DungeonJunk_Compat junk = {0};
+        unsigned char squares[2] = {
+            (DUNGEON_ELEMENT_PIT << 5) | DUNGEON_SQUARE_MASK_THING_LIST,
+            DUNGEON_ELEMENT_CORRIDOR << 5};
+        unsigned char rawWeapon[4] = {0xfe, 0xff, 1, 0};
+        unsigned char rawJunk[4] = {0xff, 0xff, 0, 0};
+        unsigned short columns[2] = {0, 1};
+        unsigned short heads[2] = {THING_TYPE_WEAPON << 10, THING_NONE};
+        unsigned short expectedDrop;
+        struct RngState_Compat oracle;
+        int i, sound = -1, falls = variant == 0;
+        if (variant != 1) squares[0] |= 0x08;
+        if (variant == 2) squares[0] |= 0x01;
+        for (i = 0; i < 2; ++i) {
+            maps[i].width = maps[i].height = 1;
+            maps[i].level = (unsigned char)i;
+            tiles[i].squareData = &squares[i];
+            tiles[i].squareCount = 1;
+        }
+        dungeon.loaded = dungeon.tilesLoaded = 1;
+        dungeon.header.mapCount = 2;
+        dungeon.header.squareFirstThingCount = 2;
+        dungeon.maps = maps; dungeon.tiles = tiles;
+        dungeon.columnsCumulativeSquareFirstThingCount = columns;
+        dungeon.dungeonColumnCount = 2;
+        weapon.next = THING_ENDOFLIST; weapon.type = 1;
+        junk.next = THING_NONE;
+        things.loaded = 1;
+        things.squareFirstThings = heads; things.squareFirstThingCount = 2;
+        things.weapons = &weapon; things.weaponCount = 1;
+        things.junks = &junk; things.junkCount = 1;
+        things.thingCounts[THING_TYPE_WEAPON] = things.thingCounts[THING_TYPE_JUNK] = 1;
+        things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
+        things.rawThingData[THING_TYPE_JUNK] = rawJunk;
+        world.dungeon = &dungeon; world.things = &things;
+        world.partyMapIndex = 0; world.party.mapX = world.party.mapY = 5;
+        world.masterRng.seed = 8;
+        oracle = world.masterRng;
+        expectedDrop = (unsigned short)((THING_TYPE_JUNK << 10) |
+            (F0732_COMBAT_RngRandom_Compat(&oracle, 4) << 14));
+        CHECK(F0186_GROUP_MaterializeFixedDropsOnWorld_Compat(
+            &world, 15, 255, 0, 0, 0, &sound) == 1,
+            "one real-format free C10 record materializes a worm round");
+        CHECK(heads[0] == (THING_TYPE_WEAPON << 10),
+            "fresh drop does not unlink the unrelated source-square owner");
+        CHECK(junk.type == 34 && junk.next == THING_ENDOFLIST &&
+            rawJunk[0] == 0xfe && rawJunk[1] == 0xff && rawJunk[2] == 34,
+            "fresh worm round raw and decoded ownership agree");
+        CHECK(weapon.next == (falls ? THING_ENDOFLIST : expectedDrop),
+            "closed or imaginary pit retains the drop on its original level");
+        CHECK((unsigned short)(rawWeapon[0] | (rawWeapon[1] << 8)) == weapon.next,
+            "original weapon raw Next agrees after destination publication");
+        CHECK(heads[1] == (falls ? expectedDrop : THING_NONE) &&
+            !!(squares[1] & DUNGEON_SQUARE_MASK_THING_LIST) == falls,
+            "only an open real pit publishes the original cell on the lower map");
+        CHECK(columns[0] == 0 && columns[1] == 1,
+            "compact column prefixes retain their actual square owners");
+    }
+    return 0;
+}
+
 int main(void)
 {
     struct GameWorld_Compat world;
@@ -28,6 +102,8 @@ int main(void)
     unsigned short projectile = (unsigned short)(THING_TYPE_PROJECTILE << 10);
     unsigned short teleporter = (unsigned short)(THING_TYPE_TELEPORTER << 10);
     int i;
+
+    if (test_f0186_fresh_drop_pits()) return 1;
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));

@@ -10522,7 +10522,10 @@ static int orch_drop_creature_fixed_possessions_compat(
             orch_reserve_fixed_drop, orch_publish_fixed_drop, &ctx, &weaponDropped)) {
         return 0;
     }
-    if (outSoundId && ctx.droppedAny) {
+    /* ReDMCSB GROUP.C F0186:644 requests the classified sound even when
+     * every F0166 allocation failed; materialized count is independent. */
+    if (outSoundId && CREATURE_GetProfile_Compat(creatureType) &&
+        (CREATURE_GetProfile_Compat(creatureType)->attributes & CREATURE_ATTR_MASK_DROP_FIXED)) {
         *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
     return ctx.droppedAny;

@@ -1,5 +1,18 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: F0186 fixed-drop sound selection no longer depends on a
+  successful allocation. Exhausted dragon junk and Trolin weapon pools retain
+  the source wooden/metallic sound respectively (GROUP.C:644), with no pool
+  growth. The M11 runtime regression passes both cases.
+
+- 2026-09-06: Fresh F0186 drops now have a three-case pit regression:
+  open pits transfer to the lower map, while closed and imaginary pits retain
+  the item. Exact cell, existing square ownership and raw/decoded compact-list
+  metadata are checked. The five original DOS 3.4 projectile/media cases also
+  invoke M11 F0186 on an unchanged original empty corridor and verify one
+  correctly typed raw/decoded Trolin club. All six tests pass. This proves
+  bounded pit behavior and original-pool integration, not emulator death parity.
+
 - 2026-09-06: M11 fixed-possession materialization now delegates to the same
   allocation-owned F0186/F0267 operation as M10, replacing direct floor linking.
   Compact-list regressions follow ReDMCSB F0163 tail append order, preserving

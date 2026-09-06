@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +23,45 @@ static const SpellCase spellCases[] = {
     {"poison-bolt", {0,4,0,0}, 3, 0xff86, 6},
     {"poison-cloud", {0,2,0,0}, 3, 0xff87, 7}
 };
+
+/* Original archive geometry and pools, with a RAM-only F0186 invocation.
+ * GROUP.C:625-643 allocates a Trolin club and moves it from X=-1. This
+ * checks real compact column metadata, not an emulator death capture. */
+static int verify_real_fixed_drop(M11_GameViewState* state)
+{
+    struct DungeonDatState_Compat* dungeon = state->world.dungeon;
+    struct DungeonThings_Compat* things = state->world.things;
+    int m, x, y;
+    for (m = 0; m < dungeon->header.mapCount; ++m) {
+        const struct DungeonMapDesc_Compat* map = &dungeon->maps[m];
+        for (x = 0; x < map->width; ++x) for (y = 0; y < map->height; ++y) {
+            unsigned char square = dungeon->tiles[m].squareData[x * map->height + y];
+            unsigned short head;
+            const unsigned char* raw;
+            int index;
+            if (square != (DUNGEON_ELEMENT_CORRIDOR << 5)) continue;
+            if (M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+                    state, DM1_CREATURE_TYPE_TROLIN, 0, m, x, y) != 1) {
+                fputs("real-pool F0186 Trolin club publication failed\n", stderr);
+                return 0;
+            }
+            head = F0511_DUNGEON_GetSquareFirstThing_Compat(dungeon, things, m, x, y);
+            index = THING_GET_INDEX(head);
+            if (THING_GET_TYPE(head) != THING_TYPE_WEAPON ||
+                index >= things->weaponCount || !things->rawThingData[THING_TYPE_WEAPON])
+                return 0;
+            raw = things->rawThingData[THING_TYPE_WEAPON] + index * 4;
+            if (things->weapons[index].type != 23 ||
+                things->weapons[index].next != THING_ENDOFLIST ||
+                raw[0] != 0xfe || raw[1] != 0xff || (raw[2] & 0x7f) != 23)
+                return 0;
+            printf("real F0186 club: map=%d x=%d y=%d thing=%04x\n", m, x, y, head);
+            return 1;
+        }
+    }
+    fputs("original dungeon has no empty corridor for F0186 verification\n", stderr);
+    return 0;
+}
 
 static int regular_file_has_bytes(const char* path)
 {
@@ -382,7 +422,11 @@ int main(int argc, char** argv)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    if (!verify_real_fixed_drop(&state)) {
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     M11_GameView_Shutdown(&state);
-    puts("ok: real PC34 C15 deferred explosion material reaches final M11 capture");
+    puts("ok: real PC34 C15 capture and F0186 fixed-drop publication");
     return 0;
 }

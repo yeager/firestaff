@@ -19103,7 +19103,7 @@ static int m11_materialize_creature_fixed_possession_drops(
     materialized = F0186_GROUP_MaterializeFixedDropsOnWorld_Compat(
         &state->world, creatureType, sourceCell, mapIndex, mapX, mapY, &soundId);
 
-    if (materialized > 0 && soundId >= 0) {
+    if (materialized >= 0 && soundId >= 0) {
         m11_audio_emit_source_sound(
             state, soundId,
             M11_AUDIO_MARKER_COMBAT);
