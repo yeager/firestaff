@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Expanded the existing live M11 lightning impact regression
+  to both party and individual recipient shield. Both reach projectile
+  consumption and the expected 86 HP through AdvanceProjectilesOnce;
+  the full action/stamina runtime suite passes. This controlled corridor
+  fixture does not replace original-media fire-impact parity evidence.
+
 - 2026-09-06: Added independent F0307/F0313/F0321 damage expectations
   to shield-layer tests: fire 202 with body protection versus 239 without,
   magic 118 (body-scale bypass), normal 128. The RNG fire path consumes

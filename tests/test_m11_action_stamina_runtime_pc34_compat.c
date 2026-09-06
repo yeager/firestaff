@@ -4625,7 +4625,7 @@ static void test_projectile_champion_hit_applies_poison_dose(void) {
               "poison projectile C75 dispatch keeps one active poison event");
 }
 
-static void test_projectile_champion_hit_uses_f0321_defense_scale(void) {
+static void test_projectile_champion_hit_uses_f0321_defense_scale(int individualShield) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -4665,7 +4665,9 @@ static void test_projectile_champion_hit_uses_f0321_defense_scale(void) {
     state.world.party.champions[1].stamina.current = 100;
     state.world.party.champions[1].stamina.maximum = 100;
     state.world.party.champions[1].cell = 1;
-    state.world.magic.partyShieldDefense = 200;
+    /* F0313:1354 adds either party or recipient shield to body defense. */
+    state.world.magic.partyShieldDefense = individualShield ? 0 : 200;
+    state.world.lifecycle.champions[1].shieldDefense = individualShield ? 200 : 0;
     state.world.gameTick = 100;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 5u);
 
@@ -9820,7 +9822,8 @@ int main(void) {
     test_projectile_door_hit_schedules_and_dispatches_destruction();
     test_projectile_magical_door_zero_adjusted_skips_sound();
     test_projectile_champion_hit_applies_poison_dose();
-    test_projectile_champion_hit_uses_f0321_defense_scale();
+    test_projectile_champion_hit_uses_f0321_defense_scale(0);
+    test_projectile_champion_hit_uses_f0321_defense_scale(1);
     test_projectile_empty_party_cell_does_not_hit_champion();
     test_projectile_champion_hit_can_kill_party();
     test_thrown_potion_wall_impact_consumes_potion_thing();

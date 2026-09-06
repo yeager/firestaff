@@ -68,3 +68,9 @@ result is 239. Magic is 118 and normal damage is 128. Both deterministic
 and RNG-bearing fire paths pass; two existing projectile receipt/handoff
 tests also pass. This is still not the original-media live-builder attack
 comparison required above.
+
+The existing M11 action/stamina runtime suite now repeats its lightning
+impact with either party shield 200 or recipient shield 200. Both produce
+86 HP and consume the projectile through AdvanceProjectilesOnce. This
+proves a live snapshot/impact connection in a controlled existing fixture,
+not original-media fire damage or emulator parity.
