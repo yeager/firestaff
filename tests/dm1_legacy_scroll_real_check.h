@@ -531,8 +531,32 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         }
                         /* F0319's final death sets PartyDead and does not
                          * run the surviving-caster selection branch. */
-                        state->world.party.champions[0].hp.current = 0;
-                        M11_GameView_ProbeCheckPartyDeath(state);
+                        state->world.party.champions[0].hp.current = 1;
+                        state->inventoryPanelActive = 1;
+                        state->dm1InventoryChampionOrdinal = 1;
+                        {
+                            struct TimelineEvent_Compat lethal = {0};
+                            lethal.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+                            lethal.fireAtTick = state->world.gameTick;
+                            lethal.mapIndex = state->world.party.mapIndex;
+                            lethal.aux0 = LIFECYCLE_STATUS_POISON;
+                            lethal.aux1 = 128;
+                            lethal.aux2 = LIFECYCLE_STATUS_POISON;
+                            lethal.aux4 = 0;
+                            state->world.lifecycle.champions[0].poisonEventCount = 2;
+                            if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &lethal)) return 0;
+                            (void)M11_GameView_AdvanceIdleTick(state);
+                            if (state->world.party.champions[0].hp.current != 0 ||
+                                state->world.lifecycle.champions[0].poisonEventCount != 0) return 0;
+                            for (int e = 0; e < state->world.timeline.count; ++e) {
+                                const struct TimelineEvent_Compat *pending = &state->world.timeline.events[e];
+                                if (pending->kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                                    pending->aux0 == LIFECYCLE_STATUS_POISON && pending->aux4 == 0) {
+                                    fprintf(stderr, "FAIL: lethal poison retains pending chain\n");
+                                    return 0;
+                                }
+                            }
+                        }
                         if (!state->partyDead || !state->world.partyDead ||
                             state->dm1SpellCasting.magicCasterIndex != 0 ||
                             state->dm1SpellCasting.input[0].symbols[0] != 0 ||

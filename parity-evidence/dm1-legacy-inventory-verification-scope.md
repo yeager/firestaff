@@ -62,6 +62,11 @@ including equal-time events, a survivor's poison, another status kind and
 an unrelated event kind carrying the same auxiliary value. These injected
 pending events live only in memory; no original archive is modified.
 
+The final champion dies from a due C75 processed by AdvanceIdleTick with
+inventory open. Assertions cover zero HP, party-dead flags, closed panel,
+cleared spell input and cancellation of both old and rescheduled poison.
+Earlier non-final death cases still use the direct death-dispatch probe.
+
 ```sh
 ctest --test-dir BUILD_DIR --output-on-failure --parallel 2 --no-tests=error \
   -R '^dm1_.*_death_leader[01]_livingcaster[01]_real$'

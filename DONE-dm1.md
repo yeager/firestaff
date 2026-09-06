@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Final champion death now runs through an actual due C75
+  and AdvanceIdleTick in all twenty original-media regressions, rather
+  than setting zero HP and calling the death probe. Verified zero HP,
+  both party-dead flags, closed inventory, cleared caster input and removal
+  of the old and newly rescheduled poison chains. The controlled event
+  and one-HP setup are RAM-only; full emulator/death-screen parity remains
+  unproven.
+
 - 2026-09-06: The inventory-open regression now injects a C75 into the
   real-media world's timeline and uses AdvanceIdleTick, not direct damage.
   All twenty cases verify attack 128 deals two HP only to its owner,

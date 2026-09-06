@@ -1,10 +1,10 @@
 # Firestaff TODO — DM1
 
-- Extend the inventory-open idle-tick regression to lethal poison,
-  other damage sources, torch/status expiry and Modern presentation modes.
+- Extend the inventory-open idle-tick regression to other damage sources,
+  torch/status expiry and Modern presentation modes.
 
-- Verify poison-triggered death through actual timeline dispatch and
-  cross-map events; direct death-dispatch cancellation is covered.
+- Extend poison-triggered death coverage to cross-map events and death
+  with multiple surviving champions; final death through the timeline is covered.
 
 - Extend death spell-input coverage to actual timeline dispatch;
   verify final-death UI and redraw against

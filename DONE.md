@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 lethal poison reaches final-death cleanup through the
+  normal idle update in twenty original-media regression cases.
+
 - 2026-09-06: Twenty DM1 original-media cases verify live C75 damage
   and source-timed rescheduling while inventory remains open.
 
