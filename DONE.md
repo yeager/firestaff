@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Twenty DM1 original-media cases verify live C75 damage
+  and source-timed rescheduling while inventory remains open.
+
 - 2026-09-06: DM1 no longer pauses idle simulation merely because its
   inventory is open; original-media tick/owner regressions pass.
 

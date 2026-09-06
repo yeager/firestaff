@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: The inventory-open regression now injects a C75 into the
+  real-media world's timeline and uses AdvanceIdleTick, not direct damage.
+  All twenty cases verify attack 128 deals two HP only to its owner,
+  keeps inventory open, and queues attack 127 for the processing tick +36
+  with the original C75 tag, champion and current map. The later direct
+  death dispatch also removes that actual rescheduled event. This does
+  not yet prove lethal poison dispatch or emulator visual parity.
+
 - 2026-09-06: Fixed the DM1 inventory overlay incorrectly stopping idle
   simulation. GAMELOOP.C:81-128 changes rendering while inventory is open
   but still applies damage and advances game time. Five original-media

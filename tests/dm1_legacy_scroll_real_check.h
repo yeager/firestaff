@@ -361,12 +361,48 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         }
                         {
                             uint32_t tickBefore = state->world.gameTick;
+                            unsigned short hpBefore = state->world.party.champions[1].hp.current;
+                            unsigned short leaderHp = state->world.party.champions[0].hp.current;
+                            struct TimelineEvent_Compat poison = {0};
+                            /* F0322:1947 uses max(1, Attack >> 6): 128 -> 2. */
+                            poison.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+                            poison.fireAtTick = tickBefore;
+                            poison.mapIndex = state->world.party.mapIndex;
+                            poison.aux0 = LIFECYCLE_STATUS_POISON;
+                            poison.aux1 = 128;
+                            poison.aux2 = LIFECYCLE_STATUS_POISON;
+                            poison.aux4 = 1;
+                            state->world.lifecycle.champions[1].poisonEventCount = 1;
+                            if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &poison)) return 0;
                             (void)M11_GameView_AdvanceIdleTick(state);
                             if (state->world.gameTick <= tickBefore ||
                                 !state->inventoryPanelActive ||
                                 state->dm1InventoryChampionOrdinal != 2) {
                                 fprintf(stderr, "FAIL: inventory pauses source simulation\n");
                                 return 0;
+                            }
+                            if (state->world.party.champions[1].hp.current != hpBefore - 2 ||
+                                state->world.party.champions[0].hp.current != leaderHp) {
+                                fprintf(stderr, "FAIL: inventory poison tick damage/owner\n");
+                                return 0;
+                            }
+                            {
+                                int chains = 0;
+                                for (int e = 0; e < state->world.timeline.count; ++e) {
+                                    const struct TimelineEvent_Compat *next = &state->world.timeline.events[e];
+                                    if (next->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+                                        next->aux0 != LIFECYCLE_STATUS_POISON || next->aux4 != 1) continue;
+                                    if (next->aux1 != 127 || next->aux2 != LIFECYCLE_STATUS_POISON ||
+                                        next->fireAtTick != tickBefore + 36 ||
+                                        next->mapIndex != state->world.party.mapIndex) {
+                                        fprintf(stderr, "FAIL: source poison reschedule attack=%d tag=%d due=%u now=%u map=%d party=%d\n",
+                                            next->aux1, next->aux2, next->fireAtTick, state->world.gameTick,
+                                            next->mapIndex, state->world.party.mapIndex);
+                                        return 0;
+                                    }
+                                    ++chains;
+                                }
+                                if (chains != 1) return 0;
                             }
                         }
                         state->world.party.champions[1].hp.current = 0;
