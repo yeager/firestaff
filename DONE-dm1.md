@@ -1,5 +1,18 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Original legacy equipment-mask verification
+
+- Read G0237 from each selected Atari/Amiga archive's original graphic
+  559 into memory. Require exactly one complete table matching the
+  source-defined Scroll/Chest/Mon Potion prefix; missing or ambiguous
+  matches fail rather than selecting an arbitrary byte sequence.
+- DEFS.H:1683–1688 defines the six-byte OBJECT_INFO layout. Its big-endian
+  AllowedSlots word is compared against the runtime mask for each of the
+  606 allocated original object records per edition. All five editions pass,
+  together with the full hand/backpack transfer corpus.
+- Object-to-info indexing remains shared. This verifies original mask
+  values, not independent type decoding or body-slot input rejection.
+
 ## 2026-09-06 — Real-media read-error reporting
 
 - Atari/Amiga media tests no longer convert every fopen failure into a

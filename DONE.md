@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 Atari/Amiga runtime equipment masks match original
+  graphic-559 G0237 words for 606 allocated objects in each of five
+  editions; all source-mask and transfer checks pass.
+
 - 2026-09-06: Atari/Amiga real-media verification skips only absent paths;
   archive-open errors now fail. Negative checks confirm ENOENT returns 77
   and ENOTDIR returns 1 for both test binaries.

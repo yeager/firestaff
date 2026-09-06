@@ -5,6 +5,8 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "font_m11.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_atari_st_graphics_dat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 
 static int check_legacy_object_transfers(M11_GameViewState *state)
 {
@@ -14,12 +16,55 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
     static const int boxes[19] = {8,9,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37};
     static const int slots[19] = {19,20,11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,29};
     int checked = 0;
+    unsigned char objectData[65535];
+    size_t objectBytes = 0, objectOffset = 0;
+    int matches = 0;
+    if (state->assetLoader.atariStDm1) {
+        DM1_V1_AtariStGraphicsDat dat;
+        int bytes;
+        if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
+                (size_t)state->assetLoader.atariStDataSize, &dat)) return 0;
+        bytes = dm1_v1_atari_st_graphics_read(&dat, 559, objectData, sizeof(objectData));
+        if (bytes <= 0) return 0;
+        objectBytes = (size_t)bytes;
+    } else if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+            (size_t)state->assetLoader.legacyDataSize, 1, 559,
+            objectData, sizeof(objectData), &objectBytes)) return 0;
+    /* DUNGEON.C G0237:79-84: identify the unique Scroll/Chest/Mon Potion
+     * record prefix, then compare masks from the selected original media.
+     * DEFS.H:1683-1688: six-byte OBJECT_INFO has a 16-bit Type,
+     * two byte fields, then a 16-bit AllowedSlots mask. */
+    for (size_t offset = 0; offset + 180 * 6 <= objectBytes; ++offset) {
+        const unsigned char *p = objectData + offset;
+        if (p[0] == 0 && p[1] == 30 && p[2] == 1 && p[3] == 0 && p[4] == 5 && p[5] == 0 &&
+            p[6] == 0 && p[7] == 144 && p[8] == 0 && p[9] == 0 && p[10] == 2 && p[11] == 0 &&
+            p[12] == 0 && p[13] == 148 && p[14] == 67 && p[15] == 0 && p[16] == 5 && p[17] == 0) {
+            objectOffset = offset;
+            ++matches;
+        }
+    }
+    if (matches != 1) {
+        fprintf(stderr, "FAIL: original G0237 location ambiguous/missing (%d, bytes=%zu)\n", matches, objectBytes);
+        return 0;
+    }
     for (int type = THING_TYPE_WEAPON; type <= THING_TYPE_JUNK; ++type) {
         for (int i = 0; i < state->world.things->thingCounts[type]; ++i) {
             unsigned short thing = (unsigned short)((type << 10) | i);
             const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, thing);
             if (!raw) return 0;
             if (raw[0] == 0xff && raw[1] == 0xff) continue;
+            {
+                int info = dm1_v1_dungeon_get_object_info_index_pc34(state->world.things, thing);
+                const unsigned char *entry;
+                unsigned int mask;
+                if (info < 0 || info >= 180) return 0;
+                entry = objectData + objectOffset + (size_t)info * 6;
+                mask = ((unsigned int)entry[4] << 8) | entry[5];
+                if (dm1_v1_dungeon_get_object_allowed_slots_pc34(state->world.things, thing) != mask) {
+                    fprintf(stderr, "FAIL: original G0237 mask thing=%04x info=%d expected=%04x\n", thing, info, mask);
+                    return 0;
+                }
+            }
             for (int mode = 0; mode < 2; ++mode) for (int slot = 0; slot < 19; ++slot) {
                 int x, y, w, h;
                 state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED : M12_PRESENTATION_V1_ORIGINAL;
