@@ -1,5 +1,10 @@
 # Firestaff TODO — DM1
 
+- Pair source-projectile Fluxcage passage with original emulator captures.
+  The raw C14/C15 RAM regression and F0219 source audit do not establish
+  full endgame or cross-platform parity. Extend real Lord Chaos/fusion
+  coverage beyond F0221 lookup and source-owner metadata checks.
+
 - Complete projectile occupancy parity for destination squares and active
   group overlays. The F0176 selector currently receives decoded group cells
   and direction; verify F0145/F0147 active-map overrides with original

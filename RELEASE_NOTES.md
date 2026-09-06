@@ -1,5 +1,8 @@
 # Unreleased
 
+- Original-data projectiles pass through Fluxcage instead of treating it
+  as a solid wall. Fluxcage lookup for endgame logic is unchanged.
+
 - Projectiles pass through open and imaginary fake walls instead of treating
   every fake wall as solid.
 

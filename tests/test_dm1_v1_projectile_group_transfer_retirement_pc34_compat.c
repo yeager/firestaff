@@ -21,6 +21,7 @@ int main(int argc, char** argv)
     int partyFirst = argc == 2 && strcmp(argv[1], "party-first") == 0;
     int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
+    int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
     int fakeOpen = argc == 2 && strcmp(argv[1], "fake-open") == 0;
     int fakeImaginary = argc == 2 && strcmp(argv[1], "fake-imaginary") == 0;
     int fakeClosed = argc == 2 && strcmp(argv[1], "fake-closed") == 0;
@@ -37,6 +38,8 @@ int main(int argc, char** argv)
     struct DungeonGroup_Compat group = {0};
     struct DungeonWeapon_Compat weapon = {0};
     struct DungeonProjectile_Compat c14[2] = {{0}};
+    struct DungeonExplosion_Compat c15 = {0};
+    unsigned char rawC15[4] = {0};
     struct ProjectileCreateInput_Compat create = {0};
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
@@ -92,6 +95,16 @@ int main(int argc, char** argv)
     things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
     things.rawThingData[THING_TYPE_PROJECTILE] = rawC14;
     if (peer) things.thingCounts[THING_TYPE_PROJECTILE] = 2;
+    if (fluxcage) {
+        c15.next = THING_ENDOFLIST;
+        c15.type = 50;
+        word(rawC15, THING_ENDOFLIST);
+        word(rawC15 + 2, 50);
+        things.explosions = &c15;
+        things.explosionCount = things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+        things.rawThingData[THING_TYPE_EXPLOSION] = rawC15;
+        sft[0] = THING_TYPE_EXPLOSION << 10;
+    }
     world.dungeon = &dungeon; world.things = &things; world.ownsDungeon = 0;
     world.gameTick = 40; world.partyMapIndex = world.party.mapIndex = 0;
     world.newPartyMapIndex = -1; world.party.mapX = 2; world.party.mapY = 2;
@@ -140,6 +153,14 @@ int main(int argc, char** argv)
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (fluxcage) {
+        CHECK(world.projectiles.entries[0].reserved3 != 0);
+        CHECK(world.projectiles.entries[0].mapY == 0);
+        CHECK(c14[0].next != THING_NONE);
+        CHECK(c15.type == 50 && c15.next != THING_NONE);
+        puts("ok: source projectile passes through Fluxcage");
+        return 0;
+    }
     if (stairsEntry || stairsPair) {
         /* PROJEXPL.C F0219:723 blocks only stairs -> stairs. */
         CHECK((world.projectiles.entries[0].reserved3 != 0) == !stairsPair);

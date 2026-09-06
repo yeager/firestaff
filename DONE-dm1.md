@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Source C14 flight no longer treats C15 Fluxcage as a solid
+  blocker. F0219 (PROJEXPL.C:687-764) has no F0221 call; F0221's callers
+  at 997-1082 serve Lord Chaos/fusion. A raw C14/C15 Type=50 RAM crossing
+  failed before this change and passes afterward. Twenty focused tests
+  include five authentic DOS spells; F0221 lookup and source-owner metadata
+  regressions also pass. Executable rebuilt. Those latter checks are not
+  end-to-end fusion tests; original emulator capture pairing remains open.
+
 - 2026-09-06: Extended the half-square projectile fixture to a lethal hit
   on the second creature. The survivor keeps its 1000 HP, raw and decoded
   group counts agree after removal, and the C14 carrier is freed. This

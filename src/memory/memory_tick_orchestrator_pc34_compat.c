@@ -7666,13 +7666,15 @@ static int orch_build_projectile_digest_compat(
      * walls allow passage. Preserve both flags from the original tile. */
     out->destFakeWallIsImaginaryOrOpen =
         out->destSquareType == PROJECTILE_ELEMENT_FAKEWALL && (destSquare & 0x05);
+    /* PROJEXPL.C F0219:687-764 never tests Fluxcage. F0221 belongs
+     * to the Lord Chaos/fusion callers at 997-1082, not C14 flight. */
     if (world->things && world->things->loaded &&
+        !world->things->rawThingData[THING_TYPE_PROJECTILE] &&
         (destSquare & DUNGEON_SQUARE_MASK_THING_LIST) &&
         !dm1_v1_f0221_fluxcage_on_square_pc34(
             world->dungeon, world->things, projectile->mapIndex, destX, destY,
             &out->destHasFluxcage)) {
-        /* F0221 owns the C15 test before F0219 may classify the blocker.
-         * A malformed raw/decoded C15 chain cannot become a host fluxcage. */
+        /* Legacy host-only contract; not source projectile parity. */
         return 0;
     }
     if (out->destSquareType == PROJECTILE_ELEMENT_DOOR) {
