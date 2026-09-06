@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 clears stale carried weight after a champion's death drops.
+
 - DM1 death drops now translate the original slot-order table to the
   engine's inventory indices before removing items.
 

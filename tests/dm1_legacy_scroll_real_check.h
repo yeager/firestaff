@@ -354,8 +354,17 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         /* G0057 drops source backpack 13 (host 11) before
                          * source ready hand 0 (host 19); F0163 appends. */
                         state->world.party.champions[1].inventory[11] = deathExtra;
+                        {
+                            int extraWeight;
+                            if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, deathExtra, &extraWeight)) return 0;
+                            state->world.party.champions[1].load = (unsigned short)(otherWeight + extraWeight);
+                        }
                         state->world.party.champions[1].hp.current = 0;
                         M11_GameView_ProbeCheckPartyDeath(state);
+                        if (state->world.party.champions[1].load != 0) {
+                            fprintf(stderr, "FAIL: death retained load=%u\n", state->world.party.champions[1].load);
+                            return 0;
+                        }
                         if (state->world.party.champions[1].inventory[19] != THING_NONE) return 0;
                         {
                             unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(

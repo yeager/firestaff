@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Reproduced stale load 2 after two-object death drops in all
+  five Atari/Amiga editions. F0319 now refreshes carried load/hash after
+  drop and leader fallback. All five regressions now reach load 0 and
+  retain repeat-call stability. Dying-leader held-item transfer remains
+  separate from this non-leader death test.
+
 - 2026-09-06: Five original Atari/Amiga death tests now drop two distinct
   original weapons from source backpack 13 and ready hand 0. Floor-chain
   traversal verifies each exactly once and backpack before hand, matching
