@@ -6546,9 +6546,13 @@ static int orch_c25_prepare_continuation_owner_compat(
         }
         raw = dm1_v1_dungeon_get_thing_data_pc34(world->things, thing);
         source = &world->things->explosions[index];
-        if (!raw || source->type != ev->aux1 || source->attack != ev->aux2 ||
+        if (!raw) return 0;
+        if (source->type != ev->aux1 || source->attack != ev->aux2 ||
             dm1_v1_c15_layout_fingerprint_pc34(raw, 4u) != (uint32_t)ev->aux3) {
-            return 0;
+            /* F0220 updates the event's C15, not the first explosion
+             * sharing its cell. Other live effects are not owner failures. */
+            thing = orch_next_thing_compat(world->things, thing);
+            continue;
         }
         writable = world->things->rawThingData[THING_TYPE_EXPLOSION] +
             (size_t)index * 4u;

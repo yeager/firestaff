@@ -1,5 +1,8 @@
 # Unreleased
 
+- Death smoke continues fading and retires correctly when other explosion
+  records occupy the same cell.
+
 - Monster death smoke from group-wide damage now uses the original effect
   record and scheduled event when original game records are available.
 

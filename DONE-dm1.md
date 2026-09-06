@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: C25 continuation skips unrelated co-located C15 records
+  instead of rejecting the first different type/attack/fingerprint. The
+  death-smoke lifecycle fixture failed before this correction and now
+  verifies 190 -> 150 -> 110 -> 70 -> 30 -> freed, including raw attack
+  bytes and Next=FFFF at retirement (PROJEXPL.C F0220:853-877).
+  Nine tests pass, including five original DOS spell cases; executable built.
+  This remains source-shaped lifecycle evidence, not original pixel capture.
+
 - 2026-09-06: Shared F0191 death smoke uses source-first F0213 allocation
   (GROUP.C:916) instead of unconditionally creating a host-only effect.
   A three-slot C15 fixture failed before the fix and now verifies raw smoke

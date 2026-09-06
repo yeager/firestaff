@@ -191,6 +191,22 @@ int main(int argc, char** argv)
             CHECK((world.pc34ActiveGroupDirections[0] & 3) == 2);
             CHECK(world.creatureAI[0].aspect[0] == 2);
             CHECK(readword(rawGroup + 6) == group.health[0]);
+            if (burstSmoke) {
+                static const int attacks[] = {150, 110, 70, 30};
+                int step;
+                for (step = 0; step < 5; ++step) {
+                    world.gameTick = 41 + step;
+                    memset(&result, 0, sizeof(result));
+                    CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+                    if (step < 4) {
+                        CHECK(smokePool[1].next != THING_NONE);
+                        CHECK(smokePool[1].attack == attacks[step]);
+                        CHECK(rawC15[7] == attacks[step]);
+                    }
+                }
+                CHECK(smokePool[1].next == THING_NONE);
+                CHECK(readword(rawC15 + 4) == THING_NONE);
+            }
             puts("ok: source explosion compacts the active survivor");
             return 0;
         }
