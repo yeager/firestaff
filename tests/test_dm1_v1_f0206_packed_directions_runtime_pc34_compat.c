@@ -1442,6 +1442,14 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
         event.aux4 |= 5;
     }
     memset(&result, 0, sizeof(result));
+    if (frozen == 7 && eventType == 31) {
+        struct TimelineEvent_Compat old = event;
+        old.fireAtTick = world.gameTick + 10000;
+        old.aux2 = 37;
+        if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &old)) return 1;
+        old.aux2 = 99; /* Not a group event: F0181 must retain it. */
+        if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &old)) return 1;
+    }
     if (frozen == 8) {
         struct TimelineEvent_Compat filler = event;
         filler.fireAtTick = world.gameTick + 10000;
@@ -1495,11 +1503,14 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
             int index = type >= 38 ? type - 38 : type - 33;
             if (index >= 0 && index < 4) mask |= 1u << index;
         }
-        ok &= expect(world.timeline.count == 4 && mask == 15 &&
+        ok &= expect(world.timeline.count == (eventType == 31 ? 5 : 4) && mask == 15 &&
                      world.things->groups[0].behavior == DM1_BEHAVIOR_ATTACK &&
                      world.masterRng.seed == expectedRng.seed &&
                      world.party.champions[0].hp.current == 100,
                      "aspect attack entry schedules every slot without immediate damage");
+        if (eventType == 31)
+            ok &= expect(world.timeline.events[4].aux2 == 99,
+                         "C31 replaces old group events but retains non-group event");
         if (eventType == 37)
             for (i = 0; i < world.timeline.count; ++i)
                 ok &= expect(world.timeline.events[i].fireAtTick == world.gameTick + 1u &&
@@ -1554,7 +1565,8 @@ int main(void)
 {
     int slot;
     int eventType;
-    if (test_timed_aspect_and_freeze_gate(0, 7, 32) != 0 ||
+    if (test_timed_aspect_and_freeze_gate(0, 7, 31) != 0 ||
+        test_timed_aspect_and_freeze_gate(0, 7, 32) != 0 ||
         test_timed_aspect_and_freeze_gate(0, 7, 37) != 0 ||
         test_timed_aspect_and_freeze_gate(0, 8, 37) != 0) return 1;
     for (slot = 0; slot < 4; ++slot)

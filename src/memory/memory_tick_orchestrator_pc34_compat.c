@@ -3152,8 +3152,8 @@ static void orch_cmd_attack_apply_f0231_side_effects_compat(
 
 /* ReDMCSB GROUP.C F0181: only C29..C41 reactions on the exact current-map
  * square are deleted.  F0182 and F0195 share this primitive. */
-static int orch_delete_group_reaction_events_f0181_compat(
-    struct GameWorld_Compat* world,
+static int orch_delete_group_reaction_queue_f0181_compat(
+    struct TimelineQueue_Compat* queue,
     int mapIndex,
     int mapX,
     int mapY)
@@ -3162,14 +3162,14 @@ static int orch_delete_group_reaction_events_f0181_compat(
     int readIndex;
     int writeIndex = 0;
 
-    if (!world || world->timeline.count < 0 ||
-        world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
+    if (!queue || queue->count < 0 ||
+        queue->count > TIMELINE_QUEUE_CAPACITY) {
         return 0;
     }
-    oldEventCount = world->timeline.count;
+    oldEventCount = queue->count;
     for (readIndex = 0; readIndex < oldEventCount; ++readIndex) {
         const struct TimelineEvent_Compat* event =
-            &world->timeline.events[readIndex];
+            &queue->events[readIndex];
 
         if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
             event->mapIndex == mapIndex && event->mapX == mapX &&
@@ -3178,15 +3178,22 @@ static int orch_delete_group_reaction_events_f0181_compat(
             event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
             continue;
         }
-        world->timeline.events[writeIndex++] = *event;
+        queue->events[writeIndex++] = *event;
     }
-    world->timeline.count = writeIndex;
+    queue->count = writeIndex;
     while (writeIndex < oldEventCount) {
-        memset(&world->timeline.events[writeIndex], 0,
-               sizeof(world->timeline.events[writeIndex]));
+        memset(&queue->events[writeIndex], 0,
+               sizeof(queue->events[writeIndex]));
         ++writeIndex;
     }
     return 1;
+}
+
+static int orch_delete_group_reaction_events_f0181_compat(
+    struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY)
+{
+    return world && orch_delete_group_reaction_queue_f0181_compat(
+        &world->timeline, mapIndex, mapX, mapY);
 }
 
 int F0182_DM1_GROUP_StopAttacking_Compat(
@@ -12620,6 +12627,11 @@ static int orch_f0209_begin_attack_compat(
     struct RngState_Compat rng = world->masterRng;
     struct DM1ActiveGroup_Compat staged = *active;
     int i;
+    /* GROUP.C:2012: C31 removes this square's old C29-C41 events
+     * before attack entry. Keep deletion inside the staged transaction. */
+    if (ev->aux2 == DM1_EVENT_REACTION_PARTY_IS_ADJACENT &&
+        !orch_delete_group_reaction_queue_f0181_compat(
+            &queue, ev->mapIndex, ev->mapX, ev->mapY)) return 0;
     for (i = group->count; i >= 0; --i) {
         DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspect;
         struct DM1GroupAddEventPlan_Compat plan;
@@ -13077,7 +13089,7 @@ static int orch_handle_creature_reaction_event_compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return 0;
     }
-    if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP &&
+    if (ev->aux2 >= DM1_EVENT_REACTION_PARTY_IS_ADJACENT &&
         ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
         behavior.newBehavior == DM1_BEHAVIOR_ATTACK &&
         ctx.groupBehavior != DM1_BEHAVIOR_ATTACK) {

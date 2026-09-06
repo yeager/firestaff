@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1's party-adjacent reaction replaces old group events with per-creature
+  attack continuations while retaining unrelated events.
+
 - DM1's regular group update now starts every creature's attack continuation
   with the original behavior-event timing and random-number consumption.
 

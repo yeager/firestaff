@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- Integrated C31 attack entry with staged F0181 removal of the source
+  square's C29-C41 events (GROUP.C:2007-2013,340-371). The queue-removal
+  primitive is shared with existing world callers without staging an entire
+  world. A regression failed before integration and now verifies four
+  continuations, exact already-facing RNG, replacement of old C37 and
+  retention of a non-group event. All 21 selected runtime/source tests plus
+  the F0182/F0195/F0196 lifecycle helper test pass. Five use original DOS
+  media; this is not original capture or full attack-sequence proof.
+
 - C37 attack entry now uses the staged per-creature fanout too. Unlike
   C32-C36, GROUP.C:2094,2123 omits the incoming-event delay draw/addition.
   The already-facing four-creature regression failed before integration;
