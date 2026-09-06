@@ -1,5 +1,9 @@
 # Unreleased
 
+- Source-backed DM1 projectiles no longer move early in the presentation
+  layer. Their removal preserves following explosion records and leaves
+  emptied squares usable for subsequent effects and object placement.
+
 - Original-data DM1 Fireball and Lightning apply their explosion burst
   immediately, using the original fire-damage rules. Their following
   explosion event no longer repeats party or monster burst damage.

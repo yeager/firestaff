@@ -323,14 +323,10 @@ int main(int argc, char** argv)
         if (advances > 86) return 1;
     }
     if (spell->explosionType == 0 || spell->explosionType == 2) {
-        static const int dx[4] = {0, 1, 0, -1};
-        static const int dy[4] = {-1, 0, 1, 0};
         struct ExplosionCreateInput_Compat input;
         struct TickResult_Compat result;
         int hpBefore = state.world.party.champions[0].hp.current;
         int hpAfter;
-        state.world.party.mapX += dx[state.world.party.direction & 3];
-        state.world.party.mapY += dy[state.world.party.direction & 3];
         /* RAM-only impact placement on the party's authentic map square.
          * F0213 must hurt the party immediately after source publication;
          * dispatching C25 must not repeat that burst. No media is edited. */

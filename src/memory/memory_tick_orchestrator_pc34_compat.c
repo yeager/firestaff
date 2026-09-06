@@ -7884,6 +7884,26 @@ static int orch_materialize_projectile_associated_thing_compat(
         }
     }
 
+    if (world->dungeon->columnsCumulativeSquareFirstThingCount &&
+        world->dungeon->dungeonColumnCount > 0) {
+        /* PROJEXPL.C F0217:607-608 unlinks C14 before F0215 frees it
+         * and attaches Slot. Preserve any following C15 and compact an
+         * empty SFT before re-inserting an ordinary dropped object. */
+        if (!receipt.shouldUnlinkProjectileFromSquare ||
+            !F0515_DUNGEON_UnlinkThingFromList_Compat(world->dungeon,
+                world->things, receipt.projectileThing, THING_ENDOFLIST,
+                receipt.cleanupMapIndex, receipt.cleanupMapX, receipt.cleanupMapY) ||
+            !orch_set_next_thing_compat(world->things, receipt.projectileThing,
+                receipt.projectileNextAfterDelete)) return 0;
+        if (receipt.shouldConsumePotion && !orch_set_next_thing_compat(
+                world->things, receipt.materialization.associatedThing, THING_NONE)) return 0;
+        if (receipt.shouldMaterialize)
+            return F0514_DUNGEON_LinkThingToList_Compat(world->dungeon,
+                world->things, receipt.materialization.droppedThing,
+                THING_ENDOFLIST, receipt.mapIndex, receipt.mapX, receipt.mapY);
+        return 1;
+    }
+
     if (receipt.shouldMaterialize) {
         if (receipt.mapIndex != mapIndex ||
             receipt.mapX != mapX ||

@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Pending source C48/C49 events now prevent premature M11
+  projectile stepping, not just repeat stepping after M10 dispatch. The
+  source M10 terminal path unlinks C14 before clearing Next, preserving
+  following C15 records and compacting empty SFT entries before item drops.
+  Authentic DOS tests now reuse the original launch square for the F0213
+  party-burst test instead of relocating the party to the impact square.
+  Nine spell/throw/lifecycle regressions pass and the production build
+  succeeds. GROUP.Slot transfers and broader emulator timing remain open.
+
 - 2026-09-06: Source-bound DM1 Fireball/Lightning now apply F0213's initial
   burst after successful C15/C25 publication. Both use fire damage, source
   party precedence, nonmaterial quartering and fire-resistance RNG. C25

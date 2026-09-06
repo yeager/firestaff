@@ -4,10 +4,10 @@
   consumers; their previous delayed burst remains isolated from the fixed
   source-bound DM1 transaction. Verify packed source/target MapXCombo damage
   coordinates, group kill cleanup and original emulator RNG/damage traces.
-- Repair projectile movement leaving an empty launch square's Thing-list
-  flag/SFT entry behind: a subsequent source explosion cannot be linked on
-  that square. C25 removal now uses F0515's complete SFT maintenance; audit
-  C14 movement and all remaining host unlink paths against F0164.
+- Extend source C14 retirement verification to GROUP.Slot transfers,
+  thrown-potion consumption, projectile collisions and allocation failures;
+  audit all remaining host unlink paths against F0164. Verify complete
+  original-emulator flight timing beyond the authentic DOS regression lane.
 
 - Extend fresh-game G0236 pool admission to the separately authenticated
   Atari/Amiga/FM Towns paths and CSB. Audit runtime capacities against source

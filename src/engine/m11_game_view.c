@@ -52881,6 +52881,21 @@ static int m11_projectile_has_m10_move_owner(
     uint64_t slotMask;
     uint32_t dispatchedAt;
     uint32_t currentTick;
+    int i;
+    /* A pending source C48/C49 is already owned by M10, even before its
+     * first dispatch. M11 runs after GameTime increments and must not
+     * consume that next tick early without F0219's raw C14/SFT relink. */
+    if (state && state->world.things && state->world.things->loaded &&
+        state->world.things->rawThingData[THING_TYPE_PROJECTILE] &&
+        projectileSlot >= 0 && projectileSlot < state->world.things->projectileCount &&
+        state->world.things->projectiles &&
+        state->world.things->projectiles[projectileSlot].next != THING_NONE) {
+        for (i = 0; i < state->world.timeline.count; ++i) {
+            const struct TimelineEvent_Compat* event = &state->world.timeline.events[i];
+            if (event->kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+                event->aux0 == projectileSlot) return 1;
+        }
+    }
     if (!state || !state->world.pc34OriginalC3C4ReceiptValid ||
         projectileSlot < 0 ||
         projectileSlot >= PROJECTILE_LIST_CAPACITY) return 0;
