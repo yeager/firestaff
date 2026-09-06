@@ -1980,8 +1980,9 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
                 }
             }
 
-            /* Random wandering — 50% chance to move */
-            if (F0732_COMBAT_RngRandom_Compat(rng, 2) == 0) {
+            /* GROUP.C F0209:2153: nonzero M005_RANDOM(2) admits movement.
+             * Inverting this bit preserves probability but breaks replay. */
+            if (F0732_COMBAT_RngRandom_Compat(rng, 2) != 0) {
                 int startDir = F0732_COMBAT_RngRandom_Compat(rng, 4);
                 int refDir = startDir;
                 int bw, bd, bp, bg;

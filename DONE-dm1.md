@@ -1480,6 +1480,15 @@ Reviewed 2026-08-29. Completed work only.
   pending the integration and edition-routing work recorded in TODO-dm1.md.
 # F0412 potion practice boundary regression (2026-09-06)
 
+## F0209 wander movement gate
+
+- Corrected the inverted random-movement condition in the DM1 behavior
+  dispatcher: GROUP.C:2153 moves on a nonzero one-bit sample. Two source-seed
+  regressions (1: stay, 6: move) both fail before the correction and pass
+  afterward. The complete creature behavior test reports 2493 passed checks,
+  zero failures. This covers the decision in bounded RAM, not full C37
+  scheduling, look-around RNG, CSB bridge behavior or emulator parity.
+
 - Expanded post-fix verification: spell lookup, spell duration, potion
   power, spell-casting receipt and tick-source-ownership tests all pass
   after rebuilding their five targets. Added literal BASE.C seed-1 sample

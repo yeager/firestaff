@@ -120,6 +120,26 @@ static void test_f0264_levitation_classifier(void) {
 /* =========================================================
  *  Test 1: Wander behavior — visible party in range → attack
  * ========================================================= */
+static void test_wander_random_gate(void) {
+    int attempt;
+    /* GROUP.C F0209:2153 enters random movement when M005_RANDOM(2)
+     * is nonzero. BASE.C seed 1 returns bit 0; seed 6 returns bit 1. */
+    for (attempt = 0; attempt < 2; ++attempt) {
+        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+        struct DM1ActiveGroup_Compat ag = make_default_ag();
+        struct RngState_Compat rng = make_rng(attempt ? 6 : 1);
+        struct DM1BehaviorResult_Compat result;
+        ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+        ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+        ctx.distanceToVisibleParty = 0;
+        ctx.creatureInfo.ranges = 0; /* No sight, smell or attack target. */
+        EXPECT_EQ(F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result),
+                  1, "random wander dispatch");
+        EXPECT_EQ(result.actionKind, attempt ? DM1_ACTION_MOVE : DM1_ACTION_NONE,
+                  "source nonzero bit admits wandering movement");
+    }
+}
+
 static void test_wander_to_attack(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
     struct DM1ActiveGroup_Compat ag = make_default_ag();
@@ -1958,6 +1978,7 @@ int main(void) {
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
 
     test_wander_to_attack();
+    test_wander_random_gate();
     test_wander_to_approach();
     test_freeze_life();
     test_archenemy_ignores_freeze();
