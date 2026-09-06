@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- Public native Amiga startup/input recheck passes for both
+  Dungeon-Master_Amiga_EN.zip and Dungeon-Master_Amiga_EN_Version-20.zip.
+  Ran `test_dm1_v1_amiga_hd_archive_cli_boot.sh` against each original archive
+  (second via FIRESTAFF_DM1_AMIGA_HD_ARCHIVE override), covering CLI, menu,
+  IMG2 graphics hash, first movement and fresh-launch seven-command matrix.
+  No extraction or external archive helper is enabled. The separate v2.0
+  save-resume suite was not run; savegame work remains deferred. These headless
+  checks do not establish original pixel, sound or simulation timing parity.
+
 - Current public executable (runtime code at a8ada3b50) passes authentic
   `test_dm1_v1_fmtowns_archive_cli_boot.sh`: CLI/menu EDM and JDM paths bind
   distinct original program/graphics hashes, pointer-only card selection works,
