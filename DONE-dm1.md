@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added an opt-in original-media load diagnostic and reproduced
+  stale load after normal Atari floor-drop input. This is diagnosis only,
+  not a completed fix; reproduction and remaining work are in TODO-dm1.
+
 - 2026-09-06: Audited original hand/slot load-update ownership against
   M11's direct hand bridge and recorded the missing dynamic verification
   in TODO-dm1. Existing identity tests do not establish load correctness.

@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+- Reproduced Atari EN1.2 load defect: enable
+  `FIRESTAFF_VERIFY_LEGACY_LOAD=1` for `dm1_atari_names_real`. Original
+  Thing 0x1400 is placed in the ready hand with consistent load 1, picked
+  up through normal input, then dropped at viewport pile C00. The hand
+  becomes empty but load remains 1 instead of 0. Fix the complete hand/slot
+  accounting transaction, including rollback and leader ownership, rather
+  than only hiding the displayed value. The opt-in diagnostic intentionally
+  fails until corrected; it is not part of the default positive corpus.
+
 - Investigate live inventory load accounting before claiming complete
   inventory parity. CHAMPION.C F0297:264 and F0298:293 add/subtract held
   object weight; F0300:582 and F0301:614 update slot weight. The inspected

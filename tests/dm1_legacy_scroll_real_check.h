@@ -7,6 +7,7 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_throw_shoot_pc34_compat.h"
 
 static int check_legacy_object_transfers(M11_GameViewState *state)
 {
@@ -95,6 +96,27 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                     unsigned short hand = (step || !admitted) ? thing : THING_NONE;
                     unsigned short resident = (step || !admitted) ? THING_NONE : thing;
                     (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
+                    /* Opt-in diagnostic: initialize a consistent one-item
+                     * load, then use normal pickup/drop input. Direct hand
+                     * setup alone is not evidence of correct initial load. */
+                    if (getenv("FIRESTAFF_VERIFY_LEGACY_LOAD") &&
+                        type == THING_TYPE_WEAPON && slot == 0 && mode == 0 && step == 0) {
+                        int weight;
+                        if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, thing, &weight)) return 0;
+                        if (weight <= 0) return 0;
+                        state->world.party.champions[0].load = (unsigned short)weight;
+                        (void)M11_GameView_HandlePointerButtonRelease(state, x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
+                        (void)M11_GameView_HandlePointerButtonRelease(state, x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != thing ||
+                            state->world.party.champions[0].inventory[slots[slot]] != THING_NONE) return 0;
+                        state->inventoryPanelActive = 0;
+                        (void)M11_GameView_HandlePointer(state, 64, 158, 1);
+                        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) return 0;
+                        fprintf(stderr, "legacy floor-drop load thing=%04x before=%d after=%u expected=0\n",
+                            thing, weight, state->world.party.champions[0].load);
+                        return state->world.party.champions[0].load == 0;
+                    }
                     for (int release = 0; release < 2; ++release) {
                         if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
                             x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
