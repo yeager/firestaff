@@ -2965,6 +2965,7 @@ static void test_c37_group_approach_teleporter_rotation(void)
               profile.timeline_queue.events[event_index].b_mapY == 1,
           "C37 cross-map group teleporter requeues behavior from map 1 target");
 
+    for (int pit_case = 0; pit_case < 2; ++pit_case) {
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.level_count = 2;
     dungeon.level_widths[1] = 3;
@@ -2991,7 +2992,7 @@ static void test_c37_group_approach_teleporter_rotation(void)
     test_put_le16(raw, 124, 0xfffeu);
     test_put_le16(raw, 152, 0xfffeu);
     test_put_le16(raw, 154, 0u);
-    raw[156] = 9u;
+    raw[156] = pit_case ? 19u : 9u; /* Flying eye levitates; rat does not. */
     raw[157] = 0u;
     test_put_le16(raw, 158, 40u);
     test_put_le16(raw, 160, 0u);
@@ -3027,6 +3028,17 @@ static void test_c37_group_approach_teleporter_rotation(void)
           "C37 group pit-fall fixture dispatches the approach event");
     CHECK(test_get_le16(raw, 120) == 0xfffeu,
           "C37 group pit-fall removes the group from the original source");
+    if (pit_case) {
+        CHECK(test_get_le16(raw, 122) == (uint16_t)(4u << 10),
+              "levitating group stays over the upper-map pit");
+        CHECK(test_get_le16(raw, 124) == 0xfffeu && test_get_le16(raw, 158) == 40u,
+              "levitation prevents lower-map ownership and fall damage");
+        event_index = find_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
+        CHECK(event_index >= 0 && DM1_MAP_TIME_MAP(
+                  profile.timeline_queue.events[event_index].map_time) == 0,
+              "levitating group continues behavior on upper map");
+        continue;
+    }
     CHECK(test_get_le16(raw, 122) == 0xfffeu,
           "C37 group pit-fall leaves the source pit thing-list empty");
     CHECK(test_get_le16(raw, 124) == (uint16_t)(4u << 10),
@@ -3043,6 +3055,7 @@ static void test_c37_group_approach_teleporter_rotation(void)
               profile.timeline_queue.events[event_index].b_mapX == 0 &&
               profile.timeline_queue.events[event_index].b_mapY == 1,
           "C37 group pit-fall requeues behavior from the lower map target");
+    }
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.level_count = 2;

@@ -5484,6 +5484,15 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             int target_x = *inout_map_x;
             int target_y = *inout_map_y;
 
+            /* MOVESENS.C F0264:136-146 and F0267:538 exclude levitating
+             * groups before any lower-map move, sound or fall damage. */
+            group_record = csb_v1_runtime_mutable_thing_record(
+                dungeon, group_thing, &thing_type, &thing_size);
+            if (!group_record || thing_type != 4 || thing_size < 16) break;
+            creature_profile = CREATURE_GetProfile_Compat(group_record[4]);
+            if (!creature_profile ||
+                (creature_profile->attributes & CREATURE_ATTR_MASK_LEVITATION)) break;
+
             if ((raw_square & 0x08) == 0 ||
                 (raw_square & 0x01) != 0 ||
                 !csb_v1_runtime_location_after_level_change(

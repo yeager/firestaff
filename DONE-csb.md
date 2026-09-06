@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-09-06: Group pit consequences check source levitation attributes before
+  lower-map movement (MOVESENS.C F0264:136-146, F0267:538). The bounded C37
+  flying-eye fixture preserves upper-map chain ownership, health and behavior
+  scheduling; the non-levitating rat still falls. Disabling the guard fails
+  three assertions; restoring and rebuilding passes the runtime regression.
+
 - 2026-09-06: C25 group damage honors Defense=255 after the F0191 random
   damage draw (GROUP.C F0190:826-829, MEDIA720). A bounded Lord Chaos record
   retains health and carried possessions and emits no death smoke. Disabling

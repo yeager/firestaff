@@ -2,6 +2,11 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Extend the source-profile C37 levitation/pit checks to original platform
+  captures and exact RNG evidence. Audit fall-damage Defense=255 semantics
+  and moving-group aftermath separately; C25 immunity is not proof of those
+  paths. Verify levitation across chained teleporter/pit destinations.
+
 - Extend chest verification to Atari/Amiga pointer geometry, chest switches,
   runtime-driven owner changes and native save boundaries. F31 EN/JP now
   verifies open-slot persistence, pickup and permitted replacement in both

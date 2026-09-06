@@ -1,5 +1,7 @@
 # Unreleased
 
+- Levitating CSB creature groups no longer fall through open pits.
+
 - CSB explosion damage now preserves creatures marked immune to damage.
 
 - CSB explosion damage visits group members in the original last-to-first
