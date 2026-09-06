@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Completed a static trace of YA shield into both combat
+  snapshot builders and documented their conflated body/spell shield
+  representation. The repair and damage proof remain open in TODO-dm1;
+  this audit does not claim the combat defect is fixed.
+
 - 2026-09-06: Original YA tests now advance every ordinary idle tick
   through C72 expiry while inventory remains open. All twenty cases
   preserve the shield until the due processing tick, then subtract only
