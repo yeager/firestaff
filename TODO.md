@@ -9,8 +9,8 @@
   remaining Japanese glyph and visual-composition gaps are independent.
   Replace the generic HUD's PC-only material admission: original F31 C011
   is 14x39, not 14x26; Japanese C010 is 96x72 and C013 is 96x41.
-  Audit the live viewport origin and its x48..271 restore against C696
-  C007 (English x0,y33; Japanese x0,y31), including sprite/input ownership.
+  Extend the corrected C007 viewport origin to emulator pixel comparisons
+  and authentic C080 edge/pickup/throw/sensor interaction sequences.
   Do not enable the whole generic HUD merely by accepting its asset sizes.
 
 - Complete Japanese FM Towns active-menu text and remaining row boundaries.

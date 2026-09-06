@@ -116,18 +116,20 @@ static uint32_t fnv1a(const uint8_t *bytes, size_t size)
     return hash;
 }
 
-/* DUNVIEW.C F0128 owns exactly this aperture at (48,33).  Keep the live
+/* Retail C696 C007 owns x0,y33 EN / x0,y31 JP. Keep the live
  * frame assertion scoped to those source-owned pixels: C017 HUD updates
  * elsewhere on the page must neither satisfy nor mask a stale viewport. */
-static uint32_t f31_viewport_fnv1a(const uint8_t *framebuffer)
+static uint32_t f31_viewport_fnv1a(const uint8_t *framebuffer,
+                                  CSB_V1_FmtownsSwitchLanguage language)
 {
     uint32_t hash = 2166136261u;
     int x;
     int y;
 
     if (!framebuffer) return 0u;
-    for (y = 33; y < 169; ++y) {
-        for (x = 48; x < 272; ++x) {
+    const int top = language == CSB_FMTOWNS_SWITCH_JAPANESE ? 31 : 33;
+    for (y = top; y < top + 136; ++y) {
+        for (x = 0; x < 224; ++x) {
             hash ^= framebuffer[(size_t)y * 320u + (size_t)x];
             hash *= UINT32_C(16777619);
         }
@@ -1962,7 +1964,9 @@ int main(void)
     }
     CHECK(live_frame_nonblack,
           "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
-    live_viewport_hash = f31_viewport_fnv1a(framebuffer);
+    live_viewport_hash = f31_viewport_fnv1a(framebuffer, language);
+    CHECK(live_viewport_hash == view.csbState.runtime_viewport_pixel_hash,
+          "F31 final source-positioned aperture matches the complete runtime frame receipt");
     CHECK(live_viewport_hash != 0u &&
               view.csbState.runtime_viewport_source_session_ready &&
               view.csbState.runtime_viewport_pixel_hash != 0u,
@@ -2134,7 +2138,7 @@ int main(void)
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(live_viewport_hash != 0u &&
-                  f31_viewport_fnv1a(framebuffer) != live_viewport_hash &&
+                  f31_viewport_fnv1a(framebuffer, language) != live_viewport_hash &&
                   view.csbState.runtime_viewport_source_session_ready &&
                   view.csbState.runtime_viewport_pixel_hash != 0u,
               "F31 F0128 redraws its source-owned aperture after live movement input");
@@ -2172,6 +2176,9 @@ int main(void)
                     int mismatch = 0;
                     view.presentationMode = modes[mode];
                     M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    CHECK(f31_viewport_fnv1a(framebuffer, language) ==
+                              view.csbState.runtime_viewport_pixel_hash,
+                          "F31 full viewport remains source-positioned beside the active menu in every mode");
                     /* Border columns exclude name/action glyphs. Include
                      * x233/234, previously overwritten by viewport restore.
                      * Check the final public frame, not an isolated blit. */

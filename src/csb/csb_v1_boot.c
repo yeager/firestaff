@@ -2105,6 +2105,19 @@ csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
     return profile->csbgraphics_skin_def_words;
 }
 
+void csb_v1_boot_viewport_origin_pc34(
+    const CSB_V1_BootProfile *profile, int *x, int *y)
+{
+    const int towns = profile &&
+        (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+         profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
+    /* ReDMCSB COORD.C F0635 resolves retail F31 C696 C007 against
+     * C003's 224x136 extent: EN(0,33), JP(0,31). Other source layouts
+     * retain their existing origin; no claim of cross-edition identity. */
+    if (x) *x = towns ? 0 : 48;
+    if (y) *y = towns && profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA ? 31 : 33;
+}
+
 int csb_v1_boot_render_viewport_frame_pc34(
     void *boot_profile,
     unsigned char *framebuffer,
@@ -2121,6 +2134,7 @@ int csb_v1_boot_render_viewport_frame_pc34(
     uint8_t dungeon_pit_invisible_grid[32 * 32];
     uint8_t custom_background_cell_skins[32 * 32];
     CSB_V1_WallOrnamentOrdinalResolverPc34 wall_ornament_resolver;
+    int viewport_x, viewport_y;
 
     if (out_counts) {
         csb_v1_viewport_runtime_draw_counts_reset(out_counts);
@@ -2136,11 +2150,11 @@ int csb_v1_boot_render_viewport_frame_pc34(
     (void)csb_v1_boot_sync_post_teleport_projectile_runtime_pc34(profile);
 
     csb_v1_viewport_init(&cfg);
-    /* DUNVIEW.C F0128 owns the 224x136 aperture at (48,33) in the
-     * 320x200 C017/C040 page. The viewport core addresses its supplied
-     * pixel pointer relative to that aperture, so passing the full page
-     * incorrectly overwrote the top-left of the HUD page. */
-    cfg.viewport_pixels = framebuffer + (size_t)33 * (size_t)framebuffer_width + 48u;
+    /* F0128 and all sprite callbacks address the same local aperture.
+     * Apply the selected source's screen offset exactly once. */
+    csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+    cfg.viewport_pixels = framebuffer +
+        (size_t)viewport_y * (size_t)framebuffer_width + (size_t)viewport_x;
     cfg.viewport_stride = framebuffer_width;
     if (!csb_v1_viewport_bind_live_dungeon_grid(
             &cfg, profile->runtime.dungeon_handle,
@@ -2457,6 +2471,7 @@ int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
     CSB_V1_FirstLiveDungeonFrameReceipt_PC34 receipt;
     uint32_t pixel_hash = 2166136261u;
     uint32_t counts_hash = 2166136261u;
+    int viewport_x, viewport_y;
     int x;
     int y;
 
@@ -2484,10 +2499,10 @@ int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
         return 0;
     }
 
-    /* DUNVIEW.C F0128 owns the native viewport at (48,33), 224x136. Hash
-     * the actual completed indexed output, not a cached C004/C017 surface. */
-    for (y = 33; y < 169; ++y) {
-        for (x = 48; x < 272; ++x) {
+    /* Hash the same source aperture that F0128 actually rendered. */
+    csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+    for (y = viewport_y; y < viewport_y + 136; ++y) {
+        for (x = viewport_x; x < viewport_x + 224; ++x) {
             pixel_hash = csb_v1_boot_packaged_capture_hash_step_pc34(
                 pixel_hash, framebuffer[(size_t)y * (size_t)framebuffer_width +
                                        (size_t)x]);

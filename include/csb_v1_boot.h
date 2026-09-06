@@ -1857,6 +1857,9 @@ csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile);
 const uint16_t *
 csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
                                        size_t *out_word_count);
+/* Profile-owned screen origin; viewport size remains 224x136. */
+void csb_v1_boot_viewport_origin_pc34(
+    const CSB_V1_BootProfile *profile, int *x, int *y);
 int csb_v1_boot_render_viewport_frame_pc34(
     void *boot_profile,
     unsigned char *framebuffer,

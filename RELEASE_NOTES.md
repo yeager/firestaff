@@ -1,5 +1,9 @@
 # Unreleased
 
+- CSB FM Towns dungeon views use their original screen position instead of
+  a centered offset. Japanese viewport clicks and inscriptions follow the
+  matching two-pixel-higher origin.
+
 - CSB FM Towns active action menus now display their original C010 artwork
   without viewport restoration overwriting it. English menu text uses the
   original interface font; Japanese menu text remains incomplete.

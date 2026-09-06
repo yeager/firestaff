@@ -1132,7 +1132,8 @@ static int m11_draw_dm1_translated_inscription(
 
 static int m11_draw_csb_m648_lines(const M11_AssetSlot *font,
                                    const char *text, const int bottom_y[4],
-                                   unsigned char *fb, int fbw, int fbh)
+                                   unsigned char *fb, int fbw, int fbh,
+                                   int viewport_x, int viewport_y)
 {
     const char *line = text;
     int row = 0, drew = 0;
@@ -1140,7 +1141,7 @@ static int m11_draw_csb_m648_lines(const M11_AssetSlot *font,
     while (line && *line && row < 4) {
         const char *end = strchr(line, '\n');
         int count = end ? (int)(end - line) : (int)strlen(line);
-        int x = DM1_VIEWPORT_X + 112 - count * 4;
+        int x = viewport_x + 112 - count * 4;
         int i;
         for (i = 0; i < count; ++i) {
             int glyph = DM1_V1_InscriptionGlyphIndexForFontWidth(
@@ -1148,7 +1149,7 @@ static int m11_draw_csb_m648_lines(const M11_AssetSlot *font,
             if (glyph < 0 || (glyph + 1) * 8 > (int)font->width) return 0;
             M11_AssetLoader_BlitRegion(font, glyph * 8, 0, 8, 8,
                 fb, fbw, fbh, x + i * 8,
-                DM1_VIEWPORT_Y + bottom_y[row] - 7, 10);
+                viewport_y + bottom_y[row] - 7, 10);
             drew = 1;
         }
         line = end ? end + 1 : NULL;
@@ -1214,8 +1215,13 @@ static int m11_draw_csb_front_inscription(
     const M11_AssetSlot *font;
     const char *presented;
     int line_y[4];
+    int viewport_x = DM1_VIEWPORT_X, viewport_y = DM1_VIEWPORT_Y;
     if (!state || !state->csbBootProfile || !framebuffer) return 0;
     boot = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    /* F31 C696 C007 owns the full-page origin; M648 line coordinates
+     * remain viewport-local. Preserve other platform presentation paths. */
+    if (m11_csb_is_fmtowns_profile(boot))
+        csb_v1_boot_viewport_origin_pc34(boot, &viewport_x, &viewport_y);
     if (!csb_v1_visible_front_inscription_receipt(&boot->runtime, &receipt) ||
         !csb_v1_inscription_presentation_plan(boot->runtime.variant_id, &plan) ||
         !plan.valid ||
@@ -1232,9 +1238,9 @@ static int m11_draw_csb_front_inscription(
     presented = fs_po_gettext_in_domain("csb", receipt.source_text);
     if (presented && presented[0] && m11_draw_csb_m648_lines(
             font, presented, line_y, framebuffer, framebuffer_width,
-            framebuffer_height)) return 1;
+            framebuffer_height, viewport_x, viewport_y)) return 1;
     return m11_draw_csb_m648_lines(font, receipt.source_text, line_y,
-        framebuffer, framebuffer_width, framebuffer_height);
+        framebuffer, framebuffer_width, framebuffer_height, viewport_x, viewport_y);
 }
 
 static void m11_clear_csb_v1_message_area_source_owned(
@@ -37019,6 +37025,23 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
+    /* COMMAND.C C080 -> CLIKVIEW.C F0377 uses F31's original C696
+     * C007 rectangle, not the generic C007 admission at y33. In CJDATA
+     * its top is31: admit the first two rows and reject the old bottom
+     * two rows. Earlier startup/inventory/control routes remain owners. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !state->inventoryPanelActive && !state->csbState.startup_title_active &&
+        !state->showDebugHUD &&
+        m11_csb_is_fmtowns_profile((const CSB_V1_BootProfile *)state->csbBootProfile)) {
+        int viewport_x, viewport_y;
+        csb_v1_boot_viewport_origin_pc34(
+            (const CSB_V1_BootProfile *)state->csbBootProfile,
+            &viewport_x, &viewport_y);
+        if (m11_point_in_rect(x, y, viewport_x, viewport_y, 224, 136))
+            return m11_process_v1_c080_click(state, x, y);
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
         m11_point_in_rect(x, y,
                           M11_VIEWPORT_X,
@@ -40035,6 +40058,14 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     localY = y - M11_VIEWPORT_Y;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (m11_csb_is_fmtowns_profile(profile)) {
+            int viewport_x, viewport_y;
+            csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+            localX = x - viewport_x;
+            localY = y - viewport_y;
+        }
         return m11_process_csb_v1_c080_click(state, localX, localY);
     }
 
@@ -67348,28 +67379,29 @@ void M11_GameView_Draw(M11_GameViewState* state,
                        (size_t)framebufferWidth *
                            (size_t)framebufferHeight);
             } else if (!state->inventoryPanelActive) {
-                /* CSB PC 3.4 viewport aperture sits at (48,33) in the 320x200
-                 * page. Draw the HUD first, then save and restore the viewport
-                 * rectangle so DM1-layout HUD panels (x=224+) that overlap the
-                 * CSB viewport area (x=48..271) do not corrupt it. */
+                /* Preserve the exact profile aperture across HUD drawing.
+                 * F31 C696 C007 is (0,33) EN / (0,31) JP; other CSB
+                 * routes retain their existing (48,33) presentation. */
                 unsigned char vp_save[224 * 136];
-                int vpy;
+                int vpy, viewport_x, viewport_y;
+                csb_v1_boot_viewport_origin_pc34(
+                    (const CSB_V1_BootProfile *)state->csbBootProfile,
+                    &viewport_x, &viewport_y);
                 for (vpy = 0; vpy < 136; ++vpy) {
                     memcpy(vp_save + vpy * 224,
-                           framebuffer + (33 + vpy) * framebufferWidth + 48,
+                           framebuffer + (viewport_y + vpy) * framebufferWidth + viewport_x,
                            224);
                 }
                 m11_draw_csb_v1_runtime_hud(state, framebuffer,
                                             framebufferWidth,
                                             framebufferHeight);
                 for (vpy = 0; vpy < 136; ++vpy) {
-                    memcpy(framebuffer + (33 + vpy) * framebufferWidth + 48,
+                    memcpy(framebuffer + (viewport_y + vpy) * framebufferWidth + viewport_x,
                            vp_save + vpy * 224,
                            224);
                 }
-                /* F31 C696 places this active menu at x233 regardless of
-                 * the still-separate generic viewport-origin work. Publish
-                 * its authenticated pixels after that viewport restore;
+                /* F31 C696 places this active menu outside its aperture.
+                 * Publish its authenticated pixels after viewport restore;
                  * do not enable the unrelated PC-sized HUD material gate. */
                 (void)m11_draw_csb_fmtowns_active_menu(state, framebuffer,
                     framebufferWidth, framebufferHeight);

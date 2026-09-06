@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: CSB FM Towns viewport raster, receipt hash and HUD restoration
+  share the original C696 C007 origin: English (0,33), Japanese (0,31),
+  replacing the inherited (48,33) offset. Local sprite coordinates remain
+  unchanged; full-page inscriptions and C080 admission/normalization use
+  the selected F31 origin. Original-media final-frame tests compare all
+  224x136 pixels through the independent aperture hash in both languages
+  and Original/V2.0/V2.1, including an active menu beside the viewport.
+  Emulator pixel parity and authentic C080 interaction sequences remain open.
+  Production build and seven targeted regressions pass (22.80 seconds,
+  no skips).
+
 - 2026-09-06: CSB FM Towns active action menus now use package-bound native
   IMG2 C010 pixels after viewport restoration, with a fresh source-party
   mirror and no fabricated DM1 receipt. English text uses original M653;

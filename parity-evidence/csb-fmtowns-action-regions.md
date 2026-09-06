@@ -56,9 +56,19 @@ generic CSB HUD admission requires C011=14x26 and PC-sized Japanese panels,
 so it rejects these authentic records before rendering its action overlay.
 
 C696 C003 is 224x136, C004 is its (0,0) anchor, and C007 has offset
-(0,33) in English or (0,31) in Japanese. The live composition currently
-saves/restores x48..271,y33..168 after HUD painting. That restore intersects
-the action menu's x233..319 region. Correcting the whole viewport requires
-auditing the raster, sprite and input consumers together, not just changing
-one save/restore rectangle. A final active-menu source pass can independently
-preserve the menu's verified region while that broader gap remains open.
+(0,33) in English or (0,31) in Japanese. ReDMCSB COORD.C:1693–1698 also
+defines G2067/G2068 with these offsets. The previous live composition
+saved/restored x48..271,y33..168 after HUD painting, intersecting the menu.
+
+The F31 raster pointer, completed-frame hash and HUD save/restore now share
+the source origin. Sprite callbacks already receive the viewport-local
+pointer and therefore need no second translation. Full-page M648 text uses
+the same origin. F31 C080 admission and screen-to-local conversion use its
+224x136 rectangle, including Japanese y31–32 and excluding y167–168.
+Other platform origins are unchanged.
+
+Original-media tests compare the entire final 224x136 aperture hash with
+the runtime receipt, independently using the C696 coordinates in both
+languages and all three presentation modes. This proves final composition
+and receipt consistency, not emulator raster parity. Authentic C080
+edge/pickup/throw/sensor sequences remain a separate verification task.
