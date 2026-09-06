@@ -1,5 +1,19 @@
 # Firestaff TODO — DM1
 
+- Preserve actual prior-square history in the live M11 wander adapter.
+  `m11_game_view.c` currently passes groupX/groupY as activeGroup.priorMapX/Y
+  because its serialized AI record lacks those fields. This disables the
+  GROUP.C:2164-2171 return-to-prior-square admission rule despite passing
+  helper-level regressions. Add a runtime history owner without silently
+  changing save layout; verify consecutive real-runtime moves and RNG.
+- Reconcile the failing F0221 case in
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat`: the fixture expects
+  Fluxcage to retire an F0219 projectile. The September 6 expanded run
+  fails that assertion; the neighboring C38 projectile-aftermath test passes.
+  Compare the fixture against the source-projectile passage correction
+  before changing either production behavior or expected results. This
+  expanded runtime suite is not green yet.
+
 - Extend F0412 RNG verification to M11's prevalidated XP/gate handoff and
   original execution traces. M10 XP/practice extraction is now corrected to
   BASE.C F0027's shifted sample; the shared multiplier matches BASE.C, not
