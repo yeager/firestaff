@@ -406,6 +406,95 @@ static void test_f0304_level_gain_ignores_temporary_xp(void) {
     assert(before == 1 && after == 1);
 }
 
+static void test_f0304_levelup_bonuses_and_random_order(void)
+{
+    static const uint32_t seeds[] = {0u, 31459u, 0x12345678u};
+    int skill, level;
+    size_t seed_index;
+
+    /* Bounded unit fixtures, not game assets or emulator captures.
+     * Independent PC34 oracle: CHAMPION.C F0304:896-989 consumes minor,
+     * major, vitality and antifire draws before its class switch. Priest
+     * and wizard consume mana then antimagic (&3 in MEDIA722); health and
+     * stamina are last. BASE.C:1688-1775 owns the single LCG stream. */
+    for (skill = 0; skill < 4; ++skill) {
+        for (level = 2; level <= 3; ++level) {
+            for (seed_index = 0; seed_index < sizeof(seeds) / sizeof(seeds[0]);
+                 ++seed_index) {
+                struct ChampionLifecycleState_Compat actual, expected;
+                struct RngState_Compat rng;
+                struct LevelUpMarker_Compat marker;
+                uint32_t expected_seed = seeds[seed_index];
+                unsigned int draw[8];
+                int n, health_factor, stamina_factor, last_draw;
+                int magical = skill == LIFECYCLE_SKILL_PRIEST ||
+                              skill == LIFECYCLE_SKILL_WIZARD;
+                memset(&actual, 0, sizeof(actual));
+                memset(actual.statistics, 40, sizeof(actual.statistics));
+                actual.maxHealth = 123;
+                actual.maxStamina = 987;
+                actual.maxMana = 234;
+                expected = actual;
+                for (n = 0; n < (magical ? 8 : 6); ++n) {
+                    expected_seed = expected_seed * UINT32_C(0xbb40e62d) + 11u;
+                    draw[n] = (unsigned int)((expected_seed >> 8) & 0xffffu);
+                }
+                expected.statistics[LIFECYCLE_STAT_VITALITY][LIFECYCLE_STAT_MAXIMUM] +=
+                    (uint8_t)((draw[2] & 1u) &
+                              (skill == LIFECYCLE_SKILL_PRIEST ? 1u : (unsigned int)level));
+                expected.statistics[LIFECYCLE_STAT_ANTIFIRE][LIFECYCLE_STAT_MAXIMUM] +=
+                    (uint8_t)((draw[3] & 1u) & ~(unsigned int)level);
+                health_factor = level;
+                if (skill == LIFECYCLE_SKILL_FIGHTER) {
+                    expected.statistics[LIFECYCLE_STAT_STRENGTH][LIFECYCLE_STAT_MAXIMUM] +=
+                        (uint8_t)(1u + (draw[1] & 1u));
+                    expected.statistics[LIFECYCLE_STAT_DEXTERITY][LIFECYCLE_STAT_MAXIMUM] +=
+                        (uint8_t)(draw[0] & 1u);
+                    health_factor = 3 * level;
+                    stamina_factor = 987 >> 4;
+                } else if (skill == LIFECYCLE_SKILL_NINJA) {
+                    expected.statistics[LIFECYCLE_STAT_STRENGTH][LIFECYCLE_STAT_MAXIMUM] +=
+                        (uint8_t)(draw[0] & 1u);
+                    expected.statistics[LIFECYCLE_STAT_DEXTERITY][LIFECYCLE_STAT_MAXIMUM] +=
+                        (uint8_t)(1u + (draw[1] & 1u));
+                    health_factor = 2 * level;
+                    stamina_factor = 987 / 21;
+                } else {
+                    unsigned int mana_random = draw[4] & 3u;
+                    if (mana_random > (unsigned int)(level - 1)) mana_random = (unsigned int)(level - 1);
+                    expected.maxMana += (uint16_t)(level + mana_random);
+                    expected.statistics[LIFECYCLE_STAT_ANTIMAGIC][LIFECYCLE_STAT_MAXIMUM] +=
+                        (uint8_t)(draw[5] & 3u);
+                    if (skill == LIFECYCLE_SKILL_WIZARD) {
+                        expected.maxMana += (uint16_t)(level >> 1);
+                        expected.statistics[LIFECYCLE_STAT_WISDOM][LIFECYCLE_STAT_MAXIMUM] +=
+                            (uint8_t)(1u + (draw[1] & 1u));
+                        stamina_factor = 987 >> 5;
+                    } else {
+                        expected.statistics[LIFECYCLE_STAT_WISDOM][LIFECYCLE_STAT_MAXIMUM] +=
+                            (uint8_t)(draw[0] & 1u);
+                        health_factor += (level + 1) >> 1;
+                        stamina_factor = 987 / 25;
+                    }
+                }
+                last_draw = magical ? 6 : 4;
+                expected.maxHealth += (uint16_t)(health_factor +
+                    draw[last_draw] % (unsigned int)((health_factor >> 1) + 1));
+                expected.maxStamina += (uint16_t)(stamina_factor +
+                    draw[last_draw + 1] % (unsigned int)((stamina_factor >> 1) + 1));
+                rng.seed = seeds[seed_index];
+                memset(&marker, 0, sizeof(marker));
+                assert(F0850_LIFECYCLE_ApplyLevelUp_Compat(&actual, skill, level,
+                                                         &rng, &marker) == 1);
+                assert(memcmp(&actual, &expected, sizeof(actual)) == 0);
+                assert(rng.seed == expected_seed);
+                assert(marker.baseSkillIndex == skill && marker.previousLevel == level - 1 &&
+                       marker.newLevel == level && marker.championIndex == -1);
+            }
+        }
+    }
+}
+
 int main(void) {
     {
         struct LifecycleState_Compat lifecycle;
@@ -419,6 +508,7 @@ int main(void) {
         F0883_WORLD_Free_Compat(&world);
     }
     test_f0303_has_no_artificial_level_cap();
+    test_f0304_levelup_bonuses_and_random_order();
     test_f0304_award_word_width();
     test_f0304_level_gain_ignores_temporary_xp();
     test_f0304_temporary_xp_destination_and_threshold();

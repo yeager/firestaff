@@ -54,6 +54,29 @@ created. These are original-object checks, not natural-route emulator traces;
 the two Firestaff variants were not found by this corpus scan.
 Complete original F0304 XP/level-up mutation and F0412 casting remain open.
 
+## RNG and level-up integration audit
+
+BASE.C:193-194 initializes F31 G0349 to 31459. Fresh verified F31 boot now
+binds this value instead of inheriting the generic PC/I34 zero initializer;
+later source save restore still owns the saved stream. Both original-media
+title tests assert this boundary. This does not establish all intervening
+original title/gameplay draws or emulator timing.
+
+DEFS.H:1-4 and BASE.C:1688-1775 require one LCG advance per draw, with
+the middle 16 bits used for modulo/one-bit/two-bit operations. G0361's
+last-creature-attack time starts at -200 (PROJEXPL.C:5) and is assigned at
+the beginning of GROUP.C:1691's attack, before hit/target decisions. The
+current CSB field is only imported/exported, not updated by a live attack
+owner. Do not treat its zero default as authentic combat context.
+
+F0304:896-989 consumes minor, major, vitality and antifire draws first,
+then mana/antimagic for magic classes, then health/stamina. F31/Atari use
+antimagic modulo 3; PC/I34 and late Amiga use two bits. The shared live
+PC34 level-up helper now follows that order, class health multipliers and
+random stamina increase; 24 independent unit cases check exact maxima and
+final RNG. It is not a substitute for CSB's edition-aware transaction or
+G2016 recently-upgraded flags and localized source UI publication.
+
 ## Required complete transaction
 
 1. F0408 (MENU.C:1651-1661) invokes F0412 for G0514's source champion.

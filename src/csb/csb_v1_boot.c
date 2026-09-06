@@ -9485,6 +9485,13 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     profile->runtime.utility_search_dir = profile->utility_search_root[0]
         ? profile->utility_search_root : profile->asset_root;
     profile->runtime.variant_id = profile->variant_id;
+    /* ReDMCSB BASE.C:193-194 (MEDIA551 F31E/F31J) initializes
+     * G0349 to 31459, not the PC/I34 zero default. Bind only at fresh
+     * runtime creation; a later source save restore owns its saved seed. */
+    if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
+        profile->runtime.csbwin_random_seed = 31459u;
+    }
     profile->runtime.difficulty = CSB_V1_DIFFICULTY_UNBOUND;
     profile->runtime.save_dir = profile->save_root;
     profile->runtime.dungeon_path = profile->dungeon_path;

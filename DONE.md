@@ -1,5 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Live PC34 lifecycle level-up follows F0304's fixed RNG
+  order, fighter/ninja/priest health factors, one mana random draw,
+  PC34 antimagic and stamina random bonus. Independent unit fixtures
+  compare all maxima, untouched champion fields, markers and final RNG
+  for 24 class/level/seed combinations. Production build, exact oracle
+  (0.04s) and three DM1 XP/spell/action regressions (8.94s) pass. This
+  is source-contract coverage, not original-emulator progression proof.
+
+- 2026-09-06: Fresh CSB FM Towns boot binds BASE.C's original RNG seed
+  31459 rather than the PC default zero. Existing source-save restoration
+  remains authoritative after boot. Original EN/JP media handoff tests
+  assert the title seed and pass their existing routes (15.01s).
+
 - 2026-09-06: CSB public F0303 mastery query restores original flags,
   temporary/base XP averaging, edition signedness, uncapped threshold loop,
   resting override and original action-hand/neck bonuses. Five authentic

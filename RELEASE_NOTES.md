@@ -1,5 +1,9 @@
 # Unreleased
 
+- Corrected DM1 PC34 level-up health/stamina bonuses and RNG ordering,
+  including the extra mana draw and priest antimagic mismatch.
+- CSB FM Towns starts its fresh RNG stream with the original seed.
+
 - CSB skill queries honor original temporary-XP/equipment flags, mastery
   thresholds and equipment bonuses instead of imposing a level-16 cap.
   This does not yet implement complete original spell execution.

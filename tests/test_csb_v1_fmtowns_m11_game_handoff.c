@@ -537,6 +537,11 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    CHECK(((const CSB_V1_BootProfile *)view.csbBootProfile)->runtime
+              .csbwin_random_seed_valid &&
+          ((const CSB_V1_BootProfile *)view.csbBootProfile)->runtime
+              .csbwin_random_seed == 31459u,
+          "F31 fresh title retains original BASE.C initial RNG seed");
     CHECK(view.originalFontAvailable &&
               M11_Font_ResolvedGraphicIndex(&view.originalFont) == 695,
           "verified F31 M653 raw interface font is bound before title playback");

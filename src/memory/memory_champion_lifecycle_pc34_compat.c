@@ -821,7 +821,7 @@ int F0850_LIFECYCLE_ApplyLevelUp_Compat(
     struct LevelUpMarker_Compat* outMarker)
 {
     int level = newLevel;
-    int halfPlus1;
+    int minorIncrease, majorIncrease;
     int maxH, maxS, maxM;
     int strengthBump = 0;
     int dexterityBump = 0;
@@ -832,65 +832,65 @@ int F0850_LIFECYCLE_ApplyLevelUp_Compat(
     int healthBump = 0;
     int staminaBump = 0;
     int manaBump = 0;
-    int oddLevel;
 
     if (champ == 0) return 0;
     if (baseSkillIndex < 0 || baseSkillIndex >= LIFECYCLE_HIDDEN_SKILL_FIRST)
         return 0;
     if (level < 2) return 0;
 
-    halfPlus1 = (level >> 1) + 1;
-    oddLevel = level & 1;
-
     maxH = (int)champ->maxHealth;
     maxS = (int)champ->maxStamina;
     maxM = (int)champ->maxMana;
 
-    /* Class-specific bonuses (F0304). */
+    /* ReDMCSB CHAMPION.C F0304:896-975. All classes consume these
+     * four draws first, even when parity masks discard a result. Changing
+     * the order changes every subsequent draw in the live master stream. */
+    minorIncrease = rng_next_mod(rng, 2);
+    majorIncrease = 1 + rng_next_mod(rng, 2);
+    vitalityBump = rng_next_mod(rng, 2);
+    if (baseSkillIndex != LIFECYCLE_SKILL_PRIEST)
+        vitalityBump &= level;
+    antifireBump = rng_next_mod(rng, 2) & ~level;
+    healthBump = level;
+
+    /* Class-specific bonuses; PC/I34 uses M004_RANDOM(4) for
+     * priest/wizard antimagic (:966-967), not the earlier/F31 modulo 3. */
     switch (baseSkillIndex) {
     case LIFECYCLE_SKILL_FIGHTER:
-        strengthBump = 1 + rng_next_mod(rng, 2);
-        dexterityBump = rng_next_mod(rng, 2);
+        strengthBump = majorIncrease;
+        dexterityBump = minorIncrease;
         staminaBump = maxS >> 4;
-        healthBump = level + rng_next_mod(rng, halfPlus1);
+        healthBump *= 3;
         break;
     case LIFECYCLE_SKILL_NINJA:
-        strengthBump = rng_next_mod(rng, 2);
-        dexterityBump = 1 + rng_next_mod(rng, 2);
+        strengthBump = minorIncrease;
+        dexterityBump = majorIncrease;
         staminaBump = maxS / 21;
-        healthBump = level + rng_next_mod(rng, halfPlus1);
+        healthBump <<= 1;
         break;
     case LIFECYCLE_SKILL_WIZARD:
-        manaBump = level + (level >> 1)
-            + ((rng_next_mod(rng, 4) < level - 1)
-               ? rng_next_mod(rng, 4) : (level - 1));
-        wisdomBump = 1 + rng_next_mod(rng, 2);
+        manaBump = level + (level >> 1);
+        wisdomBump = majorIncrease;
         staminaBump = maxS >> 5;
-        healthBump = level + rng_next_mod(rng, halfPlus1);
-        antimagicBump = rng_next_mod(rng, 4);
         break;
     case LIFECYCLE_SKILL_PRIEST:
-        manaBump = level + ((rng_next_mod(rng, 4) < level - 1)
-                            ? rng_next_mod(rng, 4) : (level - 1));
-        wisdomBump = rng_next_mod(rng, 2);
-        vitalityBump = rng_next_mod(rng, 2);
+        manaBump = level;
+        wisdomBump = minorIncrease;
         staminaBump = maxS / 25;
-        healthBump = level + rng_next_mod(rng, halfPlus1);
-        antimagicBump = rng_next_mod(rng, 3);
+        healthBump += (level + 1) >> 1;
         break;
     default:
         return 0;
     }
 
-    /* Universal per-level bonuses. */
-    if (baseSkillIndex != LIFECYCLE_SKILL_PRIEST && oddLevel) {
-        vitalityBump += rng_next_mod(rng, 2);
-    } else if (baseSkillIndex == LIFECYCLE_SKILL_PRIEST) {
-        /* priest already set above */
+    if (baseSkillIndex == LIFECYCLE_SKILL_PRIEST ||
+        baseSkillIndex == LIFECYCLE_SKILL_WIZARD) {
+        int manaRandom = rng_next_mod(rng, 4);
+        manaBump += manaRandom < level - 1 ? manaRandom : level - 1;
+        antimagicBump = rng_next_mod(rng, 4);
     }
-    if (!oddLevel) {
-        antifireBump += rng_next_mod(rng, 2);
-    }
+    healthBump += rng_next_mod(rng, (healthBump >> 1) + 1);
+    staminaBump += rng_next_mod(rng, (staminaBump >> 1) + 1);
 
     /* Apply to stats (maxima). */
     {

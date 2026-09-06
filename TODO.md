@@ -1,5 +1,9 @@
 # Firestaff TODO — active cross-game work
 
+- Bind edition-specific level-up antimagic behavior for early DM1/FM
+  Towns (modulo 3 versus PC34/late-Amiga two bits) and compare complete
+  level transitions against original emulator traces, including source UI.
+
 - Extend authentic combat coverage to multi-creature selection, reach
   blocking and exact damage/XP comparisons against original emulator traces.
   The relocated-party original-group tests do not prove a natural play route.
@@ -16,6 +20,8 @@
   admit Atari/Amiga tables.
   Implement original F0304 practice/level-up mutation and bind resting state
   end-to-end; verify Firestaff mastery bonuses with authentic object evidence.
+  Bind G0361 at the live creature-attack boundary and preserve original
+  level-up RNG ordering, recently-upgraded flags and localized messages.
 
 - Complete CSB FM Towns action-menu pixel parity and all row boundaries.
   Source C696 now owns language-specific action/Pass pointer geometry;
