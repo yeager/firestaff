@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 PC3.4 startup and 36 legacy-edition CLI/menu launches
+  pass with the rebuilt application after leader-input fixes.
+
 - 2026-09-06: DM1 newly selected leaders align with party direction;
   verified with five original Atari/Amiga input regressions.
 

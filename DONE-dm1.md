@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Rebuilt the application after leader fixes. PC3.4 native
+  startup passes, plus 36 CLI/menu launches across Atari EN/DE/FR,
+  Amiga EN and FM Towns EN/JP in Original/V2.0/V2.1. These establish
+  authenticated dungeon handoff and retained presentation mode, not
+  complete visual or emulator parity.
+
 - 2026-09-06: Fixed missing direction alignment when selecting a different
   DM1 leader (CLIKCHAM.C F0368:67). All five Atari/Amiga regressions failed
   with deliberately divergent champion facing before the fix, then passed
