@@ -1,5 +1,10 @@
 # Firestaff TODO — DM1
 
+- Fix food command timing: defer swallow until all four source mouth delays
+  complete, including release/input lifecycle and simulation ordering. See
+  `parity-evidence/dm1-consumption-timing-audit.md`; current sound-transport
+  tests do not prove correct timing.
+
 - Verify swallow timing/output against emulator captures and load changes through actual
   pickup/equipment input and presentation feedback before claiming complete
   consumable parity. Extend the unchanged-skill assertion beyond antivenin.
