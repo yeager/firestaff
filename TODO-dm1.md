@@ -17,10 +17,10 @@
   original-audio setup, observed before the restorative tests. Full rerun
   passed; do not conflate this with a fixed failure or the no-output exit.
 
-- Verify low-skill cast handoff and exact XP against F0412. M11 validates
-  practice before dispatch, while M10 can run practice checks again; prove
-  there is no duplicate validation/RNG draw or changed outcome. High-skill
-  restorative potion power now matches the independent second RNG sample.
+- Extend F0412 evidence to exact earned XP, low-wisdom failure trajectories,
+  and non-potion low-skill effects. Successful restorative casts at skill 1
+  now preserve the original practice/potion RNG sequence; the full failure
+  and effect matrix is not yet proven.
 
 - Fix food command timing: defer swallow until all four source mouth delays
   complete, including release/input lifecycle and simulation ordering. See

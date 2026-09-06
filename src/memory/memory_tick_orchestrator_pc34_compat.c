@@ -13363,7 +13363,11 @@ cmd_attack_legacy_marker:
          * cast will not enter the gate. */
         uint8_t needsPracticeProbes[8];
         int needsPracticeProbeCount = 0;
-        {
+        /* MENU.C F0412:1832-1841 performs this gate once. M11 emits the
+         * XP handoff only after its gate succeeds; preserve that accepted
+         * outcome with the zero-valued receipt input, without fresh probes.
+         * Unvalidated direct M10 commands still own their practice draws. */
+        if ((input->reserved2 & CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP) == 0u) {
             DM1_ChampionSpellStats gateStats;
             if (spell.baseRequiredSkillLevel >= 0 &&
                 orch_cmd_cast_spell_build_dm1_stats_f0412_compat(

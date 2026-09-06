@@ -1,5 +1,8 @@
 # Unreleased
 
+- Successful low-skill DM1 casts no longer consume duplicate practice random
+  samples during dispatch, preserving the original potion power sequence.
+
 - DM1 spell dispatch no longer consumes a duplicate XP random sample after
   M11 prevalidation, correcting subsequent potion power generation.
 

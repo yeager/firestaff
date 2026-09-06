@@ -687,8 +687,15 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].inventory[CHAMPION_SLOT_ACTION_HAND] = flask;
                             state->world.party.champions[1].mana.current = 100;
                             state->world.party.champions[1].mana.maximum = 100;
+                            int lowSkill = getenv("FIRESTAFF_VERIFY_LOW_SKILL_CAST") != NULL ||
+                                getenv("FIRESTAFF_VERIFY_LIVING_CASTER") != NULL;
+                            if (lowSkill) {
+                                memset(state->world.lifecycle.champions[1].skills20, 0,
+                                    sizeof(state->world.lifecycle.champions[1].skills20));
+                                state->world.party.champions[1].attributes[CHAMPION_ATTR_WISDOM] = 100;
+                            }
                             for (int s = 0; s < LIFECYCLE_SKILL_COUNT; ++s)
-                                state->world.lifecycle.champions[1].skills20[s].experience = 1000000;
+                                state->world.lifecycle.champions[1].skills20[s].experience = lowSkill ? 0 : 1000000;
                             state->dm1SpellCasting.magicCasterIndex = 1;
                             /* ReDMCSB MENU.C:68,71,74: Ya / Vi / Zo Bro Ra.
                              * No potion bytes/power are assigned by the fixture. */
@@ -703,7 +710,30 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                              * High source skill avoids the practice RNG loop.
                              * BASE.C F0027 / F0732: LCG then bits 8..23. */
                             unsigned int castSeed = state->world.masterRng.seed;
+                            int missing = 0;
+                            if (lowSkill) {
+                                /* MENU.C:68,71,74 base skill 2/1/3; F0303's
+                                 * zero-experience champion starts at level 1.
+                                 * Choose only RAM RNG state, never potion bytes. */
+                                int skill = restorative == 13 ? 2 : 13;
+                                if (M11_GameView_GetSkillLevel(state, 1, skill) != 1) return 0;
+                                missing = powerRune + (restorative == 11 ? 2 : restorative == 14 ? 1 : 3);
+                                unsigned int trial;
+                                for (trial = 1; trial < 10000; ++trial) {
+                                    unsigned int seed = trial * 0xBB40E62Du + 11u;
+                                    int accepted = 1;
+                                    for (int probe = 0; probe < missing; ++probe) {
+                                        seed = seed * 0xBB40E62Du + 11u;
+                                        if (((seed >> 8) & 127u) > 115u) accepted = 0;
+                                    }
+                                    if (accepted) break;
+                                }
+                                if (trial == 10000) return 0;
+                                state->world.masterRng.seed = castSeed = trial;
+                            }
                             castSeed = castSeed * 0xBB40E62Du + 11u;
+                            for (int probe = 0; probe < missing; ++probe)
+                                castSeed = castSeed * 0xBB40E62Du + 11u;
                             castSeed = castSeed * 0xBB40E62Du + 11u;
                             int expectedPower = (powerRune + 1) * 40 +
                                 ((castSeed >> 8) & 15u);

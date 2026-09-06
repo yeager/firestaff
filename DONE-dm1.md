@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Removed duplicate practice RNG consumption after the M11
+  validated-cast/XP handoff. The original Atari test reproduced potion
+  power 44 instead of source-expected 50 before the fix. A bounded RAM seed
+  search now exercises successful skill-1 casts independently against
+  F0412's wisdom threshold, practice draw count and potion power sample.
+  All twenty forced-low-skill original-media cases pass; the default twenty
+  cases now mix high/low skill and pass alongside three runtime regressions
+  (23 tests). Media and flask contents are authentic; skill/RNG fixtures are
+  RAM-only. Exact earned XP and the full failure matrix remain open.
+
 - 2026-09-06: Replaced restorative CastSpell API calls with original C108
   mouse press/release. The independent F0027/F0412 oracle exposed an extra
   M10 XP random draw after M11 had already supplied XP; dispatch now skips
