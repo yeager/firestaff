@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Non-vacuous scroll font check
+
+- The real-scroll raster test now requires a loaded original font and a
+  nonzero ink-pixel count for every tested scroll. Original/V2.1 and the
+  complete original-object corpus pass with these guards.
+
 ## 2026-09-06 — Original scroll text raster placement
 
 - The PC3.4 scroll eye corpus reconstructs the C023 panel and scroll-font

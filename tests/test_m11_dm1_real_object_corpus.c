@@ -311,12 +311,14 @@ static int check_type(M11_GameViewState *state, int thingType,
                     if (panel && panel->pixels && panel->width == 144 && panel->height == 73) {
                         unsigned char expected[320 * 200];
                         char text[4096];
+                        int inkPixels = 0;
                         DM1_V1_ScrollLayout layout;
                         memcpy(expected, framebuffer, sizeof(expected));
                         for (int py = 0; py < 73; ++py) for (int px = 0; px < 144; ++px)
                             if (panel->pixels[py * 144 + px] != 8)
                                 expected[(85 + py) * 320 + 80 + px] = panel->pixels[py * 144 + px];
-                        if (!DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+                        if (!M11_Font_IsLoaded(&state->originalFont) ||
+                            !DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
                                 state, text, sizeof(text))) scrollOk = 0;
                         else {
                             dm1_v1_text_scroll_measure_layout(text, &layout);
@@ -336,14 +338,17 @@ static int check_type(M11_GameViewState *state, int thingType,
                                             int dy = 33 + layout.firstLineY + line * DM1_V1_TEXT_LINE_HEIGHT + y;
                                             if (dx >= 0 && dx < 320 && dy >= 0 && dy < 200 &&
                                                 M11_Font_GetPixel(&state->originalFont,
-                                                    code * M11_FONT_CHAR_CELL_WIDTH + M11_FONT_X_OFFSET + x, y))
+                                                    code * M11_FONT_CHAR_CELL_WIDTH + M11_FONT_X_OFFSET + x, y)) {
                                                 expected[dy * 320 + dx] = 0;
+                                                ++inkPixels;
+                                            }
                                         }
                                 }
                             }
                             for (int py = 0; py < 73; ++py) for (int px = 0; px < 144; ++px)
                                 if (expected[(85 + py) * 320 + 80 + px] != framebuffer[(85 + py) * 320 + 80 + px])
                                     scrollOk = 0;
+                            if (inkPixels == 0) scrollOk = 0;
                         }
                     }
                 }

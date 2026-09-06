@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+- Investigate scroll background semantics: PANEL.C F0340 passes white
+  (15) to F0040/F0644, while the native F0341 receipt currently selects
+  transparent text background (-1). Trace the original text consumer and
+  compare source-panel pixels before deciding whether this is an observable
+  rendering deviation; current raster tests reproduce transparent behavior.
+
 Reviewed 2026-08-29. Only open work is listed here.
 
 - Deferred savegame gap: native quicksave does not serialize dungeon Thing

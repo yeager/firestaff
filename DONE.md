@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 scroll raster evidence now explicitly requires loaded
+  font data and nonzero glyph ink; the original-media corpus passes.
+
 - 2026-09-06: DM1 original-scroll tests now compare panel/text raster
   placement in Original/V2.1 using original C023 and M653 materials;
   shared layout/font decoding and transparent backgrounds remain separate.
