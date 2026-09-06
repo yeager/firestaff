@@ -116,7 +116,10 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) return 0;
                         fprintf(stderr, "legacy floor-drop load thing=%04x before=%d after=%u expected=0\n",
                             thing, weight, state->world.party.champions[0].load);
-                        return state->world.party.champions[0].load == 0;
+                        if (state->world.party.champions[0].load != 0) return 0;
+                        (void)M11_GameView_HandlePointerButtonRelease(state, 64, 158, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        return state->world.party.champions[0].load == 0 &&
+                            DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE;
                     }
                     for (int release = 0; release < 2; ++release) {
                         if (release) (void)M11_GameView_HandlePointerButtonRelease(state,

@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: All five original Atari/Amiga floor-drop load tests now
+  verify the explicit release event as well: load remains zero and the
+  dropped Thing does not return to the hand. All five tests pass.
+
 ## 2026-09-06 — Carried-load transaction refresh
 
 - Before publishing a DM1 transaction's world hash, recompute carried load
