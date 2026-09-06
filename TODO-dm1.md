@@ -9,7 +9,7 @@
   inventory slot transactions, action-hand chest opening and eye-release
   action-hand lookup and action-hand scroll decoding are migrated;
   empty-hand eye selection/statistics rendering, main inventory rendering
-  and food/water rendering are migrated. Empty-eye
+  and food/water rendering plus top-row ownership records are migrated. Empty-eye
   press/release is covered; chest-restoring eye-release remains unverified;
   normal input must remain on the legacy owner until other consumers follow.
   Separate it from party leader

@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Migrated DM1 top-row redraw/ownership input records to the
+  explicit inventory owner; leader name-color selection remains leader-owned.
+  Five original-media regressions pass. Independent top-row highlight
+  pixel evidence is still required when activating normal panel input.
+
 - 2026-09-06: Five original Atari/Amiga tests now feed an allocated original
   food item to inventory champion 1 while champion 0 leads. Source G0242
   nutrition reaches only the recipient; leader identity, remaining weapon,

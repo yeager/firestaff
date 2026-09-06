@@ -61960,7 +61960,7 @@ static int m11_dm1_v1_party_inventory_handoff_from_frame(
     memset(&redrawState, 0, sizeof(redrawState));
     redrawState.partyChampionCount = state->world.party.championCount;
     redrawState.inventoryChampionIndex = state->inventoryPanelActive
-        ? state->world.party.activeChampionIndex : -1;
+        ? m11_inventory_champion_index(state) : -1;
     if (redrawState.partyChampionCount < 0 ||
         redrawState.partyChampionCount > CHAMPION_MAX_PARTY ||
         redrawState.inventoryChampionIndex >= CHAMPION_MAX_PARTY) {
@@ -62038,8 +62038,8 @@ static int m11_draw_dm1_v1_status_bar_frame_receipt(
             ? state->candidateMirrorPartyIndex + 1 : 0;
     ownershipInput.inventoryPanelActive = state->inventoryPanelActive;
     ownershipInput.inventoryChampionOrdinal = state->inventoryPanelActive &&
-        state->world.party.activeChampionIndex >= 0
-            ? state->world.party.activeChampionIndex + 1 : 0;
+        m11_inventory_champion_index(state) >= 0
+            ? m11_inventory_champion_index(state) + 1 : 0;
     memset(&ownership, 0, sizeof(ownership));
     memset(&portraitPolicy, 0, sizeof(portraitPolicy));
     memset(&redraw, 0, sizeof(redraw));
@@ -62147,8 +62147,8 @@ static int m11_dm1_v1_top_row_atomic_host_consume(
             ? state->candidateMirrorPartyIndex + 1 : 0;
     ownershipInput.inventoryPanelActive = state->inventoryPanelActive;
     ownershipInput.inventoryChampionOrdinal = state->inventoryPanelActive &&
-        state->world.party.activeChampionIndex >= 0
-            ? state->world.party.activeChampionIndex + 1 : 0;
+        m11_inventory_champion_index(state) >= 0
+            ? m11_inventory_champion_index(state) + 1 : 0;
     memset(&ownership, 0, sizeof(ownership));
     memset(&policy, 0, sizeof(policy));
     memset(&redraw, 0, sizeof(redraw));
