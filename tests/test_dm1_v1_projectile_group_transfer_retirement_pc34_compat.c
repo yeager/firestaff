@@ -23,7 +23,8 @@ int main(int argc, char** argv)
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
     int burstDrop = argc == 2 && strcmp(argv[1], "burst-drop") == 0;
-    int burstAll = burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
+    int burstFixed = argc == 2 && strcmp(argv[1], "burst-fixed") == 0;
+    int burstAll = burstFixed || burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
     int burstSmoke = argc == 2 && strcmp(argv[1], "burst-smoke") == 0;
     int burstLethal = burstAll || burstSmoke || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
     int burst = burstLethal || (argc == 2 && strcmp(argv[1], "burst") == 0);
@@ -121,6 +122,8 @@ int main(int argc, char** argv)
     if (burst) {
         struct ExplosionCreateInput_Compat blast = {0};
         struct DungeonExplosion_Compat smokePool[3] = {{0}};
+        struct DungeonJunk_Compat food[6] = {{0}};
+        unsigned char rawFood[24] = {0};
         struct RngState_Compat expectedRng = world.masterRng;
         int attack, spread, expectedHp[2], i;
         group.creatureType = rawGroup[4] = 15;
@@ -163,6 +166,15 @@ int main(int argc, char** argv)
         blast.mapX = 1; blast.mapY = 0;
         blast.centered = 1; blast.cell = 255; blast.currentTick = 40;
         blast.creatorProjectileSlot = -1;
+        if (burstFixed) {
+            for (i = 0; i < 6; ++i) {
+                food[i].next = THING_NONE;
+                word(rawFood + i * 4, THING_NONE);
+            }
+            things.junks = food;
+            things.junkCount = things.thingCounts[THING_TYPE_JUNK] = 6;
+            things.rawThingData[THING_TYPE_JUNK] = rawFood;
+        }
         if (burstDrop) {
             group.slot = weaponThing;
             word(rawGroup + 2, weaponThing);
@@ -196,6 +208,30 @@ int main(int argc, char** argv)
             CHECK(group.next == THING_NONE && readword(rawGroup) == THING_NONE);
             CHECK(world.creatureAICount == 0);
             CHECK((sft[0] & 0x3fff) != (THING_TYPE_GROUP << 10));
+            if (burstFixed) {
+                int allocated = 0, visited = 0, links = 0;
+                unsigned int seen = 0;
+                unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    &dungeon, &things, 0, 1, 0);
+                for (i = 0; i < 6; ++i) if (food[i].next != THING_NONE) {
+                    CHECK(food[i].type == 34);
+                    CHECK(readword(rawFood + i * 4) == food[i].next);
+                    ++allocated;
+                }
+                CHECK(allocated >= 2 && allocated <= 6);
+                while (cursor != THING_ENDOFLIST && links++ < 8) {
+                    if (((cursor >> 10) & 15) == THING_TYPE_JUNK) {
+                        int index = cursor & 1023;
+                        CHECK(index < 6 && !(seen & (1u << index)));
+                        seen |= 1u << index; ++visited;
+                        cursor = food[index].next;
+                    } else {
+                        CHECK((cursor & 0x3fff) == (THING_TYPE_EXPLOSION << 10));
+                        cursor = c15.next;
+                    }
+                }
+                CHECK(cursor == THING_ENDOFLIST && visited == allocated);
+            }
             if (burstDrop) {
                 unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
                     &dungeon, &things, 0, 1, 0);

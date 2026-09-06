@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: M10 explosion death now has direct fixed-possession coverage,
+  separate from the M11 helper gate. A two-worm group with six free C10
+  records produces 2-6 worm rounds (DUNGEON.C G0252:543-547), with matching
+  raw/decoded links and every allocated item reachable exactly once from
+  the floor chain. The source-shaped fixture passes without a runtime fix.
+  Exact optional-drop RNG, cell distribution and original-media pickup
+  rendering remain open; this test asserts ownership and type/count bounds.
+
 - 2026-09-06: Whole-group explosion death with a carried sharp dagger now
   has an ownership regression: the freed group has no possession head,
   the destination floor chain contains the dagger exactly once and its
