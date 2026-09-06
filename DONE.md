@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Five original DM1 Atari/Amiga load tests verify that a
+  leader's floor drop preserves a second champion's carried object/load.
+
 - 2026-09-06: Fixed stale DM1 carried load after a floor drop; five original
   Atari/Amiga load regressions now pass. Full encumbrance parity remains open.
 

@@ -101,7 +101,29 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                      * setup alone is not evidence of correct initial load. */
                     if (getenv("FIRESTAFF_VERIFY_LEGACY_LOAD") &&
                         type == THING_TYPE_WEAPON && slot == 0 && mode == 0 && step == 0) {
-                        int weight;
+                        int weight, otherWeight;
+                        unsigned short other = THING_NONE;
+                        /* CHAMPION.C F0297:264/F0298:293 charges the held
+                         * object only to the leader. A second champion's
+                         * independently carried original object must survive. */
+                        for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
+                            unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);
+                            const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                            if (candidate != thing && bytes && !(bytes[0] == 0xff && bytes[1] == 0xff)) {
+                                other = candidate;
+                                break;
+                            }
+                        }
+                        if (other == THING_NONE ||
+                            !dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, other, &otherWeight) ||
+                            otherWeight <= 0) return 0;
+                        F0600_CHAMPION_InitEmpty_Compat(&state->world.party.champions[1]);
+                        state->world.party.championCount = 2;
+                        state->world.party.champions[1].present = 1;
+                        state->world.party.champions[1].hp.current = 100;
+                        state->world.party.champions[1].hp.maximum = 100;
+                        state->world.party.champions[1].inventory[19] = other;
+                        state->world.party.champions[1].load = (unsigned short)otherWeight;
                         if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, thing, &weight)) return 0;
                         if (weight <= 0) return 0;
                         state->world.party.champions[0].load = (unsigned short)weight;
@@ -118,7 +140,9 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             thing, weight, state->world.party.champions[0].load);
                         if (state->world.party.champions[0].load != 0) return 0;
                         (void)M11_GameView_HandlePointerButtonRelease(state, 64, 158, DM1_V1_MOUSE_MASK_LEFT_PC34);
-                        return state->world.party.champions[0].load == 0 &&
+                        return state->world.party.champions[1].inventory[19] == other &&
+                            state->world.party.champions[1].load == otherWeight &&
+                            state->world.party.champions[0].load == 0 &&
                             DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE;
                     }
                     for (int release = 0; release < 2; ++release) {

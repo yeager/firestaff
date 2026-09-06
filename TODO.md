@@ -1,5 +1,8 @@
 # Firestaff TODO — active cross-game work
 
+- Extend DM1 carried-load verification to leader switching, cross-champion
+  exchanges and open-chest mutations; see TODO-dm1.md for remaining scope.
+
 - Compare Atari CSB's full chest composition with a same-state original
   runtime capture; source-material composition tests are not emulator parity.
 

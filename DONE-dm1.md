@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Five original Atari/Amiga floor-drop load regressions now
+  retain a distinct original weapon on a second champion. Normal leader
+  pickup/drop/release preserves that champion's ready hand and load.
+  This checks isolation, not leader switching or cross-champion exchanges.
+
 - 2026-09-06: All five original Atari/Amiga floor-drop load tests now
   verify the explicit release event as well: load remains zero and the
   dropped Thing does not return to the hand. All five tests pass.
