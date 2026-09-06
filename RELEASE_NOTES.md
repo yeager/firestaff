@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 stops Lord Chaos animation and AI continuations after victory, matching
+  the original event gate without consuming further random values.
+
 - DM1 Freeze Life defers creature animation events before they alter graphics
   or consume the random stream, preserving the original four-tick retry.
 

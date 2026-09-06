@@ -1372,7 +1372,7 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     if (!build_world(&world)) return 1;
     world.pc34ActiveGroupSourceCount = 1;
     world.things->groups[0].count = 3;
-    if (frozen == 2) {
+    if (frozen >= 2) {
         world.things->groups[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
         world.creatureAI[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
     }
@@ -1382,6 +1382,7 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     memcpy(world.creatureAI[0].aspect, siblings, sizeof(siblings));
     world.creatureAI[0].aspect[slot] = 0xff;
     world.freezeLifeTicks = frozen ? 8 : 0;
+    world.gameWon = frozen == 3;
     seedBefore = world.masterRng.seed;
     memset(&event, 0, sizeof(event));
     event.kind = TIMELINE_EVENT_CREATURE_REACTION;
@@ -1393,7 +1394,12 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     memset(&result, 0, sizeof(result));
     ok = F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) &&
          F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
-    if (frozen == 1) {
+    if (frozen == 3) {
+        ok &= expect(world.masterRng.seed == seedBefore &&
+                     world.creatureAI[0].aspect[slot] == 0xff &&
+                     world.timeline.count == 0,
+                     "victory consumes Lord Chaos event without RNG, aspects or retry");
+    } else if (frozen == 1) {
         ok &= expect(world.masterRng.seed == seedBefore &&
                      world.creatureAI[0].aspect[slot] == 0xff,
                      "Freeze Life defers C33-C36 before aspect and RNG changes");
@@ -1425,7 +1431,8 @@ int main(void)
     for (slot = 0; slot < 4; ++slot)
         if (test_c33_to_c36_aspect_slot_conversion(slot, 0) != 0 ||
             test_c33_to_c36_aspect_slot_conversion(slot, 1) != 0 ||
-            test_c33_to_c36_aspect_slot_conversion(slot, 2) != 0) return 1;
+            test_c33_to_c36_aspect_slot_conversion(slot, 2) != 0 ||
+            test_c33_to_c36_aspect_slot_conversion(slot, 3) != 0) return 1;
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;

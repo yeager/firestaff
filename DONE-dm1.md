@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Added the source F0209 victory gate for Lord Chaos before aspect/RNG work
+  (GROUP.C:1946-1949). Timed events are consumed without mutation or retry.
+  The C33-C36 regression fails before the guard and passes after it for all
+  four slots; the ordinary/frozen/immune/victorious matrix is now 16 cases.
+  All 20 selected tests pass, including five original-DOS-media tests. This
+  is a bounded event gate, not proof of the complete fusion/ending sequence.
+
 - Extended C33-C36 Freeze Life checks with original Lord Chaos attributes:
   all four selected slots continue updating and consuming RNG while ordinary
   groups defer. The 12-case ordinary/frozen/immune matrix passes. Read-only

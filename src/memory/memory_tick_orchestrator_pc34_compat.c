@@ -12863,6 +12863,9 @@ static int orch_handle_creature_reaction_event_compat(
     }
     ctx.creatureSize = ctx.creatureInfo.attributes & DM1_ATTR_SIZE_MASK;
     ctx.isArchenemy = (ctx.creatureInfo.attributes & DM1_ATTR_ARCHENEMY) != 0;
+    /* GROUP.C F0209:1946-1949: after victory Lord Chaos events are
+     * consumed without animation, RNG or continuation publication. */
+    if (ctx.isArchenemy && world->gameWon) return 1;
     ctx.freezeLifeTicks = world->freezeLifeTicks;
     /* GROUP.C F0209:1962-1968 (PC34) defers timed events before F0179
      * or visibility RNG. Preserve the original C.Ticks payload verbatim. */
