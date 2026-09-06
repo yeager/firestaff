@@ -49953,6 +49953,81 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
     return 1;
 }
 
+/* F31's C696 binds ACTIDRAW.C F0387:323,333-374 to C010 and
+ * C011/C077/C079 independently of the DM1 executable receipt. This narrow
+ * final-page overlay does not admit the generic PC-sized HUD or establish
+ * parity for F31's remaining viewport, idle controls, or Japanese glyphs.
+ * See parity-evidence/csb-fmtowns-action-regions.md. */
+static int m11_draw_csb_fmtowns_active_menu(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebufferWidth, int framebufferHeight)
+{
+    const CSB_V1_BootProfile *profile;
+    M11_GameViewState mirror;
+    const M11_GameViewState *party;
+    const M11_AssetSlot *asset;
+    unsigned char actions[3];
+    int rows, actor, japanese, menuY, sourceH, cropH;
+    int y;
+
+    if (!state || !framebuffer || framebufferWidth < 320 ||
+        framebufferHeight < 200 || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        state->inventoryPanelActive || state->actingChampionOrdinal == 0 ||
+        !m11_csb_startup_package_identity_current(state)) return 0;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile)) return 0;
+    japanese = profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA;
+    if (!japanese && !m11_dm1_pc34_hud_font_is_source_bound(state)) return 0;
+    party = m11_csb_v1_party_hud_source_state(state, &mirror);
+    if (!party || !M11_GameView_GetActingActionIndices(party, actions)) return 0;
+    actor = (int)party->actingChampionOrdinal - 1;
+    if (actor < 0 || actor >= party->world.party.championCount ||
+        actor >= CHAMPION_MAX_PARTY || !party->world.party.champions[actor].present)
+        return 0;
+    rows = m11_count_source_action_menu_rows(actions);
+    if (rows <= 0) return 0;
+    sourceH = japanese ? 72 : 45;
+    menuY = japanese ? 85 : 77;
+    cropH = rows == 3 ? sourceH :
+        (rows == 2 ? (japanese ? 51 : 33) : (japanese ? 30 : 21));
+    /* The package-bound cache selects F31 IMG2 from retained archive
+     * bytes. The generic boot decoder is PC IMG3 and cannot own C010. */
+    if (!state->assetLoader.csbFmtowns ||
+        !m11_csb_install_runtime_source_graphic(state, 10u)) return 0;
+    asset = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 10u);
+    if (!asset || !asset->loaded || !asset->pixels ||
+        asset->width != (japanese ? 96 : 87) || asset->height != sourceH) {
+        return 0;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  233, menuY, 87, sourceH, M11_COLOR_BLACK);
+    for (y = 0; y < cropH; ++y)
+        memcpy(framebuffer + (menuY + y) * framebufferWidth + 233,
+               asset->pixels + y * asset->width + (japanese ? 9 : 0), 87);
+    if (!japanese) {
+        DM1_V1_ActionAreaRectPc34 clip = {233,77,87,45};
+        char name[CHAMPION_NAME_LENGTH + 1];
+        int row;
+        /* F0768/F0040 -> TEXT2.C F0644: use the fresh source party name,
+         * but retain state's genuine font binding (the mirror is a copy,
+         * not the owner of g_activeOriginalFont). */
+        memcpy(name, party->world.party.champions[actor].name, CHAMPION_NAME_LENGTH);
+        name[CHAMPION_NAME_LENGTH] = '\0';
+        m11_draw_dm1_ui_text_trailing_spaces(state, framebuffer,
+            framebufferWidth, framebufferHeight, 235, 83, name, 7, 0, 4, &clip);
+        for (row = 0; row < 3; ++row) {
+            const char *label = actions[row] == 0xFFu ? "" :
+                m11_action_name_for_state(state, actions[row]);
+            m11_draw_dm1_ui_text_trailing_spaces(state, framebuffer,
+                framebufferWidth, framebufferHeight, 241, 93 + 12 * row,
+                label, 12, 4, 0, &clip);
+        }
+    }
+    /* F31J F0952 system-glyph ownership remains unresolved. C010 alone
+     * is authentic background evidence, not Japanese text parity. */
+    return 1;
+}
+
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
                                                  int championIndex,
                                                  int cost) {
@@ -67292,6 +67367,12 @@ void M11_GameView_Draw(M11_GameViewState* state,
                            vp_save + vpy * 224,
                            224);
                 }
+                /* F31 C696 places this active menu at x233 regardless of
+                 * the still-separate generic viewport-origin work. Publish
+                 * its authenticated pixels after that viewport restore;
+                 * do not enable the unrelated PC-sized HUD material gate. */
+                (void)m11_draw_csb_fmtowns_active_menu(state, framebuffer,
+                    framebufferWidth, framebufferHeight);
             }
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,

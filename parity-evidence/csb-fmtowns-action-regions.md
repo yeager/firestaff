@@ -47,3 +47,18 @@ corners without stamina/leader changes, and first-row dispatch.
 This is source-data/input evidence, not full menu pixel or emulator parity.
 Japanese glyphs, all row boundaries, and complete visual composition still
 require independent verification.
+
+## Additional HUD blockers confirmed from the same media
+
+The original graphic dimension table gives C009=87x25 and C011=14x39 in
+both languages. C010 is EN87x45/JP96x72; C013 is EN87x45/JP96x41. The
+generic CSB HUD admission requires C011=14x26 and PC-sized Japanese panels,
+so it rejects these authentic records before rendering its action overlay.
+
+C696 C003 is 224x136, C004 is its (0,0) anchor, and C007 has offset
+(0,33) in English or (0,31) in Japanese. The live composition currently
+saves/restores x48..271,y33..168 after HUD painting. That restore intersects
+the action menu's x233..319 region. Correcting the whole viewport requires
+auditing the raster, sprite and input consumers together, not just changing
+one save/restore rectangle. A final active-menu source pass can independently
+preserve the menu's verified region while that broader gap remains open.

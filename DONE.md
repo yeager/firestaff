@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: CSB FM Towns active action menus now use package-bound native
+  IMG2 C010 pixels after viewport restoration, with a fresh source-party
+  mirror and no fabricated DM1 receipt. English text uses original M653;
+  Japanese remains background-only. Final-frame source-border comparisons
+  failed in all six EN/JP presentation cases before the fix and pass in
+  Original, V2.0 and V2.1 afterward. Broader HUD admission, viewport origin
+  and Japanese text remain open; this is not full menu or emulator parity.
+  Production build and seven combined regressions pass without skips
+  (22.72 seconds).
+
 - 2026-09-06: DOS and English/Japanese FM Towns original-media tests now
   locate existing C04 groups through native square/thing traversal and
   source-owned map handoff. Nine positive non-leader hits across Original,

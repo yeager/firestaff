@@ -2146,6 +2146,50 @@ int main(void)
         memset(fmtowns_actions, 0xff, sizeof(fmtowns_actions));
         CHECK(M11_GameView_SetActingChampion(&view, 0),
               "F31 actor opens original action menu");
+        {
+            static const int modes[] = {M12_PRESENTATION_V1_ORIGINAL,
+                M12_PRESENTATION_V20_FILTERED, M12_PRESENTATION_V21_UPSCALED};
+            const int savedMode = view.presentationMode;
+            const int jp = language == CSB_FMTOWNS_SWITCH_JAPANESE;
+            const int width = jp ? 96 : 87, height = jp ? 72 : 45;
+            const int menuY = jp ? 85 : 77;
+            int cropHeight = height;
+            size_t graphics_size = 0;
+            uint8_t *graphics = load_profile_graphics(live_profile, &graphics_size);
+            uint8_t source[96 * 72];
+            CSB_V1_FmtownsItemDecodeReceipt receipt;
+            memset(&receipt, 0, sizeof(receipt));
+            CHECK(M11_GameView_GetActingActionIndices(&view, fmtowns_actions),
+                  "F31 original action rows available for source crop oracle");
+            if (fmtowns_actions[2] == 0xffu) cropHeight = jp ? 51 : 33;
+            if (fmtowns_actions[1] == 0xffu) cropHeight = jp ? 30 : 21;
+            CHECK(graphics && csb_v1_fmtowns_graphics_decode_item(
+                      graphics, graphics_size, 10, source, sizeof(source), &receipt) &&
+                      receipt.valid && receipt.width == width && receipt.height == height,
+                  "F31 oracle decodes original language-specific C010");
+            if (receipt.valid && receipt.width == width && receipt.height == height) {
+                for (int mode = 0; mode < 3; ++mode) {
+                    int mismatch = 0;
+                    view.presentationMode = modes[mode];
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    /* Border columns exclude name/action glyphs. Include
+                     * x233/234, previously overwritten by viewport restore.
+                     * Check the final public frame, not an isolated blit. */
+                    for (int y = 0; y < height; ++y)
+                        for (int x = 0; x < 87; ++x) {
+                            if (x >= 2 && x < 81) continue;
+                            uint8_t expected = y < cropHeight ?
+                                source[y * width + x + (jp ? 9 : 0)] : 0;
+                            if (framebuffer[(menuY + y) * 320 + 233 + x] != expected)
+                                ++mismatch;
+                        }
+                    CHECK(mismatch == 0,
+                          "F31 final active-menu border matches original C010 in all modes");
+                }
+            }
+            free(graphics);
+            view.presentationMode = savedMode;
+        }
         (void)M11_GameView_HandlePointerButton(
             &view, 240, language == CSB_FMTOWNS_SWITCH_JAPANESE ? 87 : 79,
             DM1_V1_MOUSE_MASK_LEFT_PC34);

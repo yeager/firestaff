@@ -7,6 +7,11 @@
 - Complete CSB FM Towns action-menu pixel parity and all row boundaries.
   Source C696 now owns language-specific action/Pass pointer geometry;
   remaining Japanese glyph and visual-composition gaps are independent.
+  Replace the generic HUD's PC-only material admission: original F31 C011
+  is 14x39, not 14x26; Japanese C010 is 96x72 and C013 is 96x41.
+  Audit the live viewport origin and its x48..271 restore against C696
+  C007 (English x0,y33; Japanese x0,y31), including sprite/input ownership.
+  Do not enable the whole generic HUD merely by accepting its asset sizes.
 
 - Complete Japanese FM Towns active-menu text and remaining row boundaries.
   Reconcile the old JDM mixed-font adapter with TEXT2.C:75–105: the original

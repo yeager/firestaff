@@ -1,5 +1,9 @@
 # Unreleased
 
+- CSB FM Towns active action menus now display their original C010 artwork
+  without viewport restoration overwriting it. English menu text uses the
+  original interface font; Japanese menu text remains incomplete.
+
 - CSB FM Towns action and Pass clicks use the original English/Japanese
   menu regions; clicking the name band no longer triggers an action.
 
