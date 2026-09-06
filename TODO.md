@@ -14,6 +14,8 @@
   parser or abort-path tests are not original-game casting evidence.
   Connect F31's admitted 29-record table to the complete transaction and
   admit Atari/Amiga tables.
+  Implement original F0304 practice/level-up mutation and bind resting state
+  end-to-end; verify Firestaff mastery bonuses with authentic object evidence.
 
 - Complete CSB FM Towns action-menu pixel parity and all row boundaries.
   Source C696 now owns language-specific action/Pass pointer geometry;

@@ -1,5 +1,9 @@
 # Unreleased
 
+- CSB skill queries honor original temporary-XP/equipment flags, mastery
+  thresholds and equipment bonuses instead of imposing a level-16 cap.
+  This does not yet implement complete original spell execution.
+
 - DM1 and CSB retain paid runes when closing and reopening the spell panel.
   Closing clears the caster selection and display, not the champion's
   incantation; reopening no longer silently discards it.

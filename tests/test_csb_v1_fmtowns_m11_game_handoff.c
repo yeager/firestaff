@@ -270,6 +270,69 @@ static int test_set_env(const char *name, const char *value)
     } \
 } while (0)
 
+static void verify_original_equipment_mastery(CSB_V1_RuntimeProfile *runtime)
+{
+    static const int icons[] = {27, 28, 66, 120, 121, 122, 124};
+    static const int skills[] = {3, 3, 13, 13, 15, 14, 3};
+    uint16_t found[7];
+    CSB_V1_Champion saved;
+    CSB_V1_Champion *champion;
+    const CSB_V1_DungeonData *dungeon;
+    int type, index, row, count = 0;
+
+    /* Actual original object records; only equipment assignment is a RAM
+     * fixture, not a natural dungeon route. Never create or alter records.
+     * ReDMCSB CHAMPION.C F0303:770-824 supplies the modifier oracle. */
+    CHECK(runtime && runtime->party_state_valid &&
+          runtime->party_state.ChampionCount > 0 && runtime->dungeon_handle,
+          "F31 equipment mastery oracle has a live original party/dungeon");
+    if (!runtime || !runtime->party_state_valid ||
+        runtime->party_state.ChampionCount <= 0 || !runtime->dungeon_handle)
+        return;
+    dungeon = runtime->dungeon_handle;
+    for (row = 0; row < 7; ++row) found[row] = 0xffffu;
+    for (type = 5; type <= 10; type += 5) {
+        for (index = 0; index < dungeon->thing_type_counts[type] && index < 1024;
+             ++index) {
+            uint16_t thing = (uint16_t)((type << 10) | index);
+            int size = 0;
+            const uint8_t *record = csb_v1_dungeon_get_thing_record(
+                dungeon, thing, NULL, NULL, &size);
+            int icon;
+            if (!record || size < 4 || (record[0] == 0xff && record[1] == 0xff))
+                continue; /* Source unused-record marker, not a live object. */
+            icon = csb_v1_runtime_object_icon_index(runtime, thing);
+            for (row = 0; row < 7; ++row)
+                if (icon == icons[row] && found[row] == 0xffffu) found[row] = thing;
+        }
+    }
+    champion = &runtime->party_state.Champions[0];
+    saved = *champion;
+    for (row = 0; row < 7; ++row) {
+        int base, actual;
+        if (found[row] == 0xffffu) continue;
+        *champion = saved;
+        champion->Slots[CSB_V1_SLOT_ACTION_HAND] = 0xffffu;
+        champion->Slots[CSB_V1_SLOT_NECK] = 0xffffu;
+        champion->Slots[row < 3 ? CSB_V1_SLOT_ACTION_HAND : CSB_V1_SLOT_NECK] = found[row];
+        base = csb_v1_runtime_get_champion_skill_level(runtime, 0, skills[row] | 0x4000);
+        actual = csb_v1_runtime_get_champion_skill_level(runtime, 0, skills[row]);
+        CHECK(base >= 1 && actual == base + (icons[row] == 28 ? 2 : 1),
+              "F31 original equipment applies its F0303 mastery modifier");
+        CHECK(csb_v1_runtime_get_champion_skill_level(runtime, 0, 0) ==
+              csb_v1_runtime_get_champion_skill_level(runtime, 0, 0x4000) +
+                  (row < 2 ? (row == 1 ? 2 : 1) : 0),
+              "F31 equipment distinguishes universal Firestaff from skill-specific bonuses");
+        printf("F31 original equipment mastery: icon=%d thing=%04x skill=%d base=%d actual=%d\n",
+               icons[row], found[row], skills[row], base, actual);
+        ++count;
+    }
+    *champion = saved;
+    CHECK(count > 0, "F31 corpus supplies at least one authentic mastery-modifying object");
+    CHECK(memcmp(champion, &saved, sizeof(saved)) == 0,
+          "F31 equipment oracle restores the complete source champion");
+}
+
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
@@ -2015,6 +2078,9 @@ int main(void)
     }
     CHECK(live_frame_nonblack,
           "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
+    if (view.csbBootProfile)
+        verify_original_equipment_mastery(
+            &((CSB_V1_BootProfile *)view.csbBootProfile)->runtime);
     live_viewport_hash = f31_viewport_fnv1a(framebuffer, language);
     CHECK(live_viewport_hash == view.csbState.runtime_viewport_pixel_hash,
           "F31 final source-positioned aperture matches the complete runtime frame receipt");

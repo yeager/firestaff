@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: CSB public F0303 mastery query restores original flags,
+  temporary/base XP averaging, edition signedness, uncapped threshold loop,
+  resting override and original action-hand/neck bonuses. Five authentic
+  modifier objects pass EN/JP F31 RAM-equipment checks with full champion
+  restoration; no object records are fabricated. Production build and
+  three initial checks pass (13.67s), followed by three expanded runtime,
+  signedness and DSA regressions (0.05s). Opaque imported-summary fixtures
+  explicitly ignore equipment when checking XP. Full casting, original
+  F0304 mutation and emulator-route comparisons remain open.
+
 - 2026-09-06: FM Towns Game handoff binds original G0487 from the verified
   CHTWE/CHTWJ executable spans, decoding all 29 little-endian spell records
   and retaining source offset/hash. Original-media tests independently

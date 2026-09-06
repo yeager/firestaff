@@ -94,6 +94,69 @@ static void init_runtime_with_party(CSB_V1_RuntimeProfile *profile)
     (void)csb_v1_runtime_set_party_state(profile, &party);
 }
 
+static void test_original_skill_query_contract(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_Champion *champion;
+
+    /* Bounded RAM fixture, not original-media or emulator parity evidence.
+     * ReDMCSB CHAMPION.C F0303:742-824 owns flags, temporary experience,
+     * hidden/base averaging and the uncapped threshold loop. Equipment
+     * modifiers require a separate original-object source oracle. */
+    init_runtime_with_party(&profile);
+    champion = &profile.party_state.Champions[0];
+    champion->SkillExperienceValid = 1;
+    memset(champion->SkillExperience, 0, sizeof(champion->SkillExperience));
+    memset(champion->SkillTemporaryExperience, 0,
+           sizeof(champion->SkillTemporaryExperience));
+    champion->SkillExperience[3] = 499;
+    champion->SkillTemporaryExperience[3] = 1;
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 3), 2,
+             "F0303 temporary XP crosses the 500-XP threshold");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x8003), 1,
+             "F0303 0x8000 excludes temporary experience");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x4003), 2,
+             "F0303 0x4000 preserves temporary experience");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0xc003), 1,
+             "F0303 combined flags exclude temporary XP and object bonuses");
+
+    champion->SkillExperience[3] = 1000;
+    champion->SkillExperience[16] = 0;
+    champion->SkillTemporaryExperience[3] = 1000;
+    champion->SkillTemporaryExperience[16] = 1000;
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 16), 3,
+             "F0303 averages hidden and base permanent plus temporary XP");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x8010), 2,
+             "F0303 ignore-temporary flag applies to both hidden and base XP");
+    champion->SkillExperience[3] = 0x10000000u;
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0xc003), 21,
+             "F0303 source threshold loop does not cap mastery at sixteen");
+    profile.csbwin_party_sleeping = 1;
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 3), 1,
+             "F0303 resting party reports skill level one");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0xc003), 1,
+             "F0303 resting overrides both ignore flags");
+    profile.csbwin_party_sleeping = 0;
+    champion->SkillExperience[3] = 0x80000000u;
+    profile.variant_id = CSB_V1_VARIANT_ST20_EN;
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0xc003), 1,
+             "Atari F0303 treats high-bit experience as signed negative");
+    profile.variant_id = CSB_V1_VARIANT_FMTOWNS_EN;
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0xc003), 24,
+             "F31 F0303 retains unsigned high-bit experience");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 20), -1,
+             "skill query rejects nonexistent skill twenty");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, -1), -1,
+             "skill query rejects negative skill index");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x2003), -1,
+             "skill query rejects unknown flag bits");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x10003), -1,
+             "skill query rejects bits outside the source uint16 argument");
+    CHECK_EQ(csb_v1_runtime_get_champion_skill_level(&profile, 2, 3), -1,
+             "skill query rejects an absent champion");
+    csb_v1_runtime_cleanup(&profile);
+}
+
 static void test_magic_caster_runtime_selection(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -459,6 +522,7 @@ int main(void)
 {
     printf("=== CSB V1 Input Command Bridge Gate (startup-adjacent) ===\n\n");
     test_source_evidence();
+    test_original_skill_query_contract();
     test_magic_caster_runtime_selection();
     test_menu_input_to_event_mapping();
     test_unmapped_menu_inputs();

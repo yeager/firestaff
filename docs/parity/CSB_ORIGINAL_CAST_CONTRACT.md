@@ -36,6 +36,24 @@ fields against independently read bytes, check Zokathra/map descriptors,
 and reject a RAM-only mutation of a source spell byte. Admission is a
 prerequisite for, not an implementation of, the cast transaction below.
 
+## Original mastery query prerequisite
+
+The public runtime F0303 query now implements the independent ignore-temporary
+XP/object flags, hidden/base averaging, the uncapped 500-XP threshold loop,
+Atari signed versus later unsigned 32-bit experience, resting override and
+source action-hand/neck modifiers (CHAMPION.C:732-824). Unresolved equipped
+objects fail the query rather than silently losing their potential bonus.
+Imported states without full skill experience retain a legacy fallback;
+that fallback and end-to-end resting-state publication are not parity claims.
+
+Bounded RAM tests cover flags, thresholds and signedness. Original F31 EN/JP
+media tests locate existing Sceptre of Lyf, Gem of Ages, Ekkhard Cross,
+Moonstone and Pendant Feral records, temporarily equip each in RAM, verify
+its specific bonus and restore the full champion. No object records are
+created. These are original-object checks, not natural-route emulator traces;
+the two Firestaff variants were not found by this corpus scan.
+Complete original F0304 XP/level-up mutation and F0412 casting remain open.
+
 ## Required complete transaction
 
 1. F0408 (MENU.C:1651-1661) invokes F0412 for G0514's source champion.

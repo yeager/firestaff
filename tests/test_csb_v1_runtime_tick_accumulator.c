@@ -6027,7 +6027,9 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     CHECK(profile.party_state.Champions[0].SkillExperienceValid == 1u &&
               profile.party_state.Champions[0].SkillExperience[7] == 8000u &&
               profile.party_state.Champions[0].SkillTemporaryExperience[7] == 1000 &&
-              csb_v1_runtime_get_champion_skill_level(&profile, 0, 7) == 5 &&
+              /* This summary fixture has opaque RN slots, not resolved
+               * dungeon objects. Query XP explicitly without modifiers. */
+              csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x4007) == 5 &&
               profile.party_state.Champions[0].Skills[7] == 5u,
           "CSBWin champion handoff preserves full skill XP and derives F0303 levels");
     CHECK(profile.party_state.Champions[0].Slots[0] == 0x2200u &&
@@ -6423,7 +6425,8 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
               profile.party_state.ChampionCount == 2 &&
               strcmp(profile.party_state.Champions[0].Name, "TIGGY") == 0,
           "CSBWin resume file applies champion summaries");
-    CHECK(csb_v1_runtime_get_champion_skill_level(&profile, 0, 7) == 5 &&
+    /* Imported fixture possessions are not an original equipment oracle. */
+    CHECK(csb_v1_runtime_get_champion_skill_level(&profile, 0, 0x4007) == 5 &&
               profile.party_state.Champions[0].SkillExperience[7] == 8000u &&
               profile.party_state.Champions[0].SkillTemporaryExperience[7] == 1000,
           "CSBWin resume file preserves decoded skill XP into runtime levels");

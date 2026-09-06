@@ -6843,6 +6843,10 @@ int csb_v1_runtime_get_champion_skill_level(
     int champion_index,
     int skill_index)
 {
+    const CSB_V1_Champion *champion;
+    uint32_t experience;
+    int skill, level, unsigned_experience;
+    int hand_icon = -1, neck_icon = -1;
     if (!profile ||
         !profile->party_state_valid ||
         champion_index < 0 ||
@@ -6850,9 +6854,56 @@ int csb_v1_runtime_get_champion_skill_level(
         champion_index >= CSB_V1_MAX_CHAMPIONS) {
         return -1;
     }
-    return csb_v1_runtime_imported_skill_level(
-        &profile->party_state.Champions[champion_index],
-        skill_index);
+    if (skill_index < 0 || (skill_index & ~0xc01f) != 0) return -1;
+    skill = skill_index & 0x1f;
+    if (skill >= CSB_V1_FULL_SKILL_COUNT) return -1;
+    /* CHAMPION.C F0303:742-824. The 16-level host display limit is not
+     * the source mastery loop; flags suppress temporary XP and possessions
+     * independently. Resting returns before either modifier is applied. */
+    if (profile->csbwin_party_sleeping) return 1;
+    champion = &profile->party_state.Champions[champion_index];
+    if (!champion->SkillExperienceValid) {
+        return csb_v1_runtime_imported_skill_level(champion, skill);
+    }
+    experience = champion->SkillExperience[skill];
+    if (!(skill_index & 0x8000))
+        experience += (uint32_t)(int32_t)champion->SkillTemporaryExperience[skill];
+    if (skill > 3) {
+        const int base = (skill - 4) >> 2;
+        experience += champion->SkillExperience[base];
+        if (!(skill_index & 0x8000))
+            experience += (uint32_t)(int32_t)champion->SkillTemporaryExperience[base];
+    }
+    /* F0303:732-737 uses signed long for Atari S20/S21 and unsigned
+     * long for MEDIA720 Amiga/F31. Preserve the original 32-bit wrap. */
+    unsigned_experience = profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+        profile->variant_id != CSB_V1_VARIANT_ST21_EN &&
+        profile->variant_id != CSB_V1_VARIANT_ST_F20E &&
+        profile->variant_id != CSB_V1_VARIANT_ST_F20J;
+    level = 1;
+    if (unsigned_experience || !(experience & 0x80000000u)) {
+        if (skill > 3) experience >>= 1;
+        while (experience >= 500u) { experience >>= 1; ++level; }
+    }
+    if (!(skill_index & 0x4000)) {
+        uint16_t hand = champion->Slots[CSB_V1_SLOT_ACTION_HAND];
+        uint16_t neck = champion->Slots[CSB_V1_SLOT_NECK];
+        if (hand != THING_NONE && hand != THING_ENDOFLIST) {
+            hand_icon = csb_v1_runtime_object_icon_index(profile, hand);
+            if (hand_icon < 0) return -1;
+        }
+        if (neck != THING_NONE && neck != THING_ENDOFLIST) {
+            neck_icon = csb_v1_runtime_object_icon_index(profile, neck);
+            if (neck_icon < 0) return -1;
+        }
+        if (hand_icon == 27) ++level;
+        else if (hand_icon == 28) level += 2;
+        if ((skill == 3 && neck_icon == 124) ||
+            (skill == 15 && neck_icon == 121) ||
+            (skill == 13 && (neck_icon == 120 || hand_icon == 66)) ||
+            (skill == 14 && neck_icon == 122)) ++level;
+    }
+    return level;
 }
 
 static int csb_v1_runtime_fill_creature_combat_snapshot(

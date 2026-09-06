@@ -1360,6 +1360,10 @@ const char *csb_v1_runtime_get_bonus_dungeon_path(
     const CSB_V1_RuntimeProfile *profile);
 const char *csb_v1_runtime_get_dungeon_save_namespace(
     const CSB_V1_RuntimeProfile *profile);
+/* Original F0303 query: skills 0..19, optionally OR 0x8000 (ignore
+ * temporary XP) and 0x4000 (ignore equipment). Returns -1 for invalid
+ * state/unresolved equipped objects. Imported states without full skill
+ * experience retain their legacy level fallback, not full F0303 parity. */
 int csb_v1_runtime_get_champion_skill_level(
     const CSB_V1_RuntimeProfile *profile,
     int champion_index,
