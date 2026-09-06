@@ -1,5 +1,18 @@
 # Firestaff DONE — CSB
 
+## 2026-09-06 — Fixed and carried drop RNG ordering
+
+- F0186 now allocates before cell RNG and publishes floor effects before the
+  next optional decision. F0186/F0188 share F0190's caller RNG rather than
+  independently deriving seeds from coordinates and time.
+- F0190 rollback restores the external caller RNG as well as profile/dungeon.
+  The runtime regression passes 822 assertions, including six fixed-drop cells
+  and eight carried-drop cases. Reintroducing F0186 reseeding fails four cell
+  checks. AArch64 GDB observes one failed-death rollback preserving its seed;
+  removing restoration makes that observation fail, and the restored build passes.
+- Evidence and scope: `docs/parity/DM1_FIXED_DROP_ALLOCATION_ORDER.md`.
+  These are source-shaped native fixtures, not full original-game RNG parity.
+
 ## 2026-09-06 — Scoped combat regression check
 
 - Rebuilt and passed four tests after shared DM1/CSB runtime changes:

@@ -8622,6 +8622,44 @@ static uint16_t csb_v1_runtime_allocate_new_object_launcher_thing(
  * runtime bridge and therefore used best-effort returns.  Keep their normal
  * resource-exhaustion behaviour, but report malformed live chains so the
  * caller can restore the complete C04/C14/C15 transaction. */
+struct CsbFixedDropContext {
+    CSB_V1_RuntimeProfile *profile;
+    CSB_V1_DungeonData *dungeon;
+    int level, map_x, map_y, failed;
+    uint16_t thing;
+};
+
+static int csb_reserve_fixed_drop(void *opaque,
+    const struct DM1FixedPossessionDrop_Compat *drop)
+{
+    struct CsbFixedDropContext *ctx = opaque;
+    if (ctx->failed) return 0;
+    ctx->thing = csb_v1_runtime_allocate_fixed_possession_thing(ctx->dungeon, drop);
+    return ctx->thing != 0xFFFFu;
+}
+
+static void csb_publish_fixed_drop(void *opaque,
+    const struct DM1FixedPossessionDrop_Compat *drop)
+{
+    struct CsbFixedDropContext *ctx = opaque;
+    uint16_t thing = (uint16_t)((ctx->thing & 0x3FFFu) | ((unsigned)drop->cell << 14));
+    int level = ctx->level, x = ctx->map_x, y = ctx->map_y;
+    if (!csb_v1_runtime_append_thing_to_square_tail(
+            ctx->dungeon, thing, level, x, y)) {
+        int type, size;
+        uint8_t *record = csb_v1_runtime_mutable_thing_record(ctx->dungeon, thing, &type, &size);
+        if (record && size >= 2) csb_v1_runtime_write_u16(record, 0xFFFFu);
+        ctx->failed = 1; /* F0190 caller restores the complete transaction. */
+        return;
+    }
+    /* GROUP.C F0186:643: F0267 and its floor effects run before the next
+     * optional-drop decision, not after precomputing the whole table. */
+    csb_v1_runtime_process_object_floor_sensors_at(ctx->profile, ctx->dungeon,
+        thing, level, x, y, 1);
+    (void)csb_v1_runtime_apply_object_consequences_at_square(ctx->profile,
+        ctx->dungeon, &thing, -1, &level, &x, &y);
+}
+
 static int csb_v1_runtime_drop_creature_fixed_possessions(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
@@ -8629,84 +8667,17 @@ static int csb_v1_runtime_drop_creature_fixed_possessions(
     int source_cell,
     int level,
     int map_x,
-    int map_y)
+    int map_y,
+    struct RngState_Compat *rng)
 {
-    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
-    struct RngState_Compat rng;
-    int drop_count = 0;
+    struct CsbFixedDropContext ctx = {profile, dungeon, level, map_x, map_y, 0, 0xFFFFu};
     int weapon_dropped = 0;
-    int i;
 
-    if (!profile || !dungeon) return 0;
-    F0730_COMBAT_RngInit_Compat(
-        &rng,
-        profile->dungeon_seed ^ profile->game_time ^
-            ((uint32_t)map_x << 8) ^
-            ((uint32_t)map_y << 16) ^
-            ((uint32_t)creature_type << 24) ^
-            0xF0186u);
-    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
-            creature_type,
-            source_cell,
-            &rng,
-            drops,
-            DM1_MAX_FIXED_POSSESSION_DROPS,
-            &drop_count,
-            &weapon_dropped)) {
-        /* The source resolver uses a false return for creatures without a
-         * fixed possession descriptor.  That is a valid zero-drop result. */
-        return 1;
-    }
-    /* ReDMCSB GROUP.C F0186 lines 580-645 resolves fixed creature
-     * possessions, allocates unused C05/C06/C10 records, stores item type
-     * plus cursed bit, assigns a floor cell, moves the thing to the source
-     * square through F0267, then requests C00 when any resolved possession
-     * is a weapon and C04 otherwise. */
-    for (i = 0; i < drop_count; ++i) {
-        uint16_t thing = csb_v1_runtime_allocate_fixed_possession_thing(
-            dungeon,
-            &drops[i]);
-        if (thing == 0xFFFFu) continue;
-        if (!csb_v1_runtime_append_thing_to_square_tail(
-                dungeon,
-                thing,
-                level,
-                map_x,
-                map_y)) {
-            uint8_t *record;
-            int thing_type;
-            int thing_size;
-            record = csb_v1_runtime_mutable_thing_record(
-                dungeon,
-                thing,
-                &thing_type,
-                &thing_size);
-            if (record && thing_size >= 2) {
-                csb_v1_runtime_write_u16(record, 0xFFFFu);
-            }
-                return 0;
-        } else {
-            int drop_level = level;
-            int drop_x = map_x;
-            int drop_y = map_y;
-            csb_v1_runtime_process_object_floor_sensors_at(
-                profile,
-                dungeon,
-                thing,
-                drop_level,
-                drop_x,
-                drop_y,
-                1);
-            (void)csb_v1_runtime_apply_object_consequences_at_square(
-                profile,
-                dungeon,
-                &thing,
-                -1,
-                &drop_level,
-                &drop_x,
-                &drop_y);
-        }
-    }
+    if (!profile || !dungeon || !rng) return 0;
+    /* GROUP.C F0186:610-643 consumes the caller's source RNG stream. */
+    if (!F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
+            creature_type, source_cell, rng, csb_reserve_fixed_drop,
+            csb_publish_fixed_drop, &ctx, &weapon_dropped) || ctx.failed) return 0;
 
     {
         CsbV1AudioRequest request;
@@ -8728,23 +8699,17 @@ static int csb_v1_runtime_drop_group_slot_possessions(
     uint8_t *group_record,
     int level,
     int map_x,
-    int map_y)
+    int map_y,
+    struct RngState_Compat *rng)
 {
-    struct RngState_Compat rng;
     uint16_t thing;
     int guard;
     int weapon_dropped = 0;
     int saw_possession = 0;
 
-    if (!profile || !dungeon || !group_record) return 0;
+    if (!profile || !dungeon || !group_record || !rng) return 0;
     thing = csb_v1_runtime_read_u16(group_record + 2);
     if (thing == 0xFFFEu || thing == 0xFFFFu) return 1;
-    F0730_COMBAT_RngInit_Compat(
-        &rng,
-        profile->dungeon_seed ^ profile->game_time ^
-            ((uint32_t)map_x << 8) ^
-            ((uint32_t)map_y << 16) ^
-            0xF0188u);
 
     /* ReDMCSB GROUP.C F0188 lines 724-731 walks GROUP.Slot, rewrites each
      * carried thing with a random floor cell, and moves it onto the group
@@ -8770,7 +8735,7 @@ static int csb_v1_runtime_drop_group_slot_possessions(
         }
         dropped_thing = (uint16_t)((thing & 0x3FFFu) |
                                    (uint16_t)(F0732_COMBAT_RngRandom_Compat(
-                                                  &rng,
+                                                  rng,
                                                   4) << 14));
         if (!csb_v1_runtime_append_thing_to_square_tail(
                 dungeon,
@@ -9961,9 +9926,10 @@ static int csb_v1_runtime_pack_dead_group_creature(
     int creature_type;
     CSB_V1_F0178GroupCellsCompactReceiptPc34 cells_receipt;
     CSB_V1_F0190DeathTransactionPc34 transaction;
+    struct RngState_Compat rng_before;
     int i;
 
-    if (!dungeon || !group_record ||
+    if (!dungeon || !group_record || !rng ||
         creature_index < 0 || creature_index > 3) {
         return 0;
     }
@@ -9985,6 +9951,7 @@ static int csb_v1_runtime_pack_dead_group_creature(
             profile, dungeon, &transaction)) {
         return 0;
     }
+    rng_before = *rng;
     killed_cell = (cells == 0xFF)
         ? EXPLOSION_CELL_CENTERED
         : csb_v1_runtime_group_cell_value(cells, creature_index);
@@ -10003,7 +9970,7 @@ static int csb_v1_runtime_pack_dead_group_creature(
         killed_cell,
         level,
         map_x,
-        map_y)) {
+        map_y, rng)) {
         goto rollback;
     }
 
@@ -10021,7 +9988,7 @@ static int csb_v1_runtime_pack_dead_group_creature(
             group_record,
             level,
             map_x,
-            map_y)) {
+            map_y, rng)) {
             goto rollback;
         }
         if (!csb_v1_runtime_f0189_group_delete_receipt_pc34(
@@ -10101,6 +10068,8 @@ static int csb_v1_runtime_pack_dead_group_creature(
     return 1;
 
 rollback:
+    /* The caller's RNG is external to the profile transaction snapshot. */
+    *rng = rng_before;
     csb_v1_runtime_rollback_f0190_death_transaction(
         profile, dungeon, &transaction);
     csb_v1_runtime_end_f0190_death_transaction(&transaction);

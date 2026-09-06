@@ -3202,6 +3202,7 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     uint16_t group_hp_before;
     uint16_t group_hp_after;
     uint16_t group_flags;
+    int expected_fixed_cells[6] = {0};
     int i;
 
     printf("\n-- CSB C25 party/group damage writeback --\n");
@@ -3486,6 +3487,33 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
               &first_advance) == 1 &&
               slot == 0,
           "CSB C25 two-creature group fixture creates an explosion slot");
+    {
+        struct CellContentDigest_Compat digest = {0};
+        struct ExplosionInstance_Compat next;
+        struct ExplosionTickResult_Compat result;
+        struct RngState_Compat rng;
+        int attack;
+        digest.sourceMapX = digest.destMapX = 1;
+        digest.sourceMapY = digest.destMapY = 1;
+        digest.sourceSquareType = digest.destSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+        digest.destTeleporterNewDirection = -1;
+        digest.destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        digest.destHasCreatureGroup = 1;
+        digest.destCreatureType = 18;
+        digest.destCreatureCellMask = 15;
+        F0730_COMBAT_RngInit_Compat(&rng, profile.dungeon_seed ^
+            (uint32_t)profile.explosions.entries[slot].scheduledAtTick ^ 0x100u ^ 0x10000u);
+        CHECK(F0822_EXPLOSION_Advance_Compat(&profile.explosions.entries[slot],
+            &digest, profile.explosions.entries[slot].scheduledAtTick,
+            &rng, &next, &result), "reference explosion attack advances caller RNG");
+        attack = result.outActionGroup.rawAttackValue;
+        /* F0191 first damage draw, then F0186's first mandatory armour cell.
+         * This asserts shared call ordering, not authentic global seed ownership. */
+        (void)F0732_COMBAT_RngRandom_Compat(&rng, ((attack >> 3) + 1) * 2);
+        for (i = 0; i < 6; ++i)
+            if (!F0732_COMBAT_RngRandom_Compat(&rng, 4))
+                expected_fixed_cells[i] = F0732_COMBAT_RngRandom_Compat(&rng, 4);
+    }
     queue_explosion_advance_event(&profile, &first_advance);
     CHECK(count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_0) == 1 &&
               count_queued_event_type(&profile, DM1_EVENT_UPDATE_ASPECT_CREATURE_1) == 1 &&
@@ -3514,6 +3542,22 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
               ((uint16_t)(raw[82] | ((uint16_t)raw[83] << 8)) & 0x3c00u) ==
               (uint16_t)(6u << 10),
           "C25 group partial kill appends first fixed armour drop after group");
+    {
+        uint16_t thing = (uint16_t)(raw[82] | ((uint16_t)raw[83] << 8));
+        for (i = 0; i < 6; ++i) {
+            int type = (thing >> 10) & 15;
+            int index = thing & 1023;
+            int offset;
+            CHECK((thing >> 14) == expected_fixed_cells[i],
+                  "C25 fixed drops consume damage caller RNG without reseeding");
+            if ((type != 5 && type != 6) || index >= dungeon.thing_type_counts[type]) {
+                CHECK(0, "fixed drop chain remains within source pools");
+                break;
+            }
+            offset = dungeon.thing_data_bases[type] + index * 4;
+            thing = (uint16_t)(raw[offset] | ((uint16_t)raw[offset + 1] << 8));
+        }
+    }
     CHECK((uint16_t)(raw[100] | ((uint16_t)raw[101] << 8)) == 0x0129u,
           "C25 group partial kill materializes cursed animated-armour foot plate");
     CHECK((uint16_t)(raw[116] | ((uint16_t)raw[117] << 8)) == 0x010au,
@@ -4034,6 +4078,49 @@ static void test_f0190_death_transaction_rolls_back_bad_slot_chain(void)
     CHECK(find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE) < 0 &&
               count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 0,
           "F0190 rollback removes staged C15 smoke and C14 follow-up state");
+    /* A valid carried chain must consume the same damage stream, rather
+     * than a coordinate-derived F0188 seed. This is a source-shaped fixture. */
+    for (int seed = 1; seed <= 8; ++seed) {
+        struct CellContentDigest_Compat digest = {0};
+        struct ExplosionInstance_Compat next;
+        struct ExplosionTickResult_Compat result;
+        struct RngState_Compat rng;
+        int expected_cell, attack;
+        uint16_t first;
+        memcpy(raw, before, sizeof(raw));
+        test_put_le16(raw, 98, 0xfffeu);
+        csb_v1_runtime_init(&profile, NULL);
+        profile.chaos_magic.magic_initialized = 1;
+        profile.dungeon_handle = &dungeon;
+        profile.current_level = 0;
+        profile.dungeon_seed = (uint32_t)seed;
+        slot = -1;
+        CHECK(F0821_EXPLOSION_Create_Compat(&input, &profile.explosions,
+            &slot, &first_advance) == 1, "carried drop fixture creates impact");
+        digest.sourceMapX = digest.destMapX = 1;
+        digest.sourceMapY = digest.destMapY = 1;
+        digest.sourceSquareType = digest.destSquareType = PROJECTILE_ELEMENT_CORRIDOR;
+        digest.destTeleporterNewDirection = -1;
+        digest.destDoorState = PROJECTILE_DOOR_STATE_NONE;
+        digest.destHasCreatureGroup = 1;
+        digest.destCreatureType = 9;
+        digest.destCreatureCellMask = 15;
+        F0730_COMBAT_RngInit_Compat(&rng, (uint32_t)seed ^
+            (uint32_t)profile.explosions.entries[slot].scheduledAtTick ^ 0x100u ^ 0x10000u);
+        CHECK(F0822_EXPLOSION_Advance_Compat(&profile.explosions.entries[slot],
+            &digest, profile.explosions.entries[slot].scheduledAtTick,
+            &rng, &next, &result), "carried-drop reference advances attack stream");
+        attack = result.outActionGroup.rawAttackValue;
+        (void)F0732_COMBAT_RngRandom_Compat(&rng, ((attack >> 3) + 1) * 2);
+        expected_cell = F0732_COMBAT_RngRandom_Compat(&rng, 4);
+        queue_explosion_advance_event(&profile, &first_advance);
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1, "carried drop death dispatches");
+        first = (uint16_t)(raw[66] | ((uint16_t)raw[67] << 8));
+        CHECK((first & 0x3fffu) == (5u << 10), "carried weapon is the floor chain owner");
+        CHECK((first >> 14) == expected_cell, "F0188 continues caller RNG without reseeding");
+        CHECK(raw[98] == 0xfeu && raw[99] == 0xffu, "carried drop retains terminal Next");
+    }
 }
 
 static void test_explosion_c25_door_destruction_writeback(void)

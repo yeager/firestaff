@@ -1,8 +1,10 @@
 # Firestaff TODO — DM1
 
 - Finish F0186 allocation/RNG ordering across runtime drop materializers.
-  M10/M11 use the tested streamed helper; CSB still resolves cell RNG before
-  allocation. Extend M10 death-path RNG and reclamation evidence. See
+  M10/M11/CSB use the streamed helper; CSB drops now share the F0190 caller RNG.
+  Audit upstream RNG owners and nested sensor RNG effects beyond the verified
+  fixed/carried-cell sequence and direct rollback observation.
+  Extend M10 death-path RNG and reclamation evidence. See
   `docs/parity/DM1_FIXED_DROP_ALLOCATION_ORDER.md` for the confirmed mismatch
   and the required exhausted-pool regression matrix.
 

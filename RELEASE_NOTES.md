@@ -1,5 +1,8 @@
 # Unreleased
 
+- CSB fixed and carried monster drops share their damage caller's random
+  sequence; rejected death transactions also restore that sequence.
+
 - DM1 fixed monster drops no longer consume floor-cell randomness when the
   item pool cannot allocate the drop, preserving subsequent random decisions.
 
