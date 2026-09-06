@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Expanded the bounded Freeze Life regression to every C32-C41 timed
+  aspect/behavior event, following GROUP.C F0209:1962-1968. Frozen groups
+  preserve their complete active/dungeon group structures, RNG, and nonzero
+  source timing payload while retrying four ticks later. All 20 selected
+  tests pass, including five original-DOS-media tests. The new event matrix
+  is a constructed runtime fixture, not an original emulator capture or
+  proof of cross-edition parity; C29-C31 admission remains separate work.
+
 - Added the source F0209 victory gate for Lord Chaos before aspect/RNG work
   (GROUP.C:1946-1949). Timed events are consumed without mutation or retry.
   The C33-C36 regression fails before the guard and passes after it for all

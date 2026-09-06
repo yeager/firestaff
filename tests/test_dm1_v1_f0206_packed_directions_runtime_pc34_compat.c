@@ -1360,9 +1360,11 @@ static int test_m10_f0220_rejects_drifted_live_c15_c25_owner(void)
     return run_m10_f0217_thrown_potion_fixture(3);
 }
 
-static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
+static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType)
 {
     struct GameWorld_Compat world;
+    unsigned char aiBefore[sizeof(world.creatureAI[0])];
+    unsigned char groupBefore[sizeof(world.things->groups[0])];
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
     int ok;
@@ -1384,13 +1386,21 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
     world.freezeLifeTicks = frozen ? 8 : 0;
     world.gameWon = frozen == 3;
     seedBefore = world.masterRng.seed;
+    memcpy(aiBefore, &world.creatureAI[0], sizeof(aiBefore));
+    memcpy(groupBefore, &world.things->groups[0], sizeof(groupBefore));
     memset(&event, 0, sizeof(event));
     event.kind = TIMELINE_EVENT_CREATURE_REACTION;
     event.fireAtTick = world.gameTick;
     event.mapX = event.mapY = 1;
-    event.aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + slot;
+    event.aux2 = eventType;
     event.aux1 = world.things->groups[0].creatureType;
     event.aux4 = 0x100;
+    /* Nonzero source timing fields must survive the GROUP.C F0209
+     * Freeze Life retry (1962-1968), not merely zero-initialized payloads. */
+    if (frozen == 1) {
+        event.aux3 = 7;
+        event.aux4 |= 5;
+    }
     memset(&result, 0, sizeof(result));
     ok = F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) &&
          F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
@@ -1400,9 +1410,12 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
                      world.timeline.count == 0,
                      "victory consumes Lord Chaos event without RNG, aspects or retry");
     } else if (frozen == 1) {
+        ok &= expect(memcmp(aiBefore, &world.creatureAI[0], sizeof(aiBefore)) == 0 &&
+                     memcmp(groupBefore, &world.things->groups[0], sizeof(groupBefore)) == 0,
+                     "Freeze Life preserves complete active and dungeon group state");
         ok &= expect(world.masterRng.seed == seedBefore &&
                      world.creatureAI[0].aspect[slot] == 0xff,
-                     "Freeze Life defers C33-C36 before aspect and RNG changes");
+                     "Freeze Life defers timed events before aspect and RNG changes");
         ok &= expect(world.timeline.count == 1 &&
                      world.timeline.events[0].fireAtTick == world.gameTick + 4u &&
                      world.timeline.events[0].aux2 == event.aux2 &&
@@ -1428,11 +1441,16 @@ static int test_c33_to_c36_aspect_slot_conversion(int slot, int frozen)
 int main(void)
 {
     int slot;
+    int eventType;
     for (slot = 0; slot < 4; ++slot)
-        if (test_c33_to_c36_aspect_slot_conversion(slot, 0) != 0 ||
-            test_c33_to_c36_aspect_slot_conversion(slot, 1) != 0 ||
-            test_c33_to_c36_aspect_slot_conversion(slot, 2) != 0 ||
-            test_c33_to_c36_aspect_slot_conversion(slot, 3) != 0) return 1;
+        if (test_timed_aspect_and_freeze_gate(slot, 0, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 1, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 2, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 3, 33 + slot) != 0) return 1;
+    for (eventType = 32; eventType <= 41; ++eventType) {
+        if (eventType >= 33 && eventType <= 36) continue;
+        if (test_timed_aspect_and_freeze_gate(0, 1, eventType) != 0) return 1;
+    }
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
