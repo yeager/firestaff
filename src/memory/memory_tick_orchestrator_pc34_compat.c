@@ -6244,6 +6244,15 @@ static int orch_unlink_thing_from_square_compat(
 
     if (!world || !world->dungeon || !world->things) return 0;
     if (thingToUnlink == THING_NONE || thingToUnlink == THING_ENDOFLIST) return 0;
+    /* DUNGEON.C F0164 also removes an empty square's SFT entry, clears
+     * its list flag and adjusts subsequent column offsets. Merely writing
+     * END_OF_LIST strands the square and prevents later source insertion. */
+    if (world->dungeon->columnsCumulativeSquareFirstThingCount &&
+        world->dungeon->dungeonColumnCount > 0) {
+        return F0515_DUNGEON_UnlinkThingFromList_Compat(
+            world->dungeon, world->things, thingToUnlink, THING_ENDOFLIST,
+            mapIndex, mapX, mapY);
+    }
     sftIndex = orch_square_first_thing_list_index_compat(world->dungeon, mapIndex, mapX, mapY);
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
 
@@ -8137,6 +8146,10 @@ static int orch_validate_f0217_thrown_potion_receipt_compat(
     return 0;
 }
 
+static int orch_apply_initial_explosion_burst_compat(
+    struct GameWorld_Compat* world,
+    const struct ExplosionInstance_Compat* explosion);
+
 int F0887_ORCH_CreateSourceExplosion_Compat(
     struct GameWorld_Compat* world,
     const struct ExplosionCreateInput_Compat* sourceInput,
@@ -8205,6 +8218,10 @@ int F0887_ORCH_CreateSourceExplosion_Compat(
         (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
         return 0;
     }
+    /* PROJEXPL.C F0213:165-192 applies the burst only after publication;
+     * failed allocation must not consume damage RNG or hurt any target. */
+    (void)orch_apply_initial_explosion_burst_compat(
+        world, &world->explosions.entries[explosionSlot]);
     return 1;
 }
 
@@ -9068,6 +9085,39 @@ static int orch_apply_explosion_party_action_compat(
     struct GameWorld_Compat* world,
     const struct CombatAction_Compat* action,
     struct TickResult_Compat* result);
+
+static int orch_apply_initial_explosion_burst_compat(
+    struct GameWorld_Compat* world,
+    const struct ExplosionInstance_Compat* explosion)
+{
+    struct CellContentDigest_Compat digest;
+    struct ExplosionTickResult_Compat burst;
+    struct DM1CreatureInfo_Compat info;
+    int groupIndex = -1;
+    int resistance = 0;
+    if (explosion->explosionType != C000_EXPLOSION_FIREBALL &&
+        explosion->explosionType != C002_EXPLOSION_LIGHTNING_BOLT) return 1;
+    if (!orch_build_explosion_digest_compat(world, explosion, &digest)) return 0;
+    /* F0175 reads the source square's GROUP, including inactive groups;
+     * the active AI list is not an authoritative inventory of occupants. */
+    digest.destHasCreatureGroup = orch_cmd_attack_find_group_on_square_compat(
+        world, explosion->mapIndex, explosion->mapX, explosion->mapY,
+        &groupIndex);
+    if (!digest.destHasChampion && digest.destHasCreatureGroup) {
+        if (!world->things || groupIndex < 0 || groupIndex >= world->things->groupCount ||
+            !orch_get_dm1_creature_info_pc34_compat(
+                world->things->groups[groupIndex].creatureType, &info)) return 0;
+        resistance = (info.resistances >> 4) & 15;
+        digest.destCreatureIsNonMaterial = (info.attributes & 0x0040) != 0;
+    }
+    if (!F0213_EXPLOSION_ComputeInitialBurst_Compat(explosion, &digest,
+            resistance, &world->masterRng, &burst)) return 0;
+    if (burst.emittedCombatActionPartyCount)
+        (void)orch_apply_explosion_party_action_compat(world, &burst.outActionParty, NULL);
+    if (burst.emittedCombatActionGroupCount)
+        (void)orch_apply_explosion_group_action_compat(world, &burst.outActionGroup);
+    return 1;
+}
 
 static int orch_handle_explosion_advance_event_compat(
     struct GameWorld_Compat* world,

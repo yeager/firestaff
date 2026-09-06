@@ -322,6 +322,42 @@ int main(int argc, char** argv)
         }
         if (advances > 86) return 1;
     }
+    if (spell->explosionType == 0 || spell->explosionType == 2) {
+        static const int dx[4] = {0, 1, 0, -1};
+        static const int dy[4] = {-1, 0, 1, 0};
+        struct ExplosionCreateInput_Compat input;
+        struct TickResult_Compat result;
+        int hpBefore = state.world.party.champions[0].hp.current;
+        int hpAfter;
+        state.world.party.mapX += dx[state.world.party.direction & 3];
+        state.world.party.mapY += dy[state.world.party.direction & 3];
+        /* RAM-only impact placement on the party's authentic map square.
+         * F0213 must hurt the party immediately after source publication;
+         * dispatching C25 must not repeat that burst. No media is edited. */
+        memset(&input, 0, sizeof(input));
+        input.explosionType = spell->explosionType;
+        input.mapIndex = state.world.party.mapIndex;
+        input.mapX = state.world.party.mapX;
+        input.mapY = state.world.party.mapY;
+        input.attack = 80;
+        input.currentTick = state.world.gameTick;
+        if (!F0887_ORCH_CreateSourceExplosion_Compat(&state.world, &input, 0)) {
+            fputs("party-square source explosion publication failed\n", stderr);
+            return 1;
+        }
+        hpAfter = state.world.party.champions[0].hp.current;
+        if (hpAfter >= hpBefore) {
+            fputs("F0213 did not apply its immediate party burst\n", stderr);
+            return 1;
+        }
+        state.world.gameTick++;
+        memset(&result, 0, sizeof(result));
+        (void)F0887_ORCH_DispatchTimelineEvents_Compat(&state.world, &result);
+        if (state.world.party.champions[0].hp.current != hpAfter) {
+            fputs("C25 repeated the initial party burst\n", stderr);
+            return 1;
+        }
+    }
     state.world.gameTick++;
     state.assetsAvailable = 0;
     memset(framebuffer, 0, sizeof(framebuffer));

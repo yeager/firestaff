@@ -1,5 +1,9 @@
 # Unreleased
 
+- Original-data DM1 Fireball and Lightning apply their explosion burst
+  immediately, using the original fire-damage rules. Their following
+  explosion event no longer repeats party or monster burst damage.
+
 - DM1 Poison Cloud continues weakening until it expires; its scheduled
   continuation now references the updated dungeon record correctly.
 

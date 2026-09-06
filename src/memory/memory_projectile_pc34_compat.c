@@ -1560,6 +1560,41 @@ static void build_explosion_group_action(
     out->flags                       = 0;
 }
 
+int F0213_EXPLOSION_ComputeInitialBurst_Compat(
+    const struct ExplosionInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    int fireResistance,
+    struct RngState_Compat* rng,
+    struct ExplosionTickResult_Compat* outResult)
+{
+    int attack = 0;
+    if (!in || !digest || !outResult) return 0;
+    memset(outResult, 0, sizeof(*outResult));
+    if (in->explosionType != C000_EXPLOSION_FIREBALL &&
+        in->explosionType != C002_EXPLOSION_LIGHTNING_BOLT) return 1;
+    if (!digest->destHasChampion && digest->destHasCreatureGroup &&
+        (fireResistance < 0 || fireResistance > 15)) return 0;
+    /* PROJEXPL.C F0213:165-192 consumes this RNG at creation even when
+     * neither party nor group occupies the target. Both effects use fire. */
+    F0823_EXPLOSION_ComputeAoE_Compat(in, digest, rng, &attack);
+    if (attack <= 0) return 1;
+    if (digest->destHasChampion) {
+        build_explosion_champion_action(in, digest, attack,
+            COMBAT_ATTACK_FIRE, &outResult->outActionParty);
+        outResult->emittedCombatActionPartyCount = 1;
+    } else if (digest->destHasCreatureGroup && fireResistance != 15) {
+        if (digest->destCreatureIsNonMaterial) attack >>= 2;
+        if (rng) attack -= F0732_COMBAT_RngRandom_Compat(rng,
+            (fireResistance << 1) + 1);
+        if (attack > 0) {
+            build_explosion_group_action(in, digest, attack,
+                COMBAT_ATTACK_FIRE, &outResult->outActionGroup);
+            outResult->emittedCombatActionGroupCount = 1;
+        }
+    }
+    return 1;
+}
+
 int F0822_EXPLOSION_Advance_Compat(
     const struct ExplosionInstance_Compat* in,
     const struct CellContentDigest_Compat* digest,
@@ -1569,7 +1604,6 @@ int F0822_EXPLOSION_Advance_Compat(
     struct ExplosionTickResult_Compat* outResult)
 {
     int attackApplied = 0;
-    int attackTypeCode;
 
     if (in == NULL || digest == NULL || outNewState == NULL
         || outResult == NULL) {
@@ -1584,30 +1618,27 @@ int F0822_EXPLOSION_Advance_Compat(
     switch (in->explosionType) {
     case C000_EXPLOSION_FIREBALL:
     case C002_EXPLOSION_LIGHTNING_BOLT: {
-        attackTypeCode = (in->explosionType == C002_EXPLOSION_LIGHTNING_BOLT)
-                         ? COMBAT_ATTACK_LIGHTNING : COMBAT_ATTACK_FIRE;
-        if (digest->destHasChampion) {
-            /* ReDMCSB PROJEXPL.C:F0213 lines 129-146 checks the
-             * party square first; creature damage is in the else branch. */
-            build_explosion_champion_action(in, digest, attackApplied,
-                                            attackTypeCode,
-                                            &outResult->outActionParty);
-            outResult->emittedCombatActionPartyCount = 1;
-        } else if (digest->destHasCreatureGroup) {
-            int groupAttackApplied = attackApplied;
-            /* ReDMCSB PROJEXPL.C:F0213 lines 137-142 quarters
-             * fireball/lightning damage against non-material creatures
-             * before resistance adjustment. The digest has the
-             * non-material bit, so preserve that high-impact parity even
-             * though fire-resistance remains caller-side Phase 13 data. */
-            if (digest->destCreatureIsNonMaterial) {
-                groupAttackApplied >>= 2;
-            }
-            if (groupAttackApplied > 0) {
-                build_explosion_group_action(in, digest, groupAttackApplied,
-                                             attackTypeCode,
-                                             &outResult->outActionGroup);
-                outResult->emittedCombatActionGroupCount = 1;
+        /* F0220:822-831: the burst already happened in F0213. This
+         * independent RNG result is used only for a door at C25 time. */
+        if (in->sourceC15Fingerprint == 0u) {
+            /* Legacy ownerless consumers (including CSB's separate
+             * runtime) have not adopted the source creation transaction.
+             * Preserve their existing burst until that owner is migrated;
+             * this fallback is not evidence of original F0213 timing. */
+            int type = in->explosionType == C002_EXPLOSION_LIGHTNING_BOLT
+                ? COMBAT_ATTACK_LIGHTNING : COMBAT_ATTACK_FIRE;
+            if (digest->destHasChampion) {
+                build_explosion_champion_action(in, digest, attackApplied,
+                    type, &outResult->outActionParty);
+                outResult->emittedCombatActionPartyCount = 1;
+            } else if (digest->destHasCreatureGroup) {
+                int groupAttack = digest->destCreatureIsNonMaterial
+                    ? attackApplied >> 2 : attackApplied;
+                if (groupAttack > 0) {
+                    build_explosion_group_action(in, digest, groupAttack,
+                        type, &outResult->outActionGroup);
+                    outResult->emittedCombatActionGroupCount = 1;
+                }
             }
         }
         if (digest->destSquareType == PROJECTILE_ELEMENT_DOOR

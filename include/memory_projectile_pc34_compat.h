@@ -504,6 +504,14 @@ int F0213_EXPLOSION_Create_Compat(
     int* outSlotIndex,
     struct TimelineEvent_Compat* outFirstAdvanceEvent);
 
+/* PROJEXPL.C F0213:165-192, after successful C15/C25 publication. */
+int F0213_EXPLOSION_ComputeInitialBurst_Compat(
+    const struct ExplosionInstance_Compat* in,
+    const struct CellContentDigest_Compat* digest,
+    int fireResistance,
+    struct RngState_Compat* rng,
+    struct ExplosionTickResult_Compat* outResult);
+
 int F0220_EXPLOSION_ProcessEvent25_Compat(
     const struct ExplosionInstance_Compat* in,
     const struct CellContentDigest_Compat* digest,

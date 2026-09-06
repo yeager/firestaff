@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Source-bound DM1 Fireball/Lightning now apply F0213's initial
+  burst after successful C15/C25 publication. Both use fire damage, source
+  party precedence, nonmaterial quartering and fire-resistance RNG. C25
+  consumes its separate attack roll without repeating party/group damage.
+  An independent arithmetic test covers RNG stages/resistance/immunity;
+  authentic DOS tests verify immediate party health loss and no C25 repeat
+  using RAM-only impact placement. Eight final focused tests pass; the
+  production binary builds. Legacy ownerless consumers retain their prior
+  behavior until separately migrated. C25 unlink now maintains empty-square
+  SFT flags/offsets through F0515. Cross-platform and emulator parity remain
+  incomplete; the separate C14 empty-launch-square gap is recorded in TODO.
+
 - 2026-09-06: Extended authentic DOS spell lifecycle verification to all
   four one-shot effects (including no premature retirement), and Poison
   Cloud's complete three-point decay through final raw/decoded C15 free.
