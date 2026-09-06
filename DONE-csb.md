@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- Japanese F31 startup independently passes the same native FM Towns CLI
+  suite with FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja and no optional user save.
+  TITLE.ANM, SWITCHTW and MINI.DAT transitions pass in v1/v21, with map 4 /
+  party 22,18,2 and one champion. Keyboard and mouse launcher receipts retain
+  variant=csb-fmtowns-ja; the original archive hash remains unchanged. This
+  closes Japanese coverage of these startup checks, not Japanese pixel/audio
+  parity or a complete campaign verification.
+
 - 2026-09-06 public executable recheck: authentic nested Atari ZIP->ZIP->STX
   CLI title, runtime entry, first UP movement and start-menu launch pass.
   Authentic Amiga ZIP->ADF entrance, CLI/menu, seven fresh-session input
