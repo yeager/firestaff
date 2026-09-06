@@ -80,8 +80,8 @@ esac
 # Only that source path may promote the checksum-verified MINI.DAT state to a
 # live dungeon.  The retail seed is HALK at map 4/(22,18), not the map-0
 # bootstrap dungeon which used to leak through the CLI receipt.
-for mode in v1 v21; do
-case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
+for mode in v1 v20 v21; do
+case "$mode" in v1) expected_mode=0;; v20) expected_mode=1;; v21) expected_mode=2;; esac
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --presentation-mode "$mode" \
     --width 320 --height 200 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \

@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- Extended the original-media FM Towns EN/JA startup matrix to include
+  Filtered (v20), alongside Original (v1) and Upscaled (v21). Both complete
+  scripts pass with optional user saves unset, checking retained mode,
+  map 4/(22,18,2), one champion, title and menu admission. Tested against
+  the existing public build at runtime 537ca520c; this is mode selection
+  and initial-state evidence, not filter appearance or movement parity.
+
 - Rechecked original FM Towns EN and JA archives with the rebuilt native
   executable (runtime 537ca520c): both pass TITLE.ANM, modal SWITCHTW,
   original MINI.DAT initial party state, v1/v21 runtime admission and start
