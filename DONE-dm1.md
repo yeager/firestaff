@@ -3,8 +3,11 @@
 - 2026-09-06: Fixed ROS/KU/DANE/NETA statistic gains to use F0348's
   PC3.4/S1.2+ diminishing returns above 120 and 150 and cap at 170.
   Twenty-four explicit potion/boundary cases pass alongside existing
-  consumable tests and twenty original-media regressions. High-stat
-  potion consumption through original-media mouse input remains unproven.
+  consumable tests and twenty original-media regressions. Original
+  ROS/KU/DANE/NETA records from five Atari/Amiga editions also pass mouse
+  press/release consumption at statistics 151 and 169: reduced gain,
+  cap, recipient isolation, empty-flask conversion and retained hand object.
+  These RAM-controlled scenarios do not establish emulator or full-game parity.
 
 - 2026-09-06: Expanded the existing live M11 lightning impact regression
   to both party and individual recipient shield. Both reach projectile

@@ -509,6 +509,41 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             }
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
+                        /* ReDMCSB PANEL.C F0348:1695-1741: S1.2+/Amiga gains
+                           above 150 are quartered, incremented, then capped at 170.
+                           Only party statistics are staged; potion power is original. */
+                        for (int type = 6; type <= 9; ++type) {
+                            const int attrs[] = {CHAMPION_ATTR_DEXTERITY, CHAMPION_ATTR_STRENGTH,
+                                                 CHAMPION_ATTR_WISDOM, CHAMPION_ATTR_VITALITY};
+                            unsigned short potion = THING_NONE;
+                            int power = 0, attr = attrs[type - 6];
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_POTION]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_POTION << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff) &&
+                                    (bytes[3] & 127) == type) { potion = candidate; power = bytes[2]; break; }
+                            }
+                            if (potion == THING_NONE) { fprintf(stderr, "FAIL: missing original stat potion %d\n", type); return 0; }
+                            int baseline = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 169 : 151;
+                            int delta = type == 7 ? power / 35 + 5 : power / 25 + 8;
+                            int expected = baseline + (delta >> 2) + 1;
+                            if (expected > 170) expected = 170;
+                            unsigned short leaderStat = state->world.party.champions[0].attributes[attr];
+                            unsigned short oldStat = state->world.party.champions[1].attributes[attr];
+                            state->world.party.champions[1].attributes[attr] = (unsigned short)baseline;
+                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, potion)) return 0;
+                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, potion);
+                            if (!bytes || (bytes[3] & 127) != 20 ||
+                                state->world.party.champions[1].attributes[attr] != expected ||
+                                state->world.party.champions[0].attributes[attr] != leaderStat ||
+                                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != potion) {
+                                fprintf(stderr, "FAIL: original stat potion owner/threshold %d\n", type); return 0;
+                            }
+                            state->world.party.champions[1].attributes[attr] = oldStat;
+                            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                        }
                         unsigned short deathExtra = THING_NONE;
                         for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
                             unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);
