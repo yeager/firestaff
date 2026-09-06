@@ -1,5 +1,8 @@
 # Unreleased
 
+- Original-data projectiles no longer disappear through invented collisions
+  with other projectiles occupying the same cell.
+
 - Original-data projectile damage follows the champion's actual formation
   cell rather than assuming formation positions equal roster indices.
 

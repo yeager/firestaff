@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Source-backed C14 projectiles no longer collide with another
+  projectile. PROJEXPL.C F0219:687-764 checks party, groups and geometry,
+  not peer C14 records. A bounded two-record RAM fixture reproduced the
+  erroneous despawn before the fix and now preserves both carriers while
+  the first moves. Thirteen focused tests (five original DOS spell cases)
+  and five shared movement/teleporter regressions pass; executable rebuilt.
+  This is not an original emulator timing capture.
+
 - 2026-09-06: Source projectile champion damage resolves the living roster
   member occupying the impact cell, following PROJEXPL.C F0217:509-514 and
   CHAMPION.C F0285, instead of treating the cell number as roster index.

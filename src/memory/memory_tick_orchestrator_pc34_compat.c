@@ -7033,6 +7033,10 @@ static int orch_find_projectile_collision_peer_compat(
     int landingCell;
 
     if (!world || !projectile || !digest) return -1;
+    /* PROJEXPL.C F0219:687-764 has no projectile/projectile impact.
+     * Only retain that host-only extension without source C14 records. */
+    if (world->things && world->things->loaded &&
+        world->things->rawThingData[THING_TYPE_PROJECTILE]) return -1;
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
@@ -7637,7 +7641,9 @@ static int orch_build_projectile_digest_compat(
              * projectile impact checks; another projectile on the same
              * dungeon square but in a different cell is not the current
              * cell impact. */
-            out->sourceHasOtherProjectile = 1;
+            /* F0219 has no peer collision for source-backed C14. */
+            out->sourceHasOtherProjectile = !(world->things && world->things->loaded &&
+                world->things->rawThingData[THING_TYPE_PROJECTILE]);
             break;
         }
     }
@@ -7748,7 +7754,9 @@ static int orch_build_projectile_digest_compat(
             } else {
                 newCell = (projectile->cell + 1) & 3;
             }
-            if (other->cell == newCell) {
+            if (!(world->things && world->things->loaded &&
+                  world->things->rawThingData[THING_TYPE_PROJECTILE]) &&
+                other->cell == newCell) {
                 /* ReDMCSB F0219 lines 721-725 applies the parity cell step
                  * before relinking the projectile.  Only a projectile in that
                  * landing cell is a same-cell projectile collision. */

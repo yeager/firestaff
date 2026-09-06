@@ -20,6 +20,7 @@ int main(int argc, char** argv)
     int emptyCell = argc == 2 && strcmp(argv[1], "empty-cell") == 0;
     int partyFirst = argc == 2 && strcmp(argv[1], "party-first") == 0;
     int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
+    int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int halfSquare = argc == 2 && strcmp(argv[1], "half-square") == 0;
     int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
@@ -29,12 +30,12 @@ int main(int argc, char** argv)
     struct DungeonMapTiles_Compat tile = {0};
     struct DungeonGroup_Compat group = {0};
     struct DungeonWeapon_Compat weapon = {0};
-    struct DungeonProjectile_Compat c14 = {0};
+    struct DungeonProjectile_Compat c14[2] = {{0}};
     struct ProjectileCreateInput_Compat create = {0};
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
     DM1_C14PoolReservationPc34 reservation;
-    unsigned char squares[9], rawGroup[16] = {0}, rawWeapon[4] = {0}, rawC14[8] = {0};
+    unsigned char squares[9], rawGroup[16] = {0}, rawWeapon[4] = {0}, rawC14[16] = {0};
     unsigned short columns[3] = {0,0,1}, sft[3] = {THING_TYPE_GROUP << 10, THING_NONE, THING_NONE};
     const unsigned short weaponThing = THING_TYPE_WEAPON << 10;
     int slot = -1;
@@ -65,16 +66,18 @@ int main(int argc, char** argv)
     rawGroup[5] = group.cells;
     weapon.next = THING_ENDOFLIST; weapon.type = 8; /* Original sharp dagger. */
     word(rawWeapon, weapon.next); rawWeapon[2] = 8;
-    c14.next = THING_NONE; word(rawC14, THING_NONE);
+    c14[0].next = c14[1].next = THING_NONE;
+    word(rawC14, THING_NONE); word(rawC14 + 8, THING_NONE);
     things.loaded = 1; things.squareFirstThings = sft; things.squareFirstThingCount = 3;
     things.groups = &group; things.groupCount = 1;
     things.weapons = &weapon; things.weaponCount = 1;
-    things.projectiles = &c14; things.projectileCount = 1;
+    things.projectiles = c14; things.projectileCount = peer ? 2 : 1;
     things.thingCounts[THING_TYPE_GROUP] = things.thingCounts[THING_TYPE_WEAPON] =
         things.thingCounts[THING_TYPE_PROJECTILE] = 1;
     things.rawThingData[THING_TYPE_GROUP] = rawGroup;
     things.rawThingData[THING_TYPE_WEAPON] = rawWeapon;
     things.rawThingData[THING_TYPE_PROJECTILE] = rawC14;
+    if (peer) things.thingCounts[THING_TYPE_PROJECTILE] = 2;
     world.dungeon = &dungeon; world.things = &things; world.ownsDungeon = 0;
     world.gameTick = 40; world.partyMapIndex = world.party.mapIndex = 0;
     world.newPartyMapIndex = -1; world.party.mapX = 2; world.party.mapY = 2;
@@ -107,9 +110,30 @@ int main(int argc, char** argv)
     CHECK(dm1_v1_c14_pool_initialize_and_link_pc34(&reservation, &dungeon,
               weaponThing, 40, 30, 0, create.cell, 0, 1, 1));
     CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event));
+    if (peer) {
+        int peerSlot = -1;
+        struct TimelineEvent_Compat peerEvent;
+        create.category = PROJECTILE_CATEGORY_MAGICAL;
+        create.subtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+        create.currentTick += 10; /* Leave the second real C14 pending. */
+        CHECK(F0810_PROJECTILE_Create_Compat(&create, &world.projectiles, &peerSlot, &peerEvent));
+        CHECK(peerSlot == 1);
+        CHECK(dm1_v1_c14_pool_reserve_pc34(&things, &reservation));
+        CHECK(dm1_v1_c14_pool_initialize_and_link_pc34(&reservation, &dungeon,
+                  0xff83, 40, 30, 1, create.cell, 0, 1, 1));
+        CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &peerEvent));
+    }
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (peer) {
+        CHECK(world.projectiles.entries[0].reserved3 != 0);
+        CHECK(world.projectiles.entries[0].mapY == 0);
+        CHECK(world.projectiles.entries[1].reserved3 != 0);
+        CHECK(c14[0].next != THING_NONE && c14[1].next != THING_NONE);
+        puts("ok: co-located source projectiles do not collide with each other");
+        return 0;
+    }
     if (!sameSquare) {
         int i, found = 0;
         CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
@@ -136,7 +160,7 @@ int main(int argc, char** argv)
         CHECK(group.health[0] == 1000);
         CHECK(group.health[1] > 0 && group.health[1] < 1000);
         CHECK(group.slot == THING_ENDOFLIST);
-        CHECK(c14.next == THING_NONE && readword(rawC14) == THING_NONE);
+        CHECK(c14[0].next == THING_NONE && readword(rawC14) == THING_NONE);
         CHECK((group.next & 0x3fff) == weaponThing);
         puts("ok: half-square footprint hits the second worm without an active AI row");
         return 0;
@@ -144,7 +168,7 @@ int main(int argc, char** argv)
     if (partyFirst || partyLanding) {
         CHECK(world.party.champions[0].hp.current < 1000);
         CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
-        CHECK(c14.next == THING_NONE && readword(rawC14) == THING_NONE);
+        CHECK(c14[0].next == THING_NONE && readword(rawC14) == THING_NONE);
         CHECK((group.next & 0x3fff) == weaponThing);
         CHECK(weapon.next == THING_ENDOFLIST);
         puts("ok: source-cell champion impact precedes the co-located group");
@@ -153,7 +177,7 @@ int main(int argc, char** argv)
     if (grace || emptyCell) {
         CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
         CHECK(world.projectiles.entries[slot].reserved3 != 0);
-        CHECK(c14.next != THING_NONE && readword(rawC14) != THING_NONE);
+        CHECK(c14[0].next != THING_NONE && readword(rawC14) != THING_NONE);
         CHECK(world.projectiles.entries[slot].firstMoveGraceFlag == 0);
         puts("ok: grace or empty source cell does not create a false group hit");
         return 0;
@@ -162,7 +186,7 @@ int main(int argc, char** argv)
     CHECK((group.slot & 0x3fff) == weaponThing);
     CHECK(readword(rawGroup + 2) == group.slot);
     CHECK(weapon.next == THING_ENDOFLIST && readword(rawWeapon) == THING_ENDOFLIST);
-    CHECK(c14.next == THING_NONE && readword(rawC14) == THING_NONE);
+    CHECK(c14[0].next == THING_NONE && readword(rawC14) == THING_NONE);
     CHECK(world.projectiles.entries[slot].reserved3 == 0);
     CHECK(sft[0] == (THING_TYPE_GROUP << 10));
     CHECK(group.next == THING_ENDOFLIST && readword(rawGroup) == THING_ENDOFLIST);
