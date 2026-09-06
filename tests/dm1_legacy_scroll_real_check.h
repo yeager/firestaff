@@ -124,6 +124,19 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         state->world.party.champions[1].hp.maximum = 100;
                         state->world.party.champions[1].inventory[19] = other;
                         state->world.party.champions[1].load = (unsigned short)otherWeight;
+                        /* Exercise the explicit owner accessor before input
+                         * migration: only champion 1 has an action-hand item. */
+                        state->world.party.champions[1].inventory[19] = THING_NONE;
+                        state->world.party.champions[1].inventory[20] = other;
+                        state->dm1InventoryChampionOrdinal = 2;
+                        if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) < 0 ||
+                            state->world.party.activeChampionIndex != 0) return 0;
+                        state->dm1InventoryChampionOrdinal = CHAMPION_MAX_PARTY + 1;
+                        if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) != -1) return 0;
+                        state->dm1InventoryChampionOrdinal = 0;
+                        if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) != -1) return 0;
+                        state->world.party.champions[1].inventory[20] = THING_NONE;
+                        state->world.party.champions[1].inventory[19] = other;
                         if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, thing, &weight)) return 0;
                         if (weight <= 0) return 0;
                         state->world.party.champions[0].load = (unsigned short)weight;

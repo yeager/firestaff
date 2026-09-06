@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added a separately validated DM1 inventory-owner ordinal and
+  migrated inventory icon lookup. Five original-media tests verify another
+  champion's item without changing the leader, invalid-owner rejection,
+  and the explicit legacy fallback. Normal input does not set the ordinal
+  yet; this is migration infrastructure, not the inventory-isolation fix.
+
 - 2026-09-06: Added an opt-in original-media diagnostic for inventory/leader
   isolation and reproduced the index conflation on all five Atari/Amiga
   editions. Diagnosis is complete; the runtime correction remains in TODO-dm1.

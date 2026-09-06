@@ -1,6 +1,9 @@
 # Firestaff TODO — DM1
 
 - Separate inventory champion (PANEL.C G0423:2363) from party leader
+  using the new dm1InventoryChampionOrdinal/accessor. Icon lookup is migrated;
+  normal input must remain on the legacy owner until other consumers follow.
+  Separate it from party leader
   (CLIKCHAM.C G0411). Reproduced on all five Atari/Amiga editions: opening
   champion 2's inventory changes leader 0 to 1. The toggle and inventory
   slot handler both use activeChampionIndex; migrate rendering, eye/mouth,

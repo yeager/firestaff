@@ -16678,6 +16678,26 @@ static void m11_set_inspect_readoutf(M11_GameViewState* state,
     m11_set_inspect_readout(state, title, detail);
 }
 
+/* ReDMCSB PANEL.C:2363 owns G0423 separately from CLIKCHAM.C G0411.
+ * The explicit ordinal is not yet set by ordinary panel input: consumers
+ * must migrate together before enabling independent runtime selection. */
+static int m11_inventory_champion_index(const M11_GameViewState* state)
+{
+    int index;
+    if (!state) return -1;
+    index = state->world.party.activeChampionIndex;
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        state->dm1InventoryChampionOrdinal != 0) {
+        if (state->dm1InventoryChampionOrdinal < 1 ||
+            state->dm1InventoryChampionOrdinal > CHAMPION_MAX_PARTY) return -1;
+        index = state->dm1InventoryChampionOrdinal - 1;
+    }
+    if (index < 0 || index >= CHAMPION_MAX_PARTY ||
+        index >= state->world.party.championCount ||
+        !state->world.party.champions[index].present) return -1;
+    return index;
+}
+
 static int m11_dm1_carried_object_weight(const M11_GameViewState* state,
                                         unsigned short thing, int* weight)
 {
@@ -55223,7 +55243,7 @@ int DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(const M11_GameViewStat
     if (!state || championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) {
         return -1;
     }
-    championIndex = state->world.party.activeChampionIndex;
+    championIndex = m11_inventory_champion_index(state);
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
         championIndex >= state->world.party.championCount) {
         return -1;
