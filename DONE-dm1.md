@@ -1482,6 +1482,13 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Verified the prior-square admission rule with seeds 6 and 7: both select
+  west, but only the zero two-bit prior-square sample admits returning
+  west; nonzero falls back north. Both consume exactly one additional
+  admission draw (GROUP.C:2164-2171). AI test: 2520 passed checks. Confirmed
+  production dispatcher callers in the M10 orchestrator and M11 game view;
+  this caller audit is not a full runtime movement-capture assertion.
+
 - Corrected the ordinary C37 stationary look-around path to consume the
   admission draw before the smell-distance test, then a separate direction
   draw when last-move timing permits (GROUP.C:2217-2222). The seed-1

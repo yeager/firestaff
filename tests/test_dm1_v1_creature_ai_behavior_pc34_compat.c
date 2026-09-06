@@ -174,6 +174,31 @@ static void test_wander_clockwise_fallback(void) {
     }
 }
 
+static void test_wander_prior_square_gate(void) {
+    int allow;
+    /* GROUP.C:2164-2171: only a candidate matching PriorMapX/Y draws
+     * the extra two-bit probe, and zero admits returning to that square. */
+    for (allow = 0; allow < 2; ++allow) {
+        struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+        struct DM1ActiveGroup_Compat ag = make_default_ag();
+        struct RngState_Compat rng = make_rng(allow ? 7 : 6);
+        struct DM1BehaviorResult_Compat result;
+        ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+        ctx.eventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+        ctx.distanceToVisibleParty = 0;
+        ctx.creatureInfo.ranges = 0;
+        ag.priorMapX = 4;
+        ag.priorMapY = 5; /* West, selected by both fixed seeds. */
+        EXPECT_EQ(F0810_DM1_GROUP_DispatchBehavior_Compat(&ctx, &ag, &rng, &result),
+                  1, "prior-square wander dispatch");
+        EXPECT_EQ(result.actionKind, DM1_ACTION_MOVE, "prior-square case moves");
+        EXPECT_EQ(result.moveDirection, allow ? 3 : 0,
+                  "zero returns west, nonzero falls back north");
+        EXPECT_EQ(rng.seed == (allow ? UINT32_C(2606913275) : UINT32_C(2404601066)),
+                  1, "exactly one prior-square admission draw");
+    }
+}
+
 static void test_wander_to_attack(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
     struct DM1ActiveGroup_Compat ag = make_default_ag();
@@ -2014,6 +2039,7 @@ int main(void) {
     test_wander_to_attack();
     test_wander_random_gate();
     test_wander_clockwise_fallback();
+    test_wander_prior_square_gate();
     test_wander_to_approach();
     test_freeze_life();
     test_archenemy_ignores_freeze();
