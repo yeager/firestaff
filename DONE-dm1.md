@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Strengthened the 128-seed half-pair attack-entry test with independent
+  F0209/F0205 RNG accounting and exact packed direction comparison. It
+  confirms turn-delay draws still occur after a suppressed pair turn and
+  includes the original I34 type-five F0179 draw count (GI=0x539D).
+  The runtime target passes; expectations do not invoke production F0179.
+  This remains bounded source-derived evidence, not an emulator trace.
+
 - Prevented a half-square pair from turning twice inside one attack-entry
   fanout, following F0205's same-time suppression (GROUP.C:1606-1620).
   The caller still draws its F0209 turn delay after a suppressed turn.

@@ -1601,6 +1601,10 @@ static int test_half_pair_attack_turn(unsigned seed)
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
     unsigned directions;
+    struct RngState_Compat expectedRng;
+    unsigned expectedDirections = 0;
+    int turned = 0;
+    int i, j;
     int ok;
     if (!build_world(&world)) return 1;
     world.pc34ActiveGroupSourceCount = 1;
@@ -1610,6 +1614,25 @@ static int test_half_pair_attack_turn(unsigned seed)
     authenticate_group_c04(world.things, &world.things->groups[0],
                            world.things->rawThingData[THING_TYPE_GROUP]);
     F0730_COMBAT_RngInit_Compat(&world.masterRng, seed);
+    F0730_COMBAT_RngInit_Compat(&expectedRng, seed);
+    (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536); /* F0228 */
+    for (i = 1; i >= 0; --i) {
+        if (((expectedDirections >> (i * 2)) & 3) != 2 &&
+            !(i && F0732_COMBAT_RngRandom_Compat(&expectedRng, 2))) {
+            if (!turned) {
+                unsigned direction = ((F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536) & 2) + 3) & 3;
+                expectedDirections = direction | (direction << 2);
+                turned = 1;
+            }
+            /* F0205 may return early, but F0209 still draws turn delay. */
+            (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 4);
+        }
+        (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 4); /* C31 delay */
+        /* Original I34 type-five GI=0x539D: four offset draws, flip,
+         * and cadence. No production F0179 call builds this expectation. */
+        for (j = 0; j < 6; ++j)
+            (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536);
+    }
     memset(&event, 0, sizeof(event));
     memset(&result, 0, sizeof(result));
     event.kind = TIMELINE_EVENT_CREATURE_REACTION;
@@ -1624,6 +1647,8 @@ static int test_half_pair_attack_turn(unsigned seed)
     directions = world.pc34ActiveGroupDirections[0] & 15;
     ok &= expect(world.timeline.count == 2 && (directions == 5 || directions == 15),
                  "half-square attack pair takes only one sideways turn in this tick");
+    ok &= expect(directions == expectedDirections && world.masterRng.seed == expectedRng.seed,
+                 "suppressed pair turn retains the exact source delay and aspect RNG stream");
     F0883_WORLD_Free_Compat(&world);
     return ok ? 0 : 1;
 }
