@@ -251,8 +251,12 @@ int dm1_v1_inventory_live_use_action_hand_pc34(
         if (receipt.consumable.chargeCountAfter >= 0)
             mutableRaw[3] = (unsigned char)((mutableRaw[3] & 0x3fu) |
                 ((receipt.consumable.chargeCountAfter & 0x03) << 6));
-        if (receipt.consumable.removeLeaderHandObject)
+        if (receipt.consumable.removeLeaderHandObject) {
+            /* ReDMCSB PANEL.C F0349:1842 frees the consumed food record. */
+            mutableRaw[0] = 0xff;
+            mutableRaw[1] = 0xff;
             state->slots[DM1_PC34_SLOT_ACTION_HAND] = THING_NONE;
+        }
         *champion = nextChampion;
         receipt.kind = DM1_V1_INVENTORY_LIVE_USE_CONSUMABLE_PC34;
         receipt.valid = 1;

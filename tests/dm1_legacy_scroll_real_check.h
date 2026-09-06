@@ -327,9 +327,22 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->dm1InventoryChampionOrdinal = 2;
                             state->world.party.champions[0].food = 0;
                             state->world.party.champions[1].food = 0;
-                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, food)) return 0;
-                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
-                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (getenv("FIRESTAFF_VERIFY_LIVING_CASTER")) {
+                                unsigned short savedRight = state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT];
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = food;
+                                state->world.party.activeChampionIndex = 1;
+                                if (!M11_GameView_UseItem(state) ||
+                                    state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] != THING_NONE) { fprintf(stderr, "FAIL: alternate food consume/slot\n"); return 0; }
+                                const unsigned char *eaten = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, food);
+                                if (!eaten || eaten[0] != 255 || eaten[1] != 255) { fprintf(stderr, "FAIL: alternate food raw release\n"); return 0; }
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = savedRight;
+                                state->world.party.champions[1].load = otherWeight;
+                                state->world.party.activeChampionIndex = 0;
+                            } else {
+                                if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, food)) return 0;
+                                (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                                (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            }
                             if (state->world.party.champions[0].food != 0 ||
                                 state->world.party.champions[1].food != amount ||
                                 state->world.party.activeChampionIndex != 0) return 0;

@@ -23176,7 +23176,31 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
         return 0;
     }
 
-    /* Junk type: waterskin (type 2) can be drunk */
+    if (m11_is_dm1_source_kind(state->sourceKind) && thingType == THING_TYPE_JUNK) {
+        DM1ConsumableChampionPc34 consumer;
+        DM1_V1_InventoryLiveUseReceiptPc34 receipt;
+        memset(&consumer, 0, sizeof(consumer));
+        consumer.food = champ->food;
+        consumer.water = champ->water;
+        /* ReDMCSB PANEL.C F0349:1832-1844,1917-1919: original mouth
+         * admission, +800 water/charge, G0242 food amounts and 2048 cap.
+         * Use the same raw-object transaction for the alternate action. */
+        if (!m11_v1_mouth_live_inventory_transaction(state, champ, item,
+                &consumer, NULL, 0, &receipt) || !receipt.consumable.consumed) {
+            return 0;
+        }
+        champ->food = consumer.food;
+        champ->water = consumer.water;
+        if (receipt.consumable.removeLeaderHandObject) {
+            champ->inventory[useSlot] = THING_NONE;
+        }
+        m11_set_status(state, "USE", receipt.consumable.removeLeaderHandObject
+            ? "FOOD CONSUMED" : "DRANK WATER");
+        m11_refresh_hash(state);
+        return 1;
+    }
+
+    /* Legacy non-DM1 junk handling. */
     if (thingType == THING_TYPE_JUNK) {
         if (state->world.things->junks &&
             thingIndex >= 0 && thingIndex < state->world.things->junkCount) {

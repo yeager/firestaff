@@ -1,9 +1,8 @@
 # Firestaff TODO — DM1
 
-- Align alternative UseItem food/water and potion XP behavior with F0349.
-  The current junk path still uses non-source food/water amounts and a
-  waterskin subtype of 2; mouth input already uses the source transaction.
-  Verify both routes with original objects before claiming consumable parity.
+- Verify alternative UseItem water charges, empty rejection, caps and sound
+  with original objects; it now uses the source transaction. Audit potion XP
+  and presentation feedback before claiming complete consumable parity.
 
 - If early S1.0/S1.1 media are enabled, dispatch their distinct
   F0348 thresholds/caps rather than applying the PC3.4/S1.2+ rule.

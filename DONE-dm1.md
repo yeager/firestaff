@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Routed DM1 alternative junk consumption through the original
+  inventory transaction instead of legacy placeholder amounts. Original-food
+  tests also exposed missing raw-record release; both consumption routes now
+  mark consumed food free per F0349. Twenty Atari/Amiga cases pass, including
+  alternate food amount, recipient isolation, slot removal and raw release.
+  Alternate waterskin runtime coverage remains separate open work.
+
 - 2026-09-06: Fixed alternative UseItem antivenin consumption to cancel
   the recipient's pending poison events and counter via F0323. Original
   Atari media reproduced the retained-counter failure before the fix;
