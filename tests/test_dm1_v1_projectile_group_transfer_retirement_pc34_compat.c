@@ -22,7 +22,8 @@ int main(int argc, char** argv)
     int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
-    int burstAll = argc == 2 && strcmp(argv[1], "burst-all") == 0;
+    int burstDrop = argc == 2 && strcmp(argv[1], "burst-drop") == 0;
+    int burstAll = burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
     int burstSmoke = argc == 2 && strcmp(argv[1], "burst-smoke") == 0;
     int burstLethal = burstAll || burstSmoke || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
     int burst = burstLethal || (argc == 2 && strcmp(argv[1], "burst") == 0);
@@ -162,6 +163,10 @@ int main(int argc, char** argv)
         blast.mapX = 1; blast.mapY = 0;
         blast.centered = 1; blast.cell = 255; blast.currentTick = 40;
         blast.creatorProjectileSlot = -1;
+        if (burstDrop) {
+            group.slot = weaponThing;
+            word(rawGroup + 2, weaponThing);
+        }
         CHECK(F0887_ORCH_CreateSourceExplosion_Compat(&world, &blast, 0));
         if (burstLethal && !burstSmoke) {
             /* F0213:129-130 returns when no original C15 slot exists.
@@ -191,6 +196,23 @@ int main(int argc, char** argv)
             CHECK(group.next == THING_NONE && readword(rawGroup) == THING_NONE);
             CHECK(world.creatureAICount == 0);
             CHECK((sft[0] & 0x3fff) != (THING_TYPE_GROUP << 10));
+            if (burstDrop) {
+                unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    &dungeon, &things, 0, 1, 0);
+                int weapons = 0, links = 0;
+                while (cursor != THING_ENDOFLIST && links++ < 4) {
+                    if ((cursor & 0x3fff) == weaponThing) {
+                        ++weapons;
+                        CHECK(readword(rawWeapon) == weapon.next);
+                        cursor = weapon.next;
+                    } else {
+                        CHECK((cursor & 0x3fff) == (THING_TYPE_EXPLOSION << 10));
+                        cursor = c15.next;
+                    }
+                }
+                CHECK(cursor == THING_ENDOFLIST && weapons == 1);
+                CHECK(group.slot == THING_ENDOFLIST);
+            }
             puts("ok: source explosion removes the dead group and active AI");
             return 0;
         }

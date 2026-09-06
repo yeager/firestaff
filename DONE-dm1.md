@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Whole-group explosion death with a carried sharp dagger now
+  has an ownership regression: the freed group has no possession head,
+  the destination floor chain contains the dagger exactly once and its
+  raw/decoded Next values agree. The bounded source-format fixture passes
+  without a runtime change. Generated fixed possessions and real-media
+  pickup/render pairing remain separate open work.
+
 - 2026-09-06: Exhausted C15 smoke fixtures verify F0213:129-130 admission:
   when the fireball occupies the only source slot, lethal damage creates
   neither a host smoke entry nor a smoke event and preserves that fireball.
