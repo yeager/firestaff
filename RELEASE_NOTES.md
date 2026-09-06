@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 Freeze Life defers creature animation events before they alter graphics
+  or consume the random stream, preserving the original four-tick retry.
+
 - DM1 resets nonpersistent group behavior on activation and publishes raw
   group-state changes only after a staged map transition succeeds.
 

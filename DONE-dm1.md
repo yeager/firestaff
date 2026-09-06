@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- M10 timed reaction handling now applies the PC34 Freeze Life gate before
+  visibility RNG and F0179 aspect work (GROUP.C:1962-1968). Non-archenemy
+  events retain their payload and retry at gameTick+4. All four C33-C36
+  runtime regressions preserve selected/sibling aspects and exact RNG while
+  frozen, and update normally when unfrozen. Outer C29-C31 admission and
+  edition-specific original traces remain separate verification work.
+
 - Public native Amiga startup/input recheck passes for both
   Dungeon-Master_Amiga_EN.zip and Dungeon-Master_Amiga_EN_Version-20.zip.
   Ran `test_dm1_v1_amiga_hd_archive_cli_boot.sh` against each original archive

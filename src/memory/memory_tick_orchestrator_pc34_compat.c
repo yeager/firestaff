@@ -12864,6 +12864,13 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.creatureSize = ctx.creatureInfo.attributes & DM1_ATTR_SIZE_MASK;
     ctx.isArchenemy = (ctx.creatureInfo.attributes & DM1_ATTR_ARCHENEMY) != 0;
     ctx.freezeLifeTicks = world->freezeLifeTicks;
+    /* GROUP.C F0209:1962-1968 (PC34) defers timed events before F0179
+     * or visibility RNG. Preserve the original C.Ticks payload verbatim. */
+    if (ctx.freezeLifeTicks > 0 && !ctx.isArchenemy) {
+        struct TimelineEvent_Compat retry = *ev;
+        retry.fireAtTick = world->gameTick + 4u;
+        return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+    }
     ctx.movementTicks = ctx.creatureInfo.movementTicks;
     ctx.currentGroupDistanceToParty =
         F0226_DM1_GROUP_GetDistanceBetweenSquares_Compat(
