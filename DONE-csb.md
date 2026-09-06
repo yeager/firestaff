@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- Rechecked native Atari nested ZIP/STX and Amiga ZIP/ADF startup with
+  the rebuilt executable after the DM1 group-event changes (runtime
+  537ca520c). Both original-media scripts pass title/entrance, menu launch
+  and movement checks. The Atari test now explicitly unsets the diagnostic
+  external-extractor opt-in, matching the Amiga contract, and passes when
+  invoked with that flag set in its parent environment. These are bounded
+  startup tests, not original rendered/audio or complete campaign parity.
+
 - Japanese F31 startup independently passes the same native FM Towns CLI
   suite with FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja and no optional user save.
   TITLE.ANM, SWITCHTW and MINI.DAT transitions pass in v1/v21, with map 4 /

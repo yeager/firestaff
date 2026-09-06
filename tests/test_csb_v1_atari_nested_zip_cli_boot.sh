@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+# A diagnostic developer opt-in must not turn this native archive test
+# into a test of external extraction tools.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 firestaff_cli="${1:?Firestaff executable is required}"
 media_path="${FIRESTAFF_CSB_ATARI_NESTED_ZIP:-$HOME/.firestaff/data/csb/chaos_strikes_back_ftl.zip}"
 
