@@ -48402,18 +48402,17 @@ int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
     const struct ChampionState_Compat* champ;
     unsigned short thing;
     int scrollIndex;
+    int inventoryOwner;
 
     if (out && outSize > 0) out[0] = '\0';
     if (!state || !out || outSize < 2) {
         return 0;
     }
-    if (state->world.party.activeChampionIndex < 0 ||
-        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY ||
-        state->world.party.activeChampionIndex >= state->world.party.championCount) {
-        return 0;
-    }
-
-    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    /* PANEL.C F0341 reads the displayed inventory's action hand.
+     * Eye-held scroll selection below still belongs to the leader hand. */
+    inventoryOwner = m11_inventory_champion_index(state);
+    if (inventoryOwner < 0) return 0;
+    champ = &state->world.party.champions[inventoryOwner];
     if (!champ->present) return 0;
 
     if (state->v1ScrollPanelActive &&

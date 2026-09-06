@@ -123,6 +123,21 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         state->world.party.champions[1].hp.current = 100;
                         state->world.party.champions[1].hp.maximum = 100;
                         state->world.party.champions[1].inventory[19] = other;
+                        {
+                            char expected[4096], actual[4096];
+                            state->dm1InventoryChampionOrdinal = 2;
+                            for (int scroll = 0; scroll < state->world.things->thingCounts[THING_TYPE_SCROLL]; ++scroll) {
+                                state->world.party.champions[1].inventory[20] =
+                                    (unsigned short)((THING_TYPE_SCROLL << 10) | scroll);
+                                if (F0509_DUNGEON_DecodeScrollText_Compat(state->world.things,
+                                        scroll, expected, sizeof(expected)) < 0 ||
+                                    !DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+                                        state, actual, sizeof(actual)) || strcmp(expected, actual) ||
+                                    state->world.party.activeChampionIndex != 0) return 0;
+                            }
+                            state->world.party.champions[1].inventory[20] = THING_NONE;
+                            state->dm1InventoryChampionOrdinal = 0;
+                        }
                         state->world.party.champions[1].load = (unsigned short)otherWeight;
                         /* Exercise the explicit owner accessor before input
                          * migration: only champion 1 has an action-hand item. */

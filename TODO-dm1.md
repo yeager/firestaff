@@ -3,7 +3,8 @@
 - Separate inventory champion (PANEL.C G0423:2363) from party leader
   using the new dm1InventoryChampionOrdinal/accessor. Icon lookup and ordinary
   inventory slot transactions, action-hand chest opening and eye-release
-  action-hand lookup are migrated; cross-owner eye-release remains unverified;
+  action-hand lookup and action-hand scroll decoding are migrated;
+  cross-owner eye-release remains unverified;
   normal input must remain on the legacy owner until other consumers follow.
   Separate it from party leader
   (CLIKCHAM.C G0411). Reproduced on all five Atari/Amiga editions: opening

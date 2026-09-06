@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Migrated action-hand scroll text selection to the explicit
+  inventory owner while retaining leader-hand eye inspection. Five original
+  Atari/Amiga tests decode all original scrolls from champion 1's action
+  hand with champion 0 still leading. Expected text shares F0509: this
+  verifies owner selection, not an independent text-decoder oracle.
+
 - 2026-09-06: Action-hand chest opening and eye-release action-hand lookup
   now use the explicit inventory owner. Five original Atari/Amiga tests
   open a real chest on champion 1 without changing leader 0. The probe
