@@ -17,7 +17,13 @@
   original-audio setup, observed before the restorative tests. Full rerun
   passed; do not conflate this with a fixed failure or the no-output exit.
 
-- Extend F0412 evidence to exact earned XP, low-wisdom failure trajectories,
+- Correct F0304 map difficulty in M11 magic/combat/throw award bridges:
+  they pass party.mapIndex instead of maps[mapIndex].difficulty. Add
+  regressions where the two values differ, including missing-map bounds.
+- Verify/fix F0304 freshness scaling: CHAMPION.C:885 doubles all hidden
+  skills after a recent attack, whereas F0849 currently restricts both
+  freshness and staleness to Swing..Shoot. Keep the narrower stale rule.
+- Extend F0412 evidence to final earned XP, low-wisdom failure trajectories,
   and non-potion low-skill effects. Successful restorative casts at skill 1
   now preserve the original practice/potion RNG sequence; the full failure
   and effect matrix is not yet proven.

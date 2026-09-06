@@ -732,6 +732,13 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 state->world.masterRng.seed = castSeed = trial;
                             }
                             castSeed = castSeed * 0xBB40E62Du + 11u;
+                            /* MENU.C:1826, independent of the runtime XP
+                             * helper and packed-emission encoder. */
+                            int baseSkill = restorative == 11 ? 2 : restorative == 14 ? 1 : 3;
+                            int requiredSkill = baseSkill + powerRune + 1;
+                            int expectedXp = ((castSeed >> 8) & 7u) +
+                                (requiredSkill << 4) + ((powerRune * baseSkill) << 3) +
+                                requiredSkill * requiredSkill;
                             for (int probe = 0; probe < missing; ++probe)
                                 castSeed = castSeed * 0xBB40E62Du + 11u;
                             castSeed = castSeed * 0xBB40E62Du + 11u;
@@ -740,6 +747,23 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             int paidMana = state->world.party.champions[1].mana.current;
                             if (M11_GameView_HandlePointer(state, 250, 68, 1) != M11_GAME_INPUT_REDRAW) return 0;
                             (void)M11_GameView_HandlePointer(state, 250, 68, 0);
+                            int xpReceipts = 0;
+                            for (int event = 0; event < state->lastTickResult.emissionCount; ++event) {
+                                const struct TickEmission_Compat *emission =
+                                    &state->lastTickResult.emissions[event];
+                                if (emission->kind != EMIT_SPELL_EFFECT) continue;
+                                ++xpReceipts;
+                                unsigned int packedXp = (unsigned int)emission->payload[3];
+                                if (emission->payload[0] != 1 ||
+                                    emission->payload[1] != C1_SPELL_KIND_POTION_COMPAT ||
+                                    emission->payload[2] != restorative ||
+                                    ((packedXp >> 16) & 65535u) != (unsigned int)expectedXp) {
+                                    fprintf(stderr, "FAIL: original potion XP receipt\n"); return 0;
+                                }
+                            }
+                            if (xpReceipts != 1) {
+                                fprintf(stderr, "FAIL: potion XP receipt count=%d\n", xpReceipts); return 0;
+                            }
                             if (state->world.party.champions[1].mana.current != paidMana ||
                                 !state->spellPanelOpen || state->spellBuffer.runeCount != 0) {
                                 fprintf(stderr, "FAIL: C108 paid cast lifecycle\n"); return 0;

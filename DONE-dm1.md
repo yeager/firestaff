@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Original-media restorative casts now verify the exact F0412
+  base-XP formula from the independently advanced first RNG sample, and
+  exactly one EMIT_SPELL_EFFECT receipt for the correct caster/potion.
+  All twenty high/low-skill cases pass (360 casts). This proves base XP
+  handoff, not final F0304 map/freshness scaling; those gaps are tracked.
+
 - 2026-09-06: Removed duplicate practice RNG consumption after the M11
   validated-cast/XP handoff. The original Atari test reproduced potion
   power 44 instead of source-expected 50 before the fix. A bounded RAM seed
