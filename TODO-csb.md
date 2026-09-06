@@ -2,6 +2,15 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Replace the C37 wander bridge's locally reseeded relative direction with
+  the authenticated GROUP.C F0209 control flow. GROUP.C:2153-2155 performs
+  a one-bit movement gate followed by an absolute two-bit direction using
+  the shared stream (BASE.C:1717,1765). The current runtime instead combines
+  dungeon/time/position into a local seed and adds raw low bits to direction.
+  Audit persistent RNG ownership, retry/admission order and source event
+  context before changing this branch; a shifted-mask-only patch is not
+  sufficient. See `docs/parity/DM1_RAW_RNG_CONSUMER_AUDIT.md` for scan scope.
+
 - Extend the source-profile C37 levitation/pit checks to original platform
   captures and exact RNG evidence. Audit fall-damage Defense=255 semantics
   and moving-group aftermath separately; C25 immunity is not proof of those

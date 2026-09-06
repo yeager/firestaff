@@ -101,7 +101,8 @@ static const unsigned char AttackSize_ToExplosionAttack[3] = {
 /* ==========================================================
  *  Group A — RNG (F0730–F0732).
  *
- *  DM1 PC 3.4 LCG matching ReDMCSB CEDT002.C F0027 / BASE.C.
+ *  DM1 PC 3.4 LCG matching ReDMCSB BASE.C F0027:1688-1695.
+ *  CEDT002.C defines a different generator; it is not this game's oracle.
  *  Multiplier 0xBB40E62D, increment 11, extract (seed>>8)&0xFFFF.
  * ========================================================== */
 
