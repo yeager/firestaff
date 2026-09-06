@@ -665,14 +665,32 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].mana.maximum = 100;
                             /* PANEL.C F0349:1900 and 1925-1926: VI restores
                              * maximum/counter health, capped at maximum.
-                             * Wound/RNG recovery is a separate verification. */
+                             * PANEL.C:1901-1910 and BASE.C F0027:1688 onward
+                             * independently determine wounds and final RNG seed. */
                             state->world.party.champions[1].hp.current = before;
                             state->world.party.champions[1].hp.maximum = 1000;
-                            state->world.party.champions[1].wounds = 0;
+                            state->world.party.champions[1].wounds = restorative == 14 ? 63 : 0;
+                            uint32_t expectedSeed = state->world.masterRng.seed;
+                            unsigned short expectedWounds = state->world.party.champions[1].wounds;
+                            if (restorative == 14) {
+                                int iterations = raw[2] / 42;
+                                int tries = 10;
+                                if (iterations < 1) iterations = 1;
+                                do {
+                                    for (int i = 0; i < iterations; ++i) {
+                                        expectedSeed = expectedSeed * UINT32_C(0xBB40E62D) + 11u;
+                                        expectedWounds &= (unsigned short)(expectedSeed >> 8);
+                                    }
+                                    iterations = 1;
+                                } while (expectedWounds == 63 && --tries);
+                            }
                             if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, flask)) return 0;
                             (void)M11_GameView_HandlePointer(state, 60, 54, 1);
                             (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
                             raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
+                            if (state->world.masterRng.seed != expectedSeed || state->world.party.champions[1].wounds != expectedWounds) {
+                                fprintf(stderr, "FAIL: restorative wound RNG ordering\n"); return 0;
+                            }
                             if (!raw || (raw[3] & 127) != 20 ||
                                 state->world.party.champions[1].stamina.current != (restorative == 11 ? expected : before) ||
                                 state->world.party.champions[1].mana.current != (restorative == 13 ? expected : manaBefore) ||

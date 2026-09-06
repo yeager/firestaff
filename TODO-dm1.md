@@ -3,8 +3,8 @@
 - Investigate the intermittent no-output early exit of the French Atari
   original-media test observed on September 6; it did not recur in three
   isolated repetitions or the full rerun. Do not treat retries as a fix.
-- Verify VI wound healing with independently predicted RNG masks; the
-  original-flask spell/health route currently disables wounds explicitly.
+- Extend VI wound/RNG coverage to each individual wound, retry exhaustion,
+  and alternative UseItem input; all-six-wounds mouth consumption is covered.
 
 - Extend spell-created restorative potion evidence with full rune mouse
   input and independent RNG/XP receipts. MON/EE at all six power runes

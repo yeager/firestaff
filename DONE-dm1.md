@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed VI's premature generation of unused wound-retry random
+  values. Both callers now stop generating masks when F0349 would stop.
+  Original-flask VI consumption reproduces the old seed mismatch and now
+  matches independently computed wound bits and final RNG seed across six
+  powers and twenty Atari/Amiga cases. MON/EE do not advance RNG on drinking.
+
 - 2026-09-06: Added spell-created VI health recovery at all six power runes
   with wounds disabled, covering deficit and maximum clamp. The complete
   twenty-case MON/EE/VI matrix passes (360 cast/consume sequences). One

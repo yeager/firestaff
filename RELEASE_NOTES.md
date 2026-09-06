@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 healing potions no longer advance the shared random sequence for
+  wound-healing retries that the original game would not perform.
 - DM1 eating and drinking now request the original edition's swallow sound;
   attempts to drink from an empty waterskin remain silent.
 - DM1 no longer grants extra skill experience simply for drinking a potion

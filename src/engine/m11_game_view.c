@@ -7285,11 +7285,14 @@ static uint16_t m11_dm1_v1_next_16bit_random_pc34(struct RngState_Compat* rng)
 
 static int m11_dm1_v1_fill_vi_wound_random_masks_pc34(struct RngState_Compat* rng,
                                                        int potionPower,
+                                                       uint16_t wounds,
                                                        uint16_t* masks,
                                                        int maxMasks)
 {
     int firstTryMasks;
-    int totalMasks;
+    int totalMasks = 0;
+    int tries = 10;
+    uint16_t remaining = wounds;
     int i;
 
     if (!masks || maxMasks <= 0) {
@@ -7300,14 +7303,15 @@ static int m11_dm1_v1_fill_vi_wound_random_masks_pc34(struct RngState_Compat* rn
     if (firstTryMasks < 1) {
         firstTryMasks = 1;
     }
-    totalMasks = firstTryMasks + 9;
-    if (totalMasks > maxMasks) {
-        totalMasks = maxMasks;
-    }
-
-    for (i = 0; i < totalMasks; ++i) {
-        masks[i] = m11_dm1_v1_next_16bit_random_pc34(rng);
-    }
+    /* PANEL.C F0349:1901-1910 stops after the first changed wound set.
+     * Pre-generating every possible retry advances the shared RNG too far. */
+    do {
+        for (i = 0; i < firstTryMasks && totalMasks < maxMasks; ++i) {
+            masks[totalMasks] = m11_dm1_v1_next_16bit_random_pc34(rng);
+            remaining &= masks[totalMasks++];
+        }
+        firstTryMasks = 1;
+    } while (remaining == wounds && --tries && totalMasks < maxMasks);
     return totalMasks;
 }
 
@@ -23043,7 +23047,7 @@ static int m11_apply_source_potion_effect_pc34(
 
     if (potionType == M11_DM1_V1_POTION_VI_PC34 && champ->wounds) {
         woundMaskCount = m11_dm1_v1_fill_vi_wound_random_masks_pc34(
-            &state->world.masterRng, potionPower, woundMasks,
+            &state->world.masterRng, potionPower, champ->wounds, woundMasks,
             M11_DM1_V1_VI_WOUND_MASK_MAX_PC34);
     }
     if (!m11_v1_mouth_live_inventory_transaction(
@@ -55782,7 +55786,7 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
             viWoundMaskCount = m11_dm1_v1_fill_vi_wound_random_masks_pc34(
                 &state->world.masterRng,
                 potionPower,
-                viWoundMasks,
+                champ->wounds, viWoundMasks,
                 M11_DM1_V1_VI_WOUND_MASK_MAX_PC34);
         }
         if (!m11_v1_mouth_live_inventory_transaction(
