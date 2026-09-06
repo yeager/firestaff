@@ -159,6 +159,24 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 return 0;
                             }
                         }
+                        /* CLIKCHAM.C F0368:55 rejects a zero-health leader.
+                         * Controlled health setup does not fabricate media. */
+                        state->world.party.champions[1].hp.current = 0;
+                        for (int pointer = 0; pointer < 2; ++pointer) {
+                            if (pointer) {
+                                (void)M11_GameView_HandlePointer(state, 79, 2, 1);
+                                (void)M11_GameView_HandlePointerButtonRelease(state, 79, 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            } else {
+                                (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_CYCLE_CHAMPION);
+                            }
+                            if (state->world.party.activeChampionIndex != 0 ||
+                                state->world.party.champions[0].load != weight ||
+                                state->world.party.champions[1].load != otherWeight) {
+                                fprintf(stderr, "FAIL: dead leader admitted pointer=%d\n", pointer);
+                                return 0;
+                            }
+                        }
+                        state->world.party.champions[1].hp.current = 100;
                         (void)M11_GameView_HandlePointer(state, 64, 158, 1);
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) return 0;
                         fprintf(stderr, "legacy floor-drop load thing=%04x before=%d after=%u expected=0\n",

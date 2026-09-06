@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 keyboard/mouse leader selection rejects zero-health
+  champions; all five original Atari/Amiga load regressions pass.
+
 - 2026-09-06: Restored DM1 source-layout name-click leader selection;
   five original Atari/Amiga tests verify press/release weight ownership.
 

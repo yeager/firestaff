@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 no longer allows selecting a dead champion as party leader.
+
 - Clicking a champion name in DM1's original-layout HUD selects the leader
   rather than unexpectedly opening inventory.
 

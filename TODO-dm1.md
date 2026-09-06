@@ -1,5 +1,9 @@
 # Firestaff TODO — DM1
 
+- Verify leader/load transitions through actual death and resurrection,
+  including a party with no living champions; controlled zero-health
+  selection rejection does not cover the lifecycle.
+
 - Extend load verification beyond floor-drop and second-champion isolation:
   Modern composed-HUD leader changes, cross-champion exchanges, full and partially emptied
   open chests, mutation rollback and weight-changing consumption/spells.

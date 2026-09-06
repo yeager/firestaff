@@ -61168,7 +61168,9 @@ static int m11_cycle_active_champion(M11_GameViewState* state) {
     for (step = 1; step <= CHAMPION_MAX_PARTY; ++step) {
         int candidate = (start + step) % CHAMPION_MAX_PARTY;
         if (candidate < state->world.party.championCount &&
-            state->world.party.champions[candidate].present) {
+            state->world.party.champions[candidate].present &&
+            (!m11_is_dm1_source_kind(state->sourceKind) ||
+             state->world.party.champions[candidate].hp.current > 0)) {
             state->world.party.activeChampionIndex = candidate;
             /* ReDMCSB CLIKCHAM.C F0368:55-76 moves held-object load
              * from the previous leader to the new leader immediately. */
@@ -61193,6 +61195,12 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
     }
     if (championIndex >= state->world.party.championCount ||
         !state->world.party.champions[championIndex].present) {
+        return 0;
+    }
+    /* ReDMCSB CLIKCHAM.C F0368:55 rejects dead champions before
+     * changing either leader identity or held-object load ownership. */
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        state->world.party.champions[championIndex].hp.current <= 0) {
         return 0;
     }
     if (state->world.party.activeChampionIndex == championIndex) {

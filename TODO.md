@@ -1,5 +1,8 @@
 # Firestaff TODO — active cross-game work
 
+- Verify DM1 death/resurrection leader ownership with original-media
+  runtime sequences, beyond isolated leader-selection admission checks.
+
 - Extend DM1 carried-load verification to Modern composed-HUD leader switching, cross-champion
   exchanges and open-chest mutations; see TODO-dm1.md for remaining scope.
 

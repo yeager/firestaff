@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed DM1 leader selection admitting zero-health champions,
+  following CLIKCHAM.C F0368:55. Five original Atari/Amiga tests reproduced
+  the keyboard defect before the fix and now verify both keyboard and
+  mouse rejection without transferring held weight. Health is controlled
+  in RAM; this does not verify the complete death/resurrection lifecycle.
+
 - 2026-09-06: Fixed DM1 source-layout champion name clicks opening inventory
   instead of selecting the leader (CLIKCHAM.C F0367). Five Atari/Amiga
   original-media regressions now pass two-way mouse selection, checking
