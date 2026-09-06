@@ -63763,6 +63763,19 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
 
     dm1_v1_text_scroll_measure_layout(presentedText, &layout);
     centerX = M11_VIEWPORT_X + 162;
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        state->assetLoader.fileState &&
+        !state->assetLoader.legacyDm1 && !state->assetLoader.atariStDm1 &&
+        !state->assetLoader.csbAmiga && !state->assetLoader.csbFmtowns &&
+        !state->dm1FmtownsStartupReceiptValid) {
+        /* Original PC3.4 C696 C560=(0,101,84,35). COORD.C F0635/F0636
+         * (2052-2448) resolve the one-pixel anchor to (163,86).
+         * PANEL.C F0341:1009-1018 supplies the baseline; TEXT2.C
+         * F0644:130-143 subtracts four for the six-row raster top.
+         * Keep this separate from the older media's F0040 coordinates. */
+        centerX = M11_VIEWPORT_X + 163;
+        layout.firstLineY = 86 - ((7 * layout.lineCount - 2) / 2) + 6 - 4;
+    }
     for (i = 0; i < layout.storedLineCount; ++i) {
         m11_draw_v1_scroll_text_line(framebuffer,
                                      framebufferWidth,

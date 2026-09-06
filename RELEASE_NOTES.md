@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 PC3.4: corrected scroll text positioning in Original and Modern to
+  match the original layout data and font baseline.
+
 - DM1: scroll text now uses the original white six-pixel character cells,
   fixing visible differences on three original PC3.4 scrolls.
 

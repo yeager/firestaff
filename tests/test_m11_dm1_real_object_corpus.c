@@ -334,8 +334,14 @@ static int check_type(M11_GameViewState *state, int thingType,
                                     else if (code >= '{') code -= 96;
                                     for (int y = 0; y < M11_FONT_CHAR_VISIBLE_H; ++y)
                                         for (int x = 0; x < 6; ++x) {
-                                            int dx = 162 - length * 3 + character * 6 + x;
-                                            int dy = 33 + layout.firstLineY + line * DM1_V1_TEXT_LINE_HEIGHT + y;
+                                            /* Original I34E C696: C560=(0,101,84,35),
+                                             * C101=(0,100,152,89), C100=144x73.
+                                             * COORD.C F0636 resolves (163,86); PANEL.C
+                                             * F0341 and TEXT2.C F0644 give raster top
+                                             * 86-((7*n-2)/2)+6-4. Do not reuse the
+                                             * renderer's legacy baseline as the oracle. */
+                                            int dx = 163 - length * 3 + character * 6 + x;
+                                            int dy = 33 + 86 - ((7 * layout.lineCount - 2) / 2) + 6 - 4 + line * 7 + y;
                                             if (dx >= 0 && dx < 320 && dy >= 0 && dy < 200)
                                                 expected[dy * 320 + dx] = 15;
                                             if (dx >= 0 && dx < 320 && dy >= 0 && dy < 200 &&

@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Corrected DM1 PC3.4 scroll text position from original C696
+  and F0341/F0644 evidence. All 35 original scrolls now pass the corrected
+  raster oracle in Original/V2.1; other media coordinates are unchanged.
+
 - 2026-09-06: Fixed DM1 scroll cells to use the original six-column white
   background; three original-scroll raster failures are resolved and the
   complete PC3.4 corpus passes in Original/V2.1.

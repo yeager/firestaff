@@ -1,5 +1,17 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — PC3.4 scroll text anchor and baseline
+
+- Read the original archive's C696 layout in memory and verified its CRC
+  and GRAPHICS.DAT SHA-256 against the recorded source table.
+- C560 resolves to (163,86); F0341/F0644 place the first raster row at
+  89-floor(7*n/2). The old renderer was one pixel left and three pixels low.
+- The independent coordinate oracle failed on all 35 original scrolls
+  before the correction. Afterward the entire real-object corpus passes
+  in Original/V2.1, together with the scroll-material gate.
+- See `parity-evidence/dm1-pc34-scroll-text-position.md`. This proves the
+  source/data calculation, not emulator-capture or other-platform parity.
+
 ## 2026-09-06 — Source-owned scroll cell background
 
 - Corrected scroll rendering to copy six columns with white background,
