@@ -1,11 +1,10 @@
 # Firestaff TODO — DM1
 
-- Preserve actual prior-square history in the live M11 wander adapter.
-  `m11_game_view.c` currently passes groupX/groupY as activeGroup.priorMapX/Y
-  because its serialized AI record lacks those fields. This disables the
-  GROUP.C:2164-2171 return-to-prior-square admission rule despite passing
-  helper-level regressions. Add a runtime history owner without silently
-  changing save layout; verify consecutive real-runtime moves and RNG.
+- Extend the new shared prior-square history to full original-runtime
+  capture verification: compare consecutive live M11 wander moves and exact
+  RNG with original execution, staged map-transition failure and deferred
+  removal/re-admission. Unadmitted legacy worlds still lack source history.
+  Bounded C29/C37 two-move and lifecycle evidence is recorded in DONE-dm1.md.
 
 - Extend F0412 RNG verification to M11's prevalidated XP/gate handoff and
   original execution traces. M10 XP/practice extraction is now corrected to

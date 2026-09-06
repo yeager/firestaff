@@ -316,8 +316,10 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
     }
     if (movePlan->route == DM1_V1_GROUP_MOVE_ROUTE_RETRY_PC34) {
         plan.shouldRequeue = 1;
-        plan.nextEventMapX = movePlan->destinationMapX;
-        plan.nextEventMapY = movePlan->destinationMapY;
+        /* No physical move occurred: retain source ownership for both the
+         * active row and next event (GROUP.C F0209:2174-2185). */
+        plan.activeMapX = plan.nextEventMapX = sourceMapX;
+        plan.activeMapY = plan.nextEventMapY = sourceMapY;
     }
 
     /* ReDMCSB GROUP.C F0209 lines 1928-1931/2175-2178 plus

@@ -159,6 +159,8 @@ int main(int argc, char** argv)
             world.creatureAI[0].aspect[1] = 2;
             world.pc34ActiveGroupHomeMapX[0] = 17;
             world.pc34ActiveGroupHomeMapY[0] = 23;
+            world.pc34ActiveGroupHistory[0].valid = 1;
+            world.pc34ActiveGroupHistory[0].groupThingIndex = 0;
             if (burstCompact) {
                 /* A nonparticipating active-row sentinel verifies that
                  * retiring row zero preserves the neighboring owner. */
@@ -168,6 +170,10 @@ int main(int argc, char** argv)
                 world.pc34ActiveGroupDirections[1] = 0x55;
                 world.pc34ActiveGroupHomeMapX[1] = 31;
                 world.pc34ActiveGroupHomeMapY[1] = 47;
+                world.pc34ActiveGroupHistory[1].valid = 1;
+                world.pc34ActiveGroupHistory[1].groupThingIndex = 1;
+                world.pc34ActiveGroupHistory[1].priorMapX = 29;
+                world.pc34ActiveGroupHistory[1].priorMapY = 37;
             }
         }
         /* F0213 attack 80, original C15 worm fire resistance 9; F0191
@@ -277,16 +283,21 @@ int main(int argc, char** argv)
         if (burstAll) {
             CHECK(group.next == THING_NONE && readword(rawGroup) == THING_NONE);
             CHECK(world.creatureAICount == (burstCompact ? 1 : 0));
-            CHECK(world.pc34ActiveGroupSourceCount == (burstCompact ? 1 : 0));
+            CHECK(world.pc34ActiveGroupSourceCount == (burstCompact ? 2 : 1));
             CHECK(world.pc34ActiveGroupDirections[0] == (burstCompact ? 0x55 : 0));
             CHECK(world.pc34ActiveGroupHomeMapX[0] == (burstCompact ? 31 : 0));
             CHECK(world.pc34ActiveGroupHomeMapY[0] == (burstCompact ? 47 : 0));
+            CHECK(world.pc34ActiveGroupHistory[0].valid == (burstCompact ? 1 : 0));
             if (burstCompact) {
                 CHECK(world.creatureAI[0].reserved0 == 1);
                 CHECK(world.creatureAI[0].groupMapX == 9);
                 CHECK(world.pc34ActiveGroupDirections[1] == 0);
                 CHECK(world.pc34ActiveGroupHomeMapX[1] == 0);
                 CHECK(world.pc34ActiveGroupHomeMapY[1] == 0);
+                CHECK(world.pc34ActiveGroupHistory[0].groupThingIndex == 1);
+                CHECK(world.pc34ActiveGroupHistory[0].priorMapX == 29);
+                CHECK(world.pc34ActiveGroupHistory[0].priorMapY == 37);
+                CHECK(world.pc34ActiveGroupHistory[1].valid == 0);
             }
             CHECK((sft[0] & 0x3fff) != (THING_TYPE_GROUP << 10));
             if (burstFixed) {

@@ -1482,6 +1482,20 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Added nonserialized group prior-square/time history shared by M10/M11,
+  initialized at admission and source-row publication, retained through
+  compaction and cleared at retirement/staged map replacement. History reads
+  preserve unrelated context. Invalid coordinates fail before publication.
+  Re-admission replaces old history for the same C04. Two dispatched C29/C37
+  moves verify successive prior coordinates and timestamps in bounded RAM.
+- The two-move regression exposed two additional defects: physical movement
+  used creature facing instead of the chosen direction, and blocked retries
+  published the rejected destination as active/event position. Corrected
+  both. Preserved SourceCount as storage capacity, correcting the earlier
+  retirement patch's live-count interpretation. Teleporter/pit 19-case gate,
+  packed-direction runtime test, group bundle and 19 explosion/original-media
+  CTests pass. This is not full original-emulator movement timing parity.
+
 - Fixed active-row retirement to compact direction/home sidecars together
   with creatureAI, clear retired tail data and update the admitted source
   count. The last-group death regression failed before the fix. Added a

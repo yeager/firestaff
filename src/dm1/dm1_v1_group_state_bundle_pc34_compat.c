@@ -194,6 +194,7 @@ int dm1_v1_group_state_initialize_f0196_pc34(
     memcpy(world->pc34ActiveGroupHomeMapX, stagedHomeX, sizeof(stagedHomeX));
     memcpy(world->pc34ActiveGroupHomeMapY, stagedHomeY, sizeof(stagedHomeY));
     world->creatureAICount = 0;
+    memset(world->pc34ActiveGroupHistory, 0, sizeof(world->pc34ActiveGroupHistory));
     world->pc34ActiveGroupSourceCount = 0;
     if (outReceipt) {
         outReceipt->valid = 1;
@@ -292,6 +293,8 @@ int dm1_v1_group_state_apply_save_handoff_pc34(
                 world, src->groupThing, &groupIndex) ||
             src->cells < 0 || src->cells > 0xff ||
             src->directions < 0 || src->directions > 0xff ||
+            src->priorMapX < 0 || src->priorMapX > 0xff ||
+            src->priorMapY < 0 || src->priorMapY > 0xff ||
             src->homeMapX < 0 || src->homeMapX > 0xff ||
             src->homeMapY < 0 || src->homeMapY > 0xff) {
             return 0;
@@ -321,6 +324,16 @@ int dm1_v1_group_state_apply_save_handoff_pc34(
     memcpy(world->pc34ActiveGroupHomeMapX, stagedHomeX, sizeof(stagedHomeX));
     memcpy(world->pc34ActiveGroupHomeMapY, stagedHomeY, sizeof(stagedHomeY));
     world->creatureAICount = currentCount;
+    /* The validated source rows already contain authentic ACTIVE_GROUP
+     * history. Keep it outside the serialized CreatureAIState layout. */
+    memset(world->pc34ActiveGroupHistory, 0, sizeof(world->pc34ActiveGroupHistory));
+    for (index = 0; index < currentCount; ++index) {
+        world->pc34ActiveGroupHistory[index].valid = 1;
+        world->pc34ActiveGroupHistory[index].groupThingIndex = staged[index].reserved0;
+        world->pc34ActiveGroupHistory[index].priorMapX = (uint8_t)rows[index].priorMapX;
+        world->pc34ActiveGroupHistory[index].priorMapY = (uint8_t)rows[index].priorMapY;
+        world->pc34ActiveGroupHistory[index].lastMoveTime = (uint8_t)rows[index].lastMoveTime;
+    }
     world->pc34ActiveGroupSourceCount = sourceCapacity;
     if (outReceipt) {
         outReceipt->valid = 1;

@@ -21578,18 +21578,16 @@ static int m11_creature_try_wander(
     activeGroup.cells = (int)group->cells;
     activeGroup.homeMapX = groupX;
     activeGroup.homeMapY = groupY;
-    /* F0209 discourages an immediate step back onto the group's PRIOR
-     * square (and only then draws the extra RANDOM(4) that can override the
-     * refusal).  CreatureAIState_Compat is a size-pinned, serialized 18-int
-     * record with no prior-square field, so M11 cannot supply that history
-     * without a save-format change.  Passing the current square keeps the
-     * comparison well-defined and the RNG order stable — dest always differs
-     * from prior, so the source short-circuits before the extra draw — but it
-     * does leave the anti-backtracking rule inert.  This route therefore
-     * reproduces F0209's wander MOVEMENT, not its full path-history bias;
-     * closing that gap needs a prior-square field first. */
+    /* Legacy/unadmitted worlds have no authenticated history. Admitted
+     * groups use the shared runtime owner without changing the save layout.
+     * GROUP.C:1955-1956 computes elapsed movement time modulo one byte. */
     activeGroup.priorMapX = groupX;
     activeGroup.priorMapY = groupY;
+    if (F0209_DM1_GROUP_ReadHistory_Compat(
+            &state->world, THING_GET_INDEX(groupThing), &activeGroup)) {
+        ctx.ticksSinceLastMove = (int)((state->world.gameTick -
+            (uint32_t)activeGroup.lastMoveTime) & 0xffu);
+    }
 
     memset(&behavior, 0, sizeof(behavior));
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
@@ -21599,9 +21597,13 @@ static int m11_creature_try_wander(
     if (behavior.actionKind != DM1_ACTION_MOVE || behavior.moveDirection < 0) {
         return 0;
     }
-    return m11_creature_step_in_exact_direction(
+    if (!m11_creature_step_in_exact_direction(
         state, groupThing, groupX, groupY, behavior.moveDirection,
-        outNewX, outNewY);
+        outNewX, outNewY)) return 0;
+    /* GROUP.C:2176-2181 commits history only after the move succeeds. */
+    (void)F0209_DM1_GROUP_CommitMoveHistory_Compat(
+        &state->world, THING_GET_INDEX(groupThing), groupX, groupY);
+    return 1;
 }
 
 /* Visible-party movement has no precomputed direction plan.  F0201's
@@ -53207,6 +53209,10 @@ static void m11_schedule_creature_reaction_f0209(
         ? state->world.creatureAI[aiIndex].lastSeenPartyTick : 0;
     activeGroup.priorMapX = mapX;
     activeGroup.priorMapY = mapY;
+    if (F0209_DM1_GROUP_ReadHistory_Compat(&state->world, groupIndex, &activeGroup)) {
+        ctx.ticksSinceLastMove = (int)((state->world.gameTick -
+            (uint32_t)activeGroup.lastMoveTime) & 0xffu);
+    }
 
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &state->world.masterRng, &behavior)) {

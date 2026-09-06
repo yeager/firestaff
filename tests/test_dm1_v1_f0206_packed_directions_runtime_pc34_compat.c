@@ -340,6 +340,11 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
      * not a synthetic runtime fallback. */
     world.pc34ActiveGroupSourceCount = 1;
     world.pc34ActiveGroupDirections[0] = groups[0].direction;
+    world.pc34ActiveGroupHistory[0].valid = 1;
+    world.pc34ActiveGroupHistory[0].groupThingIndex = 0;
+    world.pc34ActiveGroupHistory[0].priorMapX = 2;
+    world.pc34ActiveGroupHistory[0].priorMapY = 1;
+    world.pc34ActiveGroupHistory[0].lastMoveTime = 0;
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
 
     memset(&reaction, 0, sizeof(reaction));
@@ -355,14 +360,36 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     memset(&result, 0, sizeof(result));
     if (!F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result)) return 1;
 
-    return expect(world.creatureAI[0].groupMapX == 1 &&
+    if (!(expect(world.creatureAI[0].groupMapX == 1 &&
                   world.creatureAI[0].groupMapY == 0,
                   "C29 moves the live group through F0267") &&
+           expect(world.pc34ActiveGroupHistory[0].priorMapX == 1 &&
+                  world.pc34ActiveGroupHistory[0].priorMapY == 1 &&
+                  world.pc34ActiveGroupHistory[0].lastMoveTime == 101,
+                  "successful F0209 move commits its source square and time") &&
            expect(groups[0].behavior == DM1_BEHAVIOR_APPROACH,
                   "C29 keeps the source-selected approach behavior") &&
            expect(squareFirstThings[0] == (unsigned short)(THING_TYPE_GROUP << 10) &&
                   squareFirstThings[1] == THING_ENDOFLIST,
-                  "C29 relinks source and destination square chains") ? 0 : 1;
+                  "C29 relinks source and destination square chains"))) return 1;
+
+    /* A subsequent C37 event must update history from the new source,
+     * not keep the original fixture coordinates. The only exit is south. */
+    memset(&world.timeline, 0, sizeof(world.timeline));
+    world.gameTick = world.timeline.nowTick = 201;
+    reaction.fireAtTick = 201;
+    reaction.mapY = 0;
+    reaction.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &reaction)) return 1;
+    memset(&result, 0, sizeof(result));
+    if (!F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result)) return 1;
+    return expect(world.creatureAI[0].groupMapX == 1 &&
+                  world.creatureAI[0].groupMapY == 1,
+                  "second F0209 event returns through the sole open exit") &&
+           expect(world.pc34ActiveGroupHistory[0].priorMapX == 1 &&
+                  world.pc34ActiveGroupHistory[0].priorMapY == 0 &&
+                  world.pc34ActiveGroupHistory[0].lastMoveTime == 201,
+                  "second physical move replaces prior square and time") ? 0 : 1;
 }
 
 /* GROUP.C F0209 ignores an off-party-map C29 before looking up the raw C04

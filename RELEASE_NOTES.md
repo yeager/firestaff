@@ -5883,3 +5883,6 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
   sample before selecting their new facing.
 - DM1: retain the correct direction and home-coordinate owner when active
   creature rows are compacted after group removal; clear retired side data.
+- DM1: track prior-square movement history outside the save layout, use the
+  chosen movement direction rather than creature facing, and keep blocked
+  move retries on their source square. Preserve active storage capacity.

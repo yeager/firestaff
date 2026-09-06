@@ -7083,6 +7083,43 @@ static int orch_find_active_group_state_index_compat(
     return -1;
 }
 
+int F0209_DM1_GROUP_ReadHistory_Compat(
+    const struct GameWorld_Compat* world, int groupIndex,
+    struct DM1ActiveGroup_Compat* outActiveGroup)
+{
+    int index;
+    const struct DM1GroupMoveHistory_Compat* history;
+    if (!world || !outActiveGroup || !world->things ||
+        groupIndex < 0 || groupIndex >= world->things->groupCount ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount > GAMEWORLD_CREATURE_AI_CAPACITY) return 0;
+    index = orch_find_active_group_state_index_compat(world, groupIndex);
+    if (index < 0) return 0;
+    history = &world->pc34ActiveGroupHistory[index];
+    if (!history->valid || history->groupThingIndex != groupIndex) return 0;
+    outActiveGroup->priorMapX = history->priorMapX;
+    outActiveGroup->priorMapY = history->priorMapY;
+    outActiveGroup->lastMoveTime = history->lastMoveTime;
+    return 1;
+}
+
+int F0209_DM1_GROUP_CommitMoveHistory_Compat(
+    struct GameWorld_Compat* world, int groupIndex,
+    int sourceMapX, int sourceMapY)
+{
+    struct DM1ActiveGroup_Compat active;
+    int index;
+    if (sourceMapX < 0 || sourceMapX > 255 ||
+        sourceMapY < 0 || sourceMapY > 255 ||
+        !F0209_DM1_GROUP_ReadHistory_Compat(world, groupIndex, &active)) return 0;
+    index = orch_find_active_group_state_index_compat(world, groupIndex);
+    /* GROUP.C F0209:2179-2181, only after the caller's F0267 success. */
+    world->pc34ActiveGroupHistory[index].priorMapX = (uint8_t)sourceMapX;
+    world->pc34ActiveGroupHistory[index].priorMapY = (uint8_t)sourceMapY;
+    world->pc34ActiveGroupHistory[index].lastMoveTime = (uint8_t)world->gameTick;
+    return 1;
+}
+
 static void orch_remove_active_group_state_compat(
     struct GameWorld_Compat* world,
     int groupIndex)
@@ -7091,7 +7128,6 @@ static void orch_remove_active_group_state_compat(
     int writeIndex = 0;
     int oldCount;
     int retainedCount;
-    int retainedSourceCount = 0;
     if (!world || groupIndex < 0) return;
     oldCount = world->creatureAICount;
     for (i = 0; i < oldCount; ++i) {
@@ -7100,23 +7136,26 @@ static void orch_remove_active_group_state_compat(
          * split runtime arrays aligned when its active row is compacted. */
         if (writeIndex != i) {
             world->creatureAI[writeIndex] = world->creatureAI[i];
+            world->pc34ActiveGroupHistory[writeIndex] = world->pc34ActiveGroupHistory[i];
             world->pc34ActiveGroupDirections[writeIndex] = world->pc34ActiveGroupDirections[i];
             world->pc34ActiveGroupHomeMapX[writeIndex] = world->pc34ActiveGroupHomeMapX[i];
             world->pc34ActiveGroupHomeMapY[writeIndex] = world->pc34ActiveGroupHomeMapY[i];
         }
-        if (i < world->pc34ActiveGroupSourceCount) ++retainedSourceCount;
         ++writeIndex;
     }
     retainedCount = writeIndex;
     while (writeIndex < oldCount) {
         memset(&world->creatureAI[writeIndex], 0, sizeof(world->creatureAI[writeIndex]));
+        memset(&world->pc34ActiveGroupHistory[writeIndex], 0,
+               sizeof(world->pc34ActiveGroupHistory[writeIndex]));
         world->pc34ActiveGroupDirections[writeIndex] = 0;
         world->pc34ActiveGroupHomeMapX[writeIndex] = 0;
         world->pc34ActiveGroupHomeMapY[writeIndex] = 0;
         ++writeIndex;
     }
     world->creatureAICount = retainedCount;
-    world->pc34ActiveGroupSourceCount = retainedSourceCount;
+    /* SourceCount is the admitted storage capacity, not the live count.
+     * Retirement must leave free rows available for subsequent admission. */
 }
 
 static int orch_group_creature_cell_compat(
@@ -9170,6 +9209,11 @@ static void orch_schedule_group_reaction_compat(
         ? world->creatureAI[activeIndex].lastSeenPartyTick : 0;
     activeGroup.priorMapX = action->targetMapX;
     activeGroup.priorMapY = action->targetMapY;
+    if (F0209_DM1_GROUP_ReadHistory_Compat(world, groupIndex, &activeGroup)) {
+        /* GROUP.C:1955-1957 subtracts byte-shaped LastMoveTime. */
+        ctx.ticksSinceLastMove = (int)(uint8_t)(
+            (uint8_t)world->gameTick - (uint8_t)activeGroup.lastMoveTime);
+    }
 
     /* ReDMCSB GROUP.C:F0209 creates a concrete C29-C31 reaction from the
      * source event kind.  Projectile impacts pass CM2; F0241 door hazards
@@ -11370,6 +11414,13 @@ static int orch_add_generated_group_active_state_compat(
     ai->lastSeenPartyMapY = plan.activeLastSeenPartyMapY;
     ai->lastSeenPartyTick = plan.activeLastSeenPartyTick;
     ai->reserved0 = plan.activeReservedGroupIndex;
+    /* GROUP.C F0183:436-438: admission resets history, including C04 reuse. */
+    world->pc34ActiveGroupHistory[world->creatureAICount - 1].valid = 1;
+    world->pc34ActiveGroupHistory[world->creatureAICount - 1].groupThingIndex = groupIndex;
+    world->pc34ActiveGroupHistory[world->creatureAICount - 1].priorMapX = (uint8_t)mapX;
+    world->pc34ActiveGroupHistory[world->creatureAICount - 1].priorMapY = (uint8_t)mapY;
+    world->pc34ActiveGroupHistory[world->creatureAICount - 1].lastMoveTime =
+        (uint8_t)(world->gameTick - 127u);
     return 1;
 }
 
@@ -11584,6 +11635,8 @@ static int orch_transition_party_map_f0194_f0195_compat(
         activeGroups[i].targetMapY = ai->lastSeenPartyMapY;
         activeGroups[i].priorMapX = ai->groupMapX;
         activeGroups[i].priorMapY = ai->groupMapY;
+        (void)F0209_DM1_GROUP_ReadHistory_Compat(
+            world, ai->reserved0, &activeGroups[i]);
         activeGroups[i].homeMapX = world->pc34ActiveGroupHomeMapX[i];
         activeGroups[i].homeMapY = world->pc34ActiveGroupHomeMapY[i];
         memcpy(activeGroups[i].aspect, ai->aspect, sizeof(ai->aspect));
@@ -11605,6 +11658,7 @@ static int orch_transition_party_map_f0194_f0195_compat(
         staged.creatureAI[i].reserved0 = -1;
     }
     staged.creatureAICount = 0;
+    memset(staged.pc34ActiveGroupHistory, 0, sizeof(staged.pc34ActiveGroupHistory));
     staged.pc34ActiveGroupSourceCount = 0;
     memset(staged.pc34ActiveGroupDirections, 0,
            sizeof(staged.pc34ActiveGroupDirections));
@@ -11629,6 +11683,8 @@ static int orch_transition_party_map_f0194_f0195_compat(
     world->party.mapIndex = staged.party.mapIndex;
     world->newPartyMapIndex = staged.newPartyMapIndex;
     memcpy(world->creatureAI, staged.creatureAI, sizeof(world->creatureAI));
+    memcpy(world->pc34ActiveGroupHistory, staged.pc34ActiveGroupHistory,
+           sizeof(world->pc34ActiveGroupHistory));
     world->creatureAICount = staged.creatureAICount;
     memcpy(world->pc34ActiveGroupDirections, staged.pc34ActiveGroupDirections,
            sizeof(world->pc34ActiveGroupDirections));
@@ -12084,7 +12140,8 @@ static int orch_f0209_off_party_map_event_is_admitted_compat(int eventType)
 static int orch_apply_creature_tick_group_move_f0267_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
-    struct TickResult_Compat* result)
+    struct TickResult_Compat* result,
+    int selectedMoveDirection)
 {
     int groupIndex;
     int activeIndex;
@@ -12108,7 +12165,10 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
     if (activeIndex < 0) return 1;
     group = &world->things->groups[groupIndex];
-    direction = world->creatureAI[activeIndex].groupDirection & 3;
+    /* GROUP.C F0209:2162-2176 moves along the selected candidate, not
+     * the packed creature facing subsequently published by F0206. */
+    direction = selectedMoveDirection >= 0 && selectedMoveDirection < 4
+        ? selectedMoveDirection : (world->creatureAI[activeIndex].groupDirection & 3);
     memset(&movePlan, 0, sizeof(movePlan));
     if (!DM1_V1_PlanOrdinaryGroupMoveF0267Pc34Compat(
             ev->mapX, ev->mapY, direction, 1, 0, 0,
@@ -12211,6 +12271,13 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     world->creatureAI[activeIndex].groupMapY = applyPlan.activeMapY;
     world->creatureAI[activeIndex].groupCells = applyPlan.activeCells;
 
+    if (applyPlan.shouldLinkDestination &&
+        applyPlan.activeMapIndex == ev->mapIndex &&
+        (applyPlan.activeMapX != ev->mapX || applyPlan.activeMapY != ev->mapY)) {
+        (void)F0209_DM1_GROUP_CommitMoveHistory_Compat(
+            world, groupIndex, ev->mapX, ev->mapY);
+    }
+
     emit(result, EMIT_CREATURE_MOVED,
          groupIndex, (int32_t)group->creatureType,
          applyPlan.activeMapX, applyPlan.activeMapY);
@@ -12236,7 +12303,7 @@ static int orch_handle_creature_tick_group_move_compat(
         ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
         return orch_handle_creature_reaction_event_compat(world, ev, result);
     }
-    return orch_apply_creature_tick_group_move_f0267_compat(world, ev, result);
+    return orch_apply_creature_tick_group_move_f0267_compat(world, ev, result, -1);
 }
 
 static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
@@ -12336,7 +12403,8 @@ static int orch_apply_f0209_reaction_move_f0267_compat(
     /* GROUP.C F0209 reaches MOVESENS.C F0267 only after its authenticated
      * C29-C41 direction decision.  Do not manufacture a group move when
      * the physical source owner refuses the loaded C04/SFT state. */
-    if (!orch_apply_creature_tick_group_move_f0267_compat(world, ev, NULL)) {
+    if (!orch_apply_creature_tick_group_move_f0267_compat(
+            world, ev, NULL, behavior->moveDirection)) {
         return 0;
     }
     if (outReactionMoveHandled) *outReactionMoveHandled = 1;
@@ -12743,6 +12811,7 @@ static int orch_handle_creature_reaction_event_compat(
     activeGroup.targetMapY = ai->lastSeenPartyMapY;
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
+    (void)F0209_DM1_GROUP_ReadHistory_Compat(world, groupIndex, &activeGroup);
     memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
 
     ctx.distanceToVisibleParty =
@@ -12788,6 +12857,10 @@ static int orch_handle_creature_reaction_event_compat(
     }
     ctx.ticksSinceLastMove = (int)world->gameTick - ai->lastSeenPartyTick;
     if (ctx.ticksSinceLastMove < 0) ctx.ticksSinceLastMove = 0;
+    if (F0209_DM1_GROUP_ReadHistory_Compat(world, groupIndex, &activeGroup)) {
+        ctx.ticksSinceLastMove = (int)((world->gameTick -
+            (uint32_t)activeGroup.lastMoveTime) & 0xffu);
+    }
     ctx.currentTickLow = (int)world->gameTick;
     ctx.eventType = ev->aux2;
     ctx.eventTicks = (ev->aux4 & 0x100) ? ev->aux3 : (int)ev->fireAtTick;
@@ -13029,7 +13102,7 @@ static int orch_handle_creature_reaction_event_compat(
          * GROUP.Direction is only its low two-bit F0184-compatible view. */
         group->direction = (unsigned char)(ai->groupDirection & 0x03);
         return orch_apply_creature_tick_group_move_f0267_compat(
-            world, ev, result);
+            world, ev, result, behavior.moveDirection);
     }
 
 schedule_next:

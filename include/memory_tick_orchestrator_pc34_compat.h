@@ -321,6 +321,15 @@ struct GameWorld_Compat {
     uint64_t                            pc34M10ProjectileDispatchMask;
     uint32_t                            pc34M10ProjectileDispatchTick;
     struct LifecycleState_Compat       lifecycle;          /* Phase 18 */
+    /* Transient ACTIVE_GROUP history; never changes the serialized AI row.
+     * GROUP.C F0183:436-438 initializes it; F0209:2179-2181 updates it. */
+    struct DM1GroupMoveHistory_Compat {
+        int valid;
+        int groupThingIndex;
+        uint8_t priorMapX;
+        uint8_t priorMapY;
+        uint8_t lastMoveTime;
+    } pc34ActiveGroupHistory[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupDirections[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapX[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapY[GAMEWORLD_CREATURE_AI_CAPACITY];
@@ -395,6 +404,15 @@ int F0882J_WORLD_InitFromDungeonDatBufferFmTownsJp_Compat(
     struct GameWorld_Compat* outWorld);
 
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world);
+
+/* Read only history belonging to a live C04 owner. Commit is reserved for
+ * callers that proved a successful F0209 move (not generic relocation). */
+int F0209_DM1_GROUP_ReadHistory_Compat(
+    const struct GameWorld_Compat* world, int groupIndex,
+    struct DM1ActiveGroup_Compat* outActiveGroup);
+int F0209_DM1_GROUP_CommitMoveHistory_Compat(
+    struct GameWorld_Compat* world, int groupIndex,
+    int sourceMapX, int sourceMapY);
 
 int F0880b_WORLD_Clone_Compat(
     const struct GameWorld_Compat* src,

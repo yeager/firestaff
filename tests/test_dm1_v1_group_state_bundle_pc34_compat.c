@@ -1,4 +1,5 @@
 #include "dm1_v1_group_state_bundle_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -83,6 +84,32 @@ int main(void)
               world.creatureAI[1].reserved0 == 1,
           "F0435 retains cells, packed directions, owner, and home coordinates");
 
+    {
+        struct DM1ActiveGroup_Compat history = {0};
+        history.directions = 0x96;
+        CHECK(F0209_DM1_GROUP_ReadHistory_Compat(&world, 0, &history),
+              "runtime history is published with validated active rows");
+        CHECK(history.priorMapX == 2 && history.priorMapY == 4 &&
+                  history.lastMoveTime == 71 && history.directions == 0x96,
+              "history read preserves unrelated caller context");
+        world.gameTick = 300;
+        CHECK(F0209_DM1_GROUP_CommitMoveHistory_Compat(&world, 0, 9, 11),
+              "confirmed move can publish prior coordinates");
+        CHECK(F0209_DM1_GROUP_ReadHistory_Compat(&world, 0, &history) &&
+                  history.priorMapX == 9 && history.priorMapY == 11 &&
+                  (history.lastMoveTime & 255) == 44,
+              "runtime history follows successful move and byte-shaped time");
+        CHECK(!F0209_DM1_GROUP_CommitMoveHistory_Compat(&world, 999, 1, 2),
+              "unadmitted group cannot acquire another owner's history");
+        rows[0].priorMapX = 256;
+        CHECK(!dm1_v1_group_state_apply_save_handoff_pc34(&world, rows, 2, 4, &receipt),
+              "out-of-byte history fails before publication");
+        CHECK(F0209_DM1_GROUP_ReadHistory_Compat(&world, 0, &history) &&
+                  history.priorMapX == 9 && history.priorMapY == 11,
+              "failed re-admission preserves committed history");
+        rows[0].priorMapX = 2;
+    }
+
     /* Operator-owned DOSBox-X PC34 saves contain raw GROUP-table indexes in
      * ACTIVE_GROUP.GroupThingIndex. The historical encoded-THING fixture
      * above remains useful, but must not be the only accepted wire form. */
@@ -94,6 +121,13 @@ int main(void)
     CHECK(world.creatureAI[0].reserved0 == 0 &&
               world.creatureAI[1].reserved0 == 1,
           "raw PC34 active-group indexes resolve against the real GROUP table");
+    {
+        struct DM1ActiveGroup_Compat history = {0};
+        CHECK(F0209_DM1_GROUP_ReadHistory_Compat(&world, 0, &history) &&
+                  history.priorMapX == 2 && history.priorMapY == 4 &&
+                  history.lastMoveTime == 71,
+              "re-admission replaces previous runtime history for the same C04");
+    }
 
     rows[0].groupThing = make_group_thing(0);
     rows[1].groupThing = make_group_thing(1);
