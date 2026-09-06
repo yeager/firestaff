@@ -16831,7 +16831,8 @@ static int m11_apply_tick(M11_GameViewState* state,
 static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
                                              uint8_t command,
                                              const char* actionLabel,
-                                             int actionIndex);
+                                             int actionIndex,
+                                             int actingChampionIndex);
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state);
 static int m11_start_v1_mouth_animation(M11_GameViewState* state,
                                         const DM1ConsumableResultPc34* result);
@@ -30684,7 +30685,7 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
 static int m11_apply_tick(M11_GameViewState* state,
                           uint8_t command,
                           const char* actionLabel) {
-    return m11_apply_tick_with_attack_action(state, command, actionLabel, -1);
+    return m11_apply_tick_with_attack_action(state, command, actionLabel, -1, -1);
 }
 
 static int m11_last_attack_tick_observed_damage(
@@ -30790,7 +30791,8 @@ static void m11_restore_candidate_attack_marker_after_tick(
 static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
                                              uint8_t command,
                                              const char* actionLabel,
-                                             int actionIndex) {
+                                             int actionIndex,
+                                             int actingChampionIndex) {
     struct TickInput_Compat input;
     struct PartyState_Compat beforeParty;
     uint32_t beforeTick;
@@ -30810,10 +30812,10 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
     if (command == CMD_ATTACK) {
         DM1_MeleeActionTickInputPc34 meleeIn;
         DM1_MeleeActionTickPlanPc34 meleePlan;
-        int championIndex =
-            state->world.party.activeChampionIndex >= 0
+        int championIndex = actingChampionIndex >= 0 ? actingChampionIndex :
+            (state->world.party.activeChampionIndex >= 0
                 ? state->world.party.activeChampionIndex
-                : 0;
+                : 0);
         memset(&meleeIn, 0, sizeof(meleeIn));
         memset(&meleePlan, 0, sizeof(meleePlan));
         meleeIn.championIndex = championIndex;
@@ -54948,10 +54950,9 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
      * still emit the log line and advance time so the menu
      * closure feels consistent with the rest of the UI.
      *
-     * Either way the acting champion is selected as leader for
-     * the closing frame — DM1 updates the leader portrait to the
-     * acting champion while the action animation plays. */
-    state->world.party.activeChampionIndex = championIndex;
+     * MENU.C F0391:803-841 passes G0506's actor to F0407 without
+     * changing the leader. Carry the attacker explicitly in TickInput's
+     * commandArg1; never repurpose leader/hand ownership, even temporarily. */
     if (!m11_apply_action_begin_plan_f0407(
             state, championIndex, chosen, &beginPlan)) {
         M11_GameView_ClearActingChampion(state);
@@ -54998,7 +54999,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
          * F0407 action index.  M10 owns front-square group/creature
          * selection through its ReDMCSB F0177/F0229 auto-target bridge. */
         (void)m11_apply_tick_with_attack_action(
-            state, CMD_ATTACK, "ATTACK", (int)chosen);
+            state, CMD_ATTACK, "ATTACK", (int)chosen, championIndex);
         (void)m11_last_attack_tick_observed_damage(
             state, &observedDamage, &observedCombatOutcome);
         /* ReDMCSB MENU.C F0407 lines 1308-1317 treats the closed-door

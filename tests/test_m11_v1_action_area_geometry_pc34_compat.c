@@ -85,16 +85,17 @@ static void test_action_spell_m11_blit_zone_ownership(void)
                dm1_v1_action_spell_m11_blit_plan_build_pc34(
                    DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34, 0,
                    &plan));
-    check_int("spell blit count", plan.blitCount, 3);
+    /* I34 CASTER.C:90 and COORD.C F0635 bottom-anchor C009 in C013.
+     * C011 strip copies belong to earlier editions, not DOS I34. */
+    check_int("spell blit count", plan.blitCount, 1);
+    check_int("spell source graphic", plan.blits[0].graphicId, 9);
     check_int("spell C009 zone", plan.blits[0].zoneId, 13);
     check_int("spell C009 destination x", plan.blits[0].destinationX, 233);
-    check_int("spell C009 destination y", plan.blits[0].destinationY, 42);
-    check_int("spell C011 available zone", plan.blits[1].zoneId, 245);
-    check_int("spell C011 available source y", plan.blits[1].sourceY, 13);
-    check_int("spell C011 available destination y", plan.blits[1].destinationY, 50);
-    check_int("spell C011 selected zone", plan.blits[2].zoneId, 261);
-    check_int("spell C011 selected y", plan.blits[2].sourceY, 26);
-    check_int("spell C011 selected destination y", plan.blits[2].destinationY, 62);
+    check_int("spell C009 destination y", plan.blits[0].destinationY, 50);
+    check_int("spell C009 source x", plan.blits[0].sourceX, 0);
+    check_int("spell C009 source y", plan.blits[0].sourceY, 0);
+    check_int("spell C009 width", plan.blits[0].sourceW, 87);
+    check_int("spell C009 height", plan.blits[0].sourceH, 25);
     check_int("spell clear x", plan.clearX, 224);
 }
 
@@ -168,7 +169,7 @@ static void test_spell_area_boxes_stay_source_locked(void)
     check_int("spell area zone id", M11_GameView_GetV1SpellAreaZoneId(), 13);
     check_true("spell area", M11_GameView_GetV1SpellAreaZone(&x, &y, &w, &h));
     check_int("spell area x", x, 233);
-    check_int("spell area y", y, 42);
+    check_int("spell bitmap y (not parent click area)", y, 50);
     check_int("spell area w", w, 87);
     check_int("spell area h", h, 25);
     check_int("spell bg graphic", M11_GameView_GetV1SpellAreaBackgroundGraphicId(), 9);
@@ -245,11 +246,14 @@ static void test_action_pointer_routes_consume_source_matrix(void)
     check_true("action list is source-resolved",
                M11_GameView_GetActingActionIndices(&state, actions));
     check_true("first source action exists", actions[0] != 0xffu);
-    check_int("C112 pass stays within source action menu",
+    check_int("C112 pass closes source action menu",
               M11_GameView_HandlePointer(&state, 285, 77, 1),
               M11_GAME_INPUT_REDRAW);
-    check_int("C112 does not synthesize action or clear menu",
-              (int)state.actingChampionOrdinal, 1);
+    /* CLIKMENU.C F0371:529-539 calls F0391(-1), then F0388 clears
+     * the actor. Reopen explicitly before testing the active-menu gap. */
+    check_int("C112 clears actor", (int)state.actingChampionOrdinal, 0);
+    check_true("reopen action menu for gap test",
+               M11_GameView_SetActingChampion(&state, 0));
     /* y=97 is the one-pixel gap between C113 and C114, but remains inside
      * the old broad icon-cell rectangle.  It must not fall through to C116. */
     check_int("action-row gap does not hit icon fallback",

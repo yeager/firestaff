@@ -331,6 +331,53 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
             puts("PASS: original JDM movement arrow mouse rotation in all three modes");
         }
     }
+    {
+        /* Exercise real empty-hand actions in the loaded dungeon, without
+         * inventing a target or assuming attack success. F0407 records the
+         * chosen action even when the authentic front square is empty. */
+        for(mode=0;mode<3;++mode) for(int row=0;row<3;++row) {
+            unsigned char actions[3];
+            const int rowY=(yOffset?94:86)+row*(yOffset?21:12);
+            int staminaBefore;
+            state->presentationMode=modes[mode];
+            state->world.party.activeChampionIndex=0;
+            state->inventoryPanelActive=0;
+            state->resting=0;
+            for(i=0;i<4;++i) {
+                state->world.party.champions[i].hp.current=100;
+                state->world.party.champions[i].stamina.current=1000;
+                state->world.party.champions[i].stamina.maximum=1000;
+                state->actionDisabledTicks[i]=0;
+            }
+            state->world.party.champions[3].actionIndex=255;
+            M11_GameView_ClearActingChampion(state);
+            LATE_SPELL_CHECK(M11_GameView_SetActingChampion(state,3));
+            LATE_SPELL_CHECK(M11_GameView_GetActingActionIndices(state,actions));
+            LATE_SPELL_CHECK(actions[0]==6 && actions[1]==7 && actions[2]==8);
+            staminaBefore=state->world.party.champions[3].stamina.current;
+            /* The one-pixel gap beneath each source row is not an action. */
+            (void)M11_GameView_HandlePointer(state,250,rowY+(yOffset?20:11),1);
+            (void)M11_GameView_HandlePointer(state,250,rowY+(yOffset?20:11),0);
+            LATE_SPELL_CHECK(state->actingChampionOrdinal==4 &&
+                             state->world.party.champions[3].actionIndex==255 &&
+                             state->world.party.champions[3].stamina.current==staminaBefore);
+            (void)M11_GameView_HandlePointer(state,250,rowY+5,1);
+            (void)M11_GameView_HandlePointer(state,250,rowY+5,0);
+            fprintf(stderr,"FMT action pointer lang%s mode%d row%d y%d actor%u index%u expected%u leader%d stamina%d->%u cooldown%u active%d tick%u\n",
+                yOffset?"JP":"EN",mode,row,rowY+5,state->actingChampionOrdinal,
+                state->world.party.champions[3].actionIndex,actions[row],
+                state->world.party.activeChampionIndex,staminaBefore,
+                (unsigned int)state->world.party.champions[3].stamina.current,
+                (unsigned int)state->actionDisabledTicks[3],state->active,
+                (unsigned int)state->world.gameTick);
+            LATE_SPELL_CHECK(state->actingChampionOrdinal==0 &&
+                             state->world.party.champions[3].actionIndex==actions[row] &&
+                             state->world.party.activeChampionIndex==0);
+            LATE_SPELL_CHECK(state->world.party.champions[3].stamina.current<staminaBefore);
+            M11_GameView_ClearActingChampion(state);
+        }
+        puts("PASS: original late-edition empty-hand action rows and gaps, all three modes");
+    }
     puts("PASS authentic late spell panel: 24 pixel cases and three mode-specific mouse input cases");
     return 1;
 }

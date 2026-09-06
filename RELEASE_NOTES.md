@@ -1,5 +1,8 @@
 # Unreleased
 
+- Performing an action no longer replaces the party leader with its actor;
+  melee ticks receive the attacker explicitly.
+
 - FM Towns active action menus now use original C010 artwork instead of
   a flat-colour substitute and no longer draw idle icons over that artwork.
   Action-row and Pass clicks use the original language-specific regions.

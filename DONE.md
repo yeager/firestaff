@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Action dispatch passes its attacker explicitly in TickInput
+  instead of changing the party leader. Original-media DOS/F20EN/F20JP
+  PUNCH/KICK/WAR CRY row/gap tests preserve leader ownership across three
+  modes; spell/XP regressions pass. Reconciled the old geometry test with
+  I34's single C009 and source Pass behavior; it reopens the menu before
+  testing row gaps. Expanded selection passes4/4,no skips(13.58 seconds).
+
 - 2026-09-06: FM Towns active-menu pointers use EN/JP C098 and C082–C084
   region geometry rather than seven-pixel font rows. Original-media Pass
   tests cover both corners in three modes and JP's left-outside point,

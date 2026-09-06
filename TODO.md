@@ -1,5 +1,8 @@
 # Firestaff TODO — active cross-game work
 
+- Extend actor/leader regression coverage beyond empty-hand actions to
+  weapon/target/damage ownership, including actions by a non-leader.
+
 - Complete FM Towns active-menu text and row-action/boundary parity. Extend C010
   tests beyond the right border to full panels with one/two/three actions.
   Retire obsolete solid-fill shim/tests and misleading colour-selector
