@@ -1,5 +1,15 @@
 # Firestaff TODO — active cross-game work
 
+- Bind the legacy M11 C15 runtime-capture regression to available original
+  archives and report missing media as CTest skip, not exit-zero success.
+
+- Correct projectile-art weapon orientation against DUNVIEW.C F0115:
+  perpendicular type-0 horizontal flip uses view cells 0/3 (:5755), parallel
+  vertical flip uses view cell < 2 (:5791), SIDE uses view lane/cell and
+  parallel type-0 bitmap selection also depends on map parity. Existing
+  direction-only helpers do not model all these inputs. Add authentic
+  projectile-art orientation coverage; object-art evidence is not a substitute.
+
 - Extend DM1 thrown-object capture coverage to the separate Hall of Champions
   renderer, all visible flight cells, direction-specific projectile-art
   variants and natural-play emulator comparisons.

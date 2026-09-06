@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 live projectile presentation now passes camera-relative
+  cells to C2900, packed F0115 ordering and flip selection, not absolute
+  dungeon cells. The original DOS throw regression exposed the wrong-side
+  render, then passed all 12 D0C camera-cell/presentation combinations
+  (Original, V2.0, V2.1): exact source X/Y for front cells and no projectile
+  receipt for back cells. Party/camera setup remains RAM-only; original
+  object records and graphics are unchanged. Production build and focused
+  throw/presentation/render checks pass. The legacy C15 test lacks local
+  media binding and is not counted as additional runtime evidence.
+
 - 2026-09-06: Fixed DM1 PC34 thrown-object material admission for fresh live
   projectiles without fabricating a saved-C14 receipt. Original raw object
   records and mounted decoder bitmaps remain required; explicit saved

@@ -37778,7 +37778,9 @@ static int m11_build_dm1_viewport_materialization_decision(
                 material.uses_object_aspect;
             cell->projectileObjectAspectIndices[renderIndex] = material.aspect_index;
             cell->projectileRelDirs[renderIndex] = projectileRelDir;
-            cell->projectileCells[renderIndex] = projectileCell;
+            /* DUNVIEW.C F0115:5635-5900 indexes C2900 and packed draw
+             * order by view cell, not the absolute C14 dungeon cell. */
+            cell->projectileCells[renderIndex] = sourceCell;
             cell->projectileFlipFlags[renderIndex] = 0;
             if (!material.uses_object_aspect) {
                 cell->projectileGfxIndices[renderIndex] =
@@ -37787,7 +37789,7 @@ static int m11_build_dm1_viewport_materialization_decision(
                 cell->projectileFlipFlags[renderIndex] =
                     dm1_v1_projectile_flip_flags(material.aspect_index,
                                                   projectileRelDir,
-                                                  projectileCell,
+                                                  sourceCell,
                                                   cell->mapX, cell->mapY);
             }
             (void)sourceX;

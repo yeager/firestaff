@@ -323,6 +323,47 @@ int main(void)
         return 1;
     }
 
+    /* DUNVIEW.C G0218/C2900 row 11 (D0C): (66,47), (158,47),
+     * (0,0), (0,0). Rotate only the RAM camera around the authentic live
+     * object. Both visible cells must use source coordinates; neither back
+     * cell may borrow another square's row. Presentation cannot change it. */
+    {
+        int mode, relativeCell;
+        for (mode = M12_PRESENTATION_V1_ORIGINAL;
+             mode <= M12_PRESENTATION_V21_UPSCALED; ++mode) {
+            for (relativeCell = 0; relativeCell < 4; ++relativeCell) {
+                state.presentationMode = mode;
+                state.world.party.direction = (projectile->cell - relativeCell) & 3;
+                ++state.world.gameTick;
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&state, framebuffer, 320, 200);
+                memset(&receipt, 0, sizeof(receipt));
+                M11_GameView_GetDm1ProjectileHostPresentationReceipt(&receipt);
+                if (relativeCell >= 2) {
+                    if (receipt.valid) {
+                        fprintf(stderr, "D0C back cell rendered: mode=%d cell=%d\n",
+                                mode, relativeCell);
+                        M11_GameView_Shutdown(&state);
+                        return 1;
+                    }
+                } else if (!receipt.valid || !receipt.objectMaterial ||
+                           receipt.graphicsId != material.graphic_index ||
+                           receipt.sourceZoneRow != 11 ||
+                           receipt.destinationY + receipt.destinationH - 1 != 33 + 47 ||
+                           receipt.destinationX + receipt.destinationW / 2 !=
+                               (relativeCell == 0 ? 66 : 158)) {
+                    fprintf(stderr, "D0C source position mismatch: mode=%d cell=%d valid=%d object=%d row=%d x=%d w=%d\n",
+                            mode, relativeCell, receipt.valid, receipt.objectMaterial,
+                            receipt.sourceZoneRow, receipt.destinationX, receipt.destinationW);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
+            }
+        }
+        state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+        state.world.party.direction = projectile->cell & 3;
+    }
+
     /* F0142/F0115 may not revive the decoded WEAPON mirror after the raw
      * F0156 source record drifts.  The projectile remains live, but its
      * object material is fail-closed for this frame. */

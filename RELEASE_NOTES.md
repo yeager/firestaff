@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 projectile placement and view-cell ordering now follow camera rotation
+  instead of using absolute dungeon cells. Original, V2.0 and V2.1 share
+  the corrected source-coordinate handoff.
+
 - DM1 PC34 freshly thrown objects can use their original decoded graphics
   without a save-import receipt. Corrected the party-square object coordinate
   lookup, which previously selected a distant left-square row.
