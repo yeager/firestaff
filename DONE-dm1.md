@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- Post-attack-entry integration recheck at runtime revision 537ca520c:
+  rebuilt the public executable and passed the authentic English DOS ZIP
+  CLI/menu test in Original, Filtered and Upscaled modes, including native
+  movement and original IMG3 graphics hash binding. The test explicitly
+  disables external archive tools. Also rebuilt/passed F0182 stop-attacking,
+  group-map lifecycle, LoS move rollback and C38 projectile-aftermath tests.
+  These bounded checks add startup/regression evidence; they do not prove
+  campaign, rendered-pixel, audio or original-emulator timing parity.
+
 - Integrated C31 attack entry with staged F0181 removal of the source
   square's C29-C41 events (GROUP.C:2007-2013,340-371). The queue-removal
   primitive is shared with existing world callers without staging an entire
