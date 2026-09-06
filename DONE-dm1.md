@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Rebuilt the public firestaff executable at 6224744ad and reran
+  `test_dm1_v1_dos_en_archive_cli_boot.sh` against the authentic English DOS
+  distribution ZIP: passed CLI/menu launch in Original, Filtered and Upscaled
+  modes, native IMG3 fingerprint binding and the expected first dungeon move.
+  External archive tools were disabled; the archive stayed in memory. These
+  headless boot/input checks do not prove visual, audio or full gameplay parity.
+
 - Expanded post-admission regression run: F0195 add-all, group-state bundle,
   group-sensor bundle, F0182/F0195/F0196 lifecycle, LoS move rollback and
   C38 projectile aftermath all pass after rebuilding against a8ada3b50.
