@@ -214,4 +214,4 @@ if [ -n "$media_hash_before" ] && [ "$media_hash_before" != "$(sha256sum "$data_
     exit 1
 fi
 
-echo "PASS: native CSB FM Towns CLI title, MINI.DAT runtime/movement, and start-menu launch"
+echo "PASS: native CSB FM Towns CLI title, MINI.DAT initial party state, and start-menu launch"

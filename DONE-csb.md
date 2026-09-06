@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- Rechecked original FM Towns EN and JA archives with the rebuilt native
+  executable (runtime 537ca520c): both pass TITLE.ANM, modal SWITCHTW,
+  original MINI.DAT initial party state, v1/v21 runtime admission and start
+  menu routes. Optional user saves were explicitly unset. Corrected the
+  script's PASS wording from runtime/movement to initial party state because
+  it does not prove dungeon movement. No pixel/audio/emulator parity claim.
+
 - Rechecked native Atari nested ZIP/STX and Amiga ZIP/ADF startup with
   the rebuilt executable after the DM1 group-event changes (runtime
   537ca520c). Both original-media scripts pass title/entrance, menu launch
