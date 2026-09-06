@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Extended the half-square projectile fixture to a lethal hit
+  on the second creature. The survivor keeps its 1000 HP, raw and decoded
+  group counts agree after removal, and the C14 carrier is freed. This
+  bounded F0176/F0190 integration passes without a production change;
+  GROUP.C:831-904 owns lethal removal and count reduction. It is not proof
+  of original death-smoke pixels, possession drops or all platform deaths.
+
 - 2026-09-06: Added source-shaped F0219 stair-boundary integration checks:
   corridor-to-stairs preserves the flying C14 on the same map, whereas
   stairs-to-stairs retires it without damaging the destination group.

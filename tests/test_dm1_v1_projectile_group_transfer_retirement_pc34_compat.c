@@ -26,7 +26,8 @@ int main(int argc, char** argv)
     int fakeClosed = argc == 2 && strcmp(argv[1], "fake-closed") == 0;
     int stairsEntry = argc == 2 && strcmp(argv[1], "stairs-entry") == 0;
     int stairsPair = argc == 2 && strcmp(argv[1], "stairs-pair") == 0;
-    int halfSquare = argc == 2 && strcmp(argv[1], "half-square") == 0;
+    int halfLethal = argc == 2 && strcmp(argv[1], "half-lethal") == 0;
+    int halfSquare = halfLethal || (argc == 2 && strcmp(argv[1], "half-square") == 0);
     int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon = {0};
@@ -69,9 +70,9 @@ int main(int argc, char** argv)
         group.creatureType = 15;
         group.count = 1;
         group.cells = 0 | (2 << 2);
-        group.health[1] = 1000;
+        group.health[1] = halfLethal ? 1 : 1000;
         rawGroup[4] = 15;
-        word(rawGroup + 8, 1000);
+        word(rawGroup + 8, group.health[1]);
         rawGroup[14] = 1 << 5;
     }
     word(rawGroup, group.next); word(rawGroup + 2, group.slot);
@@ -191,6 +192,14 @@ int main(int argc, char** argv)
     }
     if (halfSquare) {
         CHECK(group.health[0] == 1000);
+        if (halfLethal) {
+            CHECK(group.count == 0);
+            CHECK(((rawGroup[14] >> 5) & 3) == 0);
+            CHECK(readword(rawGroup + 6) == 1000);
+            CHECK(c14[0].next == THING_NONE && readword(rawC14) == THING_NONE);
+            puts("ok: lethal half-square hit preserves the other creature");
+            return 0;
+        }
         CHECK(group.health[1] > 0 && group.health[1] < 1000);
         CHECK(group.slot == THING_ENDOFLIST);
         CHECK(c14[0].next == THING_NONE && readword(rawC14) == THING_NONE);
