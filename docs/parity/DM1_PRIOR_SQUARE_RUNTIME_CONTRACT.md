@@ -45,11 +45,14 @@ elapsed-time fallback. This fallback is not authenticated prior-square parity.
 - Explosion retirement tests cover history compaction and cleared tail rows.
 - Ordinary-move tests cover terrain and occupancy rejection in all four
   directions, with unchanged source coordinates and no unlink/link operation.
+- The registered map-lifecycle test rejects invalid outgoing/destination owners,
+  checks byte-for-byte world/history/C04 rollback after staged removal, and
+  verifies fresh history on successful entry from an empty map.
 
 ## Required verification
 
 Obtain original-execution comparisons for full M11 movement sequences and exact
-RNG at subsequent decisions. Extend delayed-move, staged-failure and deferred
+RNG at subsequent decisions. Extend delayed-move and deferred
 re-admission coverage. Audit all admission routes so missing history cannot
 silently stand in for source state. Keep save restore provenance separate while
 savegames are deferred. Bounded runtime tests do not prove all-platform parity.

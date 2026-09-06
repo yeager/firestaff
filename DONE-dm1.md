@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Registered and repaired the previously unregistered F0194/F0195 map-lifecycle
+  regression. It verifies rejection of an invalid outgoing owner, byte-for-byte
+  preservation of world/history/C04 after failed destination admission (including
+  staged F0184 cell changes), and fresh F0183 position/time on successful entry.
+  `dm1_v1_group_map_lifecycle_pc34_compat` passes. This is bounded constructed
+  state, not an original-media or emulator parity capture.
+
 - 2026-09-06: Direct M10 F0412 practice checks stop consuming RNG at the
   first failure and support nine missing levels. Counted receipt APIs retain
   the legacy eight-probe interfaces without widening their buffer reads.

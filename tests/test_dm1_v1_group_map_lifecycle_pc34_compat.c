@@ -30,6 +30,9 @@ int main(void)
     unsigned short squareFirstThings[1];
     struct TickInput_Compat input;
     struct TickResult_Compat result;
+    static struct GameWorld_Compat before;
+    struct DungeonGroup_Compat groupBefore;
+    unsigned short columns[2] = {0, 0};
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -52,6 +55,8 @@ int main(void)
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.dungeonColumnCount = 2;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = CREATURE_TYPE_SKELETON;
     groups[0].cells = 0xffu;
@@ -72,6 +77,34 @@ int main(void)
     world.newPartyMapIndex = 1;
     world.creatureAICount = 1;
     world.creatureAI[0].reserved0 = 99; /* stale active group from map 0 */
+    world.pc34ActiveGroupHistory[0].valid = 1;
+    world.pc34ActiveGroupHistory[0].groupThingIndex = 99;
+    world.pc34ActiveGroupHistory[0].priorMapX = 17;
+    world.pc34ActiveGroupHistory[0].priorMapY = 23;
+    world.pc34ActiveGroupHistory[0].lastMoveTime = 71;
+
+    before = world;
+    groupBefore = groups[0];
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_FAIL,
+          "invalid outgoing owner rejects map transition");
+    CHECK(memcmp(&world, &before, sizeof(world)) == 0 &&
+          memcmp(&groups[0], &groupBefore, sizeof(groupBefore)) == 0,
+          "invalid owner leaves world, history and C04 unchanged");
+
+    /* GROUP.C F0194/F0195: removal precedes destination admission. Reject
+     * a bad destination after staging, without publishing cleared history. */
+    world.creatureAI[0].reserved0 = 0;
+    world.creatureAI[0].groupCells = 0x42; /* staged F0184 must not leak this */
+    world.pc34ActiveGroupHistory[0].groupThingIndex = 0;
+    squareFirstThings[0] = group_thing_ref(99);
+    before = world;
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_FAIL,
+          "invalid destination owner rejects staged admission");
+    CHECK(memcmp(&world, &before, sizeof(world)) == 0 &&
+          memcmp(&groups[0], &groupBefore, sizeof(groupBefore)) == 0,
+          "failed staged admission preserves world, history and C04");
+    squareFirstThings[0] = group_thing_ref(0);
+    world.creatureAICount = 0; /* successful entry starts from empty map 0 */
 
     CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
               ORCH_OK,
@@ -79,7 +112,13 @@ int main(void)
     CHECK(world.partyMapIndex == 1 && world.party.mapIndex == 1,
           "map transition commits party map before F0195 scan");
     CHECK(world.creatureAICount == 1,
-          "F0194 clears stale active state before F0195 adds current-map group");
+          "F0195 adds current-map group after empty-map retirement");
+    CHECK(world.pc34ActiveGroupHistory[0].valid &&
+          world.pc34ActiveGroupHistory[0].groupThingIndex == 0 &&
+          world.pc34ActiveGroupHistory[0].priorMapX == 0 &&
+          world.pc34ActiveGroupHistory[0].priorMapY == 0 &&
+          world.pc34ActiveGroupHistory[0].lastMoveTime == (unsigned char)(100u - 127u),
+          "F0183 admission replaces stale history with source position and time");
     CHECK(world.creatureAI[0].reserved0 == 0 &&
           world.creatureAI[0].groupMapIndex == 1 &&
           world.creatureAI[0].groupMapX == 0 &&

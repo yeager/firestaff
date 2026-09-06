@@ -2,9 +2,11 @@
 
 - Extend the new shared prior-square history to full original-runtime
   capture verification: compare consecutive live M11 wander moves and exact
-  RNG with original execution, staged map-transition failure and deferred
+  RNG with original execution and deferred
   removal/re-admission. Unadmitted legacy worlds still lack source history.
-  Bounded C29/C37 two-move and lifecycle evidence is recorded in DONE-dm1.md.
+  Bounded C29/C37 two-move, staged map-transition rollback and lifecycle
+  evidence is recorded in DONE-dm1.md; full original map-transition traces
+  remain unverified.
 
 - Extend F0412 RNG verification to M11's prevalidated XP/gate handoff and
   original execution traces. M10 XP/practice extraction is now corrected to
