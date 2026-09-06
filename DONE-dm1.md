@@ -1480,6 +1480,14 @@ Reviewed 2026-08-29. Completed work only.
   pending the integration and edition-routing work recorded in TODO-dm1.md.
 # F0412 potion practice boundary regression (2026-09-06)
 
+- Audited M11_GameView_CastSpell: XP uses F0732(8), and paid validation
+  uses F0732(128) with immediate first-failure return before flask admission.
+  Added a low-skill M10 handoff regression with HAS_SPELL_XP: exactly one
+  potion-power draw, no repeated XP/practice samples, unchanged supplied XP
+  (420), and matching decoded/raw C08 mutation. Focused CTest passes.
+  This is a source audit plus command-boundary fixture, not an original
+  UI/input capture of the complete M11 path.
+
 - Corrected M10 F0412 XP/practice samples from raw state to `state >> 8`,
   matching BASE.C F0027:1688-1695 and DEFS.H M003. The existing multiplier
   0xBB40E62D is correct for that game routine; CEDT002 is not its replacement.

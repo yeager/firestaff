@@ -188,6 +188,26 @@ int main(void)
             assert(potion.power == expectedPower);
             assert(rawPotion[2] == expectedPower);
             assert(rawPotion[3] == 8);
+
+            /* M11 has already consumed XP/practice draws before setting
+             * HAS_SPELL_XP (m11_game_view.c M11_GameView_CastSpell).
+             * A low-skill caster must not repeat either draw at handoff. */
+            memset(&world.lifecycle, 0, sizeof(world.lifecycle));
+            potion.type = 20;
+            rawPotion[3] = 20;
+            world.masterRng.seed = 1;
+            expectedRng = world.masterRng;
+            expectedPower = 240u +
+                ((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 15u);
+            input.reserved2 = CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK |
+                CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP |
+                (420u << CMD_CAST_SPELL_RESERVED2_SPELL_XP_SHIFT);
+            memset(&result, 0, sizeof(result));
+            assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+            assert(world.masterRng.seed == expectedRng.seed);
+            assert(potion.type == 8 && potion.power == expectedPower);
+            assert(rawPotion[2] == expectedPower && rawPotion[3] == 8);
+            assert(world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_HEAL].experience == 420);
             things.potions = NULL;
             things.rawThingData[THING_TYPE_POTION] = NULL;
         }
