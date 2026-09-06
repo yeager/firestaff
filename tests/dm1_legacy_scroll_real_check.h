@@ -137,6 +137,29 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) != -1) return 0;
                         state->world.party.champions[1].inventory[20] = THING_NONE;
                         state->world.party.champions[1].inventory[19] = other;
+                        {
+                            unsigned short chest = THING_NONE;
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_CONTAINER]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_CONTAINER << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff)) {
+                                    chest = candidate;
+                                    break;
+                                }
+                            }
+                            if (chest == THING_NONE) return 0;
+                            state->dm1InventoryChampionOrdinal = 2;
+                            state->world.party.champions[1].inventory[20] = chest;
+                            if (!DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state) ||
+                                DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) != chest ||
+                                state->world.party.activeChampionIndex != 0) return 0;
+                            /* Opening only: discard the read-only cache without
+                             * invoking close-time chain rewriting in this probe. */
+                            state->v1OpenChestThing = THING_NONE;
+                            state->v1OpenChestSlotsValid = 0;
+                            state->world.party.champions[1].inventory[20] = THING_NONE;
+                            state->dm1InventoryChampionOrdinal = 0;
+                        }
                         if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, thing, &weight)) return 0;
                         if (weight <= 0) return 0;
                         state->world.party.champions[0].load = (unsigned short)weight;

@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Action-hand chest opening and eye-release action-hand lookup
+  now use the explicit inventory owner. Five original Atari/Amiga tests
+  open a real chest on champion 1 without changing leader 0. The probe
+  checks opening only; cross-owner eye release and close-time chain changes
+  still need dedicated coverage before activating normal-input ownership.
+
 - 2026-09-06: Migrated inventory slot transactions to the explicit owner
   accessor. Five Atari/Amiga tests exchange distinct original weapons
   between leader hand and another champion's ready hand in both directions,

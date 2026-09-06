@@ -55311,7 +55311,7 @@ int DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(M11_GameViewState* state) {
          * cross-champion status-slot object routing while C040 is live. */
         return 0;
     }
-    championIndex = state->world.party.activeChampionIndex;
+    championIndex = m11_inventory_champion_index(state);
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     thing = state->world.party.champions[championIndex].inventory[CHAMPION_SLOT_ACTION_HAND];
     if (thing == THING_NONE || thing == THING_ENDOFLIST || THING_GET_TYPE(thing) != THING_TYPE_CONTAINER) return 0;
@@ -55406,14 +55406,15 @@ void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state) {
  * route so its C145 state is no longer suppressed. */
 static int m11_finish_v1_eye_press(M11_GameViewState* state) {
     unsigned short action_hand;
+    int inventory_owner;
 
     if (!state || !state->v1EyePressActive) return 0;
     state->v1EyePressActive = 0;
     if (!state->inventoryPanelActive) return 1;
 
-    action_hand = state->world.party.activeChampionIndex >= 0 &&
-                  state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY
-        ? state->world.party.champions[state->world.party.activeChampionIndex]
+    inventory_owner = m11_inventory_champion_index(state);
+    action_hand = inventory_owner >= 0
+        ? state->world.party.champions[inventory_owner]
               .inventory[CHAMPION_SLOT_ACTION_HAND]
         : THING_NONE;
     state->v1ChampionStatsPanelActive = 0;
