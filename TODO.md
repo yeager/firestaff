@@ -1,9 +1,13 @@
 # Firestaff TODO — active cross-game work
 
-- Extend actor/leader regression coverage beyond empty-hand actions to
-  weapon/target/damage ownership, including actions by a non-leader.
+- Extend actor/leader regression coverage to guaranteed combat against an
+  authentic target, checking damage ownership for actions by a non-leader.
 
 - Complete Japanese FM Towns active-menu text and remaining row boundaries.
+  Reconcile the old JDM mixed-font adapter with TEXT2.C:75–105: the original
+  chooses the Japanese path for a whole string, then F0952 uses 8x16 or 16x16
+  system glyphs per unit. Its ASCII/M653-per-byte mixture is not equivalent.
+  JAPANESE.C:242–269 calls EGB_sjisString; do not add a runtime BIOS dependency.
   Extend full C010 panel tests to Japanese labels; English one/two/three
   action panels are covered using existing dungeon weapon records.
   Retire obsolete solid-fill shim/tests and misleading colour-selector

@@ -448,6 +448,64 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
         }
         puts("PASS: original late-edition empty-hand action rows and gaps, all three modes");
     }
+    {
+        unsigned short savedActorHand=state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND];
+        unsigned short savedLeaderHand=state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND];
+        unsigned short weaponThing=THING_NONE;
+        int weaponRow=-1;
+        unsigned char weaponAction=255;
+        LATE_SPELL_CHECK(state->world.things && state->world.things->weapons);
+        state->world.party.champions[3].hp.current=100;
+        state->actionDisabledTicks[3]=0;
+        state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND]=THING_NONE;
+        /* Select an existing original weapon with STAB/SWING, neither of
+         * which appears in the leader's empty-hand PUNCH/KICK/WAR CRY set. */
+        for(int weapon=0;weapon<state->world.things->weaponCount && weaponRow<0;++weapon) {
+            unsigned char actions[3];
+            state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND]=
+                (unsigned short)((THING_TYPE_WEAPON<<10)|weapon);
+            M11_GameView_ClearActingChampion(state);
+            if(!M11_GameView_SetActingChampion(state,3) ||
+               !M11_GameView_GetActingActionIndices(state,actions)) continue;
+            for(int row=0;row<3;++row) if(actions[row]==9 || actions[row]==13) {
+                weaponThing=state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND];
+                weaponRow=row; weaponAction=actions[row]; break;
+            }
+        }
+        LATE_SPELL_CHECK(weaponRow>=0);
+        for(mode=0;mode<3;++mode) {
+            int staminaBefore;
+            const int rowY=(yOffset?94:86)+weaponRow*(yOffset?21:12);
+            state->presentationMode=modes[mode];
+            state->world.party.activeChampionIndex=0;
+            for(i=0;i<4;++i) {
+                state->world.party.champions[i].hp.current=100;
+                state->world.party.champions[i].stamina.current=1000;
+                state->world.party.champions[i].stamina.maximum=1000;
+                state->actionDisabledTicks[i]=0;
+            }
+            state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND]=weaponThing;
+            state->world.party.champions[3].actionIndex=255;
+            state->world.party.champions[0].actionIndex=255;
+            M11_GameView_ClearActingChampion(state);
+            LATE_SPELL_CHECK(M11_GameView_SetActingChampion(state,3));
+            staminaBefore=state->world.party.champions[3].stamina.current;
+            (void)M11_GameView_HandlePointer(state,250,rowY+5,1);
+            (void)M11_GameView_HandlePointer(state,250,rowY+5,0);
+            LATE_SPELL_CHECK(state->actingChampionOrdinal==0 &&
+                             state->world.party.activeChampionIndex==0 &&
+                             state->world.party.champions[3].actionIndex==weaponAction &&
+                             state->world.party.champions[0].actionIndex==255 &&
+                             state->world.party.champions[3].stamina.current<staminaBefore);
+            for(int emission=0;emission<state->lastTickResult.emissionCount;++emission)
+                if(state->lastTickResult.emissions[emission].kind==EMIT_DAMAGE_DEALT)
+                    LATE_SPELL_CHECK(state->lastTickResult.emissions[emission].payload[0]==3);
+        }
+        state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND]=savedActorHand;
+        state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND]=savedLeaderHand;
+        M11_GameView_ClearActingChampion(state);
+        puts("PASS: original weapon action belongs to nonleader actor in all modes; emitted combat owner checked when present");
+    }
     puts("PASS authentic late spell panel: 24 pixel cases and three mode-specific mouse input cases");
     return 1;
 }

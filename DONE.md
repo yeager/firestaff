@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Original-media DOS and English/Japanese FM Towns tests select
+  an existing dungeon weapon and dispatch STAB/SWING through mouse input in
+  Original, V2.0 and V2.1. The non-leader actor receives the action and stamina
+  cost without changing the leader. Damage emission ownership is checked
+  when present; these cases do not prove a successful hit against a target.
+  Four targeted regression tests pass without skips (11.91 seconds).
+
 - 2026-09-06: English FM Towns active-menu text follows F0768's original
   name/action baselines and7/12-character padding using original M653.
   Empty names remain empty rather than becoming invented EMPTY labels.
