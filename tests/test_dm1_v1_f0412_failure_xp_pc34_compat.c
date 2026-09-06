@@ -6,6 +6,7 @@
 
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
+#include "dm1_v1_spell_casting_pc34_compat.h"
 
 int main(void)
 {
@@ -13,6 +14,7 @@ int main(void)
     struct DungeonThings_Compat things;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
+    struct RngState_Compat expectedRng;
     int i;
     int sawXp = 0;
     (void)sawXp;
@@ -24,6 +26,9 @@ int main(void)
     world.things = &things;
     world.newPartyMapIndex = -1;
     world.masterRng.seed = 1; /* First raw low-7 value is 38 > Wisdom+15. */
+    expectedRng = world.masterRng;
+    (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng); /* F0412 XP sample. */
+    assert((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) & 127u) > 15u);
     world.party.championCount = 1;
     world.party.champions[0].present = 1;
     world.party.champions[0].hp.current = 100;
@@ -39,6 +44,7 @@ int main(void)
 
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     assert(world.timeline.count == 0);
+    assert(world.masterRng.seed == expectedRng.seed); /* Stop at first failed probe. */
     /* F0412 shifts 186 F0304 XP by the five missing F0303 levels. */
     assert(world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_FIRE].experience == 5);
     assert(world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_WIZARD].experience == 5);
@@ -53,6 +59,64 @@ int main(void)
         assert(result.emissions[i].kind != EMIT_ACTION_DISABLED);
     }
     assert(sawXp == 1);
+
+    world.masterRng.seed = 1;
+    memset(&result, 0, sizeof(result));
+    input.commandArg2 = 16; /* Ya Bro Dain: Wisdom potion. */
+    input.reserved = 6;
+    input.reserved2 = CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK;
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+    /* A failed practice gate precedes even a declared available flask:
+     * no potion-power sample may be drawn (MENU.C:1837 before :1853). */
+    assert(world.masterRng.seed == expectedRng.seed);
+    assert(world.timeline.count == 0);
+    for (i = 0; i < result.emissionCount; ++i) {
+        assert(result.emissions[i].kind != EMIT_SPELL_EFFECT);
+        assert(result.emissions[i].kind != EMIT_ACTION_DISABLED);
+    }
+
+    {
+        DM1_ChampionSpellStats stats = {0};
+        DM1_SpellF0412RuntimeReceipt receipt;
+        uint8_t probes[9] = {0};
+        stats.currentHealth = 100;
+        stats.wisdom = 100;
+        for (i = 0; i < 20; ++i) stats.skillLevels[i] = 1;
+        probes[8] = 127;
+        /* Mon Lightning: base 4 + power 6 - skill 1 requires nine probes. */
+        assert(dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(
+            5, 6, 0, &stats, 0, probes, 9, 0, 0, 0, &receipt));
+        assert(receipt.requiredSkillLevel - receipt.skillLevel == 9);
+        assert(receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE);
+    }
+
+    {
+        unsigned seed;
+        int probe;
+        /* Find a deterministic source stream whose first eight checks pass
+         * and ninth fails. The command must consume that ninth real draw. */
+        for (seed = 0; seed < 10000; ++seed) {
+            expectedRng.seed = seed;
+            (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng);
+            for (probe = 0; probe < 9; ++probe)
+                if ((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) & 127u) > 115u)
+                    break;
+            if (probe == 8) break;
+        }
+        assert(seed < 10000);
+        world.masterRng.seed = seed;
+        world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 100;
+        input.commandArg2 = 5;
+        input.reserved = 6;
+        input.reserved2 = 0;
+        memset(&result, 0, sizeof(result));
+        assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+        assert(world.masterRng.seed == expectedRng.seed);
+        assert(world.timeline.count == 0);
+        assert(world.projectiles.count == 0);
+        for (i = 0; i < result.emissionCount; ++i)
+            assert(result.emissions[i].kind != EMIT_SPELL_EFFECT);
+    }
 
     printf("PASS dm1_v1_f0412_failure_xp_pc34_compat\n");
     return 0;

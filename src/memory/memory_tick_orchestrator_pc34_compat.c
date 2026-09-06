@@ -13786,14 +13786,16 @@ cmd_attack_legacy_marker:
          * and ONLY when the gate is entered (skillLevel < requiredSkillLevel).
          * When the skill is already sufficient, the reference draws zero
          * probes; drawing them unconditionally here would advance the shared
-         * RNG by up to 8 steps that the reference never spends and break
+         * RNG by up to 9 steps that the reference never spends and break
          * every downstream spell whose materialisation reads from the same
          * stream (Light, Darkness, Torch, area spells).  Compute the exact
          * miss count first from the same champion stats the receipt builder
-         * would see, then draw exactly that many probes -- zero when the
-         * cast will not enter the gate. */
-        uint8_t needsPracticeProbes[8];
+         * would see, then draw until the first failure or all probes pass --
+         * zero when the cast will not enter the gate. */
+        uint8_t needsPracticeProbes[9] = {0};
         int needsPracticeProbeCount = 0;
+        int needsPracticeThreshold = 0;
+        int needsPracticeFailed = 0;
         /* MENU.C F0412:1832-1841 performs this gate once. M11 emits the
          * XP handoff only after its gate succeeds; preserve that accepted
          * outcome with the zero-valued receipt input, without fresh probes.
@@ -13814,8 +13816,10 @@ cmd_attack_legacy_marker:
                     ? (int)gateStats.skillLevels[gateSkillIndex]
                     : 0;
                 int missing = requiredLevel - gateSkillLevel;
+                needsPracticeThreshold = gateStats.wisdom + 15;
+                if (needsPracticeThreshold > 115) needsPracticeThreshold = 115;
                 if (missing < 0) missing = 0;
-                if (missing > 8) missing = 8;
+                if (missing > 9) missing = 9;
                 needsPracticeProbeCount = missing;
             }
             for (int probeIndex = 0;
@@ -13823,6 +13827,12 @@ cmd_attack_legacy_marker:
                 uint32_t raw =
                     F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
                 needsPracticeProbes[probeIndex] = (uint8_t)(raw & 0x7Fu);
+                /* MENU.C F0412:1836-1841 returns at the first failed
+                 * wisdom probe. Do not consume the remaining level draws. */
+                if (needsPracticeProbes[probeIndex] > needsPracticeThreshold) {
+                    needsPracticeFailed = 1;
+                    break;
+                }
             }
         }
         const uint8_t* needsPracticeProbesArg =
@@ -13845,10 +13855,10 @@ cmd_attack_legacy_marker:
 
             if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
                     world, champIdx, &dm1Stats) ||
-                !dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
+                !dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(
                     tableIdx, powerOrd, champIdx, &dm1Stats,
                     (uint16_t)(spellRngRaw & 0xFFFFu),
-                    needsPracticeProbesArg,
+                    needsPracticeProbesArg, needsPracticeProbeCount,
                     world->party.champions[champIdx].direction,
                     world->party.direction,
                     world->magic.partyShieldDefense,
@@ -13946,10 +13956,10 @@ cmd_attack_legacy_marker:
 
             if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
                     world, champIdx, &dm1Stats) ||
-                !dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
+                !dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(
                     tableIdx, powerOrd, champIdx, &dm1Stats,
                     (uint16_t)(spellRngRaw & 0xFFFFu),
-                    needsPracticeProbesArg,
+                    needsPracticeProbesArg, needsPracticeProbeCount,
                     world->party.champions[champIdx].direction,
                     world->party.direction,
                     world->magic.partyShieldDefense,
@@ -13973,17 +13983,18 @@ cmd_attack_legacy_marker:
             DM1_SpellF0412RuntimeReceipt receipt;
             uint16_t potionPowerRng16 = 0;
 
-            if (emptyFlaskSlot >= 0) {
+            if (emptyFlaskSlot >= 0 && !needsPracticeFailed) {
                 potionPowerRng16 =
                     (uint16_t)F0732_COMBAT_RngRandom_Compat(
                         &world->masterRng, 16);
             }
             if (!orch_cmd_cast_spell_build_dm1_stats_f0412_compat(
                     world, champIdx, &dm1Stats) ||
-                !dm1_spell_f0412PotionReceiptForTableIndex(
+                !dm1_spell_f0412PotionReceiptForTableIndexWithProbeCount(
                     tableIdx, powerOrd, champIdx, &dm1Stats,
                     (uint16_t)(spellRngRaw & 0xFFFFu),
-                    potionPowerRng16, emptyFlaskSlot >= 0, &receipt) ||
+                    potionPowerRng16, emptyFlaskSlot >= 0,
+                    needsPracticeProbesArg, needsPracticeProbeCount, &receipt) ||
                 !dm1_spell_f0412ReceiptToSpellEffectPc34(
                     &receipt, world->magic.fireShieldDefense, &effect)) {
                 return 0;

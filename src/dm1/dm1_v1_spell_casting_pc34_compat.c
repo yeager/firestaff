@@ -630,11 +630,22 @@ int dm1_spell_f0412RuntimeReceipt(const DM1_SpellCastingState* s,
 }
 
 int dm1_spell_f0412RuntimeReceiptWithProbes(
+    const DM1_SpellCastingState* s, int champIdx, const DM1_ChampionSpellStats* stats,
+    uint16_t rng16, const uint8_t* probes,
+    int championDirection, int partyDirection, int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
+    return dm1_spell_f0412RuntimeReceiptWithProbeCount(s, champIdx, stats, rng16,
+        probes, probes ? 8 : 0, championDirection, partyDirection, partyShieldDefense, outReceipt);
+}
+
+int dm1_spell_f0412RuntimeReceiptWithProbeCount(
     const DM1_SpellCastingState* s,
     int champIdx,
     const DM1_ChampionSpellStats* stats,
     uint16_t rng16,
     const uint8_t* needsPracticeProbes,
+    int probeCount,
     int championDirection,
     int partyDirection,
     int partyShieldDefense,
@@ -711,11 +722,11 @@ int dm1_spell_f0412RuntimeReceiptWithProbes(
              * inside the missing-level loop.  When the caller supplies
              * pre-drawn probes -- the source-accurate path -- use them;
              * otherwise fall back to the historical shifting-rng16
-             * approximation for legacy callers.  Cap i at 8 so a caller
-             * that supplies a short probe buffer still fails closed to
-             * the approximation rather than reading past its buffer. */
+             * approximation for legacy callers. The explicit count prevents
+             * reading beyond a shorter legacy buffer; native callers provide
+             * the complete source gate, up to nine checks. */
             int rngVal;
-            if (needsPracticeProbes && i < 8) {
+            if (needsPracticeProbes && i < probeCount) {
                 rngVal = needsPracticeProbes[i] & 0x7F;
             } else {
                 rngVal = (rng16 >> ((i & 3) * 4)) & 0x7F;
@@ -856,12 +867,23 @@ int dm1_spell_f0412RuntimeReceiptForTableIndex(
 }
 
 int dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
+    int spellTableIndex, int powerOrdinal, int champIdx, const DM1_ChampionSpellStats* stats,
+    uint16_t rng16, const uint8_t* probes,
+    int championDirection, int partyDirection, int partyShieldDefense,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
+    return dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(spellTableIndex, powerOrdinal, champIdx, stats, rng16,
+        probes, probes ? 8 : 0, championDirection, partyDirection, partyShieldDefense, outReceipt);
+}
+
+int dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(
     int spellTableIndex,
     int powerOrdinal,
     int champIdx,
     const DM1_ChampionSpellStats* stats,
     uint16_t rng16,
     const uint8_t* needsPracticeProbes,
+    int probeCount,
     int championDirection,
     int partyDirection,
     int partyShieldDefense,
@@ -905,12 +927,23 @@ int dm1_spell_f0412RuntimeReceiptForTableIndexWithProbes(
      * prevalidated UI input. Rebuild the exact symbol buffer here so command
      * callers still consume the F0412 receipt instead of reimplementing the
      * projectile/light/status branches from spell table metadata. */
-    return dm1_spell_f0412RuntimeReceiptWithProbes(
-        &s, champIdx, stats, rng16, needsPracticeProbes,
+    return dm1_spell_f0412RuntimeReceiptWithProbeCount(
+        &s, champIdx, stats, rng16, needsPracticeProbes, probeCount,
         championDirection, partyDirection, partyShieldDefense, outReceipt);
 }
 
 int dm1_spell_f0412PotionReceiptForTableIndex(
+    int spellTableIndex, int powerOrdinal, int champIdx,
+    const DM1_ChampionSpellStats* stats, uint16_t experienceRng16,
+    uint16_t potionPowerRng16, int hasEmptyFlask,
+    DM1_SpellF0412RuntimeReceipt* outReceipt)
+{
+    return dm1_spell_f0412PotionReceiptForTableIndexWithProbeCount(
+        spellTableIndex, powerOrdinal, champIdx, stats, experienceRng16,
+        potionPowerRng16, hasEmptyFlask, NULL, 0, outReceipt);
+}
+
+int dm1_spell_f0412PotionReceiptForTableIndexWithProbeCount(
     int spellTableIndex,
     int powerOrdinal,
     int champIdx,
@@ -918,13 +951,15 @@ int dm1_spell_f0412PotionReceiptForTableIndex(
     uint16_t experienceRng16,
     uint16_t potionPowerRng16,
     int hasEmptyFlask,
+    const uint8_t* probes, int probeCount,
     DM1_SpellF0412RuntimeReceipt* outReceipt)
 {
     DM1_SpellF0412RuntimeReceipt receipt;
 
     if (!outReceipt) return 0;
-    if (!dm1_spell_f0412RuntimeReceiptForTableIndex(
+    if (!dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(
             spellTableIndex, powerOrdinal, champIdx, stats, experienceRng16,
+            probes, probeCount,
             0, 0, 0, &receipt)) {
         return 0;
     }

@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Direct M10 F0412 practice checks stop consuming RNG at the
+  first failure and support nine missing levels. Counted receipt APIs retain
+  the legacy eight-probe interfaces without widening their buffer reads.
+  Potion receipts use the same probes and do not draw potion power after a
+  practice failure. The runtime regression pins first- and ninth-probe failure
+  RNG states, no projectile/event creation, and the failed-potion ordering.
+  Reintroducing eager probe consumption fails the exact-RNG assertion;
+  restoring the early stop passes again.
+  Nine focused spell/potion and DOS 3.4 media tests pass; these bounded checks
+  do not replace original emulator failure captures.
+
 - 2026-09-06: Live M10/M11 skill-level queries now share defined early/late
   accumulator arithmetic. F0849 permanent XP wraps instead of saturating;
   before/after level queries use the world edition policy. Exact known graphics

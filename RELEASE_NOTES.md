@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 failed spell practice checks preserve the original RNG sequence,
+  including nine-level checks and potion failures before power generation.
+
 - DM1 skill queries avoid signed integer overflow and use source-edition XP
   arithmetic. Permanent XP wraps with original 32-bit semantics rather than
   saturating at the signed maximum.
