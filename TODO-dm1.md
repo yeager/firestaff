@@ -11,9 +11,7 @@
     adjacent transition produces no continuation and must not be replaced
     with an immediate F0207 attack. Rollback must cover the whole fanout.
   - Obtain original traces for approach entry and zero-tick chained dispatch.
-    Preserve off-map handling and the separate priority gap. Consolidate the
-    pure behavior helper's inferred cadence with the source deadline now
-    resolved by M10, so standalone decisions cannot imply different timing.
+    Preserve off-map handling and the separate priority gap.
 
 - Deferred savegame regression: `dm1_v1_g0377_active_group_count_pc34_compat`
   passes F0196 initialization and F0195 live-count admission, then fails

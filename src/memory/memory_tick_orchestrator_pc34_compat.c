@@ -13042,9 +13042,6 @@ static int orch_handle_creature_reaction_event_compat(
                 !aspectReceipt.valid) return 0;
             f0179UpdateTime = aspectReceipt.next_update_time;
         }
-        behavior.nextEventType = approachEntry ? DM1_EVENT_UPDATE_BEHAVIOR_GROUP
-            : ev->aux2 + 5;
-        behavior.nextEventDelayTicks = ctx.eventTicks + (approachEntry ? 1 : 0);
     }
 
     /* GROUP.C F0209 calls F0182 whenever this source decision abandons an

@@ -433,6 +433,30 @@ static void test_approach_arrives_at_target(void) {
 /* =========================================================
  *  Test 9: Should-attack range check
  * ========================================================= */
+static void test_aspect_behavior_deadline(void) {
+    int eventType, ticks, approach;
+    for (eventType = 32; eventType <= 36; ++eventType)
+        for (ticks = 0; ticks <= 7; ticks += 7)
+            for (approach = 0; approach <= 1; ++approach) {
+                struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+                struct DM1ActiveGroup_Compat ag = make_default_ag();
+                struct DM1BehaviorResult_Compat result;
+                struct RngState_Compat rng = make_rng(7);
+                ctx.eventType = eventType;
+                ctx.eventTicks = ticks;
+                ctx.groupBehavior = approach ? DM1_BEHAVIOR_WANDER : DM1_BEHAVIOR_FLEE;
+                ctx.partyMapX = 8;
+                ctx.distanceToVisibleParty = 3;
+                EXPECT_EQ(F0810_DM1_GROUP_DispatchBehavior_Compat(
+                              &ctx, &ag, &rng, &result), 1,
+                          "aspect deadline decision succeeds");
+                EXPECT_EQ(result.nextEventDelayTicks, ticks + approach,
+                          "F0209 behavior deadline retains zero ticks and approach increment");
+                EXPECT_EQ(result.nextEventType, approach ? 37 : eventType + 5,
+                          "F0209 behavior deadline retains source event type");
+            }
+}
+
 static void test_attack_ticks_sentinel(void) {
     int eventType, disabled;
     /* GROUP.C F0209 MEDIA720 (I34): 255 suppresses attack admission,
@@ -2058,6 +2082,7 @@ static void test_group_path_blockers_f0197_to_f0199(void) {
 }
 
 int main(void) {
+    test_aspect_behavior_deadline();
     test_attack_ticks_sentinel();
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");

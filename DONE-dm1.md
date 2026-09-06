@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Consolidated C32-C36 behavior deadlines in the pure F0209 decision:
+  incoming C.Ticks is retained even when zero, and approach entry adds one
+  before retaining that delay (T0209054/T0209136). Removed the duplicate M10
+  override. A 20-case event/ticks/transition matrix exposed ten failures
+  before the fix and passes afterward. All 21 selected tests pass after
+  relinking, including five original-DOS-media tests. This does not complete
+  the separate attack-entry fanout or original-capture verification.
+
 - Reordered C32-C36 continuation animation after the visibility decision
   (GROUP.C F0209:2051-2088,2452-2463). Existing attack updates its selected
   slot; near nonattack updates the whole group; distant nonattack skips
