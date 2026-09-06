@@ -295,6 +295,33 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             thing, weight, state->world.party.champions[0].load);
                         if (state->world.party.champions[0].load != 0) return 0;
                         (void)M11_GameView_HandlePointerButtonRelease(state, 64, 158, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        {
+                            unsigned short food = THING_NONE;
+                            int amount = 0;
+                            static const int amounts[8] = {500,600,650,820,550,350,990,1400};
+                            /* DUNGEON.C G0242; original allocated food only. */
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_JUNK]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_JUNK << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff) &&
+                                    (bytes[2] & 127) >= 29 && (bytes[2] & 127) <= 36) {
+                                    food = candidate;
+                                    amount = amounts[(bytes[2] & 127) - 29];
+                                    break;
+                                }
+                            }
+                            if (food == THING_NONE) return 0;
+                            state->inventoryPanelActive = 1;
+                            state->dm1InventoryChampionOrdinal = 2;
+                            state->world.party.champions[0].food = 0;
+                            state->world.party.champions[1].food = 0;
+                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, food)) return 0;
+                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (state->world.party.champions[0].food != 0 ||
+                                state->world.party.champions[1].food != amount ||
+                                state->world.party.activeChampionIndex != 0) return 0;
+                        }
                         return state->world.party.champions[1].inventory[19] == other &&
                             state->world.party.champions[1].load == otherWeight &&
                             state->world.party.champions[0].load == 0 &&

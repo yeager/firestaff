@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Five original Atari/Amiga tests now feed an allocated original
+  food item to inventory champion 1 while champion 0 leads. Source G0242
+  nutrition reaches only the recipient; leader identity, remaining weapon,
+  empty mouse hand and final loads are checked after release. Water and
+  potion-specific recipient/effect coverage remain open.
+
 - 2026-09-06: Migrated mouth consumption's champion lookup to the explicit
   inventory owner, preserving leader-hand object selection. Build and five
   existing original-media ownership regressions pass. These tests do not
