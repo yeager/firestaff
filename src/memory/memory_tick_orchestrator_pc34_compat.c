@@ -7704,6 +7704,12 @@ static int orch_build_projectile_digest_compat(
         out->destDoorState = PROJECTILE_DOOR_STATE_NONE;
     }
 
+    /* PROJEXPL.C F0219:687-697,721-739: source C14 checks occupants
+     * before movement, then relinks and schedules. Landing occupants are
+     * checked by the next event, not during this crossing. Keep the legacy
+     * host-only digest contract separate from source-record timing. */
+    if (!(world->things && world->things->loaded &&
+          world->things->rawThingData[THING_TYPE_PROJECTILE])) {
     if (world->party.mapIndex == projectile->mapIndex &&
         world->party.mapX == destX && world->party.mapY == destY) {
         out->destHasChampion = 1;
@@ -7726,6 +7732,8 @@ static int orch_build_projectile_digest_compat(
                 ((profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
             break;
         }
+    }
+
     }
 
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
@@ -8660,6 +8668,23 @@ static int orch_apply_projectile_champion_action_compat(
     }
     if (impactPlan.rawAttackValue <= 0) return 0;
     championIndex = impactPlan.championIndex;
+    if (projectile && world->things && world->things->loaded &&
+        world->things->rawThingData[THING_TYPE_PROJECTILE]) {
+        int i;
+        /* PROJEXPL.C F0217:509-514 calls F0285: a dungeon cell is
+         * not a champion roster index after formation changes. */
+        championIndex = -1;
+        for (i = 0; i < world->party.championCount && i < CHAMPION_MAX_PARTY; ++i) {
+            if (world->party.champions[i].present &&
+                world->party.champions[i].hp.current > 0 &&
+                world->party.champions[i].cell == (projectile->cell & 3)) {
+                championIndex = i;
+                break;
+            }
+        }
+        impactPlan.championIndex = championIndex;
+        impactPlan.impactCell = projectile->cell & 3;
+    }
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champion = &world->party.champions[championIndex];
     if (!champion->present || champion->hp.current == 0) return 0;

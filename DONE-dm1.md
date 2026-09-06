@@ -1,5 +1,20 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Source projectile champion damage resolves the living roster
+  member occupying the impact cell, following PROJEXPL.C F0217:509-514 and
+  CHAMPION.C F0285, instead of treating the cell number as roster index.
+  The party-landing regression failed before this correction and now proves
+  unchanged HP on crossing followed by damage to champion zero in cell 3.
+  Twelve focused tests pass, including five original DOS spell tests.
+
+- 2026-09-06: Source C14 landing no longer resolves party/group collisions
+  one event early. ReDMCSB PROJEXPL.C F0219:687-697,721-739 checks current
+  occupants, moves and reschedules; the next event checks the landing cell.
+  The native ownership fixture now asserts undamaged group and live C14
+  after crossing, then removes its AI row and verifies the next-event hit
+  and retained-weapon cleanup. Eleven focused tests pass, including five
+  authentic DOS spell tests. Emulator timing comparison remains open.
+
 - 2026-09-06: Projectile target selection now reuses the F0176 creature
   footprint rule (GROUP.C:88-103): only cells FF means centered, half-square
   creatures occupy facing-dependent pairs, and ordinals search last-first.

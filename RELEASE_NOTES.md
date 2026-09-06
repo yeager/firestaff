@@ -1,5 +1,11 @@
 # Unreleased
 
+- Original-data projectile damage follows the champion's actual formation
+  cell rather than assuming formation positions equal roster indices.
+
+- Original-data DM1 projectiles check landing occupants on the following
+  scheduled event, avoiding premature cross-square hits.
+
 - DM1 projectile collision respects facing-dependent half-square monster
   footprints and no longer treats every lone monster as centered.
 

@@ -19,6 +19,7 @@ int main(int argc, char** argv)
     int grace = argc == 2 && strcmp(argv[1], "grace") == 0;
     int emptyCell = argc == 2 && strcmp(argv[1], "empty-cell") == 0;
     int partyFirst = argc == 2 && strcmp(argv[1], "party-first") == 0;
+    int partyLanding = argc == 2 && strcmp(argv[1], "party-landing") == 0;
     int halfSquare = argc == 2 && strcmp(argv[1], "half-square") == 0;
     int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
@@ -83,11 +84,12 @@ int main(int argc, char** argv)
     world.creatureAI[0].groupMapY = sameSquare ? 1 : 0;
     world.creatureAI[0].creatureType = 0;
     if (halfSquare) world.creatureAICount = 0; /* Source GROUP needs no AI row. */
-    if (partyFirst) {
-        world.party.mapX = world.party.mapY = 1;
+    if (partyFirst || partyLanding) {
+        world.party.mapX = 1;
+        world.party.mapY = partyLanding ? 0 : 1;
         world.party.championCount = 1;
         world.party.champions[0].present = 1;
-        world.party.champions[0].cell = 0;
+        world.party.champions[0].cell = partyLanding ? 3 : 0;
         world.party.champions[0].hp.current = world.party.champions[0].hp.maximum = 1000;
     }
     create.category = PROJECTILE_CATEGORY_KINETIC;
@@ -108,6 +110,28 @@ int main(int argc, char** argv)
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (!sameSquare) {
+        int i, found = 0;
+        CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
+        CHECK(world.projectiles.entries[slot].reserved3 != 0);
+        CHECK(world.projectiles.entries[slot].mapX == 1);
+        CHECK(world.projectiles.entries[slot].mapY == 0);
+        CHECK(world.projectiles.entries[slot].cell == 3);
+        if (partyLanding) CHECK(world.party.champions[0].hp.current == 1000);
+        /* F0219 checks the landed cell on its next event, independently
+         * of active AI admission. */
+        world.creatureAICount = 0;
+        for (i = 0; i < world.timeline.count; ++i) {
+            if (world.timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE) {
+                world.gameTick = world.timeline.events[i].fireAtTick;
+                found = 1;
+                break;
+            }
+        }
+        CHECK(found);
+        memset(&result, 0, sizeof(result));
+        CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    }
     if (halfSquare) {
         CHECK(group.health[0] == 1000);
         CHECK(group.health[1] > 0 && group.health[1] < 1000);
@@ -117,7 +141,7 @@ int main(int argc, char** argv)
         puts("ok: half-square footprint hits the second worm without an active AI row");
         return 0;
     }
-    if (partyFirst) {
+    if (partyFirst || partyLanding) {
         CHECK(world.party.champions[0].hp.current < 1000);
         CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
         CHECK(c14.next == THING_NONE && readword(rawC14) == THING_NONE);
