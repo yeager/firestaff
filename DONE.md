@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Restored the shared F0386 empty-hand hatch gate using
+  ACTIDRAW.C:247-288: C201 selection does not bypass cooldown, candidate
+  or resting markings. The companion state resolver also preserves the
+  empty hand when applying F0330 timing. Predicate/state regressions cover
+  enabled gates, expiry and invalid/dead champions. Production build,
+  seven combined DM1/CSB regressions and three focused checks pass.
+  These checks do not establish emulator pixel parity or restore the
+  still-missing CSB FM Towns idle-icon compositor.
+
 - 2026-09-06: CSB FM Towns closed-inventory movement panels consume cached
   original C013 with EN/JP C009 placement and Japanese source clipping.
   Full panel comparisons pass in both languages across Original/V2.0/V2.1.

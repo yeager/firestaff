@@ -239,6 +239,7 @@ def main():
             "test_global_hatch_gates",
             "test_dead_champion_early_return",
             "test_empty_hand_available",
+            "test_empty_hand_hatch_gates_and_expiry",
             "test_shield_border_disabled_state",
             "test_per_champion_priority_over_global",
             "test_boundary_clamps",

@@ -254,6 +254,7 @@ static void test_apply_disable_action_attribute_paths(void)
 
     /* Apply BLOCK (action_index=1) to champion 0 — should set the
      * two bits and remaining_disabled_ticks=6. */
+    for (int i = 0; i < 3; ++i) state.champions[i].action_hand_empty = false;
     expect_int("apply.BLOCK.rc",
                DM1_V1_ChampionPanelDisabledIconState_ApplyDisableActionPc34Compat(
                    &state, 0, 1),
@@ -342,6 +343,8 @@ static void test_advance_timeline_enable_event(void)
 
     DM1_V1_ChampionPanelDisabledIconState_ApplyDisableActionPc34Compat(
         &state, 0, 1); /* BLOCK = 6 ticks */
+    state.champions[0].action_hand_empty = false;
+    state.champions[1].action_hand_empty = false;
     DM1_V1_ChampionPanelDisabledIconState_ApplyDisableActionPc34Compat(
         &state, 1, 19); /* BERZERK = 30 ticks */
 
@@ -514,9 +517,8 @@ static void test_dead_champion_early_return(void)
 /*
  * ReDMCSB ACTIDRAW.C F0386:262-264 empty-hand blit — when the
  * champion's action-hand slot is C0xFFFF_THING_NONE, F0386 fills
- * the cell cyan and blits C201_ICON_ACTION_ICON_EMPTY_HAND.  The
- * hatch gate is not entered.  This pins the AVAILABLE-but-empty
- * side of the gate (distinct from PER_CHAMPION_DISABLE_ACTION).
+ * the cell cyan and blits C201_ICON_ACTION_ICON_EMPTY_HAND, then reaches
+ * the normal hatch gate. Without a disable/global gate it stays unhatched.
  */
 static void test_empty_hand_available(void)
 {
@@ -524,9 +526,8 @@ static void test_empty_hand_available(void)
     DM1_V1_ChampionPanelDisabledIconResolveResultPc34Compat r;
 
     DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
-    /* All four champions start with last_action_index=-1 (the
-     * InitState default), so the resolve sees an empty-hand
-     * configuration. */
+    /* InitState explicitly sets action_hand_empty; action history must
+     * not manufacture an equipped item. */
     DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(&state, &r);
     expect_bool("empty.flag", r.any_empty_hand, true,
                 "F0386:262-264 empty-hand blit");
@@ -542,7 +543,61 @@ static void test_empty_hand_available(void)
                    "F0386:262-264 SLOT_EMPTY state id");
         snprintf(id, sizeof(id), "empty.no_hatch%d", i);
         expect_bool(id, r.champion_results[i].should_hatch_cell, false,
-                    "F0386:262-264 empty hand never hatches");
+                    "F0386:283 empty hand without a gate stays unhatched");
+    }
+}
+
+static void test_empty_hand_hatch_gates_and_expiry(void)
+{
+    DM1_V1_ChampionPanelDisabledIconStatePc34Compat state;
+    DM1_V1_ChampionPanelDisabledIconResolveResultPc34Compat result;
+    static const int expected[] = {
+        DM1_V1_CPDIS_STATE_PER_CHAMPION_DISABLE_ACTION_PC34,
+        DM1_V1_CPDIS_STATE_CANDIDATE_ACTIVE_PC34,
+        DM1_V1_CPDIS_STATE_CANDIDATE_ACTIVE_PC34,
+        DM1_V1_CPDIS_STATE_PARTY_RESTING_PC34
+    };
+    for (int gate = 0; gate < 4; ++gate) {
+        DM1_V1_ChampionPanelDisabledIconState_InitStatePc34Compat(&state, 4);
+        if (gate == 0)
+            DM1_V1_ChampionPanelDisabledIconState_ApplyDisableActionPc34Compat(
+                &state, 0, 6); /* Original empty-hand PUNCH. */
+        else if (gate == 1) state.candidate_champion_ordinal = 1;
+        else if (gate == 2) state.candidate_mirror_panel_active = true;
+        else state.party_is_resting = true;
+        expect_bool("empty.gate.hand_preserved", state.champions[0].action_hand_empty,
+                    true, "F0330 does not equip an item");
+        expect_int("empty.gate.resolve",
+            DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(&state, &result),
+            1, "F0386 living empty-hand hatch resolution");
+        expect_bool("empty.gate.hatches", result.champion_results[0].should_hatch_cell,
+                    true, "ACTIDRAW.C:247-283 C201 reaches every hatch cause");
+        expect_bool("empty.gate.identity", result.any_empty_hand, true,
+                    "Hatching does not erase empty-hand identity");
+        expect_int("empty.gate.state", result.champion_results[0].state,
+                   expected[gate], "Hatch cause takes precedence over SLOT_EMPTY");
+        if (gate == 0) {
+            expect_bool("empty.gate.other", result.champion_results[1].should_hatch_cell,
+                        false, "Per-champion lock must not hatch another empty hand");
+            DM1_V1_ChampionPanelDisabledIconState_AdvanceTimelinePc34Compat(
+                &state, state.champions[0].remaining_disabled_ticks);
+        } else {
+            state.candidate_champion_ordinal = 0;
+            state.candidate_mirror_panel_active = false;
+            state.party_is_resting = false;
+        }
+        DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(&state, &result);
+        expect_bool("empty.gate.clear", result.champion_results[0].should_hatch_cell,
+                    false, "C11 expiry/global release removes hatch");
+        expect_int("empty.gate.empty_again", result.champion_results[0].state,
+                   DM1_V1_CPDIS_STATE_SLOT_EMPTY_PC34,
+                   "Cleared empty-hand action remains SLOT_EMPTY");
+        state.champions[0].current_health = 0;
+        state.champions[0].attributes |= DM1_V1_CPDIS_MASK_DISABLE_ACTION_PC34;
+        state.party_is_resting = true;
+        DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(&state, &result);
+        expect_bool("empty.gate.dead", result.champion_results[0].should_hatch_cell,
+                    false, "Dead champion still returns before any hatch cause");
     }
 }
 
@@ -790,6 +845,7 @@ int main(void)
     test_global_hatch_gates();
     test_dead_champion_early_return();
     test_empty_hand_available();
+    test_empty_hand_hatch_gates_and_expiry();
     test_shield_border_disabled_state();
     test_per_champion_priority_over_global();
     test_boundary_clamps();

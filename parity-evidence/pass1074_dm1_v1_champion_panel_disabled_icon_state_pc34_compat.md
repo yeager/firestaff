@@ -20,4 +20,4 @@
 
 ## Verification runs
 
-- `/dev/shm/firestaff-dm1/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=164 fails=0 assertions=164
+- `.codex-scratch/parity-build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=197 fails=0 assertions=197

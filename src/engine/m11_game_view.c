@@ -48745,7 +48745,6 @@ int M11_GameView_ShouldHatchV1ActionIconCell(
     const M11_GameViewState* state, int championSlot)
 {
     const struct ChampionState_Compat* champion;
-    unsigned short actionHand;
 
     if (!state || championSlot < 0 ||
         championSlot >= state->world.party.championCount ||
@@ -48753,13 +48752,9 @@ int M11_GameView_ShouldHatchV1ActionIconCell(
         return 0;
     }
     champion = &state->world.party.champions[championSlot];
-    /* ACTIDRAW.C F0386 takes the dead and empty-hand branches before its
-     * final MASK0x0008/G0299/G0300 hatch gate. */
+    /* ACTIDRAW.C F0386:235-288 returns for dead champions, but the empty
+     * hand selects C201 and still reaches MASK0x0008/G0299/G0300. */
     if (!champion->present || champion->hp.current == 0) {
-        return 0;
-    }
-    actionHand = m11_get_action_hand_thing(champion);
-    if (actionHand == THING_NONE || actionHand == THING_ENDOFLIST) {
         return 0;
     }
 

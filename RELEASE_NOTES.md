@@ -1,5 +1,8 @@
 # Unreleased
 
+- Empty-hand action icons retain cooldown, resting and candidate markings,
+  matching the original F0386 hatch gate instead of bypassing it.
+
 - CSB FM Towns movement arrows use the original language-specific C013
   graphics. Japanese mouse controls now use the correct lower-screen
   regions, and turn arrows dispatch the native CSB turn commands.

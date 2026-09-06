@@ -133,14 +133,36 @@ static void test_action_row_and_icon_cells_stay_source_locked(void)
     state.world.party.champions[1].inventory[CHAMPION_SLOT_ACTION_HAND] =
         THING_NONE;
     state.actionDisabledTicks[1] = 6;
-    check_int("empty action hand bypasses F0386 hatch",
+    check_int("empty action hand retains F0386 cooldown hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, 1), 1);
+    state.actionDisabledTicks[1] = 0;
+    check_int("cleared empty-hand cooldown removes hatch",
               M11_GameView_ShouldHatchV1ActionIconCell(&state, 1), 0);
+    state.resting = 1;
+    check_true("resting hatches empty action hand",
+               M11_GameView_ShouldHatchV1ActionIconCell(&state, 1));
+    state.resting = 0;
+    state.candidateMirrorOrdinal = 1;
+    check_true("candidate ordinal hatches empty action hand",
+               M11_GameView_ShouldHatchV1ActionIconCell(&state, 1));
+    state.candidateMirrorOrdinal = 0;
     state.candidateMirrorPanelActive = 1;
+    check_true("candidate panel hatches empty action hand",
+               M11_GameView_ShouldHatchV1ActionIconCell(&state, 1));
     check_true("G0299 hatch uses source action-hand gate",
                M11_GameView_ShouldHatchV1ActionIconCell(&state, 0));
     state.world.party.champions[0].hp.current = 0;
     check_int("dead champion returns before hatch",
               M11_GameView_ShouldHatchV1ActionIconCell(&state, 0), 0);
+    state.world.party.champions[1].present = 0;
+    check_int("absent champion cannot hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, 1), 0);
+    check_int("out-of-party cell cannot hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, 2), 0);
+    check_int("negative action cell cannot hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, -1), 0);
+    check_int("missing state cannot hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(NULL, 0), 0);
     check_int("invalid action cell cannot hatch",
               M11_GameView_ShouldHatchV1ActionIconCell(&state, 4), 0);
     M11_GameView_Shutdown(&state);

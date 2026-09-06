@@ -65,17 +65,17 @@
     }
   ],
   "status": "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
-  "timestampUtc": "2026-09-04T18:24:26.280401+00:00",
+  "timestampUtc": "2026-09-06T14:27:15.776360+00:00",
   "verificationRuns": [
     {
-      "assertions": 164,
+      "assertions": 197,
       "command": [
-        "/dev/shm/firestaff-dm1/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
+        ".codex-scratch/parity-build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
       ],
       "fails": 0,
       "finalMarker": "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",
       "passed": true,
-      "passes": 164,
+      "passes": 197,
       "returncode": 0
     }
   ]

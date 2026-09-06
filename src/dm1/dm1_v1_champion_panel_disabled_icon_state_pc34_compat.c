@@ -258,14 +258,8 @@ int DM1_V1_ChampionPanelDisabledIconState_ApplyDisableActionPc34Compat(
     if (ticks < 0) return -1;
     row = &state->champions[champion_index];
     row->last_action_index = action_index;
-    /* ReDMCSB CHAMPION.C F0330:2208 — F0330 is called from
-     * F0407_MENUS_IsActionPerformed which only runs when
-     * Champion.Slots[C01_SLOT_ACTION_HAND] holds a non-empty
-     * action.  The hand is therefore non-empty after a successful
-     * F0330 dispatch.  The empty-hand branch is only entered when
-     * the champion has never performed an action (initial party
-     * state). */
-    row->action_hand_empty = false;
+    /* MENU.C F0407:1321-1334 includes empty-hand PUNCH/KICK. F0330
+     * changes action timing/attributes, not the action-hand thing. */
     if (ticks == 0) {
         /* ReDMCSB MENU.C:834 — the action is not disabled because
          * G0491[actionIndex] == 0.  F0330 is still called from
@@ -325,20 +319,18 @@ int DM1_V1_ChampionPanelDisabledIconState_AdvanceTimelinePc34Compat(
  * per-cell hatch decision.  This is the gate's contract predicate
  * — the source of truth for which lane of F0386 would fire next.
  *
- * The four source-locked branches:
+ * The source-locked branches:
  *   1. Party incomplete → PARTY_INCOMPLETE, no draw, no hatch.
- *   2. Champion absent (present==0) → skip (no champion result row).
+ *   2. Champion absent (present==0) → PARTY_INCOMPLETE, no hatch.
  *   3. Dead champion (current_health == 0) → DEAD_CHAMPION, no icon,
  *      F0386 fills the cell BLACK and returns without hatch.
- *   4. Living champion with empty action hand → SLOT_EMPTY, F0386
- *      fills cyan and blits C201_ICON_ACTION_ICON_EMPTY_HAND, no
- *      hatch (the hatch gate at line 282 is not entered).
- *   5. Living champion with action-hand object → AVAILABLE by default
+ *   4. Every living champion reaches F0386:283's hatch test, including
+ *      an empty hand after the C201 blit (ACTIDRAW.C:247-281).
+ *   5. Living champion → SLOT_EMPTY or AVAILABLE by default
  *      OR PER_CHAMPION_DISABLE_ACTION if MASK0x0008 is set on the
  *      Attributes bitfield (matching F0330:2252 + F0386:282-286).
- *      CANDIDATE_ACTIVE / PARTY_RESTING override the per-champion
- *      state for the global hatch gates (F0386:282 also hatches
- *      those, independently of MASK0x0008).
+ *      CANDIDATE_ACTIVE / PARTY_RESTING are equivalent global hatch
+ *      causes; reporting prioritizes the per-champion disable bit.
  *
  * Returns 1 if the resolution succeeded and the result row is
  * consistent, 0 if any contract violation is detected (also flags
@@ -424,20 +416,12 @@ int DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
             continue;
         }
         if (!action_hand_thing_present) {
-            /* Living champion with no action-hand thing — F0386 fills
-             * C201_ICON_ACTION_ICON_EMPTY_HAND and skips the hatch
-             * gate.  Still AVAILABLE (the slot is just empty). */
-            r->state = DM1_V1_CPDIS_STATE_SLOT_EMPTY_PC34;
-            r->should_hatch_cell = false;
-            r->anchor = "ACTIDRAW.C F0386:262-264 C0xFFFF_THING_NONE -> "
-                         "C201_ICON_ACTION_ICON_EMPTY_HAND";
+            /* ACTIDRAW.C:247 selects C201, then reaches the same
+             * palette/blit/hatch tail as an action-hand object. */
             out_result->any_empty_hand = true;
-            ++out_result->per_state_count[DM1_V1_CPDIS_STATE_SLOT_EMPTY_PC34];
-            ++out_result->champions_processed;
-            continue;
         }
 
-        /* Living champion with action-hand object — apply the
+        /* Living champion with either hand state — apply the
          * priority order from F0386:282 (per-champion MASK0x0008
          * has the same priority as candidate / resting; the first
          * one matching already triggers the hatch).  We report the
@@ -481,10 +465,11 @@ int DM1_V1_ChampionPanelDisabledIconState_ResolvePc34Compat(
             ++out_result->champions_processed;
             continue;
         }
-        r->state = DM1_V1_CPDIS_STATE_AVAILABLE_PC34;
+        r->state = action_hand_thing_present ? DM1_V1_CPDIS_STATE_AVAILABLE_PC34 :
+            DM1_V1_CPDIS_STATE_SLOT_EMPTY_PC34;
         r->should_hatch_cell = false;
         r->anchor = "ACTIDRAW.C F0386 available icon — no hatch";
-        ++out_result->per_state_count[DM1_V1_CPDIS_STATE_AVAILABLE_PC34];
+        ++out_result->per_state_count[r->state];
         ++out_result->champions_processed;
     }
 
