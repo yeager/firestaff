@@ -49883,7 +49883,6 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
         int framebufferWidth,
         int framebufferHeight)
 {
-    uint8_t dynamenu[DM1_V1_FMTOWNS_DYNAMENU_BYTES] = {0};
     unsigned int slot;
 
     if (!state || !actions || !framebuffer || framebufferWidth <= 0 ||
@@ -49916,7 +49915,6 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
                 }
             }
         }
-        dynamenu[DM1_V1_FMTOWNS_DYNAMENU_OFFSET_BUTTON0 + slot] = action;
     }
     /* ACTIDRAW.C:323,333-355; FMTOWNS.H:315: SPC_BLOT is F0660.
      * Arguments10,11/77/79,-1 are graphic, destination region and
@@ -49936,17 +49934,35 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
                 framebufferWidth, framebufferHeight, 10, sourceW, sourceH,
                 japanese ? 9 : 0, 0, 87, cropH, 233, menuY)) return 0;
     }
-    /* Existing label consumer; source-region80/85-87 text placement and
-     * Japanese glyph rendering still need independent verification.
-     * Correct bitmap composition does not establish text parity. */
-    {
-        int menuLang = (state->dm1FmtownsStartupReceipt.language ==
-                        DM1_FMTOWNS_LANG_JP) ? 1 : 0;
-        (void)M11_GameView_RenderDm1FmtownsMenu(
-            (M11_GameViewState *)state, dynamenu, menuLang,
-            framebuffer, framebufferWidth, framebufferHeight,
-            framebufferWidth, 4, 0);
+    if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+        const int actor = (int)state->actingChampionOrdinal - 1;
+        DM1_V1_ActionAreaRectPc34 clip = {233,77,87,45};
+        char name[CHAMPION_NAME_LENGTH + 1];
+        int row;
+        if (actor < 0 || actor >= CHAMPION_MAX_PARTY) return 1;
+        /* ACTIDRAW.C:364/374 -> TEXT.C F0768:1295-1307 pads7/12
+         * characters for F20E. F0040:1219-1221 resolves C080/C085-87
+         * using text height5; COORD.C:2193-2196,2359-2361 yields
+         * baseline83 for the name and93/105/117 for action labels. */
+        /* F0768 consumes the source name verbatim, including an empty
+         * string; the general UI formatter invents "EMPTY" for that case. */
+        memcpy(name, state->world.party.champions[actor].name, CHAMPION_NAME_LENGTH);
+        name[CHAMPION_NAME_LENGTH] = '\0';
+        m11_draw_dm1_ui_text_trailing_spaces(state, framebuffer,
+            framebufferWidth, framebufferHeight, 235, 83, name, 7, 0, 4, &clip);
+        for (row = 0; row < 3; ++row) {
+            const char* label = actions[row] == 0xFFu ? "" :
+                m11_action_name_for_state(state, actions[row]);
+            m11_draw_dm1_ui_text_trailing_spaces(state, framebuffer,
+                framebufferWidth, framebufferHeight, 241, 93+12*row,
+                label, 12, 4, 0, &clip);
+        }
+        return 1;
     }
+    /* The historical menu-render adapter fills a synthetic rectangle
+     * before drawing its labels. Never let it overwrite authentic JDM
+     * C010. Japanese F0952 glyph metrics/raster ownership remain open;
+     * retaining the source background does not establish text parity. */
     return 1;
 }
 

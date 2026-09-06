@@ -1,5 +1,10 @@
 # Unreleased
 
+- English FM Towns action-menu names and labels use original font placement
+  and padding; empty names no longer display an invented EMPTY label.
+  A second legacy synthetic fill can no longer overwrite Japanese C010;
+  Japanese menu text remains a known incomplete path.
+
 - Performing an action no longer replaces the party leader with its actor;
   melee ticks receive the attacker explicitly.
 

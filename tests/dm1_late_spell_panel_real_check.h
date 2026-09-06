@@ -209,22 +209,57 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
         {
             const M11_AssetSlot *menu=M11_AssetLoader_Load(&state->assetLoader,10);
             const int menuY=yOffset?85:77, menuH=yOffset?72:45;
+            unsigned short rowThings[3]={THING_NONE,THING_NONE,THING_NONE};
+            unsigned int foundRows=0;
+            unsigned short savedHand=state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND];
+            LATE_SPELL_CHECK(state->world.things && state->world.things->weapons);
+            /* Search actual dungeon weapon records for source action sets.
+             * Only the RAM hand reference changes; no weapon/type/action
+             * table or original media bytes are manufactured. */
+            state->world.party.champions[0].hp.current=100;
+            state->actionDisabledTicks[0]=0;
+            for(int weapon=0;weapon<state->world.things->weaponCount;++weapon) {
+                unsigned char candidateActions[3];
+                int count;
+                unsigned short thing=(unsigned short)((THING_TYPE_WEAPON<<10)|weapon);
+                state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND]=thing;
+                M11_GameView_ClearActingChampion(state);
+                if(!M11_GameView_SetActingChampion(state,0) ||
+                   !M11_GameView_GetActingActionIndices(state,candidateActions)) continue;
+                count=candidateActions[0]==255?0:candidateActions[1]==255?1:candidateActions[2]==255?2:3;
+                if(count && !(foundRows&(1u<<(count-1)))) {
+                    rowThings[count-1]=thing;
+                    foundRows|=1u<<(count-1);
+                    fprintf(stderr,"Original FMT %d-row menu weapon record%d type%u actions%u/%u/%u\n",
+                        count,weapon,state->world.things->weapons[weapon].type,
+                        candidateActions[0],candidateActions[1],candidateActions[2]);
+                }
+            }
+            state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND]=savedHand;
+            M11_GameView_ClearActingChampion(state);
+            LATE_SPELL_CHECK(foundRows==7u);
             LATE_SPELL_CHECK(menu && menu->loaded && menu->pixels &&
                              menu->width==(yOffset?96:87) && menu->height==menuH);
             /* ACTIDRAW.C:333-355 selects C079/C077/C011 by action count.
              * Rightmost column is outside label glyphs; compare authentic
              * C010 pixels rather than asserting host-generated colours. */
+            for (int rowVariant=0;rowVariant<3;++rowVariant)
             for (mode=0;mode<3;++mode) for(i=0;i<4;++i) {
                 unsigned char actions[3];
                 int rows, cropH;
+                unsigned short actorHand=state->world.party.champions[i].inventory[CHAMPION_SLOT_ACTION_HAND];
+                state->world.party.champions[i].inventory[CHAMPION_SLOT_ACTION_HAND]=rowThings[rowVariant];
                 state->presentationMode=modes[mode];
                 state->world.party.champions[i].hp.current=100;
+                memset(state->world.party.champions[i].name,0,CHAMPION_NAME_LENGTH);
+                if (mode != 0)
+                    memcpy(state->world.party.champions[i].name,names[i],strlen(names[i]));
                 state->actionDisabledTicks[i]=0;
                 M11_GameView_ClearActingChampion(state);
                 LATE_SPELL_CHECK(M11_GameView_SetActingChampion(state,i));
                 LATE_SPELL_CHECK(M11_GameView_GetActingActionIndices(state,actions));
                 rows=actions[0]==255?0:actions[1]==255?1:actions[2]==255?2:3;
-                LATE_SPELL_CHECK(rows>0);
+                LATE_SPELL_CHECK(rows==rowVariant+1);
                 cropH=yOffset?9+21*rows:9+12*rows;
                 memset(actual,15,sizeof(actual));
                 M11_GameView_Draw(state,actual,320,200);
@@ -237,9 +272,44 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
                         return 0;
                     }
                 }
+                if(!yOffset) {
+                    const unsigned char *actorName=state->world.party.champions[i].name;
+                    int ended=0;
+                    memset(expected,0,sizeof(expected));
+                    for(y=0;y<cropH;++y)
+                        memcpy(expected+(77+y)*320+233,menu->pixels+y*87,87);
+                    /* Recovered EDM text consumer: seven padded ASCII
+                     * name cells, twelve padded action cells per row.
+                     * Read source labels/font bytes, not host draw plans. */
+                    for(int column=0;column<7;++column) {
+                        unsigned char ch=' ';
+                        if(!ended) {
+                            if(actorName[column]) ch=actorName[column];
+                            else ended=1;
+                        }
+                        glyph(expected,&state->originalFont,235+6*column,83,ch,0,4);
+                    }
+                    for(int row=0;row<rows;++row) {
+                        const unsigned char *label;
+                        LATE_SPELL_CHECK(actions[row]<state->dm1FmtownsStartupReceipt.game_action_name_count);
+                        label=(const unsigned char*)state->dm1FmtownsStartupReceipt.game_action_names[actions[row]];
+                        ended=0;
+                        for(int column=0;column<12;++column) {
+                            unsigned char ch=' ';
+                            if(!ended) {
+                                if(label[column]) ch=label[column];
+                                else ended=1;
+                            }
+                            glyph(expected,&state->originalFont,241+6*column,93+12*row,ch,4,0);
+                        }
+                    }
+                    LATE_SPELL_CHECK(equal_box(actual,expected,233,77,87,45));
+                }
                 M11_GameView_ClearActingChampion(state);
+                state->world.party.champions[i].inventory[CHAMPION_SLOT_ACTION_HAND]=actorHand;
             }
             puts("PASS: original FM Towns active-menu C010 border, all actors and modes (not text parity)");
+            if(!yOffset) puts("PASS: original EDM full active menu ASCII text/background pixels");
             /* Original C080 Pass is narrower in JDM. Test public pointer
              * routing at both inclusive corners without executing an action. */
             for(mode=0;mode<3;++mode) for(int edge=0;edge<2;++edge) {

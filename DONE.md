@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: English FM Towns active-menu text follows F0768's original
+  name/action baselines and7/12-character padding using original M653.
+  Empty names remain empty rather than becoming invented EMPTY labels.
+  Full87x45 panel comparisons pass for four actors and three modes with
+  empty/nonempty names. Existing dungeon weapons supply one/two/three-row
+  action sets:36 full English panels and36 Japanese border comparisons.
+  Removed the Japanese text adapter's second synthetic-fill call from the
+  live path.4/4 targeted tests pass,no skips(12.51 seconds). Japanese text
+  remains unsupported by this renderer, not proven by background checks.
+
 - 2026-09-06: Action dispatch passes its attacker explicitly in TickInput
   instead of changing the party leader. Original-media DOS/F20EN/F20JP
   PUNCH/KICK/WAR CRY row/gap tests preserve leader ownership across three

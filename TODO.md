@@ -3,16 +3,17 @@
 - Extend actor/leader regression coverage beyond empty-hand actions to
   weapon/target/damage ownership, including actions by a non-leader.
 
-- Complete FM Towns active-menu text and row-action/boundary parity. Extend C010
-  tests beyond the right border to full panels with one/two/three actions.
+- Complete Japanese FM Towns active-menu text and remaining row boundaries.
+  Extend full C010 panel tests to Japanese labels; English one/two/three
+  action panels are covered using existing dungeon weapon records.
   Retire obsolete solid-fill shim/tests and misleading colour-selector
   names; destination region IDs11/77/79 are not palette values.
 
 - Extend DM1 FM Towns Japanese movement pointer coverage to traversal and
   exact boundaries, and action-cell coverage to outside edges. Verify
   hatching against the original JDM registry. Verify Japanese message
-  wrapping and glyph metrics within its224x33 container. The active
-  Japanese menu text still uses English-derived placement.
+  wrapping and glyph metrics within its224x33 container. The unsupported
+  Japanese menu text adapter is no longer called by the live renderer.
   Extend Japanese spell input verification to casting and outside-parent
   boundaries; verify Japanese text separately from the ASCII/rune oracle.
 
