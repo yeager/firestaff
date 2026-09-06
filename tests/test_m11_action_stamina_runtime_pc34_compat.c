@@ -517,7 +517,7 @@ static void test_melee_action_row_uses_auto_target_and_action_index(void) {
               "F0391 clears acting champion after melee action");
 }
 
-static void test_melee_action_row_targets_pref0407_champion_direction(void) {
+static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -579,7 +579,7 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = 0;
     groups[0].count = 0;
-    groups[0].health[0] = 200;
+    groups[0].health[0] = initialHealth;
     groups[0].cells = 0xFF;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
@@ -602,7 +602,7 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
     }
     ASSERT_EQ(meleeRow >= 0, 1,
               "champion-facing fixture exposes a melee row");
-    if (meleeRow < 0) return;
+    if (meleeRow < 0) return -1;
     logBefore = M11_GameView_GetMessageLogCount(&state);
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 1,
               "melee action row uses champion-facing F0407 target");
@@ -622,9 +622,10 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
         ASSERT_EQ(damageDealt > 0, 1,
                   "live F0231 emission carries positive damage");
     }
-    ASSERT_EQ(groups[0].health[0] < 200, 1,
+    ASSERT_EQ(groups[0].health[0] < initialHealth, 1,
               "champion-facing melee row damages the south group");
-    ASSERT_EQ(200 - groups[0].health[0], damageDealt,
+    ASSERT_EQ(initialHealth - groups[0].health[0],
+              damageDealt > initialHealth ? initialHealth : damageDealt,
               "live F0231 damage emission matches group HP writeback");
     /* ReDMCSB: PROJEXPL.C F0231 lines 1531-1536 writes creature damage
      * before returning the positive damage value; MENU.C F0390 lines
@@ -649,6 +650,25 @@ static void test_melee_action_row_targets_pref0407_champion_direction(void) {
               "melee action does not rewrite party direction");
     ASSERT_EQ(state.world.party.champions[0].direction, 2,
               "melee action preserves champion direction");
+    *outDamage = damageDealt;
+    if (initialHealth == 1) {
+        int killReceipt = 0;
+        ASSERT_EQ(groups[0].health[0], 0,
+                  "one-health target is killed by the action");
+        for (int e = 0; e < state.lastTickResult.emissionCount; ++e)
+            if (state.lastTickResult.emissions[e].kind == EMIT_KILL_NOTIFY) killReceipt = 1;
+        ASSERT_EQ(killReceipt, 1, "fatal action exercises M11 kill-notification dispatch");
+    }
+    return state.world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_FIGHTER].experience;
+}
+
+static void test_melee_action_row_targets_pref0407_champion_direction(void) {
+    int survivingDamage = 0, killingDamage = 0;
+    int survivingXp = run_melee_action_row_target_case(200, &survivingDamage);
+    int killingXp = run_melee_action_row_target_case(1, &killingDamage);
+    /* F0231 awards calculated-damage XP, not a second kill reward. */
+    ASSERT_EQ(killingDamage, survivingDamage, "same seed produces same calculated damage");
+    ASSERT_EQ(killingXp, survivingXp, "kill notification must not add a second XP reward");
 }
 
 static void test_melee_action_row_closed_door_targets_pref0407_champion_direction(void) {
@@ -809,7 +829,8 @@ static void test_parry_action_row_routes_through_f0402_f0231(void) {
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_PARRY, &route), 1,
               "PARRY has a source G0496/G0497 route for action-row XP");
     if (!route.valid) return;
-    minActionXp = route.experienceGain * 2;
+    /* Tick 11: F0304 unsigned stale halve applies without recent bonus. */
+    minActionXp = route.experienceGain >> 1;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
 
     dungeon.header.mapCount = 1;
@@ -968,7 +989,8 @@ static void test_melee_action_row_halves_disable_ticks_when_f0402_fails(void) {
     if (!route.valid) return;
 
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
-    expectedActionXp = (route.experienceGain >> 1) * 2;
+    /* Tick 7: F0407 failure halve, then F0304 unsigned startup halve. */
+    expectedActionXp = (route.experienceGain >> 1) >> 1;
     staminaBefore = (int)state.world.party.champions[0].stamina.current;
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, meleeRow), 0,
               "empty-front melee row reports F0402 failure");
@@ -2181,8 +2203,8 @@ static void test_blow_horn_uses_f0304_influence_xp_semantics(void) {
               "F0304 propagates Influence XP to Priest base skill");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_PRIEST].temporaryExperience,
-              3,
-              "F0304 adds bounded temporary XP to Priest base skill");
+              0,
+              "F0304 CHAMPION.C:887-895 awards temporary XP only to Influence");
     ASSERT_EQ(state.world.party.champions[0]
                   .skillLevels[DM1_SKILL_IDX_PRIEST],
               2,
@@ -2323,16 +2345,16 @@ static void test_throw_action_removes_action_hand_object(void) {
               "THROW mirrors F0406 champion direction to party direction");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
-              21,
-              "THROW awards F0328 Throw XP plus F0407 G0497 action XP");
+              ((8 + 4 + (19 >> 2)) >> 1) + (5 >> 1),
+              "THROW F0304 unsigned startup halves F0328 and G0497 independently");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_NINJA].experience,
-              21,
-              "THROW propagates both XP sources to Ninja base skill");
+              ((8 + 4 + (19 >> 2)) >> 1) + (5 >> 1),
+              "THROW propagates both startup-scaled XP sources to Ninja");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].temporaryExperience,
-              3,
-              "THROW adds bounded temporary XP for both XP sources");
+              1 + 1,
+              "THROW adds bounded(1, XP/8, 100) separately for both awards");
     ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
               "THROW uses F0407 side-derived launch cell");
     ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
@@ -2418,12 +2440,12 @@ static void test_throw_full_projectile_list_still_accepts_f0328(void) {
               "full-list THROW spends F0305 stamina plus F0407 jitter");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
-              21,
-              "full-list THROW keeps F0328 Throw XP plus F0407 G0497 XP");
+              ((8 + 4 + (19 >> 2)) >> 1) + (5 >> 1),
+              "full-list THROW preserves both F0304 unsigned-startup-scaled awards");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_NINJA].experience,
-              21,
-              "full-list THROW propagates both XP sources to Ninja");
+              ((8 + 4 + (19 >> 2)) >> 1) + (5 >> 1),
+              "full-list THROW propagates both startup-scaled XP sources to Ninja");
     ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
               "dropped full-list THROW does not set live-projectile movement lockout");
     ASSERT_EQ(state.audioState.lastSoundIndex, DM1_SND_COMBAT,
@@ -2465,10 +2487,12 @@ static void test_throw_uses_post_f0304_throw_level_for_projectile(void) {
     state.world.party.champions[0].cell = 2;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
     state.world.party.champions[0].maxLoad = 420;
+    /* F0328 compass award is 8 after startup halve/recent double.
+     * Seed 492 so the inner award itself reaches 500, before F0407. */
     state.world.lifecycle.champions[0]
-        .skills20[LIFECYCLE_SKILL_NINJA].experience = 491;
+        .skills20[LIFECYCLE_SKILL_NINJA].experience = 492;
     state.world.lifecycle.champions[0]
-        .skills20[LIFECYCLE_SKILL_THROW].experience = 491;
+        .skills20[LIFECYCLE_SKILL_THROW].experience = 492;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
     thrownThing = make_thing(THING_TYPE_JUNK, 0);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
@@ -2506,7 +2530,8 @@ static void test_direct_throw_empty_action_hand_keeps_f0407_tail(void) {
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_THROW, &route), 1,
               "empty-hand THROW has a source G0496/G0497 route");
     if (!route.valid) return;
-    expectedActionXp = route.experienceGain * 2;
+    /* F0304:866 unsigned startup stale halve, then :883 recent double. */
+    expectedActionXp = (route.experienceGain >> 1) * 2;
     expectedStaminaCost =
         dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_THROW);
     expectedDisabledTicks = action_disabled_ticks_for_test(DM1_ACTION_THROW);
@@ -5238,8 +5263,10 @@ static void test_thrown_weapon_wall_impact_appends_source_square_raw_tail(void) 
               "raw thrown dagger next is cleared after materialization");
 }
 
-static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
+static void test_leader_hand_throw_uses_f0328_temporary_action_hand(int difficulty) {
     M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
     unsigned char rawWeapon[4];
@@ -5248,6 +5275,16 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
     uint32_t tickBefore;
 
     seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    if (difficulty > 0) {
+        /* CHAMPION.C F0304:870: map zero has nonzero difficulty.
+         * Header-only RAM fixture isolates the multiplier from media IO. */
+        dungeon.header.mapCount = 1;
+        dungeon.maps = maps;
+        maps[0].difficulty = difficulty;
+        state.world.dungeon = &dungeon;
+    }
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
     memset(rawWeapon, 0, sizeof(rawWeapon));
@@ -5291,8 +5328,8 @@ static void test_leader_hand_throw_uses_f0328_temporary_action_hand(void) {
               "leader-hand throw spends F0305 object-weight stamina");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
-              16,
-              "leader-hand throw awards F0328/F0304 Throw hidden-skill XP");
+              ((8 + 4 + (19 >> 2)) >> 1) * (difficulty ? difficulty : 1),
+              "leader-hand dagger XP halves before actual map difficulty multiplier");
     ASSERT_EQ(state.world.projectiles.entries[0].cell, 2,
               "leader-hand throw uses explicit right-side launch cell");
     ASSERT_EQ(state.world.projectiles.entries[0].direction, 1,
@@ -5373,8 +5410,8 @@ static void test_leader_hand_throw_full_projectile_list_accepts_f0328(void) {
               "full-list leader-hand throw spends F0305 object-weight stamina");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[LIFECYCLE_SKILL_THROW].experience,
-              16,
-              "full-list leader-hand throw awards F0328 Throw XP");
+              (8 + 4 + (19 >> 2)) >> 1,
+              "full-list leader-hand dagger XP retains F0304 startup halve");
     ASSERT_EQ(state.world.gameTick, tickBefore + 1u,
               "full-list accepted leader-hand throw still consumes the PC34 stop-wait tick");
     ASSERT_EQ(state.world.projectileDisabledMovementTicks, 0,
@@ -5530,7 +5567,8 @@ static void test_block_action_disables_champion_for_source_ticks(void) {
               "BLOCK has a source G0496/G0497 route");
     if (!route.valid) return;
     state.world.lifecycle.lastCreatureAttackTime = state.world.gameTick;
-    expectedActionXp = route.experienceGain * 2;
+    /* Tick 1: F0304 unsigned stale halve applies; recent bonus does not. */
+    expectedActionXp = route.experienceGain >> 1;
     expectedStaminaCost =
         dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_BLOCK);
 
@@ -5600,7 +5638,8 @@ static void test_direct_parry_empty_front_uses_f0402_failure_tail(void) {
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_PARRY, &route), 1,
               "PARRY has a source G0496/G0497 route");
     if (!route.valid) return;
-    expectedXp = (route.experienceGain >> 1) * 2;
+    /* F0407 failed PARRY halves first, then F0304 halves at tick 3. */
+    expectedXp = (route.experienceGain >> 1) >> 1;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_PARRY),
@@ -5900,12 +5939,12 @@ static void test_heal_action_uses_hidden_heal_skill(void) {
               "F0407 HEAL spends two mana per source healing cycle");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_HEAL].experience,
-              10010,
-              "F0407 HEAL awards 2 plus 2 XP per healing cycle");
+              10000 + 2 * (2 + 2 * 4),
+              "F0407 four HEAL cycles then F0304 recent-attack double XP");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_PRIEST].experience,
-              10,
-              "F0407 HEAL propagates healing-loop XP to base Priest");
+              2 * (2 + 2 * 4),
+              "F0304 CHAMPION.C:883-894 doubles HEAL XP before Priest propagation");
 }
 
 static void test_heal_no_effect_still_runs_f0407_tail(void) {
@@ -5938,12 +5977,12 @@ static void test_heal_no_effect_still_runs_f0407_tail(void) {
               "no-effect HEAL keeps the common F0407 action-disabled tail");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_HEAL].experience,
-              10000 + route.experienceGain,
-              "no-effect HEAL awards the common G0497 table XP to Heal");
+              10000 + 2 * route.experienceGain,
+              "no-effect HEAL receives F0304 recent-attack bonus on G0497 XP");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[DM1_SKILL_IDX_PRIEST].experience,
-              route.experienceGain,
-              "no-effect HEAL propagates common G0497 XP to Priest");
+              2 * route.experienceGain,
+              "no-effect HEAL propagates recent-attack-scaled XP to Priest");
 }
 
 static void test_window_action_schedules_thieves_eye_and_decrements_charges(void) {
@@ -5993,12 +6032,12 @@ static void test_window_action_schedules_thieves_eye_and_decrements_charges(void
               "WINDOW increments the party C73 Thieves Eye counter");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[route.skillIndex].experience,
-              10000 + route.experienceGain,
-              "direct WINDOW awards full F0407 G0497 XP to Earth");
+              10000 + 2 * route.experienceGain,
+              "WINDOW receives F0304 CHAMPION.C:883 recent-attack bonus");
     ASSERT_EQ(state.world.lifecycle.champions[0]
                   .skills20[route.baseSkillIndex].experience,
-              route.experienceGain,
-              "direct WINDOW propagates full F0407 G0497 XP to Wizard");
+              2 * route.experienceGain,
+              "WINDOW propagates recent-attack-scaled XP to Wizard");
     for (i = 0; i < state.world.timeline.count; ++i) {
         if (state.world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
             state.world.timeline.events[i].aux0 == LIFECYCLE_STATUS_THIEVES_EYE) {
@@ -6489,7 +6528,8 @@ static void test_fireball_projectile_create_failure_halves_action_xp(void) {
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_FIREBALL, &route), 1,
               "FIREBALL has a source G0496/G0497 route");
     if (!route.valid) return;
-    expectedXp = route.experienceGain >> 1;
+    /* F0407 failure halve precedes F0304 CHAMPION.C:883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FIREBALL),
@@ -6544,7 +6584,8 @@ static void test_spit_projectile_create_failure_halves_action_xp(void) {
     ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_FIRE,
               "SPIT failure route uses G0496 Fire skill");
     if (!route.valid) return;
-    expectedXp = route.experienceGain >> 1;
+    /* F0407 failure halve precedes F0304 CHAMPION.C:883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_SPIT),
@@ -6606,7 +6647,8 @@ static void run_air_projectile_create_failure_halves_action_xp_case(
     ASSERT_EQ(route.skillIndex, DM1_SKILL_IDX_AIR,
               "Air projectile failure route uses G0496 Air skill");
     if (!route.valid) return;
-    expectedXp = route.experienceGain >> 1;
+    /* F0407 failure halve precedes F0304 CHAMPION.C:883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, actionIndex),
@@ -7145,6 +7187,8 @@ static void test_failed_practice_spell_awards_shifted_f0412_xp(void) {
     rng8 = F0732_COMBAT_RngRandom_Compat(&expectedRng, 8);
     expectedXp = (int)dm1_spell_experience(
                      DM1_POWER_ON + 1, 3, rng8) >> missingSkillLevels;
+    /* MENU.C:1839 partial award then CHAMPION.C:883 recent double. */
+    expectedXp *= 2;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1,
               "failed Fireball opens spell panel");
@@ -7768,7 +7812,8 @@ static void test_climb_down_failure_cancels_disable_but_keeps_xp(void) {
               "rope action set exposes CLIMB DOWN in row 0");
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
               "CLIMB DOWN has a source G0496/G0497 route");
-    expectedXp = route.experienceGain * 2;
+    /* F0304:866 unsigned startup stale halve, then :883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
               "failed CLIMB DOWN still returns F0407 performed");
@@ -7833,7 +7878,8 @@ static void test_direct_climb_down_failure_cancels_disable_but_keeps_xp(void) {
 
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
               "direct CLIMB DOWN fixture has a source G0496/G0497 route");
-    expectedXp = route.experienceGain * 2;
+    /* F0304:866 unsigned startup stale halve, then :883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_CLIMB_DOWN),
@@ -7920,7 +7966,8 @@ static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
               "rope action set exposes CLIMB DOWN before open pit");
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
               "CLIMB DOWN open pit has a source G0496/G0497 route");
-    expectedXp = route.experienceGain * 2;
+    /* F0304:866 unsigned startup stale halve, then :883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
     expectedStamina = 100 -
         dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_CLIMB_DOWN) -
         (int)((state.world.gameTick + (uint32_t)DM1_ACTION_CLIMB_DOWN) & 1u) -
@@ -8013,7 +8060,8 @@ static void test_climb_down_closed_pit_moves_forward_without_fall(void) {
               "rope action set exposes CLIMB DOWN before closed pit");
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
               "CLIMB DOWN closed pit has a source G0496/G0497 route");
-    expectedXp = route.experienceGain * 2;
+    /* F0304:866 unsigned startup stale halve, then :883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
               "CLIMB DOWN in front of a closed pit returns success");
@@ -8106,7 +8154,8 @@ static void test_climb_down_group_over_pit_blocks_move_but_keeps_bug79_tail(void
               "rope action set exposes CLIMB DOWN before occupied pit");
     ASSERT_EQ(dm1_v1_action_xp_route(DM1_ACTION_CLIMB_DOWN, &route), 1,
               "CLIMB DOWN occupied pit has a source G0496/G0497 route");
-    expectedXp = route.experienceGain * 2;
+    /* F0304:866 unsigned startup stale halve, then :883 recent double. */
+    expectedXp = (route.experienceGain >> 1) * 2;
 
     ASSERT_EQ(M11_GameView_TriggerActionRow(&state, 0), 1,
               "group-blocked CLIMB DOWN still returns F0407 performed");
@@ -9829,7 +9878,8 @@ int main(void) {
     test_thrown_potion_wall_impact_consumes_potion_thing();
     test_thrown_weapon_wall_impact_materializes_source_square();
     test_thrown_weapon_wall_impact_appends_source_square_raw_tail();
-    test_leader_hand_throw_uses_f0328_temporary_action_hand();
+    test_leader_hand_throw_uses_f0328_temporary_action_hand(0);
+    test_leader_hand_throw_uses_f0328_temporary_action_hand(3);
     test_leader_hand_throw_full_projectile_list_accepts_f0328();
     test_leader_hand_throw_waterskin_uses_f0140_charge_weight();
     test_leader_hand_throw_container_uses_f0140_recursive_weight();

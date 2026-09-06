@@ -7420,6 +7420,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         m11_present_launcher(launcherFramebuffer, modernRgba, useModern);
     }
     int gameFrameNeedsPresent = 0;
+    uint32_t foodClockLastMs = (uint32_t)SDL_GetTicks();
 
     while (o->durationMs < 0 || (now - start) < duration) {
         M12_MenuInput input = M12_MENU_INPUT_NONE;
@@ -7452,7 +7453,22 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         now = SDL_GetTicks();
         if (gameView.active) {
             uint32_t loopDeltaMs = (uint32_t)(now - lastLoopTick);
-            idleAccumulatorMs += loopDeltaMs;
+            int foodCommandWasPending = gameView.v1FoodCommandPending;
+            uint32_t foodElapsedMs = (uint32_t)now - foodClockLastMs;
+            foodClockLastMs = (uint32_t)now;
+            if (M11_GameView_AdvanceFoodClockMs(&gameView, foodElapsedMs) ==
+                M11_GAME_INPUT_REDRAW) {
+                M11_GameView_Draw(&gameView, M11_Render_GetFramebuffer(),
+                                  M11_FB_WIDTH, M11_FB_HEIGHT);
+                gameFrameNeedsPresent = 1;
+            }
+            /* Source F0349 cannot run ordinary game-loop work during its
+             * synchronous waits. Keep pumping host events, but discard
+             * simulation debt including the command's completion slice. */
+            if (foodCommandWasPending || gameView.v1FoodCommandPending)
+                idleAccumulatorMs = 0;
+            else
+                idleAccumulatorMs += loopDeltaMs;
             /* DM1 V1: feed elapsed time to VBlank simulation */
             DM1_V1_VBlankTiming_Update(&gameView.vblankTiming, loopDeltaMs);
             /* Session timer runtime handoff: tick the in-game runtime
@@ -7746,13 +7762,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameView_DrawFpsOverlay(&gameView,
                                              M11_Render_GetFramebuffer(),
                                              M11_FB_WIDTH, M11_FB_HEIGHT);
-                (void)m11_present_game_frame_and_publish_startup_capture(
-                    &gameView, &menuState);
-                gameFrameNeedsPresent = 0;
+                {
+                    const uint64_t foodFrameSerial = gameView.v1FoodPresentationSerial;
+                    const int presented = m11_present_game_frame_and_publish_startup_capture(
+                        &gameView, &menuState);
+                    if (gameView.v1FoodAwaitingPresentation) {
+                        const uint32_t presentedAtMs = (uint32_t)SDL_GetTicks();
+                        /* Edges during render/present belong to the wait for
+                         * visibility, not to the subsequent Delay(8). Account
+                         * for them before acknowledging successful present. */
+                        (void)M11_GameView_AdvanceFoodClockMs(
+                            &gameView, presentedAtMs - foodClockLastMs);
+                        foodClockLastMs = presentedAtMs;
+                        if (presented)
+                            (void)M11_GameView_AcknowledgeFoodPresentation(
+                                &gameView, foodFrameSerial);
+                    }
+                    gameFrameNeedsPresent = gameView.v1FoodAwaitingPresentation;
+                }
             }
         } else {
             /* Redraw the launcher every tick so animations (pulse,
              * hover) remain alive even without input. */
+            foodClockLastMs = (uint32_t)SDL_GetTicks();
             menuState.frameTick += 1U;
             if (M12_StartupMenu_Update(&menuState)) {
                 M11_ApplyStartupMenuRuntime(&menuState);

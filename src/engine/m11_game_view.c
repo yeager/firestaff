@@ -7595,6 +7595,43 @@ static int m11_dm1_bind_original_font(M11_GameViewState *state) {
     return state->originalFontAvailable;
 }
 
+static void m11_bind_verified_i34e_archive_food_clock(M11_GameViewState* state) {
+    static const char* const hashes[] = {
+        "fa6b1aa29e191418713bf2cda93d962e", /* I34E GRAPHICS.DAT */
+        "a7d61d6127cca1b5068110f531b988b8", /* I34E DM.EXE */
+        "218895d977eaa86b25b803bf21c49f62", /* original VGA driver */
+        NULL
+    };
+    char archive[ASSET_PATH_MAX], paths[3][ASSET_PATH_MAX];
+    int matched[3] = {0, 0, 0};
+    const char* separator;
+    size_t length;
+    if (!state || state->assetLoader.legacyDm1 || state->assetLoader.atariStDm1)
+        return;
+    separator = strstr(state->assetLoader.graphicsDatPath, "::");
+    if (!separator) return; /* Loose/mixed installations need separate evidence. */
+    length = (size_t)(separator - state->assetLoader.graphicsDatPath);
+    if (!length || length >= sizeof(archive)) return;
+    memcpy(archive, state->assetLoader.graphicsDatPath, length);
+    archive[length] = '\0';
+    if (asset_find_all_by_md5_list(archive, hashes, paths, matched, 3, 0) != 3 ||
+        strcmp(paths[0], state->assetLoader.graphicsDatPath) != 0) return;
+    /* Hash co-occurrence in a collection archive is not package ownership.
+     * For now admit only the verified original top-level package layout;
+     * nested/renamed installations need a separate package-root receipt. */
+    if (strcmp(separator, "::DATA/GRAPHICS.DAT") != 0 ||
+        !strstr(paths[1], "::") || !strstr(paths[2], "::") ||
+        strcmp(strstr(paths[1], "::"), "::DM.EXE") != 0 ||
+        strcmp(strstr(paths[2], "::"), "::VGA") != 0) return;
+    /* Original I34E VGA load-module 0x1006-0x100A selects BIOS mode13;
+     * 0x098D polls retrace, without later CRTC clock programming. Normal
+     * inventory F0349 uses F0097 palette wait + Delay(8) per frame.
+     * Standard VGA raster: 25.175MHz / (800 dots * 449 lines).
+     * See parity-evidence/dm1-consumption-timing-audit.md for binary hashes,
+     * source chain and original-run corroboration. No emulator is required. */
+    (void)M11_GameView_BindI34EVgaFoodClock(state, 25175000u, 359200u);
+}
+
 static int m11_apply_dm1_startup_graphics_bind_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt) {
@@ -7617,6 +7654,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
         (void)m11_dm1_load_object_names_m564(state);
         (void)m11_dm1_bind_original_font(state);
+        m11_bind_verified_i34e_archive_food_clock(state);
         return 1;
     }
     /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
@@ -16798,6 +16836,9 @@ static void m11_clear_v1_mouth_visual(M11_GameViewState* state);
 static int m11_start_v1_mouth_animation(M11_GameViewState* state,
                                         const DM1ConsumableResultPc34* result);
 static int m11_tick_v1_mouth_animation(M11_GameViewState* state);
+static int m11_start_i34e_food_command(M11_GameViewState* state,
+                                      const DM1ConsumableResultPc34* result,
+                                      int championIndex, int foodBefore);
 
 static int m11_refill_ready_hand_after_dm1_shoot(M11_GameViewState* state,
                                                  int championIndex);
@@ -20189,7 +20230,6 @@ int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
 
 
 /* Forward declaration for spell XP */
-static void m11_award_combat_xp(M11_GameViewState* state, int championIndex, int damage);
 int M11_GameView_ClearSpell(M11_GameViewState* state) {
     DM1_V1_SpellPanelStatePc34 panel =
         m11_dm1_spell_panel_state_pc34(state);
@@ -22047,6 +22087,10 @@ static void m11_creature_attack_party(
         struct CombatResult_Compat result;
         if (group->health[i] <= 0) continue;
 
+        /* ReDMCSB GROUP.C F0207:1691 updates attack time before target
+         * selection and F0230 damage; a miss is still an attack attempt. */
+        state->world.lifecycle.lastCreatureAttackTime = state->world.gameTick;
+
         /* Pick target: round-robin alive champion (ReDMCSB picks by cell).
          * Shared with the Giggler steal route so both attack forms agree. */
         targetChamp = m11_pick_alive_champion_index(
@@ -22385,6 +22429,9 @@ static int m11_creature_maybe_launch_projectile(
     activeGroup.homeMapX = groupX;
     activeGroup.homeMapY = groupY;
 
+    /* ReDMCSB GROUP.C F0207:1691 records an attack attempt before
+     * target/projectile resolution, not only after successful allocation. */
+    state->world.lifecycle.lastCreatureAttackTime = state->world.gameTick;
     memset(&launch, 0, sizeof(launch));
     if (!F0823_DM1_GROUP_ResolveProjectileAttack_Compat(
             &ctx, &activeGroup, 0, &state->world.masterRng, &launch) ||
@@ -22506,6 +22553,9 @@ static void m11_process_one_creature_group(
              * plain damage and never took an item, even though F0822 was
              * source-locked. */
             if ((int)group->creatureType == DM1_CREATURE_TYPE_GIGGLER) {
+                /* GROUP.C F0207:1691 precedes the F0193 branch at
+                 * 1790-1793, even when there is nothing to steal. */
+                state->world.lifecycle.lastCreatureAttackTime = state->world.gameTick;
                 int target = m11_pick_alive_champion_index(
                     state, (int)state->world.gameTick);
                 if (target >= 0 &&
@@ -22515,8 +22565,9 @@ static void m11_process_one_creature_group(
                         target)) {
                     m11_audio_emit_creature_attack_sound(
                         state, group->creatureType, groupX, groupY);
-                    return;
                 }
+                /* F0193 and F0230 are mutually exclusive in F0207. */
+                return;
             }
             m11_creature_attack_party(state, group, groupX, groupY);
         }
@@ -22815,67 +22866,16 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
  * damage XP is applied by M10 when the hit is resolved; tick emission
  * processing must stay presentation-only for that damage.
  * ================================================================ */
-static void m11_award_combat_xp(M11_GameViewState* state,
-                                int championIndex,
-                                int damage) {
-    struct ChampionLifecycleState_Compat* lc;
-    struct LevelUpMarker_Compat marker;
-    int xpAmount;
-    int skillIndex;
-    char name[16];
-
-    if (!state) return;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
-    if (!state->world.party.champions[championIndex].present) return;
-
-    lc = &state->world.lifecycle.champions[championIndex];
-    memset(&marker, 0, sizeof(marker));
-
-    /* XP proportional to damage, minimum 1.
-     * The lifecycle layer uses 20-skill indices: LIFECYCLE_SKILL_SWING
-     * is the default melee sub-skill under Fighter. */
-    xpAmount = damage;
-    if (xpAmount < 1) xpAmount = 1;
-    skillIndex = LIFECYCLE_SKILL_SWING;
-
-    if (F0851_LIFECYCLE_AwardCombatXP_Compat(
-            lc, championIndex, skillIndex, xpAmount,
-            state->world.party.mapIndex, /* map difficulty */
-            state->world.gameTick,
-            state->world.lifecycle.lastCreatureAttackTime,
-            &state->world.masterRng,
-            &marker)) {
-        /* Sync base skill level back to Phase 10 party state.
-         * The lifecycle uses 20 sub-skills; Phase 10 only tracks the
-         * 4 base classes (Fighter/Ninja/Priest/Wizard). */
-        int baseIdx = (skillIndex - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
-        if (baseIdx >= 0 && baseIdx < CHAMPION_SKILL_COUNT) {
-            int newLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-                lc, baseIdx, 0);
-            if (newLevel > 0) {
-                state->world.party.champions[championIndex].skillLevels[baseIdx] =
-                    (unsigned short)newLevel;
-            }
-        }
-
-        /* Check for level-up */
-        if (marker.newLevel > marker.previousLevel && marker.newLevel > 0) {
-            m11_format_champion_name(
-                state->world.party.champions[championIndex].name,
-                name, sizeof(name));
-            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                          "T%u: %s LEVELED UP! (%s %d -> %d)",
-                          (unsigned int)state->world.gameTick,
-                          name,
-                          (baseIdx == LIFECYCLE_SKILL_FIGHTER)  ? "FIGHTER" :
-                          (baseIdx == LIFECYCLE_SKILL_NINJA)    ? "NINJA"   :
-                          (baseIdx == LIFECYCLE_SKILL_PRIEST)   ? "PRIEST"  :
-                          (baseIdx == LIFECYCLE_SKILL_WIZARD)   ? "WIZARD"  :
-                          "SKILL",
-                          marker.previousLevel, marker.newLevel);
-        }
-    }
+static int m11_current_xp_map_difficulty(const M11_GameViewState* state) {
+    /* ReDMCSB CHAMPION.C F0304:870-871 uses CurrentMap->C.Difficulty,
+     * never its ordinal. Missing maps have no difficulty multiplier. */
+    if (!state || !state->world.dungeon || !state->world.dungeon->maps ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= (int)state->world.dungeon->header.mapCount)
+        return 0;
+    return state->world.dungeon->maps[state->world.party.mapIndex].difficulty;
 }
+
 
 static void m11_award_magic_xp(M11_GameViewState* state,
                                int championIndex,
@@ -22900,7 +22900,7 @@ static void m11_award_magic_xp(M11_GameViewState* state,
 
     if (F0849_LIFECYCLE_AddSkillExperience_Compat(
             lc, skillIndex, xpAmount,
-            state->world.party.mapIndex,
+            m11_current_xp_map_difficulty(state),
             state->world.gameTick,
             state->world.lifecycle.lastCreatureAttackTime,
             &levelBefore, &levelAfter)) {
@@ -22962,18 +22962,8 @@ static void m11_apply_kill_notify_plan(
                           ? m11_creature_name(state, plan->creatureType)
                           : "ENEMY");
     }
-    if (plan->shouldAwardKillXp) {
-        char name[16];
-        m11_award_combat_xp(state, plan->championIndex, plan->xpBonus);
-        m11_format_champion_name(
-            state->world.party.champions[plan->championIndex].name,
-            name, sizeof(name));
-        m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                      "T%u: %s EARNS %d KILL XP (%s)",
-                      (unsigned int)state->world.gameTick,
-                      name, plan->xpBonus,
-                      m11_creature_name(state, plan->creatureType));
-    }
+    /* ReDMCSB PROJEXPL.C F0231:1533-1535 awards calculated damage XP
+     * in the attack path, regardless of death; no separate kill bonus. */
 }
 
 /* ================================================================
@@ -23130,6 +23120,7 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
     char itemName[48];
     char champName[16];
 
+    if (state && state->v1FoodCommandPending) return 0;
     if (!state || !state->active || state->partyDead) {
         return 0;
     }
@@ -23226,6 +23217,8 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
     if (m11_is_dm1_source_kind(state->sourceKind) && thingType == THING_TYPE_JUNK) {
         DM1ConsumableChampionPc34 consumer;
         DM1_V1_InventoryLiveUseReceiptPc34 receipt;
+        const int foodBefore = champ->food;
+        const int foodPanelBefore = state->v1FoodWaterPanelActive;
         memset(&consumer, 0, sizeof(consumer));
         consumer.food = champ->food;
         consumer.water = champ->water;
@@ -23239,9 +23232,14 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
         champ->food = consumer.food;
         champ->water = consumer.water;
         /* ReDMCSB PANEL.C F0349:1944; rejected empty skins stay silent. */
-        m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
         if (receipt.consumable.removeLeaderHandObject) {
             champ->inventory[useSlot] = THING_NONE;
+        }
+        if (!m11_start_i34e_food_command(state, &receipt.consumable,
+                (int)(champ - state->world.party.champions), foodBefore)) {
+            m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
+        } else {
+            state->v1FoodWaterPanelActive = foodPanelBefore;
         }
         m11_set_status(state, "USE", receipt.consumable.removeLeaderHandObject
             ? "FOOD CONSUMED" : "DRANK WATER");
@@ -23766,6 +23764,15 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    /* Session teardown cancels the command; never emit queued audio into
+     * the next session or preserve an unverified source-clock binding. */
+    state->v1FoodCommandPending = 0;
+    state->v1FoodPaletteWaitPending = 0;
+    state->v1FoodAwaitingPresentation = 0;
+    state->v1FoodVblankHzNumerator = 0;
+    state->v1FoodVblankHzDenominator = 0;
+    state->v1FoodVblankPhase = 0;
+    m11_clear_v1_mouth_visual(state);
     if (state->csbHintOracleRuntime) {
         csb_hint_oracle_atari_runtime_free(
             (CSB_HintOracleAtariRuntime *)state->csbHintOracleRuntime);
@@ -29151,6 +29158,9 @@ static void m11_dm2_clear_unbound_feedback(M11_GameViewState *state)
 }
 
 int M11_GameView_QuickSave(M11_GameViewState* state) {
+    /* PANEL.C F0349:1928-1944 owns the command until the final delay.
+     * Direct host shortcuts must not persist an unfinished consumption. */
+    if (state && state->v1FoodCommandPending) return 0;
     /* Sensor state persistence: sensor effects that modify dungeon squares
      * (door open/close, pit toggle, teleporter toggle) are persisted through
      * the dungeon square byte array in world.dungeon.tiles[].squareData[].
@@ -29568,6 +29578,9 @@ static int m11_csb_fmtowns_load_user_save_path(M11_GameViewState *state,
 int M11_GameView_QuickLoad(M11_GameViewState* state) {
     char path[M11_GAME_VIEW_PATH_CAPACITY];
 
+    /* PANEL.C F0349:1928-1944: do not replace the world beneath its
+     * pending consumption or deliver the old completion into a new world. */
+    if (state && state->v1FoodCommandPending) return 0;
     if (!state || !state->active) {
         return 0;
     }
@@ -29952,6 +29965,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    /* F0349's synchronous source command does not run the game loop while
+     * waiting. The host pumps events and services the source clock instead. */
+    if (state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
     if (m11_dm1_v1_blocks_host_map_overlay(state)) {
         /* A state object can be reused after a diagnostic session. Never let
          * a stale host overlay pause an authenticated DM1 V1 simulation. */
@@ -30397,6 +30413,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
 
 int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
                                               M12_MenuInput input) {
+    if (state && state->v1FoodCommandPending) return 0;
     if (!state || !state->active ||
         state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN ||
         state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 ||
@@ -33490,6 +33507,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
     const char* label = "NONE";
+    if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -35082,6 +35100,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
 
 static void m11_clear_v1_mouth_visual(M11_GameViewState* state) {
     if (!state) return;
+    if (state->v1FoodCommandPending) return;
     state->v1MouthVisualIconIndex = 0;
     state->v1MouthAnimationFrameCount = 0;
     state->v1MouthAnimationFrameIndex = 0;
@@ -35138,6 +35157,109 @@ static int m11_tick_v1_mouth_animation(M11_GameViewState* state) {
     state->v1MouthAnimationDelayRemaining =
         state->v1MouthAnimationDelays[state->v1MouthAnimationFrameIndex];
     return 1;
+}
+
+int M11_GameView_BindI34EVgaFoodClock(M11_GameViewState* state,
+                                    uint32_t hzNumerator, uint32_t hzDenominator) {
+    if (!state || state->v1FoodCommandPending || !hzNumerator || !hzDenominator ||
+        !m11_is_dm1_source_kind(state->sourceKind) ||
+        state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1) return 0;
+    state->v1FoodVblankHzNumerator = hzNumerator;
+    state->v1FoodVblankHzDenominator = hzDenominator;
+    state->v1FoodVblankPhase = 0;
+    return 1;
+}
+
+static int m11_start_i34e_food_command(M11_GameViewState* state,
+                                      const DM1ConsumableResultPc34* result,
+                                      int championIndex, int foodBefore) {
+    if (!state || !result || !result->consumed || !result->removeLeaderHandObject ||
+        !state->v1FoodVblankHzNumerator || !state->v1FoodVblankHzDenominator ||
+        !m11_is_dm1_source_kind(state->sourceKind) ||
+        state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1) return 0;
+    if (!m11_start_v1_mouth_animation(state, result)) return 0;
+    /* ReDMCSB PANEL.C:1934-1938, DRAWVIEW.C:830,857 and
+     * VIDEODRV.C:3319,3439-3444: normal VGA palette waits for an edge
+     * BEFORE blitting each frame, followed by eight explicit edge waits.
+     * The initial icon must therefore not become visible before that edge. */
+    state->v1MouthVisualIconIndex = 0;
+    state->v1FoodPaletteWaitPending = 1;
+    state->v1FoodAwaitingPresentation = 0;
+    state->v1FoodDisplayChampionIndex = championIndex;
+    state->v1FoodDisplayBeforeConsumption = foodBefore;
+    state->v1FoodCommandPending = 1;
+    return 1;
+}
+
+M11_GameInputResult M11_GameView_AdvanceFoodSourceVblank(M11_GameViewState* state) {
+    if (!state || !state->active || !state->v1FoodCommandPending)
+        return M11_GAME_INPUT_IGNORED;
+    if (state->v1FoodAwaitingPresentation) return M11_GAME_INPUT_IGNORED;
+    if (state->v1FoodPaletteWaitPending) {
+        state->v1FoodPaletteWaitPending = 0;
+        state->v1FoodAwaitingPresentation = 1;
+        ++state->v1FoodPresentationSerial;
+        if (!state->v1FoodPresentationSerial) ++state->v1FoodPresentationSerial;
+        state->v1MouthVisualIconIndex =
+            state->v1MouthAnimationIcons[state->v1MouthAnimationFrameIndex];
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (--state->v1MouthAnimationDelayRemaining > 0) return M11_GAME_INPUT_IGNORED;
+    if (++state->v1MouthAnimationFrameIndex < state->v1MouthAnimationFrameCount) {
+        state->v1FoodPaletteWaitPending = 1;
+        state->v1MouthAnimationDelayRemaining =
+            state->v1MouthAnimationDelays[state->v1MouthAnimationFrameIndex];
+        return M11_GAME_INPUT_IGNORED;
+    }
+    state->v1FoodCommandPending = 0;
+    state->v1FoodPaletteWaitPending = 0;
+    state->v1MouthAnimationFrameCount = 0;
+    state->v1MouthAnimationFrameIndex = 0;
+    ++state->v1FoodCompletionCount;
+    /* PANEL.C F0349:1944: exactly one original C08 after the fourth delay. */
+    m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
+    return M11_GAME_INPUT_REDRAW;
+}
+
+int M11_GameView_AcknowledgeFoodPresentation(M11_GameViewState* state,
+                                            uint64_t presentationSerial) {
+    if (!state || !state->active || !state->v1FoodCommandPending ||
+        !state->v1FoodAwaitingPresentation ||
+        presentationSerial != state->v1FoodPresentationSerial) return 0;
+    /* F0097 must return from its actual blit before F0022 begins waiting.
+     * Draw/composition alone is not evidence that a host frame was shown. */
+    state->v1FoodAwaitingPresentation = 0;
+    return 1;
+}
+
+M11_GameInputResult M11_GameView_AdvanceFoodClockMs(M11_GameViewState* state,
+                                                  uint32_t elapsedMs) {
+    uint64_t threshold, wholeEdges, added;
+    M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
+    if (!state || !state->active || !state->v1FoodVblankHzNumerator ||
+        !state->v1FoodVblankHzDenominator) return result;
+    threshold = (uint64_t)state->v1FoodVblankHzDenominator * 1000u;
+    added = (uint64_t)elapsedMs * state->v1FoodVblankHzNumerator;
+    /* Split before addition so arbitrary uint32 elapsed inputs cannot wrap. */
+    wholeEdges = added / threshold;
+    state->v1FoodVblankPhase += added % threshold;
+    wholeEdges += state->v1FoodVblankPhase / threshold;
+    state->v1FoodVblankPhase %= threshold;
+    /* Interrupt/raster phase keeps running while the synchronous command
+     * awaits its visible frame, but none of these edges count as Delay(8).
+     * The host also services this phase through the actual present return
+     * timestamp, before acknowledging the matching frame serial. */
+    if (state->v1FoodAwaitingPresentation) return result;
+    while (wholeEdges-- && state->v1FoodCommandPending) {
+        if (M11_GameView_AdvanceFoodSourceVblank(state) == M11_GAME_INPUT_REDRAW) {
+            result = M11_GAME_INPUT_REDRAW;
+            /* Remaining historical edges predate presentation and cannot
+             * satisfy the newly exposed frame's delay. The current phase
+             * remains free-running rather than restarting a full period. */
+            break;
+        }
+    }
+    return result;
 }
 
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
@@ -35290,6 +35412,7 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int destinationAccepted;
     int sourceSlotBox;
     int destinationSlotBox;
+    if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
     if (!state || !state->active ||
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
@@ -35700,6 +35823,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int y,
                                                      int buttonMask) {
     int slot;
+    if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
 
     if (!state || !state->active || buttonMask == 0) {
         return M11_GAME_INPUT_IGNORED;
@@ -49926,7 +50050,7 @@ static void m11_dm1_award_throw_xp(M11_GameViewState* state,
     lc = &state->world.lifecycle.champions[championIndex];
     if (F0849_LIFECYCLE_AddSkillExperience_Compat(
             lc, LIFECYCLE_SKILL_THROW, experience,
-            state->world.party.mapIndex,
+            m11_current_xp_map_difficulty(state),
             state->world.gameTick,
             state->world.lifecycle.lastCreatureAttackTime,
             &levelBefore, &levelAfter)) {
@@ -55712,6 +55836,8 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     int thingType;
     int thingIndex;
     int championIndex;
+    int foodBefore;
+    int foodPanelBefore;
     struct ChampionState_Compat* champ;
     DM1ConsumableChampionPc34 consumableChampion;
     DM1ConsumableResultPc34 consumableResult;
@@ -55746,6 +55872,8 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present || champ->hp.current == 0) return 0;
+    foodBefore = champ->food;
+    foodPanelBefore = state->v1FoodWaterPanelActive;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_BootProfile *profile =
@@ -55834,10 +55962,6 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
             return 0;
         }
         consumableResult = liveReceipt.consumable;
-        /* ReDMCSB PANEL.C F0349:1944 uses the edition's original C08. */
-        if (consumableResult.consumed) {
-            m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
-        }
         champ->attributes[CHAMPION_ATTR_STRENGTH] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH];
         champ->attributes[CHAMPION_ATTR_DEXTERITY] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY];
         champ->attributes[CHAMPION_ATTR_WISDOM] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM];
@@ -55860,8 +55984,19 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
             state, (int)(champ - state->world.party.champions), &consumableResult);
         if (consumableResult.removeLeaderHandObject) {
             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
-            (void)m11_start_v1_mouth_animation(state, &consumableResult);
+            if (!m11_start_i34e_food_command(state, &consumableResult,
+                                             championIndex, foodBefore))
+                (void)m11_start_v1_mouth_animation(state, &consumableResult);
+            else
+                /* F0349 retains the panel while leader-hand food disappears;
+                 * its statistics redraw follows the final delay at :1944-1949. */
+                state->v1FoodWaterPanelActive = foodPanelBefore;
         }
+        /* PANEL.C F0349:1944. Retained drinks are immediate; the verified
+         * I34E food command emits C08 only when its final wait completes.
+         * Unbound editions retain the documented legacy timing path. */
+        if (consumableResult.consumed && !state->v1FoodCommandPending)
+            m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
         m11_set_status(state,
                        thingType == THING_TYPE_POTION ? "DRINK" :
                        (iconIndex == 8 || iconIndex == 9 ? "DRINK" : "EAT"),
@@ -61433,6 +61568,7 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
                                                           int championIndex) {
     int sameOpen;
     char champion[16];
+    if (state && state->v1FoodCommandPending) return M11_GAME_INPUT_IGNORED;
 
     if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* ReDMCSB PANEL.C F0355:2267-2302 validates
@@ -64408,6 +64544,19 @@ static void m11_draw_v1_food_water_bar(unsigned char* framebuffer,
                   (unsigned char)cmd.fillColor);
 }
 
+static int m11_displayed_food_for_champion(const M11_GameViewState* state,
+                                          const struct ChampionState_Compat* champion) {
+    /* F0349 mutates Food at PANEL.C:1918 but F0292 redraw follows C08 at
+     * :1944-1949. Freeze only that consumer's displayed food; other champions
+     * and the already-committed simulation value remain independent. */
+    if (state && state->v1FoodCommandPending &&
+        state->v1FoodDisplayChampionIndex >= 0 &&
+        state->v1FoodDisplayChampionIndex < CHAMPION_MAX_PARTY &&
+        champion == &state->world.party.champions[state->v1FoodDisplayChampionIndex])
+        return state->v1FoodDisplayBeforeConsumption;
+    return champion ? (int)champion->food : 0;
+}
+
 static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state,
                                                   unsigned char* framebuffer,
                                                   int framebufferWidth,
@@ -64550,7 +64699,7 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
                                    M11_VIEWPORT_Y + foodBar.y,
                                    foodBar.w, foodBar.h,
                                    foodBar.shadow_offset,
-                                   (int)champ->food,
+                                   m11_displayed_food_for_champion(state, champ),
                                    foodWaterContract->food_base_color);
         m11_draw_v1_food_water_bar(framebuffer, framebufferWidth, framebufferHeight,
                                    M11_VIEWPORT_X + waterBar.x,
@@ -65354,7 +65503,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
                    panelX + 3, panelBottom - 2, panelW - 6, M11_COLOR_DARK_GRAY);
     {
-        int avgFood = (int)champ->food;
+        int avgFood = m11_displayed_food_for_champion(state, champ);
         int avgWater = (int)champ->water;
         int labelDrawn = 0;
         int fwX = panelX + 5;
@@ -68340,6 +68489,7 @@ int M11_GameView_IsMapOverlayActive(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
     if (!state) return 0;
+    if (state->v1FoodCommandPending) return state->inventoryPanelActive;
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         /* SKProject CHANGE_VIEWPORT_TO_INVENTORY renders the DM2 inventory
          * from CHAMPIONS/INTERFACE_GENERAL GDAT and its own click table. The

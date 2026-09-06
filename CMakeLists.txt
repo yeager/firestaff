@@ -12441,6 +12441,29 @@ if(BUILD_TESTING)
             LABELS "dm1;dos;pc34;real-media;in-memory;objects;skip-safe")
     endif()
 
+    add_executable(test_m11_dm1_xp_real tests/test_m11_dm1_xp_real.c)
+    target_link_libraries(test_m11_dm1_xp_real PRIVATE firestaff_m12 firestaff_m11)
+    add_test(NAME m11_dm1_xp_real COMMAND test_m11_dm1_xp_real)
+    set_tests_properties(m11_dm1_xp_real PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        LABELS "dm1;dos;pc34;real-media;xp;skip-safe")
+
+    add_executable(test_m11_dm1_food_clock_package
+        tests/test_m11_dm1_food_clock_package.c)
+    target_link_libraries(test_m11_dm1_food_clock_package PRIVATE firestaff_m12 firestaff_m11)
+    add_test(NAME m11_dm1_food_clock_package_real
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/run_dm1_food_clock_package.py
+            --probe $<TARGET_FILE:test_m11_dm1_food_clock_package>
+            --archive "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            --scratch "${CMAKE_CURRENT_SOURCE_DIR}/.codex-scratch/food-package-tests")
+    set_tests_properties(m11_dm1_food_clock_package_real PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        SKIP_RETURN_CODE 77 TIMEOUT 420
+        LABELS "dm1;dos;pc34;real-media;package-ownership;skip-safe")
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_dm1_dungeon_state_real_data.c")
         add_executable(test_firestaff_dm1_dungeon_state_real_data
             tests/test_firestaff_dm1_dungeon_state_real_data.c

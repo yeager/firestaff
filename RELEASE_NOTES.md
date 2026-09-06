@@ -1,5 +1,25 @@
 # Unreleased
 
+- DM1's verified I34E food command keeps the inventory food panel visible
+  and delays its displayed value update until consumption finishes. Direct
+  quicksave/load shortcuts cannot interrupt the pending command. Other
+  editions' consumption timing and full raster/audio parity remain unverified.
+
+- DM1 experience gains use the current map's difficulty rather than its
+  index, preserve original recent/stale-combat ordering and update the
+  attack timestamp on admitted monster attack attempts.
+- DM1 temporary experience is awarded only to the selected skill, with the
+  original threshold behavior; level gains ignore temporary experience.
+
+- DM1 skill checks and level-up queries no longer impose inconsistent
+  artificial level caps absent from the original F0303 calculation.
+
+- DM1 experience awards now preserve the original 16-bit scaling arithmetic
+  and temporary-experience eligibility when a scaled award wraps to zero.
+
+- DM1 melee kills no longer grant an invented extra base-health XP bonus;
+  damage-derived skill experience remains awarded by the original attack path.
+
 - Successful low-skill DM1 casts no longer consume duplicate practice random
   samples during dispatch, preserving the original potion power sequence.
 

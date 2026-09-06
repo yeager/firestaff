@@ -215,10 +215,55 @@ static void test_live_idle_tick_inserts_creature_projectile(void) {
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
               "idle tick accepted");
     ASSERT_EQ(state.world.gameTick, 28, "idle tick advanced to attack cadence");
+    ASSERT_EQ(state.world.lifecycle.lastCreatureAttackTime, 28,
+              "F0207 GROUP.C:1691 records the live attack tick for F0304 XP");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
               "live creature tick inserted projectile");
     ASSERT_EQ(state.world.projectiles.entries[0].firstMoveGraceFlag, 1,
               "live creature tick projectile has first-move grace");
+}
+
+static void test_live_melee_attack_updates_xp_time(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1], map1Tiles[3], rawGroup[16];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[4];
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    state.world.party.mapX = 2; /* Live melee path, same square as dragon. */
+    state.world.gameTick = 27;
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "live melee cadence tick advances");
+    ASSERT_EQ(state.world.lifecycle.lastCreatureAttackTime, 28,
+              "F0207 melee attack records tick before damage resolution");
+}
+
+static void test_live_giggler_attack_updates_xp_time(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    unsigned char map0Tiles[1], map1Tiles[3], rawGroup[16];
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat groups[1];
+    unsigned short squareFirstThings[4];
+    seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
+                                  map1Tiles, &things, groups, squareFirstThings);
+    groups[0].creatureType = DM1_CREATURE_TYPE_GIGGLER;
+    authenticate_group_c04(&things, &groups[0], rawGroup);
+    state.world.party.mapX = 2;
+    state.world.gameTick = 0;
+    for (int slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot)
+        state.world.party.champions[0].inventory[slot] = THING_NONE;
+    for (int tick = 0; tick < 64 && !state.world.lifecycle.lastCreatureAttackTime; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&state);
+    ASSERT_EQ(state.world.lifecycle.lastCreatureAttackTime != 0, 1,
+              "Giggler empty-inventory attack still updates F0207 XP clock");
 }
 
 static void test_live_tick_rejects_c04_position_and_route_drift(void) {
@@ -267,6 +312,8 @@ static void test_live_tick_rejects_c04_position_and_route_drift(void) {
     ASSERT_EQ(F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 2, 0),
               (THING_TYPE_GROUP << 10),
               "blocked route leaves raw group chain in its source square");
+    ASSERT_EQ(state.world.lifecycle.lastCreatureAttackTime, 0,
+              "rejected C04/position/sight routes never enter F0207 attack");
 }
 
 static void test_live_tick_moves_authenticated_group_and_ai_position(void) {
@@ -603,6 +650,8 @@ static void test_probe_rejects_unscheduled_creature_projectile(void) {
     ASSERT_EQ(M11_GameView_ProbeCreatureProjectileRuntimeLaunch(
                   &state, (unsigned short)(THING_TYPE_GROUP << 10), 0, 2, 0),
               0, "F0212 rejects when its first C48/C49 cannot be scheduled");
+    ASSERT_EQ(state.world.lifecycle.lastCreatureAttackTime, 28,
+              "F0207 attack time survives failed F0212 scheduling");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
               "F0212 queue rejection restores the newly allocated projectile slot");
     ASSERT_EQ(state.world.projectiles.entries[0].slotIndex, -1,
@@ -690,6 +739,8 @@ static void test_first_move_grace_skips_source_square_impact(void) {
 }
 
 int main(void) {
+    test_live_giggler_attack_updates_xp_time();
+    test_live_melee_attack_updates_xp_time();
     printf("=== M11 Creature Projectile Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: GROUP.C F0207/F0209, PROJEXPL.C F0212/F0219, MOVESENS.C C48 impact gate\n\n");
 

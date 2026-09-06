@@ -719,7 +719,8 @@ int F0848_LIFECYCLE_ComputeSkillLevel_Compat(
     while (exp >= (int32_t)LIFECYCLE_XP_LEVEL_THRESHOLD) {
         exp >>= 1;
         level += 1;
-        if (level > 16) break; /* hard guard */
+        /* F0303 CHAMPION.C:765-770: no artificial level cap. Each
+         * iteration halves positive XP, so this loop always terminates. */
     }
     return level;
 }
@@ -736,7 +737,8 @@ int F0849_LIFECYCLE_AddSkillExperience_Compat(
 {
     int baseIdx;
     int tempAdd;
-    int64_t expLong;
+    uint16_t award;
+    int awardEligible;
     int levelBefore;
     int levelAfter;
 
@@ -749,33 +751,36 @@ int F0849_LIFECYCLE_AddSkillExperience_Compat(
     if (baseIdx < 0) baseIdx = 0;
     if (baseIdx >= LIFECYCLE_HIDDEN_SKILL_FIRST) baseIdx = 0;
 
-    /* Map difficulty multiplier (F0304 line ~835 in Fontanel). */
-    expLong = (int64_t)experience;
-    if (mapDifficulty > 0) expLong *= (int64_t)mapDifficulty;
-
-    /* Staleness / freshness modifiers only for hidden combat skills. */
-    if (skillIndex >= LIFECYCLE_SKILL_SWING
-        && skillIndex <= LIFECYCLE_SKILL_SHOOT) {
-        if (gameTime >= lastCreatureAttackTime) {
-            uint32_t delay = gameTime - lastCreatureAttackTime;
-            if (delay <= (uint32_t)LIFECYCLE_RECENT_COMBAT_WINDOW) {
-                expLong <<= 1;
-            } else if (delay >= (uint32_t)LIFECYCLE_STALE_COMBAT_WINDOW) {
-                expLong >>= 1;
-            }
-        }
+    /* ReDMCSB CHAMPION.C F0304:866-885 halves stale combat XP
+     * before map multiplication, and doubles ALL hidden skills only
+     * strictly inside the recent-attack window. DEFS.H:5708,5794 declares
+     * unsigned-long game time and signed-long last attack: the original
+     * 32-bit comparisons therefore use unsigned conversion and subtraction,
+     * including startup and the -200 sentinel (PROJEXPL.C:5). */
+    /* F0304:834 takes a word, and :869 tests it before scaling. Each
+     * assignment at :871/:885 wraps to 16 bits, even when it becomes zero.
+     * Retain rejection of negative host-side inputs outside that contract. */
+    award = experience < 0 ? 0 : (uint16_t)experience;
+    if (skillIndex >= LIFECYCLE_SKILL_SWING &&
+        skillIndex <= LIFECYCLE_SKILL_SHOOT &&
+        lastCreatureAttackTime < (uint32_t)(gameTime - LIFECYCLE_STALE_COMBAT_WINDOW)) {
+        award >>= 1;
     }
+    awardEligible = award != 0;
+    if (mapDifficulty > 0)
+        award = (uint16_t)((uint32_t)award * (uint32_t)mapDifficulty);
+    if (skillIndex >= LIFECYCLE_SKILL_SWING &&
+        lastCreatureAttackTime > (uint32_t)(gameTime - LIFECYCLE_RECENT_COMBAT_WINDOW))
+        award = (uint16_t)((uint32_t)award * 2u);
 
-    if (expLong < 0) expLong = 0;
-    if (expLong > (int64_t)INT32_MAX) expLong = (int64_t)INT32_MAX;
-
+    /* F0304 CHAMPION.C:882,895 ignores temporary XP for level gains. */
     levelBefore = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-        champ, baseIdx, /*ignoreTemporary=*/0);
+        champ, baseIdx, /*ignoreTemporary=*/1);
 
     /* Award experience to the hidden skill AND to the base skill.
      * F0304: both get the raw (post-difficulty / post-staleness) value. */
     {
-        int32_t add = (int32_t)expLong;
+        int32_t add = (int32_t)award;
         int32_t prevHid = champ->skills20[skillIndex].experience;
         int32_t prevBase = champ->skills20[baseIdx].experience;
         int64_t sumHid = (int64_t)prevHid + (int64_t)add;
@@ -788,28 +793,20 @@ int F0849_LIFECYCLE_AddSkillExperience_Compat(
         }
     }
 
-    /* Temporary XP: bounded(1, experience >> 3, 100), capped at 32000
-     * on the hidden skill (where most combat XP lands). */
-    tempAdd = (int)expLong >> 3;
+    /* ReDMCSB CHAMPION.C F0304:887-895: temporary XP is awarded only
+     * to the selected skill. 32000 is an eligibility threshold, not a
+     * post-addition cap; the base skill receives permanent XP only. */
+    tempAdd = (int)award >> 3;
     if (tempAdd < 1) tempAdd = 1;
     if (tempAdd > 100) tempAdd = 100;
-    {
+    if (awardEligible &&
+        champ->skills20[skillIndex].temporaryExperience < LIFECYCLE_TEMP_XP_CAP) {
         int newTemp = (int)champ->skills20[skillIndex].temporaryExperience + tempAdd;
-        if (newTemp > LIFECYCLE_TEMP_XP_CAP) newTemp = LIFECYCLE_TEMP_XP_CAP;
-        if (newTemp < 0) newTemp = 0;
-        if (newTemp > INT16_MAX) newTemp = INT16_MAX;
         champ->skills20[skillIndex].temporaryExperience = (int16_t)newTemp;
-    }
-    if (skillIndex != baseIdx) {
-        int newTemp = (int)champ->skills20[baseIdx].temporaryExperience + tempAdd;
-        if (newTemp > LIFECYCLE_TEMP_XP_CAP) newTemp = LIFECYCLE_TEMP_XP_CAP;
-        if (newTemp < 0) newTemp = 0;
-        if (newTemp > INT16_MAX) newTemp = INT16_MAX;
-        champ->skills20[baseIdx].temporaryExperience = (int16_t)newTemp;
     }
 
     levelAfter = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-        champ, baseIdx, /*ignoreTemporary=*/0);
+        champ, baseIdx, /*ignoreTemporary=*/1);
 
     if (outBaseLevelBefore) *outBaseLevelBefore = levelBefore;
     if (outBaseLevelAfter)  *outBaseLevelAfter = levelAfter;
@@ -1310,7 +1307,11 @@ int F0859_LIFECYCLE_Init_Compat(
 
     memset(state, 0, sizeof(*state));
 
-    if (party == 0) return 1; /* zero-init is valid */
+    /* ReDMCSB PROJEXPL.C:5 initializes G0361 to signed -200. Preserve
+     * its 32-bit representation for F0304's unsigned time comparisons. */
+    state->lastCreatureAttackTime = UINT32_MAX - 199u;
+
+    if (party == 0) return 1; /* Default clocks are valid without a party. */
 
     for (i = 0; i < CHAMPION_MAX_PARTY; i++) {
         const struct ChampionState_Compat* src = &party->champions[i];

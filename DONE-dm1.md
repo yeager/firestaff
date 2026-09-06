@@ -1,5 +1,199 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Rebuilt and reran all six selected original-media startup/
+  object regressions after the shared XP and food-state changes: Atari
+  English/German/French, Amiga disk/HD, and FM Towns (Japanese/English
+  restart within its test). All pass in 165.76 s, with no failures or skips.
+  This does not establish full startup animation or gameplay parity.
+
+- 2026-09-06: Rebuilt the main executable and affected food/XP/melee/
+  creature-projectile targets together. All eight selected regressions pass
+  (8.25 s, zero failures or skips), including original package admission
+  and original-dungeon Mon Light XP scaling. This is scoped regression
+  evidence, not full game or all-platform parity.
+
+- 2026-09-06: Added `m11_dm1_xp_real`: canonical original archive identity,
+  fourteen map difficulties and native Mon Light rune/cast integration on
+  difficulty 6. Independent source-derived expectations verify 2,556 XP
+  normally and 5,112 after recent combat for Air and Wizard, a light effect
+  and no duplicate mana debit (0.17 s, no skip). Party/RNG/timestamps are
+  bounded RAM fixtures; no emulator or original-input capture is claimed.
+
+- 2026-09-06: Audited ordinary defined PC 3.4 award reachability against
+  ReDMCSB and independently streamed the original EN dungeon's fourteen
+  map descriptors (maximum difficulty 6). Conservative melee/spell/throw/
+  fear/action/heal/parry award bounds remain below 16-bit overflow even
+  at format-maximum difficulty 15 with recent-combat doubling. See
+  `parity-evidence/dm1-pc34-xp-award-reachability.md`. This is source and
+  original-data evidence, not a fight capture; BUG0_81 and cumulative
+  32-bit XP behavior remain outside the proven bounds.
+
+- 2026-09-06: Preserved the active food panel and its pre-consumption
+  displayed food during the admitted I34E pending command. Simulation food
+  still changes immediately (PANEL.C F0349:1918); panel pixels update only
+  after completion (1944-1949). Original-graphics/font regressions cover
+  Original and Modern, mouth and UseItem, all four pending frames and
+  cross-champion isolation (428 assertions, zero failures; CTest 0.58 s).
+  These are source-backed framebuffer checks, not emulator captures.
+  The rebuilt original DOS object corpus also passes (104.21 s, no skip):
+  an allocated original food record preserves all four pending panel images,
+  visibly updates the completed panel and queues exactly the original C08
+  sample buffer after the final delay. The main executable was rebuilt.
+
+- 2026-09-06: Blocked direct F5/F9 quicksave/load APIs while a food command
+  is pending, preserving PANEL.C F0349 command ownership without changing
+  save formats. Both consumption routes verify rejection and preservation
+  of the pending command and committed food effect; the mouth regression
+  passes (0.34 seconds). Before this guard, the rebuilt executable and six
+  focused food/package/XP/melee tests passed (7.79 seconds, no skips).
+
+- 2026-09-06: Verified automatic food-clock binding for the original
+  top-level I34E ZIP after requiring matching GRAPHICS.DAT, DM.EXE and VGA
+  identities/layout. Original object/C08 corpus passes (99.72 seconds).
+  Standard VGA cadence is supported by original-driver disassembly and
+  the observed mode13 emulator rate. Four original-byte package cases pass
+  (0.91 seconds, no skips), including rejection of missing VGA, original EGA
+  substituted for VGA, and sibling-directory executable/driver ownership.
+  Complete audible/raster-phase parity remains separate verification work.
+
+- 2026-09-06: Original DOS object corpus passes with deferred food/C08
+  transport verification (109.10 seconds, no skip). The test consumes a
+  real allocated food record, explicitly acknowledges each presented test
+  frame, and checks zero early queueing, exactly one source-buffer enqueue
+  after 36 edges and no duplicate enqueue. Startup rebinds SND3 to the same
+  archive GRAPHICS.DAT used for graphics. This is bounded command-order and
+  source-audio queue proof, not live raster timing or audible waveform proof.
+
+- 2026-09-06: Built the main firestaff executable and rebuilt/reran mouth
+  visual and action-runtime tests after adding opt-in food-command ordering:
+  both pass (0.35/7.77 seconds). Source-edge fixtures verify pending-command
+  sequencing, not live clock authentication or successful original C08
+  playback. No normal launch enables the new clock; remaining integration
+  is tracked in parity-evidence/dm1-consumption-timing-audit.md.
+
+- 2026-09-06: Rebuilt the DOS PC3.4 original-object corpus test after the
+  XP word-width and computed-level changes. It passes without skipping
+  (101.01 seconds), reading original media in memory. This is object/runtime
+  regression coverage, not a complete dungeon playthrough or timing capture.
+
+- 2026-09-06: Extended direct F0303 threshold round trips through level 24
+  (the positive signed-32-bit threshold range), plus M10/M11/F0848 runtime
+  checks for levels 17-24. Added threshold-minus-one plus temporary XP=1
+  cases, distinguishing ignored temporary XP from live queries. Both rebuilt
+  skill suites pass. A bounded read-only caller audit found no newly unsafe
+  array indexing or shifts from removing the caps; this is not an exhaustive
+  safety claim or evidence for edition-specific overflow behavior.
+
+- 2026-09-06: Removed artificial F0303 computed-level caps (live helper
+  capped at 16, lifecycle at 17), following CHAMPION.C:765-770,822.
+  Added non-overflow XP vectors 16,384,000 and 32,768,000, verifying levels
+  17/18 through F0848, M11 and M10 F0888. The regression failed before
+  the fix and passes afterward; the full action runtime test also passes.
+  Display-name bounds remain separate. Edition-specific signedness and
+  original-media high-XP reachability remain open verification work.
+
+- 2026-09-06: Rebuilt original-media name/runtime tests after the F0304
+  word-width correction. All six CTest cases pass without media skips:
+  Atari EN/DE/FR, Amiga, Amiga HD and FM Towns (JP plus EN restart).
+  Runtime: 179.81 seconds with two test workers. This establishes regression
+  coverage for their asserted startup/object paths, not full visual parity
+  or natural gameplay overflow reachability.
+
+- 2026-09-06: Corrected F0849 award arithmetic to the unsigned 16-bit
+  parameter/assignments in ReDMCSB CHAMPION.C F0304:834,866-889. Six
+  explicit boundary cases cover input narrowing, multiplier wrap, recent
+  doubling and temporary XP after a nonzero award wraps to zero. The new
+  regression failed before the fix and passes afterward. These are source
+  contract fixtures; natural gameplay reachability remains unproven.
+
+- 2026-09-06: Rebuilt and reran the M11 skill-query, creature-projectile
+  and Giggler-steal runtime suites after removing the kill-XP bridge: all
+  three pass. These are scoped runtime regressions, not original-media
+  captures or proof of full XP arithmetic parity.
+
+- 2026-09-06: Removed the invented base-health/2 XP request from the DM1
+  kill notification plan. PROJEXPL.C F0231:1533-1535 already awards
+  damage-derived skill XP, with no second kill reward. Regression checks
+  all 27 creature types with a living active champion: defeat logging stays
+  enabled while bonus XP stays zero. Removed the obsolete M11 bonus helper
+  and its notification call. The paired fatal/nonfatal action regression
+  checks equal calculated damage and Fighter XP, zero remaining health and
+  an actual EMIT_KILL_NOTIFY on the fatal route. Rebuilt melee-plan and full
+  action tests pass. This is a bounded RAM fixture, not an emulator capture.
+
+- 2026-09-06: Extended the C080 leader-hand dagger throw integration case
+  to map ordinal zero with difficulty three. XP is independently derived
+  as ((8 + 4 + (19 >> 2)) >> 1) * 3 from CHAMPION.C F0328/F0304;
+  projectile energy/direction, inventory restoration, consumed tick and
+  action-disable assertions remain enabled. The full action suite passes.
+
+- 2026-09-06: FM Towns original-media startup checks now assert the
+  PROJEXPL.C:5 attack-time sentinel in both Japanese startup and subsequent
+  English restart. The names/font/audio test passes with both assertions.
+  DOS PC 3.4 startup also asserts the sentinel, and its original-object
+  corpus test passes (94 seconds); missing media was not skipped.
+
+- 2026-09-06: Authentic Atari EN/DE/FR and Amiga/Amiga HD startup tests
+  now assert the -200 attack-time sentinel immediately after M11 Start.
+  All twenty death/leader/living-caster combinations pass with this check,
+  proving propagation beyond default-world initialization for those media
+  paths. This does not cover DOS/FM Towns startup or imported saves.
+
+- 2026-09-06: Reproduced the zero initial attack clock and restored
+  PROJEXPL.C:5's signed -200 bit pattern in F0859 initialization. Both
+  direct no-party initialization and F0881 default-world initialization
+  assert the sentinel. No serialized layout or save import was changed.
+
+- 2026-09-06: Reproduced Giggler's live empty-inventory attack leaving the
+  XP timestamp unchanged. Its F0207 entry now records the attempt before
+  F0193, and cannot fall through to ordinary F0230 damage (GROUP.C:1691,
+  1790-1793). Live creature checks pass 69/69 and Giggler checks 18/18.
+  This does not establish full Giggler cadence/target-selection parity.
+
+- 2026-09-06: Reproduced ordinary M11 melee leaving the XP attack clock
+  at zero on tick 28. The live-creature path now records F0207 entry before
+  target selection/damage (GROUP.C:1691), matching ranged attack timing.
+  Creature runtime and the 1390-assertion action suite both pass after the
+  fix. Initial state and Giggler-specific handling remain separately open.
+
+- 2026-09-06: Corrected the Lord Chaos adjacent-retry test oracle from
+  east to south. ReDMCSB BASE.C F0029:1765 advances seed 2 to 1988217957
+  and 1387506636, giving two-bit values 0 and 3; TIMELINE.C F0252 maps
+  the latter to Y+1. Active-state position and C37 destination now pass.
+  No gameplay change was needed. Later cross-map teleporter cases fail,
+  so the encompassing C006 suite is not yet verified.
+
+- 2026-09-06: M10 C38 projectile test now supplies the complete bounded
+  C04/ACTIVE_GROUP/free-C14 fixture and verifies F0207 attack time at tick
+  300 (before the orchestrator's final increment). Its projectile receipt
+  and timestamp checks pass. The enclosing C006 suite remains failing on
+  two later Lord Chaos random-adjacent movement assertions; not a suite PASS.
+
+- 2026-09-06: Reproduced missing live ranged attack timestamp (0 instead
+  of tick 28) and connected the M11 F0207 entry to lifecycle XP time per
+  GROUP.C:1691. Tests cover successful launch, failed scheduling retaining
+  the timestamp, and rejected C04/position/sight routes leaving it unchanged.
+  This is ranged M11 evidence; initial state and melee/M10 paths remain open.
+
+- 2026-09-06: Restored the standalone lifecycle probe's repository-relative
+  source/include paths and decompressor/FM Towns/reincarnation link inputs.
+  Its executable and reports now stay in the selected output directory
+  (default .codex-scratch/champion-lifecycle). Missing dungeon media now
+  fails K3 instead of passing, and K3 explicitly distinguishes authentic
+  header loading from its RAM party fixture. Verified authentic French DOS
+  header acceptance and missing-file rejection; three separate legacy
+  size/serialization assertions remain failing and are tracked in TODO.
+
+- 2026-09-06: Reviewed F0304-dependent action XP assertions against ReDMCSB
+  CHAMPION.C:866-895 and F0328:2170-2183, plus MENU.C F0407/F0412.
+  The local action suite passes all 1390 assertions: hidden magic skills
+  receive the recent-attack bonus; startup unsigned stale halving precedes
+  recent doubling; separate throw awards round independently; parent skills
+  receive no temporary XP. The throw-level fixture now starts at 492 so
+  the inner eight-point compass award itself reaches 500 before the common
+  action tail. This verifies the reviewed cases, not full game parity or
+  live attack-timestamp propagation; remaining XP integration work is open.
+
 - 2026-09-06: Original-media restorative casts now verify the exact F0412
   base-XP formula from the independently advanced first RNG sample, and
   exactly one EMIT_SPELL_EFFECT receipt for the correct caster/potion.

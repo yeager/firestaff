@@ -4,6 +4,7 @@
 #include "font_m11.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
 #include <stdio.h>
@@ -376,6 +377,102 @@ static int check_type(M11_GameViewState *state, int thingType,
     return failures;
 }
 
+static int check_original_food_completion(M11_GameViewState *state)
+{
+    unsigned char framebuffer[320 * 200];
+    unsigned char beforeFrame[320 * 200];
+    int panelX, panelY, panelW, panelH;
+    unsigned short food = THING_NONE;
+    int queuedBefore = state->audioState.queuedSampleCount;
+    M11_AudioMarker markerBefore = state->audioState.lastMarker;
+    int sampleCount = state->audioState.originalSounds[DM1_SND_SWALLOW].sampleCount;
+    for (int i = 0; i < state->world.things->junkCount; ++i) {
+        unsigned short candidate = (unsigned short)((THING_TYPE_JUNK << 10) | i);
+        const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(
+            state->world.things, candidate);
+        if (raw && !(raw[0] == 255 && raw[1] == 255) &&
+            (raw[2] & 127) >= 29 && (raw[2] & 127) <= 36) {
+            food = candidate;
+            break;
+        }
+    }
+    if (food == THING_NONE || !state->audioState.initialized || sampleCount <= 0) {
+        fprintf(stderr, "food setup thing=%04x audio=%d\n", food, state->audioState.initialized);
+        return 0;
+    }
+    /* Injected edge clock tests order, not the original raster frequency.
+     * Food and sound bytes must still come from the loaded original media. */
+    if (!M11_GameView_BindI34EVgaFoodClock(state, 1000, 1)) return 0;
+    state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    state->inventoryPanelActive = 1;
+    state->dm1InventoryChampionOrdinal = 1;
+    state->world.party.activeChampionIndex = 0;
+    state->world.party.champions[0].food = 0;
+    state->audioState.lastSoundIndex = -1;
+    if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, food)) return 0;
+    state->v1FoodWaterPanelActive = 1;
+    if (!M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH))
+        return 0;
+    /* COORD.C G2068: inventory viewport starts at screen y=33. */
+    panelY += 33;
+    if (panelX < 0 || panelY < 0 || panelX + panelW > 320 || panelY + panelH > 200)
+        return 0;
+    memset(beforeFrame, 0, sizeof(beforeFrame));
+    M11_GameView_Draw(state, beforeFrame, 320, 200);
+    (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+    if (!state->v1FoodCommandPending || state->world.party.champions[0].food <= 0) {
+        fprintf(stderr, "food admission pending=%d food=%d\n", state->v1FoodCommandPending,
+                state->world.party.champions[0].food);
+        return 0;
+    }
+    for (int edge = 1; edge <= 36; ++edge) {
+        if (state->audioState.lastSoundIndex != -1 ||
+            state->audioState.queuedSampleCount != queuedBefore) return 0;
+        (void)M11_GameView_AdvanceFoodSourceVblank(state);
+        if (state->v1FoodAwaitingPresentation) {
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(state, framebuffer, 320, 200);
+            for (int row = 0; row < panelH; ++row) {
+                size_t offset = (size_t)(panelY + row) * 320 + panelX;
+                if (memcmp(framebuffer + offset, beforeFrame + offset, (size_t)panelW)) {
+                    fputs("food panel changed before swallow\n", stderr);
+                    return 0;
+                }
+            }
+            /* Explicit test-presenter acknowledgement, not a display capture. */
+            if (!M11_GameView_AcknowledgeFoodPresentation(
+                    state, state->v1FoodPresentationSerial)) return 0;
+        }
+    }
+    if (state->v1FoodCommandPending || state->v1FoodCompletionCount != 1 ||
+        state->audioState.lastSoundIndex != DM1_SND_SWALLOW ||
+        state->audioState.lastMarker != markerBefore ||
+        state->audioState.queuedSampleCount != queuedBefore + sampleCount) {
+        fprintf(stderr, "food completion pending=%d count=%u sound=%d queued=%d/%d samples=%d\n",
+                state->v1FoodCommandPending, state->v1FoodCompletionCount,
+                state->audioState.lastSoundIndex, state->audioState.queuedSampleCount,
+                queuedBefore, sampleCount);
+        return 0;
+    }
+    (void)M11_GameView_AdvanceFoodSourceVblank(state);
+    if (state->audioState.queuedSampleCount != queuedBefore + sampleCount) return 0;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(state, framebuffer, 320, 200);
+    {
+        int changed = 0;
+        for (int row = 0; row < panelH; ++row) {
+            size_t offset = (size_t)(panelY + row) * 320 + panelX;
+            changed |= memcmp(framebuffer + offset, beforeFrame + offset, (size_t)panelW) != 0;
+        }
+        if (!changed) {
+            fputs("food panel did not expose committed food after swallow\n", stderr);
+            return 0;
+        }
+    }
+    puts("ok: original DOS food completes with C08 and no generated audio marker");
+    return 1;
+}
+
 int main(void)
 {
     /* Every expectation in this corpus comes from the canonical DOS PC 3.4
@@ -394,6 +491,17 @@ int main(void)
     if (!M11_GameView_StartDm1(&state, dataDir) || !state.world.things ||
         !state.dm1ObjectNameTableValid || !state.originalFontAvailable) {
         fprintf(stderr, "DM1 real object corpus failed to start\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (state.world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u) {
+        fputs("FAIL: DOS startup lost PROJEXPL.C:5 attack-time sentinel\n", stderr);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (state.v1FoodVblankHzNumerator != 25175000u ||
+        state.v1FoodVblankHzDenominator != 359200u) {
+        fputs("FAIL: authenticated I34E archive did not bind VGA food clock\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
@@ -440,6 +548,10 @@ int main(void)
     failures += check_type(&state, THING_TYPE_CONTAINER, "container", &checked);
     failures += check_type(&state, THING_TYPE_JUNK, "junk", &checked);
     DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&state);
+    if (!check_original_food_completion(&state)) {
+        fputs("FAIL: original food deferred C08 transport\n", stderr);
+        ++failures;
+    }
     M11_GameView_Shutdown(&state);
 
     if (failures != 0) {

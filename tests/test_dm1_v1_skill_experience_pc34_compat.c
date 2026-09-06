@@ -202,7 +202,9 @@ static int test_level_thresholds(void) {
 
     /* Verify consistency: threshold at level N gives level N */
     DM1_ChampionSkillState state;
-    for (int lvl = 1; lvl <= 15; lvl++) {
+    /* F0303 has no level cap. Through level 24 the threshold fits a
+     * positive signed 32-bit value in every source edition family. */
+    for (int lvl = 1; lvl <= 24; lvl++) {
         dm1_skill_state_init(&state);
         state.skills[0].experience = dm1_skill_level_threshold(lvl);
         int computed = dm1_skill_get_level(&state, 0, DM1_SKILL_FLAG_IGNORE_TEMP);

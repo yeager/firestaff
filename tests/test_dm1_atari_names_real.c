@@ -53,6 +53,11 @@ int main(int argc, char **argv) {
         fputs("FAIL: authentic Atari M564 name binding\n", stderr);
         goto done;
     }
+    /* PROJEXPL.C:5 initial clock must survive actual original-media start. */
+    if (state->world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u) {
+        fputs("FAIL: Atari startup lost original attack-time sentinel\n", stderr);
+        goto done;
+    }
     if (!dm1_v1_atari_st_graphics_open(state->assetLoader.atariStData,
             (size_t)state->assetLoader.atariStDataSize, &dat)) goto done;
     count = dm1_v1_atari_st_graphics_read(&dat, 556, raw, sizeof(raw));

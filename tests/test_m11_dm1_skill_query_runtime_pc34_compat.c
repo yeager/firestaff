@@ -159,8 +159,10 @@ static void test_m11_cast_spell_validation_uses_f0303_skill_query(void) {
     assert(champ->mana.current == 0); /* Paid runes cast at zero remaining mana. */
 }
 
-static void test_m11_cast_spell_validation_failure_stops_cast(void) {
+static int failed_cast_xp_at_map(int mapIndex, int difficulty, int availability) {
     M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[3];
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junks[2];
@@ -168,6 +170,13 @@ static void test_m11_cast_spell_validation_failure_stops_cast(void) {
 
     init_state(&state, &things, weapons, junks);
     state.world.gameTick = 12;
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    dungeon.header.mapCount = 3;
+    dungeon.maps = availability == 2 ? NULL : maps;
+    for (int i = 0; i < 3; ++i) maps[i].difficulty = difficulty;
+    state.world.dungeon = availability ? &dungeon : NULL;
+    state.world.party.mapIndex = mapIndex;
     state.world.party.activeChampionIndex = 0;
     champ = &state.world.party.champions[0];
     champ->hp.current = 100;
@@ -188,6 +197,21 @@ static void test_m11_cast_spell_validation_failure_stops_cast(void) {
     assert(M11_GameView_GetProjectileCount(&state) == 0);
     assert(strcmp(state.lastOutcome,
                   "EMPTY NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.") == 0);
+    return state.world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_FIRE].experience;
+}
+
+static void test_m11_cast_spell_validation_failure_stops_cast(void) {
+    int baseline = failed_cast_xp_at_map(0, 0, 0);
+    assert(baseline > 0);
+    /* CHAMPION.C F0304:870-871: change difficulty independently of ordinal.
+     * RAM map descriptors isolate this input; they are not game media. */
+    assert(failed_cast_xp_at_map(0, 3, 1) == baseline * 3);
+    assert(failed_cast_xp_at_map(2, 3, 1) == baseline * 3);
+    assert(failed_cast_xp_at_map(2, 0, 1) == baseline);
+    assert(failed_cast_xp_at_map(2, 3, 0) == baseline);
+    assert(failed_cast_xp_at_map(2, 3, 2) == baseline);
+    assert(failed_cast_xp_at_map(-1, 3, 1) == baseline);
+    assert(failed_cast_xp_at_map(3, 3, 1) == baseline);
 }
 
 static void test_m11_f0230_parry_attack_uses_f0303_query(void) {
@@ -249,7 +273,157 @@ static void test_m11_f0407_shoot_and_f0328_throw_use_f0303_hidden_skills(void) {
     assert(M11_GameView_ProbeF0328ThrowAttack(&state, 0, 15) == 34);
 }
 
+static void test_f0304_xp_scaling_boundaries(void) {
+    /* CHAMPION.C:866-885: stale halve BEFORE difficulty, strict 150/25
+     * boundaries, recent bonus for every hidden skill (not just combat). */
+    static const int delays[] = {24,25,26,149,150,151};
+    for (int skill = 0; skill < 20; ++skill)
+    for (int d = 0; d < 6; ++d)
+    for (int difficulty = 0; difficulty <= 3; difficulty += 3) {
+        struct ChampionLifecycleState_Compat champion;
+        int expected = 7;
+        int base = skill < 4 ? skill : (skill - 4) / 4;
+        memset(&champion, 0, sizeof(champion));
+        if (skill >= 4 && skill <= 11 && delays[d] > 150) expected >>= 1;
+        if (difficulty) expected *= difficulty;
+        if (skill >= 4 && delays[d] < 25) expected *= 2;
+        (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+            &champion, skill, 7, difficulty, 300, 300-delays[d], NULL, NULL);
+        assert(champion.skills20[skill].experience == expected);
+        assert(champion.skills20[base].experience == expected);
+    }
+}
+
+static void test_f0304_unsigned_startup_times(void) {
+    /* ReDMCSB DEFS.H:5708,5794 and CHAMPION.C:866,883. Explicit
+     * expected awards preserve unsigned 32-bit wrap, not elapsed-time math. */
+    static const struct { uint32_t now, attack; int combat, magic; } cases[] = {
+        {0, 0, 3, 7}, {24, 24, 3, 7}, {25, 25, 6, 14},
+        {149, 149, 6, 14}, {150, 150, 14, 14},
+        {0, UINT32_MAX - 199, 3, 7},
+        {25, UINT32_MAX - 199, 6, 14},
+        {300, UINT32_MAX - 199, 14, 14}
+    };
+    for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        for (int skill = 4; skill <= 12; skill += 8) {
+            struct ChampionLifecycleState_Compat champion;
+            memset(&champion, 0, sizeof(champion));
+            (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+                &champion, skill, 7, 0, cases[i].now, cases[i].attack, NULL, NULL);
+            assert(champion.skills20[skill].experience ==
+                   (skill == 4 ? cases[i].combat : cases[i].magic));
+        }
+    }
+}
+
+static void test_f0304_temporary_xp_destination_and_threshold(void) {
+    /* CHAMPION.C F0304:887-895: no temporary award to the parent skill;
+     * zero XP is a no-op and the 32000 test precedes the bounded addition. */
+    static const struct { int xp, before, after; } cases[] = {
+        {0, 0, 0}, {7, 0, 1}, {800, 0, 100},
+        {800, 31999, 32099}, {800, 32000, 32000},
+        {800, 32099, 32099}
+    };
+    for (int skill = 0; skill < 20; ++skill)
+    for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        struct ChampionLifecycleState_Compat champion;
+        int base = skill < 4 ? skill : (skill - 4) / 4;
+        memset(&champion, 0, sizeof(champion));
+        champion.skills20[skill].temporaryExperience = cases[i].before;
+        (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+            &champion, skill, cases[i].xp, 0, 300, 200, NULL, NULL);
+        assert(champion.skills20[skill].temporaryExperience == cases[i].after);
+        if (skill != base) assert(champion.skills20[base].temporaryExperience == 0);
+    }
+}
+
+static void test_f0303_has_no_artificial_level_cap(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonJunk_Compat junks[2];
+    /* CHAMPION.C F0303:765-770,822: shift until below 500, no cap.
+     * These positive sums fit both signed and unsigned source editions. */
+    for (int level = 17; level <= 24; ++level) {
+        init_state(&state, &things, weapons, junks);
+        state.world.lifecycle.champions[0].skills20[0].experience =
+            dm1_skill_level_threshold(level);
+        assert(F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            &state.world.lifecycle.champions[0], 0, 1) == level);
+        assert(M11_GameView_GetSkillLevel(&state, 0, 0) == level);
+        assert(F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+            &state.world, 0, 0) == level);
+        --state.world.lifecycle.champions[0].skills20[0].experience;
+        state.world.lifecycle.champions[0].skills20[0].temporaryExperience = 1;
+        assert(F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            &state.world.lifecycle.champions[0], 0, 1) == level - 1);
+        assert(F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+            &state.world.lifecycle.champions[0], 0, 0) == level);
+        assert(M11_GameView_GetSkillLevel(&state, 0, 0) == level);
+        assert(F0888_ORCH_GetChampionF0303SkillLevel_Compat(
+            &state.world, 0, 0) == level);
+    }
+}
+
+static void test_f0304_award_word_width(void) {
+    /* CHAMPION.C:834,866-889: unsigned 16-bit assignments; the
+     * nonzero gate precedes multiplication and recent-attack doubling. */
+    static const struct { int xp, difficulty, recent, expected, temporary; } cases[] = {
+        {32768, 2, 0, 0, 1},
+        {32768, 0, 1, 0, 1},
+        {40000, 2, 1, 28928, 100},
+        {65535, 0, 1, 65534, 100},
+        {65536, 3, 1, 0, 0},
+        {65537, 3, 1, 6, 1}
+    };
+    for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        struct ChampionLifecycleState_Compat champion;
+        memset(&champion, 0, sizeof(champion));
+        (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+            &champion, 12, cases[i].xp, cases[i].difficulty,
+            300, cases[i].recent ? 300 : 200, NULL, NULL);
+        assert(champion.skills20[12].experience == cases[i].expected);
+        assert(champion.skills20[2].experience == cases[i].expected);
+        assert(champion.skills20[12].temporaryExperience == cases[i].temporary);
+        assert(champion.skills20[2].temporaryExperience == 0);
+    }
+}
+
+static void test_f0304_level_gain_ignores_temporary_xp(void) {
+    struct ChampionLifecycleState_Compat champion;
+    int before, after;
+    memset(&champion, 0, sizeof(champion));
+    champion.skills20[0].experience = 499;
+    champion.skills20[0].temporaryExperience = 100;
+    assert(F0849_LIFECYCLE_AddSkillExperience_Compat(
+        &champion, 4, 1, 0, 300, 200, &before, &after) == 1);
+    assert(before == 1 && after == 2);
+    memset(&champion, 0, sizeof(champion));
+    champion.skills20[0].experience = 398;
+    champion.skills20[0].temporaryExperience = 100;
+    assert(F0849_LIFECYCLE_AddSkillExperience_Compat(
+        &champion, 0, 2, 0, 300, 200, &before, &after) == 0);
+    assert(before == 1 && after == 1);
+}
+
 int main(void) {
+    {
+        struct LifecycleState_Compat lifecycle;
+        struct GameWorld_Compat world;
+        memset(&world, 0, sizeof(world));
+        assert(F0859_LIFECYCLE_Init_Compat(&lifecycle, NULL) == 1);
+        /* ReDMCSB PROJEXPL.C:5: initial signed -200 as a 32-bit word. */
+        assert(lifecycle.lastCreatureAttackTime == UINT32_MAX - 199u);
+        assert(F0881_WORLD_InitDefault_Compat(&world, 1u) == 1);
+        assert(world.lifecycle.lastCreatureAttackTime == UINT32_MAX - 199u);
+        F0883_WORLD_Free_Compat(&world);
+    }
+    test_f0303_has_no_artificial_level_cap();
+    test_f0304_award_word_width();
+    test_f0304_level_gain_ignores_temporary_xp();
+    test_f0304_temporary_xp_destination_and_threshold();
+    test_f0304_xp_scaling_boundaries();
+    test_f0304_unsigned_startup_times();
     test_m11_skill_query_uses_inventory_modifiers();
     test_m11_skill_query_uses_hidden_skill_average_and_heal_items();
     test_m11_skill_query_resting_returns_neophyte();

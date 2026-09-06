@@ -31,6 +31,7 @@ int main(void) {
     spec.dm1Fmtowns = 1;
     spec.dm1FmtownsJapanese = 1;
     if (!M11_GameView_Start(state, &spec) ||
+        state->world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u ||
         !state->dm1FmtownsStartupReceiptValid ||
         state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_JP) {
         fprintf(stderr, "FAIL: JDM startup names=%d receipt=%d language=%d\n",
@@ -113,6 +114,7 @@ int main(void) {
         M11_GameView_Init(state);
         spec.dm1FmtownsJapanese = 0;
         if (!M11_GameView_Start(state, &spec) ||
+            state->world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u ||
             !state->dm1FmtownsStartupReceiptValid ||
             state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_EN) goto done;
         size = (size_t)state->assetLoader.legacyDataSize;

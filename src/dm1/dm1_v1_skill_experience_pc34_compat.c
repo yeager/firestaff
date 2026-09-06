@@ -244,7 +244,8 @@ int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
         level = dm1_skill_apply_object_modifiers(level, skillIndex, query);
     }
 
-    if (level > DM1_MAX_SKILL_LEVEL) level = DM1_MAX_SKILL_LEVEL;
+    /* F0303 CHAMPION.C:765-770,822 does not cap the computed level;
+     * the finite display-name table is a separate presentation concern. */
     return level;
 }
 

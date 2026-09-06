@@ -41,6 +41,11 @@ int main(void) {
     spec.verifiedAssetMd5 = version->matchedMd5;
     if (!M11_GameView_Start(state, &spec) || !state->dm1ObjectNameTableValid ||
         !state->assetLoader.legacyDm1 || !state->assetLoader.legacyBigEndian) goto done;
+    /* PROJEXPL.C:5 initial clock must survive actual original-media start. */
+    if (state->world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u) {
+        fputs("FAIL: Amiga startup lost original attack-time sentinel\n", stderr);
+        goto done;
+    }
     if (!dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
             (size_t)state->assetLoader.legacyDataSize, 1, 556, raw, sizeof(raw), &length))
         goto done;

@@ -12042,6 +12042,10 @@ static int orch_apply_f0207_creature_attack_compat(
     creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
     if (creatureIndex < 0 || creatureIndex > (int)group->count) return 1;
 
+    /* ReDMCSB GROUP.C F0207:1691 updates G0361 at attack entry, before
+     * either melee or projectile resolution (including failed attacks). */
+    world->lifecycle.lastCreatureAttackTime = world->gameTick;
+
     if (behavior->attackIsProjectile) {
         DM1_CreatureProjectileCreateRequestPc34 request;
         struct ProjectileCreateInput_Compat input;

@@ -1,5 +1,22 @@
 # Firestaff TODO — DM1
 
+- Extend F0304 reachability analysis beyond ordinary defined PC 3.4 paths.
+  The source bounds in `parity-evidence/dm1-pc34-xp-award-reachability.md`
+  rule out scaled-word overflow for the examined normal PC 3.4 awards,
+  even at format-maximum difficulty. BUG0_81's uninitialized damage path
+  needs original binary evidence, not a deterministic invented oracle.
+  Extend the verified original-media Mon Light difficulty-6 integration to
+  original input/presentation captures and other casts/attacks; primitive
+  word-width tests are not naturally occurring original fights.
+  Separately audit cumulative permanent-XP overflow; F0849 still saturates
+  those 32-bit totals, which the award-word correction does not address.
+  Include F0303 level-query signedness in that audit: CHAMPION.C:730-737
+  selects signed long for early Atari/Amiga and FM Towns 2.0, but unsigned
+  long for PC 3.4 and the MEDIA720 editions. F0848 currently uses signed
+  int32_t addition (including hidden/base averaging) and clamps negative
+  values. Do not apply one overflow/level-query policy to every edition;
+  establish edition dispatch and avoid host signed-overflow undefined behavior.
+
 - Extend rune lifecycle verification to original DOS/FM Towns media and
   rendered symbol rows after fourth-rune wrap/recant. Atari/Amiga input
   and debit tests do not establish visual parity for every platform.
@@ -17,21 +34,37 @@
   original-audio setup, observed before the restorative tests. Full rerun
   passed; do not conflate this with a fixed failure or the no-output exit.
 
-- Correct F0304 map difficulty in M11 magic/combat/throw award bridges:
-  they pass party.mapIndex instead of maps[mapIndex].difficulty. Add
-  regressions where the two values differ, including missing-map bounds.
-- Verify/fix F0304 freshness scaling: CHAMPION.C:885 doubles all hidden
-  skills after a recent attack, whereas F0849 currently restricts both
-  freshness and staleness to Swing..Shoot. Keep the narrower stale rule.
+- Extend original-media combat XP integration coverage before publishing
+  the XP batch. Paired fatal/nonfatal RAM tests do not replace an authentic
+  fight capture. Extend startup sentinel proof to remaining editions and
+  actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
+- Resolve the C006 generated-group cross-map teleporter failures before
+  promoting the complete suite. Six assertions fail: source chain, target
+  linkage/next, active state, C37 location and buzz receipt. The fixture
+  contains raw C01 (00 0c 22 a0 00 01), and instrumentation finds the correct
+  target map1/2/1. F0262 then requests party-map ACTIVE_GROUP for a newly
+  generated group before insertion creates it; the helper returns failure
+  and its caller discards that result, retaining source coordinates.
+  Compare GROUP.C F0185:542-543, MOVESENS.C F0267:439-440,524 and
+  F0262:76-83 with original execution. DUNGEON.C:1276-1278,1303-1305
+  also selects ACTIVE_GROUP solely by party-map equality, so neither a
+  decoded fallback nor reordered insertion is justified without further
+  evidence. Obtain a runtime capture for this exact generation case.
+- When savegame work resumes, inspect the legacy lifecycle probe's A5/A6
+  size expectations (208/872) and J4 all-fields-max serialization failure
+  against magicMapRefresh and the serialization contract. It runs against
+  original French DOS DUNGEON.DAT but is not a passing full probe. Keep
+  this separate from runtime XP verification; serialization remains deferred.
 - Extend F0412 evidence to final earned XP, low-wisdom failure trajectories,
   and non-potion low-skill effects. Successful restorative casts at skill 1
   now preserve the original practice/potion RNG sequence; the full failure
   and effect matrix is not yet proven.
 
-- Fix food command timing: defer swallow until all four source mouth delays
-  complete, including release/input lifecycle and simulation ordering. See
-  `parity-evidence/dm1-consumption-timing-audit.md`; current sound-transport
-  tests do not prove correct timing.
+- Establish edition-appropriate food-command clocks and presentation waits
+  for paths not covered by the verified top-level I34E archive binding,
+  including loose/nested packages and other platforms. See
+  `parity-evidence/dm1-consumption-timing-audit.md`; source-edge and audio
+  queue tests do not prove wall-clock or raster-phase parity.
 
 - Verify swallow timing/output against emulator captures and load changes through actual
   pickup/equipment input and presentation feedback before claiming complete

@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+## 2026-09-06 — Scoped combat regression check
+
+- Rebuilt and passed four tests after shared DM1/CSB runtime changes:
+  `csb_v1_grey_lord_combat_pc34_compat`,
+  `csb_v1_combat_bugfix_helpers_pc34_compat`,
+  `csb_v1_f0193_giggler_steal_receipt_pc34_compat`, and
+  `m11_csb_f0247_boot_projectile_frame_pc34_compat`.
+  These are bounded compatibility/runtime fixtures, not original-media
+  playthroughs, full XP-path verification or proof of platform parity.
+
 ## 2026-09-05 — Amiga chest material admission
 
 - The original ZIP/ADF graphics test now requires C025 to decode to exactly

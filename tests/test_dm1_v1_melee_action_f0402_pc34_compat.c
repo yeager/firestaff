@@ -85,6 +85,24 @@ static void test_kill_notify_null(void)
     assert(rc == 0);
 }
 
+static void test_kill_notification_does_not_duplicate_source_xp(void)
+{
+    /* PROJEXPL.C F0231:1533-1535 awards damage-derived XP, not a
+     * second reward proportional to the killed creature's base health. */
+    for (int type = 0; type < 27; ++type) {
+        DM1_MeleeKillNotifyInputPc34 in;
+        DM1_MeleeKillNotifyPlanPc34 out;
+        memset(&in, 0, sizeof(in));
+        in.creatureType = type;
+        in.creatureBaseHealth = 100 + type * 10;
+        in.activeChampionIndex = 0;
+        in.activeChampionPresent = 1;
+        assert(dm1_v1_melee_kill_notify_plan_f0231_pc34(&in, &out) == 1);
+        assert(out.valid && out.shouldLogDefeated);
+        assert(!out.shouldAwardKillXp && out.xpBonus == 0);
+    }
+}
+
 static void test_reach_gate_null(void)
 {
     DM1_MeleeReachGatePlanPc34 out;
@@ -362,6 +380,7 @@ int main(void)
     test_damage_emission_zero();
     test_runtime_outcome_null();
     test_kill_notify_null();
+    test_kill_notification_does_not_duplicate_source_xp();
     test_reach_gate_null();
     test_disrupt_material_gate_null();
     test_weapon_profile_null();
@@ -387,6 +406,6 @@ int main(void)
     test_timeline_cleanup_null();
     test_mutation_dispatch_null();
 
-    puts("ok: DM1 melee action F0402 (Q-DM1-05) 30 tests passed");
+    puts("ok: DM1 melee action F0402 checks passed, including presentation-only kill notification");
     return 0;
 }

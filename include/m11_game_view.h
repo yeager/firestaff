@@ -987,6 +987,20 @@ typedef struct {
     int v1MouthAnimationDelayRemaining;
     int v1MouthAnimationIcons[4];
     int v1MouthAnimationDelays[4];
+    /* Explicit I34E VGA clock binding; zero means unverified/unbound.
+     * No launch path may infer this cadence from the PC34/PAL idle timer. */
+    uint32_t v1FoodVblankHzNumerator;
+    uint32_t v1FoodVblankHzDenominator;
+    uint64_t v1FoodVblankPhase;
+    int v1FoodCommandPending;
+    int v1FoodPaletteWaitPending;
+    int v1FoodAwaitingPresentation;
+    uint64_t v1FoodPresentationSerial;
+    unsigned int v1FoodCompletionCount;
+    /* PANEL.C:1944-1949 redraws food statistics only after swallow, although
+     * the simulation value has already changed before the mouth animation. */
+    int v1FoodDisplayChampionIndex;
+    int v1FoodDisplayBeforeConsumption;
 
     /* ── Endgame / dialog flow state ── */
     /* Set to 1 when ORCH_GAME_WON / EMIT_GAME_WON fires.  Blocks all
@@ -2157,6 +2171,24 @@ int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state);
  * package profile cadence (55 ms for the PC34 route). */
 uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* state,
                                          int speedMultiplier);
+
+/* Only an authenticated I34E VGA source-clock owner may bind this rational
+ * frequency. The CALLER must establish executable/driver revision, normal
+ * palette curtain, and raster cadence; this API cannot authenticate them
+ * from the dungeon/graphics loader and binding itself is not proof.
+ * No launch path currently binds it. No default cadence is assumed.
+ * Binding is rejected mid-command. Other editions retain their existing,
+ * separately audited timing path. The elapsed adapter drops elapsed edges
+ * while a frame awaits presentation, retaining the free-running rational
+ * phase. A successful host present must acknowledge that frame's serial
+ * after servicing elapsed time through the present timestamp. */
+int M11_GameView_BindI34EVgaFoodClock(M11_GameViewState* state,
+                                    uint32_t hzNumerator, uint32_t hzDenominator);
+M11_GameInputResult M11_GameView_AdvanceFoodSourceVblank(M11_GameViewState* state);
+M11_GameInputResult M11_GameView_AdvanceFoodClockMs(M11_GameViewState* state,
+                                                  uint32_t elapsedMs);
+int M11_GameView_AcknowledgeFoodPresentation(M11_GameViewState* state,
+                                            uint64_t presentationSerial);
 
 /* TITLE.C and ENTRANCE.C present one source-owned page per VBlank.  Do not
  * replay an accumulated host stall as a burst of invisible startup frames;
