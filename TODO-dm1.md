@@ -1,7 +1,7 @@
 # Firestaff TODO — DM1
 
 - Extend explosion F0191 verification to possession drops and original
-  death-smoke captures/lifecycle, including exhausted source pools.
+  death-smoke captures across supported platforms.
   Nonlethal RNG/raw writeback, survivor compaction, whole-group retirement
   and source C15/C25 smoke publication are verified in bounded fixtures;
   they do not establish full death aftermath or emulator parity.

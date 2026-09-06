@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Exhausted C15 smoke fixtures verify F0213:129-130 admission:
+  when the fireball occupies the only source slot, lethal damage creates
+  neither a host smoke entry nor a smoke event and preserves that fireball.
+  Both one-survivor and all-dead cases pass, alongside the available-pool
+  smoke lifecycle and nonlethal RNG tests (four tests total).
+
 - 2026-09-06: C25 continuation skips unrelated co-located C15 records
   instead of rejecting the first different type/attack/fingerprint. The
   death-smoke lifecycle fixture failed before this correction and now

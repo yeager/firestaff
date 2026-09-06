@@ -163,6 +163,15 @@ int main(int argc, char** argv)
         blast.centered = 1; blast.cell = 255; blast.currentTick = 40;
         blast.creatorProjectileSlot = -1;
         CHECK(F0887_ORCH_CreateSourceExplosion_Compat(&world, &blast, 0));
+        if (burstLethal && !burstSmoke) {
+            /* F0213:129-130 returns when no original C15 slot exists.
+             * This fixture's sole slot is occupied by the fireball. */
+            CHECK(world.explosions.count == 1);
+            for (i = 0; i < world.timeline.count; ++i)
+                CHECK(world.timeline.events[i].kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
+                      world.timeline.events[i].aux1 != 40);
+            CHECK(c15.type == 0 && c15.next != THING_NONE);
+        }
         if (burstSmoke) {
             int smokeEvents = 0;
             CHECK(smokePool[1].next != THING_NONE);
