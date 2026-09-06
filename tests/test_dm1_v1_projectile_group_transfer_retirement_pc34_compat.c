@@ -230,6 +230,10 @@ int main(int argc, char** argv)
     if (halfSquare) {
         CHECK(group.health[0] == 1000);
         if (halfLethal) {
+            /* GROUP.C F0190:892-904 shifts only the surviving fields,
+             * masks bits 6-7 and does not recenter a lone survivor. */
+            CHECK(group.cells == (halfActive ? 10 : 8));
+            CHECK(rawGroup[5] == group.cells);
             if (halfActive) {
                 CHECK(world.creatureAI[0].groupCells == group.cells);
                 CHECK((world.pc34ActiveGroupDirections[0] & 3) == 2);

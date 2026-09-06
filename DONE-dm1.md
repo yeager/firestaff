@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Lethal half-square fixtures now assert exact surviving cell
+  bytes in both decoded and raw C04: 08 when removing slot one, 0A when
+  shifting slot one over slot zero. Both pass. F0190:892-904 preserves unused
+  lower packed fields and does not automatically center a lone survivor;
+  equality between two mirrors alone was insufficient to prove this rule.
+
 - 2026-09-06: Projectile F0190 survivor removal shifts active packed
   directions and aspect bytes together with HP/cells (GROUP.C:892-899),
   before scheduling later behavior. The slot-zero lethal fixture now gives
