@@ -23154,11 +23154,14 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
                 }
             }
 
-            /* Award priest XP for drinking a potion */
-            m11_award_magic_xp(state,
+            /* ReDMCSB PANEL.C F0349:1745-1949 consumes without awarding
+             * skill experience. Preserve the legacy policy only outside DM1. */
+            if (!m11_is_dm1_source_kind(state->sourceKind)) {
+                m11_award_magic_xp(state,
                                state->world.party.activeChampionIndex,
                                LIFECYCLE_SKILL_HEAL,
                                potPower > 0 ? potPower / 10 + 1 : 1);
+            }
 
             m11_set_status(state, "USE", "POTION CONSUMED");
             m11_format_presented_text(state, state->inspectTitle,

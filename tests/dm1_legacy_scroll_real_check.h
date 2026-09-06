@@ -467,6 +467,8 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                     (bytes[3] & 127) == 10) { antidote = candidate; break; }
                             }
                             if (antidote == THING_NONE) { fprintf(stderr, "FAIL: no original antivenin\n"); return 0; }
+                            struct SkillState_Compat skillsBefore[LIFECYCLE_SKILL_COUNT];
+                            memcpy(skillsBefore, state->world.lifecycle.champions[1].skills20, sizeof(skillsBefore));
                             struct TimelineEvent_Compat poison = {0};
                             poison.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
                             poison.fireAtTick = state->world.gameTick + 100;
@@ -496,6 +498,9 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             if (state->world.party.champions[1].poisonDose != 0 ||
                                 state->world.lifecycle.champions[1].poisonEventCount != 0) {
                                 fprintf(stderr, "FAIL: antivenin retains poison counter\n"); return 0;
+                            }
+                            if (memcmp(skillsBefore, state->world.lifecycle.champions[1].skills20, sizeof(skillsBefore))) {
+                                fprintf(stderr, "FAIL: drinking antivenin awards skill experience\n"); return 0;
                             }
                             int leaderPoison = 0;
                             for (int e = 0; e < state->world.timeline.count; ++e) {

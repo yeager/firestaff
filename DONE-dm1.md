@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Removed non-source skill XP from DM1 alternative potion use
+  per PANEL.C F0349. Original antivenin reproduced the XP mutation before
+  the fix; twenty Atari/Amiga cases now preserve all recipient lifecycle
+  skill records through both consumption routes. Other games are unchanged.
+
 - 2026-09-06: Verified alternative UseItem with original charged waterskins:
   decremented raw charges, water cap, empty rejection, recipient isolation
   and retained equipment object across five Atari/Amiga editions. Twenty

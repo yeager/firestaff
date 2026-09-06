@@ -1,8 +1,8 @@
 # Firestaff TODO — DM1
 
 - Verify alternative UseItem swallow sound and load changes through actual
-  pickup/equipment input. Audit potion XP
-  and presentation feedback before claiming complete consumable parity.
+  pickup/equipment input and presentation feedback before claiming complete
+  consumable parity. Extend the unchanged-skill assertion beyond antivenin.
 
 - If early S1.0/S1.1 media are enabled, dispatch their distinct
   F0348 thresholds/caps rather than applying the PC3.4/S1.2+ rule.

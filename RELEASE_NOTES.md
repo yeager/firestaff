@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 no longer grants extra skill experience simply for drinking a potion
+  through the alternative item-use action.
 - DM1 alternative food/water use now shares the original consumption rules;
   eating also correctly releases the consumed food record.
 - DM1 antivenin now also clears pending poison when consumed through the
