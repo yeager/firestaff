@@ -51,38 +51,23 @@ Source: CEDTINC8.C:101–118 · BugsAndChanges.htm
 
 ## Part II: Magic
 
-### Spell Power Changes (DM1 vs CSB delta)
+### Zokathra and edition-specific spell tables
 
-M13_PLAN.md:337: *"CSB changes some spell power values"* for shared spell names.
-Specifically the ZOKATHRA (Zo Kath Ra) fireball variant has a different kinetic energy
-/power calculation vs the standard Fireball (Ful Ir) spell.
+Correction (2026-09-06): Zo Kath Ra is not a CSB-only fireball variant.
+ReDMCSB `MENU.C:76` defines attributes `0x3C73` (other spell, Zokathra,
+15 disabled ticks). `MENU.C:F0412:1994–2027` creates a C51 junk object
+in an empty hand or on the party square in both DM1 and CSB. The former
+50-versus-0 power helper and test had no authentic basis and were removed.
 
-No new spell types. The 25-spell table is identical between DM1 and CSB.
-The CSB-specific delta is the power value for ZOKATHRA's fireball effect.
+Atari CSB S20/S21 uses 25 spells; Amiga CSB A31/A33/A35 and FM Towns F31
+use 29, adding four magic-map spells (`MENU.C:15–18,50–84`,
+`DEFS.H:3224–3227`). Do not substitute CSBWin's 25-entry graphic
+`0x230` table or spell-filter callbacks for these original owners.
 
-Source: M13_PLAN.md:337 · memory_magic_pc34_compat.c (CSB spell variants gate)
-
-### ZOKATHRA Spell — Fireball Variant
-
-| Property | Value |
-|----------|-------|
-| Runes | Zo Kath Ra |
-| Type | `C7_SPELL_TYPE_OTHER_ZOKATHRA` = 7 |
-| Effect | Fireball variant with CSB-specific power |
-| Icon | `C197_ICON_JUNK_ZOKATHRA` = 197 |
-| CSB power delta | Different from DM1 Fireball (Ful Ir) |
-
-Source: DEFS.H:1774 (C7_SPELL_TYPE_OTHER_ZOKATHRA) · MENU.C:1994 · M13_PLAN.md:337
-
-### Magic System — Unchanged from DM1
-
-- Same 25-spell table (DM1_SPELL_COUNT = 25)
-- Same 4 schools (Fire/Air/Earth/Water), 4 classes (Fighter/Ninja/Priest/Wizard)
-- Same casting mechanism (Incantation2Spell → CastSpell → spell type handler)
-- Same mana/stat requirements
-- Same spell filtering (`CallSpellFilter`, `SPELL_PARAMETERS`)
-
-Source: Magic.cpp:844–954 · CSB.h:1727–1739 (SPELL struct) · dm1_v1_spell_casting_pc34_compat.c
+Original casting is F0408/F0412: rune clearing except missing flask/map,
+source RNG/practice XP, effect mutation, success XP and action disable.
+Edition-specific effects/timing still require verification. See
+[the item/spell source audit](csb_items.md) for the corrected scope.
 
 ---
 
@@ -161,7 +146,7 @@ Source: CSB:REVIVE.C (CHANGE7_24) · csb_champions.md
 | Grey Lord combat | New C5_ATTACK_MAGIC creature | New content |
 | Group AI (teleporter/map) | BUG0_69 fix | Bug fix |
 | Dungeon event processing | BUG0_09, BUG0_10 fix | Bug fix |
-| ZOKATHRA spell power | Different value vs DM1 | Variant delta |
+| Magic-map spells | Four additional spells in later Amiga/FM Towns editions | Edition-specific content |
 | Movement | None | — |
 | Class system | Identical to DM1 | — |
 | Champion reincarnation | Package-specific PC/ST/Amiga/FM Towns branch | Significant change |
@@ -170,7 +155,7 @@ Source: CSB:REVIVE.C (CHANGE7_24) · csb_champions.md
 - One gameplay improvement (projectile speed normalization)
 - One significant champion change (reincarnation penalty)
 - One new creature with combat role (Grey Lord)
-- One spell power variant (ZOKATHRA)
+- Four magic-map spells in later Amiga/FM Towns editions; Zokathra is shared object creation
 - Bug fixes for group movement and dungeon events
 
 ---
@@ -188,5 +173,5 @@ Source: CSB:REVIVE.C (CHANGE7_24) · csb_champions.md
 | CSBWin Magic.cpp | 1090–1400 | CastSpell, LevelUp, ZOKATHRA |
 | CSBWin Character.cpp | 5528 | Character handling |
 | CSB:REVIVE.C | CHANGE7_24 | Reincarnation change |
-| M13_PLAN.md | 337,346 | ZOKATHRA power variant |
+| ReDMCSB MENU.C | 76–84,1994–2027 | Shared Zokathra object creation; later magic-map spells |
 | BugsAndChanges.htm | CHANGE7_20,21,22,23,24 | All CSB changes |

@@ -1,5 +1,9 @@
 # Unreleased
 
+- Removed an unused, incorrect Zokathra fireball model and its misleading
+  test. Zokathra is an object-creation spell in both DM1 and CSB; this
+  cleanup does not claim that CSB's full spell executor is implemented.
+
 - CSB FM Towns spell panels use original C009 artwork and rune glyphs,
   with Japanese controls shifted to their original screen coordinates.
   Rune display reads current CSB champion data. Spell execution and

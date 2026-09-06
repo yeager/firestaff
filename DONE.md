@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Removed the unused false Zokathra fireball helper, header
+  and test target; corrected its direct documentation claims against
+  MENU.C:1994-2027. Genuine DM1 object-creation tests remain. Added the
+  original CSB cast transaction contract, separating retail edition tables
+  from CSBWin-only parsers/DSA abort semantics. F0394's runtime selector now
+  accepts -1 without changing champion runes, mana or leader; focused RAM
+  contract tests cover clear/no-op/reselect and invalid negative indices.
+  Production build and four runtime/input/media regressions pass (30.93s).
+  This does not implement the remaining original CSB cast executor.
+
 - 2026-09-06: CSB FM Towns spell-area rendering consumes original C009
   87x25 and M653, with the C696 Japanese eight-pixel vertical offset also
   applied to pointer input. Caster, incantation and symbol step come from

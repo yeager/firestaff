@@ -7,8 +7,8 @@
 /* CSBWin's separately decoded menu-data payload uses entry 0x230. Data.h
  * places Byte19016 at 0x4cc and Byte19010 at 0x4d2 of its fixed 0x4e8-byte
  * payload. This parser is for an already authenticated CSBWin payload only.
- * Original PC3.4 CSB executes the corresponding G0485--G0487 menu block;
- * it is not an IMG3 GRAPHICS.DAT record. */
+ * Original Atari, Amiga and FM Towns CSB have edition-specific G0485--G0487
+ * admission. This CSBWin parser does not authenticate those original tables. */
 #define CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34 0x230u
 #define CSB_V1_MAGIC_RUNE_TABLE_DECODED_SIZE_PC34 0x4e8u
 #define CSB_V1_MAGIC_RUNE_POWER_MULTIPLIER_OFFSET_PC34 0x4ccu

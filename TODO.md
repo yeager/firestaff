@@ -9,6 +9,9 @@
   DM1 effects against CSB state. Spell-panel raster/input verification does
   not close this gap. Verify Japanese caster names through their authentic
   whole-string glyph path and compare spell-panel timing with an emulator.
+  Follow [the original cast contract](docs/parity/CSB_ORIGINAL_CAST_CONTRACT.md)
+  for edition tables and complete effect/XP/timer transactions; CSBWin-only
+  parser or abort-path tests are not original-game casting evidence.
 
 - Complete CSB FM Towns action-menu pixel parity and all row boundaries.
   Source C696 now owns language-specific action/Pass pointer geometry;

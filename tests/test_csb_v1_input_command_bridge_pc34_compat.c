@@ -116,6 +116,29 @@ static void test_magic_caster_runtime_selection(void)
              "rejected caster selection preserves the live CSB caster");
     CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, 2), -1,
              "out-of-party caster selection is rejected");
+    {
+        CSB_V1_Champion before;
+        /* RAM contract fixture, not an original-media parity capture. */
+        profile.party_state.Champions[1].Incantation[0] = 96;
+        profile.party_state.Champions[1].SymbolStep = 1;
+        before = profile.party_state.Champions[1];
+        CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, -1), 1,
+                 "F0394 accepts the no-caster sentinel");
+        CHECK_EQ(profile.magic_caster_index, -1,
+                 "runtime caster is cleared");
+        CHECK_EQ(profile.party_state.MagicCasterIndex, -1,
+                 "party caster mirror is cleared");
+        CHECK_EQ(memcmp(&before, &profile.party_state.Champions[1], sizeof(before)), 0,
+                 "clearing the caster preserves all champion state including runes");
+        CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, -1), 0,
+                 "clearing an already clear caster is a no-op");
+        CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, -2), -1,
+                 "other negative caster indices remain invalid");
+        CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, 1), 1,
+                 "the same living caster can be selected again");
+        CHECK_EQ(profile.party_state.LeaderIndex, 0,
+                 "clear and reselect preserve the leader");
+    }
     csb_v1_runtime_cleanup(&profile);
 }
 

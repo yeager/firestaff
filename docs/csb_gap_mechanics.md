@@ -8,14 +8,14 @@ memory; no emulator or extracted-game-data dependency is implied.
 ## Result
 
 This page replaces the May 2026 speculative gap list. The items below have
-native, CTest-covered implementations. Passing a unit or bounded runtime test
+the implementation/evidence status shown below. Passing a unit or bounded runtime test
 does **not** claim a complete original-media playthrough or visual parity.
 
 | ReDMCSB delta | Firestaff implementation | Regression evidence | Status |
 |---|---|---|---|
 | 24-level CSB world | `CSB_MAX_LEVELS`, CSB dungeon world and loader | `csb_v1_decompdu_pc34_compat` | Bounded implementation verified |
 | compressed dungeon stream | `csb_v1_decompdu_pc34_compat.c` bit-packed decoder with explicit bounds checks | `csb_v1_decompdu_pc34_compat` | Bounded implementation verified |
-| ZOKATHRA power | CSB-specific spell-power helper returns 50; DM1 comparison path returns 0 | `csb_v1_zokathra_spell_pc34_compat` | Helper verified; live cast-route capture remains open |
+| ZOKATHRA object creation | Source requires C51 junk allocation, not a fireball or DM1 no-op | ReDMCSB `MENU.C:1994–2027`; false unused power helper/test removed | CSB live cast implementation and capture remain open |
 | Grey Lord | CSB Grey Lord proximity/attack classification helper | `csb_v1_grey_lord_combat_pc34_compat` | Bounded implementation verified |
 | CHANGE7_24 reincarnation | source-family vitals/stat/RNG path | `csb_v1_champion_per_stat_parity_pc34_compat`, `csb_v1_reincarnation_media_branch_pc34_compat` | Covered at runtime boundary |
 | CHANGE7_20 projectile cadence | CSB normalization keeps `+1` on every map | `csb_v1_projectile_speed_pc34_compat` | Scheduler verified |

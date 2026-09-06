@@ -21297,14 +21297,18 @@ int csb_v1_runtime_set_magic_caster(CSB_V1_RuntimeProfile *profile,
     const CSB_V1_Champion *champion;
 
     if (!profile || !profile->party_state_valid ||
-        champion_index < 0 ||
+        champion_index < -1 ||
         champion_index >= profile->party_state.ChampionCount ||
         champion_index >= CSB_V1_MAX_CHAMPIONS) {
         return -1;
     }
-    champion = &profile->party_state.Champions[champion_index];
-    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
-        return -1;
+    /* CASTER.C F0394:17,75-86 accepts CM1_CHAMPION_NONE and clears
+     * C013 without touching any champion's incantation or mana. */
+    if (champion_index >= 0) {
+        champion = &profile->party_state.Champions[champion_index];
+        if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+            return -1;
+        }
     }
     if (profile->magic_caster_index == champion_index &&
         profile->party_state.MagicCasterIndex == champion_index) {
