@@ -7083,6 +7083,22 @@ static int orch_find_active_group_state_index_compat(
     return -1;
 }
 
+/* GROUP.C F0179 stores one aspect per creature. Runtime AI uses bytes,
+ * while the behavior adapter uses ints: memcpy would mix creature slots. */
+static void orch_read_group_aspects_compat(
+    struct DM1ActiveGroup_Compat* active, const struct CreatureAIState_Compat* ai)
+{
+    int i;
+    for (i = 0; i < 4; ++i) active->aspect[i] = ai->aspect[i];
+}
+
+static void orch_write_group_aspects_compat(
+    struct CreatureAIState_Compat* ai, const struct DM1ActiveGroup_Compat* active)
+{
+    int i;
+    for (i = 0; i < 4; ++i) ai->aspect[i] = (uint8_t)active->aspect[i];
+}
+
 int F0209_DM1_GROUP_ReadHistory_Compat(
     const struct GameWorld_Compat* world, int groupIndex,
     struct DM1ActiveGroup_Compat* outActiveGroup)
@@ -11685,7 +11701,7 @@ static int orch_transition_party_map_f0194_f0195_compat(
             world, ai->reserved0, &activeGroups[i]);
         activeGroups[i].homeMapX = world->pc34ActiveGroupHomeMapX[i];
         activeGroups[i].homeMapY = world->pc34ActiveGroupHomeMapY[i];
-        memcpy(activeGroups[i].aspect, ai->aspect, sizeof(ai->aspect));
+        orch_read_group_aspects_compat(&activeGroups[i], ai);
     }
     if (activeCount > 0 &&
         !F0817c_DM1_GROUP_RemoveAllActiveGroups_Compat(
@@ -12574,7 +12590,7 @@ static int orch_f0209_insert_next_event_f0238_compat(
         return 0;
     }
 
-    memcpy(ai->aspect, activeGroup->aspect, sizeof(ai->aspect));
+    orch_write_group_aspects_compat(ai, activeGroup);
     return 1;
 }
 
@@ -12859,7 +12875,7 @@ static int orch_handle_creature_reaction_event_compat(
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
     (void)F0209_DM1_GROUP_ReadHistory_Compat(world, groupIndex, &activeGroup);
-    memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+    orch_read_group_aspects_compat(&activeGroup, ai);
 
     ctx.distanceToVisibleParty =
         F0890f_ORCH_GetActiveGroupVisibleDistance_Compat(
@@ -13084,7 +13100,7 @@ static int orch_handle_creature_reaction_event_compat(
              * reaches F0208.  Do not copy the pre-impact ACTIVE_GROUP back
              * over that source mutation at the common apply-plan tail. */
             activeGroup.directions = ai->groupDirection;
-            memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+            orch_read_group_aspects_compat(&activeGroup, ai);
         }
         activeGroup.cells = group->cells;
         ai->groupCells = group->cells;
@@ -13129,7 +13145,7 @@ static int orch_handle_creature_reaction_event_compat(
     ai->lastSeenPartyMapX = applyPlan.lastSeenPartyMapX;
     ai->lastSeenPartyMapY = applyPlan.lastSeenPartyMapY;
     ai->lastSeenPartyTick = applyPlan.lastSeenPartyTick;
-    memcpy(ai->aspect, activeGroup.aspect, sizeof(ai->aspect));
+    orch_write_group_aspects_compat(ai, &activeGroup);
     group->behavior = (unsigned char)applyPlan.groupBehavior;
 
     if (behavior.actionKind == DM1_ACTION_MOVE ||

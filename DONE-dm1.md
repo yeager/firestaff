@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Replaced five M10 aspect transfers between uint8_t[4] runtime storage and
+  int[4] behavior adapters with explicit per-creature conversion. The old
+  memcpy sizes could combine slots, erase sibling aspects or read adjacent
+  runtime fields. This covers map staging, reaction import, post-compaction
+  reload, continuation publication and final writeback. The C38 regression
+  pins three untouched sibling aspect bytes; 20 selected tests pass, including
+  five original-DOS-media tests. Full visual parity still needs original traces.
+
 - Aligned standalone F0180 and generated-placement event receipts with runtime
   C37 publication. The runtime now consumes the corrected plan event type;
   helper/runtime assertions distinguish original event type from AI state.

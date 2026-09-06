@@ -470,6 +470,9 @@ static int test_m10_c38_turns_before_attack(void)
     world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
     world.creatureAI[0].stateKind = AI_STATE_ATTACK;
     world.creatureAI[0].groupDirection = 0; /* north; party is south */
+    world.creatureAI[0].aspect[1] = 0x44;
+    world.creatureAI[0].aspect[2] = 0x21;
+    world.creatureAI[0].aspect[3] = 0x63;
     world.pc34ActiveGroupSourceCount = 1;
     world.pc34ActiveGroupDirections[0] = 0;
     /* The current M10 F0200 visibility bridge reads raw C04 facing, while
@@ -498,6 +501,10 @@ static int test_m10_c38_turns_before_attack(void)
                  "F0205 takes one intermediate step for an opposite turn");
     ok &= expect((world.creatureAI[0].aspect[0] & 0x80) == 0,
                  "misfacing C38 does not begin an attack");
+    ok &= expect(world.creatureAI[0].aspect[1] == 0x44 &&
+                 world.creatureAI[0].aspect[2] == 0x21 &&
+                 world.creatureAI[0].aspect[3] == 0x63,
+                 "single-creature C38 preserves other aspect slots across byte/int adapters");
     for (i = 0; i < world.timeline.count; ++i) {
         if (world.timeline.events[i].kind == TIMELINE_EVENT_CREATURE_REACTION &&
             world.timeline.events[i].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&

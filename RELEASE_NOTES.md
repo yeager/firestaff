@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 preserves each creature's animation flags when transferring active-group
+  state between byte-sized runtime storage and behavior logic.
+
 - DM1 routes newly activated groups' first scheduled update through original
   C37 behavior logic instead of the legacy direct-movement path.
 
