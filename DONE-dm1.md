@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed missing direction alignment when selecting a different
+  DM1 leader (CLIKCHAM.C F0368:67). All five Atari/Amiga regressions failed
+  with deliberately divergent champion facing before the fix, then passed
+  two-way keyboard and original-layout mouse selection afterward.
+
 - 2026-09-06: After the leader-selection fixes, all six complete original
   object/scroll corpus tests pass: PC3.4, Atari EN/DE/FR and Amiga EN/HD.
   No media skips; this supplements the five targeted load regressions,

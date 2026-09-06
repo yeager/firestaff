@@ -61172,6 +61172,11 @@ static int m11_cycle_active_champion(M11_GameViewState* state) {
             (!m11_is_dm1_source_kind(state->sourceKind) ||
              state->world.party.champions[candidate].hp.current > 0)) {
             state->world.party.activeChampionIndex = candidate;
+            /* ReDMCSB CLIKCHAM.C F0368:67 aligns a newly selected leader. */
+            if (candidate != start && m11_is_dm1_source_kind(state->sourceKind)) {
+                state->world.party.champions[candidate].direction =
+                    (unsigned char)state->world.party.direction;
+            }
             /* ReDMCSB CLIKCHAM.C F0368:55-76 moves held-object load
              * from the previous leader to the new leader immediately. */
             m11_refresh_hash(state);
@@ -61210,6 +61215,10 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
     state->world.party.activeChampionIndex = championIndex;
     /* ReDMCSB CLIKCHAM.C F0368:55-76: publish the held-weight transfer
      * for direct leader selection as well as keyboard cycling. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        state->world.party.champions[championIndex].direction =
+            (unsigned char)state->world.party.direction;
+    }
     m11_refresh_hash(state);
     m11_get_active_champion_label(state, champion, sizeof(champion));
     m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");

@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 newly selected leaders align with party direction;
+  verified with five original Atari/Amiga input regressions.
+
 - 2026-09-06: Revalidated all six DM1 original-media object/scroll corpus
   tests after the leader-selection fixes; all passed without skips.
 

@@ -1,5 +1,8 @@
 # Unreleased
 
+- Selecting a different DM1 leader now aligns that champion with the
+  party's facing direction, matching the original behavior.
+
 - DM1 no longer allows selecting a dead champion as party leader.
 
 - Clicking a champion name in DM1's original-layout HUD selects the leader
