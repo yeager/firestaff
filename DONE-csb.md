@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-09-06 public executable recheck: authentic nested Atari ZIP->ZIP->STX
+  CLI title, runtime entry, first UP movement and start-menu launch pass.
+  Authentic Amiga ZIP->ADF entrance, CLI/menu, seven fresh-session input
+  commands, pointer-only cards and unchanged archive hash pass. English FM
+  Towns TITLE.ANM->SWITCHTW->MINI.DAT passes in v1/v21 with original map 4,
+  party 22,18,2 and one champion; keyboard/mouse launcher paths and unchanged
+  archive hash pass. Ran the existing platform CLI boot scripts against the
+  current native binary. No optional user save was supplied. These headless
+  receipts do not prove pixel/audio/timing parity or Japanese F31 coverage.
+
 - 2026-09-06: Original FM Towns CDATA/CJDATA GRAPHICS.DAT regression now reads
   all 728 asset spans in each edition, checking contiguous offsets, in-buffer
   bounds and rejection of the first invalid index. ZIP/IMG and both files are
