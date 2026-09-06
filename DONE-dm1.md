@@ -1478,3 +1478,12 @@ Reviewed 2026-08-29. Completed work only.
   This proves the tested static panel, not spell-effect receipt integration,
   other editions, emulator parity or full-game completion. Publication is
   pending the integration and edition-routing work recorded in TODO-dm1.md.
+# F0412 potion practice boundary regression (2026-09-06)
+
+- Corrected the failure-XP fixture's Wisdom Potion table index from 16
+  (Stamina Potion) to 17. Added source-shaped receipt checks for nine
+  successful threshold-equality probes (115), independent potion power
+  masking (0xffff produces Mon power 255), and ninth-probe rejection at 116.
+  Reference: ReDMCSB MENU.C F0412:1837,1853. The focused
+  `test_dm1_v1_f0412_failure_xp_pc34_compat` passes. This is bounded
+  source-contract evidence, not original emulator or complete RNG-stream parity.

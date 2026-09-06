@@ -62,7 +62,7 @@ int main(void)
 
     world.masterRng.seed = 1;
     memset(&result, 0, sizeof(result));
-    input.commandArg2 = 16; /* Ya Bro Dain: Wisdom potion. */
+    input.commandArg2 = 17; /* Ya Bro Dain: Wisdom potion. */
     input.reserved = 6;
     input.reserved2 = CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK;
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
@@ -87,6 +87,22 @@ int main(void)
         assert(dm1_spell_f0412RuntimeReceiptForTableIndexWithProbeCount(
             5, 6, 0, &stats, 0, probes, 9, 0, 0, 0, &receipt));
         assert(receipt.requiredSkillLevel - receipt.skillLevel == 9);
+        assert(receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE);
+
+        /* MENU.C F0412:1837 uses strictly greater-than: equality at the
+         * capped threshold must pass all nine checks, including the last.
+         * :1853 then uses an independent low-four-bit potion power sample.
+         * This source-shaped receipt fixture is not an emulator capture. */
+        memset(probes, 115, sizeof(probes));
+        assert(dm1_spell_f0412PotionReceiptForTableIndexWithProbeCount(
+            17, 6, 0, &stats, 127, 0xffff, 1, probes, 9, &receipt));
+        assert(receipt.requiredSkillLevel - receipt.skillLevel == 9);
+        assert(receipt.castResult == DM1_SPELL_CAST_SUCCESS);
+        assert(receipt.failureType == -1);
+        assert(receipt.potionPower == 255);
+        probes[8] = 116;
+        assert(dm1_spell_f0412PotionReceiptForTableIndexWithProbeCount(
+            17, 6, 0, &stats, 0, 0xffff, 1, probes, 9, &receipt));
         assert(receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE);
     }
 
