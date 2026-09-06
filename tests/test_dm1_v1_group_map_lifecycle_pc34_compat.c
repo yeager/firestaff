@@ -24,10 +24,10 @@ int main(void)
     struct DungeonMapDesc_Compat maps[2];
     struct DungeonMapTiles_Compat tiles[2];
     struct DungeonThings_Compat things;
-    struct DungeonGroup_Compat groups[1];
+    struct DungeonGroup_Compat groups[2];
     unsigned char map0Squares[1];
     unsigned char map1Squares[4];
-    unsigned short squareFirstThings[1];
+    unsigned short squareFirstThings[2];
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     static struct GameWorld_Compat before;
@@ -145,6 +145,40 @@ int main(void)
           world.timeline.events[0].mapIndex == 1 &&
           world.timeline.events[0].fireAtTick == 101u,
           "F0195 restarts C37 wandering at game time plus one");
+
+    /* GROUP.C F0195 scans columns, not C04 indices. Admit group 1 first,
+     * then fail on the next column after its F0179 draws and queued event. */
+    world = before;
+    world.creatureAICount = 0;
+    groups[1] = groups[0];
+    groups[1].creatureType = 6; /* I34 Rockpile GraphicInfo=0x0020: one draw */
+    things.groupCount = 2;
+    things.squareFirstThingCount = 2;
+    map1Squares[1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    columns[2] = 1;
+    squareFirstThings[0] = group_thing_ref(1);
+    squareFirstThings[1] = group_thing_ref(99);
+    before = world;
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_FAIL,
+          "second-column failure rejects partial admission");
+    CHECK(memcmp(&world, &before, sizeof(world)) == 0 &&
+          memcmp(&groups[0], &groupBefore, sizeof(groupBefore)) == 0 &&
+          groups[1].cells == groupBefore.cells,
+          "partial admission publishes no RNG, aspects, events or C04 changes");
+    squareFirstThings[1] = group_thing_ref(0);
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+          "two-column admission succeeds after correcting second owner");
+    CHECK(world.creatureAICount == 2 &&
+          world.creatureAI[0].reserved0 == 1 &&
+          world.creatureAI[1].reserved0 == 0 &&
+          world.creatureAI[0].groupMapX == 0 &&
+          world.creatureAI[1].groupMapX == 1,
+          "admission follows column order rather than group table order");
+    CHECK(world.masterRng.seed == UINT32_C(3861356397) &&
+          world.creatureAI[0].aspect[0] == 0 &&
+          world.creatureAI[1].aspect[0] == 1 &&
+          world.timeline.count == 2,
+          "column-ordered original metadata consumes six draws with exact aspects");
 
     if (failures != 0) {
         return 1;

@@ -1,8 +1,8 @@
 # Firestaff TODO — DM1
 
 - Complete F0183/F0180 admission fidelity beyond the implemented F0179 aspect/RNG
-  initialization and successful staged RNG publication. Verify multi-group
-  scan order, rollback after partial destination admission and original traces.
+  initialization and successful staged RNG publication. Obtain original traces
+  beyond the bounded multi-group scan-order and partial-admission rollback tests.
   Check Couatl sound emission and edition-specific metadata beyond I34.
   F0180:333 event priority (255-MovementTicks) and raw behavior>=4 reset at
   :328-330 also need integration. The standalone active-state helper's

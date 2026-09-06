@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Extended the F0194/F0195 runtime regression to reject a second-column owner
+  after the first group has consumed admission RNG and scheduled its event.
+  The caller world (including RNG/aspects/timeline/history) remains byte-for-byte
+  unchanged. Correcting that owner admits group 1 before group 0 in column order:
+  original I34 Rockpile/Skeleton metadata yields aspects 0/1 and final RNG
+  3861356397 from seed 7. The registered lifecycle test passes. This constructed
+  topology verifies runtime ownership/order, not an original gameplay capture.
+
 - F0183 admission now runs F0179 with original I34 creature metadata and the
   shared RNG, publishing per-creature aspects. Successful staged map entry
   publishes the advanced RNG; failure leaves the caller's stream unchanged.
