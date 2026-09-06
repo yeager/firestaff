@@ -12962,7 +12962,11 @@ static int orch_handle_creature_reaction_event_compat(
 
         if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
                 &activeGroup, group, &ctx.creatureInfo, creatureIndex,
-                0,
+                /* GROUP.C F0209:2070-2073 preserves the selected
+                 * creature's ongoing attack animation in attack behavior.
+                 * C32 has no selected slot; never index Aspect[-1]. */
+                creatureIndex >= 0 && group->behavior == DM1_BEHAVIOR_ATTACK
+                    && (activeGroup.aspect[creatureIndex] & 0x80),
                 world->gameTick, &world->masterRng, &aspectReceipt) ||
             !aspectReceipt.valid) {
             return 0;

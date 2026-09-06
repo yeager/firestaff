@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 preserves ongoing creature attack animation during individual aspect
+  updates instead of prematurely switching to the non-attack frame.
+
 - DM1 stops Lord Chaos animation and AI continuations after victory, matching
   the original event gate without consuming further random values.
 

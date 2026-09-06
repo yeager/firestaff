@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+- Complete the C32-C36 source decision tree around F0179. GROUP.C
+  F0209:2051-2085 resolves visibility/behavior changes before animation and
+  skips non-attacking distant-group aspect mutation; the runtime currently
+  invokes F0179 before the broader behavior resolver. Preserve the source
+  timing/RNG ordering when integrating these branches. Audit C32's lack of
+  an individual slot without reproducing an out-of-bounds Aspect[-1] read.
+  F0179 also lacks Couatl movement and Animated Armour ongoing-attack sound
+  requests (GROUP.C:242, 270-280); implement edition-specific sound mapping
+  and prioritized dispatch, not an unconditional generic audio effect.
+
 - Deferred savegame regression: `dm1_v1_g0377_active_group_count_pc34_compat`
   passes F0196 initialization and F0195 live-count admission, then fails
   "PC34 export accepts the bounded G0377 live count". Observed after rebuilding

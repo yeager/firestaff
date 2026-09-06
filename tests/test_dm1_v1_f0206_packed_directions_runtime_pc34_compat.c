@@ -1374,7 +1374,7 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
     if (!build_world(&world)) return 1;
     world.pc34ActiveGroupSourceCount = 1;
     world.things->groups[0].count = 3;
-    if (frozen >= 2) {
+    if (frozen == 2 || frozen == 3) {
         world.things->groups[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
         world.creatureAI[0].creatureType = CREATURE_TYPE_LORD_CHAOS;
     }
@@ -1383,7 +1383,13 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                            world.things->rawThingData[THING_TYPE_GROUP]);
     memcpy(world.creatureAI[0].aspect, siblings, sizeof(siblings));
     world.creatureAI[0].aspect[slot] = 0xff;
-    world.freezeLifeTicks = frozen ? 8 : 0;
+    if (frozen == 4) {
+        world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+        world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+        authenticate_group_c04(world.things, &world.things->groups[0],
+                               world.things->rawThingData[THING_TYPE_GROUP]);
+    }
+    world.freezeLifeTicks = (frozen > 0 && frozen < 4) ? 8 : 0;
     world.gameWon = frozen == 3;
     seedBefore = world.masterRng.seed;
     memcpy(aiBefore, &world.creatureAI[0], sizeof(aiBefore));
@@ -1423,6 +1429,9 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                      world.timeline.events[0].aux4 == event.aux4,
                      "Freeze Life retains event type and source ticks on four-tick retry");
     } else {
+        if (frozen == 4)
+            ok &= expect((world.creatureAI[0].aspect[slot] & 0x80) != 0,
+                         "C33-C36 retains ongoing attack aspect for attacking groups");
         ok &= expect(world.creatureAI[0].aspect[slot] != 0xff,
                      "C33-C36 actually updates selected creature aspect");
         if (frozen == 2)
@@ -1446,7 +1455,8 @@ int main(void)
         if (test_timed_aspect_and_freeze_gate(slot, 0, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 1, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 2, 33 + slot) != 0 ||
-            test_timed_aspect_and_freeze_gate(slot, 3, 33 + slot) != 0) return 1;
+            test_timed_aspect_and_freeze_gate(slot, 3, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 4, 33 + slot) != 0) return 1;
     for (eventType = 32; eventType <= 41; ++eventType) {
         if (eventType >= 33 && eventType <= 36) continue;
         if (test_timed_aspect_and_freeze_gate(0, 1, eventType) != 0) return 1;

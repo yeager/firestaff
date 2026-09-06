@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- C33-C36 aspect updates now retain the selected creature's attack flag
+  when its group is already attacking (GROUP.C F0209:2070-2073), instead
+  of unconditionally applying the non-attack animation branch. Regression
+  fails before the fix and passes for all four slots afterward. Rebuilt
+  runtime-linked targets and passed all 20 selected tests, including five
+  original-DOS-media tests. This does not prove the entire F0209 visibility,
+  distance, animation timing or sound decision tree.
+
 - Expanded the bounded Freeze Life regression to every C32-C41 timed
   aspect/behavior event, following GROUP.C F0209:1962-1968. Frozen groups
   preserve their complete active/dungeon group structures, RNG, and nonzero
