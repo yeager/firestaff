@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 Atari/Amiga: restored inventory rendering with the original padded
+  slot graphics and corrected scroll text's vertical position.
+
 - DM1 PC3.4: corrected scroll text positioning in Original and Modern to
   match the original layout data and font baseline.
 

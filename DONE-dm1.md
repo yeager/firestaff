@@ -1,5 +1,22 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Atari/Amiga inventory and scroll rendering
+
+- Original C033 is stored as 32x18 pixels, whereas its visible box is
+  18x18. The PC-only size gate had suppressed the inventory overlay.
+  CHAMDRAW.C F0291:558–559,655–658 supplies the crop, source stride and
+  C12 transparency. The legacy adapter now binds that original crop;
+  the PC material gate remains strict and unchanged.
+- Legacy scroll Y is a baseline, not a raster top. TEXT.C F0040:413,714
+  subtracts four pixels before drawing, now reflected in the renderer.
+- Tests initially failed at the undrawn panel on all five original-media
+  editions. After correction, Atari EN1.2/DE1.2/FR1.3 and Amiga EN2.0/HD
+  each pass 35 scrolls in Original/V2.1 (350 raster checks in total).
+- The oracle uses original panel/font assets and independent baseline
+  arithmetic. Line counting/font decoding are shared and transparent
+  background pixels are retained from the actual frame. This is not a
+  substitute for full same-state emulator comparison or full HUD parity.
+
 ## 2026-09-06 — PC3.4 scroll text anchor and baseline
 
 - Read the original archive's C696 layout in memory and verified its CRC

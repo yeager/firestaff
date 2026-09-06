@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "dm1_legacy_scroll_real_check.h"
 
 int main(void) {
     const char *path = getenv("FIRESTAFF_DM1_AMIGA_ARCHIVE");
@@ -97,6 +98,7 @@ int main(void) {
                 (size_t)state->assetLoader.legacyDataSize, 35)) goto done;
     }
     puts("PASS: all 35 engine sound events select original Amiga PCM records (34 unique effects)");
+    if (!check_legacy_scroll_raster(state)) goto done;
     result = 0;
 done:
     if (result) fputs("FAIL: original Amiga name/media selection gate\n", stderr);

@@ -1,9 +1,9 @@
 # Firestaff TODO — DM1
 
-- Verify Atari, Amiga and FM Towns scroll baseline/line placement against
-  their own F0341/F0040/F0644 paths and original layout data. PC3.4's
-  source/data coordinate calculation is now verified; same-state emulator
-  captures remain necessary for independent full-render parity.
+- Verify FM Towns scroll baseline/line placement against its own
+  F0341/F0644 paths and original layout data. PC3.4 and the tested
+  Atari/Amiga editions now have source/data raster evidence; same-state
+  emulator captures remain necessary for independent full-render parity.
 
 Reviewed 2026-08-29. Only open work is listed here.
 

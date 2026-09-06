@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "dm1_legacy_scroll_real_check.h"
 
 int main(int argc, char **argv) {
     const char *path = getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
@@ -165,6 +166,7 @@ int main(int argc, char **argv) {
             M11_Audio_Dm1AtariSoundIndex(35) != -1) goto done;
     }
     puts("PASS: DM1 event indices select original Atari samples and Timer-A periods without generated markers");
+    if (!check_legacy_scroll_raster(state)) goto done;
     result = 0;
 done:
     free(pixels);

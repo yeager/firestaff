@@ -63775,6 +63775,11 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
          * Keep this separate from the older media's F0040 coordinates. */
         centerX = M11_VIEWPORT_X + 163;
         layout.firstLineY = 86 - ((7 * layout.lineCount - 2) / 2) + 6 - 4;
+    } else if (state->assetLoader.atariStDm1 ||
+               (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian)) {
+        /* PANEL.C F0341's 92-based Y is a baseline. Atari and Amiga
+         * TEXT.C F0040:413,714 subtract four before the first font row. */
+        layout.firstLineY -= 4;
     }
     for (i = 0; i < layout.storedLineCount; ++i) {
         m11_draw_v1_scroll_text_line(framebuffer,
@@ -64440,6 +64445,7 @@ static int m11_dm1_v1_f0355_inventory_material_ready(
     DM1_V1_F0355SourceSurfacePc34 surfaces[2];
     DM1_V1_F0355GlyphSourcePc34 glyph;
     DM1_V1_F0355InventoryMaterialReceiptPc34 receipt;
+    unsigned char legacySlotPixels[18 * 18];
     M11_FontState loadedFont;
     const M11_FontState* sourceFont;
     const M11_AssetSlot* inventory;
@@ -64486,8 +64492,20 @@ static int m11_dm1_v1_f0355_inventory_material_ready(
     surfaces[1].height = (int)slot->height;
     surfaces[1].indexedPixelCount = surfaces[1].width * surfaces[1].height;
     surfaces[1].indexedPixels = slot->pixels;
+    if ((state->assetLoader.atariStDm1 ||
+         (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian)) &&
+        slot->width == 32 && slot->height == 18) {
+        /* CHAMDRAW.C F0291:558-559,655-658 clips an 18x18 box from
+         * C016_BYTE_WIDTH (32 pixels) legacy storage. Bind precisely
+         * those original pixels, not the padding, to the material gate. */
+        for (int row = 0; row < 18; ++row)
+            memcpy(legacySlotPixels + row * 18, slot->pixels + row * 32, 18);
+        surfaces[1].width = 18;
+        surfaces[1].indexedPixelCount = 18 * 18;
+        surfaces[1].indexedPixels = legacySlotPixels;
+    }
     surfaces[1].pixelsFNV1a = dm1_v1_f0355_inventory_material_fnv1a_pc34(
-        slot->pixels, surfaces[1].indexedPixelCount);
+        surfaces[1].indexedPixels, surfaces[1].indexedPixelCount);
     glyph.graphicsDatOwned = 1;
     glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(sourceFont);
     glyph.bits = sourceFont->bitmap;
@@ -64666,6 +64684,17 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)slotBoxGraphic);
+                if (boxSlot && boxSlot->loaded && boxSlot->pixels &&
+                    (state->assetLoader.atariStDm1 ||
+                     (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian)) &&
+                    boxSlot->width == 32 && boxSlot->height == 18) {
+                    /* CHAMDRAW.C F0291:558-559,655-658: 18x18 from
+                     * a 32-pixel source stride, C12 transparency. */
+                    M11_AssetLoader_BlitRegion(boxSlot, 0, 0, 18, 18,
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        M11_VIEWPORT_X + zx - 1, M11_VIEWPORT_Y + zy - 1, 12);
+                    continue;
+                }
                 if (boxSlot &&
                     DM1_ChampionPanel_AssetSurfaceAccepted(
                         slotBoxGraphic, slotBoxGraphic,
