@@ -695,17 +695,30 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             if (!M11_GameView_OpenSpellPanel(state) ||
                                 !enter_legacy_rune_by_mouse(state, powerRune) ||
                                 !enter_legacy_rune_by_mouse(state, restorative == 11 ? 0 : restorative == 14 ? 1 : 5) ||
-                                (restorative == 13 && (!enter_legacy_rune_by_mouse(state, 4) || !enter_legacy_rune_by_mouse(state, 4))) ||
-                                !M11_GameView_CastSpell(state)) {
+                                (restorative == 13 && (!enter_legacy_rune_by_mouse(state, 4) || !enter_legacy_rune_by_mouse(state, 4)))) {
                                 fprintf(stderr, "FAIL: original flask restorative cast\n"); return 0;
+                            }
+                            /* COMMAND.C:199 C108; MENU.C:1826 consumes XP's
+                             * RANDOM(8) before :1853's potion RANDOM(16).
+                             * High source skill avoids the practice RNG loop.
+                             * BASE.C F0027 / F0732: LCG then bits 8..23. */
+                            unsigned int castSeed = state->world.masterRng.seed;
+                            castSeed = castSeed * 0xBB40E62Du + 11u;
+                            castSeed = castSeed * 0xBB40E62Du + 11u;
+                            int expectedPower = (powerRune + 1) * 40 +
+                                ((castSeed >> 8) & 15u);
+                            int paidMana = state->world.party.champions[1].mana.current;
+                            if (M11_GameView_HandlePointer(state, 250, 68, 1) != M11_GAME_INPUT_REDRAW) return 0;
+                            (void)M11_GameView_HandlePointer(state, 250, 68, 0);
+                            if (state->world.party.champions[1].mana.current != paidMana ||
+                                !state->spellPanelOpen || state->spellBuffer.runeCount != 0) {
+                                fprintf(stderr, "FAIL: C108 paid cast lifecycle\n"); return 0;
                             }
                             const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
                             if (!raw || (raw[3] & 127) != restorative) { fprintf(stderr, "FAIL: restorative subtype %d\n", restorative); return 0; }
-                            /* MENU.C F0412:1824,1853: RANDOM(16) + ordinal*40.
-                             * Independent bound rejects wrong power-rune scaling;
-                             * it does not prove which RNG sample was consumed. */
-                            if (raw[2] < (powerRune + 1) * 40 || raw[2] > (powerRune + 1) * 40 + 15) {
-                                fprintf(stderr, "FAIL: restorative source power range\n"); return 0;
+                            if (raw[2] != expectedPower) {
+                                fprintf(stderr, "FAIL: restorative power=%u expected=%d\n",
+                                    (unsigned int)raw[2], expectedPower); return 0;
                             }
                             int counter = ((511 - raw[2]) / (32 + (raw[2] + 1) / 8)) >> 1;
                             int before = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 990 : 100;

@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Replaced restorative CastSpell API calls with original C108
+  mouse press/release. The independent F0027/F0412 oracle exposed an extra
+  M10 XP random draw after M11 had already supplied XP; dispatch now skips
+  that duplicate. Exact potion power, paid mana and retained spell controls
+  pass in twenty original Atari/Amiga cases (360 casts), repeated with V2.1
+  selected (720 total). Open Door and action-runtime regressions also pass.
+  This covers high-skill input/state, not low-skill double validation or
+  final Modern framebuffer parity; those remain open.
+
 - 2026-09-06: DM1 top-row inventory open/switch/close now preserves the
   spell controls, selected caster and paid rune chain (PANEL.C F0355).
   Twenty original Atari/Amiga cases verify five inventory transitions,

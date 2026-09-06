@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 spell dispatch no longer consumes a duplicate XP random sample after
+  M11 prevalidation, correcting subsequent potion power generation.
+
 - Opening, switching or closing DM1 inventory via champion clicks no longer
   hides the spell controls or interrupts a prepared incantation.
 

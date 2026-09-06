@@ -13333,7 +13333,12 @@ cmd_attack_legacy_marker:
         int failedCastSkillIndex = -1;
         uint32_t spellRngRaw;
 
-        spellRngRaw = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
+        /* MENU.C F0412:1826 spends one XP sample before validation. M11
+         * already supplied that XP through reserved2; the receipt's XP is
+         * discarded in that case. Do not consume a second sample before
+         * :1853's potion power draw. Direct M10 callers keep their draw. */
+        spellRngRaw = (input->reserved2 & CMD_CAST_SPELL_RESERVED2_HAS_SPELL_XP)
+            ? 0u : F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
         emit(result, EMIT_SOUND_REQUEST, tableIdx,
              world->party.mapX, world->party.mapY, 0);
 

@@ -17,9 +17,10 @@
   original-audio setup, observed before the restorative tests. Full rerun
   passed; do not conflate this with a fixed failure or the no-output exit.
 
-- Extend spell-created restorative potion evidence with full rune mouse
-  input and independent RNG/XP receipts. MON/EE at all six power runes
-  now have original-flask API-route creation/consumption coverage.
+- Verify low-skill cast handoff and exact XP against F0412. M11 validates
+  practice before dispatch, while M10 can run practice checks again; prove
+  there is no duplicate validation/RNG draw or changed outcome. High-skill
+  restorative potion power now matches the independent second RNG sample.
 
 - Fix food command timing: defer swallow until all four source mouth delays
   complete, including release/input lifecycle and simulation ordering. See
