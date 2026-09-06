@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- Added C32-C36 attack-entry fanout from GROUP.C T0209044: descending
+  per-creature F0205/delay/F0179/F0208 processing, without immediate F0207
+  damage. Queue/RNG/group publication is staged together. Four-slot runtime
+  tests cover each incoming C33-C36 type, all continuation slots, exact
+  29-draw already-facing I34 sequence, and no partial publication when only
+  one queue slot remains. All 21 selected tests pass, including five original
+  DOS-media tests. The outer dispatcher still consumes scheduling failure;
+  C31/C37 entry, turning pairs and original traces remain separate work.
+
 - Consolidated C32-C36 behavior deadlines in the pure F0209 decision:
   incoming C.Ticks is retained even when zero, and approach entry adds one
   before retaining that delay (T0209054/T0209136). Removed the duplicate M10

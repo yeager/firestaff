@@ -6,10 +6,12 @@
   requests (GROUP.C:242, 270-280); implement edition-specific sound mapping
   and prioritized dispatch, not an unconditional generic audio effect.
   Remaining integration requirements:
-  - Attack entry must fan out descending C38-C41 slots with source F0205
-    directions, delay RNG, F0179(false), and F0208 scheduling. The current
-    adjacent transition produces no continuation and must not be replaced
-    with an immediate F0207 attack. Rollback must cover the whole fanout.
+  - Extend attack-entry fanout beyond C32-C36 to C31/C37 and other source
+    transitions with their own deletion/delay rules. Obtain turning-pair
+    and emulator-trace coverage beyond the four already-facing slots.
+  - Propagate failed fanout scheduling through the outer dispatcher: it
+    currently consumes the input event even when staging cannot fit all
+    slots. Preserve/retry the input without partially publishing the fanout.
   - Obtain original traces for approach entry and zero-tick chained dispatch.
     Preserve off-map handling and the separate priority gap.
 

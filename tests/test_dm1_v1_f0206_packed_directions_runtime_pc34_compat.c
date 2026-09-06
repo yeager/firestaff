@@ -1392,6 +1392,15 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
         authenticate_group_c04(world.things, &world.things->groups[0],
                                world.things->rawThingData[THING_TYPE_GROUP]);
     }
+    if (frozen == 7 || frozen == 8) {
+        world.things->groups[0].behavior = DM1_BEHAVIOR_WANDER;
+        world.things->groups[0].direction = 2;
+        world.creatureAI[0].stateKind = AI_STATE_WANDER;
+        world.creatureAI[0].groupDirection = 2;
+        world.pc34ActiveGroupDirections[0] = 0xaa;
+        authenticate_group_c04(world.things, &world.things->groups[0],
+                               world.things->rawThingData[THING_TYPE_GROUP]);
+    }
     if (frozen == 6) {
         unsigned char* squares = calloc(21, 1);
         unsigned short* columns = calloc(7, sizeof(*columns));
@@ -1433,9 +1442,29 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
         event.aux4 |= 5;
     }
     memset(&result, 0, sizeof(result));
+    if (frozen == 8) {
+        struct TimelineEvent_Compat filler = event;
+        filler.fireAtTick = world.gameTick + 10000;
+        for (i = 0; i < TIMELINE_QUEUE_CAPACITY - 1; ++i)
+            if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &filler)) {
+                F0883_WORLD_Free_Compat(&world);
+                return 1;
+            }
+    }
     ok = F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) &&
          F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
-    if (frozen == 3) {
+    if (frozen == 8) {
+        struct RngState_Compat expectedRng;
+        F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
+        (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536);
+        /* The outer dispatcher consumes handler failures; verify state,
+         * not its success return, until failure propagation is integrated. */
+        ok &= expect(world.timeline.count == TIMELINE_QUEUE_CAPACITY - 1 &&
+                    world.masterRng.seed == expectedRng.seed &&
+                    memcmp(aiBefore, &world.creatureAI[0], sizeof(aiBefore)) == 0 &&
+                    memcmp(groupBefore, &world.things->groups[0], sizeof(groupBefore)) == 0,
+                    "failed attack fanout publishes no partial queue, RNG or group state");
+    } else if (frozen == 3) {
         ok &= expect(world.masterRng.seed == seedBefore &&
                      world.creatureAI[0].aspect[slot] == 0xff &&
                      world.timeline.count == 0,
@@ -1453,6 +1482,24 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
                      world.timeline.events[0].aux3 == event.aux3 &&
                      world.timeline.events[0].aux4 == event.aux4,
                      "Freeze Life retains event type and source ticks on four-tick retry");
+    } else if (frozen == 7) {
+        unsigned mask = 0;
+        struct RngState_Compat expectedRng;
+        F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
+        /* One F0228 draw, then each already-facing slot draws one bounded
+         * attack delay and six F0179 values for original I34 GI=0x623D. */
+        for (i = 0; i < 29; ++i)
+            (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536);
+        for (i = 0; i < world.timeline.count; ++i) {
+            int type = world.timeline.events[i].aux2;
+            int index = type >= 38 ? type - 38 : type - 33;
+            if (index >= 0 && index < 4) mask |= 1u << index;
+        }
+        ok &= expect(world.timeline.count == 4 && mask == 15 &&
+                     world.things->groups[0].behavior == DM1_BEHAVIOR_ATTACK &&
+                     world.masterRng.seed == expectedRng.seed &&
+                     world.party.champions[0].hp.current == 100,
+                     "aspect attack entry schedules every slot without immediate damage");
     } else if (frozen == 6) {
         struct RngState_Compat expectedRng;
         F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
@@ -1489,7 +1536,7 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
     }
     for (i = 0; i < 4; ++i) {
         if (i != slot)
-            ok &= expect(frozen == 5
+            ok &= expect(frozen == 5 || frozen == 7
                              ? world.creatureAI[0].aspect[i] != siblings[i]
                              : world.creatureAI[0].aspect[i] == siblings[i],
                          "aspect update follows source selected versus whole-group scope");
@@ -1509,7 +1556,9 @@ int main(void)
             test_timed_aspect_and_freeze_gate(slot, 3, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 4, 33 + slot) != 0 ||
             test_timed_aspect_and_freeze_gate(slot, 5, 33 + slot) != 0 ||
-            test_timed_aspect_and_freeze_gate(slot, 6, 33 + slot) != 0) return 1;
+            test_timed_aspect_and_freeze_gate(slot, 6, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 7, 33 + slot) != 0 ||
+            test_timed_aspect_and_freeze_gate(slot, 8, 33 + slot) != 0) return 1;
     for (eventType = 32; eventType <= 41; ++eventType) {
         if (eventType >= 33 && eventType <= 36) continue;
         if (test_timed_aspect_and_freeze_gate(0, 1, eventType) != 0) return 1;

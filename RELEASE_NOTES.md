@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 groups entering attack during an animation update now schedule each
+  creature's continuation instead of stopping after the behavior change.
+
 - DM1 distinguishes whole-group idle animation from individual attack
   animation, skips distant idle animation work, and preserves separate
   animation/behavior deadlines instead of replacing their timing.

@@ -12608,6 +12608,69 @@ static int orch_f0209_insert_next_event_f0238_compat(
 /* ReDMCSB GROUP.C F0207 lines 1695-1815 performs the action selected by
  * F0209's C38-C41 branch.  F0810 already owns the behavior decision; this
  * M10 bridge owns only the live projectile/champion mutation and receipt. */
+/* GROUP.C F0209 T0209044: prepare every creature's first attack event in
+ * descending slot order. Publish the queue, RNG and group only together. */
+static int orch_f0209_begin_aspect_attack_compat(
+    struct GameWorld_Compat* world, const struct TimelineEvent_Compat* ev,
+    struct DungeonGroup_Compat* group, struct CreatureAIState_Compat* ai,
+    int activeIndex, const struct DM1GroupBehaviorContext_Compat* ctx,
+    const struct DM1ActiveGroup_Compat* active)
+{
+    struct TimelineQueue_Compat queue = world->timeline;
+    struct RngState_Compat rng = world->masterRng;
+    struct DM1ActiveGroup_Compat staged = *active;
+    int i;
+    for (i = group->count; i >= 0; --i) {
+        DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspect;
+        struct DM1GroupAddEventPlan_Compat plan;
+        struct TimelineEvent_Compat next;
+        uint32_t time = world->gameTick + 1u;
+        int delay;
+        if (((staged.directions >> (i * 2)) & 3) != ctx->currentGroupPrimaryDirToParty &&
+            !(i && F0732_COMBAT_RngRandom_Compat(&rng, 2))) {
+            if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+                    &staged, ctx->currentGroupPrimaryDirToParty, i,
+                    ctx->creatureSize, group->count, &rng)) return 0;
+            time = world->gameTick + F0732_COMBAT_RngRandom_Compat(&rng, 4) + 2u;
+        }
+        /* C32-C36 always takes CurrentEventTypeIsNotUpdateBehavior. */
+        delay = (ctx->creatureInfo.attackTicks >> 1) +
+            F0732_COMBAT_RngRandom_Compat(&rng, 4);
+        if (delay > ctx->eventTicks) delay = ctx->eventTicks;
+        time += delay;
+        if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+                &staged, group, &ctx->creatureInfo, i, 0, world->gameTick,
+                &rng, &aspect) || !aspect.valid ||
+            !F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+                DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + i, time,
+                aspect.next_update_time, &plan) || !plan.valid) return 0;
+        memset(&next, 0, sizeof(next));
+        next.kind = TIMELINE_EVENT_CREATURE_REACTION;
+        next.fireAtTick = plan.mapTime;
+        next.mapIndex = ev->mapIndex;
+        next.mapX = ev->mapX;
+        next.mapY = ev->mapY;
+        next.aux0 = staged.groupThingIndex;
+        next.aux1 = group->creatureType;
+        next.aux2 = plan.eventType;
+        next.aux3 = plan.ticks;
+        next.aux4 = 0x100;
+        if (!F0721_TIMELINE_Schedule_Compat(&queue, &next)) return 0;
+    }
+    world->timeline = queue;
+    world->masterRng = rng;
+    ai->stateKind = AI_STATE_ATTACK;
+    ai->lastSeenPartyMapX = ctx->partyMapX;
+    ai->lastSeenPartyMapY = ctx->partyMapY;
+    ai->groupDirection = staged.directions & 3;
+    world->pc34ActiveGroupDirections[activeIndex] = (unsigned char)staged.directions;
+    orch_write_group_aspects_compat(ai, &staged);
+    group->behavior = DM1_BEHAVIOR_ATTACK;
+    group->direction = staged.directions & 3;
+    orch_write_raw_group_compat(world->things, staged.groupThingIndex);
+    return 1;
+}
+
 static int orch_apply_f0207_creature_attack_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -13011,6 +13074,13 @@ static int orch_handle_creature_reaction_event_compat(
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return 0;
+    }
+    if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP &&
+        ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3 &&
+        behavior.newBehavior == DM1_BEHAVIOR_ATTACK &&
+        ctx.groupBehavior != DM1_BEHAVIOR_ATTACK) {
+        return orch_f0209_begin_aspect_attack_compat(
+            world, ev, group, ai, activeIndex, &ctx, &activeGroup);
     }
 
     /* GROUP.C F0209:2051-2088,2452-2463: visibility transitions precede
