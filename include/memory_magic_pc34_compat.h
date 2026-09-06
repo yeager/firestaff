@@ -268,6 +268,14 @@ int F0754_MAGIC_ValidateCastRequest_Compat(
     struct RngState_Compat* rng,
     int* outFailureReason);
 
+/* F0412 validation after F0399 has already consumed rune mana. */
+int F0754_MAGIC_ValidatePaidCastRequest_Compat(
+    const struct SpellCastRequest_Compat* req,
+    const struct SpellDefinition_Compat* spell,
+    int powerOrdinal,
+    struct RngState_Compat* rng,
+    int* outFailureReason);
+
 int F0755_MAGIC_CheckSkillRequired_Compat(
     int baseRequiredSkillLevel,
     int powerOrdinal,

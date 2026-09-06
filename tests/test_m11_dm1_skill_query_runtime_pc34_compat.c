@@ -140,7 +140,7 @@ static void test_m11_cast_spell_validation_uses_f0303_skill_query(void) {
     champ = &state.world.party.champions[0];
     champ->hp.current = 100;
     champ->hp.maximum = 100;
-    champ->mana.current = 100;
+    champ->mana.current = 27; /* On Ful Ir: 3 + 10 + 14 (MENU.C G0485/6). */
     champ->mana.maximum = 100;
     champ->attributes[CHAMPION_ATTR_WISDOM] = 0;
     champ->inventory[CHAMPION_SLOT_ACTION_HAND] =
@@ -156,7 +156,7 @@ static void test_m11_cast_spell_validation_uses_f0303_skill_query(void) {
     assert(M11_GameView_CastSpell(&state) == 1);
     assert(state.spellPanelOpen == 0);
     assert(state.spellBuffer.runeCount == 0);
-    assert(champ->mana.current < 100);
+    assert(champ->mana.current == 0); /* Paid runes cast at zero remaining mana. */
 }
 
 static void test_m11_cast_spell_validation_failure_stops_cast(void) {
@@ -184,7 +184,7 @@ static void test_m11_cast_spell_validation_failure_stops_cast(void) {
     assert(M11_GameView_CastSpell(&state) == 1);
     assert(state.spellPanelOpen == 0);
     assert(state.spellBuffer.runeCount == 0);
-    assert(champ->mana.current == 100);
+    assert(champ->mana.current == 73); /* Failed practice cannot refund runes. */
     assert(M11_GameView_GetProjectileCount(&state) == 0);
     assert(strcmp(state.lastOutcome,
                   "EMPTY NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.") == 0);

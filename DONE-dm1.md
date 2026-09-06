@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Corrected native DM1 F0399 rune charging and modulo-four
+  SymbolStep, including fifth-rune replacement. F0412 now uses a separate
+  paid-rune validation entry point, retaining legacy callers and serialized
+  request layout. Twenty Atari/Amiga original-media cases enforce exact
+  rune costs and selected-caster ownership for 360 restorative casts.
+  Focused tests cover insufficient-mana rejection, no refund on recant/
+  practice failure, and successful casting at zero remaining mana.
+  Five additional runtime/legacy magic regressions pass; no emulator or
+  final spell-panel pixel parity is claimed.
+
 - 2026-09-06: Restored DM1 spell mouse routing with inventory open.
   PANEL.C:2445 changes the secondary list, not COMMAND.C's primary C100.
   Twenty original-media Atari/Amiga cases now create MON/EE/VI at all six

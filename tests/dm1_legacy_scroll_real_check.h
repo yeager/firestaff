@@ -36,15 +36,10 @@ static int enter_legacy_rune_by_mouse(M11_GameViewState *state, int rune)
     otherMana = state->world.party.champions[other].mana.current;
     (void)M11_GameView_HandlePointer(state, 241 + 14 * rune, 56, 1);
     (void)M11_GameView_HandlePointer(state, 241 + 14 * rune, 56, 0);
-    /* Rune-time mana charging is a known separate runtime gap: M11
-     * currently defers it until CastSpell. Keep an opt-in failing oracle
-     * while the normal suite proves mouse routing and symbol ownership. */
-    if ((getenv("FIRESTAFF_VERIFY_RUNE_MANA") &&
-         state->world.party.champions[caster].mana.current != before - cost) ||
+    if (state->world.party.champions[caster].mana.current != before - cost ||
         state->world.party.champions[other].mana.current != otherMana ||
         state->dm1SpellCasting.input[caster].symbols[step] != 96 + 6 * step + rune ||
-        (getenv("FIRESTAFF_VERIFY_RUNE_MANA") &&
-         state->dm1SpellCasting.input[caster].symbolStep != ((step + 1) & 3)) ||
+        state->dm1SpellCasting.input[caster].symbolStep != ((step + 1) & 3) ||
         state->spellBuffer.runeCount != step + 1) {
         fprintf(stderr, "FAIL: original rune mouse owner/debit step=%d rune=%d mana=%d expected=%d symbol=%d next=%d debug=%d inventory=%d panel=%d\n",
             step, rune, state->world.party.champions[caster].mana.current,

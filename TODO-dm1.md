@@ -1,11 +1,8 @@
 # Firestaff TODO — DM1
 
-- Correct rune-entry lifecycle against SYMBOL.C F0399: debit mana per rune,
-  reject unaffordable input without mutation, preserve spent mana on recant/
-  failure, and wrap SymbolStep after the fourth rune. M11 currently charges
-  at CastSpell and leaves the full buffer's step at 3. Reproduce with
-  FIRESTAFF_VERIFY_RUNE_MANA=1 and the original-media inventory/death tests.
-  Coordinate cast preflight and effect consumers to prevent double charging.
+- Extend rune lifecycle verification to original DOS/FM Towns media and
+  rendered symbol rows after fourth-rune wrap/recant. Atari/Amiga input
+  and debit tests do not establish visual parity for every platform.
 
 - Verify the actual DM1 C009/C011 spell renderer with different leader and
   caster state using original graphics. The procedural compact workbench

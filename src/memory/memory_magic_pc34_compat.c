@@ -390,12 +390,12 @@ int F0755_MAGIC_CheckSkillRequired_Compat(
     return 0;
 }
 
-int F0754_MAGIC_ValidateCastRequest_Compat(
+static int validate_cast_request(
     const struct SpellCastRequest_Compat* req,
     const struct SpellDefinition_Compat* spell,
     int powerOrdinal,
     struct RngState_Compat* rng,
-    int* outFailureReason)
+    int* outFailureReason, int runeManaPaid)
 {
     int required;
     int missing;
@@ -416,8 +416,8 @@ int F0754_MAGIC_ValidateCastRequest_Compat(
         return SPELL_CAST_FAILURE;
     }
 
-    /* Mana budget. */
-    {
+    /* Legacy callers budget at cast; native F0399 already paid at input. */
+    if (!runeManaPaid) {
         struct RuneSequence_Compat tmpSeq;
         int tmpCost = 0;
         uint32_t packedLocal = (uint32_t)req->rawSymbolsPacked;
@@ -479,6 +479,24 @@ int F0754_MAGIC_ValidateCastRequest_Compat(
     }
 
     return SPELL_CAST_SUCCESS;
+}
+
+int F0754_MAGIC_ValidateCastRequest_Compat(
+    const struct SpellCastRequest_Compat* req,
+    const struct SpellDefinition_Compat* spell, int powerOrdinal,
+    struct RngState_Compat* rng, int* outFailureReason)
+{
+    return validate_cast_request(req, spell, powerOrdinal, rng, outFailureReason, 0);
+}
+
+int F0754_MAGIC_ValidatePaidCastRequest_Compat(
+    const struct SpellCastRequest_Compat* req,
+    const struct SpellDefinition_Compat* spell, int powerOrdinal,
+    struct RngState_Compat* rng, int* outFailureReason)
+{
+    /* ReDMCSB MENU.C F0412:1824-1853: skill/flask checks follow F0399;
+     * zero remaining mana does not invalidate a paid incantation. */
+    return validate_cast_request(req, spell, powerOrdinal, rng, outFailureReason, 1);
 }
 
 /* ==========================================================

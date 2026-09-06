@@ -7180,8 +7180,8 @@ static void test_failed_practice_spell_awards_shifted_f0412_xp(void) {
               (long)state.world.gameTick +
                   DM1_V1_MESSAGE_ROW_EXPIRATION_TICKS,
               "F0410 visible failure expires 70 ticks after its cast");
-    ASSERT_EQ(state.world.party.champions[0].mana.current, manaBefore,
-              "practice failure does not spend spell mana");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, manaBefore - 27,
+              "F0399 On Ful Ir costs 3+10+14 even when practice fails");
     ASSERT_EQ(state.world.projectiles.count, 0,
               "practice failure does not create a projectile");
     ASSERT_EQ(state.lastTickResult.emissionCount, 0,

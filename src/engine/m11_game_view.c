@@ -20139,6 +20139,31 @@ static int m11_csb_consume_source_rune_cost(
 }
 
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
+    if (state && m11_is_dm1_source_kind(state->sourceKind)) {
+        DM1_V1_G0485SymbolManaCostPc34 cost;
+        int caster = state->dm1SpellCasting.magicCasterIndex;
+        int step = state->spellRuneRow;
+        struct ChampionState_Compat *champion;
+        /* ReDMCSB SYMBOL.C F0399:17-37 charges at selection, writes at
+         * SymbolStep, terminates the string and wraps the step modulo 4.
+         * Thus a fifth selection starts a new incantation, without refund. */
+        if (!state->active || state->partyDead || state->candidateMirrorPanelActive ||
+            !state->spellPanelOpen ||
+            caster < 0 || caster >= state->world.party.championCount ||
+            caster >= CHAMPION_MAX_PARTY || step < 0 || step >= 4) return 0;
+        champion = &state->world.party.champions[caster];
+        if (!champion->present || !champion->hp.current ||
+            !dm1_v1_graphic560_symbol_mana_cost_f0399_pc34(step, symbolIndex,
+                step ? (char)state->spellBuffer.runes[0] : (char)-1, &cost) ||
+            !cost.accepted || champion->mana.current < cost.manaCost) return 0;
+        champion->mana.current -= cost.manaCost;
+        state->spellBuffer.runes[step] = 96 + 6 * step + symbolIndex;
+        for (int i = step + 1; i < 4; ++i) state->spellBuffer.runes[i] = 0;
+        state->spellBuffer.runeCount = step + 1;
+        state->spellRuneRow = (step + 1) & 3;
+        m11_dm1_spell_sync_legacy_to_caster(state);
+        return 1;
+    }
     DM1_V1_SpellPanelStatePc34 panel =
         m11_dm1_spell_panel_state_pc34(state);
     DM1_V1_SpellPanelReceiptPc34 receipt =
@@ -20698,14 +20723,13 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     }
 
     /* Compute mana cost */
-    F0753_MAGIC_ComputeManaCost_Compat(&state->spellBuffer, &manaCost);
+    /* DM1 paid F0399 rune-by-rune, including failed/recanted sequences.
+     * MENU.C F0412:1824-1853 has no second mana budget/debit at cast. */
+    if (!m11_is_dm1_source_kind(state->sourceKind))
+        F0753_MAGIC_ComputeManaCost_Compat(&state->spellBuffer, &manaCost);
     if ((int)champ->mana.current < manaCost) {
-        /* ReDMCSB MENU.C F0408 lines ~1633-1663 clears symbols only
-         * after F0412 returns a normal cast-click result.  Firestaff's
-         * V1 UI defers rune mana charging until this gate, so an
-         * insufficient-mana preflight must preserve the selected rune
-         * chain and caster state for retry/recant instead of routing
-         * through the normal cast-click clear path. */
+        /* Retain legacy non-DM1 cast-time budgeting. Native DM1 rejects
+         * unaffordable symbols in F0399 and never enters this branch. */
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s — NOT ENOUGH MANA (%d/%d)",
                       (unsigned int)state->world.gameTick, champName,
                       (int)champ->mana.current, manaCost);
@@ -20756,7 +20780,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
 
     /* Validate the cast */
     memset(&effect, 0, sizeof(effect));
-    if (!F0754_MAGIC_ValidateCastRequest_Compat(&req, &spell,
+    if (!(m11_is_dm1_source_kind(state->sourceKind)
+              ? F0754_MAGIC_ValidatePaidCastRequest_Compat
+              : F0754_MAGIC_ValidateCastRequest_Compat)(&req, &spell,
                                                  spellPowerOrdinal,
                                                  &state->world.masterRng,
                                                  &failureReason)) {

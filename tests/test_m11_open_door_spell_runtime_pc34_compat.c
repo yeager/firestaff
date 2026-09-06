@@ -383,7 +383,7 @@ static void test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster(
     state.world.party.champions[0].present = 1;
     state.world.party.champions[0].hp.current = 100;
     state.world.party.champions[0].hp.maximum = 100;
-    state.world.party.champions[0].mana.current = 0;
+    state.world.party.champions[0].mana.current = 1;
     state.world.party.champions[0].mana.maximum = 80;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 80;
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
@@ -391,7 +391,8 @@ static void test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster(
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "spell panel opens for low-mana cast");
     ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "LO power rune entered for low-mana cast");
-    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 1, "ZO element rune entered for low-mana cast");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, 0,
+              "F0399 Lo consumes the last mana point");
 
     beforeChampion = state.world.party.champions[0];
     memcpy(beforeRunes, state.spellBuffer.runes, sizeof(beforeRunes));
@@ -400,8 +401,8 @@ static void test_open_door_ui_cast_insufficient_mana_preserves_runes_and_caster(
     beforeActiveChampion = state.world.party.activeChampionIndex;
     beforeGameTick = state.world.gameTick;
 
-    ASSERT_EQ(M11_GameView_CastSpell(&state), 1, "insufficient mana cast consumes input");
-    ASSERT_EQ(state.spellPanelOpen, 0, "insufficient mana closes spell panel feedback");
+    ASSERT_EQ(M11_GameView_EnterRune(&state, 5), 0, "F0399 rejects unaffordable Zo");
+    ASSERT_EQ(state.spellPanelOpen, 1, "rejected rune leaves spell panel open");
     ASSERT_EQ(state.spellBuffer.runeCount, beforeRuneCount,
               "insufficient mana preserves selected rune count");
     ASSERT_EQ(state.spellRuneRow, beforeRuneRow,

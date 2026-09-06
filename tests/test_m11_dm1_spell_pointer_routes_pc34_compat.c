@@ -36,6 +36,8 @@ static void seed_state(M11_GameViewState* state)
     state->world.party.champions[1].present = 1;
     state->world.party.champions[1].hp.current = 100;
     state->world.party.champions[1].hp.maximum = 100;
+    state->world.party.champions[0].mana.current = 100;
+    state->world.party.champions[1].mana.current = 100;
 }
 
 int main(void)
@@ -137,6 +139,36 @@ int main(void)
     CHECK_EQ(state.spellBuffer.runeCount, 1,
              "out-of-zone click cannot mutate spell data");
 
+    /* SYMBOL.C F0399/F0400: charge on input, no refund on deletion,
+     * reject an unaffordable rune atomically, and restart after four. */
+    CHECK_EQ(state.world.party.champions[0].mana.current, 96,
+             "Lo and Vi cost 1+3 even after Vi was recanted");
+    CHECK_EQ(state.world.party.champions[1].mana.current, 99,
+             "second caster pays only its own Lo");
+    state.world.party.champions[0].mana.current = 2;
+    CHECK_EQ(M11_GameView_EnterRune(&state, 1), 0,
+             "Vi rejects with only two mana");
+    CHECK_EQ(state.spellBuffer.runeCount, 1, "rejection preserves Lo");
+    CHECK_EQ(state.world.party.champions[0].mana.current, 2,
+             "rejection preserves mana");
+    state.world.party.champions[0].mana.current = 40;
+    CHECK_EQ(M11_GameView_EnterRune(&state, 1), 1, "Vi accepted");
+    CHECK_EQ(M11_GameView_EnterRune(&state, 4), 1, "Bro accepted");
+    CHECK_EQ(M11_GameView_EnterRune(&state, 4), 1, "Ra accepted");
+    CHECK_EQ(state.spellRuneRow, 0, "fourth symbol wraps step");
+    CHECK_EQ(state.spellBuffer.runeCount, 4, "four symbols remain castable");
+    CHECK_EQ(M11_GameView_HandlePointerButton(&state, 306, 64, 0x0002),
+             M11_GAME_INPUT_REDRAW, "recant removes the fourth symbol");
+    CHECK_EQ(state.spellRuneRow, 3, "recant wraps back to class row");
+    CHECK_EQ(state.spellBuffer.runeCount, 3, "recant retains three symbols");
+    CHECK_EQ(state.world.party.champions[0].mana.current, 24,
+             "recant does not refund the fourth rune");
+    CHECK_EQ(M11_GameView_EnterRune(&state, 4), 1, "replacement Ra pays again");
+    CHECK_EQ(M11_GameView_EnterRune(&state, 5), 1, "fifth symbol starts Mon");
+    CHECK_EQ(state.spellBuffer.runeCount, 1, "fifth symbol truncates old chain");
+    CHECK_EQ(state.spellBuffer.runes[0], 101, "new power symbol is Mon");
+    CHECK_EQ(state.world.party.champions[0].mana.current, 12,
+             "Vi Bro Ra Ra Mon consume 3+7+6+6+6 without refund");
     M11_GameView_Shutdown(&state);
 
     /* CSB shares the C100/C101 geometry, but the rune path also consumes
