@@ -213,8 +213,8 @@ int dm1_v1_live_action_effect_hud_presentation_pc34(
             outReceipt->requiresRealSpellAreaLayout = 1;
             outReceipt->requiredPrimaryGraphicId =
                 DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
-            outReceipt->requiredSecondaryGraphicId =
-                DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+            /* CASTER.C:90-93 (I34): C009, controls and font; no C011. */
+            outReceipt->requiredSecondaryGraphicId = 0;
             outReceipt->requiredPrimaryZoneId = DM1_V1_SPELL_AREA_ZONE_ID_PC34;
             if (effect->combatOutcome == 1) {
                 outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34;
@@ -255,8 +255,7 @@ int dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
     outReceipt->requiresSourceFont = 1;
     outReceipt->requiredPrimaryGraphicId =
         DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
-    outReceipt->requiredSecondaryGraphicId =
-        DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+    outReceipt->requiredSecondaryGraphicId = 0;
     outReceipt->requiredPrimaryZoneId = DM1_V1_SPELL_AREA_ZONE_ID_PC34;
     outReceipt->requiredFontGraphicId = kGraphicHudFontAlternate;
     outReceipt->requiresRealSpellAreaLayout = 1;
@@ -336,16 +335,12 @@ dm1_v1_live_action_effect_hud_bind_materials_pc34(
             if (!presentation->requiresRealSpellAreaLayout ||
                 presentation->requiredPrimaryGraphicId !=
                     DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 ||
-                presentation->requiredSecondaryGraphicId !=
-                    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 ||
+                presentation->requiredSecondaryGraphicId != 0 ||
                 presentation->requiredPrimaryZoneId !=
                     DM1_V1_SPELL_AREA_ZONE_ID_PC34 ||
                 !dm1_v1_live_action_bind_surface_pc34(
                     materials, DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
                     87, 25, outReceipt, 0) ||
-                !dm1_v1_live_action_bind_surface_pc34(
-                    materials, DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-                    14, 39, outReceipt, 1) ||
                 !dm1_v1_live_action_bind_surface_pc34(
                     materials, presentation->requiredFontGraphicId, 0, 0,
                     outReceipt, 2)) {

@@ -22,8 +22,8 @@ dm1_v1_action_spell_source_frame_evidence_assets_valid_pc34(
         assets->presentationKind <= DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34) {
         return assets->originalGraphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
                assets->originalZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
-               assets->companionGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
-               assets->sourceAssetCount == 2;
+               assets->companionGraphicId == 0 &&
+               assets->sourceAssetCount == 1;
     }
     return 0;
 }

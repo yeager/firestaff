@@ -99,8 +99,8 @@ dm1_v1_action_spell_input_execution_spell_valid_pc34(
     return effect->kind == DM1_V1_LIVE_ACTION_EFFECT_SPELL_PC34 &&
            isSpellPresentation && input->commandGraphicId ==
                DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
-           input->secondaryGraphicId ==
-               DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+           /* CASTER.C:75-98 F0394 I34 has no C011 companion bitmap. */
+           input->secondaryGraphicId == 0 &&
            input->commandZoneId >=
                DM1_V1_SPELL_AVAILABLE_SYMBOL_ZONE_ID_BASE_PC34 &&
            input->commandZoneId <

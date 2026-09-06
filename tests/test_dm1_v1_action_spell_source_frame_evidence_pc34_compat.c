@@ -15,7 +15,7 @@ assets(unsigned int tick, int action)
     value.presentationKind = action ? DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34
                                     : DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34;
     value.originalGraphicId = action ? 10 : 9; value.originalZoneId = action ? 11 : 13;
-    value.companionGraphicId = action ? 0 : 11; value.sourceAssetCount = action ? 1 : 2;
+    value.companionGraphicId = 0; value.sourceAssetCount = 1;
     value.sourceCommandCount = action ? 3 : 4;
     value.frameTick = tick; value.sourceTick = tick - 800;
     value.serial = tick - 891; value.commandFingerprint = tick + 0x10u;
@@ -35,7 +35,7 @@ main(void)
     CHECK(dm1_v1_action_spell_source_frame_evidence_apply_pc34(&state, &spell, &evidence));
     CHECK(evidence.accepted && evidence.liveSourceFrameCurrent &&
           !evidence.clearStaleSourceFrame && evidence.originalGraphicId == 9 &&
-          evidence.companionGraphicId == 11);
+          evidence.companionGraphicId == 0 && evidence.sourceAssetCount == 1);
     CHECK(dm1_v1_action_spell_source_frame_evidence_apply_pc34(&state, &action, &evidence));
     CHECK(evidence.accepted && evidence.clearStaleSourceFrame && evidence.revokeStaleSourceFrame &&
           evidence.staleOriginalGraphicId == 9 && evidence.staleOriginalZoneId == 13 &&

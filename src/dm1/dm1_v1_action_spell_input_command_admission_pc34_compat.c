@@ -37,6 +37,8 @@ dm1_v1_action_spell_input_spell_material_valid_pc34(
     const DM1_V1_ActionSpellInputCommandRequestPc34 *request,
     const DM1_V1_ActionSpellHudMaterialReceiptPc34 *materials)
 {
+    /* CASTER.C:75-98 F0394 I34 uses C009 and M653; MENUDRAW.C:30-41
+       loads the separate C011 bitmap only in the earlier MEDIA009 branch. */
     return request->spellPanel.active &&
            !request->spellPanel.party_dead &&
            !request->spellPanel.candidate_panel_active &&
@@ -46,12 +48,11 @@ dm1_v1_action_spell_input_spell_material_valid_pc34(
            materials->accepted && materials->drawable &&
            materials->primaryGraphicId ==
                DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
-           materials->secondaryGraphicId ==
-               DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+           materials->secondaryGraphicId == 0 &&
            materials->primaryZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
            (materials->fontGraphicId == kGraphicHudFontPrimary ||
             materials->fontGraphicId == kGraphicHudFontAlternate) &&
-           materials->sourceSurfaceCount == 3;
+           materials->sourceSurfaceCount == 2;
 }
 
 int
@@ -105,8 +106,7 @@ dm1_v1_action_spell_input_command_admit_pc34(
             dm1_v1_spell_available_symbol_zone_id_pc34(request->runeSymbolIndex);
         outReceipt->commandGraphicId =
             DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
-        outReceipt->secondaryGraphicId =
-            DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+        outReceipt->secondaryGraphicId = 0;
         outReceipt->fontGraphicId = materials->fontGraphicId;
         outReceipt->runeValue = runeReceipt.rune_value;
         outReceipt->runeRow = request->spellPanel.rune_row;

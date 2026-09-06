@@ -1,5 +1,34 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added native MEDIA009 spell composition for Atari/early
+  Amiga, separate from the I34 C009-only route. Original C009 96x33 and
+  C011 96x36 are required; source row offsets are 12/24, with Atari's
+  interior-row copies preserved. Controls retain the selected caster and
+  living tabs; legacy selected text stops at NUL. Closed panels clear.
+  Five original-media tests passed (170.74 s, no skips): Atari EN/DE/FR,
+  Amiga disk/HD, each with 24 independent whole-panel pixel comparisons
+  across Original/V2.0/V2.1 plus closed-panel clearing. Existing source
+  name/audio/scroll/object checks also passed. PC34 capture receipts no
+  longer mislabel these legacy surfaces as I34 material. This is bounded
+  source/data framebuffer evidence, not emulator or complete game parity.
+
+- 2026-09-06: Rebuilt the executable and broader inventory/action/original
+  object targets after restoring source HUD ownership in V2.0/V2.1. All
+  three regressions pass (101.88 s, no skips), including original DOS
+  inventory roundtrips and food-panel/C08 checks. This predates the separate
+  in-progress bottom-anchored C009 background correction.
+
+- 2026-09-06: Corrected caster-dependent spell tabs, living-slot iteration,
+  selected-caster name drawing and source black-clear/XOR4 highlighting
+  (SPELDRAW.C:87-94, VIDEODRV.C:3233-3237). Validated authentic item-696
+  records against the retained layout reconstruction; name zones resolve
+  to x235+14*caster, baseline48, not horizontal centering. DM1 V2.0/V2.1
+  no longer select the generated V2.2 HUD. Independent original M653-bit
+  comparisons pass all 24 Original/V2.0/V2.1 caster/sparse-party cases,
+  plus the direct plan suite (0.21 s, no skips). Names and party state are
+  bounded test fixtures. This does not prove full C009/C011 background,
+  other-edition or emulator/display parity; broader regressions remain open.
+
 - 2026-09-06: Rebuilt and reran all six selected original-media startup/
   object regressions after the shared XP and food-state changes: Atari
   English/German/French, Amiga disk/HD, and FM Towns (Japanese/English
@@ -1217,3 +1246,38 @@ Reviewed 2026-08-29. Completed work only.
   checksum trailer; all ordinary dungeon and save readers remain strictly
   checksum-validating. Real-media tests prove both the rejection boundary
   and successful 14-map Japanese materialization without extracting to disk.
+# Local PC34 spell-panel background evidence (2026-09-06)
+
+- Original Atari English, German and French archive tests passed with new
+  source geometry assertions: C009 96x33 and C011 96x36. These establish
+  required legacy bitmap dimensions, not the pending legacy compositor's
+  pixel parity. Existing names, source sounds, scroll and object interaction
+  checks in those three tests also passed without skips (111.14 seconds).
+- Expanded successful-cast pixel/XP checks to six cases across Original,
+  V2.0 and V2.1. The 38-test action/spell regression selection passed,
+  including action stamina and source-route checks; two obsolete textual
+  assertions were corrected to match I34 C009-only painting and VGA XOR4.
+- The F0344/F0658 aggregate describes source-font rune zones rather than
+  C011 bitmap copies. Its direct positive/negative test and original I34E
+  archive gate both passed. This aggregate is not a full paint sequence
+  and currently has no live production caller.
+- The live effect, command ordering, input admission and capture lifecycle
+  now bind C009 plus the original font, without a C011 companion. Original
+  C101-C108 click-zone identities are unchanged. Legacy companion/count
+  proofs are rejected in the focused negative tests.
+- A successful Mon Oh Ir Ra cast now renders the same C013 pixels as the
+  original-data panel at identical state. The original I34E test covers
+  both recent-attack XP branches on separate source ticks. Its new render
+  assertion exposed a cooldown mistakenly selecting an unopened action
+  menu; MENU.C:778-797,2036-2039 supports retaining the icon path when
+  G0506 is zero. Fourteen focused tests passed, including both original-media
+  tests, without skips. This does not establish every cast/failure path.
+- ReDMCSB CASTER.C:75-98 (I34) draws C009 without legacy C011 copies.
+  The native painter now places the authentic 87x25 image at (233,50),
+  retaining the full C013 click rectangle above it.
+- `m11_dm1_spell_panel_real` passed against the original DOS 3.4 English
+  archive: all pixels in C013 (87x33), four casters, sparse living slots,
+  and Original/V2.0/V2.1 modes (24 cases), with original bitmap/font data.
+  This proves the tested static panel, not spell-effect receipt integration,
+  other editions, emulator parity or full-game completion. Publication is
+  pending the integration and edition-routing work recorded in TODO-dm1.md.

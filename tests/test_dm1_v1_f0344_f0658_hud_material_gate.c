@@ -1,6 +1,7 @@
 /* Focused real-PC34 asset test for the source-only F0344/F0658 HUD receipt. */
 
 #include "asset_loader_m11.h"
+#include "asset_find_by_hash.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "font_m11.h"
 
@@ -8,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum { kSurfaceCount = 7 };
+enum { kSurfaceCount = 6 };
 
 static const char* graphics_path(char path[2048])
 {
@@ -42,12 +43,17 @@ int main(void)
     DM1_V1_HudSourceSurfacePc34 surfaces[kSurfaceCount];
     DM1_V1_HudGlyphSourcePc34 glyph;
     DM1_V1_F0344F0658HudMaterialReceiptPc34 receipt;
-    int graphics[kSurfaceCount] = { 10, 9, 11, 20, 30, 31, 32 };
+    int graphics[kSurfaceCount] = { 10, 9, 20, 30, 31, 32 };
     int i;
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
 
     if (!graphics_path(path)) {
         puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
         return 77;
+    }
+    if (!asset_file_matches_md5(archive, "ee7b83cdb88c39c441a319f9610e97d6")) {
+        fputs("original archive identity is not canonical I34E\n", stderr);
+        return 1;
     }
     if (!M11_AssetLoader_Init(&loader, path)) {
         fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr);
@@ -74,8 +80,18 @@ int main(void)
         receipt.operations[0].zoneIndex != 79 ||
         receipt.operations[1].zoneIndex != 77 ||
         receipt.operations[2].zoneIndex != 11 ||
-        receipt.operations[4].sourceY != 13 ||
-        receipt.operations[5].sourceY != 26 ||
+        receipt.operations[3].graphicIndex != 9 ||
+        receipt.operations[3].zoneIndex != 13 ||
+        receipt.operations[4].graphicIndex != glyph.graphicIndex ||
+        receipt.operations[4].zoneIndex != 255 ||
+        receipt.operations[4].zoneCount != 6 ||
+        receipt.operations[5].graphicIndex != glyph.graphicIndex ||
+        receipt.operations[5].zoneIndex != 261 ||
+        receipt.operations[5].zoneCount != 4 ||
+        receipt.operations[4].sourceX || receipt.operations[4].sourceY ||
+        receipt.operations[4].sourceW || receipt.operations[4].sourceH ||
+        receipt.operations[5].sourceX || receipt.operations[5].sourceY ||
+        receipt.operations[5].sourceW || receipt.operations[5].sourceH ||
         receipt.operations[7].transparentColor != 12 ||
         receipt.operations[9].sourceLine != 1606) goto fail;
     ++surfaces[0].pixelsFNV1a;

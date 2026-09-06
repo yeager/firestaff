@@ -8,6 +8,7 @@
 #include <string.h>
 #include <errno.h>
 #include "dm1_legacy_scroll_real_check.h"
+#include "dm1_legacy_spell_panel_real_check.h"
 
 int main(int argc, char **argv) {
     const char *path = getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
@@ -52,6 +53,24 @@ int main(int argc, char **argv) {
     if (!M11_GameView_Start(state, &spec) || !state->assetLoader.atariStDm1) {
         fputs("FAIL: authentic Atari M564 name binding\n", stderr);
         goto done;
+    }
+    {
+        /* CASTER.C MEDIA009 uses a 96x33 background and MENU.C F0392
+         * builds its rows from a 96x36 C011. Establish loader geometry
+         * independently of the PC34 compositor before edition dispatch. */
+        const M11_AssetSlot *background =
+            M11_AssetLoader_Load(&state->assetLoader, 9);
+        const M11_AssetSlot *lines =
+            M11_AssetLoader_Load(&state->assetLoader, 11);
+        if (!background || !lines || !background->loaded || !lines->loaded ||
+            !background->pixels || !lines->pixels) goto done;
+        printf("Atari spell media: C009=%dx%d C011=%dx%d\n",
+               background->width, background->height, lines->width, lines->height);
+        if (background->width != 96 || background->height != 33 ||
+            lines->width != 96 || lines->height != 36) {
+            fputs("FAIL: legacy spell bitmap dimensions differ from source\n", stderr);
+            goto done;
+        }
     }
     /* PROJEXPL.C:5 initial clock must survive actual original-media start. */
     if (state->world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u) {
@@ -184,6 +203,17 @@ int main(int argc, char **argv) {
             M11_Audio_Dm1AtariSoundIndex(35) != -1) goto done;
     }
     puts("PASS: DM1 event indices select original Atari samples and Timer-A periods without generated markers");
+    {
+        M11_GameViewState *spellState = calloc(1, sizeof(*spellState));
+        int spellOk;
+        if (!spellState) goto done;
+        M11_GameView_Init(spellState);
+        spellOk = M11_GameView_Start(spellState, &spec) &&
+                  check_legacy_spell_panel_real(spellState);
+        M11_GameView_Shutdown(spellState);
+        free(spellState);
+        if (!spellOk) goto done;
+    }
     if (!check_legacy_scroll_raster(state)) goto done;
     result = 0;
 done:

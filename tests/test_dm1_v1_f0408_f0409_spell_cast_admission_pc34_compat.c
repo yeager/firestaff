@@ -19,9 +19,9 @@ static void set_material(DM1_V1_ActionSpellHudMaterialReceiptPc34 *m)
     memset(m, 0, sizeof(*m));
     m->accepted = 1;
     m->drawable = 1;
-    m->sourceSurfaceCount = 3;
+    m->sourceSurfaceCount = 2;
     m->primaryGraphicId = 9;
-    m->secondaryGraphicId = 11;
+    m->secondaryGraphicId = 0;
     m->primaryZoneId = 13;
     m->fontGraphicId = 695;
 }
@@ -82,6 +82,17 @@ int main(void)
     CHECK(receipt.accepted && !receipt.lookupMatched && receipt.spellIndex == -1 &&
           receipt.f0412DispatchRequired && state.input[0].symbols[0] == 96);
 
+    /* Reject the obsolete legacy C011/three-surface PC34 proof. */
+    materials.secondaryGraphicId = 11;
+    CHECK(!dm1_v1_f0408_f0409_spell_cast_admit_pc34(&request, &zone, &materials, &state, &receipt));
+    materials.sourceSurfaceCount = 3;
+    CHECK(!dm1_v1_f0408_f0409_spell_cast_admit_pc34(&request, &zone, &materials, &state, &receipt));
+    materials.secondaryGraphicId = 0;
+    CHECK(!dm1_v1_f0408_f0409_spell_cast_admit_pc34(&request, &zone, &materials, &state, &receipt));
+    materials.sourceSurfaceCount = 2;
+    zone.linesGraphicId = 11;
+    CHECK(!dm1_v1_f0408_f0409_spell_cast_admit_pc34(&request, &zone, &materials, &state, &receipt));
+    zone.linesGraphicId = 0;
     materials.fontGraphicId = 1;
     CHECK(!dm1_v1_f0408_f0409_spell_cast_admit_pc34(
         &request, &zone, &materials, &state, &receipt));

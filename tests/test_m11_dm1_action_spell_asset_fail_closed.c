@@ -110,7 +110,8 @@ int main(void) {
         !strstr(s, "clipRect->x, clipRect->y, clipRect->w, clipRect->h") ||
         !strstr(s, "m11_build_dm1_spell_area_overlay_plan") ||
         !strstr(s, "m11_invert_dm1_pc34_indexed_box") ||
-        !strstr(s, "framebuffer[y * framebufferWidth + x] ^= 0x0fU") ||
+        /* VIDEODRV.C F8154 VGA toggles bit2, not all four bits. */
+        !strstr(s, "framebuffer[y * framebufferWidth + x] ^= 0x04U") ||
         !strstr(s, "plan.line1[i].highlighted") ||
         !strstr(s, "DM1_V1_CPSAO_LINE2_X0_PC34") ||
         !strstr(s, "DM1_V1_CPSAO_LINE3_X0_PC34") ||

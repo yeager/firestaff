@@ -52,25 +52,12 @@ int dm1_v1_action_spell_m11_blit_plan_build_pc34(
         outPlan->clearY = sourceBox.y;
         outPlan->clearW = sourceBox.w;
         outPlan->clearH = sourceBox.h;
-        outPlan->blitCount = 3;
+        /* CASTER.C:89-93 I34 draws only C009; F0396/C011 is MEDIA009. */
+        outPlan->blitCount = 1;
         dm1_v1_action_spell_m11_blit_set_pc34(&outPlan->blits[0],
             DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
             DM1_V1_SPELL_AREA_ZONE_ID_PC34, 1, 0, 0, background.w,
             background.h, background.x, background.y);
-        dm1_v1_action_spell_m11_blit_set_pc34(&outPlan->blits[1],
-            DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-            DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34,
-            DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34, 0,
-            DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34,
-            DM1_V1_SPELL_LABEL_CELL_W_PC34,
-            DM1_V1_SPELL_LABEL_CELL_H_PC34, 224, 50);
-        dm1_v1_action_spell_m11_blit_set_pc34(&outPlan->blits[2],
-            DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-            DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34,
-            DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34, 0,
-            DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34,
-            DM1_V1_SPELL_LABEL_CELL_W_PC34,
-            DM1_V1_SPELL_LABEL_CELL_H_PC34, 224, 62);
     } else {
         return 0;
     }

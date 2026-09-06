@@ -69,11 +69,9 @@ dm1_v1_action_spell_source_asset_runtime_route_pc34(
 {
     const DM1_V1_ActionSpellHudSurfacePc34 *c009;
     const DM1_V1_ActionSpellHudSurfacePc34 *c010;
-    const DM1_V1_ActionSpellHudSurfacePc34 *c011;
     int i;
     c009 = dm1_v1_action_spell_source_asset_runtime_find_pc34(materials, 9);
     c010 = dm1_v1_action_spell_source_asset_runtime_find_pc34(materials, 10);
-    c011 = dm1_v1_action_spell_source_asset_runtime_find_pc34(materials, 11);
     if (runtime->originalRouteKind == DM1_V1_ACTION_SPELL_M11_ORIGINAL_ROUTE_ACTION_PC34) {
         if (runtime->sourceGraphicId != DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 ||
             runtime->sourceZoneId != DM1_V1_ACTION_AREA_ZONE_ID_PC34 ||
@@ -97,27 +95,20 @@ dm1_v1_action_spell_source_asset_runtime_route_pc34(
         (frameState->presentationKind != DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34 &&
          frameState->presentationKind != DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34 &&
          frameState->presentationKind != DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34) ||
-        !dm1_v1_action_spell_source_asset_runtime_surface_pc34(c009, 87, 25) ||
-        !dm1_v1_action_spell_source_asset_runtime_surface_pc34(c011, 14, 39)) return 0;
+        !dm1_v1_action_spell_source_asset_runtime_surface_pc34(c009, 87, 25)) return 0;
     if (c010 && !c010->sourceOwned) return 0;
+    /* Do not authenticate legacy F0396 strip commands as I34 output. */
+    for (i = 0; i < frameState->commandCount; ++i)
+        if (frameState->commands[i].graphicId == 11) return 0;
     for (i = 0; i < frameState->commandCount; ++i) {
         const DM1_V1_ActionSpellRenderCommandPc34 *command = &frameState->commands[i];
         if (command->graphicId == 9 && command->zoneId == 13 &&
             command->sourceX == 0 && command->sourceY == 0 &&
             command->sourceW == 87 && command->sourceH == 25) {
-            int j;
-            for (j = 0; j < frameState->commandCount; ++j) {
-                const DM1_V1_ActionSpellRenderCommandPc34 *line = &frameState->commands[j];
-                if (line->graphicId == 11 &&
-                    (line->zoneId == DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34 ||
-                     line->zoneId == DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34) &&
-                    line->sourceX == 0 && (line->sourceY == 13 || line->sourceY == 26) &&
-                    line->sourceW == 14 && line->sourceH == 12) {
-                    *outCompanionGraphicId = 11;
-                    *outSourceAssetCount = 2;
-                    return 1;
-                }
-            }
+            /* CASTER.C:89-93: PC34 C009 owns the entire symbol backdrop. */
+            *outCompanionGraphicId = 0;
+            *outSourceAssetCount = 1;
+            return 1;
         }
     }
     return 0;

@@ -19,9 +19,9 @@ static void set_material(DM1_V1_ActionSpellHudMaterialReceiptPc34 *m)
     memset(m, 0, sizeof(*m));
     m->accepted = 1;
     m->drawable = 1;
-    m->sourceSurfaceCount = 3;
+    m->sourceSurfaceCount = 2;
     m->primaryGraphicId = 9;
-    m->secondaryGraphicId = 11;
+    m->secondaryGraphicId = 0;
     m->primaryZoneId = 13;
     m->fontGraphicId = 695;
 }
@@ -84,6 +84,17 @@ int main(void)
           stats.currentMana == 49);
 
     request.sourceTick = 91;
+    /* Reject the obsolete legacy C011/three-surface PC34 proof. */
+    materials.secondaryGraphicId = 11;
+    CHECK(!dm1_v1_f0399_f0400_spell_symbol_consume_pc34(&request, &zone, &materials, &state, &stats, &receipt));
+    materials.sourceSurfaceCount = 3;
+    CHECK(!dm1_v1_f0399_f0400_spell_symbol_consume_pc34(&request, &zone, &materials, &state, &stats, &receipt));
+    materials.secondaryGraphicId = 0;
+    CHECK(!dm1_v1_f0399_f0400_spell_symbol_consume_pc34(&request, &zone, &materials, &state, &stats, &receipt));
+    materials.sourceSurfaceCount = 2;
+    zone.linesGraphicId = 11;
+    CHECK(!dm1_v1_f0399_f0400_spell_symbol_consume_pc34(&request, &zone, &materials, &state, &stats, &receipt));
+    zone.linesGraphicId = 0;
     materials.fontGraphicId = 1;
     CHECK(!dm1_v1_f0399_f0400_spell_symbol_consume_pc34(
         &request, &zone, &materials, &state, &stats, &receipt));

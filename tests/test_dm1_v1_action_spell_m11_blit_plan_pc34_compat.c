@@ -66,10 +66,11 @@ static void test_build_spell(void)
     (void)ok;
     assert(ok == 1);
     assert(p.accepted == 1);
-    assert(p.blitCount == 3);
+    assert(p.blitCount == 1);
     assert(p.blits[0].graphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34);
-    assert(p.blits[1].graphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
-    assert(p.blits[2].graphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
+    assert(p.blits[0].destinationX == 233 && p.blits[0].destinationY == 50);
+    assert(p.blits[0].sourceW == 87 && p.blits[0].sourceH == 25);
+    assert(p.blits[1].graphicId == 0 && p.blits[2].graphicId == 0);
 }
 
 static void test_build_invalid_kind(void)

@@ -12441,6 +12441,15 @@ if(BUILD_TESTING)
             LABELS "dm1;dos;pc34;real-media;in-memory;objects;skip-safe")
     endif()
 
+    add_executable(test_m11_dm1_spell_panel_real tests/test_m11_dm1_spell_panel_real.c)
+    target_link_libraries(test_m11_dm1_spell_panel_real PRIVATE firestaff_m12 firestaff_m11)
+    add_test(NAME m11_dm1_spell_panel_real COMMAND test_m11_dm1_spell_panel_real)
+    set_tests_properties(m11_dm1_spell_panel_real PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        SKIP_RETURN_CODE 77 TIMEOUT 180
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        LABELS "dm1;dos;pc34;real-media;spell-panel;skip-safe")
+
     add_executable(test_m11_dm1_xp_real tests/test_m11_dm1_xp_real.c)
     target_link_libraries(test_m11_dm1_xp_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME m11_dm1_xp_real COMMAND test_m11_dm1_xp_real)

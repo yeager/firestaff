@@ -70,7 +70,7 @@ static void test_screen_contract_helpers(void)
     CHECK(DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 == 254);
 
     CHECK(graphic.x == 233);
-    CHECK(graphic.y == 42);
+    CHECK(graphic.y == 50);
     CHECK(graphic.w == 87);
     CHECK(graphic.h == 25);
     CHECK(click.x == 233);

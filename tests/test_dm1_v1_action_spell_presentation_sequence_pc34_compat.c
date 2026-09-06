@@ -53,20 +53,29 @@ int main(void)
     make_base(&presentation, &materials,
               DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34);
     presentation.requiresRealSpellAreaLayout = 1;
-    materials.sourceSurfaceCount = 3;
+    materials.sourceSurfaceCount = 2;
     materials.primaryGraphicId = 9;
-    materials.secondaryGraphicId = 11;
+    materials.secondaryGraphicId = 0;
     materials.primaryZoneId = 13;
     materials.fontGraphicId = 695;
     CHECK(dm1_v1_action_spell_presentation_sequence_build_pc34(
               &presentation, &materials, 0, &sequence));
     CHECK(sequence.stepCount == 4);
     CHECK(sequence.steps[0].graphicId == 9 && sequence.steps[0].zoneId == 13);
-    CHECK(sequence.steps[1].graphicId == 11 && sequence.steps[1].zoneId == 245 &&
-          sequence.steps[1].zoneCount == 6 && sequence.steps[1].sourceY == 13);
-    CHECK(sequence.steps[2].graphicId == 11 && sequence.steps[2].zoneId == 261 &&
-          sequence.steps[2].zoneCount == 4 && sequence.steps[2].sourceY == 26);
-    CHECK(sequence.steps[3].graphicId == 695 && sequence.steps[3].zoneId == 221);
+    CHECK(sequence.steps[1].graphicId == 695 && sequence.steps[1].zoneId == 221 &&
+          sequence.steps[1].zoneCount == 1);
+    CHECK(sequence.steps[2].graphicId == 695 && sequence.steps[2].zoneId == 255 &&
+          sequence.steps[2].zoneCount == 6);
+    CHECK(sequence.steps[3].graphicId == 695 && sequence.steps[3].zoneId == 261 &&
+          sequence.steps[3].zoneCount == 4);
+    for (int i=1;i<4;++i) {
+        CHECK(sequence.steps[i].sourceX == 0 && sequence.steps[i].sourceY == 0 &&
+              sequence.steps[i].sourceW == 0 && sequence.steps[i].sourceH == 0);
+    }
+    materials.secondaryGraphicId = 11;
+    CHECK(!dm1_v1_action_spell_presentation_sequence_build_pc34(
+              &presentation, &materials, 0, &sequence));
+    materials.secondaryGraphicId = 0;
     materials.fontGraphicId = 123;
     CHECK(!dm1_v1_action_spell_presentation_sequence_build_pc34(
               &presentation, &materials, 0, &sequence));

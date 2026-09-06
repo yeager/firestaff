@@ -93,13 +93,28 @@ int main(void)
     CHECK(hud.spellKind == 2 && hud.spellPowerOrdinal == 3, "spell kind and power");
     CHECK(hud.text[0] == '\0', "projectile spell has no host label");
     CHECK(hud.requiredPrimaryGraphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
-          hud.requiredSecondaryGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+          hud.requiredSecondaryGraphicId == 0 &&
           hud.requiredPrimaryZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34,
-          "projectile spell requires C009/C011/C013 material");
+          "I34 projectile requires C009/C013 without C011");
     CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
               &hud, &materials, &materialReceipt),
-          "spell binds only C009/C011/M653 source material");
-    CHECK(materialReceipt.sourceSurfaceCount == 3 &&
+          "spell binds only C009/M653 source material");
+    CHECK(materialReceipt.sourceSurfaceCount == 2 && materialReceipt.secondaryGraphicId == 0,
+          "I34 source proof contains background and font only");
+    surfaces[2].pixels = NULL;
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(&hud, &materials, &materialReceipt),
+          "C011 is not required by the I34 painter");
+    surfaces[3].pixels = NULL;
+    CHECK(!dm1_v1_live_action_effect_hud_bind_materials_pc34(&hud, &materials, &materialReceipt),
+          "missing C009 fails closed");
+    surfaces[3].pixels = spellBackgroundPixels;
+    hud.requiredSecondaryGraphicId = 11;
+    CHECK(!dm1_v1_live_action_effect_hud_bind_materials_pc34(&hud, &materials, &materialReceipt),
+          "legacy C011 presentation is not an I34 receipt");
+    hud.requiredSecondaryGraphicId = 0;
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(&hud, &materials, &materialReceipt),
+          "restored I34 presentation binds without legacy strips");
+    CHECK(materialReceipt.sourceSurfaceCount == 2 &&
           materialReceipt.primaryZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34,
           "spell material ownership");
     CHECK(hud.requiresRealSpellAreaLayout && hud.suppressSyntheticFallback, "spell route requires source layout");
@@ -162,12 +177,12 @@ int main(void)
           "failure redraw flags");
     CHECK(hud.text[0] == '\0' &&
           hud.requiredPrimaryGraphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
-          hud.requiredSecondaryGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+          hud.requiredSecondaryGraphicId == 0 &&
           hud.requiredFontGraphicId == 557,
-          "failure requires C009/C011/M653 material");
+          "failure requires C009/M653 material");
     CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
               &hud, &materials, &materialReceipt),
-          "failure binds C009/C011/alternate M653 material");
+          "failure binds C009/alternate M653 material");
     CHECK(materialReceipt.fontGraphicId == 557,
           "failure retains alternate M653 source font");
     CHECK(strcmp(hud.messageBeforeSkill, " NEEDS MORE PRACTICE WITH THIS ") == 0 &&

@@ -128,8 +128,7 @@ dm1_v1_action_spell_presentation_sequence_build_pc34(
             if (!presentation->requiresRealSpellAreaLayout ||
                 materials->primaryGraphicId !=
                     DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 ||
-                materials->secondaryGraphicId !=
-                    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 ||
+                materials->secondaryGraphicId != 0 ||
                 materials->primaryZoneId != DM1_V1_SPELL_AREA_ZONE_ID_PC34 ||
                 (materials->fontGraphicId != kGraphicHudFontPrimary &&
                  materials->fontGraphicId != kGraphicHudFontAlternate) ||
@@ -138,22 +137,21 @@ dm1_v1_action_spell_presentation_sequence_build_pc34(
                     DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
                     DM1_V1_SPELL_AREA_ZONE_ID_PC34, 1, 0, 0, 87, 25) ||
                 !dm1_v1_action_spell_sequence_append_pc34(
-                    outReceipt, DM1_V1_ACTION_SPELL_SEQUENCE_STEP_BLIT_PC34,
-                    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-                    DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34,
-                    DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34,
-                    0, DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34, 14, 12) ||
+                    outReceipt, DM1_V1_ACTION_SPELL_SEQUENCE_STEP_FONT_ZONE_PC34,
+                    materials->fontGraphicId,
+                    DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34, 1,
+                    0, 0, 0, 0) ||
                 !dm1_v1_action_spell_sequence_append_pc34(
-                    outReceipt, DM1_V1_ACTION_SPELL_SEQUENCE_STEP_BLIT_PC34,
-                    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
-                    DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34,
-                    DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34,
-                    0, DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34, 14, 12) ||
+                    outReceipt, DM1_V1_ACTION_SPELL_SEQUENCE_STEP_FONT_ZONE_PC34,
+                    materials->fontGraphicId,
+                    DM1_V1_SPELL_AVAILABLE_SYMBOL_ZONE_ID_BASE_PC34,
+                    DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34, 0, 0, 0, 0) ||
                 !dm1_v1_action_spell_sequence_append_pc34(
                     outReceipt,
                     DM1_V1_ACTION_SPELL_SEQUENCE_STEP_FONT_ZONE_PC34,
                     materials->fontGraphicId,
-                    DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34, 1,
+                    DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34,
+                    DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34,
                     0, 0, 0, 0)) {
                 return 0;
             }

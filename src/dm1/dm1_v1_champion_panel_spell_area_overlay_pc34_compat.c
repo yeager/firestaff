@@ -7,7 +7,7 @@
  *
  * Contract-only: no GRAPHICS.DAT or real screen access. Computes the
  * deterministic draw plan that the ReDMCSB WIP20210206 PC 3.4 path
- * (CASTER.C F0394 + SPELDRAW.C F0393 + MENUDRAW.C F0396/F0397/F0398)
+ * (CASTER.C F0394 + SPELDRAW.C F0393 + MENUDRAW.C F0397/F0398)
  * would emit given a fixed {previous_caster, requested_caster,
  * party_champion_count, symbol_step, 4-champion party with typed
  * Symbols[]} input. The existing spell_area_routes gate covers the
@@ -25,9 +25,9 @@
  *      sets G0514_i_MagicCasterChampionIndex = CM1_CHAMPION_NONE
  *      (cleared_to_black = 1, no lines drawn).
  *   4. Otherwise F0394 sets G0514 to the new caster, paints the
- *      C009 background graphic into the spell-area box (only on a
- *      transition from NONE), calls F0393 (line 1), F0396 + F0392 +
- *      F0397 (line 2), and F0392 + F0398 (line 3).
+ *      C009 background graphic on every accepted caster change, calls
+ *      F0393 (line 1), F0397 (line 2), and F0398 (line 3). The early
+ *      MEDIA009 F0396/F0392 C011 path is not part of I34.
  *
  * F0393 paints 0..4 tab highlight boxes, gated per tab by
  * Champions[i].CurrentHealth > 0 and i < party_champion_count.
@@ -40,8 +40,8 @@
  * F0398 emits up to 4 characters from the new caster's Symbols[],
  * space-padding the tail. X = 241 + 9*i, y = 70, cyan on black.
  *
- * The 4 caster-tab x0 columns and the 11-wide Champion-0 column come
- * straight from SPELDRAW.C F0393.
+ * Tab geometry is selected by caster*5+C224 in I34E item696. The selected
+ * caster's tab is 45x8; each other living champion receives a 12x7 tab.
  */
 
 static int safe_strlen4(const char *s)
@@ -111,7 +111,7 @@ static const DM1_V1_ChampionPanelSpellAreaOverlayPc34Contract s_contract = {
         "starting at 96+6*SymbolStep",
     "MENUDRAW.C:83-117 F0398_MENUS_DrawChampionSymbols strlen(Symbols) fill "
         "and space-pad tail",
-    "MENUDRAW.C:31-45 F0396_MENUS_LoadSpellAreaLinesBitmap C011 graphic",
+    "MENUDRAW.C:31-45 F0396 C011 is MEDIA009 only; I34 CASTER.C:89-93 uses C009",
     "DATA.C:119 G0000_ai_Graphic562_Box_SpellArea={224,319,42,74}; "
         "DATA.C:530-531 G1072_ai_Box_SpellAreaLine2/Line3",
     "DEFS.H C04/C00 colors, CM1_CHAMPION_NONE sentinel, C009/C011 gfx ids, "
@@ -129,15 +129,14 @@ static const char s_source_evidence[] =
     "select a party tab already admitted by G0305_ui_PartyChampionCount, so "
     "a skipped out-of-party tab cannot publish C009/C011 spell material; "
     "CASTER.C:23-33 F0394 paints the "
-    "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND (33 rows, 48 byte width) into "
-    "G0000_ai_Graphic562_Box_SpellArea only on a transition from NONE; "
+    "C009_GRAPHIC_MENU_SPELL_AREA_LINES (87x25) into C013 at233,50 on "
+    "every accepted caster change in the I34 branch at CASTER.C:89-93; "
     "CASTER.C:28-32 F0394 CM1_CHAMPION_NONE path sets "
     "G0514_i_MagicCasterChampionIndex = CM1_CHAMPION_NONE and "
-    "M524_FillScreenBox(..., C00_COLOR_BLACK). SPELDRAW.C:36-90 F0393 emits "
-    "the 4 champion tab highlight boxes: champion 0 is x0=233..277 (44 wide "
-    "to span the inventory champion / leader column), champions 1..3 are "
-    "x0=280..291/294..305/308..319 (11 wide), all with y0=42; champion 0 "
-    "uses y1=49 to extend through the leader row, champions 1..3 use y1=48; "
+    "M524_FillScreenBox(..., C00_COLOR_BLACK). SPELDRAW.C:87-94 F0393 "
+    "selects item696 zones C224+5*caster: the selected caster tab is 45x8, "
+    "all other tabs are 12x7, with y0=42. Caster identity, not leader or "
+    "inventory identity, chooses all four tab positions. "
     "F0393 only highlights champion n if Champion[n].CurrentHealth > 0 and "
     "G0305_ui_PartyChampionCount > n. MENUDRAW.C:47-80 F0397 emits 6 chars "
     "starting at ASCII 96 + 6*SymbolStep in C04_COLOR_CYAN on C00_COLOR_BLACK "
@@ -146,7 +145,7 @@ static const char s_source_evidence[] =
     "MENUDRAW.C:83-117 F0398 emits up to "
     "4 chars from Champion->Symbols[0..N-1] (N = strlen clamped to 4) with "
     "space-pad tail, screen x = 241 + 9*i, y = 70, cyan on black. "
-    "MENUDRAW.C:31-45 F0396 loads C011_GRAPHIC_MENU_SPELL_AREA_LINES into "
+    "MENUDRAW.C:31-45 F0396 is excluded from I34; early MEDIA009 loads C011 into "
     "the 3-row stack bitmap used by F0392/F0394. DATA.C:119 pins the "
     "spell-area screen box {224, 319, 42, 74} and DATA.C:530-531 pins "
     "G1072_ai_Box_SpellAreaLine2={224,319,50,61} and "
@@ -193,39 +192,31 @@ static int fill_line1(
     int active_caster,
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 *out)
 {
-    static const struct {
-        int x0;
-        int x1;
-        int y1;
-    } tabs[DM1_V1_CPSAO_CHAMPION_COUNT_PC34] = {
-        { DM1_V1_CPSAO_TAB_CHAMPION_0_X0_PC34,
-          DM1_V1_CPSAO_TAB_CHAMPION_0_X1_PC34,
-          DM1_V1_CPSAO_TAB_CHAMPION_0_Y1_PC34 },
-        { DM1_V1_CPSAO_TAB_CHAMPION_1_X0_PC34,
-          DM1_V1_CPSAO_TAB_CHAMPION_1_X1_PC34,
-          DM1_V1_CPSAO_TAB_OTHER_Y1_PC34 },
-        { DM1_V1_CPSAO_TAB_CHAMPION_2_X0_PC34,
-          DM1_V1_CPSAO_TAB_CHAMPION_2_X1_PC34,
-          DM1_V1_CPSAO_TAB_OTHER_Y1_PC34 },
-        { DM1_V1_CPSAO_TAB_CHAMPION_3_X0_PC34,
-          DM1_V1_CPSAO_TAB_CHAMPION_3_X1_PC34,
-          DM1_V1_CPSAO_TAB_OTHER_Y1_PC34 }
+    /* Authentic I34E GRAPHICS.DAT SHA256 2c3aa836925c64c09402bafb03c6459
+     * 32bd03c4f003ad9a86542383b078ecf8e, item696 C224..C243. All records
+     * match data/zones_h_reconstruction.json. COORD.C:337-360 defines
+     * parent222=45x8 and parent223=12x7; F0393 selects caster*5+224. */
+    static const int tabX[4][4] = {
+        {233, 280, 294, 308}, {233, 247, 294, 308},
+        {233, 247, 261, 308}, {233, 247, 261, 275}
     };
     int i;
     for (i = 0; i < DM1_V1_CPSAO_CHAMPION_COUNT_PC34; ++i) {
         DM1_V1_ChampionPanelSpellAreaOverlayLine1Pc34 *row =
             &out->line1[i];
         row->champion_index = i;
-        row->tab_x0 = tabs[i].x0;
-        row->tab_x1 = tabs[i].x1;
+        row->tab_x0 = tabX[active_caster][i];
+        row->tab_x1 = row->tab_x0 + (i == active_caster ? 44 : 11);
         row->tab_y0 = DM1_V1_CPSAO_TAB_Y0_PC34;
-        row->tab_y1 = tabs[i].y1;
+        row->tab_y1 = i == active_caster ? 49 : 48;
         row->highlighted = 0;
         row->present = 0;
         if (i >= input->party_champion_count) continue;
         if (input->champions[i].current_health <= 0) continue;
         row->present = 1;
-        if (i == active_caster) row->highlighted = 1;
+        /* SPELDRAW.C F0393:87-94 (I34E/I34M): invert every living
+         * champion's zone, not just the expanded selected-caster tab. */
+        row->highlighted = 1;
         ++out->tab_count;
     }
     return out->tab_count;
@@ -365,18 +356,11 @@ int dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
     plan.reject_reason = DM1_V1_CPSAO_REJECT_NONE_PC34;
     plan.cleared_to_black = 0;
 
-    /*
-     * CASTER.C:23-26 F0394 paints the spell-area background graphic
-     * (C009) only on a transition from CM1_CHAMPION_NONE.
-     */
-    plan.drew_background_graphic =
-        (input->previous_caster_index == DM1_V1_CPSAO_CHAMPION_NONE_PC34) ? 1 : 0;
-
-    /*
-     * F0396 + F0392 happen unconditionally; F0393 / F0397 / F0398
-     * each draw on the new caster identity.
-     */
-    plan.drew_lines_bitmap = 1;
+    /* CASTER.C:75-95 MEDIA529 includes I34E/I34M: every accepted
+     * non-NONE caster paints C009 then controls and source glyphs.
+     * F0396/F0392 strip construction belongs to early MEDIA009 only. */
+    plan.drew_background_graphic = 1;
+    plan.drew_lines_bitmap = 0;
     plan.drew_spell_area_controls = 1;
     plan.drew_available_symbols = 1;
     plan.drew_champion_symbols = 1;

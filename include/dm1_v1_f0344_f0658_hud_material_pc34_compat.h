@@ -49,6 +49,9 @@ typedef struct DM1_V1_HudMaterialOperationPc34 {
     int kind;
     int graphicIndex;
     int zoneIndex;
+    int zoneCount; /* Bitmap: 1. Glyph row: consecutive character zones. */
+    /* Glyph-row operations reference M653, not a bitmap crop; all four
+     * source coordinates are zero. Character values remain caller-owned. */
     int sourceX;
     int sourceY;
     int sourceW;
@@ -73,10 +76,13 @@ typedef struct DM1_V1_F0344F0658HudMaterialReceiptPc34 {
 uint32_t dm1_v1_f0344_f0658_hud_material_fnv1a_pc34(
     const unsigned char* bytes, int byteCount);
 
-/* Requires the complete C010/C009/C011/C020/C030/C031/C032 set and an
+/* Requires the complete C010/C009/C020/C030/C031/C032 set and an
  * authentic M653 bitplane. Any unavailable, foreign, altered, or malformed
  * source returns no receipt; no generated panel, font, palette, or crop is
- * exposed. C077/C079 are retained as their original F0387 zone identities. */
+ * exposed. C077/C079 are retained as their original F0387 zone identities.
+ * I34 CASTER.C:90-93 uses C009 and M653 glyphs, never the early-edition
+ * C011 strip. This is a material inventory, not a complete paint sequence
+ * (caster control clearing, inversion and name drawing are separate). */
 int dm1_v1_f0344_f0658_hud_material_receipt_pc34(
     const DM1_V1_HudSourceSurfacePc34* surfaces,
     int surfaceCount,

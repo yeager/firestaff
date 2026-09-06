@@ -4,7 +4,6 @@
 
 enum {
     kGraphicC009 = 9,
-    kGraphicC011 = 11,
     kZoneC013 = 13,
     kFontM653 = 695,
     kFontM653Legacy = 557
@@ -13,17 +12,17 @@ enum {
 static const char s_source_evidence[] =
     "ReDMCSB COMMAND.C:392,481 C100/C108; CLIKMENU.C F0369/F0370; "
     "CLIKMENU.C:484-497 F0408_MENUS_GetClickOnSpellCastResult; MENU.C "
-    "F0409_MENUS_GetSpellFromSymbols:1685-1705; CASTER.C F0394 C009; "
-    "MENUDRAW.C F0396 C011; GRAPHICS.DAT M653. F0412 owns cast result "
+    "F0409_MENUS_GetSpellFromSymbols:1685-1705; CASTER.C:75-98 F0394 I34 C009; "
+    "MENUDRAW.C:30-41 C011 is legacy-only; GRAPHICS.DAT M653. F0412 owns cast result "
     "and all state mutation after this admission.";
 
 static int material_is_source_bound(
     const DM1_V1_ActionSpellHudMaterialReceiptPc34 *materials)
 {
     return materials && materials->accepted && materials->drawable &&
-           materials->sourceSurfaceCount == 3 &&
+           materials->sourceSurfaceCount == 2 &&
            materials->primaryGraphicId == kGraphicC009 &&
-           materials->secondaryGraphicId == kGraphicC011 &&
+           materials->secondaryGraphicId == 0 &&
            materials->primaryZoneId == kZoneC013 &&
            (materials->fontGraphicId == kFontM653 ||
             materials->fontGraphicId == kFontM653Legacy);
@@ -60,7 +59,7 @@ int dm1_v1_f0408_f0409_spell_cast_admit_pc34(
         !zoneReceipt->cast || zoneReceipt->sourceTick != request->sourceTick ||
         !zoneReceipt->suppressSyntheticFallback ||
         zoneReceipt->parentGraphicId != kGraphicC009 ||
-        zoneReceipt->linesGraphicId != kGraphicC011 ||
+        zoneReceipt->linesGraphicId != 0 ||
         (zoneReceipt->fontGraphicId != kFontM653 &&
          zoneReceipt->fontGraphicId != kFontM653Legacy)) {
         return 0;

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <errno.h>
 #include "dm1_legacy_scroll_real_check.h"
+#include "dm1_legacy_spell_panel_real_check.h"
 
 int main(void) {
     const char *path = getenv("FIRESTAFF_DM1_AMIGA_ARCHIVE");
@@ -110,6 +111,21 @@ int main(void) {
                 (size_t)state->assetLoader.legacyDataSize, 35)) goto done;
     }
     puts("PASS: all 35 engine sound events select original Amiga PCM records (34 unique effects)");
+    {
+        /* Reuse the hash-selected launch specification for a disposable
+         * session. Only its RAM party/UI are fixtures; the shared oracle
+         * requires actual Amiga C00996x33/C01196x36 and original M653 first.
+         * Both registered 2.0 and HD archive tests execute this path. */
+        M11_GameViewState *spell = calloc(1, sizeof(*spell));
+        int spell_ok;
+        if (!spell) goto done;
+        M11_GameView_Init(spell);
+        spell_ok = M11_GameView_Start(spell, &spec) &&
+            check_legacy_spell_panel_real(spell);
+        M11_GameView_Shutdown(spell);
+        free(spell);
+        if (!spell_ok) goto done;
+    }
     if (!check_legacy_scroll_raster(state)) goto done;
     result = 0;
 done:

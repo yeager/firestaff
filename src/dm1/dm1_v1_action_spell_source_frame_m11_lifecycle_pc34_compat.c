@@ -12,7 +12,7 @@ dm1_v1_action_spell_source_frame_m11_lifecycle_proof_pc34(int g, int z, int c, i
             z == DM1_V1_ACTION_AREA_ZONE_ID_PC34 && c == 0 && count == 1) ||
            (g == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
             z == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
-            c == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 && count == 2);
+            c == 0 && count == 1); /* CASTER.C:89-93 I34: C009 only. */
 }
 
 static int
@@ -31,7 +31,7 @@ dm1_v1_action_spell_source_frame_m11_lifecycle_valid_pc34(
             dm1_v1_action_spell_source_frame_m11_lifecycle_proof_pc34(
                 bridge->staleOriginalGraphicId, bridge->staleOriginalZoneId,
                 bridge->staleCompanionGraphicId,
-                bridge->staleOriginalGraphicId == 10 ? 1 : 2));
+                1)); /* I34 stale C009 and C010 frames each own one bitmap. */
 }
 
 static int

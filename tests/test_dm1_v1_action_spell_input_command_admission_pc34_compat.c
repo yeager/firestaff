@@ -58,21 +58,25 @@ int main(void)
     request.spellPanel.rune_count = 1;
     materials.accepted = 1;
     materials.drawable = 1;
-    materials.sourceSurfaceCount = 3;
+    materials.sourceSurfaceCount = 2;
     materials.primaryGraphicId = 9;
-    materials.secondaryGraphicId = 11;
+    materials.secondaryGraphicId = 0;
     materials.primaryZoneId = 13;
     materials.fontGraphicId = 557;
     CHECK(dm1_v1_action_spell_input_command_admit_pc34(
               &request, &materials, &receipt));
-    CHECK(receipt.commandGraphicId == 9 && receipt.secondaryGraphicId == 11 &&
+    CHECK(receipt.commandGraphicId == 9 && receipt.secondaryGraphicId == 0 &&
           receipt.commandZoneId == 258 && receipt.runeValue == 0x69 &&
           receipt.runeRow == 1 && receipt.runeCount == 2 &&
           receipt.fontGraphicId == 557);
-    materials.sourceSurfaceCount = 2;
+    materials.sourceSurfaceCount = 3;
     CHECK(!dm1_v1_action_spell_input_command_admit_pc34(
               &request, &materials, &receipt));
-    materials.sourceSurfaceCount = 3;
+    materials.sourceSurfaceCount = 2;
+    materials.secondaryGraphicId = 11;
+    CHECK(!dm1_v1_action_spell_input_command_admit_pc34(
+              &request, &materials, &receipt));
+    materials.secondaryGraphicId = 0;
     request.spellPanel.candidate_panel_active = 1;
     CHECK(!dm1_v1_action_spell_input_command_admit_pc34(
               &request, &materials, &receipt));

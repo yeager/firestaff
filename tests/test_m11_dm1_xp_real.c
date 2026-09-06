@@ -13,11 +13,14 @@
 int main(void) {
     static const int difficulty[] = {0,1,1,2,2,2,3,3,3,4,5,5,6,6};
     static const int runes[] = {5,2,3,4}; /* Mon Oh Ir Ra */
+    static const int modes[] = { M12_PRESENTATION_V1_ORIGINAL,
+        M12_PRESENTATION_V20_FILTERED, M12_PRESENTATION_V21_UPSCALED };
     const char* archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     M11_GameViewState* state;
     struct SpellDefinition_Compat spell;
     FILE* media;
-    int recent, i;
+    int recent, i, mode;
+    unsigned char rendered[64000], reference[64000];
     if (!archive || !(media = fopen(archive, "rb"))) {
         puts("skip: original I34E archive unavailable"); return 77;
     }
@@ -36,7 +39,7 @@ int main(void) {
     CHECK(F0752b_MAGIC_LookupSpellByTableIndex_Compat(6, &spell));
     CHECK(spell.symbolsPacked == 0x00686f76 && spell.baseRequiredSkillLevel == 4 &&
           spell.skillIndex == 17);
-    for (recent = 0; recent < 2; ++recent) {
+    for (mode = 0; mode < 3; ++mode) for (recent = 0; recent < 2; ++recent) {
         struct ChampionState_Compat* champion = &state->world.party.champions[0];
         struct ChampionLifecycleState_Compat* life = &state->world.lifecycle.champions[0];
         const uint32_t initialXp = 1000000;
@@ -45,6 +48,7 @@ int main(void) {
          * This constant oracle never calls the production XP/RNG helper. */
         const uint32_t expected = 426u * (recent ? 12u : 6u);
         int manaBefore;
+        state->presentationMode = modes[mode];
         F0600_CHAMPION_InitEmpty_Compat(champion);
         memset(life, 0, sizeof(*life));
         state->world.party.championCount = 1;
@@ -57,8 +61,11 @@ int main(void) {
         champion->attributes[CHAMPION_ATTR_WISDOM] = 100;
         life->skills20[3].experience = initialXp;
         life->skills20[17].experience = initialXp;
-        state->world.gameTick = 1000;
-        state->world.lifecycle.lastCreatureAttackTime = recent ? 999 : 800;
+        /* Separate casts are distinct source frames, not two conflicting
+         * presentation serials injected into the same frame tick. */
+        state->world.gameTick = 1000 + mode * 2 + recent;
+        state->world.lifecycle.lastCreatureAttackTime =
+            state->world.gameTick - (recent ? 1 : 200);
         state->world.magic.magicalLightAmount = 0;
         state->inventoryPanelActive = 0;
         CHECK(M11_GameView_OpenSpellPanel(state));
@@ -70,7 +77,30 @@ int main(void) {
         CHECK(life->skills20[3].experience == initialXp + expected);
         CHECK(state->world.magic.magicalLightAmount > 0);
         CHECK(champion->mana.current == manaBefore); /* F0399 already paid. */
-        printf("I34E Mon Light recent=%d award=%u: passed\n", recent, expected);
+        {
+            const int liveCount = state->dm1LiveActionEffects.count;
+            int row, nonblack = 0;
+            CHECK(liveCount > 0);
+            /* Render the actual F0412 effect, then compare its C013 output
+             * with the source panel at identical world state. A rejected
+             * live receipt clears this region, unlike the original C009. */
+            memset(rendered, 0, sizeof(rendered));
+            M11_GameView_Draw(state, rendered, 320, 200);
+            state->dm1LiveActionEffects.count = 0;
+            memset(reference, 0, sizeof(reference));
+            M11_GameView_Draw(state, reference, 320, 200);
+            state->dm1LiveActionEffects.count = liveCount;
+            for (row = 42; row < 75; ++row) {
+                int col;
+                CHECK(memcmp(rendered + row * 320 + 233,
+                             reference + row * 320 + 233, 87) == 0);
+                for (col = 233; col < 320; ++col)
+                    nonblack += rendered[row * 320 + col] != 0;
+            }
+            CHECK(nonblack > 0);
+        }
+        printf("I34E Mon Light mode=%d recent=%d award=%u: passed\n",
+               mode, recent, expected);
     }
     M11_GameView_Shutdown(state); free(state); return 0;
 fail:

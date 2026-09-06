@@ -19,9 +19,9 @@ static void set_material(DM1_V1_ActionSpellHudMaterialReceiptPc34 *m)
     memset(m, 0, sizeof(*m));
     m->accepted = 1;
     m->drawable = 1;
-    m->sourceSurfaceCount = 3;
+    m->sourceSurfaceCount = 2;
     m->primaryGraphicId = 9;
-    m->secondaryGraphicId = 11;
+    m->secondaryGraphicId = 0;
     m->primaryZoneId = 13;
     m->fontGraphicId = 695;
 }
@@ -106,6 +106,17 @@ int main(void)
     runtime.castResult = DM1_SPELL_CAST_SUCCESS;
     runtime.failureType = -1;
     runtime.spellKind = DM1_SPELL_KIND_POTION;
+    /* Reject the obsolete legacy C011/three-surface PC34 proof. */
+    materials.secondaryGraphicId = 11;
+    CHECK(!dm1_v1_f0410_f0411_spell_cast_continue_pc34(&request, &zone, &cast, &materials, &runtime, &inventory, &receipt));
+    materials.sourceSurfaceCount = 3;
+    CHECK(!dm1_v1_f0410_f0411_spell_cast_continue_pc34(&request, &zone, &cast, &materials, &runtime, &inventory, &receipt));
+    materials.secondaryGraphicId = 0;
+    CHECK(!dm1_v1_f0410_f0411_spell_cast_continue_pc34(&request, &zone, &cast, &materials, &runtime, &inventory, &receipt));
+    materials.sourceSurfaceCount = 2;
+    zone.linesGraphicId = 11;
+    CHECK(!dm1_v1_f0410_f0411_spell_cast_continue_pc34(&request, &zone, &cast, &materials, &runtime, &inventory, &receipt));
+    zone.linesGraphicId = 0;
     materials.fontGraphicId = 1;
     CHECK(!dm1_v1_f0410_f0411_spell_cast_continue_pc34(
         &request, &zone, &cast, &materials, &runtime, &inventory, &receipt));

@@ -1,5 +1,13 @@
 # Unreleased
 
+- DM1 spell controls now use the selected caster's tab layout and name,
+  retain later living tabs when earlier champions are dead, and use the
+  original cyan highlight operation. Filtered/upscaled DM1 modes retain
+  the original HUD; generated replacement HUD art stays in V2.2.
+  DOS uses its bottom-anchored C009 image without legacy strip copies;
+  Atari and early Amiga use their original C009/C011 composition. Spell
+  cooldowns no longer select an unopened action menu over the spell panel.
+
 - DM1's verified I34E food command keeps the inventory food panel visible
   and delays its displayed value update until consumption finishes. Direct
   quicksave/load shortcuts cannot interrupt the pending command. Other

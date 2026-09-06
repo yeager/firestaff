@@ -9,7 +9,7 @@ static int configured_proof(int g, int z, int c, int n)
 {
     return (g == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 && z == DM1_V1_ACTION_AREA_ZONE_ID_PC34 && c == 0 && n == 1) ||
            (g == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 && z == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
-            c == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 && n == 2);
+            c == 0 && n == 1);
 }
 
 int dm1_v1_action_spell_final_capture_m11_gate_build_pc34(

@@ -13,7 +13,7 @@ dm1_v1_action_spell_source_frame_m11_bridge_asset_proof_pc34(
             zoneId == DM1_V1_ACTION_AREA_ZONE_ID_PC34 && companionGraphicId == 0) ||
            (graphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
             zoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
-            companionGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34);
+            companionGraphicId == 0);
 }
 
 static int
@@ -32,7 +32,7 @@ dm1_v1_action_spell_source_frame_m11_bridge_current_valid_pc34(
     }
     return evidence->presentationKind >= DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34 &&
            evidence->presentationKind <= DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34 &&
-           evidence->originalGraphicId == 9 && evidence->sourceAssetCount == 2;
+           evidence->originalGraphicId == 9 && evidence->sourceAssetCount == 1;
 }
 
 int

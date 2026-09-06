@@ -6,7 +6,6 @@
 
 enum {
     kGraphicC009 = 9,
-    kGraphicC011 = 11,
     kZoneC013 = 13,
     kFontM653 = 695,
     kFontM653Legacy = 557
@@ -16,8 +15,8 @@ static const char s_source_evidence[] =
     "ReDMCSB COMMAND.C:392 C100 parent -> C013; COMMAND.C:475-482 "
     "G0454 maps C101..C108 to C245..C252/C254; CLIKMENU.C "
     "F0369_COMMAND_ProcessTypes101To108_ClickInSpellSymbolsArea; "
-    "CLIKMENU.C F0370 parent dispatch; MENUDRAW.C F0396 C011; "
-    "CASTER.C F0394 C009; GRAPHICS.DAT M653. "
+    "CLIKMENU.C F0370 parent dispatch; CASTER.C:75-98 F0394 I34 C009; "
+    "MENUDRAW.C:30-41 F0396 C011 is legacy-only; GRAPHICS.DAT M653. "
     "The shared touch matrix supplies only original layout-696 zones.";
 
 static int point_in_zone(int x, int y, const TouchClickZonePc34Compat *zone)
@@ -50,9 +49,9 @@ static int material_is_source_bound(
     const DM1_V1_ActionSpellHudMaterialReceiptPc34 *materials)
 {
     return materials && materials->accepted && materials->drawable &&
-           materials->sourceSurfaceCount == 3 &&
+           materials->sourceSurfaceCount == 2 &&
            materials->primaryGraphicId == kGraphicC009 &&
-           materials->secondaryGraphicId == kGraphicC011 &&
+           materials->secondaryGraphicId == 0 &&
            materials->primaryZoneId == kZoneC013 &&
            (materials->fontGraphicId == kFontM653 ||
             materials->fontGraphicId == kFontM653Legacy);

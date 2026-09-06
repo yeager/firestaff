@@ -9,14 +9,12 @@ static int failures;
 int main(void)
 {
     static const unsigned char background[87 * 25] = { 1 };
-    static const unsigned char lines[14 * 39] = { 1 };
     static const unsigned char font[1] = { 1 };
     DM1_V1_ActionSpellHudSurfacePc34 surfaces[] = {
         { 9, 87, 25, 87 * 25, background, 1 },
-        { 11, 14, 39, 14 * 39, lines, 1 },
         { 695, 1, 1, 1, font, 1 }
     };
-    DM1_V1_ActionSpellHudMaterialSetPc34 materials = { surfaces, 3, 0 };
+    DM1_V1_ActionSpellHudMaterialSetPc34 materials = { surfaces, 2, 0 };
     DM1_V1_ActionSpellPresentationFrameStatePc34 state;
     DM1_V1_ActionSpellPresentationApplyReceiptPc34 apply;
     DM1_V1_ActionSpellCommandFrameOrderReceiptPc34 receipt;
@@ -32,9 +30,9 @@ int main(void)
     state.commandCount = 4;
     state.commandFingerprint = 0x1a2b3c4du;
     state.commands[0] = (DM1_V1_ActionSpellRenderCommandPc34) { 1, 9, 13, 1, 0, 0, 87, 25, 0 };
-    state.commands[1] = (DM1_V1_ActionSpellRenderCommandPc34) { 1, 11, 245, 6, 0, 13, 14, 12, 1 };
-    state.commands[2] = (DM1_V1_ActionSpellRenderCommandPc34) { 1, 11, 261, 4, 0, 26, 14, 12, 1 };
-    state.commands[3] = (DM1_V1_ActionSpellRenderCommandPc34) { 2, 695, 221, 1, 0, 0, 0, 0, 2 };
+    state.commands[1] = (DM1_V1_ActionSpellRenderCommandPc34) { 2, 695, 221, 1, 0, 0, 0, 0, 1 };
+    state.commands[2] = (DM1_V1_ActionSpellRenderCommandPc34) { 2, 695, 255, 6, 0, 0, 0, 0, 1 };
+    state.commands[3] = (DM1_V1_ActionSpellRenderCommandPc34) { 2, 695, 261, 4, 0, 0, 0, 0, 1 };
     apply.accepted = 1;
     apply.applied = 1;
     apply.presentationKind = state.presentationKind;
@@ -50,7 +48,7 @@ int main(void)
           receipt.commandCount == 4 && receipt.orderingFingerprint != 0);
     CHECK(receipt.orderedSurfaceIndices[0] == 0 &&
           receipt.orderedSurfaceIndices[1] == 1 &&
-          receipt.orderedSurfaceIndices[3] == 2);
+          receipt.orderedSurfaceIndices[2] == 1 && receipt.orderedSurfaceIndices[3] == 1);
     surfaces[1].sourceOwned = 0;
     CHECK(!dm1_v1_action_spell_command_frame_order_build_pc34(
               &state, &apply, &materials, &receipt));
@@ -58,7 +56,15 @@ int main(void)
     state.commands[1].sourceY = 26;
     CHECK(!dm1_v1_action_spell_command_frame_order_build_pc34(
               &state, &apply, &materials, &receipt));
-    state.commands[1].sourceY = 13;
+    state.commands[1].sourceY = 0;
+    state.commands[2].graphicId = 11;
+    CHECK(!dm1_v1_action_spell_command_frame_order_build_pc34(
+              &state, &apply, &materials, &receipt));
+    state.commands[2].graphicId = 695;
+    surfaces[0].sourceOwned = 0;
+    CHECK(!dm1_v1_action_spell_command_frame_order_build_pc34(
+              &state, &apply, &materials, &receipt));
+    surfaces[0].sourceOwned = 1;
     apply.commandFingerprint = 0;
     CHECK(!dm1_v1_action_spell_command_frame_order_build_pc34(
               &state, &apply, &materials, &receipt));

@@ -19,9 +19,9 @@ static void set_source_material(DM1_V1_ActionSpellHudMaterialReceiptPc34 *m)
     memset(m, 0, sizeof(*m));
     m->accepted = 1;
     m->drawable = 1;
-    m->sourceSurfaceCount = 3;
+    m->sourceSurfaceCount = 2;
     m->primaryGraphicId = 9;
-    m->secondaryGraphicId = 11;
+    m->secondaryGraphicId = 0;
     m->primaryZoneId = 13;
     m->fontGraphicId = 695;
 }
@@ -43,7 +43,7 @@ int main(void)
     CHECK(dm1_v1_f0369_spell_zone_admit_pc34(&request, &materials, &receipt));
     CHECK(receipt.commandId == 101 && receipt.zoneIndex == 245 &&
           receipt.runeIndex == 0 && !receipt.recant && !receipt.cast &&
-          receipt.parentGraphicId == 9 && receipt.linesGraphicId == 11 &&
+          receipt.parentGraphicId == 9 && receipt.linesGraphicId == 0 &&
           receipt.fontGraphicId == 695 && receipt.suppressSyntheticFallback);
 
     request.screenX = 305;
@@ -58,6 +58,14 @@ int main(void)
     CHECK(receipt.commandId == 108 && receipt.zoneIndex == 252 &&
           receipt.runeIndex == -1 && !receipt.recant && receipt.cast);
 
+    /* Reject the obsolete legacy C011/three-surface PC34 proof. */
+    materials.secondaryGraphicId = 11;
+    CHECK(!dm1_v1_f0369_spell_zone_admit_pc34(&request, &materials, &receipt));
+    materials.sourceSurfaceCount = 3;
+    CHECK(!dm1_v1_f0369_spell_zone_admit_pc34(&request, &materials, &receipt));
+    materials.secondaryGraphicId = 0;
+    CHECK(!dm1_v1_f0369_spell_zone_admit_pc34(&request, &materials, &receipt));
+    materials.sourceSurfaceCount = 2;
     request.candidatePanelActive = 1;
     CHECK(!dm1_v1_f0369_spell_zone_admit_pc34(&request, &materials, &receipt));
     request.candidatePanelActive = 0;

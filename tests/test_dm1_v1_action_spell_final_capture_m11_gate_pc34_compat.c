@@ -6,8 +6,8 @@ static int failures;
 static void set_capture(DM1_V1_ActionSpellM11CaptureLifecycleReceiptPc34 *v, int action) {
     memset(v, 0, sizeof(*v)); v->accepted = v->finalCaptureCurrent = v->suppressSyntheticFallback = 1;
     v->presentationKind = action ? DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34 : DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34;
-    v->graphicId = action ? 10 : 9; v->zoneId = action ? 11 : 13; v->companionGraphicId = action ? 0 : 11;
-    v->assetCount = action ? 1 : 2; v->sourceCommandCount = action ? 3 : 4;
+    v->graphicId = action ? 10 : 9; v->zoneId = action ? 11 : 13; v->companionGraphicId = 0;
+    v->assetCount = 1; v->sourceCommandCount = action ? 3 : 4;
     v->frameTick = 901; v->sourceTick = 101; v->serial = 10; v->commandFingerprint = 0x41u; v->orderingFingerprint = 0x42u;
 }
 int main(void) {
@@ -18,7 +18,10 @@ int main(void) {
     CHECK(gate.accepted && gate.m11CaptureGateOpen && gate.originalGraphicId == 10 && gate.originalZoneId == 11);
     set_capture(&capture, 0);
     CHECK(dm1_v1_action_spell_final_capture_m11_gate_build_pc34(&capture, &gate));
-    CHECK(gate.originalGraphicId == 9 && gate.originalZoneId == 13 && gate.companionGraphicId == 11);
+    CHECK(gate.originalGraphicId == 9 && gate.originalZoneId == 13 && gate.companionGraphicId == 0 && gate.sourceAssetCount == 1);
+    capture.companionGraphicId = 11; capture.assetCount = 2;
+    CHECK(!dm1_v1_action_spell_final_capture_m11_gate_build_pc34(&capture, &gate));
+    capture.companionGraphicId = 0; capture.assetCount = 1;
     capture.zoneId = 11;
     CHECK(!dm1_v1_action_spell_final_capture_m11_gate_build_pc34(&capture, &gate));
     capture.zoneId = 13; capture.finalCaptureCurrent = 0;

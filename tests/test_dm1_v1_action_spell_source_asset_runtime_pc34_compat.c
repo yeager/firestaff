@@ -17,7 +17,7 @@ set_common(DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
            DM1_V1_ActionSpellRuntimeFrameAdmissionReceiptPc34 *runtime,
            int action)
 {
-    int commandCount = action ? 3 : 4;
+    int commandCount = action ? 3 : 2;
     memset(surfaces, 0, 4 * sizeof(*surfaces));
     surfaces[0] = (DM1_V1_ActionSpellHudSurfacePc34){ 9, 87, 25, 87 * 25, c009, 1 };
     surfaces[1] = (DM1_V1_ActionSpellHudSurfacePc34){ 10, 87, 45, 87 * 45, c010, 1 };
@@ -50,9 +50,7 @@ set_common(DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
         runtime->originalRouteKind = DM1_V1_ACTION_SPELL_M11_ORIGINAL_ROUTE_SPELL_PC34;
         runtime->sourceGraphicId = 9; runtime->sourceZoneId = 13;
         frame->commands[0] = (DM1_V1_ActionSpellRenderCommandPc34){ 1, 9, 13, 1, 0, 0, 87, 25, 0 };
-        frame->commands[1] = (DM1_V1_ActionSpellRenderCommandPc34){ 1, 11, 245, 6, 0, 13, 14, 12, 2 };
-        frame->commands[2] = (DM1_V1_ActionSpellRenderCommandPc34){ 1, 11, 261, 4, 0, 26, 14, 12, 2 };
-        frame->commands[3] = (DM1_V1_ActionSpellRenderCommandPc34){ 2, 695, 221, 1, 0, 0, 0, 0, 3 };
+        frame->commands[1] = (DM1_V1_ActionSpellRenderCommandPc34){ 2, 695, 221, 1, 0, 0, 0, 0, 3 };
     }
     memcpy(commands->commands, frame->commands, (size_t)commandCount * sizeof(frame->commands[0]));
 }
@@ -72,14 +70,18 @@ main(void)
     CHECK(dm1_v1_action_spell_source_asset_runtime_build_pc34(
               &materials, &commands, &frame, &order, &runtime, &receipt));
     CHECK(receipt.accepted && receipt.originalGraphicId == 9 && receipt.originalZoneId == 13 &&
-          receipt.companionGraphicId == 11 && receipt.sourceAssetCount == 2 &&
-          receipt.sourceCommandCount == 4 && receipt.suppressSyntheticFallback);
+          receipt.companionGraphicId == 0 && receipt.sourceAssetCount == 1 &&
+          receipt.sourceCommandCount == 2 && receipt.suppressSyntheticFallback);
 
     surfaces[2].sourceOwned = 0;
+    surfaces[2].pixels = NULL;
+    CHECK(dm1_v1_action_spell_source_asset_runtime_build_pc34(
+              &materials, &commands, &frame, &order, &runtime, &receipt));
+    frame.commands[1].graphicId = commands.commands[1].graphicId = 11;
     CHECK(!dm1_v1_action_spell_source_asset_runtime_build_pc34(
               &materials, &commands, &frame, &order, &runtime, &receipt));
-    surfaces[2].sourceOwned = 1;
-    frame.commands[1].sourceY = 12;
+    frame.commands[1].graphicId = commands.commands[1].graphicId = 695;
+    surfaces[0].sourceOwned = 0;
     CHECK(!dm1_v1_action_spell_source_asset_runtime_build_pc34(
               &materials, &commands, &frame, &order, &runtime, &receipt));
 

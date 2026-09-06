@@ -21,9 +21,17 @@
   rendered symbol rows after fourth-rune wrap/recant. Atari/Amiga input
   and debit tests do not establish visual parity for every platform.
 
-- Verify the actual DM1 C009/C011 spell renderer with different leader and
-  caster state using original graphics. The procedural compact workbench
-  explicitly excludes DM1/CSB and cannot provide this parity evidence.
+- Extend spell-panel parity beyond the tested DOS/Atari/Amiga static
+  panels and six successful DOS light-cast cases. Verify failure frames,
+  other spell types, rune wrap/recant transitions and same-tick serial
+  replacement; retain distinct edition-specific rendering and evidence.
+  Add FM Towns spell pixel tests with authentic C009-size admission and
+  edition registry evidence (English EDM.EXP regions already documented).
+  Japanese caster names require TEXT2.C F0952, not M653 ASCII glyphs;
+  verify JP registry bytes and that text path separately. Do not classify
+  little-endian FM Towns as early Amiga merely due to its legacy loader.
+  Original emulator/input captures and complete all-platform HUD parity
+  remain unproven. V2.2 retains its explicitly permitted alternative art.
 
 - Investigate the intermittent no-output early exit of the French Atari
   original-media test observed on September 6; it did not recur in three

@@ -15,7 +15,7 @@ bridge(unsigned int tick, int action)
     value.presentationKind = action ? DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34
                                    : DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34;
     value.originalGraphicId = action ? 10 : 9; value.originalZoneId = action ? 11 : 13;
-    value.companionGraphicId = action ? 0 : 11; value.sourceAssetCount = action ? 1 : 2;
+    value.companionGraphicId = 0; value.sourceAssetCount = 1;
     value.sourceCommandCount = action ? 3 : 4;
     value.frameTick = tick; value.sourceTick = tick - 800; value.serial = tick - 891;
     value.commandFingerprint = tick + 0x10u; value.orderingFingerprint = tick + 0x20u;
@@ -29,11 +29,14 @@ int main(void)
     DM1_V1_ActionSpellSourceFrameM11BridgeReceiptPc34 spell = bridge(900, 0);
     DM1_V1_ActionSpellSourceFrameM11BridgeReceiptPc34 action = bridge(901, 1);
     memset(&state, 0, sizeof(state));
+    spell.companionGraphicId = 11; spell.sourceAssetCount = 2;
+    CHECK(!dm1_v1_action_spell_source_frame_m11_lifecycle_apply_pc34(&state, &spell, &lifecycle));
+    spell.companionGraphicId = 0; spell.sourceAssetCount = 1;
     CHECK(dm1_v1_action_spell_source_frame_m11_lifecycle_apply_pc34(&state, &spell, &lifecycle));
     CHECK(lifecycle.accepted && lifecycle.m11SourceFrameCurrent && !lifecycle.clearStaleSourceFrame);
     CHECK(dm1_v1_action_spell_source_frame_m11_lifecycle_apply_pc34(&state, &action, &lifecycle));
     CHECK(lifecycle.clearStaleSourceFrame && lifecycle.revokeStaleSourceFrame &&
-          lifecycle.staleOriginalGraphicId == 9 && lifecycle.staleCompanionGraphicId == 11);
+          lifecycle.staleOriginalGraphicId == 9 && lifecycle.staleCompanionGraphicId == 0);
     CHECK(dm1_v1_action_spell_source_frame_m11_lifecycle_apply_pc34(&state, &action, &lifecycle));
     CHECK(lifecycle.alreadyCurrent && !lifecycle.clearStaleSourceFrame);
     CHECK(!dm1_v1_action_spell_source_frame_m11_lifecycle_apply_pc34(&state, &spell, &lifecycle));

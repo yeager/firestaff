@@ -84,9 +84,9 @@ typedef struct DM1_V1_SpellPanelReceiptPc34 {
 } DM1_V1_SpellPanelReceiptPc34;
 
 /*
- * ReDMCSB PC 3.x: CASTER.C F0394 blits C009 into G0000, the 96-pixel
- * physical source box at x=224..319. C013 is the smaller 87-pixel input
- * zone at x=233..319; it must not be used to validate or crop C009.
+ * ReDMCSB CASTER.C:75-98 (I34): F0660 resolves C009 in C013 using
+ * its stored dimensions and the zone's bottom-right anchor. The earlier
+ * MEDIA009 branch uses G0000; its 96-pixel box is not PC34 bitmap geometry.
  */
 enum {
     DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 = 9,
@@ -107,9 +107,9 @@ enum {
 
     /* The stored C011 lines graphic is 14x39 (GRAPHICS.DAT item 0011,
      * verified against the PC 3.4 data): three 14x12 label cells at row
-     * strides of 13.  CASTER.C F0394 copies the available/selected cells
-     * to screen rows (224,50) and (224,62).  The earlier 96x36/96x12
-     * reading rejected the real asset and left the spell HUD black. */
+     * strides of 13. These extraction constants remain for diagnostic
+     * consumers; the I34 CASTER.C branch does not copy this graphic.
+     * Do not confuse this item with MEDIA009's 96-pixel line buffer. */
     DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 = 14,
     DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34 = 39,
     DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34 = 13,
@@ -117,8 +117,7 @@ enum {
     DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 = 26,
 
     /* Compatibility extraction cell for non-DM diagnostic surfaces. It is
-     * derived from a real C011 row; DM1's live F0394 path copies the whole
-     * 96x12 row above. */
+     * derived from a real C011 row, not an I34 F0394 render operation. */
     DM1_V1_SPELL_LABEL_CELL_W_PC34 = 14,
     DM1_V1_SPELL_LABEL_CELL_H_PC34 = 12,
     DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 = 13,
@@ -129,10 +128,10 @@ static inline DM1_V1_SpellAreaRectPc34
 dm1_v1_spell_area_graphic_rect_pc34(void)
 {
     /* The stored C009 spell-area background is 87x25 (GRAPHICS.DAT item
-     * 0009, verified against the PC 3.4 data) and covers the C013 zone
-     * header at 233,42.  DATA.C G0000 {224,319,42,74} is only the clear
-     * box (dm1_v1_box_spell_area), never the blit bounds. */
-    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 87, 25 };
+     * 0009, verified against the PC 3.4 data). Item696 C013 is bottom-right
+     * anchored at319,74, placing this shorter bitmap below the controls.
+     * The full C013 input rectangle remains233,42,87x33. */
+    DM1_V1_SpellAreaRectPc34 r = { 233, 50, 87, 25 };
     return r;
 }
 

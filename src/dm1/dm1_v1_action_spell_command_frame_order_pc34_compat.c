@@ -93,28 +93,34 @@ dm1_v1_action_spell_order_validate_spell_pc34(
     const DM1_V1_ActionSpellPresentationFrameStatePc34 *state)
 {
     const DM1_V1_ActionSpellRenderCommandPc34 *background = &state->commands[0];
-    const DM1_V1_ActionSpellRenderCommandPc34 *available = &state->commands[1];
-    const DM1_V1_ActionSpellRenderCommandPc34 *selected = &state->commands[2];
-    const DM1_V1_ActionSpellRenderCommandPc34 *font = &state->commands[3];
+    const DM1_V1_ActionSpellRenderCommandPc34 *font = &state->commands[1];
+    const DM1_V1_ActionSpellRenderCommandPc34 *available = &state->commands[2];
+    const DM1_V1_ActionSpellRenderCommandPc34 *selected = &state->commands[3];
+    /* CASTER.C:90-93 and MENUDRAW.C:47-128, I34: C009 followed by
+     * controls, six available glyph zones and four selected glyph zones. */
     return state->commandCount == 4 &&
            background->kind == DM1_V1_ACTION_SPELL_SEQUENCE_STEP_BLIT_PC34 &&
            background->graphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
            background->zoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
            background->sourceW == 87 && background->sourceH == 25 &&
-           available->kind == DM1_V1_ACTION_SPELL_SEQUENCE_STEP_BLIT_PC34 &&
-           available->graphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
-           available->zoneId == DM1_V1_SPELL_AVAILABLE_SYMBOL_PARENT_ZONE_ID_BASE_PC34 &&
+           background->sourceX == 0 && background->sourceY == 0 &&
+           background->zoneCount == 1 &&
+           dm1_v1_action_spell_order_is_font_pc34(available) &&
+           available->graphicId == font->graphicId &&
+           available->zoneId == DM1_V1_SPELL_AVAILABLE_SYMBOL_ZONE_ID_BASE_PC34 &&
            available->zoneCount == DM1_V1_SPELL_RUNE_SYMBOLS_PER_ROW_PC34 &&
-           available->sourceY == DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34 &&
-           available->sourceW == 14 && available->sourceH == 12 &&
-           selected->kind == DM1_V1_ACTION_SPELL_SEQUENCE_STEP_BLIT_PC34 &&
-           selected->graphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+           available->sourceX == 0 && available->sourceY == 0 &&
+           available->sourceW == 0 && available->sourceH == 0 &&
+           dm1_v1_action_spell_order_is_font_pc34(selected) &&
+           selected->graphicId == font->graphicId &&
            selected->zoneId == DM1_V1_SPELL_CHAMPION_SYMBOL_ZONE_ID_BASE_PC34 &&
            selected->zoneCount == DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34 &&
-           selected->sourceY == DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 &&
-           selected->sourceW == 14 && selected->sourceH == 12 &&
+           selected->sourceX == 0 && selected->sourceY == 0 &&
+           selected->sourceW == 0 && selected->sourceH == 0 &&
            dm1_v1_action_spell_order_is_font_pc34(font) &&
-           font->zoneId == DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34;
+           font->zoneId == DM1_V1_SPELL_CASTER_PANEL_ZONE_ID_PC34 &&
+           font->zoneCount == 1 && font->sourceX == 0 && font->sourceY == 0 &&
+           font->sourceW == 0 && font->sourceH == 0;
 }
 
 static unsigned int

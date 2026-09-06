@@ -9,7 +9,7 @@
  * Pinned contracts (all anchored to the ReDMCSB WIP20210206 PC 3.4 path):
  * - CASTER.C:18-21 F0394 same-caster short-circuit.
  * - CASTER.C:18-21 F0394 dead-champion reject.
- * - CASTER.C:23-26 F0394 background blit on a transition from NONE.
+ * - CASTER.C:89-93 I34 background blit on every accepted caster change.
  * - CASTER.C:28-32 F0394 CM1_CHAMPION_NONE clear-to-black path.
  * - SPELDRAW.C:36-90 F0393 4-tab x0 columns and CurrentHealth / party
  *   count gate.
@@ -220,8 +220,8 @@ static void test_contract(void)
                    "G1072 line 2 box in evidence");
     check_contains("source.g1073", evidence, "G1073",
                    "G1073 line 3 box in evidence");
-    check_contains("source.champion0", evidence, "233..277",
-                   "champion 0 tab x0/x1 in evidence");
+    check_contains("source.caster.zones", evidence, "C224+5*caster",
+                   "caster-dependent original layout zones in evidence");
 }
 
 static void test_same_caster_reject(void)
@@ -393,8 +393,8 @@ static void test_first_caster_after_none(void)
               "G0514 = 0");
     check_int("firstCaster.background", plan.drew_background_graphic, 1,
               "C009_GRAPHIC_MENU_SPELL_AREA_BACKGROUND on transition from NONE");
-    check_int("firstCaster.linesBitmap", plan.drew_lines_bitmap, 1,
-              "F0396 lines bitmap loaded");
+    check_int("firstCaster.linesBitmap", plan.drew_lines_bitmap, 0,
+              "I34 excludes F0396 legacy lines bitmap");
     check_int("firstCaster.controls", plan.drew_spell_area_controls, 1,
               "F0393 drew");
     check_int("firstCaster.avail", plan.drew_available_symbols, 1,
@@ -442,8 +442,8 @@ static void test_first_caster_after_none(void)
     for (i = 1; i < 4; ++i) {
         char lbl[64];
         snprintf(lbl, sizeof(lbl), "firstCaster.l1c%dhl", i);
-        check_int(lbl, plan.line1[i].highlighted, 0,
-                  "non-active champion not highlighted");
+        check_int(lbl, plan.line1[i].highlighted, 1,
+                  "every living champion is highlighted");
         snprintf(lbl, sizeof(lbl), "firstCaster.l1c%dpresent", i);
         check_int(lbl, plan.line1[i].present, 1,
                   "alive champion is present");
@@ -509,23 +509,23 @@ static void test_caster_swap_with_step_window(void)
               1, "CASTER.C:18 swap path");
     check_int("swapStep.postCaster", plan.post_caster_index, 2,
               "G0514 = 2");
-    check_int("swapStep.background", plan.drew_background_graphic, 0,
-              "no C009 background on caster-caster transition");
+    check_int("swapStep.background", plan.drew_background_graphic, 1,
+              "I34 repaints C009 on caster-caster transition");
     check_int("swapStep.controls", plan.drew_spell_area_controls, 1,
               "F0393 drew");
     check_int("swapStep.avail", plan.drew_available_symbols, 1,
               "F0397 drew");
 
-    check_int("swapStep.l1c0hl", plan.line1[0].highlighted, 0,
-              "old caster 0 no longer highlighted");
+    check_int("swapStep.l1c0hl", plan.line1[0].highlighted, 1,
+              "old caster remains living and highlighted");
     check_int("swapStep.l1c0present", plan.line1[0].present, 1,
               "champion 0 still present");
     check_int("swapStep.l1c2hl", plan.line1[2].highlighted, 1,
               "new caster 2 highlighted");
     check_int("swapStep.l1c2present", plan.line1[2].present, 1,
               "champion 2 present");
-    check_int("swapStep.l1c2x0", plan.line1[2].tab_x0, 294,
-              "champion 2 x0=294");
+    check_int("swapStep.l1c2x0", plan.line1[2].tab_x0, 261,
+              "selected champion 2 source zone236 x0=261");
 
     /* F0397 step 3 -> characters 96 + 6*3 = 114..119 */
     for (i = 0; i < 6; ++i) {
@@ -592,9 +592,8 @@ static void test_dead_champion_excluded_from_tabs(void)
     for (i = 0; i < 4; ++i) {
         char lbl[64];
         snprintf(lbl, sizeof(lbl), "deadExcl.l1c%dhl", i);
-        if (i != 1)
-            check_int(lbl, plan.line1[i].highlighted, 0,
-                      "non-active champion not highlighted");
+        check_int(lbl, plan.line1[i].highlighted, i < 2,
+                  "all and only living champions highlighted");
     }
 }
 
@@ -676,7 +675,7 @@ static void test_material_receipt_accepts_only_source_surfaces(void)
     check_int("material.ok",
               dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
                   &plan, &facts, &receipt),
-              1, "C009/C011/M653 source receipt");
+              1, "I34 C009/M653 source receipt");
     check_int("material.drawable", receipt.drawable, 1,
               "all required source surfaces are present");
     check_int("material.reason", receipt.reject_reason,
@@ -684,8 +683,8 @@ static void test_material_receipt_accepts_only_source_surfaces(void)
               "accepted material receipt");
     check_int("material.c009Req", receipt.c009_required, 1,
               "C009 required when F0394 draws background");
-    check_int("material.c011Req", receipt.c011_required, 1,
-              "C011 required when F0396/F0392 draw lines");
+    check_int("material.c011Req", receipt.c011_required, 0,
+              "I34 never draws legacy F0396/F0392 C011 strips");
     check_int("material.fontReq", receipt.m653_required, 1,
               "M653 required for F0393/F0397/F0398");
     check_int("material.noHostFallback", receipt.no_host_fallback_visuals, 1,
@@ -696,12 +695,25 @@ static void test_material_receipt_accepts_only_source_surfaces(void)
     check_int("material.noPixelsC011",
               dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
                   &plan, &facts, &receipt),
-              1, "dimension-only C011 is not drawable");
-    check_int("material.noPixelsC011Drawable", receipt.drawable, 0,
-              "missing C011 pixels fail closed");
+              1, "unused C011 pixels are not an I34 dependency");
+    check_int("material.noPixelsC011Drawable", receipt.drawable, 1,
+              "C009 and M653 suffice without C011");
     check_int("material.noPixelsC011Reason", receipt.reject_reason,
-              DM1_V1_CPSAO_MATERIAL_REJECT_C011_PC34,
-              "C011 reject reason");
+              DM1_V1_CPSAO_MATERIAL_ACCEPTED_PC34,
+              "no legacy C011 requirement");
+
+    in.previous_caster_index = 1;
+    in.requested_caster_index = 0;
+    check_int("material.swapPlan",
+              dm1_v1_champion_panel_spell_area_overlay_plan_pc34(&in, &plan),
+              1, "I34 caster switch requires a fresh C009 blit");
+    facts = material_ok();
+    facts.c009_loaded_pixels = 0;
+    check_int("material.swapMissingBackground",
+              dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
+                  &plan, &facts, &receipt), 1, "missing caster-switch C009 checked");
+    check_int("material.swapMissingBackgroundDrawable", receipt.drawable, 0,
+              "caster switch cannot skip original background ownership");
 
     facts = material_ok();
     facts.c009_width = DM1_V1_CPSAO_SPELL_AREA_WIDTH_PC34 - 1;
@@ -810,6 +822,43 @@ static void test_validation_guards(void)
               0, "null output guard");
 }
 
+static void test_all_caster_source_rectangles_and_sparse_living_slots(void)
+{
+    /* Independently transcribed inclusive boxes from authenticated item696
+     * C224..243 / COORD.C G3035, not computed by the plan under test. */
+    static const int boxes[4][4][4] = {
+        {{233,277,42,49},{280,291,42,48},{294,305,42,48},{308,319,42,48}},
+        {{233,244,42,48},{247,291,42,49},{294,305,42,48},{308,319,42,48}},
+        {{233,244,42,48},{247,258,42,48},{261,305,42,49},{308,319,42,48}},
+        {{233,244,42,48},{247,258,42,48},{261,272,42,48},{275,319,42,49}}
+    };
+    int caster, sparse, i;
+    for (caster = 0; caster < 4; ++caster) for (sparse = 0; sparse < 2; ++sparse) {
+        DM1_V1_ChampionPanelSpellAreaOverlayInputPc34 in;
+        DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
+        reset_input(&in);
+        in.previous_caster_index = -1;
+        in.requested_caster_index = caster;
+        in.party_champion_count = 4;
+        for (i = 0; i < 4; ++i)
+            in.champions[i].current_health = !sparse || i == caster ? 100 : 0;
+        check_int("allCaster.build", dm1_v1_champion_panel_spell_area_overlay_plan_pc34(
+                    &in, &plan), 1, "source caster zone set accepted");
+        check_int("allCaster.count", plan.tab_count, sparse ? 1 : 4,
+                  "tab_count counts living champions, not dense row extent");
+        for (i = 0; i < 4; ++i) {
+            check_int("allCaster.x0", plan.line1[i].tab_x0, boxes[caster][i][0], "source x0");
+            check_int("allCaster.x1", plan.line1[i].tab_x1, boxes[caster][i][1], "source x1");
+            check_int("allCaster.y0", plan.line1[i].tab_y0, boxes[caster][i][2], "source y0");
+            check_int("allCaster.y1", plan.line1[i].tab_y1, boxes[caster][i][3], "source y1");
+            check_int("allCaster.highlight", plan.line1[i].highlighted,
+                      !sparse || i == caster, "all living absolute-index rows inverted");
+            check_int("allCaster.index", plan.line1[i].champion_index, i,
+                      "dead earlier slot never compacts caster receipt");
+        }
+    }
+}
+
 int main(void)
 {
     printf("== DM1 V1 champion panel spell-area overlay slice ==\n");
@@ -821,6 +870,7 @@ int main(void)
     test_first_caster_after_none();
     test_caster_swap_with_step_window();
     test_dead_champion_excluded_from_tabs();
+    test_all_caster_source_rectangles_and_sparse_living_slots();
     test_full_symbols_no_padding();
     test_empty_symbols_full_padding();
     test_material_receipt_accepts_only_source_surfaces();

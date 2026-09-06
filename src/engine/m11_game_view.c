@@ -17430,7 +17430,11 @@ static int m11_v2_vertical_slice_enabled(const M11_GameViewState* state) {
      * vertical-slice layout; applying that layout overwrites CSB HUD pixels
      * with generic status panels. */
     return state && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
-           state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
+           state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
+           /* DM1 filtered/upscaled modes retain the original HUD owners.
+            * Generated replacement art is exclusive to explicit V2.2. */
+           (!m11_is_dm1_source_kind(state->sourceKind) ||
+            state->presentationMode == M12_PRESENTATION_V22_MODERN);
 }
 
 /* Pass 42: V1 chrome-mode switch.
@@ -55728,7 +55732,9 @@ static int m11_v1_action_spell_strip_zone(int* outX,
                                            int* outW,
                                            int* outH) {
     DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
-    DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
+    /* C013's input area includes the caster tabs above the bottom-anchored
+     * C009 bitmap; bitmap placement must not shrink the hit-test strip. */
+    DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_click_rect_pc34();
     int minX = action.x < spell.x ? action.x : spell.x;
     int minY = action.y < spell.y ? action.y : spell.y;
     int maxX = action.x + action.w > spell.x + spell.w ?
@@ -58747,10 +58753,9 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
     }
 }
 
-/* ReDMCSB SPELDRAW.C F0393 sends the current source panel pixels through
- * IMAGE.C F0698_InvertBox.  The retained M11 surface is indexed 4bpp, so
- * complementing its low nibble is the exact inverse operation; this never
- * creates a color, border, or font outside C009/C011's loaded pixels. */
+/* ReDMCSB IMAGE.C F0698 -> VIDEODRV.C F8154:3235-3237 toggles index
+ * bit 2 for VGA (and 0x44 for two packed EGA/Tandy pixels), not all four
+ * palette bits. Thus the source black control tabs become cyan. */
 static int m11_invert_dm1_pc34_indexed_box(
     unsigned char* framebuffer,
     int framebufferWidth,
@@ -58774,7 +58779,7 @@ static int m11_invert_dm1_pc34_indexed_box(
     if (bottom >= framebufferHeight) bottom = framebufferHeight - 1;
     for (y = top; y <= bottom; ++y) {
         for (x = left; x <= right; ++x) {
-            framebuffer[y * framebufferWidth + x] ^= 0x0fU;
+            framebuffer[y * framebufferWidth + x] ^= 0x04U;
         }
     }
     return 1;
@@ -58826,6 +58831,7 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                           int framebufferHeight) {
     int spellW, spellH;
     int i;
+    int legacySpellPanel;
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
@@ -58834,32 +58840,55 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         m11_v2_vertical_slice_enabled(state)) {
         return 0;
     }
-    {
-        /* CASTER.C F0394 clears DATA.C G0000 in every exit path. Keep this
-         * separate from C009's narrower GRAPHICS.DAT blit rectangle so a
-         * closed or rejected caster cannot retain the previous panel gutter. */
+    /* MEDIA009 Atari/early Amiga and MEDIA529 FM Towns are distinct
+     * source branches despite sharing a legacy container decoder. */
+    legacySpellPanel = state->assetLoader.atariStDm1 ||
+        (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian);
+    if (!state->spellPanelOpen) {
         DM1_V1_SpellAreaRectPc34 sourceBox =
             dm1_v1_spell_area_source_box_rect_pc34();
-        if (!state->spellPanelOpen) {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
-                          M11_COLOR_BLACK);
-            return 1;
-        }
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
+                      M11_COLOR_BLACK);
+        return 1;
     }
+    if (legacySpellPanel) {
+        /* CASTER.C:21-74 and MENU.C F0392:844-910. Original Atari
+         * media independently verifies C009 96x33 and C011 96x36.
+         * Atari copies line rows 1..11; Amiga copies all twelve rows. */
+        const int inset = state->assetLoader.atariStDm1 ? 1 : 0;
+        if (!m11_dm1_pc34_hud_font_is_source_bound(state) ||
+            !m11_build_dm1_spell_area_overlay_plan(state, &plan) ||
+            !m11_panel_asset_source_loaded(state, 9, 96, 33, NULL, NULL) ||
+            !m11_panel_asset_source_loaded(state, 11, 96, 36, NULL, NULL)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          224, 42, 96, 33, M11_COLOR_BLACK);
+            return 0;
+        }
+        if (!m11_blit_panel_asset_native(state, framebuffer, framebufferWidth,
+                framebufferHeight, 9, 96, 33, 224, 42) ||
+            !m11_blit_panel_asset_region_native(state, framebuffer,
+                framebufferWidth, framebufferHeight, 11, 96, 36,
+                0, 12 + inset, 96, 12 - inset, 224, 50 + inset) ||
+            !m11_blit_panel_asset_region_native(state, framebuffer,
+                framebufferWidth, framebufferHeight, 11, 96, 36,
+                0, 24 + inset, 96, 12 - inset, 224, 62 + inset)) {
+            return 0;
+        }
+    } else {
     {
         /* ReDMCSB CASTER.C F0394 clears the physical G0000 box
          * (224,42,96x33 per DATA.C:119) and blits the stored 87x25 C009
-         * into the C013 zone at 233,42.  spellX/spellY/spellW/spellH
+         * into the C013 zone at 233,50.  spellX/spellY/spellW/spellH
          * track the C009 blit rect; clears use the G0000 box. */
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
         if (!DM1_V1_SPELL_AREA_ZONE_ID_PC34) return 0;
         spellW = spell.w;
         spellH = spell.h;
     }
-    /* CASTER.C F0394: clear G0000, paint C009, then copy C011 rows 1 and 2
-     * to the two symbol lines.  C011 is not optional decoration: it owns
-     * the controls behind the source-font glyphs. */
+    /* ReDMCSB CASTER.C:75-98, I34 branch: F0660 paints C009 into
+     * bottom-right anchored C013, followed by controls and source glyphs.
+     * The C011 line copies belong to the earlier MEDIA009 branch. */
     memset(&facts, 0, sizeof(facts));
     facts.c009_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34;
     facts.c009_loaded_pixels = m11_panel_asset_source_loaded(
@@ -58891,14 +58920,14 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     }
     if (!dm1_v1_action_spell_m11_blit_plan_build_pc34(
             DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34, 0,
-            &blitPlan) || !blitPlan.accepted || blitPlan.blitCount != 3) {
+            &blitPlan) || !blitPlan.accepted || blitPlan.blitCount != 1) {
         return 0;
     }
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   blitPlan.clearX, blitPlan.clearY,
                   blitPlan.clearW, blitPlan.clearH, M11_COLOR_BLACK);
     /* C009 is the stored 87x25 spell-area background (GRAPHICS.DAT item
-     * 0009) and blits into the C013 zone at 233,42.  DATA.C G0000
+     * 0009) and blits into the C013 zone at 233,50.  DATA.C G0000
      * {224,319,42,74} is only the clear box, never the blit bounds. */
     if (!m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
@@ -58907,33 +58936,37 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         blitPlan.blits[0].destinationX, blitPlan.blits[0].destinationY)) {
         return 0;
     }
-    if (!m11_blit_panel_asset_region_native(state,
-        framebuffer, framebufferWidth, framebufferHeight,
-        (unsigned int)blitPlan.blits[1].graphicId,
-        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
-        DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
-        blitPlan.blits[1].sourceX, blitPlan.blits[1].sourceY,
-        blitPlan.blits[1].sourceW, blitPlan.blits[1].sourceH,
-        blitPlan.blits[1].destinationX, blitPlan.blits[1].destinationY) ||
-        !m11_blit_panel_asset_region_native(state,
-        framebuffer, framebufferWidth, framebufferHeight,
-        (unsigned int)blitPlan.blits[2].graphicId,
-        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
-        DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
-        blitPlan.blits[2].sourceX, blitPlan.blits[2].sourceY,
-        blitPlan.blits[2].sourceW, blitPlan.blits[2].sourceH,
-        blitPlan.blits[2].destinationX, blitPlan.blits[2].destinationY)) {
-        return 0;
     }
-    /* SPELDRAW.C F0393 inverts only the living caster tab after C009 has
-     * materialized it. The plan supplies the original inclusive box, so the
-     * inverse cannot leak into another champion or rune line. */
-    for (i = 0; i < plan.tab_count; ++i) {
+    /* SPELDRAW.C F0393 clears C221 before visiting tabs. Authentic item696
+     * defines that control strip as (233,42,87,8), independent of C009. */
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  233, 42, 87, 8, M11_COLOR_BLACK);
+    /* SPELDRAW.C F0393:87-94 visits all four champion slots. Rows retain
+     * slot indices, so a count of living champions is not an iteration
+     * bound when an earlier slot is dead. Invert each admitted living tab. */
+    for (i = 0; i < DM1_V1_CPSAO_CHAMPION_COUNT_PC34; ++i) {
         if (plan.line1[i].highlighted) {
             (void)m11_invert_dm1_pc34_indexed_box(
                 framebuffer, framebufferWidth, framebufferHeight,
                 plan.line1[i].tab_x0, plan.line1[i].tab_y0,
                 plan.line1[i].tab_x1, plan.line1[i].tab_y1);
+        }
+    }
+    {
+        const int caster = state->dm1SpellCasting.magicCasterIndex;
+        const unsigned char* name = state->world.party.champions[caster].name;
+        /* SPELDRAW.C F0393:94 calls F0650 on C228+5*caster. Authentic
+         * I34E layout-696 records (COORD.C:337-360) resolve these type-18
+         * name zones at x=235+14*caster, baseline=48 for F0645's height5.
+         * Despite F0650's name, this zone is left-anchored, not centered.
+         * Use the selected caster's source bytes, never the party leader
+         * or a generated placeholder. F0644 clips against the screen. */
+        for (i = 0; i < CHAMPION_NAME_LENGTH && name[i]; ++i) {
+            (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
+                g_activeOriginalFont, framebuffer, framebufferWidth,
+                framebufferHeight, 235 + 14 * caster + 6 * i, 48, name[i],
+                0, DM1_V1_CPSAO_COLOR_CYAN_PC34,
+                0, 0, framebufferWidth, framebufferHeight);
         }
     }
     /* MENUDRAW.C F0397 always repaints the six-symbol source window. A full
@@ -58952,6 +58985,11 @@ static int m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     /* MENUDRAW.C F0398 owns exactly four output cells, space-padding the
      * tail so recant/caster changes cannot retain stale source glyphs. */
     for (i = 0; i < plan.champion_symbol_count; ++i) {
+        /* MENU.C F0392:884-910 stops at the first NUL in the newly
+         * copied legacy row; it does not paint PC34 space-padding cells. */
+        if (legacySpellPanel &&
+            !state->dm1SpellCasting.input[
+                state->dm1SpellCasting.magicCasterIndex].symbols[i]) break;
         (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight, plan.line3[i].screen_x,
@@ -58975,18 +59013,17 @@ static int m11_dm1_v1_action_spell_materials_from_loader(
     DM1_V1_ActionSpellHudSurfacePc34 surfaces[5],
     DM1_V1_ActionSpellHudMaterialSetPc34* outMaterials)
 {
-    static const int graphicIds[4] = {
+    static const int graphicIds[3] = {
         14,
         DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34,
-        DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
-        DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34
+        DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34
     };
     int index;
 
     if (!state || !surfaces || !outMaterials || !state->assetsAvailable ||
         !m11_dm1_pc34_hud_font_is_source_bound(state)) return 0;
     memset(surfaces, 0, 5 * sizeof(*surfaces));
-    for (index = 0; index < 4; ++index) {
+    for (index = 0; index < 3; ++index) {
         const M11_AssetSlot* slot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)graphicIds[index]);
@@ -58999,17 +59036,17 @@ static int m11_dm1_v1_action_spell_materials_from_loader(
         surfaces[index].pixels = slot->pixels;
         surfaces[index].sourceOwned = 1;
     }
-    surfaces[4].graphicId = M11_Font_ResolvedGraphicIndex(g_activeOriginalFont);
-    surfaces[4].width = M11_FONT_BITMAP_WIDTH;
-    surfaces[4].height = M11_FONT_BITMAP_HEIGHT;
-    surfaces[4].pixelCount = M11_FONT_BITMAP_BYTES;
-    surfaces[4].pixels = g_activeOriginalFont->bitmap;
-    surfaces[4].sourceOwned = 1;
-    if ((surfaces[4].graphicId != M11_FONT_GRAPHIC_INDEX_PC34 &&
-         surfaces[4].graphicId != M11_FONT_GRAPHIC_INDEX_LEGACY) ||
-        !surfaces[4].pixels) return 0;
+    surfaces[3].graphicId = M11_Font_ResolvedGraphicIndex(g_activeOriginalFont);
+    surfaces[3].width = M11_FONT_BITMAP_WIDTH;
+    surfaces[3].height = M11_FONT_BITMAP_HEIGHT;
+    surfaces[3].pixelCount = M11_FONT_BITMAP_BYTES;
+    surfaces[3].pixels = g_activeOriginalFont->bitmap;
+    surfaces[3].sourceOwned = 1;
+    if ((surfaces[3].graphicId != M11_FONT_GRAPHIC_INDEX_PC34 &&
+         surfaces[3].graphicId != M11_FONT_GRAPHIC_INDEX_LEGACY) ||
+        !surfaces[3].pixels) return 0;
     outMaterials->surfaces = surfaces;
-    outMaterials->surfaceCount = 5;
+    outMaterials->surfaceCount = 4;
     outMaterials->actionMenuRowCount = 0;
     return 1;
 }
@@ -59043,7 +59080,7 @@ static unsigned int m11_dm1_v1_action_spell_material_fnv1a(
     unsigned int hash = 2166136261u;
     int index;
 
-    if (!materials || !materials->surfaces || materials->surfaceCount != 5) {
+    if (!materials || !materials->surfaces || materials->surfaceCount != 4) {
         return 0u;
     }
     for (index = 0; index < materials->surfaceCount; ++index) {
@@ -59281,6 +59318,12 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
     if (!state || !framebuffer || !m11_is_dm1_source_kind(state->sourceKind) ||
         state->showDebugHUD || !m11_v1_chrome_mode_enabled(state) ||
         m11_v2_vertical_slice_enabled(state)) return 0;
+    /* These receipts describe I34's C009-only material. MEDIA009's
+     * original C009/C011 compositor runs separately, not through forged
+     * PC34 asset identities or dimensions. Simulation effects are intact. */
+    if (state->assetLoader.atariStDm1 ||
+        (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian))
+        return 0;
     memset(&presentation, 0, sizeof(presentation));
     for (index = 0; index < state->dm1LiveActionEffects.count; ++index) {
         const DM1_V1_LiveActionEffectPc34* candidate =
@@ -59296,6 +59339,15 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
                  DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34 &&
              candidatePresentation.presentationKind !=
                  DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34)) {
+            continue;
+        }
+        /* MENU.C:2036-2039 also disables actions after a spell. That
+         * cooldown does not open an action menu: F0390:778-797 selects
+         * icons when G0506 is zero. Leave those icons to their painter,
+         * rather than letting the newer cooldown hide the spell receipt. */
+        if (candidatePresentation.presentationKind ==
+                DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34 &&
+            state->actingChampionOrdinal == 0) {
             continue;
         }
         if (!live || candidate->serial > live->serial) {
@@ -59421,11 +59473,8 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
     sourceBridge.presentationKind = presentation.presentationKind;
     sourceBridge.originalGraphicId = finalRender.sourceGraphicId;
     sourceBridge.originalZoneId = finalRender.sourceZoneId;
-    sourceBridge.companionGraphicId =
-        presentation.presentationKind ==
-            DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34 ? 0 :
-        DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
-    sourceBridge.sourceAssetCount = sourceBridge.companionGraphicId ? 2 : 1;
+    sourceBridge.companionGraphicId = 0;
+    sourceBridge.sourceAssetCount = 1;
     sourceBridge.sourceCommandCount = order.commandCount;
     sourceBridge.suppressSyntheticFallback = 1;
     sourceBridge.frameTick = finalRender.frameTick;

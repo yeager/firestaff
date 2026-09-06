@@ -17,7 +17,7 @@ set_lifecycle(DM1_V1_ActionSpellSourceFrameM11LifecycleReceiptPc34 *value, int a
     value->presentationKind = action ? DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34
                                      : DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34;
     value->originalGraphicId = action ? 10 : 9; value->originalZoneId = action ? 11 : 13;
-    value->companionGraphicId = action ? 0 : 11; value->sourceAssetCount = action ? 1 : 2;
+    value->companionGraphicId = 0; value->sourceAssetCount = 1;
     value->sourceCommandCount = action ? 3 : 4;
 }
 
@@ -28,15 +28,18 @@ int main(void)
     set_lifecycle(&lifecycle, 1);
     lifecycle.clearStaleSourceFrame = lifecycle.revokeStaleSourceFrame = 1;
     lifecycle.staleOriginalGraphicId = 9; lifecycle.staleOriginalZoneId = 13;
-    lifecycle.staleCompanionGraphicId = 11;
+    lifecycle.staleCompanionGraphicId = 0;
     CHECK(dm1_v1_action_spell_runtime_capture_build_pc34(&lifecycle, &capture));
     CHECK(capture.accepted && capture.runtimeCaptureCurrent && capture.originalGraphicId == 10 &&
           capture.originalZoneId == 11 && capture.revokeStaleCapture &&
-          capture.staleOriginalGraphicId == 9 && capture.staleCompanionGraphicId == 11);
+          capture.staleOriginalGraphicId == 9 && capture.staleCompanionGraphicId == 0);
     set_lifecycle(&lifecycle, 0);
     CHECK(dm1_v1_action_spell_runtime_capture_build_pc34(&lifecycle, &capture));
-    CHECK(capture.originalGraphicId == 9 && capture.companionGraphicId == 11 &&
-          capture.sourceAssetCount == 2 && !capture.revokeStaleCapture);
+    CHECK(capture.originalGraphicId == 9 && capture.companionGraphicId == 0 &&
+          capture.sourceAssetCount == 1 && !capture.revokeStaleCapture);
+    lifecycle.companionGraphicId = 11; lifecycle.sourceAssetCount = 2;
+    CHECK(!dm1_v1_action_spell_runtime_capture_build_pc34(&lifecycle, &capture));
+    lifecycle.companionGraphicId = 0; lifecycle.sourceAssetCount = 1;
     lifecycle.clearStaleSourceFrame = 1;
     CHECK(!dm1_v1_action_spell_runtime_capture_build_pc34(&lifecycle, &capture));
     lifecycle.clearStaleSourceFrame = 0; lifecycle.originalZoneId = 11;

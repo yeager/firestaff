@@ -102,10 +102,15 @@ int main(void)
                        "dm1_v1_action_spell_m11_blit_plan_build_pc34");
     ok &= require_text(source, "blitPlan.clearX");
     ok &= require_text(source, "blitPlan.blits[0].sourceH");
-    ok &= require_text(source, "blitPlan.blits[1].destinationY");
+    ok &= require_text(source, "blitPlan.blitCount != 1");
+    ok &= require_text(source, "blitPlan.blits[0].destinationY");
+    if (strstr(source, "blitPlan.blits[1].destinationY")) {
+        fprintf(stderr, "PC34 spell painter retains legacy strip blits\n");
+        ok = 0;
+    }
     ok &= require_text(source, "dm1_v1_spell_area_source_box_rect_pc34()");
 
-    /* F0394 admits a panel through G0514, C009/C011 and M653 only.
+    /* I34 F0394 admits a panel through G0514, C009 and M653 only.
      * C077/C079 are F0387 action-subpanel material, so a legacy
      * spellBuffer must never become substitute spell text in this path. */
     spell_plan = strstr(

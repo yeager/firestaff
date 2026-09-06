@@ -9,7 +9,7 @@ static int proof(int g, int z, int c, int n)
 {
     return (g == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 && z == DM1_V1_ACTION_AREA_ZONE_ID_PC34 && c == 0 && n == 1) ||
            (g == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 && z == DM1_V1_SPELL_AREA_ZONE_ID_PC34 &&
-            c == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 && n == 2);
+            c == 0 && n == 1); /* CASTER.C:89-93 I34: C009 only. */
 }
 
 static int same(const DM1_V1_ActionSpellM11CaptureLifecycleStatePc34 *s,
@@ -34,7 +34,7 @@ int dm1_v1_action_spell_m11_capture_lifecycle_apply_pc34(
         !proof(m->originalGraphicId, m->originalZoneId, m->companionGraphicId, m->sourceAssetCount)) return 0;
     if (m->revokeStaleSourceFrame && !proof(m->staleOriginalGraphicId, m->staleOriginalZoneId,
                                             m->staleCompanionGraphicId,
-                                            m->staleOriginalGraphicId == 10 ? 1 : 2)) return 0;
+                                            1)) return 0; /* I34: one bitmap for either route. */
     if (s->active && m->frameTick < s->frameTick) return 0;
     if (s->active && m->frameTick == s->frameTick && !same(s, m)) return 0;
     if (o) {
