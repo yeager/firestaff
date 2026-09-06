@@ -11,6 +11,13 @@ These are distinct contributors, not interchangeable representations.
 
 ## Current integration gap
 
+Update: the M10/M11 builders now set an explicit runtime body-shield
+layer. F0733 and F0733b use it independently of the elemental subtraction
+field. The legacy 76-byte serializer rejects split-layer snapshots before
+writing; deserialization clears the new runtime fields. Legacy records
+retain their old interpretation. The following describes the diagnosed
+pre-fix representation; full end-to-end damage evidence is still pending.
+
 Both `m11_build_projectile_defender_champion_snapshot` in
 `src/engine/m11_game_view.c` and its M10 counterpart in
 `src/memory/memory_tick_orchestrator_pc34_compat.c` put the sum of action,
@@ -43,3 +50,9 @@ comparison or a completed fix.
 
 YA consumption and live C72 expiry have original-media regression evidence;
 that evidence does not close this damage-layer gap.
+
+The new `dm1_shield_layers` production test proves deterministic and RNG
+wound-defense independence across six slots, legacy round-trip shield
+semantics and non-mutating rejection of unrepresentable snapshots. The
+integrated rebuild and twenty original-media consumable/death cases pass.
+Those cases do not replace the required actual attack comparisons above.

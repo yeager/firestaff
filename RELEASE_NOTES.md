@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 combat keeps individual/body shielding separate from fire and
+  magic attack reduction.
+
 - DM1 YA shield potions protect the champion who drinks them, not the
   whole party, and schedule expiration for the correct champion.
 

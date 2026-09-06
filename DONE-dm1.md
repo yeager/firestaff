@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: M10/M11 combat snapshots now retain separate runtime
+  body-shield and elemental-subtraction layers. F0733/F0733b use the body
+  layer; legacy 76-byte serialization rejects unrepresentable split
+  snapshots without writing. Integrated rebuild and 21 targeted tests
+  pass. Actual projectile damage comparison remains open.
+
 - 2026-09-06: Completed a static trace of YA shield into both combat
   snapshot builders and documented their conflated body/spell shield
   representation. The repair and damage proof remain open in TODO-dm1;

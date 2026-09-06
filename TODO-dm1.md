@@ -1,9 +1,9 @@
 # Firestaff TODO — DM1
 
-- Separate body shield from fire/magic attack subtraction in the M10/M11
-  combat snapshots. See `parity-evidence/dm1-shield-damage-layer-audit.md`;
-  source F0313 and F0321 require distinct layers. Verify with original YA
-  and independently derived damage before claiming combat parity.
+- Verify the now-separated body/elemental shield layers through actual
+  M10/M11 attacks with original YA and independently derived damage.
+  See `parity-evidence/dm1-shield-damage-layer-audit.md`; primitive tests
+  and consumable tests do not establish full combat parity.
 
 - Verify original YA potion combat-defense integration;
   recipient shield gain, scheduled ownership and live C72 expiry now have

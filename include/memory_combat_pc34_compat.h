@@ -153,6 +153,10 @@ struct CombatantChampionSnapshot_Compat {
     int woundDefense[6];
     int isResting;
     int partyShieldDefense;
+    /* Runtime-only F0313 body layer, independent of F0321 elemental
+     * subtraction. Legacy 76-byte snapshots cannot encode this split. */
+    int separateBodyShield;
+    int bodyShieldDefense;
     /* ReDMCSB CHAMPION.C BUG0_41 is emitted by the Megamax C Atari
      * builds: F0307 observes every statistic as zero.  This is selected
      * from verified source media at world handoff, never from a user toggle. */

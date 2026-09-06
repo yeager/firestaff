@@ -159,7 +159,7 @@ int F0733_COMBAT_GetChampionWoundDefense_Compat(
      * bake the expected value (vit>>4) into a deterministic add so callers of
      * F0733 get a stable defence number without consuming the rng. The
      * resolver F0736 re-introduces stochasticity at the Attack roll instead. */
-    adjusted = baseline + (champ->partyShieldDefense);
+    adjusted = baseline + (champ->separateBodyShield ? champ->bodyShieldDefense : champ->partyShieldDefense);
     adjusted = adjusted + ((WoundDefenseFactor[woundSlotIndex] * champ->statisticVitality) >> 8);
 
     if (useSharpDefense) {
@@ -223,7 +223,7 @@ int F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
     }
 
     adjusted = champ->woundDefense[woundSlotIndex] +
-        champ->partyShieldDefense + randomVitality;
+        (champ->separateBodyShield ? champ->bodyShieldDefense : champ->partyShieldDefense) + randomVitality;
 
     /* ReDMCSB CHAMPION.C F0313 lines 1364-1366 subtracts
      * 8 + M004_RANDOM(4) for an already-wounded target slot. */
@@ -1487,6 +1487,9 @@ int F0744_COMBAT_ChampionSnapshotSerialize_Compat(
     int i;
     if (champ == 0 || outBuf == 0) return 0;
     if (outBufSize < COMBATANT_CHAMPION_SERIALIZED_SIZE) return 0;
+    /* The legacy format has one shield field; never silently lose the
+     * independent F0313 runtime layer. Savegame formats are unchanged. */
+    if (champ->separateBodyShield) return 0;
 
     write_i32_le(outBuf +  0, champ->championIndex);
     write_i32_le(outBuf +  4, champ->currentHealth);
@@ -1515,6 +1518,8 @@ int F0745_COMBAT_ChampionSnapshotDeserialize_Compat(
     int i;
     if (champ == 0 || buf == 0) return 0;
     if (bufSize < COMBATANT_CHAMPION_SERIALIZED_SIZE) return 0;
+    champ->separateBodyShield = 0;
+    champ->bodyShieldDefense = 0;
 
     champ->championIndex      = read_i32_le(buf +  0);
     champ->currentHealth      = read_i32_le(buf +  4);

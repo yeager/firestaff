@@ -52656,6 +52656,12 @@ static int m11_build_projectile_defender_champion_snapshot(
      * F0313 body-defense scale.  For physical/lightning projectile
      * paths, fold action defense plus lifecycle/party shield defense into
      * the F0313 snapshot, matching the M10 dispatcher. */
+    /* CHAMPION.C F0313:1354 applies this body layer independently of
+     * F0321:1879-1883's spell/fire shield attack subtraction. */
+    outChampion->separateBodyShield = 1;
+    outChampion->bodyShieldDefense = champion->actionDefense +
+        world->lifecycle.champions[championIndex].shieldDefense +
+        world->magic.partyShieldDefense;
     if (attackType == COMBAT_ATTACK_MAGIC) {
         outChampion->partyShieldDefense = world->magic.spellShieldDefense;
     } else if (attackType == COMBAT_ATTACK_FIRE) {
