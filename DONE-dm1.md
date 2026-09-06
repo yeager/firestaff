@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Original scroll text ownership
+
+- Every original PC3.4 scroll tested through the eye now requires M11's
+  decoded source text to match that scroll's own C02 reference with F0341's
+  SCROLL/DECODE_EVEN_IF_INVISIBLE flags. Original and V2.1 pass with the
+  full original-object corpus.
+- This verifies owner/reference selection using the shared text decoder;
+  it does not independently validate decompression, localization or glyph
+  pixel parity.
+
 ## 2026-09-05 — Three-mode legacy launch matrix
 
 - Added V2.0 to the existing Original/V2.1 original-media CLI/menu matrix.

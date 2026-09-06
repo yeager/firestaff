@@ -272,6 +272,22 @@ static int check_type(M11_GameViewState *state, int thingType,
                     !state->v1ScrollPanelActive || state->v1ScrollPanelThing != thing ||
                     state->v1ObjectDescriptionPanelActive ||
                     M11_GameView_IsDialogOverlayActive(state)) scrollOk = 0;
+                {
+                    char expectedText[4096], presentedSource[4096];
+                    /* PANEL.C F0341 reads the held scroll's own C02
+                     * reference with SCROLL|DECODE_EVEN_IF_INVISIBLE.
+                     * Verify the M11 owner selection separately from the
+                     * common text decoder and presentation localization. */
+                    int length = F0508_DUNGEON_DecodeTextStringThing_Compat(
+                        state->world.things,
+                        state->world.things->scrolls[i].textStringThingIndex,
+                        DUNGEON_TEXT_TYPE_SCROLL | DUNGEON_TEXT_MASK_DECODE_EVEN_IF_INVISIBLE,
+                        expectedText, sizeof(expectedText));
+                    if (length <= 0 ||
+                        !DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+                            state, presentedSource, sizeof(presentedSource)) ||
+                        strcmp(expectedText, presentedSource) != 0) scrollOk = 0;
+                }
                 memset(framebuffer, 0, sizeof(framebuffer));
                 M11_GameView_Draw(state, framebuffer, 320, 200);
                 (void)M11_GameView_HandlePointerButtonRelease(state, 20, 54,

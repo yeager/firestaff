@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 original-scroll eye checks now assert source text equality
+  against each scroll's C02 reference, not merely successful panel routing.
+
 - 2026-09-05: DM1 legacy original-media launch matrix now covers V2.0 as
   well as Original/V2.1: all 36 CLI/menu launches across six editions pass.
 
