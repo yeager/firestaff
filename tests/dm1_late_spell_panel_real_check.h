@@ -152,6 +152,57 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
                          state->spellBuffer.runeCount==0 &&
                          state->world.party.champions[3].mana.current==49);
     }
+    if (towns) {
+        const M11_AssetSlot *movement=M11_AssetLoader_Load(&state->assetLoader,13);
+        LATE_SPELL_CHECK(movement && movement->loaded && movement->pixels);
+        printf("Original F20 %s movement C013: %dx%d\n",
+               yOffset ? "JP" : "EN", movement->width, movement->height);
+        const M11_AssetSlot *atlas=M11_AssetLoader_Load(&state->assetLoader,48);
+        const int cellY=yOffset?94:86, cellH=yOffset?62:35;
+        const int iconY=yOffset?117:96;
+        /* OBJECT.C F0036:318-342: icon201 is block48, local9 =>144,0.
+         * ACTIDRAW.C F0386:249-281 remaps palette12 to4, fills cyan,
+         * then centers that original16x16 icon in C089+slot. */
+        LATE_SPELL_CHECK(atlas && atlas->loaded && atlas->pixels &&
+                         atlas->width>=160 && atlas->height>=16);
+        state->actingChampionOrdinal=0;
+        state->candidateMirrorOrdinal=0;
+        state->candidateMirrorPanelActive=0;
+        state->resting=0;
+        for (mode=0;mode<3;++mode) for (int deadParity=0;deadParity<2;++deadParity) {
+            state->presentationMode=modes[mode];
+            for (i=0;i<4;++i) {
+                struct ChampionState_Compat *champion=&state->world.party.champions[i];
+                F0600_CHAMPION_InitEmpty_Compat(champion);
+                champion->present=1;
+                champion->hp.maximum=100;
+                champion->hp.current=((i&1)==deadParity)?100:0;
+            }
+            state->world.party.activeChampionIndex=deadParity;
+            memset(actual,0,sizeof(actual)); memset(expected,0,sizeof(expected));
+            M11_GameView_Draw(state,actual,320,200);
+            for (i=0;i<4;++i) {
+                int cellX=233+22*i;
+                if ((i&1)==deadParity) {
+                    for (y=cellY;y<cellY+cellH;++y)
+                        memset(expected+y*320+cellX,4,20);
+                    for (y=0;y<16;++y) for (x=0;x<16;++x) {
+                        unsigned char pixel=atlas->pixels[y*atlas->width+144+x];
+                        expected[(iconY+y)*320+cellX+2+x]=pixel==12?4:pixel;
+                    }
+                }
+                LATE_SPELL_CHECK(equal_box(actual,expected,cellX,cellY,20,cellH));
+            }
+            if (yOffset) {
+                LATE_SPELL_CHECK(movement->width==96 && movement->height==41);
+                for(y=0;y<41;++y)
+                    memcpy(expected+(159+y)*320+233,
+                           movement->pixels+y*96+9,87);
+                LATE_SPELL_CHECK(equal_box(actual,expected,233,159,87,41));
+            }
+        }
+        puts("PASS: original FM Towns idle action cells, all slots/alive-dead, three modes");
+    }
     puts("PASS authentic late spell panel: 24 pixel cases and three mode-specific mouse input cases");
     return 1;
 }

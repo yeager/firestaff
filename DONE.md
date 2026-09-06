@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: FM Towns idle action cells use original language-specific
+  icon centering; Japanese movement graphics use the96x41 source with its
+  nine-column parent clip. The Japanese message clear respects its224x33
+  container instead of erasing movement controls. Full original-media cell
+  and movement comparisons pass across three modes alongside spell/input
+  and DOS XP regressions (3/3 tests, no skips,10.98 seconds). Pointer,
+  hatching and Japanese text parity remain open.
+
 - 2026-09-06: Japanese FM Towns spell pointer coordinates now follow C013's
   eight-pixel displacement. Caster selection visits all four absolute slots.
   Original-media DOS/EN/JP tests cover parent opening, sparse slot-3 caster

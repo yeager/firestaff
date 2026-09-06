@@ -1,9 +1,9 @@
 # Firestaff TODO — active cross-game work
 
-- Resolve DM1 FM Towns Japanese action cells C089–C092, icon anchors
-  C093–C096 and hatching from the original JDM registry. The idle clear
-  correction alone does not fix these PC-coordinate consumers. The active
-  Japanese menu also still calls the English-only backdrop resolver.
+- Resolve DM1 FM Towns Japanese action/movement pointer regions and verify
+  hatching against the original JDM registry. Verify Japanese message
+  wrapping and glyph metrics within its224x33 container. The active
+  Japanese menu still calls the English-only backdrop resolver.
   Extend Japanese spell input verification to casting and outside-parent
   boundaries; verify Japanese text separately from the ASCII/rune oracle.
 

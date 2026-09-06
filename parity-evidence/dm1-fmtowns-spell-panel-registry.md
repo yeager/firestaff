@@ -88,3 +88,17 @@ subtracts half its extent with the source rounding convention.
 The Japanese icon displacement is 21 pixels, not eight: the parent
 height also changes. These are recovered target coordinates, not a claim
 that the current icon renderer or pointer consumers implement them.
+
+## Movement and message-container overlap regression
+
+The original-media loader reports EN C013 movement graphics as87x45 and
+JP as96x41. JDM C008=(9,2,87,41), C009=(3,8,319,199) places the
+Japanese source at224,159 and clips its first9columns through the87-wide
+parent. MENUDRAW.C F0395:16 calls F0660 without the legacy DOS-box clear.
+The full-cell oracle exposed that incorrect clear at(233,124).
+
+After correcting movement placement, a full87x41 movement-image comparison
+exposed a second overpaint at(233,173): the DOS message-area clear.
+JDM C014=(9,2,224,33), C015=(4,14,0,199) defines the adjacent message
+container at(0,167),224x33. Correcting its clear is separate from proving
+Japanese text wrapping, glyph metrics and input/movement hit regions.

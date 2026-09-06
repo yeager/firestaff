@@ -57153,6 +57153,20 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         innerW = iconReceipt.inner_rect.w;
         innerH = iconReceipt.inner_rect.h;
 
+        /* ACTIDRAW.C F0386:235,280-288 uses C089+slot for fill/hatch
+         * and C093+slot for the centered icon. JDM C088 is20x62,
+         * not EDM's20x35; COORD.C:2177 centers in that larger parent.
+         * Original registry evidence: dm1-fmtowns-spell-panel-registry.md. */
+        if (state->dm1FmtownsStartupReceiptValid) {
+            if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+                cellY = 94;
+                cellH = 62;
+                innerY = 117;
+            } else if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+                innerY = 96;
+            }
+        }
+
         if (iconReceipt.draw_dead_only) {
             /* DM1: FillBox BLACK then return — no icon for dead. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -58729,6 +58743,18 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
         !m11_v1_chrome_mode_enabled(state) ||
         (m11_v2_vertical_slice_enabled(state) &&
          state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
+        return;
+    }
+    if (state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+        /* MENUDRAW.C F0395:16 delegates to F0660 without a DOS-box
+         * clear. Original JDM C008=(9,2,87,41), C009=(3,8,319,199).
+         * COORD.C F0635:2333-2338 anchors authentic C013 (96x41)
+         * at224,159, then the parent clip advances sourceX by9.
+         * PC feedback rectangles are not Japanese source geometry. */
+        (void)m11_blit_panel_asset_region_native(state, framebuffer,
+            framebufferWidth, framebufferHeight, 13, 96, 41,
+            9, 0, 87, 41, 233, 159);
         return;
     }
     if (!dm1_v1_movement_arrows_outer_rect_pc34(&outerRect) ||
@@ -65798,6 +65824,15 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
     messageY = messageRect.y;
     messageW = messageRect.w;
     messageH = messageRect.h;
+    /* Original JDM root C014=(9,2,224,33), C015=(4,14,0,199).
+     * F0049 clears this container, not the DOS full-width message strip;
+     * the Japanese movement controls occupy its right-hand neighbour. */
+    if (state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+        messageY = 167;
+        messageW = 224;
+        messageH = 33;
+    }
 
     /* ReDMCSB TEXT.C owns C015_ZONE_MESSAGE_AREA as a full-width black
      * scrolling text surface: C014 is the 320x27 bottom container,
