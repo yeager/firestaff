@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Original scroll text raster placement
+
+- The PC3.4 scroll eye corpus reconstructs the C023 panel and scroll-font
+  ink with a separate character-remapping and pixel-placement loop. Its
+  panel-area comparisons pass in Original and V2.1 alongside the full
+  object corpus.
+- Text layout and M653 pixel decoding remain shared with production. The
+  comparison preserves actual pixels behind transparency, so it does not
+  independently prove those pixels, font decoding or full emulator parity.
+
 ## 2026-09-06 — Original scroll panel border
 
 - Every PC3.4 original scroll eye transaction now compares the visible

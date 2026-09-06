@@ -1,5 +1,7 @@
 #include "m11_game_view.h"
 #include "asset_loader_m11.h"
+#include "dm1_v1_text_message_pc34_compat.h"
+#include "font_m11.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
@@ -306,6 +308,44 @@ static int check_type(M11_GameViewState *state, int thingType,
                         ++checkedPixels;
                     }
                     if (!checkedPixels) scrollOk = 0;
+                    if (panel && panel->pixels && panel->width == 144 && panel->height == 73) {
+                        unsigned char expected[320 * 200];
+                        char text[4096];
+                        DM1_V1_ScrollLayout layout;
+                        memcpy(expected, framebuffer, sizeof(expected));
+                        for (int py = 0; py < 73; ++py) for (int px = 0; px < 144; ++px)
+                            if (panel->pixels[py * 144 + px] != 8)
+                                expected[(85 + py) * 320 + 80 + px] = panel->pixels[py * 144 + px];
+                        if (!DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
+                                state, text, sizeof(text))) scrollOk = 0;
+                        else {
+                            dm1_v1_text_scroll_measure_layout(text, &layout);
+                            /* PANEL.C F0340 maps letters to M653's scroll
+                             * alphabet and centers six-pixel character cells.
+                             * Layout/font decoding are shared; raster placement
+                             * and remapping are checked independently here. */
+                            for (int line = 0; line < layout.storedLineCount; ++line) {
+                                int length = (int)strlen(layout.lines[line]);
+                                for (int character = 0; character < length; ++character) {
+                                    unsigned char code = (unsigned char)layout.lines[line][character];
+                                    if (code >= 'A' && code <= 'Z') code -= 64;
+                                    else if (code >= '{') code -= 96;
+                                    for (int y = 0; y < M11_FONT_CHAR_VISIBLE_H; ++y)
+                                        for (int x = 0; x < 5; ++x) {
+                                            int dx = 162 - length * 3 + character * 6 + x;
+                                            int dy = 33 + layout.firstLineY + line * DM1_V1_TEXT_LINE_HEIGHT + y;
+                                            if (dx >= 0 && dx < 320 && dy >= 0 && dy < 200 &&
+                                                M11_Font_GetPixel(&state->originalFont,
+                                                    code * M11_FONT_CHAR_CELL_WIDTH + M11_FONT_X_OFFSET + x, y))
+                                                expected[dy * 320 + dx] = 0;
+                                        }
+                                }
+                            }
+                            for (int py = 0; py < 73; ++py) for (int px = 0; px < 144; ++px)
+                                if (expected[(85 + py) * 320 + 80 + px] != framebuffer[(85 + py) * 320 + 80 + px])
+                                    scrollOk = 0;
+                        }
+                    }
                 }
                 (void)M11_GameView_HandlePointerButtonRelease(state, 20, 54,
                     DM1_V1_MOUSE_MASK_LEFT_PC34);
