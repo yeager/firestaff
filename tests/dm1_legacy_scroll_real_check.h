@@ -59,9 +59,22 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
             if (!raw) return 0;
             if (raw[0] == 0xff && raw[1] == 0xff) continue;
             {
-                int info = dm1_v1_dungeon_get_object_info_index_pc34(state->world.things, thing);
+                /* F0141 DUNGEON.C:1136-1163. Runtime dungeon records
+                 * are normalized little-endian; original G0237 remains
+                 * big-endian. Decode independently of the subtype/index
+                 * helpers whose result this oracle is checking. */
+                unsigned int word = raw[2] | ((unsigned int)raw[3] << 8);
+                int info = type == THING_TYPE_SCROLL ? 0 :
+                    type == THING_TYPE_CONTAINER ? 1 + ((raw[4] >> 1) & 3) :
+                    type == THING_TYPE_POTION ? 2 + ((word >> 8) & 127) :
+                    type == THING_TYPE_WEAPON ? 23 + (word & 127) :
+                    type == THING_TYPE_ARMOUR ? 69 + (word & 127) : 127 + (word & 127);
                 const unsigned char *entry;
                 if (info < 0 || info >= 180) return 0;
+                if (dm1_v1_dungeon_get_object_info_index_pc34(state->world.things, thing) != info) {
+                    fprintf(stderr, "FAIL: original F0141 index thing=%04x expected=%d\n", thing, info);
+                    return 0;
+                }
                 entry = objectData + objectOffset + (size_t)info * 6;
                 mask = ((unsigned int)entry[4] << 8) | entry[5];
                 if (dm1_v1_dungeon_get_object_allowed_slots_pc34(state->world.things, thing) != mask) {

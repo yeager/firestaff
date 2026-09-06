@@ -1,5 +1,17 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Independent F0141 equipment-oracle indices
+
+- The Atari/Amiga equipment oracle now decodes each object-info index
+  directly from the normalized Thing bytes using DUNGEON.C F0141's
+  category offsets, rather than calling the runtime index/subtype helper
+  to choose the expected G0237 row. The runtime index is also compared
+  explicitly to that independently computed value.
+- All five original-media tests pass, including the complete all-slot
+  placement/rejection corpus. Archive ingestion, dungeon normalization
+  and slot coordinates remain shared dependencies; this does not prove
+  complete original-runtime parity.
+
 ## 2026-09-06 — Legacy equipment-slot acceptance and rejection
 
 - All 606 allocated original object records now visit all 30 inventory

@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Legacy DM1 equipment tests independently decode F0141
+  object-info indices from normalized dungeon bytes before selecting
+  original G0237 masks. All five edition tests pass.
+
 - 2026-09-06: Five original DM1 Atari/Amiga editions pass 307,900
   placement, pickup and rejection checks across all 30 inventory slots
   in Original/V2.1, using original G0237 masks and source G0038 rules.
