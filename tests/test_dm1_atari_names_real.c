@@ -120,9 +120,15 @@ int main(int argc, char **argv) {
         CsbV1AtariStSoundPayload sound = {0};
         CsbV1StSoundDecodeResult decodedSound = {0};
         int decodeStatus;
+        errno = 0;
         if (!csb_v1_audio_runtime_load_atari_st_sound_payload(
                 state->assetLoader.graphicsDatPath, (int16_t)i, &sound)) {
-            fprintf(stderr, "FAIL: original Atari SND1 source index %d\n", i);
+            int savedErrno = errno;
+            const CsbV1AtariStSoundSpec *spec = csb_v1_audio_runtime_atari_st_sound_spec((int16_t)i);
+            int residentBytes = spec ? dm1_v1_atari_st_graphics_read(&dat,
+                spec->graphicIndex, raw, sizeof(raw)) : -1;
+            fprintf(stderr, "FAIL: original Atari SND1 source index %d errno=%d residentBytes=%d path=%s\n",
+                i, savedErrno, residentBytes, state->assetLoader.graphicsDatPath);
             goto done;
         }
         count = dm1_v1_atari_st_graphics_read(&dat, sound.spec.graphicIndex,

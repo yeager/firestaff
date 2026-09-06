@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added failure-only Atari sound-load diagnostics recording
+  errno and an independent read from resident original graphics bytes.
+  Forty French Atari test repetitions passed without reproducing the
+  intermittent failure. This is diagnostic coverage, not a stability fix.
+
 - 2026-09-06: Extended VI's independent wound/final-seed checks to six
   individual wound bits through alternate UseItem; combined wounds retain
   mouth coverage. MON/EE also exercise both routes. Full twenty-case rerun
