@@ -492,6 +492,21 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 ++found;
                             }
                             if (found != 1) return 0;
+                            {
+                                unsigned int expires = state->world.gameTick + (unsigned int)(delta * delta);
+                                while (state->world.gameTick <= expires) {
+                                    unsigned int before = state->world.gameTick;
+                                    (void)M11_GameView_AdvanceIdleTick(state);
+                                    if (state->world.gameTick <= before) return 0;
+                                    int expectedShield = before < expires ? baseline + delta : baseline;
+                                    if (state->world.lifecycle.champions[1].shieldDefense != expectedShield ||
+                                        state->world.lifecycle.champions[0].shieldDefense != 7 ||
+                                        state->world.magic.partyShieldDefense != 11 ||
+                                        state->world.lifecycle.status.partyShieldDefense != 11) {
+                                        fprintf(stderr, "FAIL: YA expiry tick/owner\n"); return 0;
+                                    }
+                                }
+                            }
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
                         unsigned short deathExtra = THING_NONE;

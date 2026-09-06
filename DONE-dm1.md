@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Original YA tests now advance every ordinary idle tick
+  through C72 expiry while inventory remains open. All twenty cases
+  preserve the shield until the due processing tick, then subtract only
+  the potion delta from its recipient. Leader and party shields remain
+  unchanged in both normal and above-50 diminishing-return cases.
+
 - 2026-09-06: Fixed YA potion ownership: both M11 consumable bridges
   now read/write the recipient's champion shield, not party shield, and
   C72 records that recipient as Priority. Five original editions reproduced

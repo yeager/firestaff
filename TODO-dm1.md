@@ -1,7 +1,8 @@
 # Firestaff TODO — DM1
 
-- Verify original YA potion C72 expiry and combat-defense integration;
-  recipient shield gain and scheduled ownership now have real-media tests.
+- Verify original YA potion combat-defense integration;
+  recipient shield gain, scheduled ownership and live C72 expiry now have
+  real-media tests.
 
 - Extend the inventory-open idle-tick regression to other damage sources,
   torch/status expiry and Modern presentation modes.

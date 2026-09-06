@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 original YA protection expires on the correct live tick
+  for only its recipient in twenty real-media regression cases.
+
 - 2026-09-06: DM1 YA potions now give individual recipient shield and
   schedule C72 for that champion, verified using original potion records.
 
