@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Rebuilt and reran the broader thirteen-test original-media
+  suite after the consumable changes: PC3.4 native boot, six edition launch
+  profiles through CLI/menu in v1/v20/v21, and six original object corpora
+  all pass. No missing-media skips. These checks do not prove emulator
+  pixel/timing parity or complete gameplay.
+
 - 2026-09-06: Connected successful mouth and alternative consumption to the
   edition-owned C08 swallow sound transport. Twenty original Atari/Amiga
   cases pass, asserting accepted C08 for food and alternative water use and
