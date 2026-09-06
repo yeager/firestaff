@@ -1,5 +1,16 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1/CSB spell panel close/open no longer writes a cleared
+  host buffer into the champion's paid incantation. F0394 clears selection
+  and display only; reopening restores champion-owned symbols/step. CSB
+  resolves its caster from runtime state. DM1 DOS/F20 original-asset RAM
+  fixtures preserve a non-leader's runes/champion/mana through public
+  reopen/reselection; F31 original-party tests additionally compare the
+  black closed panel and unchanged source RNG across EN/JP and all three
+  modes. Production build, seven regressions (36.71s, no skips) and four
+  additional door-spell/Nexus/input/skill regressions (1.49s) pass.
+  This is not an original-emulator timing or successful CSB cast claim.
+
 - 2026-09-06: Removed the unused false Zokathra fireball helper, header
   and test target; corrected its direct documentation claims against
   MENU.C:1994-2027. Genuine DM1 object-creation tests remain. Added the

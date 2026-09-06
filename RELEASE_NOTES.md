@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 and CSB retain paid runes when closing and reopening the spell panel.
+  Closing clears the caster selection and display, not the champion's
+  incantation; reopening no longer silently discards it.
+
 - Removed an unused, incorrect Zokathra fireball model and its misleading
   test. Zokathra is an object-creation spell in both DM1 and CSB; this
   cleanup does not claim that CSB's full spell executor is implemented.

@@ -2471,6 +2471,46 @@ int main(void)
                     view.dm1SpellCasting.magicCasterIndex = savedCaster;
                 }
                 {
+                    CSB_V1_Champion savedChampion;
+                    uint32_t savedRandom = live_profile->runtime.csbwin_random_seed;
+                    int savedRuneCount = view.spellBuffer.runeCount;
+                    memcpy(&savedChampion, &live_profile->runtime.party_state.Champions[caster],
+                        sizeof(savedChampion));
+                    CHECK(M11_GameView_CloseSpellPanel(&view) && !view.spellPanelOpen &&
+                              live_profile->runtime.magic_caster_index == -1 &&
+                              live_profile->runtime.party_state.MagicCasterIndex == -1,
+                          "F31 close clears both source caster selectors");
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    mismatch = 0;
+                    for (int y = 0; y < 33; ++y)
+                        for (int x = 0; x < 87; ++x)
+                            if (framebuffer[(42 + offsetY + y) * 320 + 233 + x] != 0)
+                                ++mismatch;
+                    CHECK(mismatch == 0,
+                          "F31 closed source spell panel is black across C012 in every mode");
+                    CHECK(memcmp(&savedChampion,
+                              &live_profile->runtime.party_state.Champions[caster],
+                              sizeof(savedChampion)) == 0 &&
+                              live_profile->runtime.csbwin_random_seed == savedRandom,
+                          "F31 close and draw preserve the whole paid-rune champion and source RNG");
+                    (void)M11_GameView_HandlePointerButton(&view, 319, 74 + offsetY,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34);
+                    CHECK(view.spellPanelOpen &&
+                              live_profile->runtime.magic_caster_index == caster &&
+                              live_profile->runtime.party_state.MagicCasterIndex == caster &&
+                              view.spellBuffer.runeCount == savedRuneCount,
+                          "F31 public reopen restores the source caster and paid incantation length");
+                    for (int rune = 0; rune < savedRuneCount && rune < 4; ++rune)
+                        CHECK(view.spellBuffer.runes[rune] ==
+                                  (unsigned char)savedChampion.Incantation[rune],
+                              "F31 public reopen restores each original paid rune");
+                    CHECK(memcmp(&savedChampion,
+                              &live_profile->runtime.party_state.Champions[caster],
+                              sizeof(savedChampion)) == 0 &&
+                              live_profile->runtime.csbwin_random_seed == savedRandom,
+                          "F31 public reopen does not debit mana or mutate source champion/RNG state");
+                }
+                {
                     int before = view.spellBuffer.runeCount;
                     (void)M11_GameView_HandlePointerButton(&view, 311, 70 + offsetY,
                         DM1_V1_MOUSE_MASK_LEFT_PC34);

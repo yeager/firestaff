@@ -20039,12 +20039,44 @@ int M11_GameView_OpenSpellPanel(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_open_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (m11_source_is_csb(state)) {
+        CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+        int caster;
+        if (!profile || !profile->runtime.party_state_valid) return 0;
+        caster = profile->runtime.magic_caster_index;
+        if (caster < 0) caster = profile->runtime.leader_index;
+        if (caster < 0 || caster >= profile->runtime.party_state.ChampionCount ||
+            caster >= CHAMPION_MAX_PARTY ||
+            profile->runtime.party_state.Champions[caster].SymbolStep > 3u) return 0;
+        if (csb_v1_runtime_set_magic_caster(&profile->runtime, caster) < 0) return 0;
+        state->dm1SpellCasting.magicCasterIndex = caster;
+        if (!m11_csb_spell_sync_runtime_to_legacy(state)) return 0;
+        {
+            DM1_ChampionSpellInput *input = &state->dm1SpellCasting.input[caster];
+            int rune;
+            memset(input->symbols, 0, sizeof(input->symbols));
+            for (rune = 0; rune < state->spellBuffer.runeCount && rune < DM1_MAX_SPELL_SYMBOLS; ++rune)
+                input->symbols[rune] = (char)state->spellBuffer.runes[rune];
+            input->symbolStep = (uint8_t)state->spellRuneRow;
+        }
+        /* CASTER.C F0394:88-98 draws existing Symbols/SymbolStep. Opening
+         * is not F0408's completed-cast or F0400's recant transaction. */
+        state->spellPanelOpen = 1;
+        return 1;
+    }
     if (state && state->dm1SpellCasting.magicCasterIndex < 0 &&
         !m11_dm1_spell_select_caster(
             state, state->world.party.activeChampionIndex)) {
         return 0;
     }
-    m11_apply_dm1_spell_panel_receipt(state, &receipt);
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        /* The selected champion owns the retained runes, not the panel's
+         * legacy open receipt (which describes an empty host buffer). */
+        m11_dm1_spell_sync_caster_to_legacy(state);
+        state->spellPanelOpen = 1;
+    } else {
+        m11_apply_dm1_spell_panel_receipt(state, &receipt);
+    }
     m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: SPELL PANEL OPENED",
                   (unsigned int)state->world.gameTick);
     return 1;
@@ -20056,6 +20088,19 @@ int M11_GameView_CloseSpellPanel(M11_GameViewState* state) {
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_close_pc34(&panel);
     if (!receipt.accepted) return 0;
+    if (state && (m11_is_dm1_source_kind(state->sourceKind) || m11_source_is_csb(state))) {
+        /* CASTER.C F0394:17,75-86: CM1 clears only selection and C013.
+         * Never publish the cleared presentation buffer into Symbols. */
+        if (m11_source_is_csb(state)) {
+            CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+            if (!profile || csb_v1_runtime_set_magic_caster(&profile->runtime, -1) < 0) return 0;
+        }
+        state->spellPanelOpen = 0;
+        state->dm1SpellCasting.magicCasterIndex = -1;
+        state->spellRuneRow = 0;
+        memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+        return 1;
+    }
     m11_apply_dm1_spell_panel_receipt(state, &receipt);
     return 1;
 }

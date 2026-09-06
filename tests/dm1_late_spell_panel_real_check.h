@@ -144,6 +144,32 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
         LATE_SPELL_CHECK(state->dm1SpellCasting.input[3].symbols[0]==96 &&
                          state->dm1SpellCasting.input[3].symbolStep==1 &&
                          state->spellBuffer.runeCount==1);
+        {
+            struct ChampionState_Compat savedChampion;
+            unsigned char savedInput[sizeof(state->dm1SpellCasting.input[3])];
+            memcpy(&savedChampion,&state->world.party.champions[3],sizeof(savedChampion));
+            memcpy(savedInput,&state->dm1SpellCasting.input[3],sizeof(savedInput));
+            /* This is the existing RAM champion fixture over authentic
+             * edition graphics, not a natural-route emulator capture.
+             * F0394 changes selection, not the paid champion incantation. */
+            LATE_SPELL_CHECK(M11_GameView_CloseSpellPanel(state));
+            LATE_SPELL_CHECK(!state->spellPanelOpen &&
+                             state->dm1SpellCasting.magicCasterIndex==-1);
+            LATE_SPELL_CHECK(memcmp(savedInput,&state->dm1SpellCasting.input[3],sizeof(savedInput))==0);
+            LATE_SPELL_CHECK(memcmp(&savedChampion,&state->world.party.champions[3],sizeof(savedChampion))==0);
+            (void)M11_GameView_HandlePointer(state,319,74+yOffset,1);
+            (void)M11_GameView_HandlePointer(state,319,74+yOffset,0);
+            (void)M11_GameView_HandlePointer(state,309,43+yOffset,1);
+            (void)M11_GameView_HandlePointer(state,309,43+yOffset,0);
+            LATE_SPELL_CHECK(state->spellPanelOpen &&
+                             state->dm1SpellCasting.magicCasterIndex==3 &&
+                             state->spellBuffer.runeCount==1 &&
+                             state->spellBuffer.runes[0]==96);
+            LATE_SPELL_CHECK(memcmp(savedInput,&state->dm1SpellCasting.input[3],sizeof(savedInput))==0);
+            LATE_SPELL_CHECK(memcmp(&savedChampion,&state->world.party.champions[3],sizeof(savedChampion))==0);
+            LATE_SPELL_CHECK(state->world.party.activeChampionIndex==0 &&
+                             state->world.party.champions[0].mana.current==50);
+        }
         /* F0400 removes the symbol without refunding its mana cost. */
         (void)M11_GameView_HandlePointer(state,305,63+yOffset,1);
         (void)M11_GameView_HandlePointer(state,305,63+yOffset,0);

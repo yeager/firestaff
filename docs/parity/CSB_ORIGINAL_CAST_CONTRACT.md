@@ -52,5 +52,7 @@ completion gate. Genuine DM1 object-allocation regressions remain relevant.
 
 F0394's -1 no-caster selector is a distinct operation: CASTER.C:17,75-86
 clears the spell surface without changing champion incantations or mana.
-Its runtime setter contract is tested separately; host panel-close behavior
-still needs a complete source-owner audit.
+The runtime setter and host panel close/reopen now preserve champion data.
+F31 EN/JP original-media tests verify the black closed panel, retained paid
+runes, unchanged champion/mana/RNG and public-pointer reopening across all
+three modes. This does not establish the F0408/F0412 cast transaction above.
