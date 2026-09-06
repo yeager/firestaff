@@ -27,8 +27,11 @@ int main(void)
     world.newPartyMapIndex = -1;
     world.masterRng.seed = 1;
     expectedRng = world.masterRng;
-    (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng); /* F0412 XP sample. */
+    /* Independent BASE.C F0027 vector: seed 1 -> 0xbb40e638,
+     * returned word 0x40e6 (16614), hence RANDOM(8) == 6. */
+    assert(((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 65535u) == 16614u);
     assert(((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 127u) > 15u);
+    assert(expectedRng.seed == UINT32_C(2940127203));
     world.party.championCount = 1;
     world.party.champions[0].present = 1;
     world.party.champions[0].hp.current = 100;

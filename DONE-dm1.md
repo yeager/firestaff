@@ -1480,6 +1480,12 @@ Reviewed 2026-08-29. Completed work only.
   pending the integration and edition-routing work recorded in TODO-dm1.md.
 # F0412 potion practice boundary regression (2026-09-06)
 
+- Expanded post-fix verification: spell lookup, spell duration, potion
+  power, spell-casting receipt and tick-source-ownership tests all pass
+  after rebuilding their five targets. Added literal BASE.C seed-1 sample
+  and second-state anchors to avoid relying solely on the runtime RNG helper
+  when calculating the failure-path oracle.
+
 - M10 now rejects unknown spell-table indices before consuming the XP RNG
   sample, following MENU.C F0412:1816-1826. Added a seed-preservation
   regression: it fails on the previous implementation and passes after
