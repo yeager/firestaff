@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 fixed monster drops no longer consume floor-cell randomness when the
+  item pool cannot allocate the drop, preserving subsequent random decisions.
+
 - Death smoke continues fading and retires correctly when other explosion
   records occupy the same cell.
 

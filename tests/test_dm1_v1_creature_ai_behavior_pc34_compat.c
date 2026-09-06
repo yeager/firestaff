@@ -1329,6 +1329,64 @@ static void test_attack_any_back_row_bypasses_cell_adjust(void) {
 /* =========================================================
  *  Test 21: Source fixed possession table: Animated Armour
  * ========================================================= */
+struct FixedDropPoolTest {
+    int freeSlots, count;
+    struct DM1FixedPossessionDrop_Compat drops[3];
+};
+
+static int fixed_drop_reserve_test(void* opaque,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    struct FixedDropPoolTest* pool = opaque;
+    EXPECT_EQ(drop->itemType, 34, "worm allocation receives round type");
+    if (!pool->freeSlots) return 0;
+    --pool->freeSlots;
+    return 1;
+}
+
+static void fixed_drop_publish_test(void* opaque,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    struct FixedDropPoolTest* pool = opaque;
+    if (pool->count < 3) pool->drops[pool->count++] = *drop;
+}
+
+static void test_fixed_possessions_pool_rng_order(void)
+{
+    int seed, capacity, source;
+    /* Bounded pool fixture; GROUP.C F0186:610-643 and DUNGEON.C:543-547.
+     * The oracle interleaves optional choice, allocation, then cell RNG. */
+    for (seed = 1; seed <= 32; ++seed)
+    for (capacity = 0; capacity <= 3; ++capacity)
+    for (source = 0; source < 2; ++source) {
+        struct RngState_Compat actual = make_rng(seed), expected = make_rng(seed);
+        struct FixedDropPoolTest pool = {0};
+        int cells[3], ordinals[3], count = 0, ordinal, weapon = -1;
+        int sourceCell = source ? 255 : 2;
+        pool.freeSlots = capacity;
+        for (ordinal = 1; ordinal <= 3; ++ordinal) {
+            int cell;
+            if (ordinal > 1 && F0732_COMBAT_RngRandom_Compat(&expected, 2)) continue;
+            if (count == capacity) continue;
+            cell = sourceCell;
+            if (sourceCell == 255 || !F0732_COMBAT_RngRandom_Compat(&expected, 4))
+                cell = F0732_COMBAT_RngRandom_Compat(&expected, 4);
+            cells[count] = cell;
+            ordinals[count++] = ordinal;
+        }
+        EXPECT_EQ(F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
+            15, sourceCell, &actual, fixed_drop_reserve_test,
+            fixed_drop_publish_test, &pool, &weapon), 1, "streamed worm drops");
+        EXPECT_EQ(actual.seed, expected.seed, "allocation failure preserves source RNG order");
+        EXPECT_EQ(pool.count, count, "pool-limited optional drop count");
+        EXPECT_EQ(weapon, 0, "worm has no weapon sound");
+        for (ordinal = 0; ordinal < count; ++ordinal) {
+            EXPECT_EQ(pool.drops[ordinal].cell, cells[ordinal], "source drop cell");
+            EXPECT_EQ(pool.drops[ordinal].sourceOrdinal, ordinals[ordinal], "source optional ordinal");
+        }
+    }
+}
+
 static void test_fixed_possessions_animated_armour_are_cursed(void) {
     struct RngState_Compat rng = make_rng(1);
     struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
@@ -1939,6 +1997,7 @@ int main(void) {
     test_quarter_square_melee_cell_adjusts_before_attack();
     test_attack_any_back_row_bypasses_cell_adjust();
     test_fixed_possessions_animated_armour_are_cursed();
+    test_fixed_possessions_pool_rng_order();
     test_fixed_possessions_rockpile_random_flags();
     test_fixed_possessions_dragon_steak_table();
     test_wizard_eye_promoted_to_full();

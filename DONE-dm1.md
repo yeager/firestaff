@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: DM1 M10/M11 fixed drops now reserve before cell RNG and
+  publish before the next optional decision (ReDMCSB GROUP.C F0186:610-643).
+  The bounded helper matrix covers 256 seed/capacity/cell cases; the behavior
+  gate passes 2,489 checks, eight explosion cases pass (including zero/one-slot
+  ownership), and the M11 runtime gate
+  passes 138 checks including zero/one free-slot exhaustion. Evidence scope:
+  `docs/parity/DM1_FIXED_DROP_ALLOCATION_ORDER.md`.
+
 - 2026-09-06: M10 explosion death now has direct fixed-possession coverage,
   separate from the M11 helper gate. A two-worm group with six free C10
   records produces 2-6 worm rounds (DUNGEON.C G0252:543-547), with matching

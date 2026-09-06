@@ -652,7 +652,52 @@ static void test_killed_all_rejects_drifted_c04_or_wrong_source_square(void) {
               "wrong source square leaves LoS active-group ownership intact");
 }
 
+static void test_worm_exhausted_pool_rng(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char mapTiles[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[12];
+    unsigned short squareFirstThings[1];
+    unsigned char weaponRaw[8][4], armourRaw[8][4], junkRaw[12][4];
+    int capacity, source, i;
+    /* Source-shaped RAM fixture, not captured original gameplay. F0186
+     * skips cell RNG when F0166 cannot reserve the next junk record. */
+    for (capacity = 0; capacity <= 1; ++capacity)
+    for (source = 0; source < 2; ++source) {
+        struct RngState_Compat expected;
+        int cell = source ? 255 : 2;
+        seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
+            weapons, armours, junks, squareFirstThings, weaponRaw, armourRaw, junkRaw);
+        for (i = capacity; i < 12; ++i) {
+            junks[i].next = THING_ENDOFLIST;
+            junkRaw[i][0] = 0xFE;
+            junkRaw[i][1] = 0xFF;
+        }
+        expected = state.world.masterRng;
+        if (capacity && (cell == 255 || !F0732_COMBAT_RngRandom_Compat(&expected, 4)))
+            cell = F0732_COMBAT_RngRandom_Compat(&expected, 4);
+        /* Both optional choices still draw even though no slots remain. */
+        (void)F0732_COMBAT_RngRandom_Compat(&expected, 2);
+        (void)F0732_COMBAT_RngRandom_Compat(&expected, 2);
+        ASSERT_EQ(M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+            &state, 15, source ? 255 : 2, 0, 0, 0), capacity,
+            "worm obeys exhausted source pool");
+        ASSERT_EQ(state.world.masterRng.seed, expected.seed, "runtime source RNG after allocation failure");
+        ASSERT_EQ(count_square_chain(&things), capacity, "no invented pool records");
+        if (capacity) {
+            ASSERT_EQ(THING_GET_CELL(squareFirstThings[0]), cell, "runtime cell matches original order");
+            ASSERT_EQ(junks[0].next, next_for_thing(&things, squareFirstThings[0]), "raw/decoded next agrees");
+        }
+    }
+}
+
 int main(void) {
+    test_worm_exhausted_pool_rng();
     printf("M11 creature fixed possession runtime source-lock gate\n");
     printf("Source: ReDMCSB GROUP.C F0186/F0188, DUNGEON.C F0166, MOVESENS.C F0267\n\n");
 

@@ -7853,6 +7853,40 @@ static int orch_drop_group_fixed_possessions_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static unsigned short orch_allocate_fixed_possession_thing_compat(
+    struct DungeonThings_Compat* things,
+    const struct DM1FixedPossessionDrop_Compat* drop);
+static int orch_link_thing_to_square_tail_compat(
+    struct GameWorld_Compat* world, int mapIndex, int mapX, int mapY,
+    unsigned short thing);
+
+struct OrchFixedDropContext {
+    struct GameWorld_Compat* world;
+    int mapIndex, mapX, mapY, droppedAny;
+    unsigned short thing;
+};
+
+static int orch_reserve_fixed_drop(void* opaque,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    struct OrchFixedDropContext* ctx = opaque;
+    ctx->thing = orch_allocate_fixed_possession_thing_compat(ctx->world->things, drop);
+    return ctx->thing != THING_NONE;
+}
+
+static void orch_publish_fixed_drop(void* opaque,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    struct OrchFixedDropContext* ctx = opaque;
+    unsigned short thing = (unsigned short)((ctx->thing & 0x3FFFu) |
+                                           ((unsigned)drop->cell << 14));
+    if (orch_link_thing_to_square_tail_compat(ctx->world, ctx->mapIndex,
+                                            ctx->mapX, ctx->mapY, thing))
+        ctx->droppedAny = 1;
+    else
+        (void)orch_set_next_thing_compat(ctx->world->things, thing, THING_NONE);
+}
+
 static int orch_drop_creature_fixed_possessions_compat(
     struct GameWorld_Compat* world,
     int creatureType,
@@ -10384,35 +10418,20 @@ static int orch_drop_creature_fixed_possessions_compat(
     int mapY,
     int* outSoundId)
 {
-    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
-    int dropCount = 0;
+    struct OrchFixedDropContext ctx = {world, mapIndex, mapX, mapY, 0, THING_NONE};
     int weaponDropped = 0;
-    int droppedAny = 0;
-    int i;
 
     if (outSoundId) *outSoundId = -1;
     if (!world || !world->things) return 0;
-    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
-            creatureType, sourceCell, &world->masterRng, drops,
-            DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
+    if (!F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
+            creatureType, sourceCell, &world->masterRng,
+            orch_reserve_fixed_drop, orch_publish_fixed_drop, &ctx, &weaponDropped)) {
         return 0;
     }
-    for (i = 0; i < dropCount; ++i) {
-        unsigned short thing =
-            orch_allocate_fixed_possession_thing_compat(world->things, &drops[i]);
-        if (thing == THING_NONE) {
-            continue;
-        }
-        if (orch_link_thing_to_square_tail_compat(world, mapIndex, mapX, mapY, thing)) {
-            droppedAny = 1;
-        } else {
-            (void)orch_set_next_thing_compat(world->things, thing, THING_NONE);
-        }
-    }
-    if (outSoundId && droppedAny) {
+    if (outSoundId && ctx.droppedAny) {
         *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
-    return droppedAny;
+    return ctx.droppedAny;
 }
 
 static int orch_drop_moving_fixed_possessions_compat(

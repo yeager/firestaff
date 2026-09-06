@@ -856,4 +856,13 @@ int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
     int* outDropCount,
     int* outWeaponDropped);
 
+/* F0186 GROUP.C:610-645: reserve before cell RNG, publish before the next
+ * entry. reserve returns zero on allocation failure. Callbacks share context
+ * so the reservation can retain its Thing handle until publication. */
+int F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
+    int creatureType, int sourceCell, struct RngState_Compat* rng,
+    int (*reserve)(void*, const struct DM1FixedPossessionDrop_Compat*),
+    void (*publish)(void*, const struct DM1FixedPossessionDrop_Compat*),
+    void* context, int* outWeaponDropped);
+
 #endif /* DM1_V1_CREATURE_AI_BEHAVIOR_PC34_COMPAT_H */

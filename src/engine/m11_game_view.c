@@ -19179,6 +19179,33 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     m11_refresh_hash(state);
 }
 
+struct M11FixedDropContext {
+    M11_GameViewState* state;
+    int mapIndex, mapX, mapY, materialized;
+    unsigned short thing;
+};
+
+static int m11_reserve_fixed_drop(void* opaque,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    struct M11FixedDropContext* ctx = opaque;
+    ctx->thing = m11_allocate_fixed_possession_thing(ctx->state->world.things, drop);
+    return ctx->thing != THING_NONE;
+}
+
+static void m11_publish_fixed_drop(void* opaque,
+    const struct DM1FixedPossessionDrop_Compat* drop)
+{
+    struct M11FixedDropContext* ctx = opaque;
+    unsigned short thing = (unsigned short)((ctx->thing & 0x3FFFu) |
+                                           ((unsigned)drop->cell << 14));
+    if (m11_link_fixed_possession_thing_to_square(&ctx->state->world,
+            ctx->mapIndex, ctx->mapX, ctx->mapY, thing))
+        ++ctx->materialized;
+    else
+        m11_set_object_drop_next(ctx->state->world.things, thing, THING_NONE);
+}
+
 static int m11_materialize_creature_fixed_possession_drops(
     M11_GameViewState* state,
     int creatureType,
@@ -19186,39 +19213,24 @@ static int m11_materialize_creature_fixed_possession_drops(
     int mapIndex,
     int mapX,
     int mapY) {
-    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
-    int dropCount = 0;
+    struct M11FixedDropContext ctx = {state, mapIndex, mapX, mapY, 0, THING_NONE};
     int weaponDropped = 0;
-    int materialized = 0;
-    int i;
 
     if (!state || !state->world.things) return -1;
-    if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
-            creatureType, sourceCell, &state->world.masterRng, drops,
-            DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
+    /* GROUP.C F0186:625-643 reserves before cell RNG and publishes before
+     * the next optional decision, including when the source pool is full. */
+    if (!F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
+            creatureType, sourceCell, &state->world.masterRng,
+            m11_reserve_fixed_drop, m11_publish_fixed_drop, &ctx, &weaponDropped)) {
         return -1;
     }
 
-    for (i = 0; i < dropCount; ++i) {
-        unsigned short thing =
-            m11_allocate_fixed_possession_thing(state->world.things, &drops[i]);
-        if (thing == THING_NONE) {
-            continue;
-        }
-        if (m11_link_fixed_possession_thing_to_square(
-                &state->world, mapIndex, mapX, mapY, thing)) {
-            ++materialized;
-        } else {
-            m11_set_object_drop_next(state->world.things, thing, THING_NONE);
-        }
-    }
-
-    if (materialized > 0) {
+    if (ctx.materialized > 0) {
         m11_audio_emit_source_sound(
             state, weaponDropped ? DM1_SND_METALLIC_THUD : DM1_SND_WOODEN_THUD,
             M11_AUDIO_MARKER_COMBAT);
     }
-    return materialized;
+    return ctx.materialized;
 }
 
 int M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(

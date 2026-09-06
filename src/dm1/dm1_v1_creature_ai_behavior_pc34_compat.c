@@ -663,14 +663,17 @@ static int fixed_possession_cell(int sourceCell, struct RngState_Compat* rng)
     return sourceCell & 3;
 }
 
-int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+static int resolve_fixed_possessions(
     int creatureType,
     int sourceCell,
     struct RngState_Compat* rng,
     struct DM1FixedPossessionDrop_Compat* outDrops,
     int maxDrops,
     int* outDropCount,
-    int* outWeaponDropped)
+    int* outWeaponDropped,
+    int (*reserve)(void*, const struct DM1FixedPossessionDrop_Compat*),
+    void (*publish)(void*, const struct DM1FixedPossessionDrop_Compat*),
+    void* context)
 {
     const uint16_t* table;
     int cursed;
@@ -699,7 +702,6 @@ int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
         if (count >= maxDrops) return 0;
 
         memset(&drop, 0, sizeof(drop));
-        drop.cell = fixed_possession_cell(sourceCell, rng);
         drop.cursed = cursed;
         drop.sourceOrdinal = ordinal;
         drop.sourceHadRandomFlag = randomFlag;
@@ -715,11 +717,39 @@ int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
             drop.itemType = objectIndex - DM1_DROP_OBJECT_FIRST_WEAPON;
             *outWeaponDropped = 1;
         }
+        /* GROUP.C F0186:625-643: failed F0166 allocation skips cell RNG;
+         * successful F0267 publication precedes the next optional decision. */
+        if (reserve && !reserve(context, &drop)) continue;
+        drop.cell = fixed_possession_cell(sourceCell, rng);
+        if (publish) publish(context, &drop);
         outDrops[count++] = drop;
     }
 
     *outDropCount = count;
     return 1;
+}
+
+int F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
+    int creatureType, int sourceCell, struct RngState_Compat* rng,
+    struct DM1FixedPossessionDrop_Compat* outDrops, int maxDrops,
+    int* outDropCount, int* outWeaponDropped)
+{
+    return resolve_fixed_possessions(creatureType, sourceCell, rng, outDrops,
+        maxDrops, outDropCount, outWeaponDropped, NULL, NULL, NULL);
+}
+
+int F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
+    int creatureType, int sourceCell, struct RngState_Compat* rng,
+    int (*reserve)(void*, const struct DM1FixedPossessionDrop_Compat*),
+    void (*publish)(void*, const struct DM1FixedPossessionDrop_Compat*),
+    void* context, int* outWeaponDropped)
+{
+    struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
+    int count;
+    if (!reserve || !publish) return 0;
+    return resolve_fixed_possessions(creatureType, sourceCell, rng, drops,
+        DM1_MAX_FIXED_POSSESSION_DROPS, &count, outWeaponDropped,
+        reserve, publish, context);
 }
 
 

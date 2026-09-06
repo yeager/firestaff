@@ -23,7 +23,11 @@ int main(int argc, char** argv)
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
     int burstDrop = argc == 2 && strcmp(argv[1], "burst-drop") == 0;
-    int burstFixed = argc == 2 && strcmp(argv[1], "burst-fixed") == 0;
+    int burstFixedEmpty = argc == 2 && strcmp(argv[1], "burst-fixed-empty") == 0;
+    int burstFixedOne = argc == 2 && strcmp(argv[1], "burst-fixed-one") == 0;
+    int burstFixed = burstFixedEmpty || burstFixedOne ||
+        (argc == 2 && strcmp(argv[1], "burst-fixed") == 0);
+    int foodCapacity = burstFixedEmpty ? 0 : (burstFixedOne ? 1 : 6);
     int burstAll = burstFixed || burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
     int burstSmoke = argc == 2 && strcmp(argv[1], "burst-smoke") == 0;
     int burstLethal = burstAll || burstSmoke || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
@@ -172,7 +176,7 @@ int main(int argc, char** argv)
                 word(rawFood + i * 4, THING_NONE);
             }
             things.junks = food;
-            things.junkCount = things.thingCounts[THING_TYPE_JUNK] = 6;
+            things.junkCount = things.thingCounts[THING_TYPE_JUNK] = foodCapacity;
             things.rawThingData[THING_TYPE_JUNK] = rawFood;
         }
         if (burstDrop) {
@@ -218,7 +222,14 @@ int main(int argc, char** argv)
                     CHECK(readword(rawFood + i * 4) == food[i].next);
                     ++allocated;
                 }
-                CHECK(allocated >= 2 && allocated <= 6);
+                if (foodCapacity < 2) CHECK(allocated == foodCapacity);
+                else CHECK(allocated >= 2 && allocated <= foodCapacity);
+                CHECK(things.junkCount == foodCapacity);
+                CHECK(things.thingCounts[THING_TYPE_JUNK] == foodCapacity);
+                for (i = foodCapacity; i < 6; ++i) {
+                    CHECK(food[i].next == THING_NONE);
+                    CHECK(readword(rawFood + i * 4) == THING_NONE);
+                }
                 while (cursor != THING_ENDOFLIST && links++ < 8) {
                     if (((cursor >> 10) & 15) == THING_TYPE_JUNK) {
                         int index = cursor & 1023;

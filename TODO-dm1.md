@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+- Finish F0186 allocation/RNG ordering across runtime drop materializers.
+  M10/M11 use the tested streamed helper; CSB still resolves cell RNG before
+  allocation. Extend M10 death-path RNG and reclamation evidence. See
+  `docs/parity/DM1_FIXED_DROP_ALLOCATION_ORDER.md` for the confirmed mismatch
+  and the required exhausted-pool regression matrix.
+
 - Extend explosion F0191 verification to possession drops and original
   death-smoke captures across supported platforms.
   Nonlethal RNG/raw writeback, survivor compaction, whole-group retirement
