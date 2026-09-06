@@ -28,8 +28,26 @@ static int check_legacy_scroll_raster(M11_GameViewState *state)
             int ink = 0;
             state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED : M12_PRESENTATION_V1_ORIGINAL;
             state->inventoryPanelActive = 1;
-            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing) ||
-                M11_GameView_HandlePointer(state, 20, 54, 1) != M11_GAME_INPUT_REDRAW ||
+            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing)) return 0;
+            {
+                int sx, sy, sw, sh;
+                /* COMMAND.C F0359/F0361: dropping in the action hand
+                 * and picking back up are distinct press transactions.
+                 * Releases must not repeat either ownership exchange. */
+                if (!M11_GameView_GetV1InventorySourceSlotBoxZone(9, &sx, &sy, &sw, &sh)) return 0;
+                for (int step = 0; step < 2; ++step) {
+                    (void)M11_GameView_HandlePointer(state, sx + 1, 33 + sy + 1, 1);
+                    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != (step ? thing : THING_NONE) ||
+                        state->world.party.champions[0].inventory[20] != (step ? THING_NONE : thing)) return 0;
+                    (void)M11_GameView_HandlePointerButtonRelease(state, sx + 1, 33 + sy + 1, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != (step ? thing : THING_NONE) ||
+                        state->world.party.champions[0].inventory[20] != (step ? THING_NONE : thing)) {
+                        fprintf(stderr, "FAIL: legacy scroll %d action-hand transfer %d\n", i, step);
+                        return 0;
+                    }
+                }
+            }
+            if (M11_GameView_HandlePointer(state, 20, 54, 1) != M11_GAME_INPUT_REDRAW ||
                 !state->v1ScrollPanelActive || state->v1ScrollPanelThing != thing ||
                 !DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(state, text, sizeof(text))) return 0;
             memset(frame, 0, sizeof(frame));

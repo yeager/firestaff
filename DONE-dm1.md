@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Legacy scroll action-hand ownership
+
+- Extended the five Atari/Amiga original-media tests to place and pick up
+  each of the 35 original scrolls through action-hand pointer input before
+  eye inspection. Both the held Thing and action-hand slot are checked
+  after press and after the explicit left-button release API.
+- All editions pass in Original/V2.1. This covers 700 transfer transactions
+  and their releases without modifying the original archive. Other item
+  classes, occupied exchanges and other slots still need equivalent
+  original-media coverage on these platforms.
+
 ## 2026-09-06 — Legacy inventory border regression coverage
 
 - The real-media Atari/Amiga checks now compare all 30 inventory slot

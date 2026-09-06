@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Original DM1 Atari/Amiga scrolls now exercise action-hand
+  placement and pickup, checking held/slot identity before and after mouse
+  release in five editions and Original/V2.1; all tests pass.
+
 - 2026-09-06: Original C033 border pixels now verify all 30 DM1 inventory
   slots across five Atari/Amiga editions in Original/V2.1; all tests pass.
 
