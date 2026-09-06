@@ -1,5 +1,8 @@
 # Unreleased
 
+- Monsters surviving a projectile kill retain their own facing and aspect
+  state when the defeated creature is removed from the front of the group.
+
 - After a projectile kills the first monster in a group, active monster
   positions now stay synchronized with the compacted survivor list.
 

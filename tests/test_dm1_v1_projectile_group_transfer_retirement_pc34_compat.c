@@ -124,6 +124,11 @@ int main(int argc, char** argv)
         world.creatureAI[0].reserved0 = 0;
         world.creatureAI[0].creatureType = group.creatureType;
         world.creatureAI[0].groupCells = group.cells;
+        world.creatureAI[0].groupDirection = 8; /* slot zero north, slot one south */
+        world.pc34ActiveGroupSourceCount = 1;
+        world.pc34ActiveGroupDirections[0] = 8;
+        world.creatureAI[0].aspect[0] = 1;
+        world.creatureAI[0].aspect[1] = 2;
     }
     if (partyFirst || partyLanding) {
         world.party.mapX = 1;
@@ -225,7 +230,12 @@ int main(int argc, char** argv)
     if (halfSquare) {
         CHECK(group.health[0] == 1000);
         if (halfLethal) {
-            if (halfActive) CHECK(world.creatureAI[0].groupCells == group.cells);
+            if (halfActive) {
+                CHECK(world.creatureAI[0].groupCells == group.cells);
+                CHECK((world.pc34ActiveGroupDirections[0] & 3) == 2);
+                CHECK((world.creatureAI[0].groupDirection & 3) == 2);
+                CHECK(world.creatureAI[0].aspect[0] == 2);
+            }
             CHECK(group.count == 0);
             CHECK(((rawGroup[14] >> 5) & 3) == 0);
             CHECK(readword(rawGroup + 6) == 1000);

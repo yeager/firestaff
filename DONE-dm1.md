@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Projectile F0190 survivor removal shifts active packed
+  directions and aspect bytes together with HP/cells (GROUP.C:892-899),
+  before scheduling later behavior. The slot-zero lethal fixture now gives
+  the survivor a distinct south-facing direction and aspect byte; it failed
+  before the correction. Seven impact and seven broader tests pass, including
+  five original DOS spell cases. Executable rebuilt. Other damage consumers,
+  original ACTIVE_GROUP raw representation and capture pairing remain open.
+
 - 2026-09-06: Projectile survivor compaction now synchronizes the normalized
   active AI cell mirror after F0190 damage. A lethal hit to slot zero in a
   two-worm group reproduced stale ai.groupCells before the fix; it now agrees

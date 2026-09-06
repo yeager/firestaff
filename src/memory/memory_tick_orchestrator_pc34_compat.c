@@ -8931,6 +8931,26 @@ static int orch_apply_projectile_group_action_compat(
         !applyPlan.handled) {
         return 0;
     }
+    if (applyPlan.outcomeCode == COMBAT_OUTCOME_KILLED_SOME_CREATURES) {
+        int activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+        if (activeIndex >= 0) {
+            struct CreatureAIState_Compat* ai = &world->creatureAI[activeIndex];
+            unsigned int directions = activeIndex < world->pc34ActiveGroupSourceCount
+                ? world->pc34ActiveGroupDirections[activeIndex] : ai->groupDirection;
+            int i;
+            /* GROUP.C F0190:892-899 shifts directions and aspects with
+             * surviving HP/cells before any later behavior consumes them. */
+            for (i = creatureIndex; i < originalGroupCount; ++i) {
+                unsigned int value = (directions >> ((i + 1) * 2)) & 3u;
+                directions = (directions & ~(3u << (i * 2))) | (value << (i * 2));
+                ai->aspect[i] = ai->aspect[i + 1];
+            }
+            ai->groupDirection = (int)directions;
+            if (activeIndex < world->pc34ActiveGroupSourceCount)
+                world->pc34ActiveGroupDirections[activeIndex] = (unsigned char)directions;
+            group->direction = directions & 3u;
+        }
+    }
     memset(&aftermath, 0, sizeof(aftermath));
     if (!dm1_v1_projectile_creature_action_aftermath_pc34(
             &actionPlan, projectile, creatureAttributes, (int)group->behavior,

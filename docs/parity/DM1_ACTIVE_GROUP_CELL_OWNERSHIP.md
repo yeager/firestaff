@@ -57,5 +57,7 @@ Follow-up: a source-shaped lethal projectile hit to slot zero reproduced a
 stale ai.groupCells mirror after survivor compaction. The projectile damage
 consumer now copies the surviving normalized cells into the active mirror.
 The regression passes, but it does not repair the original raw union model.
-Per-creature packed directions,
-raw byte ownership and cross-platform activation semantics remain open.
+The same projectile regression now verifies distinct survivor directions and
+aspect bytes, and the projectile consumer shifts these before aftermath.
+Other damage consumers, raw byte ownership and cross-platform activation
+semantics remain open.
