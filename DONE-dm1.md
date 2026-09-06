@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Five original-media tests now invoke the runtime death
+  handler after setting the separate inventory owner to zero health.
+  Panel closure, cleared owner, handled-death flag and unchanged living
+  leader pass. One idle tick did not dispatch death in this fixture;
+  the test uses ProbeCheckPartyDeath and does not prove tick timing,
+  dropped-item chain integrity or resurrection behavior.
+
 - 2026-09-06: Corrected F0319 inventory-close selection to use G0423's
   owner rather than the leader. Close the chest cache before dropping the
   dead owner's inventory and clear transient eye panels. Build and five

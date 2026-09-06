@@ -334,10 +334,21 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 state->world.party.champions[1].food != amount ||
                                 state->world.party.activeChampionIndex != 0) return 0;
                         }
-                        return state->world.party.champions[1].inventory[19] == other &&
+                        if (!(state->world.party.champions[1].inventory[19] == other &&
                             state->world.party.champions[1].load == otherWeight &&
                             state->world.party.champions[0].load == 0 &&
-                            DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE;
+                            DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE)) return 0;
+                        /* Drive the real death handler after a controlled
+                         * zero-health transition of the inventory owner. */
+                        state->world.party.champions[1].hp.current = 0;
+                        M11_GameView_ProbeCheckPartyDeath(state);
+                        fprintf(stderr, "death owner panel=%d ordinal=%d handled=%u\n",
+                            state->inventoryPanelActive, state->dm1InventoryChampionOrdinal,
+                            state->championDeathHandledMask);
+                        return !state->inventoryPanelActive &&
+                            state->dm1InventoryChampionOrdinal == 0 &&
+                            (state->championDeathHandledMask & 2) &&
+                            state->world.party.activeChampionIndex == 0;
                     }
                     for (int release = 0; release < 2; ++release) {
                         if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
