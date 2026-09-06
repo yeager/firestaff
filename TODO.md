@@ -1,5 +1,10 @@
 # Firestaff TODO — active cross-game work
 
+- Extend F0219 current-cell collision coverage to original-media encounters,
+  half-square creature footprints, nonmaterial/Black Flame cases and inactive
+  group destinations. The source-cell tests cover centered and quarter-cell
+  admission plus party priority; destination admission still uses active AI.
+
 - Extend F0213 initial-burst ownership to CSB/legacy ownerless creation
   consumers; their previous delayed burst remains isolated from the fixed
   source-bound DM1 transaction. Verify packed source/target MapXCombo damage

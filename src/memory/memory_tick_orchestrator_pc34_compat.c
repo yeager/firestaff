@@ -7586,6 +7586,52 @@ static int orch_build_projectile_digest_compat(
     out->sourceSquareType = (sourceSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
     out->destTeleporterNewDirection = PROJECTILE_TELEPORTER_ROTATION_NONE;
 
+    /* PROJEXPL.C F0219:687-697 checks the current cell before motion,
+     * except C48's first-move grace. A destination-only digest silently
+     * missed these occupants. Return a same-square collision digest only
+     * for an actual hit; rejected/nonmaterial cells still need normal flight. */
+    if (!projectile->firstMoveGraceFlag) {
+        int hitParty = 0, hitGroup = 0, groupIndex = -1;
+        int creatureType = 0, nonMaterial = 0;
+        if (world->party.mapIndex == projectile->mapIndex &&
+            world->party.mapX == projectile->mapX && world->party.mapY == projectile->mapY) {
+            for (i = 0; i < world->party.championCount && i < CHAMPION_MAX_PARTY; ++i) {
+                const struct ChampionState_Compat* champion = &world->party.champions[i];
+                if (champion->present && champion->hp.current > 0 &&
+                    champion->cell == (projectile->cell & 3)) hitParty = 1;
+            }
+        }
+        if (!hitParty && orch_cmd_attack_find_group_on_square_compat(world,
+                projectile->mapIndex, projectile->mapX, projectile->mapY, &groupIndex) &&
+            world->things && world->things->groups && groupIndex >= 0 &&
+            groupIndex < world->things->groupCount) {
+            unsigned char cells[4];
+            const struct DungeonGroup_Compat* group = &world->things->groups[groupIndex];
+            const struct CreatureBehaviorProfile_Compat* profile = CREATURE_GetProfile_Compat(group->creatureType);
+            orch_build_group_projectile_impact_cells_compat(group, cells);
+            creatureType = group->creatureType;
+            nonMaterial = profile && (profile->attributes & CREATURE_ATTR_MASK_NON_MATERIAL);
+            hitGroup = cells[projectile->cell & 3] &&
+                (!nonMaterial || projectile->projectileSubtype == PROJECTILE_SUBTYPE_HARM_NON_MATERIAL ||
+                 (creatureType == CREATURE_TYPE_BLACK_FLAME &&
+                  projectile->projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL));
+        }
+        if (hitParty || hitGroup) {
+            out->destMapIndex = projectile->mapIndex;
+            out->destMapX = projectile->mapX;
+            out->destMapY = projectile->mapY;
+            out->destSquareType = out->sourceSquareType;
+            out->destHasChampion = hitParty;
+            out->destPartyDirection = world->party.direction & 3;
+            out->destChampionCellMask = hitParty ? 1 << (projectile->cell & 3) : 0;
+            out->destHasCreatureGroup = hitGroup;
+            out->destCreatureType = creatureType;
+            out->destCreatureIsNonMaterial = nonMaterial != 0;
+            out->destCreatureCellMask = hitGroup ? 1 << (projectile->cell & 3) : 0;
+            return 1;
+        }
+    }
+
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];

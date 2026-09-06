@@ -16277,6 +16277,14 @@ if(BUILD_TESTING)
     target_link_libraries(test_dm1_v1_projectile_group_transfer_retirement_pc34_compat PRIVATE firestaff_m10)
     add_test(NAME dm1_v1_projectile_group_transfer_retirement_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat)
+    add_test(NAME dm1_v1_projectile_same_square_group_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat same-square)
+    add_test(NAME dm1_v1_projectile_same_square_grace_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat grace)
+    add_test(NAME dm1_v1_projectile_same_square_empty_cell_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat empty-cell)
+    add_test(NAME dm1_v1_projectile_same_square_party_first_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat party-first)
     target_include_directories(test_dm1_v1_f0213_f0220_explosion_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )

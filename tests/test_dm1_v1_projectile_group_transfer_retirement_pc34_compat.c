@@ -14,8 +14,12 @@ static void word(unsigned char *p, unsigned short value)
 static unsigned short readword(const unsigned char *p)
 { return (unsigned short)(p[0] | ((unsigned short)p[1] << 8)); }
 
-int main(void)
+int main(int argc, char** argv)
 {
+    int grace = argc == 2 && strcmp(argv[1], "grace") == 0;
+    int emptyCell = argc == 2 && strcmp(argv[1], "empty-cell") == 0;
+    int partyFirst = argc == 2 && strcmp(argv[1], "party-first") == 0;
+    int sameSquare = grace || emptyCell || partyFirst || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon = {0};
     struct DungeonThings_Compat things = {0};
@@ -34,7 +38,7 @@ int main(void)
     int slot = -1;
     CHECK(F0881_WORLD_InitDefault_Compat(&world, 1));
     memset(squares, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squares));
-    squares[3] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squares[sameSquare ? 4 : 3] |= DUNGEON_SQUARE_MASK_THING_LIST;
     dungeon.loaded = dungeon.tilesLoaded = 1;
     dungeon.header.mapCount = 1; dungeon.header.squareFirstThingCount = 3;
     dungeon.maps = &map; dungeon.tiles = &tile;
@@ -43,11 +47,11 @@ int main(void)
     map.width = map.height = 3;
     tile.squareData = squares; tile.squareCount = 9;
     group.next = group.slot = THING_ENDOFLIST;
-    group.creatureType = 0; group.cells = 255; group.count = 0;
+    group.creatureType = 0; group.cells = emptyCell ? 1 : 255; group.count = 0;
     group.health[0] = 1000;
     word(rawGroup, group.next); word(rawGroup + 2, group.slot);
     word(rawGroup + 6, group.health[0]);
-    rawGroup[5] = 255;
+    rawGroup[5] = group.cells;
     weapon.next = THING_ENDOFLIST; weapon.type = 8; /* Original sharp dagger. */
     word(rawWeapon, weapon.next); rawWeapon[2] = 8;
     c14.next = THING_NONE; word(rawC14, THING_NONE);
@@ -66,15 +70,22 @@ int main(void)
     world.creatureAICount = 1;
     world.creatureAI[0].groupMapIndex = 0;
     world.creatureAI[0].groupMapX = 1;
-    world.creatureAI[0].groupMapY = 0;
+    world.creatureAI[0].groupMapY = sameSquare ? 1 : 0;
     world.creatureAI[0].creatureType = 0;
+    if (partyFirst) {
+        world.party.mapX = world.party.mapY = 1;
+        world.party.championCount = 1;
+        world.party.champions[0].present = 1;
+        world.party.champions[0].cell = 0;
+        world.party.champions[0].hp.current = world.party.champions[0].hp.maximum = 1000;
+    }
     create.category = PROJECTILE_CATEGORY_KINETIC;
     create.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
     create.ownerKind = PROJECTILE_OWNER_CHAMPION;
     create.mapIndex = 0; create.mapX = create.mapY = 1;
     create.cell = 0; create.direction = 0;
     create.kineticEnergy = 40; create.attack = 30; create.stepEnergy = 1;
-    create.currentTick = 40; create.firstMoveGraceFlag = 0;
+    create.currentTick = 40; create.firstMoveGraceFlag = grace;
     create.attackTypeCode = COMBAT_ATTACK_NORMAL;
     CHECK(F0810_PROJECTILE_Create_Compat(&create, &world.projectiles, &slot, &event));
     CHECK(slot == 0);
@@ -86,6 +97,23 @@ int main(void)
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (partyFirst) {
+        CHECK(world.party.champions[0].hp.current < 1000);
+        CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
+        CHECK(c14.next == THING_NONE && readword(rawC14) == THING_NONE);
+        CHECK((group.next & 0x3fff) == weaponThing);
+        CHECK(weapon.next == THING_ENDOFLIST);
+        puts("ok: source-cell champion impact precedes the co-located group");
+        return 0;
+    }
+    if (grace || emptyCell) {
+        CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);
+        CHECK(world.projectiles.entries[slot].reserved3 != 0);
+        CHECK(c14.next != THING_NONE && readword(rawC14) != THING_NONE);
+        CHECK(world.projectiles.entries[slot].firstMoveGraceFlag == 0);
+        puts("ok: grace or empty source cell does not create a false group hit");
+        return 0;
+    }
     CHECK(group.health[0] > 0 && group.health[0] < 1000);
     CHECK((group.slot & 0x3fff) == weaponThing);
     CHECK(readword(rawGroup + 2) == group.slot);
@@ -96,7 +124,7 @@ int main(void)
     CHECK(group.next == THING_ENDOFLIST && readword(rawGroup) == THING_ENDOFLIST);
     CHECK(sft[1] == THING_NONE);
     CHECK(sft[2] == THING_NONE);
-    CHECK((squares[4] & DUNGEON_SQUARE_MASK_THING_LIST) == 0);
+    CHECK(((squares[4] & DUNGEON_SQUARE_MASK_THING_LIST) != 0) == sameSquare);
     CHECK(columns[0] == 0 && columns[1] == 0 && columns[2] == 1);
     puts("ok: retained sharp weapon has one group owner and retired C14 carrier");
     return 0;

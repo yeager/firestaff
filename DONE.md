@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: M10 projectile collision admission now checks current-cell
+  party/group occupants before forward movement (PROJEXPL.C F0219:687-697).
+  It uses the source square's GROUP rather than requiring an active AI row,
+  respects living cell occupancy and C48 grace, and preserves party-first
+  priority. The same-square group test failed before the change; positive
+  group/party-priority and negative grace/empty-cell cases now pass. Seven
+  authentic DOS spell/throw regressions also pass. These bounded ownership
+  fixtures do not prove all creature footprints or original capture parity.
+
 - 2026-09-06: F0215 no longer skips C14 retirement when a surviving
   monster retains the thrown weapon in GROUP.Slot. A source-shaped RAM
   timeline regression proves the dagger has one group owner, the raw and

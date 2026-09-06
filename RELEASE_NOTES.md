@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 projectiles check occupants of their current cell before moving,
+  preserving champion-before-monster priority and the first-step grace period.
+
 - DM1 frees the projectile carrier when a monster retains a thrown weapon,
   without dropping or duplicating the retained item.
 
