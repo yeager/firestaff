@@ -12,8 +12,8 @@
   Extend the corrected C007 viewport origin to emulator pixel comparisons
   and authentic C080 edge/pickup/throw/sensor interaction sequences.
   Do not enable the whole generic HUD merely by accepting its asset sizes.
-  Restore idle action cells through their own source-party/atlas path and
-  bind F31J icon clicks to C089..C092 (y94, height62). Verify empty-hand
+  Verify all idle-cell click edges/gaps and source cooldown transitions.
+  Verify empty-hand
   cooldown expiry against original emulator pixels, beyond predicate tests.
   Extend source C013 movement-control verification beyond closed-inventory
   panel pixels and rotation to traversal, exact edges/gaps and inventory mode.

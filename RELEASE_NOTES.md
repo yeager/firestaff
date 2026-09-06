@@ -1,5 +1,8 @@
 # Unreleased
 
+- CSB FM Towns idle action cells now display original object/empty-hand
+  icons. Japanese icon clicks use the full original-height cells.
+
 - Empty-hand action icons retain cooldown, resting and candidate markings,
   matching the original F0386 hatch gate instead of bypassing it.
 

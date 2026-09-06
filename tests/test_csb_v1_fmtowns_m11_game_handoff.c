@@ -2291,6 +2291,95 @@ int main(void)
             free(graphics);
             view.presentationMode = savedMode;
         }
+        {
+            static const int modes[] = {M12_PRESENTATION_V1_ORIGINAL,
+                M12_PRESENTATION_V20_FILTERED, M12_PRESENTATION_V21_UPSCALED};
+            const int savedMode = view.presentationMode;
+            const int jp = language == CSB_FMTOWNS_SWITCH_JAPANESE;
+            const int cellY = jp ? 94 : 86, cellH = jp ? 62 : 35;
+            const int iconY = jp ? 117 : 96;
+            size_t graphicsSize = 0;
+            uint8_t *graphics = load_profile_graphics(live_profile, &graphicsSize);
+            CHECK(graphics != NULL, "F31 idle oracle reads original graphics in RAM");
+            for (int mode = 0; graphics && mode < 3; ++mode) {
+                CSB_V1_RuntimeM11MirrorReceipt_PC34 mirror;
+                int checked = 0, clicked = 0;
+                memset(&mirror, 0, sizeof(mirror));
+                CHECK(csb_v1_boot_runtime_m11_mirror_receipt_pc34(live_profile, &mirror) &&
+                          mirror.valid && mirror.party.valid,
+                      "F31 idle oracle uses the current original party receipt");
+                view.presentationMode = modes[mode];
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                for (int slot = 0; mirror.valid && mirror.party.valid &&
+                     slot < mirror.party.party.championCount && slot < 4; ++slot) {
+                    const struct ChampionState_Compat *champ = &mirror.party.party.champions[slot];
+                    uint16_t hand = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
+                    int icon = -1, mismatch = 0;
+                    uint8_t atlas[256 * 32];
+                    CSB_V1_FmtownsItemDecodeReceipt decoded;
+                    if (!champ->present) continue;
+                    /* This original-party oracle covers unhatched cells.
+                     * Cooldown/dead fixtures are tested separately; do not
+                     * fabricate a retail party state to increase coverage. */
+                    if (view.actionDisabledTicks[slot] || view.resting ||
+                        view.candidateMirrorOrdinal > 0 || view.candidateMirrorPanelActive) continue;
+                    if (champ->hp.current) {
+                        if (hand == THING_NONE || hand == THING_ENDOFLIST) icon = 201;
+                        else if (csb_v1_runtime_object_action_set_index(&live_profile->runtime, hand) > 0) {
+                            icon = csb_v1_runtime_object_icon_index(&live_profile->runtime, hand);
+                            CHECK(icon >= 0, "F31 actionable original hand resolves its source icon");
+                            if (icon < 0) continue;
+                        }
+                    }
+                    memset(&decoded, 0, sizeof(decoded));
+                    if (icon >= 0) {
+                        CHECK(csb_v1_fmtowns_graphics_decode_item(graphics, graphicsSize,
+                                  42 + icon / 32, atlas, sizeof(atlas), &decoded) &&
+                                  decoded.valid && decoded.width == 256 && decoded.height == 32,
+                              "F31 idle oracle independently decodes the original icon atlas");
+                        if (!decoded.valid || decoded.width != 256 || decoded.height != 32) continue;
+                    }
+                    /* OBJECT.C F0036:32 icons per atlas,16 per row;
+                     * ACTIDRAW.C F0386:264-281 uses G0498's12->4 action
+                     * palette rewrite, then centers16x16 in C089..C092. */
+                    for (int y = 0; y < cellH; ++y)
+                        for (int x = 0; x < 20; ++x) {
+                            uint8_t expected = champ->hp.current ? 4 : 0;
+                            int iy = cellY + y - iconY;
+                            if (icon >= 0 && x >= 2 && x < 18 && iy >= 0 && iy < 16) {
+                                int sx = (icon % 16) * 16 + x - 2;
+                                int sy = ((icon % 32) / 16) * 16 + iy;
+                                expected = atlas[sy * 256 + sx];
+                                if (expected == 12) expected = 4;
+                            }
+                            if (framebuffer[(cellY + y) * 320 + 233 + 22 * slot + x] != expected)
+                                ++mismatch;
+                        }
+                    CHECK(mismatch == 0, "F31 final idle cell matches original icon/cyan source pixels");
+                    ++checked;
+                    if (champ->hp.current && M11_GameView_SetActingChampion(&view, slot)) {
+                        int leader = view.world.party.activeChampionIndex;
+                        M11_GameView_ClearActingChampion(&view);
+                        (void)M11_GameView_HandlePointerButton(&view, 234 + 22 * slot,
+                            cellY + cellH - 1, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        CHECK(view.actingChampionOrdinal == (unsigned int)slot + 1 &&
+                                  view.world.party.activeChampionIndex == leader,
+                              "F31 lower idle-cell edge opens its actor without changing leader");
+                        (void)M11_GameView_HandlePointerButton(&view, jp ? 295 : 285,
+                            jp ? 85 : 77, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        CHECK(view.actingChampionOrdinal == 0,
+                              "F31 Pass closes the mouse-opened original actor menu");
+                        ++clicked;
+                    }
+                }
+                CHECK(checked > 0 && clicked > 0,
+                      "F31 every mode verifies real idle pixels and an eligible original actor click");
+                printf("F31_IDLE_SOURCE_PIXELS language=%s mode=%d cells=%d clicks=%d\n",
+                    jp ? "ja" : "en", modes[mode], checked, clicked);
+            }
+            free(graphics);
+            view.presentationMode = savedMode;
+        }
         /* F31 G0447 keeps C012 (status selection) separate from C007
          * (inventory): a named status rectangle must never inherit the
          * convenient host inventory behavior.  C187's adjacent source bar

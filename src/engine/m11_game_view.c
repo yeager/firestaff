@@ -31317,8 +31317,12 @@ static int m11_resolve_action_icon_pointer(const M11_GameViewState* state,
                                           ActionAreaRoutePc34Compat* outRoute) {
     unsigned int slot;
     if (!state || !outRoute) return 0;
-    if (!state->dm1FmtownsStartupReceiptValid ||
-        state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_JP) {
+    if (!((state->dm1FmtownsStartupReceiptValid &&
+           state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) ||
+          (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+           m11_csb_is_fmtowns_profile((const CSB_V1_BootProfile *)state->csbBootProfile) &&
+           ((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+               CSB_V1_VARIANT_FMTOWNS_JA))) {
         return action_area_routes_ResolveIconClick(
             x, y, (unsigned int)state->world.party.championCount, outRoute);
     }
@@ -57389,6 +57393,17 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
             }
         }
 
+        /* F31 C696 C088..C096 uses the same EN/JP cell geometry;
+         * no DM1 startup receipt is fabricated for this CSB surface. */
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+            m11_csb_is_fmtowns_profile((const CSB_V1_BootProfile *)state->csbBootProfile)) {
+            const int japanese = ((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+                CSB_V1_VARIANT_FMTOWNS_JA;
+            cellY = japanese ? 94 : 86;
+            cellH = japanese ? 62 : 35;
+            innerY = japanese ? 117 : 96;
+        }
+
         if (iconReceipt.draw_dead_only) {
             /* DM1: FillBox BLACK then return — no icon for dead. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -57453,6 +57468,36 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         ++drawn;
     }
     return drawn;
+}
+
+/* ACTIDRAW.C F0386:247-288 and F0387:323 select idle icons OR an
+ * active menu. Install native atlases on their owner before copying the
+ * source-party mirror: a copied loader must never own new allocations. */
+static void m11_draw_csb_fmtowns_idle_icons(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebufferWidth, int framebufferHeight)
+{
+    const CSB_V1_BootProfile *profile;
+    M11_GameViewState mirror;
+    const M11_GameViewState *party;
+    unsigned int graphic;
+    int japanese;
+    if (!state || !framebuffer || framebufferWidth < 320 || framebufferHeight < 200 ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        state->inventoryPanelActive || state->actingChampionOrdinal != 0 ||
+        !m11_csb_startup_package_identity_current(state)) return;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile)) return;
+    for (graphic = 42; graphic <= 48; ++graphic) {
+        if (!m11_csb_install_runtime_source_graphic(state, graphic)) return;
+    }
+    party = m11_csb_v1_party_hud_source_state(state, &mirror);
+    if (!party) return;
+    japanese = profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA;
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+        233, japanese ? 85 : 77, 87, japanese ? 72 : 45, M11_COLOR_BLACK);
+    (void)m11_draw_dm_action_icon_cells(party, framebuffer,
+        framebufferWidth, framebufferHeight);
 }
 
 static unsigned short m11_get_status_hand_thing(const struct ChampionState_Compat* champ,
@@ -67437,6 +67482,8 @@ void M11_GameView_Draw(M11_GameViewState* state,
                  * Publish its authenticated pixels after viewport restore;
                  * do not enable the unrelated PC-sized HUD material gate. */
                 (void)m11_draw_csb_fmtowns_active_menu(state, framebuffer,
+                    framebufferWidth, framebufferHeight);
+                m11_draw_csb_fmtowns_idle_icons(state, framebuffer,
                     framebufferWidth, framebufferHeight);
                 m11_draw_csb_fmtowns_movement(state, framebuffer,
                     framebufferWidth, framebufferHeight);

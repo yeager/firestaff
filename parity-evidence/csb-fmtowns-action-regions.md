@@ -73,6 +73,27 @@ languages and all three presentation modes. This proves final composition
 and receipt consistency, not emulator raster parity. Authentic C080
 edge/pickup/throw/sensor sequences remain a separate verification task.
 
+## Idle action cells
+
+ACTIDRAW.C F0386:247-288 selects the original object icon or C201 for an
+empty hand, remaps color 12 to cyan 4 for F31, and places the icon in
+C093..C096. C089..C092 are 20x35 EN / 20x62 JP, at x233+22*slot and
+y86 EN / y94 JP. The 16x16 icons start at x235+22*slot, y96 EN / y117 JP.
+The standalone idle compositor loads native atlases C042..C048 on the
+owning cache before taking a fresh source-party mirror. It clears only
+C011 and draws after viewport restoration, mutually exclusive with the
+active menu. It does not admit the still-incomplete generic HUD.
+
+Original-media tests independently decode the required atlas and compare
+every pixel of each eligible unhatched cell in all three modes. The current
+original-party route supplies one eligible cell per language/mode (six
+cases), not coverage of every possible party configuration. Source
+object/action-set APIs supply identity; bitmap decoding, placement and
+palette comparison are independent. Public lower-cell-edge clicks select
+the original actor and Pass closes without changing the leader. No party
+or equipment is fabricated. Hatched cells, all click edges/gaps and emulator
+pixel/timing comparisons remain outside this evidence.
+
 ## Movement controls
 
 The same original C696 records define C009 at bottom-right (319,168) in

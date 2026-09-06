@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: CSB FM Towns idle action cells render original C042..C048
+  atlas icons through a fresh source-party mirror after viewport restoration.
+  EN/JP placement follows C089..C096; Japanese pointer admission uses the
+  full 62-pixel cell height. Original-media tests independently compare all
+  pixels of the one eligible original cell and click its lower edge in each
+  language/mode (six cases). Production build and seven combined regressions
+  pass (25.36 seconds); both final media tests also pass. Hatched-cell pixel
+  comparisons, remaining cell edges and the broader F31 HUD remain open.
+
 - 2026-09-06: Restored the shared F0386 empty-hand hatch gate using
   ACTIDRAW.C:247-288: C201 selection does not bypass cooldown, candidate
   or resting markings. The companion state resolver also preserves the
