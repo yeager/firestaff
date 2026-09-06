@@ -1,6 +1,7 @@
 # Firestaff TODO — active cross-game work
 
-- Resolve DM1 FM Towns Japanese action/movement pointer regions and verify
+- Extend DM1 FM Towns Japanese movement pointer coverage to traversal and
+  exact boundaries, and action-cell coverage to outside edges. Verify
   hatching against the original JDM registry. Verify Japanese message
   wrapping and glyph metrics within its224x33 container. The active
   Japanese menu still calls the English-only backdrop resolver.

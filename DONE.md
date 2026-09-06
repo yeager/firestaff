@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Japanese FM Towns action-icon mouse routing uses C089–C092
+  at y94..155. Original-media tests cover both inclusive corners of all
+  four cells in three modes, alive admission/dead rejection and unchanged
+  leader ownership. Full executable build and3/3 targeted tests passed
+  without skips (12.04 seconds), including movement/spell/DOS regressions.
+
+- 2026-09-06: Japanese DM1 FM Towns movement clicks resolve the original
+  six19-pixel-high regions instead of DOS coordinates. Original-media mouse
+  tests turn left/right in all three source-HUD modes while preserving map
+  position; spell/action pixel and DOS XP regressions also pass (3/3,
+  no skips,11.02 seconds). Traversal and boundary coverage remain open.
+
 - 2026-09-06: FM Towns idle action cells use original language-specific
   icon centering; Japanese movement graphics use the96x41 source with its
   nine-column parent clip. The Japanese message clear respects its224x33

@@ -3,6 +3,8 @@
 - DM1 FM Towns action icons follow the original English/Japanese cell
   geometry. Japanese movement controls use their original lower-screen
   position and are no longer erased by the DOS message-area clear.
+  Japanese movement-arrow clicks now use the matching original regions.
+  The taller Japanese action-icon cells are clickable over their full area.
 
 - DM1 FM Towns uses the original spell bitmap's clipped source region.
   The Japanese spell panel now follows its original vertical position,

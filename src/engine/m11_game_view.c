@@ -31294,6 +31294,35 @@ int M11_GameView_GetV1SlotBoxActingHandGraphicId(void) {
     return dm1_v1_graphic_slot_box_acting_hand_pc34();
 }
 
+static int m11_resolve_action_icon_pointer(const M11_GameViewState* state,
+                                          int x, int y,
+                                          ActionAreaRoutePc34Compat* outRoute) {
+    unsigned int slot;
+    if (!state || !outRoute) return 0;
+    if (!state->dm1FmtownsStartupReceiptValid ||
+        state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_JP) {
+        return action_area_routes_ResolveIconClick(
+            x, y, (unsigned int)state->world.party.championCount, outRoute);
+    }
+    /* COMMAND.C:468-471 routes116..119 through the same C089..C092
+     * cells as F0386. JDM C088's20x62 size inherits C011 at233,85;
+     * each cell's local anchor is(22*slot,9). Preserve command ownership
+     * from the source route, replacing only edition-specific geometry. */
+    for (slot = 0; slot < CHAMPION_MAX_PARTY &&
+                   slot < (unsigned int)state->world.party.championCount; ++slot) {
+        ActionAreaRoutePc34Compat route;
+        if (!action_area_routes_GetRoute(4u + slot, &route)) continue;
+        route.y = 94;
+        route.h = 62;
+        if (m11_point_in_rect(x, y, route.x, route.y, route.w, route.h)) {
+            *outRoute = route;
+            return 1;
+        }
+    }
+    memset(outRoute, 0, sizeof(*outRoute));
+    return 0;
+}
+
 int M11_GameView_GetV1ActionIconCellZone(int championSlot,
                                          int* outX, int* outY,
                                          int* outW, int* outH) {
@@ -36882,9 +36911,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
         if (state->actingChampionOrdinal == 0 &&
             action_area_routes_GetTouchMatrixInvariant() &&
-            action_area_routes_ResolveIconClick(
-                x, y, (unsigned int)state->world.party.championCount,
-                &sourceRoute)) {
+            m11_resolve_action_icon_pointer(state, x, y, &sourceRoute)) {
             int slotHit = sourceRoute.championIndex;
             /* Toggle: click on already-acting champion clears. */
             if (state->actingChampionOrdinal ==
@@ -36933,6 +36960,28 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             DM1_V1_MOUSE_MASK_LEFT_PC34,
             &space,
             &zoneId);
+        if (state->dm1FmtownsStartupReceiptValid &&
+            state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+            /* COMMAND.C:397-402 maps JDM C068,C070,C069,C073,C072,C071.
+             * Original C065-67 are19pixels high; C009 anchors the parent
+             * at233,159. Reject old DOS targets as well as matching JP. */
+            static const int regions[6][6] = {
+                {234,160,28,19,68,1}, {263,160,27,19,70,3},
+                {291,160,28,19,69,2}, {234,180,28,19,73,6},
+                {263,180,27,19,72,5}, {291,180,28,19,71,4}
+            };
+            int arrow;
+            command = 0;
+            zoneId = 0;
+            for (arrow = 0; arrow < 6; ++arrow) {
+                if (m11_point_in_rect(x, y, regions[arrow][0], regions[arrow][1],
+                                     regions[arrow][2], regions[arrow][3])) {
+                    zoneId = regions[arrow][4];
+                    command = regions[arrow][5];
+                    break;
+                }
+            }
+        }
         (void)space;
         /* ReDMCSB COMMAND.C G0448: C068/C070/C069/C073/C072/C071 →
          * commands 1/3/2/6/5/4. Commands 1/2 are absolute turn;

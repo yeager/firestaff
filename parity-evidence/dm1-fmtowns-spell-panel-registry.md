@@ -102,3 +102,17 @@ exposed a second overpaint at(233,173): the DOS message-area clear.
 JDM C014=(9,2,224,33), C015=(4,14,0,199) defines the adjacent message
 container at(0,167),224x33. Correcting its clear is separate from proving
 Japanese text wrapping, glyph metrics and input/movement hit regions.
+
+The separately recovered movement input records resolve as follows.
+COMMAND.C:397–402 maps the regions in this order; the Japanese size nodes
+C065–C067 have height19 instead of21. Action input uses the same C089–C092
+cells as rendering (COMMAND.C:468–471).
+
+| Region / command | English x,y,w,h | Japanese x,y,w,h |
+|---|---|---|
+| 68 / turn left | 234,125,28,21 | 234,160,28,19 |
+| 70 / forward | 263,125,27,21 | 263,160,27,19 |
+| 69 / turn right | 291,125,28,21 | 291,160,28,19 |
+| 73 / left | 234,147,28,21 | 234,180,28,19 |
+| 72 / backward | 263,147,27,21 | 263,180,27,19 |
+| 71 / right | 291,147,28,21 | 291,180,28,19 |

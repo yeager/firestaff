@@ -202,6 +202,65 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
             }
         }
         puts("PASS: original FM Towns idle action cells, all slots/alive-dead, three modes");
+        if (yOffset) {
+            /* JDM C089..C092: inclusive cell edges, independent of the
+             * centered icon. F0389 selects an actor, never a new leader. */
+            for (mode=0;mode<3;++mode) for (i=0;i<4;++i) {
+                const int cellX=233+22*i;
+                const int leader=(i+1)%4;
+                state->presentationMode=modes[mode];
+                state->world.party.activeChampionIndex=leader;
+                state->inventoryPanelActive=0;
+                state->resting=0;
+                for (int champion=0;champion<4;++champion) {
+                    state->world.party.champions[champion].hp.current=100;
+                    state->actionDisabledTicks[champion]=0;
+                }
+                for (int edge=0;edge<2;++edge) {
+                    int clickX=cellX+(edge?19:0);
+                    int clickY=edge?155:94;
+                    M11_GameView_ClearActingChampion(state);
+                    (void)M11_GameView_HandlePointer(state,clickX,clickY,1);
+                    (void)M11_GameView_HandlePointer(state,clickX,clickY,0);
+                    LATE_SPELL_CHECK(state->actingChampionOrdinal==(unsigned int)(i+1));
+                    LATE_SPELL_CHECK(state->world.party.activeChampionIndex==leader);
+                    M11_GameView_ClearActingChampion(state);
+                    state->world.party.champions[i].hp.current=0;
+                    (void)M11_GameView_HandlePointer(state,clickX,clickY,1);
+                    (void)M11_GameView_HandlePointer(state,clickX,clickY,0);
+                    LATE_SPELL_CHECK(state->actingChampionOrdinal==0);
+                    LATE_SPELL_CHECK(state->world.party.activeChampionIndex==leader);
+                    state->world.party.champions[i].hp.current=100;
+                    M11_GameView_ClearActingChampion(state);
+                }
+            }
+            puts("PASS: original JDM action cell inclusive edges/dead rejection, all slots and modes");
+            /* Original JDM movement zones C068/C069 occupy the top row
+             * y160..178. Rotate only: no invented traversable dungeon. */
+            for (mode=0;mode<3;++mode) {
+                int beforeDirection, beforeX, beforeY;
+                state->presentationMode=modes[mode];
+                state->world.party.activeChampionIndex=0;
+                state->inventoryPanelActive=0;
+                state->resting=0;
+                for (i=0;i<4;++i) {
+                    state->world.party.champions[i].hp.current=100;
+                    state->world.party.champions[i].stamina.current=1000;
+                    state->world.party.champions[i].stamina.maximum=1000;
+                }
+                beforeDirection=state->world.party.direction;
+                beforeX=state->world.party.mapX; beforeY=state->world.party.mapY;
+                (void)M11_GameView_HandlePointer(state,248,169,1);
+                (void)M11_GameView_HandlePointer(state,248,169,0);
+                LATE_SPELL_CHECK(state->world.party.direction==((beforeDirection+3)&3));
+                LATE_SPELL_CHECK(state->world.party.mapX==beforeX && state->world.party.mapY==beforeY);
+                (void)M11_GameView_HandlePointer(state,305,169,1);
+                (void)M11_GameView_HandlePointer(state,305,169,0);
+                LATE_SPELL_CHECK(state->world.party.direction==beforeDirection);
+                LATE_SPELL_CHECK(state->world.party.mapX==beforeX && state->world.party.mapY==beforeY);
+            }
+            puts("PASS: original JDM movement arrow mouse rotation in all three modes");
+        }
     }
     puts("PASS authentic late spell panel: 24 pixel cases and three mode-specific mouse input cases");
     return 1;
