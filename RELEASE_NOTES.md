@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 Poison Bolt now launches through the original spell path and produces
+  its short, noncentered impact effect instead of a lingering poison cloud.
+  Magical projectile records retain their original spell identifiers.
+
 - Fresh DM1 PC games reserve the original spare object/projectile/explosion
   pools, allowing Fireball to allocate its source records. Wall explosions
   appear on the preceding open square, and their rendering uses the correct

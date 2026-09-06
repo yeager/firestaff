@@ -192,6 +192,7 @@ struct DM1FixedPossessionDrop_Compat {
 #define DM1_PROJECTILE_THING_HARM_NON_MATERIAL 0xFF83
 #define DM1_PROJECTILE_THING_OPEN_DOOR         0xFF84
 #define DM1_PROJECTILE_THING_POISON_CLOUD      0xFF87
+#define DM1_PROJECTILE_THING_POISON_BOLT       0xFF86
 
 /* ==========================================================
  *  DM1 V1 Active Group State (matches DEFS.H ACTIVE_GROUP)

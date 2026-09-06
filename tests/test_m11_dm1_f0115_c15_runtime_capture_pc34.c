@@ -5,6 +5,24 @@
 #include <string.h>
 #include <sys/stat.h>
 
+typedef struct {
+    const char* name;
+    int runes[4];
+    int runeCount;
+    unsigned short sourceThing;
+    int explosionType;
+} SpellCase;
+
+/* Original G0487 / PROJEXPL.C F0213:149 and F0217:562-585.
+ * Poison Bolt remains C006; it is not a lingering C007 Poison Cloud. */
+static const SpellCase spellCases[] = {
+    {"fireball", {0,3,3,0}, 3, 0xff80, 0},
+    {"lightning", {0,2,2,4}, 4, 0xff82, 2},
+    {"harm", {0,4,1,0}, 3, 0xff83, 3},
+    {"poison-bolt", {0,4,0,0}, 3, 0xff86, 6},
+    {"poison-cloud", {0,2,0,0}, 3, 0xff87, 7}
+};
+
 static int regular_file_has_bytes(const char* path)
 {
     struct stat st;
@@ -46,6 +64,7 @@ static int element_at(const struct DungeonDatState_Compat* dungeon,
 }
 
 static int find_real_c15_capture(M11_GameViewState* state,
+                                 const SpellCase* spell,
                                  unsigned char* framebuffer,
                                  M11_Dm1F0115C15RuntimeCaptureReceipt* receipt)
 {
@@ -94,12 +113,34 @@ static int find_real_c15_capture(M11_GameViewState* state,
                     state->inventoryPanelActive = 0;
                     state->presentationMode = M12_PRESENTATION_V1_ORIGINAL;
                     state->world.masterRng.seed = 1;
-                    if (!M11_GameView_OpenSpellPanel(state) ||
-                        !M11_GameView_EnterRune(state, 0) ||
-                        !M11_GameView_EnterRune(state, 3) ||
-                        !M11_GameView_EnterRune(state, 3) ||
-                        !M11_GameView_CastSpell(state)) return 0;
+                    if (!M11_GameView_OpenSpellPanel(state)) return 0;
+                    for (i = 0; i < spell->runeCount; ++i)
+                        if (!M11_GameView_EnterRune(state, spell->runes[i])) return 0;
+                    if (!M11_GameView_CastSpell(state)) {
+                        fprintf(stderr, "%s: public cast failed\n", spell->name);
+                        return 0;
+                    }
+                    if (state->world.projectiles.count != 1) {
+                        fprintf(stderr, "%s: expected one projectile, got %d\n",
+                            spell->name, state->world.projectiles.count);
+                        return 0;
+                    }
                     for (tick = 0; tick < 128; ++tick) {
+                        /* PROJEXPL.C F0212:76 keeps the original magical
+                         * Thing in raw Slot; THING_NONE is only the host's
+                         * no-carried-object marker, not source spell data. */
+                        for (i = 0; i < state->world.projectiles.count; ++i) {
+                            const struct ProjectileInstance_Compat* p = &state->world.projectiles.entries[i];
+                            const unsigned char* raw;
+                            if (p->slotIndex < 0 || !p->reserved3) continue;
+                            if (p->slotIndex >= state->world.things->projectileCount) return 0;
+                            raw = state->world.things->rawThingData[THING_TYPE_PROJECTILE] + p->slotIndex * 8;
+                            if ((unsigned short)(raw[2] | ((unsigned short)raw[3] << 8)) != spell->sourceThing ||
+                                state->world.things->projectiles[p->slotIndex].slot != spell->sourceThing) {
+                                fputs("raw/decoded C14 Slot is not the original spell Thing\n", stderr);
+                                return 0;
+                            }
+                        }
                         memset(framebuffer, 0, 320 * 200);
                         M11_GameView_Draw(state, framebuffer, 320, 200);
                         memset(receipt, 0, sizeof(*receipt));
@@ -108,7 +149,7 @@ static int find_real_c15_capture(M11_GameViewState* state,
                             for (i = 0; i < state->world.explosions.count; ++i) {
                                 const struct ExplosionInstance_Compat* e = &state->world.explosions.entries[i];
                                 if (e->slotIndex >= 0 && e->reserved0 &&
-                                    e->sourceC15Fingerprint && e->explosionType == C000_EXPLOSION_FIREBALL &&
+                                    e->sourceC15Fingerprint && e->explosionType == spell->explosionType &&
                                     e->mapIndex == mapIndex && e->mapX == x + dx[direction] &&
                                     e->mapY == y + dy[direction]) return 1;
                             }
@@ -127,14 +168,23 @@ static int find_real_c15_capture(M11_GameViewState* state,
     return 0;
 }
 
-int main(void)
+int main(int argc, char** argv)
 {
+    const SpellCase* spell = &spellCases[0];
     const char* dataDir = resolve_data_dir();
     const char* selectedDataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     M11_Dm1F0115C15RuntimeCaptureReceipt receipt;
     unsigned char framebuffer[320 * 200];
     int mode;
+
+    if (argc == 2) {
+        size_t i;
+        spell = NULL;
+        for (i = 0; i < sizeof(spellCases)/sizeof(spellCases[0]); ++i)
+            if (!strcmp(argv[1], spellCases[i].name)) spell = &spellCases[i];
+        if (!spell) return 1;
+    } else if (argc != 1) return 1;
 
     if (!dataDir) {
         if (selectedDataDir && selectedDataDir[0]) {
@@ -147,7 +197,7 @@ int main(void)
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir) || !state.assetsAvailable ||
-        !find_real_c15_capture(&state, framebuffer, &receipt)) {
+        !find_real_c15_capture(&state, spell, framebuffer, &receipt)) {
         M11_GameView_Shutdown(&state);
         fputs("FAIL: original PC34 startup/fireball C15 capture failed\n", stderr);
         return 1;

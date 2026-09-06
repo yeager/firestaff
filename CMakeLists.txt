@@ -12520,7 +12520,14 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_f0115_c15_runtime_capture_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
-        set_tests_properties(m11_dm1_f0115_c15_runtime_capture_pc34 PROPERTIES
+        foreach(spell_case lightning harm poison-bolt poison-cloud)
+            add_test(NAME m11_dm1_c15_${spell_case}_real
+                COMMAND test_m11_dm1_f0115_c15_runtime_capture_pc34 ${spell_case}
+                WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+        endforeach()
+        set_tests_properties(m11_dm1_f0115_c15_runtime_capture_pc34
+            m11_dm1_c15_lightning_real m11_dm1_c15_harm_real
+            m11_dm1_c15_poison-bolt_real m11_dm1_c15_poison-cloud_real PROPERTIES
             SKIP_RETURN_CODE 77 TIMEOUT 180
             ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
             LABELS "dm1;dos;pc34;real-media;spell;explosion;skip-safe")

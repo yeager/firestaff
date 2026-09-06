@@ -430,6 +430,11 @@ static void test_projectile_create_input_model(void) {
     ASSERT_EQ(dm1_v1_projectile_attack_type_for_subtype_pc34(
                   PROJECTILE_SUBTYPE_LIGHTNING_BOLT),
               COMBAT_ATTACK_LIGHTNING, "lightning attack type");
+    ASSERT_EQ(dm1_v1_projectile_subtype_from_thing_pc34(
+                  DM1_PROJECTILE_THING_POISON_BOLT, &subtype), 1,
+              "original FF86 Poison Bolt maps for F0327 launch");
+    ASSERT_EQ(subtype, PROJECTILE_SUBTYPE_POISON_BOLT,
+              "Poison Bolt retains its distinct subtype");
     ASSERT_EQ(dm1_v1_projectile_subtype_from_thing_pc34(0x1234, &subtype), 0,
               "unknown projectile thing rejected");
     ASSERT_EQ(subtype, -1, "unknown projectile subtype reset");

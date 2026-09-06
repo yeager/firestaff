@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Original DOS public spell tests now cover Fireball, Lightning,
+  Harm Non Material, Poison Bolt and Poison Cloud with authentic C14 Slots,
+  C15 fingerprints and captures in V1/V2.0/V2.1. Added missing FF86 launch
+  mapping; corrected Poison Bolt impact to noncentered C006 rather than
+  lingering C007. Raw spell C14 records retain the original magical Thing
+  instead of the host no-carried-object sentinel (PROJEXPL.C F0212:76,
+  F0213:149, F0217:574-585). RAM-only party setup leaves media unchanged.
+  This proves the tested DOS path, not cross-platform or emulator parity.
+
 - 2026-09-06: Authentic public LO FUL IR now reaches an original-data C15
   render receipt after wall impact. Fixed three exposed production gaps:
   fresh PC startup omitted F0434/G0236's seven spare Thing pools and 300 SFT

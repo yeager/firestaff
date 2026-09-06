@@ -4,13 +4,10 @@
   Atari/Amiga/FM Towns paths and CSB. Audit runtime capacities against source
   pool/event counts (including 50 fresh C15 slots), pool recycling and all
   resource-exhaustion behavior. Save/import expansion must remain disabled.
-- Verify magical C14 raw Slot publication: F0327's original explosion Thing
-  (e.g. FF80 Fireball) must not become the runtime-only THING_NONE sentinel
-  when publishing the raw F0212 record. Extend raw-record assertions beyond
-  the now passing public Fireball-to-C15 runtime capture.
 - Extend ordinary C15 runtime captures to all visible lanes, explosion
-  families and original-emulator timing/pixels. D1C Fireball in three modes
+  families and original-emulator timing/pixels. Five D1C spells in three modes
   does not prove complete explosions or kinetic-energy scaling parity.
+  Verify raw C006 unlink timing and RNG against an original emulator trace.
 
 - Extend the complete projectile-orientation query to CSB's live material
   owner with original edition-specific weapon aspects and view lanes;

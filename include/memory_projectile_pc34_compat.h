@@ -94,6 +94,7 @@
 #define C002_EXPLOSION_LIGHTNING_BOLT               2
 #define C003_EXPLOSION_HARM_NON_MATERIAL            3
 #define C004_EXPLOSION_OPEN_DOOR                    4
+#define C006_EXPLOSION_POISON_BOLT                  6
 #define C007_EXPLOSION_POISON_CLOUD                 7
 #define C040_EXPLOSION_SMOKE                       40
 #define C050_EXPLOSION_FLUXCAGE                    50

@@ -616,6 +616,10 @@ int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
         case DM1_PROJECTILE_THING_OPEN_DOOR:
             subtype = PROJECTILE_SUBTYPE_OPEN_DOOR;
             break;
+        /* MENU.C F0412 / PROJEXPL.C F0217:562-585: DES VEN is FF86. */
+        case DM1_PROJECTILE_THING_POISON_BOLT:
+            subtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+            break;
         case DM1_PROJECTILE_THING_POISON_CLOUD:
             subtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
             break;

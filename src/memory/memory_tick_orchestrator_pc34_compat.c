@@ -13555,7 +13555,9 @@ cmd_attack_legacy_marker:
                 }
                 if (eventIndex < 0 || !dm1_v1_c14_pool_initialize_and_link_pc34(
                         &c14, world->dungeon,
-                        (unsigned short)projectileInput.associatedThing,
+                        /* PROJEXPL.C F0212:76 stores F0327's magical
+                         * Thing, not the host no-carried-object sentinel. */
+                        (unsigned short)receipt.projectileThing,
                         projectileInput.kineticEnergy, projectileInput.attack,
                         (unsigned short)eventIndex, projectileInput.cell,
                         projectileInput.mapIndex, projectileInput.mapX,
