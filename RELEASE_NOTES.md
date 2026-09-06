@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 respects the original disabled-attack timing marker when deciding
+  whether adjacent or visible creatures should enter attack behavior.
+
 - DM1 preserves ongoing creature attack animation during individual aspect
   updates instead of prematurely switching to the non-attack frame.
 

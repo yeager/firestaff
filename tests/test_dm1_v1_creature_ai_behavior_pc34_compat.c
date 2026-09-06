@@ -433,6 +433,29 @@ static void test_approach_arrives_at_target(void) {
 /* =========================================================
  *  Test 9: Should-attack range check
  * ========================================================= */
+static void test_attack_ticks_sentinel(void) {
+    int eventType, disabled;
+    /* GROUP.C F0209 MEDIA720 (I34): 255 suppresses attack admission,
+     * not merely a long cooldown. Test both sides of that byte boundary. */
+    for (eventType = DM1_EVENT_REACTION_PARTY_IS_ADJACENT;
+         eventType <= DM1_EVENT_UPDATE_BEHAVIOR_GROUP; ++eventType) {
+        for (disabled = 0; disabled <= 1; ++disabled) {
+            struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
+            struct DM1ActiveGroup_Compat ag = make_default_ag();
+            struct DM1BehaviorResult_Compat result;
+            struct RngState_Compat rng = make_rng(7);
+            ctx.groupBehavior = DM1_BEHAVIOR_WANDER;
+            ctx.eventType = eventType;
+            ctx.creatureInfo.attackTicks = disabled ? 255 : 254;
+            EXPECT_EQ(F0810_DM1_GROUP_DispatchBehavior_Compat(
+                          &ctx, &ag, &rng, &result), 1,
+                      "attack sentinel dispatch succeeds");
+            EXPECT_EQ(result.newBehavior == DM1_BEHAVIOR_ATTACK, !disabled,
+                      "C31-C37 honors original attack-ticks sentinel");
+        }
+    }
+}
+
 static void test_should_attack_range(void) {
     struct DM1GroupBehaviorContext_Compat ctx = make_default_ctx();
     int shouldAttack = 0;
@@ -2033,6 +2056,7 @@ static void test_group_path_blockers_f0197_to_f0199(void) {
 }
 
 int main(void) {
+    test_attack_ticks_sentinel();
     printf("DM1 V1 Creature AI Behavior CTest Gate\n");
     printf("Source: ReDMCSB GROUP.C, MOVESENS.C, DEFS.H\n\n");
 

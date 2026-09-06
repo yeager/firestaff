@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Restored I34 AttackTicks=255 admission guards for C31, C32-C36 adjacency,
+  and the shared wander/approach range decision (GROUP.C F0209 MEDIA720,
+  lines 2009, 2057, 2104, 2240). Fourteen boundary cases cover 254 versus
+  255 across C31-C37; seven failed before the fix and all pass afterward.
+  All 21 selected tests pass after rebuilding runtime targets, including
+  five original-DOS-media tests. This is not proof of attack-entry fanout,
+  blocked-movement attack admission or pre-MEDIA720 edition behavior.
+
 - C33-C36 aspect updates now retain the selected creature's attack flag
   when its group is already attacking (GROUP.C F0209:2070-2073), instead
   of unconditionally applying the non-attack animation branch. Regression

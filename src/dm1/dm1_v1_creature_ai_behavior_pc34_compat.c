@@ -997,6 +997,9 @@ int F0814_DM1_GROUP_ShouldAttack_Compat(
     if (!ctx || !outShouldAttack) return 0;
     *outShouldAttack = 0;
 
+    /* GROUP.C F0209:2104,2240, MEDIA720 (I34): C255_UNKNOWN
+     * disables attack admission; it is not a 255-tick cooldown. */
+    if (ctx->creatureInfo.attackTicks == 255) return 1;
     if (ctx->distanceToVisibleParty == 0) return 1; /* Can't see party */
 
     attackRange = DM1_ATTACK_RANGE(ctx->creatureInfo.ranges);
@@ -1761,7 +1764,9 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
         case DM1_CM1_REACTION_PARTY_IS_ADJACENT:
             /* Source: F0209 party-adjacent reaction:
              * If not already attacking or fleeing → switch to attack */
-            if (behavior != DM1_BEHAVIOR_ATTACK &&
+            /* GROUP.C F0209:2007-2012, MEDIA720 (I34). */
+            if (ctx->creatureInfo.attackTicks != 255 &&
+                behavior != DM1_BEHAVIOR_ATTACK &&
                 behavior != DM1_BEHAVIOR_FLEE) {
                 result->deleteEvents = 1;
                 result->newBehavior = DM1_BEHAVIOR_ATTACK;
@@ -1863,7 +1868,9 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
             if (behavior != DM1_BEHAVIOR_ATTACK &&
                 behavior != DM1_BEHAVIOR_FLEE) {
                 /* Adjacent → attack */
-                if (manhattan(ctx->partyMapX, ctx->partyMapY,
+                /* GROUP.C F0209:2055-2059, MEDIA720 (I34). */
+                if (ctx->creatureInfo.attackTicks != 255 &&
+                    manhattan(ctx->partyMapX, ctx->partyMapY,
                               ctx->currentGroupMapX, ctx->currentGroupMapY) <= 1) {
                     result->newBehavior = DM1_BEHAVIOR_ATTACK;
                     result->actionKind = DM1_ACTION_ATTACK;
