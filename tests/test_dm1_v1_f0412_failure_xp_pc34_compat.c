@@ -134,6 +134,65 @@ int main(void)
             assert(result.emissions[i].kind != EMIT_SPELL_EFFECT);
     }
 
+    {
+        unsigned seed;
+        int probe;
+        int experienceBefore;
+        /* MENU.C:1836-1850: all nine checks precede the flask lookup;
+         * absent flask returns before potion-power RNG and XP award. */
+        for (seed = 0; seed < 10000; ++seed) {
+            expectedRng.seed = seed;
+            (void)F0731_COMBAT_RngNextRaw_Compat(&expectedRng);
+            for (probe = 0; probe < 9; ++probe)
+                if ((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) & 127u) > 115u)
+                    break;
+            if (probe == 9) break;
+        }
+        assert(seed < 10000);
+        world.masterRng.seed = seed;
+        input.commandArg2 = 17; /* Mon Wisdom Potion: nine missing levels. */
+        input.reserved = 6;
+        input.reserved2 = 0; /* No flask. */
+        experienceBefore = world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_HEAL].experience;
+        memset(&result, 0, sizeof(result));
+        assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+        assert(world.masterRng.seed == expectedRng.seed);
+        assert(world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_HEAL].experience == experienceBefore);
+        assert(world.timeline.count == 0);
+        for (i = 0; i < result.emissionCount; ++i) {
+            assert(result.emissions[i].kind != EMIT_XP_AWARD);
+            assert(result.emissions[i].kind != EMIT_SPELL_EFFECT);
+            assert(result.emissions[i].kind != EMIT_ACTION_DISABLED);
+        }
+        {
+            struct DungeonPotion_Compat potion = {0};
+            unsigned char rawPotion[4] = {0xff, 0xfe, 0, 20};
+            unsigned expectedPower;
+            /* Reuse the identical successful gate with an actual C08
+             * owner in hand. Exactly one further draw makes potion power. */
+            potion.type = 20;
+            things.potions = &potion;
+            things.potionCount = 1;
+            things.rawThingData[THING_TYPE_POTION] = rawPotion;
+            things.thingCounts[THING_TYPE_POTION] = 1;
+            world.party.champions[0].inventory[0] =
+                (unsigned short)(THING_TYPE_POTION << 10);
+            expectedPower = 240u +
+                ((F0731_COMBAT_RngNextRaw_Compat(&expectedRng) >> 8) & 15u);
+            world.masterRng.seed = seed;
+            input.reserved2 = CMD_CAST_SPELL_RESERVED2_HAS_EMPTY_FLASK;
+            memset(&result, 0, sizeof(result));
+            assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+            assert(world.masterRng.seed == expectedRng.seed);
+            assert(potion.type == 8);
+            assert(potion.power == expectedPower);
+            assert(rawPotion[2] == expectedPower);
+            assert(rawPotion[3] == 8);
+            things.potions = NULL;
+            things.rawThingData[THING_TYPE_POTION] = NULL;
+        }
+    }
+
     printf("PASS dm1_v1_f0412_failure_xp_pc34_compat\n");
     return 0;
 }

@@ -1480,6 +1480,12 @@ Reviewed 2026-08-29. Completed work only.
   pending the integration and edition-routing work recorded in TODO-dm1.md.
 # F0412 potion practice boundary regression (2026-09-06)
 
+- Extended the runtime fixture with nine passing practice draws: absent
+  flask consumes no potion sample or XP; a C08 flask in hand consumes one
+  additional sample and updates decoded and raw potion type/power. Focused
+  CTest passes. This verifies current-stream ordering and RAM mutation only;
+  the newly identified raw-versus-shifted RNG discrepancy remains in TODO.
+
 - Corrected the failure-XP fixture's Wisdom Potion table index from 16
   (Stamina Potion) to 17. Added source-shaped receipt checks for nine
   successful threshold-equality probes (115), independent potion power
