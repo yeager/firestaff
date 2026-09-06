@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Changed the compact DM1 spell-panel mana indicator from party
+  leader to the existing validated caster resolver (MENU.C G0514). Build,
+  skill-query regression and twenty original-media cases pass. Direct
+  rendered-panel verification remains tracked separately.
+
 - 2026-09-06: Reran all twenty original-media inventory/death/consumption
   cases with presentationMode V2.1 using the explicit
   FIRESTAFF_VERIFY_UPSCALED_INVENTORY=1 test option. All pass. This exercises

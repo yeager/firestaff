@@ -1,5 +1,9 @@
 # Firestaff TODO — DM1
 
+- Add a rendered compact-spell-panel regression with different leader/caster
+  mana. Its DM1 mana indicator now resolves the caster; current skill and
+  original-media tests do not verify this panel's pixels.
+
 - Investigate the intermittent no-output early exit of the French Atari
   original-media test observed on September 6; it did not recur in three
   isolated repetitions or the full rerun. Do not treat retries as a fix.

@@ -67552,10 +67552,14 @@ void M11_GameView_Draw(M11_GameViewState* state,
         }
 
         /* ── Mana indicator (compact bar + value) ── */
-        if (state->world.party.activeChampionIndex >= 0 &&
-            state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY) {
+        /* MENU.C:855,1652-1655: spell controls belong to G0514's caster,
+         * independently of the party leader. Preserve other game owners. */
+        int manaChampionIndex = m11_is_dm1_source_kind(state->sourceKind)
+            ? m11_dm1_spell_caster_index(state) : state->world.party.activeChampionIndex;
+        if (manaChampionIndex >= 0 && manaChampionIndex < CHAMPION_MAX_PARTY &&
+            state->world.party.champions[manaChampionIndex].present) {
             const struct ChampionState_Compat* sc =
-                &state->world.party.champions[state->world.party.activeChampionIndex];
+                &state->world.party.champions[manaChampionIndex];
             int barX = pnlX + 8, barY = pnlY + 64;
             int barW = pnlW - 16, barH = 6;
             int fillW;
