@@ -65254,7 +65254,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
      * drawn on the portrait area instead of graphic 15 (small).
      * Ref: ReDMCSB CHAMPION.C F0291 — G0423_i_InventoryChampionOrdinal. */
     {
-        int activeSlot = state->world.party.activeChampionIndex;
+        int activeSlot = m11_inventory_champion_index(state);
         if (activeSlot >= 0 && activeSlot < 4 &&
             state->championDamageTimer[activeSlot] > 0) {
             int dmgDrawn = 0;

@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1's inventory damage overlay now follows the displayed champion,
+  rather than the party leader.
+
 - Opening another champion's DM1 inventory no longer selects that champion
   as party leader; inventory contents and leader-hand ownership are separate.
 

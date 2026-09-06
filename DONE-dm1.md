@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Corrected the remaining inventory damage-overlay lookup to
+  use the displayed inventory owner. Five original Atari/Amiga viewport
+  comparisons pass with different leader/inventory damage timers. This
+  does not establish independent C016 visual parity or damage timing.
+
 - 2026-09-06: After enabling inventory/leader separation, all 13 broad
   regressions pass without skips: six original object/scroll corpora,
   PC3.4 application startup and six legacy presentation suites covering

@@ -150,6 +150,8 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             unsigned char selected[320 * 200], baseline[320 * 200];
                             memset(selected, 0, sizeof(selected));
                             memset(baseline, 0, sizeof(baseline));
+                            state->championDamageTimer[0] = 0;
+                            state->championDamageTimer[1] = 5;
                             M11_GameView_Draw(state, selected, 320, 200);
                             state->world.party.activeChampionIndex = 1;
                             state->dm1InventoryChampionOrdinal = 0;
@@ -164,6 +166,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                     return 0;
                                 }
                             }
+                            state->championDamageTimer[1] = 0;
                         }
                         state->dm1InventoryChampionOrdinal = CHAMPION_MAX_PARTY + 1;
                         if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) != -1) return 0;
