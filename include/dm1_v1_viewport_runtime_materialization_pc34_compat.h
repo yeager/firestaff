@@ -53,6 +53,12 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     const DM1_V1_C14C15GraphicsCatalogPc34 *c14C15GraphicsCatalog;
     const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *c14C15MaterialReceipts;
     int c14C15MaterialReceiptCount;
+    /* Fresh runtime C14 owner (not a fabricated save receipt). Must resolve
+     * the current associated object's raw F0142 data and decoder bitmap.
+     * An explicit saved-material catalog still takes precedence. */
+    const void *liveObjectMaterialOwner;
+    int (*admitLiveObjectProjectile)(const void *owner,
+                                    const struct ProjectileInstance_Compat *projectile);
     DM1_V1_ViewportRuntimeOriginPc34 runtimeOrigin;
 } DM1_V1_ViewportRuntimeMaterializationInputPc34;
 

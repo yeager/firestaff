@@ -563,7 +563,7 @@ int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
                                             int rel_side)
 {
     /* ReDMCSB DUNVIEW.C / DEFS.H MEDIA720 visible-square order:
-     * D0C = M609 (12), D1C/L/R = 3/4/5, D2C/L/R = 6/7/8,
+     * D0C = M609 (0), D1C/L/R = 3/4/5, D2C/L/R = 6/7/8,
      * D3C/L/R = 11/12/13.
      * D3L2/D3R2 = 14/15. DUNVIEW.C F0115 uses this square id with
      * G2028_ac_ViewSquareIndexTo for object/projectile source rows. */
@@ -575,7 +575,9 @@ int dm1_viewport_3d_f0115_view_square_index(int rel_forward,
     /* F0127 calls F0115 for D0C with C0x0021. D0L/D0R have no G2028
      * object row, so only the party square participates here. */
     if (rel_forward == 0) {
-        return rel_side == 0 ? DM1_VIEW_SQUARE_D0C : -1;
+        /* DEFS.H:2596 is the source index, not our host enum ordinal.
+         * Passing host D0C (12) into G2028 selects D3L's row instead. */
+        return rel_side == 0 ? 0 : -1;
     }
     if (rel_forward < 1 || rel_forward > 3) return -1;
     if (rel_side == -2 && rel_forward == 3) return 14;

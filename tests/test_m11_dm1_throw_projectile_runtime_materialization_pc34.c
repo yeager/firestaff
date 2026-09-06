@@ -32,12 +32,14 @@ static const char* resolve_data_dir(void)
 {
     static char path[2048];
     const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
 
     if (data_dir_has_pc34(env)) return env;
     if (env && env[0]) {
         snprintf(path, sizeof(path), "%s/DATA", env);
         if (data_dir_has_pc34(path)) return path;
     }
+    if (regular_file_has_bytes(archive)) return archive;
     return NULL;
 }
 
@@ -87,7 +89,9 @@ static int find_real_open_launch_pose(const struct DungeonDatState_Compat* dunge
 {
     int mapIndex;
     if (!dungeon || !outMap || !outX || !outY || !outDirection) return 0;
-    for (mapIndex = 0; mapIndex < (int)dungeon->header.mapCount; ++mapIndex) {
+    /* The generic C2900 capture owner excludes stock HoC map zero;
+     * its separate HoC renderer/capture path needs its own regression. */
+    for (mapIndex = 1; mapIndex < (int)dungeon->header.mapCount; ++mapIndex) {
         const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
         int x;
         int y;
@@ -130,7 +134,8 @@ static int find_real_throwable_weapon(const struct DungeonThings_Compat* things,
         int objectWeight;
         int weaponType;
         int aspectOrdinal;
-        if (!raw || !dm1_v1_dungeon_get_object_weight_f0140_pc34(
+        if (!raw || (raw[0] == 0xff && raw[1] == 0xff) ||
+            !dm1_v1_dungeon_get_object_weight_f0140_pc34(
                         things, make_thing(THING_TYPE_WEAPON, index),
                         &objectWeight)) {
             continue;
@@ -138,7 +143,9 @@ static int find_real_throwable_weapon(const struct DungeonThings_Compat* things,
         weaponType = raw[2] & 0x7f;
         if (dm1_weapon_info_pc34(weaponType, &info) <= 0) continue;
         aspectOrdinal = (info.attributes >> 8) & 0x1f;
-        if (aspectOrdinal <= 0) continue;
+        /* F0142: nonzero M066 selects projectile art, not the object-art
+         * C2900 path checked below. The old opposite gate skipped all data. */
+        if (aspectOrdinal != 0) continue;
         if (!dm1_v1_projectile_material_resolve_pc34(
                 PROJECTILE_SUBTYPE_KINETIC_ARROW,
                 THING_TYPE_WEAPON,
@@ -192,8 +199,8 @@ int main(void)
 
     if (!dataDir) {
         if (!getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-            return 0;
+            puts("SKIP: original DM1 media is unavailable");
+            return 77;
         }
         fputs("configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n", stderr);
         return 1;
@@ -216,7 +223,7 @@ int main(void)
                                     &weaponType, &material)) {
         puts("skip: real DM1 data lacks an open throw lane or projectile weapon");
         M11_GameView_Shutdown(&state);
-        return 0;
+        return 77;
     }
 
     weaponThing = make_thing(THING_TYPE_WEAPON, weaponIndex);
@@ -242,11 +249,25 @@ int main(void)
     state.world.party.champions[0].direction = (unsigned char)(direction & 3);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         weaponThing;
+    /* Original object/map, RAM-only mastery threshold: F0328's F0304
+     * award must apply and publish a Ninja level, not merely record XP. */
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_NINJA].experience = 499;
+    state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_THROW].experience = 499;
 
     if (!M11_GameView_TriggerNonMeleeActionByIndex(
             &state, 0, DM1_ACTION_THROW)) {
         fprintf(stderr, "F0328 THROW did not accept real weapon type %d\n",
                 weaponType);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (state.world.party.champions[0].hp.maximum <= 100 ||
+        state.world.party.champions[0].stamina.maximum <= 200 ||
+        state.world.party.champions[0].hp.current != 100 ||
+        state.world.party.champions[0].hp.maximum !=
+            state.world.lifecycle.champions[0].maxHealth ||
+        state.world.party.champions[0].skillLevels[LIFECYCLE_SKILL_NINJA] < 2) {
+        fputs("F0328 crossing failed to publish Ninja level-up maxima\n", stderr);
         M11_GameView_Shutdown(&state);
         return 1;
     }
@@ -262,8 +283,12 @@ int main(void)
     state.world.party.mapIndex = projectile->mapIndex;
     state.world.party.mapX = projectile->mapX;
     state.world.party.mapY = projectile->mapY;
-    state.world.party.direction = projectile->direction & 3;
+    /* Camera-only RAM fixture: G2028 D0C row 11 has coordinates only
+     * for relative cells 0/1. The launch direction can put its actual cell
+     * behind this camera; face the original cell without moving the object. */
+    state.world.party.direction = projectile->cell & 3;
     state.world.gameTick++;
+    state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);

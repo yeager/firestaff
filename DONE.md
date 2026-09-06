@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Fixed DM1 PC34 thrown-object material admission for fresh live
+  projectiles without fabricating a saved-C14 receipt. Original raw object
+  records and mounted decoder bitmaps remain required; explicit saved
+  catalogs retain their validation. Corrected the D0C source-table index
+  from host enum 12 (D3L coordinates) to source index 0. The original DOS
+  ZIP regression now actually runs, verifies object-art capture, rejects a
+  RAM-corrupted object record and checks throw-driven Ninja level-up.
+  Missing media is a CTest skip, not a pass. Production build, three focused
+  tests (0.21s) and four XP/action/spell/F20 regressions (15.21s) pass.
+  Fixtures reposition the party/camera in RAM; HoC and emulator flight
+  comparisons remain open. No game media was changed or extracted.
+
 - 2026-09-06: Unified live DM1 XP-to-level-up mutation/publication across
   spell success/failure, parry, melee, sensors, throw, actions and influence.
   Success XP moved into M10 before cooldown; M11 no longer awards it again.

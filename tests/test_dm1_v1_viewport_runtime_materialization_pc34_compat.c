@@ -8,6 +8,16 @@
 
 static int tests;
 static int passes;
+static int live_owner_calls;
+
+/* Admission-control fixture only; real decoder evidence is covered by the
+ * original-media M11 throw regression. */
+static int test_live_owner(const void *owner,
+                           const struct ProjectileInstance_Compat *projectile)
+{
+    ++live_owner_calls;
+    return owner && projectile && *(const int *)owner;
+}
 
 #define CHECK(condition, message) do { \
     ++tests; \
@@ -185,6 +195,7 @@ int main(void)
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
         DM1_V1_C14C15GraphicsCatalogPc34 catalog;
         DM1_V1_F0248LiveEffectMaterialReceiptPc34 receipts[2];
+        int owner_admits = 1;
         seed_live_effects(&input, &projectiles, &explosions);
         admit_live_pc34_surfaces(&input, surfaces);
         admit_live_catalog(&input, surfaces, &catalog, receipts);
@@ -195,16 +206,28 @@ int main(void)
               d1c.admittedLiveExplosionCount == 1,
               "F0142/G0209 C14 and C15 bind only through catalog-backed receipts");
         receipts[0].associatedThing = THING_NONE;
+        live_owner_calls = 0;
+        input.liveObjectMaterialOwner = &owner_admits;
+        input.admitLiveObjectProjectile = test_live_owner;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
               d1c.admittedLiveProjectileCount == 0 &&
-              d1c.admittedLiveExplosionCount == 1,
-              "C14 Slot drift fails closed without hiding a valid C15");
+              d1c.admittedLiveExplosionCount == 1 && live_owner_calls == 0,
+              "invalid explicit receipt cannot fall back to positive live owner");
         receipts[0].associatedThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 12);
         ((unsigned char *)surfaces[2].pixels)[0] ^= 0x0f;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
               d1c.admittedLiveProjectileCount == 0,
               "catalog fingerprint rejects substituted decoded C14 pixels");
         ((unsigned char *)surfaces[2].pixels)[0] ^= 0x0f;
+        input.c14C15GraphicsCatalog = NULL;
+        owner_admits = 0;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.admittedLiveProjectileCount == 0 && live_owner_calls == 1,
+              "live owner denial without catalog stays fail-closed");
+        owner_admits = 1;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.admittedLiveProjectileCount == 1 && live_owner_calls == 2,
+              "fresh live owner admits without inventing saved receipt");
     }
 
     {

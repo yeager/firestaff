@@ -37656,6 +37656,27 @@ static int m11_fluxcage_field_source_bound(
         &state->world.explosions, mapIndex, mapX, mapY);
 }
 
+static int m11_admit_live_object_projectile(const void* owner,
+    const struct ProjectileInstance_Compat* projectile)
+{
+    const M11_GameViewState* state = (const M11_GameViewState*)owner;
+    DM1_ProjectileMaterialResolutionPc34 material;
+    const M11_AssetSlot* slot;
+    int type, subtype, ordinal;
+    if (!state || !projectile || !state->assetsAvailable ||
+        !m11_is_dm1_source_kind(state->sourceKind) ||
+        !m11_projectile_associated_thing_material(state,
+            (unsigned short)projectile->reserved1, &type, &subtype, &ordinal) ||
+        !dm1_v1_projectile_material_resolve_pc34(projectile->projectileSubtype,
+            type, subtype, ordinal, &material) || !material.valid) return 0;
+    /* DUNGEON.C F0142 and DUNVIEW.C F0115:5896-5900: the live Slot's
+     * source object selects G0209/G0210 and its actual mounted bitmap.
+     * Do not pretend a new throw came from an F0248 saved-C14 receipt. */
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)material.graphic_index);
+    return slot && slot->loaded && slot->pixels && slot->width > 0 && slot->height > 0;
+}
+
 static int m11_build_dm1_viewport_materialization_decision(
     const M11_GameViewState* state,
     M11_ViewportCell* cell,
@@ -37680,6 +37701,8 @@ static int m11_build_dm1_viewport_materialization_decision(
     input.sourceBoundFluxcage = m11_fluxcage_field_source_bound(
         state, input.mapIndex, input.mapX, input.mapY);
     input.liveProjectiles = &state->world.projectiles;
+    input.liveObjectMaterialOwner = state;
+    input.admitLiveObjectProjectile = m11_admit_live_object_projectile;
     input.liveExplosions = &state->world.explosions;
     input.hasVisibleChampionMirrorPayload =
         cell->relForward == 1 && cell->relSide == 0 &&

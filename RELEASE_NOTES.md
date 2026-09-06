@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 PC34 freshly thrown objects can use their original decoded graphics
+  without a save-import receipt. Corrected the party-square object coordinate
+  lookup, which previously selected a distant left-square row.
+
 - DM1 level gains now apply bonuses and publish live champion maxima from
   spell, attack, parry, sensor, throw and action XP paths. Spell XP is owned
   by the engine and is not repeated by presentation; level-up does not refill

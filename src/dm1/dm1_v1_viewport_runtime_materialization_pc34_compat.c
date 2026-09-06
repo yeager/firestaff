@@ -278,7 +278,11 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 if (projectile->reserved1 != THING_NONE && receipt) {
                     expectedGraphicIndex = receipt->graphicIndex;
                 }
-                if (!dm1_v1_viewport_runtime_admit_effect_pc34(
+                if (projectile->reserved1 != THING_NONE &&
+                    !input->c14C15GraphicsCatalog && input->admitLiveObjectProjectile) {
+                    if (!input->admitLiveObjectProjectile(
+                            input->liveObjectMaterialOwner, projectile)) continue;
+                } else if (!dm1_v1_viewport_runtime_admit_effect_pc34(
                     input, DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34,
                     rawThing,
                     (unsigned short)projectile->reserved1,

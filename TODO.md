@@ -1,5 +1,11 @@
 # Firestaff TODO — active cross-game work
 
+- Extend DM1 thrown-object capture coverage to the separate Hall of Champions
+  renderer, all visible flight cells, direction-specific projectile-art
+  variants and natural-play emulator comparisons.
+  The DOS PC34 D0C real-media regression uses a RAM-configured party/camera
+  and mastery threshold; it does not establish complete flight/render parity.
+
 - Extend the [DM1 world XP transaction](docs/parity/DM1_ORIGINAL_XP_TRANSACTION.md)
   evidence to original-emulator level crossings for melee, parry, sensors,
   throw and actions; finish original recently-upgraded flags and localized
