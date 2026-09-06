@@ -1,11 +1,17 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Verified alternative UseItem with original charged waterskins:
+  decremented raw charges, water cap, empty rejection, recipient isolation
+  and retained equipment object across five Atari/Amiga editions. Twenty
+  original-media cases and the live-transaction unit test pass. Controlled
+  equipment placement does not prove pickup/load or swallow-sound parity.
+
 - 2026-09-06: Routed DM1 alternative junk consumption through the original
   inventory transaction instead of legacy placeholder amounts. Original-food
   tests also exposed missing raw-record release; both consumption routes now
   mark consumed food free per F0349. Twenty Atari/Amiga cases pass, including
   alternate food amount, recipient isolation, slot removal and raw release.
-  Alternate waterskin runtime coverage remains separate open work.
+  Sound and full input/load coverage remain separate open work.
 
 - 2026-09-06: Fixed alternative UseItem antivenin consumption to cancel
   the recipient's pending poison events and counter via F0323. Original

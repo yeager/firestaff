@@ -367,9 +367,39 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 }
                             }
                             if (water == THING_NONE) { fprintf(stderr, "FAIL: no original charged waterskin\n"); return 0; }
+                            if (getenv("FIRESTAFF_VERIFY_LIVING_CASTER")) {
+                                unsigned short savedRight = state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT];
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = water;
+                                state->world.party.activeChampionIndex = 1;
+                                for (int drink = 0; drink <= charges; ++drink) {
+                                    int before = drink == charges ? -1024 : (drink & 1) ? -1024 : 1800;
+                                    int expected = drink == charges ? before : before + 800;
+                                    if (expected > 2048) expected = 2048;
+                                    state->world.party.champions[0].water = 0;
+                                    state->world.party.champions[1].water = (short)before;
+                                    int used = M11_GameView_UseItem(state);
+                                    const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, water);
+                                    int remaining = charges > drink ? charges - drink - 1 : 0;
+                                    if (used != (drink < charges) || !raw || (raw[3] >> 6) != remaining ||
+                                        state->world.party.champions[1].water != expected ||
+                                        state->world.party.champions[0].water != 0 ||
+                                        state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] != water) {
+                                        fprintf(stderr, "FAIL: alternate original waterskin\n"); return 0;
+                                    }
+                                }
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = savedRight;
+                                state->world.party.champions[1].load = otherWeight;
+                                state->world.party.activeChampionIndex = 0;
+                                /* The following mouth check now verifies the same empty skin. */
+                                charges = 0;
+                            }
                             state->world.party.champions[0].water = 0;
                             state->world.party.champions[1].water = 1800;
                             if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, water)) return 0;
+                            /* Direct fixture placement does not run the pickup/load handler. */
+                            int placedWeight;
+                            if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, water, &placedWeight)) return 0;
+                            state->world.party.champions[0].load = placedWeight;
                             /* PANEL.C F0346:1832-1838 caps water at 2048,
                              * decrements charges and retains the leader hand. */
                             for (int drink = 0; drink <= charges; ++drink) {

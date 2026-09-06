@@ -1,7 +1,7 @@
 # Firestaff TODO — DM1
 
-- Verify alternative UseItem water charges, empty rejection, caps and sound
-  with original objects; it now uses the source transaction. Audit potion XP
+- Verify alternative UseItem swallow sound and load changes through actual
+  pickup/equipment input. Audit potion XP
   and presentation feedback before claiming complete consumable parity.
 
 - If early S1.0/S1.1 media are enabled, dispatch their distinct
