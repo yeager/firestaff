@@ -1,5 +1,19 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Legacy equipment-slot acceptance and rejection
+
+- All 606 allocated original object records now visit all 30 inventory
+  slots in Original/V2.1. Acceptance is computed from the selected
+  archive's G0237 AllowedSlots word and DATA.C G0038:320–350 slot masks,
+  independently of the runtime admission helper.
+- Accepted placements are picked back up. Rejected placements must leave
+  the original Thing in hand and the slot empty. Identity is checked after
+  the press and after explicit release in both cases.
+- All five Atari/Amiga editions pass: 61,580 input transactions each,
+  307,900 total including rejected placements. Source geometry and
+  object-to-info indexing remain shared; occupied swaps, drag sequences
+  and complete original-runtime parity remain unproven.
+
 ## 2026-09-06 — Original legacy equipment-mask verification
 
 - Read G0237 from each selected Atari/Amiga archive's original graphic

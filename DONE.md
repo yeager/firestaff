@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Five original DM1 Atari/Amiga editions pass 307,900
+  placement, pickup and rejection checks across all 30 inventory slots
+  in Original/V2.1, using original G0237 masks and source G0038 rules.
+
 - 2026-09-06: DM1 Atari/Amiga runtime equipment masks match original
   graphic-559 G0237 words for 606 allocated objects in each of five
   editions; all source-mask and transfer checks pass.

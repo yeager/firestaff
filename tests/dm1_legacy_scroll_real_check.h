@@ -10,11 +10,15 @@
 
 static int check_legacy_object_transfers(M11_GameViewState *state)
 {
-    /* DATA.C G0038 and CHAMPION.C F0302:662-707: the two hands and all
-     * 17 backpack slots accept ordinary object categories without a
-     * body-slot mask restriction. Use allocated original records only. */
-    static const int boxes[19] = {8,9,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37};
-    static const int slots[19] = {19,20,11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,29};
+    /* DATA.C G0038:320-350 and CHAMPION.C F0302:662-707.
+     * Source slot masks are independent of the runtime admission helper. */
+    static const unsigned int slotMasks[30] = {
+        0xffff,0xffff,2,8,16,32,256,128,128,128,4,256,64,
+        0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,
+        0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff,0xffff
+    };
+    static const int slots[30] = {19,20,0,2,3,4,6,9,8,10,1,5,7,
+        11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,29};
     int checked = 0;
     unsigned char objectData[65535];
     size_t objectBytes = 0, objectOffset = 0;
@@ -50,13 +54,13 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
     for (int type = THING_TYPE_WEAPON; type <= THING_TYPE_JUNK; ++type) {
         for (int i = 0; i < state->world.things->thingCounts[type]; ++i) {
             unsigned short thing = (unsigned short)((type << 10) | i);
+            unsigned int mask;
             const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, thing);
             if (!raw) return 0;
             if (raw[0] == 0xff && raw[1] == 0xff) continue;
             {
                 int info = dm1_v1_dungeon_get_object_info_index_pc34(state->world.things, thing);
                 const unsigned char *entry;
-                unsigned int mask;
                 if (info < 0 || info >= 180) return 0;
                 entry = objectData + objectOffset + (size_t)info * 6;
                 mask = ((unsigned int)entry[4] << 8) | entry[5];
@@ -65,16 +69,17 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                     return 0;
                 }
             }
-            for (int mode = 0; mode < 2; ++mode) for (int slot = 0; slot < 19; ++slot) {
+            for (int mode = 0; mode < 2; ++mode) for (int slot = 0; slot < 30; ++slot) {
                 int x, y, w, h;
+                int admitted = (mask & slotMasks[slot]) != 0;
                 state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED : M12_PRESENTATION_V1_ORIGINAL;
                 state->inventoryPanelActive = 1;
                 if (state->world.party.champions[0].inventory[slots[slot]] != THING_NONE ||
-                    !M11_GameView_GetV1InventorySourceSlotBoxZone(boxes[slot], &x, &y, &w, &h) ||
+                    !M11_GameView_GetV1InventorySourceSlotBoxZone(slot + 8, &x, &y, &w, &h) ||
                     !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing)) return 0;
-                for (int step = 0; step < 2; ++step) {
-                    unsigned short hand = step ? thing : THING_NONE;
-                    unsigned short resident = step ? THING_NONE : thing;
+                for (int step = 0; step < (admitted ? 2 : 1); ++step) {
+                    unsigned short hand = (step || !admitted) ? thing : THING_NONE;
+                    unsigned short resident = (step || !admitted) ? THING_NONE : thing;
                     (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
                     for (int release = 0; release < 2; ++release) {
                         if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
@@ -91,7 +96,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
             }
         }
     }
-    printf("PASS: %d original legacy object transfers and releases\n", checked);
+    printf("PASS: %d original legacy object placement/pickup/rejection checks and releases\n", checked);
     return checked > 0;
 }
 
