@@ -216,17 +216,17 @@ int main(int argc, char** argv)
             return 1;
         }
     }
-    if (spell->explosionType == 6) {
-        int i, rawIndex = -1;
+    if (spell->explosionType != 7) {
+        int i, rawIndex = -1, events = 0;
         unsigned int beforeTick = state.world.gameTick;
         unsigned int dueTick = beforeTick;
-        /* PROJEXPL.C F0220:876-877 unlinks FF86 and frees its original
-         * C15 on the next event, without the FF87 cloud continuation. */
+        /* PROJEXPL.C F0220:822-877 retires these one-shot effects on
+         * their C25 event, unlike the FF87 cloud continuation. */
         for (i = 0; i < state.world.things->explosionCount; ++i) {
             const struct DungeonExplosion_Compat* e = &state.world.things->explosions[i];
-            if (e->next != THING_NONE && e->type == 6) {
+            if (e->next != THING_NONE && e->type == spell->explosionType) {
                 if (rawIndex >= 0) {
-                    fputs("ambiguous live Poison Bolt C15 owner\n", stderr);
+                    fputs("ambiguous live one-shot C15 owner\n", stderr);
                     M11_GameView_Shutdown(&state);
                     return 1;
                 }
@@ -235,24 +235,35 @@ int main(int argc, char** argv)
         }
         for (i = 0; i < state.world.timeline.count; ++i) {
             const struct TimelineEvent_Compat* ev = &state.world.timeline.events[i];
-            if (ev->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE && ev->aux1 == 6)
+            if (ev->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+                ev->aux1 == spell->explosionType) {
                 dueTick = ev->fireAtTick;
+                ++events;
+            }
         }
         /* The host exposes the next simulation tick after dispatch. Run
          * through the source event's due tick, not merely up to it. */
-        if (dueTick > beforeTick + 1u) return 1;
+        if (events != 1 || rawIndex < 0 || dueTick > beforeTick + 1u) {
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
         while (state.world.gameTick <= dueTick) {
             unsigned int tick = state.world.gameTick;
             (void)M11_GameView_AdvanceIdleTick(&state);
-            if (state.world.gameTick != tick + 1u) return 1;
+            if (state.world.gameTick != tick + 1u ||
+                (tick < dueTick && state.world.things->explosions[rawIndex].next == THING_NONE)) {
+                fputs("one-shot C15 retired before its source event\n", stderr);
+                M11_GameView_Shutdown(&state);
+                return 1;
+            }
         }
         if (rawIndex < 0 ||
             state.world.gameTick != dueTick + 1u ||
             state.world.things->explosions[rawIndex].next != THING_NONE ||
             state.world.things->rawThingData[THING_TYPE_EXPLOSION][rawIndex * 4] != 0xff ||
             state.world.things->rawThingData[THING_TYPE_EXPLOSION][rawIndex * 4 + 1] != 0xff) {
-            fprintf(stderr, "Poison Bolt C15 retirement failed: index=%d tick=%u->%u next=%04x\n",
-                rawIndex, beforeTick, state.world.gameTick,
+            fprintf(stderr, "%s C15 retirement failed: index=%d tick=%u->%u next=%04x\n",
+                spell->name, rawIndex, beforeTick, state.world.gameTick,
                 rawIndex < 0 ? 0 : state.world.things->explosions[rawIndex].next);
             M11_GameView_Shutdown(&state);
             return 1;
@@ -260,10 +271,56 @@ int main(int argc, char** argv)
         M11_GameView_Draw(&state, framebuffer, 320, 200);
         M11_GameView_GetDm1F0115C15RuntimeCaptureReceipt(&receipt);
         if (receipt.valid) {
-            fputs("retired Poison Bolt retained a live C15 render receipt\n", stderr);
+            fputs("retired one-shot retained a live C15 render receipt\n", stderr);
             M11_GameView_Shutdown(&state);
             return 1;
         }
+    }
+    if (spell->explosionType == 7) {
+        int rawIndex = -1, i, advances = 0;
+        for (i = 0; i < state.world.things->explosionCount; ++i) {
+            const struct DungeonExplosion_Compat* e = &state.world.things->explosions[i];
+            if (e->next != THING_NONE && e->type == 7) {
+                if (rawIndex >= 0) return 1;
+                rawIndex = i;
+            }
+        }
+        if (rawIndex < 0) return 1;
+        /* PROJEXPL.C F0220:866-877: subtract three at Attack >= 6,
+         * reschedule one source tick later, otherwise unlink/free. */
+        while (advances++ < 86) {
+            int oldAttack = state.world.things->explosions[rawIndex].attack;
+            int events = 0;
+            unsigned int dueTick = 0;
+            const unsigned char* raw;
+            for (i = 0; i < state.world.timeline.count; ++i) {
+                const struct TimelineEvent_Compat* ev = &state.world.timeline.events[i];
+                if (ev->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE && ev->aux1 == 7) {
+                    dueTick = ev->fireAtTick;
+                    ++events;
+                }
+            }
+            if (events != 1 || dueTick > state.world.gameTick + 1u) return 1;
+            while (state.world.gameTick <= dueTick) {
+                unsigned int tick = state.world.gameTick;
+                (void)M11_GameView_AdvanceIdleTick(&state);
+                if (state.world.gameTick != tick + 1u) return 1;
+            }
+            raw = state.world.things->rawThingData[THING_TYPE_EXPLOSION] + rawIndex * 4;
+            if (oldAttack < 6) {
+                if (state.world.things->explosions[rawIndex].next != THING_NONE ||
+                    raw[0] != 0xff || raw[1] != 0xff) return 1;
+                break;
+            }
+            if (state.world.things->explosions[rawIndex].next == THING_NONE ||
+                state.world.things->explosions[rawIndex].attack != oldAttack - 3 ||
+                raw[3] != oldAttack - 3) {
+                fprintf(stderr, "Poison Cloud source continuation drift: attack=%d raw=%d\n",
+                    oldAttack, raw[3]);
+                return 1;
+            }
+        }
+        if (advances > 86) return 1;
     }
     state.world.gameTick++;
     state.assetsAvailable = 0;

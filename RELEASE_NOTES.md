@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 Poison Cloud continues weakening until it expires; its scheduled
+  continuation now references the updated dungeon record correctly.
+
 - Original-data explosions are advanced only by their scheduled game event,
   preventing premature presentation-layer advancement. Retiring an effect
   also frees its original dungeon record instead of leaking a pool slot.

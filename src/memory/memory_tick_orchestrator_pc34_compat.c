@@ -9106,6 +9106,14 @@ static int orch_handle_explosion_advance_event_compat(
         !orch_c25_prepare_continuation_owner_compat(world, event, &newState)) {
         return 0;
     }
+    if (tickResult.outNextTick.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+        sourceThing != THING_NONE) {
+        /* F0220:866-872 changes C15 Attack before rescheduling its event.
+         * The event was built before that raw publication; bind it to the
+         * updated owner fingerprint, not the previous cloud strength. */
+        tickResult.outNextTick.aux3 = (int)newState.sourceC15Fingerprint;
+        tickResult.outNextTick.aux4 = newState.sourceC25Priority;
+    }
 
     if (tickResult.emittedCombatActionPartyCount > 0) {
         (void)orch_apply_explosion_party_action_compat(

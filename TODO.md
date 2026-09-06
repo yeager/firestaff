@@ -1,5 +1,12 @@
 # Firestaff TODO — active cross-game work
 
+- Correct Fireball/Lightning damage ownership: original PROJEXPL.C F0213
+  applies the initial party-or-group fire burst immediately after C15/C25
+  publication, while F0220:822-831 consumes separate RNG and only attacks
+  doors. The current host delays party/group burst to C25 and labels
+  Lightning damage as lightning rather than source fire. Preserve separate
+  direct projectile-hit damage and verify both RNG stages before promotion.
+
 - Extend fresh-game G0236 pool admission to the separately authenticated
   Atari/Amiga/FM Towns paths and CSB. Audit runtime capacities against source
   pool/event counts (including 50 fresh C15 slots), pool recycling and all

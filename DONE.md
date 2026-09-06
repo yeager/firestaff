@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Extended authentic DOS spell lifecycle verification to all
+  four one-shot effects (including no premature retirement), and Poison
+  Cloud's complete three-point decay through final raw/decoded C15 free.
+  Fixed continuation events retaining the pre-decay owner fingerprint,
+  which stalled the cloud after its first decay. All five original-media
+  spell tests pass; damage timing and emulator comparisons remain open.
+
 - 2026-09-06: Authentic DOS Poison Bolt now verifies raw/decoded C15
   retirement through its due C25 event and absence of a stale render
   receipt. This exposed two lifecycle defects: M11 advanced source-bound
