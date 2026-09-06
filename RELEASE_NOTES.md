@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 now transfers held-object weight immediately when selecting another
+  leader, instead of leaving the old leader's displayed load stale.
+
 - DM1: corrected stale carried load after dropping an item. Completed
   inventory transactions now refresh carried weight, including the held
   object and the current contents of an open chest.

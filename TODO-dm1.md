@@ -1,7 +1,7 @@
 # Firestaff TODO — DM1
 
 - Extend load verification beyond floor-drop and second-champion isolation:
-  leader changes, cross-champion exchanges, full and partially emptied
+  mouse leader changes, cross-champion exchanges, full and partially emptied
   open chests, mutation rollback and weight-changing consumption/spells.
   Audit mutation paths that do not publish through m11_refresh_hash and
   compare platform-specific weight values against original media. The

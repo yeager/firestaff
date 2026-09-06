@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Fixed delayed DM1 held-weight transfer on leader selection;
+  two-way keyboard cycling passes five original Atari/Amiga regressions.
+
 - 2026-09-06: Five original DM1 Atari/Amiga load tests verify that a
   leader's floor drop preserves a second champion's carried object/load.
 

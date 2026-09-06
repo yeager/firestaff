@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Reproduced stale held-object load after keyboard leader
+  cycling in all five Atari/Amiga editions. Leader selection now publishes
+  a refreshed load/hash immediately, following CLIKCHAM.C F0368. All five
+  original-media tests pass a two-way keyboard leader switch before the
+  floor drop, preserving the second champion's separate inventory weight.
+  Direct mouse selection uses the same refresh but needs input-level coverage.
+
 - 2026-09-06: Five original Atari/Amiga floor-drop load regressions now
   retain a distinct original weapon on a second champion. Normal leader
   pickup/drop/release preserves that champion's ready hand and load.

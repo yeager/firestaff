@@ -134,6 +134,20 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[0].inventory[slots[slot]] != THING_NONE ||
                             state->world.party.champions[0].load != weight) return 0;
                         state->inventoryPanelActive = 0;
+                        /* CLIKCHAM.C F0368:55-76 transfers only held weight
+                         * when the leader changes, then transfers it back. */
+                        for (int leader = 1; leader >= 0; --leader) {
+                            (void)M11_GameView_HandleInput(state, M12_MENU_INPUT_CYCLE_CHAMPION);
+                            if (state->world.party.activeChampionIndex != leader ||
+                                state->world.party.champions[0].load != (leader ? 0 : weight) ||
+                                state->world.party.champions[1].load != otherWeight + (leader ? weight : 0)) {
+                                fprintf(stderr, "FAIL: leader switch %d loads=%u/%u expected=%d/%d\n",
+                                    leader, state->world.party.champions[0].load,
+                                    state->world.party.champions[1].load,
+                                    leader ? 0 : weight, otherWeight + (leader ? weight : 0));
+                                return 0;
+                            }
+                        }
                         (void)M11_GameView_HandlePointer(state, 64, 158, 1);
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) return 0;
                         fprintf(stderr, "legacy floor-drop load thing=%04x before=%d after=%u expected=0\n",

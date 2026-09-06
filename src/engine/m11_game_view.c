@@ -61162,6 +61162,9 @@ static int m11_cycle_active_champion(M11_GameViewState* state) {
         if (candidate < state->world.party.championCount &&
             state->world.party.champions[candidate].present) {
             state->world.party.activeChampionIndex = candidate;
+            /* ReDMCSB CLIKCHAM.C F0368:55-76 moves held-object load
+             * from the previous leader to the new leader immediately. */
+            m11_refresh_hash(state);
             m11_get_active_champion_label(state, champion, sizeof(champion));
             m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");
             snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s READY", champion);
@@ -61189,6 +61192,9 @@ static int m11_set_active_champion(M11_GameViewState* state, int championIndex) 
     }
 
     state->world.party.activeChampionIndex = championIndex;
+    /* ReDMCSB CLIKCHAM.C F0368:55-76: publish the held-weight transfer
+     * for direct leader selection as well as keyboard cycling. */
+    m11_refresh_hash(state);
     m11_get_active_champion_label(state, champion, sizeof(champion));
     m11_set_status(state, "CHAMP", "ACTIVE CHAMPION READY");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s READY", champion);
