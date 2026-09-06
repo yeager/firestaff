@@ -30900,7 +30900,17 @@ static int m11_apply_tick_with_attack_action(M11_GameViewState* state,
         char champion[16];
         int attackRoll = 0;
         int i;
-        m11_get_active_champion_label(state, champion, sizeof(champion));
+        /* MENU.C F0391:836 / F0407:1263-1269: the action owner is
+         * independent of the leader. Use the dispatched actor for feedback,
+         * too, even if simulation changes party state during the tick. */
+        if (input.commandArg1 < CHAMPION_MAX_PARTY &&
+            beforeParty.champions[input.commandArg1].present) {
+            m11_format_champion_name(
+                beforeParty.champions[input.commandArg1].name,
+                champion, sizeof(champion));
+        } else {
+            m11_get_active_champion_label(state, champion, sizeof(champion));
+        }
         for (i = 0; i < state->lastTickResult.emissionCount; ++i) {
             const struct TickEmission_Compat* emission = &state->lastTickResult.emissions[i];
             if (emission->kind == EMIT_DAMAGE_DEALT) {

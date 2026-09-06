@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Attack inspection feedback names the dispatched champion,
+  not the party leader, using the pre-tick actor snapshot. A distinct-name
+  non-leader regression failed before the fix and passes with original DOS
+  and English/Japanese FM Towns media in Original, V2.0 and V2.1. All five
+  targeted tests, including action/stamina runtime coverage, pass without
+  skips (12.89 seconds). This does not establish full combat parity.
+
 - 2026-09-06: Original-media DOS and English/Japanese FM Towns tests select
   an existing dungeon weapon and dispatch STAB/SWING through mouse input in
   Original, V2.0 and V2.1. The non-leader actor receives the action and stamina

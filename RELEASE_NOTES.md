@@ -1,5 +1,8 @@
 # Unreleased
 
+- Attack feedback now names the attacking champion rather than the party
+  leader when a different champion performs the action.
+
 - English FM Towns action-menu names and labels use original font placement
   and padding; empty names no longer display an invented EMPTY label.
   A second legacy synthetic fill can no longer overwrite Japanese C010;

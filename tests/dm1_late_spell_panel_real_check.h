@@ -485,6 +485,8 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
                 state->actionDisabledTicks[i]=0;
             }
             state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND]=weaponThing;
+            memcpy(state->world.party.champions[0].name,"HALK",5);
+            memcpy(state->world.party.champions[3].name,"ZED",4);
             state->world.party.champions[3].actionIndex=255;
             state->world.party.champions[0].actionIndex=255;
             M11_GameView_ClearActingChampion(state);
@@ -497,6 +499,8 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
                              state->world.party.champions[3].actionIndex==weaponAction &&
                              state->world.party.champions[0].actionIndex==255 &&
                              state->world.party.champions[3].stamina.current<staminaBefore);
+            LATE_SPELL_CHECK(strstr(state->inspectTitle,"ZED")!=NULL &&
+                             strstr(state->inspectTitle,"HALK")==NULL);
             for(int emission=0;emission<state->lastTickResult.emissionCount;++emission)
                 if(state->lastTickResult.emissions[emission].kind==EMIT_DAMAGE_DEALT)
                     LATE_SPELL_CHECK(state->lastTickResult.emissions[emission].payload[0]==3);
