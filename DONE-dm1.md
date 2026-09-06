@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Expanded the aspect adapter regression across all four original C33-C36
+  selected-creature events in a four-creature group. Each event changes its
+  selected aspect and preserves the other three byte values. Reintroducing
+  the old int-sized memcpy import also fails sibling preservation; restored
+  per-slot import passes. Together with the earlier writeback mutation this
+  detects both transfer directions. Negative-control changes were removed.
+
 - Strengthened aspect-width regression with a real C33 dispatch through the
   runtime adapter: selected creature changes while three sibling slots retain
   their byte values. Reintroducing the old memcpy writeback fails specifically
