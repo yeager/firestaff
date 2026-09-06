@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Reran all twenty original-media inventory/death/consumption
+  cases with presentationMode V2.1 using the explicit
+  FIRESTAFF_VERIFY_UPSCALED_INVENTORY=1 test option. All pass. This exercises
+  the source-layout input/state paths with that mode selected, not the
+  separately composed Modern HUD or final upscaled framebuffer parity.
+
 - 2026-09-06: Verified VI's ten-retry exhaustion using source RNG seed 321
   and wound bit 1 with a runtime-created Lo VI in an original flask. The
   wound remains and the final seed matches ten draws; all twenty cases pass.

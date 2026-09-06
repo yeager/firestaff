@@ -104,6 +104,8 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         type == THING_TYPE_WEAPON && slot == 0 && mode == 0 && step == 0) {
                         int weight, otherWeight;
                         unsigned short other = THING_NONE;
+                        if (getenv("FIRESTAFF_VERIFY_UPSCALED_INVENTORY"))
+                            state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
                         /* CHAMPION.C F0297:264/F0298:293 charges the held
                          * object only to the leader. A second champion's
                          * independently carried original object must survive. */
