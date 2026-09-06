@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Source-owned scroll cell background
+
+- Corrected scroll rendering to copy six columns with white background,
+  following PANEL.C F0340 and TEXT2.C F0644:133–143. The previous five-column
+  transparent renderer contradicted the original PC3.4 no-transparency blit.
+- A source-corrected original-media oracle failed on scrolls 10, 22 and 27
+  before the fix. The full PC3.4 Original/V2.1 object corpus and targeted
+  scroll-material gate pass afterward. Vertical layout and emulator parity
+  remain separate verification requirements.
+
 ## 2026-09-06 — Non-vacuous scroll font check
 
 - The real-scroll raster test now requires a loaded original font and a

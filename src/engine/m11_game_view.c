@@ -63638,7 +63638,9 @@ static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
             int row, col;
             int dx = startX + ci * 6;
             for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
-                for (col = 0; col < 5; ++col) {
+                /* TEXT2.C F0644:133-143 blits all six columns, including
+                 * the white inter-character column, without transparency. */
+                for (col = 0; col < 6; ++col) {
                     int px = dx + col;
                     int py = y + row;
                     if (px < 0 || px >= framebufferWidth ||

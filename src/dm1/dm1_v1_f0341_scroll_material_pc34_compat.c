@@ -68,7 +68,9 @@ int dm1_v1_f0341_scroll_material_receipt_pc34(
     outReceipt->panelTransparentColor = 8; /* C08 red */
     outReceipt->panelZoneIndex = 101;
     outReceipt->textForeground = 0; /* F0340 scroll ink is C00 */
-    outReceipt->textBackground = -1;
+    /* PANEL.C F0340 and TEXT2.C F0644:133-143 copy a six-pixel
+     * character cell with C15 white and no transparency in PC3.4. */
+    outReceipt->textBackground = 15;
     outReceipt->m653GraphicIndex = glyph->graphicIndex;
     outReceipt->materialFingerprint = fingerprint;
     return 1;

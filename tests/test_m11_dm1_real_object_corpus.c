@@ -333,9 +333,11 @@ static int check_type(M11_GameViewState *state, int thingType,
                                     if (code >= 'A' && code <= 'Z') code -= 64;
                                     else if (code >= '{') code -= 96;
                                     for (int y = 0; y < M11_FONT_CHAR_VISIBLE_H; ++y)
-                                        for (int x = 0; x < 5; ++x) {
+                                        for (int x = 0; x < 6; ++x) {
                                             int dx = 162 - length * 3 + character * 6 + x;
                                             int dy = 33 + layout.firstLineY + line * DM1_V1_TEXT_LINE_HEIGHT + y;
+                                            if (dx >= 0 && dx < 320 && dy >= 0 && dy < 200)
+                                                expected[dy * 320 + dx] = 15;
                                             if (dx >= 0 && dx < 320 && dy >= 0 && dy < 200 &&
                                                 M11_Font_GetPixel(&state->originalFont,
                                                     code * M11_FONT_CHAR_CELL_WIDTH + M11_FONT_X_OFFSET + x, y)) {

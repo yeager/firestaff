@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Fixed DM1 scroll cells to use the original six-column white
+  background; three original-scroll raster failures are resolved and the
+  complete PC3.4 corpus passes in Original/V2.1.
+
 - 2026-09-06: DM1 scroll raster evidence now explicitly requires loaded
   font data and nonzero glyph ink; the original-media corpus passes.
 

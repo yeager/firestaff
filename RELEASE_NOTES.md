@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1: scroll text now uses the original white six-pixel character cells,
+  fixing visible differences on three original PC3.4 scrolls.
+
 - CSB Atari: open-chest input now resolves the original viewport-relative
   slot positions. Chest backgrounds and resident icons now use original
   graphics; full visual parity remains under verification.
