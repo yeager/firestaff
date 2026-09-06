@@ -340,6 +340,20 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) == THING_NONE)) return 0;
                         /* Drive the real death handler after a controlled
                          * zero-health transition of the inventory owner. */
+                        unsigned short deathExtra = THING_NONE;
+                        for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
+                            unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);
+                            const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                            if (candidate != other && candidate != thing && bytes &&
+                                !(bytes[0] == 0xff && bytes[1] == 0xff)) {
+                                deathExtra = candidate;
+                                break;
+                            }
+                        }
+                        if (deathExtra == THING_NONE) return 0;
+                        /* G0057 drops source backpack 13 (host 11) before
+                         * source ready hand 0 (host 19); F0163 appends. */
+                        state->world.party.champions[1].inventory[11] = deathExtra;
                         state->world.party.champions[1].hp.current = 0;
                         M11_GameView_ProbeCheckPartyDeath(state);
                         if (state->world.party.champions[1].inventory[19] != THING_NONE) return 0;
@@ -348,15 +362,17 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 state->world.dungeon, state->world.things,
                                 state->world.party.mapIndex, state->world.party.mapX,
                                 state->world.party.mapY);
-                            int count = 0, steps = 0;
+                            int count = 0, steps = 0, extraCount = 0, extraPosition = -1, handPosition = -1;
                             while (cursor != THING_ENDOFLIST && cursor != THING_NONE && steps++ < 4096) {
                                 if ((cursor & 0x3fff) == (other & 0x3fff)) {
                                     if ((cursor >> 14) != (state->world.party.champions[1].cell & 3)) return 0;
                                     ++count;
+                                    handPosition = steps;
                                 }
+                                if ((cursor & 0x3fff) == deathExtra) { ++extraCount; extraPosition = steps; }
                                 cursor = F0512_DUNGEON_GetThingNext_Compat(state->world.things, cursor);
                             }
-                            if (count != 1 || steps >= 4096) {
+                            if (count != 1 || extraCount != 1 || extraPosition >= handPosition || steps >= 4096) {
                                 fprintf(stderr, "FAIL: death floor object count=%d steps=%d\n", count, steps);
                                 return 0;
                             }

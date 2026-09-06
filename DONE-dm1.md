@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Five original Atari/Amiga death tests now drop two distinct
+  original weapons from source backpack 13 and ready hand 0. Floor-chain
+  traversal verifies each exactly once and backpack before hand, matching
+  G0057/F0318 and F0163's append semantics. All 30 slots and non-compact
+  diagnostic layouts remain outside this ordering proof.
+
 - 2026-09-06: Corrected F0318's source-slot/host-slot mismatch: translate
   G0057 C00..C29 through the inventory mapping before reading host slots.
   Build and five original-media death/ownership tests pass. Those currently
