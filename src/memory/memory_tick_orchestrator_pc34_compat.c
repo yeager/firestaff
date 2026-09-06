@@ -29,9 +29,10 @@ int F0884_WORLD_AwardSkillExperience_Compat(
     if (!party->present) return -1;
     life = &world->lifecycle.champions[championIndex];
     base = skillIndex < 4 ? skillIndex : (skillIndex - 4) >> 2;
-    gained = F0849_LIFECYCLE_AddSkillExperience_Compat(life, skillIndex,
+    gained = F0849_LIFECYCLE_AddSkillExperienceWithPolicy_Compat(life, skillIndex,
         experience, mapDifficulty, world->gameTick,
-        world->lifecycle.lastCreatureAttackTime, &before, &after);
+        world->lifecycle.lastCreatureAttackTime, &before, &after,
+        world->skillAccumulatorPolicy);
     /* CHAMPION.C F0303:742 and F0304:882-895: resting mastery is one
      * on both sides, so practice does not trigger a level-up while asleep. */
     if (world->partyIsResting || world->lifecycle.rest.isResting) gained = 0;
@@ -2413,14 +2414,15 @@ int F0888_ORCH_GetChampionF0303SkillLevel_Compat(
     partyIsResting = world->partyIsResting || world->lifecycle.rest.isResting;
     if (!dm1_skill_build_query_from_champion_inventory(
             champion, world->things, partyIsResting, &query)) {
-        return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-            lifecycleChampion, skillIndex, 0);
+        return F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
+            lifecycleChampion, skillIndex, 0, world->skillAccumulatorPolicy);
     }
 
     /* ReDMCSB: COMMAND/MENU spell/action execution queries live levels via
      * CHAMPION.C F0303, which includes temporary XP, resting and equipped
      * action-hand/neck object modifiers. */
-    return dm1_skill_get_level_ex(&skillState, skillIndex, 0, &query);
+    return dm1_skill_get_level_policy(&skillState, skillIndex, 0, &query,
+        world->skillAccumulatorPolicy);
 }
 
 int F0888_ORCH_GetChampionF0312SkillBonus_Compat(

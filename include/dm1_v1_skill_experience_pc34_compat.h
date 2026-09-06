@@ -15,6 +15,7 @@
 #define FIRESTAFF_DM1_V1_SKILL_EXPERIENCE_PC34_COMPAT_H
 
 #include <stdint.h>
+#include "dm1_skill_accumulator_policy.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,6 +153,11 @@ int dm1_skill_get_level(const DM1_ChampionSkillState* state,
  * Passing NULL for query is equivalent to no resting and no equipped
  * modifier objects.
  */
+int dm1_skill_get_level_policy(const DM1_ChampionSkillState* state,
+                           int skillIndex, int flags,
+                           const DM1_SkillLevelQuery* query,
+                           enum DM1SkillAccumulatorPolicy policy);
+
 int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
                            int skillIndex,
                            int flags,

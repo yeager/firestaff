@@ -58,14 +58,12 @@
   Extend the verified original-media Mon Light difficulty-6 integration to
   original input/presentation captures and other casts/attacks; primitive
   word-width tests are not naturally occurring original fights.
-  Separately audit cumulative permanent-XP overflow; F0849 still saturates
-  those 32-bit totals, which the award-word correction does not address.
-  Include F0303 level-query signedness in that audit: CHAMPION.C:730-737
-  selects signed long for early Atari/Amiga and FM Towns 2.0, but unsigned
-  long for PC 3.4 and the MEDIA720 editions. F0848 currently uses signed
-  int32_t addition (including hidden/base averaging) and clamps negative
-  values. Do not apply one overflow/level-query policy to every edition;
-  establish edition dispatch and avoid host signed-overflow undefined behavior.
+  Extend source-edition XP arithmetic verification to authentic Amiga 3.6
+  startup and original boundary traces. Unknown identities retain the legacy
+  signed default; add explicitly evidenced edition mappings rather than
+  inferring signedness from graphics format. Audit remaining standalone legacy
+  helpers and maintain common policy for all live query/award consumers. See
+  `docs/parity/DM1_SKILL_ACCUMULATOR_AUDIT.md` for implementation and evidence.
 
 - Extend rune lifecycle verification to original DOS/FM Towns media and
   rendered symbol rows after fourth-rune wrap/recant. Atari/Amiga input

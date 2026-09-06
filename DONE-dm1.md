@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Live M10/M11 skill-level queries now share defined early/late
+  accumulator arithmetic. F0849 permanent XP wraps instead of saturating;
+  before/after level queries use the world edition policy. Exact known graphics
+  hashes bind PC34 and Amiga 3.6 late semantics; direct archive startup hashes
+  its actual graphics member when launcher metadata is absent. Boundary and
+  live-world tests pass, including UBSan reproduction of the original overflow.
+  Five DOS 3.4 media cases and six Atari/Amiga/F20 media cases pass with policy
+  assertions (Atari EN/DE/FR, Amiga 2.0, F20 EN/JP). The Amiga HD-named test
+  also selects 2.0, so it does not prove 3.6. See
+  `docs/parity/DM1_SKILL_ACCUMULATOR_AUDIT.md` for remaining scope.
+
 - 2026-09-06: F0186 fixed-drop sound selection no longer depends on a
   successful allocation. Exhausted dragon junk and Trolin weapon pools retain
   the source wooden/metallic sound respectively (GROUP.C:644), with no pool

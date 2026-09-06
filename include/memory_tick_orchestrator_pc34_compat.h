@@ -300,6 +300,7 @@ struct GameWorld_Compat {
     struct TimelineQueue_Compat        timeline;           /* Phase 12 */
     struct RngState_Compat             masterRng;          /* Phase 13 */
     uint8_t levelUpAntimagicModulus; /* Edition configuration: 0/4 PC34, 3 F20. */
+    enum DM1SkillAccumulatorPolicy skillAccumulatorPolicy; /* Source edition, not save data. */
     struct CombatResult_Compat         pendingCombat;      /* Phase 13 */
     /* ReDMCSB CHAMPION.C F0321 adds each hit to G0409/G0410 by champion;
      * F0320 drains all four entries at the game-loop boundary.  Keep the

@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1 skill queries avoid signed integer overflow and use source-edition XP
+  arithmetic. Permanent XP wraps with original 32-bit semantics rather than
+  saturating at the signed maximum.
+
 - DM1 preserves the original creature-drop sound when the item pool is full.
 
 - DM1 newly generated creature drops now use shared destination movement

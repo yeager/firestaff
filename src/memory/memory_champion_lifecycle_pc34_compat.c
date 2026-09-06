@@ -686,46 +686,31 @@ int F0847_LIFECYCLE_ApplyTemporaryXPDecay_Compat(
  *  Group E — XP & level-up (F0848-F0853)
  * ================================================================ */
 
-int F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+int F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
     const struct ChampionLifecycleState_Compat* champ,
-    int skillIndex,
-    int ignoreTemporary)
+    int skillIndex, int ignoreTemporary, enum DM1SkillAccumulatorPolicy policy)
 {
-    int32_t exp;
-    int level = 1;
-
-    if (champ == 0) return 1;
-    if (skillIndex < 0 || skillIndex >= LIFECYCLE_SKILL_COUNT) return 1;
-
-    exp = champ->skills20[skillIndex].experience;
-    if (!ignoreTemporary) {
-        exp += (int32_t)champ->skills20[skillIndex].temporaryExperience;
-    }
-
-    /* Hidden skills average with their base skill (F0303). */
-    if (skillIndex >= LIFECYCLE_HIDDEN_SKILL_FIRST) {
-        int baseIdx = (skillIndex - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2;
-        if (baseIdx >= 0 && baseIdx < LIFECYCLE_HIDDEN_SKILL_FIRST) {
-            int32_t baseExp = champ->skills20[baseIdx].experience;
-            if (!ignoreTemporary) {
-                baseExp += (int32_t)champ->skills20[baseIdx].temporaryExperience;
-            }
-            /* Average of hidden+base, to avoid double-count. */
-            exp = (exp + baseExp) >> 1;
-        }
-    }
-
-    if (exp < 0) exp = 0;
-    while (exp >= (int32_t)LIFECYCLE_XP_LEVEL_THRESHOLD) {
-        exp >>= 1;
-        level += 1;
-        /* F0303 CHAMPION.C:765-770: no artificial level cap. Each
-         * iteration halves positive XP, so this loop always terminates. */
-    }
-    return level;
+    int hidden, base;
+    if (!champ || skillIndex < 0 || skillIndex >= LIFECYCLE_SKILL_COUNT) return 1;
+    hidden = skillIndex >= LIFECYCLE_HIDDEN_SKILL_FIRST;
+    base = hidden ? (skillIndex - LIFECYCLE_HIDDEN_SKILL_FIRST) >> 2 : skillIndex;
+    return dm1_skill_accumulator_level(
+        (uint32_t)champ->skills20[skillIndex].experience,
+        (uint16_t)champ->skills20[skillIndex].temporaryExperience,
+        (uint32_t)champ->skills20[base].experience,
+        (uint16_t)champ->skills20[base].temporaryExperience,
+        hidden, ignoreTemporary, policy);
 }
 
-int F0849_LIFECYCLE_AddSkillExperience_Compat(
+int F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+    const struct ChampionLifecycleState_Compat* champ,
+    int skillIndex, int ignoreTemporary)
+{
+    return F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
+        champ, skillIndex, ignoreTemporary, DM1_SKILL_ACCUMULATOR_SIGNED_EARLY);
+}
+
+int F0849_LIFECYCLE_AddSkillExperienceWithPolicy_Compat(
     struct ChampionLifecycleState_Compat* champ,
     int skillIndex,
     int experience,
@@ -733,7 +718,8 @@ int F0849_LIFECYCLE_AddSkillExperience_Compat(
     uint32_t gameTime,
     uint32_t lastCreatureAttackTime,
     int* outBaseLevelBefore,
-    int* outBaseLevelAfter)
+    int* outBaseLevelAfter,
+    enum DM1SkillAccumulatorPolicy policy)
 {
     int baseIdx;
     int tempAdd;
@@ -774,22 +760,17 @@ int F0849_LIFECYCLE_AddSkillExperience_Compat(
         award = (uint16_t)((uint32_t)award * 2u);
 
     /* F0304 CHAMPION.C:882,895 ignores temporary XP for level gains. */
-    levelBefore = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-        champ, baseIdx, /*ignoreTemporary=*/1);
+    levelBefore = F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
+        champ, baseIdx, /*ignoreTemporary=*/1, policy);
 
     /* Award experience to the hidden skill AND to the base skill.
      * F0304: both get the raw (post-difficulty / post-staleness) value. */
     {
-        int32_t add = (int32_t)award;
-        int32_t prevHid = champ->skills20[skillIndex].experience;
-        int32_t prevBase = champ->skills20[baseIdx].experience;
-        int64_t sumHid = (int64_t)prevHid + (int64_t)add;
-        int64_t sumBase = (int64_t)prevBase + (int64_t)add;
-        if (sumHid > (int64_t)INT32_MAX) sumHid = (int64_t)INT32_MAX;
-        if (sumBase > (int64_t)INT32_MAX) sumBase = (int64_t)INT32_MAX;
-        champ->skills20[skillIndex].experience = (int32_t)sumHid;
+        champ->skills20[skillIndex].experience = dm1_skill_add_permanent_bits(
+            champ->skills20[skillIndex].experience, award);
         if (skillIndex != baseIdx) {
-            champ->skills20[baseIdx].experience = (int32_t)sumBase;
+            champ->skills20[baseIdx].experience = dm1_skill_add_permanent_bits(
+                champ->skills20[baseIdx].experience, award);
         }
     }
 
@@ -800,17 +781,29 @@ int F0849_LIFECYCLE_AddSkillExperience_Compat(
     if (tempAdd < 1) tempAdd = 1;
     if (tempAdd > 100) tempAdd = 100;
     if (awardEligible &&
-        champ->skills20[skillIndex].temporaryExperience < LIFECYCLE_TEMP_XP_CAP) {
+        (policy == DM1_SKILL_ACCUMULATOR_UNSIGNED_LATE
+            ? (int)(uint16_t)champ->skills20[skillIndex].temporaryExperience
+            : (int)champ->skills20[skillIndex].temporaryExperience) < LIFECYCLE_TEMP_XP_CAP) {
         int newTemp = (int)champ->skills20[skillIndex].temporaryExperience + tempAdd;
         champ->skills20[skillIndex].temporaryExperience = (int16_t)newTemp;
     }
 
-    levelAfter = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-        champ, baseIdx, /*ignoreTemporary=*/1);
+    levelAfter = F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
+        champ, baseIdx, /*ignoreTemporary=*/1, policy);
 
     if (outBaseLevelBefore) *outBaseLevelBefore = levelBefore;
     if (outBaseLevelAfter)  *outBaseLevelAfter = levelAfter;
     return (levelAfter > levelBefore) ? 1 : 0;
+}
+
+int F0849_LIFECYCLE_AddSkillExperience_Compat(
+    struct ChampionLifecycleState_Compat* champ, int skillIndex, int experience,
+    int mapDifficulty, uint32_t gameTime, uint32_t lastCreatureAttackTime,
+    int* outBaseLevelBefore, int* outBaseLevelAfter)
+{
+    return F0849_LIFECYCLE_AddSkillExperienceWithPolicy_Compat(champ, skillIndex,
+        experience, mapDifficulty, gameTime, lastCreatureAttackTime,
+        outBaseLevelBefore, outBaseLevelAfter, DM1_SKILL_ACCUMULATOR_SIGNED_EARLY);
 }
 
 int F0850_LIFECYCLE_ApplyLevelUp_Compat(

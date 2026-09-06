@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "dm1_skill_accumulator_policy.h"
 
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
@@ -349,10 +350,20 @@ int F0847_LIFECYCLE_ApplyTemporaryXPDecay_Compat(
  *  Group E — XP & level-up (F0848-F0853)
  * ========================================================== */
 
+int F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
+    const struct ChampionLifecycleState_Compat* champ,
+    int skillIndex, int ignoreTemporary, enum DM1SkillAccumulatorPolicy policy);
+
 int F0848_LIFECYCLE_ComputeSkillLevel_Compat(
     const struct ChampionLifecycleState_Compat* champ,
     int skillIndex,
     int ignoreTemporary);
+
+int F0849_LIFECYCLE_AddSkillExperienceWithPolicy_Compat(
+    struct ChampionLifecycleState_Compat* champ, int skillIndex, int experience,
+    int mapDifficulty, uint32_t gameTime, uint32_t lastCreatureAttackTime,
+    int* outBaseLevelBefore, int* outBaseLevelAfter,
+    enum DM1SkillAccumulatorPolicy policy);
 
 int F0849_LIFECYCLE_AddSkillExperience_Compat(
     struct ChampionLifecycleState_Compat* champ,

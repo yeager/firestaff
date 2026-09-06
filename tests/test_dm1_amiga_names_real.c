@@ -42,6 +42,23 @@ int main(void) {
     spec.verifiedAssetMd5 = version->matchedMd5;
     if (!M11_GameView_Start(state, &spec) || !state->dm1ObjectNameTableValid ||
         !state->assetLoader.legacyDm1 || !state->assetLoader.legacyBigEndian) goto done;
+    /* CHAMPION.C F0303:729-738: policy follows the selected edition,
+     * not the archive's HD label or the shared Amiga graphics decoder. */
+    {
+        enum DM1SkillAccumulatorPolicy expected;
+        if (strcmp(version->matchedMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
+            expected = DM1_SKILL_ACCUMULATOR_UNSIGNED_LATE;
+        else if (strcmp(version->matchedMd5, "6a2f135b53c2220f0251fa103e2a6e7e") == 0)
+            expected = DM1_SKILL_ACCUMULATOR_SIGNED_EARLY;
+        else {
+            fputs("FAIL: Amiga skill-policy fixture has an unclassified edition\n", stderr);
+            goto done;
+        }
+        if (state->world.skillAccumulatorPolicy != expected) {
+            fputs("FAIL: Amiga startup skill policy differs from selected media\n", stderr);
+            goto done;
+        }
+    }
     /* PROJEXPL.C:5 initial clock must survive actual original-media start. */
     if (state->world.lifecycle.lastCreatureAttackTime != UINT32_MAX - 199u) {
         fputs("FAIL: Amiga startup lost original attack-time sentinel\n", stderr);

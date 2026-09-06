@@ -7496,12 +7496,34 @@ static int m11_apply_dm1_startup_launch_path_receipt(
 static int m11_apply_dm1_startup_runtime_start_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupRuntimeStartReceipt_PC34* receipt) {
+    char skillEditionMd5[33];
     if (!state || !receipt || !receipt->handled) {
         return 0;
+    }
+    snprintf(skillEditionMd5, sizeof(skillEditionMd5), "%s", receipt->boot_asset_md5);
+    /* Direct StartDm1 callers do not supply the launcher's verified hash.
+     * Identify the graphics file actually admitted by the loaded asset
+     * owner. asset_file_md5_hex reads archive-member locators in bounded
+     * memory; this neither extracts media nor infers an edition from IMG3. */
+    if (!skillEditionMd5[0] && state->assetLoader.initialized &&
+        state->assetLoader.graphicsDatPath[0]) {
+        (void)asset_file_md5_hex(state->assetLoader.graphicsDatPath, skillEditionMd5);
     }
     state->active = receipt->active;
     state->startedFromLauncher = receipt->started_from_launcher;
     state->sourceKind = (M11_GameSourceKind)receipt->source_kind;
+    /* CHAMPION.C F0303:729-738 / DEFS.H:611-616: signed early versus
+     * unsigned MEDIA720 accumulators are edition properties. Bind after
+     * F0882 initializes the world, using the admitted graphics identity
+     * (asset_status_m12.c g_dm1Versions), never merely its container format.
+     * DM1 FM Towns is F20 (signed), unlike CSB F31. Unknown identities keep
+     * the legacy signed default pending an explicit edition registry entry. */
+    state->world.skillAccumulatorPolicy =
+        (strcmp(skillEditionMd5, "fa6b1aa29e191418713bf2cda93d962e") == 0 ||
+         strcmp(skillEditionMd5, "f934d97e43e1ba6e5159839acbcd0611") == 0 ||
+         strcmp(skillEditionMd5, "7f9458e4a3972d06e649a6fa85a7f34b") == 0)
+        ? DM1_SKILL_ACCUMULATOR_UNSIGNED_LATE
+        : DM1_SKILL_ACCUMULATOR_SIGNED_EARLY;
     snprintf(state->bootAssetMd5,
              sizeof(state->bootAssetMd5),
              "%s",
@@ -19395,14 +19417,15 @@ int M11_GameView_GetSkillLevel(const M11_GameViewState* state,
                      state->world.lifecycle.rest.isResting;
     if (!dm1_skill_build_query_from_champion_inventory(
             champion, state->world.things, partyIsResting, &query)) {
-        return F0848_LIFECYCLE_ComputeSkillLevel_Compat(
-            lifecycleChampion, skillIndex, 0);
+        return F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
+            lifecycleChampion, skillIndex, 0, state->world.skillAccumulatorPolicy);
     }
 
     /* ReDMCSB: MENU.C/F0407 and F0412 query skill levels through
      * CHAMPION.C F0303, so live M11 checks must include resting,
      * temporary XP, and action-hand/neck object modifiers. */
-    return dm1_skill_get_level_ex(&skillState, skillIndex, 0, &query);
+    return dm1_skill_get_level_policy(&skillState, skillIndex, 0, &query,
+                                     state->world.skillAccumulatorPolicy);
 }
 
 static int m11_game_view_get_f0230_parry_skill(
@@ -61842,10 +61865,10 @@ static int m11_endgame_source_skill_level(const M11_GameViewState* state,
         return 1;
     }
     storedLevel = (int)state->world.party.champions[championIndex].skillLevels[baseSkillIndex];
-    lifecycleLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
+    lifecycleLevel = F0848_LIFECYCLE_ComputeSkillLevelWithPolicy_Compat(
         &state->world.lifecycle.champions[championIndex],
         baseSkillIndex,
-        1); /* ENDGAME.C uses IGNORE_TEMPORARY_EXPERIENCE. */
+        1, state->world.skillAccumulatorPolicy); /* ENDGAME.C ignores temporary XP. */
     if (lifecycleLevel < storedLevel) lifecycleLevel = storedLevel;
     if (lifecycleLevel > 16) lifecycleLevel = 16;
     if (lifecycleLevel < 1) lifecycleLevel = 1;

@@ -197,10 +197,11 @@ static int dm1_skill_apply_object_modifiers(int level,
     return level;
 }
 
-int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
+int dm1_skill_get_level_policy(const DM1_ChampionSkillState* state,
                            int skillIndex,
                            int flags,
-                           const DM1_SkillLevelQuery* query) {
+                           const DM1_SkillLevelQuery* query,
+                           enum DM1SkillAccumulatorPolicy policy) {
     if (!state) return 1;
     if (skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) return 1;
 
@@ -211,34 +212,12 @@ int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
     int ignoreTemp = (flags & DM1_SKILL_FLAG_IGNORE_TEMP);
 
     const DM1_Skill* skill = &state->skills[skillIndex];
-    int32_t experience = skill->experience;
-    if (!ignoreTemp) {
-        experience += skill->temporaryExperience;
-    }
-
-    /* For sub-skills (index > 3), add base skill experience and halve.
-     * ReDMCSB: CHAMPION.C F0303 lines 758-767:
-     *   L0907_Experience += base_skill->Experience;
-     *   if (!ignoreTemp) L0907_Experience += base_skill->TemporaryExperience;
-     *   L0907_Experience >>= 1; */
-    if (skillIndex >= DM1_SUB_SKILL_FIRST) {
-        int baseIdx = dm1_skill_get_base_index(skillIndex);
-        const DM1_Skill* baseSkill = &state->skills[baseIdx];
-        experience += baseSkill->experience;
-        if (!ignoreTemp) {
-            experience += baseSkill->temporaryExperience;
-        }
-        experience >>= 1;
-    }
-
-    /* ReDMCSB: F0303 lines 765-768:
-     * L0908_i_SkillLevel = 1;
-     * while (L0907_Experience >= 500) { L0907_Experience >>= 1; L0908_i_SkillLevel++; } */
-    int level = 1;
-    while (experience >= 500) {
-        experience >>= 1;
-        level++;
-    }
+    int hidden = skillIndex >= DM1_SUB_SKILL_FIRST;
+    const DM1_Skill* baseSkill = hidden
+        ? &state->skills[dm1_skill_get_base_index(skillIndex)] : skill;
+    int level = dm1_skill_accumulator_level((uint32_t)skill->experience,
+        (uint16_t)skill->temporaryExperience, (uint32_t)baseSkill->experience,
+        (uint16_t)baseSkill->temporaryExperience, hidden, ignoreTemp, policy);
 
     if ((flags & DM1_SKILL_FLAG_IGNORE_OBJECTS) == 0) {
         level = dm1_skill_apply_object_modifiers(level, skillIndex, query);
@@ -247,6 +226,14 @@ int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
     /* F0303 CHAMPION.C:765-770,822 does not cap the computed level;
      * the finite display-name table is a separate presentation concern. */
     return level;
+}
+
+int dm1_skill_get_level_ex(const DM1_ChampionSkillState* state,
+    int skillIndex, int flags, const DM1_SkillLevelQuery* query)
+{
+    /* Preserve legacy signed callers until their edition is bound explicitly. */
+    return dm1_skill_get_level_policy(state, skillIndex, flags, query,
+        DM1_SKILL_ACCUMULATOR_SIGNED_EARLY);
 }
 
 int dm1_skill_get_level(const DM1_ChampionSkillState* state,
@@ -258,11 +245,15 @@ int32_t dm1_skill_get_experience(const DM1_ChampionSkillState* state,
                                  int skillIndex, int includeTemp) {
     if (!state) return 0;
     if (skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) return 0;
-    int32_t xp = state->skills[skillIndex].experience;
+    uint32_t xp = (uint32_t)state->skills[skillIndex].experience;
     if (includeTemp) {
-        xp += state->skills[skillIndex].temporaryExperience;
+        xp += dm1_skill_temporary_bits(
+            (uint16_t)state->skills[skillIndex].temporaryExperience,
+            DM1_SKILL_ACCUMULATOR_SIGNED_EARLY);
     }
-    return xp;
+    /* This legacy getter returns signed bits, not an edition-aware level. */
+    return xp <= INT32_MAX ? (int32_t)xp
+        : (int32_t)((int64_t)xp - INT64_C(4294967296));
 }
 
 DM1_LevelUpBonuses dm1_skill_add_experience(

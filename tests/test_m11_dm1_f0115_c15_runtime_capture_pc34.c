@@ -32,6 +32,10 @@ static int verify_real_fixed_drop(M11_GameViewState* state)
     struct DungeonDatState_Compat* dungeon = state->world.dungeon;
     struct DungeonThings_Compat* things = state->world.things;
     int m, x, y;
+    if (state->world.skillAccumulatorPolicy != DM1_SKILL_ACCUMULATOR_UNSIGNED_LATE) {
+        fputs("original DOS 3.4 did not bind MEDIA720 skill arithmetic\n", stderr);
+        return 0;
+    }
     for (m = 0; m < dungeon->header.mapCount; ++m) {
         const struct DungeonMapDesc_Compat* map = &dungeon->maps[m];
         for (x = 0; x < map->width; ++x) for (y = 0; y < map->height; ++y) {

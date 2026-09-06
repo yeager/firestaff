@@ -36576,6 +36576,14 @@ if(NOT TARGET test_m11_dm1_f0115_material_asset_fail_closed)
     )
 endif()
 
+if(NOT TARGET test_dm1_skill_accumulator_policy)
+    add_executable(test_dm1_skill_accumulator_policy
+        tests/test_dm1_skill_accumulator_policy.c)
+    target_link_libraries(test_dm1_skill_accumulator_policy PRIVATE firestaff_m10)
+    add_test(NAME dm1_skill_accumulator_policy
+        COMMAND test_dm1_skill_accumulator_policy)
+endif()
+
 if(NOT TARGET test_dm1_v1_skill_experience_pc34_compat)
     add_executable(test_dm1_v1_skill_experience_pc34_compat
         tests/test_dm1_v1_skill_experience_pc34_compat.c
