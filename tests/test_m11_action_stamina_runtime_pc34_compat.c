@@ -517,7 +517,7 @@ static void test_melee_action_row_uses_auto_target_and_action_index(void) {
               "F0391 clears acting champion after melee action");
 }
 
-static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
+static int run_melee_action_row_target_case(int initialHealth, int actor, int* outDamage) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -561,19 +561,34 @@ static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
     state.world.partyMapIndex = 0;
     state.world.party.mapX = 1;
     state.world.party.mapY = 1;
+    /* Bounded RAM combat fixture, not original-media parity evidence.
+     * MENU.C F0407:1263-1269 chooses actor weapon/facing independently
+     * of the leader. MENU.C:1031-1041 permits actor cell2 facing south
+     * (relative front cell0) in a complete four-champion formation. */
+    if (actor != 0) {
+        for (int slot = 1; slot < 4; ++slot) {
+            state.world.party.champions[slot] = state.world.party.champions[0];
+            state.world.party.champions[slot].cell = slot;
+        }
+        state.world.party.champions[2].cell = 3;
+        state.world.party.champions[0].direction = 1;
+        state.world.party.champions[0].cell = 0;
+        state.world.party.champions[actor].cell = 2;
+    }
+    state.world.party.championCount = actor + 1;
     state.world.party.direction = 1; /* Party east: front square is empty. */
     state.world.party.activeChampionIndex = 0;
-    state.world.party.champions[0].direction = 2; /* Champion south. */
+    state.world.party.champions[actor].direction = 2; /* Champion south. */
 
     weapons[0].type = 8;
-    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+    state.world.party.champions[actor].inventory[CHAMPION_SLOT_ACTION_HAND] =
         make_thing(THING_TYPE_WEAPON, 0);
-    state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 100;
-    state.world.party.champions[0].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
-    state.world.party.champions[0].attributes[CHAMPION_ATTR_VITALITY] = 100;
-    state.world.lifecycle.champions[0]
+    state.world.party.champions[actor].attributes[CHAMPION_ATTR_STRENGTH] = 100;
+    state.world.party.champions[actor].attributes[CHAMPION_ATTR_DEXTERITY] = 100;
+    state.world.party.champions[actor].attributes[CHAMPION_ATTR_VITALITY] = 100;
+    state.world.lifecycle.champions[actor]
         .skills20[DM1_SKILL_IDX_FIGHTER].experience = 500;
-    state.world.lifecycle.champions[0]
+    state.world.lifecycle.champions[actor]
         .skills20[DM1_SKILL_IDX_SWING].experience = 500;
 
     groups[0].next = THING_ENDOFLIST;
@@ -590,7 +605,7 @@ static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
     things.groupCount = 1;
     state.world.things = &things;
 
-    ASSERT_EQ(M11_GameView_SetActingChampion(&state, 0), 1,
+    ASSERT_EQ(M11_GameView_SetActingChampion(&state, actor), 1,
               "champion-facing melee fixture opens action menu");
     ASSERT_EQ(M11_GameView_GetActingActionIndices(&state, actions), 1,
               "champion-facing melee fixture resolves source action rows");
@@ -617,6 +632,8 @@ static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
     ASSERT_EQ(damageEmission >= 0, 1,
               "champion-facing melee row emits live damage result");
     if (damageEmission >= 0) {
+        ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[0], actor,
+                  "resolved combat receipt belongs to the acting champion");
         ASSERT_EQ(state.lastTickResult.emissions[damageEmission].payload[1], 0,
                   "champion-facing melee row targets the south group");
         ASSERT_EQ(damageDealt > 0, 1,
@@ -648,8 +665,20 @@ static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
               "live F0231 positive damage arms the C014 hit overlay");
     ASSERT_EQ(state.world.party.direction, 1,
               "melee action does not rewrite party direction");
-    ASSERT_EQ(state.world.party.champions[0].direction, 2,
+    ASSERT_EQ(state.world.party.champions[actor].direction, 2,
               "melee action preserves champion direction");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 0,
+              "resolved combat never replaces the party leader");
+    if (actor != 0) {
+        ASSERT_EQ(state.world.party.champions[0].direction, 1,
+                  "non-acting leader retains independent facing");
+        ASSERT_EQ(state.world.party.champions[0].actionIndex, 255,
+                  "non-acting leader receives no action");
+        for (int skill = 0; skill < 20; ++skill)
+            ASSERT_EQ(state.world.lifecycle.champions[0]
+                          .skills20[skill].experience, 0,
+                      "non-acting leader receives no combat XP in any skill");
+    }
     *outDamage = damageDealt;
     if (initialHealth == 1) {
         int killReceipt = 0;
@@ -659,16 +688,24 @@ static int run_melee_action_row_target_case(int initialHealth, int* outDamage) {
             if (state.lastTickResult.emissions[e].kind == EMIT_KILL_NOTIFY) killReceipt = 1;
         ASSERT_EQ(killReceipt, 1, "fatal action exercises M11 kill-notification dispatch");
     }
-    return state.world.lifecycle.champions[0].skills20[DM1_SKILL_IDX_FIGHTER].experience;
+    /* A dagger can select STAB (Ninja), so checking Fighter alone would
+     * make the no-duplicate-XP comparison vacuous. Include all 20 skills. */
+    int totalXp = 0;
+    for (int skill = 0; skill < 20; ++skill)
+        totalXp += state.world.lifecycle.champions[actor].skills20[skill].experience;
+    return totalXp;
 }
 
 static void test_melee_action_row_targets_pref0407_champion_direction(void) {
-    int survivingDamage = 0, killingDamage = 0;
-    int survivingXp = run_melee_action_row_target_case(200, &survivingDamage);
-    int killingXp = run_melee_action_row_target_case(1, &killingDamage);
-    /* F0231 awards calculated-damage XP, not a second kill reward. */
-    ASSERT_EQ(killingDamage, survivingDamage, "same seed produces same calculated damage");
-    ASSERT_EQ(killingXp, survivingXp, "kill notification must not add a second XP reward");
+    for (int actor = 0; actor < 4; actor += 3) {
+        int survivingDamage = 0, killingDamage = 0;
+        int survivingXp = run_melee_action_row_target_case(200, actor, &survivingDamage);
+        int killingXp = run_melee_action_row_target_case(1, actor, &killingDamage);
+        ASSERT_EQ(survivingXp > 1000, 1, "successful attack awards XP to its actor");
+        /* F0231 awards calculated-damage XP, not a second kill reward. */
+        ASSERT_EQ(killingDamage, survivingDamage, "same seed produces same calculated damage");
+        ASSERT_EQ(killingXp, survivingXp, "kill notification must not add a second XP reward");
+    }
 }
 
 static void test_melee_action_row_closed_door_targets_pref0407_champion_direction(void) {

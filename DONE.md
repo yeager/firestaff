@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Extended the bounded RAM F0407/F0231 combat regression to a
+  non-leader actor facing south while the leader and party face east.
+  Surviving and fatal hits require positive damage, matching target HP
+  writeback, the actor's damage receipt, unchanged leader/facing, and no
+  action or skill XP awarded to the leader. Fatal and nonfatal cases
+  retain equal increased actor XP (no duplicate kill reward). The old
+  Fighter-only comparison missed STAB's Ninja XP; the regression now sums
+  all 20 skills and requires an actual increase over the seeded baseline.
+  It uses a complete four-champion formation for the non-leader case.
+  The action runtime suite passes (7.65 seconds). This fixture is not original-media
+  or emulator parity evidence; authentic target coverage remains open.
+
 - 2026-09-06: Attack inspection feedback names the dispatched champion,
   not the party leader, using the pre-tick actor snapshot. A distinct-name
   non-leader regression failed before the fix and passes with original DOS
