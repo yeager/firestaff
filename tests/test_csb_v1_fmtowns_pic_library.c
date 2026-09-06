@@ -28,6 +28,29 @@ static void test_wrong_sig_rejects(void) {
     assert(csb_v1_fmtowns_pic_library_open_ext_v1_pc34(buf, 10, &v) == 0);
 }
 
+static void verify_all_original_spans(const dm1_v1_fmtowns_pic_library_view_t *view) {
+    size_t next = view->payload_offset;
+    const uint8_t *bytes = NULL;
+    uint16_t size = 0;
+    for (uint16_t index = 0; index < view->asset_count; ++index) {
+        size_t offset = 0;
+        assert(dm1_v1_fmtowns_pic_library_asset_offset_pc34(view, index, &offset) ==
+               DM1_V1_FMTOWNS_PIC_LIB_OK);
+        assert(offset == next);
+        assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(view, index, &bytes, &size) ==
+               DM1_V1_FMTOWNS_PIC_LIB_OK);
+        assert(next <= view->data_size && size <= view->data_size - next);
+        assert(bytes == view->data + next);
+        next += size;
+    }
+    assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(view, view->asset_count,
+        &bytes, &size) == DM1_V1_FMTOWNS_PIC_LIB_ERR_INDEX);
+    /* Container spans are not all necessarily pixel graphics; do not infer
+     * DECODEGRAPHIC dimensions or visual parity from successful indexing. */
+    printf("PASS: all %u original asset spans are contiguous and bounded\n",
+           (unsigned)view->asset_count);
+}
+
 static void test_real_data_csb(void) {
     const char *archive = getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE");
     uint8_t *image = NULL;
@@ -50,6 +73,7 @@ static void test_real_data_csb(void) {
     assert(csb_v1_fmtowns_pic_library_open_ext_v1_pc34(buf, size, &v) == 1);
     /* CSB has 728 assets, first asset size = 0xef (239). */
     assert(v.asset_count == 728);
+    verify_all_original_spans(&v);
     uint16_t first_size = 0;
     assert(dm1_v1_fmtowns_pic_library_asset_size_pc34(&v, 0, &first_size) ==
            DM1_V1_FMTOWNS_PIC_LIB_OK);
@@ -68,6 +92,7 @@ static void test_real_data_csb(void) {
     assert(csb_v1_fmtowns_pic_library_open_ext_v1_pc34(buf, entry->size,
                                                         &v) == 1);
     assert(v.asset_count == 728);
+    verify_all_original_spans(&v);
     free(buf);
     free(image);
     puts("PASS: CSB CDATA/CJDATA GRAPHICS.DAT open from original ZIP/IMG in RAM");

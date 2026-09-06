@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-09-06: Original FM Towns CDATA/CJDATA GRAPHICS.DAT regression now reads
+  all 728 asset spans in each edition, checking contiguous offsets, in-buffer
+  bounds and rejection of the first invalid index. ZIP/IMG and both files are
+  read in memory. Both real-media cases pass; this proves container indexing,
+  not palette correctness or visual parity.
+
 - 2026-09-06: Group pit consequences check source levitation attributes before
   lower-map movement (MOVESENS.C F0264:136-146, F0267:538). The bounded C37
   flying-eye fixture preserves upper-map chain ownership, health and behavior
