@@ -1,5 +1,8 @@
 # Unreleased
 
+- Opening, switching or closing DM1 inventory via champion clicks no longer
+  hides the spell controls or interrupts a prepared incantation.
+
 - DM1 keeps its spell controls available after casting. A lone power rune
   now produces the original meaningless-spell feedback instead of being ignored.
 

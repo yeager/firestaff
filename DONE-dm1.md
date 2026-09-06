@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: DM1 top-row inventory open/switch/close now preserves the
+  spell controls, selected caster and paid rune chain (PANEL.C F0355).
+  Twenty original Atari/Amiga cases verify five inventory transitions,
+  including both press and release, without mana or symbol mutation.
+- 2026-09-06: Broader verification at b0043799a passed all thirteen tests:
+  original DOS/Atari/Amiga object coverage, DOS PC3.4 native startup, and
+  thirty-six CLI/menu launches across six original-media profiles and
+  V1/V2.0/V2.1. Both FM Towns languages pass, with JDATA/JDM.EXP provenance
+  checked for Japanese. These probes prove loaded-level/mode selection,
+  not emulator-equivalent palette, cadence or final pixels.
+
 - 2026-09-06: Corrected F0370/F0408 cast UI lifecycle. A lone power rune
   now reaches F0410's meaningless-spell feedback through mouse, keyboard
   and API, clearing symbols without a refund or practice RNG draw. Successful

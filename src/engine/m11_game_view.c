@@ -61473,7 +61473,10 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
     sameOpen = state->inventoryPanelActive &&
                m11_inventory_champion_index(state) == championIndex;
     state->mapOverlayActive = 0;
-    state->spellPanelOpen = 0;
+    /* ReDMCSB PANEL.C F0355:2363,2445 changes G0423 and the secondary
+     * inventory input list, not G0514 or its paid Symbols. Keep the
+     * primary spell controls live across DM1 inventory open/switch/close. */
+    if (!m11_is_dm1_source_kind(state->sourceKind)) state->spellPanelOpen = 0;
     if (m11_is_dm1_source_kind(state->sourceKind)) {
         /* PANEL.C F0355 owns G0423 without changing CLIKCHAM.C G0411.
          * Close the previous chest before assigning the new panel owner. */
