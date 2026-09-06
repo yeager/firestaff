@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added independent F0307/F0313/F0321 damage expectations
+  to shield-layer tests: fire 202 with body protection versus 239 without,
+  magic 118 (body-scale bypass), normal 128. The RNG fire path consumes
+  six slot-defense draws. New and two existing projectile tests pass;
+  live original-media builder/impact verification remains open.
+
 - 2026-09-06: M10/M11 combat snapshots now retain separate runtime
   body-shield and elemental-subtraction layers. F0733/F0733b use the body
   layer; legacy 76-byte serialization rejects unrepresentable split

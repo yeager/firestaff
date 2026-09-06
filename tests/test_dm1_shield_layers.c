@@ -25,6 +25,27 @@ int main(void) {
     s.partyShieldDefense = 0;
     assert(F0733_COMBAT_GetChampionWoundDefense_Compat(&s, 0, 0, &defense));
     assert(defense == 20);
+    {
+        struct RngState_Compat rng = {0};
+        int damage, calls;
+        s.statisticAntifire = s.statisticAntimagic = 42;
+        s.partyShieldDefense = 10;
+        /* F0307: 128*(170-42)/128 = 128. F0321 fire subtracts 10,
+         * then F0313's 40/2 body defense gives 118*(130-20)/64 = 202.
+         * Magic jumps past body scaling; normal skips both operations. */
+        assert(F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(COMBAT_ATTACK_FIRE, 128, 63, &s, &rng, &damage, &calls));
+        assert(damage == 202 && calls == 6);
+        assert(F0739_COMBAT_ScaleChampionDamageF0321_Compat(COMBAT_ATTACK_FIRE, 128, 63, &s, &damage));
+        assert(damage == 202);
+        assert(F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(COMBAT_ATTACK_MAGIC, 128, 63, &s, &rng, &damage, &calls));
+        assert(damage == 118);
+        assert(F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(COMBAT_ATTACK_NORMAL, 128, 63, &s, &rng, &damage, &calls));
+        assert(damage == 128);
+        s.bodyShieldDefense = 0;
+        assert(F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(COMBAT_ATTACK_FIRE, 128, 63, &s, &rng, &damage, &calls));
+        assert(damage == 239);
+        s.bodyShieldDefense = 40;
+    }
     memset(bytes, 0x5a, sizeof(bytes));
     assert(!F0744_COMBAT_ChampionSnapshotSerialize_Compat(&s, bytes, sizeof(bytes)));
     for (unsigned int i = 0; i < sizeof(bytes); ++i) assert(bytes[i] == 0x5a);

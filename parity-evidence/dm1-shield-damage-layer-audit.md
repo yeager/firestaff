@@ -9,6 +9,10 @@ defense for non-normal attacks. F0321:1879-1883 separately subtracts
 party spell/fire shield from the appropriate statistic-adjusted attack.
 These are distinct contributors, not interchangeable representations.
 
+Important exception: F0321's magic branch jumps to T0321024 after spell
+shield subtraction, skipping the body-defense scale; the fire branch does
+not. A body-layer change must not invent YA mitigation for magic damage.
+
 ## Current integration gap
 
 Update: the M10/M11 builders now set an explicit runtime body-shield
@@ -56,3 +60,11 @@ wound-defense independence across six slots, legacy round-trip shield
 semantics and non-mutating rejection of unrepresentable snapshots. The
 integrated rebuild and twenty original-media consumable/death cases pass.
 Those cases do not replace the required actual attack comparisons above.
+
+The damage-level primitive regression uses independently calculated values:
+raw 128, anti-stat 42, elemental shield 10 and body shield 40 yield fire
+damage `((128 - 10) * (130 - 40/2)) >> 6 = 202`; without body shield the
+result is 239. Magic is 118 and normal damage is 128. Both deterministic
+and RNG-bearing fire paths pass; two existing projectile receipt/handoff
+tests also pass. This is still not the original-media live-builder attack
+comparison required above.
