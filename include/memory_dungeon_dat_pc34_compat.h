@@ -455,8 +455,14 @@ struct DungeonThings_Compat {
     unsigned short* textData;
     int             textDataWordCount;
 
+    int freshPc34PoolsReserved;
     int loaded;
 };
+
+/* LOADSAVE.C F0434 new-game-only G0236 pools and 300 spare SFT entries.
+ * Atomic, idempotent in-memory expansion; never call for a saved-game tail. */
+int F0506_DUNGEON_ReserveFreshPc34Pools_Compat(
+    struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things);
 
 /*
  * Load SquareFirstThings, thing data (all types raw + Door/TextString/Teleporter decoded),

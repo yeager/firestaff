@@ -735,10 +735,10 @@ static void test_f0811_magical_fireball_wall_impact_creates_explosion(void)
     expect_int("f0811.fireball.explosion_type", r.outExplosion.explosionType,
                C000_EXPLOSION_FIREBALL,
                "F0820 HIT_WALL: explosion type is C000_EXPLOSION_FIREBALL for FIREBALL");
-    expect_int("f0811.fireball.explosion_x",  r.outExplosion.mapX, d.destMapX,
-               "F0820 HIT_WALL: explosion mapX is wall X (impact cell)");
-    expect_int("f0811.fireball.explosion_y",  r.outExplosion.mapY, d.destMapY,
-               "F0820 HIT_WALL: explosion mapY is wall Y (impact cell)");
+    expect_int("f0811.fireball.explosion_x",  r.outExplosion.mapX, d.sourceMapX,
+               "PROJEXPL.C:725 passes preceding square X to F0217/F0213");
+    expect_int("f0811.fireball.explosion_y",  r.outExplosion.mapY, d.sourceMapY,
+               "PROJEXPL.C:725 passes preceding square Y to F0217/F0213");
     expect_int("f0811.fireball.explosion_attack",
                r.outExplosion.attack, p.kineticEnergy,
                "F0820 HIT_WALL: explosion attack uses projectile kinetic energy");

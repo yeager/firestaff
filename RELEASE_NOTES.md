@@ -1,5 +1,10 @@
 # Unreleased
 
+- Fresh DM1 PC games reserve the original spare object/projectile/explosion
+  pools, allowing Fireball to allocate its source records. Wall explosions
+  appear on the preceding open square, and their rendering uses the correct
+  viewport-square mapping. Existing game records remain unchanged.
+
 - DM1 rotating thrown weapons select and mirror their original projectile
   graphics using map parity, camera-relative cells and view lane, correcting
   front/back bitmap selection and horizontal/vertical orientation.

@@ -12506,6 +12506,9 @@ if(BUILD_TESTING)
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0115_c15_runtime_capture_pc34.c")
+        add_executable(test_dm1_v1_fresh_pc34_pools tests/test_dm1_v1_fresh_pc34_pools.c)
+        target_link_libraries(test_dm1_v1_fresh_pc34_pools PRIVATE firestaff_m10)
+        add_test(NAME dm1_v1_fresh_pc34_pools COMMAND test_dm1_v1_fresh_pc34_pools)
         add_executable(test_m11_dm1_f0115_c15_runtime_capture_pc34
             tests/test_m11_dm1_f0115_c15_runtime_capture_pc34.c)
         target_link_libraries(test_m11_dm1_f0115_c15_runtime_capture_pc34 PRIVATE firestaff_m12 firestaff_m11)
@@ -12517,6 +12520,10 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_f0115_c15_runtime_capture_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_f0115_c15_runtime_capture_pc34 PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 180
+            ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+            LABELS "dm1;dos;pc34;real-media;spell;explosion;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_champion_death_asset_receipt_pc34.c")

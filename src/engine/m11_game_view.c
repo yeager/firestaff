@@ -25564,6 +25564,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 &receipt.graphics_bind_receipt)) {
             return 0;
         }
+        /* LOADSAVE.C F0434:2040-2074 adds G0236 pools on a new game,
+         * never while importing a save. I34 uses compiled DUNGEON.C tables;
+         * earlier/platform-specific admission remains separate. */
+        if ((!spec->savePath || !spec->savePath[0]) && !spec->dm1Fmtowns &&
+            !state->assetLoader.atariStDm1 && !state->assetLoader.legacyDm1 &&
+            !F0506_DUNGEON_ReserveFreshPc34Pools_Compat(
+                state->world.dungeon, state->world.things)) return 0;
         /* Report the decoder that admitted the selected original package.
          * This is emitted after both DUNGEON.DAT and GRAPHICS.DAT are bound,
          * so a start-menu launch cannot be mistaken for a generic successful
@@ -47711,6 +47718,18 @@ static int m11_draw_dm1_f0115_explosions_for_square(
     int framebufferWidth, int framebufferHeight,
     const M11_ViewportCell *cell, int square)
 {
+    /* Scheduler order is not DM1_ViewSquareIndex. F0124's scheduler D1C
+     * ordinal 15 otherwise resolves the unrelated viewport square 15.
+     * Names follow DUNVIEW.C F0116-F0128 and DEFS.H:2596-2614. */
+    static const int viewportSquares[DM1_V1_F0128_VIEW_SQUARE_COUNT] = {
+        DM1_VIEW_SQUARE_D4L, DM1_VIEW_SQUARE_D4R, DM1_VIEW_SQUARE_D4C,
+        DM1_VIEW_SQUARE_D3L2, DM1_VIEW_SQUARE_D3R2,
+        DM1_VIEW_SQUARE_D3L, DM1_VIEW_SQUARE_D3R, DM1_VIEW_SQUARE_D3C,
+        -1, -1,
+        DM1_VIEW_SQUARE_D2L, DM1_VIEW_SQUARE_D2R, DM1_VIEW_SQUARE_D2C,
+        DM1_VIEW_SQUARE_D1L, DM1_VIEW_SQUARE_D1R, DM1_VIEW_SQUARE_D1C,
+        DM1_VIEW_SQUARE_D0L, DM1_VIEW_SQUARE_D0R, DM1_VIEW_SQUARE_D0C
+    };
     const DM1_ViewportExplosionOcclusionSpec *spec;
     unsigned char viewport[M11_VIEWPORT_W * M11_VIEWPORT_H];
     int rendered = 0;
@@ -47718,8 +47737,10 @@ static int m11_draw_dm1_f0115_explosions_for_square(
         framebufferWidth < M11_VIEWPORT_X + M11_VIEWPORT_W ||
         framebufferHeight < M11_VIEWPORT_Y + M11_VIEWPORT_H ||
         !m11_viewport_cell_has_renderable_explosion(cell)) return 0;
+    if (square < 0 || square >= DM1_V1_F0128_VIEW_SQUARE_COUNT ||
+        viewportSquares[square] < 0) return 0;
     spec = dm1_viewport_3d_get_explosion_occlusion_spec_for_square(
-        (DM1_ViewSquareIndex)square);
+        (DM1_ViewSquareIndex)viewportSquares[square]);
     if (!spec || spec->d0c_pattern_zone || spec->g2034_row < 0) return 0;
     for (int y = 0; y < M11_VIEWPORT_H; ++y) {
         memcpy(viewport + y * M11_VIEWPORT_W,

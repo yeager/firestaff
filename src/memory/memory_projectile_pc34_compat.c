@@ -849,6 +849,14 @@ int F0820_PROJECTILE_ResolveCollision_Compat(
         if (createsExplosion) {
             outResult->emittedExplosion = populate_explosion_on_impact(
                 in, digest, &outResult->outExplosion);
+            if (outResult->emittedExplosion) {
+                /* PROJEXPL.C F0219:717-725 tests the destination blocker
+                 * but calls F0217 with the source square. F0217:440/585
+                 * passes that location to F0213, never inside the wall. */
+                outResult->outExplosion.mapIndex = digest->sourceMapIndex;
+                outResult->outExplosion.mapX = digest->sourceMapX;
+                outResult->outExplosion.mapY = digest->sourceMapY;
+            }
         } else {
             outResult->emittedSoundRequest = 1;
             outResult->emittedSoundCode =

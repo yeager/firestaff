@@ -2038,6 +2038,82 @@ int F0515_DUNGEON_UnlinkThingFromList_Compat(
     return dungeon_set_thing_next_compat(things, target, THING_ENDOFLIST);
 }
 
+int F0506_DUNGEON_ReserveFreshPc34Pools_Compat(
+    struct DungeonDatState_Compat* dungeon, struct DungeonThings_Compat* things)
+{
+    /* ReDMCSB DUNGEON.C:36-79 MEDIA365 includes I34E: these are compiled
+     * G0236 constants, not an image decoded from GRAPHICS.DAT entry 559.
+     * LOADSAVE.C F0434:2020-2074 adds them only for G0298_B_NewGame. */
+    static const unsigned char extra[16] =
+        {0,0,0,0,75,100,120,0,5,0,140,0,0,0,60,50};
+    struct DungeonThings_Compat next;
+    unsigned char* raw[16] = {0};
+    void* decoded[16] = {0};
+    unsigned short* sft = NULL;
+    int type, i, oldSft;
+    if (!dungeon || !things || !dungeon->loaded || !things->loaded) return 0;
+    if (things->freshPc34PoolsReserved) return 1;
+    next = *things;
+    oldSft = things->squareFirstThingCount;
+    if (oldSft < 0 || oldSft > 65535 - 300 ||
+        dungeon->header.squareFirstThingCount != oldSft ||
+        (oldSft && !things->squareFirstThings)) return 0;
+    for (type = 0; type < 16; ++type) {
+        int old = things->thingCounts[type], count, limit = type == 15 ? 768 : 1024;
+        if (old < 0 || old > limit || dungeon->header.thingCounts[type] != old) goto fail;
+        if (!extra[type]) continue;
+        count = old + extra[type];
+        if (count > limit) count = limit;
+        if (old && !things->rawThingData[type]) goto fail;
+        raw[type] = calloc((size_t)count, s_thingDataByteCount[type]);
+        if (!raw[type]) goto fail;
+        if (old) memcpy(raw[type], things->rawThingData[type], (size_t)old * s_thingDataByteCount[type]);
+        for (i = old; i < count; ++i) {
+            raw[type][i * s_thingDataByteCount[type]] = 0xff;
+            raw[type][i * s_thingDataByteCount[type] + 1] = 0xff;
+        }
+        next.thingCounts[type] = count;
+        next.rawThingData[type] = raw[type];
+    }
+#define RESERVE_DECODED(kind, field, countField) do { \
+    int old = things->countField, count = next.thingCounts[kind]; \
+    if (old != things->thingCounts[kind] || (old && !things->field)) goto fail; \
+    next.field = calloc((size_t)count, sizeof(*next.field)); \
+    decoded[kind] = next.field; \
+    if (!next.field) goto fail; \
+    if (old) memcpy(next.field, things->field, (size_t)old * sizeof(*next.field)); \
+    for (i = old; i < count; ++i) next.field[i].next = THING_NONE; \
+    next.countField = count; \
+} while (0)
+    RESERVE_DECODED(4, groups, groupCount);
+    RESERVE_DECODED(5, weapons, weaponCount);
+    RESERVE_DECODED(6, armours, armourCount);
+    RESERVE_DECODED(8, potions, potionCount);
+    RESERVE_DECODED(10, junks, junkCount);
+    RESERVE_DECODED(14, projectiles, projectileCount);
+    RESERVE_DECODED(15, explosions, explosionCount);
+#undef RESERVE_DECODED
+    sft = malloc((size_t)(oldSft + 300) * sizeof(*sft));
+    if (!sft) goto fail;
+    if (oldSft) memcpy(sft, things->squareFirstThings, (size_t)oldSft * sizeof(*sft));
+    for (i = oldSft; i < oldSft + 300; ++i) sft[i] = THING_NONE;
+    next.squareFirstThings = sft;
+    next.squareFirstThingCount = oldSft + 300;
+    next.freshPc34PoolsReserved = 1;
+    for (type = 0; type < 16; ++type) if (raw[type]) free(things->rawThingData[type]);
+    free(things->groups); free(things->weapons); free(things->armours);
+    free(things->potions); free(things->junks); free(things->projectiles);
+    free(things->explosions); free(things->squareFirstThings);
+    *things = next;
+    for (type = 0; type < 16; ++type) dungeon->header.thingCounts[type] = next.thingCounts[type];
+    dungeon->header.squareFirstThingCount = next.squareFirstThingCount;
+    return 1;
+fail:
+    for (type = 0; type < 16; ++type) { free(raw[type]); free(decoded[type]); }
+    free(sft);
+    return 0;
+}
+
 static void dungeon_clear_thing_decoded_compat(
     struct DungeonThings_Compat* things, int type, int index)
 {

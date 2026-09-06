@@ -1,5 +1,20 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Authentic public LO FUL IR now reaches an original-data C15
+  render receipt after wall impact. Fixed three exposed production gaps:
+  fresh PC startup omitted F0434/G0236's seven spare Thing pools and 300 SFT
+  entries; wall explosions were placed inside the blocker instead of the
+  source square; F0115 explosion scheduling confused scheduler ordinals
+  with viewport square enums. Allocation is atomic/idempotent, preserves
+  original records, honors source caps and excludes save imports. Its unit
+  test covers free markers, capped preservation and late-failure rollback.
+  The former false-pass C15 test now binds the DOS ZIP, casts via public
+  rune input, advances native ticks, requires a raw-C15 fingerprint and
+  final capture in V1/V2.0/V2.1, then rejects stale missing-material capture.
+  Production build and seven focused regressions pass (0.67s, no skips).
+  Party setup is RAM-only; original maps/media are neither edited nor
+  extracted. This is not complete emulator or cross-platform parity.
+
 - 2026-09-06: DM1 F0115 live projectile-art selection now binds camera
   direction/cell, view lane and map parity together. Corrected rotating
   weapons' front/back bitmap choice, perpendicular cell-dependent flips,
