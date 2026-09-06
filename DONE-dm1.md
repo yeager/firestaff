@@ -1480,6 +1480,13 @@ Reviewed 2026-08-29. Completed work only.
   pending the integration and edition-routing work recorded in TODO-dm1.md.
 # F0412 potion practice boundary regression (2026-09-06)
 
+- M10 now rejects unknown spell-table indices before consuming the XP RNG
+  sample, following MENU.C F0412:1816-1826. Added a seed-preservation
+  regression: it fails on the previous implementation and passes after
+  moving the sample after lookup. Both focused F0412 tests and five DOS
+  original-media C15 integration tests pass; unknown-command presentation
+  is not claimed as original UI parity by this fixture.
+
 - Audited M11_GameView_CastSpell: XP uses F0732(8), and paid validation
   uses F0732(128) with immediate first-failure return before flask admission.
   Added a low-skill M10 handoff regression with HAS_SPELL_XP: exactly one

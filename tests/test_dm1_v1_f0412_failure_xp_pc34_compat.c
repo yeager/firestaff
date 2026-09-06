@@ -213,6 +213,19 @@ int main(void)
         }
     }
 
+    /* MENU.C F0412:1816-1819 rejects an unknown spell before :1826 RNG. */
+    world.masterRng.seed = 123;
+    input.commandArg2 = 255;
+    input.reserved2 = 0;
+    memset(&result, 0, sizeof(result));
+    assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
+    assert(world.masterRng.seed == 123);
+    for (i = 0; i < result.emissionCount; ++i) {
+        assert(result.emissions[i].kind != EMIT_XP_AWARD);
+        assert(result.emissions[i].kind != EMIT_SPELL_EFFECT);
+        assert(result.emissions[i].kind != EMIT_ACTION_DISABLED);
+    }
+
     printf("PASS dm1_v1_f0412_failure_xp_pc34_compat\n");
     return 0;
 }

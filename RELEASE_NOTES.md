@@ -5876,3 +5876,4 @@ V2 expansion, source-lock hardening, and engine handoff release building on the 
 | Linux | ARM64 | DEB, RPM |
 - DM1: correct direct-runtime spell XP and wisdom-check random samples to
   use the original shifted 16-bit RNG output instead of raw generator state.
+  Unknown spell indices no longer consume an XP sample before rejection.
