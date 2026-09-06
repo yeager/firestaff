@@ -1,5 +1,8 @@
 # Unreleased
 
+- Opening another champion's DM1 inventory no longer selects that champion
+  as party leader; inventory contents and leader-hand ownership are separate.
+
 - Selecting a different DM1 leader now aligns that champion with the
   party's facing direction, matching the original behavior.
 

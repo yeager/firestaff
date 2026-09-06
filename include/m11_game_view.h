@@ -967,7 +967,7 @@ typedef struct {
     int mapOverlayActive;        /* 1 when full-screen map is displayed */
     int inventoryPanelActive;    /* 1 when full inventory grid is displayed */
     /* PANEL.C G0423: one-based DM1 inventory owner, independent of leader.
-     * Zero retains the legacy owner until all panel consumers are migrated. */
+     * Zero supports legacy/direct fixtures without explicit selection. */
     int dm1InventoryChampionOrdinal;
     int inventorySelectedSlot;   /* currently highlighted slot index (-1 = none) */
     int csbGameFrozen;           /* CSB C147/C148 freeze/unfreeze keyboard state */

@@ -16679,8 +16679,7 @@ static void m11_set_inspect_readoutf(M11_GameViewState* state,
 }
 
 /* ReDMCSB PANEL.C:2363 owns G0423 separately from CLIKCHAM.C G0411.
- * The explicit ordinal is not yet set by ordinary panel input: consumers
- * must migrate together before enabling independent runtime selection. */
+ * Zero preserves legacy direct fixtures; normal panel input sets an owner. */
 static int m11_inventory_champion_index(const M11_GameViewState* state)
 {
     int index;
@@ -61315,10 +61314,21 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
     }
 
     sameOpen = state->inventoryPanelActive &&
-               state->world.party.activeChampionIndex == championIndex;
+               m11_inventory_champion_index(state) == championIndex;
     state->mapOverlayActive = 0;
     state->spellPanelOpen = 0;
-    state->world.party.activeChampionIndex = championIndex;
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        /* PANEL.C F0355 owns G0423 without changing CLIKCHAM.C G0411.
+         * Close the previous chest before assigning the new panel owner. */
+        DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+        state->dm1InventoryChampionOrdinal = sameOpen ? 0 : championIndex + 1;
+        state->v1ScrollPanelActive = 0;
+        state->v1ChampionStatsPanelActive = 0;
+        state->v1ObjectDescriptionPanelActive = 0;
+        state->v1EyePressActive = 0;
+    } else {
+        state->world.party.activeChampionIndex = championIndex;
+    }
     /* CSBWin ShowHideInventory redraws C017 for both a close and a champion
      * switch.  DisplayFoodWater is a transient empty-hand page on that
      * surface, never state that may survive onto another champion's page. */
@@ -61333,7 +61343,8 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
     state->inventoryPanelActive = 1;
     state->inventorySelectedSlot = 0;
     m11_clear_v1_mouth_visual(state);
-    m11_get_active_champion_label(state, champion, sizeof(champion));
+    m11_format_champion_name(state->world.party.champions[championIndex].name,
+                             champion, sizeof(champion));
     m11_set_status(state, "INVENTORY", "CHAMPION READY");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s INVENTORY", champion);
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
@@ -68186,6 +68197,11 @@ int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state) {
         return 0;
     }
     state->inventoryPanelActive = !state->inventoryPanelActive;
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+        state->dm1InventoryChampionOrdinal = state->inventoryPanelActive
+            ? state->world.party.activeChampionIndex + 1 : 0;
+    }
     m11_clear_v1_mouth_visual(state);
     state->v1FoodWaterPanelActive = 0;
     if (state->inventoryPanelActive) {

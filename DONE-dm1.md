@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Enabled separate DM1 inventory selection in normal panel
+  input. All five previously failing inventory/leader isolation probes now
+  pass, as do the default five ownership regressions. Panel close clears
+  selection; owner switching closes the old chest before assigning G0423.
+  Broader startup/corpus and multi-owner close/reopen checks are pending.
+
 - 2026-09-06: Migrated DM1 top-row redraw/ownership input records to the
   explicit inventory owner; leader name-color selection remains leader-owned.
   Five original-media regressions pass. Independent top-row highlight
