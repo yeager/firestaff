@@ -510,6 +510,131 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
         M11_GameView_ClearActingChampion(state);
         puts("PASS: original weapon action belongs to nonleader actor in all modes; emitted combat owner checked when present");
     }
+    {
+        /* Authentic C04/SFT targets and weapon records, with a relocated RAM
+         * party. This is integration evidence, not an emulator capture or a
+         * naturally played route. MENU.C F0407:1263-1269 owns actor facing;
+         * F0402:1024-1057 owns actor-cell targeting and F0231 damage.
+         * Consume a different existing group per mode; never restore only
+         * decoded HP after a tick has also changed raw records/timelines. */
+        static const int dx[4]={0,1,0,-1}, dy[4]={-1,0,1,0};
+        unsigned char *usedGroups;
+        unsigned short weaponThing=THING_NONE;
+        int weaponRow=-1;
+        struct DungeonThings_Compat *things=state->world.things;
+        const struct DungeonDatState_Compat *dungeon=state->world.dungeon;
+        LATE_SPELL_CHECK(things && dungeon && things->groupCount>0);
+        usedGroups=(unsigned char*)calloc((size_t)things->groupCount,1);
+        LATE_SPELL_CHECK(usedGroups);
+        for(i=0;i<4;++i) {
+            struct ChampionState_Compat *c=&state->world.party.champions[i];
+            c->present=1; c->hp.current=c->hp.maximum=1000;
+            c->stamina.current=c->stamina.maximum=1000;
+            c->attributes[CHAMPION_ATTR_STRENGTH]=100;
+            c->attributes[CHAMPION_ATTR_DEXTERITY]=100;
+            c->attributes[CHAMPION_ATTR_VITALITY]=100;
+            c->inventory[CHAMPION_SLOT_ACTION_HAND]=THING_NONE;
+            c->actionIndex=255; state->actionDisabledTicks[i]=0;
+        }
+        state->world.party.championCount=4;
+        for(int weapon=0;weapon<things->weaponCount && weaponRow<0;++weapon) {
+            unsigned char actions[3];
+            state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND]=
+                (unsigned short)((THING_TYPE_WEAPON<<10)|weapon);
+            M11_GameView_ClearActingChampion(state);
+            if(!M11_GameView_SetActingChampion(state,3) ||
+               !M11_GameView_GetActingActionIndices(state,actions)) continue;
+            for(int row=0;row<3;++row) if(actions[row]==9 || actions[row]==13) {
+                weaponRow=row;
+                weaponThing=state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND];
+                break;
+            }
+        }
+        if(weaponRow<0) { free(usedGroups); LATE_SPELL_CHECK(weaponRow>=0); }
+        for(mode=0;mode<3;++mode) {
+            int verified=0, totalAttempts=0;
+            state->presentationMode=modes[mode];
+            for(int map=0;map<(int)dungeon->header.mapCount && !verified && totalAttempts<256;++map) {
+                const struct DungeonMapDesc_Compat *desc=&dungeon->maps[map];
+                const struct DungeonMapTiles_Compat *tiles=&dungeon->tiles[map];
+                /* Use the source-owned F0194/F0195 handoff before querying
+                 * group positions; a map change may advance real wandering. */
+                if(state->world.partyMapIndex!=map) {
+                    struct TickInput_Compat input;
+                    struct TickResult_Compat result;
+                    memset(&input,0,sizeof(input));
+                    input.tick=state->world.gameTick; input.command=CMD_NONE;
+                    state->world.newPartyMapIndex=map;
+                    if(F0884_ORCH_AdvanceOneTick_Compat(&state->world,&input,&result)==ORCH_FAIL ||
+                       state->world.partyMapIndex!=map) continue;
+                }
+                for(int gx=0;gx<desc->width && !verified && totalAttempts<256;++gx)
+                for(int gy=0;gy<desc->height && !verified && totalAttempts<256;++gy) {
+                    unsigned short thing=F0511_DUNGEON_GetSquareFirstThing_Compat(
+                        dungeon,things,map,gx,gy);
+                    int group=-1;
+                    for(int link=0;link<64 && thing!=THING_NONE && thing!=THING_ENDOFLIST;++link) {
+                        if(THING_GET_TYPE(thing)==THING_TYPE_GROUP) {
+                            group=THING_GET_INDEX(thing); break;
+                        }
+                        thing=F0512_DUNGEON_GetThingNext_Compat(things,thing);
+                    }
+                    if(group<0 || group>=things->groupCount || usedGroups[group]) continue;
+                    for(int direction=0;direction<4 && !verified && totalAttempts<256;++direction) {
+                        int px=gx-dx[direction], py=gy-dy[direction];
+                        if(px<0 || py<0 || px>=desc->width || py>=desc->height) continue;
+                        /* Plain original corridor, no sensor/object chain. */
+                        if(tiles->squareData[px*desc->height+py]!=(DUNGEON_ELEMENT_CORRIDOR<<5)) continue;
+                        state->world.party.mapX=px; state->world.party.mapY=py;
+                        state->world.party.direction=(direction+1)&3;
+                        state->world.party.activeChampionIndex=0;
+                        for(i=0;i<4;++i) {
+                            state->world.party.champions[i].cell=(direction+i+1)&3;
+                            state->world.party.champions[i].direction=(direction+1)&3;
+                        }
+                        state->world.party.champions[3].direction=direction;
+                        state->world.party.champions[3].inventory[CHAMPION_SLOT_ACTION_HAND]=weaponThing;
+                        for(int attempt=0;attempt<16 && !verified && totalAttempts<256;++attempt) {
+                            int beforeHp=0, afterHp=0, damage=0;
+                            int count=things->groups[group].count;
+                            if(count<0 || count>3) break;
+                            for(i=0;i<4;++i) beforeHp+=things->groups[group].health[i];
+                            if(beforeHp<=0) break;
+                            for(i=0;i<4;++i) {
+                                state->world.party.champions[i].hp.current=1000;
+                                state->world.party.champions[i].stamina.current=1000;
+                                state->actionDisabledTicks[i]=0;
+                            }
+                            state->inventoryPanelActive=0; state->resting=0;
+                            ++totalAttempts;
+                            M11_GameView_ClearActingChampion(state);
+                            if(!M11_GameView_SetActingChampion(state,3)) break;
+                            int rowY=(yOffset?94:86)+weaponRow*(yOffset?21:12);
+                            (void)M11_GameView_HandlePointer(state,250,rowY+5,1);
+                            (void)M11_GameView_HandlePointer(state,250,rowY+5,0);
+                            for(int e=0;e<state->lastTickResult.emissionCount;++e) {
+                                const struct TickEmission_Compat *em=&state->lastTickResult.emissions[e];
+                                if(em->kind==EMIT_DAMAGE_DEALT && em->payload[1]==group && em->payload[2]>0) {
+                                    if(em->payload[0]!=3) { free(usedGroups); LATE_SPELL_CHECK(em->payload[0]==3); }
+                                    damage=em->payload[2];
+                                }
+                            }
+                            for(i=0;i<4;++i) afterHp+=things->groups[group].health[i];
+                            if(damage>0 && beforeHp>afterHp && beforeHp-afterHp<=damage) {
+                                LATE_SPELL_CHECK(state->world.party.activeChampionIndex==0);
+                                LATE_SPELL_CHECK(state->world.party.champions[0].direction==((direction+1)&3));
+                                printf("PASS original target mode%d map%d square%d,%d group%d actor3 damage%d HP%d->%d\n",
+                                    mode,map,gx,gy,group,damage,beforeHp,afterHp);
+                                usedGroups[group]=1; verified=1;
+                            }
+                        }
+                    }
+                }
+            }
+            if(!verified) { free(usedGroups); LATE_SPELL_CHECK(verified); }
+        }
+        free(usedGroups);
+    }
     puts("PASS authentic late spell panel: 24 pixel cases and three mode-specific mouse input cases");
     return 1;
 }

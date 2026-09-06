@@ -2138,20 +2138,45 @@ int main(void)
                   view.csbState.runtime_viewport_source_session_ready &&
                   view.csbState.runtime_viewport_pixel_hash != 0u,
               "F31 F0128 redraws its source-owned aperture after live movement input");
-        /* FMTOWNS.H aliases F0387/F0391 to DRAW_DMENU/DYNAMENU, whose first
-         * action row is x=232..318/y=77..83.  CHTWE/CHTWJ must use that
-         * source rectangle even though it has no DM1 startup receipt.  This
+        /* Retail F31 C696 C082 is x234..318, EN y86..96 / JP y94..113.
+         * C098 is a separate Pass zone. The old seven-pixel text-line
+         * approximation incorrectly dispatched the name band. This
          * uses the admitted F31 MINI.DAT champion/action list; no action
          * fixture or synthetic menu state is introduced. */
         memset(fmtowns_actions, 0xff, sizeof(fmtowns_actions));
+        CHECK(M11_GameView_SetActingChampion(&view, 0),
+              "F31 actor opens original action menu");
+        (void)M11_GameView_HandlePointerButton(
+            &view, 240, language == CSB_FMTOWNS_SWITCH_JAPANESE ? 87 : 79,
+            DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(view.actingChampionOrdinal == 1u,
+              "F31 name band does not dispatch an action");
+        {
+            const int passX = language == CSB_FMTOWNS_SWITCH_JAPANESE ? 295 : 285;
+            const int passY = language == CSB_FMTOWNS_SWITCH_JAPANESE ? 85 : 77;
+            const int leader = view.world.party.activeChampionIndex;
+            const int stamina = view.world.party.champions[0].stamina.current;
+            for (int corner = 0; corner < 2; ++corner) {
+                CHECK(M11_GameView_SetActingChampion(&view, 0),
+                      "F31 original actor reopens menu for Pass");
+                (void)M11_GameView_HandlePointerButton(
+                    &view, corner ? 319 : passX, passY + (corner ? 6 : 0),
+                    DM1_V1_MOUSE_MASK_LEFT_PC34);
+                CHECK(view.actingChampionOrdinal == 0u &&
+                          view.world.party.activeChampionIndex == leader &&
+                          view.world.party.champions[0].stamina.current == stamina,
+                      "F31 C098 inclusive Pass corners close without an action");
+            }
+        }
         CHECK(M11_GameView_SetActingChampion(&view, 0) &&
                   M11_GameView_GetActingActionIndices(&view, fmtowns_actions) &&
                   fmtowns_actions[0] != 0xffu &&
                   M11_GameView_HandlePointerButton(
-                      &view, 240, 79, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                      &view, 240, language == CSB_FMTOWNS_SWITCH_JAPANESE ? 99 : 91,
+                      DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                       M11_GAME_INPUT_REDRAW &&
                   view.actingChampionOrdinal == 0u,
-              "F31 CHTW Game action row uses DRAW_DMENU geometry, not PC34 C113 geometry");
+              "F31 CHTW Game action row uses its original C696 geometry");
         /* F31 G0447 keeps C012 (status selection) separate from C007
          * (inventory): a named status rectangle must never inherit the
          * convenient host inventory behavior.  C187's adjacent source bar

@@ -1,7 +1,12 @@
 # Firestaff TODO — active cross-game work
 
-- Extend actor/leader regression coverage to guaranteed combat against an
-  authentic target, checking damage ownership for actions by a non-leader.
+- Extend authentic combat coverage to multi-creature selection, reach
+  blocking and exact damage/XP comparisons against original emulator traces.
+  The relocated-party original-group tests do not prove a natural play route.
+
+- Complete CSB FM Towns action-menu pixel parity and all row boundaries.
+  Source C696 now owns language-specific action/Pass pointer geometry;
+  remaining Japanese glyph and visual-composition gaps are independent.
 
 - Complete Japanese FM Towns active-menu text and remaining row boundaries.
   Reconcile the old JDM mixed-font adapter with TEXT2.C:75–105: the original

@@ -1,5 +1,21 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DOS and English/Japanese FM Towns original-media tests now
+  locate existing C04 groups through native square/thing traversal and
+  source-owned map handoff. Nine positive non-leader hits across Original,
+  V2.0 and V2.1 require actor-owned damage receipts and original group HP
+  decreases while preserving leader/facing. No dungeon, monster or weapon
+  records are generated; the RAM party is relocated and equipped from
+  existing records. This is integration evidence, not an emulator trace.
+
+- 2026-09-06: CSB FM Towns action clicks use authenticated English/Japanese
+  C696 C082..C084 and C098 rectangles instead of seven-pixel text rows.
+  Original MINI.DAT handoff tests verify name-band rejection, both inclusive
+  Pass corners without stamina/leader changes, and first-row dispatch.
+  Seven combined DM1/CSB regressions pass without skips (21.36 seconds).
+  See parity-evidence/csb-fmtowns-action-regions.md for original
+  hashes and region records. Menu pixel parity remains a separate gap.
+
 - 2026-09-06: Extended the bounded RAM F0407/F0231 combat regression to a
   non-leader actor facing south while the leader and party face east.
   Surviving and fatal hits require positive damage, matching target HP

@@ -36861,12 +36861,19 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     }
                 }
             }
-            if (state->dm1FmtownsStartupReceiptValid) {
+            const CSB_V1_BootProfile *actionProfile =
+                state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ?
+                    (const CSB_V1_BootProfile *)state->csbBootProfile : NULL;
+            const int csbTowns = m11_csb_is_fmtowns_profile(actionProfile);
+            if (state->dm1FmtownsStartupReceiptValid || csbTowns) {
                 /* COMMAND.C:461-465 resolves C098 and C082..C084,
                  * not font rows. Authenticated EDM/JDM region records
                  * define distinct parent offsets, row heights and Pass. */
-                const int japanese = state->dm1FmtownsStartupReceipt.language ==
-                    DM1_FMTOWNS_LANG_JP;
+                /* F31 CDATA/CJDATA C696 confirms these same C098 and
+                 * C082..C084 records; see csb-fmtowns-action-regions.md. */
+                const int japanese = csbTowns ?
+                    actionProfile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA :
+                    state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP;
                 const int menuY = japanese ? 85 : 77;
                 const int passX = japanese ? 295 : 285;
                 const int rowHeight = japanese ? 20 : 11;
@@ -36882,36 +36889,6 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                         (void)M11_GameView_TriggerActionRow(state, row);
                         return M11_GAME_INPUT_REDRAW;
                     }
-                }
-            }
-            /* Legacy CSB FM Towns routing remains separately unverified.
-             * FM Towns uses a narrower 87-pixel panel at x=232..318
-             * with three 7-pixel-tall text rows starting at y=77.
-             * Hit-test directly against the source-locked geometry
-             * instead of the PC34 route table. */
-            /* FMTOWNS.H maps the common F0387/F0391 action path to
-             * DRAW_DMENU/DYNAMENU for both DM1 and CSB.  CSB's CHTWE/CHTWJ
-             * Game handoff deliberately does not populate DM1's startup
-             * receipt, so using that receipt as the sole F31 discriminator
-             * sent a real CSB F31 action panel through PC34 C113..C115
-             * geometry.  The recovered F31 geometry below is the durable
-             * input owner; its panel pixels remain separately fail-closed
-             * until the CHTW* DRAW_DMENU raster consumer is recovered.
-             * ReDMCSB FMTOWNS.H:76,498,650; MENU.C F0391. */
-            if (actionCount > 0 &&
-                (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-                  m11_csb_is_fmtowns_profile(
-                      (const CSB_V1_BootProfile *)state->csbBootProfile))) {
-                int fmx1 = 232, fmy1 = 77, fmx2 = 318;
-                if (x >= fmx1 && x <= fmx2 && y >= fmy1 &&
-                    y < fmy1 + (int)(actionCount * DM1_V1_FMTOWNS_CHAR_Y_HYT)) {
-                    int row = (y - fmy1) / DM1_V1_FMTOWNS_CHAR_Y_HYT;
-                    if (row >= 0 && row < actionCount &&
-                        actions[row] != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED) {
-                        (void)M11_GameView_TriggerActionRow(state, row);
-                        return M11_GAME_INPUT_REDRAW;
-                    }
-                    return M11_GAME_INPUT_REDRAW;
                 }
             }
             /* F0371 resolves G0452 before it calls F0391.  The route table

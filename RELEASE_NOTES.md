@@ -1,5 +1,8 @@
 # Unreleased
 
+- CSB FM Towns action and Pass clicks use the original English/Japanese
+  menu regions; clicking the name band no longer triggers an action.
+
 - Attack feedback now names the attacking champion rather than the party
   leader when a different champion performs the action.
 
