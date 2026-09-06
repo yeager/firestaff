@@ -20,6 +20,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
     static const int slots[30] = {19,20,0,2,3,4,6,9,8,10,1,5,7,
         11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,29};
     int checked = 0;
+    int swaps = 0;
     unsigned char objectData[65535];
     size_t objectBytes = 0, objectOffset = 0;
     int matches = 0;
@@ -107,10 +108,50 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                     ++checked;
                 }
             }
+            {
+                unsigned short other = THING_NONE;
+                int x, y, w, h;
+                /* CHAMPION.C F0302:697-707 exchanges both owners. Use a
+                 * distinct allocated original weapon, never a fabricated
+                 * resident or the same Thing on both sides of the swap. */
+                for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
+                    unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);
+                    const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                    if (candidate != thing && bytes && !(bytes[0] == 0xff && bytes[1] == 0xff)) {
+                        other = candidate;
+                        break;
+                    }
+                }
+                if (other == THING_NONE ||
+                    !M11_GameView_GetV1InventorySourceSlotBoxZone(9, &x, &y, &w, &h)) return 0;
+                for (int mode = 0; mode < 2; ++mode) {
+                    state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED : M12_PRESENTATION_V1_ORIGINAL;
+                    state->world.party.champions[0].inventory[20] = other;
+                    if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing)) return 0;
+                    for (int step = 0; step < 2; ++step) {
+                        unsigned short hand = step ? thing : other;
+                        unsigned short resident = step ? other : thing;
+                        (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
+                        for (int release = 0; release < 2; ++release) {
+                            if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
+                                x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
+                                state->world.party.champions[0].inventory[20] != resident) {
+                                fprintf(stderr, "FAIL: legacy occupied action hand %04x/%04x mode %d step %d release %d\n",
+                                    thing, other, mode, step, release);
+                                return 0;
+                            }
+                        }
+                        ++swaps;
+                    }
+                    state->world.party.champions[0].inventory[20] = THING_NONE;
+                }
+            }
         }
     }
     printf("PASS: %d original legacy object placement/pickup/rejection checks and releases\n", checked);
-    return checked > 0;
+    printf("PASS: %d original legacy occupied action-hand swaps and releases\n", swaps);
+    return checked > 0 && swaps > 0;
 }
 
 /* PANEL.C F0340/F0341: original Atari/Amiga center X=162,

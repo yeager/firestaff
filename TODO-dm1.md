@@ -1,7 +1,8 @@
 # Firestaff TODO — DM1
 
-- Extend Atari/Amiga original-object coverage to occupied exchanges and
-  complete drag sequences. Independently verify source slot geometry and
+- Extend Atari/Amiga original-object coverage to occupied equipment and
+  backpack exchanges and complete drag sequences. Independently verify
+  source slot geometry and
   archive-to-normalized-dungeon decoding; those remain shared with the
   current empty-slot admission oracle.
 

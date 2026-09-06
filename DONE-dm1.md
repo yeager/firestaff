@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Legacy occupied action-hand exchanges
+
+- Each of the 606 allocated original objects now exchanges with a distinct
+  allocated original weapon in the action hand, then exchanges back.
+  Tests check both held and slot Thing identity after press and release.
+- All five Atari/Amiga editions pass in Original/V2.1 together with the
+  full existing all-slot corpus. Controlled resident placement is in RAM;
+  no original archive is modified and no substitute objects are generated.
+- Scope is occupied action-hand ownership, not occupied equipment-mask
+  rejection, full drag gestures, rendering, load accounting or save parity.
+
 ## 2026-09-06 — Independent F0141 equipment-oracle indices
 
 - The Atari/Amiga equipment oracle now decodes each object-info index
