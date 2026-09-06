@@ -3,15 +3,17 @@
 Status: M10 and M11 now reserve each item before cell RNG and publish it before the
 next entry. The streamed helper's bounded worm-pool regression covers 32 seeds,
 four capacities and centered/off-center cells (256 cases), including exact RNG
-state. The creature behavior executable passes 2,489 checks, and eight F0191
+state. The creature behavior executable passes 2,489 checks, and thirteen F0191
 explosion integration cases pass. The M11 runtime gate passes 138 checks,
 including zero/one free junk slot with centered/off-center worm drops and exact
 RNG state. M10 zero/one-slot integration verifies bounded allocation and raw/
 decoded floor-chain ownership, not the complete death-path RNG sequence.
-CSB also uses the streamed allocation/publication protocol; its runtime tick
-accumulator regression passes. Shared CSB RNG ownership, full M10 death RNG,
-allocation reclamation and original captures
-remain open.
+M10 and M11 share an allocation-owned F0267 destination operation. Bounded
+cases cover teleporter insertion, full-list rejection, malformed columns,
+missing raw backing and floor-plate event publication through pit dispatch.
+General sensor/link rollback, full M10 death
+RNG and original captures remain open. CSB uses the streamed protocol and the
+F0190 caller RNG; upstream reseeding and nested sensor RNG remain separate gaps.
 This is not an original-emulator capture.
 
 ## Original contract
@@ -43,8 +45,8 @@ Affected materializers include:
   converted to the streamed materializer).
 - `m11_materialize_creature_fixed_possession_drops` (M11 runtime, now converted
   to the streamed materializer).
-- The CSB native runtime materializer calling F0824; it additionally initializes
-  a local seed instead of using a demonstrated original shared RNG owner.
+- The CSB native runtime materializer calling F0824 (now uses the F0190 caller
+  RNG; upstream caller seed provenance still requires further verification).
 
 The F0186 melee receipt also uses the precomputed resolver. Its payload is not
 proof of allocation-failure parity. Existing successful-pool tests do not cover

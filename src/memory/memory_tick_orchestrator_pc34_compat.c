@@ -7866,6 +7866,12 @@ struct OrchFixedDropContext {
     unsigned short thing;
 };
 
+static int orch_f0267_move_allocated_fixed_drop_compat(
+    struct GameWorld_Compat* world,
+    const struct F0267ThingMoveRequestPc34Compat* request,
+    struct F0267ThingMoveResultPc34Compat* outResult,
+    int freshlyAllocated);
+
 static int orch_reserve_fixed_drop(void* opaque,
     const struct DM1FixedPossessionDrop_Compat* drop)
 {
@@ -7880,11 +7886,22 @@ static void orch_publish_fixed_drop(void* opaque,
     struct OrchFixedDropContext* ctx = opaque;
     unsigned short thing = (unsigned short)((ctx->thing & 0x3FFFu) |
                                            ((unsigned)drop->cell << 14));
-    if (orch_link_thing_to_square_tail_compat(ctx->world, ctx->mapIndex,
-                                            ctx->mapX, ctx->mapY, thing))
-        ctx->droppedAny = 1;
-    else
+    struct F0267ThingMoveRequestPc34Compat request = {0};
+    request.thing = thing;
+    request.sourceMapX = -1;
+    request.destinationMapIndex = ctx->mapIndex;
+    request.destinationMapX = ctx->mapX;
+    request.destinationMapY = ctx->mapY;
+    /* GROUP.C F0186:625-643: this callback owns the record just reserved
+     * above. Only that private provenance admits the off-square F0267 path. */
+    if (orch_f0267_move_allocated_fixed_drop_compat(
+            ctx->world, &request, NULL, 1))
+        ++ctx->droppedAny;
+    else {
         (void)orch_set_next_thing_compat(ctx->world->things, thing, THING_NONE);
+        orch_write_raw_next_compat(ctx->world->things, thing);
+    }
+    ctx->thing = THING_NONE;
 }
 
 static int orch_drop_creature_fixed_possessions_compat(
@@ -9629,7 +9646,10 @@ static unsigned short orch_allocate_fixed_possession_thing_compat(
         case DM1_DROP_THING_TYPE_WEAPON:
             if (!things->weapons) return THING_NONE;
             for (i = 0; i < things->weaponCount; ++i) {
-                if (things->weapons[i].next == THING_NONE) {
+                if (things->weapons[i].next == THING_NONE &&
+                    (!things->rawThingData[THING_TYPE_WEAPON] ||
+                     (i < things->thingCounts[THING_TYPE_WEAPON] &&
+                      r_u16(things->rawThingData[THING_TYPE_WEAPON] + i * 4) == THING_NONE))) {
                     memset(&things->weapons[i], 0, sizeof(things->weapons[i]));
                     things->weapons[i].next = THING_ENDOFLIST;
                     things->weapons[i].type = (unsigned char)(drop->itemType & 0x7F);
@@ -9648,7 +9668,10 @@ static unsigned short orch_allocate_fixed_possession_thing_compat(
         case DM1_DROP_THING_TYPE_ARMOUR:
             if (!things->armours) return THING_NONE;
             for (i = 0; i < things->armourCount; ++i) {
-                if (things->armours[i].next == THING_NONE) {
+                if (things->armours[i].next == THING_NONE &&
+                    (!things->rawThingData[THING_TYPE_ARMOUR] ||
+                     (i < things->thingCounts[THING_TYPE_ARMOUR] &&
+                      r_u16(things->rawThingData[THING_TYPE_ARMOUR] + i * 4) == THING_NONE))) {
                     memset(&things->armours[i], 0, sizeof(things->armours[i]));
                     things->armours[i].next = THING_ENDOFLIST;
                     things->armours[i].type = (unsigned char)(drop->itemType & 0x7F);
@@ -9667,7 +9690,10 @@ static unsigned short orch_allocate_fixed_possession_thing_compat(
         case DM1_DROP_THING_TYPE_JUNK:
             if (!things->junks) return THING_NONE;
             for (i = 0; i < things->junkCount; ++i) {
-                if (things->junks[i].next == THING_NONE) {
+                if (things->junks[i].next == THING_NONE &&
+                    (!things->rawThingData[THING_TYPE_JUNK] ||
+                     (i < things->thingCounts[THING_TYPE_JUNK] &&
+                      r_u16(things->rawThingData[THING_TYPE_JUNK] + i * 4) == THING_NONE))) {
                     memset(&things->junks[i], 0, sizeof(things->junks[i]));
                     things->junks[i].next = THING_ENDOFLIST;
                     things->junks[i].type = (unsigned char)(drop->itemType & 0x7F);
@@ -10192,10 +10218,11 @@ static int orch_f0267_resolve_non_group_chain_compat(
     return 1;
 }
 
-int F0267_MOVE_MoveThingOnLoadedChain_Compat(
+static int orch_f0267_move_allocated_fixed_drop_compat(
     struct GameWorld_Compat* world,
     const struct F0267ThingMoveRequestPc34Compat* request,
-    struct F0267ThingMoveResultPc34Compat* outResult)
+    struct F0267ThingMoveResultPc34Compat* outResult,
+    int freshlyAllocated)
 {
     struct F0267ThingMoveResultPc34Compat result;
     struct F0267ThingMoveRequestPc34Compat resolvedRequest;
@@ -10229,9 +10256,20 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
         type > THING_TYPE_EXPLOSION ||
         !orch_f0267_validate_raw_live_thing_owner_compat(
             world->things, request->thing) ||
-        !orch_f0267_thing_is_present_on_square_compat(
+        (!freshlyAllocated && !orch_f0267_thing_is_present_on_square_compat(
             world, request->sourceMapIndex, request->sourceMapX,
-            request->sourceMapY, request->thing)) {
+            request->sourceMapY, request->thing))) {
+        if (outResult) *outResult = result;
+        return 0;
+    }
+    if (freshlyAllocated &&
+        ((type != THING_TYPE_WEAPON && type != THING_TYPE_ARMOUR &&
+          type != THING_TYPE_JUNK) ||
+         !world->things->rawThingData[type] ||
+         THING_GET_INDEX(request->thing) >= world->things->thingCounts[type] ||
+         r_u16(world->things->rawThingData[type] +
+               THING_GET_INDEX(request->thing) * 4) != THING_ENDOFLIST ||
+         orch_next_thing_compat(world->things, request->thing) != THING_ENDOFLIST)) {
         if (outResult) *outResult = result;
         return 0;
     }
@@ -10248,21 +10286,64 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     result.finalMapX = resolvedRequest.destinationMapX;
     result.finalMapY = resolvedRequest.destinationMapY;
     result.finalThing = resolvedRequest.thing;
+    if (freshlyAllocated) {
+        unsigned char square;
+        int sftIndex, used = 0, m, i, count = 0, column = 0;
+        unsigned short cursor;
+        if (!world->things->squareFirstThings ||
+            !orch_read_square_byte_compat(world->dungeon, result.finalMapIndex,
+                result.finalMapX, result.finalMapY, &square)) return 0;
+        /* F0514 uses cumulative column bases even when the destination
+         * was empty. Validate those bases before any F0276 sensor effects. */
+        if (!world->dungeon->columnsCumulativeSquareFirstThingCount) return 0;
+        for (m = 0; m < world->dungeon->header.mapCount; ++m) {
+            int x, height = world->dungeon->maps[m].height;
+            if (!world->dungeon->tiles[m].squareData ||
+                world->dungeon->maps[m].width * height >
+                    world->dungeon->tiles[m].squareCount) return 0;
+            for (x = 0; x < world->dungeon->maps[m].width; ++x, ++column) {
+                if (column >= world->dungeon->dungeonColumnCount ||
+                    world->dungeon->columnsCumulativeSquareFirstThingCount[column] != used)
+                    return 0;
+                for (i = 0; i < height; ++i)
+                    used += !!(world->dungeon->tiles[m].squareData[x * height + i] &
+                               DUNGEON_SQUARE_MASK_THING_LIST);
+            }
+        }
+        if (column != world->dungeon->dungeonColumnCount ||
+            used > world->things->squareFirstThingCount) return 0;
+        sftIndex = orch_square_first_thing_list_index_compat(world->dungeon,
+            result.finalMapIndex, result.finalMapX, result.finalMapY);
+        if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+        if (!(square & DUNGEON_SQUARE_MASK_THING_LIST)) {
+            if (!world->dungeon->columnsCumulativeSquareFirstThingCount ||
+                world->things->squareFirstThings[world->things->squareFirstThingCount - 1] != THING_NONE)
+                return 0;
+            if (used >= world->things->squareFirstThingCount) return 0;
+        } else {
+            cursor = world->things->squareFirstThings[sftIndex];
+            while (cursor != THING_ENDOFLIST && cursor != THING_NONE && count++ < 63) {
+                if ((cursor & 0x3fffu) == (request->thing & 0x3fffu)) return 0;
+                cursor = orch_next_thing_compat(world->things, cursor);
+            }
+            if (cursor != THING_ENDOFLIST) return 0;
+        }
+    }
     /* ReDMCSB MOVESENS.C:F0267 lines 799-807 runs F0276 before the
      * source unlink for ordinary things. C14 projectiles and C15 explosions
      * levitate under F0264 and therefore use F0164 directly. */
-    if (!result.levitates) {
+    if (!freshlyAllocated && !result.levitates) {
         result.sourceSensorPasses = orch_f0267_sensor_pass_dispatch_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
             resolvedRequest.sourceMapY, resolvedRequest.thing, 0, &result);
     }
-    if (!orch_unlink_thing_from_square_compat(
+    if (!freshlyAllocated && !orch_unlink_thing_from_square_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
             resolvedRequest.sourceMapY, resolvedRequest.thing)) {
         if (outResult) *outResult = result;
         return 0;
     }
-    result.sourceUnlinked = 1;
+    result.sourceUnlinked = !freshlyAllocated;
 
     /* MOVESENS.C:F0267 lines 892-897 runs the destination F0276 pass
      * before linking ordinary things; F0264 keeps C14/C15 levitating. */
@@ -10271,12 +10352,17 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
             world, resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
             resolvedRequest.destinationMapY, resolvedRequest.thing, 1, &result);
     }
-    if (!orch_link_thing_to_square_tail_compat(
+    if (!(freshlyAllocated && world->dungeon->columnsCumulativeSquareFirstThingCount
+        ? F0514_DUNGEON_LinkThingToList_Compat(world->dungeon, world->things,
+            resolvedRequest.thing, THING_ENDOFLIST,
+            resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
+            resolvedRequest.destinationMapY)
+        : orch_link_thing_to_square_tail_compat(
             world, resolvedRequest.destinationMapIndex, resolvedRequest.destinationMapX,
-            resolvedRequest.destinationMapY, resolvedRequest.thing)) {
+            resolvedRequest.destinationMapY, resolvedRequest.thing))) {
         /* A failed destination link is not allowed to discard an original
          * Thing. Restore its source position before reporting failure. */
-        (void)orch_link_thing_to_square_tail_compat(
+        if (!freshlyAllocated) (void)orch_link_thing_to_square_tail_compat(
             world, resolvedRequest.sourceMapIndex, resolvedRequest.sourceMapX,
             resolvedRequest.sourceMapY, resolvedRequest.thing);
         result.sourceUnlinked = 0;
@@ -10329,6 +10415,14 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     }
     if (outResult) *outResult = result;
     return 1;
+}
+
+int F0267_MOVE_MoveThingOnLoadedChain_Compat(
+    struct GameWorld_Compat* world,
+    const struct F0267ThingMoveRequestPc34Compat* request,
+    struct F0267ThingMoveResultPc34Compat* outResult)
+{
+    return orch_f0267_move_allocated_fixed_drop_compat(world, request, outResult, 0);
 }
 
 /* ReDMCSB TIMELINE.C F0249:1352-1465 snapshots the source square before
@@ -10432,6 +10526,19 @@ static int orch_drop_creature_fixed_possessions_compat(
         *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
     return ctx.droppedAny;
+}
+
+int F0186_GROUP_MaterializeFixedDropsOnWorld_Compat(
+    struct GameWorld_Compat* world, int creatureType, int sourceCell,
+    int mapIndex, int mapX, int mapY, int* outSoundId)
+{
+    unsigned char square;
+    if (outSoundId) *outSoundId = -1;
+    if (!world || !world->things || !world->things->loaded ||
+        !orch_read_square_byte_compat(world->dungeon, mapIndex, mapX, mapY, &square))
+        return -1;
+    return orch_drop_creature_fixed_possessions_compat(
+        world, creatureType, sourceCell, mapIndex, mapX, mapY, outSoundId);
 }
 
 static int orch_drop_moving_fixed_possessions_compat(

@@ -62,7 +62,11 @@ static void seed_drop_state(M11_GameViewState* state,
                             unsigned char weaponRaw[8][4],
                             unsigned char armourRaw[8][4],
                             unsigned char junkRaw[12][4]) {
+    /* Cases run sequentially and retain only one live fixture. Keep column
+     * storage alive through each probe without introducing heap ownership. */
+    static unsigned short columns[2];
     int i;
+    memset(columns, 0, sizeof(columns));
     memset(state, 0, sizeof(*state));
     memset(dungeon, 0, sizeof(*dungeon));
     memset(maps, 0, sizeof(struct DungeonMapDesc_Compat));
@@ -86,6 +90,8 @@ static void seed_drop_state(M11_GameViewState* state,
     dungeon->tiles = tiles;
     dungeon->loaded = 1;
     dungeon->tilesLoaded = 1;
+    dungeon->columnsCumulativeSquareFirstThingCount = columns;
+    dungeon->dungeonColumnCount = 1;
 
     for (i = 0; i < 8; ++i) {
         weapons[i].next = THING_NONE;
@@ -110,7 +116,9 @@ static void seed_drop_state(M11_GameViewState* state,
     things->rawThingData[THING_TYPE_WEAPON] = &weaponRaw[0][0];
     things->rawThingData[THING_TYPE_ARMOUR] = &armourRaw[0][0];
     things->rawThingData[THING_TYPE_JUNK] = &junkRaw[0][0];
-    squareFirstThings[0] = THING_ENDOFLIST;
+    /* An unflagged square has no compact entry. The allocated table slot
+     * is a trailing NONE, consumed by F0514 upon the first insertion. */
+    squareFirstThings[0] = THING_NONE;
     things->squareFirstThings = squareFirstThings;
     things->squareFirstThingCount = 1;
     things->loaded = 1;
@@ -337,7 +345,7 @@ static void test_fixed_drops_do_not_append_when_pool_exhausted(void) {
                   &state, DM1_CREATURE_TYPE_RED_DRAGON,
                   DM1_SINGLE_CENTERED_CREATURE_CELL, 0, 0, 0),
               0, "red dragon does not grow exhausted junk pool");
-    ASSERT_EQ(things.squareFirstThings[0], THING_ENDOFLIST,
+    ASSERT_EQ(things.squareFirstThings[0], THING_NONE,
               "exhausted pool leaves square chain unchanged");
 }
 
@@ -396,6 +404,7 @@ static void test_dead_group_runtime_materializes_and_removes_group(void) {
     things.thingCounts[THING_TYPE_GROUP] = 1;
     things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
     things.squareFirstThings[0] = groupThing;
+    mapTiles[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
 
     ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
                   &state, groupThing, 0, 0, 0),
@@ -475,11 +484,13 @@ static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void)
     things.thingCounts[THING_TYPE_GROUP] = 1;
     things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
     things.squareFirstThings[0] = groupThing;
+    mapTiles[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
 
     /* ReDMCSB GROUP.C:F0188:716-731 invokes F0186 before walking Slot.
      * F0186:610-645 allocates the fixed Trolin club, cell-tags it, and
-     * inserts it through F0267, so the existing square chain survives between
-     * the later group-slot prepend and the generated fixed possession. */
+     * inserts it through F0267. MOVESENS.C F0276:1654 calls F0163;
+     * DUNGEON.C F0163:1829-1837 appends at the tail, not the head.
+     * The pre-existing floor object therefore precedes fixed and carried drops. */
     ASSERT_EQ(M11_GameView_ProbeCheckCreatureGroupDeathAndDrop(
                   &state, groupThing, 0, 0, 0),
               1, "dead trolin runtime death/drop path accepted");
@@ -492,14 +503,14 @@ static void test_dead_trolin_inserts_fixed_drop_into_existing_object_chain(void)
      * so the raw THING word cannot be compared against the fixture's
      * original cell bits.  Compare identity (type + index) and let the
      * source own the cell. */
-    ASSERT_TRUE(same_thing_identity(things.squareFirstThings[0], carriedJunk),
-                "group slot possession is first after group removal");
-    ASSERT_EQ(raw_next_for_thing(&things, carriedJunk), existingFloorJunk,
-              "carried possession links to pre-existing floor object");
+    ASSERT_EQ(things.squareFirstThings[0], existingFloorJunk,
+              "pre-existing floor object remains first after group removal");
     ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), fixedClub,
               "pre-existing floor object links to generated fixed club");
-    ASSERT_EQ(raw_next_for_thing(&things, fixedClub), THING_ENDOFLIST,
-              "generated fixed club terminates object chain");
+    ASSERT_TRUE(same_thing_identity(raw_next_for_thing(&things, fixedClub), carriedJunk),
+                "fixed club precedes the later F0188 carried possession");
+    ASSERT_EQ(raw_next_for_thing(&things, carriedJunk), THING_ENDOFLIST,
+              "carried possession terminates object chain");
     ASSERT_EQ(weapons[0].type, 23, "generated Trolin fixed drop is club subtype");
     ASSERT_EQ(THING_GET_CELL(fixedClub), 1,
               "generated Trolin fixed club keeps deterministic source cell");
@@ -562,6 +573,7 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
     things.thingCounts[THING_TYPE_GROUP] = 1;
     things.rawThingData[THING_TYPE_GROUP] = &groupRaw[0][0];
     things.squareFirstThings[0] = groupThing;
+    mapTiles[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
 
     /* ReDMCSB GROUP.C:F0188:724-731 walks the dead group's Slot chain and
      * inserts each carried object through F0267 before GROUP.C:F0189 removes
@@ -571,17 +583,18 @@ static void test_dead_mummy_preserves_carried_tail_and_floor_chain(void) {
                   &state, groupThing, 0, 0, 0),
               1, "dead mummy runtime death/drop path accepted");
 
-    /* Same GROUP.C F0188:728 re-cell as above — compare identity, not the
-     * raw THING word with its fixture cell bits. */
-    ASSERT_TRUE(same_thing_identity(things.squareFirstThings[0], carriedTail),
-                "second carried object is first after source-order prepends");
-    ASSERT_TRUE(same_thing_identity(raw_next_for_thing(&things, carriedTail),
+    /* GROUP.C F0188:728 re-cells each item; F0276:1654 delegates to
+     * DUNGEON.C F0163:1829-1837, which appends in original Slot order. */
+    ASSERT_EQ(things.squareFirstThings[0], existingFloorJunk,
+              "pre-existing floor object stays first after group unlink");
+    ASSERT_TRUE(same_thing_identity(raw_next_for_thing(&things, existingFloorJunk),
                                     carriedHead),
-                "second carried object links to original carried head");
-    ASSERT_EQ(raw_next_for_thing(&things, carriedHead), existingFloorJunk,
-              "carried head links to pre-existing floor object after group unlink");
-    ASSERT_EQ(raw_next_for_thing(&things, existingFloorJunk), THING_ENDOFLIST,
-              "pre-existing floor object remains chain tail");
+                "existing floor tail links to original carried head");
+    ASSERT_TRUE(same_thing_identity(raw_next_for_thing(&things, carriedHead),
+                                    carriedTail),
+                "carried head links to original carried tail");
+    ASSERT_EQ(raw_next_for_thing(&things, carriedTail), THING_ENDOFLIST,
+              "last carried object terminates floor chain");
     ASSERT_EQ(groups[0].slot, THING_ENDOFLIST,
               "dead mummy carried slot chain is consumed");
     ASSERT_EQ(groups[0].next, THING_NONE,
@@ -613,11 +626,14 @@ static void test_killed_all_rejects_drifted_c04_or_wrong_source_square(void) {
     memset(groupRaw, 0, sizeof(groupRaw));
     maps[0].width = 2;
     maps[0].height = 1;
-    mapTiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    mapTiles[0] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                  DUNGEON_SQUARE_MASK_THING_LIST);
     mapTiles[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     tiles[0].squareCount = 2;
     squareFirstThings[0] = groupThing;
-    squareFirstThings[1] = THING_ENDOFLIST;
+    squareFirstThings[1] = THING_NONE;
+    dungeon.dungeonColumnCount = 2;
+    dungeon.columnsCumulativeSquareFirstThingCount[1] = 1;
     things.squareFirstThingCount = 2;
     dungeon.header.squareFirstThingCount = 2;
     groups[0].next = THING_ENDOFLIST;

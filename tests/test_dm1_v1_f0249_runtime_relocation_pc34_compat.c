@@ -166,6 +166,17 @@ static int test_f0249_c14_relocation_precedes_champion_impact(void) {
           "F0249 keeps C14, live M10 projectile, and C48 location aligned");
     CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &tick) == ORCH_OK,
           "C48 dispatches after F0249 C14 relocation");
+    /* ReDMCSB PROJEXPL.C F0219:693-696 checks current-square occupants
+     * before crossing at 718-732. F0249 relocated to x1; this first C48
+     * lands at x2/cell0, and only the following C48 can hit its champion. */
+    CHECK(world.party.champions[0].hp.current == 100 &&
+          world.projectiles.entries[0].reserved3 != 0 &&
+          world.projectiles.entries[0].mapX == 2 &&
+          world.projectiles.entries[0].cell == 0 &&
+          world.timeline.count == 1,
+          "first C48 lands without inventing a destination occupant impact");
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &tick) == ORCH_OK,
+          "following C48 evaluates the destination champion");
     CHECK(world.party.champions[0].hp.current < 100 &&
           world.projectiles.entries[0].reserved3 == 0 &&
           sourceProjectile.eventIndex == 0xFFFFu &&

@@ -523,6 +523,14 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     const struct F0267ThingMoveRequestPc34Compat* request,
     struct F0267ThingMoveResultPc34Compat* outResult);
 
+/* GROUP.C F0186: reserve, consume cell RNG and publish each fixed drop
+ * through F0267. Returns materialized count, or -1 for invalid world input.
+ * outSoundId is -1 when nothing was published; otherwise source sound 0/4.
+ * No caller-provided Thing is admitted as a fresh allocation. */
+int F0186_GROUP_MaterializeFixedDropsOnWorld_Compat(
+    struct GameWorld_Compat* world, int creatureType, int sourceCell,
+    int mapIndex, int mapX, int mapY, int* outSoundId);
+
 int F0886_ORCH_RunUntilCondition_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* inputs,

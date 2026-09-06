@@ -92,6 +92,14 @@ int main(void)
     request.destinationMapIndex = 0;
     request.destinationMapX = 1;
     request.destinationMapY = 0;
+    request.sourceMapX = -1;
+    CHECK(!F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &result),
+          "public F0267 rejects off-square claims for an already-owned tail");
+    CHECK(firstThings[0] == weaponThing && firstThings[1] == sensor0 &&
+          sensors[0].next == sensor1 && sensors[1].next == THING_ENDOFLIST &&
+          weapon.next == THING_ENDOFLIST && result.destinationSensorPasses == 0,
+          "rejected off-square claim neither duplicates the item nor rotates sensors");
+    request.sourceMapX = 0;
     CHECK(F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &result),
           "F0267 moves a raw object onto loaded local floor sensors");
     CHECK(result.destinationSensorPasses == 2 && result.localSensorRotations == 1 &&

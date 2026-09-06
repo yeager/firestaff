@@ -18914,100 +18914,6 @@ static int m11_find_unused_object_slot(const struct DungeonThings_Compat* things
     return -1;
 }
 
-static unsigned short m11_allocate_fixed_possession_thing(
-    struct DungeonThings_Compat* things,
-    const struct DM1FixedPossessionDrop_Compat* drop) {
-    int index;
-    unsigned short thing;
-    if (!things || !drop) return THING_NONE;
-    index = m11_find_unused_object_slot(things, drop->thingType);
-    if (index < 0) return THING_NONE;
-
-    thing = m11_thing_with_cell(drop->thingType, index, drop->cell);
-    switch (drop->thingType) {
-    case THING_TYPE_WEAPON:
-        memset(&things->weapons[index], 0, sizeof(things->weapons[index]));
-        things->weapons[index].next = THING_ENDOFLIST;
-        things->weapons[index].type = (unsigned char)(drop->itemType & 0x7F);
-        things->weapons[index].cursed = (unsigned char)(drop->cursed ? 1 : 0);
-        break;
-    case THING_TYPE_ARMOUR:
-        memset(&things->armours[index], 0, sizeof(things->armours[index]));
-        things->armours[index].next = THING_ENDOFLIST;
-        things->armours[index].type = (unsigned char)(drop->itemType & 0x7F);
-        things->armours[index].cursed = (unsigned char)(drop->cursed ? 1 : 0);
-        break;
-    case THING_TYPE_JUNK:
-        memset(&things->junks[index], 0, sizeof(things->junks[index]));
-        things->junks[index].next = THING_ENDOFLIST;
-        things->junks[index].type = (unsigned char)(drop->itemType & 0x7F);
-        things->junks[index].cursed = (unsigned char)(drop->cursed ? 1 : 0);
-        break;
-    default:
-        return THING_NONE;
-    }
-    m11_store_raw_object4(things, drop->thingType, index, THING_ENDOFLIST,
-                          drop->itemType, drop->cursed);
-    return thing;
-}
-
-static int m11_link_fixed_possession_thing_to_square(
-    struct GameWorld_Compat* world,
-    int mapIndex,
-    int mapX,
-    int mapY,
-    unsigned short thing) {
-    int base;
-    const struct DungeonMapDesc_Compat* map;
-    int squareIndex;
-    unsigned short oldFirst;
-
-    if (!world || !world->dungeon || !world->things || !world->things->squareFirstThings) return 0;
-    if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) return 0;
-    map = &world->dungeon->maps[mapIndex];
-    if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) return 0;
-    /* Real PC34 saves compact SquareFirstThings by flagged square.  F0514
-     * owns both tail linking and the insertion/cumulative-column update. */
-    if (m11_world_has_compact_sft(world)) {
-        return F0514_DUNGEON_LinkThingToList_Compat(
-            world->dungeon, world->things, thing, THING_ENDOFLIST,
-            mapIndex, mapX, mapY);
-    }
-    base = m11_map_square_base(world->dungeon, mapIndex);
-    if (base < 0) return 0;
-    squareIndex = base + mapX * (int)map->height + mapY;
-    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) return 0;
-
-    oldFirst = world->things->squareFirstThings[squareIndex];
-    m11_set_object_drop_next(world->things, thing, THING_ENDOFLIST);
-    if (oldFirst == THING_ENDOFLIST || oldFirst == THING_NONE) {
-        world->things->squareFirstThings[squareIndex] = thing;
-    } else {
-        unsigned short current = oldFirst;
-        int safety = 0;
-        while (current != THING_ENDOFLIST && current != THING_NONE &&
-               safety++ < 64) {
-            unsigned short next = m11_get_raw_next_thing(world->things, current);
-            if (next == THING_ENDOFLIST || next == THING_NONE) {
-                next = m11_get_decoded_next_thing(world->things, current);
-            }
-            if (next == THING_ENDOFLIST || next == THING_NONE) {
-                int currentType = THING_GET_TYPE(current);
-                if (currentType == THING_TYPE_WEAPON ||
-                    currentType == THING_TYPE_ARMOUR ||
-                    currentType == THING_TYPE_JUNK) {
-                    m11_set_object_drop_next(world->things, current, thing);
-                } else {
-                    m11_set_raw_next_thing(world->things, current, thing);
-                    m11_set_decoded_next_thing(world->things, current, thing);
-                }
-                break;
-            }
-            current = next;
-        }
-    }
-    return 1;
-}
 
 /* A saved PC34 party can already contain the source-created bones record
  * before M11 sees the zero-health champion for the first time.  Treat that
@@ -19179,33 +19085,6 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     m11_refresh_hash(state);
 }
 
-struct M11FixedDropContext {
-    M11_GameViewState* state;
-    int mapIndex, mapX, mapY, materialized;
-    unsigned short thing;
-};
-
-static int m11_reserve_fixed_drop(void* opaque,
-    const struct DM1FixedPossessionDrop_Compat* drop)
-{
-    struct M11FixedDropContext* ctx = opaque;
-    ctx->thing = m11_allocate_fixed_possession_thing(ctx->state->world.things, drop);
-    return ctx->thing != THING_NONE;
-}
-
-static void m11_publish_fixed_drop(void* opaque,
-    const struct DM1FixedPossessionDrop_Compat* drop)
-{
-    struct M11FixedDropContext* ctx = opaque;
-    unsigned short thing = (unsigned short)((ctx->thing & 0x3FFFu) |
-                                           ((unsigned)drop->cell << 14));
-    if (m11_link_fixed_possession_thing_to_square(&ctx->state->world,
-            ctx->mapIndex, ctx->mapX, ctx->mapY, thing))
-        ++ctx->materialized;
-    else
-        m11_set_object_drop_next(ctx->state->world.things, thing, THING_NONE);
-}
-
 static int m11_materialize_creature_fixed_possession_drops(
     M11_GameViewState* state,
     int creatureType,
@@ -19213,24 +19092,23 @@ static int m11_materialize_creature_fixed_possession_drops(
     int mapIndex,
     int mapX,
     int mapY) {
-    struct M11FixedDropContext ctx = {state, mapIndex, mapX, mapY, 0, THING_NONE};
-    int weaponDropped = 0;
+    int materialized;
+    int soundId = -1;
 
     if (!state || !state->world.things) return -1;
-    /* GROUP.C F0186:625-643 reserves before cell RNG and publishes before
-     * the next optional decision, including when the source pool is full. */
-    if (!F0824_DM1_GROUP_MaterializeFixedPossessionDrops_Compat(
-            creatureType, sourceCell, &state->world.masterRng,
-            m11_reserve_fixed_drop, m11_publish_fixed_drop, &ctx, &weaponDropped)) {
-        return -1;
-    }
+    /* ReDMCSB GROUP.C F0186:625-643 reserves before cell RNG, then moves
+     * from X=-1 through destination consequences before the next drop.
+     * The shared owner retains allocation provenance; no public fresh-handle
+     * bypass or direct floor link is used by the game view. */
+    materialized = F0186_GROUP_MaterializeFixedDropsOnWorld_Compat(
+        &state->world, creatureType, sourceCell, mapIndex, mapX, mapY, &soundId);
 
-    if (ctx.materialized > 0) {
+    if (materialized > 0 && soundId >= 0) {
         m11_audio_emit_source_sound(
-            state, weaponDropped ? DM1_SND_METALLIC_THUD : DM1_SND_WOODEN_THUD,
+            state, soundId,
             M11_AUDIO_MARKER_COMBAT);
     }
-    return ctx.materialized;
+    return materialized;
 }
 
 int M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(

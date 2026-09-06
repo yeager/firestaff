@@ -1,5 +1,23 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: M11 fixed-possession materialization now delegates to the same
+  allocation-owned F0186/F0267 operation as M10, replacing direct floor linking.
+  Compact-list regressions follow ReDMCSB F0163 tail append order, preserving
+  existing floor objects before generated and subsequently carried drops.
+  Eighteen relevant tests pass, including five original DOS 3.4 archive tests.
+  The original-media cases cover projectile runtime regressions, not emulator
+  captures of fixed-drop consequences or complete cross-platform parity.
+
+- 2026-09-06: The bounded M10 fixed-drop regression now verifies that a newly
+  allocated worm round passes through an object-only teleporter onto a floor
+  plate, retaining matching raw/decoded ownership and queuing exactly one
+  PIT/SET event for tick 43 at (2,0). Normal timeline dispatch opens the pit
+  at tick 43, consumes the event and retains the drop's raw/decoded ownership.
+  Missing raw C10 backing is rejected before any sensor effect is published.
+  All 13 explosion-group cases and the existing M11 fixed-possession runtime
+  gate pass. This is a source-shaped RAM fixture, not an original emulator
+  capture.
+
 - 2026-09-06: DM1 M10/M11 fixed drops now reserve before cell RNG and
   publish before the next optional decision (ReDMCSB GROUP.C F0186:610-643).
   The bounded helper matrix covers 256 seed/capacity/cell cases; the behavior

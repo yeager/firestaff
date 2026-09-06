@@ -1,5 +1,25 @@
 # Firestaff TODO — DM1
 
+- Extend verification of newly allocated fixed drops through F0267's off-square source path.
+  GROUP.C F0186:643 passes source X=-1; retain this distinction without relaxing
+  source membership on `F0267_MOVE_MoveThingOnLoadedChain_Compat`.
+  Extend the bounded M10 teleporter/plate regression to direct falling,
+  then pair the behavior with original captures.
+  Successful floor linking or event publication alone is not full move parity.
+  Preserve failure ownership: the existing loaded-chain mover restores a
+  failed destination link to its source, which is impossible for X=-1.
+  A reserved-drop path must return the unlinked allocation to its caller
+  without linking it to an invented source square. Audit destination sensor
+  side effects on link failure before claiming transaction atomicity.
+  Existing test owners to extend are `test_csb_v1_f0267_loaded_chain_pc34_compat`
+  and `test_dm1_v1_f0267_local_sensor_rotation_pc34_compat`.
+  Keep the complete reserve/RNG/publish operation shared by M10 and M11.
+  Do not expose an unchecked
+  public "fresh Thing" handle: the current ordinary-record validator accepts
+  C05..C10 without checking raw ownership, and Next=END also describes existing
+  floor/inventory tails. Keep source membership required on the existing public
+  loaded-chain move API.
+
 - Finish F0186 allocation/RNG ordering across runtime drop materializers.
   M10/M11/CSB use the streamed helper; CSB drops now share the F0190 caller RNG.
   Audit upstream RNG owners and nested sensor RNG effects beyond the verified

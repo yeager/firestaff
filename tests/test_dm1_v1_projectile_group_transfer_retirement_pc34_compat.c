@@ -1,5 +1,6 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_c14_layout_pc34_compat.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -25,9 +26,17 @@ int main(int argc, char** argv)
     int burstDrop = argc == 2 && strcmp(argv[1], "burst-drop") == 0;
     int burstFixedEmpty = argc == 2 && strcmp(argv[1], "burst-fixed-empty") == 0;
     int burstFixedOne = argc == 2 && strcmp(argv[1], "burst-fixed-one") == 0;
-    int burstFixed = burstFixedEmpty || burstFixedOne ||
+    int burstFixedFull = argc == 2 && strcmp(argv[1], "burst-fixed-destination-full") == 0;
+    int burstFixedBadColumns = argc == 2 && strcmp(argv[1], "burst-fixed-bad-columns") == 0;
+    int burstFixedReject = burstFixedFull || burstFixedBadColumns;
+    int burstFixedNoRaw = argc == 2 && strcmp(argv[1], "burst-fixed-no-raw") == 0;
+    int burstFixedSensor = burstFixedNoRaw ||
+        (argc == 2 && strcmp(argv[1], "burst-fixed-sensor") == 0);
+    int burstFixedTeleport = burstFixedReject || burstFixedSensor ||
+        (argc == 2 && strcmp(argv[1], "burst-fixed-teleport") == 0);
+    int burstFixed = burstFixedEmpty || burstFixedOne || burstFixedTeleport ||
         (argc == 2 && strcmp(argv[1], "burst-fixed") == 0);
-    int foodCapacity = burstFixedEmpty ? 0 : (burstFixedOne ? 1 : 6);
+    int foodCapacity = burstFixedEmpty ? 0 : ((burstFixedOne || burstFixedSensor) ? 1 : 6);
     int burstAll = burstFixed || burstDrop || (argc == 2 && strcmp(argv[1], "burst-all") == 0);
     int burstSmoke = argc == 2 && strcmp(argv[1], "burst-smoke") == 0;
     int burstLethal = burstAll || burstSmoke || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
@@ -128,6 +137,10 @@ int main(int argc, char** argv)
         struct DungeonExplosion_Compat smokePool[3] = {{0}};
         struct DungeonJunk_Compat food[6] = {{0}};
         unsigned char rawFood[24] = {0};
+        struct DungeonTeleporter_Compat dropTeleporter = {0};
+        unsigned char rawDropTeleporter[6] = {0};
+        struct DungeonSensor_Compat dropSensor = {0};
+        unsigned char rawDropSensor[8] = {0};
         struct RngState_Compat expectedRng = world.masterRng;
         int attack, spread, expectedHp[2], i;
         group.creatureType = rawGroup[4] = 15;
@@ -178,6 +191,46 @@ int main(int argc, char** argv)
             things.junks = food;
             things.junkCount = things.thingCounts[THING_TYPE_JUNK] = foodCapacity;
             things.rawThingData[THING_TYPE_JUNK] = rawFood;
+            if (burstFixedTeleport) {
+                /* Bounded F0186 -> F0267 off-square fixture: an object-only
+                 * teleporter sends fresh worm rounds to an empty square.
+                 * The dying group and levitating fireball stay at (1,0). */
+                squares[3] = (DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18;
+                group.next = THING_TYPE_TELEPORTER << 10;
+                word(rawGroup, group.next);
+                dropTeleporter.next = THING_ENDOFLIST;
+                dropTeleporter.scope = 2;
+                word(rawDropTeleporter, THING_ENDOFLIST);
+                word(rawDropTeleporter + 2, 0x4000);
+                things.teleporters = &dropTeleporter;
+                things.teleporterCount = things.thingCounts[THING_TYPE_TELEPORTER] = 1;
+                things.rawThingData[THING_TYPE_TELEPORTER] = rawDropTeleporter;
+                if (burstFixedFull) things.squareFirstThingCount = 1;
+                if (burstFixedBadColumns) columns[2] = 2; /* Actual prefix is 1. */
+                if (burstFixedSensor) {
+                    /* MOVESENS.C F0267:892-897 / F0276 / F0268: the
+                     * off-square drop reaches the plate before linking.
+                     * One free C10 slot makes exactly one addition. */
+                    squares[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+                    squares[6] = DUNGEON_ELEMENT_PIT << 5;
+                    sft[1] = sft[0];
+                    sft[0] = THING_TYPE_SENSOR << 10;
+                    columns[1] = 1; columns[2] = 2;
+                    dropSensor.next = THING_ENDOFLIST;
+                    dropSensor.sensorType = DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT;
+                    dropSensor.effect = DM1_EFFECT_SET;
+                    dropSensor.value = 3;
+                    dropSensor.targetMapX = 2;
+                    word(rawDropSensor, THING_ENDOFLIST);
+                    word(rawDropSensor + 2, dropSensor.sensorType);
+                    word(rawDropSensor + 4, 3u << 7);
+                    word(rawDropSensor + 6, 2u << 6);
+                    things.sensors = &dropSensor;
+                    things.sensorCount = things.thingCounts[THING_TYPE_SENSOR] = 1;
+                    things.rawThingData[THING_TYPE_SENSOR] = rawDropSensor;
+                    if (burstFixedNoRaw) things.rawThingData[THING_TYPE_JUNK] = NULL;
+                }
+            }
         }
         if (burstDrop) {
             group.slot = weaponThing;
@@ -216,13 +269,14 @@ int main(int argc, char** argv)
                 int allocated = 0, visited = 0, links = 0;
                 unsigned int seen = 0;
                 unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
-                    &dungeon, &things, 0, 1, 0);
+                    &dungeon, &things, 0, burstFixedTeleport ? 0 : 1, 0);
                 for (i = 0; i < 6; ++i) if (food[i].next != THING_NONE) {
                     CHECK(food[i].type == 34);
                     CHECK(readword(rawFood + i * 4) == food[i].next);
                     ++allocated;
                 }
-                if (foodCapacity < 2) CHECK(allocated == foodCapacity);
+                if (burstFixedReject || burstFixedNoRaw) CHECK(allocated == 0);
+                else if (foodCapacity < 2) CHECK(allocated == foodCapacity);
                 else CHECK(allocated >= 2 && allocated <= foodCapacity);
                 CHECK(things.junkCount == foodCapacity);
                 CHECK(things.thingCounts[THING_TYPE_JUNK] == foodCapacity);
@@ -236,12 +290,40 @@ int main(int argc, char** argv)
                         CHECK(index < 6 && !(seen & (1u << index)));
                         seen |= 1u << index; ++visited;
                         cursor = food[index].next;
+                    } else if (burstFixedSensor &&
+                               (cursor & 0x3fff) == (THING_TYPE_SENSOR << 10)) {
+                        CHECK(readword(rawDropSensor) == dropSensor.next);
+                        cursor = dropSensor.next;
                     } else {
                         CHECK((cursor & 0x3fff) == (THING_TYPE_EXPLOSION << 10));
                         cursor = c15.next;
                     }
                 }
                 CHECK(cursor == THING_ENDOFLIST && visited == allocated);
+                if (burstFixedSensor) {
+                    int pitEvents = 0;
+                    CHECK(allocated == (burstFixedNoRaw ? 0 : 1));
+                    CHECK(world.pendingSensorEffects.count == (burstFixedNoRaw ? 0 : 1));
+                    for (i = 0; i < world.timeline.count; ++i) {
+                        const struct TimelineEvent_Compat* queued = &world.timeline.events[i];
+                        if (queued->kind != TIMELINE_EVENT_SQUARE_STATE) continue;
+                        ++pitEvents;
+                        CHECK(queued->aux0 == DM1_EVENT_PIT && queued->aux1 == DM1_EFFECT_SET);
+                        CHECK(queued->fireAtTick == 43 && queued->mapIndex == 0 &&
+                              queued->mapX == 2 && queued->mapY == 0);
+                    }
+                    CHECK(pitEvents == (burstFixedNoRaw ? 0 : 1));
+                    CHECK(!(squares[6] & 0x08)); /* Deferred, not immediate. */
+                }
+                if (burstFixedTeleport) {
+                    CHECK(!!(squares[0] & DUNGEON_SQUARE_MASK_THING_LIST) == !burstFixedReject);
+                    if (burstFixedBadColumns) CHECK(columns[2] == 2);
+                    CHECK((F0511_DUNGEON_GetSquareFirstThing_Compat(
+                        &dungeon, &things, 0, 1, 0) & 0x3fff) ==
+                          (THING_TYPE_TELEPORTER << 10));
+                    CHECK(dropTeleporter.next == (THING_TYPE_EXPLOSION << 10));
+                    CHECK(c15.next == THING_ENDOFLIST);
+                }
             }
             if (burstDrop) {
                 unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
@@ -259,6 +341,31 @@ int main(int argc, char** argv)
                 }
                 CHECK(cursor == THING_ENDOFLIST && weapons == 1);
                 CHECK(group.slot == THING_ENDOFLIST);
+            }
+            if (burstFixedSensor && !burstFixedNoRaw) {
+                struct TickInput_Compat idle = {0};
+                unsigned short dropped = dropSensor.next;
+                int dispatchTick;
+                CHECK((dropped & 0x3fff) == (THING_TYPE_JUNK << 10));
+                /* MOVESENS.C F0268 queues the remote event; the ordinary
+                 * timeline owner must consume it at its due tick. Advance
+                 * through tick43 plus one later tick, without direct edits
+                 * to the pit or invoking its state handler ourselves. */
+                for (dispatchTick = 40; dispatchTick <= 44; ++dispatchTick) {
+                    int remaining = 0;
+                    CHECK(world.gameTick == (unsigned)dispatchTick);
+                    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &idle, &result) == ORCH_OK);
+                    CHECK(!!(squares[6] & 0x08) == (dispatchTick >= 43));
+                    for (i = 0; i < world.timeline.count; ++i)
+                        if (world.timeline.events[i].kind == TIMELINE_EVENT_SQUARE_STATE &&
+                            world.timeline.events[i].aux0 == DM1_EVENT_PIT)
+                            ++remaining;
+                    CHECK(remaining == (dispatchTick < 43 ? 1 : 0));
+                    CHECK(F0511_DUNGEON_GetSquareFirstThing_Compat(
+                        &dungeon, &things, 0, 0, 0) == (THING_TYPE_SENSOR << 10));
+                    CHECK(dropSensor.next == dropped && readword(rawDropSensor) == dropped);
+                    CHECK(food[0].next == THING_ENDOFLIST && readword(rawFood) == THING_ENDOFLIST);
+                }
             }
             puts("ok: source explosion removes the dead group and active AI");
             return 0;

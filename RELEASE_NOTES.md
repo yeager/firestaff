@@ -1,5 +1,10 @@
 # Unreleased
 
+- DM1 newly generated creature drops now use shared destination movement
+  handling instead of direct floor linking, including teleporter routing and
+  floor-sensor activation. Invalid compact-list metadata rejects publication
+  before sensor dispatch.
+
 - Levitating CSB creature groups no longer fall through open pits.
 
 - CSB explosion damage now preserves creatures marked immune to damage.
