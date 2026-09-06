@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+- Complete projectile occupancy parity for destination squares and active
+  group overlays. The F0176 selector currently receives decoded group cells
+  and direction; verify F0145/F0147 active-map overrides with original
+  captures. Destination admission still needs raw group lookup and precise
+  occupied-cell masks instead of depending on active AI rows.
+
 - Extend F0304 reachability analysis beyond ordinary defined PC 3.4 paths.
   The source bounds in `parity-evidence/dm1-pc34-xp-award-reachability.md`
   rule out scaled-word overflow for the examined normal PC 3.4 awards,

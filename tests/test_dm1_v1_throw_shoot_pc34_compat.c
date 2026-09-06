@@ -1279,6 +1279,29 @@ static void test_black_flame_heal_and_group_cell(void) {
     ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, 3), 2,
               "packed group live target cell");
 
+    {
+        static const int expected[2][4] = {{0,1,1,0}, {0,0,1,1}};
+        int direction, cell;
+        group.creatureType = 15; /* G0243 Magenta Worm: half-square. */
+        group.count = 1;
+        group.cells = 0 | (2 << 2);
+        group.health[0] = group.health[1] = 100;
+        for (direction = 0; direction < 4; ++direction) {
+            group.direction = direction;
+            for (cell = 0; cell < 4; ++cell)
+                ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, cell),
+                    expected[direction & 1][cell], "F0176 half-square facing footprint");
+        }
+        group.creatureType = 1; /* Quarter-square Swamp Slime. */
+        group.count = 0;
+        group.cells = 0;
+        ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, 1), -1,
+                  "single creature is not automatically centered");
+        group.count = 1;
+        ASSERT_EQ(dm1_v1_group_creature_index_for_cell_pc34(&group, 0), 1,
+                  "F0176 resolves overlapping packed cells last-to-first");
+    }
+
     group.creatureType = DM1_PROJECTILE_BLACK_FLAME_CREATURE_PC34;
     group.count = 0;
     group.cells = DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34;

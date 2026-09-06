@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 projectile collision respects facing-dependent half-square monster
+  footprints and no longer treats every lone monster as centered.
+
 - DM1 projectiles check occupants of their current cell before moving,
   preserving champion-before-monster priority and the first-step grace period.
 

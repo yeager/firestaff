@@ -7171,16 +7171,9 @@ static void orch_build_group_projectile_impact_cells_compat(
     if (!ordinalInCell) return;
     memset(ordinalInCell, 0, 4);
     if (!group) return;
-    for (i = 0; i <= (int)group->count && i < 4; ++i) {
-        int cell;
-        if (group->health[i] == 0) continue;
-        if (group->cells == 0xFFu) {
-            ordinalInCell[0] = ordinalInCell[1] =
-                ordinalInCell[2] = ordinalInCell[3] = (unsigned char)(i + 1);
-            return;
-        }
-        cell = orch_group_creature_cell_compat(group, i);
-        if (cell >= 0 && cell < 4) ordinalInCell[cell] = (unsigned char)(i + 1);
+    for (i = 0; i < 4; ++i) {
+        int index = dm1_v1_group_creature_index_for_cell_pc34(group, i);
+        if (index >= 0) ordinalInCell[i] = (unsigned char)(index + 1);
     }
 }
 

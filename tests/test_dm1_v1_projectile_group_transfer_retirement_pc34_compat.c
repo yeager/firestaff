@@ -19,7 +19,8 @@ int main(int argc, char** argv)
     int grace = argc == 2 && strcmp(argv[1], "grace") == 0;
     int emptyCell = argc == 2 && strcmp(argv[1], "empty-cell") == 0;
     int partyFirst = argc == 2 && strcmp(argv[1], "party-first") == 0;
-    int sameSquare = grace || emptyCell || partyFirst || (argc == 2 && strcmp(argv[1], "same-square") == 0);
+    int halfSquare = argc == 2 && strcmp(argv[1], "half-square") == 0;
+    int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon = {0};
     struct DungeonThings_Compat things = {0};
@@ -49,6 +50,15 @@ int main(int argc, char** argv)
     group.next = group.slot = THING_ENDOFLIST;
     group.creatureType = 0; group.cells = emptyCell ? 1 : 255; group.count = 0;
     group.health[0] = 1000;
+    if (halfSquare) {
+        group.creatureType = 15;
+        group.count = 1;
+        group.cells = 0 | (2 << 2);
+        group.health[1] = 1000;
+        rawGroup[4] = 15;
+        word(rawGroup + 8, 1000);
+        rawGroup[14] = 1 << 5;
+    }
     word(rawGroup, group.next); word(rawGroup + 2, group.slot);
     word(rawGroup + 6, group.health[0]);
     rawGroup[5] = group.cells;
@@ -72,6 +82,7 @@ int main(int argc, char** argv)
     world.creatureAI[0].groupMapX = 1;
     world.creatureAI[0].groupMapY = sameSquare ? 1 : 0;
     world.creatureAI[0].creatureType = 0;
+    if (halfSquare) world.creatureAICount = 0; /* Source GROUP needs no AI row. */
     if (partyFirst) {
         world.party.mapX = world.party.mapY = 1;
         world.party.championCount = 1;
@@ -83,7 +94,7 @@ int main(int argc, char** argv)
     create.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
     create.ownerKind = PROJECTILE_OWNER_CHAMPION;
     create.mapIndex = 0; create.mapX = create.mapY = 1;
-    create.cell = 0; create.direction = 0;
+    create.cell = halfSquare ? 1 : 0; create.direction = 0;
     create.kineticEnergy = 40; create.attack = 30; create.stepEnergy = 1;
     create.currentTick = 40; create.firstMoveGraceFlag = grace;
     create.attackTypeCode = COMBAT_ATTACK_NORMAL;
@@ -92,11 +103,20 @@ int main(int argc, char** argv)
     world.projectiles.entries[slot].reserved1 = weaponThing;
     CHECK(dm1_v1_c14_pool_reserve_pc34(&things, &reservation));
     CHECK(dm1_v1_c14_pool_initialize_and_link_pc34(&reservation, &dungeon,
-              weaponThing, 40, 30, 0, 0, 0, 1, 1));
+              weaponThing, 40, 30, 0, create.cell, 0, 1, 1));
     CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event));
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (halfSquare) {
+        CHECK(group.health[0] == 1000);
+        CHECK(group.health[1] > 0 && group.health[1] < 1000);
+        CHECK(group.slot == THING_ENDOFLIST);
+        CHECK(c14.next == THING_NONE && readword(rawC14) == THING_NONE);
+        CHECK((group.next & 0x3fff) == weaponThing);
+        puts("ok: half-square footprint hits the second worm without an active AI row");
+        return 0;
+    }
     if (partyFirst) {
         CHECK(world.party.champions[0].hp.current < 1000);
         CHECK(group.health[0] == 1000 && group.slot == THING_ENDOFLIST);

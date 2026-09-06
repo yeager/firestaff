@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Projectile target selection now reuses the F0176 creature
+  footprint rule (GROUP.C:88-103): only cells FF means centered, half-square
+  creatures occupy facing-dependent pairs, and ordinals search last-first.
+  Source-cell and movement preflight use the same selector. Four directions
+  by four cells, single quarter-square and duplicate-cell cases pass; a
+  bounded RAM integration hits the second worm without an active AI row.
+  Fourteen distinct focused tests pass, including five authentic DOS spell
+  tests and two shared CSB movement tests. These are source and native-media
+  checks, not emulator capture or complete platform parity.
+
 - 2026-09-06: Added native MEDIA009 spell composition for Atari/early
   Amiga, separate from the I34 C009-only route. Original C009 96x33 and
   C011 96x36 are required; source row offsets are 12/24, with Atari's

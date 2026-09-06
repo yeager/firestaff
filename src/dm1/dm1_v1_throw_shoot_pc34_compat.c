@@ -7,6 +7,8 @@
 #include "dm1_v1_projectile_impact_attack_f0216_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "memory_creature_ai_pc34_compat.h"
+#include "dm1_v1_group_targeting_f0175_f0178_pc34_compat.h"
 
 #include <string.h>
 
@@ -1413,19 +1415,23 @@ int dm1_v1_projectile_flight_relink_receipt_f0219_pc34(
 int dm1_v1_group_creature_index_for_cell_pc34(
     const struct DungeonGroup_Compat* group,
     int targetCell) {
+    DM1_V1_GroupCellContextF0176Pc34 context;
+    DM1_V1_CreatureOrdinalResultF0176Pc34 result;
+    const struct CreatureBehaviorProfile_Compat* profile;
     int i;
-    if (!group) return -1;
-    if (group->count == 0 ||
-        group->cells == DM1_PROJECTILE_SINGLE_CENTERED_CREATURE_CELL_PC34) {
-        return group->health[0] ? 0 : -1;
-    }
-    for (i = 0; i <= (int)group->count && i < 4; ++i) {
-        int cell;
-        if (group->health[i] == 0) continue;
-        cell = (int)((group->cells >> (i * 2)) & 0x03u);
-        if (cell == (targetCell & 3)) return i;
-    }
-    return -1;
+    if (!group || targetCell < 0 || targetCell > 3) return -1;
+    profile = CREATURE_GetProfile_Compat(group->creatureType);
+    if (!profile) return -1;
+    memset(&context, 0, sizeof(context));
+    context.creatureCountMinusOne = group->count;
+    context.packedCells = group->cells;
+    context.groupDirection = group->direction;
+    context.creatureSize = profile->attributes & 3;
+    for (i = 0; i < 4; ++i) context.creatureHealth[i] = group->health[i];
+    /* GROUP.C F0176:88-103: only Cells=FF is centered; half-square
+     * footprints depend on facing, and slots are searched last-to-first. */
+    return F0176_GROUP_GetCreatureOrdinalInCell(&context, targetCell, &result)
+        ? result.creatureIndex : -1;
 }
 
 int dm1_v1_black_flame_fireball_heal_pc34(
