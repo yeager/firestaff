@@ -11414,6 +11414,16 @@ static int orch_add_generated_group_active_state_compat(
     ai->lastSeenPartyMapY = plan.activeLastSeenPartyMapY;
     ai->lastSeenPartyTick = plan.activeLastSeenPartyTick;
     ai->reserved0 = plan.activeReservedGroupIndex;
+    /* GROUP.C F0183:436-447 initializes home and each live creature's
+     * direction alongside history. Publish the newly admitted row, but do
+     * not promote gaps belonging to unadmitted legacy AI into source rows. */
+    world->pc34ActiveGroupDirections[world->creatureAICount - 1] =
+        (uint8_t)ai->groupDirection;
+    world->pc34ActiveGroupHomeMapX[world->creatureAICount - 1] = (uint8_t)mapX;
+    world->pc34ActiveGroupHomeMapY[world->creatureAICount - 1] = (uint8_t)mapY;
+    if (world->pc34ActiveGroupSourceCount == world->creatureAICount - 1) {
+        ++world->pc34ActiveGroupSourceCount;
+    }
     /* GROUP.C F0183:436-438: admission resets history, including C04 reuse. */
     world->pc34ActiveGroupHistory[world->creatureAICount - 1].valid = 1;
     world->pc34ActiveGroupHistory[world->creatureAICount - 1].groupThingIndex = groupIndex;

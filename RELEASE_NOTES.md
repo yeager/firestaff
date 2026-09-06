@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 initializes active-group direction/home ownership on map admission so
+  later authenticated creature reactions can use newly admitted groups.
+
 - DM1 failed spell practice checks preserve the original RNG sequence,
   including nine-level checks and potion failures before power generation.
 

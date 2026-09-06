@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- Fixed F0183 runtime admission to publish packed directions and home coordinates
+  together with movement history, extending contiguous source-row coverage.
+  Previously F0195 map entry left SourceCount zero, causing authenticated
+  reaction consumers to reject newly admitted groups. The map-lifecycle
+  regression failed before the fix and passes after it, using a nonzero home
+  position. All 16 selected lifecycle, packed-direction and explosion-group
+  tests and five original-DOS-media tests pass. Existing source capacity is
+  preserved; unadmitted legacy gaps are not promoted to authenticated rows.
+
 - Registered and repaired the previously unregistered F0194/F0195 map-lifecycle
   regression. It verifies rejection of an invalid outgoing owner, byte-for-byte
   preservation of world/history/C04 after failed destination admission (including

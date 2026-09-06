@@ -26,13 +26,13 @@ int main(void)
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
     unsigned char map0Squares[1];
-    unsigned char map1Squares[1];
+    unsigned char map1Squares[4];
     unsigned short squareFirstThings[1];
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     static struct GameWorld_Compat before;
     struct DungeonGroup_Compat groupBefore;
-    unsigned short columns[2] = {0, 0};
+    unsigned short columns[3] = {0, 0, 0};
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -45,17 +45,20 @@ int main(void)
 
     maps[0].width = maps[1].width = 1;
     maps[0].height = maps[1].height = 1;
+    maps[1].width = maps[1].height = 2;
     map0Squares[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-    map1Squares[0] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+    memset(map1Squares, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(map1Squares));
+    map1Squares[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
                                      DUNGEON_SQUARE_MASK_THING_LIST);
     tiles[0].squareData = map0Squares;
     tiles[1].squareData = map1Squares;
     tiles[0].squareCount = tiles[1].squareCount = 1;
+    tiles[1].squareCount = 4;
     dungeon.header.mapCount = 2;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
-    dungeon.dungeonColumnCount = 2;
+    dungeon.dungeonColumnCount = 3;
     dungeon.columnsCumulativeSquareFirstThingCount = columns;
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = CREATURE_TYPE_SKELETON;
@@ -113,16 +116,21 @@ int main(void)
           "map transition commits party map before F0195 scan");
     CHECK(world.creatureAICount == 1,
           "F0195 adds current-map group after empty-map retirement");
+    CHECK(world.pc34ActiveGroupSourceCount >= 1 &&
+          world.pc34ActiveGroupDirections[0] == 2 &&
+          world.pc34ActiveGroupHomeMapX[0] == 1 &&
+          world.pc34ActiveGroupHomeMapY[0] == 1,
+          "F0183 publishes directions and home ownership for reaction consumers");
     CHECK(world.pc34ActiveGroupHistory[0].valid &&
           world.pc34ActiveGroupHistory[0].groupThingIndex == 0 &&
-          world.pc34ActiveGroupHistory[0].priorMapX == 0 &&
-          world.pc34ActiveGroupHistory[0].priorMapY == 0 &&
+          world.pc34ActiveGroupHistory[0].priorMapX == 1 &&
+          world.pc34ActiveGroupHistory[0].priorMapY == 1 &&
           world.pc34ActiveGroupHistory[0].lastMoveTime == (unsigned char)(100u - 127u),
           "F0183 admission replaces stale history with source position and time");
     CHECK(world.creatureAI[0].reserved0 == 0 &&
           world.creatureAI[0].groupMapIndex == 1 &&
-          world.creatureAI[0].groupMapX == 0 &&
-          world.creatureAI[0].groupMapY == 0,
+          world.creatureAI[0].groupMapX == 1 &&
+          world.creatureAI[0].groupMapY == 1,
           "F0195 materializes current-map C04 active state");
     CHECK(world.timeline.count == 1 &&
           world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
