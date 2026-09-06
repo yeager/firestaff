@@ -1,5 +1,9 @@
 # Unreleased
 
+- DM1: corrected stale carried load after dropping an item. Completed
+  inventory transactions now refresh carried weight, including the held
+  object and the current contents of an open chest.
+
 - DM1 Atari/Amiga: restored inventory rendering with the original padded
   slot graphics and corrected scroll text's vertical position.
 

@@ -16678,11 +16678,64 @@ static void m11_set_inspect_readoutf(M11_GameViewState* state,
     m11_set_inspect_readout(state, title, detail);
 }
 
+static int m11_dm1_carried_object_weight(const M11_GameViewState* state,
+                                        unsigned short thing, int* weight)
+{
+    if (thing == THING_NONE) { *weight = 0; return 1; }
+    if (state->v1OpenChestSlotsValid &&
+        state->v1OpenChestSlotsOwner == thing &&
+        THING_GET_TYPE(thing) == THING_TYPE_CONTAINER) {
+        /* DUNGEON.C F0140: a chest weighs 50 plus its contents.
+         * CHEST.C F0333/F0334: G0425 owns live contents until close;
+         * the old linked chain must not count an item already picked up. */
+        int total = 50;
+        for (int i = 0; i < 8; ++i) {
+            int childWeight;
+            if (!dm1_v1_dungeon_get_object_weight_f0140_pc34(
+                    state->world.things, state->v1OpenChestSlots[i], &childWeight)) return 0;
+            total += childWeight;
+        }
+        *weight = total;
+        return 1;
+    }
+    return dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, thing, weight);
+}
+
+static void m11_dm1_refresh_carried_loads(M11_GameViewState* state)
+{
+    unsigned short loads[CHAMPION_MAX_PARTY] = {0};
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) || !state->world.things) return;
+    /* CHAMPION.C F0297:264/F0298:293 and F0300:582/F0301:614:
+     * load includes inventory and the leader's mouse-hand object. Derive
+     * it from the completed ownership transaction before publishing its
+     * world hash, including rollback paths and direct runtime handoffs. */
+    for (int c = 0; c < CHAMPION_MAX_PARTY; ++c) {
+        unsigned int total = 0;
+        if (!state->world.party.champions[c].present) continue;
+        for (int slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+            int weight;
+            if (!m11_dm1_carried_object_weight(state,
+                    state->world.party.champions[c].inventory[slot], &weight)) return;
+            total += (unsigned int)weight;
+        }
+        if (c == state->world.party.activeChampionIndex) {
+            int weight;
+            if (!m11_dm1_carried_object_weight(state,
+                    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state), &weight)) return;
+            total += (unsigned int)weight;
+        }
+        loads[c] = (unsigned short)total;
+    }
+    for (int c = 0; c < CHAMPION_MAX_PARTY; ++c)
+        if (state->world.party.champions[c].present) state->world.party.champions[c].load = loads[c];
+}
+
 static void m11_refresh_hash(M11_GameViewState* state) {
     uint32_t hash = 0;
     if (!state) {
         return;
     }
+    m11_dm1_refresh_carried_loads(state);
     if (F0891_ORCH_WorldHash_Compat(&state->world, &hash) == 1) {
         state->lastWorldHash = hash;
     }

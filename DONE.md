@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Fixed stale DM1 carried load after a floor drop; five original
+  Atari/Amiga load regressions now pass. Full encumbrance parity remains open.
+
 - 2026-09-06: Five original DM1 Atari/Amiga editions pass occupied
   action-hand exchanges in both directions for all 606 allocated objects
   in Original/V2.1, retaining both Thing identities after mouse release.

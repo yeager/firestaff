@@ -109,7 +109,8 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
                         (void)M11_GameView_HandlePointerButtonRelease(state, x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != thing ||
-                            state->world.party.champions[0].inventory[slots[slot]] != THING_NONE) return 0;
+                            state->world.party.champions[0].inventory[slots[slot]] != THING_NONE ||
+                            state->world.party.champions[0].load != weight) return 0;
                         state->inventoryPanelActive = 0;
                         (void)M11_GameView_HandlePointer(state, 64, 158, 1);
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) return 0;

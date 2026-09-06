@@ -12328,6 +12328,25 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_atari_names_real PROPERTIES SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
         LABELS "dm1;atari;real-media;objects;skip-safe")
+    foreach(load_edition amiga amiga_hd atari atari_de atari_fr)
+        set(load_args)
+        if(load_edition MATCHES "^amiga")
+            set(load_target test_dm1_amiga_names_real)
+        else()
+            set(load_target test_dm1_atari_names_real)
+            if(load_edition STREQUAL "atari_de")
+                set(load_args 2bdc5f431f84c0ece738f54dbd787c3b)
+            elseif(load_edition STREQUAL "atari_fr")
+                set(load_args 0d7af44dd14f383464288abdcec76afc)
+            endif()
+        endif()
+        get_test_property(dm1_${load_edition}_names_real ENVIRONMENT load_media_env)
+        add_test(NAME dm1_${load_edition}_floor_drop_load_real COMMAND ${load_target} ${load_args})
+        set_tests_properties(dm1_${load_edition}_floor_drop_load_real PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "${load_media_env};FIRESTAFF_VERIFY_LEGACY_LOAD=1"
+            LABELS "dm1;real-media;inventory;load;skip-safe")
+    endforeach()
     target_link_libraries(test_dm1_fmtowns_jp_names_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME dm1_fmtowns_jp_names_real COMMAND test_dm1_fmtowns_jp_names_real)
     set_tests_properties(dm1_fmtowns_jp_names_real PROPERTIES

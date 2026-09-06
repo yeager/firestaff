@@ -32,6 +32,12 @@ tests **ran and passed**, not merely that CTest exited successfully.
 Return code 77 marks absent optional media as skipped; skips are not
 positive parity evidence. Other archive-open failures return 1.
 
+The five separately registered `dm1_*_floor_drop_load_real` tests select
+the targeted load diagnostic. They verify conserved slot-to-hand weight
+and removal of that weight after a normal-input floor drop. Their expected
+weight shares F0140 with the engine; they do not prove every weight-table
+entry or multi-champion encumbrance behavior.
+
 ## Current evidence
 
 The shared test helper `tests/dm1_legacy_scroll_real_check.h` exercises:

@@ -1,5 +1,19 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Carried-load transaction refresh
+
+- Before publishing a DM1 transaction's world hash, recompute carried load
+  from inventory and the active leader's held Thing using F0140. Open
+  chests use live G0425 slots rather than stale linked contents. CSB's
+  separately owned runtime is excluded. Invalid weight data prevents a
+  partial load publication.
+- The previously failing original Atari drop now reaches load 0. Five
+  named `dm1_*_floor_drop_load_real` tests pass for Atari EN/DE/FR and
+  Amiga EN2.0/HD, checking conserved slot-to-hand weight and its removal
+  after a successful normal-input floor drop.
+- Multi-champion, full weight-table and every-mutation coverage remain
+  open; this corrects the reproduced defect, not all encumbrance parity.
+
 - 2026-09-06: Added an opt-in original-media load diagnostic and reproduced
   stale load after normal Atari floor-drop input. This is diagnosis only,
   not a completed fix; reproduction and remaining work are in TODO-dm1.
