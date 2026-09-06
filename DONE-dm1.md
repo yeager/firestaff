@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Corrected F0318's source-slot/host-slot mismatch: translate
+  G0057 C00..C29 through the inventory mapping before reading host slots.
+  Build and five original-media death/ownership tests pass. Those currently
+  drop one weapon; multi-item list ordering still needs dynamic proof.
+
 - 2026-09-06: Five original Atari/Amiga death probes traverse the current
   square's Thing chain and find the dropped original weapon exactly once
   with the dead champion's cell bits. Bounded traversal rejects cycles.

@@ -19003,7 +19003,11 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     state->spellPanelOpen = 0;
 
     for (slot = 0; slot < dm1_v1_slot_drop_order_size_pc34(); ++slot) {
-        int inventorySlot = dm1_v1_slot_drop_order_get_pc34(slot);
+        /* DATA.C G0057 stores source C00..C29 slot ordinals, not M10
+         * host indices. CHAMPION.C F0318:1546 consumes that source order. */
+        int sourceSlot = dm1_v1_slot_drop_order_get_pc34(slot);
+        int inventorySlot = dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+            sourceSlot + 8);
         unsigned short thing;
         if (inventorySlot < 0 || inventorySlot >= CHAMPION_SLOT_COUNT) continue;
         thing = champion->inventory[inventorySlot];

@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 death drops now translate the original slot-order table to the
+  engine's inventory indices before removing items.
+
 - DM1's inventory damage overlay now follows the displayed champion,
   rather than the party leader.
 
