@@ -1,5 +1,14 @@
 # Firestaff TODO — DM1
 
+- Investigate live inventory load accounting before claiming complete
+  inventory parity. CHAMPION.C F0297:264 and F0298:293 add/subtract held
+  object weight; F0300:582 and F0301:614 update slot weight. The inspected
+  M11 SetLeaderHandObject bridge only assigns Thing/icon/name/panel fields.
+  This is a suspected gap, not yet a reproduced gameplay defect: trace
+  normal pointer entry/exit and tick recomputation, then test a real floor
+  pickup, hand-to-slot move, occupied swap and drop with a known leader.
+  Direct test placement must not be mistaken for normal load initialization.
+
 - Extend Atari/Amiga original-object coverage to occupied equipment and
   backpack exchanges and complete drag sequences. Independently verify
   source slot geometry and

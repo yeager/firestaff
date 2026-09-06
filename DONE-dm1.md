@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Audited original hand/slot load-update ownership against
+  M11's direct hand bridge and recorded the missing dynamic verification
+  in TODO-dm1. Existing identity tests do not establish load correctness.
+
 - 2026-09-06: Documented the exact local legacy inventory test selection,
   media/skip requirements, oracle dependencies and public CI exclusion in
   `parity-evidence/dm1-legacy-inventory-verification-scope.md`.
