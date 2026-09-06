@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Extended original waterskin cases to uncapped +800 water
+  from -1024 and rejection of an empty skin while dehydrated. This removes
+  the prior capped-only blind spot, where an accidental drink on empty
+  could be hidden by the 2048 cap. All twenty cases pass.
+
 - 2026-09-06: Twenty original-media cases now drain a genuinely allocated,
   charged waterskin through mouse press/release into the non-leader's
   inventory mouth. Verified the 2048 water cap, unchanged leader water,

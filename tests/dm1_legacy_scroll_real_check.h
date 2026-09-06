@@ -361,6 +361,13 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                              * decrements charges and retains the leader hand. */
                             for (int drink = 0; drink <= charges; ++drink) {
                                 int heldWeight;
+                                int waterBefore = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? -1024 : 1800;
+                                int expectedWater = drink < charges ? waterBefore + 800 : waterBefore;
+                                if (expectedWater > 2048) expectedWater = 2048;
+                                /* An empty skin must not grant water even
+                                 * when the recipient is below the cap. */
+                                if (drink == charges) waterBefore = expectedWater = -1024;
+                                state->world.party.champions[1].water = (short)waterBefore;
                                 (void)M11_GameView_HandlePointer(state, 60, 54, 1);
                                 (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
                                 const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, water);
@@ -368,7 +375,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 if (remaining < 0) remaining = 0;
                                 if (!bytes || (bytes[3] >> 6) != remaining ||
                                     state->world.party.champions[0].water != 0 ||
-                                    state->world.party.champions[1].water != 2048 ||
+                                    state->world.party.champions[1].water != expectedWater ||
                                     DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != water ||
                                     !dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, water, &heldWeight) ||
                                     state->world.party.champions[0].load != heldWeight ||

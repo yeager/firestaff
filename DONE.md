@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 original waterskin tests additionally prove uncapped
+  +800 water and rejection of empty skins for dehydrated champions.
+
 - 2026-09-06: Original DM1 waterskins pass cross-owner drinking/depletion
   checks across five Atari/Amiga editions using normal mouse input.
 
