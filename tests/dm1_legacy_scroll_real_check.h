@@ -234,13 +234,22 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         }
                         state->dm1InventoryChampionOrdinal = 0;
                         state->inventoryPanelActive = 0;
-                        if (getenv("FIRESTAFF_VERIFY_INVENTORY_LEADER_ISOLATION")) {
+                        {
                             /* PANEL.C:2363 changes G0423, not G0411. */
-                            (void)M11_GameView_HandlePointer(state, 114, 10, 1);
-                            (void)M11_GameView_HandlePointerButtonRelease(state, 114, 10, DM1_V1_MOUSE_MASK_LEFT_PC34);
-                            fprintf(stderr, "inventory isolation open=%d leader=%d expected=0\n",
-                                state->inventoryPanelActive, state->world.party.activeChampionIndex);
-                            return state->inventoryPanelActive && state->world.party.activeChampionIndex == 0;
+                            static const int owners[] = {1,0,0,1,1};
+                            static const int ordinals[] = {2,1,0,2,0};
+                            for (int visit = 0; visit < 5; ++visit) {
+                                int px = owners[visit] * 69 + 45;
+                                for (int release = 0; release < 2; ++release) {
+                                    if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
+                                        px, 10, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                                    else (void)M11_GameView_HandlePointer(state, px, 10, 1);
+                                    if (state->inventoryPanelActive != (ordinals[visit] != 0) ||
+                                        state->dm1InventoryChampionOrdinal != ordinals[visit] ||
+                                        state->world.party.activeChampionIndex != 0 ||
+                                        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != thing) return 0;
+                                }
+                            }
                         }
                         /* CLIKCHAM.C F0368:55-76 transfers only held weight
                          * when the leader changes, then transfers it back. */

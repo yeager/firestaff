@@ -1,13 +1,20 @@
 # DM1 inventory and leader ownership migration
 
+## Current implementation status
+
+The separate owner is now enabled by normal DM1 panel input. The five
+default floor-drop load tests include mouse open/switch/close/reopen
+isolation; the old opt-in flag has been removed. Core icon, slot, chest,
+scroll, eye, mouth, inventory render and top-row inputs are migrated.
+The following original diagnosis and migration requirements are historical
+context; broader regression and remaining-consumer auditing are still open.
+
 ## Reproduced defect
 
 With champion 0 leading and holding an original weapon, opening champion
 1's inventory at screen (114,10) changes `activeChampionIndex` to 1.
 All five Atari/Amiga original-media load diagnostics reproduce this.
-Run the existing floor-drop tests with
-`FIRESTAFF_VERIFY_INVENTORY_LEADER_ISOLATION=1` to select the failing probe.
-The default load tests do not select this diagnostic.
+This was the original failing probe; it now passes in the default load tests.
 
 ReDMCSB PANEL.C:2363 assigns G0423 (inventory champion ordinal).
 CLIKCHAM.C F0368 separately assigns G0411 (leader), transfers held weight,

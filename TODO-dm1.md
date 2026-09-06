@@ -1,26 +1,15 @@
 # Firestaff TODO — DM1
 
-- Verify cross-owner consumption with original food/water/potions after
+- Verify cross-owner consumption with original water/potions after
   the mouth-owner migration. Check recipient stats, leader held weight,
   consumed Thing removal, potion event ownership and release behavior.
 
-- Separate inventory champion (PANEL.C G0423:2363) from party leader
-  using the new dm1InventoryChampionOrdinal/accessor. Icon lookup and ordinary
-  inventory slot transactions, action-hand chest opening and eye-release
-  action-hand lookup and action-hand scroll decoding are migrated;
-  empty-hand eye selection/statistics rendering, main inventory rendering
-  and food/water rendering plus top-row ownership records are migrated. Empty-eye
-  press/release is covered; chest-restoring eye-release remains unverified;
-  normal input must remain on the legacy owner until other consumers follow.
-  Separate it from party leader
-  (CLIKCHAM.C G0411). Reproduced on all five Atari/Amiga editions: opening
-  champion 2's inventory changes leader 0 to 1. The toggle and inventory
-  slot handler both use activeChampionIndex; migrate rendering, eye/mouth,
-  chest owner, close/switch, and slot transactions together. Reproduce with
-  FIRESTAFF_VERIFY_INVENTORY_LEADER_ISOLATION=1 and the five
-  dm1_*_floor_drop_load_real tests. This opt-in diagnostic currently fails
-  intentionally and is not positive parity evidence. Do not merely restore
-  the index after opening: that would redirect slot edits to the wrong owner.
+- Complete the broader regression of the now-enabled inventory/leader
+  separation: full original-media corpus, application startup, Modern input,
+  chest-restoring eye release, top-row highlights, death/revival and any
+  remaining direct activeChampionIndex consumers. Verify cross-owner
+  scroll/chest close/reopen sequences through normal input, not just explicit
+  owner fixtures. Save persistence remains deferred.
 
 - Verify leader/load transitions through actual death and resurrection,
   including a party with no living champions; controlled zero-health

@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Promoted inventory/leader isolation into the default five
+  original-media ownership tests. Normal mouse input opens, switches,
+  closes and reopens both inventory owners; every press/release preserves
+  the leader and held Thing. All five pass; no opt-in isolation flag remains.
+
 - 2026-09-06: Enabled separate DM1 inventory selection in normal panel
   input. All five previously failing inventory/leader isolation probes now
   pass, as do the default five ownership regressions. Panel close clears
