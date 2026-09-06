@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Legacy inventory border regression coverage
+
+- The real-media Atari/Amiga checks now compare all 30 inventory slot
+  borders against the original C033 32-pixel-stride source, cropped to
+  18x18 as specified by CHAMDRAW.C F0291. Nontransparent border pixels
+  are checked separately from the 16x16 resident icons.
+- All five edition tests pass in Original/V2.1. The coordinate resolver
+  remains shared; this checks source pixels/cropping, not independent
+  layout geometry, transparent backdrop composition or whole-HUD parity.
+
 ## 2026-09-06 — Atari/Amiga inventory and scroll rendering
 
 - Original C033 is stored as 32x18 pixels, whereas its visible box is

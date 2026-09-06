@@ -34,6 +34,31 @@ static int check_legacy_scroll_raster(M11_GameViewState *state)
                 !DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(state, text, sizeof(text))) return 0;
             memset(frame, 0, sizeof(frame));
             M11_GameView_Draw(state, frame, 320, 200);
+            {
+                const M11_AssetSlot *slot = M11_AssetLoader_Load(&state->assetLoader, 33);
+                int borderPixels = 0;
+                if (!slot || !slot->loaded || !slot->pixels ||
+                    slot->width != 32 || slot->height != 18) return 0;
+                /* CHAMDRAW.C F0291:558-559,655-658 uses the first 18
+                 * columns of each 32-pixel row and C12 transparency.
+                 * Check all 30 borders, outside the 16x16 object icons.
+                 * Coordinates still share the source-slot resolver. */
+                for (int box = 8; box <= 37; ++box) {
+                    int bx, by, bw, bh;
+                    if (!M11_GameView_GetV1InventorySourceSlotBoxZone(
+                            box, &bx, &by, &bw, &bh)) return 0;
+                    for (int y = 0; y < 18; ++y) for (int x = 0; x < 18; ++x) {
+                        unsigned char color = slot->pixels[y * 32 + x];
+                        if ((x > 0 && x < 17 && y > 0 && y < 17) || color == 12) continue;
+                        if (frame[(33 + by - 1 + y) * 320 + bx - 1 + x] != color) {
+                            fprintf(stderr, "FAIL: original legacy slot border %d (%d,%d)\n", box, x, y);
+                            return 0;
+                        }
+                        ++borderPixels;
+                    }
+                }
+                if (!borderPixels) return 0;
+            }
             panel = M11_AssetLoader_Load(&state->assetLoader, 23);
             if (!panel || !panel->loaded || !panel->pixels || panel->width != 144 || panel->height != 73) return 0;
             memcpy(expected, frame, sizeof(expected));

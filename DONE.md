@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Original C033 border pixels now verify all 30 DM1 inventory
+  slots across five Atari/Amiga editions in Original/V2.1; all tests pass.
+
 - 2026-09-06: Fixed DM1 Atari/Amiga inventory admission of original padded
   C033 graphics and scroll baseline conversion. Five real-media editions
   pass 350 scroll/mode raster checks in Original/V2.1.
