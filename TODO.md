@@ -1,5 +1,8 @@
 # Firestaff TODO — active cross-game work
 
+- Fix reproduced DM1 inventory/leader index conflation; opening another
+  champion's inventory must not select that champion as party leader.
+
 - Verify DM1 death/resurrection leader ownership with original-media
   runtime sequences, beyond isolated leader-selection admission checks.
 

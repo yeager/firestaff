@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added an opt-in original-media diagnostic for inventory/leader
+  isolation and reproduced the index conflation on all five Atari/Amiga
+  editions. Diagnosis is complete; the runtime correction remains in TODO-dm1.
+
 - 2026-09-06: Rebuilt the application after leader fixes. PC3.4 native
   startup passes, plus 36 CLI/menu launches across Atari EN/DE/FR,
   Amiga EN and FM Towns EN/JP in Original/V2.0/V2.1. These establish

@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+- Separate inventory champion (PANEL.C G0423:2363) from party leader
+  (CLIKCHAM.C G0411). Reproduced on all five Atari/Amiga editions: opening
+  champion 2's inventory changes leader 0 to 1. The toggle and inventory
+  slot handler both use activeChampionIndex; migrate rendering, eye/mouth,
+  chest owner, close/switch, and slot transactions together. Reproduce with
+  FIRESTAFF_VERIFY_INVENTORY_LEADER_ISOLATION=1 and the five
+  dm1_*_floor_drop_load_real tests. This opt-in diagnostic currently fails
+  intentionally and is not positive parity evidence. Do not merely restore
+  the index after opening: that would redirect slot edits to the wrong owner.
+
 - Verify leader/load transitions through actual death and resurrection,
   including a party with no living champions; controlled zero-health
   selection rejection does not cover the lifecycle.

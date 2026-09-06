@@ -134,6 +134,14 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[0].inventory[slots[slot]] != THING_NONE ||
                             state->world.party.champions[0].load != weight) return 0;
                         state->inventoryPanelActive = 0;
+                        if (getenv("FIRESTAFF_VERIFY_INVENTORY_LEADER_ISOLATION")) {
+                            /* PANEL.C:2363 changes G0423, not G0411. */
+                            (void)M11_GameView_HandlePointer(state, 114, 10, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(state, 114, 10, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            fprintf(stderr, "inventory isolation open=%d leader=%d expected=0\n",
+                                state->inventoryPanelActive, state->world.party.activeChampionIndex);
+                            return state->inventoryPanelActive && state->world.party.activeChampionIndex == 0;
+                        }
                         /* CLIKCHAM.C F0368:55-76 transfers only held weight
                          * when the leader changes, then transfers it back. */
                         for (int pointer = 0; pointer < 2; ++pointer)
