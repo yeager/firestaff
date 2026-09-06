@@ -16,6 +16,26 @@ The runtime DSA cast callback handles only an explicit abort-without-message
 packet. Neither constitutes original CSB spell execution. Optional CSBWin
 filter semantics are not prerequisites for original Atari/Amiga/FM Towns.
 
+## FM Towns original-table admission
+
+The supplied JP/EN ZIP's first 4,500 MODE1/2352 sectors were read into RAM
+and their ISO9660 payload inspected without extraction. Each executable has
+one G0487 signature match. Both 232-byte tables are identical little-endian
+records: u32 Symbols, u8 BaseRequiredSkillLevel, u8 SkillIndex, u16 Attributes.
+
+| Program | Bytes | Raw table offset | SHA-256 of program |
+| --- | ---: | --- | --- |
+| CHTWE.EXP | 283936 | 0x2a07c | `7edbdd6f088eaa7a82afd8a78c5ae32c0b3be7e023d261419277ea588c183e0d` |
+| CHTWJ.EXP | 284416 | 0x2a254 | `c2add7b7c152e1b7be50b407828807b7005bbd36e2b4b96dbc1dd51703d86da6` |
+
+Table SHA-256: `97227c2ee947a7c61e29cf5c1ef94a7a4be584815b19f259fd091036bf622e9e`;
+FNV-1a: `9fd916c2`. The existing whole-executable verified handoff now reads
+and checks this exact span, retaining all 29 typed records. No compiled spell
+definitions or CSBWin parser supply values. Original-media tests compare all
+fields against independently read bytes, check Zokathra/map descriptors,
+and reject a RAM-only mutation of a source spell byte. Admission is a
+prerequisite for, not an implementation of, the cast transaction below.
+
 ## Required complete transaction
 
 1. F0408 (MENU.C:1651-1661) invokes F0412 for G0514's source champion.

@@ -12,6 +12,8 @@
   Follow [the original cast contract](docs/parity/CSB_ORIGINAL_CAST_CONTRACT.md)
   for edition tables and complete effect/XP/timer transactions; CSBWin-only
   parser or abort-path tests are not original-game casting evidence.
+  Connect F31's admitted 29-record table to the complete transaction and
+  admit Atari/Amiga tables.
 
 - Complete CSB FM Towns action-menu pixel parity and all row boundaries.
   Source C696 now owns language-specific action/Pass pointer geometry;

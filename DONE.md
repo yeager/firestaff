@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: FM Towns Game handoff binds original G0487 from the verified
+  CHTWE/CHTWJ executable spans, decoding all 29 little-endian spell records
+  and retaining source offset/hash. Original-media tests independently
+  compare every field, confirm Zokathra object/map descriptors and reject
+  a RAM-mutated spell byte. No game data is extracted or compiled into a
+  substitute table. Production build and EN/JP media tests pass (23.45s).
+  Original cast execution and other editions' table admission remain open.
+
 - 2026-09-06: DM1/CSB spell panel close/open no longer writes a cleared
   host buffer into the champion's paid incantation. F0394 clears selection
   and display only; reopening restores champion-owned symbols/step. CSB

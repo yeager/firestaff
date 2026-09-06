@@ -81,6 +81,17 @@ typedef struct CSB_V1_FmtownsUtilityMenuHitBox {
  * C03_GAME and binds them to the distinct F31J/F31E media sets; STARTUP1.C
  * line 163 then owns the F0435 load loop and ENTRANCE.C line 85 owns F0807.
  */
+#define CSB_V1_FMTOWNS_GAME_SPELL_COUNT 29u
+
+/* Native F31 G0487 (MENU.C:48-84), including the four magic-map spells.
+ * These values are decoded from the authenticated executable, not CSBWin. */
+typedef struct CSB_V1_FmtownsGameSpell {
+    uint32_t symbols;
+    uint8_t base_required_skill_level;
+    uint8_t skill_index;
+    uint16_t attributes;
+} CSB_V1_FmtownsGameSpell;
+
 typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     int valid;
     int executable_verified;
@@ -164,6 +175,10 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint32_t startup_mini_dungeon_tail_offset;
     uint32_t startup_mini_dungeon_tail_size;
     int music_table_verified;
+    int spell_table_verified;
+    uint32_t spell_table_source_offset;
+    uint32_t spell_table_fnv1a;
+    CSB_V1_FmtownsGameSpell spells[CSB_V1_FMTOWNS_GAME_SPELL_COUNT];
     uint32_t music_table_source_offset;
     uint32_t music_table_size;
     uint32_t music_table_fnv1a;

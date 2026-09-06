@@ -303,6 +303,35 @@ static int csb_v1_fmtowns_game_read_executable_span(
                                           bytes, size);
 }
 
+/* MENU.C G0487:48-84 / DEFS.H SPELL:1755-1757. Both verified retail
+ * executables contain the same 29 little-endian eight-byte records at
+ * these raw-file offsets. Only their bytes populate the retained table. */
+static int csb_v1_fmtowns_game_bind_spell_table(
+    CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    CSB_V1_FmtownsSwitchLanguage language)
+{
+    uint8_t bytes[CSB_V1_FMTOWNS_GAME_SPELL_COUNT * 8u];
+    uint32_t offset;
+    unsigned int index;
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) offset = 0x2a07cu;
+    else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) offset = 0x2a254u;
+    else return 0;
+    if (!csb_v1_fmtowns_game_read_executable_span(receipt, offset, bytes, sizeof(bytes)) ||
+        csb_v1_fmtowns_game_bytes_fnv1a(bytes, sizeof(bytes)) != 0x9fd916c2u) return 0;
+    for (index = 0; index < CSB_V1_FMTOWNS_GAME_SPELL_COUNT; ++index) {
+        const uint8_t *record = bytes + index * 8u;
+        CSB_V1_FmtownsGameSpell *spell = &receipt->spells[index];
+        spell->symbols = csb_v1_fmtowns_game_read_le32(record);
+        spell->base_required_skill_level = record[4];
+        spell->skill_index = record[5];
+        spell->attributes = csb_v1_fmtowns_game_read_le16(record + 6u);
+    }
+    receipt->spell_table_source_offset = offset;
+    receipt->spell_table_fnv1a = 0x9fd916c2u;
+    receipt->spell_table_verified = 1;
+    return 1;
+}
+
 static int csb_v1_fmtowns_game_bind_entrance_palette(
     CSB_V1_FmtownsGameHandoffReceipt *receipt)
 {
@@ -2277,7 +2306,8 @@ int csb_v1_fmtowns_game_handoff_open(
         ? profile->fmtowns_executable_size : 0u;
     out_receipt->executable_size = actual_size;
     if (!csb_v1_fmtowns_game_bind_entrance_palette(out_receipt) ||
-        !csb_v1_fmtowns_game_bind_dungeon_palettes(out_receipt)) {
+        !csb_v1_fmtowns_game_bind_dungeon_palettes(out_receipt) ||
+        !csb_v1_fmtowns_game_bind_spell_table(out_receipt, language)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }

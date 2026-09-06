@@ -624,6 +624,57 @@ int main(void)
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
+    {
+        uint8_t table[29 * 8];
+        const size_t offset = language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x2a07cu : 0x2a254u;
+        int loaded = 0, maps = 0;
+        if (direct_handoff.executable_bytes &&
+            offset + sizeof(table) <= direct_handoff.executable_bytes_size) {
+            memcpy(table, direct_handoff.executable_bytes + offset, sizeof(table));
+            loaded = 1;
+        } else {
+            FILE *file = fopen(direct_handoff.executable_path, "rb");
+            if (file) {
+                loaded = fseek(file, (long)offset, SEEK_SET) == 0 &&
+                    fread(table, 1, sizeof(table), file) == sizeof(table);
+                fclose(file);
+            }
+        }
+        CHECK(loaded && direct_handoff.spell_table_verified &&
+                  direct_handoff.spell_table_source_offset == offset &&
+                  direct_handoff.spell_table_fnv1a == 0x9fd916c2u,
+              "F31 handoff binds the original language-specific 29-spell table");
+        for (int i = 0; loaded && i < 29; ++i) {
+            const uint8_t *raw = table + 8 * i;
+            const CSB_V1_FmtownsGameSpell *spell = &direct_handoff.spells[i];
+            uint32_t symbols = raw[0] | ((uint32_t)raw[1] << 8) |
+                ((uint32_t)raw[2] << 16) | ((uint32_t)raw[3] << 24);
+            CHECK(spell->symbols == symbols && spell->base_required_skill_level == raw[4] &&
+                      spell->skill_index == raw[5] &&
+                      spell->attributes == (uint16_t)(raw[6] | ((uint16_t)raw[7] << 8)),
+                  "F31 every spell field matches independently read original executable bytes");
+            if ((spell->attributes & 15u) == 4u) ++maps;
+        }
+        CHECK(maps == 4 && direct_handoff.spells[24].symbols == 0x006b6e76u &&
+                  direct_handoff.spells[24].attributes == 0x3c73u &&
+                  direct_handoff.spells[28].attributes == 0x0434u,
+              "F31 retains object-creation Zokathra and all four original magic-map spells");
+        if (direct_handoff.executable_bytes && loaded) {
+            CSB_V1_BootProfile corrupt = *(const CSB_V1_BootProfile *)view.csbBootProfile;
+            CSB_V1_FmtownsGameHandoffReceipt rejected;
+            uint8_t *image = malloc(direct_handoff.executable_bytes_size);
+            CHECK(image != NULL, "F31 corruption check allocates only a bounded RAM executable copy");
+            if (image) {
+                memcpy(image, direct_handoff.executable_bytes, direct_handoff.executable_bytes_size);
+                image[offset] ^= 1u;
+                corrupt.fmtowns_executable_bytes = image;
+                CHECK(!csb_v1_fmtowns_game_handoff_open(&corrupt, language, &rejected) &&
+                          !rejected.valid && !rejected.spell_table_verified,
+                      "F31 rejects a RAM-mutated spell byte before admitting any cast table");
+                free(image);
+            }
+        }
+    }
     if (user_save_path && user_save_path[0]) {
         M11_GameLaunchSpec resume_spec;
         M11_GameViewState resumed_view;
