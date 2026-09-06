@@ -27,7 +27,8 @@ int main(int argc, char** argv)
     int fakeClosed = argc == 2 && strcmp(argv[1], "fake-closed") == 0;
     int stairsEntry = argc == 2 && strcmp(argv[1], "stairs-entry") == 0;
     int stairsPair = argc == 2 && strcmp(argv[1], "stairs-pair") == 0;
-    int halfLethal = argc == 2 && strcmp(argv[1], "half-lethal") == 0;
+    int halfActive = argc == 2 && strcmp(argv[1], "half-active") == 0;
+    int halfLethal = halfActive || (argc == 2 && strcmp(argv[1], "half-lethal") == 0);
     int halfSquare = halfLethal || (argc == 2 && strcmp(argv[1], "half-square") == 0);
     int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
@@ -74,6 +75,10 @@ int main(int argc, char** argv)
         group.count = 1;
         group.cells = 0 | (2 << 2);
         group.health[1] = halfLethal ? 1 : 1000;
+        if (halfActive) {
+            group.health[0] = 1;
+            group.health[1] = 1000;
+        }
         rawGroup[4] = 15;
         word(rawGroup + 8, group.health[1]);
         rawGroup[14] = 1 << 5;
@@ -114,6 +119,12 @@ int main(int argc, char** argv)
     world.creatureAI[0].groupMapY = sameSquare ? 1 : 0;
     world.creatureAI[0].creatureType = 0;
     if (halfSquare) world.creatureAICount = 0; /* Source GROUP needs no AI row. */
+    if (halfActive) {
+        world.creatureAICount = 1;
+        world.creatureAI[0].reserved0 = 0;
+        world.creatureAI[0].creatureType = group.creatureType;
+        world.creatureAI[0].groupCells = group.cells;
+    }
     if (partyFirst || partyLanding) {
         world.party.mapX = 1;
         world.party.mapY = partyLanding ? 0 : 1;
@@ -126,7 +137,7 @@ int main(int argc, char** argv)
     create.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
     create.ownerKind = PROJECTILE_OWNER_CHAMPION;
     create.mapIndex = 0; create.mapX = create.mapY = 1;
-    create.cell = halfSquare ? 1 : 0; create.direction = 0;
+    create.cell = halfSquare && !halfActive ? 1 : 0; create.direction = 0;
     create.kineticEnergy = 40; create.attack = 30; create.stepEnergy = 1;
     create.currentTick = 40; create.firstMoveGraceFlag = grace;
     create.attackTypeCode = COMBAT_ATTACK_NORMAL;
@@ -214,6 +225,7 @@ int main(int argc, char** argv)
     if (halfSquare) {
         CHECK(group.health[0] == 1000);
         if (halfLethal) {
+            if (halfActive) CHECK(world.creatureAI[0].groupCells == group.cells);
             CHECK(group.count == 0);
             CHECK(((rawGroup[14] >> 5) & 3) == 0);
             CHECK(readword(rawGroup + 6) == 1000);

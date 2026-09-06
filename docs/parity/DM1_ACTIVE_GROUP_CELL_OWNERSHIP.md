@@ -53,5 +53,9 @@ would not establish the original state-transition contract.
    remains deferred; neither synthetic RAM fixtures nor helper metadata
    substitute for original capture parity.
 
-No runtime change is claimed by this audit. Per-creature packed directions,
+Follow-up: a source-shaped lethal projectile hit to slot zero reproduced a
+stale ai.groupCells mirror after survivor compaction. The projectile damage
+consumer now copies the surviving normalized cells into the active mirror.
+The regression passes, but it does not repair the original raw union model.
+Per-creature packed directions,
 raw byte ownership and cross-platform activation semantics remain open.

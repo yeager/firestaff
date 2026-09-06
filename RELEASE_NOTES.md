@@ -1,5 +1,8 @@
 # Unreleased
 
+- After a projectile kills the first monster in a group, active monster
+  positions now stay synchronized with the compacted survivor list.
+
 - Original-data projectiles pass through Fluxcage instead of treating it
   as a solid wall. Fluxcage lookup for endgame logic is unchanged.
 

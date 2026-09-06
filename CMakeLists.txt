@@ -16299,6 +16299,8 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat half-square)
     add_test(NAME dm1_v1_projectile_half_square_lethal_pc34_compat
         COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat half-lethal)
+    add_test(NAME dm1_v1_projectile_active_survivor_cells_pc34_compat
+        COMMAND test_dm1_v1_projectile_group_transfer_retirement_pc34_compat half-active)
     target_include_directories(test_dm1_v1_f0213_f0220_explosion_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )

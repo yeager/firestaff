@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Projectile survivor compaction now synchronizes the normalized
+  active AI cell mirror after F0190 damage. A lethal hit to slot zero in a
+  two-worm group reproduced stale ai.groupCells before the fix; it now agrees
+  with the surviving decoded group. Killing slot one alone did not expose
+  the mismatch. Seven focused impact tests and seven broader tests (five
+  original DOS spell cases plus two lifecycle checks) pass; executable built.
+  Packed-direction compaction and original raw active-index parity remain open.
+
 - 2026-09-06: Source C14 flight no longer treats C15 Fluxcage as a solid
   blocker. F0219 (PROJEXPL.C:687-764) has no F0221 call; F0221's callers
   at 997-1082 serve Lord Chaos/fusion. A raw C14/C15 Type=50 RAM crossing

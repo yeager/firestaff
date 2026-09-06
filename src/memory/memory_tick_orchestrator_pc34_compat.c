@@ -9011,6 +9011,12 @@ static int orch_apply_projectile_group_action_compat(
      * after projectile damage: surviving groups carry compacted HP/cells and
      * all-kill groups are unlinked.  Mirror those decoded changes into the
      * raw DUNGEON.DAT record used by save/export and later raw inspections. */
+    if (applyPlan.outcomeCode != COMBAT_OUTCOME_KILLED_ALL_CREATURES) {
+        int activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+        /* GROUP.C F0190:892-904 compacts surviving cells. Keep the
+         * normalized active mirror consumed by map removal in sync. */
+        if (activeIndex >= 0) world->creatureAI[activeIndex].groupCells = group->cells;
+    }
     orch_write_raw_group_compat(world->things, groupIndex);
     return associatedThingMovedToGroup ? 2 : 1;
 }
