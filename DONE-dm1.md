@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Removed obsolete .openclaw/external-volume source lookup from the
+  creature-chain original-capture gate. It now discovers the repository
+  ReDMCSB copy first, retains the explicit environment override, and supports
+  a .firestaff/reference fallback. Source discovery/audit and check-only
+  validation pass. The gate correctly remains blocked on original images;
+  no captures or parity claims were fabricated and no reports regenerated.
+
 - Strengthened the 128-seed half-pair attack-entry test with independent
   F0209/F0205 RNG accounting and exact packed direction comparison. It
   confirms turn-delay draws still occur after a suppressed pair turn and

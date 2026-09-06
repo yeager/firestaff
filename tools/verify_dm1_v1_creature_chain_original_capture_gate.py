@@ -16,8 +16,6 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
 
 
 def first_existing(env_name: str, candidates: list[Path]) -> Path:
@@ -33,8 +31,8 @@ def first_existing(env_name: str, candidates: list[Path]) -> Path:
 RED = first_existing(
     "FIRESTAFF_REDMCSB_SOURCE",
     [
-        DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-        EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+        ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+        Path.home() / ".firestaff/reference/ReDMCSB_WIP20210206/Toolchains/Common/Source",
     ],
 )
 
