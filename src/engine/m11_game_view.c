@@ -20215,9 +20215,14 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
     if (!state ||
         !(m11_is_dm1_source_kind(state->sourceKind) ||
           m11_source_is_csb(state)) ||
-        state->showDebugHUD || state->inventoryPanelActive) {
+        state->showDebugHUD ||
+        (state->inventoryPanelActive && !m11_is_dm1_source_kind(state->sourceKind))) {
         return M11_GAME_INPUT_IGNORED;
     }
+    /* ReDMCSB PANEL.C:2445 changes only G0442's secondary inventory
+     * input list. COMMAND.C:78-102 keeps C100 on the primary interface,
+     * so opening a DM1 inventory must not disable the spell controls.
+     * Other games retain their separately verified input policy. */
     parent = dm1_v1_spell_area_click_rect_pc34();
     if (!m11_point_in_rect(x, y, parent.x, parent.y, parent.w, parent.h)) {
         return M11_GAME_INPUT_IGNORED;

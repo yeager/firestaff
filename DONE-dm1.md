@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Restored DM1 spell mouse routing with inventory open.
+  PANEL.C:2445 changes the secondary list, not COMMAND.C's primary C100.
+  Twenty original-media Atari/Amiga cases now create MON/EE/VI at all six
+  powers through rune mouse press/release (360 casts); symbol ownership and
+  unchanged non-caster mana are checked. Cast itself still uses the API.
+  The strict opt-in rune mana/step oracle exposed separate failures tracked
+  in TODO; this result is not mana timing or rendered spell-panel parity.
+
 - 2026-09-06: Audited the compact spell workbench reachability and removed
   the ineffective DM1 caster change and its release claim. The enclosing
   draw guard excludes both DM1 and CSB. Passing inventory/skill tests did

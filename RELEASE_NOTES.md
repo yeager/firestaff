@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 spell-panel mouse input is no longer blocked by an open inventory,
+  matching the original primary-interface command routing.
+
 - DM1 healing potions no longer advance the shared random sequence for
   wound-healing retries that the original game would not perform.
 - DM1 eating and drinking now request the original edition's swallow sound;
