@@ -55592,7 +55592,9 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         return 1;
     }
 
-    championIndex = state->world.party.activeChampionIndex;
+    /* ReDMCSB PANEL.C F0349:1824-1919 applies consumption to the
+     * inventory champion, independently of the leader holding the item. */
+    championIndex = m11_inventory_champion_index(state);
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present || champ->hp.current == 0) return 0;

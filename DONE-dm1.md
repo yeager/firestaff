@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Migrated mouth consumption's champion lookup to the explicit
+  inventory owner, preserving leader-hand object selection. Build and five
+  existing original-media ownership regressions pass. These tests do not
+  exercise cross-owner consumption; that verification remains open.
+
 - 2026-09-06: Migrated inventory main rendering and food/water rendering
   to the explicit owner. Five Atari/Amiga tests compare the 224x136 C017
   viewport for the same inventory owner with different leaders. All pass;

@@ -1,5 +1,9 @@
 # Firestaff TODO — DM1
 
+- Verify cross-owner consumption with original food/water/potions after
+  the mouth-owner migration. Check recipient stats, leader held weight,
+  consumed Thing removal, potion event ownership and release behavior.
+
 - Separate inventory champion (PANEL.C G0423:2363) from party leader
   using the new dm1InventoryChampionOrdinal/accessor. Icon lookup and ordinary
   inventory slot transactions, action-hand chest opening and eye-release
