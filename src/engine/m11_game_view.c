@@ -23161,6 +23161,9 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
                                state->world.party.activeChampionIndex,
                                LIFECYCLE_SKILL_HEAL,
                                potPower > 0 ? potPower / 10 + 1 : 1);
+            } else {
+                /* ReDMCSB PANEL.C F0349:1944: C08 after consumption. */
+                m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
             }
 
             m11_set_status(state, "USE", "POTION CONSUMED");
@@ -23194,6 +23197,8 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
         }
         champ->food = consumer.food;
         champ->water = consumer.water;
+        /* ReDMCSB PANEL.C F0349:1944; rejected empty skins stay silent. */
+        m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
         if (receipt.consumable.removeLeaderHandObject) {
             champ->inventory[useSlot] = THING_NONE;
         }
@@ -55787,6 +55792,10 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
             return 0;
         }
         consumableResult = liveReceipt.consumable;
+        /* ReDMCSB PANEL.C F0349:1944 uses the edition's original C08. */
+        if (consumableResult.consumed) {
+            m11_audio_emit_source_sound(state, DM1_SND_SWALLOW, M11_AUDIO_MARKER_COMBAT);
+        }
         champ->attributes[CHAMPION_ATTR_STRENGTH] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH];
         champ->attributes[CHAMPION_ATTR_DEXTERITY] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY];
         champ->attributes[CHAMPION_ATTR_WISDOM] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM];

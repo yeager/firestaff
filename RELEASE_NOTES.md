@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 eating and drinking now request the original edition's swallow sound;
+  attempts to drink from an empty waterskin remain silent.
 - DM1 no longer grants extra skill experience simply for drinking a potion
   through the alternative item-use action.
 - DM1 alternative food/water use now shares the original consumption rules;

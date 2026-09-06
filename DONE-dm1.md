@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Connected successful mouth and alternative consumption to the
+  edition-owned C08 swallow sound transport. Twenty original Atari/Amiga
+  cases pass, asserting accepted C08 for food and alternative water use and
+  no sound request for an empty waterskin. This is transport acceptance,
+  not emulator waveform/timing parity. Rebuilt after the RAM build was lost.
+
 - 2026-09-06: Removed non-source skill XP from DM1 alternative potion use
   per PANEL.C F0349. Original antivenin reproduced the XP mutation before
   the fix; twenty Atari/Amiga cases now preserve all recipient lifecycle

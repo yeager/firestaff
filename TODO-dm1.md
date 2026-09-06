@@ -1,6 +1,6 @@
 # Firestaff TODO — DM1
 
-- Verify alternative UseItem swallow sound and load changes through actual
+- Verify swallow timing/output against emulator captures and load changes through actual
   pickup/equipment input and presentation feedback before claiming complete
   consumable parity. Extend the unchanged-skill assertion beyond antivenin.
 

@@ -2,6 +2,7 @@
 #define DM1_LEGACY_SCROLL_REAL_CHECK_H
 
 #include "asset_loader_m11.h"
+#include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "font_m11.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
@@ -323,6 +324,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 }
                             }
                             if (food == THING_NONE) return 0;
+                            state->audioState.lastSoundIndex = -1;
                             state->inventoryPanelActive = 1;
                             state->dm1InventoryChampionOrdinal = 2;
                             state->world.party.champions[0].food = 0;
@@ -344,6 +346,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
                             }
                             if (state->world.party.champions[0].food != 0 ||
+                                state->audioState.lastSoundIndex != DM1_SND_SWALLOW ||
                                 state->world.party.champions[1].food != amount ||
                                 state->world.party.activeChampionIndex != 0) return 0;
                         }
@@ -377,10 +380,12 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                     if (expected > 2048) expected = 2048;
                                     state->world.party.champions[0].water = 0;
                                     state->world.party.champions[1].water = (short)before;
+                                    state->audioState.lastSoundIndex = -1;
                                     int used = M11_GameView_UseItem(state);
                                     const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, water);
                                     int remaining = charges > drink ? charges - drink - 1 : 0;
                                     if (used != (drink < charges) || !raw || (raw[3] >> 6) != remaining ||
+                                        state->audioState.lastSoundIndex != (drink < charges ? DM1_SND_SWALLOW : -1) ||
                                         state->world.party.champions[1].water != expected ||
                                         state->world.party.champions[0].water != 0 ||
                                         state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] != water) {
