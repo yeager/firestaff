@@ -3,8 +3,11 @@
 - Investigate the intermittent no-output early exit of the French Atari
   original-media test observed on September 6; it did not recur in three
   isolated repetitions or the full rerun. Do not treat retries as a fix.
-- Extend VI wound/RNG coverage to each individual wound, retry exhaustion,
-  and alternative UseItem input; all-six-wounds mouth consumption is covered.
+- Verify VI retry exhaustion and all wound/power combinations; individual
+  wound bits on alternate UseItem and combined wounds on mouth are covered.
+- Investigate intermittent French Atari SND1 source-index-1 rejection in
+  original-audio setup, observed before the restorative tests. Full rerun
+  passed; do not conflate this with a fixed failure or the no-output exit.
 
 - Extend spell-created restorative potion evidence with full rune mouse
   input and independent RNG/XP receipts. MON/EE at all six power runes

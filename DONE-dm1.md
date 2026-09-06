@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Extended VI's independent wound/final-seed checks to six
+  individual wound bits through alternate UseItem; combined wounds retain
+  mouth coverage. MON/EE also exercise both routes. Full twenty-case rerun
+  passes; an earlier French original-audio setup failure remains tracked.
+
 - 2026-09-06: Fixed VI's premature generation of unused wound-retry random
   values. Both callers now stop generating masks when F0349 would stop.
   Original-flask VI consumption reproduces the old seed mismatch and now

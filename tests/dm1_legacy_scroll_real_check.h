@@ -669,7 +669,9 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                              * independently determine wounds and final RNG seed. */
                             state->world.party.champions[1].hp.current = before;
                             state->world.party.champions[1].hp.maximum = 1000;
-                            state->world.party.champions[1].wounds = restorative == 14 ? 63 : 0;
+                            unsigned short initialWounds = restorative == 14
+                                ? (getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? (1u << powerRune) : 63) : 0;
+                            state->world.party.champions[1].wounds = initialWounds;
                             uint32_t expectedSeed = state->world.masterRng.seed;
                             unsigned short expectedWounds = state->world.party.champions[1].wounds;
                             if (restorative == 14) {
@@ -682,11 +684,19 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                         expectedWounds &= (unsigned short)(expectedSeed >> 8);
                                     }
                                     iterations = 1;
-                                } while (expectedWounds == 63 && --tries);
+                                } while (expectedWounds == initialWounds && --tries);
                             }
-                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, flask)) return 0;
-                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
-                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (getenv("FIRESTAFF_VERIFY_LIVING_CASTER")) {
+                                int savedLeader = state->world.party.activeChampionIndex;
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = flask;
+                                state->world.party.activeChampionIndex = 1;
+                                if (!M11_GameView_UseItem(state)) return 0;
+                                state->world.party.activeChampionIndex = savedLeader;
+                            } else {
+                                if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, flask)) return 0;
+                                (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                                (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            }
                             raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
                             if (state->world.masterRng.seed != expectedSeed || state->world.party.champions[1].wounds != expectedWounds) {
                                 fprintf(stderr, "FAIL: restorative wound RNG ordering\n"); return 0;
