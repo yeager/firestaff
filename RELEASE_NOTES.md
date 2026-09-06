@@ -1,5 +1,9 @@
 # Unreleased
 
+- FM Towns active action menus now use original C010 artwork instead of
+  a flat-colour substitute and no longer draw idle icons over that artwork.
+  Action-row and Pass clicks use the original language-specific regions.
+
 - DM1 FM Towns action icons follow the original English/Japanese cell
   geometry. Japanese movement controls use their original lower-screen
   position and are no longer erased by the DOS message-area clear.

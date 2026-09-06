@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: FM Towns active-menu pointers use EN/JP C098 and C082–C084
+  region geometry rather than seven-pixel font rows. Original-media Pass
+  tests cover both corners in three modes and JP's left-outside point,
+  preserving leader/stamina/cooldowns (3/3 tests,no skips,11.17 seconds).
+  Direct row-action/boundary parity remains to be tested independently.
+
+- 2026-09-06: Removed the FM Towns live active-menu solid-colour substitute
+  and icon overpaint. Original C010(EN87x45/JP96x72) now supplies the menu
+  background. All actors/three modes pass right-border source-pixel checks;
+  3/3 targeted original-media regressions pass (11.58 seconds,no skips).
+  Full-panel/text and one/two-action coverage remain open.
+
 - 2026-09-06: Japanese FM Towns action-icon mouse routing uses C089–C092
   at y94..155. Original-media tests cover both inclusive corners of all
   four cells in three modes, alive admission/dead rejection and unchanged

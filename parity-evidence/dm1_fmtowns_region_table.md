@@ -1,5 +1,13 @@
 # DM1 FM Towns region table (GET_RGN_COORD / GET_SCL_COORD)
 
+## Correction (2026-09-06)
+
+The historical consumption plan below misidentifies SPC_BLOT argument10
+as a region and11/77/79 as colours. It actually draws graphic C010 into
+C011/C077/C079 (FMTOWNS.H:315; ACTIDRAW.C:333–355). The registry bytes
+remain useful, but a flat coloured rectangle is not an authentic menu.
+See [corrected argument semantics](dm1_fmtowns_menu_p3_disassembly.md).
+
 Companion to `dm1_fmtowns_menu_p3_disassembly.md`. Same load image:
 HMA-240 English disc `EDM.EXP` (310518 bytes, sha256
 `c888470d39aa449eac85438b598158492d2c981008cc6b427c52f2c73001ecb6`),

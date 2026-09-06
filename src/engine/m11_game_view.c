@@ -36849,7 +36849,31 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     }
                 }
             }
-            /* FM Towns uses a narrower 87-pixel panel at x=232..318
+            if (state->dm1FmtownsStartupReceiptValid) {
+                /* COMMAND.C:461-465 resolves C098 and C082..C084,
+                 * not font rows. Authenticated EDM/JDM region records
+                 * define distinct parent offsets, row heights and Pass. */
+                const int japanese = state->dm1FmtownsStartupReceipt.language ==
+                    DM1_FMTOWNS_LANG_JP;
+                const int menuY = japanese ? 85 : 77;
+                const int passX = japanese ? 295 : 285;
+                const int rowHeight = japanese ? 20 : 11;
+                const int rowStep = rowHeight + 1;
+                int row;
+                if (m11_point_in_rect(x, y, passX, menuY, 320-passX, 7)) {
+                    M11_GameView_ClearActingChampion(state);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                for (row = 0; row < actionCount; ++row) {
+                    if (m11_point_in_rect(x, y, 234, menuY+9+row*rowStep,
+                                         85, rowHeight)) {
+                        (void)M11_GameView_TriggerActionRow(state, row);
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                }
+            }
+            /* Legacy CSB FM Towns routing remains separately unverified.
+             * FM Towns uses a narrower 87-pixel panel at x=232..318
              * with three 7-pixel-tall text rows starting at y=77.
              * Hit-test directly against the source-locked geometry
              * instead of the PC34 route table. */
@@ -36863,10 +36887,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
              * until the CHTW* DRAW_DMENU raster consumer is recovered.
              * ReDMCSB FMTOWNS.H:76,498,650; MENU.C F0391. */
             if (actionCount > 0 &&
-                (state->dm1FmtownsStartupReceiptValid ||
-                 (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
                   m11_csb_is_fmtowns_profile(
-                      (const CSB_V1_BootProfile *)state->csbBootProfile)))) {
+                      (const CSB_V1_BootProfile *)state->csbBootProfile))) {
                 int fmx1 = 232, fmy1 = 77, fmx2 = 318;
                 if (x >= fmx1 && x <= fmx2 && y >= fmy1 &&
                     y < fmy1 + (int)(actionCount * DM1_V1_FMTOWNS_CHAR_Y_HYT)) {
@@ -49893,18 +49916,27 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
         }
         dynamenu[DM1_V1_FMTOWNS_DYNAMENU_OFFSET_BUTTON0 + slot] = action;
     }
-    /* Backdrop first (source-owned FILL_CSCREEN + SPC_BLOT). */
-    if (dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
-            framebuffer, framebufferWidth, framebufferHeight,
-            framebufferWidth, dynamenu, 1) == 0u) {
-        return 0;
+    /* ACTIDRAW.C:323,333-355; FMTOWNS.H:315: SPC_BLOT is F0660.
+     * Arguments10,11/77/79,-1 are graphic, destination region and
+     * transparency, NOT panel colours. Consume authentic C010 bytes. */
+    {
+        const int japanese = state->dm1FmtownsStartupReceipt.language ==
+            DM1_FMTOWNS_LANG_JP;
+        const int menuY = japanese ? 85 : 77;
+        const int sourceW = japanese ? 96 : 87;
+        const int sourceH = japanese ? 72 : 45;
+        int cropH = sourceH;
+        if (actions[2] == 0xFFu) cropH = japanese ? 51 : 33;
+        if (actions[1] == 0xFFu) cropH = japanese ? 30 : 21;
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      233, menuY, 87, sourceH, M11_COLOR_BLACK);
+        if (!m11_blit_panel_asset_region_native(state, framebuffer,
+                framebufferWidth, framebufferHeight, 10, sourceW, sourceH,
+                japanese ? 9 : 0, 0, 87, cropH, 233, menuY)) return 0;
     }
-    /* Overlay text: consume the round-trip-verified font raster
-     * asset 557 through the M11 game view's default glyph consumer.
-     * English labels render byte-exact into the panel. Japanese
-     * labels render ASCII glyphs from the same raster (byte-identical
-     * to English); Shift-JIS pairs advance the cursor but paint no
-     * pixels until a TBIOS font ROM callback is supplied. */
+    /* Existing label consumer; source-region80/85-87 text placement and
+     * Japanese glyph rendering still need independent verification.
+     * Correct bitmap composition does not establish text parity. */
     {
         int menuLang = (state->dm1FmtownsStartupReceipt.language ==
                         DM1_FMTOWNS_LANG_JP) ? 1 : 0;
@@ -57059,9 +57091,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                 framebufferHeight)) {
             return 0;
         }
-        (void)m11_draw_dm_action_icon_cells(state, framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight);
+        /* ACTIDRAW.C:325-328 selects either icons or menu, never both. */
         return 1;
     }
 

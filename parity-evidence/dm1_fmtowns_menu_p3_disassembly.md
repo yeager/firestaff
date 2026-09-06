@@ -1,5 +1,17 @@
 # DM1 FM Towns menu — P3 executable disassembly evidence
 
+## Correction (2026-09-06): argument semantics
+
+The historical interpretation below of11/77/79 as panel colours is wrong.
+FMTOWNS.H:315 maps F0660 to SPC_BLOT; ACTIDRAW.C:333–355 selects
+C011/C077/C079 as destination regions, then blits graphic C010 with
+transparency -1. Thus `push -1; push di; push 0xA` passes transparency,
+destination region and graphic index, not a rectangle colour. The
+solid-fill runtime substitute must be replaced with authentic C010 pixels.
+The historical pseudocode also reverses the sentinel conditions: source
+selects77 when slot2 is0xFF, and79 when slot1 is0xFF. Constants alone do
+not prove argument semantics. Do not use the claims below as pixel parity.
+
 Source: HMA-240 English disc `EDM.EXP` (Phar Lap P3 level 1), extracted
 from `~/.firestaff/data/dm1/Dungeon Master (Japan) (En,Ja) (Rev 1).7z`,
 Track 01 (MODE1/2048 ISO 9660 volume "DUNGEON"), file

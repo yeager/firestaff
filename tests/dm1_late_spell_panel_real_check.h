@@ -153,6 +153,10 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
                          state->world.party.champions[3].mana.current==49);
     }
     if (towns) {
+        const M11_AssetSlot *actionMenu=M11_AssetLoader_Load(&state->assetLoader,10);
+        LATE_SPELL_CHECK(actionMenu && actionMenu->loaded && actionMenu->pixels);
+        printf("Original F20 %s action C010: %dx%d\n",
+               yOffset ? "JP" : "EN", actionMenu->width, actionMenu->height);
         const M11_AssetSlot *movement=M11_AssetLoader_Load(&state->assetLoader,13);
         LATE_SPELL_CHECK(movement && movement->loaded && movement->pixels);
         printf("Original F20 %s movement C013: %dx%d\n",
@@ -202,6 +206,71 @@ static int check_late_spell_panel_real(M11_GameViewState *state) {
             }
         }
         puts("PASS: original FM Towns idle action cells, all slots/alive-dead, three modes");
+        {
+            const M11_AssetSlot *menu=M11_AssetLoader_Load(&state->assetLoader,10);
+            const int menuY=yOffset?85:77, menuH=yOffset?72:45;
+            LATE_SPELL_CHECK(menu && menu->loaded && menu->pixels &&
+                             menu->width==(yOffset?96:87) && menu->height==menuH);
+            /* ACTIDRAW.C:333-355 selects C079/C077/C011 by action count.
+             * Rightmost column is outside label glyphs; compare authentic
+             * C010 pixels rather than asserting host-generated colours. */
+            for (mode=0;mode<3;++mode) for(i=0;i<4;++i) {
+                unsigned char actions[3];
+                int rows, cropH;
+                state->presentationMode=modes[mode];
+                state->world.party.champions[i].hp.current=100;
+                state->actionDisabledTicks[i]=0;
+                M11_GameView_ClearActingChampion(state);
+                LATE_SPELL_CHECK(M11_GameView_SetActingChampion(state,i));
+                LATE_SPELL_CHECK(M11_GameView_GetActingActionIndices(state,actions));
+                rows=actions[0]==255?0:actions[1]==255?1:actions[2]==255?2:3;
+                LATE_SPELL_CHECK(rows>0);
+                cropH=yOffset?9+21*rows:9+12*rows;
+                memset(actual,15,sizeof(actual));
+                M11_GameView_Draw(state,actual,320,200);
+                for(y=0;y<menuH;++y) {
+                    unsigned char pixel=y<cropH?
+                        menu->pixels[y*menu->width+menu->width-1]:0;
+                    if(actual[(menuY+y)*320+319]!=pixel) {
+                        fprintf(stderr,"FAIL: FMT menu border mode%d actor%d rows%d y%d actual%u expected%u\n",
+                            mode,i,rows,menuY+y,actual[(menuY+y)*320+319],pixel);
+                        return 0;
+                    }
+                }
+                M11_GameView_ClearActingChampion(state);
+            }
+            puts("PASS: original FM Towns active-menu C010 border, all actors and modes (not text parity)");
+            /* Original C080 Pass is narrower in JDM. Test public pointer
+             * routing at both inclusive corners without executing an action. */
+            for(mode=0;mode<3;++mode) for(int edge=0;edge<2;++edge) {
+                const int passX=yOffset?295:285;
+                const int passY=yOffset?85:77;
+                int staminaBefore[4];
+                state->presentationMode=modes[mode];
+                state->world.party.activeChampionIndex=0;
+                state->world.party.champions[3].hp.current=100;
+                for(i=0;i<4;++i) {
+                    state->actionDisabledTicks[i]=0;
+                    staminaBefore[i]=state->world.party.champions[i].stamina.current;
+                }
+                M11_GameView_ClearActingChampion(state);
+                LATE_SPELL_CHECK(M11_GameView_SetActingChampion(state,3));
+                if(yOffset) {
+                    (void)M11_GameView_HandlePointer(state,294,85,1);
+                    (void)M11_GameView_HandlePointer(state,294,85,0);
+                    LATE_SPELL_CHECK(state->actingChampionOrdinal==4);
+                }
+                (void)M11_GameView_HandlePointer(state,edge?319:passX,passY+(edge?6:0),1);
+                (void)M11_GameView_HandlePointer(state,edge?319:passX,passY+(edge?6:0),0);
+                LATE_SPELL_CHECK(state->actingChampionOrdinal==0 &&
+                                 state->world.party.activeChampionIndex==0);
+                for(i=0;i<4;++i)
+                    LATE_SPELL_CHECK(state->world.party.champions[i].stamina.current==staminaBefore[i] &&
+                                     state->actionDisabledTicks[i]==0);
+                M11_GameView_ClearActingChampion(state);
+            }
+            puts("PASS: original FM Towns Pass mouse corners close without action cost or leader change");
+        }
         if (yOffset) {
             /* JDM C089..C092: inclusive cell edges, independent of the
              * centered icon. F0389 selects an actor, never a new leader. */
