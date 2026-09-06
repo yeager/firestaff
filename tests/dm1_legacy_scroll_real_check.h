@@ -342,6 +342,19 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                          * zero-health transition of the inventory owner. */
                         state->world.party.champions[1].hp.current = 0;
                         M11_GameView_ProbeCheckPartyDeath(state);
+                        if (state->world.party.champions[1].inventory[19] != THING_NONE) return 0;
+                        {
+                            uint32_t before, after;
+                            const unsigned char *dropped = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, other);
+                            unsigned short next;
+                            if (!F0891_ORCH_WorldHash_Compat(&state->world, &before)) return 0;
+                            if (!dropped) return 0;
+                            next = (unsigned short)(dropped[0] | ((unsigned int)dropped[1] << 8));
+                            M11_GameView_ProbeCheckPartyDeath(state);
+                            dropped = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, other);
+                            if (!dropped || !F0891_ORCH_WorldHash_Compat(&state->world, &after) || before != after ||
+                                next != (unsigned short)(dropped[0] | ((unsigned int)dropped[1] << 8))) return 0;
+                        }
                         fprintf(stderr, "death owner panel=%d ordinal=%d handled=%u\n",
                             state->inventoryPanelActive, state->dm1InventoryChampionOrdinal,
                             state->championDeathHandledMask);

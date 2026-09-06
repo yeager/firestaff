@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Five original-media death probes verify that the dead owner's
+  ready hand is emptied and a second death-handler call leaves the world
+  hash and dropped original weapon's next link unchanged. This checks
+  repeat-call stability, not independent full floor-chain reachability.
+
 - 2026-09-06: Five original-media tests now invoke the runtime death
   handler after setting the separate inventory owner to zero health.
   Panel closure, cleared owner, handled-death flag and unchanged living
