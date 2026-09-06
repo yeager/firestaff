@@ -1,5 +1,13 @@
 # Firestaff TODO — DM1
 
+- Deferred savegame regression: `dm1_v1_g0377_active_group_count_pc34_compat`
+  passes F0196 initialization and F0195 live-count admission, then fails
+  "PC34 export accepts the bounded G0377 live count". Observed after rebuilding
+  at a8ada3b50 on 2026-09-06. Its constructed world lacks raw C04 data and
+  invokes native save export/handoff; the exact export rejection and its
+  introduction have not been established. Keep this test enabled and investigate
+  when savegame work resumes; do not weaken export validation to satisfy it.
+
 - Complete F0183/F0180 admission fidelity beyond the implemented F0179 aspect/RNG
   initialization and successful staged RNG publication. Obtain original traces
   beyond the bounded multi-group scan-order and partial-admission rollback tests.

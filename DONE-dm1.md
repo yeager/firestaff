@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- Expanded post-admission regression run: F0195 add-all, group-state bundle,
+  group-sensor bundle, F0182/F0195/F0196 lifecycle, LoS move rollback and
+  C38 projectile aftermath all pass after rebuilding against a8ada3b50.
+  The seventh selected test (G0377) fails at deferred save export and is
+  recorded in TODO-dm1.md. This batch is explicitly 6/7, not a green suite.
+
 - Runtime F0180 resets nonpersistent C04 behaviors (>=4) to wander after
   successful event publication, retaining valid attack/approach/flee states.
   Map-transition staging detaches shared raw C04 storage and publishes decoded
