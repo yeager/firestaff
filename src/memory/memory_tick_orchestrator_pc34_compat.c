@@ -11485,7 +11485,7 @@ static int orch_add_generated_group_active_state_compat(
 static void orch_schedule_generated_group_wandering_event_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
-    const struct DungeonGroup_Compat* group,
+    struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
     int mapY)
@@ -11518,7 +11518,12 @@ static void orch_schedule_generated_group_wandering_event_compat(
     wander.aux2 = plan.wanderEventType;
     wander.aux3 = 0;
     wander.aux4 = 0x100;
-    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);
+    if (F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander) &&
+        group->behavior >= DM1_BEHAVIOR_USELESS4) {
+        /* GROUP.C F0180:328-330 resets only nonpersistent behaviors. */
+        group->behavior = DM1_BEHAVIOR_WANDER;
+        orch_write_raw_group_compat(world->things, groupIndex);
+    }
 }
 
 int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
@@ -11580,7 +11585,7 @@ int F0195_DM1_GROUP_AddAllActiveGroups_Compat(
             for (guard = 0; guard < 1024 && thing != THING_NONE &&
                  thing != THING_ENDOFLIST; ++guard) {
                 int groupIndex;
-                const struct DungeonGroup_Compat* group;
+                struct DungeonGroup_Compat* group;
                 int wasActive;
                 int eventCount;
 
@@ -11671,6 +11676,9 @@ static int orch_transition_party_map_f0194_f0195_compat(
     staged = *world;
     stagedThings = *world->things;
     stagedThings.groups = stagedGroups;
+    /* F0194/F0180 may change decoded C04 fields. Defer raw publication
+     * until the entire destination admission succeeds; raw storage is shared. */
+    stagedThings.rawThingData[THING_TYPE_GROUP] = NULL;
     staged.things = &stagedThings;
     memset(activeGroups, 0, sizeof(activeGroups));
     for (i = 0; i < DM1_PC34_ACTIVE_GROUP_CAPACITY; ++i) {
@@ -11739,6 +11747,8 @@ static int orch_transition_party_map_f0194_f0195_compat(
     if (world->things->groupCount > 0) {
         memcpy(world->things->groups, stagedGroups,
                (size_t)world->things->groupCount * sizeof(*stagedGroups));
+        for (i = 0; i < world->things->groupCount; ++i)
+            orch_write_raw_group_compat(world->things, i);
     }
     free(stagedGroups);
     world->partyMapIndex = staged.partyMapIndex;

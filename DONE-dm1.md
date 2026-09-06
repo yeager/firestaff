@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- Runtime F0180 resets nonpersistent C04 behaviors (>=4) to wander after
+  successful event publication, retaining valid attack/approach/flee states.
+  Map-transition staging detaches shared raw C04 storage and publishes decoded
+  C04 changes to raw bytes only after all destination groups are admitted.
+  Lifecycle tests cover decoded/raw reset and failure after a first group's
+  staged reset, with no leaked raw writes. All 21 selected tests pass,
+  including five original-DOS-media cases; original traces remain required.
+
 - Expanded the aspect adapter regression across all four original C33-C36
   selected-creature events in a four-creature group. Each event changes its
   selected aspect and preserves the other three byte values. Reintroducing

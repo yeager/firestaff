@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 resets nonpersistent group behavior on activation and publishes raw
+  group-state changes only after a staged map transition succeeds.
+
 - DM1 preserves each creature's animation flags when transferring active-group
   state between byte-sized runtime storage and behavior logic.
 

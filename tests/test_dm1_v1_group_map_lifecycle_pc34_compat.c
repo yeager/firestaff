@@ -34,6 +34,8 @@ int main(void)
     static struct GameWorld_Compat before;
     struct DungeonGroup_Compat groupBefore;
     unsigned short columns[3] = {0, 0, 0};
+    unsigned char rawGroups[32];
+    unsigned char rawBefore[32];
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -41,6 +43,8 @@ int main(void)
     memset(tiles, 0, sizeof(tiles));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
+    memset(rawGroups, 0xa5, sizeof(rawGroups));
+    memcpy(rawBefore, rawGroups, sizeof(rawGroups));
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
 
@@ -67,12 +71,15 @@ int main(void)
     groups[0].direction = 2;
     groups[0].count = 0;
     groups[0].health[0] = 100;
+    groups[0].behavior = DM1_BEHAVIOR_USELESS4;
     squareFirstThings[0] = group_thing_ref(0);
     things.groups = groups;
     things.groupCount = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 1;
     things.loaded = 1;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroups;
+    things.thingCounts[THING_TYPE_GROUP] = 2;
     world.dungeon = &dungeon;
     world.things = &things;
     world.gameTick = 100u;
@@ -108,6 +115,8 @@ int main(void)
     CHECK(memcmp(&world, &before, sizeof(world)) == 0 &&
           memcmp(&groups[0], &groupBefore, sizeof(groupBefore)) == 0,
           "failed staged admission preserves world, history and C04");
+    CHECK(memcmp(rawGroups, rawBefore, sizeof(rawGroups)) == 0,
+          "failed transition does not publish decoded C04 changes to raw storage");
     squareFirstThings[0] = group_thing_ref(0);
     world.creatureAICount = 0; /* successful entry starts from empty map 0 */
 
@@ -116,6 +125,9 @@ int main(void)
           "map transition tick succeeds");
     CHECK(world.partyMapIndex == 1 && world.party.mapIndex == 1,
           "map transition commits party map before F0195 scan");
+    CHECK(groups[0].behavior == DM1_BEHAVIOR_WANDER &&
+          (rawGroups[14] & 0x0f) == DM1_BEHAVIOR_WANDER,
+          "F0180 resets nonpersistent behavior in decoded and raw C04");
     CHECK(world.creatureAICount == 1,
           "F0195 adds current-map group after empty-map retirement");
     /* I34 Skeleton GraphicInfo=0x6038: X offset/sign, Y offset/sign,
@@ -156,6 +168,7 @@ int main(void)
     world.creatureAICount = 0;
     groups[1] = groups[0];
     groups[1].creatureType = 6; /* I34 Rockpile GraphicInfo=0x0020: one draw */
+    groups[1].behavior = DM1_BEHAVIOR_USELESS4;
     things.groupCount = 2;
     things.squareFirstThingCount = 2;
     map1Squares[1] |= DUNGEON_SQUARE_MASK_THING_LIST;
@@ -163,12 +176,17 @@ int main(void)
     squareFirstThings[0] = group_thing_ref(1);
     squareFirstThings[1] = group_thing_ref(99);
     before = world;
+    groupBefore = groups[0];
+    memcpy(rawBefore, rawGroups, sizeof(rawGroups));
     CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_FAIL,
           "second-column failure rejects partial admission");
     CHECK(memcmp(&world, &before, sizeof(world)) == 0 &&
           memcmp(&groups[0], &groupBefore, sizeof(groupBefore)) == 0 &&
-          groups[1].cells == groupBefore.cells,
+          groups[1].cells == groupBefore.cells &&
+          groups[1].behavior == DM1_BEHAVIOR_USELESS4,
           "partial admission publishes no RNG, aspects, events or C04 changes");
+    CHECK(memcmp(rawGroups, rawBefore, sizeof(rawGroups)) == 0,
+          "partial admission leaves shared raw C04 storage unchanged");
     squareFirstThings[1] = group_thing_ref(0);
     CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
           "two-column admission succeeds after correcting second owner");
