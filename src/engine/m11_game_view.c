@@ -53961,6 +53961,10 @@ static void m11_advance_explosions_v1(M11_GameViewState* state) {
         struct CellContentDigest_Compat digest;
 
         if (e->reserved0 == 0) continue;
+        /* Source-bound C15/C25 effects belong to F0220 in M10's timeline.
+         * Advancing them here after gameTick increments runs them early
+         * and consumes their owner before the scheduled event can do so. */
+        if (e->sourceC15Fingerprint != 0u) continue;
         if ((uint32_t)e->scheduledAtTick > now) continue;
 
         if (!m11_build_explosion_digest(&state->world, e, &digest)) {

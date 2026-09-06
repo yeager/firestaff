@@ -216,6 +216,55 @@ int main(int argc, char** argv)
             return 1;
         }
     }
+    if (spell->explosionType == 6) {
+        int i, rawIndex = -1;
+        unsigned int beforeTick = state.world.gameTick;
+        unsigned int dueTick = beforeTick;
+        /* PROJEXPL.C F0220:876-877 unlinks FF86 and frees its original
+         * C15 on the next event, without the FF87 cloud continuation. */
+        for (i = 0; i < state.world.things->explosionCount; ++i) {
+            const struct DungeonExplosion_Compat* e = &state.world.things->explosions[i];
+            if (e->next != THING_NONE && e->type == 6) {
+                if (rawIndex >= 0) {
+                    fputs("ambiguous live Poison Bolt C15 owner\n", stderr);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
+                rawIndex = i;
+            }
+        }
+        for (i = 0; i < state.world.timeline.count; ++i) {
+            const struct TimelineEvent_Compat* ev = &state.world.timeline.events[i];
+            if (ev->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE && ev->aux1 == 6)
+                dueTick = ev->fireAtTick;
+        }
+        /* The host exposes the next simulation tick after dispatch. Run
+         * through the source event's due tick, not merely up to it. */
+        if (dueTick > beforeTick + 1u) return 1;
+        while (state.world.gameTick <= dueTick) {
+            unsigned int tick = state.world.gameTick;
+            (void)M11_GameView_AdvanceIdleTick(&state);
+            if (state.world.gameTick != tick + 1u) return 1;
+        }
+        if (rawIndex < 0 ||
+            state.world.gameTick != dueTick + 1u ||
+            state.world.things->explosions[rawIndex].next != THING_NONE ||
+            state.world.things->rawThingData[THING_TYPE_EXPLOSION][rawIndex * 4] != 0xff ||
+            state.world.things->rawThingData[THING_TYPE_EXPLOSION][rawIndex * 4 + 1] != 0xff) {
+            fprintf(stderr, "Poison Bolt C15 retirement failed: index=%d tick=%u->%u next=%04x\n",
+                rawIndex, beforeTick, state.world.gameTick,
+                rawIndex < 0 ? 0 : state.world.things->explosions[rawIndex].next);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        M11_GameView_GetDm1F0115C15RuntimeCaptureReceipt(&receipt);
+        if (receipt.valid) {
+            fputs("retired Poison Bolt retained a live C15 render receipt\n", stderr);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
     state.world.gameTick++;
     state.assetsAvailable = 0;
     memset(framebuffer, 0, sizeof(framebuffer));

@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Authentic DOS Poison Bolt now verifies raw/decoded C15
+  retirement through its due C25 event and absence of a stale render
+  receipt. This exposed two lifecycle defects: M11 advanced source-bound
+  effects before their M10 event, and M10 despawn omitted original C15
+  unlink/free. The source timeline now owns these effects exclusively;
+  F0220 removes its authenticated source Thing before retiring the host
+  slot. Five real-media spell captures and two DM1/CSB explosion runtime
+  regressions pass. Emulator timing/RNG comparison remains open.
+
 - 2026-09-06: Original DOS public spell tests now cover Fireball, Lightning,
   Harm Non Material, Poison Bolt and Poison Cloud with authentic C14 Slots,
   C15 fingerprints and captures in V1/V2.0/V2.1. Added missing FF86 launch

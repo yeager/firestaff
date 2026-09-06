@@ -1,5 +1,9 @@
 # Unreleased
 
+- Original-data explosions are advanced only by their scheduled game event,
+  preventing premature presentation-layer advancement. Retiring an effect
+  also frees its original dungeon record instead of leaking a pool slot.
+
 - DM1 Poison Bolt now launches through the original spell path and produces
   its short, noncentered impact effect instead of a lingering poison cloud.
   Magical projectile records retain their original spell identifiers.

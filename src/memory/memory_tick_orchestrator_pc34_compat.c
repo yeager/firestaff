@@ -6383,11 +6383,13 @@ static int orch_c13_find_vi_altar_bones_compat(
     return 0;
 }
 
-static int orch_c25_event_source_bound_compat(
+static int orch_c25_find_source_thing_compat(
     const struct GameWorld_Compat* world,
-    const struct TimelineEvent_Compat* ev)
+    const struct TimelineEvent_Compat* ev,
+    unsigned short* outThing)
 {
     unsigned short thing;
+    unsigned short matchedThing = THING_NONE;
     const struct ExplosionInstance_Compat* live;
     int matches = 0;
     int safety = 0;
@@ -6432,11 +6434,21 @@ static int orch_c25_event_source_bound_compat(
                 (uint32_t)ev->aux3 ==
                     dm1_v1_c15_layout_fingerprint_pc34(raw, 4u)) {
                 ++matches;
+                matchedThing = thing;
             }
         }
         thing = orch_next_thing_compat(world->things, thing);
     }
-    return matches == 1;
+    if (matches != 1) return 0;
+    if (outThing) *outThing = matchedThing;
+    return 1;
+}
+
+static int orch_c25_event_source_bound_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev)
+{
+    return orch_c25_find_source_thing_compat(world, ev, NULL);
 }
 
 /* ReDMCSB PROJEXPL.C F0224 keeps C24's C15 Slot until the timer removes the
@@ -9067,12 +9079,13 @@ static int orch_handle_explosion_advance_event_compat(
     struct ExplosionTickResult_Compat tickResult;
     struct CellContentDigest_Compat digest;
     int explosionSlot;
+    unsigned short sourceThing = THING_NONE;
 
     if (!world || !event) return 0;
     if (world->things && world->things->loaded &&
         world->things->explosions &&
         world->things->rawThingData[THING_TYPE_EXPLOSION] &&
-        !orch_c25_event_source_bound_compat(world, event)) {
+        !orch_c25_find_source_thing_compat(world, event, &sourceThing)) {
         return 0;
     }
     explosionSlot = event->aux0;
@@ -9109,6 +9122,16 @@ static int orch_handle_explosion_advance_event_compat(
     }
 
     if (tickResult.despawn) {
+        /* ReDMCSB PROJEXPL.C F0220:876-877: remove the exact original
+         * C15 from its square and mark Next unused before retiring the
+         * host instance. Otherwise every one-shot leaks a source slot. */
+        if (sourceThing != THING_NONE &&
+            (!orch_unlink_thing_from_square_compat(world, event->mapIndex,
+                event->mapX, event->mapY, sourceThing) ||
+             !orch_set_next_thing_compat(world->things, sourceThing,
+                THING_NONE))) {
+            return 0;
+        }
         F0824_EXPLOSION_Despawn_Compat(&world->explosions, explosionSlot);
         return 1;
     }
