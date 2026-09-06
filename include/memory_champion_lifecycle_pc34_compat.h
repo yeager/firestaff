@@ -371,6 +371,14 @@ int F0850_LIFECYCLE_ApplyLevelUp_Compat(
     struct RngState_Compat* rng,
     struct LevelUpMarker_Compat* outMarker);
 
+/* CHAMPION.C F0304:963-967: early/F20/F31 uses modulo 3; PC34 and
+ * late Amiga use modulo 4. Reject other values before changing state. */
+int F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+    struct ChampionLifecycleState_Compat* champ,
+    int baseSkillIndex, int newLevel, int antimagicModulus,
+    struct RngState_Compat* rng,
+    struct LevelUpMarker_Compat* outMarker);
+
 int F0851_LIFECYCLE_AwardCombatXP_Compat(
     struct ChampionLifecycleState_Compat* champ,
     int championIndex,

@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Level-up exposes an explicitly validated antimagic rule;
+  admitted DM1 F20 M11 magic/influence awards select modulo 3, while the
+  PC34 wrapper retains modulo 4. The independent oracle now covers 48
+  class/level/seed/rule combinations and rejects invalid rules without
+  mutations. Production build and four skill/XP/action/F20 original-media
+  regressions pass (11.82s). Remaining edition admission and orchestrator
+  XP-to-level-up publication remain open; this is not full XP parity.
+
 - 2026-09-06: Live PC34 lifecycle level-up follows F0304's fixed RNG
   order, fighter/ninja/priest health factors, one mana random draw,
   PC34 antimagic and stamina random bonus. Independent unit fixtures

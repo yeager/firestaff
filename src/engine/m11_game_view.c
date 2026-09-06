@@ -22980,8 +22980,12 @@ static void m11_award_magic_xp(M11_GameViewState* state,
             }
         }
         if (levelAfter > levelBefore && levelAfter > 0) {
-            (void)F0850_LIFECYCLE_ApplyLevelUp_Compat(
-                lc, baseIdx, levelAfter, &state->world.masterRng, &marker);
+            /* F0304 CHAMPION.C:963-967: admitted F20 uses modulo 3,
+             * while the PC34 lifecycle default uses two random bits. */
+            (void)F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+                lc, baseIdx, levelAfter,
+                state->dm1FmtownsStartupReceiptValid ? 3 : 4,
+                &state->world.masterRng, &marker);
             m11_format_champion_name(
                 state->world.party.champions[championIndex].name,
                 name, sizeof(name));
@@ -52029,6 +52033,7 @@ static int m11_add_influence_experience(M11_GameViewState* state,
     struct LevelUpMarker_Compat marker;
     int mapDifficulty = 0;
     int priestLevel;
+    int levelBefore, levelAfter;
     if (!state || championIndex < 0 ||
         championIndex >= CHAMPION_MAX_PARTY || experience <= 0) {
         return 0;
@@ -52044,11 +52049,15 @@ static int m11_add_influence_experience(M11_GameViewState* state,
     /* ReDMCSB MENU.C F0401 line 987 calls CHAMPION.C F0304 with
      * C14_SKILL_INFLUENCE.  Use the lifecycle F0304 wrapper so the award
      * also updates temporary XP, the Priest base skill and level-up state. */
-    if (F0852_LIFECYCLE_AwardMagicXP_Compat(
-            lifecycleChampion, championIndex, LIFECYCLE_SKILL_INFLUENCE,
+    if (F0849_LIFECYCLE_AddSkillExperience_Compat(
+            lifecycleChampion, LIFECYCLE_SKILL_INFLUENCE,
             experience, mapDifficulty, state->world.gameTick,
             state->world.lifecycle.lastCreatureAttackTime,
-            &state->world.masterRng, &marker)) {
+            &levelBefore, &levelAfter)) {
+        (void)F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+            lifecycleChampion, LIFECYCLE_SKILL_PRIEST, levelAfter,
+            state->dm1FmtownsStartupReceiptValid ? 3 : 4,
+            &state->world.masterRng, &marker);
         priestLevel = F0848_LIFECYCLE_ComputeSkillLevel_Compat(
             lifecycleChampion, LIFECYCLE_SKILL_PRIEST, 0);
         if (priestLevel > 0) {

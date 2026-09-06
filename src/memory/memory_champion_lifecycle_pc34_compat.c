@@ -820,6 +820,16 @@ int F0850_LIFECYCLE_ApplyLevelUp_Compat(
     struct RngState_Compat* rng,
     struct LevelUpMarker_Compat* outMarker)
 {
+    return F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+        champ, baseSkillIndex, newLevel, 4, rng, outMarker);
+}
+
+int F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+    struct ChampionLifecycleState_Compat* champ,
+    int baseSkillIndex, int newLevel, int antimagicModulus,
+    struct RngState_Compat* rng,
+    struct LevelUpMarker_Compat* outMarker)
+{
     int level = newLevel;
     int minorIncrease, majorIncrease;
     int maxH, maxS, maxM;
@@ -834,6 +844,7 @@ int F0850_LIFECYCLE_ApplyLevelUp_Compat(
     int manaBump = 0;
 
     if (champ == 0) return 0;
+    if (antimagicModulus != 3 && antimagicModulus != 4) return 0;
     if (baseSkillIndex < 0 || baseSkillIndex >= LIFECYCLE_HIDDEN_SKILL_FIRST)
         return 0;
     if (level < 2) return 0;
@@ -887,7 +898,7 @@ int F0850_LIFECYCLE_ApplyLevelUp_Compat(
         baseSkillIndex == LIFECYCLE_SKILL_WIZARD) {
         int manaRandom = rng_next_mod(rng, 4);
         manaBump += manaRandom < level - 1 ? manaRandom : level - 1;
-        antimagicBump = rng_next_mod(rng, 4);
+        antimagicBump = rng_next_mod(rng, antimagicModulus);
     }
     healthBump += rng_next_mod(rng, (healthBump >> 1) + 1);
     staminaBump += rng_next_mod(rng, (staminaBump >> 1) + 1);

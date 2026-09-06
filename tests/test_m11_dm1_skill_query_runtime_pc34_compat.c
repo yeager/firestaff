@@ -421,7 +421,7 @@ static void test_f0304_levelup_bonuses_and_random_order(void)
         for (level = 2; level <= 3; ++level) {
             for (seed_index = 0; seed_index < sizeof(seeds) / sizeof(seeds[0]);
                  ++seed_index) {
-                struct ChampionLifecycleState_Compat actual, expected;
+                struct ChampionLifecycleState_Compat actual, expected, initial;
                 struct RngState_Compat rng;
                 struct LevelUpMarker_Compat marker;
                 uint32_t expected_seed = seeds[seed_index];
@@ -435,6 +435,7 @@ static void test_f0304_levelup_bonuses_and_random_order(void)
                 actual.maxStamina = 987;
                 actual.maxMana = 234;
                 expected = actual;
+                initial = actual;
                 for (n = 0; n < (magical ? 8 : 6); ++n) {
                     expected_seed = expected_seed * UINT32_C(0xbb40e62d) + 11u;
                     draw[n] = (unsigned int)((expected_seed >> 8) & 0xffffu);
@@ -490,6 +491,22 @@ static void test_f0304_levelup_bonuses_and_random_order(void)
                 assert(rng.seed == expected_seed);
                 assert(marker.baseSkillIndex == skill && marker.previousLevel == level - 1 &&
                        marker.newLevel == level && marker.championIndex == -1);
+                /* F20/F31 uses the same sixth draw, but modulo three.
+                 * Verify all other mutations and the stream stay identical. */
+                if (magical) {
+                    expected.statistics[LIFECYCLE_STAT_ANTIMAGIC][LIFECYCLE_STAT_MAXIMUM] =
+                        (uint8_t)(40u + draw[5] % 3u);
+                }
+                actual = initial;
+                rng.seed = seeds[seed_index];
+                assert(F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+                    &actual, skill, level, 3, &rng, &marker) == 1);
+                assert(memcmp(&actual, &expected, sizeof(actual)) == 0);
+                assert(rng.seed == expected_seed);
+                assert(F0850_LIFECYCLE_ApplyLevelUpWithAntimagic_Compat(
+                    &actual, skill, level, 2, &rng, &marker) == 0);
+                assert(memcmp(&actual, &expected, sizeof(actual)) == 0);
+                assert(rng.seed == expected_seed);
             }
         }
     }

@@ -1,7 +1,10 @@
 # Firestaff TODO — active cross-game work
 
-- Bind edition-specific level-up antimagic behavior for early DM1/FM
-  Towns (modulo 3 versus PC34/late-Amiga two bits) and compare complete
+- Complete DM1 XP-to-level-up publication across orchestrator spell,
+  melee, parry and sensor paths: several call F0849 but drop the level
+  transition result instead of applying F0850 and publishing source UI.
+- Bind edition-specific level-up antimagic behavior for remaining early
+  DM1 editions (modulo 3 versus PC34/late-Amiga two bits) and compare complete
   level transitions against original emulator traces, including source UI.
 
 - Extend authentic combat coverage to multi-creature selection, reach

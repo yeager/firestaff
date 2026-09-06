@@ -1,5 +1,8 @@
 # Unreleased
 
+- Admitted DM1 FM Towns magic/influence level-up paths use their original
+  antimagic rule instead of the PC34 two-bit rule.
+
 - Corrected DM1 PC34 level-up health/stamina bonuses and RNG ordering,
   including the extra mana draw and priest antimagic mismatch.
 - CSB FM Towns starts its fresh RNG stream with the original seed.
