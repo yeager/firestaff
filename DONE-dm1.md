@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Migrated inventory main rendering and food/water rendering
+  to the explicit owner. Five Atari/Amiga tests compare the 224x136 C017
+  viewport for the same inventory owner with different leaders. All pass;
+  the comparison shares the renderer and is not an emulator pixel oracle.
+
 - 2026-09-06: Migrated empty-hand eye selection and statistics rendering
   to the explicit inventory owner. Five original Atari/Amiga tests pass
   cross-owner eye press/release and invalid-owner rejection. This verifies

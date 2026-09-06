@@ -146,6 +146,25 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         state->dm1InventoryChampionOrdinal = 2;
                         if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) < 0 ||
                             state->world.party.activeChampionIndex != 0) return 0;
+                        {
+                            unsigned char selected[320 * 200], baseline[320 * 200];
+                            memset(selected, 0, sizeof(selected));
+                            memset(baseline, 0, sizeof(baseline));
+                            M11_GameView_Draw(state, selected, 320, 200);
+                            state->world.party.activeChampionIndex = 1;
+                            state->dm1InventoryChampionOrdinal = 0;
+                            M11_GameView_Draw(state, baseline, 320, 200);
+                            state->world.party.activeChampionIndex = 0;
+                            state->dm1InventoryChampionOrdinal = 2;
+                            /* Same inventory owner, different leader. Compare
+                             * C017 viewport only, excluding leader HUD markers. */
+                            for (int row = 33; row < 169; ++row) {
+                                if (memcmp(selected + row * 320, baseline + row * 320, 224)) {
+                                    fprintf(stderr, "FAIL: inventory owner raster row=%d\n", row);
+                                    return 0;
+                                }
+                            }
+                        }
                         state->dm1InventoryChampionOrdinal = CHAMPION_MAX_PARTY + 1;
                         if (DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(state, 20) != -1) return 0;
                         state->dm1InventoryChampionOrdinal = 0;

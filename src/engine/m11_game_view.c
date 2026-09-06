@@ -64251,7 +64251,7 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
         !state->inventoryPanelActive || state->showDebugHUD) {
         return 0;
     }
-    championIndex = state->world.party.activeChampionIndex;
+    championIndex = m11_inventory_champion_index(state);
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     champ = &state->world.party.champions[championIndex];
     if (!champ->present) return 0;
@@ -64667,9 +64667,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
      * the viewport untouched rather than reconstructing inventory chrome. */
     if (!state->showDebugHUD && m11_is_dm1_source_kind(state->sourceKind) &&
         !m11_dm1_v1_f0355_inventory_material_ready(state)) return;
-    if (state->world.party.activeChampionIndex < 0 ||
-        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) return;
-    champ = &state->world.party.champions[state->world.party.activeChampionIndex];
+    if (m11_inventory_champion_index(state) < 0) return;
+    champ = &state->world.party.champions[m11_inventory_champion_index(state)];
     isDead = (champ->hp.current == 0);
 
     /* Use 18×18 slot boxes when GRAPHICS.DAT assets are available */
