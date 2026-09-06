@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Strengthened aspect-width regression with a real C33 dispatch through the
+  runtime adapter: selected creature changes while three sibling slots retain
+  their byte values. Reintroducing the old memcpy writeback fails specifically
+  on sibling preservation; restoring per-slot conversion passes. The earlier
+  misfacing-C38 test alone did not detect that mutation, so it must not be
+  cited as proof of the writeback fix. Negative-control code was removed.
+
 - Replaced five M10 aspect transfers between uint8_t[4] runtime storage and
   int[4] behavior adapters with explicit per-creature conversion. The old
   memcpy sizes could combine slots, erase sibling aspects or read adjacent

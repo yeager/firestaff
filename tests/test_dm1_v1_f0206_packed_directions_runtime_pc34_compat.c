@@ -1360,8 +1360,40 @@ static int test_m10_f0220_rejects_drifted_live_c15_c25_owner(void)
     return run_m10_f0217_thrown_potion_fixture(3);
 }
 
+static int test_c33_aspect_slot_conversion(void)
+{
+    struct GameWorld_Compat world;
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int ok;
+    if (!build_world(&world)) return 1;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.creatureAI[0].aspect[0] = 0xff;
+    world.creatureAI[0].aspect[1] = 0x44;
+    world.creatureAI[0].aspect[2] = 0x21;
+    world.creatureAI[0].aspect[3] = 0x63;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapX = event.mapY = 1;
+    event.aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    event.aux4 = 0x100;
+    memset(&result, 0, sizeof(result));
+    ok = F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) &&
+         F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    ok &= expect(world.creatureAI[0].aspect[0] != 0xff,
+                 "C33 actually updates selected creature aspect");
+    ok &= expect(world.creatureAI[0].aspect[1] == 0x44 &&
+                 world.creatureAI[0].aspect[2] == 0x21 &&
+                 world.creatureAI[0].aspect[3] == 0x63,
+                 "C33 writeback preserves sibling aspect bytes");
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 int main(void)
 {
+    if (test_c33_aspect_slot_conversion() != 0) return 1;
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
