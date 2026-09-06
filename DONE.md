@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Five original DM1 Atari/Amiga editions pass 230,280
+  place/pickup transactions across both hands and all 17 backpack slots
+  in Original/V2.1, including identity checks after mouse release.
+
 - 2026-09-06: Original DM1 Atari/Amiga scrolls now exercise action-hand
   placement and pickup, checking held/slot identity before and after mouse
   release in five editions and Original/V2.1; all tests pass.

@@ -4,6 +4,51 @@
 #include "asset_loader_m11.h"
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "font_m11.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+
+static int check_legacy_object_transfers(M11_GameViewState *state)
+{
+    /* DATA.C G0038 and CHAMPION.C F0302:662-707: the two hands and all
+     * 17 backpack slots accept ordinary object categories without a
+     * body-slot mask restriction. Use allocated original records only. */
+    static const int boxes[19] = {8,9,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37};
+    static const int slots[19] = {19,20,11,12,13,14,15,16,17,18,21,22,23,24,25,26,27,28,29};
+    int checked = 0;
+    for (int type = THING_TYPE_WEAPON; type <= THING_TYPE_JUNK; ++type) {
+        for (int i = 0; i < state->world.things->thingCounts[type]; ++i) {
+            unsigned short thing = (unsigned short)((type << 10) | i);
+            const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, thing);
+            if (!raw) return 0;
+            if (raw[0] == 0xff && raw[1] == 0xff) continue;
+            for (int mode = 0; mode < 2; ++mode) for (int slot = 0; slot < 19; ++slot) {
+                int x, y, w, h;
+                state->presentationMode = mode ? M12_PRESENTATION_V21_UPSCALED : M12_PRESENTATION_V1_ORIGINAL;
+                state->inventoryPanelActive = 1;
+                if (state->world.party.champions[0].inventory[slots[slot]] != THING_NONE ||
+                    !M11_GameView_GetV1InventorySourceSlotBoxZone(boxes[slot], &x, &y, &w, &h) ||
+                    !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing)) return 0;
+                for (int step = 0; step < 2; ++step) {
+                    unsigned short hand = step ? thing : THING_NONE;
+                    unsigned short resident = step ? THING_NONE : thing;
+                    (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
+                    for (int release = 0; release < 2; ++release) {
+                        if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
+                            x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
+                            state->world.party.champions[0].inventory[slots[slot]] != resident) {
+                            fprintf(stderr, "FAIL: legacy object %04x mode %d slot %d step %d release %d\n",
+                                thing, mode, slots[slot], step, release);
+                            return 0;
+                        }
+                    }
+                    ++checked;
+                }
+            }
+        }
+    }
+    printf("PASS: %d original legacy object transfers and releases\n", checked);
+    return checked > 0;
+}
 
 /* PANEL.C F0340/F0341: original Atari/Amiga center X=162,
  * baseline=92-floor(7*n/2). TEXT.C F0040:413,714 subtracts four
@@ -31,7 +76,7 @@ static int check_legacy_scroll_raster(M11_GameViewState *state)
             if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing)) return 0;
             {
                 int sx, sy, sw, sh;
-                /* COMMAND.C F0359/F0361: dropping in the action hand
+                /* CHAMPION.C F0302:662-707: dropping in the action hand
                  * and picking back up are distinct press transactions.
                  * Releases must not repeat either ownership exchange. */
                 if (!M11_GameView_GetV1InventorySourceSlotBoxZone(9, &sx, &sy, &sw, &sh)) return 0;
@@ -110,6 +155,6 @@ static int check_legacy_scroll_raster(M11_GameViewState *state)
         }
     }
     printf("PASS: %d original legacy scroll/mode raster checks\n", checked);
-    return checked > 0;
+    return checked > 0 && check_legacy_object_transfers(state);
 }
 #endif

@@ -1,5 +1,19 @@
 # Firestaff DONE — DM1
 
+## 2026-09-06 — Legacy original-object hand/backpack corpus
+
+- Extended the five original-media tests beyond scrolls to every allocated
+  weapon, armour, scroll, potion, container and junk record (606 per
+  edition). Unused records marked by a 0xffff next pointer are excluded.
+- Each record visits the two hands and all 17 backpack slots in Original
+  and V2.1 through pointer input. Held and resident Thing identity is
+  checked after each placement/pickup press and explicit mouse release.
+- Atari EN1.2/DE1.2/FR1.3 and Amiga EN2.0/HD each pass 46,056 transfer
+  transactions: 230,280 total. Original archives remain unchanged.
+- Scope: empty-slot transfers and release idempotence. This does not
+  establish body-slot restrictions, occupied swaps, independent slot
+  geometry, item pixel parity, save persistence or full gameplay parity.
+
 ## 2026-09-06 — Legacy scroll action-hand ownership
 
 - Extended the five Atari/Amiga original-media tests to place and pick up

@@ -1,5 +1,10 @@
 # Firestaff TODO — DM1
 
+- Extend Atari/Amiga original-object transfer coverage to body-slot
+  restrictions, occupied exchanges and complete drag sequences. Verify
+  restrictions against each edition's original G0237/G0038 tables rather
+  than reusing the runtime admission result as the expected answer.
+
 - Verify FM Towns scroll baseline/line placement against its own
   F0341/F0644 paths and original layout data. PC3.4 and the tested
   Atari/Amiga editions now have source/data raster evidence; same-state
