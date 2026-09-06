@@ -23,7 +23,8 @@ int main(int argc, char** argv)
     int peer = argc == 2 && strcmp(argv[1], "peer") == 0;
     int fluxcage = argc == 2 && strcmp(argv[1], "fluxcage") == 0;
     int burstAll = argc == 2 && strcmp(argv[1], "burst-all") == 0;
-    int burstLethal = burstAll || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
+    int burstSmoke = argc == 2 && strcmp(argv[1], "burst-smoke") == 0;
+    int burstLethal = burstAll || burstSmoke || (argc == 2 && strcmp(argv[1], "burst-lethal") == 0);
     int burst = burstLethal || (argc == 2 && strcmp(argv[1], "burst") == 0);
     int fakeOpen = argc == 2 && strcmp(argv[1], "fake-open") == 0;
     int fakeImaginary = argc == 2 && strcmp(argv[1], "fake-imaginary") == 0;
@@ -43,7 +44,7 @@ int main(int argc, char** argv)
     struct DungeonWeapon_Compat weapon = {0};
     struct DungeonProjectile_Compat c14[2] = {{0}};
     struct DungeonExplosion_Compat c15 = {0};
-    unsigned char rawC15[4] = {0};
+    unsigned char rawC15[12] = {0};
     struct ProjectileCreateInput_Compat create = {0};
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
@@ -118,6 +119,7 @@ int main(int argc, char** argv)
     world.newPartyMapIndex = -1; world.party.mapX = 2; world.party.mapY = 2;
     if (burst) {
         struct ExplosionCreateInput_Compat blast = {0};
+        struct DungeonExplosion_Compat smokePool[3] = {{0}};
         struct RngState_Compat expectedRng = world.masterRng;
         int attack, spread, expectedHp[2], i;
         group.creatureType = rawGroup[4] = 15;
@@ -147,12 +149,35 @@ int main(int argc, char** argv)
         things.explosions = &c15;
         things.explosionCount = things.thingCounts[THING_TYPE_EXPLOSION] = 1;
         things.rawThingData[THING_TYPE_EXPLOSION] = rawC15;
+        if (burstSmoke) {
+            for (i = 0; i < 3; ++i) {
+                smokePool[i].next = THING_NONE;
+                word(rawC15 + i * 4, THING_NONE);
+            }
+            things.explosions = smokePool;
+            things.explosionCount = things.thingCounts[THING_TYPE_EXPLOSION] = 3;
+        }
         blast.explosionType = C000_EXPLOSION_FIREBALL;
         blast.attack = 80;
         blast.mapX = 1; blast.mapY = 0;
         blast.centered = 1; blast.cell = 255; blast.currentTick = 40;
         blast.creatorProjectileSlot = -1;
         CHECK(F0887_ORCH_CreateSourceExplosion_Compat(&world, &blast, 0));
+        if (burstSmoke) {
+            int smokeEvents = 0;
+            CHECK(smokePool[1].next != THING_NONE);
+            CHECK(smokePool[1].type == 40 && smokePool[1].attack == 190);
+            CHECK((readword(rawC15 + 6) & 127) == 40);
+            for (i = 0; i < world.timeline.count; ++i) {
+                const struct TimelineEvent_Compat* pending = &world.timeline.events[i];
+                if (pending->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE && pending->aux1 == 40) {
+                    CHECK(pending->aux3 != 0);
+                    CHECK(pending->fireAtTick == world.gameTick + 1);
+                    ++smokeEvents;
+                }
+            }
+            CHECK(smokeEvents == 1);
+        }
         if (burstAll) {
             CHECK(group.next == THING_NONE && readword(rawGroup) == THING_NONE);
             CHECK(world.creatureAICount == 0);

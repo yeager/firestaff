@@ -9517,8 +9517,6 @@ static int orch_apply_door_group_damage_f0191_compat(
             DM1_MeleeF0190DeathSmokePlanPc34 smokePlan;
             DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
             DM1_MeleeF0190MutationDispatchPlanPc34 dispatchPlan;
-            struct TimelineEvent_Compat advance;
-            int slotIndex = -1;
 
             /* ReDMCSB: GROUP.C F0191 lines 956-980 calls F0190 for each
              * descending slot.  F0190 lines 824-917 owns the per-kill
@@ -9560,13 +9558,12 @@ static int orch_apply_door_group_damage_f0191_compat(
             if (dm1_v1_melee_death_smoke_plan_f0190_pc34(
                     &smokeIn, &smokePlan) &&
                 smokePlan.valid && smokePlan.shouldCreate) {
-                memset(&advance, 0, sizeof(advance));
-                if (F0213_EXPLOSION_Create_Compat(
-                        &smokePlan.createInput, &world->explosions,
-                        &slotIndex, &advance)) {
-                    (void)F0721_TIMELINE_Schedule_Compat(
-                        &world->timeline, &advance);
-                }
+                /* GROUP.C F0190:916 calls F0213, including its source
+                 * C15 allocation/C25 owner. Never invent a host-only smoke
+                 * when the original record pool is present or exhausted. */
+                (void)orch_create_explosion_with_fallback_compat(world,
+                    &smokePlan.createInput,
+                    smokePlan.createInput.centered ? 0 : smokePlan.createInput.cell);
             }
         }
         if (outcome == COMBAT_OUTCOME_KILLED_ALL_CREATURES) {

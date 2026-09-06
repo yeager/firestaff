@@ -1,5 +1,8 @@
 # Unreleased
 
+- Monster death smoke from group-wide damage now uses the original effect
+  record and scheduled event when original game records are available.
+
 - Original-data explosions apply individually randomized monster damage in
   the original order and keep raw health and surviving active state in sync.
 

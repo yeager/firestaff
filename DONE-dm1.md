@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Shared F0191 death smoke uses source-first F0213 allocation
+  (GROUP.C:916) instead of unconditionally creating a host-only effect.
+  A three-slot C15 fixture failed before the fix and now verifies raw smoke
+  type 40, half-square strength 190 and one fingerprinted C25 at tick+1.
+  Nine tests pass, including five original DOS spells; executable rebuilt.
+  This proves publication, not original smoke pixels or full expiration.
+
 - 2026-09-06: A two-creature lethal explosion fixture verifies that F0191
   frees the raw/decoded C04 group, removes its active AI entry and unlinks
   the group from its square. This passes without another runtime change.
