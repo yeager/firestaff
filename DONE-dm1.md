@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- Authenticated the local English DOS ZIP against the creature-capture
+  contract directly through streamed archive members: GRAPHICS.DAT SHA-256
+  2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e and
+  DUNGEON.DAT d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85.
+  Prepared an unchanged, untracked emulator-only copy under
+  .codex-scratch/dm1-original-en-capture. The older dos-raster stage has a
+  different graphics hash and cannot support this revision's capture claim.
+  No original screenshots or new parity claims result from staging alone.
+
 - Removed the viewport capture launcher's implicit .openclaw game-stage
   selection and updated its help/printed HoC diagnostic. The explicit
   DM1_ORIGINAL_STAGE_DIR override and existing repository-local fallback
