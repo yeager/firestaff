@@ -642,6 +642,12 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             }
                             const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
                             if (!raw || (raw[3] & 127) != restorative) { fprintf(stderr, "FAIL: restorative subtype %d\n", restorative); return 0; }
+                            /* MENU.C F0412:1824,1853: RANDOM(16) + ordinal*40.
+                             * Independent bound rejects wrong power-rune scaling;
+                             * it does not prove which RNG sample was consumed. */
+                            if (raw[2] < (powerRune + 1) * 40 || raw[2] > (powerRune + 1) * 40 + 15) {
+                                fprintf(stderr, "FAIL: restorative source power range\n"); return 0;
+                            }
                             int counter = ((511 - raw[2]) / (32 + (raw[2] + 1) / 8)) >> 1;
                             int before = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 990 : 100;
                             int expected = before + 1000 / counter;

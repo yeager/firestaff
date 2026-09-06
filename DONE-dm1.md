@@ -1,5 +1,9 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: All 240 MON/EE cast sequences additionally satisfy the
+  independent MENU.C F0412 power bound: ordinal*40 through ordinal*40+15.
+  This verifies scaling/range, not exact RNG draw identity or ordering.
+
 - 2026-09-06: Extended original-flask spell/consumption coverage to MON
   and EE at all six power runes: 240 creation/consumption sequences across
   twenty Atari/Amiga cases pass. Checks include raw subtype conversion,
