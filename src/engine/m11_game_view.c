@@ -809,6 +809,7 @@ static void m11_log_event(M11_GameViewState* state,
                           const char* fmt,
                            ...);
 static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex);
+static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state);
 static void m11_format_champion_name(const unsigned char* raw,
                                      char* out,
                                      size_t outSize);
@@ -19058,6 +19059,9 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     }
     champion->wounds = 0;
     champion->poisonDose = 0;
+    /* ReDMCSB CHAMPION.C F0319:1621-1622 clears the dead caster's input. */
+    memset(&state->dm1SpellCasting.input[championIndex], 0,
+           sizeof(state->dm1SpellCasting.input[championIndex]));
     champion->direction = (unsigned char)(state->world.party.direction & 3);
     state->world.lifecycle.champions[championIndex].poisonEventCount = 0;
     state->championDeathHandledMask |= (unsigned char)(1u << championIndex);
@@ -19077,6 +19081,14 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     }
     /* CHAMPION.C F0318/F0300:582 removes dropped inventory weight.
      * Publish after leader fallback so held weight follows the survivor. */
+    /* ReDMCSB CHAMPION.C F0319:1679-1680 selects a living magic caster
+     * independently of the leader. Do not save the dead UI buffer back. */
+    if (state->dm1SpellCasting.magicCasterIndex == championIndex) {
+        memset(&state->spellBuffer, 0, sizeof(state->spellBuffer));
+        state->spellRuneRow = 0;
+        state->dm1SpellCasting.magicCasterIndex = aliveIndex;
+        if (aliveIndex >= 0) m11_dm1_spell_sync_caster_to_legacy(state);
+    }
     m11_refresh_hash(state);
 }
 

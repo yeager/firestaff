@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: F0319 now clears the dead champion's spell input and
+  independently transfers magic-caster selection to a survivor, restoring
+  that survivor's pending runes instead of retaining the dead UI buffer.
+  Five original Atari/Amiga media probes pass in both leader-death and
+  non-leader-death variants. This is a direct death-dispatch regression,
+  not an emulator or full-timeline parity claim.
+
 - 2026-09-06: Leader-death probes now retain a third distinct original
   weapon in the mouse hand and verify its identity/weight pass to the
   survivor while the dead champion's load becomes zero. All five editions

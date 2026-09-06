@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 selects a surviving magic caster after death and restores their
+  pending runes, clearing the dead champion's spell input.
+
 - DM1 clears stale carried weight after a champion's death drops.
 
 - DM1 death drops now translate the original slot-order table to the

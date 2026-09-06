@@ -377,7 +377,26 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[0].direction =
                                 (unsigned char)((state->world.party.direction + 1) & 3);
                         }
+                        state->dm1SpellCasting.magicCasterIndex = 1;
+                        state->dm1SpellCasting.input[1].symbols[0] = 96;
+                        state->dm1SpellCasting.input[1].symbolStep = 1;
+                        state->spellBuffer.runes[0] = 96;
+                        state->spellBuffer.runeCount = 1;
+                        state->spellRuneRow = 1;
+                        memset(&state->dm1SpellCasting.input[0], 0,
+                               sizeof(state->dm1SpellCasting.input[0]));
+                        state->dm1SpellCasting.input[0].symbols[0] = 97;
+                        state->dm1SpellCasting.input[0].symbolStep = 1;
                         M11_GameView_ProbeCheckPartyDeath(state);
+                        if (state->dm1SpellCasting.magicCasterIndex != 0 ||
+                            state->dm1SpellCasting.input[1].symbols[0] != 0 ||
+                            state->dm1SpellCasting.input[1].symbolStep != 0 ||
+                            state->spellBuffer.runeCount != 1 ||
+                            state->spellBuffer.runes[0] != 97 ||
+                            state->spellRuneRow != 1) {
+                            fprintf(stderr, "FAIL: death caster/rune handoff\n");
+                            return 0;
+                        }
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != inheritedHand ||
                             state->world.party.champions[0].load != inheritedWeight) return 0;
                         if (getenv("FIRESTAFF_VERIFY_LEADER_DEATH") &&

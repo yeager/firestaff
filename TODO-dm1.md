@@ -1,5 +1,9 @@
 # Firestaff TODO — DM1
 
+- Extend death spell-input coverage to an unaffected living caster,
+  all-party death and actual timeline dispatch; verify UI redraw against
+  the original. Savegames remain deferred.
+
 - Verify cross-owner consumption with original water/potions after
   the mouth-owner migration. Check recipient stats, leader held weight,
   consumed Thing removal, potion event ownership and release behavior.
