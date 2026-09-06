@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added source-shaped F0219 stair-boundary integration checks:
+  corridor-to-stairs preserves the flying C14 on the same map, whereas
+  stairs-to-stairs retires it without damaging the destination group.
+  Both match PROJEXPL.C:723; no production correction was needed. All
+  thirteen ownership/occupancy/geometry fixture cases pass. These bounded
+  checks do not establish original-media or emulator stair capture parity.
+
 - 2026-09-06: Native projectile destination digests preserve imaginary/open
   fake-wall bits (01/04), following PROJEXPL.C F0219:721-724. The omitted
   flags previously made open fake walls stop projectiles. A source-shaped

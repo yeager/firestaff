@@ -24,6 +24,8 @@ int main(int argc, char** argv)
     int fakeOpen = argc == 2 && strcmp(argv[1], "fake-open") == 0;
     int fakeImaginary = argc == 2 && strcmp(argv[1], "fake-imaginary") == 0;
     int fakeClosed = argc == 2 && strcmp(argv[1], "fake-closed") == 0;
+    int stairsEntry = argc == 2 && strcmp(argv[1], "stairs-entry") == 0;
+    int stairsPair = argc == 2 && strcmp(argv[1], "stairs-pair") == 0;
     int halfSquare = argc == 2 && strcmp(argv[1], "half-square") == 0;
     int sameSquare = grace || emptyCell || partyFirst || halfSquare || (argc == 2 && strcmp(argv[1], "same-square") == 0);
     struct GameWorld_Compat world;
@@ -50,6 +52,10 @@ int main(int argc, char** argv)
             DUNGEON_SQUARE_MASK_THING_LIST | (fakeOpen ? 4 : fakeImaginary ? 1 : 0);
     }
     dungeon.loaded = dungeon.tilesLoaded = 1;
+    if (stairsEntry || stairsPair) {
+        squares[3] = (DUNGEON_ELEMENT_STAIRS << 5) | DUNGEON_SQUARE_MASK_THING_LIST;
+        if (stairsPair) squares[4] = DUNGEON_ELEMENT_STAIRS << 5;
+    }
     dungeon.header.mapCount = 1; dungeon.header.squareFirstThingCount = 3;
     dungeon.maps = &map; dungeon.tiles = &tile;
     dungeon.dungeonColumnCount = 3;
@@ -133,6 +139,19 @@ int main(int argc, char** argv)
     world.gameTick = event.fireAtTick;
     memset(&result, 0, sizeof(result));
     CHECK(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) >= 1);
+    if (stairsEntry || stairsPair) {
+        /* PROJEXPL.C F0219:723 blocks only stairs -> stairs. */
+        CHECK((world.projectiles.entries[0].reserved3 != 0) == !stairsPair);
+        if (stairsEntry) {
+            CHECK(world.projectiles.entries[0].mapY == 0);
+            CHECK(world.projectiles.entries[0].mapIndex == 0);
+        } else {
+            CHECK(c14[0].next == THING_NONE && readword(rawC14) == THING_NONE);
+        }
+        CHECK(group.health[0] == 1000);
+        puts("ok: source projectile stair boundary matches F0219");
+        return 0;
+    }
     if (fakeOpen || fakeImaginary || fakeClosed) {
         CHECK((world.projectiles.entries[0].reserved3 != 0) == !fakeClosed);
         if (!fakeClosed) CHECK(world.projectiles.entries[0].mapY == 0);
