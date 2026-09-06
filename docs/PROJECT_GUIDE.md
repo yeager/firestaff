@@ -3,6 +3,9 @@
 Reference navigation, not mandatory reading for every edit. Descriptive
 snapshots may be outdated; current code and verification evidence take precedence.
 
+Contributor requirements and verification/publication policy live in
+[AGENTS.md](../AGENTS.md). See also [archived project notes](PROJECT_NOTES_HISTORICAL.md).
+
 ## Architecture
 
 ### Layer Model
@@ -21,7 +24,7 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 
 | Directory | Purpose |
 |-----------|---------|
-| `src/engine/` | Main loop, game view (21K LOC), render pipeline, SDL integration |
+| `src/engine/` | Main loop, game view, render pipeline, SDL integration |
 | `src/ui/` | M12 launcher: menu logic, hit-testing, modern HD rendering |
 | `src/memory/` | M10 data layer: dungeon, movement, combat, sensors, timeline, savegame |
 | `src/shared/` | Cross-game: asset loading, palette, VGA compat, config, touch zones |
@@ -33,8 +36,8 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | `src/nexus/` | DM Nexus (Saturn): DGN level format, DMDF parser |
 | `src/theron/` | Theron's Quest: profile, data, rendering, mechanics, progression |
 | `src/test/` | Test utilities |
-| `include/` | All public headers (~365 files) |
-| `tests/` | Integration tests (~149 files) |
+| `include/` | Public headers |
+| `tests/` | Test sources |
 | `probes/` | Headless verification probes (Phase A = CI, others = local) |
 | `verification-screens/` | Tracked project screenshots suitable for README/public docs |
 | `docs/compare/` | Tracked visual comparison assets suitable for public docs |
@@ -43,7 +46,7 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 
 | File | What It Does |
 |------|-------------|
-| `src/engine/m11_game_view.c` | Game view: rendering, input dispatch, HUD, dialog overlays (21K LOC) |
+| `src/engine/m11_game_view.c` | Game view: rendering, input dispatch, HUD, dialog overlays |
 | `src/engine/main_loop_m11.c` | SDL event loop, menu↔game transitions, mouse mapping |
 | `src/engine/firestaff_game_loop.c` | Asset loading, game tick, V1 command processing |
 | `src/ui/menu_startup_m12.c` | Launcher state machine: navigation, game options, launch logic |
@@ -52,8 +55,8 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | `src/shared/asset_status_m12.c` | Game version catalog and recursive hash-verified game-data scanner |
 | `src/shared/changelog_m12.c` | Version string and changelog text |
 | `src/engine/firestaff_accessibility.c` | Accessibility manifest (JSON, atomic writes) |
-| `TODO.md` | Open work only; update after every completed job and at least twice daily during active Firestaff work |
-| `DONE.md` | Completed/verified work only; update after every completed job and at least twice daily during active Firestaff work |
+| `TODO.md` | Open work and remaining verification gaps |
+| `DONE.md` | Verified completed work |
 
 ### Graphics Modes (V1/V2)
 
@@ -100,8 +103,9 @@ Required game data must block launch:
 ## Build
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build --parallel
+TMPDIR=/dev/shm cmake -S . -B .codex-scratch/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+TMPDIR=/dev/shm cmake --build .codex-scratch/build -j1
+TMPDIR=/dev/shm ctest --test-dir .codex-scratch/build -j2 --output-on-failure
 ```
 
 Requires SDL3. On macOS: `brew install sdl3`

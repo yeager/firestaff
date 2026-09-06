@@ -1,8 +1,8 @@
 # Firestaff TODO — DM1
 
-- Add a rendered compact-spell-panel regression with different leader/caster
-  mana. Its DM1 mana indicator now resolves the caster; current skill and
-  original-media tests do not verify this panel's pixels.
+- Verify the actual DM1 C009/C011 spell renderer with different leader and
+  caster state using original graphics. The procedural compact workbench
+  explicitly excludes DM1/CSB and cannot provide this parity evidence.
 
 - Investigate the intermittent no-output early exit of the French Atari
   original-media test observed on September 6; it did not recur in three
