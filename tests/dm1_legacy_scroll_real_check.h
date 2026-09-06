@@ -455,6 +455,45 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                                 state->world.lifecycle.champions[0].poisonEventCount != 1) return 0;
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
+                        {
+                            unsigned short shield = THING_NONE;
+                            int power = 0;
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_POTION]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_POTION << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff) &&
+                                    (bytes[3] & 127) == 12) { shield = candidate; power = bytes[2]; break; }
+                            }
+                            if (shield == THING_NONE) { fprintf(stderr, "FAIL: no original YA potion\n"); return 0; }
+                            int baseline = getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? 51 : 0;
+                            int delta = power / 25 + 8;
+                            delta += delta >> 1;
+                            if (baseline > 50) delta >>= 2;
+                            state->world.lifecycle.champions[1].shieldDefense = (short)baseline;
+                            state->world.lifecycle.champions[0].shieldDefense = 7;
+                            state->world.magic.partyShieldDefense = 11;
+                            state->world.lifecycle.status.partyShieldDefense = 11;
+                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, shield)) return 0;
+                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (state->world.lifecycle.champions[1].shieldDefense != baseline + delta ||
+                                state->world.lifecycle.champions[0].shieldDefense != 7 ||
+                                state->world.magic.partyShieldDefense != 11 ||
+                                state->world.lifecycle.status.partyShieldDefense != 11) {
+                                fprintf(stderr, "FAIL: YA potion shield owner\n"); return 0;
+                            }
+                            int found = 0;
+                            for (int e = 0; e < state->world.timeline.count; ++e) {
+                                const struct TimelineEvent_Compat *pending = &state->world.timeline.events[e];
+                                if (pending->kind != TIMELINE_EVENT_STATUS_TIMEOUT ||
+                                    pending->aux0 != LIFECYCLE_STATUS_CHAMPION_SHIELD) continue;
+                                if (pending->aux4 != 1 || pending->aux1 != delta ||
+                                    pending->fireAtTick != state->world.gameTick + (unsigned int)(delta * delta)) return 0;
+                                ++found;
+                            }
+                            if (found != 1) return 0;
+                            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                        }
                         unsigned short deathExtra = THING_NONE;
                         for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
                             unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);

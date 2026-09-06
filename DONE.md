@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 YA potions now give individual recipient shield and
+  schedule C72 for that champion, verified using original potion records.
+
 - 2026-09-06: DM1 antivenin now cancels the recipient's poison timeline
   and counter; original-media regressions preserve another poisoned champion.
 

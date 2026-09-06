@@ -22968,21 +22968,21 @@ static int m11_v1_mouth_live_inventory_transaction(
 
 static void m11_schedule_source_potion_status_event_pc34(
     M11_GameViewState* state,
+    int championIndex,
     const DM1ConsumableResultPc34* result)
 {
     struct TimelineEvent_Compat event;
 
-    if (!state || !result || !result->consumed ||
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        !result || !result->consumed ||
         result->eventType != DM1_EVENT_CHAMPION_SHIELD ||
         result->eventDelay <= 0 || result->amountApplied <= 0) {
         return;
     }
 
-    /* ReDMCSB PANEL.C F0349 stores YA's C72 as a native status timeout:
-     * B.Defense = the applied shield delta, C72 in aux0/aux2, and Priority
-     * zero.  TIMELINE.C F0261 later subtracts B.Defense from the party
-     * shield.  Keep this event source-shaped so the existing M10 dispatch
-     * owns expiry instead of a second host countdown. */
+    /* ReDMCSB PANEL.C F0346:1878-1887 stores YA's C72 with the
+     * recipient as Priority and the applied delta as B.Defense.
+     * TIMELINE.C F0261:1964-1967 subtracts that champion's shield. */
     memset(&event, 0, sizeof(event));
     event.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
     event.fireAtTick = state->world.gameTick +
@@ -22994,7 +22994,7 @@ static void m11_schedule_source_potion_status_event_pc34(
     event.aux0 = result->eventType;
     event.aux1 = result->amountApplied;
     event.aux2 = result->eventType;
-    event.aux4 = 0;
+    event.aux4 = championIndex;
     (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &event);
 }
 
@@ -23035,7 +23035,7 @@ static int m11_apply_source_potion_effect_pc34(
     sourceChampion.currentMana = (int16_t)champ->mana.current;
     sourceChampion.maximumMana = (int16_t)champ->mana.maximum;
     sourceChampion.shieldDefense =
-        (int16_t)state->world.magic.partyShieldDefense;
+        state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense;
     sourceChampion.wounds = champ->wounds;
     sourceChampion.poisonDose = champ->poisonDose;
     sourceChampion.food = champ->food;
@@ -23070,9 +23070,8 @@ static int m11_apply_source_potion_effect_pc34(
     champ->poisonDose = sourceChampion.poisonDose;
     champ->food = sourceChampion.food;
     champ->water = sourceChampion.water;
-    state->world.magic.partyShieldDefense = sourceChampion.shieldDefense;
-    state->world.lifecycle.status.partyShieldDefense = sourceChampion.shieldDefense;
-    m11_schedule_source_potion_status_event_pc34(state, outResult);
+    state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense = sourceChampion.shieldDefense;
+    m11_schedule_source_potion_status_event_pc34(state, (int)(champ - state->world.party.champions), outResult);
     return 1;
 }
 
@@ -55723,7 +55722,7 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     consumableChampion.water = champ->water;
     consumableChampion.wounds = champ->wounds;
     consumableChampion.poisonDose = champ->poisonDose;
-    consumableChampion.shieldDefense = (int16_t)state->world.magic.partyShieldDefense;
+    consumableChampion.shieldDefense = state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense;
 
     if ((thingType == THING_TYPE_JUNK || thingType == THING_TYPE_POTION) &&
         state->world.things) {
@@ -55766,11 +55765,10 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         if (potionType == 10 && consumableResult.consumed) {
             m11_unpoison_champion_f0323(state, (int)(champ - state->world.party.champions));
         }
-        state->world.magic.partyShieldDefense = consumableChampion.shieldDefense;
-        state->world.lifecycle.status.partyShieldDefense =
+        state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense =
             consumableChampion.shieldDefense;
         m11_schedule_source_potion_status_event_pc34(
-            state, &consumableResult);
+            state, (int)(champ - state->world.party.champions), &consumableResult);
         if (consumableResult.removeLeaderHandObject) {
             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
             (void)m11_start_v1_mouth_animation(state, &consumableResult);

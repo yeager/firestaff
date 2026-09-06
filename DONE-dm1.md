@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed YA potion ownership: both M11 consumable bridges
+  now read/write the recipient's champion shield, not party shield, and
+  C72 records that recipient as Priority. Five original editions reproduced
+  the wrong owner. Twenty cases now pass, verifying source power/duration,
+  reduced gain above 50 defense, unchanged leader/party shields and C72
+  owner. Actual expiry and damage-defense integration remain to be tested.
+
 - 2026-09-06: Fixed original C10 antivenin leaving pending poison and
   its counter active after drinking. PANEL.C F0346 now reaches shared
   F0323 cancellation for the displayed inventory owner. All twenty

@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 YA shield potions protect the champion who drinks them, not the
+  whole party, and schedule expiration for the correct champion.
+
 - DM1 antivenin now cancels pending poison damage for the champion who
   drinks it, without curing a different champion.
 
