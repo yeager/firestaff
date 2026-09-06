@@ -344,6 +344,24 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         M11_GameView_ProbeCheckPartyDeath(state);
                         if (state->world.party.champions[1].inventory[19] != THING_NONE) return 0;
                         {
+                            unsigned short cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                                state->world.dungeon, state->world.things,
+                                state->world.party.mapIndex, state->world.party.mapX,
+                                state->world.party.mapY);
+                            int count = 0, steps = 0;
+                            while (cursor != THING_ENDOFLIST && cursor != THING_NONE && steps++ < 4096) {
+                                if ((cursor & 0x3fff) == (other & 0x3fff)) {
+                                    if ((cursor >> 14) != (state->world.party.champions[1].cell & 3)) return 0;
+                                    ++count;
+                                }
+                                cursor = F0512_DUNGEON_GetThingNext_Compat(state->world.things, cursor);
+                            }
+                            if (count != 1 || steps >= 4096) {
+                                fprintf(stderr, "FAIL: death floor object count=%d steps=%d\n", count, steps);
+                                return 0;
+                            }
+                        }
+                        {
                             uint32_t before, after;
                             const unsigned char *dropped = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, other);
                             unsigned short next;

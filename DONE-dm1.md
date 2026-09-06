@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Five original Atari/Amiga death probes traverse the current
+  square's Thing chain and find the dropped original weapon exactly once
+  with the dead champion's cell bits. Bounded traversal rejects cycles.
+  Head/link decoding shares the engine helpers; full inventory drop order
+  and independent original-runtime comparison remain unverified.
+
 - 2026-09-06: Five original-media death probes verify that the dead owner's
   ready hand is emptied and a second death-handler call leaves the world
   hash and dropped original weapon's next link unchanged. This checks
