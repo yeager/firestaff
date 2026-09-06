@@ -614,7 +614,7 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
                         unsigned short deathExtra = THING_NONE;
-                        for (int restorative = 11; restorative <= 13; restorative += 2)
+                        for (int restorative = 11; restorative <= 14; restorative += restorative == 11 ? 2 : 1)
                         for (int powerRune = 0; powerRune < 6; ++powerRune) {
                             unsigned short flask = THING_NONE;
                             for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_POTION]; ++r) {
@@ -631,14 +631,14 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             for (int s = 0; s < LIFECYCLE_SKILL_COUNT; ++s)
                                 state->world.lifecycle.champions[1].skills20[s].experience = 1000000;
                             state->dm1SpellCasting.magicCasterIndex = 1;
-                            /* ReDMCSB MENU.C:68,74: Ya / Zo Bro Ra create MON/EE.
+                            /* ReDMCSB MENU.C:68,71,74: Ya / Vi / Zo Bro Ra.
                              * No potion bytes/power are assigned by the fixture. */
                             if (!M11_GameView_OpenSpellPanel(state) ||
                                 !M11_GameView_EnterRune(state, powerRune) ||
-                                !M11_GameView_EnterRune(state, restorative == 11 ? 0 : 5) ||
+                                !M11_GameView_EnterRune(state, restorative == 11 ? 0 : restorative == 14 ? 1 : 5) ||
                                 (restorative == 13 && (!M11_GameView_EnterRune(state, 4) || !M11_GameView_EnterRune(state, 4))) ||
                                 !M11_GameView_CastSpell(state)) {
-                                fprintf(stderr, "FAIL: original flask Lo Ya cast\n"); return 0;
+                                fprintf(stderr, "FAIL: original flask restorative cast\n"); return 0;
                             }
                             const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
                             if (!raw || (raw[3] & 127) != restorative) { fprintf(stderr, "FAIL: restorative subtype %d\n", restorative); return 0; }
@@ -663,14 +663,21 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].stamina.maximum = 1000;
                             state->world.party.champions[1].mana.current = manaBefore;
                             state->world.party.champions[1].mana.maximum = 100;
+                            /* PANEL.C F0349:1900 and 1925-1926: VI restores
+                             * maximum/counter health, capped at maximum.
+                             * Wound/RNG recovery is a separate verification. */
+                            state->world.party.champions[1].hp.current = before;
+                            state->world.party.champions[1].hp.maximum = 1000;
+                            state->world.party.champions[1].wounds = 0;
                             if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, flask)) return 0;
                             (void)M11_GameView_HandlePointer(state, 60, 54, 1);
                             (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
                             raw = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
                             if (!raw || (raw[3] & 127) != 20 ||
                                 state->world.party.champions[1].stamina.current != (restorative == 11 ? expected : before) ||
-                                state->world.party.champions[1].mana.current != (restorative == 13 ? expected : manaBefore)) {
-                                fprintf(stderr, "FAIL: spell-created MON consumption\n"); return 0;
+                                state->world.party.champions[1].mana.current != (restorative == 13 ? expected : manaBefore) ||
+                                state->world.party.champions[1].hp.current != (restorative == 14 ? expected : before)) {
+                                fprintf(stderr, "FAIL: spell-created restorative consumption\n"); return 0;
                             }
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                             state->world.party.champions[1] = saved;

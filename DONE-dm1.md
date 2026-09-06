@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Added spell-created VI health recovery at all six power runes
+  with wounds disabled, covering deficit and maximum clamp. The complete
+  twenty-case MON/EE/VI matrix passes (360 cast/consume sequences). One
+  earlier French Atari run exited without output; three isolated repetitions
+  and the full rerun passed. The unexplained early exit remains open.
+
 - 2026-09-06: All 240 MON/EE cast sequences additionally satisfy the
   independent MENU.C F0412 power bound: ordinal*40 through ordinal*40+15.
   This verifies scaling/range, not exact RNG draw identity or ordering.

@@ -1,5 +1,11 @@
 # Firestaff TODO — DM1
 
+- Investigate the intermittent no-output early exit of the French Atari
+  original-media test observed on September 6; it did not recur in three
+  isolated repetitions or the full rerun. Do not treat retries as a fix.
+- Verify VI wound healing with independently predicted RNG masks; the
+  original-flask spell/health route currently disables wounds explicitly.
+
 - Extend spell-created restorative potion evidence with full rune mouse
   input and independent RNG/XP receipts. MON/EE at all six power runes
   now have original-flask API-route creation/consumption coverage.
