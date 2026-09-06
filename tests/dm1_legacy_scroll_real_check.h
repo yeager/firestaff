@@ -671,6 +671,14 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].hp.maximum = 1000;
                             unsigned short initialWounds = restorative == 14
                                 ? (getenv("FIRESTAFF_VERIFY_LIVING_CASTER") ? (1u << powerRune) : 63) : 0;
+                            int exhaustRetries = restorative == 14 && powerRune == 0 &&
+                                getenv("FIRESTAFF_VERIFY_LEADER_DEATH") && getenv("FIRESTAFF_VERIFY_LIVING_CASTER");
+                            if (exhaustRetries) {
+                                /* Controlled RNG seed, not fabricated potion data:
+                                 * bit 1 survives the first ten source random masks. */
+                                initialWounds = 2;
+                                state->world.masterRng.seed = 321;
+                            }
                             state->world.party.champions[1].wounds = initialWounds;
                             uint32_t expectedSeed = state->world.masterRng.seed;
                             unsigned short expectedWounds = state->world.party.champions[1].wounds;

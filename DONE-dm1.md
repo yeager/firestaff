@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Verified VI's ten-retry exhaustion using source RNG seed 321
+  and wound bit 1 with a runtime-created Lo VI in an original flask. The
+  wound remains and the final seed matches ten draws; all twenty cases pass.
+  RNG state is controlled in RAM, not substituted potion data.
+
 - 2026-09-06: Added failure-only Atari sound-load diagnostics recording
   errno and an independent read from resident original graphics bytes.
   Forty French Atari test repetitions passed without reproducing the

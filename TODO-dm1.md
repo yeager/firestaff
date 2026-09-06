@@ -3,7 +3,7 @@
 - Investigate the intermittent no-output early exit of the French Atari
   original-media test observed on September 6; it did not recur in three
   isolated repetitions or the full rerun. Do not treat retries as a fix.
-- Verify VI retry exhaustion and all wound/power combinations; individual
+- Verify all VI wound/power combinations; ten-retry exhaustion, individual
   wound bits on alternate UseItem and combined wounds on mouth are covered.
 - Investigate intermittent French Atari SND1 source-index-1 rejection in
   original-audio setup, observed before the restorative tests. Full rerun
