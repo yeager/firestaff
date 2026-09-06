@@ -1,5 +1,7 @@
 # Unreleased
 
+- DM1 antivenin now also clears pending poison when consumed through the
+  alternative item-use action.
 - DM1 statistic potions now apply the original diminishing returns and
   maximum statistic value instead of adding their full strength indefinitely.
 

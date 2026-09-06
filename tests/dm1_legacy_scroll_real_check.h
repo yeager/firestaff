@@ -437,9 +437,19 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &poison)) return 0;
                             state->world.party.champions[0].poisonDose = 128;
                             state->world.lifecycle.champions[0].poisonEventCount = 1;
-                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, antidote)) return 0;
-                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
-                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (getenv("FIRESTAFF_VERIFY_LIVING_CASTER")) {
+                                unsigned short savedRight = state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT];
+                                int savedLeader = state->world.party.activeChampionIndex;
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = antidote;
+                                state->world.party.activeChampionIndex = 1;
+                                if (!M11_GameView_UseItem(state)) return 0;
+                                state->world.party.champions[1].inventory[CHAMPION_SLOT_HAND_RIGHT] = savedRight;
+                                state->world.party.activeChampionIndex = savedLeader;
+                            } else {
+                                if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, antidote)) return 0;
+                                (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                                (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            }
                             if (state->world.party.champions[1].poisonDose != 0 ||
                                 state->world.lifecycle.champions[1].poisonEventCount != 0) {
                                 fprintf(stderr, "FAIL: antivenin retains poison counter\n"); return 0;

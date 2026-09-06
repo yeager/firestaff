@@ -23068,6 +23068,11 @@ static int m11_apply_source_potion_effect_pc34(
     champ->mana.current = (uint16_t)sourceChampion.currentMana;
     champ->wounds = sourceChampion.wounds;
     champ->poisonDose = sourceChampion.poisonDose;
+    /* ReDMCSB PANEL.C F0349:1872-1873 calls F0323 for antivenin:
+     * cancel pending poison events as well as clearing the current dose. */
+    if (potionType == 10 && outResult->consumed) {
+        m11_unpoison_champion_f0323(state, (int)(champ - state->world.party.champions));
+    }
     champ->food = sourceChampion.food;
     champ->water = sourceChampion.water;
     state->world.lifecycle.champions[champ - state->world.party.champions].shieldDefense = sourceChampion.shieldDefense;

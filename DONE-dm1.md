@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed alternative UseItem antivenin consumption to cancel
+  the recipient's pending poison events and counter via F0323. Original
+  Atari media reproduced the retained-counter failure before the fix;
+  twenty Atari/Amiga cases now cover both mouth and UseItem routes while
+  preserving another champion's poison event.
+
 - 2026-09-06: Fixed ROS/KU/DANE/NETA statistic gains to use F0348's
   PC3.4/S1.2+ diminishing returns above 120 and 150 and cap at 170.
   Twenty-four explicit potion/boundary cases pass alongside existing
