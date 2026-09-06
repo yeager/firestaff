@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: DM1 antivenin now cancels the recipient's poison timeline
+  and counter; original-media regressions preserve another poisoned champion.
+
 - 2026-09-06: DM1 original water-flask consumption is verified across
   inventory owners, including empty-flask identity and carried weight.
 

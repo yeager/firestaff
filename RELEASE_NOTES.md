@@ -1,5 +1,8 @@
 # Unreleased
 
+- DM1 antivenin now cancels pending poison damage for the champion who
+  drinks it, without curing a different champion.
+
 - DM1 keeps simulation running while inventory is open, matching the
   original game's behavior rather than granting an unintended pause.
 

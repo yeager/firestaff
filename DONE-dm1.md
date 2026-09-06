@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Fixed original C10 antivenin leaving pending poison and
+  its counter active after drinking. PANEL.C F0346 now reaches shared
+  F0323 cancellation for the displayed inventory owner. All twenty
+  original-media cases pass, preserving the other champion's dose,
+  counter and pending event byte-for-byte. Events are controlled RAM
+  fixtures; the antivenin Things are allocated original media records.
+
 - 2026-09-06: Original allocated C15 water flasks now pass cross-owner
   mouse consumption on five Atari/Amiga editions. All twenty cases prove
   +1600 water to the displayed champion, unchanged leader water, same

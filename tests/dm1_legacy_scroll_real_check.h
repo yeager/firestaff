@@ -415,6 +415,46 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             }
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
+                        {
+                            unsigned short antidote = THING_NONE;
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_POTION]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_POTION << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff) &&
+                                    (bytes[3] & 127) == 10) { antidote = candidate; break; }
+                            }
+                            if (antidote == THING_NONE) { fprintf(stderr, "FAIL: no original antivenin\n"); return 0; }
+                            struct TimelineEvent_Compat poison = {0};
+                            poison.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+                            poison.fireAtTick = state->world.gameTick + 100;
+                            poison.aux0 = LIFECYCLE_STATUS_POISON;
+                            poison.aux1 = 128;
+                            poison.aux4 = 1;
+                            if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &poison)) return 0;
+                            state->world.party.champions[1].poisonDose = 128;
+                            state->world.lifecycle.champions[1].poisonEventCount = 1;
+                            poison.aux4 = 0;
+                            if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &poison)) return 0;
+                            state->world.party.champions[0].poisonDose = 128;
+                            state->world.lifecycle.champions[0].poisonEventCount = 1;
+                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, antidote)) return 0;
+                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            if (state->world.party.champions[1].poisonDose != 0 ||
+                                state->world.lifecycle.champions[1].poisonEventCount != 0) {
+                                fprintf(stderr, "FAIL: antivenin retains poison counter\n"); return 0;
+                            }
+                            int leaderPoison = 0;
+                            for (int e = 0; e < state->world.timeline.count; ++e) {
+                                const struct TimelineEvent_Compat *pending = &state->world.timeline.events[e];
+                                if (pending->kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                                    pending->aux0 == LIFECYCLE_STATUS_POISON && pending->aux4 == 1) return 0;
+                                if (!memcmp(pending, &poison, sizeof(poison))) ++leaderPoison;
+                            }
+                            if (leaderPoison != 1 || state->world.party.champions[0].poisonDose != 128 ||
+                                state->world.lifecycle.champions[0].poisonEventCount != 1) return 0;
+                            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                        }
                         unsigned short deathExtra = THING_NONE;
                         for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
                             unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);

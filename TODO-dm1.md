@@ -10,7 +10,8 @@
   verify final-death UI and redraw against
   the original. Savegames remain deferred.
 
-- Extend cross-owner consumption to original non-water potions.
+- Extend cross-owner consumption to original stat/healing/shield potions.
+  Original antivenin cancellation and other-owner preservation are covered.
   Capped/uncapped waterskin depletion, empty rejection, hand retention and
   leader held weight pass on five editions. Check potion recipient stats,
   consumed Thing removal, event ownership and release behavior.

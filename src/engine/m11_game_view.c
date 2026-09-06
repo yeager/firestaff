@@ -18971,6 +18971,33 @@ static int m11_has_champion_bones_f0319(const struct DungeonThings_Compat* thing
     return 0;
 }
 
+static void m11_unpoison_champion_f0323(M11_GameViewState* state, int championIndex) {
+    if (!state || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
+    /* ReDMCSB CHAMPION.C F0319:1651-1653 calls F0323:1986-1990:
+     * remove every C75 owned by this champion, not just its counter.
+     * The host queue is sorted/packed; stable compaction preserves all
+     * unrelated event payloads and their equal-time dispatch order. */
+    {
+        struct TimelineQueue_Compat* queue = &state->world.timeline;
+        if (queue->count >= 0 && queue->count <= TIMELINE_QUEUE_CAPACITY) {
+            int readIndex, retained = 0;
+            int oldCount = queue->count;
+            for (readIndex = 0; readIndex < oldCount; ++readIndex) {
+                const struct TimelineEvent_Compat* event = &queue->events[readIndex];
+                if (event->kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                    event->aux0 == LIFECYCLE_STATUS_POISON &&
+                    event->aux4 == championIndex) continue;
+                queue->events[retained++] = *event;
+            }
+            memset(&queue->events[retained], 0,
+                   (size_t)(oldCount - retained) * sizeof(queue->events[0]));
+            queue->count = retained;
+        }
+    }
+    state->world.lifecycle.champions[championIndex].poisonEventCount = 0;
+    state->world.party.champions[championIndex].poisonDose = 0;
+}
+
 /* ReDMCSB CHAMPION.C F0318:1527-1550 and F0319:1552-1687. */
 static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex) {
     struct ChampionState_Compat* champion;
@@ -19063,28 +19090,7 @@ static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex)
     memset(&state->dm1SpellCasting.input[championIndex], 0,
            sizeof(state->dm1SpellCasting.input[championIndex]));
     champion->direction = (unsigned char)(state->world.party.direction & 3);
-    /* ReDMCSB CHAMPION.C F0319:1651-1653 calls F0323:1986-1990:
-     * remove every C75 owned by this champion, not just its counter.
-     * The host queue is sorted/packed; stable compaction preserves all
-     * unrelated event payloads and their equal-time dispatch order. */
-    {
-        struct TimelineQueue_Compat* queue = &state->world.timeline;
-        if (queue->count >= 0 && queue->count <= TIMELINE_QUEUE_CAPACITY) {
-            int readIndex, retained = 0;
-            int oldCount = queue->count;
-            for (readIndex = 0; readIndex < oldCount; ++readIndex) {
-                const struct TimelineEvent_Compat* event = &queue->events[readIndex];
-                if (event->kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
-                    event->aux0 == LIFECYCLE_STATUS_POISON &&
-                    event->aux4 == championIndex) continue;
-                queue->events[retained++] = *event;
-            }
-            memset(&queue->events[retained], 0,
-                   (size_t)(oldCount - retained) * sizeof(queue->events[0]));
-            queue->count = retained;
-        }
-    }
-    state->world.lifecycle.champions[championIndex].poisonEventCount = 0;
+    m11_unpoison_champion_f0323(state, championIndex);
     state->championDeathHandledMask |= (unsigned char)(1u << championIndex);
     for (slot = 0; slot < state->world.party.championCount; ++slot) {
         if (state->world.party.champions[slot].present &&
@@ -55755,6 +55761,11 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         champ->water = consumableChampion.water;
         champ->wounds = consumableChampion.wounds;
         champ->poisonDose = consumableChampion.poisonDose;
+        /* ReDMCSB PANEL.C F0346:1870-1872 calls F0323 for C10
+         * antivenin: cancel the inventory owner's pending C75 chain. */
+        if (potionType == 10 && consumableResult.consumed) {
+            m11_unpoison_champion_f0323(state, (int)(champ - state->world.party.champions));
+        }
         state->world.magic.partyShieldDefense = consumableChampion.shieldDefense;
         state->world.lifecycle.status.partyShieldDefense =
             consumableChampion.shieldDefense;
