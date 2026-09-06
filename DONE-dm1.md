@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- Current public executable (runtime code at a8ada3b50) passes authentic
+  `test_dm1_v1_fmtowns_archive_cli_boot.sh`: CLI/menu EDM and JDM paths bind
+  distinct original program/graphics hashes, pointer-only card selection works,
+  and both seven-command input matrices reach expected positions. CDDA track-2
+  playback state is asserted, not independently audible playback parity.
+  `test_dm1_v1_atari_nested_archive_cli_boot.sh` also passes original English
+  v1.2 ZIP->ZIP->STX CLI/menu, pointer navigation and the complete initial
+  input matrix. Both run natively in memory with external archive tools disabled.
+  Headless probes do not establish pixel, timing, audio or all-edition parity.
+
 - Rebuilt the public firestaff executable at 6224744ad and reran
   `test_dm1_v1_dos_en_archive_cli_boot.sh` against the authentic English DOS
   distribution ZIP: passed CLI/menu launch in Original, Filtered and Upscaled
