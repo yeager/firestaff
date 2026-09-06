@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: CSB FM Towns closed-inventory movement panels consume cached
+  original C013 with EN/JP C009 placement and Japanese source clipping.
+  Full panel comparisons pass in both languages across Original/V2.0/V2.1.
+  Real-party mouse rotations exposed unsupported LEFT/RIGHT tokens in the
+  shared arrow path; explicit TURN_LEFT/TURN_RIGHT fixes those failures.
+  Japanese input bypasses obsolete PC arrow geometry. Source party facing
+  changes correctly without changing map position. Production build and
+  seven combined regressions pass (25.13 seconds, no skips).
+
 - 2026-09-06: CSB FM Towns viewport raster, receipt hash and HUD restoration
   share the original C696 C007 origin: English (0,33), Japanese (0,31),
   replacing the inherited (48,33) offset. Local sprite coordinates remain

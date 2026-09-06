@@ -72,3 +72,24 @@ the runtime receipt, independently using the C696 coordinates in both
 languages and all three presentation modes. This proves final composition
 and receipt consistency, not emulator raster parity. Authentic C080
 edge/pickup/throw/sensor sequences remain a separate verification task.
+
+## Movement controls
+
+The same original C696 records define C009 at bottom-right (319,168) in
+English and (319,199) in Japanese. C008 is 87x45 / 87x41 respectively.
+MENUDRAW.C F0395:16 places C013 into C009 without transparency: English
+87x45 at (233,124), Japanese 96x41 clipped by nine source pixels at
+(233,159). The native package-bound IMG2 cache supplies these pixels.
+
+C065/C067 are 28x21 EN or 28x19 JP; C066 is 27 pixels wide. C068/C069
+offsets are (1,1)/(58,1), C070 is (30,1). Bottom-row offsets are y23 EN
+and y21 JP. Therefore the top click rows start at y125 EN / y160 JP and
+the bottom rows at y147 EN / y180 JP. COMMAND.C:397–402 maps them to the
+original six movement commands. Japanese input bypasses the earlier PC
+geometry resolver, and turn clicks use explicit TURN_LEFT/TURN_RIGHT
+tokens accepted by the CSB command bridge.
+
+Original-media tests compare every final C013 pixel and exercise left/right
+rotation with unchanged source party position in both languages/all three
+modes. Traversal, exact edge/gap coverage and inventory-open controls remain
+separate verification work.

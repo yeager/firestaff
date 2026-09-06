@@ -36225,7 +36225,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             }
         }
         CSB_V1_CommandInputGeometryResultPc34Compat csb_pointer;
-        if (CSB_V1_CommandInputGeometryFromPointerPc34Compat(
+        const CSB_V1_BootProfile *pointer_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        /* CJDATA C068..C073 live at y160/180, not the PC y125/147.
+         * Let the language-owned route below decide all Japanese arrows. */
+        if (!(pointer_profile && pointer_profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) &&
+            CSB_V1_CommandInputGeometryFromPointerPc34Compat(
                 x, y, buttonMask, &csb_pointer)) {
             return M11_GameView_HandleInput(state, csb_pointer.input);
         }
@@ -36978,9 +36983,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             DM1_V1_MOUSE_MASK_LEFT_PC34,
             &space,
             &zoneId);
-        if (state->dm1FmtownsStartupReceiptValid &&
-            state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+        if ((state->dm1FmtownsStartupReceiptValid &&
+             state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) ||
+            (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT && state->csbBootProfile &&
+             ((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+                 CSB_V1_VARIANT_FMTOWNS_JA)) {
             /* COMMAND.C:397-402 maps JDM C068,C070,C069,C073,C072,C071.
+             * Retail CSB CJDATA C696 confirms the same source records.
              * Original C065-67 are19pixels high; C009 anchors the parent
              * at233,159. Reject old DOS targets as well as matching JP. */
             static const int regions[6][6] = {
@@ -37011,8 +37020,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (command >= 1 && command <= 6) {
             M12_MenuInput arrowInput;
             switch (command) {
-                case 1: arrowInput = M12_MENU_INPUT_LEFT;         break;
-                case 2: arrowInput = M12_MENU_INPUT_RIGHT;        break;
+                case 1: arrowInput = M12_MENU_INPUT_TURN_LEFT;    break;
+                case 2: arrowInput = M12_MENU_INPUT_TURN_RIGHT;   break;
                 case 3: arrowInput = M12_MENU_INPUT_UP;           break;
                 case 5: arrowInput = M12_MENU_INPUT_DOWN;         break;
                 case 4: arrowInput = M12_MENU_INPUT_STRAFE_RIGHT;  break;
@@ -50057,6 +50066,35 @@ static int m11_draw_csb_fmtowns_active_menu(
     /* F31J F0952 system-glyph ownership remains unresolved. C010 alone
      * is authentic background evidence, not Japanese text parity. */
     return 1;
+}
+
+/* MENUDRAW.C F0395:16 blits original C013 into C009. This independent
+ * source control must not disappear because the unrelated PC HUD's C011
+ * material gate rejects F31's authentic 14x39 rune source. */
+static void m11_draw_csb_fmtowns_movement(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    const CSB_V1_BootProfile *profile;
+    const M11_AssetSlot *asset;
+    int japanese, height, top;
+    if (!state || !framebuffer || framebuffer_width < 320 || framebuffer_height < 200 ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !m11_csb_startup_package_identity_current(state)) return;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile) || !state->assetLoader.csbFmtowns ||
+        !m11_csb_install_runtime_source_graphic(state, 13u)) return;
+    japanese = profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA;
+    height = japanese ? 41 : 45;
+    top = japanese ? 159 : 124;
+    asset = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader, 13u);
+    if (!asset || !asset->loaded || !asset->pixels ||
+        asset->width != (japanese ? 96 : 87) || asset->height != height) return;
+    /* COORD.C F0635 anchors to C009's bottom-right; JP's 96-pixel
+     * bitmap is clipped through its 87-pixel parent (sourceX9). */
+    for (int y = 0; y < height; ++y)
+        memcpy(framebuffer + (top + y) * framebuffer_width + 233,
+               asset->pixels + y * asset->width + (japanese ? 9 : 0), 87);
 }
 
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
@@ -67404,6 +67442,8 @@ void M11_GameView_Draw(M11_GameViewState* state,
                  * Publish its authenticated pixels after viewport restore;
                  * do not enable the unrelated PC-sized HUD material gate. */
                 (void)m11_draw_csb_fmtowns_active_menu(state, framebuffer,
+                    framebufferWidth, framebufferHeight);
+                m11_draw_csb_fmtowns_movement(state, framebuffer,
                     framebufferWidth, framebufferHeight);
             }
         }

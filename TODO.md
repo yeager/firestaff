@@ -12,6 +12,8 @@
   Extend the corrected C007 viewport origin to emulator pixel comparisons
   and authentic C080 edge/pickup/throw/sensor interaction sequences.
   Do not enable the whole generic HUD merely by accepting its asset sizes.
+  Extend source C013 movement-control verification beyond closed-inventory
+  panel pixels and rotation to traversal, exact edges/gaps and inventory mode.
 
 - Complete Japanese FM Towns active-menu text and remaining row boundaries.
   Reconcile the old JDM mixed-font adapter with TEXT2.C:75–105: the original

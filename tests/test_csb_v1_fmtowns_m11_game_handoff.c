@@ -2228,6 +2228,69 @@ int main(void)
                       M11_GAME_INPUT_REDRAW &&
                   view.actingChampionOrdinal == 0u,
               "F31 CHTW Game action row uses its original C696 geometry");
+        {
+            static const int modes[] = {M12_PRESENTATION_V1_ORIGINAL,
+                M12_PRESENTATION_V20_FILTERED, M12_PRESENTATION_V21_UPSCALED};
+            const int savedMode = view.presentationMode;
+            const int jp = language == CSB_FMTOWNS_SWITCH_JAPANESE;
+            const int width = jp ? 96 : 87, height = jp ? 41 : 45;
+            const int panelY = jp ? 159 : 124;
+            const int pointerY = jp ? 169 : 135;
+            size_t graphics_size = 0;
+            uint8_t *graphics = load_profile_graphics(live_profile, &graphics_size);
+            uint8_t source[96 * 45];
+            CSB_V1_FmtownsItemDecodeReceipt receipt;
+            memset(&receipt, 0, sizeof(receipt));
+            /* MENUDRAW.C F0395 -> F0660(C013,C009): decode the retail
+             * bitmap independently of M11's installed asset cache. F31J's
+             * 96-pixel source is right-anchored then clipped by nine pixels.
+             * The full final panel, not an isolated blitter, is the oracle. */
+            CHECK(graphics && csb_v1_fmtowns_graphics_decode_item(
+                      graphics, graphics_size, 13, source, sizeof(source), &receipt) &&
+                      receipt.valid && receipt.width == width && receipt.height == height,
+                  "F31 oracle decodes original language-specific C013");
+            if (receipt.valid && receipt.width == width && receipt.height == height &&
+                live_profile) {
+                for (int mode = 0; mode < 3; ++mode) {
+                    int mismatch = 0;
+                    int beforeDirection = live_profile->runtime.party_dir;
+                    int beforeX = live_profile->runtime.party_x;
+                    int beforeY = live_profile->runtime.party_y;
+                    int beforeLevel = live_profile->runtime.current_level;
+                    view.presentationMode = modes[mode];
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    for (int y = 0; y < height; ++y)
+                        for (int x = 0; x < 87; ++x)
+                            if (framebuffer[(panelY + y) * 320 + 233 + x] !=
+                                source[y * width + x + (jp ? 9 : 0)]) ++mismatch;
+                    CHECK(mismatch == 0,
+                          "F31 final movement panel matches all original C013 pixels in every mode");
+                    /* COMMAND.C C068/C069: exercise genuine existing party
+                     * rotation through public mouse input, without relocating
+                     * the party or inventing a traversable square. */
+                    CHECK(M11_GameView_HandlePointerButton(
+                              &view, 248, pointerY, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                              M11_GAME_INPUT_REDRAW &&
+                              live_profile->runtime.party_dir == ((beforeDirection + 3) & 3),
+                          "F31 original left-arrow mouse region rotates the source party");
+                    CHECK(live_profile->runtime.party_x == beforeX &&
+                              live_profile->runtime.party_y == beforeY &&
+                              live_profile->runtime.current_level == beforeLevel,
+                          "F31 left-arrow rotation preserves source party position");
+                    CHECK(M11_GameView_HandlePointerButton(
+                              &view, 305, pointerY, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                              M11_GAME_INPUT_REDRAW &&
+                              live_profile->runtime.party_dir == beforeDirection,
+                          "F31 original right-arrow mouse region restores source facing");
+                    CHECK(live_profile->runtime.party_x == beforeX &&
+                              live_profile->runtime.party_y == beforeY &&
+                              live_profile->runtime.current_level == beforeLevel,
+                          "F31 right-arrow rotation preserves source party position");
+                }
+            }
+            free(graphics);
+            view.presentationMode = savedMode;
+        }
         /* F31 G0447 keeps C012 (status selection) separate from C007
          * (inventory): a named status rectangle must never inherit the
          * convenient host inventory behavior.  C187's adjacent source bar

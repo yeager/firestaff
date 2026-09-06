@@ -1,5 +1,9 @@
 # Unreleased
 
+- CSB FM Towns movement arrows use the original language-specific C013
+  graphics. Japanese mouse controls now use the correct lower-screen
+  regions, and turn arrows dispatch the native CSB turn commands.
+
 - CSB FM Towns dungeon views use their original screen position instead of
   a centered offset. Japanese viewport clicks and inscriptions follow the
   matching two-pixel-higher origin.
