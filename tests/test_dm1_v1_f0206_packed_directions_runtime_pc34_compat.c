@@ -1010,23 +1010,23 @@ static int run_m10_f0221_fluxcage_fixture(int drift_raw_c15)
         F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) != ORCH_OK) {
         return 0;
     }
-    if (drift_raw_c15) {
-        return world.projectiles.entries[0].reserved3 == 1 &&
-               world.projectiles.entries[0].mapX == 0 &&
-               sourceProjectile.kineticEnergy == 20 && rawProjectile[4] == 20;
-    }
-    return world.projectiles.entries[0].reserved3 == 0 &&
-           sourceProjectile.next == THING_NONE &&
-           rawProjectile[0] == 0xff && rawProjectile[1] == 0xff &&
-           sourceExplosion.next == THING_ENDOFLIST && rawExplosion[3] == 0;
+    /* PROJEXPL.C F0219:720-739 admits the corridor and links the C14;
+     * F0221 is a fusion query, not a projectile collision gate. C15 attack
+     * bytes therefore do not determine passage, even when mirrors differ. */
+    return world.projectiles.entries[0].reserved3 == 1 &&
+           world.projectiles.entries[0].mapX == 1 &&
+           sourceProjectile.kineticEnergy == 16 && rawProjectile[4] == 16 &&
+           sourceProjectile.next == THING_ENDOFLIST &&
+           rawProjectile[0] == 0xfe && rawProjectile[1] == 0xff &&
+           rawExplosion[3] == (drift_raw_c15 ? 1 : 0);
 }
 
 static int test_m10_f0221_uses_authenticated_c15_fluxcage(void)
 {
     return expect(run_m10_f0221_fluxcage_fixture(0),
-                  "F0221 source C15 fluxcage blocks F0219") &&
+                  "source C14 passes C15 fluxcage without retirement") &&
            expect(run_m10_f0221_fluxcage_fixture(1),
-                  "F0221 rejects raw/decoded C15 drift before F0219 mutation") ? 0 : 1;
+                  "F0219 passage does not depend on unrelated C15 attack bytes") ? 0 : 1;
 }
 
 static int test_m10_f0219_rejects_drifted_raw_c14_before_mutation(void)
@@ -1229,22 +1229,31 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                 rawExplosion[6] == (unsigned char)(C007_EXPLOSION_POISON_CLOUD | 0x80u) &&
                 rawExplosion[7] == 77 &&
                 squareFirstThings[1] == (unsigned short)(THING_TYPE_EXPLOSION << 10) &&
-                sourceExplosions[0].next ==
+                squareFirstThings[0] ==
                     (unsigned short)(THING_TYPE_EXPLOSION << 10 | 1) &&
+                sourceExplosions[0].next == THING_ENDOFLIST &&
                 world.timeline.count == 1 &&
+                world.timeline.events[0].mapX == 0 &&
                 world.timeline.events[0].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
                 world.timeline.events[0].aux3 == (int)dm1_v1_c15_layout_fingerprint_pc34(rawExplosion + 4, 4) &&
                 world.timeline.events[0].cell == 0),
-                "F0217 publishes authenticated centered C15/C25 before runtime advance") ||
+                "F0219:724 publishes wall-impact C15/C25 on source square") ||
         !expect(mode == 0 || mode == 3 || mode == 4 ||
                 (sourceExplosions[1].next == THING_NONE &&
                  rawExplosion[4] == 0xff && rawExplosion[5] == 0xff &&
-                 squareFirstThings[1] == (unsigned short)(THING_TYPE_EXPLOSION << 10) &&
+                 squareFirstThings[0] == (unsigned short)(THING_TYPE_EXPLOSION << 10) &&
+                 squareFirstThings[1] == THING_NONE &&
                  sourceExplosions[0].next == THING_ENDOFLIST &&
                  world.timeline.count == 0 &&
                  (mode != 1 || world.explosions.count == 0) &&
                  (mode != 2 || world.explosions.count == EXPLOSION_LIST_CAPACITY)),
                 "F0217 rejects drift/full runtime pool without retaining C15/C25")) {
+        fprintf(stderr, "F0217 mode=%d explosions=%d next=%04x type=%u centered=%u attack=%u sft=%04x,%04x oldnext=%04x timeline=%u mapX=%d\n",
+                mode, world.explosions.count, sourceExplosions[1].next,
+                sourceExplosions[1].type, sourceExplosions[1].centered,
+                sourceExplosions[1].attack, squareFirstThings[0], squareFirstThings[1],
+                sourceExplosions[0].next, world.timeline.count,
+                world.timeline.count ? world.timeline.events[0].mapX : -1);
         F0883_WORLD_Free_Compat(&world);
         return 1;
     }

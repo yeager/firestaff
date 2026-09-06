@@ -1482,6 +1482,14 @@ Reviewed 2026-08-29. Completed work only.
 
 ## F0209 wander movement gate
 
+- Reconciled stale packed-direction runtime fixtures with PROJEXPL.C
+  F0219:720-739: source C14 projectiles pass Fluxcage, and wall-impact
+  explosions are published on the source square, not inside the wall.
+  Failed explosion publication compacts the remaining square-head array;
+  its surviving head is index zero. Corrected these assertions without
+  changing production collision logic. Both packed-direction and C38
+  projectile-aftermath runtime CTests pass, including drift/full-pool cases.
+
 - Verified the prior-square admission rule with seeds 6 and 7: both select
   west, but only the zero two-bit prior-square sample admits returning
   west; nonzero falls back north. Both consume exactly one additional
