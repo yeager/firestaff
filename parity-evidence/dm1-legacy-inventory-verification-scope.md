@@ -34,9 +34,15 @@ positive parity evidence. Other archive-open failures return 1.
 
 The five separately registered `dm1_*_floor_drop_load_real` tests select
 the targeted load diagnostic. They verify conserved slot-to-hand weight
-and removal of that weight after a normal-input floor drop. Their expected
-weight shares F0140 with the engine; they do not prove every weight-table
-entry or multi-champion encumbrance behavior.
+and removal of that weight after a normal-input floor drop. A second
+champion carries a distinct allocated original weapon. Two-way keyboard
+and source-layout name-click leader selection transfers only the held
+weight; mouse press/release must not open inventory or repeat the transfer.
+Zero-health selection is rejected through both input paths, using a
+controlled health change in RAM rather than a complete death sequence.
+Their expected weight shares F0140 with the engine; they do not prove
+every weight-table entry, full cross-champion inventory interaction,
+Modern composed-HUD input, or death/resurrection lifecycle parity.
 
 ## Current evidence
 

@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: After the leader-selection fixes, all six complete original
+  object/scroll corpus tests pass: PC3.4, Atari EN/DE/FR and Amiga EN/HD.
+  No media skips; this supplements the five targeted load regressions,
+  not full gameplay or emulator parity.
+
 - 2026-09-06: Fixed DM1 leader selection admitting zero-health champions,
   following CLIKCHAM.C F0368:55. Five original Atari/Amiga tests reproduced
   the keyboard defect before the fix and now verify both keyboard and

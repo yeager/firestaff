@@ -1,5 +1,8 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-06: Revalidated all six DM1 original-media object/scroll corpus
+  tests after the leader-selection fixes; all passed without skips.
+
 - 2026-09-06: DM1 keyboard/mouse leader selection rejects zero-health
   champions; all five original Atari/Amiga load regressions pass.
 
