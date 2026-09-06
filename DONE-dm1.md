@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Original allocated C15 water flasks now pass cross-owner
+  mouse consumption on five Atari/Amiga editions. All twenty cases prove
+  +1600 water to the displayed champion, unchanged leader water, same
+  held Thing transformed to C20 empty flask and leader-owned final weight.
+  Weight comparison shares F0140; potion status effects remain separate.
+
 - 2026-09-06: Extended original waterskin cases to uncapped +800 water
   from -1024 and rejection of an empty skin while dehydrated. This removes
   the prior capped-only blind spot, where an accidental drink on empty

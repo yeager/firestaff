@@ -386,6 +386,35 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             }
                             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
                         }
+                        {
+                            unsigned short flask = THING_NONE;
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_POTION]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_POTION << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (bytes && !(bytes[0] == 0xff && bytes[1] == 0xff) &&
+                                    (bytes[3] & 127) == 15) { flask = candidate; break; }
+                            }
+                            if (flask == THING_NONE) { fprintf(stderr, "FAIL: no original water flask\n"); return 0; }
+                            state->world.party.champions[0].water = 0;
+                            state->world.party.champions[1].water = -1024;
+                            if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, flask)) return 0;
+                            (void)M11_GameView_HandlePointer(state, 60, 54, 1);
+                            (void)M11_GameView_HandlePointerButtonRelease(state, 60, 54, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                            const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, flask);
+                            int flaskWeight;
+                            /* PANEL.C F0346:1912-1916: +1600, same Thing,
+                             * transformed into C20 empty flask. */
+                            if (!bytes || (bytes[3] & 127) != 20 ||
+                                state->world.party.champions[1].water != 576 ||
+                                state->world.party.champions[0].water != 0 ||
+                                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != flask ||
+                                !dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, flask, &flaskWeight) ||
+                                state->world.party.champions[0].load != flaskWeight ||
+                                state->world.party.champions[1].load != otherWeight) {
+                                fprintf(stderr, "FAIL: cross-owner water flask\n"); return 0;
+                            }
+                            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+                        }
                         unsigned short deathExtra = THING_NONE;
                         for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
                             unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);
