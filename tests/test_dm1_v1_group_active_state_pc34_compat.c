@@ -93,14 +93,15 @@ int main(void)
               5, 12, 2, 7, 8, 100u, &wander_event,
               &wander_receipt) == 1,
           "F0180 builds a wander timeline event");
-    check(wander_event.kind == TIMELINE_EVENT_CREATURE_TICK &&
+    check(wander_event.kind == TIMELINE_EVENT_CREATURE_REACTION &&
               wander_event.fireAtTick == 101u &&
               wander_event.mapIndex == 2 &&
               wander_event.mapX == 7 &&
               wander_event.mapY == 8 &&
               wander_event.aux0 == 5 &&
               wander_event.aux1 == 12 &&
-              wander_event.aux2 == DM1_BEHAVIOR_WANDER,
+              wander_event.aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+              wander_event.aux3 == 0 && wander_event.aux4 == 0x100,
           "F0180 schedules C37 wander at game time plus one");
     check(wander_receipt.valid && wander_receipt.source_symbol &&
               strcmp(wander_receipt.source_symbol,

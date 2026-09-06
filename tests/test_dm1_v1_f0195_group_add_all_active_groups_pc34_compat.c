@@ -140,14 +140,16 @@ int main(void)
               world.timeline.events[0].aux2 ==
                   DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3 + 1,
           "F0195 deletes only C29 through C41 before starting C37");
-    CHECK(world.timeline.events[1].kind == TIMELINE_EVENT_CREATURE_TICK &&
+    CHECK(world.timeline.events[1].kind == TIMELINE_EVENT_CREATURE_REACTION &&
               world.timeline.events[1].fireAtTick == 201 &&
               world.timeline.events[1].mapX == 0 &&
               world.timeline.events[1].mapY == 0 &&
               world.timeline.events[1].aux0 == 0 &&
-              world.timeline.events[1].aux2 == AI_STATE_WANDER,
+              world.timeline.events[1].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
+              world.timeline.events[1].aux3 == 0 &&
+              world.timeline.events[1].aux4 == 0x100,
           "F0195 starts the first group wandering at GameTime plus one");
-    CHECK(world.timeline.events[2].kind == TIMELINE_EVENT_CREATURE_TICK &&
+    CHECK(world.timeline.events[2].kind == TIMELINE_EVENT_CREATURE_REACTION &&
               world.timeline.events[2].mapX == 1 &&
               world.timeline.events[2].mapY == 0 &&
               world.timeline.events[2].aux0 == 1,

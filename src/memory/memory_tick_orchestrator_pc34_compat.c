@@ -11499,7 +11499,7 @@ static void orch_schedule_generated_group_wandering_event_compat(
     wander.aux1 = plan.wanderCreatureType;
     /* GROUP.C F0180:332-334 publishes C37, not the WANDER AI state.
      * Mark C.Ticks=0 explicitly so F0209 does not substitute fireAtTick. */
-    wander.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    wander.aux2 = plan.wanderEventType;
     wander.aux3 = 0;
     wander.aux4 = 0x100;
     (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &wander);

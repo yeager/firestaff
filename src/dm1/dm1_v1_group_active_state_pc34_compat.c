@@ -186,14 +186,16 @@ int F0180_DM1_GROUP_StartWandering_Compat(
     }
 
     memset(&event, 0, sizeof(event));
-    event.kind = TIMELINE_EVENT_CREATURE_TICK;
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
     event.fireAtTick = game_time + 1u;
     event.mapIndex = map_index;
     event.mapX = map_x;
     event.mapY = map_y;
     event.aux0 = group_index;
     event.aux1 = creature_type;
-    event.aux2 = DM1_BEHAVIOR_WANDER;
+    /* GROUP.C F0180:332-334: C37 with explicit C.Ticks=0. */
+    event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    event.aux4 = 0x100;
     *out_event = event;
 
     out_receipt->valid = 1;

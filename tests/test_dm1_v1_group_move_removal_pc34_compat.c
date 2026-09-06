@@ -1,4 +1,5 @@
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -201,7 +202,7 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_apply_retry_source_y", apply.sourceMapY, 5);
     expect_int("ordinary_apply_retry_event_map", apply.nextEventMapIndex, 7);
     expect_int("ordinary_apply_retry_event_x", apply.nextEventMapX, 4);
-    expect_int("ordinary_apply_retry_event_y", apply.nextEventMapY, 4);
+    expect_int("ordinary_apply_retry_event_y", apply.nextEventMapY, 5);
 }
 
 static void test_pit_and_chaos_subplans(void) {
@@ -311,7 +312,7 @@ static void test_generated_group_placement_plan(void) {
     expect_int("generated_party_wander", plan.shouldScheduleWanderEvent, 1);
     expect_int("generated_party_wander_tick", (int)plan.wanderFireAtTick, 101);
     expect_int("generated_party_wander_group", plan.wanderGroupIndex, 4);
-    expect_int("generated_party_wander_type", plan.wanderEventType, DM1_V1_AI_STATE_WANDER_PC34);
+    expect_int("generated_party_wander_type", plan.wanderEventType, DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
 
     expect_int("generated_other_map_ok",
         DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(

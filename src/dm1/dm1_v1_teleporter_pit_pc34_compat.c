@@ -1,6 +1,7 @@
 /* DM1 V1 Teleporter/Pit — ReDMCSB MOVESENS.C F0276, F0267.
  * Generated via Q3.6, fixed by Opus (added x,y to structs, fixed pit chain). */
 #include "dm1_v1_teleporter_pit_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include <string.h>
 
 static int dm1_v1_normalize_direction_or_cell_pc34(int value) {
@@ -432,7 +433,7 @@ int DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
     plan.wanderMapY = mapY;
     plan.wanderGroupIndex = groupIndex;
     plan.wanderCreatureType = creatureType;
-    plan.wanderEventType = DM1_V1_AI_STATE_WANDER_PC34;
+    plan.wanderEventType = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
 
     if (mapIndex == partyMapIndex && activeGroupCapacity > 0 && activeGroupCount >= 0) {
         if (activeGroupCount >= activeGroupCapacity) {

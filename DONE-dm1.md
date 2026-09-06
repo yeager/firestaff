@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- Aligned standalone F0180 and generated-placement event receipts with runtime
+  C37 publication. The runtime now consumes the corrected plan event type;
+  helper/runtime assertions distinguish original event type from AI state.
+  Corrected a stale blocked-move retry assertion to retain source Y=5, not
+  destination Y=4, consistent with GROUP.C F0209:2174-2185. All 24 selected
+  admission, movement, explosion and original-DOS-media tests pass.
+
 - Runtime F0180 publication now emits CREATURE_REACTION/C37 with explicit
   C.Ticks=0 (GROUP.C:332-334), rather than an AI-state-tagged legacy movement
   tick. The natural first-event regression consumes the event published by
