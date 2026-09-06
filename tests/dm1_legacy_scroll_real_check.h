@@ -360,12 +360,26 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                             state->world.party.champions[1].load = (unsigned short)(otherWeight + extraWeight);
                         }
                         state->world.party.champions[1].hp.current = 0;
+                        unsigned short inheritedHand = THING_NONE;
+                        int inheritedWeight = 0;
                         if (getenv("FIRESTAFF_VERIFY_LEADER_DEATH")) {
                             state->world.party.activeChampionIndex = 1;
+                            for (int r = 0; r < state->world.things->thingCounts[THING_TYPE_WEAPON]; ++r) {
+                                unsigned short candidate = (unsigned short)((THING_TYPE_WEAPON << 10) | r);
+                                const unsigned char *bytes = dm1_v1_dungeon_get_thing_data_pc34(state->world.things, candidate);
+                                if (candidate != thing && candidate != other && candidate != deathExtra && bytes &&
+                                    !(bytes[0] == 0xff && bytes[1] == 0xff)) { inheritedHand = candidate; break; }
+                            }
+                            if (inheritedHand == THING_NONE ||
+                                !dm1_v1_dungeon_get_object_weight_f0140_pc34(state->world.things, inheritedHand, &inheritedWeight) ||
+                                !DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, inheritedHand)) return 0;
+                            state->world.party.champions[1].load += (unsigned short)inheritedWeight;
                             state->world.party.champions[0].direction =
                                 (unsigned char)((state->world.party.direction + 1) & 3);
                         }
                         M11_GameView_ProbeCheckPartyDeath(state);
+                        if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != inheritedHand ||
+                            state->world.party.champions[0].load != inheritedWeight) return 0;
                         if (getenv("FIRESTAFF_VERIFY_LEADER_DEATH") &&
                             state->world.party.champions[0].direction != state->world.party.direction) {
                             fprintf(stderr, "FAIL: surviving leader direction not aligned\n");

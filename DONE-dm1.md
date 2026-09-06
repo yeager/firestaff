@@ -1,5 +1,10 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Leader-death probes now retain a third distinct original
+  weapon in the mouse hand and verify its identity/weight pass to the
+  survivor while the dead champion's load becomes zero. All five editions
+  pass both leader and non-leader death variants; weight values share F0140.
+
 - 2026-09-06: Reproduced missing survivor direction alignment in five
   original-media leader-death probes. F0319 now applies F0368's direction
   rule to the replacement leader. Both default non-leader death and
