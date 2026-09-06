@@ -146,6 +146,25 @@ static int check_legacy_object_transfers(M11_GameViewState *state)
                         if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != thing ||
                             state->world.party.champions[0].inventory[slots[slot]] != THING_NONE ||
                             state->world.party.champions[0].load != weight) return 0;
+                        /* Explicit-owner migration gate: exchange the held
+                         * original object with champion 1's original weapon. */
+                        state->dm1InventoryChampionOrdinal = 2;
+                        for (int exchange = 0; exchange < 2; ++exchange) {
+                            unsigned short expectedHand = exchange ? thing : other;
+                            unsigned short expectedSlot = exchange ? other : thing;
+                            for (int release = 0; release < 2; ++release) {
+                                if (release) (void)M11_GameView_HandlePointerButtonRelease(state,
+                                    x+w/2, 33+y+h/2, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                                else (void)M11_GameView_HandlePointer(state, x+w/2, 33+y+h/2, 1);
+                                if (state->world.party.activeChampionIndex != 0 ||
+                                    state->world.party.champions[0].inventory[19] != THING_NONE ||
+                                    state->world.party.champions[1].inventory[19] != expectedSlot ||
+                                    DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != expectedHand ||
+                                    state->world.party.champions[0].load != (exchange ? weight : otherWeight) ||
+                                    state->world.party.champions[1].load != (exchange ? otherWeight : weight)) return 0;
+                            }
+                        }
+                        state->dm1InventoryChampionOrdinal = 0;
                         state->inventoryPanelActive = 0;
                         if (getenv("FIRESTAFF_VERIFY_INVENTORY_LEADER_ISOLATION")) {
                             /* PANEL.C:2363 changes G0423, not G0411. */

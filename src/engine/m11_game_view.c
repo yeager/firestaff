@@ -56386,7 +56386,9 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     if (sourceSlotBoxIndex >= 38 && sourceSlotBoxIndex <= 45) {
         return m11_process_v1_chest_slot_box_click(state, sourceSlotBoxIndex);
     }
-    championIndex = state->world.party.activeChampionIndex;
+    /* CHAMPION.C F0302 uses G0423 for inventory slots; G0411 still
+     * owns the object exchanged through the mouse hand. */
+    championIndex = m11_inventory_champion_index(state);
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
     championSlot = dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
         sourceSlotBoxIndex);

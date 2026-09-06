@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-06: Migrated inventory slot transactions to the explicit owner
+  accessor. Five Atari/Amiga tests exchange distinct original weapons
+  between leader hand and another champion's ready hand in both directions,
+  checking identities and separate loads on press/release. The owner is
+  selected directly by the test; normal panel opening is not migrated yet.
+
 - 2026-09-06: Added a separately validated DM1 inventory-owner ordinal and
   migrated inventory icon lookup. Five original-media tests verify another
   champion's item without changing the leader, invalid-owner rejection,
