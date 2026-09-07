@@ -1,12 +1,11 @@
-# Firestaff — dm1 domain template.
-# Canonical English source-string template for Dungeon Master 1 runtime.
+# Firestaff — CSB Swedish catalogue.
+# Swedish presentation strings for Chaos Strikes Back runtime.
 #
-# Domain: dm1
-# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+# Domain: csb
+# Covers: CSB in-game HUD, runtime messages, prompts, labels, menus,
 #         item/creature names, and surfaced story/ending text.
 #
-# NOTE: Test population pass from current M11/DM1 runtime strings.
-# Future extraction should replace manual population.
+# NOTE: Source extraction is driven by the selected CSB media and runtime.
 #
 msgid ""
 msgstr ""
@@ -14,7 +13,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
 "POT-Creation-Date: 1970-01-01 00:00+0000\n"
 "PO-Revision-Date: 2026-04-22 12:05+0200\n"
-"Last-Translator: OpenClaw GPT-5.4 pass\n"
+"Last-Translator: Firestaff contributors\n"
 "Language-Team: Swedish\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
