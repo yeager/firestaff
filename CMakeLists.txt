@@ -15431,6 +15431,13 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_boot_title_import_ui_gate_pc34_compat
             PRIVATE -Wall -Wextra -O2)
+        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            # GCC 15 can ICE in ipa-pure-const while compiling the large
+            # source-faithful CSB boot unit.  This test-only workaround
+            # leaves release optimisation and game behaviour unchanged.
+            target_compile_options(test_csb_v1_boot_title_import_ui_gate_pc34_compat
+                PRIVATE -fno-ipa-pure-const)
+        endif()
     endif()
     add_test(
         NAME csb_v1_boot_title_import_ui_gate_pc34_compat
