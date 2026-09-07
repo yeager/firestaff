@@ -8,7 +8,7 @@
  * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
  *
  * Build-time pipeline:
- *   1. .openclaw/tools/png_to_rgba.py reads modern_asset_manifest.json
+ *   1. tools/png_to_rgba.py reads modern_asset_manifest.json
  *      + every PNG referenced, scales to MAX_SIZE=256, packs into a
  *      single v22_inplace_cache.bin (header + per-asset entries + raw RGBA).
  *   2. Output: ~/.firestaff/assets/dm1/modern/v22_inplace_cache.bin

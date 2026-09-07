@@ -12,7 +12,7 @@
     "cleanRoomRewrite": true,
     "functionalTemplate": "ReDMCSB_WIP20210206",
     "functionalTemplateArchive": "http://dmweb.free.fr/Stuff/ReDMCSB_WIP20210206.7z",
-    "localFunctionalTemplateRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+    "localFunctionalTemplateRoot": "reference/redmcsb-20210206/Toolchains/Common/Source/",
     "rules": [
       "Use ReDMCSB source-locks as the primary functional template for DM1 and CSB gameplay, UI state machines, save/load fields, timers, input routing, and compatibility quirks.",
       "Use Firestaff runtime probes to prove the clean-room implementation follows the ReDMCSB-derived contract without importing ReDMCSB code.",

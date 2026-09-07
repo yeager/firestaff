@@ -4,7 +4,7 @@
  * Dungeon Master Nexus Sega Saturn — Phase 1
  * Source reference: ReDMCSB COMMAND.C F0359 ("LoadGameSettings");
  *   Greatstone DM Nexus map data; Sega Saturn developer docs
- *   Reference path: ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/
+ *   Reference tree: reference/redmcsb-20210206/ (developer-only; not runtime)
  *
  * This module provides:
  *   • Default boot profile for Nexus Sega Saturn runtime
