@@ -8,10 +8,11 @@ Reviewed 2026-09-05. Only open work is listed here.
   `M004_RANDOM(4)` direction; its bounded four-direction scan also consumes
   the prior-square one-in-four `M004` gate only when applicable. The remaining
   C37 now uses F0202's creature-owned open-pit/levitation and imaginary
-  fakewall gates plus its non-material door exception. Remaining work is
-  F0202's archenemy-fluxcage gate plus F0267's
-  blocked-by-party / attack transition,
-  including retry ownership and original platform traces.
+  fakewall gates plus its non-material door exception. The F0202
+  archenemy-Fluxcage gate and the C31 party-bump attack transition are
+  covered by raw-format regression tests. Remaining work is F0267's
+  blocked-by-party/retry ownership and the distinct C29 danger and C30
+  projectile-reaction paths, including original platform traces.
   Do not reintroduce map/tick-derived reseeding. See
   `docs/parity/DM1_RAW_RNG_CONSUMER_AUDIT.md` for scan scope.
 

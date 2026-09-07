@@ -85,9 +85,11 @@ Timeline drives all behavior. Key events (DEFS.H:956–960):
 - C37_EVENT_UPDATE_BEHAVIOR_GROUP — recalculate group-wide behavior
 - C38..C41_EVENT_UPDATE_BEHAVIOR_CREATURE_0..3 — per-creature attack timing
 
-Reaction events (GROUPED BY C29..C36):
-- C30: party adjacent — force ATTACK if not already attacking/fleeing
-- C31: party adjacent — bump-triggered
+Reaction events (GROUP.C F0209 C29..C31):
+- C29: danger on the group's square — move away from the danger
+- C30: hit by a projectile — probabilistic search/avoidance reaction
+- C31: party adjacent — bump/physical-hit reaction; force ATTACK when the
+  creature is eligible and is neither already attacking nor fleeing
 - C32..C36: aspect update events (visual only)
 
 Events are accumulated even when Life is Frozen (BUG0_14 noted at GROUP.C:1982).

@@ -102,11 +102,15 @@ Sight/smell ranges vary by creature type but are generally 1–4 squares.
 
 ## 5. Reaction Events — C30/C31 (GROUP.C:2006–2042)
 
-When the party **bumps into a group** or attacks it physically:
-- Event CM3_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT fires
+When the party **bumps into a group** or attacks it physically, event
+CM1_EVENT_CREATE_REACTION_EVENT_31_PARTY_IS_ADJACENT fires:
 - Creature transitions to BEHAVIOR_ATTACK (C6) if not already attacking/fleeing
-- 3/4 chance to look in a random direction to search for party if not visible
-- After reaction, creature re-evaluates at next UPDATE_BEHAVIOR_GROUP event
+- It first removes stale C29..C41 group work and schedules per-creature C38
+  attack events.
+
+C30 is instead CM2_EVENT_CREATE_REACTION_EVENT_30_HIT_BY_PROJECTILE. It can
+search for the visible party or fall through to the random avoidance movement
+route; it is not a party-adjacent event.
 
 ---
 
@@ -133,5 +137,5 @@ Creatures also flee from **danger on their own square**:
 | M055_SMELL_RANGE | DEFS.H macro | Smell range from creature data |
 | M056_ATTACK_RANGE | DEFS.H macro | Attack range from creature data |
 | C29_EVENT_CREATE_REACTION_EVENT_29_DANGER_ON_SQUARE | DEFS.H:950 | Danger on square event |
-| C30_EVENT_CREATE_REACTION_EVENT_30_PARTY_IS_ADJACENT | DEFS.H:951 | Party adjacent event |
+| C30_EVENT_CREATE_REACTION_EVENT_30_HIT_BY_PROJECTILE | DEFS.H:951 | Projectile-hit reaction |
 | MASK0x0004_SIDE_ATTACK | DEFS.H:1598 | All-direction attack flag |
