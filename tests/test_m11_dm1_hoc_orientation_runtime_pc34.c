@@ -556,14 +556,20 @@ int main(void)
         return 1;
     }
     {
-        DM1_V1_ChampionStatusRectPc34 rect;
-        if (!dm1_v1_champion_status_box_rect_pc34(0, &rect) ||
+        DM1_V1_ChampionStatusRectPc34 bar;
+        if (!dm1_v1_champion_status_bar_rect_pc34(0, 0, &bar) ||
             M11_GameView_HandlePointerButton(&state,
-                                             rect.x + rect.w / 2,
-                                             rect.y + rect.h / 2,
+                                             bar.x + bar.w / 2,
+                                             bar.y + bar.h / 2,
                                              DM1_V1_MOUSE_MASK_LEFT_PC34) !=
                 M11_GAME_INPUT_REDRAW || !state.inventoryPanelActive) {
-            fprintf(stderr, "live champion HUD click did not open inventory\n");
+            /* COMMAND.C G0447 keeps C012 (the status box) and C007 (the
+             * bar graph) distinct. Use the source C187 bar rectangle rather
+             * than inferring a coordinate from the adjacent C151 status box.
+             * A broad status-box hit here would conceal the native C007 path
+             * and regress the real HoC route. */
+            fprintf(stderr,
+                    "live champion HUD C007 inventory route failed\n");
             M11_GameView_Shutdown(&state);
             return 1;
         }
