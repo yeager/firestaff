@@ -2712,6 +2712,27 @@ int main(void)
                               source_champion->SymbolStep == 0u &&
                               mutable_profile->runtime.csbwin_random_seed == rng_before,
                           "F31 F0409-invalid cast clears only source symbols through authenticated G0487");
+
+                    /* The source table's Zokathra definition has a zero
+                     * high byte, so F0409 compares its lower three spell
+                     * symbols and accepts every valid power rune.  F0412's
+                     * allocation transaction is deliberately still closed. */
+                    view.spellBuffer.runes[0] = 0x60u;
+                    view.spellBuffer.runes[1] = 0x6bu;
+                    view.spellBuffer.runes[2] = 0x6eu;
+                    view.spellBuffer.runes[3] = 0x76u;
+                    view.spellBuffer.runeCount = 4;
+                    source_champion->Incantation[0] = 0x60;
+                    source_champion->Incantation[1] = 0x6b;
+                    source_champion->Incantation[2] = 0x6e;
+                    source_champion->Incantation[3] = 0x76;
+                    rng_before = mutable_profile->runtime.csbwin_random_seed;
+                    CHECK(M11_GameView_CastSpell(&view) == 0 &&
+                              view.spellPanelOpen && view.spellBuffer.runeCount == 4 &&
+                              source_champion->Incantation[0] == 0x60 &&
+                              source_champion->Incantation[3] == 0x76 &&
+                              mutable_profile->runtime.csbwin_random_seed == rng_before,
+                          "F31 F0409 accepts source Zokathra symbols but blocks unimplemented F0412 mutation");
                 }
             }
             /* This proves presentation only, not a successful spell cast.

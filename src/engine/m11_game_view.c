@@ -20640,7 +20640,15 @@ static int m11_csb_fmtowns_spell_table_contains(
     }
     handoff = &state->csbFmtownsGameHandoffReceipt;
     for (index = 0u; index < CSB_V1_FMTOWNS_GAME_SPELL_COUNT; ++index) {
-        if (handoff->spells[index].symbols == symbols) return 1;
+        const uint32_t source_symbols = handoff->spells[index].symbols;
+        /* MENU.C F0409: a zero high byte means that the definition has no
+         * power symbol, so only the three spell-symbol bytes are compared. */
+        if ((source_symbols & 0xff000000u) != 0u) {
+            if (source_symbols == symbols) return 1;
+        } else if ((source_symbols & 0x00ffffffu) ==
+                   (symbols & 0x00ffffffu)) {
+            return 1;
+        }
     }
     return 0;
 }
