@@ -26206,12 +26206,12 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
         facts.captured_from_real_assets;
     facts.observed_required_dungeon_hash_match =
         facts.dungeon_loaded && facts.map_count > 0;
+    /* This field names the historical macOS capture route, but the native
+     * SDL presentation surface is shared by every supported desktop host.
+     * A real host-window RGBA capture must therefore satisfy the same
+     * receipt on Linux and Windows as it does on macOS. */
     facts.captured_from_mac_window =
-#ifdef __APPLE__
         host_window_present && presented_capture_ready;
-#else
-        0;
-#endif
     facts.captured_from_release_app =
         state && state->startedFromLauncher &&
         !state->dm1StartupIntroBypassed &&
