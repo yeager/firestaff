@@ -110,10 +110,6 @@ if "--check-tkinter" in sys.argv:
     print(f"Tkinter runtime check: PASS (Tk {tk.TkVersion})")
     raise SystemExit(0)
 
-if "--self-test" in sys.argv:
-    print("firestaff_savegame_editor self-test: PASS")
-    raise SystemExit(0)
-
 if "--smoke-ui" in sys.argv:
     import tkinter as tk
     require_supported_tk(tk)
@@ -149,6 +145,7 @@ PART_DESCRIPTIONS = {
 }
 GAME_LABELS = {
     "dm1": "Dungeon Master", "csb": "Chaos Strikes Back",
+    "csbwin": "Chaos Strikes Back (CSBWin)",
     "dm2": "Dungeon Master II", "theron": "Theron's Quest", "nexus": "DM Nexus",
 }
 CHAMPION_NAMES_DM1 = [
@@ -409,10 +406,36 @@ class Savegame:
         self.modified = False
 
 
-def detect_game(data):
+def detect_game(data: bytes, filename: str = "") -> str | None:
+    """Identify only documented, non-destructive save containers.
+
+    Unknown data is rejected rather than guessed.  Containers without a
+    field-level editor still open as a byte-preserving inspection/save-as
+    document; this avoids re-encoding a format that has not been decoded.
+    """
+    if data.startswith(b"CSBGAME\0") and len(data) >= 12:
+        version = struct.unpack_from("<I", data, 8)[0]
+        if version in (0x200, 0x201):
+            return "csbwin"
+    if data.startswith(b"FNXS"):
+        return "nexus"
+    if data.startswith(b"TQSV"):
+        return "theron"
+    if data.startswith(b"SKSAVE"):
+        return "dm2"
     if len(data) >= 512 and data[299] in (3, 4, 5):
-        return "dm1"
+        return "csb" if struct.unpack_from("<H", data, 376)[0] == 1 else "dm1"
     return None
+
+
+if "--self-test" in sys.argv:
+    assert detect_game(b"CSBGAME\0\x00\x02\x00\x00") == "csbwin"
+    assert detect_game(b"FNXS\0") == "nexus"
+    assert detect_game(b"TQSV\0") == "theron"
+    assert detect_game(b"SKSAVE\0") == "dm2"
+    assert detect_game(b"not a save") is None
+    print("firestaff_savegame_editor self-test: PASS")
+    raise SystemExit(0)
 
 
 # ── Tk GUI ───────────────────────────────────────────────────────────────
@@ -540,7 +563,7 @@ class SavegameEditor(tk.Tk):
         try: data = p.read_bytes()
         except Exception as e:
             messagebox.showerror(_("Error"), str(e)); return
-        game = detect_game(data)
+        game = detect_game(data, p.name)
         if not game:
             messagebox.showerror(_("Error"), _("Unrecognized savegame format.")); return
         self.savegame = Savegame(game, p, data)
