@@ -17781,6 +17781,17 @@ endif()
         TIMEOUT 180
     )
     add_test(
+        NAME csb_v1_atari_utility_mini_cli_resume
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_utility_mini_cli_resume.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_utility_mini_cli_resume PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;resume;cli;real_data;in_memory;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_REAL_MEDIA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+        TIMEOUT 60
+    )
+    add_test(
         NAME csb_v1_hint_oracle_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_hint_oracle_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
