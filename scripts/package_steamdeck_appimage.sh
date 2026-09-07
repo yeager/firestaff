@@ -60,6 +60,7 @@ cp "$ARTPACK_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_dungeon_studio"
 cp "$SAVEGAME_EDITOR_BIN_SRC" "$APPDIR/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$APPDIR/usr/share/firestaff/firestaff-startup-intro.ppm"
+cp "$ROOT/assets/branding/firestaff-startup-dungeon-v2.ppm" "$APPDIR/usr/share/firestaff/firestaff-startup-dungeon-v2.ppm"
 cp "$ROOT/assets/cards/platforms/platforms.ppm" "$APPDIR/usr/share/firestaff/firestaff-platform-cards.ppm"
 for domain in startup-menu dm1 csb dm2 firestaff nexus theron; do
   cp "$ROOT"/po/"$domain".*.po "$APPDIR/usr/share/firestaff/po/"

@@ -642,12 +642,25 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
     if (!rgba) return 0;
     (void)M11_Render_SetPresentationFillWindow(1);
+    /* The generated dungeon composition is the preferred intro art. Keep
+     * the established PPM as a compatible fallback for partial installs. */
+    (void)M12_StartupIntro_LoadBackground(
+        "assets/branding/firestaff-startup-dungeon-v2.ppm");
     (void)M12_StartupIntro_LoadBackground("assets/branding/firestaff-startup-intro.ppm");
     basePath = SDL_GetBasePath();
     if (basePath) {
+        snprintf(resourcePath, sizeof(resourcePath),
+                 "%sfirestaff-startup-dungeon-v2.ppm", basePath);
+        (void)M12_StartupIntro_LoadBackground(resourcePath);
         snprintf(resourcePath, sizeof(resourcePath), "%sfirestaff-startup-intro.ppm", basePath);
         (void)M12_StartupIntro_LoadBackground(resourcePath);
+        snprintf(resourcePath, sizeof(resourcePath),
+                 "%s../Resources/firestaff-startup-dungeon-v2.ppm", basePath);
+        (void)M12_StartupIntro_LoadBackground(resourcePath);
         snprintf(resourcePath, sizeof(resourcePath), "%s../Resources/firestaff-startup-intro.ppm", basePath);
+        (void)M12_StartupIntro_LoadBackground(resourcePath);
+        snprintf(resourcePath, sizeof(resourcePath),
+                 "%s../share/firestaff/firestaff-startup-dungeon-v2.ppm", basePath);
         (void)M12_StartupIntro_LoadBackground(resourcePath);
         snprintf(resourcePath, sizeof(resourcePath), "%s../share/firestaff/firestaff-startup-intro.ppm", basePath);
         (void)M12_StartupIntro_LoadBackground(resourcePath);
@@ -656,8 +669,13 @@ static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
         SDL_free((void*)basePath);
 #endif
     }
+    (void)M12_StartupIntro_LoadBackground(
+        "/usr/share/firestaff/firestaff-startup-dungeon-v2.ppm");
     (void)M12_StartupIntro_LoadBackground("/usr/share/firestaff/firestaff-startup-intro.ppm");
 #ifdef FIRESTAFF_SOURCE_DIR
+    snprintf(resourcePath, sizeof(resourcePath),
+             FIRESTAFF_SOURCE_DIR "/assets/branding/firestaff-startup-dungeon-v2.ppm");
+    (void)M12_StartupIntro_LoadBackground(resourcePath);
     snprintf(resourcePath, sizeof(resourcePath),
              FIRESTAFF_SOURCE_DIR "/assets/branding/firestaff-startup-intro.ppm");
     (void)M12_StartupIntro_LoadBackground(resourcePath);
