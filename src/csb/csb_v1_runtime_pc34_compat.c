@@ -5106,6 +5106,32 @@ static int csb_v1_runtime_f0202_destination_is_blocked(
         (creature->attributes & CREATURE_ATTR_MASK_NON_MATERIAL)) {
         return 0;
     }
+    if (square_type == 4) {
+        const uint8_t *door_record;
+        int thing_type;
+        int thing_size;
+        int first_thing;
+        int door_vertical;
+        int creature_height;
+        int door_state;
+
+        /* GROUP.C F0202:1540-1564 reads the C00 record selected by
+         * F0161, rather than applying the party's coarse C04 aperture.
+         * The PC/I34 record's word at +2 stores Vertical in bit 5
+         * (DEFS.H:1131-1146); M051_CREATURE_HEIGHT is Attributes[7:8]. */
+        first_thing = csb_v1_dungeon_get_first_thing(
+            dungeon, level, map_x, map_y);
+        if (first_thing < 0) return 1;
+        door_record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)first_thing, &thing_type, NULL, &thing_size);
+        if (!door_record || thing_type != 0 || thing_size < 4) return 1;
+        door_state = raw_square & 0x07;
+        if (door_state == 5) return 0;
+        door_vertical = (csb_v1_runtime_read_u16(door_record + 2) & 0x0020u)
+            != 0;
+        creature_height = (creature->attributes >> 7) & 0x03;
+        return door_state > (door_vertical ? creature_height : 1);
+    }
     return csb_v1_runtime_group_destination_is_blocked(
         dungeon, level, map_x, map_y);
 }
