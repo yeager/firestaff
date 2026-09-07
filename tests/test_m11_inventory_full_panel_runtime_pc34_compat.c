@@ -768,24 +768,33 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
               "clicking C537 picks the first visible chest item");
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
               "chest pickup moves the slot object to the leader hand");
-    ASSERT_EQ(containers[0].slot, axeThing,
-              "open chest writeback compacts remaining visible slot objects");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "open chest keeps its raw linked-list head until F0334 close");
     ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
               "picked chest object is detached from the container list");
 
     ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(1, &sx, &sy, &sw, &sh),
                 "C538 chest slot zone exists");
+    ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_INVENTORY,
+                                                     sx + sw / 2,
+                                                     33 + sy + sh / 2,
+                                                     M11_DM1_MOUSE_MASK_LEFT,
+                                                     &space,
+                                                     &zone),
+              81,
+              "open chest child first enters the C081/C101 parent route");
+    ASSERT_EQ(zone, 101, "open chest child is admitted by C101 before G0456");
     ASSERT_EQ(M11_GameView_HandlePointer(&state, sx + sw / 2, 33 + sy + sh / 2, 1),
               M11_GAME_INPUT_REDRAW,
               "clicking C538 places the leader-hand item into the chest");
-    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
-              "placing into chest clears the leader hand");
-    ASSERT_EQ(containers[0].slot, axeThing,
-              "chest list keeps the first existing object first");
-    ASSERT_EQ(weapons[1].next, daggerThing,
-              "placed object is linked after the existing visible item");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), axeThing,
+              "placing into occupied C538 swaps its item into the leader hand");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "open chest keeps raw list ownership until F0334 close");
+    ASSERT_EQ(weapons[1].next, THING_ENDOFLIST,
+              "open chest does not link the cached replacement before close");
     ASSERT_EQ(weapons[0].next, THING_ENDOFLIST,
-              "placed object terminates the compacted chest list");
+              "picked object remains detached from the raw chest list");
 
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, arrowThing), 1,
               "leader hand accepts a source weapon thing for rejection test");
@@ -950,10 +959,10 @@ static void test_open_chest_occupied_slot_swap_preserves_visible_order(void) {
               "occupied chest-slot swap moves the old C538 item to leader hand");
     ASSERT_EQ(containers[0].slot, daggerThing,
               "occupied chest-slot swap keeps C537 as list head");
-    ASSERT_EQ(weapons[0].next, swordThing,
-              "occupied chest-slot swap places leader-hand object at C538");
-    ASSERT_EQ(weapons[3].next, maceThing,
-              "occupied chest-slot swap preserves the following visible item");
+    ASSERT_EQ(weapons[0].next, axeThing,
+              "open chest keeps its raw C538 link until F0334 close");
+    ASSERT_EQ(weapons[3].next, THING_ENDOFLIST,
+              "cached replacement stays outside the raw list until close");
     ASSERT_EQ(weapons[2].next, THING_ENDOFLIST,
               "occupied chest-slot swap keeps the last visible item terminating");
     ASSERT_EQ(weapons[1].next, THING_ENDOFLIST,
@@ -2057,8 +2066,8 @@ static void test_open_chest_middle_pickup_compacts_visible_list(void) {
               "middle chest pickup keeps first visible object as list head");
     ASSERT_EQ(weapons[0].next, axeThing,
               "middle chest pickup preserves object before the picked slot");
-    ASSERT_EQ(weapons[1].next, maceThing,
-              "middle chest pickup links around the emptied visible slot");
+    ASSERT_EQ(weapons[1].next, swordThing,
+              "open chest retains the raw middle-slot link until F0334 close");
     ASSERT_EQ(weapons[2].next, THING_ENDOFLIST,
               "middle chest pickup detaches the picked object from chest list");
     ASSERT_EQ(weapons[3].next, THING_ENDOFLIST,
@@ -2119,8 +2128,8 @@ static void test_open_chest_pickup_preserves_mixed_type_tail_order(void) {
               "mixed-type pickup moves the weapon head to leader hand");
     ASSERT_EQ(weapon.next, THING_ENDOFLIST,
               "mixed-type pickup detaches the picked weapon head");
-    ASSERT_EQ(containers[0].slot, potionThing,
-              "mixed-type pickup promotes the potion tail to container head");
+    ASSERT_EQ(containers[0].slot, daggerThing,
+              "mixed-type pickup retains raw head until F0334 close");
     ASSERT_EQ(potion.next, junkThing,
               "mixed-type pickup preserves potion-to-junk tail order");
     ASSERT_EQ(junk.next, THING_ENDOFLIST,
@@ -2384,8 +2393,8 @@ static void test_open_chest_last_visible_swap_rewrites_hidden_tail(void) {
         ASSERT_EQ(weapons[i].next, weaponThings[i + 1],
                   "C544 replacement preserves visible C537..C542 order");
     }
-    ASSERT_EQ(weapons[6].next, weaponThings[9],
-              "C544 replacement links C543 directly to the leader-hand replacement");
+    ASSERT_EQ(weapons[6].next, weaponThings[7],
+              "C544 replacement leaves the raw C543 link intact until close");
     ASSERT_EQ(weapons[9].next, THING_ENDOFLIST,
               "C544 replacement terminates the rewritten visible list");
     ASSERT_EQ(weapons[7].next, THING_ENDOFLIST,
@@ -2818,8 +2827,8 @@ static void test_open_chest_all_eight_slot_mouse_routes_and_pickup(void) {
               "clicking C543 picks the seventh visible chest object");
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), weaponThings[6],
               "C543 pickup moves the seventh visible chest object to leader hand");
-    ASSERT_EQ(weapons[5].next, weaponThings[7],
-              "C543 pickup links slot 6 around the empty seventh slot");
+    ASSERT_EQ(weapons[5].next, weaponThings[6],
+              "C543 pickup leaves raw slot-6 link intact until F0334 close");
     ASSERT_EQ(weapons[6].next, THING_ENDOFLIST,
               "C543 pickup detaches the picked object from the chest chain");
 

@@ -36729,6 +36729,18 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             DM1_V1_MOUSE_MASK_LEFT_PC34,
             &space,
             &zoneId);
+        /* F0378 first admits C081/C101 from G0449, then switches to G0456
+         * while an open chest owns that panel. Resolve the child list only
+         * after that parent hit; querying G0456 unconditionally would give
+         * the chest slots ownership outside M569_PANEL_CHEST. */
+        if (command == 81 && zoneId == 101 && m11_v1_open_chest_valid(state)) {
+            command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34,
+                x, y,
+                DM1_V1_MOUSE_MASK_LEFT_PC34,
+                &space,
+                &zoneId);
+        }
         (void)space;
         if (command >= 20 && command <= 27 &&
             zoneId >= 211 && zoneId <= 218) {
@@ -36740,6 +36752,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                  * the held object in another authenticated hand box. */
                 state->v1InventoryDragActive = 1;
                 state->v1InventoryDragSourceSlotBox = command - 20;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        /* COMMAND.C G0449 maps the open-container C537..C544 boxes to
+         * C058..C065.  They are not champion inventory slots C507..C536:
+         * F0380 sends them to F0302 with source slot indices 38..45, where
+         * CHAMPION.C exchanges G0425_aT_ChestSlots and the leader hand.
+         * Leaving these commands out of this dispatcher made a real chest
+         * click fall through to an unrelated redraw path, so pickup and
+         * placement could appear to do nothing. */
+        if (command >= 58 && command <= 65 &&
+            zoneId >= 537 && zoneId <= 544) {
+            int chestSourceSlot = command - 20; /* C058 -> C538 index 38 */
+            if (m11_process_v1_inventory_slot_box_click(state,
+                                                        chestSourceSlot)) {
+                state->v1InventoryDragActive = 1;
+                state->v1InventoryDragSourceSlotBox = chestSourceSlot;
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;

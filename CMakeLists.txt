@@ -7713,13 +7713,30 @@ if(DM2_V2_SOURCES)
 endif()
 if(NOT MSVC)
     target_compile_options(firestaff_m11 PRIVATE -Wall -Wextra -O2)
+    # GCC 15.2 can ICE in tree-ccp while compiling the large M11 dispatcher
+    # (observed in M11_GameView_TriggerNonMeleeActionByIndex). Keep normal
+    # optimization enabled and disable only the faulty compiler pass there;
+    # this is a toolchain workaround, not a runtime behavior change.
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND
+       CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "15")
+        target_compile_options(firestaff_m11 PRIVATE -fno-tree-ccp)
+    endif()
     # src/engine/m11_game_view.c is a large legacy file — relax truncation/unused warnings.
     # -Wno-maybe-uninitialized is a GCC-only flag; skip on Clang/MSVC to avoid
     # -Wunknown-warning-option noise.
     if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
-            COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
-        )
+        if(CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "15")
+            # Keep this source at a stable optimization level on GCC 15:
+            # its larger control-flow graph has also emitted malformed CFI
+            # after the tree-ccp ICE above. Other M11 sources remain -O2.
+            set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
+                COMPILE_OPTIONS "-O1;-fno-tree-ccp;-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
+            )
+        else()
+            set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
+                COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function;-Wno-maybe-uninitialized"
+            )
+        endif()
     else()
         set_source_files_properties(src/engine/m11_game_view.c PROPERTIES
             COMPILE_OPTIONS "-Wno-format-truncation;-Wno-unused-function"
