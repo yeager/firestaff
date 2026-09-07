@@ -5986,6 +5986,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 } while (direction != first_direction);
                 if (moved) {
                     int group_alive = 1;
+                    int c37_delay;
                     csb_v1_runtime_request_creature_movement_sound(
                         profile, (int)thing_record[4], moved_x, moved_y);
                     (void)csb_v1_runtime_apply_group_consequences_at_square(
@@ -6010,11 +6011,20 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                     csb_v1_runtime_sync_active_group_state_from_record(
                         profile, group_thing, thing_record, moved_map, moved_x,
                         moved_y, 1, 1);
+                    /* GROUP.C F0209:2450,2458-2463 advances the C37 wakeup
+                     * by max(1, M004_RANDOM(4) + MovementTicks - 1) after
+                     * a danger-reaction move.  It is a separate draw from
+                     * the initial absolute direction (and any prior-square
+                     * admission), so consuming it here preserves the shared
+                     * source RNG stream for following group work. */
+                    c37_delay = csb_v1_runtime_main_random2(profile) +
+                        csb_v1_runtime_creature_movement_ticks(
+                            (int)thing_record[4]) - 1;
+                    if (c37_delay < 1) c37_delay = 1;
                     csb_v1_runtime_schedule_c37_group_event(
                         profile, moved_map, moved_x, moved_y,
                         (int)thing_record[4],
-                        (uint32_t)csb_v1_runtime_creature_movement_ticks(
-                            (int)thing_record[4]));
+                        (uint32_t)c37_delay);
                 }
                 return;
             }

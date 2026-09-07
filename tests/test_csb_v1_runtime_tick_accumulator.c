@@ -1957,6 +1957,8 @@ static void test_c29_danger_reaction_uses_absolute_escape_direction(void)
     profile.csbwin_random_seed = 29u;
     expected_random_state =
         29u * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    expected_random_state =
+        expected_random_state * UINT32_C(0xbb40e62d) + UINT32_C(11);
 
     memset(&event, 0, sizeof(event));
     event.type = DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE;
@@ -1971,7 +1973,7 @@ static void test_c29_danger_reaction_uses_absolute_escape_direction(void)
               test_get_le16(raw, 68) == (uint16_t)(4u << 10),
           "C29 uses its absolute M004 east escape direction");
     CHECK(profile.csbwin_random_seed == expected_random_state,
-          "C29 consumes exactly its initial shared M004 direction");
+          "C29 consumes its direction and source C37-delay M004 draws");
     CHECK(count_queued_event_type(&profile,
                                   DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 1,
           "C29 escape schedules a follow-up C37 group update");
