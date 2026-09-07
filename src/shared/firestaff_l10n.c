@@ -215,6 +215,8 @@ const char *fs_l10n_language_name(FS_Language lang) {
  * ══════════════════════════════════════════════════════════════════════ */
 
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 
 /* macOS applications commonly inherit the launcher environment instead of
  * the user's login shell.  In particular, LC_ALL is often C.UTF-8 even when
@@ -274,6 +276,8 @@ FS_Language fs_l10n_language_from_locale(const char *locale) {
     if (((locale[0] == 'n' || locale[0] == 'N') &&
          (locale[1] == 'b' || locale[1] == 'B')) ||
         ((locale[0] == 'n' || locale[0] == 'N') &&
+         (locale[1] == 'n' || locale[1] == 'N')) ||
+        ((locale[0] == 'n' || locale[0] == 'N') &&
          (locale[1] == 'o' || locale[1] == 'O'))) return FS_LANG_NO;
     if ((locale[0] == 'f' || locale[0] == 'F') &&
         (locale[1] == 'i' || locale[1] == 'I')) return FS_LANG_FI;
@@ -284,6 +288,47 @@ FS_Language fs_l10n_language_from_locale(const char *locale) {
     if ((locale[0] == 'i' || locale[0] == 'I') &&
         (locale[1] == 'd' || locale[1] == 'D')) return FS_LANG_ID;
     return FS_LANG_EN;
+}
+
+/* `fs_l10n_language_from_locale()` intentionally returns English for an
+ * unknown code.  Detection needs to distinguish that fallback from a real
+ * `en` preference, otherwise `LANGUAGE=xx:sv` can never reach Swedish. */
+static int fs_l10n_locale_is_supported(const char* locale) {
+    const char a = locale && locale[0] ? (char)tolower((unsigned char)locale[0]) : '\0';
+    const char b = locale && locale[1] ? (char)tolower((unsigned char)locale[1]) : '\0';
+    return (a == 'e' && b == 'n') || (a == 's' && b == 'v') ||
+           (a == 'd' && (b == 'e' || b == 'a')) ||
+           (a == 'f' && (b == 'r' || b == 'i')) ||
+           (a == 'e' && b == 's') || (a == 'i' && (b == 't' || b == 'd')) ||
+           (a == 'p' && (b == 't' || b == 'l')) || (a == 'n' && b == 'l') ||
+           (a == 'c' && b == 's') || (a == 'r' && b == 'u') ||
+           (a == 'j' && b == 'a') || (a == 'k' && b == 'o') ||
+           (a == 'z' && b == 'h') || (a == 'n' &&
+             (b == 'b' || b == 'n' || b == 'o')) ||
+           (a == 'h' && b == 'u') || (a == 't' && b == 'r');
+}
+
+static int fs_l10n_locale_is_generic(const char* locale) {
+    return !locale || !locale[0] ||
+           (tolower((unsigned char)locale[0]) == 'c' && locale[1] == '\0') ||
+           strncmp(locale, "C.", 2) == 0 || strcmp(locale, "POSIX") == 0;
+}
+
+static FS_Language fs_l10n_detect_language_list(const char* locales) {
+    const char* cursor = locales;
+    while (cursor && *cursor) {
+        const char* end = strchr(cursor, ':');
+        size_t bytes = end ? (size_t)(end - cursor) : strlen(cursor);
+        char locale[64];
+        if (bytes >= sizeof(locale)) bytes = sizeof(locale) - 1U;
+        memcpy(locale, cursor, bytes);
+        locale[bytes] = '\0';
+        if (fs_l10n_locale_is_supported(locale)) {
+            return fs_l10n_language_from_locale(locale);
+        }
+        cursor = end ? end + 1 : NULL;
+    }
+    return FS_LANG_COUNT;
 }
 
 FS_Language fs_l10n_detect_system_language(void) {
@@ -301,8 +346,13 @@ FS_Language fs_l10n_detect_system_language(void) {
     int i;
     for (i = 0; env_vars[i]; i++) {
         const char *val = getenv(env_vars[i]);
-        if (!val || !val[0]) continue;
-        return fs_l10n_language_from_locale(val);
+        FS_Language detected;
+        /* A launcher-provided C locale does not express a human language.
+         * Continue to LANGUAGE/LANG, which is how Steam and desktop launchers
+         * preserve the actual user preference. */
+        if (fs_l10n_locale_is_generic(val)) continue;
+        detected = fs_l10n_detect_language_list(val);
+        if (detected >= FS_LANG_EN && detected < FS_LANG_COUNT) return detected;
     }
     return FS_LANG_EN; /* default */
 #endif

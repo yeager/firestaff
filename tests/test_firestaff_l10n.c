@@ -1,6 +1,11 @@
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "firestaff_l10n.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int failures;
@@ -38,6 +43,29 @@ int main(void) {
     expect_language("C", FS_LANG_EN);
     expect_language("", FS_LANG_EN);
     expect_language(NULL, FS_LANG_EN);
+
+#if !defined(_WIN32)
+    /* A generic C locale is common for GUI/Steam launchers.  It must not
+     * mask the first supported LANGUAGE preference, and unsupported entries
+     * in that list must fall through to the next real user choice. */
+    setenv("LC_ALL", "C.UTF-8", 1);
+    unsetenv("LC_MESSAGES");
+    setenv("LANGUAGE", "xx:sv_SE:en", 1);
+    setenv("LANG", "de_DE.UTF-8", 1);
+    if (fs_l10n_detect_system_language() != FS_LANG_SV) {
+        ++failures;
+        printf("FAIL LANGUAGE list should select Swedish after generic LC_ALL\n");
+    }
+    setenv("LC_ALL", "fr_FR.UTF-8", 1);
+    if (fs_l10n_detect_system_language() != FS_LANG_FR) {
+        ++failures;
+        printf("FAIL explicit LC_ALL should take precedence\n");
+    }
+    unsetenv("LC_ALL");
+    unsetenv("LC_MESSAGES");
+    unsetenv("LANGUAGE");
+    unsetenv("LANG");
+#endif
 
     fs_l10n_set_language(FS_LANG_SV);
     if (fs_l10n_get_language() != FS_LANG_SV ||

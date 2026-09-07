@@ -31,6 +31,7 @@
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
+#include "firestaff_l10n.h"
 #include "asset_find_by_hash.h"
 #include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "fs_portable_compat.h"
@@ -3765,6 +3766,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->presentationModeOverride = -1;
     opts->windowModeOverride = -1;
     opts->vsyncOverride = -1;
+    opts->languageOverride = -1;
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
     opts->script         = NULL;
@@ -6769,6 +6771,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M12_Config scanConfig;
         m11_ttf_renderer_init();
         M12_Config_Load(&scanConfig, o->dataDir);
+        if (o->languageOverride >= 0 && o->languageOverride < 20) {
+            /* The CLI is an explicit user choice, including while the scan
+             * progress UI is visible.  It must outrank a saved AUTO policy. */
+            scanConfig.languageIndex = o->languageOverride;
+        }
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
         menuInitOptions.looseFilesOnlyAssetScan =
@@ -6789,6 +6796,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);
+        if (o->languageOverride >= 0 && o->languageOverride < 20) {
+            static const char* const languageCodes[] = {
+                "en", "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
+                "hu", "it", "ko", "nl", "no", "pl", "pt", "ru", "tr", "id"
+            };
+            menuState.settings.languageIndex = o->languageOverride;
+            menuState.languageExplicit = 1;
+            fs_l10n_set_language(
+                fs_l10n_language_from_locale(languageCodes[o->languageOverride]));
+        }
     }
     if (o->architectureOverride == M12_ARCH_AUTO) {
         if (!m11_apply_auto_architecture_override(&menuState, o->gameId)) {

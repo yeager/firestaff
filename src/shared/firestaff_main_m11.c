@@ -36,6 +36,7 @@ static void usage(const char* prog) {
             "  --height <px>       Window height (default: 400)\n"
             "  --scale-mode <n>    Window scaling: 0=1x, 1=2x, 2=3x, 3=4x, 4=fit, 5=stretch\n"
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
+            "  --lang <code>      Set launcher/game UI language (en, sv, fr, de, ja, zh, cs, da, es, fi, hu, it, ko, nl, no, pl, pt, ru, tr, id)\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
@@ -104,6 +105,26 @@ static int parse_party_triplet(const char* text,
     if (outY) *outY = y;
     if (outDir) *outDir = dir;
     return 1;
+}
+
+static int parse_ui_language(const char* value, int* out_index) {
+    static const char* const codes[] = {
+        "en", "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
+        "hu", "it", "ko", "nl", "no", "pl", "pt", "ru", "tr", "id"
+    };
+    size_t i;
+    if (!value || !out_index) return 0;
+    if (strcmp(value, "auto") == 0) {
+        *out_index = -1;
+        return 1;
+    }
+    for (i = 0U; i < sizeof(codes) / sizeof(codes[0]); ++i) {
+        if (strcmp(value, codes[i]) == 0) {
+            *out_index = (int)i;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void print_csb_verified_source_media(const M12_AssetStatus* status) {
@@ -468,6 +489,13 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--lang") == 0 && i + 1 < argc) {
+            if (!parse_ui_language(argv[++i], &opts.languageOverride)) {
+                fprintf(stderr, "firestaff: --lang requires a supported code or auto\n");
+                return 2;
+            }
             continue;
         }
         if (strcmp(a, "--csb-hint-oracle") == 0) {

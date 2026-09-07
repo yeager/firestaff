@@ -29,6 +29,7 @@ typedef struct {
     int presentationModeOverride; /* M12_PRESENTATION_V*, -1 keeps config. */
     int windowModeOverride; /* M11_WINDOW_MODE_*, -1 keeps config. */
     int vsyncOverride;      /* 0/1, -1 keeps config. */
+    int languageOverride;   /* M12 UI-language index, -1 keeps saved/AUTO policy. */
     int durationMs;        /* <0 = run until exit, 0 = close
                               immediately after one present. */
     int presentEveryMs;    /* How often to present during the loop.
