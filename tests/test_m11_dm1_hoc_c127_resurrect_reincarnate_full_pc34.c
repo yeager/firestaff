@@ -19,6 +19,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#define TEST_MKDIR(path) _mkdir(path)
+#else
+#include <sys/stat.h>
+#define TEST_MKDIR(path) mkdir((path), 0700)
+#endif
+
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
@@ -518,13 +526,13 @@ int main(void) {
     char defaultDataDir[1024];
     const char* dataDir = NULL;
     char saveTemplate[384];
-    const char* temporaryRoot = getenv("TMPDIR");
+    const char* temporaryRoot = ".codex-scratch";
     char savePath[512];
     M11_GameLaunchSpec spec;
     M11_GameViewState state;
     M11_GameViewState resumed;
-    HocMirrorPosePc34 mirrorA;
-    HocMirrorPosePc34 mirrorB;
+    HocMirrorPosePc34 mirrorA = {0};
+    HocMirrorPosePc34 mirrorB = {0};
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
     const char* name = "KIR";
     const char* title = "NEW";
@@ -541,7 +549,7 @@ int main(void) {
         puts("skip: DM1 PC34 data dir not available");
         return 77;
     }
-    if (!temporaryRoot || !temporaryRoot[0]) temporaryRoot = ".";
+    (void)TEST_MKDIR(temporaryRoot);
     if (snprintf(saveTemplate, sizeof(saveTemplate),
                  "%s/firestaff-dm1-hoc-c127-full-XXXXXX", temporaryRoot) >=
         (int)sizeof(saveTemplate)) {
