@@ -1279,7 +1279,7 @@ msgid ""
 "A KEY PIECE\n"
 "FROM EACH OF\n"
 "THE FOUR CLANS\n"
-"OF "
+"OF SKULLKEEP"
 msgstr ""
 
 #. GDAT 0x0f/0x39/0x00

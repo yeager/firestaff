@@ -26,7 +26,23 @@ def decode_c_strings(expression: str) -> str:
 
 
 def quote_c(value: str) -> str:
-    return '"' + value.encode("unicode_escape").decode("ascii").replace('"', r'\"') + '"'
+    # Do not use ``\\xNN`` here: a following hexadecimal character becomes
+    # part of the same C escape (for example, ``\\x01" "1`` was previously
+    # emitted as ``\\x011`` and compiled as byte 0x11).  Three-digit octal
+    # escapes have an unambiguous boundary and preserve control glyphs found
+    # in the original GDAT text.
+    escaped: list[str] = []
+    for char in value:
+        codepoint = ord(char)
+        if char == "\\\\":
+            escaped.append(r"\\\\")
+        elif char == '"':
+            escaped.append(r'\\"')
+        elif codepoint < 0x20 or codepoint == 0x7F:
+            escaped.append(f"\\{codepoint:03o}")
+        else:
+            escaped.append(char)
+    return '"' + "".join(escaped) + '"'
 
 
 def main() -> int:

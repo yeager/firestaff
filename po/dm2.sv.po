@@ -1308,6 +1308,7 @@ msgstr "TIGERRANDIG MASK"
 
 #. GDAT 0x03/0x00/0x1c
 #: po/dm2_source_strings.c:253
+#, fuzzy
 msgid ""
 "TO OPEN THE\n"
 "CASTLE DOOR\n"
@@ -1315,7 +1316,7 @@ msgid ""
 "A KEY PIECE\n"
 "FROM EACH OF\n"
 "THE FOUR CLANS\n"
-"OF "
+"OF SKULLKEEP"
 msgstr ""
 "FÖR ATT ÖPPNA\n"
 "SLOTTSPORTEN\n"

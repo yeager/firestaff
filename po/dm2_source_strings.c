@@ -250,7 +250,7 @@ static const char *const dm2_v1_player_text_gettext_markers[] = {
     /* GDAT 0x11/0x21/0x18 */ DM2_N_("THIGH PLATES"),
     /* GDAT 0x0f/0x00/0x00 */ DM2_N_("THORN DEMON"),
     /* GDAT 0x0f/0x0f/0x00 */ DM2_N_("TIGER STRIPED WORM"),
-    /* GDAT 0x03/0x00/0x1c */ DM2_N_("TO OPEN THE\nCASTLE DOOR\nYOU MUST GET\nA KEY PIECE\nFROM EACH OF\nTHE FOUR CLANS\nOF "),
+    /* GDAT 0x03/0x00/0x1c */ DM2_N_("TO OPEN THE\nCASTLE DOOR\nYOU MUST GET\nA KEY PIECE\nFROM EACH OF\nTHE FOUR CLANS\nOF SKULLKEEP"),
     /* GDAT 0x0f/0x39/0x00 */ DM2_N_("TOMBSTONE"),
     /* GDAT 0x10/0x02/0x18 */ DM2_N_("TORCH"),
     /* GDAT 0x11/0x27/0x18 */ DM2_N_("TORSO PLATE"),

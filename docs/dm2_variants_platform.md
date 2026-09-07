@@ -26,7 +26,16 @@ tracked in `TODO-dm2.md`.
 - Platform: Windows 3.1 with VP6 codec for video
 - Video playback: FMV sequences using VP6 codec
 - Same game content, different media handling
-- File: (part of DOS release archive, Windows executable included)
+- The supplied authenticated PC-DOS archive contains the PC data owner
+  (`data/graphics.dat`, MD5 `25247ede4dabb6a71e5dabdfbcd5907d`) and DOS
+  executables only. It does not contain a separately identifiable Windows
+  executable or Windows-specific `GRAPHICS.DAT`.
+- Firestaff correlates every currently bridged non-Japanese FM Towns text key
+  byte-for-byte against that PC-English archive member in memory. This is a
+  verified PC-English compatibility reference, not a claim that an
+  unavailable Windows-specific dump is byte-identical. The complete
+  PC-English text inventory is larger than the current bridge; its exact
+  coverage is reported by the real-media regression.
 
 ## Amiga Version
 

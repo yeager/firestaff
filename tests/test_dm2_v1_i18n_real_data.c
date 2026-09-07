@@ -8,6 +8,7 @@
 
 #include "dm2_v1_i18n.h"
 #include "dm2_v1_asset_loader.h"
+#include "firestaff_zip_extract.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -159,24 +160,101 @@ static int test_gdat_text(const char *label, const char *path,
     return 1;
 }
 
+/* The FM Towns non-Japanese bridge is generated from the reviewed PC-English
+ * GDAT inventory.  Check it directly against the authenticated archive member
+ * so a stale generated table cannot silently change the presentation owner.
+ * No member is written to disk. */
+static int test_builtin_matches_pc_archive(const char *archive) {
+    uint8_t *data = NULL;
+    size_t data_size = 0u;
+    DM2_V1_I18nContext source;
+    DM2_V1_I18nContext builtin;
+    uint16_t i;
+
+    if (!archive || !archive[0] ||
+        firestaff_zip_extract_by_suffix(archive, "data/graphics.dat", &data,
+                                        &data_size) != 0 ||
+        !data) {
+        printf("  SKIP: PC-English archive unavailable for built-in bridge correlation\n");
+        free(data);
+        return 1;
+    }
+
+    dm2_v1_i18n_init(&source);
+    dm2_v1_i18n_init(&builtin);
+    if (!dm2_v1_i18n_load_english_overlay(&source, data, data_size) ||
+        !dm2_v1_i18n_load_builtin_english_overlay(&builtin)) {
+        printf("  FAIL: could not load PC-English or built-in text bridge\n");
+        dm2_v1_i18n_destroy(&builtin);
+        dm2_v1_i18n_destroy(&source);
+        free(data);
+        return 0;
+    }
+    for (i = 0u; i < builtin.entry_count; ++i) {
+        const DM2_V1_I18nTextEntry *entry = &builtin.entries[i];
+        const uint8_t *expected;
+        const uint8_t *actual;
+        size_t actual_size = 0u;
+        size_t expected_size = 0u;
+        expected = dm2_v1_i18n_query_text(&source, entry->category,
+                                           entry->index, entry->field,
+                                           &expected_size);
+        actual = dm2_v1_i18n_query_text(&builtin, entry->category,
+                                         entry->index, entry->field,
+                                         &actual_size);
+        if (!expected || !actual || actual_size != expected_size ||
+            memcmp(actual, expected, actual_size) != 0) {
+            printf("  FAIL: bridge differs at GDAT %02x/%02x/%02x (built %zu, PC %zu)\n",
+                   entry->category, entry->index, entry->field,
+                   actual_size, expected_size);
+            printf("    built: %.*s\n    PC: %.*s\n", (int)actual_size,
+                   (const char *)actual, (int)expected_size,
+                   (const char *)expected);
+            dm2_v1_i18n_destroy(&builtin);
+            dm2_v1_i18n_destroy(&source);
+            free(data);
+            return 0;
+        }
+    }
+    printf("  PASS: %u/%u built-in bridge keys exactly match PC-English GDAT\n",
+           builtin.entry_count, source.entry_count);
+    dm2_v1_i18n_destroy(&builtin);
+    dm2_v1_i18n_destroy(&source);
+    free(data);
+    return 1;
+}
+
 int main(void) {
     const char *data_dir;
+    const char *archive;
     char path[512];
     int passed = 1;
 
     printf("DM2 i18n real data tests:\n\n");
 
     data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
-    if (!data_dir || !data_dir[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
-        return 0;
+    if (data_dir && data_dir[0]) {
+        /* The required corpus is the exact selected PC-DOS data root, not an
+         * obsolete convenience path under HOME. */
+        snprintf(path, sizeof(path), "%s/graphics.dat", data_dir);
+        passed &= test_gdat_text("PC EN", path, DM2_LOCALE_EN, 1, 1);
     }
 
-    /* The required corpus is the exact selected PC-DOS data root, not an
-     * obsolete convenience path under HOME. */
-    snprintf(path, sizeof(path),
-             "%s/graphics.dat", data_dir);
-    passed &= test_gdat_text("PC EN", path, DM2_LOCALE_EN, 1, 1);
+    archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+    if (!archive || !archive[0]) {
+        const char *home = getenv("HOME");
+        if (home) {
+            snprintf(path, sizeof(path),
+                     "%s/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+                     home);
+            archive = path;
+        }
+    }
+    passed &= test_builtin_matches_pc_archive(archive);
+
+    if ((!data_dir || !data_dir[0]) && (!archive || !archive[0])) {
+        puts("SKIP: set FIRESTAFF_DM2_DATA_DIR or FIRESTAFF_DM2_DOS_ARCHIVE");
+    }
 
     if (!passed) {
         puts("\nFAIL: DM2 i18n real-data verification failed.");
