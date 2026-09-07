@@ -42163,6 +42163,67 @@ static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState*
                                                         unsigned int wallSet0GraphicIndex);
 static int m11_current_map_wall_set(const M11_GameViewState* state,
                                     int* out_wall_set);
+
+/* FM Towns DM1 (F20E/F20J) is not a PC34 GRAPHICS.DAT with different
+ * endianness.  ReDMCSB DEFS.H MEDIA020 documents a 13-record wall-set at
+ * C077..C089 and a separate 18-record stair family at C090..C107.  Keep
+ * that identity here instead of pretending that the PC34 40-record cache
+ * can consume it. */
+static int m11_is_dm1_fmtowns(const M11_GameViewState* state) {
+    return state && state->assetLoader.legacyDm1 &&
+           !state->assetLoader.legacyBigEndian;
+}
+
+static unsigned int m11_fmtowns_wall_semantic_index(unsigned int pc34Index) {
+    if (pc34Index >= 86u && pc34Index <= 92u) return pc34Index - 9u;
+    switch (pc34Index) {
+    case 93u: return 84u; /* M661 D0R */
+    case 94u: return 85u; /* M662 D0L */
+    case 95u: case 96u: case 97u: return 86u; /* C086 D1LCR */
+    case 98u: case 99u: case 100u: case 101u: case 102u:
+        return 87u; /* C087 D2LCR */
+    case 103u: case 104u: return 89u; /* M663 narrow D3 side */
+    case 105u: case 106u: case 107u: return 88u; /* C088 D3LCR */
+    default: return M11_GFX_UNAVAILABLE;
+    }
+}
+
+static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
+                                         unsigned char* framebuffer,
+                                         int fbW, int fbH,
+                                         unsigned int graphicIndex,
+                                         int dstX, int dstY,
+                                         int dstW, int dstH,
+                                         int transparentColor,
+                                         int flipHorizontally) {
+    const M11_AssetSlot* slot;
+    int dy;
+    if (!state || !framebuffer || dstW <= 0 || dstH <= 0 ||
+        graphicIndex == M11_GFX_UNAVAILABLE) return 0;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0u || slot->height == 0u) return 0;
+    for (dy = 0; dy < dstH; ++dy) {
+        const int sy = dy * (int)slot->height / dstH;
+        const int fbY = M11_VIEWPORT_Y + dstY + dy;
+        int dx;
+        if (fbY < 0 || fbY >= fbH) continue;
+        for (dx = 0; dx < dstW; ++dx) {
+            const int sourceX = dx * (int)slot->width / dstW;
+            const int sx = flipHorizontally
+                ? (int)slot->width - 1 - sourceX : sourceX;
+            const int fbX = M11_VIEWPORT_X + dstX + dx;
+            const unsigned char pixel = slot->pixels[
+                sy * (int)slot->width + sx];
+            if (fbX < 0 || fbX >= fbW ||
+                (transparentColor >= 0 &&
+                 pixel == (unsigned char)transparentColor)) continue;
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+    return 1;
+}
 static int m11_dm1_use_flipped_walls(const M11_GameViewState* state) {
     if (!state) return 0;
     return dm1_viewport_3d_use_flipped_walls_pc34(
@@ -42186,6 +42247,14 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
     int y;
     if (!state || !state->assetsAvailable || !blit || !framebuffer) {
         return 0;
+    }
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_fmtowns_scaled_asset(
+            state, framebuffer, fbW, fbH,
+            m11_wallset_graphic_index_for_state(
+                state, (unsigned int)blit->graphicIndex),
+            blit->dstX, blit->dstY, blit->width, blit->height,
+            transparentColor, 1);
     }
     if (!m11_current_map_wall_set(state, &map_wall_set)) {
         return 0;
@@ -42227,6 +42296,27 @@ static int m11_draw_dm1_wall_blit_flipped(const M11_GameViewState* state,
 static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,
                                                         unsigned int wallSet0GraphicIndex) {
     int wallSet;
+    if (m11_is_dm1_fmtowns(state)) {
+        if (wallSet0GraphicIndex >= M11_GFX_DM1_STAIRS_UP_FRONT_D3L &&
+            wallSet0GraphicIndex <= M11_GFX_DM1_STAIRS_SIDE_D0L) {
+            /* MEDIA020: M645=90 and C018 stair records are global, not
+             * members of the 13-record M646 wall-set cache. */
+            return 90u + (wallSet0GraphicIndex -
+                          M11_GFX_DM1_STAIRS_UP_FRONT_D3L);
+        }
+        if (wallSet0GraphicIndex < M11_GFX_DM1_WALLSET_FIRST ||
+            wallSet0GraphicIndex >= M11_GFX_DM1_WALLSET_FIRST +
+                M11_GFX_DM1_WALLSET_COUNT ||
+            !m11_current_map_wall_set(state, &wallSet)) {
+            return wallSet0GraphicIndex;
+        }
+        {
+            const unsigned int source =
+                m11_fmtowns_wall_semantic_index(wallSet0GraphicIndex);
+            if (source == M11_GFX_UNAVAILABLE) return source;
+            return 77u + (unsigned int)wallSet * 13u + (source - 77u);
+        }
+    }
     if (wallSet0GraphicIndex < M11_GFX_DM1_WALLSET_FIRST ||
         wallSet0GraphicIndex >=
             M11_GFX_DM1_WALLSET_FIRST + M11_GFX_DM1_WALLSET_COUNT) {
@@ -42255,6 +42345,14 @@ static int m11_draw_dm1_wall_blit_with_transparency(const M11_GameViewState* sta
     int map_wall_set;
     if (!state || !state->assetsAvailable || !blit) {
         return 0;
+    }
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_fmtowns_scaled_asset(
+            state, framebuffer, fbW, fbH,
+            m11_wallset_graphic_index_for_state(
+                state, (unsigned int)blit->graphicIndex),
+            blit->dstX, blit->dstY, blit->width, blit->height,
+            transparentColor, 0);
     }
     if (!m11_current_map_wall_set(state, &map_wall_set)) {
         return 0;
@@ -42297,6 +42395,15 @@ static int m11_draw_dm1_side_wall_host_receipt(
     if (!state || !state->assetsAvailable || !framebuffer || !receipt ||
         !receipt->handled || !receipt->draw_wall || !receipt->material.valid) {
         return 0;
+    }
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_fmtowns_scaled_asset(
+            state, framebuffer, fbW, fbH,
+            m11_wallset_graphic_index_for_state(
+                state, (unsigned int)receipt->material.graphic_index),
+            receipt->dst_x, receipt->dst_y, receipt->width, receipt->height,
+            receipt->material.transparent_color,
+            receipt->material.flip_horizontally);
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)receipt->material.graphic_index);
@@ -42427,6 +42534,12 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
         slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_fmtowns_scaled_asset(
+            state, framebuffer, fbW, fbH, graphic_index,
+            blit->dstX, blit->dstY, blit->width, blit->height,
+            transparentColor, 0);
+    }
     if (blit->srcX < 0 || blit->srcY < 0 ||
         blit->srcX + blit->width > slot->width ||
         blit->srcY + blit->height > slot->height) {
@@ -42466,6 +42579,12 @@ static int m11_draw_dm1_zone_blit_maybe_flip(const M11_GameViewState* state,
                                 graphic_index);
     if (!slot || !slot->loaded || !slot->pixels || slot->width <= 0 || slot->height <= 0) {
         return 0;
+    }
+    if (m11_is_dm1_fmtowns(state)) {
+        return m11_draw_fmtowns_scaled_asset(
+            state, framebuffer, fbW, fbH, graphic_index,
+            blit->dstX, blit->dstY, blit->width, blit->height,
+            transparentColor, (flipMask & 1) != 0);
     }
     if (blit->srcX < 0 || blit->srcY < 0 ||
         blit->srcX + blit->width > slot->width ||
