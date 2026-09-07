@@ -2037,11 +2037,11 @@ static void test_c30_projectile_reaction_ignores_attacking_group(void)
           "C30 attack-ignore branch does not manufacture C37 work");
 }
 
-/* ReDMCSB GROUP.C F0209:2027-2031: on the 3/4 C30 path, a group that
- * cannot see the party turns toward a second M004 result but does not move or
- * queue C37 work.  The wall is deliberately on the one-dimensional F0199
- * route, not merely beside it. */
-static void test_c30_projectile_reaction_no_sight_turns_without_moving(void)
+/* ReDMCSB GROUP.C F0200:1315-1415 and F0209:2027-2031: on the 3/4 C30
+ * path, a normal (non-side-attack) group cannot see a party behind its
+ * facing, even when the raw F0199 route is clear.  It turns on a second M004
+ * result but neither moves nor queues C37 work. */
+static void test_c30_projectile_reaction_behind_facing_turns_without_moving(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
@@ -2049,7 +2049,7 @@ static void test_c30_projectile_reaction_no_sight_turns_without_moving(void)
     struct DM1_Event_V1 event;
     uint32_t expected_random_state;
 
-    printf("\n-- CSB C30 projectile reaction no-sight turn --\n");
+    printf("\n-- CSB C30 projectile reaction behind-facing turn --\n");
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
     dungeon.square_first_thing_count = 2;
@@ -2057,7 +2057,6 @@ static void test_c30_projectile_reaction_no_sight_turns_without_moving(void)
     dungeon.thing_type_counts[4] = 1;
     raw[real_format_square_offset(0, 0)] =
         (uint8_t)((1u << 5) | 0x10u);
-    raw[real_format_square_offset(0, 1)] = (uint8_t)(0u << 5); /* Wall. */
     test_put_le16(raw, 60, 0);
     test_put_le16(raw, 62, 1);
     test_put_le16(raw, 64, 1);
@@ -2088,19 +2087,19 @@ static void test_c30_projectile_reaction_no_sight_turns_without_moving(void)
     event.b_mapX = 0;
     event.b_mapY = 0;
     CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
-          "C30 no-sight fixture queues projectile reaction");
+          "C30 behind-facing fixture queues projectile reaction");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
-          "C30 no-sight fixture dispatches projectile reaction");
+          "C30 behind-facing fixture dispatches projectile reaction");
     CHECK(test_get_le16(raw, 66) == (uint16_t)(4u << 10) &&
               test_get_le16(raw, 68) == 0xffffu,
-          "C30 no-sight branch leaves the group on its source square");
+          "C30 behind-facing branch leaves the group on its source square");
     CHECK((test_get_le16(raw, 84) & 0x0300u) == 0x0300u,
-          "C30 no-sight branch applies its second M004 direction to the group");
+          "C30 behind-facing branch applies its second M004 direction to the group");
     CHECK(profile.csbwin_random_seed == expected_random_state,
-          "C30 no-sight branch consumes exactly the gate and direction M004 draws");
+          "C30 behind-facing branch consumes exactly the gate and direction M004 draws");
     CHECK(count_queued_event_type(&profile,
                                   DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 0,
-          "C30 no-sight branch does not manufacture C37 work");
+          "C30 behind-facing branch does not manufacture C37 work");
 }
 
 /* ReDMCSB GROUP.C F0209:2153-2168 / BASE.C F0028,F0029: C37 wandering
@@ -7367,7 +7366,7 @@ int main(void)
     test_c31_party_bump_enters_attack_and_clears_stale_group_work();
     test_c29_danger_reaction_uses_absolute_escape_direction();
     test_c30_projectile_reaction_ignores_attacking_group();
-    test_c30_projectile_reaction_no_sight_turns_without_moving();
+    test_c30_projectile_reaction_behind_facing_turns_without_moving();
     test_c37_wander_uses_shared_rng_absolute_direction();
     test_c37_wary_creature_rejects_disallowed_teleporter();
     test_c37_group_approach_turns_moved_group_per_creature();

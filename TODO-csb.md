@@ -106,4 +106,7 @@ using newly supplied captures; it must never generate a replacement corpus.
 # rather than another generic visibility predicate: it must bind each real
 # creature's direction(s), sight range, invisibility capability, palette-light
 # adjustment, and source-owned range RNG before C30/C32--C37 can claim full
-# perception parity.
+# perception parity. C30 now applies the available F0200 gates (per-creature
+# facing, side-attack, sight range and C71 invisibility) before F0199; the
+# remaining palette/range-jitter receipt must not be inferred from a host
+# brightness value.

@@ -5901,11 +5901,50 @@ static int csb_v1_runtime_f0199_square_blocks_view(
     return F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&sight);
 }
 
-static int csb_v1_runtime_f0199_visible_party_distance(
-    CSB_V1_RuntimeProfile *profile, int level, int source_x, int source_y)
+/* ReDMCSB GROUP.C F0200 first gates F0199 by creature direction, side-attack
+ * capability, invisibility and sight range.  Keeping only F0199 here made a
+ * C30 projectile hit treat a party behind a one-way creature as visible. */
+static int csb_v1_runtime_f0200_visible_party_distance(
+    CSB_V1_RuntimeProfile *profile,
+    const struct CreatureBehaviorProfile_Compat *creature,
+    uint16_t group_thing,
+    int creature_count,
+    int level, int source_x, int source_y)
 {
     CSB_V1_RuntimeF0199RouteContext context;
+    CSB_V1_RuntimeActiveGroupState *active;
+    int distance;
+    int index;
+    int direction_visible = 0;
+
     if (!profile || level != profile->current_level) return 0;
+    if (!creature) return 0;
+    if (profile->csbwin_character_tail_invisible > 0u &&
+        (creature->attributes & CREATURE_ATTR_MASK_SEE_INVISIBLE) == 0) {
+        return 0;
+    }
+    distance = abs(profile->party_x - source_x) +
+        abs(profile->party_y - source_y);
+    if (distance > creature->sightRange) return 0;
+    if ((creature->attributes & CREATURE_ATTR_MASK_SIDE_ATTACK) != 0) {
+        direction_visible = 1;
+    } else {
+        active = csb_v1_runtime_active_group_state_for_thing(profile,
+                                                               group_thing);
+        if (!active) return 0;
+        if (creature_count < 1) creature_count = 1;
+        if (creature_count > 4) creature_count = 4;
+        for (index = 0; index < creature_count; ++index) {
+            int direction = (active->directions >> (index << 1)) & 3;
+            if (F0227_DM1_GROUP_IsDestinationVisibleFromSource_Compat(
+                    direction, source_x, source_y,
+                    profile->party_x, profile->party_y)) {
+                direction_visible = 1;
+                break;
+            }
+        }
+    }
+    if (!direction_visible) return 0;
     context.profile = profile;
     context.level = level;
     return F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
@@ -5974,9 +6013,13 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             if (record->eventType == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE) {
                 int visible_distance;
                 if (behavior == 6 || behavior == 5) return;
+                csb_v1_runtime_sync_active_group_state_from_record(
+                    profile, group_thing, thing_record, record->mapIndex,
+                    record->mapX, record->mapY, 0, 0);
                 if (csb_v1_runtime_main_random2(profile) != 0) {
-                    visible_distance = csb_v1_runtime_f0199_visible_party_distance(
-                        profile, record->mapIndex, record->mapX, record->mapY);
+                    visible_distance = csb_v1_runtime_f0200_visible_party_distance(
+                        profile, creature_profile, group_thing, creature_count,
+                        record->mapIndex, record->mapX, record->mapY);
                     if (!visible_distance) {
                         csb_v1_runtime_set_active_group_direction_group(
                             profile, group_thing, thing_record, record->mapIndex,
