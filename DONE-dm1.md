@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- Implemented F0205's G0395/G0396 half-square owner as a transient stable
+  ACTIVE_GROUP source-slot identity instead of the compacted host AI row or
+  C04 group index. Admission chooses the first unused source slot, compaction
+  carries the slot with its owner, and F0194/F0195 map rebuilding retains the
+  last-owner memo while repopulating slots. C38 retry, F0206 and attack-entry
+  fanout share the transactional memo. ReDMCSB GROUP.C:414-435, 1602-1636
+  and 1954 are the source reference. Six focused DM1 tests pass, including a
+  same-tick cross-dispatch regression and one real DOS-media test. This is
+  source-derived native evidence; an original emulator trace remains open.
+
 - Authenticated the local English DOS ZIP against the creature-capture
   contract directly through streamed archive members: GRAPHICS.DAT SHA-256
   2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e and

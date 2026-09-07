@@ -10,10 +10,10 @@
   complete-capture gate; establish reliable host input and inspect each frame
   before claiming dungeon, movement, or rendering parity.
 
-- Integrate F0205's G0395/G0396 same-tick half-square turn owner across
-  separate dispatches, not just within one attack-entry fanout. Original
-  ownership is the last active-group pointer plus game time; preserve its
-  behavior across group compaction and map transitions without save changes.
+- Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
+  through a same-tick map transition and slot reuse. The native transient
+  source-slot implementation is covered by bounded C38 dispatch and lifecycle
+  regressions, but has no authentic emulator trace yet.
 
 - Complete attack entry in the C32-C36 source decision tree. Audit C32's lack
   of an individual slot without reproducing an out-of-bounds Aspect[-1] read.
