@@ -9,7 +9,7 @@ Reviewed 2026-09-05. Only open work is listed here.
   the prior-square one-in-four `M004` gate only when applicable. The remaining
   C37 now uses F0202's creature-owned open-pit/levitation and imaginary
   fakewall gates plus its non-material door exception. Remaining work is
-  F0202's teleporter and archenemy-fluxcage gates plus F0267's
+  F0202's archenemy-fluxcage gate plus F0267's
   blocked-by-party / attack transition,
   including retry ownership and original platform traces.
   Do not reintroduce map/tick-derived reseeding. See

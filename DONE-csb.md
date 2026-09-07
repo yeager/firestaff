@@ -9,8 +9,11 @@
   source horizontal threshold of one or vertical `M051_CREATURE_HEIGHT`
   threshold from creature Attributes[7:8]; malformed C00 ownership rejects
   the move. The full native CSB runtime accumulator passes 840 assertions,
-  including a state-C2 material-door C37 fixture. Teleporter and fluxcage
-  gates remain open work.
+  including a state-C2 vertical-door C37 fixture for a height-one creature.
+  F0202 also rejects an open group-scope teleporter for a wary creature when
+  its raw TargetMapIndex allowed-type list excludes that creature, matching
+  F0139 rather than admitting it through the generic C05 gate. Archenemy
+  fluxcage remains open work.
 
 - 2026-09-07: C37 wandering no longer creates a local map/time-derived RNG.
   The native runtime advances the persistent `G0349` counterpart once for

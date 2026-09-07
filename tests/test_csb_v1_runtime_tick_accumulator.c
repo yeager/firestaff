@@ -1916,6 +1916,71 @@ static void test_c37_wander_uses_shared_rng_absolute_direction(void)
           "C37 advances shared G0349 exactly once for F0028 and F0029");
 }
 
+/* GROUP.C F0202:1527-1538 rejects an open group-scope C05 before the C37
+ * move when a wary creature is absent from TargetMapIndex's raw allowed-type
+ * list.  The previous generic C37 gate moved it into the teleporter. */
+static void test_c37_wary_creature_rejects_disallowed_teleporter(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[144];
+    struct DM1_Event_V1 ev;
+
+    printf("\n-- CSB C37 wary teleporter admission --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[1] = 70;
+    dungeon.thing_type_counts[1] = 1;
+    dungeon.thing_data_bases[4] = 76;
+    dungeon.thing_type_counts[4] = 1;
+    /* Target map 0 admits no creature types: its metadata starts directly
+     * after the 3x3 square bank at byte 9. */
+    dungeon.map_creature_type_count[0] = 0;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(1, 0)] =
+        (uint8_t)((5u << 5) | 0x10u | 0x08u);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 1);
+    test_put_le16(raw, 60 + 2 * 2, 2);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, (uint16_t)(1u << 10));
+    test_put_le16(raw, 70, 0xfffeu);
+    test_put_le16(raw, 72, 0x2000u); /* C05 Scope includes groups. */
+    test_put_le16(raw, 74, 0u);      /* TargetMapIndex = 0. */
+    test_put_le16(raw, 76, 0xfffeu);
+    raw[80] = 22u; /* Demon: Properties high nibble B, wariness 11. */
+    raw[81] = 0xffu;
+    test_put_le16(raw, 82, 40u);
+    test_put_le16(raw, 90, 0u); /* C0 wandering. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 2;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.csbwin_random_seed_valid = 1;
+    profile.csbwin_random_seed = 29u; /* F0029 chooses east. */
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 wary-teleporter fixture queues the source event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 wary-teleporter fixture dispatches once");
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(4u << 10) &&
+              test_get_le16(raw, 68) == (uint16_t)(1u << 10),
+          "C37 keeps a disallowed wary creature outside the group teleporter");
+}
+
 static void test_c37_group_approach_turns_moved_group_per_creature(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -2243,7 +2308,7 @@ static void test_c37_group_approach_defers_when_destination_has_group(void)
           "C60 retry consumes the deferred move event after movement succeeds");
 }
 
-static void test_c37_vertical_material_door_uses_creature_height(void)
+static void test_c37_vertical_material_door_blocks_short_creature(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
@@ -2251,7 +2316,7 @@ static void test_c37_vertical_material_door_uses_creature_height(void)
     struct DM1_Event_V1 ev;
     int event_index;
 
-    printf("\n-- CSB C37 vertical material-door height aperture --\n");
+    printf("\n-- CSB C37 vertical material-door short-creature gate --\n");
 
     make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
     dungeon.square_first_thing_base = 66;
@@ -2262,9 +2327,8 @@ static void test_c37_vertical_material_door_uses_creature_height(void)
     dungeon.thing_type_counts[4] = 1;
     raw[real_format_square_offset(0, 0)] =
         (uint8_t)((1u << 5) | 0x10u);
-    /* GROUP.C F0202:1540-1564: the C00.Vertical bit makes state C2
-     * passable for this height-two Stone Golem. The old generic C04 gate
-     * incorrectly blocked every material creature at state C2. */
+    /* GROUP.C F0202:1540-1564: C00.Vertical compares state C2 against this
+     * Stone Golem's M051 height one, so it must remain blocked. */
     raw[real_format_square_offset(0, 1)] =
         (uint8_t)((4u << 5) | 0x10u | 2u);
     test_put_le16(raw, 60 + 0 * 2, 0);
@@ -2305,20 +2369,20 @@ static void test_c37_vertical_material_door_uses_creature_height(void)
           "C37 vertical-material-door fixture queues the approach event");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "C37 vertical-material-door fixture dispatches the approach event");
-    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
-              test_get_le16(raw, 68) == (uint16_t)(4u << 10),
-          "C37 vertical-material-door fixture admits the height-two group");
+    CHECK(test_get_le16(raw, 66) == (uint16_t)(4u << 10) &&
+              test_get_le16(raw, 68) == 0u,
+          "C37 vertical-material-door fixture blocks the height-one group");
     CHECK(profile.active_group_state_count == 1u &&
               profile.active_group_state[0].valid &&
               profile.active_group_state[0].map_x == 0 &&
-              profile.active_group_state[0].map_y == 1,
-          "C37 vertical-material-door fixture updates active-group ownership");
+              profile.active_group_state[0].map_y == 0,
+          "C37 vertical-material-door fixture preserves active-group ownership");
     event_index = find_queued_event_type(&profile,
                                          DM1_EVENT_UPDATE_BEHAVIOR_GROUP);
     CHECK(event_index >= 0 &&
               profile.timeline_queue.events[event_index].b_mapX == 0 &&
-              profile.timeline_queue.events[event_index].b_mapY == 1,
-          "C37 vertical-material-door fixture requeues behavior at the destination");
+              profile.timeline_queue.events[event_index].b_mapY == 0,
+          "C37 vertical-material-door fixture requeues behavior at the source");
 }
 
 static void test_c37_blocked_wall_mirrors_half_square_pair_direction(void)
@@ -7050,11 +7114,12 @@ int main(void)
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
     test_c37_wander_uses_shared_rng_absolute_direction();
+    test_c37_wary_creature_rejects_disallowed_teleporter();
     test_c37_group_approach_turns_moved_group_per_creature();
     test_c37_archenemy_double_move_requests_buzz();
     test_c37_group_approach_uses_stored_target_without_party_sight();
     test_c37_group_approach_defers_when_destination_has_group();
-    test_c37_vertical_material_door_uses_creature_height();
+    test_c37_vertical_material_door_blocks_short_creature();
     test_c37_blocked_wall_mirrors_half_square_pair_direction();
     test_c37_half_square_direction_debounces_same_tick();
     test_c37_attack_entry_turns_active_group_per_creature();

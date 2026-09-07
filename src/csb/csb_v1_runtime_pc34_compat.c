@@ -5056,6 +5056,34 @@ static int csb_v1_runtime_group_destination_is_blocked(
     return 0;
 }
 
+/* ReDMCSB DUNGEON.C F0139:1050-1079.  The native CSB loader retains the
+ * map's creature-type count and its source map-data offset, so F0202 can
+ * make the same raw target-map admission decision without a decoded-world
+ * fallback. */
+static int csb_v1_runtime_creature_is_allowed_on_map(
+    const CSB_V1_DungeonData *dungeon,
+    int creature_type,
+    int target_map)
+{
+    int offset;
+    int count;
+    int i;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1 ||
+        target_map < 0 || target_map >= dungeon->level_count ||
+        creature_type < 0 || creature_type > 255) return 0;
+    count = dungeon->map_creature_type_count[target_map];
+    offset = dungeon->level_offsets[target_map] +
+        dungeon->level_widths[target_map] * dungeon->level_heights[target_map];
+    if (count < 0 || offset < 0 || offset > dungeon->raw_size ||
+        count > dungeon->raw_size - offset) return 0;
+    for (i = 0; i < count; ++i) {
+        if (dungeon->raw_data[offset + i] == (uint8_t)creature_type)
+            return 1;
+    }
+    return 0;
+}
+
 /* ReDMCSB GROUP.C F0202:1500-1513.  The old generic destination gate was
  * intentionally shared by several F0267 callers, but C37 specifically owns
  * F0202 and therefore must account for its C04 creature attributes.  Keep
@@ -5131,6 +5159,32 @@ static int csb_v1_runtime_f0202_destination_is_blocked(
             != 0;
         creature_height = (creature->attributes >> 7) & 0x03;
         return door_state > (door_vertical ? creature_height : 1);
+    }
+    if (square_type == 5 && (raw_square & 0x08) != 0 &&
+        (creature->properties >> 12) >= 10) {
+        const uint8_t *teleporter_record;
+        int thing_type;
+        int thing_size;
+        int first_thing;
+        uint16_t flags;
+        uint16_t target;
+
+        /* GROUP.C F0202:1530-1538: wary creatures decline an open C05
+         * only when its Scope includes groups and F0139 rejects their type
+         * on TargetMapIndex.  A malformed C05 record cannot be admitted. */
+        first_thing = csb_v1_dungeon_get_first_thing(
+            dungeon, level, map_x, map_y);
+        if (first_thing < 0) return 1;
+        teleporter_record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)first_thing, &thing_type, NULL, &thing_size);
+        if (!teleporter_record || thing_type != 1 || thing_size < 6) return 1;
+        flags = csb_v1_runtime_read_u16(teleporter_record + 2);
+        target = csb_v1_runtime_read_u16(teleporter_record + 4);
+        if ((flags & 0x2000u) != 0 &&
+            !csb_v1_runtime_creature_is_allowed_on_map(
+                dungeon, creature->creatureType, (int)(target >> 8))) {
+            return 1;
+        }
     }
     return csb_v1_runtime_group_destination_is_blocked(
         dungeon, level, map_x, map_y);
