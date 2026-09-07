@@ -3217,7 +3217,13 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * and TITLE_MASTER do not add another per-frame wait. Cumulative 60 Hz
      * deadlines avoid the drift from rounding every blank to 17 ms.
      */
-    for (frame = 0u; frame <= DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
+    /* STARTEND/TITLE.C's F20 branch displays PRESENTS, then the eighteen
+     * reverse-order zoom bitmaps.  It does not put TITLE_MASTER on screen
+     * immediately after the final zoom: it waits two VBlanks first, blits
+     * MASTER, then holds that page for one final VBlank.  Keeping MASTER in
+     * the loop used to reverse that boundary (and omit the final hold),
+     * making the transition visibly premature on a real-time host. */
+    for (frame = 0u; frame < DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
         const uint8_t (*titlePalette)[3] =
             frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME
                 ? plan->game_title_presents_palette_rgb6
@@ -3242,10 +3248,36 @@ static int m11_play_dm1_fmtowns_title_if_available(
             }
         }
     }
-    /* EDM.EXP +0xc5b9 performs two final VBlank waits before returning. */
+    /* TITLE.C: F20E/F20J executes two VBlanks after the final zoom and
+     * before F0132_VIDEO_Blit writes TITLE_MASTER.  The ordinal-based
+     * helper preserves a 60 Hz aggregate deadline rather than rounding
+     * each VBlank independently. */
+    for (frame = 0u; frame < 2u; ++frame) {
+        ++waitedVblanks;
+        if (m11_delay_ms_with_intro_event_pump(
+                dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks))) {
+            return 1;
+        }
+    }
+    if (!dm1_v1_fmtowns_title_compose_frame(
+            plan, title->pixels, title->width, title->height,
+            DM1_FMTOWNS_TITLE_FINAL_FRAME, framebuffer,
+            (size_t)M11_FB_BYTES)) {
+        return 0;
+    }
+    memset(titlePaletteRgb6, 0, sizeof(titlePaletteRgb6));
+    memcpy(titlePaletteRgb6, plan->game_title_zoom_palette_rgb6,
+           16u * 3u);
+    if (M11_Render_SetIndexedPaletteRgb6(titlePaletteRgb6) != M11_RENDER_OK ||
+        M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
+                                  M11_FB_HEIGHT) != M11_RENDER_OK) {
+        return 0;
+    }
+    if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
+    /* The source's final M526_WaitVerticalBlank follows the master blit. */
+    ++waitedVblanks;
     (void)m11_delay_ms_with_intro_event_pump(
-        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks + 1u) +
-        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks + 2u));
+        dm1_v1_fmtowns_title_vblank_delay_ms(waitedVblanks));
     return 1;
 }
 

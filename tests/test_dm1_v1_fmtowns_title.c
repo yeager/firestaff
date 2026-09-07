@@ -83,9 +83,12 @@ int main(void)
             elapsed += delay;
         }
         CHECK(elapsed == 300u);
+        /* TITLE.C's F20 path waits twice before TITLE_MASTER and once after
+         * it.  The presentation loop must retain all three VBlanks. */
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 1u);
         elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 2u);
-        CHECK(elapsed == 333u);
+        elapsed += dm1_v1_fmtowns_title_vblank_delay_ms(waits + 3u);
+        CHECK(elapsed == 350u);
     }
     puts("PASS: dm1_v1_fmtowns_title");
     return 0;

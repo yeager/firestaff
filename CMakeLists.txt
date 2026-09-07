@@ -4521,8 +4521,13 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;fmtowns;real-media;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip"
-        # Both original programs now run independent seven-command matrices.
-        TIMEOUT 240
+        # Both original programs run independent seven-command matrices from
+        # a 256 MB ZIP-held optical disc.  A cold, rotational or contention-
+        # limited disk can take more than four minutes merely to read and
+        # authenticate each source-owned session; do not confuse that with a
+        # functional timeout.  The test remains bounded and is skipped when
+        # the authentic archive is not staged.
+        TIMEOUT 600
     )
     foreach(legacy_platform IN ITEMS atari-st amiga fm-towns)
         if(legacy_platform STREQUAL "atari-st")
