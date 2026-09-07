@@ -36603,55 +36603,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return m11_toggle_champion_inventory(state, slot);
                 }
             }
-        } else {
-            /* The V1 top row visibly identifies a champion through its
-             * F0292 name plaque and F0287 vertical bar graph.  Make both
-             * painted surfaces live inventory targets; the two hand-slot
-             * rectangles remain on their separate COMMAND.C routes. */
-            for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-                DM1_V1_ChampionStatusRectPc34 statusRect;
-                DM1_V1_ChampionStatusRectPc34 nameRect;
-                DM1_V1_ChampionStatusRectPc34 handRect;
-                int overHand = 0;
-                int hand;
-                if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect) &&
-                    dm1_v1_champion_status_name_rect_pc34(slot, &nameRect)) {
-                    /* ReDMCSB CLIKCHAM.C F0367:24-29 routes the name
-                     * to F0368 leader selection, not inventory toggling. */
-                    if (m11_is_dm1_source_kind(state->sourceKind) &&
-                        m11_point_in_rect(x, y, nameRect.x, nameRect.y,
-                                          nameRect.w, nameRect.h)) {
-                        return m11_set_active_champion(state, slot)
-                            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
-                    }
-                    for (hand = 0; hand < 2; ++hand) {
-                        if (dm1_v1_champion_status_hand_rect_pc34(
-                                slot, hand, &handRect) &&
-                            m11_point_in_rect(x, y,
-                                              handRect.x, handRect.y,
-                                              handRect.w, handRect.h)) {
-                            overHand = 1;
-                            break;
-                        }
-                    }
-                    /* The full F0287/F0292 status-box surface represents
-                     * its champion.  A hand cell has an independent item
-                     * route only while the inventory is already open.  With
-                     * the panel closed it is still a visible part of that
-                     * champion's HUD tile, so it must open the champion
-                     * rather than silently swallowing the click. */
-                    if ((!overHand || !state->inventoryPanelActive) &&
-                        (m11_point_in_rect(x, y,
-                                           statusRect.x, statusRect.y,
-                                           statusRect.w, statusRect.h) ||
-                         m11_point_in_rect(x, y,
-                                           nameRect.x, nameRect.y,
-                                           nameRect.w, nameRect.h))) {
-                        return m11_toggle_champion_inventory(state, slot);
-                    }
-                }
-            }
         }
+
+        /* V1 status and bar regions intentionally abut: C012..C015 are
+         * x=0..42,69..111,... while C007..C010 are x=43..66,112..135,... .
+         * Do not pre-hit-test the broader painted 67px champion surface:
+         * that overlaps the bar graph and turns C007/C008 inventory input
+         * into a C012/C013 leader selection.  COMMAND.C G0447 below is the
+         * authoritative owner for both adjacent source rectangles. */
 
         command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
             DM1_V1_MOUSE_LIST_INTERFACE_PC34,

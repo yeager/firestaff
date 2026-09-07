@@ -546,51 +546,51 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     state.world.party.champions[1].hp.current = 100;
     state.world.party.champions[1].hp.maximum = 100;
 
-    /* The visible F0292 name plaque is a live inventory target, alongside
-     * the source C187..C190 F0287 vertical bar graph. */
+    /* F0292's name plaque belongs to C012..C015: it selects a champion.
+     * C007..C010, whose hit rectangles are the F0287 bar graphs, own the
+     * inventory open/close transaction.  Do not collapse those two source
+     * commands into a host-side "champion HUD click" shortcut. */
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 8, 2,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "visible champion 0 name opens inventory");
-    ASSERT_EQ(state.inventoryPanelActive, 1,
-              "visible champion 0 name opens the inventory panel");
+              "visible champion 0 name selects champion");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "visible champion 0 name does not open inventory");
     ASSERT_EQ(state.world.party.activeChampionIndex, 0,
               "visible champion 0 name keeps champion 0 active");
 
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 20,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "status background closes the same champion inventory");
+              "status background selects the same champion");
     ASSERT_EQ(state.inventoryPanelActive, 0,
-              "status background closes the same champion inventory");
+              "status background does not toggle inventory");
 
-    /* The two visible hand cells are part of the champion HUD while the
-     * inventory is closed.  They must not be inert: only an already-open
-     * panel gives C020..C027 ownership of those coordinates. */
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 5, 14,
+    /* C187, not the C012 name/hand zone, opens champion 0's inventory. */
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 50, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "closed champion 0 hand cell opens inventory");
+              "C187 opens champion 0 inventory");
     ASSERT_EQ(state.inventoryPanelActive, 1,
-              "closed champion 0 hand cell opens inventory");
+              "C187 opens the inventory panel");
 
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 20,
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 50, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "visible champion 0 status background toggles inventory");
+              "second C187 click toggles inventory");
     ASSERT_EQ(state.inventoryPanelActive, 0,
-              "status background closes the same champion inventory");
+              "second C187 click closes inventory");
 
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 120, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "C188 left-click selects champion 1 inventory");
+              "C188 left-click opens champion 1 inventory");
     ASSERT_EQ(state.inventoryPanelActive, 1,
               "C188 keeps the panel open while switching champions");
-    ASSERT_EQ(state.world.party.activeChampionIndex, 1,
-              "C188 makes champion 1 active");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 0,
+              "C188 preserves the selected leader");
 
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 120, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
               "second C188 click toggles champion 1 inventory closed");
