@@ -5127,6 +5127,31 @@ static int csb_v1_runtime_f0202_destination_is_blocked(
             return 0;
         return 1;
     }
+    if ((creature->attributes & CREATURE_ATTR_MASK_ARCHENEMY) != 0) {
+        int thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+        int guard;
+
+        /* GROUP.C F0202:1504-1520: archenemies cannot enter a square
+         * occupied by a C15 Fluxcage.  Walk the authentic Thing chain,
+         * rather than inferring the effect from the rendered square. */
+        for (guard = 0;
+             guard < 128 && thing != 0xfffe && thing != 0xffff;
+             ++guard) {
+            const uint8_t *record;
+            int thing_type;
+            int thing_size;
+
+            record = csb_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
+            if (!record || thing_size < 2) return 1;
+            if (thing_type == 15 && thing_size >= 4 &&
+                (csb_v1_runtime_read_u16(record + 2) & 0x007fu) == 50u) {
+                return 1;
+            }
+            thing = (int)csb_v1_runtime_read_u16(record);
+        }
+        if (guard == 128) return 1;
+    }
     /* GROUP.C F0202:1557-1564: a non-material creature passes a door
      * regardless of its C00 vertical/height comparison. The remaining
      * material-creature height branch stays with the raw-door owner below. */
