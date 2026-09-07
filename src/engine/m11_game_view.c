@@ -42092,8 +42092,16 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                DM1_VIEWPORT_WIDTH);
     }
     provider.state = state;
-    provider.floor_graphic = (unsigned int)(M11_GFX_FIRST_FLOOR_SET +
-        floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
+    /* F20E/F20J (FM Towns) is MEDIA020, not PC 3.4 MEDIA720.  Its
+     * GRAPHICS.DAT contains 575 original records and DEFS.H gives
+     * M644/M650 = 75 (floor) and M651 = 76 (ceiling); applying I34's
+     * 78/79 selects unrelated records and clears the live view. */
+    provider.floor_graphic = (unsigned int)
+        ((state->assetLoader.legacyDm1 &&
+          !state->assetLoader.legacyBigEndian)
+             ? 75 + floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT
+             : M11_GFX_FIRST_FLOOR_SET +
+                   floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
     provider.ceiling_graphic = provider.floor_graphic + 1;
     dm1_viewport_3d_init(&f0098, viewport, DM1_VIEWPORT_WIDTH);
     f0098.graphic_provider_callback = m11_dm1_f0098_graphic_provider;
