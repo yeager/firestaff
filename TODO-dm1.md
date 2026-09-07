@@ -1,8 +1,8 @@
 # Firestaff TODO — DM1
 
-- Reproduce and correct the reported retail HoC interaction/viewport set as
-  one source-locked pass: champion-mirror clicks, pickup-to-inventory and Eye
-  scroll reads, Vi altar wall material, stairs occlusion, complete door
+- Reproduce and correct the remaining reported retail HoC interaction/viewport
+  set as one source-locked pass: pickup-to-inventory and Eye scroll reads, Vi
+  altar wall material, stairs occlusion, complete door
   composition, pressure-plate near/far visibility, wall-torch placement, and
   held-item striping/loss on inventory placement. Existing raw-format pointer,
   F0128 scheduler, and individual material tests are necessary but do not

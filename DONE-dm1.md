@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-07: Verified the authentic PC 3.4 Hall of Champions C127 mirror
+  route end-to-end.  Every source-owned candidate reaches F0280 by its real
+  pointer route in Original and Modern; a rendered C026 portrait click opens
+  C040, C160 resurrects, and C161 rename/reincarnate applies the original
+  vital-halving rule.  The recruited source portraits and rename survive the
+  native quick-save/load boundary.  `m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34`
+  and `m11_dm1_hoc_real_mirror_viewport_material` pass against the supplied
+  media.  This closes champion-mirror click admission only; the remaining HoC
+  composite viewport, inventory, and natural-play capture work stays in
+  `TODO-dm1.md`.
+
 - 2026-09-07: F0179 now records the source-gated I34 sound request when an
   idle Couatl flips a frame (movement sound) or an already-attacking Animated
   Armour flips a frame (combat sound), following GROUP.C:235-243 and 267-281.
