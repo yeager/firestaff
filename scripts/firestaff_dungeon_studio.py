@@ -403,7 +403,7 @@ def load_entrance_image(path: Path) -> Image.Image | None:
 class DungeonStudio(tk.Tk):
     def __init__(self, initial_game: str):
         super().__init__()
-        self.title("Firestaff Dungeon Studio")
+        self.title("Firestaff Dungeon Studio 0.2")
         self.geometry("1280x820")
         self.minsize(1000, 680)
         self.game = tk.StringVar(value=initial_game)
@@ -1372,7 +1372,7 @@ class DungeonStudio(tk.Tk):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Firestaff Dungeon Studio")
+    parser = argparse.ArgumentParser(description="Firestaff Dungeon Studio 0.2")
     parser.add_argument("--game", choices=GAMES, default="dm1")
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--screenshot", type=str, default=None)

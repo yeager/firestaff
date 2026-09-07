@@ -1716,7 +1716,7 @@ class ArtpackStudio(tk.Tk):
     def __init__(self, initial_game: str, initial_root: Path | None):
         super().__init__()
         self._config = _load_config()
-        self.title(_("Firestaff V2.2 Artpack Studio"))
+        self.title(_("Firestaff Artpack Studio 0.2"))
         self.geometry("1280x820")
         self.minsize(1000, 680)
         self.game = tk.StringVar(value=initial_game)
@@ -2582,7 +2582,7 @@ def render_demo_screenshot(out_path: Path, game: str) -> Path:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    ap = argparse.ArgumentParser(description="Firestaff V2.2 Artpack Studio")
+    ap = argparse.ArgumentParser(description="Firestaff Artpack Studio 0.2")
     ap.add_argument("--game", choices=GAMES, default="dm1")
     ap.add_argument("--pack-dir", type=Path)
     ap.add_argument("--self-test", action="store_true")

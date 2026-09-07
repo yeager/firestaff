@@ -447,7 +447,7 @@ from tkinter import ttk, filedialog, messagebox
 class SavegameEditor(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title(_("Firestaff Savegame Editor"))
+        self.title(_("Firestaff Savegame Editor 0.2"))
         self.geometry("1000x750")
         self.minsize(800, 550)
         self.savegame = None
