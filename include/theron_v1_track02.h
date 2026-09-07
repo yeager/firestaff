@@ -2260,8 +2260,10 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
 /* Cross-variant graphics-format reconnaissance.
  *
  * This is intentionally narrower than the older non-startup transport
- * receipts.  It scans only JP/US MODE1 user-data sectors that agree exactly
- * at the documented JP n / US n+1 physical-sector displacement, looking for
+ * receipts.  It scans only JP/US MODE1 user-data sectors that agree exactly.
+ * A conventional US raw BIN is aligned at JP n / US n+1 because it has one
+ * additional pregap sector; a CloneCD US Track 02 slice is aligned from JP
+ * INDEX 01 (sector 224) to CloneCD INDEX 01 (sector 0).  It looks only for
  * two hardware-shaped byte forms:
  *
  *   - 16 HuC6260 9-bit palette words (32 bytes, first word black, at least

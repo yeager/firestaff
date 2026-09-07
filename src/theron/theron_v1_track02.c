@@ -7589,7 +7589,10 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_graphics_format_candidates(
     Theron_Track02GraphicsFormatCatalog *out_catalog) {
     size_t jp_sector_count;
     size_t us_sector_count;
+    size_t jp_first_sector;
+    size_t us_first_sector;
     size_t jp_sector;
+    Theron_Track02Variant us_variant;
 
     if (out_catalog) memset(out_catalog, 0, sizeof(*out_catalog));
     if (!jp_track02_data || !us_track02_data || !jp_md5_hex || !us_md5_hex ||
@@ -7598,25 +7601,44 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_graphics_format_candidates(
         us_track02_size % TQR_RAW_SECTOR_BYTES != 0u) {
         return THERON_TRACK02_SIGNAL_BAD_INPUT;
     }
-    if (theron_v1_track02_variant_for_md5(jp_md5_hex) != THERON_TRACK02_VARIANT_JP_BIN ||
-        theron_v1_track02_variant_for_md5(us_md5_hex) != THERON_TRACK02_VARIANT_US_BIN) {
+    if (theron_v1_track02_variant_for_md5(jp_md5_hex) != THERON_TRACK02_VARIANT_JP_BIN) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+    us_variant = theron_v1_track02_variant_for_md5(us_md5_hex);
+    if (us_variant != THERON_TRACK02_VARIANT_US_BIN &&
+        us_variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
     jp_sector_count = jp_track02_size / TQR_RAW_SECTOR_BYTES;
     us_sector_count = us_track02_size / TQR_RAW_SECTOR_BYTES;
-    if (jp_sector_count == 0u || us_sector_count <= 1u) {
+    if (jp_sector_count == 0u || us_sector_count == 0u) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_catalog->jp_variant = THERON_TRACK02_VARIANT_JP_BIN;
-    out_catalog->us_variant = THERON_TRACK02_VARIANT_US_BIN;
+    out_catalog->us_variant = us_variant;
+    /* JP has a 224-sector pregap and the conventional US BIN has a
+     * 225-sector pregap.  CloneCD instead begins its IMG Track 02 directly
+     * at INDEX 01.  Compare only aligned MODE1 user sectors; this is a
+     * physical-layout correction, not synthesized media. */
+    jp_first_sector = us_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+        ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR : 0u;
+    us_first_sector = us_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+        ? 0u : 1u;
+    if (jp_sector_count <= jp_first_sector || us_sector_count <= us_first_sector) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
     out_catalog->compared_sector_count =
-        jp_sector_count < us_sector_count - 1u ? jp_sector_count : us_sector_count - 1u;
+        jp_sector_count - jp_first_sector < us_sector_count - us_first_sector
+            ? jp_sector_count - jp_first_sector
+            : us_sector_count - us_first_sector;
 
     for (jp_sector = 0u; jp_sector < out_catalog->compared_sector_count; ++jp_sector) {
-        const uint8_t *jp_bytes = jp_track02_data + jp_sector * TQR_RAW_SECTOR_BYTES +
+        const size_t jp_physical_sector = jp_first_sector + jp_sector;
+        const size_t us_physical_sector = us_first_sector + jp_sector;
+        const uint8_t *jp_bytes = jp_track02_data + jp_physical_sector * TQR_RAW_SECTOR_BYTES +
             TQR_RAW_SECTOR_USER_DATA_OFFSET;
-        const uint8_t *us_bytes = us_track02_data + (jp_sector + 1u) * TQR_RAW_SECTOR_BYTES +
+        const uint8_t *us_bytes = us_track02_data + us_physical_sector * TQR_RAW_SECTOR_BYTES +
             TQR_RAW_SECTOR_USER_DATA_OFFSET;
         size_t offset;
         if (memcmp(jp_bytes, us_bytes, TQR_RAW_SECTOR_USER_DATA_BYTES) != 0 ||
@@ -7629,12 +7651,12 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_graphics_format_candidates(
             size_t distinct_nonblack = 0u;
             uint16_t stride = 0u;
             const uint8_t *candidate = jp_bytes + offset;
-            const size_t jp_raw = jp_sector * TQR_RAW_SECTOR_BYTES +
+            const size_t jp_raw = jp_physical_sector * TQR_RAW_SECTOR_BYTES +
                 TQR_RAW_SECTOR_USER_DATA_OFFSET + offset;
-            const size_t us_raw = (jp_sector + 1u) * TQR_RAW_SECTOR_BYTES +
+            const size_t us_raw = us_physical_sector * TQR_RAW_SECTOR_BYTES +
                 TQR_RAW_SECTOR_USER_DATA_OFFSET + offset;
-            const size_t jp_user = jp_sector * TQR_RAW_SECTOR_USER_DATA_BYTES + offset;
-            const size_t us_user = (jp_sector + 1u) * TQR_RAW_SECTOR_USER_DATA_BYTES + offset;
+            const size_t jp_user = jp_physical_sector * TQR_RAW_SECTOR_USER_DATA_BYTES + offset;
+            const size_t us_user = us_physical_sector * TQR_RAW_SECTOR_USER_DATA_BYTES + offset;
             if (tqr_palette_candidate_shape(candidate, &distinct_nonblack)) {
                 tqr_catalog_graphics_candidate(out_catalog,
                                                 THERON_TRACK02_GRAPHICS_FORMAT_HUC6260_PALETTE_4BPP,

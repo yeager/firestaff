@@ -6,6 +6,8 @@
  */
 
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
+#include "firestaff_theron_media_classify.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
@@ -100,15 +102,30 @@ static const char *resolve_track02_path(const char *env_name,
     return fallback;
 }
 
+static const char *resolve_clonecd_path(char *fallback, size_t fallback_size) {
+    const char *value = getenv("FIRESTAFF_THERON_US_CLONECD_ZIP");
+    const char *home = getenv("HOME");
+    if (value && value[0]) return value;
+    if (!home || !home[0] || !fallback || fallback_size == 0u) return NULL;
+    if (snprintf(fallback, fallback_size,
+                 "%s/.firestaff/data/theron/Dungeon-Master-Therons-Quest_TurboGrafx-CD_EN.zip",
+                 home) < 0) return NULL;
+    return fallback;
+}
+
 static void probe_real_media(void) {
     char jp_fallback[512];
     char us_fallback[512];
+    char clonecd_fallback[512];
     const char *jp_path = resolve_track02_path(
-        "FIRESTAFF_THERON_TRACK02_JP_BIN", "TQJP02.bin",
+        "FIRESTAFF_THERON_TRACK02_JP_BIN",
+        "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin",
         jp_fallback, sizeof(jp_fallback));
     const char *us_path = resolve_track02_path(
         "FIRESTAFF_THERON_TRACK02_US_BIN", "TQUS02.bin",
         us_fallback, sizeof(us_fallback));
+    const char *clonecd_path = resolve_clonecd_path(
+        clonecd_fallback, sizeof(clonecd_fallback));
     uint8_t *jp = NULL;
     uint8_t *us = NULL;
     size_t jp_size = 0u;
@@ -118,23 +135,46 @@ static void probe_real_media(void) {
     Theron_Track02GraphicsFormatCatalog catalog;
     size_t i;
 
-    if (!jp_path || !us_path || !read_file(jp_path, &jp, &jp_size) ||
-        !read_file(us_path, &us, &us_size) || !m12_file_md5_hex(jp_path, jp_md5) ||
-        !m12_file_md5_hex(us_path, us_md5)) {
-        printf("SKIP real JP/US Track 02 scan: standard or FIRESTAFF_THERON_TRACK02_{JP,US}_BIN path unavailable\n");
+    if (jp_path && us_path && read_file(jp_path, &jp, &jp_size) &&
+        read_file(us_path, &us, &us_size) && m12_file_md5_hex(jp_path, jp_md5) &&
+        m12_file_md5_hex(us_path, us_md5)) {
+        /* Existing loose JP/US comparison path. */
+    } else {
+        FirestaffTheronMediaStatus clonecd;
+        free(jp);
+        free(us);
+        jp = NULL;
+        us = NULL;
+        jp_size = 0u;
+        us_size = 0u;
+        if (!jp_path || !clonecd_path || !read_file(jp_path, &jp, &jp_size) ||
+            !m12_file_md5_hex(jp_path, jp_md5) ||
+            FirestaffTheronMedia_ClassifyPath(clonecd_path, &clonecd) != 0 ||
+            !clonecd.track02_path[0] ||
+            !asset_read_path_alloc(clonecd.track02_path, &us, &us_size) ||
+            !m12_file_md5_hex(clonecd.track02_path, us_md5)) {
+            printf("SKIP real JP/US Track 02 scan: no verified loose US BIN or CloneCD Track 02 slice\n");
+            free(jp);
+            free(us);
+            return;
+        }
+    }
+    if (!jp || !us) {
         free(jp);
         free(us);
         return;
     }
     check(strcmp(jp_md5, THERON_TRACK02_MD5_JP_BIN) == 0 &&
-              strcmp(us_md5, THERON_TRACK02_MD5_US_BIN) == 0,
-          "real media hashes are the verified JP/US pair");
+              (strcmp(us_md5, THERON_TRACK02_MD5_US_BIN) == 0 ||
+               strcmp(us_md5, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0),
+          "real media hashes are the verified JP/US or JP/CloneCD pair");
     if (g_failures == 0) {
         check(theron_v1_track02_catalog_graphics_format_candidates(
                   jp, jp_size, jp_md5, us, us_size, us_md5, &catalog) ==
                   THERON_TRACK02_SIGNAL_OK && catalog.valid,
               "real media graphics-format scan completes");
-        printf("FORMAT-SCAN sectors=%zu matching-nonzero=%zu palette-shapes=%zu stride-shapes=%zu retained=%zu overflow=%zu compression=%d decode=%d\n",
+        printf("FORMAT-SCAN us-variant=%s sectors=%zu matching-nonzero=%zu palette-shapes=%zu stride-shapes=%zu retained=%zu overflow=%zu compression=%d decode=%d\n",
+               catalog.us_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ? "clonecd-index01" : "raw-bin",
                catalog.compared_sector_count, catalog.matching_nonzero_sector_count,
                catalog.huc6260_palette_candidate_count,
                catalog.le16_stride_table_candidate_count,
@@ -157,6 +197,10 @@ static void probe_real_media(void) {
 int main(void) {
     uint8_t jp[RAW_SECTOR_BYTES * FIXTURE_SECTORS];
     uint8_t us[RAW_SECTOR_BYTES * FIXTURE_SECTORS];
+    uint8_t clone_source_jp[RAW_SECTOR_BYTES * FIXTURE_SECTORS];
+    uint8_t clone_source_us[RAW_SECTOR_BYTES * FIXTURE_SECTORS];
+    uint8_t *clone_jp;
+    uint8_t *clone_us;
     Theron_Track02GraphicsFormatCatalog catalog;
 
     build_pair(jp, us, sizeof(jp));
@@ -186,6 +230,32 @@ int main(void) {
               us, sizeof(us), THERON_TRACK02_MD5_JP_BIN, &catalog) ==
               THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT,
           "catalog rejects reversed or unknown variant identity");
+
+    clone_jp = (uint8_t *)calloc(THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR +
+                                 FIXTURE_SECTORS, RAW_SECTOR_BYTES);
+    clone_us = (uint8_t *)calloc(FIXTURE_SECTORS, RAW_SECTOR_BYTES);
+    check(clone_jp != NULL && clone_us != NULL,
+          "CloneCD alignment fixture allocates");
+    if (clone_jp && clone_us) {
+        build_pair(clone_source_jp, clone_source_us, sizeof(clone_source_jp));
+        memcpy(clone_jp + THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR * RAW_SECTOR_BYTES,
+               clone_source_jp, sizeof(clone_source_jp));
+        /* build_pair's conventional US image places matching data one raw
+         * sector later; CloneCD starts directly at Track 02 INDEX 01. */
+        memcpy(clone_us, clone_source_us + RAW_SECTOR_BYTES,
+               sizeof(clone_source_us) - RAW_SECTOR_BYTES);
+        check(theron_v1_track02_catalog_graphics_format_candidates(
+                  clone_jp,
+                  (THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR + FIXTURE_SECTORS) * RAW_SECTOR_BYTES,
+                  THERON_TRACK02_MD5_JP_BIN,
+                  clone_us, FIXTURE_SECTORS * RAW_SECTOR_BYTES,
+                  THERON_TRACK02_MD5_US_CLONECD_BIN, &catalog) ==
+                  THERON_TRACK02_SIGNAL_OK && catalog.valid &&
+                  catalog.us_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW,
+              "CloneCD comparison applies the documented INDEX 01 alignment");
+    }
+    free(clone_jp);
+    free(clone_us);
 
     probe_real_media();
     printf("summary: fail=%d\n", g_failures);
