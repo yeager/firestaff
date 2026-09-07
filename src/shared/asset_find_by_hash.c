@@ -3391,139 +3391,13 @@ static int shell_tool_exists(const char *tool) {
 #endif
 }
 
-/* Defined with the scanner diagnostics below. CHD media is a container too,
- * but chdman is deliberately separate from the generic archive tools. */
-static void record_missing_tool(const char *mediaPath, const char *tools);
-
-static int chd_tool_available(void) {
-    /* Never materialize game media through a host converter.  A CHD must
-     * eventually be admitted by Firestaff's own bounded reader; until then
-     * it is unavailable rather than an implicit chdman dependency or a
-     * temporary CUE/BIN extraction.  Deliberately ignore the historical
-     * FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS escape hatch. */
-    return 0;
-}
-
-static int make_chd_temp_dir(char *outDir, size_t outDirSize) {
-    char tmpl[ASSET_PATH_MAX];
-    char *made;
-    if (!outDir || outDirSize == 0U) return 0;
-    if (snprintf(tmpl, sizeof(tmpl), "/tmp/firestaff-chd-scan-XXXXXX") >=
-        (int)sizeof(tmpl)) {
-        return 0;
-    }
-    made = mkdtemp(tmpl);
-    if (!made) return 0;
-    if (strlen(made) + 1U > outDirSize) {
-        rmdir(made);
-        return 0;
-    }
-    strcpy(outDir, made);
-    return 1;
-}
-
-static int chd_extractcd_to_cue(const char *chdPath,
-                                char *outCuePath,
-                                size_t outCuePathSize,
-                                char *outTempDir,
-                                size_t outTempDirSize) {
-#if defined(__ANDROID__) || defined(FIRESTAFF_IOS)
-    (void)chdPath; (void)outCuePath; (void)outCuePathSize;
-    (void)outTempDir; (void)outTempDirSize;
-    return 0;
-#else
-    char cmd[ASSET_PATH_MAX * 3];
-    if (!chdPath || !outCuePath || outCuePathSize == 0U ||
-        !outTempDir || outTempDirSize == 0U) {
-        return 0;
-    }
-    if (!chd_tool_available()) {
-        /* Keep the diagnostic scoped to its explicit test hook.  Normal
-         * discovery must simply leave an unsupported CHD unmatched instead
-         * of turning every later launcher scan into a stale tool popup. */
-        if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL) {
-            record_missing_tool(chdPath, "chdman");
-        }
-        return 0;
-    }
-    if (!make_chd_temp_dir(outTempDir, outTempDirSize)) return 0;
-    if (snprintf(outCuePath, outCuePathSize, "%s/disc.cue", outTempDir) >=
-        (int)outCuePathSize) {
-        rmdir(outTempDir);
-        outTempDir[0] = '\0';
-        return 0;
-    }
-    if (snprintf(cmd, sizeof(cmd), "chdman extractcd -f -i ") >= (int)sizeof(cmd) ||
-        !shell_append_quoted(cmd, sizeof(cmd), chdPath) ||
-        strlen(cmd) + 4U >= sizeof(cmd)) {
-        rmdir(outTempDir);
-        outTempDir[0] = '\0';
-        return 0;
-    }
-    strcat(cmd, " -o ");
-    if (!shell_append_quoted(cmd, sizeof(cmd), outCuePath) ||
-        strlen(cmd) + 23U >= sizeof(cmd)) {
-        rmdir(outTempDir);
-        outTempDir[0] = '\0';
-        return 0;
-    }
-    strcat(cmd, " >/dev/null 2>&1");
-    if (system(cmd) != 0) {
-        remove(outCuePath);
-        rmdir(outTempDir);
-        outTempDir[0] = '\0';
-        return 0;
-    }
-    return 1;
-#endif
-}
-
-static void cleanup_chd_temp(const char *tempDir, const char *cuePath) {
-    char binPath[ASSET_PATH_MAX];
-    char tocPath[ASSET_PATH_MAX];
-    if (cuePath && *cuePath) remove(cuePath);
-    if (tempDir && *tempDir) {
-        if (snprintf(binPath, sizeof(binPath), "%s/disc.bin", tempDir) < (int)sizeof(binPath)) {
-            remove(binPath);
-        }
-        if (snprintf(tocPath, sizeof(tocPath), "%s/disc.toc", tempDir) < (int)sizeof(tocPath)) {
-            remove(tocPath);
-        }
-        rmdir(tempDir);
-    }
-}
-
-static int chd_virtual_path_from_temp_match(const char *chdPath,
-                                            const char *tempMatchPath,
-                                            char *outPath,
-                                            int outPathLen) {
-    const char *sep;
-    if (!chdPath || !tempMatchPath || !outPath || outPathLen <= 0) return 0;
-    sep = strstr(tempMatchPath, "::");
-    if (sep && sep[2] != '\0') {
-        return copy_virtual_match_path(chdPath, sep + 2, outPath, outPathLen);
-    }
-    return copy_virtual_match_path(chdPath, "TRACK02.BIN", outPath, outPathLen);
-}
-
+/* CHD is deliberately unsupported until Firestaff has a bounded native
+ * in-memory reader.  Do not add a converter fallback: Firestaff must not
+ * invoke chdman, create a CUE/BIN sidecar, or write game media to disk. */
 static int scan_chd_by_md5(const char *chdPath, const char *expectedMd5,
                            char *outPath, int outPathLen) {
-    char tempDir[ASSET_PATH_MAX];
-    char cuePath[ASSET_PATH_MAX];
-    char tempMatch[ASSET_PATH_MAX];
-    int ok = 0;
-    tempDir[0] = '\0';
-    cuePath[0] = '\0';
-    if (!chd_extractcd_to_cue(chdPath, cuePath, sizeof(cuePath),
-                              tempDir, sizeof(tempDir))) {
-        return 0;
-    }
-    tempMatch[0] = '\0';
-    if (scan_cue_by_md5(cuePath, expectedMd5, tempMatch, (int)sizeof(tempMatch))) {
-        ok = chd_virtual_path_from_temp_match(chdPath, tempMatch, outPath, outPathLen);
-    }
-    cleanup_chd_temp(tempDir, cuePath);
-    return ok;
+    (void)chdPath; (void)expectedMd5; (void)outPath; (void)outPathLen;
+    return 0;
 }
 
 static int scan_chd_by_md5_list(const char *chdPath,
@@ -3531,109 +3405,16 @@ static int scan_chd_by_md5_list(const char *chdPath,
                                 int md5Count,
                                 char outPaths[][ASSET_PATH_MAX],
                                 int matched[]) {
-    char tempDir[ASSET_PATH_MAX];
-    char cuePath[ASSET_PATH_MAX];
-    char tempPaths[64][ASSET_PATH_MAX];
-    int tempMatched[64];
-    int foundCount = 0;
-    int i;
-    tempDir[0] = '\0';
-    cuePath[0] = '\0';
-    if (!chdPath || !md5List || md5Count <= 0 || md5Count > 64 ||
-        !outPaths || !matched) {
-        return 0;
-    }
-    if (!chd_extractcd_to_cue(chdPath, cuePath, sizeof(cuePath),
-                              tempDir, sizeof(tempDir))) {
-        return 0;
-    }
-    memset(tempPaths, 0, sizeof(tempPaths));
-    memcpy(tempMatched, matched, (size_t)md5Count * sizeof(tempMatched[0]));
-    (void)scan_cue_by_md5_list(cuePath, md5List, md5Count, tempPaths, tempMatched);
-    for (i = 0; i < md5Count; ++i) {
-        if (matched[i] || !tempMatched[i]) continue;
-        if (chd_virtual_path_from_temp_match(chdPath, tempPaths[i],
-                                             outPaths[i], ASSET_PATH_MAX)) {
-            matched[i] = 1;
-            ++foundCount;
-        }
-    }
-    cleanup_chd_temp(tempDir, cuePath);
-    return foundCount;
-}
-
-static int cue_first_data_payload_path(const char *cuePath,
-                                       char *outPath,
-                                       size_t outPathSize) {
-    FILE *fp;
-    char line[1024];
-    char currentFile[ASSET_PATH_MAX];
-    currentFile[0] = '\0';
-    if (!cuePath || !outPath || outPathSize == 0U) return 0;
-    fp = fopen(cuePath, "rb");
-    if (!fp) return 0;
-    while (fgets(line, sizeof(line), fp)) {
-        char fileName[ASSET_PATH_MAX];
-        if (cue_extract_file_name(line, fileName, sizeof(fileName))) {
-            strcpy(currentFile, fileName);
-            continue;
-        }
-        if (cue_track_is_data(line) && currentFile[0] != '\0' &&
-            cue_resolve_payload_path(cuePath, currentFile, outPath, outPathSize)) {
-            fclose(fp);
-            return 1;
-        }
-    }
-    fclose(fp);
+    (void)chdPath; (void)md5List; (void)md5Count;
+    (void)outPaths; (void)matched;
     return 0;
-}
-
-static int copy_whole_file_to_path(const char *inPath, const char *outFilePath) {
-    unsigned char buf[8192];
-    FILE *in;
-    FILE *out;
-    size_t n;
-    int ok = 1;
-    if (!inPath || !outFilePath) return 0;
-    in = fopen(inPath, "rb");
-    if (!in) return 0;
-    out = fopen(outFilePath, "wb");
-    if (!out) {
-        fclose(in);
-        return 0;
-    }
-    while ((n = fread(buf, 1U, sizeof(buf), in)) > 0U) {
-        if (fwrite(buf, 1U, n, out) != n) ok = 0;
-    }
-    if (ferror(in)) ok = 0;
-    if (fclose(in) != 0) ok = 0;
-    if (fclose(out) != 0) ok = 0;
-    return ok;
 }
 
 static int chd_extract_entry_to_path(const char *chdPath,
                                      const char *entryName,
                                      const char *outFilePath) {
-    char tempDir[ASSET_PATH_MAX];
-    char cuePath[ASSET_PATH_MAX];
-    char payloadPath[ASSET_PATH_MAX];
-    int ok = 0;
-    tempDir[0] = '\0';
-    cuePath[0] = '\0';
-    if (!chd_extractcd_to_cue(chdPath, cuePath, sizeof(cuePath),
-                              tempDir, sizeof(tempDir))) {
-        return 0;
-    }
-    if (entryName && strcmp(entryName, "TRACK02.BIN") == 0 &&
-        cue_first_data_payload_path(cuePath, payloadPath, sizeof(payloadPath))) {
-        ok = copy_whole_file_to_path(payloadPath, outFilePath);
-    } else {
-        if (cue_first_data_payload_path(cuePath, payloadPath, sizeof(payloadPath))) {
-            ok = iso_extract_entry_to_path(payloadPath, entryName, outFilePath);
-        }
-    }
-    cleanup_chd_temp(tempDir, cuePath);
-    return ok;
+    (void)chdPath; (void)entryName; (void)outFilePath;
+    return 0;
 }
 
 static const char *external_archive_tool_for_path(const char *archivePath) {

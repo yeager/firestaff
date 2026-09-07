@@ -100,14 +100,15 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
  * Missing-extractor diagnostics.
  *
  * When the scan meets game media that needs a host extraction tool (.7z,
- * .rar, .cab, CHD, ...) and that tool is unavailable, the media is skipped
+ * .rar, .cab, ...) and that tool is unavailable, the media is skipped
  * and recorded here so the launcher and --scan-data output can tell the
  * user which archives were skipped and which tool would unlock them. The
  * store is bounded (16 entries), deduplicated by archive path, and
  * process-global; clear it before a fresh multi-game scan pass.
  * *_path() / *_tools() return NULL for out-of-range indices. *_tools()
  * returns a static "preferred/fallback" tool list such as "7zz/7z/bsdtar"
- * or "chdman".
+ * or "unrar/7zz/7z/bsdtar". CHD is separately unsupported until Firestaff
+ * has a native in-memory reader; it never appears as a host-tool request.
  */
 void asset_scan_clear_missing_extractor_diagnostics(void);
 int asset_scan_missing_extractor_count(void);

@@ -424,9 +424,10 @@ static void check_missing_rar_tool_popup(void) {
     CHECK(launcher_has_clean_main_view(&state));
 }
 
-/* CHD is game data too, but needs chdman rather than the generic 7z tool
- * family. It must therefore reach the same actionable launcher popup. */
-static void check_missing_chd_tool_popup(void) {
+/* CHD remains unavailable until Firestaff owns a native reader.  An installed
+ * host converter must never alter the launcher state or become a runtime
+ * dependency. */
+static void check_unsupported_chd_has_no_tool_popup(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char ignoredMd5[M12_ASSET_MD5_CAPACITY];
@@ -435,18 +436,10 @@ static void check_missing_chd_tool_popup(void) {
     CHECK(isolate_home_and_data_root(dataRoot));
     CHECK(write_payload_with_md5(dataRoot, "original-media.chd",
                                  "nonempty CHD fixture\n", ignoredMd5));
-    CHECK(test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", "1"));
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
-    CHECK(test_unsetenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS"));
-
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(state.messageLine1 &&
-          strcmp(state.messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
-    CHECK(state.messageLine2 &&
-          strstr(state.messageLine2, "original-media.chd") != NULL &&
-          strstr(state.messageLine2, "chdman") != NULL);
-    CHECK(state.messageLine3 &&
-          strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
+    CHECK(has_text_prefix(state.messageLine1, "NO GAME DATA FOUND"));
+    CHECK(state.messageLine2 && strstr(state.messageLine2, "chdman") == NULL);
     dismiss_message(&state);
     CHECK(launcher_has_clean_main_view(&state));
 }
@@ -827,7 +820,7 @@ int main(void) {
     check_rescan_with_empty_dir_shows_no_data_result_once();
     check_quick_resume_unavailable_shows_missing_popup_once();
     check_data_root_switch_partial_required_pairs_for_dm1_dm2();
-    check_missing_chd_tool_popup();
+    check_unsupported_chd_has_no_tool_popup();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
