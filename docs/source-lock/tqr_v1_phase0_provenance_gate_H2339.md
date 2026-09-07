@@ -325,9 +325,9 @@ Differences:
 
 ### 7.1 Game-by-Game Comparison
 
-| Aspect | DM1 (PC) | CSB (PC) | Nexus (Saturn) | Theron's Quest (PCE) |
+| Aspect | DM1 (PC) | CSB (Atari ST / Amiga / FM Towns) | Nexus (Saturn) | Theron's Quest (PCE) |
 |--------|----------|----------|----------------|----------------------|
-| Platform | IBM PC | IBM PC | Sega Saturn | PC Engine CD |
+| Platform | IBM PC | Atari ST, Amiga, FM Towns | Sega Saturn | PC Engine CD |
 | Dungeon format | DUNGEON.DAT | DUNGEON.DAT | DGN + DMDF | Unknown (Track 02) |
 | Graphics format | GRAPHICS.DAT | GRAPHICS.DAT | DMDF | Unknown (Track 02) |
 | Levels | 16 | 16 + chaos | Multiple | **7 mini-dungeons** |
@@ -417,7 +417,7 @@ After disc image acquisition:
 ```
 Firestaff supported games:
   DM1 (PC 3.4)  — source-locked (ReDMCSB), V1 ✅
-  CSB (PC 3.4)  — source-locked (ReDMCSB), V1 ✅
+  CSB (Atari ST / Amiga / FM Towns) — source-locked (ReDMCSB), V1 ✅
   DM2 (Skullkeep) — source-locked (ReDMCSB), V1 ❌ Phase 1-8
   Nexus (Saturn)  — provenance-locked, V1 ✅ Phase 0-7 (done)
   Theron's Quest (PCE/TG16) — provenance-locked, V1 ❌ Phase 0-7

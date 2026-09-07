@@ -63,8 +63,17 @@ captures.
 - CSB supplied Atari ST, Amiga and FM Towns media boot through the native
   routes. The CSB map loader, teleporter chain, projectile cadence, end-game
   raw receipt and version gate have focused regression coverage.
+- CSB entrance resources are platform-specific. FM Towns is verified at the
+  framebuffer level: the real F31 C004 screen is composed with the original
+  C002/C003 closed-door strips, with an exact three-source receipt and the
+  C28 entrance palette. Amiga uses its own A31/A35 C004/C002/C003 records and
+  native palette register; the supplied loose and ZIP-to-ADF routes reach that
+  entrance and complete the source-owned transition. Atari ST does not ship
+  this C004/C002/C003 asset family: its original `ANIMATE.SCR`/`ANIMATE.DAT`
+  route is separately verified. These are deliberately not interchangeable,
+  and CSB has no DOS/Windows/PC game route.
 - On 2026-08-31 the rebuilt focused CSB real-media suite passed its Atari ST,
-  French Atari, Amiga, PC and FM Towns (English/Japanese) routes, including
+  French Atari, Amiga, and FM Towns (English/Japanese) routes, including
   M12-to-M11 handoff, source palette selection, teleporter rotation, Lord
   Chaos direction, projectile post-teleport consumers, and real graphics
   readers. After the FM Towns F0093 repair, the complete labelled CSB CTest
