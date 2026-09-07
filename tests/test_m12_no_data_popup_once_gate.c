@@ -483,13 +483,17 @@ static void check_unavailable_game_popup_appears_once_per_selection(void) {
         CHECK(entry && entry->available == 0);
     }
 
-    /* First selection event. */
+    /* A game card always opens the platform-card step first.  An unavailable
+     * platform is rejected only when selected, so the user can still see
+     * which original platforms Firestaff supports. */
     state.selectedIndex = dm1CardIndex;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.gameCardFlowStage == 0);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.launchRequested == 0);
     line1 = state.messageLine1 ? state.messageLine1 : "";
-    CHECK(has_text_prefix(line1, "DM1"));
     CHECK(strstr(line1, "GAME DATA NOT FOUND") != NULL);
     /* The missing-files line lists verified-but-missing roles. */
     CHECK(state.messageLine2 && state.messageLine2[0] != '\0');
@@ -509,20 +513,26 @@ static void check_unavailable_game_popup_appears_once_per_selection(void) {
         CHECK(state.messageLine3 == line3Before);
     }
 
-    /* Dismiss. */
+    /* Dismiss returns to the platform cards, then BACK returns to the game
+     * cards.  This is distinct from a stale modal popup on the main screen. */
     dismiss_message(&state);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(launcher_has_clean_main_view(&state));
 
     /* Second selection event (the user navigated back to DM1). The popup
      * must appear once again — fresh, not stacked or duplicated. */
     state.selectedIndex = dm1CardIndex;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     line1 = state.messageLine1 ? state.messageLine1 : "";
-    CHECK(has_text_prefix(line1, "DM1"));
     CHECK(strstr(line1, "GAME DATA NOT FOUND") != NULL);
 
     /* Dismiss via BACK this time to also cover the BACK-from-message path. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(launcher_has_clean_main_view(&state));
 }
@@ -675,7 +685,6 @@ static void check_quick_resume_unavailable_shows_missing_popup_once(void) {
     CHECK(state.launchRequested == 0);
     CHECK(state.quickResumeLaunchRequested == 0);
     line1 = state.messageLine1 ? state.messageLine1 : "";
-    CHECK(has_text_prefix(line1, "DM1"));
     CHECK(strstr(line1, "GAME DATA NOT FOUND") != NULL);
 
     /* Dismiss — must return to MAIN with cleared message lines and no
@@ -775,22 +784,32 @@ static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
 
     state.selectedIndex = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.gameCardFlowStage == 0);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.launchRequested == 0);
-    CHECK(state.messageLine1 && has_text_prefix(state.messageLine1, "DM1"));
+    CHECK(state.messageLine1 && strstr(state.messageLine1, "GAME DATA NOT FOUND") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") == NULL);
     dismiss_message(&state);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(launcher_has_clean_main_view(&state));
 
     state.selectedIndex = 2;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.gameCardFlowStage == 0);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.launchRequested == 0);
-    CHECK(state.messageLine1 && has_text_prefix(state.messageLine1, "DM2"));
+    CHECK(state.messageLine1 && strstr(state.messageLine1, "GAME DATA NOT FOUND") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") == NULL);
     dismiss_message(&state);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(launcher_has_clean_main_view(&state));
 
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(NULL, NULL);

@@ -6312,6 +6312,17 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         m12_show_missing_game_data_popup(state, cardEntry->gameId);
                         return;
                     }
+                    /* A platform card may be listed because the catalog
+                     * supports it even when its scanner row has only a
+                     * subset of the required original files.  Do not let a
+                     * partial hash match advance to the presentation cards:
+                     * the selected game must have a complete, launchable
+                     * original-media set first. */
+                    if (!M12_AssetStatus_GameAvailable(&state->assetStatus,
+                                                        cardEntry->gameId)) {
+                        m12_show_missing_game_data_popup(state, cardEntry->gameId);
+                        return;
+                    }
                     index = m12_clamp_index(index, count);
                     /* A platform card selects an architecture, not an
                      * arbitrary edition within that architecture.  Preserve
