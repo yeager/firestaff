@@ -2066,7 +2066,7 @@ static void test_c30_projectile_reaction_behind_facing_turns_without_moving(void
     raw[74] = 9u;
     raw[75] = 0xffu;
     test_put_le16(raw, 76, 40u);
-    test_put_le16(raw, 84, 0u); /* C0 wander, initially north. */
+    test_put_le16(raw, 84, 0x0200u); /* C0 wander; raw C04 faces south. */
 
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
@@ -2075,6 +2075,16 @@ static void test_c30_projectile_reaction_behind_facing_turns_without_moving(void
     profile.party_x = 0;
     profile.party_y = 2;
     profile.champion_count = 1;
+    /* A CSBWin ACTIVE_GROUP owns the live per-creature direction.  Its
+     * north-facing receipt must win over the stale south-facing raw C04
+     * direction above, so F0200 rejects the party at (0,2). */
+    profile.active_group_state_count = 1;
+    profile.active_group_state[0].valid = 1;
+    profile.active_group_state[0].group_thing = (uint16_t)(4u << 10);
+    profile.active_group_state[0].map_index = 0;
+    profile.active_group_state[0].map_x = 0;
+    profile.active_group_state[0].map_y = 0;
+    profile.active_group_state[0].directions = 0u; /* North. */
     profile.csbwin_random_seed_valid = 1;
     profile.csbwin_random_seed = 1u;
     expected_random_state =
