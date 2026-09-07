@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-09-07: Routed C37 wandering through the creature-owned F0202
+  destination gate for wall/stairs, open pits with levitation, closed/
+  imaginary fake walls, and the non-material door exception
+  (GROUP.C:1500-1564, called from the C37 false-imaginary route). This
+  replaces the generic gate's accidental admission of open pits and imaginary
+  fake walls. The full native CSB runtime accumulator passes 840 assertions.
+  Raw material-door height, teleporter and fluxcage gates remain open work.
+
 - 2026-09-07: C37 wandering no longer creates a local map/time-derived RNG.
   The native runtime advances the persistent `G0349` counterpart once for
   GROUP.C F0209's `M005_RANDOM(2)` gate and, when admitted, once for the

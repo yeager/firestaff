@@ -5056,6 +5056,60 @@ static int csb_v1_runtime_group_destination_is_blocked(
     return 0;
 }
 
+/* ReDMCSB GROUP.C F0202:1500-1513.  The old generic destination gate was
+ * intentionally shared by several F0267 callers, but C37 specifically owns
+ * F0202 and therefore must account for its C04 creature attributes.  Keep
+ * the generic owner intact while routing C37 through this source-shaped
+ * predicate. */
+static int csb_v1_runtime_f0202_destination_is_blocked(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y,
+    const struct CreatureBehaviorProfile_Compat *creature,
+    int allow_imaginary_pits_and_fakewalls)
+{
+    int raw_square;
+    int square_type;
+    int levitates;
+
+    if (!dungeon || !creature || level < 0 || level >= dungeon->level_count)
+        return 1;
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0) return 1;
+    square_type = (dungeon->square_bytes == 1)
+        ? ((raw_square >> 5) & 0x07)
+        : (raw_square & 0x1F);
+    levitates = (creature->attributes & CREATURE_ATTR_MASK_LEVITATION) != 0;
+
+    /* F0202's shared wall/stairs gate. */
+    if (square_type == 0 || square_type == 3) return 1;
+    /* F0202 permits a closed pit, an explicitly permitted imaginary pit, or
+     * a levitating creature; an ordinary open pit blocks the C37 move. */
+    if (square_type == 2) {
+        if ((raw_square & 0x01) && allow_imaginary_pits_and_fakewalls)
+            return 0;
+        if ((raw_square & 0x08) == 0 || levitates) return 0;
+        return 1;
+    }
+    /* F0202's fakewall gate has the same opt-in imaginary exception. */
+    if (square_type == 6) {
+        if (raw_square & 0x04) return 0;
+        if ((raw_square & 0x01) && allow_imaginary_pits_and_fakewalls)
+            return 0;
+        return 1;
+    }
+    /* GROUP.C F0202:1557-1564: a non-material creature passes a door
+     * regardless of its C00 vertical/height comparison. The remaining
+     * material-creature height branch stays with the raw-door owner below. */
+    if (square_type == 4 &&
+        (creature->attributes & CREATURE_ATTR_MASK_NON_MATERIAL)) {
+        return 0;
+    }
+    return csb_v1_runtime_group_destination_is_blocked(
+        dungeon, level, map_x, map_y);
+}
+
 static int csb_v1_runtime_find_group_thing_location(
     const CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
@@ -5807,8 +5861,9 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                          * zero result. */
                         if ((!is_prior_square ||
                              csb_v1_runtime_main_random2(profile) == 0) &&
-                            !csb_v1_runtime_group_destination_is_blocked(
-                                dungeon, record->mapIndex, wander_x, wander_y) &&
+                            !csb_v1_runtime_f0202_destination_is_blocked(
+                                dungeon, record->mapIndex, wander_x, wander_y,
+                                creature_profile, 0) &&
                             !csb_v1_runtime_group_destination_has_party_or_group(
                                 profile, record->mapIndex, wander_x, wander_y)) {
                             wandered = csb_v1_runtime_move_group_thing_to_square(
