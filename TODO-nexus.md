@@ -6,10 +6,20 @@ in the Nexus capture and reverse-engineering records.
 ## Available local retail media
 
 The staged JP retail set supplies the CUE, nine BIN tracks, CDDA WAV tracks,
-and the original ZIP package.  It does **not** contain a Saturn VDP1/VDP2 VRAM
-dump, CRAM dump, register snapshot, or frame/timing capture.  Firestaff reads
-the CUE/ISO members directly in memory; it must not manufacture either the
-missing capture or a presentation claim from these disc files.
+and the original ZIP package.  The disc itself does **not** contain a Saturn
+VDP1/VDP2 VRAM dump, CRAM dump, register snapshot, or frame/timing capture.
+Firestaff reads the CUE/ISO members directly in memory; it must not manufacture
+either a capture or a presentation claim from those disc files.
+
+The local development capture corpus now includes hash-bound, same-session
+hardware evidence for the retail Track 01 CD→RAM→VDP2 transfer, including
+VDP1/VDP2, VRAM, CRAM, register and timing domains.  The admission tests
+`nexus_v1_authenticated_hardware_capture_real`,
+`nexus_v1_title_same_session_capture_real`, and
+`nexus_v1_title_mapd_vdp2_transfer_real` verify that transport evidence.
+Its asset semantics remain explicitly `unassigned`: it does **not** identify
+the final NBG0 source, VDP1/VDP2 layer composition, priorities, or interactive
+title-menu ownership.  It must therefore not enable the native title renderer.
 
 - Capture one same-revision, post-composition title/menu state that jointly
   binds the active NBG0 source, CRAM palette, VDP1/VDP2 layers, priorities and
