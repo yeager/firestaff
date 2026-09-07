@@ -2003,6 +2003,11 @@ int main(void)
           "F31 Game handoff draws the authenticated C004 entrance raster");
     CHECK(M11_GameView_GetPresentationSpecialPalette(&view) == -1,
           "F31 C004 rejects the PC3.4 special palette and retains its native DAC state");
+    CHECK(M11_Render_CopyIndexedPaletteRgb6(presented_palette) &&
+              memcmp(presented_palette,
+                     view.csbFmtownsEntrancePaletteRgb6,
+                     sizeof(view.csbFmtownsEntrancePaletteRgb6)) == 0,
+          "F31 C004 raster is presented through C28_ENTRANCE_CSB, not SWITCHTW's red C26 palette");
     /* CHTWE/CHTWJ reaches the native C004 Entrance page without the PC
      * TITLE.C session.  Its C407 box is nevertheless the original C200
      * primary-mouse command (COMMAND.C:342; layout-696 (244,45) 55x14).
