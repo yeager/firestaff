@@ -1852,6 +1852,70 @@ static void test_c37_group_approach_creates_empty_destination_thing_list(void)
           "C37 empty-destination move requeues behavior from the created target list");
 }
 
+/* ReDMCSB GROUP.C F0209:2153-2168 / BASE.C F0028,F0029: C37 wandering
+ * consumes G0349 first for the one-bit movement gate and, only when admitted,
+ * once more for an absolute two-bit direction.  The old bridge reseeded from
+ * map/time and made direction relative to the C04 facing. */
+static void test_c37_wander_uses_shared_rng_absolute_direction(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[144];
+    struct DM1_Event_V1 ev;
+    uint32_t expected_random_state;
+
+    printf("\n-- CSB C37 shared-RNG wandering direction --\n");
+
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[4] = 70;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(1, 0)] = (uint8_t)(1u << 5);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 1);
+    test_put_le16(raw, 60 + 2 * 2, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, 0xffffu);
+    test_put_le16(raw, 70, 0xfffeu);
+    raw[74] = 9u;   /* Mummy: ordinary wandering C04. */
+    raw[75] = 0xffu;
+    test_put_le16(raw, 76, 40u);
+    test_put_le16(raw, 84, 0u); /* C0 wander, facing north. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 2;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.csbwin_random_seed_valid = 1;
+    profile.csbwin_random_seed = 29u;
+    /* Seed 29: F0028 is one, then F0029 is one (east). */
+    expected_random_state = 29u * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    expected_random_state = expected_random_state * UINT32_C(0xbb40e62d) +
+        UINT32_C(11);
+
+    memset(&ev, 0, sizeof(ev));
+    ev.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    ev.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    ev.priority = 234u;
+    ev.b_mapX = 0;
+    ev.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &ev) >= 0,
+          "C37 shared-RNG wander fixture queues the source event");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C37 shared-RNG wander fixture dispatches once");
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
+              test_get_le16(raw, 68) == (uint16_t)(4u << 10),
+          "C37 uses absolute F0029 east rather than C04-relative facing");
+    CHECK(profile.csbwin_random_seed == expected_random_state,
+          "C37 advances shared G0349 exactly once for F0028 and F0029");
+}
+
 static void test_c37_group_approach_turns_moved_group_per_creature(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -6978,6 +7042,7 @@ int main(void)
     test_timeline_square_events_mutate_real_format_map_bytes();
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
+    test_c37_wander_uses_shared_rng_absolute_direction();
     test_c37_group_approach_turns_moved_group_per_creature();
     test_c37_archenemy_double_move_requests_buzz();
     test_c37_group_approach_uses_stored_target_without_party_sight();

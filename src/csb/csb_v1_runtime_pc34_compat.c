@@ -5685,6 +5685,29 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
     return moved_count;
 }
 
+/* ReDMCSB BASE.C F0027/F0028/F0029 owns one process-wide G0349 stream.
+ * The profile field retains that state across native CSB loads as well as
+ * ordinary running ticks.  Do not substitute a map/tick-derived stream:
+ * GROUP.C F0209's C37 branch shares this stream with every other consumer. */
+static uint16_t csb_v1_runtime_main_random16(
+    CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile || !profile->csbwin_random_seed_valid) return 0;
+    profile->csbwin_random_seed =
+        profile->csbwin_random_seed * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    return (uint16_t)(profile->csbwin_random_seed >> 8);
+}
+
+static int csb_v1_runtime_main_random1(CSB_V1_RuntimeProfile *profile)
+{
+    return (int)(csb_v1_runtime_main_random16(profile) & 0x0001u);
+}
+
+static int csb_v1_runtime_main_random2(CSB_V1_RuntimeProfile *profile)
+{
+    return (int)(csb_v1_runtime_main_random16(profile) & 0x0003u);
+}
+
 static void csb_v1_runtime_apply_group_behavior_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -5754,29 +5777,48 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 int wander_x = record->mapX;
                 int wander_y = record->mapY;
                 int wandered = 0;
-                struct RngState_Compat wander_rng;
-                F0730_COMBAT_RngInit_Compat(
-                    &wander_rng,
-                    profile->dungeon_seed ^ profile->game_time ^
-                        ((uint32_t)record->mapX << 4) ^
-                        ((uint32_t)record->mapY << 12));
-                wander_dir = (wander_dir +
-                    (int)(F0731_COMBAT_RngNextRaw_Compat(&wander_rng) & 3u)) & 3;
-                if (wander_dir == 0) wander_y--;
-                else if (wander_dir == 1) wander_x++;
-                else if (wander_dir == 2) wander_y++;
-                else wander_x--;
-                if (!csb_v1_runtime_group_destination_is_blocked(
-                        dungeon, record->mapIndex, wander_x, wander_y) &&
-                    !csb_v1_runtime_group_destination_has_party_or_group(
-                        profile, record->mapIndex, wander_x, wander_y)) {
+                CSB_V1_RuntimeActiveGroupState *active_state;
+                int attempt;
+
+                /* GROUP.C F0209:2153-2186.  M005 first decides whether a
+                 * wander move is considered at all.  If it is, M004 supplies
+                 * an absolute (not relative-to-C04-facing) start direction.
+                 * Both calls advance G0349 exactly once. */
+                if (csb_v1_runtime_main_random1(profile)) {
+                    wander_dir = csb_v1_runtime_main_random2(profile);
                     csb_v1_runtime_sync_active_group_state_from_record(
                         profile, group_thing, thing_record,
                         record->mapIndex, record->mapX, record->mapY, 0, 0);
-                    wandered = csb_v1_runtime_move_group_thing_to_square(
-                        profile, dungeon, group_thing,
-                        record->mapIndex, record->mapX, record->mapY,
-                        record->mapIndex, wander_x, wander_y);
+                    active_state = csb_v1_runtime_active_group_state_for_thing(
+                        profile, group_thing);
+                    for (attempt = 0; attempt < 4; ++attempt) {
+                        int is_prior_square;
+                        wander_x = record->mapX;
+                        wander_y = record->mapY;
+                        if (wander_dir == 0) wander_y--;
+                        else if (wander_dir == 1) wander_x++;
+                        else if (wander_dir == 2) wander_y++;
+                        else wander_x--;
+                        is_prior_square = active_state &&
+                            active_state->prior_map_x == wander_x &&
+                            active_state->prior_map_y == wander_y;
+                        /* GROUP.C:2165-2168 calls M004 only for the prior
+                         * square, admitting it on the exact one-in-four
+                         * zero result. */
+                        if ((!is_prior_square ||
+                             csb_v1_runtime_main_random2(profile) == 0) &&
+                            !csb_v1_runtime_group_destination_is_blocked(
+                                dungeon, record->mapIndex, wander_x, wander_y) &&
+                            !csb_v1_runtime_group_destination_has_party_or_group(
+                                profile, record->mapIndex, wander_x, wander_y)) {
+                            wandered = csb_v1_runtime_move_group_thing_to_square(
+                                profile, dungeon, group_thing,
+                                record->mapIndex, record->mapX, record->mapY,
+                                record->mapIndex, wander_x, wander_y);
+                            if (wandered) break;
+                        }
+                        wander_dir = (wander_dir + 1) & 3;
+                    }
                 }
                 if (wandered) {
                     int group_alive = 1;

@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-09-07: C37 wandering no longer creates a local map/time-derived RNG.
+  The native runtime advances the persistent `G0349` counterpart once for
+  GROUP.C F0209's `M005_RANDOM(2)` gate and, when admitted, once for the
+  absolute `M004_RANDOM(4)` direction. Its bounded direction scan now also
+  consumes the source prior-square one-in-four draw only for that square.
+  The regression seeds G0349 with 29 and proves east is chosen despite a
+  north-facing C04, as well as the exact two-step resulting state. This is
+  source/RNG evidence, not a claim that all F0202/F0267 C37 movement and
+  attack branches or original-capture parity are complete.
+
 - Extended the original-media FM Towns EN/JA startup matrix to include
   Filtered (v20), alongside Original (v1) and Upscaled (v21). Both complete
   scripts pass with optional user saves unset, checking retained mode,
