@@ -361,6 +361,29 @@
   dungeon Thing tables. Full inventory persistence across resume remains
   incomplete; these interaction fixes do not resolve that savegame gap.
 
+# Firestaff v3.0.329
+
+## DM1
+
+### Fixed
+
+- `DM1 creature-aspect sound receipt`: Corrects routing of authentic
+  creature-aspect sound requests through the runtime receipt instead of
+  discarding them during aspect processing.
+
+## CSB
+
+### Fixed
+
+- `csb_v1_runtime_f0202_destination_is_blocked`: Corrects original pit,
+  material-door, and wary-group teleporter admission gates before a creature
+  group commits its C37 movement.
+
+## Changed
+
+- `test_csb_v1_runtime_tick_accumulator`: Adds raw record-shaped C37 fixtures
+  that verify blocked creature movement retains source ownership and state.
+
 # Firestaff v3.0.328
 
 ## DM1
