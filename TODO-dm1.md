@@ -6,7 +6,10 @@
   dungeon gameplay. A subsequent Enter/movement route produced zero of six
   screenshots; replacing window-targeted keys with focused XTEST keys also
   produced zero. That unsuccessful experimental change was reverted. Local
-  evidence is in `.codex-scratch/dm1-original-en-{title,enter,xtest}`. Keep the
+  evidence is in `.codex-scratch/dm1-original-en-{title,enter,xtest,scrot-v2}`.
+  The scrot-v2 client-window experiment did produce six correctly sized files,
+  but all six were compositor-black and were rejected by the raw-frame health
+  gate; it must not be used as a fallback reference source. Keep the
   complete-capture gate; establish reliable host input and inspect each frame
   before claiming dungeon, movement, or rendering parity.
 
