@@ -1,6 +1,6 @@
 # CSB V1 parity matrix
 
-Last updated: 2026-08-31
+Last updated: 2026-09-07
 
 Scope: conservative CSB V1 definition-of-done matrix for the Atari ST v2.x lane. This matrix recognizes the hash-matched M12 launch/profile boundary plus CTest-wired compatibility-fixture boot/runtime/input/save/Utility/first-viewport/multi-step slices, including a wall-blocked step and bounded save-prefix roundtrip after the final route state. The historical PC34-compatible test names are source-reference/fixture evidence only: CSB has no original DOS/PC edition. Broad real-data playability, CSBGAME.DAT save compatibility, New Adventure capture, original-overlay parity, and pixel parity still require their own gates.
 
@@ -45,6 +45,22 @@ touch input and save-and-quit followed by cold resume. The generated quicksave
 is a native output derived from admitted `MINI.DAT`, not a hand-written save
 or extracted-game directory. This is bounded Prison/save evidence only; it
 does not establish broad campaign or original-overlay parity.
+
+## 2026-09-07 native archive boot recheck
+
+The current `main` build was exercised directly against the supplied archives
+under `${HOME}/.firestaff/data/csb/`, without unpacking game data or using an
+emulator at runtime. These are boot/input boundary checks, not a claim of
+full gameplay or pixel parity.
+
+| Platform | Original package | Verified boundary |
+|---|---|---|
+| Atari ST | `Chaos Strikes Back.stx` | `ANIMATE.SCR` title (`assetMd5=ebf6a57af3f27782e358c0490bfd2f2e`) -> Enter runtime -> first `UP` to party `(9,1,2)`, with a non-zero viewport receipt. |
+| Amiga | `Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip` | A31M `TITL.DAT` title (`assetMd5=61fbfd56887c94adc26888a9491c6611`) -> title click/Enter -> first `UP` to party `(9,1,2)`. |
+| FM Towns | `Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip` | `TITLE.ANM` -> `SWITCHTW` -> Game/Enter -> authenticated `MINI.DAT` runtime at map 4, party `(22,18,2)`, with a non-zero viewport receipt. |
+
+All commands used `--duration 0` and bounded `timeout 45s`; no resident test
+process or modified source/game-data file was retained after the probes.
 
 ## Source-lock anchors audited by the verifier
 
