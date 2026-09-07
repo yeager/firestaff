@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_sound_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 
@@ -63,6 +64,12 @@ typedef struct DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 {
     int graphic_info;
     int animation_ticks;
     int attacking;
+    /* GROUP.C:235-243 and 267-281 can request a prioritized sound while
+     * changing an aspect.  F0179 is deliberately side-effect-free here;
+     * the runtime publishes these source sound ids only after its enclosing
+     * group/timeline transaction commits. */
+    int emitted_sound_count;
+    int emitted_sound_indices[4];
     uint32_t next_update_time;
     int source_line_start;
     int source_line_end;

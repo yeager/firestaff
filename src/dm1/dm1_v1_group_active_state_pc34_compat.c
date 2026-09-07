@@ -52,6 +52,15 @@ static int pack_direction_for_group_pc34(int direction, int creature_count)
     return packed;
 }
 
+static void f0179_record_sound_pc34(
+    DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 *receipt,
+    int sound_index)
+{
+    if (!receipt || sound_index == DM1_SND_NONE ||
+        receipt->emitted_sound_count >= 4) return;
+    receipt->emitted_sound_indices[receipt->emitted_sound_count++] = sound_index;
+}
+
 int F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
     struct DM1ActiveGroup_Compat *active_group,
     const struct DungeonGroup_Compat *group,
@@ -109,6 +118,11 @@ int F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
                     group->creatureType == DM1_CREATURE_TYPE_ANIMATED_ARMOUR) {
                     if (f0179_random_pc34(rng, 2)) {
                         aspect ^= DM1_F0179_ASPECT_FLIP_BITMAP;
+                        /* GROUP.C:235-243 (I34): the ongoing Animated
+                         * Armour attack frame flip is also the combat sound
+                         * gate.  Keep this in the receipt until the caller
+                         * has committed the enclosing event transaction. */
+                        f0179_record_sound_pc34(out_receipt, DM1_SND_COMBAT);
                     }
                 } else if (!(aspect & DM1_F0179_ASPECT_IS_ATTACKING) ||
                            !(graphic_info &
@@ -128,6 +142,11 @@ int F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
                 if (group->creatureType == CREATURE_TYPE_COUATL) {
                     if (f0179_random_pc34(rng, 2)) {
                         aspect ^= DM1_F0179_ASPECT_FLIP_BITMAP;
+                        /* GROUP.C:267-281 calls F0514 after this exact M005
+                         * result.  Its rest gate is runtime-owned, so carry
+                         * the resolved I34 movement id to that boundary. */
+                        f0179_record_sound_pc34(out_receipt,
+                                                 DM1_SND_MOVE_COUATL_WASP);
                     }
                 } else if (f0179_random_pc34(rng, 2)) {
                     aspect |= DM1_F0179_ASPECT_FLIP_BITMAP;

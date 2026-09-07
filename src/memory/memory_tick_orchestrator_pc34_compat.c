@@ -275,6 +275,50 @@ static void emit(struct TickResult_Compat* r, uint8_t kind,
     e->payload[3] = d;
 }
 
+/* GROUP.C F0179 can request sound while it mutates an ACTIVE_GROUP aspect.
+ * Preserve the source ordering, but publish the request only after the
+ * surrounding reaction/fanout transaction has committed. */
+struct OrchF0179SoundList_Compat {
+    int count;
+    int soundIndices[8];
+};
+
+static void orch_record_f0179_sounds_compat(
+    struct OrchF0179SoundList_Compat* list,
+    const DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34* receipt)
+{
+    int i;
+    if (!list || !receipt || !receipt->valid) return;
+    for (i = 0; i < receipt->emitted_sound_count &&
+                i < (int)(sizeof(receipt->emitted_sound_indices) /
+                          sizeof(receipt->emitted_sound_indices[0])); ++i) {
+        if (list->count >= (int)(sizeof(list->soundIndices) /
+                                 sizeof(list->soundIndices[0]))) return;
+        list->soundIndices[list->count++] = receipt->emitted_sound_indices[i];
+    }
+}
+
+static void orch_emit_f0179_sounds_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result,
+    const struct OrchF0179SoundList_Compat* list)
+{
+    int i;
+    if (!world || !ev || !result || !list) return;
+    for (i = 0; i < list->count; ++i) {
+        int soundIndex = list->soundIndices[i];
+        /* F0514_MOVE_GetSound suppresses the Couatl movement request while
+         * resting; the Animated Armour combat request is unaffected. */
+        if (soundIndex == DM1_SND_MOVE_COUATL_WASP &&
+            (world->partyIsResting || world->lifecycle.rest.isResting)) {
+            continue;
+        }
+        emit(result, EMIT_SOUND_REQUEST, soundIndex,
+             ev->mapX, ev->mapY, ev->mapIndex);
+    }
+}
+
 static void orch_award_skill_experience_compat(
     struct GameWorld_Compat* world, int champion, int skill, int experience,
     int difficulty, struct TickResult_Compat* result)
@@ -12746,7 +12790,8 @@ static int orch_f0209_begin_attack_compat(
     struct GameWorld_Compat* world, const struct TimelineEvent_Compat* ev,
     struct DungeonGroup_Compat* group, struct CreatureAIState_Compat* ai,
     int activeIndex, const struct DM1GroupBehaviorContext_Compat* ctx,
-    const struct DM1ActiveGroup_Compat* active)
+    const struct DM1ActiveGroup_Compat* active,
+    struct TickResult_Compat* result)
 {
     struct TimelineQueue_Compat queue = world->timeline;
     struct RngState_Compat rng = world->masterRng;
@@ -12755,7 +12800,9 @@ static int orch_f0209_begin_attack_compat(
     int ownerSlot = world->pc34F0205LastHalfPairOwnerSlot;
     uint32_t ownerTick = world->pc34F0205LastHalfPairOwnerTick;
     int sourceSlot = orch_active_group_source_slot_compat(world, activeIndex);
+    struct OrchF0179SoundList_Compat sounds;
     int i;
+    memset(&sounds, 0, sizeof(sounds));
     /* GROUP.C:2012: C31 removes this square's old C29-C41 events
      * before attack entry. Keep deletion inside the staged transaction. */
     if (ev->aux2 == DM1_EVENT_REACTION_PARTY_IS_ADJACENT &&
@@ -12791,6 +12838,7 @@ static int orch_f0209_begin_attack_compat(
             !F0208_DM1_GROUP_BuildAddEventPlan_Compat(
                 DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + i, time,
                 aspect.next_update_time, &plan) || !plan.valid) return 0;
+        orch_record_f0179_sounds_compat(&sounds, &aspect);
         memset(&next, 0, sizeof(next));
         next.kind = TIMELINE_EVENT_CREATURE_REACTION;
         next.fireAtTick = plan.mapTime;
@@ -12818,6 +12866,7 @@ static int orch_f0209_begin_attack_compat(
     group->behavior = DM1_BEHAVIOR_ATTACK;
     group->direction = staged.directions & 3;
     orch_write_raw_group_compat(world->things, staged.groupThingIndex);
+    orch_emit_f0179_sounds_compat(world, ev, result, &sounds);
     return 1;
 }
 
@@ -13018,12 +13067,13 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
     struct RngState_Compat rngBeforeBehavior;
     uint32_t f0179UpdateTime = 0;
+    struct OrchF0179SoundList_Compat f0179Sounds;
     int reactionMoveHandled = 0;
     int cellsBeforeBehavior;
     int creatureCountBeforeBehavior;
 
-    (void)result;
     if (!world || !ev || !world->things || !world->things->groups) return 0;
+    memset(&f0179Sounds, 0, sizeof(f0179Sounds));
     if (ev->mapIndex != world->partyMapIndex &&
         !orch_f0209_off_party_map_event_is_admitted_compat(ev->aux2)) {
         /* Source-order fence: do not consume RNG or inspect a C04 receipt
@@ -13235,7 +13285,8 @@ static int orch_handle_creature_reaction_event_compat(
         behavior.newBehavior == DM1_BEHAVIOR_ATTACK &&
         ctx.groupBehavior != DM1_BEHAVIOR_ATTACK) {
         if (orch_f0209_begin_attack_compat(
-                world, ev, group, ai, activeIndex, &ctx, &activeGroup)) {
+                world, ev, group, ai, activeIndex, &ctx, &activeGroup,
+                result)) {
             return 1;
         }
         /* F0209's descending C38-C41 fanout is staged against a private
@@ -13281,6 +13332,7 @@ static int orch_handle_creature_reaction_event_compat(
                         (activeGroup.aspect[creatureIndex] & 0x80),
                     world->gameTick, &world->masterRng, &aspectReceipt) ||
                 !aspectReceipt.valid) return 0;
+            orch_record_f0179_sounds_compat(&f0179Sounds, &aspectReceipt);
             f0179UpdateTime = aspectReceipt.next_update_time;
         }
     }
@@ -13395,6 +13447,7 @@ static int orch_handle_creature_reaction_event_compat(
             !aspectReceipt.valid) {
             return 0;
         }
+        orch_record_f0179_sounds_compat(&f0179Sounds, &aspectReceipt);
         f0179UpdateTime = aspectReceipt.next_update_time;
     }
 
@@ -13436,8 +13489,15 @@ static int orch_handle_creature_reaction_event_compat(
         /* The F0206 write above owns the persistent packed directions; raw
          * GROUP.Direction is only its low two-bit F0184-compatible view. */
         group->direction = (unsigned char)(ai->groupDirection & 0x03);
-        return orch_apply_creature_tick_group_move_f0267_compat(
-            world, ev, result, behavior.moveDirection);
+        {
+            int moved = orch_apply_creature_tick_group_move_f0267_compat(
+                world, ev, result, behavior.moveDirection);
+            if (moved) {
+                orch_emit_f0179_sounds_compat(world, ev, result,
+                                               &f0179Sounds);
+            }
+            return moved;
+        }
     }
 
 schedule_next:
@@ -13447,6 +13507,7 @@ schedule_next:
             return 0;
         }
     }
+    orch_emit_f0179_sounds_compat(world, ev, result, &f0179Sounds);
     return 1;
 }
 

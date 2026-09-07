@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-07: F0179 now records the source-gated I34 sound request when an
+  idle Couatl flips a frame (movement sound) or an already-attacking Animated
+  Armour flips a frame (combat sound), following GROUP.C:235-243 and 267-281.
+  C32-C41 reaction and staged attack-entry dispatch publish the receipt only
+  after their timeline/group transaction commits; Couatl requests retain
+  F0514's rest suppression. Focused F0179 and packed-direction runtime tests
+  pass. F0183 map-entry initialization and original live arbitration traces
+  remain explicitly open.
+
 - 2026-09-07: F0209 attack-entry fanout now preserves the popped source event
   when its private C38-C41 queue transaction cannot fit. It restores the
   pre-decision RNG and requeues the original record on the next game tick,

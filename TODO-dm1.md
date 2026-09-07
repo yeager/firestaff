@@ -20,9 +20,11 @@
 
 - Complete attack entry in the C32-C36 source decision tree. Audit C32's lack
   of an individual slot without reproducing an out-of-bounds Aspect[-1] read.
-  F0179 also lacks Couatl movement and Animated Armour ongoing-attack sound
-  requests (GROUP.C:242, 270-280); implement edition-specific sound mapping
-  and prioritized dispatch, not an unconditional generic audio effect.
+  F0179 now carries its PC3.4 Couatl movement and Animated Armour ongoing-
+  attack sound gates through committed reaction/fanout dispatch
+  (GROUP.C:242, 270-280). F0183 map-entry initialization still has no
+  result-emission handoff, and authentic live captures must validate sound
+  priority/arbitration; do not replace these with a generic audio effect.
   Remaining integration requirements:
   - Audit remaining attack-entry transitions beyond C31-C37 with their
     own deletion/delay rules. Obtain turning-pair

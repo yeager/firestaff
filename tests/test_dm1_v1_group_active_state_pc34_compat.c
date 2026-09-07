@@ -89,6 +89,39 @@ int main(void)
     check(active_groups[0].aspect[0] == 0x11,
           "F0179 rejects before mutating active aspects");
 
+    /* GROUP.C:267-281: a Couatl idle-frame M005 flip carries the F0514
+     * movement request out through the receipt; the runtime applies F0514's
+     * rest gate when it commits the enclosing reaction. */
+    groups[0].creatureType = CREATURE_TYPE_COUATL;
+    groups[0].count = 0u;
+    active_groups[0].aspect[0] = 0;
+    creature_info.graphicInfo = 0x0004;
+    rng.seed = 6u; /* first M005_RANDOM(2) is one for the PC3.4 LCG */
+    check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+              &active_groups[0], &groups[0], &creature_info, 0, 0,
+              1u, &rng, &aspect_receipt) == 1 &&
+              aspect_receipt.emitted_sound_count == 1 &&
+              aspect_receipt.emitted_sound_indices[0] ==
+                  DM1_SND_MOVE_COUATL_WASP,
+          "F0179 records the Couatl idle flip movement sound at its source gate");
+
+    /* GROUP.C:235-243: an already-attacking Animated Armour uses the same
+     * M005 flip as its combat request. */
+    groups[0].creatureType = DM1_CREATURE_TYPE_ANIMATED_ARMOUR;
+    active_groups[0].aspect[0] = 0x80;
+    creature_info.graphicInfo = 0x0200;
+    rng.seed = 6u;
+    check(F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+              &active_groups[0], &groups[0], &creature_info, 0, 1,
+              1u, &rng, &aspect_receipt) == 1 &&
+              aspect_receipt.emitted_sound_count == 1 &&
+              aspect_receipt.emitted_sound_indices[0] == DM1_SND_COMBAT,
+          "F0179 records the ongoing Animated Armour attack sound at its source gate");
+
+    groups[0].creatureType = 0;
+    groups[0].count = 1u;
+    creature_info.graphicInfo = 0;
+
     check(F0180_DM1_GROUP_StartWandering_Compat(
               5, 12, 2, 7, 8, 100u, &wander_event,
               &wander_receipt) == 1,
