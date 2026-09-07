@@ -80,6 +80,34 @@ load_from_absolute_path(
 }
 
 dm1_v1_fmtowns_pic_library_load_status_t
+dm1_v1_fmtowns_pic_library_load_from_bytes_pc34(
+    const uint8_t *bytes, size_t byte_count,
+    dm1_v1_fmtowns_pic_library_handle_t *out_handle) {
+    dm1_v1_fmtowns_pic_library_status_t view_status;
+    uint8_t *copy;
+
+    if (!bytes || !out_handle) return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_NULL;
+    memset(out_handle, 0, sizeof(*out_handle));
+    if (byte_count == 0u || byte_count > DM1_V1_FMTOWNS_PIC_LIB_MAX_BYTES)
+        return byte_count > DM1_V1_FMTOWNS_PIC_LIB_MAX_BYTES
+            ? DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_TOO_LARGE
+            : DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_PATH;
+    copy = (uint8_t *)malloc(byte_count);
+    if (!copy) return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_ALLOC;
+    memcpy(copy, bytes, byte_count);
+    view_status = dm1_v1_fmtowns_pic_library_open_pc34(
+        copy, byte_count, &out_handle->view);
+    if (view_status != DM1_V1_FMTOWNS_PIC_LIB_OK) {
+        free(copy);
+        memset(out_handle, 0, sizeof(*out_handle));
+        return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_CONTAINER;
+    }
+    out_handle->bytes = copy;
+    out_handle->size_bytes = byte_count;
+    return DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK;
+}
+
+dm1_v1_fmtowns_pic_library_load_status_t
 dm1_v1_fmtowns_pic_library_load_from_file_pc34(
     const char                          *file_path,
     dm1_v1_fmtowns_pic_library_handle_t *out_handle) {

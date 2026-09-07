@@ -112,6 +112,33 @@ static void test_load_and_release(void) {
     rmdir(dir);
 }
 
+static void test_load_from_bytes(void) {
+    /* The archive route supplies this same validated container in RAM. The
+     * fixture only establishes loader ownership semantics; it is not game
+     * data and no file is materialised by the API under test. */
+    static const uint8_t bytes[] = {
+        0x02, 0x00,             /* asset count */
+        0x02, 0x00, 0x03, 0x00, /* primary sizes */
+        0x02, 0x00, 0x03, 0x00, /* mirrored sizes */
+        0x11, 0x22, 0x33, 0x44, 0x55
+    };
+    dm1_v1_fmtowns_pic_library_handle_t h;
+    const uint8_t *asset = NULL;
+    uint16_t asset_size = 0;
+
+    assert(dm1_v1_fmtowns_pic_library_load_from_bytes_pc34(
+               bytes, sizeof(bytes), &h) == DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK);
+    assert(h.bytes != bytes);
+    assert(h.size_bytes == sizeof(bytes));
+    assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(
+               &h.view, 1u, &asset, &asset_size) == DM1_V1_FMTOWNS_PIC_LIB_OK);
+    assert(asset_size == 3u);
+    assert(asset[0] == 0x33u && asset[1] == 0x44u && asset[2] == 0x55u);
+    dm1_v1_fmtowns_pic_library_release_pc34(&h);
+    assert(dm1_v1_fmtowns_pic_library_load_from_bytes_pc34(
+               NULL, sizeof(bytes), &h) == DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_NULL);
+}
+
 static void test_load_missing_file(void) {
     dm1_v1_fmtowns_pic_library_handle_t h;
     dm1_v1_fmtowns_pic_library_load_status_t st =
@@ -197,6 +224,7 @@ static void test_load_menu_font_from_fixture(void) {
 
 int main(void) {
     test_load_and_release();
+    test_load_from_bytes();
     test_load_missing_file();
     test_null_args();
     test_font_size_mismatch();

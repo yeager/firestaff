@@ -73,6 +73,17 @@ dm1_v1_fmtowns_pic_library_load_from_file_pc34(
     const char                          *file_path,
     dm1_v1_fmtowns_pic_library_handle_t *out_handle);
 
+/* Adopt a caller-supplied picture-library byte span into a private,
+ * heap-owned view. This is the archive-owned runtime route: FM Towns media
+ * is already authenticated and held in RAM, so reopening a placeholder path
+ * or materialising GRAPHICS.DAT on disk would be both incorrect and
+ * unnecessary. The input span is copied; callers retain ownership. */
+dm1_v1_fmtowns_pic_library_load_status_t
+dm1_v1_fmtowns_pic_library_load_from_bytes_pc34(
+    const uint8_t                       *bytes,
+    size_t                               byte_count,
+    dm1_v1_fmtowns_pic_library_handle_t *out_handle);
+
 /* Release the buffer owned by `handle`. Safe to call on a zeroed
  * handle. Zeros the handle after freeing. */
 void dm1_v1_fmtowns_pic_library_release_pc34(

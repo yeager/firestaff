@@ -29,6 +29,7 @@ probe() {
     grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$output" &&
     grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$output" &&
     grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$output" &&
+    grep -Fq 'dm1FmtownsMenuFontLoaded=1' <<<"$output" &&
     grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$output" &&
     grep -Fq 'phase=dm1-runtime' <<<"$output" &&
     grep -Fq 'levelLoaded=1' <<<"$output"
@@ -51,6 +52,7 @@ grep -Fq 'platformHandoff=fmtowns-tmenu-jdm' <<<"$japanese_output"
 grep -Fq 'fmtownsProgram=JDM.EXP' <<<"$japanese_output"
 grep -Fq "fmtownsProgramMd5=$expected_jdm_md5" <<<"$japanese_output"
 grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$japanese_output"
+grep -Fq 'dm1FmtownsMenuFontLoaded=1' <<<"$japanese_output"
 grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$japanese_output"
 grep -Fq 'phase=dm1-runtime' <<<"$japanese_output"
 grep -Fq 'levelLoaded=1' <<<"$japanese_output"
@@ -67,6 +69,7 @@ grep -Fq 'platformHandoff=fmtowns-tmenu-jdm' <<<"$japanese_menu_output"
 grep -Fq 'fmtownsProgram=JDM.EXP' <<<"$japanese_menu_output"
 grep -Fq "fmtownsProgramMd5=$expected_jdm_md5" <<<"$japanese_menu_output"
 grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$japanese_menu_output"
+grep -Fq 'dm1FmtownsMenuFontLoaded=1' <<<"$japanese_menu_output"
 grep -Fq 'phase=dm1-runtime' <<<"$japanese_menu_output"
 grep -Fq 'levelLoaded=1' <<<"$japanese_menu_output"
 
@@ -110,6 +113,7 @@ expect_gameplay_input() {
        ! grep -Fq "fmtownsProgram=$program" <<<"$gameplay_output" ||
        ! grep -Fq "fmtownsProgramMd5=$program_md5" <<<"$gameplay_output" ||
        ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
+       ! grep -Fq 'dm1FmtownsMenuFontLoaded=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$gameplay_output" ||
        ! grep -Fq "map=0 party=$expected_party" <<<"$gameplay_output"; then

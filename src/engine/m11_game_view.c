@@ -30010,9 +30010,23 @@ int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state) {
     if (state->dm1FmtownsMenuFontLoaded) return 1;
     if (!state->dm1FmtownsStartupReceiptValid) return 0;
     path = state->assetLoader.graphicsDatPath;
-    if (!path || path[0] == '\0') return 0;
+    if ((!path || path[0] == '\0') &&
+        (!state->fmtownsGraphicsDat || state->fmtownsGraphicsDatSize == 0u)) {
+        return 0;
+    }
     memset(&handle, 0, sizeof(handle));
-    st = dm1_v1_fmtowns_pic_library_load_from_file_pc34(path, &handle);
+    /* ZIP -> CUE -> BIN -> ISO admission retains GRAPHICS.DAT in this
+     * state-owned buffer. M11_AssetLoader correctly labels its copied
+     * parser buffer as in-memory, which is not a reopenable pathname. Use
+     * the original retained bytes first so the FM Towns font/menu route
+     * remains fully in-memory and cannot silently lose its glyphs. */
+    if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0u) {
+        st = dm1_v1_fmtowns_pic_library_load_from_bytes_pc34(
+            state->fmtownsGraphicsDat, state->fmtownsGraphicsDatSize,
+            &handle);
+    } else {
+        st = dm1_v1_fmtowns_pic_library_load_from_file_pc34(path, &handle);
+    }
     if (st != DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK) {
         dm1_v1_fmtowns_pic_library_release_pc34(&handle);
         return 0;
