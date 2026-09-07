@@ -11,7 +11,7 @@ Run:
 
 from __future__ import annotations
 
-DUNGEON_STUDIO_VERSION = "0.1"
+DUNGEON_STUDIO_VERSION = "0.2"
 
 import argparse
 import gettext

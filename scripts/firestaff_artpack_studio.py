@@ -21,7 +21,7 @@ default.
 from __future__ import annotations
 
 import argparse
-ARTPACK_STUDIO_VERSION = "0.1"
+ARTPACK_STUDIO_VERSION = "0.2"
 
 import datetime as _dt
 import hashlib
