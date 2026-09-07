@@ -6,7 +6,14 @@ REPO=Path(__file__).resolve().parent.parent
 sys.path.insert(0,str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original
 from tools.pass80_original_frame_classifier import sha256
-STAGE=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+# Capture diagnostics must use an explicit original-media stage.  The old
+# hidden .openclaw extraction was machine-specific and could silently test a
+# stale copy instead of the user-selected PC 3.4 corpus.  Match the canonical
+# capture runner: callers may set DM1_ORIGINAL_STAGE_DIR, otherwise use the
+# repository-owned staging location (which is intentionally absent in CI).
+STAGE=Path(os.environ.get(
+    'DM1_ORIGINAL_STAGE_DIR',
+    str(REPO/'verification-screens/dm1-dosbox-capture/DungeonMasterPC34')))
 DOSBOX='/usr/bin/dosbox'; PROGRAM='DM -vv -sn -pm'
 BASE_ROUTE=[('key','Return'),('wait',1.4),('key','F1'),('wait',1.2)]
 VARIANTS={
@@ -55,6 +62,10 @@ def run_one(base,name,actions):
  (out/'pass153_rows.json').write_text(json.dumps(rows,indent=2)+'\n')
  return {'variant':name,'rows':rows}
 def main():
+ if not (STAGE/'DM.EXE').is_file():
+  raise SystemExit(
+      'original DM1 PC 3.4 stage is unavailable: '
+      f'{STAGE} (set DM1_ORIGINAL_STAGE_DIR)')
  base=Path(sys.argv[1]); base.mkdir(parents=True,exist_ok=True); results=[]; errors=[]
  for n,a in VARIANTS.items():
   try: results.append(run_one(base,n,a))
