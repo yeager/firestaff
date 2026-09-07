@@ -18,8 +18,11 @@
   source-slot implementation is covered by bounded C38 dispatch and lifecycle
   regressions, but has no authentic emulator trace yet.
 
-- Complete attack entry in the C32-C36 source decision tree. Audit C32's lack
-  of an individual slot without reproducing an out-of-bounds Aspect[-1] read.
+- Validate the remaining attack-entry C32-C36 source decision tree. The raw
+  active-group dispatcher already routes C32-C36 through F0179/F0208 and the
+  clean group-timeline and creature-AI regression targets pass (2,609 checks);
+  do not duplicate that logic in a second runtime path. Audit C32's lack of
+  an individual slot without reproducing an out-of-bounds Aspect[-1] read.
   F0179 now carries its PC3.4 Couatl movement and Animated Armour ongoing-
   attack sound gates through committed reaction/fanout dispatch
   (GROUP.C:242, 270-280). F0183 map-entry initialization still has no
