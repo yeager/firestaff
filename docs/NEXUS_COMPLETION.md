@@ -340,11 +340,15 @@ CTest cases completed successfully. Fourteen tests remain intentionally
 capture-gated and are reported as skips, not as passing semantic evidence.
 The real English `MENU.BPK` decoder independently decodes all 162 PRS3
 surfaces (`test_nexus_v1_bppk`), and the engine exposes the resulting
-`READY_DECODED` source route. This does not authorize Saturn presentation:
-the menu still requires an authenticated PALT/VDP1 consumer join, and the
-startup/menu, LEV01 pose, HUD/viewport, SLEV/SAL playback, and Saturn-save
-production gates remain closed where their source-owned runtime witnesses are
-missing.
+`READY_DECODED` source route. The later hash-bound Japanese TITLE session also
+proves the five MAPD planes in order (`N,E,X,U,S`) reach VDP2 VRAM at
+`0x05c000..0x05dbff`, and proves the matching 16-colour palette transfer from
+Work RAM `0x060c0c4c..0x060c0c6b` to CRAM `0x100400..0x10041f`. This is a
+transport and provenance boundary, not a presentation authorization: the
+Saturn display-window transform, MAPD plane selection/timing and final
+VDP1/VDP2 consumer are still unbound. The startup/menu, LEV01 pose,
+HUD/viewport, SLEV/SAL playback, and Saturn-save production gates therefore
+remain closed where their source-owned runtime witnesses are missing.
 
 ## Correction — long SCSP traces remain structurally admitted only
 
