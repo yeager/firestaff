@@ -5875,6 +5875,44 @@ static void csb_v1_runtime_delete_group_events_at_square(
     int map_x,
     int map_y);
 
+typedef struct {
+    CSB_V1_RuntimeProfile *profile;
+    int level;
+} CSB_V1_RuntimeF0199RouteContext;
+
+static int csb_v1_runtime_f0199_square_blocks_view(
+    int map_x, int map_y, void *opaque)
+{
+    CSB_V1_RuntimeF0199RouteContext *context =
+        (CSB_V1_RuntimeF0199RouteContext *)opaque;
+    uint8_t *square;
+    int type;
+    struct DM1GroupSightSquare_Compat sight;
+
+    if (!context || !context->profile) return 1;
+    square = csb_v1_runtime_square_byte_ptr(context->profile, context->level,
+                                             map_x, map_y, &type);
+    if (!square) return 1;
+    memset(&sight, 0, sizeof(sight));
+    sight.elementType = type;
+    sight.doorState = *square & 0x07;
+    sight.fakeWallOpen = (*square & 0x04) != 0;
+    sight.fakeWallImaginary = (*square & 0x01) != 0;
+    return F0817d_DM1_GROUP_IsViewPartyBlocked_Compat(&sight);
+}
+
+static int csb_v1_runtime_f0199_visible_party_distance(
+    CSB_V1_RuntimeProfile *profile, int level, int source_x, int source_y)
+{
+    CSB_V1_RuntimeF0199RouteContext context;
+    if (!profile || level != profile->current_level) return 0;
+    context.profile = profile;
+    context.level = level;
+    return F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(
+        source_x, source_y, profile->party_x, profile->party_y,
+        csb_v1_runtime_f0199_square_blocks_view, &context);
+}
+
 static void csb_v1_runtime_apply_group_behavior_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -5933,6 +5971,25 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             creature_size = creature_profile
                 ? (int)(creature_profile->attributes & 0x0003u)
                 : 0;
+            if (record->eventType == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE) {
+                int visible_distance;
+                if (behavior == 6 || behavior == 5) return;
+                if (csb_v1_runtime_main_random2(profile) != 0) {
+                    visible_distance = csb_v1_runtime_f0199_visible_party_distance(
+                        profile, record->mapIndex, record->mapX, record->mapY);
+                    if (!visible_distance) {
+                        csb_v1_runtime_set_active_group_direction_group(
+                            profile, group_thing, thing_record, record->mapIndex,
+                            record->mapX, record->mapY,
+                            csb_v1_runtime_main_random2(profile), creature_count,
+                            creature_size);
+                        return;
+                    }
+                    if (csb_v1_runtime_main_random2(profile) != 0) return;
+                }
+                /* The admitted C30 route deliberately shares C29's
+                 * source-defined random escape transaction below. */
+            }
             /* ReDMCSB GROUP.C F0209:2040-2044,2154-2240: C29 is a
              * danger-on-square escape, not a regular C37 perception update.
              * It begins at M004_RANDOM(4), scans each direction once, and
@@ -5940,7 +5997,8 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
              * M004 result. Reuse the live F0202/F0267 bridge so ordinary
              * movement keeps its collision, sensor, teleporter and rollback
              * ownership. */
-            if (record->eventType == DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE) {
+            if (record->eventType == DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE ||
+                record->eventType == DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE) {
                 CSB_V1_RuntimeActiveGroupState *active_state;
                 int direction = csb_v1_runtime_main_random2(profile);
                 const int first_direction = direction;
