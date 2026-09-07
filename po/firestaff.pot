@@ -140,3 +140,35 @@ msgstr ""
 #: src/engine/m11_game_view.c
 msgid "NO"
 msgstr ""
+
+#. F10_SHARED_UI
+msgid "CHEATS"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "DISPLAY"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "EFFECTS"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "FILTERS"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "GOD MODE"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "INF MANA"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "INF STAM"
+msgstr ""
+
+#. F10_SHARED_UI
+msgid "SPEED"
+msgstr ""

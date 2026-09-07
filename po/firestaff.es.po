@@ -124,12 +124,44 @@ msgstr "Vídeo"
 
 #: src/engine/m11_game_view.c
 msgid "RETURN TO START MENU?"
-msgstr ""
+msgstr "VOLVER AL MENÚ?"
 
 #: src/engine/m11_game_view.c
 msgid "YES"
-msgstr ""
+msgstr "SÍ"
 
 #: src/engine/m11_game_view.c
 msgid "NO"
-msgstr ""
+msgstr "NO"
+
+#. F10_SHARED_UI
+msgid "CHEATS"
+msgstr "TRUCOS"
+
+#. F10_SHARED_UI
+msgid "DISPLAY"
+msgstr "PANTALLA"
+
+#. F10_SHARED_UI
+msgid "EFFECTS"
+msgstr "EFECTOS"
+
+#. F10_SHARED_UI
+msgid "FILTERS"
+msgstr "FILTROS"
+
+#. F10_SHARED_UI
+msgid "GOD MODE"
+msgstr "MODO DIOS"
+
+#. F10_SHARED_UI
+msgid "INF MANA"
+msgstr "MANÁ INFINITO"
+
+#. F10_SHARED_UI
+msgid "INF STAM"
+msgstr "AGUANTE INFINITO"
+
+#. F10_SHARED_UI
+msgid "SPEED"
+msgstr "VELOCIDAD"

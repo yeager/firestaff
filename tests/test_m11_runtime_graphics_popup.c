@@ -375,6 +375,14 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.gameGodMode[1] == 1);
+    for (int cheat_row = 0; cheat_row < 3; ++cheat_row) {
+        result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+        assert(result == M11_GAME_INPUT_REDRAW);
+    }
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
     assert(config.gameSpeed[1] == 2);
     assert(config.gameSpeedMultiplier == 150);
     assert(M11_QolRuntime_GetSpeedMultiplier() == 150);
@@ -422,7 +430,7 @@ int main(void) {
             assert(result == M11_GAME_INPUT_REDRAW);
             assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
 
-            /* Click CH, then click the selected CHEATS and SPEED rows. */
+            /* Click CHEATS, then its master toggle and SPEED row. */
             result = M11_GameView_HandlePointerButton(
                 &state, 286, 31, DM1_V1_MOUSE_MASK_LEFT_PC34);
             assert(result == M11_GAME_INPUT_REDRAW);
@@ -433,10 +441,10 @@ int main(void) {
             assert(M12_Config_Load(&config, NULL) == 1);
             assert(config.gameCheatsEnabled[slot] == 1);
             result = M11_GameView_HandlePointerButton(
-                &state, 180, 58, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                &state, 180, 88, DM1_V1_MOUSE_MASK_LEFT_PC34);
             assert(result == M11_GAME_INPUT_REDRAW);
             result = M11_GameView_HandlePointerButton(
-                &state, 180, 58, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                &state, 180, 88, DM1_V1_MOUSE_MASK_LEFT_PC34);
             assert(result == M11_GAME_INPUT_REDRAW);
             assert(M12_Config_Load(&config, NULL) == 1);
             assert(config.gameSpeed[slot] == 2);

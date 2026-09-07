@@ -55,6 +55,9 @@ typedef struct {
     int gameVersionIndex[M12_CONFIG_GAME_COUNT];
     int gameLanguageIndex[M12_CONFIG_GAME_COUNT];
     int gameCheatsEnabled[M12_CONFIG_GAME_COUNT];
+    int gameGodMode[M12_CONFIG_GAME_COUNT];
+    int gameInfiniteMana[M12_CONFIG_GAME_COUNT];
+    int gameInfiniteStamina[M12_CONFIG_GAME_COUNT];
     int gameSpeed[M12_CONFIG_GAME_COUNT];
     int gameAspectRatio[M12_CONFIG_GAME_COUNT];
     int gameResolution[M12_CONFIG_GAME_COUNT];

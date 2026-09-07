@@ -124,12 +124,44 @@ msgstr "Video"
 
 #: src/engine/m11_game_view.c
 msgid "RETURN TO START MENU?"
-msgstr ""
+msgstr "ZURÜCK ZUM STARTMENÜ?"
 
 #: src/engine/m11_game_view.c
 msgid "YES"
-msgstr ""
+msgstr "JA"
 
 #: src/engine/m11_game_view.c
 msgid "NO"
-msgstr ""
+msgstr "NEIN"
+
+#. F10_SHARED_UI
+msgid "CHEATS"
+msgstr "CHEATS"
+
+#. F10_SHARED_UI
+msgid "DISPLAY"
+msgstr "ANZEIGE"
+
+#. F10_SHARED_UI
+msgid "EFFECTS"
+msgstr "EFFEKTE"
+
+#. F10_SHARED_UI
+msgid "FILTERS"
+msgstr "FILTER"
+
+#. F10_SHARED_UI
+msgid "GOD MODE"
+msgstr "GOTT-MODUS"
+
+#. F10_SHARED_UI
+msgid "INF MANA"
+msgstr "UNENDL. MANA"
+
+#. F10_SHARED_UI
+msgid "INF STAM"
+msgstr "UNENDL. AUSDAUER"
+
+#. F10_SHARED_UI
+msgid "SPEED"
+msgstr "GESCHWINDIGKEIT"

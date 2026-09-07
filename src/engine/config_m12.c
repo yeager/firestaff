@@ -637,6 +637,18 @@ static void m12_parse_line(M12_Config* config, char* line) {
                 config->gameCheatsEnabled[gameIndex] = m12_parse_int(value, config->gameCheatsEnabled[gameIndex]);
                 return;
             }
+            if (m12_string_equals(field, "god_mode")) {
+                config->gameGodMode[gameIndex] = m12_parse_int(value, config->gameGodMode[gameIndex]) ? 1 : 0;
+                return;
+            }
+            if (m12_string_equals(field, "infinite_mana")) {
+                config->gameInfiniteMana[gameIndex] = m12_parse_int(value, config->gameInfiniteMana[gameIndex]) ? 1 : 0;
+                return;
+            }
+            if (m12_string_equals(field, "infinite_stamina")) {
+                config->gameInfiniteStamina[gameIndex] = m12_parse_int(value, config->gameInfiniteStamina[gameIndex]) ? 1 : 0;
+                return;
+            }
             if (m12_string_equals(field, "speed")) {
                 config->gameSpeed[gameIndex] = m12_parse_int(value, config->gameSpeed[gameIndex]);
                 return;
@@ -1137,6 +1149,9 @@ int M12_Config_Save(const M12_Config* config) {
             fprintf(fp, "game_%d_version_index = %d\n", gi, config->gameVersionIndex[gi]);
             fprintf(fp, "game_%d_language_index = %d\n", gi, config->gameLanguageIndex[gi]);
             fprintf(fp, "game_%d_cheats_enabled = %d\n", gi, config->gameCheatsEnabled[gi]);
+            fprintf(fp, "game_%d_god_mode = %d\n", gi, config->gameGodMode[gi]);
+            fprintf(fp, "game_%d_infinite_mana = %d\n", gi, config->gameInfiniteMana[gi]);
+            fprintf(fp, "game_%d_infinite_stamina = %d\n", gi, config->gameInfiniteStamina[gi]);
             fprintf(fp, "game_%d_speed = %d\n", gi, config->gameSpeed[gi]);
             fprintf(fp, "game_%d_aspect_ratio = %d\n", gi, config->gameAspectRatio[gi]);
             fprintf(fp, "game_%d_resolution = %d\n", gi, config->gameResolution[gi]);
@@ -1567,6 +1582,9 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
         fprintf(fp, "      \"version_index\": %d,\n", config->gameVersionIndex[gi]);
         fprintf(fp, "      \"language_index\": %d,\n", config->gameLanguageIndex[gi]);
         fprintf(fp, "      \"cheats_enabled\": %d,\n", config->gameCheatsEnabled[gi]);
+        fprintf(fp, "      \"god_mode\": %d,\n", config->gameGodMode[gi]);
+        fprintf(fp, "      \"infinite_mana\": %d,\n", config->gameInfiniteMana[gi]);
+        fprintf(fp, "      \"infinite_stamina\": %d,\n", config->gameInfiniteStamina[gi]);
         fprintf(fp, "      \"speed\": %d,\n", config->gameSpeed[gi]);
         fprintf(fp, "      \"aspect_ratio\": %d,\n", config->gameAspectRatio[gi]);
         fprintf(fp, "      \"resolution\": %d\n", config->gameResolution[gi]);
@@ -1941,6 +1959,12 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
                             config->gameLanguageIndex[gi] = m12_parse_int(t2, config->gameLanguageIndex[gi]);
                         } else if (strcmp(key, "cheats_enabled") == 0) {
                             config->gameCheatsEnabled[gi] = m12_parse_int(t2, config->gameCheatsEnabled[gi]);
+                        } else if (strcmp(key, "god_mode") == 0) {
+                            config->gameGodMode[gi] = m12_parse_int(t2, config->gameGodMode[gi]) ? 1 : 0;
+                        } else if (strcmp(key, "infinite_mana") == 0) {
+                            config->gameInfiniteMana[gi] = m12_parse_int(t2, config->gameInfiniteMana[gi]) ? 1 : 0;
+                        } else if (strcmp(key, "infinite_stamina") == 0) {
+                            config->gameInfiniteStamina[gi] = m12_parse_int(t2, config->gameInfiniteStamina[gi]) ? 1 : 0;
                         } else if (strcmp(key, "speed") == 0) {
                             config->gameSpeed[gi] = m12_parse_int(t2, config->gameSpeed[gi]);
                         } else if (strcmp(key, "aspect_ratio") == 0) {

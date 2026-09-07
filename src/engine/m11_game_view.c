@@ -815,6 +815,13 @@ static void m11_log_event(M11_GameViewState* state,
                            ...);
 static void m11_kill_champion_f0319(M11_GameViewState* state, int championIndex);
 static void m11_dm1_spell_sync_caster_to_legacy(M11_GameViewState* state);
+enum {
+    M11_GAMEPLAY_CHEAT_GOD_MODE = 1,
+    M11_GAMEPLAY_CHEAT_INFINITE_MANA = 2,
+    M11_GAMEPLAY_CHEAT_INFINITE_STAMINA = 3
+};
+static int m11_gameplay_cheat_enabled(const M11_GameViewState* state,
+                                      int feature);
 static void m11_format_champion_name(const unsigned char* raw,
                                      char* out,
                                      size_t outSize);
@@ -16635,6 +16642,14 @@ static const char* m11_translate_for_state(const M11_GameViewState* state,
     return fs_po_gettext_in_domain(m11_po_domain_for_state(state), sourceText);
 }
 
+/* F10 is Firestaff chrome rather than source-owned game text.  Keep it in
+ * the shared UI domain so the same keyboard/mouse settings vocabulary is
+ * available in every game. */
+static const char* m11_translate_shell_ui(const char* sourceText) {
+    if (!sourceText) return "";
+    return fs_po_gettext_in_domain("firestaff", sourceText);
+}
+
 /* Extraction marker for literals proven to be presented by the DM1 runtime.
  * It is intentionally an identity expression: translation remains centralized
  * in m11_set_status/readout and still selects the active sourceKind domain.
@@ -20992,6 +21007,9 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
 
 static void m11_apply_champion_time_effects(M11_GameViewState* state) {
     int i;
+    int godMode;
+    int infiniteMana;
+    int infiniteStamina;
     if (!state || !state->active) {
         return;
     }
@@ -21005,12 +21023,25 @@ static void m11_apply_champion_time_effects(M11_GameViewState* state) {
         int mask = state->resting ? 15 : 63;
         if ((int)state->world.gameTick & mask) return;
     }
+    godMode = m11_gameplay_cheat_enabled(state, M11_GAMEPLAY_CHEAT_GOD_MODE);
+    infiniteMana = m11_gameplay_cheat_enabled(
+        state, M11_GAMEPLAY_CHEAT_INFINITE_MANA);
+    infiniteStamina = m11_gameplay_cheat_enabled(
+        state, M11_GAMEPLAY_CHEAT_INFINITE_STAMINA);
     DM1_V1_Needs_DecayScentsPc34Compat(&state->championScents);
     for (i = 0; i < state->world.party.championCount; ++i) {
         struct ChampionState_Compat* champ = &state->world.party.champions[i];
-        if (!champ->present || champ->hp.current == 0) {
+        if (!champ->present) {
             continue; /* absent or dead */
         }
+        if (godMode && champ->hp.maximum > 0) {
+            /* An enabled Modern cheat is deliberately applied after the
+             * authentic source tick is selected but before it can discard a
+             * zero-HP champion.  Original mode stays byte-for-byte on its
+             * source path unless the user explicitly enables the cheat. */
+            champ->hp.current = champ->hp.maximum;
+        }
+        if (champ->hp.current == 0) continue;
         /* ReDMCSB CHAMPION.C F0331:2333-2335 excludes
          * G0299_ui_CandidateChampionOrdinal while the C040
          * resurrect/reincarnate panel is open.  REVIVE.C F0280:272-284
@@ -21088,10 +21119,14 @@ static void m11_apply_champion_time_effects(M11_GameViewState* state) {
 
         /* F0325 underflow produces pending HP damage */
         if (out.pending_health_damage > 0) {
-            int hp = (int)champ->hp.current - (int)out.pending_health_damage;
-            champ->hp.current = (unsigned short)(hp > 0 ? hp : 0);
-            M11_GameView_NotifyDamageFlash(state, -1);
+            if (!godMode) {
+                int hp = (int)champ->hp.current - (int)out.pending_health_damage;
+                champ->hp.current = (unsigned short)(hp > 0 ? hp : 0);
+                M11_GameView_NotifyDamageFlash(state, -1);
+            }
         }
+        if (infiniteMana) champ->mana.current = champ->mana.maximum;
+        if (infiniteStamina) champ->stamina.current = champ->stamina.maximum;
 
         /* F0331:2357-2361 and 2452-2476.  Lifecycle owns the complete
          * 20-skill and seven-stat records; mirror the visible six stats in
@@ -22196,10 +22231,13 @@ static void m11_creature_attack_party(
         }
         damage = result.damageApplied;
 
-        if ((int)champ->hp.current > damage) {
-            champ->hp.current -= (unsigned short)damage;
-        } else {
-            champ->hp.current = 0;
+        if (!m11_gameplay_cheat_enabled(state,
+                                        M11_GAMEPLAY_CHEAT_GOD_MODE)) {
+            if ((int)champ->hp.current > damage) {
+                champ->hp.current -= (unsigned short)damage;
+            } else {
+                champ->hp.current = 0;
+            }
         }
         champ->wounds |= (unsigned short)result.woundMaskAdded;
 
@@ -33076,7 +33114,7 @@ enum {
 static int m11_graphics_popup_row_count(const M11_GameViewState* state,
                                         int page) {
     if (page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) return 9;
-    if (page == M11_GRAPHICS_POPUP_PAGE_CHEATS) return 2;
+    if (page == M11_GRAPHICS_POPUP_PAGE_CHEATS) return 5;
     /* Theron has its own admitted V2 filter owner.  DM2 and Nexus do not yet
      * have a real filter-chain contract, so expose one explicit locked row
      * instead of presenting DM1 controls as if they affected those games. */
@@ -33104,6 +33142,27 @@ static int m11_graphics_popup_game_slot(const M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) return 3;
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) return 4;
     return 0;
+}
+
+/* The popup persists per-game preferences, while simulation remains the
+ * authoritative consumer.  Loading the small configuration snapshot at a
+ * simulation boundary also makes a changed F10 setting take effect without
+ * restarting a running session. */
+static int m11_gameplay_cheat_enabled(const M11_GameViewState* state,
+                                      int feature) {
+    M12_Config config;
+    int slot;
+    if (!state) return 0;
+    M12_Config_SetDefaults(&config);
+    if (!M12_Config_Load(&config, NULL)) return 0;
+    slot = m11_graphics_popup_game_slot(state);
+    if (!config.gameCheatsEnabled[slot]) return 0;
+    switch (feature) {
+        case M11_GAMEPLAY_CHEAT_GOD_MODE: return config.gameGodMode[slot] != 0;
+        case M11_GAMEPLAY_CHEAT_INFINITE_MANA: return config.gameInfiniteMana[slot] != 0;
+        case M11_GAMEPLAY_CHEAT_INFINITE_STAMINA: return config.gameInfiniteStamina[slot] != 0;
+        default: return 0;
+    }
 }
 
 static int m11_graphics_popup_cycle(int value, int delta, int count) {
@@ -33313,6 +33372,12 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
                 M11_QolRuntime_SetSpeedMultiplier(speedMultipliers[speed]);
             }
         } else if (row == 1 && config.gameCheatsEnabled[slot]) {
+            config.gameGodMode[slot] = !config.gameGodMode[slot];
+        } else if (row == 2 && config.gameCheatsEnabled[slot]) {
+            config.gameInfiniteMana[slot] = !config.gameInfiniteMana[slot];
+        } else if (row == 3 && config.gameCheatsEnabled[slot]) {
+            config.gameInfiniteStamina[slot] = !config.gameInfiniteStamina[slot];
+        } else if (row == 4 && config.gameCheatsEnabled[slot]) {
             static const int speedMultipliers[] = { 50, 100, 150 };
             config.gameSpeed[slot] = m11_graphics_popup_cycle(
                 config.gameSpeed[slot], delta, 3);
@@ -53865,8 +53930,11 @@ static void m11_explosion_apply_tick_result(
             int hp = (int)state->world.party.champions[ci].hp.current;
             if (dmg < 0) dmg = 0;
             if (dmg > hp) dmg = hp;
-            state->world.party.champions[ci].hp.current =
-                (unsigned short)(hp - dmg);
+            if (!m11_gameplay_cheat_enabled(state,
+                                             M11_GAMEPLAY_CHEAT_GOD_MODE)) {
+                state->world.party.champions[ci].hp.current =
+                    (unsigned short)(hp - dmg);
+            }
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s BURNS PARTY FOR %d",
                           (unsigned int)state->world.gameTick,
@@ -66871,7 +66939,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     static const char* const presentation[] = { "MODE", "SCALE", "FILTER", "ASPECT", "INTEGER", "VSYNC", "FPS", "RES", "WINDOW" };
     static const char* const filters[] = { "SCANLINE", "SCAN %", "PALETTE", "GAMMA", "BRIGHT", "CONTRAST", "DITHER", "SHARPEN", "SHARP %", "PRESET", "SMOOTH" };
     static const char* const effects[] = { "PHOSPHOR", "DECAY", "GRID", "GRID %", "MOTION", "BLUR %", "LIGHT", "TURN PAN" };
-    static const char* const cheats[] = { "CHEATS", "SPEED" };
+    static const char* const cheats[] = { "CHEATS", "GOD MODE", "INF MANA", "INF STAM", "SPEED" };
     /* The last renderer enum value has legacy name M11_SCALE_STRETCH, but
      * ComputePresentationRect preserves the selected aspect in that mode.
      * Label the F10 control after its actual behaviour. */
@@ -66886,7 +66954,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     M11_TextStyle normal = g_text_small;
     M11_TextStyle selected = g_text_small;
     static const char* const tabNames[] = {
-        "DISPLAY", "FILTERS", "EFFECTS", "PLAY"
+        "DISPLAY", "FILTERS", "EFFECTS", "CHEATS"
     };
 
     if (!state || !state->graphicsPopupActive || !framebuffer ||
@@ -66936,9 +67004,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
          * 43px inner tab.  Keep this explicit instead of relying on a later
          * layout helper: F10 is available before any source font is bound. */
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      tabX + (i == M11_GRAPHICS_POPUP_PAGE_CHEATS ? 9 : 1),
+                      tabX + (i == M11_GRAPHICS_POPUP_PAGE_CHEATS ? 1 : 1),
                       M11_GRAPHICS_POPUP_Y + M11_GRAPHICS_POPUP_TAB_Y + 2,
-                      tabNames[i], &tabStyle);
+                      m11_translate_shell_ui(tabNames[i]), &tabStyle);
     }
     if (!v2 && (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ||
                 state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS))
@@ -66981,6 +67049,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_CHEATS) {
             switch (i) {
                 case 0: snprintf(value, sizeof(value), "%s", config.gameCheatsEnabled[slot] ? "ON" : "OFF"); break;
+                case 1: snprintf(value, sizeof(value), "%s", config.gameCheatsEnabled[slot] && config.gameGodMode[slot] ? "ON" : "OFF"); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.gameCheatsEnabled[slot] && config.gameInfiniteMana[slot] ? "ON" : "OFF"); break;
+                case 3: snprintf(value, sizeof(value), "%s", config.gameCheatsEnabled[slot] && config.gameInfiniteStamina[slot] ? "ON" : "OFF"); break;
                 default:
                     if (!config.gameCheatsEnabled[slot]) snprintf(value, sizeof(value), "LOCKED");
                     else if (config.gameSpeed[slot] == 0) snprintf(value, sizeof(value), "SLOWER");
@@ -67061,7 +67132,8 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
             }
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 8, y, rows[i], &line);
+                      M11_GRAPHICS_POPUP_X + 8, y,
+                      m11_translate_shell_ui(rows[i]), &line);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       M11_GRAPHICS_POPUP_X + 100, y, value, &line);
     }

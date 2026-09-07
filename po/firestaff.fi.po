@@ -124,12 +124,45 @@ msgstr "Video"
 
 #: src/engine/m11_game_view.c
 msgid "RETURN TO START MENU?"
-msgstr ""
+msgstr "PALAA ALOITUSVALIKKOON?"
 
 #: src/engine/m11_game_view.c
 msgid "YES"
-msgstr ""
+msgstr "KYLLÄ"
 
 #: src/engine/m11_game_view.c
 msgid "NO"
-msgstr ""
+msgstr "EI"
+
+#. F10_SHARED_UI
+msgid "CHEATS"
+msgstr "CHEATS"
+
+#. F10_SHARED_UI
+#, fuzzy
+msgid "DISPLAY"
+msgstr "PELAA"
+
+#. F10_SHARED_UI
+msgid "EFFECTS"
+msgstr "EFFECTS"
+
+#. F10_SHARED_UI
+msgid "FILTERS"
+msgstr "FILTERS"
+
+#. F10_SHARED_UI
+msgid "GOD MODE"
+msgstr "GOD MODE"
+
+#. F10_SHARED_UI
+msgid "INF MANA"
+msgstr "INF MANA"
+
+#. F10_SHARED_UI
+msgid "INF STAM"
+msgstr "INF STAM"
+
+#. F10_SHARED_UI
+msgid "SPEED"
+msgstr "SPEED"

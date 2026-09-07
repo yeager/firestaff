@@ -124,12 +124,45 @@ msgstr "비디오"
 
 #: src/engine/m11_game_view.c
 msgid "RETURN TO START MENU?"
-msgstr ""
+msgstr "시작 메뉴로 돌아가기?"
 
 #: src/engine/m11_game_view.c
 msgid "YES"
-msgstr ""
+msgstr "예"
 
 #: src/engine/m11_game_view.c
 msgid "NO"
-msgstr ""
+msgstr "아니오"
+
+#. F10_SHARED_UI
+msgid "CHEATS"
+msgstr "CHEATS"
+
+#. F10_SHARED_UI
+#, fuzzy
+msgid "DISPLAY"
+msgstr "플레이"
+
+#. F10_SHARED_UI
+msgid "EFFECTS"
+msgstr "EFFECTS"
+
+#. F10_SHARED_UI
+msgid "FILTERS"
+msgstr "FILTERS"
+
+#. F10_SHARED_UI
+msgid "GOD MODE"
+msgstr "GOD MODE"
+
+#. F10_SHARED_UI
+msgid "INF MANA"
+msgstr "INF MANA"
+
+#. F10_SHARED_UI
+msgid "INF STAM"
+msgstr "INF STAM"
+
+#. F10_SHARED_UI
+msgid "SPEED"
+msgstr "SPEED"

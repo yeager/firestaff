@@ -34,6 +34,9 @@ FIRESTAFF_EN = {  # English source (msgid = msgstr)
     'Version': 'Version', 'Video': 'Video',
     'RETURN TO START MENU?': 'RETURN TO START MENU?',
     'YES': 'YES', 'NO': 'NO',
+    'CHEATS': 'CHEATS', 'DISPLAY': 'DISPLAY', 'EFFECTS': 'EFFECTS',
+    'FILTERS': 'FILTERS', 'GOD MODE': 'GOD MODE', 'INF MANA': 'INF MANA',
+    'INF STAM': 'INF STAM', 'SPEED': 'SPEED',
 }
 
 FIRESTAFF = {'en': FIRESTAFF_EN}
@@ -54,6 +57,9 @@ FIRESTAFF['sv'] = {k: v for k, v in {
     'Version': 'Version', 'Video': 'Video',
     'RETURN TO START MENU?': 'ÅTERGÅ TILL STARTMENYN?',
     'YES': 'JA', 'NO': 'NEJ',
+    'CHEATS': 'FUSK', 'DISPLAY': 'BILD', 'EFFECTS': 'EFFEKTER',
+    'FILTERS': 'FILTER', 'GOD MODE': 'GUDALÄGE', 'INF MANA': 'OÄNDLIG MANA',
+    'INF STAM': 'OÄNDLIG UTHÅLLIGHET', 'SPEED': 'HASTIGHET',
 }.items() if k in FIRESTAFF_EN}
 
 # Helper to make a per-locale table from a "universal" mapping
@@ -79,6 +85,9 @@ FIRESTAFF.update({
         'Version': 'Version', 'Video': 'Vidéo',
         'RETURN TO START MENU?': 'RETOURNER AU MENU?',
         'YES': 'OUI', 'NO': 'NON',
+        'CHEATS': 'ASTUCES', 'DISPLAY': 'AFFICHAGE', 'EFFECTS': 'EFFETS',
+        'FILTERS': 'FILTRES', 'GOD MODE': 'MODE DIEU', 'INF MANA': 'MANA INFINIE',
+        'INF STAM': 'ENDURANCE INFINIE', 'SPEED': 'VITESSE',
     }.items() if k in FIRESTAFF_EN},
     'de': {k: v for k, v in {
         'Accessibility': 'Barrierefreiheit', 'Audio': 'Audio', 'Back': 'Zurück',
@@ -100,6 +109,9 @@ FIRESTAFF.update({
         'Version': 'Version', 'Video': 'Video',
         'RETURN TO START MENU?': 'ZURÜCK ZUM STARTMENÜ?',
         'YES': 'JA', 'NO': 'NEIN',
+        'CHEATS': 'CHEATS', 'DISPLAY': 'ANZEIGE', 'EFFECTS': 'EFFEKTE',
+        'FILTERS': 'FILTER', 'GOD MODE': 'GOTT-MODUS', 'INF MANA': 'UNENDL. MANA',
+        'INF STAM': 'UNENDL. AUSDAUER', 'SPEED': 'GESCHWINDIGKEIT',
     }.items() if k in FIRESTAFF_EN},
     'ja': {k: v for k, v in {
         'Accessibility': 'アクセシビリティ', 'Audio': 'オーディオ',
@@ -159,6 +171,9 @@ FIRESTAFF.update({
         'Version': 'Versión', 'Video': 'Vídeo',
         'RETURN TO START MENU?': 'VOLVER AL MENÚ?',
         'YES': 'SÍ', 'NO': 'NO',
+        'CHEATS': 'TRUCOS', 'DISPLAY': 'PANTALLA', 'EFFECTS': 'EFECTOS',
+        'FILTERS': 'FILTROS', 'GOD MODE': 'MODO DIOS', 'INF MANA': 'MANÁ INFINITO',
+        'INF STAM': 'AGUANTE INFINITO', 'SPEED': 'VELOCIDAD',
     }.items() if k in FIRESTAFF_EN},
     'it': {k: v for k, v in {
         'Accessibility': 'Accessibilità', 'Audio': 'Audio', 'Back': 'Indietro',
