@@ -71,7 +71,7 @@ int main(void) {
     M12_MouseHit hit;
     M12_Config config;
     int changed;
-    char homeTemplate[] = "/tmp/firestaff-m12-hit-home-XXXXXX";
+    char homeTemplate[] = ".firestaff-m12-hit-home-XXXXXX";
     char* homeDir = test_mkdtemp(homeTemplate);
     char manualDir[512];
     char manualPhysicalDir[512];
@@ -117,7 +117,7 @@ int main(void) {
         return 1;
     }
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -141,6 +141,11 @@ int main(void) {
     hit = M12_ModernMenu_HitTest(&state, platformCardCenterX, presentationCardCenterY);
     if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW && hit.index == 0,
                 "first rendered platform card should be clickable")) return 1;
+    state.gameCardSelected = 1;
+    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX,
+                                           presentationCardCenterY, 0, NULL);
+    if (!expect(changed == 1 && state.gameCardSelected == 0,
+                "platform-card hover should move the visible card selection")) return 1;
     changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX,
                                            presentationCardCenterY, 1, NULL);
     if (!expect(changed == 1 && state.gameCardFlowStage == 1 &&

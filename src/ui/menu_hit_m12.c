@@ -162,8 +162,17 @@ static int m12_hit_game_platform_card_count(const M12_StartupMenuState* state) {
         int architecture = M12_AssetStatus_GetVersionArchitecture(entry->gameId, i);
         int seen = 0;
         int j;
+        /* Keep this list byte-for-byte equivalent to the modern card
+         * renderer's card_platforms_for_game().  CSB's PC3.4 source is a
+         * compatibility reference, not a shipped DOS platform; counting it
+         * here shifted every later rendered CSB platform card by one click.
+         * The result was a visible Atari/Amiga/FM Towns card that keyboard
+         * navigation could select but whose mouse click chose the wrong
+         * platform index. */
         if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
-            architecture == M12_ARCH_X68000) continue;
+            architecture == M12_ARCH_X68000 ||
+            (strcmp(entry->gameId, "csb") == 0 &&
+             architecture == M12_ARCH_PC)) continue;
         for (j = 0; j < count; ++j) {
             if (architectures[j] == architecture) {
                 seen = 1;
@@ -811,6 +820,17 @@ int M12_ModernMenu_HandlePointer(M12_StartupMenuState* state,
             case M12_HIT_GAMEOPT_ROW:
             case M12_HIT_GAMEOPT_CYCLE:
             case M12_HIT_GAMEOPT_LAUNCH:
+                /* The first two card-flow stages use gameCardSelected,
+                 * rather than the detailed-options row cursor.  Updating
+                 * only gameOptSelectedRow made platform cards look inert
+                 * under the mouse even though keyboard focus was correct. */
+                if ((state->gameCardFlowStage == 0 ||
+                     state->gameCardFlowStage == 1) &&
+                    hit.kind == M12_HIT_GAMEOPT_ROW &&
+                    state->gameCardSelected != hit.index) {
+                    state->gameCardSelected = hit.index;
+                    changed = 1;
+                }
                 if (state->gameOptSelectedRow != hit.index) {
                     state->gameOptSelectedRow = hit.index;
                     changed = 1;

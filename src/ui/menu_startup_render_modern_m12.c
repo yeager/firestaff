@@ -321,8 +321,9 @@ static void draw_background(M12_ModernCanvas* c, const M12_StartupMenuState* sta
 }
 
 /* -------------------------------------------------------------------------- */
-/* Font: compact 5x7 monospaced (A-Z, 0-9, punctuation). Rendered at any       */
-/* integer scale with soft shadow for legibility.                             */
+/* Font: compact, high-contrast 5x7 UI face (A-Z, 0-9, punctuation).  A small */
+/* antialiased edge pass gives every start-menu view one calmer, less harsh    */
+/* typographic treatment without requiring a platform font or font runtime.   */
 /* -------------------------------------------------------------------------- */
 
 typedef struct {
@@ -490,6 +491,13 @@ static void draw_glyph(M12_ModernCanvas* c, int x, int y,
                           scale, scale,
                           st->shadowColor);
             }
+            /* Feather only the outside edge.  This removes the jagged
+             * all-or-nothing appearance of the original bitmap face while
+             * preserving the exact glyph metrics used by every menu view. */
+            blend_pixel(c, px - 1, py, st->color, 52);
+            blend_pixel(c, px + scale, py, st->color, 52);
+            blend_pixel(c, px, py - 1, st->color, 52);
+            blend_pixel(c, px, py + scale, st->color, 52);
             fill_rect(c, px, py, scale, scale, st->color);
         }
     }
@@ -515,6 +523,10 @@ static void draw_unicode_glyph(M12_ModernCanvas* c, int x, int y,
             if (st->shadow > 0) {
                 fill_rect(c, px + st->shadow, py + st->shadow, scale, scale, st->shadowColor);
             }
+            blend_pixel(c, px - 1, py, st->color, 52);
+            blend_pixel(c, px + scale, py, st->color, 52);
+            blend_pixel(c, px, py - 1, st->color, 52);
+            blend_pixel(c, px, py + scale, st->color, 52);
             fill_rect(c, px, py, scale, scale, st->color);
         }
     }
@@ -1035,6 +1047,108 @@ static void draw_generated_card_art(M12_ModernCanvas* c,
             M12_RGB col = rgb(p[0], p[1], p[2]);
             if (disabled) col = muted_rgb(col);
             put_pixel(c, px, py, col);
+        }
+    }
+}
+
+/* Platform-card hardware atlas ------------------------------------------------
+ *
+ * The atlas is a compact P6 PPM generated from the project's product-art
+ * source.  PPM keeps this renderer independent from SDL_image, a PNG decoder,
+ * or any other runtime dependency.  Its cells are deliberately source-owned
+ * UI decoration: game media is never copied, decoded, or modified here. */
+enum {
+    M12_PLATFORM_ATLAS_WIDTH = 384,
+    M12_PLATFORM_ATLAS_HEIGHT = 256,
+    M12_PLATFORM_ATLAS_CELL_WIDTH = 128,
+    M12_PLATFORM_ATLAS_CELL_HEIGHT = 128
+};
+
+static unsigned char* g_m12_platform_atlas_rgb;
+static int g_m12_platform_atlas_tried;
+
+static int m12_load_platform_atlas_file(const char* path) {
+    FILE* file;
+    char magic[3] = {0, 0, 0};
+    int width = 0, height = 0, max_value = 0;
+    unsigned char* bytes;
+    size_t byte_count;
+    if (!path || !*path || g_m12_platform_atlas_rgb) return g_m12_platform_atlas_rgb != NULL;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fscanf(file, "%2s %d %d %d", magic, &width, &height, &max_value) != 4 ||
+        strcmp(magic, "P6") != 0 || width != M12_PLATFORM_ATLAS_WIDTH ||
+        height != M12_PLATFORM_ATLAS_HEIGHT || max_value != 255 || fgetc(file) == EOF) {
+        fclose(file);
+        return 0;
+    }
+    byte_count = (size_t)width * (size_t)height * 3U;
+    bytes = (unsigned char*)malloc(byte_count);
+    if (!bytes || fread(bytes, 1, byte_count, file) != byte_count) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    g_m12_platform_atlas_rgb = bytes;
+    return 1;
+}
+
+static const unsigned char* m12_platform_atlas(void) {
+    if (!g_m12_platform_atlas_tried) {
+        g_m12_platform_atlas_tried = 1;
+        (void)m12_load_platform_atlas_file("assets/cards/platforms/platforms.ppm");
+        (void)m12_load_platform_atlas_file("firestaff-platform-cards.ppm");
+        (void)m12_load_platform_atlas_file("../Resources/firestaff-platform-cards.ppm");
+        (void)m12_load_platform_atlas_file("/usr/share/firestaff/firestaff-platform-cards.ppm");
+#ifdef FIRESTAFF_SOURCE_DIR
+        (void)m12_load_platform_atlas_file(
+            FIRESTAFF_SOURCE_DIR "/assets/cards/platforms/platforms.ppm");
+#endif
+    }
+    return g_m12_platform_atlas_rgb;
+}
+
+static int m12_platform_atlas_cell(int architecture) {
+    switch (architecture) {
+        case M12_ARCH_FM_TOWNS: return 0;
+        case M12_ARCH_PC:       return 1;
+        case M12_ARCH_ATARI_ST: return 2;
+        case M12_ARCH_AMIGA:    return 3;
+        case M12_ARCH_SATURN:   return 4;
+        case M12_ARCH_PCE:      return 5;
+        default:                return -1;
+    }
+}
+
+static void draw_platform_card_art(M12_ModernCanvas* c, int architecture,
+                                   int x, int y, int w, int h, int disabled) {
+    const unsigned char* atlas = m12_platform_atlas();
+    int cell = m12_platform_atlas_cell(architecture);
+    int draw_w, draw_h, dst_x, dst_y;
+    if (!c || !atlas || cell < 0 || w <= 0 || h <= 0) return;
+    draw_w = w;
+    draw_h = draw_w * M12_PLATFORM_ATLAS_CELL_HEIGHT / M12_PLATFORM_ATLAS_CELL_WIDTH;
+    if (draw_h > h) {
+        draw_h = h;
+        draw_w = draw_h * M12_PLATFORM_ATLAS_CELL_WIDTH / M12_PLATFORM_ATLAS_CELL_HEIGHT;
+    }
+    dst_x = x + (w - draw_w) / 2;
+    dst_y = y + (h - draw_h) / 2;
+    for (int yy = 0; yy < draw_h; ++yy) {
+        int sy = (cell / 3) * M12_PLATFORM_ATLAS_CELL_HEIGHT +
+                 yy * M12_PLATFORM_ATLAS_CELL_HEIGHT / draw_h;
+        for (int xx = 0; xx < draw_w; ++xx) {
+            int sx = (cell % 3) * M12_PLATFORM_ATLAS_CELL_WIDTH +
+                     xx * M12_PLATFORM_ATLAS_CELL_WIDTH / draw_w;
+            const unsigned char* pixel = atlas +
+                (((size_t)sy * M12_PLATFORM_ATLAS_WIDTH + (size_t)sx) * 3U);
+            M12_RGB color = rgb(pixel[0], pixel[1], pixel[2]);
+            /* The atlas is photographed against near-black.  Let the menu
+             * card's own gradient show through that backing instead. */
+            if (color.r < 22 && color.g < 22 && color.b < 22) continue;
+            if (disabled) color = muted_rgb(color);
+            put_pixel(c, dst_x + xx, dst_y + yy, color);
         }
     }
 }
@@ -2062,12 +2176,11 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
             int x = rowX + col * (cardW + gap), y = rowY + row * (cardH + gap);
             int ready = M12_AssetStatus_GameHasMatchedArchitecture(
                 &state->assetStatus, entry->gameId, platforms[i]);
-            const M12_GeneratedCardArt* art = generated_card_art_for_game(entry->gameId);
             draw_mode_choice_card(c, state, x, y, cardW, cardH, M12_Architecture_Label(platforms[i]),
                                   ready ? "GAME DATA VERIFIED" : "GAME DATA NOT FOUND",
                                   ready ? "SELECT TO CONTINUE" : "CANNOT START", i == selected,
                                   ready ? COLOR_V2() : rgb(96, 92, 104));
-            if (art) draw_generated_card_art(c, art, x + cardW - 128, y + 70, 112, 150, !ready);
+            draw_platform_card_art(c, platforms[i], x + cardW - 154, y + 54, 136, 172, !ready);
         }
         if (count == 0) {
             draw_text(c, 160, 260,
