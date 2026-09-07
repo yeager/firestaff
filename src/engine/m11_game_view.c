@@ -12105,25 +12105,40 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                 &opening);
             return;
         }
-        /* Record the exact C004 presentation in the same session that will
-         * later consume C002/C003 and C017/C040.  The direct F31 raster path
-         * above is only presentation; this frame receipt carries ENTRANCE.C
-         * F0807's source event into the terminal handoff. */
+        /* ENTRANCE.C F0807's waiting page is not C004 on its own.  F0441
+         * retains the closed C002/C003 strips over C004 until the first
+         * opening step.  Presenting the decoded C004 record directly made
+         * the retail entrance look like its red background rather than a
+         * closed Prison door.  Build the source-owned closed composition
+         * through the same F0438/F0441 raster receipt used for the opening
+         * frames; this also keeps all three source surfaces in RAM. */
         memset(&render_state, 0, sizeof(render_state));
         memset(&render_plan, 0, sizeof(render_plan));
+        memset(&opening, 0, sizeof(opening));
         render_state.entrance_active = 1;
         render_state.entrance_source_step =
             state->csbState.startup_entrance_source_step;
         if (!csb_v1_startup_source_render_plan_from_state_pc34(
                 &render_state, &render_plan) ||
             render_plan.surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
-            !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+            !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
                 (CSB_V1_StartupRuntimeAssetSession_PC34 *)fmtowns_session,
-                &render_plan, m11_csb_startup_source_tick(state), &opening.frame)) {
+                &render_plan, m11_csb_startup_source_tick(state), &opening) ||
+            !opening.valid ||
+            opening.host_surface !=
+                CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 ||
+            !opening.raster.valid || !opening.raster.entrance_composited ||
+            !opening.raster.door_composited ||
+            opening.raster.source_surface_count != 3 ||
+            !opening.raster.pixels) {
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &opening);
             return;
         }
-        m11_csb_present_startup_raster(entrance->pixels, framebuffer,
+        m11_csb_present_startup_raster(opening.raster.pixels, framebuffer,
                                        framebufferWidth, framebufferHeight);
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &opening);
         return;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);

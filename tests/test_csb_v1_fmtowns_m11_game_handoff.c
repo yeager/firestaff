@@ -1994,13 +1994,38 @@ int main(void)
     live_frame_nonblack = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    CHECK(memcmp(framebuffer,
-                 ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
-                  view.csbStartupRuntimeAssetSession)->surfaces.surfaces[
-                     CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
-                     .pixels,
-                 sizeof(framebuffer)) == 0,
-          "F31 Game handoff draws the authenticated C004 entrance raster");
+    {
+        CSB_V1_StartupRenderState_PC34 closed_state;
+        CSB_V1_StartupRenderPlan_PC34 closed_plan;
+        CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 closed_surface;
+
+        memset(&closed_state, 0, sizeof(closed_state));
+        memset(&closed_plan, 0, sizeof(closed_plan));
+        memset(&closed_surface, 0, sizeof(closed_surface));
+        closed_state.entrance_active = 1;
+        closed_state.entrance_source_step =
+            view.csbState.startup_entrance_source_step;
+        CHECK(csb_v1_startup_source_render_plan_from_state_pc34(
+                  &closed_state, &closed_plan) &&
+                  closed_plan.surface ==
+                      CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+                  csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                      (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                          view.csbStartupRuntimeAssetSession,
+                      &closed_plan, 1u, &closed_surface) &&
+                  closed_surface.valid &&
+                  closed_surface.host_surface ==
+                      CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
+                  closed_surface.raster.entrance_composited &&
+                  closed_surface.raster.door_composited &&
+                  closed_surface.raster.source_surface_count == 3 &&
+                  closed_surface.raster.pixels &&
+                  memcmp(framebuffer, closed_surface.raster.pixels,
+                         sizeof(framebuffer)) == 0,
+              "F31 Game handoff composites authenticated C004 with C002/C003 closed doors");
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &closed_surface);
+    }
     CHECK(M11_GameView_GetPresentationSpecialPalette(&view) == -1,
           "F31 C004 rejects the PC3.4 special palette and retains its native DAC state");
     CHECK(M11_Render_CopyIndexedPaletteRgb6(presented_palette) &&
