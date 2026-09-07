@@ -11,6 +11,7 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,12 +121,61 @@ static int square_contains_thing_exactly_once(const M11_GameViewState *state,
     return count == 1 && guard < 64;
 }
 
+/* Diagnostic ownership audit for the real corpus.  A wall alcove can only
+ * present F0115 material when its raw square chain contains both a map-local
+ * G0192 ornament sensor and an ordinary item Thing.  Keep this in the
+ * regression's failure output so a missing corpus fixture cannot be confused
+ * with a renderer failure. */
+static int count_real_alcove_item_squares(M11_GameViewState *state, int mapIndex)
+{
+    const struct DungeonMapDesc_Compat *map;
+    int x, y, count = 0;
+
+    if (!state || !state->world.dungeon || !state->world.things ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount ||
+        !state->ornamentCacheLoaded[mapIndex]) return 0;
+    map = &state->world.dungeon->maps[mapIndex];
+    (void)dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(
+        mapIndex, state->wallOrnamentIndices[mapIndex], 16);
+    for (y = 0; y < (int)map->height; ++y) {
+        for (x = 0; x < (int)map->width; ++x) {
+            unsigned short thing;
+            int guard = 0, alcove = 0, item = 0;
+            int square = x * (int)map->height + y;
+            if (((state->world.dungeon->tiles[mapIndex].squareData[square] &
+                  DUNGEON_SQUARE_MASK_TYPE) >> 5) != DUNGEON_ELEMENT_WALL) continue;
+            thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                state->world.dungeon, state->world.things, mapIndex, x, y);
+            while (thing != THING_NONE && thing != THING_ENDOFLIST && guard++ < 64) {
+                int type = THING_GET_TYPE(thing);
+                if (type >= THING_TYPE_WEAPON && type <= THING_TYPE_JUNK) item = 1;
+                if (type == THING_TYPE_SENSOR) {
+                    int index = THING_GET_INDEX(thing);
+                    if (index >= 0 && index < state->world.things->sensorCount &&
+                        state->world.things->sensors[index].ornamentOrdinal > 0 &&
+                        dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
+                            state->world.things->sensors[index].ornamentOrdinal)) {
+                        alcove = 1;
+                    }
+                }
+                thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
+            }
+            if (alcove && item) ++count;
+        }
+    }
+    return count;
+}
+
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
     int mapIndex;
+    int renderedAlcoveItems = 0;
+    int renderedAlcoveItemsOnWalls = 0;
+    int sourceAlcoveItemSquares = 0;
+    unsigned char sourceMapAudited[32] = {0};
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
@@ -173,8 +223,20 @@ int main(void)
                     memset(framebuffer, 0, sizeof(framebuffer));
                     M11_GameView_Draw(&state, framebuffer,
                                       kFramebufferWidth, kFramebufferHeight);
+                    if (!sourceMapAudited[mapIndex]) {
+                        sourceAlcoveItemSquares +=
+                            count_real_alcove_item_squares(&state, mapIndex);
+                        sourceMapAudited[mapIndex] = 1;
+                    }
                     memset(&receipt, 0, sizeof(receipt));
                     M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&receipt);
+                    if (receipt.valid) {
+                        ++renderedAlcoveItems;
+                        if (front_square_is_wall(&state, mapIndex, x, y,
+                                                 direction)) {
+                            ++renderedAlcoveItemsOnWalls;
+                        }
+                    }
                     if (receipt.valid && !receipt.floorItemLane &&
                         receipt.usesF0791Blit && receipt.transparentColor == 10 &&
                         receipt.sourceZone >= 2548 && receipt.destinationW > 0 &&
@@ -313,7 +375,23 @@ int main(void)
         }
     }
 
-    fprintf(stderr, "no real PC34 F0115 alcove object was presented\n");
+    if (sourceAlcoveItemSquares == 0) {
+        /* ReDMCSB DUNVIEW.C F0124 passes the wall square's first Thing to
+         * F0115 for C0x0000_CELL_ORDER_ALCOVE.  The preserved PC34 retail
+         * dungeon has no wall chain containing both a G0192 alcove sensor
+         * and a grabbable object, so it cannot evidence this route.  Keep
+         * the synthetic contract probe separate; do not turn absence in a
+         * real corpus into a renderer failure or invent a replacement item. */
+        puts("SKIP: real PC34 corpus has no alcove-object wall-chain fixture");
+        M11_GameView_Shutdown(&state);
+        return 0;
+    }
+    fprintf(stderr,
+            "source alcove objects were not presented "
+            "(source alcove-item squares=%d, alcove receipts=%d, "
+            "wall-alcove receipts=%d)\n",
+            sourceAlcoveItemSquares, renderedAlcoveItems,
+            renderedAlcoveItemsOnWalls);
     M11_GameView_Shutdown(&state);
     return 1;
 }
