@@ -414,6 +414,26 @@ source-owned blocker. This does not change production readiness: the authentic
 startup→menu→LEV01 chain still lacks a verified start-position and consumer
 witness.
 
+## Post-render title falsification — 2026-09-07
+
+The external JP-BIOS/Japanese-retail-CUE capture was replayed with the
+already instrumented Mednafen post-render hook at the r33 absolute frame
+(`13460`).  Its raw VDP1/VDP2 state has SHA-256
+`f700206629eaf6f37dd750271b3a76371d11bd80a2b1abcf79224337f8dbb672`, the
+same raw state as the r33 MAPD-to-VDP2 receipt.  The independently emitted
+704×480 RGB post-render frame has SHA-256
+`703587d6bb955636f4c5688f2eb862b0f103317343b28f5c71cd65b4e80ea993` and
+shows the Sega Saturn BIOS splash, not a Nexus title/menu surface.
+
+This is a negative but useful result: r33 continues to prove the exact MAPD
+transport, CRAM/VRAM state and timing facts recorded above; it does **not**
+prove that those facts are the active title display consumer at that frame.
+The post-render artifact remains operator-owned under
+`~/.firestaff/external/nexus-capture/` and is not shipped or required by
+Firestaff.  The public `title-vdp-capture-required` gate must stay closed
+until a same-session post-render frame shows the actual Nexus title/menu and
+can be joined to the relevant VDP1/VDP2 state.
+
 Current external-disk audit, 2026-08-13: the verified game corpus contains
 CUE/ISO and extracted retail files. A new isolated J-BIOS/English-Merged
 capture is now available as operator evidence on external disk:
