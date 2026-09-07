@@ -14,13 +14,17 @@ if [ ! -x "$firestaff" ] || [ ! -f "$campaign" ] || [ ! -f "$utility" ]; then
     exit 77
 fi
 
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 45s "$firestaff" \
-    --game csb --platform atari-st --data-dir "$campaign" --save "$save" \
-    --boot-probe --boot-probe-frames 10 --boot-probe-expect-runtime \
-    --boot-probe-expect-level-loaded 1 --duration 0 2>&1)
+for mode in 0 1 2; do
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy timeout 45s "$firestaff" \
+        --presentation-mode "$mode" --game csb --platform atari-st \
+        --data-dir "$campaign" --save "$save" --boot-probe \
+        --boot-probe-frames 10 --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 --duration 0 2>&1)
 
-printf '%s\n' "$output"
-printf '%s\n' "$output" | grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb'
-printf '%s\n' "$output" | grep -Fq 'route=f0435-resume'
-printf '%s\n' "$output" | grep -Fq 'levelLoaded=1 map=4 party=22,18,2 champions=1'
-printf '%s\n' "$output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'
+    printf '%s\n' "$output"
+    printf '%s\n' "$output" | grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb'
+    printf '%s\n' "$output" | grep -Fq 'route=f0435-resume'
+    printf '%s\n' "$output" | grep -Fq "presentationMode=$mode"
+    printf '%s\n' "$output" | grep -Fq 'levelLoaded=1 map=4 party=22,18,2 champions=1'
+    printf '%s\n' "$output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'
+done
