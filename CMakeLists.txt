@@ -17373,6 +17373,9 @@ if(BUILD_TESTING)
         firestaff_m12
         firestaff_m10
     )
+    target_compile_definitions(test_dm2_fmtowns_m11_gameplay_real_media PRIVATE
+        FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    )
     if(NOT MSVC)
         target_compile_options(test_dm2_fmtowns_m11_gameplay_real_media PRIVATE
             -Wall -Wextra -Werror -O2

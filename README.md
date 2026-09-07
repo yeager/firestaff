@@ -4,12 +4,12 @@ Firestaff is a clean-room engine for the Dungeon Master games. It reads the
 original files you own, identifies each edition by its content hash and keeps
 that data separate from the program.
 
-Dungeon Master for PC DOS 3.4 and Dungeon Master II: Skullkeep are the current
-playable routes when matching original media is supplied. DM1 also recognises
-its native Atari ST container. Chaos Strikes Back starts from verified native
-Amiga editions by default; Atari ST and FM Towns have their own native data
-paths. CSB campaign, save and presentation parity, plus Nexus and Theron's
-Quest runtime work, are still under active development.
+Firestaff can start verified original media for Dungeon Master, Chaos Strikes
+Back and Dungeon Master II: Skullkeep across their supported platforms.
+Coverage is deliberately conservative: a route is available only when the
+selected edition has a verified native handoff. Full campaign, save and visual
+parity remain active work, especially for Chaos Strikes Back, Nexus and
+Theron's Quest.
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -18,10 +18,10 @@ Quest runtime work, are still under active development.
   <img src="assets/branding/firestaff-logo.png" alt="Firestaff logo" width="360">
 </p>
 
-## Current state
+## Current status
 
-Dungeon Master for PC DOS 3.4 is the most complete route: startup, menus,
-dungeon view, HUD, controls, combat and save handling use original data.
+The status below was reviewed on 2026-09-07. It reports what has been exercised
+with real media, not a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
 never borrows data from another edition to fill a gap. The detailed status is kept in
@@ -33,11 +33,11 @@ separates source/disassembly evidence, real-media receipts and open routes.
 
 | Game | Current scope |
 |---|---|
-| Dungeon Master | Playable PC DOS 3.4 route. Atari ST media has its own native graphics decoder and launch path; further parity work continues. |
-| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. Campaign parity is still being completed. |
-| Dungeon Master II: Skullkeep | Playable source-owned runtime from DOS, Amiga, FM Towns and Macintosh data. Advanced parity work, native non-DOS saves and some combat/UI owners continue. |
-| DM Nexus | Saturn real-data bring-up in progress. |
-| Theron's Quest | PC Engine real-media bring-up in progress. |
+| Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. Further gameplay and visual parity work continues. |
+| Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. Campaign, saves and presentation parity are still being completed. |
+| Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Advanced parity, saves and some combat/UI behavior continue. |
+| DM Nexus | Saturn disc parsing and native title-resource loading work; the public title is correctly blocked pending authenticated display-state captures. |
+| Theron's Quest | PC Engine/TurboGrafx real-media startup and initial dungeon parsing work; later presentation and level-transition evidence is still required. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -45,16 +45,34 @@ DM2 is playable in Firestaff from four authenticated source families:
 
 | Edition | Accepted source data | Verified runtime scope |
 |---|---|---|
-| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `Downloads/dm2` are optional resume data | New Game, active runtime, movement, pit/stairs/DB1 routes, creatures and spell handoff |
-| Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, clipped source CHARSHEET inventory, movement, pit/stairs/DB1 routes and creatures |
-| FM Towns Japanese | Original HME-242 ZIP/disc image; English text additionally uses the verified PC-English `GRAPHICS.DAT` companion | M12 archive launch, AUTOEXEC animation order, source title streams, New Game, inventory, movement, pit/stairs/DB1 routes and creatures |
-| Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs/DB1 routes and source-owned combat/creature handoff |
+| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `Downloads/dm2` are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
+| Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, clipped source CHARSHEET inventory, movement, pits, stairs, level transitions and creatures |
+| FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese UI text uses the verified PC-English `GRAPHICS.DAT` companion in memory | Title sequence, New Game, inventory, movement, level transitions and creatures |
+| Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs, level transitions and combat/creature handoff |
 
-The shared DM2 data root may contain all four editions. M12 resolves each
+The shared DM2 data root may contain all four editions. Firestaff resolves a
 selected version to its own source owner: the DOS `data` tree or symlink,
 Amiga installer, FM Towns disc archive, or Mac archive. Original archives are
 kept intact and archive members are read into bounded memory; Firestaff does
 not use a sibling edition as a fallback.
+
+### Language selection
+
+Firestaff offers 20 interface languages: English, Swedish, German, French,
+Spanish, Italian, Portuguese, Dutch, Polish, Czech, Russian, Japanese,
+Korean, Simplified Chinese, Danish, Norwegian, Finnish, Hungarian, Turkish
+and Indonesian. **Auto** uses the system language when it is supported and
+otherwise uses English. A language chosen in the start menu or with
+`--lang <code>` takes precedence over Auto.
+
+For the Japanese FM Towns edition of DM2, Firestaff keeps the original Towns
+disc as the game-data owner and reads the verified PC-English text companion
+only in memory. This lets the game present English text and apply the selected
+localization instead of being locked to Japanese. Swedish has a complete DM2
+catalog; other language catalogs remain work in progress. Any untranslated
+entry safely shows its authenticated English source text—never invented text
+or a different edition's Japanese fallback. See [translation status](po/README.md)
+for exact per-language coverage.
 
 Focused real-media checks and their current boundaries are documented in
 [TODO-dm2.md](TODO-dm2.md), [DONE-dm2.md](DONE-dm2.md),
@@ -87,8 +105,8 @@ matching data is present:
 | Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. Native startup, entrance, supported HUD and viewport material use the Amiga data path. |
 | Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
 | FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
-| PC-9801 Japanese 3.1 | Not supported. The media is retained only as preservation reference and cannot select an M11 data, startup, gameplay or input route. |
-| X68000 Japanese 3.1 | Not supported. The media is retained only as preservation reference and does not select an M11 data, startup or gameplay route. |
+| PC-9801 Japanese 3.1 | Not supported. The media is retained only as preservation reference and cannot select a data, startup, gameplay or input route. |
+| X68000 Japanese 3.1 | Not supported. The media is retained only as preservation reference and does not select a data, startup or gameplay route. |
 
 Recognition is deliberately separate from a playability claim. A recognised
 edition has passed the data gate; it does not imply that every screen, save
@@ -160,11 +178,11 @@ game media and every user-local input.
 
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
 |---|---|---|---|---|
-| DM1 | PC DOS 3.4 | Bounded Atari ST, Amiga and FM Towns start/runtime routes | PC-9801 preservation | X68000 |
-| CSB | — | Bounded Atari ST, Amiga and FM Towns title/start-menu/runtime routes | — | PC-9801, X68000 |
-| DM2 | Bounded DOS, Amiga, FM Towns and Macintosh routes | New Game/startup, source-owned runtime slices and real-media resume where supplied | Mac JP/FR preservation | X68000 |
-| Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
-| Theron's Quest | — | Bounded native PC Engine/TurboGrafx US CloneCD ZIP and Japanese CUE/Track 02 startup routes | Source-only dungeon loading; gameplay, save, and presentation consumers remain capture-gated | — |
+| DM1 | — | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes | PC-9801 preservation | X68000 |
+| CSB | — | Atari ST, Amiga and FM Towns title/start-menu routes | — | PC-9801, X68000 |
+| DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
+| Nexus | — | Saturn disc/resource parsing; title display remains blocked pending authenticated captures | Saturn demo/fan translations | — |
+| Theron's Quest | — | PC Engine/TurboGrafx US ZIP and Japanese CUE/Track 02 startup plus initial dungeon parsing | Later gameplay, saves and presentation remain evidence-gated | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
 the exact feature boundary and [Project status](docs/PROJECT_STATUS.md) for
@@ -209,13 +227,13 @@ real Saturn title/display-consumer capture exists.  Firestaff never delegates
 Nexus startup or gameplay to Mednafen (or another emulator); emulator tooling
 is used only outside the product to obtain and validate capture evidence.
 
-`--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
-hash-verified Japanese FM Towns package and fails if that original package is
-not present; it never guesses from the host language or falls back to F31E.
+`--csb-fmtowns-ja` explicitly selects the hash-verified Japanese FM Towns
+package and fails if that original package is not present; it never guesses
+from the host language or substitutes the English package.
 
-`--dm1-fmtowns-ja` is the corresponding explicit DM1 request. It selects the
-hash-verified JDM.EXP/JDATA edition and fails closed if those original members
-are unavailable; the default FM Towns selection remains EDM.EXP/DATA.
+`--dm1-fmtowns-ja` explicitly selects the hash-verified Japanese FM Towns
+edition and fails closed if its original members are unavailable; the default
+FM Towns selection remains the English edition.
 ### Theron's Quest (PC Engine CD)
 
 Place the original US Track 02 BIN in `.firestaff/data/theron/` (or pass a
@@ -242,20 +260,16 @@ This confirms the source-backed title → stage → Soul Room → initial runtim
 handoff, not broad PC Engine gameplay parity. Uncaptured later-level/object
 publication, creature AI, combat, generator, sound-effect and text-control
 semantics remain unavailable rather than being replaced with host behavior.
-`--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk
-after the normal verified CSB F31 boot; it implies `--game csb --platform
-fm-towns` and fails closed if that package is unavailable. The start menu also
-has a dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from
-the Atari R1 Hint Oracle (`--csb-hint-oracle`) and never substitutes its data
-or UI. The Hint Oracle needs `--data-dir <root>` containing the verified Atari
-R1 `HCSB.HTC`, `HCSB.DAT` and native `MINI.DAT`; those files may be loose or
-inside a supported archive. `--save <MINI.DAT>` is optional and selects an
-explicit native save instead of the verified R1 `MINI.DAT` found in that root.
-The initial Japanese C06 Utility chooser additionally requires the user's
-authorised 256 KiB `FMT_FNT.ROM`; set `FIRESTAFF_FMTOWNS_FONT_ROM` to that
-file before launch. Firestaff uses the ROM only for its original Shift-JIS
-glyphs and keeps the route closed if the file is missing or malformed; it
-never substitutes a system font or installs the ROM into game data.
+`--csb-utility-disk` opens the separately preserved FM Towns Utility Disk
+after normal verified CSB startup; it implies `--game csb --platform fm-towns`
+and fails closed if that package is unavailable. The start menu also has a
+dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from the
+Atari Hint Oracle (`--csb-hint-oracle`) and never substitutes its data or UI.
+The Hint Oracle needs `--data-dir <root>` containing its matching verified
+files; those files may be loose or inside a supported archive. The Japanese
+Utility Disk chooser additionally requires the user's authorised FM Towns
+font ROM for original Shift-JIS glyphs. Firestaff never substitutes a system
+font or installs the ROM into game data.
 
 Run the local test suite with:
 

@@ -8,6 +8,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_dungeon_input_owner.h"
+#include "firestaff_po_loader.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -298,6 +299,9 @@ int main(void)
     int populated_source_slot = -1;
     uint32_t populated_source_object = 0u;
     int loose_root = 0;
+    size_t localized_text_size = 0u;
+    const uint8_t *localized_source_text;
+    char swedish_catalog[1024];
     static const struct {
         uint16_t event_index;
         uint16_t rect_id;
@@ -348,6 +352,23 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    /* The selected FM Towns disc remains the runtime owner, but its Japanese
+     * GDAT is overlaid in RAM from the hash-admitted PC-English companion.
+     * The final presentation boundary must then honour the selected UI
+     * locale. This proves a Swedish session does not fall back to Japanese
+     * merely because its source platform is FM Towns. */
+    localized_source_text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x26,
+                                                      &localized_text_size);
+    check(localized_source_text != NULL && localized_text_size == 10u &&
+              memcmp(localized_source_text, "ANTI-FIRE", 9u) == 0,
+          "FM Towns uses the authenticated English GDAT source text");
+    check(snprintf(swedish_catalog, sizeof(swedish_catalog),
+                   "%s/po/dm2.sv.po", FIRESTAFF_SOURCE_DIR) > 0 &&
+              fs_po_load(swedish_catalog) > 0,
+          "DM2 Swedish catalog loads for the selected launcher locale");
+    check(strcmp(fs_po_gettext_in_domain("dm2", "ANTI-FIRE"),
+                 "ELDMOTSTÅND") == 0,
+          "DM2 presentation translates English companion text to Swedish");
     for (step = 0; step < 20000 && view.dm2FmtownsSwooshActive; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
