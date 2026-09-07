@@ -765,15 +765,22 @@ static void m11_apply_temporal_filters_and_snapshot(int w, int h) {
     int phosphorDecay = g_state.v2_phosphor_decay;
     int applyMotion;
     int applyPhosphor;
-    if (!g_state.v2_phosphor_enabled && !g_state.v2_motion_blur_enabled) return;
-    cur = g_state.presentBuffer;
-    if (!cur || m11_ensure_prev_frame_buffer(w, h) != 0) return;
-    prev = g_state.previousFrameBuffer;
-    pixelCount = w * h;
     if (motionStrength < 0) motionStrength = 0;
     if (motionStrength > 100) motionStrength = 100;
     if (phosphorDecay < 0) phosphorDecay = 0;
     if (phosphorDecay > 100) phosphorDecay = 100;
+    /* An enabled effect at 0% must be a genuine no-op.  Previously it still
+     * allocated a second full-resolution RGBA frame and copied it every
+     * present; at a 4K Modern target that turns an invisible setting into
+     * substantial memory bandwidth.  Motion retains history while idle only
+     * when it has a non-zero strength, so its next movement frame still
+     * blends with the immediately preceding image. */
+    if ((!g_state.v2_phosphor_enabled || phosphorDecay == 0) &&
+        (!g_state.v2_motion_blur_enabled || motionStrength == 0)) return;
+    cur = g_state.presentBuffer;
+    if (!cur || m11_ensure_prev_frame_buffer(w, h) != 0) return;
+    prev = g_state.previousFrameBuffer;
+    pixelCount = w * h;
     applyMotion = g_state.v2_motion_blur_enabled &&
                   g_state.v2_movement_active && motionStrength > 0;
     applyPhosphor = g_state.v2_phosphor_enabled && phosphorDecay > 0;
@@ -3003,7 +3010,8 @@ int M11_Render_GetV2Filters(int* outCrtEnabled,
 static void m11_maybe_release_prev_frame(void) {
     /* Free the prev-frame buffer only when no consumer (phosphor or
      * motion blur) needs it.  Keeps V1 launches at zero memory cost. */
-    if (!g_state.v2_phosphor_enabled && !g_state.v2_motion_blur_enabled) {
+    if ((!g_state.v2_phosphor_enabled || g_state.v2_phosphor_decay == 0) &&
+        (!g_state.v2_motion_blur_enabled || g_state.v2_motion_blur_strength == 0)) {
         if (g_state.previousFrameBuffer) {
             free(g_state.previousFrameBuffer);
             g_state.previousFrameBuffer = NULL;
