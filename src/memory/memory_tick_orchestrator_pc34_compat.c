@@ -13016,6 +13016,7 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
     struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
+    struct RngState_Compat rngBeforeBehavior;
     uint32_t f0179UpdateTime = 0;
     int reactionMoveHandled = 0;
     int cellsBeforeBehavior;
@@ -13221,6 +13222,10 @@ static int orch_handle_creature_reaction_event_compat(
      * whole group died.  The scheduler has already converted CM1 into the
      * concrete C31 reaction event; this dispatch applies F0209's C31 branch
      * to the active-group analogue. */
+    /* F0810 owns source RNG decisions, but an unpublishable attack-entry
+     * fanout must leave the input event retryable as if its decision had not
+     * started. */
+    rngBeforeBehavior = world->masterRng;
     if (!F0810_DM1_GROUP_DispatchBehavior_Compat(
             &ctx, &activeGroup, &world->masterRng, &behavior)) {
         return 0;
@@ -13229,8 +13234,24 @@ static int orch_handle_creature_reaction_event_compat(
         ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_GROUP &&
         behavior.newBehavior == DM1_BEHAVIOR_ATTACK &&
         ctx.groupBehavior != DM1_BEHAVIOR_ATTACK) {
-        return orch_f0209_begin_attack_compat(
-            world, ev, group, ai, activeIndex, &ctx, &activeGroup);
+        if (orch_f0209_begin_attack_compat(
+                world, ev, group, ai, activeIndex, &ctx, &activeGroup)) {
+            return 1;
+        }
+        /* F0209's descending C38-C41 fanout is staged against a private
+         * queue/RNG/group copy.  A capacity failure therefore has published
+         * none of that fanout, but the outer dispatcher has already popped
+         * this source event.  Put the exact input record back on the now-free
+         * queue slot instead of silently losing the attack transition. */
+        {
+            struct TimelineEvent_Compat retry = *ev;
+            /* The current timeline pass continues dispatching due records.
+             * A same-tick reinsertion would re-admit LoS repeatedly against
+             * the same full queue.  Retry on the next source game tick. */
+            retry.fireAtTick = world->gameTick + 1u;
+            world->masterRng = rngBeforeBehavior;
+            return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+        }
     }
 
     /* GROUP.C F0209:2051-2088,2452-2463: visibility transitions precede

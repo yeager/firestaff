@@ -1464,15 +1464,27 @@ static int test_timed_aspect_and_freeze_gate(int slot, int frozen, int eventType
          F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     if (frozen == 8) {
         struct RngState_Compat expectedRng;
+        int retryFound = 0;
         F0730_COMBAT_RngInit_Compat(&expectedRng, seedBefore);
         (void)F0732_COMBAT_RngRandom_Compat(&expectedRng, 65536);
-        /* The outer dispatcher consumes handler failures; verify state,
-         * not its success return, until failure propagation is integrated. */
-        ok &= expect(world.timeline.count == TIMELINE_QUEUE_CAPACITY - 1 &&
-                    world.masterRng.seed == expectedRng.seed &&
-                    memcmp(aiBefore, &world.creatureAI[0], sizeof(aiBefore)) == 0 &&
+        /* The private fanout has no publication on failure. Its popped C37
+         * input is restored to the now-free timeline slot for a later retry. */
+        for (i = 0; i < world.timeline.count; ++i) {
+            if (world.timeline.events[i].aux2 == event.aux2 &&
+                world.timeline.events[i].fireAtTick == world.gameTick + 1u &&
+                world.timeline.events[i].aux0 == event.aux0) {
+                retryFound = 1;
+            }
+        }
+        ok &= expect(world.timeline.count == TIMELINE_QUEUE_CAPACITY,
+                    "failed attack fanout restores the popped queue slot");
+        ok &= expect(retryFound,
+                    "failed attack fanout restores its exact source event");
+        ok &= expect(world.masterRng.seed == expectedRng.seed,
+                    "failed attack fanout keeps the pre-fanout RNG state");
+        ok &= expect(memcmp(aiBefore, &world.creatureAI[0], sizeof(aiBefore)) == 0 &&
                     memcmp(groupBefore, &world.things->groups[0], sizeof(groupBefore)) == 0,
-                    "failed attack fanout publishes no partial queue, RNG or group state");
+                    "failed attack fanout publishes no partial group state");
     } else if (frozen == 3) {
         ok &= expect(world.masterRng.seed == seedBefore &&
                      world.creatureAI[0].aspect[slot] == 0xff &&
