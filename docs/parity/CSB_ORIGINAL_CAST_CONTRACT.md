@@ -16,6 +16,15 @@ The runtime DSA cast callback handles only an explicit abort-without-message
 packet. Neither constitutes original CSB spell execution. Optional CSBWin
 filter semantics are not prerequisites for original Atari/Amiga/FM Towns.
 
+For verified FM Towns CHTWE/CHTWJ media, M11 now performs the non-mutating
+F0409 table lookup using the admitted G0487 bytes. A source-invalid row takes
+the F0408/F0410 failure boundary: it clears the source `Symbols`/`SymbolStep`
+presentation state while retaining the selected caster and panel. Definitions
+whose high byte is zero use F0409's lower-24-bit comparison, so a power rune
+does not hide an otherwise valid definition. A source-valid spell remains
+fail-closed; it does not run DM1 effects or mutate CSB RNG, XP, objects, or
+the timeline until the complete F0412 transaction below is implemented.
+
 ## FM Towns original-table admission
 
 The supplied JP/EN ZIP's first 4,500 MODE1/2352 sectors were read into RAM
