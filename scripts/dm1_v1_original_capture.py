@@ -90,7 +90,11 @@ except Exception:
     _HAS_PIL = False
 
 try:
-    sys.path.insert(0, "/Users/bosse/.openclaw/workspace-main/docs/parity/tools")
+    # Keep the optional classifier project-local.  This capture helper must
+    # neither depend on a former developer's workstation nor revive the
+    # retired .openclaw workspace path.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] /
+                           "docs" / "parity" / "tools"))
     from dosbox_state_detector import classify as _state_classify
     _HAS_DETECTOR = True
 except Exception:
