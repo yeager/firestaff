@@ -60,7 +60,7 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
     memset(&options, 0, sizeof(options));
     options.skipScreenshotGalleryScan = 1;
     M12_StartupMenu_InitWithOptions(state,
-                                    "/tmp/firestaff-test-dm1-required",
+                                    ".codex-scratch/firestaff-test-dm1-required",
                                     NULL,
                                     &options);
 
@@ -91,7 +91,7 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
     version->shortLabel = kDm1VersionShortLabel;
     version->matched = 1;
     snprintf(version->matchedPath, sizeof(version->matchedPath),
-             "/tmp/firestaff-test-dm1-required/dm1/GRAPHICS.DAT");
+             ".codex-scratch/firestaff-test-dm1-required/dm1/GRAPHICS.DAT");
     snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s", kDm1GraphicsMd5);
 
     state->assetStatus.requiredFileCounts[kDm1GameIndex] = 2U;
@@ -104,7 +104,7 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
     graphics->required = 1;
     graphics->matched = 1;
     snprintf(graphics->matchedPath, sizeof(graphics->matchedPath),
-             "/tmp/firestaff-test-dm1-required/dm1/GRAPHICS.DAT");
+             ".codex-scratch/firestaff-test-dm1-required/dm1/GRAPHICS.DAT");
     snprintf(graphics->matchedHash, sizeof(graphics->matchedHash), "%s", kDm1GraphicsMd5);
 
     dungeon = &state->assetStatus.requiredFiles[kDm1GameIndex][1];
@@ -115,7 +115,7 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
     dungeon->required = 1;
     dungeon->matched = 1;
     snprintf(dungeon->matchedPath, sizeof(dungeon->matchedPath),
-             "/tmp/firestaff-test-dm1-required/dm1/DUNGEON.DAT");
+             ".codex-scratch/firestaff-test-dm1-required/dm1/DUNGEON.DAT");
     snprintf(dungeon->matchedHash, sizeof(dungeon->matchedHash), "%s", kDm1DungeonMd5);
 
     /* V1 original path, software renderer, PC 3.4 English version, on
@@ -126,6 +126,9 @@ static void seed_dm1_v1_complete_required_state(M12_StartupMenuState* state) {
     state->gameOptions[kDm1GameIndex].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     state->activatedIndex = kDm1GameIndex;
     state->view = M12_MENU_VIEW_GAME_OPTIONS;
+    /* This fixture starts at the detailed options view.  Stage 0 is the
+     * platform-card selector, where ACCEPT intentionally does not launch. */
+    state->gameCardFlowStage = 2;
     state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
 }
 
@@ -353,7 +356,8 @@ static int isolate_home(void) {
     }
     return _putenv_s("HOME", path) == 0 && _putenv_s("USERPROFILE", path) == 0;
 #else
-    char path[] = "/tmp/firestaff_dm1_v1_required_home_XXXXXX";
+    char path[] = ".codex-scratch/firestaff_dm1_v1_required_home_XXXXXX";
+    (void)MKDIR(".codex-scratch");
     char* made = mkdtemp(path);
     if (!made) {
         return 0;
