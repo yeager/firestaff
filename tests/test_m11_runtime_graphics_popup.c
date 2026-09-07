@@ -80,7 +80,8 @@ int main(void) {
     assert(state.graphicsPopupSelectedRow == 1);
     /* Mouse controls are bidirectional: clicking the selected value with
      * Button II is the pointer equivalent of the keyboard LEFT key. */
-    result = M11_GameView_HandlePointerButton(&state, 180, 34,
+    /* DISPLAY is the first named 44px tab in the readable F10 layout. */
+    result = M11_GameView_HandlePointerButton(&state, 150, 34,
                                                DM1_V1_MOUSE_MASK_LEFT_PC34);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupPage == 0);

@@ -33050,10 +33050,22 @@ enum {
     M11_GRAPHICS_POPUP_PAGE_COUNT,
     /* Keep the live dungeon visible while graphics settings are adjusted.
      * The prior 288x184 modal almost completely hid the 224x136 viewport. */
-    M11_GRAPHICS_POPUP_X = 166,
+    /* Modern-only host UI: leave enough room for named tabs and readable
+     * values.  The old 148px panel compressed four tab names into a single
+     * cryptic "PRES FILT FX CH" line.  This does not alter any source-owned
+     * game surface; it is the F10 presentation/settings overlay. */
+    M11_GRAPHICS_POPUP_X = 128,
     M11_GRAPHICS_POPUP_Y = 8,
-    M11_GRAPHICS_POPUP_W = 148,
+    M11_GRAPHICS_POPUP_W = 188,
     M11_GRAPHICS_POPUP_H = 150
+};
+
+enum {
+    M11_GRAPHICS_POPUP_CONTENT_X = 6,
+    M11_GRAPHICS_POPUP_CONTENT_W = 176,
+    M11_GRAPHICS_POPUP_TAB_Y = 23,
+    M11_GRAPHICS_POPUP_TAB_W = 44,
+    M11_GRAPHICS_POPUP_TAB_H = 12
 };
 
 static int m11_graphics_popup_row_count(const M11_GameViewState* state,
@@ -36016,25 +36028,31 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
          * could only be stepped forward.  Keep tabs and the close button
          * left-click-only so the standard right-click decrement gesture
          * cannot accidentally dismiss or change page. */
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 130,
-                              M11_GRAPHICS_POPUP_Y + 6, 18, 12)) {
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 154,
+                              M11_GRAPHICS_POPUP_Y + 6, 28, 12)) {
             if (!leftClick) return M11_GAME_INPUT_REDRAW;
             state->graphicsPopupActive = 0;
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
-                              M11_GRAPHICS_POPUP_Y + 23, 136, 12)) {
+        if (m11_point_in_rect(x, y,
+                              M11_GRAPHICS_POPUP_X + M11_GRAPHICS_POPUP_CONTENT_X,
+                              M11_GRAPHICS_POPUP_Y + M11_GRAPHICS_POPUP_TAB_Y,
+                              M11_GRAPHICS_POPUP_CONTENT_W,
+                              M11_GRAPHICS_POPUP_TAB_H)) {
             if (!leftClick) return M11_GAME_INPUT_REDRAW;
-            state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 40) ?
-                M11_GRAPHICS_POPUP_PAGE_PRESENTATION :
-                (x < M11_GRAPHICS_POPUP_X + 78 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
-                 (x < M11_GRAPHICS_POPUP_X + 114 ? M11_GRAPHICS_POPUP_PAGE_EFFECTS :
-                                                   M11_GRAPHICS_POPUP_PAGE_CHEATS));
+            int tab = (x - (M11_GRAPHICS_POPUP_X + M11_GRAPHICS_POPUP_CONTENT_X)) /
+                      M11_GRAPHICS_POPUP_TAB_W;
+            if (tab < 0) tab = 0;
+            if (tab >= M11_GRAPHICS_POPUP_PAGE_COUNT)
+                tab = M11_GRAPHICS_POPUP_PAGE_COUNT - 1;
+            state->graphicsPopupPage = tab;
             state->graphicsPopupSelectedRow = 0;
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
-                              M11_GRAPHICS_POPUP_Y + 40, 136, 110)) {
+        if (m11_point_in_rect(x, y,
+                              M11_GRAPHICS_POPUP_X + M11_GRAPHICS_POPUP_CONTENT_X,
+                              M11_GRAPHICS_POPUP_Y + 40,
+                              M11_GRAPHICS_POPUP_CONTENT_W, 110)) {
             int row = (y - (M11_GRAPHICS_POPUP_Y + 40)) / 10;
             if (row >= 0 && row < m11_graphics_popup_row_count(state, state->graphicsPopupPage)) {
                 if (row == state->graphicsPopupSelectedRow) {
@@ -66848,9 +66866,12 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     M12_Config config;
     int i, slot, rowCount, v2;
     char value[40];
-    M11_TextStyle title = g_text_small;
+    M11_TextStyle title = g_text_title;
     M11_TextStyle normal = g_text_small;
     M11_TextStyle selected = g_text_small;
+    static const char* const tabNames[] = {
+        "DISPLAY", "FILTERS", "EFFECTS", "PLAY"
+    };
 
     if (!state || !state->graphicsPopupActive || !framebuffer ||
         framebufferWidth <= 0 || framebufferHeight <= 0) {
@@ -66875,16 +66896,34 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                   M11_GRAPHICS_POPUP_W, M11_GRAPHICS_POPUP_H,
                   M11_COLOR_LIGHT_BLUE);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 8,
-                  "GRAPHICS F10 ESC TAB", &title);
+                  M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 5,
+                  "GRAPHICS", &title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 134, M11_GRAPHICS_POPUP_Y + 8, "X", &title);
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 23,
-                  state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? "[PRES] FILT FX CH" :
-                  state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ? "PRES [FILT] FX CH" :
-                  state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS ? "PRES FILT [FX] CH" :
-                                                                                  "PRES FILT FX [CH]", &selected);
+                  M11_GRAPHICS_POPUP_X + 154, M11_GRAPHICS_POPUP_Y + 8,
+                  "F10  X", &normal);
+    for (i = 0; i < M11_GRAPHICS_POPUP_PAGE_COUNT; ++i) {
+        int tabX = M11_GRAPHICS_POPUP_X + M11_GRAPHICS_POPUP_CONTENT_X +
+                   i * M11_GRAPHICS_POPUP_TAB_W;
+        int activeTab = i == state->graphicsPopupPage;
+        M11_TextStyle tabStyle = activeTab ? selected : normal;
+        if (activeTab) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          tabX, M11_GRAPHICS_POPUP_Y + M11_GRAPHICS_POPUP_TAB_Y,
+                          M11_GRAPHICS_POPUP_TAB_W - 1,
+                          M11_GRAPHICS_POPUP_TAB_H, M11_COLOR_DARK_GRAY);
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          tabX, M11_GRAPHICS_POPUP_Y + M11_GRAPHICS_POPUP_TAB_Y,
+                          M11_GRAPHICS_POPUP_TAB_W - 1,
+                          M11_GRAPHICS_POPUP_TAB_H, M11_COLOR_LIGHT_BLUE);
+        }
+        /* The longest labels are seven 6px cells (42px), exactly fitting the
+         * 43px inner tab.  Keep this explicit instead of relying on a later
+         * layout helper: F10 is available before any source font is bound. */
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      tabX + (i == M11_GRAPHICS_POPUP_PAGE_CHEATS ? 9 : 1),
+                      M11_GRAPHICS_POPUP_Y + M11_GRAPHICS_POPUP_TAB_Y + 2,
+                      tabNames[i], &tabStyle);
+    }
     if (!v2 && (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ||
                 state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS))
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
@@ -66932,9 +66971,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 default: snprintf(value, sizeof(value), "%s", config.csbV2BilinearEnabled ? "ON" : "OFF"); break;
             }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_GRAPHICS_POPUP_X + 7, y, csbFilters[i], &line);
+                          M11_GRAPHICS_POPUP_X + 8, y, csbFilters[i], &line);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_GRAPHICS_POPUP_X + 82, y, value, &line);
+                          M11_GRAPHICS_POPUP_X + 100, y, value, &line);
             continue;
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
                    state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
@@ -66950,9 +66989,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 default: snprintf(value, sizeof(value), "%s", config.theronV2BilinearEnabled ? "ON" : "OFF"); break;
             }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_GRAPHICS_POPUP_X + 7, y, theronFilters[i], &line);
+                          M11_GRAPHICS_POPUP_X + 8, y, theronFilters[i], &line);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_GRAPHICS_POPUP_X + 82, y, value, &line);
+                          M11_GRAPHICS_POPUP_X + 100, y, value, &line);
             continue;
         } else if ((state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ||
                     state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS) &&
@@ -66960,9 +66999,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                    state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
                    state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_GRAPHICS_POPUP_X + 7, y, "SOURCE LOCKED", &line);
+                          M11_GRAPHICS_POPUP_X + 8, y, "SOURCE LOCKED", &line);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          M11_GRAPHICS_POPUP_X + 82, y, "REAL CHAIN NEEDED", &line);
+                          M11_GRAPHICS_POPUP_X + 100, y, "REAL CHAIN NEEDED", &line);
             continue;
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
             switch (i) {
@@ -66991,9 +67030,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
             }
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 7, y, rows[i], &line);
+                      M11_GRAPHICS_POPUP_X + 8, y, rows[i], &line);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 82, y, value, &line);
+                      M11_GRAPHICS_POPUP_X + 100, y, value, &line);
     }
 }
 
