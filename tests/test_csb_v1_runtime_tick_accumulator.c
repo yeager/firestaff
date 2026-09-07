@@ -2112,6 +2112,77 @@ static void test_c30_projectile_reaction_behind_facing_turns_without_moving(void
           "C30 behind-facing branch does not manufacture C37 work");
 }
 
+/* ReDMCSB GROUP.C F0209:2027-2044: when the initial three-in-four C30 gate
+ * admits a group that can see the party, its second M004 zero result falls
+ * through to C29.  The escape therefore uses a third absolute M004 direction
+ * and then consumes the normal post-move C37-delay draw. */
+static void test_c30_projectile_reaction_visible_party_falls_through_to_c29(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[144];
+    struct DM1_Event_V1 event;
+    uint32_t expected_random_state;
+
+    printf("\n-- CSB C30 visible-party danger fallthrough --\n");
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[4] = 70;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(1, 0)] = (uint8_t)(1u << 5);
+    test_put_le16(raw, 60, 0);
+    test_put_le16(raw, 62, 1);
+    test_put_le16(raw, 64, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, 0xffffu);
+    test_put_le16(raw, 70, 0xfffeu);
+    raw[74] = 9u; /* Mummy. */
+    raw[75] = 0xffu;
+    test_put_le16(raw, 76, 40u);
+    test_put_le16(raw, 84, 0x0200u); /* C0 wander; faces south. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 0;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.csbwin_random_seed_valid = 1;
+    /* M004 sequence 2, 0, 1, 2: admit C30, admit its C29 fallthrough,
+     * choose east for C29, then choose the C37 delay. */
+    profile.csbwin_random_seed = 34u;
+    expected_random_state = 34u;
+    expected_random_state = expected_random_state * UINT32_C(0xbb40e62d) +
+        UINT32_C(11);
+    expected_random_state = expected_random_state * UINT32_C(0xbb40e62d) +
+        UINT32_C(11);
+    expected_random_state = expected_random_state * UINT32_C(0xbb40e62d) +
+        UINT32_C(11);
+    expected_random_state = expected_random_state * UINT32_C(0xbb40e62d) +
+        UINT32_C(11);
+    memset(&event, 0, sizeof(event));
+    event.type = DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE;
+    event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    event.b_mapX = 0;
+    event.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
+          "C30 visible-party fixture queues projectile reaction");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C30 visible-party fixture dispatches projectile reaction");
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
+              test_get_le16(raw, 68) == (uint16_t)(4u << 10),
+          "C30 visible-party second gate falls through to C29 east escape");
+    CHECK(profile.csbwin_random_seed == expected_random_state,
+          "C30 visible-party fallthrough preserves all four source M004 draws");
+    CHECK(count_queued_event_type(&profile,
+                                  DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 1,
+          "C30 visible-party escape schedules its C37 group update");
+}
+
 /* ReDMCSB GROUP.C F0209:2153-2168 / BASE.C F0028,F0029: C37 wandering
  * consumes G0349 first for the one-bit movement gate and, only when admitted,
  * once more for an absolute two-bit direction.  The old bridge reseeded from
@@ -7377,6 +7448,7 @@ int main(void)
     test_c29_danger_reaction_uses_absolute_escape_direction();
     test_c30_projectile_reaction_ignores_attacking_group();
     test_c30_projectile_reaction_behind_facing_turns_without_moving();
+    test_c30_projectile_reaction_visible_party_falls_through_to_c29();
     test_c37_wander_uses_shared_rng_absolute_direction();
     test_c37_wary_creature_rejects_disallowed_teleporter();
     test_c37_group_approach_turns_moved_group_per_creature();

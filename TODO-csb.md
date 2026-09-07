@@ -101,8 +101,9 @@ using newly supplied captures; it must never generate a replacement corpus.
 # groups, makes a 3/4 M004 gate, turns without moving if the party is not on
 # the unblocked route, and otherwise makes a second 3/4 gate before falling
 # through to C29's danger-movement route. The native tick regression now
-# covers the attack-ignore branch and the blocked-route direction-only branch,
-# including their exact G0349 draw counts. Remaining work is full F0200,
+# covers attack-ignore, blocked-route direction-only, and visible-party C29
+# fallthrough branches, including their exact G0349 draw counts. Remaining work
+# is full F0200,
 # rather than another generic visibility predicate: it must bind each real
 # creature's direction(s), sight range, invisibility capability, palette-light
 # adjustment, and source-owned range RNG before C30/C32--C37 can claim full
