@@ -16,8 +16,9 @@
  *
  * Phase 1 rules:
  *   LAUNCH domain: V2 launch must verify CSB assets independently from DM1.
- *     CSB DUNGEON.DAT MD5: 6695d2acebce49f95db1d8f3a5c733de (PC 3.4 EN)
- *     CSB GRAPHICS.DAT MD5: 61fbfd56887c94adc26888a9491c6611 (PC 3.4 EN)
+ *     CSB DUNGEON.DAT MD5: 6695d2acebce49f95db1d8f3a5c733de (retail CSB)
+ *     CSB GRAPHICS.DAT MD5: 61fbfd56887c94adc26888a9491c6611
+ *       (Amiga 3.1 multilingual; never a PC release)
  *     CSBGRAPH.DAT and CSB.DAT are also valid CSB archives (floppy variants).
  *     V2 launch must NOT require DM1's GRAPHICS.DAT or DUNGEON.DAT hashes.
  *
@@ -85,8 +86,9 @@ CSB_V2_PhaseGateDecision csb_v2_phase_gate_decide(
              * and C28_ENTRANCE_CSB palette before any asset binding.
              * V2 may extend the entrance animation but must not skip it.
              *
-             * CSB DUNGEON.DAT hash: 6695d2acebce49f95db1d8f3a5c733de (PC 3.4 EN)
-             * CSB GRAPHICS.DAT hash: 61fbfd56887c94adc26888a9491c6611 (PC 3.4 EN)
+             * CSB DUNGEON.DAT hash: 6695d2acebce49f95db1d8f3a5c733de
+             * CSB GRAPHICS.DAT hash: 61fbfd56887c94adc26888a9491c6611
+             *   (Amiga 3.1 multilingual; CSB has no PC/DOS release)
              * These hashes are distinct from DM1's:
              *   DM1 DUNGEON.DAT: d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
              *   DM1 GRAPHICS.DAT: 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e

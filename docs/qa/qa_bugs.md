@@ -41,8 +41,9 @@ also treated historical behaviour as a Firestaff defect.
    source-modelled VBlank route is tested separately; frame-perfect parity is
    still open because the required original gameplay captures are absent.
 2. `BUG0_07` is edition-specific. ReDMCSB marks it fixed in DM 1.1 and later,
-   including the PC 3.4/CSB families Firestaff currently targets. It is wrong
-   to label it an open PC 3.4 defect.
+   including DM1 PC 3.4 and the supported CSB families. CSB has no PC/DOS
+   edition; it is wrong to label the defect as open for the supported retail
+   routes.
 3. The CSB dialog engine-version surface is source modelled and covered by
    `test_csb_v1_graphics_extras_pc34_compat` and the boot/title handoff test;
    it is not an open graphics gap.

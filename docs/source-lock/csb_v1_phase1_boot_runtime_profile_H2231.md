@@ -156,10 +156,13 @@ From `asset_status_m12.c` (`g_csbVersions[]`, confirmed all platforms):
 
 | Variant | Platform | GRAPHICS.DAT MD5 |
 |---------|----------|-----------------|
-| PC 3.4 EN | DOS | `61fbfd56887c94adc26888a9491c6611` |
+| Amiga 3.1 Multi | Amiga | `61fbfd56887c94adc26888a9491c6611` |
+| Amiga 3.1 EN | Amiga | `21197b1d4994fd835c403d5a33dcac2b` |
 | ST 2.0/2.1 EN | Atari ST | `ebf6a57af3f27782e358c0490bfd2f2e` |
 | Amiga 3.5 EN | Amiga | `291e1bc6803e3dc4b974c60117ca5d68` |
 | Amiga 3.5 Multi | Amiga | `cefaddfdf5651df2c91f61b5611a8362` |
+| FM Towns EN | FM Towns | `405b757038eea3c263e60f240854d6de` |
+| FM Towns JP | FM Towns | `761d6fc588b31aeaaa9caf3725e111b9` |
 
 All CSB platforms share same dungeon hash: `6695d2acebce49f95db1d8f3a5c733de`
 
