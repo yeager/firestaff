@@ -96,12 +96,14 @@ DSA-bearing saves and visual/audio captures are deferred while native Atari,
 Amiga and FM Towns media paths continue to be improved from the supplied
 original packages.  Later work must record media hashes and provenance before
 using newly supplied captures; it must never generate a replacement corpus.
-# CSB C30 projectile-hit reaction must not fall through to generic C37. ReDMCSB
-# GROUP.C F0209:2024-2044 first ignores attacking/fleeing groups, then makes a
-# 3/4 M004 gate. A group without a visible party turns to a fresh random
-# direction; a visible party performs a second 3/4 gate before falling through
-# to C29's danger-movement route. Firestaff currently has no source-equivalent
-# F0200 visibility receipt in the C30 dispatcher, so implementing a generic
-# "can see party" predicate would invent behavior. Add raw-map F0200 evidence,
-# then cover both RNG draws and the no-move direction-only outcome with a real
-# C04/ACTIVE_GROUP fixture.
+# CSB C30 projectile-hit reaction uses the raw C04 group and source-shaped
+# F0199 route. ReDMCSB GROUP.C F0209:2024-2044 first ignores attacking/fleeing
+# groups, makes a 3/4 M004 gate, turns without moving if the party is not on
+# the unblocked route, and otherwise makes a second 3/4 gate before falling
+# through to C29's danger-movement route. The native tick regression now
+# covers the attack-ignore branch and the blocked-route direction-only branch,
+# including their exact G0349 draw counts. Remaining work is full F0200,
+# rather than another generic visibility predicate: it must bind each real
+# creature's direction(s), sight range, invisibility capability, palette-light
+# adjustment, and source-owned range RNG before C30/C32--C37 can claim full
+# perception parity.
