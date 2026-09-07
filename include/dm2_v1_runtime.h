@@ -1879,6 +1879,10 @@ const uint8_t *dm2_v1_runtime_query_gdat_text_override(
 int dm2_v1_runtime_bind_fmtowns_english_text_companion(
     const uint8_t *graphics_data, size_t graphics_size);
 
+/* Bind the built-in GDAT-keyed l10n bridge. The FM Towns disc stays the only
+ * runtime game-data owner; no PC-English GRAPHICS.DAT is required. */
+int dm2_v1_runtime_bind_fmtowns_builtin_l10n_overlay(void);
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *dm2_v1_runtime_source_evidence(void);
 

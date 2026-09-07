@@ -13117,14 +13117,6 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
             free(profile);
             return 0;
         }
-    } else if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
-               language_index == 0) {
-        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
-        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
-                                               out_launch);
-        dm2_v1_boot_cleanup(profile);
-        free(profile);
-        return 0;
     }
     dm2_v1_boot_set_save_root(profile, NULL);
     if (dm2_v1_boot_enter_game(profile) != 0) {
@@ -13158,6 +13150,19 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
         dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
                                                out_launch);
         free(english_companion);
+        dm2_v1_boot_cleanup(profile);
+        free(profile);
+        return 0;
+    }
+    /* Japanese is an explicit presentation choice. Every other selected
+     * locale uses the reviewed GDAT-keyed English bridge and then gettext;
+     * the Towns disc remains the sole game-data owner. */
+    if (!english_companion && profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        language_index != 4 &&
+        !dm2_v1_runtime_bind_fmtowns_builtin_l10n_overlay()) {
+        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
         dm2_v1_boot_cleanup(profile);
         free(profile);
         return 0;

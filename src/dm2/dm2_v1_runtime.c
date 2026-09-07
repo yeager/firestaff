@@ -15617,6 +15617,23 @@ int dm2_v1_runtime_bind_fmtowns_english_text_companion(
     return 1;
 }
 
+int dm2_v1_runtime_bind_fmtowns_builtin_l10n_overlay(void)
+{
+    if (!g_dm2_runtime.boot ||
+        g_dm2_runtime.boot->platform != DM2_PLATFORM_FMTOWNS_JA) return 0;
+    if (g_dm2_runtime.i18n_ready) {
+        dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
+        g_dm2_runtime.i18n_ready = 0;
+    }
+    dm2_v1_i18n_init(&g_dm2_runtime.i18n);
+    if (!dm2_v1_i18n_load_builtin_english_overlay(&g_dm2_runtime.i18n)) {
+        dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
+        return 0;
+    }
+    g_dm2_runtime.i18n_ready = 1;
+    return 1;
+}
+
 /* ── Engage command (hand actions) ────────────────────────────────── */
 
 typedef struct {

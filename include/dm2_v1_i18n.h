@@ -88,6 +88,12 @@ int dm2_v1_i18n_load_english_overlay(DM2_V1_I18nContext *ctx,
                                      const uint8_t *pc_gdat_data,
                                      size_t pc_gdat_size);
 
+/* Load the reviewed, GDAT-keyed canonical-English catalog built from the
+ * project's gettext inventory. This does not read or require a second game
+ * edition at runtime; it is the non-Japanese presentation bridge for an
+ * authenticated FM Towns Japanese disc. */
+int dm2_v1_i18n_load_builtin_english_overlay(DM2_V1_I18nContext *ctx);
+
 /* Load a locale text overlay from a GDAT v5 GRAPHICS.DAT file.
  * Multiple locales can be loaded; entries are appended and tagged
  * with their locale.  Query uses the active locale to pick the right entry.

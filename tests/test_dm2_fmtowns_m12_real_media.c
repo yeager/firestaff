@@ -151,8 +151,11 @@ int main(void)
         size_t text_size = 0u;
         memset(&missing_companion, 0, sizeof(missing_companion));
         expect(dm2_v1_boot_startup_launch_alloc_with_language(
-                   selectedRuntime, NULL, 0, &missing_companion) == 0,
-               "FM Towns English refuses to launch without its real companion corpus");
+                   selectedRuntime, NULL, 0, &missing_companion) == 1,
+               "FM Towns English launches through the built-in keyed l10n bridge");
+        expect(dm2_v1_runtime_i18n_ready(),
+               "FM Towns without a companion binds the English l10n bridge");
+        dm2_v1_boot_startup_launch_cleanup(&missing_companion);
         memset(&launch, 0, sizeof(launch));
         expect(dm2_v1_boot_startup_launch_alloc_with_language(
                    selectedRuntime, english_companion, 0, &launch) == 1,

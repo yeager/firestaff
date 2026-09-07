@@ -8,6 +8,15 @@ static const char *locale_codes[DM2_LOCALE_COUNT] = {
     "no", "fi", "pl", "cs", "hu", "ro", "hr", "sk", "ru", "zh"
 };
 
+typedef struct {
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    const char *text;
+} DM2_V1_I18nBuiltinText;
+
+#include "dm2_v1_i18n_builtin_overlay.inc"
+
 void dm2_v1_i18n_init(DM2_V1_I18nContext *ctx) {
     if (!ctx) return;
     memset(ctx, 0, sizeof(*ctx));
@@ -24,6 +33,44 @@ void dm2_v1_i18n_destroy(DM2_V1_I18nContext *ctx) {
 void dm2_v1_i18n_set_locale(DM2_V1_I18nContext *ctx, DM2_Locale locale) {
     if (!ctx || locale < 0 || locale >= DM2_LOCALE_COUNT) return;
     ctx->active_locale = locale;
+}
+
+int dm2_v1_i18n_load_builtin_english_overlay(DM2_V1_I18nContext *ctx) {
+    size_t i;
+    size_t pool_size = 0u;
+    if (!ctx) return 0;
+    for (i = 0u; i < sizeof(g_builtin_english_text) / sizeof(g_builtin_english_text[0]); ++i)
+        pool_size += strlen(g_builtin_english_text[i].text) + 1u;
+    if (pool_size == 0u || pool_size > UINT32_MAX) return 0;
+    free(ctx->entries);
+    free(ctx->text_pool);
+    ctx->entries = calloc(sizeof(g_builtin_english_text) / sizeof(g_builtin_english_text[0]),
+                          sizeof(*ctx->entries));
+    ctx->text_pool = malloc(pool_size);
+    if (!ctx->entries || !ctx->text_pool) {
+        free(ctx->entries); free(ctx->text_pool);
+        ctx->entries = NULL; ctx->text_pool = NULL;
+        return 0;
+    }
+    ctx->entry_count = (uint16_t)(sizeof(g_builtin_english_text) /
+                                  sizeof(g_builtin_english_text[0]));
+    ctx->text_pool_size = 0u;
+    ctx->text_pool_capacity = (uint32_t)pool_size;
+    for (i = 0u; i < ctx->entry_count; ++i) {
+        size_t bytes = strlen(g_builtin_english_text[i].text) + 1u;
+        ctx->entries[i].category = g_builtin_english_text[i].category;
+        ctx->entries[i].index = g_builtin_english_text[i].index;
+        ctx->entries[i].field = g_builtin_english_text[i].field;
+        ctx->entries[i].locale = (uint8_t)DM2_LOCALE_EN;
+        ctx->entries[i].text_offset = ctx->text_pool_size;
+        ctx->entries[i].text_length = (uint16_t)bytes;
+        memcpy(ctx->text_pool + ctx->text_pool_size,
+               g_builtin_english_text[i].text, bytes);
+        ctx->text_pool_size += (uint32_t)bytes;
+    }
+    ctx->active_locale = DM2_LOCALE_EN;
+    ctx->valid = 1;
+    return 1;
 }
 
 static int i18n_ensure_pool(DM2_V1_I18nContext *ctx, uint32_t needed) {

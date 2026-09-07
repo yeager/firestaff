@@ -47,7 +47,7 @@ DM2 is playable in Firestaff from four authenticated source families:
 |---|---|---|
 | DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `Downloads/dm2` are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
 | Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, clipped source CHARSHEET inventory, movement, pits, stairs, level transitions and creatures |
-| FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese UI text uses the verified PC-English `GRAPHICS.DAT` companion in memory | Title sequence, New Game, inventory, movement, level transitions and creatures |
+| FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese text uses the built-in GDAT-keyed l10n bridge | Title sequence, New Game, inventory, movement, level transitions and creatures |
 | Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs, level transitions and combat/creature handoff |
 
 The shared DM2 data root may contain all four editions. Firestaff resolves a
@@ -66,12 +66,13 @@ otherwise uses English. A language chosen in the start menu or with
 `--lang <code>` takes precedence over Auto.
 
 For the Japanese FM Towns edition of DM2, Firestaff keeps the original Towns
-disc as the game-data owner and reads the verified PC-English text companion
-only in memory. This lets the game present English text and apply the selected
-localization instead of being locked to Japanese. Swedish has a complete DM2
+disc as the only game-data owner. A built-in, GDAT-keyed bridge maps the
+disc's authenticated text records to canonical English gettext entries, so no
+PC-English `GRAPHICS.DAT` is required at runtime. The selected catalog then
+applies Swedish or another supported language. Swedish has a complete DM2
 catalog; other language catalogs remain work in progress. Any untranslated
-entry safely shows its authenticated English source text—never invented text
-or a different edition's Japanese fallback. See [translation status](po/README.md)
+entry safely shows its canonical English source text—never invented text or a
+different edition's Japanese fallback. See [translation status](po/README.md)
 for exact per-language coverage.
 
 Focused real-media checks and their current boundaries are documented in
@@ -173,6 +174,20 @@ boundary.
 The reproducible source dependency inventory is available as
 [`sbom/firestaff.spdx.json`](sbom/firestaff.spdx.json) (SPDX 2.3). It excludes
 game media and every user-local input.
+
+## Included tools
+
+Firestaff also ships desktop tools for working with files you own. They are
+optional and never run while playing a game.
+
+| Tool | Purpose | Documentation |
+|---|---|---|
+| Firestaff Artpack Studio | Creates and validates Modern-mode artpacks without modifying original game media. | [Artpack Studio guide](docs/artpack_studio.md) |
+| Firestaff Dungeon Studio | Views and edits supported dungeon data, with a built-in screenshot option for documentation and review. | [Dungeon Studio source](scripts/firestaff_dungeon_studio.py) |
+| Firestaff Savegame Editor | Inspects and edits supported save files; always keep a backup of an original save. | [Savegame Editor source](scripts/firestaff_savegame_editor.py) |
+
+The desktop bundles build translations from their `.po` source catalogs during
+packaging. Generated `.mo` files are not stored in the source tree.
 
 ### Platform status at a glance
 
