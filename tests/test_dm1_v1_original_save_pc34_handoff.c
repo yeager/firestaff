@@ -3893,8 +3893,12 @@ static void test_original_save_later_map_group_transition(void)
             event->mapIndex == 0 && event->aux0 == 0) {
             found_old_wander = 1;
         }
-        if (event->kind == TIMELINE_EVENT_CREATURE_TICK &&
-            event->mapIndex == 1 && event->aux0 == 1) {
+        /* GROUP.C F0180 schedules C37 (a reaction event) for a newly
+         * admitted C04.  It is not an immediate WANDER creature tick;
+         * F0209 consumes C37 on the next source tick. */
+        if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            event->mapIndex == 1 && event->aux0 == 1 &&
+            event->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
             found_new_wander = 1;
         }
     }
