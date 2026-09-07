@@ -1207,6 +1207,51 @@ static int m11_load_po_domain(const char* domain,
     return 0;
 }
 
+/* Keep one ordering shared by CLI parsing, M12 and the runtime catalog
+ * handoff. The game selector owns a language per title; loading every
+ * catalog from the launcher-wide setting alone used to discard that choice
+ * when the selected game entered M11. */
+static const char* m11_language_code_from_index(int languageIndex) {
+    static const char* const codes[] = {
+        "en", "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
+        "hu", "it", "ko", "nl", "no", "pl", "pt", "ru", "tr", "id"
+    };
+    if (languageIndex < 0 ||
+        languageIndex >= (int)(sizeof(codes) / sizeof(codes[0]))) {
+        return "en";
+    }
+    return codes[languageIndex];
+}
+
+static void m11_apply_selected_game_language(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry,
+    const char* dataDir) {
+    M12_LaunchIntent intent;
+    const char* domain = NULL;
+    const char* language;
+
+    if (!menuState || !entry || !entry->gameId) {
+        return;
+    }
+    if (strcmp(entry->gameId, "dm1") == 0) domain = "dm1";
+    else if (strcmp(entry->gameId, "csb") == 0) domain = "csb";
+    else if (strcmp(entry->gameId, "dm2") == 0) domain = "dm2";
+    else if (strcmp(entry->gameId, "nexus") == 0) domain = "nexus";
+    else if (strcmp(entry->gameId, "theron") == 0) domain = "theron";
+    if (!domain) {
+        return;
+    }
+
+    intent = M12_StartupMenu_GetLaunchIntent(menuState);
+    language = m11_language_code_from_index(intent.options.languageIndex);
+    fs_l10n_set_language(fs_l10n_language_from_locale(language));
+    /* A missing catalog is deliberately not substituted with another game
+     * domain. fs_po's exact-msgid fallback leaves the selected game's
+     * authenticated English source intact. */
+    (void)m11_load_po_domain(domain, language, dataDir);
+}
+
 /* Opt-in evidence capture for the actual post-present SDL surface. The
  * capture is downstream of the source-raster and RGBA palette gates; it
  * never promotes a screenshot into source evidence. One file per source
@@ -3321,6 +3366,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         return 0;
     }
     launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    /* The language on a game's Custom card is a launch option. Apply it at
+     * the handoff boundary, after the selected-version checks and before a
+     * title or entrance frame can expose player text. */
+    m11_apply_selected_game_language(menuState, launchEntry, dataDir);
     /* Game options are per title.  Apply the selected ratio before any title
      * frame is shown and disable the launcher-only fill mode.  The renderer
      * computes a fitted destination rectangle, so this is letterbox or
@@ -6803,6 +6852,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             };
             menuState.settings.languageIndex = o->languageOverride;
             menuState.languageExplicit = 1;
+            /* --lang is an explicit user request and therefore must also
+             * replace a stale per-game Custom-card language. */
+            for (int gameIndex = 0; gameIndex < M12_ASSET_GAME_COUNT;
+                 ++gameIndex) {
+                menuState.gameOptions[gameIndex].languageIndex =
+                    o->languageOverride;
+            }
             fs_l10n_set_language(
                 fs_l10n_language_from_locale(languageCodes[o->languageOverride]));
         }
