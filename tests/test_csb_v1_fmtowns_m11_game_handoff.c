@@ -2673,6 +2673,47 @@ int main(void)
             }
             free(graphics);
             view.presentationMode = savedMode;
+
+            /* F0408 clears a source-invalid incantation after F0409 cannot
+             * find it in the authenticated G0487 table.  This is deliberately
+             * narrower than a successful F0412 cast: no effect, XP, RNG or
+             * timeline state may be borrowed from DM1 while that owner is
+             * still being implemented. */
+            {
+                int caster = view.dm1SpellCasting.magicCasterIndex;
+                CSB_V1_BootProfile *mutable_profile =
+                    (CSB_V1_BootProfile *)view.csbBootProfile;
+                CSB_V1_Champion *source_champion;
+                uint32_t rng_before;
+                if (!view.spellPanelOpen)
+                    (void)M11_GameView_OpenSpellPanel(&view);
+                CHECK(mutable_profile && caster >= 0 &&
+                          caster < mutable_profile->runtime.party_state.ChampionCount,
+                      "F31 source-invalid cast retains an admitted magic caster");
+                if (mutable_profile && caster >= 0 &&
+                    caster < mutable_profile->runtime.party_state.ChampionCount &&
+                    view.spellPanelOpen) {
+                    source_champion =
+                        &mutable_profile->runtime.party_state.Champions[caster];
+                    memset(view.spellBuffer.runes, 0, sizeof(view.spellBuffer.runes));
+                    view.spellBuffer.runes[0] = 0x60u; /* Lo Lo is absent from G0487. */
+                    view.spellBuffer.runes[1] = 0x60u;
+                    view.spellBuffer.runeCount = 2;
+                    view.spellRuneRow = 0;
+                    memset(source_champion->Incantation, 0,
+                           sizeof(source_champion->Incantation));
+                    source_champion->Incantation[0] = 0x60;
+                    source_champion->Incantation[1] = 0x60;
+                    source_champion->SymbolStep = 0u;
+                    rng_before = mutable_profile->runtime.csbwin_random_seed;
+                    CHECK(M11_GameView_CastSpell(&view) == 1 &&
+                              view.spellPanelOpen && view.spellBuffer.runeCount == 0 &&
+                              source_champion->Incantation[0] == 0 &&
+                              source_champion->SymbolStep == 0u &&
+                              mutable_profile->runtime.csbwin_random_seed == rng_before,
+                          "F31 F0409-invalid cast clears only source symbols through authenticated G0487");
+                }
+            }
             /* This proves presentation only, not a successful spell cast.
              * The independent CSB cast-owner gap remains explicitly open. */
         }

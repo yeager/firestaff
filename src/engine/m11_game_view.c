@@ -20622,6 +20622,29 @@ static int m11_apply_dm1_spell_failure_feedback_f0412(
     return 1;
 }
 
+/* F31 MENU.C F0409 searches the selected CHTWE/CHTWJ G0487 table, not
+ * DM1's compiled table.  A complete successful CSB F0412 transaction still
+ * needs its source-owned effect, XP, RNG and timeline consumers, but the
+ * meaningless-spell path is self-contained: F0408 clears Symbols after the
+ * F0410 result while retaining the selected caster and spell panel. */
+static int m11_csb_fmtowns_spell_table_contains(
+    const M11_GameViewState *state,
+    uint32_t symbols)
+{
+    const CSB_V1_FmtownsGameHandoffReceipt *handoff;
+    unsigned int index;
+
+    if (!state || !state->csbFmtownsGameHandoffReceipt.valid ||
+        !state->csbFmtownsGameHandoffReceipt.spell_table_verified) {
+        return -1;
+    }
+    handoff = &state->csbFmtownsGameHandoffReceipt;
+    for (index = 0u; index < CSB_V1_FMTOWNS_GAME_SPELL_COUNT; ++index) {
+        if (handoff->spells[index].symbols == symbols) return 1;
+    }
+    return 0;
+}
+
 int M11_GameView_CastSpell(M11_GameViewState* state) {
     DM1_V1_SpellPanelStatePc34 panel =
         m11_dm1_spell_panel_state_pc34(state);
@@ -20662,6 +20685,25 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
          * Atari/Amiga/FM Towns casts. Keep the rune line intact until its owner can
          * consume it; falling through here would debit a CSB champion and
          * mutate the world through DM1's F0750--F0754 route. */
+        int csb_spell_known = -1;
+
+        /* The F31 table is retained from the exact CHTWE/CHTWJ executable.
+         * It lets Firestaff complete only the non-mutating F0409/F0408
+         * failure path.  Do not promote a known spell to DM1's executor. */
+        if (F0750_MAGIC_EncodeRuneSequence_Compat(&state->spellBuffer,
+                                                   &packed)) {
+            csb_spell_known = m11_csb_fmtowns_spell_table_contains(state, packed);
+        } else if (state->csbFmtownsGameHandoffReceipt.valid &&
+                   state->csbFmtownsGameHandoffReceipt.spell_table_verified) {
+            csb_spell_known = 0;
+        }
+        if (csb_spell_known == 0) {
+            M11_GameView_ClearSpell(state);
+            m11_set_status(state, "CAST", "CSB MEANINGLESS SPELL");
+            m11_set_inspect_readout(state, "CSB SPELL FAILED",
+                                    "SOURCE G0487: MEANINGLESS SPELL");
+            return 1;
+        }
         m11_set_status(state, "CAST", "CSB CAST OWNER UNAVAILABLE");
         return 0;
     }
