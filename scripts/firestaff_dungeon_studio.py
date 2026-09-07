@@ -19,6 +19,7 @@ import locale
 import os
 import struct
 import sys
+from firestaff_studio_preferences import resolve_language, save_language
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -40,7 +41,8 @@ LANG_META = [
     ("pl", "\U0001f1f5\U0001f1f1", "Polski"),
     ("cs", "\U0001f1e8\U0001f1ff", "Čeština"),
     ("hu", "\U0001f1ed\U0001f1fa", "Magyar"),
-    ("ro", "\U0001f1f7\U0001f1f4", "Română"),
+    ("tr", "\U0001f1f9\U0001f1f7", "Türkçe"),
+    ("id", "\U0001f1ee\U0001f1e9", "Bahasa Indonesia"),
     ("ja", "\U0001f1ef\U0001f1f5", "日本語"),
     ("ko", "\U0001f1f0\U0001f1f7", "한국어"),
     ("zh", "\U0001f1e8\U0001f1f3", "中文"),
@@ -92,7 +94,9 @@ def _load_translations(lang: str) -> gettext.GNUTranslations | gettext.NullTrans
         return gettext.NullTranslations()
 
 
-_current_lang = _detect_system_lang()
+_APP_ID = "dungeon"
+_current_lang = resolve_language(
+    _APP_ID, _detect_system_lang(), {code for code, _, _ in LANG_META})
 _trans = _load_translations(_current_lang)
 _ = _trans.gettext
 
@@ -111,6 +115,8 @@ except Exception:
 GAMES = ("dm1", "csb", "dm2", "theron", "nexus")
 FSDUNG_MAGIC = b"FSDG"
 FSDUNG_VERSION = 1
+FSDUNG_GAME_IDS = {"dm1": 1, "csb": 2, "dm2": 3, "theron": 4, "nexus": 5}
+FSDUNG_GAMES_BY_ID = {value: key for key, value in FSDUNG_GAME_IDS.items()}
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIRESTAFF_LOGO = REPO_ROOT / "assets" / "branding" / "firestaff-logo.png"
 
@@ -230,6 +236,7 @@ GFX_SLOTS = GFX_SLOTS_V1 + GFX_SLOTS_V2
 
 @dataclass
 class Dungeon:
+    game: str = "dm1"
     maps: list[DungeonMap] = field(default_factory=list)
     party_x: int = 1
     party_y: int = 1
@@ -237,8 +244,10 @@ class Dungeon:
     graphics: dict[str, bytes] = field(default_factory=dict)
 
     @staticmethod
-    def new_default() -> "Dungeon":
-        d = Dungeon()
+    def new_default(game: str = "dm1") -> "Dungeon":
+        if game not in FSDUNG_GAME_IDS:
+            raise ValueError(f"unsupported game: {game}")
+        d = Dungeon(game=game)
         m = DungeonMap()
         m.init_tiles()
         d.maps.append(m)
@@ -253,6 +262,7 @@ def save_fsdung(path: Path, dungeon: Dungeon) -> None:
     hdr[0:4] = FSDUNG_MAGIC
     struct.pack_into("<H", hdr, 4, FSDUNG_VERSION)
     hdr[6] = len(dungeon.maps)
+    hdr[7] = FSDUNG_GAME_IDS[dungeon.game]
     struct.pack_into("<H", hdr, 8, dungeon.party_x)
     struct.pack_into("<H", hdr, 10, dungeon.party_y)
     struct.pack_into("<H", hdr, 12, dungeon.party_dir)
@@ -317,7 +327,7 @@ def load_fsdung(path: Path) -> Dungeon:
     if ver != FSDUNG_VERSION:
         raise ValueError(f"Unsupported version {ver}")
 
-    d = Dungeon()
+    d = Dungeon(game=FSDUNG_GAMES_BY_ID.get(data[7], "dm1"))
     d.party_x = struct.unpack_from("<H", data, 8)[0]
     d.party_y = struct.unpack_from("<H", data, 10)[0]
     d.party_dir = struct.unpack_from("<H", data, 12)[0]
@@ -422,6 +432,12 @@ class DungeonStudio(tk.Tk):
     # ── UI construction ──
 
     def _build_ui(self) -> None:
+        if sys.platform == "darwin":
+            menubar = tk.Menu(self)
+            app_menu = tk.Menu(menubar, tearoff=0)
+            app_menu.add_command(label=_("Settings..."), command=self.show_settings)
+            menubar.add_cascade(label="Firestaff", menu=app_menu)
+            self.config(menu=menubar)
         # Top toolbar
         top = ttk.Frame(self, padding=8)
         top.pack(fill="x")
@@ -454,6 +470,8 @@ class DungeonStudio(tk.Tk):
         lang_menu = ttk.Menubutton(lang_frame, textvariable=self._lang_var, width=4)
         lang_menu.pack(side="right")
         lm = tk.Menu(lang_menu, tearoff=0)
+        lm.add_command(label=_("Auto (System Language)"), command=self._use_system_language)
+        lm.add_separator()
         for lc, flag, name in LANG_META:
             lm.add_command(label=f"{flag} {name}", command=lambda c=lc: self._switch_lang(c))
         lang_menu["menu"] = lm
@@ -638,11 +656,9 @@ class DungeonStudio(tk.Tk):
         tile_count = sum(1 for x in range(m.width) for y in range(m.height) if m.tiles[x][y].type != 0)
         thing_count = sum(len(m.tiles[x][y].things) for x in range(m.width) for y in range(m.height))
         game = self.game.get().upper()
-        supported = game == "DM1"
-        tag = "" if supported else "  [" + _("Coming soon") + "]"
         pos = f"Pos: {self.selected_tile[0]},{self.selected_tile[1]}  " if self.selected_tile else ""
         self.status.set(
-            f"{game}{tag}  |  {pos}Zoom: {self.zoom}  |  "
+            f"{game}  |  {pos}Zoom: {self.zoom}  |  "
             f"Map: {self.current_map_idx + 1}/{len(self.dungeon.maps)}  |  "
             f"Tiles: {tile_count}  |  Things: {thing_count}  |  "
             f"Tool: {self.current_tool.get()}"
@@ -987,19 +1003,36 @@ class DungeonStudio(tk.Tk):
     def _switch_lang(self, lang_code: str) -> None:
         global _, _trans, _current_lang
         _current_lang = lang_code
+        save_language(_APP_ID, lang_code)
         _trans = _load_translations(lang_code)
         _ = _trans.gettext
         self._lang_var.set(lang_code)
         messagebox.showinfo(_("Language"),
                             _("Language set to {}.\nRestart app for full effect.").format(lang_code))
 
+    def _use_system_language(self) -> None:
+        self._switch_lang(_detect_system_lang())
+        save_language(_APP_ID, None)
+
+    def show_settings(self) -> None:
+        dlg = tk.Toplevel(self)
+        dlg.title(_("Settings"))
+        dlg.transient(self)
+        dlg.resizable(False, False)
+        body = ttk.Frame(dlg, padding=16)
+        body.pack(fill="both", expand=True)
+        ttk.Checkbutton(body, text=_("Show grid"), variable=self.show_grid,
+                        command=self.render_canvas).pack(anchor="w")
+        ttk.Checkbutton(body, text=_("Show things"), variable=self.show_things,
+                        command=self.render_canvas).pack(anchor="w", pady=(6, 12))
+        ttk.Button(body, text=_("Use system language"),
+                   command=lambda: (self._use_system_language(), dlg.destroy())).pack(anchor="w")
+        ttk.Button(body, text=_("Close"), command=dlg.destroy).pack(anchor="e", pady=(16, 0))
+
     # ── File operations ──
 
     def new_dungeon(self) -> None:
-        if self.game.get() != "dm1":
-            messagebox.showinfo(_("Coming soon"), _("{} support coming in a future update").format(self.game.get().upper()))
-            return
-        self.dungeon = Dungeon.new_default()
+        self.dungeon = Dungeon.new_default(self.game.get())
         self.current_map_idx = 0
         self.selected_tile = None
         self.file_path = None
@@ -1017,6 +1050,7 @@ class DungeonStudio(tk.Tk):
             return
         try:
             self.dungeon = load_fsdung(Path(path))
+            self.game.set(self.dungeon.game)
             self.file_path = Path(path)
             self.current_map_idx = 0
             self.selected_tile = None
@@ -1051,11 +1085,6 @@ class DungeonStudio(tk.Tk):
     # ── Game selector ──
 
     def on_game_changed(self) -> None:
-        game = self.game.get()
-        if game != "dm1":
-            messagebox.showinfo(_("Coming soon"), _("{} support coming in a future update").format(game.upper()))
-            self.game.set("dm1")
-            return
         self.new_dungeon()
 
     # ── Map settings ──

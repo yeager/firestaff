@@ -17,6 +17,7 @@ from __future__ import annotations
 SAVEGAME_EDITOR_VERSION = "0.2"
 
 import gettext, os, struct, sys
+from firestaff_studio_preferences import resolve_language, save_language
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +37,8 @@ LANG_META = [
     ("pl", "\U0001f1f5\U0001f1f1", "Polski"),
     ("cs", "\U0001f1e8\U0001f1ff", "Čeština"),
     ("hu", "\U0001f1ed\U0001f1fa", "Magyar"),
-    ("ro", "\U0001f1f7\U0001f1f4", "Română"),
+    ("tr", "\U0001f1f9\U0001f1f7", "Türkçe"),
+    ("id", "\U0001f1ee\U0001f1e9", "Bahasa Indonesia"),
     ("ja", "\U0001f1ef\U0001f1f5", "日本語"),
     ("ko", "\U0001f1f0\U0001f1f7", "한국어"),
     ("zh", "\U0001f1e8\U0001f1f3", "中文"),
@@ -85,7 +87,9 @@ def _load_translations(lang: str):
         return gettext.NullTranslations()
 
 
-_current_lang = _detect_system_lang()
+_APP_ID = "savegame"
+_current_lang = resolve_language(
+    _APP_ID, _detect_system_lang(), {code for code, _, _ in LANG_META})
 _trans = _load_translations(_current_lang)
 _ = _trans.gettext
 
@@ -456,7 +460,8 @@ class SavegameEditor(tk.Tk):
             if icns.exists():
                 try:
                     import subprocess
-                    png = Path("/tmp/firestaff_icon.png")
+                    png = Path.home() / ".firestaff" / "cache" / "firestaff_icon.png"
+                    png.parent.mkdir(parents=True, exist_ok=True)
                     subprocess.run(["sips", "-s", "format", "png", str(icns),
                                     "--out", str(png)], capture_output=True, timeout=5)
                     if png.exists():
@@ -477,7 +482,14 @@ class SavegameEditor(tk.Tk):
         fm.add_command(label=_("Quit"), command=self.quit)
         menubar.add_cascade(label=_("File"), menu=fm)
 
+        if sys.platform == "darwin":
+            app_menu = tk.Menu(menubar, tearoff=0)
+            app_menu.add_command(label=_("Settings..."), command=self.show_settings)
+            menubar.add_cascade(label="Firestaff", menu=app_menu)
+
         lm = tk.Menu(menubar, tearoff=0)
+        lm.add_command(label=_("Auto (System Language)"), command=self._use_system_language)
+        lm.add_separator()
         for code, flag, name in LANG_META:
             lm.add_command(label=f"{flag} {name}", command=lambda c=code: self._switch_lang(c))
         menubar.add_cascade(label=_("Language"), menu=lm)
@@ -915,10 +927,27 @@ class SavegameEditor(tk.Tk):
     def _switch_lang(self, lang_code):
         global _current_lang, _trans, _
         _current_lang = lang_code
+        save_language(_APP_ID, lang_code)
         _trans = _load_translations(lang_code)
         _ = _trans.gettext
         messagebox.showinfo(_("Language"),
             _("Language set to {}.\nRestart app for full effect.").format(lang_code))
+
+    def _use_system_language(self):
+        self._switch_lang(_detect_system_lang())
+        save_language(_APP_ID, None)
+
+    def show_settings(self):
+        dlg = tk.Toplevel(self)
+        dlg.title(_("Settings"))
+        dlg.transient(self)
+        dlg.resizable(False, False)
+        body = ttk.Frame(dlg, padding=16)
+        body.pack(fill="both", expand=True)
+        ttk.Label(body, text=_("Language")).pack(anchor="w")
+        ttk.Button(body, text=_("Use system language"),
+                   command=lambda: (self._use_system_language(), dlg.destroy())).pack(anchor="w", pady=(4, 16))
+        ttk.Button(body, text=_("Close"), command=dlg.destroy).pack(anchor="e")
 
 
 def main():

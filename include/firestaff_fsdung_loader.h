@@ -20,6 +20,13 @@
 #define FSDUNG_MAX_GFX_SLOTS    16
 #define FSDUNG_MAX_GFX_KEY_LEN  32
 
+/* Header byte 7.  Zero is the legacy/default DM1 target. */
+#define FSDUNG_GAME_DM1     1
+#define FSDUNG_GAME_CSB     2
+#define FSDUNG_GAME_DM2     3
+#define FSDUNG_GAME_THERON  4
+#define FSDUNG_GAME_NEXUS   5
+
 #define FSDUNG_TILE_WALL        0
 #define FSDUNG_TILE_CORRIDOR    1
 #define FSDUNG_TILE_PIT         2
@@ -71,6 +78,7 @@ typedef struct {
 typedef struct {
     uint16_t version;
     uint8_t  mapCount;
+    uint8_t  gameId;
     uint16_t partyX;
     uint16_t partyY;
     uint16_t partyDir;
@@ -96,6 +104,7 @@ static bool fsdung_load(const uint8_t *data, size_t dataSize, FsdungDungeon *out
 
     out->mapCount = data[6];
     if (out->mapCount == 0 || out->mapCount > FSDUNG_MAX_MAPS) return false;
+    out->gameId = data[7];
 
     out->partyX   = fsdung_read_u16(data + 8);
     out->partyY   = fsdung_read_u16(data + 10);

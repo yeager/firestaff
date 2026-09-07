@@ -49,6 +49,7 @@ except Exception as exc:  # pragma: no cover - exercised by startup path
 
 import gettext
 import locale
+from firestaff_studio_preferences import resolve_language, save_language
 
 LANG_META = [
     ("sv", "\U0001f1f8\U0001f1ea", "Svenska"),
@@ -65,7 +66,8 @@ LANG_META = [
     ("pl", "\U0001f1f5\U0001f1f1", "Polski"),
     ("cs", "\U0001f1e8\U0001f1ff", "Čeština"),
     ("hu", "\U0001f1ed\U0001f1fa", "Magyar"),
-    ("ro", "\U0001f1f7\U0001f1f4", "Română"),
+    ("tr", "\U0001f1f9\U0001f1f7", "Türkçe"),
+    ("id", "\U0001f1ee\U0001f1e9", "Bahasa Indonesia"),
     ("ja", "\U0001f1ef\U0001f1f5", "日本語"),
     ("ko", "\U0001f1f0\U0001f1f7", "한국어"),
     ("zh", "\U0001f1e8\U0001f1f3", "中文"),
@@ -114,7 +116,9 @@ def _load_translations(lang):
     except Exception:
         return gettext.NullTranslations()
 
-_current_lang = _detect_system_lang()
+_APP_ID = "artpack"
+_current_lang = resolve_language(
+    _APP_ID, _detect_system_lang(), {code for code, _, _ in LANG_META})
 _trans = _load_translations(_current_lang)
 _ = _trans.gettext
 
@@ -1742,6 +1746,12 @@ class ArtpackStudio(tk.Tk):
         self.open_pack()
 
     def _build_ui(self) -> None:
+        if sys.platform == "darwin":
+            menubar = tk.Menu(self)
+            app_menu = tk.Menu(menubar, tearoff=0)
+            app_menu.add_command(label=_("Settings..."), command=self.show_settings)
+            menubar.add_cascade(label="Firestaff", menu=app_menu)
+            self.config(menu=menubar)
         top = ttk.Frame(self, padding=8)
         top.pack(fill="x")
         ttk.Label(top, text=_("Game")).pack(side="left")
@@ -1765,6 +1775,8 @@ class ArtpackStudio(tk.Tk):
         lang_menu = ttk.Menubutton(lang_frame, textvariable=self._lang_var, width=4)
         lang_menu.pack(side="right")
         lm = tk.Menu(lang_menu, tearoff=0)
+        lm.add_command(label=_("Auto (System Language)"), command=self._use_system_language)
+        lm.add_separator()
         for lc, flag, name in LANG_META:
             lm.add_command(label=f"{flag} {name}", command=lambda c=lc: self._switch_lang(c))
         lang_menu["menu"] = lm
@@ -1871,11 +1883,16 @@ class ArtpackStudio(tk.Tk):
     def _switch_lang(self, lang_code: str) -> None:
         global _, _trans, _current_lang
         _current_lang = lang_code
+        save_language(_APP_ID, lang_code)
         _trans = _load_translations(lang_code)
         _ = _trans.gettext
         self._lang_var.set(lang_code)
         messagebox.showinfo(_("Language"),
                             _("Language set to {}.\nRestart app for full effect.").format(lang_code))
+
+    def _use_system_language(self) -> None:
+        self._switch_lang(_detect_system_lang())
+        save_language(_APP_ID, None)
 
     def show_settings(self) -> None:
         dlg = tk.Toplevel(self)

@@ -29,6 +29,7 @@ static void test_roundtrip(void) {
     buf[0] = 'F'; buf[1] = 'S'; buf[2] = 'D'; buf[3] = 'G';
     write_u16(buf + 4, FSDUNG_VERSION);
     buf[6] = 1;  /* mapCount */
+    buf[7] = FSDUNG_GAME_NEXUS;
     write_u16(buf + 8, 1);   /* partyX */
     write_u16(buf + 10, 2);  /* partyY */
     write_u16(buf + 12, 3);  /* partyDir */
@@ -93,6 +94,7 @@ static void test_roundtrip(void) {
 
     assert(d.version == FSDUNG_VERSION);
     assert(d.mapCount == 1);
+    assert(d.gameId == FSDUNG_GAME_NEXUS);
     assert(d.partyX == 1);
     assert(d.partyY == 2);
     assert(d.partyDir == 3);
