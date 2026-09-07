@@ -1,7 +1,7 @@
-# Firestaff V2.2 Artpack Studio
+# Firestaff Artpack Studio 0.2
 
 `scripts/firestaff_artpack_studio.py` is a cross-platform graphical tool for
-creating and editing V2.2 modern artpacks for:
+creating and editing modern artpacks for:
 
 - `dm1`
 - `csb`
@@ -127,7 +127,7 @@ useful for reviewing a local CSB PC3.4 `GRAPHICS.DAT` on a build machine:
 ```sh
 python3 scripts/firestaff_artpack_studio.py \
   --import-game-data "$HOME/.firestaff/data/csb/GRAPHICS.DAT" \
-  --export-original-previews /tmp/csb-original-previews
+  --export-original-previews "$HOME/.firestaff/review/csb-original-previews"
 ```
 
 This writes every successfully decoded original record as a PNG and records
