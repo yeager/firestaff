@@ -1,5 +1,15 @@
 # Firestaff TODO — DM1
 
+- Repair and validate original DOS capture input delivery before using the
+  six-shot viewport route as parity evidence. On 2026-09-06, canonical English
+  media produced an authentic entrance-menu image (`selector_000.png`), not
+  dungeon gameplay. A subsequent Enter/movement route produced zero of six
+  screenshots; replacing window-targeted keys with focused XTEST keys also
+  produced zero. That unsuccessful experimental change was reverted. Local
+  evidence is in `.codex-scratch/dm1-original-en-{title,enter,xtest}`. Keep the
+  complete-capture gate; establish reliable host input and inspect each frame
+  before claiming dungeon, movement, or rendering parity.
+
 - Integrate F0205's G0395/G0396 same-tick half-square turn owner across
   separate dispatches, not just within one attack-entry fanout. Original
   ownership is the last active-group pointer plus game time; preserve its
