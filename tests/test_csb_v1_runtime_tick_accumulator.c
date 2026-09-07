@@ -1915,6 +1915,68 @@ static void test_c31_party_bump_enters_attack_and_clears_stale_group_work(void)
           "C31 attack entry schedules the first C38 creature attack event");
 }
 
+/* ReDMCSB GROUP.C F0209:2040-2044,2154-2240: C29 starts with one absolute
+ * M004 direction and escapes danger through the ordinary F0202/F0267 move
+ * transaction, rather than entering the C37 perception state machine. */
+static void test_c29_danger_reaction_uses_absolute_escape_direction(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[144];
+    struct DM1_Event_V1 event;
+    uint32_t expected_random_state;
+
+    printf("\n-- CSB C29 danger reaction --\n");
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[4] = 70;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(0, 0)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    raw[real_format_square_offset(1, 0)] = (uint8_t)(1u << 5);
+    test_put_le16(raw, 60 + 0 * 2, 0);
+    test_put_le16(raw, 60 + 1 * 2, 1);
+    test_put_le16(raw, 60 + 2 * 2, 1);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 68, 0xffffu);
+    test_put_le16(raw, 70, 0xfffeu);
+    raw[74] = 9u;   /* Mummy. */
+    raw[75] = 0xffu;
+    test_put_le16(raw, 76, 40u);
+    test_put_le16(raw, 84, 0u);   /* C0 wander. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 2;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.csbwin_random_seed_valid = 1;
+    profile.csbwin_random_seed = 29u;
+    expected_random_state =
+        29u * UINT32_C(0xbb40e62d) + UINT32_C(11);
+
+    memset(&event, 0, sizeof(event));
+    event.type = DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE;
+    event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    event.b_mapX = 0;
+    event.b_mapY = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
+          "C29 fixture queues the danger reaction");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C29 fixture dispatches the danger reaction");
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
+              test_get_le16(raw, 68) == (uint16_t)(4u << 10),
+          "C29 uses its absolute M004 east escape direction");
+    CHECK(profile.csbwin_random_seed == expected_random_state,
+          "C29 consumes exactly its initial shared M004 direction");
+    CHECK(count_queued_event_type(&profile,
+                                  DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 1,
+          "C29 escape schedules a follow-up C37 group update");
+}
+
 /* ReDMCSB GROUP.C F0209:2153-2168 / BASE.C F0028,F0029: C37 wandering
  * consumes G0349 first for the one-bit movement gate and, only when admitted,
  * once more for an absolute two-bit direction.  The old bridge reseeded from
@@ -7177,6 +7239,7 @@ int main(void)
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
     test_c31_party_bump_enters_attack_and_clears_stale_group_work();
+    test_c29_danger_reaction_uses_absolute_escape_direction();
     test_c37_wander_uses_shared_rng_absolute_direction();
     test_c37_wary_creature_rejects_disallowed_teleporter();
     test_c37_group_approach_turns_moved_group_per_creature();

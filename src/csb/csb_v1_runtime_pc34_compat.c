@@ -5933,6 +5933,91 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             creature_size = creature_profile
                 ? (int)(creature_profile->attributes & 0x0003u)
                 : 0;
+            /* ReDMCSB GROUP.C F0209:2040-2044,2154-2240: C29 is a
+             * danger-on-square escape, not a regular C37 perception update.
+             * It begins at M004_RANDOM(4), scans each direction once, and
+             * admits a return to the prior square only on its one-in-four
+             * M004 result. Reuse the live F0202/F0267 bridge so ordinary
+             * movement keeps its collision, sensor, teleporter and rollback
+             * ownership. */
+            if (record->eventType == DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE) {
+                CSB_V1_RuntimeActiveGroupState *active_state;
+                int direction = csb_v1_runtime_main_random2(profile);
+                const int first_direction = direction;
+                int moved = 0;
+                int moved_x = record->mapX;
+                int moved_y = record->mapY;
+                int moved_map = record->mapIndex;
+
+                csb_v1_runtime_sync_active_group_state_from_record(
+                    profile, group_thing, thing_record, record->mapIndex,
+                    record->mapX, record->mapY, 0, 0);
+                active_state = csb_v1_runtime_active_group_state_for_thing(
+                    profile, group_thing);
+                do {
+                    int candidate_x = record->mapX;
+                    int candidate_y = record->mapY;
+                    int prior_square;
+                    if (direction == 0) candidate_y--;
+                    else if (direction == 1) candidate_x++;
+                    else if (direction == 2) candidate_y++;
+                    else candidate_x--;
+                    prior_square = active_state &&
+                        active_state->prior_map_x == candidate_x &&
+                        active_state->prior_map_y == candidate_y;
+                    if ((!prior_square ||
+                         csb_v1_runtime_main_random2(profile) == 0) &&
+                        !csb_v1_runtime_f0202_destination_is_blocked(
+                            dungeon, record->mapIndex, candidate_x, candidate_y,
+                            creature_profile, 0) &&
+                        !csb_v1_runtime_group_destination_has_party_or_group(
+                            profile, record->mapIndex,
+                            candidate_x, candidate_y) &&
+                        csb_v1_runtime_move_group_thing_to_square(
+                            profile, dungeon, group_thing, record->mapIndex,
+                            record->mapX, record->mapY, record->mapIndex,
+                            candidate_x, candidate_y)) {
+                        moved = 1;
+                        moved_x = candidate_x;
+                        moved_y = candidate_y;
+                        break;
+                    }
+                    direction = (direction + 1) & 3;
+                } while (direction != first_direction);
+                if (moved) {
+                    int group_alive = 1;
+                    csb_v1_runtime_request_creature_movement_sound(
+                        profile, (int)thing_record[4], moved_x, moved_y);
+                    (void)csb_v1_runtime_apply_group_consequences_at_square(
+                        profile, group_thing, &moved_map, &moved_x, &moved_y,
+                        &group_alive);
+                    if (!group_alive) return;
+                    thing_record = csb_v1_runtime_mutable_thing_record(
+                        dungeon, group_thing, &thing_type, &thing_size);
+                    if (!thing_record || thing_type != 4 || thing_size < 16) {
+                        return;
+                    }
+                    if (behavior == 6) {
+                        csb_v1_runtime_delete_group_events_at_square(
+                            profile, record->mapIndex, record->mapX,
+                            record->mapY);
+                        flags = (uint16_t)((flags & 0xFFF0u) | 7u);
+                        csb_v1_runtime_write_u16(thing_record + 14, flags);
+                    }
+                    csb_v1_runtime_set_active_group_direction_group(
+                        profile, group_thing, thing_record, moved_map, moved_x,
+                        moved_y, direction, creature_count, creature_size);
+                    csb_v1_runtime_sync_active_group_state_from_record(
+                        profile, group_thing, thing_record, moved_map, moved_x,
+                        moved_y, 1, 1);
+                    csb_v1_runtime_schedule_c37_group_event(
+                        profile, moved_map, moved_x, moved_y,
+                        (int)thing_record[4],
+                        (uint32_t)csb_v1_runtime_creature_movement_ticks(
+                            (int)thing_record[4]));
+                }
+                return;
+            }
             /* ReDMCSB GROUP.C F0209:2006-2033 handles C31 before the
              * ordinary C37 behavior state machine.  A party bump turns a
              * group into C6 attack only when that creature can attack and is
