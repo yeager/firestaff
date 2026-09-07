@@ -4256,7 +4256,11 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        TIMEOUT 120
+        # Seven independent source-owned DOS sessions each traverse MVE,
+        # SKULL and New Game from the ZIP in memory.  The observed cold-media
+        # run is close to two minutes, so retain a bounded allowance without
+        # turning normal archive I/O variation into a false CI regression.
+        TIMEOUT 240
     )
     add_test(
         NAME dm2_v1_dos_sksave_archive_menu_resume
