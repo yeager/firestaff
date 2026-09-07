@@ -69560,8 +69560,13 @@ int M11_GameView_ProbeDrawDm1ChampionMirrorBackingHostReceipt(
     else if (relForward == 2 && relSide == -1) viewWallIndex = 5;
     else if (relForward == 2 && relSide == 1) viewWallIndex = 9;
     else if (relForward == 2 && relSide == 0) viewWallIndex = 8;
-    else if (relForward == 3 && relSide == -2) viewWallIndex = 0;
-    else if (relForward == 3 && relSide == 2) viewWallIndex = 1;
+    /* The outer D3 lanes use the distinct MEDIA720 layout-696 rows, not
+     * the adjacent G0205 D3 wall rows 0/1.  The normal viewport traversal
+     * represents them as the internal 13/14 pair; keep this diagnostic
+     * helper on that same source route so its material receipt verifies the
+     * actual geometry used at runtime. */
+    else if (relForward == 3 && relSide == -2) viewWallIndex = 13;
+    else if (relForward == 3 && relSide == 2) viewWallIndex = 14;
     else if (relForward == 3 && relSide == -1) viewWallIndex = 2;
     else if (relForward == 3 && relSide == 1) viewWallIndex = 4;
     else if (relForward == 3 && relSide == 0) viewWallIndex = 3;

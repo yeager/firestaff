@@ -8,9 +8,21 @@ static const char* pc34_graphics_path(void)
 {
     static char path[2048];
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    size_t rootLength;
 
     if (!root || !root[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    rootLength = strlen(root);
+    /* The real-data root is deliberately kept as original archives.  This
+     * gate must therefore open GRAPHICS.DAT through Firestaff's native ZIP
+     * reader rather than silently requiring an extracted test fixture.  A
+     * direct archive remains useful for isolated runners. */
+    if (rootLength > 4 && strcmp(root + rootLength - 4, ".zip") == 0) {
+        snprintf(path, sizeof(path), "%s::DATA/GRAPHICS.DAT", root);
+    } else {
+        snprintf(path, sizeof(path),
+                 "%s/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT",
+                 root);
+    }
     return path;
 }
 
@@ -27,7 +39,7 @@ int main(void)
         int viewWallIndex;
     } cases[] = {
         {1, -1, 10}, {1, 1, 11}, {2, -1, 5}, {2, 0, 8},
-        {2, 1, 9}, {3, -2, 0}, {3, 0, 3}, {3, 2, 1},
+        {2, 1, 9}, {3, -2, 13}, {3, 0, 3}, {3, 2, 14},
         {3, -1, 2}, {3, 1, 4}
     };
     size_t index;
@@ -63,7 +75,8 @@ int main(void)
             wall.flipHorizontal !=
                 (cases[index].viewWallIndex == 1 ||
                  cases[index].viewWallIndex == 6 ||
-                 cases[index].viewWallIndex == 11)) {
+                 cases[index].viewWallIndex == 11 ||
+                 cases[index].viewWallIndex == 14)) {
             fprintf(stderr, "D%d side %d C127 backing receipt drifted\n",
                     cases[index].relForward, cases[index].relSide);
             M11_GameView_Shutdown(&state);
