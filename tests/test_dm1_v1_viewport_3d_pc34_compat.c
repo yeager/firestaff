@@ -239,7 +239,8 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
         { 16, 3, 218,  74 }
     };
     static const int expected_square_rows[][4] = {
-        { 0,  0, 12,  1 },
+        /* ReDMCSB MEDIA720 assigns D0C source index 0; G2028[0] is row 11. */
+        { 0,  0,  0, 11 },
         { 1, -1,  4,  9 },
         { 1,  0,  3,  8 },
         { 1,  1,  5, 10 },
