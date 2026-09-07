@@ -22,7 +22,7 @@
  *   3. menuState->assetStatus.dataDir, or fallback dataDir argument,
  *      joined with a small set of canonical subdirs (dm1/, dm1-multilingual/,
  *      DungeonMasterPC34/, dm-pc34/DungeonMasterPC34/...).
- *   4. $HOME canonical OpenClaw/firestaff original-games anchors.
+ *   4. $HOME canonical Firestaff original-game-data anchors.
  *
  * Every candidate is validated by V1_SWSH_Intro_PayloadLooksValid()
  * which accepts either a raw source-shaped 320x200 logo stream or an
