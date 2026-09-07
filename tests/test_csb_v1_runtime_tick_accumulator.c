@@ -1852,6 +1852,69 @@ static void test_c37_group_approach_creates_empty_destination_thing_list(void)
           "C37 empty-destination move requeues behavior from the created target list");
 }
 
+/* ReDMCSB GROUP.C F0209:2006-2033: C31 is not an ordinary C37 update.  A
+ * party bump deletes obsolete group work and immediately enters C6 attack. */
+static void test_c31_party_bump_enters_attack_and_clears_stale_group_work(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[128];
+    struct DM1_Event_V1 event;
+
+    printf("\n-- CSB C31 party-bump reaction --\n");
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 70;
+    dungeon.thing_type_counts[4] = 1;
+    raw[real_format_square_offset(1, 1)] =
+        (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 70, 0xfffeu);
+    test_put_le16(raw, 72, 0xfffeu);
+    raw[74] = 9u;                 /* Mummy: attack ticks are known. */
+    raw[75] = 0xffu;
+    test_put_le16(raw, 76, 40u);
+    test_put_le16(raw, 84, 0u);   /* C0 wandering behavior. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 2;
+    profile.champion_count = 1;
+    profile.party_state_valid = 1;
+    profile.party_state.ChampionCount = 1;
+    profile.party_state.LeaderIndex = 0;
+    profile.leader_index = 0;
+    profile.party_state.Champions[0].CurrentHealth = 100;
+    profile.party_state.Champions[0].MaximumHealth = 100;
+    profile.party_state.Champions[0].Cell = 0;
+
+    memset(&event, 0, sizeof(event));
+    event.type = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
+    event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time + 10u);
+    event.b_mapX = 1;
+    event.b_mapY = 1;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
+          "C31 fixture queues stale future C37 group work");
+    event.type = DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT;
+    event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
+          "C31 fixture queues the adjacent-party reaction");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C31 fixture dispatches the party-bump reaction");
+    CHECK((test_get_le16(raw, 84) & 0x000fu) == 6u,
+          "C31 changes an eligible non-fleeing group to C6 attack");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 0,
+          "C31 deletes stale C37 group work before attack entry");
+    CHECK(count_queued_event_type(&profile,
+                                  DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0) == 1,
+          "C31 attack entry schedules the first C38 creature attack event");
+}
+
 /* ReDMCSB GROUP.C F0209:2153-2168 / BASE.C F0028,F0029: C37 wandering
  * consumes G0349 first for the one-bit movement gate and, only when admitted,
  * once more for an absolute two-bit direction.  The old bridge reseeded from
@@ -7113,6 +7176,7 @@ int main(void)
     test_timeline_square_events_mutate_real_format_map_bytes();
     test_timeline_corridor_text_and_generator_mutations();
     test_c37_group_approach_creates_empty_destination_thing_list();
+    test_c31_party_bump_enters_attack_and_clears_stale_group_work();
     test_c37_wander_uses_shared_rng_absolute_direction();
     test_c37_wary_creature_rejects_disallowed_teleporter();
     test_c37_group_approach_turns_moved_group_per_creature();

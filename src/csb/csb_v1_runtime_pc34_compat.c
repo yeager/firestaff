@@ -4567,7 +4567,9 @@ static int csb_v1_runtime_creature_attack_ticks(int creature_type)
         14, 12, 8, 7, 10, 20, 19, 8, 16,
         6, 18, 25, 15, 14, 22, 28, 22, 22
     };
-    if (creature_type < 0 || creature_type >= 27) return 1;
+    /* C255_UNKNOWN in ReDMCSB DATA.C must not make an unrecognised C04
+     * attackable through the C31 party-bump path. */
+    if (creature_type < 0 || creature_type >= 27) return 255;
     return (int)attack_ticks[creature_type];
 }
 
@@ -5867,6 +5869,12 @@ static int csb_v1_runtime_main_random2(CSB_V1_RuntimeProfile *profile)
     return (int)(csb_v1_runtime_main_random16(profile) & 0x0003u);
 }
 
+static void csb_v1_runtime_delete_group_events_at_square(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y);
+
 static void csb_v1_runtime_apply_group_behavior_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -5925,6 +5933,40 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             creature_size = creature_profile
                 ? (int)(creature_profile->attributes & 0x0003u)
                 : 0;
+            /* ReDMCSB GROUP.C F0209:2006-2033 handles C31 before the
+             * ordinary C37 behavior state machine.  A party bump turns a
+             * group into C6 attack only when that creature can attack and is
+             * neither already attacking nor fleeing.  F0181 removes stale
+             * C29..C41 work first; otherwise C31 only retargets the active
+             * group at the party. */
+            if (record->eventType == DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT) {
+                if (csb_v1_runtime_creature_attack_ticks((int)thing_record[4]) !=
+                        255 &&
+                    behavior != 6 && behavior != 5) {
+                    csb_v1_runtime_delete_group_events_at_square(
+                        profile, record->mapIndex, record->mapX, record->mapY);
+                    flags = (uint16_t)((flags & 0xFFF0u) | 6u);
+                    csb_v1_runtime_write_u16(thing_record + 14, flags);
+                    csb_v1_runtime_set_active_group_target(
+                        profile, group_thing, record->mapIndex, record->mapX,
+                        record->mapY, profile->party_x, profile->party_y);
+                    csb_v1_runtime_turn_active_group_toward_attack(
+                        profile, group_thing, thing_record, record->mapIndex,
+                        record->mapX, record->mapY,
+                        csb_v1_runtime_direction_from_source_to_destination(
+                            record->mapX, record->mapY, profile->party_x,
+                            profile->party_y),
+                        creature_count, creature_size);
+                    csb_v1_runtime_schedule_c38_attack_events(
+                        profile, record->mapIndex, record->mapX, record->mapY,
+                        (int)thing_record[4], flags);
+                } else {
+                    csb_v1_runtime_set_active_group_target(
+                        profile, group_thing, record->mapIndex, record->mapX,
+                        record->mapY, profile->party_x, profile->party_y);
+                }
+                return;
+            }
             /* ReDMCSB GROUP.C F0209 reads CreatureInfo.MovementTicks before
              * every C37 reschedule; use the same source-locked table as the
              * other C37/C38 scheduling paths in this runtime. */
