@@ -58,6 +58,35 @@ static int test_setenv(const char* name, const char* value) {
 #endif
 }
 
+static void cleanup_save_fixture(const char* root, const char* save_path) {
+    char path[512];
+
+    if (!root || !root[0] || !save_path || !save_path[0]) {
+        return;
+    }
+    (void)remove(save_path);
+    if (snprintf(path, sizeof(path), "%s.v1runtime", save_path) <
+        (int)sizeof(path)) {
+        (void)remove(path);
+    }
+    if (snprintf(path, sizeof(path), "%s.explored", save_path) <
+        (int)sizeof(path)) {
+        (void)remove(path);
+    }
+    /* HOME is redirected to this private fixture. These directories are
+     * expected to be empty after the save files above are removed; rmdir is
+     * intentionally non-recursive so unrelated output is never removed. */
+    if (snprintf(path, sizeof(path), "%s/.firestaff", root) <
+        (int)sizeof(path)) {
+        (void)rmdir(path);
+    }
+    if (snprintf(path, sizeof(path), "%s/.config", root) <
+        (int)sizeof(path)) {
+        (void)rmdir(path);
+    }
+    (void)rmdir(root);
+}
+
 static int dx(int direction) {
     return (direction & 3) == 1 ? 1 : ((direction & 3) == 3 ? -1 : 0);
 }
@@ -765,9 +794,11 @@ int main(void) {
         printf("ok: real PC34 HoC mirrors %d/%d resurrect and reincarnate through world/save state\n",
                mirrorA.ordinal, mirrorB.ordinal);
     }
+    cleanup_save_fixture(saveTemplate, savePath);
     return failures == 0 ? 0 : 1;
 
 done_state:
     M11_GameView_Shutdown(&state);
+    cleanup_save_fixture(saveTemplate, savePath);
     return 1;
 }
