@@ -13,8 +13,9 @@ if [ ! -x "$firestaff_cli" ] || [ ! -e "$media_path" ]; then
     exit 77
 fi
 
+# "atari" is the public spelling for the Atari ST source route.
 title_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --game csb --platform atari-st --data-dir "$media_path" \
+    --game csb --platform atari --data-dir "$media_path" \
     --boot-probe --boot-probe-frames 60 2>&1)" || {
     printf '%s\n' "$title_output" >&2
     exit 1

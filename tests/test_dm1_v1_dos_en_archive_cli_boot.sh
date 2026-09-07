@@ -29,7 +29,8 @@ probe() {
 
 # The source remains in its distribution ZIP.  The native DOS IMG3 path must
 # bind its members through virtual archive paths, never a staged extraction.
-probe --game dm1 --platform pc --data-dir "$archive" \
+# "dos" is the public spelling for the PC/DOS source route.
+probe --game dm1 --platform dos --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --menu --game dm1 --platform pc --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0

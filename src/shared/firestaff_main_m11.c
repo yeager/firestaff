@@ -75,7 +75,7 @@ static void usage(const char* prog) {
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
-            "  --platform <name>   Select source platform: auto, pc, amiga, atari-st, fm-towns, mac, pce, saturn\n"
+            "  --platform <name>   Select source platform: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn\n"
             "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
             "  --dm1-fmtowns-ja    Select DM1's verified Japanese FM Towns edition\n"
             "  --csb-fmtowns-ja    Select CSB's verified Japanese FM Towns edition\n"
@@ -436,9 +436,11 @@ static int parse_presentation_mode(const char* value, int* out_mode) {
 static int parse_architecture(const char* value, int* out_architecture) {
     if (!value || !out_architecture) return 0;
     if (strcmp(value, "auto") == 0) *out_architecture = M12_ARCH_AUTO;
-    else if (strcmp(value, "pc") == 0) *out_architecture = M12_ARCH_PC;
+    else if (strcmp(value, "pc") == 0 || strcmp(value, "dos") == 0)
+        *out_architecture = M12_ARCH_PC;
     else if (strcmp(value, "amiga") == 0) *out_architecture = M12_ARCH_AMIGA;
-    else if (strcmp(value, "atari-st") == 0 || strcmp(value, "st") == 0)
+    else if (strcmp(value, "atari-st") == 0 || strcmp(value, "atari") == 0 ||
+             strcmp(value, "st") == 0)
         *out_architecture = M12_ARCH_ATARI_ST;
     else if (strcmp(value, "fm-towns") == 0 || strcmp(value, "fmtowns") == 0 ||
              strcmp(value, "fm_towns") == 0)
@@ -649,7 +651,7 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--platform") == 0 && i + 1 < argc) {
             if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
                 fprintf(stderr,
-                        "firestaff: --platform must be auto, pc, amiga, atari-st, fm-towns, mac, pce, or saturn\n");
+                        "firestaff: --platform must be auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, or saturn\n");
                 return 2;
             }
             continue;

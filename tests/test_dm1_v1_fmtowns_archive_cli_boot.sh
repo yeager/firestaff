@@ -35,7 +35,8 @@ probe() {
     grep -Fq 'levelLoaded=1' <<<"$output"
 }
 
-probe --game dm1 --platform fm-towns --data-dir "$archive" \
+# "fmtowns" is accepted alongside the canonical hyphenated spelling.
+probe --game dm1 --platform fmtowns --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --menu --game dm1 --platform fm-towns --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
