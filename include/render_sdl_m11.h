@@ -265,6 +265,21 @@ int  M11_Render_ComputePresentationRect(int windowW,
                                         int* outY,
                                         int* outW,
                                         int* outH);
+/* Compute a drawable-pixel rectangle from a logical SDL window.  SDL3
+ * mouse input is logical while rendering can target a HiDPI drawable. */
+int  M11_Render_ComputeDrawablePresentationRect(int windowW,
+                                                int windowH,
+                                                int drawableW,
+                                                int drawableH,
+                                                int contentW,
+                                                int contentH,
+                                                int scaleMode,
+                                                int integerScaling,
+                                                int displayAspectMode,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH);
 int  M11_Render_ResolveSdl3ResizeEvent(int eventW,
                                         int eventH,
                                         int liveWindowW,

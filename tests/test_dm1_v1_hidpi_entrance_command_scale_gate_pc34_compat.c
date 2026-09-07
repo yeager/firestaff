@@ -238,6 +238,41 @@ static void expect_macbook_drawable_not_tiny_view(void) {
     CHECK(drawableH > 1800);
 }
 
+static void expect_retina_integer_rectangle_matches_logical_input(void) {
+    int logicalX = -1;
+    int logicalY = -1;
+    int logicalW = -1;
+    int logicalH = -1;
+    int drawableX = -1;
+    int drawableY = -1;
+    int drawableW = -1;
+    int drawableH = -1;
+
+    /* Original selects integer pixels. On a 2x surface its factor must be
+     * selected from 1512x982 logical mouse points, not 3024x1964 pixels. */
+    CHECK(M11_Render_ComputePresentationRect(1512, 982,
+                                             M11_FB_WIDTH, M11_FB_HEIGHT,
+                                             M11_SCALE_FIT, 1,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &logicalX, &logicalY,
+                                             &logicalW, &logicalH) == M11_RENDER_OK);
+    CHECK(logicalX == 116);
+    CHECK(logicalY == 91);
+    CHECK(logicalW == 1280);
+    CHECK(logicalH == 800);
+    CHECK(M11_Render_ComputeDrawablePresentationRect(1512, 982,
+                                                      3024, 1964,
+                                                      M11_FB_WIDTH, M11_FB_HEIGHT,
+                                                      M11_SCALE_FIT, 1,
+                                                      M11_DISPLAY_ASPECT_CONTENT,
+                                                      &drawableX, &drawableY,
+                                                      &drawableW, &drawableH) == M11_RENDER_OK);
+    CHECK(drawableX == logicalX * 2);
+    CHECK(drawableY == logicalY * 2);
+    CHECK(drawableW == logicalW * 2);
+    CHECK(drawableH == logicalH * 2);
+}
+
 int main(void) {
     const char* evidence = ENTRANCE_Compat_GetMouseRouteEvidence();
     unsigned int i;
@@ -255,6 +290,7 @@ int main(void) {
     CHECK(strstr(evidence, "COORD.C:2490-2495") != NULL);
 
     expect_macbook_drawable_not_tiny_view();
+    expect_retina_integer_rectangle_matches_logical_input();
 
     count = ENTRANCE_Compat_GetMouseRouteCount();
     CHECK(count == 5u);

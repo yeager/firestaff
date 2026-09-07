@@ -437,6 +437,65 @@ int M11_Render_ComputePresentationRect(int windowW,
     return M11_RENDER_OK;
 }
 
+int M11_Render_ComputeDrawablePresentationRect(int windowW,
+                                                int windowH,
+                                                int drawableW,
+                                                int drawableH,
+                                                int contentW,
+                                                int contentH,
+                                                int scaleMode,
+                                                int integerScaling,
+                                                int displayAspectMode,
+                                                int* outX,
+                                                int* outY,
+                                                int* outW,
+                                                int* outH) {
+    int logicalX = 0;
+    int logicalY = 0;
+    int logicalW = 0;
+    int logicalH = 0;
+    int drawableX;
+    int drawableY;
+    int drawableRight;
+    int drawableBottom;
+
+    if (drawableW <= 0) drawableW = windowW;
+    if (drawableH <= 0) drawableH = windowH;
+    if (windowW <= 0) windowW = drawableW;
+    if (windowH <= 0) windowH = drawableH;
+
+    /* A normal FIT rectangle is scale-invariant. Integer FIT is not: on a
+     * Retina drawable it may select a factor twice as large as the logical
+     * SDL mouse surface. Choose that factor in logical coordinates, then
+     * scale its two edges to pixels. This makes the rendered image and the
+     * input hit rectangle identical rather than merely similar. */
+    if (!integerScaling) {
+        return M11_Render_ComputePresentationRect(drawableW, drawableH,
+                                                  contentW, contentH,
+                                                  scaleMode, 0,
+                                                  displayAspectMode,
+                                                  outX, outY, outW, outH);
+    }
+    if (M11_Render_ComputePresentationRect(windowW, windowH,
+                                           contentW, contentH,
+                                           scaleMode, integerScaling,
+                                           displayAspectMode,
+                                           &logicalX, &logicalY,
+                                           &logicalW, &logicalH) != M11_RENDER_OK ||
+        windowW <= 0 || windowH <= 0 || drawableW <= 0 || drawableH <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    drawableX = (logicalX * drawableW) / windowW;
+    drawableY = (logicalY * drawableH) / windowH;
+    drawableRight = ((logicalX + logicalW) * drawableW) / windowW;
+    drawableBottom = ((logicalY + logicalH) * drawableH) / windowH;
+    if (outX) *outX = drawableX;
+    if (outY) *outY = drawableY;
+    if (outW) *outW = drawableRight - drawableX;
+    if (outH) *outH = drawableBottom - drawableY;
+    return M11_RENDER_OK;
+}
+
 int M11_Render_ResolveSdl3ResizeEvent(int eventW,
                                       int eventH,
                                       int liveWindowW,
@@ -491,17 +550,10 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
                                                             outW, outH);
         return;
     }
-    (void)M11_Render_ComputePresentationRect(rw,
-                                             rh,
-                                             contentW,
-                                             contentH,
-                                             g_state.scaleMode,
-                                             g_state.integerScaling,
-                                             g_state.displayAspectMode,
-                                             outX,
-                                             outY,
-                                             outW,
-                                             outH);
+    (void)M11_Render_ComputeDrawablePresentationRect(
+        g_state.windowW, g_state.windowH, rw, rh,
+        contentW, contentH, g_state.scaleMode, g_state.integerScaling,
+        g_state.displayAspectMode, outX, outY, outW, outH);
 }
 
 static int m11_apply_window_mode(int windowMode) {
