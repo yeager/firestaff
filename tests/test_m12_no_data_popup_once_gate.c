@@ -77,6 +77,7 @@ static char* test_mkdtemp(char* templ) {
     return NULL;
 }
 #else
+#include <limits.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0700)
@@ -253,8 +254,20 @@ static int isolate_home_and_data_root(char dataRoot[M12_ASSET_DATA_DIR_CAPACITY]
     }
     return make_child_dir(home, "empty-data-root", dataRoot);
 #else
-    char homeTemplate[] = "/tmp/firestaff_m12_no_data_popup_home_XXXXXX";
-    char* home = test_mkdtemp(homeTemplate);
+    char cwd[PATH_MAX];
+    char homeTemplate[PATH_MAX];
+    char* home;
+    /* Keep test-only HOME fixtures inside the active build directory.  The
+     * project never uses /tmp for game data or test material: a developer
+     * may mount it separately, clear it concurrently, or forbid it outright.
+     * getcwd also gives HOME the absolute form expected by the launcher. */
+    if (!getcwd(cwd, sizeof(cwd)) ||
+        snprintf(homeTemplate, sizeof(homeTemplate),
+                 "%s/.firestaff_m12_no_data_popup_home_XXXXXX", cwd) >=
+            (int)sizeof(homeTemplate)) {
+        return 0;
+    }
+    home = test_mkdtemp(homeTemplate);
     if (!home) {
         return 0;
     }
