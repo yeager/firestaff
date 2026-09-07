@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-07: F0209 attack-entry fanout now preserves the popped source event
+  when its private C38-C41 queue transaction cannot fit. It restores the
+  pre-decision RNG and requeues the original record on the next game tick,
+  avoiding both partial publication and same-tick re-admission loops. The
+  full-capacity regression proves retained group state, RNG and source-event
+  identity. This does not establish the remaining C32-C36 branch coverage or
+  original-emulator timing.
+
 - Implemented F0205's G0395/G0396 half-square owner as a transient stable
   ACTIVE_GROUP source-slot identity instead of the compacted host AI row or
   C04 group index. Admission chooses the first unused source slot, compaction

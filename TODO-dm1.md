@@ -27,9 +27,6 @@
   - Audit remaining attack-entry transitions beyond C31-C37 with their
     own deletion/delay rules. Obtain turning-pair
     and emulator-trace coverage beyond the four already-facing slots.
-  - Propagate failed fanout scheduling through the outer dispatcher: it
-    currently consumes the input event even when staging cannot fit all
-    slots. Preserve/retry the input without partially publishing the fanout.
   - Obtain original traces for approach entry and zero-tick chained dispatch.
     Preserve off-map handling and the separate priority gap.
 
