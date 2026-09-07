@@ -42299,10 +42299,14 @@ static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState*
     if (m11_is_dm1_fmtowns(state)) {
         if (wallSet0GraphicIndex >= M11_GFX_DM1_STAIRS_UP_FRONT_D3L &&
             wallSet0GraphicIndex <= M11_GFX_DM1_STAIRS_SIDE_D0L) {
-            /* MEDIA020: M645=90 and C018 stair records are global, not
-             * members of the 13-record M646 wall-set cache. */
-            return 90u + (wallSet0GraphicIndex -
-                          M11_GFX_DM1_STAIRS_UP_FRONT_D3L);
+            /* MEDIA020 DUNVIEW.C F0095: M645=90 and the C018 stair
+             * family is selected by the active wall-set (not by the
+             * 13-record M646 wall-cache stride). */
+            if (!m11_current_map_wall_set(state, &wallSet)) {
+                return M11_GFX_UNAVAILABLE;
+            }
+            return 90u + (unsigned int)wallSet * 18u +
+                (wallSet0GraphicIndex - M11_GFX_DM1_STAIRS_UP_FRONT_D3L);
         }
         if (wallSet0GraphicIndex < M11_GFX_DM1_WALLSET_FIRST ||
             wallSet0GraphicIndex >= M11_GFX_DM1_WALLSET_FIRST +
