@@ -1653,12 +1653,75 @@ static int test_half_pair_attack_turn(unsigned seed)
     return ok ? 0 : 1;
 }
 
+/* GROUP.C F0205's G0395/G0396 state is not a per-F0209 local. A second
+ * C38 dispatch for the same ACTIVE_GROUP storage row during the same game
+ * time must take F0205's early return, even if an intervening host adapter
+ * reloads the active direction receipt. */
+static int test_half_pair_cross_dispatch_owner(void)
+{
+    struct GameWorld_Compat world;
+    struct TimelineEvent_Compat event;
+    struct TickResult_Compat result;
+    int ok = 1;
+    if (!build_world(&world)) return 1;
+    world.gameTick = world.timeline.nowTick = 100;
+    world.things->groups[0].creatureType = 5; /* I34 half-square type. */
+    world.creatureAI[0].creatureType = 5;
+    world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = 0; /* north, party is south */
+    world.pc34ActiveGroupSourceSlot[0] = 7;
+    world.pc34ActiveGroupSourceSlotValid[0] = 1;
+    authenticate_group_c04(world.things, &world.things->groups[0],
+                           world.things->rawThingData[THING_TYPE_GROUP]);
+    F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = 5;
+    event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+    event.aux3 = 20;
+    event.aux4 = 0x100;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule first same-tick half-pair C38 turn");
+    memset(&result, 0, sizeof(result));
+    ok &= expect(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1,
+                 "dispatch first same-tick half-pair C38 turn");
+    ok &= expect(world.pc34F0205LastHalfPairOwnerValid &&
+                 world.pc34F0205LastHalfPairOwnerSlot == 7 &&
+                 world.pc34F0205LastHalfPairOwnerTick == 100,
+                 "first F0205 records stable source slot rather than row index");
+
+    /* Re-read a stale source direction as a distinct F0209 invocation. */
+    world.pc34ActiveGroupDirections[0] = 0;
+    world.things->groups[0].direction = 0;
+    authenticate_group_c04(world.things, &world.things->groups[0],
+                           world.things->rawThingData[THING_TYPE_GROUP]);
+    memset(&world.timeline, 0, sizeof(world.timeline));
+    world.timeline.nowTick = world.gameTick;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule second same-tick half-pair C38 turn");
+    memset(&result, 0, sizeof(result));
+    ok &= expect(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1,
+                 "dispatch second same-tick half-pair C38 turn");
+    ok &= expect(world.pc34ActiveGroupDirections[0] == 0,
+                 "same source slot suppresses F0205 direction mutation across dispatches");
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 int main(void)
 {
     int slot;
     int eventType;
     for (slot = 1; slot <= 128; ++slot)
         if (test_half_pair_attack_turn((unsigned)slot) != 0) return 1;
+    if (test_half_pair_cross_dispatch_owner() != 0) return 1;
     for (slot = 0; slot < 4; ++slot)
         if (test_timed_aspect_and_freeze_gate(slot, 9, 37) != 0) return 1;
     if (test_timed_aspect_and_freeze_gate(0, 7, 31) != 0 ||

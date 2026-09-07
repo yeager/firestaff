@@ -7163,6 +7163,10 @@ static void orch_remove_active_group_state_compat(
             world->pc34ActiveGroupDirections[writeIndex] = world->pc34ActiveGroupDirections[i];
             world->pc34ActiveGroupHomeMapX[writeIndex] = world->pc34ActiveGroupHomeMapX[i];
             world->pc34ActiveGroupHomeMapY[writeIndex] = world->pc34ActiveGroupHomeMapY[i];
+            world->pc34ActiveGroupSourceSlot[writeIndex] =
+                world->pc34ActiveGroupSourceSlot[i];
+            world->pc34ActiveGroupSourceSlotValid[writeIndex] =
+                world->pc34ActiveGroupSourceSlotValid[i];
         }
         ++writeIndex;
     }
@@ -7174,6 +7178,8 @@ static void orch_remove_active_group_state_compat(
         world->pc34ActiveGroupDirections[writeIndex] = 0;
         world->pc34ActiveGroupHomeMapX[writeIndex] = 0;
         world->pc34ActiveGroupHomeMapY[writeIndex] = 0;
+        world->pc34ActiveGroupSourceSlot[writeIndex] = -1;
+        world->pc34ActiveGroupSourceSlotValid[writeIndex] = 0;
         ++writeIndex;
     }
     world->creatureAICount = retainedCount;
@@ -7218,6 +7224,70 @@ static int orch_active_group_directions_compat(
     return packed & 0xff;
 }
 
+/* ReDMCSB GROUP.C F0205:1602-1623 keys its static G0396 memo by the
+ * ACTIVE_GROUP array address.  Firestaff deliberately compacts its host AI
+ * rows, so retain a separate source slot rather than treating a row index or
+ * C04 thing index as that address.  Legacy fixtures which predate this
+ * transient sidecar retain the old row-index identity until admission gives
+ * them a source slot. */
+static int orch_active_group_source_slot_compat(
+    const struct GameWorld_Compat* world, int activeIndex)
+{
+    if (!world || activeIndex < 0 ||
+        activeIndex >= GAMEWORLD_CREATURE_AI_CAPACITY) return -1;
+    if (world->pc34ActiveGroupSourceSlotValid[activeIndex] &&
+        world->pc34ActiveGroupSourceSlot[activeIndex] >= 0 &&
+        world->pc34ActiveGroupSourceSlot[activeIndex] <
+            DM1_PC34_ACTIVE_GROUP_CAPACITY) {
+        return world->pc34ActiveGroupSourceSlot[activeIndex];
+    }
+    return activeIndex < DM1_PC34_ACTIVE_GROUP_CAPACITY ? activeIndex : -1;
+}
+
+static int orch_allocate_active_group_source_slot_compat(
+    const struct GameWorld_Compat* world)
+{
+    int candidate;
+    int i;
+    if (!world) return -1;
+    for (candidate = 0; candidate < DM1_PC34_ACTIVE_GROUP_CAPACITY; ++candidate) {
+        int used = 0;
+        for (i = 0; i < world->creatureAICount; ++i) {
+            if (orch_active_group_source_slot_compat(world, i) == candidate) {
+                used = 1;
+                break;
+            }
+        }
+        if (!used) return candidate;
+    }
+    return -1;
+}
+
+static int orch_f0205_set_direction_with_source_owner_compat(
+    struct DM1ActiveGroup_Compat* activeGroup, int direction,
+    int creatureIndex, int creatureSize, int creatureCount,
+    struct RngState_Compat* rng, int sourceSlot, uint32_t gameTick,
+    int* ownerValid, int* ownerSlot, uint32_t* ownerTick)
+{
+    int paired;
+    if (!activeGroup || !rng || !ownerValid || !ownerSlot || !ownerTick ||
+        sourceSlot < 0) return 0;
+    paired = creatureSize == DM1_SIZE_HALF_SQUARE && creatureCount > 0;
+    if (paired && *ownerValid && *ownerTick == gameTick &&
+        *ownerSlot == sourceSlot) {
+        return 1; /* Exact F0205 early return: no direction or RNG mutation. */
+    }
+    if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+            activeGroup, direction, creatureIndex, creatureSize,
+            creatureCount, rng)) return 0;
+    if (paired) {
+        *ownerValid = 1;
+        *ownerSlot = sourceSlot;
+        *ownerTick = gameTick;
+    }
+    return 1;
+}
+
 
 static int orch_apply_f0205_active_creature_direction_compat(
     struct GameWorld_Compat* world,
@@ -7228,12 +7298,19 @@ static int orch_apply_f0205_active_creature_direction_compat(
     int creatureIndex,
     int creatureSize)
 {
+    int sourceSlot;
     if (!world || !ai || !group || !activeGroup || direction < 0 || direction > 3 ||
-        !F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
-            activeGroup, direction, creatureIndex, creatureSize,
-            (int)group->count, &world->masterRng)) {
+        (sourceSlot = orch_find_active_group_state_index_compat(
+             world, activeGroup->groupThingIndex)) < 0) {
         return 0;
     }
+    sourceSlot = orch_active_group_source_slot_compat(world, sourceSlot);
+    if (!orch_f0205_set_direction_with_source_owner_compat(
+            activeGroup, direction, creatureIndex, creatureSize,
+            (int)group->count, &world->masterRng, sourceSlot, world->gameTick,
+            &world->pc34F0205LastHalfPairOwnerValid,
+            &world->pc34F0205LastHalfPairOwnerSlot,
+            &world->pc34F0205LastHalfPairOwnerTick)) return 0;
     ai->groupDirection = activeGroup->directions & 0xff;
     group->direction = (unsigned char)(activeGroup->directions & 0x03);
     return 1;
@@ -11407,6 +11484,7 @@ static int orch_add_generated_group_active_state_compat(
 {
     struct CreatureAIState_Compat* ai;
     DM1_V1_GeneratedGroupPlacementPlanPc34 plan;
+    int sourceSlot;
     if (!world || !group) return 0;
     memset(&plan, 0, sizeof(plan));
     if (!DM1_V1_PlanGeneratedGroupPlacementF0183F0180Pc34Compat(
@@ -11418,6 +11496,12 @@ static int orch_add_generated_group_active_state_compat(
         return 0;
     }
     if (!plan.shouldCreateActiveState) return 1;
+
+    /* GROUP.C F0183:414-435 takes the first vacant ACTIVE_GROUP array
+     * element. Allocate this before consuming F0179 RNG, but publish it only
+     * with the fully admitted row below. */
+    sourceSlot = orch_allocate_active_group_source_slot_compat(world);
+    if (sourceSlot < 0) return 0;
 
     /* GROUP.C F0183:444-447 clears live aspects and calls F0179(-1,false).
      * Use I34 metadata and the shared stream, never an independent seed.
@@ -11476,6 +11560,9 @@ static int orch_add_generated_group_active_state_compat(
         (uint8_t)ai->groupDirection;
     world->pc34ActiveGroupHomeMapX[world->creatureAICount - 1] = (uint8_t)mapX;
     world->pc34ActiveGroupHomeMapY[world->creatureAICount - 1] = (uint8_t)mapY;
+    world->pc34ActiveGroupSourceSlot[world->creatureAICount - 1] =
+        (int16_t)sourceSlot;
+    world->pc34ActiveGroupSourceSlotValid[world->creatureAICount - 1] = 1;
     if (world->pc34ActiveGroupSourceCount == world->creatureAICount - 1) {
         ++world->pc34ActiveGroupSourceCount;
     }
@@ -11743,6 +11830,10 @@ static int orch_transition_party_map_f0194_f0195_compat(
            sizeof(staged.pc34ActiveGroupHomeMapX));
     memset(staged.pc34ActiveGroupHomeMapY, 0,
            sizeof(staged.pc34ActiveGroupHomeMapY));
+    for (i = 0; i < GAMEWORLD_CREATURE_AI_CAPACITY; ++i)
+        staged.pc34ActiveGroupSourceSlot[i] = -1;
+    memset(staged.pc34ActiveGroupSourceSlotValid, 0,
+           sizeof(staged.pc34ActiveGroupSourceSlotValid));
     staged.partyMapIndex = destinationMapIndex;
     staged.party.mapIndex = destinationMapIndex;
     staged.newPartyMapIndex = -1;
@@ -11771,6 +11862,11 @@ static int orch_transition_party_map_f0194_f0195_compat(
            sizeof(world->pc34ActiveGroupHomeMapX));
     memcpy(world->pc34ActiveGroupHomeMapY, staged.pc34ActiveGroupHomeMapY,
            sizeof(world->pc34ActiveGroupHomeMapY));
+    memcpy(world->pc34ActiveGroupSourceSlot, staged.pc34ActiveGroupSourceSlot,
+           sizeof(world->pc34ActiveGroupSourceSlot));
+    memcpy(world->pc34ActiveGroupSourceSlotValid,
+           staged.pc34ActiveGroupSourceSlotValid,
+           sizeof(world->pc34ActiveGroupSourceSlotValid));
     world->pc34ActiveGroupSourceCount = staged.pc34ActiveGroupSourceCount;
     world->timeline = staged.timeline;
     world->masterRng = staged.masterRng;
@@ -12408,15 +12504,32 @@ static int orch_apply_f0206_active_group_directions_compat(
     int direction,
     int creatureSize)
 {
+    int creatureIndex;
+    int twoHalfSquareCreatures;
+    int sourceSlot;
     if (!world || !ai || !group || !activeGroup || activeIndex < 0 ||
         direction < 0 || direction > 3) {
         return 0;
     }
-    if (!F0817a_DM1_GROUP_SetGroupDirectionsWithRng_Compat(
-            activeGroup, direction, creatureSize, (int)group->count,
-            &world->masterRng)) {
-        return 0;
-    }
+    sourceSlot = orch_active_group_source_slot_compat(world, activeIndex);
+    /* GROUP.C F0206:1626-1636.  It calls F0205 for every admitted turn,
+     * thereby sharing F0205's cross-dispatch owner memo. */
+    twoHalfSquareCreatures = group->count != 0 &&
+        creatureSize == DM1_SIZE_HALF_SQUARE;
+    creatureIndex = twoHalfSquareCreatures ? (int)group->count - 1 :
+        (int)group->count;
+    do {
+        if (creatureIndex != 0 &&
+            F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2) == 0) {
+            continue;
+        }
+        if (!orch_f0205_set_direction_with_source_owner_compat(
+                activeGroup, direction, creatureIndex, creatureSize,
+                (int)group->count, &world->masterRng, sourceSlot,
+                world->gameTick, &world->pc34F0205LastHalfPairOwnerValid,
+                &world->pc34F0205LastHalfPairOwnerSlot,
+                &world->pc34F0205LastHalfPairOwnerTick)) return 0;
+    } while (creatureIndex-- != 0);
     /* C04 holds its primary direction, while ACTIVE_GROUP retains all four
      * F0205-packed creature directions between C29-C41 events. */
     group->direction = (unsigned char)(activeGroup->directions & 0x03);
@@ -12441,6 +12554,10 @@ static int orch_apply_f0205_creature_turn_retry_compat(
     struct DM1ActiveGroup_Compat staged;
     struct RngState_Compat stagedRng;
     struct TimelineEvent_Compat retry;
+    int ownerValid;
+    int ownerSlot;
+    uint32_t ownerTick;
+    int sourceSlot;
 
     if (!world || !ev || !ai || !group || !activeGroup || activeIndex < 0 ||
         creatureIndex < 0 || creatureIndex > (int)group->count ||
@@ -12448,14 +12565,22 @@ static int orch_apply_f0205_creature_turn_retry_compat(
     if (((activeGroup->directions >> (creatureIndex * 2)) & 3) == direction) return 0;
     staged = *activeGroup;
     stagedRng = world->masterRng;
-    if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+    ownerValid = world->pc34F0205LastHalfPairOwnerValid;
+    ownerSlot = world->pc34F0205LastHalfPairOwnerSlot;
+    ownerTick = world->pc34F0205LastHalfPairOwnerTick;
+    sourceSlot = orch_active_group_source_slot_compat(world, activeIndex);
+    if (!orch_f0205_set_direction_with_source_owner_compat(
             &staged, direction, creatureIndex, creatureSize, (int)group->count,
-            &stagedRng)) return 0;
+            &stagedRng, sourceSlot, world->gameTick, &ownerValid, &ownerSlot,
+            &ownerTick)) return 0;
     retry = *ev;
     retry.fireAtTick = world->gameTick + 2u;
     if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry)) return 0;
     *activeGroup = staged;
     world->masterRng = stagedRng;
+    world->pc34F0205LastHalfPairOwnerValid = ownerValid;
+    world->pc34F0205LastHalfPairOwnerSlot = ownerSlot;
+    world->pc34F0205LastHalfPairOwnerTick = ownerTick;
     group->direction = (unsigned char)(staged.directions & 3);
     ai->groupDirection = group->direction;
     if (activeIndex < world->pc34ActiveGroupSourceCount)
@@ -12626,8 +12751,11 @@ static int orch_f0209_begin_attack_compat(
     struct TimelineQueue_Compat queue = world->timeline;
     struct RngState_Compat rng = world->masterRng;
     struct DM1ActiveGroup_Compat staged = *active;
+    int ownerValid = world->pc34F0205LastHalfPairOwnerValid;
+    int ownerSlot = world->pc34F0205LastHalfPairOwnerSlot;
+    uint32_t ownerTick = world->pc34F0205LastHalfPairOwnerTick;
+    int sourceSlot = orch_active_group_source_slot_compat(world, activeIndex);
     int i;
-    int halfPairTurned = 0;
     /* GROUP.C:2012: C31 removes this square's old C29-C41 events
      * before attack entry. Keep deletion inside the staged transaction. */
     if (ev->aux2 == DM1_EVENT_REACTION_PARTY_IS_ADJACENT &&
@@ -12643,13 +12771,10 @@ static int orch_f0209_begin_attack_compat(
             /* GROUP.C F0205:1606-1620 suppresses repeated pair turns at
              * the same game time. All calls in this fanout share a tick.
              * F0209 still draws the turn delay after a suppressed call. */
-            if (!halfPairTurned) {
-                if (!F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
-                        &staged, ctx->currentGroupPrimaryDirToParty, i,
-                        ctx->creatureSize, group->count, &rng)) return 0;
-                halfPairTurned = ctx->creatureSize == DM1_SIZE_HALF_SQUARE &&
-                    group->count > 0;
-            }
+            if (!orch_f0205_set_direction_with_source_owner_compat(
+                    &staged, ctx->currentGroupPrimaryDirToParty, i,
+                    ctx->creatureSize, group->count, &rng, sourceSlot,
+                    world->gameTick, &ownerValid, &ownerSlot, &ownerTick)) return 0;
             time = world->gameTick + F0732_COMBAT_RngRandom_Compat(&rng, 4) + 2u;
         }
         /* GROUP.C:2094,2123: C37 does not draw or add the incoming
@@ -12681,6 +12806,9 @@ static int orch_f0209_begin_attack_compat(
     }
     world->timeline = queue;
     world->masterRng = rng;
+    world->pc34F0205LastHalfPairOwnerValid = ownerValid;
+    world->pc34F0205LastHalfPairOwnerSlot = ownerSlot;
+    world->pc34F0205LastHalfPairOwnerTick = ownerTick;
     ai->stateKind = AI_STATE_ATTACK;
     ai->lastSeenPartyMapX = ctx->partyMapX;
     ai->lastSeenPartyMapY = ctx->partyMapY;

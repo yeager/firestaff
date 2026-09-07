@@ -333,6 +333,14 @@ struct GameWorld_Compat {
     uint8_t                             pc34ActiveGroupDirections[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapX[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapY[GAMEWORLD_CREATURE_AI_CAPACITY];
+    /* GROUP.C keeps ACTIVE_GROUP storage stable while this host mirror
+     * compacts creatureAI rows.  These transient IDs preserve the original
+     * pointer identity for F0205's G0395/G0396 pair-turn suppression. */
+    int16_t                             pc34ActiveGroupSourceSlot[GAMEWORLD_CREATURE_AI_CAPACITY];
+    uint8_t                             pc34ActiveGroupSourceSlotValid[GAMEWORLD_CREATURE_AI_CAPACITY];
+    int32_t                             pc34F0205LastHalfPairOwnerValid;
+    int32_t                             pc34F0205LastHalfPairOwnerSlot;
+    uint32_t                            pc34F0205LastHalfPairOwnerTick;
     int32_t                             pc34ActiveGroupSourceCount;
     /* G0407 Party.Scents/ScentStrengths is runtime source state, not an
      * inferred save tail.  F0201 may consume it only while this receipt's
