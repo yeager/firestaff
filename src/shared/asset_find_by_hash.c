@@ -3396,17 +3396,12 @@ static int shell_tool_exists(const char *tool) {
 static void record_missing_tool(const char *mediaPath, const char *tools);
 
 static int chd_tool_available(void) {
-    /* Game startup is self-contained by default.  CHD conversion is a
-     * diagnostic/import convenience only, and therefore needs an explicit
-     * operator opt-in; a missing host tool must never become a runtime
-     * requirement.  Keep the test override for the no-tool diagnostic path
-     * deterministic on development machines. */
-    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL ||
-        getenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS") == NULL ||
-        strcmp(getenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS"), "1") != 0) {
-        return 0;
-    }
-    return shell_tool_exists("chdman");
+    /* Never materialize game media through a host converter.  A CHD must
+     * eventually be admitted by Firestaff's own bounded reader; until then
+     * it is unavailable rather than an implicit chdman dependency or a
+     * temporary CUE/BIN extraction.  Deliberately ignore the historical
+     * FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS escape hatch. */
+    return 0;
 }
 
 static int make_chd_temp_dir(char *outDir, size_t outDirSize) {
@@ -3443,7 +3438,12 @@ static int chd_extractcd_to_cue(const char *chdPath,
         return 0;
     }
     if (!chd_tool_available()) {
-        record_missing_tool(chdPath, "chdman");
+        /* Keep the diagnostic scoped to its explicit test hook.  Normal
+         * discovery must simply leave an unsupported CHD unmatched instead
+         * of turning every later launcher scan into a stale tool popup. */
+        if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL) {
+            record_missing_tool(chdPath, "chdman");
+        }
         return 0;
     }
     if (!make_chd_temp_dir(outTempDir, outTempDirSize)) return 0;

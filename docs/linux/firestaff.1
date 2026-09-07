@@ -181,10 +181,11 @@ optional title, intro, logo, and other non-essential extras may be absent.
 .PP
 The scanner can inspect ordinary directories and common archive or disc-image
 containers. Supported paths include ZIP-compatible archives, ISO/BIN/IMG-style
-disc images, CUE sheets, TAR/TGZ/GZ, stored LHA/LZH/LZS entries, and CHD CD
-images when
+disc images, CUE sheets, TAR/TGZ/GZ, and stored LHA/LZH/LZS entries. CHD CD
+images are not admitted until Firestaff has a native in-memory CHD reader;
+Firestaff never invokes
 .B chdman
-is installed. Several other archive or disk-image formats can be scanned when
+or extracts game media to disk. Several other archive or disk-image formats can be scanned when
 local extractor tools such as
 .BR 7zz ,
 .BR 7z ,
