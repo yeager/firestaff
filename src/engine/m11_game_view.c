@@ -128,6 +128,11 @@
 #include "firestaff/dm1/v1/G0485_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
+
+/* F31J's M564 records are CP932, while po/csb.pot deliberately keeps
+ * reviewed English msgids. The table preserves the source-owned icon order
+ * so presentation can select a translated label without rewriting media. */
+#include "csb_fmtowns_jp_object_l10n.inc"
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "dm1_v1_amiga_graphics_dat.h"
@@ -49588,12 +49593,23 @@ static int m11_csb_runtime_object_name_for_thing(
         const char *source = original;
         const char *translated;
         if (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) {
-            if (firestaff_cp932_to_utf8(original, strlen(original), utf8,
-                                       sizeof(utf8)) < 0) {
-                out[0] = '\0';
-                return 0;
+            const int icon = m11_csb_runtime_object_icon_index_for_thing(
+                state, thingId);
+            /* F31J M564 uses the same index as the admitted G0237 object
+             * icon. Prefer its reviewed English msgid: gettext then gives
+             * every available UI language an honest fallback. The CP932
+             * decode remains for out-of-range/private records. */
+            if (icon >= 0 && icon < (int)(sizeof(m11_csb_fmtowns_jp_object_msgids) /
+                                         sizeof(m11_csb_fmtowns_jp_object_msgids[0]))) {
+                source = m11_csb_fmtowns_jp_object_msgids[icon];
+            } else {
+                if (firestaff_cp932_to_utf8(original, strlen(original), utf8,
+                                           sizeof(utf8)) < 0) {
+                    out[0] = '\0';
+                    return 0;
+                }
+                source = utf8;
             }
-            source = utf8;
         }
         translated = fs_po_gettext_in_domain("csb", source);
         {

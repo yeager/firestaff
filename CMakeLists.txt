@@ -12269,6 +12269,19 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_fmtowns_jp_object_l10n_map.c")
+        add_executable(test_csb_fmtowns_jp_object_l10n_map
+            tests/test_csb_fmtowns_jp_object_l10n_map.c)
+        if(NOT MSVC)
+            target_compile_options(test_csb_fmtowns_jp_object_l10n_map PRIVATE
+                -Wall -Wextra -O2)
+        endif()
+        add_test(NAME csb_fmtowns_jp_object_l10n_map
+            COMMAND test_csb_fmtowns_jp_object_l10n_map)
+        set_tests_properties(csb_fmtowns_jp_object_l10n_map PROPERTIES
+            LABELS "csb;fmtowns;japanese;l10n;source-index")
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_inscription_presentation.c")
         add_executable(test_csb_v1_inscription_presentation
             tests/test_csb_v1_inscription_presentation.c)
