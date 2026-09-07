@@ -47,6 +47,10 @@ int main(void)
     state.world.things = &things;
     state.world.party.championCount = 1;
     state.world.party.activeChampionIndex = 0;
+    /* A panel can only draw an admitted party member.  The raw icon path is
+     * being tested here, so make the fixture match a live C00 champion rather
+     * than relying on a zero-filled diagnostic record. */
+    state.world.party.champions[0].present = 1;
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = torch;
 
     CHECK_EQ("raw F0033 inventory icon",
