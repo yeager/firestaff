@@ -1540,18 +1540,22 @@ class PixelCanvas(ttk.Frame):
         self.editable = editable
         self.image: Image.Image | None = None
         self.photo: ImageTk.PhotoImage | None = None
-        self.zoom = tk.IntVar(value=2)
+        self.zoom = tk.DoubleVar(value=1.0)
         self.tool = tk.StringVar(value="pencil")
         self.brush = tk.IntVar(value=1)
         self.color = "#00ffff"
         self.path: Path | None = None
         self._dragging = False
+        self._fit_active = True
+        self._setting_fit_zoom = False
 
         top = ttk.Frame(self)
         top.pack(fill="x")
         ttk.Label(top, text=title).pack(side="left")
         ttk.Label(top, text="Zoom").pack(side="left", padx=(12, 2))
-        ttk.Spinbox(top, from_=1, to=16, width=4, textvariable=self.zoom, command=self.render).pack(side="left")
+        ttk.Spinbox(top, from_=0.1, to=16, increment=0.1, width=5,
+                    textvariable=self.zoom, command=self._manual_zoom).pack(side="left")
+        ttk.Button(top, text="Fit", command=self.fit_to_panel).pack(side="left", padx=(4, 0))
         if editable:
             ttk.Label(top, text="Brush").pack(side="left", padx=(12, 2))
             ttk.Spinbox(top, from_=1, to=32, width=4, textvariable=self.brush).pack(side="left")
@@ -1560,21 +1564,70 @@ class PixelCanvas(ttk.Frame):
             ttk.Button(top, text="Pick", command=lambda: self.tool.set("pick")).pack(side="left")
             ttk.Button(top, text="Fill", command=lambda: self.tool.set("fill")).pack(side="left")
 
-        self.canvas = tk.Canvas(self, width=512, height=384, background="#202020", highlightthickness=0)
-        self.canvas.pack(fill="both", expand=True)
+        canvas_frame = ttk.Frame(self)
+        canvas_frame.pack(fill="both", expand=True)
+        self.canvas = tk.Canvas(canvas_frame, width=512, height=384,
+                                background="#202020", highlightthickness=0)
+        y_scroll = ttk.Scrollbar(canvas_frame, orient="vertical",
+                                 command=self.canvas.yview)
+        x_scroll = ttk.Scrollbar(canvas_frame, orient="horizontal",
+                                 command=self.canvas.xview)
+        self.canvas.configure(xscrollcommand=x_scroll.set,
+                              yscrollcommand=y_scroll.set)
+        y_scroll.pack(side="right", fill="y")
+        x_scroll.pack(side="bottom", fill="x")
+        self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.bind("<Button-1>", self.on_down)
         self.canvas.bind("<B1-Motion>", self.on_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_up)
-        self.zoom.trace_add("write", lambda *_: self.render())
+        self.zoom.trace_add("write", self._on_zoom_changed)
+        self.canvas.bind("<Configure>", self._on_canvas_resize)
 
     def load(self, path: Path) -> None:
         self.path = path
         self.image = ensure_rgba(Image.open(path))
-        self.render()
+        self.fit_to_panel()
 
     def set_image(self, img: Image.Image, path: Path | None = None) -> None:
         self.path = path
         self.image = ensure_rgba(img.copy())
+        self.fit_to_panel()
+
+    def _manual_zoom(self) -> None:
+        self._fit_active = False
+        self.render()
+
+    def _on_zoom_changed(self, *_args: object) -> None:
+        if not self._setting_fit_zoom:
+            self._fit_active = False
+        self.render()
+
+    def _on_canvas_resize(self, _event: tk.Event) -> None:
+        if self._fit_active and self.image is not None:
+            self.after_idle(self.fit_to_panel)
+
+    def fit_to_panel(self) -> None:
+        """Scale the loaded asset to the visible canvas without distortion."""
+        self._fit_active = True
+        if self.image is None:
+            self.render()
+            return
+        # Geometry is not final during construction and immediately after a
+        # PanedWindow resize.  The requested size is a stable fallback until
+        # Tk reports the real drawable panel dimensions.
+        available_w = max(1, self.canvas.winfo_width() or self.canvas.winfo_reqwidth())
+        available_h = max(1, self.canvas.winfo_height() or self.canvas.winfo_reqheight())
+        scale = min(available_w / self.image.width, available_h / self.image.height)
+        # A zero-sized widget can briefly report one pixel before layout.
+        # Delay one pass rather than committing a nearly invisible preview.
+        if available_w <= 2 or available_h <= 2:
+            self.after_idle(self.fit_to_panel)
+            return
+        self._setting_fit_zoom = True
+        try:
+            self.zoom.set(max(0.1, min(16.0, round(scale, 3))))
+        finally:
+            self._setting_fit_zoom = False
         self.render()
 
     def choose_color(self) -> None:
@@ -1587,24 +1640,27 @@ class PixelCanvas(ttk.Frame):
         if self.image is None:
             self.canvas.create_text(20, 20, anchor="nw", fill="#aaaaaa", text="No image")
             return
-        z = max(1, int(self.zoom.get() or 1))
-        view = self.image.resize((self.image.width * z, self.image.height * z), Image.Resampling.NEAREST)
+        z = max(0.1, float(self.zoom.get() or 1.0))
+        view = self.image.resize((max(1, round(self.image.width * z)),
+                                  max(1, round(self.image.height * z))),
+                                 Image.Resampling.NEAREST)
         self.photo = ImageTk.PhotoImage(view)
         self.canvas.create_image(0, 0, anchor="nw", image=self.photo)
         self.canvas.config(scrollregion=(0, 0, view.width, view.height))
         if z >= 8:
             self.draw_grid(view.width, view.height, z)
 
-    def draw_grid(self, w: int, h: int, z: int) -> None:
-        for x in range(0, w + 1, z):
+    def draw_grid(self, w: int, h: int, z: float) -> None:
+        step = max(1, round(z))
+        for x in range(0, w + 1, step):
             self.canvas.create_line(x, 0, x, h, fill="#333333")
-        for y in range(0, h + 1, z):
+        for y in range(0, h + 1, step):
             self.canvas.create_line(0, y, w, y, fill="#333333")
 
     def canvas_to_pixel(self, event: tk.Event) -> tuple[int, int] | None:
         if self.image is None:
             return None
-        z = max(1, int(self.zoom.get() or 1))
+        z = max(0.1, float(self.zoom.get() or 1.0))
         x = int(self.canvas.canvasx(event.x) // z)
         y = int(self.canvas.canvasy(event.y) // z)
         if x < 0 or y < 0 or x >= self.image.width or y >= self.image.height:
