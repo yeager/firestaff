@@ -66960,7 +66960,22 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 case 4: snprintf(value, sizeof(value), "%s", config.integerScaling ? "ON" : "OFF"); break;
                 case 5: snprintf(value, sizeof(value), "%s", config.vsyncIndex ? "ON" : "OFF"); break;
                 case 6: snprintf(value, sizeof(value), "%s", config.showFpsOverlay ? "ON" : "OFF"); break;
-                case 7: { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
+                case 7: {
+                    int w = state->presentationWidth;
+                    int h = state->presentationHeight;
+                    /* The launcher preference can differ from the live
+                     * target after a presentation-mode handoff (for example
+                     * Modern's 640x400 target).  F10 is a live settings
+                     * panel, so report the dimensions the renderer is
+                     * actually using; only an uninitialised view falls back
+                     * to the persisted preference. */
+                    if (w <= 0 || h <= 0) {
+                        M12_Resolution_Dimensions(config.gameResolution[slot],
+                                                  &w, &h);
+                    }
+                    snprintf(value, sizeof(value), "%dX%d", w, h);
+                    break;
+                }
                 default: snprintf(value, sizeof(value), "%s", config.windowModeIndex == 0 ? "WINDOW" : config.windowModeIndex == 1 ? "MAXIMIZED" : "FULLSCREEN"); break;
             }
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_CHEATS) {
