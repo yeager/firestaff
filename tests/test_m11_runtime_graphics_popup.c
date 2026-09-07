@@ -18,7 +18,10 @@ static void set_test_home(void) {
 #if defined(_WIN32)
     (void)_putenv("APPDATA=.firestaff-runtime-graphics-popup-test");
 #else
-    char path[] = "/tmp/firestaff-runtime-graphics-popup-XXXXXX";
+    /* Keep test fixtures within CTest's working tree.  Firestaff must not
+     * depend on /tmp: it is often a small tmpfs and is not a suitable home
+     * for either real-game media or build verification artefacts. */
+    char path[] = ".firestaff-runtime-graphics-popup-XXXXXX";
     char* home = mkdtemp(path);
     (void)home;
     assert(home != NULL);
@@ -133,7 +136,12 @@ int main(void) {
         &state, 12 + 3 * 77 + 24, 14, DM1_V1_MOUSE_MASK_LEFT_PC34);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.inventoryPanelActive == 1);
-    assert(state.world.party.activeChampionIndex == 3);
+    /* DM1 keeps the selected leader (CLIKCHAM.C G0411) distinct from the
+     * champion whose panel is open (PANEL.C G0423).  The visible V2 HUD
+     * click must therefore select champion four through the latter without
+     * spuriously changing the former. */
+    assert(state.dm1InventoryChampionOrdinal == 4);
+    assert(state.world.party.activeChampionIndex == 0);
     state.inventoryPanelActive = 0;
     result = M11_GameView_HandleInput(&state,
                                       M12_MENU_INPUT_GRAPHICS_POPUP);
