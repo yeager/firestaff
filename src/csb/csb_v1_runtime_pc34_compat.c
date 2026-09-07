@@ -47,6 +47,7 @@
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
 #include <stdio.h>
@@ -5869,6 +5870,19 @@ static int csb_v1_runtime_main_random2(CSB_V1_RuntimeProfile *profile)
     return (int)(csb_v1_runtime_main_random16(profile) & 0x0003u);
 }
 
+static int csb_v1_runtime_main_random_mod(CSB_V1_RuntimeProfile *profile,
+                                          int modulus)
+{
+    if (modulus <= 0) return 0;
+    return (int)(csb_v1_runtime_main_random16(profile) % (uint16_t)modulus);
+}
+
+static int csb_v1_runtime_main_random_mask(CSB_V1_RuntimeProfile *profile,
+                                           int mask)
+{
+    return (int)(csb_v1_runtime_main_random16(profile) & (uint16_t)mask);
+}
+
 static void csb_v1_runtime_delete_group_events_at_square(
     CSB_V1_RuntimeProfile *profile,
     int map_index,
@@ -5916,17 +5930,20 @@ static int csb_v1_runtime_f0200_visible_party_distance(
     int distance;
     int index;
     int direction_visible = 0;
+    struct DM1CreatureInfo_Compat source_info;
+    int sight_range;
 
     if (!profile || level != profile->current_level) return 0;
-    if (!creature) return 0;
+    if (!creature ||
+        !F0890d_ORCH_GetCreatureInfoPc34Compat(creature->creatureType,
+                                                &source_info)) return 0;
     if (profile->csbwin_character_tail_invisible > 0u &&
-        (creature->attributes & CREATURE_ATTR_MASK_SEE_INVISIBLE) == 0) {
+        (source_info.attributes & CREATURE_ATTR_MASK_SEE_INVISIBLE) == 0) {
         return 0;
     }
     distance = abs(profile->party_x - source_x) +
         abs(profile->party_y - source_y);
-    if (distance > creature->sightRange) return 0;
-    if ((creature->attributes & CREATURE_ATTR_MASK_SIDE_ATTACK) != 0) {
+    if ((source_info.attributes & CREATURE_ATTR_MASK_SIDE_ATTACK) != 0) {
         direction_visible = 1;
     } else {
         active = csb_v1_runtime_active_group_state_for_thing(profile,
@@ -5945,6 +5962,25 @@ static int csb_v1_runtime_f0200_visible_party_distance(
         }
     }
     if (!direction_visible) return 0;
+    /* GROUP.C F0200 reads the complete G0243 Ranges word.  The profile's
+     * sightRange is only its low nibble and cannot reproduce the adjacent
+     * awareness or distance-jitter draws. */
+    sight_range = (int)(source_info.ranges & 0x000fu);
+    if (distance > sight_range) {
+        if (distance == 1) {
+            sight_range += csb_v1_runtime_main_random_mod(
+                profile, ((source_info.ranges >> 4) & 0x000fu) + 1);
+            sight_range += csb_v1_runtime_main_random_mod(
+                profile, ((source_info.ranges >> 8) & 0x000fu) + 1);
+            if (csb_v1_runtime_main_random_mask(profile, 7) == 0) {
+                sight_range += csb_v1_runtime_main_random1(profile) + 5;
+            }
+        }
+        if (distance > sight_range +
+                csb_v1_runtime_main_random_mask(profile, 7) - 3) {
+            return 0;
+        }
+    }
     context.profile = profile;
     context.level = level;
     return F0817f_DM1_GROUP_GetDistanceBetweenUnblockedSquares_Compat(

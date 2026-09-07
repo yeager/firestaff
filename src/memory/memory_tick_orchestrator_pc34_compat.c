@@ -1685,7 +1685,7 @@ static const unsigned short s_dm1_i34_creature_resistances[27] = {
     0x0859, 0x0A5D, 0x0FBF, 0x06CD, 0x0FBF, 0x0FBF
 };
 
-static int orch_get_dm1_creature_info_pc34_compat(
+int F0890d_ORCH_GetCreatureInfoPc34Compat(
     int creatureType,
     struct DM1CreatureInfo_Compat* out)
 {
@@ -9492,7 +9492,7 @@ static int orch_apply_initial_explosion_burst_compat(
         &groupIndex);
     if (!digest.destHasChampion && digest.destHasCreatureGroup) {
         if (!world->things || groupIndex < 0 || groupIndex >= world->things->groupCount ||
-            !orch_get_dm1_creature_info_pc34_compat(
+            !F0890d_ORCH_GetCreatureInfoPc34Compat(
                 world->things->groups[groupIndex].creatureType, &info)) return 0;
         resistance = (info.resistances >> 4) & 15;
         digest.destCreatureIsNonMaterial = (info.attributes & 0x0040) != 0;
@@ -9727,7 +9727,7 @@ static int orch_apply_door_group_damage_f0191_compat(
     group = &world->things->groups[groupIndex];
     if (attack <= 0) return 1;
     memset(&creatureInfo, 0, sizeof(creatureInfo));
-    if (!orch_get_dm1_creature_info_pc34_compat(
+    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(
             (int)group->creatureType, &creatureInfo)) {
         return 0;
     }
@@ -10884,7 +10884,7 @@ static void orch_apply_moving_killed_all_afterplay_f0190_compat(
     DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34 plan;
 
     if (!world || !group || !sourceSquareKnown) return;
-    if (!orch_get_dm1_creature_info_pc34_compat(
+    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(
             (int)group->creatureType, &creatureInfo)) {
         return;
     }
@@ -11558,7 +11558,7 @@ static int orch_add_generated_group_active_state_compat(
         int creature;
         memset(&active, 0, sizeof(active));
         active.groupThingIndex = groupIndex;
-        if (!orch_get_dm1_creature_info_pc34_compat(group->creatureType, &info) ||
+        if (!F0890d_ORCH_GetCreatureInfoPc34Compat(group->creatureType, &info) ||
             !F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
                 &active, group, &info, -1, 0, world->gameTick, &rng, &receipt) ||
             !receipt.valid) return 0;
@@ -12400,7 +12400,7 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     destMapY = movePlan.destinationMapY;
 
     memset(&creatureInfo, 0, sizeof(creatureInfo));
-    if (!orch_get_dm1_creature_info_pc34_compat(
+    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(
             (int)group->creatureType, &creatureInfo)) {
         return 0;
     }
@@ -13122,7 +13122,7 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.creatureType = group->creatureType;
     ctx.groupBehavior = orch_ai_state_to_dm1_behavior_compat(ai->stateKind);
     ctx.creatureCount = group->count;
-    if (!orch_get_dm1_creature_info_pc34_compat(group->creatureType,
+    if (!F0890d_ORCH_GetCreatureInfoPc34Compat(group->creatureType,
                                                  &ctx.creatureInfo)) {
         return 0;
     }

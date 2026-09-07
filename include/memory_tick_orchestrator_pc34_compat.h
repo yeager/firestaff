@@ -88,6 +88,11 @@
 #include "memory_movement_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
+
+/* Defined by the creature behaviour interface.  The orchestrator exports a
+ * source-table lookup without making this broad integration header depend on
+ * that implementation header. */
+struct DM1CreatureInfo_Compat;
 #include "memory_combat_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_compat.h"
@@ -655,6 +660,12 @@ void F0890_ORCH_ApplyPeriodicEffects_Compat(
 int F0890b_ORCH_ComputeDungeonViewLight_Compat(
     const struct GameWorld_Compat* world,
     struct DungeonViewLight_Compat* outLight);
+
+/* Complete source-locked PC3.4 G0243 record.  Perception callers need the
+ * packed Ranges word; do not reconstruct its XXX/smell nibbles from a
+ * reduced behaviour profile. */
+int F0890d_ORCH_GetCreatureInfoPc34Compat(
+    int creatureType, struct DM1CreatureInfo_Compat* out);
 
 int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     struct DungeonGroup_Compat* group,

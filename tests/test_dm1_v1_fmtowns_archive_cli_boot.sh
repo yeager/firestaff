@@ -29,6 +29,7 @@ probe() {
     grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$output" &&
     grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$output" &&
     grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$output" &&
+    grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$output" &&
     grep -Fq 'phase=dm1-runtime' <<<"$output" &&
     grep -Fq 'levelLoaded=1' <<<"$output"
 }
@@ -50,6 +51,7 @@ grep -Fq 'platformHandoff=fmtowns-tmenu-jdm' <<<"$japanese_output"
 grep -Fq 'fmtownsProgram=JDM.EXP' <<<"$japanese_output"
 grep -Fq "fmtownsProgramMd5=$expected_jdm_md5" <<<"$japanese_output"
 grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$japanese_output"
+grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$japanese_output"
 grep -Fq 'phase=dm1-runtime' <<<"$japanese_output"
 grep -Fq 'levelLoaded=1' <<<"$japanese_output"
 
@@ -64,6 +66,7 @@ grep -Fq "assetMd5=$expected_japanese_md5" <<<"$japanese_menu_output"
 grep -Fq 'platformHandoff=fmtowns-tmenu-jdm' <<<"$japanese_menu_output"
 grep -Fq 'fmtownsProgram=JDM.EXP' <<<"$japanese_menu_output"
 grep -Fq "fmtownsProgramMd5=$expected_jdm_md5" <<<"$japanese_menu_output"
+grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$japanese_menu_output"
 grep -Fq 'phase=dm1-runtime' <<<"$japanese_menu_output"
 grep -Fq 'levelLoaded=1' <<<"$japanese_menu_output"
 
@@ -97,6 +100,9 @@ expect_gameplay_input() {
         printf '%s\n' "$gameplay_output" >&2
         return 1
     }
+    # After EDM/JDM's title track 02, the common entrance/HoC handoff
+    # selects the authenticated FM Towns entrance map track. Track 02 here
+    # would prove that title fell straight through to a party-less dungeon.
     if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
        ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
        ! grep -Fq "assetMd5=$graphics_md5" <<<"$gameplay_output" ||
@@ -105,7 +111,7 @@ expect_gameplay_input() {
        ! grep -Fq "fmtownsProgramMd5=$program_md5" <<<"$gameplay_output" ||
        ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
-       ! grep -Fq 'dm1FmtownsCddaTrack=2' <<<"$gameplay_output" ||
+       ! grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$gameplay_output" ||
        ! grep -Fq "map=0 party=$expected_party" <<<"$gameplay_output"; then
         printf '%s\n' "$gameplay_output" >&2
         printf 'FAIL: authentic DM1 FM Towns %s %s input did not reach native runtime\n' "$language" "$input" >&2

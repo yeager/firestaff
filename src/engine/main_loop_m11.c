@@ -3461,6 +3461,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0 &&
             gameView->dm1FmtownsStartupReceiptValid) {
+            DM1_V1_StartupHandoffPostLaunchPlan_PC34 entrancePlan;
             int played = 0;
             int titleTrack = dm1_v1_fmtowns_cd_track_for_event(0);
             /* FM Towns must either consume its authenticated native title
@@ -3475,6 +3476,33 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             (void)M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(gameView);
             if (!m11_play_dm1_fmtowns_title_if_available(gameView, &played) ||
                 !played) {
+                M11_GameView_Shutdown(gameView);
+                M11_GameView_Init(gameView);
+                m11_set_launch_failed_message(menuState);
+                return 0;
+            }
+            /* EDM/JDM owns the Towns title, but completing that title is not
+             * permission to expose a live, party-less dungeon.  The common
+             * DM1 entrance owns the first interactive Hall-of-Champions
+             * handoff; it consumes the already-bound original FM Towns
+             * GRAPHICS.DAT surfaces and waits for a fresh entrance command.
+             * Build the existing source-locked plan explicitly rather than
+             * manufacturing a Towns-only shortcut or treating the title
+             * launch input as C200. */
+            memset(&entrancePlan, 0, sizeof(entrancePlan));
+            if (!dm1_v1_startup_handoff_post_launch_plan_pc34(
+                    "dm1", &entrancePlan) ||
+                !entrancePlan.play_entrance ||
+                !entrancePlan.entrance_full_start_receipt.valid ||
+                /* This harness-only flag asserts that the pointer launch
+                 * reached a bound game. It is deliberately an exit-before-
+                 * gameplay contract, so it must not wait for a second,
+                 * interactive entrance command. */
+                (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") &&
+                 m11_play_redmcsb_entrance_transition(
+                    gameView, entrancePlan.entrance_auto_enter_ms,
+                    &entrancePlan.entrance_full_start_receipt,
+                    &entrancePlan.media_receipt) == M11_ENTRANCE_COMMAND_QUIT)) {
                 M11_GameView_Shutdown(gameView);
                 M11_GameView_Init(gameView);
                 m11_set_launch_failed_message(menuState);
