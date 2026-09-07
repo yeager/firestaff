@@ -63,6 +63,9 @@ for domain in "${DOMAINS[@]}"; do
         msgmerge --update --quiet --no-wrap --backup=none "$catalog" "$pot"
     done
 done
+# Reapply reviewed terminology after msgmerge.  It updates only explicit
+# source-owned entries and leaves unknown player text as an honest fallback.
+python3 "$ROOT/po/refresh_major_language_catalogs.py" --po-dir "$WORK_PO"
 msguniq --use-first --no-wrap --output-file="$WORK_PO/firestaff_studio.pot.canonical" "$WORK_PO/firestaff_studio.pot"
 mv -- "$WORK_PO/firestaff_studio.pot.canonical" "$WORK_PO/firestaff_studio.pot"
 for catalog in "$WORK_PO/studio"/*.po; do
