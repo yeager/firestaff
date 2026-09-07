@@ -162,18 +162,22 @@
   the XP batch. Paired fatal/nonfatal RAM tests do not replace an authentic
   fight capture. Extend startup sentinel proof to remaining editions and
   actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
-- Resolve the C006 generated-group cross-map teleporter failures before
-  promoting the complete suite. Six assertions fail: source chain, target
-  linkage/next, active state, C37 location and buzz receipt. The fixture
-  contains raw C01 (00 0c 22 a0 00 01), and instrumentation finds the correct
-  target map1/2/1. F0262 then requests party-map ACTIVE_GROUP for a newly
-  generated group before insertion creates it; the helper returns failure
-  and its caller discards that result, retaining source coordinates.
-  Compare GROUP.C F0185:542-543, MOVESENS.C F0267:439-440,524 and
-  F0262:76-83 with original execution. DUNGEON.C:1276-1278,1303-1305
-  also selects ACTIVE_GROUP solely by party-map equality, so neither a
-  decoded fallback nor reordered insertion is justified without further
-  evidence. Obtain a runtime capture for this exact generation case.
+- Resolve the C006 generated-group cross-map teleporter path before promoting
+  it as full parity. The source fixture contains raw C01
+  (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,
+  preserving the source chain, target linkage, inactive cross-map state and
+  target buzz. The remaining local regression mismatch is narrower: two
+  assertions still expect the legacy host `CREATURE_TICK` label for the
+  scheduled C37 wander. The native timeline represents C37 as
+  `CREATURE_REACTION` with `aux2=C37`, which is also what its dispatch and
+  save conversion consume. Reconcile that test expectation only after an
+  original trace confirms the event-type mapping; do not relabel the runtime
+  merely to make an old test pass. Continue to compare GROUP.C F0185:542-543,
+  MOVESENS.C F0267:439-440,524 and F0262:76-83 with original execution.
+  DUNGEON.C:1276-1278,1303-1305 selects ACTIVE_GROUP solely by party-map
+  equality, so neither a decoded fallback nor reordered insertion is
+  justified without further evidence. Obtain a runtime capture for this exact
+  generation case.
 - When savegame work resumes, inspect the legacy lifecycle probe's A5/A6
   size expectations (208/872) and J4 all-fields-max serialization failure
   against magicMapRefresh and the serialization contract. It runs against
