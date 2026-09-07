@@ -1,5 +1,17 @@
 # Firestaff TODO — DM1
 
+- Reproduce and correct the reported retail HoC interaction/viewport set as
+  one source-locked pass: champion-mirror clicks, pickup-to-inventory and Eye
+  scroll reads, Vi altar wall material, stairs occlusion, complete door
+  composition, pressure-plate near/far visibility, wall-torch placement, and
+  held-item striping/loss on inventory placement. Existing raw-format pointer,
+  F0128 scheduler, and individual material tests are necessary but do not
+  prove these live combinations. Use an authenticated PC3.4 HoC route or a
+  generated-in-original-runtime C13 save as the state driver; do not promote
+  a hand-made save or substitute graphics from another platform. Capture the
+  exact square/pose/input and compare source-order command receipts before
+  changing a renderer or inventory transaction.
+
 - Repair and validate original DOS capture input delivery before using the
   six-shot viewport route as parity evidence. On 2026-09-06, canonical English
   media produced an authentic entrance-menu image (`selector_000.png`), not
