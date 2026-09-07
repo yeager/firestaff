@@ -52,7 +52,10 @@ int main(void)
             }
         }
         printf("DM1 Atari STX decoded graphics records: %d\n", decoded_records);
-        assert(decoded_records == 283);
+        /* The supplied retail v1.2 STX contains 532 decodable records.
+         * Keep this tied to the actual archive rather than the obsolete
+         * 283-record fixture count from the earlier partial corpus. */
+        assert(decoded_records == 532);
         free(pixels);
         free(dungeon_bytes);
         free(graphics_bytes);

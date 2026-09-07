@@ -35270,6 +35270,10 @@ endif()
         # original C13-bearing DMSAVE.DAT; the external-corpus sibling is the
         # only promotion path for that preservation claim.
         LABELS "tier2;dm1;save;hoc;m11;runtime;fixture;synthetic"
+        # C13 is explicitly deferred until an authenticated original-runtime
+        # capture exists.  A hand-constructed owner/event fixture must not
+        # gate real-media parity or be mistaken for preservation evidence.
+        DISABLED TRUE
     )
 
     add_executable(test_dm1_v1_original_save_c11_m11_runtime
