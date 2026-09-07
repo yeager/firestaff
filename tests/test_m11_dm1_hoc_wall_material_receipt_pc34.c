@@ -258,7 +258,12 @@ static int verify_all_ordinary_hoc_wall_ornaments(
                                 state->wallOrnamentIndices[0],
                                 DM1_WALL_ORN_MAX, ornament,
                                 &expectedGlobalByOrdinal[ornament]) ||
-                            expectedGlobalByOrdinal[ornament] <= 0) {
+                            expectedGlobalByOrdinal[ornament] < 0) {
+                            fprintf(stderr,
+                                    "HoC ornament discovery failed: ordinal=%d cache=%d map=%d square=%d,%d dir=%d view=%d,%d\n",
+                                    ornament, state->ornamentCacheLoaded[0],
+                                    state->world.party.mapIndex, partyX, partyY,
+                                    direction, forward, side);
                             return 0;
                         }
                     }
