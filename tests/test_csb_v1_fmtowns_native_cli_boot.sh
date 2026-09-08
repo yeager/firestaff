@@ -108,6 +108,95 @@ if ! printf '%s\n' "$runtime_output" | grep -Fq "presentationMode=$expected_mode
 fi
 done
 
+# CHTWE/CHTWJ has now reached the real C03_GAME owner.  Its C28 palette
+# replaces the prior SWITCHTW palette before F0807 composes C002/C003 over
+# C004.  A raw boot receipt can still pass when that presentation transaction
+# regresses: drawing only C004 produces the well-known large red field rather
+# than the closed Prison doors.  Capture the actual indexed presentation from
+# the user-owned ZIP, without materialising any member, and bind it to the
+# executable's authenticated C28 six-bit palette.
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+entrance_capture_dir=$(mktemp -d "$scratch_root/csb-fmtowns-entrance.XXXXXX")
+cleanup_entrance_capture() { find "$entrance_capture_dir" -depth -delete; }
+trap cleanup_entrance_capture EXIT HUP INT TERM
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$entrance_capture_dir" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --boot-probe --boot-probe-frames 720 \
+    --script 'wait700,click:52:110,wait5' --duration 0 >/dev/null 2>&1
+python3 - "$entrance_capture_dir" <<'PY'
+import pathlib
+import struct
+import sys
+
+files = list(pathlib.Path(sys.argv[1]).glob("*.bmp"))
+if len(files) != 1:
+    raise SystemExit("FAIL: expected exactly one CSB FM Towns Entrance frame")
+blob = files[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: CSB FM Towns Entrance capture is not a BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, height = struct.unpack_from("<Ii", blob, 18)
+height = abs(height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if width != 320 or height != 200 or bits != 24 or offset + stride * height > len(blob):
+    raise SystemExit("FAIL: invalid CSB FM Towns Entrance capture geometry")
+
+# C28_ENTRANCE_CSB from authenticated F31E/F31J GAME.EXP.  BMP samples are
+# BGR; six-bit DAC values are expanded by (v << 2) | (v >> 4).
+rgb6 = (
+    (0, 0, 0), (0x1b, 0x1b, 0x1b), (0x23, 0x23, 0x23),
+    (0x23, 0x13, 0x03), (0x33, 0x2b, 0x23), (0x13, 0x0b, 0x0b),
+    (0x03, 0x03, 0x23), (0x03, 0x03, 0x2b), (0x23, 0x1b, 0x13),
+    (0x3f, 0x03, 0x03), (0x2b, 0x23, 0x1b), (0x1b, 0x13, 0x0b),
+    (0x13, 0x13, 0x13), (0x2b, 0x2b, 0x2b), (0x1b, 0x0b, 0x03),
+    (0x3f, 0x3f, 0x3f),
+)
+def expand(v):
+    return (v << 2) | (v >> 4)
+allowed = {(expand(b), expand(g), expand(r)) for r, g, b in rgb6}
+pixels = []
+for row in range(height):
+    start = offset + row * stride
+    pixels.extend(tuple(blob[start + column * 3:start + column * 3 + 3])
+                  for column in range(width))
+observed = set(pixels)
+unexpected = observed - allowed
+nonblack = sum(pixel != (0, 0, 0) for pixel in pixels)
+red_background = (expand(0x03), expand(0x03), expand(0x3f))
+# C28 legitimately uses palette entry 9 for a small title decoration: the
+# authenticated source frame has 40 such pixels at x=224..233/y=8..21.
+# The regression is C004 rendered as a broad red field, not the mere presence
+# of this palette entry.
+red_points = [
+    (column, row)
+    for row in range(height)
+    for column in range(width)
+    if pixels[row * width + column] == red_background
+]
+red_background_broad = False
+if red_points:
+    red_x = [point[0] for point in red_points]
+    red_y = [point[1] for point in red_points]
+    red_background_broad = (
+        len(red_points) > 512 or
+        max(red_x) - min(red_x) + 1 > 32 or
+        max(red_y) - min(red_y) + 1 > 32
+    )
+if unexpected or nonblack < 50000 or len(observed) < 10 or red_background_broad:
+    raise SystemExit(
+        "FAIL: CSB FM Towns Entrance did not present C28 + closed C002/C003 "
+        f"(nonblack={nonblack}, colours={len(observed)}, "
+        f"unexpected={len(unexpected)}, red_pixels={len(red_points)}, "
+        f"red_background_broad={red_background_broad})")
+print(f"PASS: CSB FM Towns C28 closed Entrance nonblack={nonblack} colours={len(observed)}")
+PY
+trap - EXIT HUP INT TERM
+cleanup_entrance_capture
+
 # An explicit F31 save is a distinct C03/F0435 route.  It must not replay
 # TITLE.ANM or pass the bytes to the Atari/CSBWin importer merely because the
 # launcher was started from a generic --game csb invocation.  Keep this opt-in
