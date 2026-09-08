@@ -6397,7 +6397,7 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
  * receipt is intentionally not involved: A31/A35 have their own DMCSB2
  * GRAPHICS.DAT owner.  Render into a candidate page so an unsupported source
  * record cannot leak a partial host frame. */
-static int m11_csb_render_amiga_runtime_viewport(const M11_GameViewState *state,
+static int m11_csb_render_amiga_runtime_viewport(M11_GameViewState *state,
                                                   unsigned char *framebuffer,
                                                   int framebuffer_width,
                                                   int framebuffer_height)
@@ -6457,6 +6457,26 @@ static int m11_csb_render_amiga_runtime_viewport(const M11_GameViewState *state,
     }
     memcpy(framebuffer, candidate, byte_count);
     free(candidate);
+    /* A31/A35 does not pass through the PC3.4 first-live-frame receipt, but
+     * it has still completed the same source-selected F0094/F0095/F0128
+     * transaction against authenticated DMCSB2 records.  Publish the exact
+     * 224x136 aperture digest here.  Previously this valid renderer left
+     * csbViewportHash at zero, so CLI verification could not distinguish a
+     * real Amiga viewport from an undrawn one. */
+    {
+        uint32_t hash = 2166136261u;
+        int y;
+        int x;
+        for (y = 0; y < DM1_VIEWPORT_HEIGHT; ++y) {
+            for (x = 0; x < DM1_VIEWPORT_WIDTH; ++x) {
+                hash ^= framebuffer[(size_t)(DM1_VIEWPORT_Y + y) *
+                                    (size_t)framebuffer_width +
+                                    (size_t)(DM1_VIEWPORT_X + x)];
+                hash *= 16777619u;
+            }
+        }
+        state->csbState.runtime_viewport_pixel_hash = hash ? hash : 1u;
+    }
     return 1;
 }
 
@@ -6594,7 +6614,7 @@ static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
  * owned by the M11 cache; this presentation path consumes only its stable
  * decoded records, so a frame never reopens or reparses game data. */
 static int m11_csb_present_amiga_runtime_surface(
-    const M11_GameViewState *state, unsigned char *framebuffer,
+    M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
 {
     static const uint16_t dungeon_palette_rgb4[16] = {
@@ -6660,6 +6680,10 @@ static int m11_csb_present_amiga_runtime_surface(
         surface->height != (uint16_t)expected_height) {
         goto done;
     }
+    /* Clear a prior live-aperture receipt before constructing this frame.
+     * Inventory and mirror panels intentionally replace the viewport, so a
+     * failed or non-viewport Amiga frame must never retain its old digest. */
+    state->csbState.runtime_viewport_pixel_hash = 0u;
     if (state->candidateMirrorPanelActive || state->candidateMirrorRenameActive) {
         inventory_surface = M11_AssetLoader_Load(
             (M11_AssetLoader *)&state->assetLoader, 17u);

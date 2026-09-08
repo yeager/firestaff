@@ -73,6 +73,16 @@ case "$runtime_output" in
         ;;
 esac
 
+# A31's native F0128 route has no PC-title receipt, but it must still publish
+# the digest of the source-decoded 224x136 dungeon aperture.  A zero digest
+# would make a successful title/input handoff indistinguishable from a black
+# or unrendered Amiga viewport.
+if ! printf '%s\n' "$runtime_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
+    echo "FAIL: native Amiga CSB runtime did not publish its source viewport receipt" >&2
+    printf '%s\n' "$runtime_output" >&2
+    exit 1
+fi
+
 if ! printf '%s\n' "$runtime_output" | grep -Fq "presentationMode=$expected_mode "; then
     printf '%s\n' "$runtime_output" >&2; exit 1
 fi
