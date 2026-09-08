@@ -119,9 +119,24 @@ echo "=== po/ layout validation ==="
 # still contains one is therefore incomplete regardless of a non-empty
 # msgstr, so reject them before reporting completion percentages.  Include
 # Studio catalogs here even though their files live below po/studio/.
+po_fuzzy_count() {
+    local catalog="$1"
+    if command -v msgattrib >/dev/null 2>&1; then
+        msgattrib --only-fuzzy --no-obsolete "$catalog" |
+            awk '/^msgid / { count++ } END { print count + 0 }'
+    else
+        # Asset-hygiene deliberately runs without gettext.  Retain the same
+        # active-entry check instead of making CI depend on an optional tool.
+        awk '
+            /^#,/ { if ($0 ~ /(^|[ ,])fuzzy([ ,]|$)/) fuzzy = 1; next }
+            /^msgid / { if (fuzzy) count++; fuzzy = 0 }
+            END { print count + 0 }
+        ' "$catalog"
+    fi
+}
+
 while IFS= read -r catalog; do
-    fuzzy_count=$(msgattrib --only-fuzzy --no-obsolete "$catalog" |
-        awk '/^msgid / { count++ } END { print count + 0 }')
+    fuzzy_count=$(po_fuzzy_count "$catalog")
     if [ "$fuzzy_count" -ne 0 ]; then
         echo "FAIL: $catalog contains $fuzzy_count active fuzzy translation(s)"
         ERRORS=$((ERRORS + 1))

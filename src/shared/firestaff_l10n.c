@@ -293,6 +293,7 @@ FS_Language fs_l10n_language_from_locale(const char *locale) {
 /* `fs_l10n_language_from_locale()` intentionally returns English for an
  * unknown code.  Detection needs to distinguish that fallback from a real
  * `en` preference, otherwise `LANGUAGE=xx:sv` can never reach Swedish. */
+#if !defined(__APPLE__)
 static int fs_l10n_locale_is_supported(const char* locale) {
     const char a = locale && locale[0] ? (char)tolower((unsigned char)locale[0]) : '\0';
     const char b = locale && locale[1] ? (char)tolower((unsigned char)locale[1]) : '\0';
@@ -330,6 +331,7 @@ static FS_Language fs_l10n_detect_language_list(const char* locales) {
     }
     return FS_LANG_COUNT;
 }
+#endif
 
 FS_Language fs_l10n_detect_system_language(void) {
 #if defined(__APPLE__)
