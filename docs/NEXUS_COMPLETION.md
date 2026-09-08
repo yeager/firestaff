@@ -434,6 +434,15 @@ Firestaff.  The public `title-vdp-capture-required` gate must stay closed
 until a same-session post-render frame shows the actual Nexus title/menu and
 can be joined to the relevant VDP1/VDP2 state.
 
+On 2026-09-08, a fresh JP-BIOS/retail-CUE r38 scout requested one post-render
+frame at absolute frame 18,000 through the hash-manifested raw-capture
+launcher.  The launcher cleanly killed the external Mednafen process at its
+five-minute bound before the requested frame was reached; no raw witness or
+image was emitted.  The empty operator-owned directory was removed.  This is
+only a capture-duration measurement, not hardware or title evidence: a later
+attempt must use a longer bounded window and still require a validated raw
+witness plus an actual Nexus post-render image.
+
 Current external-disk audit, 2026-08-13: the verified game corpus contains
 CUE/ISO and extracted retail files. A new isolated J-BIOS/English-Merged
 capture is now available as operator evidence on external disk:
