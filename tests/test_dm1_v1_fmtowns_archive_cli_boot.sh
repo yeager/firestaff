@@ -145,4 +145,53 @@ expect_gameplay_input strafe-left  1,3,2 ja
 expect_gameplay_input strafe-right 1,3,2 ja
 expect_gameplay_input action       1,3,2 ja
 
+# The runtime receipt above proves that EDM/JDM reached the retail party
+# state, but a PC34-only wall/floor binding could still leave the presented
+# F20 view almost entirely black.  Capture a real frame from the selected
+# archive and require substantial, multi-colour original indexed content.
+# The image is a test artifact only and lives under the caller-controlled
+# workspace scratch root; neither the ZIP nor a disc member is extracted.
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+capture_dir=$(mktemp -d "$scratch_root/dm1-fmtowns-live-frame.XXXXXX")
+cleanup_capture() { rm -rf "$capture_dir"; }
+trap cleanup_capture EXIT HUP INT TERM
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform fm-towns --data-dir "$archive" \
+    --script wait300 --duration 5000 >/dev/null 2>&1
+python3 - "$capture_dir" <<'PY'
+import pathlib
+import struct
+import sys
+
+files = list(pathlib.Path(sys.argv[1]).glob("*.bmp"))
+if len(files) != 1:
+    raise SystemExit("FAIL: expected exactly one DM1 FM Towns presented frame")
+blob = files[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM1 FM Towns capture is not a BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, height = struct.unpack_from("<Ii", blob, 18)
+height = abs(height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if width <= 0 or height <= 0 or bits != 24 or offset + stride * height > len(blob):
+    raise SystemExit("FAIL: invalid DM1 FM Towns capture geometry")
+nonblack = 0
+colours = set()
+for row in range(height):
+    start = offset + row * stride
+    for column in range(width):
+        pixel = blob[start + column * 3:start + column * 3 + 3]
+        if pixel != b"\0\0\0":
+            nonblack += 1
+            colours.add(pixel)
+if nonblack < 100000 or len(colours) < 4:
+    raise SystemExit(
+        "FAIL: DM1 FM Towns live view lacks original F20 scenery "
+        f"(nonblack={nonblack}, colours={len(colours)})")
+print(f"PASS: DM1 FM Towns live F20 view nonblack={nonblack} colours={len(colours)}")
+PY
+
 printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM and TMENU/JDM handoffs, plus native English and Japanese input matrices in memory'
