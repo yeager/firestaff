@@ -8,9 +8,9 @@
 # tested here — this is filesystem contract only.
 #
 # Exit codes:
-#   0 = all structural checks pass. Zero/fallback-only native coverage is
-#       reported as WARN/FALL but does not fail the structural CI gate.
-#   1 = missing required files, malformed headers, or fatal errors
+#   0 = every shipped locale has a complete, non-fuzzy runtime catalog.
+#   1 = missing required files, incomplete catalogs, malformed headers, or
+#       other fatal errors.
 
 set -euo pipefail
 
@@ -26,18 +26,25 @@ cd "$PO_DIR"
 
 # All i18n domains Firestaff ships (added: firestaff + nexus + theron
 # to the original startup-menu/dm1/csb/dm2 quartet).
-DOMAINS=(startup-menu dm1 csb dm2 firestaff nexus theron)
+DOMAINS=(startup-menu dm1 csb dm2 firestaff nexus theron firestaff_studio)
 
-# Per-domain "all known locales" list. Used to enumerate catalogs we
-# expect to exist. The script is structural, not strict: missing locale
-# files are reported as warnings, not errors, but completeness is
-# reported per locale so a translator can see which gaps remain.
-#
-# English (.en.po) is required for every domain.
+# Every shipped domain must provide every supported locale. English is the
+# source locale: its empty msgstr values deliberately resolve through msgid
+# at runtime, which is a complete English catalog rather than a gap.
 KNOWN_LOCALES=(en sv fr de ja zh cs da es fi hu it ko nl no pl pt ru tr id)
 
 ERRORS=0
 WARNINGS=0
+
+catalog_path() {
+    local domain="$1"
+    local locale="$2"
+    if [ "$domain" = "firestaff_studio" ]; then
+        printf 'studio/%s.po' "$locale"
+    else
+        printf '%s.%s.po' "$domain" "$locale"
+    fi
+}
 
 # po_count <mode> <file>
 # mode = "total" -> print number of non-empty msgid entries (catalog size)
@@ -123,7 +130,7 @@ done < <(find . -type f -name '*.po' -print | sort)
 
 for domain in "${DOMAINS[@]}"; do
     pot="${domain}.pot"
-    enpo="${domain}.en.po"
+    enpo="$(catalog_path "$domain" en)"
 
     echo ""
     echo "--- domain: ${domain} ---"
@@ -179,13 +186,21 @@ for domain in "${DOMAINS[@]}"; do
         fi
     fi
 
-    # Per-locale coverage report (warnings only)
+    # Every locale is shipped and therefore must be complete. A partial
+    # catalog silently falls back to English in gettext, which violates the
+    # product's full-localization contract even though the UI still renders.
     for loc in "${KNOWN_LOCALES[@]}"; do
-        f="${domain}.${loc}.po"
+        f="$(catalog_path "$domain" "$loc")"
+        if [ ! -f "$f" ]; then
+            echo "FAIL: missing required locale catalog $f"
+            ERRORS=$((ERRORS + 1))
+            continue
+        fi
         if [ -f "$f" ]; then
             # A catalog must identify its own domain. This catches copied PO
             # headers that otherwise compile but belong to another game.
-            if grep -q 'Project-Id-Version:' "$f" &&
+            if [ "$domain" != "firestaff_studio" ] &&
+               grep -q 'Project-Id-Version:' "$f" &&
                ! grep -q "Project-Id-Version: firestaff-${domain}" "$f"; then
                 if [ "$domain" != "firestaff" ] ||
                    ! grep -q 'Project-Id-Version: firestaff' "$f"; then
@@ -197,8 +212,17 @@ for domain in "${DOMAINS[@]}"; do
             tra=$(po_count translated "$f" || echo 0)
             native=$(po_count native "$f" || echo 0)
             if [ "$tot" -gt 0 ]; then
+                if [ "$loc" = "en" ]; then
+                    # English is intentionally represented by msgid in the
+                    # source catalog. Treat it as a full runtime translation.
+                    tra="$tot"
+                fi
                 pct=$(( tra * 100 / tot ))
                 native_pct=$(( native * 100 / tot ))
+                if [ "$tra" -ne "$tot" ]; then
+                    echo "FAIL: $f is incomplete: ${tra}/${tot} active translations"
+                    ERRORS=$((ERRORS + 1))
+                fi
                 marker="OK  "
                 if [ "$loc" = "en" ]; then
                     marker="SRC "

@@ -114,11 +114,12 @@ A dash means that the language has no catalog for that domain.
 ## Validation
 
 Run `po/validate_po_layout.sh` to verify structural consistency, valid gettext
-syntax, and empty template translations. The
-validator reports both `nonblank` coverage and `native` coverage:
-`msgstr == msgid` counts as fallback/scaffold coverage, not as native
-translation. Fallback-only catalogs are marked `FALL` but do not fail the
-structural CI gate.
+syntax, empty template translations, and complete shipped catalogs. It fails
+when any active locale/domain catalog is missing, has an empty active entry,
+or contains a fuzzy entry. English is counted as complete through its source
+`msgid` values. The report also shows `native` coverage as a diagnostic:
+`msgstr == msgid` is valid for proper names and established technical terms,
+but is not counted as language-specific wording.
 
 Run `python3 po/generate_completion_table.py --check` to check only this
 README's generated completion matrix. Run `bash po/update.sh --check` for the
@@ -128,5 +129,6 @@ DM1's `581/581` Swedish catalog figure includes ten explicitly admitted live
 M11 status/readout literals. It is guarded by
 `dm1_m11_presented_catalog_source_lock`; unmarked literals in the shared M11
 translation unit are not silently counted as DM1 because they may belong to
-CSB, DM2, Nexus, or Theron. Completion is catalog coverage, not whole-game
-localization or behavioral parity.
+CSB, DM2, Nexus, or Theron. Completion guarantees runtime catalog coverage;
+linguistic review and whole-game behavioral parity remain separate quality
+work.
