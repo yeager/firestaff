@@ -924,32 +924,32 @@ msgstr ""
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BLOCK
 msgid "さえぎる"
-msgstr "BLOCKERA"
+msgstr "PARRERA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CHOP
 msgid "叩き切る"
-msgstr "HUGG"
+msgstr "HUGGA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BLOW HORN
 msgid "角笛を吹く"
-msgstr "BLÅS I HORN"
+msgstr "BLÅS HORN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FLIP
 msgid "ｺｲﾝﾄｽ"
-msgstr "VÄND"
+msgstr "KASTA MYNT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: PUNCH
 msgid "殴る"
-msgstr "SLAG"
+msgstr "SLÅ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: KICK
 msgid "蹴る"
-msgstr "SPARK"
+msgstr "SPARKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: WAR CRY
@@ -974,22 +974,22 @@ msgstr "FRYS LIV"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: HIT
 msgid "打つ"
-msgstr "SLÅ"
+msgstr "TRÄFFA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SWING
 msgid "振り回す"
-msgstr "SVINGA"
+msgstr "SVÄNGA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: THRUST
 msgid "突き刺す"
-msgstr "STÖT"
+msgstr "STÖTA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: JAB
 msgid "突く"
-msgstr "STÖT"
+msgstr "STICKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: PARRY
@@ -999,17 +999,17 @@ msgstr "PARERA"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BERZERK
 msgid "暴れ回る"
-msgstr "BÄRSÄRK"
+msgstr "RASERI"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FIREBALL
 msgid "火炎弾"
-msgstr "ELDKLOT"
+msgstr "ELDBOLL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: DISPELL
 msgid "対霊呪文"
-msgstr "FÖRDRIV"
+msgstr "FÖRDREVA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CONFUSE
@@ -1024,7 +1024,7 @@ msgstr "BLIXT"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: DISRUPT
 msgid "対霊武器"
-msgstr "SKINGRA"
+msgstr "STÖRA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: MELEE
@@ -1039,17 +1039,17 @@ msgstr "ÅKALLA"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SLASH
 msgid "斬り下ろす"
-msgstr "SKÄR"
+msgstr "HUGGA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CLEAVE
 msgid "斬り裂く"
-msgstr "KLYV"
+msgstr "KLYVA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BASH
 msgid "打ち割る"
-msgstr "SMÄLL"
+msgstr "KROSSA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: STUN
@@ -1059,7 +1059,7 @@ msgstr "BEDÖVA"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SHOOT
 msgid "射る"
-msgstr "SKJUT"
+msgstr "SKJUTA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SPELLSHIELD
@@ -1074,12 +1074,12 @@ msgstr "ELDSKÖLD"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FLUXCAGE
 msgid "呪縛する"
-msgstr "FLÖDESBUR"
+msgstr "FLUXBUR"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: HEAL
 msgid "治療する"
-msgstr "HELA"
+msgstr "LÄKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CALM
@@ -1104,7 +1104,7 @@ msgstr "SPOTTA"
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BRANDISH
 msgid "追い払う"
-msgstr "SVINGA"
+msgstr "VIFTA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: THROW

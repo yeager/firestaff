@@ -925,197 +925,197 @@ msgstr ""
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BLOCK
 msgid "さえぎる"
-msgstr "さえぎる"
+msgstr "BLOCKEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CHOP
 msgid "叩き切る"
-msgstr "叩き切る"
+msgstr "HACKEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BLOW HORN
 msgid "角笛を吹く"
-msgstr "角笛を吹く"
+msgstr "HORN BLASEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FLIP
 msgid "ｺｲﾝﾄｽ"
-msgstr "ｺｲﾝﾄｽ"
+msgstr "MÜNZE WERFEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: PUNCH
 msgid "殴る"
-msgstr "Nein"
+msgstr "SCHLAGEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: KICK
 msgid "蹴る"
-msgstr "Nein"
+msgstr "TRETEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: WAR CRY
 msgid "ときの声"
-msgstr "ときの声"
+msgstr "KRIEGSSCHREI"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: STAB
 msgid "刺す"
-msgstr "Ja"
+msgstr "STECHEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CLIMB DOWN
 msgid "降りる"
-msgstr "Nein"
+msgstr "HINABSTEIGEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FREEZE LIFE
 msgid "時間凍結"
-msgstr "時間凍結"
+msgstr "LEBEN EINFRIEREN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: HIT
 msgid "打つ"
-msgstr "Nein"
+msgstr "TREFFEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SWING
 msgid "振り回す"
-msgstr "振り回す"
+msgstr "SCHWINGEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: THRUST
 msgid "突き刺す"
-msgstr "突き刺す"
+msgstr "STOSSEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: JAB
 msgid "突く"
-msgstr "突く"
+msgstr "PIKSEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: PARRY
 msgid "かわす"
-msgstr "Ja"
+msgstr "PARIEREN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BERZERK
 msgid "暴れ回る"
-msgstr "暴れ回る"
+msgstr "BERSERKERWUT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FIREBALL
 msgid "火炎弾"
-msgstr "火炎弾"
+msgstr "FEUERBALL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: DISPELL
 msgid "対霊呪文"
-msgstr "対霊呪文"
+msgstr "BANNEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CONFUSE
 msgid "催眠術"
-msgstr "催眠術"
+msgstr "VERWIRREN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: LIGHTNING
 msgid "稲妻の術"
-msgstr "稲妻の術"
+msgstr "BLITZ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: DISRUPT
 msgid "対霊武器"
-msgstr "対霊武器"
+msgstr "ZERSTÖREN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: MELEE
 msgid "斬り払う"
-msgstr "斬り払う"
+msgstr "NAHKAMPF"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: INVOKE
 msgid "念じる"
-msgstr "念じる"
+msgstr "BESCHWÖREN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SLASH
 msgid "斬り下ろす"
-msgstr "斬り下ろす"
+msgstr "SCHLITZEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CLEAVE
 msgid "斬り裂く"
-msgstr "斬り裂く"
+msgstr "SPALTEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BASH
 msgid "打ち割る"
-msgstr "打ち割る"
+msgstr "ZERTRÜMMERN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: STUN
 msgid "気絶させる"
-msgstr "気絶させる"
+msgstr "BETÄUBEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SHOOT
 msgid "射る"
-msgstr "射る"
+msgstr "SCHIESSEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SPELLSHIELD
 msgid "呪文防御"
-msgstr "呪文防御"
+msgstr "ZAUBERSCHILD"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FIRESHIELD
 msgid "火炎防御"
-msgstr "火炎防御"
+msgstr "FEUERSCHILD"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FLUXCAGE
 msgid "呪縛する"
-msgstr "呪縛する"
+msgstr "FLUXKÄFIG"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: HEAL
 msgid "治療する"
-msgstr "治療する"
+msgstr "HEILEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: CALM
 msgid "手なずける"
-msgstr "手なずける"
+msgstr "BERUHIGEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: LIGHT
 msgid "魔術灯火"
-msgstr "魔術灯火"
+msgstr "LICHT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: WINDOW
 msgid "透視"
-msgstr "透視"
+msgstr "FENSTER"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: SPIT
 msgid "火炎攻撃"
-msgstr "火炎攻撃"
+msgstr "SPUCKEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: BRANDISH
 msgid "追い払う"
-msgstr "追い払う"
+msgstr "SCHWINGEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: THROW
 msgid "投げる"
-msgstr "Nein"
+msgstr "WERFEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 #. Reviewed action equivalent: FUSE
 msgid "融合する"
-msgstr "融合する"
+msgstr "VERSCHMELZEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "羅針盤"
