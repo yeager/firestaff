@@ -1,6 +1,6 @@
 /* Real FM Towns DM2 M11 GAME_LOAD -> active-session regression.
- * The selected HME-242 archive and the authenticated English companion stay
- * in their original locations; no game data is generated or unpacked. */
+ * The selected HME-242 archive stays in its original location; FM Towns
+ * localization must not require a PC-English companion archive. */
 
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
@@ -277,7 +277,6 @@ static void check(int condition, const char *message)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
-    const char *companion = getenv("FIRESTAFF_DM2_ENGLISH_COMPANION");
     M12_AssetStatus assets;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -313,8 +312,8 @@ int main(void)
         { 122u, 0x004Du }, { 123u, 0x0049u }
     };
 
-    if (!root || !root[0] || !companion || !companion[0]) {
-        puts("SKIP: FM Towns root and English companion are required");
+    if (!root || !root[0]) {
+        puts("SKIP: FM Towns root is required");
         return 77;
     }
     memset(&assets, 0, sizeof(assets));
@@ -335,7 +334,6 @@ int main(void)
     spec.sourceId = "dm2";
     spec.title = "DUNGEON MASTER II";
     spec.dataDir = selected_runtime;
-    spec.dm2EnglishCompanionPath = companion;
     spec.languageIndex = 1;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
@@ -352,23 +350,21 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
-    /* The selected FM Towns disc remains the runtime owner, but its Japanese
-     * GDAT is overlaid in RAM from the hash-admitted PC-English companion.
-     * The final presentation boundary must then honour the selected UI
-     * locale. This proves a Swedish session does not fall back to Japanese
-     * merely because its source platform is FM Towns. */
+    /* The selected FM Towns disc remains the runtime owner. An internal
+     * English source overlay supplies locale-neutral lookup keys, so Swedish
+     * must not fall back to Japanese or require a PC archive. */
     localized_source_text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x26,
                                                       &localized_text_size);
     check(localized_source_text != NULL && localized_text_size == 10u &&
               memcmp(localized_source_text, "ANTI-FIRE", 9u) == 0,
-          "FM Towns uses the authenticated English GDAT source text");
+          "FM Towns uses the built-in English source text");
     check(snprintf(swedish_catalog, sizeof(swedish_catalog),
                    "%s/po/dm2.sv.po", FIRESTAFF_SOURCE_DIR) > 0 &&
               fs_po_load(swedish_catalog) > 0,
           "DM2 Swedish catalog loads for the selected launcher locale");
     check(strcmp(fs_po_gettext_in_domain("dm2", "ANTI-FIRE"),
                  "ELDMOTSTÅND") == 0,
-          "DM2 presentation translates English companion text to Swedish");
+          "DM2 presentation translates built-in English text to Swedish");
     for (step = 0; step < 20000 && view.dm2FmtownsSwooshActive; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
