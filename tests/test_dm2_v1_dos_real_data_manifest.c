@@ -180,6 +180,13 @@ int main(void) {
             assert(video.decoded_presentations == presentation_count &&
                    dm2_v1_mve_video_pixels(&video) != NULL &&
                    dm2_v1_mve_video_palette_rgb(&video) != NULL);
+            /* Interplay's palette opcode is VGA DAC RGB6.  The renderer
+             * expands this exactly once when presenting the indexed page;
+             * accepting RGB8 here would cause a visible double expansion. */
+            for (size_t palette_byte = 0u;
+                 palette_byte < sizeof(video.palette_rgb); ++palette_byte) {
+                assert(video.palette_rgb[palette_byte] <= 63u);
+            }
             {
                 DM2_V1_MveAudioIterator audio_iterator;
                 DM2_V1_MvePcm pcm;

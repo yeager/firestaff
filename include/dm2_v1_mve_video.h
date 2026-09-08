@@ -16,7 +16,9 @@ typedef struct {
     uint8_t second_last[DM2_V1_MVE_VIDEO_PIXELS];
     uint8_t last[DM2_V1_MVE_VIDEO_PIXELS];
     uint8_t current[DM2_V1_MVE_VIDEO_PIXELS];
-    uint8_t palette_rgb[256u * 3u]; /* RGB6 expanded to RGB8 on update. */
+    /* MVE palette opcodes contain VGA DAC RGB6 values.  M11's indexed
+     * presenter is the sole RGB6 -> RGB8 conversion boundary. */
+    uint8_t palette_rgb[256u * 3u];
     uint32_t decoded_presentations;
     int initialized;
 } DM2_V1_MveVideo;

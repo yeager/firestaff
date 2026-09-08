@@ -68151,9 +68151,20 @@ void M11_GameView_Draw(M11_GameViewState* state,
                  * credits or host overlay route.  The presenter advances at
                  * most one exact source frame per Draw call, even when the
                  * host has missed several deadlines. */
-                (void)m11_dm2_present_dos_intro((M11_GameViewState *)state,
-                                                framebuffer, framebufferWidth,
-                                                framebufferHeight);
+                if (!m11_dm2_present_dos_intro(
+                        (M11_GameViewState *)state, framebuffer,
+                        framebufferWidth, framebufferHeight) &&
+                    ((M11_GameViewState *)state)->dm2DosMveIntroComplete) {
+                    /* The last MVE page was already presented.  Its next
+                     * draw releases the movie owner; draw SHOW_MENU_SCREEN
+                     * immediately instead of leaving a one-frame black gap
+                     * that can become the visible handoff frame. */
+                    startup_menu_drawn = m11_draw_dm2_startup_menu(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, &startup_host_receipt,
+                        &startup_ownership_receipt,
+                        &startup_visual_receipt);
+                }
             } else if (((const M11_GameViewState *)state)->dm2DosMveIntroRejected) {
                 /* A verified MVE that cannot retain strict source order must
                  * fail black.  Showing SKULL's menu here would falsely claim
