@@ -24,6 +24,14 @@
   gate; it must not be used as a fallback reference source. Keep the
   complete-capture gate; establish reliable host input and inspect each frame
   before claiming dungeon, movement, or rendering parity.
+  A fresh 2026-09-08 Linux retry staged only the user-supplied PC 3.4 ZIP for
+  the external original-runtime capture under `.codex-scratch` (Firestaff did
+  not use that stage), launched `DM -vv -sn -pk` through `/usr/bin/dosbox` and
+  Xvfb, and requested one labelled title frame. The route injector completed
+  but DOSBox produced `0/1` raw screenshots, so no image was normalized or
+  admitted. The reproducible diagnostic is
+  `.codex-scratch/dm1-pc34-original-title-capture-20260908`; repair the
+  DOSBox screenshot channel before retrying a HoC route.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
