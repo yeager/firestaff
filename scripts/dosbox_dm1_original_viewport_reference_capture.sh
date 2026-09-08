@@ -113,6 +113,15 @@ Optional environment:
                     screenshot writer is unstable. Captures the X11 DOSBox
                     window with scrot, crops its 4:3 content rectangle, and
                     reduces it with nearest-neighbour to original 320x200.
+  DM1_DOSBOX_INPUT_MODE=global
+                    Linux/X11 verification fallback for DOSBox-X builds that
+                    stop accepting xdotool --window events after the Entrance
+                    handoff. Emits focused root-device XTest input instead;
+                    it affects only this external original-capture harness.
+  DM1_DOSBOX_MOUSE_HOLD_MS=60
+                    duration of each injected mouse press. The dungeon loop
+                    samples button state asynchronously, so an XTest click
+                    with an immediate release is intentionally not used.
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
@@ -651,6 +660,8 @@ skip_startup_selector="$3"
 screenshot_hotkey="${DM1_DOSBOX_SCREENSHOT_HOTKEY:-ctrl+F5}"
 capture_backend="${DM1_DOSBOX_CAPTURE_BACKEND:-emulator}"
 capture_dir="${DM1_DOSBOX_CAPTURE_OUT_DIR:-.}"
+input_mode="${DM1_DOSBOX_INPUT_MODE:-window}"
+mouse_hold_ms="${DM1_DOSBOX_MOUSE_HOLD_MS:-60}"
 host_capture_index=0
 
 if [[ -z "${DISPLAY:-}" ]]; then
@@ -666,9 +677,30 @@ fi
 xdotool windowactivate --sync "$window" >/dev/null 2>&1 || true
 xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
 
+case "$input_mode" in
+    window|global) ;;
+    *)
+        echo "ERROR: DM1_DOSBOX_INPUT_MODE must be 'window' or 'global', got '$input_mode'" >&2
+        exit 2
+        ;;
+esac
+if [[ ! "$mouse_hold_ms" =~ ^[0-9]+$ ]] || [[ "$mouse_hold_ms" -lt 1 ]]; then
+    echo "ERROR: DM1_DOSBOX_MOUSE_HOLD_MS must be a positive millisecond count, got '$mouse_hold_ms'" >&2
+    exit 2
+fi
+
 tap_key() {
     local key="$1"
-    xdotool key --window "$window" "$key"
+    # DOSBox-X accepts XTest events addressed at its window for title/Entrance,
+    # but some SDL input paths stop consuming those targeted events once C407
+    # transfers into the game loop.  ``global`` deliberately emits the same
+    # focused X11 event at the root input device, like physical keyboard input.
+    # It is capture tooling only; Firestaff never invokes xdotool at runtime.
+    if [[ "$input_mode" == "global" ]]; then
+        xdotool key "$key"
+    else
+        xdotool key --window "$window" "$key"
+    fi
     sleep 0.12
 }
 
@@ -736,13 +768,30 @@ py = top + ((y + 0.5) / 200.0) * content_h
 print(int(round(px)), int(round(py)))
 PY
 )
-    # xdotool --window coordinates are relative to the target window.  Do not
-    # add the absolute X/Y origin here; doing so can click outside the DOSBox
-    # client under Xvfb when the window is offset from 0,0.
-    xdotool mousemove --window "$window" "$px" "$py" click "$button"
+    if [[ "$input_mode" == "global" ]]; then
+        # Physical-style X11 input must use desktop coordinates.  This is the
+        # counterpart to the root-level keyboard path above.
+        xdotool mousemove "$((gx + px))" "$((gy + py))"
+    else
+        # xdotool --window coordinates are relative to the target window.  Do
+        # not add the absolute X/Y origin here; doing so can click outside the
+        # DOSBox client under Xvfb when the window is offset from 0,0.
+        xdotool mousemove --window "$window" "$px" "$py"
+    fi
+    # ``xdotool click`` can collapse press/release into one host timeslice.
+    # The Entrance menu observes it, but the timed dungeon loop can miss it.
+    # Keep the button down across several original frames; this mirrors the
+    # existing CGEvent injector's explicit 45ms interval.
+    xdotool mousedown "$button"
+    sleep "$(python3 - "$mouse_hold_ms" <<'PY'
+import sys
+print(int(sys.argv[1]) / 1000.0)
+PY
+)"
+    xdotool mouseup "$button"
     local button_name=left
     if [[ "$button" == "3" ]]; then button_name=right; fi
-    echo "${button_name}-click-mapped ${x},${y} -> window-relative ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
+    echo "${button_name}-click-mapped ${x},${y} -> ${input_mode} ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
     sleep 0.18
 }
 

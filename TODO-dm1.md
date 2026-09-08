@@ -32,24 +32,26 @@
 
   The remaining external-reference task is strictly an emulator input/capture
   issue. DOSBox-X under Xvfb now produces healthy original Entrance and Hall
-  frames through the documented host capture backend, but its injected keypad
-  and C001--C006 gameplay-control events do not yet reach the source movement
-  queue reliably after the successful C407 click. Do not label those duplicate
-  no-panel frames as a failed C127 implementation, and do not use them as
-  C040/C026 or inventory evidence. Preserve the raw captures and resolve the
-  emulator event-ingestion boundary before promoting an original pixel pair.
+  frames through the documented host capture backend. The capture helper's
+  `DM1_DOSBOX_INPUT_MODE=global` path reaches the documented C127 portrait
+  using root-device keypad events; this proves the earlier targeted-XTest
+  keyboard limitation is resolved. Its physical-style left click (held for
+  120ms) at `(112,83)` still leaves the C127-before and C127-after raw frames
+  byte-identical, so the remaining boundary is C080 mouse-coordinate/button
+  delivery after the handoff, not the route or Firestaff's C127 dispatch. Do
+  not label those no-panel frames as a failed C127 implementation, and do not
+  use them as C040/C026 or inventory evidence. Preserve the raw captures and
+  resolve the emulator mouse event-ingestion boundary before promoting an
+  original pixel pair.
 
   Rechecked on 2026-09-08 with the supplied `Dungeon-Master_DOS_EN_Version-34.zip`,
   DOSBox-X, Xvfb and the host-window capture backend. DOSBox-X's own screenshot
   writer aborts with `double free or corruption` after its first capture, so
   the runner's documented host capture path was used only to keep the original
-  run observable. The four normalized 320x200 frames are retained outside the
-  source tree in `.codex-scratch/dm1-hoc-original-c127-host`: the title,
-  stable Entrance, and a genuine portrait frame were captured. The portrait
-  frame visibly contains the C127 wall image, but the pre- and five-second
-  post-click frame hashes are both
-  `a02cf5ed35892b6297a1f1809bb051117c41a48ead3a0ff952d4b27cffaa39ae`.
-  This is evidence that the selected original click route did not establish a
+  run observable. The global-input four-shot run visibly reaches the C127 wall
+  portrait; its C127-before and C127-after hashes are both
+  `473af58764f816758c2cc6209e4d3050cdfe57fbe9eba00095eb407a5a38f464`.
+  This is evidence that the original mouse click did not establish a
   candidate-panel transition; it must not be reclassified as a successful
   C040/C026 route or used to synthesize a Firestaff response.
 
