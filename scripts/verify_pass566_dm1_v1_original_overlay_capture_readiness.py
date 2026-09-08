@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Pass566 DM1 V1 original overlay/capture readiness manifest.
 
-This gate is intentionally evidence-only. It checks the exact N2-local original
-stage, emulator helpers, route shape, and ReDMCSB source anchors needed before
-running the next DOSBox original overlay diagnostic. It does not launch DOSBox
-or write image artifacts.
+This gate is intentionally evidence-only. It checks an operator-supplied
+original stage, emulator helpers, route shape, and ReDMCSB source anchors
+needed before running the next DOSBox original overlay diagnostic. It does not
+launch DOSBox or write image artifacts.
 """
 from __future__ import annotations
 
@@ -13,30 +13,28 @@ import json
 import os
 import re
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-HOME = Path.home()
-RED = HOME / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM_ROOT = HOME / ".openclaw/data/firestaff-original-games/DM"
-CANONICAL = DM_ROOT / "_canonical/dm1"
-STAGE = DM_ROOT / "_extracted/dm-pc34/DungeonMasterPC34"
+sys.path.insert(0, str(ROOT))
+from tools.redmcsb_source import source_root
+
+RED = source_root(("COMMAND.C", "CLIKMENU.C", "DUNGEON.C", "DUNVIEW.C", "DRAWVIEW.C"))
+STAGE = Path(os.environ.get("DM1_ORIGINAL_STAGE_DIR", "")).expanduser()
 OUT_DIR = ROOT / "parity-evidence/verification/pass566_dm1_v1_original_overlay_capture_readiness"
 OUT_JSON = OUT_DIR / "manifest.json"
 
 EXPECTED = {
-    "canonical_GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-    "canonical_DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-    "canonical_TITLE": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
     "stage_DM.EXE": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
     "stage_GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "stage_DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
 }
 
 ROUTE = (
-    "wait:7000 shot:title enter wait:1200 shot:pre_enter_menu "
-    "click:260,50 wait:1200 shot:after_enter_click click:276,140 "
+    "wait:7000 shot:title enter wait:2500 shot:pre_enter_menu "
+    "click:260,50 wait:1800 shot:after_enter_click click:276,140 "
     "wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 "
     "click:246,140 wait:600 shot:left_turn_probe"
 )
@@ -177,7 +175,7 @@ def audit_source() -> list[dict[str, Any]]:
                     raise AssertionError(f"{anchor['file']}:{anchor['lines']} missing {needle!r}")
         rows.append(
             {
-                "file": str(path),
+                "file": f"ReDMCSB/{anchor['file']}",
                 "function": anchor["function"],
                 "lines": anchor["lines"],
                 "sliceSha256": hashlib.sha256(sliced.encode("utf-8", "replace")).hexdigest(),
@@ -187,10 +185,11 @@ def audit_source() -> list[dict[str, Any]]:
 
 
 def audit_files() -> list[dict[str, Any]]:
+    if not os.environ.get("DM1_ORIGINAL_STAGE_DIR"):
+        raise AssertionError(
+            "DM1_ORIGINAL_STAGE_DIR is required and must name an operator-staged "
+            "authentic DM1 PC 3.4 tree")
     files = [
-        ("canonical_GRAPHICS.DAT", "DM1 PC 3.4 canonical", CANONICAL / "GRAPHICS.DAT"),
-        ("canonical_DUNGEON.DAT", "DM1 PC 3.4 canonical", CANONICAL / "DUNGEON.DAT"),
-        ("canonical_TITLE", "DM1 PC 3.4 canonical", CANONICAL / "TITLE"),
         ("stage_DM.EXE", "DM1 PC 3.4 DOS original stage", STAGE / "DM.EXE"),
         ("stage_GRAPHICS.DAT", "DM1 PC 3.4 DOS original stage", STAGE / "DATA/GRAPHICS.DAT"),
         ("stage_DUNGEON.DAT", "DM1 PC 3.4 DOS original stage", STAGE / "DATA/DUNGEON.DAT"),
@@ -206,8 +205,7 @@ def audit_files() -> list[dict[str, Any]]:
             {
                 "key": key,
                 "variant": variant,
-                "path": str(path),
-                "resolvedPath": str(path.resolve()),
+                "path": f"DM1_ORIGINAL_STAGE_DIR/{path.relative_to(STAGE)}",
                 "bytes": path.stat().st_size,
                 "sha256": actual,
             }
@@ -267,6 +265,7 @@ def main() -> int:
     route = audit_route()
     command = (
         "OUT_DIR=$PWD/verification-screens/pass566-original-overlay-diagnostic "
+        "DM1_ORIGINAL_STAGE_DIR=\"$DM1_ORIGINAL_STAGE_DIR\" "
         "DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' "
         "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=5000 "
         "NEW_FILE_TIMEOUT_MS=6000 "
@@ -276,7 +275,7 @@ def main() -> int:
     )
     payload = {
         "status": "PASS566_DM1_V1_ORIGINAL_OVERLAY_CAPTURE_READINESS",
-        "redmcsbRoot": str(RED),
+        "redmcsbRoot": "operator-configured ReDMCSB Common/Source",
         "sourceAnchors": source,
         "originalFiles": original_files,
         "tools": tools,

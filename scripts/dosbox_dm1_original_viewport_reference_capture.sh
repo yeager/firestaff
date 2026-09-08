@@ -150,6 +150,8 @@ print_pass94_diagnostic() {
     cat <<EOF
 # Pass 94 original entrance-click diagnostic (manual/original-route unblock only).
 # This is not parity evidence. It should answer whether click:260,50 leaves the entrance menu.
+# The PC 3.4 title-to-entrance fade needs at least 2.5 seconds on the
+# authenticated DOSBox-X route; a shorter delay sends the click into black.
 
 OUT_DIR=\$PWD/verification-screens/pass94-hall-map-enter-diagnostic \\
 DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
@@ -157,7 +159,7 @@ DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=5000 \\
 NEW_FILE_TIMEOUT_MS=6000 \\
-DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:1200 shot:pre_enter_menu click:260,50 wait:1200 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' \\
+DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:2500 shot:pre_enter_menu click:260,50 wait:1800 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' \\
 scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 
 # Expected route labels in original_viewport_shot_labels.tsv:
