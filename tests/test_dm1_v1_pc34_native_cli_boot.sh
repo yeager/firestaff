@@ -235,6 +235,26 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_confirm_output" ||
     exit 1
 fi
 
+# The authentic original continuation is C007 at the centre of champion 0's
+# inventory strip, (54,14), after C160 has recruited the mirror candidate.
+# Keep this a live PC3.4 CLI route: it guards the reported HoC state where
+# panel clicks looked accepted but never opened the champion inventory.
+hoc_inventory_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 720 \
+    --script "${hoc_route},click:130:115,wait5,click:54:14,wait5" --duration 0 2>&1) || {
+    printf '%s\n' "$hoc_inventory_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_inventory_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=0' <<<"$hoc_inventory_output" ||
+   ! grep -Fq 'dm1InventoryPanel=1' <<<"$hoc_inventory_output"; then
+    printf '%s\n' "$hoc_inventory_output" >&2
+    printf '%s\n' 'FAIL: authentic PC-34 Hall C007 did not open inventory after C160' >&2
+    exit 1
+fi
+
 trap - EXIT HUP INT TERM
 cleanup_hoc_capture
 
