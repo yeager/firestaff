@@ -192,6 +192,26 @@ if ! grep -Fq 'window=1920x1080' <<<"$hoc_scaled_output" ||
     exit 1
 fi
 
+# Modern changes the render target, but it must not change the original
+# source-coordinate hit route.  Use the same real PC3.4 archive and physical
+# 16:9 click; this caught variants where C040 worked only in Original mode.
+hoc_modern_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v20 --width 1920 --height 1080 \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 720 \
+    --script "${hoc_route%click:112:83,wait5}click:744:464,wait5" --duration 0 2>&1) || {
+    printf '%s\n' "$hoc_modern_output" >&2
+    exit 1
+}
+if ! grep -Fq 'window=1920x1080' <<<"$hoc_modern_output" ||
+   ! grep -Fq 'presentationMode=1' <<<"$hoc_modern_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=1' <<<"$hoc_modern_output" ||
+   ! grep -Fq 'dm1HocCandidateOrdinal=5' <<<"$hoc_modern_output"; then
+    printf '%s\n' "$hoc_modern_output" >&2
+    printf '%s\n' 'FAIL: Modern scaled authentic PC-34 Hall portrait click missed C040' >&2
+    exit 1
+fi
+
 # C040 is interactive, not merely a painted modal.  Its RESURRECT control is
 # centred at (130,115) in the same source-sized PC viewport.  It must consume
 # the pending C127 candidate and close the panel through the normal REVIVE.C
