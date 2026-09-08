@@ -14,11 +14,14 @@
 
 - Use the working authenticated PC 3.4 DOSBox-X route to locate and record a
   real Hall-of-Champions mirror selection, resurrection/reincarnation, party
-  creation, and a subsequent inventory interaction. The title-to-entrance
-  transition needs a 2.5-second wait before C407; the verified C407 click
-  reaches the dungeon, but the current mirror candidates do not yet select a
-  champion. Preserve raw captures and source-order command receipts, then use
-  that route to drive the reported HoC rendering and inventory regressions.
+  creation, and a subsequent inventory interaction. The 2026-09-08 original
+  run proves that the title-to-Entrance transition requires a six-second door
+  wait before C407 (`click:260,50`); that source zone then reaches the
+  no-party Hall start. The prior 2.5-second route sent portrait clicks to the
+  Entrance menu and is invalid. Derive the remaining start-position-to-C127
+  movement path from the authenticated map rather than guessing it. Preserve
+  raw captures and source-order command receipts, then use that route to drive
+  the reported HoC rendering and inventory regressions.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient

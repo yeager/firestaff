@@ -108,6 +108,11 @@ Optional environment:
                     macOS Swift route injector screenshot accelerator. Use
                     ctrl-f5 for CLI DOSBox Staging builds whose mapper does not
                     respond to Cmd+F5. Linux/xdotool uses Ctrl+F5.
+  DM1_DOSBOX_CAPTURE_BACKEND=host
+                    Verification-only fallback for an emulator whose own
+                    screenshot writer is unstable. Captures the X11 DOSBox
+                    window with scrot, crops its 4:3 content rectangle, and
+                    reduces it with nearest-neighbour to original 320x200.
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
@@ -185,12 +190,13 @@ EOF
 
 print_pass435_hoc_route() {
     cat <<EOF
-# Pass435 DM1 original Hall-of-Champions route candidate.
-# This route is now a reproducible diagnostic, not a current promotion route.
-# Local 2026-06-30 runs captured clean frames but did not prove party control;
-# next work should instrument C080/F0377/F0372/F0280 before more overlay shots.
-# Source-lock route: entrance -> C127/F0280 portrait click -> C160 resurrect
-# -> confirm -> party/spell/inventory six-shot route.
+# Pass435 DM1 original Hall-of-Champions C407 diagnostic.
+# This is a reproducible source-start checkpoint, not a promotion route.
+# The old candidate clicked a supposed C127 portrait while the original was
+# still in Entrance. Authentic 2026-09-08 DOSBox-X captures prove that C407
+# becomes active only after a six-second door wait and leads to the no-party
+# Hall start. Derive the later start-position-to-C127 movement path from the
+# original map before attempting resurrection or inventory capture.
 
 OUT_DIR=\$PWD/verification-screens/pass376-original-route \\
 DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
@@ -199,8 +205,8 @@ DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=3000 \\
 NEW_FILE_TIMEOUT_MS=6000 \\
-DM1_ORIGINAL_EXPECTED_SHOTS=6 \\
-DM1_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel' \\
+DM1_ORIGINAL_EXPECTED_SHOTS=2 \\
+DM1_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:6000 shot:entrance_stable click:260,50 wait:3000 shot:hall_start' \\
 xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 
 python3 tools/pass86_original_viewport_crop_manifest.py \\
@@ -208,13 +214,9 @@ python3 tools/pass86_original_viewport_crop_manifest.py \\
   --out-dir verification-screens/pass376-original-dm1-viewports
 python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py
 
-# Expected pass435 raw classes:
-#   dungeon_gameplay, dungeon_gameplay, dungeon_gameplay,
-#   spell_panel, dungeon_gameplay, inventory
-#
-# If this still collapses to 48ed3743ab6a/no-party frames, the next fix is not
-# a new six-shot overlay route. Instrument the C080/F0377/F0280 gate from
-# parity-evidence/verification/pass162_c080_queue_trace/ first.
+# Expected diagnostic classes: entrance_menu, dungeon_gameplay.
+# This only establishes the original C407 handoff. It must not be used as
+# portrait, party, inventory, overlay, or pixel-parity evidence.
 EOF
 }
 
@@ -642,6 +644,9 @@ pid="$1"
 route_events="$2"
 skip_startup_selector="$3"
 screenshot_hotkey="${DM1_DOSBOX_SCREENSHOT_HOTKEY:-ctrl+F5}"
+capture_backend="${DM1_DOSBOX_CAPTURE_BACKEND:-emulator}"
+capture_dir="${DM1_DOSBOX_CAPTURE_OUT_DIR:-.}"
+host_capture_index=0
 
 if [[ -z "${DISPLAY:-}" ]]; then
     echo "ERROR: DISPLAY is not set; run DOSBox under an X server, e.g. xvfb-run -a ... --run" >&2
@@ -663,6 +668,37 @@ tap_key() {
 }
 
 shot() {
+    if [[ "$capture_backend" == "host" ]]; then
+        local host_raw host_out
+        host_capture_index=$((host_capture_index + 1))
+        host_raw="${capture_dir}/host-window-${host_capture_index}.png"
+        host_out="${capture_dir}/host-${host_capture_index}.png"
+        scrot --window "$window" --overwrite --silent "$host_raw"
+        python3 - "$host_raw" "$host_out" <<'PY'
+from pathlib import Path
+from PIL import Image
+import sys
+src, dst = map(Path, sys.argv[1:])
+im = Image.open(src).convert("RGB")
+width, height = im.size
+content_width = width
+content_height = round(content_width * 200 / 320)
+if content_height > height:
+    content_height = height
+    content_width = round(content_height * 320 / 200)
+left = (width - content_width) // 2
+# scrot's X11 window capture includes DOSBox-X's menu chrome above (not below)
+# the emulated canvas.  The actual DOS canvas is the trailing 4:3 rectangle;
+# centering would leak that host UI into a purported original frame.
+top = height - content_height
+resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+im.crop((left, top, left + content_width, top + content_height)).resize(
+    (320, 200), resample).save(dst)
+if __import__("os").environ.get("DM1_DOSBOX_KEEP_HOST_CAPTURE") != "1":
+    src.unlink()
+PY
+        return
+    fi
     # DOSBox 0.74 on Linux uses Ctrl+F5 for screenshots. DOSBox Staging accepts
     # the same accelerator, while DOSBox-X uses its F12+P host-key sequence.
     # The caller/backend selection is injected through the environment.
@@ -686,7 +722,10 @@ if content_h > gh:
     content_h = gh
     content_w = content_h * content_aspect
 left = (gw - content_w) / 2.0
-top = (gh - content_h) / 2.0
+# DOSBox-X places its optional menu chrome above the emulated canvas.  The
+# usable 4:3 rectangle therefore ends at the window's bottom edge; centering
+# it shifts every original-space click upward when that chrome is present.
+top = gh - content_h
 px = left + ((x + 0.5) / 320.0) * content_w
 py = top + ((y + 0.5) / 200.0) * content_h
 print(int(round(px)), int(round(py)))
@@ -815,7 +854,8 @@ if not paths:
     # imageNNNN.png.  Normalize those raw 320x200, or exact 640x400 2x, captures into the stable
     # image000N-raw.png names expected by the downstream pass70/pass84 tools.
     candidates = sorted(
-        [p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")],
+        [p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")
+         and not p.name.startswith("host-window-")],
         key=lambda p: (p.stat().st_mtime_ns, p.name),
     )
     if len(candidates) == expected:
@@ -1149,6 +1189,20 @@ case "$mode" in
             echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
             exit 6
         fi
+        case "${DM1_DOSBOX_CAPTURE_BACKEND:-emulator}" in
+            emulator) ;;
+            host)
+                if ! command -v scrot >/dev/null 2>&1; then
+                    echo "ERROR: DM1_DOSBOX_CAPTURE_BACKEND=host requires scrot" >&2
+                    exit 6
+                fi
+                export DM1_DOSBOX_CAPTURE_OUT_DIR="${OUT_DIR}"
+                ;;
+            *)
+                echo "ERROR: unsupported DM1_DOSBOX_CAPTURE_BACKEND=${DM1_DOSBOX_CAPTURE_BACKEND}" >&2
+                exit 6
+                ;;
+        esac
         # DOSBox-X on Linux maps screenshot capture to the host-key sequence
         # F12+P; Ctrl+F5 copies DOS text there. Vanilla DOSBox continues to
         # use Ctrl+F5. Keep an explicit caller override authoritative.
@@ -1191,19 +1245,40 @@ timeout = int(sys.argv[2]) / 1000.0
 expected_raw = sys.argv[3].strip().lower()
 expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row", "pass625", "pass626"} else int(expected_raw)
 start = time.monotonic()
+png_iend = b"\x00\x00\x00\x00IEND\xaeB`\x82"
+
+def complete_png(path: Path) -> bool:
+    """Do not terminate DOSBox while its screenshot writer is still active."""
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return False
+    return (len(data) >= 45 and data.startswith(b"\x89PNG\r\n\x1a\n")
+            and data.endswith(png_iend))
+
 while time.monotonic() - start < timeout:
-    image_count = len(list(out.glob("image*.png")))
-    fallback_count = len([p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")])
-    if image_count >= expected or fallback_count >= expected:
+    images = sorted(out.glob("image*.png"))
+    fallbacks = sorted(p for p in out.glob("*.png")
+                       if p.parent == out and not p.name.startswith("image")
+                       and not p.name.startswith("host-window-"))
+    candidates = images if images else fallbacks
+    if len(candidates) >= expected and all(complete_png(path) for path in candidates):
         break
     time.sleep(0.025)
 image_count = len(list(out.glob("image*.png")))
-fallback_count = len([p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")])
+fallback_count = len([p for p in out.glob("*.png") if p.parent == out
+                      and not p.name.startswith("image")
+                      and not p.name.startswith("host-window-")])
 captured = max(image_count, fallback_count)
-if captured < expected:
+images = sorted(out.glob("image*.png"))
+fallbacks = sorted(p for p in out.glob("*.png")
+                   if p.parent == out and not p.name.startswith("image")
+                   and not p.name.startswith("host-window-"))
+candidates = images if images else fallbacks
+if captured < expected or not all(complete_png(path) for path in candidates):
     raise SystemExit(
-        f"ERROR: DOSBox produced {captured}/{expected} raw screenshots in {out}; "
-        "refusing to normalize or promote an incomplete capture route"
+        f"ERROR: DOSBox produced {captured}/{expected} complete raw screenshots in {out}; "
+        "refusing to normalize or promote a still-writing capture route"
     )
 PY
         normalize_existing
