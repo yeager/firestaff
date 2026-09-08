@@ -120,8 +120,11 @@ static int find_c009_party_route(const CSB_V1_DungeonData *dungeon,
         for (x = 0; x < dungeon->level_widths[level]; ++x) {
             int y;
             for (y = 0; y < dungeon->level_heights[level]; ++y) {
-                int target_x;
-                int target_y;
+                /* The helper writes both values before success.  Initialize
+                 * them as well so conservative compilers retain that fact
+                 * across the short-circuit condition below. */
+                int target_x = 0;
+                int target_y = 0;
                 int direction;
 
                 if (square_type(dungeon, level, x, y) != 1 ||
