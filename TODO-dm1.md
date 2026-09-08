@@ -12,33 +12,13 @@
   exact square/pose/input and compare source-order command receipts before
   changing a renderer or inventory transaction.
 
-- Repair and validate original DOS capture input delivery before using the
-  six-shot viewport route as parity evidence. On 2026-09-06, canonical English
-  media produced an authentic entrance-menu image (`selector_000.png`), not
-  dungeon gameplay. A subsequent Enter/movement route produced zero of six
-  screenshots; replacing window-targeted keys with focused XTEST keys also
-  produced zero. That unsuccessful experimental change was reverted. Local
-  evidence is in `.codex-scratch/dm1-original-en-{title,enter,xtest,scrot-v2}`.
-  The scrot-v2 client-window experiment did produce six correctly sized files,
-  but all six were compositor-black and were rejected by the raw-frame health
-  gate; it must not be used as a fallback reference source. Keep the
-  complete-capture gate; establish reliable host input and inspect each frame
-  before claiming dungeon, movement, or rendering parity.
-  A fresh 2026-09-08 Linux retry staged only the user-supplied PC 3.4 ZIP for
-  the external original-runtime capture under `.codex-scratch` (Firestaff did
-  not use that stage), launched `DM -vv -sn -pk` through `/usr/bin/dosbox` and
-  Xvfb, and requested one labelled title frame. The route injector completed
-  but DOSBox produced `0/1` raw screenshots, so no image was normalized or
-  admitted. The reproducible diagnostic is
-  `.codex-scratch/dm1-pc34-original-title-capture-20260908`; repair the
-  DOSBox screenshot channel before retrying a HoC route.
-  The channel is available with `/usr/bin/dosbox-x`: on 2026-09-08 the same
-  PC 3.4 stage produced one 320x200, 15-colour, fully nonblack authentic
-  title frame (`sha256=5c2574022a68af43bb362c771304ebbefd618eab2f60e1fa2490b8ba65d2791a`)
-  in `.codex-scratch/dm1-pc34-dosboxx-title-capture-20260908`. This proves
-  only raw capture delivery; it does not prove HoC control, route semantics,
-  or pixel parity. Use DOSBox-X for the next input-route attempt and retain
-  the ordinary DOSBox 0.74 failure as a backend-specific limitation.
+- Use the working authenticated PC 3.4 DOSBox-X route to locate and record a
+  real Hall-of-Champions mirror selection, resurrection/reincarnation, party
+  creation, and a subsequent inventory interaction. The title-to-entrance
+  transition needs a 2.5-second wait before C407; the verified C407 click
+  reaches the dungeon, but the current mirror candidates do not yet select a
+  champion. Preserve raw captures and source-order command receipts, then use
+  that route to drive the reported HoC rendering and inventory regressions.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
