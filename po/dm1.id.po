@@ -1,0 +1,2453 @@
+# Firestaff — dm1 domain template.
+# Canonical English source-string template for Dungeon Master 1 runtime.
+#
+# Domain: dm1
+# Covers: DM1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, and surfaced story/ending text.
+#
+# NOTE: Test population pass from current M11/DM1 runtime strings.
+# Future extraction should replace manual population.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm1\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Extracted from current DM1 runtime
+msgid "NORTH"
+msgstr "UTARA"
+
+#. Extracted from current DM1 runtime
+msgid "EAST"
+msgstr "TIMUR"
+
+#. Extracted from current DM1 runtime
+msgid "SOUTH"
+msgstr "SELATAN"
+
+#. Extracted from current DM1 runtime
+msgid "WEST"
+msgstr "BARAT"
+
+#. Extracted from current DM1 runtime
+msgid "UNKNOWN"
+msgstr "TIDAK DIKETAHUI"
+
+#. Extracted from current DM1 runtime
+msgid "CUSTOM"
+msgstr "KHUSUS"
+
+#. Extracted from current DM1 runtime
+msgid "DIRECT"
+msgstr "LANGSUNG"
+
+#. Extracted from current DM1 runtime
+msgid "BUILTIN"
+msgstr "DIBANGUN"
+
+#. Extracted from current DM1 runtime
+msgid "NONE"
+msgstr "TIDAK ADA"
+
+#. Extracted from current DM1 runtime
+msgid "NO FOCUS"
+msgstr "TIDAK ADA FOKUS"
+
+#. Extracted from current DM1 runtime
+msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "TEKAN ENTER PADA TARGET SEL DEPAN NYATA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: STAIRS LEAD NOWHERE"
+msgstr "T%u: TANGGA MEMIMPIN KE MANA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: NAIK KE TINGKAT %d"
+
+#. Extracted from current DM1 runtime
+msgid "STAIRS"
+msgstr "TANGGA"
+
+#. Extracted from current DM1 runtime
+msgid "ASCENDED TO PREVIOUS LEVEL"
+msgstr "NAIK KE TINGKAT SEBELUMNYA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: Turun ke Level %d"
+
+#. Extracted from current DM1 runtime
+msgid "DESCENDED TO NEXT LEVEL"
+msgstr "TURUN KE TINGKAT BERIKUTNYA"
+
+#. Extracted from current DM1 runtime
+msgid "LEVEL %d"
+msgstr "TINGKAT %d"
+
+#. Extracted from current DM1 runtime
+msgid "MAP %dx%d, ENTERED FROM STAIRS"
+msgstr "PETA %dx%d, MASUK DARI TANGGA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: PIT LEADS NOWHERE"
+msgstr "T%u: PIT MENUJU KE MANA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %c%c TAKES %d FALL DAMAGE"
+msgstr "T%u: %c%c MENGAMBIL %d KERUSAKAN JATUH"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: FELL INTO PIT! LEVEL %d"
+msgstr "T%u: JATUH KE DALAM LUBANG! TINGKAT %d"
+
+#. Extracted from current DM1 runtime
+msgid "PIT"
+msgstr "lubang"
+
+#. Extracted from current DM1 runtime
+msgid "FELL TO NEXT LEVEL"
+msgstr "JATUH KE TINGKAT BERIKUTNYA"
+
+#. Extracted from current DM1 runtime
+msgid "PIT FALL"
+msgstr "LUBANG JATUH"
+
+#. Extracted from current DM1 runtime
+msgid "DROPPED TO LEVEL %d, MAP %dx%d"
+msgstr "DITURUNKAN KE TINGKAT %d, PETA %dx%d"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: TELEPORTER TIDAK MEMILIKI DATA HAL"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: PETA TARGET TELEPORTER %d DILUAR JANGKAUAN"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: DELEPORTASI KE PETA %d (%d,%d)"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: SHIFTED TO (%d,%d)"
+msgstr "T%u: DIGESER KE (%d,%d)"
+
+#. Extracted from current DM1 runtime
+msgid "TELEPORT"
+msgstr "TELEPORT"
+
+#. Extracted from current DM1 runtime
+msgid "PARTY TRANSPORTED"
+msgstr "PIHAK DIANGKUT"
+
+#. Extracted from current DM1 runtime
+msgid "TELEPORTER"
+msgstr "TELEPORTER"
+
+#. Extracted from current DM1 runtime
+msgid "ARRIVED AT LEVEL %d, POSITION (%d,%d)"
+msgstr "TIBA PADA LEVEL %d, POSISI (%d,%d)"
+
+#. Extracted from current DM1 runtime
+msgid "EYE OF TIME"
+msgstr "MATA WAKTU"
+
+#. Extracted from current DM1 runtime
+msgid "STORMRING"
+msgstr "badai"
+
+#. Extracted from current DM1 runtime
+msgid "TORCH"
+msgstr "obor"
+
+#. Extracted from current DM1 runtime
+msgid "FLAMITT"
+msgstr "FLAMIT"
+
+#. Extracted from current DM1 runtime
+msgid "STAFF OF CLAWS"
+msgstr "STAF CAKAR"
+
+#. Extracted from current DM1 runtime
+msgid "BOLT BLADE"
+msgstr "PISAU BAUT"
+
+#. Extracted from current DM1 runtime
+msgid "FURY"
+msgstr "KEMARAHAN"
+
+#. Extracted from current DM1 runtime
+msgid "THE FIRESTAFF"
+msgstr "PEMADAM KEBAKARAN"
+
+#. Extracted from current DM1 runtime
+msgid "DAGGER"
+msgstr "belati"
+
+#. Extracted from current DM1 runtime
+msgid "FALCHION"
+msgstr "FALCHION"
+
+#. Extracted from current DM1 runtime
+msgid "SWORD"
+msgstr "PEDANG"
+
+#. Extracted from current DM1 runtime
+msgid "RAPIER"
+msgstr "RAPIER"
+
+#. Extracted from current DM1 runtime
+msgid "SABRE"
+msgstr "SABRE"
+
+#. Extracted from current DM1 runtime
+msgid "SAMURAI SWORD"
+msgstr "PEDANG SAMURAI"
+
+#. Extracted from current DM1 runtime
+msgid "DELTA"
+msgstr "DELTA"
+
+#. Extracted from current DM1 runtime
+msgid "DIAMOND EDGE"
+msgstr "TEPI BERLIAN"
+
+#. Extracted from current DM1 runtime
+msgid "VORPAL BLADE"
+msgstr "PISAU VORPAL"
+
+#. Extracted from current DM1 runtime
+msgid "THE INQUISITOR"
+msgstr "PENYIDIK"
+
+#. Extracted from current DM1 runtime
+msgid "AXE"
+msgstr "kapak"
+
+#. Extracted from current DM1 runtime
+msgid "HARDCLEAVE"
+msgstr "CLEAVE KERAS"
+
+#. Extracted from current DM1 runtime
+msgid "MACE"
+msgstr "gada"
+
+#. Extracted from current DM1 runtime
+msgid "MACE OF ORDER"
+msgstr "GADA PESANAN"
+
+#. Extracted from current DM1 runtime
+msgid "MORNING STAR"
+msgstr "BINTANG PAGI"
+
+#. Extracted from current DM1 runtime
+msgid "CLUB"
+msgstr "KLUB"
+
+#. Extracted from current DM1 runtime
+msgid "STONE CLUB"
+msgstr "KLUB BATU"
+
+#. Extracted from current DM1 runtime
+msgid "BOW"
+msgstr "BUSUR"
+
+#. Extracted from current DM1 runtime
+msgid "CROSSBOW"
+msgstr "Busur silang"
+
+#. Extracted from current DM1 runtime
+msgid "ARROW"
+msgstr "PANAH"
+
+#. Extracted from current DM1 runtime
+msgid "SLAYER"
+msgstr "PEMBANTAI"
+
+#. Extracted from current DM1 runtime
+msgid "SLING"
+msgstr "selempang"
+
+#. Extracted from current DM1 runtime
+msgid "ROCK"
+msgstr "BATU"
+
+#. Extracted from current DM1 runtime
+msgid "POISON DART"
+msgstr "PANAH RACUN"
+
+#. Extracted from current DM1 runtime
+msgid "THROWING STAR"
+msgstr "MEMBUAT BINTANG"
+
+#. Extracted from current DM1 runtime
+msgid "STICK"
+msgstr "TETAP"
+
+#. Extracted from current DM1 runtime
+msgid "STAFF"
+msgstr "STAF"
+
+#. Extracted from current DM1 runtime
+msgid "WAND"
+msgstr "tongkat"
+
+#. Extracted from current DM1 runtime
+msgid "TEOWAND"
+msgstr "TEOWAND"
+
+#. Extracted from current DM1 runtime
+msgid "YEW STAFF"
+msgstr "STAF YA"
+
+#. Extracted from current DM1 runtime
+msgid "STAFF OF MANAR"
+msgstr "STAF MANAR"
+
+#. Extracted from current DM1 runtime
+msgid "SNAKE STAFF"
+msgstr "STAF ULAR"
+
+#. Extracted from current DM1 runtime
+msgid "THE CONDUIT"
+msgstr "SALURAN"
+
+#. Extracted from current DM1 runtime
+msgid "DRAGON SPIT"
+msgstr "ludah naga"
+
+#. Extracted from current DM1 runtime
+msgid "SCEPTRE OF LYF"
+msgstr "tongkat kerajaan LYF"
+
+#. Extracted from current DM1 runtime
+msgid "HORN OF FEAR"
+msgstr "TANDUK KETAKUTAN"
+
+#. Extracted from current DM1 runtime
+msgid "SPEED BOW"
+msgstr "BUSUR KECEPATAN"
+
+#. Extracted from current DM1 runtime
+msgid "CAPE"
+msgstr "JANTUNG"
+
+#. Extracted from current DM1 runtime
+msgid "CLOAK OF NIGHT"
+msgstr "JUBAH MALAM"
+
+#. Extracted from current DM1 runtime
+msgid "BARBARIAN HIDE"
+msgstr "SEMBUNYIKAN BARBAR"
+
+#. Extracted from current DM1 runtime
+msgid "SANDALS"
+msgstr "SANDAL"
+
+#. Extracted from current DM1 runtime
+msgid "LEATHER BOOTS"
+msgstr "SEPATU KULIT"
+
+#. Extracted from current DM1 runtime
+msgid "ELVEN BOOTS"
+msgstr "SEPATU ELVEN"
+
+#. Extracted from current DM1 runtime
+msgid "LEATHER JERKIN"
+msgstr "JERKIN KULIT"
+
+#. Extracted from current DM1 runtime
+msgid "LEATHER PANTS"
+msgstr "CELANA KULIT"
+
+#. Extracted from current DM1 runtime
+msgid "SUEDE BOOTS"
+msgstr "SEPATU SUEDE"
+
+#. Extracted from current DM1 runtime
+msgid "BLUE PANTS"
+msgstr "CELANA BIRU"
+
+#. Extracted from current DM1 runtime
+msgid "GHI"
+msgstr "GHI"
+
+#. Extracted from current DM1 runtime
+msgid "GHI TROUSERS"
+msgstr "CELANA GHI"
+
+#. Extracted from current DM1 runtime
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Extracted from current DM1 runtime
+msgid "CROWN OF NERRA"
+msgstr "MAHKOTA NERRA"
+
+#. Extracted from current DM1 runtime
+msgid "BEZERKER HELM"
+msgstr "HELM BEZERKER"
+
+#. Extracted from current DM1 runtime
+msgid "HELMET"
+msgstr "HELM"
+
+#. Extracted from current DM1 runtime
+msgid "BASINET"
+msgstr "BASINET"
+
+#. Extracted from current DM1 runtime
+msgid "NETA SHIRT"
+msgstr "KEMEJA NET"
+
+#. Extracted from current DM1 runtime
+msgid "CHAINMAIL"
+msgstr "RANTAI"
+
+#. Extracted from current DM1 runtime
+msgid "PLATE MAIL"
+msgstr "PIRING SURAT"
+
+#. Extracted from current DM1 runtime
+msgid "MITHRAL MAIL"
+msgstr "SURAT MITHRAL"
+
+#. Extracted from current DM1 runtime
+msgid "MITHRAL HOSEN"
+msgstr "SELANG MITHRAL"
+
+#. Extracted from current DM1 runtime
+msgid "LEG MAIL"
+msgstr "SURAT KAKI"
+
+#. Extracted from current DM1 runtime
+msgid "FOOT PLATE"
+msgstr "PELAT KAKI"
+
+#. Extracted from current DM1 runtime
+msgid "SMALL SHIELD"
+msgstr "PERISAI KECIL"
+
+#. Extracted from current DM1 runtime
+msgid "WOODEN SHIELD"
+msgstr "PERISAI KAYU"
+
+#. Extracted from current DM1 runtime
+msgid "LARGE SHIELD"
+msgstr "PERISAI BESAR"
+
+#. Extracted from current DM1 runtime
+msgid "SHIELD OF LYTE"
+msgstr "PERISAI LYTE"
+
+#. Extracted from current DM1 runtime
+msgid "SHIELD OF DARC"
+msgstr "PERISAI DARC"
+
+#. Extracted from current DM1 runtime
+msgid "DEXHELM"
+msgstr "DEXHELM"
+
+#. Extracted from current DM1 runtime
+msgid "MON POTION"
+msgstr "Ramuan Senin"
+
+#. Extracted from current DM1 runtime
+msgid "UM POTION"
+msgstr "Ramuan UM"
+
+#. Extracted from current DM1 runtime
+msgid "DES POTION"
+msgstr "Ramuan DES"
+
+#. Extracted from current DM1 runtime
+msgid "VEN POTION"
+msgstr "Ramuan VEN"
+
+#. Extracted from current DM1 runtime
+msgid "SAR POTION"
+msgstr "Ramuan SAR"
+
+#. Extracted from current DM1 runtime
+msgid "ZO POTION"
+msgstr "Ramuan ZO"
+
+#. Extracted from current DM1 runtime
+msgid "ROS POTION"
+msgstr "Ramuan ROS"
+
+#. Extracted from current DM1 runtime
+msgid "KU POTION"
+msgstr "Ramuan KU"
+
+#. Extracted from current DM1 runtime
+msgid "DANE POTION"
+msgstr "Ramuan DANE"
+
+#. Extracted from current DM1 runtime
+msgid "NETA POTION"
+msgstr "Ramuan NETA"
+
+#. Extracted from current DM1 runtime
+msgid "BRO POTION"
+msgstr "BRO Ramuan"
+
+#. Extracted from current DM1 runtime
+msgid "MA POTION"
+msgstr "Ramuan MA"
+
+#. Extracted from current DM1 runtime
+msgid "YA POTION"
+msgstr "Ramuan YA"
+
+#. Extracted from current DM1 runtime
+msgid "EE POTION"
+msgstr "Ramuan EE"
+
+#. Extracted from current DM1 runtime
+msgid "VI POTION"
+msgstr "VI Ramuan"
+
+#. Extracted from current DM1 runtime
+msgid "WATER FLASK"
+msgstr "TERmos AIR"
+
+#. Extracted from current DM1 runtime
+msgid "EMPTY FLASK"
+msgstr "BOTOL KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "COMPASS"
+msgstr "Kompas"
+
+#. Extracted from current DM1 runtime
+msgid "WATERSKIN"
+msgstr "KULIT AIR"
+
+#. Extracted from current DM1 runtime
+msgid "JEWEL SYMAL"
+msgstr "SIMAL PERMATA"
+
+#. Extracted from current DM1 runtime
+msgid "ILLUMULET"
+msgstr "ILLUMULET"
+
+#. Extracted from current DM1 runtime
+msgid "ASHES"
+msgstr "ABU"
+
+#. Extracted from current DM1 runtime
+msgid "BONES"
+msgstr "TULANG"
+
+#. Extracted from current DM1 runtime
+msgid "SAR COIN"
+msgstr "KOIN SAR"
+
+#. Extracted from current DM1 runtime
+msgid "GOLD COIN"
+msgstr "KOIN EMAS"
+
+#. Extracted from current DM1 runtime
+msgid "IRON KEY"
+msgstr "KUNCI BESI"
+
+#. Extracted from current DM1 runtime
+msgid "KEY OF B"
+msgstr "KUNCI B"
+
+#. Extracted from current DM1 runtime
+msgid "SOLID KEY"
+msgstr "KUNCI PADAT"
+
+#. Extracted from current DM1 runtime
+msgid "SQUARE KEY"
+msgstr "KUNCI KOTAK"
+
+#. Extracted from current DM1 runtime
+msgid "TOURQUOISE KEY"
+msgstr "KUNCI TURQUOISE"
+
+#. Extracted from current DM1 runtime
+msgid "CROSS KEY"
+msgstr "KUNCI SILANG"
+
+#. Extracted from current DM1 runtime
+msgid "ONYX KEY"
+msgstr "KUNCI ONYX"
+
+#. Extracted from current DM1 runtime
+msgid "SKELETON KEY"
+msgstr "KUNCI RANGKA"
+
+#. Extracted from current DM1 runtime
+msgid "GOLD KEY"
+msgstr "KUNCI EMAS"
+
+#. Extracted from current DM1 runtime
+msgid "WINGED KEY"
+msgstr "KUNCI BERSAYAP"
+
+#. Extracted from current DM1 runtime
+msgid "TOPAZ KEY"
+msgstr "KUNCI TOPAZ"
+
+#. Extracted from current DM1 runtime
+msgid "SAPPHIRE KEY"
+msgstr "KUNCI SAPPHIRE"
+
+#. Extracted from current DM1 runtime
+msgid "EMERALD KEY"
+msgstr "KUNCI EMERALD"
+
+#. Extracted from current DM1 runtime
+msgid "RUBY KEY"
+msgstr "KUNCI RUBI"
+
+#. Extracted from current DM1 runtime
+msgid "RA KEY"
+msgstr "RA KUNCI"
+
+#. Extracted from current DM1 runtime
+msgid "MASTER KEY"
+msgstr "KUNCI UTAMA"
+
+#. Extracted from current DM1 runtime
+msgid "BOULDER"
+msgstr "batu besar"
+
+#. Extracted from current DM1 runtime
+msgid "BLUE GEM"
+msgstr "PERMATA BIRU"
+
+#. Extracted from current DM1 runtime
+msgid "ORANGE GEM"
+msgstr "PERMATA ORANGE"
+
+#. Extracted from current DM1 runtime
+msgid "GREEN GEM"
+msgstr "PERMATA HIJAU"
+
+#. Extracted from current DM1 runtime
+msgid "APPLE"
+msgstr "apel"
+
+#. Extracted from current DM1 runtime
+msgid "CORN"
+msgstr "JAGUNG"
+
+#. Extracted from current DM1 runtime
+msgid "BREAD"
+msgstr "ROTI"
+
+#. Extracted from current DM1 runtime
+msgid "CHEESE"
+msgstr "KEJU"
+
+#. Extracted from current DM1 runtime
+msgid "SCREAMER SLICE"
+msgstr "irisan jeritan"
+
+#. Extracted from current DM1 runtime
+msgid "WORM ROUND"
+msgstr "PUTARAN CACING"
+
+#. Extracted from current DM1 runtime
+msgid "DRUMSTICK"
+msgstr "stik drum"
+
+#. Extracted from current DM1 runtime
+msgid "DRAGON STEAK"
+msgstr "STEAK NAGA"
+
+#. Extracted from current DM1 runtime
+msgid "GEM OF AGES"
+msgstr "PERMATA USIA"
+
+#. Extracted from current DM1 runtime
+msgid "EKKHARD CROSS"
+msgstr "SALIB EKKKARD"
+
+#. Extracted from current DM1 runtime
+msgid "MOONSTONE"
+msgstr "BATU BULAN"
+
+#. Extracted from current DM1 runtime
+msgid "THE HELLION"
+msgstr "NERAKA"
+
+#. Extracted from current DM1 runtime
+msgid "PENDANT FERAL"
+msgstr "LIONTIN LIAR"
+
+#. Extracted from current DM1 runtime
+msgid "MAGICAL BOX"
+msgstr "KOTAK AJAIB"
+
+#. Extracted from current DM1 runtime
+msgid "MIRROR OF DAWN"
+msgstr "CERMIN FAJAR"
+
+#. Extracted from current DM1 runtime
+msgid "ROPE"
+msgstr "TALI"
+
+#. Extracted from current DM1 runtime
+msgid "RABBIT FOOT"
+msgstr "KAKI KELINCI"
+
+#. Extracted from current DM1 runtime
+msgid "CORBAMITE"
+msgstr "KORBAMIT"
+
+#. Extracted from current DM1 runtime
+msgid "CHOKER"
+msgstr "tersedak"
+
+#. Extracted from current DM1 runtime
+msgid "LOCK PICKS"
+msgstr "PILIHAN KUNCI"
+
+#. Extracted from current DM1 runtime
+msgid "MAGNIFIER"
+msgstr "kaca pembesar"
+
+#. Extracted from current DM1 runtime
+msgid "ZOKATHRA SPELL"
+msgstr "MANFAAT ZOKATHRA"
+
+#. Extracted from current DM1 runtime
+msgid "SCROLL"
+msgstr "GULIR"
+
+#. Extracted from current DM1 runtime
+msgid "CHEST"
+msgstr "DADA"
+
+#. Extracted from current DM1 runtime
+msgid "OPEN CHEST"
+msgstr "BUKA DADA"
+
+#. Extracted from current DM1 runtime
+msgid "GIANT SCORPION"
+msgstr "kalajengking raksasa"
+
+#. Extracted from current DM1 runtime
+msgid "SWAMP SLIME"
+msgstr "Lendir RAWA"
+
+#. Extracted from current DM1 runtime
+msgid "GIGGLER"
+msgstr "TERKIKIK"
+
+#. Extracted from current DM1 runtime
+msgid "WIZARD EYE"
+msgstr "MATA PENYIHIR"
+
+#. Extracted from current DM1 runtime
+msgid "PAIN RAT"
+msgstr "TIKUS NYERI"
+
+#. Extracted from current DM1 runtime
+msgid "RUSTER"
+msgstr "RUSTER"
+
+#. Extracted from current DM1 runtime
+msgid "SCREAMER"
+msgstr "TERIAK"
+
+#. Extracted from current DM1 runtime
+msgid "ROCKPILE"
+msgstr "tumpukan batu"
+
+#. Extracted from current DM1 runtime
+msgid "GHOST"
+msgstr "HANTU"
+
+#. Extracted from current DM1 runtime
+msgid "STONE GOLEM"
+msgstr "GOLEM BATU"
+
+#. Extracted from current DM1 runtime
+msgid "MUMMY"
+msgstr "IBU"
+
+#. Extracted from current DM1 runtime
+msgid "BLACK FLAME"
+msgstr "API HITAM"
+
+#. Extracted from current DM1 runtime
+msgid "SKELETON"
+msgstr "RANGKA"
+
+#. Extracted from current DM1 runtime
+msgid "COUATL"
+msgstr "COUATL"
+
+#. Extracted from current DM1 runtime
+msgid "VEXIRK"
+msgstr "VEXIRK"
+
+#. Extracted from current DM1 runtime
+msgid "MAGENTA WORM"
+msgstr "CACING MAGENTA"
+
+#. Extracted from current DM1 runtime
+msgid "TROLIN"
+msgstr "TROLIN"
+
+#. Extracted from current DM1 runtime
+msgid "GIANT WASP"
+msgstr "TWASP RAKSASA"
+
+#. Extracted from current DM1 runtime
+msgid "ANIMATED ARMOUR"
+msgstr "ARMOR ANIMASI"
+
+#. Extracted from current DM1 runtime
+msgid "MATERIALIZER"
+msgstr "MATERIALISASI"
+
+#. Extracted from current DM1 runtime
+msgid "WATER ELEMENTAL"
+msgstr "UNSUR AIR"
+
+#. Extracted from current DM1 runtime
+msgid "OITU"
+msgstr "OITU"
+
+#. Extracted from current DM1 runtime
+msgid "DEMON"
+msgstr "DEMON"
+
+#. Extracted from current DM1 runtime
+msgid "LORD CHAOS"
+msgstr "TUHAN KEkacauan"
+
+#. Extracted from current DM1 runtime
+msgid "RED DRAGON"
+msgstr "NAGA MERAH"
+
+#. Extracted from current DM1 runtime
+msgid "LORD ORDER"
+msgstr "PERINTAH TUHAN"
+
+#. Extracted from current DM1 runtime
+msgid "GREY LORD"
+msgstr "TUHAN ABU-ABU"
+
+#. Extracted from current DM1 runtime
+msgid "UNKNOWN CREATURE"
+msgstr "MAKHLUK YANG TIDAK DIKENAL"
+
+#. Extracted from current DM1 runtime
+msgid "NOTHING"
+msgstr "TIDAK ADA"
+
+#. Extracted from current DM1 runtime
+msgid "WEAPON %d"
+msgstr "SENJATA %d"
+
+#. Extracted from current DM1 runtime
+msgid "ARMOUR %d"
+msgstr "ARMOR %d"
+
+#. Extracted from current DM1 runtime
+msgid "POTION %d"
+msgstr "Ramuan %d"
+
+#. Extracted from current DM1 runtime
+msgid "JUNK %d"
+msgstr "SAMPAH %d"
+
+#. Extracted from current DM1 runtime
+msgid "CONTAINER %d"
+msgstr "KONTAINER %d"
+
+#. Extracted from current DM1 runtime
+msgid "%s %d"
+msgstr "%s %d"
+
+#. Extracted from current DM1 runtime
+msgid "PICKUP"
+msgstr "PICKUP"
+
+#. Extracted from current DM1 runtime
+msgid "NO ACTIVE CHAMPION"
+msgstr "TIDAK ADA JUARA YANG AKTIF"
+
+#. Extracted from current DM1 runtime
+msgid "CHAMPION CANNOT ACT"
+msgstr "JUARA TIDAK BISA BERTINDAK"
+
+#. Extracted from current DM1 runtime
+msgid "NOTHING TO PICK UP"
+msgstr "TIDAK ADA YANG HARUS DIAMBIL"
+
+#. Extracted from current DM1 runtime
+msgid "EMPTY FLOOR"
+msgstr "LANTAI KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "NO ITEMS ON THIS CELL"
+msgstr "TIDAK ADA ITEM DI SEL INI"
+
+#. Extracted from current DM1 runtime
+msgid "INVENTORY FULL"
+msgstr "PERSEDIAAN PENUH"
+
+#. Extracted from current DM1 runtime
+msgid "HANDS FULL"
+msgstr "TANGAN PENUH"
+
+#. Extracted from current DM1 runtime
+msgid "DROP SOMETHING FIRST (P KEY)"
+msgstr "JATUHKAN SESUATU TERLEBIH DAHULU (KUNCI P)"
+
+#. Extracted from current DM1 runtime
+msgid "CHAIN ERROR"
+msgstr "KESALAHAN RANTAI"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s TOOK %s"
+msgstr "T%u: %s MENGAMBIL %s"
+
+#. Extracted from current DM1 runtime
+msgid "ITEM TAKEN"
+msgstr "BARANG DIAMBIL"
+
+#. Extracted from current DM1 runtime
+msgid "PICKED UP"
+msgstr "DIAMBIL"
+
+#. Extracted from current DM1 runtime
+msgid "%s -> %s SLOT %d"
+msgstr "%s -> %s SLOT %d"
+
+#. Extracted from current DM1 runtime
+msgid "DROP"
+msgstr "JATUH"
+
+#. Extracted from current DM1 runtime
+msgid "NOTHING TO DROP"
+msgstr "TIDAK ADA YANG BISA DIHENTIKAN"
+
+#. Extracted from current DM1 runtime
+msgid "EMPTY HANDS"
+msgstr "TANGAN KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "PICK SOMETHING UP FIRST (G KEY)"
+msgstr "MENGAMBIL SESUATU PERTAMA (KUNCI G)"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s DROPPED %s"
+msgstr "T%u: %s DIHENTIKAN %s"
+
+#. Extracted from current DM1 runtime
+msgid "ITEM DROPPED"
+msgstr "BARANG DIJATUHKAN"
+
+#. Extracted from current DM1 runtime
+msgid "DROPPED"
+msgstr "DIJATUHKAN"
+
+#. Extracted from current DM1 runtime
+msgid "%s FROM %s SLOT %d"
+msgstr "%s DARI %s SLOT %d"
+
+#. Extracted from current DM1 runtime
+msgid "LO"
+msgstr "LO"
+
+#. Extracted from current DM1 runtime
+msgid "UM"
+msgstr "UM"
+
+#. Extracted from current DM1 runtime
+msgid "ON"
+msgstr "AKTIF"
+
+#. Extracted from current DM1 runtime
+msgid "EE"
+msgstr "EE"
+
+#. Extracted from current DM1 runtime
+msgid "PAL"
+msgstr "SAHABAT"
+
+#. Extracted from current DM1 runtime
+msgid "MON"
+msgstr "Senin"
+
+#. Extracted from current DM1 runtime
+msgid "YA"
+msgstr "ya"
+
+#. Extracted from current DM1 runtime
+msgid "VI"
+msgstr "VI"
+
+#. Extracted from current DM1 runtime
+msgid "OH"
+msgstr "OH"
+
+#. Extracted from current DM1 runtime
+msgid "FUL"
+msgstr "PENUH"
+
+#. Extracted from current DM1 runtime
+msgid "DES"
+msgstr "DES"
+
+#. Extracted from current DM1 runtime
+msgid "ZO"
+msgstr "ZO"
+
+#. Extracted from current DM1 runtime
+msgid "VEN"
+msgstr "VEN"
+
+#. Extracted from current DM1 runtime
+msgid "EW"
+msgstr "YAITU"
+
+#. Extracted from current DM1 runtime
+msgid "KATH"
+msgstr "KATH"
+
+#. Extracted from current DM1 runtime
+msgid "IR"
+msgstr "IR"
+
+#. Extracted from current DM1 runtime
+msgid "BRO"
+msgstr "Kawan"
+
+#. Extracted from current DM1 runtime
+msgid "GOR"
+msgstr "GOR"
+
+#. Extracted from current DM1 runtime
+msgid "KU"
+msgstr "KU"
+
+#. Extracted from current DM1 runtime
+msgid "ROS"
+msgstr "ROS"
+
+#. Extracted from current DM1 runtime
+msgid "DAIN"
+msgstr "sial"
+
+#. Extracted from current DM1 runtime
+msgid "NETA"
+msgstr "NET"
+
+#. Extracted from current DM1 runtime
+msgid "RA"
+msgstr "RA"
+
+#. Extracted from current DM1 runtime
+msgid "SAR"
+msgstr "SAR"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: SPELL PANEL OPENED"
+msgstr "T%u: PANEL EJA DIBUKA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: RUNE %s (%d)"
+msgstr "T%u: RUNE %s (%d)"
+
+#. Extracted from current DM1 runtime
+msgid "RUNE ENTERED"
+msgstr "RUNE MASUK"
+
+#. Extracted from current DM1 runtime
+msgid "%s - %d OF 4 SYMBOLS"
+msgstr "%s - %d DARI 4 SIMBOL"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: SPELL CLEARED"
+msgstr "T%u: EJA DIHAPUS"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: NEED AT LEAST 2 RUNES"
+msgstr "T%u: MEMBUTUHKAN MINIMAL 2 RUNE"
+
+#. Extracted from current DM1 runtime
+msgid "CAST"
+msgstr "PEMERAN"
+
+#. Extracted from current DM1 runtime
+msgid "NOT ENOUGH RUNES"
+msgstr "TIDAK CUKUP RUNE"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s - INVALID RUNES"
+msgstr "T%u: %s - RUNE TIDAK VALID"
+
+#. Extracted from current DM1 runtime
+msgid "INVALID RUNE SEQUENCE"
+msgstr "URUTAN RUNE TIDAK VALID"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s - MEANINGLESS SPELL"
+msgstr "T%u: %s - MANFAAT TIDAK BERARTI"
+
+#. Extracted from current DM1 runtime
+msgid "UNKNOWN SPELL"
+msgstr "MANFAAT TIDAK DIKETAHUI"
+
+#. Extracted from current DM1 runtime
+msgid "SPELL FAILED"
+msgstr "EJA GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "NO MATCHING SPELL IN TABLE"
+msgstr "TIDAK ADA MANFAAT YANG COCOK DI TABEL"
+
+#. Extracted from current DM1 runtime
+msgid "OUT OF MANA"
+msgstr "KELUAR DARI MANA"
+
+#. Extracted from current DM1 runtime
+msgid "NEED MANA"
+msgstr "MEMBUTUHKAN MANA"
+
+#. Extracted from current DM1 runtime
+msgid "COST %d, HAVE %d"
+msgstr "BIAYA %d, PUNYA %d"
+
+#. Extracted from current DM1 runtime
+msgid "NEEDS MORE PRACTICE"
+msgstr "PERLU LATIHAN LEBIH BANYAK"
+
+#. Extracted from current DM1 runtime
+msgid "MEANINGLESS SPELL"
+msgstr "MANFAAT TIDAK BERARTI"
+
+#. Extracted from current DM1 runtime
+msgid "NEED FLASK"
+msgstr "MEMBUTUHKAN FLASK"
+
+#. Extracted from current DM1 runtime
+msgid "NEED MAGIC MAP"
+msgstr "MEMBUTUHKAN PETA AJAIB"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s - %s"
+msgstr "T%u: %s - %s"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
+msgstr "T%u: %s CAST SPELL #%d (BIAYA %d MANA)"
+
+#. Extracted from current DM1 runtime
+msgid "SPELL COMMITTED"
+msgstr "EJA BERKOMITMEN"
+
+#. Extracted from current DM1 runtime
+msgid "%s CASTS"
+msgstr "Pemeran %s"
+
+#. Extracted from current DM1 runtime
+msgid "SPELL #%d, COST %d MANA, %d REMAINING"
+msgstr "EJA #%d, BIAYA %d MANA, SISA %d"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
+msgstr "T%u: SEMUA JUARA TELAH JATUH"
+
+#. Extracted from current DM1 runtime
+msgid "DEATH"
+msgstr "KEMATIAN"
+
+#. Extracted from current DM1 runtime
+msgid "PARTY WIPED"
+msgstr "PESTA DIHAPUS"
+
+#. Extracted from current DM1 runtime
+msgid "GAME OVER"
+msgstr "PERMAINAN BERAKHIR"
+
+#. Extracted from current DM1 runtime
+msgid "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU."
+msgstr "DUNGEON MENGKLAIM JIWA ANDA. MUAT SIMPAN ATAU KEMBALI KE MENU."
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s HIT BY %s FOR %d"
+msgstr "T%u: %s DIHIT OLEH %s UNTUK %d"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s REACHES THE PARTY!"
+msgstr "T%u: %s MENCAPAI PESTA!"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s NAIK! (%s %d -> %d)"
+
+#. Extracted from current DM1 runtime
+msgid "FIGHTER"
+msgstr "PEJUANG"
+
+#. Extracted from current DM1 runtime
+msgid "NINJA"
+msgstr "NINJA"
+
+#. Extracted from current DM1 runtime
+msgid "PRIEST"
+msgstr "IMAM"
+
+#. Extracted from current DM1 runtime
+msgid "WIZARD"
+msgstr "PENYIHIR"
+
+#. Extracted from current DM1 runtime
+msgid "SKILL"
+msgstr "KETERAMPILAN"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s EARNS %d KILL XP (%s)"
+msgstr "T%u: %s DAPATKAN %d MEMBUNUH XP (%s)"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s HEALED %d HP"
+msgstr "T%u: %s SEMBUH %d HP"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s STAMINA RESTORED +%d"
+msgstr "T%u: %s STAMINA DIPULIHKAN +%d"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s MANA RESTORED +%d"
+msgstr "T%u: %s MANA DIPULIHKAN +%d"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s POISONED! -%d HP"
+msgstr "T%u: %s RACUN! -%d HP"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s VITALITY RESTORED"
+msgstr "T%u: VITALITAS %s DIPULIHKAN"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s DRINKS WATER"
+msgstr "T%u: %s MINUM AIR"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s - FLASK IS EMPTY"
+msgstr "T%u: %s - FLASK KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s FEELS SHIELDED"
+msgstr "T%u: %s MERASA TERLINDUNG"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s DRINKS POTION (+%d HP)"
+msgstr "T%u: Ramuan MINUMAN %s (+%d HP)"
+
+#. Extracted from current DM1 runtime
+msgid "USE"
+msgstr "PENGGUNAAN"
+
+#. Extracted from current DM1 runtime
+msgid "HANDS ARE EMPTY"
+msgstr "TANGAN KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "NOTHING TO USE"
+msgstr "TIDAK ADA YANG BISA DIGUNAKAN"
+
+#. Extracted from current DM1 runtime
+msgid "PICK UP A POTION OR FLASK FIRST (G KEY)"
+msgstr "PILIH POTION ATAU FLASK PERTAMA (KUNCI G)"
+
+#. Extracted from current DM1 runtime
+msgid "FLASK IS EMPTY"
+msgstr "FLASK KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "NOTHING TO DRINK"
+msgstr "TIDAK ADA MINUM"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
+msgstr "T%u: %s SEKARANG MEMEGANG FLASK KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "POTION CONSUMED"
+msgstr "Ramuan DIKONSUMSI"
+
+#. Extracted from current DM1 runtime
+msgid "DRANK %s"
+msgstr "MINUM %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s USED %s (POWER %d)"
+msgstr "%s DIGUNAKAN %s (DAYA %d)"
+
+#. Extracted from current DM1 runtime
+msgid "POTION DATA ERROR"
+msgstr "KESALAHAN DATA RAMUAN"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s DRINKS FROM WATERSKIN"
+msgstr "T%u: %s MINUMAN DARI KULIT AIR"
+
+#. Extracted from current DM1 runtime
+msgid "DRANK WATER"
+msgstr "MINUM AIR"
+
+#. Extracted from current DM1 runtime
+msgid "%s QUENCHED THIRST"
+msgstr "%s MEMADAMKAN KETIGA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s ATE %s (KEEPS ITEM)"
+msgstr "T%u: %s MAKAN %s (Simpan ITEM)"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s ATE %s (+%d FOOD)"
+msgstr "T%u: %s MAKAN %s (+%d MAKANAN)"
+
+#. Extracted from current DM1 runtime
+msgid "FOOD CONSUMED"
+msgstr "MAKANAN YANG DIKONSUMSI"
+
+#. Extracted from current DM1 runtime
+msgid "ATE %s"
+msgstr "MAKAN %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s FEELS LESS HUNGRY (+%d)"
+msgstr "%s MERASA KURANG LAPAR (+%d)"
+
+#. Extracted from current DM1 runtime
+msgid "CANNOT USE THIS ITEM"
+msgstr "TIDAK BISA MENGGUNAKAN BARANG INI"
+
+#. Extracted from current DM1 runtime
+msgid "THIS ITEM CANNOT BE USED DIRECTLY"
+msgstr "BARANG INI TIDAK DAPAT DIGUNAKAN SECARA LANGSUNG"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: DAMAGE %d DEALT"
+msgstr "T%u: KERUSAKAN %d DEALS"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s DEFEATED"
+msgstr "T%u: %s KALAH"
+
+#. Extracted from current DM1 runtime
+msgid "ENEMY"
+msgstr "MUSUH"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: EXPERIENCE GAINED"
+msgstr "T%u: PENGALAMAN YANG DIPEROLEH"
+
+#. Extracted from current DM1 runtime
+msgid "CHAMPION"
+msgstr "JUARA"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s HAS FALLEN"
+msgstr "T%u: %s TELAH JATUH"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: PARTY MOVED TO %d,%d"
+msgstr "T%u: PARTAI DI PINDAHKAN KE %d,%d"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: DOOR STATE CHANGED"
+msgstr "T%u: KEADAAN PINTU BERUBAH"
+
+#. Extracted from current DM1 runtime
+msgid "SPELL"
+msgstr "EJA"
+
+#. Extracted from current DM1 runtime
+msgid "PROJECTILE"
+msgstr "PROYEKTIL"
+
+#. Extracted from current DM1 runtime
+msgid "ENCHANTMENT"
+msgstr "PESAN"
+
+#. Extracted from current DM1 runtime
+msgid "POTION"
+msgstr "Ramuan"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
+msgstr "T%u: EFEK %s DITERAPKAN (TYPE %d, POWER %d)"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: THE QUEST IS COMPLETE!"
+msgstr "T%u: QUEST SELESAI!"
+
+#. Extracted from current DM1 runtime
+msgid "ENDGAME"
+msgstr "AKHIR PERMAINAN"
+
+#. Extracted from current DM1 runtime
+msgid "VICTORY!"
+msgstr "KEMENANGAN!"
+
+#. Extracted from current DM1 runtime
+msgid "VICTORY"
+msgstr "KEMENANGAN"
+
+#. Extracted from current DM1 runtime
+msgid "LORD CHAOS IS DEFEATED. THE FIRESTAFF IS RESTORED."
+msgstr "TUHAN CHAOS KALAHKAN. FIRESTAFF DIPULIHKAN."
+
+#. Extracted from current DM1 runtime
+msgid "BOOT"
+msgstr "BOOT"
+
+#. Extracted from current DM1 runtime
+msgid "GAME VIEW NOT STARTED"
+msgstr "TAMPILAN GAME TIDAK DIMULAI"
+
+#. Extracted from current DM1 runtime
+msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "TEKAN ENTER ATAU KLIK LIHAT UNTUK MEMBACA SEL DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "FAILED TO LOAD DUNGEON.DAT"
+msgstr "GAGAL MEMUAT DUNGEON.DAT"
+
+#. Extracted from current DM1 runtime
+msgid "GRAPHICS.DAT"
+msgstr "GRAFIS.DAT"
+
+#. Extracted from current DM1 runtime
+msgid "T0: %s LOADED"
+msgstr "T0: %s DIMUAT"
+
+#. Extracted from current DM1 runtime
+msgid "GAME DATA LOADED"
+msgstr "DATA PERMAINAN DIMUAT"
+
+#. Extracted from current DM1 runtime
+msgid "READY"
+msgstr "SIAP"
+
+#. Extracted from current DM1 runtime
+msgid "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION"
+msgstr "KLIK PUSAT UNTUK MAJU ATAU MEMBACA, KLIK SISI UNTUK MENGHIDUPKAN, TAB PILIH JUARA DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "DUNGEON MASTER"
+msgstr "MASTER DUNGEON"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE"
+msgstr "SIMPAN"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE PATH TOO LONG"
+msgstr "SIMPAN JALUR TERLALU PANJANG"
+
+#. Extracted from current DM1 runtime
+msgid "SERIALISE SIZE FAILED"
+msgstr "UKURAN SERIALISE GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "OUT OF MEMORY"
+msgstr "KELUAR DARI MEMORI"
+
+#. Extracted from current DM1 runtime
+msgid "SERIALISE FAILED"
+msgstr "SERIALISE GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "OPEN FAILED"
+msgstr "BUKA GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "WRITE FAILED"
+msgstr "TULIS GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "QUICKSAVE WRITTEN"
+msgstr "TERTULIS CEPAT"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE SLOT READY"
+msgstr "SIMPAN SLOT SIAP"
+
+#. Extracted from current DM1 runtime
+msgid "F9 RESTORES TICK %u FROM %s"
+msgstr "F9 MEMULIHKAN CENTANG %u DARI %s"
+
+#. Extracted from current DM1 runtime
+msgid "LOAD"
+msgstr "BEBAN"
+
+#. Extracted from current DM1 runtime
+msgid "NO QUICKSAVE FOUND"
+msgstr "TIDAK DITEMUKAN SIMPAN CEPAT"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE HEADER INVALID"
+msgstr "SIMPAN HEADER TIDAK VALID"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE SIZE INVALID"
+msgstr "SIMPAN UKURAN TIDAK VALID"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE SEEK FAILED"
+msgstr "SIMPAN CARI GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE LENGTH MISMATCH"
+msgstr "SIMPAN KESALAHAN PANJANG"
+
+#. Extracted from current DM1 runtime
+msgid "READ FAILED"
+msgstr "BACA GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "SAVE VERIFY FAILED"
+msgstr "SIMPAN VERIFIKASI GAGAL"
+
+#. Extracted from current DM1 runtime
+msgid "QUICKSAVE RESTORED"
+msgstr "HEMAT CEPAT DIPULIHKAN"
+
+#. Extracted from current DM1 runtime
+msgid "RESTORED"
+msgstr "DIPULIHKAN"
+
+#. Extracted from current DM1 runtime
+msgid "TICK %u HASH %08X RELOADED FROM %s"
+msgstr "CENTANG %u HASH %08X DIMUAT DARI %s"
+
+#. Extracted from current DM1 runtime
+msgid "WAIT"
+msgstr "TUNGGU"
+
+#. Extracted from current DM1 runtime
+msgid "TICK REJECTED"
+msgstr "CENTANG DITOLAK"
+
+#. Extracted from current DM1 runtime
+msgid "STRIKE COMMITTED"
+msgstr "STRIKE BERKOMITMEN"
+
+#. Extracted from current DM1 runtime
+msgid "%s ATTACKS"
+msgstr "SERANGAN %s"
+
+#. Extracted from current DM1 runtime
+msgid "FRONT CONTACT, ROLL %d, TICK %u"
+msgstr "KONTAK DEPAN, ROLL %d, CENTANG %u"
+
+#. Extracted from current DM1 runtime
+msgid "FACING UPDATED"
+msgstr "MENGHADAPI DIPERBARUI"
+
+#. Extracted from current DM1 runtime
+msgid "TURN IGNORED"
+msgstr "HIDUP DIABAIKAN"
+
+#. Extracted from current DM1 runtime
+msgid "IDLE TICK ADVANCED"
+msgstr "TICK IDLE LANJUTAN"
+
+#. Extracted from current DM1 runtime
+msgid "IDLE TICK HELD"
+msgstr "TICK IDLE DIADAKAN"
+
+#. Extracted from current DM1 runtime
+msgid "PARTY MOVED"
+msgstr "PARTAI PINDAH"
+
+#. Extracted from current DM1 runtime
+msgid "MOVEMENT BLOCKED"
+msgstr "GERAKAN DIBLOKIR"
+
+#. Extracted from current DM1 runtime
+msgid "RETURN"
+msgstr "KEMBALI"
+
+#. Extracted from current DM1 runtime
+msgid "BACK TO LAUNCHER"
+msgstr "KEMBALI KE PELUNCUR"
+
+#. Extracted from current DM1 runtime
+msgid "FORWARD"
+msgstr "MAJU"
+
+#. Extracted from current DM1 runtime
+msgid "BACKSTEP"
+msgstr "LANGKAH BELAKANG"
+
+#. Extracted from current DM1 runtime
+msgid "TURN LEFT"
+msgstr "BELI KIRI"
+
+#. Extracted from current DM1 runtime
+msgid "TURN RIGHT"
+msgstr "BELI KANAN"
+
+#. Extracted from current DM1 runtime
+msgid "STRAFE LEFT"
+msgstr "MENEMBAK KIRI"
+
+#. Extracted from current DM1 runtime
+msgid "STRAFE RIGHT"
+msgstr "MENANGKAP KANAN"
+
+#. Extracted from current DM1 runtime
+msgid "ATTACK"
+msgstr "SERANGAN"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: RESTING"
+msgstr "T%u: BERISTIRAHAT"
+
+#. Extracted from current DM1 runtime
+msgid "REST"
+msgstr "Istirahat"
+
+#. Extracted from current DM1 runtime
+msgid "PARTY IS RESTING"
+msgstr "PESTA SUDAH BERISTIRAHAT"
+
+#. Extracted from current DM1 runtime
+msgid "RESTING"
+msgstr "BERISTIRAHAT"
+
+#. Extracted from current DM1 runtime
+msgid "HP AND STAMINA RECOVER SLOWLY. PRESS R AGAIN TO WAKE."
+msgstr "HP DAN STAMINA MEMULIHKAN SECARA LAMBAT. TEKAN R LAGI UNTUK BANGUN."
+
+#. Extracted from current DM1 runtime
+msgid "T%u: WOKE UP"
+msgstr "T%u: BANGUN"
+
+#. Extracted from current DM1 runtime
+msgid "PARTY AWAKE"
+msgstr "PESTA BANGUN"
+
+#. Extracted from current DM1 runtime
+msgid "AWAKE"
+msgstr "BANGUN"
+
+#. Extracted from current DM1 runtime
+msgid "REST ENDED. RESUME EXPLORING."
+msgstr "SISA BERAKHIR. LANJUTKAN MENJELAJAHI."
+
+#. Extracted from current DM1 runtime
+msgid "NO STAIRS HERE"
+msgstr "TIDAK ADA TANGGA DI SINI"
+
+#. Extracted from current DM1 runtime
+msgid "%d %s"
+msgstr "%d %s"
+
+#. Extracted from current DM1 runtime
+msgid "VOID"
+msgstr "BATAL"
+
+#. Extracted from current DM1 runtime
+msgid "OPEN"
+msgstr "BUKA"
+
+#. Extracted from current DM1 runtime
+msgid "SHUT"
+msgstr "TUTUP"
+
+#. Extracted from current DM1 runtime
+msgid "FOE"
+msgstr "MUSUH"
+
+#. Extracted from current DM1 runtime
+msgid "FOES"
+msgstr "MUSUH"
+
+#. Extracted from current DM1 runtime
+msgid "ITEM"
+msgstr "BARANG"
+
+#. Extracted from current DM1 runtime
+msgid "ITEMS"
+msgstr "ITEM"
+
+#. Extracted from current DM1 runtime
+msgid "EFFECT"
+msgstr "EFEK"
+
+#. Extracted from current DM1 runtime
+msgid "EFFECTS"
+msgstr "EFEK"
+
+#. Extracted from current DM1 runtime
+msgid "SENSOR"
+msgstr "SENSOR"
+
+#. Extracted from current DM1 runtime
+msgid "SENSORS"
+msgstr "SENSOR"
+
+#. Extracted from current DM1 runtime
+msgid "MARK"
+msgstr "MENANDAI"
+
+#. Extracted from current DM1 runtime
+msgid "MARKS"
+msgstr "TANDA"
+
+#. Extracted from current DM1 runtime
+msgid "%s, %s"
+msgstr "%s, %s"
+
+#. Extracted from current DM1 runtime
+msgid "QUIET FLOOR"
+msgstr "LANTAI TENANG"
+
+#. Extracted from current DM1 runtime
+msgid "%d CREATURE %s"
+msgstr "%d MAKHLUK %s"
+
+#. Extracted from current DM1 runtime
+msgid "CONTACT"
+msgstr "KONTAK"
+
+#. Extracted from current DM1 runtime
+msgid "CONTACTS"
+msgstr "KONTAK"
+
+#. Extracted from current DM1 runtime
+msgid "%d LIVE EFFECT %s"
+msgstr "%d EFEK LANGSUNG %s"
+
+#. Extracted from current DM1 runtime
+msgid "AHEAD"
+msgstr "DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "STACKED"
+msgstr "DITUMPUN"
+
+#. Extracted from current DM1 runtime
+msgid "TEXT PLAQUE"
+msgstr "PLAK TEKS"
+
+#. Extracted from current DM1 runtime
+msgid "TRIGGER TILE"
+msgstr "TILE PEMICU"
+
+#. Extracted from current DM1 runtime
+msgid "TELEPORT FIELD"
+msgstr "BIDANG TELEPORT"
+
+#. Extracted from current DM1 runtime
+msgid "%d FLOOR %s"
+msgstr "%d LANTAI %s"
+
+#. Extracted from current DM1 runtime
+msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
+msgstr "OFFSET TEKS %u (DEKODE TIDAK TERSEDIA)"
+
+#. Extracted from current DM1 runtime
+msgid "INSPECT"
+msgstr "PERIKSA"
+
+#. Extracted from current DM1 runtime
+msgid "VOID AHEAD"
+msgstr "BATAL DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "TURN TO RE-ENTER THE MAP"
+msgstr "HIDUPKAN UNTUK MEMASUK KEMBALI PETA"
+
+#. Extracted from current DM1 runtime
+msgid "READ TEXT"
+msgstr "BACA TEKS"
+
+#. Extracted from current DM1 runtime
+msgid "FRONT DOOR"
+msgstr "PINTU DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "%s, STATE %d, %s"
+msgstr "%s, NEGARA %d, %s"
+
+#. Extracted from current DM1 runtime
+msgid "VERTICAL"
+msgstr "VERTIKAL"
+
+#. Extracted from current DM1 runtime
+msgid "HORIZONTAL"
+msgstr "HORIZONTAL"
+
+#. Extracted from current DM1 runtime
+msgid "OPEN ENOUGH TO CROSS"
+msgstr "CUKUP TERBUKA UNTUK MENYALIB"
+
+#. Extracted from current DM1 runtime
+msgid "STILL CLOSED"
+msgstr "MASIH TUTUP"
+
+#. Extracted from current DM1 runtime
+msgid "DOOR CHECK"
+msgstr "PEMERIKSAAN PINTU"
+
+#. Extracted from current DM1 runtime
+msgid "CREATURE CONTACT"
+msgstr "KONTAK MAKHLUK"
+
+#. Extracted from current DM1 runtime
+msgid "%d GROUP TARGET%s IN FRONT CELL"
+msgstr "%d GROUP TARGET%s DI SEL DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "ENEMY SPOTTED"
+msgstr "MUSUH TERLIHAT"
+
+#. Extracted from current DM1 runtime
+msgid "FRONT CELL READOUT"
+msgstr "PEMBACAAN SEL DEPAN"
+
+#. Extracted from current DM1 runtime
+msgid "DOOR"
+msgstr "PINTU"
+
+#. Extracted from current DM1 runtime
+msgid "DOOR DESTROYED"
+msgstr "PINTU DIHANCURKAN"
+
+#. Extracted from current DM1 runtime
+msgid "DESTROYED, NO LONGER BLOCKING THE PASSAGE"
+msgstr "DIHANCURKAN, TIDAK LAGI MEMBLOKIR JALAN"
+
+#. Extracted from current DM1 runtime
+msgid "DOOR OPENED"
+msgstr "PINTU TERBUKA"
+
+#. Extracted from current DM1 runtime
+msgid "OPEN, PASSAGE CLEAR, CLICK CENTER OR PRESS UP TO CROSS"
+msgstr "BUKA, PASSAGE CLEAR, KLIK PUSAT ATAU TEKAN SAMPAI SILANG"
+
+#. Extracted from current DM1 runtime
+msgid "DOOR CLOSED"
+msgstr "PINTU TERTUTUP"
+
+#. Extracted from current DM1 runtime
+msgid "SHUT, ENTER INSPECTS, SPACE TOGGLES AGAIN"
+msgstr "TUTUP, MASUK INSPEKSI, RUANG BERALIH LAGI"
+
+#. Extracted from current DM1 runtime
+msgid "%s VOID"
+msgstr "%s BATAL"
+
+#. Extracted from current DM1 runtime
+msgid "%s %dG"
+msgstr "%s %dG"
+
+#. Extracted from current DM1 runtime
+msgid "%s DOOR"
+msgstr "PINTU %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s PIT"
+msgstr "LUBANG %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s STEP"
+msgstr "LANGKAH %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s TELE"
+msgstr "%s TELE"
+
+#. Extracted from current DM1 runtime
+msgid "%s ITEM"
+msgstr "BARANG %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s MARK"
+msgstr "TANDA %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s OPEN"
+msgstr "%s TERBUKA"
+
+#. Extracted from current DM1 runtime
+msgid "%s WALL"
+msgstr "DINDING %s"
+
+#. Extracted from current DM1 runtime
+msgid "TURN"
+msgstr "MENGHIDUPKAN"
+
+#. Extracted from current DM1 runtime
+msgid "BLOCKED"
+msgstr "DIBLOKIR"
+
+#. Extracted from current DM1 runtime
+msgid "HIT %d"
+msgstr "TEKAN %d"
+
+#. Extracted from current DM1 runtime
+msgid "TURN %s"
+msgstr "HIDUPKAN %s"
+
+#. Extracted from current DM1 runtime
+msgid "STEP %d:%d"
+msgstr "LANGKAH %d:%d"
+
+#. Extracted from current DM1 runtime
+msgid "DOOR %d:%d"
+msgstr "PINTU %d:%d"
+
+#. Extracted from current DM1 runtime
+msgid "FX %d"
+msgstr "FX %d"
+
+#. Extracted from current DM1 runtime
+msgid "DOWN %d"
+msgstr "BAWAH %d"
+
+#. Extracted from current DM1 runtime
+msgid "KILL"
+msgstr "MEMBUNUH"
+
+#. Extracted from current DM1 runtime
+msgid "DANGER"
+msgstr "BAHAYA"
+
+#. Extracted from current DM1 runtime
+msgid "ENTRY"
+msgstr "MASUK"
+
+#. Extracted from current DM1 runtime
+msgid "BARRIER"
+msgstr "Hambatan"
+
+#. Extracted from current DM1 runtime
+msgid "HAZARD"
+msgstr "BAHAYA"
+
+#. Extracted from current DM1 runtime
+msgid "INTERACT"
+msgstr "BERINTERAKSI"
+
+#. Extracted from current DM1 runtime
+msgid "CLEAR"
+msgstr "JELAS"
+
+#. Extracted from current DM1 runtime
+msgid "STONE"
+msgstr "BATU"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: TORCH DIMS"
+msgstr "T%u: TORCH DIMS"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: FLAMITT DIMS"
+msgstr "T%u: FLAMITT DIMS"
+
+#. Extracted from current DM1 runtime
+msgid "T%u: %s BURNS OUT"
+msgstr "T%u: %s TERBAKAR"
+
+#. Extracted from current DM1 runtime
+msgid "MENU"
+msgstr "MENU"
+
+#. Extracted from current DM1 runtime
+msgid "%s %s"
+msgstr "%s %s"
+
+#. Extracted from current DM1 runtime
+msgid "L%d HP%u ST%u"
+msgstr "L%d HP%u ST%u"
+
+#. Extracted from current DM1 runtime
+msgid "BRIGHT"
+msgstr "TERANG"
+
+#. Extracted from current DM1 runtime
+msgid "LIT"
+msgstr "menyala"
+
+#. Extracted from current DM1 runtime
+msgid "DIM"
+msgstr "redup"
+
+#. Extracted from current DM1 runtime
+msgid "DARK"
+msgstr "GELAP"
+
+#. Extracted from current DM1 runtime
+msgid "EMPTY"
+msgstr "KOSONG"
+
+#. Extracted from current DM1 runtime
+msgid "LEADER"
+msgstr "PEMIMPIN"
+
+#. Extracted from current DM1 runtime
+msgid "CHAMP"
+msgstr "JUARA"
+
+#. Extracted from current DM1 runtime
+msgid "ACTIVE CHAMPION READY"
+msgstr "JUARA AKTIF SIAP"
+
+#. Extracted from current DM1 runtime
+msgid "%s READY"
+msgstr "%s SIAP"
+
+#. Extracted from current DM1 runtime
+msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
+msgstr "SPACE ACTS, ENTER INSPECTS, KLIK PUSAT UNTUK BERKOMITMEN, TAB CYCLES THE FRONT CHAMPION"
+
+#. Extracted from current DM1 runtime
+msgid "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
+msgstr "KLIK ATAU TAB UNTUK MENUKAR, KLIK PUSAT UNTUK MELAKUKAN, TINDAKAN RUANG, MASUK INSPEKSI"
+
+#. Extracted from current DM1 runtime
+msgid "DEAD"
+msgstr "MATI"
+
+#. Extracted from current DM1 runtime
+msgid "HP%u I%d"
+msgstr "HP%u I%d"
+
+#. Extracted from current DM1 runtime
+msgid "HP%u ST%u"
+msgstr "HP%u ST%u"
+
+#. Extracted from current DM1 runtime
+msgid "SLOT %d"
+msgstr "SLOT %d"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS VOID"
+msgstr "FOKUS BATAL"
+
+#. Extracted from current DM1 runtime
+msgid "ATTACK WITH %s"
+msgstr "SERANGAN DENGAN %s"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS ACTIVE EFFECT"
+msgstr "EFEK AKTIF FOKUS"
+
+#. Extracted from current DM1 runtime
+msgid "SPACE WAITS, ENTER INSPECTS, TURN IF THE CELL STAYS HOT"
+msgstr "RUANG TUNGGU, MASUK INSPEKSI, HIDUP JIKA SEL TETAP PANAS"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS OPEN DOOR"
+msgstr "FOKUS PINTU TERBUKA"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS CLOSED DOOR"
+msgstr "FOKUS PINTU TERTUTUP"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS PIT"
+msgstr "LUBANG FOKUS"
+
+#. Extracted from current DM1 runtime
+msgid "UP RISKS A DROP, ENTER INSPECTS BEFORE COMMITTING"
+msgstr "NAIK RESIKO DROP, MASUK INSPEKSI SEBELUM BERKOMITMEN"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS STAIRS"
+msgstr "TANGGA FOKUS"
+
+#. Extracted from current DM1 runtime
+msgid "UP CLIMBS, ENTER INSPECTS, SPACE WAITS"
+msgstr "NAIK, MASUK INSPEKSI, RUANG MENUNGGU"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS TELEPORTER"
+msgstr "TELEPORTER FOKUS"
+
+#. Extracted from current DM1 runtime
+msgid "UP TESTS THE RIFT, ENTER INSPECTS FIRST"
+msgstr "UP TEST RIFT, MASUK INSPEKSI TERLEBIH DAHULU"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS INTERACTABLE"
+msgstr "FOKUS YANG DAPAT DITERAKSIKAN"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS CLEAR PASSAGE"
+msgstr "FOKUS JELAS PASSAGE"
+
+#. Extracted from current DM1 runtime
+msgid "FOCUS BLOCKED"
+msgstr "FOKUS DIBLOKIR"
+
+#. Extracted from current DM1 runtime
+msgid "ENTER INSPECTS, SPACE WAITS, TURN TO SEARCH"
+msgstr "MASUKKAN INSPEKSI, RUANG TUNGGU, HIDUPKAN UNTUK MENCARI"
+
+#. Extracted from current DM1 runtime
+msgid "NO GAME VIEW"
+msgstr "TIDAK ADA TAMPILAN PERMAINAN"
+
+#. Extracted from current DM1 runtime
+msgid "GAME VIEW"
+msgstr "TAMPILAN PERMAINAN"
+
+#. Extracted from current DM1 runtime
+msgid "L%d %s %s%s"
+msgstr "L%d %s %s%s"
+
+#. Extracted from current DM1 runtime
+msgid " ZZZ"
+msgstr "ZZZ"
+
+#. Extracted from current DM1 runtime
+msgid "G GRAB P DROP R REST 1-6 RUNE C CAST"
+msgstr "G GRAB P DROP R REST 1-6 RUNE C CAST"
+
+#. Extracted from current DM1 runtime
+msgid "HERE  %s"
+msgstr "DI SINI %s"
+
+#. Extracted from current DM1 runtime
+msgid "TICK %u"
+msgstr "CENTANG %u"
+
+#. Extracted from current DM1 runtime
+msgid "AHEAD %s"
+msgstr "DEPAN %s"
+
+#. Extracted from current DM1 runtime
+msgid "%s F%03d W%03d"
+msgstr "%s F%03d W%03d"
+
+#. Extracted from current DM1 runtime
+msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
+msgstr "MANFAAT CAST (1-6 RUNE, CAST C, V CLEAR)"
+
+#. Extracted from current DM1 runtime
+msgid "POWER"
+msgstr "KEKUATAN"
+
+#. Extracted from current DM1 runtime
+msgid "ELEMENT"
+msgstr "ELEMEN"
+
+#. Extracted from current DM1 runtime
+msgid "FORM"
+msgstr "BENTUK"
+
+#. Extracted from current DM1 runtime
+msgid "CLASS"
+msgstr "KELAS"
+
+#. Extracted from current DM1 runtime
+msgid "ROW %d: %s"
+msgstr "BARIS %d: %s"
+
+#. Extracted from current DM1 runtime
+msgid "%d:%s"
+msgstr "%d:%s"
+
+#. Extracted from current DM1 runtime
+msgid "READY TO CAST (C) OR CLEAR (V)"
+msgstr "SIAP CAST (C) ATAU CLEAR (V)"
+
+#. Extracted from current DM1 runtime
+msgid "QUEST COMPLETE"
+msgstr "PERTANYAAN SELESAI"
+
+#. Extracted from current DM1 runtime
+msgid "LORD CHAOS IS DEFEATED."
+msgstr "TUHAN CHAOS KALAHKAN."
+
+#. Extracted from current DM1 runtime
+msgid "THE FIRESTAFF IS RESTORED."
+msgstr "FIRESTAFF DIPULIHKAN."
+
+#. Extracted from current DM1 runtime
+msgid "VICTORY AT TICK %u"
+msgstr "KEMENANGAN DI TICK %u"
+
+#. Extracted from current DM1 runtime
+msgid "ESC TO RETURN TO MENU"
+msgstr "ESC UNTUK KEMBALI KE MENU"
+
+#. Extracted from current DM1 runtime
+msgid "PRESS ANY KEY TO DISMISS"
+msgstr "TEKAN APA SAJA TOMBOL UNTUK MENGHAPUS"
+
+#. Extracted from current DM1 runtime
+msgid "LOAD SAVE OR ESC TO MENU"
+msgstr "BEBAN SIMPAN ATAU ESC KE MENU"
+
+#. Extracted from current DM1 runtime
+msgid "RESTING..."
+msgstr "BERISTIRAHAT..."
+
+#. Extracted from current DM1 runtime
+msgid "R TO WAKE"
+msgstr "R UNTUK BANGUN"
+
+#. ReDMCSB SPELFAIL.C F0410. Named fields may be reordered by translators.
+msgid "{champion} NEEDS MORE PRACTICE WITH THIS {skill} SPELL."
+msgstr "{champion} PERLU LATIHAN LEBIH BANYAK DENGAN MANFAAT {skill} INI."
+
+#. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
+msgid "{champion} MUMBLES A MEANINGLESS SPELL."
+msgstr "{champion} MENGUMPULKAN MANFAAT YANG TIDAK BERARTI."
+
+#. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
+msgid "{champion} NEEDS AN EMPTY FLASK IN HAND FOR POTION."
+msgstr "{champion} MEMBUTUHKAN TERmos KOSONG DI TANGAN UNTUK RAMUAN."
+
+#. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
+msgid "IT COMES UP HEADS."
+msgstr "ITU MUNCUL KEPALA."
+
+#. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
+msgid "IT COMES UP TAILS."
+msgstr "ITU DATANG EKOR."
+
+#. PC34 DUNGEON.DAT TextString 4; final F0107/M648 presentation only.
+msgid ""
+"dm1.pc34.inscription.4:HALL OF\n"
+"CHAMPIONS"
+msgstr ""
+"dm1.pc34.inscription.4:HALL OF\n"
+"JUARA"
+
+#. DM1 player-facing pickup/drop and rune presentation templates
+#, c-format
+msgid "%s -> MOUSE HAND"
+msgstr "%s -> TANGAN MOUSE"
+
+#, c-format
+msgid "%s FROM MOUSE HAND"
+msgstr "%s DARI TANGAN MOUSE"
+
+msgid "PLACE THE HELD OBJECT FIRST"
+msgstr "TEMPATKAN OBJEK YANG DIKETAHUI TERLEBIH DAHULU"
+
+#, c-format
+msgid "%s — %d OF 4 SYMBOLS"
+msgstr "%s — %d DARI 4 SIMBOL"
+
+#. Firestaff host presentation used by every DM1 mode; source state remains unchanged.
+msgid "EXPIRED"
+msgstr "KEDALUWARSA"
+
+msgid "ENTER MENU"
+msgstr "MASUK MENU"
+
+msgid "ESC DISMISS"
+msgstr "PENOLAKAN ESC"
+
+#, c-format
+msgid "EXPIRED %s"
+msgstr "%s KEDALUWARSA"
+
+msgid "ENTER: MENU"
+msgstr "MASUK: MENU"
+
+msgid "ESC: DISMISS"
+msgstr "ESC: HAPUS"
+
+#, c-format
+msgid "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU"
+msgstr "PENGATUR WAKTU SESI KEDALUWARSA (%s) -- KEMBALI KE MENU"
+
+msgid "PRESS ENTER TO RETURN TO MENU"
+msgstr "TEKAN ENTER UNTUK KEMBALI KE MENU"
+
+msgid "ESC TO DISMISS"
+msgstr "ESC UNTUK DIHAPUS"
+
+msgid "QUIT?"
+msgstr "BERHENTI?"
+
+msgid "RETURN TO MENU?"
+msgstr "KEMBALI KE MENU?"
+
+msgid "RETURN TO START MENU?"
+msgstr "KEMBALI KE MENU MULAI?"
+
+msgid "YES"
+msgstr "YA"
+
+msgid "NO"
+msgstr "TIDAK"
+
+msgid "OK"
+msgstr "Oke"
+
+#. M11_DM1_PRESENTED: live DM1 pickup/drop/spell feedback.
+msgid "LEADER HAND FULL"
+msgstr "TANGAN PEMIMPIN PENUH"
+
+msgid "HAND FULL"
+msgstr "TANGAN PENUH"
+
+msgid "HAND ROUTE FAILED"
+msgstr "RUTE TANGAN GAGAL"
+
+msgid "ITEM IN HAND"
+msgstr "BARANG DI TANGAN"
+
+msgid "DROP TARGET UNAVAILABLE"
+msgstr "DROP TARGET TIDAK TERSEDIA"
+
+msgid "SPELL CAST"
+msgstr "PEMERAN EJA"
+
+#. M11_DM1_PRESENTED: source-locked CLIKVIEW.C fountain interaction.
+msgid "FOUNTAIN"
+msgstr "air mancur"
+
+msgid "CONTAINER FILLED"
+msgstr "KONTAINER TERISI"
+
+msgid "FLASK FILLED WITH WATER"
+msgstr "Labu berisi air"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "NEOPHYTE"
+msgstr "BARU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "NOVICE"
+msgstr "PEMULA"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "APPRENTICE"
+msgstr "magang"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "JOURNEYMAN"
+msgstr "PERJALANAN"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "CRAFTSMAN"
+msgstr "PENGERAJIN"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "ARTISAN"
+msgstr "PENGARANG"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "ADEPT"
+msgstr "mahir"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "EXPERT"
+msgstr "AHLI"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "` MASTER"
+msgstr "` GURU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "a MASTER"
+msgstr "seorang GURU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "b MASTER"
+msgstr "b GURU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "c MASTER"
+msgstr "c GURU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "d MASTER"
+msgstr "d GURU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "e MASTER"
+msgstr "e GURU"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "ARCHMASTER"
+msgstr "MASTER"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "STRENGTH"
+msgstr "KEKUATAN"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "DEXTERITY"
+msgstr "KEtangkasan"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "WISDOM"
+msgstr "KEBIJAKSANAAN"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "VITALITY"
+msgstr "VITALITAS"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "ANTI-MAGIC"
+msgstr "ANTI-SIHIR"
+
+#. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
+msgid "ANTI-FIRE"
+msgstr "ANTI KEBAKARAN"
+
+#. Authentic PC3.4 DUNGEON.DAT TextString 102; F0446 removes its A ordering key.
+msgid ""
+"THANK YOU MY\n"
+"FRIENDS.  YOU\n"
+"HAVE BANISHED\n"
+"CHAOS AND\n"
+"REJECTED THE\n"
+"FALSE PATH OF\n"
+"UNCOMPROMISING\n"
+"ORDER."
+msgstr ""
+"TERIMA KASIH SAYA\n"
+"TEMAN.  ANDA\n"
+"TELAH DIBUANG\n"
+"KEkacauan DAN\n"
+"DITOLAK\n"
+"JALUR YANG SALAH\n"
+"TANPA KOMPROMI\n"
+"PESANAN."
+
+#. Authentic PC3.4 DUNGEON.DAT TextString 104; F0446 removes its B ordering key.
+msgid ""
+"ONLY BY LEARNING\n"
+"THE TRUTH AND\n"
+"SEEKING THE PATH\n"
+"OF BALANCE\n"
+"DID YOU GUESS THE\n"
+"TRUE NATURE OF\n"
+"THE FIRESTAFF."
+msgstr ""
+"HANYA DENGAN BELAJAR\n"
+"KEBENARAN DAN\n"
+"MENCARI JALAN\n"
+"KESEIMBANGAN\n"
+"APAKAH ANDA MENECANYA\n"
+"SIFAT SEJATI\n"
+"PEMADAM KEBAKARAN."

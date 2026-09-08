@@ -1448,7 +1448,7 @@ msgstr "ГОТОВО"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION"
-msgstr ""
+msgstr "НАЖМИТЕ ПО ЦЕНТРУ, ЧТОБЫ ПРОДВИГАТЬСЯ ИЛИ ПРОЧИТАТЬ, НАЖМИТЕ ПО СТОРОНАМ, ЧТОБЫ ПОВЕРНУТЬ, TAB ВЫБИРАЕТ ПЕРЕДНЕГО ЧЕМПИОНА"
 
 #. Extracted from current DM1 runtime
 msgid "DUNGEON MASTER"
@@ -2020,11 +2020,11 @@ msgstr "%s ГОТОВ"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
-msgstr ""
+msgstr "КОСМИЧЕСКИЕ ДЕЙСТВИЯ, ВХОД В ПРОВЕРКУ, НАЖМИТЕ ПО ЦЕНТРУ, ЧТОБЫ ЗАВЕРШИТЬ, ПЕРЕДНИЙ ЧЕМПИОН ПЕРЕДНЕГО ЧЕМПИОНА."
 
 #. Extracted from current DM1 runtime
 msgid "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
-msgstr ""
+msgstr "НАЖМИТЕ ИЛИ TAB, ЧТОБЫ ПЕРЕМЕНИТЬ, НАЖМИТЕ ПО ЦЕНТРУ, ЧТОБЫ ЗАВЕРИТЬ, ПРОБЕЛ ДЕЙСТВИЯ, ВВОД ПРОВЕРКИ"
 
 #. Extracted from current DM1 runtime
 msgid "DEAD"
@@ -2212,228 +2212,208 @@ msgstr "R ЧТОБЫ ПРОСНУТЬСЯ"
 
 #. ReDMCSB SPELFAIL.C F0410. Named fields may be reordered by translators.
 msgid "{champion} NEEDS MORE PRACTICE WITH THIS {skill} SPELL."
-msgstr ""
+msgstr "{champion} НУЖНО БОЛЬШЕ ПРАКТИКОВАТЬСЯ С ЭТИМ ЗАКЛИНАНИЕМ {skill}."
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
-#, fuzzy
 msgid "{champion} MUMBLES A MEANINGLESS SPELL."
 msgstr "БЕССМЫСЛЕННОЕ ЗАКЛИНАНИЕ"
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
 msgid "{champion} NEEDS AN EMPTY FLASK IN HAND FOR POTION."
-msgstr ""
+msgstr "{champion} НУЖНА ПУСТАЯ ФЛЯГА В РУКАХ ДЛЯ Зелья."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP HEADS."
-msgstr ""
+msgstr "ВЫПАДАЕТ Орел."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP TAILS."
-msgstr ""
+msgstr "ВЫПАДАЕТ РЕШКА."
 
 #. PC34 DUNGEON.DAT TextString 4; final F0107/M648 presentation only.
 msgid ""
 "dm1.pc34.inscription.4:HALL OF\n"
 "CHAMPIONS"
 msgstr ""
+"dm1.pc34.inscription.4:ХАЛЛ\n"
+"ЧЕМПИОНЫ"
 
 #. DM1 player-facing pickup/drop and rune presentation templates
 #, c-format
 msgid "%s -> MOUSE HAND"
-msgstr ""
+msgstr "%s -> РУКА МЫШИ"
 
 #, c-format
 msgid "%s FROM MOUSE HAND"
-msgstr ""
+msgstr "%s ИЗ РУКИ МЫШИ"
 
 msgid "PLACE THE HELD OBJECT FIRST"
-msgstr ""
+msgstr "РАЗМЕСТИТЕ УДЕРЖИВАЕМЫЙ ОБЪЕКТ ПЕРВЫМ"
 
 #, c-format
 msgid "%s — %d OF 4 SYMBOLS"
-msgstr ""
+msgstr "%s — %d ИЗ 4 СИМВОЛОВ"
 
 #. Firestaff host presentation used by every DM1 mode; source state remains unchanged.
 msgid "EXPIRED"
-msgstr ""
+msgstr "Срок действия истек"
 
 msgid "ENTER MENU"
-msgstr ""
+msgstr "ВОЙТИ В МЕНЮ"
 
 msgid "ESC DISMISS"
-msgstr ""
+msgstr "ESC ОТКЛОНИТЬ"
 
 #, c-format
 msgid "EXPIRED %s"
-msgstr ""
+msgstr "Срок действия истек %s"
 
 msgid "ENTER: MENU"
-msgstr ""
+msgstr "ВВОД: МЕНЮ"
 
 msgid "ESC: DISMISS"
-msgstr ""
+msgstr "ESC: ОТКЛЮЧИТЬ"
 
 #, c-format
 msgid "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU"
-msgstr ""
+msgstr "ТАЙМЕР СЕАНСА ИСТЕК (%s) -- ВОЗВРАТ В МЕНЮ"
 
-#, fuzzy
 msgid "PRESS ENTER TO RETURN TO MENU"
 msgstr "ESC ЧТОБЫ ВЕРНУТЬСЯ В МЕНЮ"
 
-#, fuzzy
 msgid "ESC TO DISMISS"
 msgstr "НАЖМИТЕ ЛЮБУЮ КЛАВИШУ"
 
 msgid "QUIT?"
-msgstr ""
+msgstr "ВЫХОДИТЬ?"
 
-#, fuzzy
 msgid "RETURN TO MENU?"
 msgstr "ESC ЧТОБЫ ВЕРНУТЬСЯ В МЕНЮ"
 
-#, fuzzy
 msgid "RETURN TO START MENU?"
 msgstr "ESC ЧТОБЫ ВЕРНУТЬСЯ В МЕНЮ"
 
-#, fuzzy
 msgid "YES"
 msgstr "DES"
 
-#, fuzzy
 msgid "NO"
 msgstr "НЕТ"
 
-#, fuzzy
 msgid "OK"
 msgstr "КАМЕНЬ"
 
 #. M11_DM1_PRESENTED: live DM1 pickup/drop/spell feedback.
-#, fuzzy
 msgid "LEADER HAND FULL"
 msgstr "РУКИ ЗАНЯТЫ"
 
-#, fuzzy
 msgid "HAND FULL"
 msgstr "РУКИ ЗАНЯТЫ"
 
-#, fuzzy
 msgid "HAND ROUTE FAILED"
 msgstr "ЗАПИСЬ НЕ УДАЛАСЬ"
 
-#, fuzzy
 msgid "ITEM IN HAND"
 msgstr "ПРЕДМЕТ ВЗЯТ"
 
 msgid "DROP TARGET UNAVAILABLE"
-msgstr ""
+msgstr "ЦЕЛЬ ПЕРЕДАЧИ НЕДОСТУПНА"
 
-#, fuzzy
 msgid "SPELL CAST"
 msgstr "ЗАКЛИНАНИЕ"
 
 #. M11_DM1_PRESENTED: source-locked CLIKVIEW.C fountain interaction.
-#, fuzzy
 msgid "FOUNTAIN"
 msgstr "КОНТЕЙНЕР %d"
 
-#, fuzzy
 msgid "CONTAINER FILLED"
 msgstr "КОНТЕЙНЕР %d"
 
 msgid "FLASK FILLED WITH WATER"
-msgstr ""
+msgstr "КОЛБА, НАПОЛНЕННАЯ ВОДОЙ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NEOPHYTE"
-msgstr ""
+msgstr "НЕОФИТ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NOVICE"
-msgstr ""
+msgstr "НОВИЧОК"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "APPRENTICE"
-msgstr ""
+msgstr "УЧЕНИК"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "JOURNEYMAN"
-msgstr ""
+msgstr "подмастерье"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "CRAFTSMAN"
-msgstr ""
+msgstr "МАСТЕР"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ARTISAN"
-msgstr ""
+msgstr "РЕСТОРАН"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ADEPT"
-msgstr ""
+msgstr "АДЕПТ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "EXPERT"
-msgstr ""
+msgstr "ЭКСПЕРТ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "` MASTER"
 msgstr "ГЛАВНЫЙ КЛЮЧ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "a MASTER"
 msgstr "ГЛАВНЫЙ КЛЮЧ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "b MASTER"
 msgstr "ГЛАВНЫЙ КЛЮЧ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "c MASTER"
 msgstr "ГЛАВНЫЙ КЛЮЧ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "d MASTER"
 msgstr "ГЛАВНЫЙ КЛЮЧ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "e MASTER"
 msgstr "ГЛАВНЫЙ КЛЮЧ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "ARCHMASTER"
 msgstr "РЖАВЧИНА"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "STRENGTH"
-msgstr ""
+msgstr "ПРОЧНОСТЬ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "DEXTERITY"
-msgstr ""
+msgstr "Ловкость"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "WISDOM"
-msgstr ""
+msgstr "МУДРОСТЬ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "VITALITY"
-msgstr ""
+msgstr "ЖИЗНЕННОСТЬ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-MAGIC"
-msgstr ""
+msgstr "АНТИМАГИЯ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-FIRE"
-msgstr ""
+msgstr "АНТИ-ОГОНЬ"
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 102; F0446 removes its A ordering key.
 msgid ""
@@ -2446,6 +2426,14 @@ msgid ""
 "UNCOMPROMISING\n"
 "ORDER."
 msgstr ""
+"СПАСИБО МОЁ\n"
+"ДРУЗЬЯ.  ВЫ\n"
+"ИЗГНАЛИ\n"
+"ХАОС И\n"
+"ОТКЛОНИЛ\n"
+"ЛОЖНЫЙ ПУТЬ\n"
+"БЕСКОМПРОМИССНЫЙ\n"
+"ЗАКАЗАТЬ."
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 104; F0446 removes its B ordering key.
 msgid ""
@@ -2457,3 +2445,10 @@ msgid ""
 "TRUE NATURE OF\n"
 "THE FIRESTAFF."
 msgstr ""
+"ТОЛЬКО НАУЧИВШИСЬ\n"
+"ПРАВДА И\n"
+"В поисках пути\n"
+"БАЛАНСА\n"
+"ВЫ УГАДАЛИ?\n"
+"ИСТИННАЯ ПРИРОДА\n"
+"ПОЖАРНЫЙ ШАФ."

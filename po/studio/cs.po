@@ -15,7 +15,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: scripts/firestaff_artpack_studio.py:1775
-#, fuzzy
 msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
@@ -31,7 +30,6 @@ msgstr "Žádná herní data nenaimportována"
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
 #: scripts/firestaff_savegame_editor.py:510
-#, fuzzy
 msgid "Settings..."
 msgstr "Nastavení mapy"
 
@@ -79,7 +77,6 @@ msgstr "Exportovat .fsart"
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
 #: scripts/firestaff_savegame_editor.py:965
-#, fuzzy
 msgid "Settings"
 msgstr "Nastavení mapy"
 
@@ -87,7 +84,7 @@ msgstr "Nastavení mapy"
 #: scripts/firestaff_dungeon_studio.py:473
 #: scripts/firestaff_savegame_editor.py:514
 msgid "Auto (System Language)"
-msgstr ""
+msgstr "Auto (Jazyk systému)"
 
 #: scripts/firestaff_artpack_studio.py:1850
 msgid "V1 assets / V2.2 targets"
@@ -185,55 +182,52 @@ msgstr ""
 "Restartujte aplikaci."
 
 #: scripts/firestaff_artpack_studio.py:1964
-#, fuzzy
 msgid "AI Command Template"
 msgstr "Nejprve zadejte šablonu příkazu AI."
 
 #: scripts/firestaff_artpack_studio.py:1966
 #, python-brace-format
 msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
-msgstr ""
+msgstr "Zástupné symboly: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
 
 #: scripts/firestaff_artpack_studio.py:1970
 msgid "Command"
-msgstr ""
+msgstr "Příkaz"
 
 #: scripts/firestaff_artpack_studio.py:1973
 msgid "API Key"
-msgstr ""
+msgstr "Klíč API"
 
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored in ~/.firestaff/studio_settings.json"
-msgstr ""
+msgstr "Uloženo v ~/.firestaff/studio_settings.json"
 
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored securely in system keychain"
-msgstr ""
+msgstr "Bezpečně uloženo v systémové klíčence"
 
 #: scripts/firestaff_artpack_studio.py:1982
 #: scripts/firestaff_savegame_editor.py:733
 msgid "Key"
-msgstr ""
+msgstr "klíč"
 
 #: scripts/firestaff_artpack_studio.py:1986
 msgid "API Provider"
-msgstr ""
+msgstr "Poskytovatel rozhraní API"
 
 #: scripts/firestaff_artpack_studio.py:2002
-#, fuzzy
 msgid "Settings saved"
 msgstr "Nastavení mapy"
 
 #: scripts/firestaff_artpack_studio.py:2006
 #: scripts/firestaff_savegame_editor.py:502
 #: scripts/firestaff_savegame_editor.py:528
-#, fuzzy
 msgid "Save"
 msgstr "Uloženo: {}"
 
 #: scripts/firestaff_artpack_studio.py:2007
 msgid "Cancel"
-msgstr ""
+msgstr "Zrušit"
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
@@ -629,24 +623,22 @@ msgid "New Level"
 msgstr "Nová úroveň"
 
 #: scripts/firestaff_dungeon_studio.py:1024
-#, fuzzy
 msgid "Show grid"
 msgstr "Zobrazit mřížku"
 
 #: scripts/firestaff_dungeon_studio.py:1026
-#, fuzzy
 msgid "Show things"
 msgstr "Zobrazit objekty"
 
 #: scripts/firestaff_dungeon_studio.py:1028
 #: scripts/firestaff_savegame_editor.py:971
 msgid "Use system language"
-msgstr ""
+msgstr "Použijte jazyk systému"
 
 #: scripts/firestaff_dungeon_studio.py:1030
 #: scripts/firestaff_savegame_editor.py:973
 msgid "Close"
-msgstr ""
+msgstr "Zavřít"
 
 #: scripts/firestaff_dungeon_studio.py:1042
 msgid "New dungeon created"
@@ -795,475 +787,464 @@ msgstr "Vpravo"
 
 #: scripts/firestaff_savegame_editor.py:140
 msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
-msgstr ""
+msgstr "Globální stav dungeonu: počty událostí, limity aktivní skupiny, RNG seed. Opraveno 128 bajtů."
 
 #: scripts/firestaff_savegame_editor.py:141
 msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
-msgstr ""
+msgstr "Aktivní skupiny bytostí/předmětů v dungeonu. Proměnná velikost od GLOBAL_DATA @46."
 
 #: scripts/firestaff_savegame_editor.py:142
 msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
-msgstr ""
+msgstr "Záznamy šampionů (4 x 319 bajtů) + informace o párty (128 bajtů). HP, statistiky, dovednosti, inventář."
 
 #: scripts/firestaff_savegame_editor.py:143
 msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
-msgstr ""
+msgstr "Seznam událostí v dungeonu: časovače, spouštěče, senzory. Proměnná velikost od GLOBAL_DATA @28."
 
 #: scripts/firestaff_savegame_editor.py:144
 msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
-msgstr ""
+msgstr "Časová osa/fronta časovače pro plánované události. Zbytek souboru po jiných částech."
 
 #: scripts/firestaff_savegame_editor.py:185
 msgid "Random Words [0-148]"
-msgstr ""
+msgstr "Náhodná slova [0-148]"
 
 #: scripts/firestaff_savegame_editor.py:186
 msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
-msgstr ""
+msgstr "XOR matoucí podložka – 149 náhodných 16bitových slov (298 bajtů)"
 
 #: scripts/firestaff_savegame_editor.py:187
 msgid "Format Version"
-msgstr ""
+msgstr "Verze formátu"
 
 #: scripts/firestaff_savegame_editor.py:188
 msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
-msgstr ""
+msgstr "Uložit verzi formátu. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
 
 #: scripts/firestaff_savegame_editor.py:189
-#, fuzzy
 msgid "Game ID"
 msgstr "Hra"
 
 #: scripts/firestaff_savegame_editor.py:190
 msgid "Identifies which game created this save"
-msgstr ""
+msgstr "Identifikuje, která hra vytvořila toto uložení"
 
 #: scripts/firestaff_savegame_editor.py:191
 msgid "Key: GLOBAL_DATA"
-msgstr ""
+msgstr "Klíč: GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:192
 msgid "XOR deobfuscation key for GLOBAL_DATA"
-msgstr ""
+msgstr "Deobfuskační klíč XOR pro GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:193
 msgid "Key: ACTIVE_GROUP"
-msgstr ""
+msgstr "Klíč: ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:194
 msgid "XOR deobfuscation key for ACTIVE_GROUP"
-msgstr ""
+msgstr "Deobfuskační klíč XOR pro ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:195
 msgid "Key: PARTY"
-msgstr ""
+msgstr "Klíč: PARTY"
 
 #: scripts/firestaff_savegame_editor.py:196
 msgid "XOR deobfuscation key for PARTY"
-msgstr ""
+msgstr "XOR deobfuskační klíč pro PARTY"
 
 #: scripts/firestaff_savegame_editor.py:197
 msgid "Key: EVENTS"
-msgstr ""
+msgstr "Klíč: AKCE"
 
 #: scripts/firestaff_savegame_editor.py:198
 msgid "XOR deobfuscation key for EVENTS"
-msgstr ""
+msgstr "Deobfuskační klíč XOR pro UDÁLOSTI"
 
 #: scripts/firestaff_savegame_editor.py:199
 msgid "Key: TIMELINE"
-msgstr ""
+msgstr "Klíč: TIMELINE"
 
 #: scripts/firestaff_savegame_editor.py:200
 msgid "XOR deobfuscation key for TIMELINE"
-msgstr ""
+msgstr "Deobfuskační klíč XOR pro ČASOVOU osu"
 
 #: scripts/firestaff_savegame_editor.py:201
 msgid "Checksum: GLOBAL_DATA"
-msgstr ""
+msgstr "Kontrolní součet: GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:202
 msgid "F0418 checksum for GLOBAL_DATA validation"
-msgstr ""
+msgstr "Kontrolní součet F0418 pro ověření GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:203
 msgid "Checksum: ACTIVE_GROUP"
-msgstr ""
+msgstr "Kontrolní součet: ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:204
 msgid "F0418 checksum for ACTIVE_GROUP validation"
-msgstr ""
+msgstr "F0418 kontrolní součet pro ověření ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:205
 msgid "Checksum: PARTY"
-msgstr ""
+msgstr "Kontrolní součet: PARTY"
 
 #: scripts/firestaff_savegame_editor.py:206
 msgid "F0418 checksum for PARTY validation"
-msgstr ""
+msgstr "F0418 kontrolní součet pro ověření PARTY"
 
 #: scripts/firestaff_savegame_editor.py:207
 msgid "Checksum: EVENTS"
-msgstr ""
+msgstr "Kontrolní součet: UDÁLOSTI"
 
 #: scripts/firestaff_savegame_editor.py:208
 msgid "F0418 checksum for EVENTS validation"
-msgstr ""
+msgstr "F0418 kontrolní součet pro ověření UDÁLOSTÍ"
 
 #: scripts/firestaff_savegame_editor.py:209
 msgid "Checksum: TIMELINE"
-msgstr ""
+msgstr "Kontrolní součet: ČASOVÁ OSA"
 
 #: scripts/firestaff_savegame_editor.py:210
 msgid "F0418 checksum for TIMELINE validation"
-msgstr ""
+msgstr "F0418 kontrolní součet pro ověření ČASOVÉ OSY"
 
 #: scripts/firestaff_savegame_editor.py:211
 #: scripts/firestaff_savegame_editor.py:633
 msgid "Platform"
-msgstr ""
+msgstr "Platforma"
 
 #: scripts/firestaff_savegame_editor.py:212
 msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
-msgstr ""
+msgstr "Cílová platforma. 1=PC, 2=Amiga, 9=PC Engine atd."
 
 #: scripts/firestaff_savegame_editor.py:213
 msgid "Dungeon ID"
-msgstr ""
+msgstr "ID dungeonu"
 
 #: scripts/firestaff_savegame_editor.py:214
 msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
-msgstr ""
+msgstr "Dungeon. 0 = DM1, 1 = CSB, 10 = Theron"
 
 #: scripts/firestaff_savegame_editor.py:220
 msgid "Title"
-msgstr ""
+msgstr "Název"
 
 #: scripts/firestaff_savegame_editor.py:221
-#, fuzzy
 msgid "Direction"
 msgstr "Pozice"
 
 #: scripts/firestaff_savegame_editor.py:222
 msgid "Action Index"
-msgstr ""
+msgstr "Akční index"
 
 #: scripts/firestaff_savegame_editor.py:223
 msgid "Poison"
-msgstr ""
+msgstr "Jed"
 
 #: scripts/firestaff_savegame_editor.py:224
-#, fuzzy
 msgid "HP Current"
 msgstr "Aktuální prostředek"
 
 #: scripts/firestaff_savegame_editor.py:225
 msgid "HP Max"
-msgstr ""
+msgstr "HP Max"
 
 #: scripts/firestaff_savegame_editor.py:226
-#, fuzzy
 msgid "Stamina Current"
 msgstr "Aktuální prostředek"
 
 #: scripts/firestaff_savegame_editor.py:227
 msgid "Stamina Max"
-msgstr ""
+msgstr "Výdrž Max"
 
 #: scripts/firestaff_savegame_editor.py:228
-#, fuzzy
 msgid "Mana Current"
 msgstr "Aktuální prostředek"
 
 #: scripts/firestaff_savegame_editor.py:229
 msgid "Mana Max"
-msgstr ""
+msgstr "Mana Max"
 
 #: scripts/firestaff_savegame_editor.py:230
 #: scripts/firestaff_savegame_editor.py:670
 msgid "Food"
-msgstr ""
+msgstr "Jídlo"
 
 #: scripts/firestaff_savegame_editor.py:231
 #: scripts/firestaff_savegame_editor.py:670
 msgid "Water"
-msgstr ""
+msgstr "Voda"
 
 #: scripts/firestaff_savegame_editor.py:232
 msgid "Load"
-msgstr ""
+msgstr "Načíst"
 
 #: scripts/firestaff_savegame_editor.py:236
 msgid "Fighter"
-msgstr ""
+msgstr "Bojovník"
 
 #: scripts/firestaff_savegame_editor.py:237
 msgid "Ninja"
-msgstr ""
+msgstr "Ninja"
 
 #: scripts/firestaff_savegame_editor.py:238
 msgid "Priest"
-msgstr ""
+msgstr "kněz"
 
 #: scripts/firestaff_savegame_editor.py:239
 msgid "Wizard"
-msgstr ""
+msgstr "Čaroděj"
 
 #: scripts/firestaff_savegame_editor.py:240
 msgid "Swing"
-msgstr ""
+msgstr "Houpačka"
 
 #: scripts/firestaff_savegame_editor.py:241
 msgid "Thrust"
-msgstr ""
+msgstr "Tah"
 
 #: scripts/firestaff_savegame_editor.py:242
 msgid "Club"
-msgstr ""
+msgstr "Klub"
 
 #: scripts/firestaff_savegame_editor.py:243
 msgid "Parry"
-msgstr ""
+msgstr "Parry"
 
 #: scripts/firestaff_savegame_editor.py:244
 msgid "Steal"
-msgstr ""
+msgstr "Ukrást"
 
 #: scripts/firestaff_savegame_editor.py:245
 msgid "Fight"
-msgstr ""
+msgstr "Bojuj"
 
 #: scripts/firestaff_savegame_editor.py:246
 msgid "Throw"
-msgstr ""
+msgstr "Hodit"
 
 #: scripts/firestaff_savegame_editor.py:247
 msgid "Shoot"
-msgstr ""
+msgstr "Střílejte"
 
 #: scripts/firestaff_savegame_editor.py:248
 msgid "Identify"
-msgstr ""
+msgstr "Identifikovat"
 
 #: scripts/firestaff_savegame_editor.py:249
 msgid "Heal"
-msgstr ""
+msgstr "Vyléčit"
 
 #: scripts/firestaff_savegame_editor.py:250
 msgid "Influence"
-msgstr ""
+msgstr "Vliv"
 
 #: scripts/firestaff_savegame_editor.py:251
 msgid "Defend"
-msgstr ""
+msgstr "Bránit se"
 
 #: scripts/firestaff_savegame_editor.py:252
 msgid "Fire"
-msgstr ""
+msgstr "Oheň"
 
 #: scripts/firestaff_savegame_editor.py:253
 msgid "Air"
-msgstr ""
+msgstr "vzduch"
 
 #: scripts/firestaff_savegame_editor.py:254
 msgid "Earth"
-msgstr ""
+msgstr "Země"
 
 #: scripts/firestaff_savegame_editor.py:255
 msgid "Water (spell)"
-msgstr ""
+msgstr "Voda (kouzlo)"
 
 #: scripts/firestaff_savegame_editor.py:259
 msgid "Event Count"
-msgstr ""
+msgstr "Počet událostí"
 
 #: scripts/firestaff_savegame_editor.py:260
 msgid "Number of active events"
-msgstr ""
+msgstr "Počet aktivních událostí"
 
 #: scripts/firestaff_savegame_editor.py:261
 msgid "First Unused Event"
-msgstr ""
+msgstr "První nepoužitá akce"
 
 #: scripts/firestaff_savegame_editor.py:262
 msgid "Index of first free event slot"
-msgstr ""
+msgstr "Index prvního volného slotu události"
 
 #: scripts/firestaff_savegame_editor.py:263
 msgid "Event Max Count"
-msgstr ""
+msgstr "Maximální počet událostí"
 
 #: scripts/firestaff_savegame_editor.py:264
 msgid "Max events (determines EVENTS part size)"
-msgstr ""
+msgstr "Maximální počet událostí (určuje velikost dílu EVENTS)"
 
 #: scripts/firestaff_savegame_editor.py:265
 msgid "Active Group Count"
-msgstr ""
+msgstr "Počet aktivních skupin"
 
 #: scripts/firestaff_savegame_editor.py:266
 msgid "Number of active creature/item groups"
-msgstr ""
+msgstr "Počet aktivních skupin bytostí/předmětů"
 
 #: scripts/firestaff_savegame_editor.py:267
 msgid "Max Active Group Count"
-msgstr ""
+msgstr "Maximální počet aktivních skupin"
 
 #: scripts/firestaff_savegame_editor.py:268
 msgid "Max active groups (determines ACTIVE_GROUP size)"
-msgstr ""
+msgstr "Maximální počet aktivních skupin (určuje velikost ACTIVE_GROUP)"
 
 #: scripts/firestaff_savegame_editor.py:272
 msgid "Magical Light"
-msgstr ""
+msgstr "Magické světlo"
 
 #: scripts/firestaff_savegame_editor.py:273
 msgid "Light spell intensity (0=dark)"
-msgstr ""
+msgstr "Intenzita světelného kouzla (0 = tma)"
 
 #: scripts/firestaff_savegame_editor.py:274
 msgid "Thief's Eye"
-msgstr ""
+msgstr "Zlodějské oko"
 
 #: scripts/firestaff_savegame_editor.py:275
 msgid "Thief's Eye active (0/1)"
-msgstr ""
+msgstr "Thief's Eye aktivní (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:276
 msgid "Footprints"
-msgstr ""
+msgstr "Stopy"
 
 #: scripts/firestaff_savegame_editor.py:277
 msgid "Footprints active (0/1)"
-msgstr ""
+msgstr "Footprints aktivní (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:278
 msgid "Shield"
-msgstr ""
+msgstr "Štít"
 
 #: scripts/firestaff_savegame_editor.py:279
 msgid "Shield spell strength"
-msgstr ""
+msgstr "Síla kouzla štítu"
 
 #: scripts/firestaff_savegame_editor.py:280
 msgid "Fire Shield"
-msgstr ""
+msgstr "Ohnivý štít"
 
 #: scripts/firestaff_savegame_editor.py:281
 msgid "Fire Shield strength"
-msgstr ""
+msgstr "Síla Fire Shield"
 
 #: scripts/firestaff_savegame_editor.py:282
 msgid "Spell Shield"
-msgstr ""
+msgstr "Spell Shield"
 
 #: scripts/firestaff_savegame_editor.py:283
 msgid "Spell Shield (Antimagic) strength"
-msgstr ""
+msgstr "Síla kouzelného štítu (Antimagic)."
 
 #: scripts/firestaff_savegame_editor.py:284
 msgid "Calming Scent"
-msgstr ""
+msgstr "Uklidňující vůně"
 
 #: scripts/firestaff_savegame_editor.py:285
 msgid "Calming influence active"
-msgstr ""
+msgstr "Aktivní uklidňující účinek"
 
 #: scripts/firestaff_savegame_editor.py:286
 msgid "Freeze Life"
-msgstr ""
+msgstr "Zmrazit život"
 
 #: scripts/firestaff_savegame_editor.py:287
 msgid "Freeze Life active (0/1)"
-msgstr ""
+msgstr "Freeze Life aktivní (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
 msgid "Champion {}"
-msgstr ""
+msgstr "šampion {}"
 
 #: scripts/firestaff_savegame_editor.py:450
 msgid "Firestaff Savegame Editor 0.2"
-msgstr ""
+msgstr "Firestaff Savegame Editor 0.2"
 
 #: scripts/firestaff_savegame_editor.py:501
 msgid "Open..."
-msgstr ""
+msgstr "Otevřít..."
 
 #: scripts/firestaff_savegame_editor.py:505
 msgid "Quit"
-msgstr ""
+msgstr "Konec"
 
 #: scripts/firestaff_savegame_editor.py:506
 #: scripts/firestaff_savegame_editor.py:630
-#, fuzzy
 msgid "File"
 msgstr "Všechny soubory"
 
 #: scripts/firestaff_savegame_editor.py:527
 msgid "Open"
-msgstr ""
+msgstr "Otevřít"
 
 #: scripts/firestaff_savegame_editor.py:529
 #: scripts/firestaff_savegame_editor.py:583
-#, fuzzy
 msgid "Save As"
 msgstr "Uložit jako..."
 
 #: scripts/firestaff_savegame_editor.py:531
 msgid "No file loaded"
-msgstr ""
+msgstr "Nebyl načten žádný soubor"
 
 #: scripts/firestaff_savegame_editor.py:558
 msgid "Open Savegame"
-msgstr ""
+msgstr "Otevřete Savegame"
 
 #: scripts/firestaff_savegame_editor.py:559
 msgid "All Savegames"
-msgstr ""
+msgstr "Všechny hry Savegames"
 
 #: scripts/firestaff_savegame_editor.py:560
-#, fuzzy
 msgid "All Files"
 msgstr "Všechny soubory"
 
 #: scripts/firestaff_savegame_editor.py:568
 msgid "Unrecognized savegame format."
-msgstr ""
+msgstr "Nerozpoznaný formát uložené hry."
 
 #: scripts/firestaff_savegame_editor.py:571
-#, fuzzy
 msgid "Loaded: {}"
 msgstr "Cíl načten: {}"
 
 #: scripts/firestaff_savegame_editor.py:576
 #: scripts/firestaff_savegame_editor.py:582
 msgid "No savegame loaded"
-msgstr ""
+msgstr "Nebyla načtena žádná uložená hra"
 
 #: scripts/firestaff_savegame_editor.py:576
 #: scripts/firestaff_savegame_editor.py:582
-#, fuzzy
 msgid "Warning"
 msgstr "Varování"
 
 #: scripts/firestaff_savegame_editor.py:586
-#, fuzzy
 msgid "Saved as: {}"
 msgstr "Uloženo: {}"
 
 #: scripts/firestaff_savegame_editor.py:622
 msgid "File Overview"
-msgstr ""
+msgstr "Přehled souboru"
 
 #: scripts/firestaff_savegame_editor.py:624
 msgid "File Information"
-msgstr ""
+msgstr "Informace o souboru"
 
 #: scripts/firestaff_savegame_editor.py:632
 msgid "Format"
-msgstr ""
+msgstr "Formát"
 
 #: scripts/firestaff_savegame_editor.py:632
 #: scripts/firestaff_savegame_editor.py:633
@@ -1272,136 +1253,129 @@ msgstr ""
 #: scripts/firestaff_savegame_editor.py:703
 #: scripts/firestaff_savegame_editor.py:705
 msgid "Unknown"
-msgstr ""
+msgstr "Neznámý"
 
 #: scripts/firestaff_savegame_editor.py:634
 msgid "Dungeon"
-msgstr ""
+msgstr "Dungeon"
 
 #: scripts/firestaff_savegame_editor.py:639
-#, fuzzy
 msgid "Save Parts"
 msgstr "Uložit jako..."
 
 #: scripts/firestaff_savegame_editor.py:641
 #: scripts/firestaff_savegame_editor.py:731
 msgid "Offset"
-msgstr ""
+msgstr "Offset"
 
 #: scripts/firestaff_savegame_editor.py:641
 msgid "Part"
-msgstr ""
+msgstr "Část"
 
 #: scripts/firestaff_savegame_editor.py:641
-#, fuzzy
 msgid "Status"
 msgstr "Statistiky"
 
 #: scripts/firestaff_savegame_editor.py:651
 #: scripts/firestaff_savegame_editor.py:740
 msgid "MISMATCH"
-msgstr ""
+msgstr "NESHODA"
 
 #: scripts/firestaff_savegame_editor.py:651
-#, fuzzy
 msgid "Valid"
 msgstr "Ověřit"
 
 #: scripts/firestaff_savegame_editor.py:655
 msgid "Champions"
-msgstr ""
+msgstr "Šampioni"
 
 #: scripts/firestaff_savegame_editor.py:682
 msgid "Header Fields"
-msgstr ""
+msgstr "Pole záhlaví"
 
 #: scripts/firestaff_savegame_editor.py:684
-#, fuzzy
 msgid "Description"
 msgstr "Pozice"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Field"
-msgstr ""
+msgstr "pole"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Hex"
-msgstr ""
+msgstr "Hex"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Value"
-msgstr ""
+msgstr "Hodnota"
 
 #: scripts/firestaff_savegame_editor.py:717
 msgid "DM1 PC34 Save Parts (F0417/F0418)"
-msgstr ""
+msgstr "DM1 PC34 Save Parts (F0417/F0418)"
 
 #: scripts/firestaff_savegame_editor.py:734
 msgid "Expected"
-msgstr ""
+msgstr "Očekávané"
 
 #: scripts/firestaff_savegame_editor.py:735
 msgid "Actual"
-msgstr ""
+msgstr "Skutečné"
 
 #: scripts/firestaff_savegame_editor.py:740
 msgid "VALID"
-msgstr ""
+msgstr "PLATNÁ"
 
 #: scripts/firestaff_savegame_editor.py:763
-#, fuzzy
 msgid "No champion data"
 msgstr "Importovat herní data"
 
 #: scripts/firestaff_savegame_editor.py:788
 msgid "Combat & Vitals"
-msgstr ""
+msgstr "Combat & Vitals"
 
 #: scripts/firestaff_savegame_editor.py:804
 msgid "Skills"
-msgstr ""
+msgstr "Dovednosti"
 
 #: scripts/firestaff_savegame_editor.py:825
 msgid "No party info available"
-msgstr ""
+msgstr "Nejsou k dispozici žádné informace o večírku"
 
 #: scripts/firestaff_savegame_editor.py:828
 msgid "Party Info"
-msgstr ""
+msgstr "Informace o večírku"
 
 #: scripts/firestaff_savegame_editor.py:851
-#, fuzzy
 msgid "No global data"
 msgstr "Importovat herní data"
 
 #: scripts/firestaff_savegame_editor.py:854
-#, fuzzy
 msgid "Global Data"
 msgstr "Importovat herní data"
 
 #: scripts/firestaff_savegame_editor.py:868
 msgid "Raw Data"
-msgstr ""
+msgstr "Nezpracovaná data"
 
 #: scripts/firestaff_savegame_editor.py:888
 msgid "Header Words"
-msgstr ""
+msgstr "Hlavička slova"
 
 #: scripts/firestaff_savegame_editor.py:894
 msgid "Random Words"
-msgstr ""
+msgstr "Náhodná slova"
 
 #: scripts/firestaff_savegame_editor.py:895
 msgid "Part Keys"
-msgstr ""
+msgstr "Klíče součástí"
 
 #: scripts/firestaff_savegame_editor.py:896
 msgid "Checksums"
-msgstr ""
+msgstr "Kontrolní součty"
 
 #: scripts/firestaff_savegame_editor.py:897
 msgid "Format/Platform/Dungeon"
-msgstr ""
+msgstr "Formát/Platforma/Dungeon"
 
 #~ msgid "Coming soon"
 #~ msgstr "Již brzy"

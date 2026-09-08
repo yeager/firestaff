@@ -1,0 +1,1655 @@
+# Turkish translations for firestaff-dm2 package.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the firestaff-dm2 package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm2\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. GDAT 0x07/0x00/0x0a
+#: po/dm2_source_strings.c:10
+msgid "ADEPT 1"
+msgstr "UZMAN 1"
+
+#. GDAT 0x07/0x00/0x26
+#: po/dm2_source_strings.c:11
+msgid "ANTI-FIRE"
+msgstr "YANGIN ÖNLEYİCİ"
+
+#. GDAT 0x07/0x00/0x25
+#: po/dm2_source_strings.c:12
+msgid "ANTI-MAGIC"
+msgstr "ANTI-BÜYÜ"
+
+#. GDAT 0x15/0x1d/0x18
+#: po/dm2_source_strings.c:13
+msgid "APPLE"
+msgstr "ELMA"
+
+#. GDAT 0x07/0x00/0x06
+#: po/dm2_source_strings.c:14
+msgid "APPRENTICE 1"
+msgstr "ÇIRAK 1"
+
+#. GDAT 0x0f/0x1d/0x00
+#: po/dm2_source_strings.c:15
+msgid "ARCHER-GUARD"
+msgstr "OKÇU-GUARD"
+
+#. GDAT 0x07/0x00/0x12
+#: po/dm2_source_strings.c:16
+msgid "ARCHMASTER 1"
+msgstr "BAŞÜSTAT 1"
+
+#. GDAT 0x11/0x26/0x18
+#: po/dm2_source_strings.c:17
+msgid "ARMET"
+msgstr "ARMET"
+
+#. GDAT 0x10/0x1b/0x18
+#: po/dm2_source_strings.c:18
+msgid "ARROW"
+msgstr "OK"
+
+#. GDAT 0x07/0x00/0x09
+#: po/dm2_source_strings.c:19
+msgid "ARTISAN 1"
+msgstr "ZANAATÇI 1"
+
+#. GDAT 0x0f/0x31/0x00, 0x15/0x3f/0x18
+#: po/dm2_source_strings.c:20
+msgid "ATTACK MINION"
+msgstr "SALDIRI MİNYONU"
+
+#. GDAT 0x10/0x12/0x18
+#: po/dm2_source_strings.c:21
+msgid "AXE"
+msgstr "BALTA"
+
+#. GDAT 0x0f/0x42/0x00
+#: po/dm2_source_strings.c:22
+msgid "AXEMAN"
+msgstr "Baltacı"
+
+#. GDAT 0x0f/0x48/0x00
+#: po/dm2_source_strings.c:23
+msgid "AXEMAN THIEF"
+msgstr "baltacı hırsızı"
+
+#. GDAT 0x0f/0x43/0x00
+#: po/dm2_source_strings.c:24
+msgid "BAD MERCHANT"
+msgstr "KÖTÜ Tüccar"
+
+#. GDAT 0x14/0x01/0x18
+#: po/dm2_source_strings.c:25
+msgid "BAG"
+msgstr "ÇANTA"
+
+#. GDAT 0x10/0x29/0x18
+#: po/dm2_source_strings.c:26
+msgid "BAINBLOOM"
+msgstr "BAINBLOOM"
+
+#. GDAT 0x11/0x17/0x18
+#: po/dm2_source_strings.c:27
+msgid "BANDANA"
+msgstr "BANDANA"
+
+#. GDAT 0x0f/0x2d/0x00
+#: po/dm2_source_strings.c:28
+msgid "BARREL"
+msgstr "NAMLU"
+
+#. GDAT 0x11/0x1b/0x18
+#: po/dm2_source_strings.c:29
+msgid "BASCINET"
+msgstr "BASCINET"
+
+#. GDAT 0x03/0x00/0x13
+#: po/dm2_source_strings.c:30
+msgid ""
+"BEFORE USING\n"
+"BOILER TURN ON\n"
+"WATER VALVES\n"
+"TWO LEVELS UP"
+msgstr ""
+"KULLANMADAN ÖNCE\n"
+"KAZAN ÇALIŞTIRILDI\n"
+"SU VANALARI\n"
+"İKİ SEVİYE YUKARI"
+
+#. GDAT 0x11/0x04/0x18
+#: po/dm2_source_strings.c:31
+msgid "BLACK BOOTS"
+msgstr "SİYAH ÇİZME"
+
+#. GDAT 0x11/0x06/0x18
+#: po/dm2_source_strings.c:32
+msgid "BLACK SKIRT"
+msgstr "SİYAH ETEK"
+
+#. GDAT 0x11/0x05/0x18
+#: po/dm2_source_strings.c:33
+msgid "BLACK TOP"
+msgstr "SİYAH ÜST"
+
+#. GDAT 0x15/0x0a/0x18
+#: po/dm2_source_strings.c:34
+msgid "BLOOD KEY"
+msgstr "KAN ANAHTARI"
+
+#. GDAT 0x15/0x1a/0x18
+#: po/dm2_source_strings.c:35
+msgid "BLUE GEM"
+msgstr "MAVİ MÜCEVHER"
+
+#. GDAT 0x11/0x02/0x18
+#: po/dm2_source_strings.c:36
+msgid "BLUE PANTS"
+msgstr "MAVİ PANTOLON"
+
+#. GDAT 0x10/0x0f/0x18
+#: po/dm2_source_strings.c:37
+msgid "BLUE STEELE"
+msgstr "MAVİ ÇELİK"
+
+#. GDAT 0x11/0x0a/0x18
+#: po/dm2_source_strings.c:38
+msgid "BODICE"
+msgstr "KORSA"
+
+#. GDAT 0x0f/0x2f/0x00
+#: po/dm2_source_strings.c:39
+msgid "BOILER"
+msgstr "KAZAN"
+
+#. GDAT 0x15/0x3d/0x18
+#: po/dm2_source_strings.c:40
+msgid "BONE"
+msgstr "KEMİK"
+
+#. GDAT 0x15/0x34/0x18
+#: po/dm2_source_strings.c:41
+msgid "BONES"
+msgstr "KEMİKLER"
+
+#. GDAT 0x15/0x01/0x18
+#: po/dm2_source_strings.c:42
+msgid "BOTA"
+msgstr "BOTA"
+
+#. GDAT 0x0f/0x07/0x00, 0x15/0x19/0x18
+#: po/dm2_source_strings.c:43
+msgid "BOULDER"
+msgstr "KAYA BLOK"
+
+#. GDAT 0x10/0x19/0x18
+#: po/dm2_source_strings.c:44
+msgid "BOW"
+msgstr "YAY"
+
+#. GDAT 0x10/0x21/0x18
+#: po/dm2_source_strings.c:45
+msgid "BRANCH"
+msgstr "ŞUBE"
+
+#. GDAT 0x15/0x1f/0x18
+#: po/dm2_source_strings.c:46
+msgid "BREAD "
+msgstr "EKMEK"
+
+#. GDAT 0x11/0x20/0x18
+#: po/dm2_source_strings.c:47
+msgid "BREASTPLATE"
+msgstr "GÖĞÜS PLAKASI"
+
+#. GDAT 0x11/0x13/0x18
+#: po/dm2_source_strings.c:48
+msgid "BRIGANDINE"
+msgstr "BRİGANDİN"
+
+#. GDAT 0x0f/0x04/0x00
+#: po/dm2_source_strings.c:49
+msgid "BUSH"
+msgstr "BURÇ"
+
+#. GDAT 0x1a/0x09/0x00
+#: po/dm2_source_strings.c:50
+msgid "CANCEL"
+msgstr "İPTAL"
+
+#. GDAT 0x11/0x00/0x18
+#: po/dm2_source_strings.c:51
+msgid "CAPE"
+msgstr "PELERİN"
+
+#. GDAT 0x0f/0x32/0x00
+#: po/dm2_source_strings.c:52
+msgid "CARRY MINION"
+msgstr "MİNYON TAŞIMA"
+
+#. GDAT 0x0f/0x18/0x00
+#: po/dm2_source_strings.c:53
+msgid "CAVE IN"
+msgstr "Mağaraya Girmek"
+
+#. GDAT 0x0f/0x23/0x00
+#: po/dm2_source_strings.c:54
+msgid "CAVERN BAT"
+msgstr "MAĞARA YARASA"
+
+#. GDAT 0x0f/0x01/0x00, 0x0f/0x4d/0x00, 0x0f/0x53/0x00
+#: po/dm2_source_strings.c:55
+msgid "CAVERN TABLE"
+msgstr "MAĞAR MASASI"
+
+#. GDAT 0x15/0x20/0x18
+#: po/dm2_source_strings.c:56
+msgid "CHEESE"
+msgstr "PEYNİR"
+
+#. GDAT 0x0f/0x54/0x00, 0x14/0x00/0x18
+#: po/dm2_source_strings.c:57
+msgid "CHEST"
+msgstr "SANDIK"
+
+#. GDAT 0x15/0x29/0x18
+#: po/dm2_source_strings.c:58
+msgid "CLAN CHIEF GEM"
+msgstr "KLAN ŞEFİ TAŞI"
+
+#. GDAT 0x15/0x31/0x18
+#: po/dm2_source_strings.c:59
+msgid "CLAN KEY PIECE"
+msgstr "KLAN ANAHTAR PARÇASI"
+
+#. GDAT 0x11/0x01/0x18
+#: po/dm2_source_strings.c:60
+msgid "CLOAK OF NIGHT"
+msgstr "GECE PELERİNİ"
+
+#. GDAT 0x10/0x17/0x18
+#: po/dm2_source_strings.c:61
+msgid "CLUB"
+msgstr "SOPA"
+
+#. GDAT 0x10/0x26/0x18
+#: po/dm2_source_strings.c:62
+msgid "COMBAT STAFF"
+msgstr "MUHAREBE PERSONELİ"
+
+#. GDAT 0x15/0x05/0x18
+#: po/dm2_source_strings.c:63
+msgid "COMPASS"
+msgstr "PUSULA"
+
+#. GDAT 0x15/0x06/0x18
+#: po/dm2_source_strings.c:64
+msgid "COPPER COIN"
+msgstr "BAKIR PARA"
+
+#. GDAT 0x15/0x36/0x18
+#: po/dm2_source_strings.c:65
+msgid "COVER PLATE"
+msgstr "KAPAK PLAKASI"
+
+#. GDAT 0x07/0x00/0x08
+#: po/dm2_source_strings.c:66
+msgid "CRAFTSMAN 1"
+msgstr "ZANAATÇI 1"
+
+#. GDAT 0x15/0x0e/0x18
+#: po/dm2_source_strings.c:67
+msgid "CROSS KEY"
+msgstr "HAÇ ANAHTAR"
+
+#. GDAT 0x10/0x1a/0x18
+#: po/dm2_source_strings.c:68
+msgid "CROSSBOW"
+msgstr "ARBALET"
+
+#. GDAT 0x11/0x1d/0x18
+#: po/dm2_source_strings.c:69
+msgid "CRYSTAL SHIELD"
+msgstr "KRİSTAL KALKAN"
+
+#. GDAT 0x10/0x08/0x18
+#: po/dm2_source_strings.c:70
+msgid "DAGGER"
+msgstr "Hançer"
+
+#. GDAT 0x0f/0x20/0x00
+#: po/dm2_source_strings.c:71
+msgid "DARK VEXIRK"
+msgstr "KOYU VEXIRK"
+
+#. GDAT 0x15/0x3b/0x18
+#: po/dm2_source_strings.c:72
+msgid "DEAD BAT"
+msgstr "ÖLÜ YARASA"
+
+#. GDAT 0x14/0x0f/0x18
+#: po/dm2_source_strings.c:73
+msgid "DEBUG MAP"
+msgstr "HATA AYIKLAMA HARİTASI"
+
+#. GDAT 0x07/0x00/0x22
+#: po/dm2_source_strings.c:74
+msgid "DEXTERITY"
+msgstr "EL becerisi"
+
+#. GDAT 0x0f/0x38/0x00
+#: po/dm2_source_strings.c:75
+msgid "DIGGER WORM"
+msgstr "KAZICI SOLUCU"
+
+#. GDAT 0x0f/0x4e/0x00
+#: po/dm2_source_strings.c:76
+msgid "DOOR GHOST"
+msgstr "KAPI HAYALETİ"
+
+#. GDAT 0x11/0x0d/0x18
+#: po/dm2_source_strings.c:77
+msgid "DOUBLET"
+msgstr "ÇİFT"
+
+#. GDAT 0x0f/0x17/0x00
+#: po/dm2_source_strings.c:78
+msgid "DRAGOTH"
+msgstr "EJDERHA"
+
+#. GDAT 0x0f/0x4c/0x00
+#: po/dm2_source_strings.c:79
+msgid "DRAGOTH ATTACK MINION"
+msgstr "DRAGOT SALDIRI MİNYONU"
+
+#. GDAT 0x0f/0x52/0x00
+#: po/dm2_source_strings.c:80
+msgid "DRU TAN"
+msgstr "DRU TAN"
+
+#. GDAT 0x10/0x25/0x18
+#: po/dm2_source_strings.c:81
+msgid "EMERALD ORB"
+msgstr "ZÜMRÜT KÜRE"
+
+#. GDAT 0x0f/0x1b/0x00, 0x0f/0x57/0x00
+#: po/dm2_source_strings.c:82
+msgid "EVIL ATTACK MINION"
+msgstr "KÖTÜ SALDIRI MİNYONU"
+
+#. GDAT 0x0f/0x25/0x00
+#: po/dm2_source_strings.c:83
+msgid "EVIL FOUNTAIN"
+msgstr "KÖTÜ ÇEŞMESİ"
+
+#. GDAT 0x0f/0x45/0x00
+#: po/dm2_source_strings.c:84
+msgid "EVIL GUARD MINION"
+msgstr "ŞEY MUHAFIZ MİNYONU"
+
+#. GDAT 0x0f/0x2b/0x00
+#: po/dm2_source_strings.c:85
+msgid "EVIL SCOUT MINION"
+msgstr "ŞEY İZCİ MİNYONU"
+
+#. GDAT 0x10/0x0e/0x18
+#: po/dm2_source_strings.c:86
+msgid "EXCSYMYR"
+msgstr "EXCSYMYR"
+
+#. GDAT 0x07/0x00/0x0b
+#: po/dm2_source_strings.c:87
+msgid "EXPERT 1"
+msgstr "UZMAN 1"
+
+#. GDAT 0x10/0x00/0x18
+#: po/dm2_source_strings.c:88
+msgid "EYE OF TIME"
+msgstr "ZAMANIN GÖZÜ"
+
+#. GDAT 0x0f/0x08/0x00
+#: po/dm2_source_strings.c:89
+msgid "FACE PILLAR"
+msgstr "YÜZ AYAĞI"
+
+#. GDAT 0x15/0x33/0x18
+#: po/dm2_source_strings.c:90
+msgid "FAIRY CUSHION"
+msgstr "PERİ YASTIK"
+
+#. GDAT 0x0f/0x33/0x00
+#: po/dm2_source_strings.c:91
+msgid "FETCH MINION"
+msgstr "MİNYONU GETİR"
+
+#. GDAT 0x07/0x00/0x00
+#: po/dm2_source_strings.c:92
+msgid "FIGHTER"
+msgstr "SAVAŞÇI"
+
+#. GDAT 0x11/0x08/0x18
+#: po/dm2_source_strings.c:93
+msgid "FINE ROBE "
+msgstr "İNCE ELBİSE"
+
+#. GDAT 0x11/0x07/0x18
+#: po/dm2_source_strings.c:94
+msgid "FINE ROBE TOP"
+msgstr "İNCE ROBOT ÜST"
+
+#. GDAT 0x11/0x38/0x18
+#: po/dm2_source_strings.c:95
+msgid "FIRE GREAVE"
+msgstr "YANGIN GÖSTERGESİ"
+
+#. GDAT 0x11/0x35/0x18
+#: po/dm2_source_strings.c:96
+msgid "FIRE HELM"
+msgstr "YANGIN DÜĞMESİ"
+
+#. GDAT 0x11/0x09/0x18, 0x11/0x36/0x18
+#: po/dm2_source_strings.c:97
+msgid "FIRE PLATE"
+msgstr "YANGIN PLAKASI"
+
+#. GDAT 0x11/0x37/0x18
+#: po/dm2_source_strings.c:98
+msgid "FIRE POLEYN"
+msgstr "YANGIN POLEYNİ"
+
+#. GDAT 0x0f/0x37/0x00
+#: po/dm2_source_strings.c:99
+msgid "FLAME ORB"
+msgstr "ALEV KÜRE"
+
+#. GDAT 0x13/0x14/0x18
+#: po/dm2_source_strings.c:100
+msgid "FLASK"
+msgstr "ŞİŞE"
+
+#. GDAT 0x11/0x29/0x18
+#: po/dm2_source_strings.c:101
+msgid "FOOT PLATE"
+msgstr "AYAK PLAĞI"
+
+#. GDAT 0x0f/0x13/0x00
+#: po/dm2_source_strings.c:102
+msgid "FOUNTAIN"
+msgstr "KAP %d"
+
+#. GDAT 0x03/0x00/0x14
+#: po/dm2_source_strings.c:103
+msgid ""
+"FURNACE ON\n"
+"LEVEL BELOW\n"
+"MUST BE STOKED\n"
+"AND BURNING"
+msgstr ""
+"FIRIN AÇIK\n"
+"AŞAĞIDAKİ SEVİYE\n"
+"STOKLANMALIDIR\n"
+"VE YANMA"
+
+#. GDAT 0x10/0x06/0x18
+#: po/dm2_source_strings.c:104
+msgid "FURY"
+msgstr "ÖFKE"
+
+#. GDAT 0x01/0x00/0x12
+#: po/dm2_source_strings.c:105
+msgid "GAME PAUSED"
+msgstr "OYUN DURAKLATILDI"
+
+#. GDAT 0x0f/0x49/0x00
+#: po/dm2_source_strings.c:106
+msgid "GHOST"
+msgstr "HAYALET"
+
+#. GDAT 0x0f/0x0d/0x00
+#: po/dm2_source_strings.c:107
+msgid "GIGGLER"
+msgstr "GÜLÜCÜ"
+
+#. GDAT 0x0f/0x09/0x00
+#: po/dm2_source_strings.c:108
+msgid "GLOP"
+msgstr "GOP"
+
+#. GDAT 0x15/0x08/0x18
+#: po/dm2_source_strings.c:109
+msgid "GOLD COIN"
+msgstr "ALTIN PARA"
+
+#. GDAT 0x15/0x11/0x18
+#: po/dm2_source_strings.c:110
+msgid "GOLD KEY"
+msgstr "ALTIN ANAHTAR"
+
+#. GDAT 0x11/0x18/0x18
+#: po/dm2_source_strings.c:111
+msgid "GREAT HELM"
+msgstr "BÜYÜK DÜĞMAN"
+
+#. GDAT 0x11/0x25/0x18
+#: po/dm2_source_strings.c:112
+msgid "GREAVES"
+msgstr "Dizlikler"
+
+#. GDAT 0x15/0x1c/0x18
+#: po/dm2_source_strings.c:113
+msgid "GREEN GEM"
+msgstr "YEŞİL MÜCEVHER"
+
+#. GDAT 0x0f/0x34/0x00, 0x15/0x40/0x18
+#: po/dm2_source_strings.c:114
+msgid "GUARD MINION"
+msgstr "KORUMA MİNYONU"
+
+#. GDAT 0x11/0x0c/0x18
+#: po/dm2_source_strings.c:115
+msgid "GUNNA"
+msgstr "GUNNA"
+
+#. GDAT 0x07/0x00/0x27
+#: po/dm2_source_strings.c:116
+msgid "HEALTH"
+msgstr "SAĞLIK"
+
+#. GDAT 0x11/0x1a/0x18
+#: po/dm2_source_strings.c:117
+msgid "HELMET"
+msgstr "MIĞFER"
+
+#. GDAT 0x11/0x19/0x18
+#: po/dm2_source_strings.c:118
+msgid "HORNED HELM"
+msgstr "Boynuzlu Miğfer"
+
+#. GDAT 0x11/0x0e/0x18
+#: po/dm2_source_strings.c:119
+msgid "HUKE"
+msgstr "HUKE"
+
+#. GDAT 0x15/0x03/0x18
+#: po/dm2_source_strings.c:120
+msgid "ILLUMULET"
+msgstr "AYDINLATAN"
+
+#. GDAT 0x03/0x00/0x28
+#: po/dm2_source_strings.c:121
+msgid ""
+"INVOKE ZO TO\n"
+"CLOSE PORTALS\n"
+"THAT THE\n"
+"EVIL MINIONS\n"
+"HAVE OPENED"
+msgstr ""
+"ZO'YU ÇAĞIRIN\n"
+"PORTALLARI KAPATIN\n"
+"BU\n"
+"KÖTÜ MİNYONLAR\n"
+"AÇILDI"
+
+#. GDAT 0x03/0x00/0x16
+#: po/dm2_source_strings.c:122
+msgid ""
+"INVOKE\n"
+"ZO EW KU\n"
+"TO CREATE A\n"
+"MINION THAT\n"
+"WILL ATTACK\n"
+"YOUR ENEMIES"
+msgstr ""
+"ÇAĞIR\n"
+"ZO EW KU\n"
+"BİR YARATMAK İÇİN\n"
+"MİNYON BU\n"
+"SALDIRACAK\n"
+"DÜŞMANLARINIZ"
+
+#. GDAT 0x03/0x00/0x17
+#: po/dm2_source_strings.c:123
+msgid ""
+"INVOKE\n"
+"ZO EW NETA\n"
+"TO CREATE A\n"
+"GUARDIAN\n"
+"MINION"
+msgstr ""
+"ÇAĞIR\n"
+"ZO EW NETA\n"
+"BİR YARATMAK İÇİN\n"
+"KORUYUCU\n"
+"MİNYON"
+
+#. GDAT 0x15/0x09/0x18
+#: po/dm2_source_strings.c:124
+msgid "IRON KEY"
+msgstr "DEMİR ANAHTAR"
+
+#. GDAT 0x15/0x02/0x18
+#: po/dm2_source_strings.c:125
+msgid "JEWEL OF SYMAL"
+msgstr "SYMAL MÜCEVHER"
+
+#. GDAT 0x15/0x1e/0x18
+#: po/dm2_source_strings.c:126
+msgid "JICAMA"
+msgstr "JICAMA"
+
+#. GDAT 0x07/0x00/0x07
+#: po/dm2_source_strings.c:127
+msgid "JOURNEYMAN 1"
+msgstr "YOLCU 1"
+
+#. GDAT 0x10/0x03/0x18
+#: po/dm2_source_strings.c:128
+msgid "KALAN GAUNTLET"
+msgstr "KALAN ELDİVENİ"
+
+#. GDAT 0x10/0x0d/0x18
+#: po/dm2_source_strings.c:129
+msgid "KATANA"
+msgstr "KATANA"
+
+#. GDAT 0x15/0x2c/0x18
+#: po/dm2_source_strings.c:130
+msgid "LARGE GEAR"
+msgstr "BÜYÜK DİŞLİ"
+
+#. GDAT 0x11/0x12/0x18
+#: po/dm2_source_strings.c:131
+msgid "LEATHER BOOTS"
+msgstr "DERİ ÇİZME"
+
+#. GDAT 0x11/0x10/0x18
+#: po/dm2_source_strings.c:132
+msgid "LEATHER JERKIN"
+msgstr "DERİ CEKET"
+
+#. GDAT 0x11/0x11/0x18
+#: po/dm2_source_strings.c:133
+msgid "LEATHER PANTS"
+msgstr "DERİ PANTOLON"
+
+#. GDAT 0x11/0x28/0x18
+#: po/dm2_source_strings.c:134
+msgid "LEG PLATE"
+msgstr "BACAK PLAKASI"
+
+#. GDAT 0x15/0x0d/0x18
+#: po/dm2_source_strings.c:135
+msgid "LIGHTNING KEY"
+msgstr "YILDIRIM ANAHTARI"
+
+#. GDAT 0x0f/0x29/0x00
+#: po/dm2_source_strings.c:136
+msgid "LIGHTNING ROD"
+msgstr "PARATONER"
+
+#. GDAT 0x07/0x00/0x1e, 0x1a/0x0f/0x00, 0x1a/0x80/0x00
+#: po/dm2_source_strings.c:137
+msgid "LOAD"
+msgstr "YÜKLE"
+
+#. GDAT 0x10/0x14/0x18
+#: po/dm2_source_strings.c:138
+msgid "MACE"
+msgstr "TOPUZ"
+
+#. GDAT 0x10/0x09/0x18
+#: po/dm2_source_strings.c:139
+msgid "MACHETE"
+msgstr "Pala"
+
+#. GDAT 0x14/0x08/0x18, 0x14/0x0b/0x18
+#: po/dm2_source_strings.c:140
+msgid "MAGIC MAP"
+msgstr "SİHİRLİ HARİTA"
+
+#. GDAT 0x0f/0x44/0x00
+#: po/dm2_source_strings.c:141
+msgid "MAGIC MERCHANT"
+msgstr "BÜYÜLÜ Tüccar"
+
+#. GDAT 0x0f/0x1a/0x00
+#: po/dm2_source_strings.c:142
+msgid "MAGIK CAULDRON"
+msgstr "MAGİK KAZANI"
+
+#. GDAT 0x0f/0x2e/0x00
+#: po/dm2_source_strings.c:143
+msgid "MAGIK REFLECTOR"
+msgstr "MAGİK REFLEKTÖR"
+
+#. GDAT 0x15/0x2b/0x18
+#: po/dm2_source_strings.c:144
+msgid "MAGIKAL BOX"
+msgstr "BÜYÜLÜ KUTU"
+
+#. GDAT 0x11/0x24/0x18
+#: po/dm2_source_strings.c:145
+msgid "MAIL HELMET"
+msgstr "POSTA KASK"
+
+#. GDAT 0x07/0x00/0x29
+#: po/dm2_source_strings.c:146
+msgid "MANA"
+msgstr "MANA"
+
+#. GDAT 0x15/0x2f/0x18
+#: po/dm2_source_strings.c:147
+msgid "MANA BLOSSOM"
+msgstr "MANA ÇİÇEĞİ"
+
+#. GDAT 0x15/0x18/0x18
+#: po/dm2_source_strings.c:148
+msgid "MASTER KEY"
+msgstr "ANA ANAHTAR"
+
+#. GDAT 0x0f/0x22/0x00
+#: po/dm2_source_strings.c:149
+msgid "MERCHANT"
+msgstr "Tüccar"
+
+#. GDAT 0x0f/0x2c/0x00
+#: po/dm2_source_strings.c:150
+msgid "MERCHANT GUARD"
+msgstr "Tüccar muhafızı"
+
+#. GDAT 0x0f/0x3a/0x00
+#: po/dm2_source_strings.c:151
+msgid "MERCHANT TOMB"
+msgstr "Tüccar Mezarı"
+
+#. GDAT 0x10/0x2d/0x18, 0x15/0x2a/0x18
+#: po/dm2_source_strings.c:152
+msgid "METEOR METAL"
+msgstr "METEOR METAL"
+
+#. GDAT 0x15/0x25/0x18
+#: po/dm2_source_strings.c:153
+msgid "MEZMAR"
+msgstr "MEZMAR"
+
+#. GDAT 0x14/0x0a/0x18
+#: po/dm2_source_strings.c:154
+msgid "MINION MAP"
+msgstr "MİNYON HARİTASI"
+
+#. GDAT 0x11/0x0f/0x18
+#: po/dm2_source_strings.c:155
+msgid "MITHRAL HOSEN"
+msgstr "MITHRIL PANTOLON"
+
+#. GDAT 0x11/0x23/0x18
+#: po/dm2_source_strings.c:156
+msgid "MITHRAL HUKE"
+msgstr "MİTHRAL HUKE"
+
+#. GDAT 0x11/0x22/0x18
+#: po/dm2_source_strings.c:157
+msgid "MITHRAL MAIL"
+msgstr "MITHRIL ZINCİR"
+
+#. GDAT 0x14/0x02/0x18
+#: po/dm2_source_strings.c:158
+msgid "MONEY BOX"
+msgstr "PARA KUTUSU"
+
+#. GDAT 0x15/0x0c/0x18
+#: po/dm2_source_strings.c:159
+msgid "MOON KEY"
+msgstr "AY ANAHTARI"
+
+#. GDAT 0x15/0x27/0x18
+#: po/dm2_source_strings.c:160
+msgid "MOONSTONE"
+msgstr "AY TAŞI"
+
+#. GDAT 0x10/0x16/0x18
+#: po/dm2_source_strings.c:161
+msgid "MORNINGSTAR"
+msgstr "SABAH YILDIZI"
+
+#. GDAT 0x0f/0x26/0x00
+#: po/dm2_source_strings.c:162
+msgid "MUMMY"
+msgstr "MUMYA"
+
+#. GDAT 0x07/0x00/0x04
+#: po/dm2_source_strings.c:163
+msgid "NEOPHYTE 1"
+msgstr "YENİ 1"
+
+#. GDAT 0x07/0x00/0x01
+#: po/dm2_source_strings.c:164
+msgid "NINJA"
+msgstr "NİNJA"
+
+#. GDAT 0x01/0xfe/0x05
+#: po/dm2_source_strings.c:165
+msgid "NO CREATURE"
+msgstr "YARATIK YOK"
+
+#. GDAT 0x03/0x00/0x11
+#: po/dm2_source_strings.c:166
+msgid ""
+"NO WATER\n"
+"CHECK PUMP\n"
+"OPERATION ON\n"
+"LEVEL BELOW"
+msgstr ""
+"SU YOK\n"
+"POMPAYI KONTROL EDİN\n"
+"ÇALIŞMA AÇIK\n"
+"AŞAĞIDAKİ SEVİYE"
+
+#. GDAT 0x07/0x00/0x05
+#: po/dm2_source_strings.c:167
+msgid "NOVICE 1"
+msgstr "Acemi 1"
+
+#. GDAT 0x10/0x2a/0x18
+#: po/dm2_source_strings.c:168
+msgid "NUMENSTAFF"
+msgstr "NUMMENPERSONEL"
+
+#. GDAT 0x0f/0x3d/0x00, 0x0f/0x3e/0x00, 0x0f/0x3f/0x00
+#: po/dm2_source_strings.c:169
+msgid "OBELISK"
+msgstr "Dikilitaş"
+
+#. GDAT 0x1a/0x00/0x00, 0x1a/0x01/0x00, 0x1a/0x02/0x00, 0x1a/0x03/0x00, 0x1a/0x04/0x00, 0x1a/0x05/0x00, 0x1a/0x06/0x00, 0x1a/0x07/0x00, 0x1a/0x08/0x00, 0x1a/0x13/0x00, 0x1a/0x14/0x00, 0x1a/0x1a/0x00, 0x1a/0x87/0x00
+#: po/dm2_source_strings.c:170
+msgid "OK"
+msgstr "TAŞ"
+
+#. GDAT 0x15/0x0f/0x18
+#: po/dm2_source_strings.c:171
+msgid "ONYX KEY"
+msgstr "ONİKS ANAHTAR"
+
+#. GDAT 0x15/0x32/0x18
+#: po/dm2_source_strings.c:172
+msgid "PALMAPPLE"
+msgstr "PALMAPLE"
+
+#. GDAT 0x0f/0x55/0x00
+#: po/dm2_source_strings.c:173
+msgid "PEDISTAL"
+msgstr "PEDİSTAL"
+
+#. GDAT 0x0f/0x05/0x00
+#: po/dm2_source_strings.c:174
+msgid "PILLAR"
+msgstr "SÜTUN"
+
+#. GDAT 0x0f/0x27/0x00
+#: po/dm2_source_strings.c:175
+msgid "PIPE SHAFT"
+msgstr "BORU MİLİ"
+
+#. GDAT 0x0f/0x21/0x00
+#: po/dm2_source_strings.c:176
+msgid "PIT GHOST"
+msgstr "ÇUKUR HAYALET"
+
+#. GDAT 0x15/0x35/0x18
+#: po/dm2_source_strings.c:177
+msgid "PLANK"
+msgstr "KAHRAMAN"
+
+#. GDAT 0x10/0x1f/0x18
+#: po/dm2_source_strings.c:178
+msgid "POISON DART"
+msgstr "ZEHİR DART"
+
+#. GDAT 0x0f/0x11/0x00
+#: po/dm2_source_strings.c:179
+msgid "POWER CRYSTAL"
+msgstr "GÜÇ KRİSTALİ"
+
+#. GDAT 0x07/0x00/0x02
+#: po/dm2_source_strings.c:180
+msgid "PRIEST"
+msgstr "RAHİP"
+
+#. GDAT 0x15/0x3a/0x18
+#: po/dm2_source_strings.c:181
+msgid "PYRO"
+msgstr "PİRO"
+
+#. GDAT 0x14/0x03/0x18
+#: po/dm2_source_strings.c:182
+msgid "QUIVER"
+msgstr "titreme"
+
+#. GDAT 0x10/0x23/0x18
+#: po/dm2_source_strings.c:183
+msgid "RAINBOW WAND"
+msgstr "GÖKKUŞAĞI DEĞNEĞİ"
+
+#. GDAT 0x10/0x0b/0x18
+#: po/dm2_source_strings.c:184
+msgid "RAPIER"
+msgstr "RAPIR"
+
+#. GDAT 0x15/0x1b/0x18
+#: po/dm2_source_strings.c:185
+msgid "RED GEM"
+msgstr "KIRMIZI TAŞ"
+
+#. GDAT 0x03/0x00/0x12
+#: po/dm2_source_strings.c:186
+msgid ""
+"REFLECTOR\n"
+"PRACTICE"
+msgstr ""
+"REFLEKTÖR\n"
+"UYGULAMA"
+
+#. GDAT 0x03/0x00/0x19
+#: po/dm2_source_strings.c:187
+msgid ""
+"RENEW THE LIFE\n"
+"OF A FALLEN\n"
+"CHAMPION"
+msgstr ""
+"HAYATI YENİLEYİN\n"
+"BİR DÜŞMÜŞÜN\n"
+"ŞAMPİYON"
+
+#. GDAT 0x1a/0x10/0x00
+#: po/dm2_source_strings.c:188
+msgid "RESTART GAME"
+msgstr "OYUNU YENİDEN BAŞLAT"
+
+#. GDAT 0x10/0x1e/0x18
+#: po/dm2_source_strings.c:189
+msgid "ROCK"
+msgstr "TAŞ"
+
+#. GDAT 0x0f/0x0c/0x00
+#: po/dm2_source_strings.c:190
+msgid "ROCKY"
+msgstr "kayalık"
+
+#. GDAT 0x10/0x04/0x18
+#: po/dm2_source_strings.c:191
+msgid "ROGUE STAVE"
+msgstr "HARİKA STAVE"
+
+#. GDAT 0x15/0x2d/0x18
+#: po/dm2_source_strings.c:192
+msgid "ROPE"
+msgstr "İP"
+
+#. GDAT 0x15/0x28/0x18
+#: po/dm2_source_strings.c:193
+msgid "RUNE CHARM"
+msgstr "RÜN CİHAZI"
+
+#. GDAT 0x10/0x0c/0x18
+#: po/dm2_source_strings.c:194
+msgid "SABRE"
+msgstr "KILıç"
+
+#. GDAT 0x11/0x03/0x18
+#: po/dm2_source_strings.c:195
+msgid "SANDALS"
+msgstr "SANDALET"
+
+#. GDAT 0x0f/0x2a/0x00
+#: po/dm2_source_strings.c:196
+msgid "SARDES MINION"
+msgstr "SARDES MİNYONU"
+
+#. GDAT 0x1a/0x0b/0x00, 0x1a/0x11/0x00, 0x1a/0x12/0x00, 0x1a/0x1b/0x00, 0x1a/0x81/0x00
+#: po/dm2_source_strings.c:197
+msgid "SAVE"
+msgstr "KAYDET"
+
+#. GDAT 0x11/0x15/0x18
+#: po/dm2_source_strings.c:198
+msgid "SCALE HAUBERK"
+msgstr "TERAZİ HAUBERK"
+
+#. GDAT 0x11/0x16/0x18
+#: po/dm2_source_strings.c:199
+msgid "SCALE MAIL"
+msgstr "ÖLÇEKLİ POSTA"
+
+#. GDAT 0x10/0x2b/0x18
+#: po/dm2_source_strings.c:200
+msgid "SCARAB"
+msgstr "bokböceği"
+
+#. GDAT 0x14/0x09/0x18
+#: po/dm2_source_strings.c:201
+msgid "SCOUT MAP"
+msgstr "İZCİ HARİTASI"
+
+#. GDAT 0x0f/0x30/0x00
+#: po/dm2_source_strings.c:202
+msgid "SCOUT MINION"
+msgstr "İZCİ MİNYONU"
+
+#. GDAT 0x12/0x00/0x18
+#: po/dm2_source_strings.c:203
+msgid "SCROLL"
+msgstr "PARŞÖMEN"
+
+#. GDAT 0x10/0x07/0x18
+#: po/dm2_source_strings.c:204
+msgid "SCYTHE"
+msgstr "tırpan"
+
+#. GDAT 0x10/0x28/0x18
+#: po/dm2_source_strings.c:205
+msgid "SERPENT STAFF"
+msgstr "YILAN PERSONEL"
+
+#. GDAT 0x15/0x23/0x18
+#: po/dm2_source_strings.c:206
+msgid "SHANK"
+msgstr "ŞAFT"
+
+#. GDAT 0x11/0x1c/0x18
+#: po/dm2_source_strings.c:207
+msgid "SHIELD OF FIRE"
+msgstr "ATEŞ KALKANI"
+
+#. GDAT 0x10/0x20/0x18
+#: po/dm2_source_strings.c:208
+msgid "SHURIKEN"
+msgstr "ŞURİKEN"
+
+#. GDAT 0x15/0x38/0x18
+#: po/dm2_source_strings.c:209
+msgid "SILVER COIN"
+msgstr "GÜMÜŞ PARA"
+
+#. GDAT 0x0f/0x41/0x00
+#: po/dm2_source_strings.c:210
+msgid "SKELETON"
+msgstr "İSKELET"
+
+#. GDAT 0x0f/0x16/0x00
+#: po/dm2_source_strings.c:211
+msgid "SKULL BRAZIER"
+msgstr "KAFATASI MANZARASI"
+
+#. GDAT 0x15/0x10/0x18
+#: po/dm2_source_strings.c:212
+msgid "SKULL KEY"
+msgstr "KAFATASI ANAHTARI"
+
+#. GDAT 0x01/0xfe/0x00
+#: po/dm2_source_strings.c:213
+msgid "SKULLKEEP"
+msgstr "KAFATASI"
+
+#. GDAT 0x01/0xfe/0x06
+#: po/dm2_source_strings.c:214
+msgid "SKULLKEEP C"
+msgstr "KAFATASI C"
+
+#. GDAT 0x10/0x1c/0x18
+#: po/dm2_source_strings.c:215
+msgid "SLAYER ARROW"
+msgstr "Avcı oku"
+
+#. GDAT 0x10/0x1d/0x18
+#: po/dm2_source_strings.c:216
+msgid "SLING"
+msgstr "SAPANCA"
+
+#. GDAT 0x15/0x07/0x18
+#: po/dm2_source_strings.c:217
+msgid "SMALL PLANK"
+msgstr "KÜÇÜK TAHTA"
+
+#. GDAT 0x11/0x1f/0x18
+#: po/dm2_source_strings.c:218
+msgid "SMALL SHIELD"
+msgstr "KÜÇÜK KALKAN"
+
+#. GDAT 0x03/0x00/0x1b
+#: po/dm2_source_strings.c:219
+msgid ""
+"SNAKE STAFF\n"
+"\n"
+"ADD 1 MANA\n"
+"BLOSSOM\n"
+"\n"
+"ADD 1 STAFF"
+msgstr ""
+"YILAN PERSONEL\n"
+"\n"
+"1 MANA EKLE\n"
+"ÇİÇEK\n"
+"\n"
+"1 PERSONEL EKLE"
+
+#. GDAT 0x15/0x0b/0x18
+#: po/dm2_source_strings.c:220
+msgid "SOLID KEY"
+msgstr "KATI ANAHTAR"
+
+#. GDAT 0x0f/0x10/0x00
+#: po/dm2_source_strings.c:221
+msgid "SPECTRE"
+msgstr "HAYAL"
+
+#. GDAT 0x10/0x2c/0x18
+#: po/dm2_source_strings.c:222
+msgid "SPEEDBOW"
+msgstr "HIZLI YAY"
+
+#. GDAT 0x0f/0x24/0x00
+#: po/dm2_source_strings.c:223
+msgid "SPIKED CAPSTAN"
+msgstr "ÇİVİLİ KAPTAN"
+
+#. GDAT 0x0f/0x51/0x00
+#: po/dm2_source_strings.c:224
+msgid "SPIKED WALL"
+msgstr "ÇİVİLİ DUVAR"
+
+#. GDAT 0x10/0x24/0x18
+#: po/dm2_source_strings.c:225
+msgid "SPIRAL STAFF"
+msgstr "SPİRAL PERSONEL"
+
+#. GDAT 0x15/0x22/0x18
+#: po/dm2_source_strings.c:226
+msgid "SPIRIT CAP"
+msgstr "RUH BAŞLIĞI"
+
+#. GDAT 0x10/0x22/0x18
+#: po/dm2_source_strings.c:227
+msgid "STAFF"
+msgstr "ASA"
+
+#. GDAT 0x10/0x27/0x18
+#: po/dm2_source_strings.c:228
+msgid "STAFF OF u"
+msgstr "PERSONELİNİZ"
+
+#. GDAT 0x0f/0x06/0x00
+#: po/dm2_source_strings.c:229
+msgid "STALAGMITE"
+msgstr "DİKİT"
+
+#. GDAT 0x07/0x00/0x28
+#: po/dm2_source_strings.c:230
+msgid "STAMINA"
+msgstr "DAYANIKLILIK"
+
+#. GDAT 0x15/0x24/0x18
+#: po/dm2_source_strings.c:231
+msgid "STEAK"
+msgstr "Biftek"
+
+#. GDAT 0x0f/0x47/0x00
+#: po/dm2_source_strings.c:232
+msgid "STEAM ENGINE"
+msgstr "BUHAR MOTORU"
+
+#. GDAT 0x10/0x01/0x18
+#: po/dm2_source_strings.c:233
+msgid "STORMRING"
+msgstr "FIRTINA YÜZÜĞÜ"
+
+#. GDAT 0x07/0x00/0x21
+#: po/dm2_source_strings.c:234
+msgid "STRENGTH"
+msgstr "GÜÇ"
+
+#. GDAT 0x15/0x30/0x18
+#: po/dm2_source_strings.c:235
+msgid "SUN CREST"
+msgstr "GÜNEŞ ARMASI"
+
+#. GDAT 0x15/0x26/0x18
+#: po/dm2_source_strings.c:236
+msgid "SUZERAIN"
+msgstr "SÜZERİN"
+
+#. GDAT 0x10/0x0a/0x18
+#: po/dm2_source_strings.c:237
+msgid "SWORD"
+msgstr "KILıç"
+
+#. GDAT 0x11/0x0b/0x18
+#: po/dm2_source_strings.c:238
+msgid "TABARD"
+msgstr "CEPLİ"
+
+#. GDAT 0x15/0x3c/0x18
+#: po/dm2_source_strings.c:239
+msgid "TANKARD"
+msgstr "TANKARD"
+
+#. GDAT 0x15/0x37/0x18
+#: po/dm2_source_strings.c:240
+msgid "TAPESTRY"
+msgstr "Goblen"
+
+#. GDAT 0x11/0x33/0x18
+#: po/dm2_source_strings.c:241
+msgid "TECHBOOTS"
+msgstr "TEKNOLOJİ BOOTLARI"
+
+#. GDAT 0x11/0x30/0x18
+#: po/dm2_source_strings.c:242
+msgid "TECHELM"
+msgstr "TECHELM"
+
+#. GDAT 0x15/0x42/0x18
+#: po/dm2_source_strings.c:243
+msgid "TECHEYE"
+msgstr "Techeye"
+
+#. GDAT 0x10/0x15/0x18
+#: po/dm2_source_strings.c:244
+msgid "TECHMACE"
+msgstr "TEKNOLOJİ"
+
+#. GDAT 0x11/0x31/0x18
+#: po/dm2_source_strings.c:245
+msgid "TECHPLATE"
+msgstr "TEKNOLOJİ PLAKASI"
+
+#. GDAT 0x11/0x32/0x18
+#: po/dm2_source_strings.c:246
+msgid "TECHPOLEYN "
+msgstr "TEKPOLEYN"
+
+#. GDAT 0x11/0x34/0x18
+#: po/dm2_source_strings.c:247
+msgid "TECHSHIELD"
+msgstr "TEKNOLOJİ KALKANI"
+
+#. GDAT 0x10/0x05/0x18
+#: po/dm2_source_strings.c:248
+msgid "TEMPEST"
+msgstr "FIRTINA"
+
+#. GDAT 0x0f/0x0e/0x00
+#: po/dm2_source_strings.c:249
+msgid "THICKET THEIF"
+msgstr "HIRSIZLIK"
+
+#. GDAT 0x11/0x21/0x18
+#: po/dm2_source_strings.c:250
+msgid "THIGH PLATES"
+msgstr "UYLUK PLAKALARI"
+
+#. GDAT 0x0f/0x00/0x00
+#: po/dm2_source_strings.c:251
+msgid "THORN DEMON"
+msgstr "dikenli şeytan"
+
+#. GDAT 0x0f/0x0f/0x00
+#: po/dm2_source_strings.c:252
+msgid "TIGER STRIPED WORM"
+msgstr "KAPLAN ÇİZGİLİ SOLUCAN"
+
+#. GDAT 0x03/0x00/0x1c
+#: po/dm2_source_strings.c:253
+msgid ""
+"TO OPEN THE\n"
+"CASTLE DOOR\n"
+"YOU MUST GET\n"
+"A KEY PIECE\n"
+"FROM EACH OF\n"
+"THE FOUR CLANS\n"
+"OF SKULLKEEP"
+msgstr ""
+"AÇMAK İÇİN\n"
+"KALE KAPISI\n"
+"ALMALISINIZ\n"
+"ANAHTAR PARÇA\n"
+"HER BİRİNDEN\n"
+"DÖRT KLAN\n"
+"KAFATASI"
+
+#. GDAT 0x0f/0x39/0x00
+#: po/dm2_source_strings.c:254
+msgid "TOMBSTONE"
+msgstr "MEZAR TAŞI"
+
+#. GDAT 0x10/0x02/0x18
+#: po/dm2_source_strings.c:255
+msgid "TORCH"
+msgstr "MEŞALE"
+
+#. GDAT 0x11/0x27/0x18
+#: po/dm2_source_strings.c:256
+msgid "TORSO PLATE"
+msgstr "GÖVDE PLAKASI"
+
+#. GDAT 0x0f/0x1c/0x00
+#: po/dm2_source_strings.c:257
+msgid "TOWER BAT"
+msgstr "KULE YARASA"
+
+#. GDAT 0x0f/0x3c/0x00
+#: po/dm2_source_strings.c:258
+msgid "TRADING TABLE (BUYS)"
+msgstr "TİCARET TABLOSU (SATIN ALMA)"
+
+#. GDAT 0x0f/0x3b/0x00
+#: po/dm2_source_strings.c:259
+msgid "TRADING TABLE (SELLS)"
+msgstr "TİCARET TABLOSU (SATIŞ)"
+
+#. GDAT 0x0f/0x14/0x00
+#: po/dm2_source_strings.c:260
+msgid "TREE"
+msgstr "AĞAÇ"
+
+#. GDAT 0x0f/0x12/0x00
+#: po/dm2_source_strings.c:261
+msgid "TREE GORGON"
+msgstr "AĞAÇ GORGONU"
+
+#. GDAT 0x11/0x14/0x18
+#: po/dm2_source_strings.c:262
+msgid "TUNIC"
+msgstr "TUNİK"
+
+#. GDAT 0x0f/0x35/0x00
+#: po/dm2_source_strings.c:263
+msgid "U-HAUL MINION"
+msgstr "U-HAUL MİNYONU"
+
+#. GDAT 0x15/0x21/0x18
+#: po/dm2_source_strings.c:264
+msgid "VACUUM FUSE"
+msgstr "VAKUM SİGORTASI"
+
+#. GDAT 0x0f/0x1f/0x00
+#: po/dm2_source_strings.c:265
+msgid "VEXIRK KING"
+msgstr "VEXİRK KRAL"
+
+#. GDAT 0x07/0x00/0x24
+#: po/dm2_source_strings.c:266
+msgid "VITALITY"
+msgstr "CANLILIK"
+
+#. GDAT 0x0f/0x46/0x00
+#: po/dm2_source_strings.c:267
+msgid "VOID DOOR"
+msgstr "GEÇERSİZ KAPI"
+
+#. GDAT 0x10/0x13/0x18
+#: po/dm2_source_strings.c:268
+msgid "VORAX"
+msgstr "VORAKS"
+
+#. GDAT 0x10/0x10/0x18
+#: po/dm2_source_strings.c:269
+msgid "VORPAL BLADE"
+msgstr "VORPAL KILıç"
+
+#. GDAT 0x0f/0x02/0x00
+#: po/dm2_source_strings.c:270
+msgid "VORTEX"
+msgstr "VORTEKS"
+
+#. GDAT 0x01/0x00/0x11
+#: po/dm2_source_strings.c:271
+msgid "WAKE UP"
+msgstr "UYAN"
+
+#. GDAT 0x10/0x18/0x18
+#: po/dm2_source_strings.c:272
+msgid "WAR CLUB"
+msgstr "SAVAŞ KULÜBÜ"
+
+#. GDAT 0x13/0x0f/0x18
+#: po/dm2_source_strings.c:273
+msgid "WATER FLASK"
+msgstr "SU ŞİŞESİ"
+
+#. GDAT 0x07/0x00/0x23
+#: po/dm2_source_strings.c:274
+msgid "WISDOM"
+msgstr "BİLGELİK"
+
+#. GDAT 0x07/0x00/0x03
+#: po/dm2_source_strings.c:275
+msgid "WIZARD"
+msgstr "BÜYÜCÜ"
+
+#. GDAT 0x0f/0x4a/0x00
+#: po/dm2_source_strings.c:276
+msgid "WOLF"
+msgstr "KURT"
+
+#. GDAT 0x11/0x1e/0x18
+#: po/dm2_source_strings.c:277
+msgid "WOOD SHIELD"
+msgstr "AHŞAP KALKAN"
+
+#. GDAT 0x0f/0x19/0x00
+#: po/dm2_source_strings.c:278
+msgid "WOOD TABLE"
+msgstr "AHŞAP MASA"
+
+#. GDAT 0x15/0x39/0x18
+#: po/dm2_source_strings.c:279
+msgid "WORM ROUND"
+msgstr "KURT YUVARLAK"
+
+#. GDAT 0x01/0x00/0x0e
+#: po/dm2_source_strings.c:280
+msgid "' AWAKENED."
+msgstr "' UYANDI."
+
+#. GDAT 0x01/0x00/0x06
+#: po/dm2_source_strings.c:281
+msgid "' JUST GAINED A FIGHTER LEVEL."
+msgstr "' SAVAŞÇI SEVİYESİ KAZANDI."
+
+#. GDAT 0x01/0x00/0x07
+#: po/dm2_source_strings.c:282
+msgid "' JUST GAINED A NINJA LEVEL."
+msgstr "' SADECE BİR NİNJA SEVİYESİ KAZANDIK."
+
+#. GDAT 0x01/0x00/0x08
+#: po/dm2_source_strings.c:283
+msgid "' JUST GAINED A PRIEST LEVEL."
+msgstr "' AZ ÖNCE RAHİP SEVİYESİ KAZANDI."
+
+#. GDAT 0x01/0x00/0x09
+#: po/dm2_source_strings.c:284
+msgid "' JUST GAINED A WIZARD LEVEL."
+msgstr "' AZ ÖNCE BİR BÜYÜCÜ SEVİYESİ KAZANDI."
+
+#. GDAT 0x15/0x00/0x18
+#: po/dm2_source_strings.c:285
+msgid "'BONES"
+msgstr "'KEMİKLER"
+
+#. GDAT 0x07/0x00/0x1f
+#: po/dm2_source_strings.c:286
+msgid "*.+ KG."
+msgstr "*.+KG."
+
+#. GDAT 0x07/0x00/0x2a
+#: po/dm2_source_strings.c:287
+msgid ",.-/..0 KG"
+msgstr ",. -/ ..0 KG"
+
+#. GDAT 0x07/0x00/0x0c
+#: po/dm2_source_strings.c:288
+msgid "` MASTER 1"
+msgstr "`USTA 1"
+
+#. GDAT 0x07/0x00/0x0d
+#: po/dm2_source_strings.c:289
+msgid "a MASTER 1"
+msgstr "bir USTA 1"
+
+#. GDAT 0x07/0x00/0x0e
+#: po/dm2_source_strings.c:290
+msgid "b MASTER 1"
+msgstr "b USTA 1"
+
+#. GDAT 0x07/0x00/0x0f
+#: po/dm2_source_strings.c:291
+msgid "c MASTER 1"
+msgstr "c USTA 1"
+
+#. GDAT 0x07/0x00/0x10
+#: po/dm2_source_strings.c:292
+msgid "d MASTER 1"
+msgstr "Usta 1"
+
+#. GDAT 0x07/0x00/0x11
+#: po/dm2_source_strings.c:293
+msgid "e MASTER 1"
+msgstr "e USTA 1"
+
+#. GDAT 0x15/0x13/0x18
+#: po/dm2_source_strings.c:294
+msgid "f KEY"
+msgstr "f ANAHTAR"
+
+#. GDAT 0x13/0x0b/0x18
+#: po/dm2_source_strings.c:295
+msgid "f POTION"
+msgstr "f İKSİR"
+
+#. GDAT 0x15/0x3e/0x18
+#: po/dm2_source_strings.c:296
+msgid "f m"
+msgstr "f m"
+
+#. GDAT 0x13/0x0c/0x18
+#: po/dm2_source_strings.c:297
+msgid "f p POTION"
+msgstr "f p İKSİR"
+
+#. GDAT 0x13/0x08/0x18
+#: po/dm2_source_strings.c:298
+msgid "f p t POTION"
+msgstr "f p t İKSİR"
+
+#. GDAT 0x13/0x09/0x18
+#: po/dm2_source_strings.c:299
+msgid "f p u POTION"
+msgstr "f p u İKSİR"
+
+#. GDAT 0x15/0x15/0x18
+#: po/dm2_source_strings.c:300
+msgid "g KEY"
+msgstr "ANAHTAR"
+
+#. GDAT 0x13/0x0e/0x18
+#: po/dm2_source_strings.c:301
+msgid "g POTION"
+msgstr "İKSİR"
+
+#. GDAT 0x13/0x0a/0x18
+#: po/dm2_source_strings.c:302
+msgid "g p POTION"
+msgstr "g p İKSİR"
+
+#. GDAT 0x15/0x14/0x18
+#: po/dm2_source_strings.c:303
+msgid "h KEY"
+msgstr "h ANAHTAR"
+
+#. GDAT 0x13/0x06/0x18
+#: po/dm2_source_strings.c:304
+msgid "h p s POTION"
+msgstr "h p s İKSİR"
+
+#. GDAT 0x13/0x13/0x18
+#: po/dm2_source_strings.c:305
+msgid "i BOMB"
+msgstr "bombaladım"
+
+#. GDAT 0x15/0x16/0x18
+#: po/dm2_source_strings.c:306
+msgid "i KEY"
+msgstr "ben ANAHTAR"
+
+#. GDAT 0x13/0x07/0x18
+#: po/dm2_source_strings.c:307
+msgid "i p r POTION"
+msgstr "i p r İKSİR"
+
+#. GDAT 0x10/0x11/0x18
+#: po/dm2_source_strings.c:308
+msgid "k BLADE"
+msgstr "k BIÇAK"
+
+#. GDAT 0x13/0x0d/0x18
+#: po/dm2_source_strings.c:309
+msgid "k p v POTION"
+msgstr "k p v İKSİR"
+
+#. GDAT 0x13/0x03/0x18
+#: po/dm2_source_strings.c:310
+msgid "l BOMB"
+msgstr "BOMBA"
+
+#. GDAT 0x15/0x12/0x18
+#: po/dm2_source_strings.c:311
+msgid "o KEY"
+msgstr "o ANAHTAR"
+
+#. GDAT 0x15/0x17/0x18
+#: po/dm2_source_strings.c:312
+msgid "v KEY"
+msgstr "v ANAHTAR"
+
+#. GDAT 0x11/0x2e/0x18
+#: po/dm2_source_strings.c:313
+msgid "vw GREAVE"
+msgstr "vw GREAVE"
+
+#. GDAT 0x11/0x2b/0x18
+#: po/dm2_source_strings.c:314
+msgid "vw HELM"
+msgstr "vw HELM"
+
+#. GDAT 0x11/0x2c/0x18
+#: po/dm2_source_strings.c:315
+msgid "vw PLATE"
+msgstr "vw PLAKA"
+
+#. GDAT 0x11/0x2d/0x18
+#: po/dm2_source_strings.c:316
+msgid "vw POLEYN"
+msgstr "vw POLEYN"
+
+#. GDAT 0x11/0x2f/0x18
+#: po/dm2_source_strings.c:317
+msgid "vw SHIELD"
+msgstr "vw KALKAN"
+
+#. GDAT 0x11/0x2a/0x18
+#: po/dm2_source_strings.c:318
+msgid "w SHIELD"
+msgstr "KALKAN"

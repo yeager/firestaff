@@ -15,7 +15,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: scripts/firestaff_artpack_studio.py:1775
-#, fuzzy
 msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
@@ -31,7 +30,6 @@ msgstr "Ingen speldata importerad"
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
 #: scripts/firestaff_savegame_editor.py:510
-#, fuzzy
 msgid "Settings..."
 msgstr "Inställningar"
 
@@ -86,7 +84,7 @@ msgstr "Inställningar"
 #: scripts/firestaff_dungeon_studio.py:473
 #: scripts/firestaff_savegame_editor.py:514
 msgid "Auto (System Language)"
-msgstr ""
+msgstr "Auto (systemspråk)"
 
 #: scripts/firestaff_artpack_studio.py:1850
 msgid "V1 assets / V2.2 targets"
@@ -625,24 +623,22 @@ msgid "New Level"
 msgstr "Ny nivå"
 
 #: scripts/firestaff_dungeon_studio.py:1024
-#, fuzzy
 msgid "Show grid"
 msgstr "Visa rutnät"
 
 #: scripts/firestaff_dungeon_studio.py:1026
-#, fuzzy
 msgid "Show things"
 msgstr "Visa objekt"
 
 #: scripts/firestaff_dungeon_studio.py:1028
 #: scripts/firestaff_savegame_editor.py:971
 msgid "Use system language"
-msgstr ""
+msgstr "Använd systemspråk"
 
 #: scripts/firestaff_dungeon_studio.py:1030
 #: scripts/firestaff_savegame_editor.py:973
 msgid "Close"
-msgstr ""
+msgstr "Stäng"
 
 #: scripts/firestaff_dungeon_studio.py:1042
 msgid "New dungeon created"
@@ -1175,7 +1171,6 @@ msgid "Champion {}"
 msgstr "Hjälte {}"
 
 #: scripts/firestaff_savegame_editor.py:450
-#, fuzzy
 msgid "Firestaff Savegame Editor 0.2"
 msgstr "Firestaffs sparfilsredigerare"
 

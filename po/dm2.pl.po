@@ -1,0 +1,1655 @@
+# Polish translations for firestaff-dm2 package.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the firestaff-dm2 package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm2\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#. GDAT 0x07/0x00/0x0a
+#: po/dm2_source_strings.c:10
+msgid "ADEPT 1"
+msgstr "ADEPTA 1"
+
+#. GDAT 0x07/0x00/0x26
+#: po/dm2_source_strings.c:11
+msgid "ANTI-FIRE"
+msgstr "PRZECIWPOŻAROWY"
+
+#. GDAT 0x07/0x00/0x25
+#: po/dm2_source_strings.c:12
+msgid "ANTI-MAGIC"
+msgstr "ANTYMAGIA"
+
+#. GDAT 0x15/0x1d/0x18
+#: po/dm2_source_strings.c:13
+msgid "APPLE"
+msgstr "JABŁKO"
+
+#. GDAT 0x07/0x00/0x06
+#: po/dm2_source_strings.c:14
+msgid "APPRENTICE 1"
+msgstr "UCZNIOWIE 1"
+
+#. GDAT 0x0f/0x1d/0x00
+#: po/dm2_source_strings.c:15
+msgid "ARCHER-GUARD"
+msgstr "ŁUCZNIK-STRAŻ"
+
+#. GDAT 0x07/0x00/0x12
+#: po/dm2_source_strings.c:16
+msgid "ARCHMASTER 1"
+msgstr "ARCYMISTRZ 1"
+
+#. GDAT 0x11/0x26/0x18
+#: po/dm2_source_strings.c:17
+msgid "ARMET"
+msgstr "ARMET"
+
+#. GDAT 0x10/0x1b/0x18
+#: po/dm2_source_strings.c:18
+msgid "ARROW"
+msgstr "STRZAŁA"
+
+#. GDAT 0x07/0x00/0x09
+#: po/dm2_source_strings.c:19
+msgid "ARTISAN 1"
+msgstr "RZEMIEŚLNIK 1"
+
+#. GDAT 0x0f/0x31/0x00, 0x15/0x3f/0x18
+#: po/dm2_source_strings.c:20
+msgid "ATTACK MINION"
+msgstr "ATAKUJ STWORY"
+
+#. GDAT 0x10/0x12/0x18
+#: po/dm2_source_strings.c:21
+msgid "AXE"
+msgstr "TOPÓR"
+
+#. GDAT 0x0f/0x42/0x00
+#: po/dm2_source_strings.c:22
+msgid "AXEMAN"
+msgstr "AXEMAN"
+
+#. GDAT 0x0f/0x48/0x00
+#: po/dm2_source_strings.c:23
+msgid "AXEMAN THIEF"
+msgstr "ZŁODZIEJ AXEMANA"
+
+#. GDAT 0x0f/0x43/0x00
+#: po/dm2_source_strings.c:24
+msgid "BAD MERCHANT"
+msgstr "ZŁY HANDEL"
+
+#. GDAT 0x14/0x01/0x18
+#: po/dm2_source_strings.c:25
+msgid "BAG"
+msgstr "TORBA"
+
+#. GDAT 0x10/0x29/0x18
+#: po/dm2_source_strings.c:26
+msgid "BAINBLOOM"
+msgstr "BAINBLOOM"
+
+#. GDAT 0x11/0x17/0x18
+#: po/dm2_source_strings.c:27
+msgid "BANDANA"
+msgstr "BANDANA"
+
+#. GDAT 0x0f/0x2d/0x00
+#: po/dm2_source_strings.c:28
+msgid "BARREL"
+msgstr "Beczka"
+
+#. GDAT 0x11/0x1b/0x18
+#: po/dm2_source_strings.c:29
+msgid "BASCINET"
+msgstr "BASCYNET"
+
+#. GDAT 0x03/0x00/0x13
+#: po/dm2_source_strings.c:30
+msgid ""
+"BEFORE USING\n"
+"BOILER TURN ON\n"
+"WATER VALVES\n"
+"TWO LEVELS UP"
+msgstr ""
+"PRZED UŻYCIEM\n"
+"WŁĄCZENIE KOTŁA\n"
+"ZAWORY WODNE\n"
+"DWA POZIOMY W GÓRĘ"
+
+#. GDAT 0x11/0x04/0x18
+#: po/dm2_source_strings.c:31
+msgid "BLACK BOOTS"
+msgstr "CZARNE BUTY"
+
+#. GDAT 0x11/0x06/0x18
+#: po/dm2_source_strings.c:32
+msgid "BLACK SKIRT"
+msgstr "CZARNA SPÓDNICA"
+
+#. GDAT 0x11/0x05/0x18
+#: po/dm2_source_strings.c:33
+msgid "BLACK TOP"
+msgstr "CZARNY TOP"
+
+#. GDAT 0x15/0x0a/0x18
+#: po/dm2_source_strings.c:34
+msgid "BLOOD KEY"
+msgstr "KREW KLUCZ"
+
+#. GDAT 0x15/0x1a/0x18
+#: po/dm2_source_strings.c:35
+msgid "BLUE GEM"
+msgstr "NIEBIESKI KLEJNOT"
+
+#. GDAT 0x11/0x02/0x18
+#: po/dm2_source_strings.c:36
+msgid "BLUE PANTS"
+msgstr "NIEBIESKIE SPODNIE"
+
+#. GDAT 0x10/0x0f/0x18
+#: po/dm2_source_strings.c:37
+msgid "BLUE STEELE"
+msgstr "NIEBIESKA STAL"
+
+#. GDAT 0x11/0x0a/0x18
+#: po/dm2_source_strings.c:38
+msgid "BODICE"
+msgstr "gorset"
+
+#. GDAT 0x0f/0x2f/0x00
+#: po/dm2_source_strings.c:39
+msgid "BOILER"
+msgstr "KOCIOŁ"
+
+#. GDAT 0x15/0x3d/0x18
+#: po/dm2_source_strings.c:40
+msgid "BONE"
+msgstr "KOŚĆ"
+
+#. GDAT 0x15/0x34/0x18
+#: po/dm2_source_strings.c:41
+msgid "BONES"
+msgstr "KOŚCI"
+
+#. GDAT 0x15/0x01/0x18
+#: po/dm2_source_strings.c:42
+msgid "BOTA"
+msgstr "BOTA"
+
+#. GDAT 0x0f/0x07/0x00, 0x15/0x19/0x18
+#: po/dm2_source_strings.c:43
+msgid "BOULDER"
+msgstr "GŁAZ"
+
+#. GDAT 0x10/0x19/0x18
+#: po/dm2_source_strings.c:44
+msgid "BOW"
+msgstr "ŁUK"
+
+#. GDAT 0x10/0x21/0x18
+#: po/dm2_source_strings.c:45
+msgid "BRANCH"
+msgstr "ODDZIAŁ"
+
+#. GDAT 0x15/0x1f/0x18
+#: po/dm2_source_strings.c:46
+msgid "BREAD "
+msgstr "CHLEB"
+
+#. GDAT 0x11/0x20/0x18
+#: po/dm2_source_strings.c:47
+msgid "BREASTPLATE"
+msgstr "NApierśnik"
+
+#. GDAT 0x11/0x13/0x18
+#: po/dm2_source_strings.c:48
+msgid "BRIGANDINE"
+msgstr "BRYGANDYNA"
+
+#. GDAT 0x0f/0x04/0x00
+#: po/dm2_source_strings.c:49
+msgid "BUSH"
+msgstr "BUSZ"
+
+#. GDAT 0x1a/0x09/0x00
+#: po/dm2_source_strings.c:50
+msgid "CANCEL"
+msgstr "ANULUJ"
+
+#. GDAT 0x11/0x00/0x18
+#: po/dm2_source_strings.c:51
+msgid "CAPE"
+msgstr "PŁASZCZ"
+
+#. GDAT 0x0f/0x32/0x00
+#: po/dm2_source_strings.c:52
+msgid "CARRY MINION"
+msgstr "NOŚ MINIONA"
+
+#. GDAT 0x0f/0x18/0x00
+#: po/dm2_source_strings.c:53
+msgid "CAVE IN"
+msgstr "ZAGRAJ SIĘ"
+
+#. GDAT 0x0f/0x23/0x00
+#: po/dm2_source_strings.c:54
+msgid "CAVERN BAT"
+msgstr "Nietoperz jaskiniowy"
+
+#. GDAT 0x0f/0x01/0x00, 0x0f/0x4d/0x00, 0x0f/0x53/0x00
+#: po/dm2_source_strings.c:55
+msgid "CAVERN TABLE"
+msgstr "STOLIK CAVERN"
+
+#. GDAT 0x15/0x20/0x18
+#: po/dm2_source_strings.c:56
+msgid "CHEESE"
+msgstr "SER"
+
+#. GDAT 0x0f/0x54/0x00, 0x14/0x00/0x18
+#: po/dm2_source_strings.c:57
+msgid "CHEST"
+msgstr "SKRZYNIA"
+
+#. GDAT 0x15/0x29/0x18
+#: po/dm2_source_strings.c:58
+msgid "CLAN CHIEF GEM"
+msgstr "GŁÓWNY KLAN KLEJNOTU"
+
+#. GDAT 0x15/0x31/0x18
+#: po/dm2_source_strings.c:59
+msgid "CLAN KEY PIECE"
+msgstr "KLUCZOWY ELEMENT KLANU"
+
+#. GDAT 0x11/0x01/0x18
+#: po/dm2_source_strings.c:60
+msgid "CLOAK OF NIGHT"
+msgstr "PŁASZCZ NOCY"
+
+#. GDAT 0x10/0x17/0x18
+#: po/dm2_source_strings.c:61
+msgid "CLUB"
+msgstr "MACZUGA"
+
+#. GDAT 0x10/0x26/0x18
+#: po/dm2_source_strings.c:62
+msgid "COMBAT STAFF"
+msgstr "SZEREG BOJOWY"
+
+#. GDAT 0x15/0x05/0x18
+#: po/dm2_source_strings.c:63
+msgid "COMPASS"
+msgstr "KOMPAS"
+
+#. GDAT 0x15/0x06/0x18
+#: po/dm2_source_strings.c:64
+msgid "COPPER COIN"
+msgstr "MIEDZIANA MONETA"
+
+#. GDAT 0x15/0x36/0x18
+#: po/dm2_source_strings.c:65
+msgid "COVER PLATE"
+msgstr "PŁYTA POKRYWAJĄCA"
+
+#. GDAT 0x07/0x00/0x08
+#: po/dm2_source_strings.c:66
+msgid "CRAFTSMAN 1"
+msgstr "rzemieślnik 1"
+
+#. GDAT 0x15/0x0e/0x18
+#: po/dm2_source_strings.c:67
+msgid "CROSS KEY"
+msgstr "KRZYŻOWY KLUCZ"
+
+#. GDAT 0x10/0x1a/0x18
+#: po/dm2_source_strings.c:68
+msgid "CROSSBOW"
+msgstr "KUSZA"
+
+#. GDAT 0x11/0x1d/0x18
+#: po/dm2_source_strings.c:69
+msgid "CRYSTAL SHIELD"
+msgstr "KRYSZTAŁOWA TARCZA"
+
+#. GDAT 0x10/0x08/0x18
+#: po/dm2_source_strings.c:70
+msgid "DAGGER"
+msgstr "SZTYLET"
+
+#. GDAT 0x0f/0x20/0x00
+#: po/dm2_source_strings.c:71
+msgid "DARK VEXIRK"
+msgstr "CIEMNY VEXIRK"
+
+#. GDAT 0x15/0x3b/0x18
+#: po/dm2_source_strings.c:72
+msgid "DEAD BAT"
+msgstr "MARTWY NIEToperz"
+
+#. GDAT 0x14/0x0f/0x18
+#: po/dm2_source_strings.c:73
+msgid "DEBUG MAP"
+msgstr "DEBUGUJ MAPĘ"
+
+#. GDAT 0x07/0x00/0x22
+#: po/dm2_source_strings.c:74
+msgid "DEXTERITY"
+msgstr "Zręczność"
+
+#. GDAT 0x0f/0x38/0x00
+#: po/dm2_source_strings.c:75
+msgid "DIGGER WORM"
+msgstr "ROWK KOPARCZY"
+
+#. GDAT 0x0f/0x4e/0x00
+#: po/dm2_source_strings.c:76
+msgid "DOOR GHOST"
+msgstr "DUCH DRZWI"
+
+#. GDAT 0x11/0x0d/0x18
+#: po/dm2_source_strings.c:77
+msgid "DOUBLET"
+msgstr "DUBLET"
+
+#. GDAT 0x0f/0x17/0x00
+#: po/dm2_source_strings.c:78
+msgid "DRAGOTH"
+msgstr "DRAGOTH"
+
+#. GDAT 0x0f/0x4c/0x00
+#: po/dm2_source_strings.c:79
+msgid "DRAGOTH ATTACK MINION"
+msgstr "STWOR ATAKU DRAGOTHA"
+
+#. GDAT 0x0f/0x52/0x00
+#: po/dm2_source_strings.c:80
+msgid "DRU TAN"
+msgstr "DRU TAN"
+
+#. GDAT 0x10/0x25/0x18
+#: po/dm2_source_strings.c:81
+msgid "EMERALD ORB"
+msgstr "szmaragdowa kula"
+
+#. GDAT 0x0f/0x1b/0x00, 0x0f/0x57/0x00
+#: po/dm2_source_strings.c:82
+msgid "EVIL ATTACK MINION"
+msgstr "STWOR ATAKU ZŁA"
+
+#. GDAT 0x0f/0x25/0x00
+#: po/dm2_source_strings.c:83
+msgid "EVIL FOUNTAIN"
+msgstr "ZŁA FONTANNA"
+
+#. GDAT 0x0f/0x45/0x00
+#: po/dm2_source_strings.c:84
+msgid "EVIL GUARD MINION"
+msgstr "STWORNIK ZŁEJ STRAŻNIKA"
+
+#. GDAT 0x0f/0x2b/0x00
+#: po/dm2_source_strings.c:85
+msgid "EVIL SCOUT MINION"
+msgstr "SŁUGA ZŁEGO ZWYCIĘZCY"
+
+#. GDAT 0x10/0x0e/0x18
+#: po/dm2_source_strings.c:86
+msgid "EXCSYMYR"
+msgstr "EXCSYMYR"
+
+#. GDAT 0x07/0x00/0x0b
+#: po/dm2_source_strings.c:87
+msgid "EXPERT 1"
+msgstr "EKSPERT 1"
+
+#. GDAT 0x10/0x00/0x18
+#: po/dm2_source_strings.c:88
+msgid "EYE OF TIME"
+msgstr "OKO CZASU"
+
+#. GDAT 0x0f/0x08/0x00
+#: po/dm2_source_strings.c:89
+msgid "FACE PILLAR"
+msgstr "FILAR TWARZY"
+
+#. GDAT 0x15/0x33/0x18
+#: po/dm2_source_strings.c:90
+msgid "FAIRY CUSHION"
+msgstr "PODUSZKA Wróżka"
+
+#. GDAT 0x0f/0x33/0x00
+#: po/dm2_source_strings.c:91
+msgid "FETCH MINION"
+msgstr "PRZYBIERZ MINIONA"
+
+#. GDAT 0x07/0x00/0x00
+#: po/dm2_source_strings.c:92
+msgid "FIGHTER"
+msgstr "WOJOWNIK"
+
+#. GDAT 0x11/0x08/0x18
+#: po/dm2_source_strings.c:93
+msgid "FINE ROBE "
+msgstr "DOBRA SZATA"
+
+#. GDAT 0x11/0x07/0x18
+#: po/dm2_source_strings.c:94
+msgid "FINE ROBE TOP"
+msgstr "WSPANIAŁY TOP SZLAGI"
+
+#. GDAT 0x11/0x38/0x18
+#: po/dm2_source_strings.c:95
+msgid "FIRE GREAVE"
+msgstr "OGNIOWY GRÓB"
+
+#. GDAT 0x11/0x35/0x18
+#: po/dm2_source_strings.c:96
+msgid "FIRE HELM"
+msgstr "HEŁM OGNIOWY"
+
+#. GDAT 0x11/0x09/0x18, 0x11/0x36/0x18
+#: po/dm2_source_strings.c:97
+msgid "FIRE PLATE"
+msgstr "PŁYTA OGNIOWA"
+
+#. GDAT 0x11/0x37/0x18
+#: po/dm2_source_strings.c:98
+msgid "FIRE POLEYN"
+msgstr "OGNIA POLYNA"
+
+#. GDAT 0x0f/0x37/0x00
+#: po/dm2_source_strings.c:99
+msgid "FLAME ORB"
+msgstr "PŁOMIENNA KULA"
+
+#. GDAT 0x13/0x14/0x18
+#: po/dm2_source_strings.c:100
+msgid "FLASK"
+msgstr "KOLBKA"
+
+#. GDAT 0x11/0x29/0x18
+#: po/dm2_source_strings.c:101
+msgid "FOOT PLATE"
+msgstr "PŁYTA STÓP"
+
+#. GDAT 0x0f/0x13/0x00
+#: po/dm2_source_strings.c:102
+msgid "FOUNTAIN"
+msgstr "POJEMNIK %d"
+
+#. GDAT 0x03/0x00/0x14
+#: po/dm2_source_strings.c:103
+msgid ""
+"FURNACE ON\n"
+"LEVEL BELOW\n"
+"MUST BE STOKED\n"
+"AND BURNING"
+msgstr ""
+"PIEC WŁĄCZONY\n"
+"POZIOM PONIŻEJ\n"
+"MUSI BYĆ ZAPALONY\n"
+"I PALENIE"
+
+#. GDAT 0x10/0x06/0x18
+#: po/dm2_source_strings.c:104
+msgid "FURY"
+msgstr "WŚCIEKŁOŚĆ"
+
+#. GDAT 0x01/0x00/0x12
+#: po/dm2_source_strings.c:105
+msgid "GAME PAUSED"
+msgstr "GRA WSTRZYMANA"
+
+#. GDAT 0x0f/0x49/0x00
+#: po/dm2_source_strings.c:106
+msgid "GHOST"
+msgstr "DUCH"
+
+#. GDAT 0x0f/0x0d/0x00
+#: po/dm2_source_strings.c:107
+msgid "GIGGLER"
+msgstr "CHICHOTKA"
+
+#. GDAT 0x0f/0x09/0x00
+#: po/dm2_source_strings.c:108
+msgid "GLOP"
+msgstr "GLOP"
+
+#. GDAT 0x15/0x08/0x18
+#: po/dm2_source_strings.c:109
+msgid "GOLD COIN"
+msgstr "ZŁOTA MONETA"
+
+#. GDAT 0x15/0x11/0x18
+#: po/dm2_source_strings.c:110
+msgid "GOLD KEY"
+msgstr "ZŁOTY KLUCZ"
+
+#. GDAT 0x11/0x18/0x18
+#: po/dm2_source_strings.c:111
+msgid "GREAT HELM"
+msgstr "WSPANIAŁY STEROWNIK"
+
+#. GDAT 0x11/0x25/0x18
+#: po/dm2_source_strings.c:112
+msgid "GREAVES"
+msgstr "SKLEBY"
+
+#. GDAT 0x15/0x1c/0x18
+#: po/dm2_source_strings.c:113
+msgid "GREEN GEM"
+msgstr "ZIELONY KLEJNOT"
+
+#. GDAT 0x0f/0x34/0x00, 0x15/0x40/0x18
+#: po/dm2_source_strings.c:114
+msgid "GUARD MINION"
+msgstr "STRONIA SŁUCHA"
+
+#. GDAT 0x11/0x0c/0x18
+#: po/dm2_source_strings.c:115
+msgid "GUNNA"
+msgstr "GUNA"
+
+#. GDAT 0x07/0x00/0x27
+#: po/dm2_source_strings.c:116
+msgid "HEALTH"
+msgstr "ZDROWIE"
+
+#. GDAT 0x11/0x1a/0x18
+#: po/dm2_source_strings.c:117
+msgid "HELMET"
+msgstr "HEŁM"
+
+#. GDAT 0x11/0x19/0x18
+#: po/dm2_source_strings.c:118
+msgid "HORNED HELM"
+msgstr "ROGATY HEŁM"
+
+#. GDAT 0x11/0x0e/0x18
+#: po/dm2_source_strings.c:119
+msgid "HUKE"
+msgstr "HUKE"
+
+#. GDAT 0x15/0x03/0x18
+#: po/dm2_source_strings.c:120
+msgid "ILLUMULET"
+msgstr "OŚWIETLACZ"
+
+#. GDAT 0x03/0x00/0x28
+#: po/dm2_source_strings.c:121
+msgid ""
+"INVOKE ZO TO\n"
+"CLOSE PORTALS\n"
+"THAT THE\n"
+"EVIL MINIONS\n"
+"HAVE OPENED"
+msgstr ""
+"WZYWAJ ZO DO\n"
+"ZAMKNIJ PORTALE\n"
+"ŻE\n"
+"ZŁE SŁUGI\n"
+"OTWARTE"
+
+#. GDAT 0x03/0x00/0x16
+#: po/dm2_source_strings.c:122
+msgid ""
+"INVOKE\n"
+"ZO EW KU\n"
+"TO CREATE A\n"
+"MINION THAT\n"
+"WILL ATTACK\n"
+"YOUR ENEMIES"
+msgstr ""
+"WYWOŁAJ\n"
+"ZO EW KU\n"
+"ABY STWORZYĆ A\n"
+"MINION TO\n"
+"ATAKUJE\n"
+"TWOI WROGOWIE"
+
+#. GDAT 0x03/0x00/0x17
+#: po/dm2_source_strings.c:123
+msgid ""
+"INVOKE\n"
+"ZO EW NETA\n"
+"TO CREATE A\n"
+"GUARDIAN\n"
+"MINION"
+msgstr ""
+"WYWOŁAJ\n"
+"ZO EW Neta\n"
+"ABY STWORZYĆ A\n"
+"STRAŻNIK\n"
+"MINION"
+
+#. GDAT 0x15/0x09/0x18
+#: po/dm2_source_strings.c:124
+msgid "IRON KEY"
+msgstr "ŻELAZNY KLUCZ"
+
+#. GDAT 0x15/0x02/0x18
+#: po/dm2_source_strings.c:125
+msgid "JEWEL OF SYMAL"
+msgstr "KLEJNOT SYMALU"
+
+#. GDAT 0x15/0x1e/0x18
+#: po/dm2_source_strings.c:126
+msgid "JICAMA"
+msgstr "JICAMA"
+
+#. GDAT 0x07/0x00/0x07
+#: po/dm2_source_strings.c:127
+msgid "JOURNEYMAN 1"
+msgstr "PODRÓŻNIK 1"
+
+#. GDAT 0x10/0x03/0x18
+#: po/dm2_source_strings.c:128
+msgid "KALAN GAUNTLET"
+msgstr "RĘKAWICA KALANA"
+
+#. GDAT 0x10/0x0d/0x18
+#: po/dm2_source_strings.c:129
+msgid "KATANA"
+msgstr "KATANA"
+
+#. GDAT 0x15/0x2c/0x18
+#: po/dm2_source_strings.c:130
+msgid "LARGE GEAR"
+msgstr "DUŻY PRZEKŁADNIA"
+
+#. GDAT 0x11/0x12/0x18
+#: po/dm2_source_strings.c:131
+msgid "LEATHER BOOTS"
+msgstr "SKÓRZANE BUTY"
+
+#. GDAT 0x11/0x10/0x18
+#: po/dm2_source_strings.c:132
+msgid "LEATHER JERKIN"
+msgstr "SKÓRZANY KURTKA"
+
+#. GDAT 0x11/0x11/0x18
+#: po/dm2_source_strings.c:133
+msgid "LEATHER PANTS"
+msgstr "SKÓRZANE SPODNIE"
+
+#. GDAT 0x11/0x28/0x18
+#: po/dm2_source_strings.c:134
+msgid "LEG PLATE"
+msgstr "PŁYTA NA NOGI"
+
+#. GDAT 0x15/0x0d/0x18
+#: po/dm2_source_strings.c:135
+msgid "LIGHTNING KEY"
+msgstr "KLUCZ BŁYSKAWICY"
+
+#. GDAT 0x0f/0x29/0x00
+#: po/dm2_source_strings.c:136
+msgid "LIGHTNING ROD"
+msgstr "PIORUNTOWNIK"
+
+#. GDAT 0x07/0x00/0x1e, 0x1a/0x0f/0x00, 0x1a/0x80/0x00
+#: po/dm2_source_strings.c:137
+msgid "LOAD"
+msgstr "WCZYTAJ"
+
+#. GDAT 0x10/0x14/0x18
+#: po/dm2_source_strings.c:138
+msgid "MACE"
+msgstr "BUŁAW"
+
+#. GDAT 0x10/0x09/0x18
+#: po/dm2_source_strings.c:139
+msgid "MACHETE"
+msgstr "MACZETA"
+
+#. GDAT 0x14/0x08/0x18, 0x14/0x0b/0x18
+#: po/dm2_source_strings.c:140
+msgid "MAGIC MAP"
+msgstr "MAGICZNA MAPA"
+
+#. GDAT 0x0f/0x44/0x00
+#: po/dm2_source_strings.c:141
+msgid "MAGIC MERCHANT"
+msgstr "MAGICZNY HANDLARZ"
+
+#. GDAT 0x0f/0x1a/0x00
+#: po/dm2_source_strings.c:142
+msgid "MAGIK CAULDRON"
+msgstr "MAGICZNY KOCIOŁ"
+
+#. GDAT 0x0f/0x2e/0x00
+#: po/dm2_source_strings.c:143
+msgid "MAGIK REFLECTOR"
+msgstr "ODBŁYŚNIK MAGIK"
+
+#. GDAT 0x15/0x2b/0x18
+#: po/dm2_source_strings.c:144
+msgid "MAGIKAL BOX"
+msgstr "MAGIKALNE PUDEŁKO"
+
+#. GDAT 0x11/0x24/0x18
+#: po/dm2_source_strings.c:145
+msgid "MAIL HELMET"
+msgstr "KASK POCZTOWY"
+
+#. GDAT 0x07/0x00/0x29
+#: po/dm2_source_strings.c:146
+msgid "MANA"
+msgstr "MANA"
+
+#. GDAT 0x15/0x2f/0x18
+#: po/dm2_source_strings.c:147
+msgid "MANA BLOSSOM"
+msgstr "KWIAT MANY"
+
+#. GDAT 0x15/0x18/0x18
+#: po/dm2_source_strings.c:148
+msgid "MASTER KEY"
+msgstr "KLUCZ GŁÓWNY"
+
+#. GDAT 0x0f/0x22/0x00
+#: po/dm2_source_strings.c:149
+msgid "MERCHANT"
+msgstr "KUPIEC"
+
+#. GDAT 0x0f/0x2c/0x00
+#: po/dm2_source_strings.c:150
+msgid "MERCHANT GUARD"
+msgstr "STRAŻ HANDLOWA"
+
+#. GDAT 0x0f/0x3a/0x00
+#: po/dm2_source_strings.c:151
+msgid "MERCHANT TOMB"
+msgstr "GRÓB HANDLOWY"
+
+#. GDAT 0x10/0x2d/0x18, 0x15/0x2a/0x18
+#: po/dm2_source_strings.c:152
+msgid "METEOR METAL"
+msgstr "METEOR METALOWY"
+
+#. GDAT 0x15/0x25/0x18
+#: po/dm2_source_strings.c:153
+msgid "MEZMAR"
+msgstr "MEZMAR"
+
+#. GDAT 0x14/0x0a/0x18
+#: po/dm2_source_strings.c:154
+msgid "MINION MAP"
+msgstr "MAPA MINIONÓW"
+
+#. GDAT 0x11/0x0f/0x18
+#: po/dm2_source_strings.c:155
+msgid "MITHRAL HOSEN"
+msgstr "MITHRILOWE NOGAWICE"
+
+#. GDAT 0x11/0x23/0x18
+#: po/dm2_source_strings.c:156
+msgid "MITHRAL HUKE"
+msgstr "MITHRAL HUKE"
+
+#. GDAT 0x11/0x22/0x18
+#: po/dm2_source_strings.c:157
+msgid "MITHRAL MAIL"
+msgstr "KOLCZAUGA MITHRILOWA"
+
+#. GDAT 0x14/0x02/0x18
+#: po/dm2_source_strings.c:158
+msgid "MONEY BOX"
+msgstr "SKRZYNKA PIENIĘDZY"
+
+#. GDAT 0x15/0x0c/0x18
+#: po/dm2_source_strings.c:159
+msgid "MOON KEY"
+msgstr "KLUCZ KSIĘŻYCA"
+
+#. GDAT 0x15/0x27/0x18
+#: po/dm2_source_strings.c:160
+msgid "MOONSTONE"
+msgstr "KSIĘŻYCOWY KAMIEŃ"
+
+#. GDAT 0x10/0x16/0x18
+#: po/dm2_source_strings.c:161
+msgid "MORNINGSTAR"
+msgstr "GWIAZDA PORANNA"
+
+#. GDAT 0x0f/0x26/0x00
+#: po/dm2_source_strings.c:162
+msgid "MUMMY"
+msgstr "MUMIA"
+
+#. GDAT 0x07/0x00/0x04
+#: po/dm2_source_strings.c:163
+msgid "NEOPHYTE 1"
+msgstr "NEOFITA 1"
+
+#. GDAT 0x07/0x00/0x01
+#: po/dm2_source_strings.c:164
+msgid "NINJA"
+msgstr "NINJA"
+
+#. GDAT 0x01/0xfe/0x05
+#: po/dm2_source_strings.c:165
+msgid "NO CREATURE"
+msgstr "ŻADNEGO STWORZENIA"
+
+#. GDAT 0x03/0x00/0x11
+#: po/dm2_source_strings.c:166
+msgid ""
+"NO WATER\n"
+"CHECK PUMP\n"
+"OPERATION ON\n"
+"LEVEL BELOW"
+msgstr ""
+"BEZ WODY\n"
+"SPRAWDŹ POMPĘ\n"
+"OPERACJA WŁĄCZONA\n"
+"POZIOM PONIŻEJ"
+
+#. GDAT 0x07/0x00/0x05
+#: po/dm2_source_strings.c:167
+msgid "NOVICE 1"
+msgstr "nowicjusz 1"
+
+#. GDAT 0x10/0x2a/0x18
+#: po/dm2_source_strings.c:168
+msgid "NUMENSTAFF"
+msgstr "NUMENSAFF"
+
+#. GDAT 0x0f/0x3d/0x00, 0x0f/0x3e/0x00, 0x0f/0x3f/0x00
+#: po/dm2_source_strings.c:169
+msgid "OBELISK"
+msgstr "OBELISK"
+
+#. GDAT 0x1a/0x00/0x00, 0x1a/0x01/0x00, 0x1a/0x02/0x00, 0x1a/0x03/0x00, 0x1a/0x04/0x00, 0x1a/0x05/0x00, 0x1a/0x06/0x00, 0x1a/0x07/0x00, 0x1a/0x08/0x00, 0x1a/0x13/0x00, 0x1a/0x14/0x00, 0x1a/0x1a/0x00, 0x1a/0x87/0x00
+#: po/dm2_source_strings.c:170
+msgid "OK"
+msgstr "KAMIEŃ"
+
+#. GDAT 0x15/0x0f/0x18
+#: po/dm2_source_strings.c:171
+msgid "ONYX KEY"
+msgstr "ONYKSOWY KLUCZ"
+
+#. GDAT 0x15/0x32/0x18
+#: po/dm2_source_strings.c:172
+msgid "PALMAPPLE"
+msgstr "PALMAPLA"
+
+#. GDAT 0x0f/0x55/0x00
+#: po/dm2_source_strings.c:173
+msgid "PEDISTAL"
+msgstr "PODSTAWA"
+
+#. GDAT 0x0f/0x05/0x00
+#: po/dm2_source_strings.c:174
+msgid "PILLAR"
+msgstr "FILAR"
+
+#. GDAT 0x0f/0x27/0x00
+#: po/dm2_source_strings.c:175
+msgid "PIPE SHAFT"
+msgstr "WAŁ RURY"
+
+#. GDAT 0x0f/0x21/0x00
+#: po/dm2_source_strings.c:176
+msgid "PIT GHOST"
+msgstr "PIT DUCH"
+
+#. GDAT 0x15/0x35/0x18
+#: po/dm2_source_strings.c:177
+msgid "PLANK"
+msgstr "DESKA"
+
+#. GDAT 0x10/0x1f/0x18
+#: po/dm2_source_strings.c:178
+msgid "POISON DART"
+msgstr "TRUCIZNA"
+
+#. GDAT 0x0f/0x11/0x00
+#: po/dm2_source_strings.c:179
+msgid "POWER CRYSTAL"
+msgstr "KRYSZTAŁ MOCY"
+
+#. GDAT 0x07/0x00/0x02
+#: po/dm2_source_strings.c:180
+msgid "PRIEST"
+msgstr "KAPŁAN"
+
+#. GDAT 0x15/0x3a/0x18
+#: po/dm2_source_strings.c:181
+msgid "PYRO"
+msgstr "PYRO"
+
+#. GDAT 0x14/0x03/0x18
+#: po/dm2_source_strings.c:182
+msgid "QUIVER"
+msgstr "KRĘCENIE"
+
+#. GDAT 0x10/0x23/0x18
+#: po/dm2_source_strings.c:183
+msgid "RAINBOW WAND"
+msgstr "TĘCZOWA RÓŻDŻKA"
+
+#. GDAT 0x10/0x0b/0x18
+#: po/dm2_source_strings.c:184
+msgid "RAPIER"
+msgstr "RAPIER"
+
+#. GDAT 0x15/0x1b/0x18
+#: po/dm2_source_strings.c:185
+msgid "RED GEM"
+msgstr "CZERWONY KLEJNOT"
+
+#. GDAT 0x03/0x00/0x12
+#: po/dm2_source_strings.c:186
+msgid ""
+"REFLECTOR\n"
+"PRACTICE"
+msgstr ""
+"ODBŁYŚNIK\n"
+"PRAKTYKA"
+
+#. GDAT 0x03/0x00/0x19
+#: po/dm2_source_strings.c:187
+msgid ""
+"RENEW THE LIFE\n"
+"OF A FALLEN\n"
+"CHAMPION"
+msgstr ""
+"ODNÓW ŻYCIE\n"
+"UPADŁEGO\n"
+"MISTRZ"
+
+#. GDAT 0x1a/0x10/0x00
+#: po/dm2_source_strings.c:188
+msgid "RESTART GAME"
+msgstr "ZRESTARTUJ Grę"
+
+#. GDAT 0x10/0x1e/0x18
+#: po/dm2_source_strings.c:189
+msgid "ROCK"
+msgstr "KAMIEŃ"
+
+#. GDAT 0x0f/0x0c/0x00
+#: po/dm2_source_strings.c:190
+msgid "ROCKY"
+msgstr "ROCKY"
+
+#. GDAT 0x10/0x04/0x18
+#: po/dm2_source_strings.c:191
+msgid "ROGUE STAVE"
+msgstr "ZŁOTA KOŁA"
+
+#. GDAT 0x15/0x2d/0x18
+#: po/dm2_source_strings.c:192
+msgid "ROPE"
+msgstr "LINA"
+
+#. GDAT 0x15/0x28/0x18
+#: po/dm2_source_strings.c:193
+msgid "RUNE CHARM"
+msgstr "UROK RUNY"
+
+#. GDAT 0x10/0x0c/0x18
+#: po/dm2_source_strings.c:194
+msgid "SABRE"
+msgstr "SZABLA"
+
+#. GDAT 0x11/0x03/0x18
+#: po/dm2_source_strings.c:195
+msgid "SANDALS"
+msgstr "SANDAŁY"
+
+#. GDAT 0x0f/0x2a/0x00
+#: po/dm2_source_strings.c:196
+msgid "SARDES MINION"
+msgstr "MINION SARDESA"
+
+#. GDAT 0x1a/0x0b/0x00, 0x1a/0x11/0x00, 0x1a/0x12/0x00, 0x1a/0x1b/0x00, 0x1a/0x81/0x00
+#: po/dm2_source_strings.c:197
+msgid "SAVE"
+msgstr "ZAPISZ"
+
+#. GDAT 0x11/0x15/0x18
+#: po/dm2_source_strings.c:198
+msgid "SCALE HAUBERK"
+msgstr "SKALA HAUBERKA"
+
+#. GDAT 0x11/0x16/0x18
+#: po/dm2_source_strings.c:199
+msgid "SCALE MAIL"
+msgstr "POCZTA SKALA"
+
+#. GDAT 0x10/0x2b/0x18
+#: po/dm2_source_strings.c:200
+msgid "SCARAB"
+msgstr "SKARAB"
+
+#. GDAT 0x14/0x09/0x18
+#: po/dm2_source_strings.c:201
+msgid "SCOUT MAP"
+msgstr "MAPA SKAUTOWA"
+
+#. GDAT 0x0f/0x30/0x00
+#: po/dm2_source_strings.c:202
+msgid "SCOUT MINION"
+msgstr "MINION SKAUTÓW"
+
+#. GDAT 0x12/0x00/0x18
+#: po/dm2_source_strings.c:203
+msgid "SCROLL"
+msgstr "ZWÓJ"
+
+#. GDAT 0x10/0x07/0x18
+#: po/dm2_source_strings.c:204
+msgid "SCYTHE"
+msgstr "KOSA"
+
+#. GDAT 0x10/0x28/0x18
+#: po/dm2_source_strings.c:205
+msgid "SERPENT STAFF"
+msgstr "WĘŻOWA ŁASKA"
+
+#. GDAT 0x15/0x23/0x18
+#: po/dm2_source_strings.c:206
+msgid "SHANK"
+msgstr "Trzon"
+
+#. GDAT 0x11/0x1c/0x18
+#: po/dm2_source_strings.c:207
+msgid "SHIELD OF FIRE"
+msgstr "TARCZA OGNIA"
+
+#. GDAT 0x10/0x20/0x18
+#: po/dm2_source_strings.c:208
+msgid "SHURIKEN"
+msgstr "SHURIKEN"
+
+#. GDAT 0x15/0x38/0x18
+#: po/dm2_source_strings.c:209
+msgid "SILVER COIN"
+msgstr "SREBRNA MONETA"
+
+#. GDAT 0x0f/0x41/0x00
+#: po/dm2_source_strings.c:210
+msgid "SKELETON"
+msgstr "SZKIELET"
+
+#. GDAT 0x0f/0x16/0x00
+#: po/dm2_source_strings.c:211
+msgid "SKULL BRAZIER"
+msgstr "CZASZACZKA"
+
+#. GDAT 0x15/0x10/0x18
+#: po/dm2_source_strings.c:212
+msgid "SKULL KEY"
+msgstr "KLUCZ CZASZKI"
+
+#. GDAT 0x01/0xfe/0x00
+#: po/dm2_source_strings.c:213
+msgid "SKULLKEEP"
+msgstr "TRZYMAJ CZASZKI"
+
+#. GDAT 0x01/0xfe/0x06
+#: po/dm2_source_strings.c:214
+msgid "SKULLKEEP C"
+msgstr "TRZYMAJ CZASZKI C"
+
+#. GDAT 0x10/0x1c/0x18
+#: po/dm2_source_strings.c:215
+msgid "SLAYER ARROW"
+msgstr "Strzała Zabójcy"
+
+#. GDAT 0x10/0x1d/0x18
+#: po/dm2_source_strings.c:216
+msgid "SLING"
+msgstr "PROCA"
+
+#. GDAT 0x15/0x07/0x18
+#: po/dm2_source_strings.c:217
+msgid "SMALL PLANK"
+msgstr "MAŁA DESKA"
+
+#. GDAT 0x11/0x1f/0x18
+#: po/dm2_source_strings.c:218
+msgid "SMALL SHIELD"
+msgstr "MAŁA TARCZA"
+
+#. GDAT 0x03/0x00/0x1b
+#: po/dm2_source_strings.c:219
+msgid ""
+"SNAKE STAFF\n"
+"\n"
+"ADD 1 MANA\n"
+"BLOSSOM\n"
+"\n"
+"ADD 1 STAFF"
+msgstr ""
+"ŁASKA WĘŻA\n"
+"\n"
+"DODAJ 1 MANA\n"
+"KWIAT\n"
+"\n"
+"DODAJ 1 PERSONEL"
+
+#. GDAT 0x15/0x0b/0x18
+#: po/dm2_source_strings.c:220
+msgid "SOLID KEY"
+msgstr "PEŁNY KLUCZ"
+
+#. GDAT 0x0f/0x10/0x00
+#: po/dm2_source_strings.c:221
+msgid "SPECTRE"
+msgstr "WIDMO"
+
+#. GDAT 0x10/0x2c/0x18
+#: po/dm2_source_strings.c:222
+msgid "SPEEDBOW"
+msgstr "SPEEDBOW"
+
+#. GDAT 0x0f/0x24/0x00
+#: po/dm2_source_strings.c:223
+msgid "SPIKED CAPSTAN"
+msgstr "KABELKA Z KOLCZAMI"
+
+#. GDAT 0x0f/0x51/0x00
+#: po/dm2_source_strings.c:224
+msgid "SPIKED WALL"
+msgstr "SZCZĘŚLIWA ŚCIANA"
+
+#. GDAT 0x10/0x24/0x18
+#: po/dm2_source_strings.c:225
+msgid "SPIRAL STAFF"
+msgstr "PERSONEL SPIRALNY"
+
+#. GDAT 0x15/0x22/0x18
+#: po/dm2_source_strings.c:226
+msgid "SPIRIT CAP"
+msgstr "DUCHOWA CZAPKA"
+
+#. GDAT 0x10/0x22/0x18
+#: po/dm2_source_strings.c:227
+msgid "STAFF"
+msgstr "KIJ"
+
+#. GDAT 0x10/0x27/0x18
+#: po/dm2_source_strings.c:228
+msgid "STAFF OF u"
+msgstr "PERSONEL u"
+
+#. GDAT 0x0f/0x06/0x00
+#: po/dm2_source_strings.c:229
+msgid "STALAGMITE"
+msgstr "STALAGMIT"
+
+#. GDAT 0x07/0x00/0x28
+#: po/dm2_source_strings.c:230
+msgid "STAMINA"
+msgstr "WYTRZYMAŁOŚĆ"
+
+#. GDAT 0x15/0x24/0x18
+#: po/dm2_source_strings.c:231
+msgid "STEAK"
+msgstr "STEK"
+
+#. GDAT 0x0f/0x47/0x00
+#: po/dm2_source_strings.c:232
+msgid "STEAM ENGINE"
+msgstr "SILNIK PAROWY"
+
+#. GDAT 0x10/0x01/0x18
+#: po/dm2_source_strings.c:233
+msgid "STORMRING"
+msgstr "PIERŚCIEŃ BURZY"
+
+#. GDAT 0x07/0x00/0x21
+#: po/dm2_source_strings.c:234
+msgid "STRENGTH"
+msgstr "SIŁA"
+
+#. GDAT 0x15/0x30/0x18
+#: po/dm2_source_strings.c:235
+msgid "SUN CREST"
+msgstr "CREST SŁOŃCA"
+
+#. GDAT 0x15/0x26/0x18
+#: po/dm2_source_strings.c:236
+msgid "SUZERAIN"
+msgstr "SUZERAIN"
+
+#. GDAT 0x10/0x0a/0x18
+#: po/dm2_source_strings.c:237
+msgid "SWORD"
+msgstr "MIECZ"
+
+#. GDAT 0x11/0x0b/0x18
+#: po/dm2_source_strings.c:238
+msgid "TABARD"
+msgstr "TABARD"
+
+#. GDAT 0x15/0x3c/0x18
+#: po/dm2_source_strings.c:239
+msgid "TANKARD"
+msgstr "kufel"
+
+#. GDAT 0x15/0x37/0x18
+#: po/dm2_source_strings.c:240
+msgid "TAPESTRY"
+msgstr "gobelin"
+
+#. GDAT 0x11/0x33/0x18
+#: po/dm2_source_strings.c:241
+msgid "TECHBOOTS"
+msgstr "TECHBUTY"
+
+#. GDAT 0x11/0x30/0x18
+#: po/dm2_source_strings.c:242
+msgid "TECHELM"
+msgstr "TECHELM"
+
+#. GDAT 0x15/0x42/0x18
+#: po/dm2_source_strings.c:243
+msgid "TECHEYE"
+msgstr "TECHEYE"
+
+#. GDAT 0x10/0x15/0x18
+#: po/dm2_source_strings.c:244
+msgid "TECHMACE"
+msgstr "TECHMAC"
+
+#. GDAT 0x11/0x31/0x18
+#: po/dm2_source_strings.c:245
+msgid "TECHPLATE"
+msgstr "PŁYTA TECHNICZNA"
+
+#. GDAT 0x11/0x32/0x18
+#: po/dm2_source_strings.c:246
+msgid "TECHPOLEYN "
+msgstr "TECHPOLEYN"
+
+#. GDAT 0x11/0x34/0x18
+#: po/dm2_source_strings.c:247
+msgid "TECHSHIELD"
+msgstr "TECHSHIELD"
+
+#. GDAT 0x10/0x05/0x18
+#: po/dm2_source_strings.c:248
+msgid "TEMPEST"
+msgstr "BURZA"
+
+#. GDAT 0x0f/0x0e/0x00
+#: po/dm2_source_strings.c:249
+msgid "THICKET THEIF"
+msgstr "THICKET THEIF"
+
+#. GDAT 0x11/0x21/0x18
+#: po/dm2_source_strings.c:250
+msgid "THIGH PLATES"
+msgstr "PŁYTKI UDA"
+
+#. GDAT 0x0f/0x00/0x00
+#: po/dm2_source_strings.c:251
+msgid "THORN DEMON"
+msgstr "DEMON CIERNIOWY"
+
+#. GDAT 0x0f/0x0f/0x00
+#: po/dm2_source_strings.c:252
+msgid "TIGER STRIPED WORM"
+msgstr "Robak w paski tygrysie"
+
+#. GDAT 0x03/0x00/0x1c
+#: po/dm2_source_strings.c:253
+msgid ""
+"TO OPEN THE\n"
+"CASTLE DOOR\n"
+"YOU MUST GET\n"
+"A KEY PIECE\n"
+"FROM EACH OF\n"
+"THE FOUR CLANS\n"
+"OF SKULLKEEP"
+msgstr ""
+"ABY OTWARĆ\n"
+"DRZWI ZAMKU\n"
+"MUSISZ DOSTAĆ\n"
+"KLUCZOWY ELEMENT\n"
+"Z KAŻDEGO\n"
+"CZTERY KLANY\n"
+"Z CZASZKI"
+
+#. GDAT 0x0f/0x39/0x00
+#: po/dm2_source_strings.c:254
+msgid "TOMBSTONE"
+msgstr "NABÓR"
+
+#. GDAT 0x10/0x02/0x18
+#: po/dm2_source_strings.c:255
+msgid "TORCH"
+msgstr "POCHODNIA"
+
+#. GDAT 0x11/0x27/0x18
+#: po/dm2_source_strings.c:256
+msgid "TORSO PLATE"
+msgstr "PŁYTA TORSA"
+
+#. GDAT 0x0f/0x1c/0x00
+#: po/dm2_source_strings.c:257
+msgid "TOWER BAT"
+msgstr "WIEŻA NIETOPOT"
+
+#. GDAT 0x0f/0x3c/0x00
+#: po/dm2_source_strings.c:258
+msgid "TRADING TABLE (BUYS)"
+msgstr "TABELA HANDLOWA (KUPUJE)"
+
+#. GDAT 0x0f/0x3b/0x00
+#: po/dm2_source_strings.c:259
+msgid "TRADING TABLE (SELLS)"
+msgstr "TABELA HANDLOWA (SPRZEDAJE)"
+
+#. GDAT 0x0f/0x14/0x00
+#: po/dm2_source_strings.c:260
+msgid "TREE"
+msgstr "DRZEWO"
+
+#. GDAT 0x0f/0x12/0x00
+#: po/dm2_source_strings.c:261
+msgid "TREE GORGON"
+msgstr "DRZEWNY GORGON"
+
+#. GDAT 0x11/0x14/0x18
+#: po/dm2_source_strings.c:262
+msgid "TUNIC"
+msgstr "TUNIKA"
+
+#. GDAT 0x0f/0x35/0x00
+#: po/dm2_source_strings.c:263
+msgid "U-HAUL MINION"
+msgstr "U-HAUL MINION"
+
+#. GDAT 0x15/0x21/0x18
+#: po/dm2_source_strings.c:264
+msgid "VACUUM FUSE"
+msgstr "BEZPIECZNIK PRÓŻNIOWY"
+
+#. GDAT 0x0f/0x1f/0x00
+#: po/dm2_source_strings.c:265
+msgid "VEXIRK KING"
+msgstr "VEXIRK KRÓL"
+
+#. GDAT 0x07/0x00/0x24
+#: po/dm2_source_strings.c:266
+msgid "VITALITY"
+msgstr "WITALIZACJA"
+
+#. GDAT 0x0f/0x46/0x00
+#: po/dm2_source_strings.c:267
+msgid "VOID DOOR"
+msgstr "PUSTE DRZWI"
+
+#. GDAT 0x10/0x13/0x18
+#: po/dm2_source_strings.c:268
+msgid "VORAX"
+msgstr "VORAX"
+
+#. GDAT 0x10/0x10/0x18
+#: po/dm2_source_strings.c:269
+msgid "VORPAL BLADE"
+msgstr "OSTRZE VORPAL"
+
+#. GDAT 0x0f/0x02/0x00
+#: po/dm2_source_strings.c:270
+msgid "VORTEX"
+msgstr "WIR"
+
+#. GDAT 0x01/0x00/0x11
+#: po/dm2_source_strings.c:271
+msgid "WAKE UP"
+msgstr "OBUDŹ SIĘ"
+
+#. GDAT 0x10/0x18/0x18
+#: po/dm2_source_strings.c:272
+msgid "WAR CLUB"
+msgstr "KLUB WOJNY"
+
+#. GDAT 0x13/0x0f/0x18
+#: po/dm2_source_strings.c:273
+msgid "WATER FLASK"
+msgstr "FLASZKA WODY"
+
+#. GDAT 0x07/0x00/0x23
+#: po/dm2_source_strings.c:274
+msgid "WISDOM"
+msgstr "MĄDROŚĆ"
+
+#. GDAT 0x07/0x00/0x03
+#: po/dm2_source_strings.c:275
+msgid "WIZARD"
+msgstr "CZARODZIEJ"
+
+#. GDAT 0x0f/0x4a/0x00
+#: po/dm2_source_strings.c:276
+msgid "WOLF"
+msgstr "WILK"
+
+#. GDAT 0x11/0x1e/0x18
+#: po/dm2_source_strings.c:277
+msgid "WOOD SHIELD"
+msgstr "DREWNIANA TARCZA"
+
+#. GDAT 0x0f/0x19/0x00
+#: po/dm2_source_strings.c:278
+msgid "WOOD TABLE"
+msgstr "STÓŁ DREWNIANY"
+
+#. GDAT 0x15/0x39/0x18
+#: po/dm2_source_strings.c:279
+msgid "WORM ROUND"
+msgstr "ROBACZYWA OKRĄGŁA"
+
+#. GDAT 0x01/0x00/0x0e
+#: po/dm2_source_strings.c:280
+msgid "' AWAKENED."
+msgstr "„OBUDZONY."
+
+#. GDAT 0x01/0x00/0x06
+#: po/dm2_source_strings.c:281
+msgid "' JUST GAINED A FIGHTER LEVEL."
+msgstr "WŁAŚNIE Zdobyłem Poziom Wojownika."
+
+#. GDAT 0x01/0x00/0x07
+#: po/dm2_source_strings.c:282
+msgid "' JUST GAINED A NINJA LEVEL."
+msgstr "WŁAŚNIE Zdobyłem Poziom Ninja."
+
+#. GDAT 0x01/0x00/0x08
+#: po/dm2_source_strings.c:283
+msgid "' JUST GAINED A PRIEST LEVEL."
+msgstr "WŁAŚNIE OTRZYMAŁEM POZIOM KAPŁANA."
+
+#. GDAT 0x01/0x00/0x09
+#: po/dm2_source_strings.c:284
+msgid "' JUST GAINED A WIZARD LEVEL."
+msgstr "WŁAŚNIE OTRZYMAŁEM POZIOM KREATORA."
+
+#. GDAT 0x15/0x00/0x18
+#: po/dm2_source_strings.c:285
+msgid "'BONES"
+msgstr "KOŚCI"
+
+#. GDAT 0x07/0x00/0x1f
+#: po/dm2_source_strings.c:286
+msgid "*.+ KG."
+msgstr "*. + KG."
+
+#. GDAT 0x07/0x00/0x2a
+#: po/dm2_source_strings.c:287
+msgid ",.-/..0 KG"
+msgstr ",. -/ ..0 KG"
+
+#. GDAT 0x07/0x00/0x0c
+#: po/dm2_source_strings.c:288
+msgid "` MASTER 1"
+msgstr "„MISTRZ 1"
+
+#. GDAT 0x07/0x00/0x0d
+#: po/dm2_source_strings.c:289
+msgid "a MASTER 1"
+msgstr "MISTRZ 1"
+
+#. GDAT 0x07/0x00/0x0e
+#: po/dm2_source_strings.c:290
+msgid "b MASTER 1"
+msgstr "b MISTRZ 1"
+
+#. GDAT 0x07/0x00/0x0f
+#: po/dm2_source_strings.c:291
+msgid "c MASTER 1"
+msgstr "c MISTRZ 1"
+
+#. GDAT 0x07/0x00/0x10
+#: po/dm2_source_strings.c:292
+msgid "d MASTER 1"
+msgstr "d MISTRZ 1"
+
+#. GDAT 0x07/0x00/0x11
+#: po/dm2_source_strings.c:293
+msgid "e MASTER 1"
+msgstr "e MISTRZ 1"
+
+#. GDAT 0x15/0x13/0x18
+#: po/dm2_source_strings.c:294
+msgid "f KEY"
+msgstr "f KLUCZ"
+
+#. GDAT 0x13/0x0b/0x18
+#: po/dm2_source_strings.c:295
+msgid "f POTION"
+msgstr "f Eliksir"
+
+#. GDAT 0x15/0x3e/0x18
+#: po/dm2_source_strings.c:296
+msgid "f m"
+msgstr "f m"
+
+#. GDAT 0x13/0x0c/0x18
+#: po/dm2_source_strings.c:297
+msgid "f p POTION"
+msgstr "f p Eliksir"
+
+#. GDAT 0x13/0x08/0x18
+#: po/dm2_source_strings.c:298
+msgid "f p t POTION"
+msgstr "f p t Eliksir"
+
+#. GDAT 0x13/0x09/0x18
+#: po/dm2_source_strings.c:299
+msgid "f p u POTION"
+msgstr "f p u eliksir"
+
+#. GDAT 0x15/0x15/0x18
+#: po/dm2_source_strings.c:300
+msgid "g KEY"
+msgstr "g KLUCZ"
+
+#. GDAT 0x13/0x0e/0x18
+#: po/dm2_source_strings.c:301
+msgid "g POTION"
+msgstr "g Eliksir"
+
+#. GDAT 0x13/0x0a/0x18
+#: po/dm2_source_strings.c:302
+msgid "g p POTION"
+msgstr "g p Eliksir"
+
+#. GDAT 0x15/0x14/0x18
+#: po/dm2_source_strings.c:303
+msgid "h KEY"
+msgstr "h KLUCZ"
+
+#. GDAT 0x13/0x06/0x18
+#: po/dm2_source_strings.c:304
+msgid "h p s POTION"
+msgstr "h p s Eliksir"
+
+#. GDAT 0x13/0x13/0x18
+#: po/dm2_source_strings.c:305
+msgid "i BOMB"
+msgstr "BOMBA"
+
+#. GDAT 0x15/0x16/0x18
+#: po/dm2_source_strings.c:306
+msgid "i KEY"
+msgstr "KLUCZ"
+
+#. GDAT 0x13/0x07/0x18
+#: po/dm2_source_strings.c:307
+msgid "i p r POTION"
+msgstr "i p r Eliksir"
+
+#. GDAT 0x10/0x11/0x18
+#: po/dm2_source_strings.c:308
+msgid "k BLADE"
+msgstr "k OSTRZE"
+
+#. GDAT 0x13/0x0d/0x18
+#: po/dm2_source_strings.c:309
+msgid "k p v POTION"
+msgstr "k p v MISTRZOSTWA"
+
+#. GDAT 0x13/0x03/0x18
+#: po/dm2_source_strings.c:310
+msgid "l BOMB"
+msgstr "BOMBA"
+
+#. GDAT 0x15/0x12/0x18
+#: po/dm2_source_strings.c:311
+msgid "o KEY"
+msgstr "o KLUCZ"
+
+#. GDAT 0x15/0x17/0x18
+#: po/dm2_source_strings.c:312
+msgid "v KEY"
+msgstr "v KLUCZ"
+
+#. GDAT 0x11/0x2e/0x18
+#: po/dm2_source_strings.c:313
+msgid "vw GREAVE"
+msgstr "vw GREAVE"
+
+#. GDAT 0x11/0x2b/0x18
+#: po/dm2_source_strings.c:314
+msgid "vw HELM"
+msgstr "vw HELM"
+
+#. GDAT 0x11/0x2c/0x18
+#: po/dm2_source_strings.c:315
+msgid "vw PLATE"
+msgstr "vw PŁYTA"
+
+#. GDAT 0x11/0x2d/0x18
+#: po/dm2_source_strings.c:316
+msgid "vw POLEYN"
+msgstr "w POLEYN"
+
+#. GDAT 0x11/0x2f/0x18
+#: po/dm2_source_strings.c:317
+msgid "vw SHIELD"
+msgstr "vw TARCZA"
+
+#. GDAT 0x11/0x2a/0x18
+#: po/dm2_source_strings.c:318
+msgid "w SHIELD"
+msgstr "w TARCZA"

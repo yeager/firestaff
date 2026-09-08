@@ -1,0 +1,1655 @@
+# Korean translations for firestaff-dm2 package.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the firestaff-dm2 package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-dm2\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#. GDAT 0x07/0x00/0x0a
+#: po/dm2_source_strings.c:10
+msgid "ADEPT 1"
+msgstr "숙련자 1"
+
+#. GDAT 0x07/0x00/0x26
+#: po/dm2_source_strings.c:11
+msgid "ANTI-FIRE"
+msgstr "방화"
+
+#. GDAT 0x07/0x00/0x25
+#: po/dm2_source_strings.c:12
+msgid "ANTI-MAGIC"
+msgstr "대마법"
+
+#. GDAT 0x15/0x1d/0x18
+#: po/dm2_source_strings.c:13
+msgid "APPLE"
+msgstr "사과"
+
+#. GDAT 0x07/0x00/0x06
+#: po/dm2_source_strings.c:14
+msgid "APPRENTICE 1"
+msgstr "견습생 1"
+
+#. GDAT 0x0f/0x1d/0x00
+#: po/dm2_source_strings.c:15
+msgid "ARCHER-GUARD"
+msgstr "아처가드"
+
+#. GDAT 0x07/0x00/0x12
+#: po/dm2_source_strings.c:16
+msgid "ARCHMASTER 1"
+msgstr "아크마스터 1"
+
+#. GDAT 0x11/0x26/0x18
+#: po/dm2_source_strings.c:17
+msgid "ARMET"
+msgstr "아르멧"
+
+#. GDAT 0x10/0x1b/0x18
+#: po/dm2_source_strings.c:18
+msgid "ARROW"
+msgstr "화살표"
+
+#. GDAT 0x07/0x00/0x09
+#: po/dm2_source_strings.c:19
+msgid "ARTISAN 1"
+msgstr "장인 1"
+
+#. GDAT 0x0f/0x31/0x00, 0x15/0x3f/0x18
+#: po/dm2_source_strings.c:20
+msgid "ATTACK MINION"
+msgstr "공격 미니언"
+
+#. GDAT 0x10/0x12/0x18
+#: po/dm2_source_strings.c:21
+msgid "AXE"
+msgstr "도끼"
+
+#. GDAT 0x0f/0x42/0x00
+#: po/dm2_source_strings.c:22
+msgid "AXEMAN"
+msgstr "액스맨"
+
+#. GDAT 0x0f/0x48/0x00
+#: po/dm2_source_strings.c:23
+msgid "AXEMAN THIEF"
+msgstr "도끼맨 도둑"
+
+#. GDAT 0x0f/0x43/0x00
+#: po/dm2_source_strings.c:24
+msgid "BAD MERCHANT"
+msgstr "나쁜 상인"
+
+#. GDAT 0x14/0x01/0x18
+#: po/dm2_source_strings.c:25
+msgid "BAG"
+msgstr "가방"
+
+#. GDAT 0x10/0x29/0x18
+#: po/dm2_source_strings.c:26
+msgid "BAINBLOOM"
+msgstr "베인블룸"
+
+#. GDAT 0x11/0x17/0x18
+#: po/dm2_source_strings.c:27
+msgid "BANDANA"
+msgstr "반다나"
+
+#. GDAT 0x0f/0x2d/0x00
+#: po/dm2_source_strings.c:28
+msgid "BARREL"
+msgstr "배럴"
+
+#. GDAT 0x11/0x1b/0x18
+#: po/dm2_source_strings.c:29
+msgid "BASCINET"
+msgstr "배시넷"
+
+#. GDAT 0x03/0x00/0x13
+#: po/dm2_source_strings.c:30
+msgid ""
+"BEFORE USING\n"
+"BOILER TURN ON\n"
+"WATER VALVES\n"
+"TWO LEVELS UP"
+msgstr ""
+"사용하기 전에\n"
+"보일러 켜기\n"
+"물 밸브\n"
+"두 레벨 업"
+
+#. GDAT 0x11/0x04/0x18
+#: po/dm2_source_strings.c:31
+msgid "BLACK BOOTS"
+msgstr "블랙 부츠"
+
+#. GDAT 0x11/0x06/0x18
+#: po/dm2_source_strings.c:32
+msgid "BLACK SKIRT"
+msgstr "블랙 스커트"
+
+#. GDAT 0x11/0x05/0x18
+#: po/dm2_source_strings.c:33
+msgid "BLACK TOP"
+msgstr "블랙 탑"
+
+#. GDAT 0x15/0x0a/0x18
+#: po/dm2_source_strings.c:34
+msgid "BLOOD KEY"
+msgstr "블러드 키"
+
+#. GDAT 0x15/0x1a/0x18
+#: po/dm2_source_strings.c:35
+msgid "BLUE GEM"
+msgstr "블루 젬"
+
+#. GDAT 0x11/0x02/0x18
+#: po/dm2_source_strings.c:36
+msgid "BLUE PANTS"
+msgstr "파란색 바지"
+
+#. GDAT 0x10/0x0f/0x18
+#: po/dm2_source_strings.c:37
+msgid "BLUE STEELE"
+msgstr "블루스틸"
+
+#. GDAT 0x11/0x0a/0x18
+#: po/dm2_source_strings.c:38
+msgid "BODICE"
+msgstr "보디스"
+
+#. GDAT 0x0f/0x2f/0x00
+#: po/dm2_source_strings.c:39
+msgid "BOILER"
+msgstr "보일러"
+
+#. GDAT 0x15/0x3d/0x18
+#: po/dm2_source_strings.c:40
+msgid "BONE"
+msgstr "뼈"
+
+#. GDAT 0x15/0x34/0x18
+#: po/dm2_source_strings.c:41
+msgid "BONES"
+msgstr "뼈"
+
+#. GDAT 0x15/0x01/0x18
+#: po/dm2_source_strings.c:42
+msgid "BOTA"
+msgstr "보타"
+
+#. GDAT 0x0f/0x07/0x00, 0x15/0x19/0x18
+#: po/dm2_source_strings.c:43
+msgid "BOULDER"
+msgstr "볼더"
+
+#. GDAT 0x10/0x19/0x18
+#: po/dm2_source_strings.c:44
+msgid "BOW"
+msgstr "활"
+
+#. GDAT 0x10/0x21/0x18
+#: po/dm2_source_strings.c:45
+msgid "BRANCH"
+msgstr "지점"
+
+#. GDAT 0x15/0x1f/0x18
+#: po/dm2_source_strings.c:46
+msgid "BREAD "
+msgstr "빵"
+
+#. GDAT 0x11/0x20/0x18
+#: po/dm2_source_strings.c:47
+msgid "BREASTPLATE"
+msgstr "흉갑"
+
+#. GDAT 0x11/0x13/0x18
+#: po/dm2_source_strings.c:48
+msgid "BRIGANDINE"
+msgstr "브리건딘"
+
+#. GDAT 0x0f/0x04/0x00
+#: po/dm2_source_strings.c:49
+msgid "BUSH"
+msgstr "부시"
+
+#. GDAT 0x1a/0x09/0x00
+#: po/dm2_source_strings.c:50
+msgid "CANCEL"
+msgstr "취소"
+
+#. GDAT 0x11/0x00/0x18
+#: po/dm2_source_strings.c:51
+msgid "CAPE"
+msgstr "케이프"
+
+#. GDAT 0x0f/0x32/0x00
+#: po/dm2_source_strings.c:52
+msgid "CARRY MINION"
+msgstr "캐리 미니언"
+
+#. GDAT 0x0f/0x18/0x00
+#: po/dm2_source_strings.c:53
+msgid "CAVE IN"
+msgstr "동굴에 들어가다"
+
+#. GDAT 0x0f/0x23/0x00
+#: po/dm2_source_strings.c:54
+msgid "CAVERN BAT"
+msgstr "동굴 박쥐"
+
+#. GDAT 0x0f/0x01/0x00, 0x0f/0x4d/0x00, 0x0f/0x53/0x00
+#: po/dm2_source_strings.c:55
+msgid "CAVERN TABLE"
+msgstr "동굴 테이블"
+
+#. GDAT 0x15/0x20/0x18
+#: po/dm2_source_strings.c:56
+msgid "CHEESE"
+msgstr "치즈"
+
+#. GDAT 0x0f/0x54/0x00, 0x14/0x00/0x18
+#: po/dm2_source_strings.c:57
+msgid "CHEST"
+msgstr "가슴"
+
+#. GDAT 0x15/0x29/0x18
+#: po/dm2_source_strings.c:58
+msgid "CLAN CHIEF GEM"
+msgstr "클랜 수석 보석"
+
+#. GDAT 0x15/0x31/0x18
+#: po/dm2_source_strings.c:59
+msgid "CLAN KEY PIECE"
+msgstr "클랜 핵심 작품"
+
+#. GDAT 0x11/0x01/0x18
+#: po/dm2_source_strings.c:60
+msgid "CLOAK OF NIGHT"
+msgstr "밤의 망토"
+
+#. GDAT 0x10/0x17/0x18
+#: po/dm2_source_strings.c:61
+msgid "CLUB"
+msgstr "클럽"
+
+#. GDAT 0x10/0x26/0x18
+#: po/dm2_source_strings.c:62
+msgid "COMBAT STAFF"
+msgstr "전투 직원"
+
+#. GDAT 0x15/0x05/0x18
+#: po/dm2_source_strings.c:63
+msgid "COMPASS"
+msgstr "나침반"
+
+#. GDAT 0x15/0x06/0x18
+#: po/dm2_source_strings.c:64
+msgid "COPPER COIN"
+msgstr "구리 동전"
+
+#. GDAT 0x15/0x36/0x18
+#: po/dm2_source_strings.c:65
+msgid "COVER PLATE"
+msgstr "커버 플레이트"
+
+#. GDAT 0x07/0x00/0x08
+#: po/dm2_source_strings.c:66
+msgid "CRAFTSMAN 1"
+msgstr "장인 1"
+
+#. GDAT 0x15/0x0e/0x18
+#: po/dm2_source_strings.c:67
+msgid "CROSS KEY"
+msgstr "십자키"
+
+#. GDAT 0x10/0x1a/0x18
+#: po/dm2_source_strings.c:68
+msgid "CROSSBOW"
+msgstr "석궁"
+
+#. GDAT 0x11/0x1d/0x18
+#: po/dm2_source_strings.c:69
+msgid "CRYSTAL SHIELD"
+msgstr "크리스탈 쉴드"
+
+#. GDAT 0x10/0x08/0x18
+#: po/dm2_source_strings.c:70
+msgid "DAGGER"
+msgstr "단검"
+
+#. GDAT 0x0f/0x20/0x00
+#: po/dm2_source_strings.c:71
+msgid "DARK VEXIRK"
+msgstr "다크 벡시르크"
+
+#. GDAT 0x15/0x3b/0x18
+#: po/dm2_source_strings.c:72
+msgid "DEAD BAT"
+msgstr "데드배트"
+
+#. GDAT 0x14/0x0f/0x18
+#: po/dm2_source_strings.c:73
+msgid "DEBUG MAP"
+msgstr "디버그 맵"
+
+#. GDAT 0x07/0x00/0x22
+#: po/dm2_source_strings.c:74
+msgid "DEXTERITY"
+msgstr "민첩성"
+
+#. GDAT 0x0f/0x38/0x00
+#: po/dm2_source_strings.c:75
+msgid "DIGGER WORM"
+msgstr "파는 벌레"
+
+#. GDAT 0x0f/0x4e/0x00
+#: po/dm2_source_strings.c:76
+msgid "DOOR GHOST"
+msgstr "도어 고스트"
+
+#. GDAT 0x11/0x0d/0x18
+#: po/dm2_source_strings.c:77
+msgid "DOUBLET"
+msgstr "더블릿"
+
+#. GDAT 0x0f/0x17/0x00
+#: po/dm2_source_strings.c:78
+msgid "DRAGOTH"
+msgstr "드라고스"
+
+#. GDAT 0x0f/0x4c/0x00
+#: po/dm2_source_strings.c:79
+msgid "DRAGOTH ATTACK MINION"
+msgstr "드라고스 공격 미니언"
+
+#. GDAT 0x0f/0x52/0x00
+#: po/dm2_source_strings.c:80
+msgid "DRU TAN"
+msgstr "드루 탄"
+
+#. GDAT 0x10/0x25/0x18
+#: po/dm2_source_strings.c:81
+msgid "EMERALD ORB"
+msgstr "에메랄드 오브"
+
+#. GDAT 0x0f/0x1b/0x00, 0x0f/0x57/0x00
+#: po/dm2_source_strings.c:82
+msgid "EVIL ATTACK MINION"
+msgstr "사악한 공격 미니언"
+
+#. GDAT 0x0f/0x25/0x00
+#: po/dm2_source_strings.c:83
+msgid "EVIL FOUNTAIN"
+msgstr "사악한 샘"
+
+#. GDAT 0x0f/0x45/0x00
+#: po/dm2_source_strings.c:84
+msgid "EVIL GUARD MINION"
+msgstr "이블 가드 미니언"
+
+#. GDAT 0x0f/0x2b/0x00
+#: po/dm2_source_strings.c:85
+msgid "EVIL SCOUT MINION"
+msgstr "사악한 정찰병 미니언"
+
+#. GDAT 0x10/0x0e/0x18
+#: po/dm2_source_strings.c:86
+msgid "EXCSYMYR"
+msgstr "엑시미르"
+
+#. GDAT 0x07/0x00/0x0b
+#: po/dm2_source_strings.c:87
+msgid "EXPERT 1"
+msgstr "전문가 1"
+
+#. GDAT 0x10/0x00/0x18
+#: po/dm2_source_strings.c:88
+msgid "EYE OF TIME"
+msgstr "시간의 눈"
+
+#. GDAT 0x0f/0x08/0x00
+#: po/dm2_source_strings.c:89
+msgid "FACE PILLAR"
+msgstr "얼굴 기둥"
+
+#. GDAT 0x15/0x33/0x18
+#: po/dm2_source_strings.c:90
+msgid "FAIRY CUSHION"
+msgstr "페어리쿠션"
+
+#. GDAT 0x0f/0x33/0x00
+#: po/dm2_source_strings.c:91
+msgid "FETCH MINION"
+msgstr "미니언 가져오기"
+
+#. GDAT 0x07/0x00/0x00
+#: po/dm2_source_strings.c:92
+msgid "FIGHTER"
+msgstr "파이터"
+
+#. GDAT 0x11/0x08/0x18
+#: po/dm2_source_strings.c:93
+msgid "FINE ROBE "
+msgstr "고급 로브"
+
+#. GDAT 0x11/0x07/0x18
+#: po/dm2_source_strings.c:94
+msgid "FINE ROBE TOP"
+msgstr "파인 로브 탑"
+
+#. GDAT 0x11/0x38/0x18
+#: po/dm2_source_strings.c:95
+msgid "FIRE GREAVE"
+msgstr "소방용 그리브"
+
+#. GDAT 0x11/0x35/0x18
+#: po/dm2_source_strings.c:96
+msgid "FIRE HELM"
+msgstr "소방헬름"
+
+#. GDAT 0x11/0x09/0x18, 0x11/0x36/0x18
+#: po/dm2_source_strings.c:97
+msgid "FIRE PLATE"
+msgstr "파이어 플레이트"
+
+#. GDAT 0x11/0x37/0x18
+#: po/dm2_source_strings.c:98
+msgid "FIRE POLEYN"
+msgstr "파이어 폴리인"
+
+#. GDAT 0x0f/0x37/0x00
+#: po/dm2_source_strings.c:99
+msgid "FLAME ORB"
+msgstr "화염구"
+
+#. GDAT 0x13/0x14/0x18
+#: po/dm2_source_strings.c:100
+msgid "FLASK"
+msgstr "플라스크"
+
+#. GDAT 0x11/0x29/0x18
+#: po/dm2_source_strings.c:101
+msgid "FOOT PLATE"
+msgstr "발판"
+
+#. GDAT 0x0f/0x13/0x00
+#: po/dm2_source_strings.c:102
+msgid "FOUNTAIN"
+msgstr "분수"
+
+#. GDAT 0x03/0x00/0x14
+#: po/dm2_source_strings.c:103
+msgid ""
+"FURNACE ON\n"
+"LEVEL BELOW\n"
+"MUST BE STOKED\n"
+"AND BURNING"
+msgstr ""
+"용광로 켜짐\n"
+"아래 수준\n"
+"반드시 충전해야 합니다\n"
+"그리고 굽기"
+
+#. GDAT 0x10/0x06/0x18
+#: po/dm2_source_strings.c:104
+msgid "FURY"
+msgstr "분노"
+
+#. GDAT 0x01/0x00/0x12
+#: po/dm2_source_strings.c:105
+msgid "GAME PAUSED"
+msgstr "게임이 일시중지되었습니다."
+
+#. GDAT 0x0f/0x49/0x00
+#: po/dm2_source_strings.c:106
+msgid "GHOST"
+msgstr "유령"
+
+#. GDAT 0x0f/0x0d/0x00
+#: po/dm2_source_strings.c:107
+msgid "GIGGLER"
+msgstr "기글러"
+
+#. GDAT 0x0f/0x09/0x00
+#: po/dm2_source_strings.c:108
+msgid "GLOP"
+msgstr "글롭"
+
+#. GDAT 0x15/0x08/0x18
+#: po/dm2_source_strings.c:109
+msgid "GOLD COIN"
+msgstr "골드 코인"
+
+#. GDAT 0x15/0x11/0x18
+#: po/dm2_source_strings.c:110
+msgid "GOLD KEY"
+msgstr "골드 키"
+
+#. GDAT 0x11/0x18/0x18
+#: po/dm2_source_strings.c:111
+msgid "GREAT HELM"
+msgstr "그레이트 헬름"
+
+#. GDAT 0x11/0x25/0x18
+#: po/dm2_source_strings.c:112
+msgid "GREAVES"
+msgstr "경갑"
+
+#. GDAT 0x15/0x1c/0x18
+#: po/dm2_source_strings.c:113
+msgid "GREEN GEM"
+msgstr "그린 젬"
+
+#. GDAT 0x0f/0x34/0x00, 0x15/0x40/0x18
+#: po/dm2_source_strings.c:114
+msgid "GUARD MINION"
+msgstr "가드 미니언"
+
+#. GDAT 0x11/0x0c/0x18
+#: po/dm2_source_strings.c:115
+msgid "GUNNA"
+msgstr "군나"
+
+#. GDAT 0x07/0x00/0x27
+#: po/dm2_source_strings.c:116
+msgid "HEALTH"
+msgstr "건강"
+
+#. GDAT 0x11/0x1a/0x18
+#: po/dm2_source_strings.c:117
+msgid "HELMET"
+msgstr "헬멧"
+
+#. GDAT 0x11/0x19/0x18
+#: po/dm2_source_strings.c:118
+msgid "HORNED HELM"
+msgstr "뿔 투구"
+
+#. GDAT 0x11/0x0e/0x18
+#: po/dm2_source_strings.c:119
+msgid "HUKE"
+msgstr "휴크"
+
+#. GDAT 0x15/0x03/0x18
+#: po/dm2_source_strings.c:120
+msgid "ILLUMULET"
+msgstr "일루물렛"
+
+#. GDAT 0x03/0x00/0x28
+#: po/dm2_source_strings.c:121
+msgid ""
+"INVOKE ZO TO\n"
+"CLOSE PORTALS\n"
+"THAT THE\n"
+"EVIL MINIONS\n"
+"HAVE OPENED"
+msgstr ""
+"ZO를 호출하여\n"
+"포털 닫기\n"
+"그\n"
+"사악한 미니언\n"
+"오픈했습니다"
+
+#. GDAT 0x03/0x00/0x16
+#: po/dm2_source_strings.c:122
+msgid ""
+"INVOKE\n"
+"ZO EW KU\n"
+"TO CREATE A\n"
+"MINION THAT\n"
+"WILL ATTACK\n"
+"YOUR ENEMIES"
+msgstr ""
+"호출\n"
+"조 EW 쿠\n"
+"만들기\n"
+"미니언 그\n"
+"공격할 것이다\n"
+"당신의 적"
+
+#. GDAT 0x03/0x00/0x17
+#: po/dm2_source_strings.c:123
+msgid ""
+"INVOKE\n"
+"ZO EW NETA\n"
+"TO CREATE A\n"
+"GUARDIAN\n"
+"MINION"
+msgstr ""
+"호출\n"
+"조 EW 네타\n"
+"만들기\n"
+"수호자\n"
+"미니언"
+
+#. GDAT 0x15/0x09/0x18
+#: po/dm2_source_strings.c:124
+msgid "IRON KEY"
+msgstr "아이언 키"
+
+#. GDAT 0x15/0x02/0x18
+#: po/dm2_source_strings.c:125
+msgid "JEWEL OF SYMAL"
+msgstr "시말의 보석"
+
+#. GDAT 0x15/0x1e/0x18
+#: po/dm2_source_strings.c:126
+msgid "JICAMA"
+msgstr "히카마"
+
+#. GDAT 0x07/0x00/0x07
+#: po/dm2_source_strings.c:127
+msgid "JOURNEYMAN 1"
+msgstr "숙련공 1"
+
+#. GDAT 0x10/0x03/0x18
+#: po/dm2_source_strings.c:128
+msgid "KALAN GAUNTLET"
+msgstr "카란 건틀릿"
+
+#. GDAT 0x10/0x0d/0x18
+#: po/dm2_source_strings.c:129
+msgid "KATANA"
+msgstr "카타나"
+
+#. GDAT 0x15/0x2c/0x18
+#: po/dm2_source_strings.c:130
+msgid "LARGE GEAR"
+msgstr "대형 기어"
+
+#. GDAT 0x11/0x12/0x18
+#: po/dm2_source_strings.c:131
+msgid "LEATHER BOOTS"
+msgstr "가죽 부츠"
+
+#. GDAT 0x11/0x10/0x18
+#: po/dm2_source_strings.c:132
+msgid "LEATHER JERKIN"
+msgstr "가죽 저킨"
+
+#. GDAT 0x11/0x11/0x18
+#: po/dm2_source_strings.c:133
+msgid "LEATHER PANTS"
+msgstr "가죽 바지"
+
+#. GDAT 0x11/0x28/0x18
+#: po/dm2_source_strings.c:134
+msgid "LEG PLATE"
+msgstr "레그 플레이트"
+
+#. GDAT 0x15/0x0d/0x18
+#: po/dm2_source_strings.c:135
+msgid "LIGHTNING KEY"
+msgstr "번개 열쇠"
+
+#. GDAT 0x0f/0x29/0x00
+#: po/dm2_source_strings.c:136
+msgid "LIGHTNING ROD"
+msgstr "피뢰침"
+
+#. GDAT 0x07/0x00/0x1e, 0x1a/0x0f/0x00, 0x1a/0x80/0x00
+#: po/dm2_source_strings.c:137
+msgid "LOAD"
+msgstr "로드"
+
+#. GDAT 0x10/0x14/0x18
+#: po/dm2_source_strings.c:138
+msgid "MACE"
+msgstr "메이스"
+
+#. GDAT 0x10/0x09/0x18
+#: po/dm2_source_strings.c:139
+msgid "MACHETE"
+msgstr "마체테"
+
+#. GDAT 0x14/0x08/0x18, 0x14/0x0b/0x18
+#: po/dm2_source_strings.c:140
+msgid "MAGIC MAP"
+msgstr "매직맵"
+
+#. GDAT 0x0f/0x44/0x00
+#: po/dm2_source_strings.c:141
+msgid "MAGIC MERCHANT"
+msgstr "마법 상인"
+
+#. GDAT 0x0f/0x1a/0x00
+#: po/dm2_source_strings.c:142
+msgid "MAGIK CAULDRON"
+msgstr "마법의 가마솥"
+
+#. GDAT 0x0f/0x2e/0x00
+#: po/dm2_source_strings.c:143
+msgid "MAGIK REFLECTOR"
+msgstr "매직 반사판"
+
+#. GDAT 0x15/0x2b/0x18
+#: po/dm2_source_strings.c:144
+msgid "MAGIKAL BOX"
+msgstr "마법의 상자"
+
+#. GDAT 0x11/0x24/0x18
+#: po/dm2_source_strings.c:145
+msgid "MAIL HELMET"
+msgstr "메일 헬멧"
+
+#. GDAT 0x07/0x00/0x29
+#: po/dm2_source_strings.c:146
+msgid "MANA"
+msgstr "마나"
+
+#. GDAT 0x15/0x2f/0x18
+#: po/dm2_source_strings.c:147
+msgid "MANA BLOSSOM"
+msgstr "마나 블라썸"
+
+#. GDAT 0x15/0x18/0x18
+#: po/dm2_source_strings.c:148
+msgid "MASTER KEY"
+msgstr "마스터 키"
+
+#. GDAT 0x0f/0x22/0x00
+#: po/dm2_source_strings.c:149
+msgid "MERCHANT"
+msgstr "상인"
+
+#. GDAT 0x0f/0x2c/0x00
+#: po/dm2_source_strings.c:150
+msgid "MERCHANT GUARD"
+msgstr "상인 가드"
+
+#. GDAT 0x0f/0x3a/0x00
+#: po/dm2_source_strings.c:151
+msgid "MERCHANT TOMB"
+msgstr "상인의 무덤"
+
+#. GDAT 0x10/0x2d/0x18, 0x15/0x2a/0x18
+#: po/dm2_source_strings.c:152
+msgid "METEOR METAL"
+msgstr "유성 금속"
+
+#. GDAT 0x15/0x25/0x18
+#: po/dm2_source_strings.c:153
+msgid "MEZMAR"
+msgstr "메즈마르"
+
+#. GDAT 0x14/0x0a/0x18
+#: po/dm2_source_strings.c:154
+msgid "MINION MAP"
+msgstr "미니언 맵"
+
+#. GDAT 0x11/0x0f/0x18
+#: po/dm2_source_strings.c:155
+msgid "MITHRAL HOSEN"
+msgstr "미스랄 호센"
+
+#. GDAT 0x11/0x23/0x18
+#: po/dm2_source_strings.c:156
+msgid "MITHRAL HUKE"
+msgstr "미스랄 휴크"
+
+#. GDAT 0x11/0x22/0x18
+#: po/dm2_source_strings.c:157
+msgid "MITHRAL MAIL"
+msgstr "미스랄 메일"
+
+#. GDAT 0x14/0x02/0x18
+#: po/dm2_source_strings.c:158
+msgid "MONEY BOX"
+msgstr "저금통"
+
+#. GDAT 0x15/0x0c/0x18
+#: po/dm2_source_strings.c:159
+msgid "MOON KEY"
+msgstr "문 키"
+
+#. GDAT 0x15/0x27/0x18
+#: po/dm2_source_strings.c:160
+msgid "MOONSTONE"
+msgstr "문스톤"
+
+#. GDAT 0x10/0x16/0x18
+#: po/dm2_source_strings.c:161
+msgid "MORNINGSTAR"
+msgstr "모닝스타"
+
+#. GDAT 0x0f/0x26/0x00
+#: po/dm2_source_strings.c:162
+msgid "MUMMY"
+msgstr "미라"
+
+#. GDAT 0x07/0x00/0x04
+#: po/dm2_source_strings.c:163
+msgid "NEOPHYTE 1"
+msgstr "신생물 1"
+
+#. GDAT 0x07/0x00/0x01
+#: po/dm2_source_strings.c:164
+msgid "NINJA"
+msgstr "닌자"
+
+#. GDAT 0x01/0xfe/0x05
+#: po/dm2_source_strings.c:165
+msgid "NO CREATURE"
+msgstr "생물 없음"
+
+#. GDAT 0x03/0x00/0x11
+#: po/dm2_source_strings.c:166
+msgid ""
+"NO WATER\n"
+"CHECK PUMP\n"
+"OPERATION ON\n"
+"LEVEL BELOW"
+msgstr ""
+"물 없음\n"
+"펌프를 확인하세요\n"
+"작동 중\n"
+"아래 수준"
+
+#. GDAT 0x07/0x00/0x05
+#: po/dm2_source_strings.c:167
+msgid "NOVICE 1"
+msgstr "초보자 1"
+
+#. GDAT 0x10/0x2a/0x18
+#: po/dm2_source_strings.c:168
+msgid "NUMENSTAFF"
+msgstr "누멘스태프"
+
+#. GDAT 0x0f/0x3d/0x00, 0x0f/0x3e/0x00, 0x0f/0x3f/0x00
+#: po/dm2_source_strings.c:169
+msgid "OBELISK"
+msgstr "오벨리스크"
+
+#. GDAT 0x1a/0x00/0x00, 0x1a/0x01/0x00, 0x1a/0x02/0x00, 0x1a/0x03/0x00, 0x1a/0x04/0x00, 0x1a/0x05/0x00, 0x1a/0x06/0x00, 0x1a/0x07/0x00, 0x1a/0x08/0x00, 0x1a/0x13/0x00, 0x1a/0x14/0x00, 0x1a/0x1a/0x00, 0x1a/0x87/0x00
+#: po/dm2_source_strings.c:170
+msgid "OK"
+msgstr "알았어"
+
+#. GDAT 0x15/0x0f/0x18
+#: po/dm2_source_strings.c:171
+msgid "ONYX KEY"
+msgstr "오닉스 키"
+
+#. GDAT 0x15/0x32/0x18
+#: po/dm2_source_strings.c:172
+msgid "PALMAPPLE"
+msgstr "팜플렛"
+
+#. GDAT 0x0f/0x55/0x00
+#: po/dm2_source_strings.c:173
+msgid "PEDISTAL"
+msgstr "받침대"
+
+#. GDAT 0x0f/0x05/0x00
+#: po/dm2_source_strings.c:174
+msgid "PILLAR"
+msgstr "기둥"
+
+#. GDAT 0x0f/0x27/0x00
+#: po/dm2_source_strings.c:175
+msgid "PIPE SHAFT"
+msgstr "파이프 샤프트"
+
+#. GDAT 0x0f/0x21/0x00
+#: po/dm2_source_strings.c:176
+msgid "PIT GHOST"
+msgstr "핏 고스트"
+
+#. GDAT 0x15/0x35/0x18
+#: po/dm2_source_strings.c:177
+msgid "PLANK"
+msgstr "판자"
+
+#. GDAT 0x10/0x1f/0x18
+#: po/dm2_source_strings.c:178
+msgid "POISON DART"
+msgstr "독 다트"
+
+#. GDAT 0x0f/0x11/0x00
+#: po/dm2_source_strings.c:179
+msgid "POWER CRYSTAL"
+msgstr "파워 크리스탈"
+
+#. GDAT 0x07/0x00/0x02
+#: po/dm2_source_strings.c:180
+msgid "PRIEST"
+msgstr "성직자"
+
+#. GDAT 0x15/0x3a/0x18
+#: po/dm2_source_strings.c:181
+msgid "PYRO"
+msgstr "파이로"
+
+#. GDAT 0x14/0x03/0x18
+#: po/dm2_source_strings.c:182
+msgid "QUIVER"
+msgstr "떨림"
+
+#. GDAT 0x10/0x23/0x18
+#: po/dm2_source_strings.c:183
+msgid "RAINBOW WAND"
+msgstr "무지개 지팡이"
+
+#. GDAT 0x10/0x0b/0x18
+#: po/dm2_source_strings.c:184
+msgid "RAPIER"
+msgstr "레이피어"
+
+#. GDAT 0x15/0x1b/0x18
+#: po/dm2_source_strings.c:185
+msgid "RED GEM"
+msgstr "레드 젬"
+
+#. GDAT 0x03/0x00/0x12
+#: po/dm2_source_strings.c:186
+msgid ""
+"REFLECTOR\n"
+"PRACTICE"
+msgstr ""
+"반사경\n"
+"연습"
+
+#. GDAT 0x03/0x00/0x19
+#: po/dm2_source_strings.c:187
+msgid ""
+"RENEW THE LIFE\n"
+"OF A FALLEN\n"
+"CHAMPION"
+msgstr ""
+"삶을 새롭게 하세요\n"
+"타락한 사람의\n"
+"챔피언"
+
+#. GDAT 0x1a/0x10/0x00
+#: po/dm2_source_strings.c:188
+msgid "RESTART GAME"
+msgstr "게임 다시 시작"
+
+#. GDAT 0x10/0x1e/0x18
+#: po/dm2_source_strings.c:189
+msgid "ROCK"
+msgstr "록"
+
+#. GDAT 0x0f/0x0c/0x00
+#: po/dm2_source_strings.c:190
+msgid "ROCKY"
+msgstr "록키"
+
+#. GDAT 0x10/0x04/0x18
+#: po/dm2_source_strings.c:191
+msgid "ROGUE STAVE"
+msgstr "불량 지팡이"
+
+#. GDAT 0x15/0x2d/0x18
+#: po/dm2_source_strings.c:192
+msgid "ROPE"
+msgstr "로프"
+
+#. GDAT 0x15/0x28/0x18
+#: po/dm2_source_strings.c:193
+msgid "RUNE CHARM"
+msgstr "룬 참"
+
+#. GDAT 0x10/0x0c/0x18
+#: po/dm2_source_strings.c:194
+msgid "SABRE"
+msgstr "세이버"
+
+#. GDAT 0x11/0x03/0x18
+#: po/dm2_source_strings.c:195
+msgid "SANDALS"
+msgstr "샌들"
+
+#. GDAT 0x0f/0x2a/0x00
+#: po/dm2_source_strings.c:196
+msgid "SARDES MINION"
+msgstr "사데스 미니언"
+
+#. GDAT 0x1a/0x0b/0x00, 0x1a/0x11/0x00, 0x1a/0x12/0x00, 0x1a/0x1b/0x00, 0x1a/0x81/0x00
+#: po/dm2_source_strings.c:197
+msgid "SAVE"
+msgstr "저장"
+
+#. GDAT 0x11/0x15/0x18
+#: po/dm2_source_strings.c:198
+msgid "SCALE HAUBERK"
+msgstr "스케일 하우버크"
+
+#. GDAT 0x11/0x16/0x18
+#: po/dm2_source_strings.c:199
+msgid "SCALE MAIL"
+msgstr "스케일 메일"
+
+#. GDAT 0x10/0x2b/0x18
+#: po/dm2_source_strings.c:200
+msgid "SCARAB"
+msgstr "풍뎅이"
+
+#. GDAT 0x14/0x09/0x18
+#: po/dm2_source_strings.c:201
+msgid "SCOUT MAP"
+msgstr "스카우트 지도"
+
+#. GDAT 0x0f/0x30/0x00
+#: po/dm2_source_strings.c:202
+msgid "SCOUT MINION"
+msgstr "스카우트 미니언"
+
+#. GDAT 0x12/0x00/0x18
+#: po/dm2_source_strings.c:203
+msgid "SCROLL"
+msgstr "스크롤"
+
+#. GDAT 0x10/0x07/0x18
+#: po/dm2_source_strings.c:204
+msgid "SCYTHE"
+msgstr "낫"
+
+#. GDAT 0x10/0x28/0x18
+#: po/dm2_source_strings.c:205
+msgid "SERPENT STAFF"
+msgstr "뱀 지팡이"
+
+#. GDAT 0x15/0x23/0x18
+#: po/dm2_source_strings.c:206
+msgid "SHANK"
+msgstr "생크"
+
+#. GDAT 0x11/0x1c/0x18
+#: po/dm2_source_strings.c:207
+msgid "SHIELD OF FIRE"
+msgstr "불의 방패"
+
+#. GDAT 0x10/0x20/0x18
+#: po/dm2_source_strings.c:208
+msgid "SHURIKEN"
+msgstr "수리검"
+
+#. GDAT 0x15/0x38/0x18
+#: po/dm2_source_strings.c:209
+msgid "SILVER COIN"
+msgstr "실버 코인"
+
+#. GDAT 0x0f/0x41/0x00
+#: po/dm2_source_strings.c:210
+msgid "SKELETON"
+msgstr "스켈레톤"
+
+#. GDAT 0x0f/0x16/0x00
+#: po/dm2_source_strings.c:211
+msgid "SKULL BRAZIER"
+msgstr "해골 화로"
+
+#. GDAT 0x15/0x10/0x18
+#: po/dm2_source_strings.c:212
+msgid "SKULL KEY"
+msgstr "해골 열쇠"
+
+#. GDAT 0x01/0xfe/0x00
+#: po/dm2_source_strings.c:213
+msgid "SKULLKEEP"
+msgstr "스컬킵"
+
+#. GDAT 0x01/0xfe/0x06
+#: po/dm2_source_strings.c:214
+msgid "SKULLKEEP C"
+msgstr "스컬킵 C"
+
+#. GDAT 0x10/0x1c/0x18
+#: po/dm2_source_strings.c:215
+msgid "SLAYER ARROW"
+msgstr "슬레이어 애로우"
+
+#. GDAT 0x10/0x1d/0x18
+#: po/dm2_source_strings.c:216
+msgid "SLING"
+msgstr "슬링"
+
+#. GDAT 0x15/0x07/0x18
+#: po/dm2_source_strings.c:217
+msgid "SMALL PLANK"
+msgstr "작은 판자"
+
+#. GDAT 0x11/0x1f/0x18
+#: po/dm2_source_strings.c:218
+msgid "SMALL SHIELD"
+msgstr "작은 방패"
+
+#. GDAT 0x03/0x00/0x1b
+#: po/dm2_source_strings.c:219
+msgid ""
+"SNAKE STAFF\n"
+"\n"
+"ADD 1 MANA\n"
+"BLOSSOM\n"
+"\n"
+"ADD 1 STAFF"
+msgstr ""
+"스네이크 스태프\n"
+"\n"
+"마나 1 추가\n"
+"꽃\n"
+"\n"
+"직원 1명 추가"
+
+#. GDAT 0x15/0x0b/0x18
+#: po/dm2_source_strings.c:220
+msgid "SOLID KEY"
+msgstr "솔리드 키"
+
+#. GDAT 0x0f/0x10/0x00
+#: po/dm2_source_strings.c:221
+msgid "SPECTRE"
+msgstr "스펙터"
+
+#. GDAT 0x10/0x2c/0x18
+#: po/dm2_source_strings.c:222
+msgid "SPEEDBOW"
+msgstr "스피드보우"
+
+#. GDAT 0x0f/0x24/0x00
+#: po/dm2_source_strings.c:223
+msgid "SPIKED CAPSTAN"
+msgstr "스파이크 캡스턴"
+
+#. GDAT 0x0f/0x51/0x00
+#: po/dm2_source_strings.c:224
+msgid "SPIKED WALL"
+msgstr "스파이크 벽"
+
+#. GDAT 0x10/0x24/0x18
+#: po/dm2_source_strings.c:225
+msgid "SPIRAL STAFF"
+msgstr "나선형 직원"
+
+#. GDAT 0x15/0x22/0x18
+#: po/dm2_source_strings.c:226
+msgid "SPIRIT CAP"
+msgstr "스피릿 캡"
+
+#. GDAT 0x10/0x22/0x18
+#: po/dm2_source_strings.c:227
+msgid "STAFF"
+msgstr "직원"
+
+#. GDAT 0x10/0x27/0x18
+#: po/dm2_source_strings.c:228
+msgid "STAFF OF u"
+msgstr "당신의 직원"
+
+#. GDAT 0x0f/0x06/0x00
+#: po/dm2_source_strings.c:229
+msgid "STALAGMITE"
+msgstr "석순"
+
+#. GDAT 0x07/0x00/0x28
+#: po/dm2_source_strings.c:230
+msgid "STAMINA"
+msgstr "체력"
+
+#. GDAT 0x15/0x24/0x18
+#: po/dm2_source_strings.c:231
+msgid "STEAK"
+msgstr "스테이크"
+
+#. GDAT 0x0f/0x47/0x00
+#: po/dm2_source_strings.c:232
+msgid "STEAM ENGINE"
+msgstr "증기 엔진"
+
+#. GDAT 0x10/0x01/0x18
+#: po/dm2_source_strings.c:233
+msgid "STORMRING"
+msgstr "폭풍우"
+
+#. GDAT 0x07/0x00/0x21
+#: po/dm2_source_strings.c:234
+msgid "STRENGTH"
+msgstr "힘"
+
+#. GDAT 0x15/0x30/0x18
+#: po/dm2_source_strings.c:235
+msgid "SUN CREST"
+msgstr "썬 크레스트"
+
+#. GDAT 0x15/0x26/0x18
+#: po/dm2_source_strings.c:236
+msgid "SUZERAIN"
+msgstr "종주국"
+
+#. GDAT 0x10/0x0a/0x18
+#: po/dm2_source_strings.c:237
+msgid "SWORD"
+msgstr "소드"
+
+#. GDAT 0x11/0x0b/0x18
+#: po/dm2_source_strings.c:238
+msgid "TABARD"
+msgstr "휘장"
+
+#. GDAT 0x15/0x3c/0x18
+#: po/dm2_source_strings.c:239
+msgid "TANKARD"
+msgstr "탱커드"
+
+#. GDAT 0x15/0x37/0x18
+#: po/dm2_source_strings.c:240
+msgid "TAPESTRY"
+msgstr "태피스트리"
+
+#. GDAT 0x11/0x33/0x18
+#: po/dm2_source_strings.c:241
+msgid "TECHBOOTS"
+msgstr "테크부츠"
+
+#. GDAT 0x11/0x30/0x18
+#: po/dm2_source_strings.c:242
+msgid "TECHELM"
+msgstr "테크엘름"
+
+#. GDAT 0x15/0x42/0x18
+#: po/dm2_source_strings.c:243
+msgid "TECHEYE"
+msgstr "테크아이"
+
+#. GDAT 0x10/0x15/0x18
+#: po/dm2_source_strings.c:244
+msgid "TECHMACE"
+msgstr "테크메이스"
+
+#. GDAT 0x11/0x31/0x18
+#: po/dm2_source_strings.c:245
+msgid "TECHPLATE"
+msgstr "테크플레이트"
+
+#. GDAT 0x11/0x32/0x18
+#: po/dm2_source_strings.c:246
+msgid "TECHPOLEYN "
+msgstr "테크폴린"
+
+#. GDAT 0x11/0x34/0x18
+#: po/dm2_source_strings.c:247
+msgid "TECHSHIELD"
+msgstr "테크쉴드"
+
+#. GDAT 0x10/0x05/0x18
+#: po/dm2_source_strings.c:248
+msgid "TEMPEST"
+msgstr "폭풍우"
+
+#. GDAT 0x0f/0x0e/0x00
+#: po/dm2_source_strings.c:249
+msgid "THICKET THEIF"
+msgstr "덤불 도둑"
+
+#. GDAT 0x11/0x21/0x18
+#: po/dm2_source_strings.c:250
+msgid "THIGH PLATES"
+msgstr "허벅지 판"
+
+#. GDAT 0x0f/0x00/0x00
+#: po/dm2_source_strings.c:251
+msgid "THORN DEMON"
+msgstr "가시 악마"
+
+#. GDAT 0x0f/0x0f/0x00
+#: po/dm2_source_strings.c:252
+msgid "TIGER STRIPED WORM"
+msgstr "호랑이 줄무늬 벌레"
+
+#. GDAT 0x03/0x00/0x1c
+#: po/dm2_source_strings.c:253
+msgid ""
+"TO OPEN THE\n"
+"CASTLE DOOR\n"
+"YOU MUST GET\n"
+"A KEY PIECE\n"
+"FROM EACH OF\n"
+"THE FOUR CLANS\n"
+"OF SKULLKEEP"
+msgstr ""
+"열려면\n"
+"성문\n"
+"당신은 반드시 얻어야합니다\n"
+"핵심 작품\n"
+"각각에서\n"
+"네 가지 클랜\n"
+"스컬킵의"
+
+#. GDAT 0x0f/0x39/0x00
+#: po/dm2_source_strings.c:254
+msgid "TOMBSTONE"
+msgstr "묘비"
+
+#. GDAT 0x10/0x02/0x18
+#: po/dm2_source_strings.c:255
+msgid "TORCH"
+msgstr "토치"
+
+#. GDAT 0x11/0x27/0x18
+#: po/dm2_source_strings.c:256
+msgid "TORSO PLATE"
+msgstr "토르소 플레이트"
+
+#. GDAT 0x0f/0x1c/0x00
+#: po/dm2_source_strings.c:257
+msgid "TOWER BAT"
+msgstr "타워 배트"
+
+#. GDAT 0x0f/0x3c/0x00
+#: po/dm2_source_strings.c:258
+msgid "TRADING TABLE (BUYS)"
+msgstr "거래 테이블(매수)"
+
+#. GDAT 0x0f/0x3b/0x00
+#: po/dm2_source_strings.c:259
+msgid "TRADING TABLE (SELLS)"
+msgstr "거래 테이블(판매)"
+
+#. GDAT 0x0f/0x14/0x00
+#: po/dm2_source_strings.c:260
+msgid "TREE"
+msgstr "나무"
+
+#. GDAT 0x0f/0x12/0x00
+#: po/dm2_source_strings.c:261
+msgid "TREE GORGON"
+msgstr "나무 고르곤"
+
+#. GDAT 0x11/0x14/0x18
+#: po/dm2_source_strings.c:262
+msgid "TUNIC"
+msgstr "튜닉"
+
+#. GDAT 0x0f/0x35/0x00
+#: po/dm2_source_strings.c:263
+msgid "U-HAUL MINION"
+msgstr "유홀 미니언"
+
+#. GDAT 0x15/0x21/0x18
+#: po/dm2_source_strings.c:264
+msgid "VACUUM FUSE"
+msgstr "진공 퓨즈"
+
+#. GDAT 0x0f/0x1f/0x00
+#: po/dm2_source_strings.c:265
+msgid "VEXIRK KING"
+msgstr "벡시르크 킹"
+
+#. GDAT 0x07/0x00/0x24
+#: po/dm2_source_strings.c:266
+msgid "VITALITY"
+msgstr "활력"
+
+#. GDAT 0x0f/0x46/0x00
+#: po/dm2_source_strings.c:267
+msgid "VOID DOOR"
+msgstr "보이드 도어"
+
+#. GDAT 0x10/0x13/0x18
+#: po/dm2_source_strings.c:268
+msgid "VORAX"
+msgstr "보락스"
+
+#. GDAT 0x10/0x10/0x18
+#: po/dm2_source_strings.c:269
+msgid "VORPAL BLADE"
+msgstr "보팔 블레이드"
+
+#. GDAT 0x0f/0x02/0x00
+#: po/dm2_source_strings.c:270
+msgid "VORTEX"
+msgstr "소용돌이"
+
+#. GDAT 0x01/0x00/0x11
+#: po/dm2_source_strings.c:271
+msgid "WAKE UP"
+msgstr "일어나"
+
+#. GDAT 0x10/0x18/0x18
+#: po/dm2_source_strings.c:272
+msgid "WAR CLUB"
+msgstr "워클럽"
+
+#. GDAT 0x13/0x0f/0x18
+#: po/dm2_source_strings.c:273
+msgid "WATER FLASK"
+msgstr "물병"
+
+#. GDAT 0x07/0x00/0x23
+#: po/dm2_source_strings.c:274
+msgid "WISDOM"
+msgstr "지혜"
+
+#. GDAT 0x07/0x00/0x03
+#: po/dm2_source_strings.c:275
+msgid "WIZARD"
+msgstr "마법사"
+
+#. GDAT 0x0f/0x4a/0x00
+#: po/dm2_source_strings.c:276
+msgid "WOLF"
+msgstr "늑대"
+
+#. GDAT 0x11/0x1e/0x18
+#: po/dm2_source_strings.c:277
+msgid "WOOD SHIELD"
+msgstr "나무 방패"
+
+#. GDAT 0x0f/0x19/0x00
+#: po/dm2_source_strings.c:278
+msgid "WOOD TABLE"
+msgstr "우드 테이블"
+
+#. GDAT 0x15/0x39/0x18
+#: po/dm2_source_strings.c:279
+msgid "WORM ROUND"
+msgstr "웜 라운드"
+
+#. GDAT 0x01/0x00/0x0e
+#: po/dm2_source_strings.c:280
+msgid "' AWAKENED."
+msgstr "' 깨어났습니다."
+
+#. GDAT 0x01/0x00/0x06
+#: po/dm2_source_strings.c:281
+msgid "' JUST GAINED A FIGHTER LEVEL."
+msgstr "' 방금 파이터 레벨을 얻었습니다."
+
+#. GDAT 0x01/0x00/0x07
+#: po/dm2_source_strings.c:282
+msgid "' JUST GAINED A NINJA LEVEL."
+msgstr "' 방금 닌자 레벨을 얻었습니다."
+
+#. GDAT 0x01/0x00/0x08
+#: po/dm2_source_strings.c:283
+msgid "' JUST GAINED A PRIEST LEVEL."
+msgstr "' 방금 사제 레벨을 얻었습니다."
+
+#. GDAT 0x01/0x00/0x09
+#: po/dm2_source_strings.c:284
+msgid "' JUST GAINED A WIZARD LEVEL."
+msgstr "' 방금 마법사 레벨을 얻었습니다."
+
+#. GDAT 0x15/0x00/0x18
+#: po/dm2_source_strings.c:285
+msgid "'BONES"
+msgstr "'본즈"
+
+#. GDAT 0x07/0x00/0x1f
+#: po/dm2_source_strings.c:286
+msgid "*.+ KG."
+msgstr "*.+KG."
+
+#. GDAT 0x07/0x00/0x2a
+#: po/dm2_source_strings.c:287
+msgid ",.-/..0 KG"
+msgstr ",. -/ ..0KG"
+
+#. GDAT 0x07/0x00/0x0c
+#: po/dm2_source_strings.c:288
+msgid "` MASTER 1"
+msgstr "` 마스터 1"
+
+#. GDAT 0x07/0x00/0x0d
+#: po/dm2_source_strings.c:289
+msgid "a MASTER 1"
+msgstr "마스터 1"
+
+#. GDAT 0x07/0x00/0x0e
+#: po/dm2_source_strings.c:290
+msgid "b MASTER 1"
+msgstr "b 마스터 1"
+
+#. GDAT 0x07/0x00/0x0f
+#: po/dm2_source_strings.c:291
+msgid "c MASTER 1"
+msgstr "c 마스터 1"
+
+#. GDAT 0x07/0x00/0x10
+#: po/dm2_source_strings.c:292
+msgid "d MASTER 1"
+msgstr "d 마스터 1"
+
+#. GDAT 0x07/0x00/0x11
+#: po/dm2_source_strings.c:293
+msgid "e MASTER 1"
+msgstr "e 마스터 1"
+
+#. GDAT 0x15/0x13/0x18
+#: po/dm2_source_strings.c:294
+msgid "f KEY"
+msgstr "f 키"
+
+#. GDAT 0x13/0x0b/0x18
+#: po/dm2_source_strings.c:295
+msgid "f POTION"
+msgstr "f 포션"
+
+#. GDAT 0x15/0x3e/0x18
+#: po/dm2_source_strings.c:296
+msgid "f m"
+msgstr "에프엠"
+
+#. GDAT 0x13/0x0c/0x18
+#: po/dm2_source_strings.c:297
+msgid "f p POTION"
+msgstr "f p 포션"
+
+#. GDAT 0x13/0x08/0x18
+#: po/dm2_source_strings.c:298
+msgid "f p t POTION"
+msgstr "f p t 포션"
+
+#. GDAT 0x13/0x09/0x18
+#: po/dm2_source_strings.c:299
+msgid "f p u POTION"
+msgstr "f p u 포션"
+
+#. GDAT 0x15/0x15/0x18
+#: po/dm2_source_strings.c:300
+msgid "g KEY"
+msgstr "g 키"
+
+#. GDAT 0x13/0x0e/0x18
+#: po/dm2_source_strings.c:301
+msgid "g POTION"
+msgstr "g 물약"
+
+#. GDAT 0x13/0x0a/0x18
+#: po/dm2_source_strings.c:302
+msgid "g p POTION"
+msgstr "g p 포션"
+
+#. GDAT 0x15/0x14/0x18
+#: po/dm2_source_strings.c:303
+msgid "h KEY"
+msgstr "h 키"
+
+#. GDAT 0x13/0x06/0x18
+#: po/dm2_source_strings.c:304
+msgid "h p s POTION"
+msgstr "hp s 포션"
+
+#. GDAT 0x13/0x13/0x18
+#: po/dm2_source_strings.c:305
+msgid "i BOMB"
+msgstr "나는 폭탄"
+
+#. GDAT 0x15/0x16/0x18
+#: po/dm2_source_strings.c:306
+msgid "i KEY"
+msgstr "나는 키"
+
+#. GDAT 0x13/0x07/0x18
+#: po/dm2_source_strings.c:307
+msgid "i p r POTION"
+msgstr "i p r 포션"
+
+#. GDAT 0x10/0x11/0x18
+#: po/dm2_source_strings.c:308
+msgid "k BLADE"
+msgstr "k 블레이드"
+
+#. GDAT 0x13/0x0d/0x18
+#: po/dm2_source_strings.c:309
+msgid "k p v POTION"
+msgstr "k p v 포션"
+
+#. GDAT 0x13/0x03/0x18
+#: po/dm2_source_strings.c:310
+msgid "l BOMB"
+msgstr "l 폭탄"
+
+#. GDAT 0x15/0x12/0x18
+#: po/dm2_source_strings.c:311
+msgid "o KEY"
+msgstr "o 키"
+
+#. GDAT 0x15/0x17/0x18
+#: po/dm2_source_strings.c:312
+msgid "v KEY"
+msgstr "v 키"
+
+#. GDAT 0x11/0x2e/0x18
+#: po/dm2_source_strings.c:313
+msgid "vw GREAVE"
+msgstr "폭스바겐 그리브"
+
+#. GDAT 0x11/0x2b/0x18
+#: po/dm2_source_strings.c:314
+msgid "vw HELM"
+msgstr "폭스바겐 헬멧"
+
+#. GDAT 0x11/0x2c/0x18
+#: po/dm2_source_strings.c:315
+msgid "vw PLATE"
+msgstr "vw 플레이트"
+
+#. GDAT 0x11/0x2d/0x18
+#: po/dm2_source_strings.c:316
+msgid "vw POLEYN"
+msgstr "폭스바겐 폴리인"
+
+#. GDAT 0x11/0x2f/0x18
+#: po/dm2_source_strings.c:317
+msgid "vw SHIELD"
+msgstr "폭스바겐 쉴드"
+
+#. GDAT 0x11/0x2a/0x18
+#: po/dm2_source_strings.c:318
+msgid "w SHIELD"
+msgstr "w 쉴드"

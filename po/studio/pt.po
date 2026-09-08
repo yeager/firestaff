@@ -15,7 +15,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: scripts/firestaff_artpack_studio.py:1775
-#, fuzzy
 msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
@@ -31,7 +30,6 @@ msgstr "Nenhum dado de jogo importado"
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
 #: scripts/firestaff_savegame_editor.py:510
-#, fuzzy
 msgid "Settings..."
 msgstr "Configurações do mapa"
 
@@ -79,7 +77,6 @@ msgstr "Exportar .fsart"
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
 #: scripts/firestaff_savegame_editor.py:965
-#, fuzzy
 msgid "Settings"
 msgstr "Configurações do mapa"
 
@@ -87,7 +84,7 @@ msgstr "Configurações do mapa"
 #: scripts/firestaff_dungeon_studio.py:473
 #: scripts/firestaff_savegame_editor.py:514
 msgid "Auto (System Language)"
-msgstr ""
+msgstr "Automático (idioma do sistema)"
 
 #: scripts/firestaff_artpack_studio.py:1850
 msgid "V1 assets / V2.2 targets"
@@ -185,55 +182,52 @@ msgstr ""
 "Reinicie o aplicativo para efeito completo."
 
 #: scripts/firestaff_artpack_studio.py:1964
-#, fuzzy
 msgid "AI Command Template"
 msgstr "Insira primeiro um modelo de comando IA."
 
 #: scripts/firestaff_artpack_studio.py:1966
 #, python-brace-format
 msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
-msgstr ""
+msgstr "Espaços reservados: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
 
 #: scripts/firestaff_artpack_studio.py:1970
 msgid "Command"
-msgstr ""
+msgstr "Comando"
 
 #: scripts/firestaff_artpack_studio.py:1973
 msgid "API Key"
-msgstr ""
+msgstr "Chave de API"
 
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored in ~/.firestaff/studio_settings.json"
-msgstr ""
+msgstr "Armazenado em ~/.firestaff/studio_settings.json"
 
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored securely in system keychain"
-msgstr ""
+msgstr "Armazenado com segurança no chaveiro do sistema"
 
 #: scripts/firestaff_artpack_studio.py:1982
 #: scripts/firestaff_savegame_editor.py:733
 msgid "Key"
-msgstr ""
+msgstr "Chave"
 
 #: scripts/firestaff_artpack_studio.py:1986
 msgid "API Provider"
-msgstr ""
+msgstr "Provedor de API"
 
 #: scripts/firestaff_artpack_studio.py:2002
-#, fuzzy
 msgid "Settings saved"
 msgstr "Configurações do mapa"
 
 #: scripts/firestaff_artpack_studio.py:2006
 #: scripts/firestaff_savegame_editor.py:502
 #: scripts/firestaff_savegame_editor.py:528
-#, fuzzy
 msgid "Save"
 msgstr "Salvo: {}"
 
 #: scripts/firestaff_artpack_studio.py:2007
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
@@ -629,24 +623,22 @@ msgid "New Level"
 msgstr "Novo nível"
 
 #: scripts/firestaff_dungeon_studio.py:1024
-#, fuzzy
 msgid "Show grid"
 msgstr "Mostrar grade"
 
 #: scripts/firestaff_dungeon_studio.py:1026
-#, fuzzy
 msgid "Show things"
 msgstr "Mostrar objetos"
 
 #: scripts/firestaff_dungeon_studio.py:1028
 #: scripts/firestaff_savegame_editor.py:971
 msgid "Use system language"
-msgstr ""
+msgstr "Usar linguagem do sistema"
 
 #: scripts/firestaff_dungeon_studio.py:1030
 #: scripts/firestaff_savegame_editor.py:973
 msgid "Close"
-msgstr ""
+msgstr "Fechar"
 
 #: scripts/firestaff_dungeon_studio.py:1042
 msgid "New dungeon created"
@@ -795,475 +787,464 @@ msgstr "Dir."
 
 #: scripts/firestaff_savegame_editor.py:140
 msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
-msgstr ""
+msgstr "Estado global da masmorra: contagens de eventos, limites de grupos ativos, sementes RNG. Corrigidos 128 bytes."
 
 #: scripts/firestaff_savegame_editor.py:141
 msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
-msgstr ""
+msgstr "Grupos ativos de criaturas/itens na masmorra. Tamanho variável de GLOBAL_DATA @46."
 
 #: scripts/firestaff_savegame_editor.py:142
 msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
-msgstr ""
+msgstr "Registros de campeões (4 x 319 bytes) + informações do grupo (128 bytes). HP, estatísticas, habilidades, inventário."
 
 #: scripts/firestaff_savegame_editor.py:143
 msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
-msgstr ""
+msgstr "Lista de eventos da masmorra: temporizadores, gatilhos, sensores. Tamanho variável de GLOBAL_DATA @28."
 
 #: scripts/firestaff_savegame_editor.py:144
 msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
-msgstr ""
+msgstr "Fila de linha do tempo/cronômetro para eventos agendados. Restante do arquivo após outras partes."
 
 #: scripts/firestaff_savegame_editor.py:185
 msgid "Random Words [0-148]"
-msgstr ""
+msgstr "Palavras aleatórias [0-148]"
 
 #: scripts/firestaff_savegame_editor.py:186
 msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
-msgstr ""
+msgstr "Bloco de ofuscação XOR – 149 palavras aleatórias de 16 bits (298 bytes)"
 
 #: scripts/firestaff_savegame_editor.py:187
 msgid "Format Version"
-msgstr ""
+msgstr "Versão do formato"
 
 #: scripts/firestaff_savegame_editor.py:188
 msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
-msgstr ""
+msgstr "Salve a versão do formato. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
 
 #: scripts/firestaff_savegame_editor.py:189
-#, fuzzy
 msgid "Game ID"
 msgstr "Jogo"
 
 #: scripts/firestaff_savegame_editor.py:190
 msgid "Identifies which game created this save"
-msgstr ""
+msgstr "Identifica qual jogo criou este save"
 
 #: scripts/firestaff_savegame_editor.py:191
 msgid "Key: GLOBAL_DATA"
-msgstr ""
+msgstr "Chave: GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:192
 msgid "XOR deobfuscation key for GLOBAL_DATA"
-msgstr ""
+msgstr "Chave de desofuscação XOR para GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:193
 msgid "Key: ACTIVE_GROUP"
-msgstr ""
+msgstr "Chave: ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:194
 msgid "XOR deobfuscation key for ACTIVE_GROUP"
-msgstr ""
+msgstr "Chave de desofuscação XOR para ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:195
 msgid "Key: PARTY"
-msgstr ""
+msgstr "Chave: FESTA"
 
 #: scripts/firestaff_savegame_editor.py:196
 msgid "XOR deobfuscation key for PARTY"
-msgstr ""
+msgstr "Chave de desofuscação XOR para PARTY"
 
 #: scripts/firestaff_savegame_editor.py:197
 msgid "Key: EVENTS"
-msgstr ""
+msgstr "Chave: EVENTOS"
 
 #: scripts/firestaff_savegame_editor.py:198
 msgid "XOR deobfuscation key for EVENTS"
-msgstr ""
+msgstr "Chave de desofuscação XOR para EVENTOS"
 
 #: scripts/firestaff_savegame_editor.py:199
 msgid "Key: TIMELINE"
-msgstr ""
+msgstr "Chave: LINHA DO TEMPO"
 
 #: scripts/firestaff_savegame_editor.py:200
 msgid "XOR deobfuscation key for TIMELINE"
-msgstr ""
+msgstr "Chave de desofuscação XOR para TIMELINE"
 
 #: scripts/firestaff_savegame_editor.py:201
 msgid "Checksum: GLOBAL_DATA"
-msgstr ""
+msgstr "Soma de verificação: GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:202
 msgid "F0418 checksum for GLOBAL_DATA validation"
-msgstr ""
+msgstr "Soma de verificação F0418 para validação GLOBAL_DATA"
 
 #: scripts/firestaff_savegame_editor.py:203
 msgid "Checksum: ACTIVE_GROUP"
-msgstr ""
+msgstr "Soma de verificação: ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:204
 msgid "F0418 checksum for ACTIVE_GROUP validation"
-msgstr ""
+msgstr "Soma de verificação F0418 para validação ACTIVE_GROUP"
 
 #: scripts/firestaff_savegame_editor.py:205
 msgid "Checksum: PARTY"
-msgstr ""
+msgstr "Soma de verificação: FESTA"
 
 #: scripts/firestaff_savegame_editor.py:206
 msgid "F0418 checksum for PARTY validation"
-msgstr ""
+msgstr "Soma de verificação F0418 para validação PARTY"
 
 #: scripts/firestaff_savegame_editor.py:207
 msgid "Checksum: EVENTS"
-msgstr ""
+msgstr "Soma de verificação: EVENTOS"
 
 #: scripts/firestaff_savegame_editor.py:208
 msgid "F0418 checksum for EVENTS validation"
-msgstr ""
+msgstr "Checksum F0418 para validação de EVENTOS"
 
 #: scripts/firestaff_savegame_editor.py:209
 msgid "Checksum: TIMELINE"
-msgstr ""
+msgstr "Soma de verificação: LINHA DO TEMPO"
 
 #: scripts/firestaff_savegame_editor.py:210
 msgid "F0418 checksum for TIMELINE validation"
-msgstr ""
+msgstr "Soma de verificação F0418 para validação TIMELINE"
 
 #: scripts/firestaff_savegame_editor.py:211
 #: scripts/firestaff_savegame_editor.py:633
 msgid "Platform"
-msgstr ""
+msgstr "Plataforma"
 
 #: scripts/firestaff_savegame_editor.py:212
 msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
-msgstr ""
+msgstr "Plataforma alvo. 1=PC, 2=Amiga, 9=PC Engine, etc."
 
 #: scripts/firestaff_savegame_editor.py:213
 msgid "Dungeon ID"
-msgstr ""
+msgstr "ID da masmorra"
 
 #: scripts/firestaff_savegame_editor.py:214
 msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
-msgstr ""
+msgstr "Masmorra. 0=DM1, 1=CSB, 10=Theron"
 
 #: scripts/firestaff_savegame_editor.py:220
 msgid "Title"
-msgstr ""
+msgstr "Título"
 
 #: scripts/firestaff_savegame_editor.py:221
-#, fuzzy
 msgid "Direction"
 msgstr "Posição"
 
 #: scripts/firestaff_savegame_editor.py:222
 msgid "Action Index"
-msgstr ""
+msgstr "Índice de Ação"
 
 #: scripts/firestaff_savegame_editor.py:223
 msgid "Poison"
-msgstr ""
+msgstr "Veneno"
 
 #: scripts/firestaff_savegame_editor.py:224
-#, fuzzy
 msgid "HP Current"
 msgstr "Recurso atual"
 
 #: scripts/firestaff_savegame_editor.py:225
 msgid "HP Max"
-msgstr ""
+msgstr "HP máx."
 
 #: scripts/firestaff_savegame_editor.py:226
-#, fuzzy
 msgid "Stamina Current"
 msgstr "Recurso atual"
 
 #: scripts/firestaff_savegame_editor.py:227
 msgid "Stamina Max"
-msgstr ""
+msgstr "Vigor máximo"
 
 #: scripts/firestaff_savegame_editor.py:228
-#, fuzzy
 msgid "Mana Current"
 msgstr "Recurso atual"
 
 #: scripts/firestaff_savegame_editor.py:229
 msgid "Mana Max"
-msgstr ""
+msgstr "Mana Máx."
 
 #: scripts/firestaff_savegame_editor.py:230
 #: scripts/firestaff_savegame_editor.py:670
 msgid "Food"
-msgstr ""
+msgstr "Comida"
 
 #: scripts/firestaff_savegame_editor.py:231
 #: scripts/firestaff_savegame_editor.py:670
 msgid "Water"
-msgstr ""
+msgstr "Água"
 
 #: scripts/firestaff_savegame_editor.py:232
 msgid "Load"
-msgstr ""
+msgstr "Carregar"
 
 #: scripts/firestaff_savegame_editor.py:236
 msgid "Fighter"
-msgstr ""
+msgstr "Lutador"
 
 #: scripts/firestaff_savegame_editor.py:237
 msgid "Ninja"
-msgstr ""
+msgstr "Ninja"
 
 #: scripts/firestaff_savegame_editor.py:238
 msgid "Priest"
-msgstr ""
+msgstr "Padre"
 
 #: scripts/firestaff_savegame_editor.py:239
 msgid "Wizard"
-msgstr ""
+msgstr "Assistente"
 
 #: scripts/firestaff_savegame_editor.py:240
 msgid "Swing"
-msgstr ""
+msgstr "Balanço"
 
 #: scripts/firestaff_savegame_editor.py:241
 msgid "Thrust"
-msgstr ""
+msgstr "Impulso"
 
 #: scripts/firestaff_savegame_editor.py:242
 msgid "Club"
-msgstr ""
+msgstr "Clube"
 
 #: scripts/firestaff_savegame_editor.py:243
 msgid "Parry"
-msgstr ""
+msgstr "Desviar"
 
 #: scripts/firestaff_savegame_editor.py:244
 msgid "Steal"
-msgstr ""
+msgstr "Roubar"
 
 #: scripts/firestaff_savegame_editor.py:245
 msgid "Fight"
-msgstr ""
+msgstr "Lutar"
 
 #: scripts/firestaff_savegame_editor.py:246
 msgid "Throw"
-msgstr ""
+msgstr "Jogue"
 
 #: scripts/firestaff_savegame_editor.py:247
 msgid "Shoot"
-msgstr ""
+msgstr "Atire"
 
 #: scripts/firestaff_savegame_editor.py:248
 msgid "Identify"
-msgstr ""
+msgstr "Identificar"
 
 #: scripts/firestaff_savegame_editor.py:249
 msgid "Heal"
-msgstr ""
+msgstr "Curar"
 
 #: scripts/firestaff_savegame_editor.py:250
 msgid "Influence"
-msgstr ""
+msgstr "Influência"
 
 #: scripts/firestaff_savegame_editor.py:251
 msgid "Defend"
-msgstr ""
+msgstr "Defender"
 
 #: scripts/firestaff_savegame_editor.py:252
 msgid "Fire"
-msgstr ""
+msgstr "Fogo"
 
 #: scripts/firestaff_savegame_editor.py:253
 msgid "Air"
-msgstr ""
+msgstr "Ar"
 
 #: scripts/firestaff_savegame_editor.py:254
 msgid "Earth"
-msgstr ""
+msgstr "Terra"
 
 #: scripts/firestaff_savegame_editor.py:255
 msgid "Water (spell)"
-msgstr ""
+msgstr "Água (feitiço)"
 
 #: scripts/firestaff_savegame_editor.py:259
 msgid "Event Count"
-msgstr ""
+msgstr "Contagem de eventos"
 
 #: scripts/firestaff_savegame_editor.py:260
 msgid "Number of active events"
-msgstr ""
+msgstr "Número de eventos ativos"
 
 #: scripts/firestaff_savegame_editor.py:261
 msgid "First Unused Event"
-msgstr ""
+msgstr "Primeiro evento não utilizado"
 
 #: scripts/firestaff_savegame_editor.py:262
 msgid "Index of first free event slot"
-msgstr ""
+msgstr "Índice do primeiro slot de evento gratuito"
 
 #: scripts/firestaff_savegame_editor.py:263
 msgid "Event Max Count"
-msgstr ""
+msgstr "Contagem máxima de eventos"
 
 #: scripts/firestaff_savegame_editor.py:264
 msgid "Max events (determines EVENTS part size)"
-msgstr ""
+msgstr "Máximo de eventos (determina o tamanho da parte EVENTS)"
 
 #: scripts/firestaff_savegame_editor.py:265
 msgid "Active Group Count"
-msgstr ""
+msgstr "Contagem de grupos ativos"
 
 #: scripts/firestaff_savegame_editor.py:266
 msgid "Number of active creature/item groups"
-msgstr ""
+msgstr "Número de grupos ativos de criaturas/itens"
 
 #: scripts/firestaff_savegame_editor.py:267
 msgid "Max Active Group Count"
-msgstr ""
+msgstr "Contagem máxima de grupos ativos"
 
 #: scripts/firestaff_savegame_editor.py:268
 msgid "Max active groups (determines ACTIVE_GROUP size)"
-msgstr ""
+msgstr "Máximo de grupos ativos (determina o tamanho de ACTIVE_GROUP)"
 
 #: scripts/firestaff_savegame_editor.py:272
 msgid "Magical Light"
-msgstr ""
+msgstr "Luz Mágica"
 
 #: scripts/firestaff_savegame_editor.py:273
 msgid "Light spell intensity (0=dark)"
-msgstr ""
+msgstr "Intensidade do feitiço Luz (0=escuro)"
 
 #: scripts/firestaff_savegame_editor.py:274
 msgid "Thief's Eye"
-msgstr ""
+msgstr "Olho de ladrão"
 
 #: scripts/firestaff_savegame_editor.py:275
 msgid "Thief's Eye active (0/1)"
-msgstr ""
+msgstr "Olho do Ladrão ativo (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:276
 msgid "Footprints"
-msgstr ""
+msgstr "Pegadas"
 
 #: scripts/firestaff_savegame_editor.py:277
 msgid "Footprints active (0/1)"
-msgstr ""
+msgstr "Pegadas ativas (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:278
 msgid "Shield"
-msgstr ""
+msgstr "Escudo"
 
 #: scripts/firestaff_savegame_editor.py:279
 msgid "Shield spell strength"
-msgstr ""
+msgstr "Força do feitiço do escudo"
 
 #: scripts/firestaff_savegame_editor.py:280
 msgid "Fire Shield"
-msgstr ""
+msgstr "Escudo de Fogo"
 
 #: scripts/firestaff_savegame_editor.py:281
 msgid "Fire Shield strength"
-msgstr ""
+msgstr "Força do Escudo de Fogo"
 
 #: scripts/firestaff_savegame_editor.py:282
 msgid "Spell Shield"
-msgstr ""
+msgstr "Escudo Mágico"
 
 #: scripts/firestaff_savegame_editor.py:283
 msgid "Spell Shield (Antimagic) strength"
-msgstr ""
+msgstr "Força do Escudo Mágico (Antimagica)"
 
 #: scripts/firestaff_savegame_editor.py:284
 msgid "Calming Scent"
-msgstr ""
+msgstr "Aroma calmante"
 
 #: scripts/firestaff_savegame_editor.py:285
 msgid "Calming influence active"
-msgstr ""
+msgstr "Influência calmante ativa"
 
 #: scripts/firestaff_savegame_editor.py:286
 msgid "Freeze Life"
-msgstr ""
+msgstr "Congelar Vida"
 
 #: scripts/firestaff_savegame_editor.py:287
 msgid "Freeze Life active (0/1)"
-msgstr ""
+msgstr "Congelar Vida ativa (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
 msgid "Champion {}"
-msgstr ""
+msgstr "Campeão {}"
 
 #: scripts/firestaff_savegame_editor.py:450
 msgid "Firestaff Savegame Editor 0.2"
-msgstr ""
+msgstr "Editor de jogo salvo do Firestaff 0.2"
 
 #: scripts/firestaff_savegame_editor.py:501
 msgid "Open..."
-msgstr ""
+msgstr "Abrir..."
 
 #: scripts/firestaff_savegame_editor.py:505
 msgid "Quit"
-msgstr ""
+msgstr "Sair"
 
 #: scripts/firestaff_savegame_editor.py:506
 #: scripts/firestaff_savegame_editor.py:630
-#, fuzzy
 msgid "File"
 msgstr "Todos os arquivos"
 
 #: scripts/firestaff_savegame_editor.py:527
 msgid "Open"
-msgstr ""
+msgstr "Abrir"
 
 #: scripts/firestaff_savegame_editor.py:529
 #: scripts/firestaff_savegame_editor.py:583
-#, fuzzy
 msgid "Save As"
 msgstr "Salvar como..."
 
 #: scripts/firestaff_savegame_editor.py:531
 msgid "No file loaded"
-msgstr ""
+msgstr "Nenhum arquivo carregado"
 
 #: scripts/firestaff_savegame_editor.py:558
 msgid "Open Savegame"
-msgstr ""
+msgstr "Abra o jogo salvo"
 
 #: scripts/firestaff_savegame_editor.py:559
 msgid "All Savegames"
-msgstr ""
+msgstr "Todos os jogos salvos"
 
 #: scripts/firestaff_savegame_editor.py:560
-#, fuzzy
 msgid "All Files"
 msgstr "Todos os arquivos"
 
 #: scripts/firestaff_savegame_editor.py:568
 msgid "Unrecognized savegame format."
-msgstr ""
+msgstr "Formato de savegame não reconhecido."
 
 #: scripts/firestaff_savegame_editor.py:571
-#, fuzzy
 msgid "Loaded: {}"
 msgstr "Alvo carregado: {}"
 
 #: scripts/firestaff_savegame_editor.py:576
 #: scripts/firestaff_savegame_editor.py:582
 msgid "No savegame loaded"
-msgstr ""
+msgstr "Nenhum jogo salvo carregado"
 
 #: scripts/firestaff_savegame_editor.py:576
 #: scripts/firestaff_savegame_editor.py:582
-#, fuzzy
 msgid "Warning"
 msgstr "Avisos"
 
 #: scripts/firestaff_savegame_editor.py:586
-#, fuzzy
 msgid "Saved as: {}"
 msgstr "Salvo: {}"
 
 #: scripts/firestaff_savegame_editor.py:622
 msgid "File Overview"
-msgstr ""
+msgstr "Visão geral do arquivo"
 
 #: scripts/firestaff_savegame_editor.py:624
 msgid "File Information"
-msgstr ""
+msgstr "Informações do arquivo"
 
 #: scripts/firestaff_savegame_editor.py:632
 msgid "Format"
-msgstr ""
+msgstr "Formato"
 
 #: scripts/firestaff_savegame_editor.py:632
 #: scripts/firestaff_savegame_editor.py:633
@@ -1272,136 +1253,129 @@ msgstr ""
 #: scripts/firestaff_savegame_editor.py:703
 #: scripts/firestaff_savegame_editor.py:705
 msgid "Unknown"
-msgstr ""
+msgstr "Desconhecido"
 
 #: scripts/firestaff_savegame_editor.py:634
 msgid "Dungeon"
-msgstr ""
+msgstr "Masmorra"
 
 #: scripts/firestaff_savegame_editor.py:639
-#, fuzzy
 msgid "Save Parts"
 msgstr "Salvar como..."
 
 #: scripts/firestaff_savegame_editor.py:641
 #: scripts/firestaff_savegame_editor.py:731
 msgid "Offset"
-msgstr ""
+msgstr "Deslocamento"
 
 #: scripts/firestaff_savegame_editor.py:641
 msgid "Part"
-msgstr ""
+msgstr "Parte"
 
 #: scripts/firestaff_savegame_editor.py:641
-#, fuzzy
 msgid "Status"
 msgstr "Estatísticas"
 
 #: scripts/firestaff_savegame_editor.py:651
 #: scripts/firestaff_savegame_editor.py:740
 msgid "MISMATCH"
-msgstr ""
+msgstr "INCOMPARÁVEL"
 
 #: scripts/firestaff_savegame_editor.py:651
-#, fuzzy
 msgid "Valid"
 msgstr "Validar"
 
 #: scripts/firestaff_savegame_editor.py:655
 msgid "Champions"
-msgstr ""
+msgstr "Campeões"
 
 #: scripts/firestaff_savegame_editor.py:682
 msgid "Header Fields"
-msgstr ""
+msgstr "Campos de cabeçalho"
 
 #: scripts/firestaff_savegame_editor.py:684
-#, fuzzy
 msgid "Description"
 msgstr "Posição"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Field"
-msgstr ""
+msgstr "Campo"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Hex"
-msgstr ""
+msgstr "Feitiço"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Value"
-msgstr ""
+msgstr "Valor"
 
 #: scripts/firestaff_savegame_editor.py:717
 msgid "DM1 PC34 Save Parts (F0417/F0418)"
-msgstr ""
+msgstr "DM1 PC34 Salvar Peças (F0417/F0418)"
 
 #: scripts/firestaff_savegame_editor.py:734
 msgid "Expected"
-msgstr ""
+msgstr "Esperado"
 
 #: scripts/firestaff_savegame_editor.py:735
 msgid "Actual"
-msgstr ""
+msgstr "Real"
 
 #: scripts/firestaff_savegame_editor.py:740
 msgid "VALID"
-msgstr ""
+msgstr "VÁLIDO"
 
 #: scripts/firestaff_savegame_editor.py:763
-#, fuzzy
 msgid "No champion data"
 msgstr "Importar dados de jogo"
 
 #: scripts/firestaff_savegame_editor.py:788
 msgid "Combat & Vitals"
-msgstr ""
+msgstr "Combate e sinais vitais"
 
 #: scripts/firestaff_savegame_editor.py:804
 msgid "Skills"
-msgstr ""
+msgstr "Habilidades"
 
 #: scripts/firestaff_savegame_editor.py:825
 msgid "No party info available"
-msgstr ""
+msgstr "Nenhuma informação sobre a festa disponível"
 
 #: scripts/firestaff_savegame_editor.py:828
 msgid "Party Info"
-msgstr ""
+msgstr "Informações da festa"
 
 #: scripts/firestaff_savegame_editor.py:851
-#, fuzzy
 msgid "No global data"
 msgstr "Importar dados de jogo"
 
 #: scripts/firestaff_savegame_editor.py:854
-#, fuzzy
 msgid "Global Data"
 msgstr "Importar dados de jogo"
 
 #: scripts/firestaff_savegame_editor.py:868
 msgid "Raw Data"
-msgstr ""
+msgstr "Dados brutos"
 
 #: scripts/firestaff_savegame_editor.py:888
 msgid "Header Words"
-msgstr ""
+msgstr "Palavras de cabeçalho"
 
 #: scripts/firestaff_savegame_editor.py:894
 msgid "Random Words"
-msgstr ""
+msgstr "Palavras aleatórias"
 
 #: scripts/firestaff_savegame_editor.py:895
 msgid "Part Keys"
-msgstr ""
+msgstr "Chaves de peças"
 
 #: scripts/firestaff_savegame_editor.py:896
 msgid "Checksums"
-msgstr ""
+msgstr "Somas de verificação"
 
 #: scripts/firestaff_savegame_editor.py:897
 msgid "Format/Platform/Dungeon"
-msgstr ""
+msgstr "Formato/Plataforma/Masmorra"
 
 #~ msgid "Coming soon"
 #~ msgstr "Em breve"

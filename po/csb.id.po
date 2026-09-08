@@ -1,0 +1,1818 @@
+# Generated only from the CSB media selected by csb_v1_boot.
+# graphics-md5: 61fbfd56887c94adc26888a9491c6611
+# dungeon-md5: 6695d2acebce49f95db1d8f3a5c733de
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-csb\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Source-owned C699 action name
+msgid "N"
+msgstr "N"
+
+#. Source-owned C699 action name
+msgid "BLOCK"
+msgstr "BLOK"
+
+#. Source-owned C699 action name
+msgid "CHOP"
+msgstr "MEMOTONG"
+
+#. Source-owned C699 action name
+msgid "X"
+msgstr "X"
+
+#. Source-owned C699 action name
+msgid "BLOW HORN"
+msgstr "TIAP TANDUK"
+
+#. Source-owned C699 action name
+msgid "FLIP"
+msgstr "BALIK"
+
+#. Source-owned C699 action name
+msgid "PUNCH"
+msgstr "Pukulan"
+
+#. Source-owned C699 action name
+msgid "KICK"
+msgstr "Tendang"
+
+#. Source-owned C699 action name
+msgid "WAR CRY"
+msgstr "PERANG MENANGIS"
+
+#. Source-owned C699 action name
+msgid "STAB"
+msgstr "Tusuk"
+
+#. Source-owned C699 action name
+msgid "CLIMB DOWN"
+msgstr "NAIK KE BAWAH"
+
+#. Source-owned C699 action name
+msgid "FREEZE LIFE"
+msgstr "BEKUKAN HIDUP"
+
+#. Source-owned C699 action name
+msgid "HIT"
+msgstr "PUKUL"
+
+#. Source-owned C699 action name
+msgid "SWING"
+msgstr "AYUNAN"
+
+#. Source-owned C699 action name
+msgid "THRUST"
+msgstr "DORONG"
+
+#. Source-owned C699 action name
+msgid "JAB"
+msgstr "JAB"
+
+#. Source-owned C699 action name
+msgid "PARRY"
+msgstr "menangkis"
+
+#. Source-owned C699 action name
+msgid "HACK"
+msgstr "HACK"
+
+#. Source-owned C699 action name
+msgid "BERZERK"
+msgstr "BERZERK"
+
+#. Source-owned C699 action name
+msgid "FIREBALL"
+msgstr "BOLA KEBAKARAN"
+
+#. Source-owned C699 action name
+msgid "DISPELL"
+msgstr "HAPUS"
+
+#. Source-owned C699 action name
+msgid "CONFUSE"
+msgstr "BINGUNG"
+
+#. Source-owned C699 action name
+msgid "LIGHTNING"
+msgstr "PETIR"
+
+#. Source-owned C699 action name
+msgid "DISRUPT"
+msgstr "GANGGUAN"
+
+#. Source-owned C699 action name
+msgid "MELEE"
+msgstr "jarak dekat"
+
+#. Source-owned C699 action name
+msgid "INVOKE"
+msgstr "MEMINTA"
+
+#. Source-owned C699 action name
+msgid "SLASH"
+msgstr "TEKAN"
+
+#. Source-owned C699 action name
+msgid "CLEAVE"
+msgstr "MEMBELI"
+
+#. Source-owned C699 action name
+msgid "BASH"
+msgstr "BASH"
+
+#. Source-owned C699 action name
+msgid "STUN"
+msgstr "setrum"
+
+#. Source-owned C699 action name
+msgid "SHOOT"
+msgstr "TEMBAK"
+
+#. Source-owned C699 action name
+msgid "SPELLSHIELD"
+msgstr "PERISAI MANFAAT"
+
+#. Source-owned C699 action name
+msgid "FIRESHIELD"
+msgstr "PERISAI KEBAKARAN"
+
+#. Source-owned C699 action name
+msgid "FLUXCAGE"
+msgstr "FLUXCAGE"
+
+#. Source-owned C699 action name
+msgid "HEAL"
+msgstr "SEMBUH"
+
+#. Source-owned C699 action name
+msgid "CALM"
+msgstr "TENANG"
+
+#. Source-owned C699 action name
+msgid "LIGHT"
+msgstr "CAHAYA"
+
+#. Source-owned C699 action name
+msgid "WINDOW"
+msgstr "JENDELA"
+
+#. Source-owned C699 action name
+msgid "SPIT"
+msgstr "meludah"
+
+#. Source-owned C699 action name
+msgid "BRANDISH"
+msgstr "MEREK"
+
+#. Source-owned C699 action name
+msgid "THROW"
+msgstr "MEMBUANG"
+
+#. Source-owned C699 action name
+msgid "FUSE"
+msgstr "SEKERING"
+
+#. Source-owned M564 object name
+msgid "COMPASS"
+msgstr "Kompas"
+
+#. Source-owned M564 object name
+msgid "TORCH"
+msgstr "obor"
+
+#. Source-owned M564 object name
+msgid "WATERSKIN"
+msgstr "KULIT AIR"
+
+#. Source-owned M564 object name
+msgid "WATER"
+msgstr "AIR"
+
+#. Source-owned M564 object name
+msgid "JEWEL SYMAL"
+msgstr "SIMAL PERMATA"
+
+#. Source-owned M564 object name
+msgid "ILLUMULET"
+msgstr "ILLUMULET"
+
+#. Source-owned M564 object name
+msgid "FLAMITT"
+msgstr "FLAMIT"
+
+#. Source-owned M564 object name
+msgid "EYE OF TIME"
+msgstr "MATA WAKTU"
+
+#. Source-owned M564 object name
+msgid "STORMRING"
+msgstr "badai"
+
+#. Source-owned M564 object name
+msgid "STAFF OF CLAWS"
+msgstr "STAF CAKAR"
+
+#. Source-owned M564 object name
+msgid "STORM"
+msgstr "badai"
+
+#. Source-owned M564 object name
+msgid "RA BLADE"
+msgstr "PISAU RA"
+
+#. Source-owned M564 object name
+msgid "THE FIRESTAFF"
+msgstr "PEMADAM KEBAKARAN"
+
+#. Source-owned M564 object name
+msgid "OPEN SCROLL"
+msgstr "BUKA GULIR"
+
+#. Source-owned M564 object name
+msgid "SCROLL"
+msgstr "GULIR"
+
+#. Source-owned M564 object name
+msgid "DAGGER"
+msgstr "belati"
+
+#. Source-owned M564 object name
+msgid "FALCHION"
+msgstr "FALCHION"
+
+#. Source-owned M564 object name
+msgid "SWORD"
+msgstr "PEDANG"
+
+#. Source-owned M564 object name
+msgid "RAPIER"
+msgstr "RAPIER"
+
+#. Source-owned M564 object name
+msgid "BITER"
+msgstr "penggigit"
+
+#. Source-owned M564 object name
+msgid "SAMURAI SWORD"
+msgstr "PEDANG SAMURAI"
+
+#. Source-owned M564 object name
+msgid "SIDE SPLITTER"
+msgstr "PEMISAH SAMPING"
+
+#. Source-owned M564 object name
+msgid "DIAMOND EDGE"
+msgstr "TEPI BERLIAN"
+
+#. Source-owned M564 object name
+msgid "VORPAL BLADE"
+msgstr "PISAU VORPAL"
+
+#. Source-owned M564 object name
+msgid "DRAGON FANG"
+msgstr "taring naga"
+
+#. Source-owned M564 object name
+msgid "AXE"
+msgstr "kapak"
+
+#. Source-owned M564 object name
+msgid "EXECUTIONER"
+msgstr "EKSEKUSI"
+
+#. Source-owned M564 object name
+msgid "MACE"
+msgstr "gada"
+
+#. Source-owned M564 object name
+msgid "MACE OF ORDER"
+msgstr "GADA PESANAN"
+
+#. Source-owned M564 object name
+msgid "MORNINGSTAR"
+msgstr "BINTANG PAGI"
+
+#. Source-owned M564 object name
+msgid "CLUB"
+msgstr "KLUB"
+
+#. Source-owned M564 object name
+msgid "STONE CLUB"
+msgstr "KLUB BATU"
+
+#. Source-owned M564 object name
+msgid "CLAW BOW"
+msgstr "Busur Cakar"
+
+#. Source-owned M564 object name
+msgid "CROSSBOW"
+msgstr "Busur silang"
+
+#. Source-owned M564 object name
+msgid "ARROW"
+msgstr "PANAH"
+
+#. Source-owned M564 object name
+msgid "SLAYER"
+msgstr "PEMBANTAI"
+
+#. Source-owned M564 object name
+msgid "SLING"
+msgstr "selempang"
+
+#. Source-owned M564 object name
+msgid "ROCK"
+msgstr "BATU"
+
+#. Source-owned M564 object name
+msgid "POISON DART"
+msgstr "PANAH RACUN"
+
+#. Source-owned M564 object name
+msgid "THROWING STAR"
+msgstr "MEMBUAT BINTANG"
+
+#. Source-owned M564 object name
+msgid "STICK"
+msgstr "TETAP"
+
+#. Source-owned M564 object name
+msgid "STAFF"
+msgstr "STAF"
+
+#. Source-owned M564 object name
+msgid "WAND"
+msgstr "tongkat"
+
+#. Source-owned M564 object name
+msgid "TEOWAND"
+msgstr "TEOWAND"
+
+#. Source-owned M564 object name
+msgid "YEW STAFF"
+msgstr "STAF YA"
+
+#. Source-owned M564 object name
+msgid "STAFF OF IRRA"
+msgstr "STAF IRRA"
+
+#. Source-owned M564 object name
+msgid "CROSS OF NETA"
+msgstr "SILANG NETA"
+
+#. Source-owned M564 object name
+msgid "SERPENT STAFF"
+msgstr "STAF ULAR"
+
+#. Source-owned M564 object name
+msgid "DRAGON SPIT"
+msgstr "ludah naga"
+
+#. Source-owned M564 object name
+msgid "SCEPTRE OF LYF"
+msgstr "tongkat kerajaan LYF"
+
+#. Source-owned M564 object name
+msgid "TATTERED SHIRT"
+msgstr "KEMEJA KOMPAK"
+
+#. Source-owned M564 object name
+msgid "FINE ROBE"
+msgstr "JUBAH HALUS"
+
+#. Source-owned M564 object name
+msgid "KIRTLE"
+msgstr "KIRTLE"
+
+#. Source-owned M564 object name
+msgid "SILK SHIRT"
+msgstr "KEMEJA SUTRA"
+
+#. Source-owned M564 object name
+msgid "ELVEN DOUBLET"
+msgstr "ELVEN GANDA"
+
+#. Source-owned M564 object name
+msgid "LEATHER JERKIN"
+msgstr "JERKIN KULIT"
+
+#. Source-owned M564 object name
+msgid "TUNIC"
+msgstr "TUNIK"
+
+#. Source-owned M564 object name
+msgid "GHI"
+msgstr "GHI"
+
+#. Source-owned M564 object name
+msgid "MAIL AKETON"
+msgstr "MAIL AKETON"
+
+#. Source-owned M564 object name
+msgid "MITHRAL AKETON"
+msgstr "MITHRAL AKETON"
+
+#. Source-owned M564 object name
+msgid "TORSO PLATE"
+msgstr "PELAT TORSO"
+
+#. Source-owned M564 object name
+msgid "PLATE OF RA"
+msgstr "PIRING RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON PLATE"
+msgstr "PIRING NAGA"
+
+#. Source-owned M564 object name
+msgid "CAPE"
+msgstr "JANTUNG"
+
+#. Source-owned M564 object name
+msgid "CLOAK OF NIGHT"
+msgstr "JUBAH MALAM"
+
+#. Source-owned M564 object name
+msgid "TATTERED PANTS"
+msgstr "CELANA KOMPAK"
+
+#. Source-owned M564 object name
+msgid "ROBE"
+msgstr "JUBAH"
+
+#. Source-owned M564 object name
+msgid "TABARD"
+msgstr "TABAR"
+
+#. Source-owned M564 object name
+msgid "GUNNA"
+msgstr "GUNNA"
+
+#. Source-owned M564 object name
+msgid "ELVEN HUKE"
+msgstr "ELVEN HUKE"
+
+#. Source-owned M564 object name
+msgid "LEATHER PANTS"
+msgstr "CELANA KULIT"
+
+#. Source-owned M564 object name
+msgid "BLUE PANTS"
+msgstr "CELANA BIRU"
+
+#. Source-owned M564 object name
+msgid "GHI TROUSERS"
+msgstr "CELANA GHI"
+
+#. Source-owned M564 object name
+msgid "LEG MAIL"
+msgstr "SURAT KAKI"
+
+#. Source-owned M564 object name
+msgid "MITHRAL MAIL"
+msgstr "SURAT MITHRAL"
+
+#. Source-owned M564 object name
+msgid "LEG PLATE"
+msgstr "PELAT KAKI"
+
+#. Source-owned M564 object name
+msgid "POLEYN OF RA"
+msgstr "POLEYN RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON POLEYN"
+msgstr "POLEYN NAGA"
+
+#. Source-owned M564 object name
+msgid "BEZERKER HELM"
+msgstr "HELM BEZERKER"
+
+#. Source-owned M564 object name
+msgid "HELMET"
+msgstr "HELM"
+
+#. Source-owned M564 object name
+msgid "BASINET"
+msgstr "BASINET"
+
+#. Source-owned M564 object name
+msgid "CASQUE 'N COIF"
+msgstr "CASQUE 'N COIF"
+
+#. Source-owned M564 object name
+msgid "ARMET"
+msgstr "ARMET"
+
+#. Source-owned M564 object name
+msgid "HELM OF RA"
+msgstr "HELM RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON HELM"
+msgstr "HELM NAGA"
+
+#. Source-owned M564 object name
+msgid "CALISTA"
+msgstr "CALISTA"
+
+#. Source-owned M564 object name
+msgid "CROWN OF NERRA"
+msgstr "MAHKOTA NERRA"
+
+#. Source-owned M564 object name
+msgid "NETA SHIELD"
+msgstr "PERISAI NET"
+
+#. Source-owned M564 object name
+msgid "CRYSTAL SHIELD"
+msgstr "PERISAI KRISTAL"
+
+#. Source-owned M564 object name
+msgid "SMALL SHIELD"
+msgstr "PERISAI KECIL"
+
+#. Source-owned M564 object name
+msgid "WOODEN SHIELD"
+msgstr "PERISAI KAYU"
+
+#. Source-owned M564 object name
+msgid "SAR SHIELD"
+msgstr "PERISAI SAR"
+
+#. Source-owned M564 object name
+msgid "SHIELD OF RA"
+msgstr "PERISAI RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON SHIELD"
+msgstr "PERISAI NAGA"
+
+#. Source-owned M564 object name
+msgid "SANDALS"
+msgstr "SANDAL"
+
+#. Source-owned M564 object name
+msgid "SUEDE BOOTS"
+msgstr "SEPATU SUEDE"
+
+#. Source-owned M564 object name
+msgid "LEATHER BOOTS"
+msgstr "SEPATU KULIT"
+
+#. Source-owned M564 object name
+msgid "HOSEN"
+msgstr "SELANG"
+
+#. Source-owned M564 object name
+msgid "FOOT PLATE"
+msgstr "PELAT KAKI"
+
+#. Source-owned M564 object name
+msgid "GREAVE OF RA"
+msgstr "KESUKSESAN RA"
+
+#. Source-owned M564 object name
+msgid "DRAGON GREAVE"
+msgstr "SARANA NAGA"
+
+#. Source-owned M564 object name
+msgid "ELVEN BOOTS"
+msgstr "SEPATU ELVEN"
+
+#. Source-owned M564 object name
+msgid "GEM OF AGES"
+msgstr "PERMATA USIA"
+
+#. Source-owned M564 object name
+msgid "EKKHARD CROSS"
+msgstr "SALIB EKKKARD"
+
+#. Source-owned M564 object name
+msgid "MOONSTONE"
+msgstr "BATU BULAN"
+
+#. Source-owned M564 object name
+msgid "THE HELLION"
+msgstr "NERAKA"
+
+#. Source-owned M564 object name
+msgid "PENDANT FERAL"
+msgstr "LIONTIN LIAR"
+
+#. Source-owned M564 object name
+msgid "SAR COIN"
+msgstr "KOIN SAR"
+
+#. Source-owned M564 object name
+msgid "SILVER COIN"
+msgstr "KOIN PERAK"
+
+#. Source-owned M564 object name
+msgid "GOR COIN"
+msgstr "KOIN GOR"
+
+#. Source-owned M564 object name
+msgid "BOULDER"
+msgstr "batu besar"
+
+#. Source-owned M564 object name
+msgid "BLUE GEM"
+msgstr "PERMATA BIRU"
+
+#. Source-owned M564 object name
+msgid "ORANGE GEM"
+msgstr "PERMATA ORANGE"
+
+#. Source-owned M564 object name
+msgid "GREEN GEM"
+msgstr "PERMATA HIJAU"
+
+#. Source-owned M564 object name
+msgid "MAGICAL BOX"
+msgstr "KOTAK AJAIB"
+
+#. Source-owned M564 object name
+msgid "MIRROR OF DAWN"
+msgstr "CERMIN FAJAR"
+
+#. Source-owned M564 object name
+msgid "HORN OF FEAR"
+msgstr "TANDUK KETAKUTAN"
+
+#. Source-owned M564 object name
+msgid "ROPE"
+msgstr "TALI"
+
+#. Source-owned M564 object name
+msgid "RABBIT'S FOOT"
+msgstr "KAKI KELINCI"
+
+#. Source-owned M564 object name
+msgid "CORBUM"
+msgstr "KORBUM"
+
+#. Source-owned M564 object name
+msgid "CHOKER"
+msgstr "tersedak"
+
+#. Source-owned M564 object name
+msgid "DEXHELM"
+msgstr "DEXHELM"
+
+#. Source-owned M564 object name
+msgid "FLAMEBAIN"
+msgstr "FLAMEBAIN"
+
+#. Source-owned M564 object name
+msgid "POWERTOWERS"
+msgstr "MENARA KEKUATAN"
+
+#. Source-owned M564 object name
+msgid "SPEEDBOW"
+msgstr "BUSUR KECEPATAN"
+
+#. Source-owned M564 object name
+msgid "CHEST"
+msgstr "DADA"
+
+#. Source-owned M564 object name
+msgid "OPEN CHEST"
+msgstr "BUKA DADA"
+
+#. Source-owned M564 object name
+msgid "ASHES"
+msgstr "ABU"
+
+#. Source-owned M564 object name
+msgid "BONES"
+msgstr "TULANG"
+
+#. Source-owned M564 object name
+msgid "MON POTION"
+msgstr "Ramuan Senin"
+
+#. Source-owned M564 object name
+msgid "UM POTION"
+msgstr "Ramuan UM"
+
+#. Source-owned M564 object name
+msgid "DES POTION"
+msgstr "Ramuan DES"
+
+#. Source-owned M564 object name
+msgid "VEN POTION"
+msgstr "Ramuan VEN"
+
+#. Source-owned M564 object name
+msgid "SAR POTION"
+msgstr "Ramuan SAR"
+
+#. Source-owned M564 object name
+msgid "ZO POTION"
+msgstr "Ramuan ZO"
+
+#. Source-owned M564 object name
+msgid "ROS POTION"
+msgstr "Ramuan ROS"
+
+#. Source-owned M564 object name
+msgid "KU POTION"
+msgstr "Ramuan KU"
+
+#. Source-owned M564 object name
+msgid "DANE POTION"
+msgstr "Ramuan DANE"
+
+#. Source-owned M564 object name
+msgid "NETA POTION"
+msgstr "Ramuan NETA"
+
+#. Source-owned M564 object name
+msgid "ANTIVENIN"
+msgstr "ANTIFENIN"
+
+#. Source-owned M564 object name
+msgid "YA POTION"
+msgstr "Ramuan YA"
+
+#. Source-owned M564 object name
+msgid "EE POTION"
+msgstr "Ramuan EE"
+
+#. Source-owned M564 object name
+msgid "VI POTION"
+msgstr "VI Ramuan"
+
+#. Source-owned M564 object name
+msgid "WATER FLASK"
+msgstr "TERmos AIR"
+
+#. Source-owned M564 object name
+msgid "KATH BOMB"
+msgstr "BOM KATH"
+
+#. Source-owned M564 object name
+msgid "PEW BOMB"
+msgstr "BOM PEW"
+
+#. Source-owned M564 object name
+msgid "RA BOMB"
+msgstr "BOM RA"
+
+#. Source-owned M564 object name
+msgid "FUL BOMB"
+msgstr "BOM PENUH"
+
+#. Source-owned M564 object name
+msgid "APPLE"
+msgstr "apel"
+
+#. Source-owned M564 object name
+msgid "CORN"
+msgstr "JAGUNG"
+
+#. Source-owned M564 object name
+msgid "BREAD"
+msgstr "ROTI"
+
+#. Source-owned M564 object name
+msgid "CHEESE"
+msgstr "KEJU"
+
+#. Source-owned M564 object name
+msgid "SCREAMER SLICE"
+msgstr "irisan jeritan"
+
+#. Source-owned M564 object name
+msgid "WORM ROUND"
+msgstr "PUTARAN CACING"
+
+#. Source-owned M564 object name
+msgid "SHANK"
+msgstr "betis"
+
+#. Source-owned M564 object name
+msgid "DRAGON STEAK"
+msgstr "STEAK NAGA"
+
+#. Source-owned M564 object name
+msgid "IRON KEY"
+msgstr "KUNCI BESI"
+
+#. Source-owned M564 object name
+msgid "KEY OF B"
+msgstr "KUNCI B"
+
+#. Source-owned M564 object name
+msgid "SOLID KEY"
+msgstr "KUNCI PADAT"
+
+#. Source-owned M564 object name
+msgid "SQUARE KEY"
+msgstr "KUNCI KOTAK"
+
+#. Source-owned M564 object name
+msgid "TOURQUOISE KEY"
+msgstr "KUNCI TURQUOISE"
+
+#. Source-owned M564 object name
+msgid "CROSS KEY"
+msgstr "KUNCI SILANG"
+
+#. Source-owned M564 object name
+msgid "ONYX KEY"
+msgstr "KUNCI ONYX"
+
+#. Source-owned M564 object name
+msgid "SKELETON KEY"
+msgstr "KUNCI RANGKA"
+
+#. Source-owned M564 object name
+msgid "GOLD KEY"
+msgstr "KUNCI EMAS"
+
+#. Source-owned M564 object name
+msgid "WINGED KEY"
+msgstr "KUNCI BERSAYAP"
+
+#. Source-owned M564 object name
+msgid "TOPAZ KEY"
+msgstr "KUNCI TOPAZ"
+
+#. Source-owned M564 object name
+msgid "SAPPHIRE KEY"
+msgstr "KUNCI SAPPHIRE"
+
+#. Source-owned M564 object name
+msgid "EMERALD KEY"
+msgstr "KUNCI EMERALD"
+
+#. Source-owned M564 object name
+msgid "RUBY KEY"
+msgstr "KUNCI RUBI"
+
+#. Source-owned M564 object name
+msgid "RA KEY"
+msgstr "RA KUNCI"
+
+#. Source-owned M564 object name
+msgid "MASTER KEY"
+msgstr "KUNCI UTAMA"
+
+#. Source-owned M564 object name
+msgid "LOCK PICKS"
+msgstr "PILIHAN KUNCI"
+
+#. Source-owned M564 object name
+msgid "MAGNIFIER"
+msgstr "kaca pembesar"
+
+#. Source-owned M564 object name
+msgid "BOOTS OF SPEED"
+msgstr "SEPATU KECEPATAN"
+
+#. Source-owned M564 object name
+msgid "EMPTY FLASK"
+msgstr "BOTOL KOSONG"
+
+#. Source-owned M564 object name
+msgid "HALTER"
+msgstr "HALTER"
+
+#. Source-owned M564 object name
+msgid "ZOKATHRA SPELL"
+msgstr "MANFAAT ZOKATHRA"
+
+#. Source-owned DUNGEON.DAT DB2 text
+msgid ""
+"THERE IS ONLY ONE\n"
+"LEVEL HERE.      \n"
+"                 \n"
+"FIRST CHOOSE YOUR\n"
+"CHAMPIONS...THEN\n"
+"SAVE THE GAME...\n"
+"THEN RESTART WITH\n"
+"THE UTILITY DISK."
+msgstr ""
+"HANYA ADA SATU\n"
+"TINGKAT DI SINI.      \n"
+"                 \n"
+"PERTAMA PILIH ANDA\n"
+"JUARA... LALU\n"
+"SIMPAN PERMAINAN...\n"
+"KEMUDIAN MULAI ULANG DENGAN\n"
+"DISK UTILITAS."
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: BLOCK
+msgid "さえぎる"
+msgstr "さえぎる"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: CHOP
+msgid "叩き切る"
+msgstr "叩き切る"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: BLOW HORN
+msgid "角笛を吹く"
+msgstr "角笛を吹く"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: FLIP
+msgid "ｺｲﾝﾄｽ"
+msgstr "ｺｲﾝﾄｽ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: PUNCH
+msgid "殴る"
+msgstr "る"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: KICK
+msgid "蹴る"
+msgstr "itu"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: WAR CRY
+msgid "ときの声"
+msgstr "ときの声"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: STAB
+msgid "刺す"
+msgstr "刺す"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: CLIMB DOWN
+msgid "降りる"
+msgstr "降りる"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: FREEZE LIFE
+msgid "時間凍結"
+msgstr "時間凍結"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: HIT
+msgid "打つ"
+msgstr "つ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: SWING
+msgid "振り回す"
+msgstr "振り回す"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: THRUST
+msgid "突き刺す"
+msgstr "突き刺す"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: JAB
+msgid "突く"
+msgstr "突く"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: PARRY
+msgid "かわす"
+msgstr "かわす"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: BERZERK
+msgid "暴れ回る"
+msgstr "暴れ回る"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: FIREBALL
+msgid "火炎弾"
+msgstr "火炎弾"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: DISPELL
+msgid "対霊呪文"
+msgstr "対霊呪文"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: CONFUSE
+msgid "催眠術"
+msgstr "催眠術"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: LIGHTNING
+msgid "稲妻の術"
+msgstr "稲妻の術"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: DISRUPT
+msgid "対霊武器"
+msgstr "対霊武器"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: MELEE
+msgid "斬り払う"
+msgstr "斬り払う"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: INVOKE
+msgid "念じる"
+msgstr "念じる"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: SLASH
+msgid "斬り下ろす"
+msgstr "斬り下ろす"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: CLEAVE
+msgid "斬り裂く"
+msgstr "斬り裂く"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: BASH
+msgid "打ち割る"
+msgstr "打ち割る"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: STUN
+msgid "気絶させる"
+msgstr "気絶させる"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: SHOOT
+msgid "射る"
+msgstr "射る"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: SPELLSHIELD
+msgid "呪文防御"
+msgstr "呪文防御"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: FIRESHIELD
+msgid "火炎防御"
+msgstr "火炎防御"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: FLUXCAGE
+msgid "呪縛する"
+msgstr "呪縛する"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: HEAL
+msgid "治療する"
+msgstr "治療する"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: CALM
+msgid "手なずける"
+msgstr "なずける"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: LIGHT
+msgid "魔術灯火"
+msgstr "魔術灯火"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: WINDOW
+msgid "透視"
+msgstr "透視"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: SPIT
+msgid "火炎攻撃"
+msgstr "火炎攻撃"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: BRANDISH
+msgid "追い払う"
+msgstr "追い払う"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: THROW
+msgid "投げる"
+msgstr "げる"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+#. Reviewed action equivalent: FUSE
+msgid "融合する"
+msgstr "融合する"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "羅針盤"
+msgstr "羅針盤"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "たいまつ"
+msgstr "たいまつ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "皮袋(水無)"
+msgstr "皮袋(水無)"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "皮袋(水有)"
+msgstr "皮袋(水有)"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "魔法の護符"
+msgstr "魔法の護符"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "灯の護符"
+msgstr "灯の護符"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "炎の手袋"
+msgstr "炎の手袋"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "時の眼"
+msgstr "の眼"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "稲妻ﾘﾝｸﾞ"
+msgstr "稲妻ﾘﾝｸﾞ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｺﾌﾞﾗの杖"
+msgstr "ｺﾌﾞﾗの杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "嵐の剣"
+msgstr "嵐の剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰの剣"
+msgstr "ﾗｰの剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "炎の杖"
+msgstr "炎の杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "開いた巻物"
+msgstr "開いた巻物"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "巻物"
+msgstr "巻物"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "短剣"
+msgstr "短剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾌｧﾙﾁｵﾝの剣"
+msgstr "ﾌｧﾙﾁｵﾝの剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "つるぎ"
+msgstr "つるぎ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗﾋﾟｴの剣"
+msgstr "ﾗﾋﾟｴの剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "闇の剣"
+msgstr "闇の剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "日本刀"
+msgstr "日本刀"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "力の剣"
+msgstr "力の剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾀﾞｲﾔの剣"
+msgstr "ﾀﾞｲﾔの剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾎﾞｰﾊﾟﾙの剣"
+msgstr "ﾎﾞｰﾊﾟﾙの剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝの牙"
+msgstr "ﾄﾞﾗｺﾞﾝの牙"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "斧"
+msgstr "斧"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "首切りの斧"
+msgstr "首切りの斧"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ほこ"
+msgstr "ほこ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "大ほこ"
+msgstr "大ほこ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "鉄棒"
+msgstr "鉄棒"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "棍棒"
+msgstr "棍棒"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "石棒"
+msgstr "石棒"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝの弓"
+msgstr "ﾄﾞﾗｺﾞﾝの弓"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｸﾛｽﾎﾞｳ"
+msgstr "ｸﾛｽﾎﾞｳ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "矢"
+msgstr "矢"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "毒矢"
+msgstr "毒矢"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "投石器"
+msgstr "投石器"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "石"
+msgstr "石"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "毒投げ矢"
+msgstr "毒投げ矢"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "手裏剣"
+msgstr "手裏剣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "棒"
+msgstr "棒"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "杖"
+msgstr "杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "小型杖"
+msgstr "小型杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "銀の杖"
+msgstr "銀の杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾕｰの杖"
+msgstr "ﾕｰの杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｲﾗｰ の杖"
+msgstr "ｲﾗｰ の杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾈﾀの十字架"
+msgstr "ﾈﾀの十字架"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "蛇の杖"
+msgstr "蛇の杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "龍の杖"
+msgstr "龍の杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "生命の杖"
+msgstr "生命の杖"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾎﾞﾛのｼｬﾂ"
+msgstr "ﾎﾞﾛのｼｬﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾌｧｲﾝ･ｶﾞｳﾝ"
+msgstr "ﾌｧｲﾝ･ｶﾞｳﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "上着"
+msgstr "上着"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "絹のｼｬﾂ"
+msgstr "絹のｼｬﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾀﾞﾌﾞﾚｯﾄ"
+msgstr "ﾀﾞﾌﾞﾚｯﾄ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "皮ﾁｮｯｷ"
+msgstr "皮ﾁｮｯｷ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾁｭﾆｯｸ"
+msgstr "ﾁｭﾆｯｸ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "武道着"
+msgstr "武道着"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "胴着"
+msgstr "itu"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾐｽﾘﾙの胴着"
+msgstr "ﾐｽﾘﾙの胴着"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "鎧"
+msgstr "鎧"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰの鎧"
+msgstr "ﾗｰの鎧"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝの鎧"
+msgstr "ﾄﾞﾗｺﾞﾝの鎧"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾏﾝﾄ"
+msgstr "ﾏﾝﾄ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "暗黒のﾏﾝﾄ"
+msgstr "暗黒のﾏﾝﾄ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾎﾞﾛのｽﾞﾎﾞﾝ"
+msgstr "ﾎﾞﾛのｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｶﾞｳﾝ"
+msgstr "ｶﾞｳﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "騎士のﾏﾝﾄ"
+msgstr "騎士のﾏﾝﾄ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "長衣"
+msgstr "長衣"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "緑のｽﾞﾎﾞﾝ"
+msgstr "緑のｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "皮製ｽﾞﾎﾞﾝ"
+msgstr "皮製ｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "青色ｽﾞﾎﾞﾝ"
+msgstr "青色ｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "武道ｽﾞﾎﾞﾝ"
+msgstr "武道ｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "金属ｽﾞﾎﾞﾝ"
+msgstr "金属ｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾐｽﾘﾙ･ｽﾞﾎﾞﾝ"
+msgstr "ﾐｽﾘﾙ･ｽﾞﾎﾞﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "金属脚絆"
+msgstr "金属脚絆"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰの脚絆"
+msgstr "ﾗｰの脚絆"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝ脚絆"
+msgstr "ﾄﾞﾗｺﾞﾝ脚絆"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "つの兜"
+msgstr "つの兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "兜"
+msgstr "兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "鉄兜"
+msgstr "鉄兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "銀兜"
+msgstr "銀兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｱｰﾒｯﾄ 兜"
+msgstr "ｱｰﾒｯﾄ 兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰの兜"
+msgstr "ﾗｰの兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝの兜"
+msgstr "ﾄﾞﾗｺﾞﾝの兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｶﾘｽﾀの王冠"
+msgstr "ｶﾘｽﾀの王冠"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾈﾗの王冠"
+msgstr "ﾈﾗの王冠"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾈﾀの楯"
+msgstr "ﾈﾀの楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "水晶の楯"
+msgstr "水晶の楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "小型楯"
+msgstr "小型楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "木製楯"
+msgstr "木製楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｻｰの楯"
+msgstr "ｻｰの楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰの楯"
+msgstr "ﾗｰの楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝの楯"
+msgstr "ﾄﾞﾗｺﾞﾝの楯"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "皮ｻﾝﾀﾞﾙ"
+msgstr "皮ｻﾝﾀﾞﾙ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｽｴｰﾄﾞﾌﾞｰﾂ"
+msgstr "ｽｴｰﾄﾞﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "皮ﾌﾞｰﾂ"
+msgstr "皮ﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "金属ﾌﾞｰﾂ"
+msgstr "金属ﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰのﾌﾞｰﾂ"
+msgstr "ﾗｰのﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝﾌﾞｰﾂ"
+msgstr "ﾄﾞﾗｺﾞﾝﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "緑のﾌﾞｰﾂ"
+msgstr "緑のﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "魔よけ"
+msgstr "魔よけ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "十字架"
+msgstr "十字架"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾑｰﾝｽﾄｰﾝ"
+msgstr "ﾑｰﾝｽﾄｰﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾍﾘｵﾝ"
+msgstr "ﾍﾘｵﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾌｪﾗﾙ"
+msgstr "ﾌｪﾗﾙ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｻｰの金貨"
+msgstr "ｻｰの金貨"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "銀貨"
+msgstr "銀貨"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｺﾞｰの金貨"
+msgstr "ｺﾞｰの金貨"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "玉石"
+msgstr "玉石"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "青宝玉"
+msgstr "青宝玉"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "黄宝玉"
+msgstr "黄宝玉"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "緑宝玉"
+msgstr "緑宝玉"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "魔法の箱"
+msgstr "魔法の箱"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "曙の鏡"
+msgstr "曙の鏡"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "恐怖の角笛"
+msgstr "恐怖の角笛"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾛｰﾌﾟ"
+msgstr "ﾛｰﾌﾟ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "兎の足"
+msgstr "兎の足"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｺｰﾊﾞﾑ"
+msgstr "ｺｰﾊﾞﾑ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "首飾り"
+msgstr "首飾り"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾃﾞｯｸｽ 兜"
+msgstr "ﾃﾞｯｸｽ 兜"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "防火胴着"
+msgstr "防火胴着"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "力の脚絆"
+msgstr "力の脚絆"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｽﾋﾟｰﾄﾞﾎﾞｳ"
+msgstr "ｽﾋﾟｰﾄﾞﾎﾞｳ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "箱"
+msgstr "箱"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "開いた箱"
+msgstr "開いた箱"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "灰"
+msgstr "灰"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "骨"
+msgstr "骨"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ﾓﾝ"
+msgstr "秘薬 ﾓﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｳﾑ"
+msgstr "秘薬 ｳﾑ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ﾃﾞｽ"
+msgstr "秘薬 ﾃﾞｽ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｳﾞｪﾝ"
+msgstr "秘薬 ｳﾞｪﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｻｰ"
+msgstr "秘薬 ｻｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｿﾞｰ"
+msgstr "秘薬 ｿﾞｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ﾛｽ"
+msgstr "秘薬 ﾛｽ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｸｰ"
+msgstr "秘薬 ｸｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ﾃﾞｲﾝ"
+msgstr "秘薬 ﾃﾞｲﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ﾈﾀ"
+msgstr "秘薬 ﾈﾀ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "対ｳﾞｪﾝ秘薬"
+msgstr "対ｳﾞｪﾝ foto"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ﾔｰ"
+msgstr "秘薬 ﾔｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｲｰ"
+msgstr "秘薬 ｲｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "秘薬 ｳﾞｨｰ"
+msgstr "秘薬 ｳﾞｨｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "水入ﾌﾗｽｺ"
+msgstr "水入ﾌﾗｽｺ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｷｬｽ 爆弾"
+msgstr "ｷｬｽ 爆弾"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾋﾟｭｰ爆弾"
+msgstr "ﾋﾟｭｰ爆弾"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰ爆弾"
+msgstr "ﾗｰ爆弾"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾌﾙ爆弾"
+msgstr "ﾌﾙ爆弾"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾘﾝｺﾞ"
+msgstr "ﾘﾝｺﾞ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄｳﾓﾛｺｼ"
+msgstr "ﾄｳﾓﾛｺｼ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾊﾟﾝ"
+msgstr "ﾊﾟﾝ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾁｰｽﾞ"
+msgstr "ﾁｰｽﾞ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｽｸﾘｰﾏｰの肉"
+msgstr "ｽｸﾘｰﾏｰの肉"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "丸虫の肉"
+msgstr "丸虫の肉"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "すね肉"
+msgstr "すね肉"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾞﾗｺﾞﾝｽﾃｰｷ"
+msgstr "ﾄﾞﾗｺﾞﾝｽﾃｰｷ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "鉄の鍵"
+msgstr "鉄の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "B の鍵"
+msgstr "B の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "銀の鍵"
+msgstr "銀の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "四角い鍵"
+msgstr "四角い鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾀｰｺｲｽﾞの鍵"
+msgstr "ﾀｰｺｲｽﾞの鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "十字の鍵"
+msgstr "十字の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "暗黒の鍵"
+msgstr "暗黒の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "どくろの鍵"
+msgstr "どくろの鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "黄金の鍵"
+msgstr "黄金の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "翼の鍵"
+msgstr "翼の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾄﾊﾟｰｽﾞの鍵"
+msgstr "ﾄﾊﾟｰｽﾞの鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｻﾌｧｲｱ の鍵"
+msgstr "ｻﾌｧｲｱ の鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｴﾒﾗﾙﾄﾞの鍵"
+msgstr "ｴﾒﾗﾙﾄﾞの鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾙﾋﾞｰの鍵"
+msgstr "ﾙﾋﾞｰの鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾗｰの鍵"
+msgstr "ﾗｰの鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾏｽﾀｰｷｰ"
+msgstr "ﾏｽﾀｰｷｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "まがり鍵"
+msgstr "まがり鍵"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "虫めがね"
+msgstr "虫めがね"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｽﾋﾟｰﾄﾞﾌﾞｰﾂ"
+msgstr "ｽﾋﾟｰﾄﾞﾌﾞｰﾂ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "空ﾌﾗｽｺ"
+msgstr "空ﾌﾗｽｺ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ﾎﾙﾀｰ"
+msgstr "ﾎﾙﾀｰ"
+
+#. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
+msgid "ｿﾞｰｷｬｽﾗｰ力"
+msgstr "ｿﾞｰｷｬｽﾗｰ力"

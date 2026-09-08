@@ -1448,7 +1448,7 @@ msgstr "VALMIS"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION"
-msgstr ""
+msgstr "KLIKKAAMALLA KESKUSTA EDISTÄ TAI LUE, KLIKKAAMALLA SIVUJA KÄÄNTÄKSI, VÄLILEHTI VALITSE ETUMESTERIN"
 
 #. Extracted from current DM1 runtime
 msgid "DUNGEON MASTER"
@@ -2020,11 +2020,11 @@ msgstr "%s VALMIS"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
-msgstr ""
+msgstr "AVARUUKSET, ANNA TARKASTUKSET, SITOA KLIKKAAMALLA KESKUSTA, PYÖRITÄ ETUMESTARI SARAKEMISTA"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
-msgstr ""
+msgstr "VAIHDA NAPSAUTTAMALLA TAI SARKAKEMAA, SITOA KLIKKAAMALLA KESKUSTA, VÄLILYÖNTI, ANNA TARKASTUKSET"
 
 #. Extracted from current DM1 runtime
 msgid "DEAD"
@@ -2212,228 +2212,208 @@ msgstr "R HERÄTÄ"
 
 #. ReDMCSB SPELFAIL.C F0410. Named fields may be reordered by translators.
 msgid "{champion} NEEDS MORE PRACTICE WITH THIS {skill} SPELL."
-msgstr ""
+msgstr "{champion} TÄMÄN {skill}-LOITUKSEN KÄYTÄNNÖN TARVITTAESSA LISÄÄ KÄYTÄNNÖT."
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
-#, fuzzy
 msgid "{champion} MUMBLES A MEANINGLESS SPELL."
 msgstr "MERKITYKSETÖN LOITSU"
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
 msgid "{champion} NEEDS AN EMPTY FLASK IN HAND FOR POTION."
-msgstr ""
+msgstr "{champion} TARVITTAA TYHJÄN PULLIN KÄSSÄ JUOMAA varten."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP HEADS."
-msgstr ""
+msgstr "SE NOUSAA PÄÄSTÄ."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP TAILS."
-msgstr ""
+msgstr "SE NOUSAA HÄNTÄ."
 
 #. PC34 DUNGEON.DAT TextString 4; final F0107/M648 presentation only.
 msgid ""
 "dm1.pc34.inscription.4:HALL OF\n"
 "CHAMPIONS"
 msgstr ""
+"dm1.pc34.inscription.4:HALL OF\n"
+"MESTARI"
 
 #. DM1 player-facing pickup/drop and rune presentation templates
 #, c-format
 msgid "%s -> MOUSE HAND"
-msgstr ""
+msgstr "%s -> HIIRIKÄSI"
 
 #, c-format
 msgid "%s FROM MOUSE HAND"
-msgstr ""
+msgstr "%s Hiirikädestä"
 
 msgid "PLACE THE HELD OBJECT FIRST"
-msgstr ""
+msgstr "ASETTA PIDETTY ESINE ENSIN"
 
 #, c-format
 msgid "%s — %d OF 4 SYMBOLS"
-msgstr ""
+msgstr "%s — %d 4 SYMBOLISTA"
 
 #. Firestaff host presentation used by every DM1 mode; source state remains unchanged.
 msgid "EXPIRED"
-msgstr ""
+msgstr "PÄÄNTYNYT"
 
 msgid "ENTER MENU"
-msgstr ""
+msgstr "ANNA VALIKKO"
 
 msgid "ESC DISMISS"
-msgstr ""
+msgstr "ESC hylkää"
 
 #, c-format
 msgid "EXPIRED %s"
-msgstr ""
+msgstr "PÄÄNTYNYT %s"
 
 msgid "ENTER: MENU"
-msgstr ""
+msgstr "ENTER: MENU"
 
 msgid "ESC: DISMISS"
-msgstr ""
+msgstr "ESC: hylkää"
 
 #, c-format
 msgid "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU"
-msgstr ""
+msgstr "ISTUNNON AJASTIN PÄÄTTYNYT (%s) -- PALAA VALIKKOON"
 
-#, fuzzy
 msgid "PRESS ENTER TO RETURN TO MENU"
 msgstr "ESC PALATA VALIKKOON"
 
-#, fuzzy
 msgid "ESC TO DISMISS"
 msgstr "PAINA MITÄ TAHANSA NÄPPÄINTÄ"
 
 msgid "QUIT?"
-msgstr ""
+msgstr "LOPETA?"
 
-#, fuzzy
 msgid "RETURN TO MENU?"
 msgstr "ESC PALATA VALIKKOON"
 
-#, fuzzy
 msgid "RETURN TO START MENU?"
 msgstr "ESC PALATA VALIKKOON"
 
-#, fuzzy
 msgid "YES"
 msgstr "DES"
 
-#, fuzzy
 msgid "NO"
 msgstr "EI MITÄÄN"
 
-#, fuzzy
 msgid "OK"
 msgstr "KIVI"
 
 #. M11_DM1_PRESENTED: live DM1 pickup/drop/spell feedback.
-#, fuzzy
 msgid "LEADER HAND FULL"
 msgstr "KÄDET TÄYNNÄ"
 
-#, fuzzy
 msgid "HAND FULL"
 msgstr "KÄDET TÄYNNÄ"
 
-#, fuzzy
 msgid "HAND ROUTE FAILED"
 msgstr "KIRJOITUS EPÄONNISTUI"
 
-#, fuzzy
 msgid "ITEM IN HAND"
 msgstr "ESINE OTETTU"
 
 msgid "DROP TARGET UNAVAILABLE"
-msgstr ""
+msgstr "PUDOTA TAVOITE EI SAATAVILLA"
 
-#, fuzzy
 msgid "SPELL CAST"
 msgstr "LOITSU"
 
 #. M11_DM1_PRESENTED: source-locked CLIKVIEW.C fountain interaction.
-#, fuzzy
 msgid "FOUNTAIN"
 msgstr "ASTIA %d"
 
-#, fuzzy
 msgid "CONTAINER FILLED"
 msgstr "ASTIA %d"
 
 msgid "FLASK FILLED WITH WATER"
-msgstr ""
+msgstr "VEDELLÄ TÄYTETTY PULKKI"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NEOPHYTE"
-msgstr ""
+msgstr "NEOPHYTE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NOVICE"
-msgstr ""
+msgstr "NOVICE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "APPRENTICE"
-msgstr ""
+msgstr "oppipoika"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "JOURNEYMAN"
-msgstr ""
+msgstr "JOURNEYMAN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "CRAFTSMAN"
-msgstr ""
+msgstr "Käsityöläinen"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ARTISAN"
-msgstr ""
+msgstr "ARTISAN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ADEPT"
-msgstr ""
+msgstr "ADEPT"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "EXPERT"
-msgstr ""
+msgstr "ASIANTUNTIJA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "` MASTER"
 msgstr "PÄÄAVAIN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "a MASTER"
 msgstr "PÄÄAVAIN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "b MASTER"
 msgstr "PÄÄAVAIN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "c MASTER"
 msgstr "PÄÄAVAIN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "d MASTER"
 msgstr "PÄÄAVAIN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "e MASTER"
 msgstr "PÄÄAVAIN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "ARCHMASTER"
 msgstr "RUOSTUNUT"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "STRENGTH"
-msgstr ""
+msgstr "VAHVUUS"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "DEXTERITY"
-msgstr ""
+msgstr "KÄYTTÖÄ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "WISDOM"
-msgstr ""
+msgstr "VIISAUS"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "VITALITY"
-msgstr ""
+msgstr "ELINVOIMAA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-MAGIC"
-msgstr ""
+msgstr "ANTIMAGIA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-FIRE"
-msgstr ""
+msgstr "ANTITULI"
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 102; F0446 removes its A ordering key.
 msgid ""
@@ -2446,6 +2426,14 @@ msgid ""
 "UNCOMPROMISING\n"
 "ORDER."
 msgstr ""
+"KIITOS MINUN\n"
+"YSTÄVÄT.  SINÄ\n"
+"OVAT karkotettuja\n"
+"KAAOS JA\n"
+"hylkäsi\n"
+"VÄÄRÄ POLKU\n"
+"TÄRKEYTTÖÖN\n"
+"TILAA."
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 104; F0446 removes its B ordering key.
 msgid ""
@@ -2457,3 +2445,10 @@ msgid ""
 "TRUE NATURE OF\n"
 "THE FIRESTAFF."
 msgstr ""
+"VAIN OPPIMALLA\n"
+"TOTUUS JA\n"
+"HAKU POLKUA\n"
+"TASAPAINOSTA\n"
+"ARVAITTEKO\n"
+"TODELLINEN LUONNE\n"
+"FIRESTFF."

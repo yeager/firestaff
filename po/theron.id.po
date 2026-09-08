@@ -1,0 +1,182 @@
+# Theron's Quest (PC Engine CD) string template.
+# Canonical English source-string template for Theron's Quest V1 runtime.
+#
+# Domain: theron
+# Covers: Theron V1 in-game HUD, runtime messages, prompts, labels, menus,
+#         item/creature names, dungeon depth/title text, world-serialize
+#         save/load labels, shop purchase text.
+#
+# Source notes: Theron's Quest was published by Westwood Associates /
+# NEC for PC Engine CD-ROM2 in 1992 (US) / 1991 (JP). The game used a
+# small text surface (compact HuC6280 ADPCM-streamed dialogue + HUD)
+# compared to DM1. This .pot captures the strings the Firestaff V1
+# runtime surfaces through the M11 game view.
+#
+# Track 02 (PCE CD data track) holds the game assets; SHA256 anchors
+# for JP Rev 1 (397039af02d50d15c70b74088eb8a1cb) and US ISO
+# (3d8b78571dcd0e6eb8eb4b01eeb7fbba) live in src/theron/theron_v1_track02.c.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-theron\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Direction / compass
+msgid "NORTH"
+msgstr "UTARA"
+
+#. Direction / compass
+msgid "EAST"
+msgstr "TIMUR"
+
+#. Direction / compass
+msgid "SOUTH"
+msgstr "SELATAN"
+
+#. Direction / compass
+msgid "WEST"
+msgstr "BARAT"
+
+#. Stairs
+msgid "STAIRS"
+msgstr "TANGGA"
+
+#. Pit
+msgid "PIT"
+msgstr "lubang"
+
+#. Teleporter
+msgid "TELEPORTER"
+msgstr "TELEPORTER"
+
+#. Door
+msgid "DOOR"
+msgstr "PINTU"
+
+#. Inventory / item action
+msgid "PICK UP"
+msgstr "MENGAMBIL"
+
+#. Inventory / item action
+msgid "DROP"
+msgstr "JATUH"
+
+#. Inventory / item action
+msgid "USE"
+msgstr "PENGGUNAAN"
+
+#. Combat action
+msgid "ATTACK"
+msgstr "SERANGAN"
+
+#. Combat action
+msgid "DEFEND"
+msgstr "PERTAHANAN"
+
+#. Combat action
+msgid "CAST SPELL"
+msgstr "Mantra Pemeran"
+
+#. Status label
+msgid "NO FOCUS"
+msgstr "TIDAK ADA FOKUS"
+
+#. Status label
+msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "TEKAN ENTER PADA TARGET SEL DEPAN NYATA"
+
+#. Generic
+msgid "UNKNOWN"
+msgstr "TIDAK DIKETAHUI"
+
+#. Generic
+msgid "NONE"
+msgstr "TIDAK ADA"
+
+#. Save / load
+msgid "SAVE GAME"
+msgstr "SIMPAN PERMAINAN"
+
+#. Save / load
+msgid "LOAD GAME"
+msgstr "BEBAN PERMAINAN"
+
+#. Shop
+msgid "SHOP"
+msgstr "TOKO"
+
+#. Shop
+msgid "NOT ENOUGH GOLD"
+msgstr "TIDAK CUKUP EMAS"
+
+#. Shop
+msgid "PURCHASED %s FOR %d GOLD"
+msgstr "MEMBELI %s UNTUK %d EMAS"
+
+#. Dungeon progression
+msgid "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: NAIK KE TINGKAT %d"
+
+#. Dungeon progression
+msgid "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: Turun ke Level %d"
+
+#. Dungeon progression
+msgid "T%u: FELL INTO PIT"
+msgstr "T%u: JATUH KE DALAM LUBANG"
+
+#. Dungeon progression
+msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: DELEPORTASI KE PETA %d (%d,%d)"
+
+#. Teleporter chain
+msgid "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: TELEPORTER TIDAK MEMILIKI DATA HAL"
+
+#. Teleporter chain
+msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: PETA TARGET TELEPORTER %d DILUAR JANGKAUAN"
+
+#. Teleporter chain
+msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s NAIK! (%s %d -> %d)"
+
+#. Combat log
+msgid "T%u: %s CASTS %s"
+msgstr "T%u: %s MELAKUKAN %s"
+
+#. Combat log
+msgid "T%u: %s HITS %s FOR %d"
+msgstr "T%u: %s MENGHADAPI %s UNTUK %d"
+
+#. Combat log
+msgid "T%u: %s MISSES %s"
+msgstr "T%u: %s LEWATKAN %s"
+
+#. Altar
+msgid "OFFERING ACCEPTED"
+msgstr "PENAWARAN DITERIMA"
+
+#. Inventory capacity
+msgid "INVENTORY FULL"
+msgstr "PERSEDIAAN PENUH"
+
+#. Sound / feedback
+msgid "OUT OF RANGE"
+msgstr "DILUAR JANGKAUAN"
+
+#. Generic message
+msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "TEKAN ENTER ATAU KLIK LIHAT UNTUK MEMBACA SEL DEPAN"
+
+#. Status footer
+msgid "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HP DAN STAMINA MEMULIHKAN SECARA LAMBAT"

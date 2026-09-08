@@ -1448,7 +1448,7 @@ msgstr "KLAAR"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION"
-msgstr ""
+msgstr "KLIK IN HET MIDDEN OM DOOR TE GAAN OF TE LEZEN, KLIK OP DE ZIJKANT OM TE DRAAIEN, TAB KIES DE VOORKAMPIOEN"
 
 #. Extracted from current DM1 runtime
 msgid "DUNGEON MASTER"
@@ -2020,11 +2020,11 @@ msgstr "%s KLAAR"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
-msgstr ""
+msgstr "RUIMTE HANDELT, VOER INSPECTIES IN, KLIK OP CENTREREN OM TE COMMITTEN, TAB CYCLI DE VOORSTE KAMPIOEN"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
-msgstr ""
+msgstr "KLIK OF TAB OM TE WISSELEN, KLIK OP CENTREREN OM TE COMMITTEN, RUIMTE HANDELT, VOER INSPECTIES IN"
 
 #. Extracted from current DM1 runtime
 msgid "DEAD"
@@ -2212,228 +2212,208 @@ msgstr "R OM TE ONTWAKEN"
 
 #. ReDMCSB SPELFAIL.C F0410. Named fields may be reordered by translators.
 msgid "{champion} NEEDS MORE PRACTICE WITH THIS {skill} SPELL."
-msgstr ""
+msgstr "{champion} HEEFT MEER OEFENING NODIG MET DEZE {skill} SPREUK."
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
-#, fuzzy
 msgid "{champion} MUMBLES A MEANINGLESS SPELL."
 msgstr "BETEKENISLOZE SPREUK"
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
 msgid "{champion} NEEDS AN EMPTY FLASK IN HAND FOR POTION."
-msgstr ""
+msgstr "{champion} HEEFT EEN LEGE FLES NODIG VOOR EEN DRANKJE."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP HEADS."
-msgstr ""
+msgstr "HET KOMT NAAR BOVEN."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP TAILS."
-msgstr ""
+msgstr "HET KOMT STAARTEN."
 
 #. PC34 DUNGEON.DAT TextString 4; final F0107/M648 presentation only.
 msgid ""
 "dm1.pc34.inscription.4:HALL OF\n"
 "CHAMPIONS"
 msgstr ""
+"dm1.pc34.inscription.4: ZAAL VAN\n"
+"KAMPIOENEN"
 
 #. DM1 player-facing pickup/drop and rune presentation templates
 #, c-format
 msgid "%s -> MOUSE HAND"
-msgstr ""
+msgstr "%s -> MUISHAND"
 
 #, c-format
 msgid "%s FROM MOUSE HAND"
-msgstr ""
+msgstr "%s VANAF MUISHAND"
 
 msgid "PLACE THE HELD OBJECT FIRST"
-msgstr ""
+msgstr "PLAATS EERST HET GEHOUDEN OBJECT"
 
 #, c-format
 msgid "%s — %d OF 4 SYMBOLS"
-msgstr ""
+msgstr "%s — %d VAN 4 SYMBOLEN"
 
 #. Firestaff host presentation used by every DM1 mode; source state remains unchanged.
 msgid "EXPIRED"
-msgstr ""
+msgstr "VERLOPEN"
 
 msgid "ENTER MENU"
-msgstr ""
+msgstr "VOER MENU IN"
 
 msgid "ESC DISMISS"
-msgstr ""
+msgstr "ESC AFSLUITEN"
 
 #, c-format
 msgid "EXPIRED %s"
-msgstr ""
+msgstr "VERLOPEN %s"
 
 msgid "ENTER: MENU"
-msgstr ""
+msgstr "VOER IN: MENU"
 
 msgid "ESC: DISMISS"
-msgstr ""
+msgstr "ESC: AFSLUITEN"
 
 #, c-format
 msgid "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU"
-msgstr ""
+msgstr "SESSIETIMER VERLOPEN (%s) -- TERUG NAAR MENU"
 
-#, fuzzy
 msgid "PRESS ENTER TO RETURN TO MENU"
 msgstr "ESC TERUG NAAR MENU"
 
-#, fuzzy
 msgid "ESC TO DISMISS"
 msgstr "DRUK EEN WILLEKEURIGE TOETS"
 
 msgid "QUIT?"
-msgstr ""
+msgstr "STOPPEN?"
 
-#, fuzzy
 msgid "RETURN TO MENU?"
 msgstr "ESC TERUG NAAR MENU"
 
-#, fuzzy
 msgid "RETURN TO START MENU?"
 msgstr "ESC TERUG NAAR MENU"
 
-#, fuzzy
 msgid "YES"
 msgstr "DES"
 
-#, fuzzy
 msgid "NO"
 msgstr "GEEN"
 
-#, fuzzy
 msgid "OK"
 msgstr "STEEN"
 
 #. M11_DM1_PRESENTED: live DM1 pickup/drop/spell feedback.
-#, fuzzy
 msgid "LEADER HAND FULL"
 msgstr "HANDEN VOL"
 
-#, fuzzy
 msgid "HAND FULL"
 msgstr "HANDEN VOL"
 
-#, fuzzy
 msgid "HAND ROUTE FAILED"
 msgstr "SCHRIJVEN MISLUKT"
 
-#, fuzzy
 msgid "ITEM IN HAND"
 msgstr "VOORWERP GEP AIT"
 
 msgid "DROP TARGET UNAVAILABLE"
-msgstr ""
+msgstr "DROP-DOEL NIET BESCHIKBAAR"
 
-#, fuzzy
 msgid "SPELL CAST"
 msgstr "SPREUK"
 
 #. M11_DM1_PRESENTED: source-locked CLIKVIEW.C fountain interaction.
-#, fuzzy
 msgid "FOUNTAIN"
 msgstr "HOUDER %d"
 
-#, fuzzy
 msgid "CONTAINER FILLED"
 msgstr "HOUDER %d"
 
 msgid "FLASK FILLED WITH WATER"
-msgstr ""
+msgstr "FLES DIE MET WATER WORDT GEVULD"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NEOPHYTE"
-msgstr ""
+msgstr "NEOFYET"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NOVICE"
-msgstr ""
+msgstr "NOVICE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "APPRENTICE"
-msgstr ""
+msgstr "LEERLING"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "JOURNEYMAN"
-msgstr ""
+msgstr "REIZIGER"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "CRAFTSMAN"
-msgstr ""
+msgstr "AMBACHTSMAN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ARTISAN"
-msgstr ""
+msgstr "ARTISAAN"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ADEPT"
-msgstr ""
+msgstr "BEVOEGD"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "EXPERT"
-msgstr ""
+msgstr "DESKUNDIG"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "` MASTER"
 msgstr "HOOFDSLEUTEL"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "a MASTER"
 msgstr "HOOFDSLEUTEL"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "b MASTER"
 msgstr "HOOFDSLEUTEL"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "c MASTER"
 msgstr "HOOFDSLEUTEL"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "d MASTER"
 msgstr "HOOFDSLEUTEL"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "e MASTER"
 msgstr "HOOFDSLEUTEL"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "ARCHMASTER"
 msgstr "ROESTIGE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "STRENGTH"
-msgstr ""
+msgstr "STERKTE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "DEXTERITY"
-msgstr ""
+msgstr "BEHANDIGHEID"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "WISDOM"
-msgstr ""
+msgstr "WIJSHEID"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "VITALITY"
-msgstr ""
+msgstr "VITALITEIT"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-MAGIC"
-msgstr ""
+msgstr "ANTI-MAGISCH"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-FIRE"
-msgstr ""
+msgstr "ANTI-BRAND"
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 102; F0446 removes its A ordering key.
 msgid ""
@@ -2446,6 +2426,14 @@ msgid ""
 "UNCOMPROMISING\n"
 "ORDER."
 msgstr ""
+"DANK U MIJN\n"
+"VRIENDEN.  JIJ\n"
+"HEBBEN VERBODEN\n"
+"CHAOS EN\n"
+"VERWORPEN DE\n"
+"VALSE PAD VAN\n"
+"COMPROMISLOOS\n"
+"BESTEL."
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 104; F0446 removes its B ordering key.
 msgid ""
@@ -2457,3 +2445,10 @@ msgid ""
 "TRUE NATURE OF\n"
 "THE FIRESTAFF."
 msgstr ""
+"ALLEEN DOOR TE LEREN\n"
+"DE WAARHEID EN\n"
+"HET PAD ZOEKEN\n"
+"VAN BALANS\n"
+"HEB JE HET GEDAAN\n"
+"WARE AARD VAN\n"
+"DE BRANDWEER."

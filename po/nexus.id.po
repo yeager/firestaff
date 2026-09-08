@@ -1,0 +1,103 @@
+# DM Nexus string template
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-nexus\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Attack"
+msgstr "Menyerang"
+
+msgid "Cast Spell"
+msgstr "Mantra Pemeran"
+
+msgid "Track %d"
+msgstr "Lacak %d"
+
+msgid "%s has died"
+msgstr "%s telah mati"
+
+msgid "Continue"
+msgstr "Lanjutkan"
+
+msgid "Defend"
+msgstr "Mempertahankan"
+
+msgid "This door is locked"
+msgstr "Pintu ini terkunci"
+
+msgid "You found the Firestaff!"
+msgstr "Anda menemukan Firestaff!"
+
+msgid "Congratulations! You have saved the realm!"
+msgstr "Selamat! Anda telah menyelamatkan dunia!"
+
+msgid "Your party has perished"
+msgstr "Pestamu telah binasa"
+
+msgid "Hall of Champions"
+msgstr "Aula Juara"
+
+msgid "Health"
+msgstr "Kesehatan"
+
+msgid "Inventory full"
+msgstr "Persediaan penuh"
+
+msgid "A key is required"
+msgstr "Diperlukan kunci"
+
+msgid "Level %d"
+msgstr "Tingkat %d"
+
+msgid "%s gained a level"
+msgstr "%s naik satu level"
+
+msgid "Load Game"
+msgstr "Memuat Permainan"
+
+msgid "Mana"
+msgstr "Mana"
+
+msgid "New Game"
+msgstr "Permainan Baru"
+
+msgid "Not enough mana"
+msgstr "Mana tidak cukup"
+
+msgid "Recruit"
+msgstr "Rekrut"
+
+msgid "Reincarnate"
+msgstr "Bereinkarnasi"
+
+msgid "Rest"
+msgstr "Istirahat"
+
+msgid "Resurrect"
+msgstr "Bangkit kembali"
+
+msgid "Save Game"
+msgstr "Simpan Permainan"
+
+msgid "Select a champion"
+msgstr "Pilih seorang juara"
+
+msgid "Spell failed"
+msgstr "Mantra gagal"
+
+msgid "Stamina"
+msgstr "Daya tahan"
+
+msgid "Party is full"
+msgstr "Pesta sudah penuh"
+
+msgid "Use Item"
+msgstr "Gunakan Barang"

@@ -1,0 +1,174 @@
+# Firestaff UI string template
+# Generated automatically — do not edit manually
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. ACCESSIBILITY
+msgid "Accessibility"
+msgstr "Aksesibilitas"
+
+#. AUDIO
+msgid "Audio"
+msgstr "Audio"
+
+#. BACK
+msgid "Back"
+msgstr "Kembali"
+
+#. BESTIARY
+msgid "Bestiary"
+msgstr "Bestiari"
+
+#. CHANGELOG
+msgid "Changelog"
+msgstr "log perubahan"
+
+#. COMING_SOON
+msgid "Coming soon"
+msgstr "Segera hadir"
+
+#. CONTINUE
+msgid "Continue Saved Game"
+msgstr "Lanjutkan Permainan Tersimpan"
+
+#. CONTROLS
+msgid "Controls"
+msgstr "Kontrol"
+
+#. DISPLAY
+msgid "Display"
+msgstr "Tampilan"
+
+#. EXTRAS
+msgid "EXTRAS"
+msgstr "EKSTRA"
+
+#. ITEMS
+msgid "Item Encyclopedia"
+msgstr "Ensiklopedia Barang"
+
+#. LANGUAGE
+msgid "Language"
+msgstr "Bahasa"
+
+#. MAP_VIEWER
+msgid "Map Viewer"
+msgstr "Penampil Peta"
+
+#. MUSEUM
+msgid "Museum of Lore"
+msgstr "Museum Pengetahuan"
+
+#. NEW_GAME_V1
+msgid "New Game (V1 Original)"
+msgstr "Game Baru (V1 Asli)"
+
+#. NEW_GAME_V21
+msgid "New Game (V2.1 Upscaled)"
+msgstr "Game Baru (V2.1 Ditingkatkan)"
+
+#. NEW_GAME_V22
+msgid "New Game (V2.2 Enhanced)"
+msgstr "Game Baru (V2.2 Ditingkatkan)"
+
+#. NO_DATA
+msgid "No data files"
+msgstr "Tidak ada file data"
+
+#. OFF
+msgid "Off"
+msgstr "Mati"
+
+#. ON
+msgid "On"
+msgstr "Aktif"
+
+#. PLAY
+msgid "PLAY"
+msgstr "MAINKAN"
+
+#. QUIT
+msgid "QUIT"
+msgstr "BERHENTI"
+
+#. SCREENSHOTS
+msgid "Screenshot Gallery"
+msgstr "Galeri Tangkapan Layar"
+
+#. SELECT_GAME
+msgid "SELECT GAME"
+msgstr "PILIH PERMAINAN"
+
+#. SETTINGS
+msgid "SETTINGS"
+msgstr "PENGATURAN"
+
+#. SPELLS
+msgid "Spell Reference"
+msgstr "Referensi Ejaan"
+
+#. VALIDATE
+msgid "Validate game data"
+msgstr "Validasi data permainan"
+
+#. VERSION
+msgid "Version"
+msgstr "Versi"
+
+#. VIDEO
+msgid "Video"
+msgstr "Video"
+
+#: src/engine/m11_game_view.c
+msgid "RETURN TO START MENU?"
+msgstr "KEMBALI KE MENU MULAI?"
+
+#: src/engine/m11_game_view.c
+msgid "YES"
+msgstr "YA"
+
+#: src/engine/m11_game_view.c
+msgid "NO"
+msgstr "TIDAK"
+
+#. F10_SHARED_UI
+msgid "CHEATS"
+msgstr "MENIPU"
+
+#. F10_SHARED_UI
+msgid "DISPLAY"
+msgstr "TAMPILAN"
+
+#. F10_SHARED_UI
+msgid "EFFECTS"
+msgstr "EFEK"
+
+#. F10_SHARED_UI
+msgid "FILTERS"
+msgstr "FILTER"
+
+#. F10_SHARED_UI
+msgid "GOD MODE"
+msgstr "MODE TUHAN"
+
+#. F10_SHARED_UI
+msgid "INF MANA"
+msgstr "INF MANA"
+
+#. F10_SHARED_UI
+msgid "INF STAM"
+msgstr "STAM INF"
+
+#. F10_SHARED_UI
+msgid "SPEED"
+msgstr "KECEPATAN"
