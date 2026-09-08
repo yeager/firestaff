@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Extended the authenticated PC 3.4 Hall capture through a real
+  C040 resurrection and C007 inventory open. After the source C127/C040 route,
+  C160 at `(130,115)` recruits Chani Sayyadina Shaya and C007 at `(54,14)`
+  opens the retail FOOD/WATER inventory panel. The source frame remains local
+  under `.codex-scratch`; it establishes the correct state and hit geometry
+  for later pickup/eye comparisons, not item-transaction parity by itself.
+
 - 2026-09-08: Captured the authentic retail PC 3.4 Hall C127/C040 route with
   DOSBox-X/Xvfb using the existing read-only local original stage. The working
   input sequence is mouse-mode launch (`DM -vv -sn -pm`), Entrance click
