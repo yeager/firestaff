@@ -11,8 +11,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_RUN_ROOT = Path('/home/trv2/.openclaw/data/firestaff-n2-runs/pass462-title-end-capture-parity')
-RED = Path(os.environ.get('REDMCSB_SOURCE_ROOT', '/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source'))
+DEFAULT_RUN_ROOT = ROOT / '.codex-scratch' / 'pass462-title-end-capture-parity'
+RED = Path(os.environ.get(
+    'REDMCSB_SOURCE_ROOT',
+    str(ROOT / 'reference' / 'redmcsb-20210206' / 'Toolchains' / 'Common' / 'Source'),
+))
 
 @dataclass
 class CaptureRow:
@@ -57,8 +60,12 @@ def make_refs(out_dir: Path) -> Path:
     ref.mkdir(parents=True, exist_ok=True)
     env=os.environ.copy()
     env['FIRESTAFF_PASS57_DUMP_DIR']=str(ref)
+    probe = ROOT / 'scripts' / 'probes' / 'run_firestaff_v1_title_render_probe.sh'
+    if not probe.is_file():
+        raise FileNotFoundError(f'missing checked-in title render probe: {probe}')
     with (out_dir/'title_reference_probe.txt').open('w') as f:
-        subprocess.run([str(ROOT/'run_firestaff_v1_title_render_probe.sh')], cwd=ROOT, env=env, check=True, stdout=f, stderr=subprocess.STDOUT)
+        subprocess.run([str(probe)], cwd=ROOT, env=env, check=True,
+                       stdout=f, stderr=subprocess.STDOUT)
     return ref
 
 def latest_title_dir(run_root: Path) -> Path | None:
@@ -77,7 +84,17 @@ def main(argv: Iterable[str] | None=None) -> int:
     require_markers(RED/'ENDGAME.C', ['F0444_STARTEND_Endgame', 'C006_GRAPHIC_THE_END', 'F0022_MAIN_Delay(300)', 'C005_GRAPHIC_CREDITS'], missing, 'ENDGAME.C')
     require_markers(RED/'DATA.C', ['G0012_ai_Graphic562_Box_Endgame_TheEnd'], missing, 'DATA.C')
     capture_dir=args.capture_dir or latest_title_dir(args.run_root)
-    rows=load_manifest(capture_dir/'title_capture_manifest.tsv') if capture_dir else []
+    # DOSBox variants use different screenshot names.  The maintained capture
+    # harness always writes raw_manifest.tsv after normalizing that difference;
+    # retain title_capture_manifest.tsv for older capture transactions.
+    manifest = None
+    if capture_dir:
+        for name in ('title_capture_manifest.tsv', 'raw_manifest.tsv'):
+            candidate = capture_dir / name
+            if candidate.exists():
+                manifest = candidate
+                break
+    rows=load_manifest(manifest) if manifest else []
     ref_dir=make_refs(args.out_dir)
     refs=[]
     for p in sorted(ref_dir.glob('frame_*.ppm')):
@@ -116,6 +133,7 @@ def main(argv: Iterable[str] | None=None) -> int:
         'sourceAuditOk': not missing,
         'missingSourceMarkers':missing,
         'titleCaptureDir': str(capture_dir) if capture_dir else None,
+        'titleCaptureManifest': str(manifest) if manifest else None,
         'titleCaptureCount':len(rows),
         'titleLikeMatches':title_like,
         'uniqueTitleReferences':unique_title_refs,
