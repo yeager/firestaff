@@ -2,16 +2,6 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
-- Correct the in-progress FM Towns Entrance screenshot verifier before it is
-  promoted. A direct 2026-09-08 F31E ZIP capture at `csb-entrance-4` had the
-  authenticated C28 palette, 59,886 non-black pixels and 13 colours, with
-  only 40 pixels of C28 index 9 in the `(224..233, 8..21)` title/decorative
-  region. The historical regression is a broad red C004 field, so a rule
-  rejecting any occurrence of that palette entry is a false positive. Bind
-  the verifier to a red-area/row-span threshold and the closed C002/C003 door
-  geometry; do not remove C28's valid red entry or substitute another
-  platform's palette.
-
 - Complete the remaining C37 wander bridge after its shared-RNG admission was
   corrected. It now consumes persistent `G0349` exactly once for the
   `M005_RANDOM(2)` movement gate and, when admitted, once for absolute

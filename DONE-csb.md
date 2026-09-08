@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-08: Added an authentic FM Towns Entrance screenshot regression for
+  the F31 ZIP. It verifies the source C28 palette, closed C002/C003 entrance
+  composition and a broad-red C004 failure signature. The verifier accepts
+  C28's legitimate 40-pixel red title detail at `(224..233, 8..21)` while
+  rejecting a large red field. The real-media result is 59,886 non-black
+  pixels and 13 colours; no game member is materialised on disk.
+
 - 2026-09-08: The Swedish F31 FM Towns catalogue is complete at the gettext
   level.  `msgfmt --check po/csb.sv.po` succeeds and
   `msgattrib --untranslated po/csb.sv.po` produces no entries.  This corrects
