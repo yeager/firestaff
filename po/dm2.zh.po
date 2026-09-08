@@ -24,12 +24,12 @@ msgstr "ADEPT 1"
 #. GDAT 0x07/0x00/0x26
 #: po/dm2_source_strings.c:11
 msgid "ANTI-FIRE"
-msgstr "ANTI-FIRE"
+msgstr "抗火"
 
 #. GDAT 0x07/0x00/0x25
 #: po/dm2_source_strings.c:12
 msgid "ANTI-MAGIC"
-msgstr "ANTI-MAGIC"
+msgstr "抗魔法"
 
 #. GDAT 0x15/0x1d/0x18
 #: po/dm2_source_strings.c:13
@@ -44,12 +44,12 @@ msgstr "APPRENTICE 1"
 #. GDAT 0x0f/0x1d/0x00
 #: po/dm2_source_strings.c:15
 msgid "ARCHER-GUARD"
-msgstr "ARCHER-GUARD"
+msgstr "弓箭守卫"
 
 #. GDAT 0x07/0x00/0x12
 #: po/dm2_source_strings.c:16
 msgid "ARCHMASTER 1"
-msgstr "ARCHMASTER 1"
+msgstr "大法师 1"
 
 #. GDAT 0x11/0x26/0x18
 #: po/dm2_source_strings.c:17
@@ -64,12 +64,12 @@ msgstr "箭"
 #. GDAT 0x07/0x00/0x09
 #: po/dm2_source_strings.c:19
 msgid "ARTISAN 1"
-msgstr "ARTISAN 1"
+msgstr "工匠 1"
 
 #. GDAT 0x0f/0x31/0x00, 0x15/0x3f/0x18
 #: po/dm2_source_strings.c:20
 msgid "ATTACK MINION"
-msgstr "ATTACK MINION"
+msgstr "攻击仆从"
 
 #. GDAT 0x10/0x12/0x18
 #: po/dm2_source_strings.c:21
@@ -79,22 +79,22 @@ msgstr "斧"
 #. GDAT 0x0f/0x42/0x00
 #: po/dm2_source_strings.c:22
 msgid "AXEMAN"
-msgstr "AXEMAN"
+msgstr "斧兵"
 
 #. GDAT 0x0f/0x48/0x00
 #: po/dm2_source_strings.c:23
 msgid "AXEMAN THIEF"
-msgstr "AXEMAN THIEF"
+msgstr "斧兵盗贼"
 
 #. GDAT 0x0f/0x43/0x00
 #: po/dm2_source_strings.c:24
 msgid "BAD MERCHANT"
-msgstr "BAD MERCHANT"
+msgstr "奸商"
 
 #. GDAT 0x14/0x01/0x18
 #: po/dm2_source_strings.c:25
 msgid "BAG"
-msgstr "BAG"
+msgstr "袋子"
 
 #. GDAT 0x10/0x29/0x18
 #: po/dm2_source_strings.c:26
@@ -104,17 +104,17 @@ msgstr "BAINBLOOM"
 #. GDAT 0x11/0x17/0x18
 #: po/dm2_source_strings.c:27
 msgid "BANDANA"
-msgstr "BANDANA"
+msgstr "头巾"
 
 #. GDAT 0x0f/0x2d/0x00
 #: po/dm2_source_strings.c:28
 msgid "BARREL"
-msgstr "BARREL"
+msgstr "木桶"
 
 #. GDAT 0x11/0x1b/0x18
 #: po/dm2_source_strings.c:29
 msgid "BASCINET"
-msgstr "BASCINET"
+msgstr "护鼻盔"
 
 #. GDAT 0x03/0x00/0x13
 #: po/dm2_source_strings.c:30
@@ -132,22 +132,22 @@ msgstr ""
 #. GDAT 0x11/0x04/0x18
 #: po/dm2_source_strings.c:31
 msgid "BLACK BOOTS"
-msgstr "BLACK BOOTS"
+msgstr "黑靴"
 
 #. GDAT 0x11/0x06/0x18
 #: po/dm2_source_strings.c:32
 msgid "BLACK SKIRT"
-msgstr "BLACK SKIRT"
+msgstr "黑裙"
 
 #. GDAT 0x11/0x05/0x18
 #: po/dm2_source_strings.c:33
 msgid "BLACK TOP"
-msgstr "BLACK TOP"
+msgstr "黑上衣"
 
 #. GDAT 0x15/0x0a/0x18
 #: po/dm2_source_strings.c:34
 msgid "BLOOD KEY"
-msgstr "BLOOD KEY"
+msgstr "血钥匙"
 
 #. GDAT 0x15/0x1a/0x18
 #: po/dm2_source_strings.c:35
@@ -167,17 +167,17 @@ msgstr "BLUE STEELE"
 #. GDAT 0x11/0x0a/0x18
 #: po/dm2_source_strings.c:38
 msgid "BODICE"
-msgstr "BODICE"
+msgstr "紧身胸衣"
 
 #. GDAT 0x0f/0x2f/0x00
 #: po/dm2_source_strings.c:39
 msgid "BOILER"
-msgstr "BOILER"
+msgstr "锅炉"
 
 #. GDAT 0x15/0x3d/0x18
 #: po/dm2_source_strings.c:40
 msgid "BONE"
-msgstr "BONE"
+msgstr "骨头"
 
 #. GDAT 0x15/0x34/0x18
 #: po/dm2_source_strings.c:41
@@ -202,7 +202,7 @@ msgstr "弓"
 #. GDAT 0x10/0x21/0x18
 #: po/dm2_source_strings.c:45
 msgid "BRANCH"
-msgstr "BRANCH"
+msgstr "树枝"
 
 #. GDAT 0x15/0x1f/0x18
 #: po/dm2_source_strings.c:46
@@ -212,22 +212,22 @@ msgstr "BREAD"
 #. GDAT 0x11/0x20/0x18
 #: po/dm2_source_strings.c:47
 msgid "BREASTPLATE"
-msgstr "BREASTPLATE"
+msgstr "胸甲"
 
 #. GDAT 0x11/0x13/0x18
 #: po/dm2_source_strings.c:48
 msgid "BRIGANDINE"
-msgstr "BRIGANDINE"
+msgstr "板条甲"
 
 #. GDAT 0x0f/0x04/0x00
 #: po/dm2_source_strings.c:49
 msgid "BUSH"
-msgstr "BUSH"
+msgstr "灌木"
 
 #. GDAT 0x1a/0x09/0x00
 #: po/dm2_source_strings.c:50
 msgid "CANCEL"
-msgstr "CANCEL"
+msgstr "取消"
 
 #. GDAT 0x11/0x00/0x18
 #: po/dm2_source_strings.c:51
@@ -237,22 +237,22 @@ msgstr "斗篷"
 #. GDAT 0x0f/0x32/0x00
 #: po/dm2_source_strings.c:52
 msgid "CARRY MINION"
-msgstr "CARRY MINION"
+msgstr "搬运仆从"
 
 #. GDAT 0x0f/0x18/0x00
 #: po/dm2_source_strings.c:53
 msgid "CAVE IN"
-msgstr "CAVE IN"
+msgstr "塌方"
 
 #. GDAT 0x0f/0x23/0x00
 #: po/dm2_source_strings.c:54
 msgid "CAVERN BAT"
-msgstr "CAVERN BAT"
+msgstr "洞穴蝙蝠"
 
 #. GDAT 0x0f/0x01/0x00, 0x0f/0x4d/0x00, 0x0f/0x53/0x00
 #: po/dm2_source_strings.c:55
 msgid "CAVERN TABLE"
-msgstr "CAVERN TABLE"
+msgstr "洞穴桌"
 
 #. GDAT 0x15/0x20/0x18
 #: po/dm2_source_strings.c:56
@@ -267,12 +267,12 @@ msgstr "宝箱"
 #. GDAT 0x15/0x29/0x18
 #: po/dm2_source_strings.c:58
 msgid "CLAN CHIEF GEM"
-msgstr "CLAN CHIEF GEM"
+msgstr "氏族首领宝石"
 
 #. GDAT 0x15/0x31/0x18
 #: po/dm2_source_strings.c:59
 msgid "CLAN KEY PIECE"
-msgstr "CLAN KEY PIECE"
+msgstr "氏族钥匙碎片"
 
 #. GDAT 0x11/0x01/0x18
 #: po/dm2_source_strings.c:60
@@ -287,7 +287,7 @@ msgstr "木棒"
 #. GDAT 0x10/0x26/0x18
 #: po/dm2_source_strings.c:62
 msgid "COMBAT STAFF"
-msgstr "COMBAT STAFF"
+msgstr "战斗法杖"
 
 #. GDAT 0x15/0x05/0x18
 #: po/dm2_source_strings.c:63
@@ -297,17 +297,17 @@ msgstr "指南针"
 #. GDAT 0x15/0x06/0x18
 #: po/dm2_source_strings.c:64
 msgid "COPPER COIN"
-msgstr "COPPER COIN"
+msgstr "铜币"
 
 #. GDAT 0x15/0x36/0x18
 #: po/dm2_source_strings.c:65
 msgid "COVER PLATE"
-msgstr "COVER PLATE"
+msgstr "盖板"
 
 #. GDAT 0x07/0x00/0x08
 #: po/dm2_source_strings.c:66
 msgid "CRAFTSMAN 1"
-msgstr "CRAFTSMAN 1"
+msgstr "工匠 1"
 
 #. GDAT 0x15/0x0e/0x18
 #: po/dm2_source_strings.c:67
@@ -322,7 +322,7 @@ msgstr "十字弓"
 #. GDAT 0x11/0x1d/0x18
 #: po/dm2_source_strings.c:69
 msgid "CRYSTAL SHIELD"
-msgstr "CRYSTAL SHIELD"
+msgstr "水晶盾"
 
 #. GDAT 0x10/0x08/0x18
 #: po/dm2_source_strings.c:70
@@ -337,32 +337,32 @@ msgstr "DARK VEXIRK"
 #. GDAT 0x15/0x3b/0x18
 #: po/dm2_source_strings.c:72
 msgid "DEAD BAT"
-msgstr "DEAD BAT"
+msgstr "死蝙蝠"
 
 #. GDAT 0x14/0x0f/0x18
 #: po/dm2_source_strings.c:73
 msgid "DEBUG MAP"
-msgstr "DEBUG MAP"
+msgstr "调试地图"
 
 #. GDAT 0x07/0x00/0x22
 #: po/dm2_source_strings.c:74
 msgid "DEXTERITY"
-msgstr "DEXTERITY"
+msgstr "敏捷"
 
 #. GDAT 0x0f/0x38/0x00
 #: po/dm2_source_strings.c:75
 msgid "DIGGER WORM"
-msgstr "DIGGER WORM"
+msgstr "掘地虫"
 
 #. GDAT 0x0f/0x4e/0x00
 #: po/dm2_source_strings.c:76
 msgid "DOOR GHOST"
-msgstr "DOOR GHOST"
+msgstr "门幽灵"
 
 #. GDAT 0x11/0x0d/0x18
 #: po/dm2_source_strings.c:77
 msgid "DOUBLET"
-msgstr "DOUBLET"
+msgstr "紧身上衣"
 
 #. GDAT 0x0f/0x17/0x00
 #: po/dm2_source_strings.c:78
@@ -372,7 +372,7 @@ msgstr "DRAGOTH"
 #. GDAT 0x0f/0x4c/0x00
 #: po/dm2_source_strings.c:79
 msgid "DRAGOTH ATTACK MINION"
-msgstr "DRAGOTH ATTACK MINION"
+msgstr "Dragoth 攻击仆从"
 
 #. GDAT 0x0f/0x52/0x00
 #: po/dm2_source_strings.c:80
@@ -382,27 +382,27 @@ msgstr "DRU TAN"
 #. GDAT 0x10/0x25/0x18
 #: po/dm2_source_strings.c:81
 msgid "EMERALD ORB"
-msgstr "EMERALD ORB"
+msgstr "翡翠宝珠"
 
 #. GDAT 0x0f/0x1b/0x00, 0x0f/0x57/0x00
 #: po/dm2_source_strings.c:82
 msgid "EVIL ATTACK MINION"
-msgstr "EVIL ATTACK MINION"
+msgstr "邪恶攻击仆从"
 
 #. GDAT 0x0f/0x25/0x00
 #: po/dm2_source_strings.c:83
 msgid "EVIL FOUNTAIN"
-msgstr "EVIL FOUNTAIN"
+msgstr "邪恶喷泉"
 
 #. GDAT 0x0f/0x45/0x00
 #: po/dm2_source_strings.c:84
 msgid "EVIL GUARD MINION"
-msgstr "EVIL GUARD MINION"
+msgstr "邪恶守卫仆从"
 
 #. GDAT 0x0f/0x2b/0x00
 #: po/dm2_source_strings.c:85
 msgid "EVIL SCOUT MINION"
-msgstr "EVIL SCOUT MINION"
+msgstr "邪恶侦察仆从"
 
 #. GDAT 0x10/0x0e/0x18
 #: po/dm2_source_strings.c:86
@@ -412,7 +412,7 @@ msgstr "EXCSYMYR"
 #. GDAT 0x07/0x00/0x0b
 #: po/dm2_source_strings.c:87
 msgid "EXPERT 1"
-msgstr "EXPERT 1"
+msgstr "专家 1"
 
 #. GDAT 0x10/0x00/0x18
 #: po/dm2_source_strings.c:88
@@ -422,17 +422,17 @@ msgstr "时间之眼"
 #. GDAT 0x0f/0x08/0x00
 #: po/dm2_source_strings.c:89
 msgid "FACE PILLAR"
-msgstr "FACE PILLAR"
+msgstr "面孔石柱"
 
 #. GDAT 0x15/0x33/0x18
 #: po/dm2_source_strings.c:90
 msgid "FAIRY CUSHION"
-msgstr "FAIRY CUSHION"
+msgstr "仙女坐垫"
 
 #. GDAT 0x0f/0x33/0x00
 #: po/dm2_source_strings.c:91
 msgid "FETCH MINION"
-msgstr "FETCH MINION"
+msgstr "取物仆从"
 
 #. GDAT 0x07/0x00/0x00
 #: po/dm2_source_strings.c:92
@@ -447,37 +447,37 @@ msgstr "FINE ROBE"
 #. GDAT 0x11/0x07/0x18
 #: po/dm2_source_strings.c:94
 msgid "FINE ROBE TOP"
-msgstr "FINE ROBE TOP"
+msgstr "精致长袍上衣"
 
 #. GDAT 0x11/0x38/0x18
 #: po/dm2_source_strings.c:95
 msgid "FIRE GREAVE"
-msgstr "FIRE GREAVE"
+msgstr "火焰护胫"
 
 #. GDAT 0x11/0x35/0x18
 #: po/dm2_source_strings.c:96
 msgid "FIRE HELM"
-msgstr "FIRE HELM"
+msgstr "火焰头盔"
 
 #. GDAT 0x11/0x09/0x18, 0x11/0x36/0x18
 #: po/dm2_source_strings.c:97
 msgid "FIRE PLATE"
-msgstr "FIRE PLATE"
+msgstr "火焰甲片"
 
 #. GDAT 0x11/0x37/0x18
 #: po/dm2_source_strings.c:98
 msgid "FIRE POLEYN"
-msgstr "FIRE POLEYN"
+msgstr "火焰膝甲"
 
 #. GDAT 0x0f/0x37/0x00
 #: po/dm2_source_strings.c:99
 msgid "FLAME ORB"
-msgstr "FLAME ORB"
+msgstr "火焰宝珠"
 
 #. GDAT 0x13/0x14/0x18
 #: po/dm2_source_strings.c:100
 msgid "FLASK"
-msgstr "FLASK"
+msgstr "烧瓶"
 
 #. GDAT 0x11/0x29/0x18
 #: po/dm2_source_strings.c:101
@@ -510,7 +510,7 @@ msgstr "狂怒"
 #. GDAT 0x01/0x00/0x12
 #: po/dm2_source_strings.c:105
 msgid "GAME PAUSED"
-msgstr "GAME PAUSED"
+msgstr "游戏已暂停"
 
 #. GDAT 0x0f/0x49/0x00
 #: po/dm2_source_strings.c:106
@@ -540,12 +540,12 @@ msgstr "金钥匙"
 #. GDAT 0x11/0x18/0x18
 #: po/dm2_source_strings.c:111
 msgid "GREAT HELM"
-msgstr "GREAT HELM"
+msgstr "大头盔"
 
 #. GDAT 0x11/0x25/0x18
 #: po/dm2_source_strings.c:112
 msgid "GREAVES"
-msgstr "GREAVES"
+msgstr "护胫"
 
 #. GDAT 0x15/0x1c/0x18
 #: po/dm2_source_strings.c:113
@@ -555,7 +555,7 @@ msgstr "绿宝石"
 #. GDAT 0x0f/0x34/0x00, 0x15/0x40/0x18
 #: po/dm2_source_strings.c:114
 msgid "GUARD MINION"
-msgstr "GUARD MINION"
+msgstr "守卫仆从"
 
 #. GDAT 0x11/0x0c/0x18
 #: po/dm2_source_strings.c:115
@@ -565,7 +565,7 @@ msgstr "GUNNA"
 #. GDAT 0x07/0x00/0x27
 #: po/dm2_source_strings.c:116
 msgid "HEALTH"
-msgstr "HEALTH"
+msgstr "生命"
 
 #. GDAT 0x11/0x1a/0x18
 #: po/dm2_source_strings.c:117
@@ -575,7 +575,7 @@ msgstr "头盔"
 #. GDAT 0x11/0x19/0x18
 #: po/dm2_source_strings.c:118
 msgid "HORNED HELM"
-msgstr "HORNED HELM"
+msgstr "角盔"
 
 #. GDAT 0x11/0x0e/0x18
 #: po/dm2_source_strings.c:119
@@ -652,7 +652,7 @@ msgstr "JICAMA"
 #. GDAT 0x07/0x00/0x07
 #: po/dm2_source_strings.c:127
 msgid "JOURNEYMAN 1"
-msgstr "JOURNEYMAN 1"
+msgstr "熟练者 1"
 
 #. GDAT 0x10/0x03/0x18
 #: po/dm2_source_strings.c:128
@@ -662,12 +662,12 @@ msgstr "KALAN GAUNTLET"
 #. GDAT 0x10/0x0d/0x18
 #: po/dm2_source_strings.c:129
 msgid "KATANA"
-msgstr "KATANA"
+msgstr "武士刀"
 
 #. GDAT 0x15/0x2c/0x18
 #: po/dm2_source_strings.c:130
 msgid "LARGE GEAR"
-msgstr "LARGE GEAR"
+msgstr "大齿轮"
 
 #. GDAT 0x11/0x12/0x18
 #: po/dm2_source_strings.c:131
@@ -687,17 +687,17 @@ msgstr "皮裤"
 #. GDAT 0x11/0x28/0x18
 #: po/dm2_source_strings.c:134
 msgid "LEG PLATE"
-msgstr "LEG PLATE"
+msgstr "腿甲"
 
 #. GDAT 0x15/0x0d/0x18
 #: po/dm2_source_strings.c:135
 msgid "LIGHTNING KEY"
-msgstr "LIGHTNING KEY"
+msgstr "闪电钥匙"
 
 #. GDAT 0x0f/0x29/0x00
 #: po/dm2_source_strings.c:136
 msgid "LIGHTNING ROD"
-msgstr "LIGHTNING ROD"
+msgstr "避雷针"
 
 #. GDAT 0x07/0x00/0x1e, 0x1a/0x0f/0x00, 0x1a/0x80/0x00
 #: po/dm2_source_strings.c:137
@@ -712,17 +712,17 @@ msgstr "钉锤"
 #. GDAT 0x10/0x09/0x18
 #: po/dm2_source_strings.c:139
 msgid "MACHETE"
-msgstr "MACHETE"
+msgstr "砍刀"
 
 #. GDAT 0x14/0x08/0x18, 0x14/0x0b/0x18
 #: po/dm2_source_strings.c:140
 msgid "MAGIC MAP"
-msgstr "MAGIC MAP"
+msgstr "魔法地图"
 
 #. GDAT 0x0f/0x44/0x00
 #: po/dm2_source_strings.c:141
 msgid "MAGIC MERCHANT"
-msgstr "MAGIC MERCHANT"
+msgstr "魔法商人"
 
 #. GDAT 0x0f/0x1a/0x00
 #: po/dm2_source_strings.c:142
@@ -742,17 +742,17 @@ msgstr "MAGIKAL BOX"
 #. GDAT 0x11/0x24/0x18
 #: po/dm2_source_strings.c:145
 msgid "MAIL HELMET"
-msgstr "MAIL HELMET"
+msgstr "锁子头盔"
 
 #. GDAT 0x07/0x00/0x29
 #: po/dm2_source_strings.c:146
 msgid "MANA"
-msgstr "MANA"
+msgstr "法力"
 
 #. GDAT 0x15/0x2f/0x18
 #: po/dm2_source_strings.c:147
 msgid "MANA BLOSSOM"
-msgstr "MANA BLOSSOM"
+msgstr "法力花"
 
 #. GDAT 0x15/0x18/0x18
 #: po/dm2_source_strings.c:148
@@ -762,22 +762,22 @@ msgstr "主钥匙"
 #. GDAT 0x0f/0x22/0x00
 #: po/dm2_source_strings.c:149
 msgid "MERCHANT"
-msgstr "MERCHANT"
+msgstr "商人"
 
 #. GDAT 0x0f/0x2c/0x00
 #: po/dm2_source_strings.c:150
 msgid "MERCHANT GUARD"
-msgstr "MERCHANT GUARD"
+msgstr "商人守卫"
 
 #. GDAT 0x0f/0x3a/0x00
 #: po/dm2_source_strings.c:151
 msgid "MERCHANT TOMB"
-msgstr "MERCHANT TOMB"
+msgstr "商人墓"
 
 #. GDAT 0x10/0x2d/0x18, 0x15/0x2a/0x18
 #: po/dm2_source_strings.c:152
 msgid "METEOR METAL"
-msgstr "METEOR METAL"
+msgstr "陨铁"
 
 #. GDAT 0x15/0x25/0x18
 #: po/dm2_source_strings.c:153
@@ -787,7 +787,7 @@ msgstr "MEZMAR"
 #. GDAT 0x14/0x0a/0x18
 #: po/dm2_source_strings.c:154
 msgid "MINION MAP"
-msgstr "MINION MAP"
+msgstr "仆从地图"
 
 #. GDAT 0x11/0x0f/0x18
 #: po/dm2_source_strings.c:155
@@ -807,12 +807,12 @@ msgstr "秘银锁子甲"
 #. GDAT 0x14/0x02/0x18
 #: po/dm2_source_strings.c:158
 msgid "MONEY BOX"
-msgstr "MONEY BOX"
+msgstr "钱箱"
 
 #. GDAT 0x15/0x0c/0x18
 #: po/dm2_source_strings.c:159
 msgid "MOON KEY"
-msgstr "MOON KEY"
+msgstr "月亮钥匙"
 
 #. GDAT 0x15/0x27/0x18
 #: po/dm2_source_strings.c:160
@@ -822,7 +822,7 @@ msgstr "月光石"
 #. GDAT 0x10/0x16/0x18
 #: po/dm2_source_strings.c:161
 msgid "MORNINGSTAR"
-msgstr "MORNINGSTAR"
+msgstr "流星锤"
 
 #. GDAT 0x0f/0x26/0x00
 #: po/dm2_source_strings.c:162
@@ -832,7 +832,7 @@ msgstr "木乃伊"
 #. GDAT 0x07/0x00/0x04
 #: po/dm2_source_strings.c:163
 msgid "NEOPHYTE 1"
-msgstr "NEOPHYTE 1"
+msgstr "新手 1"
 
 #. GDAT 0x07/0x00/0x01
 #: po/dm2_source_strings.c:164
@@ -842,7 +842,7 @@ msgstr "忍者"
 #. GDAT 0x01/0xfe/0x05
 #: po/dm2_source_strings.c:165
 msgid "NO CREATURE"
-msgstr "NO CREATURE"
+msgstr "没有生物"
 
 #. GDAT 0x03/0x00/0x11
 #: po/dm2_source_strings.c:166
@@ -860,7 +860,7 @@ msgstr ""
 #. GDAT 0x07/0x00/0x05
 #: po/dm2_source_strings.c:167
 msgid "NOVICE 1"
-msgstr "NOVICE 1"
+msgstr "初学者 1"
 
 #. GDAT 0x10/0x2a/0x18
 #: po/dm2_source_strings.c:168
@@ -870,7 +870,7 @@ msgstr "NUMENSTAFF"
 #. GDAT 0x0f/0x3d/0x00, 0x0f/0x3e/0x00, 0x0f/0x3f/0x00
 #: po/dm2_source_strings.c:169
 msgid "OBELISK"
-msgstr "OBELISK"
+msgstr "方尖碑"
 
 #. GDAT 0x1a/0x00/0x00, 0x1a/0x01/0x00, 0x1a/0x02/0x00, 0x1a/0x03/0x00, 0x1a/0x04/0x00, 0x1a/0x05/0x00, 0x1a/0x06/0x00, 0x1a/0x07/0x00, 0x1a/0x08/0x00, 0x1a/0x13/0x00, 0x1a/0x14/0x00, 0x1a/0x1a/0x00, 0x1a/0x87/0x00
 #: po/dm2_source_strings.c:170
@@ -890,27 +890,27 @@ msgstr "PALMAPPLE"
 #. GDAT 0x0f/0x55/0x00
 #: po/dm2_source_strings.c:173
 msgid "PEDISTAL"
-msgstr "PEDISTAL"
+msgstr "底座"
 
 #. GDAT 0x0f/0x05/0x00
 #: po/dm2_source_strings.c:174
 msgid "PILLAR"
-msgstr "PILLAR"
+msgstr "石柱"
 
 #. GDAT 0x0f/0x27/0x00
 #: po/dm2_source_strings.c:175
 msgid "PIPE SHAFT"
-msgstr "PIPE SHAFT"
+msgstr "管道井"
 
 #. GDAT 0x0f/0x21/0x00
 #: po/dm2_source_strings.c:176
 msgid "PIT GHOST"
-msgstr "PIT GHOST"
+msgstr "坑洞幽灵"
 
 #. GDAT 0x15/0x35/0x18
 #: po/dm2_source_strings.c:177
 msgid "PLANK"
-msgstr "PLANK"
+msgstr "木板"
 
 #. GDAT 0x10/0x1f/0x18
 #: po/dm2_source_strings.c:178
@@ -920,7 +920,7 @@ msgstr "毒镖"
 #. GDAT 0x0f/0x11/0x00
 #: po/dm2_source_strings.c:179
 msgid "POWER CRYSTAL"
-msgstr "POWER CRYSTAL"
+msgstr "能量水晶"
 
 #. GDAT 0x07/0x00/0x02
 #: po/dm2_source_strings.c:180
@@ -935,12 +935,12 @@ msgstr "PYRO"
 #. GDAT 0x14/0x03/0x18
 #: po/dm2_source_strings.c:182
 msgid "QUIVER"
-msgstr "QUIVER"
+msgstr "箭袋"
 
 #. GDAT 0x10/0x23/0x18
 #: po/dm2_source_strings.c:183
 msgid "RAINBOW WAND"
-msgstr "RAINBOW WAND"
+msgstr "彩虹魔杖"
 
 #. GDAT 0x10/0x0b/0x18
 #: po/dm2_source_strings.c:184
@@ -950,7 +950,7 @@ msgstr "细剑"
 #. GDAT 0x15/0x1b/0x18
 #: po/dm2_source_strings.c:185
 msgid "RED GEM"
-msgstr "RED GEM"
+msgstr "红宝石"
 
 #. GDAT 0x03/0x00/0x12
 #: po/dm2_source_strings.c:186
@@ -975,7 +975,7 @@ msgstr ""
 #. GDAT 0x1a/0x10/0x00
 #: po/dm2_source_strings.c:188
 msgid "RESTART GAME"
-msgstr "RESTART GAME"
+msgstr "重新开始游戏"
 
 #. GDAT 0x10/0x1e/0x18
 #: po/dm2_source_strings.c:189
@@ -990,7 +990,7 @@ msgstr "ROCKY"
 #. GDAT 0x10/0x04/0x18
 #: po/dm2_source_strings.c:191
 msgid "ROGUE STAVE"
-msgstr "ROGUE STAVE"
+msgstr "游侠法杖"
 
 #. GDAT 0x15/0x2d/0x18
 #: po/dm2_source_strings.c:192
@@ -1000,7 +1000,7 @@ msgstr "绳"
 #. GDAT 0x15/0x28/0x18
 #: po/dm2_source_strings.c:193
 msgid "RUNE CHARM"
-msgstr "RUNE CHARM"
+msgstr "符文护符"
 
 #. GDAT 0x10/0x0c/0x18
 #: po/dm2_source_strings.c:194
@@ -1025,27 +1025,27 @@ msgstr "保存"
 #. GDAT 0x11/0x15/0x18
 #: po/dm2_source_strings.c:198
 msgid "SCALE HAUBERK"
-msgstr "SCALE HAUBERK"
+msgstr "鳞甲锁子衫"
 
 #. GDAT 0x11/0x16/0x18
 #: po/dm2_source_strings.c:199
 msgid "SCALE MAIL"
-msgstr "SCALE MAIL"
+msgstr "鳞甲"
 
 #. GDAT 0x10/0x2b/0x18
 #: po/dm2_source_strings.c:200
 msgid "SCARAB"
-msgstr "SCARAB"
+msgstr "圣甲虫"
 
 #. GDAT 0x14/0x09/0x18
 #: po/dm2_source_strings.c:201
 msgid "SCOUT MAP"
-msgstr "SCOUT MAP"
+msgstr "侦察地图"
 
 #. GDAT 0x0f/0x30/0x00
 #: po/dm2_source_strings.c:202
 msgid "SCOUT MINION"
-msgstr "SCOUT MINION"
+msgstr "侦察仆从"
 
 #. GDAT 0x12/0x00/0x18
 #: po/dm2_source_strings.c:203
@@ -1055,32 +1055,32 @@ msgstr "卷轴"
 #. GDAT 0x10/0x07/0x18
 #: po/dm2_source_strings.c:204
 msgid "SCYTHE"
-msgstr "SCYTHE"
+msgstr "镰刀"
 
 #. GDAT 0x10/0x28/0x18
 #: po/dm2_source_strings.c:205
 msgid "SERPENT STAFF"
-msgstr "SERPENT STAFF"
+msgstr "蛇杖"
 
 #. GDAT 0x15/0x23/0x18
 #: po/dm2_source_strings.c:206
 msgid "SHANK"
-msgstr "SHANK"
+msgstr "短刀"
 
 #. GDAT 0x11/0x1c/0x18
 #: po/dm2_source_strings.c:207
 msgid "SHIELD OF FIRE"
-msgstr "SHIELD OF FIRE"
+msgstr "火焰之盾"
 
 #. GDAT 0x10/0x20/0x18
 #: po/dm2_source_strings.c:208
 msgid "SHURIKEN"
-msgstr "SHURIKEN"
+msgstr "手里剑"
 
 #. GDAT 0x15/0x38/0x18
 #: po/dm2_source_strings.c:209
 msgid "SILVER COIN"
-msgstr "SILVER COIN"
+msgstr "银币"
 
 #. GDAT 0x0f/0x41/0x00
 #: po/dm2_source_strings.c:210
@@ -1090,12 +1090,12 @@ msgstr "骷髅"
 #. GDAT 0x0f/0x16/0x00
 #: po/dm2_source_strings.c:211
 msgid "SKULL BRAZIER"
-msgstr "SKULL BRAZIER"
+msgstr "骷髅火盆"
 
 #. GDAT 0x15/0x10/0x18
 #: po/dm2_source_strings.c:212
 msgid "SKULL KEY"
-msgstr "SKULL KEY"
+msgstr "骷髅钥匙"
 
 #. GDAT 0x01/0xfe/0x00
 #: po/dm2_source_strings.c:213
@@ -1110,7 +1110,7 @@ msgstr "SKULLKEEP C"
 #. GDAT 0x10/0x1c/0x18
 #: po/dm2_source_strings.c:215
 msgid "SLAYER ARROW"
-msgstr "SLAYER ARROW"
+msgstr "杀手之箭"
 
 #. GDAT 0x10/0x1d/0x18
 #: po/dm2_source_strings.c:216
@@ -1120,7 +1120,7 @@ msgstr "投石索"
 #. GDAT 0x15/0x07/0x18
 #: po/dm2_source_strings.c:217
 msgid "SMALL PLANK"
-msgstr "SMALL PLANK"
+msgstr "小木板"
 
 #. GDAT 0x11/0x1f/0x18
 #: po/dm2_source_strings.c:218
@@ -1152,7 +1152,7 @@ msgstr "实心钥匙"
 #. GDAT 0x0f/0x10/0x00
 #: po/dm2_source_strings.c:221
 msgid "SPECTRE"
-msgstr "SPECTRE"
+msgstr "幽灵"
 
 #. GDAT 0x10/0x2c/0x18
 #: po/dm2_source_strings.c:222
@@ -1162,22 +1162,22 @@ msgstr "SPEEDBOW"
 #. GDAT 0x0f/0x24/0x00
 #: po/dm2_source_strings.c:223
 msgid "SPIKED CAPSTAN"
-msgstr "SPIKED CAPSTAN"
+msgstr "尖刺绞盘"
 
 #. GDAT 0x0f/0x51/0x00
 #: po/dm2_source_strings.c:224
 msgid "SPIKED WALL"
-msgstr "SPIKED WALL"
+msgstr "尖刺墙"
 
 #. GDAT 0x10/0x24/0x18
 #: po/dm2_source_strings.c:225
 msgid "SPIRAL STAFF"
-msgstr "SPIRAL STAFF"
+msgstr "螺旋法杖"
 
 #. GDAT 0x15/0x22/0x18
 #: po/dm2_source_strings.c:226
 msgid "SPIRIT CAP"
-msgstr "SPIRIT CAP"
+msgstr "灵魂帽"
 
 #. GDAT 0x10/0x22/0x18
 #: po/dm2_source_strings.c:227
@@ -1192,22 +1192,22 @@ msgstr "STAFF OF u"
 #. GDAT 0x0f/0x06/0x00
 #: po/dm2_source_strings.c:229
 msgid "STALAGMITE"
-msgstr "STALAGMITE"
+msgstr "石笋"
 
 #. GDAT 0x07/0x00/0x28
 #: po/dm2_source_strings.c:230
 msgid "STAMINA"
-msgstr "STAMINA"
+msgstr "耐力"
 
 #. GDAT 0x15/0x24/0x18
 #: po/dm2_source_strings.c:231
 msgid "STEAK"
-msgstr "STEAK"
+msgstr "牛排"
 
 #. GDAT 0x0f/0x47/0x00
 #: po/dm2_source_strings.c:232
 msgid "STEAM ENGINE"
-msgstr "STEAM ENGINE"
+msgstr "蒸汽机"
 
 #. GDAT 0x10/0x01/0x18
 #: po/dm2_source_strings.c:233
@@ -1217,12 +1217,12 @@ msgstr "风暴之戒"
 #. GDAT 0x07/0x00/0x21
 #: po/dm2_source_strings.c:234
 msgid "STRENGTH"
-msgstr "STRENGTH"
+msgstr "力量"
 
 #. GDAT 0x15/0x30/0x18
 #: po/dm2_source_strings.c:235
 msgid "SUN CREST"
-msgstr "SUN CREST"
+msgstr "太阳徽记"
 
 #. GDAT 0x15/0x26/0x18
 #: po/dm2_source_strings.c:236
@@ -1237,17 +1237,17 @@ msgstr "剑"
 #. GDAT 0x11/0x0b/0x18
 #: po/dm2_source_strings.c:238
 msgid "TABARD"
-msgstr "TABARD"
+msgstr "罩袍"
 
 #. GDAT 0x15/0x3c/0x18
 #: po/dm2_source_strings.c:239
 msgid "TANKARD"
-msgstr "TANKARD"
+msgstr "大酒杯"
 
 #. GDAT 0x15/0x37/0x18
 #: po/dm2_source_strings.c:240
 msgid "TAPESTRY"
-msgstr "TAPESTRY"
+msgstr "挂毯"
 
 #. GDAT 0x11/0x33/0x18
 #: po/dm2_source_strings.c:241
@@ -1297,17 +1297,17 @@ msgstr "THICKET THEIF"
 #. GDAT 0x11/0x21/0x18
 #: po/dm2_source_strings.c:250
 msgid "THIGH PLATES"
-msgstr "THIGH PLATES"
+msgstr "大腿甲"
 
 #. GDAT 0x0f/0x00/0x00
 #: po/dm2_source_strings.c:251
 msgid "THORN DEMON"
-msgstr "THORN DEMON"
+msgstr "荆棘恶魔"
 
 #. GDAT 0x0f/0x0f/0x00
 #: po/dm2_source_strings.c:252
 msgid "TIGER STRIPED WORM"
-msgstr "TIGER STRIPED WORM"
+msgstr "虎纹蠕虫"
 
 #. GDAT 0x03/0x00/0x1c
 #: po/dm2_source_strings.c:253
@@ -1331,7 +1331,7 @@ msgstr ""
 #. GDAT 0x0f/0x39/0x00
 #: po/dm2_source_strings.c:254
 msgid "TOMBSTONE"
-msgstr "TOMBSTONE"
+msgstr "墓碑"
 
 #. GDAT 0x10/0x02/0x18
 #: po/dm2_source_strings.c:255
@@ -1341,47 +1341,47 @@ msgstr "火把"
 #. GDAT 0x11/0x27/0x18
 #: po/dm2_source_strings.c:256
 msgid "TORSO PLATE"
-msgstr "TORSO PLATE"
+msgstr "躯干甲"
 
 #. GDAT 0x0f/0x1c/0x00
 #: po/dm2_source_strings.c:257
 msgid "TOWER BAT"
-msgstr "TOWER BAT"
+msgstr "塔蝙蝠"
 
 #. GDAT 0x0f/0x3c/0x00
 #: po/dm2_source_strings.c:258
 msgid "TRADING TABLE (BUYS)"
-msgstr "TRADING TABLE (BUYS)"
+msgstr "交易桌（收购）"
 
 #. GDAT 0x0f/0x3b/0x00
 #: po/dm2_source_strings.c:259
 msgid "TRADING TABLE (SELLS)"
-msgstr "TRADING TABLE (SELLS)"
+msgstr "交易桌（出售）"
 
 #. GDAT 0x0f/0x14/0x00
 #: po/dm2_source_strings.c:260
 msgid "TREE"
-msgstr "TREE"
+msgstr "树"
 
 #. GDAT 0x0f/0x12/0x00
 #: po/dm2_source_strings.c:261
 msgid "TREE GORGON"
-msgstr "TREE GORGON"
+msgstr "树妖"
 
 #. GDAT 0x11/0x14/0x18
 #: po/dm2_source_strings.c:262
 msgid "TUNIC"
-msgstr "TUNIC"
+msgstr "束腰外衣"
 
 #. GDAT 0x0f/0x35/0x00
 #: po/dm2_source_strings.c:263
 msgid "U-HAUL MINION"
-msgstr "U-HAUL MINION"
+msgstr "搬运仆从"
 
 #. GDAT 0x15/0x21/0x18
 #: po/dm2_source_strings.c:264
 msgid "VACUUM FUSE"
-msgstr "VACUUM FUSE"
+msgstr "真空保险丝"
 
 #. GDAT 0x0f/0x1f/0x00
 #: po/dm2_source_strings.c:265
@@ -1391,12 +1391,12 @@ msgstr "VEXIRK KING"
 #. GDAT 0x07/0x00/0x24
 #: po/dm2_source_strings.c:266
 msgid "VITALITY"
-msgstr "VITALITY"
+msgstr "活力"
 
 #. GDAT 0x0f/0x46/0x00
 #: po/dm2_source_strings.c:267
 msgid "VOID DOOR"
-msgstr "VOID DOOR"
+msgstr "虚空之门"
 
 #. GDAT 0x10/0x13/0x18
 #: po/dm2_source_strings.c:268
@@ -1411,17 +1411,17 @@ msgstr "斩剑"
 #. GDAT 0x0f/0x02/0x00
 #: po/dm2_source_strings.c:270
 msgid "VORTEX"
-msgstr "VORTEX"
+msgstr "涡流"
 
 #. GDAT 0x01/0x00/0x11
 #: po/dm2_source_strings.c:271
 msgid "WAKE UP"
-msgstr "WAKE UP"
+msgstr "醒来"
 
 #. GDAT 0x10/0x18/0x18
 #: po/dm2_source_strings.c:272
 msgid "WAR CLUB"
-msgstr "WAR CLUB"
+msgstr "战棍"
 
 #. GDAT 0x13/0x0f/0x18
 #: po/dm2_source_strings.c:273
@@ -1431,7 +1431,7 @@ msgstr "水瓶"
 #. GDAT 0x07/0x00/0x23
 #: po/dm2_source_strings.c:274
 msgid "WISDOM"
-msgstr "WISDOM"
+msgstr "智慧"
 
 #. GDAT 0x07/0x00/0x03
 #: po/dm2_source_strings.c:275
@@ -1441,17 +1441,17 @@ msgstr "法师"
 #. GDAT 0x0f/0x4a/0x00
 #: po/dm2_source_strings.c:276
 msgid "WOLF"
-msgstr "WOLF"
+msgstr "狼"
 
 #. GDAT 0x11/0x1e/0x18
 #: po/dm2_source_strings.c:277
 msgid "WOOD SHIELD"
-msgstr "WOOD SHIELD"
+msgstr "木盾"
 
 #. GDAT 0x0f/0x19/0x00
 #: po/dm2_source_strings.c:278
 msgid "WOOD TABLE"
-msgstr "WOOD TABLE"
+msgstr "木桌"
 
 #. GDAT 0x15/0x39/0x18
 #: po/dm2_source_strings.c:279
