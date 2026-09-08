@@ -28,11 +28,11 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "BLOCK"
-msgstr ""
+msgstr "BLOQUER"
 
 #. Source-owned C699 action name
 msgid "CHOP"
-msgstr ""
+msgstr "TAILLER"
 
 #. Source-owned C699 action name
 msgid "X"
@@ -40,67 +40,67 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "BLOW HORN"
-msgstr ""
+msgstr "SONNER DU COR"
 
 #. Source-owned C699 action name
 msgid "FLIP"
-msgstr ""
+msgstr "RETOURNER"
 
 #. Source-owned C699 action name
 msgid "PUNCH"
-msgstr ""
+msgstr "FRAPPER"
 
 #. Source-owned C699 action name
 msgid "KICK"
-msgstr ""
+msgstr "DONNER UN COUP DE PIED"
 
 #. Source-owned C699 action name
 msgid "WAR CRY"
-msgstr ""
+msgstr "CRI DE GUERRE"
 
 #. Source-owned C699 action name
 msgid "STAB"
-msgstr ""
+msgstr "POIGNARDER"
 
 #. Source-owned C699 action name
 msgid "CLIMB DOWN"
-msgstr ""
+msgstr "DESCENDRE"
 
 #. Source-owned C699 action name
 msgid "FREEZE LIFE"
-msgstr ""
+msgstr "GELER LA VIE"
 
 #. Source-owned C699 action name
 msgid "HIT"
-msgstr ""
+msgstr "FRAPPER"
 
 #. Source-owned C699 action name
 msgid "SWING"
-msgstr ""
+msgstr "BALAYER"
 
 #. Source-owned C699 action name
 msgid "THRUST"
-msgstr ""
+msgstr "ESTOCADE"
 
 #. Source-owned C699 action name
 msgid "JAB"
-msgstr ""
+msgstr "PIQUER"
 
 #. Source-owned C699 action name
 msgid "PARRY"
-msgstr ""
+msgstr "PARER"
 
 #. Source-owned C699 action name
 msgid "HACK"
-msgstr ""
+msgstr "TAILLER"
 
 #. Source-owned C699 action name
 msgid "BERZERK"
-msgstr ""
+msgstr "BERSERK"
 
 #. Source-owned C699 action name
 msgid "FIREBALL"
-msgstr ""
+msgstr "BOULE DE FEU"
 
 #. Source-owned C699 action name
 msgid "DISPELL"
@@ -108,43 +108,43 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "CONFUSE"
-msgstr ""
+msgstr "CONFONDRE"
 
 #. Source-owned C699 action name
 msgid "LIGHTNING"
-msgstr ""
+msgstr "FOUDRE"
 
 #. Source-owned C699 action name
 msgid "DISRUPT"
-msgstr ""
+msgstr "PERTURBER"
 
 #. Source-owned C699 action name
 msgid "MELEE"
-msgstr ""
+msgstr "CORPS À CORPS"
 
 #. Source-owned C699 action name
 msgid "INVOKE"
-msgstr ""
+msgstr "INVOQUER"
 
 #. Source-owned C699 action name
 msgid "SLASH"
-msgstr ""
+msgstr "TAILLADER"
 
 #. Source-owned C699 action name
 msgid "CLEAVE"
-msgstr ""
+msgstr "FENDRE"
 
 #. Source-owned C699 action name
 msgid "BASH"
-msgstr ""
+msgstr "ASSOMMER"
 
 #. Source-owned C699 action name
 msgid "STUN"
-msgstr ""
+msgstr "ÉTOURDIR"
 
 #. Source-owned C699 action name
 msgid "SHOOT"
-msgstr ""
+msgstr "TIRER"
 
 #. Source-owned C699 action name
 msgid "SPELLSHIELD"
@@ -160,15 +160,15 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "HEAL"
-msgstr ""
+msgstr "SOIGNER"
 
 #. Source-owned C699 action name
 msgid "CALM"
-msgstr ""
+msgstr "APAISER"
 
 #. Source-owned C699 action name
 msgid "LIGHT"
-msgstr ""
+msgstr "LUMIÈRE"
 
 #. Source-owned C699 action name
 msgid "WINDOW"
@@ -184,7 +184,7 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "THROW"
-msgstr ""
+msgstr "LANCER"
 
 #. Source-owned C699 action name
 msgid "FUSE"
@@ -204,7 +204,7 @@ msgstr "OUTRE D'EAU"
 
 #. Source-owned M564 object name
 msgid "WATER"
-msgstr ""
+msgstr "EAU"
 
 #. Source-owned M564 object name
 msgid "JEWEL SYMAL"
@@ -312,7 +312,7 @@ msgstr ""
 
 #. Source-owned M564 object name
 msgid "CLUB"
-msgstr "MASSUE"
+msgstr "GOURDIN"
 
 #. Source-owned M564 object name
 msgid "STONE CLUB"
@@ -324,7 +324,7 @@ msgstr ""
 
 #. Source-owned M564 object name
 msgid "CROSSBOW"
-msgstr "ARBALÈTE"
+msgstr "ARBALETE"
 
 #. Source-owned M564 object name
 msgid "ARROW"
@@ -848,7 +848,7 @@ msgstr "CLÉ SQUELETTE"
 
 #. Source-owned M564 object name
 msgid "GOLD KEY"
-msgstr "CLÉ D'OR"
+msgstr "CLÉ D’OR"
 
 #. Source-owned M564 object name
 msgid "WINGED KEY"

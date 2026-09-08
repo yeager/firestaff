@@ -224,12 +224,12 @@ msgstr ""
 #. GDAT 0x1a/0x09/0x00
 #: po/dm2_source_strings.c:50
 msgid "CANCEL"
-msgstr ""
+msgstr "ABBRECHEN"
 
 #. GDAT 0x11/0x00/0x18
 #: po/dm2_source_strings.c:51
 msgid "CAPE"
-msgstr ""
+msgstr "UMHANG"
 
 #. GDAT 0x0f/0x32/0x00
 #: po/dm2_source_strings.c:52
@@ -254,7 +254,7 @@ msgstr ""
 #. GDAT 0x15/0x20/0x18
 #: po/dm2_source_strings.c:56
 msgid "CHEESE"
-msgstr ""
+msgstr "KÄSE"
 
 #. GDAT 0x0f/0x54/0x00, 0x14/0x00/0x18
 #: po/dm2_source_strings.c:57
@@ -279,7 +279,7 @@ msgstr ""
 #. GDAT 0x10/0x17/0x18
 #: po/dm2_source_strings.c:61
 msgid "CLUB"
-msgstr ""
+msgstr "KEULE"
 
 #. GDAT 0x10/0x26/0x18
 #: po/dm2_source_strings.c:62
@@ -289,7 +289,7 @@ msgstr ""
 #. GDAT 0x15/0x05/0x18
 #: po/dm2_source_strings.c:63
 msgid "COMPASS"
-msgstr ""
+msgstr "KOMPASS"
 
 #. GDAT 0x15/0x06/0x18
 #: po/dm2_source_strings.c:64
@@ -314,7 +314,7 @@ msgstr ""
 #. GDAT 0x10/0x1a/0x18
 #: po/dm2_source_strings.c:68
 msgid "CROSSBOW"
-msgstr ""
+msgstr "ARMBRUST"
 
 #. GDAT 0x11/0x1d/0x18
 #: po/dm2_source_strings.c:69
@@ -434,7 +434,7 @@ msgstr ""
 #. GDAT 0x07/0x00/0x00
 #: po/dm2_source_strings.c:92
 msgid "FIGHTER"
-msgstr ""
+msgstr "KÄMPFER"
 
 #. GDAT 0x11/0x08/0x18
 #: po/dm2_source_strings.c:93
@@ -503,12 +503,12 @@ msgstr ""
 #. GDAT 0x01/0x00/0x12
 #: po/dm2_source_strings.c:105
 msgid "GAME PAUSED"
-msgstr ""
+msgstr "SPIEL PAUSIERT"
 
 #. GDAT 0x0f/0x49/0x00
 #: po/dm2_source_strings.c:106
 msgid "GHOST"
-msgstr ""
+msgstr "GEIST"
 
 #. GDAT 0x0f/0x0d/0x00
 #: po/dm2_source_strings.c:107
@@ -528,7 +528,7 @@ msgstr ""
 #. GDAT 0x15/0x11/0x18
 #: po/dm2_source_strings.c:110
 msgid "GOLD KEY"
-msgstr ""
+msgstr "GOLDSCHLÜSSEL"
 
 #. GDAT 0x11/0x18/0x18
 #: po/dm2_source_strings.c:111

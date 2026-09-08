@@ -28,11 +28,11 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "BLOCK"
-msgstr ""
+msgstr "BLOQUEAR"
 
 #. Source-owned C699 action name
 msgid "CHOP"
-msgstr ""
+msgstr "TAJAR"
 
 #. Source-owned C699 action name
 msgid "X"
@@ -40,67 +40,67 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "BLOW HORN"
-msgstr ""
+msgstr "TOCAR CUERNO"
 
 #. Source-owned C699 action name
 msgid "FLIP"
-msgstr ""
+msgstr "GIRAR"
 
 #. Source-owned C699 action name
 msgid "PUNCH"
-msgstr ""
+msgstr "GOLPEAR"
 
 #. Source-owned C699 action name
 msgid "KICK"
-msgstr ""
+msgstr "PATEAR"
 
 #. Source-owned C699 action name
 msgid "WAR CRY"
-msgstr ""
+msgstr "GRITO DE GUERRA"
 
 #. Source-owned C699 action name
 msgid "STAB"
-msgstr ""
+msgstr "APUÑALAR"
 
 #. Source-owned C699 action name
 msgid "CLIMB DOWN"
-msgstr ""
+msgstr "BAJAR"
 
 #. Source-owned C699 action name
 msgid "FREEZE LIFE"
-msgstr ""
+msgstr "CONGELAR VIDA"
 
 #. Source-owned C699 action name
 msgid "HIT"
-msgstr ""
+msgstr "GOLPEAR"
 
 #. Source-owned C699 action name
 msgid "SWING"
-msgstr ""
+msgstr "BLANDIR"
 
 #. Source-owned C699 action name
 msgid "THRUST"
-msgstr ""
+msgstr "ESTOCADA"
 
 #. Source-owned C699 action name
 msgid "JAB"
-msgstr ""
+msgstr "PINCHAR"
 
 #. Source-owned C699 action name
 msgid "PARRY"
-msgstr ""
+msgstr "PARAR"
 
 #. Source-owned C699 action name
 msgid "HACK"
-msgstr ""
+msgstr "TAJAR"
 
 #. Source-owned C699 action name
 msgid "BERZERK"
-msgstr ""
+msgstr "BERSERK"
 
 #. Source-owned C699 action name
 msgid "FIREBALL"
-msgstr ""
+msgstr "BOLA DE FUEGO"
 
 #. Source-owned C699 action name
 msgid "DISPELL"
@@ -108,43 +108,43 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "CONFUSE"
-msgstr ""
+msgstr "CONFUNDIR"
 
 #. Source-owned C699 action name
 msgid "LIGHTNING"
-msgstr ""
+msgstr "RAYO"
 
 #. Source-owned C699 action name
 msgid "DISRUPT"
-msgstr ""
+msgstr "PERTURBAR"
 
 #. Source-owned C699 action name
 msgid "MELEE"
-msgstr ""
+msgstr "CUERPO A CUERPO"
 
 #. Source-owned C699 action name
 msgid "INVOKE"
-msgstr ""
+msgstr "INVOCAR"
 
 #. Source-owned C699 action name
 msgid "SLASH"
-msgstr ""
+msgstr "TAJAR"
 
 #. Source-owned C699 action name
 msgid "CLEAVE"
-msgstr ""
+msgstr "HENDIR"
 
 #. Source-owned C699 action name
 msgid "BASH"
-msgstr ""
+msgstr "GOLPEAR"
 
 #. Source-owned C699 action name
 msgid "STUN"
-msgstr ""
+msgstr "ATURDIR"
 
 #. Source-owned C699 action name
 msgid "SHOOT"
-msgstr ""
+msgstr "DISPARAR"
 
 #. Source-owned C699 action name
 msgid "SPELLSHIELD"
@@ -160,15 +160,15 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "HEAL"
-msgstr ""
+msgstr "CURAR"
 
 #. Source-owned C699 action name
 msgid "CALM"
-msgstr ""
+msgstr "CALMAR"
 
 #. Source-owned C699 action name
 msgid "LIGHT"
-msgstr ""
+msgstr "LUZ"
 
 #. Source-owned C699 action name
 msgid "WINDOW"
@@ -184,7 +184,7 @@ msgstr ""
 
 #. Source-owned C699 action name
 msgid "THROW"
-msgstr ""
+msgstr "LANZAR"
 
 #. Source-owned C699 action name
 msgid "FUSE"
@@ -204,7 +204,7 @@ msgstr "ODRE DE AGUA"
 
 #. Source-owned M564 object name
 msgid "WATER"
-msgstr ""
+msgstr "AGUA"
 
 #. Source-owned M564 object name
 msgid "JEWEL SYMAL"

@@ -2215,9 +2215,8 @@ msgid "{champion} NEEDS MORE PRACTICE WITH THIS {skill} SPELL."
 msgstr ""
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
-#, fuzzy
 msgid "{champion} MUMBLES A MEANINGLESS SPELL."
-msgstr "SORT SANS SENS"
+msgstr "{champion} MARMONNE UN SORT SANS EFFET."
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
 msgid "{champion} NEEDS AN EMPTY FLASK IN HAND FOR POTION."
@@ -2277,69 +2276,55 @@ msgstr ""
 msgid "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU"
 msgstr ""
 
-#, fuzzy
 msgid "PRESS ENTER TO RETURN TO MENU"
-msgstr "ÉCHAP POUR REVENIR AU MENU"
+msgstr "APPUYEZ SUR ENTRÉE POUR REVENIR AU MENU"
 
-#, fuzzy
 msgid "ESC TO DISMISS"
-msgstr "APPUYEZ SUR N'IMPORTE QUELLE TOUCHE"
+msgstr "ÉCHAP POUR FERMER"
 
 msgid "QUIT?"
 msgstr ""
 
-#, fuzzy
 msgid "RETURN TO MENU?"
-msgstr "ÉCHAP POUR REVENIR AU MENU"
+msgstr "REVENIR AU MENU ?"
 
-#, fuzzy
 msgid "RETURN TO START MENU?"
-msgstr "ÉCHAP POUR REVENIR AU MENU"
+msgstr "REVENIR AU MENU DE DÉMARRAGE ?"
 
-#, fuzzy
 msgid "YES"
-msgstr "DES"
+msgstr "OUI"
 
-#, fuzzy
 msgid "NO"
-msgstr "AUCUN"
+msgstr "NON"
 
-#, fuzzy
 msgid "OK"
-msgstr "PIERRE"
+msgstr "OK"
 
 #. M11_DM1_PRESENTED: live DM1 pickup/drop/spell feedback.
-#, fuzzy
 msgid "LEADER HAND FULL"
-msgstr "MAINS PLEINES"
+msgstr "MAIN DU CHEF PLEINE"
 
-#, fuzzy
 msgid "HAND FULL"
-msgstr "MAINS PLEINES"
+msgstr "MAIN PLEINE"
 
-#, fuzzy
 msgid "HAND ROUTE FAILED"
-msgstr "ÉCRITURE ÉCHOUÉE"
+msgstr "TRANSFERT À LA MAIN ÉCHOUÉ"
 
-#, fuzzy
 msgid "ITEM IN HAND"
-msgstr "OBJET PRIS"
+msgstr "OBJET EN MAIN"
 
 msgid "DROP TARGET UNAVAILABLE"
 msgstr ""
 
-#, fuzzy
 msgid "SPELL CAST"
-msgstr "SORT"
+msgstr "SORT LANCÉ"
 
 #. M11_DM1_PRESENTED: source-locked CLIKVIEW.C fountain interaction.
-#, fuzzy
 msgid "FOUNTAIN"
-msgstr "CONTENEUR %d"
+msgstr "FONTAINE"
 
-#, fuzzy
 msgid "CONTAINER FILLED"
-msgstr "CONTENEUR %d"
+msgstr "RÉCIPIENT REMPLI"
 
 msgid "FLASK FILLED WITH WATER"
 msgstr ""
@@ -2377,39 +2362,32 @@ msgid "EXPERT"
 msgstr ""
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "` MASTER"
-msgstr "CLÉ MAÎTRESSE"
+msgstr "` MAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "a MASTER"
-msgstr "CLÉ MAÎTRESSE"
+msgstr "a MAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "b MASTER"
-msgstr "CLÉ MAÎTRESSE"
+msgstr "b MAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "c MASTER"
-msgstr "CLÉ MAÎTRESSE"
+msgstr "c MAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "d MASTER"
-msgstr "CLÉ MAÎTRESSE"
+msgstr "d MAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "e MASTER"
-msgstr "CLÉ MAÎTRESSE"
+msgstr "e MAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
-#, fuzzy
 msgid "ARCHMASTER"
-msgstr "ROUILLEUX"
+msgstr "ARCHIMAÎTRE"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "STRENGTH"

@@ -236,7 +236,6 @@ msgid "ENGLISH"
 msgstr "ENGLISH"
 
 #: src/ui/menu_startup_m12.c:439
-#, fuzzy
 msgid "FRANÇAIS"
 msgstr "FRANÇAIS"
 
@@ -337,9 +336,8 @@ msgid "FIT"
 msgstr "AJUSTER"
 
 #: src/ui/menu_startup_m12.c:453
-#, fuzzy
 msgid "FIT SMOOTH"
-msgstr "FLUIDE"
+msgstr "AJUSTER EN DOUCEUR"
 
 #: src/ui/menu_startup_m12.c:463
 msgid "LINEAR"
@@ -1062,9 +1060,8 @@ msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "UTILISEZ L'APPLICATION FICHIERS POUR COPIER LES FICHIERS DU JEU VERS Firestaff/data DANS CETTE APPLICATION"
 
 #: src/ui/menu_startup_m12.c:2091
-#, fuzzy
 msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
-msgstr "COPIEZ VOS FICHIERS DE JEU ORIGINAUX DANS :"
+msgstr "COPIEZ LES FICHIERS ORIGINAUX DU JEU DANS LE DOSSIER DE DONNÉES"
 
 #: src/ui/menu_startup_m12.c:2110
 msgid "NO GAME DATA FOUND"
@@ -1093,9 +1090,8 @@ msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2461 src/ui/menu_startup_m12.c:2525
-#, fuzzy
 msgid "DATA DIRECTORY NOT FOUND"
-msgstr "DONNÉES DE JEU INTROUVABLES"
+msgstr "DOSSIER DE DONNÉES INTROUVABLE"
 
 #: src/ui/menu_startup_m12.c:2462 src/ui/menu_startup_m12.c:2526
 #: src/ui/menu_startup_m12.c:12520
@@ -1139,9 +1135,8 @@ msgid "CHECK QUICK RESUME SAVE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2738 src/ui/menu_startup_m12.c:12256
-#, fuzzy
 msgid "NO SAVES FOUND"
-msgstr "AUCUNE DONNÉE DE JEU TROUVÉE"
+msgstr "AUCUNE SAUVEGARDE TROUVÉE"
 
 #: src/ui/menu_startup_m12.c:2739
 msgid "SAVE A GAME FIRST"
@@ -1168,9 +1163,8 @@ msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:2925
-#, fuzzy
 msgid "CHOOSE GAME DATA FOLDER"
-msgstr "AUCUNE DONNÉE DE JEU TROUVÉE"
+msgstr "CHOISIR LE DOSSIER DE DONNÉES DU JEU"
 
 #: src/ui/menu_startup_m12.c:2926
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
@@ -1217,9 +1211,8 @@ msgid "CHOOSE V2.2 ARTPACK"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:3056
-#, fuzzy
 msgid "SELECT A .FSART FILE"
-msgstr "SÉLECTIONNEZ UNE DESTINATION"
+msgstr "SÉLECTIONNER UN FICHIER .FSART"
 
 #: src/ui/menu_startup_m12.c:4917
 msgid "NEEDS LOGIN"
@@ -1234,14 +1227,12 @@ msgid "BACKEND PENDING"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:4946
-#, fuzzy
 msgid "SET"
-msgstr "ÉTIRER"
+msgstr "DÉFINIR"
 
 #: src/ui/menu_startup_m12.c:4963 src/ui/menu_startup_m12.c:5176
-#, fuzzy
 msgid "EDITING"
-msgstr "PARAMÈTRES"
+msgstr "ÉDITION"
 
 #: src/ui/menu_startup_m12.c:5068
 msgid "SCALE"
@@ -1272,14 +1263,12 @@ msgid "VIEWPORT STYLE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5075
-#, fuzzy
 msgid "INPUT MODE"
-msgstr "MODE FENÊTRE"
+msgstr "MODE DE SAISIE"
 
 #: src/ui/menu_startup_m12.c:5077
-#, fuzzy
 msgid "TOUCH CONTROLS"
-msgstr "COMMANDES"
+msgstr "COMMANDES TACTILES"
 
 #: src/ui/menu_startup_m12.c:5078
 msgid "MOVEMENT MODE"
@@ -1290,14 +1279,12 @@ msgid "SMOOTH TURN PAN"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5080
-#, fuzzy
 msgid "DATA DIRECTORY"
-msgstr "RÉP DE DONNÉES"
+msgstr "DOSSIER DE DONNÉES"
 
 #: src/ui/menu_startup_m12.c:5081
-#, fuzzy
 msgid "ORIGINAL DATA"
-msgstr "ORIGINAL"
+msgstr "DONNÉES ORIGINALES"
 
 #: src/ui/menu_startup_m12.c:5082
 msgid "DEBUG OVERLAY"
@@ -1308,9 +1295,8 @@ msgid "DEVELOPER GATES"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5084
-#, fuzzy
 msgid "MASTER VOLUME"
-msgstr "REMASTERISÉ"
+msgstr "VOLUME PRINCIPAL"
 
 #: src/ui/menu_startup_m12.c:5085
 msgid "MUSIC VOLUME"
@@ -1321,9 +1307,8 @@ msgid "SFX VOLUME"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5087
-#, fuzzy
 msgid "MUTE AUDIO"
-msgstr "AUDIO"
+msgstr "COUPER LE SON"
 
 #: src/ui/menu_startup_m12.c:5088
 msgid "AUDIO DEVICE"
@@ -1334,9 +1319,8 @@ msgid "BRIGHTNESS"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5090
-#, fuzzy
 msgid "FONT SCALE"
-msgstr "ÉCHELLE"
+msgstr "TAILLE DU TEXTE"
 
 #: src/ui/menu_startup_m12.c:5091
 msgid "UNICODE FONT"
@@ -1399,14 +1383,12 @@ msgid "SESSION TIMER"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5106
-#, fuzzy
 msgid "MINIMAP"
-msgstr "MINIMAL"
+msgstr "MINICARTE"
 
 #: src/ui/menu_startup_m12.c:5107
-#, fuzzy
 msgid "AUTOMAP"
-msgstr "AUTO"
+msgstr "CARTE AUTOMATIQUE"
 
 #: src/ui/menu_startup_m12.c:5108
 msgid "COMBAT LOG"
@@ -1417,32 +1399,28 @@ msgid "SOUNDTRACK"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5110
-#, fuzzy
 msgid "AMBIENT SOUND"
-msgstr "DONNÉES DE JEU INTROUVABLES"
+msgstr "SON AMBIANT"
 
 #: src/ui/menu_startup_m12.c:5111
 msgid "AMBIENT VOLUME"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5112
-#, fuzzy
 msgid "UI SCALE"
-msgstr "ÉCHELLE"
+msgstr "ÉCHELLE DE L’INTERFACE"
 
 #: src/ui/menu_startup_m12.c:5113
 msgid "UI FONT"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5114
-#, fuzzy
 msgid "CUSTOM MUSIC"
-msgstr "PERSONNALISÉ"
+msgstr "MUSIQUE PERSONNALISÉE"
 
 #: src/ui/menu_startup_m12.c:5115
-#, fuzzy
 msgid "CUSTOM DUNGEONS"
-msgstr "DONJON"
+msgstr "DONJONS PERSONNALISÉS"
 
 #: src/ui/menu_startup_m12.c:5116
 msgid "SCREENSHOTS"
@@ -1469,9 +1447,8 @@ msgid "IMPORT SAVE MANIFEST"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5185
-#, fuzzy
 msgid "OPEN..."
-msgstr "OPENGL"
+msgstr "OUVRIR..."
 
 #: src/ui/menu_startup_m12.c:5203
 msgid "WRITE PC34..."
@@ -1498,9 +1475,8 @@ msgid "INPUT"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5233
-#, fuzzy
 msgid "DATA"
-msgstr "RÉP DE DONNÉES"
+msgstr "DONNÉES"
 
 #: src/ui/menu_startup_m12.c:5236
 msgid "DEBUG"
@@ -1511,23 +1487,20 @@ msgid "APPEARANCE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5519 src/ui/menu_startup_m12.c:5562
-#, fuzzy
 msgid "DATA FILES NOT FOUND"
-msgstr "FICHIERS ORIGINAUX INTROUVABLES"
+msgstr "FICHIERS DE DONNÉES INTROUVABLES"
 
 #: src/ui/menu_startup_m12.c:5562
-#, fuzzy
 msgid "ENTER FOR GAME MENU"
-msgstr "ENTRÉE OU ÉCHAP RETOURNE AU MENU"
+msgstr "ENTRÉE POUR LE MENU DU JEU"
 
 #: src/ui/menu_startup_m12.c:5563
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:5683
-#, fuzzy
 msgid "NO DM1 SAVES FOUND"
-msgstr "AUCUNE DONNÉE DE JEU TROUVÉE"
+msgstr "AUCUNE SAUVEGARDE DM1 TROUVÉE"
 
 #: src/ui/menu_startup_m12.c:5684
 msgid "SAVE OR IMPORT DM1 FIRST"
@@ -1550,27 +1523,24 @@ msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:6199
-#, fuzzy
 msgid "ESC SETTINGS"
-msgstr "PARAMÈTRES"
+msgstr "ÉCHAP : PARAMÈTRES"
 
 #: src/ui/menu_startup_m12.c:6203
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:6205
-#, fuzzy
 msgid "ENTER LOAD   ESC SETTINGS"
-msgstr "ENTRÉE OU ÉCHAP RETOURNE AU MENU"
+msgstr "ENTRÉE : CHARGER   ÉCHAP : PARAMÈTRES"
 
 #: src/ui/menu_startup_m12.c:7595 src/ui/menu_startup_m12.c:7807
 msgid "NO SOURCE"
 msgstr "AUCUNE SOURCE"
 
 #: src/ui/menu_startup_m12.c:7803
-#, fuzzy
 msgid "SELECT TO VERIFY ORIGINAL DATA"
-msgstr "ORIGINAL"
+msgstr "SÉLECTIONNER POUR VÉRIFIER LES DONNÉES ORIGINALES"
 
 #: src/ui/menu_startup_m12.c:7812
 msgid "MISSING OR MISMATCHED"
@@ -1687,9 +1657,8 @@ msgid "Screenshot Gallery"
 msgstr "Galerie de captures d'écran"
 
 #: src/ui/menu_startup_m12.c:9261
-#, fuzzy
 msgid "NO DATA SOURCE YET"
-msgstr "AUCUNE SOURCE"
+msgstr "PAS ENCORE DE SOURCE DE DONNÉES"
 
 #: src/ui/menu_startup_m12.c:9334
 msgid "Up/Down Navigate  |  Enter Select"
@@ -1716,9 +1685,8 @@ msgid "GAME OPTIONS"
 msgstr "OPTIONS DE JEU"
 
 #: src/ui/menu_startup_m12.c:11920
-#, fuzzy
 msgid "ARCHITECTURE"
-msgstr "ÉTAT DE L'ARCHIVE"
+msgstr "ARCHITECTURE"
 
 #: src/ui/menu_startup_m12.c:11933
 msgid "VERSION"
@@ -1749,19 +1717,16 @@ msgid "RESOLUTION"
 msgstr "RÉSOLUTION"
 
 #: src/ui/menu_startup_m12.c:12051
-#, fuzzy
 msgid "LOCKED BY V2.0 FILTERED MODE"
-msgstr "VERROUILLÉ PAR LE MODE V1 ORIGINAL"
+msgstr "VERROUILLÉ PAR LE MODE FILTRÉ V2.0"
 
 #: src/ui/menu_startup_m12.c:12072
-#, fuzzy
 msgid "> DATA FILES NOT FOUND"
-msgstr "FICHIERS ORIGINAUX INTROUVABLES"
+msgstr "> FICHIERS DE DONNÉES INTROUVABLES"
 
 #: src/ui/menu_startup_m12.c:12074
-#, fuzzy
 msgid "> RENDERER UNAVAILABLE"
-msgstr "MOTEUR DE RENDU INDISPONIBLE"
+msgstr "> MOTEUR DE RENDU INDISPONIBLE"
 
 #: src/ui/menu_startup_m12.c:12075
 msgid "> LAUNCH"
@@ -1794,9 +1759,8 @@ msgid "THANKS TO CHRISTOPHE FONTANEL"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:1451
-#, fuzzy
 msgid "AND THE PRESERVATION PROJECTS"
-msgstr "NOTES DE PRÉSERVATION"
+msgstr "ET LES PROJETS DE PRÉSERVATION"
 
 #: src/ui/menu_startup_render_modern_m12.c:1453
 msgid "DANIEL NYLANDER"
@@ -1807,9 +1771,8 @@ msgid "OPEN FIRESTAFF SETTINGS AND CREDITS"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:1477
-#, fuzzy
 msgid "CREDITS AND ARCHIVE"
-msgstr "VISUEL DE CARTE ACTIF"
+msgstr "CRÉDITS ET ARCHIVES"
 
 #: src/ui/menu_startup_render_modern_m12.c:1478
 msgid "5 SECTIONS"
@@ -1828,9 +1791,8 @@ msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:2043
-#, fuzzy
 msgid "ARCHIVE SECTIONS"
-msgstr "ÉTAT DE L'ARCHIVE"
+msgstr "SECTIONS DES ARCHIVES"
 
 #: src/ui/menu_startup_render_modern_m12.c:2066
 #, c-format
@@ -1838,23 +1800,20 @@ msgid "PAGE %d/%d"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:2173
-#, fuzzy
 msgid "CHOOSE PLATFORM"
-msgstr "AUCUNE DONNÉE DE JEU TROUVÉE"
+msgstr "CHOISIR LA PLATEFORME"
 
 #: src/ui/menu_startup_render_modern_m12.c:2187
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:2196
-#, fuzzy
 msgid "CHOOSE PRESENTATION"
-msgstr "DESTINATIONS DU LANCEUR"
+msgstr "CHOISIR LA PRÉSENTATION"
 
 #: src/ui/menu_startup_render_modern_m12.c:2419
-#, fuzzy
 msgid "LAUNCH >"
-msgstr "LANCER"
+msgstr "LANCER >"
 
 #: src/ui/menu_startup_render_modern_m12.c:2488
 #: src/ui/menu_startup_render_modern_m12.c:2612

@@ -15,9 +15,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: scripts/firestaff_artpack_studio.py:1775
-#, fuzzy
 msgid "Firestaff Artpack Studio 0.2"
-msgstr "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff Artpack Studio 0.2"
 
 #: scripts/firestaff_artpack_studio.py:1789
 #: scripts/firestaff_savegame_editor.py:454
@@ -31,9 +30,8 @@ msgstr "Sin datos de juego importados"
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
 #: scripts/firestaff_savegame_editor.py:510
-#, fuzzy
 msgid "Settings..."
-msgstr "Ajustes del mapa"
+msgstr "Ajustes..."
 
 #: scripts/firestaff_artpack_studio.py:1813
 #: scripts/firestaff_dungeon_studio.py:445
@@ -79,9 +77,8 @@ msgstr "Exportar .fsart"
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
 #: scripts/firestaff_savegame_editor.py:965
-#, fuzzy
 msgid "Settings"
-msgstr "Ajustes del mapa"
+msgstr "Ajustes"
 
 #: scripts/firestaff_artpack_studio.py:1834
 #: scripts/firestaff_dungeon_studio.py:473
@@ -185,9 +182,8 @@ msgstr ""
 "Reinicie la aplicación para efecto completo."
 
 #: scripts/firestaff_artpack_studio.py:1964
-#, fuzzy
 msgid "AI Command Template"
-msgstr "Introduzca primero una plantilla de comando IA."
+msgstr "Plantilla de comando de IA"
 
 #: scripts/firestaff_artpack_studio.py:1966
 #, python-brace-format
@@ -220,16 +216,14 @@ msgid "API Provider"
 msgstr ""
 
 #: scripts/firestaff_artpack_studio.py:2002
-#, fuzzy
 msgid "Settings saved"
-msgstr "Ajustes del mapa"
+msgstr "Ajustes guardados"
 
 #: scripts/firestaff_artpack_studio.py:2006
 #: scripts/firestaff_savegame_editor.py:502
 #: scripts/firestaff_savegame_editor.py:528
-#, fuzzy
 msgid "Save"
-msgstr "Guardado: {}"
+msgstr "Guardar"
 
 #: scripts/firestaff_artpack_studio.py:2007
 msgid "Cancel"
@@ -629,12 +623,10 @@ msgid "New Level"
 msgstr "Nuevo nivel"
 
 #: scripts/firestaff_dungeon_studio.py:1024
-#, fuzzy
 msgid "Show grid"
 msgstr "Mostrar cuadrícula"
 
 #: scripts/firestaff_dungeon_studio.py:1026
-#, fuzzy
 msgid "Show things"
 msgstr "Mostrar objetos"
 
@@ -830,9 +822,8 @@ msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:189
-#, fuzzy
 msgid "Game ID"
-msgstr "Juego"
+msgstr "ID del juego"
 
 #: scripts/firestaff_savegame_editor.py:190
 msgid "Identifies which game created this save"
@@ -940,9 +931,8 @@ msgid "Title"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:221
-#, fuzzy
 msgid "Direction"
-msgstr "Posición"
+msgstr "Dirección"
 
 #: scripts/firestaff_savegame_editor.py:222
 msgid "Action Index"
@@ -953,27 +943,24 @@ msgid "Poison"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:224
-#, fuzzy
 msgid "HP Current"
-msgstr "Recurso actual"
+msgstr "PV actual"
 
 #: scripts/firestaff_savegame_editor.py:225
 msgid "HP Max"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:226
-#, fuzzy
 msgid "Stamina Current"
-msgstr "Recurso actual"
+msgstr "Resistencia actual"
 
 #: scripts/firestaff_savegame_editor.py:227
 msgid "Stamina Max"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:228
-#, fuzzy
 msgid "Mana Current"
-msgstr "Recurso actual"
+msgstr "Maná actual"
 
 #: scripts/firestaff_savegame_editor.py:229
 msgid "Mana Max"
@@ -1197,9 +1184,8 @@ msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:506
 #: scripts/firestaff_savegame_editor.py:630
-#, fuzzy
 msgid "File"
-msgstr "Todos los archivos"
+msgstr "Archivo"
 
 #: scripts/firestaff_savegame_editor.py:527
 msgid "Open"
@@ -1207,9 +1193,8 @@ msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:529
 #: scripts/firestaff_savegame_editor.py:583
-#, fuzzy
 msgid "Save As"
-msgstr "Guardar como..."
+msgstr "Guardar como"
 
 #: scripts/firestaff_savegame_editor.py:531
 msgid "No file loaded"
@@ -1224,7 +1209,6 @@ msgid "All Savegames"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:560
-#, fuzzy
 msgid "All Files"
 msgstr "Todos los archivos"
 
@@ -1233,9 +1217,8 @@ msgid "Unrecognized savegame format."
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:571
-#, fuzzy
 msgid "Loaded: {}"
-msgstr "Objetivo cargado: {}"
+msgstr "Cargado: {}"
 
 #: scripts/firestaff_savegame_editor.py:576
 #: scripts/firestaff_savegame_editor.py:582
@@ -1244,14 +1227,12 @@ msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:576
 #: scripts/firestaff_savegame_editor.py:582
-#, fuzzy
 msgid "Warning"
-msgstr "Advertencias"
+msgstr "Advertencia"
 
 #: scripts/firestaff_savegame_editor.py:586
-#, fuzzy
 msgid "Saved as: {}"
-msgstr "Guardado: {}"
+msgstr "Guardado como: {}"
 
 #: scripts/firestaff_savegame_editor.py:622
 msgid "File Overview"
@@ -1279,9 +1260,8 @@ msgid "Dungeon"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:639
-#, fuzzy
 msgid "Save Parts"
-msgstr "Guardar como..."
+msgstr "Partes de guardado"
 
 #: scripts/firestaff_savegame_editor.py:641
 #: scripts/firestaff_savegame_editor.py:731
@@ -1293,9 +1273,8 @@ msgid "Part"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:641
-#, fuzzy
 msgid "Status"
-msgstr "Estadísticas"
+msgstr "Estado"
 
 #: scripts/firestaff_savegame_editor.py:651
 #: scripts/firestaff_savegame_editor.py:740
@@ -1303,9 +1282,8 @@ msgid "MISMATCH"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:651
-#, fuzzy
 msgid "Valid"
-msgstr "Validar"
+msgstr "Válido"
 
 #: scripts/firestaff_savegame_editor.py:655
 msgid "Champions"
@@ -1316,9 +1294,8 @@ msgid "Header Fields"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:684
-#, fuzzy
 msgid "Description"
-msgstr "Posición"
+msgstr "Descripción"
 
 #: scripts/firestaff_savegame_editor.py:684
 msgid "Field"
@@ -1349,9 +1326,8 @@ msgid "VALID"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:763
-#, fuzzy
 msgid "No champion data"
-msgstr "Importar datos de juego"
+msgstr "No hay datos de campeones"
 
 #: scripts/firestaff_savegame_editor.py:788
 msgid "Combat & Vitals"
@@ -1370,14 +1346,12 @@ msgid "Party Info"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:851
-#, fuzzy
 msgid "No global data"
-msgstr "Importar datos de juego"
+msgstr "No hay datos globales"
 
 #: scripts/firestaff_savegame_editor.py:854
-#, fuzzy
 msgid "Global Data"
-msgstr "Importar datos de juego"
+msgstr "Datos globales"
 
 #: scripts/firestaff_savegame_editor.py:868
 msgid "Raw Data"
