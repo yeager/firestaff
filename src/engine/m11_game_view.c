@@ -69223,6 +69223,14 @@ void M11_GameView_Draw(M11_GameViewState* state,
         int hocAccepted;
         memset(&hocAdmission, 0, sizeof(hocAdmission));
         memset(&hocCapture, 0, sizeof(hocCapture));
+        /* C040 stays visible while the original game advances its regular
+         * frame clock.  Rebuild the same generation-bound, loader-backed
+         * admission at the presentation boundary so its receipt carries the
+         * current tick; selection-time admission is evidence of the C127
+         * transition, not a one-frame paint permit. */
+        if (hocRequired) {
+            (void)m11_dm1_hoc_publish_runtime_frame_admission(state);
+        }
         hocAccepted = m11_dm1_hoc_runtime_frame_admission_current(
                 state, &hocAdmission) &&
             m11_dm1_hoc_final_runtime_capture_current(

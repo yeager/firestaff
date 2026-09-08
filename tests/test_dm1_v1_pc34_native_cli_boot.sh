@@ -109,7 +109,13 @@ probe_runtime_input action 1,3,2
 # pending candidate.  Keeping this at CLI level catches presentation/input
 # scaling regressions that a direct M11-state probe cannot see.
 hoc_route='wait5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1,key:kp2,key:kp2,key:kp2,key:kp2,key:kp2,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp1,key:kp1,key:kp1,key:kp2,key:kp1,key:kp6,key:kp6,wait5,click:112:83,wait5'
-hoc_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+hoc_capture_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$hoc_capture_root"
+hoc_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040.XXXXXX")
+cleanup_hoc_capture() { find "$hoc_capture_dir" -depth -delete; }
+trap cleanup_hoc_capture EXIT HUP INT TERM
+hoc_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_capture_dir" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 --script "$hoc_route" --duration 0 2>&1) || {
@@ -125,6 +131,45 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_output" ||
     printf '%s\n' 'FAIL: authentic PC-34 Hall C127 portrait click did not open C040 for ordinal 5' >&2
     exit 1
 fi
+
+# State receipts are not presentation proof. C040 is a source-sized 144x73
+# overlay at screen (80,85), whose original PC3.4 raster is materially dense.
+# A cleared/stale admission leaves this rectangle black even while the input
+# state says candidatePanel=1, which is the reported invisible HoC panel bug.
+python3 - "$hoc_capture_dir" <<'PY'
+import pathlib
+import struct
+import sys
+
+files = list(pathlib.Path(sys.argv[1]).glob("*.bmp"))
+if len(files) != 1:
+    raise SystemExit("FAIL: expected one native DM1 C040 presentation capture")
+blob = files[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: native DM1 C040 capture is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if width != 320 or height != 200 or bits != 24 or offset + stride * height > len(blob):
+    raise SystemExit("FAIL: invalid native DM1 C040 capture geometry")
+
+# The BMP is BGR. The C040 rectangle is deliberately measured, not compared
+# to copyrighted pixels; its source graphic has a stable dense non-black body
+# and more than the black/cyan control-strip colours.
+pixels = []
+for y in range(85, 158):
+    row = offset + y * stride
+    pixels.extend(tuple(blob[row + x * 3:row + x * 3 + 3]) for x in range(80, 224))
+nonblack = sum(pixel != (0, 0, 0) for pixel in pixels)
+colours = len(set(pixels))
+if nonblack < 5000 or colours < 10:
+    raise SystemExit(
+        "FAIL: authentic PC-34 C040 was not visibly presented "
+        f"(nonblack={nonblack}, colours={colours})")
+print(f"PASS: authentic PC-34 C040 visible nonblack={nonblack} colours={colours}")
+PY
 
 # C040 is interactive, not merely a painted modal.  Its RESURRECT control is
 # centred at (130,115) in the same source-sized PC viewport.  It must consume
@@ -148,5 +193,8 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_confirm_output" ||
     printf '%s\n' 'FAIL: authentic PC-34 Hall C040 RESURRECT click did not consume ordinal 5' >&2
     exit 1
 fi
+
+trap - EXIT HUP INT TERM
+cleanup_hoc_capture
 
 printf '%s\n' 'PASS: authentic DM1 PC-34 archive reaches CLI, menu, and complete native input matrix'

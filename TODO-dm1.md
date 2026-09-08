@@ -43,7 +43,14 @@
   reaches REVIVE.C F0280 and opens the original C040 candidate panel, rather
   than merely appending a party entry. The regression is
   `tests/test_dm1_v1_pc34_native_cli_boot.sh`; it uses no extracted game data,
-  handcrafted save, or substitute graphics.
+  handcrafted save, or substitute graphics. It additionally captures the
+  final native 320x200 frame and requires the source C040 rectangle
+  `(80,85,144,73)` to be materially visible (at least 5,000 non-black pixels
+  and 10 indexed-display colours). This caught and fixed the old stale-tick
+  admission fault where state/input were live but the final presenter cleared
+  the C040/C026 zones after the next game tick. The renderer now rebuilds the
+  same generation-bound source-material admission at each presentation tick;
+  it does not manufacture a panel or reuse an old material receipt.
 
   DOSBox-X under Xvfb produces healthy retail Entrance, C127 and C040 frames
   through the documented host capture backend when `-pm` is used. Do not
