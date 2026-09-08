@@ -51,6 +51,11 @@
   the C040/C026 zones after the next game tick. The renderer now rebuilds the
   same generation-bound source-material admission at each presentation tick;
   it does not manufacture a panel or reuse an old material receipt.
+  The same regression also clicks C127 through the physical `(744,464)`
+  coordinate of a 1920x1080 16:9 window, proving the 4:3 letterbox transform
+  reaches source `(112,83)` and opens C040. This protects the reported
+  high-resolution Entrance/HoC mouse-hit failure separately from the
+  320x200 source-coordinate route.
 
   DOSBox-X under Xvfb produces healthy retail Entrance, C127 and C040 frames
   through the documented host capture backend when `-pm` is used. Do not

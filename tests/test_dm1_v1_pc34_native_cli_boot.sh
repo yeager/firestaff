@@ -171,6 +171,27 @@ if nonblack < 5000 or colours < 10:
 print(f"PASS: authentic PC-34 C040 visible nonblack={nonblack} colours={colours}")
 PY
 
+# The Mac regression was not a source-coordinate failure: a 16:9 window
+# letterboxes the 4:3 original page. Exercise the same portrait through the
+# physical 1920x1080 point (744,464), which maps to source (112,83) inside
+# the 1600x1000 presentation rectangle. This protects the normal SDL pointer
+# transform, rather than merely the boot probe's 320x200 convenience route.
+hoc_scaled_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 1920 --height 1080 \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 720 \
+    --script "${hoc_route%click:112:83,wait5}click:744:464,wait5" --duration 0 2>&1) || {
+    printf '%s\n' "$hoc_scaled_output" >&2
+    exit 1
+}
+if ! grep -Fq 'window=1920x1080' <<<"$hoc_scaled_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=1' <<<"$hoc_scaled_output" ||
+   ! grep -Fq 'dm1HocCandidateOrdinal=5' <<<"$hoc_scaled_output"; then
+    printf '%s\n' "$hoc_scaled_output" >&2
+    printf '%s\n' 'FAIL: scaled authentic PC-34 Hall portrait click missed C040' >&2
+    exit 1
+fi
+
 # C040 is interactive, not merely a painted modal.  Its RESURRECT control is
 # centred at (130,115) in the same source-sized PC viewport.  It must consume
 # the pending C127 candidate and close the panel through the normal REVIVE.C
