@@ -259,6 +259,21 @@ checks every word against raw Track 1, and records the CDB data-port and FIFO
 word position for the WorkRAM receipt.  The title/menu display consumer is
 still unbound, so this does not authorize a playable start.
 
+## Japanese late-intro rendered-frame check — 2026-09-08
+
+The same hash-verified Japanese CUE/BIN media and JP 1.01 BIOS were run for
+18,000 emulation frames by the external capture producer.  The bounded
+one-frame receipt (`52b423d1ba65d796508fe36583cf2006faba03ec1345a08107f767ff345b08c1`,
+1,577,672 bytes) passes the raw-layout validator and contains one active VDP1
+and VDP2 state.  Its accompanying 704x480 renderer output visibly contains
+the retail red-crystal hand sequence, rather than a title or input-ready menu.
+
+This establishes a real late-intro render point only.  The generic hardware
+receipt reports `asset_semantics=unassigned`; it contains no same-state
+`TITLE.CG`/`MAPD` consumer binding, named menu action, level-load transition,
+or party pose.  It must therefore remain external verification evidence and
+must not be promoted into a native menu route or substitute title artwork.
+
 ## Static SH-2 disassembly correction — 2026-08-26
 
 The hash-verified retail `DM.BIN` was fully disassembled directly from the
