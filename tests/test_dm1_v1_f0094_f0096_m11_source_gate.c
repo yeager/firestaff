@@ -55,6 +55,13 @@ int main(void)
                       "static int m11_current_map_wall_set(const M11_GameViewState* state,") &&
          require_text(text, "if (!m11_current_map_wall_set(state, &map_wall_set))") &&
          require_text(text, "if (!m11_current_map_wall_set(state, &mapWallSet))") &&
+         /* F20 is a different, smaller source layout.  These literal
+          * MEDIA020 bindings make the renderer's per-map material selection
+          * auditable: 77 + wallSet*13 for walls and 90 + wallSet*18 for
+          * stairs, rather than PC34's 40-record cache. */
+         require_text(text, "return 90u + (unsigned int)wallSet * 18u +") &&
+         require_text(text, "return 77u + (unsigned int)wallSet * 13u + (source - 77u);") &&
+         require_text(text, "? 75 + floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT") &&
          !strstr(text, ") ? (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet\n                : 0,");
     if (!ok) {
         free(text);

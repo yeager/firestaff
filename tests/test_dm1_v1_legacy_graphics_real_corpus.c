@@ -15,6 +15,18 @@
  * and must be rejected by the IMAGE2 bitmap decoder. */
 #define DM1_LEGACY_BITMAP_COUNT 532u
 #define DM1_LEGACY_PIXEL_CAPACITY (1024u * 1024u)
+#define DM1_DUNGEON_HEADER_BYTES 44u
+#define DM1_DUNGEON_MAP_DESCRIPTOR_BYTES 16u
+
+/* MEDIA020 (F20E/F20J) DUNGEON.DAT is Motorola-order.  These are not
+ * guessed layout constants: ReDMCSB DEFS.H M644/M645/M646/M647 gives the
+ * floor, stair and wall families which DUNVIEW.C F0094/F0095 materialises
+ * from each map descriptor's FloorSet and WallSet. */
+#define F20_FIRST_FLOOR_SET 75u
+#define F20_FIRST_WALL_SET 77u
+#define F20_WALL_SET_GRAPHIC_COUNT 13u
+#define F20_FIRST_STAIRS 90u
+#define F20_STAIRS_GRAPHIC_COUNT 18u
 
 static uint64_t fnv1a(uint64_t hash, const uint8_t *data, size_t size)
 {
@@ -24,6 +36,73 @@ static uint64_t fnv1a(uint64_t hash, const uint8_t *data, size_t size)
         hash *= UINT64_C(1099511628211);
     }
     return hash;
+}
+
+static uint16_t read_u16_be(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8u) | p[1]);
+}
+
+/* Audit the actual map set selectors in the two retail FM Towns dungeons.
+ * It catches a particularly easy regression: a renderer can look correct at
+ * the entrance (wall set zero) while addressing a PC34 40-record block, or
+ * the wrong F20 stair stride, on later maps.  The game disc remains in RAM;
+ * this only consumes ISO members already selected from the authenticated
+ * archive. */
+static int audit_fmtowns_dungeon_sets(const char *label, const uint8_t *data,
+                                      size_t size)
+{
+    unsigned int map_count;
+    unsigned int map_index;
+    unsigned int distinct_wall_sets = 0u;
+    unsigned int distinct_floor_sets = 0u;
+    unsigned int max_wall_set = 0u;
+    unsigned int max_floor_set = 0u;
+
+    if (!data || size < DM1_DUNGEON_HEADER_BYTES) {
+        fprintf(stderr, "%s DUNGEON.DAT has no complete header\n", label);
+        return 0;
+    }
+    map_count = data[4];
+    if (map_count == 0u || map_count > 32u ||
+        map_count > (size - DM1_DUNGEON_HEADER_BYTES) /
+                        DM1_DUNGEON_MAP_DESCRIPTOR_BYTES) {
+        fprintf(stderr, "%s DUNGEON.DAT map table is invalid\n", label);
+        return 0;
+    }
+    for (map_index = 0u; map_index < map_count; ++map_index) {
+        const size_t at = DM1_DUNGEON_HEADER_BYTES +
+            (size_t)map_index * DM1_DUNGEON_MAP_DESCRIPTOR_BYTES;
+        const uint16_t graphic_sets = read_u16_be(data + at + 14u);
+        const unsigned int floor_set = (unsigned int)(graphic_sets & 0x0fu);
+        const unsigned int wall_set = (unsigned int)((graphic_sets >> 4u) & 0x0fu);
+        const unsigned int floor_last = F20_FIRST_FLOOR_SET + floor_set * 2u + 1u;
+        const unsigned int wall_last = F20_FIRST_WALL_SET +
+            wall_set * F20_WALL_SET_GRAPHIC_COUNT +
+            (F20_WALL_SET_GRAPHIC_COUNT - 1u);
+        const unsigned int stairs_last = F20_FIRST_STAIRS +
+            wall_set * F20_STAIRS_GRAPHIC_COUNT +
+            (F20_STAIRS_GRAPHIC_COUNT - 1u);
+
+        if (floor_last >= DM1_LEGACY_GRAPHICS_COUNT ||
+            wall_last >= DM1_LEGACY_GRAPHICS_COUNT ||
+            stairs_last >= DM1_LEGACY_GRAPHICS_COUNT) {
+            fprintf(stderr,
+                    "%s map %u selects F20 floor=%u wall=%u outside GRAPHICS.DAT"
+                    " (floor=%u wall=%u stairs=%u)\n",
+                    label, map_index, floor_set, wall_set, floor_last,
+                    wall_last, stairs_last);
+            return 0;
+        }
+        distinct_floor_sets |= 1u << floor_set;
+        distinct_wall_sets |= 1u << wall_set;
+        if (floor_set > max_floor_set) max_floor_set = floor_set;
+        if (wall_set > max_wall_set) max_wall_set = wall_set;
+    }
+    printf("ok: %s %u maps; F20 floors=0x%04x (max=%u), walls=0x%04x (max=%u)\n",
+           label, map_count, distinct_floor_sets, max_floor_set,
+           distinct_wall_sets, max_wall_set);
+    return 1;
 }
 
 typedef struct {
@@ -113,6 +192,7 @@ static int audit_fmtowns_archive(const char *archive)
     char image_member[256];
     unsigned int i;
     unsigned int graphics_found = 0u;
+    unsigned int dungeon_found = 0u;
     int ok = 1;
 
     if (!archive ||
@@ -136,25 +216,35 @@ static int audit_fmtowns_archive(const char *archive)
     }
     for (i = 0u; i < (unsigned int)layout.file_count; ++i) {
         const DM1_V1_FmtownsIsoEntry *entry = &layout.files[i];
-        uint8_t *graphics;
+        uint8_t *member;
         uint64_t digest = 0u;
-        if (strstr(entry->name, "GRAPHICS.DAT") == NULL) continue;
-        graphics = (uint8_t *)malloc(entry->size);
-        if (!graphics || dm1_v1_fmtowns_iso_extract(
-                track, track_size, entry, graphics, entry->size) != 0) {
-            free(graphics);
+        if (strstr(entry->name, "GRAPHICS.DAT") == NULL &&
+            strstr(entry->name, "DUNGEON.DAT") == NULL) continue;
+        member = (uint8_t *)malloc(entry->size);
+        if (!member || dm1_v1_fmtowns_iso_extract(
+                track, track_size, entry, member, entry->size) != 0) {
+            free(member);
             ok = 0;
             break;
         }
-        if (!audit_graphics(entry->name, graphics, entry->size, 0,
-                            &digest)) ok = 0;
-        free(graphics);
-        ++graphics_found;
+        if (strstr(entry->name, "GRAPHICS.DAT") != NULL) {
+            if (!audit_graphics(entry->name, member, entry->size, 0,
+                                &digest)) ok = 0;
+            ++graphics_found;
+        } else {
+            if (!audit_fmtowns_dungeon_sets(entry->name, member,
+                                             entry->size)) ok = 0;
+            ++dungeon_found;
+        }
+        free(member);
         if (!ok) break;
     }
     free(track);
-    if (graphics_found == 0u) {
-        fprintf(stderr, "FM Towns ISO contains no DATA/JDATA GRAPHICS.DAT\n");
+    if (graphics_found != 2u || dungeon_found != 2u) {
+        fprintf(stderr,
+                "FM Towns ISO is missing a DATA/JDATA GRAPHICS.DAT or DUNGEON.DAT pair"
+                " (graphics=%u dungeons=%u)\n",
+                graphics_found, dungeon_found);
         return 0;
     }
     return ok;
