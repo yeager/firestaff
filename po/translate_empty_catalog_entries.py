@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Translate empty Firestaff PO entries while preserving runtime tokens.
+"""Translate incomplete Firestaff PO entries while preserving runtime tokens.
 
-This is an editor aid, not a build step.  It only fills entries whose
-translation is empty and writes a review marker, so a generated translation
-cannot silently replace a curated one.  PO validation and a native-speaker
-review remain required before release.
+This is an editor aid, not a build step.  It can fill empty entries and, when
+explicitly requested, replace English-source fallback values.  It writes a
+review marker, so generated text cannot silently replace a curated
+translation.  PO validation and a native-speaker review remain required
+before release.
 """
 from __future__ import annotations
 
@@ -29,6 +30,15 @@ LANGUAGES = (
     "ja", "ko", "nl", "no", "pl", "pt", "ru", "sv", "tr", "zh",
 )
 TOKEN = re.compile(r"(?:\{[^{}]+\}|%\d*\$?[#0 +\-]*\d*(?:\.\d+)?[a-zA-Z]|\\x01\d|\^.|<[^>]+>)")
+
+
+def usable_translation(value: str) -> bool:
+    """Reject HTML/error documents accidentally returned by public endpoints."""
+    lowered = value.lower()
+    return bool(value and not any(marker in lowered for marker in (
+        "<html", "<!doctype", "error 500", "server error",
+        "google.com/images/errors", "af-error-page",
+    )))
 
 
 def mask(text: str) -> tuple[str, list[str]]:
@@ -64,7 +74,10 @@ def translate(text: str, language: str) -> str:
     lets us distinguish that response from a valid empty translation.
     """
     request = ["curl", "--fail", "--silent", "--show-error", "--max-time", "20", "--get",
-               "--data-urlencode", "sl=en", "--data-urlencode", f"tl={language}",
+               # Canonical game strings can be English, Japanese, or another
+               # platform-native language.  Detect the source instead of
+               # incorrectly forcing English (notably for FM Towns catalogs).
+               "--data-urlencode", "sl=auto", "--data-urlencode", f"tl={language}",
                "--data-urlencode", f"q={text}"]
     if not os.environ.get("FIRESTAFF_TRANSLATE_SKIP_GOOGLE"):
         response = subprocess.run(
@@ -74,7 +87,7 @@ def translate(text: str, language: str) -> str:
         match = re.search(r'<div class="result-container">(.*?)</div>', response.stdout, re.DOTALL)
         if match:
             value = html.unescape(re.sub(r"<[^>]+>", "", match.group(1))).strip()
-            if value:
+            if usable_translation(value):
                 return value
         try:
             fallback = subprocess.run(
@@ -84,7 +97,7 @@ def translate(text: str, language: str) -> str:
             )
             payload = json.loads(fallback.stdout)
             value = "".join(part[0] for part in payload[0] if part and part[0]).strip()
-            if value:
+            if usable_translation(value):
                 return value
         except (subprocess.CalledProcessError, json.JSONDecodeError, IndexError, TypeError):
             pass
@@ -94,13 +107,13 @@ def translate(text: str, language: str) -> str:
     memory = subprocess.run(
         ["curl", "--fail", "--silent", "--show-error", "--max-time", "40", "--get",
          "--data-urlencode", f"q={text}",
-         "--data-urlencode", f"langpair=en|{language}",
+         "--data-urlencode", f"langpair=auto|{language}",
          "https://api.mymemory.translated.net/get"],
         check=True, capture_output=True, text=True,
     )
     value = json.loads(memory.stdout).get("responseData", {}).get("translatedText", "").strip()
-    if not value:
-        raise RuntimeError("translation service returned an empty value")
+    if not usable_translation(value):
+        raise RuntimeError("translation service returned an empty or error value")
     return value
 
 
@@ -137,6 +150,17 @@ def paths(language: str) -> list[Path]:
     result = [ROOT / f"{domain}.{language}.po" for domain in DOMAINS]
     result.append(ROOT / "studio" / f"{language}.po")
     return result
+
+
+def is_foreign_source(text: str) -> bool:
+    """Whether text visibly contains a non-Latin source language.
+
+    This deliberately leaves ASCII game identifiers, spell syllables, printf
+    layouts, and platform names alone.  It is intended for platform media
+    such as FM Towns' Japanese strings that leaked into another locale's
+    catalog as a source fallback.
+    """
+    return any(ord(character) > 0x024F for character in text)
 
 
 def bootstrap_catalogs(language: str) -> None:
@@ -207,9 +231,15 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--activate-fuzzy", action="store_true",
                         help="activate non-empty fuzzy entries after token-safe review")
+    parser.add_argument("--replace-source-fallback", action="store_true",
+                        help="also translate msgstr values that still equal their msgid")
+    parser.add_argument("--foreign-source-only", action="store_true",
+                        help="with --replace-source-fallback, process only non-Latin source text")
     args = parser.parse_args()
     if args.limit < 1:
         parser.error("--limit must be positive")
+    if args.foreign_source_only and not args.replace_source_fallback:
+        parser.error("--foreign-source-only requires --replace-source-fallback")
     languages = list(args.language)
     if args.all:
         languages = [language for language in LANGUAGES if language != "en"]
@@ -246,7 +276,11 @@ def main() -> int:
             for entry in catalog:
                 if len(candidates) >= args.limit:
                     break
-                if entry.obsolete or entry.msgstr or entry.msgid_plural:
+                if (entry.obsolete or entry.msgid_plural or
+                        (entry.msgstr and not (
+                            args.replace_source_fallback and entry.msgstr == entry.msgid))):
+                    continue
+                if args.foreign_source_only and not is_foreign_source(entry.msgid):
                     continue
                 source, tokens = mask(entry.msgid)
                 candidates.append((path, catalog, entry, source, tokens))
