@@ -32,6 +32,13 @@
   admitted. The reproducible diagnostic is
   `.codex-scratch/dm1-pc34-original-title-capture-20260908`; repair the
   DOSBox screenshot channel before retrying a HoC route.
+  The channel is available with `/usr/bin/dosbox-x`: on 2026-09-08 the same
+  PC 3.4 stage produced one 320x200, 15-colour, fully nonblack authentic
+  title frame (`sha256=5c2574022a68af43bb362c771304ebbefd618eab2f60e1fa2490b8ba65d2791a`)
+  in `.codex-scratch/dm1-pc34-dosboxx-title-capture-20260908`. This proves
+  only raw capture delivery; it does not prove HoC control, route semantics,
+  or pixel parity. Use DOSBox-X for the next input-route attempt and retain
+  the ordinary DOSBox 0.74 failure as a backend-specific limitation.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
