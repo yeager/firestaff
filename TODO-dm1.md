@@ -31,6 +31,20 @@
   receipts, then use the completed route to drive the reported HoC rendering
   and inventory regressions.
 
+  Rechecked on 2026-09-08 with the supplied `Dungeon-Master_DOS_EN_Version-34.zip`,
+  DOSBox-X, Xvfb and the host-window capture backend. DOSBox-X's own screenshot
+  writer aborts with `double free or corruption` after its first capture, so
+  the runner's documented host capture path was used only to keep the original
+  run observable. The four normalized 320x200 frames are retained outside the
+  source tree in `.codex-scratch/dm1-hoc-original-c127-host`: the title,
+  stable Entrance, and a genuine portrait frame were captured. The portrait
+  frame visibly contains the C127 wall image, but the pre- and five-second
+  post-click frame hashes are both
+  `a02cf5ed35892b6297a1f1809bb051117c41a48ead3a0ff952d4b27cffaa39ae`.
+  This is evidence that the selected original click route did not establish a
+  candidate-panel transition; it must not be reclassified as a successful
+  C040/C026 route or used to synthesize a Firestaff response.
+
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
   source-slot implementation is covered by bounded C38 dispatch and lifecycle
