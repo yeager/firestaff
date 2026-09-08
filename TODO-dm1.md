@@ -24,9 +24,16 @@
   KP2 KP2 KP2 KP1 KP1 KP5 KP1 KP1 KP5 KP1 KP1 KP1 KP1 KP1 KP2 KP1 KP6 KP6`.
   Firestaff reaches `(14,3,N)`, facing portrait ordinal 5; ReDMCSB's DUNVIEW
   C026 placement makes the source-screen hit point `(112,83)`. The original
-  movement trace still needs its own input-cadence calibration before it can
-  be promoted as a same-state pair: its current post-handoff keypad sequence
-  reaches a different visible door pose, so no pixel comparison is claimed.
+  mouse route is now calibrated as the equivalent source commands, using
+  `COMMAND.C`'s PC movement boxes: forward `(276,135)`, move-left `(247,157)`,
+  move-backward `(276,157)`, and turn-right `(304,135)`. Replay the documented
+  30-command sequence with a 400 ms cadence, then click portrait `(112,83)`.
+  A fresh retail DOSBox-X/Xvfb run reached that portrait and displayed the
+  stock `RESURRECT`/`REINCARNATE` C040 panel. The raw screenshots remain
+  operator-local under `.codex-scratch/dm1-original-hoc-mouse-route`; no game
+  pixels are checked in. This closes the original-route blocker, but it is
+  intentionally not yet a pixel/cadence comparison: capture a matched native
+  C040 frame and compare only after recording the original frame geometry.
 
   Firestaff's production route is no longer open: the real
   `Dungeon-Master_DOS_EN_Version-34.zip` CLI regression replays the complete
@@ -38,14 +45,12 @@
   `tests/test_dm1_v1_pc34_native_cli_boot.sh`; it uses no extracted game data,
   handcrafted save, or substitute graphics.
 
-  The remaining external-reference task is original keypad input calibration,
-  not Firestaff's C127 dispatch. DOSBox-X under Xvfb now produces healthy
-  retail Entrance and post-C407 Hall frames through the documented host
-  capture backend when `-pm` is used. Do not label a no-panel capture made in
-  `-pk` as a failed C127 implementation, and do not use a different-pose
-  keypad frame as C040/C026 or inventory evidence. Preserve the raw captures
-  and calibrate the original key event cadence before promoting an original
-  pixel pair.
+  DOSBox-X under Xvfb produces healthy retail Entrance, C127 and C040 frames
+  through the documented host capture backend when `-pm` is used. Do not
+  label a no-panel capture made in `-pk` as a failed C127 implementation, and
+  do not use a different-pose keypad frame as C040/C026 or inventory evidence.
+  Preserve the raw captures and record geometry/cadence before promoting an
+  original pixel pair.
 
   Rechecked on 2026-09-08 with the supplied `Dungeon-Master_DOS_EN_Version-34.zip`,
   DOSBox-X, Xvfb and the host-window capture backend. The recorded original

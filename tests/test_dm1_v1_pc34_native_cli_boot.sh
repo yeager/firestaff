@@ -126,4 +126,27 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_output" ||
     exit 1
 fi
 
+# C040 is interactive, not merely a painted modal.  Its RESURRECT control is
+# centred at (130,115) in the same source-sized PC viewport.  It must consume
+# the pending C127 candidate and close the panel through the normal REVIVE.C
+# path.  Keep this separate from the open assertion above so a broken click
+# transform cannot be hidden by the first portrait dispatch.
+hoc_confirm_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 720 \
+    --script "${hoc_route},click:130:115,wait5" --duration 0 2>&1) || {
+    printf '%s\n' "$hoc_confirm_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_confirm_output" ||
+   ! grep -Fq 'map=0 party=14,3,0 champions=1' <<<"$hoc_confirm_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=0' <<<"$hoc_confirm_output" ||
+   ! grep -Fq 'dm1HocCandidateOrdinal=-1' <<<"$hoc_confirm_output" ||
+   ! grep -Fq 'dm1HocCandidatePartyIndex=-1' <<<"$hoc_confirm_output"; then
+    printf '%s\n' "$hoc_confirm_output" >&2
+    printf '%s\n' 'FAIL: authentic PC-34 Hall C040 RESURRECT click did not consume ordinal 5' >&2
+    exit 1
+fi
+
 printf '%s\n' 'PASS: authentic DM1 PC-34 archive reaches CLI, menu, and complete native input matrix'
