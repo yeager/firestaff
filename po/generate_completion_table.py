@@ -5,7 +5,8 @@ import argparse
 import ast
 from pathlib import Path
 
-DOMAINS = ("startup-menu", "firestaff", "dm1", "csb", "dm2", "nexus", "theron")
+DOMAINS = ("startup-menu", "firestaff", "dm1", "csb", "dm2", "nexus", "theron", "firestaff_studio")
+LOCALES = ("cs", "da", "de", "en", "es", "fi", "fr", "hu", "id", "it", "ja", "ko", "nl", "no", "pl", "pt", "ru", "sv", "tr", "zh")
 BEGIN = "<!-- completion-table:begin -->"
 END = "<!-- completion-table:end -->"
 NOTE = "¹ `N/A` means that the domain currently has no extracted source entries. It is a coverage gap, not 100% completion."
@@ -36,15 +37,20 @@ def entries(path: Path) -> list[tuple[str, str, bool]]:
     finish()
     return result
 
+
+def catalog_path(po_dir: Path, domain: str, locale: str) -> Path:
+    if domain == "firestaff_studio":
+        return po_dir / "studio" / f"{locale}.po"
+    return po_dir / f"{domain}.{locale}.po"
+
 def render(po_dir: Path) -> str:
     totals = {d: len(entries(po_dir / f"{d}.pot")) for d in DOMAINS}
-    locales = sorted({p.name.rsplit(".", 2)[1] for d in DOMAINS for p in po_dir.glob(f"{d}.*.po")})
-    lines = [BEGIN, "| Language | Launcher | Shared UI | DM1 | CSB | DM2 | Nexus | Theron |", "|---|---:|---:|---:|---:|---:|---:|---:|"]
-    for locale in locales:
+    lines = [BEGIN, "| Language | Launcher | Shared UI | DM1 | CSB | DM2 | Nexus | Theron | Studio |", "|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    for locale in LOCALES:
         cells = []
         for domain in DOMAINS:
             total = totals[domain]
-            path = po_dir / f"{domain}.{locale}.po"
+            path = catalog_path(po_dir, domain, locale)
             if total == 0: cells.append("N/A¹")
             elif not path.exists(): cells.append("—")
             elif locale == "en": cells.append(f"source ({total}/{total})")

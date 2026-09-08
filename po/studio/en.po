@@ -15,9 +15,8 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: scripts/firestaff_artpack_studio.py:1775
-#, fuzzy
 msgid "Firestaff Artpack Studio 0.2"
-msgstr "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff Artpack Studio 0.2"
 
 #: scripts/firestaff_artpack_studio.py:1789
 #: scripts/firestaff_savegame_editor.py:454
@@ -31,9 +30,8 @@ msgstr "No game data imported"
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
 #: scripts/firestaff_savegame_editor.py:510
-#, fuzzy
 msgid "Settings..."
-msgstr "Settings"
+msgstr "Settings..."
 
 #: scripts/firestaff_artpack_studio.py:1813
 #: scripts/firestaff_dungeon_studio.py:445
@@ -625,14 +623,12 @@ msgid "New Level"
 msgstr "New Level"
 
 #: scripts/firestaff_dungeon_studio.py:1024
-#, fuzzy
 msgid "Show grid"
-msgstr "Show Grid"
+msgstr "Show grid"
 
 #: scripts/firestaff_dungeon_studio.py:1026
-#, fuzzy
 msgid "Show things"
-msgstr "Show Things"
+msgstr "Show things"
 
 #: scripts/firestaff_dungeon_studio.py:1028
 #: scripts/firestaff_savegame_editor.py:971
@@ -1175,9 +1171,8 @@ msgid "Champion {}"
 msgstr "Champion {}"
 
 #: scripts/firestaff_savegame_editor.py:450
-#, fuzzy
 msgid "Firestaff Savegame Editor 0.2"
-msgstr "Firestaff Savegame Editor"
+msgstr "Firestaff Savegame Editor 0.2"
 
 #: scripts/firestaff_savegame_editor.py:501
 msgid "Open..."

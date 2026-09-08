@@ -148,7 +148,6 @@ msgid "CHEATS"
 msgstr "CHEATS"
 
 #. F10_SHARED_UI
-#, fuzzy
 msgid "DISPLAY"
 msgstr "DISPLAY"
 

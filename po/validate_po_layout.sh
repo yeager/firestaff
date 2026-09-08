@@ -108,6 +108,19 @@ END {
 
 echo "=== po/ layout validation ==="
 
+# Gettext deliberately ignores fuzzy entries at runtime.  A catalog that
+# still contains one is therefore incomplete regardless of a non-empty
+# msgstr, so reject them before reporting completion percentages.  Include
+# Studio catalogs here even though their files live below po/studio/.
+while IFS= read -r catalog; do
+    fuzzy_count=$(msgattrib --only-fuzzy --no-obsolete "$catalog" |
+        awk '/^msgid / { count++ } END { print count + 0 }')
+    if [ "$fuzzy_count" -ne 0 ]; then
+        echo "FAIL: $catalog contains $fuzzy_count active fuzzy translation(s)"
+        ERRORS=$((ERRORS + 1))
+    fi
+done < <(find . -type f -name '*.po' -print | sort)
+
 for domain in "${DOMAINS[@]}"; do
     pot="${domain}.pot"
     enpo="${domain}.en.po"
