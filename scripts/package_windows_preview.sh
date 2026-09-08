@@ -8,6 +8,7 @@ STAGE_DIR="$ROOT/release/windows-stage/Firestaff-${VERSION}-windows"
 ZIP_PATH="$ROOT/release/Firestaff-${VERSION}-windows.zip"
 README_SRC="$ROOT/README.md"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
+RELEASE_NOTES_VERSION="${RELEASE_NOTES_VERSION:-}"
 BIN_SRC="$BUILD_DIR/firestaff.exe"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio.exe}"
 DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/firestaff_dungeon_studio.exe}"
@@ -40,7 +41,14 @@ cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$STAGE_DIR/firestaff-sta
 cp "$ROOT/assets/branding/firestaff-startup-dungeon-v2.ppm" "$STAGE_DIR/firestaff-startup-dungeon-v2.ppm"
 cp "$ROOT/assets/cards/platforms/platforms.ppm" "$STAGE_DIR/firestaff-platform-cards.ppm"
 cp "$README_SRC" "$STAGE_DIR/README.md"
-cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
+if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
+  python3 "$ROOT/scripts/extract_release_notes.py" \
+    --notes "$RELEASE_NOTES_SRC" \
+    --version "$RELEASE_NOTES_VERSION" \
+    --output "$STAGE_DIR/RELEASE_NOTES.md"
+else
+  cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
+fi
 
 SDL_DLL=""
 for candidate in \

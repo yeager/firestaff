@@ -19,6 +19,7 @@ DMG_PATH="$DMG_DIR/Firestaff-${ARTIFACT_VERSION}.dmg"
 ZIP_PATH="$DMG_DIR/Firestaff-${ARTIFACT_VERSION}.zip"
 README_SRC="$ROOT/README.md"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
+RELEASE_NOTES_VERSION="${RELEASE_NOTES_VERSION:-}"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_APP_SRC="${ARTPACK_STUDIO_APP_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/Firestaff Artpack Studio.app}"
 DUNGEON_STUDIO_APP_SRC="${DUNGEON_STUDIO_APP_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/Firestaff Dungeon Studio.app}"
@@ -57,7 +58,14 @@ cp -R "$DUNGEON_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Dungeon Studio.app"
 cp -R "$SAVEGAME_EDITOR_APP_SRC" "$STAGE_DIR/Firestaff Savegame Editor.app"
 cp "$SDL_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_DYLIB")"
 cp "$README_SRC" "$STAGE_DIR/README.md"
-cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
+if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
+  python3 "$ROOT/scripts/extract_release_notes.py" \
+    --notes "$RELEASE_NOTES_SRC" \
+    --version "$RELEASE_NOTES_VERSION" \
+    --output "$STAGE_DIR/RELEASE_NOTES.md"
+else
+  cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
+fi
 if [[ -f "$ROOT/assets/icons/firestaff.icns" ]]; then
   cp "$ROOT/assets/icons/firestaff.icns" "$RESOURCES_DIR/firestaff.icns"
 fi

@@ -50,7 +50,9 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Verify release-notes policy regression cases
-        run: python3 scripts/test_verify_release_notes.py
+        run: |
+          python3 scripts/test_verify_release_notes.py
+          python3 scripts/test_extract_release_notes.py
 
       - name: Verify reproducible SPDX source SBOM
         run: python3 tests/test_generate_spdx_sbom.py

@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 VERSION="${VERSION:-0.2.9-preview}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
+RELEASE_NOTES_VERSION="${RELEASE_NOTES_VERSION:-}"
 README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
@@ -119,7 +120,14 @@ exec /usr/lib/firestaff/firestaff-savegame-editor-bin "$@"
 WRAPPER
 chmod 0755 "$PKG_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$README_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/README.md"
-cp "$RELEASE_NOTES_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
+  python3 "$ROOT/scripts/extract_release_notes.py" \
+    --notes "$RELEASE_NOTES_SRC" \
+    --version "$RELEASE_NOTES_VERSION" \
+    --output "$PKG_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+else
+  cp "$RELEASE_NOTES_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+fi
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
   cp "$ROOT/assets/branding/firestaff-logo.png" "$PKG_ROOT/usr/share/pixmaps/firestaff.png"
 fi

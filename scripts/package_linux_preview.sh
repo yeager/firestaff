@@ -7,6 +7,7 @@ VERSION="${VERSION:-0.2.9-preview}"
 ARCH_DEB="${ARCH_DEB:-$(dpkg --print-architecture 2>/dev/null || echo amd64)}"
 ARCH_RPM="${ARCH_RPM:-$(uname -m)}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
+RELEASE_NOTES_VERSION="${RELEASE_NOTES_VERSION:-}"
 README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
@@ -55,7 +56,14 @@ chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$README_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/README.md"
-cp "$RELEASE_NOTES_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
+  python3 "$ROOT/scripts/extract_release_notes.py" \
+    --notes "$RELEASE_NOTES_SRC" \
+    --version "$RELEASE_NOTES_VERSION" \
+    --output "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+else
+  cp "$RELEASE_NOTES_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+fi
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
   cp "$ROOT/assets/branding/firestaff-logo.png" "$DEB_ROOT/usr/share/pixmaps/firestaff.png"
 fi
@@ -137,7 +145,12 @@ chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$README_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/README.md"
-cp "$RELEASE_NOTES_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
+  cp "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md" \
+    "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+else
+  cp "$RELEASE_NOTES_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+fi
 RPM_ICON_ENTRY=""
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
   cp "$ROOT/assets/branding/firestaff-logo.png" "$RPM_ROOT/usr/share/pixmaps/firestaff.png"

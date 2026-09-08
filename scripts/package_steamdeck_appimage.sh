@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/build}"
 VERSION="${VERSION:-0.2.9-preview}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
+RELEASE_NOTES_VERSION="${RELEASE_NOTES_VERSION:-}"
 APPIMAGETOOL="${APPIMAGETOOL:-appimagetool}"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
@@ -91,7 +92,14 @@ open(sys.argv[1], 'wb').write(png)
 PY
 fi
 cp "$ROOT/README.md" "$APPDIR/usr/share/doc/firestaff/README.md"
-cp "$RELEASE_NOTES_SRC" "$APPDIR/usr/share/doc/firestaff/RELEASE_NOTES.md"
+if [[ -n "$RELEASE_NOTES_VERSION" ]]; then
+  python3 "$ROOT/scripts/extract_release_notes.py" \
+    --notes "$RELEASE_NOTES_SRC" \
+    --version "$RELEASE_NOTES_VERSION" \
+    --output "$APPDIR/usr/share/doc/firestaff/RELEASE_NOTES.md"
+else
+  cp "$RELEASE_NOTES_SRC" "$APPDIR/usr/share/doc/firestaff/RELEASE_NOTES.md"
+fi
 
 cat > "$APPDIR/firestaff.desktop" <<'DESKTOP'
 [Desktop Entry]
