@@ -8,6 +8,7 @@ fall back to the selected game's original text; do not fill them with a
 different game's wording.
 """
 import argparse
+import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -153,6 +154,81 @@ def refresh(path: Path, terms: dict[str, str]) -> int:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return changed
 
+
+def _po_quoted_value(line: str) -> str:
+    """Decode one gettext quoted value without accepting arbitrary Python."""
+    return ast.literal_eval(line[line.index('"'):])
+
+
+def _simple_catalog_values(path: Path) -> dict[str, str]:
+    """Read one-line gettext pairs needed by the M564 index bridge.
+
+    M564 object labels are deliberately short one-line entries.  Refuse a
+    continuation instead of accidentally applying this bridge to prose or a
+    formatted message.
+    """
+    values: dict[str, str] = {}
+    msgid = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("msgid "):
+            msgid = _po_quoted_value(line)
+        elif line.startswith("msgstr ") and msgid is not None:
+            values[msgid] = _po_quoted_value(line)
+            msgid = None
+        elif line.startswith('"') and msgid is not None:
+            # This is a multiline catalog entry outside the short M564 label
+            # vocabulary.  Ignore it rather than accidentally pairing a
+            # continuation with a later msgstr.
+            msgid = None
+    return values
+
+
+def _csb_fmtowns_jp_m564_index_map(po_dir: Path) -> dict[str, str]:
+    """Return the reviewed F31J-M564-to-English index correspondence.
+
+    ``generate_csb_fmtowns_jp_l10n_map.py`` establishes the source contract:
+    the first 177 English M564 rows and the selected F31J CP932 M564 rows are
+    index-identical; the final English-only row has no F31J counterpart.
+    The action rows preceding F31J M564 have their own explicit mapping.
+    """
+    english = []
+    japanese = []
+    comments: list[str] = []
+    current = None
+    for line in (po_dir / "csb.pot").read_text(encoding="utf-8").splitlines():
+        if line.startswith("#."):
+            comments.append(line)
+        elif line.startswith("msgid "):
+            current = _po_quoted_value(line)
+        elif line.startswith("msgstr "):
+            if current is not None:
+                if any("Source-owned M564 object name" in c for c in comments):
+                    english.append(current)
+                if any("Authentic FM Towns JP:" in c for c in comments):
+                    japanese.append(current)
+            comments = []
+            current = None
+    action_count = 39
+    if len(english) != 178 or len(japanese) != action_count + 177:
+        raise ValueError(
+            "CSB FM Towns M564 source order changed: "
+            f"english={len(english)} japanese={len(japanese)}")
+    return dict(zip(japanese[action_count:], english[:177], strict=True))
+
+
+def refresh_csb_fmtowns_jp_object_names(po_dir: Path, language: str) -> int:
+    """Promote index-locked F31J names through that locale's M564 entries."""
+    catalog = po_dir / f"csb.{language}.po"
+    current = _simple_catalog_values(catalog)
+    mapping = _csb_fmtowns_jp_m564_index_map(po_dir)
+    terms = {jp: current[english] for jp, english in mapping.items()
+             if english in current and current[english]}
+    if len(terms) != 177:
+        raise ValueError(
+            f"{catalog}: expected 177 localizable F31J M564 entries, "
+            f"got {len(terms)}")
+    return refresh(catalog, terms)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--po-dir", type=Path, default=ROOT)
@@ -163,3 +239,9 @@ if __name__ == "__main__":
     for language, terms in CSB_ACTIONS.items():
         catalog = args.po_dir / f"csb.{language}.po"
         print(f"{catalog.name}: {refresh(catalog, terms)} reviewed action entries")
+    for language in (
+            "sv", "fr", "de", "ja", "zh", "cs", "da", "es", "fi",
+            "hu", "it", "ko", "nl", "no", "pl", "pt", "ru", "tr", "id"):
+        catalog = args.po_dir / f"csb.{language}.po"
+        print(f"{catalog.name}: {refresh_csb_fmtowns_jp_object_names(args.po_dir, language)} "
+              "index-locked F31J M564 entries")

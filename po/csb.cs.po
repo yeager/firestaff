@@ -1119,708 +1119,708 @@ msgstr "融合する"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "羅針盤"
-msgstr "羅針盤"
+msgstr "KOMPASS"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "たいまつ"
-msgstr "たいまつ"
+msgstr "POCHODEŇ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "皮袋(水無)"
-msgstr "皮袋 (水無)"
+msgstr "VODNÍ VAK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "皮袋(水有)"
-msgstr "皮袋 (水有)"
+msgstr "VODA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "魔法の護符"
-msgstr "魔法の護符"
+msgstr "DRAHOKAMOVÝ SYMBOL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "灯の護符"
-msgstr "灯の護符"
+msgstr "OSVĚTLOVAČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "炎の手袋"
-msgstr "炎の手袋"
+msgstr "PLAMÍNEK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "時の眼"
-msgstr "時の眼"
+msgstr "OKO ČASU"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "稲妻ﾘﾝｸﾞ"
-msgstr "稲妻ﾘﾝｸﾞ"
+msgstr "BOUŘKRUH"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｺﾌﾞﾗの杖"
-msgstr "ｺﾌﾞﾗの杖"
+msgstr "HŮL DRÁPŮ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "嵐の剣"
-msgstr "嵐の剣"
+msgstr "BOUŘKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰの剣"
-msgstr "ﾗｰの剣"
+msgstr "RA BLADE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "炎の杖"
-msgstr "炎の杖"
+msgstr "OHNIVÁ HŮL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "開いた巻物"
-msgstr "開いた巻物"
+msgstr "OPEN SCROLL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "巻物"
-msgstr "巻物"
+msgstr "SVITEK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "短剣"
-msgstr "短剣"
+msgstr "DÝKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾌｧﾙﾁｵﾝの剣"
-msgstr "ﾌｧﾙﾁｵﾝの剣"
+msgstr "FALCATA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "つるぎ"
-msgstr "つるぎ"
+msgstr "MEČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗﾋﾟｴの剣"
-msgstr "ﾗﾋﾟｴの剣"
+msgstr "KORD"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "闇の剣"
-msgstr "闇の剣"
+msgstr "BITER"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "日本刀"
-msgstr "日本刀"
+msgstr "SAMURAJSKÝ MEČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "力の剣"
-msgstr "力の剣"
+msgstr "BOČNÍ ŠTÍPAČKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾀﾞｲﾔの剣"
-msgstr "ﾀﾞｲﾔの剣"
+msgstr "DIAMANTOVÉ OSTŘÍ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾎﾞｰﾊﾟﾙの剣"
-msgstr "ﾎﾞｰﾊﾟﾙの剣"
+msgstr "VORPÁLNÍ ČEPELE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝの牙"
-msgstr "ﾄﾞﾗｺﾞﾝの牙"
+msgstr "DRAČÍ TESÁK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "斧"
-msgstr "斧"
+msgstr "SEKERA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "首切りの斧"
-msgstr "首切りの斧"
+msgstr "kat"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ほこ"
-msgstr "ほこ"
+msgstr "PALCÁT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "大ほこ"
-msgstr "大ほこ"
+msgstr "PALCÁT ŘÁDU"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "鉄棒"
-msgstr "鉄棒"
+msgstr "MORNINGSTAR"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "棍棒"
-msgstr "棍棒"
+msgstr "KYJ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "石棒"
-msgstr "石棒"
+msgstr "KAMENNÝ KYJ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝの弓"
-msgstr "ﾄﾞﾗｺﾞﾝの弓"
+msgstr "DRÁPOVÝ MUK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｸﾛｽﾎﾞｳ"
-msgstr "ｸﾛｽﾎﾞｳ"
+msgstr "KUŠE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "矢"
-msgstr "矢"
+msgstr "ŠÍP"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "毒矢"
-msgstr "毒矢"
+msgstr "ZABIJÁK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "投石器"
-msgstr "投石器"
+msgstr "PRAK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "石"
-msgstr "石"
+msgstr "KÁMEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "毒投げ矢"
-msgstr "毒投げ矢"
+msgstr "JEDOVATÝ OŠTĚP"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "手裏剣"
-msgstr "手裏剣"
+msgstr "VRHANÁ HVĚZDA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "棒"
-msgstr "棒"
+msgstr "TYČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "杖"
-msgstr "杖"
+msgstr "HŮL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "小型杖"
-msgstr "小型杖"
+msgstr "HOŘKÁ HŮLKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "銀の杖"
-msgstr "銀の杖"
+msgstr "TEOHŮLKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾕｰの杖"
-msgstr "ﾕｰの杖"
+msgstr "TISOVÁ HŮL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｲﾗｰ の杖"
-msgstr "ｲﾗｰ の杖"
+msgstr "ZAMĚSTNANCI IRRA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾈﾀの十字架"
-msgstr "ﾈﾀの十字架"
+msgstr "KŘÍŽ NETA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "蛇の杖"
-msgstr "蛇の杖"
+msgstr "HADÍ PERSONÁL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "龍の杖"
-msgstr "龍の杖"
+msgstr "DRÁČÍ SLINA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "生命の杖"
-msgstr "生命の杖"
+msgstr "ŽEZLO LYFU"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾎﾞﾛのｼｬﾂ"
-msgstr "ﾎﾞﾛのｼｬﾂ"
+msgstr "ODRAŽENÁ KOŠILE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾌｧｲﾝ･ｶﾞｳﾝ"
-msgstr "ﾌｧｲﾝ･ｶﾞｳﾝ"
+msgstr "JEMNÁ RÚBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "上着"
-msgstr "上着"
+msgstr "KIRTLE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "絹のｼｬﾂ"
-msgstr "絹のｼｬﾂ"
+msgstr "HEDVÁBNÁ KOŠILE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾀﾞﾌﾞﾚｯﾄ"
-msgstr "ﾀﾞﾌﾞﾚｯﾄ"
+msgstr "ELVENSKÝ DUBLET"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "皮ﾁｮｯｷ"
-msgstr "皮ﾁｮｯｷ"
+msgstr "KOŽENÝ KABÁTEC"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾁｭﾆｯｸ"
-msgstr "ﾁｭﾆｯｸ"
+msgstr "TUNIKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "武道着"
-msgstr "武道着"
+msgstr "GHI"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "胴着"
-msgstr "胴着"
+msgstr "MAIL AKETON"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾐｽﾘﾙの胴着"
-msgstr "ﾐｽﾘﾙの胴着"
+msgstr "MITHRAL AKETON"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "鎧"
-msgstr "鎧"
+msgstr "TORZOVÁ DESKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰの鎧"
-msgstr "ﾗｰの鎧"
+msgstr "TALÍŘ RA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝの鎧"
-msgstr "ﾄﾞﾗｺﾞﾝの鎧"
+msgstr "DRAČÍ TALÍŘ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾏﾝﾄ"
-msgstr "ﾏﾝﾄ"
+msgstr "PLÁŠŤ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "暗黒のﾏﾝﾄ"
-msgstr "暗黒のﾏﾝﾄ"
+msgstr "PLÁŠŤ NOCI"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾎﾞﾛのｽﾞﾎﾞﾝ"
-msgstr "ﾎﾞﾛのｽﾞﾎﾞﾝ"
+msgstr "ODŘENÉ KALHOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｶﾞｳﾝ"
-msgstr "ｶﾞｳﾝ"
+msgstr "ROBE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "騎士のﾏﾝﾄ"
-msgstr "騎士のﾏﾝﾄ"
+msgstr "TABARD"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "長衣"
-msgstr "長衣"
+msgstr "GUNNA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "緑のｽﾞﾎﾞﾝ"
-msgstr "緑のｽﾞﾎﾞﾝ"
+msgstr "ELVEN HUKE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "皮製ｽﾞﾎﾞﾝ"
-msgstr "皮製ｽﾞﾎﾞﾝ"
+msgstr "KOŽENÉ KALHOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "青色ｽﾞﾎﾞﾝ"
-msgstr "青色ｽﾞﾎﾞﾝ"
+msgstr "MODRÉ KALHOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "武道ｽﾞﾎﾞﾝ"
-msgstr "武道ｽﾞﾎﾞﾝ"
+msgstr "GHI KALHOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "金属ｽﾞﾎﾞﾝ"
-msgstr "金属ｽﾞﾎﾞﾝ"
+msgstr "STEHNÍ BRNĚNÍ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾐｽﾘﾙ･ｽﾞﾎﾞﾝ"
-msgstr "ﾐｽﾘﾙ･ｽﾞﾎﾞﾝ"
+msgstr "MITHRILNÍ BRNĚNÍ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "金属脚絆"
-msgstr "金属脚絆"
+msgstr "PLÁŠŤ NA NOHY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰの脚絆"
-msgstr "ﾗｰの脚絆"
+msgstr "POLEYN OF RA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝ脚絆"
-msgstr "ﾄﾞﾗｺﾞﾝ脚絆"
+msgstr "DRAČÍ POLEYN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "つの兜"
-msgstr "つの兜"
+msgstr "BERSERKEROVA PŘILBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "兜"
-msgstr "兜"
+msgstr "PŘILBICE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "鉄兜"
-msgstr "鉄兜"
+msgstr "BASCINET"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "銀兜"
-msgstr "銀兜"
+msgstr "CASQUE 'N COIF"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｱｰﾒｯﾄ 兜"
-msgstr "ｱｰﾒｯﾄ 兜"
+msgstr "ARMET"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰの兜"
-msgstr "ﾗｰの兜"
+msgstr "HELM OF RA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝの兜"
-msgstr "ﾄﾞﾗｺﾞﾝの兜"
+msgstr "DRAČÍ KELMA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｶﾘｽﾀの王冠"
-msgstr "ｶﾘｽﾀの王冠"
+msgstr "CALISTA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾈﾗの王冠"
-msgstr "ﾈﾗの王冠"
+msgstr "NERRINA KORUNA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾈﾀの楯"
-msgstr "ﾈﾀの楯"
+msgstr "NETA SHIELD"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "水晶の楯"
-msgstr "水晶の楯"
+msgstr "KŘIŠŤÁLOVÝ ŠTÍT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "小型楯"
-msgstr "小型楯"
+msgstr "MALÝ ŠTÍT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "木製楯"
-msgstr "木製楯"
+msgstr "DŘEVĚNÝ ŠTÍT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｻｰの楯"
-msgstr "ｻｰの楯"
+msgstr "SAR SHIELD"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰの楯"
-msgstr "ﾗｰの楯"
+msgstr "ŠTÍT RA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝの楯"
-msgstr "ﾄﾞﾗｺﾞﾝの楯"
+msgstr "DRAČÍ ŠTÍT"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "皮ｻﾝﾀﾞﾙ"
-msgstr "皮ｻﾝﾀﾞﾙ"
+msgstr "SANDÁLY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｽｴｰﾄﾞﾌﾞｰﾂ"
-msgstr "ｽｴｰﾄﾞﾌﾞｰﾂ"
+msgstr "SEMŠOVÉ BOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "皮ﾌﾞｰﾂ"
-msgstr "皮ﾌﾞｰﾂ"
+msgstr "KOŽENÉ BOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "金属ﾌﾞｰﾂ"
-msgstr "金属ﾌﾞｰﾂ"
+msgstr "HOSEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰのﾌﾞｰﾂ"
-msgstr "ﾗｰのﾌﾞｰﾂ"
+msgstr "PLÁTOVÉ BOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝﾌﾞｰﾂ"
-msgstr "ﾄﾞﾗｺﾞﾝﾌﾞｰﾂ"
+msgstr "GRAVE OF RA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "緑のﾌﾞｰﾂ"
-msgstr "緑のﾌﾞｰﾂ"
+msgstr "DRAČÍ HROB"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "魔よけ"
-msgstr "魔よけ"
+msgstr "ELFÍ BOTY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "十字架"
-msgstr "十字架"
+msgstr "DRAHOKAM VĚKŮ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾑｰﾝｽﾄｰﾝ"
-msgstr "ﾑｰﾝｽﾄｰﾝ"
+msgstr "EKKHARDŮV KŘÍŽ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾍﾘｵﾝ"
-msgstr "ﾍﾘｵﾝ"
+msgstr "MĚSÍČNÍ KÁMEN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾌｪﾗﾙ"
-msgstr "ﾌｪﾗﾙ"
+msgstr "HELION"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｻｰの金貨"
-msgstr "ｻｰの金貨"
+msgstr "FERAL PŘÍVĚSEK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "銀貨"
-msgstr "銀貨"
+msgstr "SAR MINCE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｺﾞｰの金貨"
-msgstr "ｺﾞｰの金貨"
+msgstr "STŘÍBRNÁ MINCE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "玉石"
-msgstr "玉石"
+msgstr "GOR MINCE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "青宝玉"
-msgstr "青宝玉"
+msgstr "BALVAN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "黄宝玉"
-msgstr "黄宝玉"
+msgstr "MODRÝ DRAHOKAM"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "緑宝玉"
-msgstr "緑宝玉"
+msgstr "ORANŽOVÝ DRAHOKAM"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "魔法の箱"
-msgstr "魔法の箱"
+msgstr "ZELENÝ DRAHOKAM"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "曙の鏡"
-msgstr "曙の鏡"
+msgstr "MAGICKÁ KRABICE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "恐怖の角笛"
-msgstr "恐怖の角笛"
+msgstr "ZRCADLO ÚSVITU"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾛｰﾌﾟ"
-msgstr "ﾛｰﾌﾟ"
+msgstr "ROH STRACHU"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "兎の足"
-msgstr "兎の足"
+msgstr "LANO"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｺｰﾊﾞﾑ"
-msgstr "ｺｰﾊﾞﾑ"
+msgstr "KRÁLÍČÍ NOHA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "首飾り"
-msgstr "首飾り"
+msgstr "CORBUM"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾃﾞｯｸｽ 兜"
-msgstr "ﾃﾞｯｸｽ 兜"
+msgstr "OBUŠEK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "防火胴着"
-msgstr "防火胴着"
+msgstr "DEXOVÁ PŘILBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "力の脚絆"
-msgstr "力の脚絆"
+msgstr "FLAMEBAIN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｽﾋﾟｰﾄﾞﾎﾞｳ"
-msgstr "ｽﾋﾟｰﾄﾞﾎﾞｳ"
+msgstr "POWERTOWERS"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "箱"
-msgstr "箱"
+msgstr "SPEEDBOW"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "開いた箱"
-msgstr "開いた箱"
+msgstr "TRUHLA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "灰"
-msgstr "灰"
+msgstr "OTEVŘÍT TRUHLU"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "骨"
-msgstr "骨"
+msgstr "POPEL"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ﾓﾝ"
-msgstr "秘薬 ﾓﾝ"
+msgstr "KOSTI"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｳﾑ"
-msgstr "秘薬 ｳﾑ"
+msgstr "MON LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ﾃﾞｽ"
-msgstr "秘薬 ﾃﾞｽ"
+msgstr "UM LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｳﾞｪﾝ"
-msgstr "秘薬 ｳﾞｪﾝ"
+msgstr "DES LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｻｰ"
-msgstr "秘薬 ｻｰ"
+msgstr "VEN LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｿﾞｰ"
-msgstr "秘薬 ｿﾞｰ"
+msgstr "SAR LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ﾛｽ"
-msgstr "秘薬 ﾛｽ"
+msgstr "ZO LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｸｰ"
-msgstr "秘薬 ｸｰ"
+msgstr "ROS LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ﾃﾞｲﾝ"
-msgstr "秘薬 ﾃﾞｲﾝ"
+msgstr "KU LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ﾈﾀ"
-msgstr "秘薬 ﾈﾀ"
+msgstr "DANE LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "対ｳﾞｪﾝ秘薬"
-msgstr "対ｳﾞｪﾝ秘薬"
+msgstr "NETA LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ﾔｰ"
-msgstr "秘薬 ﾔｰ"
+msgstr "ANTIVENIN"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｲｰ"
-msgstr "秘薬 ｲｰ"
+msgstr "YA LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "秘薬 ｳﾞｨｰ"
-msgstr "秘薬 ｳﾞｨｰ"
+msgstr "EE LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "水入ﾌﾗｽｺ"
-msgstr "水入ﾌﾗｽｺ"
+msgstr "VI LÉK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｷｬｽ 爆弾"
-msgstr "ｷｬｽ 爆弾"
+msgstr "LÁHEV VODY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾋﾟｭｰ爆弾"
-msgstr "ﾋﾟｭｰ爆弾"
+msgstr "KATH BOMBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰ爆弾"
-msgstr "ﾗｰ爆弾"
+msgstr "PEW BOMBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾌﾙ爆弾"
-msgstr "ﾌﾙ爆弾"
+msgstr "RA BOMBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾘﾝｺﾞ"
-msgstr "ﾘﾝｺﾞ"
+msgstr "ÚPLNÁ BOMBA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄｳﾓﾛｺｼ"
-msgstr "ﾄｳﾓﾛｺｼ"
+msgstr "JABLKO"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾊﾟﾝ"
-msgstr "ﾊﾟﾝ"
+msgstr "KUKUŘICE"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾁｰｽﾞ"
-msgstr "ﾁｰｽﾞ"
+msgstr "CHLÉB"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｽｸﾘｰﾏｰの肉"
-msgstr "ｽｸﾘｰﾏｰの肉"
+msgstr "SÝR"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "丸虫の肉"
-msgstr "丸虫の肉"
+msgstr "PLÁTEK KŘIČÍKA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "すね肉"
-msgstr "すね肉"
+msgstr "ČERVÍ KULATINA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾞﾗｺﾞﾝｽﾃｰｷ"
-msgstr "ﾄﾞﾗｺﾞﾝｽﾃｰｷ"
+msgstr "SHANK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "鉄の鍵"
-msgstr "鉄の鍵"
+msgstr "DRAČÍ STEAK"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "B の鍵"
-msgstr "B の鍵"
+msgstr "ŽELEZNÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "銀の鍵"
-msgstr "銀の鍵"
+msgstr "KLÍČ B"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "四角い鍵"
-msgstr "四角い鍵"
+msgstr "PLNÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾀｰｺｲｽﾞの鍵"
-msgstr "ﾀｰｺｲｽﾞの鍵"
+msgstr "ČTVERCOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "十字の鍵"
-msgstr "十字の鍵"
+msgstr "TYRKYSOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "暗黒の鍵"
-msgstr "暗黒の鍵"
+msgstr "KŘÍŽOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "どくろの鍵"
-msgstr "どくろの鍵"
+msgstr "ONYXOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "黄金の鍵"
-msgstr "黄金の鍵"
+msgstr "KOSTERNÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "翼の鍵"
-msgstr "翼の鍵"
+msgstr "ZLATÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾄﾊﾟｰｽﾞの鍵"
-msgstr "ﾄﾊﾟｰｽﾞの鍵"
+msgstr "OKŘÍDLENÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｻﾌｧｲｱ の鍵"
-msgstr "ｻﾌｧｲｱ の鍵"
+msgstr "TOPASOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｴﾒﾗﾙﾄﾞの鍵"
-msgstr "ｴﾒﾗﾙﾄﾞの鍵"
+msgstr "ZAFÍROVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾙﾋﾞｰの鍵"
-msgstr "ﾙﾋﾞｰの鍵"
+msgstr "SMARAGDOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾗｰの鍵"
-msgstr "ﾗｰの鍵"
+msgstr "RUBÍNOVÝ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾏｽﾀｰｷｰ"
-msgstr "ﾏｽﾀｰｷｰ"
+msgstr "RA KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "まがり鍵"
-msgstr "まがり鍵"
+msgstr "HLAVNÍ KLÍČ"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "虫めがね"
-msgstr "虫めがね"
+msgstr "PACKY NA ZÁMKY"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｽﾋﾟｰﾄﾞﾌﾞｰﾂ"
-msgstr "ｽﾋﾟｰﾄﾞﾌﾞｰﾂ"
+msgstr "LUPA"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "空ﾌﾗｽｺ"
-msgstr "空ﾌﾗｽｺ"
+msgstr "BOTY RYCHLOSTI"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ﾎﾙﾀｰ"
-msgstr "ﾎﾙﾀｰ"
+msgstr "PRÁZDNÁ LÁHEV"
 
 #. Authentic FM Towns JP: graphics 761d6fc588b31aeaaa9caf3725e111b9; native CP932 decoded.
 msgid "ｿﾞｰｷｬｽﾗｰ力"
-msgstr "ｿﾞｰｷｬｽﾗｰ力"
+msgstr "HALTER"
