@@ -35,15 +35,24 @@ static int regular_file_has_bytes(const char* path)
 static int find_hoc_portrait_sensor(const struct DungeonDatState_Compat* dungeon,
                                     const struct DungeonThings_Compat* things,
                                     const struct DungeonSensor_Compat** outSensor,
-                                    int* outCell)
+                                    int* outCell,
+                                    unsigned int* outPortraitMask,
+                                    int* outPortraitCount)
 {
     const struct DungeonMapDesc_Compat* map;
+    unsigned int portraitMask = 0;
+    int portraitCount = 0;
     int y;
     if (!dungeon || !things || !outSensor || !outCell ||
+        !outPortraitMask || !outPortraitCount ||
         dungeon->header.mapCount <= 0 || !dungeon->tiles ||
         !dungeon->tiles[0].squareData) {
         return 0;
     }
+    *outSensor = NULL;
+    *outCell = -1;
+    *outPortraitMask = 0;
+    *outPortraitCount = 0;
     map = &dungeon->maps[0]; /* Original DM1 Hall of Champions. */
     for (y = 0; y < (int)map->height; ++y) {
         int x;
@@ -61,16 +70,23 @@ static int find_hoc_portrait_sensor(const struct DungeonDatState_Compat* dungeon
                         things->sensors[index].sensorData >= 0 &&
                         things->sensors[index].sensorData <
                             DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT) {
-                        *outSensor = &things->sensors[index];
-                        *outCell = THING_GET_CELL(thing);
-                        return 1;
+                        unsigned int ordinal =
+                            (unsigned int)things->sensors[index].sensorData;
+                        portraitMask |= 1u << ordinal;
+                        ++portraitCount;
+                        if (!*outSensor) {
+                            *outSensor = &things->sensors[index];
+                            *outCell = THING_GET_CELL(thing);
+                        }
                     }
                 }
                 thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
             }
         }
     }
-    return 0;
+    *outPortraitMask = portraitMask;
+    *outPortraitCount = portraitCount;
+    return *outSensor != NULL;
 }
 
 int main(void)
@@ -87,6 +103,11 @@ int main(void)
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 noDraw;
     DM1_V1_ObjectIconSourceZonePc34 expectedPortrait;
     DM1_FrontMirrorRenderPlanPc34 expectedMirror;
+    unsigned int portraitMask = 0;
+    int portraitCount = 0;
+    int initialDirection = -1;
+    int initialMapY = -1;
+    int initialMapX = -1;
     int cell = -1;
     int result = 1;
 
@@ -110,7 +131,8 @@ int main(void)
     if (!F0500_DUNGEON_LoadDatHeader_Compat(dungeonPath, &dungeon) ||
         !F0502_DUNGEON_LoadTileData_Compat(dungeonPath, &dungeon) ||
         !F0504_DUNGEON_LoadThingData_Compat(dungeonPath, &dungeon, &things) ||
-        !find_hoc_portrait_sensor(&dungeon, &things, &sensor, &cell) ||
+        !find_hoc_portrait_sensor(&dungeon, &things, &sensor, &cell,
+                                  &portraitMask, &portraitCount) ||
         !DM1_V1_ChampionMirror_F0172FrontWallSensorReceiptPc34(
             sensor->sensorType, sensor->sensorData, sensor->ornamentOrdinal,
             cell, cell, &front) ||
@@ -124,6 +146,26 @@ int main(void)
         !DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
             &render, 0, 0, &noDraw)) {
         fprintf(stderr, "could not build a real HoC C127/C346/C026 receipt\n");
+        result = 0;
+        goto cleanup;
+    }
+
+    /* The PC 3.4 retail header and Hall layout are source media, not a
+     * Firestaff fixture: F0501 decodes 0x0861 to map 0 / (1,3), facing
+     * south.  ReDMCSB DUNGEON.C publishes all 24 C127 data ordinals into
+     * the C026 8x3 portrait atlas.  Checking the full set catches a parser
+     * shift that would still make a convenient first mirror appear valid. */
+    F0501_DUNGEON_DecodePartyLocation_Compat(
+        dungeon.header.initialPartyLocation,
+        &initialDirection, &initialMapY, &initialMapX);
+    if (dungeon.header.initialPartyLocation != 0x0861u ||
+        initialMapX != 1 || initialMapY != 3 || initialDirection != 2 ||
+        portraitCount != DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT ||
+        portraitMask != ((1u << DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT) - 1u)) {
+        fprintf(stderr,
+                "real HoC layout mismatch: start=0x%04X (%d,%d,d%d), portraits=%d mask=0x%08X\n",
+                dungeon.header.initialPartyLocation, initialMapX, initialMapY,
+                initialDirection, portraitCount, portraitMask);
         result = 0;
         goto cleanup;
     }
@@ -160,8 +202,8 @@ int main(void)
         goto cleanup;
     }
 
-    printf("ok: real HoC C127 ordinal %u uses C346 then C026; missing C346 is no-draw\n",
-           (unsigned int)sensor->sensorData);
+    printf("ok: real HoC start (1,3,S) and all %d C127 portraits use C346 then C026; missing C346 is no-draw\n",
+           portraitCount);
 
 cleanup:
     F0504_DUNGEON_FreeThingData_Compat(&things);
