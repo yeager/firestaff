@@ -1321,9 +1321,9 @@ msgstr ""
 "SLOTTSPORTEN\n"
 "MÅSTE DU HÄMTA\n"
 "EN NYCKELDEL\n"
-"FRÅN VAR OCH EN AV\n"
-"DE FYRA KLANERNA\n"
-"I SKULLKEEP"
+"FRÅN ALLA FYRA\n"
+"KLANER I\n"
+"SKULLKEEP"
 
 #. GDAT 0x0f/0x39/0x00
 #: po/dm2_source_strings.c:254
