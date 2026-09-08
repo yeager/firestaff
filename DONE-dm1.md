@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Corrected the real PC 3.4 HoC C160 → C007 continuation. A
+  champion with an empty action hand now immediately selects PANEL.C F0347's
+  F0345 FOOD/WATER page (C020/C030/C031), instead of exposing a bare C017
+  background until a later mouth click. The archive-backed CLI route now
+  requires both the C007 inventory and its source FOOD/WATER panel. The full
+  976-record PC3.4 object/slot corpus still passes in Original and Modern.
+  This restores the first post-resurrection inventory panel; same-state
+  pickup, scroll and complete C007 pixel/cadence parity remain open.
+
 - 2026-09-08: Compared the valid local original PC 3.4 C127/C040 capture
   against a native 320x200 frame driven by the same archive, route and C127
   click. The C040 rectangle at `(80,85,144x73)` matched 10,409 of 10,512 RGB

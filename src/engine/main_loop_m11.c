@@ -4293,7 +4293,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             &receipt.dm1HoCBootSummary,
             &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1HocCandidatePanel=%d dm1HocCandidateOrdinal=%d dm1HocCandidatePartyIndex=%d dm1InventoryPanel=%d dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d dm1FmtownsMenuFontLoaded=%d %s\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1HocCandidatePanel=%d dm1HocCandidateOrdinal=%d dm1HocCandidatePartyIndex=%d dm1InventoryPanel=%d dm1FoodWaterPanel=%d dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d dm1FmtownsMenuFontLoaded=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -4340,6 +4340,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             gameView ? gameView->candidateMirrorOrdinal : -1,
             gameView ? gameView->candidateMirrorPartyIndex : -1,
             gameView ? gameView->inventoryPanelActive : 0,
+            gameView ? gameView->v1FoodWaterPanelActive : 0,
             gameView ? gameView->dm1FmtownsCddaPlaying : 0,
             gameView ? gameView->dm1FmtownsCddaCurrentTrack : 0,
             receipt.startedFromLauncher,

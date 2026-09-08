@@ -62473,6 +62473,15 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
 
     state->inventoryPanelActive = 1;
     state->inventorySelectedSlot = 0;
+    /* PANEL.C F0355 immediately reaches F0347 for the newly selected
+     * champion.  With an empty action hand F0347 selects F0345's original
+     * C020/C030/C031 FOOD/WATER page; waiting for a later click on the
+     * mouth left a bare C017 after the authentic C160 -> C007 HoC route. */
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        state->world.party.champions[championIndex]
+            .inventory[CHAMPION_SLOT_ACTION_HAND] == THING_NONE) {
+        state->v1FoodWaterPanelActive = 1;
+    }
     m11_clear_v1_mouth_visual(state);
     m11_format_champion_name(state->world.party.champions[championIndex].name,
                              champion, sizeof(champion));

@@ -249,9 +249,10 @@ hoc_inventory_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 }
 if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_inventory_output" ||
    ! grep -Fq 'dm1HocCandidatePanel=0' <<<"$hoc_inventory_output" ||
-   ! grep -Fq 'dm1InventoryPanel=1' <<<"$hoc_inventory_output"; then
+   ! grep -Fq 'dm1InventoryPanel=1' <<<"$hoc_inventory_output" ||
+   ! grep -Fq 'dm1FoodWaterPanel=1' <<<"$hoc_inventory_output"; then
     printf '%s\n' "$hoc_inventory_output" >&2
-    printf '%s\n' 'FAIL: authentic PC-34 Hall C007 did not open inventory after C160' >&2
+    printf '%s\n' 'FAIL: authentic PC-34 Hall C007 did not open source FOOD/WATER inventory after C160' >&2
     exit 1
 fi
 
