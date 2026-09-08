@@ -117,9 +117,12 @@ hoc_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     exit 1
 }
 if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_output" ||
-   ! grep -Fq 'map=0 party=14,3,0 champions=1' <<<"$hoc_output"; then
+   ! grep -Fq 'map=0 party=14,3,0 champions=1' <<<"$hoc_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=1' <<<"$hoc_output" ||
+   ! grep -Fq 'dm1HocCandidateOrdinal=5' <<<"$hoc_output" ||
+   ! grep -Fq 'dm1HocCandidatePartyIndex=0' <<<"$hoc_output"; then
     printf '%s\n' "$hoc_output" >&2
-    printf '%s\n' 'FAIL: authentic PC-34 Hall C127 portrait click did not append its candidate' >&2
+    printf '%s\n' 'FAIL: authentic PC-34 Hall C127 portrait click did not open C040 for ordinal 5' >&2
     exit 1
 fi
 

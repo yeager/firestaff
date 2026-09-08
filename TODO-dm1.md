@@ -24,9 +24,11 @@
 
   Firestaff's production route is no longer open: the real
   `Dungeon-Master_DOS_EN_Version-34.zip` CLI regression replays the complete
-  route at 320x200 and proves `map=0 party=14,3,0 champions=1` after the
-  `(112,83)` press, i.e. C127 reaches REVIVE.C F0280 and opens the pending
-  candidate flow. The regression is
+  route at 320x200 and proves `map=0 party=14,3,0 champions=1`,
+  `dm1HocCandidatePanel=1`, `dm1HocCandidateOrdinal=5`, and
+  `dm1HocCandidatePartyIndex=0` after the `(112,83)` press. This proves C127
+  reaches REVIVE.C F0280 and opens the original C040 candidate panel, rather
+  than merely appending a party entry. The regression is
   `tests/test_dm1_v1_pc34_native_cli_boot.sh`; it uses no extracted game data,
   handcrafted save, or substitute graphics.
 
