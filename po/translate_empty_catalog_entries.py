@@ -104,14 +104,17 @@ def translate(text: str, language: str) -> str:
     # MyMemory is deliberately last: it is slower and has a smaller public
     # quota, but provides a resilient non-Google path when Google returns a
     # rate-limit/consent page during a long catalog refresh.
-    memory = subprocess.run(
-        ["curl", "--fail", "--silent", "--show-error", "--max-time", "40", "--get",
-         "--data-urlencode", f"q={text}",
-         "--data-urlencode", f"langpair=auto|{language}",
-         "https://api.mymemory.translated.net/get"],
-        check=True, capture_output=True, text=True,
-    )
-    value = json.loads(memory.stdout).get("responseData", {}).get("translatedText", "").strip()
+    try:
+        memory = subprocess.run(
+            ["curl", "--fail", "--silent", "--show-error", "--max-time", "40", "--get",
+             "--data-urlencode", f"q={text}",
+             "--data-urlencode", f"langpair=auto|{language}",
+             "https://api.mymemory.translated.net/get"],
+            check=True, capture_output=True, text=True,
+        )
+        value = json.loads(memory.stdout).get("responseData", {}).get("translatedText", "").strip()
+    except (subprocess.CalledProcessError, json.JSONDecodeError) as error:
+        raise RuntimeError("translation services did not return a usable response") from error
     if not usable_translation(value):
         raise RuntimeError("translation service returned an empty or error value")
     return value
@@ -309,10 +312,14 @@ def main() -> int:
                 entry.msgstr = result
                 entry.comment = (entry.comment + "\n" if entry.comment else "") + "Machine-translation draft; requires language review."
                 changed_catalogs.add(path)
+            # A public service can rate-limit a later batch.  Checkpoint each
+            # completed, token-validated batch so an interrupted large locale
+            # refresh never loses earlier valid translations.
+            if not args.dry_run:
+                for path in changed_catalogs:
+                    next(catalog for candidate_path, catalog, *_ in candidates
+                         if candidate_path == path).save(str(path))
             time.sleep(args.delay)
-        if not args.dry_run:
-            for path in changed_catalogs:
-                next(catalog for candidate_path, catalog, *_ in candidates if candidate_path == path).save(str(path))
         # Activate last: candidate catalogs above are held in memory, so doing
         # this before saving them would silently restore their old fuzzy flags.
         if args.activate_fuzzy and not args.dry_run:
