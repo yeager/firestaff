@@ -53,6 +53,16 @@ PASS94_DIAGNOSTIC_EXPECTED = [
     "dungeon_gameplay",
 ]
 
+# Pass435 is the deliberately small, source-observed C407 handoff: the
+# original Entrance menu is visible before the click, and the following frame
+# is the no-party Hall gameplay state.  Keep it separate from pass94's six
+# screenshots so a valid two-frame C407 capture is not rejected for merely
+# using the wrong route profile.
+PASS435_C407_EXPECTED = [
+    "entrance_menu",
+    "dungeon_gameplay",
+]
+
 # Pass210 deliberately splits movement/viewport evidence from spell/inventory
 # probes.  This preset is strict gameplay-only: any stale duplicate raw frame,
 # spell panel, inventory panel, entrance menu, or wall-closeup frame must block
@@ -217,6 +227,8 @@ def parse_expected(value: str | None) -> list[str] | None:
         return PASS77_EXPECTED
     if value in {"pass94", "pass94-diagnostic"}:
         return PASS94_DIAGNOSTIC_EXPECTED
+    if value in {"pass435", "pass435-c407", "c407"}:
+        return PASS435_C407_EXPECTED
     if value in {"pass210", "pass210-movement", "movement-only"}:
         return PASS210_MOVEMENT_EXPECTED
     parsed = [x.strip() for x in value.split(",") if x.strip()]
@@ -365,6 +377,8 @@ def run_self_test() -> int:
         failures.append("pass210-movement preset did not resolve to the strict gameplay-only expected sequence")
     if parse_expected("pass84-overlay") != PASS77_EXPECTED:
         failures.append("pass84-overlay preset did not resolve to the six-shot overlay expected sequence")
+    if parse_expected("pass435-c407") != PASS435_C407_EXPECTED:
+        failures.append("pass435-c407 preset did not resolve to the C407 two-shot expected sequence")
     if failures:
         print(json.dumps({"pass": False, "failures": failures}, indent=2))
         return 1
@@ -377,7 +391,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument("attempt_dir", type=Path, nargs="?", help="directory containing DOSBox imageNNNN-raw.png captures")
     ap.add_argument("--out-json", type=Path, default=None)
     ap.add_argument("--out-md", type=Path, default=None)
-    ap.add_argument("--expected", default=None, help="comma-separated expected classes, or preset: 'pass77'/'pass84-overlay', 'pass94-diagnostic', 'pass210-movement'")
+    ap.add_argument("--expected", default=None, help="comma-separated expected classes, or preset: 'pass77'/'pass84-overlay', 'pass94-diagnostic', 'pass435-c407', 'pass210-movement'")
     ap.add_argument("--fail-on-duplicates", action="store_true", help="strict promotion gate: treat repeated raw frame sha256 values as a failing problem instead of a warning")
     ap.add_argument("--self-test", action="store_true", help="run classifier guard tests without reading PNG files")
     args = ap.parse_args(argv)

@@ -209,6 +209,11 @@ DM1_ORIGINAL_EXPECTED_SHOTS=2 \\
 DM1_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:6000 shot:entrance_stable click:260,50 wait:3000 shot:hall_start' \\
 xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 
+python3 tools/pass80_original_frame_classifier.py \\
+  verification-screens/pass376-original-route \\
+  --expected pass435-c407 \\
+  --fail-on-duplicates
+
 python3 tools/pass86_original_viewport_crop_manifest.py \\
   verification-screens/pass376-original-route \\
   --out-dir verification-screens/pass376-original-dm1-viewports
