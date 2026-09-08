@@ -50,6 +50,45 @@ static int failures;
     } \
 } while (0)
 
+/* PANEL.C F0346 places the authentic 144x73 C040 bitmap at viewport-local
+ * (80,52).  COORD.C fixes the DM1 viewport origin at screen (0,33).  This
+ * checks final pixels rather than merely proving that asset 40 parsed: the
+ * Hall-of-Champions route must put the source panel on the rendered page. */
+static int rendered_c040_pixels_match(const M11_GameViewState* state,
+                                      const unsigned char* framebuffer) {
+    const M11_AssetSlot* panel;
+    int panelX, panelY, panelW, panelH;
+    int x, y;
+    int opaque = 0;
+    int matching = 0;
+
+    if (!state || !framebuffer ||
+        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY,
+                                              &panelW, &panelH)) {
+        return 0;
+    }
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40u);
+    if (!panel || !panel->loaded || !panel->pixels ||
+        panel->width != (unsigned int)panelW ||
+        panel->height != (unsigned int)panelH) {
+        return 0;
+    }
+    for (y = 0; y < panelH; ++y) {
+        for (x = 0; x < panelW; ++x) {
+            const unsigned char pixel = panel->pixels[y * panelW + x];
+            /* C040's authenticated transparent colour is 6. */
+            if (pixel != 6u) {
+                ++opaque;
+                if (framebuffer[(33 + panelY + y) * kFramebufferWidth +
+                                panelX + x] == pixel) {
+                    ++matching;
+                }
+            }
+        }
+    }
+    return opaque > 0 && matching == opaque;
+}
+
 static int test_setenv(const char* name, const char* value) {
 #ifdef _WIN32
     return _putenv_s(name, value);
@@ -426,11 +465,30 @@ static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
                                 state->candidateMirrorOrdinal == sourceOrdinal &&
                                 state->world.party.championCount == 1) {
                                 if (dumpPointer) {
+                                    const M11_AssetSlot* c040 = M11_AssetLoader_Load(
+                                        &state->assetLoader, 40u);
+                                    size_t c040NonZero = 0u;
+                                    size_t c040PixelCount = c040
+                                        ? (size_t)c040->width * (size_t)c040->height
+                                        : 0u;
+                                    size_t c040Index;
+                                    for (c040Index = 0u;
+                                         c040 && c040->pixels &&
+                                         c040Index < c040PixelCount;
+                                         ++c040Index) {
+                                        c040NonZero += c040->pixels[c040Index] != 0u;
+                                    }
                                     printf("C127 pointer ordinal=%d party=%d,%d,d%d screen=%d,%d\n",
                                            sourceOrdinal, partyX, partyY,
                                            direction,
                                            viewportX + ornamentX + clickX,
                                            viewportY + ornamentY + clickY);
+                                    printf("C040 asset loaded=%d pixels=%d size=%ux%u nonzero=%zu/%zu\n",
+                                           c040 ? c040->loaded : 0,
+                                           c040 && c040->pixels != NULL,
+                                           c040 ? c040->width : 0u,
+                                           c040 ? c040->height : 0u,
+                                           c040NonZero, c040PixelCount);
                                 }
                                 ++selectedCount;
                                 ++rejectedCount;
@@ -684,6 +742,11 @@ int main(void) {
           state.world.party.championCount == 1 &&
           state.world.party.champions[candidateA].present,
           "mirror A should append candidate slot 0 from the real record");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, kFramebufferWidth,
+                      kFramebufferHeight);
+    CHECK(rendered_c040_pixels_match(&state, framebuffer),
+          "live HoC C040 must composite its authentic opaque pixels onto the final page");
     (void)expect_recruited_portrait_matches_c026(
         &state, candidateA, mirrorA.ordinal,
         "mirror A candidate should receive C026 portrait bytes");
