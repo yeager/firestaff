@@ -12,18 +12,20 @@
   exact square/pose/input and compare source-order command receipts before
   changing a renderer or inventory transaction.
 
-- Re-capture and validate an original PC 3.4 same-state C127/C040 pair for
+- Validate and compare an original PC 3.4 same-state C127/C040 pair for
   pixel/cadence comparison and the later inventory interaction. The local
-  2026-09-08 files labelled `c040`, `c040_stable` and `c040_final` are
-  bit-identical Hall frames (SHA-256 `94d941f5…bff6f40`), so their labels are
-  not evidence that the source modal was visible. Do not use them to claim
-  original C040 or C007 parity. The verified retail hybrid
+  `dm1-original-hoc-c040-20260908` files labelled `c040`, `c040_stable` and
+  `c040_final` are bit-identical Hall frames (SHA-256 `94d941f5…bff6f40`),
+  so that capture set must not be used as the source-modal proof. The separate
+  `dm1-original-hoc-recruit-inventory-20260908` route does contain a visible
+  C040 panel followed by the C007 inventory state; it still needs an
+  explicitly recorded same-state native comparison rather than a label-only
+  claim. The verified retail hybrid
   route is mouse-mode launch (`DM -vv -sn -pm`), `(260,84)` Enter selection,
   keypad-Enter (`0x001c`), an approximately eight-second door animation, and
   the 28-command `KP5/KP1/KP2/KP6` sequence before the C127 click `(112,83)`.
-  Use this route to record a visibly distinct source C040 geometry, compare
-  its material/cadence to the same-state native frame, and then extend it
-  through a real inventory
+  Use the visibly distinct source C040 geometry to compare material/cadence
+  to the same-state native frame, and then extend it through a real inventory
   interaction. A dedicated all-mouse movement route remains desirable, but it
   must not replace the verified keypad sequence or be inferred from it. Keep
   raw captures operator-local under `.codex-scratch` and do not substitute a
