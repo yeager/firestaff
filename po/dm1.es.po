@@ -1448,7 +1448,7 @@ msgstr "LISTO"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION"
-msgstr ""
+msgstr "HAGA CLIC EN EL CENTRO PARA AVANZAR O LEER, HAGA CLIC EN LOS LADOS PARA GIRAR, LA TAB ELIGE AL CAMPEÓN DELANTERO"
 
 #. Extracted from current DM1 runtime
 msgid "DUNGEON MASTER"
@@ -2020,11 +2020,11 @@ msgstr "%s LISTO"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
-msgstr ""
+msgstr "EL ESPACIO ACTÚA, ENTRA A INSPECCIONES, HAGA CLIC EN EL CENTRO PARA COMPROMETERSE, TAB CICLA AL CAMPEÓN DELANTERO"
 
 #. Extracted from current DM1 runtime
 msgid "CLICK OR TAB TO SWAP, CLICK CENTER TO COMMIT, SPACE ACTS, ENTER INSPECTS"
-msgstr ""
+msgstr "HAGA CLIC O TAB PARA INTERCAMBIAR, HAGA CLIC EN EL CENTRO PARA COMPROMETER, ACTUAR EN EL ESPACIO, INGRESAR INSPECCIONES"
 
 #. Extracted from current DM1 runtime
 msgid "DEAD"
@@ -2212,7 +2212,7 @@ msgstr "R PARA DESPERTAR"
 
 #. ReDMCSB SPELFAIL.C F0410. Named fields may be reordered by translators.
 msgid "{champion} NEEDS MORE PRACTICE WITH THIS {skill} SPELL."
-msgstr ""
+msgstr "{champion} NECESITA MÁS PRÁCTICA CON ESTE HECHIZO {skill}."
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
 msgid "{champion} MUMBLES A MEANINGLESS SPELL."
@@ -2220,61 +2220,63 @@ msgstr "{champion} MURMURA UN HECHIZO SIN SENTIDO."
 
 #. ReDMCSB SPELFAIL.C F0410. Keep the {champion} field unchanged.
 msgid "{champion} NEEDS AN EMPTY FLASK IN HAND FOR POTION."
-msgstr ""
+msgstr "{champion} NECESITA UN FRASCO VACÍO EN LA MANO PARA LA POCIÓN."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP HEADS."
-msgstr ""
+msgstr "Sale cara."
 
 #. ReDMCSB MENU.C F0381 / C005_ACTION_FLIP.
 msgid "IT COMES UP TAILS."
-msgstr ""
+msgstr "Sale cruz."
 
 #. PC34 DUNGEON.DAT TextString 4; final F0107/M648 presentation only.
 msgid ""
 "dm1.pc34.inscription.4:HALL OF\n"
 "CHAMPIONS"
 msgstr ""
+"dm1.pc34.inscription.4:SALA DE\n"
+"CAMPEONES"
 
 #. DM1 player-facing pickup/drop and rune presentation templates
 #, c-format
 msgid "%s -> MOUSE HAND"
-msgstr ""
+msgstr "%s -> MANO DEL RATÓN"
 
 #, c-format
 msgid "%s FROM MOUSE HAND"
-msgstr ""
+msgstr "%s DE LA MANO DEL RATÓN"
 
 msgid "PLACE THE HELD OBJECT FIRST"
-msgstr ""
+msgstr "COLOQUE EL OBJETO RETENIDO PRIMERO"
 
 #, c-format
 msgid "%s — %d OF 4 SYMBOLS"
-msgstr ""
+msgstr "%s — %d DE 4 SÍMBOLOS"
 
 #. Firestaff host presentation used by every DM1 mode; source state remains unchanged.
 msgid "EXPIRED"
-msgstr ""
+msgstr "EXPIRADO"
 
 msgid "ENTER MENU"
-msgstr ""
+msgstr "ENTRAR AL MENÚ"
 
 msgid "ESC DISMISS"
-msgstr ""
+msgstr "ESC DESPEDIR"
 
 #, c-format
 msgid "EXPIRED %s"
-msgstr ""
+msgstr "EXPIRADO %s"
 
 msgid "ENTER: MENU"
-msgstr ""
+msgstr "ENTRAR: MENÚ"
 
 msgid "ESC: DISMISS"
-msgstr ""
+msgstr "ESC: DESCARTAR"
 
 #, c-format
 msgid "SESSION TIMER EXPIRED (%s) -- RETURN TO MENU"
-msgstr ""
+msgstr "TIEMPO DE SESIÓN EXPIRADO (%s) - VOLVER AL MENÚ"
 
 msgid "PRESS ENTER TO RETURN TO MENU"
 msgstr "PULSA INTRO PARA VOLVER AL MENÚ"
@@ -2283,7 +2285,7 @@ msgid "ESC TO DISMISS"
 msgstr "ESC PARA CERRAR"
 
 msgid "QUIT?"
-msgstr ""
+msgstr "¿DEJAR?"
 
 msgid "RETURN TO MENU?"
 msgstr "¿VOLVER AL MENÚ?"
@@ -2314,7 +2316,7 @@ msgid "ITEM IN HAND"
 msgstr "OBJETO EN LA MANO"
 
 msgid "DROP TARGET UNAVAILABLE"
-msgstr ""
+msgstr "OBJETIVO DE CAÍDA NO DISPONIBLE"
 
 msgid "SPELL CAST"
 msgstr "HECHIZO LANZADO"
@@ -2327,39 +2329,39 @@ msgid "CONTAINER FILLED"
 msgstr "RECIPIENTE LLENO"
 
 msgid "FLASK FILLED WITH WATER"
-msgstr ""
+msgstr "FRASCO LLENADO DE AGUA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NEOPHYTE"
-msgstr ""
+msgstr "NEOFITO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "NOVICE"
-msgstr ""
+msgstr "NOVATO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "APPRENTICE"
-msgstr ""
+msgstr "APRENDIZ"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "JOURNEYMAN"
-msgstr ""
+msgstr "VIAJERO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "CRAFTSMAN"
-msgstr ""
+msgstr "ARTESANO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ARTISAN"
-msgstr ""
+msgstr "ARTESANO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ADEPT"
-msgstr ""
+msgstr "ADEPTO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "EXPERT"
-msgstr ""
+msgstr "EXPERTO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "` MASTER"
@@ -2391,27 +2393,27 @@ msgstr "ARQUIMAESTRO"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "STRENGTH"
-msgstr ""
+msgstr "FUERZA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "DEXTERITY"
-msgstr ""
+msgstr "DESTREZA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "WISDOM"
-msgstr ""
+msgstr "SABIDURÍA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "VITALITY"
-msgstr ""
+msgstr "VITALIDAD"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-MAGIC"
-msgstr ""
+msgstr "ANTIMAGIA"
 
 #. M11_DM1_PRESENTED: ReDMCSB PANEL.C F0351 skill-rank and statistic labels.
 msgid "ANTI-FIRE"
-msgstr ""
+msgstr "ANTIFUEGO"
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 102; F0446 removes its A ordering key.
 msgid ""
@@ -2424,6 +2426,14 @@ msgid ""
 "UNCOMPROMISING\n"
 "ORDER."
 msgstr ""
+"GRACIAS MI\n"
+"AMIGOS.  TÚ\n"
+"HAN DESTERRADO\n"
+"CAOS Y\n"
+"RECHAZÓ EL\n"
+"FALSO CAMINO DE\n"
+"SIN COMPROMISOS\n"
+"ORDEN."
 
 #. Authentic PC3.4 DUNGEON.DAT TextString 104; F0446 removes its B ordering key.
 msgid ""
@@ -2435,3 +2445,10 @@ msgid ""
 "TRUE NATURE OF\n"
 "THE FIRESTAFF."
 msgstr ""
+"SOLO APRENDIENDO\n"
+"LA VERDAD Y\n"
+"BUSCANDO EL CAMINO\n"
+"DE EQUILIBRIO\n"
+"¿ADIVINAS LA\n"
+"VERDADERA NATURALEZA DE\n"
+"EL BARÓN DE BOMBEROS."
