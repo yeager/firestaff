@@ -13,21 +13,16 @@
   changing a renderer or inventory transaction.
 
 - Capture an original PC 3.4 same-state C127/C040 pair for pixel/cadence
-  comparison and the later inventory interaction. Use the retail executable
-  in mouse mode (`DM -vv -sn -pm`), select Entrance at `(260,84)`, then
-  confirm with `Enter`; `-pk` cannot provide C080 mouse evidence. Recalibrate
-  the post-Entrance movement route in the original executable before treating
-  the archive-derived native sequence as an original route. The 2026-09-08
-  DOSBox-X/Xvfb host captures so far prove only the first Enter selection: a
-  second click yields the retail closed-door Entrance pose, while neither the
-  scripted Return nor a viewport click has entered the Hall. The post-Entrance
-  movement sequence must therefore not start yet. Its apparent
-  `KP5/KP1/KP2/KP6` mouse equivalent and click `(112,83)` are unverified for
-  original execution. First determine the original mouse-mode action that
-  promotes the selected closed-door Entrance into the Hall, then record the
-  successful square, direction, command cadence, C026 geometry and C040 frame.
-  Keep raw captures operator-local under `.codex-scratch` and do not substitute
-  a save, graphics, or a Firestaff-native result for this evidence.
+  comparison and the later inventory interaction. The verified retail hybrid
+  route is mouse-mode launch (`DM -vv -sn -pm`), `(260,84)` Enter selection,
+  keypad-Enter (`0x001c`), an approximately eight-second door animation, and
+  the 28-command `KP5/KP1/KP2/KP6` sequence before the C127 click `(112,83)`.
+  Use this route to record source geometry, compare C040 material/cadence to
+  the same-state native frame, and then extend it through a real inventory
+  interaction. A dedicated all-mouse movement route remains desirable, but it
+  must not replace the verified keypad sequence or be inferred from it. Keep
+  raw captures operator-local under `.codex-scratch` and do not substitute a
+  save, graphics, or a Firestaff-native result for this evidence.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient

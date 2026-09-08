@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Captured the authentic retail PC 3.4 Hall C127/C040 route with
+  DOSBox-X/Xvfb using the existing read-only local original stage. The working
+  input sequence is mouse-mode launch (`DM -vv -sn -pm`), Entrance click
+  `(260,84)`, keypad-Enter (the PC 3.4 `0x001c` command), approximately eight
+  seconds for the door animation, the documented 28 keypad movements, and
+  C127 click `(112,83)`. The final original C040 frame is stable across three
+  captures (SHA-256 `b534f397…b04856`) and remains only in `.codex-scratch`.
+  This establishes route state, not a copyrighted-pixel comparison or full
+  inventory parity.
+
 - 2026-09-08: Locked the archive-derived PC 3.4 Hall route into the native
   CLI regression for both Original and Modern. In Firestaff, the sequence
   reaches `(14,3,N)` and physical `(744,464)` in a 1920x1080 16:9 window maps
