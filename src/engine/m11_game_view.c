@@ -6596,6 +6596,10 @@ static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
     return 1;
 }
 
+/* Defined with the other F0337 presentation helpers below; Amiga's native
+ * G0021 palette consumer needs the same source light-index decision. */
+static int m11_compute_dungeon_palette_index(const M11_GameViewState* state);
+
 /* The Amiga APPB/KAOS routes enter C03_GAME outside the PC3.4
  * C017/C040 runtime-session consumer below.  The first independently-bound
  * live game surface is C013: PANEL.C F0395 calls MENUDRAW.C F0021/F0660 to
@@ -6603,10 +6607,12 @@ static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
  * DMCSB2 record from the authenticated Amiga GRAPHICS.DAT instead of asking
  * the PC IMG3 decoder to interpret it.
  *
- * DATA.C G0021's first MEDIA425 palette is the full-bright dungeon palette
- * used before PANEL.C F0337 selects a darker row.  C013 uses these original
- * four-bit indices; duplicating the 16 source registers across the indexed
- * host palette preserves that meaning without inventing PC VGA colours.
+ * DATA.C G0021 provides six MEDIA425 dungeon palettes.  PANEL.C F0337
+ * selects one from the authentic light calculation, so the Amiga route must
+ * not pin every live frame to the first, full-bright row.  C013 uses the
+ * same original four-bit indices; duplicating the selected source registers
+ * across the indexed host palette preserves that meaning without inventing
+ * PC VGA colours.
  * C017 is the source inventory backdrop, C040 the resurrect/reincarnate
  * overlay and C013 the source movement panel.  No unbound Amiga dungeon
  * viewport, champion HUD, or synthetic replacement is exposed while their
@@ -6617,9 +6623,22 @@ static int m11_csb_present_amiga_runtime_surface(
     M11_GameViewState *state, unsigned char *framebuffer,
     int framebuffer_width, int framebuffer_height)
 {
-    static const uint16_t dungeon_palette_rgb4[16] = {
-        0x000u, 0x666u, 0x888u, 0x620u, 0x0ccu, 0x840u, 0x080u, 0x0c0u,
-        0xf00u, 0xfa0u, 0xc86u, 0xff0u, 0x444u, 0xaaau, 0x00fu, 0xfffu
+    /* ReDMCSB DATA.C G0021_aaui_Graphic562_Palette_DungeonView,
+     * MEDIA425 A31/A35: the original Amiga RGB4 registers, not a generated
+     * darkening curve. */
+    static const uint16_t dungeon_palette_rgb4[6][16] = {
+        {0x000u,0x666u,0x888u,0x620u,0x0ccu,0x840u,0x080u,0x0c0u,
+         0xf00u,0xfa0u,0xc86u,0xff0u,0x444u,0xaaau,0x00fu,0xfffu},
+        {0x000u,0x444u,0x666u,0x620u,0x0ccu,0x820u,0x060u,0x0a0u,
+         0xc00u,0x000u,0x000u,0xfc0u,0x222u,0x888u,0x00cu,0xcccu},
+        {0x000u,0x222u,0x444u,0x420u,0x0ccu,0x620u,0x040u,0x080u,
+         0xa00u,0x000u,0x000u,0xfa0u,0x000u,0x666u,0x00au,0xaaau},
+        {0x000u,0x000u,0x222u,0x200u,0x0ccu,0x420u,0x020u,0x060u,
+         0x800u,0x000u,0x000u,0xc80u,0x000u,0x444u,0x008u,0x888u},
+        {0x000u,0x000u,0x000u,0x000u,0x0ccu,0x200u,0x000u,0x040u,
+         0x600u,0x000u,0x000u,0xa60u,0x000u,0x222u,0x006u,0x666u},
+        {0x000u,0x000u,0x000u,0x000u,0x0ccu,0x000u,0x000u,0x020u,
+         0x400u,0x000u,0x000u,0x640u,0x000u,0x000u,0x004u,0x444u}
     };
     const CSB_V1_BootProfile *profile;
     DM1_V1_MovementArrowRectPc34 outer_rect;
@@ -6633,6 +6652,7 @@ static int m11_csb_present_amiga_runtime_surface(
     int row;
     int portrait_index;
     int status_box_index;
+    int palette_index;
     int ok = 0;
 
     const unsigned int graphic_index = state && state->candidateMirrorRenameActive
@@ -6718,9 +6738,12 @@ static int m11_csb_present_amiga_runtime_surface(
          portrait_surface->width != 256u || portrait_surface->height != 87u)) {
         goto done;
     }
+    palette_index = m11_compute_dungeon_palette_index(state);
+    if (palette_index < 0) palette_index = 0;
+    if (palette_index > 5) palette_index = 5;
     memset(rgb4, 0, sizeof(rgb4));
     for (color = 0; color < 256; ++color) {
-        const uint16_t source = dungeon_palette_rgb4[color & 15];
+        const uint16_t source = dungeon_palette_rgb4[palette_index][color & 15];
         rgb4[color][0] = (uint8_t)((source >> 8) & 15u);
         rgb4[color][1] = (uint8_t)((source >> 4) & 15u);
         rgb4[color][2] = (uint8_t)(source & 15u);
