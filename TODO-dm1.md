@@ -13,65 +13,18 @@
   changing a renderer or inventory transaction.
 
 - Capture an original PC 3.4 same-state C127/C040 pair for pixel/cadence
-  comparison and for the later inventory interaction. The 2026-09-08 original
-  run established the correct mouse-mode Entrance handoff: launch the retail
-  binary as `DM -vv -sn -pm`, wait for Entrance, click the center of ENTER at
-  `(260,84)` to select it (the original changes the diamond to green), then
-  send `Enter` to confirm the no-party Hall transition. `-pk` is keyboard
-  mode, so it cannot provide valid C080 mouse evidence; the former one-click
-  `-pk`/`(260,50)` recipe is invalid and must not be reused. The mounted PC3.4
-  map yields the Firestaff C127 route: `KP5 KP5 KP5 KP5 KP1 KP1 KP1 KP2 KP2
-  KP2 KP2 KP2 KP1 KP1 KP5 KP1 KP1 KP5 KP1 KP1 KP1 KP1 KP1 KP2 KP1 KP6 KP6`.
-  Firestaff reaches `(14,3,N)`, facing portrait ordinal 5; ReDMCSB's DUNVIEW
-  C026 placement makes the source-screen hit point `(112,83)`. The original
-  mouse route is now calibrated as the equivalent source commands, using
-  `COMMAND.C`'s PC movement boxes: forward `(276,135)`, move-left `(247,157)`,
-  move-backward `(276,157)`, and turn-right `(304,135)`. Replay the documented
-  30-command sequence with a 400 ms cadence, then click portrait `(112,83)`.
-  A fresh retail DOSBox-X/Xvfb run reached that portrait and displayed the
-  stock `RESURRECT`/`REINCARNATE` C040 panel. The raw screenshots remain
-  operator-local under `.codex-scratch/dm1-original-hoc-mouse-route`; no game
-  pixels are checked in. This closes the original-route blocker, but it is
-  intentionally not yet a pixel/cadence comparison: capture a matched native
-  C040 frame and compare only after recording the original frame geometry.
-
-  Firestaff's production route is no longer open: the real
-  `Dungeon-Master_DOS_EN_Version-34.zip` CLI regression replays the complete
-  route at 320x200 and proves `map=0 party=14,3,0 champions=1`,
-  `dm1HocCandidatePanel=1`, `dm1HocCandidateOrdinal=5`, and
-  `dm1HocCandidatePartyIndex=0` after the `(112,83)` press. This proves C127
-  reaches REVIVE.C F0280 and opens the original C040 candidate panel, rather
-  than merely appending a party entry. The regression is
-  `tests/test_dm1_v1_pc34_native_cli_boot.sh`; it uses no extracted game data,
-  handcrafted save, or substitute graphics. It additionally captures the
-  final native 320x200 frame and requires the source C040 rectangle
-  `(80,85,144,73)` to be materially visible (at least 5,000 non-black pixels
-  and 10 indexed-display colours). This caught and fixed the old stale-tick
-  admission fault where state/input were live but the final presenter cleared
-  the C040/C026 zones after the next game tick. The renderer now rebuilds the
-  same generation-bound source-material admission at each presentation tick;
-  it does not manufacture a panel or reuse an old material receipt.
-  The same regression also clicks C127 through the physical `(744,464)`
-  coordinate of a 1920x1080 16:9 window, proving the 4:3 letterbox transform
-  reaches source `(112,83)` and opens C040. This protects the reported
-  high-resolution Entrance/HoC mouse-hit failure separately from the
-  320x200 source-coordinate route.
-
-  DOSBox-X under Xvfb produces healthy retail Entrance, C127 and C040 frames
-  through the documented host capture backend when `-pm` is used. Do not
-  label a no-panel capture made in `-pk` as a failed C127 implementation, and
-  do not use a different-pose keypad frame as C040/C026 or inventory evidence.
-  Preserve the raw captures and record geometry/cadence before promoting an
-  original pixel pair.
-
-  Rechecked on 2026-09-08 with the supplied `Dungeon-Master_DOS_EN_Version-34.zip`,
-  DOSBox-X, Xvfb and the host-window capture backend. The recorded original
-  Entrance and confirmed Hall images are distinct, proving that mouse-mode
-  selection and the subsequent confirmation are delivered to the retail
-  executable. The post-movement image differs again, but is a closed-door
-  pose rather than the intended portrait. This is evidence of a remaining
-  original keyboard-route calibration task, not a reason to synthesize a
-  Firestaff response or claim an original C040 pair.
+  comparison and the later inventory interaction. Use the retail executable
+  in mouse mode (`DM -vv -sn -pm`), select Entrance at `(260,84)`, then
+  confirm with `Enter`; `-pk` cannot provide C080 mouse evidence. Recalibrate
+  the post-Entrance movement route in the original executable before treating
+  the archive-derived native sequence as an original route. The 2026-09-08
+  DOSBox-X/Xvfb host capture proved Entrance selection reaches the retail Hall,
+  but its attempted 30-command mapping ended at a closed-door pose, not C127.
+  Therefore its apparent `KP5/KP1/KP2/KP6` mouse equivalent and click `(112,83)`
+  are unverified for original execution. Record the exact successful square,
+  direction, command cadence, C026 geometry and C040 frame; keep raw captures
+  operator-local under `.codex-scratch` and do not substitute a save, graphics,
+  or a Firestaff-native result for this evidence.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient

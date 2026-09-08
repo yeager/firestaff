@@ -1,23 +1,25 @@
 # Firestaff DONE — DM1
 
-- 2026-09-08: Locked the documented retail PC 3.4 Hall route into the native
-  CLI regression for both Original and Modern. The source movement sequence
+- 2026-09-08: Locked the archive-derived PC 3.4 Hall route into the native
+  CLI regression for both Original and Modern. In Firestaff, the sequence
   reaches `(14,3,N)` and physical `(744,464)` in a 1920x1080 16:9 window maps
-  to the real C127 portrait at source `(112,83)`, opening C040 for champion
-  ordinal 5. The test uses the supplied archive in place, makes no save or
-  graphics substitute, and verifies the Original C040 raster is materially
-  visible before the normal RESURRECT route consumes the candidate.
+  to C127 at source `(112,83)`, opening C040 for champion ordinal 5. The test
+  uses the supplied archive in place, makes no save or graphics substitute,
+  and verifies the Original-mode C040 raster is materially visible before the
+  normal RESURRECT route consumes the candidate. This is a native regression,
+  not an original-emulator route claim; the separate retail mouse route remains
+  open until its DOSBox-X capture reaches the same C127 pose.
 
-- 2026-09-07: Verified the authentic PC 3.4 Hall of Champions C127 mirror
-  route end-to-end.  Every source-owned candidate reaches F0280 by its real
-  pointer route in Original and Modern; a rendered C026 portrait click opens
-  C040, C160 resurrects, and C161 rename/reincarnate applies the original
-  vital-halving rule.  The recruited source portraits and rename survive the
-  native quick-save/load boundary.  `m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34`
-  and `m11_dm1_hoc_real_mirror_viewport_material` pass against the supplied
-  media.  This closes champion-mirror click admission only; the remaining HoC
-  composite viewport, inventory, and natural-play capture work stays in
-  `TODO-dm1.md`.
+- 2026-09-07: Implemented the source-locked PC 3.4 Hall C127 mirror path in
+  the native runtime. Candidate selection reaches F0280; a rendered C026
+  portrait click opens C040, C160 resurrects, and C161 rename/reincarnate
+  applies the original vital-halving rule. The recruited source portraits and
+  rename survive the native quick-save/load boundary.
+  `m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` and
+  `m11_dm1_hoc_real_mirror_viewport_material` pass against the supplied media.
+  This closes the native champion-mirror implementation only. Original
+  emulator capture, composite viewport, inventory, and natural-play work stay
+  in `TODO-dm1.md`.
 
 - 2026-09-07: F0179 now records the source-gated I34 sound request when an
   idle Couatl flips a frame (movement sound) or an already-attacking Animated
