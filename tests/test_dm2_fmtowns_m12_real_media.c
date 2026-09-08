@@ -140,9 +140,9 @@ int main(void)
                       "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL,
            "selected FM Towns edition retains its original archive handoff");
 
-    /* The Japanese CD is still the session owner. English is admitted only
-     * through this separately selected canonical PC corpus; both sources are
-     * read in memory and the ZIP is never unpacked to disk. */
+    /* The Japanese CD remains the session owner. The built-in bridge is the
+     * normal locale path; the optional canonical PC corpus below tests only
+     * its explicit, hash-verified import route. */
     if (english_companion && english_companion[0] != '\0') {
         DM2_V1_BootStartupLaunch launch;
         DM2_V1_BootStartupLaunch missing_companion;
@@ -159,7 +159,7 @@ int main(void)
         memset(&launch, 0, sizeof(launch));
         expect(dm2_v1_boot_startup_launch_alloc_with_language(
                    selectedRuntime, english_companion, 0, &launch) == 1,
-               "FM Towns English requires and accepts the explicit PC-English companion");
+                   "FM Towns accepts an optional explicit PC-English companion");
         expect(launch.profile &&
                    launch.profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
                    dm2_v1_runtime_i18n_ready(),
