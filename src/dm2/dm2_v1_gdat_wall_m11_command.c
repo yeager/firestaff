@@ -74,6 +74,19 @@ static int load_graphicsset_wall_local_palette(
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
     memset(out_palette16, 0, DM2_V1_GDAT_WALL_LOCAL_PALETTE_SIZE);
+    /* FM Towns IMG2/IMG6 has no PC IMG3 local-palette trailer.  Its C4
+     * stream is variable length, so the last sixteen bytes are picture
+     * payload, never a palette.  The active GRAPHICSSET physical palette
+     * owns each decoded 0..15 pixel. */
+    if (loader && loader->gdat_version == 4u) {
+        uint32_t hash = 2166136261u;
+        for (int color = 0; color < 16; ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash = hash_bytes(hash, &out_palette16[color], 1u);
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     raw = dm2_v1_asset_load_typed_sized(
         loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
         DM2_GDAT_ENTRY_TYPE_IMAGE, field, &raw_size);

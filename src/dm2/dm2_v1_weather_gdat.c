@@ -175,6 +175,21 @@ int dm2_v1_asset_load_image_local_palette(
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
     memset(out_palette16, 0, 16u);
+    /* HME-242's GDAT v4 images are IMG2/IMG6 streams.  Unlike PC IMG3,
+     * they do not append QUERY_GDAT_IMAGE_LOCALPAL's 16-byte translation:
+     * the tail belongs to the variable-length C4 payload.  Their four-bit
+     * pixels address the active physical 16-colour GRAPHICSSET palette
+     * directly.  Reading that payload tail as a palette produced arbitrary
+     * values such as 179/181 and made an otherwise real FM Towns dungeon
+     * appear almost black under the 16-colour display palette. */
+    if (loader && loader->gdat_version == 4u) {
+        for (int i = 0; i < 16; ++i) {
+            out_palette16[i] = (uint8_t)i;
+            hash = dm2_weather_hash_step(hash, out_palette16[i]);
+        }
+        if (out_hash) *out_hash = hash;
+        return hash != 0u;
+    }
     raw = dm2_v1_asset_load_typed_sized(loader, category, index,
                                          DM2_GDAT_ENTRY_TYPE_IMAGE, field,
                                          &raw_size);

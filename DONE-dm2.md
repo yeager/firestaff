@@ -1,5 +1,18 @@
 # Firestaff DONE — DM2
 
+## 2026-09-08 — FM Towns IMG2/IMG6 palette binding
+
+- Corrected the FM Towns HME-242 image-palette route. Its `0x8004` GDAT
+  stores variable-length IMG2/IMG6 C4 streams, not PC IMG3 records with a
+  trailing `QUERY_GDAT_IMAGE_LOCALPAL` table. The old generic decoder used
+  the final compressed bytes as palette values and emitted invalid physical
+  indices such as 179 and 181 into the 16-colour dungeon framebuffer. FM
+  Towns image pixels now keep their source-owned direct `0..15` physical
+  indices; the active GRAPHICSSET palette remains the RGB owner. The genuine
+  zipped HME-242 New-Game regression verifies a fully admitted source frame
+  contains no index above 15. No game media is extracted, generated, or
+  substituted.
+
 ## 2026-09-03 — Real-media startup regression audit
 
 - Re-ran the native real-media startup matrix for DOS English and French,

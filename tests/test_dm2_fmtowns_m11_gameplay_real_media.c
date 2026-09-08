@@ -898,6 +898,19 @@ int main(void)
         check(render.render_result == 0 && render.v1_succeeded &&
                   render.runtime_m11_frame_receipt_consumed,
               "FM Towns active session produces an admitted source viewport frame");
+        {
+            size_t high_physical_indices = 0u;
+            for (size_t pixel_index = 0u;
+                 pixel_index < sizeof(framebuffer); ++pixel_index) {
+                if (framebuffer[pixel_index] > 15u) ++high_physical_indices;
+            }
+            /* HME-242 is a physical 16-colour IMG2/IMG6 route.  Its C4
+             * payload tail is not a PC IMG3 local palette; accepting it as
+             * one used to write arbitrary 8-bit values into the M11 surface
+             * and render the authentic dungeon almost black. */
+            check(high_physical_indices == 0u,
+                  "FM Towns IMG2/IMG6 frame keeps every physical pixel in 0..15");
+        }
         check(render.runtime_m11_frame_hud_material_plan_required &&
                   render.runtime_m11_frame_hud_material_plan_consumed &&
                   render.runtime_m11_frame_hud_material_plan_hash != 0u,

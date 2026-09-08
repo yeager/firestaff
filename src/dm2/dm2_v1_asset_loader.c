@@ -468,6 +468,19 @@ static int dm2_v1_asset_load_image_local_palette(
     if (out_hash) *out_hash = 0u;
     if (!out_palette16) return 0;
     memset(out_palette16, 0, 16u);
+    /* FM Towns GDAT v4 uses IMG2/IMG6.  It has no IMG3 local-palette tail;
+     * C4's final bytes are compressed picture data, not a translation table.
+     * The source pixels are direct entries in the active GRAPHICSSET palette. */
+    if (loader && loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+        uint32_t hash = 2166136261u;
+        for (int color = 0; color < 16; ++color) {
+            out_palette16[color] = (uint8_t)color;
+            hash ^= out_palette16[color];
+            hash *= 16777619u;
+        }
+        if (out_hash) *out_hash = hash ? hash : 1u;
+        return 1;
+    }
     entry = dm2_gdat_find_entry(loader, category, index,
                                 DM2_GDAT_ENTRY_TYPE_IMAGE, field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
