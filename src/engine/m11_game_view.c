@@ -34338,8 +34338,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 memset(&material, 0, sizeof(material));
                 /* The host control is admitted only when the original
                  * CHARSHEET frame is present in the selected platform's
-                 * GRAPHICS.DAT. Amiga uses the authentic 16-colour U4 route;
-                 * FM Towns uses its 255-colour route. This is a source-
+                 * GRAPHICS.DAT. Amiga and FM Towns use authentic 16-colour
+                 * routes (the latter is IMG2/IMG6); this is a source-
                  * material gate, not a replacement DM1 panel. */
                 if ((!m11_dm2_is_fmtowns_profile(profile) &&
                      !m11_dm2_is_amiga_profile(profile) &&
@@ -34347,7 +34347,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     !dm2_v1_query_gdat_summary_image_receipt(
                         loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
                         &summary) || !summary.accepted ||
-                    summary.colors != (m11_dm2_is_amiga_profile(profile) ||
+                    summary.colors != (m11_dm2_is_fmtowns_profile(profile) ||
+                                       m11_dm2_is_amiga_profile(profile) ||
                                        m11_dm2_is_mac_profile(profile)
                                            ? 16u : 255u) ||
                     !dm2_v1_gdat_image_raw_material_receipt(
@@ -67437,7 +67438,10 @@ static int m11_draw_dm2_source_inventory_panel(
         (const DM2_V1_BootProfile *)state->dm2BootProfile);
     is_mac = state && m11_dm2_is_mac_profile(
         (const DM2_V1_BootProfile *)state->dm2BootProfile);
-    required_colors = (is_amiga || is_mac) ? 16u : 255u;
+    /* HME-242 CHARSHEET is an IMG2/IMG6 four-bit surface, like the Amiga
+     * form.  The 255-colour expectation belonged to the PC IMG9 path and
+     * rejected the authenticated Towns panel after input had opened it. */
+    required_colors = (is_fmtowns || is_amiga || is_mac) ? 16u : 255u;
     if (!state || !framebuffer || framebuffer_width <= 0 ||
         framebuffer_height <= 0 ||
         (!is_fmtowns && !is_amiga && !is_mac)) {

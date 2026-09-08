@@ -12,6 +12,11 @@
   zipped HME-242 New-Game regression verifies a fully admitted source frame
   contains no index above 15. No game media is extracted, generated, or
   substituted.
+- Corrected the matching FM Towns CHARSHEET admission and presentation
+  gates. They had required the PC 255-colour summary even though the selected
+  original panel is an IMG2/IMG6 four-bit surface. The live source route now
+  opens, draws, accepts authenticated pointer contexts, and closes the real
+  inventory page after New Game.
 
 ## 2026-09-03 — Real-media startup regression audit
 
