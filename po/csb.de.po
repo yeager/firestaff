@@ -372,7 +372,7 @@ msgstr "EIBENSTAB"
 
 #. Source-owned M564 object name
 msgid "STAFF OF IRRA"
-msgstr "MITARBEITER VON IRRA"
+msgstr "STAB DES IRRA"
 
 #. Source-owned M564 object name
 msgid "CROSS OF NETA"

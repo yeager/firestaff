@@ -2259,7 +2259,7 @@ msgid "EXPIRED"
 msgstr "EXPIRÉ"
 
 msgid "ENTER MENU"
-msgstr "ENTRER DANS LE MENU"
+msgstr "OUVRIR LE MENU"
 
 msgid "ESC DISMISS"
 msgstr "ESC REJETER"

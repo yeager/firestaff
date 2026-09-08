@@ -372,7 +372,7 @@ msgstr "BASTÓN DE TEJO"
 
 #. Source-owned M564 object name
 msgid "STAFF OF IRRA"
-msgstr "PERSONAL DE IRRA"
+msgstr "BASTÓN DE IRRA"
 
 #. Source-owned M564 object name
 msgid "CROSS OF NETA"

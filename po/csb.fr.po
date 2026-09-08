@@ -372,7 +372,7 @@ msgstr "BÂTON D'IF"
 
 #. Source-owned M564 object name
 msgid "STAFF OF IRRA"
-msgstr "PERSONNEL DE L'IRRA"
+msgstr "BÂTON D’IRRA"
 
 #. Source-owned M564 object name
 msgid "CROSS OF NETA"
