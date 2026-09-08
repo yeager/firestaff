@@ -18,10 +18,18 @@
   run proves that the title-to-Entrance transition requires a six-second door
   wait before C407 (`click:260,50`); that source zone then reaches the
   no-party Hall start. The prior 2.5-second route sent portrait clicks to the
-  Entrance menu and is invalid. Derive the remaining start-position-to-C127
-  movement path from the authenticated map rather than guessing it. Preserve
-  raw captures and source-order command receipts, then use that route to drive
-  the reported HoC rendering and inventory regressions.
+  Entrance menu and is invalid. The remaining route is now derived from the
+  authenticated PC3.4 map and reproduced in the original executable with
+  250 ms input pacing: `KP5 KP5 KP5 KP5 KP1 KP1 KP1 KP2 KP2 KP2 KP2 KP2
+  KP1 KP1 KP5 KP1 KP1 KP5 KP1 KP1 KP1 KP1 KP1 KP2 KP1 KP6 KP6`. It reaches
+  source C127 portrait ordinal 5 at party `(14,3,N)` and produces a genuine
+  portrait frame. Firestaff's real-data D1C zone resolves that portrait to
+  `(112,83)`. An original left click there currently yields a black frame even
+  after five seconds; do not call it a C040 candidate panel or use it as
+  inventory evidence until the original transition and its input ownership are
+  separately observed. Preserve raw captures and source-order command
+  receipts, then use the completed route to drive the reported HoC rendering
+  and inventory regressions.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient

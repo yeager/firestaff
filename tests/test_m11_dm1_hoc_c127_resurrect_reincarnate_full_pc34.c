@@ -203,6 +203,7 @@ static int drive_from_pc34_launch_to_mirror(M11_GameViewState* state,
     int queue[MAX_NODES], prev[MAX_NODES], via[MAX_NODES], route[MAX_ROUTE];
     const struct DungeonMapDesc_Compat* map;
     int width, height, head = 0, tail = 0, goal = -1, routeCount = 0, node;
+    const int dumpRoute = getenv("FIRESTAFF_DM1_HOC_ROUTE_DUMP") != NULL;
     if (!state || !target || !state->world.dungeon || !framebuffer) return 0;
     map = &state->world.dungeon->maps[0]; width = map->width; height = map->height;
     if (width > 32 || height > 32) return 0;
@@ -233,6 +234,20 @@ static int drive_from_pc34_launch_to_mirror(M11_GameViewState* state,
     if (goal < 0) return 0;
     while (prev[goal] >= 0 && routeCount < MAX_ROUTE) {
         route[routeCount++] = via[goal]; goal = prev[goal];
+    }
+    if (dumpRoute) {
+        int routeIndex;
+        printf("C127 route target=%d,%d,d%d ordinal=%d commands=", target->x,
+               target->y, target->direction, target->ordinal);
+        for (routeIndex = routeCount - 1; routeIndex >= 0; --routeIndex) {
+            static const char* const names[6] = {
+                "forward", "strafe-right", "backward", "strafe-left",
+                "turn-right", "turn-left"
+            };
+            printf("%s%s", routeIndex == routeCount - 1 ? "" : ",",
+                   names[route[routeIndex]]);
+        }
+        putchar('\n');
     }
     state->world.party.mapIndex = 0; state->world.party.mapX = 1;
     state->world.party.mapY = 3; state->world.party.direction = DIR_SOUTH;
@@ -279,6 +294,7 @@ static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
     int candidateCount = 0;
     int selectedCount = 0;
     int rejectedCount = 0;
+    const int dumpPointer = getenv("FIRESTAFF_DM1_HOC_POINTER_DUMP") != NULL;
     int y;
 
     if (!state || !state->world.dungeon || !state->world.things ||
@@ -335,8 +351,8 @@ static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
                         M11_GameInputResult outsideClickResult;
                         int outsideRejected;
                         int frontOrdinal;
-                        int clickX;
-                        int clickY;
+                        int clickX = ornamentW / 2;
+                        int clickY = ornamentH / 2;
                         ++sourceC127Count;
                         state->world.party.mapIndex = 0;
                         state->world.party.mapX = partyX;
@@ -358,8 +374,8 @@ static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
                             state->world.party.championCount == 0;
                         clickResult = M11_GameView_HandlePointer(
                             state,
-                            viewportX + ornamentX + ornamentW / 2,
-                            viewportY + ornamentY + ornamentH / 2,
+                            viewportX + ornamentX + clickX,
+                            viewportY + ornamentY + clickY,
                             1);
                         /* C127's source hit rectangle is the rendered C026
                          * destination, which can be narrower than the
@@ -409,6 +425,13 @@ static int sweep_all_source_c127_pointer_routes(M11_GameViewState* state,
                                 state->candidateMirrorPanelActive == 1 &&
                                 state->candidateMirrorOrdinal == sourceOrdinal &&
                                 state->world.party.championCount == 1) {
+                                if (dumpPointer) {
+                                    printf("C127 pointer ordinal=%d party=%d,%d,d%d screen=%d,%d\n",
+                                           sourceOrdinal, partyX, partyY,
+                                           direction,
+                                           viewportX + ornamentX + clickX,
+                                           viewportY + ornamentY + clickY);
+                                }
                                 ++selectedCount;
                                 ++rejectedCount;
                             }
