@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+- 2026-09-08: The Swedish F31 FM Towns catalogue is complete at the gettext
+  level.  `msgfmt --check po/csb.sv.po` succeeds and
+  `msgattrib --untranslated po/csb.sv.po` produces no entries.  This corrects
+  an obsolete TODO count of 177 untranslated entries; it is not a claim that
+  all languages, Japanese glyph-raster parity, or every live text consumer is
+  fully verified.  The authenticated F31 graphics/dungeon identities remain
+  `761d6fc588b31aeaaa9caf3725e111b9` and
+  `7ca51c17ef8bd542ca5f0273672ec1a5`.
+
 - 2026-09-07: Routed C37 wandering through the creature-owned F0202
   destination gate for wall/stairs, open pits with levitation, closed/
   imaginary fake walls, and the non-material door exception
