@@ -43,6 +43,7 @@ static int find_hoc_portrait_sensor(const struct DungeonDatState_Compat* dungeon
     unsigned int portraitMask = 0;
     int portraitCount = 0;
     int y;
+    const int dumpLayout = getenv("FIRESTAFF_DM1_HOC_LAYOUT_DUMP") != NULL;
     if (!dungeon || !things || !outSensor || !outCell ||
         !outPortraitMask || !outPortraitCount ||
         dungeon->header.mapCount <= 0 || !dungeon->tiles ||
@@ -72,6 +73,11 @@ static int find_hoc_portrait_sensor(const struct DungeonDatState_Compat* dungeon
                             DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT) {
                         unsigned int ordinal =
                             (unsigned int)things->sensors[index].sensorData;
+                        if (dumpLayout) {
+                            printf("C127 portrait=%u map=0 x=%d y=%d cell=%d sensor=%d ornament=%d\n",
+                                   ordinal, x, y, THING_GET_CELL(thing), index,
+                                   things->sensors[index].ornamentOrdinal);
+                        }
                         portraitMask |= 1u << ordinal;
                         ++portraitCount;
                         if (!*outSensor) {
