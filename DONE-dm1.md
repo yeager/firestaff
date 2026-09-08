@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08 correction: the operator-local original images labelled C040 in
+  the earlier Hall route are three bit-identical Hall frames, not validated
+  source-modal frames. Their labels and the corresponding C007 label must not
+  be used as original C040/inventory pixel or cadence evidence. The native
+  C127/C040 input regression remains valid; a visibly distinct original C040
+  capture is explicitly open in `TODO-dm1.md`.
+
 - 2026-09-08: Extended the authenticated PC 3.4 Hall capture through a real
   C040 resurrection and C007 inventory open. After the source C127/C040 route,
   C160 at `(130,115)` recruits Chani Sayyadina Shaya and C007 at `(54,14)`
