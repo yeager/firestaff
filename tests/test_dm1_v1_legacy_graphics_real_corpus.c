@@ -28,6 +28,16 @@
 #define F20_FIRST_STAIRS 90u
 #define F20_STAIRS_GRAPHIC_COUNT 18u
 
+/* Authentic F20E/F20J IMAGE2 geometry for M646_GRAPHIC_FIRST_WALL_SET.
+ * C086..C088 are the source-owned LCR compounds consumed through F0635_
+ * clipping in ReDMCSB, rather than three separately-scaled PC34 sprites. */
+static const uint16_t k_f20_wall_widths[F20_WALL_SET_GRAPHIC_COUNT] = {
+    32u, 25u, 21u, 13u, 14u, 102u, 70u, 32u, 32u, 248u, 136u, 117u, 16u
+};
+static const uint16_t k_f20_wall_heights[F20_WALL_SET_GRAPHIC_COUNT] = {
+    123u, 94u, 65u, 44u, 43u, 4u, 3u, 136u, 136u, 111u, 71u, 51u, 49u
+};
+
 static uint64_t fnv1a(uint64_t hash, const uint8_t *data, size_t size)
 {
     size_t i;
@@ -170,6 +180,26 @@ static int audit_graphics(const char *label, const uint8_t *data, size_t size,
             return 0;
         }
         pixel_bytes = (size_t)width * (size_t)height;
+        /* ReDMCSB MEDIA020 assigns F20 wall-set members 77..89 to the
+         * native F0128 viewport zones.  Keep their actual retail dimensions
+         * in this corpus receipt: a future renderer must not silently treat
+         * a compound LCR source as three independent PC34 tiles. */
+        if (!big_endian && index >= F20_FIRST_WALL_SET &&
+            index < F20_FIRST_WALL_SET + F20_WALL_SET_GRAPHIC_COUNT) {
+            const unsigned int wall_offset = index - F20_FIRST_WALL_SET;
+            if (width != k_f20_wall_widths[wall_offset] ||
+                height != k_f20_wall_heights[wall_offset]) {
+                fprintf(stderr,
+                        "%s F20 wall graphic %u geometry changed: got %ux%u, expected %ux%u\n",
+                        label, index, (unsigned)width, (unsigned)height,
+                        (unsigned)k_f20_wall_widths[wall_offset],
+                        (unsigned)k_f20_wall_heights[wall_offset]);
+                free(pixels);
+                return 0;
+            }
+            printf("receipt: %s F20 wall graphic %u is %ux%u\n", label,
+                   index, (unsigned)width, (unsigned)height);
+        }
         digest = fnv1a(digest, pixels, pixel_bytes);
         digest = fnv1a(digest, (const uint8_t *)&width, sizeof(width));
         digest = fnv1a(digest, (const uint8_t *)&height, sizeof(height));
