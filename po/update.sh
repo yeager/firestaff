@@ -60,7 +60,10 @@ for domain in "${DOMAINS[@]}"; do
     fi
     for catalog in "$WORK_PO/$domain".*.po; do
         [[ -e "$catalog" ]] || continue
-        msgmerge --update --quiet --no-wrap --backup=none "$catalog" "$pot"
+        # Do not transfer a nearby obsolete string's translation into a new
+        # player-facing key.  Fuzzy matching has previously changed language
+        # codes and Firestaff/FTL proper names into unrelated prose.
+        msgmerge --update --quiet --no-wrap --no-fuzzy-matching --backup=none "$catalog" "$pot"
     done
 done
 # Reapply reviewed terminology after msgmerge.  It updates only explicit
@@ -69,7 +72,7 @@ python3 "$ROOT/po/refresh_major_language_catalogs.py" --po-dir "$WORK_PO"
 msguniq --use-first --no-wrap --output-file="$WORK_PO/firestaff_studio.pot.canonical" "$WORK_PO/firestaff_studio.pot"
 mv -- "$WORK_PO/firestaff_studio.pot.canonical" "$WORK_PO/firestaff_studio.pot"
 for catalog in "$WORK_PO/studio"/*.po; do
-    msgmerge --update --quiet --no-wrap --backup=none "$catalog" "$WORK_PO/firestaff_studio.pot"
+    msgmerge --update --quiet --no-wrap --no-fuzzy-matching --backup=none "$catalog" "$WORK_PO/firestaff_studio.pot"
 done
 python3 "$ROOT/po/generate_completion_table.py" --po-dir "$WORK_PO" --readme "$WORK_PO/README.md"
 bash "$ROOT/po/validate_po_layout.sh" --po-dir "$WORK_PO"

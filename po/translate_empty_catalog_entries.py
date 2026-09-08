@@ -31,6 +31,32 @@ LANGUAGES = (
 )
 TOKEN = re.compile(r"(?:\{[^{}]+\}|%\d*\$?[#0 +\-]*\d*(?:\.\d+)?[a-zA-Z]|\\x01\d|\^.|<[^>]+>)")
 
+# These are game-language tokens, not English prose.  They are deliberately
+# shared verbatim by every release: translating a syllable changes the spell
+# the player casts.  Keep this list narrow; ordinary labels such as ``DEMON``
+# and ``SENSOR`` must still be translated by a reviewer.
+CANONICAL_SPELL_SYLLABLES = frozenset({
+    "LO", "UM", "ON", "EE", "PAL", "MON", "YA", "VI", "OH", "FUL",
+    "DES", "ZO", "VEN", "EW", "KATH", "IR", "BRO", "GOR", "KU", "ROS",
+    "DAIN", "NETA", "RA", "SAR",
+})
+
+
+def preserve_source_identifier(text: str) -> bool:
+    """Return whether *text* is a canonical non-prose runtime identifier.
+
+    Translation endpoints cannot infer FTL spell syllables or diagnostic
+    layouts.  Sending them produces damaging guesses (for example ``ON`` to
+    a Swedish preposition, or ``T%u`` to a pronoun).  These values have no
+    player-language equivalent and must remain byte-for-byte stable.
+    """
+    if text in CANONICAL_SPELL_SYLLABLES:
+        return True
+    if text.startswith("T%u:") or text.startswith("TICK %"):
+        return True
+    stripped = TOKEN.sub("", text).strip(" ,:-/()")
+    return not stripped
+
 
 def usable_translation(value: str) -> bool:
     """Reject HTML/error documents accidentally returned by public endpoints."""
@@ -281,7 +307,8 @@ def main() -> int:
                     break
                 if (entry.obsolete or entry.msgid_plural or
                         (entry.msgstr and not (
-                            args.replace_source_fallback and entry.msgstr == entry.msgid))):
+                            args.replace_source_fallback and entry.msgstr == entry.msgid)) or
+                        preserve_source_identifier(entry.msgid)):
                     continue
                 if args.foreign_source_only and not is_foreign_source(entry.msgid):
                     continue

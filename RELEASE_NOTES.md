@@ -361,6 +361,15 @@
   dungeon Thing tables. Full inventory persistence across resume remains
   incomplete; these interaction fixes do not resolve that savegame gap.
 
+# Firestaff v3.0.330
+
+## Fixed
+
+- `po/update.sh`: prevents fuzzy matching of obsolete text onto new player-facing
+  keys, preserving language codes and Firestaff/FTL proper names.
+- `translate_empty_catalog_entries.py`: prevents translation of FTL spell syllables and
+  diagnostic format layouts instead of submitting them as natural-language prose.
+
 # Firestaff v3.0.329
 
 ## DM1
