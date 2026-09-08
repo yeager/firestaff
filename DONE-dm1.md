@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Locked the documented retail PC 3.4 Hall route into the native
+  CLI regression for both Original and Modern. The source movement sequence
+  reaches `(14,3,N)` and physical `(744,464)` in a 1920x1080 16:9 window maps
+  to the real C127 portrait at source `(112,83)`, opening C040 for champion
+  ordinal 5. The test uses the supplied archive in place, makes no save or
+  graphics substitute, and verifies the Original C040 raster is materially
+  visible before the normal RESURRECT route consumes the candidate.
+
 - 2026-09-07: Verified the authentic PC 3.4 Hall of Champions C127 mirror
   route end-to-end.  Every source-owned candidate reaches F0280 by its real
   pointer route in Original and Modern; a rendered C026 portrait click opens
