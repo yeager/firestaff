@@ -147,7 +147,8 @@ int main(void)
         game->party_x != active->initial_party_x ||
         game->party_y != active->initial_party_y ||
         game->party_dir != active->initial_party_dir ||
-        game->current_level != 0 || game->outdoor != 0) {
+        game->current_level != 0 ||
+        game->outdoor != dm2_v1_dungeon_is_outdoor(active, 0)) {
         fprintf(stderr, "FAIL: LOAD_NEW_DUNGEON retained a non-source entrance pose\n");
         dm2_v1_boot_cleanup(&profile);
         remove(path);

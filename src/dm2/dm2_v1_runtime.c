@@ -2301,7 +2301,6 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
     dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
     g_dm2_runtime.boot = boot_profile;
-    g_dm2_runtime.outdoor = 0;
     g_dm2_runtime.tick_count = 0;
     g_dm2_runtime.move_cooldown_ticks = 0;
     dm2_v1_weather_init(&g_dm2_runtime.weather);
@@ -2314,6 +2313,24 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.time_of_day_minutes = DM2_TIME_UNKNOWN;
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
+    /* The boot profile has already parsed G1 and published its source
+     * start pose.  M11's first frame is rendered immediately after this
+     * bind, before any map transition can repair a stale default.  Derive
+     * the map class from the same original dungeon data used by GAME_LOAD;
+     * map 0 is an outdoor scene in the supplied retail media. */
+    if (boot_profile->dm2_state && boot_profile->dungeon_data) {
+        const DM2_V1_GameState *game =
+            (const DM2_V1_GameState *)boot_profile->dm2_state;
+        const DM2_V1_DungeonData *dungeon =
+            (const DM2_V1_DungeonData *)boot_profile->dungeon_data;
+        if (game->current_level >= 0 &&
+            game->current_level < dungeon->level_count) {
+            g_dm2_runtime.dungeon_level = game->current_level;
+            g_dm2_runtime.view_dir = game->party_dir & 3;
+            g_dm2_runtime.outdoor =
+                dm2_v1_dungeon_is_outdoor(dungeon, game->current_level);
+        }
+    }
     g_dm2_runtime.leader_hand_object = 0u;
     memset(g_dm2_runtime.champion_inventory_objects, 0,
            sizeof(g_dm2_runtime.champion_inventory_objects));

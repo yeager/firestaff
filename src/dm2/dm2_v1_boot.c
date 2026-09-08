@@ -4293,7 +4293,12 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         gs->party_dir = dd->initial_party_dir & 3;
     }
     gs->current_level = 0;
-    gs->outdoor = 0;
+    /* G1's first map is already the source-selected New Game map.  Its
+     * outdoor bit is part of the parsed dungeon header/map data, not a
+     * later host presentation choice.  Leaving this clear routed the real
+     * entrance pose through the indoor compositor until a subsequent map
+     * transition happened to refresh it. */
+    gs->outdoor = dm2_v1_dungeon_is_outdoor(dd, gs->current_level);
 
     profile->dm2_state = gs;
     profile->dungeon_data = dd;
@@ -4407,7 +4412,12 @@ int dm2_v1_boot_load_new_dungeon(
     game->party_y = candidate.initial_party_y;
     game->party_dir = candidate.initial_party_dir & 3;
     game->current_level = 0;
-    game->outdoor = 0;
+    /* Keep the just-parsed G1 map classification with the new-game pose.
+     * GAME_LOAD may later replace it only as part of a source-backed map
+     * transition; it must not make map 0 look like an indoor dungeon in the
+     * first presented frame. */
+    game->outdoor = dm2_v1_dungeon_is_outdoor(&candidate,
+                                               game->current_level);
     dm2_v1_boot_build_deterministic_config(
         profile, candidate.raw_data, candidate.raw_size);
 
