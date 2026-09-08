@@ -12678,6 +12678,14 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
         csb_v1_fmtowns_game_startup_state_free(&startup_state);
         return 0;
     }
+    /* The F31 MINI.DAT transaction has replaced the runtime dungeon and its
+     * party tuple.  Publish that same runtime receipt before rendering C004:
+     * otherwise M11 keeps the bootstrap DUNGEON.DAT pose (map 0, 9,0) while
+     * the authoritative FM Towns startup state is map 4, 22,18.  That split
+     * is especially harmful after the Prison-door handoff, where the first
+     * live viewport would be drawn from the wrong map despite a valid MINI
+     * receipt. */
+    m11_sync_csb_state_from_boot_profile(state, profile);
     /* The candidate now owns every F0435 save part and C04 active-group
      * identity, so its dungeon pose is committed atomically instead of being
      * mixed with the bootstrap DUNGEON.DAT runtime. */
