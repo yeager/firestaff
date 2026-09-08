@@ -1,5 +1,17 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Compared the valid local original PC 3.4 C127/C040 capture
+  against a native 320x200 frame driven by the same archive, route and C127
+  click. The C040 rectangle at `(80,85,144x73)` matched 10,409 of 10,512 RGB
+  pixels (99.02%). The main non-source difference is the captured original
+  mouse cursor at the C127 click location; the remaining small set is limited
+  to C040 transparency over the C017 backing panel. An experimental direct
+  Hall backing reduced the match to 91.65%, confirming that this PC3.4 C040
+  path retains C017 rather than permitting a guessed Hall-underlay renderer.
+  The images remain operator-local under `.codex-scratch`; this is a
+  same-state composition measurement, not a claim of full HoC pixel/cadence
+  or inventory-interaction parity.
+
 - 2026-09-08 correction: the operator-local images in
   `dm1-original-hoc-c040-20260908` labelled C040 are three bit-identical Hall
   frames, not validated source-modal frames. That set must not be used as
