@@ -18,13 +18,16 @@
   confirm with `Enter`; `-pk` cannot provide C080 mouse evidence. Recalibrate
   the post-Entrance movement route in the original executable before treating
   the archive-derived native sequence as an original route. The 2026-09-08
-  DOSBox-X/Xvfb host capture proved Entrance selection reaches the retail Hall,
-  but its attempted 30-command mapping ended at a closed-door pose, not C127.
-  Therefore its apparent `KP5/KP1/KP2/KP6` mouse equivalent and click `(112,83)`
-  are unverified for original execution. Record the exact successful square,
-  direction, command cadence, C026 geometry and C040 frame; keep raw captures
-  operator-local under `.codex-scratch` and do not substitute a save, graphics,
-  or a Firestaff-native result for this evidence.
+  DOSBox-X/Xvfb host captures so far prove only the first Enter selection: a
+  second click yields the retail closed-door Entrance pose, while neither the
+  scripted Return nor a viewport click has entered the Hall. The post-Entrance
+  movement sequence must therefore not start yet. Its apparent
+  `KP5/KP1/KP2/KP6` mouse equivalent and click `(112,83)` are unverified for
+  original execution. First determine the original mouse-mode action that
+  promotes the selected closed-door Entrance into the Hall, then record the
+  successful square, direction, command cadence, C026 geometry and C040 frame.
+  Keep raw captures operator-local under `.codex-scratch` and do not substitute
+  a save, graphics, or a Firestaff-native result for this evidence.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
