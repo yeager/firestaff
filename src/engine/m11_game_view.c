@@ -42251,6 +42251,52 @@ static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
                                 graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width == 0u || slot->height == 0u) return 0;
+    /* F20E/F20J's C086/C087/C088 wall records are native LCR compounds,
+     * not PC34-sized zone sprites.  ReDMCSB DUNVIEW.C F0104 hands their
+     * complete 248x111, 136x71 and 117x51 bitmaps to COORD.C F0635_, which
+     * anchors them left/centre/right and clips against the 224x136 viewport.
+     * Scaling every compound into each PC34 sub-zone both squeezes the wall
+     * texture and duplicates it across adjacent lanes.  The source's layout
+     * records use the destination zone only as an anchor: left lane begins
+     * at zero, centre is centred, right lane ends at x=224. */
+    if ((graphicIndex == 86u || graphicIndex == 87u || graphicIndex == 88u ||
+         graphicIndex == 99u || graphicIndex == 100u || graphicIndex == 101u) &&
+        ((slot->width == 248u && slot->height == 111u) ||
+        (slot->width == 136u && slot->height == 71u) ||
+        (slot->width == 117u && slot->height == 51u))) {
+        const int compoundWidth = (int)slot->width;
+        const int centreX = (DM1_VIEWPORT_WIDTH - compoundWidth) / 2;
+        const int centreZoneX = slot->width == 248u ? 32 :
+            (slot->width == 136u ? 59 : 77);
+        int originX;
+        int sourceY;
+        int sourceX;
+        if (dstX < centreZoneX) {
+            originX = 0;
+        } else if (dstX > centreZoneX) {
+            originX = DM1_VIEWPORT_WIDTH - compoundWidth;
+        } else {
+            originX = centreX;
+        }
+        for (sourceY = 0; sourceY < (int)slot->height; ++sourceY) {
+            const int fbY = M11_VIEWPORT_Y + dstY + sourceY;
+            if (fbY < 0 || fbY >= fbH) continue;
+            for (sourceX = 0; sourceX < compoundWidth; ++sourceX) {
+                const int fbX = M11_VIEWPORT_X + originX + sourceX;
+                const int sx = flipHorizontally
+                    ? compoundWidth - 1 - sourceX : sourceX;
+                const unsigned char pixel = slot->pixels[
+                    sourceY * compoundWidth + sx];
+                if (fbX < M11_VIEWPORT_X ||
+                    fbX >= M11_VIEWPORT_X + DM1_VIEWPORT_WIDTH ||
+                    fbX < 0 || fbX >= fbW ||
+                    (transparentColor >= 0 &&
+                     pixel == (unsigned char)transparentColor)) continue;
+                framebuffer[fbY * fbW + fbX] = pixel;
+            }
+        }
+        return 1;
+    }
     for (dy = 0; dy < dstH; ++dy) {
         const int sy = dy * (int)slot->height / dstH;
         const int fbY = M11_VIEWPORT_Y + dstY + dy;
