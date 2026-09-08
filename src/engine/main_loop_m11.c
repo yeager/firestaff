@@ -2352,6 +2352,32 @@ static unsigned int m11_startup_media_swsh_wait_ms(
     return vblankCount * media->swsh_vblank_ms;
 }
 
+/* The launcher has just been rendering a different surface when SWSH takes
+ * over.  On composited desktops (most visibly macOS), SDL_RenderPresent()
+ * queues that first black-palette FTL frame, while the window-show transition
+ * is still being dispatched.  Starting the source's initial 20-VBlank delay
+ * in the same turn lets the compositor skip straight to a later palette
+ * frame.  Consume the first source VBlank only after yielding the event loop;
+ * the caller subtracts it from the original 20-VBlank hold, so this is a
+ * presentation boundary rather than host timing padding. */
+static int m11_begin_swsh_source_clock_after_first_present(
+    unsigned int initialHoldMs,
+    unsigned int vblankMs) {
+    unsigned int remainingHoldMs;
+
+    if (M11_Render_PumpEvents()) {
+        return 0;
+    }
+    if (vblankMs == 0U || initialHoldMs < vblankMs) {
+        return !m11_delay_ms_with_intro_event_pump(initialHoldMs);
+    }
+    if (m11_delay_ms_with_intro_event_pump(vblankMs)) {
+        return 0;
+    }
+    remainingHoldMs = initialHoldMs - vblankMs;
+    return !m11_delay_ms_with_intro_event_pump(remainingHoldMs);
+}
+
 static void m11_play_ftl_swoosh_for_game_if_available(
                                               const M12_StartupMenuState* menuState,
                                               const char* dataDir,
@@ -2479,12 +2505,21 @@ static void m11_play_ftl_swoosh_for_game_if_available(
               }
           }
       }
-      m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
-      M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
-      if (m11_delay_ms_with_intro_event_pump(
+      {
+          const unsigned int initialHoldMs =
               hasDm1Media ? dm1Media.swsh_initial_logo_hold_ms :
-                            SWSH_Compat_GetRuntimeInitialLogoHoldMs())) {
-          goto cleanup;
+                            SWSH_Compat_GetRuntimeInitialLogoHoldMs();
+          const unsigned int vblankMs =
+              hasDm1Media && dm1Media.swsh_vblank_ms != 0U
+                  ? dm1Media.swsh_vblank_ms
+                  : SWSH_COMPAT_RUNTIME_VBLANK_MS;
+          m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
+          if (M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH,
+                                     M11_FB_HEIGHT) != M11_RENDER_OK ||
+              !m11_begin_swsh_source_clock_after_first_present(initialHoldMs,
+                                                                vblankMs)) {
+              goto cleanup;
+          }
       }
       for (sourceStep = 1U; sourceStep <= SWSH_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
           SWSH_CompatSourceAnimationStep step;
