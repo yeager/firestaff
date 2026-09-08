@@ -12,24 +12,32 @@
   exact square/pose/input and compare source-order command receipts before
   changing a renderer or inventory transaction.
 
-- Use the working authenticated PC 3.4 DOSBox-X route to locate and record a
-  real Hall-of-Champions mirror selection, resurrection/reincarnation, party
-  creation, and a subsequent inventory interaction. The 2026-09-08 original
-  run proves that the title-to-Entrance transition requires a six-second door
-  wait before C407 (`click:260,50`); that source zone then reaches the
-  no-party Hall start. The prior 2.5-second route sent portrait clicks to the
-  Entrance menu and is invalid. The remaining route is now derived from the
-  authenticated PC3.4 map and reproduced in the original executable with
-  250 ms input pacing: `KP5 KP5 KP5 KP5 KP1 KP1 KP1 KP2 KP2 KP2 KP2 KP2
-  KP1 KP1 KP5 KP1 KP1 KP5 KP1 KP1 KP1 KP1 KP1 KP2 KP1 KP6 KP6`. It reaches
-  source C127 portrait ordinal 5 at party `(14,3,N)` and produces a genuine
-  portrait frame. Firestaff's real-data D1C zone resolves that portrait to
-  `(112,83)`. An original left click there currently yields a black frame even
-  after five seconds; do not call it a C040 candidate panel or use it as
-  inventory evidence until the original transition and its input ownership are
-  separately observed. Preserve raw captures and source-order command
-  receipts, then use the completed route to drive the reported HoC rendering
-  and inventory regressions.
+- Capture an original PC 3.4 same-state C127/C040 pair for pixel/cadence
+  comparison and for the later inventory interaction. The 2026-09-08 original
+  run proves that title-to-Entrance requires a six-second door wait before
+  C407 (`click:260,50`); that source zone reaches the no-party Hall start.
+  The shorter route that clicked the Entrance menu is invalid. The mounted
+  PC3.4 map yields this C127 route: `KP5 KP5 KP5 KP5 KP1 KP1 KP1 KP2 KP2 KP2
+  KP2 KP2 KP1 KP1 KP5 KP1 KP1 KP5 KP1 KP1 KP1 KP1 KP1 KP2 KP1 KP6 KP6`.
+  It ends at party `(14,3,N)`, facing portrait ordinal 5. ReDMCSB's
+  DUNVIEW C026 placement makes the source-screen hit point `(112,83)`.
+
+  Firestaff's production route is no longer open: the real
+  `Dungeon-Master_DOS_EN_Version-34.zip` CLI regression replays the complete
+  route at 320x200 and proves `map=0 party=14,3,0 champions=1` after the
+  `(112,83)` press, i.e. C127 reaches REVIVE.C F0280 and opens the pending
+  candidate flow. The regression is
+  `tests/test_dm1_v1_pc34_native_cli_boot.sh`; it uses no extracted game data,
+  handcrafted save, or substitute graphics.
+
+  The remaining external-reference task is strictly an emulator input/capture
+  issue. DOSBox-X under Xvfb now produces healthy original Entrance and Hall
+  frames through the documented host capture backend, but its injected keypad
+  and C001--C006 gameplay-control events do not yet reach the source movement
+  queue reliably after the successful C407 click. Do not label those duplicate
+  no-panel frames as a failed C127 implementation, and do not use them as
+  C040/C026 or inventory evidence. Preserve the raw captures and resolve the
+  emulator event-ingestion boundary before promoting an original pixel pair.
 
   Rechecked on 2026-09-08 with the supplied `Dungeon-Master_DOS_EN_Version-34.zip`,
   DOSBox-X, Xvfb and the host-window capture backend. DOSBox-X's own screenshot

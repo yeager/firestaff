@@ -101,4 +101,26 @@ probe_runtime_input strafe-left 1,3,2
 probe_runtime_input strafe-right 1,3,2
 probe_runtime_input action 1,3,2
 
+# Authentic Hall of Champions route, derived from the mounted PC 3.4
+# DUNGEON.DAT rather than from a save or a coordinate fixture.  The terminal
+# C127 portrait is ordinal 5: after the source movement sequence, its C026
+# portrait occupies screen x=96..127/y=68..96 (viewport-local 96..127/35..63).
+# A click at its source centre must run REVIVE.C F0280 and append exactly one
+# pending candidate.  Keeping this at CLI level catches presentation/input
+# scaling regressions that a direct M11-state probe cannot see.
+hoc_route='wait5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1,key:kp2,key:kp2,key:kp2,key:kp2,key:kp2,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp1,key:kp1,key:kp1,key:kp2,key:kp1,key:kp6,key:kp6,wait5,click:112:83,wait5'
+hoc_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 720 --script "$hoc_route" --duration 0 2>&1) || {
+    printf '%s\n' "$hoc_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_output" ||
+   ! grep -Fq 'map=0 party=14,3,0 champions=1' <<<"$hoc_output"; then
+    printf '%s\n' "$hoc_output" >&2
+    printf '%s\n' 'FAIL: authentic PC-34 Hall C127 portrait click did not append its candidate' >&2
+    exit 1
+fi
+
 printf '%s\n' 'PASS: authentic DM1 PC-34 archive reaches CLI, menu, and complete native input matrix'
