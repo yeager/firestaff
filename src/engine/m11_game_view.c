@@ -65793,6 +65793,118 @@ static int m11_dm1_v1_f0355_inventory_material_ready(
            receipt.m653GraphicIndex == glyph.graphicIndex;
 }
 
+/* PANEL.C F0355 expands C017, then writes the three fixed labels at
+ * viewport (5,116/124/132) before it redraws the champion.  CHAMDRAW.C
+ * F0292/F0290 subsequently supplies the inventory champion's name/title,
+ * three `nnn/nnn` values, and load through the same M653 TEXT2 lane.
+ *
+ * Keep this separate from the debug workbench below: these coordinates and
+ * formatting are the PC3.4 original route, and are valid only with the
+ * session-owned M653 font which F0355 already admitted. */
+static void m11_draw_dm1_v1_inventory_state_overlay(
+    const M11_GameViewState* state,
+    const struct ChampionState_Compat* champ,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    char name[CHAMPION_NAME_LENGTH + 1];
+    char title[CHAMPION_TITLE_LENGTH + 1];
+    char value[16];
+    char load[24];
+    int titleX;
+
+    if (!state || !champ || !framebuffer || !champ->present ||
+        champ->hp.current == 0 ||
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) {
+        return;
+    }
+
+    m11_format_champion_name(champ->name, name, sizeof(name));
+    m11_format_champion_title(champ->title, title, sizeof(title));
+    /* CHAMDRAW.C F0292:841-875: F0052 name starts at (3,7); its title
+     * starts after six pixels per name cell plus the source's conditional
+     * separating cell. */
+    m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                              framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + 3, M11_VIEWPORT_Y + 7,
+                              name, M11_COLOR_SILVER);
+    titleX = 3 + (int)strlen(name) * DM1_PANEL_TEXT_CHAR_WIDTH;
+    if (title[0] != '\0') {
+        if (title[0] != ',' && title[0] != ';' && title[0] != '-') {
+            titleX += DM1_PANEL_TEXT_CHAR_WIDTH;
+        }
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + titleX,
+                                  M11_VIEWPORT_Y + 7, title,
+                                  M11_COLOR_SILVER);
+    }
+
+    /* PANEL.C F0355:2397-2414.  These remain presented strings so a
+     * selected Firestaff language can localize the player-facing labels
+     * without changing the original geometry or original glyph source. */
+    m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                              framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + 5, M11_VIEWPORT_Y + 116,
+                              m11_translate_for_state(state, "HEALTH"),
+                              M11_COLOR_SILVER);
+    m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                              framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + 5, M11_VIEWPORT_Y + 124,
+                              m11_translate_for_state(state, "STAMINA"),
+                              M11_COLOR_SILVER);
+    m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                              framebufferWidth, framebufferHeight,
+                              M11_VIEWPORT_X + 5, M11_VIEWPORT_Y + 132,
+                              m11_translate_for_state(state, "MANA"),
+                              M11_COLOR_SILVER);
+
+    /* CHAMDRAW.C F0289/F0290: PC's direct F0052 positions are x=55 and
+     * y=116/124/132.  Stamina, unlike health and mana, is in tenths. */
+    if (DM1_ChampionPanel_FormatStatusValue(
+            DM1_STATUS_VALUE_HEALTH, champ->hp.current, champ->hp.maximum,
+            champ->stamina.current, champ->stamina.maximum,
+            champ->mana.current, champ->mana.maximum, value, sizeof(value))) {
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + 55, M11_VIEWPORT_Y + 116,
+                                  value, M11_COLOR_SILVER);
+    }
+    if (DM1_ChampionPanel_FormatStatusValue(
+            DM1_STATUS_VALUE_STAMINA, champ->hp.current, champ->hp.maximum,
+            champ->stamina.current, champ->stamina.maximum,
+            champ->mana.current, champ->mana.maximum, value, sizeof(value))) {
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + 55, M11_VIEWPORT_Y + 124,
+                                  value, M11_COLOR_SILVER);
+    }
+    if (DM1_ChampionPanel_FormatStatusValue(
+            DM1_STATUS_VALUE_MANA, champ->hp.current, champ->hp.maximum,
+            champ->stamina.current, champ->stamina.maximum,
+            champ->mana.current, champ->mana.maximum, value, sizeof(value))) {
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + 55, M11_VIEWPORT_Y + 132,
+                                  value, M11_COLOR_SILVER);
+    }
+    if (DM1_ChampionPanel_FormatLoadValue(champ->load, champ->maxLoad,
+                                           load, sizeof(load))) {
+        const unsigned char loadColor = (unsigned char)DM1_ChampionPanel_LoadColor(
+            champ->load, champ->maxLoad);
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + 104, M11_VIEWPORT_Y + 132,
+                                  m11_translate_for_state(state, "LOAD "),
+                                  loadColor);
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + 148, M11_VIEWPORT_Y + 132,
+                                  load, loadColor);
+    }
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -66018,6 +66130,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         (void)m11_draw_saved_champion_portrait_pc34(
             champ, framebuffer, framebufferWidth, framebufferHeight,
             M11_VIEWPORT_X + 5, M11_VIEWPORT_Y + 4);
+        m11_draw_dm1_v1_inventory_state_overlay(
+            state, champ, framebuffer, framebufferWidth, framebufferHeight);
         if (DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) != THING_NONE) {
             unsigned short chestSlots[8];
             int chestOrdinal;

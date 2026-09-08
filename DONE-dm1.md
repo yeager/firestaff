@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Completed the next source-owned C007 paint phase on the
+  authenticated PC 3.4 HoC route. `PANEL.C F0355` now supplies its fixed
+  HEALTH/STAMINA/MANA labels and `CHAMDRAW.C F0292/F0290` supplies the
+  recruited champion's M653 name/title, health/stamina/mana and load values
+  after C160 → C007. The renderer uses the active archive's M653 font and
+  fails closed without it; it neither substitutes host typography nor an
+  invented panel. The real-media CLI regression passes through
+  C127 → C040 → C160 → C007 in 320x200, Original 16:9 and Modern 16:9.
+  A same-state original C007 pixel/cadence comparison and a real item
+  transaction remain open.
+
 - 2026-09-08: Corrected the real PC 3.4 HoC C160 → C007 continuation. A
   champion with an empty action hand now immediately selects PANEL.C F0347's
   F0345 FOOD/WATER page (C020/C030/C031), instead of exposing a bare C017
