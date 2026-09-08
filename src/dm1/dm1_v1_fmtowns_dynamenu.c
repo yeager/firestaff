@@ -43,3 +43,25 @@ uint8_t dm1_v1_fmtowns_dynamenu_panel_colour_pc34(const uint8_t *record) {
     }
     return colour;
 }
+
+int dm1_v1_fmtowns_dynamenu_action_row_at_pc34(int x, int y,
+                                                int action_count,
+                                                int japanese) {
+    const int menu_y = japanese ? 85 : 77;
+    const int row_height = japanese ? 20 : 11;
+    const int row_step = row_height + 1;
+    int row;
+
+    if (action_count < 1) return -1;
+    if (action_count > (int)DM1_V1_FMTOWNS_DYNAMENU_BUTTON_COUNT) {
+        action_count = (int)DM1_V1_FMTOWNS_DYNAMENU_BUTTON_COUNT;
+    }
+    /* C082..C084 share x=234..318.  The source rect has an exclusive
+     * right/bottom edge, matching m11_point_in_rect. */
+    if (x < 234 || x >= 319) return -1;
+    for (row = 0; row < action_count; ++row) {
+        const int top = menu_y + 9 + row * row_step;
+        if (y >= top && y < top + row_height) return row;
+    }
+    return -1;
+}

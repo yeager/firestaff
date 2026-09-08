@@ -67,6 +67,15 @@ uint8_t dm1_v1_fmtowns_dynamenu_slot_label_pc34(
  * ALT_B because byte 2 is checked last). */
 uint8_t dm1_v1_fmtowns_dynamenu_panel_colour_pc34(const uint8_t *record);
 
+/* Return the zero-based action row hit by a source-space pointer, or -1.
+ * DRAW_DMENU's English and Japanese layouts have different vertical metrics:
+ * English rows are 11 pixels high at y=86/98/110; Japanese rows are 20
+ * pixels high at y=94/115/136.  `action_count` is clamped to the three
+ * source slots. */
+int dm1_v1_fmtowns_dynamenu_action_row_at_pc34(int x, int y,
+                                                int action_count,
+                                                int japanese);
+
 #ifdef __cplusplus
 }
 #endif

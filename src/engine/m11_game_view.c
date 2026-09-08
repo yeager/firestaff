@@ -37077,19 +37077,16 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP;
                 const int menuY = japanese ? 85 : 77;
                 const int passX = japanese ? 295 : 285;
-                const int rowHeight = japanese ? 20 : 11;
-                const int rowStep = rowHeight + 1;
                 int row;
                 if (m11_point_in_rect(x, y, passX, menuY, 320-passX, 7)) {
                     M11_GameView_ClearActingChampion(state);
                     return M11_GAME_INPUT_REDRAW;
                 }
-                for (row = 0; row < actionCount; ++row) {
-                    if (m11_point_in_rect(x, y, 234, menuY+9+row*rowStep,
-                                         85, rowHeight)) {
-                        (void)M11_GameView_TriggerActionRow(state, row);
-                        return M11_GAME_INPUT_REDRAW;
-                    }
+                row = dm1_v1_fmtowns_dynamenu_action_row_at_pc34(
+                    x, y, actionCount, japanese);
+                if (row >= 0) {
+                    (void)M11_GameView_TriggerActionRow(state, row);
+                    return M11_GAME_INPUT_REDRAW;
                 }
             }
             /* F0371 resolves G0452 before it calls F0391.  The route table

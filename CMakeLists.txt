@@ -59483,6 +59483,7 @@ add_test(NAME test_dm1_v1_fmtowns_menu_regions COMMAND test_dm1_v1_fmtowns_menu_
 
 add_executable(test_dm1_v1_fmtowns_menu_click_geometry
     tests/test_dm1_v1_fmtowns_menu_click_geometry.c
+    src/dm1/dm1_v1_fmtowns_dynamenu.c
     src/dm1/dm1_v1_fmtowns_menu_regions.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
 )
