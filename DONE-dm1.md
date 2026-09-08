@@ -1,5 +1,18 @@
 # Firestaff DONE — DM1
 
+- 2026-09-08: Corrected the source binding for the authenticated PC 3.4 Hall
+  C127 route. `MOVESENS.C` supplies C127's C026 `SensorData` solely as the
+  portrait selector; `REVIVE.C F0280` then walks the party's current Hall
+  square for its `TEXTSTRING`, which owns the candidate identity and encoded
+  values. Firestaff had incorrectly treated the portrait selector as a global
+  TextString catalogue ordinal, allowing the wrong champion to be recruited.
+  The native C127 → C040 → C160 → C007 route now recruits `CHANT SAYYADINA
+  STHAYA` with the source record's C007 name/title and vital values. The
+  archive-backed CLI regression passes in Original, scaled Original and
+  Modern; the local source-derived C007 frame is deliberately not committed.
+  This fixes the documented Hall-open/recruit route, while item transactions
+  and full same-state pixel/cadence comparison remain open.
+
 - 2026-09-08: Completed the next source-owned C007 paint phase on the
   authenticated PC 3.4 HoC route. `PANEL.C F0355` now supplies its fixed
   HEALTH/STAMINA/MANA labels and `CHAMDRAW.C F0292/F0290` supplies the

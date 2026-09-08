@@ -31706,6 +31706,100 @@ static int m11_front_mirror_first_sensor_index_pc34(
     return 0;
 }
 
+/* REVIVE.C F0280 intentionally separates these two source identities:
+ * MOVESENS.C passes C127's SensorData as the C026 portrait index, then F0280
+ * walks the party source square until it finds the TEXTSTRING which supplies
+ * the candidate's name, title and encoded statistics.  A portrait index is
+ * therefore not a global TextString ordinal. */
+static int m11_party_square_mirror_text_string_index_pc34(
+    const M11_GameViewState* state, int* outTextStringIndex)
+{
+    int mapX;
+    int mapY;
+    int sftIndex;
+    int maxLinks = 0;
+    int safety;
+    int type;
+    unsigned short thing;
+
+    if (!state || !outTextStringIndex || !state->world.dungeon ||
+        !state->world.things || !state->world.things->squareFirstThings ||
+        !state->world.things->textStrings ||
+        state->world.things->textStringCount <= 0) {
+        return 0;
+    }
+    mapX = state->world.party.mapX;
+    mapY = state->world.party.mapY;
+    /* The C127 sensor is on the facing wall.  In contrast, REVIVE.C F0280
+     * starts F0161 with G0306/G0307, the party's current square.  Wall
+     * TextStrings are stored on that source square. */
+    sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
+        state->world.dungeon, state->world.party.mapIndex, mapX, mapY);
+    if (sftIndex < 0 ||
+        sftIndex >= state->world.things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = state->world.things->squareFirstThings[sftIndex];
+    for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+        if (state->world.things->thingCounts[type] > 0) {
+            maxLinks += state->world.things->thingCounts[type];
+        }
+    }
+    for (safety = 0; safety < maxLinks &&
+         thing != THING_ENDOFLIST && thing != THING_NONE; ++safety) {
+        const int thingType = THING_GET_TYPE(thing);
+        const int thingIndex = THING_GET_INDEX(thing);
+        const unsigned short next = m11_raw_next_thing(state->world.things,
+                                                        thing);
+        if (thingType == THING_TYPE_TEXTSTRING && thingIndex >= 0 &&
+            thingIndex < state->world.things->textStringCount) {
+            *outTextStringIndex = thingIndex;
+            return 1;
+        }
+        thing = next;
+    }
+    return 0;
+}
+
+static int m11_recruit_dm1_front_mirror_text_string(
+    M11_GameViewState* state, int textStringIndex, int portraitIndex)
+{
+    struct ChampionState_Compat candidate;
+    int slot;
+
+    if (!state || !state->world.things || textStringIndex < 0 ||
+        portraitIndex < 0 || !m11_party_has_pc34_candidate_layout(
+                                  &state->world.party) ||
+        state->world.party.championCount >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    F0600_CHAMPION_InitEmpty_Compat(&candidate);
+    if (!F0607_CHAMPION_ParseMirrorTextString_Compat(
+            state->world.things, textStringIndex, &candidate) ||
+        F0626_PARTY_ContainsChampionName_Compat(&state->world.party,
+                                                 candidate.name)) {
+        return 0;
+    }
+    slot = state->world.party.championCount;
+    F0600_CHAMPION_InitEmpty_Compat(&state->world.party.champions[slot]);
+    memcpy(&state->world.party.champions[slot], &candidate, sizeof(candidate));
+    state->world.party.champions[slot].present = 1;
+    /* The CHAMPION record keeps its C026 selector, not the unrelated source
+     * TextString index. REVIVE.C F0280 copies this exact atlas rectangle. */
+    state->world.party.champions[slot].portraitIndex = portraitIndex;
+    state->world.party.champions[slot].cell = (unsigned char)(slot & 3);
+    state->world.party.champions[slot].direction =
+        (unsigned char)state->world.party.direction;
+    state->world.party.championCount++;
+    if (!m11_pack_recruited_champion_portrait(state, slot, portraitIndex)) {
+        F0600_CHAMPION_InitEmpty_Compat(&state->world.party.champions[slot]);
+        state->world.party.championCount--;
+        return 0;
+    }
+    state->championDeathHandledMask &= (unsigned char)~(1u << slot);
+    return 1;
+}
+
 /* Build the complete F0282 confirmation -> apply plan from the exact F0280
  * selection receipt.  This is deliberately a pre-mutation gate: a stale
  * C127/C026/C040 source leaves the live party and panel untouched. */
@@ -32431,6 +32525,8 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     const M11_AssetSlot* c040Panel;
     int previousPartyCount;
     int firstSensorIndex = -1;
+    int sourceTextStringIndex = -1;
+    int sourceRecordFromFrontText = 0;
     int wallCell = -1;
     char mirrorName[16];
     char mirrorTitle[32];
@@ -32457,6 +32553,18 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     if (!m11_front_mirror_first_sensor_index_pc34(state, &firstSensorIndex)) {
         return 0;
     }
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        /* F0280 does not consult a catalogue ordered by arbitrary TEXTSTRING
+         * storage. It finds the first text thing on the party source square. */
+        F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
+        if (!m11_party_square_mirror_text_string_index_pc34(
+                state, &sourceTextStringIndex) ||
+            !F0607_CHAMPION_ParseMirrorTextString_Compat(
+                state->world.things, sourceTextStringIndex, &sourceRecord)) {
+            return 0;
+        }
+        sourceRecordFromFrontText = 1;
+    }
     m11_repair_dead_party_leader(state);
     if (!m11_party_has_pc34_candidate_layout(&state->world.party)) {
         m11_set_status(state, "MIRROR", "PARTY STATE INVALID");
@@ -32478,7 +32586,9 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     }
 
     previousPartyCount = state->world.party.championCount;
-    F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
+    if (!sourceRecordFromFrontText) {
+        F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
+    }
     /* Atari ST CSB owns this path too.  ReDMCSB REVIVE.C F0280 reads C026
      * for the selected portrait and PANEL.C F0346/F0347 then blits C040
      * over C017 before COMMAND.C routes C160/C161/C162.  The ST boot starts
@@ -32517,8 +32627,9 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     routeReceipt =
         F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
             &click,
-            F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(
-                &state->mirrorCatalog, mirrorOrdinal, &sourceRecord),
+            sourceRecordFromFrontText ||
+                F0675_CHAMPION_MirrorCatalogCopyRecord_Compat(
+                    &state->mirrorCatalog, mirrorOrdinal, &sourceRecord),
             portraits && portraits->loaded && portraits->pixels &&
                 portraits->width >= CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 &&
                 portraits->height >= CHAMPION_PORTRAIT_BITMAP_HEIGHT * 3,
@@ -32619,7 +32730,11 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
         !selectionReceipt.sourceOwned) {
         return 0;
     }
-    if (M11_GameView_RecruitChampionByMirrorOrdinal(state, mirrorOrdinal) != 1) {
+    if ((sourceRecordFromFrontText
+             ? m11_recruit_dm1_front_mirror_text_string(
+                   state, sourceTextStringIndex, mirrorOrdinal)
+             : M11_GameView_RecruitChampionByMirrorOrdinal(state,
+                                                            mirrorOrdinal)) != 1) {
         return 0;
     }
     if (m11_source_is_csb(state) &&
@@ -32652,10 +32767,17 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
          * when the first champion joins from a mirror. */
         state->lastPartyMovementTick = state->world.gameTick;
     }
-    (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
-                                              mirrorName, sizeof(mirrorName));
-    (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
-                                               mirrorTitle, sizeof(mirrorTitle));
+    if (sourceRecordFromFrontText) {
+        m11_format_champion_name(sourceRecord.name, mirrorName,
+                                 sizeof(mirrorName));
+        m11_format_champion_title(sourceRecord.title, mirrorTitle,
+                                  sizeof(mirrorTitle));
+    } else {
+        (void)M11_GameView_GetMirrorNameByOrdinal(state, mirrorOrdinal,
+                                                  mirrorName, sizeof(mirrorName));
+        (void)M11_GameView_GetMirrorTitleByOrdinal(state, mirrorOrdinal,
+                                                   mirrorTitle, sizeof(mirrorTitle));
+    }
     m11_refresh_hash(state);
     m11_set_status(state, "MIRROR", "RESURRECT OR REINCARNATE");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle),

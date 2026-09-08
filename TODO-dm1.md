@@ -448,6 +448,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   routes, not a host pane substitute.
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
+  The first required C13 scenario is now identified: the HoC revive alcove
+  followed by the immediately lower stair square containing a monster. Capture
+  the original route through both poses, preserving the save's dungeon-tail
+  owner, active group and event state; do not replace that state with a
+  hand-authored Firestaff save.
   The supplied French DOS save pair proves its own backed F0435/F0433 route,
   including direct CLI and start-menu resume, bounded movement, and turns on
   map 5 with its four saved champions, but does not substitute for these
