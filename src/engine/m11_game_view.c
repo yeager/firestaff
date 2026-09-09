@@ -30322,7 +30322,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                        ? M11_GAME_INPUT_REDRAW
                        : idle_result;
         }
-        if (csb_v1_boot_runtime_tick_pc34(
+        /* PANEL.C F0337 selects G0304 before GAMELOOP.C reaches GROUP.C
+         * F0200. Publish that same source palette row to the opaque CSB
+         * runtime before it dispatches one V1 tick. */
+        if (csb_v1_boot_runtime_set_dungeon_view_palette_index_pc34(
+                (CSB_V1_BootProfile *)state->csbBootProfile,
+                m11_compute_dungeon_palette_index(state)) != 0 ||
+            csb_v1_boot_runtime_tick_pc34(
                 state->csbBootProfile,
                 NULL) <= 0) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;

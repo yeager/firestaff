@@ -2069,6 +2069,8 @@ int csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
 int csb_v1_boot_runtime_tick_pc34(
     CSB_V1_BootProfile *profile,
     uint32_t *out_game_time);
+int csb_v1_boot_runtime_set_dungeon_view_palette_index_pc34(
+    CSB_V1_BootProfile *profile, int palette_index);
 int csb_v1_boot_runtime_object_icon_index_pc34(
     const CSB_V1_BootProfile *profile,
     unsigned short thing);

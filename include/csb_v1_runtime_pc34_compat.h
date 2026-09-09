@@ -581,6 +581,10 @@ typedef struct {
     int                     current_world;   /* 0-based world index */
     int                     level_count;    /* total dungeon levels */
     int                     world_count;     /* worlds in this campaign */
+    /* ReDMCSB PANEL.C F0337 publishes G0304 before GAMELOOP.C can dispatch
+     * GROUP.C F0200.  This is the source dungeon-view palette row, not a
+     * host brightness estimate: 0 is brightest and 5 is darkest. */
+    uint8_t                 dungeon_view_palette_index;
 
     /* ── Party state ────────────────────────────── */
     int                     party_x;
@@ -2234,6 +2238,12 @@ void csb_v1_runtime_tick(CSB_V1_RuntimeProfile *profile, uint32_t dt_ms);
  * Deterministic stepping function.  Returns 1 if a tick fired, 0 if paused,
  * game-over, victorious, or profile is NULL. */
 int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile);
+
+/* Publish the source-owned F0337 palette row for the next GROUP.C F0200
+ * visibility decision. Values outside the six original palette rows are
+ * rejected rather than silently clamped. */
+int csb_v1_runtime_set_dungeon_view_palette_index(
+    CSB_V1_RuntimeProfile *profile, int palette_index);
 
 /* CSB-owned ReDMCSB TIMELINE.C F0240 receipt. It inspects only the live
  * runtime's source event heap and compares the first event's low 24-bit time

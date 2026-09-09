@@ -6006,6 +6006,13 @@ static int csb_v1_runtime_f0200_visible_party_distance(
      * sightRange is only its low nibble and cannot reproduce the adjacent
      * awareness or distance-jitter draws. */
     sight_range = (int)(source_info.ranges & 0x000fu);
+    /* GROUP.C F0200 dims ordinary creature sight by half of the current
+     * F0337/G0304 dungeon-view palette index.  Night-vision creatures retain
+     * their full source range.  The value is published by the source renderer
+     * before this V1 tick, never inferred from host framebuffer brightness. */
+    if ((source_info.attributes & CREATURE_ATTR_MASK_NIGHT_VISION) == 0) {
+        sight_range -= (int)(profile->dungeon_view_palette_index >> 1u);
+    }
     if (distance > sight_range) {
         if (distance == 1) {
             sight_range += csb_v1_runtime_main_random_mod(
@@ -33085,6 +33092,14 @@ int csb_v1_runtime_tick_v1(CSB_V1_RuntimeProfile *profile)
     profile->total_play_ms += CSB_V1_TICK_MS_NOMINAL;
     csb_v1_fire_tick(profile);
     return 1;
+}
+
+int csb_v1_runtime_set_dungeon_view_palette_index(
+    CSB_V1_RuntimeProfile *profile, int palette_index)
+{
+    if (!profile || palette_index < 0 || palette_index > 5) return -1;
+    profile->dungeon_view_palette_index = (uint8_t)palette_index;
+    return 0;
 }
 
 int csb_v1_runtime_f0240_is_first_event_expired(

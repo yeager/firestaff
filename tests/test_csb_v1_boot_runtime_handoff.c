@@ -1082,6 +1082,11 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               &adapter_game_time) == 1 &&
               adapter_game_time == p.runtime.game_time,
           "boot-profile tick adapter advances CSB runtime and reports game time");
+    CHECK(csb_v1_boot_runtime_set_dungeon_view_palette_index_pc34(&p, 5) == 0 &&
+              p.runtime.dungeon_view_palette_index == 5u &&
+              csb_v1_boot_runtime_set_dungeon_view_palette_index_pc34(&p, 6) < 0 &&
+              p.runtime.dungeon_view_palette_index == 5u,
+          "boot-profile palette adapter preserves the six source F0337 rows");
     snprintf(csbwin_save_path,
              sizeof(csbwin_save_path),
              "%s/csbgame.dat",
