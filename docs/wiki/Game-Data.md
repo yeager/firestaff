@@ -8,6 +8,19 @@ Start with [Game-data setup](https://github.com/yeager/firestaff/blob/main/docs/
 It explains the required paired media, supported archive and disc containers,
 and the role of optional presentation and save files.
 
+## Runtime-media ownership
+
+The scan cache contains only local hash inventory metadata. It is never a
+game-data source. At launch, Firestaff retains the selected original archive
+or disc image as the media owner and reads required members in bounded memory.
+It does not expand game data beside the source, in a temporary directory or
+into an asset cache. An unsupported container is rejected instead of being
+silently extracted or paired with a neighbouring edition.
+
+For example, CSB FM Towns uses the selected CUE to select the raw CD member;
+the image, ISO files and CDDA layout remain tied to that original container
+for the session.
+
 The detailed [game-data format reference](https://github.com/yeager/firestaff/blob/main/docs/GAME_DATA_FORMATS.md) is the
 technical companion to that guide. It covers the current implementations of:
 

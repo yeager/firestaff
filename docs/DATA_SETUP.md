@@ -137,3 +137,18 @@ automatically.  The cache grows with the library and is local-only; it never
 contains game data and must not be committed.
 
 Do not commit game data, saves or disc images to the Firestaff repository.
+
+### Runtime-media ownership
+
+The scan cache is metadata only. It stores no decoded game payload and does
+not become a launch source. When a supported archive or disc image is chosen,
+Firestaff keeps that selected original container as the owner for the running
+session and reads the required members in bounded memory. It does not unpack
+or materialise game data beside the archive, in the system temporary directory
+or in an asset cache.
+
+This rule is especially important for FM Towns CSB: the CUE identifies the
+correct raw CD member, and the image, ISO files and CDDA layout are consumed
+directly from the selected original container. Unsupported containers are
+rejected rather than silently expanded or substituted with data from a nearby
+edition.

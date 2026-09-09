@@ -1805,6 +1805,7 @@ static void m12_publish_dm2_mac_required_files(M12_AssetStatus* status,
 /* A retail FM Towns image expands to roughly half a gigabyte.  Its transient
  * image must live inside Firestaff's owned per-edition cache, never beside a
  * user archive or in the system temporary directory. */
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_csb_fmtowns_make_archive_stage_path(const char* gameCacheDir,
                                                    char* path,
                                                    size_t pathSize) {
@@ -1858,6 +1859,7 @@ static int m12_csb_fmtowns_archive_stage(const char* archivePath,
     }
     return 1;
 }
+#endif
 
 /* Production CSB intake: keep the original ZIP and its raw CD image in
  * bounded allocations only.  The older stage-to-path helper remains for
@@ -1928,6 +1930,7 @@ static int m12_csb_fmtowns_archive_read_image(
 
 /* The original CUE is the only authority for Red Book boundaries.  Never
  * derive a replacement from the ISO payload or an application track table. */
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_csb_fmtowns_archive_extract_cue(const char* archivePath,
                                                const char* cuePath) {
     char virtualPath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
@@ -1939,6 +1942,7 @@ static int m12_csb_fmtowns_archive_extract_cue(const char* archivePath,
             (int)sizeof(virtualPath)) return 0;
     return asset_extract_virtual_path(virtualPath, cuePath);
 }
+#endif
 
 static int m12_csb_fmtowns_extract_member_bytes(
     const uint8_t* image, size_t imageSize,
@@ -3073,6 +3077,7 @@ static const char* m12_csb_amiga_sidecar_expected_md5(const char* versionId,
     return NULL;
 }
 
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_csb_amiga_a31e_program_receipt_ready(const char* gameCacheDir) {
     static const struct {
         const char* name;
@@ -3093,6 +3098,7 @@ static int m12_csb_amiga_a31e_program_receipt_ready(const char* gameCacheDir) {
     }
     return 1;
 }
+#endif
 
 static int m12_materialize_authenticated_csb_amiga_sidecar(
     const char* seedPath, const char* versionId, const char* label,
@@ -5341,6 +5347,7 @@ static int m12_materialize_csb_fmtowns_loose_runtime_cache(
     return 1;
 }
 
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_materialize_csb_fmtowns_runtime_cache(
     M12_AssetStatus* status, int gameIndex,
     const M12_AssetVersionStatus* version, const char* gameCacheDir,
@@ -5485,6 +5492,7 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     }
     return 1;
 }
+#endif
 
 static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
                                                   int gameIndex) {
@@ -7410,6 +7418,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
 #endif
 }
 
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_csb_fmtowns_cached_runtime_is_complete(
     const M12_AssetVersionStatus *version, char *outPath, size_t outPathSize)
 {
@@ -7456,6 +7465,7 @@ static int m12_csb_fmtowns_cached_runtime_is_complete(
     }
     return 1;
 }
+#endif
 
 int M12_AssetStatus_PrepareCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,

@@ -30,6 +30,8 @@ handoff is not proven.
 - [Active top-10 native-parity queue](parity/ACTIVE_TOP_10.md) — current
   evidence-backed priorities and explicit data blockers
 - [Game data setup](DATA_SETUP.md) — legal data intake and scanner behavior
+- [Runtime-media ownership](DATA_SETUP.md#runtime-media-ownership) — original
+  container ownership, bounded-memory reads and the no-extraction rule
 - [Game-data formats](GAME_DATA_FORMATS.md) — verified containers, record families and save boundaries
 - [CI guide](CI.md) — GitHub Actions checks and local reproduction
 - [Verified hashes](VERIFIED_HASHES.md) — canonical data identities
