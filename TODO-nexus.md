@@ -48,6 +48,17 @@ title-menu ownership.  It must therefore not enable the native title renderer.
   confirmation that the late NBG1 state is stable, not evidence of a writer
   or asset join. Target the earlier transition rather than enlarging this
   late window or treating the repeated state as native-renderer admission.
+  The narrowly bounded retail run
+  `title-vdp2-owner-transition-13450-20260909` now identifies the immediate
+  transition writer: at frame 13459, SH-2 PC `0x060856f0` writes VDP2 BGON
+  (`0x180020`) as `0x0002`, enabling NBG1 from the RAM table word at
+  `0x06095298`; the frame-13460 witness is hash
+  `f700206629eaf6f37dd750271b3a76371d11bd80a2b1abcf79224337f8dbb672`.
+  The capture also binds the visible NBG1 name-table and character lanes,
+  but the table's producer and retail-file/CD-to-RAM provenance are not yet
+  established. Treat `0x060856f0` as an observed generic VDP2-table copier,
+  not as title asset ownership; trace writes into `0x06095278..0x06095298`
+  before admitting presentation.
   The current native integration has an additional fail-closed ownership gap:
   `Nexus_V1_Engine.startup_title_vdp_capture_verified` is consumed by the
   launcher receipts but has no assignment site. Add an authenticated capture
