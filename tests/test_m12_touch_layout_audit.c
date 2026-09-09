@@ -102,12 +102,68 @@ static void test_editor_floor_consistency(void) {
           "editor-clamped zone flagged below minimum");
 }
 
+static const M12_TouchZone* find_zone(const M12_TouchLayout* layout,
+                                      M12_InputAction action) {
+    int i;
+    for (i = 0; i < layout->zoneCount; ++i) {
+        if (layout->zones[i].action == action) return &layout->zones[i];
+    }
+    return NULL;
+}
+
+static void test_classic_ipad_controls(void) {
+    M12_TouchLayout layout;
+    const M12_TouchZone* w;
+    const M12_TouchZone* a;
+    const M12_TouchZone* s;
+    const M12_TouchZone* d;
+    const M12_TouchZone* use;
+    const M12_TouchZone* pickup;
+    const M12_TouchZone* drop;
+
+    printf("[classic-ipad-controls]\n");
+    M12_TouchLayout_LoadPreset(&layout, M12_TOUCH_PRESET_CLASSIC);
+    w = find_zone(&layout, M12_ACTION_MOVE_FORWARD);
+    a = find_zone(&layout, M12_ACTION_TURN_LEFT);
+    s = find_zone(&layout, M12_ACTION_MOVE_BACKWARD);
+    d = find_zone(&layout, M12_ACTION_TURN_RIGHT);
+    use = find_zone(&layout, M12_ACTION_USE_ITEM);
+    pickup = find_zone(&layout, M12_ACTION_PICKUP_ITEM);
+    drop = find_zone(&layout, M12_ACTION_DROP_ITEM);
+    CHECK(w && a && s && d, "Classic provides the full WASD movement cluster");
+    if (w && a && s && d) {
+        CHECK(strcmp(w->label, "W") == 0 && strcmp(a->label, "A") == 0 &&
+              strcmp(s->label, "S") == 0 && strcmp(d->label, "D") == 0,
+              "movement cluster is visibly labelled WASD");
+        CHECK(w->y >= M12_TOUCH_CANVAS_H / 2 && a->y >= M12_TOUCH_CANVAS_H / 2 &&
+              s->y >= M12_TOUCH_CANVAS_H / 2 && d->y >= M12_TOUCH_CANVAS_H / 2,
+              "WASD cluster remains in the lower half of the canvas");
+        CHECK(w->x < M12_TOUCH_CANVAS_W / 4 && a->x < M12_TOUCH_CANVAS_W / 4 &&
+              s->x < M12_TOUCH_CANVAS_W / 4 && d->x < M12_TOUCH_CANVAS_W / 4,
+              "WASD cluster remains at bottom-left");
+        CHECK(w->opacity > 0.0f && w->opacity < 1.0f,
+              "WASD controls are translucent rather than opaque");
+    }
+    CHECK(use && pickup && drop,
+          "Classic exposes use, pickup, and drop without a hardware keyboard");
+    CHECK(find_zone(&layout, M12_ACTION_ACTION) &&
+          find_zone(&layout, M12_ACTION_ACCEPT) &&
+          find_zone(&layout, M12_ACTION_BACK) &&
+          find_zone(&layout, M12_ACTION_INVENTORY_TOGGLE) &&
+          find_zone(&layout, M12_ACTION_SPELL_CAST) &&
+          find_zone(&layout, M12_ACTION_SPELL_CLEAR) &&
+          find_zone(&layout, M12_ACTION_MAP_TOGGLE) &&
+          find_zone(&layout, M12_ACTION_QUICK_SAVE),
+          "Classic exposes all common non-pointer game actions");
+}
+
 int main(void) {
     printf("[presets]\n");
     audit_preset(M12_TOUCH_PRESET_CLASSIC, "Classic");
     audit_preset(M12_TOUCH_PRESET_COMPACT, "Compact");
     audit_preset(M12_TOUCH_PRESET_ONE_HANDED, "One-handed");
     test_editor_floor_consistency();
+    test_classic_ipad_controls();
 
     printf("\nResult: %s (%d failure%s)\n",
            g_failures == 0 ? "PASS" : "FAIL",

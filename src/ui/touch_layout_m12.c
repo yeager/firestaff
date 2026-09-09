@@ -104,8 +104,9 @@ static const char* m12_tl_action_name(M12_InputAction a) {
 
 /*
  * Default zone helper.  All coordinates are in 1280x720 canvas space.
- * The layout mirrors a typical mobile RPG: D-pad on the left, action
- * buttons on the right, utility buttons at the top.
+ * Classic intentionally exposes a translucent WASD cluster at bottom-left:
+ * W/S move and A/D turn.  It is a labelled overlay rather than a hidden
+ * gesture so the full game remains playable on an iPad without a keyboard.
  */
 static void m12_tl_add_zone(M12_TouchLayout* layout,
                             int x, int y, int w, int h,
@@ -129,27 +130,33 @@ static void m12_tl_load_classic(M12_TouchLayout* layout) {
     memset(layout, 0, sizeof(*layout));
     m12_tl_copy_string(layout->presetName, sizeof(layout->presetName), "Classic");
 
-    /* D-pad: left side */
-    m12_tl_add_zone(layout,  60, 420, 100, 100, M12_ACTION_MOVE_FORWARD,  0.5f, "Forward");
-    m12_tl_add_zone(layout,  60, 580, 100, 100, M12_ACTION_MOVE_BACKWARD, 0.5f, "Back");
-    m12_tl_add_zone(layout,   0, 500, 100, 100, M12_ACTION_TURN_LEFT,     0.5f, "Turn L");
-    m12_tl_add_zone(layout, 120, 500, 100, 100, M12_ACTION_TURN_RIGHT,    0.5f, "Turn R");
-    m12_tl_add_zone(layout,   0, 400, 80,  80,  M12_ACTION_STRAFE_LEFT,   0.4f, "Strafe L");
-    m12_tl_add_zone(layout, 140, 400, 80,  80,  M12_ACTION_STRAFE_RIGHT,  0.4f, "Strafe R");
+    /* WASD: bottom-left, deliberately large for direct iPad touch. */
+    m12_tl_add_zone(layout,  96, 432,  96,  96, M12_ACTION_MOVE_FORWARD,  0.42f, "W");
+    m12_tl_add_zone(layout,  96, 624,  96,  80, M12_ACTION_MOVE_BACKWARD, 0.42f, "S");
+    m12_tl_add_zone(layout,   0, 528,  96,  96, M12_ACTION_TURN_LEFT,     0.42f, "A");
+    m12_tl_add_zone(layout, 192, 528,  96,  96, M12_ACTION_TURN_RIGHT,    0.42f, "D");
+    m12_tl_add_zone(layout,   8, 432,  72,  72, M12_ACTION_STRAFE_LEFT,   0.35f, "Q");
+    m12_tl_add_zone(layout, 208, 432,  72,  72, M12_ACTION_STRAFE_RIGHT,  0.35f, "E");
 
     /* A/B buttons: right side */
-    m12_tl_add_zone(layout, 1100, 480, 100, 100, M12_ACTION_ACTION,  0.5f, "Action");
-    m12_tl_add_zone(layout, 1100, 600, 100, 100, M12_ACTION_BACK,    0.5f, "Cancel");
-    m12_tl_add_zone(layout, 1000, 540, 80,  80,  M12_ACTION_ACCEPT,  0.5f, "Accept");
+    m12_tl_add_zone(layout, 1100, 480, 100, 100, M12_ACTION_ACTION,      0.42f, "Action");
+    m12_tl_add_zone(layout, 1100, 600, 100, 100, M12_ACTION_BACK,        0.42f, "Back");
+    m12_tl_add_zone(layout, 1000, 540,  80,  80, M12_ACTION_ACCEPT,      0.42f, "Accept");
+    m12_tl_add_zone(layout,  900, 620,  88,  76, M12_ACTION_USE_ITEM,    0.42f, "Use");
+    m12_tl_add_zone(layout,  900, 532,  88,  76, M12_ACTION_PICKUP_ITEM, 0.42f, "Pick up");
+    m12_tl_add_zone(layout,  900, 444,  88,  76, M12_ACTION_DROP_ITEM,   0.42f, "Drop");
+    m12_tl_add_zone(layout, 1000, 444,  80,  76, M12_ACTION_CYCLE_CHAMPION, 0.42f, "Party");
 
     /* Inventory button: top-right */
     m12_tl_add_zone(layout, 1160,  20,  90,  60, M12_ACTION_INVENTORY_TOGGLE, 0.4f, "Inv");
 
     /* Spell cast: right-center */
     m12_tl_add_zone(layout, 1060, 360,  90,  60, M12_ACTION_SPELL_CAST, 0.4f, "Cast");
+    m12_tl_add_zone(layout, 1160, 360,  90,  60, M12_ACTION_SPELL_CLEAR, 0.4f, "Clear");
 
     /* Map toggle: top-left */
     m12_tl_add_zone(layout,   20,  20,  90,  60, M12_ACTION_MAP_TOGGLE, 0.4f, "Map");
+    m12_tl_add_zone(layout, 1060,  20,  90,  60, M12_ACTION_QUICK_SAVE, 0.4f, "Save");
 }
 
 static void m12_tl_load_compact(M12_TouchLayout* layout) {
