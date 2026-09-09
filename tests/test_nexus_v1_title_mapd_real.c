@@ -183,6 +183,10 @@ int main(void)
             free(broken_mapd);
         }
     }
+    check(nexus_v1_title_decode_mapd(
+              title_bin + 0x0e278U, bin_size - 0x0e278U,
+              title_cg, cg_size, &title) == 1,
+          "retail MAPD decoder restores the source-bound title after rejection");
     title.pixels = (unsigned char *)malloc(1U);
     check(title.pixels != NULL, "title presentation sentinel allocates");
     title.width = NEXUS_V1_TITLE_MAP_WIDTH;
@@ -190,8 +194,33 @@ int main(void)
     title.loaded = 1;
     {
         Nexus_V1_TitleRenderPlan plan;
-        check(nexus_v1_title_build_render_plan(&title, 0, &plan) == 0,
-              "raw TITLE.CG atlas is blocked after MAPD source decode");
+        Nexus_Framebuffer n_frame;
+        Nexus_Framebuffer s_frame;
+        size_t pixel;
+        size_t nonzero = 0U;
+        check(nexus_v1_title_build_render_plan(&title, 0, &plan) == 1 &&
+                  plan.kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART &&
+                  plan.copy_width == NEXUS_FB_W &&
+                  plan.copy_height == NEXUS_FB_H,
+              "MAPD capture handoff admits the observed 320x224 title crop");
+        nexus_fb_init(&n_frame);
+        nexus_fb_init(&s_frame);
+        nexus_render_title(&title, &n_frame, 0);
+        nexus_render_title(&title, &s_frame, 161);
+        for (pixel = 0U; pixel < sizeof(n_frame.color_buffer); ++pixel) {
+            if (n_frame.color_buffer[pixel] != 0U) ++nonzero;
+        }
+        check(nonzero > 0U,
+              "native title renderer presents the real first MAPD plane");
+        check(memcmp(n_frame.color_buffer,
+                     title.decoded_map_pixels[0],
+                     NEXUS_FB_W) == 0 &&
+                  memcmp(s_frame.color_buffer,
+                         title.decoded_map_pixels[4],
+                         NEXUS_FB_W) == 0,
+              "native title renderer preserves N,E,X,U,S source scheduling");
+        check(n_frame.palette[1] != 0U && s_frame.palette[15] != 0U,
+              "native title renderer uses the real MAPD BGR555 palette");
     }
     free(title.pixels);
     title.pixels = NULL;

@@ -3221,14 +3221,11 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     receipt->faces_loaded = nexus_v1_startup_faces_loaded_count(engine);
     receipt->faces_expected = nexus_v1_startup_faces_expected_count(engine);
     receipt->faces_fallback = nexus_v1_startup_faces_fallback_count(engine);
-    /* The verified TITLE.CG loader produces an indexed character-generator
-     * atlas. It is useful source evidence, but it is not the Saturn title
-     * framebuffer. A title capture handoff must replace that source before
-     * the startup asset receipt can advertise a drawable title route. */
+    /* TITLE.CG alone remains an atlas.  `nexus_title_load` sets the capture
+     * receipt only after it has joined the five real MAPD planes, their
+     * retail sequence/timing, palette and the captured 320x224 crop. */
     title_capture_source_ready =
-        !engine->ui.surfaces[NEXUS_SURFACE_TITLE].source ||
-        strcmp(engine->ui.surfaces[NEXUS_SURFACE_TITLE].source,
-               "TITLE.CG/4bpp-atlas") != 0;
+        title_loaded && engine->startup_title_vdp_capture_verified;
 
     memset(&bpk, 0, sizeof(bpk));
     memset(rows, 0, sizeof(rows));

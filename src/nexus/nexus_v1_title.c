@@ -247,6 +247,7 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
         return -1;
     }
     memset(title, 0, sizeof(*title));
+    engine->startup_title_vdp_capture_verified = 0;
     nexus_title_copy_cached_warning_if_available(title, engine);
     if (!title->warning_loaded) {
         nexus_title_load_warning_if_available(title, engine);
@@ -266,11 +267,10 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
         if (data && size > (int)0x0e278U) {
             int cg_size = 0;
             uint8_t *cg = nexus_v1_read_file(engine, "TITLE.CG", &cg_size);
-            (void)nexus_v1_title_decode_mapd(
-                                          data + 0x0e278U,
-                                          (size_t)size - 0x0e278U, cg,
-                                          cg_size > 0 ? (size_t)cg_size : 0U,
-                                          title);
+            engine->startup_title_vdp_capture_verified =
+                nexus_v1_title_decode_mapd(
+                    data + 0x0e278U, (size_t)size - 0x0e278U, cg,
+                    cg_size > 0 ? (size_t)cg_size : 0U, title);
             free(cg);
         }
         free(data);
@@ -319,13 +319,13 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
          * cg_size for the same reason. */
         int mapd_size = 0;
         uint8_t *mapd = nexus_v1_read_file(engine, "TITLE.BIN", &mapd_size);
-        (void)nexus_v1_title_decode_mapd(
-                                      mapd && mapd_size > (int)0x0e278U
-                                          ? mapd + 0x0e278U : NULL,
-                                      mapd_size > (int)0x0e278U
-                                          ? (size_t)mapd_size - 0x0e278U : 0U,
-                                      data, (size_t)size,
-                                      title);
+        engine->startup_title_vdp_capture_verified =
+            nexus_v1_title_decode_mapd(
+                mapd && mapd_size > (int)0x0e278U
+                    ? mapd + 0x0e278U : NULL,
+                mapd_size > (int)0x0e278U
+                    ? (size_t)mapd_size - 0x0e278U : 0U,
+                data, (size_t)size, title);
         free(mapd);
     }
 
@@ -397,12 +397,40 @@ static void nexus_title_plan_reset(Nexus_V1_TitleRenderPlan *plan)
 
 static int nexus_title_screen_surface_ready(const Nexus_TitleScreen *title)
 {
-    (void)title;
-    /* TITLE.CG is a character-generator atlas, not a framebuffer. Copying
-     * it as a full-screen title invents the missing Saturn VDP1/VDP2 tile-map
-     * selection and placement. TITLE.BIN MAPD/TIBG decoding remains a
-     * receipt until an original title capture supplies that handoff. */
-    return 0;
+    /* TITLE.CG alone is an atlas, never a screen.  The retail capture now
+     * binds the MAPD sequence (N,E,X,U,S), its 40/41-frame cadence, and the
+     * visible 320x224 crop at (0,0).  Only admit that fully decoded source
+     * route; a bare cached TITLE.CG surface must remain non-presentable. */
+    return title && title->decoded_map_source_bound &&
+           title->decoded_map_count == NEXUS_V1_TITLE_MAP_COUNT &&
+           title->decoded_map_pixels[0] && title->decoded_map_pixels[1] &&
+           title->decoded_map_pixels[2] && title->decoded_map_pixels[3] &&
+           title->decoded_map_pixels[4];
+}
+
+static int nexus_title_map_for_frame(int frame)
+{
+    /* Retail cache-read witnesses select N,E,X,U,S at absolute frames
+     * 13294, 13334, 13375, 13415 and 13455.  Firestaff starts the title
+     * timeline after its BIOS-free warning handoff, preserving the observed
+     * 40,41,40,40 VBlank intervals rather than exposing absolute Saturn
+     * boot-frame numbers to the host frontend. */
+    if (frame < 40) return 0;
+    if (frame < 81) return 1;
+    if (frame < 121) return 2;
+    if (frame < 161) return 3;
+    return 4;
+}
+
+static uint32_t nexus_title_bgr555_to_rgba(uint16_t bgr555)
+{
+    uint32_t red = (uint32_t)(bgr555 & 0x1fU);
+    uint32_t green = (uint32_t)((bgr555 >> 5U) & 0x1fU);
+    uint32_t blue = (uint32_t)((bgr555 >> 10U) & 0x1fU);
+    red = (red << 3U) | (red >> 2U);
+    green = (green << 3U) | (green >> 2U);
+    blue = (blue << 3U) | (blue >> 2U);
+    return UINT32_C(0xff000000) | (red << 16U) | (green << 8U) | blue;
 }
 
 int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
@@ -484,15 +512,26 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
 
 void nexus_render_title(const Nexus_TitleScreen *title,
                         Nexus_Framebuffer *fb, int frame) {
-    /* WARNING.BIN and TITLE.CG are authentic source assets, but this public
-     * host renderer has no Saturn VDP1/VDP2 capture binding for their palette,
-     * tile-map, destination, or command order. Keep the production framebuffer
-     * blank until that source-owned handoff is admitted. The render-plan
-     * helper remains available to isolated format/timing diagnostics. */
-    (void)title;
-    (void)frame;
+    uint32_t palette[256] = { 0 };
+    const uint8_t *source;
+    int map;
+    int y;
     if (!fb) {
         return;
     }
     nexus_fb_clear(fb);
+    if (!nexus_title_screen_surface_ready(title)) {
+        return;
+    }
+    for (map = 0; map < 16; ++map) {
+        palette[map] = nexus_title_bgr555_to_rgba(
+            title->decoded_map_palette[map]);
+    }
+    nexus_fb_set_palette(fb, palette);
+    source = title->decoded_map_pixels[nexus_title_map_for_frame(frame)];
+    for (y = 0; y < NEXUS_FB_H; ++y) {
+        memcpy(&fb->color_buffer[y * NEXUS_FB_W],
+               &source[y * NEXUS_V1_TITLE_MAP_WIDTH],
+               NEXUS_FB_W);
+    }
 }

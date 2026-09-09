@@ -168,11 +168,13 @@ static int count_diff_pixels(const unsigned char* a,
     return diff;
 }
 
-static void expect_unbound_title_render_is_blank(void) {
+static void expect_title_render_requires_mapd_handoff(void) {
     Nexus_TitleScreen title;
     Nexus_Framebuffer frame0;
     Nexus_Framebuffer frame16;
+    Nexus_Framebuffer frame161;
     unsigned char pixels[NEXUS_FB_W * NEXUS_FB_H];
+    unsigned char map_pixels[NEXUS_V1_TITLE_MAP_WIDTH * NEXUS_V1_TITLE_MAP_HEIGHT];
     int i;
 
     for (i = 0; i < (int)sizeof(pixels); ++i) {
@@ -194,6 +196,34 @@ static void expect_unbound_title_render_is_blank(void) {
                                   frame16.color_buffer,
                                   sizeof(frame0.color_buffer)) == 0,
                 "blocked title route remains blank at every boot frame");
+
+    /* A decoded MAPD route is materially different from the unbound atlas:
+     * it carries the captured N,E,X,U,S plane schedule and the MAPD palette. */
+    memset(&title, 0, sizeof(title));
+    memset(map_pixels, 0, sizeof(map_pixels));
+    map_pixels[0] = 1U;
+    map_pixels[40U * (unsigned int)NEXUS_V1_TITLE_MAP_WIDTH] = 2U;
+    for (i = 0; i < NEXUS_V1_TITLE_MAP_COUNT; ++i) {
+        title.decoded_map_pixels[i] = map_pixels;
+    }
+    title.decoded_map_count = NEXUS_V1_TITLE_MAP_COUNT;
+    title.decoded_map_source_bound = 1;
+    title.decoded_map_palette[1] = 0x001fU;
+    title.decoded_map_palette[2] = 0x03e0U;
+    nexus_fb_init(&frame0);
+    nexus_fb_init(&frame161);
+    nexus_render_title(&title, &frame0, 0);
+    nexus_render_title(&title, &frame161, 161);
+    expect_true(count_nonzero_pixels(frame0.color_buffer,
+                                     sizeof(frame0.color_buffer)) == 2,
+                "source-bound MAPD plane presents in the captured crop");
+    expect_true(frame0.palette[1] == 0xffff0000U &&
+                    frame0.palette[2] == 0xff00ff00U,
+                "MAPD BGR555 palette is installed without a host palette");
+    expect_true(count_diff_pixels(frame0.color_buffer,
+                                  frame161.color_buffer,
+                                  sizeof(frame0.color_buffer)) == 0,
+                "identical fixture planes remain stable across title schedule");
 }
 
 static void expect_title_sequence_contract(void) {
@@ -822,7 +852,7 @@ int main(void) {
     expect_face_loader_counts_real_vs_fallback();
     expect_bpk_runtime_surface_import();
     expect_title_sequence_contract();
-    expect_unbound_title_render_is_blank();
+    expect_title_render_requires_mapd_handoff();
     expect_startup_layout_contract();
     expect_champion_startup_selection_contract();
 
