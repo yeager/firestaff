@@ -96,7 +96,9 @@ append_trace_receipts() {
       [[ -s "$render_path" ]] || continue
       # The patched producer writes P6 pixmaps.  A different container is
       # rejected rather than silently being treated as a post-render receipt.
-      [[ "$(head -c 3 "$render_path" 2>/dev/null || true)" == $'P6\n' ]] || continue
+      # Command substitution strips trailing newlines, so inspect the two-byte
+      # Netpbm magic rather than comparing a three-byte P6+LF prefix.
+      [[ "$(head -c 2 "$render_path" 2>/dev/null || true)" == 'P6' ]] || continue
       printf -v render_key 'render_frame_%06d_ppm' "$((10#$render_frame))"
       if ! grep -q "^${render_key}_sha256=" "$manifest"; then
         render_bytes=$(wc -c < "$render_path" | tr -d '[:space:]')
