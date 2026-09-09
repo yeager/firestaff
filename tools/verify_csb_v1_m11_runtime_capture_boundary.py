@@ -16,7 +16,13 @@ OUT = Path(os.environ.get(
     "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
     str(ROOT / "parity-evidence/verification/csb_v1_m11_runtime_capture_boundary.json"),
 ))
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+# ReDMCSB is development-time reference material.  Prefer an explicit
+# portable override and otherwise use the repository reference checkout; do
+# not encode a developer's historical home-directory cache in verification.
+REDMCSB = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"),
+))
 MANIFEST = ROOT / "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json"
 
 ANCHORS = [
