@@ -315,14 +315,21 @@ if labeled_shots:
     pretty = ", ".join(f"{idx + 1:02d}:{label or '(unlabeled)'}" for idx, label in enumerate(labels))
     print(f"[pass-70] shot label plan: {pretty}")
 if expected == 1:
-    if labels and labels[0] in diagnostic_only:
-        print("[pass-70] single diagnostic route is capture-channel evidence only; it cannot satisfy transcript or overlay readiness")
-    else:
-        if not labels or labels[0] != "02_turn_right_west_1_3":
-            raise SystemExit("ERROR: single transcript-row capture must use shot:02_turn_right_west_1_3")
+    # DOSBox-X can exit immediately after writing a raw screenshot on some
+    # X11 hosts.  A one-frame route is therefore also a useful, honest way to
+    # capture a late original state: replay the complete source route and put
+    # the only screenshot last.  The label remains capture-channel metadata;
+    # no arbitrary one-frame result can satisfy a paired transcript or pixel
+    # parity gate.  Keep the existing C002 row warning when that special label
+    # is used, but do not reject other explicitly named diagnostic states.
+    if not labels or not labels[0]:
+        raise SystemExit("ERROR: one-frame capture routes must use an explicit shot:<label>")
+    if labels[0] == "02_turn_right_west_1_3":
         if not any(token.lower() in {"right", "kp6"} for token in route):
             raise SystemExit("ERROR: single transcript-row capture must include right or kp6 before the shot")
         print("[pass-70] single transcript-row route locked to pass625/pass626 C002 turn-redraw target")
+    else:
+        print("[pass-70] single named route is capture-channel evidence only; it cannot satisfy transcript or overlay readiness")
 diagnostic_hits = [label for label in labels if label in diagnostic_only]
 if diagnostic_hits:
     print("[pass-70] diagnostic-only labels present: " + ", ".join(diagnostic_hits))
