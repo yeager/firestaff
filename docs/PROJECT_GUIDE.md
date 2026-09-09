@@ -116,12 +116,12 @@ Requires SDL3. On macOS: `brew install sdl3`
 - **300+ source files**, **245K+ lines of C**
 - **365+ headers**, **149+ tests**, **80+ probes**
 - CI covers M10 verify, warnings, CMake builds, Phase A, audio probe, and determinism
-- **Localization:** the current tree ships 20 localized catalogs plus English
-  for the launcher, shared UI, all five game domains and Studio. The language
-  table in `po/README.md` is generated from the live templates and catalogs;
-  it distinguishes complete catalog coverage from language-specific wording.
-  Use it and `po/validate_po_layout.sh` rather than this historical snapshot
-  for exact coverage and validation status.
+- **Localization:** the current tree ships 20 languages in total: 19 localized
+  catalogs plus English for the launcher, shared UI, all five game domains and
+  Studio. The language table in `po/README.md` is generated from the live
+  templates and catalogs; it distinguishes complete catalog coverage from
+  language-specific wording. Use it and `po/validate_po_layout.sh` rather than
+  this historical snapshot for exact coverage and validation status.
 - **5 games:** DM1, CSB, DM2, DM Nexus, Theron's Quest
 
 These counts and localization claims are historical, unverified snapshots.
