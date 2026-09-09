@@ -84,13 +84,14 @@ Both decode 100% correctly through the IMG1 path per
 | Unit of RLE run | Byte | Nibble (4-bit) |
 | Container | Flat PC `GRAPHICS.DAT` offsets | `0x8001` marker + BE item count wrapper |
 | Reference decoder | ReDMCSB `IMAGE3.C` / `F0689_Img3_Expand` | ReDMCSB `IMAGE1.C` nibble-RLE notes + Amiga corpus |
-| Firestaff module | `csb_v1_img3_asset_presentation_pc34_compat.c` (PC-path CSB fallback) | `csb_v1_amiga_graphics_dat.c` (primary CSB path) |
+| Firestaff module | Internal compatibility/reference helper only; it is never a CSB PC/DOS media route | `csb_v1_amiga_graphics_dat.c` (primary CSB path) |
 
 CSBWin's own `CSBgraphics.dat` companion format (produced by CSBGraffer /
 CSBWin Viewport Compiler) is a **third**, separate container — classified by
 `csb_v1_csbgraphics_dat_classify.c` and bound at runtime via
 `csb_v1_csbgraphics_runtime_binding.c` / `csb_v1_csbgraphics_runtime_plan.c`.
-It must not be confused with either the PC or Amiga `CSBGRAPHICS.DAT`.
+It must not be confused with Amiga `CSBGRAPHICS.DAT` or treated as evidence of
+an original PC/DOS CSB release.
 
 ## 3. DSA (Dynamic Scripting Architecture)
 

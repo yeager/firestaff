@@ -58,5 +58,7 @@ test before changing its status to a verified implementation.
 ## Audit rule
 
 Do not create synthetic behaviour to fill an `unmapped_or_unverified` row.
-Use original PC34/CSB data and ReDMCSB control flow where applicable, and keep
-platform-specific TOS or assembly replacements explicitly documented.
+Use original PC 3.4 data for DM1, original Atari ST/Amiga/FM Towns data for
+CSB, and ReDMCSB control flow where applicable. CSB has no original DOS/PC
+release; keep platform-specific TOS or assembly replacements explicitly
+documented.

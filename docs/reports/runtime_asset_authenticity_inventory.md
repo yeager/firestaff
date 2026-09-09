@@ -18,7 +18,7 @@ runtime cache.
 | Area | Real material available locally | Runtime rule | Remaining work |
 | --- | --- | --- | --- |
 | DM1 V1 | PC 3.4 `GRAPHICS.DAT` and `DUNGEON.DAT` | Decode source records; missing material is no-draw. | Original DOS/Mac capture and save corpus. |
-| CSB V1 | PC 3.4 and Atari ST packages | Decode package-owned surfaces; missing source spans are no-draw. | Wider original capture and DSA/save corpus. |
+| CSB V1 | Atari ST, Amiga and FM Towns packages | Decode package-owned surfaces; missing source spans are no-draw. There is no original DOS/PC CSB package. | Wider original capture and DSA/save corpus. |
 | DM2 V1 | PC `GRAPHICS.DAT`, `DUNGEON.DAT`, GDAT records | Boot-owned GDAT provider is the only production pixel owner. | Complete GDAT HUD/dungeon decode. |
 | Theron V1 | Retail BIN/CUE/Track 02 corpus | Track 02 admission blocks unproven bitmap and level output. | Authentic later-level object/bitmap decode. |
 | Nexus V1 | Retail `MENU.BPK`, DGN/SLEV and Saturn media | PRS3/DGN admission blocks unproven menu or dungeon output. | Authentic PRS3 pixel/palette and DGN face decode. |

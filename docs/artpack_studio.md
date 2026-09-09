@@ -122,11 +122,14 @@ The status line reports imported asset count, warning count, and byte size. The
 ### Headless Original-Record Export
 
 The same source inspection path is available without starting Tk. This is
-useful for reviewing a local CSB PC3.4 `GRAPHICS.DAT` on a build machine:
+useful for reviewing a locally supplied, original CSB graphics record on a
+build machine. CSB has no original PC/DOS edition: select an admitted Amiga,
+Atari ST or FM Towns source and never use a PC-shaped reference fixture as
+runtime media:
 
 ```sh
 python3 scripts/firestaff_artpack_studio.py \
-  --import-game-data "$HOME/.firestaff/data/csb/GRAPHICS.DAT" \
+  --import-game-data /path/to/original/CSBGRAPHICS.DAT \
   --export-original-previews "$HOME/.firestaff/review/csb-original-previews"
 ```
 
