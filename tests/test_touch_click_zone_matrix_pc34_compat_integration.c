@@ -191,6 +191,10 @@ int main(void) {
         dispatch.screenX != 40 || dispatch.screenY != 86 ||
         dispatch.commandId != 31u || dispatch.zoneIndex != 510u ||
         strcmp(dispatch.groupName, "inventory.torso") != 0) ok = 0;
+    if (!TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(24, 26, 448, 272, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch) ||
+        dispatch.screenX != 12 || dispatch.screenY != 46 ||
+        dispatch.commandId != 71u || dispatch.zoneIndex != 546u ||
+        strcmp(dispatch.groupName, "inventory.eye") != 0) ok = 0;
     if (TOUCHCLICK_Compat_MapScaledViewportPointToDispatch(1, 1, 224, 136, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &dispatch)) ok = 0;
 
     printf("sourceViewportRect=%d,%d,%d,%d\n", viewportX, viewportY, viewportW, viewportH);
