@@ -132,6 +132,12 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
 static uint8_t *csb_v1_runtime_mutable_thing_record(
     CSB_V1_DungeonData *dungeon, uint16_t thing, int *out_type,
     int *out_size);
+static int csb_v1_runtime_unlink_thing_from_square(
+    CSB_V1_DungeonData *dungeon, uint16_t target_thing, int level,
+    int map_x, int map_y);
+static int csb_v1_runtime_append_thing_to_square_tail(
+    CSB_V1_DungeonData *dungeon, uint16_t thing, int level,
+    int map_x, int map_y);
 static int csb_v1_runtime_validate_square_thing_chain(
     const CSB_V1_DungeonData *dungeon, int level, int map_x, int map_y);
 static int csb_v1_runtime_stage_csbwin_dsa_tracing(
@@ -5331,12 +5337,32 @@ static void csb_v1_runtime_schedule_move_group_event(
 {
     struct DM1_Event_V1 event;
     CSB_V1_F0265GroupRetryReceiptPc34 retry_receipt;
+    int thing_type = -1;
+    int thing_size = 0;
+    uint8_t *group_record;
 
-    if (!profile ||
-        !csb_v1_runtime_f0265_group_retry_receipt_pc34(
+    if (!profile) {
+        return;
+    }
+    /* F0265 normally receives the still-linked C04, then F0267 unlinks it
+     * before C60/C61 waits.  A subsequently blocked C60/C61 is therefore
+     * allowed to requeue from its detached, but still allocated, C04. */
+    if (!csb_v1_runtime_f0265_group_retry_receipt_pc34(
             profile, group_thing, target_level, target_x, target_y, audible,
             &retry_receipt)) {
-        return;
+        group_record = profile->dungeon_handle
+            ? csb_v1_runtime_mutable_thing_record(
+                  profile->dungeon_handle, group_thing, &thing_type,
+                  &thing_size)
+            : NULL;
+        if (!group_record || thing_type != THING_TYPE_GROUP ||
+            thing_size < 16) {
+            return;
+        }
+        memset(&retry_receipt, 0, sizeof(retry_receipt));
+        retry_receipt.source_map_index = -1;
+        retry_receipt.source_map_x = -1;
+        retry_receipt.source_map_y = -1;
     }
     if (target_level < 0 || target_level > 255 ||
         target_x < 0 || target_x > 255 ||
@@ -5354,7 +5380,21 @@ static void csb_v1_runtime_schedule_move_group_event(
     event.b_mapY = (uint8_t)target_y;
     event.c_cell = (uint8_t)(group_thing & 0xFFu);
     event.c_effect = (uint8_t)((group_thing >> 8) & 0xFFu);
-    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+    if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0 &&
+        retry_receipt.source_map_index >= 0) {
+        /* MOVESENS.C F0267 removes the C04 from its source list before the
+         * C60/C61 event owns the deferred placement.  Leaving it linked
+         * lets gameplay and the retry both own the same creature. */
+        if (csb_v1_runtime_unlink_thing_from_square(
+                profile->dungeon_handle, group_thing,
+                retry_receipt.source_map_index, retry_receipt.source_map_x,
+                retry_receipt.source_map_y)) {
+            csb_v1_runtime_process_group_creature_floor_sensors_at(
+                profile, profile->dungeon_handle, group_thing,
+                retry_receipt.source_map_index, retry_receipt.source_map_x,
+                retry_receipt.source_map_y, 0);
+        }
+    }
 }
 
 static int csb_v1_runtime_move_group_thing_to_square(
@@ -6833,15 +6873,19 @@ static int csb_v1_runtime_apply_move_group_timeline_record_uncommitted(
                 0);
         }
     }
-    if (!csb_v1_runtime_move_group_thing_to_square(
-            profile, dungeon,
-            group_thing,
-            source_level,
-            source_x,
-            source_y,
-            target_level,
-            target_x,
-            target_y)) {
+    if (source_level < 0) {
+        /* F0252 invokes F0267 with CM1_MAPX_NOT_ON_A_SQUARE: the C04 is
+         * already detached and F0163 performs a placement, not a move. */
+        if (!csb_v1_runtime_append_thing_to_square_tail(
+                dungeon, group_thing, target_level, target_x, target_y)) {
+            return -1;
+        }
+        csb_v1_runtime_process_group_creature_floor_sensors_at(
+            profile, dungeon, group_thing, target_level, target_x, target_y,
+            1);
+    } else if (!csb_v1_runtime_move_group_thing_to_square(
+                   profile, dungeon, group_thing, source_level, source_x,
+                   source_y, target_level, target_x, target_y)) {
         return -1;
     }
     /* ReDMCSB TIMELINE.C F0252 emits C17 only for C61 after its linked
@@ -6927,13 +6971,32 @@ int csb_v1_runtime_f0252_f0266_group_move_transaction_pc34(
                              (uint16_t)(record->cell & 0xff));
     memset(&receipt, 0, sizeof(receipt));
     if (!csb_v1_runtime_f0252_group_move_receipt_pc34(
-            profile, record, &receipt.move) ||
-        !csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
-            dungeon, group_thing,
-            receipt.move.source_map_index, receipt.move.source_map_x,
-            receipt.move.source_map_y, receipt.move.target_map_x,
-            receipt.move.target_map_y, &receipt.projectile)) {
+            profile, record, &receipt.move)) {
         return 0;
+    }
+    if (receipt.move.source_map_index >= 0) {
+        if (!csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
+                dungeon, group_thing,
+                receipt.move.source_map_index, receipt.move.source_map_x,
+                receipt.move.source_map_y, receipt.move.target_map_x,
+                receipt.move.target_map_y, &receipt.projectile)) {
+            return 0;
+        }
+    } else {
+        /* F0252 calls F0267 with CM1_MAPX_NOT_ON_A_SQUARE for deferred
+         * C60/C61 placement.  There is no source C14 census in that path. */
+        memset(&receipt.projectile, 0, sizeof(receipt.projectile));
+        receipt.projectile.valid = 1;
+        receipt.projectile.source_map_index = -1;
+        receipt.projectile.source_map_x = -1;
+        receipt.projectile.source_map_y = -1;
+        receipt.projectile.destination_map_x = receipt.move.target_map_x;
+        receipt.projectile.destination_map_y = receipt.move.target_map_y;
+        receipt.projectile.group_thing = group_thing;
+        receipt.projectile.group_record_offset = receipt.move.group_record_offset;
+        receipt.projectile.group_record_fnv1a = receipt.move.group_record_fnv1a;
+        receipt.projectile.source_evidence =
+            "ReDMCSB TIMELINE.C F0252 -> F0267 CM1_MAPX_NOT_ON_A_SQUARE";
     }
 
     /* F0252 may relink C04, schedule C60/C61, and trigger destination
@@ -16385,6 +16448,9 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
     int source_x;
     int source_y;
     int target_square;
+    int group_type = -1;
+    int group_size = 0;
+    int group_offset;
 
     if (!out_receipt) return 0;
     memset(&local_receipt, 0, sizeof(local_receipt));
@@ -16412,13 +16478,16 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
         record->mapX < 0 || record->mapX >=
             profile->dungeon_handle->level_widths[record->mapIndex] ||
         record->mapY < 0 || record->mapY >=
-            profile->dungeon_handle->level_heights[record->mapIndex] ||
-        !csb_v1_runtime_find_group_thing_location(
+            profile->dungeon_handle->level_heights[record->mapIndex]) {
+        return 0;
+    }
+    source_level = source_x = source_y = -1;
+    if (csb_v1_runtime_find_group_thing_location(
             profile->dungeon_handle, group_thing, &source_level, &source_x,
-            &source_y) ||
-        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
-            profile->dungeon_handle, source_level, source_x, source_y,
-            &group_receipt) || group_receipt.group_thing != group_thing) {
+            &source_y) &&
+        (!csb_v1_runtime_f0175_group_thing_receipt_pc34(
+             profile->dungeon_handle, source_level, source_x, source_y,
+             &group_receipt) || group_receipt.group_thing != group_thing)) {
         return 0;
     }
     target_square = csb_v1_dungeon_get_raw_square(
@@ -16429,13 +16498,13 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
             record->mapY)) {
         return 0;
     }
-    group_record = profile->dungeon_handle->raw_data +
-        group_receipt.group_record_offset;
-    if (csb_v1_runtime_fnv1a32(
-            group_record, (size_t)group_receipt.group_record_size) !=
-        group_receipt.group_record_fnv1a) {
+    group_record = csb_v1_runtime_mutable_thing_record(
+        (CSB_V1_DungeonData *)profile->dungeon_handle, group_thing,
+        &group_type, &group_size);
+    if (!group_record || group_type != THING_TYPE_GROUP || group_size < 16) {
         return 0;
     }
+    group_offset = (int)(group_record - profile->dungeon_handle->raw_data);
     local_receipt.source_map_index = source_level;
     local_receipt.source_map_x = source_x;
     local_receipt.source_map_y = source_y;
@@ -16444,11 +16513,12 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
     local_receipt.target_map_y = record->mapY;
     local_receipt.target_square_type = (target_square >> 5) & 0x07;
     local_receipt.group_thing = group_thing;
-    local_receipt.group_record_offset = group_receipt.group_record_offset;
-    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.group_record_offset = group_offset;
+    local_receipt.group_record_fnv1a = csb_v1_runtime_fnv1a32(
+        group_record, (size_t)group_size);
     local_receipt.audible = record->eventType == DM1_EVENT_MOVE_GROUP_AUDIBLE;
     local_receipt.source_evidence =
-        "ReDMCSB TIMELINE.C F0252 C60/C61 -> F0175 linked raw C04";
+        "ReDMCSB TIMELINE.C F0252 C60/C61 -> detached-or-linked raw C04";
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;

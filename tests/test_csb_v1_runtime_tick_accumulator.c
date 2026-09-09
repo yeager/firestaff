@@ -2611,9 +2611,9 @@ static void test_c37_group_approach_defers_when_destination_has_group(void)
           "C37 blocked-destination fixture queues the approach event");
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "C37 blocked-destination fixture dispatches the approach event");
-    CHECK(test_get_le16(raw, 66) == (uint16_t)(4u << 10) &&
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
               test_get_le16(raw, 68) == (uint16_t)((4u << 10) | 1u),
-          "C37 blocked-destination keeps both group chains in place");
+          "C37 blocked-destination detaches C04 while C60 owns its retry");
     CHECK(count_queued_event_type(&profile, DM1_EVENT_UPDATE_BEHAVIOR_GROUP) == 0,
           "C37 blocked-destination suppresses the ordinary C37 requeue");
     event_index = find_queued_event_type(&profile,
