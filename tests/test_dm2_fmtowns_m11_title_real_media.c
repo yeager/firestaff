@@ -48,6 +48,38 @@ static unsigned int fnv1a32(const unsigned char* bytes, size_t size)
     return hash;
 }
 
+/* A non-zero pixel count is not enough to catch a palette regression: the
+ * original HME-242 animation can still draw with the preceding stream's PL
+ * registers.  Decode the stream independently and compare the palette that
+ * the renderer actually installed after a draw. */
+static void expect_presented_stream_palette(const uint8_t* bytes,
+                                            size_t byte_count,
+                                            uint32_t frame_index,
+                                            const char* message)
+{
+    DM2_V1_FmtownsAnimPaletteReceipt expected;
+    uint8_t presented[256][3];
+    int color;
+
+    memset(&expected, 0, sizeof(expected));
+    memset(presented, 0, sizeof(presented));
+    if (!dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+            bytes, byte_count, frame_index, &expected) || !expected.valid ||
+        !M11_Render_CopyIndexedPaletteRgb6(presented)) {
+        expect(0, message);
+        return;
+    }
+    for (color = 0; color < 16; ++color) {
+        if (presented[color][0] != (uint8_t)(expected.rgb4[color][0] << 2u) ||
+            presented[color][1] != (uint8_t)(expected.rgb4[color][1] << 2u) ||
+            presented[color][2] != (uint8_t)(expected.rgb4[color][2] << 2u)) {
+            expect(0, message);
+            return;
+        }
+    }
+    expect(1, message);
+}
+
 int main(void)
 {
     const char* root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
@@ -123,6 +155,9 @@ int main(void)
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 13u,
            "M11 presents HME-242 SWOOSH's sparse source first EN canvas");
+    expect_presented_stream_palette(
+        view.dm2FmtownsTitleBytes, view.dm2FmtownsTitleByteCount, 0u,
+        "M11 presents SWOOSH frame zero with HME-242's source PL palette");
     for (step = 0; step < 6; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
@@ -137,6 +172,11 @@ int main(void)
                view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&
                view.dm2FmtownsFrameCount == 225u,
            "M11 advances real SWOOSH before binding TITLE's source EN/DL count through Timer-A units");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    expect_presented_stream_palette(
+        view.dm2FmtownsTitleBytes, view.dm2FmtownsTitleByteCount, 0u,
+        "M11 replaces SWOOSH's palette with TITLE's source PL palette");
     for (step = 0; step < 10000 &&
                     view.dm2FmtownsTitleFrameIndex < 13u; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
