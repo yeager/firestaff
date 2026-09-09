@@ -2353,29 +2353,35 @@ static unsigned int m11_startup_media_swsh_wait_ms(
 }
 
 /* The launcher has just been rendering a different surface when SWSH takes
- * over.  On composited desktops (most visibly macOS), SDL_RenderPresent()
- * queues that first black-palette FTL frame, while the window-show transition
- * is still being dispatched.  Starting the source's initial 20-VBlank delay
- * in the same turn lets the compositor skip straight to a later palette
- * frame.  Consume the first source VBlank only after yielding the event loop;
- * the caller subtracts it from the original 20-VBlank hold, so this is a
- * presentation boundary rather than host timing padding. */
-static int m11_begin_swsh_source_clock_after_first_present(
-    unsigned int initialHoldMs,
+ * over.  On composited desktops (most visibly macOS), the first
+ * SDL_RenderPresent() can be consumed by the window/compositor handoff.  A
+ * delay alone is not sufficient: the display server may never have received
+ * a stable FTL frame before the source palette starts changing.  Submit the
+ * immutable, black-palette source frame twice, with one host VBlank and event
+ * turn in between, then begin the *full* source-owned initial hold.  The
+ * two-frame prelude is explicitly host presentation synchronisation; it does
+ * not consume or shorten any of SWSH.C's twenty original VBlanks. */
+static int m11_prepare_swsh_source_clock_after_launcher_handoff(
+    const unsigned char* initialRgba,
+    int width,
+    int height,
     unsigned int vblankMs) {
-    unsigned int remainingHoldMs;
-
+    if (!initialRgba || width <= 0 || height <= 0) {
+        return 0;
+    }
     if (M11_Render_PumpEvents()) {
         return 0;
     }
-    if (vblankMs == 0U || initialHoldMs < vblankMs) {
-        return !m11_delay_ms_with_intro_event_pump(initialHoldMs);
-    }
-    if (m11_delay_ms_with_intro_event_pump(vblankMs)) {
+    if (vblankMs != 0U && m11_delay_ms_with_intro_event_pump(vblankMs)) {
         return 0;
     }
-    remainingHoldMs = initialHoldMs - vblankMs;
-    return !m11_delay_ms_with_intro_event_pump(remainingHoldMs);
+    if (M11_Render_PresentRGBA(initialRgba, width, height) != M11_RENDER_OK) {
+        return 0;
+    }
+    if (M11_Render_PumpEvents()) {
+        return 0;
+    }
+    return vblankMs == 0U || !m11_delay_ms_with_intro_event_pump(vblankMs);
 }
 
 static void m11_play_ftl_swoosh_for_game_if_available(
@@ -2516,8 +2522,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
           if (M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH,
                                      M11_FB_HEIGHT) != M11_RENDER_OK ||
-              !m11_begin_swsh_source_clock_after_first_present(initialHoldMs,
-                                                                vblankMs)) {
+              !m11_prepare_swsh_source_clock_after_launcher_handoff(
+                  screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT, vblankMs) ||
+              m11_delay_ms_with_intro_event_pump(initialHoldMs)) {
               goto cleanup;
           }
       }
