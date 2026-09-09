@@ -955,6 +955,16 @@ int main(void) {
              * this explicit branch makes the regression test enforce the
              * production fail-closed boundary instead of masking it. */
             if (view.nexusState.level_loaded == 0) {
+                /* The MAPD/TITLE.CG consumer is a complete, retail-backed
+                 * title route even though later FACE/MENU startup work is
+                 * still intentionally gated.  Exercise the host handoff
+                 * here so a later gate cannot silently turn its visible
+                 * title back into a black frame. */
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                expect_true(count_nonzero_pixels(framebuffer,
+                                                  sizeof(framebuffer)) > 500,
+                            "real Nexus MAPD title presents nonblank retail pixels");
                 expect_true(view.nexusState.title_active == 1,
                             "real Nexus title/asset boot remains in title phase");
                 expect_true(view.nexusState.party_x == -1 &&
