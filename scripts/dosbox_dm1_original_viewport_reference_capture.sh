@@ -456,6 +456,10 @@ write_helpers() {
 [sdl]
 fullscreen=false
 output=opengl
+# Capture runs are non-interactive and are terminated by this harness.  Avoid
+# DOSBox-X's host-level Yes/No confirmation dialog, which can otherwise leak
+# into the next original-capture route.
+quit warning=false
 
 [dosbox]
 machine=svga_paradise
