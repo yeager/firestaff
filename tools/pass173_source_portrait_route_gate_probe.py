@@ -14,19 +14,18 @@ from PIL import Image, ImageChops, ImageStat
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
-from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original  # noqa: E402
+from tools.pass118_state_aware_original_route_driver import wait_window, classify_file, tap, click_original  # noqa: E402
 from tools.pass80_original_frame_classifier import sha256  # noqa: E402
 
-DM1_DOS_ARCHIVE = Path(os.environ.get(
- "FIRESTAFF_DM1_DOS_ARCHIVE",
- str(Path.home()/".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")))
+DM1_DOS_ARCHIVE = Path(os.environ.get("FIRESTAFF_DM1_DOS_ARCHIVE", ""))
 DOSBOX = os.environ.get("FIRESTAFF_DOSBOX", shutil.which("dosbox") or "/usr/bin/dosbox")
 OUT_ROOT = Path("parity-evidence/verification/pass173_source_portrait_route_gate_probe")
-DEFAULT_RUN_BASE_ROOT = Path("/dev/shm/firestaff-pass173-runs")
+DEFAULT_RUN_BASE_ROOT = REPO / ".codex-scratch" / "pass173-runs"
 RUN_BASE_ROOT = Path(os.environ.get("FIRESTAFF_PASS173_RUN_BASE", os.environ.get("FIRESTAFF_ARTIFACT_ROOT", str(DEFAULT_RUN_BASE_ROOT))))
 STATIC_NO_PARTY_HASHES={"48ed3743ab6a","082b4d249740"}
+PANEL_TRANSITION_MIN_CHANGED_RATIO = 0.02
 CROPS={"viewport":(0,0,224,136),"right_panel":(224,0,320,136),"lower_panel":(0,136,320,200),"candidate_buttons":(70,80,225,148)}
-SOURCE_ROOT="~/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source"
+SOURCE_ROOT="reference/redmcsb-20210206/Toolchains/Common/Source"
 SOURCE_LOCKS=[
  {"file":"DUNGEON.DAT via pass4 helper","lines":"n/a","point":"initial party location decodes to map0 x=1 y=3 dir=South; C127 sensor 16 is on wall square x=1 y=4, so the initial dungeon pose faces a champion portrait sensor."},
  {"file":"COMMAND.C","lines":"397-403,2322-2323","point":"left-click in C007_ZONE_VIEWPORT dispatches C080_COMMAND_CLICK_IN_DUNGEON_VIEW and calls F0377_COMMAND_ProcessType80_ClickInDungeonView."},
@@ -42,20 +41,80 @@ SOURCE_LOCKS=[
 SCENARIOS=[("gate_click_portrait_then_resurrect",130,115,"C160 resurrect"),("gate_click_portrait_then_reincarnate",186,115,"C161 reincarnate")]
 
 def slug(s:str)->str: return ''.join(c.lower() if c.isalnum() else '_' for c in s).strip('_')
-def stage_original_media()->Path:
+
+def published_path(path: str | Path) -> str:
+ """Return a repository-relative evidence path, never a host-specific path."""
+ p = Path(path)
+ try:
+  return p.resolve().relative_to(REPO.resolve()).as_posix()
+ except ValueError:
+  return f"<ephemeral>/{p.name}"
+
+def published_result(result: dict[str, Any], evidence_dir: Path) -> dict[str, Any]:
+ """Strip capture-host paths before an evidence receipt reaches Git."""
+ public = json.loads(json.dumps(result))
+ public["evidence_dir"] = published_path(evidence_dir)
+ for row in public.get("rows", []):
+  if "path" in row:
+   row["path"] = f"{public['evidence_dir']}/{row['file']}"
+ return public
+
+def capture_new(wid: str, out_dir: Path, label: str, log: list[str]) -> Path:
+ """Capture the visible DOSBox canvas without relying on emulator hotkeys.
+
+ DOSBox-X does not expose the Ctrl+F5 binding used by the historic driver.
+ Host capture is development-only and crops menu chrome before reducing the
+ native 4:3 content to the original 320x200 coordinate space.
+ """
+ raw = out_dir / f"host-window-{time.monotonic_ns()}.png"
+ captured = out_dir / f"host-canvas-{time.monotonic_ns()}.png"
+ subprocess.run(["scrot", "--window", wid, "--overwrite", "--silent", str(raw)], check=True)
+ im = Image.open(raw).convert("RGB")
+ width, height = im.size
+ content_width = width
+ content_height = round(content_width * 200 / 320)
+ if content_height > height:
+  content_height = height
+  content_width = round(content_height * 320 / 200)
+ left = (width - content_width) // 2
+ top = height - content_height
+ resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+ im.crop((left, top, left + content_width, top + content_height)).resize(
+  (320, 200), resample).save(captured)
+ raw.unlink()
+ log.append(f"host-capture {label} {captured.name} sha={sha256(captured)[:12]}")
+ return captured
+
+def wait_process_window(pid: int, log: list[str], timeout: float = 8.0) -> str:
+ """Find the window owned by this run, not another active DOSBox session."""
+ deadline = time.time() + timeout
+ while time.time() < deadline:
+  probe = subprocess.run(["xdotool", "search", "--pid", str(pid)],
+                         capture_output=True, text=True)
+  ids = [item for item in probe.stdout.split() if item]
+  if ids:
+   wid = ids[-1]
+   subprocess.run(["xdotool", "windowactivate", wid], check=False,
+                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+   log.append(f"window-found {wid} for-pid {pid}")
+   return wid
+  time.sleep(0.2)
+ raise RuntimeError(f"no DOSBox window found for capture process {pid}")
+def stage_original_media(stage_root: Path)->Path:
  if not DM1_DOS_ARCHIVE.is_file(): raise RuntimeError(f"missing original archive: {DM1_DOS_ARCHIVE}")
- stage=Path(tempfile.mkdtemp(prefix="firestaff-pass173-dm1-",dir="/dev/shm"))
+ stage_root.mkdir(parents=True, exist_ok=True)
+ stage=Path(tempfile.mkdtemp(prefix="firestaff-pass173-dm1-",dir=stage_root))
  result=subprocess.run(["unzip","-qq",str(DM1_DOS_ARCHIVE),"-d",str(stage)],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
  if not (stage/"DM.EXE").is_file() or not (stage/"DATA/GRAPHICS.DAT").is_file():
   shutil.rmtree(stage,ignore_errors=True)
-  raise RuntimeError("unable to stage complete original PC34 archive in /dev/shm")
+  raise RuntimeError("unable to stage complete original PC34 archive in the selected scratch root")
  return stage
 
 def conf(out:Path,stage:Path)->Path:
  p=out/"dosbox-pass173.conf"; p.write_text(f"""[sdl]\nfullscreen=false\noutput=opengl\n[dosbox]\nmachine=svga_paradise\nmemsize=4\ncaptures={out}\n[cpu]\ncore=normal\ncputype=386\ncpu_cycles=3000\n[render]\naspect=false\ninteger_scaling=false\n[mixer]\nnosound=true\n[speaker]\npcspeaker=false\ntandy=off\n[capture]\ncapture_dir={out}\ndefault_image_capture_formats=raw\n[autoexec]\nmount c \"{stage}\"\nc:\nDM -vv -sn\n"""); return p
 
-def shot(out:Path,log:list[str],label:str,idx:int)->dict[str,Any]:
- raw=capture_new(wait_window(log,timeout=5.0),out,label,log); dst=out/f"image{idx:04d}-{slug(label)}.png"
+def shot(out:Path,log:list[str],wid:str,label:str,idx:int)->dict[str,Any]:
+ raw=capture_new(wid,out,label,log); dst=out/f"image{idx:04d}-{slug(label)}.png"
  if dst.exists(): dst.unlink()
  shutil.move(str(raw),dst); cls,reason=classify_file(dst)
  return {"index":idx,"label":label,"file":dst.name,"path":str(dst),"sha12":sha256(dst)[:12],"class":cls,"reason":reason}
@@ -71,17 +130,24 @@ def diff_stats(a:Path,b:Path)->dict[str,Any]:
  ia,ib=Image.open(a).convert('RGB'),Image.open(b).convert('RGB'); d=ImageChops.difference(ia,ib); bbox=d.getbbox(); nz=sum(1 for px in d.getdata() if px!=(0,0,0))
  return {"bbox":list(bbox) if bbox else None,"changed_pixels":nz,"changed_ratio":round(nz/(320*200),6)}
 
-def click(out:Path,log:list[str],x:int,y:int,label:str,idx:int)->dict[str,Any]:
- wid=wait_window(log,timeout=5.0); click_original(wid,x,y,log,delay=0.8); return {"phase":"click","x":x,"y":y,**shot(out,log,label,idx)}
-def key(out:Path,log:list[str],k:str,label:str,idx:int)->dict[str,Any]:
- wid=wait_window(log,timeout=5.0); tap(wid,k,log,delay=0.8); return {"phase":"key","value":k,**shot(out,log,label,idx)}
+def click(out:Path,log:list[str],wid:str,x:int,y:int,label:str,idx:int)->dict[str,Any]:
+ click_original(wid,x,y,log,delay=0.8); return {"phase":"click","x":x,"y":y,**shot(out,log,wid,label,idx)}
+def key(out:Path,log:list[str],wid:str,k:str,label:str,idx:int)->dict[str,Any]:
+ tap(wid,k,log,delay=0.8); return {"phase":"key","value":k,**shot(out,log,wid,label,idx)}
 
-def gate_to_gameplay(out:Path,log:list[str],rows:list[dict[str,Any]],idx:int)->int:
- wid=wait_window(log,timeout=8.0); deadline=time.time()+20; attempt=0
+def gate_to_gameplay(out:Path,log:list[str],wid:str,rows:list[dict[str,Any]],idx:int)->int:
+ deadline=time.time()+24; attempt=0
  while time.time()<deadline:
-  attempt+=1; p=shot(out,log,f"gate{attempt:02d}",idx); p["phase"]="gate"; p["crop_stats"]=crop_stats(Path(p["path"])); rows.append(p); idx+=1
+  attempt+=1; p=shot(out,log,wid,f"gate{attempt:02d}",idx); p["phase"]="gate"; p["crop_stats"]=crop_stats(Path(p["path"])); rows.append(p); idx+=1
   if p["class"]=="dungeon_gameplay": return idx
-  if p["class"]=="entrance_menu": tap(wid,"Return",log,delay=1.0)
+  if attempt == 1:
+   # The title frame is classified conservatively by the generic classifier;
+   # advance it exactly once before touching the Entrance control.
+   tap(wid,"Return",log,delay=6.0)
+  elif attempt == 2:
+   # The verified PC 3.4 route selects Entrance once.  Do not send further
+   # key input after this handoff: it could move the party away from C127.
+   click_original(wid,260,50,log,delay=6.0)
   else: time.sleep(0.8)
  raise RuntimeError("state gate never observed dungeon_gameplay")
 
@@ -92,21 +158,24 @@ def classify(rows:list[dict[str,Any]])->tuple[str,str,dict[str,Any]]:
  ev={"hashes":hashes,"unique_hashes":sorted(set(hashes)),"classes":[r['class'] for r in shots],"static_hits":static,"diffs":diffs,"portrait_click_delta":portrait,"choice_delta":choice}
  if not any(r['label'].startswith('gate') and r['class']=='dungeon_gameplay' for r in shots): return 'blocked/no-gated-gameplay','never reached gated dungeon gameplay',ev
  if static: return 'blocked/static-no-party-after-gate',f"known no-party hash present after gate: {', '.join(static)}",ev
- if not portrait or portrait[0]['changed_ratio']<0.001: return 'blocked/portrait-click-no-visible-delta','gated portrait click produced no visible candidate transition',ev
- if not choice or choice[0]['changed_ratio']<0.001: return 'blocked/choice-no-visible-delta','C160/C161 choice produced no visible transition',ev
+ # The DOS pointer is part of the original framebuffer, so its movement can
+ # change roughly one hundred pixels.  A candidate panel must change far more
+ # than that; otherwise a cursor-only delta would become false evidence.
+ if not portrait or portrait[0]['changed_ratio']<PANEL_TRANSITION_MIN_CHANGED_RATIO: return 'blocked/portrait-click-no-visible-delta','gated portrait click did not produce a panel-scale candidate transition',ev
+ if not choice or choice[0]['changed_ratio']<PANEL_TRANSITION_MIN_CHANGED_RATIO: return 'blocked/choice-no-visible-delta','C160/C161 choice did not produce a panel-scale visible transition',ev
  return 'candidate-transition-visible','gated dungeon portrait click and choice both produced visible transitions',ev
 
 def run_one(base:Path,stage:Path,name:str,cx:int,cy:int,choice_name:str)->dict[str,Any]:
  out=base/slug(name); out.mkdir(parents=True,exist_ok=True); log=[]; rows=[]; proc=subprocess.Popen([DOSBOX,'-conf',str(conf(out,stage))],stdout=(out/'dosbox.log').open('w'),stderr=subprocess.STDOUT,text=True)
  try:
-  wait_window(log,timeout=8.0); time.sleep(7.0); idx=1
-  rows.append({"phase":"initial",**shot(out,log,'initial',idx)}); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
-  idx=gate_to_gameplay(out,log,rows,idx)
-  rows.append(click(out,log,111,82,'after_portrait_click',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1; time.sleep(0.8)
-  rows.append(click(out,log,cx,cy,'after_'+slug(choice_name),idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1; time.sleep(0.8)
-  rows.append(key(out,log,'Return','after_confirm_return',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
-  rows.append(key(out,log,'F1','after_f1_probe',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
-  rows.append(key(out,log,'F4','after_f4_probe',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
+  wid=wait_process_window(proc.pid,log,timeout=8.0); time.sleep(7.0); idx=1
+  rows.append({"phase":"initial",**shot(out,log,wid,'initial',idx)}); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
+  idx=gate_to_gameplay(out,log,wid,rows,idx)
+  rows.append(click(out,log,wid,111,82,'after_portrait_click',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1; time.sleep(0.8)
+  rows.append(click(out,log,wid,cx,cy,'after_'+slug(choice_name),idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1; time.sleep(0.8)
+  rows.append(key(out,log,wid,'Return','after_confirm_return',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
+  rows.append(key(out,log,wid,'F1','after_f1_probe',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
+  rows.append(key(out,log,wid,'F4','after_f4_probe',idx)); rows[-1]['crop_stats']=crop_stats(Path(rows[-1]['path'])); idx+=1
  finally:
   try: proc.terminate(); proc.wait(timeout=2)
   except Exception: proc.kill()
@@ -115,21 +184,28 @@ def run_one(base:Path,stage:Path,name:str,cx:int,cy:int,choice_name:str)->dict[s
  (out/'summary.json').write_text(json.dumps(summary,indent=2)+'\n'); return summary
 
 def main()->int:
- OUT_ROOT.mkdir(parents=True,exist_ok=True); RUN_BASE_ROOT.mkdir(parents=True,exist_ok=True); run_base=RUN_BASE_ROOT/(time.strftime('%Y%m%d-%H%M%S')+'-pass173-source-portrait-route-gate-probe'); run_base.mkdir(parents=True,exist_ok=True); stage=stage_original_media()
+ OUT_ROOT.mkdir(parents=True,exist_ok=True); RUN_BASE_ROOT.mkdir(parents=True,exist_ok=True); run_base=RUN_BASE_ROOT/(time.strftime('%Y%m%d-%H%M%S')+'-pass173-source-portrait-route-gate-probe'); run_base.mkdir(parents=True,exist_ok=True); stage=stage_original_media(RUN_BASE_ROOT / "staging")
  results=[]; errors=[]
  for name,cx,cy,choice in SCENARIOS:
   try:
    r=run_one(run_base,stage,name,cx,cy,choice); ev=OUT_ROOT/slug(name)
    if ev.exists(): shutil.rmtree(ev)
-   shutil.copytree(Path(r['evidence_dir']),ev); r['evidence_dir']=str(ev); (ev/'summary.json').write_text(json.dumps(r,indent=2)+'\n'); results.append(r)
+   ev.mkdir(parents=True)
+   # Publish only source screenshots and the scrubbed receipt. Emulator
+   # configuration and logs carry host paths and do not belong in Git.
+   for image in Path(r['evidence_dir']).glob('image*.png'):
+    shutil.copy2(image, ev / image.name)
+   public=published_result(r, ev)
+   (ev/'summary.json').write_text(json.dumps(public,indent=2)+'\n')
+   results.append(public)
   except Exception as e: errors.append({"scenario":name,"error":str(e)})
  buckets={}
  for r in results: buckets[r['classification']]=buckets.get(r['classification'],0)+1
  shutil.rmtree(stage,ignore_errors=True)
- manifest={"schema":"pass173_source_portrait_route_gate_probe.v3","originalArchive":str(DM1_DOS_ARCHIVE),"staging":"/dev/shm (removed after capture)","run_base":str(run_base),"evidence_root":str(OUT_ROOT),"completed":len(results),"errors":errors,"buckets":buckets,"source_root":SOURCE_ROOT,"source_locks":SOURCE_LOCKS,"results":results}
+ manifest={"schema":"pass173_source_portrait_route_gate_probe.v3","originalArchive":"caller-supplied original media","staging":"caller-selected scratch root (removed after capture)","evidence_root":published_path(OUT_ROOT),"completed":len(results),"errors":errors,"buckets":buckets,"source_root":SOURCE_ROOT,"source_locks":SOURCE_LOCKS,"results":results}
  (OUT_ROOT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
  bucket_text=', '.join(f'{k}={v}' for k,v in sorted(buckets.items())) or 'none'
- lines=["# Pass 173 / pass 4 — gated source portrait route probe","",f"- run base: `{run_base}`",f"- evidence root: `{OUT_ROOT}`",f"- completed: {len(results)}",f"- errors: {len(errors)}",f"- buckets: {bucket_text}",f"- ReDMCSB source root: `{SOURCE_ROOT}`","","## ReDMCSB source audit","", "This pass is source-first. The runtime clicks below are derived from these ReDMCSB anchors, not from emulator guessing.",""]
+ lines=["# Pass 173 / pass 4 — gated source portrait route probe","",f"- evidence root: `{published_path(OUT_ROOT)}`",f"- completed: {len(results)}",f"- errors: {len(errors)}",f"- buckets: {bucket_text}",f"- ReDMCSB source root: `{SOURCE_ROOT}`","","## ReDMCSB source audit","", "This pass is source-first. The runtime clicks below are derived from these ReDMCSB anchors, not from emulator guessing.",""]
  for s in SOURCE_LOCKS: lines.append(f"- `{s['file']}:{s['lines']}` — {s['point']}")
  lines += ["","## Route precondition","","- DM1 V1 initial party: map0 x=1 y=3 dir=South.","- Front wall square: map0 x=1 y=4 contains sensor 16 type C127 wall champion portrait.","- Therefore no movement is required; only entrance gate must be passed before clicking x=111,y=82.","","## Results",""]
  for r in results: lines.append(f"- `{r['name']}`: **{r['classification']}** — {r['reason']} — `{r['evidence_dir']}`")

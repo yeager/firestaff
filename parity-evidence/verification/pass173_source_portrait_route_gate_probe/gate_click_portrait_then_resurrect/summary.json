@@ -1,8 +1,8 @@
 {
   "name": "gate_click_portrait_then_resurrect",
   "choice": "C160 resurrect",
-  "classification": "blocked/static-no-party-after-gate",
-  "reason": "known no-party hash present after gate: 48ed3743ab6a",
+  "classification": "candidate-transition-visible",
+  "reason": "gated dungeon portrait click and choice both produced visible transitions",
   "source_locks": [
     {
       "file": "DUNGEON.DAT via pass4 helper",
@@ -75,30 +75,37 @@
   },
   "route_evidence": {
     "hashes": [
-      "ceb0c2eec633",
-      "014ed52c71a0",
-      "014ed52c71a0",
-      "014ed52c71a0",
-      "3ad66a894ed8",
-      "28907074b501",
-      "6d24a74adfe4",
-      "17bd7e878157",
-      "17bd7e878157",
-      "48ed3743ab6a",
-      "48ed3743ab6a",
-      "48ed3743ab6a",
-      "48ed3743ab6a",
-      "48ed3743ab6a",
-      "48ed3743ab6a"
+      "11346390b768",
+      "43cd6de36763",
+      "33422ad98376",
+      "33422ad98376",
+      "56dd208f3c32",
+      "12584dd63196",
+      "0f9958d71b20",
+      "d4ed6ef5e508",
+      "20a504c7de54",
+      "20a504c7de54",
+      "20a504c7de54",
+      "30a6a0da0257",
+      "2b15e0fb8326",
+      "6f53a3244df2",
+      "c41310423642",
+      "6f53a3244df2",
+      "6f53a3244df2"
     ],
     "unique_hashes": [
-      "014ed52c71a0",
-      "17bd7e878157",
-      "28907074b501",
-      "3ad66a894ed8",
-      "48ed3743ab6a",
-      "6d24a74adfe4",
-      "ceb0c2eec633"
+      "0f9958d71b20",
+      "11346390b768",
+      "12584dd63196",
+      "20a504c7de54",
+      "2b15e0fb8326",
+      "30a6a0da0257",
+      "33422ad98376",
+      "43cd6de36763",
+      "56dd208f3c32",
+      "6f53a3244df2",
+      "c41310423642",
+      "d4ed6ef5e508"
     ],
     "classes": [
       "entrance_menu",
@@ -110,6 +117,8 @@
       "entrance_menu",
       "entrance_menu",
       "entrance_menu",
+      "entrance_menu",
+      "entrance_menu",
       "dungeon_gameplay",
       "dungeon_gameplay",
       "dungeon_gameplay",
@@ -117,28 +126,31 @@
       "dungeon_gameplay",
       "dungeon_gameplay"
     ],
-    "static_hits": [
-      "48ed3743ab6a"
-    ],
+    "static_hits": [],
     "diffs": [
       {
         "from": "initial",
         "to": "gate01",
         "bbox": [
-          245,
-          36,
-          256,
-          51
+          35,
+          25,
+          44,
+          37
         ],
-        "changed_pixels": 62,
-        "changed_ratio": 0.000969
+        "changed_pixels": 32,
+        "changed_ratio": 0.0005
       },
       {
         "from": "gate01",
         "to": "gate02",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          35,
+          25,
+          44,
+          37
+        ],
+        "changed_pixels": 27,
+        "changed_ratio": 0.000422
       },
       {
         "from": "gate02",
@@ -151,13 +163,13 @@
         "from": "gate03",
         "to": "gate04",
         "bbox": [
-          0,
-          0,
-          320,
-          200
+          17,
+          25,
+          318,
+          146
         ],
-        "changed_pixels": 64000,
-        "changed_ratio": 1.0
+        "changed_pixels": 4202,
+        "changed_ratio": 0.065656
       },
       {
         "from": "gate04",
@@ -168,20 +180,20 @@
           320,
           200
         ],
-        "changed_pixels": 38194,
-        "changed_ratio": 0.596781
+        "changed_pixels": 64000,
+        "changed_ratio": 1.0
       },
       {
         "from": "gate05",
         "to": "gate06",
         "bbox": [
           0,
-          33,
-          233,
-          194
+          0,
+          320,
+          200
         ],
-        "changed_pixels": 21746,
-        "changed_ratio": 0.339781
+        "changed_pixels": 37585,
+        "changed_ratio": 0.587266
       },
       {
         "from": "gate06",
@@ -192,19 +204,38 @@
           233,
           194
         ],
-        "changed_pixels": 7395,
-        "changed_ratio": 0.115547
+        "changed_pixels": 20719,
+        "changed_ratio": 0.323734
       },
       {
         "from": "gate07",
         "to": "gate08",
+        "bbox": [
+          0,
+          33,
+          233,
+          194
+        ],
+        "changed_pixels": 10088,
+        "changed_ratio": 0.157625
+      },
+      {
+        "from": "gate08",
+        "to": "gate09",
         "bbox": null,
         "changed_pixels": 0,
         "changed_ratio": 0.0
       },
       {
-        "from": "gate08",
-        "to": "gate09",
+        "from": "gate09",
+        "to": "gate10",
+        "bbox": null,
+        "changed_pixels": 0,
+        "changed_ratio": 0.0
+      },
+      {
+        "from": "gate10",
+        "to": "gate11",
         "bbox": [
           0,
           0,
@@ -215,32 +246,52 @@
         "changed_ratio": 0.461969
       },
       {
-        "from": "gate09",
+        "from": "gate11",
         "to": "after_portrait_click",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          112,
+          53,
+          259,
+          93
+        ],
+        "changed_pixels": 108,
+        "changed_ratio": 0.001687
       },
       {
         "from": "after_portrait_click",
         "to": "after_c160_resurrect",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          112,
+          79,
+          141,
+          127
+        ],
+        "changed_pixels": 151,
+        "changed_ratio": 0.002359
       },
       {
         "from": "after_c160_resurrect",
         "to": "after_confirm_return",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          130,
+          111,
+          141,
+          127
+        ],
+        "changed_pixels": 97,
+        "changed_ratio": 0.001516
       },
       {
         "from": "after_confirm_return",
         "to": "after_f1_probe",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          130,
+          111,
+          141,
+          127
+        ],
+        "changed_pixels": 97,
+        "changed_ratio": 0.001516
       },
       {
         "from": "after_f1_probe",
@@ -252,20 +303,30 @@
     ],
     "portrait_click_delta": [
       {
-        "from": "gate09",
+        "from": "gate11",
         "to": "after_portrait_click",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          112,
+          53,
+          259,
+          93
+        ],
+        "changed_pixels": 108,
+        "changed_ratio": 0.001687
       }
     ],
     "choice_delta": [
       {
         "from": "after_portrait_click",
         "to": "after_c160_resurrect",
-        "bbox": null,
-        "changed_pixels": 0,
-        "changed_ratio": 0.0
+        "bbox": [
+          112,
+          79,
+          141,
+          127
+        ],
+        "changed_pixels": 151,
+        "changed_ratio": 0.002359
       }
     ]
   },
@@ -275,24 +336,24 @@
       "index": 1,
       "label": "initial",
       "file": "image0001-initial.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0001-initial.png",
-      "sha12": "ceb0c2eec633",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0001-initial.png",
+      "sha12": "11346390b768",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            99.91,
+            99.92,
             64.92,
-            13.67
+            13.66
           ],
           "nonblack_ratio": 1.0
         },
         "right_panel": {
           "mean_rgb": [
-            67.67,
-            45.33,
-            13.26
+            67.18,
+            45.0,
+            13.23
           ],
           "nonblack_ratio": 1.0
         },
@@ -318,17 +379,17 @@
       "index": 2,
       "label": "gate01",
       "file": "image0002-gate01.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0002-gate01.png",
-      "sha12": "014ed52c71a0",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0002-gate01.png",
+      "sha12": "43cd6de36763",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            99.91,
-            64.92,
-            13.67
+            100.03,
+            65.0,
+            13.69
           ],
           "nonblack_ratio": 1.0
         },
@@ -362,17 +423,17 @@
       "index": 3,
       "label": "gate02",
       "file": "image0003-gate02.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0003-gate02.png",
-      "sha12": "014ed52c71a0",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0003-gate02.png",
+      "sha12": "33422ad98376",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            99.91,
-            64.92,
-            13.67
+            99.93,
+            64.93,
+            13.68
           ],
           "nonblack_ratio": 1.0
         },
@@ -406,17 +467,17 @@
       "index": 4,
       "label": "gate03",
       "file": "image0004-gate03.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0004-gate03.png",
-      "sha12": "014ed52c71a0",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0004-gate03.png",
+      "sha12": "33422ad98376",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            99.91,
-            64.92,
-            13.67
+            99.93,
+            64.93,
+            13.68
           ],
           "nonblack_ratio": 1.0
         },
@@ -450,43 +511,43 @@
       "index": 5,
       "label": "gate04",
       "file": "image0005-gate04.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0005-gate04.png",
-      "sha12": "3ad66a894ed8",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0005-gate04.png",
+      "sha12": "56dd208f3c32",
       "class": "graphics_320x200_unclassified",
       "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            0.0,
-            0.0,
-            0.0
+            77.61,
+            51.55,
+            13.27
           ],
-          "nonblack_ratio": 0.0
+          "nonblack_ratio": 1.0
         },
         "right_panel": {
           "mean_rgb": [
-            0.0,
-            0.0,
-            0.0
+            53.35,
+            36.7,
+            12.96
           ],
-          "nonblack_ratio": 0.0
+          "nonblack_ratio": 1.0
         },
         "lower_panel": {
           "mean_rgb": [
-            0.0,
-            0.0,
-            0.0
+            12.63,
+            12.0,
+            12.0
           ],
-          "nonblack_ratio": 0.0
+          "nonblack_ratio": 1.0
         },
         "candidate_buttons": {
           "mean_rgb": [
-            0.0,
-            0.0,
-            0.0
+            78.65,
+            27.81,
+            12.07
           ],
-          "nonblack_ratio": 0.0
+          "nonblack_ratio": 1.0
         }
       }
     },
@@ -494,43 +555,43 @@
       "index": 6,
       "label": "gate05",
       "file": "image0006-gate05.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0006-gate05.png",
-      "sha12": "28907074b501",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0006-gate05.png",
+      "sha12": "12584dd63196",
       "class": "graphics_320x200_unclassified",
       "reason": "320x200 graphics frame, but layout heuristics did not match a known class",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            51.3,
-            42.46,
-            35.78
+            0.0,
+            0.0,
+            0.0
           ],
-          "nonblack_ratio": 0.42263
+          "nonblack_ratio": 0.0
         },
         "right_panel": {
           "mean_rgb": [
-            139.35,
-            134.06,
-            81.24
+            0.0,
+            0.0,
+            0.0
           ],
-          "nonblack_ratio": 0.937883
+          "nonblack_ratio": 0.0
         },
         "lower_panel": {
           "mean_rgb": [
-            76.47,
-            96.84,
-            63.87
+            0.0,
+            0.0,
+            0.0
           ],
-          "nonblack_ratio": 0.638379
+          "nonblack_ratio": 0.0
         },
         "candidate_buttons": {
           "mean_rgb": [
-            56.54,
-            52.07,
-            48.99
+            0.0,
+            0.0,
+            0.0
           ],
-          "nonblack_ratio": 0.458444
+          "nonblack_ratio": 0.0
         }
       }
     },
@@ -538,43 +599,43 @@
       "index": 7,
       "label": "gate06",
       "file": "image0007-gate06.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0007-gate06.png",
-      "sha12": "6d24a74adfe4",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0007-gate06.png",
+      "sha12": "0f9958d71b20",
       "class": "entrance_menu",
-      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "reason": "sparse closed Entrance door plus colorful parchment command strip",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            101.24,
-            94.85,
-            89.78
+            50.14,
+            41.26,
+            34.54
           ],
-          "nonblack_ratio": 0.715664
+          "nonblack_ratio": 0.415441
         },
         "right_panel": {
           "mean_rgb": [
-            139.22,
-            133.92,
-            81.1
+            139.36,
+            134.07,
+            81.25
           ],
-          "nonblack_ratio": 0.936045
+          "nonblack_ratio": 0.938036
         },
         "lower_panel": {
           "mean_rgb": [
-            128.74,
-            151.37,
-            120.43
+            72.63,
+            92.91,
+            59.85
           ],
-          "nonblack_ratio": 0.894434
+          "nonblack_ratio": 0.619238
         },
         "candidate_buttons": {
           "mean_rgb": [
-            103.23,
-            102.14,
-            101.35
+            54.78,
+            50.08,
+            46.88
           ],
-          "nonblack_ratio": 0.749146
+          "nonblack_ratio": 0.448767
         }
       }
     },
@@ -582,43 +643,43 @@
       "index": 8,
       "label": "gate07",
       "file": "image0008-gate07.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0008-gate07.png",
-      "sha12": "17bd7e878157",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0008-gate07.png",
+      "sha12": "d4ed6ef5e508",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            122.0,
-            116.57,
-            112.06
+            92.67,
+            86.1,
+            80.9
           ],
-          "nonblack_ratio": 0.816406
+          "nonblack_ratio": 0.672663
         },
         "right_panel": {
           "mean_rgb": [
-            143.85,
-            137.4,
-            83.43
+            139.33,
+            134.05,
+            81.25
           ],
-          "nonblack_ratio": 0.965763
+          "nonblack_ratio": 0.937806
         },
         "lower_panel": {
           "mean_rgb": [
-            147.52,
-            170.89,
-            140.37
+            122.28,
+            144.27,
+            112.88
           ],
-          "nonblack_ratio": 0.988965
+          "nonblack_ratio": 0.864355
         },
         "candidate_buttons": {
           "mean_rgb": [
-            130.79,
-            130.58,
-            130.37
+            95.27,
+            94.07,
+            93.18
           ],
-          "nonblack_ratio": 0.882827
+          "nonblack_ratio": 0.707685
         }
       }
     },
@@ -626,8 +687,8 @@
       "index": 9,
       "label": "gate08",
       "file": "image0009-gate08.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0009-gate08.png",
-      "sha12": "17bd7e878157",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0009-gate08.png",
+      "sha12": "20a504c7de54",
       "class": "entrance_menu",
       "reason": "dungeon entrance/menu controls still occupy the right column",
       "phase": "gate",
@@ -670,10 +731,98 @@
       "index": 10,
       "label": "gate09",
       "file": "image0010-gate09.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0010-gate09.png",
-      "sha12": "48ed3743ab6a",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0010-gate09.png",
+      "sha12": "20a504c7de54",
+      "class": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "phase": "gate",
+      "crop_stats": {
+        "viewport": {
+          "mean_rgb": [
+            122.0,
+            116.57,
+            112.06
+          ],
+          "nonblack_ratio": 0.816406
+        },
+        "right_panel": {
+          "mean_rgb": [
+            143.85,
+            137.4,
+            83.43
+          ],
+          "nonblack_ratio": 0.965763
+        },
+        "lower_panel": {
+          "mean_rgb": [
+            147.52,
+            170.89,
+            140.37
+          ],
+          "nonblack_ratio": 0.988965
+        },
+        "candidate_buttons": {
+          "mean_rgb": [
+            130.79,
+            130.58,
+            130.37
+          ],
+          "nonblack_ratio": 0.882827
+        }
+      }
+    },
+    {
+      "index": 11,
+      "label": "gate10",
+      "file": "image0011-gate10.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0011-gate10.png",
+      "sha12": "20a504c7de54",
+      "class": "entrance_menu",
+      "reason": "dungeon entrance/menu controls still occupy the right column",
+      "phase": "gate",
+      "crop_stats": {
+        "viewport": {
+          "mean_rgb": [
+            122.0,
+            116.57,
+            112.06
+          ],
+          "nonblack_ratio": 0.816406
+        },
+        "right_panel": {
+          "mean_rgb": [
+            143.85,
+            137.4,
+            83.43
+          ],
+          "nonblack_ratio": 0.965763
+        },
+        "lower_panel": {
+          "mean_rgb": [
+            147.52,
+            170.89,
+            140.37
+          ],
+          "nonblack_ratio": 0.988965
+        },
+        "candidate_buttons": {
+          "mean_rgb": [
+            130.79,
+            130.58,
+            130.37
+          ],
+          "nonblack_ratio": 0.882827
+        }
+      }
+    },
+    {
+      "index": 12,
+      "label": "gate11",
+      "file": "image0012-gate11.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0012-gate11.png",
+      "sha12": "30a6a0da0257",
       "class": "dungeon_gameplay",
-      "reason": "viewport content with mostly dark in-game right column",
+      "reason": "dense low-color dungeon viewport with dark action region and source movement strip",
       "phase": "gate",
       "crop_stats": {
         "viewport": {
@@ -714,29 +863,29 @@
       "phase": "click",
       "x": 111,
       "y": 82,
-      "index": 11,
+      "index": 13,
       "label": "after_portrait_click",
-      "file": "image0011-after_portrait_click.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0011-after_portrait_click.png",
-      "sha12": "48ed3743ab6a",
+      "file": "image0013-after_portrait_click.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0013-after_portrait_click.png",
+      "sha12": "2b15e0fb8326",
       "class": "dungeon_gameplay",
-      "reason": "viewport content with mostly dark in-game right column",
+      "reason": "dense low-color dungeon viewport with dark action region and source movement strip",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            103.45,
-            103.45,
-            103.45
+            103.9,
+            103.9,
+            103.9
           ],
-          "nonblack_ratio": 0.682314
+          "nonblack_ratio": 0.684086
         },
         "right_panel": {
           "mean_rgb": [
-            1.05,
-            5.68,
-            5.68
+            0.0,
+            4.63,
+            4.63
           ],
-          "nonblack_ratio": 0.025276
+          "nonblack_ratio": 0.02114
         },
         "lower_panel": {
           "mean_rgb": [
@@ -748,11 +897,11 @@
         },
         "candidate_buttons": {
           "mean_rgb": [
-            129.94,
-            129.94,
-            129.94
+            131.23,
+            131.23,
+            131.23
           ],
-          "nonblack_ratio": 0.876376
+          "nonblack_ratio": 0.881404
         }
       }
     },
@@ -760,29 +909,29 @@
       "phase": "click",
       "x": 130,
       "y": 115,
-      "index": 12,
+      "index": 14,
       "label": "after_c160_resurrect",
-      "file": "image0012-after_c160_resurrect.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0012-after_c160_resurrect.png",
-      "sha12": "48ed3743ab6a",
+      "file": "image0014-after_c160_resurrect.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0014-after_c160_resurrect.png",
+      "sha12": "6f53a3244df2",
       "class": "dungeon_gameplay",
-      "reason": "viewport content with mostly dark in-game right column",
+      "reason": "dense low-color dungeon viewport with dark action region and source movement strip",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            103.45,
-            103.45,
-            103.45
+            103.47,
+            103.47,
+            103.47
           ],
-          "nonblack_ratio": 0.682314
+          "nonblack_ratio": 0.680902
         },
         "right_panel": {
           "mean_rgb": [
-            1.05,
-            5.68,
-            5.68
+            0.0,
+            4.63,
+            4.63
           ],
-          "nonblack_ratio": 0.025276
+          "nonblack_ratio": 0.02114
         },
         "lower_panel": {
           "mean_rgb": [
@@ -794,24 +943,24 @@
         },
         "candidate_buttons": {
           "mean_rgb": [
-            129.94,
-            129.94,
-            129.94
+            130.01,
+            130.01,
+            130.01
           ],
-          "nonblack_ratio": 0.876376
+          "nonblack_ratio": 0.872296
         }
       }
     },
     {
       "phase": "key",
       "value": "Return",
-      "index": 13,
+      "index": 15,
       "label": "after_confirm_return",
-      "file": "image0013-after_confirm_return.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0013-after_confirm_return.png",
-      "sha12": "48ed3743ab6a",
+      "file": "image0015-after_confirm_return.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0015-after_confirm_return.png",
+      "sha12": "c41310423642",
       "class": "dungeon_gameplay",
-      "reason": "viewport content with mostly dark in-game right column",
+      "reason": "dense low-color dungeon viewport with dark action region and source movement strip",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
@@ -823,11 +972,11 @@
         },
         "right_panel": {
           "mean_rgb": [
-            1.05,
-            5.68,
-            5.68
+            0.0,
+            4.63,
+            4.63
           ],
-          "nonblack_ratio": 0.025276
+          "nonblack_ratio": 0.02114
         },
         "lower_panel": {
           "mean_rgb": [
@@ -850,29 +999,29 @@
     {
       "phase": "key",
       "value": "F1",
-      "index": 14,
+      "index": 16,
       "label": "after_f1_probe",
-      "file": "image0014-after_f1_probe.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0014-after_f1_probe.png",
-      "sha12": "48ed3743ab6a",
+      "file": "image0016-after_f1_probe.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0016-after_f1_probe.png",
+      "sha12": "6f53a3244df2",
       "class": "dungeon_gameplay",
-      "reason": "viewport content with mostly dark in-game right column",
+      "reason": "dense low-color dungeon viewport with dark action region and source movement strip",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            103.45,
-            103.45,
-            103.45
+            103.47,
+            103.47,
+            103.47
           ],
-          "nonblack_ratio": 0.682314
+          "nonblack_ratio": 0.680902
         },
         "right_panel": {
           "mean_rgb": [
-            1.05,
-            5.68,
-            5.68
+            0.0,
+            4.63,
+            4.63
           ],
-          "nonblack_ratio": 0.025276
+          "nonblack_ratio": 0.02114
         },
         "lower_panel": {
           "mean_rgb": [
@@ -884,40 +1033,40 @@
         },
         "candidate_buttons": {
           "mean_rgb": [
-            129.94,
-            129.94,
-            129.94
+            130.01,
+            130.01,
+            130.01
           ],
-          "nonblack_ratio": 0.876376
+          "nonblack_ratio": 0.872296
         }
       }
     },
     {
       "phase": "key",
       "value": "F4",
-      "index": 15,
+      "index": 17,
       "label": "after_f4_probe",
-      "file": "image0015-after_f4_probe.png",
-      "path": "<firestaff-data>/firestaff-n2-runs/20260429-080530-pass173-source-portrait-route-gate-probe/gate_click_portrait_then_resurrect/image0015-after_f4_probe.png",
-      "sha12": "48ed3743ab6a",
+      "file": "image0017-after_f4_probe.png",
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0017-after_f4_probe.png",
+      "sha12": "6f53a3244df2",
       "class": "dungeon_gameplay",
-      "reason": "viewport content with mostly dark in-game right column",
+      "reason": "dense low-color dungeon viewport with dark action region and source movement strip",
       "crop_stats": {
         "viewport": {
           "mean_rgb": [
-            103.45,
-            103.45,
-            103.45
+            103.47,
+            103.47,
+            103.47
           ],
-          "nonblack_ratio": 0.682314
+          "nonblack_ratio": 0.680902
         },
         "right_panel": {
           "mean_rgb": [
-            1.05,
-            5.68,
-            5.68
+            0.0,
+            4.63,
+            4.63
           ],
-          "nonblack_ratio": 0.025276
+          "nonblack_ratio": 0.02114
         },
         "lower_panel": {
           "mean_rgb": [
@@ -929,11 +1078,11 @@
         },
         "candidate_buttons": {
           "mean_rgb": [
-            129.94,
-            129.94,
-            129.94
+            130.01,
+            130.01,
+            130.01
           ],
-          "nonblack_ratio": 0.876376
+          "nonblack_ratio": 0.872296
         }
       }
     }

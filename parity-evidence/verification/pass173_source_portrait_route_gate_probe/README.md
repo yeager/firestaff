@@ -1,11 +1,10 @@
 # Pass 173 / pass 4 — gated source portrait route probe
 
-- run base: `/dev/shm/firestaff-pass173-runs/20260905-173237-pass173-source-portrait-route-gate-probe`
 - evidence root: `parity-evidence/verification/pass173_source_portrait_route_gate_probe`
-- completed: 0
-- errors: 2
-- buckets: none
-- ReDMCSB source root: `~/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z::Toolchains/Common/Source`
+- completed: 1
+- errors: 1
+- buckets: blocked/portrait-click-no-visible-delta=1
+- ReDMCSB source root: `reference/redmcsb-20210206/Toolchains/Common/Source`
 
 ## ReDMCSB source audit
 
@@ -30,8 +29,8 @@ This pass is source-first. The runtime clicks below are derived from these ReDMC
 
 ## Results
 
+- `gate_click_portrait_then_reincarnate`: **blocked/portrait-click-no-visible-delta** — gated portrait click did not produce a panel-scale candidate transition — `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate`
 
 ## Errors
 
-- `gate_click_portrait_then_resurrect`: timed out waiting for screenshot initial; before=[] latest=None
-- `gate_click_portrait_then_reincarnate`: timed out waiting for screenshot initial; before=[] latest=None
+- `gate_click_portrait_then_resurrect`: state gate never observed dungeon_gameplay
