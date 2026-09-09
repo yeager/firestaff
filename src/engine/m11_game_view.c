@@ -25828,11 +25828,9 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                      entry->gameId);
     spec.csbUtilitySearchDir = M12_AssetStatus_GetDataDir(&menuState->assetStatus);
-    /* Direct CLI launch has no M12 game-version picker to discover a
-     * companion.  Preserve its explicit path until the selected FM Towns
-     * branch validates the canonical PC-English hash in RAM.  An automatic
-     * M12 companion discovered below may only fill an empty field; it must
-     * never replace an explicit user selection. */
+    /* Preserve an explicitly requested optional companion.  FM Towns never
+     * discovers a sibling archive: without this CLI/menu setting, its own
+     * GDAT-keyed l10n bridge remains the sole text source. */
     if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
         menuState->dm2EnglishCompanionPath[0] != '\0') {
         spec.dm2EnglishCompanionPath = menuState->dm2EnglishCompanionPath;
