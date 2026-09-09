@@ -442,7 +442,7 @@ int main(void)
         expected_utility_initial_eip = 65024u;
     } else {
         fprintf(stderr, "SKIP: unsupported FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE\n");
-        return 0;
+        return 77;
     }
     memset(materialized_data_dir, 0, sizeof(materialized_data_dir));
     memset(&asset_status, 0, sizeof(asset_status));
@@ -453,7 +453,7 @@ int main(void)
                 sizeof(materialized_data_dir))) {
             fprintf(stderr, "SKIP: verified loose FM Towns %s CD root unavailable\n",
                     version_id);
-            return 0;
+            return 77;
         }
         CHECK(strstr(materialized_data_dir, "asset-cache") == NULL,
               "F31 retains the selected verified source package");
@@ -480,7 +480,7 @@ int main(void)
                 sizeof(materialized_data_dir))) {
             fprintf(stderr, "SKIP: verified FM Towns %s archive unavailable\n",
                     version_id);
-            return 0;
+            return 77;
         }
         data_dir = materialized_data_dir;
     }
@@ -488,7 +488,7 @@ int main(void)
         puts("SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR, "
              "FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR or "
              "FIRESTAFF_CSB_FMTOWNS_ARCHIVE_DATA_DIR not set");
-        return 0;
+        return 77;
     }
     memset(&spec, 0, sizeof(spec));
     spec.gameId = "csb";

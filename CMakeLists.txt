@@ -55750,19 +55750,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handof
     add_test(NAME csb_v1_fmtowns_m11_game_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_m11_game_handoff PROPERTIES
-        LABELS "csb;fmtowns;real_data;m11")
+        LABELS "csb;fmtowns;real_data;m11"
+        SKIP_RETURN_CODE 77)
     add_test(NAME csb_v1_fmtowns_en_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_en_m11_real_media_handoff PROPERTIES
         LABELS "csb;fmtowns;english;m11;handoff;packed-archive;in-memory;real-data;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 120)
+        TIMEOUT 120
+        SKIP_RETURN_CODE 77)
     add_test(NAME csb_v1_fmtowns_ja_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_ja_m11_real_media_handoff PROPERTIES
         LABELS "csb;fmtowns;japanese;m11;handoff;packed-archive;in-memory;real-data;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 120)
+        TIMEOUT 120
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_user_save_corpus.c")
