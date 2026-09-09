@@ -21,10 +21,55 @@ fi
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 menu_capture=$(mktemp -d "$scratch_root/dm2-dos-menu.XXXXXX")
+intro_capture=$(mktemp -d "$scratch_root/dm2-dos-intro.XXXXXX")
 cleanup_menu_capture() {
     find "$menu_capture" -depth -delete
+    find "$intro_capture" -depth -delete
 }
 trap cleanup_menu_capture EXIT HUP INT TERM
+
+# IBMIOP owns the DOS INTRO before SKULL reaches SHOW_MENU_SCREEN. Capture
+# the first actually presented source page separately from the later static
+# menu: a menu-only non-black test cannot see an RGB6-to-RGB8 double expansion
+# or a stale palette inherited from a preceding title owner.
+intro_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$intro_capture" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game dm2 --platform pc --data-dir "$archive" --duration 1 2>&1) || {
+    printf '%s\n' "$intro_output" >&2
+    exit 1
+}
+python3 - "$intro_capture" <<'PY'
+from hashlib import sha256
+from pathlib import Path
+import struct
+import sys
+
+frames = list(Path(sys.argv[1]).glob("*.bmp"))
+if len(frames) != 1:
+    raise SystemExit("FAIL: expected one DM2 DOS INTRO presentation capture")
+blob = frames[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM2 DOS INTRO capture is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if (width, height, bits) != (320, 200, 24) or offset + stride * height != len(blob):
+    raise SystemExit("FAIL: invalid DM2 DOS INTRO capture geometry")
+
+# This is the complete visible RGB payload derived from the hash-admitted
+# retail INTRO stream at source time zero; it stores no game art in Git.
+digest = sha256(blob[offset:]).hexdigest()
+expected = "d0c0fa5670a63c09c8a8ee81e6ee8d1cf827cba708794754d8e0f93e49b706d4"
+if digest != expected:
+    raise SystemExit(
+        "FAIL: DM2 DOS INTRO palette/pixels changed "
+        f"(expected {expected}, got {digest})")
+print(f"PASS: DM2 DOS INTRO presented RGB palette digest={digest}")
+PY
+
 menu_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$menu_capture" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
