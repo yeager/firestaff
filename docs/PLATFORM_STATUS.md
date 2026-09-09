@@ -60,12 +60,18 @@ Macintosh route specifically covers the retail ZIP's native title, mirror
 selection and observed input matrix. As elsewhere in this document, this is
 bounded startup/runtime evidence rather than a complete parity assertion.
 
-On 2026-09-09 the current native build re-ran focused real-media gates that
-cover the DM1 PC 3.4 Hall of Champions candidate panel, CSB FM Towns entrance
-palette and `MINI.DAT` bootstrap pose, DM2 DOS New Game and FM Towns title/
-gameplay handoff, and Nexus retail MAPD title presentation. These checks
-confirm the stated bounded routes only. They do not turn an unrecorded
-campaign screen, save path, or visual comparison into a verified route.
+On 2026-09-09 the current native build was revalidated against only supplied,
+unmodified game containers. `dm1_v1_fmtowns_archive_cli_boot` reached the
+FM Towns `TMENU` → `EDM`/`JDM` handoff, entrance, English/Japanese input
+matrix and a captured F20 frame. CSB passed
+`csb_v1_atari_stx_native_cli_boot`, `csb_v1_amiga_adf_archive_cli_boot` and
+`csb_v1_fmtowns_native_cli_boot`; the latter checks the C28 palette with the
+C002/C003 closed-prison composition and the `MINI.DAT` map 4, party 22/18/2
+bootstrap pose. DM2's real FM Towns media passed its title, gameplay and
+corpus gates. Nexus passed real `TITLE.CG`/`MAPD` title admission and its
+startup handoff gates. Theron passed Japanese raw track-02 intake, level-block
+and later-dungeon gates, plus the Japanese CUE boot route. These are bounded
+route receipts, not a claim of complete campaign, save, audio or pixel parity.
 
 ## Dungeon Master
 
