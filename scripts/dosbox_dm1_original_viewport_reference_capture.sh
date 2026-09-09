@@ -684,17 +684,20 @@ xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
 # to reach the focused SDL application, but host screenshots and mouse
 # geometry must never retain the now-invalid pre-transfer window ID.
 refresh_window() {
-    if xdotool getwindowgeometry --shell "$window" >/dev/null 2>&1; then
-        return
+    if ! xdotool getwindowgeometry --shell "$window" >/dev/null 2>&1; then
+        window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
+        if [[ -z "$window" ]]; then
+            echo "ERROR: DOSBox X11 window disappeared and could not be reacquired for pid $pid" >&2
+            exit 3
+        fi
+        echo "dosbox-window-reacquired $window"
     fi
-    window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
-    if [[ -z "$window" ]]; then
-        echo "ERROR: DOSBox X11 window disappeared and could not be reacquired for pid $pid" >&2
-        exit 3
-    fi
+    # A global XTest event follows the X input focus, not ``window``.  Long
+    # original routes include host mouse motion and screenshot shortcuts, so
+    # explicitly restore focus before every such action rather than assuming
+    # the initial activation survived the previous token.
     xdotool windowactivate --sync "$window" >/dev/null 2>&1 || true
     xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
-    echo "dosbox-window-reacquired $window"
 }
 
 case "$input_mode" in
@@ -717,6 +720,7 @@ tap_key() {
     # focused X11 event at the root input device, like physical keyboard input.
     # It is capture tooling only; Firestaff never invokes xdotool at runtime.
     if [[ "$input_mode" == "global" ]]; then
+        refresh_window
         xdotool key "$key"
     else
         xdotool key --window "$window" "$key"
@@ -765,6 +769,7 @@ PY
     # lose its window beneath the binding itself.  Match the physical-style
     # global route-input mode for this host binding as well.
     if [[ "$input_mode" == "global" ]]; then
+        refresh_window
         xdotool key "$screenshot_hotkey"
     else
         xdotool key --window "$window" "$screenshot_hotkey"
