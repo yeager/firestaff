@@ -679,6 +679,24 @@ fi
 xdotool windowactivate --sync "$window" >/dev/null 2>&1 || true
 xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
 
+# DOSBox-X recreates its SDL window while transferring from Entrance into the
+# game loop on some Linux/X11 builds.  Route keys in ``global`` mode continue
+# to reach the focused SDL application, but host screenshots and mouse
+# geometry must never retain the now-invalid pre-transfer window ID.
+refresh_window() {
+    if xdotool getwindowgeometry --shell "$window" >/dev/null 2>&1; then
+        return
+    fi
+    window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
+    if [[ -z "$window" ]]; then
+        echo "ERROR: DOSBox X11 window disappeared and could not be reacquired for pid $pid" >&2
+        exit 3
+    fi
+    xdotool windowactivate --sync "$window" >/dev/null 2>&1 || true
+    xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
+    echo "dosbox-window-reacquired $window"
+}
+
 case "$input_mode" in
     window|global) ;;
     *)
@@ -707,6 +725,7 @@ tap_key() {
 }
 
 shot() {
+    refresh_window
     if [[ "$capture_backend" == "host" ]]; then
         local host_raw host_out
         host_capture_index=$((host_capture_index + 1))
@@ -748,6 +767,7 @@ PY
 click_original_frame() {
     local x="$1" y="$2" button="${3:-1}"
     local geom gx gy gw gh px py
+    refresh_window
     geom="$(xdotool getwindowgeometry --shell "$window")"
     eval "$geom"
     gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
