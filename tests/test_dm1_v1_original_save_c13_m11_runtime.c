@@ -133,7 +133,12 @@ int main(void)
 
     CHECK(state.world.gameTick == 7u,
           "M11 movement path advances the source timeline clock");
-    CHECK(firstThing[0] == THING_ENDOFLIST,
+    /* F0164 removes an empty compact-SFT entry and clears the source square
+     * list flag; the old backing word is not a valid post-unlink observer.
+     * Ask the same F0511 accessor that F0255 uses instead. */
+    CHECK(F0511_DUNGEON_GetSquareFirstThing_Compat(
+              &dungeon, &things, 0, 0, 0) == THING_ENDOFLIST &&
+              (squareData[0] & DUNGEON_SQUARE_MASK_THING_LIST) == 0,
           "M11 C13 step 1 unlinks the authenticated bones record");
     CHECK(pending_rebirth_event_count(&state.world.timeline) == 0,
           "M11 C13 sequence consumes all source-backed transition steps");
