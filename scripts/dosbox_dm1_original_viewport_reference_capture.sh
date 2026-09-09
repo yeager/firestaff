@@ -91,9 +91,10 @@ Optional environment:
   DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
                     skip legacy graphics/sound/input selector keystrokes when
                     the DOSBox config launches 'DM VGA' directly
-  DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk'
+  DM1_ORIGINAL_PROGRAM='DM -vv -sn -pm'
                     override autoexec launch command; recommended for bypassing
-                    the original selector and entering VGA/no-sound/keyboard mode
+                    the original selector and entering VGA/no-sound/mouse mode.
+                    Use -pm for routes containing source-space click tokens.
                     directly. 'DM VGA' remains the default for legacy runs.
   DM1_ORIGINAL_EXPECTED_SHOTS=6
                     required raw screenshot count. Legacy overlay routes use 6.
@@ -140,7 +141,7 @@ Linux/N2 note:
 Honesty note:
   The route string must be validated against the original runtime state that
   corresponds to Firestaff's run_capture_screenshots.sh sequence.  This script
-  will not invent that route. Use DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' to
+  will not invent that route. Use DM1_ORIGINAL_PROGRAM='DM -vv -sn -pm' to
   bypass the text selector; audit raw captures before accepting references.
 EOF
 }
@@ -169,7 +170,7 @@ print_pass94_diagnostic() {
 
 OUT_DIR=\$PWD/verification-screens/pass94-hall-map-enter-diagnostic \\
 DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
-DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
+DM1_ORIGINAL_PROGRAM='DM -vv -sn -pm' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=5000 \\
 NEW_FILE_TIMEOUT_MS=6000 \\
@@ -210,7 +211,7 @@ print_pass435_hoc_route() {
 OUT_DIR=\$PWD/verification-screens/pass376-original-route \\
 DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
 DOSBOX=/usr/bin/dosbox \\
-DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\
+DM1_ORIGINAL_PROGRAM='DM -vv -sn -pm' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=3000 \\
 NEW_FILE_TIMEOUT_MS=6000 \\
