@@ -26,6 +26,20 @@ The original frames remain outside Git with the legally-owned game media.
 The route transcript records the close-panel click, keypad-forward attempt,
 and keypad-right turn before their corresponding capture points.
 
+## Right-facing forward pair
+
+A second original transaction begins at the right-facing fourth state above.
+Its first forward command produces a changed viewport; the immediate second
+forward command leaves that new view unchanged. This is useful observational
+movement evidence, but no coordinate or collision meaning is inferred from
+the screenshots alone.
+
+| Frame | Observed original state | SHA-256 |
+| --- | --- | --- |
+| 1 | Right-facing viewport before forward command | `fb675195bec0857f09332b1026f04aa680af7e44cd6898aa299fafac6ea04cbd` |
+| 2 | Viewport after first forward command; composition changed | `508ac8830b0b291519433fdd4f1211a159c9be833cdb747306d5c5fef13ee194` |
+| 3 | Viewport after immediate second forward command; composition retained | `b86538a80fcee110520d9d762bb9dfb0269b1e94dd156326ad816cebcc583cb5` |
+
 ## Remaining work
 
 Additional original routes must still cover successful movement, floor pickup,
