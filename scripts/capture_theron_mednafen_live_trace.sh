@@ -742,6 +742,7 @@ APPLESCRIPT
 }
 
 trace_dir=$(dirname -- "$trace")
+capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$PWD/.codex-scratch"}
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 input_trace="${trace}.input"
@@ -769,9 +770,9 @@ if [[ -n "$replay_input_script" ]] &&
     exit 1
 fi
 
-mkdir -p "$trace_dir"
+mkdir -p "$trace_dir" "$capture_scratch_root"
 rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_io_trace" "$transition_receipt" "$stage2_system_card_receipt"
-home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
+home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
     # The configured home is an input-map template, never the live capture
