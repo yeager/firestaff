@@ -159,6 +159,22 @@ def classify(regions: dict[str, RegionStats], dims: tuple[int, int]) -> tuple[st
     spell = regions["spell_area"]
     inventory = regions["inventory_extent"]
 
+    # The closed Entrance door is intentionally sparse in the left viewport:
+    # its large black door wings dominate that region, while the parchment
+    # command strip fills the right column.  It is not title art.  Recognize
+    # this layout before the older broad title/menu guard, otherwise an
+    # authentic PC 3.4 Entrance capture is mislabeled and cannot satisfy the
+    # C407 handoff evidence contract.
+    if (
+        0.15 <= viewport.nonblack_ratio < 0.40
+        and viewport.color_ratio < 0.12
+        and right_col.nonblack_ratio > 0.70
+        and right_col.color_ratio > 0.20
+        and right_action.nonblack_ratio > 0.70
+        and regions["title_top"].nonblack_ratio > 0.40
+    ):
+        return "entrance_menu", "sparse closed Entrance door plus colorful parchment command strip"
+
     # TITLE/menu frames fill the right-side game UI coordinates with colorful
     # title/menu art while the DM viewport area is comparatively sparse/dark.
     if viewport.nonblack_ratio < 0.40 and right_col.nonblack_ratio > 0.70 and right_col.color_ratio > 0.20:
@@ -357,6 +373,17 @@ def run_self_test() -> int:
         "inventory_extent": _stats(0.55, 0.07, 12),
     })
     cases.append(("entrance menu", entrance, "entrance_menu"))
+
+    closed_entrance = dict(base)
+    closed_entrance.update({
+        "viewport": _stats(0.2263, 0.0711, 5, 30.83),
+        "right_column": _stats(0.9312, 0.8713, 16, 49.02),
+        "right_action": _stats(0.8966, 0.8766, 12, 57.21),
+        "spell_area": _stats(0.9168, 0.9149, 11, 50.13),
+        "inventory_extent": _stats(0.2545, 0.0742, 5, 31.86),
+        "title_top": _stats(0.5526, 0.4793, 8, 60.32),
+    })
+    cases.append(("closed Entrance door", closed_entrance, "entrance_menu"))
 
     spell = dict(base)
     spell.update({
