@@ -15074,6 +15074,12 @@ static void m11_dm1_c13_visible_runtime_handoff_bind(
             !receipt->roundtrip_receipts_committed ||
             !receipt->c13_visible_runtime_m11_handoff_receipt_available ||
             !receipt->c13_visible_runtime_m11_handoff_valid ||
+            !receipt->c13_visible_runtime_m11_lifecycle_receipt_available ||
+            !receipt->c13_visible_runtime_m11_lifecycle_valid ||
+            receipt->c13_visible_runtime_m11_admission_revoked ||
+            receipt->c13_visible_runtime_m11_revoke_reason !=
+                DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_NONE ||
+            receipt->c13_visible_runtime_m11_lifecycle_fingerprint == 0u ||
             receipt->c13_visible_runtime_m11_handoff_fingerprint == 0u ||
             receipt->c13_visible_runtime_m11_handoff_game_tick !=
                 state->world.gameTick ||
