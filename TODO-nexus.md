@@ -55,10 +55,19 @@ title-menu ownership.  It must therefore not enable the native title renderer.
   `0x06095298`; the frame-13460 witness is hash
   `f700206629eaf6f37dd750271b3a76371d11bd80a2b1abcf79224337f8dbb672`.
   The capture also binds the visible NBG1 name-table and character lanes,
-  but the table's producer and retail-file/CD-to-RAM provenance are not yet
-  established. Treat `0x060856f0` as an observed generic VDP2-table copier,
-  not as title asset ownership; trace writes into `0x06095278..0x06095298`
-  before admitting presentation.
+  but the table did not initially establish a final title asset identity.
+  Treat `0x060856f0` as an observed generic VDP2-table copier, not as title
+  asset ownership.
+  That RAM-table provenance trace is now present in
+  `title-vdp2-table-provenance-20260909`: the state word at `0x06095298`
+  is updated by retail SH-2 code `0x06084784..0x06084956` with source LBA
+  `0x17c9` (6089), the terminal sector in the already verified TITLE.BIN
+  MAPD plane-transfer range. The separate real-media MAPD verifier confirms
+  its five plane transfers at frames 13294, 13334, 13375, 13415 and 13455.
+  This establishes a CD→RAM→VDP2 control-table chain for that pre-title
+  NBG1 transition, but not a final composed title/menu asset identity:
+  retain `asset_consumer_identity=unbound` and trace the later NBG1 bitmap
+  state's distinct table/producer before enabling native title presentation.
   The current native integration has an additional fail-closed ownership gap:
   `Nexus_V1_Engine.startup_title_vdp_capture_verified` is consumed by the
   launcher receipts but has no assignment site. Add an authenticated capture
