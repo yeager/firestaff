@@ -1,34 +1,47 @@
-# DM2 V1 — Regression: What Has Broken in Recent Builds
+# DM2 V1 — Current Regression and Verification Status
 
-## Overview
+The 2026-04 stub inventory formerly at the top of this page is obsolete.
+Firestaff now reads supported original DM2 archives directly in memory, with
+no runtime emulator dependency and no game-data extraction to disk.
 
-DM2 V1 is a pre-Phase 1 stub codebase. There are no "recent builds" of a
-functional DM2 system to regress against — the 11 stub files in `src/dm2/`
-are skeleton implementations that have never been functional.
+## Verified native startup paths
 
-However, DM2 development shares infrastructure with DM1/CSB, and there are
-documented ways the shared Firestaff infrastructure can break DM2 V1 as it
-develops.
+| Platform | Retail input | Verified sequence | Result |
+| --- | --- | --- | --- |
+| DOS English | `Dungeon-Master-II-Skullkeep_DOS_EN.zip` | launcher card selection → title/menu → New Game → movement | Native runtime receipt reports `dm2RealAssets=1`, `dm2NoCoreFallbacks=1`, and `dm2FallbackDraws=0`. |
+| FM Towns Japanese | `Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip` | launcher card selection → regional title → New Game → dungeon choice → movement | Native runtime receipt reports the same no-fallback conditions from the Towns archive. |
+
+Run the real-media checks with:
+
+```sh
+bash tests/test_dm2_v1_dos_native_cli_boot.sh <firestaff>
+bash tests/test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff>
+```
+
+DOS owns its MVE/GDAT title and menu path.  FM Towns owns a distinct regional
+title path; after the source New Game click it shows its regional
+`Resume`/`New Game`/`Quit` menu.  A successful boot does not prove complete
+animation, palette, HUD, audio, save, or campaign parity.
+
+## Active parity work
+
+- Verify title-animation palette timing frame by frame against authenticated
+  original output for each supported revision.
+- Verify menu layout, highlights, cursor and transition cadence with
+  source-owned screenshot/capture comparisons.
+- Extend real-media interaction coverage for HUD, viewport, saves, audio and
+  platform-specific controls.
+- Establish equivalent native startup/gameplay evidence for Amiga and Mac.
+
+## Historical notes (superseded)
+
+The remaining sections are retained only for source-history context.  Their
+claims about DM2 being a stub or its menu being unable to launch are not
+current status.
 
 ---
 
-## 1. DM2-Specific "Regressions" (Expected by Design)
-
-These are not regressions in the traditional sense — they are Phase 1-7
-items that haven't been built yet. They are documented here so the team
-does not mistakenly identify them as regressions:
-
-| "Regressed" Behavior | Actually | Since |
-|---------------------|---------|-------|
-| `dm2_v1_load_dungeon()` returns -1 | Zip extraction not implemented | 2026-04-16 (files added) |
-| DM2 menu entry does not launch game | Game logic not implemented | 2026-04-16 |
-| No DM2 binary probe | Phase A probe not written | 2026-04-16 |
-| No DM2 test fixtures | Fixture extraction not automated | 2026-04-16 |
-| Outdoor renderer is a stub | Rendering not implemented | 2026-04-16 |
-
----
-
-## 2. Shared Infrastructure Regressions (Affecting DM2)
+## Shared infrastructure history
 
 DM2 V1 depends on these shared Firestaff components. If these break, DM2
 development would be affected:
