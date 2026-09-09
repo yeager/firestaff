@@ -19,7 +19,18 @@ typedef struct {
     uint32_t last_index;
     uint64_t last_time_us;
     uint32_t pixel_hash;
+    uint32_t palette_hash;
 } TestSink;
+
+static uint32_t fnv1a_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
+{
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
 
 static int sink_present(void *context, const uint8_t *pixels,
                         const uint8_t palette[256][3], uint32_t index,
@@ -30,6 +41,8 @@ static int sink_present(void *context, const uint8_t *pixels,
     sink->last_index = index;
     sink->last_time_us = time_us;
     sink->pixel_hash = sink->pixel_hash * 16777619u + pixels[index % 64000u];
+    sink->palette_hash = fnv1a_bytes(sink->palette_hash, &palette[0][0],
+                                     256u * 3u);
     ++sink->count;
     return 1;
 }
@@ -68,6 +81,7 @@ int main(void)
     m11_dm2_mve_presenter_close(&presenter);
     sink.count = 0u;
     sink.pixel_hash = 0u;
+    sink.palette_hash = 2166136261u;
     CHECK(m11_dm2_mve_presenter_open(&presenter, bytes, size, 1000u,
                                      sink_present, &sink) == 1);
     CHECK(m11_dm2_mve_presenter_advance(&presenter, 1000u) == 1);
@@ -79,13 +93,17 @@ int main(void)
     CHECK(presenter.ended && !presenter.failed && sink.count == 217u &&
           sink.last_index == 216u && sink.last_time_us == 216u * 83328u &&
           presenter.audio.queued_source_packets == 217u &&
-          presenter.audio.queued_source_bytes == 797426u);
+          presenter.audio.queued_source_bytes == 797426u &&
+          /* FNV-1a over each PAL8 page delivered to M11.  This detects a
+           * stale or substituted MVE palette even if indexed movie pixels
+           * remain unchanged. */
+          sink.palette_hash == 0xdf2a5af6u);
     CHECK(m11_dm2_mve_presenter_advance(&presenter,
                                         1000u + 217u * 83328u) == 0);
 cleanup:
     m11_dm2_mve_presenter_close(&presenter);
     dm2_v1_boot_cleanup(&boot);
     if (result) return result;
-    puts("PASS: M11 DM2 MVE seam preserves retail display and PCM order");
+    puts("PASS: M11 DM2 MVE seam preserves retail display, PAL8 and PCM order");
     return 0;
 }
