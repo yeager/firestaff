@@ -248,7 +248,7 @@ if expected <= 0:
 
 allowed = set("""
 shot capture screenshot enter return esc escape space up down left right
-one two three four five six zero
+one two three four five six zero ctrl-s
 """.split())
 allowed |= set("abcdefghijklmnopqrstuvwxyz")
 allowed |= set("0123456789")
@@ -425,6 +425,16 @@ func tap(_ key: CGKeyCode, _ delayUs: useconds_t = 120_000) {
     post(key, false)
     usleep(delayUs)
 }
+func ctrlS() {
+    post(59, true, flags: .maskControl) // Control
+    usleep(20_000)
+    post(1, true, flags: .maskControl)  // S
+    usleep(20_000)
+    post(1, false, flags: .maskControl)
+    usleep(20_000)
+    post(59, false)
+    usleep(120_000)
+}
 func cmdF5() {
     post(55, true, flags: .maskCommand)
     usleep(20_000)
@@ -512,6 +522,8 @@ for token in route {
             exit(2)
         }
         clickOriginalFrame(x: x, y: y, button: isRightClick ? "right" : "left")
+    } else if lowerToken == "ctrl-s" {
+        ctrlS()
     } else if let key = keycodes[lowerToken] {
         tap(key)
     } else {
@@ -620,6 +632,7 @@ key_for_token() {
         kp8) echo KP_Up ;;
         kp9) echo KP_Prior ;;
         kpenter) echo KP_Enter ;;
+        ctrl-s) echo ctrl+s ;;
         [a-z]) echo "$1" ;;
         *) return 1 ;;
     esac

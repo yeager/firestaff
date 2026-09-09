@@ -69,7 +69,7 @@ Required for --run:
 Supported route tokens:
   shot, shot:<label>, wait:<ms>, click:<x>,<y>, enter, esc, space, up, down,
   left, right, one, two, three, four, five, six, f1-f4, kp0-kp9,
-  kpenter, a-z, 0-9, rclick:<x>,<y>
+  kpenter, ctrl-s, a-z, 0-9, rclick:<x>,<y>
 
 Labeled shot tokens:
   shot:<label> is equivalent to shot for capture input, and records the label
@@ -275,7 +275,7 @@ expected = 1 if expected_raw in {"single", "single-row", "single-transcript-row"
 if expected <= 0:
     raise SystemExit("ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive")
 allowed = set("shot capture screenshot enter return esc escape space up down left right one two three four five six zero".split())
-allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {f"f{i}" for i in range(1, 5)} | {"kpenter"}
+allowed |= set("abcdefghijklmnopqrstuvwxyz") | set("0123456789") | {f"kp{i}" for i in range(10)} | {f"f{i}" for i in range(1, 5)} | {"kpenter", "ctrl-s"}
 diagnostic_only = {"title", "pre_enter_menu", "after_enter_click", "forward_1", "forward_2", "left_turn_probe"}
 shots = 0
 labeled_shots = 0
@@ -536,6 +536,16 @@ func tap(_ key: CGKeyCode, _ delayUs: useconds_t = 120_000) {
     post(key, false)
     usleep(delayUs)
 }
+func ctrlS() {
+    post(59, true, flags: .maskControl) // Control
+    usleep(20_000)
+    post(1, true, flags: .maskControl)  // S
+    usleep(20_000)
+    post(1, false, flags: .maskControl)
+    usleep(20_000)
+    post(59, false)
+    usleep(120_000)
+}
 func cmdF5() {
     let modifierKey: CGKeyCode
     let modifierFlags: CGEventFlags
@@ -640,6 +650,8 @@ for token in route {
             exit(2)
         }
         clickOriginalFrame(x: x, y: y, button: isRightClick ? "right" : "left")
+    } else if lowerToken == "ctrl-s" {
+        ctrlS()
     } else if let key = keycodes[lowerToken] {
         tap(key)
     } else {
@@ -865,6 +877,7 @@ key_for_token() {
         kp8) echo KP_Up ;;
         kp9) echo KP_Prior ;;
         kpenter) echo KP_Enter ;;
+        ctrl-s) echo ctrl+s ;;
         [a-z]) echo "$1" ;;
         *) return 1 ;;
     esac
