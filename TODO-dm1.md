@@ -35,7 +35,13 @@
   `inventory` screenshot label is therefore not proof of a C017 transition.
   The independently verified native C017 control at `(54,14)` needs a new
   original capture before its replacement-page pixels or later pickup
-  transaction can be compared.
+  transaction can be compared. A 2026-09-09 headless DOSBox 0.74 retry with
+  the prior PC 3.4 stage reached the authentic Entrance screen but did not
+  deliver its subsequent Hall keypad/mouse commands in either global or
+  window-addressed X11 mode; its raw frames remain capture-health diagnostics
+  only and must not be relabelled as C017. Reproduce this route in a DOSBox
+  input environment that records the original command consumption before
+  comparing C017 or pickup pixels.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
