@@ -2627,10 +2627,22 @@ static void test_c37_group_approach_defers_when_destination_has_group(void)
               profile.timeline_queue.events[event_index].c_effect == 0x10u,
           "C37 blocked-destination queues C60 retry with destination and group thing");
 
+    for (i = 0; i < 5; ++i) {
+        CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+              "C60 occupied-destination retry advances one V1 tick");
+    }
+    event_index = find_queued_event_type(&profile,
+                                         DM1_EVENT_MOVE_GROUP_SILENT);
+    CHECK(test_get_le16(raw, 66) == 0xfffeu &&
+              test_get_le16(raw, 68) == (uint16_t)((4u << 10) | 1u) &&
+              event_index >= 0 && DM1_MAP_TIME_TIME(
+                  profile.timeline_queue.events[event_index].map_time) == 10u,
+          "C60 keeps C04 detached and requeues while destination stays busy");
+
     test_put_le16(raw, 68, 0xfffeu);
     for (i = 0; i < 5; ++i) {
         CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
-              "C60 blocked-destination retry advances one V1 tick");
+              "C60 cleared-destination retry advances one V1 tick");
     }
     CHECK(test_get_le16(raw, 66) == 0xfffeu &&
               test_get_le16(raw, 68) == (uint16_t)(4u << 10),
