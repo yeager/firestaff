@@ -17,6 +17,7 @@ int main(void)
     DM2_V1_StartupMenuPointerLayout layout;
     DM2_V1_BootRuntimeReceipt runtime;
     uint8_t framebuffer[M11_FB_WIDTH * M11_FB_HEIGHT];
+    int draw_count;
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
@@ -30,11 +31,35 @@ int main(void)
      * GRAPHICS.DAT and DUNGEON.DAT through this virtual archive path in RAM;
      * it must not depend on a pre-extracted directory. */
     spec.dataDir = archive;
+    /* Match a normal launcher start: IBMIOP owns INTRO.MVE before SKULL's
+     * startup menu becomes interactive.  The test fast-forwards only the
+     * host clock; M11 still admits and presents every source frame in order. */
+    spec.launcherOptionsBound = 1;
     spec.presentationWidth = M11_FB_WIDTH;
     spec.presentationHeight = M11_FB_HEIGHT;
     M11_GameView_Init(&view);
     if (!M11_GameView_Start(&view, &spec)) {
         fputs("FAIL: DM2 DOS retail archive did not enter M11\n", stderr);
+        return 1;
+    }
+    view.bootProbeFastForward = 1;
+    for (draw_count = 0; draw_count < 220 &&
+                         !view.dm2DosMveIntroComplete; ++draw_count) {
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    }
+    /* The retail MVE contains 217 display boundaries.  After its last page
+     * has been presented, one further draw must release IBMIOP and render
+     * SKULL's real GDAT menu rather than leaving a black frame or starting a
+     * dungeon without its source menu. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    if (!view.dm2DosMveIntroComplete || view.dm2DosMveIntroActive ||
+        view.dm2DosMveIntroRejected || !view.dm2State.startup_menu_active ||
+        framebuffer[0] == 0u) {
+        fputs("FAIL: DM2 DOS INTRO.MVE did not hand off to SKULL's real menu\n",
+              stderr);
+        M11_GameView_Shutdown(&view);
         return 1;
     }
     memset(&layout, 0, sizeof(layout));
