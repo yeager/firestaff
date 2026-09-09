@@ -2837,18 +2837,22 @@ static int m11_dm2_present_fmtowns_title(const M11_GameViewState *state,
                                          int framebuffer_width,
                                          int framebuffer_height)
 {
-    uint8_t rgb6[256][3];
+    uint8_t rgb4[256][3];
     int x;
     int y;
     if (!state || !framebuffer || !state->dm2FmtownsTitleBound ||
         !state->dm2FmtownsTitlePalette.valid ||
         !state->dm2FmtownsTitleFrameReceipt.valid) return 0;
     for (x = 0; x < 256; ++x) {
-        rgb6[x][0] = (uint8_t)(state->dm2FmtownsTitlePalette.rgb4[x & 15][0] << 2u);
-        rgb6[x][1] = (uint8_t)(state->dm2FmtownsTitlePalette.rgb4[x & 15][1] << 2u);
-        rgb6[x][2] = (uint8_t)(state->dm2FmtownsTitlePalette.rgb4[x & 15][2] << 2u);
+        rgb4[x][0] = state->dm2FmtownsTitlePalette.rgb4[x & 15][0];
+        rgb4[x][1] = state->dm2FmtownsTitlePalette.rgb4[x & 15][1];
+        rgb4[x][2] = state->dm2FmtownsTitlePalette.rgb4[x & 15][2];
     }
-    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    /* TWANIM PL records are native four-bit component registers, not VGA
+     * DAC bytes.  Routing 0x0RGB through the six-bit setter turns 0xf into
+     * 0xf3 on the host.  Keep the exact register width through presentation
+     * so the FM Towns title reaches full source white (0xff). */
+    if (M11_Render_SetIndexedPaletteRgb4(rgb4) != M11_RENDER_OK) return 0;
     for (y = 0; y < framebuffer_height; ++y) {
         const int source_y = y * 200 / framebuffer_height;
         for (x = 0; x < framebuffer_width; ++x) {

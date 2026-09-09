@@ -59,13 +59,16 @@ static void expect_presented_stream_palette(const uint8_t* bytes,
 {
     DM2_V1_FmtownsAnimPaletteReceipt expected;
     uint8_t presented[256][3];
+    uint8_t presented_rgb8[256][3];
     int color;
 
     memset(&expected, 0, sizeof(expected));
     memset(presented, 0, sizeof(presented));
+    memset(presented_rgb8, 0, sizeof(presented_rgb8));
     if (!dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
             bytes, byte_count, frame_index, &expected) || !expected.valid ||
-        !M11_Render_CopyIndexedPaletteRgb6(presented)) {
+        !M11_Render_CopyIndexedPaletteRgb6(presented) ||
+        !M11_Render_CopyIndexedPaletteRgb8(presented_rgb8)) {
         expect(0, message);
         return;
     }
@@ -73,6 +76,18 @@ static void expect_presented_stream_palette(const uint8_t* bytes,
         if (presented[color][0] != (uint8_t)(expected.rgb4[color][0] << 2u) ||
             presented[color][1] != (uint8_t)(expected.rgb4[color][1] << 2u) ||
             presented[color][2] != (uint8_t)(expected.rgb4[color][2] << 2u)) {
+            expect(0, message);
+            return;
+        }
+        if (presented_rgb8[color][0] !=
+                (uint8_t)((expected.rgb4[color][0] << 4u) |
+                          expected.rgb4[color][0]) ||
+            presented_rgb8[color][1] !=
+                (uint8_t)((expected.rgb4[color][1] << 4u) |
+                          expected.rgb4[color][1]) ||
+            presented_rgb8[color][2] !=
+                (uint8_t)((expected.rgb4[color][2] << 4u) |
+                          expected.rgb4[color][2])) {
             expect(0, message);
             return;
         }
