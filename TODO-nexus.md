@@ -41,7 +41,13 @@ title-menu ownership.  It must therefore not enable the native title renderer.
   again produced no VDP2 register writes in that stable frame. Future
   producer capture must span the preceding title-state transition and retain
   a bounded write window; recapturing only frame 18000 cannot establish the
-  asset writer or source pointer.
+  asset writer or source pointer. A third, longer bounded transition attempt
+  (`title-nbg1-transition-owner-20260909b`) reached the same frame from the
+  hash-verified JP retail CUE and BIOS and produced the same raw SHA-256;
+  its frame-16000..18000 writer traces remained empty. This is useful
+  confirmation that the late NBG1 state is stable, not evidence of a writer
+  or asset join. Target the earlier transition rather than enlarging this
+  late window or treating the repeated state as native-renderer admission.
   The current native integration has an additional fail-closed ownership gap:
   `Nexus_V1_Engine.startup_title_vdp_capture_verified` is consumed by the
   launcher receipts but has no assignment site. Add an authenticated capture
