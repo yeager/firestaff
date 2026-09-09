@@ -1,5 +1,5 @@
 /* Opt-in HME-242 TITLE presentation regression.  It reads the user-selected
- * FM Towns CD and English companion through Firestaff's RAM-only launch path.
+ * FM Towns CD through Firestaff's RAM-only launch path.
  * No archive member is ever materialised on disk. */
 
 #include "m11_game_view.h"
@@ -51,7 +51,6 @@ static unsigned int fnv1a32(const unsigned char* bytes, size_t size)
 int main(void)
 {
     const char* root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
-    const char* companion = getenv("FIRESTAFF_DM2_ENGLISH_COMPANION");
     M12_AssetStatus assets;
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
@@ -59,8 +58,8 @@ int main(void)
     char selected_runtime[1024];
     int step;
 
-    if (!root || !root[0] || !companion || !companion[0]) {
-        puts("SKIP: FIRESTAFF_DM2_FMTOWNS_ROOT and English companion are required");
+    if (!root || !root[0]) {
+        puts("SKIP: FIRESTAFF_DM2_FMTOWNS_ROOT is required");
         return 77;
     }
     /* M11 receives the edition selected by M12, never the shared scan root.
@@ -82,11 +81,9 @@ int main(void)
     spec.sourceId = "dm2";
     spec.title = "DUNGEON MASTER II";
     spec.dataDir = selected_runtime;
-    spec.dm2EnglishCompanionPath = companion;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
-    /* Swedish is the launcher locale.  The only verified in-game companion
-     * is PC English, so it must still bind English game text without changing
-     * the launcher choice or falling back to native Japanese GDAT text. */
+    /* Swedish uses the Towns edition's built-in GDAT-keyed English bridge,
+     * then gettext.  No PC GRAPHICS.DAT is part of this launch. */
     spec.languageIndex = 1;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.presentationWidth = M11_FB_WIDTH;
@@ -99,7 +96,7 @@ int main(void)
         size_t text_size = 0u;
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
-               "a Swedish launcher still binds the verified English FM Towns game-text companion");
+               "a Swedish launcher binds source English without a PC companion");
     }
     {
         DM2_V1_RuntimeMusicMapReceipt music;

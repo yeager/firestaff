@@ -25794,7 +25794,6 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
     char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
-    char selectedDm2EnglishCompanionPath[FSP_PATH_MAX] = {0};
     char selectedDm1RuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
@@ -25816,10 +25815,9 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         return 0;
     }
     memset(&spec, 0, sizeof(spec));
-    /* A direct CLI launch has no M12 locale selection.  In particular the
-     * original DM2 FM Towns disc is Japanese; zero means an explicit English
-     * overlay request to its boot owner, which must fail without a separately
-     * verified PC-English GRAPHICS.DAT companion. */
+    /* A direct CLI launch has no M12 locale selection.  DM2 FM Towns owns
+     * Japanese source text and a built-in GDAT-keyed l10n bridge for every
+     * non-Japanese locale, so it never needs a sibling PC archive to boot. */
     spec.languageIndex = -1;
     M11_Audio_SetPreferredPlaybackDeviceName(menuState->settings.audioDeviceName);
     spec.rendererBackend = rendererBackend;
@@ -25963,60 +25961,6 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                 spec.dm1Fmtowns = 1;
                 spec.dm1FmtownsJapanese =
                     strcmp(version->versionId, "fmtowns-ja") == 0;
-            }
-            if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
-                strcmp(version->versionId, "fmtowns-ja") == 0) {
-                int englishVersionIndex =
-                    M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
-                const M12_AssetVersionStatus* englishVersion =
-                    englishVersionIndex >= 0
-                        ? M12_AssetStatus_GetVersion(
-                              &menuState->assetStatus, "dm2",
-                              (size_t)englishVersionIndex)
-                        : NULL;
-                /* This is an explicit M12 selection, not a runtime search.
-                 * dm2_v1_boot_startup_launch_alloc_with_language() admits a
-                 * virtual ZIP member by extracting it directly into bounded
-                 * RAM and verifying the canonical PC-English hash.  Keep its
-                 * archive provenance intact.  The companion localises game
-                 * text to English; the launcher itself keeps its selected
-                 * locale, and no member is unpacked merely to satisfy
-                 * fopen(). */
-                if (!spec.dm2EnglishCompanionPath && englishVersion && englishVersion->matched &&
-                    englishVersion->matchedMd5[0] != '\0') {
-                    spec.dm2EnglishCompanionPath = englishVersion->matchedPath;
-                }
-                /* Direct selection deliberately clears sibling game versions
-                 * so a Japanese Towns disc cannot accidentally become a DOS
-                 * launch.  Its text-only companion is different: the retail
-                 * DOS EN ZIP beside the selected disc supplies an explicitly
-                 * hash-checked overlay, while the Towns ZIP remains the only
-                 * boot/runtime owner.  Discover just that canonical sibling
-                 * when M12 could not retain the PC version row. */
-                if (!spec.dm2EnglishCompanionPath && spec.dataDir) {
-                    const char *slash = strrchr(spec.dataDir, '/');
-                    const char *backslash = strrchr(spec.dataDir, '\\');
-                    const char *separator = slash;
-                    if (backslash && (!separator || backslash > separator)) {
-                        separator = backslash;
-                    }
-                    if (separator) {
-                        size_t prefix = (size_t)(separator - spec.dataDir) + 1U;
-                        static const char companionName[] =
-                            "Dungeon-Master-II-Skullkeep_DOS_EN.zip";
-                        if (prefix + sizeof(companionName) <=
-                                sizeof(selectedDm2EnglishCompanionPath)) {
-                            memcpy(selectedDm2EnglishCompanionPath, spec.dataDir,
-                                   prefix);
-                            memcpy(selectedDm2EnglishCompanionPath + prefix,
-                                   companionName, sizeof(companionName));
-                            if (FSP_FileExists(selectedDm2EnglishCompanionPath)) {
-                                spec.dm2EnglishCompanionPath =
-                                    selectedDm2EnglishCompanionPath;
-                            }
-                        }
-                    }
-                }
             }
         } else {
             /* Selected version not matched (e.g. user pointed --data-dir at

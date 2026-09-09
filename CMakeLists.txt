@@ -17373,7 +17373,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_fmtowns_m12_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm2;fmtowns;real-media;native;in-memory;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM2_ENGLISH_COMPANION=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_ENGLISH_COMPANION_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip")
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip")
 
     add_executable(test_dm2_fmtowns_m11_gameplay_real_media
         tests/test_dm2_fmtowns_m11_gameplay_real_media.c
