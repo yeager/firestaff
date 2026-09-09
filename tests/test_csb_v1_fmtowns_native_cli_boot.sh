@@ -229,7 +229,14 @@ for mode in ("v20", "v21"):
     height = abs(signed_height)
     bits = struct.unpack_from("<H", blob, 28)[0]
     stride = ((width * bits + 31) // 32) * 4
-    if width != 320 or height != 200 or bits != 24 or offset + stride * height > len(blob):
+    # V20/V21 deliberately retain the original 320x200 composition at an
+    # integer 2x internal presentation resolution.  The screenshot is of the
+    # actual presentation buffer, so requiring 320x200 here would reject the
+    # intended Modern/Custom high-resolution path rather than detect a bad
+    # aspect ratio or a red C004-only fallback.
+    scale = 2
+    if (width != 320 * scale or height != 200 * scale or bits != 24 or
+            offset + stride * height > len(blob)):
         raise SystemExit(f"FAIL: invalid CSB FM Towns {mode} Entrance geometry")
     pixels = []
     for row in range(height):
@@ -245,10 +252,10 @@ for mode in ("v20", "v21"):
     broad_red = False
     if red_points:
         xs, ys = zip(*red_points)
-        broad_red = (len(red_points) > 512 or
-                     max(xs) - min(xs) + 1 > 32 or
-                     max(ys) - min(ys) + 1 > 32)
-    if nonblack < 50000 or colours < 10 or broad_red:
+        broad_red = (len(red_points) > 512 * scale * scale or
+                     max(xs) - min(xs) + 1 > 32 * scale or
+                     max(ys) - min(ys) + 1 > 32 * scale)
+    if nonblack < 50000 * scale * scale or colours < 10 or broad_red:
         raise SystemExit(
             f"FAIL: CSB FM Towns {mode} Entrance did not retain closed doors "
             f"(nonblack={nonblack}, colours={colours}, red_pixels={len(red_points)}, "
