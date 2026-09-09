@@ -113,39 +113,28 @@ static const M12_TouchZone* find_zone(const M12_TouchLayout* layout,
 
 static void test_classic_ipad_controls(void) {
     M12_TouchLayout layout;
-    const M12_TouchZone* w;
-    const M12_TouchZone* a;
-    const M12_TouchZone* s;
-    const M12_TouchZone* d;
     const M12_TouchZone* use;
     const M12_TouchZone* pickup;
     const M12_TouchZone* drop;
 
     printf("[classic-ipad-controls]\n");
     M12_TouchLayout_LoadPreset(&layout, M12_TOUCH_PRESET_CLASSIC);
-    w = find_zone(&layout, M12_ACTION_MOVE_FORWARD);
-    a = find_zone(&layout, M12_ACTION_TURN_LEFT);
-    s = find_zone(&layout, M12_ACTION_MOVE_BACKWARD);
-    d = find_zone(&layout, M12_ACTION_TURN_RIGHT);
     use = find_zone(&layout, M12_ACTION_USE_ITEM);
     pickup = find_zone(&layout, M12_ACTION_PICKUP_ITEM);
     drop = find_zone(&layout, M12_ACTION_DROP_ITEM);
-    CHECK(w && a && s && d, "Classic provides the full WASD movement cluster");
-    if (w && a && s && d) {
-        CHECK(strcmp(w->label, "W") == 0 && strcmp(a->label, "A") == 0 &&
-              strcmp(s->label, "S") == 0 && strcmp(d->label, "D") == 0,
-              "movement cluster is visibly labelled WASD");
-        CHECK(w->y >= M12_TOUCH_CANVAS_H / 2 && a->y >= M12_TOUCH_CANVAS_H / 2 &&
-              s->y >= M12_TOUCH_CANVAS_H / 2 && d->y >= M12_TOUCH_CANVAS_H / 2,
-              "WASD cluster remains in the lower half of the canvas");
-        CHECK(w->x < M12_TOUCH_CANVAS_W / 4 && a->x < M12_TOUCH_CANVAS_W / 4 &&
-              s->x < M12_TOUCH_CANVAS_W / 4 && d->x < M12_TOUCH_CANVAS_W / 4,
-              "WASD cluster remains at bottom-left");
-        CHECK(w->opacity > 0.0f && w->opacity < 1.0f,
-              "WASD controls are translucent rather than opaque");
-    }
+    CHECK(!find_zone(&layout, M12_ACTION_MOVE_FORWARD) &&
+          !find_zone(&layout, M12_ACTION_MOVE_BACKWARD) &&
+          !find_zone(&layout, M12_ACTION_TURN_LEFT) &&
+          !find_zone(&layout, M12_ACTION_TURN_RIGHT) &&
+          !find_zone(&layout, M12_ACTION_STRAFE_LEFT) &&
+          !find_zone(&layout, M12_ACTION_STRAFE_RIGHT),
+          "Classic does not duplicate the source-owned HUD movement arrows");
     CHECK(use && pickup && drop,
           "Classic exposes use, pickup, and drop without a hardware keyboard");
+    if (use) {
+        CHECK(use->opacity > 0.0f && use->opacity < 1.0f,
+              "complementary controls are translucent rather than opaque");
+    }
     CHECK(find_zone(&layout, M12_ACTION_ACTION) &&
           find_zone(&layout, M12_ACTION_ACCEPT) &&
           find_zone(&layout, M12_ACTION_BACK) &&

@@ -104,9 +104,9 @@ static const char* m12_tl_action_name(M12_InputAction a) {
 
 /*
  * Default zone helper.  All coordinates are in 1280x720 canvas space.
- * Classic intentionally exposes a translucent WASD cluster at bottom-left:
- * W/S move and A/D turn.  It is a labelled overlay rather than a hidden
- * gesture so the full game remains playable on an iPad without a keyboard.
+ * Classic deliberately leaves movement to the source-owned arrow controls
+ * already present in the game HUD.  The overlay therefore supplies only
+ * complementary actions that otherwise need a keyboard or secondary panel.
  */
 static void m12_tl_add_zone(M12_TouchLayout* layout,
                             int x, int y, int w, int h,
@@ -130,15 +130,8 @@ static void m12_tl_load_classic(M12_TouchLayout* layout) {
     memset(layout, 0, sizeof(*layout));
     m12_tl_copy_string(layout->presetName, sizeof(layout->presetName), "Classic");
 
-    /* WASD: bottom-left, deliberately large for direct iPad touch. */
-    m12_tl_add_zone(layout,  96, 432,  96,  96, M12_ACTION_MOVE_FORWARD,  0.42f, "W");
-    m12_tl_add_zone(layout,  96, 624,  96,  80, M12_ACTION_MOVE_BACKWARD, 0.42f, "S");
-    m12_tl_add_zone(layout,   0, 528,  96,  96, M12_ACTION_TURN_LEFT,     0.42f, "A");
-    m12_tl_add_zone(layout, 192, 528,  96,  96, M12_ACTION_TURN_RIGHT,    0.42f, "D");
-    m12_tl_add_zone(layout,   8, 432,  72,  72, M12_ACTION_STRAFE_LEFT,   0.35f, "Q");
-    m12_tl_add_zone(layout, 208, 432,  72,  72, M12_ACTION_STRAFE_RIGHT,  0.35f, "E");
-
-    /* A/B buttons: right side */
+    /* Complementary actions: right side. Source-owned HUD arrows remain
+     * visible and directly touchable for movement/turn/strafe. */
     m12_tl_add_zone(layout, 1100, 480, 100, 100, M12_ACTION_ACTION,      0.42f, "Action");
     m12_tl_add_zone(layout, 1100, 600, 100, 100, M12_ACTION_BACK,        0.42f, "Back");
     m12_tl_add_zone(layout, 1000, 540,  80,  80, M12_ACTION_ACCEPT,      0.42f, "Accept");
