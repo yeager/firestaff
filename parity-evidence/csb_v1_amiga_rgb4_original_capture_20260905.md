@@ -13,9 +13,9 @@ Date: 2026-09-05
 | Kickstart 1.3 ROM used by FS-UAE | `ee05862d8102a08436ac4056da7d549db31625c7d47b24dfb7b3c9a5c113ca53` |
 
 The product path continued to read the supplied ZIP/ADF data in memory. The
-temporary ADF and ROM copies existed only under `/dev/shm` for the external
-reference emulator and were deleted after this comparison. Firestaff has no
-Kickstart or emulator dependency.
+external reference emulator used only isolated transient copies, which were
+deleted after the comparison. Firestaff has no Kickstart or emulator
+dependency.
 
 ## Original observations
 
@@ -62,7 +62,23 @@ parity. The FS-UAE wall-clock capture and Firestaff source-VBlank test use
 different capture clocks; an exact synchronized source-frame image pair is
 still required before claiming animation pixel/timing parity.
 
-## Atari diagnostic (not a parity capture)
+## Atari captures (not pixel-parity captures)
+
+Hatari 2.6.1 with a caller-supplied TOS 1.62 ROM
+(`220fc9b35fd99908db9f9075fb3d850bf196d25741405ac6fa062facbbbd1583`)
+and the supplied protected Atari STX
+(`d9aed23f7916d60dfef61c7b79bc3eb1995f8afbb6a6c8b7b4160ee12ada1025`)
+reached the original FTL splash and the evolving `Chaos Strikes Back` title
+under an STE configuration. The capture session mounted the STX
+write-protected and did not retain ROM, game data, or captured frames in the
+repository. `scripts/capture_csb_atari_st_startup.sh` reproduces this
+development-only startup route when the caller provides those inputs.
+
+This confirms a usable authentic Atari title-capture route. It does **not**
+establish same-VBL frame equivalence, Entrance input parity, an imported-party
+CSB save, dungeon/HUD/door presentation, or audio parity.
+
+## Earlier Atari diagnostic (not a parity capture)
 
 Hatari 2.6.1 was also run with the supplied protected Atari STX
 (`d9aed23f7916d60dfef61c7b79bc3eb1995f8afbb6a6c8b7b4160ee12ada1025`).
