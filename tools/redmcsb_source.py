@@ -13,8 +13,6 @@ from typing import Iterable, Optional
 
 
 _WORKSPACE = Path(__file__).resolve().parents[1]
-_LEGACY = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/"
-           "ReDMCSB_WIP20210206/Toolchains/Common/Source")
 _WORKSPACE_REFERENCE = _WORKSPACE / "reference/redmcsb-20210206/Toolchains/Common/Source"
 
 
@@ -24,7 +22,7 @@ def find_source_root(required: Iterable[str] = ()) -> Optional[Path]:
     candidates = []
     if configured:
         candidates.append(Path(configured).expanduser())
-    candidates.extend((_WORKSPACE_REFERENCE, _LEGACY))
+    candidates.append(_WORKSPACE_REFERENCE)
     names = tuple(required)
     for candidate in candidates:
         if candidate.is_dir() and all((candidate / name).is_file() for name in names):
