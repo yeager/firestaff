@@ -47,9 +47,15 @@ float v2_anim_clock_sub_tick(const V2_AnimClock *clock) {
 /* ── Easing functions ──────────────────────────────────────────────── */
 
 float v2_ease(V2_EaseType type, float t) {
+    float u;
+
     if (t <= 0.0f) return 0.0f;
     if (t >= 1.0f) return 1.0f;
 
+    /* Keep each expression in a small straight-line branch.  Besides being
+     * easier to audit against the easing definitions, this avoids GCC 15's
+     * RTL expansion ICE observed when this switch contained scoped locals in
+     * multiple case arms at -O2. */
     switch (type) {
         case V2_EASE_LINEAR:
             return t;
@@ -64,22 +70,19 @@ float v2_ease(V2_EaseType type, float t) {
             if (t < 0.5f) return 2.0f * t * t;
             return -1.0f + (4.0f - 2.0f * t) * t;
 
-        case V2_EASE_OUT_CUBIC: {
-            float u = 1.0f - t;
+        case V2_EASE_OUT_CUBIC:
+            u = 1.0f - t;
             return 1.0f - u * u * u;
-        }
 
         case V2_EASE_IN_OUT_CUBIC:
             if (t < 0.5f) return 4.0f * t * t * t;
-            return 1.0f - (-2.0f * t + 2.0f) * (-2.0f * t + 2.0f) * (-2.0f * t + 2.0f) / 2.0f;
+            u = -2.0f * t + 2.0f;
+            return 1.0f - u * u * u / 2.0f;
 
-        case V2_EASE_OUT_BACK: {
+        case V2_EASE_OUT_BACK:
             /* Slight overshoot for snappy movement feel */
-            float c1 = 1.70158f;
-            float c3 = c1 + 1.0f;
-            float u = t - 1.0f;
-            return 1.0f + c3 * u * u * u + c1 * u * u;
-        }
+            u = t - 1.0f;
+            return 1.0f + 2.70158f * u * u * u + 1.70158f * u * u;
 
         default:
             return t;
