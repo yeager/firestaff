@@ -312,7 +312,10 @@ int main(void) {
     changed = M12_ModernMenu_HandlePointer(&state, settingsRightColumnCycleX, settingsImportCenterY, 1, NULL);
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Import Settings click should show a public result message")) return 1;
-    if (!expect(strcmp(state.messageLine1, "SAVE MANIFEST IMPORTED") == 0,
+    if (!expect(strcmp(state.messageLine1,
+                       M12_StartupMenu_TranslateForLocale(
+                           state.settings.languageIndex,
+                           "SAVE MANIFEST IMPORTED")) == 0,
                 "Import Settings click should load the default save manifest")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
@@ -329,7 +332,10 @@ int main(void) {
     changed = M12_ModernMenu_HandlePointer(&state, settingsRightColumnCycleX, settingsImportCenterY, 1, NULL);
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Import Settings missing-file click should show a public result message")) return 1;
-    if (!expect(strcmp(state.messageLine1, "IMPORT FAILED") == 0,
+    if (!expect(strcmp(state.messageLine1,
+                       M12_StartupMenu_TranslateForLocale(
+                           state.settings.languageIndex,
+                           "IMPORT FAILED")) == 0,
                 "Import Settings missing-file click should report import failure")) return 1;
     if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
                 "failed settings import should preserve the active data directory")) return 1;

@@ -2007,6 +2007,7 @@ int M12_Config_ExportSaveManifestJSON(const M12_Config* config, const char* expo
     const char* path;
     FILE* fp;
     int gi;
+    int exportsQuickResume;
 
     if (!config) {
         return 0;
@@ -2020,6 +2021,13 @@ int M12_Config_ExportSaveManifestJSON(const M12_Config* config, const char* expo
     if (!m12_manifest_path_is_valid(path, FSP_PATH_MAX)) {
         return 0;
     }
+    /* A default configuration can have the preference enabled before any
+     * save exists. Do not emit a self-contradictory manifest that advertises
+     * Quick Resume while exporting an empty last_save_path. */
+    exportsQuickResume = config->quickResumeEnabled &&
+        config->lastSavePath[0] != '\0' &&
+        m12_manifest_path_is_valid(config->lastSavePath,
+                                   sizeof(config->lastSavePath));
     {
         char parentDir[FSP_PATH_MAX];
         if (FSP_ParentDir(parentDir, sizeof(parentDir), path)) {
@@ -2038,7 +2046,7 @@ int M12_Config_ExportSaveManifestJSON(const M12_Config* config, const char* expo
     fprintf(fp, "  \"type\": \"firestaff-launcher-save-export-manifest\",\n");
     fprintf(fp, "  \"scope\": \"launcher-known-save-paths\",\n");
     fprintf(fp, "  \"runtime_save_bytes_included\": 0,\n");
-    fprintf(fp, "  \"quick_resume_enabled\": %d,\n", config->quickResumeEnabled ? 1 : 0);
+    fprintf(fp, "  \"quick_resume_enabled\": %d,\n", exportsQuickResume ? 1 : 0);
     fprintf(fp, "  \"last_save_path\": ");
     m12_json_write_string(fp, config->lastSavePath);
     fprintf(fp, ",\n  \"data_dir\": ");
@@ -2164,10 +2172,16 @@ int M12_Config_ImportSaveManifestJSON(M12_Config* config, const char* importPath
     }
     fclose(fp);
 
+    /* A launcher with no resumable save exports an intentionally empty
+     * last_save_path.  It must round-trip: require a safe path only when one
+     * is present, and require one when Quick Resume is actually enabled. */
     if (!sawType ||
         strcmp(manifestType, "firestaff-launcher-save-export-manifest") != 0 ||
         !sawLastSave ||
-        !m12_manifest_path_is_valid(importedLastSave, sizeof(importedLastSave))) {
+        (importedQuickResume && importedLastSave[0] == '\0') ||
+        (importedLastSave[0] != '\0' &&
+         !m12_manifest_path_is_valid(importedLastSave,
+                                     sizeof(importedLastSave)))) {
         return 0;
     }
     config->quickResumeEnabled = importedQuickResume ? 1 : 0;
