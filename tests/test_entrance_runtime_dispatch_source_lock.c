@@ -83,6 +83,9 @@ static int expect_resume_path(const char* label,
 int main(void) {
     const char* evidence = ENTRANCE_Compat_GetMouseRouteEvidence();
     const char* commandEvidence = ENTRANCE_Compat_GetRuntimeCommandEvidence();
+    const char* dm1QuickSave = ".codex-scratch/firestaff-dm1-current.sav";
+    const char* foreignQuickSave = ".codex-scratch/csb-save.sav";
+    const char* overlongQuickSave = ".codex-scratch/too-long-for-buffer.sav";
     int ok = 1;
 
     printf("probe=firestaff_entrance_runtime_dispatch_source_lock\n");
@@ -176,13 +179,13 @@ int main(void) {
                              "dm1",
                              1,
                              "dm1",
-                             "/tmp/firestaff-dm1-current.sav",
-                             "/tmp/firestaff-dm1-current.sav");
+                             dm1QuickSave,
+                             dm1QuickSave);
     ok &= expect_resume_path("resume_foreign_quick_path_ignored",
                              "dm1",
                              1,
                              "csb",
-                             "/tmp/csb-save.sav",
+                             foreignQuickSave,
                              "firestaff-dm1-dm1save.sav");
     ok &= expect_resume_path("resume_default_source_id",
                              "",
@@ -194,7 +197,7 @@ int main(void) {
         char tiny[8];
         memset(tiny, 0, sizeof(tiny));
         ok &= M11_Entrance_ResolveDm1ResumeSavePath(
-                  "dm1", 1, "dm1", "/tmp/too-long-for-buffer.sav",
+                  "dm1", 1, "dm1", overlongQuickSave,
                   tiny, sizeof(tiny)) == 0;
     }
 

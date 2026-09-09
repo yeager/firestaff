@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last reviewed: 2026-08-25.** This page is the concise status source for the
+**Last reviewed: 2026-09-09.** This page is the concise status source for the
 README and wiki. The full documentation map is in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -9,10 +9,10 @@ source audits and capture receipts remain in the linked game documentation.
 
 | Game | Current status | What is verified | Main open boundary |
 |---|---|---|---|
-| Dungeon Master 1 | Playable/source-locked V1; native macOS host smoke verified | PC 3.4 runtime, viewport, HUD, input, combat, saves, Apple Silicon macOS boot and original-data gates | C13 save corpus, broader original-vs-Firestaff capture and V2 material; the unreleased historical Macintosh prototype has no local authenticated data |
-| Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX 50 Hz title-to-FTLCODE/runtime route, start-menu CLI, Amiga and FM Towns bounded native routes | DSA/save corpus and wider campaign/capture evidence |
+| Dungeon Master 1 | Playable/source-locked V1; native macOS host smoke verified | PC 3.4 runtime, viewport, HUD, input, combat, saves, Apple Silicon macOS boot, original-data gates and the live Hall of Champions C040/C026 candidate panel | C13 save corpus, broader original-vs-Firestaff capture and V2 material; the unreleased historical Macintosh prototype has no local authenticated data |
+| Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX 50 Hz title-to-FTLCODE/runtime route, start-menu CLI, Amiga and FM Towns bounded native routes; FM Towns C28 entrance palette and MINI.DAT bootstrap state | DSA/save corpus and wider campaign/capture evidence |
 | Dungeon Master II: Skullkeep | Verified bounded real-media routes; active hardening | M12 source-owner selection, FM Towns M11 title/gameplay corpus, source-owned viewport/HUD and focused mechanics | Full record/save ownership and broader source UI/audio/mechanics parity across editions |
-| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA and STABG source selection, captured NBG1 palette-bank/origin and raw bitmap/CRAM decode receipts, world/render/save/mechanics slices and V2 presentation | Source-to-VDP material semantics, native event/audio playback and full playability |
+| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA and STABG source selection, native retail MAPD title rendering, captured NBG1 palette-bank/origin and raw bitmap/CRAM decode receipts, world/render/save/mechanics slices and V2 presentation | Menu/face, HUD and dungeon source-to-VDP material semantics, native event/audio playback and full playability |
 | Theron's Quest | Verified bounded JP runtime and US startup routes; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime; source-only binding of all seven JP campaign dungeons (2,266 objects); US CloneCD ZIP direct and start-menu startup; JP/US Track 02 identity, parser and level framing | Captured transition handoff, save body semantics, bitmap/palette binding and gameplay capture |
 
 ## Completion reporting

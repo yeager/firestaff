@@ -1,6 +1,6 @@
 # Native platform and startup verification
 
-**Reviewed 2026-08-31.** This page records what the native Firestaff runtime
+**Reviewed 2026-09-09.** This page records what the native Firestaff runtime
 has actually admitted from authentic player-supplied media. It is deliberately
 not a compatibility wish-list: a parser, a disassembly reference, or an
 emulator capture does not by itself prove a public start route.
@@ -45,7 +45,7 @@ gaps below stay open.
 | Chaos Strikes Back | **Verified start route** — STX title→FTLCODE, CLI and menu | **Verified start route** — EN/JP F31 package | **Not released** | **Verified start route** — A31E/A31M ZIP→ADF, CLI and menu | Outside target | Outside target |
 | Dungeon Master II: Skullkeep | Not released | **Verified start route** — authenticated Towns startup/input/CD-audio slices | **Verified start route** — hash-verified GDAT/G1 startup/runtime | **Verified start route** — original installer media, title/New Game/runtime | Outside target | Outside target |
 | Theron's Quest | Outside target | Outside target | Outside target | Outside target | **Verified start route** — JP and US Track 02 CUE/BIN, CLI and menu | Outside target |
-| Dungeon Master Nexus | Outside target | Outside target | Outside target | Outside target | Outside target | **Data path / title blocked** — retail JP media is native and hash-checked, but the public title is fail-closed pending the complete same-revision VDP state binding |
+| Dungeon Master Nexus | Outside target | Outside target | Outside target | Outside target | Outside target | **Verified bounded title route** — retail JP CUE/BIN reaches native MAPD title presentation; menu, HUD and dungeon remain separately capture-gated |
 
 `ZIP→ADF` means nested archives are traversed in memory, not unpacked to
 disk. CSB's PC-shaped CSBWin files are reverse-engineering evidence, never
@@ -71,7 +71,7 @@ save, audio or pixel parity.
 | DM2 FM Towns | Authentic Towns startup, input, CD-audio and gameplay slices are covered. | Complete runtime ownership and full parity. |
 | DM2 Amiga | Authentic installer data reaches title, New Game, runtime and the clipped native CHARSHEET frame. | Wider game/save/pixel/audio parity. |
 | Theron PC Engine | JP reaches title, stage, Soul Room and Akutuba; US CloneCD CUE/IMG reaches title and scripted Soul Room startup. | Authentic CD→RAM→consumer transition capture, game-owned level publication, saves and full gameplay. |
-| Nexus Saturn | All 11 selected `nexus;real-media` tests pass against the authentic Japanese retail package. The source route reads the existing ZIP/CUE/BIN members in memory: DM.BIN HUD/champion tables, the full LEV00–LEV15 face/material corpus, and engine-level DGN receipts no longer require a mounted or extracted ISO. This proves source admission and bounded no-draw parsing, not a rendered Saturn scene. | One same-revision title capture joining `TITLE.CG`, active MAPD, palette, VDP registers/layers/timing and consumer; until then title/menu/gameplay remain closed. |
+| Nexus Saturn | The authentic Japanese retail package is read from its existing ZIP/CUE/BIN members in memory. `TITLE.BIN` + `TITLE.CG` MAPD planes and their palette now present the bounded native title sequence; DM.BIN HUD/champion tables and the full LEV00–LEV15 face/material corpus remain source-owned. | Menu/face placement, HUD and dungeon require their own same-revision Saturn VDP consumer captures; no fallback presentation is used. |
 
 ## Reproduction and evidence
 

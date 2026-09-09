@@ -6,7 +6,7 @@ the paired `DUNGEON.DAT` boundary, see the shared
 The Atari ST path uses its own DMCSB1/LZW-to-big-endian-IMG1 decode and is not
 a PC graphics fallback.
 
-> **Status reviewed 2026-08-06.** DM1 PC 3.4 V1 is Firestaff's strongest
+> **Status reviewed 2026-09-09.** DM1 PC 3.4 V1 is Firestaff's strongest
 > playable target. “Source-locked” describes the decision points covered by
 > ReDMCSB and tests; it does not make every original capture pixel-identical.
 
@@ -42,6 +42,19 @@ M10 supplies the bounded static Thing chain and typed live projectile/explosion
 lists. DM1 builds the F0115 summary and layer plan; M11 only consumes the
 receipt. HoC mirror candidates are not ordinary dungeon Things and are excluded
 from item rendering.
+
+### Hall of Champions candidate panel
+
+The PC 3.4 C127 mirror route now presents its original C040
+resurrect/reincarnate panel and C026 portrait atlas through the live M11
+frame-admission receipt. This is deliberately separate from ordinary inventory
+selection: the first recruited candidate opens the source-owned modal before a
+normal inventory champion is selected. The implementation therefore bypasses
+the ordinary C017 inventory-material gate only for an already admitted C040/C026
+frame; missing or stale source material remains no-draw. The real-media
+regression `test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` verifies
+opaque C040 pixels, candidate selection, resurrection/reincarnation and the
+subsequent save state.
 
 ## Saves
 

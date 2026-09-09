@@ -20,7 +20,7 @@ Theron's Quest.
 
 ## Current status
 
-The status below was reviewed on 2026-09-07. It reports what has been exercised
+The status below was reviewed on 2026-09-09. It reports what has been exercised
 with real media, not a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
@@ -33,10 +33,10 @@ separates source/disassembly evidence, real-media receipts and open routes.
 
 | Game | Current scope |
 |---|---|
-| Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. Further gameplay and visual parity work continues. |
-| Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. Campaign, saves and presentation parity are still being completed. |
+| Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
+| Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Advanced parity, saves and some combat/UI behavior continue. |
-| DM Nexus | Saturn disc parsing and native title-resource loading work; the public title is correctly blocked pending authenticated display-state captures. |
+| DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | PC Engine/TurboGrafx real-media startup and initial dungeon parsing work; later presentation and level-transition evidence is still required. |
 
 ### Dungeon Master II: Skullkeep
@@ -196,7 +196,7 @@ packaging. Generated `.mo` files are not stored in the source tree.
 | DM1 | — | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes | PC-9801 preservation | X68000 |
 | CSB | — | Atari ST, Amiga and FM Towns title/start-menu routes | — | PC-9801, X68000 |
 | DM2 | — | DOS, Amiga, FM Towns and Macintosh startup plus selected runtime routes | Mac JP/FR preservation | X68000 |
-| Nexus | — | Saturn disc/resource parsing; title display remains blocked pending authenticated captures | Saturn demo/fan translations | — |
+| Nexus | — | Saturn disc/resource parsing and bounded native MAPD title presentation | Saturn demo/fan translations | — |
 | Theron's Quest | — | PC Engine/TurboGrafx US ZIP and Japanese CUE/Track 02 startup plus initial dungeon parsing | Later gameplay, saves and presentation remain evidence-gated | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
@@ -237,10 +237,12 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
           --version
 ```
 
-Nexus remains deliberately fail-closed in Firestaff's native runtime until a
-real Saturn title/display-consumer capture exists.  Firestaff never delegates
-Nexus startup or gameplay to Mednafen (or another emulator); emulator tooling
-is used only outside the product to obtain and validate capture evidence.
+Nexus renders the admitted retail MAPD title sequence natively from the
+original CUE/BIN. The later menu, HUD and dungeon compositor remain
+deliberately fail-closed until their own real Saturn consumer evidence exists.
+Firestaff never delegates Nexus startup or gameplay to Mednafen (or another
+emulator); emulator tooling is used only outside the product to obtain and
+validate capture evidence.
 
 `--csb-fmtowns-ja` explicitly selects the hash-verified Japanese FM Towns
 package and fails if that original package is not present; it never guesses
