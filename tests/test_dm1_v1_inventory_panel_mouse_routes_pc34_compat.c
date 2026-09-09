@@ -1106,6 +1106,37 @@ static void test_inventory_status_hand_runtime_routes(void) {
                 "pixel immediately left of a status hand zone does not route to C020");
 }
 
+/* C211 is slot-box ordinal zero. Its release must reach C212; status-hand
+ * commands target a non-active champion, as in CHAMPION.C F0302. */
+static void test_status_hand_slot_zero_release_reaches_destination(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    int sx, sy, sw, sh, dx, dy, dw, dh;
+    unsigned short source = (unsigned short)((THING_TYPE_WEAPON << 10) | 0u);
+
+    seed_panel_view(&state, &things, weapons, containers);
+    state.world.party.championCount = 2;
+    state.world.party.activeChampionIndex = 1;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 100;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = source;
+    ASSERT_TRUE(M11_GameView_GetV1StatusHandSlotBoxZone(0, 0, &sx, &sy, &sw, &sh) &&
+                    M11_GameView_GetV1StatusHandSlotBoxZone(0, 1, &dx, &dy, &dw, &dh),
+                "C211 and C212 source rectangles are available");
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, sx + sw / 2, sy + sh / 2,
+                                               M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW, "C211 button-down starts slot-zero drag");
+    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(&state, dx + dw / 2,
+                                                      dy + dh / 2,
+                                                      M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C211 slot-zero release reaches C212 instead of being discarded");
+    ASSERT_EQ(state.v1InventoryDragActive, 0,
+              "C211 slot-zero transaction consumes its drag state");
+}
+
 /* Detail 5: open/close chest action-hand icon swap (C144 <-> C145) and
  * the close-time clear of v1OpenChestThing.  ReDMCSB CHEST.C:43-46 and
  * CHAMDRAW.C:621-630 F0291. */
@@ -1508,6 +1539,7 @@ int main(void) {
     test_inventory_open_chest_panel_click_route_priority();
     test_inventory_mouth_eye_routes_runtime();
     test_inventory_status_hand_runtime_routes();
+    test_status_hand_slot_zero_release_reaches_destination();
     test_inventory_open_chest_action_hand_icon_swap();
     test_inventory_replace_open_action_hand_chest_from_slot_click();
     test_inventory_open_chest_same_eye_reopen_keeps_open_icon();
