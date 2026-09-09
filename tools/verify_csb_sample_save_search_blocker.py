@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Inventory N2-local CSB saved-game sample coverage.
+"""Inventory CSB saved-game sample coverage.
 
 This verifier is intentionally non-invasive: it records whether an extracted,
-curated CSBGAME*.DAT sample is present in the approved N2-local reference roots.
+curated CSBGAME*.DAT sample is present in the approved local Firestaff roots.
 It exits 0 for both presence and absence so it can be used as a blocker/evidence
 probe without breaking unrelated lanes.
 """
@@ -26,8 +26,6 @@ def configured_roots() -> list[Path]:
     defaults = [
         HOME / ".firestaff/data/csb",
         HOME / ".firestaff/saves/csb",
-        HOME / ".openclaw/data/firestaff-original-games/DM",
-        HOME / ".openclaw/data/firestaff-original-games/DM/_extracted",
     ]
     configured = os.environ.get("FIRESTAFF_CSB_SAMPLE_SAVE_ROOTS", "")
     extras = [Path(entry).expanduser() for entry in configured.split(os.pathsep) if entry]
@@ -53,10 +51,13 @@ SAVE_DISK_RE = re.compile(r"save disk.*\.msa$", re.IGNORECASE)
 
 
 def rel(path: Path) -> str:
-    try:
-        return "~/" + str(path.relative_to(HOME))
-    except ValueError:
-        return str(path)
+    """Return portable evidence identity without publishing host paths."""
+    for root in ROOTS:
+        try:
+            return path.relative_to(root).as_posix()
+        except ValueError:
+            continue
+    return path.name
 
 
 def iter_files():
@@ -299,7 +300,9 @@ def main() -> int:
         "schema": "firestaff.csb_sample_save_search_blocker.v2",
         "pass": True,
         "verifier_semantics": "Inventory only; exits 0 whether a curated sample is present or absent.",
-        "roots": [rel(r) for r in ROOTS],
+        # Keep generated evidence portable.  Machine-specific filesystem
+        # paths do not belong in version-controlled reports.
+        "root_policy": ["firestaff_game_data", "firestaff_user_saves"],
         "curated_csbgame_dat_sample_present": bool(exact_extracted_samples),
         "exact_extracted_csbgame_samples": exact_extracted_samples,
         "save_named_filesystem_entries": exact_save_named_files,
@@ -314,7 +317,7 @@ def main() -> int:
             "Platform/FormatID must pass the source gates for the targeted media (CEDTINCU.C:49-58; CEDTINCH.C:55-58).",
             "Save routing must map C13_DUNGEON_CSB_GAME or C12_DUNGEON_CSB_PRISON to M746_FILE_ID_SAVE_CSBGAME_DAT, not DMSAVE.DAT (CEDTINC8.C:101-118).",
         ],
-        "blocker": None if exact_extracted_samples else "No extracted curated CSBGAME*.DAT/BAK saved-game sample is present under the approved N2 original-game roots; the N2 Atari ST Save Disk .msa candidate decodes as an empty GEMDOS/FAT12 root directory.",
+        "blocker": None if exact_extracted_samples else "No extracted curated CSBGAME*.DAT/BAK saved-game sample is present under the approved local Firestaff roots.",
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(result, indent=2, sort_keys=False) + "\n")
