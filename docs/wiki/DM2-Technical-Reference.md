@@ -1,15 +1,17 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
-> **Status reviewed 2026-08-31.** DM2 has a playable source-owned runtime
-> from DOS, Amiga, FM Towns and Macintosh real media. Advanced V1 parity,
+> **Status reviewed 2026-09-09.** DM2 has bounded source-owned routes from
+> DOS, Amiga, FM Towns and Macintosh real media. Full campaign parity,
 > native non-DOS saves and some combat/UI owners remain active work.
 
 ## Scope
 
 DM2 V1 follows skproject, DMWeb format notes and the retained disassembly
 evidence. It is independent from the DM1/CSB compatibility path. Each
-edition requires its own authenticated data pair; FM Towns English text may
-add the verified PC-English `GRAPHICS.DAT` as a text-only companion.
+edition requires its own authenticated data pair. The Japanese FM Towns
+edition retains its own disc as its only data owner: a GDAT-keyed localisation
+bridge supplies canonical text for the selected language and never requires a
+PC-English `GRAPHICS.DAT` companion.
 
 ## Verified real-media launch matrix
 

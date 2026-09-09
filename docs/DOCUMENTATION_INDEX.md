@@ -12,11 +12,11 @@ original-media playability or pixel parity.
 
 | Game | Verified today | Active boundary |
 |---|---|---|
-| Dungeon Master (DM1) | Playable PC 3.4 V1 runtime with source-locked startup, HUD, viewport, combat, saves and original-data gates | Continued original-route captures and V2 visual polish |
-| Chaos Strikes Back (CSB) | Source-locked engine slices, startup/entrance, dungeon model, DSA, mechanics, utility/import and rendering contracts | End-to-end real-data runtime proof |
-| Dungeon Master II: Skullkeep | Playable source-owned runtime from DOS, Amiga, FM Towns and Macintosh real media; M12 owner selection and M11 handoff verified | Native non-DOS saves, positive DOS WIELD/death-drop evidence and broader V1 parity |
-| DM Nexus | Saturn DMDF/DGN, world, save, mechanics, V2 presentation, MNS/SAL/MAP and bounded PRS3 evidence | Positive real-asset runtime handoff, visible material rendering and full playability |
-| Theron's Quest | JP/US Track 02 identity, startup records, descriptor/level framing, parser, mechanics, progression, save boundary and capture instrumentation | Game-owned Track 02 dungeon handoff, object/level semantics, bitmap/palette binding and app capture |
+| Dungeon Master (DM1) | Playable PC 3.4 V1 route; separately verified Atari ST, Amiga and FM Towns starts | Continued original-route captures and V2 visual polish |
+| Chaos Strikes Back (CSB) | Bounded native real-media routes on Atari ST, Amiga and FM Towns | Wider campaign, save and visual-capture evidence |
+| Dungeon Master II: Skullkeep | Bounded real-media routes on DOS, Amiga, FM Towns and Macintosh | Full record/save ownership and wider source UI, audio and mechanics parity |
+| DM Nexus | Native retail MAPD title rendering from the Japanese Saturn CUE/BIN, plus source-owned disc/format work | Same-revision menu, HUD and dungeon display-consumer evidence |
+| Theron's Quest | Bounded JP runtime and US startup from native Track 02 media | Transition trace, saves, bitmap/palette binding and wider gameplay proof |
 
 Across every game, work is ordered as **startup → menu → HUD → viewport**.
 Later presentation claims remain blocked when an earlier source or real-data
@@ -78,7 +78,7 @@ wiki and are copied by `scripts/sync_wiki.sh` during release work.
 - **Source-locked:** behavior is anchored to a reference source or disassembly and guarded by a focused test.
 - **Real-data verified:** the tested asset is identified by its canonical hash and the relevant parser/loader contract passes.
 - **Runtime proven:** the real-data path reaches the claimed runtime milestone.
-- **Playable:** the public route has end-to-end original-data runtime proof; this is currently reserved for DM1 V1.
+- **Playable:** the public route has end-to-end original-data runtime proof. At present this label is reserved for the DM1 PC 3.4 V1 route.
 - **Fixture-only:** useful for a narrow parser or state-machine contract, but not evidence for original-media rendering.
 
 ## Rebuilding the documentation
@@ -88,4 +88,4 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-08-12.
+**Last reviewed:** 2026-09-09.

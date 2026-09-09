@@ -1,5 +1,12 @@
 # Theron's Quest Technical Reference
 
+> **Status reviewed 2026-09-09.** Firestaff reads the supplied PC Engine CD
+> media natively: the Japanese Rev 1 route reaches title, stage, Soul Room
+> and Akutuba, while the US CloneCD ZIP reaches title and scripted Soul Room
+> startup. Campaign transitions, save semantics, bitmap/palette binding and
+> full gameplay remain evidence-gated. Capture tools mentioned below are
+> research provenance only and are never a Firestaff runtime dependency.
+
 ## Door movement boundary
 
 Movement does not implicitly open a closed or locked door. The explicit

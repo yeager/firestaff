@@ -47,10 +47,11 @@ is built as part of the main CMake build but is never tested.
           sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
-          git clone --depth 1 --branch release-3.2.14 https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build /tmp/SDL3-build --parallel
-          sudo cmake --install /tmp/SDL3-build
+          mkdir -p "$HOME/.cache/firestaff-build"
+          git clone --depth 1 --branch release-3.2.14 https://github.com/libsdl-org/SDL.git "$HOME/.cache/firestaff-build/SDL3"
+          cmake -S "$HOME/.cache/firestaff-build/SDL3" -B "$HOME/.cache/firestaff-build/SDL3-build" -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$HOME/.cache/firestaff-build/SDL3-build" --parallel
+          sudo cmake --install "$HOME/.cache/firestaff-build/SDL3-build"
           sudo ldconfig
       - name: Configure & Build
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release && cmake --build build --parallel

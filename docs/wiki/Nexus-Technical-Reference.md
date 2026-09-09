@@ -1,8 +1,9 @@
 # Dungeon Master Nexus Technical Reference
 
-> **Status reviewed 2026-08-31.** Nexus real-data parsing and several runtime
-> slices are verified. Positive real-asset handoff and full playability remain
-> open, especially for source-bound visible materials.
+> **Status reviewed 2026-09-09.** The retail Japanese CUE/BIN now drives a
+> native MAPD title sequence. Menu, HUD, dungeon composition and full
+> playability remain open because each needs its own source-bound display
+> consumer evidence.
 
 ## Scope
 

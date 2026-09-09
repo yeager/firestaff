@@ -31,11 +31,12 @@ sudo apt install build-essential cmake ninja-build pkg-config \
   libxkbcommon-dev wayland-protocols
 
 # SDL3 must be built from source (not yet in distro repos)
-git clone --depth 1 --branch release-3.2.14 https://github.com/libsdl-org/SDL.git /tmp/SDL3
-cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja \
+mkdir -p "$HOME/.cache/firestaff-build"
+git clone --depth 1 --branch release-3.2.14 https://github.com/libsdl-org/SDL.git "$HOME/.cache/firestaff-build/SDL3"
+cmake -S "$HOME/.cache/firestaff-build/SDL3" -B "$HOME/.cache/firestaff-build/SDL3-build" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
-cmake --build /tmp/SDL3-build --parallel
-sudo cmake --install /tmp/SDL3-build
+cmake --build "$HOME/.cache/firestaff-build/SDL3-build" --parallel
+sudo cmake --install "$HOME/.cache/firestaff-build/SDL3-build"
 sudo ldconfig
 
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release

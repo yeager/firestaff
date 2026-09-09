@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Reviewed 2026-08-30.** This is the operational status matrix. It separates
+**Reviewed 2026-09-09.** This is the operational status matrix. It separates
 media recognition, verified runtime slices and end-to-end playability. A row
 marked as supported does not mean that every menu, save format or visual
 parity gate is complete.
@@ -60,6 +60,13 @@ Macintosh route specifically covers the retail ZIP's native title, mirror
 selection and observed input matrix. As elsewhere in this document, this is
 bounded startup/runtime evidence rather than a complete parity assertion.
 
+On 2026-09-09 the current native build re-ran focused real-media gates that
+cover the DM1 PC 3.4 Hall of Champions candidate panel, CSB FM Towns entrance
+palette and `MINI.DAT` bootstrap pose, DM2 DOS New Game and FM Towns title/
+gameplay handoff, and Nexus retail MAPD title presentation. These checks
+confirm the stated bounded routes only. They do not turn an unrecorded
+campaign screen, save path, or visual comparison into a verified route.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |
@@ -90,7 +97,7 @@ bounded startup/runtime evidence rather than a complete parity assertion.
 | DOS | **Verified route** | Hash-verified PC data, GDAT/G1 loading, startup, runtime slices and sound tests. All eight supplied `data/sksave0..3.{dat,bak}` members resume through the native start-menu route directly from the distribution ZIP in memory; the real GDAT New Game rectangle is likewise dispatched from that retained ZIP through M11 into the native runtime. | Complete V1 renderer/mechanics parity and full SKSAVE ownership. |
 | Amiga | **Verified route** | Original Amiga archive reaches title, New Game, bounded runtime and the clipped native CHARSHEET inventory frame through verified GDAT/RAW4 material. | Wider gameplay, save and full pixel/audio parity. |
 | FM Towns | **Verified route** | Authentic Towns data and platform-specific startup, input, CD-audio and gameplay slices are tested. The HUD portrait proof reads `GRAPHICS.DAT` through the supplied ZIP → original IMG → ISO chain in RAM and verifies all 16 original `CHAMPIONS` records; it never relies on an extracted `DATA/` directory. | Complete native runtime ownership and full parity. |
-| Macintosh large retail | **Partial native route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, New Game, bounded wall input, and an accepted real-GDAT M11 frame with zero fallback draws pass. Its 256-row `PalIRGB`/`dtPalette16` pair remains distinct from the Amiga physical 16-colour palette route. Native QuickTime code admits original `moov`/`mdat` sample spans and decodes all four retail films: Cinepak/`twos` Title, Animation RLE/`raw ` Swoosh, and Cinepak/`raw ` Credits/Ending. No FFmpeg, BIOS, extraction, or host codec is used. | Complete Mac GAME_LOAD/Resume, dynamic pointer/drag owner, MIDI timing and full pixel/audio parity. No authentic Mac save is present. |
+| Macintosh large retail | **Verified route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, New Game, bounded wall input, and an accepted real-GDAT frame with zero fallback draws pass. Its 256-row `PalIRGB`/`dtPalette16` pair remains distinct from the Amiga physical 16-colour palette route. Native QuickTime code admits original `moov`/`mdat` sample spans and decodes all four retail films: Cinepak/`twos` Title, Animation RLE/`raw ` Swoosh, and Cinepak/`raw ` Credits/Ending. No FFmpeg, BIOS, extraction, or host codec is used. | Complete Mac GAME_LOAD/Resume, dynamic pointer/drag owner, MIDI timing and full pixel/audio parity. No authentic Mac save is present. |
 | Macintosh Japanese/French | **Preservation** | Authentic media is retained or classified as preservation input. | Separate graphics/dungeon/runtime ownership and language-specific proof. |
 | X68000 | **Unsupported** | Not part of the DM2 support matrix. | None planned in the current target. |
 
@@ -98,7 +105,7 @@ bounded startup/runtime evidence rather than a complete parity assertion.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Source route (blocked)** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests are native. A pointer-only launcher route (game card → Saturn → Original) retains the real CUE/BIN transport and reaches the native title boundary. Same-revision captures bind TITLE.BIN FIFO/RAM provenance, the complete 31,616-byte Work-RAM→VDP2 corridor, VDP writer registers, and contiguous VDP1/VDP2 state. The r27 frame binds the MAPD palette byte-for-byte to CRAM at frame 12592. The r33 receipt binds N/E/X/U/S selection at frames 13294/13334/13375/13415/13455 and all 17,920 MAPD words byte-for-byte to VDP2 VRAM `0x05c000–0x05dbff`. A 2026-09-07 post-render replay of the r33-identical raw state (`f7002066…`) produced the Saturn BIOS splash rather than a Nexus title frame, so those transport facts are not a display-composition witness. The public title route remains fail-closed at `title-vdp-capture-required`. | Capture a post-rendered, same-session Nexus title/menu frame that binds the actual display consumer, then verify menu/input transition without BIOS or emulator at runtime. |
+| Sega Saturn Japanese | **Verified bounded title route** | Authentic CUE/BIN media is retained as the sole source owner. Firestaff decodes the retail `TITLE.BIN`/`TITLE.CG` MAPD planes, selector sequence and BGR555 palettes in memory and presents that title sequence natively through both CLI and start-menu selection. Disc parsing, CDDA ownership, DMDF/DGN/MNS/PRS3 decoding and capture receipts remain separately source-bound. | A same-revision consumer capture for the menu/face compositor, HUD and dungeon display; native event/audio playback and full gameplay. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest

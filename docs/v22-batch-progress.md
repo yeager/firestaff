@@ -1,7 +1,8 @@
 # V2.2 Modern Asset Pack — Batch Progress
 
 Procedural first cut of the DM1 V2.2 "Modern Graphics" asset pack, written
-2026-06-18 by the V2.2 asset author (`tools/.openclaw/tmp/v22_asset_author.py`).
+2026-06-18 by a historical local asset-authoring script that is not retained
+in the repository.
 
 ## What landed
 
@@ -146,7 +147,7 @@ packId) so `m11_v22_validate_manifest()` returns 1 as well as
 `{"categories": {...}}` wrapper which only passed the substring-detection
 `available()` check but not the strict validator.
 
-End-to-end smoke (tools/.openclaw/tmp/v22_hero_smoke.c) verifies all three:
+An end-to-end local smoke probe verified all three:
 - modern_assets_available: 1
 - validate_manifest: 1 (top-level format)
 - get_installed: 1 (after M12 simulation)
@@ -182,8 +183,8 @@ is a single line so `m11_v22_validate_manifest()` can find
 `id`/`source_file`/`width`/`height` in the same fgets() buffer.
 Previously the multi-line indented form had `entry_has_all_fields=0`
 because the validator reads just the opening `{` line of each entry.
-The procedural generator script `.openclaw/tmp/v22_asset_author.py`
-was patched to emit the same validator-friendly format on regeneration.
+The historical procedural generator was patched to emit the same
+validator-friendly format on regeneration; it is not a project dependency.
 
 **Smoke test 3/3 PASS** (`tools/v22_hero_smoke.c`): modern_assets_available=1,
 validate_manifest=1, get_installed=1.

@@ -38,7 +38,8 @@ Reusable style template for the V2.2 "Modern" graphics mode (1920×1080,
 
 ## Output Path
 
-`~/.openclaw/media/tool-image-generation/firestaff-v22-<asset>-<NN>.png`
+Use an operator-selected local output directory, for example
+`~/.firestaff/artwork/firestaff-v22-<asset>-<NN>.png`.
 
 ## Naming
 
@@ -61,7 +62,7 @@ events before presenting results.
 **Every V2.2 generation MUST be compared with its corresponding original DM1 sprite.**
 
 1. Extract original sprites: `build/extract_all_sprites <GRAPHICS.DAT>
-   .openclaw/tmp/dm1-sprites dm1` (or the equivalent for other games).
+   .codex-scratch/dm1-sprites dm1` (or the equivalent for other games).
 2. For every V2.2 generation, locate its corresponding DM1 sprite (corridor,
    tile, creature, item). The vision model identifies the correct subject more
    reliably than dimension-based guessing.
@@ -95,8 +96,9 @@ a V2.2 generation to the correct original.
 
 ## Reference Index (workspace)
 
-- DM1 sprites: `.openclaw/tmp/dm1-sprites/` (543 PNG, manifest.json)
-- V2.2 output: `~/.openclaw/media/tool-image-generation/firestaff-v22-*.png`
+- DM1 sprites: `.codex-scratch/dm1-sprites/` (543 PNG, manifest.json)
+- V2.2 output: an operator-selected local output directory, such as
+  `~/.firestaff/artwork/firestaff-v22-*.png`
 - Batch progress: `docs/v22-batch-progress.md`
 
 ## Model Constraints — gpt-image-2 (2026-06-19)

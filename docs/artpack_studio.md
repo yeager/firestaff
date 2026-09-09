@@ -173,7 +173,7 @@ The self-test is registered in CTest:
 
 ```sh
 python3 scripts/firestaff_artpack_studio.py --self-test
-python3 scripts/firestaff_artpack_studio.py --screenshot /tmp/firestaff-artpack-studio.png
+python3 scripts/firestaff_artpack_studio.py --screenshot .codex-scratch/firestaff-artpack-studio.png
 ctest --test-dir build-local-ninja -R firestaff_artpack_studio_self_test --output-on-failure
 ```
 
