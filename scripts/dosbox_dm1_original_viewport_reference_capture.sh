@@ -215,6 +215,8 @@ DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=3000 \\
 NEW_FILE_TIMEOUT_MS=6000 \\
 DM1_ORIGINAL_EXPECTED_SHOTS=2 \\
+DM1_DOSBOX_CAPTURE_BACKEND=host \\
+DM1_DOSBOX_INPUT_MODE=global \\
 DM1_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:6000 shot:entrance_stable click:260,50 wait:3000 shot:hall_start' \\
 xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 
@@ -1332,7 +1334,11 @@ candidates = images if images else fallbacks
 if captured < expected or not all(complete_png(path) for path in candidates):
     raise SystemExit(
         f"ERROR: DOSBox produced {captured}/{expected} complete raw screenshots in {out}; "
-        "refusing to normalize or promote a still-writing capture route"
+        "refusing to normalize or promote a still-writing capture route. "
+        "On Linux/DOSBox builds whose Ctrl+F5 writer is unavailable, rerun "
+        "with DM1_DOSBOX_CAPTURE_BACKEND=host (and an X11 display); this "
+        "captures the original emulator window but still requires semantic "
+        "and duplicate-frame validation."
     )
 PY
         normalize_existing
