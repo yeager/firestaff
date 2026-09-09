@@ -43,6 +43,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
 #include "input_remap_m11.h"
+#include "touch_layout_m12.h"
 #include "gamepad_config_m12.h"
 #include "vga_palette_pc34_compat.h"
 #include "swsh_frontend_pc34_compat.h"
@@ -94,6 +95,69 @@ enum {
     M11_LAUNCHER_MODERN_WIDTH = M12_MODERN_MENU_NATIVE_WIDTH,
     M11_LAUNCHER_MODERN_HEIGHT = M12_MODERN_MENU_NATIVE_HEIGHT
 };
+
+/* The launcher owns persistence and editing of the touch layout; the active
+ * game loop owns only the translated input.  Keeping this bridge here sends
+ * virtual controls through precisely the same M12 input path as keyboard and
+ * gamepad input, rather than synthesizing pointer clicks into a dungeon.
+ */
+static M12_MenuInput m11_touch_layout_action_to_input(M12_InputAction action) {
+    switch (action) {
+    case M12_ACTION_MOVE_FORWARD:     return M12_MENU_INPUT_UP;
+    case M12_ACTION_MOVE_BACKWARD:    return M12_MENU_INPUT_DOWN;
+    case M12_ACTION_TURN_LEFT:        return M12_MENU_INPUT_TURN_LEFT;
+    case M12_ACTION_TURN_RIGHT:       return M12_MENU_INPUT_TURN_RIGHT;
+    case M12_ACTION_STRAFE_LEFT:      return M12_MENU_INPUT_STRAFE_LEFT;
+    case M12_ACTION_STRAFE_RIGHT:     return M12_MENU_INPUT_STRAFE_RIGHT;
+    case M12_ACTION_ACCEPT:           return M12_MENU_INPUT_ACCEPT;
+    case M12_ACTION_BACK:             return M12_MENU_INPUT_BACK;
+    case M12_ACTION_ACTION:           return M12_MENU_INPUT_ACTION;
+    case M12_ACTION_CYCLE_CHAMPION:   return M12_MENU_INPUT_CYCLE_CHAMPION;
+    case M12_ACTION_REST_TOGGLE:      return M12_MENU_INPUT_REST_TOGGLE;
+    case M12_ACTION_USE_STAIRS:       return M12_MENU_INPUT_USE_STAIRS;
+    case M12_ACTION_PICKUP_ITEM:      return M12_MENU_INPUT_PICKUP_ITEM;
+    case M12_ACTION_DROP_ITEM:        return M12_MENU_INPUT_DROP_ITEM;
+    case M12_ACTION_SPELL_RUNE_1:     return M12_MENU_INPUT_SPELL_RUNE_1;
+    case M12_ACTION_SPELL_RUNE_2:     return M12_MENU_INPUT_SPELL_RUNE_2;
+    case M12_ACTION_SPELL_RUNE_3:     return M12_MENU_INPUT_SPELL_RUNE_3;
+    case M12_ACTION_SPELL_RUNE_4:     return M12_MENU_INPUT_SPELL_RUNE_4;
+    case M12_ACTION_SPELL_RUNE_5:     return M12_MENU_INPUT_SPELL_RUNE_5;
+    case M12_ACTION_SPELL_RUNE_6:     return M12_MENU_INPUT_SPELL_RUNE_6;
+    case M12_ACTION_SPELL_CAST:       return M12_MENU_INPUT_SPELL_CAST;
+    case M12_ACTION_SPELL_CLEAR:      return M12_MENU_INPUT_SPELL_CLEAR;
+    case M12_ACTION_USE_ITEM:         return M12_MENU_INPUT_USE_ITEM;
+    case M12_ACTION_MAP_TOGGLE:       return M12_MENU_INPUT_MAP_TOGGLE;
+    case M12_ACTION_INVENTORY_TOGGLE: return M12_MENU_INPUT_INVENTORY_TOGGLE;
+    case M12_ACTION_QUICK_SAVE:       return M12_MENU_INPUT_SAVE_GAME;
+    case M12_ACTION_QUICK_LOAD:
+    case M12_ACTION_COUNT:
+    default:                          return M12_MENU_INPUT_NONE;
+    }
+}
+
+static M12_MenuInput m11_touch_layout_input_at(float normalizedX,
+                                               float normalizedY) {
+    static M12_TouchLayout layout;
+    static int initialized = 0;
+    int zone;
+    int x;
+    int y;
+
+    if (!initialized) {
+        M12_TouchLayout_SetDefaults(&layout);
+        (void)M12_TouchLayout_Load(&layout);
+        initialized = 1;
+    }
+    if (normalizedX < 0.0f || normalizedX > 1.0f ||
+        normalizedY < 0.0f || normalizedY > 1.0f) return M12_MENU_INPUT_NONE;
+    x = (int)(normalizedX * (float)M12_TOUCH_CANVAS_W);
+    y = (int)(normalizedY * (float)M12_TOUCH_CANVAS_H);
+    if (x >= M12_TOUCH_CANVAS_W) x = M12_TOUCH_CANVAS_W - 1;
+    if (y >= M12_TOUCH_CANVAS_H) y = M12_TOUCH_CANVAS_H - 1;
+    zone = M12_TouchLayout_HitTest(&layout, x, y);
+    return zone >= 0 ? m11_touch_layout_action_to_input(layout.zones[zone].action)
+                     : M12_MENU_INPUT_NONE;
+}
 
 uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
                                          int speedMultiplier) {
@@ -5677,6 +5741,8 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
     SDL_Event ev;
     int mappedX;
     int mappedY;
+    static SDL_FingerID overlayFingerId;
+    static int overlayFingerActive;
     if (gameViewResult) {
         *gameViewResult = M11_GAME_INPUT_IGNORED;
     }
@@ -5758,6 +5824,26 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
              ev.type == SDL_EVENT_FINGER_UP ||
              ev.type == SDL_EVENT_FINGER_CANCELED) &&
             gameView && gameView->active) {
+            /* Virtual touch controls are evaluated in full-window normalized
+             * coordinates before the letterboxed game-source mapper.  Once a
+             * finger begins on a control, consume its entire lifetime: the
+             * corresponding UP must never become an Eye/Mouth/world tap. */
+            if (overlayFingerActive && ev.tfinger.fingerID == overlayFingerId) {
+                if (ev.type == SDL_EVENT_FINGER_UP ||
+                    ev.type == SDL_EVENT_FINGER_CANCELED) {
+                    overlayFingerActive = 0;
+                }
+                continue;
+            }
+            if (ev.type == SDL_EVENT_FINGER_DOWN) {
+                M12_MenuInput overlayInput =
+                    m11_touch_layout_input_at(ev.tfinger.x, ev.tfinger.y);
+                if (overlayInput != M12_MENU_INPUT_NONE) {
+                    overlayFingerId = ev.tfinger.fingerID;
+                    overlayFingerActive = 1;
+                    return overlayInput;
+                }
+            }
             M11_TouchEventKind kind = ev.type == SDL_EVENT_FINGER_DOWN
                 ? M11_TOUCH_EVENT_DOWN
                 : (ev.type == SDL_EVENT_FINGER_MOTION
