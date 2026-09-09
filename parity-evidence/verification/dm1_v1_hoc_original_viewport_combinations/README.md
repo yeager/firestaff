@@ -40,6 +40,22 @@ the screenshots alone.
 | 2 | Viewport after first forward command; composition changed | `508ac8830b0b291519433fdd4f1211a159c9be833cdb747306d5c5fef13ee194` |
 | 3 | Viewport after immediate second forward command; composition retained | `b86538a80fcee110520d9d762bb9dfb0269b1e94dd156326ad816cebcc583cb5` |
 
+## Five-frame turn and movement sweep
+
+One further original run begins from that right-facing state, performs a
+forward command, turns left, attempts a forward command, turns right, and
+attempts a final forward command.  The screenshots establish the original
+rendered output for this exact input sequence.  They do not, by themselves,
+identify dungeon coordinates or prove collision semantics.
+
+| Frame | Input boundary | Observed original state | SHA-256 |
+| --- | --- | --- | --- |
+| 1 | Right-facing forward | First changed right-facing corridor view | `508ac8830b0b291519433fdd4f1211a159c9be833cdb747306d5c5fef13ee194` |
+| 2 | Left turn | Mirrored corridor composition | `cc4b0de33f709af66e97a0b99c759172ebdee7bab8aea7cc86c7e4a94c04ac67` |
+| 3 | Forward attempt | Left-facing corridor remains visible with changed status state | `2b07359cc4993f9283e344e1b6effb260e6e82264dc38752c4b117c6f3920384` |
+| 4 | Right turn | Returns to the right-facing corridor composition | `8b5b1dbe63503e5bd6862f9d7e8133fb1064e9da2d9b712933ce5040656cd85b` |
+| 5 | Forward attempt | Repeats the corresponding right-facing corridor view | `f4592378f3d586d497150529282bbb9a8321fb242db3b972cf4f02a73472e19d` |
+
 ## Remaining work
 
 Additional original routes must still cover successful movement, floor pickup,
