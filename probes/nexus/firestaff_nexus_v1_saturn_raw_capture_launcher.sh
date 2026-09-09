@@ -72,6 +72,33 @@ append_trace_receipts() {
         "$(lower "$(hash_file "$trace_path")")" >> "$manifest"
     fi
   done
+
+  # Rendered PPMs are evidence only when they are emitted by this exact
+  # capture session.  Record a separate receipt for every requested frame so
+  # an image cannot later be paired with unrelated VDP state just because it
+  # has a plausible filename.
+  local render_dir="${FIRESTAFF_NEXUS_TRACE_RENDER_DIR:-}"
+  local render_frames="${FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES:-}"
+  local render_frame render_path render_key render_bytes
+  local -a requested_render_frames
+  if [[ -n "$render_dir" && -n "$render_frames" && -d "$render_dir" ]]; then
+    IFS=',' read -r -a requested_render_frames <<< "$render_frames"
+    for render_frame in "${requested_render_frames[@]}"; do
+      render_frame="${render_frame//[[:space:]]/}"
+      [[ "$render_frame" =~ ^[0-9]+$ ]] || continue
+      printf -v render_path '%s/frame-%06d.ppm' "$render_dir" "$((10#$render_frame))"
+      [[ -s "$render_path" ]] || continue
+      # The patched producer writes P6 pixmaps.  A different container is
+      # rejected rather than silently being treated as a post-render receipt.
+      [[ "$(head -c 3 "$render_path" 2>/dev/null || true)" == $'P6\n' ]] || continue
+      printf -v render_key 'render_frame_%06d_ppm' "$((10#$render_frame))"
+      if ! grep -q "^${render_key}_sha256=" "$manifest"; then
+        render_bytes=$(wc -c < "$render_path" | tr -d '[:space:]')
+        printf '%s_sha256=%s\n%s_bytes=%s\n' "$render_key" \
+          "$(lower "$(hash_file "$render_path")")" "$render_key" "$render_bytes" >> "$manifest"
+      fi
+    done
+  fi
 }
 capture_manifest_finalized=0
 finalize_capture_manifest() {
@@ -286,6 +313,7 @@ umask 077
     "$(lower "$bios_sha256")" "$bios_region" "$(lower "$disc_sha256")" "$skip_frames" "$frame_limit" "$press_start_frame" "$press_start_length" "$press_button_mask" "${FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE:-}"
   printf 'mednafen_home=%s\ntrace_session=%s\ncapture_session_launcher=%s\nno_waiting=%s\nrequire_input_window=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$trace_session" "${capture_session_launcher[*]-}" "$no_waiting" "$require_input_window" "$timeout_seconds"
   printf 'vdp1_reg_pc_list=%s\n' "${FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST:-}"
+  printf 'render_frame_requests=%s\n' "${FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES:-}"
   printf 'mednafen_options=%q\n' "${mednafen_options[*]-}"
   printf 'capture_magic=FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n'
 } > "$manifest_tmp"

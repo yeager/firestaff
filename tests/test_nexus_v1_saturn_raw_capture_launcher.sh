@@ -31,6 +31,7 @@ grep -Fq 'frame_limit=8' "$tmp_dir/manifest.txt"
 grep -Fq 'press_start_frame=0' "$tmp_dir/manifest.txt"
 grep -Fq 'press_start_length=1' "$tmp_dir/manifest.txt"
 grep -Fq 'press_button_mask=0x10' "$tmp_dir/manifest.txt"
+grep -Fq 'render_frame_requests=' "$tmp_dir/manifest.txt"
 mkdir -p "$tmp_dir/mednafen-home"
 "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
@@ -100,6 +101,34 @@ grep -Fxq -- '-sound' "$tmp_dir/trace-options.raw"
 grep -Fxq -- '0' "$tmp_dir/trace-options.raw"
 grep -Fxq -- '-videoip' "$tmp_dir/trace-options.raw"
 grep -Fq 'mednafen_options=-sound\ 0\ -videoip\ 0' "$tmp_dir/manifest-options.txt"
+
+render_fake="$tmp_dir/fake-mednafen-render"
+render_dir="$tmp_dir/render"
+mkdir -p "$render_dir"
+python3 - "$render_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
+    "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
+    "printf 'P6\\n1 1\\n255\\n\\000\\001\\002' > \"$FIRESTAFF_NEXUS_TRACE_RENDER_DIR/frame-000012.ppm\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+FIRESTAFF_NEXUS_TRACE_RENDER_DIR="$render_dir" \
+FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES='12' \
+"$launcher" --operator-only --launch --mednafen "$render_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-render.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-render.txt" >/dev/null
+grep -Fq 'render_frame_requests=12' "$tmp_dir/manifest-render.txt"
+grep -Fq "render_frame_000012_ppm_sha256=$(shasum -a 256 "$render_dir/frame-000012.ppm" | awk '{print $1}')" \
+  "$tmp_dir/manifest-render.txt"
+grep -Fq 'render_frame_000012_ppm_bytes=14' "$tmp_dir/manifest-render.txt"
 if "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \

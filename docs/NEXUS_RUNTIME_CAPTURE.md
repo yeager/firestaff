@@ -666,6 +666,16 @@ in Mednafen as a fallback.  Mednafen may be instrumented outside Firestaff to
 produce read-only traces, but those traces must be imported and verified before
 they can unlock a native Nexus route.
 
+### Render-frame receipt binding
+
+The external-only Saturn capture launcher records every requested post-render
+PPM as `render_frame_NNNNNN_ppm_sha256` and
+`render_frame_NNNNNN_ppm_bytes` in the raw-capture manifest.  This receipt is
+bound to the capture's disc hash, BIOS hash, input plan, absolute frame window
+and raw VDP trace.  A PPM without those companion receipts is useful visual
+reference only: it cannot prove a title, menu, HUD, viewport or compositor
+route and must not unlock Firestaff's native Nexus startup.
+
 When M12 has matched physical Track 1 instead of a CUE, M11 reopens sibling
 CUE sheets with the native ISO reader and retains one only if it resolves to
 that exact physical Nexus data track. The CUE remains the engine input, so its
