@@ -2,9 +2,12 @@
 set -euo pipefail
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-trace=$(mktemp)
-track=$(mktemp)
-trap 'rm -f "$trace" "$trace.bad" "$track"' EXIT
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$repo/.codex-scratch"}
+mkdir -p "$scratch_root"
+scratch=$(mktemp -d "$scratch_root/firestaff-theron-lba4165.XXXXXX")
+trace="$scratch/trace"
+track="$scratch/track"
+trap 'rm -rf "$scratch"' EXIT
 
 truncate -s $((1160 * 2352)) "$track"
 cat >"$trace" <<'EOF'
