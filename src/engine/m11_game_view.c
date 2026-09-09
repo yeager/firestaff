@@ -66023,11 +66023,21 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     /* PANEL.C F0355 publishes C017 before any inventory slot or panel
      * overlay. For normal DM1, a missing raw C017/C033/M653 receipt leaves
      * the viewport untouched rather than reconstructing inventory chrome. */
-    if (!state->showDebugHUD && m11_is_dm1_source_kind(state->sourceKind) &&
+    if (!state->showDebugHUD && !state->candidateMirrorPanelActive &&
+        m11_is_dm1_source_kind(state->sourceKind) &&
         !m11_dm1_v1_f0355_inventory_material_ready(state)) return;
-    if (m11_inventory_champion_index(state) < 0) return;
-    champ = &state->world.party.champions[m11_inventory_champion_index(state)];
-    isDead = (champ->hp.current == 0);
+    /* The C127 route opens C040 before it chooses the normal inventory
+     * champion.  C040/C026 are self-contained original surfaces, so do not
+     * discard the candidate modal merely because the ordinary panel selector
+     * is intentionally unset for the first recruited champion. */
+    if (m11_inventory_champion_index(state) < 0 &&
+        !state->candidateMirrorPanelActive) return;
+    champ = NULL;
+    isDead = 0;
+    if (!state->candidateMirrorPanelActive) {
+        champ = &state->world.party.champions[m11_inventory_champion_index(state)];
+        isDead = (champ->hp.current == 0);
+    }
 
     /* Use 18×18 slot boxes when GRAPHICS.DAT assets are available */
     if (state->assetsAvailable) {
