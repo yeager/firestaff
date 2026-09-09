@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -73,12 +74,22 @@ static int make_temp_root(char root[512]) {
              (unsigned long)rand());
     return TEST_MKDIR(root) == 0;
 #else
-    char tmpl[] = "/tmp/firestaff_nexus_m11_startup_XXXXXX";
-    char* made = mkdtemp(tmpl);
+    const char *scratch = getenv("FIRESTAFF_TEST_SCRATCH");
+    char *made;
+    if (!scratch || !scratch[0]) {
+        scratch = ".codex-scratch";
+    }
+    if (TEST_MKDIR(scratch) != 0 && errno != EEXIST) {
+        return 0;
+    }
+    if (snprintf(root, 512, "%s/firestaff_nexus_m11_startup_XXXXXX",
+                 scratch) >= 512) {
+        return 0;
+    }
+    made = mkdtemp(root);
     if (!made) {
         return 0;
     }
-    snprintf(root, 512, "%s", made);
     return 1;
 #endif
 }
