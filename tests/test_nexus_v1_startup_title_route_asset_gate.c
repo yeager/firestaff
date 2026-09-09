@@ -126,7 +126,8 @@ int main(void)
                strcmp(input_route.status_scope, "ASSETS") == 0,
            "blocked title input route reports asset scope");
     expect(input_route.status &&
-               strcmp(input_route.status, "blocked-title-vdp-capture") == 0,
+               strcmp(input_route.status,
+                      "blocked-title-vdp-owner-compositor-capture") == 0,
            "raw TITLE.CG route reports the Saturn capture blocker");
     expect(!input_route.set_save_select_active &&
                !input_route.set_champion_select_active,
@@ -139,7 +140,8 @@ int main(void)
     expect(pointer_route.route == NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED,
            "title pointer cannot advertise save-select while menu assets are blocked");
     expect(pointer_route.status &&
-               strcmp(pointer_route.status, "blocked-title-vdp-capture") == 0,
+               strcmp(pointer_route.status,
+                      "blocked-title-vdp-owner-compositor-capture") == 0,
            "blocked title pointer route reports the Saturn capture blocker");
 
     expect(nexus_v1_launcher_startup_title_handoff_receipt_from_runtime_state(
@@ -151,7 +153,8 @@ int main(void)
                handoff.title_route.route ==
                    NEXUS_V1_STARTUP_TITLE_ROUTE_ASSET_BLOCKED &&
                handoff.status &&
-               strcmp(handoff.status, "blocked-title-vdp-capture") == 0,
+               strcmp(handoff.status,
+                      "blocked-title-vdp-owner-compositor-capture") == 0,
            "handoff consumes the raw-title capture blocker");
 
     check_asset_handoff_blocks_saturn_route_on_menu_prs3();

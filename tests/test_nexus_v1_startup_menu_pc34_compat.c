@@ -4516,9 +4516,9 @@ int main(void)
                                    runtime_receipt.startup_assets.save_menu_route_ready == 0 &&
                                    runtime_receipt.startup_assets.champion_menu_route_ready == 0 &&
                                    strcmp(runtime_receipt.startup_assets.real_menu_surface_blocker,
-                                          "title-vdp-capture-required") == 0 &&
+                                          "title-vdp-owner-compositor-capture-required") == 0 &&
                                    strcmp(runtime_receipt.startup_assets.startup_menu_asset_route,
-                                          "blocked-title-vdp-capture") == 0,
+                                          "blocked-title-vdp-owner-compositor-capture") == 0,
                                "Nexus launcher asset gate blocks unavailable startup menus");
                     } else {
                         expect(1, "Nexus launcher asset gate blocks unavailable startup menus");

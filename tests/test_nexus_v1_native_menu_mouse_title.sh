@@ -36,7 +36,7 @@ output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 if ! printf '%s\n' "$output" | grep -Fq \
         'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' ||
    ! printf '%s\n' "$output" | grep -Fq \
-        'blocker=title-vdp-capture-required' ||
+        'blocker=title-vdp-owner-compositor-capture-required' ||
    ! printf '%s\n' "$output" | grep -Fq 'Nexus: opened disc image ' ||
    ! printf '%s\n' "$output" | grep -Fq 'TITLE.CG/4bpp-atlas' ||
    ! printf '%s\n' "$output" | grep -Fq \

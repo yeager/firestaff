@@ -445,9 +445,12 @@ transport, CRAM/VRAM state and timing facts recorded above; it does **not**
 prove that those facts are the active title display consumer at that frame.
 The post-render artifact remains operator-owned under
 `~/.firestaff/external/nexus-capture/` and is not shipped or required by
-Firestaff.  The public `title-vdp-capture-required` gate must stay closed
-until a same-session post-render frame shows the actual Nexus title/menu and
-can be joined to the relevant VDP1/VDP2 state.
+Firestaff.  The public
+`title-vdp-owner-compositor-capture-required` gate must stay closed until a
+same-session post-render frame shows the actual Nexus title/menu and can be
+joined to the relevant VDP1/VDP2 state.  Raw VDP1/VDP2/VRAM/CRAM/timing
+transport is already authenticated; it cannot identify the title owner or
+authorize an inferred compositor.
 
 On 2026-09-08, a fresh JP-BIOS/retail-CUE r38 scout requested one post-render
 frame at absolute frame 18,000 through the hash-manifested raw-capture

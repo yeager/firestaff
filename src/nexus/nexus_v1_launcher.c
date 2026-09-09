@@ -3308,8 +3308,15 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     receipt->menu_text_consumer_bound =
         engine->startup_menu_text_consumer_capture_verified ? 1 : 0;
     if (!title_capture_source_ready) {
-        receipt->real_menu_surface_blocker = "title-vdp-capture-required";
-        receipt->startup_menu_asset_route = "blocked-title-vdp-capture";
+        /* The retained JP retail witness already proves raw VDP1/VDP2,
+         * VRAM, CRAM and timing transport.  What it does not bind is the
+         * title owner's source span, VDP1/VDP2 composition and priorities.
+         * Say that precisely: calling this merely a missing VDP capture
+         * sends capture work down a route which the corpus has completed. */
+        receipt->real_menu_surface_blocker =
+            "title-vdp-owner-compositor-capture-required";
+        receipt->startup_menu_asset_route =
+            "blocked-title-vdp-owner-compositor-capture";
     } else if (!nexus_v1_startup_surfaces_ready(engine)) {
         receipt->real_menu_surface_blocker = "startup-surfaces";
         receipt->startup_menu_asset_route = "blocked-startup-surfaces";
