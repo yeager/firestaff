@@ -760,7 +760,15 @@ PY
     # DOSBox 0.74 on Linux uses Ctrl+F5 for screenshots. DOSBox Staging accepts
     # the same accelerator, while DOSBox-X uses its F12+P host-key sequence.
     # The caller/backend selection is injected through the environment.
-    xdotool key --window "$window" "$screenshot_hotkey"
+    # Screenshot capture is a DOSBox-X host binding.  Once Entrance has
+    # transferred ownership to the SDL game loop, a targeted XTest event can
+    # lose its window beneath the binding itself.  Match the physical-style
+    # global route-input mode for this host binding as well.
+    if [[ "$input_mode" == "global" ]]; then
+        xdotool key "$screenshot_hotkey"
+    else
+        xdotool key --window "$window" "$screenshot_hotkey"
+    fi
     sleep 0.18
 }
 
@@ -1329,8 +1337,14 @@ def complete_png(path: Path) -> bool:
         data = path.read_bytes()
     except OSError:
         return False
-    return (len(data) >= 45 and data.startswith(b"\x89PNG\r\n\x1a\n")
-            and data.endswith(png_iend))
+    if len(data) < 45 or not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return False
+    # DOSBox-X appends its ``raw1`` capture trailer after a complete PNG
+    # stream.  The PNG standard permits trailing bytes, and Pillow/file both
+    # correctly accept these captures.  Looking for a complete IEND chunk
+    # rather than requiring it to be the final bytes rejects partial writes
+    # without discarding authentic DOSBox-X output.
+    return data.find(png_iend) != -1
 
 while time.monotonic() - start < timeout:
     images = sorted(out.glob("image*.png"))
