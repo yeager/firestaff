@@ -194,6 +194,67 @@ if unexpected or nonblack < 50000 or len(observed) < 10 or red_background_broad:
         f"red_background_broad={red_background_broad})")
 print(f"PASS: CSB FM Towns C28 closed Entrance nonblack={nonblack} colours={len(observed)}")
 PY
+
+# The source palette is proved above in Original mode.  Modern and Custom use
+# the same authenticated C28/C002/C003 transaction, but take separate host
+# presentation paths.  The reported broad-red-door regression could therefore
+# survive an Original-only image check.  Capture both modes from the retail
+# ZIP and reject a blank or broad red substitute without encoding source art.
+for modern_mode in v20 v21; do
+    modern_capture_dir="$entrance_capture_dir/$modern_mode"
+    mkdir -p "$modern_capture_dir"
+    FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$modern_capture_dir" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --presentation-mode "$modern_mode" --width 320 --height 200 \
+        --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+        --boot-probe --boot-probe-frames 720 \
+        --script 'wait700,click:52:110,wait5' --duration 0 >/dev/null 2>&1
+done
+python3 - "$entrance_capture_dir" <<'PY'
+import pathlib
+import struct
+import sys
+
+root = pathlib.Path(sys.argv[1])
+red_background = (12, 12, 255)  # BGR expansion of C28 entry 9.
+for mode in ("v20", "v21"):
+    files = list((root / mode).glob("*.bmp"))
+    if len(files) != 1:
+        raise SystemExit(f"FAIL: expected one CSB FM Towns {mode} Entrance frame")
+    blob = files[0].read_bytes()
+    if len(blob) < 54 or blob[:2] != b"BM":
+        raise SystemExit(f"FAIL: CSB FM Towns {mode} Entrance capture is not a BMP")
+    offset = struct.unpack_from("<I", blob, 10)[0]
+    width, signed_height = struct.unpack_from("<Ii", blob, 18)
+    height = abs(signed_height)
+    bits = struct.unpack_from("<H", blob, 28)[0]
+    stride = ((width * bits + 31) // 32) * 4
+    if width != 320 or height != 200 or bits != 24 or offset + stride * height > len(blob):
+        raise SystemExit(f"FAIL: invalid CSB FM Towns {mode} Entrance geometry")
+    pixels = []
+    for row in range(height):
+        start = offset + row * stride
+        pixels.extend(tuple(blob[start + column * 3:start + column * 3 + 3])
+                      for column in range(width))
+    nonblack = sum(pixel != (0, 0, 0) for pixel in pixels)
+    colours = len(set(pixels))
+    red_points = [
+        (column, row) for row in range(height) for column in range(width)
+        if pixels[row * width + column] == red_background
+    ]
+    broad_red = False
+    if red_points:
+        xs, ys = zip(*red_points)
+        broad_red = (len(red_points) > 512 or
+                     max(xs) - min(xs) + 1 > 32 or
+                     max(ys) - min(ys) + 1 > 32)
+    if nonblack < 50000 or colours < 10 or broad_red:
+        raise SystemExit(
+            f"FAIL: CSB FM Towns {mode} Entrance did not retain closed doors "
+            f"(nonblack={nonblack}, colours={colours}, red_pixels={len(red_points)}, "
+            f"broad_red={broad_red})")
+    print(f"PASS: CSB FM Towns {mode} closed Entrance nonblack={nonblack} colours={colours}")
+PY
 trap - EXIT HUP INT TERM
 cleanup_entrance_capture
 
