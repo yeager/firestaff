@@ -35,6 +35,13 @@ title-menu ownership.  It must therefore not enable the native title renderer.
   at priority 5, while NBG0 is inactive. That capture binds a raw state and
   matching PPM but has no same-session asset/write trace, so it corrects the
   next capture target without authorizing NBG1 bytes for native presentation.
+  A second hash-identical one-frame capture at the same absolute frame on
+  2026-09-09 (`runtime-vdp12.raw` SHA-256
+  `52b423d1ba65d796508fe36583cf2006faba03ec1345a08107f767ff345b08c1`)
+  again produced no VDP2 register writes in that stable frame. Future
+  producer capture must span the preceding title-state transition and retain
+  a bounded write window; recapturing only frame 18000 cannot establish the
+  asset writer or source pointer.
   The current native integration has an additional fail-closed ownership gap:
   `Nexus_V1_Engine.startup_title_vdp_capture_verified` is consumed by the
   launcher receipts but has no assignment site. Add an authenticated capture
