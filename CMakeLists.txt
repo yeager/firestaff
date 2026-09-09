@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.330 LANGUAGES C)
+project(Firestaff VERSION 3.0.331 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -34934,7 +34934,7 @@ endif()
         set_tests_properties(pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path PROPERTIES
             TIMEOUT 480
             SKIP_RETURN_CODE 77
-            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;FIRESTAFF_VERIFICATION_REPORT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.md;FIRESTAFF_PASS373_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/build;FIRESTAFF_PASS373_HOME_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/home")
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;FIRESTAFF_VERIFICATION_REPORT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.md;FIRESTAFF_PASS373_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR};FIRESTAFF_PASS373_HOME_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/home")
         add_test(
             NAME pass374_dm1_v1_completion_viewport_wall_credit
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_completion_viewport_wall_credit.py

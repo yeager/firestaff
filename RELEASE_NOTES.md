@@ -361,6 +361,17 @@
   dungeon Thing tables. Full inventory persistence across resume remains
   incomplete; these interaction fixes do not resolve that savegame gap.
 
+# Firestaff v3.0.331
+
+## Fixed
+
+- `Classic`: removes duplicate iPad movement, turn, and strafe controls where
+  source-owned arrows already exist. The complementary touch actions remain available
+  through the same input route as keyboard and controller input.
+- `pass373`: corrects executable selection to use the active out-of-tree CTest
+  build, preventing an absent or stale repository build from falsely blocking the
+  DM1 viewport-redraw release gate.
+
 # Firestaff v3.0.330
 
 ## Fixed

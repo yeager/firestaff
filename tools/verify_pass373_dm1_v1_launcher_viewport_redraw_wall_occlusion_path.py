@@ -21,7 +21,14 @@ REPORT = pathlib.Path(os.environ.get(
 REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(ROOT/"reference/redmcsb-20210206/Toolchains/Common/Source")))
 DM1_ARCHIVE = pathlib.Path(os.environ.get("FIRESTAFF_DM1_PC34_ARCHIVE", str(pathlib.Path.home()/".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip")))
 DM1_DATA = DM1_ARCHIVE.parent
-BUILD_DIR = resolve_build_dir(ROOT, ROOT / "build")
+# CTest gives this verifier an isolated output directory for its receipts and
+# the actual CMake build directory separately.  Respect the latter so a
+# focused out-of-tree test exercises the executable it just built rather than
+# falling back to a stale repository-level `build/` path.
+BUILD_DIR = pathlib.Path(os.environ.get(
+    "FIRESTAFF_PASS373_BUILD_DIR",
+    str(resolve_build_dir(ROOT, ROOT / "build")),
+))
 SCRIPT = "right"
 EXPECTED_STATUS = "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
 
