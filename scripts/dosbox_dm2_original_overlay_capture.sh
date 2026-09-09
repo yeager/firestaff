@@ -343,6 +343,10 @@ write_helpers() {
 [sdl]
 fullscreen=false
 output=opengl
+# Capture sessions are terminated by this tooling.  DOSBox-X otherwise asks
+# for host-side confirmation on exit, leaving a stale Yes/No dialog that can
+# contaminate the next original-capture route.
+quit warning=false
 
 [dosbox]
 machine=svga_paradise
