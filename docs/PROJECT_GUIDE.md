@@ -116,7 +116,12 @@ Requires SDL3. On macOS: `brew install sdl3`
 - **300+ source files**, **245K+ lines of C**
 - **365+ headers**, **149+ tests**, **80+ probes**
 - CI covers M10 verify, warnings, CMake builds, Phase A, audio probe, and determinism
-- **Localization:** M12 launcher has a 19-language UI cycle (`po/startup-menu.<lang>.po`); DM1 in-game strings load via a 19-language candidate list (`po/dm1.<lang>.po`) and fall back to English. `startup-menu` coverage is native for all shipped locales (sv/de/fr/ja/zh/id reviewed earlier; cs/da/es/fi/hu/it/ko/nl/no/pl/pt/ru/tr translated 2026-07-19); `csb` and `theron` domains are fully translated for all shipped locales as of 2026-07-19 (sv/de/fr/ja/zh reviewed earlier; the 13 fallback locales translated 2026-07-19, `validate_po_layout.sh` PASS with 94-100% native coverage). See `po/README.md` + `po/validate_po_layout.sh` for the layout contract.
+- **Localization:** the current tree ships 20 localized catalogs plus English
+  for the launcher, shared UI, all five game domains and Studio. The language
+  table in `po/README.md` is generated from the live templates and catalogs;
+  it distinguishes complete catalog coverage from language-specific wording.
+  Use it and `po/validate_po_layout.sh` rather than this historical snapshot
+  for exact coverage and validation status.
 - **5 games:** DM1, CSB, DM2, DM Nexus, Theron's Quest
 
 These counts and localization claims are historical, unverified snapshots.
