@@ -39,6 +39,12 @@ if [[ ! -x "$later_raw_receipt" ]] ||
     exit 1
 fi
 bash -n "$script"
+if grep -Eq '/tmp|TMPDIR' "$script" ||
+   ! grep -Fq 'capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scratch"}' "$script" ||
+   ! grep -Fq 'mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX"' "$script"; then
+    printf 'FAIL: live capture scratch must stay under the repository unless explicitly overridden\n' >&2
+    exit 1
+fi
 if [[ ! -x "$runtime_verifier" ]] ||
    ! grep -Fq 'sdl2-compat' "$runtime_verifier" ||
    ! grep -Fq 'use a real SDL2 runtime for authentic Quartz/SDL capture' "$runtime_verifier"; then
