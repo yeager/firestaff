@@ -10,9 +10,12 @@ Reviewed 2026-09-05. Only open work is listed here.
   C37 now uses F0202's creature-owned open-pit/levitation and imaginary
   fakewall gates plus its non-material door exception. The F0202
   archenemy-Fluxcage gate and the C31 party-bump attack transition are
-  covered by raw-format regression tests. Remaining work is F0267's
-  blocked-by-party/retry ownership and the distinct C29 danger and C30
-  projectile-reaction paths, including original platform traces.
+  covered by raw-format regression tests. F0267 now also detaches a C04
+  before C60/C61 owns a blocked destination and performs its later placement
+  from the detached record, matching TIMELINE.C's
+  `CM1_MAPX_NOT_ON_A_SQUARE` route. C29 and C30's bounded reaction branches
+  are covered by raw-format regression tests. Remaining work is authenticated
+  platform trace evidence for those paths and full F0200 perception input.
   Do not reintroduce map/tick-derived reseeding. See
   `docs/parity/DM1_RAW_RNG_CONSUMER_AUDIT.md` for scan scope.
 
