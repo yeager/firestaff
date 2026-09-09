@@ -35786,10 +35786,10 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     if (!state->v1InventoryDragActive) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (state->v1InventoryDragSourceSlotBox == 0) {
-        state->v1InventoryDragActive = 0;
-        return M11_GAME_INPUT_IGNORED;
-    }
+    /* C211 is the first source hand box and is represented by slot ordinal
+     * zero.  Drag activity, rather than that valid ordinal, is the presence
+     * bit: treating zero as empty silently discarded the mouse-up half of a
+     * real C211 -> C212..C218 transaction. */
     sourceSlotBox = state->v1InventoryDragSourceSlotBox;
     state->v1InventoryDragActive = 0;
     state->v1InventoryDragSourceSlotBox = 0;
