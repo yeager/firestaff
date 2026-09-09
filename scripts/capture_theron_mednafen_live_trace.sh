@@ -742,7 +742,7 @@ APPLESCRIPT
 }
 
 trace_dir=$(dirname -- "$trace")
-capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$PWD/.codex-scratch"}
+capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scratch"}
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 input_trace="${trace}.input"
