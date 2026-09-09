@@ -67,7 +67,7 @@ Required for --run:
   DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel ...'
 
 Supported route tokens:
-  shot, shot:<label>, wait:<ms>, click:<x>,<y>, enter, esc, space, up, down,
+  shot, shot:<label>, wait:<ms>, click:<x>,<y>, press:<x>,<y>, release, enter, esc, space, up, down,
   left, right, one, two, three, four, five, six, f1-f4, kp0-kp9,
   kpenter, ctrl-s, a-z, 0-9, rclick:<x>,<y>
 
@@ -129,6 +129,10 @@ Optional environment:
   rclick:<x>,<y>   posts one serialized right-click in original 320x200 game
                     coordinates. This is needed for source-owned inventory close/
                     toggle routes such as C011/C083, not a parity claim by itself.
+  press:<x>,<y>    holds the left button at an original-space coordinate until
+                    a later release token. Use this to capture transient source
+                    states such as C071 Eye and C070 Mouth while they are held.
+  release          releases a preceding press token after any requested shot.
   manifest:        ${CROP_MANIFEST}
   shot labels:     ${SHOT_LABEL_MANIFEST}
   pass513 scaffold:${PASS513_SCAFFOLD}
@@ -299,13 +303,15 @@ for token in route:
         if not re.fullmatch(r"wait:[0-9]+", low):
             raise SystemExit(f"ERROR: invalid wait token: {token}")
         continue
-    if low.startswith("click:") or low.startswith("rclick:"):
-        m = re.fullmatch(r"(?:r?click):([0-9]{1,3}),([0-9]{1,3})", low)
+    if low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
+        m = re.fullmatch(r"(?:r?click|press):([0-9]{1,3}),([0-9]{1,3})", low)
         if not m:
             raise SystemExit(f"ERROR: invalid click token: {token}")
         x, y = map(int, m.groups())
         if not (0 <= x < 320 and 0 <= y < 200):
             raise SystemExit(f"ERROR: click token outside original 320x200 frame: {token}")
+        continue
+    if low == "release":
         continue
     if low not in allowed:
         raise SystemExit(f"ERROR: unknown route token: {token}")
@@ -377,7 +383,7 @@ for idx, token in enumerate(route, 1):
         kind = "wait"
         detail = low.split(":", 1)[1]
         total_wait_ms += int(detail)
-    elif low.startswith("click:") or low.startswith("rclick:"):
+    elif low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
         kind = "click"
     rows.append({"index": idx, "token": token, "kind": kind, "detail": detail})
 
@@ -593,7 +599,8 @@ func dosboxWindowBounds() -> CGRect? {
     return nil
 }
 
-func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
+var heldMousePoint: CGPoint? = nil
+func clickOriginalFrame(x: Int, y: Int, button: String = "left", releaseAfter: Bool = true) {
     guard let bounds = dosboxWindowBounds() else {
         fputs("could not find DOSBox window bounds for click:\(x),\(y)\n", stderr)
         exit(3)
@@ -616,12 +623,26 @@ func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
     let cgButton: CGMouseButton = (button == "right") ? .right : .left
     let downType: CGEventType = (button == "right") ? .rightMouseDown : .leftMouseDown
     let upType: CGEventType = (button == "right") ? .rightMouseUp : .leftMouseUp
-    guard let down = CGEvent(mouseEventSource: source, mouseType: downType, mouseCursorPosition: point, mouseButton: cgButton),
-          let up = CGEvent(mouseEventSource: source, mouseType: upType, mouseCursorPosition: point, mouseButton: cgButton) else { return }
+    guard let down = CGEvent(mouseEventSource: source, mouseType: downType, mouseCursorPosition: point, mouseButton: cgButton) else { return }
     down.postToPid(pid)
+    if !releaseAfter {
+        heldMousePoint = point
+        print("left-press-mapped \(x),\(y) -> \(Int(px)),\(Int(py)) window=\(Int(bounds.width))x\(Int(bounds.height))")
+        return
+    }
     usleep(45_000)
+    guard let up = CGEvent(mouseEventSource: source, mouseType: upType, mouseCursorPosition: point, mouseButton: cgButton) else { return }
     up.postToPid(pid)
     print("\(button)-click-mapped \(x),\(y) -> \(Int(px)),\(Int(py)) window=\(Int(bounds.width))x\(Int(bounds.height))")
+    usleep(180_000)
+}
+
+func releaseOriginalFrameButton() {
+    guard let point = heldMousePoint,
+          let up = CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left) else { return }
+    up.postToPid(pid)
+    heldMousePoint = nil
+    print("left-release")
     usleep(180_000)
 }
 
@@ -649,15 +670,18 @@ for token in route {
             exit(2)
         }
         usleep(ms * 1000)
-    } else if lowerToken.hasPrefix("click:") || lowerToken.hasPrefix("rclick:") {
+    } else if lowerToken.hasPrefix("click:") || lowerToken.hasPrefix("rclick:") || lowerToken.hasPrefix("press:") {
         let isRightClick = lowerToken.hasPrefix("rclick:")
-        let prefix = isRightClick ? "rclick:" : "click:"
+        let isPress = lowerToken.hasPrefix("press:")
+        let prefix = isRightClick ? "rclick:" : (isPress ? "press:" : "click:")
         let coords = lowerToken.dropFirst(prefix.count).split(separator: ",")
         guard coords.count == 2, let x = Int(coords[0]), let y = Int(coords[1]), x >= 0, x < 320, y >= 0, y < 200 else {
             fputs("invalid click token: \(token)\n", stderr)
             exit(2)
         }
-        clickOriginalFrame(x: x, y: y, button: isRightClick ? "right" : "left")
+        clickOriginalFrame(x: x, y: y, button: isRightClick ? "right" : "left", releaseAfter: !isPress)
+    } else if lowerToken == "release" {
+        releaseOriginalFrameButton()
     } else if lowerToken == "ctrl-s" {
         ctrlS()
     } else if let key = keycodes[lowerToken] {
@@ -802,7 +826,7 @@ PY
 }
 
 click_original_frame() {
-    local x="$1" y="$2" button="${3:-1}"
+    local x="$1" y="$2" button="${3:-1}" release_after="${4:-1}"
     local geom gx gy gw gh px py
     refresh_window
     geom="$(xdotool getwindowgeometry --shell "$window")"
@@ -842,6 +866,10 @@ PY
     # Keep the button down across several original frames; this mirrors the
     # existing CGEvent injector's explicit 45ms interval.
     xdotool mousedown "$button"
+    if [[ "$release_after" != "1" ]]; then
+        echo "left-press-mapped ${x},${y} -> ${input_mode} ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
+        return
+    fi
     sleep "$(python3 - "$mouse_hold_ms" <<'PY'
 import sys
 print(int(sys.argv[1]) / 1000.0)
@@ -851,6 +879,14 @@ PY
     local button_name=left
     if [[ "$button" == "3" ]]; then button_name=right; fi
     echo "${button_name}-click-mapped ${x},${y} -> ${input_mode} ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
+    sleep 0.18
+}
+
+release_original_frame_button() {
+    # C071/C070 are transient while the source sees the button down.  The
+    # route deliberately takes any screenshot before this release token.
+    xdotool mouseup 1
+    echo "left-release"
     sleep 0.18
 }
 
@@ -913,15 +949,19 @@ t = sys.argv[1]
 print(int(t.split(':', 1)[1]) / 1000.0)
 PY
 )" ;;
-        click:*|rclick:*)
+        click:*|rclick:*|press:*)
             if [[ "$low" == rclick:* ]]; then
                 coords="${low#rclick:}"
                 click_original_frame "${coords%,*}" "${coords#*,}" 3
+            elif [[ "$low" == press:* ]]; then
+                coords="${low#press:}"
+                click_original_frame "${coords%,*}" "${coords#*,}" 1 0
             else
                 coords="${low#click:}"
                 click_original_frame "${coords%,*}" "${coords#*,}" 1
             fi
             ;;
+        release) release_original_frame_button ;;
         *)
             key="$(key_for_token "$low")" || { echo "unknown route token: $token" >&2; exit 2; }
             tap_key "$key"
