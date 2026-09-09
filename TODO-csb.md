@@ -28,11 +28,13 @@ Reviewed 2026-09-05. Only open work is listed here.
   residents remain forbidden to reinsert; do not loosen G0038 slot masks to
   make such placements appear supported.
 
-- Verify FM Towns distance-volume production in the shared audio runtime.
-  Transport now scales the native 1..127 driver domain correctly, and direct
-  local events use 127. The runtime request branch already implements the
-  MEDIA551 division-before-multiplication distance formula; add end-to-end
-  coverage through completed-event history and compare original captures.
+- Verify completed-event history for FM Towns distance-volume production.
+  The real F31 archive now verifies all 35 source PCM events, the native
+  5500 Hz transport, and every 1..127 driver-volume step; direct local events
+  use 127. The runtime request branch implements MEDIA551's
+  division-before-multiplication distance formula. What remains is an
+  end-to-end completed-event receipt at a non-local distance, followed by an
+  original capture comparison.
 
 - Add authentic inscription-bearing Atari, Amiga and F31E runtime fixtures or
   captures and assert the candidate framebuffer pixel delta for the now-wired
