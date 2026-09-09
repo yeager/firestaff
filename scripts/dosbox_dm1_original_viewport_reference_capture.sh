@@ -119,6 +119,9 @@ Optional environment:
                     stop accepting xdotool --window events after the Entrance
                     handoff. Emits focused root-device XTest input instead;
                     it affects only this external original-capture harness.
+                    Keep the default window mode for held C071 Eye/C070 Mouth
+                    captures: the original panel redraw is tied to the SDL
+                    window's pressed-button state on the verified PC 3.4 path.
   DM1_DOSBOX_MOUSE_HOLD_MS=60
                     duration of each injected mouse press. The dungeon loop
                     samples button state asynchronously, so an XTest click
