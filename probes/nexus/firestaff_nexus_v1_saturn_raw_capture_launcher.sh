@@ -10,6 +10,12 @@ usage() {
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
 lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 append_trace_receipts() {
+  if [[ -n "${FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS:-}" &&
+        -s "$FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS" ]] &&
+     ! grep -q '^input_events_trace_sha256=' "$manifest"; then
+    printf 'input_events_trace_sha256=%s\n' \
+      "$(lower "$(hash_file "$FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS")")" >> "$manifest"
+  fi
   if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP1_WRITES:-}" &&
         -s "$FIRESTAFF_NEXUS_TRACE_VDP1_WRITES" ]] &&
      ! grep -q '^vdp1_write_trace_sha256=' "$manifest"; then

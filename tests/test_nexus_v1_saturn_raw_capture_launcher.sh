@@ -139,6 +139,31 @@ if FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES='12' \
   echo "expected out-of-window render-frame rejection" >&2
   exit 1
 fi
+
+input_fake="$tmp_dir/fake-mednafen-input"
+input_trace="$tmp_dir/input-events.trace"
+python3 - "$input_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
+    "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
+    "printf 'frame=12 button=start pressed=1\\n' > \"$FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS="$input_trace" \
+"$launcher" --operator-only --launch --mednafen "$input_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-input.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-input.txt" >/dev/null
+grep -Fq "input_events_trace_sha256=$(shasum -a 256 "$input_trace" | awk '{print $1}')" \
+  "$tmp_dir/manifest-input.txt"
+
 if "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
