@@ -22,7 +22,14 @@ PASS = "pass376_dm1_v1_original_overlay_parity_plan"
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-REDMCSB = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
+# Development references are local project inputs, never an old agent-home
+# directory.  An explicit environment override remains useful for a separate
+# read-only ReDMCSB checkout; the bundled local reference is the normal path.
+REDMCSB = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(ROOT / "reference" / "redmcsb-20210206" / "Toolchains" /
+        "Common" / "Source"),
+))
 STATUS = "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING"
 
 SOURCE_LOCKS: list[dict[str, Any]] = [
@@ -96,7 +103,7 @@ NEXT_COMMANDS = [
     },
     {
         "id": "semantic_original_runtime_capture",
-        "command": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+        "command": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=\"$FIRESTAFF_DM1_ORIGINAL_STAGE_DIR\" DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:2200 one wait:2500 shot:readiness_preflight wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 kp8 wait:1200 shot:forward_after_vblank wait:700 kp4 wait:900 shot:turn_left_2_after_vblank wait:700 kp6 wait:1200 shot:post_redraw_after_vblank\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
         "must_produce": [
             "verification-screens/pass376-original-route/imageNNNN-raw.png frames with 320x200 gameplay dimensions",
             "route labels proving party-control-ready movement/HUD/viewport states, not menu/title/no-party duplicates",
