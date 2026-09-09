@@ -112,7 +112,11 @@ hoc_route='wait5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1
 hoc_capture_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$hoc_capture_root"
 hoc_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040.XXXXXX")
-cleanup_hoc_capture() { find "$hoc_capture_dir" -depth -delete; }
+hoc_inventory_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c007.XXXXXX")
+cleanup_hoc_capture() {
+    find "$hoc_capture_dir" -depth -delete
+    find "$hoc_inventory_capture_dir" -depth -delete
+}
 trap cleanup_hoc_capture EXIT HUP INT TERM
 hoc_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_capture_dir" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -262,7 +266,8 @@ fi
 # after C160 has recruited the mirror candidate. Keep this a live PC3.4 CLI
 # route: it guards the reported HoC state where panel clicks looked accepted
 # but never opened the champion inventory.
-hoc_inventory_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+hoc_inventory_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_inventory_capture_dir" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
@@ -278,6 +283,44 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_inventory_output" ||
     printf '%s\n' 'FAIL: authentic PC-34 Hall C007 did not open source FOOD/WATER inventory after C160' >&2
     exit 1
 fi
+
+# C007 is a visible source page, not merely an input state.  A stale panel
+# admission used to report InventoryPanel=1 while leaving the player with a
+# black/right-hand dungeon pane.  Verify that the real PC3.4 route presents a
+# dense multi-colour panel across the original left-hand 220-pixel UI region.
+# This deliberately asserts only observable geometry and colour diversity,
+# rather than encoding copyrighted source pixels.
+python3 - "$hoc_inventory_capture_dir" <<'PY'
+import pathlib
+import struct
+import sys
+
+files = list(pathlib.Path(sys.argv[1]).glob("*.bmp"))
+if len(files) != 1:
+    raise SystemExit("FAIL: expected one native DM1 C007 presentation capture")
+blob = files[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: native DM1 C007 capture is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if width != 320 or height != 200 or bits != 24 or offset + stride * height > len(blob):
+    raise SystemExit("FAIL: invalid native DM1 C007 capture geometry")
+
+pixels = []
+for y in range(0, 200):
+    row = offset + y * stride
+    pixels.extend(tuple(blob[row + x * 3:row + x * 3 + 3]) for x in range(0, 220))
+nonblack = sum(pixel != (0, 0, 0) for pixel in pixels)
+colours = len(set(pixels))
+if nonblack < 25000 or colours < 10:
+    raise SystemExit(
+        "FAIL: authentic PC-34 C007 was not visibly presented "
+        f"(nonblack={nonblack}, colours={colours})")
+print(f"PASS: authentic PC-34 C007 visible nonblack={nonblack} colours={colours}")
+PY
 
 trap - EXIT HUP INT TERM
 cleanup_hoc_capture
