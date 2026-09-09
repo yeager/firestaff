@@ -159,6 +159,29 @@ validate_press_sequence() {
   done
 }
 
+validate_render_frame_requests() {
+  local requested="${FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES:-}"
+  local frame end
+  local -a frames
+  [[ -z "$requested" ]] && return 0
+  IFS=',' read -r -a frames <<< "$requested"
+  end=$((skip_frames + frame_limit))
+  for frame in "${frames[@]}"; do
+    frame="${frame//[[:space:]]/}"
+    [[ "$frame" =~ ^[0-9]+$ ]] || {
+      echo "ERROR: invalid render frame request: $frame" >&2
+      return 1
+    }
+    # A post-render PPM is only a receipt for a raw VDP frame when both use
+    # the same absolute emulator frame.  Reject out-of-window requests rather
+    # than creating an attractive but semantically unjoinable manifest.
+    ((10#$frame >= skip_frames && 10#$frame < end)) || {
+      echo "ERROR: render frame $frame is outside raw capture window [$skip_frames,$end)" >&2
+      return 1
+    }
+  done
+}
+
 run_validator() {
   case "$validator" in
     *.py) python3 "$validator" "$@" ;;
@@ -284,6 +307,7 @@ esac
    "$press_start_frame" =~ ^[0-9]+$ && "$press_start_length" =~ ^[1-9][0-9]*$ &&
    "$press_button_mask" =~ ^(0[xX])?[0-9a-fA-F]+$ ]] || exit 1
 validate_press_sequence || exit 1
+validate_render_frame_requests || exit 1
 if ((require_input_window)) && ((press_start_frame < skip_frames ||
     press_start_frame + press_start_length > skip_frames + frame_limit)); then
   echo "ERROR: requested input window is outside the captured frame window" >&2

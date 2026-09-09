@@ -124,11 +124,21 @@ FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES='12' \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-render.raw" --validator /usr/bin/true \
-  --manifest "$tmp_dir/manifest-render.txt" >/dev/null
+  --manifest "$tmp_dir/manifest-render.txt" --skip-frames 12 --frame-limit 1 >/dev/null
 grep -Fq 'render_frame_requests=12' "$tmp_dir/manifest-render.txt"
 grep -Fq "render_frame_000012_ppm_sha256=$(shasum -a 256 "$render_dir/frame-000012.ppm" | awk '{print $1}')" \
   "$tmp_dir/manifest-render.txt"
 grep -Fq 'render_frame_000012_ppm_bytes=14' "$tmp_dir/manifest-render.txt"
+if FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES='12' \
+  "$launcher" --operator-only --mednafen /usr/bin/true \
+    --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+    --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+    --trace "$tmp_dir/trace-render-reject.raw" --validator "$validator" \
+    --manifest "$tmp_dir/manifest-render-reject.txt" --skip-frames 0 --frame-limit 2 \
+    >/dev/null 2>&1; then
+  echo "expected out-of-window render-frame rejection" >&2
+  exit 1
+fi
 if "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \

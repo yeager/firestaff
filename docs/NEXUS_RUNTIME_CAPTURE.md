@@ -672,7 +672,8 @@ The external-only Saturn capture launcher records every requested post-render
 PPM as `render_frame_NNNNNN_ppm_sha256` and
 `render_frame_NNNNNN_ppm_bytes` in the raw-capture manifest.  This receipt is
 bound to the capture's disc hash, BIOS hash, input plan, absolute frame window
-and raw VDP trace.  A PPM without those companion receipts is useful visual
+and raw VDP trace; the launcher rejects a requested render frame outside that
+raw window.  A PPM without those companion receipts is useful visual
 reference only: it cannot prove a title, menu, HUD, viewport or compositor
 route and must not unlock Firestaff's native Nexus startup.
 
