@@ -37,6 +37,16 @@ native label. These are start/menu and bounded-runtime receipts, not a claim
 that campaign, capture or pixel parity is complete; the remaining evidence
 gaps below stay open.
 
+The 2026-09-09 revalidation used only supplied, unmodified containers.
+`dm1_v1_fmtowns_archive_cli_boot` exercised the Towns `TMENU` → `EDM`/`JDM`
+handoff, entrance and English/Japanese input matrix. CSB's native Atari STX,
+Amiga ZIP→ADF and FM Towns routes passed; the FM Towns check validates the C28
+palette, C002/C003 closed-prison composition and `MINI.DAT` map 4 bootstrap
+pose. DM2's real FM Towns title/gameplay/corpus gates, Nexus's retail
+`TITLE.CG`/`MAPD` admission and startup handoff, and Theron's Japanese Track 02
+and CUE boot gates also passed. This confirms only the named bounded routes;
+it does not promote unrecorded screens or campaign behaviour to full parity.
+
 ## Verification matrix
 
 | Game | Atari ST | FM Towns | DOS | Amiga | PC Engine CD | Saturn |
