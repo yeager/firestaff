@@ -25,6 +25,11 @@ title-menu ownership.  It must therefore not enable the native title renderer.
   binds the active NBG0 source, CRAM palette, VDP1/VDP2 layers, priorities and
   timing. The observed NBG0 span remains unowned; do not admit a native title
   renderer or substitute inferred assets until this consumer is identified.
+  The local `title-owner-join-complete-20260904` ten-frame witness was
+  rechecked on 2026-09-09: every captured frame has `BGON=0`, no enabled
+  VDP2 layer, and NBG0 only as an unconsumed bitmap-mode register setting.
+  It is transport evidence, not a post-composition title frame; do not target
+  that window again for title admission.
   The current native integration has an additional fail-closed ownership gap:
   `Nexus_V1_Engine.startup_title_vdp_capture_verified` is consumed by the
   launcher receipts but has no assignment site. Add an authenticated capture
