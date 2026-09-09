@@ -12325,7 +12325,8 @@ if(BUILD_TESTING)
         )
         set_tests_properties(m11_dm1_real_alcove_item_runtime_pc34 PROPERTIES
             ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
-            LABELS "dm1;dos;pc34;real-media;in-memory;objects;inventory;skip-safe")
+            LABELS "dm1;dos;pc34;real-media;in-memory;objects;inventory;skip-safe"
+            SKIP_RETURN_CODE 77)
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_source_item_name_guard.c")

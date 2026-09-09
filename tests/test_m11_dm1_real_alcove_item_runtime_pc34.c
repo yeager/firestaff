@@ -179,7 +179,7 @@ int main(void)
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     M11_GameView_Init(&state);
     if (!start_real_dm1_corpus(&state, dataDir)) {
@@ -384,7 +384,7 @@ int main(void)
          * real corpus into a renderer failure or invent a replacement item. */
         puts("SKIP: real PC34 corpus has no alcove-object wall-chain fixture");
         M11_GameView_Shutdown(&state);
-        return 0;
+        return 77;
     }
     fprintf(stderr,
             "source alcove objects were not presented "
