@@ -56,7 +56,7 @@ case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --presentation-mode "$mode" \
     --width 320 --height 200 --game csb --data-dir "$data_dir" --platform amiga --boot-probe \
-    --boot-probe-frames 800 --script 'click:100:100,key:enter,up' \
+    --boot-probe-frames 800 --script 'wait700,click:100:100,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 \
     --boot-probe-expect-level-loaded 1 \
     --boot-probe-expect-runtime-tick-min 1 2>&1)" || {
