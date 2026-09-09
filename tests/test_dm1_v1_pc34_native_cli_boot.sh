@@ -235,10 +235,33 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_confirm_output" ||
     exit 1
 fi
 
-# The authentic original continuation is C007 at the centre of champion 0's
-# inventory strip, (54,14), after C160 has recruited the mirror candidate.
-# Keep this a live PC3.4 CLI route: it guards the reported HoC state where
-# panel clicks looked accepted but never opened the champion inventory.
+# The authenticated DOSBox route records a left click at (22,14) after C160.
+# Its following original screenshot retains the dungeon page, so this point
+# must not be reclassified as the C017 inventory opener just because it lies
+# inside the first champion strip. Keep the real reference coordinate separate
+# from the verified C007 inventory control below; the capture's historical
+# "inventory" file label is not, by itself, source-modal proof.
+hoc_source_coordinate_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --presentation-mode v1 --width 320 --height 200 \
+    --game dm1 --platform pc --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 720 \
+    --script "${hoc_route},click:22:14,wait5" --duration 0 2>&1) || {
+    printf '%s\n' "$hoc_source_coordinate_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_source_coordinate_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=0' <<<"$hoc_source_coordinate_output" ||
+   ! grep -Fq 'dm1InventoryPanel=0' <<<"$hoc_source_coordinate_output" ||
+   ! grep -Fq 'dm1FoodWaterPanel=0' <<<"$hoc_source_coordinate_output"; then
+    printf '%s\n' "$hoc_source_coordinate_output" >&2
+    printf '%s\n' 'FAIL: authentic PC-34 HoC (22,14) route changed the source-visible page' >&2
+    exit 1
+fi
+
+# C007's independently verified inventory control is centred at (54,14)
+# after C160 has recruited the mirror candidate. Keep this a live PC3.4 CLI
+# route: it guards the reported HoC state where panel clicks looked accepted
+# but never opened the champion inventory.
 hoc_inventory_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \

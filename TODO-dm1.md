@@ -30,6 +30,12 @@
   must not replace the verified keypad sequence or be inferred from it. Keep
   raw captures operator-local under `.codex-scratch` and do not substitute a
   save, graphics, or a Firestaff-native result for this evidence.
+  The authenticated route's recorded `(22,14)` click keeps the dungeon page
+  visible in both the original capture and current native run; its historical
+  `inventory` screenshot label is therefore not proof of a C017 transition.
+  The independently verified native C017 control at `(54,14)` needs a new
+  original capture before its replacement-page pixels or later pickup
+  transaction can be compared.
 
 - Add an original-media trace that covers F0205's G0395/G0396 half-pair owner
   through a same-tick map transition and slot reuse. The native transient
