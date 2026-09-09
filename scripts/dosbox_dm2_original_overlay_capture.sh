@@ -59,7 +59,7 @@
 # Environment overrides:
 #   DM2_ORIGINAL_STAGE_DIR=/path/to/staged/Skullkeep
 #        override the default stage derived from
-#        ~/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip
+#        ~/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip
 #   DM2_ORIGINAL_ARCHIVE=/path/to/Skullkeep.zip
 #        override the canonical archive path.
 #   DM2_ORIGINAL_PROGRAM='DM2.BAT'
@@ -76,24 +76,14 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-if [[ -f "${HOME}/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ]]; then
-    # The user-supplied preservation archive is the normal local source.  It
-    # is only staged for the external emulator capture tool; Firestaff itself
-    # continues to consume the archive in memory.
-    ARCHIVE_DEFAULT="${HOME}/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-else
-    ARCHIVE_DEFAULT="${HOME}/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-fi
+ARCHIVE_DEFAULT="${HOME}/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 ARCHIVE="${DM2_ORIGINAL_ARCHIVE:-${ARCHIVE_DEFAULT}}"
-STAGE_DEFAULT_DEFAULT="${REPO}/verification-screens/dm2-dosbox-capture/SkullkeepPC10EN"
-if [[ -z "${DM2_ORIGINAL_STAGE_DIR:-}" && -d "${HOME}/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34" ]]; then
-    # Fall back to the legacy extracted tree only if an operator explicitly
-    # created it; the canonical Skullkeep tree is staged below.
-    STAGE_DEFAULT="${STAGE_DEFAULT_DEFAULT}"
-else
-    STAGE_DEFAULT="${DM2_ORIGINAL_STAGE_DIR:-${STAGE_DEFAULT_DEFAULT}}"
-fi
-OUT_DIR="${OUT_DIR:-${REPO}/verification-screens/passH2313-dm2-original-overlays}"
+# Capture staging is tooling-only and never a runtime input.  Keep it out of
+# the source tree and require the explicitly documented local archive above;
+# a hidden historical workspace must not silently substitute a different
+# revision of the game.
+STAGE_DEFAULT="${DM2_ORIGINAL_STAGE_DIR:-${REPO}/.codex-scratch/dm2-pc10-original-stage}"
+OUT_DIR="${OUT_DIR:-${REPO}/.codex-scratch/dm2-original-overlay-capture}"
 DOSBOX="${DOSBOX:-$(command -v dosbox 2>/dev/null || printf '%s' /Applications/DOSBox\ Staging.app/Contents/MacOS/dosbox)}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
