@@ -113,9 +113,11 @@ hoc_capture_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$hoc_capture_root"
 hoc_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040.XXXXXX")
 hoc_inventory_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c007.XXXXXX")
+hoc_modern_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040-modern.XXXXXX")
 cleanup_hoc_capture() {
     find "$hoc_capture_dir" -depth -delete
     find "$hoc_inventory_capture_dir" -depth -delete
+    find "$hoc_modern_capture_dir" -depth -delete
 }
 trap cleanup_hoc_capture EXIT HUP INT TERM
 hoc_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_capture_dir" \
@@ -199,7 +201,8 @@ fi
 # Modern changes the render target, but it must not change the original
 # source-coordinate hit route.  Use the same real PC3.4 archive and physical
 # 16:9 click; this caught variants where C040 worked only in Original mode.
-hoc_modern_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+hoc_modern_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_modern_capture_dir" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v20 --width 1920 --height 1080 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
@@ -215,6 +218,46 @@ if ! grep -Fq 'window=1920x1080' <<<"$hoc_modern_output" ||
     printf '%s\n' 'FAIL: Modern scaled authentic PC-34 Hall portrait click missed C040' >&2
     exit 1
 fi
+
+# Modern may change the target resolution but must not accidentally retain a
+# state-only C040 modal while omitting its source-backed pixels.  This is the
+# same real PC3.4 click as above at a physical 16:9 coordinate; inspect the
+# original source rectangle after presentation rather than relying on the
+# modal receipt alone.
+python3 - "$hoc_modern_capture_dir" <<'PY'
+import pathlib
+import struct
+import sys
+
+files = list(pathlib.Path(sys.argv[1]).glob("*.bmp"))
+if len(files) != 1:
+    raise SystemExit("FAIL: expected one Modern native DM1 C040 presentation capture")
+blob = files[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: Modern native DM1 C040 capture is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if width != 1920 or height != 1080 or bits != 24 or offset + stride * height > len(blob):
+    raise SystemExit("FAIL: invalid Modern native DM1 C040 capture geometry")
+
+# 1920x1080 letterboxes the 320x200 source as a 1600x1000 rectangle at
+# (160,40).  C040's source rectangle (80,85)-(224,158) therefore maps to
+# (560,465)-(1280,830).  Test density/diversity only, never source pixels.
+pixels = []
+for y in range(465, 830):
+    row = offset + y * stride
+    pixels.extend(tuple(blob[row + x * 3:row + x * 3 + 3]) for x in range(560, 1280))
+nonblack = sum(pixel != (0, 0, 0) for pixel in pixels)
+colours = len(set(pixels))
+if nonblack < 120000 or colours < 10:
+    raise SystemExit(
+        "FAIL: Modern authentic PC-34 C040 was not visibly presented "
+        f"(nonblack={nonblack}, colours={colours})")
+print(f"PASS: Modern authentic PC-34 C040 visible nonblack={nonblack} colours={colours}")
+PY
 
 # C040 is interactive, not merely a painted modal.  Its RESURRECT control is
 # centred at (130,115) in the same source-sized PC viewport.  It must consume
