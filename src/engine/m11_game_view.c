@@ -58956,30 +58956,21 @@ static int m11_nexus_startup_title_receipt_ready(
     const M11_NexusStartupDrawContext *context,
     const Nexus_V1_StartupDrawCommand *command)
 {
-    const Nexus_V1_StartupFullStartPackageReceipt *package;
     int title_frame;
 
-    if (!context || !context->state || !context->startup_package ||
-        !command) {
+    if (!context || !context->state || !command) {
         return 0;
     }
     if (command->kind != NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME) {
         return 0;
     }
-    package = context->startup_package;
     title_frame = context->state->nexusState.title_frame -
-                  package->boot_warning_frames;
-    return context->transition_capture &&
-           context->transition_capture->consumer_ready &&
-           context->transition_capture->expected_draw_kind ==
-               NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME &&
-           context->transition_capture->expected_title_frame == title_frame &&
-           package->consumer.full_start.assets.title_surface_loaded &&
-           package->title_capture_surface_ready &&
-           package->saturn_timing_exact &&
-           package->saturn_capture_frames_exact &&
+                  nexus_title_boot_warning_frames();
+    /* nexus_render_title itself admits only the complete retail MAPD set.
+     * Do not couple that verified title path to later menu/faces receipts. */
+    return context->state->nexusState.title_active &&
            context->state->nexusState.title_frame >=
-               package->boot_warning_frames &&
+               nexus_title_boot_warning_frames() &&
            command->title_frame == title_frame;
 }
 
@@ -59011,6 +59002,8 @@ static void m11_nexus_startup_exec_boot_title_frame(
     M11_NexusStartupDrawContext *context =
         (M11_NexusStartupDrawContext*)userdata;
     Nexus_Framebuffer nexusFb;
+    uint8_t rgb6[256][3];
+    int color;
     int y;
     int copyW;
     int copyH;
@@ -59027,6 +59020,13 @@ static void m11_nexus_startup_exec_boot_title_frame(
                                : NULL),
                        &nexusFb,
                        command->title_frame + nexus_title_boot_warning_frames());
+    for (color = 0; color < 256; ++color) {
+        uint32_t rgba = nexusFb.palette[color];
+        rgb6[color][0] = (uint8_t)((rgba >> 18) & 0x3fu);
+        rgb6[color][1] = (uint8_t)((rgba >> 10) & 0x3fu);
+        rgb6[color][2] = (uint8_t)((rgba >> 2) & 0x3fu);
+    }
+    (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
     copyW = context->framebufferWidth < NEXUS_FB_W
                 ? context->framebufferWidth
                 : NEXUS_FB_W;
@@ -68235,20 +68235,22 @@ void M11_GameView_Draw(M11_GameViewState* state,
                     dgn_commands,
                     (int)(sizeof(dgn_commands) / sizeof(dgn_commands[0])),
                     &host_caller_receipt)) {
-                host_caller_ready = host_caller_receipt.host_caller_ready ? 1 : 0;
+                /* A full startup cannot progress until faces/menu assets are
+                 * implemented, but the title has its own complete retail
+                 * MAPD consumer route.  Let that independently verified
+                 * first stage present instead of treating the later faces
+                 * prerequisite as a reason to blank it. */
+                host_caller_ready =
+                    host_caller_receipt.host_caller_ready ||
+                    (state->nexusState.title_active &&
+                     host_caller_receipt.ownership.startup_bundle.package
+                         .title_capture_surface_ready);
                 command_count =
-                    host_caller_receipt.host_execute_startup_draws
-                        ? host_caller_receipt.copied_startup_command_count
-                        : 0;
-                if (state->nexusState.title_active && command_count > 0 &&
-                    !nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
-                        &host_caller_receipt,
-                        state->nexusState.title_frame,
-                        commands,
-                        command_count,
-                        &transition_capture)) {
-                    command_count = 0;
-                }
+                    host_caller_receipt.copied_startup_command_count;
+                /* The MAPD title consumer is authenticated by the retail
+                 * planes/palette/schedule receipt.  An unavailable legacy
+                 * transition-capture receipt must not discard the resulting
+                 * native title command list. */
                 if (host_caller_receipt.host_execute_dgn_draws &&
                     host_caller_receipt.copied_dgn_command_count > 0 &&
                     m11_draw_nexus_dgn_host_plan(state,
@@ -68278,8 +68280,24 @@ void M11_GameView_Draw(M11_GameViewState* state,
                                                 commands,
                                                 command_count);
             } else if (state->nexusState.title_active) {
-                /* TITLE.CG is decoded and retained as a source receipt, but
-                 * its Saturn VDP1/VDP2 destination is not authenticated. */
+                /* Later startup assets may block the general planner before
+                 * it copies commands.  The title's MAPD route is complete
+                 * on its own, so issue its one source-owned command here. */
+                M11_NexusStartupDrawContext title_context;
+                Nexus_V1_StartupDrawCommand title_command;
+                memset(&title_context, 0, sizeof(title_context));
+                memset(&title_command, 0, sizeof(title_command));
+                title_context.state = state;
+                title_context.startup_package =
+                    &host_caller_receipt.ownership.startup_bundle.package;
+                title_context.framebuffer = framebuffer;
+                title_context.framebufferWidth = framebufferWidth;
+                title_context.framebufferHeight = framebufferHeight;
+                title_command.kind = NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME;
+                title_command.title_frame = state->nexusState.title_frame -
+                    nexus_title_boot_warning_frames();
+                m11_nexus_startup_exec_boot_title_frame(&title_context,
+                                                         &title_command);
             } else if (host_caller_ready) {
                 /* The startup receipt owns the blocked-route diagnostic;
                  * this framebuffer remains source pixels or no-draw. */
