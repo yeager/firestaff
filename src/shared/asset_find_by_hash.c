@@ -1416,6 +1416,10 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
     separator = strstr(path, "::");
     if (separator) {
         const char *slice = strstr(separator + 2, "::slice@");
+        if (!slice && strncmp(separator, "::slice@", 8U) == 0) {
+            /* A raw single-BIN CUE has no archive member component. */
+            slice = separator;
+        }
         /* A CloneCD image keeps every physical track in one IMG member.
          * Preserve the selected track as an explicit bounded virtual range:
          *   archive.zip::disc.img::slice@<byte-offset>:<byte-count>
@@ -1444,6 +1448,40 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
             memcpy(memberPath, path, memberPathLength);
             memberPath[memberPathLength] = '\0';
             memberSeparator = strstr(memberPath, "::");
+            /* A conventional single-BIN CUE can exceed the bounded generic
+             * asset reader.  The selected data track is a small, explicit
+             * slice, so stream it directly instead of materialising the full
+             * disc image. */
+            if (!memberSeparator) {
+                FILE *source = fopen(memberPath, "rb");
+                long sourceSize;
+                if (!source || fseek(source, 0L, SEEK_END) != 0 ||
+                    (sourceSize = ftell(source)) < 0 ||
+                    offset > (unsigned long long)sourceSize ||
+                    count > (unsigned long long)sourceSize - offset ||
+                    fseek(source, (long)offset, SEEK_SET) != 0) {
+                    if (source) fclose(source);
+                    return 0;
+                }
+                rangeBytes = (uint8_t *)malloc((size_t)count);
+                if (!rangeBytes) {
+                    fclose(source);
+                    return 0;
+                }
+                if (fread(rangeBytes, 1U, (size_t)count, source) !=
+                        (size_t)count) {
+                    free(rangeBytes);
+                    fclose(source);
+                    return 0;
+                }
+                if (fclose(source) != 0) {
+                    free(rangeBytes);
+                    return 0;
+                }
+                *outBytes = rangeBytes;
+                *outSize = (size_t)count;
+                return 1;
+            }
             if ((memberSeparator && strncmp(memberSeparator + 2, "@suffix=", 8U) == 0
                      ? ((length = (size_t)(memberSeparator - memberPath)),
                         length == 0U || length >= sizeof(container) ? -1 :

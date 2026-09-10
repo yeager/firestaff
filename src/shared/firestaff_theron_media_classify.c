@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #if defined(_WIN32)
 #include <io.h>
@@ -155,6 +156,23 @@ static int th_parse_uint(const char** p) {
     }
     *p = s;
     return value;
+}
+
+static int th_parse_msf_lba(const char* text, size_t* out_lba) {
+    const char* p = text;
+    int minute;
+    int second;
+    int frame;
+    if (!text || !out_lba) return 0;
+    minute = th_parse_uint(&p);
+    if (minute < 0 || *p++ != ':') return 0;
+    second = th_parse_uint(&p);
+    if (second < 0 || second >= 60 || *p++ != ':') return 0;
+    frame = th_parse_uint(&p);
+    if (frame < 0 || frame >= 75) return 0;
+    *out_lba = (size_t)minute * 60U * 75U + (size_t)second * 75U +
+               (size_t)frame;
+    return 1;
 }
 
 static int th_file_has_iso9660_pvd_at(const char* path, unsigned long offset) {
@@ -327,6 +345,10 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
                     }
                 }
             }
+            if (track == 3) {
+                th_copy(status->track03_path, sizeof(status->track03_path),
+                        current_file);
+            }
             continue;
         }
         if (th_starts_with_i(p, "INDEX ") ||
@@ -339,10 +361,22 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
              * has_track01_audio/has_valid_track02_mode1/
              * paired_track01_track02 permanently 0. */
             if (th_starts_with_i(p, "INDEX 01")) {
+                const char* index_time = th_ltrim(p + 8);
                 if (current_track == 1) {
                     ++track01_index_count;
                 } else if (current_track == 2) {
                     ++track02_index_count;
+                    if (!th_parse_msf_lba(index_time,
+                                          &status->track02_index_lba)) {
+                        return -1;
+                    }
+                    status->has_track02_index_lba = 1;
+                } else if (current_track == 3) {
+                    if (!th_parse_msf_lba(index_time,
+                                          &status->track03_index_lba)) {
+                        return -1;
+                    }
+                    status->has_track03_index_lba = 1;
                 }
             }
             continue;
@@ -449,11 +483,36 @@ static int th_resolve_track02_member_path(
 
 static int th_resolve_cue_candidate_path(const char* cue_path,
                                          FirestaffTheronMediaStatus* status) {
+    char track03[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    struct stat st;
     if (!cue_path || !status || status->track02_path[0] == '\0') {
         return 0;
     }
     if (!th_resolve_track02_member_path(cue_path, status->track02_path)) {
         return 0;
+    }
+    /* A conventional single-BIN CUE names the same file for every track.
+     * Expose exactly Track 02 as a virtual slice.  Otherwise the whole CD
+     * image would be hashed as if it were the data track.  Split-track CUEs
+     * retain their standalone Track 02 file: its pregap is source data. */
+    if (status->track02_mode1_sector_bytes == 2352 &&
+        status->has_track02_index_lba && status->has_track03_index_lba &&
+        status->track03_index_lba > status->track02_index_lba &&
+        status->track03_path[0]) {
+        th_copy(track03, sizeof(track03), status->track03_path);
+        if (th_resolve_cue_member_path(cue_path, track03) &&
+            strcmp(track03, status->track02_path) == 0 &&
+            stat(status->track02_path, &st) == 0) {
+            size_t offset = status->track02_index_lba * 2352U;
+            size_t bytes = (status->track03_index_lba -
+                            status->track02_index_lba) * 2352U;
+            if (offset <= (size_t)st.st_size &&
+                bytes <= (size_t)st.st_size - offset) {
+                (void)snprintf(status->track02_path,
+                               sizeof(status->track02_path),
+                               "%s::slice@%zu:%zu", track03, offset, bytes);
+            }
+        }
     }
     th_copy(status->candidate_path, sizeof(status->candidate_path),
             status->track02_path);

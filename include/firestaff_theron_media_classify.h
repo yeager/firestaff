@@ -42,9 +42,17 @@ typedef struct {
      * CDDA pairing is stricter and remains separately recorded below. */
     int has_track01_audio;
     int paired_track01_track02;
+    /* INDEX 01 positions for a shared-file CUE.  These are used only when
+     * Track 02 and Track 03 name the same MODE1/2352 BIN: the classifier then
+     * exposes the exact Track 02 byte range rather than hashing the whole CD. */
+    size_t track02_index_lba;
+    size_t track03_index_lba;
+    int has_track02_index_lba;
+    int has_track03_index_lba;
     char cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
     char track01_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
     char track02_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    char track03_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
 } FirestaffTheronMediaStatus;
 
 void FirestaffTheronMedia_Init(FirestaffTheronMediaStatus* status);
