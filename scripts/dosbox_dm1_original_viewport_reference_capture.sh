@@ -793,7 +793,46 @@ shot() {
         host_capture_index=$((host_capture_index + 1))
         host_raw="${capture_dir}/host-window-${host_capture_index}.png"
         host_out="${capture_dir}/host-${host_capture_index}.png"
-        scrot --window "$window" --overwrite --silent "$host_raw"
+        scrot --window "$window" --overwrite --silent "$host_raw" || true
+        # Some SDL/Xvfb combinations expose a live window to xdotool while
+        # scrot's per-window path still returns an all-black pixmap.  That is
+        # not original evidence.  Detect that narrow host-capture failure and
+        # retry the same X11 window through ImageMagick's XGetImage backend.
+        # The later raw-frame health gate remains authoritative; this fallback
+        # merely avoids turning a known capture-backend defect into a false
+        # negative route result.
+        if ! python3 - "$host_raw" <<'PY'
+from pathlib import Path
+from PIL import Image
+import sys
+
+path = Path(sys.argv[1])
+try:
+    im = Image.open(path).convert("RGB")
+except Exception:
+    raise SystemExit(1)
+colors = im.getcolors(maxcolors=257)
+if not colors or len(colors) < 2:
+    raise SystemExit(1)
+if all(pixel == (0, 0, 0) for _, pixel in colors):
+    raise SystemExit(1)
+# A stale SDL surface can contain only the DOSBox-X menu/title strip at the
+# top.  Inspect the lower 80 percent where the 4:3 game canvas belongs; a
+# genuine HoC frame has substantial non-black content there, whereas that
+# strip-only failure has none.
+canvas = im.crop((0, im.height // 5, im.width, im.height))
+if not any(pixel != (0, 0, 0) for pixel in canvas.getdata()):
+    raise SystemExit(1)
+PY
+        then
+            if command -v import >/dev/null 2>&1; then
+                echo "host-capture-scrot-blank-retrying-import window=$window" >&2
+                import -window "$window" "$host_raw"
+            else
+                echo "ERROR: scrot returned a blank host capture and ImageMagick import is unavailable" >&2
+                exit 9
+            fi
+        fi
         python3 - "$host_raw" "$host_out" <<'PY'
 from pathlib import Path
 from PIL import Image
@@ -1118,6 +1157,14 @@ for idx, path in enumerate(paths, 1):
     dims, pixels = load_pixels(path)
     total = len(pixels)
     nonblack = sum(1 for rgb in pixels if rgb != (0, 0, 0))
+    # A host capture can contain only a DOSBox-X title/menu strip at the top.
+    # Treat that as blank even though its overall non-black ratio is nonzero:
+    # the original 320x200 frame must contain pixels below the upper host UI.
+    lower_pixels = [
+        rgb for y in range(dims[1] // 5, dims[1])
+        for rgb in pixels[y * dims[0]:(y + 1) * dims[0]]
+    ]
+    lower_nonblack = sum(1 for rgb in lower_pixels if rgb != (0, 0, 0))
     unique = len(set(pixels))
     data = path.read_bytes()
     row = {
@@ -1128,12 +1175,15 @@ for idx, path in enumerate(paths, 1):
         "sizeBytes": path.stat().st_size,
         "sha256": hashlib.sha256(data).hexdigest(),
         "nonblackRatio": round(nonblack / total, 6),
+        "lowerCanvasNonblackRatio": round(lower_nonblack / len(lower_pixels), 6),
         "uniqueColors": unique,
     }
     if dims != (320, 200):
         problems.append(f"{path.name}: rawshot dimensions are {dims[0]}x{dims[1]}, expected 320x200")
     if row["nonblackRatio"] <= 0.005 or unique <= 1:
         problems.append(f"{path.name}: black/blank rawshot candidate nonblack={row['nonblackRatio']} uniqueColors={unique}")
+    if row["lowerCanvasNonblackRatio"] <= 0.005:
+        problems.append(f"{path.name}: no meaningful canvas content below host UI lowerCanvasNonblack={row['lowerCanvasNonblackRatio']}")
     rows.append(row)
 payload = {
     "schema": "dm1_original_raw_frame_health.v1",
