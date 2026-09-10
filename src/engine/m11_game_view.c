@@ -25920,12 +25920,25 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
              * handoff while DOS retains the directory containing its matched
              * GRAPHICS.DAT.  Do not pass the generic first-match directory,
              * which can silently boot a different edition. */
-            if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
-                M12_AssetStatus_ResolveRuntimeDataDirForVersion(
-                    &menuState->assetStatus, entry->gameId, version->versionId,
-                    selectedDm2RuntimeDataDir,
-                    sizeof(selectedDm2RuntimeDataDir))) {
-                spec.dataDir = selectedDm2RuntimeDataDir;
+            if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
+                /* The native DOS owner consumes its selected ZIP directly.
+                 * A directory-form data root can also contain an FM Towns
+                 * disc: passing the scan's generic runtime root here would
+                 * rebind a PC selection to that sibling after the catalogue
+                 * correctly selected the DOS row. */
+                if (M12_AssetStatus_GetVersionArchitecture(
+                        "dm2", selectedVersionIndex) == M12_ARCH_PC &&
+                    strstr(version->matchedPath,
+                           "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
+                    FSP_FileExists(version->matchedPath)) {
+                    spec.dataDir = version->matchedPath;
+                } else if (M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+                               &menuState->assetStatus, entry->gameId,
+                               version->versionId,
+                               selectedDm2RuntimeDataDir,
+                               sizeof(selectedDm2RuntimeDataDir))) {
+                    spec.dataDir = selectedDm2RuntimeDataDir;
+                }
             }
             /* A data root may contain both the FM Towns disc files and a
              * hash-matched PC release.  AUTO deliberately selects PC first,

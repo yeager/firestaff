@@ -1481,18 +1481,50 @@ static int m12_admit_dm2_pc_dos_archive(M12_AssetStatus* status,
                      profile.graphics_path);
             snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s",
                      profile.graphics_md5);
-        } else {
-            memset(version, 0, sizeof(*version));
-            version->gameId = g_games[gameIndex].versions[i].gameId;
-            version->versionId = g_games[gameIndex].versions[i].versionId;
-            version->label = g_games[gameIndex].versions[i].label;
-            version->shortLabel = g_games[gameIndex].versions[i].shortLabel;
         }
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]), archive);
     dm2_v1_boot_cleanup(&profile);
     return 1;
+}
+
+/* A game-specific directory is allowed to hold several original DM2 media
+ * packages.  Register each known DOS package independently of the FM Towns
+ * disc rather than letting whichever scanner happened to run last become the
+ * runtime owner.  The command line and the launcher select an architecture
+ * only after this inventory is complete.  Every candidate still passes the
+ * native GRAPHICS.DAT + DUNGEON.DAT hash gate in m12_admit_dm2_pc_dos_archive;
+ * names merely bound the otherwise-expensive archive search. */
+static void m12_admit_dm2_pc_dos_archives_in_roots(
+    M12_AssetStatus* status,
+    int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    static const char* const archiveNames[] = {
+        "Dungeon-Master-II-Skullkeep_DOS_EN.zip",
+        "Dungeon-Master-II-Skullkeep_DOS_FR.zip",
+        "Dungeon-Master-II-Skullkeep_DOS_DE.zip"
+    };
+    size_t rootIndex;
+    size_t archiveIndex;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return;
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        for (archiveIndex = 0U;
+             archiveIndex < sizeof(archiveNames) / sizeof(archiveNames[0]);
+             ++archiveIndex) {
+            char candidate[M12_ASSET_DATA_DIR_CAPACITY];
+            snprintf(candidate, sizeof(candidate), "%s/%s", roots[rootIndex],
+                     archiveNames[archiveIndex]);
+            (void)m12_admit_dm2_pc_dos_archive(status, gameIndex, candidate);
+            snprintf(candidate, sizeof(candidate), "%s/dm2/%s", roots[rootIndex],
+                     archiveNames[archiveIndex]);
+            (void)m12_admit_dm2_pc_dos_archive(status, gameIndex, candidate);
+        }
+    }
 }
 
 /* The Amiga release is a nested installer, not a ZIP with visible DAT
@@ -6930,6 +6962,15 @@ void M12_AssetStatus_ScanGameWithOptions(
                 (void)m12_admit_dm2_mac_archive(status, gameIndex, roots, rootCount,
                                                  requestedDataDir);
 #endif
+            /* A directory-form --data-dir is a collection, not an implicit
+             * FM Towns choice.  Add verified DOS packages after the Towns
+             * probe so the architecture selector sees all real media. */
+ #ifndef FIRESTAFF_ASSET_STATUS_TESTING
+            if (!dm2ExplicitPcDos) {
+                m12_admit_dm2_pc_dos_archives_in_roots(status, gameIndex,
+                                                        roots, rootCount);
+            }
+ #endif
         }
     }
     reqMatch = m12_fill_required_files(status,
