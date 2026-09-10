@@ -25,7 +25,7 @@ source.
 | `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images verified for the canonical profile and documented English revision; VDP2 placement is missing |
 | `LOGOBG.DG2` | PP pixels and a 256-entry BGR555 palette are verified; layer/timing is missing |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
-| `FACE.BIN` | 20 real 56×56 PRS3 portraits with source palettes; VDP1 destination is missing |
+| `FACE.BIN` | The JP retail member is verified as 45,104 bytes (`bd9ca16ea68043984e2804067b6cd66f`): 20 variable-length, 56×56 PRS3 portraits with source palettes. The PLRD roster-to-portrait ordinal and the VDP1 destination/order are still unobserved. |
 | `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
 | `MENU.BPK` | 162 PRS3 surfaces decode to source-bound indexed bytes; menu ordering, CLUT, and VDP1/VDP2 are missing |
 | Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
@@ -36,6 +36,13 @@ source.
 portrait placement or a text footer as though it were Saturn output. M11 handoff
 and viewport remain fail-closed until an authenticated Saturn capture binds
 resource, palette, destination, and timing.
+
+The current `faces` startup gate is specifically a consumer-evidence gate, not
+an unavailable-file or decoder failure: the retail FACE container and every
+one of its compact PRS3 spans validate. A future capture must show the real
+roster/menu transition and bind a PLRD row to its FACE ordinal, VDP1 command
+destination, palette/CRAM state, and displayed frame timing. It must not
+relax the gate based only on the presence or hash of `FACE.BIN`.
 
 FONT256's authenticated Character Generator bytes now remain in the engine's
 source object for the future Saturn consumer. This does not admit glyph coding,
