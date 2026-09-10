@@ -25921,17 +25921,40 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
              * GRAPHICS.DAT.  Do not pass the generic first-match directory,
              * which can silently boot a different edition. */
             if (entry->gameId && strcmp(entry->gameId, "dm2") == 0) {
+                const char *archive_member = NULL;
+                size_t archive_path_length = 0u;
                 /* The native DOS owner consumes its selected ZIP directly.
                  * A directory-form data root can also contain an FM Towns
                  * disc: passing the scan's generic runtime root here would
                  * rebind a PC selection to that sibling after the catalogue
-                 * correctly selected the DOS row. */
+                 * correctly selected the DOS row.  `matchedPath` records the
+                 * authenticated GRAPHICS.DAT member as
+                 * `archive.zip::data/graphics.dat`, however, so it cannot be
+                 * passed to FSP_FileExists verbatim.  Strip only the virtual
+                 * member suffix and retain the original selected archive as
+                 * the media owner. */
+                archive_member = strstr(version->matchedPath, "::");
+                archive_path_length = archive_member
+                    ? (size_t)(archive_member - version->matchedPath)
+                    : strlen(version->matchedPath);
                 if (M12_AssetStatus_GetVersionArchitecture(
                         "dm2", selectedVersionIndex) == M12_ARCH_PC &&
                     strstr(version->matchedPath,
                            "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
-                    FSP_FileExists(version->matchedPath)) {
-                    spec.dataDir = version->matchedPath;
+                    archive_path_length > 0u &&
+                    archive_path_length < sizeof(selectedDm2RuntimeDataDir)) {
+                    memcpy(selectedDm2RuntimeDataDir, version->matchedPath,
+                           archive_path_length);
+                    selectedDm2RuntimeDataDir[archive_path_length] = '\0';
+                    if (FSP_FileExists(selectedDm2RuntimeDataDir)) {
+                        spec.dataDir = selectedDm2RuntimeDataDir;
+                    } else if (M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+                                   &menuState->assetStatus, entry->gameId,
+                                   version->versionId,
+                                   selectedDm2RuntimeDataDir,
+                                   sizeof(selectedDm2RuntimeDataDir))) {
+                        spec.dataDir = selectedDm2RuntimeDataDir;
+                    }
                 } else if (M12_AssetStatus_ResolveRuntimeDataDirForVersion(
                                &menuState->assetStatus, entry->gameId,
                                version->versionId,

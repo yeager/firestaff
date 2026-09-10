@@ -9022,7 +9022,14 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int sky_w = 0;
         int sky_h_src = 0;
         int sky_stride = 0;
-        int sky_h = DM2_VP_HEIGHT / 2;
+        int sky_x = 0;
+        int sky_y = 0;
+        int sky_w_dst = dm2_v1_viewport_draw_width(s);
+        int sky_h_dst = DM2_VP_HEIGHT / 2;
+        int ground_x = 0;
+        int ground_y = sky_h_dst;
+        int ground_w_dst = dm2_v1_viewport_draw_width(s);
+        int ground_h_dst = DM2_VP_HEIGHT - sky_h_dst;
         int sky_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
             DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING);
@@ -9053,6 +9060,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 const DM2_V1_GdatSceneM11Command *ground =
                     &plan->commands[0];
                 const DM2_V1_GdatSceneM11Command *sky = &plan->commands[1];
+                const DM2_V1_GdatSceneBlitRect *ground_rect = &plan->rects[0];
+                const DM2_V1_GdatSceneBlitRect *sky_rect = &plan->rects[1];
 
                 if (plan->graphicsset != (uint8_t)s->gdat_scene_material_index ||
                     plan->command_hash != s->gdat_scene_control_hash ||
@@ -9074,7 +9083,42 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                                                    16) ||
                     sky->palette_hash !=
                         dm2_v1_weather_pixels_hash(sky->palette16, 16, 1,
-                                                   16)) {
+                                                   16) ||
+                    ground->geometry_hash == 0u || sky->geometry_hash == 0u ||
+                    ground->geometry_hash !=
+                        dm2_v1_gdat_scene_m11_command_geometry_hash(
+                            ground, ground_rect) ||
+                    sky->geometry_hash !=
+                        dm2_v1_gdat_scene_m11_command_geometry_hash(
+                            sky, sky_rect) ||
+                    !plan->query_blit_rect.valid ||
+                    plan->query_blit_rect.floor_rect_number !=
+                        DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+                    plan->query_blit_rect.ceiling_rect_number !=
+                        DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+                    plan->query_blit_rect_hash == 0u ||
+                    plan->query_blit_rect_hash !=
+                        dm2_v1_gdat_scene_query_blit_rect_hash(
+                            &plan->query_blit_rect) ||
+                    !dm2_v1_gdat_scene_m11_command_plan_draw_order_valid(plan) ||
+                    ground_rect->rect_number !=
+                        DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
+                    sky_rect->rect_number !=
+                        DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+                    ground_rect->width != ground->width ||
+                    ground_rect->height != ground->height ||
+                    sky_rect->width != sky->width ||
+                    sky_rect->height != sky->height ||
+                    ground_rect->x < 0 || ground_rect->y < 0 ||
+                    sky_rect->x < 0 || sky_rect->y < 0 ||
+                    (unsigned)ground_rect->x + ground_rect->width >
+                        (unsigned)dm2_v1_viewport_draw_width(s) ||
+                    (unsigned)ground_rect->y + ground_rect->height >
+                        (unsigned)dm2_v1_viewport_draw_height(s) ||
+                    (unsigned)sky_rect->x + sky_rect->width >
+                        (unsigned)dm2_v1_viewport_draw_width(s) ||
+                    (unsigned)sky_rect->y + sky_rect->height >
+                        (unsigned)dm2_v1_viewport_draw_height(s)) {
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                     return;
@@ -9111,6 +9155,14 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                        sizeof(ground_material.palette16));
                 ground_material.palette_hash = ground->palette_hash;
                 ground_material.ready = 1;
+                sky_x = sky_rect->x;
+                sky_y = sky_rect->y;
+                sky_w_dst = sky_rect->width;
+                sky_h_dst = sky_rect->height;
+                ground_x = ground_rect->x;
+                ground_y = ground_rect->y;
+                ground_w_dst = ground_rect->width;
+                ground_h_dst = ground_rect->height;
             } else {
             /* skproject T600 resolves both active GRAPHICSSET materials
              * before it presents the outdoor scene. Cache the real IMG3 plus
@@ -9188,13 +9240,13 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
              * they are complete source images, not repeating textures. */
             if (s->source_materials_required && s->gdat_scene_material_plan) {
                 dm2_v1_blit_scaled_material_bitmap_region_ex(
-                    s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
+                    s, vp, stride, sky_x, sky_y, sky_w_dst, sky_h_dst, sky_pixels,
                     0, 0, sky_w, sky_h_src,
                     sky_stride > 0 ? sky_stride : sky_w, -1, 0,
                     &s->gdat_material_palette_floor_ceiling_consumed_count);
             } else {
                 dm2_v1_blit_tiled_material_bitmap(
-                    s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
+                    s, vp, stride, sky_x, sky_y, sky_w_dst, sky_h_dst, sky_pixels,
                     sky_w, sky_h_src, sky_stride > 0 ? sky_stride : sky_w,
                     -1, 0, &s->gdat_material_palette_floor_ceiling_consumed_count);
             }
@@ -9238,15 +9290,15 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         if (ground_asset) {
             if (s->source_materials_required && s->gdat_scene_material_plan) {
                 dm2_v1_blit_scaled_material_bitmap_region_ex(
-                    s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
-                    DM2_VP_HEIGHT - sky_h, ground_pixels, 0, 0,
+                    s, vp, stride, ground_x, ground_y, ground_w_dst,
+                    ground_h_dst, ground_pixels, 0, 0,
                     ground_w, ground_h_src,
                     ground_stride > 0 ? ground_stride : ground_w, -1, 0,
                     &s->gdat_material_palette_floor_ceiling_consumed_count);
             } else {
                 dm2_v1_blit_tiled_material_bitmap(
-                    s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
-                    DM2_VP_HEIGHT - sky_h, ground_pixels, ground_w,
+                    s, vp, stride, ground_x, ground_y, ground_w_dst,
+                    ground_h_dst, ground_pixels, ground_w,
                     ground_h_src, ground_stride > 0 ? ground_stride : ground_w,
                     -1, 0, &s->gdat_material_palette_floor_ceiling_consumed_count);
             }

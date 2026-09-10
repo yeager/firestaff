@@ -1112,7 +1112,10 @@ case "${mode}" in
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" \
               "${CROP_MANIFEST}" "${SIZE_LOG}"
         rm -f "${OUT_DIR}"/*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
-        "${DOSBOX}" -conf "${CONF}" >"${LOG}" 2>&1 &
+        # -exit makes DOSBox-X leave after AUTOEXEC/game termination instead
+        # of presenting its interactive quit confirmation.  The generated
+        # configuration retains quit warning=false for manual exits too.
+        "${DOSBOX}" -exit -conf "${CONF}" >"${LOG}" 2>&1 &
         pid=$!
         echo "${pid}" > "${PID_FILE}"
         cleanup() {
