@@ -12324,8 +12324,11 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
         set_tests_properties(m11_dm1_real_alcove_item_runtime_pc34 PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
-            LABELS "dm1;dos;pc34;real-media;in-memory;objects;inventory;skip-safe"
+            # The PC 3.4 dungeon has no wall chain containing both an alcove
+            # sensor and an item.  Atari ST 1.2 does contain the original
+            # source-owned fixture and exercises the same native M11 path.
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+            LABELS "dm1;atari-st;real-media;in-memory;objects;inventory;skip-safe"
             SKIP_RETURN_CODE 77)
     endif()
 

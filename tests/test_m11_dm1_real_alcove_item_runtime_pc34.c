@@ -1,4 +1,4 @@
-/* Real PC34 F0115 alcove-object presentation regression.
+/* Real DM1 F0115 alcove-object presentation regression.
  *
  * F0121/F0124 call F0115 after F0107's real alcove wall material.  This
  * walks every loaded DM1 map/party pose and requires one genuine C2548
@@ -188,7 +188,7 @@ int main(void)
         return 1;
     }
     /* OBJECT.C F0031 resolves display names from M564 by icon index.  A
-     * verified PC34 launch must therefore own the decoded original table,
+     * verified original-media launch must therefore own the decoded table,
      * rather than falling back to the legacy subtype-name bridge. */
     if (!state.dm1ObjectNameTableValid ||
         state.dm1ObjectNames[0][0] == '\0') {
@@ -359,12 +359,12 @@ int main(void)
                                 M11_GameView_Shutdown(&state);
                                 return 1;
                             }
-                            printf("ok: real PC34 alcove pickup/place thing=%u target=C%d allowed=0x%x\n",
+                            printf("ok: real DM1 alcove pickup/place thing=%u target=C%d allowed=0x%x\n",
                                    (unsigned int)picked,
                                    targetZone.zoneId,
                                    allowedSlots);
                         }
-                        printf("ok: real PC34 alcove item map=%d party=(%d,%d,%d) graphic=%d zone=%d\n",
+                        printf("ok: real DM1 alcove item map=%d party=(%d,%d,%d) graphic=%d zone=%d\n",
                                mapIndex, x, y, direction, receipt.graphicsId,
                                receipt.sourceZone);
                         M11_GameView_Shutdown(&state);
@@ -377,12 +377,10 @@ int main(void)
 
     if (sourceAlcoveItemSquares == 0) {
         /* ReDMCSB DUNVIEW.C F0124 passes the wall square's first Thing to
-         * F0115 for C0x0000_CELL_ORDER_ALCOVE.  The preserved PC34 retail
-         * dungeon has no wall chain containing both a G0192 alcove sensor
-         * and a grabbable object, so it cannot evidence this route.  Keep
-         * the synthetic contract probe separate; do not turn absence in a
-         * real corpus into a renderer failure or invent a replacement item. */
-        puts("SKIP: real PC34 corpus has no alcove-object wall-chain fixture");
+         * F0115 for C0x0000_CELL_ORDER_ALCOVE.  Preserve a skip when a
+         * selected source lacks that combination: this gate must never
+         * manufacture an item just to obtain a renderer receipt. */
+        puts("SKIP: selected DM1 corpus has no alcove-object wall-chain fixture");
         M11_GameView_Shutdown(&state);
         return 77;
     }
