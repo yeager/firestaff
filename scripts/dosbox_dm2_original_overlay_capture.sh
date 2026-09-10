@@ -68,10 +68,17 @@
 #        operator-validated DM2 keystroke route. Required for --run.
 #   DM2_ORIGINAL_EXPECTED_SHOTS=6
 #        required rawshot count (default 6).
-#   DOSBOX=/Applications/DOSBox\ Staging.app/Contents/MacOS/dosbox
-#        override the DOSBox binary path.
+#   DOSBOX=/path/to/dosbox-x
+#        override the DOSBox-X binary path.  DOSBox-X is the required
+#        reference runner; this harness deliberately does not fall back to
+#        another DOSBox implementation.
 #   WAIT_BEFORE_INPUT_MS=3000  DOSBox warm-up before route injection.
 #   NEW_FILE_TIMEOUT_MS=2500    how long to wait for new raw screenshots.
+#   DM2_DOSBOX_CAPTURE_BACKEND=host
+#        verification-only fallback when DOSBox's Ctrl+F5 binding does not
+#        write captures on the current X11 host.  Captures the DOSBox window,
+#        crops its 4:3 game canvas, and nearest-neighbour normalizes it to
+#        320x200.  Requires scrot; never used by Firestaff at runtime.
 
 set -euo pipefail
 
@@ -84,7 +91,7 @@ ARCHIVE="${DM2_ORIGINAL_ARCHIVE:-${ARCHIVE_DEFAULT}}"
 # revision of the game.
 STAGE_DEFAULT="${DM2_ORIGINAL_STAGE_DIR:-${REPO}/.codex-scratch/dm2-pc10-original-stage}"
 OUT_DIR="${OUT_DIR:-${REPO}/.codex-scratch/dm2-original-overlay-capture}"
-DOSBOX="${DOSBOX:-$(command -v dosbox 2>/dev/null || printf '%s' /Applications/DOSBox\ Staging.app/Contents/MacOS/dosbox)}"
+DOSBOX="${DOSBOX:-$(command -v dosbox-x 2>/dev/null || true)}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM2_ORIGINAL_ROUTE_EVENTS:-}"
@@ -356,9 +363,12 @@ captures=${OUT_DIR}
 [cpu]
 core=normal
 cputype=386
-cpu_cycles=3000
-cycleup=0
-cycledown=0
+# DOSBox-X consumes cycles, not the legacy cpu_cycles spelling.  Leaving
+# this unset silently selects cycles=auto (maximum speed), which races past
+# the title/menu route and invalidates timing captures.
+cycles=fixed 3000
+cycleup=500
+cycledown=500
 
 [render]
 aspect=false
@@ -546,6 +556,9 @@ fi
 pid="$1"
 route_events="$2"
 skip_intro="$3"
+capture_backend="${DM2_DOSBOX_CAPTURE_BACKEND:-emulator}"
+capture_dir="${DM2_DOSBOX_CAPTURE_OUT_DIR:-.}"
+host_capture_index=0
 
 if [[ -z "${DISPLAY:-}" ]]; then
     echo "ERROR: DISPLAY is not set; run DOSBox under an X server, e.g. xvfb-run -a ... --run" >&2
@@ -568,6 +581,36 @@ tap_key() {
 }
 
 shot() {
+    if [[ "$capture_backend" == "host" ]]; then
+        local raw out
+        host_capture_index=$((host_capture_index + 1))
+        raw="${capture_dir}/host-window-${host_capture_index}.png"
+        out="${capture_dir}/host-${host_capture_index}.png"
+        scrot --window "$window" --overwrite --silent "$raw"
+        python3 - "$raw" "$out" <<'PY'
+from pathlib import Path
+from PIL import Image
+import sys
+
+src, dst = map(Path, sys.argv[1:])
+image = Image.open(src).convert("RGB")
+width, height = image.size
+content_width = width
+content_height = round(content_width * 200 / 320)
+if content_height > height:
+    content_height = height
+    content_width = round(content_height * 320 / 200)
+left = (width - content_width) // 2
+# A DOSBox-X menu (when present) is above the emulated canvas.  Take the
+# trailing aspect-fit rectangle so the host UI never enters a source frame.
+top = height - content_height
+resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
+image.crop((left, top, left + content_width, top + content_height)).resize(
+    (320, 200), resample).save(dst)
+src.unlink()
+PY
+        return
+    fi
     xdotool key --window "$window" ctrl+F5
     sleep 0.18
 }
@@ -575,6 +618,11 @@ shot() {
 click_original_frame() {
     local x="$1" y="$2" button="${3:-1}"
     local geom gx gy gw gh px py
+    # DOSBox-X can drop a button transition unless its window has focus.
+    # Under a bare Xvfb server windowfocus may wait forever for a window
+    # manager acknowledgement.  It is an assist, not a precondition: keep
+    # the event injection live if the acknowledgement never arrives.
+    timeout 1 xdotool windowfocus "$window" >/dev/null 2>&1 || true
     geom="$(xdotool getwindowgeometry --shell "$window")"
     eval "$geom"
     gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
@@ -588,13 +636,23 @@ if content_h > gh:
     content_h = gh
     content_w = content_h * content_aspect
 left = (gw - content_w) / 2.0
-top = (gh - content_h) / 2.0
+# DOSBox-X reserves its native menu strip above the SDL canvas.  The host
+# capture path therefore takes the trailing 4:3 rectangle; use exactly the
+# same origin for input mapping or clicks land several emulated scanlines
+# high.
+top = gh - content_h
 px = left + ((x + 0.5) / 320.0) * content_w
 py = top + ((y + 0.5) / 200.0) * content_h
 print(int(round(px)), int(round(py)))
 PY
 )
-    xdotool mousemove --window "$window" "$px" "$py" click "$button"
+    # DOSBox-X's SDL event pump can miss xdotool's one-command synthetic
+    # click.  Send a short, explicit press/release pair so the original game
+    # observes both button edges, as it would from a physical mouse.
+    xdotool mousemove --window "$window" "$px" "$py"
+    xdotool mousedown --window "$window" "$button"
+    sleep 0.08
+    xdotool mouseup --window "$window" "$button"
     local button_name=left
     if [[ "$button" == "3" ]]; then button_name=right; fi
     echo "${button_name}-click-mapped ${x},${y} -> window-relative ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
@@ -1024,6 +1082,20 @@ case "${mode}" in
             exit 7
         fi
         write_helpers
+        case "${DM2_DOSBOX_CAPTURE_BACKEND:-emulator}" in
+            emulator) ;;
+            host)
+                if ! command -v scrot >/dev/null 2>&1; then
+                    echo "ERROR: DM2_DOSBOX_CAPTURE_BACKEND=host requires scrot" >&2
+                    exit 7
+                fi
+                export DM2_DOSBOX_CAPTURE_OUT_DIR="${OUT_DIR}"
+                ;;
+            *)
+                echo "ERROR: unsupported DM2_DOSBOX_CAPTURE_BACKEND=${DM2_DOSBOX_CAPTURE_BACKEND}" >&2
+                exit 7
+                ;;
+        esac
         injector="$(select_route_injector || true)"
         if [[ "${injector}" == "swift" ]]; then
             route_injector=(swift "${KEY_HELPER}")

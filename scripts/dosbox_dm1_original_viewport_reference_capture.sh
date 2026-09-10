@@ -13,7 +13,10 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SRC_STAGE="${DM1_ORIGINAL_STAGE_DIR:-${REPO}/verification-screens/dm1-dosbox-capture/DungeonMasterPC34}"
 OUT_DIR="${OUT_DIR:-${REPO}/verification-screens/pass70-original-dm1-viewports}"
-DOSBOX="${DOSBOX:-/Applications/DOSBox Staging.app/Contents/MacOS/dosbox}"
+# Original DOS reference sessions are captured with DOSBox-X.  Do not silently
+# select a different DOSBox implementation: its title/menu timing and SDL
+# input delivery are part of the evidence boundary.
+DOSBOX="${DOSBOX:-$(command -v dosbox-x 2>/dev/null || true)}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
@@ -142,7 +145,7 @@ Optional environment:
 
 Linux/N2 note:
   On Linux, run --run under an X server, for example:
-    DOSBOX=/usr/bin/dosbox xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+    DOSBOX=/usr/bin/dosbox-x xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
   The script uses xdotool as the route injector when Swift/CGEvent is absent.
 
 Honesty note:
@@ -217,7 +220,7 @@ print_pass435_hoc_route() {
 
 OUT_DIR=\$PWD/verification-screens/pass376-original-route \\
 DM1_ORIGINAL_STAGE_DIR=\$PWD/verification-screens/dm1-dosbox-capture/DungeonMasterPC34 \\
-DOSBOX=/usr/bin/dosbox \\
+DOSBOX=/usr/bin/dosbox-x \\
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pm' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=3000 \\
@@ -486,7 +489,11 @@ captures=${OUT_DIR}
 [cpu]
 core=normal
 cputype=386
-cpu_cycles=3000
+# DOSBox-X consumes cycles, not the legacy cpu_cycles spelling.  Without this
+# it falls back to automatic maximum speed and invalidates timing captures.
+cycles=fixed 3000
+cycleup=500
+cycledown=500
 
 [render]
 aspect=false
