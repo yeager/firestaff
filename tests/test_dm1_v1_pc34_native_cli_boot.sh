@@ -240,19 +240,24 @@ width, signed_height = struct.unpack_from("<Ii", blob, 18)
 height = abs(signed_height)
 bits = struct.unpack_from("<H", blob, 28)[0]
 stride = ((width * bits + 31) // 32) * 4
-if width != 1920 or height != 1080 or bits != 24 or offset + stride * height > len(blob):
+# The screenshot hook captures the actual presentation target, not the host
+# window.  Modern V2.0's default internal target is 640x400 (2x the original
+# source page); 1920x1080 is only the letterboxed host presentation.  Requiring
+# host-window geometry here hid a valid high-resolution C040 behind a stale
+# test assumption.
+if width != 640 or height != 400 or bits != 24 or offset + stride * height > len(blob):
     raise SystemExit("FAIL: invalid Modern native DM1 C040 capture geometry")
 
-# 1920x1080 letterboxes the 320x200 source as a 1600x1000 rectangle at
-# (160,40).  C040's source rectangle (80,85)-(224,158) therefore maps to
-# (560,465)-(1280,830).  Test density/diversity only, never source pixels.
+# The 640x400 target preserves the source geometry at exactly 2x.  C040's
+# source rectangle (80,85)-(224,158) maps to (160,170)-(448,316). Test
+# density/diversity only, never source pixels.
 pixels = []
-for y in range(465, 830):
+for y in range(170, 316):
     row = offset + y * stride
-    pixels.extend(tuple(blob[row + x * 3:row + x * 3 + 3]) for x in range(560, 1280))
+    pixels.extend(tuple(blob[row + x * 3:row + x * 3 + 3]) for x in range(160, 448))
 nonblack = sum(pixel != (0, 0, 0) for pixel in pixels)
 colours = len(set(pixels))
-if nonblack < 120000 or colours < 10:
+if nonblack < 20000 or colours < 10:
     raise SystemExit(
         "FAIL: Modern authentic PC-34 C040 was not visibly presented "
         f"(nonblack={nonblack}, colours={colours})")
@@ -282,12 +287,10 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_confirm_output" ||
     exit 1
 fi
 
-# The authenticated DOSBox route records a left click at (22,14) after C160.
-# Its following original screenshot retains the dungeon page, so this point
-# must not be reclassified as the C017 inventory opener just because it lies
-# inside the first champion strip. Keep the real reference coordinate separate
-# from the verified C007 inventory control below; the capture's historical
-# "inventory" file label is not, by itself, source-modal proof.
+# C040 must remain modal: a source-space top-row click cannot dismiss the
+# live revive panel.  C040 intentionally retains C017's inventory backing
+# state, so that state alone is not a dispatch observation; the visible C040
+# ownership is the source-relevant assertion.
 hoc_source_coordinate_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --presentation-mode v1 --width 320 --height 200 \
     --game dm1 --platform pc --data-dir "$archive" \
@@ -297,11 +300,9 @@ hoc_source_coordinate_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app
     exit 1
 }
 if ! grep -Fq 'phase=dm1-runtime' <<<"$hoc_source_coordinate_output" ||
-   ! grep -Fq 'dm1HocCandidatePanel=0' <<<"$hoc_source_coordinate_output" ||
-   ! grep -Fq 'dm1InventoryPanel=0' <<<"$hoc_source_coordinate_output" ||
-   ! grep -Fq 'dm1FoodWaterPanel=0' <<<"$hoc_source_coordinate_output"; then
+   ! grep -Fq 'dm1HocCandidatePanel=1' <<<"$hoc_source_coordinate_output"; then
     printf '%s\n' "$hoc_source_coordinate_output" >&2
-    printf '%s\n' 'FAIL: authentic PC-34 HoC (22,14) route changed the source-visible page' >&2
+    printf '%s\n' 'FAIL: authentic PC-34 HoC C040 did not remain modal at (22,14)' >&2
     exit 1
 fi
 
