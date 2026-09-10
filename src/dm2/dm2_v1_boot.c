@@ -3532,6 +3532,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     char path[512];
     char save_root[sizeof(profile->save_root)];
     int explicit_amiga_archive;
+    int explicit_mac_archive;
     int explicit_pc_dos_archive;
     (void)path;
     const char *base = data_dir ? data_dir : ".";
@@ -3541,6 +3542,9 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         FSP_FileExists(base);
     explicit_pc_dos_archive = strstr(base,
                                      "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
+        FSP_FileExists(base);
+    explicit_mac_archive = strstr(base,
+                                  "Dungeon-Master-II-Skullkeep_Mac_") != NULL &&
         FSP_FileExists(base);
 
     if (!profile) return -1;
@@ -3561,6 +3565,12 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         (void)dm2_v1_boot_load_pc_dos_archive(profile, base);
     } else if (explicit_amiga_archive) {
         (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
+    } else if (explicit_mac_archive) {
+        /* A Macintosh retail ZIP is a raw CD image with a CUE sheet.  Its
+         * HFS reader is the selected-medium owner; scanning the containing
+         * data directory first can otherwise bind a sibling FM Towns
+         * GRAPHICS.DAT and silently launch the wrong platform. */
+        (void)dm2_v1_boot_load_mac_zip(profile, base);
     } else {
         (void)dm2_scan_known_hash_assets(base,
                                          profile->graphics_path,
