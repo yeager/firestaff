@@ -12543,6 +12543,12 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_f0115_floor_item_runtime_capture_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        # This is a real-media capture gate.  Keep its input explicit just as
+        # the alcove gate above: the test must never silently depend on an
+        # extracted developer-local DATA directory.
+        set_tests_properties(m11_dm1_f0115_floor_item_runtime_capture_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;in-memory;objects;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0115_c15_runtime_capture_pc34.c")

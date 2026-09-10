@@ -1,44 +1,29 @@
 #include "m11_game_view.h"
+#include "main_loop_m11.h"
+#include "menu_startup_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
-static int regular_file_has_bytes(const char* path)
+static int start_real_dm1_corpus(M11_GameViewState* state, const char* path)
 {
     struct stat st;
-    return path && path[0] && stat(path, &st) == 0 && st.st_size > 0;
-}
-
-static int data_dir_has_pc34(const char* dir)
-{
-    char dungeon[1024];
-    char graphics[1024];
-    char data_dir[1024];
-    if (!dir || !dir[0]) return 0;
-    snprintf(dungeon, sizeof(dungeon), "%s/DUNGEON.DAT", dir);
-    snprintf(graphics, sizeof(graphics), "%s/GRAPHICS.DAT", dir);
-    if (regular_file_has_bytes(dungeon) && regular_file_has_bytes(graphics)) {
-        return 1;
+    if (!state || !path || !path[0]) return 0;
+    if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
+        M12_StartupMenuState menu;
+        int opened;
+        M12_StartupMenu_InitWithDataDir(&menu, path, "dm1");
+        if (!M11_PrepareDirectLaunchForGame(&menu, "dm1")) {
+            M12_StartupMenu_Destroy(&menu);
+            return 0;
+        }
+        opened = M11_GameView_OpenSelectedMenuEntry(state, &menu);
+        M12_StartupMenu_Destroy(&menu);
+        return opened;
     }
-    /* The normal PC34 archive layout stores the originals below DATA/. */
-    snprintf(data_dir, sizeof(data_dir), "%s/DATA", dir);
-    snprintf(dungeon, sizeof(dungeon), "%s/DUNGEON.DAT", data_dir);
-    snprintf(graphics, sizeof(graphics), "%s/GRAPHICS.DAT", data_dir);
-    return regular_file_has_bytes(dungeon) && regular_file_has_bytes(graphics);
-}
-
-static const char* resolve_data_dir(void)
-{
-    static char data_path[2048];
-    const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
-
-    if (data_dir_has_pc34(env)) {
-        snprintf(data_path, sizeof(data_path), "%s/DATA", env);
-        return data_dir_has_pc34(data_path) ? data_path : env;
-    }
-    return NULL;
+    return M11_GameView_StartDm1(state, path);
 }
 
 static int find_real_floor_item_pose(M11_GameViewState* state,
@@ -105,21 +90,17 @@ static int find_real_floor_item_pose(M11_GameViewState* state,
 
 int main(void)
 {
-    const char* dataDir = resolve_data_dir();
+    const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     M11_Dm1F0115FloorItemRuntimeCaptureReceipt receipt;
     unsigned char framebuffer[320 * 200];
 
-    if (!dataDir) {
-        if (!getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-            return 0;
-        }
-        fputs("configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n", stderr);
-        return 1;
+    if (!dataDir || !dataDir[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     M11_GameView_Init(&state);
-    if (!M11_GameView_StartDm1(&state, dataDir) || !state.assetsAvailable) {
+    if (!start_real_dm1_corpus(&state, dataDir) || !state.assetsAvailable) {
         M11_GameView_Shutdown(&state);
         fputs("configured PC34 corpus could not start\n", stderr);
         return 1;
