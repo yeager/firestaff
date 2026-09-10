@@ -20,6 +20,12 @@ not establish HUD, dungeon, door, audio, DSA, or full Firestaff pixel parity.
 | 18 seconds | FTL ident | `115f087c9838e0e02dd1677134da04aa21392e61720b8a45d5cfd6cb33509c91` |
 | 36 seconds | Chaos title | `8ead262db0a0b467c8464e51836acb7c2102f1185ddefc075ef20e5e344695a0` |
 
+A second independent, write-protected session confirmed the same startup
+route: 20 seconds produced the FTL ident
+`60e0cb7f203f0acefb72bd47914413868ef0eeea9e92d1d9de720cdabf626b2d`,
+and 40 seconds produced the Chaos title
+`02320a65f5f455523b3672eb2577aaa43b4a113d0b7a8ca9ee74a76d782f00e6`.
+
 ## Amiga
 
 - Emulator: FS-UAE, A500 profile, Kickstart 1.3.
@@ -34,6 +40,10 @@ not establish HUD, dungeon, door, audio, DSA, or full Firestaff pixel parity.
 | --- | --- | --- |
 | 32 seconds | FTL ident | `e9b5baa4ad41919b308a4e4c2ee39f1f16345ab3c5a289dd2bf99baa91f08675` |
 | 52 seconds | Chaos Strikes Back title | `7db79506f9849ae8e61ad999141c7265e9b1b174cb432d10b021cbb5ca1cbf8e` |
+
+A second independent, write-protected A500 session reached the same title
+sequence at 24 seconds (`add7c11fa2d8b659cf634db581202183e4b415ce098135d54275e8250d915f6d`)
+and 42 seconds (`09a576ebf918a20700ab648a1bd459fa0921916540054dcf7ca8e7dc237bf6c8`).
 
 The original screenshots remain outside the repository with the legally-owned
 source media. The hashes above bind reviewable private captures to the exact
