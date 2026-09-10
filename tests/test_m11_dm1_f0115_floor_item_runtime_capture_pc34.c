@@ -78,6 +78,15 @@ static int find_real_floor_item_pose(M11_GameViewState* state,
                             memset(&receipt, 0, sizeof(receipt));
                             M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(&receipt);
                             if (receipt.valid && receipt.presentation.floorItemLane) {
+                                printf("real F0115 floor-item pose: map=%d party=(%d,%d,d%d) item=(%d,%d) relative=(%d,%d) graphic=%d hit=(%d,%d %dx%d)\n",
+                                       mapIndex, partyX, partyY, direction,
+                                       sampledMapX, sampledMapY,
+                                       relativeForward, relativeSide,
+                                       receipt.presentation.graphicsId,
+                                       receipt.presentation.destinationX,
+                                       receipt.presentation.destinationY,
+                                       receipt.presentation.destinationW,
+                                       receipt.presentation.destinationH);
                                 return 1;
                             }
                         }
