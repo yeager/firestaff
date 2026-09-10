@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+SRC = Path.home() / '.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 DUNVIEW = SRC / 'DUNVIEW.C'
 DUNGEON = SRC / 'DUNGEON.C'
 FIRE = ROOT / 'src/engine/m11_game_view.c'

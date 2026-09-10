@@ -30,7 +30,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TITLE_C = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/"
+    "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/"
     "Toolchains/Common/Source/TITLE.C"
 ).expanduser()
 

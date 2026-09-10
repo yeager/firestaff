@@ -20,9 +20,9 @@ OUT = Path(os.environ.get(
 MEDIA_MANIFEST = ROOT / "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json"
 MENU = ROOT / "src/ui/menu_startup_m12.c"
 DOC = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+CSB_SRC = Path.home() / ".firestaff/data/firestaff-csb-source/CSB/src"
+CSBWIN = Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin"
 
 FIXTURE = {
     "schema": "firestaff.csb_v1.launch_intent_fixture.v2",

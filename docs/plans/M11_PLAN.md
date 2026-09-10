@@ -2242,7 +2242,7 @@ Rendering dominates — as expected. The dungeon viewport (Phase J, 5 days) is t
 
 Before starting Phase A implementation, the following must be verified or prepared:
 
-1. **GRAPHICS.DAT location confirmed:** `$HOME/.openclaw/data/redmcsb-original/GRAPHICS.DAT` — verify it exists and is the PC 3.4 EN version.
+1. **GRAPHICS.DAT location confirmed:** `$HOME/.firestaff/data/redmcsb-original/GRAPHICS.DAT` — verify it exists and is the PC 3.4 EN version.
 2. **SDL3 available on build machine:** `brew install sdl3 sdl3_mixer` on macOS.
 3. **Audio format investigation (for R4):** Spend 2-4 hours examining the PC 3.4 binary or data files for sound format clues. Document findings. This doesn't block Phase A but must be done before Phase L.
 4. **GRAPHICS.DAT entry map:** Build or verify a table mapping GRAPHICS.DAT entry indices to their purpose (wall segments, sprites, UI elements, font). Fontanel's `graphics_dat_entry_classify_pc34_compat.h` is a starting point.

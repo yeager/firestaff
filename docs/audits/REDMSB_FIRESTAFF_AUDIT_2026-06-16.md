@@ -4,7 +4,7 @@
 **Auditor:** Firestaff Watchdog (main session)
 **Scope:** Source-level comparison of ReDMCSB WIP20210206
 (200,402 LOC across 289 .C + 58 .H files in
-`~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`)
+`~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`)
 against the Firestaff codebase (536,365 LOC across 878 .C + 846 .H files).
 
 ---

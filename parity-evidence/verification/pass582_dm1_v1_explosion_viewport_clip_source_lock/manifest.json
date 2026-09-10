@@ -127,7 +127,7 @@
       "ordered": true
     }
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass582_dm1_v1_explosion_viewport_clip_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS582_DM1_V1_EXPLOSION_VIEWPORT_CLIP_SOURCE_LOCKED",

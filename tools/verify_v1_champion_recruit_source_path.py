@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 SRC_LABEL = "<N2_REDMCSB_SOURCE>/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 PASS162 = REPO / "parity-evidence/verification/pass162_original_party_route_unblock/manifest.json"
 OUT = REPO / "parity-evidence/verification/pass163_champion_recruit_source_path"

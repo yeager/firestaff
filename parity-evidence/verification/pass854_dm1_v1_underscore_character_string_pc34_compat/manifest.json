@@ -11,7 +11,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:89",
       "line": 89,
       "lineText": "char G0051_ac_Graphic562_UnderscoreCharacterString[2];",
@@ -19,7 +19,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:428",
       "line": 428,
       "lineText": "char G0051_ac_Graphic562_UnderscoreCharacterString[2] = \"_\";",
@@ -27,7 +27,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1104",
       "line": 1104,
       "lineText": "char G0051_ac_Graphic562_UnderscoreCharacterString[2] = \"_\";",
@@ -35,7 +35,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:429",
       "line": 429,
       "lineText": "                        M521_F0040_TEXT_Print(G0348_Bitmap_Screen, C160_BYTE_WIDTH_SCREEN, L0813_i_X, L0814_i_Y, C09_COLOR_GOLD, C12_COLOR_DARKEST_GRAY, G0051_ac_Graphic562_UnderscoreCharacterString, C200_HEIGHT_SCREEN);",
@@ -43,7 +43,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass854_dm1_v1_underscore_character_string_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [

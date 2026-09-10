@@ -2,13 +2,13 @@
   "claim": "DM1 V1 wall drawing keeps ReDMCSB source-offset/source-row clipping represented in the local wall clip gate and wall-row blitters.",
   "dm1CanonicalAnchors": [
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 363417,
       "name": "DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 33357,
       "name": "DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"

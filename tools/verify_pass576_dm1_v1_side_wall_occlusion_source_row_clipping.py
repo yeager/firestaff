@@ -15,8 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
+DATA = Path.home() / ".firestaff/data"
+EXTERNAL_DATA = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff")
 
 def first_existing(env_name: str, candidates: list[Path]) -> Path:
     env = os.environ.get(env_name)
@@ -30,12 +30,12 @@ def first_existing(env_name: str, candidates: list[Path]) -> Path:
 RED = first_existing("FIRESTAFF_REDMCSB_SOURCE", [
     DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
     EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    Path("/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ])
 DM1 = first_existing("FIRESTAFF_DM1_CANONICAL", [
     DATA / "firestaff-original-games/DM/_canonical/dm1",
     EXTERNAL_DATA / "firestaff-original-games/DM/_canonical/dm1",
-    Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"),
+    Path("/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1"),
 ])
 REPORT = ROOT / "parity-evidence/pass576_dm1_v1_side_wall_occlusion_source_row_clipping.md"
 MANIFEST = ROOT / "parity-evidence/verification/pass576_dm1_v1_side_wall_occlusion_source_row_clipping/manifest.json"
@@ -53,8 +53,8 @@ ALLOWED_ROOTS = [
     DM1.parents[1].resolve(),
     DATA.resolve(),
     EXTERNAL_DATA.resolve(),
-    Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source").resolve(),
-    Path("/home/trv2/.openclaw/data/firestaff-original-games/DM").resolve(),
+    Path("/home/trv2/.firestaff/data/firestaff-redmcsb-source").resolve(),
+    Path("/home/trv2/.firestaff/data/firestaff-original-games/DM").resolve(),
 ]
 
 SOURCE_CHECKS = [

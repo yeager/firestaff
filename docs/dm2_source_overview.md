@@ -3,7 +3,7 @@
 ## Repository
 
 Source: https://github.com/gbsphenx/skproject
-Local canonical anchor: /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/SKULL.ASM
+Local canonical anchor: /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm2/SKULL.ASM
 
 ## Original Disassembly
 

@@ -19,10 +19,10 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass322_dm1_v1_movement_state_binding"
 SOURCE_ROOTS = [
-    Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+    Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source",
 ]
-ATLAS = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
+ATLAS = Path.home() / ".firestaff/data/firestaff-greatstone-atlas"
 OUT_JSON = ROOT / f"parity-evidence/verification/{PASS}.json"
 OUT_MD = ROOT / f"parity-evidence/{PASS}.md"
 PASS273 = ROOT / "parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json"

@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW = SOURCE_ROOT / "DUNVIEW.C"
 VIEW = ROOT / "src/engine/m11_game_view.c"
 EVIDENCE = ROOT / "parity-evidence/dm1_v1_viewport_explosion_pass_gap_source_lock_20260508.md"

@@ -630,7 +630,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument(
         "--data-dir", type=Path,
         default=Path(os.path.expanduser(
-            "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+            "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1"
         )),
         help="DM1 game data root (default: %(default)s)",
     )

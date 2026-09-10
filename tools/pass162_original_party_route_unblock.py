@@ -36,10 +36,10 @@ from tools.pass118_state_aware_original_route_driver import (  # noqa: E402
 )
 from tools.pass80_original_frame_classifier import sha256  # noqa: E402
 
-STAGE = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+STAGE = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 DOSBOX = "/usr/bin/dosbox"
 OUT_ROOT = Path("parity-evidence/verification/pass162_original_party_route_unblock")
-RUN_BASE_ROOT = Path.home() / ".openclaw/data/firestaff-n2-runs"
+RUN_BASE_ROOT = Path.home() / ".firestaff/data/firestaff-n2-runs"
 
 STATIC_NO_PARTY_HASHES = {"48ed3743ab6a", "082b4d249740"}
 CONTROL_CLASSES = {"inventory", "spell_panel"}

@@ -1,7 +1,7 @@
 # pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate
 
 - status: `PARTIAL_PASS449_FRAMEBUFFER_COMPARATOR_INCOMPLETE`
-- redmcsb archive: `/home/yeager/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z`
+- redmcsb archive: `<local-home>/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z`
 - parity claim: **not made**; this is a source-locked evidence path and blocker gate.
 
 ## Locked original data
@@ -42,7 +42,7 @@
 - schema: `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json`
 - comparator result: `parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_compare.json` status=`PARTIAL_COMPARE_WITH_ERRORS`
 - required original data provenance: `GRAPHICS.DAT` and `DUNGEON.DAT` must include exact variant, file/path, bytes, and SHA256; filename-only identity is rejected.
-- materialization: `NOT_MATERIALIZED` from Firestaff root `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs` and original root `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509`
+- materialization: `NOT_MATERIALIZED` from Firestaff root `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs` and original root `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509`
 - partial comparisons executed (diagnostic only; no full pixel parity claim):
   - `candidate_select` `fullframe` differingPixels=58965/64000 maxChannelDelta=255 meanAbsDeltaRgb=104.875698
   - `candidate_select` `hud_status_crop` differingPixels=8174/10560 maxChannelDelta=255 meanAbsDeltaRgb=80.281503
@@ -97,7 +97,7 @@
 - `hud_status_after` `original` `hud_status_crop` path=`parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png` hashField=`scenes.hud_status_after.original.hud_status_crop.sha256` exists=True
 
 ## N2 DOSBox original Hall panel-visible artifact
-- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=False ok=False
+- root: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=False ok=False
 - status: `None` host=`None` created=`None` entries=None
 - use: original Hall/front-mirror visible context only; not a candidate panel framebuffer comparator input
 - DUNGEON.DAT sha256 `None`; GRAPHICS.DAT sha256 `None`; TITLE sha256 `None`

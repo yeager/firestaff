@@ -27,7 +27,7 @@ Traced the DM1 V1 input → command queue → movement → sensor/timing pipelin
 
 ```sh
 python3 tools/verify_pass383_dm1_v1_movement_timing_integration.py
-ctest --test-dir ~/.openclaw/data/firestaff-builds/pass383-verify --output-on-failure -R 'dm1_v1_command_movement_sensor_timing_pc34_compat|dm1_v1_movement_pipeline_pc34_compat'
+ctest --test-dir ~/.firestaff/data/firestaff-builds/pass383-verify --output-on-failure -R 'dm1_v1_command_movement_sensor_timing_pc34_compat|dm1_v1_movement_pipeline_pc34_compat'
 git diff --check
 ```
 

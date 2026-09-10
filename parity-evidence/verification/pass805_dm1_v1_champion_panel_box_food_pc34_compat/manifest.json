@@ -20,7 +20,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:41",
       "line": 41,
       "lineText": "int16_t G0035_ai_Graphic562_Box_Food[4];",
@@ -28,7 +28,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:317",
       "line": 317,
       "lineText": "int16_t G0035_ai_Graphic562_Box_Food[4] = { 112, 159, 60, 68 };",
@@ -36,7 +36,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1035",
       "line": 1035,
       "lineText": "int16_t G0035_ai_Graphic562_Box_Food[4] = { 112, 159, 60, 68 };",
@@ -44,7 +44,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1585",
       "line": 1585,
       "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C030_GRAPHIC_FOOD_LABEL), G0035_ai_Graphic562_Box_Food, C024_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
@@ -52,7 +52,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1589",
       "line": 1589,
       "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C030_GRAPHIC_FOOD_LABEL), G0035_ai_Graphic562_Box_Food, C032_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
@@ -60,7 +60,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1593",
       "line": 1593,
       "lineText": "        M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C030_GRAPHIC_FOOD_LABEL), G0035_ai_Graphic562_Box_Food, C048_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 9);",
@@ -68,7 +68,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass805_dm1_v1_champion_panel_box_food_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0035_ai_Graphic562_Box_Food[4] = {112, 159, 60, 68}. The {X, Y, W, H} pixel-coordinate rectangle for the food status label blit onto the champion panel. Read sites: PANEL.C:1585/1589/1593 F0344_INVENTORY_DrawPanel \u2014 blit C030_GRAPHIC_FOOD_LABEL into G0035's box with byte widths C024/C032/C048 for English/German/French localizations.",
   "sourceChecks": [

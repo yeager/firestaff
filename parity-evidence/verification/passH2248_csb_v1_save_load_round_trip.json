@@ -5,7 +5,7 @@
     {
       "id": "redmcsb_save_header_obfuscate",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
       "lines": "1-80",
       "needles": [
         "F0417_SAVEUTIL_GetChecksumAndObfuscate",
@@ -16,7 +16,7 @@
     {
       "id": "redmcsb_header_read_checksum",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
       "lines": "14-63",
       "needles": [
         "F0429_STARTEND_IsReadSaveHeaderSuccessful",
@@ -28,7 +28,7 @@
     {
       "id": "redmcsb_csb_dungeon_id",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "519-523",
       "needles": [
         "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
@@ -40,7 +40,7 @@
     {
       "id": "redmcsb_save_load_funcs",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
       "lines": "1-50",
       "needles": [
         "F0435_STARTEND_LoadGame",

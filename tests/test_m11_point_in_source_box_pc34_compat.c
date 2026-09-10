@@ -46,7 +46,7 @@
 /* ctest sets CWD to builds/n2-build, so we resolve the source file
  * relative to the project root.  Probe source root via FIRESTAFF_ROOT_PATH. */
 #ifndef FIRESTAFF_ROOT_PATH
-#define FIRESTAFF_ROOT_PATH "/Users/bosse/.openclaw/workspace-main/"
+#define FIRESTAFF_ROOT_PATH "<local-home>/.firestaff/workspace-main/"
 #endif
 
 static int g_assertions = 0;

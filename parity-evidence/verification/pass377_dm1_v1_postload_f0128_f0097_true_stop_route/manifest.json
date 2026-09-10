@@ -57,7 +57,7 @@
       "lines": "142-174,180-237",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "anchors": {
@@ -72,7 +72,7 @@
       "lines": "8318-8338,8598-8612",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "anchors": {
@@ -86,7 +86,7 @@
       "lines": "709-724,849-858",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "anchors": {
@@ -100,10 +100,10 @@
       "lines": "18-34,940-951,3566-3582",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source/VIDEODRV.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source/VIDEODRV.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source",
   "status": "BLOCKED_PASS377_POSTLOAD_F0128_TRUE_STOP_NOT_RECAPTURED",
   "strictStopPromotion": {
     "breakpointRetainedPostRoute": true,

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+REDMCSB = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 ATTEMPT = ROOT / "verification-screens/pass209-delayed-click-zone-route"
 OUT_DIR = ROOT / "parity-evidence/verification/pass209_dm1_v1_original_delayed_click_route_gate"
 REPORT = ROOT / "parity-evidence/pass209_dm1_v1_original_delayed_click_route_gate.md"

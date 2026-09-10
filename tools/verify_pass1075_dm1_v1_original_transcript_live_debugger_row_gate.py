@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RED = Path(
     os.environ.get(
         "FIRESTAFF_REDMCSB_SOURCE",
-        str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+        str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
     )
 )
 PASS = "pass1075_dm1_v1_original_transcript_live_debugger_row_gate"

@@ -3,7 +3,7 @@
   "status": "passed",
   "statusToken": "DM1_V1_CHAMPION_PANEL_PORTRAIT_BOX_BLIT_GATE_PC34_COMPAT_LOCKED",
   "schema": "firestaff.parity.dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat.v1",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "timestampUtc": "2026-06-12T13:33:24.213828+00:00",
   "anchorNotes": [
     "F0254:1635 sets only MASK0x0080_NAME_TITLE on the Attributes field before calling F0292 (the inventory champion's F0292 call would re-enter F0292 and trigger the F0292 dispatch tree; the test pins the F0254 non-inventory Attributes mask separately from the F0292 non-inventory fallback mask)."
@@ -11,7 +11,7 @@
   "firestaffChecks": [
     {
       "id": "champdraw_f0292_short_circuit",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:757-760",
       "claim": "F0292 short-circuits when none of the nine redraw-mask bits is set.",
       "hits": [
@@ -25,7 +25,7 @@
     },
     {
       "id": "champdraw_f0292_f0355_pre_route",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:767-770",
       "claim": "F0292 pre-routes the inventory champion through F0355 when G0297 is set.",
       "hits": [
@@ -43,7 +43,7 @@
     },
     {
       "id": "champdraw_f0292_status_box_branch",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:771-789",
       "claim": "F0292 enters the status-box branch only when MASK0x1000_STATUS_BOX is set.",
       "hits": [
@@ -61,7 +61,7 @@
     },
     {
       "id": "champdraw_f0292_f0354_call",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:810-812",
       "claim": "F0292 calls F0354 only when the champion is the inventory champion.",
       "hits": [
@@ -79,7 +79,7 @@
     },
     {
       "id": "champdraw_f0292_non_inventory_fallback",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:813-814",
       "claim": "F0292 takes the non-inventory fallback mask when the champion is not the inventory champion.",
       "hits": [
@@ -93,7 +93,7 @@
     },
     {
       "id": "champdraw_f0292_clear_at_exit",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:1110-1110",
       "claim": "F0292 clears all nine redraw-mask bits at the T0292042 label.",
       "hits": [
@@ -107,7 +107,7 @@
     },
     {
       "id": "champdraw_f0293_dispatch_loop",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "source": "CHAMDRAW.C:1117-1143",
       "claim": "F0293 OR-s the per-call P2062_ui_ argument into every active champion's Attributes and dispatches F0292 in champion-index order.",
       "hits": [
@@ -125,7 +125,7 @@
     },
     {
       "id": "timeline_f0254_secondary_dispatch",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TIMELINE.C",
       "source": "TIMELINE.C:1614-1637",
       "claim": "F0254 routes the inventory champion through F0354 and the non-inventory champion through F0292 with NAME_TITLE only.",
       "hits": [
@@ -147,7 +147,7 @@
     },
     {
       "id": "defs_status_box_zones",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "source": "DEFS.H:3783-3793",
       "claim": "DEFS.H:3783-3793 anchors C151..C154 status-box zones and C175 first champion status-box portrait zone.",
       "hits": [
@@ -169,7 +169,7 @@
     },
     {
       "id": "defs_portrait_zone",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "source": "DEFS.H:3793-3793",
       "claim": "DEFS.H:3793 anchors C175_ZONE_FIRST_CHAMPION_STATUS_BOX used by F0354.",
       "hits": [
@@ -453,7 +453,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/openclaw-work/firestaff/coding-worktrees/20260612141325600047000_dm1_v1_refill_champion_panel_portrait_box_blit_gate/build-local/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat"
+        "/Volumes/Extern-disk/legacy-workspace-work/firestaff/coding-worktrees/20260612141325600047000_dm1_v1_refill_champion_panel_portrait_box_blit_gate/build-local/test_dm1_v1_champion_panel_portrait_box_blit_gate_pc34_compat"
       ],
       "returncode": 0,
       "passed": true,

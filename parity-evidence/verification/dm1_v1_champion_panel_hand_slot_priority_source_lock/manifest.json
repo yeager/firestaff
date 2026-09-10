@@ -176,7 +176,7 @@
   "redmcsbChecks": [
     {
       "claim": "F0302 routes slot-box indices 0..7 through candidate/open/dead guards and M070 hand-slot mapping before inventory slots.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 677,
@@ -214,7 +214,7 @@
     },
     {
       "claim": "F0297/F0298 own leader-hand object, pointer/name, load byte, and F0292 redraw side effects.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 243,
@@ -260,7 +260,7 @@
     },
     {
       "claim": "F0300 clears C30+ slots through G0425_aT_ChestSlots.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 511,
@@ -286,7 +286,7 @@
     },
     {
       "claim": "F0301 writes C30+ slots through G0425_aT_ChestSlots and then updates the champion load.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 606,
@@ -316,7 +316,7 @@
     },
     {
       "claim": "F0302 snapshots leader hand, reads storage, rejects empty/mask cases, then executes F0077/F0298/F0300/F0297/F0301/F0292/F0078 order.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 688,
@@ -370,7 +370,7 @@
     },
     {
       "claim": "DEFS.H binds hand/body/backpack/chest slot constants including C30.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 780,
@@ -404,7 +404,7 @@
     },
     {
       "claim": "DEFS.H maps M516_CHAMPIONS to the party champion array.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 873,
@@ -418,7 +418,7 @@
     },
     {
       "claim": "DEFS.H binds the status/inventory slot-box boundary and M070 hand-slot macro.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 1874,
@@ -440,7 +440,7 @@
     },
     {
       "claim": "DEFS.H binds slot-box metadata and the slot masks used by F0302 AllowedSlots.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 5324,
@@ -458,7 +458,7 @@
     },
     {
       "claim": "DEFS.H exposes party count, inventory champion ordinal, chest slots, and open chest.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 5700,
@@ -484,7 +484,7 @@
     },
     {
       "claim": "F0291 redraws a requested champion slot and reads C30+ inventory from G0425_aT_ChestSlots.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "hits": [
         {
           "line": 498,
@@ -510,7 +510,7 @@
     },
     {
       "claim": "F0292 is the champion state redraw entry called by F0297/F0302.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "hits": [
         {
           "line": 703,
@@ -528,7 +528,7 @@
     },
     {
       "claim": "F0292 redraws panel content and action hand when the relevant attributes are set.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "hits": [
         {
           "line": 1060,
@@ -562,7 +562,7 @@
     },
     {
       "claim": "PANEL.C F0344/F0345 are the food/water panel redraw dependency reached by the action-hand panel path.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "hits": [
         {
           "line": 1493,
@@ -600,7 +600,7 @@
     },
     {
       "claim": "DUNVIEW viewport redraw/clickable setup exists as a non-claim fence for this HUD gate.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8337,
@@ -625,7 +625,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.dm1_v1_champion_panel_hand_slot_priority_source_lock.v1",
   "status": "passed",
   "statusToken": "DM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_SOURCE_LOCKED",
@@ -633,7 +633,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat"
+        "<local-home>/.firestaff/workspace-main/build/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat"
       ],
       "outputTail": "Assertions: 111\nFailures: 0\nDM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_PC34_COMPAT_OK",
       "passed": true,

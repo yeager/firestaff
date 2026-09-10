@@ -102,7 +102,7 @@ common capture package.
 ## Verification commands
 
 ```sh
-FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus \
+FIRESTAFF_NEXUS_DATA_DIR=<local-home>/.firestaff/data/nexus \
   ctest --test-dir build --output-on-failure -R \
   'nexus_v1_(startup_menu_source|title_mapd_real|dgn_geometry_readiness|dgn_face_mesh_corpus|startup_media_gate|slev_task_corpus_receipt|item_ibs|sal_map_corpus)$'
 

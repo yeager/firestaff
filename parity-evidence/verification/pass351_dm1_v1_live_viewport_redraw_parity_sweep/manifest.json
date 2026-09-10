@@ -23,7 +23,7 @@
     "failed": 0,
     "failures": [],
     "passed": 11,
-    "redmcsb_common_source": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "redmcsb_common_source": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
     "repo": "/home/trv2/work/firestaff-pass351-dm1-v1-live-viewport-redraw-parity-sweep-20260507",
     "results": [
       {

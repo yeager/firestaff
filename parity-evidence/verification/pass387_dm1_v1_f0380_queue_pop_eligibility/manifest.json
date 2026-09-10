@@ -42,6 +42,6 @@
     "keyboardRouteRanAfterArm": true
   },
   "secondaryEligibilityPredicate": "Movement commands C003..C006 also bypass dispatch when G0310_i_DisabledMovementTicks is non-zero or projectile-disabled movement matches the attempted direction.",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS387_F0380_QUEUE_POP_ELIGIBILITY_PREDICATE_PROVEN"
 }

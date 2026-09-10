@@ -26,10 +26,10 @@ OUT = ROOT / "parity-evidence/verification/passH2248_csb_v1_canonical_asset_mani
 REPORT = ROOT / "parity-evidence/firestaff_csb_v1_phase7_asset_manifest_H2248.md"
 
 # ReDMCSB source anchor
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 # CSB lineage source anchor (local clone or reference path)
-CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
+CSB_SRC = Path.home() / ".firestaff/data/firestaff-csb-source/CSB/src"
 
 # Local canonical data directory (may be a symlink or copy)
 LOCAL_CSB = Path.home() / ".firestaff/data/csb"

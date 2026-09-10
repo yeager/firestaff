@@ -17,7 +17,7 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / 'parity-evidence/verification' / PASS
 MANIFEST = OUT_DIR / 'manifest.json'
 REPORT = ROOT / 'parity-evidence' / f'{PASS}.md'
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 ANCHORS = [
     "DATA.C:113/535/1356",

@@ -21,8 +21,8 @@ ROOT=Path(__file__).resolve().parents[1]
 PASS="pass474_dm1_v1_live_mouse_down_up_c080_probe"
 OUT=ROOT/"parity-evidence"/"verification"/PASS
 REPORT=ROOT/"parity-evidence"/(PASS+".md")
-RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-MAP=Path.home()/".openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP"
+RED=Path.home()/".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+MAP=Path.home()/".firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP"
 ADDR={
  "F0781_EventCmp":"2A13:002F",
  "F0359_COMMAND_ProcessClick_CPSC":"22F7:030D",

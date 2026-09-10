@@ -21,8 +21,8 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 ## A. Original game data packages
 
 ### A1. DM1 DOS package
-- **Location (canonical worker-local):** `~/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z`
-- **Extracted PC34 data set:** `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
+- **Location (canonical worker-local):** `~/.firestaff/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z`
+- **Extracted PC34 data set:** `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
 - **Historical/deprecated remote:** Burken `<deprecated-remote-dm-archive>` (do not use for worker-subagent provenance; retained only as old context)
 - **Contents:**
   - `DUNGEON.DAT` — dungeon content data
@@ -50,7 +50,7 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 
 ### A4. DM2 data — acquired and Phase 0 locked
 - **Status:** `SOURCE_LOCKED_PROVENANCE_ONLY`
-- **Canonical worker-local path:** `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/`
+- **Canonical worker-local path:** `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm2/`
 - **Gate:** `tools/verify_dm2_v1_phase0_provenance_gate.py`
 - **Evidence:** `parity-evidence/verification/dm2_v1_phase0_provenance_gate/manifest.json`
 - **Contents:**
@@ -166,7 +166,7 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 - **skproject remote:** `https://github.com/gbsphenx/skproject`
 - **Locked master HEAD:** `a962896e42aaf54c76157a7b062fb5b0526929e6`
 - **Locked tree:** `a095e458cfaaa0490b9c4d4d2adf88108a8ad92f`
-- **Canonical N2 mirror:** `~/.openclaw/data/firestaff-dm2-sources/skproject.git`
+- **Canonical N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
 - **Sphenx SKWin page:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 - **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
 - **Good for:** DM2-specific source/provenance research after the Phase 0 gate passes.

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass558_dm1_v1_pass514_io_blocker_classifier"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 PASS514_MANIFEST = ROOT / "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json"
 

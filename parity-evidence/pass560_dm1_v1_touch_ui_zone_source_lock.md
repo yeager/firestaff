@@ -9,7 +9,7 @@ Scope: evidence/probe only. No movement implementation or runtime route code is 
 
 Primary source root audited on N2:
 
-/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
 
 The touch-screen feature lane must stay source-locked to ReDMCSB mouse/click semantics:
 
@@ -28,11 +28,11 @@ The touch-screen feature lane must stay source-locked to ReDMCSB mouse/click sem
 
 Secondary references available but not used as primary authority in this pass:
 
-- /home/trv2/.openclaw/data/firestaff-greatstone-atlas/
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/
-- /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/
-- /home/trv2/.openclaw/data/firestaff-csb-source/CSB/
+- /home/trv2/.firestaff/data/firestaff-greatstone-atlas/
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/
+- /home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin/
+- /home/trv2/.firestaff/data/firestaff-csb-source/CSB/
 
 ## Project audit
 

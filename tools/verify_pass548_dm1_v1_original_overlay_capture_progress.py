@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass548_dm1_v1_original_overlay_capture_progress"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / (PASS + ".md")
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 LIVE_COMMAND = ["python3", "tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py", "--seconds", "10"]
 
 SOURCE_REFS = [

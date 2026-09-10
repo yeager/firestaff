@@ -3,7 +3,7 @@ from __future__ import annotations
 import json, re, subprocess
 from pathlib import Path
 REPO=Path(__file__).resolve().parent.parent
-SRC=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206'
+SRC=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206'
 SROOT=SRC/'Toolchains/Common/Source'
 OUT=REPO/'parity-evidence/verification/pass172_redmcsb_patch_gap_inventory'
 PRIORITY_BUGS={

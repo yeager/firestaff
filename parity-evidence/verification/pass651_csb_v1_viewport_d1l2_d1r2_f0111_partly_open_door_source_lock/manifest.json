@@ -150,7 +150,7 @@
       "status": "PASS"
     }
   ],
-  "lineageViewport": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+  "lineageViewport": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
   "nonClaims": [
     "No renderer output or real-asset pixel parity claim.",
     "No game-data load or archive/materialization behavior change.",
@@ -159,7 +159,7 @@
   ],
   "redmcsbChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 4218,
@@ -212,7 +212,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 7391,
@@ -249,7 +249,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 7559,
@@ -286,7 +286,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8524,
@@ -327,7 +327,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8292,
@@ -344,7 +344,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 2088,
@@ -405,7 +405,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
+      "file": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/Viewport.cpp",
       "hits": [
         {
           "line": 1903,
@@ -438,7 +438,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass651_csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS651_CSB_V1_VIEWPORT_D1L2_D1R2_F0111_PARTLY_OPEN_DOOR_SOURCE_LOCKED"

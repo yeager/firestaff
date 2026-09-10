@@ -30,7 +30,7 @@ Problems:
 ## Failing commands preserved
 
 ```bash
-OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf "$OUT"; OUT_DIR="$OUT" DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS="wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
+OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf "$OUT"; OUT_DIR="$OUT" DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS="wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 python3 tools/pass80_original_frame_classifier.py verification-screens/pass378-source-portrait-sixshot-retry --expected pass77 --fail-on-duplicates
 python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass378-source-portrait-sixshot-retry --out-dir verification-screens/pass378-source-portrait-sixshot-viewports --dry-run
 ```

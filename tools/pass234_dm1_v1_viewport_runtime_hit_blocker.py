@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-TOOLCHAIN_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+TOOLCHAIN_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC"
 SYMBOL_MAP = ROOT / "data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
 OUT_DIR = ROOT / "parity-evidence/verification/pass234_dm1_v1_viewport_runtime_hit_blocker"
 MANIFEST = OUT_DIR / "manifest.json"
@@ -77,7 +77,7 @@ def debugger_inventory() -> dict[str, Any]:
     if tools.get("dosbox-x"):
         probes["dosbox_x_version_probe"] = run_probe(["dosbox-x", "-version"], timeout=6)
     if tools.get("objdump"):
-        probes["fires_exenew_probe"] = run_probe(["bash", "-lc", "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"], timeout=6)
+        probes["fires_exenew_probe"] = run_probe(["bash", "-lc", "find . ~/.firestaff/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"], timeout=6)
     return {"tools": tools, "toolchain_root_exists": TOOLCHAIN_ROOT.is_dir(), "symbol_map_exists": SYMBOL_MAP.is_file(), "probes": probes}
 
 

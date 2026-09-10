@@ -39,13 +39,13 @@ Host: `N2` (`firestaff-worker`)
 Commands:
 
 ```sh
-ls -la ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE
-(cd ~/.openclaw/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS)
+ls -la ~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE
+(cd ~/.firestaff/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS)
 ```
 
 Observed:
 
-- `DM.EXE` exists at `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
+- `DM.EXE` exists at `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
 - archive manifest verified OK, including `Game,Dungeon_Master,DOS,Software.7z: OK`
 
 ## N2 route probe
@@ -54,7 +54,7 @@ Command:
 
 ```sh
 OUT_DIR=$PWD/verification-screens/pass112-n2-route-probe \
-DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 WAIT_BEFORE_INPUT_MS=5000 \

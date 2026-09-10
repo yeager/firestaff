@@ -24,7 +24,7 @@ Movement/key-route processing is source/runtime proven through F0380 and F0365/F
 - retail PC34 member DATA/DUNGEON.DAT sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
 - retail PC34 member DATA/GRAPHICS.DAT sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 - retail PC34 member TITLE sha256 adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-- retail archive: /home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip
+- retail archive: <local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip
 
 ## Gate
 - python3 tools/verify_pass508_dm1_v1_key_route_state_delta_gate.py

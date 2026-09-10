@@ -20,7 +20,7 @@ DOC = ROOT / "parity-evidence/pass547_csb_v1_runtime_readiness_backfill.md"
 CSB_MATRIX = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
 COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
 ASSET_MANIFEST = ROOT / "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json"
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 ANCHORS = [
     {"id": "redmcsb_csb_header_identity", "role": "primary_source", "path": REDMCSB / "DEFS.H", "lines": "482-523", "needles": ["CSB_SAVE_HEADER", "C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK", "C12_DUNGEON_CSB_PRISON", "C13_DUNGEON_CSB_GAME"]},

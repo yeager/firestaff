@@ -2,7 +2,7 @@
 """Pass452 DM1 V1 original Hall click-no-transition blocker gate.
 
 Source-first diagnosis for the N2 DOSBox-X capture at
-/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509.
+/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509.
 
 The captured route turned away from the source-locked initial C127 mirror before
 clicking the portrait point.  This gate records the exact source/data anchors and
@@ -18,9 +18,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = Path('/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
-ARTIFACT = Path('/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json')
-CORRECTED_ARTIFACT = Path('/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509')
+SRC_ROOT = Path('/Volumes/Extern-disk/legacy-workspace-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source')
+ARTIFACT = Path('/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json')
+CORRECTED_ARTIFACT = Path('/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509')
 OUT_DIR = ROOT / 'parity-evidence/verification/pass452_dm1_v1_hall_original_route_state_blocker'
 OUT_JSON = OUT_DIR / 'manifest.json'
 OUT_MD = ROOT / 'parity-evidence/pass452_dm1_v1_hall_original_route_state_blocker.md'
@@ -190,7 +190,7 @@ def main() -> int:
                 'then click C160 resurrect center PC x=130 y=115 (root x=340 y=330) or C161 reincarnate center PC x=186 y=115',
             ],
             'route_edit': 'remove the turn_left_east, step_east_blocked, and turn_left_north_front_mirror inputs before the portrait click',
-            'exact_next_command': 'xvfb-run -a -s "-screen 0 800x600x24" dosbox-x -conf ~/openclaw-artifacts/dm1-hall-dosbox-20260509/dosboxx.conf -fastlaunch -nogui -nomenu -time-limit 150',
+            'exact_next_command': 'xvfb-run -a -s "-screen 0 800x600x24" dosbox-x -conf ~/legacy-workspace-artifacts/dm1-hall-dosbox-20260509/dosboxx.conf -fastlaunch -nogui -nomenu -time-limit 150',
         },
     }
 

@@ -20,8 +20,8 @@ from pathlib import Path
 from zipfile import ZipFile
 
 REPO = Path(__file__).resolve().parents[1]
-ARCHIVE = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-SKULL_ASM = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm2/SKULL.ASM"
+ARCHIVE = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+SKULL_ASM = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm2/SKULL.ASM"
 PREV_EVIDENCE = REPO / "parity-evidence/verification/dm2_fileopen_trace_boundary_20260430/evidence.json"
 TARGETS = ("DUNGEON.DAT", "GRAPHICS.DAT")
 FILE_OPEN_RE = re.compile(r"FILES:file open command (?P<mode>[0-9A-Fa-f]+) file (?P<path>.+)$")
@@ -120,7 +120,7 @@ def run_dosbox(timeout_s: int, keep_workdir: bool) -> tuple[dict, str]:
         "workdir_retained": str(workdir) if keep_workdir else None,
         "candidate_tools_on_n2": tools,
         "source_policy": {
-            "redmcsb": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ is DM/CSB comparison only; not DM2 C source.",
+            "redmcsb": "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ is DM/CSB comparison only; not DM2 C source.",
             "dm2": "canonical DM2 SKULL.EXE and SKULL.ASM anchors only.",
         },
         "anchors_from_473d17c": load_boundary()["dm2_exe"]["anchors"],

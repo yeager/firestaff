@@ -13,9 +13,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-ORIGINALS = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+GREATSTONE = Path.home() / ".firestaff/data/firestaff-greatstone-atlas"
+ORIGINALS = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 DM1_CANON = ORIGINALS / "_canonical/dm1"
 
 VERIFY_DIR = ROOT / "parity-evidence/verification/pass511_dm1_v1_original_transcript_blocker_evidence"

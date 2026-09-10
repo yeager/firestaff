@@ -30,8 +30,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass385_dm1_v1_corrected_loader_delta_semantic_route"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 ADDR = {
     "F0380_COMMAND_ProcessQueue_CPSC": "22F7:0699",

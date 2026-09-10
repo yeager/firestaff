@@ -19,8 +19,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 ZONES = ROOT / "data/zones_h_reconstruction.json"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-CANON_GRAPHICS = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+CANON_GRAPHICS = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
 EXPECTED_DM1_PC34_GRAPHICS_SHA256 = "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
 
 

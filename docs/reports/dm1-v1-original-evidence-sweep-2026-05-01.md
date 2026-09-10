@@ -43,7 +43,7 @@ Command:
 
 ```sh
 cd <firestaff-repo>
-base="$HOME/.openclaw/data/firestaff-n2-runs/20260501-153102-pass153-xvfb-input-delivery"
+base="$HOME/.firestaff/data/firestaff-n2-runs/20260501-153102-pass153-xvfb-input-delivery"
 xvfb-run -a python3 tools/pass153_xvfb_input_delivery_matrix.py "$base"
 ```
 

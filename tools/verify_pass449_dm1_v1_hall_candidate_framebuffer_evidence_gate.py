@@ -220,14 +220,14 @@ FRAMEBUFFER_INPUT_DIR = VERIFY_DIR / "framebuffer_inputs"
 FRAMEBUFFER_MANIFEST = FRAMEBUFFER_INPUT_DIR / "hall_candidate_framebuffer_manifest.json"
 FRAMEBUFFER_SCHEMA_PATH = VERIFY_DIR / "hall_candidate_framebuffer_manifest_schema.json"
 COMPARATOR_RESULT = VERIFY_DIR / "hall_candidate_framebuffer_compare.json"
-N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
-CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 CORRECTED_HALL_RUN = "probe-initial-south-corrected"
 CORRECTED_HALL_CANCEL_RUN = "probe-initial-south-cancel-corrected"
 CORRECTED_HALL_REINCARNATE_RUN = "probe-initial-south-reincarnate-corrected"
-FIRESTAFF_HALL_FRAME_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs")
+FIRESTAFF_HALL_FRAME_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs")
 FIRESTAFF_HALL_FRAME_MANIFEST = FIRESTAFF_HALL_FRAME_ROOT / "hall_candidate_framebuffer_manifest.json"
 
 REGIONS = {
@@ -831,12 +831,12 @@ def classify_framebuffer_delta_buckets(comparisons: list[dict[str, Any]]) -> dic
                     "the C080 portrait/candidate click reaches the candidate panel without the corridor second-mirror helper",
                     "terminal C160/C161/C162 frames are captured at their source-stop-aligned redraw boundary before pass449 HUD rows are made parity-eligible"
                 ],
-                "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
+                "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
                 "inspectedFirestaffArtifacts": [
-                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
-                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
-                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
-                    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
+                    "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+                    "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+                    "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+                    "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
                 ]
             },
             "sourceRefs": [

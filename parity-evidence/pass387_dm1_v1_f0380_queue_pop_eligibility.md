@@ -12,7 +12,7 @@ Blocked/narrowed: ReDMCSB proves the exact branch that can enter `F0380_COMMAND_
 
 ## Mandatory ReDMCSB source audit
 
-Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+Source root audited: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 Exact files/functions:
 

@@ -17,7 +17,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:24",
       "line": 24,
       "lineText": "int16_t G0018_ai_Graphic562_MandatoryGraphicIndices[M531_MANDATORY_GRAPHIC_COUNT]; /* Indices of graphics that must always be loaded */",
@@ -25,7 +25,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:137",
       "line": 137,
       "lineText": "int16_t G0018_ai_Graphic562_MandatoryGraphicIndices[M531_MANDATORY_GRAPHIC_COUNT] = {",
@@ -33,7 +33,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:209",
       "line": 209,
       "lineText": "        C039_GRAPHIC_BORDER_PARTY_SPELLSHIELD }; /* Indices of graphics that must always be loaded */",
@@ -41,7 +41,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:615",
       "line": 615,
       "lineText": "int16_t G0018_ai_Graphic562_MandatoryGraphicIndices[M531_MANDATORY_GRAPHIC_COUNT] = {",
@@ -49,7 +49,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:690",
       "line": 690,
       "lineText": "int16_t G0018_ai_Graphic562_MandatoryGraphicIndices[M531_MANDATORY_GRAPHIC_COUNT] = {",
@@ -57,7 +57,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "DUNVIEW.C:2350",
       "line": 2350,
       "lineText": "        F0007_MAIN_CopyBytes(M772_CAST_PC(G0018_ai_Graphic562_MandatoryGraphicIndices), M772_CAST_PC(L0077_pi_GraphicIndices), M543_BYTE_COUNT_INT(sizeof(G0018_ai_Graphic562_MandatoryGraphicIndices)));",
@@ -65,7 +65,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "DUNVIEW.C:2353",
       "line": 2353,
       "lineText": "        F0007_MAIN_CopyBytes(G0018_ai_Graphic562_MandatoryGraphicIndices, L0077_pi_GraphicIndices, M543_BYTE_COUNT_INT((67 + 2) * sizeof(int16_t)));",
@@ -73,7 +73,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "DUNVIEW.C:2356",
       "line": 2356,
       "lineText": "        F0007_MAIN_CopyBytes(G0018_ai_Graphic562_MandatoryGraphicIndices, L0077_pi_GraphicIndices, M543_BYTE_COUNT_INT((M531_MANDATORY_GRAPHIC_COUNT + 1 - 1) * sizeof(int16_t)));",
@@ -81,7 +81,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "DUNVIEW.C:2359",
       "line": 2359,
       "lineText": "        AL0075_ui_GraphicCount = M531_MANDATORY_GRAPHIC_COUNT;",
@@ -89,7 +89,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "DUNVIEW.C:2454",
       "line": 2454,
       "lineText": "        F0007_MAIN_CopyBytes(G0018_ai_Graphic562_MandatoryGraphicIndices, L0077_pi_GraphicIndices, sizeof(G0018_ai_Graphic562_MandatoryGraphicIndices));",
@@ -97,7 +97,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "DUNVIEW.C:2455",
       "line": 2455,
       "lineText": "        AL0075_ui_GraphicCount = M531_MANDATORY_GRAPHIC_COUNT;",
@@ -105,7 +105,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass852_dm1_v1_mandatory_graphic_indices_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [

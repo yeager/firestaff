@@ -108,7 +108,7 @@ def click_original(wid: str, x: int, y: int, log, delay=0.25):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--stage", type=Path, default=Path.home()/".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
+    ap.add_argument("--stage", type=Path, default=Path.home()/".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
     ap.add_argument("--dosbox", default="/usr/bin/dosbox")
     ap.add_argument("--program", default="DM -vv -sn -pk")
     ap.add_argument("--gate-timeout", type=float, default=18.0)

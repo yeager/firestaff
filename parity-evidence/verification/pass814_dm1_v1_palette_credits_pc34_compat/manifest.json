@@ -16,7 +16,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:25",
       "line": 25,
       "lineText": "unsigned int16_t G0019_aui_Graphic562_Palette_Credits[16];",
@@ -24,7 +24,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:210",
       "line": 210,
       "lineText": "unsigned int16_t G0019_aui_Graphic562_Palette_Credits[16] = {",
@@ -32,7 +32,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:789",
       "line": 789,
       "lineText": "unsigned int16_t G0019_aui_Graphic562_Palette_Credits[16] = {",
@@ -40,7 +40,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENDGAME.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENDGAME.C",
       "id": "ENDGAME.C:680",
       "line": 680,
       "lineText": "        F0436_STARTEND_FadeToPalette(G0019_aui_Graphic562_Palette_Credits);",
@@ -48,7 +48,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
       "id": "ENTRANCE.C:1061",
       "line": 1061,
       "lineText": "        F0436_STARTEND_FadeToPalette(G0019_aui_Graphic562_Palette_Credits);",
@@ -56,7 +56,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass814_dm1_v1_palette_credits_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0019_aui_Graphic562_Palette_Credits[16] = { 0x009, 0x0AA, 0xFF6, 0x840, 0xFF8, 0x000, 0x080, 0xA00, 0xC84, 0xFFA, 0xF84, 0xFC0, 0xFA0, 0x000, 0x620, 0xFFC }. The 16-color palette used for the Credits screen fade. Each entry is a 12-bit RGB color (4 bits per channel). Read sites: ENDGAME.C:680 + ENTRANCE.C:1061 F0436_STARTEND_FadeToPalette(G0019).",
   "sourceChecks": [

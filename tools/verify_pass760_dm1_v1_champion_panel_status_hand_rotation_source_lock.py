@@ -19,8 +19,8 @@ FAILED_STATUS = "FAILED_PASS760_DM1_V1_CHAMPION_PANEL_STATUS_HAND_ROTATION_SOURC
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = Path(os.environ.get("FIRESTAFF_BUILD_DIR", ROOT / "build"))
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
+DATA = Path.home() / ".firestaff/data"
+EXTERNAL_DATA = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff")
 MANIFEST = ROOT / f"parity-evidence/verification/{PASS}/manifest.json"
 REPORT = ROOT / f"parity-evidence/{PASS}.md"
 TEST_BINARY = BUILD / "test_dm1_v1_champion_panel_pc34_compat"

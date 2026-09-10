@@ -10,8 +10,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-LINEAGE = Path("/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp")
+RED = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+LINEAGE = Path("<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/Viewport.cpp")
 PASS = "pass651_csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_source_lock"
 STATUS = "PASS651_CSB_V1_VIEWPORT_D1L2_D1R2_F0111_PARTLY_OPEN_DOOR_SOURCE_LOCKED"
 MANIFEST = ROOT / "parity-evidence" / "verification" / PASS / "manifest.json"

@@ -19,7 +19,7 @@
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     }
   ],
-  "dm1Archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+  "dm1Archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
   "redmcsbSourceAudit": [
     {
       "claim": "original route proof must show keyboard/click queue reaching the turn/move dispatch boundary",

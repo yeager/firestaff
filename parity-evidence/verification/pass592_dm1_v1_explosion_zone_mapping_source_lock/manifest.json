@@ -3,7 +3,7 @@
   "status": "passed",
   "statusToken": "PASS592_DM1_V1_EXPLOSION_ZONE_MAPPING_SOURCE_LOCKED",
   "claim": "DM1 V1 PC34 viewport explosion zone routing is source-locked for D0C pattern, centered, two-cell, and rebirth overlay paths.",
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceAnchors": [
     { "file": "DUNVIEW.C", "lines": "370-377", "functions": "MEDIA720 viewport mapping tables G2026/G2027/G2028/G2034/G2035" },
     { "file": "DUNVIEW.C", "lines": "5915-6137", "function": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF" },

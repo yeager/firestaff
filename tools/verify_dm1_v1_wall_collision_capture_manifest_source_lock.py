@@ -17,8 +17,8 @@ import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DM = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1"
 PASS = "dm1_v1_wall_collision_capture_manifest_source_lock"
 STATUS = "DM1_V1_WALL_COLLISION_CAPTURE_MANIFEST_SOURCE_LOCKED"
 

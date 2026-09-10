@@ -38,11 +38,11 @@
     "DATA/DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
   },
   "requiredReferencesPresent": [
-    "~/.openclaw/data/firestaff-redmcsb-source/",
-    "~/.openclaw/data/firestaff-greatstone-atlas/",
-    "~/.openclaw/data/firestaff-csbwin-source/CSBWin/",
-    "~/.openclaw/data/firestaff-csb-source/CSB/",
-    "~/.openclaw/data/firestaff-original-games/DM/"
+    "~/.firestaff/data/firestaff-redmcsb-source/",
+    "~/.firestaff/data/firestaff-greatstone-atlas/",
+    "~/.firestaff/data/firestaff-csbwin-source/CSBWin/",
+    "~/.firestaff/data/firestaff-csb-source/CSB/",
+    "~/.firestaff/data/firestaff-original-games/DM/"
   ],
   "redmcsbAnchors": [
     "COMMAND.C:2045-2156 F0380 dispatches C001/C002 to F0365 and C003-C006 to F0366",

@@ -18,7 +18,7 @@ SRC = ROOT / "src/engine/m11_game_view.c"
 DM1_3D = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 DM1_PROJ = ROOT / "src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED_ROOT = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 RED_DEFS = RED_ROOT / "DEFS.H"
 

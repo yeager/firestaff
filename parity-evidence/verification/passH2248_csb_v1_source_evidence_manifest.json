@@ -21,7 +21,7 @@
         "artifact": "passH2248_csb_v1_canonical_asset_manifest",
         "id": "csb_lineage_csbgame_save",
         "source": "CSB lineage",
-        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+        "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Chaos.cpp",
         "lines": "507-623",
         "needles": [
           "CSBGAME",
@@ -39,7 +39,7 @@
         "artifact": "passH2248_csb_v1_canonical_asset_manifest",
         "id": "csb_lineage_graphics_open",
         "source": "CSB lineage",
-        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+        "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Graphics.cpp",
         "lines": "1814-1915",
         "needles": [
           "OpenCSBgraphicsFile",
@@ -56,7 +56,7 @@
         "artifact": "passH2248_csb_v1_canonical_asset_manifest",
         "id": "csb_lineage_payload_contract",
         "source": "CSB lineage",
-        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+        "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/README",
         "lines": "14-21",
         "needles": [
           "dungeon.dat",
@@ -75,7 +75,7 @@
         "artifact": "passH2248_csb_v1_canonical_asset_manifest",
         "id": "csb_lineage_disk_type",
         "source": "CSB lineage",
-        "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
+        "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
         "lines": "1-30",
         "needles": [
           "GetDiskType_CPSB",
@@ -90,7 +90,7 @@
         "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
         "id": "csbwin_dungeon_init",
         "source": "CSBWin",
-        "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp",
+        "path": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp",
         "lines": "318-480",
         "needles": [
           "DBank::Initialize",
@@ -106,7 +106,7 @@
         "artifact": "passH2248_csb_v1_deterministic_input_scripts",
         "id": "csbwin_adventuring_mode",
         "source": "CSBWin",
-        "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+        "path": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
         "lines": "1-30",
         "needles": [
           "Enter the dungeon",
@@ -141,7 +141,7 @@
         "artifact": "passH2248_csb_v1_deterministic_input_scripts",
         "id": "redmcsb_cedtinch_new_adventure",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
         "lines": "5-63",
         "needles": [
           "F7086_IsReadyToMakeNewAdventure",
@@ -155,7 +155,7 @@
         "artifact": "passH2248_csb_v1_viewport_pixel_gate",
         "id": "redmcsb_prison_state",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
         "lines": "5-63",
         "needles": [
           "C13_DUNGEON_CSB_GAME",
@@ -170,7 +170,7 @@
         "artifact": "passH2248_csb_v1_deterministic_input_scripts",
         "id": "redmcsb_command_forward",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
         "lines": "1-80",
         "needles": [
           "C0x41_CMD_MOVE_FORWARD",
@@ -186,7 +186,7 @@
         "artifact": "passH2248_csb_v1_canonical_asset_manifest",
         "id": "redmcsb_csb_dungeon_ids",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
         "lines": "519-523",
         "needles": [
           "C12_DUNGEON_CSB_PRISON",
@@ -200,7 +200,7 @@
         "artifact": "passH2248_csb_v1_save_load_round_trip",
         "id": "redmcsb_csb_dungeon_id",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
         "lines": "519-523",
         "needles": [
           "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
@@ -216,7 +216,7 @@
         "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
         "id": "redmcsb_dungeon_format",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
         "lines": "1-100",
         "needles": [
           "F0148_DUNGEON_GetSquareFirstThingType",
@@ -230,7 +230,7 @@
         "artifact": "passH2248_csb_v1_viewport_pixel_gate",
         "id": "redmcsb_viewport_geometry",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
         "lines": "1-30",
         "needles": [
           "320",
@@ -247,7 +247,7 @@
         "artifact": "passH2248_csb_v1_save_load_round_trip",
         "id": "redmcsb_save_load_funcs",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
         "lines": "1-50",
         "needles": [
           "F0435_STARTEND_LoadGame",
@@ -263,7 +263,7 @@
         "artifact": "passH2248_csb_v1_deterministic_input_scripts",
         "id": "redmcsb_movesens_collision",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
         "lines": "1-50",
         "needles": [
           "F0230_MOVE_CheckBlocked",
@@ -278,7 +278,7 @@
         "artifact": "passH2248_csb_v1_canonical_asset_manifest",
         "id": "redmcsb_save_header_format",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
         "lines": "14-63",
         "needles": [
           "F0417_SAVEUTIL_GetChecksumAndObfuscate",
@@ -292,7 +292,7 @@
         "artifact": "passH2248_csb_v1_save_load_round_trip",
         "id": "redmcsb_save_header_obfuscate",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
         "lines": "1-80",
         "needles": [
           "F0417_SAVEUTIL_GetChecksumAndObfuscate",
@@ -305,7 +305,7 @@
         "artifact": "passH2248_csb_v1_save_load_round_trip",
         "id": "redmcsb_header_read_checksum",
         "source": "ReDMCSB",
-        "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+        "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
         "lines": "14-63",
         "needles": [
           "F0429_STARTEND_IsReadSaveHeaderSuccessful",
@@ -322,7 +322,7 @@
       "artifact": "passH2248_csb_v1_canonical_asset_manifest",
       "id": "redmcsb_csb_dungeon_ids",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "519-523",
       "needles": [
         "C12_DUNGEON_CSB_PRISON",
@@ -336,7 +336,7 @@
       "artifact": "passH2248_csb_v1_canonical_asset_manifest",
       "id": "redmcsb_save_header_format",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
       "lines": "14-63",
       "needles": [
         "F0417_SAVEUTIL_GetChecksumAndObfuscate",
@@ -350,7 +350,7 @@
       "artifact": "passH2248_csb_v1_canonical_asset_manifest",
       "id": "csb_lineage_payload_contract",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/README",
       "lines": "14-21",
       "needles": [
         "dungeon.dat",
@@ -367,7 +367,7 @@
       "artifact": "passH2248_csb_v1_canonical_asset_manifest",
       "id": "csb_lineage_graphics_open",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Graphics.cpp",
       "lines": "1814-1915",
       "needles": [
         "OpenCSBgraphicsFile",
@@ -382,7 +382,7 @@
       "artifact": "passH2248_csb_v1_canonical_asset_manifest",
       "id": "csb_lineage_csbgame_save",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Chaos.cpp",
       "lines": "507-623",
       "needles": [
         "CSBGAME",
@@ -398,7 +398,7 @@
       "artifact": "passH2248_csb_v1_canonical_asset_manifest",
       "id": "csb_lineage_disk_type",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
       "lines": "1-30",
       "needles": [
         "GetDiskType_CPSB",
@@ -411,7 +411,7 @@
       "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
       "id": "csbwin_dungeon_init",
       "source": "CSBWin",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/CSBCode.cpp",
       "lines": "318-480",
       "needles": [
         "DBank::Initialize",
@@ -425,7 +425,7 @@
       "artifact": "firestaff_csb_v1_dungeon_parser_probe.c",
       "id": "redmcsb_dungeon_format",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
       "lines": "1-100",
       "needles": [
         "F0148_DUNGEON_GetSquareFirstThingType",
@@ -439,7 +439,7 @@
       "artifact": "passH2248_csb_v1_deterministic_input_scripts",
       "id": "redmcsb_cedtinch_new_adventure",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
       "lines": "5-63",
       "needles": [
         "F7086_IsReadyToMakeNewAdventure",
@@ -453,7 +453,7 @@
       "artifact": "passH2248_csb_v1_deterministic_input_scripts",
       "id": "csbwin_adventuring_mode",
       "source": "CSBWin",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "path": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
       "lines": "1-30",
       "needles": [
         "Enter the dungeon",
@@ -468,7 +468,7 @@
       "artifact": "passH2248_csb_v1_deterministic_input_scripts",
       "id": "redmcsb_command_forward",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "lines": "1-80",
       "needles": [
         "C0x41_CMD_MOVE_FORWARD",
@@ -482,7 +482,7 @@
       "artifact": "passH2248_csb_v1_deterministic_input_scripts",
       "id": "redmcsb_movesens_collision",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "lines": "1-50",
       "needles": [
         "F0230_MOVE_CheckBlocked",
@@ -495,7 +495,7 @@
       "artifact": "passH2248_csb_v1_viewport_pixel_gate",
       "id": "redmcsb_viewport_geometry",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
       "lines": "1-30",
       "needles": [
         "320",
@@ -526,7 +526,7 @@
       "artifact": "passH2248_csb_v1_viewport_pixel_gate",
       "id": "redmcsb_prison_state",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
       "lines": "5-63",
       "needles": [
         "C13_DUNGEON_CSB_GAME",
@@ -539,7 +539,7 @@
       "artifact": "passH2248_csb_v1_save_load_round_trip",
       "id": "redmcsb_save_header_obfuscate",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
       "lines": "1-80",
       "needles": [
         "F0417_SAVEUTIL_GetChecksumAndObfuscate",
@@ -552,7 +552,7 @@
       "artifact": "passH2248_csb_v1_save_load_round_trip",
       "id": "redmcsb_header_read_checksum",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
       "lines": "14-63",
       "needles": [
         "F0429_STARTEND_IsReadSaveHeaderSuccessful",
@@ -566,7 +566,7 @@
       "artifact": "passH2248_csb_v1_save_load_round_trip",
       "id": "redmcsb_csb_dungeon_id",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "519-523",
       "needles": [
         "C29_CSB_SAVE_HEADER_DECRYPTION_KEY_INDEX",
@@ -580,7 +580,7 @@
       "artifact": "passH2248_csb_v1_save_load_round_trip",
       "id": "redmcsb_save_load_funcs",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C",
       "lines": "1-50",
       "needles": [
         "F0435_STARTEND_LoadGame",
@@ -592,10 +592,10 @@
     }
   ],
   "source_paths": {
-    "ReDMCSB_common": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    "ReDMCSB_ibm_pc": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
-    "CSB_lineage": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src",
-    "CSBWin": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin"
+    "ReDMCSB_common": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "ReDMCSB_ibm_pc": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+    "CSB_lineage": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src",
+    "CSBWin": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin"
   },
   "artifacts": [
     "verify_passH2248_csb_v1_canonical_asset_manifest.py",

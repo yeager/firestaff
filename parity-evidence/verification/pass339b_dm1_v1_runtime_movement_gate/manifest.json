@@ -6,7 +6,7 @@
   "baseCommit": "d48c30a1797c7f49b7a53116ab407ff526af396b",
   "branch": "worker/pass339b-dm1-v1-runtime-movement-gate-artifact-20260507",
   "worktree": "/home/trv2/work/firestaff-worktrees/pass339b-dm1-v1-runtime-movement-gate-artifact-20260507",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "routeTokens": ["up", "left", "right"],
   "runtimeRouteEquivalent": ["left", "up", "left", "up", "left", "up", "right", "right"],
   "redmcsbAnchors": [
@@ -39,7 +39,7 @@
     },
     {
       "name": "runtime_hall_walkaround_probe",
-      "command": "./build-pass339b/firestaff_m11_hall_walkaround_runtime_probe /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 /tmp/pass339b-hall-out",
+      "command": "./build-pass339b/firestaff_m11_hall_walkaround_runtime_probe /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 /tmp/pass339b-hall-out",
       "result": "PASS dm1 v1 hall walkaround runtime probe"
     },
     {

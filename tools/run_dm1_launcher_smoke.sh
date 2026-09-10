@@ -13,7 +13,7 @@ fi
 
 if [[ -z "$DATA_DIR" ]]; then
   for candidate in \
-    "$HOME/.openclaw/data/firestaff-original-games/DM/_canonical/dm1" \
+    "$HOME/.firestaff/data/firestaff-original-games/DM/_canonical/dm1" \
     "$HOME/.firestaff/data" \
     "$ROOT/data/dm1"; do
     if [[ -f "$candidate/GRAPHICS.DAT" || -f "$candidate/Graphics.dat" || -f "$candidate/TITLE" ]]; then

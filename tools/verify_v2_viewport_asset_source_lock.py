@@ -17,8 +17,8 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = REPO_ROOT / "assets-v2/manifests/firestaff-v2-wave1-ui.manifest.json"
 DEFAULT_REDMCSB_CANDIDATES = (
-    Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser(),
-    Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser(),
+    Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
 )
 ASSET_ID = "fs.v2.ui.viewport-base.frame"
 EXPECTED_WIDTH = 224

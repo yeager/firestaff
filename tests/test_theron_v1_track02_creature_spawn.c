@@ -217,8 +217,8 @@ int main(void) {
     {
         const char *us = getenv("THERON_TRACK02_US_BIN");
         const char *jp = getenv("THERON_TRACK02_JP_BIN");
-        if (!us) us = "/Users/bosse/.firestaff/data/theron/TQUS02.bin";
-        if (!jp) jp = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
+        if (!us) us = "<local-home>/.firestaff/data/theron/TQUS02.bin";
+        if (!jp) jp = "<local-home>/.firestaff/data/theron/TQJP02.bin";
         FILE *us_file = fopen(us, "rb");
         FILE *jp_file = fopen(jp, "rb");
         if (!us_file) {

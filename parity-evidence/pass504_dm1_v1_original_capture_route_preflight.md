@@ -39,9 +39,9 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - ok: `True` returncode=`0`
 
 ## Secondary References
-- Greatstone atlas: `/home/yeager/.openclaw/data/firestaff-greatstone-atlas` exists=`False`
-- Original DM canonical data: `/home/yeager/.openclaw/data/firestaff-original-games/DM/_canonical/dm1` exists=`True`
-- CSBWin: `/home/yeager/.openclaw/data/firestaff-csbwin-source/CSBWin` exists=`False`; not used for this DM1 PC34 gate.
+- Greatstone atlas: `<local-home>/.firestaff/data/firestaff-greatstone-atlas` exists=`False`
+- Original DM canonical data: `<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1` exists=`True`
+- CSBWin: `<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin` exists=`False`; not used for this DM1 PC34 gate.
 
 ## Gate
 

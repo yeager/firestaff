@@ -7,7 +7,7 @@
     "reject static duplicate screenshots and source-only evidence as parity promotion inputs"
   ],
   "decision": "The next viewport/walls parity promotion must be a same-frame capture contract tied to ReDMCSB F0128 composition and F0097 present, with canonical PC34 data hashes recorded.",
-  "dm1Archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+  "dm1Archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
   "dm1ArchiveSha256": "6d9ce72e827e066d5dd4a9294f0258801bbb32e7cdbe09a20e6b47308fd46a33",
   "localLocks": [
     {
@@ -31,7 +31,7 @@
   "ok": true,
   "originalData": [
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 33357,
       "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "name": "DATA/DUNGEON.DAT",
@@ -39,7 +39,7 @@
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     },
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 363417,
       "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "name": "DATA/GRAPHICS.DAT",
@@ -47,7 +47,7 @@
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 12002,
       "expectedSha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
       "name": "TITLE",
@@ -105,6 +105,6 @@
       "sliceSha256": "cab0eceeb9ea0074fcfe4dfa200f3893fe49ce979ee135615f2265f87c3d3abf"
     }
   ],
-  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS504_DM1_V1_VIEWPORT_PRESENT_CAPTURE_CONTRACT_LOCKED"
 }

@@ -2,8 +2,8 @@
 
 Mandatory audit order: ReDMCSB TEXT.C first, then CSBWin secondary lineage.
 
-- ReDMCSB root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
-- CSBWin root: `/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin`
+- ReDMCSB root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- CSBWin root: `/home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin`
 
 ## ReDMCSB anchors
 - `TEXT.C:1311-1344` — `F0042_TEXT_MESSAGEAREA_MoveCursor`

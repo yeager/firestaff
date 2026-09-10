@@ -5,7 +5,7 @@
   "repo": "https://github.com/yeager/firestaff.git",
   "branch": "main",
   "head": "58ff4c890",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "anchors": [
     "DUNVIEW.C F0119:6900-7049",
     "DUNVIEW.C F0120_DUNGEONVIEW_DrawSquareD2R_CPSF:7051-7220",

@@ -14,7 +14,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 FIRESTAFF = ROOT / "src/engine/m11_game_view.c"
-DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DEFAULT_REDMCSB_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", DEFAULT_REDMCSB_ROOT))
 DUNVIEW = REDMCSB_ROOT / "DUNVIEW.C"
 DRAWVIEW = REDMCSB_ROOT / "DRAWVIEW.C"

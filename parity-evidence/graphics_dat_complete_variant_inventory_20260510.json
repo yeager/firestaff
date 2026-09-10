@@ -3,13 +3,13 @@
     "title": "GRAPHICS.DAT Complete Variant Inventory",
     "date": "2026-05-10",
     "source": "ReDMCSB WIP20210206 + original game data on N2",
-    "scope": "All GRAPHICS.DAT variants under /home/trv2/.openclaw/data/firestaff-original-games/DM/",
+    "scope": "All GRAPHICS.DAT variants under /home/trv2/.firestaff/data/firestaff-original-games/DM/",
     "total_files_found": 8,
     "distinct_variants": 5,
     "canonical_symlinks": 3
   },
   "redmcsb_source": {
-    "base_path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+    "base_path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
     "primary_files": [
       {
         "file": "MEMORY.C",
@@ -140,8 +140,8 @@
     {
       "id": "dm1-pc34-en",
       "name": "DM1 PC v3.4 — English",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
-      "canonical_symlink": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "canonical_symlink": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "filename": "GRAPHICS.DAT",
       "game": "Dungeon Master (DM1)",
       "platform": "PC (DOS)",
@@ -159,7 +159,7 @@
     {
       "id": "dm1-pc34-multilingual",
       "name": "DM1 PC v3.4 — Multilingual",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
       "canonical_symlink": null,
       "filename": "GRAPHICS.DAT",
       "game": "Dungeon Master (DM1)",
@@ -178,8 +178,8 @@
     {
       "id": "csb-amiga-fr",
       "name": "CSB Amiga — French",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
-      "canonical_symlink": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT",
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
+      "canonical_symlink": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT",
       "filename": "Graphics.DAT",
       "game": "Chaos Strikes Back (CSB)",
       "platform": "Amiga",
@@ -197,8 +197,8 @@
     {
       "id": "csb-atari",
       "name": "CSB Atari ST",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
-      "canonical_symlink": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+      "canonical_symlink": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
       "filename": "GRAPHICS.DAT",
       "game": "Chaos Strikes Back (CSB)",
       "platform": "Atari ST",
@@ -217,7 +217,7 @@
     {
       "id": "spanish-unknown",
       "name": "Spanish GRAPHICS.DAT",
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/Spanish GRAPHICS.DAT",
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/Spanish GRAPHICS.DAT",
       "canonical_symlink": null,
       "filename": "Spanish GRAPHICS.DAT",
       "game": "Unknown (likely DM1 or CSB)",
@@ -238,20 +238,20 @@
   "hash_comparison": {
     "symlink_groups": [
       {
-        "canonical": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
-        "target": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+        "canonical": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+        "target": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
         "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
         "note": "Same inode (symlink)"
       },
       {
-        "canonical": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT",
-        "target": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
+        "canonical": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/csb/amiga-Graphics.DAT",
+        "target": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT",
         "sha256": "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942",
         "note": "Same inode (symlink)"
       },
       {
-        "canonical": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
-        "target": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
+        "canonical": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
+        "target": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
         "sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
         "note": "Same inode (symlink)"
       }

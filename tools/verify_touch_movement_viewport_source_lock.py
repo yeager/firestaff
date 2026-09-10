@@ -19,7 +19,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB_SOURCE = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 COORD_C = REDMCSB_SOURCE / "COORD.C"
 ZONES_JSON = ROOT / "data/zones_h_reconstruction.json"

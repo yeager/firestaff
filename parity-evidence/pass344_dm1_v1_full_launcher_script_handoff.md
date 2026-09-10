@@ -4,7 +4,7 @@ Status: `MOVEMENT_PROVED_FULL_LAUNCHER`
 
 ## ReDMCSB anchors cited before probing
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 - `ENTRANCE.C:739-747` — entrance installs `G0441_ps_PrimaryMouseInput = G0445_as_Graphic561_PrimaryMouseInput_Entrance`, no secondary mouse movement table, and no secondary keyboard movement table.
 - `ENTRANCE.C:856-882` — entrance discards queued input, waits in entrance mode, and calls `F0380_COMMAND_ProcessQueue_CPSC()` until the entrance command changes `G0298_B_NewGame`.

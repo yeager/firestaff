@@ -16,10 +16,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 PASS = "pass349_dm1_v1_full_launcher_keypad_runtime_route"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
-BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS349_BUILD_DIR", str(pathlib.Path.home() / ".openclaw/data/firestaff-builds/pass349-verify")))
-HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS349_HOME_DIR", str(pathlib.Path.home() / ".openclaw/data/firestaff-homes/pass349-verify")))
-REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
-DM1_DATA = pathlib.Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS349_BUILD_DIR", str(pathlib.Path.home() / ".firestaff/data/firestaff-builds/pass349-verify")))
+HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS349_HOME_DIR", str(pathlib.Path.home() / ".firestaff/data/firestaff-homes/pass349-verify")))
+REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
+DM1_DATA = pathlib.Path("/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1")
 SCRIPT = "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
 
 SOURCE_LOCKS = [

@@ -27,8 +27,8 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 | GRAPHICS.DAT SHA256 | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` |
 | TITLE SHA256 | (see `SHA256SUMS` in `firestaff-original-games/DM/`) |
 | Source archive | `ReDMCSB_WIP20210206/Toolchains/Common/Source/` |
-| Local archive | `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/` |
-| Canonical game dir | `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/` |
+| Local archive | `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/` |
+| Canonical game dir | `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/` |
 | Greatstone reference | `http://greatstone.free.fr/dm/db_data/dm_pc_34/` |
 
 ---

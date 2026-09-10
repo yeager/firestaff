@@ -14,8 +14,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM1_CANONICAL = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DM1_CANONICAL = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1"
 VERIFY_OUT = ROOT / "parity-evidence/verification/dm1_v2_graphics_pipeline_source_isolation.json"
 
 EXPECTED_DM1_SHA256 = {

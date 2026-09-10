@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+SOURCE_ROOT = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 OUT_DIR = ROOT / "parity-evidence/verification/pass270_dm1_v1_fires_segment_pattern_scan"
 REPORT = ROOT / "parity-evidence/pass270_dm1_v1_fires_segment_pattern_scan.md"
 PASS229 = ROOT / "parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/manifest.json"

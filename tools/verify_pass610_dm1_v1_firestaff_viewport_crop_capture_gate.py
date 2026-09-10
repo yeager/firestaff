@@ -20,7 +20,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 PASS = "pass610_dm1_v1_firestaff_viewport_crop_capture_gate"
 STATUS = "PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED"

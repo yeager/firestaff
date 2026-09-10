@@ -19,14 +19,14 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass454_dm1_v1_hall_original_input_mapping_blocker"
-ARTIFACT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-true-stop-20260509")
+ARTIFACT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-true-stop-20260509")
 ARTIFACT_MANIFEST = ARTIFACT / "manifest.json"
-EXTERNAL_OUT_DIR = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-input-timing-state-20260509")
+EXTERNAL_OUT_DIR = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-input-timing-state-20260509")
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 OUT_JSON = OUT_DIR / "manifest.json"
 OUT_MD = ROOT / "parity-evidence" / f"{PASS}.md"
 EXTERNAL_JSON = EXTERNAL_OUT_DIR / f"{PASS}.json"
-CORRECTED_ARTIFACT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+CORRECTED_ARTIFACT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 
 EXPECTED_HASHES = {
     "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",

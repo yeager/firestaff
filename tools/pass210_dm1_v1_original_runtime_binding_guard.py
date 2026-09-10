@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-REDMCSB_ROOT = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206")
+SOURCE_ROOT = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+REDMCSB_ROOT = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206")
 IBM_SOURCE = REDMCSB_ROOT / "Toolchains/IBM PC/Source"
 def resolve_existing_path(candidates: list[Path], label: str) -> Path:
     for candidate in candidates:
@@ -26,9 +26,9 @@ def resolve_existing_path(candidates: list[Path], label: str) -> Path:
 
 
 ORIGINAL_FIRES = resolve_existing_path([
-    Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/FIRES",
-    Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
-    Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+    Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/FIRES",
+    Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
+    Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
 ], "DM1 PC34 FIRES")
 OUT_DIR = ROOT / "parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard"
 REPORT = ROOT / "parity-evidence/pass210_dm1_v1_original_runtime_binding_guard.md"
@@ -154,7 +154,7 @@ def audit_seams() -> list[dict[str, Any]]:
 
 def scan_runtime_artifacts() -> dict[str, Any]:
     original_roots = [
-        (Path.home() / ".openclaw/data/firestaff-original-games/DM"),
+        (Path.home() / ".firestaff/data/firestaff-original-games/DM"),
         REDMCSB_ROOT / "Reference",
     ]
     map_roots = original_roots + [REDMCSB_ROOT]

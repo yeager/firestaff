@@ -33,7 +33,7 @@ OUT_DIR = ROOT / "parity-evidence/verification/passH2248_csb_v1_input_scripts"
 SCRIPTS_INDEX = OUT_DIR / "index.json"
 
 # ReDMCSB source for keyboard/mouse routing evidence
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 # Input event constants (must match m11 input enum in the engine)
 KEY_LEFT  = 0xCB  # arrow left

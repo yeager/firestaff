@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parents[1]
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-DEFAULT_REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DEFAULT_BUILD = Path.home() / ".openclaw/data/firestaff-builds/pass348-verify"
+DEFAULT_REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DEFAULT_BUILD = Path.home() / ".firestaff/data/firestaff-builds/pass348-verify"
 
 SOURCE_LOCKS = [
     ("INPUT.C", 298, 430, ["F0543_INPUT_DeviceInterruptHandler", "IECLASS_RAWKEY", "G1044_B_MouseOrKeyboardInput"]),

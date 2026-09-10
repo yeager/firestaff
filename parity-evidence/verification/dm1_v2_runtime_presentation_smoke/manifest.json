@@ -1,6 +1,6 @@
 {
-  "data_dir": "/home/yeager/.firestaff/data/dm1",
-  "firestaff": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/firestaff",
+  "data_dir": "<local-home>/.firestaff/data/dm1",
+  "firestaff": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/firestaff",
   "generated_at": "2026-09-04T18:00:59.569033+00:00",
   "modes": [],
   "non_claims": [
@@ -8,7 +8,7 @@
     "No finished V2.2 real-art material or pixel claim.",
     "No promotion of blocked DOSBox/debugger capture rows."
   ],
-  "reason": "missing DM1 data in /home/yeager/.firestaff/data/dm1",
+  "reason": "missing DM1 data in <local-home>/.firestaff/data/dm1",
   "schema": "firestaff.parity.dm1_v2_runtime_presentation_smoke.v1",
   "skipped": true,
   "status": "SKIP"

@@ -20,9 +20,9 @@ PASS = "pass621_dm1_v1_champion_stat_drawn_panel_pixel_gate"
 STATUS = "PASS_SOURCE_LOCKED_PIXEL_PARITY_BLOCKED_ON_ORIGINAL_REFERENCE"
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-GREAT = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+GREAT = Path.home() / ".firestaff/data/firestaff-greatstone-atlas"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 
 MANIFEST = ROOT / f"parity-evidence/verification/{PASS}/manifest.json"
 REPORT = ROOT / f"parity-evidence/{PASS}.md"

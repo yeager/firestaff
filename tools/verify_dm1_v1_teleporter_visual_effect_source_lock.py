@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIRE_VIEW = ROOT / "src/engine/m11_game_view.c"
 DM1_FIELD = ROOT / "src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c"
 DOC = ROOT / "docs/graphics/DM1_V1_TELEPORTER_FIELD_SOURCE_LOCK.md"
-RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED_ROOT = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 
 

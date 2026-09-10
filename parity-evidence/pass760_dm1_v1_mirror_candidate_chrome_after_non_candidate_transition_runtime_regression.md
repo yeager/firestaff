@@ -34,7 +34,7 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_pc34_compat`: rc=0
+- `<local-home>/.firestaff/workspace-main/build/test_dm1_v1_mirror_candidate_pc34_compat`: rc=0
 
 ## TODO
 

@@ -24,7 +24,7 @@
       "id": "DUNVIEW.C F0128",
       "missing": [],
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "anchors": {
@@ -35,7 +35,7 @@
       "id": "DRAWVIEW.C F0097",
       "missing": [],
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "anchors": {
@@ -47,7 +47,7 @@
       "id": "COMMAND.C F0380",
       "missing": [],
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     }
   ],
   "status": "BLOCKED_PASS326_DIRECT_PTY_F0128_CODE_STOP_NOT_PROVEN",

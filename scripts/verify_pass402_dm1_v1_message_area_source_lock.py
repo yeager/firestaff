@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DEFAULT_CSBWIN = Path("~/.openclaw/data/firestaff-csbwin-source/CSBWin").expanduser()
+DEFAULT_REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+DEFAULT_CSBWIN = Path("~/.firestaff/data/firestaff-csbwin-source/CSBWin").expanduser()
 
 
 def read(path: Path) -> str:
@@ -296,7 +296,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--redmcsb", type=Path, default=DEFAULT_REDMCSB)
     ap.add_argument("--csbwin", type=Path, default=DEFAULT_CSBWIN)
-    ap.add_argument("--build-dir", type=Path, default=Path.home() / ".openclaw/data/firestaff-builds/pass402-text-message-area-gpt")
+    ap.add_argument("--build-dir", type=Path, default=Path.home() / ".firestaff/data/firestaff-builds/pass402-text-message-area-gpt")
     ap.add_argument("--run-ctest", action="store_true")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()

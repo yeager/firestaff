@@ -212,7 +212,7 @@
   "redmcsbChecks": [
     {
       "claim": "F0302 routes C00..C07 status-hand slot boxes before inventory, mapping champion and hand slot from the slot-box index.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 677,
@@ -250,7 +250,7 @@
     },
     {
       "claim": "F0297/F0298 own leader-hand put/remove state, load, pointer, and redraw side effects.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 243,
@@ -284,7 +284,7 @@
     },
     {
       "claim": "F0298 removes the leader-hand object and redraws/load-adjusts the leader before the slot write path continues.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 270,
@@ -322,7 +322,7 @@
     },
     {
       "claim": "F0300 clears C30+ slots through G0425_aT_ChestSlots.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 511,
@@ -348,7 +348,7 @@
     },
     {
       "claim": "F0301 writes C30+ slots through G0425_aT_ChestSlots and updates load.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 606,
@@ -378,7 +378,7 @@
     },
     {
       "claim": "F0302 snapshots leader hand, reads storage, applies mask/empty guards, and performs the occupied-slot swap helper order.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "hits": [
         {
           "line": 688,
@@ -432,7 +432,7 @@
     },
     {
       "claim": "F0291 resolves the status-panel action-hand icon before the status-hand border rotation.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "hits": [
         {
           "line": 622,
@@ -454,7 +454,7 @@
     },
     {
       "claim": "F0291 selects C035 for the acting champion's action hand, otherwise C034 wounded or C033 normal.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "hits": [
         {
           "line": 634,
@@ -484,7 +484,7 @@
     },
     {
       "claim": "F0292 redraw tuple is recorded as context only; this pass does not duplicate the mouth/eye or food/water gates.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "hits": [
         {
           "line": 898,
@@ -518,7 +518,7 @@
     },
     {
       "claim": "DEFS.H:780-817 anchors hand, belt/quick, backpack, and C30..C37 slots.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 780,
@@ -560,7 +560,7 @@
     },
     {
       "claim": "M516_CHAMPIONS lives outside the requested 780-817 slice in this ReDMCSB snapshot.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 873,
@@ -574,7 +574,7 @@
     },
     {
       "claim": "M070_HAND_SLOT_INDEX and the C08 status/inventory boundary live outside the requested 780-817 slice.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 1874,
@@ -592,7 +592,7 @@
     },
     {
       "claim": "DEFS.H:2088 anchors C10_COLOR_FLESH transparency/color lineage.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 2088,
@@ -606,7 +606,7 @@
     },
     {
       "claim": "G0305/G0423/G0425/G0426 live outside the requested 780-817 slice in this ReDMCSB snapshot.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 5700,
@@ -631,7 +631,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS760_DM1_V1_CHAMPION_PANEL_STATUS_HAND_ROTATION_SOURCE_LOCKED",
@@ -640,7 +640,7 @@
     {
       "assertions": 851,
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_pc34_compat"
+        "<local-home>/.firestaff/workspace-main/build/test_dm1_v1_champion_panel_pc34_compat"
       ],
       "failures": 0,
       "outputTail": "Assertions: 851\nFailures: 0\nPASS pass760_dm1_v1_champion_panel_status_hand_rotation_source_lock assertions=851",

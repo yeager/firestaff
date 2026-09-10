@@ -5,8 +5,8 @@
 - frame rows inventoried: 30
 
 ## Original data provenance
-- `DM PC 3.4 English / I34E` `GRAPHICS.DAT` sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` bytes `363417` resolved `/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT` ok=True
-- `DM PC 3.4 English / I34E` `DUNGEON.DAT` sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` bytes `33357` resolved `/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT` ok=True
+- `DM PC 3.4 English / I34E` `GRAPHICS.DAT` sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` bytes `363417` resolved `<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT` ok=True
+- `DM PC 3.4 English / I34E` `DUNGEON.DAT` sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` bytes `33357` resolved `<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT` ok=True
 
 ## ReDMCSB source anchors
 - `COMMAND.C:397-403,2322-2323` — Viewport left-click dispatches to the type-80 dungeon-view handler. ok=True
@@ -53,14 +53,14 @@
 - `parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate/image0015-after_f4_probe.png` sha12 `48ed3743ab6a` dims=[320, 200] class=`dungeon_gameplay` pass173=`blocked/static-no-party-after-gate` use=`review_only_not_promotable_static_no_party`
 
 ## N2 DOSBox original Hall artifact
-- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=False ok=False
+- root: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=False ok=False
 - status: `None` host=`None` created=`None` entries=None
 - promotable/narrowed label: `03_panel_visible_north_front_mirror` use=`panel_visible_original_hall_front_mirror_only_not_candidate_panel_parity`
 - DUNGEON.DAT sha256 `None`; GRAPHICS.DAT sha256 `None`; TITLE sha256 `None`
 - historical blocker: candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.
 
 ## Corrected Hall artifact
-- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
+- root: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
 - `candidate_select_portrait_click_before_panel` available=False
 - `candidate_panel_visible_after_append` available=False
 - `candidate_cancel_after_panel` available=False
@@ -87,12 +87,12 @@
 - dosbox-x: `/usr/bin/dosbox-x`
 - selected DOSBox: `/usr/bin/dosbox`
 - xvfb-run: `/usr/bin/xvfb-run` needsXvfb=`False` display=`:0`
-- source archive exists: `True` `/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip`
-- external artifact root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe` parentExists=`False`
-- configured run base: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe`
+- source archive exists: `True` `<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip`
+- external artifact root: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe` parentExists=`False`
+- configured run base: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe`
 - missing tools/data: `[]`
 - reason: capture-ready
-- next step: `FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/usr/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py`
+- next step: `FIRESTAFF_ARTIFACT_ROOT=/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe FIRESTAFF_DOSBOX=/usr/bin/dosbox python3 tools/pass173_source_portrait_route_gate_probe.py`
 - post-capture verification: `python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`
 
 ## Terminal HUD completeness

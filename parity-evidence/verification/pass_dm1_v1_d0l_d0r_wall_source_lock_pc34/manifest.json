@@ -5,7 +5,7 @@
   "repo": "https://github.com/yeager/firestaff.git",
   "branch": "main",
   "head": "e7b28ba15f4b6baf39e7b56881c7ef21502e7fd4",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [],
   "notes": [
     "Gate: tests/test_dm1_v1_d0l_d0r_wall_source_lock_pc34_compat.c",

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206"
 COMMON = RED / "Toolchains/Common/Source"
 IBM = RED / "Toolchains/IBM PC/Source"
 BASE = RED / "Toolchains/IBM PC/Base/HARDDISK"
@@ -35,8 +35,8 @@ SEARCH_ROOTS = [
     RED / "Reference/Original/I34E",
     IBM,
     COMMON,
-    Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-    Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1",
+    Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
 ]
 SYMBOL_SUFFIXES = {".MAP", ".SYM", ".LST"}
 

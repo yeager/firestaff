@@ -750,7 +750,7 @@ timeline builder. Compile after each group:
   (Previous agent ran into this exact footgun 4× over.)
 
 ### Step 8 — Full verify
-- Run `bash run_firestaff_m10_verify.sh <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT /tmp/m10-verify-out`
+- Run `bash run_firestaff_m10_verify.sh <local-home>/.firestaff/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT /tmp/m10-verify-out`
   from the repo root. Exit must be 0. If any earlier phase regresses
   (unlikely — we added files only), `git diff` the verify script and
   revert any accidental non-phase-13 change.

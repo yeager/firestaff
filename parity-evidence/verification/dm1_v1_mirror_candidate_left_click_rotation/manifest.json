@@ -5,7 +5,7 @@
   "repo": "https://github.com/yeager/firestaff.git",
   "branch": "firestaff-coding/1780883993_dm1_v1_mirror_candidate_left_click_rotation",
   "head": "0f780be0d",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "anchors": [
     "COMMAND.C F0359:1985-1990 C040 mirror dispatch",
     "COMMAND.C F0282 click-to-C040 routing and COMMAND.C:508-511 panel left-click table",

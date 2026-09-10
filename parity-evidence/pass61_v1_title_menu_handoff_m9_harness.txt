@@ -175,5 +175,5 @@ titleMenuHandoffFallbackFrameCount=0
 titleMenuHandoffMenuFrameCount=1
 titleMenuHandoffReadyCount=2
 titleMenuHandoffEnteredMenuCount=1
-titleMenuHandoffTitleDatPath=<local-home>/.openclaw/data/redmcsb-original/TITLE
+titleMenuHandoffTitleDatPath=<local-home>/.firestaff/data/redmcsb-original/TITLE
 titleMenuHandoffStepCount=54

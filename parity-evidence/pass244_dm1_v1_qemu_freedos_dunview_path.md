@@ -22,7 +22,7 @@ QEMU+FreeDOS now has a reproducible partitioned hard-disk route that starts the 
 
 ## N2-local run metadata only
 
-- Run dir: `/home/yeager/.openclaw/data/firestaff-qemu-dunview-20260506g`.
+- Run dir: `<local-home>/.firestaff/data/firestaff-qemu-dunview-20260506g`.
 - Disk image exists/size: `False` / `None` bytes.
 - Host start/end: `None` / `None`.
 - QEMU log present: `False`; lines: `None`; chars: `None`.

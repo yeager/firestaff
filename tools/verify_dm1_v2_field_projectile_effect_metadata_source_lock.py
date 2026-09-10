@@ -13,7 +13,7 @@ def redmcsb_source_root() -> Path:
     candidates: list[Path] = []
     if os.environ.get("FIRESTAFF_REDMCSB_SOURCE"):
         candidates.append(Path(os.environ["FIRESTAFF_REDMCSB_SOURCE"]).expanduser())
-    candidates.append(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+    candidates.append(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
     for candidate in candidates:
         if (candidate / "PROJEXPL.C").exists() and (candidate / "DUNVIEW.C").exists():
             return candidate

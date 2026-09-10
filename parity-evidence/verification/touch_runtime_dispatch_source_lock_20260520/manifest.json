@@ -2,7 +2,7 @@
   "id": "touch_runtime_dispatch_source_lock_20260520",
   "date": "2026-05-20",
   "scope": "DM1 V1 entrance/menu runtime mouse/touch dispatch through source-locked route helper",
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "redmcsb_source_root": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
   "source_anchors": [
     "ENTRANCE.C:739-747",
     "ENTRANCE.C:850-883",

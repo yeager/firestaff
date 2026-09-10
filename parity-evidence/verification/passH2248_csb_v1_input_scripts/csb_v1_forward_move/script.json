@@ -5,7 +5,7 @@
   "source_evidence": {
     "forward_command": {
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "lines": "1-60",
       "needles": [
         "C0x41_CMD_MOVE_FORWARD",
@@ -15,7 +15,7 @@
     },
     "collision_check": {
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "lines": "1-50",
       "needles": [
         "F0230_MOVE_CheckBlocked",

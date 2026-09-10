@@ -46,7 +46,7 @@
     "queue": 4,
     "viewport": 5
   },
-  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "sourceSliceSha256": {
     "CLIKMENU.C:142-346": "c80104584b4481d9b5875cf5a5003d43718b92e5c76fadb0624f7c6ff0ed0938",
     "COMMAND.C:2045-2156": "99233462e2aed38076d7a33937af86db31a47ea28196de127028b88446fe0550",

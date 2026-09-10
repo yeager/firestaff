@@ -15,7 +15,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:34",
       "line": 34,
       "lineText": "int16_t G0028_ai_Graphic562_Box_LeaderHandObjectName[4];",
@@ -23,7 +23,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:262",
       "line": 262,
       "lineText": "int16_t G0028_ai_Graphic562_Box_LeaderHandObjectName[4] = { 233, 319, 33, 38 };",
@@ -31,7 +31,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:923",
       "line": 923,
       "lineText": "int16_t G0028_ai_Graphic562_Box_LeaderHandObjectName[4] = { 233, 319, 33, 38 };",
@@ -39,7 +39,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/OBJECT.C",
       "id": "OBJECT.C:281",
       "line": 281,
       "lineText": "        M524_FillScreenBox(G0028_ai_Graphic562_Box_LeaderHandObjectName, C00_COLOR_BLACK);",
@@ -47,7 +47,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass813_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0028_ai_Graphic562_Box_LeaderHandObjectName[4] = {233, 319, 33, 38}. The {X, Y, W, H} pixel-coordinate rectangle for the leader-hand object name black-fill backdrop. Read site: OBJECT.C:281 M524_FillScreenBox(G0028, C00_COLOR_BLACK) draws the black backdrop for the leader-hand object name text.",
   "sourceChecks": [

@@ -6,7 +6,7 @@ Scope: metadata/probe gate only. No renderer behavior changes.
 
 ## Primary ReDMCSB evidence audited first
 
-Primary source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Primary source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `DUNVIEW.C:8318-8618` — `F0128_DUNGEONVIEW_Draw_CPSF` locks full viewport redraw order, parity setup, square traversal, viewport handoff, and anticipatory floor/ceiling redraw.
 - `DUNVIEW.C:8445-8542` — `F0128` PC34/I34E visible-square call order: D3 extras, D3L/D3R/D3C, D2 extras, D2L/D2R/D2C, D1L/D1R/D1C, D0L/D0R/D0C.
@@ -16,7 +16,7 @@ Primary source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB
 - `DUNVIEW.C:7960-8308` — `F0125`/`F0126`/`F0127` near D0 wall/door/content order.
 - `DRAWVIEW.C:709-722` — `F0097_DUNGEONVIEW_DrawViewport` requests viewport blit and waits one VBlank after composition.
 
-Secondary local data anchor: canonical DM1 PC34 `GRAPHICS.DAT` and `DUNGEON.DAT` symlinks under `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/`. These are asset anchors only; this pass does not claim pixel parity.
+Secondary local data anchor: canonical DM1 PC34 `GRAPHICS.DAT` and `DUNGEON.DAT` symlinks under `/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/`. These are asset anchors only; this pass does not claim pixel parity.
 
 ## Landable update
 

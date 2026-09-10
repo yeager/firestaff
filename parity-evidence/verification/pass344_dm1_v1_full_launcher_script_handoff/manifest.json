@@ -4,7 +4,7 @@
     "argv": [
       "timeout",
       "45s",
-      "/home/trv2/.openclaw/data/firestaff-builds/pass344-verify/firestaff",
+      "/home/trv2/.firestaff/data/firestaff-builds/pass344-verify/firestaff",
       "--duration",
       "12000",
       "--width",
@@ -12,14 +12,14 @@
       "--height",
       "1080",
       "--data-dir",
-      "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+      "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1",
       "--script",
       "enter,down,down,down,down,down,down,enter,left,up,right"
     ],
     "env": {
       "FIRESTAFF_AUTOTEST": "1",
       "FIRESTAFF_FAIL_IF_NO_LAUNCH": "1",
-      "HOME": "/home/trv2/.openclaw/data/firestaff-homes/pass344-verify",
+      "HOME": "/home/trv2/.firestaff/data/firestaff-homes/pass344-verify",
       "SDL_VIDEODRIVER": "dummy"
     },
     "log": "parity-evidence/verification/pass344_dm1_v1_full_launcher_script_handoff/full_launcher_script_probe.redacted.log",

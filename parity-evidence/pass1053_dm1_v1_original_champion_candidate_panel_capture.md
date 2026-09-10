@@ -10,7 +10,7 @@ HUD/status-panel pairing remains open".
 
 ## Source
 
-- Source artifact: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
+- Source artifact: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509`
 - Source run: `probe-initial-south-corrected`
 - Source gate: `parity-evidence/pass455_dm1_v1_hall_corrected_click_primitive_capture.md`
 - PC34 provenance:

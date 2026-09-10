@@ -1,7 +1,7 @@
 {
   "schema": "pass1053_dm1_v1_original_champion_candidate_panel.v1",
   "source_pass": "pass455_dm1_v1_hall_corrected_click_primitive_capture",
-  "source_artifact_root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+  "source_artifact_root": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
   "source_run": "probe-initial-south-corrected",
   "status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
   "pc34_hashes": {

@@ -28,7 +28,7 @@ DM1 V1 champion-panel/HUD hand-slot priority is source-locked: status hand -> le
 - PASS CMakeLists.txt
 
 ## Verification
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat: rc=0
+- <local-home>/.firestaff/workspace-main/build/test_dm1_v1_champion_panel_hand_slot_priority_pc34_compat: rc=0
 ~~~
 Assertions: 111
 Failures: 0

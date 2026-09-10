@@ -4,7 +4,7 @@
 
 This is the exhaustive, one-row-per-symbol audit of the named ReDMCSB `C` and `G` families in the primary source corpus:
 
-`~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+`~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 It contains all `#define Cddd...`/`#define Cdddd...` constants and all named `Gdddd_...` globals found in that corpus. The un-suffixed `G3459` is intentionally excluded: it is outside the named `Gdddd_...` family.
 

@@ -14,7 +14,7 @@ Status: BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE
 
 ## Capture path
 
-- N2-local original stage: ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34
+- N2-local original stage: ~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34
 - Debugger stack: dosbox-debug + Xvfb + xdotool
 - Exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45
 

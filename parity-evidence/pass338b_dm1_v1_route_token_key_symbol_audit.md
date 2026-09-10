@@ -4,7 +4,7 @@ Status: `BLOCKED_PASS338B_KEYPAD_NUMERIC_TOKENS_ABSENT_USE_ARROW_ROUTE_TOKENS`
 
 ## ReDMCSB source audit
 
-Source tree: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source tree: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `INPUT.C:531-568` normalizes raw movement input before `F1097_StoreKeyInBuffer`: CapsLock affects movement keys at `531-533`; `L2623_l_NormalizedKeyCode` is built at `539-546`; numeric pad keys are replaced with movement key codes at `548-567`; the result is buffered at `568`. The replacement constants shown there are:
   - numpad 7 (`0x3D37`) -> `0x4600` DEL / turn-left (`INPUT.C:549-550`)

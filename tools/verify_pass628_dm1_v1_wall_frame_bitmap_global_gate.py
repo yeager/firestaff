@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 BUILD = Path(os.environ.get("FIRESTAFF_BUILD_DIR", ROOT / "build"))
 TEST_BINARY = BUILD / "test_dm1_v1_viewport_3d_pc34_compat"
 MANIFEST = ROOT / "parity-evidence/verification/pass628_dm1_v1_wall_frame_bitmap_global_gate/manifest.json"

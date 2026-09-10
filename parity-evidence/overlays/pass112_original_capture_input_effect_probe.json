@@ -1,5 +1,5 @@
 {
-  "archive_verified_command": "cd ~/.openclaw/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS",
+  "archive_verified_command": "cd ~/.firestaff/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS",
   "date_utc": "2026-04-28T11:39:23+00:00",
   "entrance_sequence": "wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800",
   "findings": [
@@ -10,7 +10,7 @@
   ],
   "honesty": "Evidence-only original DOS route/capture input-effect probe. Captures are not promoted as pass70/pass84 references.",
   "host": "N2 / Firestaff-Worker-VM",
-  "original_stage_dir": "~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+  "original_stage_dir": "~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
   "pass": false,
   "probes": [
     {

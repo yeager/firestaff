@@ -16,7 +16,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:44",
       "line": 44,
       "lineText": "int16_t G0038_ai_Graphic562_SlotMasks[38]; /* 30 for champion inventory, 8 for chest */",
@@ -24,7 +24,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:320",
       "line": 320,
       "lineText": "int16_t G0038_ai_Graphic562_SlotMasks[38] = { /* 30 for champion inventory, 8 for chest */",
@@ -32,7 +32,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:358",
       "line": 358,
       "lineText": "        MASK0x0400_CONTAINER };                  /* Chest 8 */",
@@ -40,7 +40,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1049",
       "line": 1049,
       "lineText": "int16_t G0038_ai_Graphic562_SlotMasks[38] = { /* 30 for champion inventory, 8 for chest */",
@@ -48,7 +48,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:697",
       "line": 697,
       "lineText": "        if ((L0905_T_LeaderHandObject != C0xFFFF_THING_NONE) && (!(G0237_as_Graphic559_ObjectInfo[F0141_DUNGEON_GetObjectInfoIndex(L0905_T_LeaderHandObject)].AllowedSlots & G0038_ai_Graphic562_SlotMasks[L0904_ui_SlotIndex]))) {",
@@ -56,7 +56,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:307",
       "line": 307,
       "lineText": "                                                if (L0805_i_ObjectAllowedSlots & G0038_ai_Graphic562_SlotMasks[AL0801_ui_SlotIndex])",
@@ -64,7 +64,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:310",
       "line": 310,
       "lineText": "                                        if ((L0805_i_ObjectAllowedSlots & G0038_ai_Graphic562_SlotMasks[C10_SLOT_NECK]) && (L0797_ps_Champion->Slots[C10_SLOT_NECK] == C0xFFFF_THING_NONE)) {",
@@ -72,7 +72,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:338",
       "line": 338,
       "lineText": "                                        if ((L0805_i_ObjectAllowedSlots & G0038_ai_Graphic562_SlotMasks[C10_SLOT_NECK]) && (L0797_ps_Champion->Slots[C10_SLOT_NECK] == C0xFFFF_THING_NONE)) {",
@@ -80,7 +80,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass809_dm1_v1_slot_masks_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0038_ai_Graphic562_SlotMasks[38] \u2014 the per-slot allowed-slots bitmask table. 8 status-hand + 30 inventory + 8 chest slots. Body parts (Head/Torso/Legs/Feet) have single-bit masks (0x0002/0x0008/0x0010/0x0020), Ready/Action Hand + Backpack accept any item (0xFFFF), Quiver Line1/2 accept quiver items (0x0040/0x0080), Pouch accepts pouch items (0x0100), Neck accepts neck items (0x0004), Chest accepts container items (0x0400). Read sites: CHAMPION.C:697 (leader-hand placement), REVIVE.C:307/310/338 (resurrect placement).",
   "sourceChecks": [

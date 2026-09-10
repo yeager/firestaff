@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass310_greatstone_title_dungeon_catalogue"
-CANON_TITLE = (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE")
-CANON_DUNGEON = (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT")
+CANON_TITLE = (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE")
+CANON_DUNGEON = (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT")
 OUT_JSON = Path("parity-evidence/verification/pass310_greatstone_title_dungeon_catalogue.json")
 OUT_MD = Path("parity-evidence/pass310_greatstone_title_dungeon_catalogue.md")
 TITLE_URL = "http://greatstone.free.fr/dm/db_data/dm_pc_34/title/title.html"

@@ -15,7 +15,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass559_dm1_v1_gated_movement_pending_click_queue_replay"
 STATUS = "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 COMMAND = RED / "COMMAND.C"
 QUEUE_C = ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c"
 TEST_C = ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"

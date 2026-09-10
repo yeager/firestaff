@@ -5,7 +5,7 @@
   "repo": "https://github.com/yeager/firestaff",
   "branch": "main",
   "head": "9681aa9cb52200ea946eee3ec613030dd4af7d4f",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [],
   "notes": [
     "Adds test_dm1_v1_mirror_candidate_full_chain_pc34_compat as a deterministic contract-only runtime regression gate.",

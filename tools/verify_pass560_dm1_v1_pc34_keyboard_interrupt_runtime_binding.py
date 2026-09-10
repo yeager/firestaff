@@ -12,7 +12,7 @@ PASS = "pass560_dm1_v1_pc34_keyboard_interrupt_runtime_binding"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED_COMMON = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED_COMMON = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 SOURCE_LOCKS = [
     {"id":"pc34_irq09_installs_raw_keyboard_isr","file":"IBMIO.C","lines":"381-390,399-414","function":"F8088_ / S8A_Vector","needles":["mov     ax, 3509h","mov     dx, offset S8A_Vector","mov     ax, 2509h","asm     S8A_Vector:","in      al, 60h"],"claim":"PC34 IO startup saves INT 09 and installs S8A_Vector as the raw keyboard interrupt handler."},

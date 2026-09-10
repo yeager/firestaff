@@ -7,9 +7,9 @@ It deliberately stores metadata and lookup notes, not copied game archives or ge
 
 | Reference root | Purpose | Repo policy |
 |---|---|---|
-| `~/.openclaw/data/firestaff-greatstone-atlas/` | Greatstone/SCK documentation and source-reference downloads for DM/CSB research | Keep as external evidence; cite paths only. |
-| `~/.openclaw/data/firestaff-redmcsb-source/` | ReDMCSB notes and local source/disassembly candidate pointers | Keep as external evidence; cite paths only. |
-| `~/.openclaw/data/firestaff-original-games/DM/` | Original game archive checksums and local extraction inputs | Never vendor archives; cite checksum lock only. |
+| `~/.firestaff/data/firestaff-greatstone-atlas/` | Greatstone/SCK documentation and source-reference downloads for DM/CSB research | Keep as external evidence; cite paths only. |
+| `~/.firestaff/data/firestaff-redmcsb-source/` | ReDMCSB notes and local source/disassembly candidate pointers | Keep as external evidence; cite paths only. |
+| `~/.firestaff/data/firestaff-original-games/DM/` | Original game archive checksums and local extraction inputs | Never vendor archives; cite checksum lock only. |
 
 ## Current scaffold
 

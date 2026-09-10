@@ -15,8 +15,8 @@
     "artifact_policy": "JSON/Markdown evidence only; no PNG/PPM capture artifacts in this manifest pass."
   },
   "source_roots": {
-    "redmcsb_primary": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    "dm1_canonical_data": "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+    "redmcsb_primary": "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "dm1_canonical_data": "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1"
   },
   "coverage": [
     {

@@ -2,7 +2,7 @@
 
 Status: DM1_V1_ORIGINAL_COLLISION_OVERLAY_RUNTIME_CASES_LOCKED
 
-This gate loads the canonical local DM1 PC `DUNGEON.DAT` from `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT` and verifies representative original-data cases for the collision/door parity row.
+This gate loads the canonical local DM1 PC `DUNGEON.DAT` from `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT` and verifies representative original-data cases for the collision/door parity row.
 
 ## Source Locks
 

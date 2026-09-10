@@ -61,8 +61,8 @@ Priority order for locating TITLE intro file:
 2. Sibling of matched DM1 asset (parent of GRAPHICS.DAT/DUNGEON.DAT, then grandparent
    for DungeonMasterPC34/DATA/ layout where TITLE lives beside game dir)
 3. Suffix search in data dir
-4. Home-tree OpenClaw original-data anchors:
-   ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE etc.
+4. Home-tree legacy-workspace original-data anchors:
+   ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE etc.
 
 Suffixes checked:
 TITLE, TITLE.DAT,

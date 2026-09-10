@@ -30,7 +30,7 @@ static unsigned char *read_file(const char *path, uint32_t *out_size) {
 }
 
 int main(int argc, char **argv) {
-    const char *root = argc > 1 ? argv[1] : "/Users/bosse/.firestaff/data/nexus";
+    const char *root = argc > 1 ? argv[1] : "<local-home>/.firestaff/data/nexus";
     const uint8_t *banks[NEXUS_V1_AUDIO_LEVEL_COUNT] = {0};
     uint32_t sizes[NEXUS_V1_AUDIO_LEVEL_COUNT] = {0};
     Nexus_V1_SalSharedPrefixReceipt receipt;

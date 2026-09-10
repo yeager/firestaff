@@ -5426,8 +5426,8 @@ startup menu (and via `--game csb` direct-launch):
 $ firestaff --scan-data
 ...
 Chaos Strikes Back     READY
-  GRAPHICS.DAT                 FOUND  /Users/bosse/.firestaff/data/csb/GRAPHICS.DAT
-  DUNGEON.DAT                  FOUND  /Users/bosse/.firestaff/data/csb/DUNGEON.DAT
+  GRAPHICS.DAT                 FOUND  <local-home>/.firestaff/data/csb/GRAPHICS.DAT
+  DUNGEON.DAT                  FOUND  <local-home>/.firestaff/data/csb/DUNGEON.DAT
 ...
 ```
 

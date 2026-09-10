@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-10
 **Source:** ReDMCSB WIP20210206 + original game data on N2
-**Scope:** All GRAPHICS.DAT variants under `/home/trv2/.openclaw/data/firestaff-original-games/DM/`
+**Scope:** All GRAPHICS.DAT variants under `/home/trv2/.firestaff/data/firestaff-original-games/DM/`
 
 ## 1. ReDMCSB Source Analysis
 
@@ -76,7 +76,7 @@ The following ReDMCSB files define or load GRAPHICS.DAT assets:
 
 | Field | Value |
 |---|---|
-| Path | `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT` |
+| Path | `/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT` |
 | Canonical symlink | `_canonical/dm1/GRAPHICS.DAT` → this file |
 | Filename | `GRAPHICS.DAT` |
 | Game | Dungeon Master (DM1) |
@@ -93,7 +93,7 @@ The following ReDMCSB files define or load GRAPHICS.DAT assets:
 
 | Field | Value |
 |---|---|
-| Path | `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT` |
+| Path | `/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT` |
 | Filename | `GRAPHICS.DAT` |
 | Game | Dungeon Master (DM1) |
 | Platform | PC (DOS) |
@@ -109,7 +109,7 @@ The following ReDMCSB files define or load GRAPHICS.DAT assets:
 
 | Field | Value |
 |---|---|
-| Path | `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT` |
+| Path | `/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/Chaos Strikes Back for Amiga v3.3 (French) Hacked by Meynaf/DungeonMaster/Graphics.DAT` |
 | Canonical symlink | `_canonical/csb/amiga-Graphics.DAT` → this file |
 | Filename | `Graphics.DAT` |
 | Game | Chaos Strikes Back (CSB) |
@@ -126,7 +126,7 @@ The following ReDMCSB files define or load GRAPHICS.DAT assets:
 
 | Field | Value |
 |---|---|
-| Path | `/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT` |
+| Path | `/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT` |
 | Canonical symlink | `_canonical/csb/atari-GRAPHICS.DAT` → this file |
 | Filename | `GRAPHICS.DAT` |
 | Game | Chaos Strikes Back (CSB) |
@@ -143,7 +143,7 @@ The following ReDMCSB files define or load GRAPHICS.DAT assets:
 
 | Field | Value |
 |---|---|
-| Path | `/home/trv2/.openclaw/data/firestaff-original-games/DM/Spanish GRAPHICS.DAT` |
+| Path | `/home/trv2/.firestaff/data/firestaff-original-games/DM/Spanish GRAPHICS.DAT` |
 | Filename | `Spanish GRAPHICS.DAT` |
 | Game | Unknown (likely DM1 or CSB) |
 | Platform | PC (DOS) |

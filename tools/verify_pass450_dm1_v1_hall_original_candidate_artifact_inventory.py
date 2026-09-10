@@ -74,10 +74,10 @@ PASS173_RUNS = [
     "gate_click_portrait_then_reincarnate",
 ]
 PASS173_ROOT = ROOT / "parity-evidence/verification/pass173_source_portrait_route_gate_probe"
-N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
-CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 REQUIRED_PROMOTION_SCENES = [
     "candidate_select_portrait_click_before_panel",
     "candidate_panel_visible_after_append",
@@ -354,7 +354,7 @@ def audit_environment() -> dict[str, Any]:
     import platform
 
     capture_tool = ROOT / "tools/pass173_source_portrait_route_gate_probe.py"
-    external_root = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
+    external_root = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
     external_parent = external_root.parent
     env_dosbox = os.environ.get("FIRESTAFF_DOSBOX")
     dosbox_candidates = [

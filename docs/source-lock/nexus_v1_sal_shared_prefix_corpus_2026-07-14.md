@@ -1,6 +1,6 @@
 # Nexus V1 SAL Shared-Prefix Corpus Receipt, 2026-07-14
 
-The local retail corpus at `/Users/bosse/.firestaff/data/nexus` contains all
+The local retail corpus at `<local-home>/.firestaff/data/nexus` contains all
 sixteen canonical `SNDLEV00.SAL` through `SNDLEV15.SAL` banks. Their expected
 per-level sizes come from the existing verified audio receipt table.
 

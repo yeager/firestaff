@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-DEFAULT_ROOT = Path(os.environ.get("FIRESTAFF_ORIGINAL_DM_ROOT", Path.home() / ".openclaw/data/firestaff-original-games/DM"))
+DEFAULT_ROOT = Path(os.environ.get("FIRESTAFF_ORIGINAL_DM_ROOT", Path.home() / ".firestaff/data/firestaff-original-games/DM"))
 
 
 @dataclass(frozen=True)

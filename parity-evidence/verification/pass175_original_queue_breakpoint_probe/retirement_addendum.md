@@ -10,7 +10,7 @@
 Command run on N2 from `<firestaff-repo>`:
 
 ```sh
-./run_firestaff_m11_game_view_probe.sh /tmp/pass175-c080-gate-1777564645 ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA
+./run_firestaff_m11_game_view_probe.sh /tmp/pass175-c080-gate-1777564645 ~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA
 ```
 
 Result: `599/599 invariants passed`. Relevant C080 assertions from `/tmp/pass175-c080-gate.out`:

@@ -6,7 +6,7 @@ Worker worktree: `/home/trv2/work/firestaff-worktrees/audio-event-source-index-2
 ## Primary source audit
 
 ReDMCSB primary source root:
-`/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+`/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 - `SOUND.C:1536-1544` (`F0064_SOUND_RequestPlay_CPSD`) schedules delayed sound requests with `C20_EVENT_PLAY_SOUND`, copies the source `P0088_SoundIndex` into `L0045_s_Event.C.SoundIndex`, preserves `MapX`/`MapY`, and returns instead of playing immediately.
 - `TIMELINE.C:1903-1905` (`F0261_TIMELINE_Process_CPSEF`) handles `C20_EVENT_PLAY_SOUND` by calling `F0064_SOUND_RequestPlay_CPSD(L0682_s_Event.C.SoundIndex, L0682_s_Event.B.Location.MapX, L0682_s_Event.B.Location.MapY, C01_MODE_PLAY_IF_PRIORITIZED)`.

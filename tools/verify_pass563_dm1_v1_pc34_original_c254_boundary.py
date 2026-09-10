@@ -16,8 +16,8 @@ PASS = "pass563_dm1_v1_pc34_original_c254_boundary"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ORIGINAL_ROOT = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIGINAL_ROOT = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 PC34 = ORIGINAL_ROOT / "_extracted/dm-pc34/DungeonMasterPC34"
 ASSET_MANIFEST = ORIGINAL_ROOT / "_manifests/dm_originals_asset_inventory_20260510.json"
 

@@ -11,7 +11,7 @@ PASS237 = ROOT / 'parity-evidence/verification/pass237_dm1_v1_fires_static_csip_
 OUT_DIR = ROOT / 'parity-evidence/verification/pass248_dm1_v1_actual_loader_symbol_candidate_map'
 REPORT = ROOT / 'parity-evidence/pass248_dm1_v1_actual_loader_symbol_candidate_map.md'
 DATA = ROOT / 'data/original_runtime/dm1_pc34_i34e_actual_loader_symbol_candidates.v1.json'
-SOURCE_ROOT = str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+SOURCE_ROOT = str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 
 SOURCE_SEAMS: dict[str, dict[str, Any]] = {
     'command_accepted': {'file': 'COMMAND.C', 'function': 'F0380_COMMAND_ProcessQueue_CPSC', 'lines': [2045, 2160], 'citations': ['COMMAND.C:2075-2081', 'COMMAND.C:2095-2096', 'COMMAND.C:2118-2126', 'COMMAND.C:2151-2155'], 'watch_targets': ['G0432_as_CommandQueue', 'G0433_i_CommandQueueFirstIndex', 'G0434_i_CommandQueueLastIndex', 'G0435_B_CommandQueueLocked', 'G0308_i_PartyDirection']},

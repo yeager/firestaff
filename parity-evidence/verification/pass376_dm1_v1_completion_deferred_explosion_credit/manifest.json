@@ -55,7 +55,7 @@
           "/usr/bin/python3",
           "tools/verify_firestaff_completion_matrix.py"
         ],
-        "outputTail": "Traceback (most recent call last):\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_firestaff_completion_matrix.py\", line 50, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_firestaff_completion_matrix.py\", line 41, in main\n    assert f\"| {target} | {percent}% | {percent}/100 |\" in doc, target\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: CSB V1\n",
+        "outputTail": "Traceback (most recent call last):\n  File \"<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_firestaff_completion_matrix.py\", line 50, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_firestaff_completion_matrix.py\", line 41, in main\n    assert f\"| {target} | {percent}% | {percent}/100 |\" in doc, target\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: CSB V1\n",
         "returncode": 1
       }
     },
@@ -80,7 +80,7 @@
     "full object/creature/projectile gameplay parity",
     "original DOS runtime explosion overlay comparison"
   ],
-  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
+  "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
   "status": "BLOCKED_PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT",
   "timestampUtc": "2026-09-04T18:05:00.633357+00:00"

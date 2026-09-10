@@ -20,7 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKSPACE = ROOT.parents[1]
 SRC = WORKSPACE / "ReDMCSB_WIP20210206" / "Toolchains" / "Common" / "Source"
-REF = Path.home() / ".openclaw" / "data"
+REF = Path.home() / ".firestaff" / "data"
 GREATSTONE = REF / "firestaff-greatstone-atlas"
 REDMCSB_CACHE = REF / "firestaff-redmcsb-source"
 ORIGINAL_DM = REF / "firestaff-original-games" / "DM"

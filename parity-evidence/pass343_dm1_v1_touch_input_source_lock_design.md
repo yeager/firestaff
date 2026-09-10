@@ -7,7 +7,7 @@ Scope: design/evidence only. No runtime behavior is changed by this pass.
 ## ReDMCSB source anchors audited first
 
 Reference root audited on N2:
-`/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+`/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 Exact source-lock anchors:
 

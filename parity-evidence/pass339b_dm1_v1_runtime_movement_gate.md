@@ -4,7 +4,7 @@ Status: **MOVEMENT_PROVED** for the narrow runtime gate. This is not a full laun
 
 ## ReDMCSB source audit
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 - `COMMAND.C:106-121` defines the movement mouse input table: turn-left, forward, turn-right, left, back, right.
 - `COMMAND.C:678-683` is the PC I34E/I34M keyboard movement table from pass336: left turn `0x004B`, forward `0x004C`, right turn `0x004D`, left `0x004F`, back `0x0050`, right `0x0051`.
@@ -30,7 +30,7 @@ Command run:
 ```sh
 cmake -S . -B build-pass339b
 cmake --build build-pass339b --target firestaff_m11_hall_walkaround_runtime_probe -j2
-./build-pass339b/firestaff_m11_hall_walkaround_runtime_probe /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 /tmp/pass339b-hall-out
+./build-pass339b/firestaff_m11_hall_walkaround_runtime_probe /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 /tmp/pass339b-hall-out
 ```
 
 Result: `PASS dm1 v1 hall walkaround runtime probe`.

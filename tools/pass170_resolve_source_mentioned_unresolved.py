@@ -3,7 +3,7 @@ from __future__ import annotations
 import json, subprocess
 from pathlib import Path
 REPO=Path(__file__).resolve().parent.parent
-SRC=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+SRC=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 IN=REPO/'parity-evidence/verification/pass168_redmcsb_pass_source_map/manifest.json'
 OUT=REPO/'parity-evidence/verification/pass170_source_mentioned_unresolved_batch'
 CATS={

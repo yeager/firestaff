@@ -13,7 +13,7 @@ Recommended blocker state: replace the broad pass333 blocker with a narrower res
 
 ## ReDMCSB source audit
 
-All source paths are under `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+All source paths are under `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `INPUT.C` `F0543_INPUT_DeviceInterruptHandler`, lines 298-430: audited as a non-I34E Amiga-family event handler. It marks mouse/keyboard activity and converts Amiga modifier chords into mouse button events, but it is not the I34E PC34 keyboard path used by the pass333 keypad question.
 - `IO2.C` `F0540_INPUT_Crawcin`, lines 5-61: for `MEDIA463_P20JA_P20JB_I34E_I34M_P31J`, I34E reads `G2162_IODriver->IODRV_00_GetKeyboardInput`; `MEDIA707_I34E_I34M` normalizes extended arrow scancodes to `0x004C`, `0x0050`, `0x004B`, and `0x004D` before returning the keycode.

@@ -11,7 +11,7 @@
 |--------|-----|----------|
 | Community docs | `dmweb.free.fr/community/documentation/` | **Primary reference** for all DM/CSB game mechanics, graphics formats, creature data, actions, attacks, and dungeon formats |
 | Greatstone atlas | `greatstone.free.fr/dm/g_dm.html` | Dungeon maps, graphics atlas, PC 3.4 specific data |
-| ReDMCSB source | `~/.openclaw/data/firestaff-redmcsb-source/` | **Primary source code** for DM1/CSB implementation |
+| ReDMCSB source | `~/.firestaff/data/firestaff-redmcsb-source/` | **Primary source code** for DM1/CSB implementation |
 | skproject (DM2) | `github.com/gbsphenx/skproject` | **DM2/Skullkeep** source reference |
 | CSBWin source | `github.com/BeipDev/CSBWin` | CSB implementation reference, creature/resurrect routing |
 | CSB source | `github.com/zelurker/CSB` | CSB source under `src/` (secondary) |
@@ -19,7 +19,7 @@
 | Solutions/maps | `dmweb.free.fr/games/dungeon-master/solutions/` | Champion names, dungeon maps |
 | Champions list | `dmweb.free.fr/games/dungeon-master/solutions/champions/` | Champion data |
 | Creatures list | `dmweb.free.fr/games/dungeon-master/solutions/creatures/` | Creature data |
-| Original DM game | `~/.openclaw/data/firestaff-original-games/DM/` | Original DOS/PC data files |
+| Original DM game | `~/.firestaff/data/firestaff-original-games/DM/` | Original DOS/PC data files |
 
 ---
 
@@ -91,7 +91,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 ### C1. ReDMCSB (PRIMARY for DM1/CSB V1)
 
 **Archive:** `ReDMCSB_WIP20210206.7z`
-**Local (N2):** `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/`
+**Local (N2):** `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/`
 **Key files:**
 
 | File | Size | What it covers |
@@ -112,7 +112,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 **GitHub:** `https://github.com/gbsphenx/skproject`
 **Locked HEAD:** `585ef61aea1e9b33261cfd8a9712cadbb40604b9`
-**N2 mirror:** `~/.openclaw/data/firestaff-dm2-sources/skproject.git`
+**N2 mirror:** `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
 **Sphenx SKWin:** `https://dmbuilder.sphenxmusics.fr/skwin.php`
 **Sphenx package:** `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip`
 **SKULL.ASM:** sha256 `a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099`
@@ -122,13 +122,13 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 ### C3. CSBWin (for CSB reference)
 
 **GitHub:** `https://github.com/BeipDev/CSBWin`
-**N2 mirror:** `~/.openclaw/data/firestaff-csbwin-source/CSBWin/`
+**N2 mirror:** `~/.firestaff/data/firestaff-csbwin-source/CSBWin/`
 **Use for:** Secondary reference, especially champion resurrect/reincarnate/mouse routing. ReDMCSB remains primary for DM1 V1.
 
 ### C4. CSB source (secondary CSB reference)
 
 **GitHub:** `https://github.com/zelurker/CSB`
-**N2 mirror:** `~/.openclaw/data/firestaff-csb-source/CSB/`
+**N2 mirror:** `~/.firestaff/data/firestaff-csb-source/CSB/`
 **Source under:** `src/`
 **Use for:** Secondary CSB reference only. ReDMCSB is primary.
 
@@ -138,8 +138,8 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 ### D1. DM1 PC 3.4 (SHA-locked reference)
 
-**Canonical N2 path:** `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/`
-**Extracted data:** `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
+**Canonical N2 path:** `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/`
+**Extracted data:** `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
 **Files:**
 - `DUNGEON.DAT` — dungeon content
 - `GRAPHICS.DAT` — all graphics (713 indexes, 363,417 bytes, sha256: `2c3aa836...`)
@@ -152,7 +152,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 ### D3. DM2 data (phase 0 locked)
 
-**Canonical N2 path:** `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/`
+**Canonical N2 path:** `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm2/`
 **Files:**
 - `Dungeon-Master-II-Skullkeep_DOS_EN.zip` (sha256 locked)
 - `Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip` (sha256 locked)

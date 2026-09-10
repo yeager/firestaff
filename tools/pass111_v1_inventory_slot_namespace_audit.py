@@ -18,9 +18,9 @@ ROOT = Path(__file__).resolve().parents[1]
 HOME = Path.home()
 SOURCE = ROOT / "src/engine/m11_game_view.c"
 HEADER = ROOT / "include/m11_game_view.h"
-GREATSTONE = HOME / ".openclaw/data/firestaff-greatstone-atlas/index/keyword_hits.json"
-REDMCSB = HOME / ".openclaw/data/firestaff-redmcsb-source"
-ORIGINAL = HOME / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA"
+GREATSTONE = HOME / ".firestaff/data/firestaff-greatstone-atlas/index/keyword_hits.json"
+REDMCSB = HOME / ".firestaff/data/firestaff-redmcsb-source"
+ORIGINAL = HOME / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA"
 
 EXPECTED_ALL = [
     (507, 6, 53), (508, 62, 53), (509, 34, 26), (510, 34, 46),

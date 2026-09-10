@@ -52,7 +52,7 @@
     "No finished PBR-art quality claim beyond the reviewed-art gate.",
     "No CSB V2 material gate."
   ],
-  "redmcsbAnchor": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+  "redmcsbAnchor": "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
   "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
   "status": "failed"
 }

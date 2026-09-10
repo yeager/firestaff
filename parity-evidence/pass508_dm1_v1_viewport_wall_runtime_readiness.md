@@ -18,9 +18,9 @@ Status: PASS_PASS508_DM1_V1_VIEWPORT_WALL_RUNTIME_READINESS
 
 ## Original PC 3.4 members
 
-- PASS /home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT size=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 (in-memory/no-extraction)
-- PASS /home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT size=363417 sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e (in-memory/no-extraction)
-- PASS /home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DM.EXE size=11471 sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4 (in-memory/no-extraction)
+- PASS <local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/DUNGEON.DAT size=33357 sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 (in-memory/no-extraction)
+- PASS <local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DATA/GRAPHICS.DAT size=363417 sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e (in-memory/no-extraction)
+- PASS <local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::DM.EXE size=11471 sha256=4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4 (in-memory/no-extraction)
 
 ## Non-claims and remaining evidence
 

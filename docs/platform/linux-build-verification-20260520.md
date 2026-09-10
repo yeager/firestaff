@@ -25,7 +25,7 @@ suite completion.
 ## Commands and results
 
 ```sh
-EVIDENCE_BUILD=/home/trv2/.openclaw/data/firestaff-platform-opus46-20260520/build-linux-verify-data
+EVIDENCE_BUILD=/home/trv2/.firestaff/data/firestaff-platform-opus46-20260520/build-linux-verify-data
 
 cmake -S . -B "$EVIDENCE_BUILD" -G Ninja -DCMAKE_BUILD_TYPE=Release
 # PASS: configure completed and found SDL3.
@@ -47,7 +47,7 @@ rpm -qpi release/firestaff-2.4.0-platform-opus46.x86_64.rpm
 ```
 
 The generated build and local preview artifacts were moved out of the worktree
-to `/home/trv2/.openclaw/data/firestaff-platform-opus46-20260520/`.
+to `/home/trv2/.firestaff/data/firestaff-platform-opus46-20260520/`.
 
 ## Non-platform test note
 

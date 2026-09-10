@@ -36,7 +36,7 @@
 # This tool is pure-read. It writes one JSON file and prints a summary.
 # Run:
 #     python3 tools/extract_zones_layout_696.py \
-#         ~/.openclaw/data/redmcsb-original/GRAPHICS.DAT \
+#         ~/.firestaff/data/redmcsb-original/GRAPHICS.DAT \
 #         zones_h_reconstruction.json
 # ------------------------------------------------------------------
 import hashlib
@@ -55,7 +55,7 @@ BLOB_ABSOLUTE_OFFSET = 0x47a6f  # confirmed unique 0xFC0D run in-file
 
 def main(argv):
     src = argv[1] if len(argv) > 1 else os.path.expanduser(
-        "~/.openclaw/data/redmcsb-original/GRAPHICS.DAT")
+        "~/.firestaff/data/redmcsb-original/GRAPHICS.DAT")
     dst = argv[2] if len(argv) > 2 else "zones_h_reconstruction.json"
 
     with open(src, "rb") as fh:

@@ -8,7 +8,7 @@ PASS = "pass372_dm1_v1_movement_runtime_route"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
+REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
 SOURCE_LOCKS = [
  {"file":"IO2.C","lines":"27-61","claim":"I34E F0540 reads IODRV_00_GetKeyboardInput and normalizes shifted extended arrows to K/L/M/P before returning to the main loop.","markers":["IODRV_00_GetKeyboardInput","MEDIA707_I34E_I34M","0x48 = Scancode of Up arrow","L2944_ui_ = 'L'","0x50 = Scancode of Down arrow","L2944_ui_ = 'P'","0x4B = Scancode of Left arrow","L2944_ui_ = 'K'","0x4D = Scancode of Right arrow","L2944_ui_ = 'M'","return L2944_ui_"]},
  {"file":"GAMELOOP.C","lines":"164-168,215","claim":"The game loop drains buffered keyboard characters through F0361, then processes the command queue through F0380.","markers":["M527_IsCharacterInKeyboardBuffer","F0361_COMMAND_ProcessKeyPress","M528_GetCharacterInKeyboardBuffer","F0380_COMMAND_ProcessQueue_CPSC"]},

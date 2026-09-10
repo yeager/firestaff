@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass377_dm1_v1_postload_f0128_f0097_true_stop_route"
 OUT = ROOT / "parity-evidence/verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source"
 PASS330_PATH = ROOT / "tools/pass330_dm1_v1_direct_pty_code_stop_transition_investigation.py"
 
 SOURCE_WINDOWS = [

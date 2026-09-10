@@ -2,8 +2,8 @@
 # Pass 462: Linux/N2 original DM1 PC34 TITLE raw screenshot capture.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STAGE="${DM1_ORIGINAL_STAGE_DIR:-/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34}"
-ROOT="${OUT_ROOT:-/home/trv2/.openclaw/data/firestaff-n2-runs/pass462-title-end-capture-parity}"
+STAGE="${DM1_ORIGINAL_STAGE_DIR:-/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34}"
+ROOT="${OUT_ROOT:-/home/trv2/.firestaff/data/firestaff-n2-runs/pass462-title-end-capture-parity}"
 STAMP="${PASS462_STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 OUT_DIR="${OUT_DIR:-$ROOT/$STAMP-title}"
 DOSBOX="${DOSBOX:-/usr/bin/dosbox}"

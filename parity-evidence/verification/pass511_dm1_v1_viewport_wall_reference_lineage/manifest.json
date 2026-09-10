@@ -10,13 +10,13 @@
   ],
   "dm1Anchors": [
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 363417,
       "name": "DATA/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "bytes": 33357,
       "name": "DATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
@@ -168,7 +168,7 @@
       "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
     }
   ],
-  "redmcsbPrimarySourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "redmcsbPrimarySourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "pass511_dm1_v1_viewport_wall_reference_lineage.v1",
   "secondaryLineageChecks": [],
   "status": "passed"

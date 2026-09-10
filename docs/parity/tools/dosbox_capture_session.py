@@ -394,7 +394,7 @@ def validate_live_inputs(args: argparse.Namespace) -> int:
     """Validate the live route inputs without launching DOSBox."""
     capture_root = args.capture_root.expanduser()
     default_runtime_dir = Path(
-        "~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+        "~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
     ).expanduser()
     runtime_dir = (
         args.runtime_dir.expanduser()
@@ -3017,10 +3017,10 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
     game_dir = (
         args.game_dir.expanduser()
         if args.game_dir is not None
-        else Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
+        else Path("~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
     )
     default_runtime_dir = Path(
-        "~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+        "~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
     ).expanduser()
     runtime_dir = (
         args.runtime_dir.expanduser()
@@ -3265,7 +3265,7 @@ def main(argv: list[str] | None = None) -> int:
                              "without launching DOSBox")
     parser.add_argument("--game-dir", type=Path, default=None,
                         help="DM1 game data root (default: "
-                             "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1)")
+                             "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1)")
     parser.add_argument("--runtime-dir", type=Path, default=None,
                         help="DM1 DOS runtime dir containing DM.EXE and DATA/ "
                              "(default: local extracted PC 3.4 runtime when present)")

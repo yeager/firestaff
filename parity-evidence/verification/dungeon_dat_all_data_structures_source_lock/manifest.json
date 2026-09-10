@@ -1,7 +1,7 @@
 {
   "audit": "DUNGEON.DAT All Data Structures Source-Lock Verification",
   "target": "DM1 PC 3.4 — ALL DUNGEON.DAT data structures",
-  "redmcsb_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "redmcsb_root": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
   "primary_sources": [
     "DUNGEON.C (2763 lines)",
     "DEFS.H (MAP, DUNGEON_HEADER, SENSOR, SQUARE masks)",
@@ -342,6 +342,6 @@
     "unverified_categories": [],
     "audit_method": "Manual source inspection of ReDMCSB source files. Each category has at least one ReDMCSB line citation. No code modifications.",
     "audit_date": "2026-05-24",
-    "audited_by": "OpenClaw subagent"
+    "audited_by": "legacy-workspace subagent"
   }
 }

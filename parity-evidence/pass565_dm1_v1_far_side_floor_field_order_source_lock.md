@@ -15,11 +15,11 @@ Closed gap: DM1_ViewportFloorFieldOrderSpec now includes mirrored D3R2 and the P
 - test_dm1_v1_viewport_3d_pc34_compat.c: source-lock test count now covers 13 specs and asserts D2L2 has no thing pass.
 
 ## Local references
-- dm1_graphics /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- dm1_dungeon /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- greatstone_summary /home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md exists=True sha256=b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d
-- csbwin_viewport /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp exists=True sha256=eb3b407d34b48f98113275e967dd10bc52114fad9957b46895fc22bdf64824b9
-- csb_viewport /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp exists=True sha256=2acaeec457166e4af8e18009de3b9081f773761fa5d8913cce0ccacb8c8ea12c
+- dm1_graphics /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- dm1_dungeon /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- greatstone_summary /home/trv2/.firestaff/data/firestaff-greatstone-atlas/index/SUMMARY.md exists=True sha256=b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d
+- csbwin_viewport /home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin/Viewport.cpp exists=True sha256=eb3b407d34b48f98113275e967dd10bc52114fad9957b46895fc22bdf64824b9
+- csb_viewport /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src/Viewport.cpp exists=True sha256=2acaeec457166e4af8e18009de3b9081f773761fa5d8913cce0ccacb8c8ea12c
 
 ## Verification
 - cmake --build build --target test_dm1_v1_viewport_3d_pc34_compat -j2 passed.

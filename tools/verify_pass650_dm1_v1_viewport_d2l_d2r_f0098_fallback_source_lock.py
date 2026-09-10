@@ -12,8 +12,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
+DATA = Path.home() / ".firestaff/data"
+EXTERNAL_DATA = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff")
 STATUS = "PASS650_DM1_V1_VIEWPORT_D2L_D2R_F0098_FALLBACK_SOURCE_LOCKED"
 FAILED_STATUS = "FAILED_PASS650_DM1_V1_VIEWPORT_D2L_D2R_F0098_FALLBACK_SOURCE_LOCK"
 MANIFEST = ROOT / "parity-evidence/verification/pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock/manifest.json"

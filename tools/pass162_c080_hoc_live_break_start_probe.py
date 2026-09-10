@@ -29,9 +29,9 @@ import pexpect
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/pass162_c080_queue_trace/live_hoc_break_start_probe"
 REPORT = ROOT / "parity-evidence/pass162_c080_hoc_live_break_start_probe.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 COMMANDS_TXT = ROOT / "parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt"
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 DEFAULT_ROUTE = "wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 f1 wait:800 f4"
 DEFAULT_LABEL = "hoc"

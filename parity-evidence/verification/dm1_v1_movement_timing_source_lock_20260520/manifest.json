@@ -6,9 +6,9 @@
   "worktree": "/home/trv2/work/firestaff-worktrees/dm1-v1-movement-timing-source-lock-20260520",
   "branch": "worker/dm1-v1-movement-timing-source-lock-20260520",
   "base_origin_main": "77878680fdeecb9403d16473430ed62236c738c8",
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "original_data_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM",
-  "canonical_dm1_root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "redmcsb_source_root": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "original_data_root": "/home/trv2/.firestaff/data/firestaff-original-games/DM",
+  "canonical_dm1_root": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1",
   "canonical_anchors": [
     { "path": "_canonical/dm1/DUNGEON.DAT", "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85" },
     { "path": "_canonical/dm1/GRAPHICS.DAT", "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e" },

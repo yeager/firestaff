@@ -11,7 +11,7 @@ Master source-evidence index for DM2 V1 Phase 8 verification suite. Collects all
 - Phases missing: P8
 
 ## Source Paths
-- **SKULL.ASM:** `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source`
+- **SKULL.ASM:** `<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source`
 - **skproject:** `unavailable`
 - **docs:** `unavailable`
 

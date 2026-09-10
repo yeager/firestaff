@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass464_dm1_v1_mouse_callback_event_branch"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ADDR = {
     # FIRES.MAP link 22DD:0020 + corrected loader delta 0736.
     "F0781_MouseHandler": "2A13:0020",

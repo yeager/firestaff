@@ -533,7 +533,7 @@
       "lines": "27-61",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO2.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "claim": "F0361 can queue movement only after the drained key matches the active I34E secondary keyboard table",
@@ -543,7 +543,7 @@
       "lines": "636-685",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "the original route chain is keyboard-buffer drain, queue processing, then wait-loop boundary",
@@ -553,7 +553,7 @@
       "lines": "164-219",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "claim": "a transcript must include F0361's table match, queue slot write, last-index write, and G2153 increment",
@@ -563,7 +563,7 @@
       "lines": "1734-1812",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "the same command must be observed leaving F0380 with first-index/count delta and turn/move dispatch",
@@ -573,7 +573,7 @@
       "lines": "2075-2127,2150-2156",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "post-dispatch evidence must distinguish turn mutation, blocked-step discard, and successful-step movement/cooldown side effects",
@@ -583,7 +583,7 @@
       "lines": "142-174,237-270,293-347",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "successful movement transcripts must bind the source-committed tuple and timing/sensor side effects",
@@ -593,7 +593,7 @@
       "lines": "738-818",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "claim": "viewport/HUD captures are promotable only after F0128 consumes the post-command direction/X/Y tuple",
@@ -603,7 +603,7 @@
       "lines": "8318-8611",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "route-labeled screenshots must be tied to the PC34 viewport present/blit boundary",
@@ -613,10 +613,10 @@
       "lines": "709-858",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED",
   "timestampUtc": "2026-09-04T18:24:26.074733+00:00",
   "transcriptValidation": {

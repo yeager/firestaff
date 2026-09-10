@@ -11,7 +11,7 @@ Canonical N2 PC34 original payload did not match expected hashes.
 - DM.EXE: FAIL sha256 None
 - DATA/GRAPHICS.DAT: FAIL sha256 None
 - DATA/DUNGEON.DAT: FAIL sha256 None
-- original manifest: FAIL /home/yeager/.openclaw/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json
+- original manifest: FAIL <local-home>/.firestaff/data/firestaff-original-games/DM/_manifests/dm_originals_asset_inventory_20260510.json
 
 ## ReDMCSB locks
 - PASS GAMELOOP.C:166-215 pc34_game_loop_consumes_io_before_queue_dispatch - DM1 PC/I34E consumes keyboard-present/read before F0361 enqueue and F0380 dispatch.

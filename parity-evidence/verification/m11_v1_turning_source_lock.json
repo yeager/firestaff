@@ -1,7 +1,7 @@
 {
   "status": "pass",
   "schema": "firestaff.m11_v1_turning_source_lock.v1",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 turn left/right source mechanics, direction state, endpoint render presentation, movement/wall interaction",
   "citations": [
     {

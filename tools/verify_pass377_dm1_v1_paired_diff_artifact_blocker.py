@@ -28,7 +28,7 @@ REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 PLAN = ROOT / "parity-evidence" / "overlays" / "pass377" / "pass377_pairing_plan.json"
 REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 STATUS = "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED"
 WIDTH = 224

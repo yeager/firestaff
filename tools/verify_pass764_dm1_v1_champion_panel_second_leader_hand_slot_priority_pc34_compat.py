@@ -12,7 +12,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 RED = (
     Path.home()
-    / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
 TEST = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_champion_panel_second_leader_hand_slot_priority_pc34_compat"
 

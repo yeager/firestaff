@@ -27,11 +27,11 @@ REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 
 RED = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
-CANON_DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
+CANON_DM1 = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1"
+GREATSTONE = Path.home() / ".firestaff/data/firestaff-greatstone-atlas"
+CSBWIN = Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin"
 CAPTURE_SCRIPT = ROOT / "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
 
 SOURCE_LOCKS: list[dict[str, Any]] = [

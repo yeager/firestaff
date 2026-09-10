@@ -4,4 +4,4 @@ Source-locked: CLIKCHAM.C F0367:24-35 (status-box nested G0455 dispatch) + CLIKC
 
 Result: FAIL
 Tests: {'passes': 0, 'fails': 0}
-Failures: ['binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_leader_pc34_compat']
+Failures: ['binary not found: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_leader_pc34_compat']

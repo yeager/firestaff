@@ -873,7 +873,7 @@ source-owned T700/T900 consumer. The zero values are therefore negative
 semantic evidence, not permission to substitute host-side formulas. RNG,
 creature, AI, attack, damage, loot, generator, T700 and T900 remain
 fail-closed. The raw receipt remains outside GitHub at
-`/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.
+`<local-home>/.firestaff/cache/theron/manual-capture/out/theron.transition`.
 
 The corresponding bounded main-RAM sidecar is approximately 8.7 MiB. The
 Firestaff intake ceiling is now 16 MiB, which permits this authenticated

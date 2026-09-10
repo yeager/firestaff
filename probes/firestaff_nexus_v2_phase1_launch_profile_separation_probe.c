@@ -73,7 +73,7 @@
 /* ----------------------------------------------------------------
  * Nexus V1 Saturn DMDF/DGN asset hash constants.
  * Source: scripts/fixtures/nexus_v1_disc_file_hashes.py (138 files,
- * SHA256, computed 2026-05-27 from /Users/bosse/.firestaff/data/nexus).
+ * SHA256, computed 2026-05-27 from <local-home>/.firestaff/data/nexus).
  * ---------------------------------------------------------------- */
 
 #define NEXUS_V1_HASH_0DMSTRT_BIN  \

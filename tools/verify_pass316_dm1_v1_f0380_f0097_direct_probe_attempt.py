@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 PROBE_DIR = ROOT / "parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt"
 PROBE_MANIFEST = PROBE_DIR / "manifest.json"
 PROBE_TRANSCRIPT = PROBE_DIR / "dosbox_debug_noise_reduced.clean.txt"

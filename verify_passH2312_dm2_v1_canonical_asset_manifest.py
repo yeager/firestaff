@@ -29,7 +29,7 @@ OUT = ROOT / "parity-evidence/verification/passH2312_dm2_v1_canonical_asset_mani
 REPORT = ROOT / "parity-evidence/firestaff_dm2_v1_phase8_asset_manifest_H2312.md"
 
 # ReDMCSB source anchor (IBM PC toolchain — DM2 PC executable)
-REDMCSB_IBM_PC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source"
+REDMCSB_IBM_PC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source"
 
 # SKWin / skproject reference (skullkeep-win C++ reimplementation)
 SKPROJECT = Path.home() / "skproject"

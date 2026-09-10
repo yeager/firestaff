@@ -12,7 +12,7 @@ ReDMCSB evidence:
 
 Firestaff evidence:
 
-- Runtime path resolution is in `src/engine/main_loop_m11.c:m11_find_title_dat_for_intro`, including `FIRESTAFF_TITLE_DAT`, matched DM1 asset parents/grandparents, data-dir layouts, and canonical OpenClaw DM1 anchors.
+- Runtime path resolution is in `src/engine/main_loop_m11.c:m11_find_title_dat_for_intro`, including `FIRESTAFF_TITLE_DAT`, matched DM1 asset parents/grandparents, data-dir layouts, and canonical legacy-workspace DM1 anchors.
 - Runtime playback is in `src/engine/main_loop_m11.c:m11_play_redmcsb_title_intro_if_available`: it decodes all 53 `TITLE` frames through `V1_TitleFrontend_RenderFrameToScreen`, unpacks to M11 indexed framebuffer, presents with `VGA_PALETTE_PC34_SPECIAL_TITLE`, and uses the source timing helpers for frame/final guard delays.
 - Decode path is `src/frontend/title_dat_loader_v1.c` and frontend packing is `src/frontend/title_frontend_v1.c`.
 
@@ -33,7 +33,7 @@ cc -Iinclude probes/v1/firestaff_v1_pass58_title_frontend_probe.c src/frontend/t
 Results:
 
 - `ctest`: 2/2 passed (`title_frontend_runtime_cadence_source_lock`, `swsh_frontend_source_animation_schedule`).
-- pass56: local `TITLE` at `/Users/bosse/.firestaff/data/TITLE`, 12002 bytes, 59 records, 2 `EN` + 51 `DL`, 53 320x200 frames, 8/8 invariants, fingerprint `0x6ce154a7`.
+- pass56: local `TITLE` at `<local-home>/.firestaff/data/TITLE`, 12002 bytes, 59 records, 2 `EN` + 51 `DL`, 53 320x200 frames, 8/8 invariants, fingerprint `0x6ce154a7`.
 - pass57: decoded 53 original TITLE frames, palette split 37 + 16, index fingerprint `0xb4e5d330`, RGB fingerprint `0x143fa969`, 6/6 invariants.
 - pass58: frontend renders original TITLE data into the 320x200 V1 screen bitmap, reaches first/boundary/last frames, and sampled packed frames match pass57 output, 5/5 invariants.
 

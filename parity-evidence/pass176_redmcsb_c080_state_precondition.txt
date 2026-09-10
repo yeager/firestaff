@@ -37,7 +37,7 @@ Firestaff implementation/probe anchors
 Verification command and result
 -------------------------------
 Command:
-  ./run_firestaff_m11_game_view_probe.sh parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA
+  ./run_firestaff_m11_game_view_probe.sh parity-evidence/verification/pass176_redmcsb_c080_state_precondition/probe_run_data ~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA
 
 Result:
   # summary: 597/597 invariants passed
@@ -61,7 +61,7 @@ Relevant verifier lines:
 
 Negative/control note
 ---------------------
-I first ran the same probe against ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 (one level too high). It produced 456/597 with asset/mirror-catalog failures because GRAPHICS.DAT and DUNGEON.DAT live in the DATA subdirectory. Rerunning with .../DungeonMasterPC34/DATA passed 597/597.
+I first ran the same probe against ~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 (one level too high). It produced 456/597 with asset/mirror-catalog failures because GRAPHICS.DAT and DUNGEON.DAT live in the DATA subdirectory. Rerunning with .../DungeonMasterPC34/DATA passed 597/597.
 
 Conclusion / next blocker
 -------------------------

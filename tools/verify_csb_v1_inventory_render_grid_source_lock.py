@@ -10,8 +10,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-DEFAULT_CSBWIN = Path("/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin")
-DEFAULT_CSB = Path("/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src")
+DEFAULT_CSBWIN = Path("/home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin")
+DEFAULT_CSB = Path("/home/trv2/.firestaff/data/firestaff-csb-source/CSB/src")
 
 CHECKS = [
     {

@@ -4,10 +4,10 @@
     "dm_exe_file": {
       "args": [
         "/usr/bin/file",
-        "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"
+        "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"
       ],
       "output": [
-        "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, LZEXE v0.91 compressed"
+        "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, LZEXE v0.91 compressed"
       ],
       "returncode": 0
     },
@@ -33,7 +33,7 @@
       "error": "gdb missing"
     }
   },
-  "dm_exe": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+  "dm_exe": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
   "first_missing_gate": "native gdb symbol-binding sanity check unavailable on this host",
   "next_step": "Bind the loaded DOS image to source/addresses in DOSBox-X debugger, then apply the emitted breakpoint order.",
   "non_claims": [
@@ -41,7 +41,7 @@
     "does not classify mouse translation vs queue dequeue vs C080 dispatch vs F0280 until a DOS real-mode/source-symbol bridge or address map exists",
     "does not do coordinate guessing"
   ],
-  "original_stage": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted",
+  "original_stage": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted",
   "redmcsb_audit": [
     {
       "excerpt": "1452: void F0359_COMMAND_ProcessClick_CPSC(\n1453: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1454: P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus)\n1455: #endif\n1456: REGISTER int16_t P0725_i_X             SEPARATOR\n1457: REGISTER int16_t P0726_i_Y             SEPARATOR\n1458: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1459: int16_t          P0727_i_ButtonsStatus FINAL_SEPARATOR\n1460: #endif\n1461: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1462: REGISTER int16_t P0727_i_ButtonsStatus FINAL_SEPARATOR\n1463: #endif\n1464: {\n1465:         REGISTER int16_t L1108_i_CommandQueueIndex;\n1466:         REGISTER int16_t L1109_i_Command;\n1467: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1468:         int16_t L2287_i_MaximumRegularCommandsInQueue;\n1469: #endif\n1470: #ifdef MEDIA626_A31E_A31M_A33M_A35E_A35M\n1471:         int16_t L2288_i_;\n1472: #endif\n1473: \n1474: \n1475: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E\n1476:         asm {\n1477:                         tas     G0435_B_CommandQueueLocked(A4)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\n1478:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\n1479:                         beq.s   T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\n1480:         }\n1481: #endif\n1482: #ifdef MEDIA607_X30J_X31J\n1483:         asm {\n1484:                         tas     G0435_B_CommandQueueLocked(A5)  /* Test and set bit 7 in G0435_B_CommandQueueLocked\n1485:                                                                 BUG0_73 A mouse click may be ignored. The tas instruction works on the most significant byte of G0435_B_CommandQueueLocked but when G0435_B_CommandQueueLocked is set to C1_TRUE elsewhere in the code, this affects the least significant byte only. Consequently, the code below may run while another function is modifying the command queue. The only possible consequence is when a key press is being processed in F0361_COMMAND_ProcessKeyPress */\n1486:                         beq.s   @T0359002                        /* Branch if the command queue is not already being accessed (if G0435_B_CommandQueueLocked = C0_FALSE, before bit 7 is set above) */\n1487:         }\n1488: #endif\n1489: #ifdef MEDIA169_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_X30J_X31J\n1490:         G0436_B_PendingClickPresent = C1_TRUE;\n1491:         G0437_i_PendingClickX = P0725_i_X;\n1492:         G0438_i_PendingClickY = P0726_i_Y;\n1493:         G0439_i_PendingClickButtonsStatus = P0727_i_ButtonsStatus;\n1494: #endif\n1495: #ifdef MEDIA007_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E\n1496: #ifndef NOCOPYPROTECTION\n1497:         if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && (F0464_CPSC_GetChecksumSub(F0380_COMMAND_ProcessQueue_CPSC) != CHECKSUM_B)) {\n1498:                 G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\n1499:         }\n1500: #endif\n1501: #endif\n1502: #ifdef MEDIA169_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_X30J_X31J\n1503:         return;\n1504:         T0359002:\n1505: #endif\n1506: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1507:         if ((P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP) || (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION)) {\n1508:                 L2287_i_MaximumRegularCommandsInQueue = C7_UNKNOWN; /* Allow usage of all commands in queue */\n1509:         } else {\n1510:                 L2287_i_MaximumRegularCommandsInQueue = C5_UNKNOWN; /* Restrict usage to reserve two commands in queue */\n1511:         }\n1512: #endif\n1513:         if ((L1108_i_CommandQueueIndex = G0434_i_CommandQueueLastIndex + 2) > M529_COMMAND_QUEUE_SIZE) {\n1514:                 L1108_i_CommandQueueIndex -= M529_COMMAND_QUEUE_SIZE + 1;\n1515:         }\n1516: #ifdef MEDIA009_S10EA_S10EB_S11E_S12E_S12G_S13FA_S13FB_S20E_S21E_G14ED_G20E_G21E_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1517:         if (L1108_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is full */\n1518: #ifdef MEDIA413_A20ED_A20E_A20F_A20G_A21E_A22E_A22G\n1519: #ifndef NOCOPYPROTECTION\n1520:                 if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && (F0464_CPSC_GetChecksumSub(F0380_COMMAND_ProcessQueue_CPSC) != CHECKSUM_B)) {\n1521:                         G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\n1522:                 }\n1523: #endif\n1524: #endif\n1525:                 return;\n1526:         }\n1527: #endif\n1528: #ifdef MEDIA741_A35E_A35M\n1529:         if (G2153_i_QueuedCommandsCount >= L2287_i_MaximumRegularCommandsInQueue) {\n1530: #endif\n1531: #ifdef MEDIA510_F20E_F20J_X30J_P20JA_P20JB_A31E_A31M_A33M_F31E_F31J_X31J_P31J\n1532:         if (L1108_i_CommandQueueIndex == G0433_i_CommandQueueFirstIndex) { /* If the command queue is full */\n1533:                 if (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {\n1534:                         G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex].Command = C129_COMMAND_RELEASE_CHAMPION_ICON;\n1535:                 }\n1536: #endif\n1537: #ifdef MEDIA626_A31E_A31M_A33M_A35E_A35M\n1538: #ifndef NOCOPYPROTECTION\n1539:                 if ((!(G0317_i_WaitForInputVerticalBlankCount & 7)) && !(G0313_ul_GameTime & 3)) {\n1540:                     L2288_i_ = L1109_i_Command;\n1541:                     L1109_i_Command = F1063_ChecksumEor_CPSX(*((long*)((char*)F1053_Pre_F0380_COMMAND_ProcessQueue_CPSC + 2)), *((long*)((char*)F1055_Post_F0380_COMMAND_ProcessQueue_CPSC + 2)));\n1542:                     asm {\n1543:                         @Tloc_1EA3E:\n1544: #ifdef MEDIA619_A31E_A31M\n1545:                                 move.w  -4(a6),d1       /* Fake useless code start */\n1546:                                 cmpi.w  #CHECKSUM_B,d1      /* Actual expected checksum value */\n1547:                                 bcc.s   @Tloc_1EA4C\n1548:                                 moveq   #1,d0\n1549:                                 bra.s   @Tloc_1EA4E\n1550:                         @Tloc_1EA4C:\n1551:                                 moveq   #0,d0\n1552:                         @Tloc_1EA4E:\n1553:                                 move.w  -10(a6),d1\n1554:                                 cmp.w   d0,d1\n1555:                                 bcc.s   @Tloc_1EA5A\n1556:                                 moveq   #1,d0\n1557:                                 bra.s   @Tloc_1EA5C\n1558:                         @Tloc_1EA5A:\n1559:                                 moveq   #0,d0\n1560: #endif\n1561: #ifdef MEDIA665_A33M\n1562:                                 move.w  10(a6),d0\n1563:                                 move.w  #CHECKSUM_B,d1\n1564:                                 bra.s   @Tloc_1EA4C\n1565:                                 asl.w   #1,d0\n1566:                                 add.w   d0,d1\n1567:                                 bra.s   @Tloc_1EA4E\n1568:                         @Tloc_1EA4C:\n1569:                                 moveq   #0,d0\n1570:                         @Tloc_1EA4E:\n1571:                                 cmp.w   d0,d1\n1572:                                 bcc.s   @Tloc_1EA5C\n1573:                                 move.w  -2(a6),d1\n1574:                                 add.w   d0,d1\n1575:                                 asl.w   #1,d1\n1576: #endif\n1577: #ifdef MEDIA739_A35E\n1578:                                 move.w  #200,d1\n1579:                                 move.w  #CHECKSUM_B,d1\n1580:                                 add.w   -4(a6),d1\n1581:                                 beq.s   @Tloc_1F59C\n1582:                                 move.w  -10(a6),d1\n1583:                                 cmp.w   d0,d1\n1584:                                 beq.s   @Tloc_1F59C\n1585:                                 move.w  #0xFFFF,d0\n1586:                                 bra.s   @Tloc_1EA5C\n1587:                         @Tloc_1F59C:\n1588:                                 asl.w   #1,d0\n1589: #endif\n1590: #ifdef MEDIA742_A35M\n1591:                                 tst.w   d0\n1592:                                 bne.s   @Tloc_1F98E\n1593:                                 move.w  #CHECKSUM_B,d0\n1594:                                 bra.s   @Tloc_1F994\n1595:                         @Tloc_1F98E:\n1596:                                 move.w  #0x13F,d0\n1597:                                 bra.s   @Tloc_1F996\n1598:                         @Tloc_1F994:\n1599:                                 moveq   #0,d0\n1600:                         @Tloc_1F996:\n1601:                                 move.w  #0x96,d1\n1602:                                 cmp.w   d0,d1\n1603:                                 bcc.s   @Tloc_1EA5C\n1604:                                 move.w  d0,d1\n1605:                                 asl.w   #1,d1\n1606: #endif\n1607:                         @Tloc_1EA5C:                     /* Fake useless code end */\n1608:                                 lea     @Tloc_1EA3E,a0   /* Actual checksum value test */\n1609:                                 move.w  d3,d0\n1610:                                 cmp.w   6(a0),d0\n1611:                                 beq.s   @Tloc_1EA6E\n1612:                                 move.w  #1,d3\n1613:                                 bra.s   @Tloc_1EA72\n1614:                         @Tloc_1EA6E:\n1615:                                 move.w  #0,d3\n1616:                         @Tloc_1EA72:\n1617:                     }\n1618:                     if (!G0440_B_Consequence_StopSearchingMouseInput_CPSC && L1109_i_Command) {\n1619:                             G0440_B_Consequence_StopSearchingMouseInput_CPSC++;\n1620:                     }\n1621:                     L1109_i_Command = L2288_i_;\n1622:                 }\n1623: #endif\n1624: #endif\n1625: #ifdef MEDIA512_F20E_F20J_X30J_P20JA_P20JB_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1626:         } else {\n1627: #endif\n1628: #ifdef MEDIA716_I34E_I34M_A36M\n1629:         if (G2153_i_QueuedCommandsCount < L2287_i_MaximumRegularCommandsInQueue) {\n1630: #endif\n1631: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1632:                 if (P0727_i_ButtonsStatus == C33_MOUSE_EVENT_LEAVE_CHAMPION_ICON_REGION) {\n1633:                         L1109_i_Command = C129_COMMAND_RELEASE_CHAMPION_ICON;\n1634:                 } else {\n1635: #endif\n1636: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1637:                         if (P0727_i_ButtonsStatus == C04_MOUSE_EVENT_LEFT_BUTTON_UP) {\n1638:                                 L1109_i_Command = C254_COMMAND_STOP_PRESSING_EYE_MOUTH_WALL;\n1639:                         } else {\n1640: #endif\n1641:                                 L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0441_ps_PrimaryMouseInput, P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus);\n1642:                                 if (L1109_i_Command == C000_COMMAND_NONE) {\n1643:                                         L1109_i_Command = F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0442_ps_SecondaryMouseInput, P0725_i_X, P0726_i_Y, P0727_i_ButtonsStatus);\n1644:                                 }\n1645: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1646:                         }\n1647: #endif\n1648: #ifdef MEDIA529_F20E_F20J_X30J_P20JA_P20JB_I34E_I34M_A36M_A31E_A31M_A33M_A35E_A35M_F31E_F31J_X31J_P31J\n1649:                 }\n1650: #endif\n1651:                 if (L1109_i_Command != C000_COMMAND_NONE) {\n1652: #ifdef MEDIA728_I34E_I34M_A36M_A35E_A35M\n1653:                         G2153_i_QueuedCommandsCount++;\n1654: #endif\n1655:                         if (!L1108_i_CommandQueueIndex--) {\n1656:                                 L1108_i_CommandQueueIndex = M529_COMMAND_QUEUE_SIZE;\n1657:                         }\n1658:                         G0432_as_CommandQueue[G0434_i_CommandQueueLastIndex = L1108_i_CommandQueueIndex].Command = L1109_i_Command;\n1659:                         G0432_as_CommandQueue[L1108_i_CommandQueueIndex].X = P0725_i_X;\n1660:                         G0432_as_CommandQueue[L1108_i_CommandQueueIndex].Y = P0726_i_Y;\n1661:                 }\n1662:                 G0435_B_CommandQueueLocked = C0_FALSE;",
@@ -57,7 +57,7 @@
         ".Y = P0726_i_Y"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "Actual mouse-click queue writer: derives command from primary/secondary mouse tables and writes nonzero command plus X/Y into G0432_as_CommandQueue.",
       "symbol": "F0359_COMMAND_ProcessClick_CPSC"
     },
@@ -74,7 +74,7 @@
         "G0435_B_CommandQueueLocked = C0_FALSE"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0380 locks/dequeues command, X, Y from G0432_as_CommandQueue and unlocks before dispatch.",
       "symbol": "F0380_COMMAND_ProcessQueue_CPSC dequeue"
     },
@@ -88,7 +88,7 @@
         "F0377_COMMAND_ProcessType80_ClickInDungeonView"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0380 dispatches C080 to F0377 with dequeued X/Y.",
       "symbol": "F0380 -> F0377 dispatch"
     },
@@ -103,7 +103,7 @@
         "P0753_i_Y -= G2068_i_ViewportScreenY"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "point": "C080 handler; PC builds normalize screen coordinates by subtracting viewport origin before hit testing.",
       "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
     },
@@ -118,7 +118,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "point": "Empty-hand C05 door-button/wall-ornament hit calls F0372, otherwise object cells call grab/drop paths.",
       "symbol": "F0377 empty-hand front-wall hit"
     },
@@ -133,7 +133,7 @@
         "M018_OPPOSITE(G0308_i_PartyDirection)"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "point": "F0372 computes the square in front of the party and invokes F0275 on the wall face opposite party direction.",
       "symbol": "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
     },
@@ -147,7 +147,7 @@
         "F0280_CHAMPION_AddCandidateChampionToParty"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "point": "A clicked champion portrait wall sensor calls F0280 with sensorData/portrait index.",
       "symbol": "C127_SENSOR_WALL_CHAMPION_PORTRAIT -> F0280"
     },
@@ -161,20 +161,20 @@
         "P0596_ui_ChampionPortraitIndex"
       ],
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "point": "Candidate champion entry point reached after C127 portrait sensor processing.",
       "symbol": "F0280_CHAMPION_AddCandidateChampionToParty"
     }
   ],
-  "repo": "/Users/bosse/Documents/Firestaff",
+  "repo": "<local-home>/Documents/Firestaff",
   "runners": {
-    "dosbox_x_command": "dosbox-x -conf /Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf -break-start",
-    "dosbox_x_conf": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf",
-    "gdb_command": "gdb --batch -x /Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb",
-    "gdb_script": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb"
+    "dosbox_x_command": "dosbox-x -conf <local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf -break-start",
+    "dosbox_x_conf": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf",
+    "gdb_command": "gdb --batch -x <local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb",
+    "gdb_script": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb"
   },
   "schema": "pass162_c080_gdb_gate.v2",
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "tools": {
     "dosbox": "/opt/homebrew/bin/dosbox",
     "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",

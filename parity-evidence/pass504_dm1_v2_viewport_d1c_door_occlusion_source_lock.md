@@ -7,7 +7,7 @@ movement core and does not claim pixel parity.
 ## ReDMCSB audit
 
 Primary source root:
-~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/.
+~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/.
 
 Exact anchors:
 

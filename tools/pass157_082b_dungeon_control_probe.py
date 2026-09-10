@@ -9,11 +9,11 @@ sys.path.insert(0,str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window,capture_new,classify_file,tap,click_original
 from tools.pass80_original_frame_classifier import sha256
 
-STAGE=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+STAGE=Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
 DOSBOX='/usr/bin/dosbox'
 PROGRAM='DM -vv -sn'
 OUT_ROOT=Path('parity-evidence/verification/pass157_082b_dungeon_control_probe')
-RUN_BASE=Path.home()/'.openclaw/data/firestaff-n2-runs'
+RUN_BASE=Path.home()/'.firestaff/data/firestaff-n2-runs'
 
 SEED_ROUTE=[
   ('key','Return'),('wait',1.0),

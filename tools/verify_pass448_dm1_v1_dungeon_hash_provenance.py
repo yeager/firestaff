@@ -17,11 +17,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-DM_ROOT = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+DM_ROOT = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 CANONICAL_DM1 = DM_ROOT / "_canonical/dm1/DUNGEON.DAT"
 EXTRACTED_PC34 = DM_ROOT / "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
 EUDATA_PC34 = DM_ROOT / "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT"
-RED_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 EVIDENCE = ROOT / "parity-evidence/verification/pass448_dm1_v1_dungeon_hash_provenance.json"
 
 EXPECTED_SHA256 = "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"

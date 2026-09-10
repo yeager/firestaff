@@ -29,7 +29,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 FIRE = ROOT / "src/engine/m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED_ROOT = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DUNVIEW = RED_ROOT / "DUNVIEW.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
 

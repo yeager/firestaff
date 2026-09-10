@@ -14,7 +14,7 @@
     "screenshot promotion without comparator pass"
   ],
   "pass": "pass312_dm1_v1_original_runtime_state_oracle",
-  "primaryEvidence": "ReDMCSB source audit under ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "primaryEvidence": "ReDMCSB source audit under ~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "promotionDecision": {
     "nextRequiredGate": "run matched original-vs-Firestaff viewport comparator on promoted route labels and require non-duplicate, semantically matched outputs before any pixel-parity wording",
     "partyTupleF0128StateOracle": true,

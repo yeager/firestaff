@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB_SOURCE = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 COMMAND_C = REDMCSB_SOURCE / "COMMAND.C"
 CLIKMENU_C = REDMCSB_SOURCE / "CLIKMENU.C"
 MENUDRAW_C = REDMCSB_SOURCE / "MENUDRAW.C"

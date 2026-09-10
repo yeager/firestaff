@@ -13090,7 +13090,7 @@ int dm2_v1_skproject_query_48ae_05ae(
 }
 
 /* Lane A cycle 13 helpers begin here.  Source references are to
-   /Users/bosse/Documents/skproject-codex-ref/SKULLWIN/c_querydb.cpp. */
+   <local-home>/Documents/skproject-codex-ref/SKULLWIN/c_querydb.cpp. */
 
 static uint8_t dm2_v1_skproject_cycle13_tile_at(
     const uint8_t *tile_values,

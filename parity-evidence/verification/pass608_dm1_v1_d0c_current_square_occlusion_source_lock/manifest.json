@@ -94,7 +94,7 @@
   "redmcsbChecks": [
     {
       "claim": "F0128 draws D0L and D0R before the current-square D0C pass.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8537,
@@ -116,7 +116,7 @@
     },
     {
       "claim": "D0C door-side foreground frame work completes and breaks before the common F0115 current-square content pass.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8184,
@@ -158,7 +158,7 @@
     },
     {
       "claim": "D0C stairs-front foreground breaks; pit falls through to ceiling, F0115 with C0x0021, then teleporter field in C715.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8241,
@@ -212,7 +212,7 @@
     },
     {
       "claim": "F0115 draws objects, creatures, and projectiles per ordered cell, then explosions after ordered cells.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 4561,
@@ -246,7 +246,7 @@
     },
     {
       "claim": "PC34 MEDIA720 view-square and cell ordinals make D0C id 0 and define the back-left/back-right cell names used by C0x0021.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 2596,
@@ -276,7 +276,7 @@
     },
     {
       "claim": "PC34/I34E zone ids bind D0C field, frame, thieves-eye, stairs, floor pit, and ceiling pit draw destinations.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 4055,
@@ -321,7 +321,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "pass608_dm1_v1_d0c_current_square_occlusion_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS608_DM1_V1_D0C_CURRENT_SQUARE_OCCLUSION_SOURCE_LOCKED",

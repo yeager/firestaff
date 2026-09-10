@@ -11,7 +11,7 @@ Added a focused probe for the renderer-facing DM1 creature replacement-color sea
 
 - Firestaff `m11_game_view.c` creature aspect table carries `replacementColorSetIndices` from source-backed `G0243_as_Graphic559_CreatureInfo`.
 - Firestaff `m11_creature_replacement_colors()` resolves those nibbles through the VIDRV-style replacement-color table used by `m11_draw_creature_sprite_ex()`.
-- N2 original reference data exists at `~/.openclaw/data/firestaff-original-games/DM/_extracted/` and current runtime `GRAPHICS.DAT` is available through `$HOME/.firestaff/data`.
+- N2 original reference data exists at `~/.firestaff/data/firestaff-original-games/DM/_extracted/` and current runtime `GRAPHICS.DAT` is available through `$HOME/.firestaff/data`.
 
 ## What changed
 

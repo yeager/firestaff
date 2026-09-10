@@ -210,8 +210,8 @@ CSB PC uses `GRAPHICS.DAT` (not `.BDY`). The `.BDY` format is likely the **Amiga
 
 Commands to run on N2:
 ```bash
-ls -la ~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/
-xxd ~/.openclaw/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/ | head -40
+ls -la ~/.firestaff/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/
+xxd ~/.firestaff/data/firestaff-original-games/DM/_extracted/csb-amiga/HardDisk/ | head -40
 ```
 
 ### Task 3: Compare Save/Load Format DM1 vs CSB
@@ -346,7 +346,7 @@ GRAPHICS.DAT hash not yet recorded.
 
 ## Appendix C: Key Source References
 
-**CSB Source:** `~/.openclaw/data/firestaff-csb-source/CSB/src/`
+**CSB Source:** `~/.firestaff/data/firestaff-csb-source/CSB/src/`
 - CSBCode.cpp (11,686 lines) — DBank, LoadDungeon, command dispatch
 - Viewport.cpp (7,297 lines) — viewport rendering
 - Graphics.cpp (3,186 lines) — graphics loading
@@ -354,7 +354,7 @@ GRAPHICS.DAT hash not yet recorded.
 - Chaos.cpp — DSA system
 - Character.cpp — champion management
 
-**ReDMCSB Shared:** `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+**ReDMCSB Shared:** `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 - COMMAND.C (3,242 lines) — command queue, input dispatch
 - DUNGEON.C — dungeon data format
 - CHAMPION.C — champion core

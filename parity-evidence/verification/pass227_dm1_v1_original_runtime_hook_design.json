@@ -11,41 +11,41 @@
       "DATA/DUNGEON.DAT": {
         "exists": false,
         "file": [
-          "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT: cannot open `/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT' (No such file or directory)"
+          "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT: cannot open `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT' (No such file or directory)"
         ],
-        "path": "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+        "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
         "sha256": null
       },
       "DATA/GRAPHICS.DAT": {
         "exists": false,
         "file": [
-          "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT: cannot open `/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT' (No such file or directory)"
+          "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT: cannot open `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT' (No such file or directory)"
         ],
-        "path": "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+        "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
         "sha256": null
       },
       "DM.EXE": {
         "exists": false,
         "file": [
-          "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: cannot open `/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE' (No such file or directory)"
+          "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: cannot open `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE' (No such file or directory)"
         ],
-        "path": "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+        "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
         "sha256": null
       },
       "FIRES": {
         "exists": false,
         "file": [
-          "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES: cannot open `/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES' (No such file or directory)"
+          "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES: cannot open `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES' (No such file or directory)"
         ],
-        "path": "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
+        "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
         "sha256": null
       },
       "VGA": {
         "exists": false,
         "file": [
-          "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA: cannot open `/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA' (No such file or directory)"
+          "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA: cannot open `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA' (No such file or directory)"
         ],
-        "path": "/home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA",
+        "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/VGA",
         "sha256": null
       }
     },
@@ -256,8 +256,8 @@
     ],
     "schema": "dm1_v1_original_runtime_trace.minimal.v1"
   },
-  "redmcsb_source_root": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
+  "redmcsb_source_root": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass227_dm1_v1_original_runtime_hook_design.v1",
   "source_seams": [
     {

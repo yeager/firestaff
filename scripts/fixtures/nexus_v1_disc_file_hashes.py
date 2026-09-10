@@ -1,5 +1,5 @@
 # SHA256 hashes of all 138 files from Sega Saturn disc T-9111G V1.003 (~115 MB ISO)
-# Source: /Users/bosse/.firestaff/data/nexus
+# Source: <local-home>/.firestaff/data/nexus
 # Computed: 2026-05-27
 
 DISC_HASH = {

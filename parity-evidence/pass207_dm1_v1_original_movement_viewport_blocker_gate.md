@@ -33,10 +33,10 @@ Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox
 
 ## Current N2 original-runner attempt
 
-- pass206 manifest: `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
+- pass206 manifest: `<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass206_dm1_v1_original_runner_minimal_gate/manifest.json`
 - pass206 status: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`
 - attempt status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
-- attempt dir: `/Users/bosse/Documents/Firestaff/verification-screens/pass112-n2-stable-hud-route`
+- attempt dir: `<local-home>/Documents/Firestaff/verification-screens/pass112-n2-stable-hud-route`
 - capture count / dimensions: `6` / `{'320x200': 6}`
 - viewport crop PPM count: `0`
 - class counts: `{'dungeon_gameplay': 2, 'wall_closeup': 4}`

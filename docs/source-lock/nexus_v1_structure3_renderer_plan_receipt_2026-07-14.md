@@ -4,7 +4,7 @@ Date: 2026-07-14
 
 ## Evidence
 
-`FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus` supplies the
+`FIRESTAFF_NEXUS_DATA_DIR=<local-home>/.firestaff/data/nexus` supplies the
 original `LEV00.DGN` through `LEV15.DGN` retail corpus. The focused corpus
 target parses all 16 files and records 1,144 Structure3 entries and 18,478
 entry-local face-to-normal ordinal pairs. All 18,478 normal vectors meet the

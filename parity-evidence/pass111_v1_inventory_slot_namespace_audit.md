@@ -5,10 +5,10 @@ Scope: DM1/V1 inventory lane, specifically inventory panel slot boxes and item-i
 ## References checked
 
 - Worker VM original archive data:
-  - `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
-  - `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
-- Greatstone atlas index: `~/.openclaw/data/firestaff-greatstone-atlas/index/keyword_hits.json`
-- ReDMCSB reference directory: `~/.openclaw/data/firestaff-redmcsb-source/`
+  - `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
+  - `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
+- Greatstone atlas index: `~/.firestaff/data/firestaff-greatstone-atlas/index/keyword_hits.json`
+- ReDMCSB reference directory: `~/.firestaff/data/firestaff-redmcsb-source/`
 
 Checksums verified by the pass-111 tool:
 

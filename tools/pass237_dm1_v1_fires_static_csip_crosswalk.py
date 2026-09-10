@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT_DIR = ROOT / "parity-evidence/verification/pass237_dm1_v1_fires_static_csip_crosswalk"
 REPORT = ROOT / "parity-evidence/pass237_dm1_v1_fires_static_csip_crosswalk.md"
 EXPECTED_SHA256 = "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94"

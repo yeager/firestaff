@@ -3,7 +3,7 @@ set -eu
 
 HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
 GRAPHICS_DAT=${1:-"$HOME/.firestaff/data/GRAPHICS.DAT"}
-TITLE_DAT=${2:-"$HOME/.openclaw/data/redmcsb-original/TITLE"}
+TITLE_DAT=${2:-"$HOME/.firestaff/data/redmcsb-original/TITLE"}
 
 cc -std=c99 -Wall -Wextra -pedantic \
   -DCOMPILE_H '-DSEPARATOR=,' '-DFINAL_SEPARATOR=)' -DSTATICFUNCTION=static -DHUGE= -Dhuge= \

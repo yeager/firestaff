@@ -18,10 +18,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DM2_CANONICAL = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm2"
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DEFAULT_SKPROJECT_MIRROR = Path.home() / ".openclaw/data/firestaff-dm2-sources/skproject.git"
-DEFAULT_SPHENX_CACHE = Path.home() / ".openclaw/data/firestaff-dm2-sources/sphenx-skwin"
+DEFAULT_DM2_CANONICAL = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm2"
+REDMCSB_SOURCE = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DEFAULT_SKPROJECT_MIRROR = Path.home() / ".firestaff/data/firestaff-dm2-sources/skproject.git"
+DEFAULT_SPHENX_CACHE = Path.home() / ".firestaff/data/firestaff-dm2-sources/sphenx-skwin"
 DEFAULT_EVIDENCE = ROOT / "parity-evidence/verification/dm2_v1_phase0_provenance_gate/manifest.json"
 
 SKPROJECT_REMOTE = "https://github.com/gbsphenx/skproject"

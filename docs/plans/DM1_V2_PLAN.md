@@ -2,7 +2,7 @@
 
 **Status:** Draft 2026-05-26 (subagent on N2 / Firestaff-Worker-VM)
 **Repo:** `/home/trv2/work/firestaff`
-**Reference source code:** `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+**Reference source code:** `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 **Scope:** DM1 (V1 gameplay route + V2 presentation shell). CSB/DM2/Nexus are not covered here.
 
 ---

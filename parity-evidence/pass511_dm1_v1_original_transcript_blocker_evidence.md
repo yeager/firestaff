@@ -18,13 +18,13 @@ DM1 V1 original route/capture promotion is now blocked specifically on an extern
 
 ## N2 Local References
 
-- /home/trv2/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md exists=True sha256=b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d
-- /home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__d_articles_dungeon_html.html.html exists=True sha256=c24aa9436cf8ea06041add1a93ba88f00f69677584396bf6c579bfe06b621f8e
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json exists=True sha256=506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE exists=True sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
-- /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/Dungeon-Master_DOS_EN.zip exists=True sha256=aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275
+- /home/trv2/.firestaff/data/firestaff-greatstone-atlas/index/SUMMARY.md exists=True sha256=b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d
+- /home/trv2/.firestaff/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__d_articles_dungeon_html.html.html exists=True sha256=c24aa9436cf8ea06041add1a93ba88f00f69677584396bf6c579bfe06b621f8e
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.json exists=True sha256=506c65d3a1aad453c3040c9c0031fb7419d6ec62d5b97f621d6494906afd9494
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE exists=True sha256=adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745
+- /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/Dungeon-Master_DOS_EN.zip exists=True sha256=aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275
 
 ## Current Route/Capture Artifacts
 

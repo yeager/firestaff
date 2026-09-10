@@ -2,7 +2,7 @@
 **Pass:** H2312
 **Date:** 2026-05-26
 **Schema:** `firestaff.dm2_v1.canonical_asset_manifest.v1`
-**Data root:** `/Users/bosse/.firestaff/data/dm2`
+**Data root:** `<local-home>/.firestaff/data/dm2`
 
 ## Summary
 - Total tracked assets: 2

@@ -18,7 +18,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:124",
       "line": 124,
       "lineText": "        if (!G0415_ui_LeaderEmptyHanded)",
@@ -26,7 +26,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:744",
       "line": 744,
       "lineText": "        L0826_ps_Champion = &M516_CHAMPIONS[L0822_ui_ChampionIndex = G0305_ui_PartyChampionCount - 1];",
@@ -34,7 +34,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:2299",
       "line": 2299,
       "lineText": "        AL1102_ui_InventoryChampionOrdinal = G0423_i_InventoryChampionOrdinal;",
@@ -42,7 +42,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "COMMAND.C:1956",
       "line": 1956,
       "lineText": "STATICFUNCTION void F0378_COMMAND_ProcessType81_ClickInPanel(",
@@ -50,7 +50,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "id": "COMMAND.C:1990",
       "line": 1990,
       "lineText": "                                F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel(L1157_ui_Command);",
@@ -58,7 +58,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "id": "MOVESENS.C:1502",
       "line": 1502,
       "lineText": "                                        F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData);",
@@ -66,7 +66,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
       "id": "MOVESENS.C:1498",
       "line": 1498,
       "lineText": "                                        F0297_CHAMPION_PutObjectInLeaderHand(L0762_T_ThingOnSquare, C1_TRUE);",
@@ -74,7 +74,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "id": "DEFS.H:0",
       "line": 0,
       "lineText": "",
@@ -82,7 +82,7 @@
       "status": "DRIFT"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.v1",
   "scope": "DM1 V1 mirror candidate: a single tick drives F0282(C162 cancel) then F0280 (new sensor) so the C040 panel goes 568 -> 0 -> 568 with a fresh candidate ordinal and a fresh party count mid-tick. Disjoint from the chest cancel-reopen-pickup gate (M569 chest path, not M568 mirror) and the C045 food/water gates.",
   "sourceChecks": [

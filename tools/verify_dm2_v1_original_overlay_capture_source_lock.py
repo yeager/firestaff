@@ -35,15 +35,15 @@ REPO = Path(__file__).resolve().parent.parent
 # Search paths for SKULLWIN source. Newest entry wins; missing paths degrade
 # gracefully so the verifier can still report partial success.
 DEFAULT_SKULLWIN_SEARCH = (
-    Path.home() / ".openclaw/data/firestaff-dm2-sources/skproject.git/SKULLWIN",
-    Path.home() / ".openclaw/data/firestaff-dm2-sources/skproject/SKULLWIN",
-    Path("/Volumes/Extern-disk/openclaw-data/firestaff/skproject-source/SKULLWIN"),
+    Path.home() / ".firestaff/data/firestaff-dm2-sources/skproject.git/SKULLWIN",
+    Path.home() / ".firestaff/data/firestaff-dm2-sources/skproject/SKULLWIN",
+    Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/skproject-source/SKULLWIN"),
     REPO / "skproject-source/SKULLWIN",
     REPO / "skproject/SKULLWIN",
     # A read-only local reference checkout. It is deliberately not a runtime
     # dependency and is ignored from releases; keeping it under reference/
     # lets a developer reproduce source locks without a machine-specific
-    # ~/.openclaw path.
+    # ~/.firestaff path.
     REPO / "reference/skproject/SKULLWIN",
 )
 

@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DEFAULT_OUT = ROOT / "parity-evidence/verification/pass224_dm1_v1_runtime_state_probe_scaffold.json"
 DEFAULT_REPORT = ROOT / "parity-evidence/pass224_dm1_v1_runtime_state_probe_scaffold.md"
 CAPTURE_SCRIPT = ROOT / "scripts/dosbox_dm1_original_viewport_reference_capture.sh"

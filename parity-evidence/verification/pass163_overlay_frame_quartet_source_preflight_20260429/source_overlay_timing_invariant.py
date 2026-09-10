@@ -13,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-SRC = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+SRC = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 REPO = Path("~/work/firestaff").expanduser()
 OUT = REPO / "parity-evidence/verification/pass163_overlay_frame_quartet_source_preflight_20260429/source_overlay_timing_invariant.json"
 

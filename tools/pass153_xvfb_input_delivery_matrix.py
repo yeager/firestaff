@@ -7,7 +7,7 @@ sys.path.insert(0,str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original
 from tools.pass80_original_frame_classifier import sha256
 # Capture diagnostics must use an explicit original-media stage.  The old
-# hidden .openclaw extraction was machine-specific and could silently test a
+# hidden .firestaff extraction was machine-specific and could silently test a
 # stale copy instead of the user-selected PC 3.4 corpus.  Match the canonical
 # capture runner: callers may set DM1_ORIGINAL_STAGE_DIR, otherwise use the
 # repository-owned staging location (which is intentionally absent in CI).

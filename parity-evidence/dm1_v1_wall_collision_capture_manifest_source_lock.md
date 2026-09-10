@@ -15,7 +15,7 @@ This closes a narrow movement/collision runtime-evidence gap: wall/collision rep
 
 - DM1 PC canonical `DUNGEON.DAT` SHA-256: `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`.
 - DM1 PC canonical `GRAPHICS.DAT` SHA-256: `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`.
-- The verifier checks both canonical anchors under `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/` and the runtime `FIRESTAFF_DATA` copies before accepting generated captures.
+- The verifier checks both canonical anchors under `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/` and the runtime `FIRESTAFF_DATA` copies before accepting generated captures.
 
 ## Runtime evidence
 

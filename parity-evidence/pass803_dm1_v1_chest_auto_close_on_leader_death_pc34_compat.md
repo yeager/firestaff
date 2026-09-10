@@ -4,4 +4,4 @@ Source-locked: CHAMPION.C F0319:1552-1607 (F0319_CHAMPION_Kill: CurrentHealth=0,
 
 Result: FAIL
 Tests: {'passes': 0, 'fails': 0}
-Failures: ['binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat']
+Failures: ['binary not found: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_chest_auto_close_on_leader_death_pc34_compat']

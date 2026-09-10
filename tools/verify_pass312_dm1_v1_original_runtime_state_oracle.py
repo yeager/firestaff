@@ -18,7 +18,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass312_dm1_v1_original_runtime_state_oracle"
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT_JSON = ROOT / f"parity-evidence/verification/{PASS}.json"
 OUT_MD = ROOT / f"parity-evidence/{PASS}.md"
 PASS278 = ROOT / "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
@@ -87,7 +87,7 @@ def build() -> dict[str, Any]:
         "status": "PASS_STATE_ORACLE_SOURCE_RUNTIME_BOUND" if state_oracle_ok else "BLOCKED_STATE_ORACLE_INCOMPLETE",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "scope": "DM1 V1 original-runtime state oracle for command input -> queue write -> party tuple mutation -> F0128 viewport draw consumption. No pixel parity or bitmap publication is claimed.",
-        "primaryEvidence": "ReDMCSB source audit under ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+        "primaryEvidence": "ReDMCSB source audit under ~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
         "sourceAudit": source,
         "runtimeSupport": {
             "manifest": "parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json",

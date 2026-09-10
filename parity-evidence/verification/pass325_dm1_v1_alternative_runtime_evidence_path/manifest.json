@@ -155,7 +155,7 @@
       "ok": true
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source",
   "status": "PASS_ALTERNATIVE_RUNTIME_EVIDENCE_PATH_FOUND",
   "tests": [
     {

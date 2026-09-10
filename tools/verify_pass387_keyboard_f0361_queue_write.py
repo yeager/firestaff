@@ -33,7 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass387_keyboard_f0361_queue_write"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path("/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 
 ADDR = {
     "F0361_COMMAND_ProcessKeyPress": "22F7:0407",

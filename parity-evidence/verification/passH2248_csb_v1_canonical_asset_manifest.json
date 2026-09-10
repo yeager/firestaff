@@ -1,12 +1,12 @@
 {
   "schema": "firestaff.csb_v1.canonical_asset_manifest.v1",
   "manifest_id": "passH2248_csb_v1_canonical_asset_manifest",
-  "data_root": "/Users/bosse/.firestaff/data/csb",
+  "data_root": "<local-home>/.firestaff/data/csb",
   "source_anchors": [
     {
       "id": "redmcsb_csb_dungeon_ids",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "519-523",
       "needles": [
         "C12_DUNGEON_CSB_PRISON",
@@ -18,7 +18,7 @@
     {
       "id": "redmcsb_save_header_format",
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/SAVEHEAD.C",
       "lines": "14-63",
       "needles": [
         "F0417_SAVEUTIL_GetChecksumAndObfuscate",
@@ -30,7 +30,7 @@
     {
       "id": "csb_lineage_payload_contract",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/README",
       "lines": "14-21",
       "needles": [
         "dungeon.dat",
@@ -45,7 +45,7 @@
     {
       "id": "csb_lineage_graphics_open",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Graphics.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Graphics.cpp",
       "lines": "1814-1915",
       "needles": [
         "OpenCSBgraphicsFile",
@@ -58,7 +58,7 @@
     {
       "id": "csb_lineage_csbgame_save",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Chaos.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Chaos.cpp",
       "lines": "507-623",
       "needles": [
         "CSBGAME",
@@ -72,7 +72,7 @@
     {
       "id": "csb_lineage_disk_type",
       "source": "CSB lineage",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/Reqdisk.cpp",
       "lines": "1-30",
       "needles": [
         "GetDiskType_CPSB",

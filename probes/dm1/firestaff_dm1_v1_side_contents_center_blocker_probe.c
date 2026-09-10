@@ -6,7 +6,7 @@
  * Focused DM1 V1 viewport/walls occlusion source probe.
  *
  * Primary audit source (N2-local):
- *   ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C
+ *   ~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C
  *
  * Source-locked slice:
  * - DUNVIEW.C:8446-8542: F0128 draws each depth row side cells before the
@@ -378,7 +378,7 @@ int main(int argc, char **argv)
     int ok = 1;
 
     if (!home) home = "/home/trv2";
-    snprintf(redmcsb_path, sizeof(redmcsb_path), "%s/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C", home);
+    snprintf(redmcsb_path, sizeof(redmcsb_path), "%s/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C", home);
     snprintf(m11_path, sizeof(m11_path), "%s/src/engine/m11_game_view.c", root);
     snprintf(view3d_c_path, sizeof(view3d_c_path), "%s/src/dm1/dm1_v1_viewport_3d_pc34_compat.c", root);
     snprintf(view3d_h_path, sizeof(view3d_h_path), "%s/include/dm1_v1_viewport_3d_pc34_compat.h", root);

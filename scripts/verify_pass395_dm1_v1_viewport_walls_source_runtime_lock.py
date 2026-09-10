@@ -18,7 +18,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
 )).expanduser()
 LOCAL_C = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 LOCAL_H = ROOT / "include/dm1_v1_viewport_3d_pc34_compat.h"

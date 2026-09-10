@@ -12,9 +12,9 @@ PASS = "pass345_dm1_v1_route_to_live_viewport_bridge"
 ROOT = Path(__file__).resolve().parents[1]
 VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
-DEFAULT_REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DEFAULT_DM1_DATA = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-BUILD_DIR = Path(os.environ.get("FIRESTAFF_PASS345_BUILD_DIR", str(Path.home() / ".openclaw/data/firestaff-builds/pass345-verify")))
+DEFAULT_REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DEFAULT_DM1_DATA = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1"
+BUILD_DIR = Path(os.environ.get("FIRESTAFF_PASS345_BUILD_DIR", str(Path.home() / ".firestaff/data/firestaff-builds/pass345-verify")))
 SOURCE_LOCKS = [
     ("COMMAND.C", 252, 260, ["G0459_as_Graphic561_SecondaryKeyboardInput_Movement", "C001_COMMAND_TURN_LEFT", "C003_COMMAND_MOVE_FORWARD", "C002_COMMAND_TURN_RIGHT"]),
     ("COMMAND.C", 272, 305, ["0xAB34", "0xAB35", "0xAB36", "0x9B41"]),

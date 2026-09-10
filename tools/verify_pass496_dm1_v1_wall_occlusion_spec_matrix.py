@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+SRC = Path.home() / '.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 DUNVIEW = SRC / 'DUNVIEW.C'
 LOCAL_C = ROOT / 'src/dm1/dm1_v1_viewport_3d_pc34_compat.c'
 LOCAL_PROBE = ROOT / 'probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c'

@@ -8,63 +8,63 @@
   },
   "firestaffLocks": [
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
       "line": 1233,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
       "line": 2810,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
       "line": 2335,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
       "line": 1007,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_expected_matrix",
       "line": 30,
       "needle": "struct ExpectedWallContract",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_source_output",
       "line": 66,
       "needle": "wallCompositionMatrix source=",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "door_contract_probe_output",
       "line": 128,
       "needle": "doorFrontComposition source=",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_wall_spec_type",
       "line": 721,
       "needle": "DM1_ViewportWallDrawSpec",
       "ok": true
     },
     {
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_door_front_spec_type",
       "line": 357,
       "needle": "DM1_ViewportDoorFrontOcclusionSpec",
@@ -102,7 +102,7 @@
   "sourceLocks": [
     {
       "claim": "F0128 composes floor/ceiling and wall squares in far-to-near order, then hands the composed viewport to F0097.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "id": "dunview_f0128_far_to_near_then_present",
       "lines": [
         8318,
@@ -146,7 +146,7 @@
     },
     {
       "claim": "F0097 marks the redraw request and reaches the PC34 viewport blit boundary for G0296.",
-      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "drawview_f0097_present_boundary",
       "lines": [
         709,
@@ -167,7 +167,7 @@
       ]
     }
   ],
-  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
   "timestampUtc": "2026-09-04T18:24:26.350810+00:00"
 }

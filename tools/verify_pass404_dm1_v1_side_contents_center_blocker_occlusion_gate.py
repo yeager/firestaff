@@ -26,8 +26,8 @@ OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 SRC = ROOT / "src/engine/m11_game_view.c"
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin/Viewport.cpp"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+CSBWIN = Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin/Viewport.cpp"
 
 
 def line_no(text: str, offset: int) -> int:

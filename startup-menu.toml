@@ -139,5 +139,5 @@ cloud_sync_policy = 0
 cloud_sync_dir = ""
 v22_modern_assets_installed = 0
 artpack_path = ""
-data_dir = "/home/yeager/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+data_dir = "<local-home>/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
 last_save_path = ""

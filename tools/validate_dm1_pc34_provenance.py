@@ -21,7 +21,7 @@ EXPECTED = {
     "SONG.DAT": ("71e1ba82b7f3cfeb99ae181bd9d685201bdc2b11f42643460120ddcb3470c177", 162482),
 }
 
-DEFAULT_DM_ROOT = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+DEFAULT_DM_ROOT = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 DEFAULT_ARCHIVE = DEFAULT_DM_ROOT / "Game,Dungeon_Master,DOS,Software.7z"
 DEFAULT_EXTRACTED_DATA = DEFAULT_DM_ROOT / "_extracted/dm-pc34/DungeonMasterPC34/DATA"
 

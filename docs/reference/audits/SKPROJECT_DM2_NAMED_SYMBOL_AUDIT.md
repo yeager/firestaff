@@ -4,7 +4,7 @@
 
 This is a line-addressable inventory of callable named definitions from the
 local skproject source authority at
-`/Users/bosse/Documents/skproject-codex-ref`. It covers the readable project
+`<local-home>/Documents/skproject-codex-ref`. It covers the readable project
 owned `.cpp` sources under `SKWIN/` and `SKULLWIN/`, excluding bundled
 third-party SDK trees. The companion TSV has one row per extracted definition
 and is the authoritative machine-readable ledger.

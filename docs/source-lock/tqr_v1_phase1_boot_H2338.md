@@ -190,4 +190,4 @@ All API surface, flag defaults, save-enforcement logic, diagnostic strings, and 
 - http://dmweb.free.fr/games/therons-quest/
 - Provenance gate: `docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md`
 - Nexus boot profile pattern: `include/firestaff_nexus_v1_boot_profile.h`, `src/nexus/nexus_v1_boot_profile.c`
-- ReDMCSB: `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/`
+- ReDMCSB: `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/`

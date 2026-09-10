@@ -8,7 +8,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 
 def read(path: Path) -> str:

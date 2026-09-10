@@ -13,11 +13,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
-DM1_DATA = Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"))
-BUILD_DIR = Path(os.environ.get("FIRESTAFF_PASS398_BUILD_DIR", str(Path.home() / ".openclaw/data/firestaff-builds/pass398-runtime-redraw")))
-HOME_DIR = Path(os.environ.get("FIRESTAFF_PASS398_HOME_DIR", str(Path.home() / ".openclaw/data/firestaff-homes/pass398-runtime-redraw")))
+DM1_DATA = Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1"))
+BUILD_DIR = Path(os.environ.get("FIRESTAFF_PASS398_BUILD_DIR", str(Path.home() / ".firestaff/data/firestaff-builds/pass398-runtime-redraw")))
+HOME_DIR = Path(os.environ.get("FIRESTAFF_PASS398_HOME_DIR", str(Path.home() / ".firestaff/data/firestaff-homes/pass398-runtime-redraw")))
 PASS = "pass398_runtime_redraw_blocker"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"

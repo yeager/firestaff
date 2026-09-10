@@ -135,7 +135,7 @@ the verification suite itself (no sub-artifact to source-lock).
   (outside workspace). Anchors are documented for reference; scripts use
   `if SKPROJECT.exists()` guards.
 - SKULL.ASM is the IBM PC disassembly at
-  `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/`
+  `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source/`
 
 ---
 
@@ -157,7 +157,7 @@ the verification suite itself (no sub-artifact to source-lock).
 ## Implementation Note
 
 All five verify scripts use `ROOT = Path(__file__).resolve().parents[1]`,
-which resolves to the `.openclaw/` parent directory. This is intentional:
-parity-evidence lives at `~/.openclaw/parity-evidence/` (not inside the
+which resolves to the `.firestaff/` parent directory. This is intentional:
+parity-evidence lives at `~/.firestaff/parity-evidence/` (not inside the
 firestaff repo root), consistent with the CSB V1 Phase 7 pattern.
-Output goes to `~/.openclaw/parity-evidence/verification/passH2312_*`.
+Output goes to `~/.firestaff/parity-evidence/verification/passH2312_*`.

@@ -24,7 +24,7 @@ Command:
 RUN=<N2_RUNS>/20260428-1015-viewport-world-followup
 ROUTE='wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800 shot:start kp4 wait:800 shot:kp4a kp4 wait:800 shot:kp4b kp8 wait:800 shot:kp8a kp6 wait:800 shot:kp6a kp8 wait:800 shot:kp8b'
 OUT_DIR="$RUN/probe-turn-left-forward-mix" \
-DM1_ORIGINAL_STAGE_DIR="$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
+DM1_ORIGINAL_STAGE_DIR="$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 WAIT_BEFORE_INPUT_MS=5000 \
@@ -72,7 +72,7 @@ Command:
 RUN=<N2_RUNS>/20260428-1015-viewport-world-followup
 ROUTE='wait:7000 enter wait:1200 click:250,53 wait:1200 click:247,135 wait:1200 kp6 wait:800 shot:start click:246,140 wait:800 shot:c246_140 click:306,140 wait:800 shot:c306_140 click:276,140 wait:800 shot:c276_140 click:276,170 wait:800 shot:c276_170 click:246,170 wait:800 shot:c246_170'
 OUT_DIR="$RUN/probe-unlocked-mouse-controls" \
-DM1_ORIGINAL_STAGE_DIR="$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
+DM1_ORIGINAL_STAGE_DIR="$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 WAIT_BEFORE_INPUT_MS=5000 \

@@ -4,7 +4,7 @@ import json, sys
 from pathlib import Path
 from PIL import Image, ImageChops, ImageStat
 REPO=Path(__file__).resolve().parent.parent
-RUN141=Path.home()/".openclaw/data/firestaff-n2-runs/20260428-192537-pass141-pm-f1-dungeon-control-readiness"
+RUN141=Path.home()/".firestaff/data/firestaff-n2-runs/20260428-192537-pass141-pm-f1-dungeon-control-readiness"
 
 def stats(img):
     rgb=img.convert('RGB')

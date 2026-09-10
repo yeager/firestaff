@@ -30,9 +30,9 @@ Key source facts verified:
 
 Reference presence also recorded:
 
-- `~/.openclaw/data/firestaff-redmcsb-source/`
-- `~/.openclaw/data/firestaff-greatstone-atlas/`
-- `~/.openclaw/data/firestaff-original-games/DM/`
+- `~/.firestaff/data/firestaff-redmcsb-source/`
+- `~/.firestaff/data/firestaff-greatstone-atlas/`
+- `~/.firestaff/data/firestaff-original-games/DM/`
 - local extracted DM PC 3.4 `TITLE`, `GRAPHICS.DAT`, `DUNGEON.DAT`, `SONG.DAT` with hashes in the JSON manifest.
 
 ## Matrix impact

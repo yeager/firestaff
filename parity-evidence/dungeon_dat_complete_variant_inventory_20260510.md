@@ -2,7 +2,7 @@
 
 **Timestamp:** 2026-05-10T11:12:08Z
 **Model:** qwen3.6:35b, not Qwen 3.6 Plus; 65k context
-**Source root:** `/Users/bosse/.openclaw/data/firestaff-original-games/DM/`
+**Source root:** `<local-home>/.firestaff/data/firestaff-original-games/DM/`
 
 ## Counts
 

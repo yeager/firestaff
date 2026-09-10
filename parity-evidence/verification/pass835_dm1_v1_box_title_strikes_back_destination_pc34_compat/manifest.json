@@ -15,7 +15,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:9",
       "line": 9,
       "lineText": "int16_t G0003_ai_Graphic562_Box_Title_StrikesBack_Destination[4];",
@@ -23,7 +23,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:125",
       "line": 125,
       "lineText": "int16_t G0006_ai_Graphic562_Box_Entrance_DungeonView[4] = { 0, 223, 3, 138 };",
@@ -31,7 +31,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:545",
       "line": 545,
       "lineText": "int16_t G0003_ai_Graphic562_Box_Title_StrikesBack_Destination[4] = { 0, 319, 118, 174 };",
@@ -39,7 +39,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
       "id": "TITLE.C:233",
       "line": 233,
       "lineText": "        F0132_VIDEO_Blit(L1389_puc_Bitmap_Master_StrikesBack, G0348_Bitmap_Screen, G0003_ai_Graphic562_Box_Title_StrikesBack_Destination, 0, 0, C160_BYTE_WIDTH_SCREEN, C160_BYTE_WIDTH_SCREEN, C00_COLOR_BLACK);",
@@ -47,7 +47,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C",
       "id": "TITLE.C:236",
       "line": 236,
       "lineText": "        F0132_VIDEO_Blit(L1389_puc_Bitmap_Master_StrikesBack, G0348_Bitmap_Screen, G0003_ai_Graphic562_Box_Title_StrikesBack_Destination, 0, 0, C160_BYTE_WIDTH_SCREEN, C160_BYTE_WIDTH_SCREEN, C00_COLOR_BLACK, 57, C200_HEIGHT_SCREEN);",
@@ -55,7 +55,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass835_dm1_v1_box_title_strikes_back_destination_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0003_ai_Graphic562_Box_Title_StrikesBack_Destination[4] = {0, 319, 118, 174}. The {X, Y, W, H} byte-coordinate sub-rectangle for the Strikes Back title-view backdrop blit during the door-opening animation. Read sites: TITLE.C:233/236 F0132_VIDEO_Blit(Strikes Back title dungeon-view backdrop, G0003, 0, 0, byteWidth, byteWidth, CM1_COLOR_NO_TRANSPARENCY).",
   "sourceChecks": [

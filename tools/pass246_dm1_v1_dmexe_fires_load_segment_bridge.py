@@ -10,8 +10,8 @@ except ModuleNotFoundError:
         sys.path.append(str(site))
     import pexpect
 ROOT=Path(__file__).resolve().parents[1]
-ORIG=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
-UNLZEXE=Path.home()/'.openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Base/UNLZEXE/unlzexe.exe'
+ORIG=Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+UNLZEXE=Path.home()/'.firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Base/UNLZEXE/unlzexe.exe'
 OUT=ROOT/'parity-evidence/verification/pass246_dm1_v1_dmexe_fires_load_segment_bridge'
 REPORT=ROOT/'parity-evidence/pass246_dm1_v1_dmexe_fires_load_segment_bridge.md'
 EXPECTED='fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94'
@@ -44,7 +44,7 @@ def validate_cached_artifact(missing:list[str])->bool:
 def missing_runtime_dependencies()->list[str]:
     required=['dosbox-debug','Xvfb','xdotool']
     missing=[name for name in required if shutil.which(name) is None]
-    if shutil.which('wine') is None and shutil.which('wine64') is None and not (Path.home()/'.openclaw/data/unlzexe/unlzexe').exists():
+    if shutil.which('wine') is None and shutil.which('wine64') is None and not (Path.home()/'.firestaff/data/unlzexe/unlzexe').exists():
         missing.append('wine-or-native-unlzexe')
     return missing
 def sha256(p:Path)->str:

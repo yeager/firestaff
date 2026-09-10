@@ -1,6 +1,6 @@
 {
   "schema": "pass452_dm1_v1_hall_original_route_state_blocker.v1",
   "status": "BLOCKED_EXTERNAL_HALL_ARTIFACT_MISSING",
-  "artifact_manifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
+  "artifact_manifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
   "blocker": "external Hall capture artifact is not mounted on this host"
 }

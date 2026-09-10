@@ -18,11 +18,11 @@ sys.path.insert(0, str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original, xdo, run
 from tools.pass80_original_frame_classifier import sha256
 
-STAGE = Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+STAGE = Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
 DOSBOX = '/usr/bin/dosbox'
 OUT_ROOT = Path('parity-evidence/verification/pass174_redmcsb_c080_delivery_probe')
-RUN_BASE_ROOT = Path.home()/'.openclaw/data/firestaff-n2-runs'
-SOURCE_ROOT = '~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+RUN_BASE_ROOT = Path.home()/'.firestaff/data/firestaff-n2-runs'
+SOURCE_ROOT = '~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 SOURCE_AUDIT = [
   {'file':'COMMAND.C','lines':'397-403,2322-2323','claim':'C007_ZONE_VIEWPORT left-click maps to C080_COMMAND_CLICK_IN_DUNGEON_VIEW, which calls F0377_COMMAND_ProcessType80_ClickInDungeonView.'},
   {'file':'CLIKVIEW.C','lines':'348-349','claim':'PC build converts screen coordinates to viewport-relative by subtracting G2067_i_ViewportScreenX/G2068_i_ViewportScreenY.'},

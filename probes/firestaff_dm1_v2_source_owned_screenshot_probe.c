@@ -343,7 +343,7 @@ static const char* k_default_dungeon_paths[] = {
     "~/.firestaff/data/dm1/DUNGEON.DAT",
     "~/.firestaff/data/dm1-multilingual/DUNGEON.DAT",
     "~/.firestaff/asset-cache/dm1/DUNGEON.DAT",
-    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     NULL
 };
 
@@ -735,7 +735,7 @@ int main(int argc, char** argv) {
         printf("      ~/.firestaff/data/dm1/DUNGEON.DAT\n");
         printf("      ~/.firestaff/data/dm1-multilingual/DUNGEON.DAT\n");
         printf("      ~/.firestaff/asset-cache/dm1/DUNGEON.DAT\n");
-        printf("      ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\n");
+        printf("      ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\n");
         printf("      Receipt file path: %s\n", receipt_path);
         return 0;
     }

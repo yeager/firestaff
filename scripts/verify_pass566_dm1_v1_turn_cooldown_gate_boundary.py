@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 PASS = "pass566_dm1_v1_turn_cooldown_gate_boundary"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 OUT_JSON = OUT_DIR / "manifest.json"

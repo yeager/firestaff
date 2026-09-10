@@ -8,7 +8,7 @@ Static ReDMCSB source path proves the intended post-route transition: GAMELOOP r
 
 ## Evidence
 
-- Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - GAMELOOP order verified: F0128 draw precedes wait-loop reset; wait loop resets `G0321`, calls `F0380`, then loops until stop-wait/game-tick predicates allow exit.
 - COMMAND dispatch verified: queued turn commands call `F0365`; queued movement commands call `F0366`.
 - CLIKMENU stop-wait writes verified: both `F0365` and `F0366` set `G0321_B_StopWaitingForPlayerInput = C1_TRUE`.

@@ -288,7 +288,7 @@ screen-text wrapper, the MNS host renderer, or the procedural V2 HUD modules.
 The linked viewport returns no colour triangle, fallback palette, or procedural
 model when Saturn material is absent.
 
-The retail run with `/Users/bosse/.firestaff/data/nexus` passes focused
+The retail run with `<local-home>/.firestaff/data/nexus` passes focused
 regressions for DM.BIN startup anchors, HUD layout (80 records), HUD hit rects
 (40 records), champion panel, MENU.BPK surface classification, SLEV/SAL discovery,
 SAL provenance, audio runtime receipt, SAL decoding, TITLE MAPD/TIBG, and save

@@ -20,8 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 HDR  = ROOT / "include/dm1_v1_projectile_explosion_render_pc34_compat.h"
 IMPL = ROOT / "src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c"
 VIEW = ROOT / "src/engine/m11_game_view.c"
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
-DEFS    = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
+DEFS    = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H").expanduser()
 
 def line_no(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1

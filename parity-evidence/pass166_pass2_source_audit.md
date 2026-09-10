@@ -15,7 +15,7 @@ The recorded pass 2 route shows `title_or_menu` / `entrance_menu` states around 
 
 Source root checked:
 
-`~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+`~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 ### 1. Entrance enter click is source-valid, but only loads the dungeon
 

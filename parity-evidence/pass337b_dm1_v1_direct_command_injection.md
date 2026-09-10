@@ -23,7 +23,7 @@ That bypasses OS keypad delivery because the command id is already resolved befo
 
 ## ReDMCSB source audit
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ### `INPUT.C`
 

@@ -119,5 +119,5 @@ titleFrontendOriginalFrameCount=54
 titleFrontendFallbackFrameCount=0
 titleFrontendHandoffReadyCount=2
 titleFrontendHeldLastFrameCount=1
-titleFrontendTitleDatPath=<local-home>/.openclaw/data/redmcsb-original/TITLE
+titleFrontendTitleDatPath=<local-home>/.firestaff/data/redmcsb-original/TITLE
 titleHoldRepeatCount=54

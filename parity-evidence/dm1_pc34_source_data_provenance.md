@@ -13,13 +13,13 @@ No rendering-code correction was needed.
 
 Worker-VM local canonical archive:
 
-- `~/.openclaw/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z`
+- `~/.firestaff/data/firestaff-original-games/DM/Game,Dungeon_Master,DOS,Software.7z`
 - Archive SHA-256: `c0d4aa0b8b592605d745993c071abe042092098eed21155fa573f0cf59c048e0`
 - Extracted local check directory during validation: temporary `DungeonMasterPC34/DATA/` below `firestaff-pc34-provenance-*`.
 
 Worker-VM local extracted set:
 
-- `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
+- `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`
 
 Deprecated reference note:
 

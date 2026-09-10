@@ -16,10 +16,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB_SOURCE = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_entry_movement_viewport_source_lock.json"
 DM1_DUNGEON_DAT = Path(
-    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+    "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
 ).expanduser()
 ROUTE_EVIDENCE = ROOT / "parity-evidence/verification/pass76_capture_route_state_probe.json"
 TURN_VIEWPORT_EVIDENCE = ROOT / "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json"

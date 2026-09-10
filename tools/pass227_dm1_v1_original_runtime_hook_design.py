@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM_STAGE = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+DM_STAGE = Path("~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34").expanduser()
 DEFAULT_OUT = ROOT / "parity-evidence/verification/pass227_dm1_v1_original_runtime_hook_design.json"
 DEFAULT_REPORT = ROOT / "parity-evidence/pass227_dm1_v1_original_runtime_hook_design.md"
 

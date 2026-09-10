@@ -6,15 +6,15 @@ Status: audit/coordination document. This does not claim new pixel parity and do
 
 ## Current state input
 
-Controller state file reviewed: `/Users/bosse/.openclaw/workspace-main/memory/firestaff-dm1v1-state.json`.
+Controller state file reviewed: `<local-home>/.firestaff/workspace-main/memory/firestaff-dm1v1-state.json`.
 
 Current state: `LAND_EVIDENCE`.
 
 Last transition: `INGEST_N2_ORIGINAL_CAPTURE -> LAND_EVIDENCE`.
 
-External artifact root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509`.
+External artifact root: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509`.
 
-N2 source artifact root: `/home/trv2/openclaw-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/`.
+N2 source artifact root: `/home/trv2/legacy-workspace-artifacts/dm1-hall-dosbox-20260509/final_candidate_frames/`.
 
 Artifact status: `NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION`.
 

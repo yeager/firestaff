@@ -7,8 +7,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'parity-evidence/verification/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt'
 REPORT=ROOT/'parity-evidence/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt.md'
-ORIG=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
-SOURCE_ROOT=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+ORIG=Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+SOURCE_ROOT=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 ADDR={
  'G0432_as_CommandQueue':'2C20:3E7A','G0433_i_CommandQueueFirstIndex':'2C20:3EC8','G0434_i_CommandQueueLastIndex':'2C20:1F08','G0435_B_CommandQueueLocked':'2C20:1F0A',
  'G0308_i_PartyDirection':'2C20:3C92','G0306_i_PartyMapX':'2C20:3C94','G0307_i_PartyMapY':'2C20:3CE0',

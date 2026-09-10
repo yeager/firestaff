@@ -21,10 +21,10 @@ The original capture path is healthy, but route semantics are still blocked. The
 ## Exact commands
 
 ```sh
-cd ~/.openclaw/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS
+cd ~/.firestaff/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS
 
 OUT_DIR=$RUN_DIR/probe-f1-spell-clicks \
-DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
 DM1_ORIGINAL_PROGRAM="DM -vv -sn -pk" DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 WAIT_BEFORE_INPUT_MS=5000 NEW_FILE_TIMEOUT_MS=6000 DOSBOX=/usr/bin/dosbox \
 DM1_ORIGINAL_ROUTE_EVENTS="$ENT shot:party_hud f1 wait:800 shot:inventory_panel f1 wait:500 shot:after_inventory_close click:236,51 wait:500 shot:spell_panel click:249,63 wait:500 shot:rune1 click:312,69 wait:800 shot:after_cast" \

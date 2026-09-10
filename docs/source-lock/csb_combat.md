@@ -1,8 +1,8 @@
 # CSB V1 - Combat Changes Audit
 
 ## Source Paths
-- CSB: /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Attack.cpp, Character.cpp
-- CSB: /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Projectile.cpp, Magic.cpp
+- CSB: /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src/Attack.cpp, Character.cpp
+- CSB: /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src/Projectile.cpp, Magic.cpp
 - DM1: ReDMCSB PROJEXPL.C, DEFS.H, GROUP.C, BugsAndChanges.htm
 
 ## Projectile Speed Normalization (CHANGE7_20_IMPROVEMENT)

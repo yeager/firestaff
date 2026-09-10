@@ -19,7 +19,7 @@ Pass575 adds source-lock evidence for DM1 V1 D1C front-wall Thieves Eye handling
 
 ## ReDMCSB Audit Anchor
 
-Source root: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
+Source root: /home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
 File: DUNVIEW.C
 SHA256: a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846
 

@@ -9,7 +9,7 @@ Result: PASS.
 - EN archive: `Dungeon-Master-II-Skullkeep_DOS_EN.zip` sha256 `d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929`; member `skull.exe` sha256 `0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35`.
 - CD/layout archive: `Dungeon_Master_II_-_The_Legend_of_Skullkeep_1994.zip` sha256 `a32818cd1e691b3771e091d668bf3e236ce95fde7ef75943cb7a191ed1fc7228`; member `dumast2/SKULL.EXE` sha256 `0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35`.
 - `SKULL.ASM`: sha256 `a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099`.
-- Canonical README cited: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/README.md`.
+- Canonical README cited: `/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm2/README.md`.
 - EN/CD `SKULL.EXE` members identical: `True`.
 
 ## MZ stub and DOS extender markers

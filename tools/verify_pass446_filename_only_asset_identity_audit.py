@@ -15,10 +15,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-CANON = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-EXTRACTED = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34"
-REGISTRY = Path.home() / ".openclaw/data/firestaff-graphics-hash-registry.md"
-RED_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+CANON = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1"
+EXTRACTED = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34"
+REGISTRY = Path.home() / ".firestaff/data/firestaff-graphics-hash-registry.md"
+RED_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REPORT = ROOT / "parity-evidence/pass446_filename_only_asset_identity_audit.md"
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/pass446_filename_only_asset_identity_audit.json"
 

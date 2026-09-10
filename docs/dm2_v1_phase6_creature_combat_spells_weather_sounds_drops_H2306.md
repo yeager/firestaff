@@ -3,7 +3,7 @@
 **Audit date:** 2026-05-26
 **Phase:** DM2 V1 Phase 6 (TODO.md)
 **ReDMCSB ref:** SKULL.ASM (522,128 lines, sha256 a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099)
-**ReDMCSB local:** `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+**ReDMCSB local:** `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 **Secondary refs:** skproject (github.com/gbsphenx/skproject) SKWIN/SkWinCore.cpp, SkGlobal.cpp/h, defines.h, DME.h; SKULLWIN/c_ai.cpp, c_creature.cpp
 
 ---

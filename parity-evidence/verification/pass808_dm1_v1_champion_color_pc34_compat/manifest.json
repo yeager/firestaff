@@ -17,7 +17,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:84",
       "line": 84,
       "lineText": "unsigned char G0046_auc_Graphic562_ChampionColor[4];",
@@ -25,7 +25,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:423",
       "line": 423,
       "lineText": "unsigned char G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 };",
@@ -33,7 +33,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1095",
       "line": 1095,
       "lineText": "unsigned char G0046_auc_Graphic562_ChampionColor[4] = { 7, 11, 8, 14 };",
@@ -41,7 +41,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:48",
       "line": 48,
       "lineText": "        F0134_VIDEO_FillBitmap(M772_CAST_PC(P2058_pc_ChampionIconBitmap), G0046_auc_Graphic562_ChampionColor[P2059_i_ChampionIndex], G2080_C19_ChampionIconWidth, G2081_C14_ChampionIconHeight);",
@@ -49,7 +49,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:51",
       "line": 51,
       "lineText": "        F0134_VIDEO_FillBitmap(M772_CAST_PC(P2058_pc_ChampionIconBitmap), G0407_s_Party.Event71Count_Invisibility ? C01_COLOR_DARK_GRAY : G0046_auc_Graphic562_ChampionColor[P2059_i_ChampionIndex], G2080_C19_ChampionIconWidth, G2081_C14_ChampionIconHeight);",
@@ -57,7 +57,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:60",
       "line": 60,
       "lineText": "        F0134_VIDEO_FillBitmap(P2058_pc_ChampionIconBitmap, G0407_s_Party.Event71Count_Invisibility ? C01_COLOR_DARK_GRAY : G0046_auc_Graphic562_ChampionColor[P2059_i_ChampionIndex], G2080_C19_ChampionIconWidth, G2081_C14_ChampionIconHeight);",
@@ -65,7 +65,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:300",
       "line": 300,
       "lineText": "                        M524_FillScreenBox(L1640_ai_Box, G0046_auc_Graphic562_ChampionColor[P0605_i_ChampionIndex]);",
@@ -73,7 +73,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:342",
       "line": 342,
       "lineText": "                        F0732_FillScreenArea(L2005_ai_XYZColoredBar, G0046_auc_Graphic562_ChampionColor[P0605_i_ChampionIndex]);",
@@ -81,7 +81,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "id": "CHAMDRAW.C:1022",
       "line": 1022,
       "lineText": "                M524_FillScreenBox(&G0054_ai_Graphic562_Box_ChampionIcons[AL0864_i_ChampionIconIndex << 2], G0046_auc_Graphic562_ChampionColor[P0615_ui_ChampionIndex]);",
@@ -89,7 +89,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:986",
       "line": 986,
       "lineText": "                        F0047_TEXT_MESSAGEAREA_PrintMessage(AP0638_ui_ChampionColor = G0046_auc_Graphic562_ChampionColor[P0636_ui_ChampionIndex], L0919_ps_Champion->Name);",
@@ -97,7 +97,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:1016",
       "line": 1016,
       "lineText": "                        F0819_TEXT_MESSAGEAREA_PrintMessageAsJapanese(AP0638_ui_ChampionColor = G0046_auc_Graphic562_ChampionColor[P0636_ui_ChampionIndex], L0919_ps_Champion->Name);",
@@ -105,7 +105,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
       "id": "CHAMPION.C:1052",
       "line": 1052,
       "lineText": "                        AP0638_ui_ChampionColor = G0046_auc_Graphic562_ChampionColor[P0636_ui_ChampionIndex];",
@@ -113,7 +113,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:868",
       "line": 868,
       "lineText": "        AL0823_ui_ChampionColor = G0046_auc_Graphic562_ChampionColor[L0822_ui_ChampionIndex];",
@@ -121,7 +121,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:872",
       "line": 872,
       "lineText": "        F0047_TEXT_MESSAGEAREA_PrintMessage(AL0823_ui_ChampionColor = G0046_auc_Graphic562_ChampionColor[L0822_ui_ChampionIndex], L0826_ps_Champion->Name);",
@@ -129,7 +129,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
       "id": "REVIVE.C:887",
       "line": 887,
       "lineText": "        F0819_TEXT_MESSAGEAREA_PrintMessageAsJapanese(AL0823_ui_ChampionColor = G0046_auc_Graphic562_ChampionColor[L0822_ui_ChampionIndex], L0826_ps_Champion->Name);",
@@ -137,7 +137,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass808_dm1_v1_champion_color_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0046_auc_Graphic562_ChampionColor[4] = {7, 11, 8, 14}. Assigns each champion a unique text/fill color: champion 0 (leader) = color 7 (LIGHT_GRAY), champion 1 = color 11 (LIGHT_CYAN), champion 2 = color 8 (LIGHT_RED), champion 3 = color 14 (LIGHT_YELLOW). Read sites: CHAMDRAW.C:48/51/60/300/342/1022 (champion icon/portrait fill), CHAMPION.C:986/1016/1052 (champion-name text color), REVIVE.C:868/872/887 (resurrect text color).",
   "sourceChecks": [

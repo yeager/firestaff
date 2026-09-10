@@ -5,7 +5,7 @@
   "scope": "DM1 V1 Inventory & Items TODO: Key usage (use key on locked door)",
   "worktree": "/home/trv2/work/firestaff-worktrees/inventory-key-usage-source-lock-20260520-160633",
   "branch": "worker/inventory-key-usage-source-lock-20260520-160633",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "conclusion": "No direct DM1 V1 key-on-locked-door behavior is source-backed in the audited ReDMCSB PC click/command/sensor/door route. Do not invent a key-door action; keys remain wall-sensor/object-mechanism behavior unless another primary source proves otherwise.",
   "sourceAnchors": [
     {

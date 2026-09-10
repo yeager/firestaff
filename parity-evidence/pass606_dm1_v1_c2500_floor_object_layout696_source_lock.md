@@ -6,7 +6,7 @@ This pass closes a DM1 V1 viewport/world-visuals source-lock gap in the C2500 fl
 
 The canonical data source used here is:
 
-- `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT`
+- `/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT`
 - sha256: `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`
 - reconstructed table: `data/zones_h_reconstruction.json`, records `C2500..C2567`
 
@@ -14,7 +14,7 @@ No `DUNGEON.DAT` or `TITLE` content was compared for this slice.
 
 ## ReDMCSB source anchors
 
-Primary source audit under `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`:
+Primary source audit under `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`:
 
 - `COORD.C:2074-2109` clears `MASK0x8000_SHIFT_OBJECTS_AND_CREATURES` and applies supplied object/creature shifts in `F0637_GetProportionalZone`.
 - `COORD.C:2498-2570` loads layout ranges in `F0639_LoadLayoutRanges`, loads graphic index `C696_GRAPHIC_LAYOUT` in `F0640_LoadLayoutData`, and initializes it from `F0641_InitializeLayout`.

@@ -2,10 +2,10 @@
   "schema": "dm1_v1_champion_panel_action_hand_slot_priority_pc34_compat.v1",
   "timestampUtc": "2026-06-07T21:25:42Z",
   "status": "PASS_DM1_V1_CHAMPION_PANEL_ACTION_HAND_SLOT_PRIORITY_SOURCE_LOCK",
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "<local-home>/.firestaff/workspace-main",
   "branch": "main",
   "head": "aaed19e118c4ca17e3a54b3d40b23e536c7e6777",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "anchors": [
     "CHAMPION.C F0302:662-714",
     "CHAMPION.C F0297:243-268",

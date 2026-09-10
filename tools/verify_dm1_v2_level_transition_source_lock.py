@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 
 root = Path(__file__).resolve().parents[1]
-source_root = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+source_root = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 evidence_path = root / "parity-evidence/verification/dm1_v2_level_transition_source_lock.json"
 
 source_checks = [

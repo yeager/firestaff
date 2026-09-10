@@ -5,7 +5,7 @@
 - scope correction: 2026-05-14 webchat screenshots supersede using Hall of Champions as the normal Firestaff DM1 start baseline; this audit is Hall/resurrection-route evidence only.
 - evidence-backed completion: **80.0%** (8/10 matrix rows non-blocked)
 - parity claim: **not 100%**; original PC34 Hall candidate framebuffer/HUD parity remains blocked.
-- redmcsb: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- redmcsb: `<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## Locked original data
 - `dm1_pc34_english_graphics` `DM PC 3.4 English / I34E` `GRAPHICS.DAT` sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` bytes `363417` ok=True
@@ -24,10 +24,10 @@
 | mirror/sensor disable semantics | `VERIFIED_SOURCE_AND_UNIT` | `REVIVE.C:785-799`, `REVIVE.C:801-804`, `DUNGEON.C:2568-2583`, `MOVESENS.C:1390-1395` | `tools/verify_dm1_v1_hall_mirror_sensor_disable_source_lock.py`, `test_dm1_v1_resurrection_pc34_compat.c` | none for stated source/runtime scope |
 | HUD/status text and modal blockers | `SOURCE_LOCKED_PARTIAL_RUNTIME` | `COMMAND.C:2159-2184`, `COMMAND.C:2336-2370`, `CHAMDRAW.C:536-545`, `CHAMDRAW.C:1210-1212`, `REVIVE.C:744-783` | `tools/verify_dm1_v1_hall_of_champions_full_source_lock.py`, `tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`, `probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c` | HUD/status text pixel parity and original crops blocked |
 | graphics/palette/framebuffer parity | `BLOCKED_ORIGINAL_PROMOTABLE_FRAMES_MISSING` | `PANEL.C:1619-1636`, `DEFS.H:2078-2086`, `DATA.C:314-319`, `BASE.C:1341-1369`, `MEMORY.C:2474-2525` | `tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py`, `parity-evidence/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.md` | panel-visible original context exists; remaining promotable original PC34 true-stop frames/crops missing/no-transition |
-| original PC34 frame/crop availability | `BLOCKED_PANEL_VISIBLE_ORIGINAL_AVAILABLE_REMAINING_TRUE_STOP_AND_SEMANTIC_FRAMES_MISSING` | `GAMELOOP.C:80-90`, `DRAWVIEW.C:709-722` | `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509`, `parity-evidence/verification/pass173_source_portrait_route_gate_probe`, `parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json` | panel-visible original context exists; remaining promotable original PC34 true-stop frames/crops missing/no-transition |
+| original PC34 frame/crop availability | `BLOCKED_PANEL_VISIBLE_ORIGINAL_AVAILABLE_REMAINING_TRUE_STOP_AND_SEMANTIC_FRAMES_MISSING` | `GAMELOOP.C:80-90`, `DRAWVIEW.C:709-722` | `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509`, `parity-evidence/verification/pass173_source_portrait_route_gate_probe`, `parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json` | panel-visible original context exists; remaining promotable original PC34 true-stop frames/crops missing/no-transition |
 
 ## N2 DOSBox original Hall artifact
-- root: `/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=True ok=True
+- root: `/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509` exists=True ok=True
 - status: `NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION` host=`firestaff-worker` created=`2026-05-09T14:15:00+02:00` entries=11
 - DUNGEON.DAT sha256 `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`; GRAPHICS.DAT sha256 `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`; TITLE sha256 `adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745`
 - promotable/narrowed label `03_panel_visible_north_front_mirror` pc320 `pc320/03_panel_visible_north_front_mirror_pc320.png` sha256 `766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0`

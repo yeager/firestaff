@@ -2,7 +2,7 @@
 
 Status: **SOURCE-LOCKED BINDING MAP COMPLETE.** This pass is source-first only: it maps the ReDMCSB keyboard-buffer → command enqueue → queue dispatch → movement/turn → redraw path onto current Firestaff modules. It does not claim a new DOSBox/runtime hook or pixel parity.
 
-Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root audited: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 ## ReDMCSB movement input anchors
 

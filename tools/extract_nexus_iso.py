@@ -3,8 +3,8 @@
 import struct, os
 from pathlib import Path
 
-TRACK1 = "/home/trv2/.openclaw/data/firestaff-original-games/DM/_unpacked_by_archive/n2/fbd91afd6d37_Dungeon-Master-Nexus_SEGA-Saturn_JA.zip/Dungeon Master Nexus (Japan) (Track 1).bin"
-OUTDIR = Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/nexus-saturn")
+TRACK1 = "/home/trv2/.firestaff/data/firestaff-original-games/DM/_unpacked_by_archive/n2/fbd91afd6d37_Dungeon-Master-Nexus_SEGA-Saturn_JA.zip/Dungeon Master Nexus (Japan) (Track 1).bin"
+OUTDIR = Path("/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/nexus-saturn")
 SECTOR_SIZE = 2352
 DATA_OFF = 16
 DATA_SZ = 2048

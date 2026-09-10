@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DEFAULT_ATTEMPT = ROOT / "verification-screens/pass212-n2-state-aware-movement-probe"
 DEFAULT_OUT_DIR = ROOT / "parity-evidence/verification/pass220_dm1_v1_original_readiness_oracle"
 DEFAULT_REPORT = ROOT / "parity-evidence/pass220_dm1_v1_original_readiness_oracle.md"

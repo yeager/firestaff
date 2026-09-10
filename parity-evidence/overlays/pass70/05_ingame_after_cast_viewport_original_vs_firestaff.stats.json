@@ -15,6 +15,6 @@
   "differing_pixels": 24068,
   "total_pixels": 30464,
   "delta_percent": 79.0047,
-  "mask_path": "/Volumes/Extern-disk/openclaw-workspace-main/tmp/firestaff/parity-evidence/overlays/pass70/05_ingame_after_cast_viewport_original_vs_firestaff.mask.png",
+  "mask_path": "/Volumes/Extern-disk/legacy-workspace-workspace-main/tmp/firestaff/parity-evidence/overlays/pass70/05_ingame_after_cast_viewport_original_vs_firestaff.mask.png",
   "honesty": "Diff is measurement only; it is not a parity claim without source-backed interpretation of the mismatch."
 }

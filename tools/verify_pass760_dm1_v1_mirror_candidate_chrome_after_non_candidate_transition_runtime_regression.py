@@ -22,7 +22,7 @@ OUT_DIR = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 RED = (
     Path.home()
-    / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
 
 ANCHORS = [

@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIRE = ROOT / "src/engine/m11_game_view.c"
 DM1_WALL_ORN = ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
-DUNVIEW = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+DUNVIEW = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 
 
 def line_no(text: str, offset: int) -> int:

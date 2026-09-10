@@ -6,7 +6,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original
 from tools.pass80_original_frame_classifier import sha256
-STAGE = Path.home()/".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+STAGE = Path.home()/".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 DOSBOX = "/usr/bin/dosbox"
 PROGRAM = "DM -vv -sn -pm"
 # Pass137 found pm_enter_f1_f2 reaches an inventory-class frame immediately on F1.

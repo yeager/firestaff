@@ -164,7 +164,7 @@
     }
   ],
   "greatstoneAtlasAudit": {
-    "atlasRoot": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
+    "atlasRoot": "/home/trv2/.firestaff/data/firestaff-greatstone-atlas",
     "decision": "Greatstone lists PC 3.4 graphics.dat/dungeon graphics pages, but the local crawl does not contain the per-entry graphics.dat HTML payload; pass305 canonical GRAPHICS.DAT decode remains the byte-level wall tile authority.",
     "dmPagePresent": true,
     "graphicsDatLinkCount": 20,
@@ -323,7 +323,7 @@
       ]
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "WALL_GRAPHICS_OFFSET_BINDING_SOURCE_DATA_LOCKED_RUNTIME_BLOCKED",
   "tiledefsAudit": {
     "decision": "NOT_PRESENT_NONBLOCKING_DEFS_H_DUNVIEW_ARE_TILEDEF_AUTHORITY",

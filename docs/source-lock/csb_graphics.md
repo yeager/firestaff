@@ -1,8 +1,8 @@
 # CSB V1 - Graphics/UI Changes Audit
 
 ## Source Paths
-- CSB: /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Viewport.cpp, Graphics.cpp
-- CSB: /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Bitmaps.cpp, UI.h, UI.cpp
+- CSB: /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src/Viewport.cpp, Graphics.cpp
+- CSB: /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src/Bitmaps.cpp, UI.h, UI.cpp
 - DM1: ReDMCSB DUNVIEW.C, GRAPH21.C, BugsAndChanges.htm
 
 ## Vertical Blank Handler Fix (CHANGE7_01_FIX)

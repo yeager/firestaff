@@ -228,7 +228,7 @@
         "cmd": [
           "cmake",
           "-S",
-          "/Users/bosse/.openclaw/workspace-main",
+          "<local-home>/.firestaff/workspace-main",
           "-B",
           "/private/tmp/firestaff-pass352-verify-20260621"
         ],
@@ -325,11 +325,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
@@ -383,11 +383,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
@@ -441,11 +441,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
@@ -499,17 +499,17 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
     }
   ],
-  "dm1Data": "/Users/bosse/.firestaff/data/dm1",
+  "dm1Data": "<local-home>/.firestaff/data/dm1",
   "expectedRuntimeState": {
     "arrow_key_symbols": {
       "party": {
@@ -586,7 +586,7 @@
     "pixel parity",
     "original DOS/I34E keyboard-buffer proof"
   ],
-  "repo": "/Users/bosse/.openclaw/workspace-main",
+  "repo": "<local-home>/.firestaff/workspace-main",
   "retiredStaleBlockersInScope": [
     "BLOCKED_FULL_LAUNCHER_SCRIPT_HANDOFF",
     "BLOCKED_PASS333_NUMLOCK_KEYPAD_MODE_BLOCKS_I34E for M11 SDL key:kp* route only"
@@ -640,11 +640,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,left,left,left,up,right"
@@ -697,11 +697,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,key:left,key:left,key:left,key:up,key:right"
@@ -754,11 +754,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,key:kp4,key:kp4,key:kp4,key:kp5,key:kp6"
@@ -811,11 +811,11 @@
           "--height",
           "1080",
           "--data-dir",
-          "/Users/bosse/.firestaff/data/dm1",
+          "<local-home>/.firestaff/data/dm1",
           "--script",
           "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
         ],
-        "outputTail": "DUNGEON RESOLVE: dataDir=[/Users/bosse/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [/Users/bosse/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\n",
+        "outputTail": "DUNGEON RESOLVE: dataDir=[<local-home>/.firestaff/data/dm1] gameId=[dm1]\n  TRY: [<local-home>/.firestaff/data/dm1/dm1/DUNGEON.DAT] MISS\n  FALLBACK: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT] FOUND\nLOADING DUNGEON: [<local-home>/.firestaff/data/dm1/DUNGEON.DAT]\n",
         "returncode": 0
       },
       "script": "enter,down,down,down,down,down,down,enter,key:kp-4,key:kp-4,key:kp-4,key:kp-5,key:kp-6"
@@ -937,7 +937,7 @@
       ]
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
   "timestampUtc": "2026-06-21T08:11:45.993704+00:00"
 }

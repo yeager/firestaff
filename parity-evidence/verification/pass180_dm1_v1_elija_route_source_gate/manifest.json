@@ -67,9 +67,9 @@
       "y": 2
     }
   },
-  "greatstone_zip": "/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip",
+  "greatstone_zip": "/home/trv2/.firestaff/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip",
   "problems": [],
-  "redmcsb_source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_source_root": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "remaining_blocker": "original-runtime input/address route still must prove a non-static party-control capture; no pixel parity claim is made here",
   "repo": "/home/trv2/work/firestaff",
   "route_plan": {

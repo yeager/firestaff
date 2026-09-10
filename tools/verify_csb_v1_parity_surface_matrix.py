@@ -19,10 +19,10 @@ OUT = Path(os.environ.get(
     "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
     str(ROOT / "parity-evidence/verification/csb_v1_parity_surface_matrix.json"),
 ))
-REDMCSB = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
-ORIG = (Path.home() / ".openclaw/data/firestaff-original-games/DM")
+REDMCSB = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+CSB_SRC = Path.home() / ".firestaff/data/firestaff-csb-source/CSB/src"
+CSBWIN = Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin"
+ORIG = (Path.home() / ".firestaff/data/firestaff-original-games/DM")
 
 EXPECTED_GIT = {
     "csb_lineage": (CSB_SRC, "dda570585abb4c8113a3298d21c0b599e6cac4f9"),

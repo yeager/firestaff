@@ -15,7 +15,7 @@ For each recoverable branch I fetched origin, checked git diff --check origin/ma
 
 ## ReDMCSB Audit Anchors
 
-Source root: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
+Source root: /home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source
 
 - DUNVIEW.C:6781 selects F0124_DUNGEONVIEW_DrawSquareD1C as the D1C draw handler.
 - DUNVIEW.C:7727 starts F0124_DUNGEONVIEW_DrawSquareD1C.

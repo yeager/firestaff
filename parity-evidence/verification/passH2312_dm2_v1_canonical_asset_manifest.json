@@ -1,7 +1,7 @@
 {
   "schema": "firestaff.dm2_v1.canonical_asset_manifest.v1",
   "manifest_id": "passH2312_dm2_v1_canonical_asset_manifest",
-  "data_root": "/Users/bosse/.firestaff/data/dm2",
+  "data_root": "<local-home>/.firestaff/data/dm2",
   "source_anchors": [
     {
       "id": "skull_graphics_dat_open",

@@ -17,9 +17,9 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM2_CANONICAL = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2").expanduser()
-DM2_ASM = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM").expanduser()
+REDMCSB_SOURCE = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DM2_CANONICAL = Path("~/.firestaff/data/firestaff-original-games/DM/_canonical/dm2").expanduser()
+DM2_ASM = Path("~/.firestaff/data/firestaff-original-games/DM/_extracted/dm2-dos-asm/SKULL.ASM").expanduser()
 CANONICAL_ARCHIVE = "Dungeon-Master-II-Skullkeep_DOS_EN.zip"
 CANONICAL_EXE_MEMBER = "skull.exe"
 EXPECTED_EXE_SHA256 = "0d9f0f640d153d8fabbcaa89566d88223f775541b4ed2f5d1925e6bdcb2d5b35"

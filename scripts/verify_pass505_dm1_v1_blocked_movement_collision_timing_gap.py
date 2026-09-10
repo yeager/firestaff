@@ -9,9 +9,9 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM = Path.home() / ".openclaw/data/firestaff-original-games/DM"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DM = Path.home() / ".firestaff/data/firestaff-original-games/DM"
+GREATSTONE = Path.home() / ".firestaff/data/firestaff-greatstone-atlas"
 PASS = "pass505_dm1_v1_blocked_movement_collision_timing_gap"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 OUT_JSON = OUT_DIR / "manifest.json"

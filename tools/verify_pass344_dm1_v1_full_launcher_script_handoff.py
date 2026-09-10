@@ -20,9 +20,9 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "pass344_dm1_v1_full_launcher_script_handoff"
-BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS344_BUILD_DIR", str(pathlib.Path.home() / ".openclaw/data/firestaff-builds/pass344-verify")))
-HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS344_HOME_DIR", str(pathlib.Path.home() / ".openclaw/data/firestaff-homes/pass344-verify")))
-DATA_DIR = pathlib.Path("/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1")
+BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS344_BUILD_DIR", str(pathlib.Path.home() / ".firestaff/data/firestaff-builds/pass344-verify")))
+HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS344_HOME_DIR", str(pathlib.Path.home() / ".firestaff/data/firestaff-homes/pass344-verify")))
+DATA_DIR = pathlib.Path("/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1")
 SCRIPT = "enter,down,down,down,down,down,down,enter,left,up,right"
 COMMAND = [
     "timeout",

@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/passH2248_csb_v1_save_load_round_trip.json"
 REPORT = ROOT / "parity-evidence/firestaff_csb_v1_phase7_save_load_round_trip_H2248.md"
 
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 # ── Header field layout (from csb_v1_save_load_pc34_compat.h) ────────────
 # Offset  0: uint32_t Magic

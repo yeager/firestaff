@@ -23,8 +23,8 @@ REPORT = ROOT / "parity-evidence/pass231_dm1_v1_fires_exenew_runtime_hit_probe.m
 RUNTIME_IMAGE = ROOT / "data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json"
 SYMBOL_MAP = ROOT / "data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
 SOURCE_ROOTS = [
-    Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+    Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source",
 ]
 
 

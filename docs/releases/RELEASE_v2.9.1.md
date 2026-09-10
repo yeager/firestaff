@@ -39,7 +39,7 @@ ctest `-R v22_` is **8/8 green** after this pass.
 
 ### Per-game procedural first-cut packs
 
-Each game's `.openclaw/tmp/<game>_v22_asset_author.py` (gitignored,
+Each game's `.firestaff/tmp/<game>_v22_asset_author.py` (gitignored,
 deterministic seed per game) installs 5 PNGs into the spec'd
 categories:
 

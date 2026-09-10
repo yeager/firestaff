@@ -2,7 +2,7 @@
 
 - status: `PASS466_SOURCE_STOP_CAPTURE_PATH_LOCKED_TERMINAL_HUD_ROWS_READY_FOR_RECAPTURE`
 - generatedUtc: `2026-09-04T18:01:00.274668+00:00`
-- redmcsb: `/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- redmcsb: `<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - parity claim: **not made**; this is a source-stop capture contract for the masked pass449 terminal HUD/status rows.
 
 ## Capture path

@@ -12,7 +12,7 @@
     "original DOS breakpoint trace",
     "unsupported sensor effect materialization beyond the existing source-locked trigger metadata"
   ],
-  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "redmcsbSha256": {
     "MOVESENS.C": "35cfd3ba0a4e33bd5f8731eb52184271cd22093e95ff98b639f240b3afb508da"
   },

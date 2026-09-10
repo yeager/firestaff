@@ -12,7 +12,7 @@ This pass source-locks the path that matters for movement/viewport/wall parity: 
 
 ## Primary ReDMCSB audit anchors
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `COMMAND.C:2045-2156` — `F0380_COMMAND_ProcessQueue_CPSC` dequeues commands and dispatches `C001/C002` to `F0365_COMMAND_ProcessTypes1To2_TurnParty`, and `C003..C006` to `F0366_COMMAND_ProcessTypes3To6_MoveParty`.
 - `CLIKMENU.C:142-174` — `F0365_COMMAND_ProcessTypes1To2_TurnParty` processes sensors around the party square and calls `F0284_CHAMPION_SetPartyDirection(...)` for left/right turns.

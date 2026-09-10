@@ -54,7 +54,7 @@ OVERLAYS_DIR = ROOT / "parity-evidence" / "overlays" / "pass376_firestaff_pairin
 PLAN_JSON = OVERLAYS_DIR / "plan.json"
 REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 
 STATUS = "PASS376_FIRESTAFF_OVERLAY_DIFF_MEASUREMENT_REPRODUCIBLE"

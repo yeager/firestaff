@@ -6,7 +6,7 @@ Scope: verification-only sweep for the active DM1 V1 touch/click route. No runti
 
 ## ReDMCSB source audit anchors
 
-Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root audited: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `STARTUP2.C:1179-1182` installs `G0441_ps_PrimaryMouseInput` from `G0447_as_Graphic561_PrimaryMouseInput_Interface` before `G0442_ps_SecondaryMouseInput` from `G0448_as_Graphic561_SecondaryMouseInput_Movement`.
 - `COMMAND.C:375-405` covers the active primary-interface plus secondary-movement route block.

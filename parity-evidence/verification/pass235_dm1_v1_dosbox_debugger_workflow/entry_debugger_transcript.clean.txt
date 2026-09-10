@@ -1,8 +1,8 @@
 LOG: Early LOG Init complete
 
-LOG: CONFIG: Loaded config file: /Users/bosse/.openclaw<TMP>
+LOG: CONFIG: Loaded config file: <local-home>/.firestaff<TMP>
 
-LOG: DOSBox-X's working directory: /Users/bosse/.openclaw/workspace-main
+LOG: DOSBox-X's working directory: <local-home>/.firestaff/workspace-main
 
 LOG: Logging init: beginning logging proper. This is the end of the early init logging
 

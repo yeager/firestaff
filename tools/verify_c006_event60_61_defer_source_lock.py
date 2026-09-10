@@ -2,8 +2,8 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-DM = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DM = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 
 checks = {
     'include/memory_timeline_pc34_compat.h': [

@@ -12,8 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass514_dm1_v1_i34e_runtime_transcript_capture_path"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
 REPORT = ROOT / "parity-evidence" / (PASS + ".md")
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 
 ADDR = {
     "F0361_COMMAND_ProcessKeyPress": "22F7:0407",
@@ -252,7 +252,7 @@ def main() -> int:
         "",
         "## Capture path",
         "",
-        "- N2-local original stage: ~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+        "- N2-local original stage: ~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
         "- Debugger stack: dosbox-debug + Xvfb + xdotool",
         "- Exact command: " + CAPTURE_COMMAND,
         "",

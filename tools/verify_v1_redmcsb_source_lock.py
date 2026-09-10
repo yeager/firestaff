@@ -12,7 +12,7 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-REDMCSB = pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = pathlib.Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 checks: list[tuple[pathlib.Path, str, str]] = [
     (REDMCSB / "TITLE.C", r"M526_WaitVerticalBlank\(\).*BUG0_71|BUG0_71.*title screen", "TITLE.C locks title timing to VBlank/BUG0_71"),

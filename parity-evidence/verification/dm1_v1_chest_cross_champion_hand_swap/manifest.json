@@ -4,7 +4,7 @@
   "status": "PASS_DM1_V1_CHEST_CROSS_CHAMPION_HAND_SWAP_RUNTIME_REGRESSION",
   "repo": "https://github.com/yeager/firestaff",
   "branch": "main",
-  "redmcsbRoot": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
+  "redmcsbRoot": "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/",
   "anchors": [
     "CHEST.C F0333:30-32",
     "CHEST.C F0333:43",

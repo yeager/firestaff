@@ -7,12 +7,12 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DM1_DUNGEON_DAT = (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT")
+DM1_DUNGEON_DAT = (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT")
 EVIDENCE = ROOT / 'parity-evidence/verification/pass279_dm1_v2_dungeon_dat_square_decoder.json'
 SOURCE_CANDIDATES = [
-    (Path.home() / ".openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/SOURCE"),
-    (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source"),
-    (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    (Path.home() / ".firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/SOURCE"),
+    (Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source"),
+    (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ]
 
 FIRESTAFF_ANCHORS = [

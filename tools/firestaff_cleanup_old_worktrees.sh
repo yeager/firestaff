@@ -4,7 +4,7 @@
 #
 # Daily cron-driven cleanup of old/stale worktrees and orphan branches in
 # the Firestaff repository.  Run from the main checkout
-# (/Users/bosse/.openclaw/workspace-main) with the standard git environment
+# (<local-home>/.firestaff/workspace-main) with the standard git environment
 # (GitHub access via existing git credentials, all submodules initialized).
 #
 # Categories (matched by mtime of the worktree's working tree):
@@ -39,12 +39,12 @@
 # Exit code: 0 if no auto-push was attempted, 1 if any auto-push failed,
 # 2 if any untracked WIP was preserved (manual review required).
 #
-# Author: OpenClaw Firestaff Main session
+# Author: legacy-workspace Firestaff Main session
 # License: MIT (same as Firestaff)
 
 set -uo pipefail
 
-FIRESTAFF_ROOT="${FIRESTAFF_ROOT:-/Users/bosse/.openclaw/workspace-main}"
+FIRESTAFF_ROOT="${FIRESTAFF_ROOT:-<local-home>/.firestaff/workspace-main}"
 STALE_DAYS="${STALE_DAYS:-7}"
 MEDIUM_DAYS_MIN="${MEDIUM_DAYS_MIN:-3}"
 LOG_DIR="${LOG_DIR:-/tmp}"

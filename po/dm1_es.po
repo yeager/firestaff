@@ -1,5 +1,5 @@
 # Firestaff — DM1 Spanish catalog extracted from original Spanish GRAPHICS.DAT.
-# Source artifact: ~/.openclaw/data/firestaff-spanish-extract/spanish_graphics_dat_spanish_hits.txt
+# Source artifact: ~/.firestaff/data/firestaff-spanish-extract/spanish_graphics_dat_spanish_hits.txt
 # NOTE: msgids are stable GRAPHICS.DAT item ids because the extraction source is item-indexed text, not merged runtime keys yet.
 # French/German false positives from the candidate extractor were excluded during catalog generation.
 msgid ""
@@ -8,7 +8,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-22 05:45+0200\n"
 "PO-Revision-Date: 2026-04-29 07:37+0000\n"
-"Last-Translator: OpenClaw extraction pass\n"
+"Last-Translator: legacy-workspace extraction pass\n"
 "Language-Team: Spanish\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"

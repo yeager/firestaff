@@ -12,8 +12,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-DM1_DUNGEON_DAT = (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT")
+SOURCE = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+DM1_DUNGEON_DAT = (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT")
 EVIDENCE = ROOT / 'parity-evidence/verification/pass274_dm1_v2_d0_d3_draw_list_comparator_gate.json'
 
 SOURCE_ANCHORS = [

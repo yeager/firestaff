@@ -3,12 +3,12 @@
   "timestampUtc": "2026-07-26T16:34:23.939180+00:00",
   "status": "BLOCKED_PASS475_RUNTIME_NOT_RUN",
   "summary": "missing tools: import",
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceAudit": [
     {
       "file": "COMMAND.C",
       "section": "pc34_click_boxes",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "lineHits": {
         "G0448_as_Graphic561_SecondaryMouseInput_Movement": 35,
@@ -22,7 +22,7 @@
     {
       "file": "COMMAND.C",
       "section": "queue_to_handlers",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "ok": true,
       "lineHits": {
         "F0380_COMMAND_ProcessQueue_CPSC": 1497,
@@ -34,7 +34,7 @@
     {
       "file": "CLIKMENU.C",
       "section": "turn_stop",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
       "ok": true,
       "lineHits": {
         "F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
@@ -46,7 +46,7 @@
     {
       "file": "CLIKMENU.C",
       "section": "step_stop",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
       "ok": true,
       "lineHits": {
         "F0366_COMMAND_ProcessTypes3To6_MoveParty": 180,
@@ -58,7 +58,7 @@
     {
       "file": "DUNVIEW.C",
       "section": "wall_composite",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "ok": true,
       "lineHits": {
         "F0098_DUNGEONVIEW_DrawFloorAndCeiling": 2962,
@@ -73,7 +73,7 @@
     {
       "file": "DRAWVIEW.C",
       "section": "post_present_seam",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "ok": true,
       "lineHits": {
         "F0097_DUNGEONVIEW_DrawViewport": 709,

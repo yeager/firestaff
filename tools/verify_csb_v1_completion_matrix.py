@@ -30,10 +30,10 @@ ROUTE_TEST = ROOT / "tests/test_csb_v1_runtime_route_first_frame_movement_utilit
 REDMCSB = find_source_root(("DEFS.H", "CHAMPION.C")) or (
     ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source/.unavailable"
 )
-CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
-ORIGINAL_CSB = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/csb"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_csb.html.html"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
+CSB_SRC = Path.home() / ".firestaff/data/firestaff-csb-source/CSB/src"
+ORIGINAL_CSB = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/csb"
+GREATSTONE = Path.home() / ".firestaff/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_csb.html.html"
+CSBWIN = Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin"
 
 CRITERIA = {
     "reference_inventory": (9, "SOURCE_LOCKED_PARTIAL"),

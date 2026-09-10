@@ -13,7 +13,7 @@ This bypasses OS/keypad delivery and keeps the source-locked path after command 
 
 ## ReDMCSB source audit first
 
-Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root audited: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 ### `COMMAND.C`
 

@@ -42,7 +42,7 @@ These are asset/layout-groundwork metrics only.  They identify the source-backed
 ```sh
 ./run_firestaff_v1_title_menu_cadence_layout_probe.sh \
   "$HOME/.firestaff/data/GRAPHICS.DAT" \
-  "$HOME/.openclaw/data/redmcsb-original/TITLE" \
+  "$HOME/.firestaff/data/redmcsb-original/TITLE" \
   | tee parity-evidence/pass68_v1_title_menu_cadence_layout_probe.txt
 ```
 

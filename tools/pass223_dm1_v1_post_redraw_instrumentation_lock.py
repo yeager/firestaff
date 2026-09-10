@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DEFAULT_OUT = ROOT / "parity-evidence/verification/pass223_dm1_v1_post_redraw_instrumentation_lock.json"
 DEFAULT_REPORT = ROOT / "parity-evidence/pass223_dm1_v1_post_redraw_instrumentation_lock.md"
 

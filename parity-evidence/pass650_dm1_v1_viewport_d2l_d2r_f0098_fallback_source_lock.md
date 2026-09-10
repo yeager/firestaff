@@ -18,7 +18,7 @@ Local gates:
 - PASS CMakeLists.txt
 
 Verification:
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat: rc=0
+- <local-home>/.firestaff/workspace-main/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat: rc=0
 
 Non-claims:
 - Does not duplicate D2L/D2R wall table gates.

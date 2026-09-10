@@ -99,7 +99,7 @@ static const char *resolve_data_dir(int argc, char **argv)
     if (env && env[0]) return env;
 
     home = getenv("HOME");
-    if (!home || !home[0]) home = "/Users/bosse";
+    if (!home || !home[0]) home = "<local-home>";
     snprintf(path, sizeof(path), "%s/.firestaff/data/nexus", home);
     return path;
 }

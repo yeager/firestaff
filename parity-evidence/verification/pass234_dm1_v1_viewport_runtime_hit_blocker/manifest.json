@@ -27,10 +27,10 @@
         "cmd": [
           "bash",
           "-lc",
-          "find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
+          "find . ~/.firestaff/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f"
         ],
         "error": "TimeoutExpired",
-        "message": "Command '['bash', '-lc', 'find . ~/.openclaw/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f']' timed out after 6 seconds"
+        "message": "Command '['bash', '-lc', 'find . ~/.firestaff/data/firestaff-original-games -iname FIRES.EXENEW -print -quit | xargs -r objdump -f']' timed out after 6 seconds"
       }
     },
     "symbol_map_exists": true,
@@ -43,7 +43,7 @@
       "wine": null
     }
   },
-  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
+  "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {
@@ -60,7 +60,7 @@
       },
       "observable": "main loop consumes G0308_i_PartyDirection/G0306_i_PartyMapX/G0307_i_PartyMapY in the F0128 draw call",
       "ok": true,
-      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -79,7 +79,7 @@
       },
       "observable": "I34E-family F0128 composes G0296_puc_Bitmap_Viewport from direction/X/Y before calling F0097",
       "ok": true,
-      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -95,10 +95,10 @@
       },
       "observable": "PC I34E-family F0097 resolves C007_ZONE_VIEWPORT and blits G0296_puc_Bitmap_Viewport via VIDRV_09_BlitViewPort",
       "ok": true,
-      "source_path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "source_root": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_RUNTIME_HITS_REQUIRED",
   "symbol_map_guardrail": {
     "entries": [

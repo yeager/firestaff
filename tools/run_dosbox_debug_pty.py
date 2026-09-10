@@ -9,8 +9,8 @@ import pexpect
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop"
 REPORT = ROOT / "parity-evidence/pass326_dm1_v1_direct_pty_f0128_code_stop.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 F0128, F0097, F0380 = "23AD:40FE", "2809:1EFF", "22F4:0699"
 DEFAULT_ROUTE = "wait:4000 enter wait:1200 one wait:1200 click:276,140 wait:1200 one wait:1200 kp5 wait:600 kp4 wait:600 kp6 wait:600 kp5 wait:600"
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")

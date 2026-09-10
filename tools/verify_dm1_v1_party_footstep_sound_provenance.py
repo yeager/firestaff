@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 DEFAULT_REDMCSB_SOURCE = Path(
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/"
+    "<local-home>/.firestaff/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
 AUDITED_FILES = [

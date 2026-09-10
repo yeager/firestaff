@@ -267,15 +267,15 @@
   ],
   "inputs": {
     "dm_map": {
-      "path": "/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP",
+      "path": "<local-home>/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP",
       "present": false
     },
     "fires_map": {
       "bytes": 104565,
-      "path": "/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
+      "path": "<local-home>/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
       "sha256": "eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0"
     },
-    "pc_h": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H"
+    "pc_h": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H"
   },
   "load_segment_from_pass246_lineage": "0733",
   "pass270_correction": "The preserved FIRES.MAP shows e.g. F0267 at 1126:0516, F0365 at 1771:010D, and F0366 at 1771:01AA. Adding load segment 0733 yields 1859:0516, 1EA4:010D, and 1EA4:01AA respectively, matching prior pass263/pass270 candidates. Therefore pass270's extra +0733 runtime column was a double-add for these map-backed candidates.",

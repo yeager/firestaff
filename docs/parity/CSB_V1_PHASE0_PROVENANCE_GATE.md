@@ -16,10 +16,10 @@ Evidence: `parity-evidence/verification/csb_v1_phase0_provenance_gate.json`
 
 Local N2 caches used by the verifier:
 
-- Original CSB assets: `~/.openclaw/data/firestaff-original-games/DM/_canonical/csb/`
-- Secondary CSB lineage source: `~/.openclaw/data/firestaff-csb-source/CSB/`
-- Secondary CSBWin source: `~/.openclaw/data/firestaff-csbwin-source/CSBWin/`
-- ReDMCSB shared DM1/CSB discipline reference: `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+- Original CSB assets: `~/.firestaff/data/firestaff-original-games/DM/_canonical/csb/`
+- Secondary CSB lineage source: `~/.firestaff/data/firestaff-csb-source/CSB/`
+- Secondary CSBWin source: `~/.firestaff/data/firestaff-csbwin-source/CSBWin/`
+- ReDMCSB shared DM1/CSB discipline reference: `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 Locked original archive anchors:
 

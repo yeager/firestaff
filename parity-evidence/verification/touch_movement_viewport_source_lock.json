@@ -1996,13 +1996,13 @@
     "COMMAND.C:1641-1644 F0359_COMMAND_ProcessClick_CPSC checks primary then secondary mouse tables",
     "COORD.C:1915-1920 F0798_COMMAND_IsPointInZone inclusive zone hit-test"
   ],
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "pass",
   "verified_files": [
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
-    "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
-    "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/data/zones_h_reconstruction.json",
-    "/Users/bosse/.openclaw/data/firestaff-land-20260509-0721/touch_click_zone_matrix_pc34_compat.c"
+    "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+    "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+    "<local-home>/.firestaff/data/firestaff-land-20260509-0721/data/zones_h_reconstruction.json",
+    "<local-home>/.firestaff/data/firestaff-land-20260509-0721/touch_click_zone_matrix_pc34_compat.c"
   ],
   "zones": [
     {

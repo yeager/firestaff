@@ -10,7 +10,7 @@ MAN=ROOT/'parity-evidence/verification/pass320_dm1_v1_f0097_vidrv_window_after_f
 OUT=ROOT/'parity-evidence/verification/pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe.json'
 REPORT=ROOT/'parity-evidence/pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe.md'
 PASS318=ROOT/'parity-evidence/verification/pass318_dm1_v1_f0097_after_f0128_offset_window_probe.json'
-SRC=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+SRC=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 ADDRS={'F0128_DUNGEONVIEW_Draw_CPSF':'23AD:40FE','F0097_DUNGEONVIEW_DrawViewport_entry':'2809:1E31','F0097_after_palette_zone_setup':'2809:1EBD','F0097_before_viewport_args':'2809:1EEE','F0097_VIDRV_09_BlitViewPort_indirect_call':'2809:1EFF'}
 def compact(s): return ' '.join(s.split())
 def line_hits(fn, needles):

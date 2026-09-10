@@ -26,7 +26,7 @@ MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 EXPECTED_BLOCKED = "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY"
 READY = "PASS435_SEMANTIC_ORIGINAL_ROUTE_READY"
@@ -296,7 +296,7 @@ def unblock_commands() -> dict[str, Any]:
     # C160 resurrect choice, then Return confirmation.
     route_capture = (
         "OUT_DIR=$PWD/verification-screens/pass376-original-route "
-        "DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
+        "DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
         "DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' "
         "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 "
         "DM1_ORIGINAL_EXPECTED_SHOTS=6 "

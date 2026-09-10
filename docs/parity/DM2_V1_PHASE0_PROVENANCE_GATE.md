@@ -16,9 +16,9 @@ Evidence: `parity-evidence/verification/dm2_v1_phase0_provenance_gate/manifest.j
 
 Local N2 source caches used by the verifier:
 
-- Original DM2 assets: `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm2/`
-- skproject mirror: `~/.openclaw/data/firestaff-dm2-sources/skproject.git`
-- Sphenx SKWin SPX cache: `~/.openclaw/data/firestaff-dm2-sources/sphenx-skwin/`
+- Original DM2 assets: `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm2/`
+- skproject mirror: `~/.firestaff/data/firestaff-dm2-sources/skproject.git`
+- Sphenx SKWin SPX cache: `~/.firestaff/data/firestaff-dm2-sources/sphenx-skwin/`
 
 Locked DM2 original assets:
 

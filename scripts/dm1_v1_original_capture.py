@@ -92,7 +92,7 @@ except Exception:
 try:
     # Keep the optional classifier project-local.  This capture helper must
     # neither depend on a former developer's workstation nor revive the
-    # retired .openclaw workspace path.
+    # retired .firestaff workspace path.
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] /
                            "docs" / "parity" / "tools"))
     from dosbox_state_detector import classify as _state_classify
@@ -936,7 +936,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument(
         "--runtime",
-        default="/Users/bosse/.firestaff/data/dm1-extras/dmfiles-dos-en-v34",
+        default="<local-home>/.firestaff/data/dm1-extras/dmfiles-dos-en-v34",
         help="Path to the DM1 PC 3.4 runtime layout (DM.EXE + DATA/)",
     )
     parser.add_argument(
@@ -951,7 +951,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--evidence-out",
-        default="/Users/bosse/.openclaw/workspace-main/parity-evidence/captures",
+        default="<local-home>/.firestaff/workspace-main/parity-evidence/captures",
         help="Where to copy the captures + report into the repo",
     )
     args = parser.parse_args(argv)

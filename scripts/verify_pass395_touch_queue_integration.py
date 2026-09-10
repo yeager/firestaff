@@ -13,7 +13,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ).expanduser()
 OUT_DIR = REPO / "parity-evidence/verification/pass395_dm1_v1_touch_queue_integration"
 MANIFEST = OUT_DIR / "manifest.json"

@@ -12,8 +12,8 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source")
-GRAPHICS_DAT = (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT")
+SOURCE = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source")
+GRAPHICS_DAT = (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT")
 JSON_OUT = ROOT / "parity-evidence/verification/pass298_dm1_v2_entry_bitmap_materialization_blocker.json"
 MD_OUT = ROOT / "parity-evidence/pass298_dm1_v2_entry_bitmap_materialization_blocker.md"
 EXPECTED_GRAPHICS_SHA256 = "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"

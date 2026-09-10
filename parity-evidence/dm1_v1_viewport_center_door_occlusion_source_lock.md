@@ -2,7 +2,7 @@
 
 ## ReDMCSB source audit
 
-Primary source: `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C`.
+Primary source: `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C`.
 
 - `DUNVIEW.C:4547-4582` (`F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF`) documents the object/creature/projectile/explosion pass ordering used when a square body calls into the viewport thing renderer.
 - `DUNVIEW.C:6721-6744` (`F0118_DUNGEONVIEW_DrawSquareD3C_CPSF`) handles `C17_ELEMENT_DOOR_FRONT` as one center-square body: floor ornament / door-pass F0115 / frame / button / `F0111_DUNGEONVIEW_DrawDoor`.

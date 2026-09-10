@@ -32,9 +32,9 @@ Clean PCE video binary without Firestaff capture hooks:
 Real game media and the System Card are stored at:
 
 ```text
-/Users/bosse/.firestaff/data/theron/TQUS02.bin
-/Users/bosse/.firestaff/data/theron/TQUS19.iso
-/Users/bosse/.mednafen/firmware/syscard3.pce
+<local-home>/.firestaff/data/theron/TQUS02.bin
+<local-home>/.firestaff/data/theron/TQUS19.iso
+<local-home>/.mednafen/firmware/syscard3.pce
 ```
 
 Always use hash-verified files from this local data directory. Do not put game
@@ -157,7 +157,7 @@ Track 02, System Card, video flags and temporary Mednafen home at both 3 and
 Start the video check as follows:
 
 ```bash
-MEDNAFEN_HOME=/Users/bosse/.mednafen \
+MEDNAFEN_HOME=<local-home>/.mednafen \
 /Volumes/Extern-disk/mednafen-1.32.1-clean-pce-20260811/src/mednafen \
   -pce.stretch aspect -pce.videoip 0 -pce.special none \
   -pce.xscale 2.000000 -pce.yscale 2.000000 \
@@ -167,7 +167,7 @@ MEDNAFEN_HOME=/Users/bosse/.mednafen \
 For capture, use the same graphics flags with the current capture binary:
 
 ```bash
-MEDNAFEN_HOME=/Users/bosse/.mednafen \
+MEDNAFEN_HOME=<local-home>/.mednafen \
 /Volumes/Extern-disk/mednafen-firestaff-real-sdl2-20260811/install/bin/mednafen \
   -pce.stretch aspect -pce.videoip 0 -pce.special none \
   -pce.xscale 2.000000 -pce.yscale 2.000000 \
@@ -183,12 +183,12 @@ Dummy video is useful for checking that patches and receipt format work, but it
 is not a Quartz/app capture:
 
 ```bash
-THERON_STATE="/Users/bosse/.mednafen/mcs/Dungeon Master - Theron's Quest (USA).bee0988239a817f20a64cd38fc8caeac.mc0"
+THERON_STATE="<local-home>/.mednafen/mcs/Dungeon Master - Theron's Quest (USA).bee0988239a817f20a64cd38fc8caeac.mc0"
 
-THERON_MEDNAFEN_HOME=/Users/bosse/.mednafen \
+THERON_MEDNAFEN_HOME=<local-home>/.mednafen \
 MEDNAFEN_BIN=/Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809/install/bin/mednafen \
 THERON_US_CUE=/Volumes/Extern-disk/theron-capture-input/TQUS-minimal.cue \
-THERON_SYSTEM_CARD=/Users/bosse/.mednafen/firmware/syscard3.pce \
+THERON_SYSTEM_CARD=<local-home>/.mednafen/firmware/syscard3.pce \
 THERON_LIVE_TRACE_OUTPUT=/Volumes/Extern-disk/theron-auth-capture.trace \
 THERON_CAPTURE_AUTOLOAD_STATE="$THERON_STATE" \
 THERON_CAPTURE_SECONDS=20 \
@@ -478,7 +478,7 @@ game-owned level, object, tile, creature, RNG, T700 or T900 consumer.
 are negative evidence; they must not be replaced by synthetic records or
 host-side formulas. The receipt file is not game data and remains outside the
 repository:
-`/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.
+`<local-home>/.firestaff/cache/theron/manual-capture/out/theron.transition`.
 
 The bounded main-RAM sidecar is about 8.7 MiB. Firestaff's parser now permits
 up to 16 MiB for this explicitly bounded capture, so the real 65,536-sample
@@ -529,7 +529,7 @@ data in the repository:
 
 ```sh
 THERON_REAL_RNG_CODE_TRACE=/Volumes/Extern-disk/theron-auth-capture-mc0-rngcode-long-20260809.trace.rng-code \
-THERON_REAL_US_TRACK02=/Users/bosse/.firestaff/data/theron/TQUS02.bin \
+THERON_REAL_US_TRACK02=<local-home>/.firestaff/data/theron/TQUS02.bin \
 ctest --test-dir /Volumes/Extern-disk/firestaff-theron-active2-build \
   -R theron_v1_mednafen_spawn_consumer_trace --output-on-failure
 ```

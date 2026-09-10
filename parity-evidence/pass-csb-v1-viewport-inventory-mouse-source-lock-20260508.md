@@ -6,8 +6,8 @@ Result: PASS — source evidence and verifier for a narrow CSB V1 viewport/inven
 
 - Seam: adventuring viewport clicks vs inventory/clothing/mouth/eye click dispatch.
 - Primary for shared V1 mechanics remains ReDMCSB. This pass is CSB-specific lineage evidence, so it uses only N2-local CSB references:
-  - `/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin/Mouse.cpp`
-  - `/home/trv2/.openclaw/data/firestaff-csb-source/CSB/src/Mouse.cpp`
+  - `/home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin/Mouse.cpp`
+  - `/home/trv2/.firestaff/data/firestaff-csb-source/CSB/src/Mouse.cpp`
 - Verifier: `tools/verify_csb_v1_viewport_inventory_mouse_source_lock.py`.
 
 ## Source anchors
@@ -36,6 +36,6 @@ Result: PASS — source evidence and verifier for a narrow CSB V1 viewport/inven
 
 ```sh
 python3 tools/verify_csb_v1_viewport_inventory_mouse_source_lock.py \
-  --csbwin-source /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin \
-  --csb-source /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src
+  --csbwin-source /home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin \
+  --csb-source /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src
 ```

@@ -10,7 +10,7 @@ import json, subprocess
 from pathlib import Path
 
 REPO=Path(__file__).resolve().parent.parent
-SRC=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+SRC=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 OUT=REPO/'parity-evidence/verification/pass169_redmcsb_anchor_gap_resolution'
 
 ANCHORS={

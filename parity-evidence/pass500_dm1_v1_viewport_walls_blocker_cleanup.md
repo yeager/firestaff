@@ -4,7 +4,7 @@ Status: `PASS500_SOURCE_LOCK_ADDED_ORIGINAL_CAPTURE_DECISION_REMAINS`
 
 ## Mandatory ReDMCSB audit before implementation
 
-Audited local ReDMCSB source at `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/` before changing Firestaff.
+Audited local ReDMCSB source at `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/` before changing Firestaff.
 
 Movement/control anchors:
 - `COMMAND.C:F0361_COMMAND_ProcessKeyPress` lines 1709-1956 and `COMMAND.C:F0380_COMMAND_ProcessQueue_CPSC` lines 2045-2829: command queue/input dispatch boundary.

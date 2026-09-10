@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
+    "~/.firestaff/data/firestaff-redmcsb-source/"
     "ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ).expanduser()
 OUT_JSON = ROOT / "parity-evidence" / "verification" / "dm1_v1_movement_core_lane_source_lock.json"

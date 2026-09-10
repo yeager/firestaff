@@ -41,7 +41,7 @@ OUT_DIR = ROOT / "parity-evidence/verification/passH2312_dm2_v1_input_scripts"
 SCRIPTS_INDEX = OUT_DIR / "index.json"
 
 # SKULL.ASM source anchor
-SKULL_ASM = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source"
+SKULL_ASM = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source"
 
 # skproject reference
 SKPROJECT = ROOT.parent / "skproject"

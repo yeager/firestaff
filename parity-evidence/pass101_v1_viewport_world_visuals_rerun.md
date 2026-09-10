@@ -22,7 +22,7 @@ Full local run log is stored at:
 ## Data anchors observed
 
 - `$HOME/.firestaff/data/GRAPHICS.DAT` exists on N2 (`363417` bytes).
-- Original reference extracted set exists on N2 at `$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/` with `dm-pc34/` and `dm2-dos-asm/`.
+- Original reference extracted set exists on N2 at `$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/` with `dm-pc34/` and `dm2-dos-asm/`.
 
 ## Results
 

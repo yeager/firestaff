@@ -12,7 +12,7 @@ No DOSBox/original FIRES debugger hit or pixel parity is claimed here.
 
 ## ReDMCSB source audit anchors
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 - `COMMAND.C:636-685` — `G0459_as_Graphic561_SecondaryKeyboardInput_Movement` binds I34E movement commands to `0x004B`, `0x004C`, `0x004D`, `0x004F`, `0x0050`, `0x0051`.
 - `IO2.C:5-61` — `F0540_INPUT_Crawcin` reads `IODRV_00_GetKeyboardInput`; I34E shifted/extended arrow scancodes normalize to the same movement-table codes.
@@ -58,8 +58,8 @@ This proves the route reached the active live viewport and compat movement path 
 
 - `python3 -m py_compile tools/verify_pass349_dm1_v1_full_launcher_keypad_runtime_route.py`
 - `tools/verify_pass349_dm1_v1_full_launcher_keypad_runtime_route.py` → `FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED`
-- Verifier-internal CMake configure/build in `~/.openclaw/data/firestaff-builds/pass349-verify`
+- Verifier-internal CMake configure/build in `~/.firestaff/data/firestaff-builds/pass349-verify`
 - Verifier-internal `test_dm1_v1_movement_pipeline_pc34_compat` → `138 passed, 0 failed`
-- `cmake --build ~/.openclaw/data/firestaff-builds/pass349-verify --target firestaff_m11_hall_walkaround_runtime_probe -j2`
-- `ctest --test-dir ~/.openclaw/data/firestaff-builds/pass349-verify -R "dm1_v1_movement_pipeline|dm1_v1_hall_walkaround_runtime" --output-on-failure` → 2/2 passed
+- `cmake --build ~/.firestaff/data/firestaff-builds/pass349-verify --target firestaff_m11_hall_walkaround_runtime_probe -j2`
+- `ctest --test-dir ~/.firestaff/data/firestaff-builds/pass349-verify -R "dm1_v1_movement_pipeline|dm1_v1_hall_walkaround_runtime" --output-on-failure` → 2/2 passed
 - `git diff --check`

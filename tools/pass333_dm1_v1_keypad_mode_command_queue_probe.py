@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass333_dm1_v1_keypad_mode_command_queue_probe"
 OUT = ROOT / "parity-evidence/verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 # Runtime addresses are I34E MAP segment + 0x0733, matching pass330 F0128/F0097 strict stops.
 ADDR = {
     "F0361_COMMAND_ProcessKeyPress": "22F4:0407",

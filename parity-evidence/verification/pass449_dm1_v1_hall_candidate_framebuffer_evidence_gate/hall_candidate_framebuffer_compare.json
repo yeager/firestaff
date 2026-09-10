@@ -60,14 +60,14 @@
   },
   "materialization": {
     "status": "NOT_MATERIALIZED",
-    "firestaffRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
-    "firestaffManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
-    "originalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-    "correctedOriginalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+    "firestaffRoot": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
+    "firestaffManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
+    "originalRoot": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+    "correctedOriginalRoot": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
     "materialized": [],
     "missing": [],
     "errors": [
-      "missing Firestaff frame root: /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
+      "missing Firestaff frame root: /Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
     ]
   },
   "expectedArtifacts": [
@@ -824,7 +824,7 @@
   ],
   "missing": [],
   "errors": [
-    "missing Firestaff frame root: /Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
+    "missing Firestaff frame root: /Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs"
   ],
   "compareExecuted": true,
   "comparisons": [
@@ -1205,12 +1205,12 @@
           "the C080 portrait/candidate click reaches the candidate panel without the corridor second-mirror helper",
           "terminal C160/C161/C162 frames are captured at their source-stop-aligned redraw boundary before pass449 HUD rows are made parity-eligible"
         ],
-        "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
+        "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
         "inspectedFirestaffArtifacts": [
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
-          "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
+          "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+          "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+          "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+          "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
         ]
       },
       "sourceRefs": [

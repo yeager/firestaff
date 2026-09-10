@@ -157,7 +157,7 @@
         ]
       }
     ],
-    "root": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm2",
+    "root": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm2",
     "sourceDisassembly": {
       "actual": {
         "bytes": 7841116,
@@ -194,7 +194,7 @@
             "needle": "DATA\\\\GRAPHICS.DAT"
           }
         ],
-        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C"
+        "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C"
       },
       {
         "exists": true,
@@ -209,7 +209,7 @@
             "needle": "F0770_FILE_Open(\"\\\\DUNGEON.DAT\")"
           }
         ],
-        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C"
+        "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/LOADSAVE.C"
       },
       {
         "exists": true,
@@ -224,7 +224,7 @@
             "needle": "F0770_FILE_Open(G2130_GraphicsDatFileName)"
           }
         ],
-        "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C"
+        "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C"
       }
     ],
     "policy": "DM1/CSB source discipline comparison only; ReDMCSB is not a DM2 source."
@@ -246,7 +246,7 @@
       "treeFileCount": 1868,
       "treeNameSha256": "3aa08529543f998f97936e0c23861793f2caf3257853d3b1f58f0e3dec011417"
     },
-    "mirror": "/home/trv2/.openclaw/data/firestaff-dm2-sources/skproject.git",
+    "mirror": "/home/trv2/.firestaff/data/firestaff-dm2-sources/skproject.git",
     "remote": "https://github.com/gbsphenx/skproject"
   },
   "sphenxSkwin": {

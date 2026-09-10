@@ -14,13 +14,13 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass552_dm1_v1_movement_cooldown_queue_loop"
 STATUS = "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REFS = {
     "redmcsb": RED,
-    "greatstone": Path.home() / ".openclaw/data/firestaff-greatstone-atlas",
-    "csbwin": Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin",
-    "csb": Path.home() / ".openclaw/data/firestaff-csb-source/CSB",
-    "original_dm": Path.home() / ".openclaw/data/firestaff-original-games/DM",
+    "greatstone": Path.home() / ".firestaff/data/firestaff-greatstone-atlas",
+    "csbwin": Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin",
+    "csb": Path.home() / ".firestaff/data/firestaff-csb-source/CSB",
+    "original_dm": Path.home() / ".firestaff/data/firestaff-original-games/DM",
 }
 GAMELOOP = RED / "GAMELOOP.C"
 COMMAND = RED / "COMMAND.C"

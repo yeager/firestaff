@@ -27,9 +27,9 @@ MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
-ORIGINAL_DM = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+ORIGINAL_DM = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 
 SOURCE_ANCHORS: list[dict[str, Any]] = [
     {

@@ -32,20 +32,20 @@ def first_existing_env_path(env_names: list[str], candidates: list[pathlib.Path]
 
 REDMCSB = pathlib.Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(pathlib.Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 BUILD_DIR = pathlib.Path(os.environ.get(
     "FIRESTAFF_PASS352_BUILD_DIR",
-    str(pathlib.Path.home() / ".openclaw/data/firestaff-builds/pass352-verify"),
+    str(pathlib.Path.home() / ".firestaff/data/firestaff-builds/pass352-verify"),
 ))
 HOME_ROOT = pathlib.Path(os.environ.get(
     "FIRESTAFF_PASS352_HOME_ROOT",
-    str(pathlib.Path.home() / ".openclaw/data/firestaff-homes/pass352-verify"),
+    str(pathlib.Path.home() / ".firestaff/data/firestaff-homes/pass352-verify"),
 ))
 DM1_DATA = first_existing_env_path(
     ["FIRESTAFF_PASS352_DM1_DATA", "FIRESTAFF_DM1_CANONICAL_DATA", "FIRESTAFF_DM1_DATA"],
     [
-        pathlib.Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+        pathlib.Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1",
         pathlib.Path.home() / ".firestaff/data/dm1",
     ],
 )

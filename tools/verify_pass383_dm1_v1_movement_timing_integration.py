@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 OUTDIR = ROOT / "parity-evidence" / "verification" / "pass383_dm1_v1_movement_timing_integration"
 OUT = OUTDIR / "manifest.json"
 
@@ -141,7 +141,7 @@ def main() -> int:
         grep_status(ROOT / "parity-evidence/pass243_dm1_v1_dunview_emulator_variant_runbook.md", "BLOCKED_DUNVIEW_TCPP101_DOSBOX_VARIANTS_EXHAUSTED"),
     ]
 
-    build_dir = Path("~/.openclaw/data/firestaff-builds/pass383-verify").expanduser()
+    build_dir = Path("~/.firestaff/data/firestaff-builds/pass383-verify").expanduser()
     build_dir.mkdir(parents=True, exist_ok=True)
     if not (build_dir / "CTestTestfile.cmake").exists():
         cfg = subprocess.run(["cmake", "-S", str(ROOT), "-B", str(build_dir)],

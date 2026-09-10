@@ -4,7 +4,7 @@ Task: `inventory-consumables-source-lock-20260520`.
 
 ## ReDMCSB Evidence Anchors
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `PANEL.C:1743-1785` — `F0349_INVENTORY_ProcessCommand70_ClickOnMouth` local state for mouth consumption.
 - `PANEL.C:1824-1844` — mouth-allowed object gate, water/waterskin charge gate, and leader-hand removal choice.

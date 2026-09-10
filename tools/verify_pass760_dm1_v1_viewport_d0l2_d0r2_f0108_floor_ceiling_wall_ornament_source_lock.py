@@ -18,7 +18,7 @@ BUILD = Path(os.environ.get("FIRESTAFF_BUILD_DIR", ROOT / "build"))
 TEST_BINARY = BUILD / "test_dm1_v1_viewport_3d_pc34_compat"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 MANIFEST = ROOT / "parity-evidence" / "verification" / PASS / "manifest.json"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 REQUIRED_ANCHORS = [
     "DUNVIEW.C F0108_DUNGEONVIEW_DrawFloorOrnament:3940-4011",

@@ -25,7 +25,7 @@ MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 STATUS = "BLOCKED_PASS378_ORIGINAL_ROUTE_NOT_SEMANTICALLY_CLEAN"
 
@@ -94,7 +94,7 @@ RETRY_CLASSIFIER = f"{RETRY_DIR}/pass80_original_frame_classifier.json"
 RETRY_COMMAND = (
     "OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf \"$OUT\"; "
     "OUT_DIR=\"$OUT\" "
-    "DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
+    "DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 "
     "DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 "
     "WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 "
     "DM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel\" "

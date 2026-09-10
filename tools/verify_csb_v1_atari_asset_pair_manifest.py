@@ -17,10 +17,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json"
-REDMCSB = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
-CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
-ORIG = (Path.home() / ".openclaw/data/firestaff-original-games/DM")
+REDMCSB = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+CSB_SRC = Path.home() / ".firestaff/data/firestaff-csb-source/CSB/src"
+CSBWIN = Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin"
+ORIG = (Path.home() / ".firestaff/data/firestaff-original-games/DM")
 ATARI_HD = ORIG / "_extracted/csb-atari/HardDisk/2009-02-22 PP"
 CANON = ORIG / "_canonical/csb"
 

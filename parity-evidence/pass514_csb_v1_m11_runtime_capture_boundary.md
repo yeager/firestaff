@@ -15,7 +15,7 @@ Firestaff can catalog and hash-match CSB assets at M12, return a valid CSB launc
 
 ## Primary ReDMCSB audit
 
-Audited source: ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
+Audited source: ~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
 
 - DEFS.H lines 468-523: DM and CSB save headers differ; CSB uses its own save-header format and dungeon IDs C12_DUNGEON_CSB_PRISON and C13_DUNGEON_CSB_GAME.
 - CEDTINC8.C lines 101-118: save routing selects M746_FILE_ID_SAVE_CSBGAME_DAT for CSB prison/game IDs, separate from DM DMSAVE.DAT.

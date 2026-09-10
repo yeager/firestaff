@@ -67,7 +67,7 @@ static const char* graphics_dat_path(void) {
                  home);
         return homePath;
     }
-    return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
+    return "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
 }
 
 static int load_original_pc34_font(M11_GameViewState* state) {

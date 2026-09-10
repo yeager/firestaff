@@ -6,7 +6,7 @@ Scope: verification-only follow-up for DM1 V1 viewport wall draw-order and occlu
 
 ## ReDMCSB source audit anchors
 
-Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Source root audited: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `DRAWVIEW.C:709-900` locks `F0097_DUNGEONVIEW_DrawViewport`: the final screen blit presents `G0296_puc_Bitmap_Viewport` after the dungeon-view buffer has been drawn.
 - `DUNVIEW.C:2962-3003` locks `F0098_DUNGEONVIEW_DrawFloorAndCeiling`: floor/ceiling is the clean base before walls and contents replay over it.

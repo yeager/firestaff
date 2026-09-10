@@ -2,7 +2,7 @@
   "schema": "pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.v1",
   "status": "SOURCE_LOCKED_BINDING_MAP_COMPLETE",
   "n2_only": true,
-  "source_root": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "evidence": "parity-evidence/pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.md",
   "verifier": "tools/verify_pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.py",
   "exact_remaining_seam": "product/runtime route-to-compat-pipeline/live-viewport bridge",

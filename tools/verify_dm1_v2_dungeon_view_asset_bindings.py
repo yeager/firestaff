@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+REDMCSB = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 VERIFY_OUT = ROOT / "parity-evidence/verification/pass271_dm1_v2_dungeon_view_asset_bindings.json"
 REQUIRED_LOGICAL_IDS = [
     "fs.v2.shared.dungeon-view.wall.front",

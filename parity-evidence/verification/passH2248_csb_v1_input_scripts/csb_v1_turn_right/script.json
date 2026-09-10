@@ -5,7 +5,7 @@
   "source_evidence": {
     "turn_command": {
       "source": "ReDMCSB",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
       "lines": "1-60",
       "needles": [
         "C0x43_CMD_TURN_RIGHT",

@@ -11,7 +11,7 @@ Treat party footsteps as a non-V1/procedural audio decision unless a stronger or
 ## Audited source
 
 Primary source tree:
-`/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+`<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 The verifier defaults to the N1-local tree above. If this audit is rerun on N2,
 pass the N2-local tree explicitly with `--redmcsb-source`; do not substitute any

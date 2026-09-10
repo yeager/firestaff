@@ -10,6 +10,6 @@ Validation:
 
 - `cmake --build build --target firestaff firestaff_m12_startup_menu_probe firestaff_m12_menu_mouse_probe -j4`
 - `ctest --test-dir build -R 'm12_menu_mouse|m12_startup_menu|dm1_launcher_click_smoke' --output-on-failure`
-- Headless post-launch run: `SDL_VIDEODRIVER=dummy FIRESTAFF_AUTOTEST=1 ./build/firestaff --duration 3000 --width 1920 --height 1080 --data-dir ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 --script 'click:590:500,click:960:609'`
+- Headless post-launch run: `SDL_VIDEODRIVER=dummy FIRESTAFF_AUTOTEST=1 ./build/firestaff --duration 3000 --width 1920 --height 1080 --data-dir ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 --script 'click:590:500,click:960:609'`
 
 Install note: copy `Firestaff.app` out of the DMG before launching it. Do not run the app directly from the mounted DMG volume.

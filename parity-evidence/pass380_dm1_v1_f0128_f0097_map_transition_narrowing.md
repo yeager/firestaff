@@ -8,7 +8,7 @@ FIRES CS:IP mapping held: F0128 and F0097 rebase from FIRES.MAP with loader +073
 
 ## Evidence
 
-- Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - FIRES map rebase: F0128 `1C7A:40FE` -> `23AD:40FE`; F0097 `20D6:1E31` -> `2809:1E31`.
 - VIDRV call byte binding: `20D6:1EFF` -> `2809:1EFF` remains `26 ff 5f 24`.
 - pass379 final forced pause decodes to `IMAGE_TEXT` near `F0683_COPYPIXELLINETOSCREENWITHT`; this is not F0128/F0097.

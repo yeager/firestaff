@@ -15,8 +15,8 @@ First missing gate: `native gdb symbol-binding sanity check unavailable on this 
 
 ## Commands
 
-- gdb sanity check: `gdb --batch -x /Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
-- DOSBox-X start point: `dosbox-x -conf /Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf -break-start`
+- gdb sanity check: `gdb --batch -x <local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_dm_exe_symbol_gate.gdb`
+- DOSBox-X start point: `dosbox-x -conf <local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox-x-pass162-runtime-gate.conf -break-start`
 
 ## Breakpoint order
 

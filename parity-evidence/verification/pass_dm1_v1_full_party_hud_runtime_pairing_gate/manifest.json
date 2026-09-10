@@ -1,7 +1,7 @@
 {
-  "binary_path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
+  "binary_path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
   "claim_parity": false,
-  "data_dir": "/home/yeager/.firestaff/data/dm1",
+  "data_dir": "<local-home>/.firestaff/data/dm1",
   "data_dir_exists": true,
   "detail": "Probe binary was not built; check the CMake build.",
   "generated_at": "2026-09-04T18:05:00.757811+00:00",
@@ -15,7 +15,7 @@
     "pass_count": 0,
     "ran": false,
     "returncode": null,
-    "stderr_tail": "binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
+    "stderr_tail": "binary not found: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
     "stdout_tail": ""
   },
   "schema": "firestaff.parity.pass_dm1_v1_full_party_hud_runtime_pairing_gate.v1",

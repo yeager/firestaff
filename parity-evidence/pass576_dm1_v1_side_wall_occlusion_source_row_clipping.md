@@ -158,8 +158,8 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
   - line 2238: wall_clip_draw.opaque_copies_transparent_color
 
 ## DM1 Hash Locks
-- PASS DM1 canonical PC34/V1 GRAPHICS.DAT: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/original-capture-stage/dm1-pc34/DATA/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes=363417
-- PASS DM1 canonical PC34/V1 DUNGEON.DAT: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/original-capture-stage/dm1-pc34/DATA/DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 bytes=33357
+- PASS DM1 canonical PC34/V1 GRAPHICS.DAT: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/original-capture-stage/dm1-pc34/DATA/GRAPHICS.DAT sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e bytes=363417
+- PASS DM1 canonical PC34/V1 DUNGEON.DAT: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/original-capture-stage/dm1-pc34/DATA/DUNGEON.DAT sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 bytes=33357
 
 ## Non-Claims
 - No front-wall/front-cell behavior is promoted by this pass.

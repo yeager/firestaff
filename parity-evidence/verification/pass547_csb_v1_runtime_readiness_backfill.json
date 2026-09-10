@@ -7,7 +7,7 @@
     {
       "id": "redmcsb_csb_header_identity",
       "role": "primary_source",
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "482-523",
       "needles": [
         "CSB_SAVE_HEADER",
@@ -21,7 +21,7 @@
     {
       "id": "redmcsb_atari_csb_payload_names",
       "role": "primary_source",
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/HINTLOAD.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/HINTLOAD.C",
       "lines": "11-18",
       "needles": [
         "0HCSB.HTC",
@@ -35,7 +35,7 @@
     {
       "id": "redmcsb_make_new_adventure_runtime_gate",
       "role": "primary_source",
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
       "lines": "5-63",
       "needles": [
         "F7086_IsReadyToMakeNewAdventure",
@@ -50,7 +50,7 @@
     {
       "id": "redmcsb_csb_dungeon_validation_switch",
       "role": "primary_source",
-      "path": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCU.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCU.C",
       "lines": "5-77",
       "needles": [
         "F7272_IsDungeonValid",
@@ -64,7 +64,7 @@
     {
       "id": "firestaff_m12_launch_guard_supports_csb",
       "role": "firestaff_positive",
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/ui/menu_startup_m12.c",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/ui/menu_startup_m12.c",
       "lines": "1-99999",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
@@ -76,7 +76,7 @@
     {
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
       "role": "firestaff_positive",
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/ui/menu_startup_m12.c",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/ui/menu_startup_m12.c",
       "lines": "1-99999",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
@@ -89,7 +89,7 @@
     {
       "id": "firestaff_m11_csb_handoff_to_game_loop",
       "role": "firestaff_positive",
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "lines": "1-99999",
       "needles": [
         "CSB V1: bypass DM1 dungeon loader",
@@ -102,7 +102,7 @@
     {
       "id": "firestaff_csb_game_loop_boot_profile",
       "role": "firestaff_positive",
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/firestaff_game_loop.c",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/firestaff_game_loop.c",
       "lines": "242-280",
       "needles": [
         "FS_GAME_CSB",
@@ -115,7 +115,7 @@
     {
       "id": "firestaff_original_csb_first_viewport_probe",
       "role": "firestaff_positive",
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/probes/csb/firestaff_csb_v1_first_viewport_frame_probe.c",
       "lines": "1-560",
       "needles": [
         "Hash-verified asset scan",

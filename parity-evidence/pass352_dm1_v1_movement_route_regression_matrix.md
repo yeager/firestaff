@@ -6,7 +6,7 @@ This pass is a consolidation gate after pass346/pass347 integration. It does not
 
 ## ReDMCSB source audit anchors
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 - `IO2.C:32` calls `IODRV_00_GetKeyboardInput` in the P20JA path before PC key normalization.
 - `IO2.C:37` calls `IODRV_00_GetKeyboardInput` in the P20JB/I34E/I34M/P31J path.

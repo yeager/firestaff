@@ -1,6 +1,6 @@
 # Pass 156 — DM1/V1 TITLE.C source timing lock
 
-Evidence source: `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C`, function `F0437_STARTEND_DrawTitle`.
+Evidence source: `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C`, function `F0437_STARTEND_DrawTitle`.
 
 Locked control-flow facts for the PC/ST title path:
 

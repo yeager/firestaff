@@ -41,6 +41,6 @@ Result: PASS — source evidence and verifier for a narrow CSB V1 inventory rend
 
 ```sh
 python3 tools/verify_csb_v1_inventory_render_grid_source_lock.py \
-  --csbwin-source /home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin \
-  --csb-source /home/trv2/.openclaw/data/firestaff-csb-source/CSB/src
+  --csbwin-source /home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin \
+  --csb-source /home/trv2/.firestaff/data/firestaff-csb-source/CSB/src
 ```

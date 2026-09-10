@@ -21,7 +21,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:43",
       "line": 43,
       "lineText": "int16_t G0037_ai_Graphic562_Box_Poisoned[4];",
@@ -29,7 +29,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:319",
       "line": 319,
       "lineText": "int16_t G0037_ai_Graphic562_Box_Poisoned[4] = { 112, 207, 105, 119 };",
@@ -37,7 +37,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:1046",
       "line": 1046,
       "lineText": "int16_t G0037_ai_Graphic562_Box_Poisoned[4] = { 112, 207, 105, 119 };",
@@ -45,7 +45,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
       "id": "PANEL.C:1603",
       "line": 1603,
       "lineText": "                M519_F0020_MAIN_BlitToViewport(F0489_MEMORY_GetNativeBitmapOrGraphic(C032_GRAPHIC_POISONED_LABEL), G0037_ai_Graphic562_Box_Poisoned, C048_BYTE_WIDTH, C12_COLOR_DARKEST_GRAY, 15);",
@@ -53,7 +53,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass806_dm1_v1_champion_panel_box_poisoned_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0037_ai_Graphic562_Box_Poisoned[4] = {112, 207, 105, 119}. The {X, Y, W, H} pixel-coordinate rectangle for the POISONED status label blit onto the champion panel. Read site: PANEL.C:1603 F0344_INVENTORY_DrawPanel \u2014 when Champion->PoisonEventCount != 0, blit C032_GRAPHIC_POISONED_LABEL into G0037's box with byte width C048.",
   "sourceChecks": [

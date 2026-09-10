@@ -40,9 +40,9 @@ static const char* find_title_dat(char* buf, size_t cap) {
     if (home && buf && cap > 0) {
         static const char* suffixes[] = {
             ".firestaff/data/TITLE",
-            ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
-            ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
-            ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+            ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+            ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+            ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
         };
         size_t i;
         for (i = 0U; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
@@ -50,8 +50,8 @@ static const char* find_title_dat(char* buf, size_t cap) {
             if (n > 0 && (size_t)n < cap && file_exists(buf)) return buf;
         }
     }
-    if (file_exists("<local-home>/.openclaw/data/redmcsb-original/TITLE")) {
-        return "<local-home>/.openclaw/data/redmcsb-original/TITLE";
+    if (file_exists("<local-home>/.firestaff/data/redmcsb-original/TITLE")) {
+        return "<local-home>/.firestaff/data/redmcsb-original/TITLE";
     }
     return NULL;
 }

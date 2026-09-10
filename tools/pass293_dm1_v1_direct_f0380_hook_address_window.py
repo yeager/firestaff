@@ -6,8 +6,8 @@ from pathlib import Path
 ROOT=Path('<firestaff-worktree>/firestaff-oauth-n2-dm1v1-pass293-direct-f0380-hook-address-window-20260507-0308')
 OUT=ROOT/'parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window'
 REPORT=ROOT/'parity-evidence/pass293_dm1_v1_direct_f0380_hook_address_window.md'
-ORIG=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
-SRC=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+ORIG=Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+SRC=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 ADDR={
  'F0359_COMMAND_ProcessClick_CPSC':'22F4:030D',
  'F0361_COMMAND_ProcessKeyPress':'22F4:0407',

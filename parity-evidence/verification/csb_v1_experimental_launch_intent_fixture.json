@@ -47,7 +47,7 @@
   "source_anchors": [
     {
       "id": "redmcsb_primary_csb_dungeon_ids",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "lines": "519-523",
       "needles": [
         "C12_DUNGEON_CSB_PRISON",
@@ -59,7 +59,7 @@
     },
     {
       "id": "redmcsb_primary_new_adventure_gate",
-      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
       "lines": "5-63",
       "needles": [
         "F7086_IsReadyToMakeNewAdventure",
@@ -72,7 +72,7 @@
     },
     {
       "id": "csb_lineage_required_payloads",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "path": "<local-home>/.firestaff/data/firestaff-csb-source/CSB/src/README",
       "lines": "14-21",
       "needles": [
         "dungeon.dat",
@@ -87,7 +87,7 @@
     },
     {
       "id": "csbwin_workflow_boundary",
-      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "path": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
       "lines": "1-30",
       "needles": [
         "Enter the dungeon",

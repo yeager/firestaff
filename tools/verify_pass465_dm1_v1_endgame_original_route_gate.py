@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source"
-DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source"
+DM1 = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34"
 OUT_DIR = ROOT / "parity-evidence/verification/pass465_dm1_v1_endgame_original_route_gate"
 REPORT = ROOT / "parity-evidence/pass465_dm1_v1_endgame_original_route_gate.md"
 JSON_OUT = OUT_DIR / "manifest.json"

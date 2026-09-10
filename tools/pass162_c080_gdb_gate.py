@@ -17,7 +17,7 @@ from pathlib import Path
 from pass162_c080_queue_trace_probe import CITATIONS, SOURCE_ROOT, OUT_DIR, read_lines
 
 REPO = Path(__file__).resolve().parents[1]
-STAGE = Path('~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34').expanduser()
+STAGE = Path('~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34').expanduser()
 DM_EXE = STAGE / 'DM.EXE'
 GDB_SCRIPT = OUT_DIR / 'pass162_dm_exe_symbol_gate.gdb'
 DOSBOX_CONF = OUT_DIR / 'dosbox-x-pass162-runtime-gate.conf'

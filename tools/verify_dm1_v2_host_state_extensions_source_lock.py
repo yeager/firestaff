@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-src=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+src=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 out=root/'parity-evidence/verification/dm1_v2_host_state_extensions_source_lock.json'
 checks={'COMMAND.C':['F0366_COMMAND_ProcessTypes3To6_MoveParty','C140_COMMAND_SAVE_GAME','F0355_INVENTORY_Toggle_CPSE'],'LOADSAVE.C':['F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF','F0435_STARTEND_LoadGame'],'PANEL.C':['F0355_INVENTORY_Toggle_CPSE']}
 errors=[]

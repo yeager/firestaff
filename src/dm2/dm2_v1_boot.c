@@ -4069,7 +4069,7 @@ static int dm2_v1_boot_discover_dosbox_save_root(
      * from HOME, never hard-coded to a developer account, and only selected
      * when the directory contains source-shaped SKSave files. */
     if (!home || !home[0]) return 0;
-    snprintf(candidate, sizeof(candidate), "%s/Downloads/dm2", home);
+    snprintf(candidate, sizeof(candidate), "%s/<downloads>/dm2", home);
     if (!dm2_v1_sksave_corpus_scan(candidate, &corpus) ||
         (!corpus.has_last_session && !corpus.has_last_session_backup &&
          corpus.valid_slot_mask == 0u)) {

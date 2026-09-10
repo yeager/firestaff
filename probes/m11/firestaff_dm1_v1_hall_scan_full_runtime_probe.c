@@ -11,7 +11,7 @@ unsigned char* G2159_puc_Bitmap_Source;
 unsigned char* G2160_puc_Bitmap_Destination;
 
 int main(int argc, char** argv) {
-    const char* dataDir = argc > 1 ? argv[1] : "/Users/bosse/.firestaff/data/dm1";
+    const char* dataDir = argc > 1 ? argv[1] : "<local-home>/.firestaff/data/dm1";
     M12_StartupMenuState menu;
     M11_GameViewState game;
     if (argc < 2) { fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]); return 2; }

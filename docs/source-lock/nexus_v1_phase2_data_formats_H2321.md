@@ -1056,4 +1056,4 @@ Source: `docs/nexus_data.md` DM1 comparison tables, `docs/nexus_dungeon.md`
 | Phase 1 | `docs/source-lock/nexus_v1_phase1_boot_H2318.md` | Boot profile (boot profile split) |
 | Phase 4 | `docs/source-lock/nexus_v1_phase4_rendering_pipeline_H0357.md` | Rasterizer + palette |
 | Phase 7 | `docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md` | Verification probes |
-| ReDMCSB | `~/.openclaw/data/firestaff-redmcsb-source/` | Source-lock reference |
+| ReDMCSB | `~/.firestaff/data/firestaff-redmcsb-source/` | Source-lock reference |

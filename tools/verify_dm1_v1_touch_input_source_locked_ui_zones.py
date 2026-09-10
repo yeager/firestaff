@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT_JSON = REPO / "parity-evidence/verification/dm1_v1_touch_input_source_locked_ui_zones.json"
 OUT_MD = REPO / "parity-evidence/dm1_v1_touch_input_source_locked_ui_zones.md"
 

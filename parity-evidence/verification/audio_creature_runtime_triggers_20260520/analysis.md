@@ -2,7 +2,7 @@
 
 ## Source evidence
 
-Primary source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+Primary source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 - `GROUP.C:1668-1745` enters the creature attack path, initializes `L1876_B_UseSpellSoundAsFallback`, updates `G0361_l_LastCreatureAttackTime`, resolves the creature type from `G0243_as_Graphic559_CreatureInfo`, and marks projectile-style attacks as spell-sound fallback candidates.
 - `GROUP.C:1788-1818` completes the attack path. For I34E (`MEDIA485...`) it takes `CreatureInfo.AttackSoundOrdinal`, indexes `G2003_aauc_CreatureSounds[ordinal - 1][C0_ATTACK_SOUND]`, rejects `CM1_SOUND_NONE`, and calls `F0064_SOUND_RequestPlay_CPSD(soundIndex, mapX, mapY, C01_MODE_PLAY_IF_PRIORITIZED)`. If no attack sound exists and the projectile fallback flag is set, it requests `M542_SOUND_SPELL` instead.

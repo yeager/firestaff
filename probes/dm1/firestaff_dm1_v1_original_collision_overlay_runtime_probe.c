@@ -10,7 +10,7 @@
 #define DM1_CANONICAL_DUNGEON_SHA256 "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
 
 struct CaseRef { int found; int mapIndex; int x; int y; unsigned char square; int doorIndex; };
-static const char* default_dm1_dungeon_dat(void) { static char path[1024]; const char* home = getenv("HOME"); if (!home || home[0] == 0) home = "/home/trv2"; snprintf(path, sizeof(path), "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home); return path; }
+static const char* default_dm1_dungeon_dat(void) { static char path[1024]; const char* home = getenv("HOME"); if (!home || home[0] == 0) home = "/home/trv2"; snprintf(path, sizeof(path), "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home); return path; }
 static int expect_int(const char* label, int got, int want) { if (got != want) { fprintf(stderr, "FAIL %s got=%d want=%d\n", label, got, want); return 0; } return 1; }
 static int expect_true(const char* label, int value) { return expect_int(label, value ? 1 : 0, 1); }
 static int tile_index(const struct DungeonDatState_Compat* dungeon, int mapIndex, int x, int y) { return x * (int)dungeon->maps[mapIndex].height + y; }

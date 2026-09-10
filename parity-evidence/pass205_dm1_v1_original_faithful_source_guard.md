@@ -14,7 +14,7 @@ Scope: source-first guard only.  No HUD, viewport renderer, inventory, touch, CS
 
 ## Reference-data contract
 
-The guard also checks the local DM PC 3.4 extracted reference files under `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA`:
+The guard also checks the local DM PC 3.4 extracted reference files under `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA`:
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |

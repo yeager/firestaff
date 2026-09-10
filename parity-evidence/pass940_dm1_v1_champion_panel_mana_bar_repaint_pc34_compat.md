@@ -36,6 +36,6 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_panel_mana_bar_repaint_pc34_compat`: rc=0
+- `<local-home>/.firestaff/workspace-main/build/test_dm1_v1_champion_panel_mana_bar_repaint_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass940_dm1_v1_champion_panel_mana_bar_repaint_pc34_compat/manifest.json`

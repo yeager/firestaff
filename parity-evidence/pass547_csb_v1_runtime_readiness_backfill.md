@@ -14,7 +14,7 @@ pass547_csb_v1_runtime_readiness_backfill verifies three things:
 
 ## Primary ReDMCSB audit
 
-Audited source: ~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
+Audited source: ~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
 
 - DEFS.H lines 482-523: CSB_SAVE_HEADER is separate from DM, C0x02_SAVE_HEADER_FORMAT_CHAOS_STRIKES_BACK identifies CSB saves, and CSB uses dungeon IDs C12_DUNGEON_CSB_PRISON and C13_DUNGEON_CSB_GAME.
 - HINTLOAD.C lines 11-18: Atari CSB support/runtime filenames are HCSB.HTC, HCSB.DAT, CSBGAME.DAT and CSBGAME.BAK.

@@ -7,8 +7,8 @@ Detail: Probe binary was not built; check the CMake build.
 ## Probe
 
 - Source: `probes/m11/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe.c`
-- Binary: `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
-- Data dir: `/home/yeager/.firestaff/data/dm1`
+- Binary: `<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
+- Data dir: `<local-home>/.firestaff/data/dm1`
 - Return code: `None`
 - Pass count: `0`
 - Fail count: `0`

@@ -1,6 +1,6 @@
 # Pass 112 N2 original-route follow-up
 
-This follow-up ran on N2 (`Firestaff-Worker-VM`, `~/work/firestaff`) against the curated original DM PC 3.4 tree under `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`.
+This follow-up ran on N2 (`Firestaff-Worker-VM`, `~/work/firestaff`) against the curated original DM PC 3.4 tree under `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`.
 
 ## What changed operationally
 
@@ -24,7 +24,7 @@ Best stable-HUD keyboard route attempt:
 
 ```bash
 OUT_DIR=$PWD/verification-screens/pass112-n2-stable-hud-route \
-DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
 DM1_ORIGINAL_PROGRAM="DM -vv -sn -pk" \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 DOSBOX=/usr/bin/dosbox \

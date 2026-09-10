@@ -25,8 +25,8 @@ import pexpect
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive"
 REPORT = ROOT / "parity-evidence/pass324_dm1_v1_debugger_code_stop_control_primitive.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 SOURCE_CHECKS = [
     {"id":"F0128_DUNGEONVIEW_Draw_CPSF", "file":"DUNVIEW.C", "needles":["void F0128_DUNGEONVIEW_Draw_CPSF", "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"]},

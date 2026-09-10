@@ -18,7 +18,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 PASS = "pass305_dm1_wall_graphics_93_107_manifest"
 CANONICAL_GRAPHICS_DAT = Path(
-    str(Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT")
+    str(Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT")
 )
 EXPECTED_GRAPHICS_SHA256 = "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
 OUT_JSON = Path("parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json")

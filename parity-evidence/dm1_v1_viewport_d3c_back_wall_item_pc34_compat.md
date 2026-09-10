@@ -2,7 +2,7 @@
 
 - status: `DM1_V1_D3C_F0115_BACK_WALL_ITEM_THING_PASS_LOCKED_NON_DUPLICATIVE_WITH_D3C_F0107_D3C_F0108_D3C_F0111_AND_F0115_SIBLINGS`
 - generatedUtc: `2026-06-13T10:50:00.000000+00:00`
-- redmcsb: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- redmcsb: `<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - parity claim: **not made**; this is a contract-only, no-asset
   thing-pass source-lock gate for the back-wall item (M550_FIRST_THING
   on cells back-left=3 and back-right=2) at the D3C view square

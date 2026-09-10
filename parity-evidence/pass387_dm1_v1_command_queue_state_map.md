@@ -3,7 +3,7 @@
 Date: 2026-05-08
 Branch: `pass387-source-queue-state-map`
 Scope: source-locked evidence map only; no runtime or parity code changes.
-Primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Primary source: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## ReDMCSB source audit anchors
 

@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PNG = ROOT / 'parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png'
 EVIDENCE = ROOT / 'parity-evidence/verification/pass285_dm1_v2_entry_viewport_png_export_gate.json'
-SOURCE = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+SOURCE = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 
 
 def png_size(path: Path) -> tuple[int, int]:

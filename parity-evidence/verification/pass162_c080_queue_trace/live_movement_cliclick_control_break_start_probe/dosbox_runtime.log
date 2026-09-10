@@ -1,4 +1,4 @@
-Logging: opened logfile '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.
+Logging: opened logfile '<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.
          0 DEBUG MISC:Logging init complete
 DOSBox-X version 2026.06.02 Commit d75a57c (macOS ARM SDL2 64-bit)
          0       MISC:Copyright 2011-2026 The DOSBox-X Team. Project maintainer: joncampbell123 (The Great Codeholio). DOSBox-X published under GNU GPL.

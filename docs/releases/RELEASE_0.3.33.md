@@ -10,7 +10,7 @@ DM1 V1 source-lock preview release for the latest movement stairs semantics and 
 
 ### Fixed
 - Made the pass512 viewport source-audit verifier portable across N2, macOS, and CI data paths.
-- Made regenerated pass512 evidence paths stable with repo-relative and $OPENCLAW_DATA references.
+- Made regenerated pass512 evidence paths stable with repo-relative and $legacy-workspace_DATA references.
 
 ### Verified
 - Local git diff --check passed before each landing.

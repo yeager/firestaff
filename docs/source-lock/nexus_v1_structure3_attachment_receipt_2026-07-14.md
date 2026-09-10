@@ -34,4 +34,4 @@ still required before any of those behaviors may be added.
 
 Strict C99 builds of `test_nexus_v1_dgn_geometry_readiness` and
 `test_nexus_v1_dgn_face_mesh_corpus`, run with
-`FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+`FIRESTAFF_NEXUS_DATA_DIR=<local-home>/.firestaff/data/nexus`.

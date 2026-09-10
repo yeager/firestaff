@@ -14,7 +14,7 @@
   "mapAddressAudit": {
     "loaderSegmentDelta": "0733",
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
+    "path": "/home/trv2/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
     "symbols": {
       "F0128_DUNGEONVIEW_Draw_CPSF": {
         "link": "1C7A:40FE",
@@ -74,7 +74,7 @@
   },
   "repo": "/home/trv2/work/firestaff",
   "schema": "pass381_dm1_v1_route_f0380_transition_source_path.v1",
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sourceTransitionAudit": [
     {
       "file": "GAMELOOP.C",
@@ -88,7 +88,7 @@
       "missing": [],
       "ok": true,
       "ordered": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "COMMAND.C",
@@ -101,7 +101,7 @@
       "missing": [],
       "ok": true,
       "ordered": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -113,7 +113,7 @@
       "missing": [],
       "ok": true,
       "ordered": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     }
   ],
   "status": "BLOCKED_PASS381_STATIC_F0380_STOPWAIT_TRANSITION_PROVEN_RUNTIME_BREAKPOINTS_NEXT",

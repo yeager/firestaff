@@ -23,8 +23,8 @@
   },
   "generated_at": "2026-09-04T18:04:52.184190+00:00",
   "local_asset": {
-    "path": "/home/yeager/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
-    "reason": "variant dir missing: /home/yeager/.firestaff/data/dm1-extras/amiga-2.2-en",
+    "path": "<local-home>/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
+    "reason": "variant dir missing: <local-home>/.firestaff/data/dm1-extras/amiga-2.2-en",
     "status": "SKIP"
   },
   "registry": {

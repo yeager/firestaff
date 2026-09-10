@@ -53,10 +53,10 @@
   "verificationRuns": [
     {
       "command": [
-        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_v1_dm_title_palette_silicon_probe"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_v1_dm_title_palette_silicon_probe"
       ],
       "expectedToRun": true,
-      "outputTail": "probe binary not built at /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_v1_dm_title_palette_silicon_probe",
+      "outputTail": "probe binary not built at <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/firestaff_v1_dm_title_palette_silicon_probe",
       "passed": false,
       "returncode": -1
     }

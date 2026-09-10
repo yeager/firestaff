@@ -1,6 +1,6 @@
 # DM1 V1 pass422 fireball/lightning explosion creature-source audit
 
-Primary source: ReDMCSB `PROJEXPL.C` (`/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/SOURCE/PROJEXPL.C`).
+Primary source: ReDMCSB `PROJEXPL.C` (`/home/trv2/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/SOURCE/PROJEXPL.C`).
 
 ## Anchors
 

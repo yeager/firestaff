@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DM1_G0194 = ROOT / "src/dm1/dm1_v1_g0194_pc34_compat.c"
 DM1_G0205 = ROOT / "src/dm1/dm1_v1_g0205_pc34_compat.c"
 DM1_WALL_ORN = ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c"
-DUNVIEW = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+DUNVIEW = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 
 
 def require(text: str, needle: str, label: str) -> int:

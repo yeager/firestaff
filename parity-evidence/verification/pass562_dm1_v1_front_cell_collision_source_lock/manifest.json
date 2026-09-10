@@ -22,7 +22,7 @@
   },
   "runtimeOutputFirstLine": "static-runtime-assertions-source-locked",
   "schema": "pass562_dm1_v1_front_cell_collision_source_lock.v1",
-  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED",
   "timestampUtc": "2026-09-04T18:00:59.779756+00:00"
 }

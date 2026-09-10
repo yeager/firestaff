@@ -23,10 +23,10 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-ORIG_DIR = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG_DIR = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 PACKED_FIRES = ORIG_DIR / "FIRES"
-UNLZEXE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Base/UNLZEXE/unlzexe.exe"
+UNLZEXE = Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Base/UNLZEXE/unlzexe.exe"
 OUT_DIR = ROOT / "parity-evidence/verification/pass235_dm1_v1_dosbox_debugger_workflow"
 REPORT = ROOT / "parity-evidence/pass235_dm1_v1_dosbox_debugger_workflow.md"
 EXPECTED_EXENEW_SHA256 = "fc79ac65046e3d96c189ac3dd20ad40bacb8debee2cd1c7d2c33ca2d8f82fe94"

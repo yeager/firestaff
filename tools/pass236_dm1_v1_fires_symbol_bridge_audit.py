@@ -20,12 +20,12 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "parity-evidence/verification/pass236_dm1_v1_fires_symbol_bridge_audit"
 REPORT = ROOT / "parity-evidence/pass236_dm1_v1_fires_symbol_bridge_audit.md"
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source"
 WIP = REDMCSB / "ReDMCSB_WIP20210206"
 COMMON_SOURCE = WIP / "Toolchains/Common/Source"
 IBM_SOURCE = WIP / "Toolchains/IBM PC/Source"
 IBM_BASE = WIP / "Toolchains/IBM PC/Base/HARDDISK"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM"
 CANON = ORIG / "_canonical/dm1"
 EXTRACTED = ORIG / "_extracted/dm-pc34/DungeonMasterPC34"
 

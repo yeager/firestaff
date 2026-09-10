@@ -21,13 +21,13 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass580_dm1_v1_forward_collision_timing"
 STATUS = "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REFS = {
     "redmcsb": RED,
-    "greatstone": Path.home() / ".openclaw/data/firestaff-greatstone-atlas",
-    "csbwin": Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin",
-    "csb": Path.home() / ".openclaw/data/firestaff-csb-source/CSB",
-    "original_dm": Path.home() / ".openclaw/data/firestaff-original-games/DM",
+    "greatstone": Path.home() / ".firestaff/data/firestaff-greatstone-atlas",
+    "csbwin": Path.home() / ".firestaff/data/firestaff-csbwin-source/CSBWin",
+    "csb": Path.home() / ".firestaff/data/firestaff-csb-source/CSB",
+    "original_dm": Path.home() / ".firestaff/data/firestaff-original-games/DM",
 }
 COMMAND = RED / "COMMAND.C"
 CLIKMENU = RED / "CLIKMENU.C"

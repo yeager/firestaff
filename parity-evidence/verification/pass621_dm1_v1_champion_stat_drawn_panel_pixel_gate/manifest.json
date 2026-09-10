@@ -37,7 +37,7 @@
     "needleCount": 6,
     "ok": true
   },
-  "greatstoneRoot": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
+  "greatstoneRoot": "<local-home>/.firestaff/data/firestaff-greatstone-atlas",
   "nonClaims": [
     "No original-vs-Firestaff pixel parity claim.",
     "No original DOS runtime capture was launched by this gate.",
@@ -45,7 +45,7 @@
   ],
   "originalChecks": [
     {
-      "citation": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/README.md",
+      "citation": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/README.md",
       "id": "canonical README names PC34 data sources",
       "missing": [],
       "needleCount": 3,
@@ -55,18 +55,18 @@
       "expected": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "id": "canonical GRAPHICS.DAT SHA256",
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
     },
     {
       "expected": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "id": "canonical DUNGEON.DAT SHA256",
       "ok": true,
-      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
     }
   ],
-  "originalRoot": "/Users/bosse/.openclaw/data/firestaff-original-games/DM",
+  "originalRoot": "<local-home>/.firestaff/data/firestaff-original-games/DM",
   "redmcsbChecks": [
     {
       "citation": "PANEL.C:2013-2108",
@@ -90,7 +90,7 @@
       "ok": true
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "remainingBlockers": [
     "A verified original PC 3.4 320x200 runtime frame with inventory open, empty leader hand, eye-panel champion statistics visible, and a documented input transcript/state snapshot.",
     "A matching Firestaff indexed framebuffer generated from an original-equivalent champion, inventory, panel-content, and palette state.",

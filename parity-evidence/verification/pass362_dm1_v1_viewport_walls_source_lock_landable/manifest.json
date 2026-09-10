@@ -16,8 +16,8 @@
     {"file": "DRAWVIEW.C", "lines": "709-722", "function": "F0097_DUNGEONVIEW_DrawViewport"}
   ],
   "canonical_original_assets": [
-    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
-    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+    "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
   ],
   "required_gates": [
     "pass361_dm1_v1_viewport_occlusion_redraw_order_gate",

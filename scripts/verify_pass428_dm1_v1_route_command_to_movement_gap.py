@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "pass428_dm1_v1_route_command_to_movement_gap"
 OUT_JSON = OUT_DIR / "manifest.json"
 OUT_MD = ROOT / "parity-evidence" / "pass428_dm1_v1_route_command_to_movement_gap.md"

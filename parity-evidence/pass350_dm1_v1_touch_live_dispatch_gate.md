@@ -6,7 +6,7 @@ Scope: live M11/game-view touch dispatch integration gate for pass347 source-ord
 
 ## ReDMCSB source audit anchors
 
-Audited from `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source` before implementation:
+Audited from `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source` before implementation:
 
 - `STARTUP2.C:1179-1182` installs active in-game primary interface mouse input before secondary movement mouse input; keyboard tables are separate.
 - `COMMAND.C:375-405` defines the primary interface and secondary movement mouse tables, including champion status boxes, movement arrows, dungeon viewport, screen-wide right-click inventory-leader toggle, and source button masks.

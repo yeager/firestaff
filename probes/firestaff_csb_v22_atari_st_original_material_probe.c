@@ -63,10 +63,10 @@ int main(void)
 {
     const char *graphics_path = probe_path(
         "FIRESTAFF_CSB_A02_GRAPHICS_DAT",
-        "/Users/bosse/.firestaff/data/csb-atari-st-2x/GRAPHICS.DAT");
+        "<local-home>/.firestaff/data/csb-atari-st-2x/GRAPHICS.DAT");
     const char *dungeon_path = probe_path(
         "FIRESTAFF_CSB_A02_DUNGEON_DAT",
-        "/Users/bosse/.firestaff/data/csb-atari-st-2x/DUNGEON.DAT");
+        "<local-home>/.firestaff/data/csb-atari-st-2x/DUNGEON.DAT");
     char graphics_md5[33];
     char dungeon_md5[33];
     char reason[256];

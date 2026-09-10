@@ -15,7 +15,7 @@ This narrows the blocker to route-state diversity / post-command state-delta evi
 - worktree: `/home/trv2/work/firestaff-worktrees/pass435-route-capture-unblock-20260513-codex`
 - attempt dir: `verification-screens/pass435-20260513-movement-route-attempt`
 - runner: `xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run`
-- original stage: `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
+- original stage: `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
 - program: `DM -vv -sn -pk`
 - labels: `movement_initial`, `movement_turn_left`, `movement_turn_right`, `movement_forward`, `movement_turn_right_2`, `movement_turn_left_2`
 

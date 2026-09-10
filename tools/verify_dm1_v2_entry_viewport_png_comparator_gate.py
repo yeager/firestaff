@@ -14,8 +14,8 @@ ORIGINAL = ROOT / "parity-evidence/verification/pass282_dm1_v2_original_pixel_ca
 FIRESTAFF = ROOT / "parity-evidence/verification/pass285_dm1_v2_firestaff_entry_viewport_224x136.png"
 DIFF = ROOT / "parity-evidence/verification/pass286_dm1_v2_entry_viewport_original_vs_firestaff_diff.png"
 EVIDENCE = ROOT / "parity-evidence/verification/pass286_dm1_v2_entry_viewport_png_comparator_gate.json"
-SOURCE = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-ORIGINAL_DATA = (Path.home() / ".openclaw/data/firestaff-original-games/DM")
+SOURCE = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+ORIGINAL_DATA = (Path.home() / ".firestaff/data/firestaff-original-games/DM")
 
 
 def sha256(path: Path) -> str:

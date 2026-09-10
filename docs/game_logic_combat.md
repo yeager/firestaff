@@ -4,7 +4,7 @@
 ReDMCSB: GROUP.C, PROJEXPL.C, CHAMPION.C, GAMELOOP.C, TIMELINE.C
 
 Primary source path on N2:
-/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
+/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
 
 ---
 

@@ -31,7 +31,7 @@ def redmcsb_source_root() -> Optional[Path]:
         candidates.append(Path(configured))
     candidates.extend((
         ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
-        Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source",
+        Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source",
     ))
     for candidate in candidates:
         if (candidate / "DUNVIEW.C").is_file():

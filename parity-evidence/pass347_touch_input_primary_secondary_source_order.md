@@ -8,7 +8,7 @@ Scope: separate touchscreen feature lane; no push.
 ## ReDMCSB source audit anchors
 
 Primary evidence was audited from:
-`/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+`/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 - `STARTUP2.C:1179-1182` installs active in-game input tables: `G0441_ps_PrimaryMouseInput` = interface, `G0442_ps_SecondaryMouseInput` = movement, with keyboard tables separate.
 - `COMMAND.C:375-395` defines `G0447_as_Graphic561_PrimaryMouseInput_Interface`, including champion status boxes, bar graph toggles, champion icon regions, spell-area parent, and action-area parent.

@@ -4,8 +4,8 @@
 **Date:** 2026-06-13
 **Scope:** Cross-referencing Firestaff's source-locked M10/M11 implementation against the ReDMCSB WIP20210206 decompilation as ground truth.
 **Methodology:** (1) Read existing `docs/DM1_V1_BUG_AUDIT.md` (18 prior findings) and explicitly do **not** duplicate those findings here. (2) For each major ReDMCSB module, sample key F-functions and check whether Firestaff's equivalent exists, matches, diverges, or is approximated. (3) Catalog both code-level differences and data-level differences (magic numbers, tables, ranges).
-**Build:** `cmake --build /Volumes/Extern-disk/openclaw-work/firestaff/build --parallel` (no source modifications, build untouched)
-**Phase A probe:** `SDL_VIDEODRIVER=dummy /Volumes/Extern-disk/openclaw-work/firestaff/build/firestaff_m11_phase_a_probe` (not run by this audit; baseline 23/23)
+**Build:** `cmake --build /Volumes/Extern-disk/legacy-workspace-work/firestaff/build --parallel` (no source modifications, build untouched)
+**Phase A probe:** `SDL_VIDEODRIVER=dummy /Volumes/Extern-disk/legacy-workspace-work/firestaff/build/firestaff_m11_phase_a_probe` (not run by this audit; baseline 23/23)
 
 > **Convention:** The Firestaff code has two parallel implementations of the DM1 V1 game logic:
 >

@@ -17,8 +17,8 @@ from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-GREATSTONE_ZIP = Path("/home/trv2/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip")
+REDMCSB = Path("/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+GREATSTONE_ZIP = Path("/home/trv2/.firestaff/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip")
 GREATSTONE_MEMBER = "0000.DUNGEON [Dungeon].xml"
 OUT_DIR = ROOT / "parity-evidence/verification/pass180_dm1_v1_elija_route_source_gate"
 REPORT = ROOT / "parity-evidence/pass180_dm1_v1_elija_route_source_gate.md"

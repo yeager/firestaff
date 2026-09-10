@@ -15,7 +15,7 @@ import sys
 from typing import Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_REDMCSB_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DEFAULT_REDMCSB_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", DEFAULT_REDMCSB_ROOT))
 FIRESTAFF_SRC = ROOT / "src/engine/m11_game_view.c"
 OUT_JSON = ROOT / "parity-evidence/verification/v1_status_refresh_order_redmcsb_gate.json"

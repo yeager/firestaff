@@ -658,7 +658,7 @@
       },
       "exists": true,
       "failedCommands": [
-        "OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf \"$OUT\"; OUT_DIR=\"$OUT\" DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
+        "OUT=$PWD/verification-screens/pass378-source-portrait-sixshot-retry; rm -rf \"$OUT\"; OUT_DIR=\"$OUT\" DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:7000 enter wait:2500 shot:party_hud click:111,82 wait:1200 shot:portrait_candidate click:130,115 wait:1200 shot:resurrect_choice enter wait:1500 shot:after_confirm f1 wait:1200 shot:spell_panel f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run",
         "python3 tools/pass80_original_frame_classifier.py verification-screens/pass378-source-portrait-sixshot-retry --expected pass77 --fail-on-duplicates",
         "python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pass378-source-portrait-sixshot-retry --out-dir verification-screens/pass378-source-portrait-sixshot-viewports --dry-run"
       ],
@@ -866,7 +866,7 @@
             "F0267_MOVE_GetMoveResult_CPSCE"
           ],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
           "why": "A promotable route must prove source turn/move acceptance, not merely repeated static screenshots."
         },
         {
@@ -883,7 +883,7 @@
             "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
           ],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
           "why": "The original crop is meaningful only when bound to F0128 composing a known direction/X/Y viewport buffer."
         },
         {
@@ -898,7 +898,7 @@
             "VIDRV_09_BlitViewPort"
           ],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
           "why": "Promotion still needs a post-composition presentation seam, not BPLIST/setup echo text."
         },
         {
@@ -911,7 +911,7 @@
             "F0280_CHAMPION_AddCandidateChampionToParty"
           ],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
           "why": "The bounded retry uses the prior ReDMCSB champion-portrait route hypothesis to try to escape no-party static gameplay."
         }
       ],
@@ -976,7 +976,7 @@
         ],
         "warnings": []
       },
-      "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "BLOCKED_PASS378_ORIGINAL_ROUTE_NOT_SEMANTICALLY_CLEAN",
       "timestampUtc": "2026-05-08T10:56:16.999430+00:00"
     },
@@ -1396,7 +1396,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
         },
         {
           "file": "COMMAND.C",
@@ -1408,7 +1408,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
         },
         {
           "file": "CLIKMENU.C",
@@ -1419,7 +1419,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
         },
         {
           "file": "DUNVIEW.C",
@@ -1429,10 +1429,10 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
         }
       ],
-      "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "BLOCKED_PASS385_F0365_F0366_COMMAND_DISPATCH_NOT_PROVEN",
       "timestampUtc": "2026-05-08T12:35:17.583727+00:00"
     },
@@ -1640,7 +1640,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C",
           "section": "keyboard_drain_then_queue_process"
         },
         {
@@ -1653,7 +1653,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
           "section": "f0361_keyboard_queue_write"
         },
         {
@@ -1670,7 +1670,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
           "section": "f0380_pop_load_dispatch"
         },
         {
@@ -1684,7 +1684,7 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
           "section": "semantic_turn_move_handlers"
         },
         {
@@ -1694,11 +1694,11 @@
           },
           "missing": [],
           "ok": true,
-          "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H",
+          "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PC.H",
           "section": "pc34_queue_count_alias"
         }
       ],
-      "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+      "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
       "status": "PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN",
       "timestampUtc": "2026-05-08T14:13:47.996322+00:00"
     },
@@ -1844,7 +1844,7 @@
         "HUD/overlay parity"
       ],
       "path": "parity-evidence/verification/pass434_dm1_v1_original_viewport_crop_readiness_gate/manifest.json",
-      "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
+      "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
       "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
       "source_audit": [
         {
@@ -1864,7 +1864,7 @@
             "G0310_i_DisabledMovementTicks"
           ],
           "ok": true,
-          "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
+          "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
         },
         {
           "claim": "the 224x136 crop is meaningful only after F0128 draws G0296 for direction/X/Y",
@@ -1885,7 +1885,7 @@
             "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
           ],
           "ok": true,
-          "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
+          "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
         },
         {
           "claim": "capture readiness is locked to the PC34 viewport-present seam, not setup echo/menu text",
@@ -1902,10 +1902,10 @@
             "VIDRV_09_BlitViewPort"
           ],
           "ok": true,
-          "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
+          "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
         }
       ],
-      "source_root": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+      "source_root": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
       "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
       "timestamp_utc": "2026-09-04T18:24:39.965274+00:00",
       "tooling": {
@@ -2015,7 +2015,7 @@
         "f4"
       ]
     },
-    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_EXPECTED_SHOTS=6 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
+    "semantic_route_capture": "OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_EXPECTED_SHOTS=6 DM1_ORIGINAL_ROUTE_EVENTS=\"wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel\" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run"
   },
   "next_unblock_contract": {
     "expected_classes": [
@@ -2097,7 +2097,7 @@
       "05"
     ]
   },
-  "repo": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
+  "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "route_labels": {
     "exists": true,
     "path": "verification-screens/pass376-original-route/original_viewport_shot_labels.tsv",
@@ -2215,7 +2215,7 @@
     }
   ],
   "schema": "pass435_dm1_v1_semantic_original_route_readiness_gate.v2",
-  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "source_audit": [
     {
       "claim": "queued input must be observed through F0380 pop/load before turn commands branch to F0365 or movement commands branch to F0366",
@@ -2233,7 +2233,7 @@
         "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "turn commands must be observed reaching F0365, where stop-wait is set and party direction mutates",
@@ -2250,7 +2250,7 @@
         "F0276_SENSOR_ProcessThingAdditionOrRemoval"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "move commands must be observed reaching F0366, where target square, move result, and movement cooldown are committed",
@@ -2268,7 +2268,7 @@
         "G0310_i_DisabledMovementTicks"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "the original PC34 entrance route starts from source-defined mouse coordinates, so host click coordinates must be treated as route evidence until runtime state confirms gameplay",
@@ -2284,7 +2284,7 @@
         "F0073_MOUSE_BuildPointerScreenArea(G1038_i_MouseX >> 1, G1039_i_MouseY >> 1);"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/INPUT.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/INPUT.C"
     },
     {
       "claim": "post-load capture shots are meaningful only after the original installs interface and movement input tables for both mouse and keyboard routes",
@@ -2301,7 +2301,7 @@
         "G0444_ps_SecondaryKeyboardInput = G0459_as_Graphic561_SecondaryKeyboardInput_Movement;"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/STARTUP2.C"
     },
     {
       "claim": "the reusable capture route must pass entrance/load/start and discard stale setup input before semantic shots are promotable",
@@ -2319,7 +2319,7 @@
         "F0357_COMMAND_DiscardAllInput();"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/STARTUP2.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/STARTUP2.C"
     },
     {
       "claim": "dungeon-view mouse captures are semantic only when clicks resolve through source clickable boxes and resulting door/sensor actions, not by filename labels",
@@ -2336,7 +2336,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C"
     },
     {
       "claim": "viewport click hitboxes used by original capture are materialized while drawing G0296, so crop labels must be tied to the same draw/update boundary",
@@ -2353,7 +2353,7 @@
         "F0007_MAIN_CopyBytes((char*)G2032_ai_XYZ, (char*)G2210_aai_XYZ_DungeonViewClickable[C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT]"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "viewport crops are promotable only when F0128 composes G0296 for a known direction/X/Y tuple",
@@ -2374,7 +2374,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "the capture seam must be the PC34 viewport present path, not setup/menu echo",
@@ -2391,7 +2391,7 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
   "status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",

@@ -130,7 +130,7 @@ SCENARIOS = {
 
 def main():
     base = Path(sys.argv[1])
-    stage = Path.home()/".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+    stage = Path.home()/".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
     dosbox = "/usr/bin/dosbox"
     summary = []
     for name, actions in SCENARIOS.items():

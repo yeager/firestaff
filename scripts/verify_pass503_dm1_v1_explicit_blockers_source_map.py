@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
-SOURCE = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+SOURCE = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 OUT_DIR = REPO / "parity-evidence/verification/pass503_dm1_v1_explicit_blockers_source_map"
 MANIFEST = OUT_DIR / "manifest.json"
 EVIDENCE = REPO / "parity-evidence/pass503_dm1_v1_explicit_blockers_source_map.md"

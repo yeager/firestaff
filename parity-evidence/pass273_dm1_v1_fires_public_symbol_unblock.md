@@ -6,7 +6,7 @@ Status: `UNBLOCKED_PUBLIC_SYMBOLS_FOUND_NO_RUNTIME_HOOK`
 
 ## ReDMCSB source audit first
 
-Primary source root: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Primary source root: `<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `COMMAND.C:1-16` ok=True missing=[]
 - `COMMAND.C:1734-1812` ok=True missing=[]
@@ -21,8 +21,8 @@ Primary source root: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMC
 
 ## Public map inputs found on N2
 
-- FIRES.MAP: `/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP` (104565 bytes, sha256 `eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0`)
-- DM.MAP: `/Users/bosse/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP` (not present on this host; not required for FIRES runtime addresses)
+- FIRES.MAP: `<local-home>/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP` (104565 bytes, sha256 `eb85fee47611b4368bc218f0768937174ceab98e4bec2fa860059429288bd8c0`)
+- DM.MAP: `<local-home>/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP` (not present on this host; not required for FIRES runtime addresses)
 - Binary policy: no original/decompressed executable copied or committed; this pass records map paths, hashes, and derived addresses only.
 
 ## Global address bindings from FIRES.MAP + PC.H aliases

@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW = SOURCE_ROOT / "DUNVIEW.C"
 EVIDENCE = ROOT / "parity-evidence/pass363_dm1_v1_f0115_thing_layer_source_lock.md"
 MANIFEST = ROOT / "parity-evidence/verification/pass363_dm1_v1_f0115_thing_layer_source_lock/manifest.json"

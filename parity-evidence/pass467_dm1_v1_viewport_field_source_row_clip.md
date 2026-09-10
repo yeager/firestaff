@@ -5,7 +5,7 @@ Scope: DM1 V1 viewport/world visuals — teleporter fields, source-row clipping,
 
 ## ReDMCSB source audit first
 
-Primary source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Primary source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `DUNVIEW.C:3394-3465` — `F0791_DUNGEONVIEW_DrawBitmapXX` rejects `CM1_UNKNOWN`, resolves `P2081_i_ZoneIndex` via `F0635_(..., G2032_ai_XYZ, ...)`, then blits to `G0296_puc_Bitmap_Viewport`. This is the shared C2500/C2900 source-zone clipping seam.
 - `DUNVIEW.C:4382-4474` — `F0113_DUNGEONVIEW_DrawField` resolves the field zone through `F0635_(NULL, L2472_ai_XYZ, P2086_i_ZoneIndex, ...)`, selects `C076_GRAPHIC_FIRST_FIELD + M728_NATIVE_BITMAP_RELATIVE_INDEX(...)`, then masked-blits into `G0296_puc_Bitmap_Viewport` using `G2073_C224_ViewportPixelWidth`.

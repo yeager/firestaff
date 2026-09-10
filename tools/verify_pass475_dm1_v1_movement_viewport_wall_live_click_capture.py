@@ -15,7 +15,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PASS="pass475_dm1_v1_movement_viewport_wall_live_click_capture"
 OUT=ROOT/"parity-evidence"/"verification"/PASS
 REPORT=ROOT/"parity-evidence"/(PASS+".md")
-RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED=Path.home()/".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ADDR={
  "F0380_COMMAND_ProcessQueue_CPSC":"22F7:0699",
  "F0365_COMMAND_ProcessTypes1To2_TurnParty":"1EA7:010D",

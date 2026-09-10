@@ -429,11 +429,11 @@ Then verify the same session, not another frame or another disc:
 python3 scripts/analyze_nexus_vdp2_composition.py \
   "$run/runtime-vdp12.raw" --frame 300 --capture-frames 600 --require-layer NBG1
 python3 scripts/analyze_nexus_vdp2_char_source_join.py \
-  "$run/runtime-vdp12.raw" --data-dir /Users/bosse/.firestaff/data/nexus \
+  "$run/runtime-vdp12.raw" --data-dir <local-home>/.firestaff/data/nexus \
   --frame 300 --capture-frames 600 \
   --vdp2-write-trace "$run/vdp2-writes.trace"
 python3 scripts/analyze_nexus_vdp2_post_write_snapshot.py \
-  "$run/post.snapshot" --data-dir /Users/bosse/.firestaff/data/nexus \
+  "$run/post.snapshot" --data-dir <local-home>/.firestaff/data/nexus \
   --asset TM.BIN --source-file-offset 0x1a0c0 \
   --destination-start 0x100400 --minimum-writes 64
 ```

@@ -257,7 +257,7 @@ earlier VDP1-only witness. For the retained four-frame V1 capture, reproduce
 the join with:
 `python3 scripts/analyze_nexus_vdp1_dgn_material_join.py \
   /Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-window-20260809/runtime-vdp12.raw \
-  --data-dir /Users/bosse/.firestaff/data/nexus --frame 0 --capture-frames 4 \
+  --data-dir <local-home>/.firestaff/data/nexus --frame 0 --capture-frames 4 \
   --command-offset 0xe180`.
 
 The same legacy witness also passes the C runtime handoff when linked against
@@ -477,8 +477,8 @@ Reproduce the source-bound check with:
 python3 scripts/analyze_nexus_slev_sal_runtime_corridor.py \
   /Volumes/Extern-disk/nexus-saturn-capture/run-codex-scsp-menu-bound-20260810/scsp-writes.trace \
   --main-trace /Volumes/Extern-disk/nexus-saturn-capture/run-codex-scsp-menu-bound-20260810/main-scsp-writes.trace \
-  --data-dir /Users/bosse/.firestaff/data/nexus \
-  --driver /Users/bosse/.firestaff/data/nexus/SDDRVS.TSK
+  --data-dir <local-home>/.firestaff/data/nexus \
+  --driver <local-home>/.firestaff/data/nexus/SDDRVS.TSK
 ```
 
 The missing handler and event-to-SAL relation keep SLEV/SAL/SDDRVS playback

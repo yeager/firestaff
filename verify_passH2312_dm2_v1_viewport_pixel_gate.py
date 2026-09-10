@@ -39,7 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/passH2312_dm2_v1_viewport_pixel_gate.json"
 REPORT = ROOT / "parity-evidence/firestaff_dm2_v1_phase8_viewport_pixel_gate_H2312.md"
 
-SKULL_ASM = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source"
+SKULL_ASM = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source"
 SKPROJECT = ROOT.parent / "skproject"
 
 CaptureRegion = Literal[

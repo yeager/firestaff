@@ -4,4 +4,4 @@ Source-locked: CHAMDRAW.C F0293:1117-1143 (all-champion redraw dispatcher with d
 
 Result: FAIL
 Tests: {'passes': 0, 'fails': 0}
-Failures: ['binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_panel_all_states_pc34_compat']
+Failures: ['binary not found: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_panel_all_states_pc34_compat']

@@ -65,7 +65,7 @@ causes the test to skip; no save bytes are generated, unpacked, or written.
 ## Verified command
 
 ```
-FIRESTAFF_DM2_SKSAVE_CORPUS='/Users/bosse/.firestaff/data/dm2/dos_extract/data' \
+FIRESTAFF_DM2_SKSAVE_CORPUS='<local-home>/.firestaff/data/dm2/dos_extract/data' \
 SDL_AUDIODRIVER=dummy \
 ctest --test-dir build-dm2-main-verify \
   -R '^(dm2_v1_save_load_extra_dungeon_data|dm2_v1_save_load_real_data)$' \

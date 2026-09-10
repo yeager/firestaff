@@ -2,7 +2,7 @@
 
 - status: `DM1_V1_CHAMPION_PANEL_SPELL_AREA_OVERLAY_DRAW_CONTRACT_LOCKED_NON_DUPLICATIVE_WITH_INPUT_AND_ORCHESTRATOR_GATES`
 - generatedUtc: `2026-06-12T20:11:00.000000+00:00`
-- redmcsb: `/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+- redmcsb: `<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 - parity claim: **not made**; this is a contract-only, no-asset draw-contract
   gate for the upper-right panel HUD strip the original ReDMCSB PC 3.4 BIOS
   paints every time the acting caster identity, symbol buffer, or symbol

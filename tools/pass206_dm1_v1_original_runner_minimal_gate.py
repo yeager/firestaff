@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM1_STAGE = Path("~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+DM1_STAGE = Path("~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34").expanduser()
 CAPTURE_SCRIPT = ROOT / "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
 ATTEMPT_DIR = ROOT / "verification-screens/pass112-n2-stable-hud-route"
 CLASSIFIER_JSON = ATTEMPT_DIR / "pass80_original_frame_classifier.json"
@@ -160,7 +160,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     for label, info in runner["canonical_files"].items():
         mark = "PASS" if info["ok"] else "FAIL"
         lines.append(f"- {mark} `{label}` `{info['sha256']}` at `{info['path']}`")
-    lines += ["", "## Reproducible dry-run command", "", "```sh", "DM1_ORIGINAL_STAGE_DIR=~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \\", "DOSBOX=/usr/bin/dosbox \\", "DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\", "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\", f"DM1_ORIGINAL_ROUTE_EVENTS='{runner['route_events']}' \\", "scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run", "```", "", "## Existing N2 route attempt audit", "", f"- Attempt: `{attempt.get('attempt_dir', attempt.get('path'))}`", f"- Classifier status: `{attempt.get('status')}`", f"- Capture count/dimensions: `{attempt.get('capture_count')}` / `{attempt.get('dimensions_seen')}`", f"- Viewport crop PPM count: `{attempt.get('viewport_crop_ppm_count')}`", f"- Class counts: `{attempt.get('class_counts')}`", f"- Duplicate SHA counts >1: `{attempt.get('duplicate_sha256_counts_gt1')}`", "", "### Semantic mismatches blocking promotion", ""]
+    lines += ["", "## Reproducible dry-run command", "", "```sh", "DM1_ORIGINAL_STAGE_DIR=~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \\", "DOSBOX=/usr/bin/dosbox \\", "DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \\", "DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\", f"DM1_ORIGINAL_ROUTE_EVENTS='{runner['route_events']}' \\", "scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run", "```", "", "## Existing N2 route attempt audit", "", f"- Attempt: `{attempt.get('attempt_dir', attempt.get('path'))}`", f"- Classifier status: `{attempt.get('status')}`", f"- Capture count/dimensions: `{attempt.get('capture_count')}` / `{attempt.get('dimensions_seen')}`", f"- Viewport crop PPM count: `{attempt.get('viewport_crop_ppm_count')}`", f"- Class counts: `{attempt.get('class_counts')}`", f"- Duplicate SHA counts >1: `{attempt.get('duplicate_sha256_counts_gt1')}`", "", "### Semantic mismatches blocking promotion", ""]
     mismatches = attempt.get("mismatches") or []
     if mismatches:
         for m in mismatches:

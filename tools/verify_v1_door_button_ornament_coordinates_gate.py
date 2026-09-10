@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FIRE = ROOT / "src/engine/m11_game_view.c"
 DM1_VIEWPORT = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 DM1_DOOR_ORN = ROOT / "src/dm1/dm1_v1_door_ornament_render_pc34_compat.c"
-DUNVIEW = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+DUNVIEW = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
 
 
 def require(text: str, needle: str, label: str) -> int:

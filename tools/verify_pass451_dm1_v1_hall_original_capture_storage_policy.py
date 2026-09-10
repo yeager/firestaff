@@ -24,19 +24,19 @@ VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = VERIFY_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 TARGET = ROOT / "tools/pass173_source_portrait_route_gate_probe.py"
-EXTERNAL_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
+EXTERNAL_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
 N2_HALL_ARTIFACT_ROOTS = [
-    Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509"),
-    Path.home() / "openclaw-artifacts/dm1-hall-dosbox-20260509",
-    Path.home() / ".openclaw/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
+    Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509"),
+    Path.home() / "legacy-workspace-artifacts/dm1-hall-dosbox-20260509",
+    Path.home() / ".firestaff/data/firestaff-artifacts/dm1-hall-dosbox-20260509",
 ]
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 
 REQUIRED_NEEDLES = [
     "import json, os, shutil, subprocess, sys, time",
     "DOSBOX = os.environ.get(\"FIRESTAFF_DOSBOX\", shutil.which(\"dosbox\") or \"/usr/bin/dosbox\")",
-    "DEFAULT_EXTERNAL_ARTIFACT_ROOT = Path(\"/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe\")",
-    "DEFAULT_RUN_BASE_ROOT = DEFAULT_EXTERNAL_ARTIFACT_ROOT if DEFAULT_EXTERNAL_ARTIFACT_ROOT.parent.exists() else Path.home()/\".openclaw/data/firestaff-n2-runs\"",
+    "DEFAULT_EXTERNAL_ARTIFACT_ROOT = Path(\"/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe\")",
+    "DEFAULT_RUN_BASE_ROOT = DEFAULT_EXTERNAL_ARTIFACT_ROOT if DEFAULT_EXTERNAL_ARTIFACT_ROOT.parent.exists() else Path.home()/\".firestaff/data/firestaff-n2-runs\"",
     "RUN_BASE_ROOT = Path(os.environ.get(\"FIRESTAFF_PASS173_RUN_BASE\", os.environ.get(\"FIRESTAFF_ARTIFACT_ROOT\", str(DEFAULT_RUN_BASE_ROOT))))",
 ]
 
@@ -110,7 +110,7 @@ def main() -> int:
         "externalParentExists": EXTERNAL_ROOT.parent.exists(),
         "envOverrides": ["FIRESTAFF_DOSBOX", "FIRESTAFF_PASS173_RUN_BASE", "FIRESTAFF_ARTIFACT_ROOT"],
         "n2HallDosboxArtifactRoot": n2_artifact_root,
-        "fallbackRunBase": "~/.openclaw/data/firestaff-n2-runs only when the N1 external artifact parent is absent and no env override is supplied",
+        "fallbackRunBase": "~/.firestaff/data/firestaff-n2-runs only when the N1 external artifact parent is absent and no env override is supplied",
         "pyCompile": py_compile,
         "missing": missing,
         "errors": errors,

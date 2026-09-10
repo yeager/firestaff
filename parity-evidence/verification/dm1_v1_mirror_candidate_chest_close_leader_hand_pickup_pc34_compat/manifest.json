@@ -5,7 +5,7 @@
   "repo": "https://github.com/yeager/firestaff",
   "branch": "main",
   "head": "aaed19e118c4ca17e3a54b3d40b23e536c7e6777",
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "anchors": [
     "CHEST.C F0333:31-67",
     "CHEST.C F0334:113-132",

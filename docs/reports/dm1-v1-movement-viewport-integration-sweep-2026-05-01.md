@@ -30,10 +30,10 @@ cmake --build build --target \
 ./build/firestaff_m11_game_view_probe
 ./build/test_dm1_v1_movement_core_pc34_compat
 ./build/firestaff_m11_viewport_state_probe \
-  ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 \
+  ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 \
   build/viewport-state
 ./build/firestaff_m11_turn_viewport_orientation_probe \
-  ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 \
+  ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 \
   build/turn-viewport-orientation
 python3 tools/verify_v1_viewport_side_wall_occlusion_gate.py
 ```

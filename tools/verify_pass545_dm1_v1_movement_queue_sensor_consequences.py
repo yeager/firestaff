@@ -15,7 +15,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass545_dm1_v1_movement_queue_sensor_consequences"
 STATUS = "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 COMMAND = RED / "COMMAND.C"
 CLIKMENU = RED / "CLIKMENU.C"
 MOVESENS = RED / "MOVESENS.C"

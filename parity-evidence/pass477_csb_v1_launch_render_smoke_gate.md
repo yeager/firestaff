@@ -14,7 +14,7 @@ Primary source audit: local ReDMCSB reference payload strings show CSB is not a 
 
 Reference locations audited on N2:
 
-- ReDMCSB reference tree: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/`
+- ReDMCSB reference tree: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/ReDMCSB/`
 - CSB startup/runtime payload string families: Atari ST CSB `START.PAK` entries (`DUNGEON.DAT`/`DUNGEON.FTL`/`GRAPHICS.DAT`) and Amiga/utility `CHAOS.FTL`/`APPB.FTL` entries (`CSBGAME.DAT`/`CSBGAME.BAK` plus dungeon/graphics names).
 - Secondary cross-check only: local CSB/CSBWin source trees remain useful for utility/save-flow vocabulary but are not used here to greenlight runtime rendering.
 

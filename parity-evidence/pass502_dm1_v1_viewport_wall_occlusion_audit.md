@@ -4,7 +4,7 @@ Status: precise blocker documented; no new pixel-parity promotion.
 
 ## Primary source audit
 
-ReDMCSB local source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
+ReDMCSB local source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`.
 
 Relevant source locks, with functions and line ranges only:
 

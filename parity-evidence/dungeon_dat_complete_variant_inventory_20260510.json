@@ -1,5 +1,5 @@
 {
-  "source_root": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/",
+  "source_root": "<local-home>/.firestaff/data/firestaff-original-games/DM/",
   "fetched_at_utc": "2026-05-10T11:12:08Z",
   "model_note": "qwen3.6:35b, not Qwen 3.6 Plus; 65k context",
   "counts": {
@@ -13,7 +13,7 @@
   },
   "files": [
     {
-      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "absolute_path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "relative_path": "_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "filename": "DUNGEON.DAT",
       "is_symlink": false,
@@ -25,12 +25,12 @@
       "inferred_version": "unknown",
       "inferred_language": "English",
       "variant_family": "DM1 PC34 EN",
-      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "source_hint": "Found in <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "confidence": "high",
       "blockers": []
     },
     {
-      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "absolute_path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
       "relative_path": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
       "filename": "DUNGEON.DAT",
       "is_symlink": false,
@@ -42,12 +42,12 @@
       "inferred_version": "unknown",
       "inferred_language": "English",
       "variant_family": "DM1 PC34 EN",
-      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "source_hint": "Found in <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
       "confidence": "high",
       "blockers": []
     },
     {
-      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
+      "absolute_path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
       "relative_path": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
       "filename": "DUNGEONG.DAT",
       "is_symlink": false,
@@ -59,12 +59,12 @@
       "inferred_version": "unknown",
       "inferred_language": "German",
       "variant_family": "DM1 PC34 GE",
-      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
+      "source_hint": "Found in <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONG.DAT",
       "confidence": "high",
       "blockers": []
     },
     {
-      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
+      "absolute_path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
       "relative_path": "_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
       "filename": "DUNGEONF.DAT",
       "is_symlink": false,
@@ -76,16 +76,16 @@
       "inferred_version": "unknown",
       "inferred_language": "French",
       "variant_family": "DM1 PC34 FR",
-      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
+      "source_hint": "Found in <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEONF.DAT",
       "confidence": "high",
       "blockers": []
     },
     {
-      "absolute_path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "absolute_path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "relative_path": "_canonical/dm1/DUNGEON.DAT",
       "filename": "DUNGEON.DAT",
       "is_symlink": true,
-      "symlink_target": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "symlink_target": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
       "size_bytes": 33357,
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "inferred_game": "DM1",
@@ -93,7 +93,7 @@
       "inferred_version": "unknown",
       "inferred_language": "English",
       "variant_family": "DM1 PC34 EN",
-      "source_hint": "Found in /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "source_hint": "Found in <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "confidence": "high",
       "blockers": []
     }
@@ -361,7 +361,7 @@
       "file": "test_dm1_v2_movement_viewport_pc34.c",
       "line": 15,
       "term_matched": "dungeon\\.dat",
-      "snippet": "snprintf(path, sizeof(path), \"%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\", home);"
+      "snippet": "snprintf(path, sizeof(path), \"%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\", home);"
     },
     {
       "file": "test_dm1_v2_movement_viewport_pc34.c",
@@ -4423,7 +4423,7 @@
       "file": "probes/dm1/firestaff_dm1_v1_playable_route_probe.c",
       "line": 52,
       "term_matched": "dungeon\\.dat",
-      "snippet": "\"/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\""
+      "snippet": "\"/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\""
     },
     {
       "file": "probes/dm1/firestaff_dm1_v1_movement_core_probe.c",
@@ -4459,7 +4459,7 @@
       "file": "probes/dm1/firestaff_dm1_v1_canonical_movement_probe.c",
       "line": 21,
       "term_matched": "dungeon\\.dat",
-      "snippet": "#define DEFAULT_DM1_DUNGEON_DAT \"/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\""
+      "snippet": "#define DEFAULT_DM1_DUNGEON_DAT \"/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\""
     },
     {
       "file": "probes/dm1/firestaff_dm1_v1_canonical_movement_probe.c",
@@ -4519,7 +4519,7 @@
       "file": "tools/dm1_v2_export_entry_viewport_png.c",
       "line": 11,
       "term_matched": "dungeon\\.dat",
-      "snippet": "snprintf(path, sizeof(path), \"%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\", home);"
+      "snippet": "snprintf(path, sizeof(path), \"%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\", home);"
     },
     {
       "file": "tools/dm1_v2_export_entry_viewport_png.c",

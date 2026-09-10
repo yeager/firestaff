@@ -1009,7 +1009,7 @@
     }
   ],
   "source_paths": {
-    "SKULL.ASM": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
+    "SKULL.ASM": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/IBM PC/Source",
     "skproject": "unavailable",
     "docs": "unavailable"
   },

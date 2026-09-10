@@ -143,7 +143,7 @@
       },
       "name": "GRAPHICS.DAT",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
     },
     {
       "actual": {
@@ -157,7 +157,7 @@
       },
       "name": "DUNGEON.DAT",
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
+      "path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
     }
   ],
   "ok": true,
@@ -209,18 +209,18 @@
       "cmd": [
         "./build/firestaff_dm1_v1_canonical_movement_probe"
       ],
-      "output_tail": "probe=firestaff_dm1_v1_canonical_movement_probe\ndungeon=/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=ReDMCSB_WIP20210206/Toolchains/Common/Source DUNGEON.C,F0150,F0151 CLIKMENU.C,F0366 MOVESENS.C,F0267 GROUP.C\n[map-load] start map=0 x=1 y=3 dir=2 startType=5 frontType=1 westType=0 map0=18x19\n[legal-step] handled=1 step=1 blocked=0 resultCode=0 new=(0,1,4,2) anyMove=1 cooldown=1\n[legal-turn] handled=1 turn=1 blocked=0 resultCode=4 pos=(0,1,3,1) anyTurn=1\n[blocked-step] handled=1 step=0 blocked=1 resultCode=1 pos=(0,1,3,2) anyMove=0 queue=0\nresult=PASS\n",
+      "output_tail": "probe=firestaff_dm1_v1_canonical_movement_probe\ndungeon=/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=ReDMCSB_WIP20210206/Toolchains/Common/Source DUNGEON.C,F0150,F0151 CLIKMENU.C,F0366 MOVESENS.C,F0267 GROUP.C\n[map-load] start map=0 x=1 y=3 dir=2 startType=5 frontType=1 westType=0 map0=18x19\n[legal-step] handled=1 step=1 blocked=0 resultCode=0 new=(0,1,4,2) anyMove=1 cooldown=1\n[legal-turn] handled=1 turn=1 blocked=0 resultCode=4 pos=(0,1,3,1) anyTurn=1\n[blocked-step] handled=1 step=0 blocked=1 resultCode=1 pos=(0,1,3,2) anyMove=0 queue=0\nresult=PASS\n",
       "returncode": 0
     },
     {
       "cmd": [
         "./build/firestaff_dm1_v1_playable_route_probe"
       ],
-      "output_tail": "probe=firestaff_dm1_v1_playable_route_probe\ndungeon=/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=ReDMCSB_WIP20210206/Toolchains/Common/Source DUNGEON.C,F0150,F0151 CLIKMENU.C,F0365,F0366 MOVESENS.C,F0267 LOADSAVE.C,MEDIA529\n[start] map=0 x=1 y=3 dir=2 hash=3966301240\n[fwd1] resultCode=0 pos=(0,1,4,2) hash=299312333 blocked=0 anyMove=1\n[fwd2] resultCode=0 pos=(0,1,5,2) hash=664914492\n[turnR] turn=1 pos=(0,1,5,3) hash=124127646\n[fwd3] resultCode=0 pos=(0,0,5,3) hash=2625304315\n[blocked] resultCode=1 pos=(0,1,3,3) blocked=1 anyMove=0 hash=1202440230\nresult=PASS\n",
+      "output_tail": "probe=firestaff_dm1_v1_playable_route_probe\ndungeon=/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\nsource=ReDMCSB_WIP20210206/Toolchains/Common/Source DUNGEON.C,F0150,F0151 CLIKMENU.C,F0365,F0366 MOVESENS.C,F0267 LOADSAVE.C,MEDIA529\n[start] map=0 x=1 y=3 dir=2 hash=3966301240\n[fwd1] resultCode=0 pos=(0,1,4,2) hash=299312333 blocked=0 anyMove=1\n[fwd2] resultCode=0 pos=(0,1,5,2) hash=664914492\n[turnR] turn=1 pos=(0,1,5,3) hash=124127646\n[fwd3] resultCode=0 pos=(0,0,5,3) hash=2625304315\n[blocked] resultCode=1 pos=(0,1,3,3) blocked=1 anyMove=0 hash=1202440230\nresult=PASS\n",
       "returncode": 0
     }
   ],
-  "redmcsb": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "sources": [
     {
       "claim": "PC34 live capture can use absolute left-click centers for movement and viewport commands; arbitrary xdotool points are not evidence.",
@@ -240,7 +240,7 @@
         "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "I34E source dispatch maps mouse input through the same movement/viewport command space.",
@@ -260,7 +260,7 @@
         "C007_ZONE_VIEWPORT"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "Capture labels are source-valid only after the queued command reaches turn/step handlers, not at click/highlight time.",
@@ -276,7 +276,7 @@
         "F0366_COMMAND_ProcessTypes3To6_MoveParty"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "Turn captures must stop after source direction mutation and sensor re-entry, before the next label is accepted.",
@@ -292,7 +292,7 @@
         "F0276_SENSOR_ProcessThingAdditionOrRemoval"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "Step captures must stop after legality, move-result, and cooldown mutation; blocked moves are a separate non-movement label.",
@@ -308,7 +308,7 @@
         "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "Movement/viewport labels must bind to source relative-step vectors, not emulator visual guesses.",
@@ -324,7 +324,7 @@
         "Simulate turning right"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C"
     },
     {
       "claim": "Wall evidence must be captured after the viewport base is cleared and wall/door bitmaps are composited into G0296.",
@@ -341,7 +341,7 @@
         "F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "The comparable viewport is the F0128 draw for the mutated direction/X/Y tuple followed by presentation.",
@@ -359,7 +359,7 @@
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "The 224x136 crop must be taken after the PC34 viewport present seam, not from setup echo or pre-blit bitmap artifacts.",
@@ -375,7 +375,7 @@
         "VIDRV_09_BlitViewPort"
       ],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
   "status": "PASS473_SOURCE_STOP_CLICK_PRIMITIVE_CAPTURE_CONTRACT_READY"

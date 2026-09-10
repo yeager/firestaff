@@ -41,7 +41,7 @@ Exact remaining blocker: FIRES.EXENEW now supplies the decompressed runtime imag
 - The packed loader entry and static compressed offsets remain non-promotable.
 
 ## Artifacts
-- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/manifest.json`
-- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/runtime_address_formula.json`
-- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/symbol_map_gap.json`
-- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/breakpoint_promotion_contract.md`
+- `<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/manifest.json`
+- `<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/runtime_address_formula.json`
+- `<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/symbol_map_gap.json`
+- `<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/breakpoint_promotion_contract.md`

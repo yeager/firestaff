@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-MAP_ROOT = (Path.home() / ".openclaw/data/redmcsb-n2-build-probe")
+SOURCE_ROOT = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+MAP_ROOT = (Path.home() / ".firestaff/data/redmcsb-n2-build-probe")
 FIRES_MAP = MAP_ROOT / "ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP"
 DM_MAP = MAP_ROOT / "ibm-pc-i34e-dm/HARDDISK/BUILD/I34E/DM.MAP"
 PC_H = SOURCE_ROOT / "PC.H"

@@ -43,7 +43,7 @@ static const char* default_dm1_dungeon_dat(void)
         home = "/home/trv2";
     }
     snprintf(path, sizeof(path),
-             "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+             "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
              home);
     return path;
 }

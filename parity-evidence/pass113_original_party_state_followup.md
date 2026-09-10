@@ -11,10 +11,10 @@ Focused follow-up to pass112/pass105: stop treating direct-start/no-party captur
 
 ## References checked
 
-- Original PC 3.4 extracted set: `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/`
-- Original archive integrity: `cd ~/.openclaw/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS` completed for the local N2 reference set.
-- Greatstone atlas XML: `~/.openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip`
-- ReDMCSB local index: `~/.openclaw/data/firestaff-redmcsb-source/README_FIRESTAFF.md` and related local index files were present on N2.
+- Original PC 3.4 extracted set: `~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/`
+- Original archive integrity: `cd ~/.firestaff/data/firestaff-original-games/DM && sha256sum -c SHA256SUMS` completed for the local N2 reference set.
+- Greatstone atlas XML: `~/.firestaff/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__db_data__c_3d2d1d__dungeon.dat__dungeon_xml.zip.zip`
+- ReDMCSB local index: `~/.firestaff/data/firestaff-redmcsb-source/README_FIRESTAFF.md` and related local index files were present on N2.
 
 Source-backed Hall of Champions facts from Greatstone's extracted `0000.DUNGEON [Dungeon].xml`:
 
@@ -30,9 +30,9 @@ Interpretation: a source-plausible route to the first champion is to start at `(
 
 ```sh
 cd ~/work/firestaff
-RUN_BASE="$HOME/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup"
+RUN_BASE="$HOME/.firestaff/data/firestaff-n2-runs/20260428-1344-party-state-followup"
 OUT_DIR="$RUN_BASE/probe-forward-to-elija" \
-DM1_ORIGINAL_STAGE_DIR="$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
+DM1_ORIGINAL_STAGE_DIR="$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
 DM1_ORIGINAL_PROGRAM="DM -vv -sn -pk" \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 WAIT_BEFORE_INPUT_MS=5000 \
@@ -53,9 +53,9 @@ Result:
 
 ```sh
 cd ~/work/firestaff
-RUN_BASE="$HOME/.openclaw/data/firestaff-n2-runs/20260428-1344-party-state-followup"
+RUN_BASE="$HOME/.firestaff/data/firestaff-n2-runs/20260428-1344-party-state-followup"
 OUT_DIR="$RUN_BASE/probe-kp8-to-elija" \
-DM1_ORIGINAL_STAGE_DIR="$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
+DM1_ORIGINAL_STAGE_DIR="$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34" \
 DM1_ORIGINAL_PROGRAM="DM -vv -sn -pk" \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
 WAIT_BEFORE_INPUT_MS=5000 \

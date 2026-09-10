@@ -2,7 +2,7 @@
   "schema": "pass454_dm1_v1_hall_original_input_mapping_blocker.v1",
   "status": "BLOCKED_EXTERNAL_HALL_TRUE_STOP_ARTIFACT_MISSING",
   "errors": [],
-  "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-true-stop-20260509/manifest.json",
+  "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-true-stop-20260509/manifest.json",
   "artifactManifestSha256": "missing",
   "blocker": "external hall true-stop artifact is not mounted on this host",
   "diagnosis": "External hall true-stop artifact is not mounted on this host.",

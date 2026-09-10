@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 OUT_DIR = ROOT / "parity-evidence/verification/dm1_v1_movement_queue_capture_closure"
 OUT_JSON = OUT_DIR / "manifest.json"
 OUT_MD = ROOT / "parity-evidence/dm1_v1_movement_queue_capture_closure.md"

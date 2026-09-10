@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
+DATA = Path.home() / ".firestaff/data"
+EXTERNAL_DATA = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff")
 PASS = "dm1_v1_champion_panel_hand_slot_priority_source_lock"
 STATUS = "DM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_SOURCE_LOCKED"
 FAILED_STATUS = "FAILED_DM1_V1_CHAMPION_PANEL_HAND_SLOT_PRIORITY_SOURCE_LOCK"

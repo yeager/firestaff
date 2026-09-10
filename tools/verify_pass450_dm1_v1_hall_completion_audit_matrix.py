@@ -29,10 +29,10 @@ MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
 REDMCSB = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+    str(Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
-CANON_DM1 = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+CANON_DM1 = Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1"
+N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
 
@@ -127,7 +127,7 @@ MATRIX = [
     {
         "area": "original PC34 frame/crop availability",
         "status": "BLOCKED_PANEL_VISIBLE_ORIGINAL_AVAILABLE_REMAINING_TRUE_STOP_AND_SEMANTIC_FRAMES_MISSING",
-        "evidence": ["/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509", "parity-evidence/verification/pass173_source_portrait_route_gate_probe", "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json"],
+        "evidence": ["/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509", "parity-evidence/verification/pass173_source_portrait_route_gate_probe", "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json"],
         "redmcsb": ["GAMELOOP.C:80-90", "DRAWVIEW.C:709-722"],
         "claim": "N2 DOSBox artifact supplies a hash-locked original Hall/front-mirror visible frame/crop (`03_panel_visible_north_front_mirror`), but candidate_select/cancel/resurrect/reincarnate/HUD true-stop frames remain missing because candidate clicks did not visibly transition.",
     },

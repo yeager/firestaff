@@ -32,16 +32,16 @@
 **Game files:**
 - `DUNGEON.DAT` SHA256: `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`
 - `GRAPHICS.DAT` SHA256: `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e`
-- Both in: `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/`
+- Both in: `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/`
 
 ---
 
 ## Step 1: Verify Game Files
 
 ```bash
-sha256sum ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT
+sha256sum ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT
 # Expected: d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-sha256sum ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT
+sha256sum ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT
 # Expected: 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
 ```
 **Do NOT proceed unless both SHA256 match exactly.**
@@ -50,7 +50,7 @@ sha256sum ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.D
 
 ```bash
 python3 docs/parity/tools/dosbox_capture_preflight.py \
-    --data-dir ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 \
+    --data-dir ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 \
     --captures-dir ~/firestaff-captures
 # Expected: preflight: 16/16 checks matched  PASS
 # Writes: ~/firestaff-captures/dosbox_capture.conf
@@ -223,7 +223,7 @@ from PIL import Image
 import numpy as np
 
 # Adjust these for your setup
-GAME_DIR       = Path(os.path.expanduser("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/"))
+GAME_DIR       = Path(os.path.expanduser("~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/"))
 CAPTURE_ROOT   = Path(os.path.expanduser("~/firestaff-captures"))
 DOSBOX_BIN     = "dosbox"         # or full path
 WIN_FOCUS_WAIT = 2.0              # seconds to wait for DOSBox window focus
@@ -456,7 +456,7 @@ Run Firestaff with the same canonical game files, same input sequence:
 
 ```bash
 ./build/firestaff_m11 \
-  --data-dir ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/ \
+  --data-dir ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/ \
   --game dm1 \
   --mode v1
 
@@ -1107,7 +1107,7 @@ title sequence is:
     SELECTOR - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button
     FIRES   - max 100% cycles/ms - to capture the mouse press Cmd+F10 or click any button
 
-The macOS OpenClaw workspace title "Firestaff" contains "FIRES" as a
+The macOS legacy-workspace workspace title "Firestaff" contains "FIRES" as a
 substring, so a naive `"FIRES" in title.upper()` check matches the wrong
 window.  `scripts/dm1_v1_original_capture.py` uses:
 
@@ -1117,7 +1117,7 @@ if "FIRES -" in title_upper:  # requires the trailing space+dash
 ```
 
 and additionally requires `kCGWindowOwnerName == "dosbox-staging"` (not
-just the title).  This rules out both the OpenClaw workspace and any
+just the title).  This rules out both the legacy-workspace workspace and any
 helper/inspector windows.
 
 ### Pixel-density classifier caveat
@@ -1146,7 +1146,7 @@ paired Firestaff artifacts and reviewed pixel diffs are still required before
 any row can move to `MATCHED`:
 
 1. Launches DOSBox Staging with the canonical DM1 PC 3.4 runtime
-   (`/Users/bosse/.firestaff/data/dm1-extras/dmfiles-dos-en-v34/`).
+   (`<local-home>/.firestaff/data/dm1-extras/dmfiles-dos-en-v34/`).
 2. Polls `CGWindowListCopyWindowInfo` for the FIRES window title to
    appear (this is the marker that DM.EXE loaded FIRES.EXE).
 3. Sends a host-mouse click inside the DOSBox window to capture the
@@ -1179,7 +1179,7 @@ python3 scripts/dm1_v1_original_capture.py --pair 01_viewport
 
 # Override the runtime layout or capture directory
 python3 scripts/dm1_v1_original_capture.py \
-    --runtime /Users/bosse/.firestaff/data/dm1-extras/dmfiles-dos-en-v34 \
+    --runtime <local-home>/.firestaff/data/dm1-extras/dmfiles-dos-en-v34 \
     --capture-root /tmp/dm1_capture \
     --evidence-out parity-evidence/captures
 ```

@@ -27,14 +27,14 @@ The local FM Towns corpus was checked without modifying any source image:
 - DM2 FM Towns archives expose the original Victor CD image only; no
   `SKSAVE*` member or Towns save disk was found. The `SKSAVE0..3` files in the
   DOS archive are a different platform and are not used as substitutes.
-- An external DOSBox capture is available under the user's `Downloads/dm2`
+- An external DOSBox capture is available under the user's `<downloads>/dm2`
   directory: four primary and four backup `sksave0..3` files, each with the
   authentic 42-byte DOS SKSAVE envelope. The read-only corpus test admits all
   eight files for DOS raw-prefix/state inspection (`269` checks pass), but
   this evidence does not close the FM Towns save/resume gate. Its companion
   `graphics.dat` is the PC-English asset (`25247ede4dabb6a71e5dabdfbcd5907d`),
   not the FM Towns `GRAPHICS.DAT` (`027ff3b8ddc2c4c4cdda7ada0b0bc46c`).
-- `Downloads/DMSAVE.DAT` is not a CSB or DM2 FM Towns save candidate and was
+- `<downloads>/DMSAVE.DAT` is not a CSB or DM2 FM Towns save candidate and was
   not admitted into either corpus.
 
 These absences keep native save/resume gates fail-closed; they are not

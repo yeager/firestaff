@@ -14,7 +14,7 @@
     "new pixel capture parity",
     "full creature AI reaction timing beyond command-gate boundary"
   ],
-  "redmcsbRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass566_dm1_v1_turn_cooldown_gate_boundary.v1",
   "sourceAudit": {
     "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": [

@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HDR = ROOT / "include/dm1_v1_viewport_hand_overlay_pc34_compat.h"
 TEST = ROOT / "tests/test_dm1_v1_viewport_hand_overlay_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
-REDMCSB_IO = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C"
+REDMCSB_IO = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C"
 
 
 def line_no(text: str, offset: int) -> int:

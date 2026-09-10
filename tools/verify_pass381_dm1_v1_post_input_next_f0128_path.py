@@ -23,7 +23,7 @@ PASS = "pass381_dm1_v1_post_input_next_f0128_path"
 OUTDIR = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUTDIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 PRIORS = {
     "pass330": ROOT / "parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/manifest.json",

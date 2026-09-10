@@ -32,7 +32,7 @@
     ],
     "method": "direct pexpect PTY + Xvfb, no tmux capture-pane",
     "ran": true,
-    "transcript_path": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive/dosbox_debug_pty.clean.txt",
+    "transcript_path": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass324_dm1_v1_debugger_code_stop_control_primitive/dosbox_debug_pty.clean.txt",
     "transition": {
       "before_had_prompt": false,
       "bplist_text_after_running": false,
@@ -54,7 +54,7 @@
       "file": "DUNVIEW.C",
       "id": "F0128_DUNGEONVIEW_Draw_CPSF",
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "anchors": {
@@ -64,7 +64,7 @@
       "file": "DRAWVIEW.C",
       "id": "F0097_DUNGEONVIEW_DrawViewport",
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     },
     {
       "anchors": {
@@ -75,7 +75,7 @@
       "file": "COMMAND.C",
       "id": "F0380_COMMAND_ProcessQueue_CPSC",
       "ok": true,
-      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "source_path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     }
   ],
   "status": "BLOCKED_DEBUGGER_CONTROL_PRIMITIVE_NOT_EXPOSED",

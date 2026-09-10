@@ -15,7 +15,7 @@ MANIFEST = ROOT / "parity-evidence/verification/pass350_dm1_v1_touch_live_dispat
 EVIDENCE = ROOT / "parity-evidence/pass350_dm1_v1_touch_live_dispatch_gate.md"
 PROBE = ROOT / "probes/m11/firestaff_m11_touch_live_dispatch_gate_probe.c"
 CMAKE = ROOT / "CMakeLists.txt"
-SOURCE_ROOT = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+SOURCE_ROOT = Path("/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 EXPECTED_STATUS = "PASS_DM1_V1_TOUCH_LIVE_DISPATCH_GATE"
 
 

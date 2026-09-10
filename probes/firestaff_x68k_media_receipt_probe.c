@@ -46,7 +46,7 @@
  * Usage:
  *   probe [data_dir]
  *   Defaults:
- *     data_dir = /Users/bosse/.firestaff/data
+ *     data_dir = <local-home>/.firestaff/data
  *   Env overrides:
  *     FIRESTAFF_DATA_DIR (overrides default)
  *

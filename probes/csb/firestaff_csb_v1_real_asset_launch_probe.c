@@ -25,7 +25,7 @@
  *      /tmp/csb_atari_st_real_capture.ppm as a P6 PPM (so it can
  *      be diffed across runs).
  *
- * Amiga 3.5 path: the probe also reads /Users/bosse/.firestaff/data/csb/
+ * Amiga 3.5 path: the probe also reads <local-home>/.firestaff/data/csb/
  * (the local Amiga 3.5 DUNGEON.DAT/GRAPHICS.DAT pair). It verifies
  * that the dungeon loader accepts the Amiga dungeon, the GRAPHICS.DAT
  * has its registered SHA256, and the hidden-code skip check
@@ -42,8 +42,8 @@
  *
  * Usage: probe [atari_st_dir] [amiga_dir]
  *   Defaults:
- *     atari_st_dir = /Users/bosse/.firestaff/data/csb-atari-st-2x
- *     amiga_dir    = /Users/bosse/.firestaff/data/csb
+ *     atari_st_dir = <local-home>/.firestaff/data/csb-atari-st-2x
+ *     amiga_dir    = <local-home>/.firestaff/data/csb
  *   The probe exits 0 if every invariant passes.
  */
 
@@ -63,8 +63,8 @@
 #include "csb_v1_boot.h"
 #include "fs_portable_compat.h"
 
-#define DEFAULT_ATARI_ST_DIR "/Users/bosse/.firestaff/data/csb-atari-st-2x"
-#define DEFAULT_AMIGA_DIR    "/Users/bosse/.firestaff/data/csb"
+#define DEFAULT_ATARI_ST_DIR "<local-home>/.firestaff/data/csb-atari-st-2x"
+#define DEFAULT_AMIGA_DIR    "<local-home>/.firestaff/data/csb"
 #define CAPTURE_PATH         "/tmp/csb_atari_st_real_capture.ppm"
 
 /* ── SHA256 (no external deps) ───────────────────────────────── */

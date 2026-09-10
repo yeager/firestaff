@@ -6,7 +6,7 @@ Scope: source-bound verification gate. No runtime behavior changes.
 
 ## ReDMCSB source audit anchors
 
-Primary source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Primary source root audited: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 - `DUNVIEW.C:8318-8618` locks `F0128_DUNGEONVIEW_Draw_CPSF`: floor/ceiling composition, far-to-near square drawing, then viewport presentation request.
 - `DUNVIEW.C:8445-8542` locks the visible-square order inside `F0128`: D3 extra panels, D3 side/center, D2 side/center, D1 side/center, then D0 side/center.

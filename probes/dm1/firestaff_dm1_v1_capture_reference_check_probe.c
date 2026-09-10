@@ -21,7 +21,7 @@
  *   GRAPHICS.DAT SHA256: 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
  *
  * Expected original capture directory (from pass94, 2026-04-28):
- *   ~/.openclaw/data/firestaff-release-v0.3.28/verification-m11/
+ *   ~/.firestaff/data/firestaff-release-v0.3.28/verification-m11/
  *     lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/
  *
  * IMPORTANT NOTE on pass94 captures (2026-04-28):
@@ -103,11 +103,11 @@ int main(void)
     char title_path[MAX_PATH];
 
     snprintf(dungeon_path, sizeof(dungeon_path),
-             "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home);
+             "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home);
     snprintf(graphics_path, sizeof(graphics_path),
-             "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT", home);
+             "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT", home);
     snprintf(title_path, sizeof(title_path),
-             "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE", home);
+             "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE", home);
 
     struct {
         const char *label;
@@ -145,7 +145,7 @@ int main(void)
 
     char pass94_base[MAX_PATH];
     snprintf(pass94_base, sizeof(pass94_base),
-             "%s/.openclaw/data/firestaff-release-v0.3.28/verification-m11/"
+             "%s/.firestaff/data/firestaff-release-v0.3.28/verification-m11/"
              "lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136", home);
 
     if (!file_exists(pass94_base)) {
@@ -248,13 +248,13 @@ int main(void)
 
     char lane3[MAX_PATH];
     snprintf(lane3, sizeof(lane3),
-             "%s/.openclaw/data/firestaff-release-v0.3.28/verification-m11/"
+             "%s/.firestaff/data/firestaff-release-v0.3.28/verification-m11/"
              "lane3-inventory-followup-20260428-0914", home);
 
     if (!file_exists(lane3)) {
         /* Try workspace copy */
         snprintf(lane3, sizeof(lane3),
-                 "%s/.openclaw/workspace-main/firestaff-v2-gap-manifest/verification-m11/"
+                 "%s/.firestaff/workspace-main/firestaff-v2-gap-manifest/verification-m11/"
                  "lane3-inventory-followup-20260428-0914", home);
     }
 

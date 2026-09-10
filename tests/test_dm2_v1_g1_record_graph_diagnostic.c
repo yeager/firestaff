@@ -192,7 +192,7 @@ static int verify_real_push_button_switch(DM2_V1_DungeonData *d)
 int main(void) {
     const char *paths[] = {
         NULL,
-        "/Users/bosse/.firestaff/data/dm2/data/dungeon.dat",
+        "<local-home>/.firestaff/data/dm2/data/dungeon.dat",
         NULL
     };
     const char *env = getenv("DM2_DUNGEON_DAT");

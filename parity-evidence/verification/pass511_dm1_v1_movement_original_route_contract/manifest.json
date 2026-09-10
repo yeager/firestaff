@@ -1,7 +1,7 @@
 {
   "assetRefs": {
     "DATA/DUNGEON.DAT": {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "exists": true,
       "member": "DATA/DUNGEON.DAT",
       "ok": true,
@@ -10,7 +10,7 @@
       "size": 33357
     },
     "DATA/GRAPHICS.DAT": {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "exists": true,
       "member": "DATA/GRAPHICS.DAT",
       "ok": true,
@@ -19,7 +19,7 @@
       "size": 363417
     },
     "DM.EXE": {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "exists": true,
       "member": "DM.EXE",
       "ok": true,
@@ -28,7 +28,7 @@
       "size": 11471
     },
     "TITLE": {
-      "archive": "/home/yeager/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+      "archive": "<local-home>/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
       "exists": true,
       "member": "TITLE",
       "ok": true,
@@ -70,7 +70,7 @@
       "lines": "5-61",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO2.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "claim": "the original route transcript has to cross keyboard-buffer drain, F0361 queue write, F0380 processing, and wait-loop boundary.",
@@ -80,7 +80,7 @@
       "lines": "164-219",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "claim": "a semantic route label needs a real original queue write to G0432/G2153.",
@@ -90,7 +90,7 @@
       "lines": "1734-1812",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "movement proof must bind the queued token to original F0380 pop and F0365/F0366 dispatch.",
@@ -100,7 +100,7 @@
       "lines": "2045-2156",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "turn/step evidence must show source-owned state delta, collision/stairs outcome, and movement cooldown boundary.",
@@ -110,7 +110,7 @@
       "lines": "142-347",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "successful step proof must include committed tuple and timing/scent side effects.",
@@ -120,7 +120,7 @@
       "lines": "738-818",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "claim": "overlay capture is movement-meaningful only after F0128 draws from the changed direction/X/Y tuple.",
@@ -130,7 +130,7 @@
       "lines": "8318-8611",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "the route transcript must land at viewport present seam before screenshots can become overlay evidence.",
@@ -140,9 +140,9 @@
       "lines": "709-858",
       "missing": [],
       "ok": true,
-      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
 }

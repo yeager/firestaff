@@ -8,7 +8,7 @@ static const char* dm1_default_dungeon_dat_path(void) {
     static char path[1024];
     const char* home = getenv("HOME");
     if (!home || !home[0]) return NULL;
-    snprintf(path, sizeof(path), "%s/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home);
+    snprintf(path, sizeof(path), "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT", home);
     return path;
 }
 

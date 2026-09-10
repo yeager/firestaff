@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 DEFAULT_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ).expanduser()
 
 CHECKS: list[dict[str, Any]] = [

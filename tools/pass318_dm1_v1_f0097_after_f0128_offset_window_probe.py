@@ -6,8 +6,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'parity-evidence/verification/pass318_dm1_v1_f0097_after_f0128_offset_window_probe'
 REPORT=ROOT/'parity-evidence/pass318_dm1_v1_f0097_after_f0128_offset_window_probe.md'
-ORIG=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
-SOURCE_ROOT=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+ORIG=Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+SOURCE_ROOT=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 ADDR={'F0128_DUNGEONVIEW_Draw_CPSF':'23AD:40FE','F0097_DUNGEONVIEW_DrawViewport_entry':'2809:1E31','F0097_after_palette_zone_setup':'2809:1EBD','F0097_before_viewport_args':'2809:1EEE','F0097_VIDRV_09_BlitViewPort_indirect_call':'2809:1EFF'}
 DEFAULT_ROUTE='wait:9000 enter wait:1800 one wait:1800 click:276,140 wait:1800 one wait:1800 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp4 wait:900 kp6 wait:900 kp5 wait:900 kp6 wait:900 kp4 wait:900 kp5 wait:900'
 def run(cmd,**kw): return subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,**kw)

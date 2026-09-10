@@ -12,8 +12,8 @@
   ],
   "contract": "DM1 V1 map/start/dimension comparisons require this exact DUNGEON.DAT byte identity before using parsed facts.",
   "errors": [
-    "missing extracted_dm1_pc34_english: /home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
-    "missing extracted_dm1_pc34_eudata: /home/yeager/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT"
+    "missing extracted_dm1_pc34_english: <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+    "missing extracted_dm1_pc34_eudata: <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT"
   ],
   "expected": {
     "bytes": 33357,

@@ -5,7 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 from PIL import Image, ImageStat
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_RUN = Path.home()/".openclaw/data/firestaff-n2-runs/20260428-183628-pass133b-startup-variant-original-route"
+DEFAULT_RUN = Path.home()/".firestaff/data/firestaff-n2-runs/20260428-183628-pass133b-startup-variant-original-route"
 
 def region_stats(img: Image.Image, box):
     crop = img.crop(box).convert("RGB")

@@ -8,7 +8,7 @@ It is intentionally **forward-looking**: an entry is "missing" if it
 would unblock new work in `TODO.md`, even if we have enough files to
 play the current runtime. The verification artifacts are stored under
 `~/.firestaff/data/` for runtime use and
-`~/.openclaw/data/firestaff-original-games/` for archive provenance.
+`~/.firestaff/data/firestaff-original-games/` for archive provenance.
 
 ## How to read this
 

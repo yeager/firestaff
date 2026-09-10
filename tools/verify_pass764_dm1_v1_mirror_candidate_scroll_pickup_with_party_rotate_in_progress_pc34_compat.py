@@ -15,7 +15,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 RED = (
     Path.home()
-    / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+    / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 )
 PASS = "pass764_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat"
 TARGET = "test_dm1_v1_mirror_candidate_scroll_pickup_with_party_rotate_in_progress_pc34_compat"

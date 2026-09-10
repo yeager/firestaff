@@ -1,6 +1,6 @@
 {
   "schema": "pass455_dm1_v1_hall_corrected_click_primitive_capture.v1",
   "status": "BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING",
-  "artifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+  "artifactRoot": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
   "blocker": "external corrected-click capture artifact is not mounted on this host"
 }

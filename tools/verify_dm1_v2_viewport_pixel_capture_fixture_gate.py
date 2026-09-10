@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/Toolchains/Common/Source")
+SOURCE = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/Toolchains/Common/Source")
 FIXTURE = ROOT / 'parity-evidence/fixtures/pass280_dm1_v2_entry_viewport_pixel_capture_fixture.json'
 EVIDENCE = ROOT / 'parity-evidence/verification/pass280_dm1_v2_viewport_pixel_capture_fixture.json'
 

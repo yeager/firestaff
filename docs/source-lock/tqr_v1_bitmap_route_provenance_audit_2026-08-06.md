@@ -3,7 +3,7 @@
 **Date:** 2026-08-06
 
 **Scope:** production startup-media capture for the real Track 02 files under
-`/Users/bosse/.firestaff/data/theron/`
+`<local-home>/.firestaff/data/theron/`
 **Status:** diagnostic byte evidence; semantic runtime promotion remains open
 
 ## Finding

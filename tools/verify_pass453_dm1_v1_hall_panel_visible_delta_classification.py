@@ -18,7 +18,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass453_dm1_v1_hall_panel_visible_delta_classification"
 ARTIFACT_MANIFEST = Path(
-    "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/"
+    "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/"
     "hall-comparator-diff-20260509/panel_visible_delta_manifest.json"
 )
 EXPECTED_CLASSIFICATION = "FIRESTAFF_FRAME_STATE_MISMATCH_PANEL_NOT_VISIBLE"
@@ -29,7 +29,7 @@ OUT_JSON = ROOT / "parity-evidence/verification/pass453_dm1_v1_hall_panel_visibl
 EXTERNAL_HASH_LOCKS = {
     "dm1_pc34_english_graphics": {
         "path": Path(
-            "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/"
+            "/Volumes/Extern-disk/legacy-workspace-data/firestaff/firestaff-original-games/"
             "DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT"
         ),
         "bytes": 363417,
@@ -37,7 +37,7 @@ EXTERNAL_HASH_LOCKS = {
     },
     "dm1_pc34_english_dungeon": {
         "path": Path(
-            "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/"
+            "/Volumes/Extern-disk/legacy-workspace-data/firestaff/firestaff-original-games/"
             "DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT"
         ),
         "bytes": 33357,
@@ -45,7 +45,7 @@ EXTERNAL_HASH_LOCKS = {
     },
     "dm1_pc34_english_title": {
         "path": Path(
-            "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/"
+            "/Volumes/Extern-disk/legacy-workspace-data/firestaff/firestaff-original-games/"
             "DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE"
         ),
         "bytes": 12002,

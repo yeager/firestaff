@@ -20,7 +20,7 @@ This lane keeps the original overlay blocker honest and narrows it with one fres
 Command shape:
 
     OUT_DIR=$PWD/verification-screens/pass505-original-overlay-mouse-route-recapture
-    DM1_ORIGINAL_STAGE_DIR=/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34
+    DM1_ORIGINAL_STAGE_DIR=/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34
     DM1_ORIGINAL_PROGRAM='DM VGA'
     DM1_ROUTE_SKIP_STARTUP_SELECTOR=1
     DOSBOX=/usr/bin/dosbox

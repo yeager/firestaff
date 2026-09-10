@@ -20,7 +20,7 @@ OUT = REPO / "parity-evidence/verification/pass304_dm1_v1_original_viewport_capt
 RENDER_PLAN = REPO / "parity-evidence/verification/dm1_v1_viewport_wall_render_plan_gate.json"
 GRAPHICS_INDEX = REPO / "parity-evidence/verification/pass302_dm1_graphics_dat_index_manifest.json"
 WALL_GRAPHICS_INDEX = REPO / "parity-evidence/verification/pass305_dm1_wall_graphics_93_107_manifest.json"
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW = SOURCE_ROOT / "DUNVIEW.C"
 GAMELOOP = SOURCE_ROOT / "GAMELOOP.C"
 DRAWVIEW = SOURCE_ROOT / "DRAWVIEW.C"
@@ -31,10 +31,10 @@ MOVESENS = SOURCE_ROOT / "MOVESENS.C"
 PASS308 = REPO / "parity-evidence/verification/pass308_original_capture_execution_manifest.json"
 PASS312 = REPO / "parity-evidence/verification/pass312_dm1_v1_original_runtime_state_oracle.json"
 ASSET_PATHS = {
-    "GRAPHICS.DAT": (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"),
-    "DUNGEON.DAT": (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"),
-    "TITLE": (Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE"),
-    "DM.EXE": (Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"),
+    "GRAPHICS.DAT": (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"),
+    "DUNGEON.DAT": (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"),
+    "TITLE": (Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE"),
+    "DM.EXE": (Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"),
 }
 
 SNAPSHOT_CAPTURE = {
@@ -82,8 +82,8 @@ def sha256(path: Path) -> str:
 def public_path(path: Path) -> str:
     text = str(path)
     replacements = {
-        str(Path.home() / ".openclaw/data/firestaff-original-games/DM"): "<firestaff-original-games>",
-        str(Path.home() / ".openclaw/data/firestaff-redmcsb-source"): "<redmcsb-source>",
+        str(Path.home() / ".firestaff/data/firestaff-original-games/DM"): "<firestaff-original-games>",
+        str(Path.home() / ".firestaff/data/firestaff-redmcsb-source"): "<redmcsb-source>",
     }
     for prefix, label in replacements.items():
         if text == prefix:

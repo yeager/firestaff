@@ -2,7 +2,7 @@
 
 ## Original DM1 Data Files
 
-Canonical path: /home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/
+Canonical path: /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/
 
 Files:
 - TITLE (binary) - boot zoom animation

@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 root = Path(__file__).resolve().parents[1]
-red_root = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+red_root = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 main = (root / "src/engine/main_loop_m11.c").read_text()
 view = (root / "src/engine/m11_game_view.c").read_text()
 title = (root / "src/frontend/title_frontend_v1.c").read_text()

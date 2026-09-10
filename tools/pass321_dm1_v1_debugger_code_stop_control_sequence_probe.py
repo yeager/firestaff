@@ -24,8 +24,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/pass321_dm1_v1_debugger_code_stop_control_sequence_probe"
 REPORT = ROOT / "parity-evidence/pass321_dm1_v1_debugger_code_stop_control_sequence_probe.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 PASS318 = ROOT / "parity-evidence/verification/pass318_dm1_v1_f0097_after_f0128_offset_window_probe/manifest.json"
 PASS320 = ROOT / "parity-evidence/verification/pass320_dm1_v1_f0097_vidrv_window_after_f0128_sequence_probe/manifest.json"
 

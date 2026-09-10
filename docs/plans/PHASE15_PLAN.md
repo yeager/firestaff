@@ -1051,7 +1051,7 @@ the pre-check.
 
 ```
 bash run_firestaff_m10_verify.sh \
-    <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
+    <local-home>/.firestaff/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
     /tmp/m10-verify-out
 ```
 Exit must be 0. All 15 phases (1..14 unchanged + new 15) PASS.

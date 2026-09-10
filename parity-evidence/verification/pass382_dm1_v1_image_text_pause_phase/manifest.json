@@ -11,7 +11,7 @@
   "mapAudit": {
     "imageTextMentionsImageC": true,
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
+    "path": "/home/trv2/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP",
     "segmentRows": [
       "20D68H 22DD6H 0206FH IMAGE_TEXT         CODE",
       "20D6:0008 206F C=CODE   S=IMAGE_TEXT     G=(none)  M=IMAGE.C    ACBP=28"
@@ -109,7 +109,7 @@
       "meaning": "IMAGE_TEXT is the IMAGE.C code segment containing the generic image/viewport/message blit helpers, not TEXT.C string logic.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IMAGE.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IMAGE.C"
     },
     {
       "file": "IMAGE3.C",
@@ -123,7 +123,7 @@
       "meaning": "F0683 copies one transparent, horizontally flipped pixel line to the destination bitmap/screen.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IMAGE3.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IMAGE3.C"
     },
     {
       "file": "IMAGE3.C",
@@ -137,7 +137,7 @@
       "meaning": "The nearest symbol is the low-level worker selected by F0684_Blit for transparent horizontally flipped blits.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IMAGE3.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IMAGE3.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -150,7 +150,7 @@
       "meaning": "DUNVIEW can legitimately reach transparent/flipped blits while drawing/presenting the dungeon viewport.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWMSGA.C",
@@ -162,10 +162,10 @@
       "meaning": "The same IMAGE_TEXT segment also serves message-area redraws, so a forced sample there is generic UI/render work.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWMSGA.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWMSGA.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS382_IMAGE_TEXT_PAUSE_EXPECTED_RENDER_HELPER_NOT_WRONG_PHASE",
   "timestampUtc": "2026-05-08T11:48:30.125499+00:00"
 }

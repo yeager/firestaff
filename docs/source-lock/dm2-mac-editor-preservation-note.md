@@ -1,6 +1,6 @@
 # DM2 Macintosh editor and input-source preservation note
 
-`/Users/bosse/Downloads/Dungeon_Master_II_Editor.sit` is an authentic
+`<local-home>/<downloads>/Dungeon_Master_II_Editor.sit` is an authentic
 Macintosh StuffIt archive containing **DMII Editor**, a small utility for the
 classic Mac version of Dungeon Master II.
 

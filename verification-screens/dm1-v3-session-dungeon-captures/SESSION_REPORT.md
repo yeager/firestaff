@@ -6,7 +6,7 @@ This directory contains the artifacts from an attempt to close the
 DM1 V1 creature-chain original-capture gap by running the
 `scripts/dm1_v1_original_capture.py --pair all` harness in this
 session against the canonical DM1 PC 3.4 English runtime staged at
-`/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`.
+`<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`.
 
 ## Selector-to-dungeon hand-off (verified)
 

@@ -69,7 +69,7 @@ Executables (test_* targets, dm1_v1_engine_pc34_compat) link against these libra
 ### Data Paths
 - **Source tree**: /home/trv2/work/firestaff
 - **Build directory**: /home/trv2/work/firestaff/build (in-tree)
-- **ReDMCSB reference**: /home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
+- **ReDMCSB reference**: /home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/
 
 ### Build Artifacts
 - Static libraries in build/ directory

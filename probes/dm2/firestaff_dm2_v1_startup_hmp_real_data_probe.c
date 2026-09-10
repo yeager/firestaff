@@ -18,7 +18,7 @@ int main(void)
     DM2_V1_MusicQueueReceipt queue_receipt;
 
     if (!path || !path[0])
-        path = "/Users/bosse/Documents/skproject-codex-ref/SKULLWIN/Data/00.hmp.mid";
+        path = "<local-home>/Documents/skproject-codex-ref/SKULLWIN/Data/00.hmp.mid";
     file = fopen(path, "rb");
     if (!file) {
         printf("SKIP DM2 real HMP title file unavailable: %s\n", path);

@@ -45,7 +45,7 @@ DM2 is playable in Firestaff from four authenticated source families:
 
 | Edition | Accepted source data | Verified runtime scope |
 |---|---|---|
-| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `Downloads/dm2` are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
+| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `<downloads>/dm2` are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
 | Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, clipped source CHARSHEET inventory, movement, pits, stairs, level transitions and creatures |
 | FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese text uses the built-in GDAT-keyed l10n bridge | Title sequence, New Game, inventory, movement, level transitions and creatures |
 | Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs, level transitions and combat/creature handoff |

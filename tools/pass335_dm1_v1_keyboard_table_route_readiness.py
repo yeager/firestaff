@@ -10,8 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass335_dm1_v1_keyboard_table_route_readiness"
 OUT = ROOT / "parity-evidence/verification" / PASS
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-ORIG = Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
-SRC = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+ORIG = Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+SRC = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 # I34E MAP segment + runtime load delta 0x0733, same binding family as pass330/pass333.
 ADDR = {
     "G0444_ps_SecondaryKeyboardInput": "2C23:3EC0",

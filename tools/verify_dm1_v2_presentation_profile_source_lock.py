@@ -13,8 +13,8 @@ def redmcsb_source_root() -> Path:
     if os.environ.get("FIRESTAFF_REDMCSB_SOURCE"):
         candidates.append(Path(os.environ["FIRESTAFF_REDMCSB_SOURCE"]).expanduser())
     candidates.extend([
-        Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-        Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser(),
+        Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+        Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser(),
     ])
     for candidate in candidates:
         if (candidate / "GAMELOOP.C").exists() and (candidate / "DUNVIEW.C").exists():

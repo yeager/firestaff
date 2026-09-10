@@ -1,5 +1,5 @@
 {
-  "data_dir": "/Users/bosse/.firestaff/data/nexus",
+  "data_dir": "<local-home>/.firestaff/data/nexus",
   "total_files": 138,
   "files": {
     "0DMSTRT.BIN": 39516,

@@ -21,7 +21,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass455_dm1_v1_hall_corrected_click_primitive_capture"
-ARTIFACT = Path("/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+ARTIFACT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 OUT_JSON = OUT_DIR / "manifest.json"
 OUT_MD = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -31,7 +31,7 @@ EXPECTED = {
     "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
 }
-DATA_STAGE = Path("/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
+DATA_STAGE = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
 
 CLICK_RE = re.compile(
     r"^(?P<button>left|right)-click-mapped (?P<pcx>\d+),(?P<pcy>\d+) -> "

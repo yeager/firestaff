@@ -6,7 +6,7 @@ Scope: movement/viewport/walls only. This pass does not change renderer behavior
 
 ## ReDMCSB anchors
 
-Primary source root: `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+Primary source root: `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 - `DUNVIEW.C:4547-4582` — `F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF`; source comment gives the per-cell loop: objects, one creature, projectiles, then explosions after cell processing.
 - `DUNVIEW.C:4819-4860` — object pass begins with `/* Draw objects */`, defers group/projectile/explosion things, and draws visible objects for the current view cell.

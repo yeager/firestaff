@@ -32,7 +32,7 @@
 #define FIRESTAFF_BIN "./build/firestaff"
 #endif
 #ifndef DEFAULT_DATA_ROOT
-#define DEFAULT_DATA_ROOT "/Users/bosse/.firestaff/data"
+#define DEFAULT_DATA_ROOT "<local-home>/.firestaff/data"
 #endif
 
 typedef struct {

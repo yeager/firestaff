@@ -1,6 +1,6 @@
 # DM1 V1 ReDMCSB viewport pixel-capture / occlusion probe — 2026-05-08
 
-Scope: source-only audit on N2 against `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
+Scope: source-only audit on N2 against `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`.
 
 ## Conclusion
 

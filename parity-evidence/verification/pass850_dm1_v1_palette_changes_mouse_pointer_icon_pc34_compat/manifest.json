@@ -13,7 +13,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:40",
       "line": 40,
       "lineText": "int16_t G0034_ai_Graphic562_Box_ObjectDescriptionCircle[4];",
@@ -21,7 +21,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:181",
       "line": 181,
       "lineText": "        C064_GRAPHIC_CEILING_PIT_D2C,",
@@ -29,7 +29,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:583",
       "line": 583,
       "lineText": "#endif",
@@ -37,7 +37,7 @@
       "status": "DRIFT"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:164",
       "line": 164,
       "lineText": "unsigned char G0044_auc_Graphic562_PaletteChanges_MousePointerIcon[16] = { 120, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 0, 130, 140, 150 }; /* Atari ST: { 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 120, 40, 40, 40 } */",
@@ -45,7 +45,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2140",
       "line": 2140,
       "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(P0093_puc_Bitmap_Object, G0618_puc_Bitmap_MousePointerHiddenScreenArea, 16, 16, 16, 16, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
@@ -53,7 +53,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2167",
       "line": 2167,
       "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(P0093_puc_Bitmap_Object, G0618_puc_Bitmap_MousePointerHiddenScreenArea, 16, 16, 16, 16, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
@@ -61,7 +61,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2176",
       "line": 2176,
       "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(P0093_puc_Bitmap_Object, G1142_puc_Bitmap_MousePointerTemporaryBuffer, 16, 16, 16, 16, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
@@ -69,7 +69,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2443",
       "line": 2443,
       "lineText": "                F0129_VIDEO_BlitShrinkWithPaletteChanges(L0056_puc_Bitmap, L0056_puc_Bitmap, 32, 14, 32, 14, G0044_auc_Graphic562_PaletteChanges_MousePointerIcon);",
@@ -77,7 +77,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass850_dm1_v1_palette_changes_mouse_pointer_icon_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [

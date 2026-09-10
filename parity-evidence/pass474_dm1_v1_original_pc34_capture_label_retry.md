@@ -14,7 +14,7 @@ Timestamp: 2026-05-10T04:32:00+00:00
 - `DUNVIEW.C:8318-8611` and `DRAWVIEW.C:709-858` — comparable viewport evidence is after `F0128_DUNGEONVIEW_Draw_CPSF` and PC34 viewport presentation, not setup/menu/pre-blit frames.
 
 ## Fresh N2 attempts
-Used N2-local PC34 stage only: `$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`.
+Used N2-local PC34 stage only: `$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`.
 
 A small runner fix made `scripts/dosbox_dm1_original_viewport_reference_capture.sh` prefer the existing Pillow crop path before ImageMagick 6 `convert`, because `convert` failed during extensionless PPM crop normalization.
 

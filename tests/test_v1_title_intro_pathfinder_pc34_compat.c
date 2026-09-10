@@ -198,9 +198,9 @@ static int find_local_canonical_title(char *out, size_t out_bytes)
     static const char *suffixes[] = {
         ".firestaff/data/dm1/TITLE",
         ".firestaff/data/TITLE",
-        ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
-        ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
+        ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+        ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/TITLE",
+        ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/TITLE"
     };
     if (!home || !out || out_bytes == 0U) {
         return 0;

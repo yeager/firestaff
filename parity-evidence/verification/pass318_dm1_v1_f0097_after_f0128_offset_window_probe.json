@@ -6,7 +6,7 @@
     "f0128_link": "1C7A:40FE",
     "f0128_runtime": "23AD:40FE",
     "ok": true,
-    "path": "/home/trv2/.openclaw/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP"
+    "path": "/home/trv2/.firestaff/data/redmcsb-n2-build-probe/ibm-pc-i34e-fires/HARDDISK/BUILD/I34E/FIRES.MAP"
   },
   "probe_manifest": "parity-evidence/verification/pass318_dm1_v1_f0097_after_f0128_offset_window_probe/manifest.json",
   "probe_status": "BLOCKED_F0097_AFTER_F0128_WINDOW_NO_HIT",

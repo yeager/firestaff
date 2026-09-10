@@ -6,8 +6,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'parity-evidence/verification/pass276_dm1_v1_two_loop_bpm_runtime_proof'
 REPORT=ROOT/'parity-evidence/pass276_dm1_v1_two_loop_bpm_runtime_proof.md'
-ORIG=Path.home()/'.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
-SOURCE_ROOT=Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+ORIG=Path.home()/'.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34'
+SOURCE_ROOT=Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 ADDR={'G0432_as_CommandQueue':'2C20:3E7A','G0433_i_CommandQueueFirstIndex':'2C20:3EC8','G0434_i_CommandQueueLastIndex':'2C20:1F08','G0435_B_CommandQueueLocked':'2C20:1F0A','G0308_i_PartyDirection':'2C20:3C92','G0306_i_PartyMapX':'2C20:3C94','G0307_i_PartyMapY':'2C20:3CE0','F0380_COMMAND_ProcessQueue_CPSC':'22F4:0699','F0365_COMMAND_ProcessTypes1To2_TurnParty':'1EA4:010D','F0366_COMMAND_ProcessTypes3To6_MoveParty':'1EA4:01AA','F0267_MOVE_GetMoveResult_CPSCE':'1859:0516','F0128_DUNGEONVIEW_Draw_CPSF':'23AD:40FE'}
 ROUTE='wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 kp5 wait:700 kp4 wait:700 kp6 wait:700'
 def run(cmd, **kw): return subprocess.run(cmd,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,**kw)

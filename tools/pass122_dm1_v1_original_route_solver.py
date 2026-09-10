@@ -14,7 +14,7 @@ sys.path.insert(0, str(REPO))
 from tools.pass118_state_aware_original_route_driver import wait_window, capture_new, classify_file, tap, click_original
 from tools.pass80_original_frame_classifier import sha256
 
-STAGE = Path.home()/".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
+STAGE = Path.home()/".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34"
 DOSBOX = "/usr/bin/dosbox"
 
 ROUTE_FAMILIES = {

@@ -11,7 +11,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:422",
       "line": 422,
       "lineText": "unsigned char G4013_auc_PaletteChanges_CursorMask[16] = { 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 0, 15, 15, 15 };",
@@ -19,7 +19,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2151",
       "line": 2151,
       "lineText": "        F0129_VIDEO_BlitShrinkWithPaletteChanges(L0051_puc_Bitmap, L0051_puc_Bitmap + M075_BITMAP_BYTE_COUNT(32, 18), 32, 18, 32, 18, G4013_auc_PaletteChanges_CursorMask);",
@@ -27,7 +27,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO.C",
       "id": "IO.C:2453",
       "line": 2453,
       "lineText": "                F0129_VIDEO_BlitShrinkWithPaletteChanges(L0056_puc_Bitmap, L0056_puc_Bitmap + M075_BITMAP_BYTE_COUNT(32, 18), 32, 16, 32, 16, G4013_auc_PaletteChanges_CursorMask);",
@@ -35,7 +35,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass920_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
   "sourceChecks": [

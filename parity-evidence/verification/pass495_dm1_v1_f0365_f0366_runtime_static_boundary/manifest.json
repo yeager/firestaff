@@ -95,7 +95,7 @@
       "ok": true
     }
   ],
-  "sourceRoot": "/home/yeager/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "staticDuplicateEvidence": {
     "firstFrameStillEntranceMenu": true,
     "manifest": "parity-evidence/verification/pass487_dm1_v1_original_click_capture_blocker/manifest.json",

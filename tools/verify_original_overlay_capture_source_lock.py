@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+DEFAULT_REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DEFAULT_ATTEMPT = REPO / "verification-screens/pass112-n2-stable-hud-route"
 
 SOURCE_CHECKS = [

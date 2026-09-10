@@ -2,7 +2,7 @@
 
 Status: blocked as a direct locked-door key behavior. The ReDMCSB PC path does not show a distinct "use key on locked door" route. Key-like object use is source-backed only through wall click sensors/object mechanisms, not through door squares.
 
-Source root: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
+Source root: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source`
 
 ## Audited Files
 

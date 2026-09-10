@@ -8,7 +8,7 @@
  * preserve the source nibble semantics while operating on caller-owned
  * 8-bit pixel buffers instead of the original packed 4-bit surface.
  *
- * Source: /Users/bosse/Documents/skproject-codex-ref/SKULLWIN/c_gfx_decode.cpp
+ * Source: <local-home>/Documents/skproject-codex-ref/SKULLWIN/c_gfx_decode.cpp
  * Source: docs/dm2_graphics.md — DM2 GDAT image formats (IMG3/IMG9)
  */
 

@@ -153,7 +153,7 @@
   "redmcsbChecks": [
     {
       "claim": "F0098 owns floor/ceiling refresh and clears the dirty flag.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 2962,
@@ -179,7 +179,7 @@
     },
     {
       "claim": "F0128 gates F0098 on the dirty flag, performs F0099 flip work, dispatches D2L/D2R, then presents with F0097.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 8337,
@@ -225,7 +225,7 @@
     },
     {
       "claim": "D2L non-wall branch reaches floor ornament, ceiling pit, F0115, and optional field without taking the C00 wall/F0107 return.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 6945,
@@ -279,7 +279,7 @@
     },
     {
       "claim": "D2R non-wall branch mirrors the D2L fallback order without the C00 wall/F0107 return path.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
       "hits": [
         {
           "line": 7096,
@@ -329,7 +329,7 @@
     },
     {
       "claim": "DEFS.H binds D2L/D2R view-square, floor-view, cell-order, and floor/ceiling/zone ids.",
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
       "hits": [
         {
           "line": 2582,
@@ -414,14 +414,14 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass650_dm1_v1_viewport_d2l_d2r_f0098_fallback_source_lock.v1",
   "status": "passed",
   "statusToken": "PASS650_DM1_V1_VIEWPORT_D2L_D2R_F0098_FALLBACK_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat"
+        "<local-home>/.firestaff/workspace-main/build/test_dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat"
       ],
       "outputTail": "PASS precondition.dirty_true == 1 (DUNVIEW.C:8337 G0297 dirty flag)\nPASS precondition.dirty_false == 0 (DUNVIEW.C:8337 G0297 dirty flag)\nPASS evidence.f0098 contains \"F0098:2962-3002\" (DUNVIEW.C F0098 line 2962)\nPASS evidence.f0128_dirty contains \"F0128:8337-8338\" (DUNVIEW.C F0128 dirty flag guard)\nPASS evidence.f0128_order contains \"F0128:8512-8517\" (DUNVIEW.C F0128 D2L/D2R dispatch order)\nPASS evidence.f0097 contains \"F0128:8606-8610\" (DUNVIEW.C F0097 present)\nPASS evidence.f0119_nonwall contains \"F0119:6900-7049 D2L non-wall\" (DUNVIEW.C F0119 non-wall branch)\nPASS evidence.f0120_nonwall contains \"F0120:7051-7220 D2R\" (DUNVIEW.C F0120 non-wall branch)\nPASS evidence.no_f0107 contains \"without the C00 wall_return/F0107 branch\" (DUNVIEW.C F0119/F0120 wall branch excluded)\nPASS evidence.defs_zones contains \"DEFS.H:4040-4051\" (DEFS.H zone ids for D2L/D2R)\nPASS asset.graphics_dat_reachable == 1 (canonical DM1 PC34 GRAPHICS.DAT real-asset fixture)\nPASS dm1_v1_viewport_d2l_d2r_f0098_fallback_pc34_compat 47/47 assertions",
       "passed": true,

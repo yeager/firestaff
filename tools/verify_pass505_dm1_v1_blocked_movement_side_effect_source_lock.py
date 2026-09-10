@@ -21,7 +21,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass505_dm1_v1_blocked_movement_side_effect_source_lock"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 CLIKMENU = RED / "CLIKMENU.C"
 COMMAND_CORE = ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c"
 COMMAND_TEST = ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c"

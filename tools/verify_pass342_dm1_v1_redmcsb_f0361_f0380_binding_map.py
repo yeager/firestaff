@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+RED = Path("/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 EVIDENCE = ROOT / "parity-evidence" / "pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.md"
 MANIFEST = ROOT / "parity-evidence" / "verification" / "pass342_dm1_v1_redmcsb_f0361_f0380_binding_map" / "manifest.json"
 

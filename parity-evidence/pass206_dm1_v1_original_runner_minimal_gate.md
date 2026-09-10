@@ -22,14 +22,14 @@ Scope: N2 Linux-only original DM1 PC34 runner/capture readiness for movement/vie
 - `convert`: `MISSING`
 - `ffmpeg`: `/opt/homebrew/bin/ffmpeg`
 
-- PASS `DM.EXE` `4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` at `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-- PASS `DATA/DUNGEON.DAT` `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` at `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
-- PASS `DATA/GRAPHICS.DAT` `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` at `/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
+- PASS `DM.EXE` `4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4` at `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
+- PASS `DATA/DUNGEON.DAT` `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` at `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT`
+- PASS `DATA/GRAPHICS.DAT` `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` at `<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT`
 
 ## Reproducible dry-run command
 
 ```sh
-DM1_ORIGINAL_STAGE_DIR=~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
+DM1_ORIGINAL_STAGE_DIR=~/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 \
 DOSBOX=/usr/bin/dosbox \
 DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' \
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \
@@ -39,7 +39,7 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --dry-run
 
 ## Existing N2 route attempt audit
 
-- Attempt: `/Users/bosse/Documents/Firestaff/verification-screens/pass112-n2-stable-hud-route`
+- Attempt: `<local-home>/Documents/Firestaff/verification-screens/pass112-n2-stable-hud-route`
 - Classifier status: `BLOCKED_SEMANTIC_ROUTE_NOT_PROMOTABLE`
 - Capture count/dimensions: `6` / `{'320x200': 6}`
 - Viewport crop PPM count: `0`

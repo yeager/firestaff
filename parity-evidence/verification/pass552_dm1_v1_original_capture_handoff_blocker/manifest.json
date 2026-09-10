@@ -77,13 +77,13 @@
     "dmExeExists": true,
     "missingTools": [],
     "n2ReferenceRoots": [
-      "/home/trv2/.openclaw/data/firestaff-greatstone-atlas",
-      "/home/trv2/.openclaw/data/firestaff-redmcsb-source",
-      "/home/trv2/.openclaw/data/firestaff-csbwin-source/CSBWin",
-      "/home/trv2/.openclaw/data/firestaff-csb-source/CSB",
-      "/home/trv2/.openclaw/data/firestaff-original-games/DM"
+      "/home/trv2/.firestaff/data/firestaff-greatstone-atlas",
+      "/home/trv2/.firestaff/data/firestaff-redmcsb-source",
+      "/home/trv2/.firestaff/data/firestaff-csbwin-source/CSBWin",
+      "/home/trv2/.firestaff/data/firestaff-csb-source/CSB",
+      "/home/trv2/.firestaff/data/firestaff-original-games/DM"
     ],
-    "originalStage": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
+    "originalStage": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34",
     "originalStageExists": true,
     "tools": {
       "Xvfb": "/usr/bin/Xvfb",
@@ -135,7 +135,7 @@
       "meaning": "PC/I34E shifted arrow scan codes normalize to the same command-key bytes used by the movement table.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
     },
     {
       "file": "COMMAND.C",
@@ -156,7 +156,7 @@
       "meaning": "The command transcript must prove K/L/M/O/P/Q bytes, not host-side route labels.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "COMMAND.C",
@@ -177,7 +177,7 @@
       "meaning": "A fresh capture must show the keyboard byte entering F0361 and creating a queue slot/count delta.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "GAMELOOP.C",
@@ -195,7 +195,7 @@
       "meaning": "The source route order is keyboard-buffer drain, then F0380 queue processing.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
     },
     {
       "file": "COMMAND.C",
@@ -215,7 +215,7 @@
       "meaning": "F0380 is only promotable when the queue count is positive and the pop/decrement/dispatch path is observed.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "file": "CLIKMENU.C",
@@ -235,7 +235,7 @@
       "meaning": "After F0380 dispatch, the capture must bind turn/step handlers to party-tuple changes or blocked/no-op reason.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "file": "MOVESENS.C",
@@ -252,7 +252,7 @@
       "meaning": "Successful forward/side/backward captures need the MOVESENS coordinate commit or a source-typed blocker.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "file": "DUNVIEW.C",
@@ -269,7 +269,7 @@
       "meaning": "A frame/crop must be tied to F0128 consuming the party tuple and calling the present boundary.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "file": "DRAWVIEW.C",
@@ -287,10 +287,10 @@
       "meaning": "Promotable original pixels require the PC/I34E viewport blit boundary, not just an earlier draw call.",
       "missing": [],
       "ok": true,
-      "path": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "path": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS552_FRESH_CAPTURE_HANDOFF_STOPS_AT_EMPTY_F0380",
   "timestampUtc": "2026-05-15T01:42:21.955389+00:00"
 }

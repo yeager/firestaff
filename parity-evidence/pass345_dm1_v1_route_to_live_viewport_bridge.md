@@ -40,7 +40,7 @@ No keyboard synthesis or NumLock workaround is used.
 - `tools/verify_pass345_dm1_v1_route_to_live_viewport_bridge.py` -> `BRIDGE_CLOSED`
 - `cmake --build build-pass345 --target firestaff_m11_hall_walkaround_runtime_probe test_dm1_v1_movement_pipeline_pc34_compat -j2`
 - `/tmp/firestaff-pass345-build/test_dm1_v1_movement_pipeline_pc34_compat` -> 138 passed, 0 failed
-- `/tmp/firestaff-pass345-build/firestaff_m11_hall_walkaround_runtime_probe ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1 parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe` -> PASS
+- `/tmp/firestaff-pass345-build/firestaff_m11_hall_walkaround_runtime_probe ~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1 parity-evidence/verification/pass345_dm1_v1_route_to_live_viewport_bridge/hall_probe` -> PASS
 
 ## Decision
 

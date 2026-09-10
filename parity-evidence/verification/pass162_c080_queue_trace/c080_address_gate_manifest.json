@@ -2,12 +2,12 @@
   "bp_acceptance_probe": {
     "accepted_all": false,
     "interpretation": "non-promotable debugger-control diagnostic; address candidates remain valid, but this tmux path did not prove DOSBox-X debugger command parsing",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox_debug_bp_acceptance/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox_debug_bp_acceptance/manifest.json",
     "status": "FAIL_BREAKPOINT_COMMANDS_NOT_CONFIRMED"
   },
   "break_start_acceptance_probe": {
     "interpretation": "non-promotable debugger-control receipt; proves DOSBox-X -debug -break-start accepts the pass162 BP/BPM command packet without running original binaries",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox_x_break_start_bp_acceptance/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/dosbox_x_break_start_bp_acceptance/manifest.json",
     "ok": true,
     "status": "PASS162_DOSBOX_X_BREAK_START_BP_BPM_ACCEPTED"
   },
@@ -16,7 +16,7 @@
     "continue_key": "F5 as vt100 bytes ESC O t",
     "stop_rule": "Accept a hit only after a run transition; reject BP command echoes and BPLIST setup text."
   },
-  "dosbox_debug_commands": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt",
+  "dosbox_debug_commands": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt",
   "expected_order": [
     "F0359 receives screen click x=111,y=82 and queues C080 with X/Y",
     "F0380 dequeues C080 and X/Y from G0432",
@@ -172,7 +172,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; proves the BP/BPM packet can stop inside the original runtime and native route input can be delivered on this host, but the HoC route did not reach the C080 code chain",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_hoc_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_hoc_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "hid",
     "mouse_warp": null,
@@ -197,7 +197,7 @@
     "dosbox_mouse_log_summary": {
       "exists": true,
       "first_mouse_lines": [
-        "Logging: opened logfile '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.",
+        "Logging: opened logfile '<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.",
         "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
         "Prevent capture: 0",
         "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
@@ -214,7 +214,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; enables DOSBox-X autolock and always-on mouse emulation to test the SDL/capture path before F0359",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_autolock_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "hid",
     "mouse_warp": "true",
@@ -234,7 +234,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; same FIRES/DUNGEON readiness and input path with a movement-arrow click, used to distinguish HoC coordinate/state problems from pre-F0359 mouse delivery problems",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_click_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_click_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "hid",
     "mouse_warp": "true",
@@ -276,7 +276,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; uses the external cliclick tool instead of CGEvent mouse posting to test a separate macOS input path before F0359",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_cliclick_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "cliclick",
     "mouse_warp": "true",
@@ -296,7 +296,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; sends two movement-area clicks after FIRES/DUNGEON readiness to test whether the first click is consumed only by DOSBox focus/capture",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_double_click_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_double_click_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "hid",
     "mouse_warp": null,
@@ -321,7 +321,7 @@
     "dosbox_mouse_log_summary": {
       "exists": true,
       "first_mouse_lines": [
-        "Logging: opened logfile '/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.",
+        "Logging: opened logfile '<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/dosbox_runtime.log' successfully. All further logging will go to this file.",
         "         0 DEBUG GUI:SDL 1.2.14 hack: SDL_DISABLE_LOCK_KEYS=1",
         "Prevent capture: 0",
         "         0       GUI:Press Ctrl-F10 to capture/release mouse, Alt-F10 for configuration.",
@@ -338,7 +338,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; sends Ctrl-F10 before movement-area clicks to test DOSBox-X keyboard-driven mouse capture before F0359",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_keyboard_capture_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "hid",
     "mouse_warp": "true",
@@ -381,7 +381,7 @@
     "engine_ready_seen": false,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; switches DOSBox-X output from surface to opengl to test the SDL/Cocoa backend path before F0359",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_opengl_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_opengl_control_break_start_probe/manifest.json",
     "memory_stop_count": 17,
     "mouse_post_mode": "hid",
     "mouse_warp": "true",
@@ -423,7 +423,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; posts CGEvent mouse move/down/up directly to the DOSBox process PID instead of the HID event tap before F0359",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_pid_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_pid_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "pid",
     "mouse_warp": "true",
@@ -465,7 +465,7 @@
     "engine_ready_seen": true,
     "first_missing_expected_symbol": "F0359_COMMAND_ProcessClick_CPSC",
     "interpretation": "non-promotable stock-original diagnostic; uses macOS System Events accessibility clicking instead of CGEvent or cliclick mouse posting before F0359",
-    "manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/manifest.json",
+    "manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass162_c080_queue_trace/live_movement_systemevents_control_break_start_probe/manifest.json",
     "memory_stop_count": 34,
     "mouse_post_mode": "systemevents",
     "mouse_warp": "true",
@@ -484,7 +484,7 @@
     "does not prove F0280 is reached until a DOSBox-debug transcript records it",
     "does not promote pass435 original capture readiness"
   ],
-  "pass273_manifest": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
+  "pass273_manifest": "<local-home>/Documents/Firestaff/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
   "schema": "pass162_c080_address_gate.v1",
   "tools": {
     "dosbox-debug": "/opt/homebrew/bin/dosbox-debug",

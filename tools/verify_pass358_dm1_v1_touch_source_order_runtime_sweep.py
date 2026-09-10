@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+SOURCE_ROOT = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 MANIFEST = ROOT / "parity-evidence/verification/pass358_dm1_v1_touch_source_order_runtime_sweep/manifest.json"
 EVIDENCE = ROOT / "parity-evidence/pass358_dm1_v1_touch_source_order_runtime_sweep.md"
 EXPECTED_STATUS = "PASS_DM1_V1_TOUCH_SOURCE_ORDER_RUNTIME_SWEEP"

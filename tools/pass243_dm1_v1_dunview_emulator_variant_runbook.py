@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206"
 IBM = RED / "Toolchains/IBM PC/Source"
 COMMON = RED / "Toolchains/Common/Source"
 OUT_DIR = ROOT / "parity-evidence/verification/pass243_dm1_v1_dunview_emulator_variant_runbook"

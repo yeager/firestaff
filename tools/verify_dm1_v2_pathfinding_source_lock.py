@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 
 root = Path(__file__).resolve().parents[1]
-source = Path.home() / '.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C'
+source = Path.home() / '.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C'
 reference = source.read_text(encoding='utf-8', errors='replace')
 implementation = (root / 'src/dm1v2/dm1_v2_pathfinding_pc34.c').read_text()
 errors = []

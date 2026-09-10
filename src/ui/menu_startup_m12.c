@@ -3629,7 +3629,7 @@ static int m12_discover_dm2_download_save(
           m12_ascii_equal_ci(data_dir + strlen(data_dir) - 4u, "/dm2"))) {
         return 0;
     }
-    snprintf(root, sizeof(root), "%s/Downloads/dm2", home);
+    snprintf(root, sizeof(root), "%s/<downloads>/dm2", home);
     if (!dm2_v1_sksave_corpus_scan(root, &corpus)) {
         return 0;
     }

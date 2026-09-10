@@ -113,7 +113,7 @@ real game data for DM2 PC English and Nexus Saturn English.
 - **Real-data launch verification (commits `66419370`,
   `08aedd54`)**: with the user's `Dungeon-Master-II-Skullkeep_DOS_EN.zip`
   + `Dungeon-Master-Nexus_SEGA-Saturn_JA.zip` staged in
-  `~/Downloads/`, both games' MD5s match the catalog
+  `~/<downloads>/`, both games' MD5s match the catalog
   (`25247ede4dabb6a71e5dabdfbcd5907d` for DM2 PC English
   GRAPHICS, `6caccd7875009e82fe2e28e7f6d6adc0` for DUNGEON,
   `e88d60859f65f08fa622e1992b02280f` for Nexus DM.BIN extracted

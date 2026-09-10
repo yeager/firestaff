@@ -6,7 +6,7 @@ Systematic audit of the Firestaff DM1 V1 runtime against the ReDMCSB decompilati
 **Date:** 2026-06-13
 **Baseline:** Firestaff commit `f99587c35` (HEAD of main, post-v2.7.12)
 **ReDMCSB:** WIP20210206, `Toolchains/Common/Source/`
-**Build dir:** `/Volumes/Extern-disk/openclaw-work/firestaff/build`
+**Build dir:** `/Volumes/Extern-disk/legacy-workspace-work/firestaff/build`
 **Phase A probe:** 23/23 PASS
 **DM1 test suite:** 556/593 PASS (37 failures — see analysis below)
 
@@ -227,7 +227,7 @@ FIRESTAFF_DATA tests to assert against.
 ### BUG-117 — Test Infrastructure: Python Verification Scripts Hardcode Build Path
 - **Severity:** Minor
 - **Category:** Testing
-- **Description:** At least 14 Python verification scripts in `tools/verify_pass*.py` search for test binaries in `ROOT / "build"` and `ROOT / "build-*"` but do not search the CMake build directory when it's on a different volume (e.g., `/Volumes/Extern-disk/openclaw-work/firestaff/build`). This causes 14+ test failures that are not real code bugs.
+- **Description:** At least 14 Python verification scripts in `tools/verify_pass*.py` search for test binaries in `ROOT / "build"` and `ROOT / "build-*"` but do not search the CMake build directory when it's on a different volume (e.g., `/Volumes/Extern-disk/legacy-workspace-work/firestaff/build`). This causes 14+ test failures that are not real code bugs.
 - **ReDMCSB Reference:** N/A (test infrastructure)
 - **Expected:** Tests should find binaries in the actual CMake build directory.
 - **Actual:** Tests fail with `FileNotFoundError` or `AssertionError: missing built test_*`.

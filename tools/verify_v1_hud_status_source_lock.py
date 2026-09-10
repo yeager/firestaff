@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 ZONES = ROOT / "data/zones_h_reconstruction.json"
 M11 = ROOT / "src/engine/m11_game_view.c"
 OUT = ROOT / "parity-evidence/verification/v1_hud_status_source_lock.json"

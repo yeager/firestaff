@@ -5,21 +5,21 @@
   "originalDataProvenance": {
     "GRAPHICS.DAT": {
       "variant": "DM PC 3.4 English / I34E",
-      "file": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "file": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "bytes": 363417
     },
     "DUNGEON.DAT": {
       "variant": "DM PC 3.4 English / I34E",
-      "file": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "file": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "bytes": 33357
     }
   },
   "externalArtifactRoots": {
-    "firestaff": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
-    "original": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
-    "correctedOriginal": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509"
+    "firestaff": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
+    "original": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+    "correctedOriginal": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509"
   },
   "scenes": {
     "candidate_select": {
@@ -70,12 +70,12 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "candidate_select"
@@ -97,16 +97,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "candidate_select",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0002-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0002-raw.png"
           }
         }
       }
@@ -159,12 +159,12 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "panel_visible"
@@ -186,16 +186,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "panel_visible",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0002-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0002-raw.png"
           }
         }
       }
@@ -261,12 +261,12 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "cancel"
@@ -288,16 +288,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "cancel",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-cancel-corrected/image0004-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-cancel-corrected/image0004-raw.png"
           }
         },
         "hud_status_crop": {
@@ -316,16 +316,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "cancel",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-cancel-corrected/image0004-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-cancel-corrected/image0004-raw.png"
           }
         }
       }
@@ -391,12 +391,12 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "resurrect_confirm"
@@ -418,16 +418,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "resurrect_confirm",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
           }
         },
         "hud_status_crop": {
@@ -446,16 +446,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "resurrect_confirm",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
           }
         }
       }
@@ -521,12 +521,12 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "reincarnate_confirm"
@@ -548,16 +548,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "reincarnate_confirm",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-reincarnate-corrected/image0004-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-reincarnate-corrected/image0004-raw.png"
           }
         },
         "hud_status_crop": {
@@ -576,16 +576,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "reincarnate_confirm",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-reincarnate-corrected/image0004-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-reincarnate-corrected/image0004-raw.png"
           }
         }
       }
@@ -638,12 +638,12 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "hud_status_after"
@@ -665,16 +665,16 @@
               "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
               "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
             },
-            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "artifactManifest": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
             "sourceProvenance": {
               "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
               "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
               "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
-              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+              "DM_EXE_path": "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
             },
             "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
             "terminalAction": "hud_status_after",
-            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
+            "derivedFrom": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
           }
         }
       }

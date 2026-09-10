@@ -16,7 +16,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:27",
       "line": 27,
       "lineText": "unsigned int16_t G0021_aaui_Graphic562_Palette_DungeonView[6][16];",
@@ -24,7 +24,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:218",
       "line": 218,
       "lineText": "unsigned int16_t G0021_aaui_Graphic562_Palette_DungeonView[6][16] = {",
@@ -32,7 +32,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:833",
       "line": 833,
       "lineText": "unsigned int16_t G0021_aaui_Graphic562_Palette_DungeonView[6][16] = {",
@@ -40,7 +40,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BASE.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BASE.C",
       "id": "BASE.C:968",
       "line": 968,
       "lineText": "                lea     G0021_aaui_Graphic562_Palette_DungeonView(A4),A0        /* Address of an array of 6 color palettes for dungeon view, depending on light in the dungeon */",
@@ -48,7 +48,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "DRAWVIEW.C:744",
       "line": 744,
       "lineText": "                F0007_MAIN_CopyBytes(G0021_aaui_Graphic562_Palette_DungeonView[G0304_i_DungeonViewPaletteIndex], G3949_pui_Palette_MiddleScreen, 32);",
@@ -56,7 +56,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "DRAWVIEW.C:776",
       "line": 776,
       "lineText": "                G1010_pui_DungeonViewCurrentPalette = G0021_aaui_Graphic562_Palette_DungeonView[G0304_i_DungeonViewPaletteIndex];",
@@ -64,7 +64,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "DRAWVIEW.C:880",
       "line": 880,
       "lineText": "                        L2418_pui_ = G0021_aaui_Graphic562_Palette_DungeonView[G3117_ = G0304_i_DungeonViewPaletteIndex];",
@@ -72,7 +72,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "file": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
       "id": "DRAWVIEW.C:1040",
       "line": 1040,
       "lineText": "                G3123_PaletteSourceForMiddleScreen = G0021_aaui_Graphic562_Palette_DungeonView[G0304_i_DungeonViewPaletteIndex];",
@@ -80,7 +80,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass821_dm1_v1_palette_dungeon_view_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0021_aaui_Graphic562_Palette_DungeonView[6][16]. The 6-row \u00d7 16-col dungeon-view palette table (12-bit RGB, 4 bits per channel). Row 0 = brightest, row 5 = darkest. Current row selected by G0304_i_DungeonViewPaletteIndex based on dungeon light amount. Read sites: BASE.C:968 (address-of) + DRAWVIEW.C:744/776/880/1040 F0007_MAIN_CopyBytes(G0021[Idx], ...) selects the current palette based on dungeon light.",
   "sourceChecks": [

@@ -10,7 +10,7 @@ from pathlib import Path
 from collections import defaultdict
 
 REPO = Path(__file__).resolve().parent.parent
-SRC = Path.home()/'.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
+SRC = Path.home()/'.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source'
 OUT = REPO/'parity-evidence/verification/pass168_redmcsb_pass_source_map'
 ARTIFACT_GLOBS = [
     'tools/pass*.py', 'tools/verify_v1*.py',

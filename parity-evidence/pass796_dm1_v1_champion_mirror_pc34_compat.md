@@ -4,4 +4,4 @@ Source-locked: COMMAND.C:484-488 (PC-98/PC C159..C162 champion-name rows); COMMA
 
 Result: FAIL
 Tests: {'passes': 0, 'fails': 0}
-Failures: ['binary not found: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_mirror_pc34_compat']
+Failures: ['binary not found: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_mirror_pc34_compat']

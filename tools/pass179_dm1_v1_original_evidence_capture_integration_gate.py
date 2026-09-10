@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-CANONICAL_DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
+REDMCSB = Path("~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+CANONICAL_DM1 = Path("~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
 OUT_DIR = ROOT / "parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate"
 REPORT = ROOT / "parity-evidence/pass179_dm1_v1_original_evidence_capture_integration_gate.md"
 

@@ -6,7 +6,7 @@ This is a small N2-local readiness manifest for the next original overlay/captur
 
 ## N2 original stage
 
-- Default stage preferred by `scripts/dosbox_dm1_original_viewport_reference_capture.sh`: `$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
+- Default stage preferred by `scripts/dosbox_dm1_original_viewport_reference_capture.sh`: `$HOME/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34`
 - Variant: `DM1 PC 3.4 DOS original stage`
 - The readiness verifier hash-locks this stage's `DM.EXE`, `DATA/GRAPHICS.DAT`, and `DATA/DUNGEON.DAT`, plus canonical `GRAPHICS.DAT`, `DUNGEON.DAT`, and `TITLE`.
 

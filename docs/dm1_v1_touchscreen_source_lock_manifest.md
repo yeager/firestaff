@@ -6,7 +6,7 @@ Scope: source-lock the active DM1 V1 in-game mouse/clickable UI zones and comman
 
 Base path on N2:
 
-`/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+`/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
 
 ## Active in-game mouse tables
 

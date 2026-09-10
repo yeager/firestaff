@@ -15,7 +15,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 RED_ROOT = Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
 )).expanduser()
 
 CLIKMENU = RED_ROOT / "CLIKMENU.C"

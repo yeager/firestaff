@@ -999,7 +999,7 @@ must equal **1**. If not, git checkout and retry.
 
 ```
 bash run_firestaff_m10_verify.sh \
-    <local-home>/.openclaw/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
+    <local-home>/.firestaff/data/redmcsb-original/DungeonMasterPC34/DATA/DUNGEON.DAT \
     /tmp/m10-verify-out
 ```
 Exit must be 0. All 14 phases (1..13 unchanged + new 14) PASS.

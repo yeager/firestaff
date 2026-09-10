@@ -5,7 +5,7 @@ import json, os, re, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")).expanduser()
+REDMCSB_ROOT = Path(os.environ.get("REDMCSB_SOURCE_ROOT", "~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")).expanduser()
 EVIDENCE_JSON = ROOT / "parity-evidence/verification/v1_entrance_input_wait_redmcsb_gate.json"
 RANGES = [("ENTRANCE.C",850,883),("ENTRANCE.C",906,943),("COMMAND.C",551,577),("src/frontend/entrance_frontend_pc34_compat.c",166,186),("src/frontend/entrance_frontend_pc34_compat.c",192,227),("src/frontend/entrance_frontend_pc34_compat.c",357,359),("src/frontend/entrance_keyboard_routes_pc34_compat.c",2,3)]
 

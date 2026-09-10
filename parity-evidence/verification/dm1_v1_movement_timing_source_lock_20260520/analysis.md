@@ -6,9 +6,9 @@ Scope: N2-only source lock of the DM1 V1 party movement command pipeline against
 
 - Firestaff worktree: `/home/trv2/work/firestaff-worktrees/dm1-v1-movement-timing-source-lock-20260520`
 - Base: latest `origin/main` at `77878680fdeecb9403d16473430ed62236c738c8`
-- ReDMCSB primary source: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
-- Original DM data root: `/home/trv2/.openclaw/data/firestaff-original-games/DM/`
-- Canonical DM1 anchors: `/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/`
+- ReDMCSB primary source: `/home/trv2/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+- Original DM data root: `/home/trv2/.firestaff/data/firestaff-original-games/DM/`
+- Canonical DM1 anchors: `/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/`
 
 Canonical DM1 hashes used as provenance anchors:
 

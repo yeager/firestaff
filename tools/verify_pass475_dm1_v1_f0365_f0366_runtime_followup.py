@@ -21,7 +21,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass475_dm1_v1_f0365_f0366_runtime_followup"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 BUILD = Path(os.environ.get("FIRESTAFF_BUILD_DIR") or (Path.cwd() if (Path.cwd() / "CMakeCache.txt").exists() else ROOT / "build"))
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 OUT_JSON = OUT_DIR / "manifest.json"

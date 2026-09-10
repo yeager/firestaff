@@ -30,8 +30,8 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "parity-evidence/verification/passH2248_csb_v1_viewport_pixel_gate.json"
 REPORT = ROOT / "parity-evidence/firestaff_csb_v1_phase7_viewport_pixel_gate_H2248.md"
 
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
+REDMCSB = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+CSB_SRC = Path.home() / ".firestaff/data/firestaff-csb-source/CSB/src"
 
 CaptureRegion = Literal[
     "viewport_full",

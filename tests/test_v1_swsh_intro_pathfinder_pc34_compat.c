@@ -211,7 +211,7 @@ int main(void)
     const char *nested_dos_archive;
     const char *test_workdir;
     const char *real_swsh =
-        "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/"
+        "<local-home>/.firestaff/data/firestaff-redmcsb-source/"
         "ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH";
 
     /* Keep test scratch data inside the configured build/test work directory.

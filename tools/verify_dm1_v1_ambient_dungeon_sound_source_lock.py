@@ -19,7 +19,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 REDMCSB = pathlib.Path(os.environ.get(
     "REDMCSB_SOURCE_DIR",
-    str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/"
+    str(pathlib.Path.home() / ".firestaff/data/firestaff-redmcsb-source/"
         "ReDMCSB_WIP20210206/Toolchains/Common/Source"),
 ))
 
