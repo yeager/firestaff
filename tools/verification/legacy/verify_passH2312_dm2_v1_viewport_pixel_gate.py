@@ -35,7 +35,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Literal
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "CMakeLists.txt").is_file())
 OUT = ROOT / "parity-evidence/verification/passH2312_dm2_v1_viewport_pixel_gate.json"
 REPORT = ROOT / "parity-evidence/firestaff_dm2_v1_phase8_viewport_pixel_gate_H2312.md"
 

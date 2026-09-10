@@ -24,7 +24,7 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "CMakeLists.txt").is_file())
 OUT = ROOT / "parity-evidence/verification/passH2312_dm2_v1_canonical_asset_manifest.json"
 REPORT = ROOT / "parity-evidence/firestaff_dm2_v1_phase8_asset_manifest_H2312.md"
 

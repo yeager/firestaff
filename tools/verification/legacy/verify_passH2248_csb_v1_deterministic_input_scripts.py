@@ -28,7 +28,7 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Literal
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "CMakeLists.txt").is_file())
 OUT_DIR = ROOT / "parity-evidence/verification/passH2248_csb_v1_input_scripts"
 SCRIPTS_INDEX = OUT_DIR / "index.json"
 

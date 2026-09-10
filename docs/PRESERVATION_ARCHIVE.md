@@ -7,15 +7,9 @@ unaffected.
 
 ## Archive location
 
-```text
-/Volumes/Extern-disk/Documents/Firestaff/archive/
-```
-
-SHA-256-manifest:
-
-```text
-/Volumes/Extern-disk/Documents/Firestaff/archive/firestaff-archive-sha256-20260808.txt
-```
+The archive location is intentionally not recorded in version control. It is
+operator-owned storage rather than a project dependency; maintainers can use
+their own archive root and keep its SHA-256 manifest alongside the archive.
 
 The manifest covers 403 files.
 
@@ -29,25 +23,26 @@ The manifest covers 403 files.
 
 ## What remains in the repository
 
-- `pass610_dm1_v1_firestaff_viewport_crop_capture_gate/` remains because its
-  verifier and CTest entry are active.
+- `parity-evidence/fixtures_dm1_v1_wall_collision_runtime_capture/` remains
+  because it is the retained Firestaff-side fixture for an active verifier and
+  CTest entry.
 - `references/firestaff/dm1/` remains because the Hall of Champions map note is
   still a useful navigation reference. The referenced email attachment is not
   part of the archive unless separately supplied.
 - `examples/dm2_hud_widget_synthetic/` remains because CMake and focused probes
   use it as an explicit synthetic-test fixture. It is not real DM2 art.
-- `tools/verify_pass*.py` remains because these are active source-lock and
-  CTest verifiers, not historical output.
+- `tools/verification/legacy/` contains retained, standalone source-analysis
+  scripts. Active CTest verifiers stay in `tools/`.
 
 ## Re-running probes
 
 Several scripts still use `verification-m11/` or `verification-m12/` as their
 default output directory. If run without an explicit output path, they may
-recreate those directories in the checkout. Prefer an external output path for
-new exploratory runs, for example:
+recreate those directories in the checkout. Prefer an output path outside the
+repository for new exploratory runs, for example:
 
 ```bash
-OUT_DIR=/Volumes/Extern-disk/Documents/Firestaff/archive/verification/new-run
+OUT_DIR=/path/outside/the/repository/firestaff-verification/new-run
 ```
 
 Archived output is historical evidence only. Current claims must point to a

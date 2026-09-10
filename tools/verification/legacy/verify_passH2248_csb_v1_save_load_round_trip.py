@@ -28,7 +28,7 @@ import hashlib
 from dataclasses import dataclass, asdict
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / "CMakeLists.txt").is_file())
 OUT = ROOT / "parity-evidence/verification/passH2248_csb_v1_save_load_round_trip.json"
 REPORT = ROOT / "parity-evidence/firestaff_csb_v1_phase7_save_load_round_trip_H2248.md"
 
