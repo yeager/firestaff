@@ -328,23 +328,6 @@ static int tick_damage_timer_to_zero(M11_GameViewState* game) {
     return game->championDamageTimer[PROBE_SLOT] == 0;
 }
 
-static int probe_file_exists(const char* path) {
-    FILE* f = fopen(path, "rb");
-    if (!f) return 0;
-    fclose(f);
-    return 1;
-}
-
-static int probe_is_pc34_data_dir(const char* path) {
-    char graphicsPath[512];
-    char dungeonPath[512];
-    if (!path || !path[0]) return 0;
-    snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", path);
-    snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", path);
-    return probe_file_exists(graphicsPath) && probe_file_exists(dungeonPath);
-}
-
-
 int main(int argc, char** argv) {
     const char* dataDir;
     char narrowedDataDir[512];

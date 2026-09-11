@@ -394,7 +394,10 @@ static int check_inventory_pending_damage_receipt(M11_GameViewState* game,
 {
     const M11_AssetSlot* damage;
     const int amounts[] = {7, 37, 137};
-    int x, y, w, h;
+    int x = 0;
+    int y = 0;
+    int w = 0;
+    int h = 0;
     int amountIndex;
     int ok = 1;
 
