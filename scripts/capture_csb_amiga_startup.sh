@@ -125,16 +125,17 @@ for second in $capture_seconds; do
     expected_capture_count=$((expected_capture_count + 1))
     sleep "$((second - previous))"
     index=$((index + 1))
-    # FS-UAE emits a full window, a crop and its emulated "real" framebuffer
-    # for one screenshot request.  Only the latter is a useful native frame;
-    # do not race the writer and rename the first (host/window) file instead.
-    before_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-real-*.png' | wc -l | tr -d ' ')"
+    # FS-UAE emits a full emulator window, a clean emulated-canvas crop and a
+    # status/menu composited "real" image for one screenshot request.  The
+    # crop is the only candidate we accept: the other two can include host
+    # chrome, input overlays or FS-UAE's control menu.
+    before_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' | wc -l | tr -d ' ')"
     # F12+S is FS-UAE's documented screenshot shortcut.  It records the
     # emulated Amiga frame and therefore avoids a host Xvfb-root capture.
     DISPLAY="$display" xdotool key --window "$window" F12+s
     for attempt in $(seq 1 50); do
-        latest="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-real-*.png' -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
-        after_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-real-*.png' | wc -l | tr -d ' ')"
+        latest="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
+        after_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' | wc -l | tr -d ' ')"
         if [[ "$after_count" -gt "$before_count" && -n "$latest" ]]; then
             mv "$latest" "$out/startup-${index}-${second}s.png"
             native_capture_count=$((native_capture_count + 1))
