@@ -19,6 +19,7 @@ out="${FMTOWNS_CAPTURE_OUT:-$repo/.codex-scratch/fmtowns-original-startup-captur
 stage="${FMTOWNS_STAGE_DIR:-$repo/.codex-scratch/fmtowns-original-media-stage}"
 timeline="${FMTOWNS_CAPTURE_TIMELINE:-}"
 towns_type="${FMTOWNS_TYPE:-MX}"
+high_fidelity="${FMTOWNS_HIGH_FIDELITY:-0}"
 
 usage() {
     cat <<'EOF'
@@ -35,6 +36,7 @@ Optional:
   FMTOWNS_CAPTURE_OUT=/safe/output/path   (default: repository .codex-scratch)
   FMTOWNS_STAGE_DIR=/safe/staging/path    (default: repository .codex-scratch)
   FMTOWNS_TYPE=MX                          (FM Towns machine type)
+  FMTOWNS_HIGH_FIDELITY=1|0                (default: 0; opt in only after VM boot validation)
 
 The ZIP is staged only for this development-time emulator session because
 Tsugaru requires a seekable CUE plus BIN or IMG track image.  The archive is never modified, the
@@ -67,6 +69,10 @@ if [[ -z "$rom_dir" || ! -d "$rom_dir" ]]; then
 fi
 if [[ -z "$timeline" || ! "$timeline" =~ ^[0-9]+:[A-Za-z0-9_-]+(\ [0-9]+:[A-Za-z0-9_-]+)*$ ]]; then
     echo "ERROR: FMTOWNS_CAPTURE_TIMELINE must use seconds:label entries separated by spaces" >&2
+    exit 3
+fi
+if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
+    echo "ERROR: FMTOWNS_HIGH_FIDELITY must be 0 or 1" >&2
     exit 3
 fi
 for required in "$tsugaru" 7zz sha256sum python3; do
@@ -157,12 +163,18 @@ set +e
 # Tsugaru's first positional argument is its ROM directory.  It is not an
 # option: passing a made-up -ROMDIR flag would silently turn that directory
 # into an invalid option and leave a false failed-capture trail.
-run_commands | "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD \
+fidelity_args=()
+if [[ "$high_fidelity" == "1" ]]; then fidelity_args=(-HIGHFIDELITY); fi
+run_commands | "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" \
     -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
 tsugaru_status=${PIPESTATUS[1]}
 set -e
 if [[ "$tsugaru_status" -ne 0 ]]; then
     echo "ERROR: Tsugaru exited with status $tsugaru_status; see tsugaru.log" >&2
+    exit 6
+fi
+if grep -q 'VM Aborted!' "$out/tsugaru.log"; then
+    echo "ERROR: Tsugaru aborted the VM; no frame from this attempt is evidence" >&2
     exit 6
 fi
 
@@ -200,6 +212,7 @@ PY
     printf 'capture_backend=tsugaru-cui-SS\n'
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
+    printf 'high_fidelity=%s\n' "$high_fidelity"
     printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')"
     printf 'cue_sha256=%s\n' "$(sha256sum "$cue" | awk '{print $1}')"
     printf 'track_image_sha256=%s\n' "$(sha256sum "$track_image" | awk '{print $1}')"
