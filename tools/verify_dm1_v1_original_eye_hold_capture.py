@@ -28,6 +28,10 @@ EXPECTED = (
 )
 PANEL_BOX = (80, 0, 224, 169)
 RIGHT_UI_BOX = (224, 0, 320, 200)
+PC34_DATA_HASHES = {
+    "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+}
 
 
 def sha256(path: Path) -> str:
@@ -57,7 +61,7 @@ def load_labels(capture_dir: Path) -> list[dict[str, str]]:
     return result
 
 
-def verify(capture_dir: Path) -> dict[str, Any]:
+def verify(capture_dir: Path, stage: Path | None) -> dict[str, Any]:
     problems: list[str] = []
     try:
         labels = load_labels(capture_dir)
@@ -126,12 +130,25 @@ def verify(capture_dir: Path) -> dict[str, Any]:
         if len({row["sha256"] for row in frame_rows}) != 3:
             problems.append("raw frame hashes must all be distinct")
 
+    source_binding: dict[str, Any] = {"provided": stage is not None}
+    if stage is not None:
+        for name, expected in PC34_DATA_HASHES.items():
+            path = stage / "DATA" / name
+            if not path.is_file():
+                problems.append(f"stage is missing DATA/{name}")
+                continue
+            actual = sha256(path)
+            source_binding[name] = {"sha256": actual, "matchesPc34": actual == expected}
+            if actual != expected:
+                problems.append(f"stage DATA/{name} does not match the known PC 3.4 hash")
+
     return {
         "schema": "firestaff.local-evidence.dm1-v1-eye-hold.v1",
         "status": "passed" if not problems else "failed",
         "capture": {"frameCount": len(frame_rows), "frames": frame_rows},
         "route": {"expectedLabels": expected_labels, "requiredTransition": "inventory -> Eye held -> Eye released"},
         "observations": observations,
+        "sourceBinding": source_binding,
         "problems": problems,
         "nonClaims": [
             "The supplied frames remain operator-local and are not published by this tool.",
@@ -145,9 +162,10 @@ def verify(capture_dir: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture_dir", type=Path, help="operator-local three-frame capture directory")
+    parser.add_argument("--stage", type=Path, help="optional original PC 3.4 stage; validates its two gameplay-data hashes")
     parser.add_argument("--report", type=Path, help="optional local JSON receipt destination")
     args = parser.parse_args()
-    result = verify(args.capture_dir)
+    result = verify(args.capture_dir, args.stage)
     rendered = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.report:
         args.report.parent.mkdir(parents=True, exist_ok=True)
