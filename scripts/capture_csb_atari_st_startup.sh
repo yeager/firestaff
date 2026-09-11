@@ -25,6 +25,7 @@ Optional:
   CSB_ATARI_KEYSTROKES='70:Return'             timed key presses (exclusive with clicks)
   CSB_ATARI_XVFB_DISPLAY=103                  dedicated X display number
   CSB_ATARI_SOUND_HZ=44100                    original-session audio frequency
+  CSB_ATARI_SOUND_BUFFER_MS=100               host audio buffer (10-100 ms)
   CSB_ATARI_CAPTURE_AUDIO=0|1                 record original WAV with Hatari (default: 0)
   HATARI=/path/to/hatari                       (default: hatari)
 
@@ -52,6 +53,7 @@ capture_seconds="${CSB_ATARI_CAPTURE_SECONDS:-18 36}"
 pointer_clicks="${CSB_ATARI_POINTER_CLICKS:-}"
 keystrokes="${CSB_ATARI_KEYSTROKES:-}"
 sound_hz="${CSB_ATARI_SOUND_HZ:-44100}"
+sound_buffer_ms="${CSB_ATARI_SOUND_BUFFER_MS:-100}"
 capture_audio="${CSB_ATARI_CAPTURE_AUDIO:-0}"
 
 if [[ "$mode" == "prepare" ]]; then
@@ -77,6 +79,10 @@ if [[ ! "$capture_seconds" =~ ^[0-9]+(\ [0-9]+)*$ ]]; then
 fi
 if [[ ! "$sound_hz" =~ ^[0-9]+$ ]] || (( sound_hz < 6000 || sound_hz > 50066 )); then
     echo "ERROR: CSB_ATARI_SOUND_HZ must be a Hatari sound frequency from 6000 to 50066" >&2
+    exit 5
+fi
+if [[ ! "$sound_buffer_ms" =~ ^[0-9]+$ ]] || (( sound_buffer_ms < 10 || sound_buffer_ms > 100 )); then
+    echo "ERROR: CSB_ATARI_SOUND_BUFFER_MS must be a Hatari host buffer from 10 to 100 ms" >&2
     exit 5
 fi
 if [[ "$capture_audio" != "0" && "$capture_audio" != "1" ]]; then
@@ -127,7 +133,7 @@ trap cleanup EXIT INT TERM
 
 ( cd "$out" && exec env DISPLAY="$display" "$hatari" \
     --confirm-quit no --machine ste --tos "$tos" \
-    --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-sync on --fastfdc off \
+    --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-buffer-size "$sound_buffer_ms" --sound-sync on --fastfdc off \
     --statusbar false --drive-led false --borders false --crop true \
     --screenshot-dir "$out" --screenshot-format png ) \
     >"$out/hatari.log" 2>&1 &
@@ -274,6 +280,7 @@ fi
     printf 'schema=firestaff.csb.atari.startup.capture.v1\n'
     printf 'scope=original Hatari startup capture; no Firestaff parity claim\n'
     printf 'audio_requested_hz=%s\n' "$sound_hz"
+    printf 'audio_host_buffer_ms=%s\n' "$sound_buffer_ms"
     if [[ -f "$out/startup-audio.wav" ]]; then
         printf 'audio_capture=hatari-wav\n'
         printf 'audio_sha256=%s\n' "$(sha256sum "$out/startup-audio.wav" | awk '{print $1}')"
