@@ -54,7 +54,10 @@ receipts, pass623 fixtures, Firestaff capture manifests, and
 on-disk tools (no inlined logic, no module re-implementations),
 and feeds the resulting ``transcript.json`` to the real
 ``verify_pass608_dm1_v1_same_viewport_capture_blocker.py`` to
-confirm the binding contract is satisfied.
+confirm the binding contract is satisfied.  It deliberately does
+not promote the production capture gate: a synthetic fixture cannot
+stand in for the user-owned original archive, ReDMCSB source tree,
+or authentic capture evidence required by that gate.
 
 Checks (exit code 0 means the handoff chain closes, exit code 1
 means the next live attempt would ship a transcript the pass608
@@ -74,20 +77,18 @@ verifier still rejects):
   * C4 - The on-disk ``docs/parity/tools/dosbox_capture_transcript_writer.py``
     consumes that row and emits a transcript whose
     ``promotable`` flag is True for at least one row.
-  * C5 - The pass608 verifier reads the same transcript and
-    flips its status to
-    ``PASS608_DM1_V1_COMMAND_STATE_REDRAW_TRANSCRIPT_BOUND``,
-    its ``runtimeTranscript.status`` to
-    ``loaded_promotable_same_run``, and clears the
+  * C5 - The pass608 verifier reads the same transcript and reports
+    ``runtimeTranscript.status`` as
+    ``loaded_promotable_same_run`` while clearing the
     "no supplied transcript row satisfies the pass608
     command/state/redraw binding contract" / "original rows do
-    not bind map/X/Y/direction" blockers.
+    not bind map/X/Y/direction" blockers.  The outer production
+    status remains governed by its real-evidence audits.
   * C6 - A negative path: a transcript whose Firestaff
     viewport hash is not in the canonical manifest does NOT
-    flip the pass608 blocker; the gate asserts the BLOCKED
-    status is preserved so a future regression that drops the
-    "viewport hash must be a known Firestaff fixture hash"
-    check is caught here.
+    promote pass608.  The gate accepts either the normal BLOCKED
+    result or a failed real-evidence audit, so a clean worker
+    without private capture inputs remains a valid test host.
 """
 from __future__ import annotations
 
@@ -244,7 +245,7 @@ def _write_synth_capture_manifest(path: Path) -> None:
 
 # ---------------------------------------------------------------------------
 # Helper: run pass608 verifier with a transcript path and parse
-# its JSON envelope (printed on stdout, manifest on disk).
+# its manifest.
 # ---------------------------------------------------------------------------
 
 def _run_pass608(transcript_path: Path) -> dict[str, Any]:
@@ -514,14 +515,10 @@ def _check_c3_c5_closure_flips(
     if matched != 1 or fails:
         return 0, [f"transcript-writer check failed: matched={matched} fails={fails}"]
 
-    # C5 - pass608 verifier flips to PROMOTED.
+    # C5 - pass608 accepts the transcript binding.  This is an
+    # isolated contract test, so it must not assert that synthetic
+    # inputs promote pass608's separate real-media/source audits.
     payload = _run_pass608(transcript_path)
-    if payload.get("status") != PROMOTED_STATUS:
-        failures.append(
-            f"pass608 status={payload.get('status')!r}, expected {PROMOTED_STATUS!r}; "
-            f"blockers={payload.get('blockers')!r}; "
-            f"runtimeTranscript={payload.get('runtimeTranscript', {}).get('status')!r}"
-        )
     rt = payload.get("runtimeTranscript", {})
     if rt.get("status") != "loaded_promotable_same_run":
         failures.append(
@@ -543,11 +540,9 @@ def _check_c3_c5_closure_flips(
 
 
 def _check_c6_negative_path(sandbox: Path) -> tuple[int, list[str]]:
-    """C6: a transcript whose Firestaff viewport hash is NOT in
-    the canonical manifest must NOT flip the pass608 blocker;
-    the BLOCKED status must be preserved so a future regression
-    that drops the "viewport hash must be a known Firestaff
-    fixture hash" check is caught here."""
+    """C6: an unknown Firestaff viewport hash must not promote
+    pass608.  A clean worker may report FAIL rather than BLOCKED
+    when its optional private source/archive inputs are absent."""
     failures: list[str] = []
 
     # Use a separate sandbox for the negative path so the row
@@ -611,9 +606,9 @@ def _check_c6_negative_path(sandbox: Path) -> tuple[int, list[str]]:
     transcript_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
 
     out = _run_pass608(transcript_path)
-    if out.get("status") != BLOCKED_STATUS:
+    if out.get("status") == PROMOTED_STATUS:
         failures.append(
-            f"negative-path pass608 status={out.get('status')!r}, expected {BLOCKED_STATUS!r}"
+            f"negative-path pass608 status={out.get('status')!r}, must not be {PROMOTED_STATUS!r}"
         )
     rt = out.get("runtimeTranscript", {})
     if rt.get("status") == "loaded_promotable_same_run":
@@ -667,7 +662,7 @@ def main() -> int:
             matched += 3
             print("c3_row_builder: row builder renders 41-column row  PASS")
             print("c4_transcript_writer: transcript.promotable is True  PASS")
-            print("c5_pass608_promoted: pass608 status flipped to PROMOTED  PASS")
+            print("c5_pass608_binding: pass608 accepts the transcript binding  PASS")
 
         # C6
         m, fails = _check_c6_negative_path(sandbox)
@@ -675,7 +670,7 @@ def main() -> int:
             failures.append(f"c6_negative_path: matched={m} fails={fails}")
         else:
             matched += 1
-            print("c6_negative_path: unknown firestaff hash keeps BLOCKED status  PASS")
+            print("c6_negative_path: unknown firestaff hash cannot promote pass608  PASS")
 
     finally:
         shutil.rmtree(sandbox, ignore_errors=True)
