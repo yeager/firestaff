@@ -23,7 +23,9 @@ typedef struct {
     int fallbackVisualsPermitted;
     unsigned long long fileSize;
     char path[512];
-    char signature[8];
+    /* Four signature bytes are reported as eight uppercase hexadecimal
+     * characters plus their C-string terminator. */
+    char signature[9];
 } M12_ArtpackAdmissionReceipt;
 
 int M12_ArtpackAdmission_Check(const char* path,
