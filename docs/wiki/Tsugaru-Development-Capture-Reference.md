@@ -45,6 +45,14 @@ The CUI command loop and VM run on separate threads. Treat host-side command
 delivery and emulator process shutdown as tooling concerns; only a validated
 emulated framebuffer/audio/state is reference evidence.
 
+CUI normally auto-starts a VM, while `-PAUSE` requests `RUNMODE_PAUSE`.
+An automated capture stream nevertheless sends `RUN` explicitly before its
+first host-time delay or `SS` command, so the transcript has an unambiguous
+guest execution boundary.  `SS` can successfully write a black reset
+framebuffer if the VM is paused or has not reached video setup; that is a
+rejected capture, not a boot observation.  This is distinct from `-NOWAIT`
+and `-NOWAITBOOT`, which govern timing once the VM is running.
+
 ## ROMs and machine identity
 
 Tsugaru consumes a directory of ROM files compatible with the UNZ convention.
@@ -221,8 +229,9 @@ The maintained helper is `scripts/capture_fmtowns_original_startup.sh`. It:
    caller's firmware.
 4. Uses CUI `SS` for the emulated framebuffer; it never accepts a desktop
    capture.
-5. Uses `FORCEQUIT` after the last requested frame because the asynchronous
-   CUI ordinary teardown is unsuitable as a capture-success signal.
+5. Sends `QUIT` after the last requested frame so the VM thread shuts down in
+   order. `FORCEQUIT` calls `exit(0)` in the command interpreter and is not a
+   valid substitute for a clean capture outcome.
 6. Fails closed on missing frames, blank frames, VM abort, invalid media shape
    or non-zero process status.
 7. Writes a local receipt only after all validation succeeds.

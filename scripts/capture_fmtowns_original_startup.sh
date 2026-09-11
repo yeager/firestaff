@@ -155,10 +155,15 @@ done
 # Record each command before execution.  Tsugaru's CUI command interpreter
 # runs concurrently with the VM, so timed `SS` requests sample the emulated
 # framebuffer directly and do not depend on SDL/X11 focus or cursor state.
+# CUI normally auto-starts, but send RUN as the first guest-side command so
+# the capture transcript records an explicit run boundary.  Do not sleep or
+# issue SS before that boundary: a paused/reset VM can otherwise produce a
+# sequence of valid PNG files containing only the black CRTC surface.
 previous=0
 index=0
 command_file="$out/tsugaru-capture-commands.txt"
 {
+    printf 'RUN\n'
     for entry in $timeline; do
         second="${entry%%:*}"
         label="${entry#*:}"
@@ -175,11 +180,11 @@ command_file="$out/tsugaru-capture-commands.txt"
         printf 'SS "%s/startup-%02d-%ss-%s.png"\n' "$out" "$index" "$second" "$label"
         previous="$second"
     done
-    # Tsugaru's asynchronous CUI teardown can race its VM thread after an
-    # ordinary QUIT.  FORCEQUIT terminates only after all requested emulator
-    # framebuffer requests were emitted, avoiding that host-side crash from
-    # being mistaken for a failed emulated capture.
-    printf 'FORCEQUIT\n'
+    # Use the CUI's orderly VM shutdown after the last framebuffer command.
+    # FORCEQUIT calls exit(0) directly from the command interpreter and has
+    # been observed to race the VM thread on Linux; a signal or crash after
+    # otherwise-written PNGs must never be promoted to capture evidence.
+    printf 'QUIT\n'
 } >"$command_file"
 
 run_commands() {
