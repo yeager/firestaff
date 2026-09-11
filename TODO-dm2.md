@@ -17,13 +17,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   original-vs-Firestaff pixel parity. Remaining work is outdoor's distinct
   composition, transition stretching and same-tuple original-capture
   comparison; retain only GDAT-owned pixels.
-- Replace the non-promotable H2313 DOSBox attempt with labelled original
-  captures. Its four existing `224x136` crops are byte-identical and have no
-  route labels, so they prove neither a dungeon state nor a same-state pair
-  and must not be relabelled or promoted. Capture an authenticated PC 1.0 EN
-  `dungeon_gameplay` route with the matching `320x200` frames, `RECT_7`
-  crops, input transcript and source-data hashes; then capture the same
-  labelled state from Firestaff for comparison.
+- Pair the newly captured, labelled PC 1.0 EN original New Game route with
+  Firestaff at the same game state. The retired H2313 crops remain
+  non-promotable because they are byte-identical and lack route labels; they
+  must not be relabelled. The new original route establishes menu → New Game
+  → real runtime with matching `320x200` frames, `RECT_7` crops, input
+  transcript and source-data hashes. Its final two runtime captures are
+  byte-identical, so it proves one stable runtime pose only. Capture the same
+  labelled pose from Firestaff, then add a same-state pair manifest and diff;
+  do not promote either side as pixel parity before that comparison exists.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
