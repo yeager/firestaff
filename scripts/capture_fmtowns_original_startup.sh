@@ -37,9 +37,9 @@ Optional:
   FMTOWNS_TYPE=MX                          (FM Towns machine type)
 
 The ZIP is staged only for this development-time emulator session because
-Tsugaru requires a seekable CUE/BIN pair.  The archive is never modified, the
+Tsugaru requires a seekable CUE plus BIN or IMG track image.  The archive is never modified, the
 stage must live beneath .codex-scratch, and every result receives hashes for
-the archive, selected CUE/BIN and ROM files.  Images are produced by Tsugaru's
+the archive, selected CUE/track image and ROM files.  Images are produced by Tsugaru's
 `SS` command from its emulated framebuffer.  Host desktop captures are not
 accepted.  A successful capture is original-emulator evidence only; it is not
 a Firestaff pixel-parity claim.
@@ -91,7 +91,7 @@ if find "$out" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
     exit 3
 fi
 
-# The exact CUE/BIN pair is selected from real media, not guessed from a
+# The exact CUE/track-image pair is selected from real media, not guessed from a
 # filename.  Staging outside the source tree prevents game payloads entering
 # a commit by accident.
 if find "$stage" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
@@ -100,13 +100,13 @@ if find "$stage" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
 fi
 7zz x -y "-o$stage" "$archive" >/dev/null
 mapfile -d '' cue_files < <(find "$stage" -type f -iname '*.cue' -print0)
-mapfile -d '' bin_files < <(find "$stage" -type f -iname '*.bin' -print0)
-if [[ "${#cue_files[@]}" -ne 1 || "${#bin_files[@]}" -ne 1 ]]; then
-    echo "ERROR: original archive must contain exactly one CUE and one BIN for a reproducible capture" >&2
+mapfile -d '' track_files < <(find "$stage" -type f \( -iname '*.bin' -o -iname '*.img' \) -print0)
+if [[ "${#cue_files[@]}" -ne 1 || "${#track_files[@]}" -ne 1 ]]; then
+    echo "ERROR: original archive must contain exactly one CUE and one BIN or IMG track image" >&2
     exit 5
 fi
 cue="${cue_files[0]}"
-bin="${bin_files[0]}"
+track_image="${track_files[0]}"
 
 # Tsugaru's Linux CUI resolves ROM names with exact upper-case filenames,
 # whereas verified user ROM sets commonly use lower-case names.  Build a
@@ -198,7 +198,7 @@ PY
     printf 'towns_type=%s\n' "$towns_type"
     printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')"
     printf 'cue_sha256=%s\n' "$(sha256sum "$cue" | awk '{print $1}')"
-    printf 'bin_sha256=%s\n' "$(sha256sum "$bin" | awk '{print $1}')"
+    printf 'track_image_sha256=%s\n' "$(sha256sum "$track_image" | awk '{print $1}')"
     printf 'tsugaru_sha256=%s\n' "$(sha256sum "$(command -v "$tsugaru")" | awk '{print $1}')"
     while IFS= read -r -d '' rom; do
         printf 'rom_sha256=%s\n' "$(sha256sum "$rom" | awk '{print $1}')"
