@@ -111,6 +111,28 @@ find_fsuae_window() {
     return 1
 }
 
+# FS-UAE produces three PNGs for a screenshot request.  The crop is the
+# emulated canvas; the full and "real" variants may contain FS-UAE chrome.
+# Check the PNG header after selection as a second, content-independent guard:
+# with the fixed 800x600 emulator window a canvas crop must be smaller in both
+# dimensions.  This also makes a stale or accidentally renamed full screenshot
+# fail closed instead of becoming parity evidence.
+is_clean_canvas_crop() {
+    local image="$1"
+    python3 - "$image" <<'PY'
+import struct
+import sys
+
+path = sys.argv[1]
+with open(path, "rb") as source:
+    header = source.read(24)
+if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
+    raise SystemExit(1)
+width, height = struct.unpack(">II", header[16:24])
+raise SystemExit(0 if 0 < width < 800 and 0 < height < 600 else 1)
+PY
+}
+
 window="$(find_fsuae_window || true)"
 if [[ -z "$window" ]]; then
     echo "ERROR: could not find the FS-UAE window for native screenshots" >&2
@@ -129,20 +151,21 @@ for second in $capture_seconds; do
     # status/menu composited "real" image for one screenshot request.  The
     # crop is the only candidate we accept: the other two can include host
     # chrome, input overlays or FS-UAE's control menu.
-    before_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' | wc -l | tr -d ' ')"
+    marker="$out/.screenshot-request-${index}.marker"
+    : >"$marker"
     # F12+S is FS-UAE's documented screenshot shortcut.  It records the
     # emulated Amiga frame and therefore avoids a host Xvfb-root capture.
     DISPLAY="$display" xdotool key --window "$window" F12+s
     for attempt in $(seq 1 50); do
-        latest="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
-        after_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' | wc -l | tr -d ' ')"
-        if [[ "$after_count" -gt "$before_count" && -n "$latest" ]]; then
+        latest="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' -newer "$marker" -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
+        if [[ -n "$latest" ]] && is_clean_canvas_crop "$latest"; then
             mv "$latest" "$out/startup-${index}-${second}s.png"
             native_capture_count=$((native_capture_count + 1))
             break
         fi
         sleep 0.1
     done
+    rm -f "$marker"
     if [[ ! -f "$out/startup-${index}-${second}s.png" ]]; then
         # Some SDL/Xvfb combinations do not deliver XTest host shortcuts to
         # FS-UAE while its keyboard is grabbed. Keep a diagnostic image for
