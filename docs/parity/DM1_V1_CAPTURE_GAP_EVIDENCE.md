@@ -38,6 +38,7 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 | Evidence Item | Status | Path | Issue |
 |---|---|---|---|
 | 4x original DOSBox turn-cycle frames | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Clean original DM1 PC 3.4 capture: 2 `dungeon_gameplay` + 2 `wall_closeup`, 0 duplicate raw hashes, pass80 PASS. pass1056 now gates the pass1054 Firestaff nearest-neighbor pairing artifacts, but full same-state viewport parity still needs a debugger-observed route pair. |
+| HoC C407 movement cycle | LOCAL VERIFIED (unpaired) | Local ignored original-media receipt | A fresh PC 3.4 original session ran the documented start → forward → left turn → forward → right turn inputs. Five healthy, non-duplicate 320x200 frames classified as three `dungeon_gameplay` and two `wall_closeup`. The route labels are input provenance only: without debugger coordinates and Firestaff reproduction this remains reference capture, not a same-state pixel pair. |
 | WUUF south_return original DOS route manifest | READY (NO CAPTURE) | `parity-evidence/todo100_dm1_v1_original_dos_capture_route_manifest.md` | Skip-safe operator route manifest for `hoc_start_south_1_3 -> hoc_forward_south_1_4 -> hoc_wuuf_south_return_1_5`, ending at `(map 0, x=1, y=5, SOUTH)` with ordinal-13 WUUF portrait metadata. It validates route labels/crop names/source anchors only; no original frames or pixel parity are promoted. |
 | C407 Entrance-to-HoC checkpoint | LOCAL VERIFIED (unpaired) | Local ignored original-media receipt | A fresh DOSBox-X session from the canonical PC 3.4 data produced two healthy 320x200 frames: `entrance_stable` classified as `entrance_menu`, then `hoc_start` classified as `dungeon_gameplay`. This verifies the capture harness reaches the original C407 handoff; it does not establish coordinates, champion state, inventory, pickup, or Firestaff pixel parity. |
 | 6x original DOSBox crops (224x136) | IMPAIRED EXISTS (impaired) | `firestaff-release-v0.3.28/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/` | Historical failed route. Frames 03-06 have duplicate SHA256 `701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c`; pass80 reclassifies frames 03-04 as `entrance_menu` and 05-06 as `wall_closeup`. |
@@ -191,6 +192,7 @@ original captures.
 | Historical original overlay lane | 2026-04-28 | local evidence | Original captures attempted; frames are entrance_menu/wall_closeup |
 | Original Eye-hold receipt | 2026-09-10 | local evidence | Verified original PC 3.4 `inventory → Eye held → Eye released` redraw sequence; no published pixels or local path |
 | Original C407 HoC checkpoint | 2026-09-11 | local evidence | Verified original PC 3.4 Entrance-to-dungeon handoff through the raw-frame health and duplicate-safe classifier gates; no published pixels or local path |
+| Original C407 HoC movement cycle | 2026-09-11 | local evidence | Five input-labelled original PC 3.4 frames, three gameplay and two wall-closeup, each healthy and non-duplicate; no published pixels or local path |
 
 ---
 
