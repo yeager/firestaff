@@ -102,6 +102,27 @@ grep -Fxq -- '0' "$tmp_dir/trace-options.raw"
 grep -Fxq -- '-videoip' "$tmp_dir/trace-options.raw"
 grep -Fq 'mednafen_options=-sound\ 0\ -videoip\ 0' "$tmp_dir/manifest-options.txt"
 
+video_env_fake="$tmp_dir/fake-mednafen-video-env"
+python3 - "$video_env_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
+    "printf '%s' \"$SDL_VIDEODRIVER\" > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+SDL_VIDEODRIVER=dummy \
+"$launcher" --operator-only --launch --mednafen "$video_env_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-video-env.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-video-env.txt" >/dev/null
+grep -Fxq 'dummy' "$tmp_dir/trace-video-env.raw"
+
 render_fake="$tmp_dir/fake-mednafen-render"
 render_dir="$tmp_dir/render"
 mkdir -p "$render_dir"

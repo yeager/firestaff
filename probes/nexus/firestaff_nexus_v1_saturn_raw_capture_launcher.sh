@@ -502,6 +502,7 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_CD_READ_LIMIT="${FIRESTAFF_NEXUS_TRACE_CD_READ_LIMIT:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA:-}" \
+  SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-}" \
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
     launch_capture_process "${mednafen_command[@]}" \
       -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
@@ -642,6 +643,7 @@ else
   FIRESTAFF_NEXUS_TRACE_CD_READ_LIMIT="${FIRESTAFF_NEXUS_TRACE_CD_READ_LIMIT:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA:-}" \
+  SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-}" \
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
     launch_capture_process "${mednafen_command[@]}" \
       -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
