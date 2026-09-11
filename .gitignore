@@ -21,3 +21,15 @@ firestaff_dm1_pc34_corpus_*/
 *.mds
 /bios/
 /firmware/
+
+# Local verification output can include screenshots of copyrighted game media.
+# Keep it out of commits; public screenshots, when explicitly approved, live
+# in the documented README asset location instead.
+/.codex-scratch/
+/verification-screens/**/*.png
+/verification-screens/**/*.jpg
+/verification-screens/**/*.jpeg
+/verification-screens/**/*.gif
+/verification-screens/**/*.bmp
+/verification-screens/**/*.ppm
+/verification-screens/**/*.pcx

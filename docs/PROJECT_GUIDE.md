@@ -39,8 +39,8 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | `include/` | Public headers |
 | `tests/` | Test sources |
 | `probes/` | Headless verification probes (Phase A = CI, others = local) |
-| `verification-screens/` | Tracked project screenshots suitable for README/public docs |
-| `docs/compare/` | Tracked visual comparison assets suitable for public docs |
+| `verification-screens/` | Local, ignored verification output; it may contain copyrighted game imagery and must never be committed |
+| `docs/compare/` | Public comparison documentation only; it must not contain game captures or extracted game assets |
 
 ### Key Files
 

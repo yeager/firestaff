@@ -106,8 +106,8 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
 
 ## C. Firestaff capture artifacts
 
-### C1. Verification screenshots (Firestaff current state)
-- **Local path:** `verification-screens/`
+### C1. Verification screenshots (local-only)
+- **Local path:** `verification-screens/` (ignored; never commit)
 - **Contents (11 PNG + PPM pairs):**
   - `01_start_menu` — launcher/start menu
   - `02_settings` — settings screen
@@ -116,7 +116,11 @@ Nothing from V2 or V3 may contaminate V1 parity claims, evidence, or implementat
   - `05_ingame_move_forward` — in-game after movement
   - `*_latest` variants for ingame screens (newer captures)
   - `launcher-modern.png` — modern launcher appearance
-- **Good for:** Regression baseline, before/after comparison against original, current Firestaff visual state documentation.
+- **Good for:** Local regression baseline and before/after comparison against original.
+  These captures may include copyrighted game imagery, so public documentation
+  records hashes, dimensions, and reproducible procedures rather than the
+  images themselves. The only exception is a screenshot explicitly selected
+  for the project README.
 
 ### C2. ReDMCSB boot/title/menu probe captures
 - **Local paths (selected):**
