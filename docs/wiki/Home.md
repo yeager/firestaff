@@ -60,6 +60,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - [Game Data](Game-Data) — what original data files are needed and where to place them
 - [Game-data Formats](Game-Data-Formats) — verified containers, records and save boundaries
 - [Native Platform Verification](Native-Platform-Verification) — actual CLI/start-menu evidence by original platform
+- [Tsugaru Development and Capture Reference](Tsugaru-Development-Capture-Reference) — FM Towns emulator architecture, reproducible original captures and strict runtime boundary
 - [Documentation Index](../DOCUMENTATION_INDEX) — complete cross-game status and page map
 
 ## Quick Links

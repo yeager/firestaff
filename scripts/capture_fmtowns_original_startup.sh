@@ -169,7 +169,11 @@ command_file="$out/tsugaru-capture-commands.txt"
         printf 'SS "%s/startup-%02d-%ss-%s.png"\n' "$out" "$index" "$second" "$label"
         previous="$second"
     done
-    printf 'QUIT\n'
+    # Tsugaru's asynchronous CUI teardown can race its VM thread after an
+    # ordinary QUIT.  FORCEQUIT terminates only after all requested emulator
+    # framebuffer requests were emitted, avoiding that host-side crash from
+    # being mistaken for a failed emulated capture.
+    printf 'FORCEQUIT\n'
 } >"$command_file"
 
 run_commands() {
