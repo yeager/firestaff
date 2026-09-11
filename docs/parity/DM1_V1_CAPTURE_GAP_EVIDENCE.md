@@ -29,6 +29,15 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 | Original-media location | User-supplied local evidence only; never a repository path |
 | Greatstone reference | `http://greatstone.free.fr/dm/db_data/dm_pc_34/` |
 
+### Hall-of-Champions route anchor
+
+The PC 3.4 `DUNGEON.DAT` C127 inventory is authoritative for capture routing.
+Its all-portrait gate resolves all 24 source-visible mirror poses from the
+retail data. In particular, WUUF (ordinal 13) is visible from party pose
+`(map 0, x=7, y=16, SOUTH)` toward the north wall of `(7,17)`. Earlier
+seeded or synthetic probe poses that describe WUUF at `(1,5)` are not
+original-route evidence and must not be used to drive DOSBox captures.
+
 ---
 
 ## 2. Evidence Inventory by Area
