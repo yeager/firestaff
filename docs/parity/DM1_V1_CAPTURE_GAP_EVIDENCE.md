@@ -1,9 +1,8 @@
 # DM1 V1 Original Capture Gap Evidence
 
 **Lane:** DM1 V1 finish-quality - original DOS capture/parity evidence lane
-**Date:** 2026-05-28; updated 2026-06-20 with pass1052/pass1053/pass1055/pass1056
-**Branch:** `dm1v1-capture-gap-evidence-20260528`
-**Author:** subagent (MiniMax-M2.7)
+**Date:** 2026-05-28; updated 2026-09-11 with the original Eye-hold receipt
+**Branch:** `main`
 
 ## Scope
 
@@ -25,10 +24,9 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 | Game | Dungeon Master, PC DOS, English, v3.4 |
 | DUNGEON.DAT SHA256 | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` |
 | GRAPHICS.DAT SHA256 | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` |
-| TITLE SHA256 | (see `SHA256SUMS` in `firestaff-original-games/DM/`) |
+| TITLE SHA256 | Retained only in local, ignored original-media evidence |
 | Source archive | `ReDMCSB_WIP20210206/Toolchains/Common/Source/` |
-| Local archive | `~/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/` |
-| Canonical game dir | `~/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/` |
+| Original-media location | User-supplied local evidence only; never a repository path |
 | Greatstone reference | `http://greatstone.free.fr/dm/db_data/dm_pc_34/` |
 
 ---
@@ -146,6 +144,7 @@ an original screenshot.
 | Lane3 champion HUD captures | IMPAIRED FIRESTAFF ONLY | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm` | Firestaff V1 output only; no paired original DM1 PC 3.4 champion panel screenshot. |
 | Original champion candidate/resurrect panel | PARTIAL OK | `verification-screens/pass1053-dm1-original-champion-candidate-panel/` | Pass1053 tracks pass455 original candidate panel (`click:111,82`) and post-C160 terminal/HUD transition (`click:130,115`); `pass1053_dm1_v1_original_champion_candidate_panel_gate` now keeps the manifest, crops, source anchors, and Firestaff-side references reproducible in CTest. Not a full four-champion HUD pair. |
 | Original four-champion party HUD screenshot | MISSING MISSING | - | No paired original DM1 PC 3.4 four-champion party HUD screenshot exists. |
+| Original Eye hold/release transition | LOCAL VERIFIED (unpaired) | Local ignored capture receipt | Three authentic 320x200 PC 3.4 frames prove `inventory → Eye held → Eye released`; the same verified `DUNGEON.DAT` and `GRAPHICS.DAT` pair binds the result. This proves the observed panel redraw only, not world pickup or Firestaff pixel parity. |
 
 **Gap:** The champion panel geometry, status-box stride, portrait positions, and
 bar-graph layout are all source-locked and probe-verified. Pass1053 now adds and
@@ -187,9 +186,9 @@ original captures.
 
 | Session | Date | Host | Outcome |
 |---------|------|------|---------|
-| `lane3-inventory-followup-20260428-0914` | 2026-04-28 | N2 | Firestaff-only captures; original route not reached |
-| `lane4-original-overlay-20260428-0917` (pass94) | 2026-04-28 | N2 | Original captures attempted; DOSBox route failed; frames are entrance_menu/wall_closeup |
-| `lane1-original-faithful-parity-20260428-0931` | 2026-04-28 | N2 | Unknown outcome (not yet examined) |
+| Historical Firestaff-only inventory lane | 2026-04-28 | local evidence | Firestaff-only captures; original route not reached |
+| Historical original overlay lane | 2026-04-28 | local evidence | Original captures attempted; frames are entrance_menu/wall_closeup |
+| Original Eye-hold receipt | 2026-09-10 | local evidence | Verified original PC 3.4 `inventory → Eye held → Eye released` redraw sequence; no published pixels or local path |
 
 ---
 
@@ -228,7 +227,7 @@ Given the above gap inventory, the correct parity status labels for the five are
 | Wall | `KNOWN_DIFF` (narrowed) | `PARTIAL_MATCH` | Pass1054 has one exact original-to-Firestaff wall-crop match; broader wall route still partial |
 | Collision | (source-lock + pass1055 original closed-door stasis + Firestaff semantic pair) | `PARTIAL_PAIR` | Pass1055 captures one original closed-door stasis case and a Firestaff-side movement/collision pair; pixel comparison and broader transcript are still missing |
 | Creature-chain | (source-lock only) | `BLOCKED_ON_REFERENCE` | No original creature screenshot exists |
-| Champion-panel | (source-lock only) | `PARTIAL_REFERENCE_CAPTURED` | Pass1053 candidate/resurrect panel exists; full party HUD/status-panel pair is still missing |
+| Champion-panel | (source lock + local Eye receipt) | `PARTIAL_REFERENCE_CAPTURED` | Candidate/resurrect panel and authentic Eye redraw exist; full party HUD/status-panel pair is still missing |
 
 **Recommendation:** Keep the content/pixel sub-rows out of `MATCHED` until same-state
 Firestaff comparisons exist. Viewport and champion candidate/resurrect panel can now
