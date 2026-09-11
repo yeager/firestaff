@@ -20,6 +20,9 @@ stage="${FMTOWNS_STAGE_DIR:-$repo/.codex-scratch/fmtowns-original-media-stage}"
 timeline="${FMTOWNS_CAPTURE_TIMELINE:-}"
 towns_type="${FMTOWNS_TYPE:-MX}"
 high_fidelity="${FMTOWNS_HIGH_FIDELITY:-0}"
+nowait_boot="${FMTOWNS_NOWAIT_BOOT:-1}"
+diagnostics="${FMTOWNS_DIAGNOSTICS:-0}"
+no_wait="${FMTOWNS_NOWAIT:-0}"
 
 usage() {
     cat <<'EOF'
@@ -37,6 +40,9 @@ Optional:
   FMTOWNS_STAGE_DIR=/safe/staging/path    (default: repository .codex-scratch)
   FMTOWNS_TYPE=MX                          (FM Towns machine type)
   FMTOWNS_HIGH_FIDELITY=1|0                (default: 0; opt in only after VM boot validation)
+  FMTOWNS_NOWAIT_BOOT=1|0                  (default: 1; bypass host-time memory-test delay)
+  FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
+  FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
 
 The ZIP is staged only for this development-time emulator session because
 Tsugaru requires a seekable CUE plus BIN or IMG track image.  The archive is never modified, the
@@ -73,6 +79,18 @@ if [[ -z "$timeline" || ! "$timeline" =~ ^[0-9]+:[A-Za-z0-9_-]+(\ [0-9]+:[A-Za-z
 fi
 if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
     echo "ERROR: FMTOWNS_HIGH_FIDELITY must be 0 or 1" >&2
+    exit 3
+fi
+if [[ "$nowait_boot" != "0" && "$nowait_boot" != "1" ]]; then
+    echo "ERROR: FMTOWNS_NOWAIT_BOOT must be 0 or 1" >&2
+    exit 3
+fi
+if [[ "$diagnostics" != "0" && "$diagnostics" != "1" ]]; then
+    echo "ERROR: FMTOWNS_DIAGNOSTICS must be 0 or 1" >&2
+    exit 3
+fi
+if [[ "$no_wait" != "0" && "$no_wait" != "1" ]]; then
+    echo "ERROR: FMTOWNS_NOWAIT must be 0 or 1" >&2
     exit 3
 fi
 for required in "$tsugaru" 7zz sha256sum python3; do
@@ -144,6 +162,10 @@ command_file="$out/tsugaru-capture-commands.txt"
         fi
         index=$((index + 1))
         printf 'sleep %s\n' "$((second - previous))"
+        if [[ "$diagnostics" == "1" ]]; then
+            printf 'DUMP CRTC\n'
+            printf 'DUMP CDROM\n'
+        fi
         printf 'SS "%s/startup-%02d-%ss-%s.png"\n' "$out" "$index" "$second" "$label"
         previous="$second"
     done
@@ -165,7 +187,10 @@ set +e
 # into an invalid option and leave a false failed-capture trail.
 fidelity_args=()
 if [[ "$high_fidelity" == "1" ]]; then fidelity_args=(-HIGHFIDELITY); fi
-run_commands | "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" \
+boot_args=()
+if [[ "$nowait_boot" == "1" ]]; then boot_args=(-NOWAITBOOT); fi
+if [[ "$no_wait" == "1" ]]; then boot_args=(-NOWAIT); fi
+run_commands | "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" "${boot_args[@]}" \
     -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
 tsugaru_status=${PIPESTATUS[1]}
 set -e
@@ -213,6 +238,9 @@ PY
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
     printf 'high_fidelity=%s\n' "$high_fidelity"
+    printf 'nowait_boot=%s\n' "$nowait_boot"
+    printf 'nowait=%s\n' "$no_wait"
+    printf 'diagnostics=%s\n' "$diagnostics"
     printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')"
     printf 'cue_sha256=%s\n' "$(sha256sum "$cue" | awk '{print $1}')"
     printf 'track_image_sha256=%s\n' "$(sha256sum "$track_image" | awk '{print $1}')"
