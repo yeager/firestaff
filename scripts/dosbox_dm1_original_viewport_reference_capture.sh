@@ -116,8 +116,11 @@ Optional environment:
   DM1_DOSBOX_CAPTURE_BACKEND=host
                     Verification-only fallback for an emulator whose own
                     screenshot writer is unstable. Captures the X11 DOSBox
-                    window with scrot, crops its 4:3 content rectangle, and
-                    reduces it with nearest-neighbour to original 320x200.
+                    drawable via ImageMagick's XGetImage path, which excludes
+                    the host cursor plane, crops its 4:3 content rectangle,
+                    and reduces it with nearest-neighbour to original 320x200.
+                    A compositor/scrot capture is not accepted as original
+                    evidence because it can blend in the host cursor.
   DM1_DOSBOX_OUTPUT=surface
                     select DOSBox-X's software presentation backend for an
                     original capture when an OpenGL/X11 resize is unstable.
@@ -816,14 +819,12 @@ shot() {
         host_capture_index=$((host_capture_index + 1))
         host_raw="${capture_dir}/host-window-${host_capture_index}.png"
         host_out="${capture_dir}/host-${host_capture_index}.png"
-        scrot --window "$window" --overwrite --silent "$host_raw" || true
-        # Some SDL/Xvfb combinations expose a live window to xdotool while
-        # scrot's per-window path still returns an all-black pixmap.  That is
-        # not original evidence.  Detect that narrow host-capture failure and
-        # retry the same X11 window through ImageMagick's XGetImage backend.
-        # The later raw-frame health gate remains authoritative; this fallback
-        # merely avoids turning a known capture-backend defect into a false
-        # negative route result.
+        # ImageMagick reads the server-side X11 drawable through XGetImage;
+        # unlike a compositor/root-screen capture it cannot blend the host
+        # cursor into a purported original frame.  The health test below is
+        # still required: cursor-free does not make a stale/blank SDL surface
+        # valid original evidence.
+        import -silent -window "$window" "$host_raw"
         if ! python3 - "$host_raw" <<'PY'
 from pathlib import Path
 from PIL import Image
@@ -848,13 +849,8 @@ if not any(pixel != (0, 0, 0) for pixel in canvas.get_flattened_data()):
     raise SystemExit(1)
 PY
         then
-            if command -v import >/dev/null 2>&1; then
-                echo "host-capture-scrot-blank-retrying-import window=$window" >&2
-                import -window "$window" "$host_raw"
-            else
-                echo "ERROR: scrot returned a blank host capture and ImageMagick import is unavailable" >&2
-                exit 9
-            fi
+            echo "ERROR: X11 server-image capture returned a blank/stale DOSBox surface" >&2
+            exit 9
         fi
         python3 - "$host_raw" "$host_out" <<'PY'
 from pathlib import Path
@@ -1432,8 +1428,8 @@ case "$mode" in
         case "${DM1_DOSBOX_CAPTURE_BACKEND:-emulator}" in
             emulator) ;;
             host)
-                if ! command -v scrot >/dev/null 2>&1; then
-                    echo "ERROR: DM1_DOSBOX_CAPTURE_BACKEND=host requires scrot" >&2
+                if ! command -v import >/dev/null 2>&1; then
+                    echo "ERROR: DM1_DOSBOX_CAPTURE_BACKEND=host requires ImageMagick import for cursor-free X11 capture" >&2
                     exit 6
                 fi
                 export DM1_DOSBOX_CAPTURE_OUT_DIR="${OUT_DIR}"
