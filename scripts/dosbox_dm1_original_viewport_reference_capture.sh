@@ -1425,7 +1425,26 @@ case "$mode" in
             echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
             exit 6
         fi
-        case "${DM1_DOSBOX_CAPTURE_BACKEND:-emulator}" in
+        # DOSBox-X on Linux can terminate after its own screenshot writer is
+        # invoked repeatedly.  The host backend captures the X11 drawable
+        # without the cursor and has the same normalized 320x200 output
+        # contract.  Prefer it for that known combination unless an operator
+        # explicitly chooses a backend.  Other emulators retain their native
+        # screenshot path by default.
+        capture_backend="${DM1_DOSBOX_CAPTURE_BACKEND:-}"
+        if [[ -z "${capture_backend}" ]]; then
+            if [[ "$(uname -s 2>/dev/null || true)" == "Linux" &&
+                  "$(basename "$DOSBOX")" == "dosbox-x" ]]; then
+                capture_backend="host"
+            else
+                capture_backend="emulator"
+            fi
+        fi
+        # The generated route helper selects its screenshot primitive from
+        # this environment variable, so propagate an inferred default just
+        # as an explicit caller-provided value would be propagated.
+        export DM1_DOSBOX_CAPTURE_BACKEND="${capture_backend}"
+        case "${capture_backend}" in
             emulator) ;;
             host)
                 if ! command -v import >/dev/null 2>&1; then
@@ -1435,7 +1454,7 @@ case "$mode" in
                 export DM1_DOSBOX_CAPTURE_OUT_DIR="${OUT_DIR}"
                 ;;
             *)
-                echo "ERROR: unsupported DM1_DOSBOX_CAPTURE_BACKEND=${DM1_DOSBOX_CAPTURE_BACKEND}" >&2
+                echo "ERROR: unsupported DM1_DOSBOX_CAPTURE_BACKEND=${capture_backend}" >&2
                 exit 6
                 ;;
         esac
