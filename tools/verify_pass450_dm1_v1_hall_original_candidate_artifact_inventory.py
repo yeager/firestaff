@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import struct
 import subprocess
@@ -24,9 +25,20 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass450_dm1_v1_hall_original_candidate_artifact_inventory"
 STATUS = "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED"
-VERIFY_DIR = ROOT / "parity-evidence" / "verification" / PASS
+
+
+def local_artifact_root(environment_name: str, default_leaf: str) -> Path:
+    value = os.environ.get(environment_name)
+    if value:
+        return Path(value)
+    return ROOT / ".codex-scratch" / "unavailable-artifacts" / default_leaf
+
+
+VERIFY_DIR = Path(os.environ.get(
+    "FIRESTAFF_CAPTURE_REPORT_ROOT",
+    str(ROOT / ".codex-scratch" / "reports" / PASS)))
 MANIFEST = VERIFY_DIR / "manifest.json"
-REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
+REPORT = VERIFY_DIR / f"{PASS}.md"
 REDMCSB_ARCHIVE = Path.home() / ".firestaff/devtools/references/ReDMCSB_WIP20210206.7z"
 REDMCSB_SOURCE_PREFIX = "Toolchains/Common/Source"
 DM1_DOS_ARCHIVE = Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
@@ -73,11 +85,15 @@ PASS173_RUNS = [
     "gate_click_portrait_then_resurrect",
     "gate_click_portrait_then_reincarnate",
 ]
-PASS173_ROOT = ROOT / "parity-evidence/verification/pass173_source_portrait_route_gate_probe"
-N2_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/dm1-hall-dosbox-20260509")
+PASS173_ROOT = Path(os.environ.get(
+    "FIRESTAFF_PASS173_EVIDENCE_ROOT",
+    str(ROOT / ".codex-scratch" / "pass173-source-portrait-route-probe")))
+N2_HALL_ARTIFACT_ROOT = local_artifact_root(
+    "FIRESTAFF_DM1_N2_HALL_ARTIFACT_ROOT", "dm1-n2-hall")
 N2_HALL_ARTIFACT_STATUS = "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION"
 N2_PROMOTABLE_LABEL = "03_panel_visible_north_front_mirror"
-CORRECTED_HALL_ARTIFACT_ROOT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
+CORRECTED_HALL_ARTIFACT_ROOT = local_artifact_root(
+    "FIRESTAFF_DM1_CORRECTED_HALL_ARTIFACT_ROOT", "dm1-corrected-hall")
 REQUIRED_PROMOTION_SCENES = [
     "candidate_select_portrait_click_before_panel",
     "candidate_panel_visible_after_append",
@@ -96,6 +112,17 @@ def sha(path: Path, algo: str = "sha256") -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def portable_path(path: Path | str | None) -> str | None:
+    """Keep generated reports useful without publishing host-specific paths."""
+    if path is None:
+        return None
+    candidate = Path(path)
+    try:
+        return candidate.resolve().relative_to(ROOT).as_posix()
+    except (ValueError, OSError):
+        return f"<local-artifact>/{candidate.name}"
 
 
 def norm(text: str) -> str:
@@ -137,13 +164,13 @@ def audit_data() -> tuple[list[dict[str, Any]], list[str]]:
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for item in LOCKED_DATA:
-        row = {k: (str(v) if isinstance(v, Path) else v) for k, v in item.items()}
+        row = {k: (portable_path(v) if isinstance(v, Path) else v) for k, v in item.items()}
         archive = item["archive"]
         member = item["member"]
-        row["resolvedPath"] = f"{archive.resolve()}::{member}" if archive.exists() else None
+        row["resolvedPath"] = f"{portable_path(archive)}::{member}" if archive.exists() else None
         if not archive.is_file():
             row.update({"exists": False, "ok": False})
-            errors.append(f"missing {item['label']} archive at {archive}")
+            errors.append(f"missing {item['label']} archive")
         else:
             result = subprocess.run(
                 ["unzip", "-p", str(archive), member],
@@ -161,7 +188,7 @@ def audit_data() -> tuple[list[dict[str, Any]], list[str]]:
                     "readError": result.stderr.decode("utf-8", errors="replace").strip(),
                 })
                 errors.append(
-                    f"unable to read {item['label']} from {archive}::{member}: "
+                    f"unable to read {item['label']} from preservation archive::{member}: "
                     f"{result.stderr.decode('utf-8', errors='replace').strip()}"
                 )
                 rows.append(row)
@@ -205,7 +232,7 @@ def audit_sources() -> tuple[list[dict[str, Any]], list[str]]:
         ok = bool(source_text) and not missing
         rows.append({
             "file": file,
-            "path": f"{REDMCSB_ARCHIVE}::{member}",
+            "path": f"{portable_path(REDMCSB_ARCHIVE)}::{member}",
             "lines": lines,
             "claim": claim,
             "needles": needles,
@@ -273,18 +300,18 @@ def audit_n2_hall_artifact() -> dict[str, Any]:
     sha_path = root / "SHA256SUMS.txt"
     readme_path = root / "README.md"
     row: dict[str, Any] = {
-        "root": str(root),
+        "root": portable_path(root),
         "exists": root.is_dir(),
-        "manifestPath": str(manifest_path),
-        "sha256SumsPath": str(sha_path),
-        "readmePath": str(readme_path),
+        "manifestPath": portable_path(manifest_path),
+        "sha256SumsPath": portable_path(sha_path),
+        "readmePath": portable_path(readme_path),
         "expectedStatus": N2_HALL_ARTIFACT_STATUS,
         "promotableLabel": N2_PROMOTABLE_LABEL,
         "promotionUse": "panel_visible_original_hall_front_mirror_only_not_candidate_panel_parity",
         "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after true-stop or transition frames remain missing; candidate clicks in this run did not visibly transition.",
     }
     if not root.is_dir():
-        row.update({"ok": False, "errors": [], "externalArtifactMissing": f"missing N2 Hall artifact root {root}"})
+        row.update({"ok": False, "errors": [], "externalArtifactMissing": "missing N2 Hall artifact root"})
         return row
     errors: list[str] = []
     try:
@@ -324,7 +351,7 @@ def audit_n2_hall_artifact() -> dict[str, Any]:
             if not rel_path or not expected_hash:
                 continue
             path = root / rel_path
-            item = {"path": str(path), "rel": rel_path, "expectedSha256": expected_hash, "exists": path.is_file()}
+            item = {"path": portable_path(path), "rel": rel_path, "expectedSha256": expected_hash, "exists": path.is_file()}
             if path.is_file():
                 actual = sha(path)
                 item.update({"actualSha256": actual, "bytes": path.stat().st_size, "pngDims": png_dims(path), "ok": actual == expected_hash})
@@ -332,7 +359,7 @@ def audit_n2_hall_artifact() -> dict[str, Any]:
                     errors.append(f"artifact hash mismatch {rel_path}: {actual} != {expected_hash}")
             else:
                 item["ok"] = False
-                errors.append(f"missing artifact file {path}")
+                errors.append(f"missing artifact file {rel_path}")
             checked_files.append(item)
     row["checkedFiles"] = checked_files
     if sha_path.is_file():
@@ -350,17 +377,18 @@ def audit_n2_hall_artifact() -> dict[str, Any]:
     return row
 
 def audit_environment() -> dict[str, Any]:
-    import os
     import platform
 
     capture_tool = ROOT / "tools/pass173_source_portrait_route_gate_probe.py"
-    external_root = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe")
+    external_root = Path(os.environ.get(
+        "FIRESTAFF_ARTIFACT_ROOT",
+        str(ROOT / ".codex-scratch" / "pass173-source-portrait-route-probe")))
     external_parent = external_root.parent
     env_dosbox = os.environ.get("FIRESTAFF_DOSBOX")
     dosbox_candidates = [
-        {"name": "FIRESTAFF_DOSBOX", "path": env_dosbox, "available": bool(env_dosbox and Path(env_dosbox).exists())},
-        {"name": "dosbox", "path": cmd_available("dosbox"), "available": bool(cmd_available("dosbox"))},
-        {"name": "dosbox-x", "path": cmd_available("dosbox-x"), "available": bool(cmd_available("dosbox-x"))},
+        {"name": "FIRESTAFF_DOSBOX", "available": bool(env_dosbox and Path(env_dosbox).exists())},
+        {"name": "dosbox", "available": bool(cmd_available("dosbox"))},
+        {"name": "dosbox-x", "available": bool(cmd_available("dosbox-x"))},
     ]
     selected = next((c for c in dosbox_candidates if c["available"]), None)
     system = platform.system()
@@ -369,11 +397,11 @@ def audit_environment() -> dict[str, Any]:
     needs_xvfb = system == "Linux" and not display
     missing_tools: list[str] = []
     if not selected:
-        missing_tools.append("dosbox or dosbox-x in PATH, or FIRESTAFF_DOSBOX=/absolute/path/to/dosbox")
+        missing_tools.append("DOSBox or DOSBox-X")
     if needs_xvfb and not xvfb:
         missing_tools.append("xvfb-run for headless Linux capture")
     if not DM1_DOS_ARCHIVE.is_file():
-        missing_tools.append(f"original PC34 archive {DM1_DOS_ARCHIVE}")
+        missing_tools.append("original PC34 archive")
     if not capture_tool.is_file():
         missing_tools.append(f"capture tool {capture_tool.relative_to(ROOT)}")
 
@@ -381,33 +409,27 @@ def audit_environment() -> dict[str, Any]:
     command_prefix = []
     if needs_xvfb:
         command_prefix = [xvfb or "xvfb-run", "-a"]
-    env_parts = [
-        f"FIRESTAFF_ARTIFACT_ROOT={external_root}",
-    ]
-    if selected and selected["path"]:
-        env_parts.append(f"FIRESTAFF_DOSBOX={selected['path']}")
-    next_cmd = " ".join(env_parts + command_prefix + ["python3", "tools/pass173_source_portrait_route_gate_probe.py"])
+    next_cmd = "Set FIRESTAFF_ARTIFACT_ROOT to a local capture directory, then run tools/pass173_source_portrait_route_gate_probe.py"
     rerun_cmd = "python3 tools/verify_pass450_dm1_v1_hall_original_candidate_artifact_inventory.py && python3 tools/verify_pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.py"
 
     return {
         "localHostCaptureReady": not missing_tools,
         "platform": system,
         "machine": platform.machine(),
-        "path": os.environ.get("PATH"),
         "display": display,
         "dosboxCandidates": dosbox_candidates,
         "selectedDosbox": selected,
-        "dosbox": cmd_available("dosbox"),
-        "dosboxX": cmd_available("dosbox-x"),
-        "xvfbRun": xvfb,
+        "dosbox": bool(cmd_available("dosbox")),
+        "dosboxX": bool(cmd_available("dosbox-x")),
+        "xvfbRun": bool(xvfb),
         "needsXvfb": needs_xvfb,
-        "sourceArchive": str(DM1_DOS_ARCHIVE),
+        "sourceArchive": portable_path(DM1_DOS_ARCHIVE),
         "sourceArchiveExists": DM1_DOS_ARCHIVE.is_file(),
         "captureTool": "tools/pass173_source_portrait_route_gate_probe.py",
         "captureToolExists": capture_tool.is_file(),
-        "externalArtifactRoot": str(external_root),
+        "externalArtifactRoot": portable_path(external_root),
         "externalParentExists": external_parent.exists(),
-        "configuredRunBase": str(run_base),
+        "configuredRunBase": portable_path(run_base),
         "missingTools": missing_tools,
         "blockingReason": "capture-ready" if not missing_tools else "Original PC34 Hall capture is blocked locally by: " + "; ".join(missing_tools),
         "nextExecutableStep": next_cmd,
@@ -464,7 +486,7 @@ def write_report(manifest: dict[str, Any]) -> None:
         f"- platform: `{env['platform']}` `{env['machine']}`",
         f"- dosbox: `{env['dosbox']}`",
         f"- dosbox-x: `{env['dosboxX']}`",
-        f"- selected DOSBox: `{(env['selectedDosbox'] or {}).get('path')}`",
+        f"- selected DOSBox: `{(env['selectedDosbox'] or {}).get('name')}`",
         f"- xvfb-run: `{env['xvfbRun']}` needsXvfb=`{env['needsXvfb']}` display=`{env['display']}`",
         f"- source archive exists: `{env['sourceArchiveExists']}` `{env['sourceArchive']}`",
         f"- external artifact root: `{env['externalArtifactRoot']}` parentExists=`{env['externalParentExists']}`",
@@ -510,10 +532,10 @@ def main() -> int:
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "status": "FAIL_PASS450_SOURCE_OR_DATA_LOCK" if errors else ("PARTIAL_PASS450_MISSING_TERMINAL_ORIGINAL_FRAMES" if missing else STATUS),
-        "repo": str(ROOT),
+        "repo": ".",
         "branch": run_git(["branch", "--show-current"]),
         "head": run_git(["rev-parse", "HEAD"]),
-        "redmcsbArchive": str(REDMCSB_ARCHIVE),
+        "redmcsbArchive": portable_path(REDMCSB_ARCHIVE),
         "dataHashLock": data_rows,
         "sourceLocks": source_rows,
         "pass173Summaries": pass173_summaries,
@@ -528,7 +550,7 @@ def main() -> int:
             "probe-initial-south-reincarnate-corrected/image0005-raw.png (hud_status_after_reincarnate corrected terminal frame)",
             "03_panel_visible_north_front_mirror pc320+viewport224x136 (historical Hall/front-mirror context only)",
         ],
-        "correctedHallArtifactRoot": str(CORRECTED_HALL_ARTIFACT_ROOT),
+        "correctedHallArtifactRoot": portable_path(CORRECTED_HALL_ARTIFACT_ROOT),
         "correctedAvailableScenes": corrected_available,
         "missingPromotableScenes": missing,
         "captureEnvironment": env,

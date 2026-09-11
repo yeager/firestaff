@@ -1,7 +1,9 @@
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "firestaff_zip_extract.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -30,22 +32,51 @@ static int expect_int(const char* label, int got, int want)
     return 1;
 }
 
-static const char* default_dm1_dungeon_dat(void)
+static const char* default_dm1_pc34_archive(void)
 {
     static char path[1024];
     const char* home = getenv("HOME");
-    if (!home || home[0] == '\0') home = "/home/trv2";
+    if (!home || home[0] == '\0') return NULL;
     snprintf(path, sizeof(path),
-             "%s/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+             "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
              home);
     return path;
 }
 
-static int load_world(const char* dungeonPath, struct GameWorld_Compat* world)
+static int has_zip_suffix(const char* path)
 {
+    size_t length;
+    if (!path) return 0;
+    length = strlen(path);
+    return length >= 4U &&
+           (path[length - 4U] == '.') &&
+           (path[length - 3U] == 'z' || path[length - 3U] == 'Z') &&
+           (path[length - 2U] == 'i' || path[length - 2U] == 'I') &&
+           (path[length - 1U] == 'p' || path[length - 1U] == 'P');
+}
+
+static int load_world(const char* sourcePath, struct GameWorld_Compat* world)
+{
+    unsigned char* dungeonBytes = NULL;
+    size_t dungeonByteCount = 0U;
+    int result;
     memset(world, 0, sizeof(*world));
-    if (!F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0x1055u, world)) {
-        fprintf(stderr, "FAIL load canonical dungeon path=%s\n", dungeonPath);
+    if (has_zip_suffix(sourcePath)) {
+        if (firestaff_zip_extract_by_name(sourcePath, "DUNGEON.DAT",
+                                           &dungeonBytes, &dungeonByteCount) != 0 ||
+            dungeonByteCount > (size_t)INT_MAX) {
+            fprintf(stderr, "FAIL read DUNGEON.DAT directly from archive=%s\n", sourcePath);
+            free(dungeonBytes);
+            return 0;
+        }
+        result = F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+            dungeonBytes, (int)dungeonByteCount, 0x1055u, world);
+        free(dungeonBytes);
+    } else {
+        result = F0882_WORLD_InitFromDungeonDat_Compat(sourcePath, 0x1055u, world);
+    }
+    if (!result) {
+        fprintf(stderr, "FAIL load authentic PC34 dungeon source=%s\n", sourcePath);
         return 0;
     }
     return 1;
@@ -91,7 +122,7 @@ static int square_type(unsigned char square)
 int main(int argc, char** argv)
 {
     const char* dungeonPath =
-        argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_CANONICAL_DUNGEON_DAT");
+        argc > 1 ? argv[1] : getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     struct GameWorld_Compat world;
     struct Dm1V1MovementPipelinePc34Compat pipeline;
     struct Dm1V1MovementPipelineResultPc34Compat result;
@@ -146,10 +177,10 @@ int main(int argc, char** argv)
         DM1_V1_COMMAND_MOVE_FORWARD,
     };
 
-    if (!dungeonPath || dungeonPath[0] == '\0') dungeonPath = default_dm1_dungeon_dat();
+    if (!dungeonPath || dungeonPath[0] == '\0') dungeonPath = default_dm1_pc34_archive();
 
     printf("probe=firestaff_dm1_v1_pass1055_closed_door_pair_probe\n");
-    printf("dungeon=%s\n", dungeonPath);
+    printf("dungeonSource=%s\n", dungeonPath ? dungeonPath : "(none)");
     printf("source=COMMAND.C:F0380 CLIKMENU.C:F0365/F0366 MOVESENS.C:F0267\n");
 
     if (!load_world(dungeonPath, &world)) return 1;

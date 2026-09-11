@@ -771,12 +771,12 @@ int main(int argc, char* argv[]) {
         } else {
             fprintf(report,
                     "## DUNGEON.DAT integration\n\n"
-                    "- could not load DUNGEON.DAT at %s (skipped)\n\n",
+                    "- could not load DUNGEON.DAT at %s (failed)\n\n",
                     dungeonPath);
-            ok = 1; /* tolerate missing dungeon data in probe */
+            ok = 0; /* Required media absence is not verification success. */
         }
         CHECK(ok,
-              "K3: Real DUNGEON.DAT: champion 0 food/water sign-extended into [0, 2048] range");
+              "K3: Original dungeon header loads; RAM party fixture tests F0859 food/water range");
     }
 
     /* ================================================================

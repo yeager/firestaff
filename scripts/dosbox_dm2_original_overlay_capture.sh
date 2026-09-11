@@ -350,12 +350,11 @@ write_helpers() {
 [sdl]
 fullscreen=false
 output=opengl
-# Capture sessions are terminated by this tooling.  DOSBox-X otherwise asks
-# for host-side confirmation on exit, leaving a stale Yes/No dialog that can
-# contaminate the next original-capture route.
-quit warning=false
 
 [dosbox]
+# Capture sessions are terminated by this tooling.  This is a [dosbox]
+# setting in current DOSBox-X and avoids stale host-side exit dialogs.
+quit warning=false
 machine=svga_paradise
 memsize=63
 captures=${OUT_DIR}
@@ -565,7 +564,24 @@ if [[ -z "${DISPLAY:-}" ]]; then
     exit 6
 fi
 
-window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
+find_dosbox_window() {
+    local attempt candidate
+    # `xdotool search --sync` can wait forever when DOSBox-X recreates its
+    # SDL window during startup.  Keep discovery tied to this exact process
+    # and bounded so an absent window is an honest capture failure, never an
+    # orphaned emulator session.
+    for attempt in $(seq 1 80); do
+        candidate="$(xdotool search --pid "$pid" 2>/dev/null | head -n 1 || true)"
+        if [[ -n "$candidate" ]]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+        sleep 0.1
+    done
+    return 1
+}
+
+window="$(find_dosbox_window || true)"
 if [[ -z "$window" ]]; then
     echo "ERROR: could not find DOSBox X window for pid $pid" >&2
     exit 3
@@ -1112,10 +1128,9 @@ case "${mode}" in
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" \
               "${CROP_MANIFEST}" "${SIZE_LOG}"
         rm -f "${OUT_DIR}"/*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
-        # -exit makes DOSBox-X leave after AUTOEXEC/game termination instead
-        # of presenting its interactive quit confirmation.  The generated
-        # configuration retains quit warning=false for manual exits too.
-        "${DOSBOX}" -exit -conf "${CONF}" >"${LOG}" 2>&1 &
+        # -exit handles guest termination; the explicit [dosbox] override
+        # disables the host confirmation dialog on manual harness shutdown.
+        "${DOSBOX}" -exit -set "dosbox quit warning=false" -conf "${CONF}" >"${LOG}" 2>&1 &
         pid=$!
         echo "${pid}" > "${PID_FILE}"
         cleanup() {

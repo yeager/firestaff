@@ -17,6 +17,7 @@ OUT_DIR="${OUT_DIR:-${REPO}/verification-screens/pass70-original-dm1-viewports}"
 # select a different DOSBox implementation: its title/menu timing and SDL
 # input delivery are part of the evidence boundary.
 DOSBOX="${DOSBOX:-$(command -v dosbox-x 2>/dev/null || true)}"
+DOSBOX_OUTPUT="${DM1_DOSBOX_OUTPUT:-opengl}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
@@ -82,7 +83,7 @@ Labeled shot tokens:
   pixel parity or validate that the original runtime reached that state.
 
 Outputs:
-  raw screenshots: ${OUT_DIR}/image*.png (raw 320x200; exact DOSBox 640x400 2x captures are normalized to 320x200)
+  raw screenshots: ${OUT_DIR}/image*.png (raw 320x200; exact DOSBox 640x400 2x and 720x400 aspect-corrected captures are normalized to 320x200)
   crops:           ${CROP_DIR}/*.ppm and *.png
   raw health:      ${RAW_HEALTH_MANIFEST}
 
@@ -117,6 +118,11 @@ Optional environment:
                     screenshot writer is unstable. Captures the X11 DOSBox
                     window with scrot, crops its 4:3 content rectangle, and
                     reduces it with nearest-neighbour to original 320x200.
+  DM1_DOSBOX_OUTPUT=surface
+                    select DOSBox-X's software presentation backend for an
+                    original capture when an OpenGL/X11 resize is unstable.
+                    The default remains opengl; this affects only the
+                    external capture harness, never Firestaff runtime.
   DM1_DOSBOX_INPUT_MODE=global
                     Linux/X11 verification fallback for DOSBox-X builds that
                     stop accepting xdotool --window events after the Entrance
@@ -475,13 +481,12 @@ write_helpers() {
     cat > "${CONF}" <<EOF
 [sdl]
 fullscreen=false
-output=opengl
-# Capture runs are non-interactive and are terminated by this harness.  Avoid
-# DOSBox-X's host-level Yes/No confirmation dialog, which can otherwise leak
-# into the next original-capture route.
-quit warning=false
+output=${DOSBOX_OUTPUT}
 
 [dosbox]
+# Capture runs are non-interactive and are terminated by this harness.  This
+# is a [dosbox] setting in current DOSBox-X, not an [sdl] setting.
+quit warning=false
 machine=svga_paradise
 memsize=4
 captures=${OUT_DIR}
@@ -729,7 +734,25 @@ if [[ -z "${DISPLAY:-}" ]]; then
     exit 6
 fi
 
-window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
+find_dosbox_window() {
+    # Do not use xdotool --sync here: DOSBox-X may destroy and recreate its
+    # SDL window while control transfers from Entrance to the dungeon loop.
+    # --sync then waits forever for an already-gone window and silently turns
+    # an authentic route into a truncated capture.  A bounded retry keeps the
+    # result diagnostic: an absent replacement window is a hard route error.
+    local candidate attempt
+    for attempt in $(seq 1 50); do
+        candidate="$(xdotool search --pid "$pid" 2>/dev/null | head -n 1 || true)"
+        if [[ -n "$candidate" ]]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+        sleep 0.10
+    done
+    return 1
+}
+
+window="$(find_dosbox_window || true)"
 if [[ -z "$window" ]]; then
     echo "ERROR: could not find DOSBox X window for pid $pid" >&2
     exit 3
@@ -743,7 +766,7 @@ xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
 # geometry must never retain the now-invalid pre-transfer window ID.
 refresh_window() {
     if ! xdotool getwindowgeometry --shell "$window" >/dev/null 2>&1; then
-        window="$(xdotool search --sync --pid "$pid" | head -n 1 || true)"
+        window="$(find_dosbox_window || true)"
         if [[ -z "$window" ]]; then
             echo "ERROR: DOSBox X11 window disappeared and could not be reacquired for pid $pid" >&2
             exit 3
@@ -1054,7 +1077,8 @@ if expected <= 0:
 paths = sorted(out.glob("image*.png"))
 if not paths:
     # DOSBox 0.74 names screenshots after the running program/screen instead of
-    # imageNNNN.png.  Normalize those raw 320x200, or exact 640x400 2x, captures into the stable
+    # imageNNNN.png. Normalize raw 320x200, exact 640x400 2x, and
+    # DOSBox-X's 720x400 aspect-corrected captures into the stable
     # image000N-raw.png names expected by the downstream pass70/pass84 tools.
     candidates = sorted(
         [p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")
@@ -1079,11 +1103,13 @@ with manifest.open("w") as f:
         if data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
             raise SystemExit(f"ERROR: not a PNG with IHDR: {path}")
         w, h = struct.unpack(">II", data[16:24])
-        if (w, h) == (640, 400):
+        if (w, h) in {(640, 400), (720, 400)}:
             try:
                 from PIL import Image
             except Exception as exc:
-                raise SystemExit(f"ERROR: {path} is a 640x400 DOSBox 2x capture; Python Pillow is required to normalize it to original 320x200: {exc}")
+                raise SystemExit(
+                    f"ERROR: {path} is a {w}x{h} DOSBox scaled capture; "
+                    f"Python Pillow is required to normalize it to original 320x200: {exc}")
             im = Image.open(path).convert("RGB")
             resample = getattr(getattr(Image, "Resampling", Image), "NEAREST")
             im.resize((320, 200), resample).save(path)
@@ -1432,7 +1458,9 @@ case "$mode" in
         # stale top-level captures before a run so normalize_existing can map
         # exactly this run's six raw frames into stable image000N-raw.png names.
         rm -f "${OUT_DIR}"/*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
-        "$DOSBOX" -conf "$CONF" >"$LOG" 2>&1 &
+        # DOSBox-X requires the [dosbox] section name when setting this
+        # space-containing option from its command line.
+        "$DOSBOX" -exit -set "dosbox quit warning=false" -conf "$CONF" >"$LOG" 2>&1 &
         pid=$!
         echo "$pid" > "$PID_FILE"
         focus_dosbox_for_route "$pid"

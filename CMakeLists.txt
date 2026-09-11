@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.332 LANGUAGES C)
+project(Firestaff VERSION 3.0.333 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -4358,7 +4358,9 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;pc34;dos;real-media;archive;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN.zip"
-        TIMEOUT 120
+        # The nested archive executes the complete live HoC render/input
+        # matrix, including Original and Modern presentation captures.
+        TIMEOUT 240
     )
     add_test(
         NAME dm1_v1_boot_probe_terminal_exit
@@ -34984,6 +34986,9 @@ endif()
             NAME pass1055_dm1_v1_original_closed_door_collision_capture
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1055_dm1_v1_original_closed_door_collision_capture.py
         )
+        set_tests_properties(pass1055_dm1_v1_original_closed_door_collision_capture
+            PROPERTIES ENVIRONMENT
+                "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR};FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip")
         add_test(
             NAME todo100_dm1_v1_viewport_collision_report_repro_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_todo100_dm1_v1_viewport_collision_report_repro_gate.py

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Pass236: audit N2-local FIRES public-symbol/source-to-runtime bridge evidence.
 
-This is text-only evidence. Any ReDMCSB build products are created under /tmp
-and only bounded text summaries are copied into parity-evidence.
+This is text-only evidence. Any ReDMCSB build products stay under the local
+scratch root and only bounded text summaries are copied into parity-evidence.
 """
 from __future__ import annotations
 
@@ -106,7 +106,9 @@ def build_script_audit() -> dict[str, Any]:
 def run_dosbox_build(timeout_s: int) -> dict[str, Any]:
     if not shutil.which("dosbox-x") or not shutil.which("xvfb-run"):
         return {"attempted": False, "ok": False, "reason": "dosbox-x or xvfb-run missing"}
-    with tempfile.TemporaryDirectory(prefix="firestaff-pass236-i34e-") as td:
+    scratch = ROOT / ".codex-scratch"
+    scratch.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="firestaff-pass236-i34e-", dir=scratch) as td:
         tmp = Path(td)
         shutil.copytree(IBM_BASE, tmp, dirs_exist_ok=True)
         (tmp / "SOURCE").mkdir(exist_ok=True)
@@ -118,10 +120,10 @@ def run_dosbox_build(timeout_s: int) -> dict[str, Any]:
         (tmp / "SOURCE/EXEID74.TXT").write_text("")
         conf = tmp / "run.conf"
         conf.write_text("\n".join([
-            "[sdl]", "usescancodes=false", "[dosbox]", "memsize=32", "[cpu]", "cycles=max", "[autoexec]",
+            "[sdl]", "usescancodes=false", "[dosbox]", "quit warning=false", "memsize=32", "[cpu]", "cycles=max", "[autoexec]",
             f"mount c {tmp}", "c:", "call \\SOURCE\\MKII.BAT", "exit", "",
         ]), encoding="utf-8")
-        proc = subprocess.run(["xvfb-run", "-a", "dosbox-x", "-nogui", "-silent", "-fastlaunch", "-conf", str(conf), "-exit", "-time-limit", str(timeout_s)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout_s + 30)
+        proc = subprocess.run(["xvfb-run", "-a", "dosbox-x", "-nogui", "-silent", "-fastlaunch", "-conf", str(conf), "-exit", "-set", "dosbox quit warning=false", "-time-limit", str(timeout_s)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout_s + 30)
         log = tmp / "BUILD/MKII.LOG"
         log_text = log.read_bytes().decode("latin-1", errors="replace") if log.exists() else ""
         map_path = tmp / "BUILD/I34E/FIRES.MAP"

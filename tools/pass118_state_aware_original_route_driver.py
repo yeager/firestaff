@@ -98,9 +98,19 @@ def click_original(wid: str, x: int, y: int, log, delay=0.25):
     cw, ch = gw, gw/content_aspect
     if ch > gh:
         ch = gh; cw = ch*content_aspect
-    left, top = (gw-cw)/2, (gh-ch)/2
+    # DOSBox-X may reserve chrome at the top of its SDL window.  The 4:3 DOS
+    # canvas is consequently bottom-aligned, not vertically centred.  Using
+    # a centred origin moves original-space input into the wrong Entrance row.
+    left, top = (gw-cw)/2, gh-ch
     px = round(left + ((x+0.5)/320)*cw); py = round(top + ((y+0.5)/200)*ch)
-    xdo(["mousemove", "--window", wid, str(px), str(py), "click", "1"])
+    xdo(["windowactivate", wid], check=False)
+    xdo(["windowfocus", wid], check=False)
+    xdo(["mousemove", "--window", wid, str(px), str(py)])
+    # The original loop samples the button state asynchronously.  A single
+    # xdotool click can compress press and release into the same host tick.
+    xdo(["mousedown", "1"])
+    time.sleep(0.06)
+    xdo(["mouseup", "1"])
     log.append(f"click {x},{y} mapped {px},{py} window={gw}x{gh}")
     time.sleep(delay)
 

@@ -1446,6 +1446,8 @@ def _activate_dosbox() -> None:
     subprocess), then falls back to the AppleScript frontmost/AXRaise path
     so non-bundle DOSBox builds and headless self-tests still work.
     """
+    if shutil.which("osascript") is None:
+        return
     _open_activate_dosbox()
     names = ", ".join(f'"{name}"' for name in ACTIVE_DOSBOX_PROCESS_NAMES)
     script = r'''
@@ -1468,6 +1470,8 @@ end tell
 
 def _dosbox_window_bounds() -> tuple[int, int, int, int] | None:
     """Return the front DOSBox window bounds as x, y, w, h when available."""
+    if shutil.which("osascript") is None:
+        return None
     names = ", ".join(f'"{name}"' for name in ACTIVE_DOSBOX_PROCESS_NAMES)
     script = r'''
 tell application "System Events"
@@ -1496,6 +1500,12 @@ end tell
 
 
 def _frontmost_process_name() -> str:
+    # The dry-run exercises capture metadata on Linux as well as macOS.  A
+    # frontmost application is a macOS-only diagnostic, not a prerequisite
+    # for decoding an existing DOSBox frame, so never make an absent
+    # AppleScript runtime turn a platform-neutral dry-run into a crash.
+    if shutil.which("osascript") is None:
+        return ""
     script = r'''
 tell application "System Events"
   set frontApps to name of every process whose frontmost is true

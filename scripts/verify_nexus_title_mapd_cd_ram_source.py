@@ -67,12 +67,21 @@ def main() -> int:
                 raise ValueError("MAPD FIFO word differs from Track 1")
 
         rows: dict[int, list[tuple[int, int]]] = {}
+        out_of_range_rows = 0
         for number, line in enumerate(source[1:], 2):
             match = SOURCE_LINE.match(line)
             if not match:
                 raise ValueError(f"malformed source row {number}")
             address, size, port, lba, word, pc = (
                 int(field, 16) for field in match.groups())
+            # Only LBAs 6063..6088 form the documented contiguous MAPD RAM
+            # load.  The partial terminal sector is still required in the
+            # FIFO receipt below, but later consumers can legally read it
+            # through a different PC and must not be attributed to this
+            # loader route.
+            if lba < FIRST_LBA or lba > CONTIGUOUS_LAST_LBA:
+                out_of_range_rows += 1
+                continue
             if size != 4 or port != CDB_DATA_PORT or pc != LOADER_PC:
                 raise ValueError("source row is not the bounded retail loader")
             rows.setdefault(lba, []).append((address, word))
@@ -106,6 +115,7 @@ def main() -> int:
     palette_ram = RAM_BASE + (PALETTE_FILE_OFFSET - (FIRST_LBA - TITLE_BIN_LBA) * 2048)
     print("title_mapd_fifo_lbas=6063-6088+6089:8-824")
     print("title_mapd_contiguous_ram_lbas=6063-6088")
+    print(f"title_mapd_out_of_range_source_rows_ignored={out_of_range_rows}")
     print("title_mapd_ram_range=0x060b7d80-0x060c4d7f")
     print(f"title_mapd_record_ram=0x{mapd_ram:08x}")
     print(f"title_mapd_palette_ram=0x{palette_ram:08x}")

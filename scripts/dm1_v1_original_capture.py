@@ -418,6 +418,10 @@ viewport_resolution=1024x768
 [dosbox]
 machine=svga_s3
 memsize=16
+# DOSBox-X places the exit-confirmation control in this section.  The capture
+# driver owns process termination, so a native dialog would otherwise make a
+# completed capture look like a hung session.
+quit warning=false
 
 [render]
 frameskip=0

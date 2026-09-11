@@ -10,26 +10,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import struct
+import zipfile
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
-REDMCSB_ROOT = (Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206")
+REDMCSB_ROOT = ROOT / "reference" / "redmcsb-20210206"
+SOURCE_ROOT = REDMCSB_ROOT / "Toolchains" / "Common" / "Source"
 IBM_SOURCE = REDMCSB_ROOT / "Toolchains/IBM PC/Source"
-def resolve_existing_path(candidates: list[Path], label: str) -> Path:
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError(f"{label} not found in any candidate path: " + ", ".join(str(p) for p in candidates))
-
-
-ORIGINAL_FIRES = resolve_existing_path([
-    Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/FIRES",
-    Path.home() / ".firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/FIRES",
-    Path.home() / ".firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/FIRES",
-], "DM1 PC34 FIRES")
+PC34_ARCHIVE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_ARCHIVE",
+    str(Path.home() / ".firestaff" / "data" / "dm1" / "Dungeon-Master_DOS_EN_Version-34.zip"),
+))
 OUT_DIR = ROOT / "parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard"
 REPORT = ROOT / "parity-evidence/pass210_dm1_v1_original_runtime_binding_guard.md"
 
@@ -99,26 +93,35 @@ SOURCE_SEAMS: list[dict[str, Any]] = [
 ]
 
 
-def sha256(path: Path) -> str:
+def sha256(data: bytes) -> str:
     h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
-            h.update(chunk)
+    h.update(data)
     return h.hexdigest()
 
 
-def parse_mz(path: Path) -> dict[str, Any]:
-    data = path.read_bytes()
+def load_original_fires() -> tuple[bytes, str]:
+    """Read FIRES from the supplied retail archive without materializing it."""
+    if not PC34_ARCHIVE.is_file():
+        raise FileNotFoundError("DM1 PC 3.4 archive is not staged")
+    with zipfile.ZipFile(PC34_ARCHIVE) as archive:
+        member = next((info for info in archive.infolist()
+                       if not info.is_dir() and Path(info.filename).name.upper() == "FIRES"), None)
+        if member is None:
+            raise FileNotFoundError("DM1 PC 3.4 archive has no FIRES member")
+        return archive.read(member), f"{PC34_ARCHIVE.name}::{member.filename}"
+
+
+def parse_mz(data: bytes, source_label: str) -> dict[str, Any]:
     vals = dict(zip(MZ_FIELDS, struct.unpack_from("<14H", data, 0)))
     if vals["e_magic"] != 0x5A4D:
-        raise ValueError(f"not MZ: {path}")
+        raise ValueError(f"not MZ: {source_label}")
     image_file_size = (vals["e_cp"] - 1) * 512 + (vals["e_cblp"] or 512)
     header_bytes = vals["e_cparhdr"] * 16
     entry_linear = vals["e_cs"] * 16 + vals["e_ip"]
     return {
-        "path": str(path),
+        "source": source_label,
         "size": len(data),
-        "sha256": sha256(path),
+        "sha256": sha256(data),
         "header_bytes": header_bytes,
         "load_image_bytes_from_mz_header": max(0, image_file_size - header_bytes),
         "lzexe_signature_at_relocation_table": data[vals["e_lfarlc"]: vals["e_lfarlc"] + 4].decode("ascii", errors="replace"),
@@ -148,59 +151,30 @@ def audit_seams() -> list[dict[str, Any]]:
     for seam in SOURCE_SEAMS:
         excerpt = numbered_excerpt(seam["file"], seam["lines"])
         missing = [needle for needle in seam["must"] if needle not in excerpt]
-        audited.append({**seam, "source_path": str(SOURCE_ROOT / seam["file"]), "ok": not missing, "missing": missing, "excerpt": excerpt})
+        audited.append({**seam, "source_path": str((SOURCE_ROOT / seam["file"]).relative_to(ROOT)), "ok": not missing, "missing": missing, "excerpt": excerpt})
     return audited
 
 
 def scan_runtime_artifacts() -> dict[str, Any]:
-    original_roots = [
-        (Path.home() / ".firestaff/data/firestaff-original-games/DM"),
-        REDMCSB_ROOT / "Reference",
-    ]
-    map_roots = original_roots + [REDMCSB_ROOT]
-    maps = sorted({str(p) for base in map_roots if base.exists() for p in base.rglob("*.MAP")})
-    unpack_tools = sorted({str(p) for p in REDMCSB_ROOT.rglob("*") if p.is_file() and ("unlz" in p.name.lower() or p.name.upper() in {"LZEXE.EXE", "TLINK.EXE"})})
+    map_roots = [REDMCSB_ROOT]
+    maps = sorted({str(p.relative_to(ROOT)) for base in map_roots if base.exists() for p in base.rglob("*.MAP")})
+    unpack_tools = sorted({str(p.relative_to(ROOT)) for p in REDMCSB_ROOT.rglob("*") if p.is_file() and ("unlz" in p.name.lower() or p.name.upper() in {"LZEXE.EXE", "TLINK.EXE"})})
 
-    fires_like: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for base in original_roots:
-        if not base.exists():
-            continue
-        for p in base.rglob("*"):
-            if not p.is_file() or not p.name.upper().startswith("FIRES"):
-                continue
-            digest = sha256(p)
-            key = f"{digest}:{p.stat().st_size}"
-            if key in seen:
-                continue
-            seen.add(key)
-            try:
-                mz = parse_mz(p)
-                loader_entry = dict(mz["compressed_loader_entry"])
-                if mz["lzexe_signature_at_relocation_table"] != "LZ91":
-                    loader_entry["safe_interpretation"] = "MZ entry only; not bound to a DM1 V1 PC34 runtime seam"
-                fires_like.append({
-                    "path": str(p),
-                    "size": mz["size"],
-                    "sha256": mz["sha256"],
-                    "mz": True,
-                    "header_bytes": mz["header_bytes"],
-                    "loader_entry": loader_entry,
-                    "stack_at_loader_entry": mz["stack_at_loader_entry"],
-                    "lzexe_signature_at_relocation_table": mz["lzexe_signature_at_relocation_table"],
-                    "runtime_claim": "none; inventory only",
-                })
-            except Exception as exc:
-                fires_like.append({
-                    "path": str(p),
-                    "size": p.stat().st_size,
-                    "sha256": digest,
-                    "mz": False,
-                    "error": str(exc),
-                    "runtime_claim": "none; inventory only",
-                })
+    fires_data, fires_label = load_original_fires()
+    fires_mz = parse_mz(fires_data, fires_label)
+    fires_like = [{
+        "source": fires_label,
+        "size": fires_mz["size"],
+        "sha256": fires_mz["sha256"],
+        "mz": True,
+        "header_bytes": fires_mz["header_bytes"],
+        "loader_entry": fires_mz["compressed_loader_entry"],
+        "stack_at_loader_entry": fires_mz["stack_at_loader_entry"],
+        "lzexe_signature_at_relocation_table": fires_mz["lzexe_signature_at_relocation_table"],
+        "runtime_claim": "none; archive inventory only",
+    }]
 
-    candidate_roots = [ROOT / "parity-evidence", ROOT / "verification-screens", ROOT / "tmp", Path("/tmp")]
+    candidate_roots = [ROOT / "parity-evidence", ROOT / "verification-screens"]
     dump_suffixes = {".bin", ".dump", ".mem", ".img"}
     dump_hits: list[str] = []
     for base in candidate_roots:
@@ -208,7 +182,7 @@ def scan_runtime_artifacts() -> dict[str, Any]:
             continue
         for p in base.rglob("*"):
             if p.is_file() and p.suffix.lower() in dump_suffixes and "fires" in p.name.lower():
-                dump_hits.append(str(p))
+                dump_hits.append(str(p.relative_to(ROOT)))
     return {
         "redmcsb_map_artifacts": maps,
         "candidate_fires_runtime_dumps": sorted(dump_hits),
@@ -240,7 +214,8 @@ def binding_contract() -> dict[str, Any]:
 
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    mz = parse_mz(ORIGINAL_FIRES)
+    fires_data, fires_label = load_original_fires()
+    mz = parse_mz(fires_data, fires_label)
     seams = audit_seams()
     artifacts = scan_runtime_artifacts()
     contract = binding_contract()
@@ -258,8 +233,8 @@ def main() -> int:
         "exact_remaining_blocker": blocker,
         "n2_only": True,
         "stock_fires": mz,
-        "source_root": str(SOURCE_ROOT),
-        "ibm_source_root": str(IBM_SOURCE),
+        "source_root": str(SOURCE_ROOT.relative_to(ROOT)),
+        "ibm_source_root": str(IBM_SOURCE.relative_to(ROOT)),
         "runtime_artifact_scan": artifacts,
         "source_seams": seams,
         "binding_contract": contract,
@@ -311,7 +286,7 @@ def main() -> int:
         f"Exact remaining blocker: {blocker}",
         "",
         "## What was investigated",
-        f"- Stock FIRES: `{ORIGINAL_FIRES}` size `{mz['size']}` sha256 `{mz['sha256']}`.",
+        f"- Stock FIRES: `{fires_label}` size `{mz['size']}` sha256 `{mz['sha256']}`.",
         f"- LZEXE signature at relocation table: `{mz['lzexe_signature_at_relocation_table']}`.",
         f"- Compressed loader entry: `{mz['compressed_loader_entry']['relative_cs_ip']}`; interpretation: `{mz['compressed_loader_entry']['safe_interpretation']}`.",
         f"- ReDMCSB `*.MAP` artifacts found: `{len(artifacts['redmcsb_map_artifacts'])}`.",
@@ -331,10 +306,10 @@ def main() -> int:
         "A debugger hit can be promoted only when the trace includes PSP/load segment, post-LZEXE transfer or map/decompressed-image evidence, symbol segment:offset, and observed hit CS:IP/context for each seam. Static compressed offsets and the MZ loader entry are explicitly rejected.",
         "",
         "## Artifacts",
-        f"- Manifest: `{OUT_DIR / 'manifest.json'}`",
-        f"- Trace contract: `{OUT_DIR / 'trace_binding_contract.json'}`",
-        f"- Runtime trace template: `{OUT_DIR / 'runtime_trace_template.json'}`",
-        f"- Guarded runbook: `{OUT_DIR / 'guarded_runtime_binding_runbook.md'}`",
+        f"- Manifest: `{(OUT_DIR / 'manifest.json').relative_to(ROOT)}`",
+        f"- Trace contract: `{(OUT_DIR / 'trace_binding_contract.json').relative_to(ROOT)}`",
+        f"- Runtime trace template: `{(OUT_DIR / 'runtime_trace_template.json').relative_to(ROOT)}`",
+        f"- Guarded runbook: `{(OUT_DIR / 'guarded_runtime_binding_runbook.md').relative_to(ROOT)}`",
         "",
         "## Non-claims",
     ]

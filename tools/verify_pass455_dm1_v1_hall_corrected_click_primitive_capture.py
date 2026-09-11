@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,17 +22,22 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass455_dm1_v1_hall_corrected_click_primitive_capture"
-ARTIFACT = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/hall-corrected-click-primitive-20260509")
-OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
+ARTIFACT = Path(os.environ.get(
+    "FIRESTAFF_DM1_CORRECTED_HALL_ARTIFACT_ROOT",
+    str(ROOT / ".codex-scratch" / "unavailable-artifacts" / "dm1-corrected-hall")))
+OUT_DIR = Path(os.environ.get(
+    "FIRESTAFF_CAPTURE_REPORT_ROOT",
+    str(ROOT / ".codex-scratch" / "reports" / PASS)))
 OUT_JSON = OUT_DIR / "manifest.json"
-OUT_MD = ROOT / "parity-evidence" / f"{PASS}.md"
-EXTERNAL_JSON = ARTIFACT / f"{PASS}.json"
+OUT_MD = OUT_DIR / f"{PASS}.md"
 EXPECTED = {
     "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
 }
-DATA_STAGE = Path("/Volumes/Extern-disk/legacy-workspace-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34")
+DATA_STAGE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_STAGE",
+    str(ROOT / ".codex-scratch" / "unavailable-artifacts" / "dm1-pc34-stage")))
 
 CLICK_RE = re.compile(
     r"^(?P<button>left|right)-click-mapped (?P<pcx>\d+),(?P<pcy>\d+) -> "
@@ -46,6 +52,13 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: fh.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def portable_path(path: Path | str) -> str:
+    try:
+        return Path(path).resolve().relative_to(ROOT).as_posix()
+    except (ValueError, OSError):
+        return f"<local-artifact>/{Path(path).name}"
 
 
 def expected_client(width: int, height: int, pcx: int, pcy: int) -> list[int]:
@@ -84,7 +97,7 @@ def image_rows(run: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in sorted(run.glob("image*.png")):
         rows.append({
-            "file": str(path.relative_to(ARTIFACT)),
+            "file": path.relative_to(ARTIFACT).as_posix(),
             "sha256": sha256(path),
             "bytes": path.stat().st_size,
         })
@@ -117,19 +130,23 @@ def run_summary(name: str) -> dict[str, Any]:
 
 
 def provenance() -> dict[str, Any]:
-    rows = {
-        "DUNGEON.DAT_sha256": sha256(DATA_STAGE / "DATA" / "DUNGEON.DAT"),
-        "GRAPHICS.DAT_sha256": sha256(DATA_STAGE / "DATA" / "GRAPHICS.DAT"),
-        "TITLE_sha256": sha256(DATA_STAGE / "TITLE"),
-        "stage": str(DATA_STAGE),
+    required = {
+        "DUNGEON.DAT_sha256": DATA_STAGE / "DATA" / "DUNGEON.DAT",
+        "GRAPHICS.DAT_sha256": DATA_STAGE / "DATA" / "GRAPHICS.DAT",
+        "TITLE_sha256": DATA_STAGE / "TITLE",
     }
+    rows = {
+        key: sha256(path) if path.is_file() else None
+        for key, path in required.items()
+    }
+    rows["stage"] = portable_path(DATA_STAGE)
     return rows
 
 
 def main() -> int:
     if not ARTIFACT.exists():
         OUT_DIR.mkdir(parents=True, exist_ok=True)
-        payload = {"schema": PASS + ".v1", "status": "BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING", "artifactRoot": str(ARTIFACT), "blocker": "external corrected-click capture artifact is not mounted on this host"}
+        payload = {"schema": PASS + ".v1", "status": "BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING", "artifactRoot": portable_path(ARTIFACT), "blocker": "local corrected-click capture artifact is unavailable"}
         OUT_JSON.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
         OUT_MD.write_text("# Pass455 DM1 V1 Hall corrected click primitive capture\n\nStatus: BLOCKED_EXTERNAL_CORRECTED_CLICK_ARTIFACT_MISSING\n", encoding="utf-8")
         print(payload["status"])
@@ -189,7 +206,7 @@ def main() -> int:
         "schema": f"{PASS}.v1",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "status": status,
-        "artifactRoot": str(ARTIFACT),
+        "artifactRoot": portable_path(ARTIFACT),
         "pc34Provenance": prov,
         "expectedPc34Provenance": EXPECTED,
         "runs": runs,
@@ -206,14 +223,12 @@ def main() -> int:
     }
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     OUT_JSON.write_text(json.dumps(data, indent=2) + "\n")
-    ARTIFACT.mkdir(parents=True, exist_ok=True)
-    EXTERNAL_JSON.write_text(json.dumps(data, indent=2) + "\n")
     lines = [
         f"# {PASS}",
         "",
         f"- status: `{status}`",
-        f"- artifact root: `{ARTIFACT}`",
-        f"- external manifest: `{EXTERNAL_JSON}`",
+        f"- artifact root: `{portable_path(ARTIFACT)}`",
+        f"- manifest: `{portable_path(OUT_JSON)}`",
         "- parity claim: corrected click primitive and candidate transition are proven; full pixel parity is still handled by pass449/pass450 comparator gates.",
         "",
         "## Evidence summary",
@@ -235,7 +250,6 @@ def main() -> int:
     OUT_MD.write_text("\n".join(lines) + "\n")
     print(f"{status} wrote {OUT_JSON}")
     print(f"{status} wrote {OUT_MD}")
-    print(f"{status} wrote {EXTERNAL_JSON}")
     return 0 if not errors and corrected else 1
 
 

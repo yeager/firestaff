@@ -77,6 +77,7 @@ output=opengl
 [dosbox]
 machine=svga_paradise
 memsize=4
+quit warning=false
 
 [cpu]
 core=normal

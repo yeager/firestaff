@@ -25,8 +25,10 @@ Optional:
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
   FS_UAE=/path/to/fs-uae                       (default: fs-uae)
 
-All original ADFs are mounted write-protected.  The output holds only host
-captures, an ephemeral FS-UAE config and SHA-256 receipt.  A produced image
+All original ADFs are mounted write-protected. The helper accepts only
+FS-UAE-native emulator captures as evidence. If an Xvfb/SDL session rejects
+the screenshot shortcut it writes a separately named diagnostic host image,
+records the failed native request, and exits non-zero. A produced native image
 is an original emulator capture, not a Firestaff pixel-parity claim.
 EOF
 }
@@ -53,7 +55,7 @@ for required in "$kickstart" "$disk1" "$disk2" "$disk3"; do
         exit 3
     fi
 done
-for required in "$fsuae" Xvfb scrot sha256sum; do
+for required in "$fsuae" Xvfb xdotool scrot sha256sum; do
     command -v "$required" >/dev/null 2>&1 || {
         echo "ERROR: required capture tool is unavailable: $required" >&2
         exit 4
@@ -95,18 +97,74 @@ trap cleanup EXIT INT TERM
 
 DISPLAY="$display" "$fsuae" --stdout "$config" >"$out/fs-uae.log" 2>&1 &
 uae_pid=$!
+
+find_fsuae_window() {
+    local attempt window
+    for attempt in $(seq 1 50); do
+        window="$(DISPLAY="$display" xdotool search --name 'FS-UAE' 2>/dev/null | head -n 1 || true)"
+        if [[ -n "$window" ]]; then
+            printf '%s\n' "$window"
+            return 0
+        fi
+        sleep 0.1
+    done
+    return 1
+}
+
+window="$(find_fsuae_window || true)"
+if [[ -z "$window" ]]; then
+    echo "ERROR: could not find the FS-UAE window for native screenshots" >&2
+    exit 6
+fi
+
 previous=0
 index=0
+expected_capture_count=0
+native_capture_count=0
 for second in $capture_seconds; do
+    expected_capture_count=$((expected_capture_count + 1))
     sleep "$((second - previous))"
     index=$((index + 1))
-    DISPLAY="$display" scrot --overwrite "$out/startup-${index}-${second}s.png"
+    # FS-UAE emits a full window, a crop and its emulated "real" framebuffer
+    # for one screenshot request.  Only the latter is a useful native frame;
+    # do not race the writer and rename the first (host/window) file instead.
+    before_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-real-*.png' | wc -l | tr -d ' ')"
+    # F12+S is FS-UAE's documented screenshot shortcut.  It records the
+    # emulated Amiga frame and therefore avoids a host Xvfb-root capture.
+    DISPLAY="$display" xdotool key --window "$window" F12+s
+    for attempt in $(seq 1 50); do
+        latest="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-real-*.png' -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
+        after_count="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-real-*.png' | wc -l | tr -d ' ')"
+        if [[ "$after_count" -gt "$before_count" && -n "$latest" ]]; then
+            mv "$latest" "$out/startup-${index}-${second}s.png"
+            native_capture_count=$((native_capture_count + 1))
+            break
+        fi
+        sleep 0.1
+    done
+    if [[ ! -f "$out/startup-${index}-${second}s.png" ]]; then
+        # Some SDL/Xvfb combinations do not deliver XTest host shortcuts to
+        # FS-UAE while its keyboard is grabbed. Keep a diagnostic image for
+        # maintainers, but it is deliberately outside the startup-* evidence
+        # set and never passes as an original-emulator capture.
+        DISPLAY="$display" scrot --overwrite "$out/diagnostic-host-root-${index}-${second}s.png"
+    fi
     previous=$second
 done
+
+# A partial session is useful for diagnosis, but it is not a successful
+# capture of the caller's requested timeline.  In particular, do not allow an
+# emulator that exited between two requested timestamps to be reported as a
+# complete original-capture result merely because the first host fallback was
+# written successfully.
+actual_capture_count="$(find "$out" -maxdepth 1 -type f -name 'startup-*.png' | wc -l | tr -d ' ')"
 
 {
     printf 'schema=firestaff.csb.amiga.startup.capture.v1\n'
     printf 'scope=original FS-UAE startup capture; no Firestaff parity claim\n'
+    printf 'capture_backend=fs-uae-native\n'
+    printf 'requested_native_frames=%s\n' "$expected_capture_count"
+    printf 'captured_native_frames=%s\n' "$native_capture_count"
     printf 'kickstart_sha256=%s\n' "$(sha256sum "$kickstart" | awk '{print $1}')"
     printf 'disk1_sha256=%s\n' "$(sha256sum "$disk1" | awk '{print $1}')"
     printf 'disk2_sha256=%s\n' "$(sha256sum "$disk2" | awk '{print $1}')"
@@ -115,5 +173,10 @@ done
         printf 'frame_sha256=%s\n' "$(sha256sum "$image" | awk '{print $1}')"
     done
 } >"$out/receipt.txt"
+
+if [[ "$actual_capture_count" -ne "$expected_capture_count" ]]; then
+    echo "ERROR: requested ${expected_capture_count} CSB Amiga native startup frame(s), captured ${actual_capture_count}; host diagnostics are not evidence" >&2
+    exit 7
+fi
 
 echo "PASS: wrote $(find "$out" -maxdepth 1 -name 'startup-*.png' -type f | wc -l | tr -d ' ') original CSB Amiga startup frame(s)"

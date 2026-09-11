@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 static void put16le(unsigned char *p, unsigned short value)
@@ -55,7 +56,7 @@ static int test_legacy_load_shim_cannot_claim_success(void)
 {
     DM2_V1_GameState state;
 
-    dm2_v1_init(&state, "/tmp/firestaff-dm2-load-shim");
+    dm2_v1_init(&state, ".codex-scratch/firestaff-dm2-load-shim");
     state.party_x = 17;
     state.party_y = 23;
     state.party_dir = 2;
@@ -76,6 +77,7 @@ int main(void)
     unsigned char dungeon[512];
     char path[256];
     FILE *file;
+    const char *scratch_root;
     DM2_V1_BootProfile profile;
     DM2_V1_BootNewDungeonReceipt receipt;
     DM2_V1_DungeonData *active;
@@ -85,8 +87,12 @@ int main(void)
     if (!test_legacy_load_shim_cannot_claim_success()) return 1;
     dungeon_size = build_pc_g1_fixture(dungeon, sizeof(dungeon));
     if (dungeon_size == 0) return 1;
-    snprintf(path, sizeof(path), "/tmp/firestaff-dm2-load-new-%ld.dat",
-             (long)getpid());
+    /* Test artifacts must remain in the project-owned scratch area rather
+     * than leaking into the host's global temporary directory. */
+    scratch_root = getenv("FIRESTAFF_TEST_SCRATCH");
+    if (!scratch_root || !scratch_root[0]) scratch_root = ".codex-scratch";
+    snprintf(path, sizeof(path), "%s/firestaff-dm2-load-new-%ld.dat",
+             scratch_root, (long)getpid());
     file = fopen(path, "wb");
     if (!file || fwrite(dungeon, 1, dungeon_size, file) != dungeon_size) {
         if (file) fclose(file);

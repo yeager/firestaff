@@ -504,6 +504,20 @@ static int test_f0207_c38_creature_projectile_has_runtime_receipt(void) {
         int sawReceipt = 0;
 
         if (!build_world(&world)) return 1;
+        /* F0212 allocates a genuine C14-layout free record, not only a
+         * host projectile-list slot. This bounded RAM fixture supplies it. */
+        world.things->projectiles = calloc(1, sizeof(*world.things->projectiles));
+        world.things->rawThingData[THING_TYPE_PROJECTILE] = calloc(1, 8);
+        if (!world.things->projectiles ||
+            !world.things->rawThingData[THING_TYPE_PROJECTILE]) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+        world.things->projectileCount = 1;
+        world.things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+        world.things->projectiles[0].next = THING_NONE;
+        world.things->rawThingData[THING_TYPE_PROJECTILE][0] = 0xff;
+        world.things->rawThingData[THING_TYPE_PROJECTILE][1] = 0xff;
         memset(&input, 0, sizeof(input));
         memset(&result, 0, sizeof(result));
         memset(&event, 0, sizeof(event));
@@ -524,13 +538,22 @@ static int test_f0207_c38_creature_projectile_has_runtime_receipt(void) {
         world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
         world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
         world.things->groups[0].health[0] = 1000;
+        /* F0209 requires a complete C04 and ACTIVE_GROUP receipt, not
+         * just decoded type/next. Face south toward the party so C38
+         * reaches F0207 instead of its two-tick turn/retry branch. */
+        test_sync_group_raw_c04_record(world.things, 0);
+        world.things->squareFirstThings[0] = (unsigned short)(THING_TYPE_GROUP << 10);
+        world.pc34ActiveGroupSourceCount = 1;
+        world.pc34ActiveGroupDirections[0] = 2;
         world.creatureAICount = 1;
+        world.creatureAI[0].reserved0 = 0; /* C04 owner identity. */
         world.creatureAI[0].stateKind = AI_STATE_ATTACK;
         world.creatureAI[0].creatureType = 23;
         world.creatureAI[0].groupMapIndex = 0;
         world.creatureAI[0].groupMapX = 1;
         world.creatureAI[0].groupMapY = 1;
         world.creatureAI[0].groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+        world.gameTick = 300; /* Distinguish an attack write from initial zero. */
         F0730_COMBAT_RngInit_Compat(&world.masterRng, (uint32_t)seed);
 
         event.kind = TIMELINE_EVENT_CREATURE_REACTION;
@@ -556,13 +579,19 @@ static int test_f0207_c38_creature_projectile_has_runtime_receipt(void) {
                 world.projectiles.entries[0].ownerKind == PROJECTILE_OWNER_CREATURE &&
                 world.projectiles.entries[0].ownerIndex == 0 &&
                 world.timeline.count >= 1) {
+                /* The orchestrator increments gameTick after dispatch. */
+                if (world.lifecycle.lastCreatureAttackTime != event.fireAtTick) {
+                    fprintf(stderr, "FAIL: F0207 GROUP.C:1691 must publish attack time before projectile creation\n");
+                    F0883_WORLD_Free_Compat(&world);
+                    return 1;
+                }
                 F0883_WORLD_Free_Compat(&world);
                 return 0;
             }
         }
         F0883_WORLD_Free_Compat(&world);
     }
-    fprintf(stderr, "FAIL: F0207 C38 projectile runtime receipt\n");
+    fprintf(stderr, "FAIL: F0207 C38 projectile runtime receipt (complete C04/ACTIVE_GROUP/C14 fixture)\n");
     return 1;
 }
 
@@ -618,17 +647,19 @@ static int test_lord_chaos_adjacent_random_retry(void) {
     ok &= expect(world.things->squareFirstThings[0] == (unsigned short)((THING_TYPE_SENSOR << 10) | 0),
                  "Lord Chaos retry leaves original blocked square chain untouched");
     ok &= expect(world.things->squareFirstThings[1] == (unsigned short)((THING_TYPE_GROUP << 10) | 0),
-                 "Lord Chaos random adjacent retry links group to allowed east square");
+                 "Lord Chaos random adjacent retry links group to allowed south square");
     ok &= expect(world.things->groups[0].next == THING_ENDOFLIST,
                  "Lord Chaos random adjacent retry links onto empty adjacent chain");
+    /* BASE.C F0029:1765 with seed 2 yields RANDOM(4) values 0,3;
+     * TIMELINE.C F0252:1549-1551 maps direction 3 to Y+1, not X+1. */
     ok &= expect(world.creatureAICount == 1 &&
-                 world.creatureAI[0].groupMapX == 2 &&
-                 world.creatureAI[0].groupMapY == 1,
+                 world.creatureAI[0].groupMapX == 1 &&
+                 world.creatureAI[0].groupMapY == 2,
                  "Lord Chaos random adjacent retry seeds active state at adjacent square");
     ok &= expect(world.timeline.count == 1 &&
                  world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_TICK &&
-                 world.timeline.events[0].mapX == 2 &&
-                 world.timeline.events[0].mapY == 1,
+                 world.timeline.events[0].mapX == 1 &&
+                 world.timeline.events[0].mapY == 2,
                  "Lord Chaos random adjacent retry schedules C37 at adjacent square");
 
     F0883_WORLD_Free_Compat(&world);
@@ -709,6 +740,17 @@ static int rebuild_as_two_map_teleporter_world(struct GameWorld_Compat* world) {
     world->things->teleporterCount = 1;
     world->things->thingCounts[THING_TYPE_TELEPORTER] = 1;
     world->things->teleporters = teleporters;
+    /* ReDMCSB DEFS.H TELEPORTER PC bitfields: Next, packed XY/rotation/
+     * scope/audible, then target map in the high byte. The runtime requires
+     * the C01 source record as well as its decoded view. */
+    world->things->rawThingData[THING_TYPE_TELEPORTER] = calloc(1, 6);
+    if (!world->things->rawThingData[THING_TYPE_TELEPORTER]) return 0;
+    {
+        unsigned char* raw = world->things->rawThingData[THING_TYPE_TELEPORTER];
+        raw[0] = 0; raw[1] = 0x0c; /* C03 sensor zero. */
+        raw[2] = 0x22; raw[3] = 0xa0; /* X=2 Y=1, creatures, audible. */
+        raw[4] = 0; raw[5] = 1;
+    }
     world->things->sensors[0].next = THING_ENDOFLIST;
     world->partyMapIndex = 0;
     world->party.mapIndex = 0;

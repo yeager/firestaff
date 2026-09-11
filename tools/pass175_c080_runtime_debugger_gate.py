@@ -21,9 +21,17 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
-SOURCE_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-ORIGINAL_ROOT = Path("~/.openclaw/data/firestaff-original-games/DM").expanduser()
-DM_STAGE = ORIGINAL_ROOT / "_extracted/dm-pc34/DungeonMasterPC34"
+# Keep the gate reproducible from this workspace.  The source and executable
+# paths may be overridden for an explicitly hash-identified local capture,
+# but must never silently select an old private-agent staging tree.
+SOURCE_ROOT = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    REPO / "reference/redmcsb-20210206/Toolchains/Common/Source",
+))
+DM_STAGE = Path(os.environ.get(
+    "FIRESTAFF_DM1_PC34_STAGE",
+    REPO / ".codex-scratch/dm1-pc34-stage/DungeonMasterPC34",
+))
 DM_EXE = DM_STAGE / "DM.EXE"
 OUT = REPO / "parity-evidence/verification/pass175_c080_runtime_debugger_gate"
 
@@ -217,8 +225,8 @@ def main() -> int:
         "click": {"screen_x": 111, "screen_y": 82, "button": "left"},
         "repo": str(REPO),
         "source_root": str(SOURCE_ROOT),
-        "allowed_original_roots": [str(ORIGINAL_ROOT), str(ORIGINAL_ROOT / "_extracted")],
-        "forbidden_roots_note": "<private-host>/<private-host-ip> not used.",
+        "allowed_original_roots": [str(DM_STAGE)],
+        "forbidden_roots_note": "No private-agent staging path is selected.",
         "dm_exe": str(DM_EXE),
         "tools": tools,
         "artifacts": artifacts,

@@ -73,6 +73,7 @@ autolock=false
 machine=vgaonly
 captures=${OUT_DIR}/dosbox-hotkey-capture
 memsize=4
+quit warning=false
 
 [cpu]
 core=normal

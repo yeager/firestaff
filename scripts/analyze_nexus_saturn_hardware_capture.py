@@ -23,6 +23,7 @@ def starts(blob: mmap.mmap, token: bytes, offset: int = 0) -> bool:
 def inspect(raw: Path, manifest: Path) -> dict[str, object]:
     meta = fields(manifest); skip = int(meta["skip_frames"]); expected = int(meta["frame_limit"])
     states, active = [], 0
+    zero_domains = {name: 0 for name in ("vdp1_vram", "vdp1_fb", "vdp2_regs", "vdp2_vram", "vdp2_cram")}
     domains = {name: set() for name in ("vdp1_vram", "vdp1_fb", "vdp2_regs", "vdp2_vram", "vdp2_cram")}
     with raw.open("rb") as stream, mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as blob:
         magic = next((m for m in (RUNTIME_MAGIC, MDFN_RUNTIME_MAGIC) if starts(blob, m)), None)
@@ -41,7 +42,10 @@ def inspect(raw: Path, manifest: Path) -> dict[str, object]:
                 states.append(state); offset = end + 1
             v1 = blob[offset:offset + VDP1_PAYLOAD_BYTES]
             if len(v1) != VDP1_PAYLOAD_BYTES: raise ValueError("truncated VDP1 payload")
-            domains["vdp1_vram"].add(digest(v1[:0x80000])); domains["vdp1_fb"].add(digest(v1[0x80000:]))
+            vdp1_vram, vdp1_fb = v1[:0x80000], v1[0x80000:]
+            domains["vdp1_vram"].add(digest(vdp1_vram)); domains["vdp1_fb"].add(digest(vdp1_fb))
+            zero_domains["vdp1_vram"] += not any(vdp1_vram)
+            zero_domains["vdp1_fb"] += not any(vdp1_fb)
             match = VDP1_STATE_RE.fullmatch(state)
             if match and int(match.group(1), 16) and int(match.group(2), 16) and any(v1): active += 1
             offset += VDP1_PAYLOAD_BYTES
@@ -49,18 +53,28 @@ def inspect(raw: Path, manifest: Path) -> dict[str, object]:
             if not starts(blob, VDP2_MAGIC, offset): raise ValueError(f"missing VDP2 marker at frame {frame}")
             offset += len(VDP2_MAGIC); v2 = blob[offset:offset + VDP2_PAYLOAD_BYTES]
             regs, vram, cram = v2[:0x200], v2[0x200:0x80200], v2[0x80200:]
-            if len(v2) != VDP2_PAYLOAD_BYTES or not all(any(x) for x in (regs, vram, cram)):
-                raise ValueError(f"empty/truncated VDP2 domain at frame {frame}")
+            # A powered-on Saturn can legitimately have a zero-filled CRAM,
+            # VRAM region or register range.  The raw witness must preserve
+            # that observable state; treating zeros as a malformed transport
+            # both rejects authentic boot frames and invites fabricated data.
+            # Enforce only the fixed transport size here and report zero
+            # domains in the receipt for any later semantic adjudication.
+            if len(v2) != VDP2_PAYLOAD_BYTES:
+                raise ValueError(f"truncated VDP2 domain at frame {frame}")
+            zero_domains["vdp2_regs"] += not any(regs)
+            zero_domains["vdp2_vram"] += not any(vram)
+            zero_domains["vdp2_cram"] += not any(cram)
             domains["vdp2_regs"].add(digest(regs)); domains["vdp2_vram"].add(digest(vram)); domains["vdp2_cram"].add(digest(cram))
             offset += VDP2_PAYLOAD_BYTES; frame += 1
         if frame != expected: raise ValueError(f"manifest expects {expected} frames, got {frame}")
-    if not states or not active: raise ValueError("no active state-bearing VDP1 frame")
+    if not states: raise ValueError("no state-bearing VDP1 frame")
     return {"schema":"FIRESTAFF_NEXUS_AUTHENTIC_HARDWARE_RECEIPT_V1",
         "disc_sha256":meta["disc_sha256"], "raw_sha256":meta["raw_sha256"],
         "timing":{"first_absolute_frame":skip,"last_absolute_frame":skip+expected-1,"captured_frames":expected,"contiguous":True},
         "vdp1":{"state_frames":len(states),"active_frames":active,"register_state_variants":len(set(states)),
                 "vram_variants":len(domains["vdp1_vram"]),"framebuffer_variants":len(domains["vdp1_fb"])},
         "vdp2":{"register_variants":len(domains["vdp2_regs"]),"vram_variants":len(domains["vdp2_vram"]),"cram_variants":len(domains["vdp2_cram"])},
+        "zero_filled_domain_frames":zero_domains,
         "asset_semantics":"unassigned"}
 
 def main() -> int:

@@ -2,8 +2,11 @@
 # Pass 462: Linux/N2 original DM1 PC34 TITLE raw screenshot capture.
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STAGE="${DM1_ORIGINAL_STAGE_DIR:-/home/trv2/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34}"
-ROOT="${OUT_ROOT:-/home/trv2/.firestaff/data/firestaff-n2-runs/pass462-title-end-capture-parity}"
+STAGE="${DM1_ORIGINAL_STAGE_DIR:-}"
+# Capture artifacts are local, disposable verification material.  Keep the
+# default in the repository scratch area rather than embedding a machine- or
+# user-specific location in a reusable script.
+ROOT="${OUT_ROOT:-$REPO/.codex-scratch/pass462-title-end-capture-parity}"
 STAMP="${PASS462_STAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 OUT_DIR="${OUT_DIR:-$ROOT/$STAMP-title}"
 DOSBOX="${DOSBOX:-/usr/bin/dosbox}"
@@ -12,12 +15,19 @@ WAIT_BEFORE_SHOTS_MS="${WAIT_BEFORE_SHOTS_MS:-2500}"
 WAIT_BETWEEN_SHOTS_MS="${WAIT_BETWEEN_SHOTS_MS:-180}"
 WAIT_AFTER_SELECTOR_MS="${WAIT_AFTER_SELECTOR_MS:-700}"
 mkdir -p "$OUT_DIR"
-if [ ! -f "$STAGE/DM.EXE" ]; then echo "missing DM.EXE stage: $STAGE" >&2; exit 3; fi
+if [ -z "$STAGE" ] || [ ! -f "$STAGE/DM.EXE" ]; then
+    echo "missing DM.EXE stage; set DM1_ORIGINAL_STAGE_DIR to a local original PC 3.4 staging directory" >&2
+    exit 3
+fi
 cat > "$OUT_DIR/dosbox-title-pass462.conf" <<CONF
 [sdl]
 fullscreen=false
 output=surface
 [dosbox]
+# Current DOSBox-X uses this [dosbox] setting for its exit confirmation.
+# The matching command-line override below protects against a conflicting
+# user configuration when DOSBOX points at dosbox-x.
+quit warning=false
 machine=vgaonly
 memsize=4
 [cpu]
@@ -34,7 +44,11 @@ cat > "$OUT_DIR/run-title-xvfb.sh" <<RUN
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$OUT_DIR"
-"$DOSBOX" -conf "$OUT_DIR/dosbox-title-pass462.conf" >"$OUT_DIR/dosbox-title-pass462.log" 2>&1 &
+if [ "\$(basename "$DOSBOX")" = "dosbox-x" ]; then
+  "$DOSBOX" -exit -set "dosbox quit warning=false" -conf "$OUT_DIR/dosbox-title-pass462.conf" >"$OUT_DIR/dosbox-title-pass462.log" 2>&1 &
+else
+  "$DOSBOX" -conf "$OUT_DIR/dosbox-title-pass462.conf" >"$OUT_DIR/dosbox-title-pass462.log" 2>&1 &
+fi
 pid=\$!
 cleanup(){ kill \$pid >/dev/null 2>&1 || true; wait \$pid >/dev/null 2>&1 || true; }
 trap cleanup EXIT

@@ -152,6 +152,9 @@ output=surface
 autolock=false
 
 [dosbox]
+# DOSBox-X owns this option in the [dosbox] section.  Keep manual capture
+# sessions free of its host-side Yes/No exit prompt as well.
+quit warning=false
 machine=vgaonly
 captures=$CAPTURE_DIR
 memsize=4
@@ -216,13 +219,19 @@ EOF
 fi
 
 echo "[pass-47] found DOSBox binary: $DOSBIN"
+DOSBOX_ARGS=(-conf "$CONF_PATH")
+if [[ "$(basename "$DOSBIN")" == "dosbox-x" ]]; then
+    # DOSBox-X also accepts this explicit startup override; it protects a
+    # session if a user-level configuration later re-enables quit warnings.
+    DOSBOX_ARGS=(-set "dosbox quit warning=false" "${DOSBOX_ARGS[@]}")
+fi
 if [[ $DO_RUN -eq 1 ]]; then
     echo "[pass-47] launching DOSBox"
-    exec "$DOSBIN" -conf "$CONF_PATH"
+    exec "$DOSBIN" "${DOSBOX_ARGS[@]}"
 else
     echo ""
     echo "To launch DOSBox with the deterministic config, run:"
-    echo "    $DOSBIN -conf $CONF_PATH"
+    echo "    $DOSBIN ${DOSBOX_ARGS[*]}"
     echo "Then inside the DOSBox prompt type:"
     echo "    DM"
     echo "and use CTRL+F5 for screenshots into $CAPTURE_DIR."
