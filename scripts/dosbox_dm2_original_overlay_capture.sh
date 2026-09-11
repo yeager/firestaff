@@ -76,9 +76,13 @@
 #   NEW_FILE_TIMEOUT_MS=2500    how long to wait for new raw screenshots.
 #   DM2_DOSBOX_CAPTURE_BACKEND=host
 #        verification-only fallback when DOSBox's Ctrl+F5 binding does not
-#        write captures on the current X11 host.  Captures the DOSBox window,
-#        crops its 4:3 game canvas, and nearest-neighbour normalizes it to
-#        320x200.  Requires scrot; never used by Firestaff at runtime.
+#        write captures on the current X11 host.  Captures the DOSBox window
+#        through ImageMagick's X11 server-image path (XGetImage), which does
+#        not composite the host pointer.  It crops the trailing 4:3 game
+#        canvas and nearest-neighbour normalizes it to 320x200.  Requires
+#        ImageMagick's `import`; never used by Firestaff at runtime.  The
+#        legacy screen-compositor/scrot path is intentionally not accepted as
+#        original-capture evidence because it can include the host cursor.
 
 set -euo pipefail
 
@@ -119,6 +123,7 @@ KEY_LOG="${OUT_DIR}/dm2-overlay-route-keys.log"
 SHOT_LABEL_MANIFEST="${OUT_DIR}/dm2_original_overlay_shot_labels.tsv"
 RAW_MANIFEST="${OUT_DIR}/dm2_raw_manifest.tsv"
 RAW_HEALTH_MANIFEST="${OUT_DIR}/dm2_raw_frame_health.json"
+CAPTURE_PROVENANCE_MANIFEST="${OUT_DIR}/dm2_capture_backend.json"
 CROP_MANIFEST="${OUT_DIR}/dm2_viewport_224x136_manifest.tsv"
 CROP_DIR="${OUT_DIR}/viewport_224x136"
 SCREENSHOT_DIR="${OUT_DIR}/screenshots_320x200"
@@ -602,7 +607,16 @@ shot() {
         host_capture_index=$((host_capture_index + 1))
         raw="${capture_dir}/host-window-${host_capture_index}.png"
         out="${capture_dir}/host-${host_capture_index}.png"
-        scrot --window "$window" --overwrite --silent "$raw"
+        # `import -window` obtains the X11 server drawable with XGetImage.
+        # Unlike a compositor/root-screen grab, that readback has no host
+        # cursor plane to blend into a purported original game frame.  Do not
+        # replace this with scrot: a visible desktop cursor invalidates an
+        # otherwise useful image-diff capture.
+        import -silent -window "$window" "$raw"
+        [[ -s "$raw" ]] || {
+            echo "ERROR: X11 server-image capture produced no frame: $raw" >&2
+            exit 9
+        }
         python3 - "$raw" "$out" <<'PY'
 from pathlib import Path
 from PIL import Image
@@ -1048,6 +1062,41 @@ PY
     echo "[pass-H2313] normalized DM2 viewport crops: ${CROP_MANIFEST}"
 }
 
+write_capture_provenance() {
+    local backend="$1"
+    python3 - "${CAPTURE_PROVENANCE_MANIFEST}" "$backend" <<'PY'
+from datetime import datetime, timezone
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+backend = sys.argv[2]
+if backend == "host":
+    capture = {
+        "kind": "x11-server-image",
+        "tool": "ImageMagick import -window",
+        "cursorPolicy": "host cursor excluded by XGetImage server drawable readback",
+        "promotionRule": "Use only with the route, source-lock, health and same-state pair gates.",
+    }
+else:
+    capture = {
+        "kind": "dosbox-internal-screenshot",
+        "tool": "DOSBox Ctrl+F5",
+        "cursorPolicy": "host cursor is outside DOSBox's internal framebuffer",
+        "promotionRule": "Use only with the route, source-lock, health and same-state pair gates.",
+    }
+payload = {
+    "schema": "dm2_original_capture_backend.v1",
+    "backend": backend,
+    "capturedAt": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+    "capture": capture,
+    "honesty": "Backend provenance only; it does not establish route semantics or pixel parity.",
+}
+path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+PY
+}
+
 case "${mode}" in
     route-template)
         print_route_template
@@ -1101,8 +1150,8 @@ case "${mode}" in
         case "${DM2_DOSBOX_CAPTURE_BACKEND:-emulator}" in
             emulator) ;;
             host)
-                if ! command -v scrot >/dev/null 2>&1; then
-                    echo "ERROR: DM2_DOSBOX_CAPTURE_BACKEND=host requires scrot" >&2
+                if ! command -v import >/dev/null 2>&1; then
+                    echo "ERROR: DM2_DOSBOX_CAPTURE_BACKEND=host requires ImageMagick import for cursor-free X11 capture" >&2
                     exit 7
                 fi
                 export DM2_DOSBOX_CAPTURE_OUT_DIR="${OUT_DIR}"
@@ -1126,8 +1175,9 @@ case "${mode}" in
             exit 6
         fi
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" \
-              "${CROP_MANIFEST}" "${SIZE_LOG}"
+              "${CROP_MANIFEST}" "${SIZE_LOG}" "${CAPTURE_PROVENANCE_MANIFEST}"
         rm -f "${OUT_DIR}"/*.png "${CROP_DIR}"/*.ppm "${CROP_DIR}"/*.png
+        write_capture_provenance "${DM2_DOSBOX_CAPTURE_BACKEND:-emulator}"
         # -exit handles guest termination; the explicit [dosbox] override
         # disables the host confirmation dialog on manual harness shutdown.
         "${DOSBOX}" -exit -set "dosbox quit warning=false" -conf "${CONF}" >"${LOG}" 2>&1 &
