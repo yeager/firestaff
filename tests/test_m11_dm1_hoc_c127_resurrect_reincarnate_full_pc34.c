@@ -17,14 +17,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #ifdef _WIN32
 #include <direct.h>
 #define TEST_MKDIR(path) _mkdir(path)
+#define TEST_PATH_IS_DIR(mode) (((mode) & _S_IFDIR) == _S_IFDIR)
 #else
-#include <sys/stat.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_PATH_IS_DIR(mode) S_ISDIR(mode)
 #endif
 
 unsigned short G2157_;
@@ -605,6 +607,39 @@ static void clear_party(M11_GameViewState* state) {
     }
 }
 
+static int pc34_media_path_is_usable(const char* path) {
+    char dungeonPath[1200];
+    char graphicsPath[1200];
+    struct stat pathStat;
+
+    if (!path || !path[0] || access(path, R_OK) != 0 ||
+        stat(path, &pathStat) != 0) {
+        return 0;
+    }
+    /* An archive is a valid direct, no-extraction input.  For a directory,
+     * require the two PC 3.4 core members instead of treating an empty
+     * .firestaff/data/dm1 directory as playable media. */
+    if (!TEST_PATH_IS_DIR(pathStat.st_mode)) {
+        return 1;
+    }
+    if (snprintf(dungeonPath, sizeof(dungeonPath), "%s/DATA/DUNGEON.DAT", path) >=
+            (int)sizeof(dungeonPath) ||
+        snprintf(graphicsPath, sizeof(graphicsPath), "%s/DATA/GRAPHICS.DAT", path) >=
+            (int)sizeof(graphicsPath)) {
+        return 0;
+    }
+    if (access(dungeonPath, R_OK) == 0 && access(graphicsPath, R_OK) == 0) {
+        return 1;
+    }
+    if (snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", path) >=
+            (int)sizeof(dungeonPath) ||
+        snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", path) >=
+            (int)sizeof(graphicsPath)) {
+        return 0;
+    }
+    return access(dungeonPath, R_OK) == 0 && access(graphicsPath, R_OK) == 0;
+}
+
 static int choose_data_dir(char* defaultDataDir, size_t defaultDataDirSize,
                            const char** outDataDir) {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -615,7 +650,7 @@ static int choose_data_dir(char* defaultDataDir, size_t defaultDataDirSize,
     if (!dataDir || !dataDir[0]) {
         dataDir = NULL;
     }
-    if (dataDir && access(dataDir, R_OK) == 0) {
+    if (pc34_media_path_is_usable(dataDir)) {
         *outDataDir = dataDir;
         return 1;
     }
@@ -625,7 +660,7 @@ static int choose_data_dir(char* defaultDataDir, size_t defaultDataDirSize,
     }
     snprintf(defaultDataDir, defaultDataDirSize, "%s/.firestaff/data/dm1",
              home);
-    if (access(defaultDataDir, R_OK) == 0) {
+    if (pc34_media_path_is_usable(defaultDataDir)) {
         *outDataDir = defaultDataDir;
         return 1;
     }
@@ -635,8 +670,8 @@ static int choose_data_dir(char* defaultDataDir, size_t defaultDataDirSize,
 int main(void) {
     char defaultDataDir[1024];
     const char* dataDir = NULL;
+    char temporaryRoot[1024];
     char saveTemplate[384];
-    const char* temporaryRoot = ".codex-scratch";
     char savePath[512];
     M11_GameLaunchSpec spec;
     M11_GameViewState state;
@@ -654,11 +689,27 @@ int main(void) {
     unsigned short bManaMaxBefore;
     unsigned short chestPickup = THING_NONE;
     unsigned short chestRemainder = THING_ENDOFLIST;
+    size_t temporaryRootLength;
 
     if (!choose_data_dir(defaultDataDir, sizeof(defaultDataDir), &dataDir)) {
         puts("skip: DM1 PC34 data dir not available");
         return 77;
     }
+    /* M11 resolves the user data directory only from an absolute HOME.
+     * Derive the test-local scratch directory from the CTest workdir so the
+     * full real-data route cannot fail before it reaches C127. */
+    if (!getcwd(temporaryRoot, sizeof(temporaryRoot))) {
+        fprintf(stderr, "unable to form absolute test scratch directory\n");
+        return 1;
+    }
+    temporaryRootLength = strlen(temporaryRoot);
+    if (temporaryRootLength + sizeof("/.codex-scratch") >
+        sizeof(temporaryRoot)) {
+        fprintf(stderr, "absolute test scratch directory is too long\n");
+        return 1;
+    }
+    memcpy(temporaryRoot + temporaryRootLength, "/.codex-scratch",
+           sizeof("/.codex-scratch"));
     (void)TEST_MKDIR(temporaryRoot);
     if (snprintf(saveTemplate, sizeof(saveTemplate),
                  "%s/firestaff-dm1-hoc-c127-full-XXXXXX", temporaryRoot) >=
