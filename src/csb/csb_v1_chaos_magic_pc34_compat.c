@@ -2109,7 +2109,13 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             uint32_t missile_values[4] = {
                 UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX
             };
-            uint32_t source_missile_values[4];
+            /* A non-pending write records the source snapshot for the
+             * later commit boundary.  Initialise it defensively so a
+             * future callback-contract change cannot copy indeterminate
+             * bytes into that receipt. */
+            uint32_t source_missile_values[4] = {
+                UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX
+            };
             int pending = -1;
             int source_result;
             for (sv = 0; sv < *pending_missile_write_count; ++sv) {
