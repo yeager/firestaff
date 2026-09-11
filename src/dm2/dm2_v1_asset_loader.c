@@ -692,7 +692,32 @@ static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
                                              1u, color)) goto fail;
             }
         } else if (command == 0x0au) {
-            if (!dm2_fmtowns_img2_still(pixel_count, &pixel, 11u)) goto fail;
+            /* IMG2 command A is a transparent run whose length is carried
+             * by the second nibble.  The zero-filled decode surface is the
+             * transparent underlay for the FM Towns non-overlay route, so
+             * advancing the cursor is the complete source operation. */
+            if (!dm2_fmtowns_img2_still(pixel_count, &pixel,
+                                        (size_t)color + 1u)) goto fail;
+        } else if (command == 0x0eu) {
+            /* IMG1/IMG2 command E is the extended transparent-run form.
+             * DMWeb's format reference specifies the length selector in
+             * Nibble2: 0..C => +17, D => byte +1, E => byte +257 and
+             * F => word +1.  These runs occur in authentic FM Towns IMG2
+             * records; rejecting them desynchronizes every following block. */
+            if (color <= 0x0cu) {
+                length = (unsigned)color + 17u;
+            } else if (color == 0x0du || color == 0x0eu) {
+                if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size,
+                                                       &cursor, 2u,
+                                                       &length)) goto fail;
+                length += color == 0x0du ? 1u : 257u;
+            } else {
+                if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size,
+                                                       &cursor, 4u,
+                                                       &length)) goto fail;
+                ++length;
+            }
+            if (!dm2_fmtowns_img2_still(pixel_count, &pixel, length)) goto fail;
         } else {
             goto fail;
         }
