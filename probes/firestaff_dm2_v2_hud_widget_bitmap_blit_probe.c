@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -58,6 +59,19 @@
 
 static int s_pass = 0;
 static int s_fail = 0;
+
+static int scratch_path(char* out, size_t out_size, const char* leaf) {
+    const char* root = getenv("FIRESTAFF_TEST_SCRATCH");
+    if (!root || !root[0]) root = ".firestaff-test-scratch";
+    if (mkdir(root, 0700) != 0 && errno != EEXIST) return 0;
+    return snprintf(out, out_size, "%s/%s", root, leaf) > 0 &&
+           strlen(out) < out_size;
+}
+
+static void remove_scratch_file(const char* leaf) {
+    char path[512];
+    if (scratch_path(path, sizeof(path), leaf)) (void)unlink(path);
+}
 
 static void check(const char* name, int cond) {
     if (cond) {
@@ -158,9 +172,9 @@ static void test_bogus_paths_rejected(void) {
 static void test_non_png_signature_rejected(void) {
     printf("\n[ Scenario 2: non-PNG signature rejected ]\n");
 
-    /* Write a tiny non-PNG file in /tmp and assert it's rejected. */
-    const char* bogus = "/tmp/scratch/dm2_hwb_bogus.bin";
-    system("mkdir -p /tmp/scratch");
+    /* Use the caller's test scratch directory and assert rejection. */
+    char bogus[512];
+    check("allocated non-PNG scratch path", scratch_path(bogus, sizeof(bogus), "dm2_hwb_bogus.bin"));
     FILE* fp = fopen(bogus, "wb");
     check("wrote bogus non-PNG fixture", fp != NULL);
     if (fp) {
@@ -260,8 +274,11 @@ static void test_multi_pixel_rejected(void) {
      * synthetic fixtures but with width=2 so the bounded envelope
      * must reject it. We hand-craft the bytes because no
      * 2-pixel fixture is shipped with the project. */
-    const char* path = "/tmp/scratch/dm2_hwb_2x1.png";
-    system("mkdir -p /tmp/scratch");
+    char path[512];
+    if (!scratch_path(path, sizeof(path), "dm2_hwb_2x1.png")) {
+        check("allocated 2x1 PNG scratch path", 0);
+        return;
+    }
     FILE* fp = fopen(path, "wb");
     if (!fp) {
         check("could not open 2x1 png for write", 0);
@@ -302,8 +319,11 @@ static void test_non_rgba_rejected(void) {
     printf("\n[ Scenario 5: non-RGBA color types rejected ]\n");
     /* Build a 1x1 PNG with color type 3 (palette-indexed) — must
      * be rejected even though the dimensions are in envelope. */
-    const char* path = "/tmp/scratch/dm2_hwb_palette.png";
-    system("mkdir -p /tmp/scratch");
+    char path[512];
+    if (!scratch_path(path, sizeof(path), "dm2_hwb_palette.png")) {
+        check("allocated palette PNG scratch path", 0);
+        return;
+    }
     FILE* fp = fopen(path, "wb");
     if (!fp) {
         check("could not open palette png for write", 0);
@@ -506,10 +526,10 @@ int main(void) {
     test_render_slot_end_to_end();
     test_source_evidence();
 
-    /* Clean scratch. */
-    system("rm -f /tmp/scratch/dm2_hwb_bogus.bin "
-                  "/tmp/scratch/dm2_hwb_2x1.png "
-                  "/tmp/scratch/dm2_hwb_palette.png");
+    /* Clean only the three explicit fixtures owned by this probe. */
+    remove_scratch_file("dm2_hwb_bogus.bin");
+    remove_scratch_file("dm2_hwb_2x1.png");
+    remove_scratch_file("dm2_hwb_palette.png");
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            s_pass, s_fail);
