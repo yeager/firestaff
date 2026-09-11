@@ -7,13 +7,19 @@ if [ "$#" -gt 1 ]; then
 fi
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-source_root=${1:-/tmp/mednafen-src}
+# The original source is licensed third-party material.  Require its location
+# explicitly instead of silently assuming a shared temporary directory.
+source_root=${1:-${FIRESTAFF_MEDNAFEN_SOURCE_ROOT:-}}
 sdl2_prefix=${FIRESTAFF_MEDNAFEN_SDL2_PREFIX:-}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
-build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-${TMPDIR:-/tmp}/mednafen-firestaff-irq2-trace}
+build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
 prefix="$build_root/install"
 
+if [[ -z "$source_root" ]]; then
+    printf 'FAIL: provide MEDNAFEN_1.32.1_SOURCE or FIRESTAFF_MEDNAFEN_SOURCE_ROOT\n' >&2
+    exit 2
+fi
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
    [ ! -f "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch" ]; then
     printf 'FAIL: expected Mednafen 1.32.1 source tree and Firestaff patch\n' >&2
@@ -27,7 +33,19 @@ if [[ -n "$sdl2_prefix" ]]; then
     export PKG_CONFIG_PATH="$sdl2_prefix/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 fi
 
-rm -rf "$build_root"
+case "$build_root" in
+    /|"$repo"|"$source_root")
+        printf 'FAIL: FIRESTAFF_MEDNAFEN_BUILD_ROOT is not a safe dedicated build directory\n' >&2
+        exit 2
+        ;;
+esac
+if [[ -e "$build_root" ]]; then
+    if [[ "${FIRESTAFF_MEDNAFEN_ALLOW_REBUILD:-0}" != 1 ]]; then
+        printf 'FAIL: build root already exists; set FIRESTAFF_MEDNAFEN_ALLOW_REBUILD=1 to replace it\n' >&2
+        exit 2
+    fi
+    rm -rf -- "$build_root"
+fi
 mkdir -p "$build_root"
 cp -R "$source_root/." "$build_root/source"
 # macOS's BSD patch rejects the large debugger hunk despite a clean 1.32.1
@@ -134,7 +152,14 @@ CXXFLAGS="${CXXFLAGS:-}" ./configure --prefix="$prefix" --disable-apple2 --disab
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan \
     --without-libflac
-make -j"$(sysctl -n hw.ncpu)"
+if command -v getconf >/dev/null 2>&1; then
+    build_jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)
+fi
+if [[ ! ${build_jobs:-} =~ ^[1-9][0-9]*$ ]] && command -v sysctl >/dev/null 2>&1; then
+    build_jobs=$(sysctl -n hw.ncpu 2>/dev/null || true)
+fi
+build_jobs=${build_jobs:-1}
+make -j"$build_jobs"
 make install
 "$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh" "$prefix/bin/mednafen"
 printf '%s\n' "$prefix/bin/mednafen"
