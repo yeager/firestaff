@@ -3473,15 +3473,29 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
     size_t dungeon_size = 0u;
     char actual_md5[33];
     char graphics_actual_md5[33];
+    char graphics_virtual_path[sizeof(profile->graphics_path)];
+    char dungeon_virtual_path[sizeof(profile->dungeon_path)];
 
     if (!profile || !archive_path || !FSP_FileExists(archive_path) ||
         !strstr(archive_path, "Dungeon-Master-II-Skullkeep_DOS_")) {
         return 0;
     }
-    if (firestaff_zip_extract_by_name(archive_path, "graphics.dat",
-                                      &graphics, &graphics_size) != 0 ||
-        firestaff_zip_extract_by_name(archive_path, "dungeon.dat",
-                                      &dungeon, &dungeon_size) != 0 ||
+    /* Keep the selected archive as the media owner.  The generic ZIP helper
+     * is useful for name discovery, but this boot boundary needs the exact
+     * DATA members already recorded by M12.  Reading those virtual paths
+     * also handles the retail archive's data-descriptor layout through the
+     * common in-memory container reader, so a nearby FM Towns archive can
+     * never replace an explicitly selected DOS package after a read error. */
+    if (snprintf(graphics_virtual_path, sizeof(graphics_virtual_path),
+                 "%s::data/graphics.dat", archive_path) >=
+            (int)sizeof(graphics_virtual_path) ||
+        snprintf(dungeon_virtual_path, sizeof(dungeon_virtual_path),
+                 "%s::data/dungeon.dat", archive_path) >=
+            (int)sizeof(dungeon_virtual_path) ||
+        !asset_read_virtual_path_alloc(graphics_virtual_path,
+                                       &graphics, &graphics_size) ||
+        !asset_read_virtual_path_alloc(dungeon_virtual_path,
+                                       &dungeon, &dungeon_size) ||
         !graphics || !dungeon || graphics_size == 0u || dungeon_size == 0u ||
         graphics_size > 64u * 1024u * 1024u ||
         dungeon_size > 10u * 1024u * 1024u) {
