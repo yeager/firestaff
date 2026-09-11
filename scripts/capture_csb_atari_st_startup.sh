@@ -26,6 +26,7 @@ Optional:
   CSB_ATARI_XVFB_DISPLAY=103                  dedicated X display number
   CSB_ATARI_SOUND_HZ=44100                    original-session audio frequency
   CSB_ATARI_SOUND_BUFFER_MS=100               host audio buffer (10-100 ms)
+  CSB_ATARI_SOUND_SYNC=on|off                  Hatari emulation/audio synchronisation (default: on)
   CSB_ATARI_CAPTURE_AUDIO=0|1                 record original WAV with Hatari (default: 0)
   HATARI=/path/to/hatari                       (default: hatari)
 
@@ -54,6 +55,7 @@ pointer_clicks="${CSB_ATARI_POINTER_CLICKS:-}"
 keystrokes="${CSB_ATARI_KEYSTROKES:-}"
 sound_hz="${CSB_ATARI_SOUND_HZ:-44100}"
 sound_buffer_ms="${CSB_ATARI_SOUND_BUFFER_MS:-100}"
+sound_sync="${CSB_ATARI_SOUND_SYNC:-on}"
 capture_audio="${CSB_ATARI_CAPTURE_AUDIO:-0}"
 
 if [[ "$mode" == "prepare" ]]; then
@@ -83,6 +85,10 @@ if [[ ! "$sound_hz" =~ ^[0-9]+$ ]] || (( sound_hz < 6000 || sound_hz > 50066 ));
 fi
 if [[ ! "$sound_buffer_ms" =~ ^[0-9]+$ ]] || (( sound_buffer_ms < 10 || sound_buffer_ms > 100 )); then
     echo "ERROR: CSB_ATARI_SOUND_BUFFER_MS must be a Hatari host buffer from 10 to 100 ms" >&2
+    exit 5
+fi
+if [[ "$sound_sync" != "on" && "$sound_sync" != "off" ]]; then
+    echo "ERROR: CSB_ATARI_SOUND_SYNC must be on or off" >&2
     exit 5
 fi
 if [[ "$capture_audio" != "0" && "$capture_audio" != "1" ]]; then
@@ -133,7 +139,7 @@ trap cleanup EXIT INT TERM
 
 ( cd "$out" && exec env DISPLAY="$display" "$hatari" \
     --confirm-quit no --machine ste --tos "$tos" \
-    --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-buffer-size "$sound_buffer_ms" --sound-sync on --fastfdc off \
+    --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-buffer-size "$sound_buffer_ms" --sound-sync "$sound_sync" --fastfdc off \
     --statusbar false --drive-led false --borders false --crop true \
     --screenshot-dir "$out" --screenshot-format png ) \
     >"$out/hatari.log" 2>&1 &
@@ -271,15 +277,12 @@ if [[ "$audio_capture_active" == "1" ]]; then
 fi
 
 audio_emulation_warning_count="$(grep -c 'sound samples were not correctly emulated' "$out/hatari.log" || true)"
-if [[ "$capture_audio" == "1" && "$audio_emulation_warning_count" != "0" ]]; then
-    echo "ERROR: Hatari reported dropped sound samples; reject this WAV as non-parity evidence" >&2
-    exit 7
-fi
 
 {
     printf 'schema=firestaff.csb.atari.startup.capture.v1\n'
     printf 'scope=original Hatari startup capture; no Firestaff parity claim\n'
     printf 'audio_requested_hz=%s\n' "$sound_hz"
+    printf 'audio_sync=%s\n' "$sound_sync"
     printf 'audio_host_buffer_ms=%s\n' "$sound_buffer_ms"
     if [[ -f "$out/startup-audio.wav" ]]; then
         printf 'audio_capture=hatari-wav\n'
@@ -289,11 +292,22 @@ fi
         printf 'audio_capture=not-recorded\n'
     fi
     printf 'audio_emulation_warning_count=%s\n' "$audio_emulation_warning_count"
+    if [[ "$capture_audio" == "1" && "$audio_emulation_warning_count" != "0" ]]; then
+        printf 'audio_parity_valid=no\n'
+        printf 'audio_parity_reason=dropped-emulated-samples\n'
+    else
+        printf 'audio_parity_valid=yes\n'
+    fi
     printf 'tos_sha256=%s\n' "$(sha256sum "$tos" | awk '{print $1}')"
     printf 'stx_sha256=%s\n' "$(sha256sum "$stx" | awk '{print $1}')"
     for image in "$out"/startup-*.png; do
         printf 'frame_sha256=%s\n' "$(sha256sum "$image" | awk '{print $1}')"
     done
 } >"$out/receipt.txt"
+
+if [[ "$capture_audio" == "1" && "$audio_emulation_warning_count" != "0" ]]; then
+    echo "ERROR: Hatari reported dropped sound samples; reject this WAV as non-parity evidence" >&2
+    exit 7
+fi
 
 echo "PASS: wrote $(find "$out" -maxdepth 1 -name 'startup-*.png' -type f | wc -l | tr -d ' ') original CSB Atari startup frame(s)"
