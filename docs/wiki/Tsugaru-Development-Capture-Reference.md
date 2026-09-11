@@ -107,6 +107,22 @@ Consequently a capture runner must prove that its launch/setup ordering
 preserves the requested boot combination after the final VM reset. A black
 BIOS framebuffer is not proof of a successful CD boot.
 
+### DM1 FM Towns startup recovery target
+
+The English retail DM1 program (`EDM.EXP`) has a Phar Lap `SYM1` table. Its
+source-owned `DO_ENTRANCE` routine is at load-image address `0x0000c080`; the
+same table also identifies `DO_TITLE_ANIMATION` at `0x0000c3b0`. This is a
+useful static boundary for an original-session debugger trace: it proves that
+the retail program contains a separate Entrance owner instead of treating the
+generic dungeon handoff as its startup UI.
+
+It is not sufficient to infer the Japanese (`JDM.EXP`) address, a call order,
+button geometry, palette, or pixels. The Japanese binary has no `SYM1` table,
+and its localized code layout is not uniformly shifted. Firestaff therefore
+needs a matching original runtime trace and framebuffer sequence before it
+can claim an FM Towns Entrance reconstruction. Until then, neither a PC
+Entrance surface nor an invented replacement is acceptable evidence.
+
 ## Timing and CPU fidelity
 
 Tsugaru starts with no-wait behavior, then normally changes its timing policy
