@@ -23,6 +23,7 @@ high_fidelity="${FMTOWNS_HIGH_FIDELITY:-0}"
 nowait_boot="${FMTOWNS_NOWAIT_BOOT:-1}"
 diagnostics="${FMTOWNS_DIAGNOSTICS:-0}"
 no_wait="${FMTOWNS_NOWAIT:-0}"
+frequency_mhz="${FMTOWNS_FREQ_MHZ:-0}"
 
 usage() {
     cat <<'EOF'
@@ -42,6 +43,7 @@ Optional:
   FMTOWNS_HIGH_FIDELITY=1|0                (default: 0; opt in only after VM boot validation)
   FMTOWNS_NOWAIT_BOOT=1|0                  (default: 1; bypass host-time memory-test delay)
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
+  FMTOWNS_FREQ_MHZ=0|1..200                (default: 0; diagnostic emulated CPU frequency, recorded in receipt)
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
 
 The ZIP is staged only for this development-time emulator session because
@@ -91,6 +93,10 @@ if [[ "$diagnostics" != "0" && "$diagnostics" != "1" ]]; then
 fi
 if [[ "$no_wait" != "0" && "$no_wait" != "1" ]]; then
     echo "ERROR: FMTOWNS_NOWAIT must be 0 or 1" >&2
+    exit 3
+fi
+if [[ ! "$frequency_mhz" =~ ^[0-9]+$ ]] || (( frequency_mhz > 200 )); then
+    echo "ERROR: FMTOWNS_FREQ_MHZ must be 0 or an emulated frequency from 1 to 200 MHz" >&2
     exit 3
 fi
 for required in "$tsugaru" 7zz sha256sum python3; do
@@ -194,6 +200,7 @@ if [[ "$high_fidelity" == "1" ]]; then fidelity_args=(-HIGHFIDELITY); fi
 boot_args=()
 if [[ "$nowait_boot" == "1" ]]; then boot_args=(-NOWAITBOOT); fi
 if [[ "$no_wait" == "1" ]]; then boot_args=(-NOWAIT); fi
+if [[ "$frequency_mhz" != "0" ]]; then boot_args+=(-FREQ "$frequency_mhz"); fi
 run_commands | "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" "${boot_args[@]}" \
     -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
 tsugaru_status=${PIPESTATUS[1]}
@@ -244,6 +251,7 @@ PY
     printf 'high_fidelity=%s\n' "$high_fidelity"
     printf 'nowait_boot=%s\n' "$nowait_boot"
     printf 'nowait=%s\n' "$no_wait"
+    printf 'frequency_mhz=%s\n' "$frequency_mhz"
     printf 'diagnostics=%s\n' "$diagnostics"
     printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')"
     printf 'cue_sha256=%s\n' "$(sha256sum "$cue" | awk '{print $1}')"
