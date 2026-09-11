@@ -844,7 +844,7 @@ if all(pixel == (0, 0, 0) for _, pixel in colors):
 # genuine HoC frame has substantial non-black content there, whereas that
 # strip-only failure has none.
 canvas = im.crop((0, im.height // 5, im.width, im.height))
-if not any(pixel != (0, 0, 0) for pixel in canvas.getdata()):
+if not any(pixel != (0, 0, 0) for pixel in canvas.get_flattened_data()):
     raise SystemExit(1)
 PY
         then
@@ -1172,7 +1172,7 @@ def load_pixels(path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]
     if image_tool == "pillow":
         from PIL import Image
         im = Image.open(path).convert("RGB")
-        return im.size, list(im.getdata())
+        return im.size, list(im.get_flattened_data())
     data = subprocess.check_output([image_tool, str(path), "ppm:-"])
     return ppm_pixels(data, path)
 
