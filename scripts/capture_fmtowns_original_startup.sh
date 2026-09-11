@@ -187,6 +187,10 @@ for frame in frames:
     with Image.open(frame) as image:
         if image.width < 1 or image.height < 1:
             raise SystemExit(f"ERROR: empty framebuffer image: {frame.name}")
+        rgb = image.convert("RGB")
+        colors = rgb.getcolors(maxcolors=257)
+        if not colors or len(colors) <= 1 or all(pixel == (0, 0, 0) for _, pixel in colors):
+            raise SystemExit(f"ERROR: blank/stale framebuffer image is not original capture evidence: {frame.name}")
 PY
 
 {
