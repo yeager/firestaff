@@ -34643,10 +34643,10 @@ endif()
             NAME pass1058_dm1_v1_original_keypad_route_atlas
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1058_dm1_v1_original_keypad_route_atlas.py
         )
-        add_test(
-            NAME todo100_dm1_v1_original_dos_capture_route_manifest
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_todo100_dm1_v1_original_dos_capture_route_manifest.py
-        )
+        # The legacy TODO100 route assumes a WUUF position that has not been
+        # confirmed by an original run.  Do not turn unverified operator
+        # metadata into a passing CI claim; register a replacement only after
+        # a coordinate-observed original capture binds its input route.
         add_test(
             NAME dm2_v1_phase0_provenance_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_phase0_provenance_gate.py
