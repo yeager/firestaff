@@ -33,10 +33,12 @@ is sufficient for `SOURCE_LOCKED` but NOT for `MATCHED` pixel/content parity.
 
 The PC 3.4 `DUNGEON.DAT` C127 inventory is authoritative for capture routing.
 Its all-portrait gate resolves all 24 source-visible mirror poses from the
-retail data. In particular, WUUF (ordinal 13) is visible from party pose
-`(map 0, x=7, y=16, SOUTH)` toward the north wall of `(7,17)`. Earlier
-seeded or synthetic probe poses that describe WUUF at `(1,5)` are not
-original-route evidence and must not be used to drive DOSBox captures.
+retail data. In particular, the static table resolves WUUF (ordinal 13) from
+party pose `(map 0, x=7, y=16, SOUTH)` toward the north wall of `(7,17)`.
+The current DOSBox pointer route, however, visually reaches Azizi Yohari;
+its event-to-map transformation is therefore not independently proven and
+must not be used as WUUF-route evidence. Earlier seeded or synthetic probe
+poses that describe WUUF at `(1,5)` are likewise not original-route evidence.
 
 ---
 
@@ -48,7 +50,7 @@ original-route evidence and must not be used to drive DOSBox captures.
 |---|---|---|---|
 | 4x original DOSBox turn-cycle frames | PARTIAL OK | `verification-screens/pass1052-dm1-original-route-24h-turncycle/` | Clean original DM1 PC 3.4 capture: 2 `dungeon_gameplay` + 2 `wall_closeup`, 0 duplicate raw hashes, pass80 PASS. pass1056 now gates the pass1054 Firestaff nearest-neighbor pairing artifacts, but full same-state viewport parity still needs a debugger-observed route pair. |
 | HoC C407 movement cycle | LOCAL VERIFIED (unpaired) | Local ignored original-media receipt | A fresh PC 3.4 original session ran the documented start → forward → left turn → forward → right turn inputs. Five healthy, non-duplicate 320x200 frames classified as three `dungeon_gameplay` and two `wall_closeup`. The route labels are input provenance only: without debugger coordinates and Firestaff reproduction this remains reference capture, not a same-state pixel pair. |
-| WUUF original DOS route | LOCAL VERIFIED (unpaired) | Local ignored original-media receipt | The authoritative retail `DUNGEON.DAT` route begins at `(map 0, x=1, y=3, SOUTH)` and reaches WUUF's ordinal-13 mirror at `(7,16,SOUTH)`, facing the north wall of `(7,17)`. A fresh 320x200 PC 3.4 frame visibly shows WUUF and passes raw-frame health plus duplicate-safe classification. This proves the original route endpoint only; it is not a Firestaff pixel pair. |
+| HoC candidate original DOS route | LOCAL VERIFIED (unpaired) | Local ignored original-media receipt | A fresh 320x200 PC 3.4 route reaches and activates an Azizi Yohari mirror, then produces its candidate and post-`C160` resurrection frames. All frames pass raw-frame health plus duplicate-safe classification. The visual identity disagrees with the static WUUF route calculation, so no map coordinate or WUUF endpoint is claimed. |
 | C407 Entrance-to-HoC checkpoint | LOCAL VERIFIED (unpaired) | Local ignored original-media receipt | A fresh DOSBox-X session from the canonical PC 3.4 data produced two healthy 320x200 frames: `entrance_stable` classified as `entrance_menu`, then `hoc_start` classified as `dungeon_gameplay`. This verifies the capture harness reaches the original C407 handoff; it does not establish coordinates, champion state, inventory, pickup, or Firestaff pixel parity. |
 | 6x original DOSBox crops (224x136) | IMPAIRED EXISTS (impaired) | `firestaff-release-v0.3.28/verification-m11/lane4-original-overlay-20260428-0917/pass94-diagnostic/viewport_224x136/` | Historical failed route. Frames 03-06 have duplicate SHA256 `701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c`; pass80 reclassifies frames 03-04 as `entrance_menu` and 05-06 as `wall_closeup`. |
 | 6x Firestaff V1 captures (VGA PPM) | OK EXISTS | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/` (selected files) | No paired original to compare against. |
@@ -59,8 +61,9 @@ original-route evidence and must not be used to drive DOSBox captures.
 **Gap:** Pass1052 supersedes the broken pass94 route for initial viewport evidence by
 capturing two clean `dungeon_gameplay` frames. pass1054/pass1056 now provide a
 reproducible Firestaff nearest-neighbor pairing gate over those crops, including
-one exact wall row. The verified 35-step WUUF route adds a clean original Hall
-viewport and candidate-panel transition, but it is still unpaired. Viewport
+one exact wall row. A clean original HoC candidate-panel transition has also
+been captured, but its pointer-route map coordinate is not yet independently
+bound and it is still unpaired. Viewport
 content is not `MATCHED` because the nonzero gameplay rows are scout candidates,
 not debugger-confirmed same-state pairs.
 
@@ -201,7 +204,7 @@ original captures.
 | Original Eye-hold receipt | 2026-09-10 | local evidence | Verified original PC 3.4 `inventory → Eye held → Eye released` redraw sequence; no published pixels or local path |
 | Original C407 HoC checkpoint | 2026-09-11 | local evidence | Verified original PC 3.4 Entrance-to-dungeon handoff through the raw-frame health and duplicate-safe classifier gates; no published pixels or local path |
 | Original C407 HoC movement cycle | 2026-09-11 | local evidence | Five input-labelled original PC 3.4 frames, three gameplay and two wall-closeup, each healthy and non-duplicate; no published pixels or local path |
-| Original WUUF mirror, candidate panel, and resurrection | 2026-09-11 | local evidence | A fresh authoritative 35-step PC 3.4 route reached WUUF at `(7,16,SOUTH)`. The mirror, post-click candidate panel, and post-`C160` resurrection HUD frames are healthy and non-duplicate original frames; no pixels or local paths are published and no Firestaff pairing is claimed. |
+| Original HoC candidate panel and resurrection | 2026-09-11 | local evidence | A fresh PC 3.4 pointer route yielded healthy, non-duplicate mirror, post-click candidate, and post-`C160` resurrection HUD frames for Azizi Yohari. The visual identity disagrees with the static WUUF route calculation, so no map coordinate is claimed; no pixels or local paths are published and no Firestaff pairing is claimed. |
 
 ---
 
