@@ -25789,6 +25789,45 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     return 1;
 }
 
+int M11_GameView_ApplyDm1StartupRuntimeHandoff(
+    M11_GameViewState* state,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt) {
+    const DM1_V1_EntranceMenuRouteReceiptPc34* route;
+
+    if (!state || !receipt || !state->active ||
+        strcmp(state->sourceId, "dm1") != 0 || !receipt->handled ||
+        !receipt->runtime_first_frame_ready || receipt->return_to_launcher) {
+        return 0;
+    }
+    if (receipt->hoc_runtime_ready) {
+        route = &receipt->champion_mirror_startup_route;
+        /* ENTRANCE.C F0441 has completed the source-visible door sequence.
+         * Its first live state is the Hall's empty-party VIEWING route. Do
+         * not manufacture a mirror or alter the loaded DUNGEON.DAT world;
+         * retain only the source-owned route that the following draw must
+         * consume. */
+        if (!receipt->hoc_first_frame_ready || !route->handled ||
+            route->route != DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34 ||
+            route->state != DM1_ENTRANCE_VIEWING || !route->showHall ||
+            route->showChampionPanel || route->selectedMirrorIndex >= 0 ||
+            !route->needsRedraw || !receipt->champion_mirror_startup_input_ready ||
+            !receipt->champion_mirror_startup_panel_clear ||
+            !receipt->champion_mirror_startup_blocks_enter ||
+            route->partyChampionCount != state->world.party.championCount) {
+            return 0;
+        }
+        state->candidateMirrorOrdinal = -1;
+        state->candidateMirrorPartyIndex = -1;
+        state->candidateMirrorPanelActive = 0;
+        state->candidateMirrorRenameActive = 0;
+        state->inventoryPanelActive = 0;
+    }
+    state->dm1StartupRuntimeHandoffReceipt = *receipt;
+    state->dm1StartupRuntimeHandoffValid = 1;
+    state->dm1StartupHandoffExecuted = 1;
+    return 1;
+}
+
 int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState) {
     const M12_MenuEntry* entry;
@@ -26443,6 +26482,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     out->startedFromLauncher = state->startedFromLauncher ? 1 : 0;
     out->dm1StartupIntroBypassed =
         M11_GameView_Dm1StartupIntroBypassed(state) ? 1 : 0;
+    out->dm1StartupHandoffExecuted =
+        state->dm1StartupHandoffExecuted ? 1 : 0;
     out->dm1WorldTick = state->world.gameTick;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -31534,6 +31575,23 @@ int M11_GameView_GetDm1HocMenuRouteReceipt(
 
     if (!state || !outReceipt) {
         return 0;
+    }
+
+    /* The selected-launch callback installs this exact receipt between
+     * ENTRANCE.C F0441 and the first runtime draw. While the party is still
+     * empty it is the authoritative Hall VIEWING state; after a mirror is
+     * selected (or a champion joins), the ordinary live-state adapter below
+     * resumes ownership. */
+    if (state->dm1StartupRuntimeHandoffValid &&
+        state->dm1StartupRuntimeHandoffReceipt.hoc_first_frame_ready &&
+        state->world.party.championCount == 0 &&
+        !state->candidateMirrorPanelActive &&
+        !state->candidateMirrorRenameActive) {
+        *outReceipt = state->dm1StartupRuntimeHandoffReceipt
+                          .champion_mirror_startup_route;
+        return outReceipt->handled &&
+               outReceipt->state == DM1_ENTRANCE_VIEWING &&
+               outReceipt->route == DM1_V1_ENTRANCE_MENU_ROUTE_HALL_PC34;
     }
 
     DM1_V1_Entrance_InitPc34Compat(&ctx);

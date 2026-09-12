@@ -14,6 +14,13 @@ if [[ ! -x "$app" || ! -f "$archive" ]]; then
     exit 77
 fi
 
+native_graphics_path_matches() {
+    local output
+    output=$(cat)
+    grep -Fq "dataDir=$archive::DATA/GRAPHICS.DAT" <<<"$output" ||
+    grep -Fq "dataDir=$archive::dungeon-master/dmaster/DATA/GRAPHICS.DAT" <<<"$output"
+}
+
 probe() {
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
@@ -22,7 +29,7 @@ probe() {
     }
     grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$output" &&
     grep -Fq "assetMd5=$expected_graphics_md5" <<<"$output" &&
-    grep -Fq "dataDir=$archive::dungeon-master/dmaster/DATA/GRAPHICS.DAT" <<<"$output" &&
+    native_graphics_path_matches <<<"$output" &&
     grep -Fq 'phase=dm1-runtime' <<<"$output" &&
     grep -Fq 'levelLoaded=1' <<<"$output"
 }
@@ -32,8 +39,22 @@ probe() {
 # "dos" is the public spelling for the PC/DOS source route.
 probe --game dm1 --platform dos --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
-probe --menu --game dm1 --platform pc --data-dir "$archive" \
-    --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
+menu_boot_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform pc --data-dir "$archive" \
+    --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
+    printf '%s\n' "$menu_boot_output" >&2
+    exit 1
+}
+if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$menu_boot_output" ||
+   ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$menu_boot_output" ||
+   ! native_graphics_path_matches <<<"$menu_boot_output" ||
+   ! grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$menu_boot_output" ||
+   ! grep -Fq 'phase=dm1-runtime' <<<"$menu_boot_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$menu_boot_output"; then
+    printf '%s\n' "$menu_boot_output" >&2
+    printf '%s\n' 'FAIL: DM1 menu launch did not apply the Hall runtime handoff before its first frame' >&2
+    exit 1
+fi
 
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -43,7 +64,7 @@ menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     exit 1
 }
 if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
-   ! grep -Fq "dataDir=$archive::dungeon-master/dmaster/DATA/GRAPHICS.DAT" <<<"$menu_output" ||
+   ! native_graphics_path_matches <<<"$menu_output" ||
    ! grep -Fq 'handoff=pc-img3' <<<"$menu_output"; then
     printf '%s\n' "$menu_output" >&2
     printf '%s\n' 'FAIL: authentic English DOS ZIP start menu did not bind the native IMG3 route' >&2

@@ -777,6 +777,12 @@ typedef struct {
     int startedFromLauncher;
     int dm1StartupIntroBypassed;
     int dm1StartupHandoffExecuted;
+    /* Retained only for the source-visible selected-launch boundary. This
+     * is the ENTRANCE.C VIEWING/Hall receipt consumed before the first
+     * runtime draw; direct GameView starts intentionally leave it empty. */
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34
+        dm1StartupRuntimeHandoffReceipt;
+    int dm1StartupRuntimeHandoffValid;
     char title[64];
     char sourceId[32];
     char bootAssetMd5[M11_BOOT_RECEIPT_MD5_CAPACITY];
@@ -2015,6 +2021,9 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
                                             int outPathSize);
 int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState);
+int M11_GameView_ApplyDm1StartupRuntimeHandoff(
+    M11_GameViewState* state,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_StartCsbHintOracle(M11_GameViewState* state,
                                     const char *dataDir,

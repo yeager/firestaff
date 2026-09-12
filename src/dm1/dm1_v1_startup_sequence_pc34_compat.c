@@ -4566,6 +4566,12 @@ int dm1_v1_startup_execute_selected_launch_transaction_pc34(
         return 0;
     }
     if (result.runtime_handoff_receipt.draw_opened_runtime &&
+        callbacks->apply_runtime_handoff &&
+        !callbacks->apply_runtime_handoff(
+            callbacks->user, &result.runtime_handoff_receipt)) {
+        return 0;
+    }
+    if (result.runtime_handoff_receipt.draw_opened_runtime &&
         callbacks->draw_opened &&
         !callbacks->draw_opened(callbacks->user)) {
         return 0;

@@ -1362,6 +1362,13 @@ typedef struct DM1_V1_StartupSelectedLaunchCallbacks_PC34 {
                                char* out_source_id,
                                int out_source_id_size);
     int (*after_open)(void* user);
+    /* The source-owned HoC receipt must become live M11 state before the
+     * first post-Entrance frame is drawn. ReDMCSB ENTRANCE.C F0441 returns
+     * ENTER into the Hall's VIEWING route; drawing first and applying that
+     * route later exposes a stale dungeon state instead. */
+    int (*apply_runtime_handoff)(
+        void* user,
+        const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt);
     int (*draw_opened)(void* user);
     int (*mark_launch_failed)(void* user);
 } DM1_V1_StartupSelectedLaunchCallbacks_PC34;

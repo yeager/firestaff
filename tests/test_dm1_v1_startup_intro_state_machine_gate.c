@@ -80,6 +80,7 @@ typedef struct FakeDm1StartupCallbacks {
     int log_skipped;
     int open_ok;
     int after_open;
+    int runtime_handoff_applied;
     int draw_opened;
     int mark_failed;
     int prelude_begin_count;
@@ -308,6 +309,20 @@ static int fake_after_open(void* user) {
     return 1;
 }
 
+static int fake_apply_runtime_handoff(
+    void* user,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt) {
+    FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
+    if (!fake || !receipt || !receipt->hoc_first_frame_ready ||
+        receipt->champion_mirror_startup_route.state !=
+            DM1_ENTRANCE_VIEWING) {
+        return 0;
+    }
+    fake_append(fake, 'H');
+    fake->runtime_handoff_applied = 1;
+    return 1;
+}
+
 static int fake_draw_opened(void* user) {
     FakeDm1StartupCallbacks* fake = (FakeDm1StartupCallbacks*)user;
     fake_append(fake, 'G');
@@ -333,6 +348,7 @@ static DM1_V1_StartupSelectedLaunchCallbacks_PC34 fake_selected_launch_callbacks
     callbacks.host_callbacks = host_callbacks;
     callbacks.open_selected_entry = fake_open_selected_entry;
     callbacks.after_open = fake_after_open;
+    callbacks.apply_runtime_handoff = fake_apply_runtime_handoff;
     callbacks.draw_opened = fake_draw_opened;
     callbacks.mark_launch_failed = fake_mark_launch_failed;
     return callbacks;
@@ -3851,7 +3867,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
              launch_result.opened,
              1);
     expect_i("DM1 selected launch transaction owns full order",
-             strcmp(fake.order, "RSDOARTEG"),
+             strcmp(fake.order, "RSDOARTEHG"),
              0);
     expect_i("DM1 selected launch transaction brackets startup media",
              fake.prelude_begin_count == 1 &&
@@ -3866,7 +3882,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  fake.post_entrance.corridorCount == 6,
              1);
     expect_i("DM1 selected launch transaction draws enter path",
-             fake.draw_opened,
+             fake.runtime_handoff_applied && fake.draw_opened,
              1);
     expect_i("DM1 selected launch transaction exposes HoC handoff receipt",
                  launch_result.runtime_handoff_receipt.handled &&

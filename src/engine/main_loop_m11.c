@@ -3292,6 +3292,20 @@ static int m11_dm1_selected_launch_after_open(void* user) {
     return 1;
 }
 
+static int m11_dm1_selected_launch_apply_runtime_handoff(
+    void* user,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt) {
+    M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
+    if (!ctx || !ctx->gameView) {
+        return 0;
+    }
+    /* The selected-launch transaction has just consumed ENTRANCE.C F0441.
+     * Materialize its existing Hall VIEWING receipt before draw_opened so
+     * the first runtime frame cannot fall back to the pre-Entrance world. */
+    return M11_GameView_ApplyDm1StartupRuntimeHandoff(ctx->gameView,
+                                                       receipt);
+}
+
 static int m11_dm1_selected_launch_draw_opened(void* user) {
     M11_DM1StartupHandoffContext* ctx = (M11_DM1StartupHandoffContext*)user;
     if (!ctx || !ctx->gameView) {
@@ -3568,6 +3582,8 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     dm1SelectedLaunchCallbacks.host_callbacks = &dm1HostCallbacks;
     dm1SelectedLaunchCallbacks.open_selected_entry = m11_dm1_selected_launch_open;
     dm1SelectedLaunchCallbacks.after_open = m11_dm1_selected_launch_after_open;
+    dm1SelectedLaunchCallbacks.apply_runtime_handoff =
+        m11_dm1_selected_launch_apply_runtime_handoff;
     dm1SelectedLaunchCallbacks.draw_opened = m11_dm1_selected_launch_draw_opened;
     dm1SelectedLaunchCallbacks.mark_launch_failed =
         m11_dm1_selected_launch_mark_failed;
@@ -4395,7 +4411,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             &receipt.dm1HoCBootSummary,
             &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1HocCandidatePanel=%d dm1HocCandidateOrdinal=%d dm1HocCandidatePartyIndex=%d dm1InventoryPanel=%d dm1FoodWaterPanel=%d dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d dm1FmtownsMenuFontLoaded=%d %s\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1HocCandidatePanel=%d dm1HocCandidateOrdinal=%d dm1HocCandidatePartyIndex=%d dm1InventoryPanel=%d dm1FoodWaterPanel=%d dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d dm1StartupHandoffExecuted=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d dm1FmtownsMenuFontLoaded=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -4447,6 +4463,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             gameView ? gameView->dm1FmtownsCddaCurrentTrack : 0,
             receipt.startedFromLauncher,
             receipt.dm1StartupIntroBypassed,
+            receipt.dm1StartupHandoffExecuted,
             platformHandoff,
             fmtownsProgram,
             fmtownsProgramMd5,
