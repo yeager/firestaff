@@ -20,6 +20,7 @@ stage="${FMTOWNS_STAGE_DIR:-$repo/.codex-scratch/fmtowns-original-media-stage}"
 timeline="${FMTOWNS_CAPTURE_TIMELINE:-}"
 input_timeline="${FMTOWNS_INPUT_TIMELINE:-}"
 towns_type="${FMTOWNS_TYPE:-MX}"
+boot_key="${FMTOWNS_BOOT_KEY:-}"
 high_fidelity="${FMTOWNS_HIGH_FIDELITY:-0}"
 nowait_boot="${FMTOWNS_NOWAIT_BOOT:-1}"
 diagnostics="${FMTOWNS_DIAGNOSTICS:-0}"
@@ -42,6 +43,7 @@ Optional:
   FMTOWNS_CAPTURE_OUT=/safe/output/path   (default: repository .codex-scratch)
   FMTOWNS_STAGE_DIR=/safe/staging/path    (default: repository .codex-scratch)
   FMTOWNS_TYPE=MX                          (FM Towns machine type)
+  FMTOWNS_BOOT_KEY=CD                      (optional boot key; default is the ROM's normal boot path)
   FMTOWNS_HIGH_FIDELITY=1|0                (default: 0; opt in only after VM boot validation)
   FMTOWNS_NOWAIT_BOOT=1|0                  (default: 1; bypass host-time memory-test delay)
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
@@ -93,6 +95,10 @@ if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:enter(\ [0-9]+:ente
 fi
 if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
     echo "ERROR: FMTOWNS_HIGH_FIDELITY must be 0 or 1" >&2
+    exit 3
+fi
+if [[ -n "$boot_key" && ! "$boot_key" =~ ^(CD|F0|F1|F2|F3|H0|H1|H2|H3|H4|ICM|DEBUG|PAD_A|PAD_B|PAD_AB|FASTMODE|SLOWMODE)$ ]]; then
+    echo "ERROR: FMTOWNS_BOOT_KEY is not a Tsugaru boot-key selector" >&2
     exit 3
 fi
 if [[ "$nowait_boot" != "0" && "$nowait_boot" != "1" ]]; then
@@ -268,10 +274,13 @@ set +e
 fidelity_args=()
 if [[ "$high_fidelity" == "1" ]]; then fidelity_args=(-HIGHFIDELITY); fi
 boot_args=()
-if [[ "$nowait_boot" == "1" ]]; then boot_args=(-NOWAITBOOT); fi
-if [[ "$no_wait" == "1" ]]; then boot_args=(-NOWAIT); fi
+if [[ -n "$boot_key" ]]; then boot_args+=(-BOOTKEY "$boot_key"); fi
+# Keep independently selected boot options rather than overwriting the
+# optional boot key.  The normal path intentionally passes no -BOOTKEY.
+if [[ "$nowait_boot" == "1" ]]; then boot_args+=(-NOWAITBOOT); fi
+if [[ "$no_wait" == "1" ]]; then boot_args+=(-NOWAIT); fi
 if [[ "$frequency_mhz" != "0" ]]; then boot_args+=(-FREQ "$frequency_mhz"); fi
-run_commands | env DISPLAY="$xvfb_display" "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" "${boot_args[@]}" \
+run_commands | env DISPLAY="$xvfb_display" "$tsugaru" "$rom_stage" -CD "$cue" "${fidelity_args[@]}" "${boot_args[@]}" \
     -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
 tsugaru_status=${PIPESTATUS[1]}
 set -e
@@ -329,6 +338,7 @@ fi
     printf 'input_timeline_requested=%s\n' "${input_timeline:-none}"
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
+    printf 'boot_key=%s\n' "${boot_key:-normal}"
     printf 'high_fidelity=%s\n' "$high_fidelity"
     printf 'nowait_boot=%s\n' "$nowait_boot"
     printf 'nowait=%s\n' "$no_wait"
