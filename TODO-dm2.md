@@ -28,6 +28,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   do not promote either side as pixel parity before that comparison exists.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
+- For the Japanese FM Towns edition, pair one original-emulator session with
+  Firestaff at the same startup checkpoints. The retained original trace
+  proves pre-title → FTL → castle title → emulator-directed input → first
+  dungeon, but its nominal menu checkpoint was still title animation and it
+  has no valid audio receipt. Obtain a source-owned menu/loading/HUD trace,
+  VRTC/CRTC palette/register receipts, and a same-state Firestaff comparison
+  before correcting or claiming parity for the reported palette, missing-menu
+  and post-New-Game dungeon defects. Do not use Firestaff's own decoder output
+  as the expected original framebuffer.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
   valid encounter, weapon choice, command arguments and RNG timing, then
   bind the remaining WIELD fallback/luck and creature-drop route to that

@@ -2,16 +2,17 @@
 
 ## Current Firestaff status
 
-The authentic FM Towns route is playable in Firestaff. M12 can select the
-original HME-242 ZIP from a shared DM2 data root, read its disc image and
-retain the archive as the source owner. The FM Towns M11 route reaches active
-runtime through source-owned New Game, inventory, movement, pit, stairs, DB1
-and creature/THINK_CREATURE checks.
+Firestaff admits the authentic FM Towns route from the original HME-242 ZIP,
+reads its disc image in memory and retains the archive as the source owner.
+The native M11 route reaches a bounded New Game/runtime handoff through
+source-owned inventory, movement, pit, stairs, DB1 and creature/THINK_CREATURE
+checks. This is a verified start route, not a claim that the original
+palette, title/menu timing, HUD or dungeon presentation is fully matched.
 
-For English text, pass the verified PC-English DOS `GRAPHICS.DAT` as an
-explicit companion. The companion is read into RAM and supplies text only;
-the Japanese FM Towns disc remains the owner of dungeon, graphics, title and
-animation media. No archive member is unpacked as a substitute runtime tree.
+The Japanese FM Towns disc remains the owner of dungeon, graphics, title and
+animation media. Firestaff supplies selected-language text through its own
+localisation catalogs; it does not require a PC-English `GRAPHICS.DAT`
+companion. No archive member is unpacked as a substitute runtime tree.
 
 DM2's FM Towns port sits alongside DM1 and CSB in the Fujitsu HMA-240
 Phar Lap family. Read this together with the DM1 and CSB FM Towns
