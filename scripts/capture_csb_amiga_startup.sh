@@ -79,6 +79,14 @@ fullscreen = 0
 window_width = 800
 window_height = 600
 video_sync = 0
+# Native screenshot requests are host shortcuts.  FS-UAE grabs input by
+# default, which makes an X11 automation session send F12+S to the emulated
+# Amiga instead of to FS-UAE.  Disable those grabs only for this external
+# capture harness; game input and Firestaff runtime are unaffected.
+initial_input_grab = 0
+automatic_input_grab = 0
+keyboard_input_grab = 0
+screenshots_output_mask = 3
 screenshots_output_dir = $out
 save_states_dir = $out/save-states
 EOF
@@ -139,6 +147,15 @@ if [[ -z "$window" ]]; then
     exit 6
 fi
 
+request_native_screenshot() {
+    # A fresh FS-UAE session can take a short while to accept its first host
+    # shortcut even after its X11 window is visible.  Focus and retry the
+    # documented shortcut in the caller's bounded wait loop; only a native
+    # crop written after that request marker is ever admitted below.
+    DISPLAY="$display" xdotool windowfocus "$window" >/dev/null 2>&1 || true
+    DISPLAY="$display" xdotool key --clearmodifiers --window "$window" F12+s
+}
+
 previous=0
 index=0
 expected_capture_count=0
@@ -155,13 +172,19 @@ for second in $capture_seconds; do
     : >"$marker"
     # F12+S is FS-UAE's documented screenshot shortcut.  It records the
     # emulated Amiga frame and therefore avoids a host Xvfb-root capture.
-    DISPLAY="$display" xdotool key --window "$window" F12+s
+    request_native_screenshot
     for attempt in $(seq 1 50); do
         latest="$(find "$out" -maxdepth 1 -type f -name 'fs-uae-crop-*.png' -newer "$marker" -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
         if [[ -n "$latest" ]] && is_clean_canvas_crop "$latest"; then
             mv "$latest" "$out/startup-${index}-${second}s.png"
             native_capture_count=$((native_capture_count + 1))
             break
+        fi
+        # Retry at one-second intervals while the initial host shortcut is
+        # still being ignored by a newly-created SDL window.  The marker gate
+        # keeps a prior-session or pre-request crop from being accepted.
+        if (( attempt % 10 == 0 )); then
+            request_native_screenshot
         fi
         sleep 0.1
     done
@@ -182,6 +205,8 @@ done
 # complete original-capture result merely because the first host fallback was
 # written successfully.
 actual_capture_count="$(find "$out" -maxdepth 1 -type f -name 'startup-*.png' | wc -l | tr -d ' ')"
+shopt -s nullglob
+startup_frames=("$out"/startup-*.png)
 
 {
     printf 'schema=firestaff.csb.amiga.startup.capture.v1\n'
@@ -193,7 +218,7 @@ actual_capture_count="$(find "$out" -maxdepth 1 -type f -name 'startup-*.png' | 
     printf 'disk1_sha256=%s\n' "$(sha256sum "$disk1" | awk '{print $1}')"
     printf 'disk2_sha256=%s\n' "$(sha256sum "$disk2" | awk '{print $1}')"
     printf 'disk3_sha256=%s\n' "$(sha256sum "$disk3" | awk '{print $1}')"
-    for image in "$out"/startup-*.png; do
+    for image in "${startup_frames[@]}"; do
         printf 'frame_sha256=%s\n' "$(sha256sum "$image" | awk '{print $1}')"
     done
 } >"$out/receipt.txt"
