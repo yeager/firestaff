@@ -61,7 +61,7 @@ the verified release; it must not reinterpret another platform's bytes.
 | `GRAPHICS.DAT` | Typed **GDAT** record graph rather than a flat sprite sheet. Records carry palettes, interface media, maps, map chips, materials, creature data and placement data. | Read and bound only through typed source consumers. Unknown records are not promoted to images. |
 | `DUNGEON.DAT` | PC G1 map/record data. Real-data evidence establishes that `GenericRecord::w0` is game data, not a next-record link; DB3 and DB4 have proven extension pools. | Read and bound for the covered world/runtime slices. Other record semantics stay gated. |
 | GDAT audio | A sound entry has a two-byte format header followed by unsigned 8-bit mono PCM at 6,000 Hz. | Source PCM decoding and bounded voice allocation are implemented. |
-| FM Towns data | Original CD `DATA/` content, Japanese program/presentation material and platform-specific animation streams. | Identified and used only by the corresponding Towns route; a verified PC English companion is an English text companion, never a replacement disc. |
+| FM Towns data | Original CD `DATA/` content, Japanese program/presentation material and platform-specific animation streams. | Identified and used only by the corresponding Towns route. DM2 maps authenticated Towns GDAT text keys through gettext; no sibling PC data is required or used as a fallback. |
 | Amiga media | Installer media plus `CD.DAT` and `SK00.MOD` through `SK09.MOD` for original map music. | Read as original media where supported; these files do not replace the required edition pair. |
 | `SKSAVE` | Original save media. | Optional resume input, never a substitute for a verified new-game data pair. |
 

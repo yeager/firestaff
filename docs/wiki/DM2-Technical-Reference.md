@@ -1,6 +1,6 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
-> **Status reviewed 2026-09-09.** DM2 has bounded source-owned routes from
+> **Status reviewed 2026-09-12.** DM2 has bounded source-owned routes from
 > DOS, Amiga, FM Towns and Macintosh real media. Full campaign parity,
 > native non-DOS saves and some combat/UI owners remain active work.
 
@@ -28,9 +28,11 @@ of complete visual or gameplay parity.
 | Amiga | CLI boot, M12 admission, M11 title/new game | source title and entrance/new-game route |
 | FM Towns Japanese | CLI boot, M12 admission, M11 title/gameplay | packed media, title, menu selection and bounded movement |
 
-The suite executed on 2026-08-31 contains 17 real-media cases, all passing.
-Macintosh DM2 demo support is intentionally absent; it is not a fallback for
-any of the routes above.
+Focused real-media cases cover the stated boundaries. A passing startup or
+runtime slice is not a visual-parity claim: title palette/timing, menu
+handoff, HUD, viewport, mouse/touch input, audio and dungeon composition each
+need their own edition-owned evidence. Macintosh DM2 demo support is
+intentionally absent; it is not a fallback for any of the routes above.
 
 ## Boot and GDAT
 

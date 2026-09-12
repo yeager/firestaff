@@ -2,11 +2,13 @@
 
 ## Current Firestaff support
 
-Firestaff's DM2 runtime is playable from authenticated DOS, Amiga, FM Towns
-and Macintosh source data. The shared M12 data root keeps those editions
-separate: DOS may resolve through its verified `data` symlink, while Amiga,
-FM Towns and Mac retain their original archive owners. Focused M11 real-media
-regressions verify New Game and active runtime paths for all four families.
+Firestaff has verified bounded native routes from authenticated DOS, Amiga,
+FM Towns and Macintosh source data. The shared M12 data root keeps those
+editions separate: DOS may resolve through its verified `data` symlink, while
+Amiga, FM Towns and Mac retain their original archive owners. Focused M11
+real-media regressions verify New Game and selected runtime paths for all four
+families; they do not establish full visual, timing, input, save or campaign
+parity.
 
 The remaining items in this page are parity boundaries, not a requirement to
 substitute one edition's files for another: native non-DOS saves, positive DOS
@@ -206,5 +208,5 @@ X68000 is not part of the DM2 support matrix.
 
 ## Conclusion
 Amiga, DOS, FM Towns and Macintosh are separate original DM2 media/runtime
-families in Firestaff's support matrix, and all four now reach a playable
-source-owned runtime. X68000 and PlayStation are outside the supported matrix.
+families in Firestaff's support matrix, and all four have bounded native
+source-owned routes. X68000 and PlayStation are outside the supported matrix.

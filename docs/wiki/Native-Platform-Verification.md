@@ -1,6 +1,6 @@
 # Native platform and startup verification
 
-**Reviewed 2026-09-09.** This page records what the native Firestaff runtime
+**Reviewed 2026-09-12.** This page records what the native Firestaff runtime
 has actually admitted from authentic player-supplied media. It is deliberately
 not a compatibility wish-list: a parser, a disassembly reference, or an
 emulator capture does not by itself prove a public start route.
@@ -18,7 +18,10 @@ emulator capture does not by itself prove a public start route.
 All entries use original data in its supplied form. ZIP/CUE/disc members are
 read in memory and are never extracted by the runtime. Development captures
 may use tools such as a debugger or emulator, but no such program, BIOS or
-firmware is a Firestaff runtime dependency.
+firmware is a Firestaff runtime dependency. A route is downgraded or left
+bounded when a reported visual, timing or input discrepancy lacks an
+edition-matched original capture; a green parser or launch test cannot
+override that rule.
 
 On 2026-08-31 the complete DM1 real-media selection passed all 42 registered
 routes: archive identity, CLI and start-menu admission, original saves, Atari
