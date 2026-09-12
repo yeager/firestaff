@@ -1,6 +1,6 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-09-09.** Firestaff has five active game targets.
+> **Status reviewed 2026-09-12.** Firestaff has five active game targets.
 > DM1 PC 3.4 V1 has a playable source-owned route; CSB and DM2 have bounded
 > native real-media routes, Theron reaches a bounded JP Track 02 runtime, and
 > Nexus renders its admitted retail MAPD title sequence while its
@@ -8,7 +8,12 @@
 > [preservation status](../PRESERVATION_STATUS_2026-08-11.md) and the
 > [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.
 
-Firestaff reimplements five classic Dungeon Master game engines with source-level parity to the originals. It is a pure C application targeting macOS, Linux, Windows, iOS (AltStore Classic sideload), and Android, rendering via SDL3.
+Firestaff reimplements five classic Dungeon Master game engines with
+source-locked, native original-data routes. Each platform remains separately
+scoped: a verified parser or startup route is not described as visual or full
+campaign parity until that platform has the required original runtime evidence.
+It is a pure C application targeting macOS, Linux, Windows, iOS (AltStore
+Classic sideload), and Android, rendering via SDL3.
 
 ## Supported Games
 
