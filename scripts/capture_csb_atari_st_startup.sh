@@ -286,6 +286,14 @@ if [[ "$audio_capture_active" == "1" ]]; then
 fi
 
 audio_emulation_warning_count="$(grep -c 'sound samples were not correctly emulated' "$out/hatari.log" || true)"
+# A clean emulation-warning count does not prove that Hatari ever opened an
+# audio device.  In headless sessions SDL/ALSA can reject the host device
+# before emulation starts; treating that as audio parity would turn a missing
+# signal into a false positive.
+audio_backend_unavailable=0
+if grep -Eq "Can't use audio:|Couldn't open audio device|Failed to open audio" "$out/hatari.log"; then
+    audio_backend_unavailable=1
+fi
 
 {
     printf 'schema=firestaff.csb.atari.startup.capture.v1\n'
@@ -301,7 +309,14 @@ audio_emulation_warning_count="$(grep -c 'sound samples were not correctly emula
         printf 'audio_capture=not-recorded\n'
     fi
     printf 'audio_emulation_warning_count=%s\n' "$audio_emulation_warning_count"
-    if [[ "$capture_audio" == "1" && "$audio_emulation_warning_count" != "0" ]]; then
+    printf 'audio_backend_available=%s\n' "$([[ "$audio_backend_unavailable" == "0" ]] && printf yes || printf no)"
+    if [[ "$capture_audio" != "1" ]]; then
+        printf 'audio_parity_valid=not-evaluated\n'
+        printf 'audio_parity_reason=capture-not-requested\n'
+    elif [[ "$audio_backend_unavailable" != "0" ]]; then
+        printf 'audio_parity_valid=no\n'
+        printf 'audio_parity_reason=audio-backend-unavailable\n'
+    elif [[ "$audio_emulation_warning_count" != "0" ]]; then
         printf 'audio_parity_valid=no\n'
         printf 'audio_parity_reason=dropped-emulated-samples\n'
     else
@@ -314,9 +329,15 @@ audio_emulation_warning_count="$(grep -c 'sound samples were not correctly emula
     done
 } >"$out/receipt.txt"
 
-if [[ "$capture_audio" == "1" && "$audio_emulation_warning_count" != "0" ]]; then
-    echo "ERROR: Hatari reported dropped sound samples; reject this WAV as non-parity evidence" >&2
-    exit 7
+if [[ "$capture_audio" == "1" ]]; then
+    if [[ "$audio_backend_unavailable" != "0" ]]; then
+        echo "ERROR: Hatari could not open an audio backend; reject this WAV as non-parity evidence" >&2
+        exit 7
+    fi
+    if [[ "$audio_emulation_warning_count" != "0" ]]; then
+        echo "ERROR: Hatari reported dropped sound samples; reject this WAV as non-parity evidence" >&2
+        exit 7
+    fi
 fi
 
 echo "PASS: wrote $(find "$out" -maxdepth 1 -name 'startup-*.png' -type f | wc -l | tr -d ' ') original CSB Atari startup frame(s)"
