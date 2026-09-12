@@ -107,7 +107,7 @@ def document() -> dict[str, object]:
                 sdl_version,
                 "Zlib",
                 "https://github.com/libsdl-org/SDL",
-                comment="Required host window, input, audio, and rendering dependency (SDL3; SDL2 fallback is supported).",
+                comment="Required host window, input, audio, and rendering dependency (SDL3).",
             ),
             package(
                 "SPDXRef-Package-Python",
