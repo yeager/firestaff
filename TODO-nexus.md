@@ -28,7 +28,12 @@ presentation boundary.
   including the display consumer that places menu and face material.
   The JP window at frames 13000–13039 is bit-identical with and without
   Start/A pulses, so it is non-interactive animation rather than the native
-  startup menu.
+  startup menu. A later same-session control/Start pair establishes that
+  Start is read from the live controller register at frames 18020--18023 by
+  SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
+  no-input control. That reader is therefore not yet an admitted menu
+  consumer; find the later transition that changes presentation and bind it
+  to the retail menu asset consumer.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay.
