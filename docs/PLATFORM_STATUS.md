@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Reviewed 2026-09-09.** This is the operational status matrix. It separates
+**Reviewed 2026-09-12.** This is the operational status matrix. It separates
 media recognition, verified runtime slices and end-to-end playability. A row
 marked as supported does not mean that every menu, save format or visual
 parity gate is complete.
@@ -17,8 +17,15 @@ parity gate is complete.
 
 ## Latest real-media revalidation
 
-On 2026-08-30 the local, non-CI DM2 regression set passed against the supplied
-archives in `~/.firestaff/data/dm2`, without extracting or modifying them. It
+The 2026-09-12 documentation review did not promote any platform row. Recent
+reports of DM1/CSB input and presentation faults and DM2/FM Towns
+palette/menu/dungeon faults remain open parity work until they are reproduced
+against matching original media and resolved with source or capture evidence.
+A green launch test below is therefore not a substitute for visual, audio,
+input or campaign parity.
+
+On 2026-08-30 the local, non-CI DM2 regression set passed against supplied
+archives without extracting or modifying them. It
 covered `dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
 `dm2_v1_dos_sksave_archive_menu_resume`,
 `dm2_v1_dos_sksave_archive_menu_resume_matrix`,

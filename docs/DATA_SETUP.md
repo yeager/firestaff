@@ -29,7 +29,7 @@ catalogued original edition.
 |---|---|---|
 | Dungeon Master | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | The catalog currently includes PC 3.4, Atari ST, FM Towns and Amiga editions; loose files or supported original-media containers |
 | Chaos Strikes Back | `GRAPHICS.DAT` or `CSBGRAPH.DAT`, plus `DUNGEON.DAT` from the same edition | The catalog includes Atari ST, FM Towns and Amiga editions in loose files or supported original-media containers. |
-| Dungeon Master II: Skullkeep | `GRAPHICS.DAT` and `DUNGEON.DAT` from the same edition | PC English/French/JewelCase, PC-9801 demo, PC-9821 Japanese, FM Towns Japanese and Amiga English (68020+, OCS/ECS-compatible). FM Towns uses `DATA/` on the original CD; the Amiga installer archive is read as original media. |
+| Dungeon Master II: Skullkeep | Edition-specific boot data, including matching `GRAPHICS.DAT` and `DUNGEON.DAT` where that edition stores them as files | DOS, Amiga, FM Towns Japanese and Macintosh retail families currently have bounded native routes. FM Towns uses `DATA/` on the original CD; the Amiga installer archive and Macintosh HFS media are read in memory. Other identified editions remain preservation inputs until separately admitted. |
 | DM Nexus | The original Saturn `DM.BIN` marker plus the associated original Saturn data source | Keep a complete CUE/BIN disc image. Firestaff can also identify an already-extracted, verified Saturn data set, but extraction is not a setup requirement. |
 | Theron's Quest | One hash-recognised Track 02 data image | US or Japanese Track 02 in its original BIN or ISO form. Keep the matching CUE with BIN media when it is available. |
 
@@ -70,10 +70,11 @@ graphics and dungeon pair.
 
 ### Dungeon Master II: Skullkeep
 
-DM2 is playable from the authenticated DOS, Amiga, FM Towns and Macintosh
-source families. M12 keeps the selected edition's owner when several versions
-are present below one root; a DOS `data` symlink is valid when it resolves to
-the verified DOS files.
+DM2 has bounded native routes from authenticated DOS, Amiga, FM Towns and
+Macintosh source families. When several versions are present below one root,
+the launcher retains the selected edition as the sole source owner; a DOS
+`data` symlink is valid when it resolves to the verified DOS files. These
+routes do not yet establish complete presentation or campaign parity.
 
 PC music is stored in the original GDAT data. FM Towns presentation media,
 including `AUTOEXEC.BAT`, `TWANIM.EXP`, `SWOOSH`, `TITLE`, `SKULL.EXP` and

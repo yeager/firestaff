@@ -22,6 +22,28 @@ Across every game, work is ordered as **startup → menu → HUD → viewport**.
 Later presentation claims remain blocked when an earlier source or real-data
 handoff is not proven.
 
+## Documentation roles
+
+Use the following hierarchy when documentation appears to disagree:
+
+1. **Current public status:** this index, [project status](PROJECT_STATUS.md),
+   [platform status](PLATFORM_STATUS.md), and the corresponding checked-in
+   wiki pages are the current support contract.
+2. **Technical reference:** format, reverse-engineering and source-lock pages
+   record the evidence, implementation details and known boundaries behind a
+   current claim.
+3. **Planning and historical records:** dated audits, reports, release notes
+   and files under `docs/plans/` preserve decisions at the time they were
+   written. They are not current status unless a current-status page links to
+   the specific conclusion.
+
+Current public-status pages must describe only source-owned or real-media-backed
+behaviour. They must not contain local machine paths, private captures,
+disassemblies, BIOS/firmware, game archives, saves, or other copyrighted source
+material. A README screenshot may show Firestaff itself, but is never evidence
+for an original game's output. Historical records are being retained as dated
+research and must not be copied into current status or wiki pages.
+
 ## Start here
 
 - [README](../README.md) — user-facing overview, supported platforms and quick start

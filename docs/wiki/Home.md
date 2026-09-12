@@ -15,6 +15,20 @@ campaign parity until that platform has the required original runtime evidence.
 It is a pure C application targeting macOS, Linux, Windows, iOS (AltStore
 Classic sideload), and Android, rendering via SDL3.
 
+## Reading status correctly
+
+The project uses deliberately narrow status labels. **Playable** requires an
+end-to-end original-data route; **verified route** proves a bounded real-media
+route; **data path** proves admission or decoding only. Neither a parser, a
+source-locked unit test nor a startup screenshot establishes complete visual,
+audio, input, save or campaign parity. The canonical matrix is
+[Platform status](../PLATFORM_STATUS.md).
+
+Firestaff uses only the original game media selected by the player at runtime.
+It does not bundle or require a BIOS, firmware, System Card, external emulator
+or data from another edition. Game containers stay intact and are read in
+memory; private research artefacts are not part of the repository or wiki.
+
 ## Supported Games
 
 | Game | Platform | Reference Source | Wiki Pages |
@@ -67,6 +81,12 @@ Classic sideload), and Android, rendering via SDL3.
 - [Native Platform Verification](Native-Platform-Verification) — actual CLI/start-menu evidence by original platform
 - [Tsugaru Development and Capture Reference](Tsugaru-Development-Capture-Reference) — FM Towns emulator architecture, reproducible original captures and strict runtime boundary
 - [Documentation Index](../DOCUMENTATION_INDEX) — complete cross-game status and page map
+
+## Documentation policy
+
+[Documentation Index](../DOCUMENTATION_INDEX#documentation-roles) explains
+which pages are current status, technical evidence or historical context. Use
+that order when an older plan or release note conflicts with this wiki.
 
 ## Quick Links
 

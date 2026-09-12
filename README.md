@@ -20,7 +20,7 @@ Theron's Quest.
 
 ## Current status
 
-The status below was reviewed on 2026-09-09. It reports what has been exercised
+The status below was reviewed on 2026-09-12. It reports what has been exercised
 with real media, not a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
@@ -35,17 +35,17 @@ separates source/disassembly evidence, real-media receipts and open routes.
 |---|---|
 | Dungeon Master | PC DOS, Atari ST, Amiga and FM Towns startup and selected dungeon routes have real-media coverage. The PC 3.4 Hall of Champions candidate panel is rendered from authenticated C040/C026 assets. Further gameplay and visual parity work continues. |
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
-| Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Advanced parity, saves and some combat/UI behavior continue. |
+| Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Title timing/palette, menu handoff, input, audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
 | Theron's Quest | PC Engine/TurboGrafx real-media startup and initial dungeon parsing work; later presentation and level-transition evidence is still required. |
 
 ### Dungeon Master II: Skullkeep
 
-DM2 is playable in Firestaff from four authenticated source families:
+DM2 has bounded native routes from four authenticated source families:
 
 | Edition | Accepted source data | Verified runtime scope |
 |---|---|---|
-| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `<downloads>/dm2` are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
+| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; matching DOS saves are optional resume data | New Game, active runtime, movement, pits, stairs, level transitions, creatures and spell handoff |
 | Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, clipped source CHARSHEET inventory, movement, pits, stairs, level transitions and creatures |
 | FM Towns Japanese | Original HME-242 ZIP/disc image; non-Japanese text uses the built-in GDAT-keyed l10n bridge | Title sequence, New Game, inventory, movement, level transitions and creatures |
 | Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs, level transitions and combat/creature handoff |
@@ -69,11 +69,10 @@ For the Japanese FM Towns edition of DM2, Firestaff keeps the original Towns
 disc as the only game-data owner. A built-in, GDAT-keyed bridge maps the
 disc's authenticated text records to canonical English gettext entries, so no
 PC-English `GRAPHICS.DAT` is required at runtime. The selected catalog then
-applies Swedish or another supported language. Swedish has a complete DM2
-catalog; other language catalogs remain work in progress. Any untranslated
-entry safely shows its canonical English source text—never invented text or a
-different edition's Japanese fallback. See [translation status](po/README.md)
-for exact per-language coverage.
+applies the chosen supported language, including Swedish. Catalog completeness
+is checked in CI; an unavailable or invalid catalog falls back to canonical
+English rather than to text from another edition. See
+[translation status](po/README.md) for the generated per-language coverage.
 
 Focused real-media checks and their current boundaries are documented in
 [TODO-dm2.md](TODO-dm2.md), [DONE-dm2.md](DONE-dm2.md),
