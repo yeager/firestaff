@@ -198,7 +198,7 @@ if [[ -n "$keystrokes" ]]; then
 fi
 
 run_clicks_through() {
-    local target="$1" entry timestamp point x y
+    local target="$1" entry timestamp point x y px py geom gx gy gw gh
     while [[ "$click_index" -lt "${#click_entries[@]}" ]]; do
         entry="${click_entries[$click_index]}"
         timestamp="${entry%%:*}"
@@ -213,7 +213,32 @@ run_clicks_through() {
         sleep "$((timestamp - previous))"
         x="${point%,*}"
         y="${point#*,}"
-        DISPLAY="$display" xdotool mousemove --window "$window" "$x" "$y" click 1
+        # The caller supplies original 320x200 framebuffer coordinates.  A
+        # Hatari window is commonly larger (and can be letterboxed), so using
+        # these values as raw X11 window pixels sends a supposedly centred
+        # click into the upper-left quadrant.  Map through the centred 4:3
+        # content rectangle before injecting input.
+        geom="$(DISPLAY="$display" xdotool getwindowgeometry --shell "$window")" || {
+            echo "ERROR: could not read Hatari window geometry for click ${x},${y}" >&2
+            exit 6
+        }
+        eval "$geom"
+        gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
+        read -r px py < <(python3 - "$gw" "$gh" "$x" "$y" <<'PY'
+import sys
+width, height, x, y = map(float, sys.argv[1:])
+content_width = width
+content_height = content_width * 200.0 / 320.0
+if content_height > height:
+    content_height = height
+    content_width = content_height * 320.0 / 200.0
+left = (width - content_width) / 2.0
+top = (height - content_height) / 2.0
+print(int(round(left + ((x + 0.5) / 320.0) * content_width)),
+      int(round(top + ((y + 0.5) / 200.0) * content_height)))
+PY
+)
+        DISPLAY="$display" xdotool mousemove --window "$window" "$px" "$py" click 1
         previous="$timestamp"
         click_index=$((click_index + 1))
     done
