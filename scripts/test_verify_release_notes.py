@@ -17,7 +17,9 @@ def note(added: str, changed: str, removed: str) -> str:
         "## DM2\n\n"
         f"### Added\n{added}\n\n"
         f"### Changed\n{changed}\n\n"
-        f"### Removed\n{removed}\n"
+        f"### Removed\n{removed}\n\n"
+        "## Developer changes\n\n"
+        "- `release-notes validator`: Verifies that concrete release deltas are documented.\n"
     )
 
 
@@ -26,7 +28,15 @@ def run_case(contents: str, expected: int) -> None:
         path = Path(temp_dir) / "notes.md"
         path.write_text(contents, encoding="utf-8")
         completed = subprocess.run(
-            [sys.executable, str(VERIFY), "--notes", str(path), "--version", "9.8.7"],
+            [
+                sys.executable,
+                str(VERIFY),
+                "--notes",
+                str(path),
+                "--version",
+                "9.8.7",
+                "--require-audience-sections",
+            ],
             check=False,
             capture_output=True,
             text=True,
@@ -72,8 +82,22 @@ def main() -> None:
     )
     run_case(
         "# Firestaff v9.8.7\n\n## Fixed\n\n"
-        "- `verify.yml`: Prevent started verification matrices from being canceled.\n",
+        "- `verify.yml`: Prevent started verification matrices from being canceled.\n\n"
+        "## Developer changes\n\n"
+        "- `verify.yml`: Prevents started verification matrices from being canceled.\n",
         0,
+    )
+    run_case(
+        "# Firestaff v9.8.7\n\n## Fixed\n\n"
+        "- `verify.yml`: Prevent started verification matrices from being canceled.\n",
+        1,
+    )
+    run_case(
+        "# Firestaff v9.8.7\n\n## Fixed\n\n"
+        "- `verify.yml`: Prevent started verification matrices from being canceled.\n\n"
+        "## User-facing changes\n\n"
+        "- `release notes`: Various improvements.\n",
+        1,
     )
     print("release-notes verifier regression checks: PASS")
 

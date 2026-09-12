@@ -11,36 +11,42 @@ project(Firestaff VERSION 3.0.315 LANGUAGES C)
 
 ## Release notes format
 
-Each version block in `RELEASE_NOTES.md` contains only game and release-wide
-categories that have a concrete delta. Valid game headings are `DM1`, `DM2`,
-`CSB`, `Nexus`, and `Theron`; valid release-wide headings are `Added`,
-`Changed`, `Removed`, and `Fixed`. A bullet names the affected function,
-subsystem, command, screen, or feature in backticks. Empty categories are
-omitted—`None.` is rejected by the release validator.
+Each published version block in `RELEASE_NOTES.md` is the complete public
+record of user- and developer-relevant changes for that release. It must have
+at least one of `User-facing changes` or `Developer changes` (both when both
+audiences are affected). Do not use a generic summary to hide individual
+changes: each bullet names the affected feature, subsystem, command or screen
+in backticks and states the concrete delta. Empty categories are omitted—
+`None.` is rejected by the release validator.
+
+Game headings (`DM1`, `DM2`, `CSB`, `Nexus`, and `Theron`) and release-wide
+headings (`Added`, `Changed`, `Removed`, and `Fixed`) may organize the detailed
+record. Historical entries retain their original documented structure; a new
+release must use the audience sections so a reader can immediately separate
+what changes in the product from implementation, packaging, API, tooling and
+verification changes.
 
 ## Creating a release
 
 1. **Bump version** in `CMakeLists.txt`.
 2. **Write release notes** in `RELEASE_NOTES.md` (add a section headed
    `# Firestaff vX.Y.Z`). Include only the relevant game and release-wide
-   categories, each with concrete bullets:
+   audience sections, each with concrete bullets:
 
    ```markdown
    # Firestaff vX.Y.Z
 
-   ## CSB
-   ### Added
-   - `csb_feature`: describe the concrete change.
+   ## User-facing changes
+   - `CSB entrance`: restores mouse activation of the selected door control.
 
-   ## Firestaff
-   ### Fixed
-   - `release_feature`: describe the concrete release-wide fix.
+   ## Developer changes
+   - `csb_input_router`: maps the entrance pointer region to the native command.
    ```
 
-   Name the affected function, subsystem, command, screen or feature in every
-   bullet. Do not use aggregate wording such as “various updates” or generic
-   release summaries. The release workflow rejects notes that do not meet this
-   contract.
+   Include every relevant change for either audience. Name the affected
+   function, subsystem, command, screen or feature in every bullet. Do not use
+   aggregate wording such as “various updates” or generic release summaries.
+   The release workflow rejects notes that do not meet this contract.
 3. **Update active TODO and DONE ledgers** as needed: `TODO.md` for
    cross-game work, `TODO-<game>.md` for active game work, and the matching
    `DONE*.md` only after evidence-backed completion. Then run
