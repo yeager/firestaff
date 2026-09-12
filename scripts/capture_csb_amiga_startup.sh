@@ -22,6 +22,7 @@ Required for --run:
 Optional:
   CSB_AMIGA_CAPTURE_OUT=/path/to/output       (default: .codex-scratch)
   CSB_AMIGA_CAPTURE_SECONDS='32 52'           seconds after boot to capture
+  CSB_AMIGA_KEYSTROKES='53:Down 54:Return'    timed emulator key presses
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
   FS_UAE=/path/to/fs-uae                       (default: fs-uae)
 
@@ -47,6 +48,7 @@ disk3="${CSB_AMIGA_DISK3:-}"
 out="${CSB_AMIGA_CAPTURE_OUT:-$repo/.codex-scratch/csb-amiga-startup-capture}"
 fsuae="${FS_UAE:-fs-uae}"
 capture_seconds="${CSB_AMIGA_CAPTURE_SECONDS:-32 52}"
+keystrokes="${CSB_AMIGA_KEYSTROKES:-}"
 display_num="${CSB_AMIGA_XVFB_DISPLAY:-106}"
 
 for required in "$kickstart" "$disk1" "$disk2" "$disk3"; do
@@ -63,6 +65,10 @@ for required in "$fsuae" Xvfb xdotool scrot sha256sum; do
 done
 if [[ ! "$capture_seconds" =~ ^[0-9]+(\ [0-9]+)*$ ]] || [[ ! "$display_num" =~ ^[0-9]+$ ]]; then
     echo "ERROR: capture seconds and Xvfb display must be numeric" >&2
+    exit 5
+fi
+if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(\ [0-9]+:[A-Za-z0-9_+]+)*$ ]]; then
+    echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key entries separated by spaces" >&2
     exit 5
 fi
 
@@ -160,8 +166,36 @@ previous=0
 index=0
 expected_capture_count=0
 native_capture_count=0
+key_index=0
+key_entries=()
+if [[ -n "$keystrokes" ]]; then
+    read -r -a key_entries <<<"$keystrokes"
+fi
+
+run_keys_through() {
+    local target="$1" entry timestamp key
+    while [[ "$key_index" -lt "${#key_entries[@]}" ]]; do
+        entry="${key_entries[$key_index]}"
+        timestamp="${entry%%:*}"
+        key="${entry#*:}"
+        if (( timestamp > target )); then
+            break
+        fi
+        if (( timestamp < previous )); then
+            echo "ERROR: keystroke timestamps must be nondecreasing and cannot precede an emitted capture" >&2
+            exit 5
+        fi
+        sleep "$((timestamp - previous))"
+        DISPLAY="$display" xdotool windowfocus "$window" >/dev/null 2>&1 || true
+        DISPLAY="$display" xdotool key --clearmodifiers --window "$window" "$key"
+        previous="$timestamp"
+        key_index=$((key_index + 1))
+    done
+}
+
 for second in $capture_seconds; do
     expected_capture_count=$((expected_capture_count + 1))
+    run_keys_through "$second"
     sleep "$((second - previous))"
     index=$((index + 1))
     # FS-UAE emits a full emulator window, a clean emulated-canvas crop and a
@@ -199,6 +233,11 @@ for second in $capture_seconds; do
     previous=$second
 done
 
+if [[ "$key_index" -ne "${#key_entries[@]}" ]]; then
+    echo "ERROR: keystroke timestamp exceeds the capture timeline" >&2
+    exit 5
+fi
+
 # A partial session is useful for diagnosis, but it is not a successful
 # capture of the caller's requested timeline.  In particular, do not allow an
 # emulator that exited between two requested timestamps to be reported as a
@@ -214,6 +253,11 @@ startup_frames=("$out"/startup-*.png)
     printf 'capture_backend=fs-uae-native\n'
     printf 'requested_native_frames=%s\n' "$expected_capture_count"
     printf 'captured_native_frames=%s\n' "$native_capture_count"
+    if [[ -n "$keystrokes" ]]; then
+        printf 'input_keystrokes=%s\n' "$keystrokes"
+    else
+        printf 'input_keystrokes=none\n'
+    fi
     printf 'kickstart_sha256=%s\n' "$(sha256sum "$kickstart" | awk '{print $1}')"
     printf 'disk1_sha256=%s\n' "$(sha256sum "$disk1" | awk '{print $1}')"
     printf 'disk2_sha256=%s\n' "$(sha256sum "$disk2" | awk '{print $1}')"
