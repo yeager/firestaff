@@ -46,7 +46,7 @@ void fs_startup_ensure_data_dirs(const char *base_dir) {
                 fprintf(f, "  dm1/    - Dungeon Master (GRAPHICS.DAT + DUNGEON.DAT)\n");
                 fprintf(f, "  csb/    - Chaos Strikes Back\n");
                 fprintf(f, "  dm2/    - Dungeon Master II\n");
-                fprintf(f, "  nexus/  - DM Nexus (extracted Saturn ISO)\n");
+                fprintf(f, "  nexus/  - DM Nexus (original Saturn CUE/BIN set or supported archive)\n");
                 fprintf(f, "  theron/ - Theron's Quest (PC Engine HuCard)\n");
 
                 fprintf(f, "Run: firestaff --validate\n");
