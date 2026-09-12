@@ -75,6 +75,15 @@ for required in "$hatari" Xvfb xdotool sha256sum; do
         exit 4
     }
 done
+
+# Hatari 2.5+ accepts an explicit screenshot format while 2.4 uses PNG for
+# the documented screenshot shortcut but rejects that option entirely.  Keep
+# the capture tool usable with both releases; the post-capture filename gate
+# below still admits PNG frames only.
+screenshot_format_args=()
+if "$hatari" --help 2>&1 | grep -q -- '--screenshot-format'; then
+    screenshot_format_args=(--screenshot-format png)
+fi
 if [[ ! "$capture_seconds" =~ ^[0-9]+(\ [0-9]+)*$ ]]; then
     echo "ERROR: CSB_ATARI_CAPTURE_SECONDS must be space-separated non-negative seconds" >&2
     exit 5
@@ -141,7 +150,7 @@ trap cleanup EXIT INT TERM
     --confirm-quit no --machine ste --tos "$tos" \
     --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-buffer-size "$sound_buffer_ms" --sound-sync "$sound_sync" --fastfdc off \
     --statusbar false --drive-led false --borders false --crop true \
-    --screenshot-dir "$out" --screenshot-format png ) \
+    --screenshot-dir "$out" "${screenshot_format_args[@]}" ) \
     >"$out/hatari.log" 2>&1 &
 hatari_pid=$!
 
