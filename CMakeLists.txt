@@ -26266,6 +26266,32 @@ endif()
         ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
     )
 
+    # Standalone launch-boundary regression: an FM Towns title/Entrance
+    # failure must not expose the already-opened party-less game view.
+    add_executable(test_dm1_v1_fmtowns_entrance_handoff
+        tests/test_dm1_v1_fmtowns_entrance_handoff.c
+        src/dm1/dm1_v1_fmtowns_startup.c
+        src/shared/firestaff_fmtowns_disc.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_entrance_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_fmtowns_entrance_handoff PRIVATE
+        firestaff_zip_extract
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_entrance_handoff PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_entrance_handoff
+        COMMAND test_dm1_v1_fmtowns_entrance_handoff
+    )
+    set_tests_properties(dm1_v1_fmtowns_entrance_handoff PROPERTIES
+        LABELS "dm1;fmtowns;startup;entrance;regression"
+    )
+
     add_executable(test_dm1_v1_fmtowns_title
         tests/test_dm1_v1_fmtowns_title.c
     )

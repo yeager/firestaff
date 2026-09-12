@@ -135,6 +135,17 @@ int dm1_v1_fmtowns_startup_receipt_is_native(
 int dm1_v1_fmtowns_startup_receipt_has_native_owners(
     const DM1_V1_FmtownsStartupReceipt *receipt);
 
+/* The FM Towns title opens the verified game owner before its interactive
+ * Entrance handoff.  Only a completed ENTER or RESUME command may expose
+ * that game view.  A renderer/input failure is command-path NONE and must
+ * fail closed rather than drawing a party-less dungeon.  exit_after_launch
+ * is the explicit non-interactive boot-probe exception.  Command-path values
+ * are the shared EntranceCompatCommandPath values (NONE=0, ENTER=1,
+ * RESUME=2); they are kept as int here so this data/startup header remains
+ * independent of the SDL/M11 frontend. */
+int dm1_v1_fmtowns_startup_handoff_allows_gameplay(int exit_after_launch,
+                                                    int entrance_command_path);
+
 #ifdef __cplusplus
 }
 #endif

@@ -13,6 +13,15 @@ static const char k_tmenu_exp_md5[] = "a0ff723135c1e40f6dd471ce78f28040";
 static const char k_tmenu_icn_md5[] = "cd45c65b8ba45b43b81b6d544fe2c792";
 static const char k_tmenu_inf_md5[] = "f06d543bb7ded911ab9b1c02c48b7150";
 
+int dm1_v1_fmtowns_startup_handoff_allows_gameplay(int exit_after_launch,
+                                                    int entrance_command_path) {
+    /* EntranceCompatCommandPath is intentionally not included here: this
+     * module owns a small data/startup contract and the shared values are
+     * source-stable (NONE=0, ENTER=1, RESUME=2). */
+    return exit_after_launch || entrance_command_path == 1 ||
+           entrance_command_path == 2;
+}
+
 typedef struct {
     uint32_t s[4];
     uint64_t count;

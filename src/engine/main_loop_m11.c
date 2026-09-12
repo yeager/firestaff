@@ -3668,6 +3668,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             strcmp(launchEntry->gameId, "dm1") == 0 &&
             gameView->dm1FmtownsStartupReceiptValid) {
             DM1_V1_StartupHandoffPostLaunchPlan_PC34 entrancePlan;
+            M11_EntranceCommand entranceCommand = M11_ENTRANCE_COMMAND_NONE;
             int played = 0;
             int titleTrack = dm1_v1_fmtowns_cd_track_for_event(0);
             /* FM Towns must either consume its authenticated native title
@@ -3699,20 +3700,33 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             if (!dm1_v1_startup_handoff_post_launch_plan_pc34(
                     "dm1", &entrancePlan) ||
                 !entrancePlan.play_entrance ||
-                !entrancePlan.entrance_full_start_receipt.valid ||
-                /* This harness-only flag asserts that the pointer launch
-                 * reached a bound game. It is deliberately an exit-before-
-                 * gameplay contract, so it must not wait for a second,
-                 * interactive entrance command. */
-                (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH") &&
-                 m11_play_redmcsb_entrance_transition(
-                    gameView, entrancePlan.entrance_auto_enter_ms,
-                    &entrancePlan.entrance_full_start_receipt,
-                    &entrancePlan.media_receipt) == M11_ENTRANCE_COMMAND_QUIT)) {
+                !entrancePlan.entrance_full_start_receipt.valid) {
                 M11_GameView_Shutdown(gameView);
                 M11_GameView_Init(gameView);
                 m11_set_launch_failed_message(menuState);
                 return 0;
+            }
+            /* Never continue from an FM Towns title into the already-opened
+             * game view unless the source-owned entrance completed with a
+             * concrete handoff command.  The prior QUIT-only check treated
+             * an asset/compositor failure (NONE) as success; the generic
+             * post-open draw then exposed the party-less, black dungeon.
+             * That is neither an original title/Entrance sequence nor a
+             * playable game.  FIRESTAFF_EXIT_AFTER_LAUNCH remains a narrow
+             * boot-probe escape hatch and deliberately does not claim an
+             * interactive entrance handoff. */
+            if (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH")) {
+                entranceCommand = m11_play_redmcsb_entrance_transition(
+                    gameView, entrancePlan.entrance_auto_enter_ms,
+                    &entrancePlan.entrance_full_start_receipt,
+                    &entrancePlan.media_receipt);
+                if (!dm1_v1_fmtowns_startup_handoff_allows_gameplay(
+                        0, (int)entranceCommand)) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
             }
         }
         menuState->launchRequested = 0;
