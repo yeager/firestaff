@@ -4065,7 +4065,20 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
     }
     for (i = 0; i < frameCount; ++i) {
         M11_GameInputResult result = M11_GameView_AdvanceIdleTick(gameView);
-        if (result == M11_GAME_INPUT_REDRAW || i == frameCount - 1 ||
+        if ((result == M11_GAME_INPUT_REDRAW &&
+             /* FM Towns DM2 advances TWANIM from its Timer-A receipt in
+              * AdvanceIdleTick.  Rendering every intermediate title tick
+              * needlessly reparses the same retained GDAT plan and makes a
+              * deterministic source-time boot probe exceed its timeout.
+              * The final draw below still publishes the exact post-tick
+              * source frame before the next scripted input.  Do not extend
+              * this to DOS MVE or Macintosh Title.MooV: those streams own
+              * their frame advance from Draw. */
+             !(gameView->bootProbeFastForward &&
+               gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+               (gameView->dm2FmtownsTitleBound ||
+                gameView->dm2FmtownsTitleFinished))) ||
+            i == frameCount - 1 ||
             /* A real Macintosh QuickTime frame advances during Draw, not
              * during the generic DM2 idle tick.  A boot probe is explicitly
              * deterministic fast-forward work, so draw each source frame
