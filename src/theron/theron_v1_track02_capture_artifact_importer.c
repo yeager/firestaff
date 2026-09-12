@@ -134,7 +134,10 @@ int theron_v1_track02_capture_artifact_import(
         line[campaign_route_consumed] != '\0' ||
         !read_line(bundle, line, sizeof(line)) || sscanf(line, "descriptor_source_hash=%x%n", &descriptor_source_hash, &campaign_route_consumed) != 1 ||
         line[campaign_route_consumed] != '\0' || !descriptor_source_hash) {
-        if (bundle) fclose(bundle); goto rejected;
+        if (bundle) {
+            fclose(bundle);
+        }
+        goto rejected;
     }
     for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
         if (!read_line(bundle, line, sizeof(line)) || !route_matches(line, (unsigned int)i, &plan->targets[i])) {
