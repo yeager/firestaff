@@ -44,7 +44,7 @@ def sha256(path: Path) -> str:
 
 def changed_pixels(left: Image.Image, right: Image.Image, box: tuple[int, int, int, int]) -> int:
     delta = ImageChops.difference(left, right).crop(box)
-    return sum(pixel != (0, 0, 0) for pixel in delta.get_flattened_data())
+    return sum(pixel != (0, 0, 0) for pixel in delta.getdata())
 
 
 def load_labels(capture_dir: Path) -> list[dict[str, str]]:

@@ -123,7 +123,7 @@ def load_rgb(path: Path):
 
 def stats_for(img, xywh: tuple[int, int, int, int]) -> RegionStats:
     x0, y0, w, h = xywh
-    pix = list(img.crop((x0, y0, x0 + w, y0 + h)).get_flattened_data())
+    pix = list(img.crop((x0, y0, x0 + w, y0 + h)).getdata())
     n = len(pix)
     nonblack = 0
     color = 0
