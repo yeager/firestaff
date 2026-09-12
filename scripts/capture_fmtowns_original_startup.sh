@@ -24,6 +24,7 @@ nowait_boot="${FMTOWNS_NOWAIT_BOOT:-1}"
 diagnostics="${FMTOWNS_DIAGNOSTICS:-0}"
 no_wait="${FMTOWNS_NOWAIT:-0}"
 frequency_mhz="${FMTOWNS_FREQ_MHZ:-0}"
+xvfb_display_num="${FMTOWNS_XVFB_DISPLAY:-170}"
 
 usage() {
     cat <<'EOF'
@@ -45,6 +46,7 @@ Optional:
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
   FMTOWNS_FREQ_MHZ=0|1..200                (default: 0; diagnostic emulated CPU frequency, recorded in receipt)
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
+  FMTOWNS_XVFB_DISPLAY=170                 (default: 170; private Xvfb display for Tsugaru CUI)
 
 The ZIP is staged only for this development-time emulator session because
 Tsugaru requires a seekable CUE plus BIN or IMG track image.  The archive is never modified, the
@@ -99,7 +101,12 @@ if [[ ! "$frequency_mhz" =~ ^[0-9]+$ ]] || (( frequency_mhz > 200 )); then
     echo "ERROR: FMTOWNS_FREQ_MHZ must be 0 or an emulated frequency from 1 to 200 MHz" >&2
     exit 3
 fi
-for required in "$tsugaru" 7zz sha256sum python3; do
+if [[ ! "$xvfb_display_num" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: FMTOWNS_XVFB_DISPLAY must be a positive display number" >&2
+    exit 3
+fi
+seven_zip="$(command -v 7zz 2>/dev/null || command -v 7z 2>/dev/null || true)"
+for required in "$tsugaru" "$seven_zip" sha256sum python3 Xvfb; do
     command -v "$required" >/dev/null 2>&1 || {
         echo "ERROR: required capture tool is unavailable: $required" >&2
         exit 4
@@ -128,7 +135,7 @@ if find "$stage" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
     echo "ERROR: media stage must be empty; use a fresh .codex-scratch directory" >&2
     exit 3
 fi
-7zz x -y "-o$stage" "$archive" >/dev/null
+"$seven_zip" x -y "-o$stage" "$archive" >/dev/null
 mapfile -d '' cue_files < <(find "$stage" -type f -iname '*.cue' -print0)
 mapfile -d '' track_files < <(find "$stage" -type f \( -iname '*.bin' -o -iname '*.img' \) -print0)
 if [[ "${#cue_files[@]}" -ne 1 || "${#track_files[@]}" -ne 1 ]]; then
@@ -196,6 +203,26 @@ run_commands() {
     done <"$command_file"
 }
 
+# The Linux CUI initializes SDL even though `SS` reads Tsugaru's emulated
+# framebuffer.  Give that initialization a private headless display; do not
+# use it for screenshots.  The trap owns only this process and cannot affect
+# unrelated developer X servers.
+xvfb_display=":$xvfb_display_num"
+Xvfb "$xvfb_display" -screen 0 1024x768x24 -nolisten tcp >"$out/xvfb.log" 2>&1 &
+xvfb_pid=$!
+cleanup_xvfb() {
+    if kill -0 "$xvfb_pid" 2>/dev/null; then
+        kill "$xvfb_pid" 2>/dev/null || true
+        wait "$xvfb_pid" 2>/dev/null || true
+    fi
+}
+trap cleanup_xvfb EXIT INT TERM
+sleep 0.2
+if ! kill -0 "$xvfb_pid" 2>/dev/null; then
+    echo "ERROR: unable to start private Xvfb display $xvfb_display; see xvfb.log" >&2
+    exit 6
+fi
+
 set +e
 # Tsugaru's first positional argument is its ROM directory.  It is not an
 # option: passing a made-up -ROMDIR flag would silently turn that directory
@@ -206,7 +233,7 @@ boot_args=()
 if [[ "$nowait_boot" == "1" ]]; then boot_args=(-NOWAITBOOT); fi
 if [[ "$no_wait" == "1" ]]; then boot_args=(-NOWAIT); fi
 if [[ "$frequency_mhz" != "0" ]]; then boot_args+=(-FREQ "$frequency_mhz"); fi
-run_commands | "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" "${boot_args[@]}" \
+run_commands | env DISPLAY="$xvfb_display" "$tsugaru" "$rom_stage" -CD "$cue" -BOOTKEY CD "${fidelity_args[@]}" "${boot_args[@]}" \
     -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
 tsugaru_status=${PIPESTATUS[1]}
 set -e
