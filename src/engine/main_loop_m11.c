@@ -3394,6 +3394,9 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * the game-map dispatcher owns the later track change.  A missing or
      * malformed original CUE/BIN stays silent rather than borrowing SONG.DAT.
      */
+    /* This routine is the sole title-track owner.  Starting it in the
+     * launcher as well would make the second dispatch stop and recreate the
+     * original CDDA stream immediately before frame zero. */
     (void)M11_GameView_PlayDm1FmtownsCddaTrack(gameView, plan->title_track);
     /* EDM.EXP DO_TITLE_ANIMATION presents the prepared zoom bitmaps in
      * reverse order: 48x12 first, then 16x4 larger per frame.  Use the
@@ -3687,12 +3690,9 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             DM1_V1_StartupHandoffPostLaunchPlan_PC34 entrancePlan;
             M11_EntranceCommand entranceCommand = M11_ENTRANCE_COMMAND_NONE;
             int played = 0;
-            int titleTrack = dm1_v1_fmtowns_cd_track_for_event(0);
             /* FM Towns must either consume its authenticated native title
              * plan or fail closed; do not expose the generic PC34 title. */
             (void)M11_Render_SetPaletteLevel(0);
-            if (titleTrack > 0 && gameView->dm1FmtownsStartupReceiptValid)
-                M11_GameView_PlayFmtownsCdda(gameView, titleTrack);
             /* Load the FM Towns DM1 menu font eagerly at title time so
              * the later menu-draw path never blocks on I/O. Safe to
              * call repeatedly; returns 1 if the font is already loaded
