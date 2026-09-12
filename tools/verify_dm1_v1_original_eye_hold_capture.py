@@ -28,6 +28,12 @@ EXPECTED = (
 )
 PANEL_BOX = (80, 0, 224, 169)
 RIGHT_UI_BOX = (224, 0, 320, 200)
+# The active resurrection medallion is animated by the original PC 3.4
+# panel.  It can advance between the first and release observations even
+# though Eye release correctly restores the panel.  Restrict the exception
+# to its exact source-screen rectangle; every other panel pixel must still
+# restore bit-for-bit.
+PANEL_DYNAMIC_BOX = (110, 80, 122, 98)
 PC34_DATA_HASHES = {
     "DUNGEON.DAT": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "GRAPHICS.DAT": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
@@ -46,6 +52,25 @@ def changed_pixels(left: Image.Image, right: Image.Image, box: tuple[int, int, i
     delta = ImageChops.difference(left, right).crop(box)
     pixels = getattr(delta, "get_flattened_data", delta.getdata)()
     return sum(pixel != (0, 0, 0) for pixel in pixels)
+
+
+def changed_pixels_excluding(
+    left: Image.Image,
+    right: Image.Image,
+    box: tuple[int, int, int, int],
+    excluded: tuple[int, int, int, int],
+) -> int:
+    """Count changed source pixels in ``box`` outside a bounded animated area."""
+    x0, y0, x1, y1 = box
+    ex0, ey0, ex1, ey1 = excluded
+    count = 0
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            if ex0 <= x < ex1 and ey0 <= y < ey1:
+                continue
+            if left.getpixel((x, y)) != right.getpixel((x, y)):
+                count += 1
+    return count
 
 
 def load_labels(capture_dir: Path) -> list[dict[str, str]]:
@@ -80,7 +105,7 @@ def verify(capture_dir: Path, stage: Path | None) -> dict[str, Any]:
     try:
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         token_names = [str(row.get("token")) for row in plan.get("tokens", [])]
-        required_order = ("shot:inventory", "press:16,53", "shot:eye_hold", "release", "shot:eye_release")
+        required_order = ("shot:inventory", "press:20,53", "shot:eye_hold", "release", "shot:eye_release")
         position = -1
         for token in required_order:
             try:
@@ -111,6 +136,8 @@ def verify(capture_dir: Path, stage: Path | None) -> dict[str, Any]:
         panel_hold = changed_pixels(before, held, PANEL_BOX)
         panel_release = changed_pixels(held, released, PANEL_BOX)
         panel_restored = changed_pixels(before, released, PANEL_BOX)
+        panel_restored_static = changed_pixels_excluding(
+            before, released, PANEL_BOX, PANEL_DYNAMIC_BOX)
         right_hold = changed_pixels(before, held, RIGHT_UI_BOX)
         right_release = changed_pixels(held, released, RIGHT_UI_BOX)
         observations = {
@@ -119,13 +146,15 @@ def verify(capture_dir: Path, stage: Path | None) -> dict[str, Any]:
             "panelChangedBeforeToHeld": panel_hold,
             "panelChangedHeldToReleased": panel_release,
             "panelChangedBeforeToReleased": panel_restored,
+            "panelChangedBeforeToReleasedOutsideAnimatedMedallion": panel_restored_static,
+            "animatedMedallionBox": list(PANEL_DYNAMIC_BOX),
             "rightUiChangedBeforeToHeld": right_hold,
             "rightUiChangedHeldToReleased": right_release,
         }
         if panel_hold < 512 or panel_release < 512:
             problems.append("Eye hold did not produce a substantial central-panel redraw")
-        if panel_restored != 0:
-            problems.append("central panel was not restored after Eye release")
+        if panel_restored_static != 0:
+            problems.append("central panel was not restored after Eye release outside the animated medallion")
         if right_hold != 0 or right_release != 0:
             problems.append("Eye observation unexpectedly changed the right UI")
         if len({row["sha256"] for row in frame_rows}) != 3:
