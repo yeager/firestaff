@@ -54,9 +54,9 @@ Reviewed 2026-09-05. Only open work is listed here.
   for Atari ST, Amiga and FM Towns. Do not use CSBWin as a PC game route.
   Amiga RGB4 register expansion is now compared and fixed from an authentic
   FS-UAE/Kickstart 1.3 title route; retain as open only a same-source-VBlank
-  image pair plus the remaining HUD/viewport/door/audio comparisons. Atari
-  still needs genuine compatible TOS capture firmware: the staged EmuTOS
-  image reproducibly trips the protected retail program's Bus Error handler.
+  image pair plus the remaining HUD/viewport/door/audio comparisons. A
+  genuine TOS 1.62 capture boot reaches the protected Atari retail Entrance;
+  it does not substitute for an authentic CSB save or a campaign capture.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms.
@@ -87,8 +87,13 @@ Reviewed 2026-09-05. Only open work is listed here.
 
 DSA-bearing saves and visual/audio captures are deferred while native Atari,
 Amiga and FM Towns media paths continue to be improved from the supplied
-original packages.  Later work must record media hashes and provenance before
-using newly supplied captures; it must never generate a replacement corpus.
+original packages. The current supplied CSB corpus contains no authentic
+`CSBGAME.DAT`, backup slot, CSBWin extended save, or DSA-bearing save. A real
+Atari TOS 1.62 + protected campaign-disk run reaches the `PRISON / RESUME`
+Entrance but cannot establish a champion-bearing dungeon state without that
+missing source material. Later work must record media hashes and provenance
+before using newly supplied captures; it must never generate a replacement
+corpus.
 # CSB C30 projectile-hit reaction uses the raw C04 group and source-shaped
 # F0199 route. ReDMCSB GROUP.C F0209:2024-2044 first ignores attacking/fleeing
 # groups, makes a 3/4 M004 gate, turns without moving if the party is not on
