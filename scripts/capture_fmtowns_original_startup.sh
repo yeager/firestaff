@@ -311,6 +311,14 @@ for frame in frames:
             raise SystemExit(f"ERROR: blank/stale framebuffer image is not original capture evidence: {frame.name}")
 PY
 
+# `STA` is deliberately emitted only in diagnostics mode.  Preserve its last
+# guest-clock sample in the receipt when available; otherwise state that the
+# clock was not sampled instead of deriving guest time from host delays.
+guest_time_ns="$(awk '/Towns TIME \(Nano-Seconds\):/ { value=$NF } END { print value }' "$out/tsugaru.log")"
+if [[ ! "$guest_time_ns" =~ ^[0-9]+$ ]]; then
+    guest_time_ns="not-recorded"
+fi
+
 {
     printf 'schema=firestaff.fmtowns.original.capture.v1\n'
     printf 'scope=original Tsugaru framebuffer capture; no Firestaff parity claim\n'
@@ -326,6 +334,7 @@ PY
     printf 'nowait=%s\n' "$no_wait"
     printf 'frequency_mhz=%s\n' "$frequency_mhz"
     printf 'diagnostics=%s\n' "$diagnostics"
+    printf 'guest_time_ns_at_last_diagnostic=%s\n' "$guest_time_ns"
     printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')"
     printf 'cue_sha256=%s\n' "$(sha256sum "$cue" | awk '{print $1}')"
     printf 'track_image_sha256=%s\n' "$(sha256sum "$track_image" | awk '{print $1}')"
