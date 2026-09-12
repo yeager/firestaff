@@ -71,7 +71,7 @@ Required for --run:
   DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 enter wait:1500 shot:party_hud right wait:300 shot up wait:300 shot:spell_panel ...'
 
 Supported route tokens:
-  shot, shot:<label>, wait:<ms>, click:<x>,<y>, press:<x>,<y>, release, enter, esc, space, up, down,
+  shot, shot:<label>, wait:<ms>, move:<x>,<y>, click:<x>,<y>, press:<x>,<y>, release, enter, esc, space, up, down,
   left, right, one, two, three, four, five, six, f1-f4, kp0-kp9,
   kpenter, ctrl-s, a-z, 0-9, rclick:<x>,<y>
 
@@ -318,8 +318,8 @@ for token in route:
         if not re.fullmatch(r"wait:[0-9]+", low):
             raise SystemExit(f"ERROR: invalid wait token: {token}")
         continue
-    if low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
-        m = re.fullmatch(r"(?:r?click|press):([0-9]{1,3}),([0-9]{1,3})", low)
+    if low.startswith("move:") or low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
+        m = re.fullmatch(r"(?:move|r?click|press):([0-9]{1,3}),([0-9]{1,3})", low)
         if not m:
             raise SystemExit(f"ERROR: invalid click token: {token}")
         x, y = map(int, m.groups())
@@ -398,8 +398,8 @@ for idx, token in enumerate(route, 1):
         kind = "wait"
         detail = low.split(":", 1)[1]
         total_wait_ms += int(detail)
-    elif low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
-        kind = "click"
+    elif low.startswith("move:") or low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
+        kind = "move" if low.startswith("move:") else "click"
     rows.append({"index": idx, "token": token, "kind": kind, "detail": detail})
 
 payload = {
@@ -664,6 +664,30 @@ func releaseOriginalFrameButton() {
     usleep(180_000)
 }
 
+func moveOriginalFrame(x: Int, y: Int) {
+    guard let bounds = dosboxWindowBounds() else {
+        fputs("could not find DOSBox window bounds for move:\(x),\(y)\n", stderr)
+        exit(3)
+    }
+    let contentAspect = 320.0 / 200.0
+    var contentW = Double(bounds.width)
+    var contentH = contentW / contentAspect
+    if contentH > Double(bounds.height) {
+        contentH = Double(bounds.height)
+        contentW = contentH * contentAspect
+    }
+    let left = Double(bounds.minX) + (Double(bounds.width) - contentW) / 2.0
+    let top = Double(bounds.minY) + (Double(bounds.height) - contentH) / 2.0
+    let point = CGPoint(
+        x: left + ((Double(x) + 0.5) / 320.0) * contentW,
+        y: top + ((Double(y) + 0.5) / 200.0) * contentH)
+    guard let move = CGEvent(mouseEventSource: source, mouseType: .mouseMoved,
+                             mouseCursorPosition: point, mouseButton: .left) else { return }
+    move.postToPid(pid)
+    print("move-mapped \(x),\(y) -> \(Int(point.x)),\(Int(point.y)) window=\(Int(bounds.width))x\(Int(bounds.height))")
+    usleep(180_000)
+}
+
 // Original PC 3.4 startup selector: graphics=1, sound=1, input=1.
 // The generated DOSBox config launches 'DM VGA' directly, which bypasses that
 // selector.  In that state, posting the legacy selector keys would hit the
@@ -688,6 +712,13 @@ for token in route {
             exit(2)
         }
         usleep(ms * 1000)
+    } else if lowerToken.hasPrefix("move:") {
+        let coords = lowerToken.dropFirst("move:".count).split(separator: ",")
+        guard coords.count == 2, let x = Int(coords[0]), let y = Int(coords[1]), x >= 0, x < 320, y >= 0, y < 200 else {
+            fputs("invalid move token: \(token)\n", stderr)
+            exit(2)
+        }
+        moveOriginalFrame(x: x, y: y)
     } else if lowerToken.hasPrefix("click:") || lowerToken.hasPrefix("rclick:") || lowerToken.hasPrefix("press:") {
         let isRightClick = lowerToken.hasPrefix("rclick:")
         let isPress = lowerToken.hasPrefix("press:")
@@ -959,6 +990,35 @@ release_original_frame_button() {
     sleep 0.18
 }
 
+move_original_frame() {
+    local x="$1" y="$2" geom gx gy gw gh px py
+    refresh_window
+    geom="$(xdotool getwindowgeometry --shell "$window")"
+    eval "$geom"
+    gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
+    read -r px py < <(python3 - "$gw" "$gh" "$x" "$y" <<'PY'
+import sys
+gw, gh, x, y = map(float, sys.argv[1:])
+content_w = gw
+content_h = content_w / (320.0 / 200.0)
+if content_h > gh:
+    content_h = gh
+    content_w = content_h * (320.0 / 200.0)
+left = (gw - content_w) / 2.0
+top = gh - content_h
+print(int(round(left + ((x + 0.5) / 320.0) * content_w)),
+      int(round(top + ((y + 0.5) / 200.0) * content_h)))
+PY
+)
+    if [[ "$input_mode" == "global" ]]; then
+        xdotool mousemove "$((gx + px))" "$((gy + py))"
+    else
+        xdotool mousemove --window "$window" "$px" "$py"
+    fi
+    echo "move-mapped ${x},${y} -> ${input_mode} ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
+    sleep 0.18
+}
+
 key_for_token() {
     case "$1" in
         enter|return) echo Return ;;
@@ -1018,6 +1078,10 @@ t = sys.argv[1]
 print(int(t.split(':', 1)[1]) / 1000.0)
 PY
 )" ;;
+        move:*)
+            coords="${low#move:}"
+            move_original_frame "${coords%,*}" "${coords#*,}"
+            ;;
         click:*|rclick:*|press:*)
             if [[ "$low" == rclick:* ]]; then
                 coords="${low#rclick:}"
