@@ -2184,12 +2184,26 @@ int M11_Entrance_DispatchSourceLockedPointerCommand(int framebufferX,
 static M11_EntranceCommand m11_entrance_route_window_pointer(int windowX,
                                                             int windowY,
                                                             unsigned int buttonMask) {
-    int fbX = 0;
-    int fbY = 0;
-    if (!M11_Render_MapWindowToFramebuffer(windowX, windowY, &fbX, &fbY)) {
+    int presentedX = 0;
+    int presentedY = 0;
+    int presentedWidth = 0;
+    int presentedHeight = 0;
+    int sourceX = 0;
+    int sourceY = 0;
+    /* M11_Render_MapWindowToFramebuffer first returns a coordinate in the
+     * active target surface.  Startup pages may be 640x400 or a Custom
+     * target, but ReDMCSB COMMAND.C:340-353 / 1379-1449 requires C407 etc.
+     * to be hit-tested in the original 320x200 source space. */
+    if (!M11_Render_MapWindowToFramebuffer(windowX, windowY,
+                                           &presentedX, &presentedY) ||
+        !M11_Render_GetContentSize(&presentedWidth, &presentedHeight) ||
+        !ENTRANCE_Compat_MapPresentedPointToSource(
+            presentedX, presentedY, presentedWidth, presentedHeight,
+            M11_FB_WIDTH, M11_FB_HEIGHT, &sourceX, &sourceY)) {
         return M11_ENTRANCE_COMMAND_NONE;
     }
-    return m11_entrance_route_framebuffer_pointer(fbX, fbY, buttonMask);
+    return m11_entrance_route_framebuffer_pointer(sourceX, sourceY,
+                                                   buttonMask);
 }
 
 static M11_EntranceCommand m11_entrance_route_normalized_touch(float normalizedX,

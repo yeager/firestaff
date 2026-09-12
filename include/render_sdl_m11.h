@@ -307,6 +307,9 @@ int  M11_Render_MapWindowToFramebuffer(int windowX,
                                        int windowY,
                                        int* outFbX,
                                        int* outFbY);
+/* Dimensions of the current source/presentation target used by
+ * M11_Render_MapWindowToFramebuffer. */
+int  M11_Render_GetContentSize(int* outWidth, int* outHeight);
 int  M11_Render_SetWindowMode(int windowModeIndex);
 int  M11_Render_GetWindowMode(void);
 int  M11_Render_SyncWindowModeFromWindow(void);

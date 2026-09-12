@@ -47,9 +47,40 @@ static int expect_hit(const char* label,
     return 1;
 }
 
+static int expect_presented_hit(const char* label,
+                                const EntranceMouseRouteCompat* route,
+                                int presented_width,
+                                int presented_height) {
+    int source_x = -1;
+    int source_y = -1;
+    int presented_x;
+    int presented_y;
+    unsigned int command;
+
+    if (!route || presented_width <= 0 || presented_height <= 0) return 0;
+    presented_x = ((route->x + route->w / 2) * presented_width) / 320;
+    presented_y = ((route->y + route->h / 2) * presented_height) / 200;
+    if (!ENTRANCE_Compat_MapPresentedPointToSource(
+            presented_x, presented_y, presented_width, presented_height,
+            320, 200, &source_x, &source_y)) {
+        fprintf(stderr, "FAIL %s did not map\n", label);
+        return 0;
+    }
+    command = (unsigned int)ENTRANCE_Compat_DispatchMouseRouteCommand(
+        source_x, source_y, route->buttonMask);
+    if (command != route->commandId) {
+        fprintf(stderr, "FAIL %s source=%d,%d command=%u\n", label,
+                source_x, source_y, command);
+        return 0;
+    }
+    return 1;
+}
+
 int main(void) {
     unsigned int i;
     int ok = 1;
+    int invalid_x = -1;
+    int invalid_y = -1;
     EntranceMouseRouteCompat route;
 
     printf("probe=firestaff_entrance_mouse_routes_source\n");
@@ -69,6 +100,18 @@ int main(void) {
     ok &= expect_hit("resume", 298, 93, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, 202u, 409u);
     ok &= expect_hit("quit", 292, 124, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, 216u, 434u);
     ok &= expect_hit("credits", 293, 199, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, 203u, 411u);
+
+    /* The F10 V2/Custom target is presentation-only.  A pointer delivered
+     * from 640x400 or a selected 1920x1200 internal target must still reach
+     * COMMAND.C's 320x200 C407/C409 rows. */
+    ok &= ENTRANCE_Compat_GetMouseRoute(1u, &route);
+    ok &= expect_presented_hit("enter at V2 640x400", &route, 640, 400);
+    ok &= expect_presented_hit("enter at Custom 1920x1200", &route, 1920, 1200);
+    ok &= ENTRANCE_Compat_GetMouseRoute(3u, &route);
+    ok &= expect_presented_hit("resume at V2 640x400", &route, 640, 400);
+    ok &= expect_presented_hit("resume at Custom 1920x1200", &route, 1920, 1200);
+    ok &= !ENTRANCE_Compat_MapPresentedPointToSource(
+        640, 400, 640, 400, 320, 200, &invalid_x, &invalid_y);
 
     if (ENTRANCE_Compat_HitTestMouseRoute(299, 58, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, &route)) ok = 0;
     if (ENTRANCE_Compat_HitTestMouseRoute(298, 59, ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT, &route)) ok = 0;

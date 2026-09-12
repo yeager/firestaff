@@ -71,6 +71,27 @@ int ENTRANCE_Compat_DispatchMouseRouteCommand(int screenX,
     return (int)route.commandId;
 }
 
+int ENTRANCE_Compat_MapPresentedPointToSource(int presentedX,
+                                              int presentedY,
+                                              int presentedWidth,
+                                              int presentedHeight,
+                                              int sourceWidth,
+                                              int sourceHeight,
+                                              int* outSourceX,
+                                              int* outSourceY) {
+    if (!outSourceX || !outSourceY || presentedWidth <= 0 ||
+        presentedHeight <= 0 || sourceWidth <= 0 || sourceHeight <= 0 ||
+        presentedX < 0 || presentedY < 0 || presentedX >= presentedWidth ||
+        presentedY >= presentedHeight) {
+        return 0;
+    }
+    *outSourceX = (presentedX * sourceWidth) / presentedWidth;
+    *outSourceY = (presentedY * sourceHeight) / presentedHeight;
+    if (*outSourceX >= sourceWidth) *outSourceX = sourceWidth - 1;
+    if (*outSourceY >= sourceHeight) *outSourceY = sourceHeight - 1;
+    return 1;
+}
+
 const char* ENTRANCE_Compat_GetMouseRouteEvidence(void) {
     return "ReDMCSB COMMAND.C:340-353 G0445 entrance mouse table; DEFS.H:375-384 I34E/I34M command IDs; DEFS.H:3824-3826,3845 entrance zones; COMMAND.C:1379-1449 F0358 source-order hit-test and zone expansion; COMMAND.C:1641-1660 F0359 primary/secondary command queue routing; COORD.C:1903-1920 zone expansion/inclusive point test; COORD.C:2490-2495 F0638_GetZone; ENTRANCE.C:739-747 installs entrance input and ENTRANCE.C:850-883 waits for a fresh entrance command.";
 }

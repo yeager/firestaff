@@ -2698,6 +2698,16 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
         outFbY);
 }
 
+int M11_Render_GetContentSize(int* outWidth, int* outHeight) {
+    if (!g_state.initialised || !outWidth || !outHeight ||
+        g_state.contentW <= 0 || g_state.contentH <= 0) {
+        return 0;
+    }
+    *outWidth = g_state.contentW;
+    *outHeight = g_state.contentH;
+    return 1;
+}
+
 int M11_Render_MapPointToFramebuffer(int windowX,
                                      int windowY,
                                      int windowW,

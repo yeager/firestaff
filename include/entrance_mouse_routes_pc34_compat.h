@@ -23,6 +23,18 @@ unsigned int ENTRANCE_Compat_GetMouseRouteCount(void);
 int ENTRANCE_Compat_GetMouseRoute(unsigned int ordinal, EntranceMouseRouteCompat* outRoute);
 int ENTRANCE_Compat_HitTestMouseRoute(int screenX, int screenY, unsigned int buttonMask, EntranceMouseRouteCompat* outRoute);
 int ENTRANCE_Compat_DispatchMouseRouteCommand(int screenX, int screenY, unsigned int buttonMask);
+/* Map a hit-tested point from the currently presented startup target back to
+ * ReDMCSB's 320x200 source page.  V2/Custom may present that page through a
+ * 640x400 or user-selected internal target; the entrance mouse table still
+ * consumes the original source coordinates. */
+int ENTRANCE_Compat_MapPresentedPointToSource(int presentedX,
+                                              int presentedY,
+                                              int presentedWidth,
+                                              int presentedHeight,
+                                              int sourceWidth,
+                                              int sourceHeight,
+                                              int* outSourceX,
+                                              int* outSourceY);
 const char* ENTRANCE_Compat_GetMouseRouteEvidence(void);
 
 #endif
