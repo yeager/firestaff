@@ -18,6 +18,7 @@ tsugaru="${FMTOWNS_TSUGARU:-Tsugaru_CUI}"
 out="${FMTOWNS_CAPTURE_OUT:-$repo/.codex-scratch/fmtowns-original-startup-capture}"
 stage="${FMTOWNS_STAGE_DIR:-$repo/.codex-scratch/fmtowns-original-media-stage}"
 timeline="${FMTOWNS_CAPTURE_TIMELINE:-}"
+input_timeline="${FMTOWNS_INPUT_TIMELINE:-}"
 towns_type="${FMTOWNS_TYPE:-MX}"
 high_fidelity="${FMTOWNS_HIGH_FIDELITY:-0}"
 nowait_boot="${FMTOWNS_NOWAIT_BOOT:-1}"
@@ -46,6 +47,8 @@ Optional:
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
   FMTOWNS_FREQ_MHZ=0|1..200                (default: 0; diagnostic emulated CPU frequency, recorded in receipt)
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
+  FMTOWNS_INPUT_TIMELINE='host-seconds:enter [...]'
+                                             (default: empty; opt-in original-route input)
   FMTOWNS_XVFB_DISPLAY=170                 (default: 170; private Xvfb display for Tsugaru CUI)
 
 The ZIP is staged only for this development-time emulator session because
@@ -82,6 +85,10 @@ if [[ -z "$rom_dir" || ! -d "$rom_dir" ]]; then
 fi
 if [[ -z "$timeline" || ! "$timeline" =~ ^[0-9]+:[A-Za-z0-9_-]+(\ [0-9]+:[A-Za-z0-9_-]+)*$ ]]; then
     echo "ERROR: FMTOWNS_CAPTURE_TIMELINE must use seconds:label entries separated by spaces" >&2
+    exit 3
+fi
+if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:enter(\ [0-9]+:enter)*$ ]]; then
+    echo "ERROR: FMTOWNS_INPUT_TIMELINE currently accepts only seconds:enter entries" >&2
     exit 3
 fi
 if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
@@ -175,6 +182,12 @@ index=0
 command_file="$out/tsugaru-capture-commands.txt"
 {
     printf 'RUN\n'
+    # Input remains explicit and deliberately tiny: `TYPE ` is Tsugaru CUI's
+    # documented auto-type of a carriage return.  It is emitted only from a
+    # caller-supplied original route, never guessed by this harness.
+    input_entries=()
+    if [[ -n "$input_timeline" ]]; then read -r -a input_entries <<<"$input_timeline"; fi
+    input_index=0
     for entry in $timeline; do
         second="${entry%%:*}"
         label="${entry#*:}"
@@ -183,14 +196,35 @@ command_file="$out/tsugaru-capture-commands.txt"
             exit 5
         fi
         index=$((index + 1))
+        while (( input_index < ${#input_entries[@]} )); do
+            input_entry="${input_entries[input_index]}"
+            input_second="${input_entry%%:*}"
+            if (( input_second > second )); then break; fi
+            if (( input_second < previous )); then
+                echo "ERROR: input timestamps must be nondecreasing and must not precede emitted events" >&2
+                exit 5
+            fi
+            printf 'sleep %s\n' "$((input_second - previous))"
+            printf 'TYPE \n'
+            previous="$input_second"
+            input_index=$((input_index + 1))
+        done
         printf 'sleep %s\n' "$((second - previous))"
         if [[ "$diagnostics" == "1" ]]; then
+            # Status includes the VM's current time/register state.  Keep it
+            # in the private log so a host-time capture can be correlated
+            # with guest progress without promoting either as parity data.
+            printf 'STA\n'
             printf 'DUMP CRTC\n'
             printf 'DUMP CDROM\n'
         fi
         printf 'SS "%s/startup-%02d-%ss-%s.png"\n' "$out" "$index" "$second" "$label"
         previous="$second"
     done
+    if (( input_index != ${#input_entries[@]} )); then
+        echo "ERROR: input timestamp occurs after the final capture timestamp" >&2
+        exit 5
+    fi
     # Use the CUI's orderly VM shutdown after the last framebuffer command.
     # FORCEQUIT calls exit(0) directly from the command interpreter and has
     # been observed to race the VM thread on Linux; a signal or crash after
@@ -284,6 +318,7 @@ PY
     printf 'capture_backend=tsugaru-cui-SS\n'
     printf 'timeline_clock=host_wall_seconds_after_RUN; not_guest_time\n'
     printf 'timeline_requested=%s\n' "$timeline"
+    printf 'input_timeline_requested=%s\n' "${input_timeline:-none}"
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
     printf 'high_fidelity=%s\n' "$high_fidelity"
