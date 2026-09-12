@@ -35722,13 +35722,32 @@ M11_GameInputResult M11_GameView_HandleTouchEvent(M11_GameViewState* state,
      * UI rectangles.  A stationary finger therefore remains a real source
      * click, including CSB's startup/HUD/viewport route. */
     if (gesture == FS_GG_GESTURE_TAP) {
+        M11_GameInputResult pressResult;
+        M11_GameInputResult releaseResult;
         if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
             /* Theron host contract: short touch is authentic PC Engine
              * Button I, including startup actions and dungeon ticks. */
             return M11_GameView_HandleInput(
                 state, M11_TheronTouchButtonInput(0));
         }
-        return M11_GameView_HandlePointer(state, x, y, 1);
+        /* A completed tap is one primary mouse transaction, not merely its
+         * down edge.  ReDMCSB PANEL.C F0352 keeps C071 (Eye) pressed until
+         * COMMAND.C's button-up dispatch reaches F0353; omitting that edge
+         * left Eye held on touch devices and prevented its source-owned
+         * inspection/close path.  The same pair completes C211 drag state
+         * without inventing a touch-only inventory route.  This mirrors the
+         * SDL click and boot-probe paths, both of which deliver press then
+         * release at the same source coordinate. */
+        pressResult = M11_GameView_HandlePointerButton(
+            state, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        if (pressResult == M11_GAME_INPUT_RETURN_TO_MENU ||
+            pressResult == M11_GAME_INPUT_RESTART_GAME) {
+            return pressResult;
+        }
+        releaseResult = M11_GameView_HandlePointerButtonRelease(
+            state, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        return releaseResult != M11_GAME_INPUT_IGNORED
+            ? releaseResult : pressResult;
     }
     /* INPUT.C:641-664 forwards the secondary button independently.  The
      * existing gesture table documents a stationary long press as that

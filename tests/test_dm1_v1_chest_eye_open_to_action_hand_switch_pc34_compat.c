@@ -53,6 +53,7 @@
  *     F0352.
  */
 #include "m11_game_view.h"
+#include "fs_gesture_navigation_gate.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -461,42 +462,39 @@ static void test_eye_switch_is_idempotent_when_already_open(void)
               8,
               "first eye click closed chest A and dropped the hidden tail");
 
-    /* A second eye click on chest B (already G0426) must hit the
-     * CHEST.C F0333 lines 30-32 early-return branch: G0426 already names
-     * the same chest, so the panel is unchanged and the v1OpenChestOpenedByEye
-     * flag is left at its current value (1 from the first click). */
-    ASSERT_EQ(M11_GameView_HandlePointer(&state, EYE_SCREEN_X, EYE_SCREEN_Y, 1),
+    /* A touch tap must run the complete C071 press/release transaction.
+     * A prior host implementation dispatched only the press at UP, leaving
+     * F0353 unreachable and v1EyePressActive latched on iPad. */
+    ASSERT_TRUE(fs_gesture_gate_init() &&
+                    fs_gesture_gate_set_active_game(FS_GG_GAME_DM1) ==
+                        FS_GG_GAME_DM1 &&
+                    fs_gesture_gate_set_enabled(FS_GG_GAME_DM1, 1) >= 0,
+                "DM1 touch gate is enabled for the C071 tap");
+    ASSERT_EQ(M11_GameView_HandleTouchEvent(
+                  &state, M11_TOUCH_EVENT_DOWN,
+                  EYE_SCREEN_X, EYE_SCREEN_Y, 1000u),
+              M11_GAME_INPUT_IGNORED,
+              "touch down records C071 without dispatching it early");
+    ASSERT_EQ(M11_GameView_HandleTouchEvent(
+                  &state, M11_TOUCH_EVENT_UP,
+                  EYE_SCREEN_X, EYE_SCREEN_Y, 1100u),
               M11_GAME_INPUT_REDRAW,
-              "second eye click on chest B is a redraw (no-op open path)");
-    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestB,
-              "G0426 still names chest B after the second eye click");
-    ASSERT_EQ(state.v1OpenChestOpenedByEye, 1,
-              "F0333 lines 30-32 short-circuit keeps v1OpenChestOpenedByEye set");
-    ASSERT_EQ(containers[CHEST_B_INDEX].slot, firstChestBWeapon,
-              "second eye click does not perturb chest B's source slot chain");
-    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), chestB,
-              "leader hand still holds chest B after the second eye click");
-    ASSERT_EQ(state.v1EyePressActive, 1,
-              "C071 press latches the F0353 release route");
-
-    /* PANEL.C F0353 redraws F0347 on button-up.  Its F0334/F0342 sequence
-     * closes the transient eye chest and restores the action-hand chest by
-     * ordinary (non-eye) F0333, so C145 is visible again. */
-    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(
-                  &state, EYE_SCREEN_X, EYE_SCREEN_Y,
-                  DM1_V1_MOUSE_MASK_LEFT_PC34),
-              M11_GAME_INPUT_REDRAW,
-              "eye button release restores the normal action-hand panel");
+              "touch tap completes C071 through F0353 button-up");
     ASSERT_EQ(state.v1EyePressActive, 0,
-              "F0353 clears the transient pressed-eye state");
+              "touch C071 F0353 clears the transient pressed-eye state");
     ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestA,
-              "F0347 closes eye chest B and restores action-hand chest A");
+              "touch F0347 closes eye chest B and restores action-hand chest A");
     ASSERT_EQ(state.v1OpenChestOpenedByEye, 0,
-              "restored F0333 action-hand chest is not an eye-opened chest");
+              "touch-restored F0333 action-hand chest is not an eye-opened chest");
+    ASSERT_EQ(containers[CHEST_B_INDEX].slot, firstChestBWeapon,
+              "touch C071 does not perturb chest B's source slot chain");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), chestB,
+              "touch C071 preserves the leader-hand chest B");
     ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
                   &state, CHAMPION_SLOT_ACTION_HAND),
               145,
-              "F0353 redraw restores the ordinary open-chest C145 icon");
+              "touch F0353 redraw restores the ordinary open-chest C145 icon");
+    fs_gesture_gate_shutdown();
 }
 
 int main(void)
