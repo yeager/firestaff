@@ -13133,11 +13133,10 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
         return 0;
     }
     /* The Towns retail disc is Japanese.  The host launcher locale is not a
-     * game-data locale: when M12 has selected the canonical PC-English GDAT
-     * companion, bind it for every host language.  Do not scan data_dir here:
-     * that would resurrect the accidental sibling-install overlay and break
-     * selected-media ownership.  An explicit English request still fails
-     * closed when its verified companion is unavailable. */
+     * game-data locale: the built-in keyed bridge supplies canonical gettext
+     * entries from the selected Towns media alone.  A caller may additionally
+     * provide a verified PC-English GDAT only for diagnostic cross-checking;
+     * it is optional and must never become a selected-media fallback. */
     if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
         english_companion_graphics_path &&
         english_companion_graphics_path[0] != '\0') {

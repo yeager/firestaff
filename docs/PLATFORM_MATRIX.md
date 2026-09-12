@@ -94,7 +94,7 @@ data files.
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | DMWeb edition page: Victor JP v1.0 three-floppy/WinImage media; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection notes |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | DMWeb edition page: Europe + USA redump BIN/CUE CD images; USA also has DMFiles CD-content archive plus split data-track ISO and audio-track MP3 archives |
 | Sega CD / Mega CD | 1.0 | JP | 🔵 | `c_dm2_segacd_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles CD-content archive; same CD.DAT trigger table, but track 7 is a 15-second silent track |
-| FM-Towns | 1.0 | EN/JP | ✅ | `c_dm2_fmtowns/` | yes | Original HME-242 ZIP/disc image; M12 verifies disc, AUTOEXEC/TWANIM/TITLE/SKULL/END and the explicit PC-English text companion; M11 New Game/runtime, inventory, movement, pit/stairs/DB1 and creature gates pass |
+| FM-Towns | 1.0 | EN/JP | ✅ | `c_dm2_fmtowns/` | yes | Original HME-242 ZIP/disc image; M12 verifies disc, AUTOEXEC/TWANIM/TITLE/SKULL/END, and maps authenticated Towns GDAT text keys through gettext without a sibling edition; M11 New Game/runtime, inventory, movement, pit/stairs/DB1 and creature gates pass |
 
 **Notes:** The PC English version is the only one that uses
 Interplay MVE animations and 256-color graphics. All other

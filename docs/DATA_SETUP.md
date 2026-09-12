@@ -78,9 +78,11 @@ the verified DOS files.
 PC music is stored in the original GDAT data. FM Towns presentation media,
 including `AUTOEXEC.BAT`, `TWANIM.EXP`, `SWOOSH`, `TITLE`, `SKULL.EXP` and
 `END`, belongs with the original disc archive. Firestaff reads the MODE1/2352
-disc image and animation streams in memory. For English FM Towns text, also
-provide the verified PC English `GRAPHICS.DAT` companion; it localises text
-only and never replaces the Japanese FM Towns dungeon or presentation owner.
+disc image and animation streams in memory. The Japanese FM Towns disc is
+sufficient for every supported UI language: Firestaff maps its authenticated
+GDAT text keys to canonical gettext entries and applies the selected catalog.
+An optional PC English `GRAPHICS.DAT` may be supplied only for diagnostic
+cross-checking; it is never required and never replaces Towns game data.
 
 The Amiga installer archive is read as the original in-memory LZX source. The
 The supported Mac retail ZIP keeps its HFS/resource-fork owner and big-endian
