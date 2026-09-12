@@ -24,7 +24,7 @@ still observed zero game-owned `$E009` data reads. This is a useful bounded
 result: the transport is real, while the dungeon handoff is not yet proven.
 
 **Fresh local replay, 2026-08-13:** using the same hash-verified US Track 02
-and `<local-home>/.mednafen/firmware/syscard3.pce`, an external-disk replay
+and an operator-supplied System Card 3.0, a private replay
 produced 161 raw sectors, 51 SCSI read commands, 25 CD IRQ callbacks, 161
 sector bindings, 47 byte-exact FIFO-to-RAM origin receipts, 4,096
 source-window spawn-consumer reads, 4,608 raw RNG-window samples, and 65,536
@@ -32,8 +32,7 @@ VDC I/O writes. `scripts/verify_theron_origin_ram_receipt.pl` passed for all
 47 receipts. The spawn sidecar reaches `$CC4C`, `$4644` and `$4667`, but not a
 valid `$B0E5` category; the RNG sidecar is not a `$5D64/$5D6A` source join.
 The replay therefore remains transport/provenance evidence only.
-The raw local output is outside GitHub at
-`/Volumes/Extern-disk/theron-capture-20260813/replay/`.
+The raw output remains outside GitHub in private operator storage.
 
 The external-`TMPDIR` Theron regression is green: 253 selected CTest cases
 passed (247 executed, six expected capture skips). With the local authenticated
@@ -119,9 +118,8 @@ The strongest current proof is:
   deterministic fallback assets are capture-path proof, not final art or
   source-bank proof. Without an explicit authenticated VDC/VCE pair the gate
   is a successful SKIP; a black fail-closed viewport is never accepted as a
-  screenshot. To verify the real source-screen route on this host, use the
-  external pair <local-home>/.firestaff/cache/theron/full-capture-3/theron.vram
-  and theron.vce with --vram-snapshot and --vce-snapshot. Missing data is also
+  screenshot. To verify the real source-screen route, supply an authenticated
+  VDC/VCE pair with --vram-snapshot and --vce-snapshot. Missing data is also
   a successful SKIP, not a failure.
 - `theron_v1_track02_bank` and `theron_v1_track02_descriptor_table`: when
   real Track 02 data is present, both probes hash-gate the bank-anchor

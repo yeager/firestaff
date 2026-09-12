@@ -367,7 +367,7 @@ window. The session still produced zero `$B0E5` entries, zero
 target reads/writes. It proves the menu/input and loader route only; no RNG,
 creature AI, combat, loot, generator, T700 or T900 rule may be promoted.
 
-The companion receipts remain outside GitHub on `/Volumes/Extern-disk` and
+The companion receipts remain outside GitHub in private operator storage and
 contain no game-data payload in the repository.
 
 ## 2026-08-10 — raw CUE/save-state replay reaches rejected `$B0E5` overlay
@@ -725,8 +725,8 @@ one execution and this checked input plan:
 i@60:5,up@120:10,run@240:2,i@360:5,ii@480:5,left@600:10,right@720:10
 ```
 
-The resulting receipt is retained outside the repository at
-`/Volumes/Extern-disk/theron-dungeon-capture-20260810/` and binds:
+The resulting receipt is retained outside the repository in private operator
+storage and binds:
 
 ```text
 track02_md5=f23601102138f87c33025877767ebf76
@@ -872,8 +872,8 @@ destination, target read, `$B0E5` regular-spawn entry, dynamic RNG return, or
 source-owned T700/T900 consumer. The zero values are therefore negative
 semantic evidence, not permission to substitute host-side formulas. RNG,
 creature, AI, attack, damage, loot, generator, T700 and T900 remain
-fail-closed. The raw receipt remains outside GitHub at
-`<local-home>/.firestaff/cache/theron/manual-capture/out/theron.transition`.
+fail-closed. The raw receipt remains outside GitHub in private operator
+storage.
 
 The corresponding bounded main-RAM sidecar is approximately 8.7 MiB. The
 Firestaff intake ceiling is now 16 MiB, which permits this authenticated
@@ -1062,9 +1062,8 @@ This is a positive loader/transport witness but not a gameplay witness:
 `rng_consumer_samples=0`, `target_reads=0`, `target_writes=0` and
 `helper_4667_special_branch_samples=0`. `$4644/$4667` must therefore not be
 decoupled from the same session's missing `$B0E5`/RNG return or used to invent
-monsters, AI, attack/damage, loot, generator, T700, or T900. The receipt is on
-the external disk at
-`/Volumes/Extern-disk/theron-capture-20260810-replay2-goal.transition`.
+monsters, AI, attack/damage, loot, generator, T700, or T900. The receipt
+remains in private operator storage outside GitHub.
 
 ## 2026-08-10 — cold-start scripted replay stops before game-owned CD handoff
 
@@ -1076,8 +1075,7 @@ origin receipt (`authenticated_cd_ram=0`, `raw_sector_spans=0`) and only three
 IRQ2 callbacks before the bounded timeout. It is therefore a negative
 transport witness: it does not prove a level/object consumer, RNG return,
 spawn, creature AI, attack/damage, loot, generator, T700, or T900. Raw trace
-and snapshots exist only on the external disk at
-`/Volumes/Extern-disk/theron-capture-20260810-replay-goal`.
+and snapshots remain only in private operator storage.
 
 ## 2026-08-10 — source-bound VDC/VCE capture allow-list
 
@@ -1360,8 +1358,8 @@ T700 or T900 semantics may be promoted from this run.
 Mednafen stdout contains a missing optional `palettes/pce.pal` warning. The
 emulator continues with its built-in PCE palette; this warning is not a
 verified graphics failure and the VDC/VCE snapshots remain screen-space
-diagnostics only. The trace family is retained at
-`/Volumes/Extern-disk/theron-next-r30-20260814T080323Z.*` and is not committed.
+diagnostics only. The trace family remains in private operator storage and is
+not committed.
 The source-only Firestaff screen adapter now recognizes this pair by its
 verified FNV-1a identities: VRAM `ee9374fa`, VCE `c17c0a95`. This permits
 screen-space replay while leaving all level/object and gameplay gates closed.
@@ -1382,8 +1380,7 @@ CD→RAM receipts, zero game-owned `$E009` dispatches and `transition=missing`.
 The 64 KiB VRAM and 1 KiB VCE snapshots are therefore screen-space
 diagnostics only; r31 does not open the live loader, JP level, HuC6280 RAM,
 spawn, RNG, AI, combat, loot, T700 or T900 gates. The capture family remains
-on `/Volumes/Extern-disk/theron-next-r31-20260814T090000Z/` and is not
-committed.
+in private operator storage and is not committed.
 
 ## 2026-08-14 — JP ISO replay remains transport-negative
 
@@ -1397,9 +1394,9 @@ System Card MD5 `ff1a674273fe3540ccef576376407d1d`, Track 02 ISO MD5
 
 The same process retained 65,536 main-RAM consumer rows, 512 `$2600–$27FF`
 target reads, 3,584 target writes and 4,096 spawn-consumer rows, but no
-`$B0E5` entry. The capture is negative JP transport evidence and remains at
-`/Volumes/Extern-disk/theron-next-jp-r32-20260814T100000Z/`; it is not
-committed and does not open JP level/object, HuC6280, spawn or gameplay gates.
+`$B0E5` entry. The capture is negative JP transport evidence and remains in
+private operator storage; it is not committed and does not open JP
+level/object, HuC6280, spawn or gameplay gates.
 ## 2026-08-13 — fresh dungeon savestate replay remains transport-negative
 
 A new local replay from the authenticated dungeon `.mc0` state was run against
@@ -1407,9 +1404,9 @@ the hash-verified US Track 02 and System Card. It produced 65,756 register
 samples, 256 `$B0E5` address-overlay hits, 4,096 `spawn_consumer_read` rows,
 and 2,213 RNG samples. The replay produced only one CD IRQ after autoload:
 zero raw sectors, zero source-backed CD-to-RAM receipts, zero valid regular
-`$B0E5` categories, and zero `$4644`/`$4667` samples. The result is retained
-outside GitHub at `/Volumes/Extern-disk/theron-capture-20260813-state/` and
-does not authorize spawn, RNG, AI, combat, loot, T700, or T900 semantics.
+`$B0E5` categories, and zero `$4644`/`$4667` samples. The result remains
+outside GitHub in private operator storage and does not authorize spawn, RNG,
+AI, combat, loot, T700, or T900 semantics.
 
 The source-bound US/JP mechanics-playability probe independently passes 79/79;
 that result covers the authenticated grid/loader path only and is not merged
