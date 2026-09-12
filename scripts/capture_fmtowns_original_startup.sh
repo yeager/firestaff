@@ -34,7 +34,7 @@ Required for --run:
   FMTOWNS_GAME=dm1|csb
   FMTOWNS_ARCHIVE=/path/to/original-fm-towns.zip
   FMTOWNS_ROM_DIR=/path/to/extracted-fm-towns-rom-directory
-  FMTOWNS_CAPTURE_TIMELINE='seconds:label [seconds:label ...]'
+  FMTOWNS_CAPTURE_TIMELINE='host-seconds:label [host-seconds:label ...]'
 
 Optional:
   FMTOWNS_TSUGARU=/path/to/Tsugaru_CUI    (default: Tsugaru_CUI on PATH)
@@ -49,7 +49,10 @@ Optional:
   FMTOWNS_XVFB_DISPLAY=170                 (default: 170; private Xvfb display for Tsugaru CUI)
 
 The ZIP is staged only for this development-time emulator session because
-Tsugaru requires a seekable CUE plus BIN or IMG track image.  The archive is never modified, the
+Tsugaru requires a seekable CUE plus BIN or IMG track image.  Timeline values are
+host-wall-clock delays after `RUN`, not asserted guest-time positions: a busy
+or throttled emulator may reach a different guest frame at the same value.
+The archive is never modified, the
 stage must live beneath .codex-scratch, and every result receives hashes for
 the archive, selected CUE/track image and ROM files.  Images are produced by Tsugaru's
 `SS` command from its emulated framebuffer.  Host desktop captures are not
@@ -162,6 +165,7 @@ done
 # Record each command before execution.  Tsugaru's CUI command interpreter
 # runs concurrently with the VM, so timed `SS` requests sample the emulated
 # framebuffer directly and do not depend on SDL/X11 focus or cursor state.
+# Their timeline is intentionally recorded as host wall time, not guest time.
 # CUI normally auto-starts, but send RUN as the first guest-side command so
 # the capture transcript records an explicit run boundary.  Do not sleep or
 # issue SS before that boundary: a paused/reset VM can otherwise produce a
@@ -278,6 +282,8 @@ PY
     printf 'scope=original Tsugaru framebuffer capture; no Firestaff parity claim\n'
     printf 'game=%s\n' "$game"
     printf 'capture_backend=tsugaru-cui-SS\n'
+    printf 'timeline_clock=host_wall_seconds_after_RUN; not_guest_time\n'
+    printf 'timeline_requested=%s\n' "$timeline"
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
     printf 'high_fidelity=%s\n' "$high_fidelity"
