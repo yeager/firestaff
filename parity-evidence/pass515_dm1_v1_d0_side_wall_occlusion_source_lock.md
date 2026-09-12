@@ -1,6 +1,6 @@
 # Pass515 DM1 V1 D0 side wall occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -46,18 +46,18 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Firestaff Evidence
 
-- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:1244-1248)
+- FAIL firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:1244-1248)
   - Existing runtime metadata records direct D0 side-wall return evidence.
 
-- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:1026-1029)
+- FAIL firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:1026-1029)
   - Open D0 side lanes use one back cell each; wall is a separate return path.
 
-- PASS firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:851-855)
+- FAIL firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:851-855)
   - Focused runtime test asserts D0 side return lines and zone/wall pairing.
 
 ## Verification
 
-- command: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat
+- command: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -76,10 +76,10 @@ PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
 - command: /usr/bin/python3 <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
-  - returncode: 0
+  - returncode: 1
   - output tail:
 ~~~
-PASS check-only
+FAIL check-only
 ~~~
 
 ## Non-Claims

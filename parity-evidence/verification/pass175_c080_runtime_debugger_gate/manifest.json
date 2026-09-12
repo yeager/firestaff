@@ -1,12 +1,11 @@
 {
   "allowed_original_roots": [
-    "<firestaff-data>/firestaff-original-games/DM",
-    "<firestaff-original-games>/_extracted"
+    "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34"
   ],
   "artifacts": {
-    "dosbox_debug_conf": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/dosbox-debug-pass175.conf",
-    "gdb_script": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb",
-    "runbook": "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/breakpoint_runbook.md"
+    "dosbox_debug_conf": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/dosbox-debug-pass175.conf",
+    "gdb_script": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb",
+    "runbook": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/breakpoint_runbook.md"
   },
   "breakpoint_gates": [
     {
@@ -48,30 +47,14 @@
     "dm_exe_file": {
       "argv": [
         "/usr/bin/file",
-        "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE"
       ],
       "output": [
-        "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed"
       ],
       "returncode": 0
     },
-    "dosbox_debug_version": {
-      "argv": [
-        "/usr/bin/dosbox-debug",
-        "-version"
-      ],
-      "output": [
-        "",
-        "DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.",
-        "",
-        "DOSBox is written by the DOSBox Team (See AUTHORS file))",
-        "DOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,",
-        "and you are welcome to redistribute it under certain conditions;",
-        "please read the COPYING file thoroughly before doing so.",
-        ""
-      ],
-      "returncode": 0
-    },
+    "dosbox_debug_version": null,
     "dosbox_x_version": {
       "argv": [
         "/usr/bin/dosbox-x",
@@ -79,7 +62,7 @@
       ],
       "output": [
         "",
-        "DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.",
+        "DOSBox-X version 2026.01.02 SDL2, copyright 2011-2026 The DOSBox-X Team.",
         "DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)",
         "",
         "DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,",
@@ -94,11 +77,11 @@
         "/usr/bin/gdb",
         "--batch",
         "-x",
-        "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb"
       ],
       "output": [
-        "<firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:",
-        "\"<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE\": not in executable format: file format not recognized"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:",
+        "\"<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE\": not in executable format: file format not recognized"
       ],
       "returncode": 1
     },
@@ -108,8 +91,8 @@
         "--version"
       ],
       "output": [
-        "GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1",
-        "Copyright (C) 2024 Free Software Foundation, Inc.",
+        "GNU gdb (Ubuntu 17.1-2ubuntu1) 17.1",
+        "Copyright (C) 2025 Free Software Foundation, Inc.",
         "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>",
         "This is free software: you are free to change and redistribute it.",
         "There is NO WARRANTY, to the extent permitted by law."
@@ -117,16 +100,16 @@
       "returncode": 0
     }
   },
-  "dm_exe": "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE",
+  "dm_exe": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE",
   "exact_remaining_blocker": "native gdb can open/probe only far enough to show the stock DOS DM.EXE has no ReDMCSB symbol binding; need a DOS real-mode/source-symbol bridge or address map before F0359/F0380/F0377/F0280 can be proven",
-  "forbidden_roots_note": "<private-host>/<private-host-ip> not used.",
+  "forbidden_roots_note": "No private-agent staging path is selected.",
   "non_claims": [
     "does not prove original runtime reached F0359/F0380/F0377/F0280",
     "does not retire pass175 on visual no-delta",
     "does not try alternate coordinates",
     "does not use <private-host> or non-N2 references"
   ],
-  "repo": "<firestaff-repo>",
+  "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass175_c080_runtime_debugger_gate.v1",
   "source_audit": [
     {
@@ -140,7 +123,7 @@
         "P0721_ps_MouseInput->Command"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0358 scans MOUSE_INPUT rectangles/zones and returns the matching command for the click/button state.",
       "symbol": "F0358_COMMAND_GetCommandFromMouseInput_CPSC"
     },
@@ -159,7 +142,7 @@
         ".Y = P0726_i_Y"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0359 is the original click queue writer: records pending clicks, resolves primary/secondary mouse inputs via F0358, then queues command/X/Y in G0432_as_CommandQueue.",
       "symbol": "F0359_COMMAND_ProcessClick_CPSC"
     },
@@ -176,7 +159,7 @@
         "F0377_COMMAND_ProcessType80_ClickInDungeonView"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "point": "F0380 locks/dequeues command/X/Y from G0432_as_CommandQueue, processes pending clicks, then dispatches C080 to F0377.",
       "symbol": "F0380_COMMAND_ProcessQueue_CPSC"
     },
@@ -192,7 +175,7 @@
         "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "point": "F0377 is the C080 handler; PC builds subtract viewport origin and empty-hand C05 wall-ornament hits call F0372.",
       "symbol": "F0377_COMMAND_ProcessType80_ClickInDungeonView"
     },
@@ -208,7 +191,7 @@
         "F0010_MAIN_WriteSpacedWords"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "point": "DUNVIEW stores front-wall champion portrait and D1C door-button clickability in C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT; startup clears the clickable storage.",
       "symbol": "C05 clickable portrait/door-button storage"
     },
@@ -222,7 +205,7 @@
         "F0280_CHAMPION_AddCandidateChampionToParty"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C",
       "point": "MOVESENS identifies wall champion portrait sensors and calls F0280 with the sensor data/portrait index.",
       "symbol": "C127_SENSOR_WALL_CHAMPION_PORTRAIT"
     },
@@ -238,15 +221,15 @@
         "G0299_ui_CandidateChampionOrdinal"
       ],
       "ok": true,
-      "path": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "point": "F0280 is the candidate transition reached from C127; it checks empty hand/party count and sets up the candidate champion path.",
       "symbol": "F0280_CHAMPION_AddCandidateChampionToParty"
     }
   ],
-  "source_root": "<redmcsb-source>/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_root": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "tools": {
     "dosbox": "/usr/bin/dosbox",
-    "dosbox-debug": "/usr/bin/dosbox-debug",
+    "dosbox-debug": null,
     "dosbox-x": "/usr/bin/dosbox-x",
     "file": "/usr/bin/file",
     "gdb": "/usr/bin/gdb",

@@ -1,5 +1,7 @@
-firestaff (3.0.321) unstable; urgency=medium
+firestaff (3.0.334) unstable; urgency=medium
 
-  * Initial Debian packaging for the native Firestaff engine.
+  * Release 3.0.334.
+  * Require SDL3 at build configuration time.
+  * Preserve source-owned pointer hit areas through scaled presentations.
 
- -- Daniel Nylander <daniel@danielnylander.se>  Mon, 31 Aug 2026 12:00:00 +0000
+ -- Daniel Nylander <daniel@danielnylander.se>  Fri, 12 Sep 2026 21:15:00 +0000

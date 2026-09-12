@@ -3,23 +3,23 @@
     {
       "hits": [
         {
-          "line": 1018,
+          "line": 1021,
           "needle": "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349"
         },
         {
-          "line": 1018,
+          "line": 1021,
           "needle": "DUNVIEW.C:7874-7875 pass1 rear cells before frame"
         },
         {
-          "line": 1018,
+          "line": 1021,
           "needle": "DUNVIEW.C:7877-7902 top/side frame and button draw"
         },
         {
-          "line": 1018,
+          "line": 1021,
           "needle": "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament"
         },
         {
-          "line": 1018,
+          "line": 1021,
           "needle": "DUNVIEW.C:7910-7937 pass2 front cells after door"
         }
       ],
@@ -32,23 +32,23 @@
     {
       "hits": [
         {
-          "line": 1768,
+          "line": 1769,
           "needle": "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\""
         },
         {
-          "line": 1781,
+          "line": 1782,
           "needle": "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);"
         },
         {
-          "line": 1782,
+          "line": 1783,
           "needle": "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);"
         },
         {
-          "line": 1790,
+          "line": 1791,
           "needle": "rear.cells[0] == expected[i].rear_cells[0]"
         },
         {
-          "line": 1794,
+          "line": 1795,
           "needle": "front.cells[0] == expected[i].front_cells[0]"
         }
       ],
@@ -181,7 +181,7 @@
   "verificationRuns": [
     {
       "command": [
-        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,

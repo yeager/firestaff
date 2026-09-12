@@ -64,7 +64,7 @@ Claim: ReDMCSB F0128 draws D4L, D4R, and D4C as direct far-object F0115 passes w
 - PASS far-object-evidence (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 
 ## Verification
-- <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c

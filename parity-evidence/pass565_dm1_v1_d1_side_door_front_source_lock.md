@@ -27,22 +27,22 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
 ## Firestaff Evidence
 
 - PASS firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 1016: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
-  - line 1017: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
+  - line 1019: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
+  - line 1020: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
 
 - PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - line 176: DM1_VIEW_SQUARE_D1L
   - line 177: DM1_VIEW_SQUARE_D1R
-  - line 1771: door_front_occlusion.count
-  - line 1809: door_front_occlusion.d1l_side_door_front_spec
+  - line 1772: door_front_occlusion.count
+  - line 1810: door_front_occlusion.d1l_side_door_front_spec
 
 - PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4583: DUNVIEW.C:7493-7536
-  - line 4584: DUNVIEW.C:7661-7704
+  - line 4618: DUNVIEW.C:7493-7536
+  - line 4619: DUNVIEW.C:7661-7704
 
 ## Verification
 
-- <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c

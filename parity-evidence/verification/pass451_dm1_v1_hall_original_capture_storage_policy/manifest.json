@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-09-04T18:04:52.621025+00:00",
+  "timestampUtc": "2026-09-09T19:41:13.880658+00:00",
   "status": "FAIL_PASS451_CAPTURE_STORAGE_POLICY",
   "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "branch": "main",
-  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "head": "12264d3700912e66fc25f86645ffec7567645898",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": false,
@@ -78,8 +78,13 @@
     "returncode": 0,
     "outputTail": ""
   },
-  "missing": [],
+  "missing": [
+    "import json, os, shutil, subprocess, sys, time",
+    "DEFAULT_EXTERNAL_ARTIFACT_ROOT = Path(\"/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe\")",
+    "DEFAULT_RUN_BASE_ROOT = DEFAULT_EXTERNAL_ARTIFACT_ROOT if DEFAULT_EXTERNAL_ARTIFACT_ROOT.parent.exists() else Path.home()/\".firestaff/data/firestaff-n2-runs\""
+  ],
   "errors": [
+    "missing storage policy needles: ['import json, os, shutil, subprocess, sys, time', 'DEFAULT_EXTERNAL_ARTIFACT_ROOT = Path(\"/Volumes/Extern-disk/legacy-workspace-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe\")', 'DEFAULT_RUN_BASE_ROOT = DEFAULT_EXTERNAL_ARTIFACT_ROOT if DEFAULT_EXTERNAL_ARTIFACT_ROOT.parent.exists() else Path.home()/\".firestaff/data/firestaff-n2-runs\"']",
     "missing manifest.json or final_candidate_frames/manifest.json"
   ]
 }

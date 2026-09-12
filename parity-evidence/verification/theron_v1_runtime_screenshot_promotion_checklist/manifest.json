@@ -5,7 +5,7 @@
     "ineligible_count": 1,
     "machine_eligible_count": 0,
     "reviewer_promoted_count": 0,
-    "reviewer_state_path": "/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json",
+    "reviewer_state_path": "<local-home>/.firestaff/data/theron/promotion_review_state.json",
     "reviewer_state_present": false,
     "skipped_count": 2,
     "status": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
@@ -51,7 +51,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-13T22:15:37.689872+00:00",
+  "generated_at": "2026-09-09T19:41:00.411803+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -61,7 +61,7 @@
   ],
   "ok": true,
   "reviewerStateParseError": null,
-  "reviewerStatePath": "/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json",
+  "reviewerStatePath": "<local-home>/.firestaff/data/theron/promotion_review_state.json",
   "reviewerStatePresent": false,
   "reviewerStateSchema": null,
   "rows": [

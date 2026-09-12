@@ -131,7 +131,7 @@
     ],
     "rows_all_224x136": true
   },
-  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "head": "9d7061cc4d43598e3b62f3974487a4a581a267f5",
   "not_claimed": [
     "DOSBox/live original runtime capture",
     "semantic original route promotion",
@@ -201,7 +201,7 @@
   ],
   "source_root": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-  "timestamp_utc": "2026-09-04T18:24:39.965274+00:00",
+  "timestamp_utc": "2026-09-10T07:23:27.201340+00:00",
   "tooling": {
     "capture_script_crop_lock": {
       "has_imagemagick_crop": true,

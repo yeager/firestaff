@@ -25,15 +25,15 @@
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 36701
+      "offset": 36837
     },
     {
       "marker": "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
-      "offset": 37260
+      "offset": 37396
     },
     {
       "marker": "(void)m11_v22_inplace_render_pass(framebuffer,",
-      "offset": 37626
+      "offset": 37762
     }
   ],
   "errors": [

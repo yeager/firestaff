@@ -1,6 +1,6 @@
 # Nexus V1 runtime screenshot readiness
 
-Status: `BLOCKED_CAPTURE`
+Status: `FAIL`
 
 This gate runs real Firestaff Nexus launches when Track 1 data is
 present. It records runtime probe fields plus BMP geometry and hash
@@ -10,7 +10,7 @@ receipts only; it does not add screenshots to public docs.
 
 | Case | Status | Boot marker | Runtime source | Data source | Source BMP | Presented BMP |
 |---|---:|---:|---|---|---:|---:|
-| Nexus canonical extracted Track 1 root | BLOCKED | no | `nexus` | `iso` | `1` | `1` |
+| Nexus canonical extracted Track 1 root | FAIL | no | `nexus` | `iso` | `1` | `1` |
 | Nexus Saturn JA Track 1 ISO/CUE root | SKIP | no | `` | `` | `0` | `0` |
 
 ## Public Screenshot Boundary

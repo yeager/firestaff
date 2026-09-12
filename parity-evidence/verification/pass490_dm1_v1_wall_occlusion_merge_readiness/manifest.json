@@ -77,35 +77,35 @@
       "id": "firestaff-nearest-center-blocker",
       "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "needle": "m11_dm1_nearest_blocking_center_depth_index",
-      "line": 41948,
+      "line": 43286,
       "ok": true
     },
     {
       "id": "firestaff-front-wall-depth-collapse",
       "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_front_walls",
-      "line": 41957,
+      "line": 43295,
       "ok": true
     },
     {
       "id": "firestaff-side-lane-clear",
       "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "needle": "m11_dm1_side_lane_clear_for_rel",
-      "line": 42053,
+      "line": 43391,
       "ok": true
     },
     {
       "id": "firestaff-side-content-center-blocker",
       "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "needle": "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
-      "line": 46971,
+      "line": 48323,
       "ok": true
     },
     {
       "id": "firestaff-side-door-occlusion",
       "file": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_side_doors",
-      "line": 44732,
+      "line": 46070,
       "ok": true
     },
     {

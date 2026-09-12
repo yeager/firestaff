@@ -25,23 +25,23 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 ## Firestaff Evidence
 
 - PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1008-1022)
-  - line 1008: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
-  - line 1008: DUNVIEW.C:6270 floor ornament under far rear pass
-  - line 1009: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
-  - line 1009: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
+  - line 1011: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
+  - line 1011: DUNVIEW.C:6270 floor ornament under far rear pass
+  - line 1012: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
+  - line 1012: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
 
 - PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1743-1810)
-  - line 1758: DM1_VIEW_SQUARE_D3L2, "6270"
-  - line 1759: DM1_VIEW_SQUARE_D3R2, "6337"
-  - line 1771: door_front_occlusion_spec_count(), 11
+  - line 1759: DM1_VIEW_SQUARE_D3L2, "6270"
+  - line 1760: DM1_VIEW_SQUARE_D3R2, "6337"
+  - line 1772: door_front_occlusion_spec_count(), 11
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1008-1022)
-  - line 1008: DUNVIEW.C:6272 F0111 door bitmap/ornament
-  - line 1009: DUNVIEW.C:6339 F0111 door bitmap/ornament
+  - line 1011: DUNVIEW.C:6272 F0111 door bitmap/ornament
+  - line 1012: DUNVIEW.C:6339 F0111 door bitmap/ornament
 
 ## Verification
 
-- <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c

@@ -2,25 +2,25 @@
   "blocker": "N2 original capture route prerequisites are incomplete; fix requiredOk failures before another runtime capture attempt.",
   "canonicalDm1Audit": [
     {
-      "exists": true,
+      "exists": false,
       "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-      "isSymlink": true,
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
-      "realpath": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/original-capture-stage/dm1-pc34/DATA/DUNGEON.DAT",
+      "isSymlink": false,
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "realpath": null,
       "relative": "DUNGEON.DAT",
-      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "sha256": null,
       "variant": "DM1 PC 3.4 I34E original runtime inputs"
     },
     {
-      "exists": true,
+      "exists": false,
       "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-      "isSymlink": true,
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
-      "realpath": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/original-capture-stage/dm1-pc34/DATA/GRAPHICS.DAT",
+      "isSymlink": false,
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "realpath": null,
       "relative": "GRAPHICS.DAT",
-      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "sha256": null,
       "variant": "DM1 PC 3.4 I34E original runtime inputs"
     },
     {
@@ -28,7 +28,7 @@
       "expectedSha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
       "isSymlink": false,
       "ok": false,
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
+      "path": "/home/yeager/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
       "realpath": null,
       "relative": "TITLE",
       "sha256": null,
@@ -39,7 +39,7 @@
       "expectedSha256": "4c79b43276f1eb3191d496ba71f8e4c03380d252193561bc6bba6017ef554db4",
       "isSymlink": false,
       "ok": false,
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE",
+      "path": "/home/yeager/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE",
       "realpath": null,
       "relative": "DungeonMasterPC34/DM.EXE",
       "sha256": null,
@@ -109,6 +109,7 @@
   ],
   "ok": false,
   "problems": [
+    "redmcsb_source_locks",
     "canonical_dm1_data",
     "greatstone_secondary_available"
   ],
@@ -118,7 +119,7 @@
     "capture_script_contract": true,
     "greatstone_secondary_available": false,
     "n2_runtime_commands": true,
-    "redmcsb_source_locks": true
+    "redmcsb_source_locks": false
   },
   "routeContract": {
     "clickCenters": {
@@ -169,30 +170,38 @@
   "schema": "firestaff.parity.pass504_dm1_v1_original_capture_route_preflight.v1",
   "secondaryReferenceAudit": {
     "canonicalOriginalDm": {
-      "exists": true,
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1",
+      "exists": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-original-games/DM/_canonical/dm1",
       "role": "hash-locked original runtime data"
     },
     "csbwin": {
       "exists": false,
-      "path": "<local-home>/.firestaff/data/firestaff-csbwin-source/CSBWin",
+      "path": "/home/yeager/.firestaff/data/firestaff-csbwin-source/CSBWin",
       "role": "not used for this DM1 PC34 route gate"
     },
     "greatstoneAtlas": {
       "exists": false,
-      "path": "<local-home>/.firestaff/data/firestaff-greatstone-atlas",
+      "path": "/home/yeager/.firestaff/data/firestaff-greatstone-atlas",
       "role": "secondary DM1 atlas/hash context only"
     }
   },
   "sourceAudit": [
     {
       "claim": "N2 route clicks must use source-owned PC34 movement/viewport boxes.",
-      "exists": true,
+      "exists": false,
       "file": "COMMAND.C",
       "function": "G0448_as_Graphic561_SecondaryMouseInput_Movement",
       "id": "pc34_mouse_movement_boxes",
       "lines": "106-114",
-      "missing": [],
+      "missing": [
+        "C001_COMMAND_TURN_LEFT,             234, 261, 125, 145",
+        "C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145",
+        "C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145",
+        "C006_COMMAND_MOVE_LEFT,             234, 261, 147, 167",
+        "C005_COMMAND_MOVE_BACKWARD,         263, 289, 147, 167",
+        "C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167",
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168"
+      ],
       "needles": [
         "C001_COMMAND_TURN_LEFT,             234, 261, 125, 145",
         "C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145",
@@ -202,17 +211,26 @@
         "C004_COMMAND_MOVE_RIGHT,            291, 318, 147, 167",
         "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "keypad/arrow route tokens are readiness inputs; promotion still needs handler/state proof.",
-      "exists": true,
+      "exists": false,
       "file": "COMMAND.C",
       "function": "G0459_as_Graphic561_SecondaryKeyboardInput_Movement",
       "id": "pc34_keyboard_movement_tokens",
       "lines": "252-260,272-280",
-      "missing": [],
+      "missing": [
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C002_COMMAND_TURN_RIGHT",
+        "C006_COMMAND_MOVE_LEFT",
+        "C005_COMMAND_MOVE_BACKWARD",
+        "C004_COMMAND_MOVE_RIGHT",
+        "0xAB35",
+        "0x9B41"
+      ],
       "needles": [
         "C001_COMMAND_TURN_LEFT",
         "C003_COMMAND_MOVE_FORWARD",
@@ -223,33 +241,44 @@
         "0xAB35",
         "0x9B41"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
     },
     {
       "claim": "turn labels are promotable only after F0365 mutates party direction.",
-      "exists": true,
+      "exists": false,
       "file": "CLIKMENU.C",
       "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
       "id": "f0365_turn_state_delta",
       "lines": "142-174",
-      "missing": [],
+      "missing": [
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE",
+        "F0284_CHAMPION_SetPartyDirection",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ],
       "needles": [
         "G0321_B_StopWaitingForPlayerInput = C1_TRUE",
         "F0284_CHAMPION_SetPartyDirection",
         "F0276_SENSOR_ProcessThingAdditionOrRemoval"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "step labels require the source legality path, not a screenshot taken immediately after input.",
-      "exists": true,
+      "exists": false,
       "file": "CLIKMENU.C",
       "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
       "id": "f0366_move_legality_and_cooldown",
       "lines": "224-347",
-      "missing": [],
+      "missing": [
+        "G0465_ai_Graphic561_MovementArrowToStepForwardCount",
+        "G0466_ai_Graphic561_MovementArrowToStepRightCount",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "F0357_COMMAND_DiscardAllInput",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks"
+      ],
       "needles": [
         "G0465_ai_Graphic561_MovementArrowToStepForwardCount",
         "G0466_ai_Graphic561_MovementArrowToStepRightCount",
@@ -258,17 +287,23 @@
         "F0357_COMMAND_DiscardAllInput",
         "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
     },
     {
       "claim": "accepted movement must update move-result/state before viewport evidence is labeled.",
-      "exists": true,
+      "exists": false,
       "file": "MOVESENS.C",
       "function": "F0267_MOVE_GetMoveResult_CPSCE",
       "id": "move_result_party_state",
       "lines": "738-818",
-      "missing": [],
+      "missing": [
+        "G0397_i_MoveResultMapX",
+        "G0398_i_MoveResultMapY",
+        "G0399_ui_MoveResultMapIndex",
+        "G0362_l_LastPartyMovementTime",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ],
       "needles": [
         "G0397_i_MoveResultMapX",
         "G0398_i_MoveResultMapY",
@@ -276,17 +311,25 @@
         "G0362_l_LastPartyMovementTime",
         "F0276_SENSOR_ProcessThingAdditionOrRemoval"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
     },
     {
       "claim": "wall/viewport captures must bind to the F0128 tuple and G0296 composition.",
-      "exists": true,
+      "exists": false,
       "file": "DUNVIEW.C",
       "function": "F0128_DUNGEONVIEW_Draw_CPSF",
       "id": "viewport_wall_bitmap_frames",
       "lines": "577-593,8318-8618",
-      "missing": [],
+      "missing": [
+        "G0163_aauc_Graphic558_Frame_Walls",
+        "F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "G0296_puc_Bitmap_Viewport",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
       "needles": [
         "G0163_aauc_Graphic558_Frame_Walls",
         "F0128_DUNGEONVIEW_Draw_CPSF",
@@ -296,27 +339,32 @@
         "G0296_puc_Bitmap_Viewport",
         "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
     },
     {
       "claim": "the capture seam is after the PC34 viewport-present blit, not setup/menu echo.",
-      "exists": true,
+      "exists": false,
       "file": "DRAWVIEW.C",
       "function": "F0097_DUNGEONVIEW_DrawViewport",
       "id": "pc34_viewport_present",
       "lines": "709-858",
-      "missing": [],
+      "missing": [
+        "F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "G0296_puc_Bitmap_Viewport",
+        "VIDRV_09_BlitViewPort"
+      ],
       "needles": [
         "F0097_DUNGEONVIEW_DrawViewport",
         "F0638_GetZone(C007_ZONE_VIEWPORT",
         "G0296_puc_Bitmap_Viewport",
         "VIDRV_09_BlitViewPort"
       ],
-      "ok": true,
-      "path": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+      "ok": false,
+      "path": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
     }
   ],
-  "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "/home/yeager/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS504_ORIGINAL_CAPTURE_ROUTE_PREFLIGHT"
 }

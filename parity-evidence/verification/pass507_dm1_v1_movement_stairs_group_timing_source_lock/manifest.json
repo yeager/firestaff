@@ -31,7 +31,7 @@
       "returncode": 0,
       "summary": [
         "probe=dm1_v1_movement_timing_source_lock",
-        "sourceRoot=<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+        "sourceRoot=<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
         "- COMMAND.C:2095-2100 movement commands remain queued while cadence/projectile gates are active",
         "- COMMAND.C:2118-2127 one command is dequeued before turn/move dispatch",
         "- CLIKMENU.C:256-269 source-locks forward/right/back/left relative step mapping",
@@ -70,7 +70,7 @@
     },
     {
       "claim": "empty-party exception and group block seam.",
-      "source": "src/memory/memory_movement_pc34_compat.c:849"
+      "source": "src/memory/memory_movement_pc34_compat.c:903"
     },
     {
       "claim": "stamina/stairs/group/input-discard/timing command seam.",
@@ -93,7 +93,7 @@
       "source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"
     }
   ],
-  "generatedAt": "2026-09-04T18:00:57.441871+00:00",
+  "generatedAt": "2026-09-09T19:41:39.193260+00:00",
   "lane": "Lane A movement/stairs/group-collision/timing only; no viewport/pass435 dependency",
   "redmcsbEvidence": [
     {

@@ -19,25 +19,20 @@ Exact remaining blocker: native gdb can open/probe only far enough to show the s
 - `F0280_CHAMPION_AddCandidateChampionToParty` (DUNVIEW.C:3913-3930 + MOVESENS.C:1501-1503 + REVIVE.C:63-150,260-275): front-wall C127_SENSOR_WALL_CHAMPION_PORTRAIT reaches F0280 and sets G0299_ui_CandidateChampionOrdinal
 
 ## Tool probes
-- `dm_exe_file` rc=0: `/usr/bin/file <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE`
-  - <firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
+- `dm_exe_file` rc=0: `/usr/bin/file <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE`
+  - <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE: MS-DOS executable, MZ for MS-DOS, LZEXE v0.91 compressed
 - `gdb_version` rc=0: `/usr/bin/gdb --version`
-  - GNU gdb (Ubuntu 15.1-1ubuntu1~24.04.1) 15.1
-  - Copyright (C) 2024 Free Software Foundation, Inc.
+  - GNU gdb (Ubuntu 17.1-2ubuntu1) 17.1
+  - Copyright (C) 2025 Free Software Foundation, Inc.
   - License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
   - This is free software: you are free to change and redistribute it.
   - There is NO WARRANTY, to the extent permitted by law.
-- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x <firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb`
-  - <firestaff-repo>/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:
-  - "<firestaff-original-games>/_extracted/dm-pc34/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
-- `dosbox_debug_version` rc=0: `/usr/bin/dosbox-debug -version`
-  - DOSBox version 0.74-3, copyright 2002-2019 DOSBox Team.
-  - DOSBox is written by the DOSBox Team (See AUTHORS file))
-  - DOSBox comes with ABSOLUTELY NO WARRANTY.  This is free software,
-  - and you are welcome to redistribute it under certain conditions;
-  - please read the COPYING file thoroughly before doing so.
+- `gdb_stock_dm_symbol_gate` rc=1: `/usr/bin/gdb --batch -x <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb`
+  - <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/parity-evidence/verification/pass175_c080_runtime_debugger_gate/stock_dm_symbol_gate.gdb:3: Error in sourced command file:
+  - "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/dm1-pc34-stage/DungeonMasterPC34/DM.EXE": not in executable format: file format not recognized
+- `dosbox_debug_version`: unavailable
 - `dosbox_x_version` rc=1: `/usr/bin/dosbox-x -version`
-  - DOSBox-X version 2024.03.01 SDL2, copyright 2011-2024 The DOSBox-X Team.
+  - DOSBox-X version 2026.01.02 SDL2, copyright 2011-2026 The DOSBox-X Team.
   - DOSBox-X project maintainer: joncampbell123 (The Great Codeholio)
   - DOSBox-X comes with ABSOLUTELY NO WARRANTY.  This is free software,
   - and you are welcome to redistribute it under certain conditions;

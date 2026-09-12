@@ -19,6 +19,11 @@ when its architecture or reference material is relevant to the task.
   external uploads. Run Gitleaks with redacted output before commit/push.
 - Never use /tmp. Use a task-specific build directory or /dev/shm. Limit local
   builds to -j1 and tests to -j2. Preserve unrelated work and processes.
+- Use the dedicated `trv2` build host for full builds, sanitizer builds,
+  large test selections, disassembly, and other memory-intensive work. Keep
+  local execution to short checks that require the locally installed original
+  game media or an interactive display; never record connection details or
+  credentials in the repository.
 - Repository documentation/comments must be English. User-facing strings
   belong in the po/ localization workflow, including Original mode.
 - Never create a release, tag or dispatch a release workflow without an

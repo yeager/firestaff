@@ -64,19 +64,19 @@
       "status": "PASS"
     }
   ],
-  "status": "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
-  "timestampUtc": "2026-09-06T14:27:15.776360+00:00",
+  "status": "FAILED_PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
+  "timestampUtc": "2026-09-09T19:41:28.561229+00:00",
   "verificationRuns": [
     {
-      "assertions": 197,
+      "assertions": 0,
       "command": [
-        ".codex-scratch/parity-build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
+        "build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
       ],
+      "error": "binary not found: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat",
       "fails": 0,
-      "finalMarker": "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",
-      "passed": true,
-      "passes": 197,
-      "returncode": 0
+      "passed": false,
+      "passes": 0,
+      "returncode": -1
     }
   ]
 }

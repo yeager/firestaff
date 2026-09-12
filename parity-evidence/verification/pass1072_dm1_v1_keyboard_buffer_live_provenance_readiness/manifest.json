@@ -75,7 +75,7 @@
   ],
   "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_ORIGINAL_I34E_KEYBOARD_BUFFER_LIVE_DEBUGGER_OBSERVATION_MISSING",
-  "timestampUtc": "2026-09-04T18:05:04.540932+00:00",
+  "timestampUtc": "2026-09-09T19:41:28.474069+00:00",
   "toolAudit": {
     "allRequiredToolsAvailable": false,
     "debuggerHarness": "tools/run_dosbox_debug_pty.py",

@@ -1,20 +1,9 @@
 {
   "claim": "V2 presentation can scale/filter/present source DM1 graphics, palette, font metrics, and viewport geometry without storing gameplay state in presentation buffers/config.",
-  "dm1Originals": [
-    {
-      "bytes": 363417,
-      "name": "GRAPHICS.DAT",
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
-      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
-    },
-    {
-      "bytes": 33357,
-      "name": "DUNGEON.DAT",
-      "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
-      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
-    }
-  ],
+  "dm1Originals": [],
   "errors": [
+    "missing canonical DM1 anchor: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "missing canonical DM1 anchor: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     "missing canonical DM1 anchor: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/TITLE",
     "missing Firestaff marker in tests/test_dm1_v2_movement_viewport_pc34.c: dm1_default_dungeon_dat_path",
     "missing Firestaff marker in tests/test_dm1_v2_movement_viewport_pc34.c: _canonical/dm1/DUNGEON.DAT"

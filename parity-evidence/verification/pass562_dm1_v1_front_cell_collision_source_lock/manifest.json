@@ -2,12 +2,12 @@
   "branch": "main",
   "firestaffGuards": {
     "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:410-617",
-    "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:408-493",
-    "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat": "memory_movement_pc34_compat.c:849-923",
+    "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:462-547",
+    "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat": "memory_movement_pc34_compat.c:903-977",
     "commandCoreBlockerSlice": "dm1_v1_movement_command_core_pc34_compat.c:500-594",
     "runtimeExecutable": "test_dm1_v1_movement_command_core_pc34_compat (source assertions; executable build verified separately when link gate is available)"
   },
-  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "head": "12264d3700912e66fc25f86645ffec7567645898",
   "notClaimed": [
     "original DOS overlay pixel parity",
     "combat RNG/wound materialization",
@@ -24,5 +24,5 @@
   "schema": "pass562_dm1_v1_front_cell_collision_source_lock.v1",
   "sourceRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED",
-  "timestampUtc": "2026-09-04T18:00:59.779756+00:00"
+  "timestampUtc": "2026-09-09T19:41:29.737828+00:00"
 }

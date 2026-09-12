@@ -10,7 +10,7 @@
     {
       "file": "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py",
       "id": "pass500_source_gate",
-      "line": 241,
+      "line": 261,
       "needle": "pass500-dm1-v1-viewport-walls-blocker-cleanup-source-lock",
       "ok": true
     },

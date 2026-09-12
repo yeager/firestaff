@@ -9,27 +9,27 @@
     {
       "hits": [
         {
-          "line": 41144,
+          "line": 42289,
           "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
         },
         {
-          "line": 41154,
+          "line": 42406,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 41156,
+          "line": 42408,
           "needle": "return dm1_viewport_3d_use_flipped_walls_pc34("
         },
         {
-          "line": 41157,
+          "line": 42409,
           "needle": "state->world.party.mapX,"
         },
         {
-          "line": 41158,
+          "line": 42410,
           "needle": "state->world.party.mapY,"
         },
         {
-          "line": 41159,
+          "line": 42411,
           "needle": "state->world.party.direction);"
         }
       ],
@@ -38,18 +38,18 @@
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "da4966c629b7c79cc250e6a848d5f76c6c21342bb0c3a262ac821e4a94c5ec58",
+      "sha256": "9c59c94a4e89c9e25bf40a66d3b2fe76cd434171b743d131d02de15eb60f98d6",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 283,
+          "line": 284,
           "needle": "int dm1_viewport_3d_use_flipped_walls_pc34("
         },
         {
-          "line": 291,
+          "line": 292,
           "needle": "return (party_map_x + party_map_y + party_direction) & 1;"
         }
       ],
@@ -58,30 +58,30 @@
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
+      "sha256": "486c0e92dd48af41d6dab778ac67348556f51a4e56186035de236109380ff108",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 41150,
+          "line": 42295,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 41152,
+          "line": 42297,
           "needle": "static int m11_current_map_wall_set(const M11_GameViewState* state,"
         },
         {
-          "line": 41230,
+          "line": 42515,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
         },
         {
-          "line": 41231,
+          "line": 42516,
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         },
         {
-          "line": 45605,
+          "line": 46919,
           "needle": "(int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         }
       ],
@@ -90,38 +90,38 @@
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "da4966c629b7c79cc250e6a848d5f76c6c21342bb0c3a262ac821e4a94c5ec58",
+      "sha256": "9c59c94a4e89c9e25bf40a66d3b2fe76cd434171b743d131d02de15eb60f98d6",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 42002,
+          "line": 43316,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 42014,
+          "line": 43328,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 42016,
+          "line": 43330,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 42022,
+          "line": 43336,
           "needle": "the native center-wall graphic flipped horizontally."
         },
         {
-          "line": 42023,
+          "line": 43337,
           "needle": "drawn = m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 42027,
+          "line": 43341,
           "needle": "} else {"
         },
         {
-          "line": 42028,
+          "line": 43342,
           "needle": "drawn = m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
@@ -130,38 +130,38 @@
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "da4966c629b7c79cc250e6a848d5f76c6c21342bb0c3a262ac821e4a94c5ec58",
+      "sha256": "9c59c94a4e89c9e25bf40a66d3b2fe76cd434171b743d131d02de15eb60f98d6",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 1244,
+          "line": 1247,
           "needle": "{ DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,"
         },
         {
-          "line": 2853,
+          "line": 2856,
           "needle": "spec->parity_flips_horizontally;"
         },
         {
-          "line": 2854,
+          "line": 2857,
           "needle": "return spec->parity_wall;"
         },
         {
-          "line": 2856,
+          "line": 2859,
           "needle": "return spec->native_wall;"
         },
         {
-          "line": 2949,
+          "line": 2952,
           "needle": "int dm1_viewport_3d_build_side_wall_host_receipt_pc34("
         },
         {
-          "line": 2999,
+          "line": 3002,
           "needle": "dm1_viewport_3d_select_wall_bitmap("
         },
         {
-          "line": 3022,
+          "line": 3025,
           "needle": "receipt.draw_wall = true;"
         }
       ],
@@ -170,26 +170,26 @@
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
+      "sha256": "486c0e92dd48af41d6dab778ac67348556f51a4e56186035de236109380ff108",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 43882,
+          "line": 45196,
           "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
         },
         {
-          "line": 43899,
+          "line": 45213,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 43940,
+          "line": 45254,
           "needle": "dm1_viewport_3d_build_side_wall_host_receipt_pc34("
         },
         {
-          "line": 43946,
+          "line": 45260,
           "needle": "(void)m11_draw_dm1_side_wall_host_receipt(state,"
         }
       ],
@@ -198,7 +198,7 @@
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "da4966c629b7c79cc250e6a848d5f76c6c21342bb0c3a262ac821e4a94c5ec58",
+      "sha256": "9c59c94a4e89c9e25bf40a66d3b2fe76cd434171b743d131d02de15eb60f98d6",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }
@@ -386,7 +386,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/dev/shm/firestaff-dm1/test_dm1_v1_viewport_3d_pc34_compat"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,

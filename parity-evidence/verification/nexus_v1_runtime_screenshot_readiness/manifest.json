@@ -14,7 +14,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "NEXUS STARTUP RECEIPT: status=blocked gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue title=1 levelLoaded=0 menu=0 blocker=title-vdp-capture-required\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260903-202721.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260903-202721.bmp",
+        "stderr": "NEXUS STARTUP RECEIPT: status=blocked gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue title=1 levelLoaded=0 menu=0 blocker=faces\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260910-062136.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260910-062136.bmp",
         "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus sound: initialized (event dispatch capture-gated, SAL PCM diagnostic decode enabled, playback capture-gated)\nNexus font: FONT256.S2D CG source retained (242 tiles); text consumer gated\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue')",
         "timed_out": false
       },
@@ -22,15 +22,15 @@
       "id": "canonical_extracted_root",
       "label": "Nexus canonical extracted Track 1 root",
       "marker_found": false,
-      "ok": true,
+      "ok": false,
       "present": true,
       "presented_screenshots": [
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260903-202721.bmp",
-          "non_black_pixels": 0,
-          "sha256": "c2776312c531382df52ec6576b3e2eae6d7afd4f991b2d6c1bacb2c2f8b389b9",
+          "name": "firestaff-presented-20260910-062136.bmp",
+          "non_black_pixels": 454258,
+          "sha256": "4ec9cf074b6fdeaedb0af8107ce17774687713e540492512a61e6a63747014d8",
           "size": 1399734,
           "valid": true,
           "width": 864
@@ -73,24 +73,23 @@
         "sourceId": "nexus",
         "title": "DUNGEON MASTER NEXUS"
       },
-      "reason": "real Nexus title and asset boot succeeded, but the authenticated Saturn LEV01 start pose and presentation handoff are still required",
       "runtime_ok": false,
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260903-202721.bmp",
-          "non_black_pixels": 0,
-          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
+          "name": "firestaff-20260910-062136.bmp",
+          "non_black_pixels": 62314,
+          "sha256": "c2f740482572b91366cec835b3312b42fc71fb1201580bcf620b86ce3b5fb490",
           "size": 192054,
           "valid": true,
           "width": 320
         }
       ],
-      "status": "BLOCKED",
+      "status": "FAIL",
       "uses_extracted_source": false,
       "uses_iso_source": true,
-      "visual_ok": false
+      "visual_ok": true
     },
     {
       "id": "saturn_ja_track1_iso",
@@ -105,13 +104,13 @@
       "status": "SKIP"
     }
   ],
-  "firestaff": "build-dm1-csb-native/firestaff",
-  "generated_at": "2026-09-03T20:27:18.573743+00:00",
+  "firestaff": ".codex-scratch/release-build/firestaff",
+  "generated_at": "2026-09-10T06:21:32.306520+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",
     "No claim of full Nexus runtime playability or final text/3D/BPK rendering parity."
   ],
   "schema": "firestaff.parity.nexus_v1_runtime_screenshot_readiness.v1",
-  "status": "BLOCKED_CAPTURE"
+  "status": "FAIL"
 }

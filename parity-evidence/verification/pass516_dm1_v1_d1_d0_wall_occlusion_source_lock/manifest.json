@@ -4,71 +4,54 @@
       "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.",
       "hits": [
         {
-          "line": 1244,
+          "line": 1247,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 1244,
+          "line": 1247,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 1245,
+          "line": 1248,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 1245,
+          "line": 1248,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
-        },
-        {
-          "line": 1246,
-          "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
-        },
-        {
-          "line": 1246,
-          "needle": "DUNVIEW.C:7842-7843 front alcove draws F0115"
-        },
-        {
-          "line": 1247,
-          "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
-        },
-        {
-          "line": 1247,
-          "needle": "DUNVIEW.C:8036-8038 wall case returns"
-        },
-        {
-          "line": 1248,
-          "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
-        },
-        {
-          "line": 1248,
-          "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
       "id": "local-d1-d0-wall-specs-present",
       "lines": "1244-1248",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C",
+        "DUNVIEW.C:7842-7843 front alcove draws F0115",
+        "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R",
+        "DUNVIEW.C:8036-8038 wall case returns",
+        "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L",
+        "DUNVIEW.C:8142-8144 wall case returns"
+      ],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
+      "sha256": "486c0e92dd48af41d6dab778ac67348556f51a4e56186035de236109380ff108",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.",
       "hits": [
         {
-          "line": 223,
+          "line": 224,
           "needle": "DM1_VIEW_SQUARE_D1L, 1, -1"
         },
         {
-          "line": 224,
+          "line": 225,
           "needle": "DM1_VIEW_SQUARE_D1R, 1,  1"
         },
         {
-          "line": 226,
+          "line": 227,
           "needle": "DM1_VIEW_SQUARE_D0L, 0, -1"
         },
         {
-          "line": 227,
+          "line": 228,
           "needle": "DM1_VIEW_SQUARE_D0R, 0,  1"
         }
       ],
@@ -76,7 +59,7 @@
       "lines": "215-230",
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "7677f00671dedcfcfab5667fb633d49ca58ae1ea9be103390cc5627aa82609b7",
+      "sha256": "486c0e92dd48af41d6dab778ac67348556f51a4e56186035de236109380ff108",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -84,27 +67,27 @@
       "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.",
       "hits": [
         {
-          "line": 851,
+          "line": 852,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 852,
+          "line": 853,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 853,
+          "line": 854,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 854,
+          "line": 855,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 855,
+          "line": 856,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 925,
+          "line": 926,
           "needle": "test_wall_item_occlusion_alcove_exception"
         }
       ],
@@ -112,7 +95,7 @@
       "lines": "851-946",
       "missing": [],
       "path": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "00713e64d2e224845ee9766cc2e3fe12e65c72556d3c23e049b00ffd40dad5af",
+      "sha256": "8da231c21b8630829e6b728afd4ac232c93b79ec0a05a27969866295f37a7565",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
@@ -304,12 +287,12 @@
   ],
   "redmcsbRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -321,9 +304,9 @@
         "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass516 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass516 check-only: local-d1-d0-wall-specs-present",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

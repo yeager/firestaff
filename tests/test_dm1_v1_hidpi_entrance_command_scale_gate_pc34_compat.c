@@ -17,6 +17,7 @@
  */
 
 #include "entrance_mouse_routes_pc34_compat.h"
+#include "dm1_v1_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "render_sdl_m11.h"
 
@@ -192,6 +193,169 @@ static void expect_right_edge_misses(const EntranceMouseRouteCompat* route,
            surfaceName, route->name, windowX, windowY, fbX, fbY, command);
 }
 
+/* Original preserves the source pixels, but a user may select a larger host
+ * presentation target.  This closes the whole production mapping chain used
+ * by m11_map_window_pointer_to_game_source:
+ *
+ * window point -> M11_Render_MapPointToFramebuffer (host target) ->
+ * M11_MapPresentedGamePointToSourceForPresentation (320x200) ->
+ * ReDMCSB G0445 entrance command.
+ *
+ * Testing only either half missed the regression where V1's 640x400 or
+ * 1920x1200 host pixels were passed directly to COMMAND.C. */
+static void expect_original_host_target_route(
+    const EntranceMouseRouteCompat* route,
+    int targetW,
+    int targetH,
+    int windowW,
+    int windowH,
+    const char* surfaceName) {
+    int sourceX;
+    int sourceY;
+    int presentedX;
+    int presentedY;
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int windowX;
+    int windowY;
+    int mappedPresentedX = -1;
+    int mappedPresentedY = -1;
+    int mappedSourceX;
+    int mappedSourceY;
+    int command;
+
+    sourceX = route->x + route->w / 2;
+    sourceY = route->y + route->h / 2;
+    presentedX = sourceX;
+    presentedY = sourceY;
+    CHECK(M11_MapSourcePointToPresentedForPresentation(
+              M12_PRESENTATION_V1_ORIGINAL, targetW, targetH,
+              &presentedX, &presentedY) == 1);
+    CHECK(M11_Render_ComputePresentationRect(windowW, windowH,
+                                             targetW, targetH,
+                                             M11_SCALE_FIT, 0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX, &rectY,
+                                             &rectW, &rectH) == M11_RENDER_OK);
+    windowX = rectX + presented_center_for_source_axis(presentedX,
+                                                        targetW, rectW);
+    windowY = rectY + presented_center_for_source_axis(presentedY,
+                                                        targetH, rectH);
+    CHECK(M11_Render_MapPointToFramebuffer(windowX, windowY,
+                                           windowW, windowH,
+                                           targetW, targetH,
+                                           M11_SCALE_FIT, 0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &mappedPresentedX,
+                                           &mappedPresentedY) == 1);
+    mappedSourceX = mappedPresentedX;
+    mappedSourceY = mappedPresentedY;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V1_ORIGINAL, targetW, targetH,
+              &mappedSourceX, &mappedSourceY) == 1);
+    CHECK(mappedSourceX >= route->x &&
+          mappedSourceX < route->x + route->w);
+    CHECK(mappedSourceY >= route->y &&
+          mappedSourceY < route->y + route->h);
+    command = M11_Entrance_DispatchSourceLockedPointerCommand(
+        mappedSourceX, mappedSourceY, route->buttonMask);
+    CHECK(command == (int)route->commandId);
+
+    /* A point beyond the presented surface's right edge must be rejected by
+     * the host mapper rather than clamped into an original entrance button. */
+    CHECK(M11_Render_MapPointToFramebuffer(rectX + rectW, windowY,
+                                           windowW, windowH,
+                                           targetW, targetH,
+                                           M11_SCALE_FIT, 0,
+                                           M11_DISPLAY_ASPECT_CONTENT,
+                                           &mappedPresentedX,
+                                           &mappedPresentedY) == 0);
+    printf("surface=%s target=%dx%d route=%s window=%d,%d presented=%d,%d source=%d,%d command=%d\n",
+           surfaceName, targetW, targetH, route->name, windowX, windowY,
+           mappedPresentedX, mappedPresentedY, mappedSourceX, mappedSourceY,
+           command);
+}
+
+static int find_hoc_status_bar_source_point(int* outX, int* outY) {
+    int x;
+    int y;
+    if (!outX || !outY) return 0;
+    /* C187 is the leftmost source-owned champion bar. It is visible and
+     * interactive after a HoC champion is admitted, so it covers the same
+     * gameplay pointer route as inventory/HUD use rather than entrance-only
+     * routing. Discover it from the ReDMCSB table instead of duplicating a
+     * host rectangle. */
+    for (y = 0; y < M11_FB_HEIGHT; ++y) {
+        for (x = 0; x < M11_FB_WIDTH; ++x) {
+            int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
+            int zone = 0;
+            int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                DM1_V1_MOUSE_LIST_INTERFACE_PC34, x, y,
+                DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zone);
+            if (command == 7 && zone == 187 &&
+                space == DM1_V1_MOUSE_SPACE_SCREEN_PC34) {
+                *outX = x;
+                *outY = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void expect_original_host_target_hoc_route(int targetW,
+                                                  int targetH,
+                                                  int windowW,
+                                                  int windowH) {
+    int sourceX = -1;
+    int sourceY = -1;
+    int presentedX;
+    int presentedY;
+    int rectX = -1;
+    int rectY = -1;
+    int rectW = -1;
+    int rectH = -1;
+    int mappedX = -1;
+    int mappedY = -1;
+    int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
+    int zone = 0;
+    int command;
+
+    CHECK(find_hoc_status_bar_source_point(&sourceX, &sourceY) == 1);
+    presentedX = sourceX;
+    presentedY = sourceY;
+    CHECK(M11_MapSourcePointToPresentedForPresentation(
+              M12_PRESENTATION_V1_ORIGINAL, targetW, targetH,
+              &presentedX, &presentedY) == 1);
+    CHECK(M11_Render_ComputePresentationRect(windowW, windowH,
+                                             targetW, targetH,
+                                             M11_SCALE_FIT, 0,
+                                             M11_DISPLAY_ASPECT_CONTENT,
+                                             &rectX, &rectY,
+                                             &rectW, &rectH) == M11_RENDER_OK);
+    CHECK(M11_Render_MapPointToFramebuffer(
+              rectX + presented_center_for_source_axis(presentedX,
+                                                        targetW, rectW),
+              rectY + presented_center_for_source_axis(presentedY,
+                                                        targetH, rectH),
+              windowW, windowH, targetW, targetH, M11_SCALE_FIT, 0,
+              M11_DISPLAY_ASPECT_CONTENT, &mappedX, &mappedY) == 1);
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V1_ORIGINAL, targetW, targetH,
+              &mappedX, &mappedY) == 1);
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_INTERFACE_PC34, mappedX, mappedY,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zone);
+    CHECK(command == 7);
+    CHECK(zone == 187);
+    CHECK(space == DM1_V1_MOUSE_SPACE_SCREEN_PC34);
+    printf("hoc_original_host_target=%dx%d source=%d,%d mapped=%d,%d command=%d zone=%d\n",
+           targetW, targetH, sourceX, sourceY, mappedX, mappedY,
+           command, zone);
+}
+
 static void expect_macbook_drawable_not_tiny_view(void) {
     int logicalX = -1;
     int logicalY = -1;
@@ -291,6 +455,8 @@ int main(void) {
 
     expect_macbook_drawable_not_tiny_view();
     expect_retina_integer_rectangle_matches_logical_input();
+    expect_original_host_target_hoc_route(640, 400, 1512, 982);
+    expect_original_host_target_hoc_route(1920, 1200, 1512, 982);
 
     count = ENTRANCE_Compat_GetMouseRouteCount();
     CHECK(count == 5u);
@@ -302,6 +468,12 @@ int main(void) {
         expect_route_after_sdl3_pixel_resize(&route);
         expect_right_edge_misses(&route, 1512, 982, "macbook_logical_1512x982");
         expect_right_edge_misses(&route, 3024, 1964, "macbook_retina_drawable_3024x1964");
+        expect_original_host_target_route(&route, 640, 400,
+                                          1512, 982,
+                                          "original_host_640x400_macbook");
+        expect_original_host_target_route(&route, 1920, 1200,
+                                          1512, 982,
+                                          "original_host_1920x1200_macbook");
     }
 
     printf("result=%s\n", g_failures == 0 ? "PASS" : "FAIL");

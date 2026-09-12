@@ -19,7 +19,7 @@
   "blocker": "missing prerequisite: dosbox-debug",
   "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "head": "12264d3700912e66fc25f86645ffec7567645898",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -223,5 +223,5 @@
   ],
   "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_MISSING_N2_DEBUGGER_PREREQUISITE",
-  "timestampUtc": "2026-09-04T18:05:04.761528+00:00"
+  "timestampUtc": "2026-09-09T19:41:28.624458+00:00"
 }

@@ -1,7 +1,7 @@
 {
   "schema": "pass466_dm1_v1_initial_hall_c080_source_stop_capture_path.v1",
-  "timestampUtc": "2026-09-04T18:01:00.274668+00:00",
-  "status": "PASS466_SOURCE_STOP_CAPTURE_PATH_LOCKED_TERMINAL_HUD_ROWS_READY_FOR_RECAPTURE",
+  "timestampUtc": "2026-09-09T19:41:14.009993+00:00",
+  "status": "FAIL_PASS466_SOURCE_STOP_CAPTURE_PATH_LOCK_FAILED",
   "redmcsb": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "lockedData": [
     {
@@ -10,13 +10,8 @@
       "bytes": 363417,
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "md5": "fa6b1aa29e191418713bf2cda93d962e",
-      "exists": true,
-      "ok": true,
-      "actual": {
-        "bytes": 363417,
-        "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-        "md5": "fa6b1aa29e191418713bf2cda93d962e"
-      }
+      "exists": false,
+      "ok": false
     },
     {
       "label": "dm1_pc34_english_dungeon",
@@ -24,34 +19,13 @@
       "bytes": 33357,
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "md5": "766450c940651fc021c92fe5d0d0b3a6",
-      "exists": true,
-      "ok": true,
-      "actual": {
-        "bytes": 33357,
-        "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-        "md5": "766450c940651fc021c92fe5d0d0b3a6"
-      }
+      "exists": false,
+      "ok": false
     }
   ],
   "initialDungeonState": {
-    "ok": true,
-    "raw": "0x0861",
-    "state": {
-      "mapIndex": 0,
-      "mapX": 1,
-      "mapY": 3,
-      "direction": 2
-    },
-    "directionName": "South",
-    "expected": {
-      "raw": "0x0861",
-      "state": {
-        "mapIndex": 0,
-        "mapX": 1,
-        "mapY": 3,
-        "direction": 2
-      }
-    }
+    "ok": false,
+    "error": "missing <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
   },
   "sourceLocks": [
     {
@@ -282,7 +256,11 @@
       "hudStatusCropSha256"
     ]
   },
-  "errors": [],
+  "errors": [
+    "missing locked data dm1_pc34_english_graphics",
+    "missing locked data dm1_pc34_english_dungeon",
+    "initial DUNGEON.DAT Hall state decode failed"
+  ],
   "nonClaims": [
     "pixel parity",
     "frame promotion",

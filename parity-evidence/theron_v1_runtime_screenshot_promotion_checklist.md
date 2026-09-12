@@ -51,7 +51,7 @@ contract are satisfied for at least one row.
 - Contract-drift findings: **0**
 - Reviewer sign-off file present: **False**
 
-- Reviewer sign-off path: `/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json`
+- Reviewer sign-off path: `<local-home>/.firestaff/data/theron/promotion_review_state.json`
 
 ## Public Screenshot Boundary
 

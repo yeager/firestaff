@@ -1,22 +1,22 @@
 {
-  "blocker": null,
+  "blocker": "source, canonical hash, or pass560 prerequisite audit failed",
   "branch": "main",
   "canonicalDm1": {
     "files": {
       "DUNGEON.DAT": {
         "expectedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-        "observedSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-        "ok": true,
+        "observedSha256": null,
+        "ok": false,
         "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
       },
       "GRAPHICS.DAT": {
         "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-        "observedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
-        "ok": true,
+        "observedSha256": null,
+        "ok": false,
         "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
       }
     },
-    "ok": true,
+    "ok": false,
     "root": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1"
   },
   "decision": {
@@ -170,5 +170,5 @@
     }
   ],
   "sourceRoot": "<local-home>/.firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED"
+  "status": "FAIL_PASS562_DM1_V1_KEYBOARD_NEXT_BOUNDARY_AUDIT"
 }

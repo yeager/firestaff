@@ -2,13 +2,14 @@
   "canonicalGraphicsDat": {
     "expectedSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
     "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
-    "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    "sha256": null
   },
   "currentMismatch": {
     "mismatchedPixels": 16405,
     "totalPixels": 30464
   },
   "errors": [
+    "missing canonical GRAPHICS.DAT: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
     "missing anchor DEFS.H:2348 'M644_GRAPHIC_FIRST_FLOOR_SET'",
     "missing anchor DEFS.H:2349 'M650_GRAPHIC_FLOOR_SET_0_FLOOR'",
     "missing anchor DEFS.H:2350 'M651_GRAPHIC_FLOOR_SET_0_CEILING'",

@@ -2,8 +2,10 @@
   "capture_script": {
     "executable": true,
     "exists": true,
-    "missing_tokens": [],
-    "ok": true,
+    "missing_tokens": [
+      "DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk'"
+    ],
+    "ok": false,
     "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh",
     "required_tokens": [
       "DM1_ORIGINAL_ROUTE_EVENTS",
@@ -112,8 +114,10 @@
   },
   "gap_doc_anchor": {
     "exists": true,
-    "missing_tokens": [],
-    "ok": true,
+    "missing_tokens": [
+      "Viewport content is still not"
+    ],
+    "ok": false,
     "path": "docs/parity/DM1_V1_CAPTURE_GAP_EVIDENCE.md",
     "required_tokens": [
       "Original Capture Gap Evidence",
@@ -127,7 +131,7 @@
     "No Firestaff-vs-original pixel parity or viewport-hash match is claimed.",
     "The route labels are metadata for a later operator-run capture and pairing pass."
   ],
-  "ok": true,
+  "ok": false,
   "operator_command": {
     "argv": [
       "scripts/dosbox_dm1_original_viewport_reference_capture.sh",
@@ -189,5 +193,5 @@
     "DUNVIEW.C:525 G0109 champion portrait viewport rectangle",
     "DUNVIEW.C:8318-8542 F0128_DUNGEONVIEW_Draw_CPSF redraw path"
   ],
-  "status": "TODO100_DM1_V1_ORIGINAL_DOS_CAPTURE_ROUTE_MANIFEST_READY"
+  "status": "FAIL"
 }

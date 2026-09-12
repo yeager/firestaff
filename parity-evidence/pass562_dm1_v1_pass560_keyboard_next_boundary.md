@@ -1,13 +1,13 @@
 # Pass562 - DM1 V1 keyboard next boundary after pass560
 
-- Status: PASS562_DM1_V1_NEXT_BOUNDARY_C254_IO_DRIVER_SLOT_DECODE_LOCKED
+- Status: FAIL_PASS562_DM1_V1_KEYBOARD_NEXT_BOUNDARY_AUDIT
 - Selected next boundary: C254/IO_DRIVER slot decode
 - Pass560 status: BLOCKED_PASS560_RUNTIME_C254_IO_DRIVER_VECTOR_NOT_CAPTURED
 - Manifest: parity-evidence/verification/pass562_dm1_v1_pass560_keyboard_next_boundary/manifest.json
 
 ## Canonical DM1 anchors
-- DUNGEON.DAT: sha256 d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85 (PASS)
-- GRAPHICS.DAT: sha256 2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e (PASS)
+- DUNGEON.DAT: sha256 None (FAIL)
+- GRAPHICS.DAT: sha256 None (FAIL)
 
 ## ReDMCSB source locks
 - PASS C254/IO_DRIVER slot decode: IBMIO.C 2378-2381 - C254 publishes an IO_DRIVER table whose slots 0 and 1 are the keyboard read/present API.

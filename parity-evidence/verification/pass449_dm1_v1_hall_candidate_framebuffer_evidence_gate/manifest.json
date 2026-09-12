@@ -1,9 +1,9 @@
 {
   "schema": "pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.v1",
-  "timestampUtc": "2026-09-05T17:30:30.027785+00:00",
+  "timestampUtc": "2026-09-09T19:41:13.642122+00:00",
   "status": "PARTIAL_PASS449_FRAMEBUFFER_COMPARATOR_INCOMPLETE",
   "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
-  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "head": "12264d3700912e66fc25f86645ffec7567645898",
   "redmcsbArchive": "<local-home>/.firestaff/devtools/references/ReDMCSB_WIP20210206.7z",
   "dataHashLock": [
     {

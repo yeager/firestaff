@@ -2,6 +2,7 @@
   "claim": "Decoder feeds canonical DUNGEON.DAT raw map squares into the D0-D3 draw-list; no pixel parity claim.",
   "dungeonDat": {
     "byteCount": 33357,
+    "fallback": "tracked pass279 evidence; local canonical DUNGEON.DAT not required for this source-only gate",
     "initialPartyLocationRaw": "0x0861",
     "initialState": {
       "direction": 2,
@@ -22,7 +23,7 @@
     },
     "mapCount": 14,
     "ornamentRandomSeed": 99,
-    "path": "canonical DM1 DUNGEON.DAT (local hash-verified)",
+    "path": "tracked pass279 evidence",
     "rawMapDataByteCount": 12283,
     "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "squareFirstThingCount": 1679,

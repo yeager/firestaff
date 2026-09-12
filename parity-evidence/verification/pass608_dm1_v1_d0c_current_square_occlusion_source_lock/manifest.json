@@ -5,27 +5,27 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1177,
+          "line": 1180,
           "needle": "{ DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, true, false,"
         },
         {
-          "line": 1179,
+          "line": 1182,
           "needle": "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115"
         },
         {
-          "line": 1180,
+          "line": 1183,
           "needle": "DUNVIEW.C:8274-8292 pit floor/ceiling bitmap before F0115"
         },
         {
-          "line": 1182,
+          "line": 1185,
           "needle": "DUNVIEW.C:8294 F0115 object/creature/projectile/explosion handoff with C0x0021"
         },
         {
-          "line": 1183,
+          "line": 1186,
           "needle": "DUNVIEW.C:8295-8308 teleporter field after F0115"
         },
         {
-          "line": 1184,
+          "line": 1187,
           "needle": "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C"
         }
       ],
@@ -37,27 +37,27 @@
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1864,
+          "line": 1865,
           "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
         },
         {
-          "line": 1920,
+          "line": 1921,
           "needle": "test_floor_field_stairs_pit_teleporter_order"
         },
         {
-          "line": 1951,
+          "line": 1952,
           "needle": "DM1_VIEW_SQUARE_D0C"
         },
         {
-          "line": 1978,
+          "line": 1979,
           "needle": "d0c_foreground_before_things"
         },
         {
-          "line": 4289,
+          "line": 4290,
           "needle": "test_d0_d1_visible_square_draw_order_gate"
         },
         {
-          "line": 4365,
+          "line": 4366,
           "needle": "dm1_viewport_3d_get_floor_field_order_spec_for_square(DM1_VIEW_SQUARE_D0C)"
         }
       ],
@@ -69,11 +69,11 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 4574,
+          "line": 4609,
           "needle": "DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order"
         },
         {
-          "line": 4589,
+          "line": 4624,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],
@@ -328,7 +328,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/dev/shm/firestaff-dm1/test_dm1_v1_viewport_3d_pc34_compat"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,

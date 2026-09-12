@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/dev/shm/firestaff-dm1",
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -15,21 +15,21 @@
         "-j2"
       ],
       "outputTail": [
-        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/csb/csb_v1_chaos_magic_pc34_compat.c:2112:22: note: \u2018*(__int128 unsigned *)(&source_missile_values[0])\u2019 was declared here",
         " 2112 |             uint32_t source_missile_values[4];",
         "      |                      ^~~~~~~~~~~~~~~~~~~~~",
+        "[21/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_monster_pc34_compat.c.o",
         "[22/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_character_pc34_compat.c.o",
         "[23/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_save_load_pc34_compat.c.o",
         "[24/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_champion_stats_pc34_compat.c.o",
         "[25/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_inventory_pc34_compat.c.o",
-        "[26/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o",
-        "[27/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o",
+        "[26/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o",
+        "[27/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o",
         "[28/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o",
         "[29/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o",
         "[30/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o",
         "[31/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o",
-        "[32/39] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
-        "[33/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o",
+        "[32/39] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o",
+        "[33/39] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
         "[34/39] Linking C executable test_dm1_v1_movement_core_pc34_compat",
         "[35/39] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
         "[36/39] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
@@ -138,7 +138,7 @@
       "outputTail": [
         "PASS pass406_dm1_v1_movement_legality_completion_gate",
         "- ReDMCSB: CLIKMENU.C:180-351; MOVESENS.C:316-999; DUNGEON.C:1371-1421, 1423-1479",
-        "- Firestaff: memory_movement_pc34_compat.c:408-493, 715-847",
+        "- Firestaff: memory_movement_pc34_compat.c:462-547, 769-901",
         "- report: parity-evidence/pass406_dm1_v1_movement_legality_completion_gate.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_movement_legality_completion_gate/manifest.json"
       ],
@@ -157,7 +157,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:29907-30122; main_loop_m11.c:7593-7610; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:30604-30819; main_loop_m11.c:7937-7954; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -257,7 +257,7 @@
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
         "- Firestaff field rows/zones (DM1-owned): <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
-        "- Firestaff source viewport draw order: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:59569",
+        "- Firestaff source viewport draw order: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:61542",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -284,8 +284,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:20735",
-        "- Firestaff palette apply: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:40962",
+        "- Firestaff palette compute: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:6605",
+        "- Firestaff palette apply: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/engine/m11_game_view.c:42136",
         "- ReDMCSB F0337: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -417,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-09-04T18:24:40.009751+00:00"
+  "timestampUtc": "2026-09-10T07:23:27.251571+00:00"
 }

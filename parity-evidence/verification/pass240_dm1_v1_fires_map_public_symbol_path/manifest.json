@@ -190,7 +190,7 @@
     "native_path": {
       "dosbox-debug": null,
       "dosbox-x": "/usr/bin/dosbox-x",
-      "wine": null
+      "wine": "/usr/bin/wine"
     }
   }
 }

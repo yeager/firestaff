@@ -283,8 +283,25 @@ int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
         if (*y < 0) *y = 0;
         if (*x >= M11_SOURCE_FB_WIDTH) *x = M11_SOURCE_FB_WIDTH - 1;
         if (*y >= M11_SOURCE_FB_HEIGHT) *y = M11_SOURCE_FB_HEIGHT - 1;
-        *x = (*x * targetW) / M11_SOURCE_FB_WIDTH;
-        *y = (*y * targetH) / M11_SOURCE_FB_HEIGHT;
+        /* Map to the centre of the target pixel-cell, not its leading edge.
+         * A host presentation target can undergo one further FIT mapping
+         * before SDL delivers a pointer.  Leading-edge coordinates may then
+         * round into the preceding source cell (for example C187's x=43
+         * became x=42 through a 1920x1200 Original target on a 1512x982
+         * window).  The cell centre composes with the inverse mapper and
+         * preserves ReDMCSB COMMAND.C hit ownership. */
+        {
+            int64_t xLo = ((int64_t)*x * targetW +
+                           M11_SOURCE_FB_WIDTH - 1) / M11_SOURCE_FB_WIDTH;
+            int64_t xHi = (((int64_t)(*x + 1) * targetW) - 1) /
+                          M11_SOURCE_FB_WIDTH;
+            int64_t yLo = ((int64_t)*y * targetH +
+                           M11_SOURCE_FB_HEIGHT - 1) / M11_SOURCE_FB_HEIGHT;
+            int64_t yHi = (((int64_t)(*y + 1) * targetH) - 1) /
+                          M11_SOURCE_FB_HEIGHT;
+            *x = (int)((xLo + xHi) / 2);
+            *y = (int)((yLo + yHi) / 2);
+        }
     }
     if (*x < 0) *x = 0;
     if (*y < 0) *y = 0;

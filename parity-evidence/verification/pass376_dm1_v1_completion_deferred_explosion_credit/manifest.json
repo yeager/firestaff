@@ -73,7 +73,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 56/100 to 57/100 by crediting one additional viewport_ui_render point for pass375's ReDMCSB F0115 after-all-packed-cells deferred explosion pass.",
-  "head": "d4d0c8921edf429f726561decb0c89b8e3b1b6fb",
+  "head": "12264d3700912e66fc25f86645ffec7567645898",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -83,5 +83,5 @@
   "repo": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
   "status": "BLOCKED_PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT",
-  "timestampUtc": "2026-09-04T18:05:00.633357+00:00"
+  "timestampUtc": "2026-09-09T19:41:18.074518+00:00"
 }

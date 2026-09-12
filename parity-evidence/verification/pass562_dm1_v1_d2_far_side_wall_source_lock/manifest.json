@@ -1,91 +1,56 @@
 {
   "firestaffChecks": [
     {
-      "hits": [
-        {
-          "line": 1239,
-          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
-        },
-        {
-          "line": 1239,
-          "needle": "DM1_PC34_ZONE_WALL_D2L2"
-        },
-        {
-          "line": 1239,
-          "needle": "DUNVIEW.C:6849-6858"
-        },
-        {
-          "line": 1239,
-          "needle": "DUNVIEW.C:6848-6862 wall case returns"
-        },
-        {
-          "line": 1240,
-          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
-        },
-        {
-          "line": 1240,
-          "needle": "DM1_PC34_ZONE_WALL_D2R2"
-        },
-        {
-          "line": 1240,
-          "needle": "DUNVIEW.C:6880-6889"
-        },
-        {
-          "line": 1240,
-          "needle": "DUNVIEW.C:6882-6893 wall case returns"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-d2-far-side-wall-metadata",
       "lines": "1239-1240",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
+        "DM1_PC34_ZONE_WALL_D2L2",
+        "DUNVIEW.C:6849-6858",
+        "DUNVIEW.C:6848-6862 wall case returns",
+        "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2",
+        "DM1_PC34_ZONE_WALL_D2R2",
+        "DUNVIEW.C:6880-6889",
+        "DUNVIEW.C:6882-6893 wall case returns"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 846,
+          "line": 847,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 846,
+          "line": 847,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 846,
+          "line": 847,
           "needle": "\"6862\""
-        },
-        {
-          "line": 847,
-          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
-        },
-        {
-          "line": 847,
-          "needle": "DM1_PC34_ZONE_WALL_D2R2"
-        },
-        {
-          "line": 847,
-          "needle": "\"6893\""
         }
       ],
       "id": "firestaff-d2-far-side-runtime-test",
       "lines": "846-847",
-      "missing": [],
+      "missing": [
+        "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2",
+        "DM1_PC34_ZONE_WALL_D2R2",
+        "\"6893\""
+      ],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
-      "hits": [
-        {
-          "line": 4592,
-          "needle": "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-source-evidence-string",
       "lines": "4592-4592",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -198,12 +163,12 @@
   ],
   "redmcsbRoot": "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "pass562_dm1_v1_d2_far_side_wall_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
-        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat"
+        "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -215,9 +180,9 @@
         "<local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass562 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass562 check-only: firestaff-d2-far-side-wall-metadata,firestaff-d2-far-side-runtime-test,firestaff-source-evidence-string",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

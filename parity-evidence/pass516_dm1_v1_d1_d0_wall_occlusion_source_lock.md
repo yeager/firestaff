@@ -1,6 +1,6 @@
 # Pass516 DM1 V1 D1/D0 wall occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -55,7 +55,7 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Firestaff Evidence
 
-- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1244-1248)
+- FAIL local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1244-1248)
   - Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.
 
 - PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:215-230)
@@ -66,7 +66,7 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Verification
 
-- command: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat
+- command: <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/.codex-scratch/release-build/test_dm1_v1_viewport_3d_pc34_compat
   - returncode: 0
   - output tail:
 ~~~
@@ -85,10 +85,10 @@ PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
 - command: /usr/bin/python3 <local-home>/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
-  - returncode: 0
+  - returncode: 1
   - output tail:
 ~~~
-PASS pass516 check-only
+FAIL pass516 check-only: local-d1-d0-wall-specs-present
 ~~~
 
 ## Non-Claims

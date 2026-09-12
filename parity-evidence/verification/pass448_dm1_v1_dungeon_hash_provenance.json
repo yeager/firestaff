@@ -1,17 +1,8 @@
 {
-  "anchors": [
-    {
-      "bytes": 33357,
-      "label": "canonical_dm1",
-      "matchesExpected": true,
-      "md5": "766450c940651fc021c92fe5d0d0b3a6",
-      "relativePath": "_canonical/dm1/DUNGEON.DAT",
-      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-      "variant": "DM PC 3.4 English / I34E canonical symlink"
-    }
-  ],
+  "anchors": [],
   "contract": "DM1 V1 map/start/dimension comparisons require this exact DUNGEON.DAT byte identity before using parsed facts.",
   "errors": [
+    "missing canonical_dm1: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
     "missing extracted_dm1_pc34_english: <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
     "missing extracted_dm1_pc34_eudata: <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT"
   ],
@@ -21,37 +12,8 @@
     "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
     "variant": "DM PC 3.4 English / I34E DUNGEON.DAT"
   },
-  "localDungeonVariants": [
-    {
-      "acceptedForDm1V1EnglishComparisons": true,
-      "bytes": 33357,
-      "md5": "766450c940651fc021c92fe5d0d0b3a6",
-      "relativePath": "_canonical/dm1/DUNGEON.DAT",
-      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
-    }
-  ],
-  "parsedCanonicalFacts": {
-    "initialPartyLocationRaw": "0x0861",
-    "initialState": {
-      "direction": 2,
-      "mapIndex": 0,
-      "mapX": 1,
-      "mapY": 3
-    },
-    "map0": {
-      "entrySquareRaw_x1_y3": 176,
-      "frontSquareRaw_x1_y4": 48,
-      "height": 19,
-      "level": 0,
-      "rawMapDataByteOffset": 0,
-      "rawMapDataFileOffset": 21072,
-      "width": 18
-    },
-    "mapCount": 14,
-    "rawMapDataByteCount": 12283,
-    "squareFirstThingCount": 1679,
-    "textDataWordCount": 1749
-  },
+  "localDungeonVariants": [],
+  "parsedCanonicalFacts": {},
   "pass": "pass448_dm1_v1_dungeon_hash_provenance",
   "redmcsbSourceAnchors": {
     "CEDTINC6.C": [

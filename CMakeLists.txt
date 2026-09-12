@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.333 LANGUAGES C)
+project(Firestaff VERSION 3.0.334 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -4622,7 +4622,13 @@ else()
     endif()
 endif()
 
-# ── SDL discovery (prefer SDL3, fall back to SDL2) ──────────────────
+# ── SDL discovery ──────────────────────────────────────────────────
+#
+# The production renderer, input layer and audio owners use SDL3 stream and
+# event APIs directly.  A target alias to SDL2 only makes configuration look
+# successful; it cannot supply SDL3 headers or ABI.  Fail at configure time
+# instead of failing later in a compiler invocation with an opaque missing
+# header error.
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_package(PkgConfig REQUIRED)
 else()
@@ -4635,19 +4641,10 @@ else()
     pkg_check_modules(SDL3 QUIET IMPORTED_TARGET sdl3)
 endif()
 if(NOT SDL3_FOUND AND NOT TARGET PkgConfig::SDL3)
-    pkg_check_modules(SDL2 QUIET IMPORTED_TARGET sdl2)
-    if(SDL2_FOUND OR TARGET PkgConfig::SDL2)
-        message(STATUS "SDL3 not found, using SDL2")
-        if(NOT TARGET SDL3::SDL3)
-            add_library(SDL3::SDL3 ALIAS PkgConfig::SDL2)
-        endif()
-    else()
-        message(FATAL_ERROR "Neither SDL3 nor SDL2 found")
-    endif()
-else()
-    if(NOT TARGET SDL3::SDL3 AND TARGET PkgConfig::SDL3)
-        add_library(SDL3::SDL3 ALIAS PkgConfig::SDL3)
-    endif()
+    message(FATAL_ERROR "SDL3 is required: Firestaff uses SDL3 renderer, input, and audio-stream APIs")
+endif()
+if(NOT TARGET SDL3::SDL3 AND TARGET PkgConfig::SDL3)
+    add_library(SDL3::SDL3 ALIAS PkgConfig::SDL3)
 endif()
 
 # Theron's local original CD corpus stores Track 01 as OGG transcodes while

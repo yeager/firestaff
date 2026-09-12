@@ -1,57 +1,49 @@
 {
   "assetIdentities": [
     {
-      "actual_bytes": 363417,
-      "actual_md5": "fa6b1aa29e191418713bf2cda93d962e",
-      "actual_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "bytes": 363417,
       "filename": "GRAPHICS.DAT",
       "label": "dm1_pc34_english_graphics",
       "md5_provenance": "fa6b1aa29e191418713bf2cda93d962e",
-      "ok": true,
+      "ok": false,
       "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
-      "provenanceRegistryPresent": true,
       "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
       "variant": "DM PC 3.4 English / I34E"
     },
     {
-      "actual_bytes": 33357,
-      "actual_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "bytes": 33357,
       "filename": "DUNGEON.DAT",
       "label": "dm1_pc34_english_dungeon",
-      "ok": true,
+      "ok": false,
       "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "variant": "DM PC 3.4 English / I34E"
     },
     {
-      "actual_bytes": 398925,
-      "actual_md5": "f934d97e43e1ba6e5159839acbcd0611",
-      "actual_sha256": "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
       "bytes": 398925,
       "filename": "GRAPHICS.DAT",
       "label": "dm1_pc34_multilanguage_graphics_crossref",
       "md5_provenance": "f934d97e43e1ba6e5159839acbcd0611",
-      "ok": true,
+      "ok": false,
       "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
-      "provenanceRegistryPresent": true,
       "sha256": "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
       "variant": "DM PC 3.4 Multilanguage / EUDATA"
     },
     {
-      "actual_bytes": 33357,
-      "actual_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "bytes": 33357,
       "filename": "DUNGEON.DAT",
       "label": "dm1_pc34_multilanguage_dungeon_crossref",
-      "ok": true,
+      "ok": false,
       "path": "<local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
       "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
       "variant": "DM PC 3.4 Multilanguage / EUDATA; same dungeon payload as English"
     }
   ],
   "errors": [
+    "missing asset dm1_pc34_english_graphics: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+    "missing asset dm1_pc34_english_dungeon: <local-home>/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+    "missing asset dm1_pc34_multilanguage_graphics_crossref: <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
+    "missing asset dm1_pc34_multilanguage_dungeon_crossref: <local-home>/.firestaff/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
     "docs/design/CSB_V1_BOOTSTRAP_SCOUT.md missing required text: catalogue/status evidence, not CSB runtime identity",
     "docs/design/CSB_V1_BOOTSTRAP_SCOUT.md missing required text: filename-only match, should remain insufficient",
     "docs/design/CSB_V1_BOOTSTRAP_SCOUT.md missing required text: MD5 registry entries may be cited only as cross-reference/provenance"

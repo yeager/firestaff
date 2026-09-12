@@ -1,5 +1,5 @@
 Name:           firestaff
-Version:        3.0.321
+Version:        3.0.334
 Release:        1%{?dist}
 Summary:        Native engine for the FTL dungeon-crawler games
 License:        MIT
@@ -38,5 +38,9 @@ Original game data is not included.
 %{_mandir}/man1/firestaff.1*
 
 %changelog
+* Sat Sep 12 2026 Daniel Nylander <daniel@danielnylander.se> - 3.0.334-1
+- Release 3.0.334.
+- Require SDL3 at build configuration time and preserve source-owned pointer hit areas.
+
 * Mon Aug 31 2026 Daniel Nylander <daniel@danielnylander.se> - 3.0.321-1
 - Initial RPM package.
