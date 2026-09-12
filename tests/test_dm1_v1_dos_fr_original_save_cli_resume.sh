@@ -38,6 +38,9 @@ probe_resume() {
     grep -Fq 'map=5' <<<"$output" &&
     grep -Fq 'party=4,18,2' <<<"$output" &&
     grep -Fq 'champions=4' <<<"$output" &&
+    # The source-visible TITLE/ENTRANCE transaction must complete while
+    # preserving the explicitly requested F0435 RESUME world.
+    grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$output" &&
     grep -Fq 'runtimeTick=195221' <<<"$output"
 }
 

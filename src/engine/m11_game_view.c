@@ -26098,7 +26098,18 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             &intent.theronHandoffArtifactCorpus : NULL;
     }
     if (menuState->launchRequested) {
-        spec.savePath = intent.savePath;
+        /* DM1's original RESUME decision belongs to ENTRANCE.C M566, then
+         * LOADSAVE.C F0435.  Preserve an explicit original DM1 save as the
+         * entrance-resume request instead of preloading it in Start() before
+         * TITLE/ENTRANCE runs.  Preloading made the later source-visible
+         * Hall receipt describe an empty party while the live world already
+         * contained the restored party. */
+        if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
+            intent.savePath && intent.savePath[0] != '\0') {
+            spec.entranceResumeSavePath = intent.savePath;
+        } else {
+            spec.savePath = intent.savePath;
+        }
         spec.artpackPath = intent.artpackPath;
         spec.csbSaveCandidateIdentity =
             (entry->gameId && strcmp(entry->gameId, "csb") == 0)

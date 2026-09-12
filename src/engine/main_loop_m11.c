@@ -3194,6 +3194,23 @@ static int m11_dm1_handoff_play_entrance(void* user,
                                                    auto_enter_after_ms,
                                                    entrance,
                                                    media);
+    /* A CLI/start-menu resume is an explicit F0435 request.  The generic
+     * auto-enter timing above only drives the visual ENTRANCE.C sequence;
+     * it must not reinterpret an already selected original save as a new
+     * Hall session.  ReDMCSB COMMAND.C M566 takes the RESUME branch from the
+     * entrance and LOADSAVE.C F0435 owns the following world replacement.
+     *
+     * Keep the authored entrance presentation, but direct the post-entrance
+     * source handoff to that requested RESUME action.  In particular, do not
+     * load the save before the title/entrance callback and then apply an
+     * empty-party HoC receipt over it. */
+    if (command == ENTRANCE_COMPAT_COMMAND_PATH_ENTER &&
+        ctx->menuState->quickResumeAvailable &&
+        ctx->menuState->quickResumeLaunchRequested &&
+        ctx->menuState->quickResumeSavePath[0] != '\0' &&
+        strcmp(ctx->menuState->quickResumeGameId, "dm1") == 0) {
+        command = ENTRANCE_COMPAT_COMMAND_PATH_RESUME;
+    }
     if (out_entrance_command) {
         *out_entrance_command = command;
     }
