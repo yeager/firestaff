@@ -121,6 +121,21 @@ static void expect_non_selected_resolution_modes(void) {
               &y) == 0);
     CHECK(x == 319);
     CHECK(y == 199);
+
+    /* Original is always presented from the source-sized 320x200 surface.
+     * A resolution selected while Modern was active must not survive a
+     * return to Original: M11's source dispatcher then receives its native
+     * ReDMCSB COMMAND.C coordinates instead of a stale 640x400 point. */
+    x = 639;
+    y = 399;
+    CHECK(M11_MapPresentedGamePointToSourceForPresentation(
+              M12_PRESENTATION_V1_ORIGINAL,
+              640,
+              400,
+              &x,
+              &y) == 0);
+    CHECK(x == 639);
+    CHECK(y == 399);
 }
 
 static void expect_boundary_clamps_and_failures(void) {

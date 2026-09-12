@@ -819,10 +819,14 @@ int M11_GameView_PresentationTarget(int presentationMode,
     if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
         targetW = M11_FB_WIDTH * 2;
         targetH = M11_FB_HEIGHT * 2;
-    } else if ((presentationMode == M12_PRESENTATION_V1_ORIGINAL ||
-                M12_PresentationMode_AllowsResolutionChoice(presentationMode)) &&
+    } else if (M12_PresentationMode_AllowsResolutionChoice(presentationMode) &&
                presentationWidth > 0 &&
                presentationHeight > 0) {
+        /* Original is a source-preservation lane: its 320x200 page is
+         * scaled only by the host presentation rectangle.  Letting a stale
+         * Modern resolution alter this target disagreed with
+         * M11_MapPresentedGamePointToSourceForPresentation(), which rightly
+         * keeps Original's ReDMCSB COMMAND.C coordinates unscaled. */
         targetW = presentationWidth;
         targetH = presentationHeight;
     }
