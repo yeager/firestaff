@@ -81,6 +81,7 @@ static void expect_selected_resolution(int presentationMode,
               &y) == 1);
     CHECK(x == 319);
     CHECK(y == 199);
+
 }
 
 static void expect_mode_matrix(int presentationMode) {
@@ -122,10 +123,9 @@ static void expect_non_selected_resolution_modes(void) {
     CHECK(x == 319);
     CHECK(y == 199);
 
-    /* Original is always presented from the source-sized 320x200 surface.
-     * A resolution selected while Modern was active must not survive a
-     * return to Original: M11's source dispatcher then receives its native
-     * ReDMCSB COMMAND.C coordinates instead of a stale 640x400 point. */
+    /* Original preserves source pixels but may present them in a selected
+     * host target.  Its source dispatcher must invert that target before
+     * ReDMCSB COMMAND.C sees the click. */
     x = 639;
     y = 399;
     CHECK(M11_MapPresentedGamePointToSourceForPresentation(
@@ -133,9 +133,20 @@ static void expect_non_selected_resolution_modes(void) {
               640,
               400,
               &x,
-              &y) == 0);
-    CHECK(x == 639);
-    CHECK(y == 399);
+              &y) == 1);
+    CHECK(x == 319);
+    CHECK(y == 199);
+
+    x = 319;
+    y = 199;
+    CHECK(M11_MapSourcePointToPresentedForPresentation(
+              M12_PRESENTATION_V1_ORIGINAL,
+              640,
+              400,
+              &x,
+              &y) == 1);
+    CHECK(x == 638);
+    CHECK(y == 398);
 }
 
 static void expect_boundary_clamps_and_failures(void) {

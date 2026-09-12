@@ -182,13 +182,23 @@ int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
     if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
         targetW = M11_SOURCE_FB_WIDTH * 2;
         targetH = M11_SOURCE_FB_HEIGHT * 2;
-    } else if ((presentationMode == M12_PRESENTATION_V21_UPSCALED ||
+    } else if ((presentationMode == M12_PRESENTATION_V1_ORIGINAL ||
+                presentationMode == M12_PRESENTATION_V21_UPSCALED ||
                 presentationMode == M12_PRESENTATION_V22_MODERN) &&
                presentationWidth > 0 &&
                presentationHeight > 0) {
         targetW = presentationWidth;
         targetH = presentationHeight;
     } else {
+        return 0;
+    }
+    /* A source-sized Original page is already in COMMAND.C coordinates.
+     * Preserve its established pass-through contract so callers can avoid a
+     * needless conversion.  A selected host-sized Original target, however,
+     * must take the same inverse map as its presenter or HoC/HUD clicks are
+     * delivered as host pixels instead of source pixels. */
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
+        targetW == M11_SOURCE_FB_WIDTH && targetH == M11_SOURCE_FB_HEIGHT) {
         return 0;
     }
     if (targetW > 0 && targetH > 0) {
@@ -209,12 +219,14 @@ int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
  * direction: given a framebuffer coordinate (0..319, 0..199) used by
  * the source-locked ReDMCSB COMMAND.C / COORD.C dispatch, where on
  * the active presented surface (640x400 for V20_FILTERED, or the
- * user-selected 320x200..3840x2160 for V21_UPSCALED / V22_MODERN)
+ * user-selected 320x200..3840x2160 for Original host targets,
+ * V21_UPSCALED, or V22_MODERN)
  * does that hit-test appear? This helper is the canonical answer.
  *
- * The V1_ORIGINAL mode is a pass-through (320x200 == source), the
- * same way its sibling returns 0 / no-op in the inverse direction.
- * V20/V21/V22 with non-zero presentation extents succeed and divide
+ * A source-sized V1_ORIGINAL mode is a pass-through (320x200 == source),
+ * the same way its sibling returns 0 / no-op in the inverse direction.
+ * A selected V1 host target, V20/V21/V22 with non-zero presentation extents
+ * succeed and divide
  * the source coordinate by M11_SOURCE_FB_WIDTH / M11_SOURCE_FB_HEIGHT
  * using the same target-extent resolution rules as
  * M11_MapPresentedGamePointToSourceForPresentation().
@@ -224,11 +236,12 @@ int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
  *   - ReDMCSB COMMAND.C:1641-1660 F0359 primary click dispatch
  *   - ReDMCSB COORD.C:1903-1920 inclusive source zone expansion
  *   - src/engine/main_loop_m11.c m11_game_presentation_target (line 145)
- *     (target extent resolution; same V20=640x400 / V21=selected /
- *      V22=selected routing used here)
+ *     (target extent resolution; same V1/V21/V22=selected and
+ *      V20=640x400 routing used here)
  *
- * Returns 1 on a successful mapping (V20 / V21 / V22 with non-zero
- * extents), 0 on V1_ORIGINAL passthrough, V21/V22 with zero or
+ * Returns 1 on a successful mapping (selected V1 host target or V20 / V21 /
+ * V22 with non-zero extents), 0 on source-sized V1_ORIGINAL passthrough,
+ * V21/V22 with zero or
  * negative extents, unknown modes, or NULL output pointers.
  */
 int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
@@ -244,13 +257,18 @@ int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
     if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
         targetW = M11_SOURCE_FB_WIDTH * 2;
         targetH = M11_SOURCE_FB_HEIGHT * 2;
-    } else if ((presentationMode == M12_PRESENTATION_V21_UPSCALED ||
+    } else if ((presentationMode == M12_PRESENTATION_V1_ORIGINAL ||
+                presentationMode == M12_PRESENTATION_V21_UPSCALED ||
                 presentationMode == M12_PRESENTATION_V22_MODERN) &&
                presentationWidth > 0 &&
                presentationHeight > 0) {
         targetW = presentationWidth;
         targetH = presentationHeight;
     } else {
+        return 0;
+    }
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
+        targetW == M11_SOURCE_FB_WIDTH && targetH == M11_SOURCE_FB_HEIGHT) {
         return 0;
     }
     if (targetW > 0 && targetH > 0) {

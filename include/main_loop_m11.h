@@ -123,8 +123,9 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
                                    const char* gameId);
 
 /* Map a point from the active presented game surface back to the source
-   320x200 DM1 framebuffer. V2.1/V2.2 pass their selected presentation
-   resolution here before source-locked mouse zone dispatch. */
+   320x200 DM1 framebuffer. Original's selected host target and V2.1/V2.2
+   pass their presentation resolution here before source-locked mouse-zone
+   dispatch; source-sized Original remains a no-op. */
 int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
                                                      int presentationWidth,
                                                      int presentationHeight,
@@ -135,9 +136,10 @@ int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
    the active presented game surface. The inverse of
    M11_MapPresentedGamePointToSourceForPresentation(), used by touch
    overlay hit-tests, HUD button bounds, and mouse cursor positions
-   that need to land on the *presented* surface (V2.0 = 640x400,
-   V2.1/V2.2 = user-selected 320x200..3840x2160). V1 original mode is
-   a pass-through; V2.1/V2.2 require positive extents. */
+   that need to land on the *presented* surface (V2.0 = 640x400;
+   Original host targets and V2.1/V2.2 = user-selected
+   320x200..3840x2160). Source-sized V1 Original is a pass-through;
+   selected targets require positive extents. */
 int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
                                                  int presentationWidth,
                                                  int presentationHeight,
