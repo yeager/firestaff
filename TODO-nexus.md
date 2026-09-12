@@ -17,6 +17,13 @@ BIN media. `test_nexus_v1_title_mapd_real`, `test_m11_nexus_startup_gate` and
 `test_m11_nexus_startup_runtime_handoff` cover this bounded path. The renderer
 does not authorise the separate menu, face, HUD or dungeon compositors.
 
+A same-revision, media-immutable title-session receipt now joins retail CD
+FIFO records for LBA 6063--6089 to SH-2 RAM source writes for the same range,
+cached SH-2 reads, and frame-stamped VDP2 writes/registers for frames
+13294--13455. This closes title CD-to-RAM-to-VDP2 provenance only; it is not
+menu, HUD, dungeon, audio or input evidence and does not widen the native
+presentation boundary.
+
 - Capture the actual interactive title/menu transition and its input contract,
   including the display consumer that places menu and face material.
   The JP window at frames 13000–13039 is bit-identical with and without
