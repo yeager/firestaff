@@ -33,10 +33,12 @@
   The authenticated route's recorded `(22,14)` click keeps the dungeon page
   visible in both the original capture and current native run; its historical
   `inventory` screenshot label is therefore not proof of a C017 transition.
-  A later authenticated PC 3.4 route now establishes C017 and the empty-hand
-  Eye hold in sequence after the C127/C040 recruit flow. It does not establish
-  a held object, an object-name/scroll read, or any pickup/placement result;
-  those still require a real object-bearing route. A 2026-09-09 headless DOSBox 0.74 retry with
+  A later authenticated PC 3.4 route records C017 and a labelled empty-hand
+  Eye attempt after the C127/C040 recruit flow, but the currently retained
+  WUUF-labelled hold/release rows are byte-identical and do not validate an
+  Eye transition. It does not establish a held object, an object-name/scroll
+  read, or any pickup/placement result; those still require a real
+  object-bearing route with a verified held/released visual delta. A 2026-09-09 headless DOSBox 0.74 retry with
   the prior PC 3.4 stage reached the authentic Entrance screen but did not
   deliver its subsequent Hall keypad/mouse commands in either global or
   window-addressed X11 mode; its raw frames remain capture-health diagnostics

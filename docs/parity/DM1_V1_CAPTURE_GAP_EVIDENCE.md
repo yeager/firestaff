@@ -159,7 +159,7 @@ an original screenshot.
 | Lane3 champion HUD captures | IMPAIRED FIRESTAFF ONLY | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm` | Firestaff V1 output only; no paired original DM1 PC 3.4 champion panel screenshot. |
 | Original champion candidate/resurrect panel | PARTIAL OK | `verification-screens/pass1053-dm1-original-champion-candidate-panel/` | Pass1053 tracks pass455 original candidate panel (`click:111,82`) and post-C160 terminal/HUD transition (`click:130,115`); `pass1053_dm1_v1_original_champion_candidate_panel_gate` now keeps the manifest, crops, source anchors, and Firestaff-side references reproducible in CTest. Not a full four-champion HUD pair. |
 | Original four-champion party HUD screenshot | MISSING MISSING | - | No paired original DM1 PC 3.4 four-champion party HUD screenshot exists. |
-| Original Eye hold/release transition | LOCAL VERIFIED (unpaired) | Local ignored capture receipt | Three authentic 320x200 PC 3.4 frames prove `inventory → Eye held → Eye released`; the same verified `DUNGEON.DAT` and `GRAPHICS.DAT` pair binds the result. This proves the observed panel redraw only, not world pickup or Firestaff pixel parity. |
+| Original Eye hold/release transition | REJECTED AS EYE EVIDENCE | Local ignored capture receipt | The rechecked PC 3.4 WUUF-labelled sequence has a preceding mirror row and `wuuf_inventory → wuuf_eye_held → wuuf_eye_released` labels, but its last two raw frames are byte-identical and the only before/held delta is a 97-pixel cursor-area change. It is authentic source media but does not demonstrate a held-Eye panel transition. It must not be used for Eye, scroll, or Firestaff pixel-parity claims. |
 
 **Gap:** The champion panel geometry, status-box stride, portrait positions, and
 bar-graph layout are all source-locked and probe-verified. Pass1053 now adds and
@@ -184,7 +184,7 @@ pixel-level rendering correctness.
 | Wall | OK | OK | PARTIAL OK (pass1052) | PARTIAL MATCH (pass1054) | One exact wall-crop match exists; broader wall-state route still needs more pairings |
 | Collision | OK | MISSING | PARTIAL OK (pass1055 closed door) | PARTIAL PAIR (semantic) | One original closed-door stasis capture and one Firestaff semantic pair exist; full paired transcript still missing |
 | Creature-chain | OK | IMPAIRED Firestaff-only | MISSING | MISSING | No original creature screenshot exists |
-| Champion-panel | OK | IMPAIRED Firestaff-only | PARTIAL OK (pass1053 candidate/resurrect panel) | MISSING | Full four-champion HUD/status-panel pairing still missing |
+| Champion-panel | OK | IMPAIRED Firestaff-only | PARTIAL OK (pass1053 candidate/resurrect panel) | MISSING | Full four-champion HUD/status-panel pairing and a validated Eye/scroll transition are still missing |
 
 **Conclusion:** Existing Firestaff-side gates, source locks, and runtime routing are complete.
 Pass1052 and pass1053 reduce the original-reference gap: viewport, wall, and the
@@ -203,7 +203,7 @@ original captures.
 |---------|------|------|---------|
 | Historical Firestaff-only inventory lane | 2026-04-28 | local evidence | Firestaff-only captures; original route not reached |
 | Historical original overlay lane | 2026-04-28 | local evidence | Original captures attempted; frames are entrance_menu/wall_closeup |
-| Original Eye-hold receipt | 2026-09-10 | local evidence | Verified original PC 3.4 `inventory → Eye held → Eye released` redraw sequence; no published pixels or local path |
+| WUUF-labelled Eye candidate | 2026-09-10, rechecked 2026-09-13 | local evidence | Authentic PC 3.4 capture, but rejected as Eye evidence: its claimed held/released rows are byte-identical and the before/held delta is cursor-only; no published pixels or local path |
 | Original C407 HoC checkpoint | 2026-09-11 | local evidence | Verified original PC 3.4 Entrance-to-dungeon handoff through the raw-frame health and duplicate-safe classifier gates; no published pixels or local path |
 | Original C407 HoC movement cycle | 2026-09-11 | local evidence | Five input-labelled original PC 3.4 frames, three gameplay and two wall-closeup, each healthy and non-duplicate; no published pixels or local path |
 | Original HoC candidate panel and resurrection | 2026-09-11 | local evidence | A fresh PC 3.4 pointer route yielded healthy, non-duplicate mirror, post-click candidate, and post-`C160` resurrection HUD frames for Azizi Yohari. The visual identity disagrees with the static WUUF route calculation, so no map coordinate is claimed; no pixels or local paths are published and no Firestaff pairing is claimed. |
