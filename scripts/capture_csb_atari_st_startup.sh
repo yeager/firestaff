@@ -142,6 +142,16 @@ cleanup() {
     if [[ -n "$hatari_pid" ]]; then kill "$hatari_pid" 2>/dev/null || true; fi
     kill "$xvfb_pid" 2>/dev/null || true
     if [[ -n "$hatari_pid" ]]; then wait "$hatari_pid" 2>/dev/null || true; fi
+    # Some Xvfb versions keep serving an open SDL connection briefly after
+    # Hatari exits.  Bound the teardown so a reference capture never leaves
+    # a display server behind on the build host.
+    for _ in 1 2 3 4 5; do
+        kill -0 "$xvfb_pid" 2>/dev/null || break
+        sleep 0.1
+    done
+    if kill -0 "$xvfb_pid" 2>/dev/null; then
+        kill -9 "$xvfb_pid" 2>/dev/null || true
+    fi
     wait "$xvfb_pid" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
