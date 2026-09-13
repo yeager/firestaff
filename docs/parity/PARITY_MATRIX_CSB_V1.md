@@ -34,6 +34,13 @@ seconds. All three frames are native Hatari screenshots with matching media
 hash receipts; the images and ROM/game media remain private. This is
 original-startup and door/viewport evidence only, not a Firestaff pixel-pair,
 HUD, audio, or complete gameplay claim.
+
+The same day, a clean FS-UAE A500 session with the verified Kickstart 1.3 and
+three original Amiga disks produced two distinct native-canvas frames: a
+boot-phase frame and the retail French/English/German language-selection
+screen. The emulator's native screenshot receipt binds both frames to all four
+input hashes. This establishes the authentic Amiga startup boundary, but not
+yet English selection, entrance, HUD, audio, or gameplay parity.
 | `original_overlay_regression` | 0/10 | `BLOCKED_CAPTURE` | Representative CSB original overlays are required before regression points count. | Produce original-vs-Firestaff overlay regression fixtures. |
 
 ## CSB front-door render smoke and launch blocker gate
