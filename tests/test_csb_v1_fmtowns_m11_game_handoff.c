@@ -363,6 +363,7 @@ int main(void)
     unsigned int tick;
     int result;
     int door_frame_seen = 0;
+    int entrance_micro_viewport_seen = 0;
     int live_frame_nonblack = 0;
     uint32_t live_viewport_hash = 0u;
     int game_music_started = 0;
@@ -996,9 +997,10 @@ int main(void)
               mini_party.ChampionCount == 1 &&
               mini_party.PartyDirection == 2 &&
               mini_party.PartyMapX == 22 && mini_party.PartyMapY == 18 &&
+              mini_party.MagicalLightAmount == 0 &&
               mini_party.Champions[0].Name[0] != '\0' &&
               mini_party.Champions[0].CurrentHealth > 0,
-          "F31 MINI.DAT supplies its checksum-verified champion record without a fixture");
+          "F31 MINI.DAT supplies its checksum-verified champion and PARTY_INFO records");
     memset(&mini_portraits, 0, sizeof(mini_portraits));
     CHECK(csb_v1_fmtowns_game_load_startup_portraits(
               &direct_handoff, &mini_portraits) && mini_portraits.valid &&
@@ -2057,9 +2059,36 @@ int main(void)
                    sizeof(framebuffer)) != 0) {
             door_frame_seen = 1;
         }
+        /* F0439 renders F0797's C255 5x5 micro-dungeon in C432 before
+         * F0438 overlays the moving C002/C003 strips.  A mid-opening central
+         * aperture is uncovered by both strips; it must therefore differ
+         * from C004's red placeholder rather than merely proving that a
+         * door edge was painted. */
+        if (view.csbState.startup_entrance_opening_active &&
+            view.csbState.startup_entrance_opening_step >= 10 &&
+            view.csbState.startup_entrance_opening_step <= 20) {
+            const CSB_V1_StartupRuntimeSurface_PC34 *c004 =
+                &((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                    view.csbStartupRuntimeAssetSession)->surfaces.surfaces[
+                    CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+            int row;
+            int x;
+            for (row = 0; c004 && c004->pixels && row < 136; ++row) {
+                for (x = 96; x < 128; ++x) {
+                    if (framebuffer[(size_t)(33 + row) * 320u + (size_t)x] !=
+                        c004->pixels[(size_t)(33 + row) * 320u + (size_t)x]) {
+                        entrance_micro_viewport_seen = 1;
+                        break;
+                    }
+                }
+                if (entrance_micro_viewport_seen) break;
+            }
+        }
     }
     CHECK(door_frame_seen,
           "F31 Prison transition draws a source-owned C002/C003 door frame");
+    CHECK(entrance_micro_viewport_seen,
+          "F31 opening replaces C004's red placeholder with F0797/F0128 C255 viewport");
     CHECK(!view.csbState.startup_entrance_active && view.csbState.level_loaded,
           "F31 Prison door handoff reaches the live CSB runtime");
     {

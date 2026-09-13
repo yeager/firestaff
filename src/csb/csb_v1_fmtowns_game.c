@@ -688,7 +688,12 @@ int csb_v1_fmtowns_game_load_startup_party(
         skill_offset = 92u,
         slots_offset = 212u,
         load_offset = 272u,
-        shield_offset = 274u
+        shield_offset = 274u,
+        /* The final 128 bytes are PARTY_INFO, after four 319-byte F31
+         * CHAMPION records.  ReDMCSB DEFS.H: PARTY_INFO begins with the
+         * signed MagicalLightAmount word. */
+        party_info_offset = champion_bytes * champion_count,
+        party_magical_light_amount_offset = party_info_offset
     };
     unsigned char bytes[CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES];
     unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
@@ -736,6 +741,8 @@ int csb_v1_fmtowns_game_load_startup_party(
     out_party->PartyMapY = receipt->startup_mini_party_map_y;
     out_party->LeaderIndex = -1;
     out_party->MagicCasterIndex = -1;
+    out_party->MagicalLightAmount = (int16_t)csb_v1_fmtowns_game_read_le16(
+        bytes + party_magical_light_amount_offset);
     for (champion_index = 0u; champion_index < champion_count;
          ++champion_index) {
         const unsigned char *source = bytes + champion_index * champion_bytes;

@@ -249,7 +249,12 @@ int csb_v1_fmtowns_img2_decode(const uint8_t *item, size_t item_size,
                                 size_t pixel_capacity,
                                 CSB_V1_FmtownsItemDecodeReceipt *receipt) {
     uint16_t w, h;
-    size_t total, src, pos, count, i;
+    uint16_t physical_stride;
+    size_t total;
+    size_t physical_total;
+    uint8_t *physical_pixels = NULL;
+    CSB_V1_FmtownsItemDecodeReceipt physical_receipt;
+    uint16_t row;
 
     if (receipt) memset(receipt, 0, sizeof(*receipt));
     if (!item || !indexed_pixels || item_size < 4) return 0;
@@ -271,92 +276,30 @@ int csb_v1_fmtowns_img2_decode(const uint8_t *item, size_t item_size,
     }
 
     total = (size_t)w * h;
-    if (total > pixel_capacity) return 0;
-    memset(indexed_pixels, 0, total);
-
-    src = 4;
-    pos = 0;
-
-    while (pos < total && src < item_size) {
-        uint8_t cmd = item[src++];
-        uint8_t color = cmd & 0x0fu;
-
-        if ((cmd & 0x80u) == 0) {
-            /* Short RLE: count in bits 6-4 */
-            count = (size_t)((cmd >> 4) & 0x07u) + 1u;
-            if (count > total - pos) count = total - pos;
-            memset(indexed_pixels + pos, color, count);
-            pos += count;
-        } else {
-            uint8_t mode;
-
-            /* Read extended count */
-            if ((cmd & 0x40u) == 0) {
-                if (src >= item_size) return 0;
-                count = (size_t)item[src++] + 1u;
-            } else {
-                if (src + 1 >= item_size) return 0;
-                count = (size_t)(((uint16_t)item[src] << 8) |
-                                  item[src + 1]) + 1u;
-                src += 2;
-            }
-
-            mode = (cmd >> 4) & 0x03u;
-            switch (mode) {
-            case 0: /* solid fill */
-                if (count > total - pos) count = total - pos;
-                memset(indexed_pixels + pos, color, count);
-                pos += count;
-                break;
-
-            case 1: { /* literal nibble pairs */
-                size_t remaining = count;
-                if (remaining > total - pos) remaining = total - pos;
-                if (remaining & 1u) {
-                    indexed_pixels[pos++] = color;
-                    remaining--;
-                }
-                if (src + remaining / 2u > item_size) return 0;
-                for (i = 0; i < remaining / 2u; i++) {
-                    uint8_t packed = item[src++];
-                    indexed_pixels[pos++] = packed >> 4;
-                    indexed_pixels[pos++] = packed & 0x0fu;
-                }
-                break;
-            }
-
-            case 3: /* copy from previous scanline + final color */
-                if (count > total - pos) count = total - pos;
-                for (i = 0; i < count; i++) {
-                    if (pos >= w) {
-                        indexed_pixels[pos] = indexed_pixels[pos - w];
-                    }
-                    pos++;
-                }
-                if (pos < total) {
-                    indexed_pixels[pos++] = color;
-                }
-                break;
-
-            default:
-                return 0;
-            }
-        }
+    physical_stride = (uint16_t)((w + 31u) & ~31u);
+    if (total > pixel_capacity ||
+        h > SIZE_MAX / physical_stride) return 0;
+    physical_total = (size_t)physical_stride * h;
+    physical_pixels = (uint8_t *)malloc(physical_total);
+    if (!physical_pixels ||
+        !csb_v1_fmtowns_img2_decode_strided(
+            item, item_size, w, h, physical_stride, physical_pixels,
+            physical_total, &physical_receipt) ||
+        !physical_receipt.valid) {
+        free(physical_pixels);
+        return 0;
     }
-
+    for (row = 0u; row < h; ++row) {
+        memcpy(indexed_pixels + (size_t)row * w,
+               physical_pixels + (size_t)row * physical_stride, w);
+    }
     if (receipt) {
-        receipt->valid = 1;
-        receipt->width = w;
-        receipt->height = h;
-        receipt->stream_byte_count = item_size;
-        receipt->stream_bytes_consumed = src;
-        receipt->pixel_count = pos;
-        receipt->stream_fnv1a = fnv1a(item, item_size);
+        *receipt = physical_receipt;
+        receipt->pixel_count = total;
         receipt->pixel_fnv1a = fnv1a(indexed_pixels, total);
-        receipt->is_image = 1;
-        receipt->is_data_record = 0;
     }
-    return pos >= total ? 1 : 0;
+    free(physical_pixels);
+    return 1;
 }
 
 int csb_v1_fmtowns_graphics_decode_item(

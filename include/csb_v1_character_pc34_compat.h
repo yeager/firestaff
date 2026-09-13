@@ -233,7 +233,11 @@ typedef struct {
     int             PartyMapX;               /* current dungeon X */
     int             PartyMapY;               /* current dungeon Y */
     uint16_t        LeaderHandThing;          /* CSBWin GAMEBLOCK2 object_in_hand / G4055 hand thing */
-    uint8_t         Reserved[62];             /* future expansion */
+    /* ReDMCSB DEFS.H PARTY_INFO: first signed word in F31's verified
+     * third save part.  It participates directly in PANEL.C F0337's
+     * C00..C05 dungeon-view palette selection. */
+    int16_t         MagicalLightAmount;
+    uint8_t         Reserved[60];             /* future expansion */
 } CSB_V1_PartyState;
 
 /* ── Function declarations ─────────────────────────────────────────── */

@@ -727,6 +727,9 @@ static int m11_creature_palette_for_depth(
  * Materialize a missing derived slot from the real native raster, preserving
  * the source's nearest-neighbour M078 scale and leaving palette replacement
  * to the existing G0221/G0222 draw palette. */
+static int m11_csb_install_runtime_source_graphic(
+    const M11_GameViewState *state, unsigned int graphic_index);
+
 static const M11_AssetSlot *m11_dm1_creature_derived_source(
     const M11_GameViewState *state,
     int creatureType,
@@ -743,6 +746,7 @@ static const M11_AssetSlot *m11_dm1_creature_derived_source(
     unsigned short width;
     unsigned short height;
     int scale32;
+    int party_direction;
     int y;
 
     if (!state || !state->assetsAvailable || depthIndex <= 0 ||
@@ -755,9 +759,20 @@ static const M11_AssetSlot *m11_dm1_creature_derived_source(
         existing->width > 0 && existing->height > 0) {
         return existing;
     }
+    party_direction = state->world.party.direction;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        party_direction = profile->runtime.party_dir;
+    }
     nativeIndex = dm1_creature_native_sprite_for_view(
-        creatureType, creatureDir, state->world.party.direction,
+        creatureType, creatureDir, party_direction,
         useAttackPose);
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, nativeIndex)) {
+        return NULL;
+    }
     native = M11_AssetLoader_Load(&mutableState->assetLoader, nativeIndex);
     if (!native || !native->loaded || !native->pixels ||
         native->width == 0 || native->height == 0) {
@@ -5397,6 +5412,8 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     const CSB_V1_BootProfile *profile;
     size_t framebuffer_bytes;
     unsigned char *candidate_page;
+    int viewport_x;
+    int viewport_y;
 
     if (!state || !state->csbBootProfile || !framebuffer) {
         return 0;
@@ -5427,6 +5444,24 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
      * intact until the complete source-backed viewport and sprite passes
      * succeed, so a failed real-asset route cannot expose a partial frame. */
     memcpy(candidate_page, framebuffer, framebuffer_bytes);
+    /* F0807 releases the C28 entrance page before C017/F0128 draws the first
+     * live dungeon frame.  F0128 is permitted to use transparent source
+     * pixels, so carrying C004's red page below it leaks the entrance into
+     * the prison viewport.  Start its native aperture from the source's
+     * cleared page; F0098 then installs the authenticated floor/ceiling pair
+     * and F0128/F0115 layers the remaining real materials. */
+    csb_v1_boot_viewport_origin_pc34(profile, &viewport_x, &viewport_y);
+    if (viewport_x < 0 || viewport_y < 0 ||
+        viewport_x + DM1_VIEWPORT_WIDTH > framebufferWidth ||
+        viewport_y + DM1_VIEWPORT_HEIGHT > framebufferHeight) {
+        free(candidate_page);
+        return 0;
+    }
+    for (int row = 0; row < DM1_VIEWPORT_HEIGHT; ++row) {
+        memset(candidate_page + (size_t)(viewport_y + row) *
+                   (size_t)framebufferWidth + (size_t)viewport_x,
+               0, DM1_VIEWPORT_WIDTH);
+    }
 
     runtime_sprite_context.state = state;
     runtime_sprite_context.framebuffer_width = framebufferWidth;
@@ -12096,6 +12131,75 @@ static void m11_csb_startup_consume_audio_action(
     }
 }
 
+/* ENTRANCE.C F0439/F0438 does not expose C004's painted placeholder while
+ * the Prison doors move.  F0797 first builds C255's 5x5 all-wall map, opens
+ * the two cells at (2,1) and (0..4,2), and calls F0128 looking south from
+ * (2,0).  C004 is then used only outside the 224x136 aperture.  Keeping the
+ * micro-map here makes that source operation use the active F31 IMG2 assets
+ * through the normal F0094/F0095/F0128 provider; it never borrows a saved
+ * dungeon or manufactures a replacement raster. */
+static int m11_render_csb_fmtowns_entrance_micro_viewport(
+    M11_GameViewState *state, uint8_t *viewport)
+{
+    CSB_V1_ViewportConfig cfg;
+    const CSB_V1_BootProfile *profile;
+    uint8_t grid[5 * 5];
+    int x;
+
+    if (!state || !viewport || !(profile = (const CSB_V1_BootProfile *)
+        state->csbBootProfile) || !m11_csb_is_fmtowns_profile(profile) ||
+        !profile->runtime.dungeon_handle ||
+        profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >=
+            profile->runtime.dungeon_handle->level_count) {
+        return 0;
+    }
+    memset(grid, 0, sizeof(grid)); /* C00_ELEMENT_WALL */
+    for (x = 0; x < 5; ++x) grid[2 * 5 + x] = 32; /* C01 corridor */
+    grid[1 * 5 + 2] = 32;
+    memset(viewport, 0, 224u * 136u);
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = viewport;
+    cfg.viewport_stride = 224;
+    cfg.dungeon_grid = grid;
+    cfg.dungeon_width = 5;
+    cfg.dungeon_height = 5;
+    cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
+        profile->runtime.current_level];
+    cfg.real_graphics_session = 1;
+    cfg.graphic_provider_callback =
+        m11_csb_fmtowns_viewport_graphic_provider;
+    cfg.graphic_provider_user_data = state;
+    csb_v1_viewport_render_frame(&cfg, 2, 2, 0);
+    return 1;
+}
+
+static int m11_csb_blit_entrance_door_strip(
+    uint8_t *destination, int destination_width, int destination_height,
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface, int source_x,
+    int source_y, int width, int height, int destination_x,
+    int destination_y)
+{
+    int row;
+
+    if (!destination || !surface || !surface->valid || !surface->pixels ||
+        width < 0 || height < 0 || source_x < 0 || source_y < 0 ||
+        destination_x < 0 || destination_y < 0 ||
+        source_x + width > surface->width || source_y + height > surface->height ||
+        destination_x + width > destination_width ||
+        destination_y + height > destination_height) {
+        return 0;
+    }
+    for (row = 0; row < height; ++row) {
+        memcpy(destination + (size_t)(destination_y + row) *
+                   (size_t)destination_width + (size_t)destination_x,
+               surface->pixels + (size_t)(source_y + row) *
+                   (size_t)surface->width + (size_t)source_x,
+               (size_t)width);
+    }
+    return 1;
+}
+
 static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
@@ -12136,6 +12240,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
             entrance->height != 200 || !entrance->decode_receipt.valid ||
             !entrance->decode_receipt.ended_at_record_boundary) return;
         if (state->csbState.startup_entrance_opening_active) {
+            uint8_t micro_viewport[224 * 136];
             memset(&render_state, 0, sizeof(render_state));
             memset(&render_plan, 0, sizeof(render_plan));
             memset(&opening, 0, sizeof(opening));
@@ -12158,6 +12263,49 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                 opening.host_surface !=
                     CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
                 !opening.raster.pixels) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &opening);
+                return;
+            }
+            /* F0438 starts every moving-door page from C004, but F0439 has
+             * already replaced C004's C432 rectangle with F0797/F0128's
+             * C255 micro-dungeon.  The old F31 shortcut skipped this exact
+             * operation and consequently revealed C004's red placeholder in
+             * the widening doorway.  Put the real F0128 aperture in first,
+             * then restore C002/C003's source strips above it. */
+            if (!m11_render_csb_fmtowns_entrance_micro_viewport(
+                    state, micro_viewport) ||
+                !opening.raster.pixels || opening.raster.width != 320 ||
+                opening.raster.height != 200) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &opening);
+                return;
+            }
+            for (int row = 0; row < 136; ++row) {
+                memcpy(opening.raster.pixels + (size_t)(33 + row) * 320u,
+                       micro_viewport + (size_t)row * 224u, 224u);
+            }
+            /* The strips sit above the C432 viewport, just as F0438 does.
+             * Re-apply them after the aperture write; a zero-width final
+             * strip is a source no-op rather than a failed composition. */
+            if ((render_plan.opening_left_w > 0 &&
+                 !m11_csb_blit_entrance_door_strip(
+                    opening.raster.pixels, 320, 200,
+                    opening.frame.left_door_surface,
+                    render_plan.opening_left_source_x,
+                    render_plan.opening_left_source_y,
+                    render_plan.opening_left_w, render_plan.opening_left_h,
+                    render_plan.opening_left_dest_x,
+                    render_plan.opening_left_dest_y)) ||
+                (render_plan.opening_right_w > 0 &&
+                 !m11_csb_blit_entrance_door_strip(
+                    opening.raster.pixels, 320, 200,
+                    opening.frame.right_door_surface,
+                    render_plan.opening_right_source_x,
+                    render_plan.opening_right_source_y,
+                    render_plan.opening_right_w, render_plan.opening_right_h,
+                    render_plan.opening_right_dest_x,
+                    render_plan.opening_right_dest_y))) {
                 csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
                     &opening);
                 return;
@@ -47216,6 +47364,7 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     int drawW, drawH, drawX, drawY;
     int useAttackPose = 0;
     int useMirror = 0;
+    int partyDirection;
     uint8_t palette[16];
 
     if (!state->assetsAvailable || creatureType < 0) return 0;
@@ -47229,10 +47378,20 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
         state->attackCueCreatureType == creatureType) {
         useAttackPose = 1;
     }
+    partyDirection = state->world.party.direction;
+    /* The CSB boot route has no DM1 world mirror.  F0115 receives the
+     * current direction from the decoded CSB PARTY state, so using the
+     * mirror here can select a different native front/side/back record. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        partyDirection = profile->runtime.party_dir;
+    }
     spriteIdx = dm1_creature_sprite_for_view(creatureType,
                                              depthIndex,
                                              creatureDir,
-                                             state->world.party.direction,
+                                             partyDirection,
                                              useAttackPose,
                                              &useMirror);
     if (spriteIdx == 0) return 0;
@@ -47248,7 +47407,8 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
      * dimension record or a pane-relative side hint is not source material. */
     if ((!slot || !slot->loaded || !slot->pixels ||
          slot->width == 0 || slot->height == 0) && depthIndex > 0 &&
-        m11_is_dm1_source_kind(state->sourceKind)) {
+        (m11_is_dm1_source_kind(state->sourceKind) ||
+         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)) {
         slot = m11_dm1_creature_derived_source(
             state, creatureType, depthIndex, creatureDir, useAttackPose,
             spriteIdx);
@@ -47258,6 +47418,24 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
 
     spriteW = (int)slot->width;
     spriteH = (int)slot->height;
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* F0115 does not fit a creature into a host-defined rectangle.
+         * G0224/C3200 supplies an anchor and F0791 copies the selected
+         * native (or F0675-derived) bitmap at its actual dimensions.  The
+         * runtime bridge's x/y/w/h legacy fields encode that anchor as a
+         * centred lane; recover it and retain the source raster unchanged.
+         * Scaling it to 54x70 (and smaller invented lanes) was the cause of
+         * the striped, oversized F31 prisoner/viewport artifacts. */
+        const int anchorX = x + w / 2;
+        const int anchorY = y + h;
+        drawX = anchorX - spriteW / 2;
+        drawY = anchorY - spriteH;
+        m11_blit_creature_pc34_palette(slot, framebuffer, fbW, fbH,
+                                       drawX, drawY, spriteW, spriteH,
+                                       transparentColor, useMirror, palette);
+        return 1;
+    }
 
     /* Mirror only when the original pose needs it. Side placement has
      * already been resolved by the C3200/G0224 source coordinate table. */
@@ -47365,7 +47543,8 @@ static int m11_draw_creature_sprite_source_anchored(
     if ((!slot || !slot->loaded || !slot->pixels ||
          slot->width == 0 || slot->height == 0) &&
         placement->source_depth_index > 0 &&
-        m11_is_dm1_source_kind(state->sourceKind)) {
+        (m11_is_dm1_source_kind(state->sourceKind) ||
+         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)) {
         slot = m11_dm1_creature_derived_source(
             state, creatureType, placement->source_depth_index,
             creatureDir, useAttackPose, spriteIdx);
@@ -48997,8 +49176,94 @@ static int m11_dm1_dungeon_view_light(const M11_GameViewState* state,
     return F0890b_ORCH_ComputeDungeonViewLight_Compat(&state->world, outLight);
 }
 
+/* ReDMCSB PANEL.C F0337 is shared by the original CSB ports.  The F31
+ * runtime owns its PARTY record and must not borrow DM1's empty world mirror
+ * to choose C00..C05.  F31's fresh-game hand inventory is available through
+ * the decoded original dungeon, so derive the source palette directly. */
+static int m11_csb_runtime_palette_index(
+    const CSB_V1_BootProfile *profile, uint8_t *out_palette_index)
+{
+    static const uint8_t light_power[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51,
+        59, 68, 76, 82, 89, 94, 97, 100
+    };
+    static const uint8_t palette_threshold[6] = { 99, 75, 50, 25, 1, 0 };
+    uint8_t charges[8] = { 0 };
+    const CSB_V1_RuntimeProfile *runtime;
+    const CSB_V1_DungeonData *dungeon;
+    int total_light;
+    int palette_index;
+    int champion_index;
+
+    if (out_palette_index) *out_palette_index = 0u;
+    if (!profile || !out_palette_index || !profile->runtime.party_state_valid ||
+        !(runtime = &profile->runtime) || !(dungeon = runtime->dungeon_handle) ||
+        runtime->current_level < 0 || runtime->current_level >= dungeon->level_count ||
+        runtime->party_state.ChampionCount < 0 ||
+        runtime->party_state.ChampionCount > CSB_V1_MAX_CHAMPIONS) return 0;
+    if (dungeon->map_experience_multiplier[runtime->current_level] == 0) {
+        return 1;
+    }
+    for (champion_index = 0; champion_index < runtime->party_state.ChampionCount;
+         ++champion_index) {
+        int slot;
+        for (slot = 0; slot < 2; ++slot) {
+            const uint16_t thing = runtime->party_state.Champions[
+                champion_index].Slots[slot];
+            const uint8_t *record;
+            int thing_type;
+            int record_size;
+            int icon_index;
+            if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+            record = csb_v1_dungeon_get_thing_record(dungeon, thing,
+                                                      &thing_type, NULL,
+                                                      &record_size);
+            if (!record || record_size < 4) return 0;
+            icon_index = csb_v1_boot_runtime_object_icon_index_pc34(profile, thing);
+            if (thing_type == THING_TYPE_WEAPON && icon_index >= 4 &&
+                icon_index <= 7) {
+                const uint16_t word = (uint16_t)record[2] |
+                    ((uint16_t)record[3] << 8);
+                charges[champion_index * 2 + slot] =
+                    (uint8_t)((word >> 10) & 0x0fu);
+            }
+        }
+    }
+    /* F0337 sorts the eight hand charges and weights the five strongest
+     * contributions 64,32,16,8,4 before adding MagicalLightAmount.  F31
+     * persists the latter as the first signed word of PARTY_INFO in its
+     * verified third save part; do not substitute a CSBWin tail field. */
+    for (int i = 0; i < 5; ++i) {
+        int best = i;
+        for (int j = i + 1; j < 8; ++j)
+            if (charges[j] > charges[best]) best = j;
+        if (best != i) {
+            const uint8_t value = charges[i];
+            charges[i] = charges[best];
+            charges[best] = value;
+        }
+    }
+    total_light = runtime->party_state.MagicalLightAmount;
+    for (int i = 0; i < 5; ++i)
+        total_light += ((int)light_power[charges[i]] << (6 - i)) >> 6;
+    palette_index = total_light > 0 ? 0 : 5;
+    while (palette_index < 5 && palette_threshold[palette_index] > total_light)
+        ++palette_index;
+    *out_palette_index = (uint8_t)palette_index;
+    return 1;
+}
+
 static int m11_compute_dungeon_palette_index(const M11_GameViewState* state) {
     struct DungeonViewLight_Compat light;
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile) {
+        uint8_t palette_index;
+        if (m11_csb_runtime_palette_index(
+                (const CSB_V1_BootProfile *)state->csbBootProfile,
+                &palette_index)) {
+            return (int)palette_index;
+        }
+    }
     /* ReDMCSB PANEL.C F0337 first checks CurrentMap->C.Difficulty. The
      * CSB runtime owns this MAP.C value; M11 cannot infer it from its
      * shared DM1 world mirror, which deliberately has no CSB dungeon.
