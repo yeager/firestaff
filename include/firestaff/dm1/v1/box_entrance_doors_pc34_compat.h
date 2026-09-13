@@ -8,7 +8,7 @@
  * G0009 is the {X, Y, W, H} byte-coordinate sub-rectangle used by
  * ENTRANCE.C F0132_VIDEO_Blit to draw the entrance doors backdrop
  * (the closed-doors graphic under the door-opening animation).
- * Init value (DATA.C:137 + DATA.C:557): { 0, 231, 0, 160 }.
+ * Init value (DATA.C:128 + DATA.C:553): { 0, 231, 0, 160 }.
  * G1076 and G1133 partially replace G0009 for upper/lower half
  * animation steps.
  *

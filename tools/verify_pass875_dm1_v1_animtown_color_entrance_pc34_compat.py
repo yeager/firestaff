@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +18,8 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / 'parity-evidence/verification' / PASS
 MANIFEST = OUT_DIR / 'manifest.json'
 REPORT = ROOT / 'parity-evidence' / f'{PASS}.md'
-RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+_redmcsb_root = os.environ.get("FIRESTAFF_REDMCSB_SOURCE_ROOT")
+RED = Path(_redmcsb_root) if _redmcsb_root else None
 
 ANCHORS = [
     "DRAWVIEW.C:43",
@@ -51,7 +53,7 @@ REDMCSB_WINDOWS = {
 
 
 def read(path):
-    encoding = "latin-1" if path.is_relative_to(RED) else "utf-8"
+    encoding = "latin-1" if RED and path.is_relative_to(RED) else "utf-8"
     return path.read_text(encoding=encoding, errors="replace")
 
 
@@ -75,6 +77,13 @@ def check_needles(label, path, needles):
 
 def check_redmcsb_windows():
     checks = []
+    if RED is None or not RED.is_dir():
+        return [{
+            "id": "redmcsb-source",
+            "file": "",
+            "status": "UNAVAILABLE",
+            "detail": "set FIRESTAFF_REDMCSB_SOURCE_ROOT to verify source anchors",
+        }]
     for filename, windows in REDMCSB_WINDOWS.items():
         path = RED / filename
         for line_no, needle in windows:
@@ -83,7 +92,7 @@ def check_redmcsb_windows():
             text = "\n".join(line_at(path, row) for row in range(lo, hi + 1))
             checks.append({
                 "id": f"{filename}:{line_no}",
-                "file": str(path),
+                "file": f"ReDMCSB/{filename}",
                 "line": line_no,
                 "needle": needle,
                 "status": "PASS" if needle in text else "DRIFT",
@@ -97,7 +106,7 @@ def run(cmd):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, timeout=180)
     return {
-        "command": cmd,
+        "command": [Path(cmd[0]).name, *cmd[1:]],
         "returncode": proc.returncode,
         "passed": proc.returncode == 0,
         "outputTail": "\n".join(proc.stdout.strip().splitlines()[-20:]),
@@ -105,6 +114,13 @@ def run(cmd):
 
 
 def resolve_build_dir(binary_name=""):
+    requested = os.environ.get("FIRESTAFF_BUILD_DIR")
+    if requested:
+        candidate = Path(requested)
+        if (candidate / "CMakeCache.txt").exists() and (
+            not binary_name or (candidate / binary_name).exists()
+        ):
+            return candidate
     candidates = [ROOT / "build", ROOT / "builds" / "nv1-build",
                   ROOT / "builds" / "n2-build"]
     for c in candidates:
@@ -126,7 +142,7 @@ def write_outputs(local_checks, redmcsb_checks, runs):
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
         "scope": "DM1 V1 Graphics.dat item 562 init var contract.",
         "anchors": ANCHORS,
-        "redmcsbRoot": str(RED),
+        "redmcsbRoot": "external reference source" if RED else None,
         "sourceChecks": local_checks,
         "redmcsbLineWindowChecks": redmcsb_checks,
         "anchorDriftTodo": ["Re-pin anchor line numbers when ReDMCSB tree updates."] if drift else [],
@@ -145,7 +161,7 @@ def write_outputs(local_checks, redmcsb_checks, runs):
     rl.append("")
     rl.append("## Verification")
     for r in runs:
-        rl.append(f"- `{ ' '.join(r['command']) }`: rc={r['returncode']}")
+        rl.append(f"- `{Path(r['command'][0]).name}`: rc={r['returncode']}")
     REPORT.write_text("\n".join(rl))
 
 

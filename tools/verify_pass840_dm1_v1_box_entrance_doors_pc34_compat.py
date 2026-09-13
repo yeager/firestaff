@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -18,15 +19,13 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = (
-    Path.home()
-    / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+_redmcsb_root = os.environ.get("FIRESTAFF_REDMCSB_SOURCE_ROOT")
+RED = Path(_redmcsb_root) if _redmcsb_root else None
 
 ANCHORS = [
     "DATA.C:15",
-    "DATA.C:137",
-    "DATA.C:557",
+    "DATA.C:128",
+    "DATA.C:553",
     "ENTRANCE.C:529/538/541/544/547",
 ]
 
@@ -52,8 +51,8 @@ CMAKE_NEEDLES = [
 REDMCSB_WINDOWS = {
     "DATA.C": [
         (15, "G0009_ai_Graphic562_Box_Entrance_Doors"),
-        (137, "G0009_ai_Graphic562_Box_Entrance_Doors"),
-        (557, "G0009_ai_Graphic562_Box_Entrance_Doors"),
+        (128, "G0009_ai_Graphic562_Box_Entrance_Doors"),
+        (553, "G0009_ai_Graphic562_Box_Entrance_Doors"),
     ],
     "ENTRANCE.C": [
         (529, "G0009_ai_Graphic562_Box_Entrance_Doors"),
@@ -66,7 +65,7 @@ REDMCSB_WINDOWS = {
 
 
 def read(path: Path) -> str:
-    encoding = "latin-1" if path.is_relative_to(RED) else "utf-8"
+    encoding = "latin-1" if RED and path.is_relative_to(RED) else "utf-8"
     return path.read_text(encoding=encoding, errors="replace")
 
 
@@ -90,6 +89,13 @@ def check_needles(label: str, path: Path, needles: list[str]) -> dict[str, objec
 
 def check_redmcsb_windows() -> list[dict[str, object]]:
     checks: list[dict[str, object]] = []
+    if RED is None or not RED.is_dir():
+        return [{
+            "id": "redmcsb-source",
+            "file": "",
+            "status": "UNAVAILABLE",
+            "detail": "set FIRESTAFF_REDMCSB_SOURCE_ROOT to verify source anchors",
+        }]
     for filename, windows in REDMCSB_WINDOWS.items():
         path = RED / filename
         for line_no, needle in windows:
@@ -99,7 +105,7 @@ def check_redmcsb_windows() -> list[dict[str, object]]:
             checks.append(
                 {
                     "id": f"{filename}:{line_no}",
-                    "file": str(path),
+                    "file": f"ReDMCSB/{filename}",
                     "line": line_no,
                     "needle": needle,
                     "status": "PASS" if needle in text else "DRIFT",
@@ -119,7 +125,7 @@ def run(cmd: list[str]) -> dict[str, object]:
         timeout=180,
     )
     return {
-        "command": cmd,
+        "command": [Path(cmd[0]).name, *cmd[1:]],
         "returncode": proc.returncode,
         "passed": proc.returncode == 0,
         "outputTail": "\n".join(proc.stdout.strip().splitlines()[-20:]),
@@ -127,6 +133,13 @@ def run(cmd: list[str]) -> dict[str, object]:
 
 
 def resolve_build_dir(binary_name: str = "") -> Path:
+    requested = os.environ.get("FIRESTAFF_BUILD_DIR")
+    if requested:
+        candidate = Path(requested)
+        if (candidate / "CMakeCache.txt").exists() and (
+            not binary_name or (candidate / binary_name).exists()
+        ):
+            return candidate
     candidates = [
         ROOT / "build",
         ROOT / "builds" / "nv1-build",
@@ -153,7 +166,7 @@ def write_outputs(local_checks, redmcsb_checks, runs):
         "timestampUtc": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
         "scope": "DM1 V1 Graphics.dat item 562 init var G0009 contract.",
         "anchors": ANCHORS,
-        "redmcsbRoot": str(RED),
+        "redmcsbRoot": "external reference source" if RED else None,
         "sourceChecks": local_checks,
         "redmcsbLineWindowChecks": redmcsb_checks,
         "verificationRuns": runs,
@@ -181,7 +194,7 @@ def write_outputs(local_checks, redmcsb_checks, runs):
     lines.append("- Not pass798+ (Graphics.dat init-table gates).\n")
     lines.append("\n## Verification\n")
     for run_row in runs:
-        lines.append(f"- \`{' '.join(run_row['command'])}\`: rc={run_row['returncode']}")
+        lines.append(f"- `{Path(run_row['command'][0]).name}`: rc={run_row['returncode']}")
     REPORT.write_text("\n".join(lines))
 
 

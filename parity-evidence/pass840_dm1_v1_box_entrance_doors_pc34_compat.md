@@ -11,8 +11,8 @@
 ## ReDMCSB Anchors
 
 - DATA.C:15
-- DATA.C:137
-- DATA.C:557
+- DATA.C:128
+- DATA.C:553
 - ENTRANCE.C:529/538/541/544/547
 
 ## Non-Overlap
@@ -26,4 +26,4 @@
 
 ## Verification
 
-- \`/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_entrance_doors_pc34_compat\`: rc=0
+- `test_dm1_v1_box_entrance_doors_pc34_compat`: rc=0

@@ -5,8 +5,8 @@
 /*
  * ReDMCSB source-lock map for this gate:
  * - DATA.C:15   - declaration of G0009_ai_Graphic562_Box_Entrance_Doors[4]
- * - DATA.C:137  - PC 3.4 init { 0, 231, 0, 160 }
- * - DATA.C:557  - Atari ST init (same values)
+ * - DATA.C:128  - PC 3.4 init { 0, 231, 0, 160 }
+ * - DATA.C:553  - Atari ST init (same values)
  * - ENTRANCE.C:529/538/541/544/547 - F0132_VIDEO_Blit entrance doors backdrop
  * - DEFS.H:     - C256_BYTE_WIDTH, G2071_C320_ScreenPixelWidth,
  *                CM1_COLOR_NO_TRANSPARENCY
@@ -79,7 +79,6 @@ dm1_v1_box_entrance_doors_run_pc34(
     int w_is_0 = 1;
     int h_is_160 = 1;
     int all_components_non_negative = 1;
-    int width_positive = 1;
     int height_positive = 1;
     int within_row_range = 1;
     int within_box_bounds = 1;

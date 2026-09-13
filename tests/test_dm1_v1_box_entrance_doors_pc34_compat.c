@@ -19,7 +19,7 @@ static void check(int cond, const char *expr, const char *file, int line)
 
 static void test_table_values(void)
 {
-    /* DATA.C:137 G0009 init: { 0, 231, 0, 160 }. */
+    /* DATA.C:128 G0009 init: { 0, 231, 0, 160 }. */
     const int *t = dm1_v1_box_entrance_doors_table_pc34();
     int n = dm1_v1_box_entrance_doors_size_pc34();
     CHECK(t != 0);
