@@ -30,7 +30,7 @@ Both DM2 ZIP layouts share the locked core data member hashes for `DUNGEON.DAT`,
 
 Locked external source references:
 
-- `https://github.com/gbsphenx/skproject` master HEAD `a962896e42aaf54c76157a7b062fb5b0526929e6`
+- `https://github.com/gbsphenx/skproject` master HEAD `2c59a2c5a7978923ff5c822c15c3479e4d448493e42aaf54c76157a7b062fb5b0526929e6`
 - skproject tree `a095e458cfaaa0490b9c4d4d2adf88108a8ad92f`
 - Sphenx SKWin page `https://dmbuilder.sphenxmusics.fr/skwin.php` sha256 `ef5ed8402262d5eb95b4fe0f6e3ef6e1074a69cdaa9c2f864d3309f545d63091`
 - Sphenx package `https://dmbuilder.sphenxmusics.fr/skwin/SkWinCurrent.zip` sha256 `ed6f1f8a38c43fbff36421090c4bab4e5f939707db12f55cfcfac04688df4645`

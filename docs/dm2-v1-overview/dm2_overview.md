@@ -3,7 +3,7 @@
 ## Sources
 
 - SKULL.ASM (522,128 lines IDA disassembly, sha256: a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099)
-- skproject (github.com/gbsphenx/skproject) HEAD a962896
+- skproject (github.com/gbsphenx/skproject) HEAD 2c59a2c5a7978923ff5c822c15c3479e4d448493
 - Original archive: Dungeon-Master-II-Skullkeep_DOS_EN.zip (sha256: d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929)
 - firestaff include/dm2_v1_game.h, include/dm2_v1_outdoor_renderer.h
 

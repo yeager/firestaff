@@ -3,7 +3,7 @@
 ## Sources
 
 - SKULL.ASM (522,128 lines IDA disassembly, sha256: a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099)
-- skproject (github.com/gbsphenx/skproject) HEAD a962896
+- skproject (github.com/gbsphenx/skproject) HEAD 2c59a2c5a7978923ff5c822c15c3479e4d448493
 - SKWIN/SkGlobal.h: CREATURE_AI_TAB_SIZE, MAXSPELL, GDAT_CATEGORY_LIMIT defines
 - SKWIN/SkWinCore.cpp: EXTENDED_LOAD_SPELLS_DEFINITION, EXTENDED_LOAD_AI_DEFINITION
 - SKWIN/knowledge/SKWin.GDAT2.InternalCodes.txt

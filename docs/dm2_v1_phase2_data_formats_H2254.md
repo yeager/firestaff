@@ -2,7 +2,7 @@
 
 **Cron task:** `DM2_V1_DataFormats_H2254`
 **Committed:** 2026-05-26T23:03 Europe/Stockholm
-**Sources:** SKULL.ASM (sha256:a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099), skproject gbsphenx/skproject HEAD a962896 (SkGlobal.h, SkWinCore.cpp, DME.h, defines.h, SKWIN/knowledge/SKWin.GDAT2.InternalCodes.txt)
+**Sources:** SKULL.ASM (sha256:a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099), skproject gbsphenx/skproject HEAD 2c59a2c5a7978923ff5c822c15c3479e4d448493 (SkGlobal.h, SkWinCore.cpp, DME.h, defines.h, SKWIN/knowledge/SKWin.GDAT2.InternalCodes.txt)
 
 ---
 
@@ -765,9 +765,15 @@ Source: docs/dm2_source_lock.md (archive lock: Dungeon-Master-II-Skullkeep_DOS_E
 
 - **GDAT2.InternalCodes.txt** — referenced by multiple docs but not found in workspace as a standalone file. Content reconstructed from doc references and skproject comments. Full field code enumeration needs the actual file.
 - **SKULL.ASM disassembly** — IDA disassembly confirmed at 522,128 lines, but the actual .asm file isn't present in the workspace. Content reconstructed from doc citations.
-- **skproject actual source files** — `skproject/` directory exists but is empty (755 entries, all zero bytes). References to SkGlobal.h, SkWinCore.cpp, DME.h, defines.h are documented from the github repo at gbsphenx/skproject HEAD a962896 but the local copy is a stub.
-- **DM2 dungeon parser in Firestaff** — `dm2_v1_dungeon_loader.c` is a stub (56 lines) that doesn't yet implement full parsing. The `dm2_v1_dungeon_get_square_type` function exists but the full record parsing, thing data extraction, and text data parsing still need implementation.
-- **GDAT file reader** — No GDAT2 parser exists yet in Firestaff. The c_gdatfile class from skproject needs a C equivalent.
+- **SKProject reference source** — reviewed at revision
+  `2c59a2c5a7978923ff5c822c15c3479e4d448493`. It is an external,
+  read-only reference and is neither distributed nor needed at runtime.
+- **DM2 dungeon parser in Firestaff** — the native parser exists. Remaining
+  work is parity validation for every platform-specific record-pool and map
+  continuation, rather than replacing it with the reference implementation.
+- **GDAT file reader** — Firestaff has a native GDAT reader. Remaining work is
+  parity validation for every image mode and platform-specific palette path,
+  not a dependency on SKProject's `c_gdatfile` implementation.
 - **Save game parser** — `dm2_v1_save_load.c` is a stub (28 lines). SUPPRESS compression decoder not yet implemented.
 
 ### Implementation ordering recommendation
@@ -779,4 +785,4 @@ Source: docs/dm2_source_lock.md (archive lock: Dungeon-Master-II-Skullkeep_DOS_E
 
 ---
 
-*Sources locked against: SKULL.ASM sha256 a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099; Dungeon-Master-II-Skullkeep_DOS_EN.zip sha256 d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929; skproject gbsphenx/skproject HEAD a962896*
+*Sources locked against: SKULL.ASM sha256 a2a04b0ea7c05fd2b2a7a8da5197cdfcccd7d4d0167943caf3a21a079462e099; Dungeon-Master-II-Skullkeep_DOS_EN.zip sha256 d9ef03aff70dfe432cfc9906397bd992cb5cb6e23407d51fbc7f5b3b6ba7f929; skproject gbsphenx/skproject HEAD 2c59a2c5a7978923ff5c822c15c3479e4d448493*

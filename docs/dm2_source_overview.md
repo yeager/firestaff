@@ -2,8 +2,11 @@
 
 ## Repository
 
-Source: https://github.com/gbsphenx/skproject
-Local canonical anchor: /home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm2/SKULL.ASM
+Reference repository: [gbsphenx/skproject](https://github.com/gbsphenx/skproject),
+revision `2c59a2c5a7978923ff5c822c15c3479e4d448493`.
+
+Firestaff uses SKProject as a read-only behavioural and format reference.  It
+does not ship SKProject code or data and has no runtime dependency on it.
 
 ## Original Disassembly
 
