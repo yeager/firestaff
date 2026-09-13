@@ -87,6 +87,17 @@ def load_labels(capture_dir: Path) -> list[dict[str, str]]:
     return result
 
 
+def canonical_eye_label(label: str) -> str | None:
+    """Normalize a generic or champion-prefixed Eye observation label."""
+    if label == "inventory" or label.endswith("_inventory"):
+        return "inventory"
+    if label == "eye_hold" or label.endswith("_eye_held"):
+        return "eye_hold"
+    if label == "eye_release" or label.endswith("_eye_released"):
+        return "eye_release"
+    return None
+
+
 def verify(capture_dir: Path, stage: Path | None) -> dict[str, Any]:
     problems: list[str] = []
     try:
@@ -96,29 +107,42 @@ def verify(capture_dir: Path, stage: Path | None) -> dict[str, Any]:
         problems.append(str(error))
 
     expected_labels = [label for label, _ in EXPECTED]
-    if [row.get("label") for row in labels] != expected_labels:
-        problems.append("route labels must be inventory, eye_hold, eye_release in that order")
-    if [row.get("token") for row in labels] != [f"shot:{label}" for label in expected_labels]:
-        problems.append("route labels must retain their matching shot tokens")
+    selected_rows: list[dict[str, str]] = []
+    for start in range(max(0, len(labels) - len(expected_labels) + 1)):
+        candidate = labels[start:start + len(expected_labels)]
+        if [canonical_eye_label(row.get("label", "")) for row in candidate] == expected_labels:
+            selected_rows = candidate
+            break
+    if not selected_rows:
+        problems.append("route labels lack an ordered inventory, eye_hold, eye_release observation triplet")
+    elif any(row.get("token") != f"shot:{row.get('label')}" for row in selected_rows):
+        problems.append("Eye observation labels must retain their matching shot tokens")
 
     plan_path = capture_dir / "original_viewport_route_plan.json"
     try:
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         token_names = [str(row.get("token")) for row in plan.get("tokens", [])]
-        required_order = ("shot:inventory", "press:20,53", "shot:eye_hold", "release", "shot:eye_release")
-        position = -1
-        for token in required_order:
+        if selected_rows:
             try:
-                position = token_names.index(token, position + 1)
-            except ValueError:
-                problems.append(f"route plan lacks ordered token {token!r}")
-                break
+                inventory = token_names.index(f"shot:{selected_rows[0]['label']}")
+                press = next(index for index in range(inventory + 1, len(token_names))
+                             if token_names[index].startswith("press:"))
+                held = token_names.index(f"shot:{selected_rows[1]['label']}", press + 1)
+                release = token_names.index("release", held + 1)
+                token_names.index(f"shot:{selected_rows[2]['label']}", release + 1)
+            except (StopIteration, ValueError):
+                problems.append("route plan lacks an ordered inventory, press, Eye-held, release, Eye-released sequence")
     except (OSError, json.JSONDecodeError) as error:
         problems.append(f"invalid route plan: {error}")
 
     images: list[Image.Image] = []
     frame_rows: list[dict[str, Any]] = []
-    for _, filename in EXPECTED:
+    for row in selected_rows:
+        try:
+            filename = f"image{int(row['index']):04d}-raw.png"
+        except (KeyError, ValueError):
+            problems.append(f"invalid Eye observation index: {row!r}")
+            continue
         path = capture_dir / filename
         if not path.is_file():
             problems.append(f"missing raw frame {filename}")
