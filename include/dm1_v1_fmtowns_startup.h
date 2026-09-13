@@ -64,6 +64,11 @@ typedef struct {
     int game_title_palettes_verified;
     uint8_t game_title_presents_palette_rgb6[16][3];
     uint8_t game_title_zoom_palette_rgb6[16][3];
+    /* ANIMTOWN.C's C00_LIGHT0..C05_LIGHT5 records are the live dungeon
+     * DAC owners.  They are admitted from the selected retail EDM/JDM load
+     * image, not inferred from the title palette or a PC/Atari table. */
+    int game_dungeon_palettes_verified;
+    uint8_t game_dungeon_palettes_rgb6[6][16][3];
     /* EDM/JDM's native DRAW_DMENU indexes this source string table directly.
      * Keep the admitted bytes with the startup receipt so the host action
      * rows cannot silently fall back to a different game's labels.

@@ -68299,6 +68299,27 @@ void M11_GameView_Draw(M11_GameViewState* state,
          * and visibly change authentic CSB colours. */
         (void)csb_v22_inplace_draw_set_indexed_palette_rgb6(rgb6);
         }
+    } else if (state && m11_is_dm1_fmtowns(state) &&
+               state->dm1FmtownsStartupReceiptValid &&
+               state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified) {
+        uint8_t rgb6[256][3];
+        int palette_level = m11_compute_dungeon_palette_index(state);
+        int color;
+        if (palette_level < 0) palette_level = 0;
+        if (palette_level > 5) palette_level = 5;
+        /* F20E/F20J DRAWVIEW.C changes C00_LIGHT0..C05_LIGHT5 for the
+         * viewport.  The records above come from the selected EDM/JDM
+         * executable; expanding low-nibble source pixels is mechanical. */
+        for (color = 0; color < 256; ++color) {
+            rgb6[color][0] = state->dm1FmtownsStartupReceipt
+                .game_dungeon_palettes_rgb6[palette_level][color & 15][0];
+            rgb6[color][1] = state->dm1FmtownsStartupReceipt
+                .game_dungeon_palettes_rgb6[palette_level][color & 15][1];
+            rgb6[color][2] = state->dm1FmtownsStartupReceipt
+                .game_dungeon_palettes_rgb6[palette_level][color & 15][2];
+        }
+        (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+        csb_v22_inplace_draw_clear_indexed_palette();
     } else {
         M11_Render_ClearIndexedPaletteRgb6();
         csb_v22_inplace_draw_clear_indexed_palette();

@@ -113,6 +113,11 @@ int main(void)
         receipt.game_title_zoom_palette_rgb6[15][0] != 0x3fu ||
         receipt.game_title_zoom_palette_rgb6[15][1] != 0u ||
         receipt.game_title_zoom_palette_rgb6[15][2] != 0u ||
+        !receipt.game_dungeon_palettes_verified ||
+        receipt.game_dungeon_palettes_rgb6[0][4][1] != 0x36u ||
+        receipt.game_dungeon_palettes_rgb6[0][8][0] != 0x3fu ||
+        receipt.game_dungeon_palettes_rgb6[5][11][0] != 0x1bu ||
+        receipt.game_dungeon_palettes_rgb6[5][14][2] != 0x12u ||
         receipt.game_action_name_count != 44u ||
         strcmp(receipt.game_action_names[6], "PUNCH") ||
         strcmp(receipt.game_action_names[8], "WAR CRY") ||

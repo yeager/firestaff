@@ -382,6 +382,82 @@ static int parse_title_palettes(const uint8_t *program, size_t size,
     return 1;
 }
 
+static int apply_dungeon_palette_records(const uint8_t *records,
+                                         uint8_t palette[16][3]) {
+    size_t i;
+    if (!records || !palette) return 0;
+    memset(palette, 0, 16u * 3u);
+    for (i = 0u; i < 17u; ++i) {
+        const uint8_t *row = records + i * 4u;
+        if (i == 16u) {
+            return row[0] == 0xffu && row[1] == 0u &&
+                   row[2] == 0u && row[3] == 0u;
+        }
+        /* F20 installs LIGHT palettes at DAC 16..31.  Its indexed source
+         * pixels retain only the low nibble, so preserve that relation at
+         * the host boundary.  The original LIGHT3 table writes index 24
+         * twice; applying records in source order deliberately retains its
+         * final write. */
+        if (row[0] < 0x10u || row[0] > 0x1fu || row[1] > 0x3fu ||
+            row[2] > 0x3fu || row[3] > 0x3fu) return 0;
+        palette[row[0] & 15u][0] = row[1];
+        palette[row[0] & 15u][1] = row[2];
+        palette[row[0] & 15u][2] = row[3];
+    }
+    return 0;
+}
+
+static int parse_dungeon_palettes(const uint8_t *program, size_t size,
+                                  uint32_t load_offset, uint32_t load_size,
+                                  DM1_V1_FmtownsStartupReceipt *out) {
+    /* ANIMTOWN.C G8151_LIGHT0.  This complete 17-record source signature
+     * admits the contiguous G8151..G8156 run; only the retail bytes are
+     * published to the receipt. */
+    static const uint8_t light0[17u * 4u] = {
+        0x10,0,0,0, 0x11,0x1b,0x1b,0x1b, 0x12,0x24,0x24,0x24,
+        0x13,0x1b,9,0, 0x14,0,0x36,0x36, 0x15,0x24,0x12,0,
+        0x16,0,0x24,0, 0x17,0,0x36,0, 0x18,0x3f,0,0,
+        0x19,0x3f,0x2d,0, 0x1a,0x36,0x24,0x1b,
+        0x1b,0x3f,0x3f,0, 0x1c,0x12,0x12,0x12,
+        0x1d,0x2d,0x2d,0x2d, 0x1e,0,0,0x3f,
+        0x1f,0x3f,0x3f,0x3f, 0xff,0,0,0
+    };
+    static const uint8_t light1_prefix[8] = {
+        0x10,0,0,0, 0x11,0x12,0x12,0x12
+    };
+    size_t begin, end, first = (size_t)-1;
+    size_t palette_index;
+    size_t cursor;
+    if (!program || !out || load_offset > size || load_size > size - load_offset)
+        return 0;
+    begin = (size_t)load_offset;
+    end = begin + (size_t)load_size;
+    /* G8149_ICON duplicates LIGHT0's colours before the actual G8151
+     * table.  Bind the full LIGHT0 -> LIGHT1 transition, then insist that
+     * it occurs exactly once inside the selected P3 load image. */
+    for (cursor = begin;
+         cursor + 6u * sizeof(light0) <= end;
+         ++cursor) {
+        if (memcmp(program + cursor, light0, sizeof(light0)) != 0 ||
+            memcmp(program + cursor + sizeof(light0), light1_prefix,
+                   sizeof(light1_prefix)) != 0) continue;
+        if (first != (size_t)-1) return 0;
+        first = cursor;
+    }
+    if (first == (size_t)-1) return 0;
+    memset(out->game_dungeon_palettes_rgb6, 0,
+           sizeof(out->game_dungeon_palettes_rgb6));
+    for (palette_index = 0u; palette_index < 6u; ++palette_index) {
+        if (!apply_dungeon_palette_records(program + first +
+                                           palette_index * sizeof(light0),
+                                           out->game_dungeon_palettes_rgb6[palette_index])) {
+            return 0;
+        }
+    }
+    out->game_dungeon_palettes_verified = 1;
+    return 1;
+}
+
 static int parse_native_action_names(const uint8_t *program, size_t size,
                                      uint32_t load_offset, uint32_t load_size,
                                      int english, DM1_V1_FmtownsStartupReceipt *out) {
@@ -589,6 +665,11 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     }
     if (!parse_title_palettes(game_program, game_program_size,
                               gameLoadOffset, gameLoadSize, out)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (!parse_dungeon_palettes(game_program, game_program_size,
+                                gameLoadOffset, gameLoadSize, out)) {
         memset(out, 0, sizeof(*out));
         return 0;
     }
