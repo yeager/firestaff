@@ -119,7 +119,7 @@ def write_markdown(path: Path, result: dict[str, object]) -> None:
     ])
     for row in result["frames"]:  # type: ignore[index]
         lines.append(
-            f"| `{row['scene']}` | `{row['raw']}` | `{row['classification']}` | `{row['expected_class']}` | "
+            f"| `{row.get('scene', '')}` | `{row.get('raw', '')}` | `{row.get('classification', '')}` | `{row.get('expected_class', '')}` | "
             f"`{row.get('png', '')}` | `{row.get('ppm', '')}` | `{str(row.get('ppm_sha256', ''))[:12]}` |"
         )
     path.write_text("\n".join(lines).rstrip() + "\n")

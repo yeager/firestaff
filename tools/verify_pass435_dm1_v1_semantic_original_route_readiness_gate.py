@@ -187,6 +187,17 @@ def norm(text: str) -> str:
     return " ".join(text.split())
 
 
+def safe_path(path: Path) -> str:
+    """Return diagnostic paths without exposing a developer home directory."""
+    text = str(path)
+    home = str(Path.home())
+    if text == home:
+        return "<local-home>"
+    if text.startswith(home + os.sep):
+        return "<local-home>" + text[len(home):]
+    return text
+
+
 def source_window(path: Path, spec: str) -> str:
     lines = path.read_text(encoding="latin-1", errors="replace").splitlines()
     chunks: list[str] = []
@@ -205,7 +216,7 @@ def audit_sources() -> list[dict[str, Any]]:
         path = REDMCSB / anchor["file"]
         text = source_window(path, anchor["lines"]) if path.exists() else ""
         missing = [needle for needle in anchor["needles"] if norm(needle) not in norm(text)]
-        rows.append({**anchor, "path": str(path), "exists": path.exists(), "ok": path.exists() and not missing, "missing": missing})
+        rows.append({**anchor, "path": safe_path(path), "exists": path.exists(), "ok": path.exists() and not missing, "missing": missing})
     return rows
 
 
@@ -614,8 +625,8 @@ def main() -> int:
     data: dict[str, Any] = {
         "schema": f"{PASS}.v2",
         "timestampUtc": datetime.now(timezone.utc).isoformat(),
-        "repo": str(ROOT),
-        "sourceRoot": str(REDMCSB),
+        "repo": safe_path(ROOT),
+        "sourceRoot": safe_path(REDMCSB),
         "source_audit": audit_sources(),
         "inputs": {name: load_json(rel) for name, rel in INPUTS.items() if name not in {"pass376_classifier", "pass376_crop_manifest", "pass376_route_labels"}},
         "latest_hoc_attempt": load_json(LATEST_HOC_ATTEMPT),
