@@ -232,9 +232,12 @@ The maintained helper is `scripts/capture_fmtowns_original_startup.sh`. It:
 5. Sends `QUIT` after the last requested frame so the VM thread shuts down in
    order. `FORCEQUIT` calls `exit(0)` in the command interpreter and is not a
    valid substitute for a clean capture outcome.
-6. Fails closed on missing frames, blank frames, VM abort, invalid media shape
-   or non-zero process status.
-7. Writes a local receipt only after all validation succeeds.
+6. Fails closed on missing, blank, or byte-identical timeline frames, VM
+   abort, invalid media shape or non-zero process status. A repeated frame is
+   a stalled/insufficient observation, not temporal capture evidence.
+7. Writes a local receipt only after all validation succeeds, binding each
+   frame filename to its individual SHA-256 rather than emitting an
+   unlabelled hash list.
 
 The helper currently supports DM1 and CSB FM Towns CUE/BIN and CUE/IMG media.
 It does not establish Firestaff visual parity by itself; it provides a

@@ -301,6 +301,7 @@ if [[ "$actual" -ne "$expected" ]]; then
 fi
 
 python3 - "$out" "$expected" <<'PY'
+import hashlib
 from pathlib import Path
 from PIL import Image
 import sys
@@ -310,6 +311,7 @@ expected = int(sys.argv[2])
 frames = sorted(out.glob("startup-*.png"))
 if len(frames) != expected:
     raise SystemExit("ERROR: frame list changed during validation")
+digests = {}
 for frame in frames:
     with Image.open(frame) as image:
         if image.width < 1 or image.height < 1:
@@ -318,6 +320,12 @@ for frame in frames:
         colors = rgb.getcolors(maxcolors=257)
         if not colors or len(colors) <= 1 or all(pixel == (0, 0, 0) for _, pixel in colors):
             raise SystemExit(f"ERROR: blank/stale framebuffer image is not original capture evidence: {frame.name}")
+    digest = hashlib.sha256(frame.read_bytes()).hexdigest()
+    if digest in digests:
+        raise SystemExit(
+            "ERROR: duplicate framebuffer samples are not temporal capture evidence: "
+            f"{digests[digest]} and {frame.name}")
+    digests[digest] = frame.name
 PY
 
 # `STA` is deliberately emitted only in diagnostics mode.  Preserve its last
@@ -353,7 +361,8 @@ fi
         printf 'rom_sha256=%s\n' "$(sha256sum "$rom" | awk '{print $1}')"
     done < <(find "$rom_dir" -maxdepth 1 -type f -name '*.rom' -print0 | sort -z)
     for frame in "$out"/startup-*.png; do
-        printf 'frame_sha256=%s\n' "$(sha256sum "$frame" | awk '{print $1}')"
+        printf 'frame=%s sha256=%s\n' "$(basename "$frame")" \
+            "$(sha256sum "$frame" | awk '{print $1}')"
     done
 } >"$out/receipt.txt"
 
