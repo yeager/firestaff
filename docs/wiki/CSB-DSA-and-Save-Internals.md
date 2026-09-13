@@ -101,13 +101,14 @@ action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON` and
 
 The probe is intentionally strict about the distinction between an ordinary
 CSBWin save and an Extended Features save that actually carries a complete DSA
-corpus. On 2026-09-13, five privately held `csbgame*.dat` candidates from
-CSBWin 11, 16, and 17 were admitted far enough to be classified, but each was
-rejected at this gate with `reject_dsa_corpus_no_dsa_section`. They therefore
-provide useful legacy-save coverage only; none is evidence for DSA restore or
-DSA execution. A compatible, source-owned Extended Features/DSA save remains
-required before the DSA runtime handoff can be claimed as externally
-verified.
+corpus. On 2026-09-13, native Linux CSBWin was used privately to classify five
+`csbgame*.dat` candidates. One was rejected at the Extended Features boundary
+with `reject_dsa_corpus_no_extended_features`; the other four were
+rejected with `reject_dsa_corpus_no_dsa_section`. They therefore provide
+legacy-save coverage only; none is evidence for DSA restore or DSA execution.
+A compatible, source-owned Extended Features/DSA save remains required before
+the DSA runtime handoff can be claimed as externally verified. The candidates
+and the resulting captures remain private and are not repository artifacts.
 
 ## Admitted/Restored Timer Bridge
 
