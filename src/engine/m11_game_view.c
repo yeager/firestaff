@@ -2254,6 +2254,7 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
     if (result < 0) {
         /* A broken clock, queue or source order has no lawful GDAT fallback:
          * retain black rather than claiming that SKULL reached its menu. */
+        state->dm2DosMveFailureCode = state->dm2DosMvePresenter.failure_code;
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
         state->dm2DosMveIntroActive = 0;
         state->dm2DosMveIntroRejected = 1;
@@ -2261,6 +2262,7 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
     }
     if (M11_Render_SetIndexedPaletteRgb6(state->dm2DosMvePaletteRgb6) !=
         M11_RENDER_OK) {
+        state->dm2DosMveFailureCode = M11_DM2_MVE_FAILURE_PRESENT_CALLBACK;
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
         state->dm2DosMveIntroActive = 0;
         state->dm2DosMveIntroRejected = 1;

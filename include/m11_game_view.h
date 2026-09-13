@@ -1907,6 +1907,9 @@ typedef struct {
     int dm2DosMveIntroActive;
     int dm2DosMveIntroRejected;
     int dm2DosMveIntroComplete;
+    /* Retained after a rejected presenter is closed so diagnostics identify
+     * the native source seam that failed without retaining movie bytes. */
+    int dm2DosMveFailureCode;
     /* Test-only timing control. It never changes source bytes or runtime
      * playback; --boot-probe may drain one authenticated MVE page per draw. */
     int bootProbeFastForward;

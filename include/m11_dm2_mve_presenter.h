@@ -36,7 +36,23 @@ typedef struct {
     int initialized;
     int ended;
     int failed;
+    /* Stable diagnostic for callers/tests: 0 is no failure.  This records
+     * the exact native seam that rejected the source stream; it never
+     * changes the movie's timing or substitutes a frame/menu. */
+    int failure_code;
 } M11_Dm2MvePresenter;
+
+enum {
+    M11_DM2_MVE_FAILURE_NONE = 0,
+    M11_DM2_MVE_FAILURE_CLOCK_OR_RANGE = 1,
+    M11_DM2_MVE_FAILURE_BOUNDARY = 2,
+    M11_DM2_MVE_FAILURE_PCM_SOURCE = 3,
+    M11_DM2_MVE_FAILURE_PCM_SEQUENCE = 4,
+    M11_DM2_MVE_FAILURE_AUDIO_SINK = 5,
+    M11_DM2_MVE_FAILURE_VIDEO_SOURCE = 6,
+    M11_DM2_MVE_FAILURE_PRESENT_CALLBACK = 7,
+    M11_DM2_MVE_FAILURE_TRAILING_SOURCE = 8
+};
 
 /* Establishes an M11 presentation seam only for a source stream which has
  * already been admitted by the DOS media owner.  `clock_origin_us` belongs

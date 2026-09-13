@@ -12,7 +12,11 @@ int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner)
 
     if (!owner) return 0;
     memset(owner, 0, sizeof(*owner));
-    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) return 0;
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        owner->initialized = 1;
+        owner->output_unavailable = 1;
+        return 1;
+    }
     owner->owns_audio_subsystem = 1;
     memset(&spec, 0, sizeof(spec));
     spec.format = SDL_AUDIO_U8;
@@ -22,9 +26,13 @@ int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner)
                                        &spec, NULL, NULL);
     if (!stream || !SDL_ResumeAudioStreamDevice(stream)) {
         if (stream) SDL_DestroyAudioStream(stream);
-        SDL_QuitSubSystem(SDL_INIT_AUDIO);
-        memset(owner, 0, sizeof(*owner));
-        return 0;
+        /* A headless launcher still owns a valid source timeline.  It must
+         * not black-screen the verified MVE merely because this host has no
+         * default output device.  Keep its PCM checks active and report the
+         * condition through output_unavailable. */
+        owner->initialized = 1;
+        owner->output_unavailable = 1;
+        return 1;
     }
     owner->sdl_stream = stream;
     owner->initialized = 1;
@@ -36,7 +44,7 @@ int dm2_v1_mve_audio_sdl_owner_queue(DM2_V1_MveAudioSdlOwner *owner,
 {
     SDL_AudioStream *stream;
 
-    if (!owner || !frame || !owner->initialized || !owner->sdl_stream ||
+    if (!owner || !frame || !owner->initialized ||
         !frame->valid || !frame->samples || frame->sample_bytes == 0u ||
         frame->sample_bytes > (uint32_t)INT_MAX ||
         (frame->sample_bytes & 1u) != 0u ||
@@ -50,8 +58,16 @@ int dm2_v1_mve_audio_sdl_owner_queue(DM2_V1_MveAudioSdlOwner *owner,
     /* SDL receives the original unsigned stereo bytes unchanged.  Conversion
      * for a physical device, if its driver requires it, remains SDL's device
      * concern; Firestaff supplies no resampler or mixer on this path. */
-    if (!SDL_PutAudioStreamData(stream, frame->samples, (int)frame->sample_bytes))
-        return 0;
+    if (!owner->output_unavailable &&
+        (!stream || !SDL_PutAudioStreamData(stream, frame->samples,
+                                             (int)frame->sample_bytes))) {
+        /* A device removed during presentation has the same semantics as
+         * starting headless: retain source sequencing, stop host delivery,
+         * and let the original video complete without fabricated audio. */
+        if (stream) SDL_DestroyAudioStream(stream);
+        owner->sdl_stream = NULL;
+        owner->output_unavailable = 1;
+    }
 
     owner->queued_source_bytes += frame->sample_bytes;
     owner->queued_sample_frames += frame->sample_frames;

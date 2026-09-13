@@ -24,16 +24,23 @@ typedef struct {
     int have_source_sequence;
     int initialized;
     int owns_audio_subsystem;
+    /* No host output device was available.  Source PCM is still admitted in
+     * order so a missing device cannot suppress the retail video/menu; no
+     * substitute samples, mixer or resampler are introduced. */
+    int output_unavailable;
 } DM2_V1_MveAudioSdlOwner;
 
-/* Opens an SDL stream in the original MVE PCM format.  A failure leaves the
- * owner cleared and does not admit a different host format. */
+/* Opens an SDL stream in the original MVE PCM format when the host exposes a
+ * playback device.  On a headless/no-device host it still opens the source
+ * owner in explicit silent-delivery mode: callers can preserve exact video
+ * timing and validate every PCM packet without inventing audio or changing
+ * its format. */
 int dm2_v1_mve_audio_sdl_owner_open(DM2_V1_MveAudioSdlOwner *owner);
 
-/* Queues exactly one previously validated source packet.  The packet must
- * retain MVE's contiguous sequence and native U8/stereo/22050 shape.  Queue
- * failure is reported before bookkeeping changes; callers can stop the
- * presentation rather than filling a gap with generated audio. */
+/* Delivers exactly one previously validated source packet.  The packet must
+ * retain MVE's contiguous sequence and native U8/stereo/22050 shape.  With
+ * no device, it is consumed only by the source-order receipt; this is
+ * explicit silence, not generated or substituted audio. */
 int dm2_v1_mve_audio_sdl_owner_queue(DM2_V1_MveAudioSdlOwner *owner,
                                      const DM2_V1_MvePcmFrame *frame);
 

@@ -57,8 +57,13 @@ int main(void)
     if (!view.dm2DosMveIntroComplete || view.dm2DosMveIntroActive ||
         view.dm2DosMveIntroRejected || !view.dm2State.startup_menu_active ||
         framebuffer[0] == 0u) {
-        fputs("FAIL: DM2 DOS INTRO.MVE did not hand off to SKULL's real menu\n",
-              stderr);
+        fprintf(stderr,
+                "FAIL: DM2 DOS INTRO.MVE did not hand off to SKULL's real menu "
+                "(complete=%d active=%d rejected=%d failure=%d menu=%d pixel0=%u)\n",
+                view.dm2DosMveIntroComplete, view.dm2DosMveIntroActive,
+                view.dm2DosMveIntroRejected, view.dm2DosMveFailureCode,
+                view.dm2State.startup_menu_active,
+                (unsigned int)framebuffer[0]);
         M11_GameView_Shutdown(&view);
         return 1;
     }
