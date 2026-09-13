@@ -97,6 +97,18 @@ does not generate a save, DSA record, selector, actuator, timer, or fallback
 action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON` and
 `FIRESTAFF_CSBWIN_SAVE`), it skips.
 
+### Corpus status
+
+The probe is intentionally strict about the distinction between an ordinary
+CSBWin save and an Extended Features save that actually carries a complete DSA
+corpus. On 2026-09-13, five privately held `csbgame*.dat` candidates from
+CSBWin 11, 16, and 17 were admitted far enough to be classified, but each was
+rejected at this gate with `reject_dsa_corpus_no_dsa_section`. They therefore
+provide useful legacy-save coverage only; none is evidence for DSA restore or
+DSA execution. A compatible, source-owned Extended Features/DSA save remains
+required before the DSA runtime handoff can be claimed as externally
+verified.
+
 ## Admitted/Restored Timer Bridge
 
 `csb_v1_dsa_admitted_restored_timer_bridge` covers the handoff between an
