@@ -86,9 +86,9 @@ window_width = 800
 window_height = 600
 video_sync = 0
 # Native screenshot requests are host shortcuts.  FS-UAE grabs input by
-# default, which makes an X11 automation session send F12+S to the emulated
-# Amiga instead of to FS-UAE.  Disable those grabs only for this external
-# capture harness; game input and Firestaff runtime are unaffected.
+# default, which makes an X11 automation session send the shortcut to the
+# emulated Amiga instead of to FS-UAE. Disable those grabs only for this
+# external capture harness; game input and Firestaff runtime are unaffected.
 initial_input_grab = 0
 automatic_input_grab = 0
 keyboard_input_grab = 0
@@ -159,7 +159,7 @@ request_native_screenshot() {
     # documented shortcut in the caller's bounded wait loop; only a native
     # crop written after that request marker is ever admitted below.
     DISPLAY="$display" xdotool windowfocus "$window" >/dev/null 2>&1 || true
-    DISPLAY="$display" xdotool key --clearmodifiers --window "$window" F12+s
+    DISPLAY="$display" xdotool key --clearmodifiers --window "$window" alt+s
 }
 
 previous=0
@@ -204,7 +204,7 @@ for second in $capture_seconds; do
     # chrome, input overlays or FS-UAE's control menu.
     marker="$out/.screenshot-request-${index}.marker"
     : >"$marker"
-    # F12+S is FS-UAE's documented screenshot shortcut.  It records the
+    # Alt+S is FS-UAE's documented screenshot shortcut.  It records the
     # emulated Amiga frame and therefore avoids a host Xvfb-root capture.
     request_native_screenshot
     for attempt in $(seq 1 50); do
