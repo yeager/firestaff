@@ -20,8 +20,11 @@
   `dm1-original-hoc-recruit-inventory-20260908` route does contain a visible
   C040 panel followed by the C007 inventory state. A same-state native C040
   measurement is now recorded, but it does not prove C007 or item-transaction
-  parity. The verified retail hybrid
-  route is mouse-mode launch (`DM -vv -sn -pm`), `(260,84)` Enter selection,
+  parity. The historic retail hybrid
+  route is mouse-mode launch (`DM -vv -sn -pm`), but `(260,84)` is the
+  Resume row, not a verified Enter selection. Current DOSBox-X/Xvfb runs
+  reproduce the keyboard Return handoff into the no-party Hall frame while
+  source-space mouse-button transitions remain unproven.
   keypad-Enter (`0x001c`), an approximately eight-second door animation, and
   the 28-command `KP5/KP1/KP2/KP6` sequence before the C127 click `(112,83)`.
   Use the visibly distinct source C040 geometry to compare material/cadence

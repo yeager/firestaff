@@ -1,3 +1,10 @@
+firestaff (3.0.338) unstable; urgency=medium
+
+  * Release 3.0.338.
+  * Correct DM1 Hall of Champions original-route verification documentation.
+
+ -- Daniel Nylander <daniel@danielnylander.se>  Sun, 14 Sep 2026 12:00:00 +0000
+
 firestaff (3.0.334) unstable; urgency=medium
 
   * Release 3.0.334.
