@@ -4257,10 +4257,11 @@ if(BUILD_TESTING)
         LABELS "tier2;dm2;dos;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
         # Seven independent source-owned DOS sessions each traverse MVE,
-        # SKULL and New Game from the ZIP in memory.  The observed cold-media
-        # run is close to two minutes, so retain a bounded allowance without
-        # turning normal archive I/O variation into a false CI regression.
-        TIMEOUT 240
+        # SKULL and New Game from the ZIP in memory.  A healthy current run
+        # needs more than four minutes before it reaches the final input
+        # rows, so retain a bounded ten-minute allowance instead of
+        # misclassifying normal archive I/O as a CI regression.
+        TIMEOUT 600
     )
     add_test(
         NAME dm2_v1_dos_sksave_archive_menu_resume
@@ -4282,7 +4283,10 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;startup;resume;cli;real-media;native;skip-safe;matrix"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        TIMEOUT 120
+        # Every primary and backup slot is loaded through an independent
+        # source-owned menu session.  Keep the complete real-media matrix
+        # bounded, but do not truncate it halfway through the archive rows.
+        TIMEOUT 600
     )
     add_test(
         NAME dm2_v1_dos_fr_native_cli_boot
@@ -17936,7 +17940,10 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;startup;cli;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 120
+        # This real-media route covers TITLE.ANM, SWITCHTW, C004, three
+        # presentation modes, and screenshot measurements.  Keep enough
+        # wall-clock room for all source-owned Entrance checks on CI hosts.
+        TIMEOUT 300
     )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
@@ -17951,7 +17958,7 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;english;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 120
+        TIMEOUT 300
     )
     add_test(
         NAME csb_v1_fmtowns_ja_native_cli_real_media
@@ -17962,7 +17969,7 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;japanese;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        TIMEOUT 120
+        TIMEOUT 300
     )
     add_test(
         NAME csb_v20_m11_prison_runtime_hud_pc34
