@@ -4202,7 +4202,12 @@ endif()
 # root; callers may override with -DFIRESTAFF_WORKSPACE_DATA_DIR=... on
 # the cmake command line.
 if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
-    set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data/dm1")
+    # Keep the legacy DM1-specific knob as an override, but inherit the
+    # configured shared data root by default.  Otherwise -D
+    # FIRESTAFF_WORKSPACE_DATA_DIR=... leaves the PC 3.4 real-media tests
+    # pointing at the configuring account's home directory and silently
+    # skips them on a valid portable test staging area.
+    set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
 endif()
 
 if(BUILD_TESTING)
