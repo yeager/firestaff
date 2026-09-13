@@ -24,6 +24,8 @@ Optional:
   CSB_AMIGA_CAPTURE_SECONDS='32 52'           seconds after boot to capture
   CSB_AMIGA_KEYSTROKES='53:Down 54:Return'    timed emulator key presses
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
+  CSB_AMIGA_SAVE_DISK_WRITABLE=1              permit writes only to a supplied
+                                               private Disk 3 copy (default: 0)
   FS_UAE=/path/to/fs-uae                       (default: fs-uae)
 
 All original ADFs are mounted write-protected. The helper accepts only
@@ -50,6 +52,7 @@ fsuae="${FS_UAE:-fs-uae}"
 capture_seconds="${CSB_AMIGA_CAPTURE_SECONDS:-32 52}"
 keystrokes="${CSB_AMIGA_KEYSTROKES:-}"
 display_num="${CSB_AMIGA_XVFB_DISPLAY:-106}"
+save_disk_writable="${CSB_AMIGA_SAVE_DISK_WRITABLE:-0}"
 
 for required in "$kickstart" "$disk1" "$disk2" "$disk3"; do
     if [[ -z "$required" || ! -f "$required" ]]; then
@@ -67,6 +70,10 @@ if [[ ! "$capture_seconds" =~ ^[0-9]+(\ [0-9]+)*$ ]] || [[ ! "$display_num" =~ ^
     echo "ERROR: capture seconds and Xvfb display must be numeric" >&2
     exit 5
 fi
+if [[ "$save_disk_writable" != "0" && "$save_disk_writable" != "1" ]]; then
+    echo "ERROR: CSB_AMIGA_SAVE_DISK_WRITABLE must be 0 or 1" >&2
+    exit 5
+fi
 if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(\ [0-9]+:[A-Za-z0-9_+]+)*$ ]]; then
     echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key entries separated by spaces" >&2
     exit 5
@@ -80,7 +87,7 @@ kickstart_file = $kickstart
 floppy_drive_0 = $disk1
 floppy_drive_1 = $disk2
 floppy_drive_2 = $disk3
-floppy_write_protect = 1
+floppy_write_protect = $((1 - save_disk_writable))
 fullscreen = 0
 window_width = 800
 window_height = 600
