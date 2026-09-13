@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Capture original DM1/CSB FM Towns frames using Tsugaru's own framebuffer
+# Capture original DM1/CSB/DM2 FM Towns frames using Tsugaru's own framebuffer
 # command, never a desktop/compositor screenshot.
 #
 # Development evidence only.  Firestaff does not invoke Tsugaru, require a
@@ -33,7 +33,7 @@ usage() {
 Usage: capture_fmtowns_original_startup.sh [--prepare|--run]
 
 Required for --run:
-  FMTOWNS_GAME=dm1|csb
+  FMTOWNS_GAME=dm1|csb|dm2
   FMTOWNS_ARCHIVE=/path/to/original-fm-towns.zip
   FMTOWNS_ROM_DIR=/path/to/extracted-fm-towns-rom-directory
   FMTOWNS_CAPTURE_TIMELINE='host-seconds:label [host-seconds:label ...]'
@@ -73,8 +73,8 @@ case "$mode" in
     *) usage >&2; exit 2 ;;
 esac
 
-if [[ "$game" != "dm1" && "$game" != "csb" ]]; then
-    echo "ERROR: FMTOWNS_GAME must be dm1 or csb" >&2
+if [[ "$game" != "dm1" && "$game" != "csb" && "$game" != "dm2" ]]; then
+    echo "ERROR: FMTOWNS_GAME must be dm1, csb, or dm2" >&2
     exit 2
 fi
 if [[ -z "$archive" || ! -f "$archive" || "${archive,,}" != *.zip ]]; then

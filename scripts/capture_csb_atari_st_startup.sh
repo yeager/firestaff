@@ -28,6 +28,8 @@ Optional:
   CSB_ATARI_SOUND_BUFFER_MS=100               host audio buffer (10-100 ms)
   CSB_ATARI_SOUND_SYNC=on|off                  Hatari emulation/audio synchronisation (default: on)
   CSB_ATARI_CAPTURE_AUDIO=0|1                 record original WAV with Hatari (default: 0)
+  CSB_ATARI_SDL_AUDIO_DRIVER=name              host SDL backend for audio capture
+                                               (default: dummy when recording; unset otherwise)
   HATARI=/path/to/hatari                       (default: hatari)
 
 The script runs a write-protected STE session under a dedicated Xvfb display,
@@ -57,6 +59,7 @@ sound_hz="${CSB_ATARI_SOUND_HZ:-44100}"
 sound_buffer_ms="${CSB_ATARI_SOUND_BUFFER_MS:-100}"
 sound_sync="${CSB_ATARI_SOUND_SYNC:-on}"
 capture_audio="${CSB_ATARI_CAPTURE_AUDIO:-0}"
+sdl_audio_driver="${CSB_ATARI_SDL_AUDIO_DRIVER:-}"
 
 if [[ "$mode" == "prepare" ]]; then
     usage
@@ -103,6 +106,14 @@ fi
 if [[ "$capture_audio" != "0" && "$capture_audio" != "1" ]]; then
     echo "ERROR: CSB_ATARI_CAPTURE_AUDIO must be 0 or 1" >&2
     exit 5
+fi
+# Hatari records the emulated stream itself before handing it to SDL.  A
+# headless capture host normally has no physical ALSA device, so make the
+# portable dummy sink explicit for a recording session.  This never affects
+# Firestaff, game media, or ordinary non-recording emulator sessions.  A
+# caller can still select a real host backend for troubleshooting.
+if [[ "$capture_audio" == "1" && -z "$sdl_audio_driver" ]]; then
+    sdl_audio_driver="dummy"
 fi
 if [[ -n "$pointer_clicks" ]] && ! [[ "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(\ [0-9]+:[0-9]+,[0-9]+)*$ ]]; then
     echo "ERROR: CSB_ATARI_POINTER_CLICKS must use seconds:x,y entries separated by spaces" >&2
@@ -156,7 +167,11 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-( cd "$out" && exec env DISPLAY="$display" "$hatari" \
+hatari_environment=(env DISPLAY="$display")
+if [[ -n "$sdl_audio_driver" ]]; then
+    hatari_environment+=(SDL_AUDIODRIVER="$sdl_audio_driver")
+fi
+( cd "$out" && exec "${hatari_environment[@]}" "$hatari" \
     --confirm-quit no --machine ste --tos "$tos" \
     --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-buffer-size "$sound_buffer_ms" --sound-sync "$sound_sync" --fastfdc off \
     --statusbar false --drive-led false --borders false --crop true \
@@ -248,7 +263,13 @@ print(int(round(left + ((x + 0.5) / 320.0) * content_width)),
       int(round(top + ((y + 0.5) / 200.0) * content_height)))
 PY
 )
-        DISPLAY="$display" xdotool mousemove --window "$window" "$px" "$py" click 1
+        # Hatari's SDL input path can ignore synthetic --window events after
+        # its title page takes focus.  Focus the exact emulator window and
+        # emit root-device input at its absolute position instead; this is
+        # still confined to the dedicated Xvfb display and does not target a
+        # host desktop window.
+        DISPLAY="$display" xdotool windowfocus --sync "$window"
+        DISPLAY="$display" xdotool mousemove "$((gx + px))" "$((gy + py))" click 1
         previous="$timestamp"
         click_index=$((click_index + 1))
     done
@@ -268,7 +289,8 @@ run_keys_through() {
             exit 5
         fi
         sleep "$((timestamp - previous))"
-        DISPLAY="$display" xdotool key --window "$window" "$key"
+        DISPLAY="$display" xdotool windowfocus --sync "$window"
+        DISPLAY="$display" xdotool key "$key"
         previous="$timestamp"
         click_index=$((click_index + 1))
     done
@@ -330,12 +352,47 @@ if grep -Eq "Can't use audio:|Couldn't open audio device|Failed to open audio" "
     audio_backend_unavailable=1
 fi
 
+# A syntactically valid WAV header is not enough: an unavailable or miswired
+# host sink can otherwise leave a silent recording that looks like source
+# evidence.  Inspect the recorded PCM directly and retain the result in the
+# receipt, without materialising any game data.
+audio_signal_valid="not-evaluated"
+audio_signal_reason="capture-not-requested"
+if [[ "$capture_audio" == "1" && -f "$out/startup-audio.wav" ]]; then
+    read -r audio_signal_valid audio_signal_reason < <(python3 - "$out/startup-audio.wav" <<'PY'
+import struct
+import sys
+import wave
+
+path = sys.argv[1]
+try:
+    with wave.open(path, "rb") as wav:
+        channels = wav.getnchannels()
+        width = wav.getsampwidth()
+        rate = wav.getframerate()
+        frames = wav.getnframes()
+        payload = wav.readframes(frames)
+except (OSError, wave.Error):
+    print("no invalid-wav")
+    raise SystemExit
+
+if channels != 2 or width != 2 or rate <= 0 or frames <= 0:
+    print("no invalid-pcm-geometry")
+    raise SystemExit
+samples = struct.unpack("<%dh" % (len(payload) // 2), payload)
+peak = max((abs(sample) for sample in samples), default=0)
+print("yes non-silent" if peak else "no silent-pcm")
+PY
+)
+fi
+
 {
     printf 'schema=firestaff.csb.atari.startup.capture.v1\n'
     printf 'scope=original Hatari startup capture; no Firestaff parity claim\n'
     printf 'audio_requested_hz=%s\n' "$sound_hz"
     printf 'audio_sync=%s\n' "$sound_sync"
     printf 'audio_host_buffer_ms=%s\n' "$sound_buffer_ms"
+    printf 'audio_host_backend=%s\n' "${sdl_audio_driver:-system-default}"
     if [[ -f "$out/startup-audio.wav" ]]; then
         printf 'audio_capture=hatari-wav\n'
         printf 'audio_sha256=%s\n' "$(sha256sum "$out/startup-audio.wav" | awk '{print $1}')"
@@ -344,6 +401,8 @@ fi
         printf 'audio_capture=not-recorded\n'
     fi
     printf 'audio_emulation_warning_count=%s\n' "$audio_emulation_warning_count"
+    printf 'audio_signal_valid=%s\n' "$audio_signal_valid"
+    printf 'audio_signal_reason=%s\n' "$audio_signal_reason"
     printf 'audio_backend_available=%s\n' "$([[ "$audio_backend_unavailable" == "0" ]] && printf yes || printf no)"
     if [[ "$capture_audio" != "1" ]]; then
         printf 'audio_parity_valid=not-evaluated\n'
@@ -354,6 +413,9 @@ fi
     elif [[ "$audio_emulation_warning_count" != "0" ]]; then
         printf 'audio_parity_valid=no\n'
         printf 'audio_parity_reason=dropped-emulated-samples\n'
+    elif [[ "$audio_signal_valid" != "yes" ]]; then
+        printf 'audio_parity_valid=no\n'
+        printf 'audio_parity_reason=%s\n' "$audio_signal_reason"
     else
         printf 'audio_parity_valid=yes\n'
     fi
@@ -371,6 +433,10 @@ if [[ "$capture_audio" == "1" ]]; then
     fi
     if [[ "$audio_emulation_warning_count" != "0" ]]; then
         echo "ERROR: Hatari reported dropped sound samples; reject this WAV as non-parity evidence" >&2
+        exit 7
+    fi
+    if [[ "$audio_signal_valid" != "yes" ]]; then
+        echo "ERROR: Hatari WAV has no valid audible PCM signal; reject it as non-parity evidence" >&2
         exit 7
     fi
 fi

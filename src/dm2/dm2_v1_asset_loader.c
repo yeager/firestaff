@@ -612,26 +612,18 @@ static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
                                             DM2_ImageFormat *out_format)
 {
     size_t pixel_count;
-    /* FM Towns DM2 IMG2/IMG6 records carry a four-word prologue: two format
-     * words followed by width and height.  The compressed nibble stream
-     * begins after that prologue. */
+    /* An FM Towns IMG2 record starts with its two dimension words.  IMG6
+     * instead has an additional four-byte format/pitch prologue, but it is
+     * decoded by dm2_decode_fmtowns_img6_c4().  SKProject's
+     * ReadImgDM2C4towns() begins the IMG2 nibble stream immediately after
+     * the dimension words. */
     size_t cursor;
     size_t pixel = 0u;
     uint8_t *pixels;
 
     if (!raw || raw_size < 4u || width <= 0 || height <= 0 ||
         (size_t)width > SIZE_MAX / (size_t)height) return NULL;
-    /* HME-242's TITLE/0/4 uses the compact two-word IMG2 header (320,200)
-     * followed immediately by the nibble stream.  Other Towns IMG2 members
-     * carry the documented four-word prologue.  Select the header length from
-     * the authenticated dimensions, never from a guessed decompression size. */
-    if (((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)) == (uint16_t)width &&
-        ((uint16_t)raw[2] | ((uint16_t)raw[3] << 8)) == (uint16_t)height) {
-        cursor = 8u;
-    } else {
-        if (raw_size < 8u) return NULL;
-        cursor = 16u;
-    }
+    cursor = 8u;
     pixel_count = (size_t)width * (size_t)height;
     if (pixel_count == 0u || pixel_count > (size_t)1024u * 1024u) return NULL;
     pixels = (uint8_t *)calloc(pixel_count, 1u);
@@ -692,32 +684,12 @@ static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
                                              1u, color)) goto fail;
             }
         } else if (command == 0x0au) {
-            /* IMG2 command A is a transparent run whose length is carried
-             * by the second nibble.  The zero-filled decode surface is the
-             * transparent underlay for the FM Towns non-overlay route, so
-             * advancing the cursor is the complete source operation. */
-            if (!dm2_fmtowns_img2_still(pixel_count, &pixel,
-                                        (size_t)color + 1u)) goto fail;
-        } else if (command == 0x0eu) {
-            /* IMG1/IMG2 command E is the extended transparent-run form.
-             * DMWeb's format reference specifies the length selector in
-             * Nibble2: 0..C => +17, D => byte +1, E => byte +257 and
-             * F => word +1.  These runs occur in authentic FM Towns IMG2
-             * records; rejecting them desynchronizes every following block. */
-            if (color <= 0x0cu) {
-                length = (unsigned)color + 17u;
-            } else if (color == 0x0du || color == 0x0eu) {
-                if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size,
-                                                       &cursor, 2u,
-                                                       &length)) goto fail;
-                length += color == 0x0du ? 1u : 257u;
-            } else {
-                if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size,
-                                                       &cursor, 4u,
-                                                       &length)) goto fail;
-                ++length;
-            }
-            if (!dm2_fmtowns_img2_still(pixel_count, &pixel, length)) goto fail;
+            /* SKProject's ReadImgDM2C4towns() defines command A as exactly
+             * eleven unchanged pixels.  Its second nibble is consumed with
+             * the command pair but is not a length.  Treating that nibble as
+             * a run length desynchronizes the next opcode and produces the
+             * repeated cyan/orange bands reported for the real Towns game. */
+            if (!dm2_fmtowns_img2_still(pixel_count, &pixel, 11u)) goto fail;
         } else {
             goto fail;
         }
@@ -748,8 +720,15 @@ static uint8_t *dm2_decode_fmtowns_img6_c4(const uint8_t *raw,
     for (int y = 0; y < height; ++y) {
         const uint8_t *src = raw + 8u + (size_t)y * stride;
         uint8_t *dst = pixels + (size_t)y * (size_t)width;
-        for (int x = 0; x < width; ++x)
-            dst[x] = (uint8_t)((src[(size_t)x / 2u] >> ((x & 1) ? 0u : 4u)) & 0x0fu);
+        for (int x = 0; x < width; ++x) {
+            /* FM Towns IMG6 is stored as low-nibble then high-nibble pixels.
+             * SKProject's ReadImgU4towns reads v1 then v2 and writes v2 at
+             * x followed by v1 at x+1.  The PC packed-U4 order is opposite;
+             * using it here corrupts every pair of source pixels even though
+             * the GDAT record and its palette both validate. */
+            const uint8_t packed = src[(size_t)x / 2u];
+            dst[x] = (uint8_t)((packed >> ((x & 1) ? 4u : 0u)) & 0x0fu);
+        }
     }
     if (out_format) *out_format = DM2_IMG_FMT_U4;
     return pixels;
@@ -4526,21 +4505,22 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     if (width <= 0 || height <= 0) return NULL;
 
     /* DMWeb's data-files format table identifies DMII FM Towns (0x8004)
-     * as IMG2/IMG6 media with a four-word prologue; never route it through
-     * the PC IMG3 header/command decoder. */
+     * as IMG2/IMG6 media; never route it through the PC IMG3 command
+     * decoder.  The high bits of the dimension words are format/offset
+     * flags.  In particular, 0x8000 in cy selects raw IMG6.  This is the
+     * exact selection made by SKProject's DMGHLci::DecideType(): dimensions
+     * are masked with 0x03ff before use, while (cy & 0xfe00) selects format.
+     * Treating the flagged value as a literal height invents a second header
+     * and desynchronizes all following pixel data. */
     if (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
         uint16_t word2;
         if (raw_size < 8u) return NULL;
-        width = (int)((uint16_t)raw[0] | ((uint16_t)raw[1] << 8));
-        height = (int)((uint16_t)raw[2] | ((uint16_t)raw[3] << 8));
+        width = (int)(((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)) &
+                      0x03ffu);
         word2 = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
-        /* Retain the four-word form for non-HME members whose first words do
-         * not describe a sane source-sized surface. */
-        if (width <= 0 || width > 640 || height <= 0 || height > 400) {
-            word2 = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
-            width = (int)((uint16_t)raw[4] | ((uint16_t)raw[5] << 8));
-            height = (int)((uint16_t)raw[6] | ((uint16_t)raw[7] << 8));
-        }
+        height = (int)(word2 & 0x03ffu);
+        if (width <= 0 || width > 1023 || height <= 0 || height > 1023)
+            return NULL;
         pixels = ((word2 & 0xfe00u) == 0x8000u)
             ? dm2_decode_fmtowns_img6_c4(raw, raw_size, width, height,
                                          out_format)
