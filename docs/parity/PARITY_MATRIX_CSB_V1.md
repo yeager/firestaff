@@ -23,6 +23,17 @@ Primary references are audit-only and are never runtime dependencies:
 | `viewport_ui_render` | 7/20 | `SOURCE_SLICE_VERIFIED_PARTIAL` | Viewport/HUD/UI parity must use stable CSB original capture/state anchors tied to the Atari ST v2.x renderer lane. Current proof covers CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, portrait render handoff, first viewport-frame render entry, and a post-movement viewport render without panel bleed; real original-vs-Firestaff pixel captures remain open. | Build capture/overlay fixtures and compare original CSB frames against Firestaff output. |
 | `gameplay_systems` | 4/15 | `RUNTIME_SLICE_VERIFIED_PARTIAL` | Prison/champion/new-adventure/combat/creature/item/save behavior cannot inherit DM1 points. Current proof covers dungeon loader/world slices, DSA trigger, save runtime boundary, Utility/CMP import, imported party handoff, leader/rotation state, and related Grey Lord/Zokathra/chaos slices; broad mechanics parity remains open. | Prove a real CSB prison/new-adventure/combat/creature/item/save route with representative source/runtime gates. |
 | `audio_timing` | 5/10 | `NATIVE_TRANSPORT_VERIFIED_PARTIAL` | CSB audio/timing must prove trigger cadence and overlap from CSB references. The runtime now uses edition-owned transports: Atari ST reads only the 22 present SND1 records, applies F0064's strict loud/soft distance boundary, and selects the corresponding PSG amplitude table; Amiga reads direct signed PCM with Paula period/volume semantics; FM Towns reads the 35-entry F31 table, applies its source-ordered 1..127 distance formula, and plays BE-length-prefixed signed PCM at 5500 Hz. English and Japanese FM Towns retail ZIP/CD images prove the GRAPHICS.DAT-to-host path entirely in RAM. AMG Utility Disk SND2 decoding remains separately covered. | Capture trigger cadence, overlap and attenuation against original Atari ST, Amiga and FM Towns runtimes; add real gameplay-event receipts beyond the current payload/transport gates. |
+
+## Private original Atari ST capture receipt
+
+On 2026-09-13, a fresh write-protected Hatari session with the verified Atari
+STX and TOS inputs reached the original C004 Prison entrance at 65 seconds.
+A framebuffer-relative `(265,50)` Prison click then produced a distinct
+door-opening frame at 73 seconds and the initial dungeon viewport at 82
+seconds. All three frames are native Hatari screenshots with matching media
+hash receipts; the images and ROM/game media remain private. This is
+original-startup and door/viewport evidence only, not a Firestaff pixel-pair,
+HUD, audio, or complete gameplay claim.
 | `original_overlay_regression` | 0/10 | `BLOCKED_CAPTURE` | Representative CSB original overlays are required before regression points count. | Produce original-vs-Firestaff overlay regression fixtures. |
 
 ## CSB front-door render smoke and launch blocker gate
