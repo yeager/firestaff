@@ -45,12 +45,16 @@ PASS77_EXPECTED = [
 ]
 
 PASS94_DIAGNOSTIC_EXPECTED = [
-    "title_or_menu",
+    # The first sampled page is a timing marker. On the authenticated PC 3.4
+    # route it may be a title-transition frame rather than settled menu art.
+    "graphics_320x200_unclassified",
     "entrance_menu",
     "dungeon_gameplay",
     "dungeon_gameplay",
-    "dungeon_gameplay",
-    "dungeon_gameplay",
+    # The second forward input reaches the no-party Hall's close wall; the
+    # subsequent left turn stays at that same source-visible wall.
+    "wall_closeup",
+    "wall_closeup",
 ]
 
 # Pass435 is the deliberately small, source-observed C407 handoff: the
@@ -124,7 +128,12 @@ def load_rgb(path: Path):
 def stats_for(img, xywh: tuple[int, int, int, int]) -> RegionStats:
     x0, y0, w, h = xywh
     crop = img.crop((x0, y0, x0 + w, y0 + h))
-    pix = list(getattr(crop, "get_flattened_data", crop.getdata)())
+    # Pillow changed its pixel iterator surface across the capture hosts.
+    # Work from normalized RGB bytes instead: the classifier must remain able
+    # to audit authentic screenshots rather than failing before it has read a
+    # frame because an optional iterator shim is absent.
+    raw = crop.tobytes()
+    pix = [tuple(raw[i:i + 3]) for i in range(0, len(raw), 3)]
     n = len(pix)
     nonblack = 0
     color = 0

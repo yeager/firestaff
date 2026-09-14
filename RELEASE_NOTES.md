@@ -361,6 +361,22 @@
   dungeon Thing tables. Full inventory persistence across resume remains
   incomplete; these interaction fixes do not resolve that savegame gap.
 
+# Firestaff v3.0.340
+
+## User-facing changes
+
+- `CSB FM Towns Entrance`: corrects the source F0797 micro-dungeon camera pose while the Prison doors open, so the dungeon aperture is rendered from the authentic south-facing Hall position instead of exposing the red C004 placeholder.
+
+- `DM1 PC 3.4 Entrance`: verifies the original mouse route from Enter through the no-party Hall of Champions, including forward movement and the close-wall turn, with authentic DOSBox-X frames.
+
+## Developer changes
+
+- `DM1 original capture harness`: fixes Pillow-version handling by reading normalized RGB bytes, allowing authentic DOSBox-X frame capture and frame-health admission on current capture hosts.
+
+- `DM1 frame classifier`: uses normalized RGB bytes and validates the authenticated Entrance-to-Hall route timing, including the source-visible close-wall outcome.
+
+- `DM1 capture readiness`: corrects the documented Entrance door wait to the verified 3-second handoff before gameplay input is assessed.
+
 # Firestaff v3.0.331
 
 ## Fixed

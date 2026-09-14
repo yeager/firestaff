@@ -34,7 +34,7 @@ EXPECTED = {
 
 ROUTE = (
     "wait:7000 shot:title enter wait:2500 shot:pre_enter_menu "
-    "click:260,50 wait:1800 shot:after_enter_click click:276,140 "
+    "click:260,50 wait:3000 shot:after_enter_click click:276,140 "
     "wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 "
     "click:246,140 wait:600 shot:left_turn_probe"
 )

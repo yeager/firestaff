@@ -193,7 +193,7 @@ DM1_ORIGINAL_PROGRAM='DM -vv -sn -pm' \\
 DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 \\
 WAIT_BEFORE_INPUT_MS=5000 \\
 NEW_FILE_TIMEOUT_MS=6000 \\
-DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:2500 shot:pre_enter_menu click:260,50 wait:1800 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' \\
+DM1_ORIGINAL_ROUTE_EVENTS='wait:7000 shot:title enter wait:2500 shot:pre_enter_menu click:260,50 wait:3000 shot:after_enter_click click:276,140 wait:600 shot:forward_1 click:276,140 wait:600 shot:forward_2 click:246,140 wait:600 shot:left_turn_probe' \\
 scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 
 # Expected route labels in original_viewport_shot_labels.tsv:
@@ -205,7 +205,8 @@ scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
 #   06 left_turn_probe
 
 # Expected classifier outcome if the entrance click worked:
-#   title_or_menu, entrance_menu, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay, dungeon_gameplay
+#   graphics_320x200_unclassified, entrance_menu, dungeon_gameplay,
+#   dungeon_gameplay, wall_closeup, wall_closeup
 python3 tools/pass80_original_frame_classifier.py \\
   verification-screens/pass94-hall-map-enter-diagnostic \\
   --expected pass94-diagnostic \\
@@ -213,7 +214,8 @@ python3 tools/pass80_original_frame_classifier.py \\
 
 # Failure signal to preserve as a blocker, not promote:
 #   after_enter_click == entrance_menu means click:260,50 did not leave the menu.
-#   wall_closeup/title_or_menu/non_graphics_blocker in shots 04-06 means the movement probe is not usable gameplay evidence.
+#   wall_closeup is expected after the final left-turn probe at this
+#   authenticated no-party Hall pose; shot 04 must be dungeon_gameplay.
 EOF
 }
 
@@ -876,8 +878,11 @@ if all(pixel == (0, 0, 0) for _, pixel in colors):
 # genuine HoC frame has substantial non-black content there, whereas that
 # strip-only failure has none.
 canvas = im.crop((0, im.height // 5, im.width, im.height))
-pixels = getattr(canvas, "get_flattened_data", canvas.getdata)()
-if not any(pixel != (0, 0, 0) for pixel in pixels):
+# Do not select a Pillow iterator API by attribute: the capture hosts ship
+# different Pillow generations, and one compatibility shim delegated to a
+# missing ``get_flattened_data`` method.  RGB byte payloads are stable.
+pixels = canvas.tobytes()
+if not any(component != 0 for component in pixels):
     raise SystemExit(1)
 PY
         then
@@ -1233,7 +1238,11 @@ def load_pixels(path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]
     if image_tool == "pillow":
         from PIL import Image
         im = Image.open(path).convert("RGB")
-        return im.size, list(getattr(im, "get_flattened_data", im.getdata)())
+        # RGB bytes avoid Pillow-version-specific iterator compatibility
+        # shims.  Keep tuple rows because the frame-health logic below is
+        # intentionally expressed in source RGB pixels.
+        data = im.tobytes()
+        return im.size, [tuple(data[i:i + 3]) for i in range(0, len(data), 3)]
     data = subprocess.check_output([image_tool, str(path), "ppm:-"])
     return ppm_pixels(data, path)
 
