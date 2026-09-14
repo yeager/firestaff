@@ -58,6 +58,7 @@
 #include "csb_touch_click_zone_matrix_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v2_runtime.h"
@@ -12172,7 +12173,16 @@ static int m11_render_csb_fmtowns_entrance_micro_viewport(
     cfg.graphic_provider_callback =
         m11_csb_fmtowns_viewport_graphic_provider;
     cfg.graphic_provider_user_data = state;
-    csb_v1_viewport_render_frame(&cfg, 2, 2, 0);
+    /* F0797 calls F0128_DUNGEONVIEW_Draw_CPSF from (2,0), facing south.
+     * Starting in the corridor row at (2,2) instead makes the renderer look
+     * at the wrong micro-map cell, exposing C004's placeholder through the
+     * opening doors.  Keep these source coordinates tied to the audited
+     * F0797 contract rather than duplicating numeric literals. */
+    csb_v1_viewport_render_frame(
+        &cfg,
+        CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34,
+        CSB_V1_F0797_VIEW_X_PC34,
+        CSB_V1_F0797_VIEW_Y_PC34);
     return 1;
 }
 

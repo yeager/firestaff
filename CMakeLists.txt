@@ -13196,6 +13196,19 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_entrance_micro_viewport_source_gate.c")
+        add_executable(test_csb_v1_fmtowns_entrance_micro_viewport_source_gate
+            tests/test_csb_v1_fmtowns_entrance_micro_viewport_source_gate.c)
+        if(NOT MSVC)
+            target_compile_options(test_csb_v1_fmtowns_entrance_micro_viewport_source_gate PRIVATE -Wall -Wextra -Werror -pedantic)
+        endif()
+        add_test(
+            NAME csb_v1_fmtowns_entrance_micro_viewport_source_gate
+            COMMAND test_csb_v1_fmtowns_entrance_micro_viewport_source_gate
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c")
         add_executable(test_m11_dm1_hoc_inscription_palette_transition_pc34
             tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c)
