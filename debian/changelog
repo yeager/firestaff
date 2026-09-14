@@ -1,3 +1,11 @@
+firestaff (3.0.339) unstable; urgency=medium
+
+  * Release 3.0.339.
+  * Keep CSB Amiga save-disk capture opt-in in developer tooling.
+  * Refresh the deterministic source SPDX SBOM.
+
+ -- Daniel Nylander <daniel@danielnylander.se>  Sun, 14 Sep 2026 12:30:00 +0000
+
 firestaff (3.0.338) unstable; urgency=medium
 
   * Release 3.0.338.
