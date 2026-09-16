@@ -335,6 +335,27 @@ fi
 if [[ "$audio_capture_active" == "1" ]]; then
     DISPLAY="$display" xdotool key --window "$window" ISO_Level3_Shift+y
     audio_capture_active=0
+    # Hatari acknowledges AltGr+Y before its recorder has necessarily
+    # flushed the final data chunk and RIFF length.  Parsing immediately can
+    # therefore reject a real recording as an invalid WAV.  Wait for two
+    # consecutive identical non-zero sizes before validating or renaming it.
+    wav_last_size=-1
+    wav_stable_count=0
+    for _ in $(seq 1 30); do
+        if [[ -s "$out/hatari.wav" ]]; then
+            wav_size="$(wc -c < "$out/hatari.wav" | tr -d ' ')"
+            if [[ "$wav_size" == "$wav_last_size" ]]; then
+                wav_stable_count=$((wav_stable_count + 1))
+                if [[ "$wav_stable_count" -ge 2 ]]; then
+                    break
+                fi
+            else
+                wav_last_size="$wav_size"
+                wav_stable_count=0
+            fi
+        fi
+        sleep 0.1
+    done
     if [[ ! -s "$out/hatari.wav" ]]; then
         echo "ERROR: Hatari did not produce the requested WAV capture" >&2
         exit 7
