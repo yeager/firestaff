@@ -22,7 +22,8 @@ Required for --run:
 Optional:
   CSB_AMIGA_CAPTURE_OUT=/path/to/output       (default: .codex-scratch)
   CSB_AMIGA_CAPTURE_SECONDS='32 52'           seconds after boot to capture
-  CSB_AMIGA_KEYSTROKES='53:Down 54:Return'    timed emulator key presses
+  CSB_AMIGA_KEYSTROKES='53:Down 54:Return@750' timed emulator key presses;
+                                               append @milliseconds to hold a key
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
   CSB_AMIGA_SAVE_DISK_WRITABLE=1              permit writes only to a supplied
                                                private Disk 3 copy (default: 0)
@@ -74,8 +75,8 @@ if [[ "$save_disk_writable" != "0" && "$save_disk_writable" != "1" ]]; then
     echo "ERROR: CSB_AMIGA_SAVE_DISK_WRITABLE must be 0 or 1" >&2
     exit 5
 fi
-if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(\ [0-9]+:[A-Za-z0-9_+]+)*$ ]]; then
-    echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key entries separated by spaces" >&2
+if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?(\ [0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?)*$ ]]; then
+    echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key[@milliseconds] entries separated by spaces" >&2
     exit 5
 fi
 
@@ -180,11 +181,16 @@ if [[ -n "$keystrokes" ]]; then
 fi
 
 run_keys_through() {
-    local target="$1" entry timestamp key
+    local target="$1" entry timestamp key held_ms hold_seconds
     while [[ "$key_index" -lt "${#key_entries[@]}" ]]; do
         entry="${key_entries[$key_index]}"
         timestamp="${entry%%:*}"
         key="${entry#*:}"
+        held_ms=0
+        if [[ "$key" == *@* ]]; then
+            held_ms="${key##*@}"
+            key="${key%@*}"
+        fi
         if (( timestamp > target )); then
             break
         fi
@@ -194,7 +200,14 @@ run_keys_through() {
         fi
         sleep "$((timestamp - previous))"
         DISPLAY="$display" xdotool windowfocus "$window" >/dev/null 2>&1 || true
-        DISPLAY="$display" xdotool key --clearmodifiers --window "$window" "$key"
+        if (( held_ms > 0 )); then
+            hold_seconds="$(awk -v milliseconds="$held_ms" 'BEGIN { printf "%.3f", milliseconds / 1000 }')"
+            DISPLAY="$display" xdotool keydown --clearmodifiers --window "$window" "$key"
+            sleep "$hold_seconds"
+            DISPLAY="$display" xdotool keyup --clearmodifiers --window "$window" "$key"
+        else
+            DISPLAY="$display" xdotool key --clearmodifiers --window "$window" "$key"
+        fi
         previous="$timestamp"
         key_index=$((key_index + 1))
     done
