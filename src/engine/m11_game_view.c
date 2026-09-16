@@ -61983,7 +61983,6 @@ static void m11_draw_viewport(M11_GameViewState* state,
     int dm1F0128PlanDispatched;
     int depth;
     int occluded = 0;
-    int maxVisibleForward;
     (void)camX; (void)camY; /* applied via view-cone sampling shift in each draw pass */
 
     memset(cells, 0, sizeof(cells));
@@ -62006,7 +62005,6 @@ static void m11_draw_viewport(M11_GameViewState* state,
      * inside csb_v1_viewport_consume_first_frame_material_raster_pc34(),
      * where each admitted source command owns those facts. */
     visibility = m11_dm1_lane_visibility(cells);
-    maxVisibleForward = visibility.max_visible_forward;
     {
         unsigned char raw_squares[3][3];
         int d, s;
