@@ -1,4 +1,28 @@
-# Unreleased
+# Firestaff v3.0.341
+
+## User-facing changes
+
+- `DM1 FM Towns viewport`: fixes compound side-wall clipping so a side-wall
+  surface cannot overwrite the centre view and appear as a permanent wall
+  directly ahead.
+
+- `DM2 FM Towns title`: removes the artificial five-tick minimum while
+  retaining each retail TWANIM frame's stored Timer-A duration, so short
+  title frames no longer play too slowly.
+
+## Developer changes
+
+- `DM1 FM Towns regression coverage`: verifies the compound-wall centre-zone
+  ownership rule against the native renderer and authentic FM Towns ZIP boot
+  path.
+
+- `DM2 FM Towns verification`: reruns the native real-media start-menu, New
+  Game, directional, strafe, and action input matrix after the timing fix.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.341 for the
+  verified DM1 and DM2 FM Towns fixes below.
 
 - DM1 half-square creature pairs no longer turn twice during one attack start.
 
