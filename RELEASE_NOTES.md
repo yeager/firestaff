@@ -1,3 +1,21 @@
+# Firestaff v3.0.342
+
+## User-facing changes
+
+- `Release integrity`: regenerates the published SPDX inventory to identify the
+  exact 3.0.342 source release, so package consumers can verify the shipped
+  source metadata against the release version.
+
+## Developer changes
+
+- `SPDX source SBOM`: regenerates the deterministic inventory after the
+  release-version update and verifies it with the repository regression gate.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.342 for the
+  verified source-metadata correction.
+
 # Firestaff v3.0.341
 
 ## User-facing changes

@@ -29,7 +29,17 @@ verification changes.
 ## Creating a release
 
 1. **Bump version** in `CMakeLists.txt`.
-2. **Write release notes** in `RELEASE_NOTES.md` (add a section headed
+2. **Regenerate the SPDX source SBOM** after the version bump, then verify it:
+
+   ```bash
+   python3 tools/generate_spdx_sbom.py
+   python3 tests/test_generate_spdx_sbom.py
+   ```
+
+   Commit the resulting `sbom/firestaff.spdx.json`. The SBOM embeds the
+   release version, so a version bump without this step is deliberately
+   rejected by the verify workflow.
+3. **Write release notes** in `RELEASE_NOTES.md` (add a section headed
    `# Firestaff vX.Y.Z`). Include only the relevant game and release-wide
    audience sections, each with concrete bullets:
 
@@ -47,13 +57,13 @@ verification changes.
    function, subsystem, command, screen or feature in every bullet. Do not use
    aggregate wording such as “various updates” or generic release summaries.
    The release workflow rejects notes that do not meet this contract.
-3. **Update active TODO and DONE ledgers** as needed: `TODO.md` for
+4. **Update active TODO and DONE ledgers** as needed: `TODO.md` for
    cross-game work, `TODO-<game>.md` for active game work, and the matching
    `DONE*.md` only after evidence-backed completion. Then run
    `scripts/sync_wiki.sh` in the release workflow to publish `docs/wiki/`.
-4. **Commit** the version bump and documentation.
-5. **Tag** with `v` prefix only when a release is explicitly requested.
-6. **Push** the tag only for that release.
+5. **Commit** the version bump, SBOM and documentation.
+6. **Tag** with `v` prefix only when a release is explicitly requested.
+7. **Push** the tag only for that release.
 
 The GitHub Actions release workflow triggers automatically on `v*` tags.
 
