@@ -140,6 +140,23 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+display_ready=0
+for attempt in $(seq 1 50); do
+    if ! kill -0 "$xvfb_pid" 2>/dev/null; then
+        echo "ERROR: Xvfb exited before the capture display became ready; see $out/xvfb.log" >&2
+        exit 6
+    fi
+    if DISPLAY="$display" xdotool getdisplaygeometry >/dev/null 2>&1; then
+        display_ready=1
+        break
+    fi
+    sleep 0.1
+done
+if [[ "$display_ready" != "1" ]]; then
+    echo "ERROR: Xvfb display $display did not become ready; see $out/xvfb.log" >&2
+    exit 6
+fi
+
 SDL_AUDIODRIVER=dummy DISPLAY="$display" "$fsuae" --stdout "$config" >"$out/fs-uae.log" 2>&1 &
 uae_pid=$!
 
