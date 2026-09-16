@@ -96,6 +96,7 @@ ARCHIVE="${DM2_ORIGINAL_ARCHIVE:-${ARCHIVE_DEFAULT}}"
 STAGE_DEFAULT="${DM2_ORIGINAL_STAGE_DIR:-${REPO}/.codex-scratch/dm2-pc10-original-stage}"
 OUT_DIR="${OUT_DIR:-${REPO}/.codex-scratch/dm2-original-overlay-capture}"
 DOSBOX="${DOSBOX:-$(command -v dosbox-x 2>/dev/null || true)}"
+DOSBOX_OUTPUT="${DM2_DOSBOX_OUTPUT:-opengl}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM2_ORIGINAL_ROUTE_EVENTS:-}"
@@ -354,7 +355,10 @@ write_helpers() {
     cat > "${CONF}" <<EOF
 [sdl]
 fullscreen=false
-output=opengl
+# Xvfb has no usable OpenGL drawable on some CI/capture hosts.  Permit the
+# source runner to select DOSBox-X's software surface output explicitly;
+# this affects only the capture tool, never Firestaff runtime rendering.
+output=${DOSBOX_OUTPUT}
 
 [dosbox]
 # Capture sessions are terminated by this tooling.  This is a [dosbox]
