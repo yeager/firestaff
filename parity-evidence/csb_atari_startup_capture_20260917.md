@@ -53,3 +53,21 @@ has SHA-256 `2f4a4935ebdc8872a485da70792393d3843712f7d07bdb7f4f9968db3a93cea4`
 and passed the non-silent/no-sample-warning gate. This proves only the
 long-press transition; it is not yet a dungeon, HUD, door, DSA or full audio
 parity claim.
+
+## Resume hold result
+
+A third private run repeated the Entrance hold and then held the apparent
+Resume control at original coordinate `(270,82)` for six seconds. Screenshots
+at 92 and 108 seconds were byte-identical:
+
+```text
+92s   8fada6df878bfb77fde0760daf0876f663a9fa9487fecb0f674246ace4c87ad0
+108s  8fada6df878bfb77fde0760daf0876f663a9fa9487fecb0f674246ace4c87ad0
+```
+
+The session's private WAV passed the non-silent and zero-emulation-warning
+checks. A longer primary-button hold therefore does not advance the original
+Prison/Resume state. The next capture route must establish the original
+control's input semantics rather than retrying the same pointer hold. These
+artifacts remain private; this is a negative routing receipt, not a Firestaff
+gameplay-parity claim.
