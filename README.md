@@ -233,8 +233,13 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
           --scan-data
           --fullscreen
           --scale-mode <n>
+          --no-music | --music
           --version
 ```
+
+In the startup menu, **Settings → Audio → Music Volume → Off** disables
+music while preserving sound effects and UI audio. `--no-music` applies the
+same choice for a direct CLI launch; `--music` explicitly re-enables it.
 
 Nexus renders the admitted retail MAPD title sequence natively from the
 original CUE/BIN. The later menu, HUD and dungeon compositor remain

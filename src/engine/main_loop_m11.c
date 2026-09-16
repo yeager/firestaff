@@ -4003,6 +4003,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->presentationModeOverride = -1;
     opts->windowModeOverride = -1;
     opts->vsyncOverride = -1;
+    opts->musicEnabledOverride = -1;
     opts->languageOverride = -1;
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
@@ -7166,6 +7167,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     if (o->vsyncOverride == 0 || o->vsyncOverride == 1) {
         menuState.settings.vsyncIndex = o->vsyncOverride;
+    }
+    if (o->musicEnabledOverride == 0 || o->musicEnabledOverride == 1) {
+        /* Music is intentionally separate from the all-audio mute switch:
+         * users may keep UI, effects and accessibility cues while disabling
+         * title and in-game music for any native game route.  The value is
+         * exported with the launch intent and reapplied after game-specific
+         * audio initialisation. */
+        menuState.settings.audioMusicVolume =
+            o->musicEnabledOverride ? 128 : 0;
     }
     if (o->presentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
         o->presentationModeOverride < M12_PRESENTATION_MODE_COUNT) {

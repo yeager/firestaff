@@ -1,6 +1,4 @@
 #include "asset_status_m12.h"
-#include "asset_find_by_hash.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,32 +18,17 @@ int main(void)
     const char *archive = getenv("FIRESTAFF_DM1_ATARI_ST_OUTER_ARCHIVE");
     M12_AssetStatus status;
     const M12_AssetVersionStatus *version = NULL;
-    char graphics_path[1536];
-    char dungeon_path[1536];
-    uint8_t *graphics = NULL;
-    uint8_t *dungeon = NULL;
-    size_t graphics_size = 0U;
-    size_t dungeon_size = 0U;
     size_t i;
 
     if (!archive || !archive[0]) {
         puts("SKIP: authentic DM1 Atari ST preservation archive is not staged");
         return 77;
     }
-    snprintf(graphics_path, sizeof(graphics_path),
-             "%s::Dungeon Master (1987)(FTL)[!].zip::Dungeon Master (1987)(FTL)[!].stx::GRAPHICS.DAT",
-             archive);
-    snprintf(dungeon_path, sizeof(dungeon_path),
-             "%s::Dungeon Master (1987)(FTL)[!].zip::Dungeon Master (1987)(FTL)[!].stx::DUNGEON.DAT",
-             archive);
-    expect(asset_read_virtual_path_alloc(graphics_path, &graphics, &graphics_size) &&
-               graphics_size > 0U,
-           "the nested STX reader opens GRAPHICS.DAT in bounded memory");
-    expect(asset_read_virtual_path_alloc(dungeon_path, &dungeon, &dungeon_size) &&
-               dungeon_size > 0U,
-           "the nested STX reader opens DUNGEON.DAT in bounded memory");
-    free(graphics);
-    free(dungeon);
+    /* Preservation packages exist in both ZIP -> ZIP -> STX and the
+     * current retail ZIP -> STX form.  Exercise the public M12 admission
+     * path rather than a hand-written virtual member spelling: this is the
+     * exact scanner/reader used by the launcher and keeps all members in
+     * memory. */
     memset(&status, 0, sizeof(status));
     M12_AssetStatus_ScanGame(&status, archive, "dm1");
     for (i = 0U; i < M12_AssetStatus_GetVersionCount("dm1"); ++i) {
@@ -59,9 +42,9 @@ int main(void)
         }
     }
     expect(version != NULL,
-           "the authentic ZIP -> ZIP -> STX original is admitted as Atari ST");
+           "the authentic ZIP -> STX or ZIP -> ZIP -> STX original is admitted as Atari ST");
     expect(version && strstr(version->matchedPath,
-                             "Dungeon Master (1987)(FTL)[!].stx::GRAPHICS.DAT"),
+                             ".stx::GRAPHICS.DAT"),
            "the Atari graphics receipt remains a virtual source path");
     expect(M12_AssetStatus_GameAvailable(&status, "dm1") == 1,
            "the authentic Atari preservation archive satisfies DM1 launch requirements");

@@ -244,6 +244,22 @@ static void test_global_language_and_preference_rows(void) {
     check(audioDeviceFound, "audio device is listed on audio settings tab");
 }
 
+static void test_music_off_preference(void) {
+    M12_StartupMenuState state;
+    M12_LauncherRuntimeOptions opts;
+
+    memset(&state, 0, sizeof(state));
+    seed_dm1_state(&state);
+    state.settings.audioMusicVolume = 0;
+    check(strcmp(M12_StartupMenu_GetSettingsValue(
+                     &state, M12_STARTUP_SETTINGS_ROW_AUDIO_MUSIC),
+                 "OFF") == 0,
+          "music volume zero is presented as an explicit Off preference");
+    M12_StartupMenu_ExportLauncherRuntimeOptions(&state, 0, &opts);
+    check(opts.audioMusicVolume == 0,
+          "music Off is exported through the native launcher handoff");
+}
+
 static void test_export_clamps(void) {
     M12_StartupMenuState state;
     M12_LauncherRuntimeOptions opts;
@@ -355,6 +371,7 @@ int main(void) {
     test_launch_intent_options_follow_constraints();
     test_invalid_intent_leaves_options_unbound();
     test_global_language_and_preference_rows();
+    test_music_off_preference();
 
     if (failures) {
         printf("test_m12_launcher_options_runtime_handoff: FAIL %d\n",

@@ -174,6 +174,8 @@ enum {
 
 M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_LANGUAGE,
                              M12_SETTINGS_ROW_LANGUAGE, "language");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_AUDIO_MUSIC,
+                             M12_SETTINGS_ROW_AUDIO_MUSIC, "music audio");
 M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_GRAPHICS,
                              M12_SETTINGS_ROW_GRAPHICS, "graphics");
 M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_WINDOW_MODE,
@@ -4817,7 +4819,12 @@ static const char* m12_settings_value_audio_master(const M12_StartupMenuState* s
 }
 
 static const char* m12_settings_value_audio_music(const M12_StartupMenuState* state) {
-    return m12_settings_value_percent(state ? state->settings.audioMusicVolume : 128);
+    const int volume = state ? state->settings.audioMusicVolume : 128;
+    /* Zero is a first-class music-off preference, not an ambiguous 0% label.
+     * It preserves effects and UI audio and is persisted by the existing
+     * launcher configuration path. */
+    if (volume <= 0) return m12_tr(state, "OFF");
+    return m12_settings_value_percent(volume);
 }
 
 static const char* m12_settings_value_audio_sfx(const M12_StartupMenuState* state) {

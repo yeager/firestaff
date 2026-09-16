@@ -73,6 +73,8 @@ static void usage(const char* prog) {
             "  --verbose, -v       Show detailed information during operations\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
+            "  --no-music          Disable title and in-game music (keeps sound effects)\n"
+            "  --music             Enable title and in-game music\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
             "  --platform <name>   Select source platform: auto, pc (dos), amiga, atari-st (atari), fm-towns (fmtowns), mac, pce, saturn\n"
@@ -731,6 +733,14 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--no-vsync") == 0) {
             opts.vsyncOverride = 0;
+            continue;
+        }
+        if (strcmp(a, "--no-music") == 0) {
+            opts.musicEnabledOverride = 0;
+            continue;
+        }
+        if (strcmp(a, "--music") == 0) {
+            opts.musicEnabledOverride = 1;
             continue;
         }
         if (strcmp(a, "--fps") == 0) {
