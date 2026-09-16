@@ -27,6 +27,12 @@ firestaff_dm1_pc34_corpus_*/
 # in the documented README asset location instead.
 /.codex-scratch/
 /verification-screens/**/*.png
+# Original-game emulator captures are private evidence.  Keep only textual
+# receipts and hashes in the repository; never stage the copyrighted pixels.
+/parity-evidence/captures/**/*.png
+/parity-evidence/captures/**/*.jpg
+/parity-evidence/captures/**/*.jpeg
+/parity-evidence/captures/**/*.wav
 /verification-screens/**/*.jpg
 /verification-screens/**/*.jpeg
 /verification-screens/**/*.gif

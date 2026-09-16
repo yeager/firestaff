@@ -1,11 +1,12 @@
 # Chaos Strikes Back Atari ST: original startup capture
 
-These frames are direct host captures of the original Atari STX release in
-Hatari.  The emulator is capture-only tooling; Firestaff does not invoke or
-ship it at runtime.  The TOS 1.62 configuration uses STE mode, which is
-required by that ROM revision.
+The private frames named below are direct host captures of the original Atari
+STX release in Hatari.  They are deliberately not stored in this repository.
+The emulator is capture-only tooling; Firestaff does not invoke or ship it at
+runtime.  The TOS 1.62 configuration uses STE mode, which is required by that
+ROM revision.
 
-The frames document the contiguous untouched startup path from FTL's opening
+The private frames document the contiguous untouched startup path from FTL's opening
 screen through title to the Entrance screen.  They are original reference
 material, not Firestaff screenshots or reconstructed artwork.
 

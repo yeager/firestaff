@@ -1,8 +1,9 @@
 # Dungeon Master II DOS: original title and menu capture
 
-These are direct 320×200 captures of the original English DOS release, run
-through DOSBox-X solely as offline capture tooling.  They are original
-reference frames, not Firestaff output or synthetic artwork.
+The private frames named below are direct 320×200 captures of the original
+English DOS release, run through DOSBox-X solely as offline capture tooling.
+They are original reference frames, not Firestaff output or synthetic artwork,
+and are deliberately not stored in this repository.
 
 The title-to-menu route requires two original input transitions after the FTL
 opening animation.  Captures are taken only at semantically visible states;

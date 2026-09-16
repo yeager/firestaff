@@ -1179,17 +1179,16 @@ python3 scripts/dm1_v1_original_capture.py --pair 01_viewport
 
 # Override the runtime layout or capture directory
 python3 scripts/dm1_v1_original_capture.py \
-    --runtime <local-home>/.firestaff/data/dm1-extras/dmfiles-dos-en-v34 \
-    --capture-root /tmp/dm1_capture \
-    --evidence-out parity-evidence/captures
+    --runtime /path/to/private/dm1-pc34-media \
+    --capture-root /path/to/private/captures \
+    --evidence-out /path/to/private/evidence
 ```
 
 Outputs:
 
-- `/tmp/dm1_original_capture/<NN>_<kind>/` — per-pair capture directory.
-- `parity-evidence/captures/<NN>_<kind>/report.md` — per-pair report.
-- `parity-evidence/captures/<NN>_<kind>/<label>.png` — per-pair captures
-  (also linked into the evidence directory).
+- A caller-selected private capture directory stores per-pair frames.
+- Public source control may retain a text-only report and frame hashes, but
+  never the original-game frames themselves.
 
 ReDMCSB references inside the script's docstring:
 - COMMAND.C:254-279 — I34E keyboard input table (C003=KP5, C002=KP6, C001=KP4).

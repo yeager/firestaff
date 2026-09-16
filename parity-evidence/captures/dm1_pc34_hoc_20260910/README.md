@@ -1,8 +1,9 @@
 # Dungeon Master PC 3.4: Hall of Champions interaction capture
 
-These frames are direct 320×200 host captures from the original English DOS
-PC 3.4 executable, running under DOSBox-X.  They are reference material, not
-Firestaff screenshots and not reconstructed artwork.
+The private frames named below are direct 320×200 host captures from the
+original English DOS PC 3.4 executable, running under DOSBox-X.  They are
+reference material, not Firestaff screenshots or reconstructed artwork, and
+are deliberately not stored in this repository.
 
 The route enters the Hall of Champions, reaches and resurrects Chani Sayyadina
 Sihaya, then uses the original secondary-click champion-panel route.  The
