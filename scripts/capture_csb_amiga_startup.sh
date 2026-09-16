@@ -167,6 +167,8 @@ is_clean_canvas_crop() {
     python3 - "$image" <<'PY'
 import struct
 import sys
+from collections import Counter
+from PIL import Image
 
 path = sys.argv[1]
 with open(path, "rb") as source:
@@ -174,7 +176,19 @@ with open(path, "rb") as source:
 if header[:8] != b"\x89PNG\r\n\x1a\n" or header[12:16] != b"IHDR":
     raise SystemExit(1)
 width, height = struct.unpack(">II", header[16:24])
-raise SystemExit(0 if 0 < width < 800 and 0 < height < 600 else 1)
+if not (0 < width < 800 and 0 < height < 600):
+    raise SystemExit(1)
+
+# A native FS-UAE crop can be geometrically valid while still showing only
+# the emulator's all-white/all-black boot canvas.  That is a successful host
+# shortcut, not an original CSB frame.  Admit only a non-uniform canvas so a
+# capture receipt cannot mistake an empty boot interval for title, HUD, or
+# dungeon evidence.
+pixels = list(Image.open(path).convert("RGB").getdata())
+if not pixels:
+    raise SystemExit(1)
+dominant = Counter(pixels).most_common(1)[0][1]
+raise SystemExit(0 if dominant / len(pixels) < 0.995 else 1)
 PY
 }
 
