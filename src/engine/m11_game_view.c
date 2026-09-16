@@ -2677,8 +2677,10 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
         state->dm2FmtownsTitleRejected = 1;
         return 0;
     }
+    /* The EN/DL attribute is the source Timer-A wait count.  Zero is
+     * meaningful: TWANIM continues directly with the next source record,
+     * rather than holding a host-invented minimum number of ticks. */
     state->dm2FmtownsFrameTimerARemaining =
-        state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
         state->dm2FmtownsTitleFrameReceipt.display_duration;
     state->dm2FmtownsFrameCount = frame_count;
     state->dm2FmtownsTitleBound = 1;
@@ -2767,7 +2769,6 @@ static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
         return 0;
     }
     state->dm2FmtownsFrameTimerARemaining =
-        state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
         state->dm2FmtownsTitleFrameReceipt.display_duration;
     state->dm2FmtownsFrameCount = frame_count;
     state->dm2FmtownsSwooshActive = 1;
@@ -2842,7 +2843,6 @@ static int m11_dm2_bind_fmtowns_end(M11_GameViewState *state)
         return 0;
     }
     state->dm2FmtownsFrameTimerARemaining =
-        state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
         state->dm2FmtownsTitleFrameReceipt.display_duration;
     state->dm2FmtownsFrameCount = frame_count;
     state->dm2FmtownsEndActive = 1;
@@ -2951,7 +2951,6 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
             break;
         }
         state->dm2FmtownsFrameTimerARemaining =
-            state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
             state->dm2FmtownsTitleFrameReceipt.display_duration;
     }
     state->dm2FmtownsTimerAAccumulatorUs = (uint32_t)accumulator;

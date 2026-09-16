@@ -26,6 +26,21 @@ all 87 tests passed. That broader result includes focused source-contract and
 fixture isolation tests in addition to the real-media rows catalogued below;
 it is not a claim of complete campaign or capture parity.
 
+### FM Towns animation timing (2026-09-16)
+
+The native HME-242 `TWANIM` presenter now preserves the `EN`/`DL` record's
+stored Timer-A duration exactly.  Earlier code imposed a five-tick minimum on
+every frame, which made short source frames visibly too slow and changed zero
+duration records into artificial holds.  The correction follows the
+`TWANIM` loop in [SKProject](https://github.com/gbsphenx/skproject), where
+the record attribute is decremented directly before the next source record is
+decoded.  It does not introduce an external runtime dependency.
+
+The native `dm2_v1_fmtowns_native_cli_boot` matrix was rerun against the
+supplied FM Towns archive after this change.  It verified start-menu admission,
+New Game, and the observed directional, strafe, and action input routes while
+continuing to read the archive in memory and leaving its hash unchanged.
+
 | Platform / route | Verified boundary | Test |
 |---|---|---|
 | DOS English | archive identity, native menu, MVE → SKULL → New Game, and observed directional/action input matrix | `dm2_v1_real_media_hash_lock`, `dm2_v1_dos_native_cli_boot` |
