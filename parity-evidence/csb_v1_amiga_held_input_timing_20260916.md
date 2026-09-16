@@ -35,6 +35,18 @@ not be interpreted as a failed game input path. Future original Amiga runs
 must synchronize input to an observed menu phase rather than a fixed early
 wall-clock timestamp.
 
+A later no-input phase scan of the same two-disk media produced three more
+native canvas frames at 130, 160 and 190 seconds, respectively:
+
+1. `f37bb0b0abe77391841184532f172a3c2f4455c9c7e6f59fdf1632061e57b9fa`
+2. `c36cf31bd01fcf577e41106d05fc089ff774f9803c06197276ded450b38400d7`
+3. `bb21f493451ddc31a6d5683959da2ca97cd2afa4fe161eb05cc51af9fc1f2423`
+
+Those frames also remained in the title sequence. The current strict lower
+bound for an unattended fixed-timestamp input is therefore greater than 190
+seconds for this capture configuration. This is a timing calibration only,
+not a claim that the original title has a fixed wall-clock duration.
+
 ## Tooling boundary
 
 `scripts/capture_csb_amiga_startup.sh` accepts `seconds:key@milliseconds`
