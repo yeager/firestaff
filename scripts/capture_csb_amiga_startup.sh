@@ -108,6 +108,11 @@ fullscreen = 0
 window_width = 800
 window_height = 600
 video_sync = 0
+# This helper records native video frames only.  Use FS-UAE's SDL audio
+# backend with SDL's dummy host device so a headless X11 capture cannot fill
+# the OpenAL queue with "no audio buffer" drops.  Emulated Paula mixing and
+# timing still run; only audible host output is discarded.
+audio_driver = sdl
 # Native screenshot requests are host shortcuts.  FS-UAE grabs input by
 # default, which makes an X11 automation session send the shortcut to the
 # emulated Amiga instead of to FS-UAE. Disable those grabs only for this
@@ -135,7 +140,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-DISPLAY="$display" "$fsuae" --stdout "$config" >"$out/fs-uae.log" 2>&1 &
+SDL_AUDIODRIVER=dummy DISPLAY="$display" "$fsuae" --stdout "$config" >"$out/fs-uae.log" 2>&1 &
 uae_pid=$!
 
 find_fsuae_window() {
