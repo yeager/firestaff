@@ -11,14 +11,10 @@
   {
 --- src/ss/sh7095.inc
 +++ src/ss/sh7095.inc
-@@ -2651,6 +2651,7 @@
- 	 if(CCR & CCR_CE)											\
- 	 {												\
- 	  CPUM[which].CacheBypass[IsInstr][sizeof(T) >> 1]++;							\
+@@ -2656,2 +2656,3 @@
+          retval = ne16_rbo_be<T>(SH7095_FastMap[A >> SH7095_EXT_MAP_GRAN_BITS], A);				\
 +          if(!IsInstr) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);\
- 	  goto MemReturn;											\
- 	 }												\
- 	 way_match = LRU_Replace_Tab[cent->LRU];									\
+	  goto MemReturn;											\
 @@ -2658,6 +2659,7 @@
  	 }													\
  														\

@@ -11,7 +11,7 @@
   void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -476,6 +476,52 @@
+@@ -476,6 +476,44 @@
  {
   return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
  }
@@ -58,7 +58,7 @@
  //  -1 when we need to temporarily break out of the execution loop to
 --- src/ss/sh7095.inc
 +++ src/ss/sh7095.inc
-@@ -2300,6 +2300,12 @@
+@@ -2300,6 +2300,13 @@
    BSC.last_mem_time = SH7095_mem_timestamp;
   }
  
