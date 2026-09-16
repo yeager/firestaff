@@ -42633,7 +42633,15 @@ static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
          graphicIndex == 99u || graphicIndex == 100u || graphicIndex == 101u) &&
         ((slot->width == 248u && slot->height == 111u) ||
         (slot->width == 136u && slot->height == 71u) ||
-        (slot->width == 117u && slot->height == 51u))) {
+        (slot->width == 117u && slot->height == 51u)) &&
+        /* F20E/F20J aliases one L/C/R backing bitmap for each of the
+         * D1L, D1C and D1R (and likewise D2/D3) calls.  F0635 clips that
+         * backing bitmap to the selected layout-696 zone before F0132
+         * blits it.  Only a centre-zone call owns the complete compound.
+         * Treating a side-zone call as a complete compound overwrites D1C
+         * with a wall whenever either corridor side is solid. */
+        dstX == (slot->width == 248u ? 32 :
+                 (slot->width == 136u ? 59 : 77))) {
         const int compoundWidth = (int)slot->width;
         const int centreX = (DM1_VIEWPORT_WIDTH - compoundWidth) / 2;
         const int centreZoneX = slot->width == 248u ? 32 :

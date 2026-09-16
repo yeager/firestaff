@@ -13208,6 +13208,18 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
     endif()
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_fmtowns_compound_wall_clip_source_gate.c")
+        add_executable(test_dm1_fmtowns_compound_wall_clip_source_gate
+            tests/test_dm1_fmtowns_compound_wall_clip_source_gate.c)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_fmtowns_compound_wall_clip_source_gate PRIVATE -Wall -Wextra -Werror -pedantic)
+        endif()
+        add_test(
+            NAME dm1_fmtowns_compound_wall_clip_source_gate
+            COMMAND test_dm1_fmtowns_compound_wall_clip_source_gate
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_inscription_palette_transition_pc34.c")
         add_executable(test_m11_dm1_hoc_inscription_palette_transition_pc34
