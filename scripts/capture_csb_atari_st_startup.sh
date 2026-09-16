@@ -22,7 +22,7 @@ Optional:
   CSB_ATARI_CAPTURE_OUT=/path/to/output       (default: .codex-scratch)
   CSB_ATARI_CAPTURE_SECONDS='18 36'           seconds after boot to capture
   CSB_ATARI_POINTER_CLICKS='70:720,280'       timed emulator-relative clicks
-  CSB_ATARI_KEYSTROKES='70:Return'             timed key presses (exclusive with clicks)
+  CSB_ATARI_KEYSTROKES='70:Return@1500'        timed key presses, optionally held in ms (exclusive with clicks)
   CSB_ATARI_XVFB_DISPLAY=103                  dedicated X display number
   CSB_ATARI_SOUND_HZ=44100                    original-session audio frequency
   CSB_ATARI_SOUND_BUFFER_MS=100               host audio buffer (10-100 ms)
@@ -119,8 +119,8 @@ if [[ -n "$pointer_clicks" ]] && ! [[ "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+
     echo "ERROR: CSB_ATARI_POINTER_CLICKS must use seconds:x,y entries separated by spaces" >&2
     exit 5
 fi
-if [[ -n "$keystrokes" ]] && ! [[ "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(\ [0-9]+:[A-Za-z0-9_+]+)*$ ]]; then
-    echo "ERROR: CSB_ATARI_KEYSTROKES must use seconds:key entries separated by spaces" >&2
+if [[ -n "$keystrokes" ]] && ! [[ "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?(\ [0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?)*$ ]]; then
+    echo "ERROR: CSB_ATARI_KEYSTROKES must use seconds:key or seconds:key@milliseconds entries separated by spaces" >&2
     exit 5
 fi
 if [[ -n "$pointer_clicks" && -n "$keystrokes" ]]; then
@@ -213,6 +213,7 @@ fi
 previous=0
 index=0
 click_index=0
+key_index=0
 click_entries=()
 key_entries=()
 if [[ -n "$pointer_clicks" ]]; then
@@ -276,11 +277,16 @@ PY
 }
 
 run_keys_through() {
-    local target="$1" entry timestamp key
-    while [[ "$click_index" -lt "${#key_entries[@]}" ]]; do
-        entry="${key_entries[$click_index]}"
+    local target="$1" entry timestamp key held_ms hold_seconds
+    while [[ "$key_index" -lt "${#key_entries[@]}" ]]; do
+        entry="${key_entries[$key_index]}"
         timestamp="${entry%%:*}"
         key="${entry#*:}"
+        held_ms=0
+        if [[ "$key" == *@* ]]; then
+            held_ms="${key##*@}"
+            key="${key%@*}"
+        fi
         if (( timestamp > target )); then
             break
         fi
@@ -290,9 +296,16 @@ run_keys_through() {
         fi
         sleep "$((timestamp - previous))"
         DISPLAY="$display" xdotool windowfocus --sync "$window"
-        DISPLAY="$display" xdotool key "$key"
+        if (( held_ms > 0 )); then
+            hold_seconds="$(awk -v milliseconds="$held_ms" 'BEGIN { printf "%.3f", milliseconds / 1000 }')"
+            DISPLAY="$display" xdotool keydown "$key"
+            sleep "$hold_seconds"
+            DISPLAY="$display" xdotool keyup "$key"
+        else
+            DISPLAY="$display" xdotool key "$key"
+        fi
         previous="$timestamp"
-        click_index=$((click_index + 1))
+        key_index=$((key_index + 1))
     done
 }
 
@@ -327,7 +340,9 @@ done
 
 action_count="${#click_entries[@]}"
 if [[ "${#key_entries[@]}" -gt 0 ]]; then action_count="${#key_entries[@]}"; fi
-if [[ "$click_index" -ne "$action_count" ]]; then
+action_index="$click_index"
+if [[ "${#key_entries[@]}" -gt 0 ]]; then action_index="$key_index"; fi
+if [[ "$action_index" -ne "$action_count" ]]; then
     echo "ERROR: input-action timestamp exceeds the capture timeline" >&2
     exit 5
 fi
