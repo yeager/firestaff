@@ -35,3 +35,21 @@ The capture tool reported a non-silent signal and zero Hatari emulation-sample
 warnings. The screenshots and WAV remain private. They establish only a
 reproducible original startup/audio capture channel; HUD, dungeon viewport,
 door, DSA and gameplay parity still require their own authenticated routes.
+
+## Entrance long-press transition
+
+A second private run used the same verified TOS and STX inputs. A 1.5-second
+pointer hold at original Entrance coordinate `(260,50)` was issued at 70
+seconds after boot. Emulator screenshots were taken at 60 and 76 seconds:
+
+```text
+60s  7dd601bbdfaba1f2278a9cde6ba47a0d4c6f208baa1b1529538212098515e53d
+76s  c2e935a38bfad0fa0c878c321ebcec3c06cd992a303c008f332301a46219a87f
+```
+
+The latter is a private original Prison/Resume state with a rendered corridor,
+not an Entrance-screen or red-placeholder frame. Its same-session private WAV
+has SHA-256 `2f4a4935ebdc8872a485da70792393d3843712f7d07bdb7f4f9968db3a93cea4`
+and passed the non-silent/no-sample-warning gate. This proves only the
+long-press transition; it is not yet a dungeon, HUD, door, DSA or full audio
+parity claim.
