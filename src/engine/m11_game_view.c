@@ -2940,9 +2940,12 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
             }
             break;
         }
-        if ((state->dm2FmtownsEndActive || m11_dm2_is_amiga_profile(
-                 (const DM2_V1_BootProfile *)state->dm2BootProfile)) &&
-            !dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+        /* A PL record is stateful for every TWANIM stream, not just END.
+         * Keeping the palette installed by frame zero through TITLE made
+         * later HME-242 animation frames inherit stale colours whenever the
+         * source stream changes PL.  Replay the source-visible palette at
+         * every decoded frame for both SWOOSH/TITLE and END. */
+        if (!dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
                 state->dm2FmtownsTitleBytes,
                 state->dm2FmtownsTitleByteCount,
                 state->dm2FmtownsTitleFrameIndex,
