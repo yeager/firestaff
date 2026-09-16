@@ -62,7 +62,9 @@ and 42 seconds (`09a576ebf918a20700ab648a1bd459fa0921916540054dcf7ca8e7dc237bf6c
 
 A third independent A500 session, using the capture helper's SDL dummy-host
 audio path and its non-uniform-canvas admission gate, reached the FTL ident at
-32 seconds (`1dae95b5addd44eb804639e5cf844aba34be5c946ad801a0f1c9031c25ee6482`).
+32 seconds (`1dae95b5addd44eb804639e5cf844aba34be5c946ad801a0f1c9031c25ee6482`)
+and the complete Chaos Strikes Back title at 42 seconds
+(`1c735b33430761bcb34506578f51dbe7416f8f54f1e7dada4f3631cd9d50075d`).
 This validates the native-capture route after rejecting an earlier all-white
 boot canvas; it is still title evidence only.
 
