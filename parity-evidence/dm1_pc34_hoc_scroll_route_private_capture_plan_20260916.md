@@ -79,6 +79,24 @@ rejected as a live navigation route. No Eye input was sent and this result
 does not satisfy any scroll, text, or pixel-parity requirement. The original
 frames remain private.
 
+### Start-location traversal rejection
+
+On 2026-09-17 a second private DOSBox-X probe began from the PC 3.4 header's
+initial map-0 location and followed a breadth-first route that treated every
+non-wall square as walkable. Its three raw-frame SHA-256 values were:
+
+```text
+30a6a0da0257da8c45cfaa0716fe377321e14819bb88de2c7c4b7f597bcf73df
+2724de2d64234fd2166069235786f41230edc67063cbadcf38531cc6aec65d4d
+2724de2d64234fd2166069235786f41230edc67063cbadcf38531cc6aec65d4d
+```
+
+All three passed the raw-frame health gate. The first is an active corridor;
+the latter two are identical wall-facing frames. Thus the simplified map
+walkability model is rejected: it omits original movement constraints or an
+entry-position transition. This is a negative routing receipt only. The
+frames remain private and no pickup or Eye claim follows from it.
+
 ## Required capture outcome
 
 Use the original PC 3.4 executable through DOSBox-X only as private capture
