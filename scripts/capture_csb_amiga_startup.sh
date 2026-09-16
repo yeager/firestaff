@@ -17,9 +17,10 @@ Required for --run:
   CSB_AMIGA_KICKSTART=/path/to/kickstart-1.3.rom
   CSB_AMIGA_DISK1=/path/to/CSB-disk-1.adf
   CSB_AMIGA_DISK2=/path/to/CSB-disk-2.adf
-  CSB_AMIGA_DISK3=/path/to/CSB-disk-3.adf
 
 Optional:
+  CSB_AMIGA_DISK3=/path/to/private-save-disk.adf  optional third drive; required
+                                               only with CSB_AMIGA_SAVE_DISK_WRITABLE=1
   CSB_AMIGA_CAPTURE_OUT=/path/to/output       (default: .codex-scratch)
   CSB_AMIGA_CAPTURE_SECONDS='32 52'           seconds after boot to capture
   CSB_AMIGA_KEYSTROKES='53:Down 54:Return@750' timed emulator key presses;
@@ -55,9 +56,9 @@ keystrokes="${CSB_AMIGA_KEYSTROKES:-}"
 display_num="${CSB_AMIGA_XVFB_DISPLAY:-106}"
 save_disk_writable="${CSB_AMIGA_SAVE_DISK_WRITABLE:-0}"
 
-for required in "$kickstart" "$disk1" "$disk2" "$disk3"; do
+for required in "$kickstart" "$disk1" "$disk2"; do
     if [[ -z "$required" || ! -f "$required" ]]; then
-        echo "ERROR: all CSB_AMIGA_KICKSTART and CSB_AMIGA_DISK{1,2,3} files are required" >&2
+        echo "ERROR: CSB_AMIGA_KICKSTART and CSB_AMIGA_DISK{1,2} must name readable files" >&2
         exit 3
     fi
 done
@@ -75,6 +76,14 @@ if [[ "$save_disk_writable" != "0" && "$save_disk_writable" != "1" ]]; then
     echo "ERROR: CSB_AMIGA_SAVE_DISK_WRITABLE must be 0 or 1" >&2
     exit 5
 fi
+if [[ -n "$disk3" && ! -f "$disk3" ]]; then
+    echo "ERROR: CSB_AMIGA_DISK3 must name a readable private save disk when set" >&2
+    exit 3
+fi
+if [[ "$save_disk_writable" == "1" && -z "$disk3" ]]; then
+    echo "ERROR: CSB_AMIGA_SAVE_DISK_WRITABLE=1 requires CSB_AMIGA_DISK3" >&2
+    exit 3
+fi
 if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?(\ [0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?)*$ ]]; then
     echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key[@milliseconds] entries separated by spaces" >&2
     exit 5
@@ -87,7 +96,6 @@ amiga_model = A500
 kickstart_file = $kickstart
 floppy_drive_0 = $disk1
 floppy_drive_1 = $disk2
-floppy_drive_2 = $disk3
 floppy_write_protect = $((1 - save_disk_writable))
 fullscreen = 0
 window_width = 800
@@ -104,6 +112,9 @@ screenshots_output_mask = 3
 screenshots_output_dir = $out
 save_states_dir = $out/save-states
 EOF
+if [[ -n "$disk3" ]]; then
+    printf 'floppy_drive_2 = %s\n' "$disk3" >>"$config"
+fi
 
 display=":$display_num"
 Xvfb "$display" -screen 0 1024x768x24 >"$out/xvfb.log" 2>&1 &
@@ -281,7 +292,11 @@ startup_frames=("$out"/startup-*.png)
     printf 'kickstart_sha256=%s\n' "$(sha256sum "$kickstart" | awk '{print $1}')"
     printf 'disk1_sha256=%s\n' "$(sha256sum "$disk1" | awk '{print $1}')"
     printf 'disk2_sha256=%s\n' "$(sha256sum "$disk2" | awk '{print $1}')"
-    printf 'disk3_sha256=%s\n' "$(sha256sum "$disk3" | awk '{print $1}')"
+    if [[ -n "$disk3" ]]; then
+        printf 'disk3_sha256=%s\n' "$(sha256sum "$disk3" | awk '{print $1}')"
+    else
+        printf 'disk3_sha256=not-mounted\n'
+    fi
     for image in "${startup_frames[@]}"; do
         printf 'frame_sha256=%s\n' "$(sha256sum "$image" | awk '{print $1}')"
     done
