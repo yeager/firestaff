@@ -54,7 +54,8 @@ Optional:
   FMTOWNS_DIFF_MOUSE=1|0                   (default: 0; enable Tsugaru's differential
                                              mouse integration for original desktop routes)
   FMTOWNS_INPUT_TIMELINE='host-seconds:enter|e [...]'
-                                             (default: empty; opt-in original-route input)
+                                             (default: empty; opt-in original-route input;
+                                             injected as X11 key events into Tsugaru)
   FMTOWNS_POINTER_CLICKS='host-seconds:x,y[@milliseconds] [...]'
                                              (default: empty; original 640x480
                                              framebuffer coordinates, private X input)
@@ -100,6 +101,14 @@ if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:(enter|e)(\ [0-9]+:
     echo "ERROR: FMTOWNS_INPUT_TIMELINE accepts only seconds:enter or seconds:e entries" >&2
     exit 3
 fi
+if [[ -n "$input_timeline" ]]; then
+    last_input_entry="${input_timeline##* }"
+    last_capture_entry="${timeline##* }"
+    if (( ${last_input_entry%%:*} > ${last_capture_entry%%:*} )); then
+        echo "ERROR: input timestamp occurs after the final capture timestamp" >&2
+        exit 3
+    fi
+fi
 if [[ -n "$pointer_clicks" && ! "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(@[0-9]+)?(\ [0-9]+:[0-9]+,[0-9]+(@[0-9]+)?)*$ ]]; then
     echo "ERROR: FMTOWNS_POINTER_CLICKS must use seconds:x,y or seconds:x,y@milliseconds entries separated by spaces" >&2
     exit 3
@@ -143,8 +152,8 @@ for required in "$tsugaru" "$seven_zip" sha256sum python3 Xvfb; do
         exit 4
     }
 done
-if [[ -n "$pointer_clicks" ]] && ! command -v xdotool >/dev/null 2>&1; then
-    echo "ERROR: xdotool is required when FMTOWNS_POINTER_CLICKS is set" >&2
+if [[ -n "$pointer_clicks" || -n "$input_timeline" ]] && ! command -v xdotool >/dev/null 2>&1; then
+    echo "ERROR: xdotool is required when FMTOWNS_POINTER_CLICKS or FMTOWNS_INPUT_TIMELINE is set" >&2
     exit 4
 fi
 python3 -c 'from PIL import Image' >/dev/null 2>&1 || {
@@ -207,13 +216,6 @@ index=0
 command_file="$out/tsugaru-capture-commands.txt"
 {
     printf 'RUN\n'
-    # Input remains explicit and deliberately tiny.  `TYPE ` is Tsugaru CUI's
-    # documented auto-type of a carriage return; `TYPE E` is the original
-    # DM1/CSB FM Towns entrance-key alternative.  They are emitted only from
-    # caller-supplied original routes, never guessed by this harness.
-    input_entries=()
-    if [[ -n "$input_timeline" ]]; then read -r -a input_entries <<<"$input_timeline"; fi
-    input_index=0
     for entry in $timeline; do
         second="${entry%%:*}"
         label="${entry#*:}"
@@ -222,22 +224,6 @@ command_file="$out/tsugaru-capture-commands.txt"
             exit 5
         fi
         index=$((index + 1))
-        while (( input_index < ${#input_entries[@]} )); do
-            input_entry="${input_entries[input_index]}"
-            input_second="${input_entry%%:*}"
-            if (( input_second > second )); then break; fi
-            if (( input_second < previous )); then
-                echo "ERROR: input timestamps must be nondecreasing and must not precede emitted events" >&2
-                exit 5
-            fi
-            printf 'sleep %s\n' "$((input_second - previous))"
-            case "${input_entry#*:}" in
-                enter) printf 'TYPE \n' ;;
-                e) printf 'TYPE E\n' ;;
-            esac
-            previous="$input_second"
-            input_index=$((input_index + 1))
-        done
         printf 'sleep %s\n' "$((second - previous))"
         if [[ "$diagnostics" == "1" ]]; then
             # Status includes the VM's current time/register state.  Keep it
@@ -250,10 +236,6 @@ command_file="$out/tsugaru-capture-commands.txt"
         printf 'SS "%s/startup-%02d-%ss-%s.png"\n' "$out" "$index" "$second" "$label"
         previous="$second"
     done
-    if (( input_index != ${#input_entries[@]} )); then
-        echo "ERROR: input timestamp occurs after the final capture timestamp" >&2
-        exit 5
-    fi
     # Use the CUI's orderly VM shutdown after the last framebuffer command.
     # FORCEQUIT calls exit(0) directly from the command interpreter and has
     # been observed to race the VM thread on Linux; a signal or crash after
@@ -278,6 +260,10 @@ xvfb_display=":$xvfb_display_num"
 Xvfb "$xvfb_display" -screen 0 1024x768x24 -nolisten tcp >"$out/xvfb.log" 2>&1 &
 xvfb_pid=$!
 cleanup_xvfb() {
+    if [[ -n "${input_pid:-}" ]] && kill -0 "$input_pid" 2>/dev/null; then
+        kill "$input_pid" 2>/dev/null || true
+        wait "$input_pid" 2>/dev/null || true
+    fi
     if [[ -n "${pointer_pid:-}" ]] && kill -0 "$pointer_pid" 2>/dev/null; then
         kill "$pointer_pid" 2>/dev/null || true
         wait "$pointer_pid" 2>/dev/null || true
@@ -295,9 +281,20 @@ if ! kill -0 "$xvfb_pid" 2>/dev/null; then
 fi
 
 pointer_pid=""
+input_pid=""
+find_tsugaru_window() {
+    local attempt window=""
+    for attempt in $(seq 1 80); do
+        window="$(DISPLAY="$xvfb_display" xdotool search --name 'Tsugaru' 2>/dev/null | head -n 1 || true)"
+        [[ -n "$window" ]] && break
+        sleep 0.1
+    done
+    [[ -n "$window" ]] || return 1
+    printf '%s\n' "$window"
+}
 run_pointer_clicks() {
     local previous=0 entry timestamp point held_ms hold_seconds window
-    local x y attempt
+    local x y
     local -a entries
     read -r -a entries <<<"$pointer_clicks"
     for entry in "${entries[@]}"; do
@@ -313,13 +310,7 @@ run_pointer_clicks() {
             return 1
         fi
         sleep "$((timestamp - previous))"
-        window=""
-        for attempt in $(seq 1 80); do
-            window="$(DISPLAY="$xvfb_display" xdotool search --name 'Tsugaru' 2>/dev/null | head -n 1 || true)"
-            [[ -n "$window" ]] && break
-            sleep 0.1
-        done
-        if [[ -z "$window" ]]; then
+        if ! window="$(find_tsugaru_window)"; then
             echo "ERROR: could not find Tsugaru window for pointer action" >&2
             return 1
         fi
@@ -341,9 +332,38 @@ run_pointer_clicks() {
         previous="$timestamp"
     done
 }
+run_input_events() {
+    local previous=0 entry timestamp key window
+    local -a entries
+    read -r -a entries <<<"$input_timeline"
+    for entry in "${entries[@]}"; do
+        timestamp="${entry%%:*}"
+        key="${entry#*:}"
+        if (( timestamp < previous )); then
+            echo "ERROR: input timestamps must be nondecreasing" >&2
+            return 1
+        fi
+        sleep "$((timestamp - previous))"
+        if ! window="$(find_tsugaru_window)"; then
+            echo "ERROR: could not find Tsugaru window for keyboard action" >&2
+            return 1
+        fi
+        DISPLAY="$xvfb_display" xdotool windowfocus --sync "$window"
+        case "$key" in
+            enter) DISPLAY="$xvfb_display" xdotool key --window "$window" Return ;;
+            e) DISPLAY="$xvfb_display" xdotool key --window "$window" e ;;
+        esac
+        printf 'key=%s:%s window=%s\n' "$timestamp" "$key" "$window" >>"$out/input-actions.log"
+        previous="$timestamp"
+    done
+}
 if [[ -n "$pointer_clicks" ]]; then
     run_pointer_clicks &
     pointer_pid=$!
+fi
+if [[ -n "$input_timeline" ]]; then
+    run_input_events &
+    input_pid=$!
 fi
 
 set +e
@@ -366,6 +386,9 @@ tsugaru_status=${PIPESTATUS[1]}
 set -e
 if [[ -n "$pointer_pid" ]]; then
     wait "$pointer_pid"
+fi
+if [[ -n "$input_pid" ]]; then
+    wait "$input_pid"
 fi
 if [[ "$tsugaru_status" -ne 0 ]]; then
     echo "ERROR: Tsugaru exited with status $tsugaru_status; see tsugaru.log" >&2
