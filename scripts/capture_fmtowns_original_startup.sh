@@ -19,11 +19,13 @@ out="${FMTOWNS_CAPTURE_OUT:-$repo/.codex-scratch/fmtowns-original-startup-captur
 stage="${FMTOWNS_STAGE_DIR:-$repo/.codex-scratch/fmtowns-original-media-stage}"
 timeline="${FMTOWNS_CAPTURE_TIMELINE:-}"
 input_timeline="${FMTOWNS_INPUT_TIMELINE:-}"
+pointer_clicks="${FMTOWNS_POINTER_CLICKS:-}"
 towns_type="${FMTOWNS_TYPE:-MX}"
 boot_key="${FMTOWNS_BOOT_KEY:-}"
 high_fidelity="${FMTOWNS_HIGH_FIDELITY:-0}"
 nowait_boot="${FMTOWNS_NOWAIT_BOOT:-1}"
 diagnostics="${FMTOWNS_DIAGNOSTICS:-0}"
+diff_mouse="${FMTOWNS_DIFF_MOUSE:-0}"
 no_wait="${FMTOWNS_NOWAIT:-0}"
 frequency_mhz="${FMTOWNS_FREQ_MHZ:-0}"
 xvfb_display_num="${FMTOWNS_XVFB_DISPLAY:-170}"
@@ -49,8 +51,13 @@ Optional:
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
   FMTOWNS_FREQ_MHZ=0|1..200                (default: 0; diagnostic emulated CPU frequency, recorded in receipt)
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
+  FMTOWNS_DIFF_MOUSE=1|0                   (default: 0; enable Tsugaru's differential
+                                             mouse integration for original desktop routes)
   FMTOWNS_INPUT_TIMELINE='host-seconds:enter|e [...]'
                                              (default: empty; opt-in original-route input)
+  FMTOWNS_POINTER_CLICKS='host-seconds:x,y[@milliseconds] [...]'
+                                             (default: empty; original 640x480
+                                             framebuffer coordinates, private X input)
   FMTOWNS_XVFB_DISPLAY=170                 (default: 170; private Xvfb display for Tsugaru CUI)
 
 The ZIP is staged only for this development-time emulator session because
@@ -93,6 +100,10 @@ if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:(enter|e)(\ [0-9]+:
     echo "ERROR: FMTOWNS_INPUT_TIMELINE accepts only seconds:enter or seconds:e entries" >&2
     exit 3
 fi
+if [[ -n "$pointer_clicks" && ! "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(@[0-9]+)?(\ [0-9]+:[0-9]+,[0-9]+(@[0-9]+)?)*$ ]]; then
+    echo "ERROR: FMTOWNS_POINTER_CLICKS must use seconds:x,y or seconds:x,y@milliseconds entries separated by spaces" >&2
+    exit 3
+fi
 if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
     echo "ERROR: FMTOWNS_HIGH_FIDELITY must be 0 or 1" >&2
     exit 3
@@ -107,6 +118,10 @@ if [[ "$nowait_boot" != "0" && "$nowait_boot" != "1" ]]; then
 fi
 if [[ "$diagnostics" != "0" && "$diagnostics" != "1" ]]; then
     echo "ERROR: FMTOWNS_DIAGNOSTICS must be 0 or 1" >&2
+    exit 3
+fi
+if [[ "$diff_mouse" != "0" && "$diff_mouse" != "1" ]]; then
+    echo "ERROR: FMTOWNS_DIFF_MOUSE must be 0 or 1" >&2
     exit 3
 fi
 if [[ "$no_wait" != "0" && "$no_wait" != "1" ]]; then
@@ -128,6 +143,10 @@ for required in "$tsugaru" "$seven_zip" sha256sum python3 Xvfb; do
         exit 4
     }
 done
+if [[ -n "$pointer_clicks" ]] && ! command -v xdotool >/dev/null 2>&1; then
+    echo "ERROR: xdotool is required when FMTOWNS_POINTER_CLICKS is set" >&2
+    exit 4
+fi
 python3 -c 'from PIL import Image' >/dev/null 2>&1 || {
     echo "ERROR: Pillow is required to validate Tsugaru framebuffer PNGs" >&2
     exit 4
@@ -259,6 +278,10 @@ xvfb_display=":$xvfb_display_num"
 Xvfb "$xvfb_display" -screen 0 1024x768x24 -nolisten tcp >"$out/xvfb.log" 2>&1 &
 xvfb_pid=$!
 cleanup_xvfb() {
+    if [[ -n "${pointer_pid:-}" ]] && kill -0 "$pointer_pid" 2>/dev/null; then
+        kill "$pointer_pid" 2>/dev/null || true
+        wait "$pointer_pid" 2>/dev/null || true
+    fi
     if kill -0 "$xvfb_pid" 2>/dev/null; then
         kill "$xvfb_pid" 2>/dev/null || true
         wait "$xvfb_pid" 2>/dev/null || true
@@ -269,6 +292,58 @@ sleep 0.2
 if ! kill -0 "$xvfb_pid" 2>/dev/null; then
     echo "ERROR: unable to start private Xvfb display $xvfb_display; see xvfb.log" >&2
     exit 6
+fi
+
+pointer_pid=""
+run_pointer_clicks() {
+    local previous=0 entry timestamp point held_ms hold_seconds window
+    local x y attempt
+    local -a entries
+    read -r -a entries <<<"$pointer_clicks"
+    for entry in "${entries[@]}"; do
+        timestamp="${entry%%:*}"
+        point="${entry#*:}"
+        held_ms=0
+        if [[ "$point" == *@* ]]; then
+            held_ms="${point##*@}"
+            point="${point%@*}"
+        fi
+        if (( timestamp < previous )); then
+            echo "ERROR: pointer timestamps must be nondecreasing" >&2
+            return 1
+        fi
+        sleep "$((timestamp - previous))"
+        window=""
+        for attempt in $(seq 1 80); do
+            window="$(DISPLAY="$xvfb_display" xdotool search --name 'Tsugaru' 2>/dev/null | head -n 1 || true)"
+            [[ -n "$window" ]] && break
+            sleep 0.1
+        done
+        if [[ -z "$window" ]]; then
+            echo "ERROR: could not find Tsugaru window for pointer action" >&2
+            return 1
+        fi
+        x="${point%,*}"; y="${point#*,}"
+        # Tsugaru's CUI screenshots are 640x480 framebuffer coordinates.
+        # `--window` makes xdotool interpret the supplied coordinates in the
+        # SDL client area, avoiding host-desktop focus or scaling ambiguity.
+        DISPLAY="$xvfb_display" xdotool windowfocus --sync "$window"
+        DISPLAY="$xvfb_display" xdotool mousemove --window "$window" "$x" "$y"
+        if (( held_ms > 0 )); then
+            hold_seconds="$(awk -v milliseconds="$held_ms" 'BEGIN { printf "%.3f", milliseconds / 1000 }')"
+            DISPLAY="$xvfb_display" xdotool mousedown 1
+            sleep "$hold_seconds"
+            DISPLAY="$xvfb_display" xdotool mouseup 1
+        else
+            DISPLAY="$xvfb_display" xdotool click 1
+        fi
+        printf 'pointer=%s:%s@%sms window=%s\n' "$timestamp" "$point" "$held_ms" "$window" >>"$out/pointer-actions.log"
+        previous="$timestamp"
+    done
+}
+if [[ -n "$pointer_clicks" ]]; then
+    run_pointer_clicks &
+    pointer_pid=$!
 fi
 
 set +e
@@ -284,10 +359,14 @@ if [[ -n "$boot_key" ]]; then boot_args+=(-BOOTKEY "$boot_key"); fi
 if [[ "$nowait_boot" == "1" ]]; then boot_args+=(-NOWAITBOOT); fi
 if [[ "$no_wait" == "1" ]]; then boot_args+=(-NOWAIT); fi
 if [[ "$frequency_mhz" != "0" ]]; then boot_args+=(-FREQ "$frequency_mhz"); fi
+if [[ "$diff_mouse" == "1" ]]; then boot_args+=(-DIFFMOUSE); fi
 run_commands | env DISPLAY="$xvfb_display" "$tsugaru" "$rom_stage" -CD "$cue" "${fidelity_args[@]}" "${boot_args[@]}" \
     -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
 tsugaru_status=${PIPESTATUS[1]}
 set -e
+if [[ -n "$pointer_pid" ]]; then
+    wait "$pointer_pid"
+fi
 if [[ "$tsugaru_status" -ne 0 ]]; then
     echo "ERROR: Tsugaru exited with status $tsugaru_status; see tsugaru.log" >&2
     exit 6
@@ -348,6 +427,7 @@ fi
     printf 'timeline_clock=host_wall_seconds_after_RUN; not_guest_time\n'
     printf 'timeline_requested=%s\n' "$timeline"
     printf 'input_timeline_requested=%s\n' "${input_timeline:-none}"
+    printf 'pointer_timeline_requested=%s\n' "${pointer_clicks:-none}"
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
     printf 'boot_key=%s\n' "${boot_key:-normal}"
@@ -356,6 +436,7 @@ fi
     printf 'nowait=%s\n' "$no_wait"
     printf 'frequency_mhz=%s\n' "$frequency_mhz"
     printf 'diagnostics=%s\n' "$diagnostics"
+    printf 'differential_mouse=%s\n' "$diff_mouse"
     printf 'guest_time_ns_at_last_diagnostic=%s\n' "$guest_time_ns"
     printf 'archive_sha256=%s\n' "$(sha256sum "$archive" | awk '{print $1}')"
     printf 'cue_sha256=%s\n' "$(sha256sum "$cue" | awk '{print $1}')"
