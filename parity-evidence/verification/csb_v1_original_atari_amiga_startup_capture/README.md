@@ -45,6 +45,12 @@ A second independent, write-protected A500 session reached the same title
 sequence at 24 seconds (`add7c11fa2d8b659cf634db581202183e4b415ce098135d54275e8250d915f6d`)
 and 42 seconds (`09a576ebf918a20700ab648a1bd459fa0921916540054dcf7ca8e7dc237bf6c8`).
 
+A third independent A500 session, using the capture helper's SDL dummy-host
+audio path and its non-uniform-canvas admission gate, reached the FTL ident at
+32 seconds (`1dae95b5addd44eb804639e5cf844aba34be5c946ad801a0f1c9031c25ee6482`).
+This validates the native-capture route after rejecting an earlier all-white
+boot canvas; it is still title evidence only.
+
 The original screenshots remain outside the repository with the legally-owned
 source media. The hashes above bind reviewable private captures to the exact
 media and capture points without publishing game art.
