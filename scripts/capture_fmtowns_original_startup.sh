@@ -49,7 +49,7 @@ Optional:
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
   FMTOWNS_FREQ_MHZ=0|1..200                (default: 0; diagnostic emulated CPU frequency, recorded in receipt)
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
-  FMTOWNS_INPUT_TIMELINE='host-seconds:enter [...]'
+  FMTOWNS_INPUT_TIMELINE='host-seconds:enter|e [...]'
                                              (default: empty; opt-in original-route input)
   FMTOWNS_XVFB_DISPLAY=170                 (default: 170; private Xvfb display for Tsugaru CUI)
 
@@ -89,8 +89,8 @@ if [[ -z "$timeline" || ! "$timeline" =~ ^[0-9]+:[A-Za-z0-9_-]+(\ [0-9]+:[A-Za-z
     echo "ERROR: FMTOWNS_CAPTURE_TIMELINE must use seconds:label entries separated by spaces" >&2
     exit 3
 fi
-if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:enter(\ [0-9]+:enter)*$ ]]; then
-    echo "ERROR: FMTOWNS_INPUT_TIMELINE currently accepts only seconds:enter entries" >&2
+if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:(enter|e)(\ [0-9]+:(enter|e))*$ ]]; then
+    echo "ERROR: FMTOWNS_INPUT_TIMELINE accepts only seconds:enter or seconds:e entries" >&2
     exit 3
 fi
 if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
@@ -188,9 +188,10 @@ index=0
 command_file="$out/tsugaru-capture-commands.txt"
 {
     printf 'RUN\n'
-    # Input remains explicit and deliberately tiny: `TYPE ` is Tsugaru CUI's
-    # documented auto-type of a carriage return.  It is emitted only from a
-    # caller-supplied original route, never guessed by this harness.
+    # Input remains explicit and deliberately tiny.  `TYPE ` is Tsugaru CUI's
+    # documented auto-type of a carriage return; `TYPE E` is the original
+    # DM1/CSB FM Towns entrance-key alternative.  They are emitted only from
+    # caller-supplied original routes, never guessed by this harness.
     input_entries=()
     if [[ -n "$input_timeline" ]]; then read -r -a input_entries <<<"$input_timeline"; fi
     input_index=0
@@ -211,7 +212,10 @@ command_file="$out/tsugaru-capture-commands.txt"
                 exit 5
             fi
             printf 'sleep %s\n' "$((input_second - previous))"
-            printf 'TYPE \n'
+            case "${input_entry#*:}" in
+                enter) printf 'TYPE \n' ;;
+                e) printf 'TYPE E\n' ;;
+            esac
             previous="$input_second"
             input_index=$((input_index + 1))
         done
