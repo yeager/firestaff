@@ -52,6 +52,28 @@ floor-item interaction. A blocked move, forced turn, teleporter, encounter,
 or non-selectable stair cell invalidates the candidate and must be recorded as
 such; it must not be repaired by inserting guessed movement.
 
+### Candidate execution result
+
+The complete Hall-entry, Chani-resurrection, and translated candidate route
+was run privately against the source-locked PC 3.4 media on 2026-09-16. Its
+seven raw original-frame SHA-256 values, in capture order, were:
+
+```text
+2daf1b027cd489afb6de218f6b06c244ca1e4e8fd34a3be6811e79daeb9a3b8e
+df447ff20f686bfb58b87cd899fe0bcf604cc587209e3e1cfb329790e691ac76
+1f6f2d25ef1b95bf44f78f12754efad466b803a7740f77c0954a5a6c3354ba2d
+e263359e9d541837ca50dea42757d232336b914de0ac463c1b7fd9289d126e74
+d52340ff63d560b1b3caba5e36f94fb5a2a97590ea3ad7d24b264ce3ce043626
+668703ba1e73a6c0df5b3eac151ae1067fbf44b8e76d011f88b12e0b742f54b5
+59d55a4e0898c18bdbd8951b53657697499ae0e501b0d83e08bac9067b0e58f4
+```
+
+All raw frames passed the capture health gate, but the final state did not
+show or establish a selectable floor scroll. The candidate is therefore
+rejected as a live navigation route. No Eye input was sent and this result
+does not satisfy any scroll, text, or pixel-parity requirement. The original
+frames remain private.
+
 ## Required capture outcome
 
 Use the original PC 3.4 executable through DOSBox-X only as private capture

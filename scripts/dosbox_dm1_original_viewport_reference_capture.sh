@@ -1333,10 +1333,15 @@ PY
     printf 'index\tfilename\troute_label\troute_token\n' > "${SHOT_LABEL_MANIFEST}"
     local i=0 src legacy_label label route_label route_token ppm png
     while IFS= read -r src; do
-        if [[ $i -ge ${#labels[@]} ]]; then
-            break
+        # The historic six-frame overlay route has stable labels, but a
+        # longer explicit original route is valid capture evidence too.  Do
+        # not silently drop its later raw frames merely because it exceeds
+        # that legacy sequence.  Explicit shot labels below remain preferred.
+        if [[ $i -lt ${#labels[@]} ]]; then
+            legacy_label="${labels[$i]}"
+        else
+            printf -v legacy_label '%02d_route_frame_original_viewport_224x136' "$((i + 1))"
         fi
-        legacy_label="${labels[$i]}"
         route_label="${route_shot_labels[$i]:-}"
         if [[ -n "$route_label" ]]; then
             route_token="shot:${route_label}"
