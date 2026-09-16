@@ -130,7 +130,11 @@ def main() -> int:
         active = 0
         vdp1_draw_frames = 0
         vdp1_draw_commands = 0
-        vdp1_draw_sources: list[str] = []
+        # A long capture can repeat a stable VDP1 command hundreds of times.
+        # Keep a bounded, deterministic receipt of each distinct source instead
+        # of emitting one token per frame: the latter obscures the actual
+        # changes an operator is trying to locate.
+        vdp1_draw_sources: dict[str, list[int]] = {}
         first = "none"
         for frame, state in zip(frames, states):
             registers = frame["vdp2-regs"]
@@ -152,10 +156,14 @@ def main() -> int:
             if descriptors:
                 vdp1_draw_frames += 1
                 vdp1_draw_commands += command_count
-                vdp1_draw_sources.extend(
-                    f"f{len(labels) - 1}:{descriptor}"
-                    for descriptor in descriptors
-                )
+                frame_index = len(labels) - 1
+                for descriptor in descriptors:
+                    observed = vdp1_draw_sources.get(descriptor)
+                    if observed is None:
+                        vdp1_draw_sources[descriptor] = [frame_index, frame_index, 1]
+                    else:
+                        observed[1] = frame_index
+                        observed[2] += 1
             totals[label] = totals.get(label, 0) + 1
             # Keep the first observation compact and reproducible; later
             # frames are represented by the distinct label/count summary.
@@ -166,12 +174,18 @@ def main() -> int:
                     f"register_byte_order={byte_order}"
                 )
         distinct = ",".join(sorted(set(labels)))
+        source_summary = "|".join(
+            f"f{first_frame}-{last_frame}/n{count}:{descriptor}"
+            for descriptor, (first_frame, last_frame, count)
+            in sorted(vdp1_draw_sources.items())
+        ) or "none"
         print(
             f"file={path.parent.name} frames={len(frames)} "
             f"vdp1_nonidle_state_frames={active} states={distinct} first={first} "
             f"vdp1_draw_command_frames={vdp1_draw_frames} "
             f"vdp1_draw_commands={vdp1_draw_commands} "
-            f"vdp1_draw_sources={'|'.join(vdp1_draw_sources) or 'none'} "
+            f"vdp1_draw_source_variants={len(vdp1_draw_sources)} "
+            f"vdp1_draw_sources={source_summary} "
             f"manifest_binding={manifest_binding(path.parent, blob)} "
             "asset_consumer_identity=unbound"
         )

@@ -33,7 +33,14 @@ presentation boundary.
   SH-2 code, but its 64-frame VDP1/VDP2 output remains byte-identical to the
   no-input control. That reader is therefore not yet an admitted menu
   consumer; find the later transition that changes presentation and bind it
-  to the retail menu asset consumer.
+  to the retail menu asset consumer.  A separate post-title control/input
+  pair at frames 30000--30119 exercised Start, A, B and C in four distinct
+  20-frame pulses.  All eight captured video regions (VDP1 state/VRAM/frame
+  buffers/draw selector and VDP2 registers/VRAM/CRAM) were byte-identical to
+  the no-input control.  The observed active VDP1 state has two stable
+  texture sources for frames 30000--30037, but remains an unbound hardware
+  observation rather than proof of a menu, HUD or dungeon consumer.  Search
+  beyond this window for the first input-correlated presentation change.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay.
