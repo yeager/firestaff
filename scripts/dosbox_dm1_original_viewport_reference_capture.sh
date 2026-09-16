@@ -1249,6 +1249,7 @@ def load_pixels(path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]
 paths = sorted(out.glob("image*.png"))
 rows = []
 problems = []
+seen_hashes: dict[str, str] = {}
 for idx, path in enumerate(paths, 1):
     dims, pixels = load_pixels(path)
     total = len(pixels)
@@ -1280,6 +1281,13 @@ for idx, path in enumerate(paths, 1):
         problems.append(f"{path.name}: black/blank rawshot candidate nonblack={row['nonblackRatio']} uniqueColors={unique}")
     if row["lowerCanvasNonblackRatio"] <= 0.005:
         problems.append(f"{path.name}: no meaningful canvas content below host UI lowerCanvasNonblack={row['lowerCanvasNonblackRatio']}")
+    prior = seen_hashes.get(row["sha256"])
+    if prior is not None:
+        problems.append(
+            f"{path.name}: duplicate raw framebuffer of {prior}; "
+            "a multi-frame route cannot establish distinct original states")
+    else:
+        seen_hashes[row["sha256"]] = path.name
     rows.append(row)
 payload = {
     "schema": "dm1_original_raw_frame_health.v1",
@@ -1417,6 +1425,7 @@ if expected <= 0:
 paths = sorted(crop_dir.glob("*.ppm"))
 if len(paths) != expected:
     raise SystemExit(f"ERROR: expected exactly {expected} normalized viewport PPM crops, found {len(paths)} in {crop_dir}")
+seen_hashes: dict[str, str] = {}
 with manifest.open("w") as f:
     f.write("kind\tfilename\twidth\theight\tbytes\tsha256\n")
     for path in paths:
@@ -1424,7 +1433,14 @@ with manifest.open("w") as f:
         width, height = ppm_dims(data, path)
         if (width, height) != (224, 136):
             raise SystemExit(f"ERROR: wrong crop geometry for {path}: {width}x{height}")
-        f.write(f"original_viewport_224x136\t{path.name}\t{width}\t{height}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n")
+        digest = hashlib.sha256(data).hexdigest()
+        prior = seen_hashes.get(digest)
+        if prior is not None:
+            raise SystemExit(
+                f"ERROR: duplicate normalized viewport: {path.name} and {prior}; "
+                "a multi-frame route cannot establish distinct original states")
+        seen_hashes[digest] = path.name
+        f.write(f"original_viewport_224x136\t{path.name}\t{width}\t{height}\t{len(data)}\t{digest}\n")
 PY
     ls -lh "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}" "${CROP_DIR}"/* | tee "${SIZE_LOG}"
     if [[ -n "${ROUTE_EVENTS}" ]]; then
