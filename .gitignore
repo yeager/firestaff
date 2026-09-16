@@ -33,6 +33,10 @@ firestaff_dm1_pc34_corpus_*/
 /parity-evidence/captures/**/*.jpg
 /parity-evidence/captures/**/*.jpeg
 /parity-evidence/captures/**/*.wav
+/parity-evidence/verification/**/image*.png
+/parity-evidence/verification/**/original*.png
+/parity-evidence/verification/**/framebuffer_inputs/original/**/*.png
+/parity-evidence/overlays/**/*original*.png
 /verification-screens/**/*.jpg
 /verification-screens/**/*.jpeg
 /verification-screens/**/*.gif
