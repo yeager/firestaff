@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+- 2026-09-16: Revalidated native launch coverage against the supplied retail
+  Atari STX, Amiga ZIP/ADF, and FM Towns ZIP without external runtime
+  emulators or extraction. Atari passed campaign title, input matrix and
+  CLI/start-menu launch in Original and Modern. Amiga passed source startup,
+  title input, runtime movement and start-menu media retention. FM Towns
+  passed title, MINI.DAT initial party state and start-menu launch, while its
+  captured Original, Modern and Custom Entrance paths retained C28 and closed
+  C002/C003 doors without the broad-red C004 regression. These are bounded
+  native launch/presentation checks; campaign saves, original emulator image
+  pairs, audio comparisons and DSA-bearing saves remain open in `TODO-csb.md`.
+
 - 2026-09-08: Added an authentic FM Towns Entrance screenshot regression for
   the F31 ZIP. It verifies the source C28 palette, closed C002/C003 entrance
   composition and a broad-red C004 failure signature. The verifier accepts
