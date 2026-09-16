@@ -94,6 +94,14 @@ Entrance but cannot establish a champion-bearing dungeon state without that
 missing source material. Later work must record media hashes and provenance
 before using newly supplied captures; it must never generate a replacement
 corpus.
+
+The separately obtained CSBWin compatibility corpus is also not an admissible
+substitute: a private non-sanitized CSBWin reference build reaches its
+graphics-table decoder but resolves an impossible graphic identifier and then
+fails. It therefore cannot be used to manufacture a DSA save, a platform
+capture, or any parity claim. Retest only when a corpus is supplied with
+edition and source-media provenance that binds its `dungeon.dat`,
+`graphics.dat`, and `CSBgraphics.dat` together.
 # CSB C30 projectile-hit reaction uses the raw C04 group and source-shaped
 # F0199 route. ReDMCSB GROUP.C F0209:2024-2044 first ignores attacking/fleeing
 # groups, makes a 3/4 M004 gate, turns without moving if the party is not on
