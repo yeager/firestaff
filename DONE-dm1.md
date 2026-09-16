@@ -1,5 +1,15 @@
 # Firestaff DONE — DM1
 
+- 2026-09-16: Revalidated the authentic PC 3.4 Entrance-to-Hall checkpoint
+  with DOSBox-X and the original game data. The two-frame route produced a
+  healthy, non-duplicate 320x200 Entrance frame followed by a healthy,
+  non-duplicate dungeon frame; the semantic classifier identified them as
+  `entrance_menu` and `dungeon_gameplay`, respectively. This closes the
+  capture-harness handoff check only. It does not establish a recruited C127
+  pose, inventory/pickup behavior, Eye-scroll behavior, or pixel parity, all
+  of which remain explicitly open in `TODO-dm1.md`. Original captures remain
+  operator-local and are not part of the repository.
+
 - 2026-09-08: Corrected the source binding for the authenticated PC 3.4 Hall
   C127 route. `MOVESENS.C` supplies C127's C026 `SensorData` solely as the
   portrait selector; `REVIVE.C F0280` then walks the party's current Hall
