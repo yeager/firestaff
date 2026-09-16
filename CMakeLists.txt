@@ -12492,6 +12492,21 @@ if(BUILD_TESTING)
             LABELS "dm1;dos;pc34;real-media;in-memory;objects;skip-safe")
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_scroll_source_placement_pc34.c")
+        add_executable(test_m11_dm1_hoc_scroll_source_placement_pc34
+            tests/test_m11_dm1_hoc_scroll_source_placement_pc34.c)
+        target_link_libraries(test_m11_dm1_hoc_scroll_source_placement_pc34 PRIVATE firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_hoc_scroll_source_placement_pc34 PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(NAME m11_dm1_hoc_scroll_source_placement_pc34
+            COMMAND test_m11_dm1_hoc_scroll_source_placement_pc34)
+        set_tests_properties(m11_dm1_hoc_scroll_source_placement_pc34 PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;hoc;scroll;skip-safe")
+    endif()
+
     add_executable(test_m11_dm1_spell_panel_real tests/test_m11_dm1_spell_panel_real.c)
     target_link_libraries(test_m11_dm1_spell_panel_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME m11_dm1_spell_panel_real COMMAND test_m11_dm1_spell_panel_real)
