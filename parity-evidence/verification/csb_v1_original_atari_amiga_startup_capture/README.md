@@ -4,8 +4,9 @@
 
 This receipt records independent startup/title captures from original CSB
 media. Both emulator sessions mounted media write-protected. The captures are
-reference material for title timing, palette, and presentation only; they do
-not establish HUD, dungeon, door, audio, DSA, or full Firestaff pixel parity.
+reference material for title timing, palette, and presentation only, except
+for the explicitly-labelled Atari dungeon-entry frame below. They do not
+establish HUD, door, audio, DSA, or full Firestaff pixel parity.
 
 ## Atari ST
 
@@ -25,6 +26,19 @@ route: 20 seconds produced the FTL ident
 `60e0cb7f203f0acefb72bd47914413868ef0eeea9e92d1d9de720cdabf626b2d`,
 and 40 seconds produced the Chaos title
 `02320a65f5f455523b3672eb2577aaa43b4a113d0b7a8ca9ee74a76d782f00e6`.
+
+### Atari menu-ready input receipt
+
+The original Prison surface became interactable only after its presentation
+had settled. A five-second mouse hold at the original-space Prison control
+`(260,50)`, issued after that point in a separate write-protected session,
+produced a stable dungeon-entry viewport. Two captures at 110 and 128 seconds
+had the identical SHA-256
+`9ce88e2af00863312426c515c3f72b662121f156fe12bbd95ce92aa5d8e150f6`.
+
+This establishes the original Atari ST input route through the Prison control
+and provides a source-bound dungeon viewport reference. It does not identify
+the party state, prove a DSA state, or establish any Firestaff parity claim.
 
 ## Amiga
 

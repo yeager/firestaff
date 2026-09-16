@@ -21,7 +21,8 @@ Required for --run:
 Optional:
   CSB_ATARI_CAPTURE_OUT=/path/to/output       (default: .codex-scratch)
   CSB_ATARI_CAPTURE_SECONDS='18 36'           seconds after boot to capture
-  CSB_ATARI_POINTER_CLICKS='70:720,280'       timed emulator-relative clicks
+  CSB_ATARI_POINTER_CLICKS='70:260,50@1500'   timed emulator-relative clicks,
+                                               optionally held in ms
   CSB_ATARI_KEYSTROKES='70:Return@1500'        timed key presses, optionally held in ms (exclusive with clicks)
   CSB_ATARI_XVFB_DISPLAY=103                  dedicated X display number
   CSB_ATARI_SOUND_HZ=44100                    original-session audio frequency
@@ -115,8 +116,8 @@ fi
 if [[ "$capture_audio" == "1" && -z "$sdl_audio_driver" ]]; then
     sdl_audio_driver="dummy"
 fi
-if [[ -n "$pointer_clicks" ]] && ! [[ "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(\ [0-9]+:[0-9]+,[0-9]+)*$ ]]; then
-    echo "ERROR: CSB_ATARI_POINTER_CLICKS must use seconds:x,y entries separated by spaces" >&2
+if [[ -n "$pointer_clicks" ]] && ! [[ "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(@[0-9]+)?(\ [0-9]+:[0-9]+,[0-9]+(@[0-9]+)?)*$ ]]; then
+    echo "ERROR: CSB_ATARI_POINTER_CLICKS must use seconds:x,y or seconds:x,y@milliseconds entries separated by spaces" >&2
     exit 5
 fi
 if [[ -n "$keystrokes" ]] && ! [[ "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?(\ [0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?)*$ ]]; then
@@ -224,11 +225,16 @@ if [[ -n "$keystrokes" ]]; then
 fi
 
 run_clicks_through() {
-    local target="$1" entry timestamp point x y px py geom gx gy gw gh
+    local target="$1" entry timestamp point x y px py geom gx gy gw gh held_ms hold_seconds
     while [[ "$click_index" -lt "${#click_entries[@]}" ]]; do
         entry="${click_entries[$click_index]}"
         timestamp="${entry%%:*}"
         point="${entry#*:}"
+        held_ms=0
+        if [[ "$point" == *@* ]]; then
+            held_ms="${point##*@}"
+            point="${point%@*}"
+        fi
         if (( timestamp > target )); then
             break
         fi
@@ -270,7 +276,15 @@ PY
         # still confined to the dedicated Xvfb display and does not target a
         # host desktop window.
         DISPLAY="$display" xdotool windowfocus --sync "$window"
-        DISPLAY="$display" xdotool mousemove "$((gx + px))" "$((gy + py))" click 1
+        DISPLAY="$display" xdotool mousemove "$((gx + px))" "$((gy + py))"
+        if (( held_ms > 0 )); then
+            hold_seconds="$(awk -v milliseconds="$held_ms" 'BEGIN { printf "%.3f", milliseconds / 1000 }')"
+            DISPLAY="$display" xdotool mousedown 1
+            sleep "$hold_seconds"
+            DISPLAY="$display" xdotool mouseup 1
+        else
+            DISPLAY="$display" xdotool click 1
+        fi
         previous="$timestamp"
         click_index=$((click_index + 1))
     done
