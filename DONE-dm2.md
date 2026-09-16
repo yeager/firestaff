@@ -1,5 +1,17 @@
 # Firestaff DONE — DM2
 
+## 2026-09-16 — FM Towns New Game real-media revalidation
+
+- Rebuilt and ran the full M11 FM Towns real-media gameplay regression against
+  the admitted HME-242 ZIP. It reaches the source SKULL menu after the title,
+  dispatches New Game through the decoded source rectangle, confirms the
+  prepared champion through the source mirror route, and commits the runtime
+  session without a PC-English companion archive. The same run verifies
+  authentic pit, stairs and DB1 transitions plus the real DB4/F9 creature
+  timer path. FM Towns does not borrow the DOS Enter shortcut at this title;
+  its source-owned New Game pointer route is required. All game data remains
+  archive-backed and in memory.
+
 ## 2026-09-08 — FM Towns IMG2/IMG6 palette binding
 
 - Corrected the FM Towns HME-242 image-palette route. Its `0x8004` GDAT
