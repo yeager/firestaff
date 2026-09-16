@@ -12,6 +12,11 @@ dump. It is not a pixel-parity or runtime-success claim.
   `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`.
 - The PC 3.4 dungeon decoder read 14 maps and 35 scroll Things directly from
   that file. No alternate-platform asset or generated dungeon was used.
+- A second direct traversal of the source `SquareFirstThings` column-prefix
+  table and linked Thing chains found 28 placed scroll Things. It independently
+  confirms that Thing `0` is on map `0`, level `0`, square `(4,15)`, cell `1`.
+  This pass corrects neither the route nor the prior failed runtime result; it
+  only rules out a data-decoding ambiguity as its cause.
 
 ## Candidate
 
