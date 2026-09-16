@@ -34,6 +34,24 @@ cell is selectable before it is promoted. The listed coordinates are a
 data-derived navigation candidate, not a claim that all transitions are
 walkable, safe, or free of original events.
 
+## Input translation for the candidate route
+
+The PC 3.4 capture route atlas binds the original keypad controls as follows:
+`KP5` forward, `KP4` turn right, `KP6` turn left, `KP1` strafe left, and
+`KP3` strafe right. Starting at the stated anchor facing south, the candidate
+walk translates to this *unexecuted* command sequence:
+
+```text
+KP4 KP4 KP5 KP6 KP5 KP4 KP5 KP5 KP5 KP5 KP4 KP5
+KP6 KP5 KP5 KP5 KP6 KP5 KP5 KP6 KP5 KP5 KP5 KP5 KP5 KP5
+```
+
+This is a mechanical translation of the BFS edges only. The capture harness
+must take state frames after each direction change and immediately before the
+floor-item interaction. A blocked move, forced turn, teleporter, encounter,
+or non-selectable stair cell invalidates the candidate and must be recorded as
+such; it must not be repaired by inserting guessed movement.
+
 ## Required capture outcome
 
 Use the original PC 3.4 executable through DOSBox-X only as private capture
