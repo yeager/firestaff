@@ -26,11 +26,11 @@ Optional:
   CSB_AMIGA_KEYSTROKES='53:Down 54:Return@750' timed emulator key presses;
                                                append @milliseconds to hold a key
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
-  CSB_AMIGA_SAVE_DISK_WRITABLE=1              permit writes only to a supplied
-                                               private Disk 3 copy (default: 0)
+  CSB_AMIGA_SAVE_DISK_WRITABLE=1              enable FS-UAE overlay saves for a
+                                               supplied private Disk 3 copy (default: 0)
   FS_UAE=/path/to/fs-uae                       (default: fs-uae)
 
-All original ADFs are mounted write-protected. The helper accepts only
+All original ADFs remain direct-write protected. The helper accepts only
 FS-UAE-native emulator captures as evidence. If an Xvfb/SDL session rejects
 the screenshot shortcut it writes a separately named diagnostic host image,
 records the failed native request, and exits non-zero. A produced native image
@@ -84,6 +84,10 @@ if [[ "$save_disk_writable" == "1" && -z "$disk3" ]]; then
     echo "ERROR: CSB_AMIGA_SAVE_DISK_WRITABLE=1 requires CSB_AMIGA_DISK3" >&2
     exit 3
 fi
+if [[ "$save_disk_writable" == "0" && -n "$disk3" ]]; then
+    echo "ERROR: CSB_AMIGA_DISK3 requires CSB_AMIGA_SAVE_DISK_WRITABLE=1" >&2
+    exit 3
+fi
 if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?(\ [0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?)*$ ]]; then
     echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key[@milliseconds] entries separated by spaces" >&2
     exit 5
@@ -96,7 +100,10 @@ amiga_model = A500
 kickstart_file = $kickstart
 floppy_drive_0 = $disk1
 floppy_drive_1 = $disk2
-floppy_write_protect = $((1 - save_disk_writable))
+# FS-UAE records disk mutations in its overlay area by default. Make this
+# explicit so no capture path can write supplied ADFs back in place.
+writable_floppy_images = 0
+base_dir = $out/fs-uae-state
 fullscreen = 0
 window_width = 800
 window_height = 600
@@ -112,7 +119,7 @@ screenshots_output_mask = 3
 screenshots_output_dir = $out
 save_states_dir = $out/save-states
 EOF
-if [[ -n "$disk3" ]]; then
+if [[ "$save_disk_writable" == "1" ]]; then
     printf 'floppy_drive_2 = %s\n' "$disk3" >>"$config"
 fi
 
@@ -292,7 +299,7 @@ startup_frames=("$out"/startup-*.png)
     printf 'kickstart_sha256=%s\n' "$(sha256sum "$kickstart" | awk '{print $1}')"
     printf 'disk1_sha256=%s\n' "$(sha256sum "$disk1" | awk '{print $1}')"
     printf 'disk2_sha256=%s\n' "$(sha256sum "$disk2" | awk '{print $1}')"
-    if [[ -n "$disk3" ]]; then
+    if [[ "$save_disk_writable" == "1" ]]; then
         printf 'disk3_sha256=%s\n' "$(sha256sum "$disk3" | awk '{print $1}')"
     else
         printf 'disk3_sha256=not-mounted\n'
