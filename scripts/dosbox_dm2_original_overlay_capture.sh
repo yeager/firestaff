@@ -900,6 +900,7 @@ def load_pixels(path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]
 paths = sorted(out.glob("*.png"), key=lambda path: path.stat().st_mtime_ns)
 rows = []
 problems = []
+seen_sha256: dict[str, str] = {}
 for idx, path in enumerate(paths, 1):
     dims, pixels = load_pixels(path)
     total = len(pixels)
@@ -920,6 +921,20 @@ for idx, path in enumerate(paths, 1):
         problems.append(f"{path.name}: rawshot dimensions are {dims[0]}x{dims[1]}, expected 320x200")
     if row["nonblackRatio"] <= 0.005 or unique <= 1:
         problems.append(f"{path.name}: black/blank rawshot candidate nonblack={row['nonblackRatio']} uniqueColors={unique}")
+    # A healthy PNG can still be a stale framebuffer.  DM2 routes intentionally
+    # request several distinct source states; accepting byte-identical frames
+    # would turn a failed input route into misleading capture evidence.  This
+    # mirrors the corresponding DM1 original-capture gate and is deliberately
+    # scoped to multi-frame attempts: a one-frame diagnostic has no peer to
+    # compare against.
+    previous = seen_sha256.get(row["sha256"])
+    if expected > 1 and previous is not None:
+        problems.append(
+            f"{path.name}: duplicate raw framebuffer of {previous}; "
+            "a multi-frame route cannot establish distinct original states"
+        )
+    else:
+        seen_sha256[row["sha256"]] = path.name
     rows.append(row)
 payload = {
     "schema": "dm2_original_raw_frame_health.v1",
