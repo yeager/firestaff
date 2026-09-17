@@ -16,9 +16,12 @@ enum {
     CSB_V1_F0797_MICRO_DUNGEON_SQUARE_COUNT_PC34 = 25,
     CSB_V1_F0797_MICRO_DUNGEON_CORRIDOR_COUNT_PC34 = 6,
     CSB_V1_F0797_MICRO_DUNGEON_WALL_COUNT_PC34 = 19,
-    CSB_V1_F0797_CORRIDOR_ROW_Y_PC34 = 2,
-    CSB_V1_F0797_CORRIDOR_SPUR_X_PC34 = 2,
-    CSB_V1_F0797_CORRIDOR_SPUR_Y_PC34 = 1,
+    /* ENTRANCE.C stores its five map columns at Squares[column * 5].
+     * Its Squares[column + 10] write therefore opens x=2 for y=0..4;
+     * Squares[7] is the single westward spur at (1,2). */
+    CSB_V1_F0797_CORRIDOR_COLUMN_X_PC34 = 2,
+    CSB_V1_F0797_CORRIDOR_SPUR_X_PC34 = 1,
+    CSB_V1_F0797_CORRIDOR_SPUR_Y_PC34 = 2,
     CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34 = 2,
     CSB_V1_F0797_VIEW_X_PC34 = 2,
     CSB_V1_F0797_VIEW_Y_PC34 = 0
@@ -38,12 +41,12 @@ typedef struct CSB_V1_F0797_EntranceMicroDungeonFacts_PC34 {
     int wall_square_count;
     int corridor_square_count;
     uint32_t corridor_square_mask;
-    int current_map_data_row_count;
+    int current_map_data_column_count;
     int draw_floor_and_ceiling_requested;
     int current_map_pointer_owned_by_micro_dungeon;
     int current_map_not_loaded_dungeon;
     int source_wall_fill_reviewed;
-    int source_corridor_row_reviewed;
+    int source_corridor_column_reviewed;
     int source_corridor_spur_reviewed;
     int draw_cpsf_route_reviewed;
     int view_direction;

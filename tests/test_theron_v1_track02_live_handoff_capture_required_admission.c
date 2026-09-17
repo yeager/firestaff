@@ -91,7 +91,8 @@ static void make_receipts(Theron_V1Track02LoaderOutputRecordAdmissionReceipt *lo
 
 int main(void)
 {
-    char path[] = "/tmp/firestaff-theron-live-handoff-XXXXXX";
+    char path[1024];
+    const char *scratch = getenv("FIRESTAFF_TEST_SCRATCH");
     Theron_V1Track02HandoffArtifactCorpusReceipt corpus;
     Theron_V1Track02G8FifoSidecarReceipt sidecar;
     Theron_V1Track02G8FifoCaptureBindingReceipt g8;
@@ -99,6 +100,9 @@ int main(void)
     Theron_V1Track02LiveLoaderRouteAdmissionReceipt live;
     Theron_V1Track02DynamicCdReadOwnershipReceipt ownership;
     Theron_V1Track02LiveHandoffCaptureRequiredAdmissionReceipt receipt;
+    if (snprintf(path, sizeof(path), "%s/firestaff-theron-live-handoff-XXXXXX",
+                 scratch && scratch[0] ? scratch : ".") < 0 ||
+        strlen(path) + 1u >= sizeof(path)) return 1;
     int descriptor = mkstemp(path);
 
     if (descriptor < 0) return 1;

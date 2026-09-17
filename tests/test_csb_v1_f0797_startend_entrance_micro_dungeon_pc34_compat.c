@@ -50,12 +50,13 @@ static CSB_V1_F0797_EntranceMicroDungeonFacts_PC34 make_complete_facts(void)
         CSB_V1_F0797_MICRO_DUNGEON_CORRIDOR_COUNT_PC34;
     facts.corridor_square_mask =
         csb_v1_f0797_entrance_micro_dungeon_corridor_mask_pc34();
-    facts.current_map_data_row_count = CSB_V1_F0797_MICRO_DUNGEON_WIDTH_PC34;
+    facts.current_map_data_column_count =
+        CSB_V1_F0797_MICRO_DUNGEON_WIDTH_PC34;
     facts.draw_floor_and_ceiling_requested = 1;
     facts.current_map_pointer_owned_by_micro_dungeon = 1;
     facts.current_map_not_loaded_dungeon = 1;
     facts.source_wall_fill_reviewed = 1;
-    facts.source_corridor_row_reviewed = 1;
+    facts.source_corridor_column_reviewed = 1;
     facts.source_corridor_spur_reviewed = 1;
     facts.draw_cpsf_route_reviewed = 1;
     facts.view_direction = CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34;
@@ -81,7 +82,7 @@ static void test_accepts_source_micro_dungeon_shape(void)
     CHECK(receipt.map_height == 5);
     CHECK(receipt.wall_square_count == 19);
     CHECK(receipt.corridor_square_count == 6);
-    CHECK(receipt.corridor_square_mask == ((uint32_t)0x7c80u));
+    CHECK(receipt.corridor_square_mask == ((uint32_t)0x00421884u));
     CHECK(receipt.view_direction == CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34);
     CHECK(receipt.view_x == 2);
     CHECK(receipt.view_y == 0);
@@ -102,7 +103,7 @@ static void test_square_helper_matches_source_corridor_layout(void)
         for (x = 0; x < CSB_V1_F0797_MICRO_DUNGEON_WIDTH_PC34; ++x) {
             int kind =
                 csb_v1_f0797_entrance_micro_dungeon_square_kind_pc34(x, y);
-            if (y == 2 || (x == 2 && y == 1)) {
+            if (x == 2 || (x == 1 && y == 2)) {
                 CHECK(kind ==
                       CSB_V1_F0797_MICRO_DUNGEON_SQUARE_CORRIDOR_PC34);
                 ++corridor_count;
@@ -153,7 +154,7 @@ static void test_evidence_string(void)
         csb_v1_f0797_entrance_micro_dungeon_source_evidence_pc34();
 
     check_contains(evidence, "ENTRANCE.C:57-81");
-    check_contains(evidence, "corridor row y=2 plus spur square (2,1)");
+    check_contains(evidence, "corridor column x=2 plus spur square (1,2)");
     check_contains(evidence, "F0128_DUNGEONVIEW_Draw_CPSF");
     check_contains(evidence, "opening doors");
 }

@@ -18,7 +18,7 @@
     "localFunctionalTemplateRoot": "reference/redmcsb-20210206/Toolchains/Common/Source/",
     "supportingReferences": [
       "reference/redmcsb-20210206/Toolchains/Common/Source/",
-      "${HOME}/.firestaff/data/csb/",
+      "supplied CSB game-data directory (not tracked)",
       "parity-evidence/verification/",
       "docs/REDMCSB_REFERENCE.md",
       "docs/DMWEB_REFERENCE.md"

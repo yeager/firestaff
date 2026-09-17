@@ -5125,7 +5125,8 @@ static int m11_csb_atari_st_draw_ceiling_pit(
  * commands consume their byte strides. */
 static int m11_csb_present_atari_st_runtime_viewport(
     M11_GameViewState *state, unsigned char *framebuffer,
-    int framebuffer_width, int framebuffer_height)
+    int framebuffer_width, int framebuffer_height,
+    int entrance_micro_dungeon)
 {
     enum {
         VIEWPORT_X = 48, VIEWPORT_Y = 33, VIEWPORT_WIDTH = 224,
@@ -5162,7 +5163,8 @@ static int m11_csb_present_atari_st_runtime_viewport(
 #define M11_CSB_ATARI_VIEWPORT_HASH_INIT 2166136261u
 
     if (!state || !framebuffer || framebuffer_width < 320 ||
-        framebuffer_height < 200 || !state->csbAtariStRuntimeHandoffComplete ||
+        framebuffer_height < 200 ||
+        (!entrance_micro_dungeon && !state->csbAtariStRuntimeHandoffComplete) ||
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         return 0;
     }
@@ -5403,6 +5405,89 @@ static int m11_csb_present_atari_st_runtime_viewport(
     }
 #undef M11_CSB_ATARI_VIEWPORT_HASH_INIT
     return 1;
+}
+
+/* ReDMCSB STARTEND.C F0797 builds C255 before it asks the platform's native
+ * F0128 path to paint the scene behind the opening Prison doors.  The Atari
+ * renderer has a distinct planar material map (CSBWin Viewport.cpp), so the
+ * PC C004 background cannot stand in for that aperture.  Keep the six
+ * source-owned corridor squares in a bounded transient map: it is the
+ * original entrance route, not a replacement dungeon or authored raster. */
+static int m11_csb_present_atari_st_entrance_micro_viewport(
+    M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_BootProfile micro_profile;
+    CSB_V1_DungeonData micro_dungeon;
+    uint8_t micro_squares[CSB_V1_F0797_MICRO_DUNGEON_SQUARE_COUNT_PC34];
+    uint8_t rendered_page[320 * 200];
+    CSB_V1_BootProfile *saved_profile;
+    int y;
+    int result;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 || !(profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN)) {
+        return 0;
+    }
+    memset(&micro_dungeon, 0, sizeof(micro_dungeon));
+    memset(micro_squares, 0, sizeof(micro_squares));
+    /* MAP.C's byte-map storage is column-major.  F0797 first fills C255
+     * with walls, then opens its column and spur before F0128 looks south from
+     * (2,0).  Do not derive this page from an arbitrary saved dungeon. */
+    for (y = 0; y < CSB_V1_F0797_MICRO_DUNGEON_HEIGHT_PC34; ++y) {
+        micro_squares[CSB_V1_F0797_CORRIDOR_COLUMN_X_PC34 *
+            CSB_V1_F0797_MICRO_DUNGEON_HEIGHT_PC34 + y] =
+            CSB_V1_F0797_MICRO_DUNGEON_SQUARE_CORRIDOR_PC34 << 5;
+    }
+    micro_squares[CSB_V1_F0797_CORRIDOR_SPUR_X_PC34 *
+                  CSB_V1_F0797_MICRO_DUNGEON_HEIGHT_PC34 +
+                  CSB_V1_F0797_CORRIDOR_SPUR_Y_PC34] =
+        CSB_V1_F0797_MICRO_DUNGEON_SQUARE_CORRIDOR_PC34 << 5;
+    micro_dungeon.level_count = 1;
+    micro_dungeon.level_widths[0] = CSB_V1_F0797_MICRO_DUNGEON_WIDTH_PC34;
+    micro_dungeon.level_heights[0] = CSB_V1_F0797_MICRO_DUNGEON_HEIGHT_PC34;
+    /* F0797 deliberately leaves its local MAP structure uninitialised: the
+     * real dungeon is not loaded and no map selector participates in this
+     * draw.  The active viewport material bank is therefore the zero/default
+     * startup bank, rather than a later campaign level's wall or floor set. */
+    micro_dungeon.map_floor_set[0] = 0;
+    micro_dungeon.map_wall_set[0] = 0;
+    micro_dungeon.map_door_set0[0] = 0;
+    micro_dungeon.map_door_set1[0] = 0;
+    micro_dungeon.square_bytes = 1;
+    micro_dungeon.raw_data = micro_squares;
+    micro_dungeon.raw_size = (int)sizeof(micro_squares);
+    micro_profile = *profile;
+    micro_profile.runtime.dungeon_handle = &micro_dungeon;
+    micro_profile.runtime.current_level = 0;
+    micro_profile.runtime.party_x = CSB_V1_F0797_VIEW_X_PC34;
+    micro_profile.runtime.party_y = CSB_V1_F0797_VIEW_Y_PC34;
+    micro_profile.runtime.party_dir = CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34;
+    /* The renderer receives an immutable profile pointer.  Substitute only
+     * within this synchronous draw, then restore the active source profile
+     * before returning to the input/timeline owner. */
+    saved_profile = state->csbBootProfile;
+    state->csbBootProfile = &micro_profile;
+    /* The CSBWin runtime page places its 224x136 viewport at (48,33), but
+     * F0797/F0439 blits that exact completed page into C004's Entrance box
+     * (0,3).  Render into a private page first, then make only that source
+     * blit; drawing the runtime page directly would corrupt the C004 frame
+     * and shift the corridor 48 pixels right. */
+    memcpy(rendered_page, framebuffer, sizeof(rendered_page));
+    result = m11_csb_present_atari_st_runtime_viewport(
+        state, rendered_page, 320, 200, 1);
+    state->csbBootProfile = saved_profile;
+    if (result) {
+        for (y = 0; y < 136; ++y) {
+            memcpy(framebuffer + (size_t)(3 + y) * (size_t)framebuffer_width,
+                   rendered_page + (size_t)(33 + y) * 320u + 48u, 224u);
+        }
+    }
+    return result;
 }
 
 static int m11_render_csb_boot_viewport(M11_GameViewState *state,
@@ -12138,7 +12223,7 @@ static void m11_csb_startup_consume_audio_action(
 
 /* ENTRANCE.C F0439/F0438 does not expose C004's painted placeholder while
  * the Prison doors move.  F0797 first builds C255's 5x5 all-wall map, opens
- * the two cells at (2,1) and (0..4,2), and calls F0128 looking south from
+ * the five cells at x=2 and the spur at (1,2), and calls F0128 looking south from
  * (2,0).  C004 is then used only outside the 224x136 aperture.  Keeping the
  * micro-map here makes that source operation use the active F31 IMG2 assets
  * through the normal F0094/F0095/F0128 provider; it never borrows a saved
@@ -12149,7 +12234,7 @@ static int m11_render_csb_fmtowns_entrance_micro_viewport(
     CSB_V1_ViewportConfig cfg;
     const CSB_V1_BootProfile *profile;
     uint8_t grid[5 * 5];
-    int x;
+    int y;
 
     if (!state || !viewport || !(profile = (const CSB_V1_BootProfile *)
         state->csbBootProfile) || !m11_csb_is_fmtowns_profile(profile) ||
@@ -12160,8 +12245,8 @@ static int m11_render_csb_fmtowns_entrance_micro_viewport(
         return 0;
     }
     memset(grid, 0, sizeof(grid)); /* C00_ELEMENT_WALL */
-    for (x = 0; x < 5; ++x) grid[2 * 5 + x] = 32; /* C01 corridor */
-    grid[1 * 5 + 2] = 32;
+    for (y = 0; y < 5; ++y) grid[y * 5 + 2] = 32; /* C01 corridor */
+    grid[2 * 5 + 1] = 32;
     memset(viewport, 0, 224u * 136u);
     csb_v1_viewport_init(&cfg);
     cfg.viewport_pixels = viewport;
@@ -12176,7 +12261,7 @@ static int m11_render_csb_fmtowns_entrance_micro_viewport(
         m11_csb_fmtowns_viewport_graphic_provider;
     cfg.graphic_provider_user_data = state;
     /* F0797 calls F0128_DUNGEONVIEW_Draw_CPSF from (2,0), facing south.
-     * Starting in the corridor row at (2,2) instead makes the renderer look
+     * Turning the source's x=2 corridor into a row makes the renderer look
      * at the wrong micro-map cell, exposing C004's placeholder through the
      * opening doors.  Keep these source coordinates tied to the audited
      * F0797 contract rather than duplicating numeric literals. */
@@ -12536,6 +12621,48 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
             &host_surface);
         return;
+    }
+    if ((host_view.render_draw.render_plan.surface ==
+             CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+         host_view.render_draw.render_plan.surface ==
+             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
+         host_view.render_draw.render_plan.surface ==
+             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) &&
+        state->csbBootProfile &&
+        (((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+             CSB_V1_VARIANT_ST20_EN ||
+         ((const CSB_V1_BootProfile *)state->csbBootProfile)->variant_id ==
+             CSB_V1_VARIANT_ST21_EN)) {
+        const CSB_V1_StartupRenderPlan_PC34 *plan =
+            &host_view.render_draw.render_plan;
+        /* Atari's C004 record is only the outer Entrance page.  STARTEND
+         * F0797 paints its native F0128 micro-dungeon through C432 before
+         * F0438 restores C002/C003's moving strips.  The generic PC route
+         * previously skipped that middle operation, exposing C004's flat
+         * placeholder as the doors opened. */
+        if (!m11_csb_present_atari_st_entrance_micro_viewport(
+                state, host_surface.raster.pixels, host_surface.raster.width,
+                host_surface.raster.height) ||
+            (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+             plan->opening_left_w > 0 &&
+             !m11_csb_blit_entrance_door_strip(
+                 host_surface.raster.pixels, host_surface.raster.width,
+                 host_surface.raster.height, host_surface.frame.left_door_surface,
+                 plan->opening_left_source_x, plan->opening_left_source_y,
+                 plan->opening_left_w, plan->opening_left_h,
+                 plan->opening_left_dest_x, plan->opening_left_dest_y)) ||
+            (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+             plan->opening_right_w > 0 &&
+             !m11_csb_blit_entrance_door_strip(
+                 host_surface.raster.pixels, host_surface.raster.width,
+                 host_surface.raster.height, host_surface.frame.right_door_surface,
+                 plan->opening_right_source_x, plan->opening_right_source_y,
+                 plan->opening_right_w, plan->opening_right_h,
+                 plan->opening_right_dest_x, plan->opening_right_dest_y))) {
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &host_surface);
+            return;
+        }
     }
     /* TITLE.C F0437 presents only its source-owned C001 phase rectangles.
      * Do not let a generic title host page or a collapsed phase sequence reach
@@ -25168,7 +25295,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
      * Source: ReDMCSB LOADSAVE.C F0435 lines 2721-2800. */
     if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         const char *dd = spec->dataDir;
+        const char *utility_search_dir = spec->csbUtilitySearchDir;
         char resolvedDataDir[FSP_PATH_MAX];
+        char sibling_media_dir[FSP_PATH_MAX];
         CSB_V1_BootStartupLaunch_PC34 launch;
         CSB_V1_BootStartupRuntimeReceipt_PC34 runtime_receipt;
         int savedDebugHUD = state->showDebugHUD;
@@ -25179,6 +25308,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                    NULL)) {
                 dd = resolvedDataDir;
             }
+        }
+        /* Atari CSB's protected campaign disk and its original utility/title
+         * disk are separate media.  A user normally selects the campaign
+         * STX itself, while the supplied Utility.stx sits beside it.  Retain
+         * an explicit CLI/menu companion path when provided, otherwise look
+         * only in that selected file's immediate parent.  The native archive
+         * reader consumes the matching members in RAM; this is discovery, not
+         * extraction or a broadened scan of unrelated game data. */
+        sibling_media_dir[0] = '\0';
+        if ((!utility_search_dir || !utility_search_dir[0] ||
+             (dd && strcmp(utility_search_dir, dd) == 0)) && dd && dd[0] &&
+            FSP_FileExists(dd) &&
+            FSP_ParentDir(sibling_media_dir, sizeof(sibling_media_dir), dd)) {
+            utility_search_dir = sibling_media_dir;
         }
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
@@ -25209,7 +25352,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
                 dd,
-                spec->csbUtilitySearchDir,
+                utility_search_dir,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
                 spec->entranceResumeSavePath,
@@ -26687,7 +26830,6 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         if (csb_profile &&
             (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
              csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
-            !state->csbStartupRuntimeAssetSession &&
             state->csbState.startup_title_active) {
             snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
                      "csb-atari-st-animation");
@@ -42635,15 +42777,13 @@ static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
          graphicIndex == 99u || graphicIndex == 100u || graphicIndex == 101u) &&
         ((slot->width == 248u && slot->height == 111u) ||
         (slot->width == 136u && slot->height == 71u) ||
-        (slot->width == 117u && slot->height == 51u)) &&
+        (slot->width == 117u && slot->height == 51u))) {
         /* F20E/F20J aliases one L/C/R backing bitmap for each of the
          * D1L, D1C and D1R (and likewise D2/D3) calls.  F0635 clips that
          * backing bitmap to the selected layout-696 zone before F0132
          * blits it.  Only a centre-zone call owns the complete compound.
          * Treating a side-zone call as a complete compound overwrites D1C
          * with a wall whenever either corridor side is solid. */
-        dstX == (slot->width == 248u ? 32 :
-                 (slot->width == 136u ? 59 : 77))) {
         const int compoundWidth = (int)slot->width;
         const int centreX = (DM1_VIEWPORT_WIDTH - compoundWidth) / 2;
         const int centreZoneX = slot->width == 248u ? 32 :
@@ -42662,14 +42802,22 @@ static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
             const int fbY = M11_VIEWPORT_Y + dstY + sourceY;
             if (fbY < 0 || fbY >= fbH) continue;
             for (sourceX = 0; sourceX < compoundWidth; ++sourceX) {
-                const int fbX = M11_VIEWPORT_X + originX + sourceX;
+            const int fbX = M11_VIEWPORT_X + originX + sourceX;
                 const int sx = flipHorizontally
                     ? compoundWidth - 1 - sourceX : sourceX;
                 const unsigned char pixel = slot->pixels[
                     sourceY * compoundWidth + sx];
-                if (fbX < M11_VIEWPORT_X ||
+            if (fbX < M11_VIEWPORT_X ||
                     fbX >= M11_VIEWPORT_X + DM1_VIEWPORT_WIDTH ||
-                    fbX < 0 || fbX >= fbW ||
+                /* F0635 submits the L/C/R compound once for each zone.
+                 * Centre owns the complete backing image; side calls own
+                 * only their bounded source zone.  Previously side calls
+                 * fell through to the scaled path and duplicated the full
+                 * compound across a corridor. */
+                (dstX != centreZoneX &&
+                 (fbX < M11_VIEWPORT_X + dstX ||
+                  fbX >= M11_VIEWPORT_X + dstX + dstW)) ||
+                fbX < 0 || fbX >= fbW ||
                     (transparentColor >= 0 &&
                      pixel == (unsigned char)transparentColor)) continue;
                 framebuffer[fbY * fbW + fbX] = pixel;
@@ -58862,6 +59010,35 @@ static uint32_t m11_dm2_startup_frame_hash(const unsigned char *framebuffer,
     return hash;
 }
 
+/* FM Towns changes the physical 16-colour display palette with the active
+ * GRAPHICSSET. Its IMG2/IMG6 pixels are logical nibbles, so leaving the
+ * INTERFACE_GENERAL palette latched makes an otherwise source-backed dungeon
+ * appear cyan/orange even though the decoded planes are correct. This is a
+ * display transaction only: the HUD and scene share the machine palette in
+ * the original, and no image bytes are altered. */
+static int m11_dm2_apply_fmtowns_runtime_palette(
+    const DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+    DM2_V1_InterfacePalette palette;
+
+    if (!profile || profile->platform != DM2_PLATFORM_FMTOWNS_JA ||
+        !(loader = dm2_v1_boot_asset_loader(profile))) {
+        return 0;
+    }
+    memset(&scene, 0, sizeof(scene));
+    memset(&palette, 0, sizeof(palette));
+    if (!dm2_v1_runtime_graphicsset_scene_receipt(&scene) || !scene.ready ||
+        !dm2_v1_asset_load_interface_palette(
+            loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+            (int)scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
+            &palette) || palette.hash == 0u) {
+        return 0;
+    }
+    return M11_Render_SetIndexedPaletteRgb6(palette.rgb6) == M11_RENDER_OK;
+}
+
 static int m11_dm2_startup_exec_gdat_image(
     void *userdata,
     const DM2_V1_StartupDrawCommand *command)
@@ -68536,10 +68713,16 @@ void M11_GameView_Draw(M11_GameViewState* state,
          * PC3.4 C017/C040 terminal session.  Once ANIM.C has yielded to the
          * game, consume that real source layer directly. */
         if (m11_csb_present_atari_st_runtime_viewport(
-                csb_state, framebuffer, framebufferWidth, framebufferHeight) &&
-            m11_csb_present_atari_st_runtime_hud(csb_state, framebuffer,
-                                                 framebufferWidth,
-                                                 framebufferHeight)) {
+                csb_state, framebuffer, framebufferWidth, framebufferHeight, 0)) {
+            /* The 224x136 viewport is a complete, independently owned
+             * Viewport.cpp source surface.  C232 is an additional HUD layer;
+             * an unavailable C232 bitmap must not discard that verified page
+             * and fall through to the incompatible PC34 compositor (which
+             * clears the whole frame).  Keep the real viewport visible while
+             * the HUD admission remains fail-closed: this neither invents a
+             * panel nor reuses the Entrance raster. */
+            (void)m11_csb_present_atari_st_runtime_hud(
+                csb_state, framebuffer, framebufferWidth, framebufferHeight);
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;
@@ -68932,6 +69115,9 @@ void M11_GameView_Draw(M11_GameViewState* state,
                               0, 0, framebufferWidth, framebufferHeight,
                               M11_COLOR_BLACK);
                 rendered = -1;
+            } else {
+                (void)m11_dm2_apply_fmtowns_runtime_palette(
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile);
             }
         }
         if (rendered == -1) {

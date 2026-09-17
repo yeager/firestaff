@@ -1,3 +1,30 @@
+# Firestaff v3.0.343
+
+## User-facing changes
+
+- `DM2 FM Towns`: restores the native dungeon viewport aperture after New
+  Game, preventing scene pixels from filling the HUD area.
+
+- `DM2 FM Towns`: applies the active dungeon GRAPHICSSET palette when the
+  runtime scene is presented, correcting the cyan/orange palette corruption.
+
+- `CSB Atari ST`: replaces the flat entrance placeholder behind the opening
+  Prison doors with the source-owned micro-dungeon viewport.
+
+## Developer changes
+
+- `DM2 FM Towns regression coverage`: verifies the active runtime palette and
+  authentic archive path through the New Game runtime and start-menu input
+  matrix.
+
+- `Release integrity`: changes the deterministic SPDX source inventory for
+  this source revision.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.343 for the verified
+  DM2 FM Towns viewport and palette correction.
+
 # Firestaff v3.0.342
 
 ## User-facing changes

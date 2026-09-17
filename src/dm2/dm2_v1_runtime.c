@@ -11490,20 +11490,20 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
-    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws both the PC indoor and outdoor
-     * scenes into the local 0xe0x88 bitmap.  PC c_gfx_main::DM2_DRAWINGS_COMPLETED then
-     * copies that exact surface through expanded RECT_7; it does not use the
-     * HUD screen as a dungeon scratch buffer.  Amiga and Macintosh packages
-     * do not contain that PC RAW4/RECT_7 record: their admitted GDAT route
-     * owns the presentation surface directly.  Requiring the absent PC
-     * record there rejects authentic frames, so keep their native surface
-     * rather than borrowing a PC destination.  T600 still uses the same
-     * viewport destination: drawing it directly into the 320x200 interface
-     * stretched the first New Game exterior across the HUD. */
+    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the PC and FM Towns indoor
+     * scenes into the local 0xe0x88 bitmap.  Their c_gfx_main
+     * DM2_DRAWINGS_COMPLETED route copies that exact surface through
+     * expanded RECT_7; it does not use the 320x200 HUD as a dungeon scratch
+     * buffer.  HME-242's authenticated RECT_7 is (0,40,224,136), just like
+     * the PC aperture.  Treating its IMG2/IMG6 scene as a direct 320x200
+     * surface stretched the floor, ceiling and wall planes over the HUD.
+     * Amiga and Macintosh do not carry this compatible RECT_7 route, so
+     * their admitted GDAT surface remains direct. */
     use_rect7_backbuffer = rt->boot &&
         (rt->boot->platform == DM2_PLATFORM_PC_EN ||
          rt->boot->platform == DM2_PLATFORM_PC_FR ||
-         rt->boot->platform == DM2_PLATFORM_PC_JEWEL);
+         rt->boot->platform == DM2_PLATFORM_PC_JEWEL ||
+         rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA);
     memset(&rect7_receipt, 0, sizeof(rect7_receipt));
     if (use_rect7_backbuffer) {
         memset(dungeon_backbuffer, 0, sizeof(dungeon_backbuffer));

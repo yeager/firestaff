@@ -2,10 +2,9 @@
 
 ## Local media boundary
 
-Theron capture uses user-supplied BIOS, CUE/BIN and other original media only
-from local paths such as `~/.mednafen/firmware/` and
-`~/.firestaff/data/theron/`. None of those payloads may be committed to
-GitHub. The repository check is
+Theron capture uses user-supplied System Card firmware, CUE/BIN and other
+original media selected from operator-local storage. None of those payloads
+may be committed to GitHub. The repository check is
 `scripts/verify_no_original_media_tracked.sh`, and `.gitignore` provides the
 same protection for normal local work.
 
@@ -101,12 +100,11 @@ The strongest current proof is:
   `TQR level load` boot milestone when those data paths are present.
 - `theron_v1_m11_direct_launch`: M11 consumes the hash-verified Track 02 path
   without re-walking the data root and builds the Theron world and viewport.
-- `theron_v1_raw_bin_runtime_boot`: the normal user-owned
-  `~/.firestaff/data/theron/TQUS02.bin` layout is launched through the actual
-  CLI, enters the source-backed Theron runtime, loads the first level and
-  forms the initial party. It is a real-media test and SKIPs on hosts without
-  that copyrighted file; it does not assert unproven later rendering, combat
-  or dungeon semantics.
+- `theron_v1_raw_bin_runtime_boot`: a configured user-owned `TQUS02.bin`
+  layout is launched through the actual CLI, enters the source-backed Theron
+  runtime, loads the first level and forms the initial party. It is a
+  real-media test and SKIPs on hosts without that copyrighted file; it does
+  not assert unproven later rendering, combat or dungeon semantics.
 - `theron_v1_viewport_renderer` and `theron_v1_rendering`: the data-free
   Theron viewport, palette, UI chrome, and M11 blit contracts are covered.
 - `theron_v1_cross_route_mechanics`: synthetic runtime mechanics now cover a
@@ -125,9 +123,9 @@ The strongest current proof is:
   real Track 02 data is present, both probes hash-gate the bank-anchor
   offsets and the 9-word little-endian stride table shape on the US ISO
   (`0x1584`) plus all three US raw BIN anchors and all three JP raw BIN
-  anchors. The probes discover the standard operator-supplied files
-  `~/.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` automatically, while
-  environment overrides remain available. The descriptor-table decoder is
+  anchors. The probes discover configured operator-supplied `TQUS02.bin` and
+  `TQJP02.bin` files, while environment overrides remain available. The
+  descriptor-table decoder is
   shape-driven only: it validates
   the 9-word stride sequence (entries 0x0020..0x2020, stride 0x0400) without
   claiming per-entry semantic type, dungeon-level binding, or loader
@@ -181,10 +179,9 @@ The strongest current proof is:
   reference for Theron's Quest savegames, reports a clean
   `present_count=0, recognized_count=0` ABSENT manifest on the current
   host (no real `.srm` file is staged), and accepts a real `.srm`
-  when one is placed under
-  `$HOME/.firestaff/data/theron/save/slot0.srm` ... `slot4.srm` or
-  the `FIRESTAFF_THERON_SRM_DIR` override. Default root uses 5 disk
-  slots matching the original Save Disk cartridge model. The
+  when one is supplied through `FIRESTAFF_THERON_SRM_DIR`. The default
+  configuration uses five disk slots matching the original Save Disk
+  cartridge model. The
   classifier is the bounded real-artifact counterpart to the
   synthetic `theron_v1_save_load.c` `slotN.tqsv` in-game save
   format; the two are kept separate because the underlying save

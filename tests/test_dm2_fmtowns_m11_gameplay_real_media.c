@@ -6,6 +6,7 @@
 #include "render_sdl_m11.h"
 #include "asset_status_m12.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_dungeon_input_owner.h"
 #include "firestaff_po_loader.h"
@@ -409,7 +410,32 @@ int main(void)
               dm2_v1_boot_runtime_capture(
                   (DM2_V1_BootProfile *)view.dm2BootProfile,
                   &runtime_receipt) && runtime_receipt.runtime_ready,
-          "FM Towns M11 publishes the complete source GAME_LOAD session");
+              "FM Towns M11 publishes the complete source GAME_LOAD session");
+    /* FM Towns IMG2/IMG6 pixels are physical 16-colour indices.  The runtime
+     * scene must therefore install its active GRAPHICSSET palette before the
+     * M11 frame is presented; INTERFACE_GENERAL's menu palette produces the
+     * cyan/orange corruption this regression protects against. */
+    {
+        DM2_V1_RuntimeGraphicsSetSceneReceipt scene;
+        DM2_V1_InterfacePalette expected_palette;
+        uint8_t presented_palette[256][3];
+        const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(
+            (const DM2_V1_BootProfile *)view.dm2BootProfile);
+        memset(&scene, 0, sizeof(scene));
+        memset(&expected_palette, 0, sizeof(expected_palette));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        check(loader && dm2_v1_runtime_graphicsset_scene_receipt(&scene) &&
+                  scene.ready &&
+                  dm2_v1_asset_load_interface_palette(
+                      loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
+                      scene.map_graphics_style, DM2_GDAT_GFXSET_FLOOR,
+                      &expected_palette) && expected_palette.hash != 0u &&
+                  M11_Render_CopyIndexedPaletteRgb6(presented_palette) == 1 &&
+                  memcmp(presented_palette, expected_palette.rgb6,
+                         sizeof(expected_palette.rgb6)) == 0,
+              "FM Towns M11 presents the active GRAPHICSSET physical palette");
+    }
     check(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
               M11_GAME_INPUT_REDRAW &&
               M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==

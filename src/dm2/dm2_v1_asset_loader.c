@@ -614,9 +614,8 @@ static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
     size_t pixel_count;
     /* An FM Towns IMG2 record starts with its two dimension words.  IMG6
      * instead has an additional four-byte format/pitch prologue, but it is
-     * decoded by dm2_decode_fmtowns_img6_c4().  SKProject's
-     * ReadImgDM2C4towns() begins the IMG2 nibble stream immediately after
-     * the dimension words. */
+     * decoded by dm2_decode_fmtowns_img6_c4().  The admitted HME-242 GDAT
+     * payloads retain four bytes before their IMG2 command stream. */
     size_t cursor;
     size_t pixel = 0u;
     uint8_t *pixels;

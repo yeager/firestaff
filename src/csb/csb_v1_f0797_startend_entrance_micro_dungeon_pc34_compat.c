@@ -10,11 +10,11 @@ static int csb_v1_f0797_square_index_pc34(int x, int y)
 uint32_t csb_v1_f0797_entrance_micro_dungeon_corridor_mask_pc34(void)
 {
     uint32_t mask = 0u;
-    int x;
+    int y;
 
-    for (x = 0; x < CSB_V1_F0797_MICRO_DUNGEON_WIDTH_PC34; ++x) {
+    for (y = 0; y < CSB_V1_F0797_MICRO_DUNGEON_HEIGHT_PC34; ++y) {
         mask |= 1u << csb_v1_f0797_square_index_pc34(
-            x, CSB_V1_F0797_CORRIDOR_ROW_Y_PC34);
+            CSB_V1_F0797_CORRIDOR_COLUMN_X_PC34, y);
     }
     mask |= 1u << csb_v1_f0797_square_index_pc34(
         CSB_V1_F0797_CORRIDOR_SPUR_X_PC34,
@@ -78,13 +78,13 @@ int F0797_STARTEND_DrawEntranceMicroDungeon(
             CSB_V1_F0797_MICRO_DUNGEON_CORRIDOR_COUNT_PC34 ||
         facts->corridor_square_mask !=
             csb_v1_f0797_entrance_micro_dungeon_corridor_mask_pc34() ||
-        facts->current_map_data_row_count !=
+        facts->current_map_data_column_count !=
             CSB_V1_F0797_MICRO_DUNGEON_WIDTH_PC34 ||
         !facts->draw_floor_and_ceiling_requested ||
         !facts->current_map_pointer_owned_by_micro_dungeon ||
         !facts->current_map_not_loaded_dungeon ||
         !facts->source_wall_fill_reviewed ||
-        !facts->source_corridor_row_reviewed ||
+        !facts->source_corridor_column_reviewed ||
         !facts->source_corridor_spur_reviewed ||
         !facts->draw_cpsf_route_reviewed ||
         facts->view_direction != CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34 ||
@@ -130,8 +130,8 @@ const char *csb_v1_f0797_entrance_micro_dungeon_source_evidence_pc34(void)
 {
     return "ReDMCSB ENTRANCE.C:57-81 F0797_STARTEND_DrawEntranceMicroDungeon "
            "builds the source 5x5 C255 entrance micro-dungeon in memory, fills "
-           "it with wall squares, opens corridor row y=2 plus spur square "
-           "(2,1), requests floor and ceiling drawing, and calls "
+           "it with wall squares, opens corridor column x=2 plus spur square "
+           "(1,2), requests floor and ceiling drawing, and calls "
            "F0128_DUNGEONVIEW_Draw_CPSF(C2_DIRECTION_SOUTH,2,0); "
            "ENTRANCE.C:363-365/517-520 routes it behind the opening doors";
 }

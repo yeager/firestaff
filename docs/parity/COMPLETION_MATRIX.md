@@ -20,7 +20,7 @@ number of hashes or presented as 41 separately verified ports.
 | CSB | 2 | 9 | 38.5% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
 | DM2 | 2 | 7 | 28.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised; authentic DOS, Amiga, FM Towns and Mac V1 start paths are verified, but live parity remains open. |
 | DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
-| Theron's Quest | 1 | 4 | 72.0% | JP/US Track 02 identities include BIN/ISO forms; positive full-media launch remains open. |
+| Theron's Quest | 1 | 4 | 72.0% | JP Rev 1 CUE/BIN reaches the Track 02 runtime route, and the US CloneCD ZIP reaches direct and start-menu launch through its verified Track 02 slice. Level-transition consumer captures remain open. |
 | **Total** | **9** | **41** | **43.4%** | Unweighted mean of the 9 runtime targets: 391/900. |
 
 The tempting alternative, 57.6%, is the version-weighted mean obtained by
@@ -188,7 +188,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---:|---|
 | `reference_inventory` | 8/10 | Track 02 JP/US provenance, launcher scan reuse, and hash/profile evidence exist. |
 | `definition_matrix` | 3/10 | No complete Theron V1 parity matrix, but runtime/progression/save gates now define important slices. |
-| `launch_smoke` | 5/10 | Track 02 bank/object marker, launcher scan reuse, and runtime screenshot-readiness receipts exist; positive real-asset launch remains active work. |
+| `launch_smoke` | 7/10 | The JP Rev 1 CUE/BIN reaches native Track 02 runtime, while the US CloneCD ZIP reaches direct and keyboard/mouse start-menu launch with its verified Track 02 slice. Track 02 bank/object markers and launcher scan reuse remain covered; level-transition capture proof is separate work. |
 | `core_input_movement` | 2/15 | Dungeon progression/mechanics probes exist; broad input/movement parity is not complete. |
 | `viewport_ui_render` | 5/20 | Tile/viewport/runtime screenshot-readiness and presentation scaffolds exist, but real screen parity remains open. |
 | `gameplay_systems` | 14/15 | Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered. |
