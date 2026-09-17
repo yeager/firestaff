@@ -852,11 +852,26 @@ shot() {
         host_capture_index=$((host_capture_index + 1))
         host_raw="${capture_dir}/host-window-${host_capture_index}.png"
         host_out="${capture_dir}/host-${host_capture_index}.png"
-        # ImageMagick reads the server-side X11 drawable through XGetImage;
-        # unlike a compositor/root-screen capture it cannot blend the host
-        # cursor into a purported original frame.  The health test below is
-        # still required: cursor-free does not make a stale/blank SDL surface
-        # valid original evidence.
+        # Do not trust XGetImage to omit the server cursor plane.  Some X11
+        # servers composite it into a window readback, which would turn the
+        # host pointer into fake game pixels.  Move it outside the complete
+        # DOSBox window before reading.  A window can consume all of the X11
+        # root; reject that case rather than silently accepting a cursor-tainted
+        # host frame.  This is motion only (no game button edge).
+        eval "$(xdotool getwindowgeometry --shell "$window")"
+        read -r display_width display_height < <(xdotool getdisplaygeometry)
+        pointer_x=$((display_width - 1))
+        pointer_y=$((display_height - 1))
+        if (( pointer_x >= X && pointer_x < X + WIDTH && pointer_y >= Y && pointer_y < Y + HEIGHT )); then
+            pointer_x=0
+            pointer_y=0
+        fi
+        if (( pointer_x >= X && pointer_x < X + WIDTH && pointer_y >= Y && pointer_y < Y + HEIGHT )); then
+            echo "ERROR: no cursor-safe root position outside DOSBox window for host capture" >&2
+            exit 9
+        fi
+        xdotool mousemove "$pointer_x" "$pointer_y"
+        sleep 0.05
         import -silent -window "$window" "$host_raw"
         if ! python3 - "$host_raw" <<'PY'
 from pathlib import Path

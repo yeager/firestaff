@@ -611,11 +611,26 @@ shot() {
         host_capture_index=$((host_capture_index + 1))
         raw="${capture_dir}/host-window-${host_capture_index}.png"
         out="${capture_dir}/host-${host_capture_index}.png"
-        # `import -window` obtains the X11 server drawable with XGetImage.
-        # Unlike a compositor/root-screen grab, that readback has no host
-        # cursor plane to blend into a purported original game frame.  Do not
-        # replace this with scrot: a visible desktop cursor invalidates an
-        # otherwise useful image-diff capture.
+        # An X11 server may composite its cursor into an XGetImage window
+        # readback.  Move it outside the complete DOSBox window first.  If the
+        # window covers the whole root, host capture cannot prove that pointer
+        # pixels are absent and must fail instead of creating false evidence.
+        # This does not inject a game click.  Do not replace it with a root
+        # compositor capture, which has the same pointer contamination risk.
+        eval "$(xdotool getwindowgeometry --shell "$window")"
+        read -r display_width display_height < <(xdotool getdisplaygeometry)
+        pointer_x=$((display_width - 1))
+        pointer_y=$((display_height - 1))
+        if (( pointer_x >= X && pointer_x < X + WIDTH && pointer_y >= Y && pointer_y < Y + HEIGHT )); then
+            pointer_x=0
+            pointer_y=0
+        fi
+        if (( pointer_x >= X && pointer_x < X + WIDTH && pointer_y >= Y && pointer_y < Y + HEIGHT )); then
+            echo "ERROR: no cursor-safe root position outside DOSBox window for host capture" >&2
+            exit 9
+        fi
+        xdotool mousemove "$pointer_x" "$pointer_y"
+        sleep 0.05
         import -silent -window "$window" "$raw"
         [[ -s "$raw" ]] || {
             echo "ERROR: X11 server-image capture produced no frame: $raw" >&2
