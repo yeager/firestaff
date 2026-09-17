@@ -17,6 +17,10 @@
   authentic archive path through the New Game runtime and start-menu input
   matrix.
 
+- `Startup-menu localization`: refreshes the canonical POT and all 20 PO
+  catalogs after source-reference changes, so CI and downstream translators
+  consume the same extraction result.
+
 - `Release integrity`: changes the deterministic SPDX source inventory for
   this source revision.
 
