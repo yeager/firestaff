@@ -53,7 +53,7 @@ Optional:
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
   FMTOWNS_DIFF_MOUSE=1|0                   (default: 0; enable Tsugaru's differential
                                              mouse integration for original desktop routes)
-  FMTOWNS_INPUT_TIMELINE='host-seconds:enter|e [...]'
+  FMTOWNS_INPUT_TIMELINE='host-seconds:enter|e|up|down|left|right [...]'
                                              (default: empty; opt-in original-route input;
                                              injected as X11 key events into Tsugaru)
   FMTOWNS_POINTER_CLICKS='host-seconds:x,y[@milliseconds] [...]'
@@ -97,8 +97,8 @@ if [[ -z "$timeline" || ! "$timeline" =~ ^[0-9]+:[A-Za-z0-9_-]+(\ [0-9]+:[A-Za-z
     echo "ERROR: FMTOWNS_CAPTURE_TIMELINE must use seconds:label entries separated by spaces" >&2
     exit 3
 fi
-if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:(enter|e)(\ [0-9]+:(enter|e))*$ ]]; then
-    echo "ERROR: FMTOWNS_INPUT_TIMELINE accepts only seconds:enter or seconds:e entries" >&2
+if [[ -n "$input_timeline" && ! "$input_timeline" =~ ^[0-9]+:(enter|e|up|down|left|right)(\ [0-9]+:(enter|e|up|down|left|right))*$ ]]; then
+    echo "ERROR: FMTOWNS_INPUT_TIMELINE accepts enter, e, up, down, left, or right entries" >&2
     exit 3
 fi
 if [[ -n "$input_timeline" ]]; then
@@ -352,6 +352,10 @@ run_input_events() {
         case "$key" in
             enter) DISPLAY="$xvfb_display" xdotool key --window "$window" Return ;;
             e) DISPLAY="$xvfb_display" xdotool key --window "$window" e ;;
+            up) DISPLAY="$xvfb_display" xdotool key --window "$window" Up ;;
+            down) DISPLAY="$xvfb_display" xdotool key --window "$window" Down ;;
+            left) DISPLAY="$xvfb_display" xdotool key --window "$window" Left ;;
+            right) DISPLAY="$xvfb_display" xdotool key --window "$window" Right ;;
         esac
         printf 'key=%s:%s window=%s\n' "$timestamp" "$key" "$window" >>"$out/input-actions.log"
         previous="$timestamp"
