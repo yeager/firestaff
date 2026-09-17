@@ -113,6 +113,33 @@ if [[ -n "$pointer_clicks" && ! "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(@[0-9
     echo "ERROR: FMTOWNS_POINTER_CLICKS must use seconds:x,y or seconds:x,y@milliseconds entries separated by spaces" >&2
     exit 3
 fi
+# A framebuffer request and a pointer transition are independent host threads.
+# Sampling while a button is down (or exactly as it is released) makes the
+# ordering unknowable and previously produced duplicate, non-evidentiary
+# frames.  Require callers to sample strictly after the full hold interval.
+# This is deliberately a route-validation error rather than a best-effort
+# delay: original-capture evidence must describe an observable settled state.
+if [[ -n "$pointer_clicks" ]]; then
+    for capture_entry in $timeline; do
+        capture_second="${capture_entry%%:*}"
+        for pointer_entry in $pointer_clicks; do
+            pointer_second="${pointer_entry%%:*}"
+            pointer_point="${pointer_entry#*:}"
+            pointer_hold_ms=0
+            if [[ "$pointer_point" == *@* ]]; then
+                pointer_hold_ms="${pointer_point##*@}"
+            fi
+            # A zero-duration click still has an unordered dispatch boundary
+            # at its timestamp.  For a held click, round up to whole seconds
+            # because capture timestamps use whole host-wall seconds.
+            pointer_settle_second=$((pointer_second + (pointer_hold_ms + 999) / 1000))
+            if (( capture_second >= pointer_second && capture_second <= pointer_settle_second )); then
+                echo "ERROR: capture timestamp ${capture_second}s overlaps pointer action ${pointer_entry}; sample strictly after ${pointer_settle_second}s" >&2
+                exit 3
+            fi
+        done
+    done
+fi
 if [[ "$high_fidelity" != "0" && "$high_fidelity" != "1" ]]; then
     echo "ERROR: FMTOWNS_HIGH_FIDELITY must be 0 or 1" >&2
     exit 3
