@@ -8,6 +8,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_dungeon_input_owner.h"
 #include "firestaff_po_loader.h"
 
@@ -275,6 +276,29 @@ static void check(int condition, const char *message)
     }
 }
 
+static int preselection_cell_matches(const DM2_V1_GameLoadWorldOwner *owner,
+                                     uint8_t view_square,
+                                     int forward, int lateral)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    int direction;
+
+    if (!owner || !owner->preselection_view.valid) return 0;
+    direction = owner->source_party_direction & 3;
+    for (unsigned int i = 0u;
+         i < owner->preselection_view.cell_count; ++i) {
+        const DM2_V1_GameLoadPreselectionViewCell *cell =
+            &owner->preselection_view.cells[i];
+        if (cell->view_square != view_square) continue;
+        return cell->map_x == owner->source_party_x + dx[direction] * forward -
+                dy[direction] * lateral &&
+            cell->map_y == owner->source_party_y + dy[direction] * forward +
+                dx[direction] * lateral;
+    }
+    return 0;
+}
+
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
@@ -397,6 +421,20 @@ int main(void)
           "FM Towns NEW GAME dispatches through the source pointer route");
     check(view.dm2State.startup_menu_active && !view.dm2State.level_loaded,
           "FM Towns NEW GAME enters source GAME_LOAD preselection");
+    {
+        const DM2_V1_BootProfile *boot =
+            (const DM2_V1_BootProfile *)view.dm2BootProfile;
+        const DM2_V1_GameLoadWorldOwner *owner = boot
+            ? (const DM2_V1_GameLoadWorldOwner *)boot->game_load_world_owner
+            : NULL;
+        /* SKProject DISPLAY_VIEWPORT materializes tblCellTilesRoom cell 4/5
+         * as the final left/right cells of the four-deep projection.  Reading
+         * the former (5,-2)/(5,+2) coordinates paints unrelated map walls
+         * into the FM Towns dungeon aperture. */
+        check(preselection_cell_matches(owner, DM2_SQ_D3L, 4, -1) &&
+                  preselection_cell_matches(owner, DM2_SQ_D3R, 4, 1),
+              "FM Towns GAME_LOAD projects deep side cells from SKProject cell 4/5");
+    }
     check(M11_GameView_HandlePointerButton(
               &view, 100, 60, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
               M11_GAME_INPUT_REDRAW,

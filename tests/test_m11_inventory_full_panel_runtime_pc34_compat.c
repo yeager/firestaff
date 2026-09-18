@@ -122,11 +122,14 @@ static const char* graphics_dat_path(void) {
          * in-memory owner rather than silently depending on an extracted
          * GRAPHICS.DAT beside the archive. */
         snprintf(homePath, sizeof(homePath),
-                 "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"
-                 "::dungeon-master/dmaster/DATA/GRAPHICS.DAT", home);
+                 "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+                 "::DATA/GRAPHICS.DAT", home);
         return homePath;
     }
-    return "/home/trv2/.firestaff/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
+    /* CI and local runners can override the source explicitly above.  Keep
+     * the final fallback relative; repository tests must not encode a
+     * contributor's private media location. */
+    return "GRAPHICS.DAT";
 }
 
 static int load_original_pc34_font(M11_GameViewState* state) {

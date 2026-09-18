@@ -1574,6 +1574,9 @@ typedef struct {
     int csbViewportWallWidths[15];
     int csbViewportWallHeights[15];
     int csbViewportWallSet;
+    /* ENTRANCE.C F0797 renders its transient C255 aperture from the
+     * startup wall cache, before a campaign map owns F0128's materials. */
+    int csbFmtownsStartupWallSetActive;
     uint32_t csbStartupExpectedPackageIdentity;
     /* Source identity whose IMG2/LZW C009..C013 HUD rasters currently own
      * the shared asset cache.  Dimensions alone cannot distinguish a stale

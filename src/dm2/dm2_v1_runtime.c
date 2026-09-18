@@ -1614,16 +1614,17 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
     } visible_cells[] = {
         /* SKProject c_gui_vp.cpp consumes these D0..D3 center/side cells
          * through the existing wall panel plan. D0 sides are adjacent to the
-         * party. D3L/D3R are the deep projections: SKProject's view-cell
-         * table reaches five cells ahead and two cells out from the center
-         * ray. D3C has no source GRAPHICSSET wall field, so it is deliberately
-         * not promoted to a drawable terrain surface here. */
+         * party. D3L/D3R are the final side cells in SKProject's four-deep
+         * projection (cell 4/5 in tblCellTilesRoom): four cells ahead and
+         * one cell out from the centre ray. D3C has no source GRAPHICSSET
+         * wall field, so it is deliberately not promoted to a drawable
+         * terrain surface here. */
         { DM2_SQ_D0C, 1,  0 }, { DM2_SQ_D1C, 2,  0 },
         { DM2_SQ_D2C, 3,  0 },
         { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0R, 0,  1 },
         { DM2_SQ_D1L, 1, -1 }, { DM2_SQ_D1R, 1,  1 },
         { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2R, 2,  1 },
-        { DM2_SQ_D3L, 5, -2 }, { DM2_SQ_D3R, 5,  2 },
+        { DM2_SQ_D3L, 4, -1 }, { DM2_SQ_D3R, 4,  1 },
     };
     DM2_V1_DungeonData *dd;
     int dir;
@@ -11509,6 +11510,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         memset(dungeon_backbuffer, 0, sizeof(dungeon_backbuffer));
         dm2_v1_viewport_init(&viewport, dungeon_backbuffer,
                              DM2_GFX_BACKBUFFER_W);
+        /* GDAT material and clip receipts consume this snapshot too. It must
+         * describe RECT_7, not the later 320x200 interface page, while this
+         * compact buffer is bound. */
+        if (!dm2_v1_viewport_set_surface_dimensions(
+                &viewport, DM2_GFX_BACKBUFFER_W, DM2_GFX_BACKBUFFER_H)) {
+            return -1;
+        }
         dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 1);
     } else {
         dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
@@ -11713,10 +11721,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             rt->boot, 0, c_light_parameter,
             rt->c_light_receipt.receipt_hash, &scene_material_plan);
         if (!apply_ok) {
-            /* An observed c_light state selects _32cb_0804.  Do not present
-             * the base local palettes when its exact dt07 branch is present
-             * but undecoded. */
-            scene_material_plan_for_m11 = NULL;
+            /* c_light transforms the indoor scene palette. T600 outdoor
+             * presentation consumes UPDATE_GFXSET's base local-palette
+             * plan; retaining that plan prevents a fallback to the legacy
+             * tiled asset callback when a new session carries c_light state. */
+            scene_material_plan_for_m11 = rt->outdoor
+                ? &rt->gdat_scene_material_plan : NULL;
         } else {
             scene_material_plan_for_m11 = &scene_material_plan;
         }

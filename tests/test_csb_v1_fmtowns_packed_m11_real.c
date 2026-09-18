@@ -119,12 +119,21 @@ int main(void)
                 return 1;
             }
             count = ((size_t)original[offset] << 8) | original[offset + 1u];
-            if (count != sound.byteCount || count > profile->fmtowns_graphics_size - offset - 2u ||
-                memcmp(sound.bytes, original + offset + 2u, count)) {
-                fputs("FAIL: F31 PCM does not match original container bytes\n", stderr);
+            if (count != sound.byteCount || count > profile->fmtowns_graphics_size - offset - 2u) {
+                fputs("FAIL: F31 PCM byte count does not match original container\n", stderr);
                 csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
                 M11_GameView_Shutdown(&view);
                 return 1;
+            }
+            for (size_t sample = 0u; sample < count; ++sample) {
+                unsigned char expected = (unsigned char)(original[offset + 2u + sample] + 0x80u);
+                if (expected & 0x80u) expected ^= 0x7fu;
+                if (sound.bytes[sample] != expected) {
+                    fputs("FAIL: F31 PCM does not match TOWNSIO.C F0060 conversion\n", stderr);
+                    csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                    M11_GameView_Shutdown(&view);
+                    return 1;
+                }
             }
             /* Damage only a private RAM copy of authenticated media. The
              * loader must reject a count that runs beyond the sound record. */

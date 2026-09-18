@@ -25,6 +25,7 @@ Optional:
                                                optionally held in ms
   CSB_ATARI_KEYSTROKES='70:Return@1500'        timed key presses, optionally held in ms (exclusive with clicks)
   CSB_ATARI_XVFB_DISPLAY=103                  dedicated X display number
+  CSB_ATARI_DISPLAY=:0                        caller-owned existing X display; no Xvfb
   CSB_ATARI_SOUND_HZ=44100                    original-session audio frequency
   CSB_ATARI_SOUND_BUFFER_MS=100               host audio buffer (10-100 ms)
   CSB_ATARI_SOUND_SYNC=on|off                  Hatari emulation/audio synchronisation (default: on)
@@ -33,9 +34,11 @@ Optional:
                                                (default: dummy when recording; unset otherwise)
   HATARI=/path/to/hatari                       (default: hatari)
 
-The script runs a write-protected STE session under a dedicated Xvfb display,
-writes only capture images and a SHA-256 receipt to the chosen output folder,
-then terminates only the Hatari/Xvfb processes it started. Frames are written
+The script runs a write-protected STE session on a dedicated Xvfb display by
+default. Set CSB_ATARI_DISPLAY to use a caller-owned display instead; that
+display is neither created nor terminated by this script. It writes only
+capture images and a SHA-256 receipt to the chosen output folder, then
+terminates only the Hatari/Xvfb processes it started. Frames are written
 by Hatari's own screenshot facility, rather than by a host desktop grab, so
 they exclude emulator chrome and status overlays. A produced image is an
 original emulator capture, not a Firestaff pixel-parity claim.
@@ -61,6 +64,7 @@ sound_buffer_ms="${CSB_ATARI_SOUND_BUFFER_MS:-100}"
 sound_sync="${CSB_ATARI_SOUND_SYNC:-on}"
 capture_audio="${CSB_ATARI_CAPTURE_AUDIO:-0}"
 sdl_audio_driver="${CSB_ATARI_SDL_AUDIO_DRIVER:-}"
+caller_display="${CSB_ATARI_DISPLAY:-}"
 
 if [[ "$mode" == "prepare" ]]; then
     usage
@@ -73,7 +77,11 @@ for required in "$tos" "$stx"; do
         exit 3
     fi
 done
-for required in "$hatari" Xvfb xdotool sha256sum; do
+required_tools=("$hatari" xdotool sha256sum)
+if [[ -z "$caller_display" ]]; then
+    required_tools+=(Xvfb)
+fi
+for required in "${required_tools[@]}"; do
     command -v "$required" >/dev/null 2>&1 || {
         echo "ERROR: required capture tool is unavailable: $required" >&2
         exit 4
@@ -131,18 +139,42 @@ fi
 
 mkdir -p "$out"
 out="$(cd "$out" && pwd)"
-display_num="${CSB_ATARI_XVFB_DISPLAY:-103}"
-if [[ ! "$display_num" =~ ^[0-9]+$ ]]; then
-    echo "ERROR: CSB_ATARI_XVFB_DISPLAY must be a numeric display number" >&2
-    exit 5
+xvfb_pid=""
+if [[ -n "$caller_display" ]]; then
+    if [[ ! "$caller_display" =~ ^:[0-9]+(\.[0-9]+)?$ ]]; then
+        echo "ERROR: CSB_ATARI_DISPLAY must be an X display such as :0" >&2
+        exit 5
+    fi
+    display="$caller_display"
+else
+    display_num="${CSB_ATARI_XVFB_DISPLAY:-103}"
+    if [[ ! "$display_num" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: CSB_ATARI_XVFB_DISPLAY must be a numeric display number" >&2
+        exit 5
+    fi
+    display=":$display_num"
+    Xvfb "$display" -screen 0 1024x768x24 >"$out/xvfb.log" 2>&1 &
+    xvfb_pid=$!
 fi
-display=":$display_num"
-
-Xvfb "$display" -screen 0 1024x768x24 >"$out/xvfb.log" 2>&1 &
-xvfb_pid=$!
 hatari_pid=""
 window=""
 audio_capture_active=0
+control_fifo="$out/hatari-control.fifo"
+
+stop_owned_process() {
+    local pid="$1"
+    [[ -n "$pid" ]] || return 0
+    kill "$pid" 2>/dev/null || true
+    for _ in 1 2 3 4 5; do
+        kill -0 "$pid" 2>/dev/null || break
+        sleep 0.1
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+    fi
+    wait "$pid" 2>/dev/null || true
+}
+
 cleanup() {
     # Hatari writes the WAV header length when recording is toggled off.  Do
     # that before process termination whenever a native capture is active.
@@ -151,20 +183,20 @@ cleanup() {
             >/dev/null 2>&1 || true
         audio_capture_active=0
     fi
-    if [[ -n "$hatari_pid" ]]; then kill "$hatari_pid" 2>/dev/null || true; fi
-    kill "$xvfb_pid" 2>/dev/null || true
-    if [[ -n "$hatari_pid" ]]; then wait "$hatari_pid" 2>/dev/null || true; fi
+    stop_owned_process "$hatari_pid"
+    if [[ -n "$xvfb_pid" ]]; then kill "$xvfb_pid" 2>/dev/null || true; fi
     # Some Xvfb versions keep serving an open SDL connection briefly after
     # Hatari exits.  Bound the teardown so a reference capture never leaves
     # a display server behind on the build host.
     for _ in 1 2 3 4 5; do
+        [[ -n "$xvfb_pid" ]] || break
         kill -0 "$xvfb_pid" 2>/dev/null || break
         sleep 0.1
     done
-    if kill -0 "$xvfb_pid" 2>/dev/null; then
+    if [[ -n "$xvfb_pid" ]] && kill -0 "$xvfb_pid" 2>/dev/null; then
         kill -9 "$xvfb_pid" 2>/dev/null || true
     fi
-    wait "$xvfb_pid" 2>/dev/null || true
+    if [[ -n "$xvfb_pid" ]]; then wait "$xvfb_pid" 2>/dev/null || true; fi
 }
 trap cleanup EXIT INT TERM
 
@@ -176,7 +208,7 @@ fi
     --confirm-quit no --machine ste --tos "$tos" \
     --disk-a "$stx" --protect-floppy on --sound "$sound_hz" --sound-buffer-size "$sound_buffer_ms" --sound-sync "$sound_sync" --fastfdc off \
     --statusbar false --drive-led false --borders false --crop true \
-    --screenshot-dir "$out" "${screenshot_format_args[@]}" ) \
+    --screenshot-dir "$out" --cmd-fifo "$control_fifo" "${screenshot_format_args[@]}" ) \
     >"$out/hatari.log" 2>&1 &
 hatari_pid=$!
 
@@ -198,6 +230,22 @@ if [[ -z "$window" ]]; then
     echo "ERROR: could not find the Hatari window for native screenshots" >&2
     exit 6
 fi
+
+request_native_screenshot() {
+    local attempt
+    # The command FIFO is Hatari's supported host-control channel. It avoids
+    # relying on an XTest-modifier mapping (which varies between desktop
+    # sessions) while still asking Hatari itself to write the framebuffer.
+    for attempt in $(seq 1 50); do
+        if [[ -p "$control_fifo" ]] && \
+            timeout 2 bash -c 'printf "%s\\n" "hatari-shortcut screenshot" > "$1"' _ "$control_fifo"; then
+            return 0
+        fi
+        sleep 0.1
+    done
+    echo "ERROR: Hatari command FIFO did not accept a native screenshot request" >&2
+    return 1
+}
 
 if [[ "$capture_audio" == "1" ]]; then
     # Hatari's documented AltGr+Y recorder writes ./hatari.wav.  The process
@@ -273,8 +321,8 @@ PY
         # Hatari's SDL input path can ignore synthetic --window events after
         # its title page takes focus.  Focus the exact emulator window and
         # emit root-device input at its absolute position instead; this is
-        # still confined to the dedicated Xvfb display and does not target a
-        # host desktop window.
+        # still confined to the selected capture display and targets only the
+        # Hatari window.
         DISPLAY="$display" xdotool windowfocus --sync "$window"
         DISPLAY="$display" xdotool mousemove "$((gx + px))" "$((gy + py))"
         if (( held_ms > 0 )); then
@@ -332,10 +380,9 @@ for second in $capture_seconds; do
     sleep "$((second - previous))"
     index=$((index + 1))
     before_count="$(find "$out" -maxdepth 1 -type f -name 'grab*.png' | wc -l | tr -d ' ')"
-    # Hatari documents AltGr+G as its screenshot shortcut.  This writes the
-    # emulated framebuffer, avoiding an Xvfb root-window grab with unrelated
-    # pixels or an emulator status bar.
-    DISPLAY="$display" xdotool key --window "$window" ISO_Level3_Shift+g
+    # This asks Hatari's own control channel for the screenshot; no host
+    # desktop grab or emulated keyboard event is used.
+    request_native_screenshot
     for attempt in $(seq 1 50); do
         latest="$(find "$out" -maxdepth 1 -type f -name 'grab*.png' -printf '%T@ %p\n' | sort -n | tail -n 1 | cut -d' ' -f2-)"
         after_count="$(find "$out" -maxdepth 1 -type f -name 'grab*.png' | wc -l | tr -d ' ')"

@@ -155,10 +155,18 @@ static void check_staged_real_save(void)
           csb_v1_dungeon_get_current_mutable() == current_before);
     csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(transaction);
     transaction = NULL;
-    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
-              path, 0u, &commit_plan) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
-          commit_plan != NULL &&
-          csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_prepare(
+    if (csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+            path, 0u, &commit_plan) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
+        !commit_plan) {
+        /* A staged file can be a valid CSBWin save for another campaign
+         * (for example Conflux) without carrying the legacy CSBGAME2
+         * dungeon-tail shape this test is specifically proving.  Report the
+         * incompatible corpus cleanly; never dereference a rejected plan. */
+        CHECK(0);
+        free(bytes);
+        return;
+    }
+    CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_prepare(
               commit_plan) != NULL &&
           csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_dungeon(
               commit_plan) != NULL &&

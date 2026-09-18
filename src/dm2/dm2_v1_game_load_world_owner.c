@@ -11070,8 +11070,8 @@ int dm2_v1_game_load_world_owner_materialize_preselection_view(
         { DM2_SQ_D2C, 3,  0 }, { DM2_SQ_D0L, 0, -1 },
         { DM2_SQ_D0R, 0,  1 }, { DM2_SQ_D1L, 1, -1 },
         { DM2_SQ_D1R, 1,  1 }, { DM2_SQ_D2L, 2, -1 },
-        { DM2_SQ_D2R, 2,  1 }, { DM2_SQ_D3L, 5, -2 },
-        { DM2_SQ_D3R, 5,  2 },
+        { DM2_SQ_D2R, 2,  1 }, { DM2_SQ_D3L, 4, -1 },
+        { DM2_SQ_D3R, 4,  1 },
     };
     DM2_V1_GameLoadPreselectionViewReceipt candidate;
     const int map = owner ? owner->source_party_map : -1;

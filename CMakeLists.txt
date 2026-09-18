@@ -59576,6 +59576,13 @@ set_tests_properties(test_dm1_v1_fmtowns_cd_audio PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
     LABELS "dm1;fmtowns;cd-audio;real-data;in-memory;skip-safe")
 
+add_executable(test_audio_cdda_endian tests/test_audio_cdda_endian.c)
+target_include_directories(test_audio_cdda_endian PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_audio_cdda_endian PRIVATE firestaff_m11)
+add_test(NAME audio_cdda_endian COMMAND test_audio_cdda_endian)
+set_tests_properties(audio_cdda_endian PROPERTIES
+    LABELS "audio;cdda;red-book;portable")
+
 add_executable(test_dm1_v1_fmtowns_menu_regions
     tests/test_dm1_v1_fmtowns_menu_regions.c
     src/dm1/dm1_v1_fmtowns_menu_regions.c

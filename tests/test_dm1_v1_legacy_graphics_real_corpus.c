@@ -215,9 +215,9 @@ static int audit_graphics(const char *label, const uint8_t *data, size_t size,
 static int audit_fmtowns_archive(const char *archive)
 {
     DM1_V1_FmtownsIsoLayout layout;
-    uint8_t *track;
+    uint8_t *track = NULL;
     uint8_t *cue = NULL;
-    size_t track_size;
+    size_t track_size = 0u;
     size_t cue_size = 0u;
     char image_member[256];
     unsigned int i;

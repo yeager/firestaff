@@ -97,6 +97,11 @@ STAGE_DEFAULT="${DM2_ORIGINAL_STAGE_DIR:-${REPO}/.codex-scratch/dm2-pc10-origina
 OUT_DIR="${OUT_DIR:-${REPO}/.codex-scratch/dm2-original-overlay-capture}"
 DOSBOX="${DOSBOX:-$(command -v dosbox-x 2>/dev/null || true)}"
 DOSBOX_OUTPUT="${DM2_DOSBOX_OUTPUT:-opengl}"
+# Keep the historical 3000-cycle capture profile as the default, but let a
+# reference run select a faster *fixed* CPU rate when the retail DOS4GW
+# loader needs longer than the bounded capture window.  This is an external
+# evidence-tool setting only; Firestaff never reads it at runtime.
+DOSBOX_CYCLES="${DM2_DOSBOX_CYCLES:-3000}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM2_ORIGINAL_ROUTE_EVENTS:-}"
@@ -109,6 +114,13 @@ case "${EXPECTED_SHOTS}" in
            exit 2
        fi
        ;;
+esac
+case "${DOSBOX_CYCLES}" in
+    ''|*[!0-9]*) echo "ERROR: DM2_DOSBOX_CYCLES must be a positive integer" >&2; exit 2 ;;
+    *) if [[ "${DOSBOX_CYCLES}" -le 0 ]]; then
+           echo "ERROR: DM2_DOSBOX_CYCLES must be a positive integer" >&2
+           exit 2
+       fi ;;
 esac
 SKIP_INTRO_SELECTOR="${DM2_ROUTE_SKIP_INTRO:-0}"
 # The retail DOS archive starts through DM2.BAT (EREGCARD -> IBMIOP ->
@@ -374,7 +386,7 @@ cputype=386
 # DOSBox-X consumes cycles, not the legacy cpu_cycles spelling.  Leaving
 # this unset silently selects cycles=auto (maximum speed), which races past
 # the title/menu route and invalidates timing captures.
-cycles=fixed 3000
+cycles=fixed ${DOSBOX_CYCLES}
 cycleup=500
 cycledown=500
 

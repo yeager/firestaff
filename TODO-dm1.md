@@ -1,26 +1,28 @@
 # Firestaff TODO — DM1
 
 - Reproduce and correct the remaining reported retail HoC interaction/viewport
-  set as one source-locked pass: pickup-to-inventory and Eye scroll reads, Vi
+  set as one source-locked pass: pickup-to-inventory and object-bearing Eye
+  scroll reads, Vi
   altar wall material, stairs occlusion, complete door
   composition, pressure-plate near/far visibility, wall-torch placement, and
-  held-item striping/loss on inventory placement. Existing raw-format pointer,
-  F0128 scheduler, and individual material tests are necessary but do not
-  prove these live combinations. Use an authenticated PC3.4 HoC route or a
+  held-item striping/loss on inventory placement. A private original PC 3.4
+  run now visibly covers the post-resurrection FOOD/WATER panel, an item in
+  the action hand, and that item in a backpack slot. It is useful reference
+  evidence for those three poses, but it does not prove a floor pickup or an
+  Eye-scroll read. Existing raw-format pointer, F0128 scheduler, and
+  individual material tests are necessary but do not prove these live
+  combinations. Use an authenticated PC3.4 HoC route or a
   generated-in-original-runtime C13 save as the state driver; do not promote
   a hand-made save or substitute graphics from another platform. Capture the
   exact square/pose/input and compare source-order command receipts before
   changing a renderer or inventory transaction.
 
 - Extend the validated original PC 3.4 same-state C127/C040 comparison through
-  the later C007 inventory interaction and a real pickup. The local
-  `dm1-original-hoc-c040-20260908` files labelled `c040`, `c040_stable` and
-  `c040_final` are bit-identical Hall frames (SHA-256 `94d941f5…bff6f40`),
-  so that capture set must not be used as the source-modal proof. The separate
-  `dm1-original-hoc-recruit-inventory-20260908` route does contain a visible
-  C040 panel followed by the C007 inventory state. A same-state native C040
-  measurement is now recorded, but it does not prove C007 or item-transaction
-  parity. The historic retail hybrid
+  a real pickup. A prior private capture set with three bit-identical Hall
+  frames must not be used as source-modal proof. The separate private retail
+  route visibly contains a C040 panel followed by C007 inventory state. A
+  same-state native C040 measurement is now recorded, but it does not prove
+  C007 or item-transaction parity. The historic retail hybrid
   route is mouse-mode launch (`DM -vv -sn -pm`), but `(260,84)` is the
   Resume row, not a verified Enter selection. Current DOSBox-X/Xvfb runs
   reproduce the keyboard Return handoff into the no-party Hall frame while

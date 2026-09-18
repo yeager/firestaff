@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-18: Re-inspected a private DOSBox-X run of unmodified retail PC
+  3.4 data after the HoC resurrection route. Three distinct 320×200 frames
+  show the source FOOD/WATER inventory panel, an object in the action hand,
+  and that object placed in a backpack slot. The raw frames and game media
+  remain private and are not repository artifacts. This confirms the visual
+  reference set for those poses only; it does not claim a floor pickup,
+  object-bearing Eye-scroll read, cadence parity, or full HoC parity.
+
 - 2026-09-16: Revalidated the authentic PC 3.4 Entrance-to-Hall checkpoint
   with DOSBox-X and the original game data. The two-frame route produced a
   healthy, non-duplicate 320x200 Entrance frame followed by a healthy,

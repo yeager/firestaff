@@ -2017,6 +2017,12 @@ void dm2_v1_viewport_set_party(DM2_V1_ViewportState *s, int dir, int x, int y);
 void dm2_v1_viewport_set_outdoor(DM2_V1_ViewportState *s, int is_outdoor);
 void dm2_v1_viewport_set_render_dungeon_backbuffer_only(
     DM2_V1_ViewportState *s, int enabled);
+
+/* Bind the concrete raster dimensions for a temporary source-owned drawing
+ * surface. DM2's normal interface page is 320x200, while DRAWINGS_COMPLETED
+ * first renders PC/FM Towns dungeon material into RECT_7's 224x136 bitmap. */
+int dm2_v1_viewport_set_surface_dimensions(DM2_V1_ViewportState *s,
+                                           int width, int height);
 void dm2_v1_viewport_set_g1_first_map_runtime(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1FirstMapRuntimeReceipt *receipt);

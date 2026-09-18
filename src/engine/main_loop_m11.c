@@ -3723,6 +3723,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             DM1_V1_StartupHandoffPostLaunchPlan_PC34 entrancePlan;
             M11_EntranceCommand entranceCommand = M11_ENTRANCE_COMMAND_NONE;
             int played = 0;
+            int oldFastForward = g_m11_intro_delay_fast_forward;
             /* FM Towns must either consume its authenticated native title
              * plan or fail closed; do not expose the generic PC34 title. */
             (void)M11_Render_SetPaletteLevel(0);
@@ -3731,13 +3732,23 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
              * call repeatedly; returns 1 if the font is already loaded
              * or the load succeeds. */
             (void)M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(gameView);
+            /* A boot probe is a bounded non-interactive evidence route.  Its
+             * requested frame count must not spend the full retail title
+             * duration before reaching the probe receipt.  Keep this switch
+             * scoped to that explicit CLI mode: the interactive EDM/JDM
+             * title continues to use its source VBlank deadlines. */
+            if (bootProbe) {
+                g_m11_intro_delay_fast_forward = 1;
+            }
             if (!m11_play_dm1_fmtowns_title_if_available(gameView, &played) ||
                 !played) {
+                g_m11_intro_delay_fast_forward = oldFastForward;
                 M11_GameView_Shutdown(gameView);
                 M11_GameView_Init(gameView);
                 m11_set_launch_failed_message(menuState);
                 return 0;
             }
+            g_m11_intro_delay_fast_forward = oldFastForward;
             /* EDM/JDM owns the Towns title, but completing that title is not
              * permission to expose a live, party-less dungeon.  The common
              * DM1 entrance owns the first interactive Hall-of-Champions
@@ -3766,12 +3777,57 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
              * boot-probe escape hatch and deliberately does not claim an
              * interactive entrance handoff. */
             if (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH")) {
+                DM1_V1_StartupHandoffOutcome_PC34 entranceOutcome;
+                DM1_V1_StartupHostApplyResult_PC34 entranceHostResult;
+                DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34
+                    entranceRuntimeHandoff;
+                /* The FM Towns title is a native EDM/JDM program, but its
+                 * first Hall page is still an interactive entrance state.
+                 * Passing the PC plan's automatic timeout here consumed C200
+                 * before the host event loop regained control: on fast
+                 * machines that skipped the usable Entrance page and exposed
+                 * a party-less black dungeon.  Require a fresh source-space
+                 * command. The headless probe keeps its explicit, narrow
+                 * timeout policy inside m11_wait_for_redmcsb_entrance_command.
+                 */
                 entranceCommand = m11_play_redmcsb_entrance_transition(
-                    gameView, entrancePlan.entrance_auto_enter_ms,
+                    gameView, -1,
                     &entrancePlan.entrance_full_start_receipt,
                     &entrancePlan.media_receipt);
                 if (!dm1_v1_fmtowns_startup_handoff_allows_gameplay(
                         0, (int)entranceCommand)) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+                /* EDM/JDM owns the title pixels, but the shared Entrance
+                 * command is what changes the loaded DM1 world into the
+                 * empty-party Hall route.  Previously this native branch
+                 * presented C004 and accepted C200, then left the generic
+                 * pre-Entrance world live.  On the first Draw that exposed
+                 * a party-less black dungeon instead of the Hall mirrors.
+                 *
+                 * Build the already source-locked common Entrance receipt
+                 * from the command actually consumed above.  This does not
+                 * replay a PC title or fabricate a Towns shortcut: it only
+                 * applies the common post-Entrance runtime boundary that
+                 * EDM/JDM reaches after its own title program. */
+                memset(&entranceOutcome, 0, sizeof(entranceOutcome));
+                memset(&entranceHostResult, 0, sizeof(entranceHostResult));
+                memset(&entranceRuntimeHandoff, 0,
+                       sizeof(entranceRuntimeHandoff));
+                entranceOutcome.title_played = 1;
+                entranceOutcome.entrance_command = (int)entranceCommand;
+                entranceOutcome.action =
+                    DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34;
+                entranceOutcome.status = "FMTOWNS EDM/JDM ENTRANCE ENTER";
+                entranceHostResult.handled = 1;
+                if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
+                        "dm1", "dm1", &entranceOutcome,
+                        &entranceHostResult, &entranceRuntimeHandoff) ||
+                    !M11_GameView_ApplyDm1StartupRuntimeHandoff(
+                        gameView, &entranceRuntimeHandoff)) {
                     M11_GameView_Shutdown(gameView);
                     M11_GameView_Init(gameView);
                     m11_set_launch_failed_message(menuState);
@@ -8196,11 +8252,12 @@ cleanup:
 
 boot_probe_terminal_exit:
     /* Process-terminal probe path: the printed boot receipt is the contract.
-     * Do not enter live runtime/menu teardown here; DM1 has already reached
-     * runtime and some shutdown paths are intentionally game-loop-owned.
-     * The SDL renderer, however, is owned by M11_Render alone, so shut it
-     * down: without this a second in-process M11_PhaseA_Run boot probe
-     * (multi-game gates) dies on M11_RENDER_ERR_ALREADY_INIT. */
+     * It still owns game-side resources: in particular, an authenticated FM
+     * Towns launch can have a live CD-audio stream.  Leaving that stream
+     * alive while only the video renderer is destroyed makes a successful
+     * --duration 0 probe print its receipt and then hang at process exit.
+     * Shut the game down before M11_Render so the probe is genuinely
+     * terminal, while preserving the already-recorded receipt/capture. */
     /* Keep optional visual evidence available for the exact terminal runtime
      * page. This is deliberately opt-in and runs before the renderer is
      * released, so real-data V1/V2.x capture tests do not need a synthetic
@@ -8215,6 +8272,7 @@ boot_probe_terminal_exit:
         inputRedrawDrawCount,
         inputRedrawAfterViewportDirtyCount,
         lastInputRedrawAfterViewportDirty);
+    M11_GameView_Shutdown(&gameView);
     M11_Render_Shutdown();
     free(launcherFramebuffer);
     if (modernRgba) {

@@ -45,9 +45,18 @@ int main(void)
         fprintf(stderr, "FAIL: could not read M11 source\n");
         return 1;
     }
+    /* The original check asserted an intermediate implementation which
+     * rejected side-zone compound calls outright.  The renderer now keeps
+     * those calls, but clips them to their F0635 destination lane.  That is
+     * the required behaviour: side walls remain visible without painting a
+     * false wall across D1C.  Keep this source gate coupled to the actual
+     * clipping predicate rather than an obsolete centre-only shortcut. */
     ok = strstr(text, "Only a centre-zone call owns the complete compound.") != NULL &&
-         strstr(text, "dstX == (slot->width == 248u ? 32 :") != NULL &&
-         strstr(text, "(slot->width == 136u ? 59 : 77)))") != NULL;
+         strstr(text, "dstX != centreZoneX &&") != NULL &&
+         strstr(text, "fbX < M11_VIEWPORT_X + dstX ||") != NULL &&
+         strstr(text, "fbX >= M11_VIEWPORT_X + dstX + dstW") != NULL &&
+         strstr(text, "fbY < M11_VIEWPORT_Y + dstY ||") != NULL &&
+         strstr(text, "fbY >= M11_VIEWPORT_Y + dstY + dstH") != NULL;
     free(text);
     if (!ok) {
         fprintf(stderr, "FAIL: FM Towns compound wall side-zone clipping gate\n");

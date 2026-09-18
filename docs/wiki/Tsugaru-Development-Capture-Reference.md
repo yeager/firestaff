@@ -27,10 +27,13 @@ outcome, but not a personal filesystem path or copyrighted payload.
 
 ## Components
 
-Tsugaru has a GUI frontend and a `Tsugaru_CUI` command-line frontend. The GUI
-uses the CUI executable internally. For automated reference work Firestaff
-uses CUI because it accepts explicit machine/media arguments and commands such
-as `SS` (Save Screenshot). The core is organized around these subsystems:
+Tsugaru has a GUI frontend, a `Tsugaru_CUI` command-line frontend, and a
+`Tsugaru_Headless` frontend. The GUI uses the CUI executable internally. For
+automated reference work Firestaff uses CUI or Headless because they accept
+explicit machine/media arguments and commands such as `SS` (Save Screenshot).
+Headless is preferred when an original route needs mouse input but a desktop
+server would alter or complicate the observation. The core is organized around
+these subsystems:
 
 | Subsystem | Responsibility relevant to Firestaff evidence |
 |---|---|
@@ -192,6 +195,25 @@ are useful to reproduce original pad-only paths, but Firestaff must implement
 the resulting game behavior natively rather than importing an emulator input
 mapping.
 
+### Headless event-log input
+
+`Tsugaru_Headless` treats lines prefixed with `!` as CUI commands and ordinary
+lines as typed guest text. It also exposes `LOADEVT` and `PLAYEVT`. An event
+log can contain timestamped `LBUTTONDOWN`/`LBUTTONUP` entries with `MOS x y`
+coordinates; playback calls the VM's mouse-control path directly. This avoids
+an X11 cursor, display scaling and compositor focus from becoming part of a
+reference route.
+
+The capture helper accepts this path with `FMTOWNS_HEADLESS=1`, an explicit
+`FMTOWNS_EVENT_LOG`, and `FMTOWNS_EVENTLOG_START`. It rejects host pointer or
+keyboard timelines in that mode. The event log is a private input fixture, not
+game data and not evidence by itself: the capture still needs immutable media,
+a nonblank native framebuffer, receipt hashes and a separately defined game
+state. It is useful for investigating an authentic menu choice before
+capturing DM1, CSB, or DM2 behavior, but playback acknowledgement is not
+input acceptance: compare a defined pre/post frame or guest-state signal
+before treating any event sequence as a game route.
+
 ## Audio
 
 Tsugaru models FM/PCM sound, CDDA and MIDI-related devices. Sound has its own
@@ -239,8 +261,8 @@ The maintained helper is `scripts/capture_fmtowns_original_startup.sh`. It:
    frame filename to its individual SHA-256 rather than emitting an
    unlabelled hash list.
 
-The helper currently supports DM1 and CSB FM Towns CUE/BIN and CUE/IMG media.
-It does not establish Firestaff visual parity by itself; it provides a
+The helper supports DM1, CSB and DM2 FM Towns CUE/BIN and CUE/IMG media. It
+does not establish Firestaff visual parity by itself; it provides a
 reproducible original-reference input to a separate native comparison.
 
 ## Known investigation boundaries

@@ -167,6 +167,16 @@ static int verify_direct_handoff(int style,
            (size_t)DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H);
     unexpected_fetches = 0;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_GFX_BACKBUFFER_W);
+    /* DM2_DISPLAY_VIEWPORT first draws these source planes into RECT_7's
+     * compact 224x136 bitmap.  The framebuffer's stride alone is not an
+     * admissible surface bound: a stale 320x200 snapshot lets a later
+     * material command address rows outside this scratch page, which then
+     * appears as repeated or torn dungeon bands after the RECT_7 copy. */
+    if (!dm2_v1_viewport_set_surface_dimensions(
+            &viewport, DM2_GFX_BACKBUFFER_W, DM2_GFX_BACKBUFFER_H)) {
+        fprintf(stderr, "FAIL: could not bind RECT_7 surface dimensions\n");
+        return 0;
+    }
     dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 1);
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);

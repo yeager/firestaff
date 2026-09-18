@@ -1222,8 +1222,10 @@ enum DM2_ColorIndex {
     DM2_COL_GROUND   = 6,
 };
 
-static void dm2_v1_fill_rect(uint8_t *fb,
-                             int stride,
+static int dm2_v1_viewport_draw_width(const DM2_V1_ViewportState *s);
+static int dm2_v1_viewport_draw_height(const DM2_V1_ViewportState *s);
+
+static void dm2_v1_fill_rect(DM2_V1_ViewportState *s,
                              const DM2_V1_ViewportRect *rect,
                              uint8_t color)
 {
@@ -1232,20 +1234,26 @@ static void dm2_v1_fill_rect(uint8_t *fb,
     int x1;
     int y1;
 
-    if (!fb || !rect || stride <= 0 || rect->w <= 0 || rect->h <= 0) {
+    if (!s || !s->framebuffer || s->fb_stride <= 0 || !rect ||
+        rect->w <= 0 || rect->h <= 0) {
         return;
     }
     x0 = rect->x < 0 ? 0 : rect->x;
     y0 = rect->y < 0 ? 0 : rect->y;
     x1 = rect->x + rect->w;
     y1 = rect->y + rect->h;
-    if (x1 > DM2_VP_WIDTH) x1 = DM2_VP_WIDTH;
-    if (y1 > DM2_VP_HEIGHT) y1 = DM2_VP_HEIGHT;
+    /* RECT_7 is a real 224x136 scratch surface for the PC and FM Towns
+     * dungeon pass.  Do not use the 320x200 interface bounds here: a HUD
+     * rectangle clipped to those dimensions can otherwise overwrite the
+     * rows after the compact page and return as repeated dungeon bands. */
+    if (x1 > dm2_v1_viewport_draw_width(s)) x1 = dm2_v1_viewport_draw_width(s);
+    if (y1 > dm2_v1_viewport_draw_height(s)) y1 = dm2_v1_viewport_draw_height(s);
     if (x0 >= x1 || y0 >= y1) {
         return;
     }
     for (int y = y0; y < y1; ++y) {
-        memset(fb + y * stride + x0, color, (size_t)(x1 - x0));
+        memset(s->framebuffer + y * s->fb_stride + x0, color,
+               (size_t)(x1 - x0));
     }
 }
 
@@ -1272,8 +1280,8 @@ static void dm2_v1_apply_source_gray_overlay(
     y0 = rect->y < 0 ? 0 : rect->y;
     x1 = rect->x + rect->w;
     y1 = rect->y + rect->h;
-    if (x1 > DM2_VP_WIDTH) x1 = DM2_VP_WIDTH;
-    if (y1 > DM2_VP_HEIGHT) y1 = DM2_VP_HEIGHT;
+    if (x1 > dm2_v1_viewport_draw_width(s)) x1 = dm2_v1_viewport_draw_width(s);
+    if (y1 > dm2_v1_viewport_draw_height(s)) y1 = dm2_v1_viewport_draw_height(s);
     for (int y = y0; y < y1; ++y) {
         for (int x = x0; x < x1; ++x) {
             /* _44c8_1aca starts with 0xf on one row and 0x0f on the
@@ -1348,6 +1356,20 @@ void dm2_v1_viewport_set_render_dungeon_backbuffer_only(
 {
     if (!s) return;
     s->render_dungeon_backbuffer_only = enabled ? 1 : 0;
+}
+
+int dm2_v1_viewport_set_surface_dimensions(DM2_V1_ViewportState *s,
+                                           int width, int height)
+{
+    if (!s || !s->surface_snapshot.framebuffer || width <= 0 || height <= 0 ||
+        s->fb_stride < width || width > UINT16_MAX || height > UINT16_MAX) {
+        return 0;
+    }
+    s->surface_snapshot.width = (uint16_t)width;
+    s->surface_snapshot.height = (uint16_t)height;
+    ++s->surface_snapshot.generation;
+    if (!s->surface_snapshot.generation) ++s->surface_snapshot.generation;
+    return 1;
 }
 
 /* SKProject skguivwp.cpp::DM2_DRAW_DEFAULT_DOOR_BUTTON appends one c_rwbb
@@ -7994,10 +8016,10 @@ static int dm2_v1_render_hud_source_font(
                     rect->x + glyph * 3 + column, rect->y + row, 1, 1
                 };
                 if (bits & (0x10u >> (column * 2))) {
-                    dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel,
+                    dm2_v1_fill_rect(s, &pixel,
                         dm2_v1_hud_text_palette_color(s, foreground));
                 } else if (!transparent_background) {
-                    dm2_v1_fill_rect(s->framebuffer, s->fb_stride, &pixel,
+                    dm2_v1_fill_rect(s, &pixel,
                         dm2_v1_hud_text_palette_color(s, background));
                 }
             }
@@ -8622,36 +8644,36 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
                 }
-                dm2_v1_fill_rect(vp, stride,
+                dm2_v1_fill_rect(s,
                                  &plan.champion_slots[slot].hp_bar_rect,
                                  dm2_v1_hud_palette_color(
                                      s, DM2_COL_BLACK));
-                dm2_v1_fill_rect(vp, stride,
+                dm2_v1_fill_rect(s,
                                  &plan.champion_slots[slot].hp_fill_rect,
                                  dm2_v1_hud_palette_color(
                                      s, plan.champion_slots[slot]
                                             .stat_bar_color));
-                dm2_v1_fill_rect(vp, stride,
+                dm2_v1_fill_rect(s,
                                  &plan.champion_slots[slot].stamina_bar_rect,
                                  dm2_v1_hud_palette_color(
                                      s, DM2_COL_BLACK));
-                dm2_v1_fill_rect(vp, stride,
+                dm2_v1_fill_rect(s,
                                  &plan.champion_slots[slot].stamina_fill_rect,
                                  dm2_v1_hud_palette_color(
                                      s, plan.champion_slots[slot]
                                             .stat_bar_color));
-                dm2_v1_fill_rect(vp, stride,
+                dm2_v1_fill_rect(s,
                                  &plan.champion_slots[slot].mana_bar_rect,
                                  dm2_v1_hud_palette_color(
                                      s, DM2_COL_BLACK));
-                dm2_v1_fill_rect(vp, stride,
+                dm2_v1_fill_rect(s,
                                  &plan.champion_slots[slot].mana_fill_rect,
                                  dm2_v1_hud_palette_color(
                                      s, plan.champion_slots[slot]
                                             .stat_bar_color));
                 if (plan.champion_slots[slot].leader) {
                     dm2_v1_fill_rect(
-                        vp, stride,
+                        s,
                         &plan.champion_slots[slot].leader_mark_rect,
                         dm2_v1_hud_palette_color(s, DM2_COL_WHITE));
                 }
@@ -9008,6 +9030,14 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             DM2_OUTDOOR_SCENE_SKY = 1u << 0,
             DM2_OUTDOOR_SCENE_GROUND = 1u << 1
         };
+        /* T600's source path is an UPDATE_GFXSET-owned pair of one-shot
+         * scene planes. Repeating a generic fetched texture is not an
+         * equivalent fallback: it produces striped outdoor frames. */
+        if (s->source_materials_required && !s->gdat_scene_material_plan) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
+            return;
+        }
         /* DM2 outdoor rendering:
          * Source: SKULL.ASM T600 (outdoor tick, sky and ground draw)
          *         skproject/SKWIN/SkWinCore.cpp GRAPHICSSET material route
@@ -9025,11 +9055,11 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         int sky_x = 0;
         int sky_y = 0;
         int sky_w_dst = dm2_v1_viewport_draw_width(s);
-        int sky_h_dst = DM2_VP_HEIGHT / 2;
+        int sky_h_dst = dm2_v1_viewport_draw_height(s) / 2;
         int ground_x = 0;
         int ground_y = sky_h_dst;
         int ground_w_dst = dm2_v1_viewport_draw_width(s);
-        int ground_h_dst = DM2_VP_HEIGHT - sky_h_dst;
+        int ground_h_dst = dm2_v1_viewport_draw_height(s) - sky_h_dst;
         int sky_gdat_index = dm2_v1_viewport_scene_material_graphic_index(
             s->gdat_scene_material_index,
             DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING);

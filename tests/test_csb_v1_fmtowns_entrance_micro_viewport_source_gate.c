@@ -59,6 +59,9 @@ int main(void)
          require_text(text, "CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34,") &&
          require_text(text, "CSB_V1_F0797_VIEW_X_PC34,") &&
          require_text(text, "CSB_V1_F0797_VIEW_Y_PC34);") &&
+         require_text(text, "state->csbFmtownsStartupWallSetActive = 1;") &&
+         require_text(text, "state->csbFmtownsStartupWallSetActive = 0;") &&
+         require_text(text, "if (state->csbFmtownsStartupWallSetActive)") &&
          !strstr(text, "csb_v1_viewport_render_frame(&cfg, 2, 2, 0);");
     free(text);
     if (!ok) return 1;

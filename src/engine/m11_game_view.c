@@ -4159,6 +4159,11 @@ static int m11_csb_fmtowns_viewport_graphic_provider(
         profile->runtime.current_level];
     wall_set = profile->runtime.dungeon_handle->map_wall_set[
         profile->runtime.current_level];
+    if (state->csbFmtownsStartupWallSetActive) {
+        /* F0797's C255 is not the loaded campaign map.  Its F0128
+         * material cache is explicitly the source startup wall-set zero. */
+        wall_set = 0;
+    }
     if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15)
         return 0;
     if (graphic_index == -1) {
@@ -10453,8 +10458,17 @@ static void m11_csb_update_fmtowns_game_music(M11_GameViewState *state)
     if (state->csbFmtownsCddaPlaying && !state->csbFmtownsCddaPaused &&
         state->csbFmtownsCddaSourceTicksRemaining > 0u) {
         --state->csbFmtownsCddaSourceTicksRemaining;
-        if (state->csbFmtownsCddaSourceTicksRemaining == 0u)
+        if (state->csbFmtownsCddaSourceTicksRemaining == 0u) {
+            /* The source countdown models the physical CD device reaching
+             * its CUE end boundary.  Clearing only M11's bookkeeping left
+             * SDL's queued stream alive, so the last FM Towns CSB track
+             * could continue beneath dungeon audio after F2257 observed
+             * completion.  Clear that same stream at the source boundary;
+             * a later F0719 request is then the sole way to start it again. */
+            (void)M11_Audio_StopCdda(&state->audioState);
             state->csbFmtownsCddaPlaying = 0;
+            state->csbFmtownsCddaPaused = 0;
+        }
     }
     if (state->world.party.mapIndex < 0 || state->world.party.mapX < 0 ||
         state->world.party.mapY < 0 ||
@@ -12254,8 +12268,13 @@ static int m11_render_csb_fmtowns_entrance_micro_viewport(
     cfg.dungeon_grid = grid;
     cfg.dungeon_width = 5;
     cfg.dungeon_height = 5;
-    cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
-        profile->runtime.current_level];
+    /* F0797 builds C255 as a transient all-wall map before the campaign map
+     * has become the F0128 material owner.  It has no MAP descriptor from
+     * which to inherit the loaded game's wall set; STARTUP2's initial cache
+     * is wall-set zero.  Reusing MINI.DAT's map-4 selector here made the
+     * opening aperture depend on the eventual dungeon and could leave the
+     * C004 red placeholder visible between the door strips. */
+    cfg.wall_set_index = 0;
     cfg.real_graphics_session = 1;
     cfg.graphic_provider_callback =
         m11_csb_fmtowns_viewport_graphic_provider;
@@ -12265,11 +12284,13 @@ static int m11_render_csb_fmtowns_entrance_micro_viewport(
      * at the wrong micro-map cell, exposing C004's placeholder through the
      * opening doors.  Keep these source coordinates tied to the audited
      * F0797 contract rather than duplicating numeric literals. */
+    state->csbFmtownsStartupWallSetActive = 1;
     csb_v1_viewport_render_frame(
         &cfg,
         CSB_V1_F0797_VIEW_DIRECTION_SOUTH_PC34,
         CSB_V1_F0797_VIEW_X_PC34,
         CSB_V1_F0797_VIEW_Y_PC34);
+    state->csbFmtownsStartupWallSetActive = 0;
     return 1;
 }
 
@@ -42749,6 +42770,19 @@ static unsigned int m11_fmtowns_wall_semantic_index(unsigned int pc34Index) {
     }
 }
 
+/* MEDIA020 repeats the complete C086/C087/C088 LCR compounds for every
+ * wall set.  The first implementation recognised only the set-zero records
+ * (and three incidental set-one values), then sent the same compound from
+ * later maps through the ordinary zone scaler.  That is not merely a
+ * different scale: each F0128 lane receives the compound, so it paints a
+ * full forward wall repeatedly across the viewport. */
+static int m11_fmtowns_wall_is_lcr_compound(unsigned int graphic_index) {
+    unsigned int member;
+    if (graphic_index < 77u) return 0;
+    member = (graphic_index - 77u) % 13u;
+    return member >= 9u && member <= 11u;
+}
+
 static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW, int fbH,
@@ -42773,8 +42807,7 @@ static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
      * texture and duplicates it across adjacent lanes.  The source's layout
      * records use the destination zone only as an anchor: left lane begins
      * at zero, centre is centred, right lane ends at x=224. */
-    if ((graphicIndex == 86u || graphicIndex == 87u || graphicIndex == 88u ||
-         graphicIndex == 99u || graphicIndex == 100u || graphicIndex == 101u) &&
+    if (m11_fmtowns_wall_is_lcr_compound(graphicIndex) &&
         ((slot->width == 248u && slot->height == 111u) ||
         (slot->width == 136u && slot->height == 71u) ||
         (slot->width == 117u && slot->height == 51u))) {
@@ -42816,7 +42849,14 @@ static int m11_draw_fmtowns_scaled_asset(const M11_GameViewState* state,
                  * compound across a corridor. */
                 (dstX != centreZoneX &&
                  (fbX < M11_VIEWPORT_X + dstX ||
-                  fbX >= M11_VIEWPORT_X + dstX + dstW)) ||
+                  fbX >= M11_VIEWPORT_X + dstX + dstW ||
+                  /* A side-lane call owns a clipped source zone in both
+                   * axes.  Restricting only X lets C086/C087/C088 paint
+                   * their whole backing height into neighbouring depth
+                   * lanes, which appears as repeated horizontal wall
+                   * bands in the FM Towns viewport. */
+                  fbY < M11_VIEWPORT_Y + dstY ||
+                  fbY >= M11_VIEWPORT_Y + dstY + dstH)) ||
                 fbX < 0 || fbX >= fbW ||
                     (transparentColor >= 0 &&
                      pixel == (unsigned char)transparentColor)) continue;

@@ -231,10 +231,28 @@ int csb_v1_audio_runtime_load_fmtowns_sound_payload_bytes(
     /* TOWNSIO.C F0709:79-83 passes precisely the BE16 sample count,
      * not the record's remaining length. Original F31 record 675 has one
      * tail byte; other records have two. Padding is not part of the PCM. */
-    if (!sampleBytes || (size_t)sampleBytes > (size_t)storedBytes - 2u) goto cleanup;
+    /* TOWNSIO.C F0060 copies an F31 sound into the fixed 32,000-byte
+     * PLAY_BUF and caps the source count at 31,936 bytes, leaving the
+     * 32-byte SND header intact.  Retain precisely that source boundary:
+     * accepting a larger record here can queue data that the original driver
+     * never handed to SND_pcm_play, which presents as a repeated or noisy
+     * tail on hosts with an asynchronous audio stream. */
+    if (!sampleBytes || sampleBytes > 31936u ||
+        (size_t)sampleBytes > (size_t)storedBytes - 2u) goto cleanup;
     outPayload->bytes = (uint8_t*)malloc(sampleBytes);
     if (!outPayload->bytes) goto cleanup;
-    memcpy(outPayload->bytes, graphics + dataOffset + 2u, sampleBytes);
+    /* F31 is not F20 PCM.  TOWNSIO.C F0060 first biases the signed source
+     * byte by 0x80 and then folds the upper half before placing it in the
+     * Towns SND buffer.  The host transport consumes signed PCM, so retain
+     * the exact resulting byte representation here rather than handing the
+     * raw GRAPHICS.DAT record to SDL.  Leaving this conversion to a caller
+     * used to make CSB effects sound as a harsh, repeatedly triggered buzz.
+     */
+    for (index = 0u; index < sampleBytes; ++index) {
+        uint8_t sample = (uint8_t)(graphics[dataOffset + 2u + index] + 0x80u);
+        if (sample & 0x80u) sample ^= 0x7fu;
+        outPayload->bytes[index] = sample;
+    }
     outPayload->byteCount = sampleBytes;
     outPayload->spec = *spec;
     result = 1;

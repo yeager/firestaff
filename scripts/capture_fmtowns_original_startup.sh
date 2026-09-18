@@ -28,7 +28,11 @@ diagnostics="${FMTOWNS_DIAGNOSTICS:-0}"
 diff_mouse="${FMTOWNS_DIFF_MOUSE:-0}"
 no_wait="${FMTOWNS_NOWAIT:-0}"
 frequency_mhz="${FMTOWNS_FREQ_MHZ:-0}"
+headless="${FMTOWNS_HEADLESS:-0}"
+event_log="${FMTOWNS_EVENT_LOG:-}"
+eventlog_start="${FMTOWNS_EVENTLOG_START:-}"
 xvfb_display_num="${FMTOWNS_XVFB_DISPLAY:-170}"
+caller_display="${FMTOWNS_DISPLAY:-}"
 
 usage() {
     cat <<'EOF'
@@ -51,6 +55,9 @@ Optional:
   FMTOWNS_NOWAIT=1|0                       (default: 0; diagnostic unthrottled VM run, recorded in receipt)
   FMTOWNS_FREQ_MHZ=0|1..200                (default: 0; diagnostic emulated CPU frequency, recorded in receipt)
   FMTOWNS_DIAGNOSTICS=1|0                  (default: 0; log emulated CRTC/CD state at each frame)
+  FMTOWNS_HEADLESS=1|0                     (default: 0; use Tsugaru Headless and no X11)
+  FMTOWNS_EVENT_LOG=/private/input.evt     (headless only; optional Tsugaru event log)
+  FMTOWNS_EVENTLOG_START=seconds           (headless only; required with EVENT_LOG)
   FMTOWNS_DIFF_MOUSE=1|0                   (default: 0; enable Tsugaru's differential
                                              mouse integration for original desktop routes)
   FMTOWNS_INPUT_TIMELINE='host-seconds:enter|e|up|down|left|right [...]'
@@ -60,6 +67,12 @@ Optional:
                                              (default: empty; original 640x480
                                              framebuffer coordinates, private X input)
   FMTOWNS_XVFB_DISPLAY=170                 (default: 170; private Xvfb display for Tsugaru CUI)
+  FMTOWNS_DISPLAY=:0                        caller-owned existing X display; no Xvfb
+
+With FMTOWNS_HEADLESS=1, use Tsugaru_Headless as FMTOWNS_TSUGARU.  The event
+log is replayed by Tsugaru itself, so its mouse events use the original VM
+coordinates rather than a host desktop.  The event log, staged media and
+captures remain private development evidence.
 
 The ZIP is staged only for this development-time emulator session because
 Tsugaru requires a seekable CUE plus BIN or IMG track image.  Timeline values are
@@ -70,7 +83,8 @@ stage must live beneath .codex-scratch, and every result receives hashes for
 the archive, selected CUE/track image and ROM files.  Images are produced by Tsugaru's
 `SS` command from its emulated framebuffer.  Host desktop captures are not
 accepted.  A successful capture is original-emulator evidence only; it is not
-a Firestaff pixel-parity claim.
+a Firestaff pixel-parity claim.  With FMTOWNS_DISPLAY, this helper uses the
+caller-owned display and never creates or terminates Xvfb.
 EOF
 }
 
@@ -156,6 +170,28 @@ if [[ "$diagnostics" != "0" && "$diagnostics" != "1" ]]; then
     echo "ERROR: FMTOWNS_DIAGNOSTICS must be 0 or 1" >&2
     exit 3
 fi
+if [[ "$headless" != "0" && "$headless" != "1" ]]; then
+    echo "ERROR: FMTOWNS_HEADLESS must be 0 or 1" >&2
+    exit 3
+fi
+if [[ -n "$event_log" ]]; then
+    if [[ "$headless" != "1" || ! -f "$event_log" || ! "$eventlog_start" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: EVENT_LOG requires FMTOWNS_HEADLESS=1, an existing file, and integer EVENTLOG_START" >&2
+        exit 3
+    fi
+    last_capture_entry="${timeline##* }"
+    if (( eventlog_start > ${last_capture_entry%%:*} )); then
+        echo "ERROR: EVENTLOG_START occurs after the final capture timestamp" >&2
+        exit 3
+    fi
+elif [[ -n "$eventlog_start" ]]; then
+    echo "ERROR: FMTOWNS_EVENTLOG_START requires FMTOWNS_EVENT_LOG" >&2
+    exit 3
+fi
+if [[ "$headless" == "1" && ( -n "$pointer_clicks" || -n "$input_timeline" || -n "$caller_display" ) ]]; then
+    echo "ERROR: headless capture accepts Tsugaru event logs, not X11 input or a display" >&2
+    exit 3
+fi
 if [[ "$diff_mouse" != "0" && "$diff_mouse" != "1" ]]; then
     echo "ERROR: FMTOWNS_DIFF_MOUSE must be 0 or 1" >&2
     exit 3
@@ -168,18 +204,22 @@ if [[ ! "$frequency_mhz" =~ ^[0-9]+$ ]] || (( frequency_mhz > 200 )); then
     echo "ERROR: FMTOWNS_FREQ_MHZ must be 0 or an emulated frequency from 1 to 200 MHz" >&2
     exit 3
 fi
-if [[ ! "$xvfb_display_num" =~ ^[1-9][0-9]*$ ]]; then
+if [[ "$headless" != "1" && -z "$caller_display" && ! "$xvfb_display_num" =~ ^[1-9][0-9]*$ ]]; then
     echo "ERROR: FMTOWNS_XVFB_DISPLAY must be a positive display number" >&2
     exit 3
 fi
 seven_zip="$(command -v 7zz 2>/dev/null || command -v 7z 2>/dev/null || true)"
-for required in "$tsugaru" "$seven_zip" sha256sum python3 Xvfb; do
+required_tools=("$tsugaru" "$seven_zip" sha256sum python3)
+if [[ "$headless" != "1" && -z "$caller_display" ]]; then
+    required_tools+=(Xvfb)
+fi
+for required in "${required_tools[@]}"; do
     command -v "$required" >/dev/null 2>&1 || {
         echo "ERROR: required capture tool is unavailable: $required" >&2
         exit 4
     }
 done
-if [[ -n "$pointer_clicks" || -n "$input_timeline" ]] && ! command -v xdotool >/dev/null 2>&1; then
+if [[ "$headless" != "1" && ( -n "$pointer_clicks" || -n "$input_timeline" ) ]] && ! command -v xdotool >/dev/null 2>&1; then
     echo "ERROR: xdotool is required when FMTOWNS_POINTER_CLICKS or FMTOWNS_INPUT_TIMELINE is set" >&2
     exit 4
 fi
@@ -250,6 +290,13 @@ command_file="$out/tsugaru-capture-commands.txt"
             echo "ERROR: capture timestamps must be nondecreasing" >&2
             exit 5
         fi
+        if [[ -n "$event_log" && "${eventlog_emitted:-0}" == "0" && "$eventlog_start" -le "$second" ]]; then
+            printf 'sleep %s\n' "$((eventlog_start - previous))"
+            printf 'LOADEVT "%s"\n' "$event_log"
+            printf 'PLAYEVT\n'
+            previous="$eventlog_start"
+            eventlog_emitted=1
+        fi
         index=$((index + 1))
         printf 'sleep %s\n' "$((second - previous))"
         if [[ "$diagnostics" == "1" ]]; then
@@ -259,6 +306,12 @@ command_file="$out/tsugaru-capture-commands.txt"
             printf 'STA\n'
             printf 'DUMP CRTC\n'
             printf 'DUMP CDROM\n'
+            # Event logs use the guest's mouse coordinate system, which is
+            # not necessarily a one-to-one mapping to a captured framebuffer.
+            # Keep the guest-side state beside each private frame so replay
+            # coordinates can be calibrated without treating screenshots as
+            # source code or publishing game material.
+            printf 'DUMP MOUSE\n'
         fi
         printf 'SS "%s/startup-%02d-%ss-%s.png"\n' "$out" "$index" "$second" "$label"
         previous="$second"
@@ -280,12 +333,23 @@ run_commands() {
 }
 
 # The Linux CUI initializes SDL even though `SS` reads Tsugaru's emulated
-# framebuffer.  Give that initialization a private headless display; do not
-# use it for screenshots.  The trap owns only this process and cannot affect
-# unrelated developer X servers.
-xvfb_display=":$xvfb_display_num"
-Xvfb "$xvfb_display" -screen 0 1024x768x24 -nolisten tcp >"$out/xvfb.log" 2>&1 &
-xvfb_pid=$!
+# framebuffer. By default, give that initialization a private headless
+# display; do not use it for screenshots. An explicit caller display remains
+# caller-owned and is never stopped by this helper.
+xvfb_pid=""
+if [[ "$headless" == "1" ]]; then
+    xvfb_display=""
+elif [[ -n "$caller_display" ]]; then
+    if [[ ! "$caller_display" =~ ^:[0-9]+(\.[0-9]+)?$ ]]; then
+        echo "ERROR: FMTOWNS_DISPLAY must be an X display such as :0" >&2
+        exit 3
+    fi
+    xvfb_display="$caller_display"
+else
+    xvfb_display=":$xvfb_display_num"
+    Xvfb "$xvfb_display" -screen 0 1024x768x24 -nolisten tcp >"$out/xvfb.log" 2>&1 &
+    xvfb_pid=$!
+fi
 cleanup_xvfb() {
     if [[ -n "${input_pid:-}" ]] && kill -0 "$input_pid" 2>/dev/null; then
         kill "$input_pid" 2>/dev/null || true
@@ -295,14 +359,14 @@ cleanup_xvfb() {
         kill "$pointer_pid" 2>/dev/null || true
         wait "$pointer_pid" 2>/dev/null || true
     fi
-    if kill -0 "$xvfb_pid" 2>/dev/null; then
+    if [[ -n "$xvfb_pid" ]] && kill -0 "$xvfb_pid" 2>/dev/null; then
         kill "$xvfb_pid" 2>/dev/null || true
         wait "$xvfb_pid" 2>/dev/null || true
     fi
 }
 trap cleanup_xvfb EXIT INT TERM
-sleep 0.2
-if ! kill -0 "$xvfb_pid" 2>/dev/null; then
+if [[ "$headless" != "1" ]]; then sleep 0.2; fi
+if [[ "$headless" != "1" && -n "$xvfb_pid" ]] && ! kill -0 "$xvfb_pid" 2>/dev/null; then
     echo "ERROR: unable to start private Xvfb display $xvfb_display; see xvfb.log" >&2
     exit 6
 fi
@@ -411,9 +475,15 @@ if [[ "$nowait_boot" == "1" ]]; then boot_args+=(-NOWAITBOOT); fi
 if [[ "$no_wait" == "1" ]]; then boot_args+=(-NOWAIT); fi
 if [[ "$frequency_mhz" != "0" ]]; then boot_args+=(-FREQ "$frequency_mhz"); fi
 if [[ "$diff_mouse" == "1" ]]; then boot_args+=(-DIFFMOUSE); fi
-run_commands | env DISPLAY="$xvfb_display" "$tsugaru" "$rom_stage" -CD "$cue" "${fidelity_args[@]}" "${boot_args[@]}" \
-    -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
-tsugaru_status=${PIPESTATUS[1]}
+if [[ "$headless" == "1" ]]; then
+    run_commands | sed 's/^/!/' | env "$tsugaru" "$rom_stage" -CD "$cue" "${fidelity_args[@]}" "${boot_args[@]}" \
+        -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
+    tsugaru_status=${PIPESTATUS[2]}
+else
+    run_commands | env DISPLAY="$xvfb_display" "$tsugaru" "$rom_stage" -CD "$cue" "${fidelity_args[@]}" "${boot_args[@]}" \
+        -TOWNSTYPE "$towns_type" -FORCEQUITONPOFF >"$out/tsugaru.log" 2>&1
+    tsugaru_status=${PIPESTATUS[1]}
+fi
 set -e
 if [[ -n "$pointer_pid" ]]; then
     wait "$pointer_pid"
@@ -477,11 +547,17 @@ fi
     printf 'schema=firestaff.fmtowns.original.capture.v1\n'
     printf 'scope=original Tsugaru framebuffer capture; no Firestaff parity claim\n'
     printf 'game=%s\n' "$game"
-    printf 'capture_backend=tsugaru-cui-SS\n'
+    if [[ "$headless" == "1" ]]; then
+        printf 'capture_backend=tsugaru-headless-eventlog-SS\n'
+    else
+        printf 'capture_backend=tsugaru-cui-SS\n'
+    fi
     printf 'timeline_clock=host_wall_seconds_after_RUN; not_guest_time\n'
     printf 'timeline_requested=%s\n' "$timeline"
     printf 'input_timeline_requested=%s\n' "${input_timeline:-none}"
     printf 'pointer_timeline_requested=%s\n' "${pointer_clicks:-none}"
+    printf 'eventlog_replayed=%s\n' "$( [[ -n "$event_log" ]] && printf yes || printf no )"
+    printf 'eventlog_start=%s\n' "${eventlog_start:-none}"
     printf 'cursor_policy=host_cursor_excluded_by_emulated_framebuffer_capture\n'
     printf 'towns_type=%s\n' "$towns_type"
     printf 'boot_key=%s\n' "${boot_key:-normal}"

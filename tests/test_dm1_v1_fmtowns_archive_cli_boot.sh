@@ -115,6 +115,7 @@ expect_gameplay_input() {
        ! grep -Fq "fmtownsProgramMd5=$program_md5" <<<"$gameplay_output" ||
        ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsMenuFontLoaded=1' <<<"$gameplay_output" ||
+       ! grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
        ! grep -Fq 'dm1FmtownsCddaTrack=5' <<<"$gameplay_output" ||
        ! grep -Fq "map=0 party=$expected_party" <<<"$gameplay_output"; then

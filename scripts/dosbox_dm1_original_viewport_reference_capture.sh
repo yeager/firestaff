@@ -23,6 +23,7 @@ NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM1_ORIGINAL_ROUTE_EVENTS:-}"
 EXPECTED_SHOTS="${DM1_ORIGINAL_EXPECTED_SHOTS:-6}"
 SCREENSHOT_HOTKEY="${DM1_DOSBOX_SCREENSHOT_HOTKEY:-cmd-f5}"
+DOSBOX_MOUSE_EMULATION="${DM1_DOSBOX_MOUSE_EMULATION:-always}"
 case "${EXPECTED_SHOTS}" in
     single|single-row|single-transcript-row|pass625|pass626) EXPECTED_SHOTS_COUNT=1 ;;
     ''|*[!0-9]*)
@@ -35,6 +36,13 @@ case "${EXPECTED_SHOTS}" in
             echo "ERROR: DM1_ORIGINAL_EXPECTED_SHOTS must be positive" >&2
             exit 2
         fi
+        ;;
+esac
+case "${DOSBOX_MOUSE_EMULATION}" in
+    integration|locked|always|never) ;;
+    *)
+        echo "ERROR: DM1_DOSBOX_MOUSE_EMULATION must be integration, locked, always, or never" >&2
+        exit 2
         ;;
 esac
 SKIP_STARTUP_SELECTOR="${DM1_ROUTE_SKIP_STARTUP_SELECTOR:-0}"
@@ -138,6 +146,10 @@ Optional environment:
                     duration of each injected mouse press. The dungeon loop
                     samples button state asynchronously, so an XTest click
                     with an immediate release is intentionally not used.
+  DM1_DOSBOX_MOUSE_EMULATION=always
+                    make DOSBox-X deliver the private capture harness's
+                    pointer events before SDL has locked the cursor. Accepted
+                    values: integration, locked, always, never.
   click:<x>,<y>    posts one serialized left-click in original 320x200 game
                     coordinates. Use waits around clicks; ReDMCSB BUG0_73 shows
                     mixed mouse/keyboard commands can be lost when packed tightly.
@@ -487,6 +499,13 @@ write_helpers() {
 [sdl]
 fullscreen=false
 output=${DOSBOX_OUTPUT}
+# The private original-capture route posts explicit X11 pointer events. Do
+# not inherit a user setting that only emulates the mouse after SDL autolock:
+# the original HoC C127 portrait click must reach the guest INT 33 path before
+# a candidate champion exists. This affects only the generated harness config.
+mouse_emulation=${DOSBOX_MOUSE_EMULATION}
+autolock=false
+usesystemcursor=false
 
 [dosbox]
 # Capture runs are non-interactive and are terminated by this harness.  This

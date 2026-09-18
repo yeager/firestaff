@@ -302,8 +302,12 @@ int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
 int M11_Audio_BindOriginalSongPath(M11_AudioState* state,
                                    const char* songDatPath);
 
-/* CDDA playback for FM Towns: push raw 16-bit signed LE stereo 44100Hz PCM
- * to the dedicated CDDA audio stream. Returns 1 on success, 0 if unavailable. */
+/* CDDA playback: accept Red Book 16-bit signed big-endian stereo 44100Hz
+ * PCM and convert it for the dedicated little-endian SDL stream. Returns 1
+ * on success, 0 if unavailable. */
+int M11_Audio_ConvertRedBookPcmToS16Le(const uint8_t *source,
+                                       uint8_t *destination,
+                                       size_t byte_count);
 int M11_Audio_PlayCdda(M11_AudioState* state,
                        const uint8_t *pcm_data, size_t pcm_size,
                        int loop);

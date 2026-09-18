@@ -2262,27 +2262,63 @@ int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {
 
 #include "nexus_v1_sound.h"
 
+int M11_Audio_ConvertRedBookPcmToS16Le(const uint8_t *source,
+                                       uint8_t *destination,
+                                       size_t byte_count)
+{
+    size_t byte_index;
+    if (!source || !destination || byte_count == 0u ||
+        (byte_count & 3u) != 0u) {
+        return 0;
+    }
+    for (byte_index = 0u; byte_index < byte_count; byte_index += 2u) {
+        destination[byte_index] = source[byte_index + 1u];
+        destination[byte_index + 1u] = source[byte_index];
+    }
+    return 1;
+}
+
 int M11_Audio_PlayCdda(M11_AudioState* state,
                        const uint8_t *pcm_data, size_t pcm_size,
                        int loop)
 {
 #if M11_HAVE_SDL_AUDIO
+    uint8_t *little_endian_pcm;
+
     if (!state || !pcm_data || pcm_size < 4 || !state->cddaStream)
         return 0;
     if (pcm_size % 4u != 0u) return 0;
+
+    /* Red Book CD-DA stores each signed 16-bit channel sample in big-endian
+     * order. The dedicated SDL stream is SDL_AUDIO_S16LE on every supported
+     * host. Passing the sector bytes through unchanged made each sample's
+     * halves swap, producing harsh distorted music (particularly audible on
+     * the FM Towns CSB entrance track). Convert an owned transient buffer;
+     * SDL copies it before this function returns. */
+    little_endian_pcm = (uint8_t *)malloc(pcm_size);
+    if (!little_endian_pcm) return 0;
+    if (!M11_Audio_ConvertRedBookPcmToS16Le(pcm_data, little_endian_pcm,
+                                            pcm_size)) {
+        free(little_endian_pcm);
+        return 0;
+    }
 
     /* A later F0719 request replaces a paused F0740 track.  SDL keeps the
      * dedicated device paused across ClearAudioStream, so resume it before
      * queuing the next source-owned Red Book span. */
     if (state->cddaPaused &&
         !SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream)) {
+        free(little_endian_pcm);
         return 0;
     }
 
     SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
     if (!SDL_PutAudioStreamData((SDL_AudioStream*)state->cddaStream,
-                                pcm_data, (int)pcm_size))
+                                little_endian_pcm, (int)pcm_size)) {
+        free(little_endian_pcm);
         return 0;
+    }
+    free(little_endian_pcm);
     state->cddaPlaying = 1;
     state->cddaPaused = 0;
     (void)loop;

@@ -26,11 +26,14 @@ Optional:
   CSB_AMIGA_KEYSTROKES='53:Down 54:Return@750' timed emulator key presses;
                                                append @milliseconds to hold a key
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
+  CSB_AMIGA_DISPLAY=:0                        caller-owned existing X display; no Xvfb
   CSB_AMIGA_SAVE_DISK_WRITABLE=1              enable FS-UAE overlay saves for a
                                                supplied private Disk 3 copy (default: 0)
   FS_UAE=/path/to/fs-uae                       (default: fs-uae)
 
-All original ADFs remain direct-write protected. The helper accepts only
+All original ADFs remain direct-write protected. The default uses a dedicated
+Xvfb display; CSB_AMIGA_DISPLAY uses a caller-owned display that this helper
+does not create or terminate. The helper accepts only
 FS-UAE-native emulator captures as evidence. If an Xvfb/SDL session rejects
 the screenshot shortcut it writes a separately named diagnostic host image,
 records the failed native request, and exits non-zero. A produced native image
@@ -54,6 +57,7 @@ fsuae="${FS_UAE:-fs-uae}"
 capture_seconds="${CSB_AMIGA_CAPTURE_SECONDS:-32 52}"
 keystrokes="${CSB_AMIGA_KEYSTROKES:-}"
 display_num="${CSB_AMIGA_XVFB_DISPLAY:-106}"
+caller_display="${CSB_AMIGA_DISPLAY:-}"
 save_disk_writable="${CSB_AMIGA_SAVE_DISK_WRITABLE:-0}"
 
 for required in "$kickstart" "$disk1" "$disk2"; do
@@ -62,14 +66,18 @@ for required in "$kickstart" "$disk1" "$disk2"; do
         exit 3
     fi
 done
-for required in "$fsuae" Xvfb xdotool scrot sha256sum; do
+required_tools=("$fsuae" xdotool scrot sha256sum)
+if [[ -z "$caller_display" ]]; then
+    required_tools+=(Xvfb)
+fi
+for required in "${required_tools[@]}"; do
     command -v "$required" >/dev/null 2>&1 || {
         echo "ERROR: required capture tool is unavailable: $required" >&2
         exit 4
     }
 done
-if [[ ! "$capture_seconds" =~ ^[0-9]+(\ [0-9]+)*$ ]] || [[ ! "$display_num" =~ ^[0-9]+$ ]]; then
-    echo "ERROR: capture seconds and Xvfb display must be numeric" >&2
+if [[ ! "$capture_seconds" =~ ^[0-9]+(\ [0-9]+)*$ ]]; then
+    echo "ERROR: capture seconds must be numeric" >&2
     exit 5
 fi
 if [[ "$save_disk_writable" != "0" && "$save_disk_writable" != "1" ]]; then
@@ -128,21 +136,34 @@ if [[ "$save_disk_writable" == "1" ]]; then
     printf 'floppy_drive_2 = %s\n' "$disk3" >>"$config"
 fi
 
-display=":$display_num"
-Xvfb "$display" -screen 0 1024x768x24 >"$out/xvfb.log" 2>&1 &
-xvfb_pid=$!
+xvfb_pid=""
+if [[ -n "$caller_display" ]]; then
+    if [[ ! "$caller_display" =~ ^:[0-9]+(\.[0-9]+)?$ ]]; then
+        echo "ERROR: CSB_AMIGA_DISPLAY must be an X display such as :0" >&2
+        exit 5
+    fi
+    display="$caller_display"
+else
+    if [[ ! "$display_num" =~ ^[0-9]+$ ]]; then
+        echo "ERROR: CSB_AMIGA_XVFB_DISPLAY must be a numeric display number" >&2
+        exit 5
+    fi
+    display=":$display_num"
+    Xvfb "$display" -screen 0 1024x768x24 >"$out/xvfb.log" 2>&1 &
+    xvfb_pid=$!
+fi
 uae_pid=""
 cleanup() {
     if [[ -n "$uae_pid" ]]; then kill "$uae_pid" 2>/dev/null || true; fi
-    kill "$xvfb_pid" 2>/dev/null || true
+    if [[ -n "$xvfb_pid" ]]; then kill "$xvfb_pid" 2>/dev/null || true; fi
     if [[ -n "$uae_pid" ]]; then wait "$uae_pid" 2>/dev/null || true; fi
-    wait "$xvfb_pid" 2>/dev/null || true
+    if [[ -n "$xvfb_pid" ]]; then wait "$xvfb_pid" 2>/dev/null || true; fi
 }
 trap cleanup EXIT INT TERM
 
 display_ready=0
 for attempt in $(seq 1 50); do
-    if ! kill -0 "$xvfb_pid" 2>/dev/null; then
+    if [[ -n "$xvfb_pid" ]] && ! kill -0 "$xvfb_pid" 2>/dev/null; then
         echo "ERROR: Xvfb exited before the capture display became ready; see $out/xvfb.log" >&2
         exit 6
     fi

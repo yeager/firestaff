@@ -429,6 +429,51 @@ static int dm2_v1_asset_load_image_metadata(
                                 DM2_GDAT_ENTRY_TYPE_IMAGE, field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
+    /* IMG2/IMG6 (GDAT v4) stores a signed six-bit placement in the high
+     * bits of both dimension words.  It is not an IMG3 header: in
+     * particular, a high word of 0x8000 is not IMG3's ``OffsetY == -32``
+     * uncompressed-image marker.  Treating it as one gave every IMG6 wall a
+     * false -32 vertical offset, which made the source RECT_7 wall panels
+     * overlap as horizontal bands.  This loader feeds the live viewport
+     * command plan, so keep it in step with the weather metadata reader.
+     * SKProject: DMGHLciFDM2::ReadImgDM2C4towns and GetPicIPF. */
+    if (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+        uint16_t cx = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+        uint16_t cy_towns = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+        int offset_x = (int)(cx >> 10);
+        int offset_y = (int)(cy_towns >> 10);
+        uint16_t image_offset = 0u;
+
+        if (offset_x & 0x20) offset_x -= 0x40;
+        if (offset_y & 0x20) offset_y -= 0x40;
+        out_metadata->width = (uint16_t)(cx & 0x03ffu);
+        out_metadata->height = (uint16_t)(cy_towns & 0x03ffu);
+        if (out_metadata->width == 0u || out_metadata->height == 0u) {
+            memset(out_metadata, 0, sizeof(*out_metadata));
+            return 0;
+        }
+        out_metadata->bits_per_pixel = 4u;
+        out_metadata->query_offset_x = (int16_t)offset_x;
+        out_metadata->query_offset_y = (int16_t)offset_y;
+        /* In the Towns picture format x=-32 requests the optional
+         * dtImageOffset record.  If it is absent, the signed header values
+         * themselves remain the source placement. */
+        if (offset_x == -32 &&
+            dm2_v1_asset_load_image_offset(loader, category, index, field,
+                                           &image_offset)) {
+            out_metadata->query_offset_x = (int8_t)(image_offset >> 8);
+            out_metadata->query_offset_y = (int8_t)image_offset;
+            out_metadata->image_offset_present = 1u;
+        }
+        out_metadata->metadata_hash = dm2_gdat_file_receipt_hash(
+            entry ? entry->data_index : 0u,
+            ((uint32_t)out_metadata->width << 16) | out_metadata->height,
+            ((uint32_t)out_metadata->bits_per_pixel << 16) |
+                (uint16_t)out_metadata->query_offset_y,
+            ((uint32_t)(uint16_t)out_metadata->query_offset_x << 16) |
+                out_metadata->image_offset_present);
+        return out_metadata->metadata_hash != 0u;
+    }
     cy = img_rd16(raw + 2u, loader->big_endian);
     if (!dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian)) return 0;
     out_metadata->width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
