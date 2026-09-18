@@ -385,7 +385,7 @@ find_tsugaru_window() {
 }
 run_pointer_clicks() {
     local previous=0 entry timestamp point held_ms hold_seconds window
-    local x y
+    local x y client_width client_height client_x client_y
     local -a entries
     read -r -a entries <<<"$pointer_clicks"
     for entry in "${entries[@]}"; do
@@ -406,11 +406,25 @@ run_pointer_clicks() {
             return 1
         fi
         x="${point%,*}"; y="${point#*,}"
-        # Tsugaru's CUI screenshots are 640x480 framebuffer coordinates.
-        # `--window` makes xdotool interpret the supplied coordinates in the
-        # SDL client area, avoiding host-desktop focus or scaling ambiguity.
+        # The source route is expressed in Tsugaru's 640x480 framebuffer
+        # coordinates, whereas the SDL client area can be a different size
+        # (for example the private 1024x768 Xvfb surface).  `--window` uses
+        # client coordinates, so derive them from the live window geometry.
+        # Sending raw framebuffer coordinates to a scaled client silently
+        # clicks the wrong game location and produces a misleading capture.
+        client_width="$(DISPLAY="$xvfb_display" xdotool getwindowgeometry --shell "$window" 2>/dev/null |
+            awk -F= '$1 == "WIDTH" { print $2 }')"
+        client_height="$(DISPLAY="$xvfb_display" xdotool getwindowgeometry --shell "$window" 2>/dev/null |
+            awk -F= '$1 == "HEIGHT" { print $2 }')"
+        if [[ ! "$client_width" =~ ^[1-9][0-9]*$ ||
+              ! "$client_height" =~ ^[1-9][0-9]*$ ]]; then
+            echo "ERROR: unable to read Tsugaru client geometry for pointer action" >&2
+            return 1
+        fi
+        client_x=$(( x * client_width / 640 ))
+        client_y=$(( y * client_height / 480 ))
         DISPLAY="$xvfb_display" xdotool windowfocus --sync "$window"
-        DISPLAY="$xvfb_display" xdotool mousemove --window "$window" "$x" "$y"
+        DISPLAY="$xvfb_display" xdotool mousemove --window "$window" "$client_x" "$client_y"
         if (( held_ms > 0 )); then
             hold_seconds="$(awk -v milliseconds="$held_ms" 'BEGIN { printf "%.3f", milliseconds / 1000 }')"
             DISPLAY="$xvfb_display" xdotool mousedown 1
@@ -419,7 +433,9 @@ run_pointer_clicks() {
         else
             DISPLAY="$xvfb_display" xdotool click 1
         fi
-        printf 'pointer=%s:%s@%sms window=%s\n' "$timestamp" "$point" "$held_ms" "$window" >>"$out/pointer-actions.log"
+        printf 'pointer=%s:%s@%sms client=%s,%s window=%s geometry=%sx%s\n' \
+            "$timestamp" "$point" "$held_ms" "$client_x" "$client_y" "$window" \
+            "$client_width" "$client_height" >>"$out/pointer-actions.log"
         previous="$timestamp"
     done
 }
