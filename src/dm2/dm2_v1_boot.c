@@ -4170,6 +4170,40 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
 
 /* ── Enter game ──────────────────────────────────────────────────────── */
 
+/* SKProject::IS_MAP_INSIDE does not infer indoor/outdoor from a map ordinal.
+ * It queries the active map's GRAPHICSSET dtWordValue/0x65 and treats bit
+ * 0x20 as outside.  G1 map zero is Skullkeep's initial cave (graphics set
+ * 2, flags 0x000b), while maps 1 and 4 use the outside flag.  The former
+ * "map zero is outdoor" convention made a real new game render landscape
+ * planes over the cave viewport. */
+static int dm2_v1_boot_bind_map_outdoor_flags(
+    const DM2_V1_BootProfile *profile, DM2_V1_DungeonData *dungeon)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    int classifications[DM2_V1_MAX_LEVELS];
+
+    if (!profile || !profile->graphics_dat || !dungeon ||
+        dungeon->level_count < 1 || dungeon->level_count > DM2_V1_MAX_LEVELS) {
+        return 0;
+    }
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        uint16_t scene_flags = 0u;
+        int graphicsset = dm2_v1_dungeon_get_map_graphics_style(dungeon, map);
+        if (graphicsset < 0 ||
+            !dm2_v1_asset_load_word_value(
+                &gfx->loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
+                DM2_GDAT_GFXSET_SCENE_FLAGS, &scene_flags)) {
+            return 0;
+        }
+        classifications[map] = (scene_flags & 0x20u)
+            ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
+    }
+    for (int map = 0; map < dungeon->level_count; ++map)
+        dungeon->level_types[map] = classifications[map];
+    return 1;
+}
+
 /*
  * dm2_v1_boot_enter_game — transition from boot to game state.
  *
@@ -4307,6 +4341,13 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         dm2_v1_sound_bind_gdat_loader(NULL, 0);
     }
 
+    if (!dm2_v1_boot_bind_map_outdoor_flags(profile, dd)) {
+        dm2_v1_dungeon_free(dd);
+        free(dd);
+        free(gs);
+        return -1;
+    }
+
     /* SKProject/SKWIN DME.h File_header stores the new-game party pose in
      * w8. The dungeon loader has already admitted that pose against map-0
      * dimensions; do not replace it with the old
@@ -4393,6 +4434,10 @@ int dm2_v1_boot_load_new_dungeon(
         dm2_v1_dungeon_free(&candidate);
         return 0;
     }
+    if (!dm2_v1_boot_bind_map_outdoor_flags(profile, &candidate)) {
+        dm2_v1_dungeon_free(&candidate);
+        return 0;
+    }
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.source_party_reset_required = 1;
@@ -4436,10 +4481,9 @@ int dm2_v1_boot_load_new_dungeon(
     game->party_y = candidate.initial_party_y;
     game->party_dir = candidate.initial_party_dir & 3;
     game->current_level = 0;
-    /* Keep the just-parsed G1 map classification with the new-game pose.
+    /* Keep the GRAPHICSSET/0x65 classification with the new-game pose.
      * GAME_LOAD may later replace it only as part of a source-backed map
-     * transition; it must not make map 0 look like an indoor dungeon in the
-     * first presented frame. */
+     * transition. */
     game->outdoor = dm2_v1_dungeon_is_outdoor(&candidate,
                                                game->current_level);
     dm2_v1_boot_build_deterministic_config(
@@ -7968,6 +8012,14 @@ int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
         c_light_parameter > 64u) {
         return 0;
     }
+    /* HME-242 has no loadable INTERFACE_GENERAL/dt07/2 action table.
+     * SKProject's source dispatch consequently does not enter _0b36_037e;
+     * keep the authenticated 16-colour door-local palettes intact rather
+     * than applying a PC-only transform or rejecting the door frame. */
+    if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        !dm2_v1_boot_interface_action_table(profile, &table)) {
+        return 1;
+    }
     candidate = *plan;
     for (uint8_t i = 0u; i < candidate.command_count; ++i) {
         DM2_V1_GdatDoorOverlayM11Command *command = &candidate.commands[i];
@@ -8029,7 +8081,6 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     DM2_V1_GdatSceneM11CommandPlan candidate;
     DM2_V1_BootGraphicsDat *gfx;
     DM2_V1_InterfaceActionTable table;
-    int table_loaded = 0;
 
     if (!profile || !profile->graphics_dat || !plan || !plan->valid ||
         plan->command_hash == 0u || !c_light_receipt_hash ||
@@ -8037,6 +8088,18 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
         return 0;
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    /* LOAD_GDAT_INTERFACE_00_02 is optional in the original programs.
+     * SKProject's _32cb_0804 consequently takes the non-0b36 palette path
+     * when its dt07/2 entry is not loadable.  HME-242 has no such GDAT
+     * entry: its image-local palette is already the source-owned physical
+     * palette.  Keep that exact palette instead of borrowing PC dt07/2 or
+     * rejecting the authenticated indoor frame. */
+    if (!dm2_v1_boot_interface_action_table(profile, &table)) {
+        if (profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
+            return 1;
+        }
+        return 0;
+    }
     candidate = *plan;
     for (size_t i = 0u; i < 2u; ++i) {
         DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
@@ -8058,14 +8121,18 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
                 command->field, c_light_parameter, &darkness)) {
             return 0;
         }
-        if (translation &&
+        /* _32cb_0804's optional QUERY_GDAT_ENTRY_IF_LOADABLE result is a
+         * 256-entry colour translation table when it participates in this
+         * plane path.  FM Towns can expose another RAW7 payload at the same
+         * typed address; it is source data, but it is not a usable colour
+         * table and must not be reinterpreted as one or reject the complete
+         * UPDATE_GFXSET transaction.  Only a complete table is consumable.
+         * The following dt07/2 c_light remap remains required in either
+         * case. */
+        if (translation && translated_size >= 256u &&
             !dm2_v1_gdat_scene_m11_translate_palette(
                 command->palette16, sizeof(command->palette16), translation,
                 translated_size, &command->palette_translation_hash)) {
-            return 0;
-        }
-        if (!table_loaded &&
-            !dm2_v1_boot_interface_action_table(profile, &table)) {
             return 0;
         }
         if (!dm2_v1_interface_action_table_remap_palette(
@@ -8074,7 +8141,6 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
             return 0;
         }
         command->palette_translation_field = translation_field;
-        table_loaded = 1;
         /* The viewport recomputes this hash with FNV-1a over the 16-byte
          * local palette, so match that exactly rather than the boot's
          * packaged-capture step. */

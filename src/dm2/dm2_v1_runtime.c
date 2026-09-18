@@ -1493,11 +1493,19 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         int remap_ok = action_table_ok && dm2_v1_interface_action_table_remap_palette(
             &action_table, rt->gdat_interface_action_palette16, 16u,
             c_light_palette_darkness, -1, -1);
-        if (c_light_ok && action_table_ok && remap_ok) {
+        /* SKProject _32cb_0804 explicitly branches when dt07/2 is not
+         * loadable. HME-242 has no PC action-table payload, so its native
+         * 16-colour interface uses the selected physical palette directly.
+         * Retain the authenticated interface palette rather than borrowing
+         * a DOS table or rejecting all HUD/text material. */
+        if (c_light_ok &&
+            ((action_table_ok && remap_ok) ||
+             rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA)) {
             rt->gdat_interface_action_palette_ready = 1;
             rt->gdat_interface_action_palette_darkness =
                 c_light_palette_darkness;
-            rt->gdat_interface_action_palette_hash = action_table.hash;
+            rt->gdat_interface_action_palette_hash = action_table_ok
+                ? action_table.hash : palette.hash;
         }
     }
 }
@@ -12012,8 +12020,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (!teleporter_material_plan_consumed) {
         teleporter_material_plan_hash = 0u;
     }
-    floor_gfx_map_chip_material_plan_required =
-        !rt->outdoor && rt->map_floor_gfx_count > 0;
+    /* LOAD_LOCALLEVEL_DYN records the map's FLOOR_GFX list so an ornate can
+     * be resolved when a DB3 record selects it.  It does not draw every
+     * list entry: map-chip F9 is a renderer input only for an actually
+     * visible floor ornate.  A map with an otherwise unused local index
+     * (FM Towns map 0 is such a case) must not be rejected merely because
+     * that unused index has no F9 record.  Mark a material requirement only
+     * when the renderer has bound a concrete FLOOR_GFX ownership receipt. */
+    floor_gfx_map_chip_material_plan_required = 0;
     floor_gfx_map_chip_material_plan_consumed =
         !floor_gfx_map_chip_material_plan_required ||
         dm2_runtime_floor_gfx_map_chip_material_plan_identity(

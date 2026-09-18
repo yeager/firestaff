@@ -540,7 +540,13 @@ for frame in frames:
         if image.width < 1 or image.height < 1:
             raise SystemExit(f"ERROR: empty framebuffer image: {frame.name}")
         rgb = image.convert("RGB")
-        colors = rgb.getcolors(maxcolors=257)
+        # getcolors() returns None when the image exceeds maxcolors.  Real
+        # FM Towns frames routinely contain far more than 257 colours, so
+        # that limit previously rejected healthy, colourful framebuffer
+        # captures as "blank".  A bounded 24-bit histogram still lets us
+        # distinguish a one-colour/stale surface without imposing a palette
+        # limit on the original frame.
+        colors = rgb.getcolors(maxcolors=1 << 24)
         if not colors or len(colors) <= 1 or all(pixel == (0, 0, 0) for _, pixel in colors):
             raise SystemExit(f"ERROR: blank/stale framebuffer image is not original capture evidence: {frame.name}")
     digest = hashlib.sha256(frame.read_bytes()).hexdigest()
