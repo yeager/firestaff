@@ -1,3 +1,24 @@
+# Firestaff v3.0.347
+
+## Developer changes
+
+- `CSB Amiga original-capture harness`: supports explicit A500 and A1200
+  profiles, optional writable private save media, and timestamped pointer
+  input. It rejects captures that report an emulated CPU exception instead of
+  allowing invalid evidence into parity work.
+
+- `Native platform verification`: records fresh, real-media CLI startup
+  evidence for the supported DM1, CSB, DM2, Nexus, and Theron platform
+  routes, while clearly distinguishing startup proof from visual-parity proof.
+
+- `Parity evidence`: corrects the Nexus title-capture frame count and records
+  authenticated private title-capture receipts for CSB and DM2 FM Towns.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.347 and refreshes
+  the deterministic SPDX source inventory.
+
 # Firestaff v3.0.346
 
 ## Developer changes
