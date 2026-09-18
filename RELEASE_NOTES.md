@@ -1,3 +1,17 @@
+# Firestaff v3.0.346
+
+## Developer changes
+
+- `FM Towns original-capture harness`: scales scripted source-framebuffer
+  pointer coordinates to Tsugaru's actual client surface before injection.
+  Private parity routes therefore retain their intended targets when window
+  decorations or a host compositor change the surface size.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.346 and refreshes
+  the deterministic SPDX source inventory.
+
 # Firestaff v3.0.345
 
 ## Developer changes
