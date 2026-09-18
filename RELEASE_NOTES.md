@@ -8,8 +8,8 @@
 - `DM2 FM Towns`: preserves source outdoor material plans after New Game,
   preventing repeated horizontal scene bands in the dungeon viewport.
 
-- `CSB FM Towns`: converts Red Book CD audio from its native big-endian sample
-  order before SDL playback, removing byte-swapped distortion.
+- `CSB FM Towns`: corrects Red Book CD audio playback by converting its native
+  big-endian sample order before SDL consumes the samples.
 
 ## Developer changes
 
