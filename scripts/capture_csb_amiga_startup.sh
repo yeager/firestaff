@@ -114,9 +114,11 @@ amiga_model = $amiga_model
 kickstart_file = $kickstart
 floppy_drive_0 = $disk1
 floppy_drive_1 = $disk2
-# FS-UAE records disk mutations in its overlay area by default. Make this
-# explicit so no capture path can write supplied ADFs back in place.
-writable_floppy_images = 0
+# The default is read-only.  The sole writable route requires a caller-made
+# private Disk 3 copy and enables writes only for that explicitly requested
+# capture session; Disk 1 and Disk 2 are still caller-supplied originals and
+# must never be selected as the save image by this helper.
+writable_floppy_images = $save_disk_writable
 base_dir = $out/fs-uae-state
 fullscreen = 0
 window_width = 800
