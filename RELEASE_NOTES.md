@@ -1,3 +1,26 @@
+# Firestaff v3.0.344
+
+## User-facing changes
+
+- `DM1 FM Towns`: keeps source-owned wall material lanes inside their viewport
+  regions, preventing a side wall from overwriting the central dungeon view.
+
+- `DM2 FM Towns`: preserves source outdoor material plans after New Game,
+  preventing repeated horizontal scene bands in the dungeon viewport.
+
+- `CSB FM Towns`: converts Red Book CD audio from its native big-endian sample
+  order before SDL playback, removing byte-swapped distortion.
+
+## Developer changes
+
+- `FM Towns verification`: adds real-media startup and runtime coverage for
+  DM1, CSB, and DM2, plus a portable CD-DA endianness regression test.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.344 for the
+  verified native FM Towns rendering and audio corrections.
+
 # Firestaff v3.0.343
 
 ## User-facing changes
