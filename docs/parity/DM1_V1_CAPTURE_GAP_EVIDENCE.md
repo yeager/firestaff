@@ -1,7 +1,7 @@
 # DM1 V1 Original Capture Gap Evidence
 
 **Lane:** DM1 V1 finish-quality - original DOS capture/parity evidence lane
-**Date:** 2026-05-28; updated 2026-09-13 with original HoC motion receipts
+**Date:** 2026-05-28; updated 2026-09-18 with original HoC C040/C007/Eye receipts
 **Branch:** `main`
 
 ## Scope
@@ -159,7 +159,7 @@ an original screenshot.
 | Lane3 champion HUD captures | IMPAIRED FIRESTAFF ONLY | `firestaff-v2-gap-manifest/verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm`, `party_hud_statusbox_gfx_vga.ppm` | Firestaff V1 output only; no paired original DM1 PC 3.4 champion panel screenshot. |
 | Original champion candidate/resurrect panel | PARTIAL OK | `verification-screens/pass1053-dm1-original-champion-candidate-panel/` | Pass1053 tracks pass455 original candidate panel (`click:111,82`) and post-C160 terminal/HUD transition (`click:130,115`); `pass1053_dm1_v1_original_champion_candidate_panel_gate` now keeps the manifest, crops, source anchors, and Firestaff-side references reproducible in CTest. Not a full four-champion HUD pair. |
 | Original four-champion party HUD screenshot | MISSING MISSING | - | No paired original DM1 PC 3.4 four-champion party HUD screenshot exists. |
-| Original Eye hold/release transition | REJECTED LOCAL CANDIDATES | Local ignored capture receipts | The retained candidate triplets were rechecked on 2026-09-17 with `verify_dm1_v1_original_eye_hold_capture.py` against the canonical PC 3.4 `DUNGEON.DAT` and `GRAPHICS.DAT` hashes. Each has a duplicate held/release frame and an insufficient held-panel delta, so none is valid transition evidence. The prior 8,142-pixel claim is withdrawn pending a reproducible three-frame capture. The earlier `(24,77)` attempt remains rejected as cursor-only. |
+| Original Eye hold/release transition | LOCAL VERIFIED (unpaired) | Local ignored capture receipt | A fresh PC 3.4 route reaches C127 → C040 → C160 → C007, then holds and releases the source Eye hit area at `(20,53)`. The held and released 320×200 raw frames are healthy, non-duplicate, and visibly differ by the original champion-detail panel. Their SHA-256 values are retained below. This proves the original UI transition only; it is not a scroll-in-hand or Firestaff pixel-parity claim. The earlier `(24,77)` cursor-only attempt remains rejected. |
 
 **Gap:** The champion panel geometry, status-box stride, portrait positions, and
 bar-graph layout are all source-locked and probe-verified. Pass1053 now adds and
@@ -209,6 +209,7 @@ original captures.
 | Original HoC candidate panel and resurrection | 2026-09-11 | local evidence | A fresh PC 3.4 pointer route yielded healthy, non-duplicate mirror, post-click candidate, and post-`C160` resurrection HUD frames for Azizi Yohari. The visual identity disagrees with the static WUUF route calculation, so no map coordinate is claimed; no pixels or local paths are published and no Firestaff pairing is claimed. |
 | Original HoC inventory transaction | 2026-09-12 | local evidence | Fresh PC 3.4 capture of candidate/revival, C007 inventory, source action-hand pickup, and C520 backpack placement. ReDMCSB G0449 confirms the C520 hit box; pointer moved before the final frame. No pixels or local paths are published and no Firestaff pairing is claimed. |
 | Static C127 route-panel probe | 2026-09-18 | private original-emulator evidence | A real-data route derived from the retail map topology reached a healthy, non-duplicate dungeon framebuffer. A held click at the candidate wall coordinate produced the identical raw framebuffer. This rejects that coordinate/route pair as mirror or inventory evidence; it must not be relabelled as a champion-panel capture. No pixels or local paths are published. |
+| Original HoC C040/C007/Eye transition | 2026-09-18 | private original-emulator evidence | A fresh DOS PC 3.4 route reached C040, resurrected Chani with C160, opened C007 FOOD/WATER, and captured an Eye hold/release transition. All five 320×200 raw frames passed the health gate; the three C040/C160/C007 hashes are `28aeae130e180eb17097927b37d263eb1812d458e07fd08f0501442d1c9f640a`, `ea99c5e3eefb8e8e82602ba7259d38c1c17c194d7cc4d7783383c0f8eb84cef5`, and `18220907d3102de00005f0a3be501ad8a071423e9a8d7c78cebfcfbf2da45294`. The distinct Eye held/released hashes are `610ad13c55cfbe2f96f4ee2e040258bbe4ffd6be3a8f8abeaf1fb428528d7977` and `46917ff03687fb6795c92e053f5ffcc5d355d2713c3350996f0ee2c01213aa69`. No pixels, original data, or local paths are published; no same-state Firestaff pair is claimed. |
 
 ---
 
