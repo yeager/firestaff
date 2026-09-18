@@ -1,3 +1,16 @@
+# Firestaff v3.0.345
+
+## Developer changes
+
+- `DM2 original-reference capture`: the DOSBox-X capture route accepts an
+  explicit mouse press and release. This makes protected-mode menu paths that
+  sample a held button reproducible during private parity investigation.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.345 and refreshes
+  the deterministic SPDX source inventory.
+
 # Firestaff v3.0.344
 
 ## User-facing changes

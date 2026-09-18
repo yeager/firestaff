@@ -188,6 +188,7 @@ print_route_template() {
 #
 # Supported route tokens (mirroring scripts/dosbox_dm1_original_viewport_reference_capture.sh):
 #   shot, shot:<label>, wait:<ms>, click:<x>,<y>, rclick:<x>,<y>,
+#   press:<x>,<y>, release,
 #   enter, return, esc, escape, space, up, down, left, right,
 #   one, two, three, four, five, six, f1-f4,
 #   kp0-kp9, kpenter, a-z, 0-9
@@ -300,15 +301,15 @@ for token in route:
         if not re.fullmatch(r"wait:[0-9]+", low):
             raise SystemExit(f"ERROR: invalid wait token: {token}")
         continue
-    if low.startswith("click:") or low.startswith("rclick:"):
-        m = re.fullmatch(r"(?:r?click):([0-9]{1,3}),([0-9]{1-3})", low)
-        # tolerate regex-escape quirks by using a simpler parse below
-        m2 = re.match(r"^(r?click):([0-9]{1,3}),([0-9]{1,3})$", low)
+    if low.startswith("click:") or low.startswith("rclick:") or low.startswith("press:"):
+        m2 = re.match(r"^(?:r?click|press):([0-9]{1,3}),([0-9]{1,3})$", low)
         if not m2:
             raise SystemExit(f"ERROR: invalid click token: {token}")
-        x = int(m2.group(2)); y = int(m2.group(3))
+        x = int(m2.group(1)); y = int(m2.group(2))
         if not (0 <= x < 320 and 0 <= y < 200):
             raise SystemExit(f"ERROR: click token outside original 320x200 frame: {token}")
+        continue
+    if low == "release":
         continue
     if low not in allowed:
         raise SystemExit(f"ERROR: unknown route token: {token}")
@@ -429,6 +430,7 @@ guard let pid = pid_t(CommandLine.arguments[1]) else {
 let route = CommandLine.arguments[2].split(separator: " ").map(String.init)
 let skipIntro = CommandLine.arguments[3] == "1"
 let source = CGEventSource(stateID: .hidSystemState)
+var heldMouse: (button: CGMouseButton, upType: CGEventType, point: CGPoint)?
 
 let keycodes: [String: CGKeyCode] = [
     "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9,
@@ -494,10 +496,10 @@ func dosboxWindowBounds() -> CGRect? {
     return nil
 }
 
-func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
+func originalFramePoint(x: Int, y: Int) -> CGPoint? {
     guard let bounds = dosboxWindowBounds() else {
         fputs("could not find DOSBox window bounds for click:\(x),\(y)\n", stderr)
-        exit(3)
+        return nil
     }
     let contentAspect = 320.0 / 200.0
     var contentW = Double(bounds.width)
@@ -510,7 +512,11 @@ func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
     let top = Double(bounds.minY) + (Double(bounds.height) - contentH) / 2.0
     let px = left + ((Double(x) + 0.5) / 320.0) * contentW
     let py = top + ((Double(y) + 0.5) / 200.0) * contentH
-    let point = CGPoint(x: px, y: py)
+    return CGPoint(x: px, y: py)
+}
+
+func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
+    guard let point = originalFramePoint(x: x, y: y) else { exit(3) }
     let cgButton: CGMouseButton = (button == "right") ? .right : .left
     let downType: CGEventType = (button == "right") ? .rightMouseDown : .leftMouseDown
     let upType: CGEventType = (button == "right") ? .rightMouseUp : .leftMouseUp
@@ -519,7 +525,33 @@ func clickOriginalFrame(x: Int, y: Int, button: String = "left") {
     down.postToPid(pid)
     usleep(45_000)
     up.postToPid(pid)
-    print("\(button)-click-mapped \(x),\(y) -> \(Int(px)),\(Int(py)) window=\(Int(bounds.width))x\(Int(bounds.height))")
+    print("\(button)-click-mapped \(x),\(y)")
+    usleep(180_000)
+}
+
+func pressOriginalFrame(x: Int, y: Int) {
+    guard heldMouse == nil else {
+        fputs("mouse press requested while another button is held\n", stderr)
+        exit(2)
+    }
+    guard let point = originalFramePoint(x: x, y: y),
+          let down = CGEvent(mouseEventSource: source, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left)
+    else { exit(3) }
+    down.postToPid(pid)
+    heldMouse = (.left, .leftMouseUp, point)
+    print("mouse-press-mapped \(x),\(y)")
+    usleep(45_000)
+}
+
+func releaseOriginalFrame() {
+    guard let held = heldMouse else {
+        fputs("mouse release requested without a held button\n", stderr)
+        exit(2)
+    }
+    guard let up = CGEvent(mouseEventSource: source, mouseType: held.upType, mouseCursorPosition: held.point, mouseButton: held.button) else { exit(3) }
+    up.postToPid(pid)
+    heldMouse = nil
+    print("mouse-release")
     usleep(180_000)
 }
 
@@ -552,6 +584,15 @@ for token in route {
             exit(2)
         }
         clickOriginalFrame(x: x, y: y, button: isRightClick ? "right" : "left")
+    } else if lowerToken.hasPrefix("press:") {
+        let coords = lowerToken.dropFirst("press:".count).split(separator: ",")
+        guard coords.count == 2, let x = Int(coords[0]), let y = Int(coords[1]), x >= 0, x < 320, y >= 0, y < 200 else {
+            fputs("invalid press token: \(token)\n", stderr)
+            exit(2)
+        }
+        pressOriginalFrame(x: x, y: y)
+    } else if lowerToken == "release" {
+        releaseOriginalFrame()
     } else if lowerToken == "ctrl-s" {
         ctrlS()
     } else if let key = keycodes[lowerToken] {
@@ -720,6 +761,50 @@ PY
     sleep 0.18
 }
 
+# Some original protected-mode menu paths sample the SDL button state on a
+# later event-loop pass.  A short XTest click can therefore be observed only
+# as a cursor move.  Keep an explicit held-button route for capture work; it
+# is deliberately tooling-only and is never part of Firestaff runtime input.
+held_button=0
+
+press_original_frame() {
+    local x="$1" y="$2" button="${3:-1}"
+    local geom gx gy gw gh px py
+    timeout 1 xdotool windowfocus "$window" >/dev/null 2>&1 || true
+    geom="$(xdotool getwindowgeometry --shell "$window")"
+    eval "$geom"
+    gx="$X"; gy="$Y"; gw="$WIDTH"; gh="$HEIGHT"
+    read -r px py < <(python3 - "$gw" "$gh" "$x" "$y" <<'PY'
+import sys
+gw, gh, x, y = map(float, sys.argv[1:])
+content_aspect = 320.0 / 200.0
+content_w = gw
+content_h = content_w / content_aspect
+if content_h > gh:
+    content_h = gh
+    content_w = content_h * content_aspect
+left = (gw - content_w) / 2.0
+top = gh - content_h
+px = left + ((x + 0.5) / 320.0) * content_w
+py = top + ((y + 0.5) / 200.0) * content_h
+print(int(round(px)), int(round(py)))
+PY
+)
+    xdotool mousemove --window "$window" "$px" "$py"
+    xdotool mousedown --window "$window" "$button"
+    held_button="$button"
+    echo "mouse-press-mapped ${x},${y} -> window-relative ${px},${py} window=${gw}x${gh} origin=${gx},${gy}"
+}
+
+release_original_frame() {
+    if [[ "$held_button" -ne 0 ]]; then
+        xdotool mouseup --window "$window" "$held_button"
+        echo "mouse-release button=${held_button}"
+        held_button=0
+        sleep 0.18
+    fi
+}
+
 key_for_token() {
     case "$1" in
         enter|return) echo Return ;;
@@ -780,6 +865,13 @@ PY
                 coords="${low#click:}"
                 click_original_frame "${coords%,*}" "${coords#*,}" 1
             fi
+            ;;
+        press:*)
+            coords="${low#press:}"
+            press_original_frame "${coords%,*}" "${coords#*,}" 1
+            ;;
+        release)
+            release_original_frame
             ;;
         *)
             key="$(key_for_token "$low")" || { echo "unknown route token: $token" >&2; exit 2; }
