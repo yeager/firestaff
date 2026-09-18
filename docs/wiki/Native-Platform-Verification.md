@@ -1,6 +1,6 @@
 # Native platform and startup verification
 
-**Reviewed 2026-09-12.** This page records what the native Firestaff runtime
+**Reviewed 2026-09-18.** This page records what the native Firestaff runtime
 has actually admitted from authentic player-supplied media. It is deliberately
 not a compatibility wish-list: a parser, a disassembly reference, or an
 emulator capture does not by itself prove a public start route.
@@ -49,6 +49,13 @@ pose. DM2's real FM Towns title/gameplay/corpus gates, Nexus's retail
 `TITLE.CG`/`MAPD` admission and startup handoff, and Theron's Japanese Track 02
 and CUE boot gates also passed. This confirms only the named bounded routes;
 it does not promote unrecorded screens or campaign behaviour to full parity.
+
+A further 2026-09-18 direct-CLI recheck used the same native, in-memory
+admission paths and reached the bounded boot receipt for DM1 (DOS, Atari ST,
+Amiga and FM Towns), CSB (Atari ST, Amiga and FM Towns), DM2 (DOS, Amiga and
+FM Towns), Theron (PC Engine CD), and Nexus (Saturn). Each process exited
+cleanly. This is start-route evidence only: it does not alter the explicitly
+open visual, input, save, audio or campaign-parity rows below.
 
 ## Verification matrix
 
