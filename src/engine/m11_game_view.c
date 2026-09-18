@@ -66695,7 +66695,12 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                     panelBg->width, panelBg->height,
                     M11_VIEWPORT_W, M11_VIEWPORT_H)) {
                 M11_AssetLoader_Blit(panelBg, framebuffer, framebufferWidth,
-                                     framebufferHeight, panelX, panelY, 0);
+                                     /* PANEL.C F0355 expands C017 directly into
+                                      * the viewport.  Index 0 is therefore an
+                                      * authored opaque pixel, not a blit key:
+                                      * treating it as transparent exposes stale
+                                      * dungeon pixels behind the inventory. */
+                                     framebufferHeight, panelX, panelY, -1);
             }
         } else if (panelBg && panelBg->loaded && panelBg->pixels &&
                    panelBg->width > 0 && panelBg->height > 0) {
