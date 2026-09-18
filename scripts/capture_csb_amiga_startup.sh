@@ -23,6 +23,7 @@ Optional:
                                                only with CSB_AMIGA_SAVE_DISK_WRITABLE=1
   CSB_AMIGA_CAPTURE_OUT=/path/to/output       (default: .codex-scratch)
   CSB_AMIGA_CAPTURE_SECONDS='32 52'           seconds after boot to capture
+  CSB_AMIGA_MODEL=A500|A1200                 original machine profile (default: A500)
   CSB_AMIGA_KEYSTROKES='53:Down 54:Return@750' timed emulator key presses;
                                                append @milliseconds to hold a key
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
@@ -59,6 +60,7 @@ keystrokes="${CSB_AMIGA_KEYSTROKES:-}"
 display_num="${CSB_AMIGA_XVFB_DISPLAY:-106}"
 caller_display="${CSB_AMIGA_DISPLAY:-}"
 save_disk_writable="${CSB_AMIGA_SAVE_DISK_WRITABLE:-0}"
+amiga_model="${CSB_AMIGA_MODEL:-A500}"
 
 for required in "$kickstart" "$disk1" "$disk2"; do
     if [[ -z "$required" || ! -f "$required" ]]; then
@@ -84,6 +86,10 @@ if [[ "$save_disk_writable" != "0" && "$save_disk_writable" != "1" ]]; then
     echo "ERROR: CSB_AMIGA_SAVE_DISK_WRITABLE must be 0 or 1" >&2
     exit 5
 fi
+if [[ "$amiga_model" != "A500" && "$amiga_model" != "A1200" ]]; then
+    echo "ERROR: CSB_AMIGA_MODEL must be A500 or A1200" >&2
+    exit 5
+fi
 if [[ -n "$disk3" && ! -f "$disk3" ]]; then
     echo "ERROR: CSB_AMIGA_DISK3 must name a readable private save disk when set" >&2
     exit 3
@@ -104,7 +110,7 @@ fi
 mkdir -p "$out"
 config="$out/csb.fs-uae"
 cat >"$config" <<EOF
-amiga_model = A500
+amiga_model = $amiga_model
 kickstart_file = $kickstart
 floppy_drive_0 = $disk1
 floppy_drive_1 = $disk2
@@ -356,6 +362,7 @@ execution_fault_count="$(grep -Eic '^(Illegal instruction:|Exception [0-9]+ at )
     printf 'schema=firestaff.csb.amiga.startup.capture.v1\n'
     printf 'scope=original FS-UAE startup capture; no Firestaff parity claim\n'
     printf 'capture_backend=fs-uae-native\n'
+    printf 'amiga_model=%s\n' "$amiga_model"
     printf 'requested_native_frames=%s\n' "$expected_capture_count"
     printf 'captured_native_frames=%s\n' "$native_capture_count"
     printf 'execution_fault_count=%s\n' "$execution_fault_count"
