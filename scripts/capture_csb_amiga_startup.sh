@@ -342,12 +342,23 @@ actual_capture_count="$(find "$out" -maxdepth 1 -type f -name 'startup-*.png' | 
 shopt -s nullglob
 startup_frames=("$out"/startup-*.png)
 
+# FS-UAE can keep presenting a non-uniform framebuffer after the emulated
+# CPU has taken an exception.  Such a frame is useful when diagnosing an
+# incorrect machine/ROM/media combination, but it is not evidence of a
+# running original CSB session.  The emulator writes these traps to its own
+# stdout log, so record and fail closed on them before creating a receipt
+# that another tool could mistake for a valid game capture.  Do not treat
+# ordinary host warnings as faults: only the core's explicit CPU exception
+# messages are rejected here.
+execution_fault_count="$(grep -Eic '^(Illegal instruction:|Exception [0-9]+ at )' "$out/fs-uae.log" || true)"
+
 {
     printf 'schema=firestaff.csb.amiga.startup.capture.v1\n'
     printf 'scope=original FS-UAE startup capture; no Firestaff parity claim\n'
     printf 'capture_backend=fs-uae-native\n'
     printf 'requested_native_frames=%s\n' "$expected_capture_count"
     printf 'captured_native_frames=%s\n' "$native_capture_count"
+    printf 'execution_fault_count=%s\n' "$execution_fault_count"
     if [[ -n "$keystrokes" ]]; then
         printf 'input_keystrokes=%s\n' "$keystrokes"
     else
@@ -369,6 +380,11 @@ startup_frames=("$out"/startup-*.png)
 if [[ "$actual_capture_count" -ne "$expected_capture_count" ]]; then
     echo "ERROR: requested ${expected_capture_count} CSB Amiga native startup frame(s), captured ${actual_capture_count}; host diagnostics are not evidence" >&2
     exit 7
+fi
+
+if [[ "$execution_fault_count" -ne 0 ]]; then
+    echo "ERROR: FS-UAE reported ${execution_fault_count} emulated CPU exception(s); frames are diagnostic, not original-CSB evidence" >&2
+    exit 8
 fi
 
 echo "PASS: wrote $(find "$out" -maxdepth 1 -name 'startup-*.png' -type f | wc -l | tr -d ' ') original CSB Amiga startup frame(s)"
