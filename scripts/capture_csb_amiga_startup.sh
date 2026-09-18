@@ -26,6 +26,8 @@ Optional:
   CSB_AMIGA_MODEL=A500|A1200                 original machine profile (default: A500)
   CSB_AMIGA_KEYSTROKES='53:Down 54:Return@750' timed emulator key presses;
                                                append @milliseconds to hold a key
+  CSB_AMIGA_POINTER_CLICKS='53:320,200@100'   timed ADF-native pointer clicks;
+                                               exclusive with keystrokes
   CSB_AMIGA_XVFB_DISPLAY=106                  dedicated X display number
   CSB_AMIGA_DISPLAY=:0                        caller-owned existing X display; no Xvfb
   CSB_AMIGA_SAVE_DISK_WRITABLE=1              enable FS-UAE overlay saves for a
@@ -57,6 +59,7 @@ out="${CSB_AMIGA_CAPTURE_OUT:-$repo/.codex-scratch/csb-amiga-startup-capture}"
 fsuae="${FS_UAE:-fs-uae}"
 capture_seconds="${CSB_AMIGA_CAPTURE_SECONDS:-32 52}"
 keystrokes="${CSB_AMIGA_KEYSTROKES:-}"
+pointer_clicks="${CSB_AMIGA_POINTER_CLICKS:-}"
 display_num="${CSB_AMIGA_XVFB_DISPLAY:-106}"
 caller_display="${CSB_AMIGA_DISPLAY:-}"
 save_disk_writable="${CSB_AMIGA_SAVE_DISK_WRITABLE:-0}"
@@ -104,6 +107,14 @@ if [[ "$save_disk_writable" == "0" && -n "$disk3" ]]; then
 fi
 if [[ -n "$keystrokes" && ! "$keystrokes" =~ ^[0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?(\ [0-9]+:[A-Za-z0-9_+]+(@[0-9]+)?)*$ ]]; then
     echo "ERROR: CSB_AMIGA_KEYSTROKES must use seconds:key[@milliseconds] entries separated by spaces" >&2
+    exit 5
+fi
+if [[ -n "$pointer_clicks" && ! "$pointer_clicks" =~ ^[0-9]+:[0-9]+,[0-9]+(@[0-9]+)?(\ [0-9]+:[0-9]+,[0-9]+(@[0-9]+)?)*$ ]]; then
+    echo "ERROR: CSB_AMIGA_POINTER_CLICKS must use seconds:x,y[@milliseconds] entries separated by spaces" >&2
+    exit 5
+fi
+if [[ -n "$keystrokes" && -n "$pointer_clicks" ]]; then
+    echo "ERROR: use either CSB_AMIGA_KEYSTROKES or CSB_AMIGA_POINTER_CLICKS per capture run" >&2
     exit 5
 fi
 
@@ -258,9 +269,14 @@ index=0
 expected_capture_count=0
 native_capture_count=0
 key_index=0
+pointer_index=0
 key_entries=()
 if [[ -n "$keystrokes" ]]; then
     read -r -a key_entries <<<"$keystrokes"
+fi
+pointer_entries=()
+if [[ -n "$pointer_clicks" ]]; then
+    read -r -a pointer_entries <<<"$pointer_clicks"
 fi
 
 run_keys_through() {
@@ -296,9 +312,51 @@ run_keys_through() {
     done
 }
 
+run_pointer_through() {
+    local target="$1" entry timestamp point held_ms hold_seconds x y
+    local window_x window_y root_x root_y
+    while [[ "$pointer_index" -lt "${#pointer_entries[@]}" ]]; do
+        entry="${pointer_entries[$pointer_index]}"
+        timestamp="${entry%%:*}"
+        point="${entry#*:}"
+        held_ms=0
+        if [[ "$point" == *@* ]]; then
+            held_ms="${point##*@}"
+            point="${point%@*}"
+        fi
+        if (( timestamp > target )); then break; fi
+        if (( timestamp < previous )); then
+            echo "ERROR: pointer timestamps must be nondecreasing and cannot precede an emitted capture" >&2
+            exit 5
+        fi
+        sleep "$((timestamp - previous))"
+        x="${point%,*}"; y="${point#*,}"
+        DISPLAY="$display" xdotool windowfocus "$window" >/dev/null 2>&1 || true
+        # FS-UAE's SDL mouse backend samples the root-pointer delta, while
+        # a window-targeted XTest motion is only delivered as a toolkit event
+        # on some X servers.  Convert the caller's client coordinates to the
+        # actual X root coordinates before pressing the button.
+        eval "$(DISPLAY="$display" xdotool getwindowgeometry --shell "$window")"
+        window_x="$X"; window_y="$Y"
+        root_x=$((window_x + x)); root_y=$((window_y + y))
+        DISPLAY="$display" xdotool mousemove --sync "$root_x" "$root_y"
+        if (( held_ms > 0 )); then
+            hold_seconds="$(awk -v milliseconds="$held_ms" 'BEGIN { printf "%.3f", milliseconds / 1000 }')"
+            DISPLAY="$display" xdotool mousedown 1
+            sleep "$hold_seconds"
+            DISPLAY="$display" xdotool mouseup 1
+        else
+            DISPLAY="$display" xdotool click 1
+        fi
+        previous="$timestamp"
+        pointer_index=$((pointer_index + 1))
+    done
+}
+
 for second in $capture_seconds; do
     expected_capture_count=$((expected_capture_count + 1))
     run_keys_through "$second"
+    run_pointer_through "$second"
     sleep "$((second - previous))"
     index=$((index + 1))
     # FS-UAE emits a full emulator window, a clean emulated-canvas crop and a
@@ -340,6 +398,10 @@ if [[ "$key_index" -ne "${#key_entries[@]}" ]]; then
     echo "ERROR: keystroke timestamp exceeds the capture timeline" >&2
     exit 5
 fi
+if [[ "$pointer_index" -ne "${#pointer_entries[@]}" ]]; then
+    echo "ERROR: pointer timestamp exceeds the capture timeline" >&2
+    exit 5
+fi
 
 # A partial session is useful for diagnosis, but it is not a successful
 # capture of the caller's requested timeline.  In particular, do not allow an
@@ -372,6 +434,11 @@ execution_fault_count="$(grep -Eic '^(Illegal instruction:|Exception [0-9]+ at )
         printf 'input_keystrokes=%s\n' "$keystrokes"
     else
         printf 'input_keystrokes=none\n'
+    fi
+    if [[ -n "$pointer_clicks" ]]; then
+        printf 'input_pointer_clicks=%s\n' "$pointer_clicks"
+    else
+        printf 'input_pointer_clicks=none\n'
     fi
     printf 'kickstart_sha256=%s\n' "$(sha256sum "$kickstart" | awk '{print $1}')"
     printf 'disk1_sha256=%s\n' "$(sha256sum "$disk1" | awk '{print $1}')"
