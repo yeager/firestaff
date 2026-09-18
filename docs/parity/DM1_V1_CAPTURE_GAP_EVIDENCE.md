@@ -208,6 +208,7 @@ original captures.
 | Original C407 HoC movement cycle | 2026-09-11 | local evidence | Five input-labelled original PC 3.4 frames, three gameplay and two wall-closeup, each healthy and non-duplicate; no published pixels or local path |
 | Original HoC candidate panel and resurrection | 2026-09-11 | local evidence | A fresh PC 3.4 pointer route yielded healthy, non-duplicate mirror, post-click candidate, and post-`C160` resurrection HUD frames for Azizi Yohari. The visual identity disagrees with the static WUUF route calculation, so no map coordinate is claimed; no pixels or local paths are published and no Firestaff pairing is claimed. |
 | Original HoC inventory transaction | 2026-09-12 | local evidence | Fresh PC 3.4 capture of candidate/revival, C007 inventory, source action-hand pickup, and C520 backpack placement. ReDMCSB G0449 confirms the C520 hit box; pointer moved before the final frame. No pixels or local paths are published and no Firestaff pairing is claimed. |
+| Static C127 route-panel probe | 2026-09-18 | private original-emulator evidence | A real-data route derived from the retail map topology reached a healthy, non-duplicate dungeon framebuffer. A held click at the candidate wall coordinate produced the identical raw framebuffer. This rejects that coordinate/route pair as mirror or inventory evidence; it must not be relabelled as a champion-panel capture. No pixels or local paths are published. |
 
 ---
 
