@@ -1,10 +1,19 @@
 --- a/src/pce/input.cpp
 +++ b/src/pce/input.cpp
-@@ -317,0 +318,7 @@
+@@ -317,0 +318,16 @@
 + if(theron_input_read_trace && theron_input_read_count < theron_input_read_trace_limit)
 + {
 +  const uint16 raw = data_ptr[0] ? MDFN_de16lsb(data_ptr[0]) : 0;
-+  fprintf(theron_input_read_trace, "pce_input_result cpu_pc=%04x register=%04x raw=%04x value=%02x sel=%u clr=%u index=%u\n", HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, ret, SEL ? 1 : 0, CLR ? 1 : 0, read_index);
++  const unsigned int sp = HuCPU.GetRegister(HuC6280::GSREG_SP);
++  const uint8 stack0 = HuCPU.PeekLogical(0x2100u | ((sp + 1u) & 0xffu));
++  const uint8 stack1 = HuCPU.PeekLogical(0x2100u | ((sp + 2u) & 0xffu));
++  const uint8 stack2 = HuCPU.PeekLogical(0x2100u | ((sp + 3u) & 0xffu));
++  const uint8 stack3 = HuCPU.PeekLogical(0x2100u | ((sp + 4u) & 0xffu));
++  fprintf(theron_input_read_trace,
++          "pce_input_result cpu_pc=%04x register=%04x raw=%04x value=%02x sel=%u clr=%u index=%u sp=%02x stack=%02x%02x%02x%02x\n",
++          HuCPU.GetRegister(HuC6280::GSREG_PC), A, raw, ret,
++          SEL ? 1 : 0, CLR ? 1 : 0, read_index, sp & 0xffu,
++          stack0, stack1, stack2, stack3);
 +  fflush(theron_input_read_trace);
 + }
 +

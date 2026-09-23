@@ -284,13 +284,18 @@ if grep -Fq 'activationAccepted' "$quartz_helper"; then
     printf 'FAIL: Quartz helper must not reference an undefined activation result\n' >&2
     exit 1
 fi
-if command -v swiftc >/dev/null 2>&1 && ! swiftc -typecheck "$quartz_helper" >/dev/null 2>&1; then
-    printf 'FAIL: Quartz helper does not type-check\n' >&2
-    exit 1
-fi
-if command -v swiftc >/dev/null 2>&1 && ! swiftc -typecheck "$quartz_grab_helper" >/dev/null 2>&1; then
-    printf 'FAIL: Quartz input-grab helper does not type-check\n' >&2
-    exit 1
+if command -v swiftc >/dev/null 2>&1; then
+    swift_tmp_root=${TMPDIR:-${RUNNER_TEMP:-/private/tmp}}
+    swift_module_cache=$(mktemp -d "$swift_tmp_root/firestaff-theron-swift-module-cache.XXXXXX")
+    trap 'rm -rf -- "$swift_module_cache"' EXIT
+    if ! swiftc -module-cache-path "$swift_module_cache" -typecheck "$quartz_helper" >/dev/null 2>&1; then
+        printf 'FAIL: Quartz helper does not type-check\n' >&2
+        exit 1
+    fi
+    if ! swiftc -module-cache-path "$swift_module_cache" -typecheck "$quartz_grab_helper" >/dev/null 2>&1; then
+        printf 'FAIL: Quartz input-grab helper does not type-check\n' >&2
+        exit 1
+    fi
 fi
 if swift "$quartz_helper" 36 1 0 >/dev/null 2>&1; then
     printf 'FAIL: Quartz helper accepted a non-positive target PID\n' >&2
@@ -335,8 +340,10 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     exit 1
 fi
 if ! grep -Fq 'theron_input_read_count < theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
-   grep -Fq 'theron_input_read_count <= theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"; then
-    printf 'FAIL: input-result evidence must stop at the configured trace limit\n' >&2
+   grep -Fq 'theron_input_read_count <= theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+   ! grep -Fq 'HuCPU.PeekLogical(0x2100u | ((sp + 1u) & 0xffu))' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+   ! grep -Fq 'stack=%02x%02x%02x%02x' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"; then
+    printf 'FAIL: input-result evidence must be bounded and retain authentic caller-stack bytes\n' >&2
     exit 1
 fi
 if ! grep -Fq 'TheronIrq2TraceCriticalSamples[critical_slot] < 4096' "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"; then
