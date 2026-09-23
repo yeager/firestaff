@@ -29,9 +29,15 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   research hooks did not match any hook signatures and reached the same
   boundary. A third replay delivered 11 planned PCE inputs through frame 5800
   and again produced 24 raw-sector spans, zero authenticated CD-to-RAM
-  receipts and no dungeon-state handoff. The Mednafen transport receipt parser
-  now identifies JP and US Track 02 hashes separately, but that tooling change
-  does not make the capture a gameplay or source-consumer witness.
+  receipts and no dungeon-state handoff. A fourth replay delivered 30 planned
+  PCE inputs through frame 9600 and again produced 24 raw-sector spans, zero
+  byte-exact origin-RAM or authenticated CD-to-RAM receipts, one game-owned
+  `$E009` dispatch, zero `$E009` data reads, no command-buffer consumer reads,
+  and no dungeon-state handoff. The private capture remains on trv2; its raw
+  media and trace files are not part of the repository. The Mednafen transport
+  receipt parser now identifies JP and US Track 02 hashes separately, but
+  that tooling change does not make these captures gameplay or
+  source-consumer witnesses.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. Authentic Backup RAM decoding and transactional
   Continue integration are implemented; runtime validation remains open.
