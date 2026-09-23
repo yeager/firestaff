@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-23 — Japanese spawn source records bound to retail bytes
+
+- The JP and US real-media spawn test now checks all five regional records
+  against their own MODE1/2352 user-data offsets. The JP assertions pin the
+  exact eight source bytes at `$273858`, `$2738D7`, `$273902`, `$273929` and
+  `$273950`; the US records remain checked at their separate offsets. The
+  original Japanese and US Track 02 BINs pass with their canonical hashes.
+  This verifies static source decoding only: JP runtime category publication,
+  spawn execution, RNG, AI and combat remain gated on an authentic live
+  consumer capture.
+
 ## 2026-09-23 — Synthetic save runtimes removed from production
 
 - The Firestaff-only `FSTQPTY1` writer and Continue reader are no longer

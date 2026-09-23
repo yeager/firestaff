@@ -44,6 +44,19 @@ static uint8_t *read_file(const char *path, size_t *size_out) {
 
 static void assert_decoded_real_bin(const char *path,
                                     Theron_V1Track02Variant variant) {
+    static const uint8_t expected_zone_records[THERON_TRACK02_SPAWN_ZONE_COUNT][8] = {
+        { 0x2f, 0x00, 0x2c, 0x00, 0x03, 0x05, 0x0e, 0x02 },
+        { 0x1b, 0x00, 0x18, 0x00, 0x02, 0x04, 0x10, 0x02 },
+        { 0x17, 0x00, 0x14, 0x00, 0x02, 0x04, 0x10, 0x02 },
+        { 0x17, 0x00, 0x14, 0x00, 0x02, 0x04, 0x10, 0x02 },
+        { 0x00, 0x00, 0x18, 0x00, 0x08, 0x0a, 0x12, 0x02 }
+    };
+    static const uint32_t jp_zone_offsets[THERON_TRACK02_SPAWN_ZONE_COUNT] = {
+        0x273858u, 0x2738d7u, 0x273902u, 0x273929u, 0x273950u
+    };
+    static const uint32_t us_zone_offsets[THERON_TRACK02_SPAWN_ZONE_COUNT] = {
+        0x274058u, 0x2740d7u, 0x274102u, 0x274129u, 0x274150u
+    };
     Theron_Track02SpawnSource source;
     Theron_Track02SpawnConsumerSourceReceipt consumer;
     size_t size;
@@ -68,9 +81,41 @@ static void assert_decoded_real_bin(const char *path,
                expected->constant_016b);
     }
     for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_ZONE_COUNT; ++i) {
-        const Theron_SpawnZoneDesc *expected =
-            theron_v1_track02_spawn_zone(i);
-        assert(memcmp(&source.zones[i], expected, sizeof(*expected)) == 0);
+        const uint32_t user_offset = variant == THERON_V1_TRACK02_VARIANT_JP_BIN ?
+            jp_zone_offsets[i] : us_zone_offsets[i];
+        const size_t raw_sector = (size_t)user_offset / 2048u;
+        const size_t raw_in_sector = (size_t)user_offset % 2048u;
+        const uint8_t *record = bytes +
+            raw_sector * THERON_V1_TRACK02_RAW_SECTOR_BYTES +
+            THERON_V1_TRACK02_MODE1_HEADER_BYTES + raw_in_sector;
+        const Theron_SpawnZoneDesc *zone = &source.zones[i];
+
+        assert(zone->map_width ==
+               (uint16_t)(record[0] | ((uint16_t)record[1] << 8u)));
+        assert(zone->map_height ==
+               (uint16_t)(record[2] | ((uint16_t)record[3] << 8u)));
+        assert(zone->category == record[4]);
+        assert(zone->count == record[5]);
+        assert(zone->param1 == record[6]);
+        assert(zone->param2 == record[7]);
+        if (variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
+            assert(memcmp(record, expected_zone_records[i],
+                          sizeof(expected_zone_records[i])) == 0);
+            assert(zone->map_width ==
+                   (uint16_t)(expected_zone_records[i][0] |
+                              ((uint16_t)expected_zone_records[i][1] << 8u)));
+            assert(zone->map_height ==
+                   (uint16_t)(expected_zone_records[i][2] |
+                              ((uint16_t)expected_zone_records[i][3] << 8u)));
+            assert(zone->category == expected_zone_records[i][4]);
+            assert(zone->count == expected_zone_records[i][5]);
+            assert(zone->param1 == expected_zone_records[i][6]);
+            assert(zone->param2 == expected_zone_records[i][7]);
+        } else {
+            const Theron_SpawnZoneDesc *expected =
+                theron_v1_track02_spawn_zone(i);
+            assert(memcmp(zone, expected, sizeof(*expected)) == 0);
+        }
     }
     assert(theron_v1_track02_bind_spawn_consumer_source(
                bytes, size, variant, &consumer) == 1);
