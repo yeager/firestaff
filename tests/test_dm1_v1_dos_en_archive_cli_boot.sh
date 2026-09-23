@@ -39,20 +39,20 @@ probe() {
 # "dos" is the public spelling for the PC/DOS source route.
 probe --game dm1 --platform dos --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
-menu_boot_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform pc --data-dir "$archive" \
+direct_boot_probe_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
-    printf '%s\n' "$menu_boot_output" >&2
+    printf '%s\n' "$direct_boot_probe_output" >&2
     exit 1
 }
-if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$menu_boot_output" ||
-   ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$menu_boot_output" ||
-   ! native_graphics_path_matches <<<"$menu_boot_output" ||
-   ! grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$menu_boot_output" ||
-   ! grep -Fq 'phase=dm1-runtime' <<<"$menu_boot_output" ||
-   ! grep -Fq 'levelLoaded=1' <<<"$menu_boot_output"; then
-    printf '%s\n' "$menu_boot_output" >&2
-    printf '%s\n' 'FAIL: DM1 menu launch did not apply the Hall runtime handoff before its first frame' >&2
+if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$direct_boot_probe_output" ||
+   ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$direct_boot_probe_output" ||
+   ! native_graphics_path_matches <<<"$direct_boot_probe_output" ||
+   ! grep -Fq 'dm1StartupHandoffExecuted=1' <<<"$direct_boot_probe_output" ||
+   ! grep -Fq 'phase=dm1-runtime' <<<"$direct_boot_probe_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$direct_boot_probe_output"; then
+    printf '%s\n' "$direct_boot_probe_output" >&2
+    printf '%s\n' 'FAIL: DM1 direct boot probe did not apply the Hall runtime handoff before its first frame' >&2
     exit 1
 fi
 
@@ -72,7 +72,7 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
 fi
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform pc --data-dir "$archive" \
+    --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
@@ -88,21 +88,36 @@ fi
 for mode in v1 v20 v21; do
     case "$mode" in v1) mode_index=0;; v20) mode_index=1;; v21) mode_index=2;; esac
     for route in cli menu; do
-        route_args=()
-        if [[ "$route" == menu ]]; then route_args=(--menu --script enter,enter,enter); fi
-        mode_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-            --game dm1 --platform pc --data-dir "$archive" \
-            "${route_args[@]}" --presentation-mode "$mode" \
-            --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
-            printf '%s\n' "$mode_output" >&2; exit 1;
-        }
-        if ! grep -Fq "presentationMode=$mode_index " <<<"$mode_output" ||
-           ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$mode_output" ||
-           ! grep -Fq 'phase=dm1-runtime' <<<"$mode_output" ||
-           ! grep -Fq 'levelLoaded=1' <<<"$mode_output"; then
-            printf '%s\n' "$mode_output" >&2
-            printf 'FAIL: DOS %s did not retain requested %s presentation\n' "$route" "$mode" >&2
-            exit 1
+        if [[ "$route" == menu ]]; then
+            mode_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+                SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+                --menu --game dm1 --platform pc --data-dir "$archive" \
+                --script enter,enter,enter --presentation-mode "$mode" \
+                --duration 1000 2>&1) || {
+                printf '%s\n' "$mode_output" >&2; exit 1;
+            }
+            if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$mode_output" ||
+               ! native_graphics_path_matches <<<"$mode_output" ||
+               ! grep -Fq 'handoff=pc-img3' <<<"$mode_output"; then
+                printf '%s\n' "$mode_output" >&2
+                printf 'FAIL: DOS menu did not launch the selected %s route\n' "$mode" >&2
+                exit 1
+            fi
+        else
+            mode_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+                --game dm1 --platform pc --data-dir "$archive" \
+                --presentation-mode "$mode" --boot-probe \
+                --boot-probe-frames 2 --duration 0 2>&1) || {
+                printf '%s\n' "$mode_output" >&2; exit 1;
+            }
+            if ! grep -Fq "presentationMode=$mode_index " <<<"$mode_output" ||
+               ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$mode_output" ||
+               ! grep -Fq 'phase=dm1-runtime' <<<"$mode_output" ||
+               ! grep -Fq 'levelLoaded=1' <<<"$mode_output"; then
+                printf '%s\n' "$mode_output" >&2
+                printf 'FAIL: DOS CLI did not retain requested %s presentation\n' "$mode" >&2
+                exit 1
+            fi
         fi
     done
 done

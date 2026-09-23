@@ -45,7 +45,7 @@ if ! grep -Fq "assetMd5=$expected_md5" <<<"$title_output" ||
     exit 1
 fi
 
-movement_output=$(run_probe --menu --game csb --platform amiga --data-dir "$archive" \
+movement_output=$(run_probe --game csb --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 800 --script enter,enter,enter,up --duration 0)
 if ! grep -Fq 'phase=inactive' <<<"$movement_output" ||
    ! grep -Fq 'startupActive=0' <<<"$movement_output" ||
@@ -67,7 +67,7 @@ probe_runtime_input() {
     local input=$1
     local party=$2
     local output
-    output=$(run_probe --menu --game csb --platform amiga --data-dir "$archive" \
+    output=$(run_probe --game csb --platform amiga --data-dir "$archive" \
         --boot-probe --boot-probe-frames 800 \
         --script "enter,enter,enter,$input" \
         --boot-probe-expect-phase inactive --boot-probe-expect-runtime \

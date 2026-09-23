@@ -6550,6 +6550,19 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                 &launchGate);
                         }
                     }
+                    /* GetLaunchGate may have admitted a matched edition for
+                     * the explicitly selected architecture while the saved
+                     * version row still names a different architecture. Keep
+                     * the visible option and the launch intent on that same
+                     * verified edition at the final menu boundary. */
+                    if (hasLaunchGate &&
+                        launchGate.autoSelectedVersionIndex >= 0 &&
+                        state->gameOptions[gi].versionIndex !=
+                            launchGate.autoSelectedVersionIndex) {
+                        state->gameOptions[gi].versionIndex =
+                            launchGate.autoSelectedVersionIndex;
+                        m12_save_config(state);
+                    }
                     /* Launch row — when V2.2 mode is selected but modern assets
                      * are not installed, the fallback chain kicks in at runtime
                      * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds

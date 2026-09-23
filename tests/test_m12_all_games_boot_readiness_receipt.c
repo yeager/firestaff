@@ -137,6 +137,9 @@ int main(void) {
                                     "/tmp/firestaff-test-no-assets",
                                     NULL,
                                     &initOptions);
+    /* Contract labels are asserted in English regardless of the host locale. */
+    state.settings.languageIndex = 0;
+    state.languageExplicit = 1;
     state.view = M12_MENU_VIEW_MAIN;
     {
         M12_DM1HoCPresentedCaptureReceipt badReceipt;
@@ -171,6 +174,7 @@ int main(void) {
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         M12_StartupBootReadiness boot;
         M12_StartupLaunchGate gate;
+        int m11TitleHandoff = strcmp(expected[i].gameId, "dm1") != 0;
         mark_game_ready(&state, i, expected[i].gameId);
         if (!expect(M12_StartupMenu_GetBootReadiness(&state, i, &boot) == 1,
                     "boot readiness receipt should build")) return 1;
@@ -179,13 +183,13 @@ int main(void) {
         if (!expect(boot.dataReady == 1, "game data should be ready")) return 1;
         if (!expect(boot.versionReady == 1, "selected version should be ready")) return 1;
         if (!expect(boot.startupMenuReady == 1 &&
-                    boot.fullStartGraphicsReady == 1,
-                    "verified data should admit the startup route")) return 1;
+                    boot.fullStartGraphicsReady == !m11TitleHandoff,
+                    "verified data should admit only the proven startup route")) return 1;
         if (!expect(boot.startupContractExpected == 1 &&
-                    boot.startupContractReady == 1 &&
+                    boot.startupContractReady == !m11TitleHandoff &&
                     boot.packagedCaptureExpected == 1 &&
-                    boot.packagedCaptureReady == 1,
-                    "verified startup should expose the normal receipt contract")) return 1;
+                    boot.packagedCaptureReady == !m11TitleHandoff,
+                    "M11-owned title handoff must not claim prelaunch graphics/capture proof")) return 1;
         if (strcmp(expected[i].gameId, "dm1") == 0) {
             if (!expect(boot.dm1HoCRealAssetCaptureReady == 1 &&
                         boot.dm1HoCMacWindowCaptureReady == 1 &&
@@ -225,16 +229,28 @@ int main(void) {
         }
         if (!expect(boot.expectedStepMask == fullMask,
                     "boot receipt should expose the full expected startup proof mask")) return 1;
-        if (!expect(boot.readyStepMask == fullMask,
-                    "boot receipt should expose the full ready startup proof mask")) return 1;
-        if (!expect(boot.blockedStepMask == 0u,
-                    "ready boot receipt should have no blocked startup proof steps")) return 1;
+        if (!expect(boot.readyStepMask ==
+                        (m11TitleHandoff ? (M12_STARTUP_BOOT_STEP_DATA |
+                                            M12_STARTUP_BOOT_STEP_VERSION |
+                                            M12_STARTUP_BOOT_STEP_STARTUP_MENU)
+                               : fullMask),
+                    "boot receipt should expose only proven startup steps")) return 1;
+        if (!expect(boot.blockedStepMask ==
+                        (m11TitleHandoff ? (fullMask &
+                                  ~(M12_STARTUP_BOOT_STEP_DATA |
+                                    M12_STARTUP_BOOT_STEP_VERSION |
+                                    M12_STARTUP_BOOT_STEP_STARTUP_MENU))
+                               : 0u),
+                    "boot receipt should retain startup steps owned by M11")) return 1;
         if (!expect(boot.startupStepCount == expected[i].stepCount,
                     "startup step count should match the game boot path")) return 1;
-        if (!expect(boot.startupStepReadyCount == expected[i].stepCount,
-                    "startup ready count should match total when ready")) return 1;
-        if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0,
-                    "ready boot receipt should report READY next step")) return 1;
+        if (!expect(boot.startupStepReadyCount ==
+                        (m11TitleHandoff ? 3 : expected[i].stepCount),
+                    "startup ready count should reflect proven steps")) return 1;
+        if (!expect(boot.nextStepLabel &&
+                    strcmp(boot.nextStepLabel,
+                           m11TitleHandoff ? "TITLE START" : "READY") == 0,
+                    "boot receipt should report its actual next startup step")) return 1;
         if (!expect(boot.startupPathLabel &&
                     strcmp(boot.startupPathLabel, expected[i].pathLabel) == 0,
                     "boot path label should match game")) return 1;
@@ -245,16 +261,22 @@ int main(void) {
                     strcmp(boot.packagedCaptureLabel, expected[i].captureLabel) == 0,
                     "packaged capture label should match game startup proof")) return 1;
         if (!expect(boot.activeProofLabel &&
-                    strcmp(boot.activeProofLabel, expected[i].captureLabel) == 0,
-                    "active proof label should name packaged capture when ready")) return 1;
+                    strcmp(boot.activeProofLabel,
+                           m11TitleHandoff ? "VERIFIED SOURCE DATA" :
+                                   expected[i].captureLabel) == 0,
+                    "active proof label should name the current proof")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryCaptureProofLabel(&state, i),
                            expected[i].captureLabel) == 0,
                     "public capture proof label should match game startup proof")) return 1;
         if (!expect(boot.statusLabel &&
-                    strcmp(boot.statusLabel, expected[i].statusLabel) == 0,
+                    strcmp(boot.statusLabel,
+                           m11TitleHandoff ? "TITLE START AVAILABLE" :
+                                   expected[i].statusLabel) == 0,
                     "status label should match game startup path")) return 1;
         if (!expect(boot.detailLabel &&
-                    strcmp(boot.detailLabel, expected[i].detailLabel) == 0,
+                    strcmp(boot.detailLabel,
+                           m11TitleHandoff ? "MENU AND CAPTURE PROOFS NOT READY" :
+                                   expected[i].detailLabel) == 0,
                     "detail label should match game startup chain")) return 1;
         if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
                     "launch gate should build")) return 1;
@@ -262,24 +284,31 @@ int main(void) {
                     "verified game data should allow a runtime launch attempt")) return 1;
         if (!expect(gate.rendererReady == 1 && gate.presentationReady == 1,
                     "ready game launch gate should expose renderer/presentation readiness")) return 1;
-        if (!expect(gate.fullStartGraphicsReady == 1 &&
-                    gate.startupContractReady == 1 &&
-                    gate.packagedCaptureReady == 1,
-                    "ready game launch gate should expose full-start capture readiness")) return 1;
-        if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
+        if (!expect(gate.fullStartGraphicsReady == !m11TitleHandoff &&
+                    gate.startupContractReady == !m11TitleHandoff &&
+                    gate.packagedCaptureReady == !m11TitleHandoff,
+                    "launch gate should expose only verified full-start capture readiness")) return 1;
+        if (!expect(gate.boot.startupStepReadyCount ==
+                        (m11TitleHandoff ? 3 : expected[i].stepCount),
                     "launch gate should carry boot receipt progress")) return 1;
         if (!expect(gate.blockedLabel &&
-                    strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0,
-                    "ready game launch gate should report ready label")) return 1;
+                    strcmp(gate.blockedLabel,
+                           m11TitleHandoff ? "TITLE START AVAILABLE" :
+                                   "READY TO LAUNCH") == 0,
+                    "launch gate should distinguish M11 handoff from full readiness")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, i),
-                           "READY TO LAUNCH") == 0,
+                           m11TitleHandoff ? "TITLE START AVAILABLE" :
+                                   "READY TO LAUNCH") == 0,
                     "ready game launch status label should come from launch gate")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
-                              expected[i].captureLabel) == 0,
-                       "ready game launch detail label should name active capture proof")) return 1;
+                              m11TitleHandoff ?
+                                  "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED" :
+                                  expected[i].captureLabel) == 0,
+                       "launch detail should describe title handoff or capture proof")) return 1;
     }
-    if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "5 GAMES READY") == 0,
-                "scan feedback should count every verified launch-ready game")) return 1;
+    if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state),
+                       "TITLE START AVAILABLE: 5") == 0,
+                "scan feedback should count title handoffs without claiming full startup readiness")) return 1;
 
     state.activatedIndex = 0;
     state.gameOptions[0].versionIndex = 1;
@@ -358,6 +387,102 @@ int main(void) {
             if (!expect(intent.valid == 1 && intent.options.versionIndex == pc,
                         "AUTO launch intent must choose the original platform route")) return 1;
         }
+    }
+
+    /* The architecture row is independent of the version row. A persisted
+     * FM Towns selection beside a still-matched PC version must resolve only
+     * to a matched Towns edition, or remain blocked if none exists. */
+    {
+        int pcVersion = M12_AssetStatus_FindVersionIndex("dm1", "pc34-en");
+        int townsVersion = M12_AssetStatus_FindVersionIndex("dm1", "fmtowns-en");
+        M12_StartupBootReadiness boot;
+        M12_StartupLaunchGate gate;
+
+        if (!expect(pcVersion >= 0 && townsVersion >= 0,
+                    "DM1 PC and FM Towns catalog rows should exist")) return 1;
+        state.activatedIndex = 0;
+        state.entries[0].available = 1;
+        state.assetStatus.dm1Available = 1;
+        state.assetStatus.versions[0][pcVersion].matched = 1;
+        state.assetStatus.versions[0][townsVersion].matched = 1;
+        state.gameOptions[0].architectureIndex = M12_ARCH_FM_TOWNS;
+        state.gameOptions[0].versionIndex = pcVersion;
+
+        if (!expect(M12_StartupMenu_GetBootReadiness(&state, 0, &boot) == 1 &&
+                        boot.versionReady == 0,
+                    "matched version from a different explicit platform is not selected-ready")) return 1;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, 0, &gate) == 1 &&
+                        gate.canLaunch == 1 &&
+                        gate.autoSelectedVersionIndex == townsVersion,
+                    "launch gate recovers a stale version only within the explicit platform")) return 1;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 1 &&
+                        intent.options.architectureIndex == M12_ARCH_FM_TOWNS &&
+                        intent.options.versionIndex == townsVersion,
+                    "launch intent binds the matching FM Towns version")) return 1;
+        state.view = M12_MENU_VIEW_GAME_OPTIONS;
+        state.gameCardFlowStage = 2;
+        state.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        if (!expect(state.launchRequested == 1 &&
+                        state.gameOptions[0].versionIndex == townsVersion,
+                    "menu launch repairs the version row to the chosen platform")) return 1;
+
+        state.assetStatus.versions[0][townsVersion].matched = 0;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, 0, &gate) == 1 &&
+                        gate.canLaunch == 0 &&
+                        gate.autoSelectedVersionIndex < 0,
+                    "explicit platform with no matched edition remains blocked")) return 1;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 0,
+                    "launch intent refuses to substitute a matched other-platform edition")) return 1;
+    }
+
+    /* Preservation-only matches must not escape through a stale AUTO row.
+     * DM2 PC-98 media can be hash-recognized, but Firestaff has no launch
+     * route for that architecture. */
+    {
+        int pc98Version =
+            M12_AssetStatus_FindVersionIndex("dm2", "pc98-ja-demo");
+        size_t versionIndex;
+        M12_StartupBootReadiness boot;
+        M12_StartupLaunchGate gate;
+
+        if (!expect(pc98Version >= 0,
+                    "DM2 PC-98 preservation catalog row should exist")) return 1;
+        for (versionIndex = 0U;
+             versionIndex < M12_AssetStatus_GetVersionCount("dm2");
+             ++versionIndex) {
+            state.assetStatus.versions[2][versionIndex].matched = 0;
+        }
+        state.activatedIndex = 2;
+        state.entries[2].available = 1;
+        state.assetStatus.dm2Available = 1;
+        state.assetStatus.versions[2][pc98Version].matched = 1;
+        state.gameOptions[2].architectureIndex = M12_ARCH_AUTO;
+        state.gameOptions[2].versionIndex = pc98Version;
+
+        if (!expect(M12_StartupMenu_GetBootReadiness(&state, 2, &boot) == 1 &&
+                        boot.versionReady == 0,
+                    "unsupported preservation match is not AUTO-ready")) return 1;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, 2, &gate) == 1 &&
+                        gate.canLaunch == 0 &&
+                        gate.autoSelectedVersionIndex < 0,
+                    "AUTO launch gate blocks when only unsupported preservation media matches")) return 1;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 0,
+                    "AUTO launch intent refuses an unsupported matched preservation row")) return 1;
+
+        state.gameOptions[2].architectureIndex = M12_ARCH_PC98;
+        if (!expect(M12_StartupMenu_GetBootReadiness(&state, 2, &boot) == 1 &&
+                        boot.versionReady == 0,
+                    "explicit PC-98 preservation selection is not version-ready")) return 1;
+        if (!expect(M12_StartupMenu_GetLaunchGate(&state, 2, &gate) == 1 &&
+                        gate.canLaunch == 0,
+                    "explicit PC-98 preservation selection is blocked at launch gate")) return 1;
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 0,
+                    "explicit PC-98 preservation row cannot produce a launch intent")) return 1;
     }
 
     state.settings.rendererBackendIndex = M12_RENDERER_BACKEND_OPENGL;

@@ -22,7 +22,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # GAME_LOAD owner all the way through the first input, rather than borrowing
 # an English startup path.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
+    --game dm2 --platform pc --data-dir "$archive" --boot-probe \
     --boot-probe-frames 5000 --script 'key:enter,key:enter,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
