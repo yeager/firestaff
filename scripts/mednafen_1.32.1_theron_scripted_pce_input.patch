@@ -167,38 +167,62 @@
 @@ -20,0 +21,2 @@
 +#include <stdlib.h>
 +#include <string.h>
-@@ -43,0 +46,5 @@
-+static bool theron_script_run_hold = false;
+@@ -43,0 +46,6 @@
++static unsigned theron_script_run_count = 0;
 +static unsigned theron_script_run_frame = 0;
-+static unsigned theron_script_run_start = 0;
-+static unsigned theron_script_run_end = 0;
++static unsigned theron_script_run_start[32];
++static unsigned theron_script_run_end[32];
++static bool theron_script_run_valid = false;
 +
-@@ -53,0 +61,19 @@
+@@ -53,0 +62,37 @@
 + const char *script = getenv("FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT");
-+ theron_script_run_hold = false;
-+ theron_script_run_start = 0;
-+ theron_script_run_end = 0;
-+ if(script && !strncmp(script, "run@", 4))
++ const char *cursor = script;
++ theron_script_run_count = 0;
++ theron_script_run_valid = script && *script;
++ while(theron_script_run_valid && *cursor && theron_script_run_count < 32)
 + {
++  const char *at = strchr(cursor, '@');
++  const char *next = at ? strchr(at + 1, ',') : NULL;
++  const size_t key_length = at ? (size_t)(at - cursor) : 0;
 +  char *end = NULL;
-+  unsigned long start = strtoul(script + 4, &end, 10);
-+  unsigned long duration = 0;
++  unsigned long start;
++  unsigned long duration = 1;
++  if(!at || !key_length)
++  {
++   theron_script_run_valid = false;
++   break;
++  }
++  start = strtoul(at + 1, &end, 10);
 +  if(end && *end == ':')
 +   duration = strtoul(end + 1, &end, 10);
-+  if(end && *end == 0 && duration && start <= UINT_MAX - duration)
++  if(!start || !duration || start > UINT_MAX - duration ||
++     end != (next ? next : at + strlen(at)))
 +  {
-+   theron_script_run_hold = true;
-+   theron_script_run_start = (unsigned)start;
-+   theron_script_run_end = (unsigned)(start + duration);
++   theron_script_run_valid = false;
++   break;
 +  }
++  if(key_length == 3 && !strncmp(cursor, "run", 3))
++  {
++   theron_script_run_start[theron_script_run_count] = (unsigned)start;
++   theron_script_run_end[theron_script_run_count] = (unsigned)(start + duration);
++   theron_script_run_count++;
++  }
++  cursor = next ? next + 1 : at + strlen(at);
 + }
++ if(theron_script_run_valid && *cursor)
++  theron_script_run_valid = false;
 + theron_script_run_frame = 0;
-@@ -72,0 +96,8 @@
-+ if(theron_script_run_hold &&
-+    ((theron_script_run_frame >= theron_script_run_start) ||
-+     (theron_script_run_start > 0 &&
-+      theron_script_run_frame + 1u >= theron_script_run_start)) &&
-+    theron_script_run_frame < theron_script_run_end)
-+  buttons |= 0x0008;
-+ if(theron_script_run_hold)
+@@ -72,0 +115,13 @@
++ if(theron_script_run_valid)
++ {
++  for(unsigned run_index = 0; run_index < theron_script_run_count; run_index++)
++   if(((theron_script_run_frame >= theron_script_run_start[run_index]) ||
++       (theron_script_run_start[run_index] > 0 &&
++        theron_script_run_frame + 1u >= theron_script_run_start[run_index])) &&
++      theron_script_run_frame < theron_script_run_end[run_index])
++   {
++    buttons |= 0x0008;
++    break;
++   }
 +  theron_script_run_frame++;
++ }

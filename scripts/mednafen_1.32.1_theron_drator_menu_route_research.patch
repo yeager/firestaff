@@ -188,8 +188,8 @@ diff --git a/src/pce/input/gamepad.cpp b/src/pce/input/gamepad.cpp
 +uint16 TheronDratorGeneratorInputMask(void);
 
  class PCE_Input_Gamepad : public PCE_Input_Device
-@@ -97,3 +98,4 @@ void PCE_Input_Gamepad::Update(const uint8* data)
+@@ -116,3 +117,4 @@ void PCE_Input_Gamepad::Update(const uint8* data)
  {
   buttons = MDFN_de16lsb(data);
 + buttons |= TheronDratorGeneratorInputMask();
-  if(theron_script_run_hold &&
+  if(theron_script_run_valid)
