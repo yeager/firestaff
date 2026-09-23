@@ -1176,17 +1176,20 @@ static void test_sprite_asset_provider(void)
               dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party,
                                                                &hud) == 1 &&
                   !dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
-                                                              &hud.champion_slots[0]));
+                                                              &hud.champion_slots[0], 0));
         party.champions[0].state_source_bound = 1;
         dm2_v1_viewport_set_hud_party(&viewport, &party);
         CHECK("DM2 dynamic HUD source state becomes eligible only with GDAT owners",
               dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party,
                                                                &hud) == 1 &&
                   !dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
-                                                              &hud.champion_slots[0]));
+                                                              &hud.champion_slots[0], 0));
         memset(&layout, 0, sizeof(layout));
         layout.valid = 1;
         layout.table_hash = 0x8d2f51c4u;
+        layout.portrait_valid_mask = 1u;
+        layout.name_valid_mask = 1u;
+        layout.status_valid_mask[0] = 0x07u;
         layout.status[0][0] = (DM2_V1_InterfaceRect){ 540, 78, 68, 8 };
         layout.status[0][1] = (DM2_V1_InterfaceRect){ 540, 88, 68, 8 };
         layout.status[0][2] = (DM2_V1_InterfaceRect){ 540, 98, 68, 8 };
@@ -1197,7 +1200,7 @@ static void test_sprite_asset_provider(void)
             &viewport, (const uint8_t[768]){ 0 }, 0x4a7d3c91u);
         CHECK("DM2 dynamic HUD accepts only the complete real-data receipt",
               dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
-                                                         &hud.champion_slots[0]));
+                                                         &hud.champion_slots[0], 0));
         dm2_v1_render_ui_chrome(&viewport);
         /* SkWinCore.cpp::DRAW_PLAYER_3STAT_HEALTH_BAR selects one source
          * champion colour for all three bars. The renderer must consume the

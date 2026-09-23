@@ -112,6 +112,48 @@ int dm2_v1_asset_load_image_metadata(
                                          DM2_GDAT_ENTRY_TYPE_IMAGE, field,
                                          &raw_size);
     if (!raw || raw_size < 10u) return 0;
+    /* The original Amiga archive is GDAT v5 but its C4 pictures retain the
+     * compact signed six-bit placement in the high bits of the two
+     * big-endian dimension words. They are not IMG3 signed-height/depth
+     * flags. Match the native picture query and only replace the -32 x
+     * sentinel with a dtImageOffset row when that source row exists.
+     */
+    if (loader->big_endian && loader->gdat_version == 5u) {
+        uint16_t amiga_cx = (uint16_t)(((uint16_t)raw[0] << 8) | raw[1]);
+        uint16_t amiga_cy = (uint16_t)(((uint16_t)raw[2] << 8) | raw[3]);
+        int header_x = (int)(amiga_cx >> 10);
+        int header_y = (int)(amiga_cy >> 10);
+
+        if (header_x & 0x20) header_x -= 0x40;
+        if (header_y & 0x20) header_y -= 0x40;
+        out_metadata->width = (uint16_t)(amiga_cx & 0x03ffu);
+        out_metadata->height = (uint16_t)(amiga_cy & 0x03ffu);
+        if (out_metadata->width == 0u || out_metadata->height == 0u) {
+            memset(out_metadata, 0, sizeof(*out_metadata));
+            return 0;
+        }
+        out_metadata->bits_per_pixel = 4u;
+        out_metadata->query_offset_x = (int16_t)header_x;
+        out_metadata->query_offset_y = (int16_t)header_y;
+        if (header_x == -32 &&
+            dm2_v1_asset_load_image_offset(loader, category, index, field,
+                                           &image_offset)) {
+            out_metadata->query_offset_x = (int8_t)(image_offset >> 8);
+            out_metadata->query_offset_y = (int8_t)image_offset;
+            out_metadata->image_offset_present = 1;
+        }
+        hash = dm2_weather_hash_step(hash, out_metadata->width);
+        hash = dm2_weather_hash_step(hash, out_metadata->height);
+        hash = dm2_weather_hash_step(hash, out_metadata->bits_per_pixel);
+        hash = dm2_weather_hash_step(hash,
+                                     (uint16_t)out_metadata->query_offset_x);
+        hash = dm2_weather_hash_step(hash,
+                                     (uint16_t)out_metadata->query_offset_y);
+        hash = dm2_weather_hash_step(hash,
+                                     (uint32_t)out_metadata->image_offset_present);
+        out_metadata->metadata_hash = hash;
+        return hash != 0u;
+    }
     cx = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
     cy = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
     bpp = (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);

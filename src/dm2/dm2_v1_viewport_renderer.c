@@ -147,11 +147,14 @@ uint8_t dm2_v1_viewport_object_light_level(uint8_t base_light_level,
 int dm2_v1_viewport_g1_tile_class_to_square_type(uint8_t tile_class)
 {
     /* skproject/SKWIN/DME.h::tileTypeIndex: these are G1 byte-square
-     * classes, not DM2_SquareType enum values. */
+     * classes, not DM2_SquareType enum values. Class seven is the map-exit /
+     * perimeter-wall class (GET_TILE_VALUE returns 0xE0 for a closed edge),
+     * so it is rendered by the same source WALL pass as class zero. */
     switch (tile_class) {
     case 0u: return DM2_SQUARE_WALL;
     case 1u: return DM2_SQUARE_FLOOR;
     case 4u: return DM2_SQUARE_DOOR;
+    case 7u: return DM2_SQUARE_WALL;
     default: return -1;
     }
 }
@@ -2638,15 +2641,23 @@ void dm2_v1_viewport_set_gdat_interface_hud_layout(
 
 int dm2_v1_viewport_hud_dynamic_overlay_ready(
     const DM2_V1_ViewportState *s,
-    const DM2_V1_HudChampionSlotRender *champion)
+    const DM2_V1_HudChampionSlotRender *champion,
+    int champion_slot)
 {
     /* SKWIN/SkWinCore.cpp draws the active champion data through the expanded
      * dt04 rectangles, the interface palette, and QUERY_FONT's dt07 rows.
      * All four inputs must stay boot/session-owned in a source-only frame. */
-    return s && champion && champion->state_source_bound &&
+    return s && champion && champion_slot >= 0 &&
+        champion_slot < (int)DM2_V1_INTERFACE_HUD_CHAMPION_COUNT &&
+        champion->state_source_bound &&
         champion->stat_bar_color_source_bound &&
         champion->stat_bar_color < 16u &&
         s->gdat_interface_hud_layout &&
+        (s->gdat_interface_hud_layout->portrait_valid_mask &
+            (uint8_t)(1u << champion_slot)) &&
+        (s->gdat_interface_hud_layout->name_valid_mask &
+            (uint8_t)(1u << champion_slot)) &&
+        s->gdat_interface_hud_layout->status_valid_mask[champion_slot] == 0x07u &&
         s->gdat_interface_palette_ready &&
         s->gdat_interface_palette_hash != 0u &&
         s->gdat_interface_font_rows &&
@@ -8560,7 +8571,7 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
             if (plan.champion_slots[slot].occupied) {
                 if (!dm2_v1_viewport_hud_dynamic_overlay_ready(
-                        s, &plan.champion_slots[slot])) {
+                        s, &plan.champion_slots[slot], slot)) {
                     /* A live state value without its source dt04/dt07/palette
                      * contract is not drawable HUD material.  In particular,
                      * do not turn health percentages into host-colour bars.

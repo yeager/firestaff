@@ -1648,7 +1648,12 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
             dy[dir] * visible_cells[i].lateral;
         int map_y = party_y + dy[dir] * visible_cells[i].forward +
             dx[dir] * visible_cells[i].lateral;
-        int raw = dm2_v1_dungeon_get_tile_raw(
+        /* SkWinCore::GET_TILE_VALUE owns the map perimeter: one-cell edge
+         * coordinates can resolve to source boundary walls/passages instead
+         * of absent dungeon bytes.  The renderer needs that same projected
+         * value so a party facing an outer boundary still receives its real
+         * GRAPHICSSET wall panels. */
+        int raw = dm2_v1_dungeon_c_map_get_tile_value(
             dd,
             rt->dungeon_level,
             map_x, map_y);
@@ -1678,7 +1683,14 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                 surface->flags &= (uint8_t)~(DM2_SQF_HAS_WALL | DM2_SQF_HAS_DOOR);
             }
         }
-        if (dm2_runtime_is_door_at(dd, rt->dungeon_level, map_x, map_y, raw)) {
+        /* GET_TILE_VALUE may return one of SkWinCore's synthetic perimeter
+         * direction codes (1/2/4/8). Those are projected edge geometry, not
+         * in-map G1 tile classes or DB0 roots; never feed them to the door
+         * record detector, whose low-bit normalization would read 4 as a
+         * door class. */
+        if (map_x >= 0 && map_x < dd->level_widths[rt->dungeon_level] &&
+            map_y >= 0 && map_y < dd->level_heights[rt->dungeon_level] &&
+            dm2_runtime_is_door_at(dd, rt->dungeon_level, map_x, map_y, raw)) {
             DM2_ViewSquare *door = &viewport->squares[visible_cells[i].square];
             door->square_type =
                 (uint8_t)(square_type >= 0 ? square_type : type);
@@ -11070,6 +11082,35 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         hud.leader_index = 0;
     }
 
+    {
+        DM2_V1_ChampionStatInput stat_inputs[DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES];
+        DM2_V1_ChampionStatBridgeReceipt stat_receipt;
+        int stat_inputs_valid = rt->session_snapshot.original_champion_records_valid &&
+            hud.champion_count > 0 &&
+            hud.champion_count <= DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES;
+
+        memset(stat_inputs, 0, sizeof(stat_inputs));
+        memset(&stat_receipt, 0, sizeof(stat_receipt));
+        for (int slot = 0; slot < hud.champion_count; ++slot) {
+            const uint8_t *raw = rt->session_snapshot.original_champion_records[slot];
+            stat_inputs[slot].cur_hp = dm2_runtime_read_i16_le(raw + 54);
+            stat_inputs[slot].max_hp = dm2_runtime_read_u16_le(raw + 56);
+            stat_inputs[slot].cur_stamina = dm2_runtime_read_u16_le(raw + 58);
+            stat_inputs[slot].max_stamina = dm2_runtime_read_u16_le(raw + 60);
+            stat_inputs[slot].cur_mp = dm2_runtime_read_u16_le(raw + 62);
+            stat_inputs[slot].max_mp = dm2_runtime_read_u16_le(raw + 64);
+            stat_inputs[slot].is_leader = (uint8_t)(slot == hud.leader_index);
+        }
+        if (stat_inputs_valid) {
+            static const uint8_t source_default_stat_bar_color[
+                DM2_V1_HUD_CHAMPION_SLOT_COUNT] = { 7u, 11u, 8u, 14u };
+            stat_inputs_valid = dm2_v1_champion_stat_bridge_compute(
+                stat_inputs, NULL, hud.champion_count,
+                source_default_stat_bar_color[hud.leader_index],
+                &stat_receipt) && stat_receipt.valid &&
+                stat_receipt.champion_count == hud.champion_count;
+        }
+
     for (int slot = 0; slot < hud.champion_count; ++slot) {
         const DM2_ChampionRecord *champ =
             (const DM2_ChampionRecord *)
@@ -11098,41 +11139,22 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
          * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
          * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
-        if (dst->occupied && rt->session_snapshot.original_champion_records_valid) {
+        if (dst->occupied && stat_inputs_valid) {
             const uint8_t *raw = rt->session_snapshot
                 .original_champion_records[slot];
-            DM2_V1_ChampionStatInput stat_input;
-            DM2_V1_ChampionStatBridgeReceipt stat_receipt;
-
-            /* SKProject/SKWINSPX c_hero has the three current/max pairs at
-             * 54/56, 58/60, and 62/64.  The old 261-byte convenience view
-             * does not retain the latter two maxima, so it cannot own a
-             * drawable stat bar.  DRAW_PLAYER_3STAT_HEALTH_BAR also expands
-             * max MP to max(current MP, max MP); the shared source bridge
-             * retains that rule. */
-            memset(&stat_input, 0, sizeof(stat_input));
-            stat_input.cur_hp = dm2_runtime_read_i16_le(raw + 54);
-            stat_input.max_hp = dm2_runtime_read_u16_le(raw + 56);
-            stat_input.cur_stamina = dm2_runtime_read_u16_le(raw + 58);
-            stat_input.max_stamina = dm2_runtime_read_u16_le(raw + 60);
-            stat_input.cur_mp = dm2_runtime_read_u16_le(raw + 62);
-            stat_input.max_mp = dm2_runtime_read_u16_le(raw + 64);
-            stat_input.is_leader = (uint8_t)dst->leader;
-            if (dm2_v1_champion_stat_bridge_compute(
-                    &stat_input, NULL, 1, dst->stat_bar_color,
-                    &stat_receipt) && stat_receipt.valid) {
-                dst->hp_pct = stat_receipt.champions[0].hp_pct;
-                dst->stamina_pct = stat_receipt.champions[0].stamina_pct;
-                dst->mana_pct = stat_receipt.champions[0].mana_pct;
-                dst->state_source_bound = 1;
-                dst->portrait_index = raw[257];
-                dst->portrait_type_source_bound = 1;
-            }
+            /* Bridge receipts index the complete source party. */
+            dst->hp_pct = stat_receipt.champions[slot].hp_pct;
+            dst->stamina_pct = stat_receipt.champions[slot].stamina_pct;
+            dst->mana_pct = stat_receipt.champions[slot].mana_pct;
+            dst->state_source_bound = 1;
+            dst->portrait_index = raw[257];
+            dst->portrait_type_source_bound = 1;
         }
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
     }
 
+    }
     dm2_v1_viewport_set_hud_party(viewport, &hud);
 }
 
@@ -12036,8 +12058,11 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     if (!floor_gfx_map_chip_material_plan_consumed) {
         floor_gfx_map_chip_material_plan_hash = 0u;
     }
+    /* LOAD_LOCALLEVEL_DYN retains the full list, but the source DRAW_MAP_CHIP
+     * path consumes its F9 image only when a visible wall ornament is drawn.
+     * Do not reject a clear entrance frame for unrelated, unused list rows. */
     wall_gfx_map_chip_material_plan_required =
-        !rt->outdoor && rt->map_wall_gfx_count > 0;
+        !rt->outdoor && viewport.asset_wall_ornament_drawn_count > 0;
     wall_gfx_map_chip_material_plan_consumed =
         !wall_gfx_map_chip_material_plan_required ||
         dm2_runtime_wall_gfx_map_chip_material_plan_identity(

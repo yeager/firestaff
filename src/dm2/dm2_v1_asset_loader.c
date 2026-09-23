@@ -474,6 +474,47 @@ static int dm2_v1_asset_load_image_metadata(
                 out_metadata->image_offset_present);
         return out_metadata->metadata_hash != 0u;
     }
+    /* The original Amiga archive is GDAT v5 like the PC releases, but its
+     * 4-bit picture records retain the compact signed six-bit placement
+     * words used by the native GDAT picture query.  They are not IMG3's
+     * signed-height/depth flags.  Read dimensions and placement from the two
+     * big-endian source words; use a matching image-offset row only for the
+     * source -32 x sentinel, as QUERY_GDAT_PICT_OFFSET does.
+     */
+    if (loader->big_endian && loader->gdat_version == 5u) {
+        uint16_t cx = img_rd16(raw, 1);
+        uint16_t cy_amiga = img_rd16(raw + 2u, 1);
+        int offset_x = (int)(cx >> 10);
+        int offset_y = (int)(cy_amiga >> 10);
+        uint16_t image_offset;
+
+        if (offset_x & 0x20) offset_x -= 0x40;
+        if (offset_y & 0x20) offset_y -= 0x40;
+        out_metadata->width = (uint16_t)(cx & 0x03ffu);
+        out_metadata->height = (uint16_t)(cy_amiga & 0x03ffu);
+        if (out_metadata->width == 0u || out_metadata->height == 0u) {
+            memset(out_metadata, 0, sizeof(*out_metadata));
+            return 0;
+        }
+        out_metadata->bits_per_pixel = 4u;
+        out_metadata->query_offset_x = (int16_t)offset_x;
+        out_metadata->query_offset_y = (int16_t)offset_y;
+        if (offset_x == -32 &&
+            dm2_v1_asset_load_image_offset(loader, category, index, field,
+                                           &image_offset)) {
+            out_metadata->query_offset_x = (int8_t)(image_offset >> 8);
+            out_metadata->query_offset_y = (int8_t)image_offset;
+            out_metadata->image_offset_present = 1u;
+        }
+        out_metadata->metadata_hash = dm2_gdat_file_receipt_hash(
+            entry ? entry->data_index : 0u,
+            ((uint32_t)out_metadata->width << 16) | out_metadata->height,
+            ((uint32_t)out_metadata->bits_per_pixel << 16) |
+                (uint16_t)out_metadata->query_offset_y,
+            ((uint32_t)(uint16_t)out_metadata->query_offset_x << 16) |
+                out_metadata->image_offset_present);
+        return out_metadata->metadata_hash != 0u;
+    }
     cy = img_rd16(raw + 2u, loader->big_endian);
     if (!dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian)) return 0;
     out_metadata->width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
@@ -529,6 +570,27 @@ static int dm2_v1_asset_load_image_local_palette(
     entry = dm2_gdat_find_entry(loader, category, index,
                                 DM2_GDAT_ENTRY_TYPE_IMAGE, field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    /* Big-endian v5 Amiga/Mac records use the C4 header, which is not the
+     * IMG3 bit-depth flag layout. The source QUERY_GDAT_IMAGE_LOCALPAL still
+     * returns the final 16 bytes for a 4-bpp image; validate with the C4
+     * metadata decoder before admitting that palette tail. */
+    if (loader && loader->big_endian && loader->gdat_version == 5u) {
+        DM2_V1_GdatImageMetadata metadata;
+        if (!raw || raw_size < 8u + DM2_IMG_LOCAL_PALETTE_SIZE ||
+            !dm2_v1_asset_load_image_metadata(loader, category, index, field,
+                                               &metadata) ||
+            metadata.bits_per_pixel != 4u) {
+            return 0;
+        }
+        palette_offset = raw_size - DM2_IMG_LOCAL_PALETTE_SIZE;
+        memcpy(out_palette16, raw + palette_offset,
+               DM2_IMG_LOCAL_PALETTE_SIZE);
+        if (out_hash) {
+            *out_hash = dm2_fnv1a_bytes(out_palette16,
+                                        DM2_IMG_LOCAL_PALETTE_SIZE);
+        }
+        return !out_hash || *out_hash != 0u;
+    }
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + DM2_IMG_LOCAL_PALETTE_SIZE ||
         !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian) ||
         bpp != 4u) {

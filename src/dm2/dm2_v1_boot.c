@@ -9734,6 +9734,15 @@ static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw, size_t raw_size
         }
         if (mask & 0x03u) mask &= (uint8_t)~0x04u;
         row = raw + pos + (size_t)(rect_id - first) * 8u;
+        if (big_endian) {
+            /* Amiga GDAT RAW4 remains a list of source x,y,w,h words;
+             * Skproject compresses those rows into c_rinfo at load time. */
+            out->x = (int16_t)dm2_v1_boot_rect16(row, big_endian);
+            out->y = (int16_t)dm2_v1_boot_rect16(row + 2u, big_endian);
+            out->w = (int16_t)dm2_v1_boot_rect16(row + 4u, big_endian);
+            out->h = (int16_t)dm2_v1_boot_rect16(row + 6u, big_endian);
+            return 1;
+        }
         out->x = (mask & 0x04u) ? (int)row[0] :
                  ((mask & 0x02u) ? (int)(uint8_t)x0 :
                   (int)(int16_t)dm2_v1_boot_rect16(row, big_endian));
@@ -10062,8 +10071,10 @@ int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
     if (!raw || raw_size < 4u) return 0;
     for (size_t i = 0; i < raw_size; ++i) hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
     for (uint16_t slot = 0; slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT; ++slot) {
-        if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(173u + slot), &out_layout->portrait[slot]) ||
-            !dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(165u + slot), &out_layout->name[slot])) return 0;
+        if (dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(173u + slot), &out_layout->portrait[slot]))
+            out_layout->portrait_valid_mask |= (uint8_t)(1u << slot);
+        if (dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(165u + slot), &out_layout->name[slot]))
+            out_layout->name_valid_mask |= (uint8_t)(1u << slot);
         /* _098d_1208 addresses the three status columns in separate four-slot
          * runs.  RECT_185..188 are the large champion-status wells, whereas
          * the HP/stamina/mana fill strips are RECT_193..196, RECT_197..200,
@@ -10072,11 +10083,15 @@ int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
          * reaches absent RECT_189..192 in the authentic DOS GDAT and makes a
          * source-complete HUD falsely unavailable. */
         for (uint16_t stat = 0; stat < 3u; ++stat)
-            if (!dm2_v1_boot_expand_hud_rect(raw, raw_size,
+            if (dm2_v1_boot_expand_hud_rect(raw, raw_size,
                                              (uint16_t)(193u + slot + stat * 4u),
-                                             &out_layout->status[slot][stat])) return 0;
+                                             &out_layout->status[slot][stat]))
+                out_layout->status_valid_mask[slot] |= (uint8_t)(1u << stat);
     }
-    out_layout->table_hash = hash; out_layout->valid = 1; return 1;
+    out_layout->table_hash = hash;
+    out_layout->valid = out_layout->portrait_valid_mask != 0u ||
+        out_layout->name_valid_mask != 0u;
+    return out_layout->valid;
 }
 
 int dm2_v1_boot_interface_hud_portrait_destinations(
@@ -11629,6 +11644,8 @@ int dm2_v1_boot_runtime_render_frame(
                     raw_sksave_handoff.db_record_counts[type];
             }
         }
+        out_receipt->runtime_render_blocked_material_draw_count =
+            frame_ownership.blocked_material_draws;
         out_receipt->runtime_render_fallback_floor_ceiling_count =
             dm2_v1_runtime_last_fallback_floor_ceiling_count();
         out_receipt->runtime_render_asset_wall_count =

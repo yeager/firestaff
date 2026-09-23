@@ -2540,6 +2540,9 @@ int dm2_v1_boot_dialogue_save_pointer_receipt(
     DM2_V1_DialogueSavePointerReceipt *out_receipt);
 typedef struct {
     int valid;
+    uint8_t portrait_valid_mask;
+    uint8_t name_valid_mask;
+    uint8_t status_valid_mask[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
     uint32_t table_hash;
     DM2_V1_InterfaceRect portrait[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];
     DM2_V1_InterfaceRect name[DM2_V1_INTERFACE_HUD_CHAMPION_COUNT];

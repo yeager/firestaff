@@ -178,6 +178,9 @@ int main(void)
     memset(interface_palette16, 0, sizeof(interface_palette16));
     memset(&interface_hud_layout, 0, sizeof(interface_hud_layout));
     interface_hud_layout.valid = 1;
+    interface_hud_layout.portrait_valid_mask = 1u;
+    interface_hud_layout.name_valid_mask = 1u;
+    interface_hud_layout.status_valid_mask[0] = 0x07u;
 
     build_hud_plan(&hud_plan, 1);
     memset(framebuffer, 0, sizeof(framebuffer));

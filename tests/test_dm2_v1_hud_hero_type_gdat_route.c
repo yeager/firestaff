@@ -90,6 +90,9 @@ int main(void)
         for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)i;
         memset(&hud_layout, 0, sizeof(hud_layout));
         hud_layout.valid = 1;
+        hud_layout.portrait_valid_mask = 1u;
+        hud_layout.name_valid_mask = 1u;
+        hud_layout.status_valid_mask[0] = 0x07u;
         hud_layout.table_hash = 0x64743034u;
         party.champions[0].state_source_bound = 1;
 

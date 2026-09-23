@@ -49,6 +49,7 @@ int main(void)
     if (dm2_v1_viewport_g1_tile_class_to_square_type(0u) != DM2_SQUARE_WALL ||
         dm2_v1_viewport_g1_tile_class_to_square_type(1u) != DM2_SQUARE_FLOOR ||
         dm2_v1_viewport_g1_tile_class_to_square_type(4u) != DM2_SQUARE_DOOR ||
+        dm2_v1_viewport_g1_tile_class_to_square_type(7u) != DM2_SQUARE_WALL ||
         dm2_v1_viewport_g1_tile_class_to_square_type(2u) >= 0) {
         fputs("FAIL: G1 tileTypeIndex mapping widened or inverted\n", stderr);
         return 1;
