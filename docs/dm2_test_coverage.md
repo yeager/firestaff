@@ -81,7 +81,10 @@ initial dungeon frame is rejected: `dm2FrameAccepted=0`,
 `dm2RealAssets=0`, `dm2NoCoreFallbacks=0`, and no GRAPHICSSET scene receipt is
 published. This is an open runtime defect, not passing Amiga frame coverage;
 the strict real-media assertions stay in place until the source-owned G1/GDAT
-scene transaction is fixed.
+scene transaction is fixed. Temporary local diagnostics narrow the first
+failed material to Amiga GRAPHICSSET 2 wall field `0x23` (GDAT version 5),
+before the wall plan commits a command; its RAW4 destination binding remains
+unproven.
 PC coordinates or extracted media.
 
 `dm2_v1_dos_sksave_archive_menu_resume` adds the corresponding resume route:

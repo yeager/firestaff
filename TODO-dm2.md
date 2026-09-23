@@ -24,9 +24,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   (`party=1,7,0` after UP), but reports `dm2FrameAccepted=0`,
   `dm2RealAssets=0`, `dm2NoCoreFallbacks=0`, and a zero scene receipt. Keep
   rendering fail-closed; do not weaken the native CLI regression or paint a
-  substitute viewport. Trace the first rejected Amiga GRAPHICSSET/G1 receipt
-  against SKProject and the original big-endian data, then verify the full
-  input matrix and M11 frame with that archive.
+  substitute viewport. Temporary local diagnostics identify the first failed
+  material as indoor wall-plan field `0x23` for GRAPHICSSET 2 (GDAT version
+  5), before any wall commands are committed. Trace this Amiga record and the
+  related RAW4 destination table against SKProject and the original
+  big-endian data, then verify the full input matrix and M11 frame with that
+  archive.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they
