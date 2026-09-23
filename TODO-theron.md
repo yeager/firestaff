@@ -22,7 +22,9 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   transition and save consumers. Regional champion records and source-backed
   pickup/drop are bound, but broader item-use semantics remain gated; the
   current all-seven dungeon loader remains source-only.
-- Decode the remaining authentic Backup RAM body before enabling Continue.
+- Validate the production Continue action end-to-end with authenticated
+  dungeon-entry capture. Authentic Backup RAM decoding and transactional
+  Continue integration are implemented; runtime validation remains open.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound
@@ -40,8 +42,7 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   position and loaded media remain unchanged. Production startup now detects
   the verified real Backup RAM artifact (or an explicit
   `FIRESTAFF_THERON_BRAM_PATH`) and the explicit Continue action uses this
-  transactional route. Remaining save work is runtime validation of that
-  host action together with the authenticated dungeon-entry capture.
+  transactional route.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do
