@@ -27,9 +27,11 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   but no authenticated CD-to-RAM receipt, zero main-RAM E009 data reads, and
   no dungeon-state handoff. A second replay using the existing opcode-gated menu
   research hooks did not match any hook signatures and reached the same
-  boundary. The Mednafen transport receipt parser now identifies JP and US
-  Track 02 hashes separately; that tooling support does not promote the JP
-  capture to a gameplay or source-consumer witness.
+  boundary. A third replay delivered 11 planned PCE inputs through frame 5800
+  and again produced 24 raw-sector spans, zero authenticated CD-to-RAM
+  receipts and no dungeon-state handoff. The Mednafen transport receipt parser
+  now identifies JP and US Track 02 hashes separately, but that tooling change
+  does not make the capture a gameplay or source-consumer witness.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. Authentic Backup RAM decoding and transactional
   Continue integration are implemented; runtime validation remains open.
