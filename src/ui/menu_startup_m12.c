@@ -75,6 +75,7 @@ typedef struct M12_DataDirScanJob {
     SDL_AtomicInt cancelRequested;
     SDL_AtomicInt done;
     int result;
+    char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus assetStatus;
     M12_AssetScanProgress progress;
@@ -2418,6 +2419,18 @@ static int m12_canonicalize_data_directory(const char* input,
            FSP_ResolvePhysicalPath(out, outSize, normalized) &&
            FSP_DirExists(out);
 }
+/* Persist the resolved directory rather than a dialog's relative token or
+ * symlink spelling, so future scans keep targeting the same physical folder. */
+static void m12_copy_persisted_data_directory(const char* canonical,
+                                              char* out,
+                                              size_t outSize) {
+    if (!out || outSize == 0U) {
+        return;
+    }
+    snprintf(out, outSize, "%s", canonical ? canonical : "");
+    FSP_NormalizeSeparators(out);
+}
+
 
 /* A folder choice is valid independently of whether the first scan finds a
  * recognised game file. Keep that physical path visible and persistent when
@@ -2478,6 +2491,11 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         m12_free_data_dir_scan_job(job);
         return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
+    /* Persist and scan the resolved physical path regardless of the picker
+     * spelling, so future scans keep targeting the same folder. */
+    m12_copy_persisted_data_directory(canonicalDataDir,
+                                      job->selectedDataDir,
+                                      sizeof(job->selectedDataDir));
     snprintf(job->dataDir, sizeof(job->dataDir), "%s", canonicalDataDir);
     SDL_SetAtomicInt(&job->cancelRequested, 0);
     SDL_SetAtomicInt(&job->done, 0);
@@ -2529,12 +2547,11 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
-    /* Keep the player's selected spelling for the settings row and config.
-     * The scanner uses canonicalDataDir so aliases/symlinks are resolved for
-     * file discovery, but exposing macOS's /private path here makes a valid
-     * selected folder look as if it changed underneath the player. */
-    snprintf(selectedDataDir, sizeof(selectedDataDir), "%s", dataDir);
-    FSP_NormalizeSeparators(selectedDataDir);
+    /* Keep the resolved physical path in the settings row and config. The
+     * dialog may return a relative path or an alias such as /tmp, while the
+     * scanner and future launches must target the same resolved directory. */
+    m12_copy_persisted_data_directory(canonicalDataDir, selectedDataDir,
+                                      sizeof(selectedDataDir));
     state->dataDirScanActive = 1;
     state->dataDirScanCancelRequested = 0;
     state->dataDirScanCancelled = 0;
@@ -12504,9 +12521,10 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         state->dataDirScanCancelled =
             job->result ? 0 : state->dataDirScanProgress.cancelled;
         state->dataDirScanJob = NULL;
-        if (!state->dataDirScanCancelled) {
+        if (job->result && !state->dataDirScanCancelled) {
             state->assetStatus = job->assetStatus;
-            m12_preserve_selected_data_directory(state, job->dataDir);
+            m12_preserve_selected_data_directory(state,
+                                                 job->selectedDataDir);
             m12_apply_completed_asset_scan(state);
             if (!m12_show_missing_archive_tool_popup(state)) {
                 m12_show_data_dir_result_popup(state, 1);
@@ -13245,9 +13263,21 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         return intent;
     }
     selectedVersionIndex = state->gameOptions[gi].versionIndex;
-    version = M12_AssetStatus_GetVersion(&state->assetStatus,
-                                         intent.gameId,
-                                         (size_t)selectedVersionIndex);
+    version = selectedVersionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&state->assetStatus,
+                                     intent.gameId,
+                                     (size_t)selectedVersionIndex)
+        : NULL;
+    if (version && version->matched &&
+        state->gameOptions[gi].architectureIndex != M12_ARCH_AUTO &&
+        M12_AssetStatus_GetVersionArchitecture(
+            intent.gameId, (size_t)selectedVersionIndex) !=
+            state->gameOptions[gi].architectureIndex) {
+        /* The detailed options row can change architecture independently of
+         * the persisted version row. Never let a still-matched old release
+         * override that explicit platform choice at the launch boundary. */
+        version = NULL;
+    }
     /* AUTO is a platform policy, not a persisted catalogue row.  A prior
      * scan/configuration may legitimately leave a matched FM Towns row in
      * versionIndex; once a PC corpus is also present, allowing that stale
