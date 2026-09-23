@@ -228,7 +228,11 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   källbunden vid JP UD `$0868D2` (269 byte, `7dc1e453`), jämte USA-koden vid
   `$0870E5` (`eb241d19`). JP-posterna får lagras med källproveniens, men
   runtimekategorin lämnas `$FF` tills den japanska kodvägen har observerats i
-  en autentisk körning.
+  en autentisk körning. En statisk jämförelse 2026-09-24 fann samma
+  122-instruktionsföljd i båda hashverifierade regionerna, med flyttade helper-
+  anrop och JP-ackumulatorfält ett byte tidigare. Detta bevisar inte en live
+  JP-caller, RNG-retur eller spawnpost. Se
+  `docs/source-lock/theron-jp-us-spawn-consumer-static-comparison-2026-09-24.md`.
 - ✅ Skannern redovisar både verifierad JP- och US-BIN när båda finns i den
   riktiga Theron-katalogen. `--theron-native us|jp` väljer nu exakt regional
   canonical BIN från samma katalog och skickar den genom den befintliga

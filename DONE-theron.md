@@ -1,5 +1,16 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — JP/US spawn consumer source comparison
+
+- The two independently hash-authenticated retail spans are each 269 bytes.
+  Static structural comparison found 122 aligned operations, with 230 bytes
+  identical and 39 operand-byte differences confined to relocated helper
+  targets and regional RAM columns. JP accumulator/property fields are one
+  byte earlier than the corresponding US fields. Formula constants and
+  branch order agree. This is source-shape evidence only; no JP caller,
+  runtime category, RNG return, spawn, AI or combat behavior is promoted.
+  See `docs/source-lock/theron-jp-us-spawn-consumer-static-comparison-2026-09-24.md`.
+
 ## 2026-09-23 — Japanese spawn source records bound to retail bytes
 
 - The JP and US real-media spawn test now checks all five regional records
