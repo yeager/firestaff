@@ -1496,3 +1496,23 @@ media. If a later placement fails, the world hash and object pool are restored
 and the receipt remains invalid. This protects the already-proven handoff
 boundary; it does not promote dungeon drawing, square-to-tile mapping or any
 unbound HuC6280 consumer.
+
+## 2026-09-23 — JP cold-start input does not reach authenticated CD-to-RAM
+
+A fresh Linux capture used the authentic Japanese Rev 1 CUE and Track 02
+(MD5 `b7afb338ad31be1025b53f9aff12d73a`), the authenticated System Card 3.0
+(MD5 `ff1a674273fe3540ccef576376407d1d`), and a newly built instrumented
+Mednafen 1.32.1. The CUE-referenced nineteen BIN tracks were all present.
+The frame-bound input plan `run@1:1,run@480:30,i@900:30` was accepted and all
+three input events were observed by the emulator. The bounded run nevertheless
+stopped at 24 raw-sector observations, 115 IRQ callbacks and one `$E009`
+dispatch, with zero authenticated CD-to-RAM origins, zero `$E009` data reads
+and 24 register writes. The result does not prove JP startup handoff, level
+loading or gameplay and does not authorize reuse of the US input timing as a
+JP behavior contract.
+
+The captured screen snapshots were VRAM FNV-1a `19490536` and VCE FNV-1a
+`4e48c361`. The VCE matches the previously admitted JP source palette bank,
+but the VRAM image differs from the known JP startup image `8ae1e419`; this
+pair was not added to the production capture allow-list. The trace and all
+sidecars remain in private operator storage, not in the repository.
