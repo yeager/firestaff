@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-24: Extended the authentic PC 3.4 launcher regression to inspect
+  M11's source-owned startup receipt after the actual game-card → PC → Original
+  menu route. It now proves that launch handed off to `dm1-runtime` with the
+  game active and level loaded, instead of stopping at the menu's `DM1 READY`
+  diagnostic. The runtime-probe JSON exposes the same startup receipt for
+  local autotests; no gameplay or menu behavior changed. This covers the PC
+  3.4 route only; other DM1 editions and all other titles remain open in
+  `TODO.md`.
+
 - 2026-09-18: Re-inspected a private DOSBox-X run of unmodified retail PC
   3.4 data after the HoC resurrection route. Three distinct 320×200 frames
   show the source FOOD/WATER inventory panel, an object in the action hand,

@@ -16,6 +16,10 @@ if [[ ! -x "$app" || ! -f "$archive" ]]; then
     exit 77
 fi
 
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+menu_probe_json="$test_scratch/dm1-menu-runtime-$$.json"
+
 probe() {
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
@@ -37,6 +41,7 @@ probe --game dm1 --platform pc --data-dir "$archive" --script "$menu_original" \
     --boot-probe --boot-probe-frames 120 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 --platform pc \
     --data-dir "$archive" --script "$menu_original" --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
@@ -49,6 +54,20 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     printf '%s\n' 'FAIL: authentic DM1 PC-34 start menu did not bind IMG3 source media' >&2
     exit 1
 fi
+python3 - "$menu_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        startup["receiptReady"] != 1 or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["phase"] != "dm1-runtime" or
+        startup["levelLoaded"] != 1):
+    raise SystemExit(f"FAIL: authentic DM1 menu did not reach its first runtime frame: {probe}")
+print("PASS: authentic DM1 PC-34 start menu reached the source-owned runtime frame")
+PY
 
 # Physical card coordinates use the explicit launcher canvas, making this a
 # real mouse-only game -> PC -> Original launch rather than a keyboard alias.
