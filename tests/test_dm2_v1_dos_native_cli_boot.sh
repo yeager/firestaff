@@ -134,7 +134,7 @@ probe_input() {
     input=$1
     expected_party=$2
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
+        --game dm2 --platform pc --data-dir "$archive" --boot-probe \
         --boot-probe-frames 5000 --script "key:enter,key:enter,key:enter,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
@@ -145,10 +145,12 @@ probe_input() {
 }
 
 # These positions/directions are observed from the retail DOS new-game route.
-# Each invocation begins a fresh source-owned session, so one input cannot
-# mask another through state carried from a previous command.
-for case_item in up:1,7,0 down:1,9,2 left:1,8,3 right:1,8,1 \
-                 strafe-left:0,8,3 strafe-right:2,8,1 action:1,8,0; do
+# At the authentic spawn (1,8,0), the south and west destinations are walls:
+# the blocked moves still update facing but must not move the party. Each
+# invocation begins a fresh source-owned session so one command cannot mask
+# another through carried runtime state.
+for case_item in up:1,7,0 down:1,8,2 left:1,8,3 right:1,8,1 \
+                 strafe-left:1,8,3 strafe-right:2,8,1 action:1,8,0; do
     probe_input "${case_item%%:*}" "${case_item#*:}"
 done
 echo 'PASS: native DM2 DOS ZIP start menu -> MVE -> SKULL -> New Game accepts the complete observed input matrix in memory'
