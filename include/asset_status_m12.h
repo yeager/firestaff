@@ -224,6 +224,11 @@ const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
     const M12_AssetStatus* status);
 const char* M12_AssetStatus_GetTheronLaunchMediaPath(
     const M12_AssetStatus* status);
+/* Resolve CUE provenance for one exact, selected Theron catalogue version.
+ * Falls back to that version's authenticated payload path when it has no
+ * matching paired CUE. */
+const char* M12_AssetStatus_GetTheronLaunchMediaPathForVersion(
+    const M12_AssetStatus* status, size_t versionIndex);
 const Theron_Track02StartupLoaderReceipt*
 M12_AssetStatus_GetTheronTrack02LoaderReceipt(const M12_AssetStatus* status);
 const Theron_V1Track02CampaignMediaDiscoveryReceipt*

@@ -694,12 +694,14 @@ typedef struct M12_StartupMenuState {
     char deferredGameId[16];
     int deferredLooseFilesOnly;
     int deferredHasExplicitDataDir;
+    int deferredScanAllGames;
 } M12_StartupMenuState;
 
 typedef struct M12_StartupMenuInitOptions {
     int skipScreenshotGalleryScan;
     int looseFilesOnlyAssetScan;
     int skipAssetScan;
+    int scanAllGames;
     M12_AssetStatusScanProgressFn scanProgressFn;
     void* scanProgressUserData;
 } M12_StartupMenuInitOptions;

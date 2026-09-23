@@ -75,8 +75,8 @@ typedef struct M12_DataDirScanJob {
     SDL_AtomicInt cancelRequested;
     SDL_AtomicInt done;
     int result;
-    char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus assetStatus;
     M12_AssetScanProgress progress;
 } M12_DataDirScanJob;
@@ -368,6 +368,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
                                           const char* gameId,
+                                          int scanAllGames,
                                           int looseFilesOnlyAssetScan,
                                           M12_AssetStatusScanProgressFn progressFn,
                                           void* progressUserData);
@@ -2162,7 +2163,8 @@ static const char* m12_scan_feedback_value(const M12_StartupMenuState* state) {
         return "UNKNOWN";
     }
     if (ready > 0) {
-        snprintf(text, sizeof(text), "%d GAME%s READY", ready, ready == 1 ? "" : "S");
+        snprintf(text, sizeof(text), "%s: %d",
+                 m12_tr(state, "TITLE START AVAILABLE"), ready);
         return text;
     }
     if (M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
@@ -2310,11 +2312,19 @@ static void m12_free_data_dir_scan_job(M12_DataDirScanJob* job) {
 }
 
 static void m12_apply_completed_asset_scan(M12_StartupMenuState* state) {
+    int gameIndex;
     if (!state) {
         return;
     }
     m12_sync_entries_from_assets(state);
     m12_apply_auto_platform_versions(state);
+    /* A data-directory rescan can invalidate a persisted release index while
+     * leaving its explicit platform selection intact.  Repair the selected
+     * version just as InitWithOptions does after a synchronous scan, so the
+     * options panel and the launch gate describe the same matched edition. */
+    for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
+        m12_normalize_game_version_index(state, gameIndex);
+    }
     m12_publish_game_availability(state);
     m12_sync_card_art(state);
     M12_CreatureArt_Init(&state->creatureArt,
@@ -2419,6 +2429,7 @@ static int m12_canonicalize_data_directory(const char* input,
            FSP_ResolvePhysicalPath(out, outSize, normalized) &&
            FSP_DirExists(out);
 }
+
 /* Persist the resolved directory rather than a dialog's relative token or
  * symlink spelling, so future scans keep targeting the same physical folder. */
 static void m12_copy_persisted_data_directory(const char* canonical,
@@ -2430,7 +2441,6 @@ static void m12_copy_persisted_data_directory(const char* canonical,
     snprintf(out, outSize, "%s", canonical ? canonical : "");
     FSP_NormalizeSeparators(out);
 }
-
 
 /* A folder choice is valid independently of whether the first scan finds a
  * recognised game file. Keep that physical path visible and persistent when
@@ -2491,12 +2501,12 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
         m12_free_data_dir_scan_job(job);
         return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
+    snprintf(job->dataDir, sizeof(job->dataDir), "%s", canonicalDataDir);
     /* Persist and scan the resolved physical path regardless of the picker
      * spelling, so future scans keep targeting the same folder. */
     m12_copy_persisted_data_directory(canonicalDataDir,
                                       job->selectedDataDir,
                                       sizeof(job->selectedDataDir));
-    snprintf(job->dataDir, sizeof(job->dataDir), "%s", canonicalDataDir);
     SDL_SetAtomicInt(&job->cancelRequested, 0);
     SDL_SetAtomicInt(&job->done, 0);
     state->dataDirScanActive = 1;
@@ -2526,6 +2536,7 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir) {
     M12_AssetStatusScanOptions scanOptions;
+    M12_AssetStatus scannedAssetStatus;
     char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     int scanOk;
@@ -2566,22 +2577,34 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     scanOptions.progressUserData = state;
     scanOptions.cancelFlag = &state->dataDirScanCancelRequested;
     scanOptions.honorRequestedDataDir = 1;
-    scanOk = M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+    /* Keep the currently admitted game set live until the replacement scan
+     * completes.  ScanWithOptions publishes an empty cancelled status on
+     * cancellation, so scanning directly into state->assetStatus would make
+     * the message below false and discard the previous usable data set. */
+    scanOk = M12_AssetStatus_ScanWithOptions(&scannedAssetStatus,
                                              canonicalDataDir,
                                              &scanOptions);
-    state->dataDirScanProgress = *M12_AssetStatus_GetScanProgress(&state->assetStatus);
+    state->dataDirScanProgress =
+        *M12_AssetStatus_GetScanProgress(&scannedAssetStatus);
     state->dataDirScanActive = 0;
-    state->dataDirScanCancelled = scanOk ? 0 : state->dataDirScanProgress.cancelled;
-    if (!scanOk && state->dataDirScanCancelled) {
+    state->dataDirScanCancelled = state->dataDirScanProgress.cancelled;
+    if (!scanOk) {
         char line3[160];
         m12_format_data_dir_line(state, line3, sizeof(line3));
         m12_enter_message_view(state);
+        state->messageReturnView = M12_MENU_VIEW_MAIN;
+        state->messageReturnNavLevel = (int)M12_NAV_MAIN;
         m12_set_buffered_message(state,
-                                 m12_tr(state, "DATA SCAN CANCELLED"),
-                                 m12_tr(state, "GAME AVAILABILITY WAS NOT UPDATED"),
+                                 state->dataDirScanCancelled
+                                     ? m12_tr(state, "DATA SCAN CANCELLED")
+                                     : m12_tr(state, "DATA SCAN FAILED"),
+                                 state->dataDirScanCancelled
+                                     ? m12_tr(state, "GAME AVAILABILITY WAS NOT UPDATED")
+                                     : m12_tr(state, "CHOOSE AN EXISTING FOLDER"),
                                  line3);
         return 0;
     }
+    state->assetStatus = scannedAssetStatus;
     m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
     if (!m12_show_missing_archive_tool_popup(state)) {
@@ -3969,6 +3992,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
                                           const char* gameId,
+                                          int scanAllGames,
                                           int looseFilesOnlyAssetScan,
                                           M12_AssetStatusScanProgressFn progressFn,
                                           void* progressUserData) {
@@ -3983,14 +4007,14 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
     gameScanOptions.progressUserData = progressUserData;
     gameScan = (looseFilesOnlyAssetScan || progressFn) ? &gameScanOptions : NULL;
     if (hasExplicitDataDirOverride) {
-        if (gameId && gameId[0] != '\0') {
+        if (gameId && gameId[0] != '\0' && !scanAllGames) {
             M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
                                                 config->dataDir,
                                                 gameId,
                                                 gameScan);
             return;
         }
-        if ((!gameId || gameId[0] == '\0') &&
+        if ((!gameId || gameId[0] == '\0' || scanAllGames) &&
             m12_startup_data_dir_is_game_leaf(config->dataDir)) {
             const char* leafGameId =
                 m12_startup_game_id_for_data_dir(config->dataDir);
@@ -4019,7 +4043,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         }
         return;
     }
-    if (gameId && gameId[0] != '\0') {
+    if (gameId && gameId[0] != '\0' && !scanAllGames) {
         M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
                                             config->dataDir,
                                             gameId,
@@ -4042,7 +4066,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
         int defaultReadyCount;
         memset(&defaultStatus, 0, sizeof(defaultStatus));
-        if (gameId && gameId[0] != '\0') {
+        if (gameId && gameId[0] != '\0' && !scanAllGames) {
             M12_AssetStatus_ScanGameWithOptions(&defaultStatus,
                                                 NULL,
                                                 gameId,
@@ -4052,7 +4076,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         }
         defaultReadyCount = m12_asset_ready_game_count(&defaultStatus);
         if (defaultReadyCount > currentReadyCount ||
-            (gameId && gameId[0] != '\0' &&
+            (gameId && gameId[0] != '\0' && !scanAllGames &&
              !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
              M12_AssetStatus_GameAvailable(&defaultStatus, gameId))) {
             state->assetStatus = defaultStatus;
@@ -4071,7 +4095,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             int currentReadyCount = m12_asset_ready_game_count(&state->assetStatus);
             int fallbackReadyCount;
             memset(&fallbackStatus, 0, sizeof(fallbackStatus));
-            if (gameId && gameId[0] != '\0') {
+            if (gameId && gameId[0] != '\0' && !scanAllGames) {
                 M12_AssetStatus_ScanGameWithOptions(&fallbackStatus,
                                                     resolvedDataDir,
                                                     gameId,
@@ -4081,7 +4105,7 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
             }
             fallbackReadyCount = m12_asset_ready_game_count(&fallbackStatus);
             if (fallbackReadyCount > currentReadyCount ||
-                (gameId && gameId[0] != '\0' &&
+                (gameId && gameId[0] != '\0' && !scanAllGames &&
                  !M12_AssetStatus_GameAvailable(&state->assetStatus, gameId) &&
                  M12_AssetStatus_GameAvailable(&fallbackStatus, gameId))) {
                 state->assetStatus = fallbackStatus;
@@ -4385,12 +4409,15 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
         }
         state->deferredLooseFilesOnly =
             (options && options->looseFilesOnlyAssetScan) ? 1 : 0;
+        state->deferredScanAllGames =
+            (options && options->scanAllGames) ? 1 : 0;
         state->deferredHasExplicitDataDir = hasExplicitDataDirOverride;
     } else {
         m12_scan_startup_asset_status(state,
                                       &config,
                                       hasExplicitDataDirOverride,
                                       gameId,
+                                      options && options->scanAllGames,
                                       options && options->looseFilesOnlyAssetScan,
                                       options ? options->scanProgressFn : NULL,
                                       options ? options->scanProgressUserData : NULL);
@@ -4432,6 +4459,7 @@ void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
                                   &config,
                                   state->deferredHasExplicitDataDir,
                                   state->deferredGameId[0] ? state->deferredGameId : NULL,
+                                  state->deferredScanAllGames,
                                   state->deferredLooseFilesOnly,
                                   progressFn,
                                   progressUserData);
@@ -4452,6 +4480,13 @@ void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
     config.v22_modern_assets_installed = M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
     M12_Config_Save(&config);
     m12_sync_entries_from_assets(state);
+    m12_apply_auto_platform_versions(state);
+    {
+        int gameIndex;
+        for (gameIndex = 0; gameIndex < M12_CONFIG_GAME_COUNT; ++gameIndex) {
+            m12_normalize_game_version_index(state, gameIndex);
+        }
+    }
     m12_publish_game_availability(state);
     m12_sync_card_art(state);
     M12_CreatureArt_Init(&state->creatureArt,
@@ -5336,6 +5371,100 @@ static int m12_game_version_count(const M12_StartupMenuState* state, int gameInd
     }
 }
 
+static int m12_version_architecture_launchable(const char* gameId,
+                                               size_t versionIndex) {
+    int architecture = M12_AssetStatus_GetVersionArchitecture(gameId,
+                                                               versionIndex);
+    return architecture > M12_ARCH_AUTO && architecture < M12_ARCH_COUNT &&
+           architecture != M12_ARCH_PC98 &&
+           architecture != M12_ARCH_X68000 &&
+           !(gameId && strcmp(gameId, "csb") == 0 &&
+             architecture == M12_ARCH_PC);
+}
+
+static int m12_architecture_is_selectable(const char* gameId,
+                                          int architecture) {
+    size_t i;
+    if (architecture == M12_ARCH_AUTO) return 1;
+    if (architecture <= M12_ARCH_AUTO || architecture >= M12_ARCH_COUNT ||
+        architecture == M12_ARCH_PC98 || architecture == M12_ARCH_X68000 ||
+        (gameId && strcmp(gameId, "csb") == 0 && architecture == M12_ARCH_PC)) {
+        return 0;
+    }
+    for (i = 0U; i < M12_AssetStatus_GetVersionCount(gameId); ++i) {
+        if (m12_version_architecture_launchable(gameId, i) &&
+            M12_AssetStatus_GetVersionArchitecture(gameId, i) == architecture) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_cycle_game_architecture(M12_StartupMenuState* state,
+                                        int gameIndex, int current, int delta) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    int previous;
+    int i;
+    if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
+        return;
+    }
+    current = m12_clamp_index(current, M12_ARCH_COUNT);
+    previous = current;
+    for (i = 0; i < M12_ARCH_COUNT; ++i) {
+        current = m12_cycle_index(current, delta, M12_ARCH_COUNT);
+        if (m12_architecture_is_selectable(gameIds[gameIndex], current)) {
+            break;
+        }
+    }
+    if (i >= M12_ARCH_COUNT || current == previous) return;
+
+    state->gameOptions[gameIndex].architectureIndex = current;
+    {
+        int versionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &state->assetStatus, gameIds[gameIndex], current);
+        size_t versionCount = M12_AssetStatus_GetVersionCount(gameIds[gameIndex]);
+        size_t version;
+        if (versionIndex >= 0 &&
+            m12_version_architecture_launchable(gameIds[gameIndex],
+                                                 (size_t)versionIndex)) {
+            state->gameOptions[gameIndex].versionIndex = versionIndex;
+            return;
+        }
+        for (version = 0U; version < versionCount; ++version) {
+            int candidateArchitecture = M12_AssetStatus_GetVersionArchitecture(
+                gameIds[gameIndex], version);
+            if (m12_version_architecture_launchable(gameIds[gameIndex], version) &&
+                (current == M12_ARCH_AUTO || candidateArchitecture == current)) {
+                state->gameOptions[gameIndex].versionIndex = (int)version;
+                return;
+            }
+        }
+    }
+}
+
+static int m12_cycle_game_version_index(const M12_StartupMenuState* state,
+                                        int gameIndex, int current, int delta) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    int count = m12_game_version_count(state, gameIndex);
+    int i;
+    if (gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT || count <= 0) {
+        return 0;
+    }
+    current = m12_clamp_index(current, count);
+    for (i = 0; i < count; ++i) {
+        current = m12_cycle_index(current, delta, count);
+        if (m12_version_architecture_launchable(gameIds[gameIndex],
+                                                (size_t)current)) {
+            return current;
+        }
+    }
+    return m12_clamp_index(state->gameOptions[gameIndex].versionIndex, count);
+}
+
 /* Choosing a concrete release is also a concrete source-platform choice.
  * Keep AUTO for scans/defaults only: the later M12 launch handoff uses it to
  * recover from stale persisted rows.  Without this binding, selecting A35
@@ -5353,6 +5482,10 @@ static void m12_select_game_version(M12_StartupMenuState* state,
     }
     versionIndex = m12_clamp_index(versionIndex,
                                    m12_game_version_count(state, gameIndex));
+    if (!m12_version_architecture_launchable(gameIds[gameIndex],
+                                             (size_t)versionIndex)) {
+        return;
+    }
     state->gameOptions[gameIndex].versionIndex = versionIndex;
     version = M12_AssetStatus_GetVersion(&state->assetStatus,
                                          gameIds[gameIndex],
@@ -5365,13 +5498,75 @@ static void m12_select_game_version(M12_StartupMenuState* state,
 }
 
 static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
     int count;
+    int architecture;
+    int versionIndex;
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
         return;
     }
     count = m12_game_version_count(state, gameIndex);
-    state->gameOptions[gameIndex].versionIndex = m12_clamp_index(state->gameOptions[gameIndex].versionIndex,
-                                                                 count);
+    versionIndex = m12_clamp_index(state->gameOptions[gameIndex].versionIndex,
+                                   count);
+    architecture = state->gameOptions[gameIndex].architectureIndex;
+    if (!m12_architecture_is_selectable(gameIds[gameIndex], architecture)) {
+        int i;
+        for (i = 0; i < count; ++i) {
+            if (m12_version_architecture_launchable(gameIds[gameIndex],
+                                                    (size_t)i)) {
+                versionIndex = i;
+                architecture = M12_AssetStatus_GetVersionArchitecture(
+                    gameIds[gameIndex], (size_t)i);
+                state->gameOptions[gameIndex].architectureIndex = architecture;
+                break;
+            }
+        }
+    }
+
+    if (architecture == M12_ARCH_AUTO) {
+        int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &state->assetStatus, gameIds[gameIndex], M12_ARCH_AUTO);
+        if (autoVersion >= 0) {
+            versionIndex = autoVersion;
+        } else if (!m12_version_architecture_launchable(gameIds[gameIndex],
+                                                        (size_t)versionIndex)) {
+            int i;
+            for (i = 0; i < count; ++i) {
+                if (m12_version_architecture_launchable(gameIds[gameIndex],
+                                                        (size_t)i)) {
+                    versionIndex = i;
+                    break;
+                }
+            }
+        }
+    } else {
+        int selectedArchitecture = M12_AssetStatus_GetVersionArchitecture(
+            gameIds[gameIndex], (size_t)versionIndex);
+        if (!m12_version_architecture_launchable(gameIds[gameIndex],
+                                                 (size_t)versionIndex) ||
+            selectedArchitecture != architecture) {
+            int matchedVersion =
+                M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                    &state->assetStatus, gameIds[gameIndex], architecture);
+            int i;
+            if (matchedVersion >= 0) {
+                versionIndex = matchedVersion;
+            } else {
+                for (i = 0; i < count; ++i) {
+                    if (m12_version_architecture_launchable(gameIds[gameIndex],
+                                                            (size_t)i) &&
+                        M12_AssetStatus_GetVersionArchitecture(
+                            gameIds[gameIndex], (size_t)i) == architecture) {
+                        versionIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    state->gameOptions[gameIndex].versionIndex = versionIndex;
 }
 
 static const M12_AssetVersionStatus* m12_selected_version_status(const M12_StartupMenuState* state,
@@ -5384,9 +5579,38 @@ static const M12_AssetVersionStatus* m12_selected_version_status(const M12_Start
      * every scan.  Once a version row has been selected, however, preserve
      * that exact matched release: forcing AUTO again here made an explicit
      * A35M choice launch the first A31E cache instead. */
-    return M12_AssetStatus_GetVersion(&state->assetStatus,
-                                      gameIds[gameIndex],
-                                      (size_t)state->gameOptions[gameIndex].versionIndex);
+    {
+        int versionIndex = state->gameOptions[gameIndex].versionIndex;
+        const M12_AssetVersionStatus* version;
+        if (versionIndex < 0) {
+            return NULL;
+        }
+        version = M12_AssetStatus_GetVersion(&state->assetStatus,
+                                             gameIds[gameIndex],
+                                             (size_t)versionIndex);
+        if (version && !m12_version_architecture_launchable(
+                           gameIds[gameIndex], (size_t)versionIndex)) {
+            return NULL;
+        }
+        if (version && version->matched) {
+            int architecture =
+                state->gameOptions[gameIndex].architectureIndex;
+            if (architecture == M12_ARCH_AUTO) {
+                int autoVersion =
+                    M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                        &state->assetStatus, gameIds[gameIndex],
+                        M12_ARCH_AUTO);
+                if (autoVersion != versionIndex) {
+                    return NULL;
+                }
+            } else if (M12_AssetStatus_GetVersionArchitecture(
+                           gameIds[gameIndex], (size_t)versionIndex) !=
+                       architecture) {
+                return NULL;
+            }
+        }
+        return version;
+    }
 }
 
 static const char* m12_selected_version_label(const M12_StartupMenuState* state,
@@ -5566,21 +5790,32 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         int platforms[M12_ARCH_COUNT];
         int count = m12_collect_card_platforms(state, entry->gameId, platforms);
         int requestedArchitecture = state->gameOptions[gi].architectureIndex;
+        int autoArchitecture = M12_ARCH_AUTO;
         int i;
         /* Always show the supported-platform cards.  A platform without a
          * scanner-verified corpus is visibly unavailable and cannot proceed
          * to a launch mode.  Retain an explicit CLI/saved platform choice so
          * it is visible to the player; AUTO prefers the first verified card. */
         state->launchRequested = 0;
-        state->quickResumeLaunchRequested = 0;
+        state->quickResumeLaunchRequested =
+            state->quickResumeLaunchRequested &&
+            state->quickResumeGameId[0] != '\0' && entry->gameId &&
+            strcmp(state->quickResumeGameId, entry->gameId) == 0;
         state->gameCardFlowStage = 0;
         state->gameCardSelected = 0;
+        if (requestedArchitecture == M12_ARCH_AUTO) {
+            int autoVersion =
+                M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                    &state->assetStatus, entry->gameId, M12_ARCH_AUTO);
+            if (autoVersion >= 0) {
+                autoArchitecture = M12_AssetStatus_GetVersionArchitecture(
+                    entry->gameId, (size_t)autoVersion);
+            }
+        }
         for (i = 0; i < count; ++i) {
             if (platforms[i] == requestedArchitecture ||
                 (requestedArchitecture == M12_ARCH_AUTO &&
-                 M12_AssetStatus_GameHasMatchedArchitecture(&state->assetStatus,
-                                                             entry->gameId,
-                                                             platforms[i]))) {
+                 platforms[i] == autoArchitecture)) {
                 state->gameCardSelected = i;
                 break;
             }
@@ -5656,25 +5891,39 @@ static void m12_main_resume_or_activate_selected(M12_StartupMenuState* state) {
         int qrSlot = m12_game_slot_from_id(state->quickResumeGameId);
         if (qrSlot >= 0 && qrSlot < m12_entry_count() &&
             state->entries[qrSlot].available) {
-            int pmode = m12_clamp_index(state->settings.graphicsIndex,
-                                        M12_PRESENTATION_MODE_COUNT);
+            /* Quick Resume belongs to this game's options. V2.2 is allowed
+             * only when the ordinary per-game launch gate admits it. */
+            int pmode = m12_clamp_index(
+                state->gameOptions[qrSlot].presentationModeIndex,
+                M12_PRESENTATION_MODE_COUNT);
             state->activatedIndex = qrSlot;
             m12_normalize_game_version_index(state, qrSlot);
             m12_enforce_mode_constraints(&state->gameOptions[qrSlot], pmode);
             if (pmode == M12_PRESENTATION_V22_MODERN) {
-                state->launchRequested = 0;
-                state->quickResumeLaunchRequested = 0;
-                m12_enter_message_view(state);
-                state->messageLine1 = "V3 MODERN/3D";
-                state->messageLine2 = "DATA FILES NOT FOUND";
-                state->messageLine3 = "ESC RETURNS TO MENU";
-            } else {
+                M12_StartupLaunchGate gate;
+                memset(&gate, 0, sizeof(gate));
+                gate.blockedLabel = "OFFLINE";
+                gate.blockedDetail = "OFFLINE";
+                if (!M12_StartupMenu_GetLaunchGate(state, qrSlot, &gate) ||
+                    !gate.canLaunch) {
+                    state->launchRequested = 0;
+                    state->quickResumeLaunchRequested = 0;
+                    m12_enter_message_view(state);
+                    state->messageLine1 = gate.blockedLabel;
+                    state->messageLine2 = gate.blockedDetail;
+                    state->messageLine3 = m12_text(
+                        state, M12_TEXT_ESC_RETURNS_TO_MENU);
+                    return;
+                }
+            }
+            {
                 state->launchRequested = 1;
                 state->quickResumeLaunchRequested = 1;
                 m12_enter_message_view(state);
                 state->messageLine1 = "RESUMING SAVE";
                 state->messageLine2 = state->entries[qrSlot].title;
-                state->messageLine3 = "ESC RETURNS TO MENU";
+                state->messageLine3 = m12_text(
+                    state, M12_TEXT_ESC_RETURNS_TO_MENU);
                 m12_clear_dm2_source_status(state, state->quickResumeGameId);
             }
         } else {
@@ -6370,6 +6619,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         &state->assetStatus, cardEntry->gameId,
                         (size_t)state->gameOptions[gi].versionIndex);
                     if (selectedVersion && selectedVersion->matched &&
+                        m12_version_architecture_launchable(
+                            cardEntry->gameId,
+                            (size_t)state->gameOptions[gi].versionIndex) &&
                         M12_AssetStatus_GetVersionArchitecture(
                             cardEntry->gameId,
                             (size_t)state->gameOptions[gi].versionIndex) ==
@@ -6386,11 +6638,16 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     }
                     state->gameOptions[gi].architectureIndex = platforms[index];
                     state->gameOptions[gi].versionIndex = version;
-                    /* Selecting a data card is not consent to launch.  This
-                     * also clears a stale direct-launch request from CLI or
-                     * a prior menu session before the presentation choice. */
+                    /* Selecting a data card is not consent to launch. Keep
+                     * an explicit CLI --save only for its requested game;
+                     * ordinary discovered saves never set this request. */
                     state->launchRequested = 0;
-                    state->quickResumeLaunchRequested = 0;
+                    state->quickResumeLaunchRequested =
+                        state->quickResumeLaunchRequested &&
+                        state->quickResumeGameId[0] != '\0' &&
+                        cardEntry->gameId &&
+                        strcmp(state->quickResumeGameId,
+                               cardEntry->gameId) == 0;
                     state->gameCardFlowStage = 1;
                     state->gameCardSelected = 0;
                     return;
@@ -6418,7 +6675,6 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
         int pmode = state->gameOptions[gi].presentationModeIndex;
         if (pmode < 0) pmode = 0;
         if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;
-        int versionCount = m12_game_version_count(state, gi);
         /* Helper: determine navigable row count. In V1 mode, ASPECT and
          * RESOLUTION rows are hidden, so skip them during navigation. */
         int totalRows = M12_GAME_OPT_ROW_COUNT + 1; /* +1 for launch */
@@ -6453,12 +6709,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
                         m12_select_game_version(state, gi,
-                                                m12_cycle_index(state->gameOptions[gi].versionIndex,
-                                                                -1, versionCount));
+                                                m12_cycle_game_version_index(
+                                                    state, gi,
+                                                    state->gameOptions[gi].versionIndex,
+                                                    -1));
                     } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
-                        state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
-                                                                                   -1,
-                                                                                   M12_ARCH_COUNT);
+                        m12_cycle_game_architecture(
+                            state, gi,
+                            state->gameOptions[gi].architectureIndex, -1);
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, -1, pmode);
@@ -6476,12 +6734,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
                         m12_select_game_version(state, gi,
-                                                m12_cycle_index(state->gameOptions[gi].versionIndex,
-                                                                1, versionCount));
+                                                m12_cycle_game_version_index(
+                                                    state, gi,
+                                                    state->gameOptions[gi].versionIndex,
+                                                    1));
                     } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
-                        state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
-                                                                                   1,
-                                                                                   M12_ARCH_COUNT);
+                        m12_cycle_game_architecture(
+                            state, gi,
+                            state->gameOptions[gi].architectureIndex, 1);
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
@@ -6512,9 +6772,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                      * selected CUE/BIN/ISO to its verified Track 02 hash. */
                     if (launchEntry && launchEntry->gameId &&
                         strcmp(launchEntry->gameId, "theron") == 0) {
-                        const char* mediaPath =
-                            M12_AssetStatus_GetTheronLaunchMediaPath(
-                                &state->assetStatus);
+                        int theronVersionIndex =
+                            state->gameOptions[gi].versionIndex;
+                        const char* mediaPath = NULL;
                         theronVersion = m12_selected_version_status(state, gi);
                         if (!theronVersion || !theronVersion->matched) {
                             int matchedVersion =
@@ -6533,9 +6793,17 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                         (size_t)matchedVersion);
                                 if (candidate && candidate->matched) {
                                     state->gameOptions[gi].versionIndex = matchedVersion;
+                                    theronVersionIndex = matchedVersion;
                                     theronVersion = candidate;
                                 }
                             }
+                        }
+                        if (theronVersion && theronVersion->matched &&
+                            theronVersionIndex >= 0) {
+                            mediaPath =
+                                M12_AssetStatus_GetTheronLaunchMediaPathForVersion(
+                                    &state->assetStatus,
+                                    (size_t)theronVersionIndex);
                         }
                         /* A verified Track 02 inside an archive is already
                          * an in-memory launch source.  Its companion .ccd
@@ -6572,10 +6840,11 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                             launchGate.autoSelectedVersionIndex;
                         m12_save_config(state);
                     }
-                    /* Launch row — when V2.2 mode is selected but modern assets
-                     * are not installed, the fallback chain kicks in at runtime
-                     * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
-                     * and the best available shape source is used. */
+                    /* Launch row. GetLaunchGate is authoritative for V2.2:
+                     * unsupported game profiles or missing required modern
+                     * assets are reported before creating a launch intent.
+                     * Runtime presentation fallback applies only after a mode
+                     * has passed this launcher gate. */
                     /* Missing source data is the first-order failure. Report
                      * the actionable Nexus ISO/BIN/CUE recovery path before
                      * renderer or Saturn-capture readiness; otherwise a
@@ -6592,6 +6861,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else if (hasLaunchGate && !launchGate.rendererReady) {
                         state->launchRequested = 0;
+                        state->quickResumeLaunchRequested = 0;
                         m12_enter_message_view(state);
                         state->messageLine1 = launchGate.blockedLabel;
                         state->messageLine2 = launchGate.blockedDetail;
@@ -6599,6 +6869,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     } else if (hasLaunchGate && !launchGate.boot.versionReady) {
                         if (launchGate.autoSelectedVersionIndex < 0) {
                             state->launchRequested = 0;
+                            state->quickResumeLaunchRequested = 0;
                             m12_enter_message_view(state);
                             state->messageLine1 = launchGate.blockedLabel;
                             state->messageLine2 = launchGate.blockedDetail;
@@ -6608,7 +6879,12 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                 launchGate.autoSelectedVersionIndex;
                             if (launchGate.canLaunch) {
                                 state->launchRequested = 1;
-                                state->quickResumeLaunchRequested = 0;
+                                state->quickResumeLaunchRequested =
+                                    state->quickResumeLaunchRequested &&
+                                    launchEntry && launchEntry->gameId &&
+                                    state->quickResumeGameId[0] != '\0' &&
+                                    strcmp(state->quickResumeGameId,
+                                           launchEntry->gameId) == 0;
                             } else {
                                 state->launchRequested = 0;
                                 state->quickResumeLaunchRequested = 0;
@@ -6628,7 +6904,12 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
                     } else {
                         state->launchRequested = 1;
-                        state->quickResumeLaunchRequested = 0;
+                        state->quickResumeLaunchRequested =
+                            state->quickResumeLaunchRequested &&
+                            launchEntry && launchEntry->gameId &&
+                            state->quickResumeGameId[0] != '\0' &&
+                            strcmp(state->quickResumeGameId,
+                                   launchEntry->gameId) == 0;
                         m12_enter_message_view(state);
                         state->messageLine1 = m12_text(state, M12_TEXT_READY_TO_LAUNCH);
                         state->messageLine2 = (state->activatedIndex >= 0 &&
@@ -6644,12 +6925,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 } else {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
                         m12_select_game_version(state, gi,
-                                                m12_cycle_index(state->gameOptions[gi].versionIndex,
-                                                                1, versionCount));
+                                                m12_cycle_game_version_index(
+                                                    state, gi,
+                                                    state->gameOptions[gi].versionIndex,
+                                                    1));
                     } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
-                        state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
-                                                                                   1,
-                                                                                   M12_ARCH_COUNT);
+                        m12_cycle_game_architecture(
+                            state, gi,
+                            state->gameOptions[gi].architectureIndex, 1);
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
@@ -6665,6 +6948,7 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 break;
             case M12_MENU_INPUT_BACK:
                 state->launchRequested = 0;
+                state->quickResumeLaunchRequested = 0;
                 m12_return_to_main_view(state);
                 break;
             case M12_MENU_INPUT_NONE:
@@ -8841,6 +9125,10 @@ static int m12_apply_dm1_hoc_startup_capture_package(
     return 1;
 }
 
+static void m12_boot_readiness_use_m11_title_handoff(
+    const M12_StartupMenuState* state,
+    M12_StartupBootReadiness* boot);
+
 int M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(
     M12_StartupMenuState* state,
     const M12_DM1HoCPresentedCaptureReceipt* receipt) {
@@ -8918,7 +9206,11 @@ int M12_StartupMenu_GetBootReadiness(
     receipt.supported = m12_game_supported(entry->gameId) ? 1 : 0;
     receipt.dataReady =
         M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId) ? 1 : 0;
-    receipt.versionReady = (version && version->matched) ? 1 : 0;
+    receipt.versionReady = (gameIndex >= 0 && version && version->matched &&
+                            m12_version_architecture_launchable(
+                                entry->gameId,
+                                (size_t)state->gameOptions[gameIndex].versionIndex))
+                               ? 1 : 0;
     receipt.fullStartGraphicsExpected = receipt.supported;
     receipt.expectedStepMask = M12_STARTUP_BOOT_STEP_DATA |
                                M12_STARTUP_BOOT_STEP_VERSION;
@@ -8949,6 +9241,9 @@ int M12_StartupMenu_GetBootReadiness(
     }
     receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
     if (receipt.startupMenuReady) {
+        if ((receipt.readyStepMask & M12_STARTUP_BOOT_STEP_STARTUP_MENU) == 0u) {
+            receipt.startupStepReadyCount++;
+        }
         receipt.readyStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU;
     }
     receipt.fullStartGraphicsReady =
@@ -8971,10 +9266,24 @@ int M12_StartupMenu_GetBootReadiness(
         receipt.startupStepReadyCount = receipt.startupStepCount;
     }
 
-    /* Nexus uses the same verified-data launch boundary as every other
-     * supported game. Its in-runtime launcher still owns title/menu asset
-     * admission; M12 must not manufacture a second, permanently unavailable
-     * proof gate after the scanner has admitted the selected Saturn release. */
+    /* Nexus reaches M11 through a title-only handoff. Data/version admission
+     * is enough to try its authentic title route, but it is not evidence that
+     * the full menu graphics, startup contract, or packaged capture is ready.
+     * M11's launcher receipt owns those later transitions. */
+    if (receipt.supported && receipt.gameId &&
+        strcmp(receipt.gameId, "nexus") == 0) {
+        receipt.startupMenuReady = receipt.dataReady && receipt.versionReady;
+        receipt.startupStepReadyCount = receipt.startupMenuReady ? 3 :
+                                        (receipt.dataReady ? 1 : 0) +
+                                        (receipt.versionReady ? 1 : 0);
+        receipt.fullStartGraphicsReady = 0;
+        receipt.startupContractReady = 0;
+        receipt.packagedCaptureReady = 0;
+        receipt.readyStepMask &= ~(M12_STARTUP_BOOT_STEP_FULL_GRAPHICS |
+                                   M12_STARTUP_BOOT_STEP_CONTRACT |
+                                   M12_STARTUP_BOOT_STEP_CAPTURE);
+        receipt.blockedStepMask = receipt.expectedStepMask & ~receipt.readyStepMask;
+    }
     (void)m12_apply_dm1_hoc_startup_capture_package(state, &receipt);
 
     if (!receipt.supported) {
@@ -9005,6 +9314,7 @@ int M12_StartupMenu_GetBootReadiness(
                                        ? receipt.packagedCaptureLabel
                                        : receipt.startupContractLabel;
     }
+    m12_boot_readiness_use_m11_title_handoff(state, &receipt);
 
     *outReadiness = receipt;
     return 1;
@@ -9046,16 +9356,27 @@ const char* M12_StartupMenu_GetEntryCaptureProofLabel(
 static int m12_first_matched_version_index_for_game(
     const M12_StartupMenuState* state,
     const char* gameId) {
+    int gameIndex;
+    int architecture;
+    int versionIndex;
     if (!state || !gameId || gameId[0] == '\0') {
         return -1;
     }
-    /* This is the recovery path for a stale or unavailable persisted version.
-     * It must use the same architecture policy as normal AUTO selection.
-     * Catalogue order intentionally starts with FM Towns for several games,
-     * so returning the first hash match here would bypass the PC-first AUTO
-     * contract after a scan or data-directory change. */
-    return M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-        &state->assetStatus, gameId, M12_ARCH_AUTO);
+    gameIndex = m12_game_slot_from_id(gameId);
+    architecture = gameIndex >= 0
+        ? state->gameOptions[gameIndex].architectureIndex
+        : M12_ARCH_AUTO;
+    /* A stale version row may be recovered only within the selected source
+     * architecture. AUTO keeps its normal media-priority policy; an explicit
+     * platform must never silently launch a different platform's package. */
+    versionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        &state->assetStatus, gameId, architecture);
+    if (versionIndex >= 0 &&
+        !m12_version_architecture_launchable(gameId,
+                                             (size_t)versionIndex)) {
+        return -1;
+    }
+    return versionIndex;
 }
 
 static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot) {
@@ -9069,6 +9390,9 @@ static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot
     }
     boot->startupMenuReady = boot->dataReady && boot->versionReady;
     if (boot->startupMenuReady) {
+        if ((boot->readyStepMask & M12_STARTUP_BOOT_STEP_STARTUP_MENU) == 0u) {
+            boot->startupStepReadyCount++;
+        }
         boot->readyStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU;
     }
     boot->fullStartGraphicsReady =
@@ -9107,6 +9431,42 @@ static void m12_boot_readiness_mark_version_ready(M12_StartupBootReadiness* boot
     }
 }
 
+static void m12_boot_readiness_use_m11_title_handoff(
+    const M12_StartupMenuState* state,
+    M12_StartupBootReadiness* boot) {
+    if (!boot || !boot->handled || !boot->supported || !boot->gameId ||
+        strcmp(boot->gameId, "dm1") == 0) {
+        return;
+    }
+
+    /* M12 has no prelaunch presentation receipt for these runtimes. A matched
+     * game package admits the authentic M11 title path; only M11 can prove
+     * the live graphics, startup contract, and presented capture. */
+    boot->fullStartGraphicsReady = 0;
+    boot->startupContractReady = 0;
+    boot->packagedCaptureReady = 0;
+    boot->readyStepMask &= ~(M12_STARTUP_BOOT_STEP_FULL_GRAPHICS |
+                             M12_STARTUP_BOOT_STEP_CONTRACT |
+                             M12_STARTUP_BOOT_STEP_CAPTURE);
+    boot->startupMenuReady = boot->dataReady && boot->versionReady;
+    if (boot->startupMenuReady) {
+        boot->readyStepMask |= M12_STARTUP_BOOT_STEP_STARTUP_MENU;
+    } else {
+        boot->readyStepMask &= ~M12_STARTUP_BOOT_STEP_STARTUP_MENU;
+    }
+    boot->startupStepReadyCount = (boot->dataReady ? 1 : 0) +
+                                  (boot->versionReady ? 1 : 0) +
+                                  (boot->startupMenuReady ? 1 : 0);
+    boot->blockedStepMask = boot->expectedStepMask & ~boot->readyStepMask;
+
+    if (boot->dataReady && boot->versionReady) {
+        boot->statusLabel = m12_tr(state, "TITLE START AVAILABLE");
+        boot->detailLabel = m12_tr(state, "MENU AND CAPTURE PROOFS NOT READY");
+        boot->nextStepLabel = m12_tr(state, "TITLE START");
+        boot->activeProofLabel = m12_tr(state, "VERIFIED SOURCE DATA");
+    }
+}
+
 int M12_StartupMenu_GetLaunchGate(
     const M12_StartupMenuState* state,
     int entryIndex,
@@ -9115,6 +9475,7 @@ int M12_StartupMenu_GetLaunchGate(
     const M12_MenuEntry* entry;
     int gameIndex;
     int pmode;
+    int m11OwnsStartupProof;
 
     if (!outGate) {
         return 0;
@@ -9132,6 +9493,8 @@ int M12_StartupMenu_GetLaunchGate(
     }
 
     gate.handled = 1;
+    gameIndex = m12_game_slot_from_id(entry->gameId);
+    m11OwnsStartupProof = entry->gameId && strcmp(entry->gameId, "dm1") != 0;
     (void)M12_StartupMenu_GetBootReadiness(state, entryIndex, &gate.boot);
     gate.rendererReady = M12_StartupMenu_RendererBackendAvailable(
         state->settings.rendererBackendIndex);
@@ -9169,10 +9532,17 @@ int M12_StartupMenu_GetLaunchGate(
             m12_boot_readiness_mark_version_ready(&gate.boot);
             (void)m12_apply_dm1_hoc_startup_capture_package(state,
                                                             &gate.boot);
+            m12_boot_readiness_use_m11_title_handoff(state, &gate.boot);
             gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
             gate.startupContractReady = gate.boot.startupContractReady;
             gate.packagedCaptureReady = gate.boot.packagedCaptureReady;
         }
+    }
+    if (m11OwnsStartupProof && gate.dataReady && gate.versionReady) {
+        m12_boot_readiness_use_m11_title_handoff(state, &gate.boot);
+        gate.fullStartGraphicsReady = 0;
+        gate.startupContractReady = 0;
+        gate.packagedCaptureReady = 0;
     }
 
     if (!gate.dataReady) {
@@ -9193,33 +9563,24 @@ int M12_StartupMenu_GetLaunchGate(
     } else if (!gate.versionReady) {
         gate.blockedLabel = "SELECTED VERSION NOT FOUND";
         gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);
-    /* DM1 retains its established post-present HOC capture exception. Theron
-     * also has a deliberately narrow exception: a hash-verified Track 02 can
-     * enter M11's native capture-required startup state.  That state performs
-     * no synthetic visual fallback and does not admit a dungeon; it is the
-     * source-owned title/capture handoff implemented by M11.  Blocking the
-     * card here made its already-valid in-memory ZIP route unreachable.
-     *
-     * Nexus has no equivalent exception: authenticated Saturn source
-     * discovery is not a startup/menu presentation proof, so its card stays
-     * blocked until M11 supplies the full-start graphics receipt. */
-    } else if ((!gate.fullStartGraphicsReady &&
-                (!entry->gameId ||
-                 (strcmp(entry->gameId, "dm1") != 0 &&
-                  strcmp(entry->gameId, "theron") != 0))) ||
-               (gate.boot.startupContractExpected &&
-                !gate.startupContractReady)) {
+    /* M11 owns authentic startup presentation for every game except DM1's
+     * separately imported HoC proof. Data/version verification admits the
+     * title handoff; M11's runtime receipts gate later menu/game transitions. */
+    } else if (!m11OwnsStartupProof &&
+               gate.boot.startupContractExpected &&
+               !gate.startupContractReady) {
         gate.blockedLabel = "STARTUP PROOF MISSING";
         gate.blockedDetail = gate.boot.startupContractLabel;
-    } else if (gate.boot.packagedCaptureExpected &&
-               !gate.packagedCaptureReady &&
-               (!entry->gameId || strcmp(entry->gameId, "dm1") != 0)) {
-        gate.blockedLabel = "CAPTURE PROOF MISSING";
-        gate.blockedDetail = gate.boot.packagedCaptureLabel;
     } else {
         gate.canLaunch = 1;
-        gate.blockedLabel = "READY TO LAUNCH";
-        gate.blockedDetail =
+        gate.blockedLabel = (m11OwnsStartupProof &&
+                             !gate.packagedCaptureReady)
+                                ? m12_tr(state, "TITLE START AVAILABLE")
+                                : "READY TO LAUNCH";
+        gate.blockedDetail = (m11OwnsStartupProof &&
+                              !gate.packagedCaptureReady)
+            ? m12_tr(state, "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED")
+            :
             (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
              gate.boot.packagedCaptureExpected &&
              !gate.packagedCaptureReady)
@@ -10891,6 +11252,7 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
     int cardW;
     int cardGap;
     int cardH;
+    int cardColumns = 3;
     int i;
     int settingsSelected;
     if (margin < 12) {
@@ -10903,11 +11265,9 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
     cardsX = margin + sidebarW + 10;
     cardsW = framebufferWidth - margin - cardsX;
     cardGap = 8;
-    cardW = (cardsW - (cardGap * 3)) / 4;
-    cardH = framebufferHeight - (margin * 2) - 18;
-    if (cardH < 100) {
-        cardH = 100;
-    }
+    cardW = (cardsW - (cardGap * (cardColumns - 1))) / cardColumns;
+    cardH = (framebufferHeight - (margin * 2) - 18 - cardGap) / 2;
+    if (cardH < 100) cardH = 100;
     settingsSelected = (state->selectedIndex == m12_entry_count() - 1);
 
     m12_draw_modern_background(state, framebuffer, framebufferWidth, framebufferHeight);
@@ -10945,14 +11305,16 @@ static void m12_draw_main_view_modern(const M12_StartupMenuState* state,
         }
     }
 
-    /* Four game cards: DM1, CSB, DM2, Nexus. */
-    for (i = 0; i < 4; ++i) {
+    /* Five catalogued games occupy the same 3+2 grid as the modern renderer.
+     * Keeping this fallback in sync makes Theron visible and selectable even
+     * when the richer renderer is unavailable. */
+    for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         m12_draw_game_card(state,
                            framebuffer,
                            framebufferWidth,
                            framebufferHeight,
-                           cardsX + i * (cardW + cardGap),
-                           margin,
+                           cardsX + (i % cardColumns) * (cardW + cardGap),
+                           margin + (i / cardColumns) * (cardH + cardGap),
                            cardW,
                            cardH,
                            i,
@@ -11829,8 +12191,8 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     const M12_GameCardArt* art = (state->activatedIndex >= 0 && state->activatedIndex < m12_entry_count())
                                      ? &state->cardArt[state->activatedIndex]
                                      : NULL;
-    int gi = m12_clamp_index(state->activatedIndex, 3);
-    const M12_GameOptions* opts = &state->gameOptions[gi];
+    int gi = m12_game_slot_from_id(entry ? entry->gameId : NULL);
+    const M12_GameOptions* opts;
     int margin = framebufferWidth / 30;
     int heroH = framebufferHeight / 4;
     int contentY;
@@ -11844,6 +12206,10 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
     int resLocked;
     const M12_AssetVersionStatus* version;
     unsigned char gameFill;
+    if (gi < 0) {
+        gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
+    }
+    opts = &state->gameOptions[gi];
     if (margin < 12) {
         margin = 12;
     }
@@ -12540,8 +12906,7 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         state->dataDirScanProgress =
             *M12_AssetStatus_GetScanProgress(&job->assetStatus);
         state->dataDirScanActive = 0;
-        state->dataDirScanCancelled =
-            job->result ? 0 : state->dataDirScanProgress.cancelled;
+        state->dataDirScanCancelled = state->dataDirScanProgress.cancelled;
         state->dataDirScanJob = NULL;
         if (job->result && !state->dataDirScanCancelled) {
             state->assetStatus = job->assetStatus;

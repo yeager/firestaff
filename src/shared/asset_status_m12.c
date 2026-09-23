@@ -7678,7 +7678,31 @@ const char* M12_AssetStatus_GetTheronLaunchMediaPath(
     const M12_AssetStatus* status) {
     int theronIndex = m12_game_index_from_id("theron");
     const M12_AssetVersionStatus* version;
-    if (!status) {
+    size_t i;
+    if (!status || theronIndex < 0) {
+        return NULL;
+    }
+    version = m12_first_matched_version(status, theronIndex);
+    if (!version) {
+        return NULL;
+    }
+    for (i = 0U; i < M12_AssetStatus_GetVersionCount("theron"); ++i) {
+        if (&status->versions[theronIndex][i] == version) {
+            return M12_AssetStatus_GetTheronLaunchMediaPathForVersion(status, i);
+        }
+    }
+    return NULL;
+}
+
+const char* M12_AssetStatus_GetTheronLaunchMediaPathForVersion(
+    const M12_AssetStatus* status, size_t versionIndex) {
+    int theronIndex = m12_game_index_from_id("theron");
+    const M12_AssetVersionStatus* version;
+    if (!status || theronIndex < 0) {
+        return NULL;
+    }
+    version = M12_AssetStatus_GetVersion(status, "theron", versionIndex);
+    if (!version || !version->matched || version->matchedPath[0] == '\0') {
         return NULL;
     }
     /* A paired, hash-verified CUE stays the launch provenance; the boot
@@ -7687,14 +7711,12 @@ const char* M12_AssetStatus_GetTheronLaunchMediaPath(
     if (status->theronMedia.paired_track01_track02 &&
         status->theronMedia.cue_path[0] != '\0' &&
         status->theronMedia.track02_path[0] != '\0') {
-        version = m12_first_matched_version(status, theronIndex);
         if (version && strcmp(version->matchedPath,
                               status->theronMedia.track02_path) == 0) {
             return status->theronMedia.cue_path;
         }
     }
-    version = m12_first_matched_version(status, theronIndex);
-    return version && version->matchedPath[0] != '\0' ? version->matchedPath : NULL;
+    return version->matchedPath;
 }
 
 const Theron_Track02StartupLoaderReceipt*
