@@ -6,6 +6,7 @@
 #include "theron_v1_world.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int failures;
@@ -16,6 +17,207 @@ static int failures;
         ++failures; \
     } \
 } while (0)
+
+static uint8_t *load_real_track02(const char *env_name, const char *leaf,
+                                  size_t *out_size) {
+    const char *path = getenv(env_name);
+    char default_path[1024];
+    FILE *file;
+    long length;
+    uint8_t *bytes;
+
+    if (out_size) *out_size = 0u;
+    if (!env_name || !leaf || !out_size) return NULL;
+    if (!path || !path[0]) {
+        const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
+        const char *workspace_root = getenv("FIRESTAFF_WORKSPACE_DATA_DIR");
+        const char *home = getenv("HOME");
+        if (theron_root && theron_root[0]) {
+            snprintf(default_path, sizeof(default_path), "%s/%s",
+                     theron_root, leaf);
+        } else if (workspace_root && workspace_root[0]) {
+            snprintf(default_path, sizeof(default_path), "%s/theron/%s",
+                     workspace_root, leaf);
+        } else if (home && home[0]) {
+            snprintf(default_path, sizeof(default_path),
+                     "%s/.firestaff/data/theron/%s", home, leaf);
+        } else {
+            return NULL;
+        }
+        path = default_path;
+    }
+    file = fopen(path, "rb");
+    if (!file) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (length = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes || fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)length;
+    return bytes;
+}
+
+static void check_real_startup_region(const char *env_name, const char *leaf,
+                                      const char *md5_hex) {
+    Theron_StartupFlow flow;
+    Theron_DungeonProgression progression;
+    Theron_V1_World startup_world;
+    Theron_V1StartupRuntimeEntryRequest request;
+    Theron_V1StartupRuntimeEntryResult entry_result;
+    Theron_StartupFlow truncated_flow;
+    Theron_DungeonProgression truncated_progression;
+    Theron_V1_Party truncated_party;
+    Theron_StartupFlow saved_flow;
+    Theron_V1_Party saved_party;
+    uint8_t *track02;
+    size_t track02_size;
+    char receipt[256];
+
+    track02 = load_real_track02(env_name, leaf, &track02_size);
+    CHECK(track02 != NULL,
+          "real regional Track 02 is available for startup/combat integration");
+    if (!track02) return;
+
+    theron_v1_dungeon_progression_init(&progression);
+    theron_v1_startup_flow_init(&flow);
+    CHECK(theron_v1_startup_show_stage_select(
+              &flow, THERON_DUNGEON_1_AKUTUBA) == THERON_STARTUP_OK &&
+          theron_v1_startup_choose_stage(
+              &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
+              THERON_STARTUP_OK &&
+          theron_v1_startup_select_mirror(&flow, 0) == THERON_STARTUP_OK,
+          "regional startup reaches selected Akutuba roster state");
+
+    theron_v1_world_init_runtime(&startup_world);
+    memset(&request, 0, sizeof(request));
+    request.hucard_rom = track02;
+    request.hucard_rom_size = track02_size;
+    request.md5_hex = md5_hex;
+    receipt[0] = '\0';
+    CHECK(theron_v1_startup_runtime_enter_from_forcefield(
+              &flow, &startup_world, &request, &entry_result,
+              receipt, sizeof(receipt)),
+          "real regional Track 02 enters the source-bound runtime");
+    CHECK(startup_world.party.champion_count == 2 &&
+              startup_world.party.champions[0].health == 175 &&
+              startup_world.party.champions[1].health == 400 &&
+              startup_world.party.champions[1].strength == 60 &&
+              startup_world.party.champions[1].load == 0,
+          "regional runtime retains source roster stats without host equipment");
+    for (int champion = 0; champion < THERON_MAX_CHAMPIONS; ++champion) {
+        for (int equip = 0; equip < THERON_EQUIP_SLOT_COUNT; ++equip) {
+            CHECK(startup_world.party.champions[champion].slots[equip] == -1,
+                  "regional selected and inactive slots keep T900 equipment unavailable");
+        }
+    }
+    startup_world.party.champions[2].alive = 1;
+    startup_world.party.champions[2].health = 30000;
+    startup_world.party.champions[2].inventory[0] = THERON_ITEM_KEY;
+    startup_world.party.champions[2].load = 77;
+    CHECK(theron_v1_party_total_health(&startup_world.party) == 575 &&
+              theron_v1_party_getChampion_c(&startup_world.party, 2) == NULL,
+          "inactive source roster slot cannot enter health or party access");
+    theron_v1_party_recalculate_loads(&startup_world.party);
+    theron_v1_party_dungeon_entry_reset(&startup_world.party);
+    CHECK(startup_world.party.champions[2].load == 77 &&
+              startup_world.party.champions[2].inventory[0] == THERON_ITEM_KEY,
+          "inactive source roster slot is not mutated by gameplay maintenance");
+    {
+        Theron_StartupFlow locked_flow;
+        Theron_DungeonProgression selection_progression;
+        Theron_V1_World *locked_world =
+            (Theron_V1_World *)malloc(sizeof(*locked_world));
+        Theron_V1_World *saved_locked_world =
+            (Theron_V1_World *)malloc(sizeof(*saved_locked_world));
+        Theron_StartupFlow saved_locked_flow;
+
+        CHECK(locked_world != NULL && saved_locked_world != NULL,
+              "atomic regional runtime rollback worlds allocated");
+        if (locked_world && saved_locked_world) {
+            theron_v1_dungeon_progression_init(&selection_progression);
+            theron_v1_startup_flow_init(&locked_flow);
+            CHECK(theron_v1_startup_show_stage_select(
+                      &locked_flow, THERON_DUNGEON_1_AKUTUBA) ==
+                      THERON_STARTUP_OK &&
+                  theron_v1_startup_choose_stage(
+                      &locked_flow, &selection_progression,
+                      THERON_DUNGEON_1_AKUTUBA) == THERON_STARTUP_OK &&
+                  theron_v1_startup_select_mirror(
+                      &locked_flow, 0) == THERON_STARTUP_OK,
+                  "locked-dungeon rollback reaches selected regional roster");
+            theron_v1_world_init_runtime(locked_world);
+            locked_world->progression.dungeon_states[0] =
+                THERON_DUNGEON_STATE_LOCKED;
+            saved_locked_flow = locked_flow;
+            *saved_locked_world = *locked_world;
+            CHECK(!theron_v1_startup_runtime_enter_from_forcefield(
+                      &locked_flow, locked_world, &request, &entry_result,
+                      receipt, sizeof(receipt)) &&
+                  entry_result.result == THERON_STARTUP_ERR_DUNGEON_ENTRY &&
+                  memcmp(&locked_flow, &saved_locked_flow,
+                         sizeof(saved_locked_flow)) == 0 &&
+                  memcmp(locked_world, saved_locked_world,
+                         sizeof(*locked_world)) == 0,
+                  "post-roster dungeon failure restores the complete live state");
+        }
+        free(locked_world);
+        free(saved_locked_world);
+    }
+
+    theron_v1_dungeon_progression_init(&truncated_progression);
+    theron_v1_startup_flow_init(&truncated_flow);
+    CHECK(theron_v1_startup_show_stage_select(
+              &truncated_flow, THERON_DUNGEON_1_AKUTUBA) ==
+              THERON_STARTUP_OK &&
+          theron_v1_startup_choose_stage(
+              &truncated_flow, &truncated_progression,
+              THERON_DUNGEON_1_AKUTUBA) == THERON_STARTUP_OK &&
+          theron_v1_startup_select_mirror(
+              &truncated_flow, 0) == THERON_STARTUP_OK,
+          "regional truncated-media rollback reaches selected roster state");
+    memset(&truncated_party, 0x5a, sizeof(truncated_party));
+    saved_flow = truncated_flow;
+    saved_party = truncated_party;
+    CHECK(theron_v1_startup_enter_forcefield_with_track02_roster(
+              &truncated_flow, &truncated_party,
+              track02, 256u, md5_hex, NULL, 0) ==
+              THERON_STARTUP_ERR_NOT_READY &&
+          memcmp(&truncated_flow, &saved_flow, sizeof(saved_flow)) == 0 &&
+          memcmp(&truncated_party, &saved_party, sizeof(saved_party)) == 0,
+          "truncated regional Track 02 rolls roster handoff back atomically");
+    {
+        Theron_V1_World tampered_world;
+        Theron_V1_Party saved_runtime_party;
+        Theron_V1StartupRuntimeEntryRequest tampered_request;
+        Theron_V1StartupRuntimeEntryResult tampered_result;
+
+        theron_v1_world_init_runtime(&tampered_world);
+        saved_runtime_party = tampered_world.party;
+        memset(&tampered_request, 0, sizeof(tampered_request));
+        tampered_request.hucard_rom = track02;
+        tampered_request.hucard_rom_size = track02_size;
+        tampered_request.md5_hex = md5_hex;
+        track02[track02_size - 1u] ^= 1u;
+        CHECK(!theron_v1_startup_runtime_enter_from_forcefield(
+                  &truncated_flow, &tampered_world, &tampered_request,
+                  &tampered_result, receipt, sizeof(receipt)) &&
+              tampered_result.result == THERON_STARTUP_ERR_NOT_READY &&
+              memcmp(&truncated_flow, &saved_flow, sizeof(saved_flow)) == 0 &&
+              memcmp(&tampered_world.party, &saved_runtime_party,
+                     sizeof(saved_runtime_party)) == 0,
+              "full-file regional hash mismatch is rejected before publication");
+        track02[track02_size - 1u] ^= 1u;
+    }
+    free(track02);
+}
 
 int main(void) {
     Theron_V1_World world;
@@ -61,8 +263,10 @@ int main(void) {
     creature = theron_v1_creature_at(&world, 0, 1, 1);
     CHECK(creature != NULL && creature->source_ref == 0x1200u &&
               creature->source_chested == -2 &&
+              creature->type == 0u &&
+              creature->source_spawn_category == 0xffu &&
               theron_v1_creature_count(&world, 1, 0) == 2,
-          "published live creatures retain their authentic source identity");
+          "published live creatures retain raw type without a synthetic spawn category");
     CHECK(world.creatures[0].id == ((int)0x1200u << 2) &&
               world.creatures[1].id == (((int)0x1200u << 2) | 1),
           "source creature IDs remain tied to record and member slot");
@@ -125,6 +329,8 @@ int main(void) {
               "state hash includes authenticated source monster bytes");
         world.source_monsters[0].raw[0] ^= 0x01u;
     }
+    world.party.champion_count = 1;
+    world.party.active_slot = THERON_CHAMPION_SLOT_THERON;
     world.party.champions[0].alive = 1;
     world.party.champions[0].food = 7;
     world.party.champions[0].water = 8;
@@ -216,8 +422,8 @@ int main(void) {
         source.authenticated = 1;
         source.variant = THERON_V1_TRACK02_VARIANT_US_BIN;
         source.zones[0].category = 3u;
-        /* The source category must be present before admission; this is not
-         * a host-side category assignment. */
+        /* Even an authenticated regular-spawn descriptor does not prove
+         * that category-4 raw type zero indexes zone zero. */
         memset(&world, 0, sizeof(world));
         world.level_loaded[0][0] = 1;
         world.levels[0][0].source_header_verified = 1;
@@ -242,12 +448,14 @@ int main(void) {
         witness.ld23a_b8 = 5u;
         witness.ld23a_b4 = 7u;
         CHECK(witness_creature != NULL &&
+                  witness_creature->type == 0u &&
+                  witness_creature->source_spawn_category == 0xffu &&
                   theron_v1_creature_apply_spawn_consumer_witness(
-                      &world, witness_creature->id, &witness) == 0 &&
-                  witness_creature->hp == 350 &&
-                  witness_creature->attack == 15 &&
-                  witness_creature->defense == 27,
-              "authenticated spawn witness publishes only its source-derived stats");
+                      &world, witness_creature->id, &witness) == -1 &&
+                  witness_creature->hp == 10 &&
+                  witness_creature->attack == 0 &&
+                  witness_creature->defense == 0,
+              "unjoined regular-spawn witness cannot mutate a static category-4 creature");
         witness.authenticated_execution = 0;
         CHECK(theron_v1_creature_apply_spawn_consumer_witness(
                   &world, witness_creature->id, &witness) == -1,
@@ -301,45 +509,10 @@ int main(void) {
               strstr(theron_v1_combat_source_evidence(), "blocked") != NULL,
           "production evidence names the narrow blocked regular-spawn boundary");
 
-    {
-        Theron_StartupFlow flow;
-        Theron_DungeonProgression progression;
-        Theron_V1_World startup_world;
-        Theron_V1StartupRuntimeEntryRequest request;
-        Theron_V1StartupRuntimeEntryResult entry_result;
-        uint8_t fake_media = 0;
-        char receipt[256];
-
-        theron_v1_dungeon_progression_init(&progression);
-        theron_v1_startup_flow_init(&flow);
-        CHECK(theron_v1_startup_show_stage_select(
-                  &flow, THERON_DUNGEON_1_AKUTUBA) == THERON_STARTUP_OK,
-              "startup roster regression reaches stage select");
-        CHECK(theron_v1_startup_choose_stage(
-                  &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
-                  THERON_STARTUP_OK,
-              "startup roster regression chooses Akutuba");
-        CHECK(theron_v1_startup_select_mirror(&flow, 0) == THERON_STARTUP_OK,
-              "startup roster regression selects Hakar mirror");
-
-        theron_v1_world_init_runtime(&startup_world);
-        memset(&request, 0, sizeof(request));
-        request.hucard_rom = &fake_media;
-        request.hucard_rom_size = sizeof(fake_media);
-        request.md5_hex = THERON_TRACK02_MD5_US_BIN;
-        receipt[0] = '\0';
-        CHECK(!theron_v1_startup_runtime_enter_from_forcefield(
-                  &flow, &startup_world, &request, &entry_result,
-                  receipt, sizeof(receipt)),
-              "capture gate still blocks fake Track 02 media");
-        CHECK(startup_world.party.champion_count == 2 &&
-                  startup_world.party.champions[0].health == 175 &&
-                  startup_world.party.champions[1].health == 400 &&
-                  startup_world.party.champions[1].strength == 60 &&
-                  startup_world.party.champions[1].slots[THERON_ESLOT_WEAPON] == -1 &&
-                  startup_world.party.champions[1].load == 0,
-              "verified startup retains source roster stats while unbound T900 equipment stays gated");
-    }
+    check_real_startup_region(
+        "THERON_TRACK02_US_BIN", "TQUS02.bin", THERON_TRACK02_MD5_US_BIN);
+    check_real_startup_region(
+        "THERON_TRACK02_JP_BIN", "TQJP02.bin", THERON_TRACK02_MD5_JP_BIN);
 
     if (failures) return 1;
     puts("PASS: Theron production regular-spawn bridge and combat gates are wired");

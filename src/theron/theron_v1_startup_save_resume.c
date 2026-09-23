@@ -38,6 +38,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -93,6 +94,7 @@ static const char *path_basename(const char *path) {
     return slash ? slash + 1 : path;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int path_dirname(char out[THERON_V1_SRM_PATH_MAX],
                         const char *path) {
     const char *slash;
@@ -122,6 +124,7 @@ static int path_dirname(char out[THERON_V1_SRM_PATH_MAX],
     out[len] = '\0';
     return 1;
 }
+#endif
 
 static int parse_slot_file(const char *path,
                            const char *suffix,
@@ -151,6 +154,7 @@ static int path_has_suffix(const char *path, const char *suffix) {
            strcmp(path + path_len - suffix_len, suffix) == 0;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static void recompute_verdict_and_claim(Theron_V1StartupSaveResume *snap) {
     if (!snap) {
         return;
@@ -164,6 +168,7 @@ static void recompute_verdict_and_claim(Theron_V1StartupSaveResume *snap) {
               sizeof(snap->resume_claim_name),
               theron_v1_startup_save_resume_claim_name(snap->resume_claim));
 }
+#endif
 
 /* ── Root resolution ──────────────────────────────────────────────── */
 
@@ -171,6 +176,10 @@ static void resolve_tqsv_root(const char *boot_save_root,
                                 char out[THERON_V1_SRM_PATH_MAX]) {
     if (!out) return;
     out[0] = '\0';
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)boot_save_root;
+    return;
+#else
     if (boot_save_root && boot_save_root[0]) {
         size_t n = strlen(boot_save_root);
         if (n >= THERON_V1_SRM_PATH_MAX) n = THERON_V1_SRM_PATH_MAX - 1u;
@@ -180,6 +189,7 @@ static void resolve_tqsv_root(const char *boot_save_root,
     }
     /* Fall back to the existing canonical default. */
     theron_v1_save_default_root(out, THERON_V1_SRM_PATH_MAX);
+#endif
 }
 
 /* srm_root is resolved by the existing theron_v1_srm_default_root
@@ -250,6 +260,15 @@ static void scan_tqsv_slots(Theron_V1StartupSaveResume *snap) {
     snap->tqsv_active_slot = -1;
     snap->tqsv_active_timestamp = 0u;
 
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    /* .tqsv is a Firestaff-era fixture/container, not an authenticated PC
+     * Engine Backup RAM format. Production may inspect real .srm artifacts
+     * below, but must not advertise a synthetic Continue route while the
+     * original T080/T800 payload consumer remains undecoded. */
+    snap->tqsv_total_slots = 0;
+    return;
+#endif
+
     if (!snap->tqsv_root[0]) {
         return;
     }
@@ -300,6 +319,14 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
     snap->srm_party_restored = 0;
     snap->srm_party_champion_count = 0;
     snap->srm_party_gold = 0u;
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    /* FSTQPRG1/FSTQPTY1 are Firestaff fixture envelopes, not an
+     * authenticated Theron's Quest Save Disk format.  Real 2 KiB PC Engine
+     * Backup RAM is admitted only through the bounded HUBM classifier below;
+     * it does not yet prove enough fields for Continue. */
+    snap->srm_total_slots = 0;
+    return;
+#endif
     memset(envelopes, 0, sizeof(envelopes));
     for (int i = 0; i < THERON_V1_SRM_DISK_SLOT_COUNT; ++i) {
         envelopes[i].slot_index = i;
@@ -448,14 +475,23 @@ int theron_v1_startup_save_resume_apply_explicit_path(
     const char *tqsv_root)
 {
     int slot;
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     char root[THERON_V1_SRM_PATH_MAX];
+#endif
 
     if (!snap || !save_path || !save_path[0]) {
         return 0;
     }
 
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)tqsv_root;
+#endif
+
     slot = parse_slot_file(save_path, ".tqsv", THERON_SAVE_SLOT_COUNT);
     if (slot >= 0) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+        return 0;
+#else
         const char *root_to_use = tqsv_root;
         if (!root_to_use || !root_to_use[0]) {
             if (!path_dirname(root, save_path)) {
@@ -474,12 +510,16 @@ int theron_v1_startup_save_resume_apply_explicit_path(
         snap->tqsv_active_slot = slot;
         recompute_verdict_and_claim(snap);
         return 1;
+#endif
     }
 
     slot = parse_slot_file(save_path,
                            ".srm",
                            THERON_V1_SRM_DISK_SLOT_COUNT);
     if (slot >= 0 || path_has_suffix(save_path, ".srm")) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+        return 0;
+#else
         char srm_path[THERON_V1_SRM_PATH_MAX];
         uint8_t scratch[THERON_V1_SRM_BODY_DECODE_MAX_BYTES];
         Theron_V1SrmEnvelopeReceipt envelope;
@@ -540,6 +580,7 @@ int theron_v1_startup_save_resume_apply_explicit_path(
         }
         recompute_verdict_and_claim(snap);
         return 1;
+#endif
     }
 
     return 0;
@@ -599,6 +640,32 @@ int theron_v1_startup_save_resume_state_receipt(
     return 1;
 }
 
+int theron_v1_startup_restore_pce_bram_campaign_path(
+    Theron_V1_World *world,
+    const char *save_path,
+    Theron_V1PceBramReceipt *out_receipt) {
+    Theron_V1PceBramReceipt receipt;
+    Theron_V1PceBramStatus status;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!world || !save_path || !save_path[0]) return 0;
+
+    status = theron_v1_pce_bram_classify_path(save_path, &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (status != THERON_V1_PCE_BRAM_READY ||
+        !receipt.save_body_layout_proven ||
+        !receipt.selected_slot_layout_proven ||
+        receipt.selected_slot_index >= THERON_V1_PCE_BRAM_SLOT_COUNT ||
+        receipt.save_body_offset != receipt.selected_slot_offset ||
+        receipt.save_body_bytes != 0x86u ||
+        receipt.serialized_campaign_byte_offset != receipt.selected_slot_offset)
+        return 0;
+
+    return theron_v1_world_apply_campaign_artifact_byte(
+        world, receipt.serialized_campaign_byte);
+}
+
 static void theron_v1_startup_continue_reset_world_runtime(
     Theron_V1_World *world) {
 
@@ -615,7 +682,11 @@ static void theron_v1_startup_continue_reset_world_runtime(
     world->quest_items_in_dungeon =
         world->progression.quest_items_in_current_dungeon;
     world->dungeon_complete = 0;
-    memset(world->level_loaded, 0, sizeof(world->level_loaded));
+    /* Dungeon geometry is immutable source media, not save payload.  Keep an
+     * already authenticated Track 02 bank resident while overlaying the
+     * between-dungeon progression.  Clearing only level_loaded here made a
+     * Continue discard the real maps that startup had just decoded, while
+     * leaving their bytes behind but unreachable. */
 }
 
 int theron_v1_startup_continue_tqsv_apply(
@@ -629,6 +700,17 @@ int theron_v1_startup_continue_tqsv_apply(
     Theron_DungeonProgression loaded_progression;
     unsigned char champion_data[
         THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)world;
+    (void)save_root;
+    (void)slot_index;
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap,
+                 "TQSV is not an authenticated original-save route");
+    }
+    return 0;
+#endif
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -700,6 +782,16 @@ int theron_v1_startup_continue_tqsv_path_apply(
     Theron_DungeonProgression loaded_progression;
     unsigned char champion_data[
         THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)world;
+    (void)save_path;
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap,
+                 "TQSV is not an authenticated original-save route");
+    }
+    return 0;
+#endif
 
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
@@ -842,6 +934,16 @@ int theron_v1_startup_continue_srm_apply(
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
     }
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)world;
+    (void)srm_root;
+    (void)slot_index;
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap,
+                 "Firestaff SRM envelopes are not an authenticated original-save route");
+    }
+    return 0;
+#endif
     if (!world) {
         return 0;
     }
@@ -897,6 +999,15 @@ int theron_v1_startup_continue_srm_path_apply(
     if (receipt && receipt_cap > 0u) {
         receipt[0] = '\0';
     }
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)world;
+    (void)srm_path;
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap,
+                 "Firestaff SRM envelopes are not an authenticated original-save route");
+    }
+    return 0;
+#endif
     if (!world || !srm_path || srm_path[0] == '\0') {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap, "Continue requires an SRM path");
@@ -1104,6 +1215,11 @@ int theron_v1_startup_continue_availability_from_state(
     theron_v1_startup_continue_availability_init(out_availability);
     out_availability->tqsv_slot = tqsv_slot_index;
     out_availability->srm_slot = srm_slot_index;
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)resume_claim;
+    (void)srm_import_status;
+    return 1;
+#else
     out_availability->has_tqsv_continue =
         tqsv_slot_index >= 0 &&
         (resume_claim == THERON_V1_STARTUP_RESUME_TQSV ||
@@ -1115,6 +1231,7 @@ int theron_v1_startup_continue_availability_from_state(
         out_availability->has_tqsv_continue ||
         out_availability->has_srm_continue;
     return 1;
+#endif
 }
 
 static void theron_v1_startup_continue_capture_result(
@@ -1795,6 +1912,13 @@ int theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
 
     const Theron_V1_BootProfile *profile =
         (const Theron_V1_BootProfile *)boot_profile;
+    Theron_V1_World candidate;
+    Theron_V1_Party restored_party;
+    uint8_t *track02 = NULL;
+    FILE *track02_file = NULL;
+    size_t track02_size = 0u;
+    int restored_level;
+    int applied;
 
     if (out_result) {
         theron_v1_startup_continue_result_init(out_result);
@@ -1816,8 +1940,9 @@ int theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
         }
         return 0;
     }
-    return theron_v1_startup_continue_apply_facts_with_host_receipts(
-        world,
+    candidate = *world;
+    applied = theron_v1_startup_continue_apply_facts_with_host_receipts(
+        &candidate,
         resume_claim,
         tqsv_slot_index,
         profile->save_root,
@@ -1831,6 +1956,52 @@ int theron_v1_startup_continue_apply_boot_profile_with_host_receipts(
         out_state_receipt,
         receipt,
         receipt_cap);
+    if (!applied) return 0;
+
+    /* A native save contains progression and party state, never proprietary
+     * dungeon geometry.  For a production boot profile, rebuild the saved
+     * dungeon from the same hash-verified Track 02 before publishing the
+     * resumed world. */
+    if (profile->assets_verified && profile->graphics_path[0] &&
+        profile->graphics_md5[0]) {
+        track02_file = fopen(profile->graphics_path, "rb");
+        if (!track02_file || fseek(track02_file, 0, SEEK_END) != 0) goto media_fail;
+        {
+            long end = ftell(track02_file);
+            if (end <= 0 || (uint64_t)end > 512u * 1024u * 1024u ||
+                fseek(track02_file, 0, SEEK_SET) != 0) goto media_fail;
+            track02_size = (size_t)end;
+        }
+        track02 = (uint8_t *)malloc(track02_size);
+        if (!track02 || fread(track02, 1u, track02_size, track02_file) !=
+                            track02_size) goto media_fail;
+        fclose(track02_file);
+        track02_file = NULL;
+        restored_party = candidate.party;
+        restored_level = candidate.current_level;
+        if (!theron_v1_startup_runtime_load_initial_level_verified_only(
+                &candidate, track02, track02_size, profile->graphics_md5,
+                (Theron_DungeonID)candidate.current_dungeon,
+                receipt, receipt_cap) ||
+            restored_level < 0 ||
+            restored_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            !candidate.level_loaded[candidate.current_dungeon - 1]
+                                   [restored_level]) goto media_fail;
+        candidate.current_level = restored_level;
+        candidate.party = restored_party;
+        free(track02);
+        track02 = NULL;
+    }
+    *world = candidate;
+    return 1;
+
+media_fail:
+    if (track02_file) fclose(track02_file);
+    free(track02);
+    if (receipt && receipt_cap > 0u)
+        snprintf(receipt, receipt_cap,
+                 "Continue could not reload the verified Track 02 dungeon; synthetic fallback disabled");
+    return 0;
 }
 
 int theron_v1_startup_continue_tqsv_apply_with_host_receipts(
@@ -2393,6 +2564,11 @@ const char *theron_v1_startup_save_resume_claim_name(
 }
 
 const char *theron_v1_startup_save_resume_source_evidence(void) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    return
+        "Theron original-save startup boundary: authentic PC Engine HUBM "
+        "Backup RAM only; host save containers are fixture-only";
+#else
     return
         "Theron V1 startup save/resume smoke gate\n"
         "\n"
@@ -2431,4 +2607,5 @@ const char *theron_v1_startup_save_resume_source_evidence(void) {
         "    still owns the explicit Continue UX.\n"
         "  - Does NOT decode real Sphenx/Greatstone custom save bodies\n"
         "    or promote any auto-resume into runtime state.";
+#endif
 }

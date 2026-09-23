@@ -1,0 +1,27 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -482,3 +482,11 @@
+  TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
+                                      writer_physical_pc);
++	 TheronPCECDTraceMainRAMProvenanceWrite(address, physical_address, V,
++	                                       GetRegister(GSREG_PC),
++	                                       (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
++	                                       (GetRegister(GSREG_PC) & 0x1FFF));
++	 TheronPCECDTraceRecordWatchWrite(address, physical_address, V,
++	                                  GetRegister(GSREG_PC),
++	                                  (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
++	                                  (GetRegister(GSREG_PC) & 0x1FFF));
+ 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
+@@ -500,6 +508,14 @@
+ 	  TheronPCECDTraceMainRAMConsumerWrite(
+ 	   address & 0x1FFFu, address, data, writer_pc, writer_physical_pc);
+ 	 }
++	 TheronPCECDTraceMainRAMProvenanceWrite(address & 0x1FFFu, address, data,
++	                                        GetRegister(GSREG_PC),
++	                                        (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
++	                                        (GetRegister(GSREG_PC) & 0x1FFF));
++	 TheronPCECDTraceRecordWatchWrite(address & 0x1FFFu, address, data,
++	                                  GetRegister(GSREG_PC),
++	                                  (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
++	                                  (GetRegister(GSREG_PC) & 0x1FFF));
+ 	}

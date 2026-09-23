@@ -1616,9 +1616,10 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
  *
  * Source: THQUEST.ASM T520/T560/T600/T700 party placement, dungeon load,
  *         movement, and per-tick updates.
+ *         Original retail command capture binds $01/$02 to turns and
+ *         $03..$06 to forward/right/backward/left relative movement.
  *         ReDMCSB COMMAND.C F7015 input dispatch + MOVESENS.C F0267/F0268
- *         square interaction are the DM-family analogue; Theron has no
- *         strafe route, so LEFT/RIGHT/STRAFE_* tokens are ignored.
+ *         square interaction remain the DM-family analogue.
  * ══════════════════════════════════════════════════════════════════════ */
 
 typedef enum {
@@ -1633,6 +1634,13 @@ typedef struct {
     int moved;
     int turned;
     int waited;
+    int picked_up;
+    int dropped;
+    int inventory_slot;
+    int inventory_selected;
+    int used_front_object;
+    int champion_cycled;
+    int active_champion_slot;
     int blocked;
     int exited;
     int party_x;
@@ -1661,6 +1669,15 @@ int theron_v1_boot_runtime_handle_m12_input(
     Theron_V1_World *world,
     const void *boot_profile,
     int m12_input,
+    Theron_V1_BootRuntimeInputReceipt *out_receipt);
+
+/* Explicit inventory-selection variant used by M11.  A DROP is admitted
+ * only for the supplied source-backed slot; -1 keeps DROP fail-closed. */
+int theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+    Theron_V1_World *world,
+    const void *boot_profile,
+    int m12_input,
+    int selected_inventory_slot,
     Theron_V1_BootRuntimeInputReceipt *out_receipt);
 
 /* Idle tick facade: calls theron_v1_boot_runtime_tick_world and returns a

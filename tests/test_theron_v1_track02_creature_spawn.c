@@ -45,6 +45,7 @@ static uint8_t *read_file(const char *path, size_t *size_out) {
 static void assert_decoded_real_bin(const char *path,
                                     Theron_V1Track02Variant variant) {
     Theron_Track02SpawnSource source;
+    Theron_Track02SpawnConsumerSourceReceipt consumer;
     size_t size;
     uint8_t *bytes = read_file(path, &size);
 
@@ -56,30 +57,41 @@ static void assert_decoded_real_bin(const char *path,
     for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
         const Theron_CreaturePointerEntry *expected =
             theron_v1_track02_creature_pointer(i);
-        assert(memcmp(&source.pointers[i], expected, sizeof(*expected)) == 0);
+        assert(source.pointers[i].sprite_desc_offset ==
+               expected->sprite_desc_offset);
+        assert(source.pointers[i].constant_278a ==
+               (variant == THERON_V1_TRACK02_VARIANT_JP_BIN ?
+                    0x2780u : expected->constant_278a));
+        assert(source.pointers[i].spawn_data_offset ==
+               expected->spawn_data_offset);
+        assert(source.pointers[i].constant_016b ==
+               expected->constant_016b);
     }
     for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_ZONE_COUNT; ++i) {
         const Theron_SpawnZoneDesc *expected =
             theron_v1_track02_spawn_zone(i);
         assert(memcmp(&source.zones[i], expected, sizeof(*expected)) == 0);
     }
+    assert(theron_v1_track02_bind_spawn_consumer_source(
+               bytes, size, variant, &consumer) == 1);
+    assert(consumer.valid == 1 && consumer.variant == variant);
+    assert(consumer.user_data_offset ==
+           (variant == THERON_V1_TRACK02_VARIANT_JP_BIN ?
+                0x0868d2u : 0x0870e5u));
+    assert(consumer.byte_count == 0x10du);
+    assert(consumer.checksum ==
+           (variant == THERON_V1_TRACK02_VARIANT_JP_BIN ?
+                0x7dc1e453u : 0xeb241d19u));
+    assert(consumer.regional_code_verified == 1);
+    assert(consumer.runtime_execution_proven == 0);
+    assert(consumer.category_semantics_proven == 0);
     bytes[0x2d157fu] ^= 1u;
     assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
                                                  &source) == 0);
     assert(source.authenticated == 0);
-    free(bytes);
-}
-
-static void assert_real_bin_rejected(const char *path,
-                                     Theron_V1Track02Variant variant) {
-    Theron_Track02SpawnSource source;
-    size_t size;
-    uint8_t *bytes = read_file(path, &size);
-
-    if (!bytes) return;
-    assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
-                                                 &source) == 0);
-    assert(source.authenticated == 0);
+    assert(theron_v1_track02_bind_spawn_consumer_source(
+               bytes, size, variant, &consumer) == 0);
+    assert(consumer.valid == 0);
     free(bytes);
 }
 
@@ -228,13 +240,11 @@ int main(void) {
         }
         fclose(us_file);
         assert_decoded_real_bin(us, THERON_V1_TRACK02_VARIANT_US_BIN);
-        /* JP is a real, hash-verified asset, but its pointer table is not at
-         * the US disassembly offsets.  Do not silently reinterpret it. */
         if (jp_file) {
             fclose(jp_file);
-            assert_real_bin_rejected(jp, THERON_V1_TRACK02_VARIANT_JP_BIN);
+            assert_decoded_real_bin(jp, THERON_V1_TRACK02_VARIANT_JP_BIN);
         } else {
-            puts("NOTE: JP Track 02 BIN not present; JP-offset rejection skipped");
+            puts("NOTE: JP Track 02 BIN not present; JP source decode skipped");
         }
     }
 

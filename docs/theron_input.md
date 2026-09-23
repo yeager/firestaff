@@ -1,8 +1,9 @@
 # Theron's Quest — Keyboard Controls
 
-Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
-Firestaff's Theron route accepts both SDL scancodes and keycodes, so W/A/S/D
-also work on macOS layouts or input paths that do not populate scancodes.
+Theron's Quest (PC Engine) has six movement-panel commands: turn left/right,
+move forward/backward and step left/right. Firestaff's Theron route accepts
+both SDL scancodes and keycodes, so W/A/S/D also work on macOS layouts or
+input paths that do not populate scancodes.
 
 ## PC Engine button mapping
 
@@ -34,25 +35,42 @@ also work on macOS layouts or input paths that do not populate scancodes.
 |----------------|-----------------------------------|
 | Move forward   | Up Arrow, W                       |
 | Move backward  | Down Arrow, S                     |
+| Step left      | A                                 |
+| Step right     | D                                 |
 | Turn left      | Left Arrow, A, Home, Q            |
 | Turn right     | Right Arrow, D, End, E            |
 | Wait (tick)    | Return, Space                     |
+| Next champion  | Tab                               |
+| Pick up facing item | G                            |
+| Drop last picked source item | P                    |
+| Use facing door | U                                |
 
 ## Notes
 
-- Theron has no strafe action: Firestaff maps A/D to the PC Engine
-  left/right direction buttons, which the source runtime consumes as turns.
+- Arrow Left/Right and Home/End/Q/E rotate. A/D use the original lower-panel
+  `$06/$04` side-step commands. The mapping is intentionally different even
+  though A/D also appear as alternate PC Engine D-pad bindings above.
 - Mouse button 1/2 are direct Button I/II bindings. A short touch emits
   Button I; a long touch emits Button II, including during startup.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons) where
   the selected input mode permits gamepad events.
+- Pickup uses the authenticated Track 02 object occurrence and property row
+  on source-backed levels. A successful pickup selects the exact source-backed
+  inventory slot; P can return only that slot to the party's validated square.
+  Changing champion clears the selection. I selects the next source-backed
+  slot for the active champion, so a carried occurrence can be selected again
+  after resume; compact item IDs without provenance are skipped. DROP without
+  a selected source slot remains unavailable. Use operates an existing door in the facing cell;
+  a locked source-level door remains closed until the original T900 key
+  consumer is recovered.
 - F12 = screenshot (engine-global).
 - Theron currently has no usable Firestaff save command in the dungeon:
   `Ctrl+S` and `F5` report `THERON SAVE HANDOFF NOT READY`, and `F9` cannot
   restore a Theron runtime. This is intentional until the authenticated
-  between-dungeon T080 save writer/restore handoff is connected; do not rely
-  on a `.tqsv` file being written from the live dungeon.
+  between-dungeon T080 save writer/restore handoff is connected. The older
+  Firestaff `.tqsv` container remains fixture/tooling data and is neither
+  advertised nor accepted by the production Continue route.
 
 ## Mednafen macOS capture profile
 

@@ -5,7 +5,9 @@
 
 #define THERON_VRAM_SIZE  65536
 #define THERON_VCE_SIZE   1024
+#define THERON_VDC_SAT_SIZE 512
 #define THERON_VRAM_TILE_BYTES 32
+#define THERON_VDC_BAT_MAX_WORDS 4096
 
 int theron_v1_vram_trace_load_raw(Theron_V1_Viewport *vp,
                                   const uint8_t *vram_data, int vram_size,
@@ -34,6 +36,39 @@ int theron_v1_vram_trace_load_known_capture_files(
     Theron_V1_Viewport *vp,
     const char *vram_path,
     const char *vce_path);
+
+/* Retained source-compatible legacy entry point. It always rejects because a
+ * four-file bundle cannot prove a shared VDC producer/snapshot endpoint. */
+int theron_v1_vram_trace_load_known_capture_bundle(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    const char *vdc_state_path,
+    const char *vdc_sat_path);
+
+/* Admit the authenticated 320x200 bundle only when its complete VDC port
+ * stream reproduces every touched word in the same-instant VRAM snapshot. */
+int theron_v1_vram_trace_load_known_atomic_capture_bundle(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    const char *vdc_state_path,
+    const char *vdc_sat_path,
+    const char *vdc_io_path);
+
+/* Admit a known input-bound directional screen only when the complete
+ * original input and transition receipts accompany the exact atomic VDC
+ * bundle. This proves input-to-screen ownership, not party direction or
+ * movement. */
+int theron_v1_vram_trace_load_known_atomic_input_capture_bundle(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    const char *vdc_state_path,
+    const char *vdc_sat_path,
+    const char *vdc_io_path,
+    const char *input_path,
+    const char *transition_path);
 
 int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
                                    const char *tqtr_path);
@@ -66,7 +101,7 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
                                             int dst_x,
                                             int dst_y);
 
-/* Render the authenticated 256x224 screen-space BAT window at the native
+/* Render the authenticated register-bound screen-space BAT window at the
  * framebuffer origin. This is a VDC capture presentation route only: it does
  * not claim a dungeon-square, perspective, HUD or object mapping. */
 int theron_v1_vram_trace_render_authenticated_screen(Theron_V1_Viewport *vp);

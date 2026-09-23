@@ -1,0 +1,154 @@
+diff --git a/src/cdrom/scsicd.h b/src/cdrom/scsicd.h
+--- a/src/cdrom/scsicd.h
++++ b/src/cdrom/scsicd.h
+@@ -99,5 +99,6 @@
+ bool SCSICD_GetLastDataOrigin(uint32 *source_lba, uint16 *source_offset,
+                               uint64 *fifo_sequence);
++unsigned TheronSCSICDReadCommandGeneration(void);
+
+ }
+ #endif
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -68,8 +68,12 @@
+ static bool TrayOpen;
+ static unsigned TheronSCSIReadCommandGeneration;
+ static uint32 TheronSCSIReadCommandStartLBA;
+ static uint32 TheronSCSIReadCommandSectorCount;
++unsigned TheronSCSICDReadCommandGeneration(void)
++{
++ return TheronSCSIReadCommandGeneration;
++}
+
+ struct TheronSCSIDataOrigin
+ {
+  uint32 lba;
+diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -229,7 +229,14 @@
+ static FILE *TheronVDCIOTrace = NULL;
+ static unsigned TheronVDCIOTraceCount = 0;
+ static unsigned TheronVDCIOTraceLimit = 0;
+ static bool TheronVDCIOSnapshotPending = false;
++static FILE *TheronSCSIGenerationVDCTrace = NULL;
++static unsigned TheronSCSIGenerationVDCTraceCount = 0;
++static unsigned TheronSCSIGenerationVDCSnapshotRows = 0;
++static unsigned TheronSCSIGenerationVDCSnapshotTarget = 0;
++static unsigned TheronSCSIGenerationVDCSnapshotRowTarget = 0;
++static bool TheronSCSIGenerationVDCSnapshotTargetInitialized = false;
++static bool TheronSCSIGenerationVDCSnapshotPending = false;
+ static unsigned TheronGetVDCIOTraceLimit(void)
+ {
+  const char *value;
+@@ -237,6 +244,55 @@
+  const char *path;
+  uint16 writer_pc;
+  uint32 writer_physical_pc;
++ const unsigned scsi_generation =
++  Mednafen::TheronSCSICDReadCommandGeneration();
++
++ if(!TheronSCSIGenerationVDCSnapshotTargetInitialized)
++ {
++  const char *target = getenv(
++   "FIRESTAFF_THERON_SCSI_GENERATION_VDC_SNAPSHOT_GENERATION");
++  const char *rows = getenv(
++   "FIRESTAFF_THERON_SCSI_GENERATION_VDC_SNAPSHOT_ROWS");
++  TheronSCSIGenerationVDCSnapshotTarget = target ? strtoul(target, NULL, 10) : 6;
++  TheronSCSIGenerationVDCSnapshotRowTarget = rows ? strtoul(rows, NULL, 10) :
++   (TheronSCSIGenerationVDCSnapshotTarget == 6 ? 16392U :
++    TheronSCSIGenerationVDCSnapshotTarget == 7 ? 4302U : 0U);
++  TheronSCSIGenerationVDCSnapshotTargetInitialized = true;
++ }
++
++ if(scsi_generation >= 5 && TheronSCSIGenerationVDCTraceCount < 524288)
++ {
++  if(!TheronSCSIGenerationVDCTrace)
++  {
++   const char *generation_path = getenv(
++    "FIRESTAFF_THERON_SCSI_GENERATION_VDC_TRACE");
++   if(generation_path && *generation_path)
++   {
++    TheronSCSIGenerationVDCTrace = fopen(generation_path, "w");
++    if(TheronSCSIGenerationVDCTrace)
++     fputs("source=mednafen-pce-instrumented-scsi-generation-vdc\n",
++           TheronSCSIGenerationVDCTrace);
++   }
++  }
++  if(TheronSCSIGenerationVDCTrace)
++  {
++   const uint16 generation_writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++   const uint32 generation_writer_physical_pc =
++    (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (generation_writer_pc >> 13)) << 13) |
++    (generation_writer_pc & 0x1fff);
++   fprintf(TheronSCSIGenerationVDCTrace,
++           "scsi_generation_vdc_write sequence=%u scsi_generation=%u timestamp=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++           TheronSCSIGenerationVDCTraceCount++, scsi_generation,
++           HuCPU.Timestamp(), HuCPU.GetLastLogicalWriteAddr(), physical, value,
++           generation_writer_pc, generation_writer_physical_pc);
++   if(scsi_generation == TheronSCSIGenerationVDCSnapshotTarget &&
++      TheronSCSIGenerationVDCSnapshotRowTarget &&
++      ++TheronSCSIGenerationVDCSnapshotRows ==
++       TheronSCSIGenerationVDCSnapshotRowTarget)
++    TheronSCSIGenerationVDCSnapshotPending = true;
++   fflush(TheronSCSIGenerationVDCTrace);
++  }
++ }
+
+  const unsigned trace_limit = TheronGetVDCIOTraceLimit();
+  if(TheronVDCIOTraceCount >= trace_limit)
+@@ -303,11 +359,46 @@
+ static void TheronTraceVDCIOPostWrite(void)
+ {
+- if(!TheronVDCIOSnapshotPending)
++ if(!TheronVDCIOSnapshotPending &&
++    !TheronSCSIGenerationVDCSnapshotPending)
+   return;
+- TheronVDCIOSnapshotPending = false;
+- TheronDumpGraphicsSnapshot();
+- fprintf(TheronVDCIOTrace,
+-         "vdc_snapshot_boundary sequence=%u timestamp=%u\n",
+-         TheronVDCIOTraceCount, HuCPU.Timestamp());
+- fflush(TheronVDCIOTrace);
++ if(TheronVDCIOSnapshotPending)
++ {
++  TheronVDCIOSnapshotPending = false;
++  TheronDumpGraphicsSnapshot();
++  fprintf(TheronVDCIOTrace,
++          "vdc_snapshot_boundary sequence=%u timestamp=%u\n",
++          TheronVDCIOTraceCount, HuCPU.Timestamp());
++  fflush(TheronVDCIOTrace);
++ }
++ if(TheronSCSIGenerationVDCSnapshotPending)
++ {
++  uint32 generation_vram_hash = 2166136261U;
++  unsigned generation_vram_word;
++  unsigned generation_code_address;
++  TheronSCSIGenerationVDCSnapshotPending = false;
++  TheronGraphicsSnapshotDumped = false;
++  TheronDumpGraphicsSnapshot();
++  for(generation_vram_word = 0x1000; generation_vram_word <= 0x2fff;
++      generation_vram_word++)
++  {
++   const uint16 word = vce->PeekVDCVRAM(0, generation_vram_word);
++   generation_vram_hash ^= word & 0xff;
++   generation_vram_hash *= 16777619U;
++   generation_vram_hash ^= word >> 8;
++   generation_vram_hash *= 16777619U;
++  }
++  fprintf(TheronSCSIGenerationVDCTrace,
++          "scsi_generation_vdc_snapshot_boundary scsi_generation=%u generation_rows=%u sequence=%u timestamp=%u first_vram_word=1000 last_vram_word=2fff vram_words=8192 vram_fnv1a=%08x\n",
++          TheronSCSIGenerationVDCSnapshotTarget,
++          TheronSCSIGenerationVDCSnapshotRows,
++          TheronSCSIGenerationVDCTraceCount, HuCPU.Timestamp(),
++          generation_vram_hash);
++  for(generation_code_address = 0x104600;
++      generation_code_address <= 0x1047ff; generation_code_address++)
++   fprintf(TheronSCSIGenerationVDCTrace,
++           "scsi_generation_vdc_code_byte scsi_generation=%u physical_address=%06x value=%02x\n",
++           TheronSCSIGenerationVDCSnapshotTarget, generation_code_address,
++           PCEDBG_MemPeek(generation_code_address, 1, false, false));
++  fflush(TheronSCSIGenerationVDCTrace);
++ }
+ }

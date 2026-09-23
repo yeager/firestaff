@@ -1,7 +1,7 @@
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
 @@ -7,6 +7,11 @@
- 
+
  namespace MDFN_IEN_PCE
  {
 +void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
@@ -22,7 +22,7 @@
 +static uint16 TheronPCECDMainRAME009ReturnPC;
 +static unsigned TheronPCECDMainRAME009Sequence;
 +static void TheronTracePCECDState(const char *format, ...);
- 
+
 +void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
 +                                      uint8 accumulator, uint8 x, uint8 y)
 +{
@@ -59,7 +59,7 @@
 +                            TheronPCECDDataReadPhysicalPC, ret);
      }
  	    break;
- 
+
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
 @@ -873,10 +873,13 @@

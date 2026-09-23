@@ -22,6 +22,8 @@ fi
 for source in \
     theron_v1_compat.c \
     theron_v1_shop.c \
+    theron_v1_save_load.c \
+    theron_v1_srm_runtime.c \
     theron_v22_shape_cache_pc34.c \
     theron_v22_shapes.c \
     theron_v2_hud_widget_assets_pc34.c \
@@ -54,7 +56,15 @@ if command -v nm >/dev/null 2>&1; then
     for symbol in theron_v1_party_clear_fixture_defaults \
                   theron_v1_first_room_buffer_size \
                   theron_v1_first_room_synthesize \
-                  theron_v1_startup_fallback_room_synthesize; do
+                  theron_v1_startup_fallback_room_synthesize \
+                  theron_v1_save_to_slot \
+                  theron_v1_save_to_slot_with_gold \
+                  theron_v1_save_load_from_slot \
+                  theron_v1_save_load_from_path \
+                  theron_v1_save_import_slot \
+                  theron_v1_save_export_slot \
+                  theron_v1_srm_runtime_export_path \
+                  theron_v1_srm_runtime_continue_path; do
         if awk -v wanted="$symbol" '
             { name = $NF; sub(/^_/, "", name); if (name == wanted) found = 1 }
             END { exit found ? 0 : 1 }
@@ -63,6 +73,16 @@ if command -v nm >/dev/null 2>&1; then
             exit 1
         fi
     done
+fi
+
+# The classifier remains in production for authentic 2 KiB HUBM Backup RAM,
+# but Firestaff's retired fixture-envelope signatures must not survive in the
+# shipped archive, even as diagnostic text.
+if command -v strings >/dev/null 2>&1; then
+    if strings "$archive" | grep -Eq 'FSTQPRG1|FSTQPTY1'; then
+        printf 'FAIL: synthetic Theron save-envelope signature is linked into production\n' >&2
+        exit 1
+    fi
 fi
 
 printf 'PASS: inferred/procedural Theron sources are absent from firestaff_theron\n'

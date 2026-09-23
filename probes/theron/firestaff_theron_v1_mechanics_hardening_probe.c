@@ -75,6 +75,7 @@ static void make_world(Theron_V1_World *w) {
     w->party.leader_y = 8;
     w->party.leader_dir = 0;
     w->party.gold = 1000;
+    w->party.champion_count = THERON_MAX_CHAMPIONS;
 
     for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
         w->party.champions[i].alive = 1;
@@ -280,6 +281,9 @@ static void test_source_pit_blocks(void) {
     make_world(&w);
     w.levels[0][0].source_header_verified = 1;
     w.levels[0][0].squares[8][9] = THERON_SQUARE_PIT;
+    /* A verified level's movement consumer reads the preserved Track 02
+     * byte, not the host square enum. $48 is an open, non-imaginary pit. */
+    w.levels[0][0].source_tiles[8][9] = 0x48u;
     w.party.leader_x = 8;
     w.party.leader_y = 8;
     w.party.champions[0].health = 50;

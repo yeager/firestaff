@@ -329,11 +329,216 @@ static void test_stage2_enclosing_45xx_callees(void)
 {
     Theron_Track02Stage2Enclosing45xxCalleesReceipt receipt;
     Theron_Track02SignalStatus status;
+    uint8_t *mutated;
+    size_t stage2_sector = THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+                           THERON_TRACK02_IPL_STAGE2_RECORD;
+    size_t user_offset =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_USER_OFFSET;
+    size_t raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                        16u + user_offset % 2048u;
 
     status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
         g_us_data, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
     assert(status == THERON_TRACK02_SIGNAL_OK);
     assert(receipt.valid == 1);
+    assert(receipt.l4943_proven == 1);
+    assert(receipt.l4943_mpr_bracket_proven == 1);
+    assert(receipt.l4943_targets_proven == 1);
+    assert(receipt.l49fa_proven == 1);
+    assert(receipt.l49fa_targets_proven == 1);
+    assert(receipt.l4a09_proven == 1);
+    assert(receipt.l4a09_vdc_writes_proven == 1);
+    assert(receipt.l4a09_targets_proven == 1);
+    assert(receipt.l4a84_proven == 1);
+    assert(receipt.l4a84_vdc_writes_proven == 1);
+    assert(receipt.l4a84_targets_proven == 1);
+    assert(receipt.l4b24_proven == 1);
+    assert(receipt.l491f_proven == 1);
+    assert(receipt.l4bb0_proven == 1);
+    assert(receipt.l4bb0_vdc_scroll_writes_proven == 1);
+    assert(receipt.l56de_proven == 1);
+    assert(receipt.l56de_vram_transfer_proven == 1);
+    assert(receipt.l570a_proven == 1);
+    assert(receipt.l50f1_proven == 1);
+    assert(receipt.l50f1_vdc_transfer_proven == 1);
+    assert(receipt.l5111_proven == 1);
+    assert(receipt.l5111_local_targets_proven == 1);
+    assert(receipt.l5111_command_table_proven == 1);
+    assert(receipt.l5111_command_targets_proven == 1);
+    assert(receipt.l533d_proven == 1);
+    assert(receipt.l533d_command_table_proven == 1);
+    assert(receipt.l533d_command_targets_proven == 1);
+    assert(receipt.l55ef_proven == 1);
+    assert(receipt.l55f4_overlap_entry_proven == 1);
+    assert(receipt.l55ff_entry_proven == 1);
+    assert(receipt.l5617_overlap_entry_proven == 1);
+    assert(receipt.l562a_overlap_entry_proven == 1);
+    assert(receipt.l563d_overlap_entry_proven == 1);
+    assert(receipt.l55b6_proven == 1);
+    assert(receipt.l55c8_overlap_entry_proven == 1);
+    assert(receipt.l563d_bbr4_target_proven == 1);
+    assert(receipt.l5e2b_proven == 1);
+    assert(receipt.l5e2b_vdc_register_dispatch_proven == 1);
+    assert(receipt.l5ce4_proven == 1);
+    assert(receipt.l5ce4_buffer_init_proven == 1);
+    mutated = malloc(g_us_size);
+    assert(mutated != NULL && raw_offset < g_us_size);
+    memcpy(mutated, g_us_data, g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_USER_OFFSET +
+                  THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_OFF;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    free(mutated);
+    if (g_jp_data) {
+        status = theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    }
     printf("  PASS: stage2_enclosing_45xx_callees\n");
 }
 
@@ -365,6 +570,69 @@ static void test_stage2_45xx_tier2_callees(void)
     printf("  PASS: stage2_45xx_tier2_callees\n");
 }
 
+static void test_stage2_45xx_tier3_callees(void)
+{
+    Theron_Track02Stage245xxTier3CalleesReceipt receipt;
+    Theron_Track02SignalStatus status;
+    uint8_t *mutated;
+    size_t stage2_sector = THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+                           THERON_TRACK02_IPL_STAGE2_RECORD;
+    size_t user_offset =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_USER_OFFSET;
+    size_t raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                        16u + user_offset % 2048u;
+
+    status = theron_v1_track02_verify_stage2_45xx_tier3_callees(
+        g_us_data, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.valid == 1);
+    assert(receipt.l4215_proven == 1);
+    assert(receipt.l4417_proven == 1);
+    assert(receipt.l44a2_proven == 1);
+    assert(receipt.l42db_proven == 1);
+    assert(receipt.l4519_proven == 1);
+    assert(receipt.local_subroutines_proven == 1);
+    assert(receipt.caller_targets_proven == 1);
+    assert(receipt.existing_callee_targets_proven == 1);
+    assert(receipt.adjacency_proven == 1);
+    assert(receipt.tier3_bound_bytes ==
+           THERON_TRACK02_IPL_STAGE2_45XX_TIER3_BOUND_BYTES);
+
+    mutated = malloc(g_us_size);
+    assert(mutated != NULL && raw_offset < g_us_size);
+    memcpy(mutated, g_us_data, g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_45xx_tier3_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_45xx_tier3_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    memcpy(mutated, g_us_data, g_us_size);
+    user_offset = THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_USER_OFFSET;
+    raw_offset = (stage2_sector + user_offset / 2048u) * 2352u +
+                 16u + user_offset % 2048u;
+    assert(raw_offset < g_us_size);
+    mutated[raw_offset] ^= 1u;
+    status = theron_v1_track02_verify_stage2_45xx_tier3_callees(
+        mutated, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    free(mutated);
+
+    if (g_jp_data) {
+        status = theron_v1_track02_verify_stage2_45xx_tier3_callees(
+            g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+        assert(status == THERON_TRACK02_SIGNAL_NOT_FOUND);
+    }
+    printf("  PASS: stage2_45xx_tier3_callees\n");
+}
+
 static void test_total_bound_bytes(void)
 {
     size_t total = 0;
@@ -381,6 +649,7 @@ static void test_total_bound_bytes(void)
     total += THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES;
     total += THERON_TRACK02_IPL_STAGE2_L3114_TIER5_BOUND_BYTES;
     total += THERON_TRACK02_IPL_STAGE2_45XX_TIER2_BOUND_BYTES;
+    total += THERON_TRACK02_IPL_STAGE2_45XX_TIER3_BOUND_BYTES;
 
     assert(total > 2048u);
     printf("  PASS: total_bound_bytes = %zu (%.1f%% of stage-2 image)\n",
@@ -596,6 +865,7 @@ static void test_vdc_cr_write_l4932(void)
         g_us_data, g_us_size, THERON_TRACK02_MD5_US_BIN, &receipt);
     assert(status == THERON_TRACK02_SIGNAL_OK);
     assert(receipt.l4932_proven == 1);
+    assert(receipt.l491f_proven == 1);
 
     /* ST0 #$05: select CR */
     assert(l4932[0] == 0x03 && l4932[1] == 0x05);
@@ -634,6 +904,7 @@ int main(void)
     test_stage2_enclosing_45xx_callees();
     test_stage2_l3114_tier5_callees();
     test_stage2_45xx_tier2_callees();
+    test_stage2_45xx_tier3_callees();
     test_total_bound_bytes();
     test_vdc_port_clear_semantics();
     test_vdc_l8000_init_semantics();

@@ -16,8 +16,8 @@
  */
 
 #include "theron_v1_world.h"
-#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_item_categories.h"
+#include "theron_v1_track19_record_window.h"
 #include "theron_v1_track02_creature_names.h"
 #include "theron_v1_combat.h"
 #include "theron_v1_track02.h"
@@ -27,8 +27,10 @@
 #include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_creature_spawn.h"
 #include "theron_v1_track02_text_decode.h"
+#include "theron_v1_track02_ground_ref.h"
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
 
 #define THERON_LEGACY_GENERATOR_RUNTIME_SLOTS 5u
 #include <stdio.h>
@@ -105,7 +107,10 @@ static void ww64(uint8_t *p, uint64_t value) {
 
 #define THERON_INVENTORY_SOURCE_WIRE_BYTES_V6 31u
 #define THERON_INVENTORY_SOURCE_WIRE_BYTES_V7 48u
-#define THERON_OBJECT_WIRE_BYTES 86u
+#define THERON_INVENTORY_SOURCE_WIRE_BYTES_V12 49u
+#define THERON_INVENTORY_SOURCE_WIRE_BYTES_V13 54u
+#define THERON_OBJECT_WIRE_BYTES_V12 86u
+#define THERON_OBJECT_WIRE_BYTES_V13 91u
 #define THERON_TIMER_WIRE_BYTES 24u
 #define THERON_CREATURE_WIRE_BYTES_V7 87u
 #define THERON_CREATURE_WIRE_BYTES_V8 88u
@@ -114,6 +119,166 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_GENERATOR_WIRE_BYTES 32u
 #define THERON_GENERATOR_WIRE_BYTES_V6 36u
 #define THERON_SOURCE_OBJECT_WIRE_BYTES 41u
+#define THERON_SOURCE_ACTUATOR_EVENT_WIRE_BYTES 27u
+#define THERON_SOURCE_SQUARE_STATE_WIRE_BYTES 7u
+#define THERON_SOURCE_OBJECT_STATE_WIRE_BYTES 11u
+#define THERON_SOURCE_MONSTER_WIRE_BYTES 55u
+
+static uint8_t *theron_source_monster_write(
+    uint8_t *out, const Theron_V1_SourceMonsterRecord *record) {
+    ww32(out, (uint32_t)record->dungeon_id); out += 4;
+    ww32(out, (uint32_t)record->level); out += 4;
+    ww32(out, (uint32_t)record->x); out += 4;
+    ww32(out, (uint32_t)record->y); out += 4;
+    ww16(out, record->source_ref); out += 2;
+    ww16(out, record->source_index); out += 2;
+    ww16(out, (uint16_t)record->chested); out += 2;
+    *out++ = record->type;
+    *out++ = record->position;
+    *out++ = record->number;
+    *out++ = record->direction_flags;
+    ww16(out, record->flags_word); out += 2;
+    ww16(out, record->unknown_word); out += 2;
+    for (unsigned int i = 0; i < 4u; ++i) {
+        ww16(out, record->health[i]); out += 2;
+    }
+    *out++ = record->raw_size;
+    memcpy(out, record->raw, sizeof(record->raw));
+    return out + sizeof(record->raw);
+}
+
+static const uint8_t *theron_source_monster_read(
+    const uint8_t *in, Theron_V1_SourceMonsterRecord *record) {
+    memset(record, 0, sizeof(*record));
+    record->dungeon_id = (int32_t)rw32(in); in += 4;
+    record->level = (int32_t)rw32(in); in += 4;
+    record->x = (int32_t)rw32(in); in += 4;
+    record->y = (int32_t)rw32(in); in += 4;
+    record->source_ref = rw16(in); in += 2;
+    record->source_index = rw16(in); in += 2;
+    record->chested = (int16_t)rw16(in); in += 2;
+    record->type = *in++;
+    record->position = *in++;
+    record->number = *in++;
+    record->direction_flags = *in++;
+    record->flags_word = rw16(in); in += 2;
+    record->unknown_word = rw16(in); in += 2;
+    for (unsigned int i = 0; i < 4u; ++i) {
+        record->health[i] = rw16(in); in += 2;
+    }
+    record->raw_size = *in++;
+    memcpy(record->raw, in, sizeof(record->raw));
+    return in + sizeof(record->raw);
+}
+
+static int theron_source_monster_raw_matches(
+    const Theron_V1_SourceMonsterRecord *record) {
+    uint16_t flags;
+    if (!record) return 0;
+    /* Source records admitted before their raw occurrence was attached may
+     * legitimately have no raw payload.  Once the 16 authenticated bytes
+     * are present, every decoded field must agree with them. */
+    if (record->raw_size == 0u) return 1;
+    if (record->raw_size != sizeof(record->raw)) return 0;
+    flags = (uint16_t)record->raw[14] |
+            ((uint16_t)record->raw[15] << 8);
+    if ((int16_t)rw16(record->raw + 2) != record->chested ||
+        record->raw[4] != record->type ||
+        record->raw[5] != record->position ||
+        flags != record->flags_word ||
+        ((flags >> 5) & 3u) != record->number ||
+        record->raw[15] != record->direction_flags ||
+        record->unknown_word != 0u)
+        return 0;
+    for (unsigned int i = 0; i < 4u; ++i)
+        if (rw16(record->raw + 6u + i * 2u) != record->health[i]) return 0;
+    return 1;
+}
+
+static uint8_t *theron_source_actuator_event_write(
+    uint8_t *out, const Theron_V1_SourceActuatorEvent *event) {
+    ww64(out, event->due_tick); out += 8;
+    ww16(out, event->source_ref); out += 2;
+    ww16(out, event->source_index); out += 2;
+    ww16(out, (uint16_t)event->dungeon_id); out += 2;
+    ww16(out, (uint16_t)event->level); out += 2;
+    *out++ = event->source_x;
+    *out++ = event->source_y;
+    *out++ = event->target_x;
+    *out++ = event->target_y;
+    *out++ = event->target_facing;
+    *out++ = event->effect;
+    *out++ = event->local_effect;
+    *out++ = event->sound;
+    *out++ = event->delay;
+    ww16(out, event->local_multiple); out += 2;
+    return out;
+}
+
+static const uint8_t *theron_source_actuator_event_read(
+    const uint8_t *in, Theron_V1_SourceActuatorEvent *event) {
+    memset(event, 0, sizeof(*event));
+    event->due_tick = rw64(in); in += 8;
+    event->source_ref = rw16(in); in += 2;
+    event->source_index = rw16(in); in += 2;
+    event->dungeon_id = (int16_t)rw16(in); in += 2;
+    event->level = (int16_t)rw16(in); in += 2;
+    event->source_x = *in++;
+    event->source_y = *in++;
+    event->target_x = *in++;
+    event->target_y = *in++;
+    event->target_facing = *in++;
+    event->effect = *in++;
+    event->local_effect = *in++;
+    event->sound = *in++;
+    event->delay = *in++;
+    event->local_multiple = rw16(in); in += 2;
+    return in;
+}
+
+static uint8_t *theron_source_square_state_write(
+    uint8_t *out, const Theron_V1_SourceSquareState *state) {
+    ww16(out, (uint16_t)state->dungeon_id); out += 2;
+    ww16(out, (uint16_t)state->level); out += 2;
+    *out++ = state->x;
+    *out++ = state->y;
+    *out++ = state->tile;
+    return out;
+}
+
+static const uint8_t *theron_source_square_state_read(
+    const uint8_t *in, Theron_V1_SourceSquareState *state) {
+    memset(state, 0, sizeof(*state));
+    state->dungeon_id = (int16_t)rw16(in); in += 2;
+    state->level = (int16_t)rw16(in); in += 2;
+    state->x = *in++;
+    state->y = *in++;
+    state->tile = *in++;
+    return in;
+}
+
+static uint8_t *theron_source_object_state_write(
+    uint8_t *out, const Theron_V1_SourceObjectState *state) {
+    ww16(out, (uint16_t)state->dungeon_id); out += 2;
+    ww16(out, (uint16_t)state->level); out += 2;
+    ww16(out, state->source_ref); out += 2;
+    ww16(out, state->source_index); out += 2;
+    ww16(out, state->word); out += 2;
+    *out++ = state->category;
+    return out;
+}
+
+static const uint8_t *theron_source_object_state_read(
+    const uint8_t *in, Theron_V1_SourceObjectState *state) {
+    memset(state, 0, sizeof(*state));
+    state->dungeon_id = (int16_t)rw16(in); in += 2;
+    state->level = (int16_t)rw16(in); in += 2;
+    state->source_ref = rw16(in); in += 2;
+    state->source_index = rw16(in); in += 2;
+    state->word = rw16(in); in += 2;
+    state->category = *in++;
+    return in;
+}
 
 static size_t theron_generator_wire_size(void) {
     return THERON_GENERATOR_WIRE_BYTES_V6;
@@ -179,10 +344,10 @@ static uint8_t *theron_generator_write(
     *out++ = record->type;
     ww16(out, record->value); out += 2;
     *out++ = record->once;
-    *out++ = record->effect;
+    *out++ = (uint8_t)(record->effect | (record->revert_effect << 2));
     *out++ = record->sound;
     *out++ = record->delay;
-    *out++ = record->inactive;
+    *out++ = record->local_effect;
     *out++ = record->graphism;
     *out++ = record->target_x;
     *out++ = record->target_y;
@@ -207,10 +372,14 @@ static const uint8_t *theron_generator_read(
     record->type = *in++;
     record->value = rw16(in); in += 2;
     record->once = *in++;
-    record->effect = *in++;
+    {
+        uint8_t packed_effect = *in++;
+        record->effect = (uint8_t)(packed_effect & 3u);
+        record->revert_effect = (uint8_t)((packed_effect >> 2) & 1u);
+    }
     record->sound = *in++;
     record->delay = *in++;
-    record->inactive = *in++;
+    record->local_effect = *in++;
     record->graphism = *in++;
     record->target_x = *in++;
     record->target_y = *in++;
@@ -224,8 +393,13 @@ static const uint8_t *theron_generator_read(
     return in;
 }
 
+static size_t theron_object_wire_size_for_version(uint16_t version) {
+    return version >= 13u ? THERON_OBJECT_WIRE_BYTES_V13 :
+                            THERON_OBJECT_WIRE_BYTES_V12;
+}
+
 static size_t theron_object_wire_size(void) {
-    return THERON_OBJECT_WIRE_BYTES;
+    return theron_object_wire_size_for_version(THERON_WORLD_SAVE_VERSION);
 }
 
 static uint8_t *theron_object_write(uint8_t *out,
@@ -246,6 +420,11 @@ static uint8_t *theron_object_write(uint8_t *out,
     ww16(out, object->source_index); out += 2;
     *out++ = object->source_category;
     *out++ = object->source_position;
+    *out++ = object->source_origin_valid;
+    *out++ = object->source_dungeon;
+    *out++ = object->source_level;
+    *out++ = object->source_x;
+    *out++ = object->source_y;
     *out++ = object->source_raw_size;
     memcpy(out, object->source_raw, sizeof(object->source_raw)); out += 16;
     *out++ = object->source_item_type;
@@ -267,7 +446,7 @@ static uint8_t *theron_object_write(uint8_t *out,
 }
 
 static const uint8_t *theron_object_read(
-    const uint8_t *in, Theron_V1_Object *object) {
+    const uint8_t *in, Theron_V1_Object *object, uint16_t version) {
     memset(object, 0, sizeof(*object));
     object->id = (int32_t)rw32(in); in += 4;
     object->type = *in++;
@@ -285,6 +464,13 @@ static const uint8_t *theron_object_read(
     object->source_index = rw16(in); in += 2;
     object->source_category = *in++;
     object->source_position = *in++;
+    if (version >= 13u) {
+        object->source_origin_valid = *in++;
+        object->source_dungeon = *in++;
+        object->source_level = *in++;
+        object->source_x = *in++;
+        object->source_y = *in++;
+    }
     object->source_raw_size = *in++;
     memcpy(object->source_raw, in, sizeof(object->source_raw)); in += 16;
     object->source_item_type = *in++;
@@ -414,7 +600,9 @@ static const uint8_t *theron_creature_read(
 }
 
 static size_t theron_inventory_source_wire_size_for_version(uint16_t version) {
-    size_t bytes = version >= 7u ? THERON_INVENTORY_SOURCE_WIRE_BYTES_V7
+    size_t bytes = version >= 13u ? THERON_INVENTORY_SOURCE_WIRE_BYTES_V13 :
+                   version >= 12u ? THERON_INVENTORY_SOURCE_WIRE_BYTES_V12 :
+                   version >= 7u ? THERON_INVENTORY_SOURCE_WIRE_BYTES_V7
                                  : THERON_INVENTORY_SOURCE_WIRE_BYTES_V6;
     return (size_t)THERON_MAX_CHAMPIONS * THERON_INVENTORY_SLOTS * bytes;
 }
@@ -484,6 +672,12 @@ static uint8_t *theron_inventory_source_write(
     ww16(out, record->source_ref); out += sizeof(uint16_t);
     ww16(out, record->source_next_ref); out += sizeof(uint16_t);
     ww16(out, record->source_index); out += sizeof(uint16_t);
+    *out++ = record->source_position;
+    *out++ = record->source_origin_valid;
+    *out++ = record->source_dungeon;
+    *out++ = record->source_level;
+    *out++ = record->source_x;
+    *out++ = record->source_y;
     ww16(out, record->text_ref); out += sizeof(uint16_t);
     ww16(out, (uint16_t)record->chested); out += sizeof(uint16_t);
     ww16(out, record->data1); out += sizeof(uint16_t);
@@ -514,6 +708,15 @@ static const uint8_t *theron_inventory_source_read(
     record->source_ref = rw16(in); in += sizeof(uint16_t);
     record->source_next_ref = rw16(in); in += sizeof(uint16_t);
     record->source_index = rw16(in); in += sizeof(uint16_t);
+    record->source_position = version >= 12u ? *in++ :
+        (uint8_t)theron_ref_position(record->source_ref);
+    if (version >= 13u) {
+        record->source_origin_valid = *in++;
+        record->source_dungeon = *in++;
+        record->source_level = *in++;
+        record->source_x = *in++;
+        record->source_y = *in++;
+    }
     record->text_ref = rw16(in); in += sizeof(uint16_t);
     record->chested = (int16_t)rw16(in); in += sizeof(uint16_t);
     record->data1 = rw16(in); in += sizeof(uint16_t);
@@ -543,9 +746,16 @@ static const uint8_t *theron_inventory_source_read(
  * Source: THQUEST.ASM T800
  */
 
+enum { THERON_PARTY_CONTROL_WIRE_BYTES_V14 = 22 };
+
+static size_t _tqw_party_pack_size_for_version(uint16_t version) {
+    size_t size = (size_t)THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)
+                  + sizeof(uint32_t);
+    return version >= 14u ? size + THERON_PARTY_CONTROL_WIRE_BYTES_V14 : size;
+}
+
 static size_t _tqw_party_pack_size(void) {
-    return (size_t)THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)
-           + sizeof(uint32_t);   /* gold field follows champions in save layout */
+    return _tqw_party_pack_size_for_version(THERON_WORLD_SAVE_VERSION);
 }
 
 static size_t __attribute__((unused)) _tqw_champion_block_size (void) {
@@ -568,11 +778,21 @@ size_t _tqw_party_pack(const Theron_V1_Party *p, void *buf, size_t bufsize) {
         memcpy(out, &p->champions[i], sizeof(p->champions[i]));
         out += sizeof(p->champions[i]);
     }
+    ww32(out, (uint32_t)p->champion_count); out += 4;
+    ww32(out, (uint32_t)p->active_slot); out += 4;
+    ww16(out, (uint16_t)p->leader_x); out += 2;
+    ww16(out, (uint16_t)p->leader_y); out += 2;
+    *out++ = (uint8_t)p->leader_dir;
+    *out++ = 0u;
+    ww32(out, (uint32_t)p->levitating); out += 4;
+    ww32(out, (uint32_t)p->door_state_override); out += 4;
     return need;
 }
 
-int _tqw_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
-    if (!p || !buf || bufsize < _tqw_party_pack_size()) return -1;
+static int _tqw_party_unpack(Theron_V1_Party *p, const void *buf,
+                             size_t bufsize, uint16_t version) {
+    size_t need = _tqw_party_pack_size_for_version(version);
+    if (!p || !buf || bufsize < need) return -1;
     const uint8_t *in = (const uint8_t *)buf;
     p->gold = rw32(in);
     in += sizeof(uint32_t);
@@ -580,7 +800,26 @@ int _tqw_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
         memcpy(&p->champions[i], in, sizeof(p->champions[i]));
         in += sizeof(p->champions[i]);
     }
-    p->champion_count = THERON_MAX_CHAMPIONS;
+    if (version >= 14u) {
+        p->champion_count = (int32_t)rw32(in); in += 4;
+        p->active_slot = (int32_t)rw32(in); in += 4;
+        p->leader_x = (int16_t)rw16(in); in += 2;
+        p->leader_y = (int16_t)rw16(in); in += 2;
+        p->leader_dir = (int8_t)*in++;
+        ++in;
+        p->levitating = (int32_t)rw32(in); in += 4;
+        p->door_state_override = (int32_t)rw32(in);
+        if (p->champion_count < 0 ||
+            p->champion_count > THERON_MAX_CHAMPIONS ||
+            (p->champion_count == 0 &&
+             p->active_slot != -1 &&
+             p->active_slot != THERON_CHAMPION_SLOT_THERON) ||
+            (p->champion_count > 0 &&
+             (p->active_slot < 0 || p->active_slot >= p->champion_count)) ||
+            p->leader_dir < 0 || p->leader_dir >= 4) return -1;
+    } else {
+        p->champion_count = THERON_MAX_CHAMPIONS;
+    }
     return 0;
 }
 
@@ -627,12 +866,21 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
     world->track02_spawn_source_variant = 0;
     world->source_generator_count    = 0;
     world->source_object_count       = 0;
+    world->source_actuator_event_count = 0;
+    world->source_square_state_count = 0;
+    world->source_object_state_count = 0;
     world->timer_count               = 0;
     memset(world->objects, 0, sizeof(world->objects));
     memset(world->creatures, 0, sizeof(world->creatures));
     memset(world->source_monsters, 0, sizeof(world->source_monsters));
     memset(world->source_generators, 0, sizeof(world->source_generators));
     memset(world->source_objects, 0, sizeof(world->source_objects));
+    memset(world->source_actuator_events, 0,
+           sizeof(world->source_actuator_events));
+    memset(world->source_square_states, 0,
+           sizeof(world->source_square_states));
+    memset(world->source_object_states, 0,
+           sizeof(world->source_object_states));
     memset(world->timers,  0, sizeof(world->timers));
 }
 
@@ -779,6 +1027,51 @@ static void theron_v1_remove_source_records_for_dungeon(
         memset(&world->source_objects[i], 0,
                sizeof(world->source_objects[i]));
     world->source_object_count = write_index;
+
+    write_index = 0;
+    for (unsigned int i = 0; i < world->source_actuator_event_count; ++i) {
+        if (world->source_actuator_events[i].dungeon_id == dungeon_id)
+            continue;
+        if (write_index != i)
+            world->source_actuator_events[write_index] =
+                world->source_actuator_events[i];
+        ++write_index;
+    }
+    for (unsigned int i = write_index;
+         i < world->source_actuator_event_count; ++i)
+        memset(&world->source_actuator_events[i], 0,
+               sizeof(world->source_actuator_events[i]));
+    world->source_actuator_event_count = write_index;
+
+    write_index = 0;
+    for (unsigned int i = 0; i < world->source_square_state_count; ++i) {
+        if (world->source_square_states[i].dungeon_id == dungeon_id)
+            continue;
+        if (write_index != i)
+            world->source_square_states[write_index] =
+                world->source_square_states[i];
+        ++write_index;
+    }
+    for (unsigned int i = write_index;
+         i < world->source_square_state_count; ++i)
+        memset(&world->source_square_states[i], 0,
+               sizeof(world->source_square_states[i]));
+    world->source_square_state_count = write_index;
+
+    write_index = 0;
+    for (unsigned int i = 0; i < world->source_object_state_count; ++i) {
+        if (world->source_object_states[i].dungeon_id == dungeon_id)
+            continue;
+        if (write_index != i)
+            world->source_object_states[write_index] =
+                world->source_object_states[i];
+        ++write_index;
+    }
+    for (unsigned int i = write_index;
+         i < world->source_object_state_count; ++i)
+        memset(&world->source_object_states[i], 0,
+               sizeof(world->source_object_states[i]));
+    world->source_object_state_count = write_index;
 }
 
 static void theron_v1_remove_objects_for_dungeon(
@@ -879,7 +1172,9 @@ int theron_v1_world_load_track02_dungeon(
         int has_entrance = 0;
         for (unsigned int x = 0; x < w && x < THERON_MAX_MAP_SIZE; x++) {
             for (unsigned int y = 0; y < h && y < THERON_MAX_MAP_SIZE; y++) {
-                uint8_t sq = track02_tile_to_square(tm->tiles[x][y]);
+                uint8_t source_tile = tm->tiles[x][y];
+                uint8_t sq = track02_tile_to_square(source_tile);
+                lv->source_tiles[y][x] = source_tile;
                 lv->squares[y][x] = sq;
                 if (sq == THERON_SQUARE_FLOOR && !has_entrance) {
                     lv->start_x = (int16_t)x;
@@ -899,6 +1194,79 @@ int theron_v1_world_load_track02_dungeon(
 
 /* ── Square query ─────────────────────────────────────────────────── */
 
+int theron_v1_world_track02_runtime_tile(
+    const Theron_V1_World *world, int dungeon_id, int level, int x, int y,
+    uint8_t *out_tile)
+{
+    const Theron_V1_Level *map;
+    if (!world || !out_tile || dungeon_id < 1 ||
+        dungeon_id > THERON_DUNGEON_COUNT || level < 0 ||
+        level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[dungeon_id - 1][level])
+        return 0;
+    map = &world->levels[dungeon_id - 1][level];
+    if (!map->source_header_verified || x < 0 || x >= map->width || y < 0 ||
+        y >= map->height)
+        return 0;
+    for (unsigned int i = 0; i < world->source_square_state_count; ++i) {
+        const Theron_V1_SourceSquareState *state =
+            &world->source_square_states[i];
+        if (state->dungeon_id == dungeon_id && state->level == level &&
+            state->x == x && state->y == y) {
+            const uint8_t source_tile = map->source_tiles[y][x];
+            const uint8_t family = source_tile >> 5;
+            const uint8_t mutable_mask = family == THERON_TILE_PIT ? 0x08u :
+                family == THERON_TILE_FAKEWALL ? 0x04u : 0u;
+            if (!mutable_mask || (state->tile >> 5) != family ||
+                ((state->tile ^ source_tile) & (uint8_t)~mutable_mask) != 0u)
+                return 0;
+            *out_tile = state->tile;
+            return 1;
+        }
+    }
+    *out_tile = map->source_tiles[y][x];
+    return 1;
+}
+
+int theron_v1_world_track02_runtime_object_word(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceObjectRecord *source, uint16_t *out_word)
+{
+    int source_verified = 0;
+    if (!world || !source || !out_word || source->raw_size < 4u)
+        return 0;
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *candidate =
+            &world->source_objects[i];
+        if (candidate->dungeon_id == source->dungeon_id &&
+            candidate->level == source->level &&
+            candidate->source_ref == source->source_ref &&
+            candidate->source_index == source->source_index &&
+            candidate->category == source->category &&
+            candidate->raw_size == source->raw_size &&
+            memcmp(candidate->raw, source->raw, source->raw_size) == 0) {
+            source_verified = 1;
+            break;
+        }
+    }
+    if (!source_verified) return 0;
+    for (unsigned int i = 0; i < world->source_object_state_count; ++i) {
+        const Theron_V1_SourceObjectState *state =
+            &world->source_object_states[i];
+        if (state->dungeon_id == source->dungeon_id &&
+            state->level == source->level &&
+            state->source_ref == source->source_ref &&
+            state->source_index == source->source_index &&
+            state->category == source->category) {
+            *out_word = state->word;
+            return 1;
+        }
+    }
+    *out_word = (uint16_t)source->raw[2] |
+                ((uint16_t)source->raw[3] << 8);
+    return 1;
+}
+
 uint8_t theron_v1_world_get_square(const Theron_V1_World *world, int x, int y) {
     if (!world) return THERON_SQUARE_WALL;
     int did = world->current_dungeon;
@@ -909,6 +1277,13 @@ uint8_t theron_v1_world_get_square(const Theron_V1_World *world, int x, int y) {
     const Theron_V1_Level *lv = &world->levels[did - 1][lvl];
     if (x < 0 || x >= lv->width  || y < 0 || y >= lv->height) {
         return THERON_SQUARE_WALL;
+    }
+    if ((lv->source_tiles[y][x] >> 5) == THERON_TILE_FAKEWALL) {
+        uint8_t runtime_tile;
+        if (theron_v1_world_track02_runtime_tile(
+                world, did, lvl, x, y, &runtime_tile))
+            return (runtime_tile & 0x04u) ? THERON_SQUARE_FLOOR :
+                                            THERON_SQUARE_SECRET;
     }
     return lv->squares[y][x];
 }
@@ -983,11 +1358,31 @@ const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
  * Source layout: DMBUILDER6/src/dms.h:69-176, decoded by
  * theron_v1_track02_item_record_decode(). */
 static int theron_v1_inventory_source_record_matches(
+    const Theron_V1_World *world,
     const Theron_V1_InventorySourceRecord *carried) {
     Theron_Track02ItemRecord record;
-    const Theron_ItemPropertyRecord *property;
+    const Theron_Track02ItemNameSource *item_source = NULL;
+    int source_occurrence_found = 0;
+
+    if (world && carried && carried->source_origin_valid &&
+        carried->source_dungeon >= 1u &&
+        carried->source_dungeon <= THERON_DUNGEON_COUNT) {
+        item_source =
+            &world->track02_item_names[carried->source_dungeon - 1u];
+    }
 
     if (!carried || !carried->valid || carried->source_ref == 0u ||
+        carried->source_position > 3u ||
+        carried->source_origin_valid > 1u ||
+        (carried->source_origin_valid &&
+         (carried->source_dungeon < 1u ||
+          carried->source_dungeon > THERON_DUNGEON_COUNT ||
+          carried->source_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+          carried->source_x >= THERON_MAX_MAP_SIZE ||
+          carried->source_y >= THERON_MAX_MAP_SIZE)) ||
+        theron_ref_position(carried->source_ref) != carried->source_position ||
+        theron_ref_category(carried->source_ref) != carried->category ||
+        theron_ref_id(carried->source_ref) != carried->source_index ||
         carried->source_raw_size == 0u ||
         carried->source_raw_size > sizeof(carried->source_raw) ||
         !theron_v1_track02_item_record_decode(
@@ -1003,17 +1398,37 @@ static int theron_v1_inventory_source_record_matches(
            carried->category == THERON_CAT_POTION) &&
           carried->item_category != THERON_ITEM_CAT_CONSUMABLE) ||
          (carried->category == THERON_CAT_MISC &&
-          carried->item_category != THERON_ITEM_CAT_COMPASS &&
-          carried->item_category != THERON_ITEM_CAT_WEAPON &&
-          carried->item_category != THERON_ITEM_CAT_ARMOR &&
-          carried->item_category != THERON_ITEM_CAT_CONSUMABLE)) ||
-        (carried->category == THERON_CAT_MISC &&
-         carried->item_type >= theron_v1_track02_item_category_count()) ||
-        carried->item_type >= theron_v1_track02_item_property_count() ||
-        !(property = theron_v1_track02_item_property(carried->item_type)) ||
-        memcmp(carried->property, property,
+          carried->item_category != THERON_ITEM_CAT_SOURCE_MISC)) ||
+        carried->item_type >= THERON_TRACK02_ITEM_SLOT_COUNT ||
+        !item_source || !item_source->valid ||
+        item_source->dungeon_id != carried->source_dungeon ||
+        memcmp(carried->property,
+               item_source->raw_properties[carried->item_type],
                sizeof(carried->property)) != 0) {
         return 0;
+    }
+    if (world && theron_v1_world_source_level_verified(world)) {
+        for (unsigned int i = 0u; i < world->source_object_count; ++i) {
+            const Theron_V1_SourceObjectRecord *source =
+                &world->source_objects[i];
+            if (source->source_ref == carried->source_ref &&
+                source->next_ref == carried->source_next_ref &&
+                source->source_index == carried->source_index &&
+                source->category == carried->category &&
+                source->position == carried->source_position &&
+                (!carried->source_origin_valid ||
+                 (source->dungeon_id == carried->source_dungeon &&
+                  source->level == carried->source_level &&
+                  source->x == carried->source_x &&
+                  source->y == carried->source_y)) &&
+                source->raw_size == carried->source_raw_size &&
+                memcmp(source->raw, carried->source_raw,
+                       source->raw_size) == 0) {
+                source_occurrence_found = 1;
+                break;
+            }
+        }
+        if (!source_occurrence_found) return 0;
     }
     switch (carried->category) {
     case THERON_CAT_WEAPON:
@@ -1039,9 +1454,7 @@ static int theron_v1_inventory_source_record_matches(
                record.value.potion.keep == carried->keep;
     case THERON_CAT_MISC:
         return record.value.misc.type == carried->item_type &&
-               record.value.misc.keep == carried->keep &&
-               theron_v1_track02_item_category(carried->item_type) ==
-                   carried->item_category;
+               record.value.misc.keep == carried->keep;
     default:
         return 0;
     }
@@ -1070,9 +1483,9 @@ int theron_v1_swap_inventory_source_slots(
          * empty slot. Never carry a compact ID without its authenticated row. */
         if (!theron_v1_world_source_item_table_verified(world) ||
             (champion->inventory[inventory_slot_a] != THERON_ITEM_NONE &&
-             !theron_v1_inventory_source_record_matches(a)) ||
+             !theron_v1_inventory_source_record_matches(world, a)) ||
             (champion->inventory[inventory_slot_b] != THERON_ITEM_NONE &&
-             !theron_v1_inventory_source_record_matches(b)) ||
+             !theron_v1_inventory_source_record_matches(world, b)) ||
             (champion->inventory[inventory_slot_a] == THERON_ITEM_NONE &&
              a->valid) ||
             (champion->inventory[inventory_slot_b] == THERON_ITEM_NONE &&
@@ -1100,6 +1513,7 @@ int theron_v1_drop_inventory_source_item(
     int y) {
     const Theron_V1_InventorySourceRecord *carried;
     Theron_V1_Object object;
+    Theron_V1_Object *source_occurrence = NULL;
 
     if (!world || champion_slot < 0 || champion_slot >= THERON_MAX_CHAMPIONS ||
         inventory_slot < 0 || inventory_slot >= THERON_INVENTORY_SLOTS ||
@@ -1111,7 +1525,7 @@ int theron_v1_drop_inventory_source_item(
         return -1;
     if (theron_v1_world_source_level_verified(world) &&
         (!carried->property_valid ||
-         !theron_v1_inventory_source_record_matches(carried) ||
+         !theron_v1_inventory_source_record_matches(world, carried) ||
          !theron_v1_world_source_item_table_verified(world) ||
          carried->item_type !=
              world->party.champions[champion_slot].inventory[inventory_slot])) {
@@ -1141,6 +1555,14 @@ int theron_v1_drop_inventory_source_item(
     object.source_next_ref = carried->source_next_ref;
     object.source_index = carried->source_index;
     object.source_category = carried->category;
+    object.source_position = carried->source_position;
+    object.source_origin_valid = carried->source_origin_valid;
+    object.source_dungeon = carried->source_dungeon;
+    object.source_level = carried->source_level;
+    object.source_x = carried->source_x;
+    object.source_y = carried->source_y;
+    object.flags = (uint32_t)carried->source_position <<
+                   THERON_OBJ_F_SOURCE_POSITION_SHIFT;
     object.source_item_type = carried->item_type;
     object.source_keep = carried->keep;
     object.source_cursed = carried->cursed;
@@ -1158,15 +1580,42 @@ int theron_v1_drop_inventory_source_item(
            sizeof(object.source_property));
     object.source_raw_size = carried->source_raw_size;
     memcpy(object.source_raw, carried->source_raw, sizeof(object.source_raw));
-    if (theron_v1_object_place(world, &object) != 0)
+    for (int i = 0; i < world->object_count; ++i) {
+        Theron_V1_Object *candidate = &world->objects[i];
+        if ((candidate->flags & THERON_OBJ_F_PICKED_UP) &&
+            !(candidate->flags & THERON_OBJ_F_DESTROYED) &&
+            candidate->source_ref == carried->source_ref &&
+            candidate->source_next_ref == carried->source_next_ref &&
+            candidate->source_index == carried->source_index &&
+            candidate->source_category == carried->category &&
+            candidate->source_position == carried->source_position &&
+            candidate->source_origin_valid == carried->source_origin_valid &&
+            (!carried->source_origin_valid ||
+             (candidate->source_dungeon == carried->source_dungeon &&
+              candidate->source_level == carried->source_level &&
+              candidate->source_x == carried->source_x &&
+              candidate->source_y == carried->source_y)) &&
+            candidate->source_raw_size == carried->source_raw_size &&
+            memcmp(candidate->source_raw, carried->source_raw,
+                   carried->source_raw_size) == 0) {
+            source_occurrence = candidate;
+            break;
+        }
+    }
+    if (source_occurrence) {
+        const int source_id = source_occurrence->id;
+        object.id = source_id;
+        *source_occurrence = object;
+    } else if (theron_v1_object_place(world, &object) != 0) {
         return -1;
+    }
 
     world->party.champions[champion_slot].inventory[inventory_slot] =
         THERON_ITEM_NONE;
     memset(&world->inventory_source[champion_slot][inventory_slot], 0,
            sizeof(world->inventory_source[champion_slot][inventory_slot]));
     theron_v1_party_recalculate_loads(&world->party);
-    return object.id;
+    return source_occurrence ? source_occurrence->id : object.id;
 }
 
 Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world,
@@ -1586,7 +2035,6 @@ static int theron_v1_world_admit_source_monster_member(
     unsigned int member_count) {
     Theron_V1_Creature *creature;
     if (!world || !record || slot >= member_count ||
-        record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT ||
         record->health[slot] == 0u ||
         world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL)
         return -1;
@@ -1599,7 +2047,10 @@ static int theron_v1_world_admit_source_monster_member(
      * or make a later source record collide with an old pool index. */
     creature->id = ((int)record->source_ref << 2) | (int)slot;
     if (creature->id <= 0) creature->id = world->creature_count + 1;
-    creature->type = (uint8_t)(THERON_CREATURE_AKUTUBA + record->type);
+    /* Category-4 byte 4 is the authentic source creature type.  The seven
+     * strings at UD $2741EF are dungeon/region labels, not a 0..6 creature
+     * roster, so do not remap this byte through that unrelated table. */
+    creature->type = record->type;
     creature->level = (uint8_t)record->level;
     creature->dungeon_id = record->dungeon_id;
     creature->x = record->x;
@@ -1623,9 +2074,9 @@ static int theron_v1_world_admit_source_monster_member(
     creature->source_direction_flags = record->direction_flags;
     creature->source_flags_word = record->flags_word;
     creature->source_unknown_word = record->unknown_word;
-    creature->source_spawn_category =
-        theron_v1_world_track02_spawn_category(
-            world, (unsigned int)record->type);
+    /* The seven-entry regular-spawn zone table has no proven index join to
+     * category-4's source type byte. */
+    creature->source_spawn_category = 0xffu;
     creature->source_raw_size = record->raw_size;
     memcpy(creature->source_raw, record->raw,
            sizeof(creature->source_raw));
@@ -1655,7 +2106,6 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             &world->source_monsters[i];
         if (record->dungeon_id != world->current_dungeon ||
             record->level != lvl) continue;
-        if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
         /* The on-disk count is the two-bit value; actual members are value+1.
          * This is the source Group count contract, not a gameplay default. */
         unsigned int members = (unsigned int)record->number + 1u;
@@ -1674,7 +2124,6 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             &world->source_monsters[i];
         if (record->dungeon_id != world->current_dungeon ||
             record->level != lvl) continue;
-        if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
         unsigned int members = (unsigned int)record->number + 1u;
         if (members > 4u) members = 4u;
         {
@@ -1722,11 +2171,571 @@ int theron_v1_world_bind_track02_spawn_source(
         return 0;
     }
     world->track02_spawn_source_variant = variant;
-    if (variant != THERON_V1_TRACK02_VARIANT_US_BIN || !source ||
-        !source->authenticated || source->variant != variant)
+    if (!source || !source->authenticated || source->variant != variant)
         return 0;
     world->track02_spawn_source = *source;
     return 1;
+}
+
+static void theron_v1_world_refresh_track19_item_mapping(
+        Theron_V1_World *world) {
+    Theron_V1Track19ItemNameBank *track19;
+    const Theron_Track02ItemNameSource *sarmon;
+    if (!world) return;
+    track19 = &world->track19_item_names;
+    track19->item_mapping_proven = 0;
+    track19->mapped_track02_dungeon_mask = 0u;
+    sarmon = &world->track02_item_names[3];
+    if (!track19->valid || !sarmon->valid || sarmon->dungeon_id != 4u ||
+        sarmon->variant != track19->variant ||
+        sarmon->count != THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT ||
+        memcmp(sarmon->raw_type_codes, track19->raw_type_codes,
+               THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT) != 0 ||
+        memcmp(sarmon->raw_properties, track19->raw_properties,
+               THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES) != 0) return;
+    track19->mapped_track02_dungeon_mask = 1u << 3;
+    track19->item_mapping_proven = 1;
+}
+
+int theron_v1_world_bind_track19_item_name_bank(
+    Theron_V1_World *world,
+    const Theron_V1Track19ItemNameBank *bank,
+    int variant) {
+    const char *expected_md5;
+    uint32_t expected_span;
+    uint32_t expected_type_codes;
+    size_t expected_type_offset;
+    uint32_t type_hash = 2166136261u;
+    uint32_t property_hash = 2166136261u;
+    unsigned int i;
+    if (!world) return 0;
+    memset(&world->track19_item_names, 0,
+           sizeof(world->track19_item_names));
+    if (variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
+        expected_md5 = "f9f069a5e489b91207f3156059b756f1";
+        expected_span = 0x1020ac88u;
+        expected_type_codes = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A;
+        expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET;
+    } else if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
+        expected_md5 = "51b40a17b92a30339957ba564aa0015c";
+        expected_span = 0x5be5602du;
+        expected_type_codes = THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A;
+        expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_US_OFFSET;
+    } else {
+        return 0;
+    }
+    if (!bank || !bank->valid || bank->variant != variant ||
+        bank->count != THERON_V1_TRACK19_ITEM_NAME_COUNT ||
+        bank->source_span_fnv1a != expected_span ||
+        bank->type_code_source_offset != expected_type_offset ||
+        bank->type_code_source_fnv1a != expected_type_codes ||
+        bank->property_source_fnv1a !=
+            THERON_TRACK19_ITEM_PROPERTY_TABLE_FNV1A ||
+        strcmp(bank->source_md5, expected_md5) != 0 ||
+        bank->item_mapping_proven || bank->mapped_track02_dungeon_mask != 0u ||
+        bank->host_text_rendering_proven)
+        return 0;
+    for (i = 0u; i < bank->count; ++i) {
+        if (bank->raw_name_sizes[i] == 0u ||
+            bank->raw_name_sizes[i] >=
+                THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY)
+            return 0;
+        type_hash ^= bank->raw_type_codes[i];
+        type_hash *= 16777619u;
+    }
+    if (type_hash != expected_type_codes) return 0;
+    for (i = 0u; i < THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES; ++i) {
+        property_hash ^= ((const uint8_t *)bank->raw_properties)[i];
+        property_hash *= 16777619u;
+    }
+    if (property_hash != THERON_TRACK19_ITEM_PROPERTY_TABLE_FNV1A) return 0;
+    world->track19_item_names = *bank;
+    theron_v1_world_refresh_track19_item_mapping(world);
+    return 1;
+}
+
+int theron_v1_world_bind_track02_item_name_source(
+    Theron_V1_World *world,
+    const Theron_Track02ItemNameSource *source,
+    int variant) {
+    unsigned int slot;
+    if (!world || !source || source->dungeon_id < 1u ||
+        source->dungeon_id > THERON_DUNGEON_COUNT) return 0;
+    slot = source->dungeon_id - 1u;
+    memset(&world->track02_item_names[slot], 0,
+           sizeof(world->track02_item_names[slot]));
+    if (!source->valid || source->variant != variant ||
+        (variant != THERON_V1_TRACK02_VARIANT_JP_BIN &&
+         variant != THERON_V1_TRACK02_VARIANT_US_BIN) ||
+        source->count == 0u ||
+        source->count > THERON_TRACK02_ITEM_NAME_SOURCE_MAX_COUNT ||
+        !source->property_source_offset ||
+        !source->property_source_fnv1a ||
+        !source->object_item_index_relation_proven ||
+        source->host_text_rendering_proven)
+        return 0;
+    world->track02_item_names[slot] = *source;
+    theron_v1_world_refresh_track19_item_mapping(world);
+    return 1;
+}
+
+int theron_v1_world_track02_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int dungeon_id,
+    unsigned int item_index,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    const Theron_Track02ItemNameSource *source;
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size || dungeon_id < 1u ||
+        dungeon_id > THERON_DUNGEON_COUNT ||
+        item_index >= THERON_TRACK02_ITEM_NAME_SOURCE_COUNT)
+        return 0;
+    source = &world->track02_item_names[dungeon_id - 1u];
+    if (!source->valid || source->dungeon_id != dungeon_id ||
+        item_index >= source->count) return 0;
+    *out_bytes = source->raw_names[item_index];
+    *out_size = source->raw_name_sizes[item_index];
+    return 1;
+}
+
+int theron_v1_world_quest_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int quest_index,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size ||
+        quest_index >= THERON_DUNGEON_COUNT)
+        return 0;
+    return theron_v1_track02_quest_item_name_raw(
+        &world->track02_item_names[quest_index], out_bytes, out_size);
+}
+
+int theron_v1_world_bind_track02_retrieval_text_source(
+    Theron_V1_World *world,
+    const Theron_Track02RetrievalTextSource *source,
+    int variant) {
+    uint16_t expected_block;
+    size_t expected_resource_offset;
+    uint32_t expected_resource_fnv1a;
+    size_t expected_shared_offset;
+    uint32_t expected_shared_fnv1a;
+    size_t expected_dispatch_offset;
+    uint32_t expected_dispatch_fnv1a;
+    size_t expected_handler_offset;
+    uint32_t expected_handler_fnv1a;
+    size_t expected_selector_offset;
+    uint32_t expected_selector_fnv1a;
+    size_t expected_advance_offset;
+    uint32_t expected_advance_fnv1a;
+    uint16_t expected_message_relative_offset;
+    unsigned int i;
+    if (!world) return 0;
+    memset(&world->track02_retrieval_text, 0,
+           sizeof(world->track02_retrieval_text));
+    if (variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
+        expected_block = 0x040cu;
+        expected_resource_offset = 0x276800u;
+        expected_resource_fnv1a = 0x851c05b3u;
+        expected_shared_offset = 0x263800u;
+        expected_shared_fnv1a = 0x834bede1u;
+        expected_dispatch_offset = 0x26604au;
+        expected_dispatch_fnv1a = 0x7700654cu;
+        expected_handler_offset = 0x263e53u;
+        expected_handler_fnv1a = 0xf7f547ccu;
+        expected_selector_offset = 0x264f29u;
+        expected_selector_fnv1a = 0xc8086d7bu;
+        expected_advance_offset = 0x264a09u;
+        expected_advance_fnv1a = 0x69e37389u;
+        expected_message_relative_offset = 0x016du;
+    } else if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
+        expected_block = 0x040du;
+        expected_resource_offset = 0x277000u;
+        expected_resource_fnv1a = 0xeeb43e74u;
+        expected_shared_offset = 0x264000u;
+        expected_shared_fnv1a = 0x113c8278u;
+        expected_dispatch_offset = 0x26684au;
+        expected_dispatch_fnv1a = 0x815cbce4u;
+        expected_handler_offset = 0x264653u;
+        expected_handler_fnv1a = 0xcafb5d7fu;
+        expected_selector_offset = 0x2656afu;
+        expected_selector_fnv1a = 0x46cd7f6cu;
+        expected_advance_offset = 0x2651d2u;
+        expected_advance_fnv1a = 0x5813b731u;
+        expected_message_relative_offset = 0x013du;
+    } else {
+        return 0;
+    }
+    if (!source || !source->valid || source->variant != variant ||
+        !source->source_offset || !source->source_span_bytes ||
+        !source->source_span_fnv1a || !source->resource_record_authenticated ||
+        source->track02_resource_block != expected_block ||
+        source->resource_offset != expected_resource_offset ||
+        source->resource_bytes != 2048u ||
+        source->resource_fnv1a != expected_resource_fnv1a ||
+        source->post_dungeon_shared_program_offset != expected_shared_offset ||
+        source->post_dungeon_shared_program_fnv1a != expected_shared_fnv1a ||
+        source->post_dungeon_ordinal_dispatch_offset !=
+            expected_dispatch_offset ||
+        source->post_dungeon_ordinal_dispatch_fnv1a !=
+            expected_dispatch_fnv1a ||
+        source->post_dungeon_text_opcode_handler_offset !=
+            expected_handler_offset ||
+        source->post_dungeon_text_opcode_handler_fnv1a !=
+            expected_handler_fnv1a ||
+        source->post_dungeon_text_selector_offset !=
+            expected_selector_offset ||
+        source->post_dungeon_text_selector_fnv1a !=
+            expected_selector_fnv1a ||
+        source->post_dungeon_text_ordinal_advance_offset !=
+            expected_advance_offset ||
+        source->post_dungeon_text_ordinal_advance_fnv1a !=
+            expected_advance_fnv1a ||
+        source->message_list_relative_offset !=
+            expected_message_relative_offset ||
+        !source->retrieval_event_relation_proven ||
+        source->text_group != 2u ||
+        source->text_group_script_relative_offset != 0x00cau ||
+        source->message_list_relative_offset !=
+            source->source_offset - source->resource_offset ||
+        !source->post_dungeon_shared_program_offset ||
+        !source->post_dungeon_shared_program_fnv1a ||
+        !source->post_dungeon_ordinal_dispatch_offset ||
+        !source->post_dungeon_ordinal_dispatch_fnv1a ||
+        !source->post_dungeon_text_opcode_handler_offset ||
+        !source->post_dungeon_text_opcode_handler_fnv1a ||
+        !source->post_dungeon_text_selector_offset ||
+        !source->post_dungeon_text_selector_fnv1a ||
+        !source->post_dungeon_text_ordinal_advance_offset ||
+        !source->post_dungeon_text_ordinal_advance_fnv1a ||
+        source->host_text_rendering_proven)
+        return 0;
+    for (i = 0u; i < THERON_TRACK02_RETRIEVAL_TEXT_COUNT; ++i) {
+        if (!source->raw_message_sizes[i] ||
+            source->raw_message_sizes[i] >=
+                THERON_TRACK02_RETRIEVAL_TEXT_CAPACITY)
+            return 0;
+    }
+    world->track02_retrieval_text = *source;
+    return 1;
+}
+
+int theron_v1_world_retrieval_text_record_raw(
+    const Theron_V1_World *world,
+    unsigned int record_index,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    const Theron_Track02RetrievalTextSource *source;
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size ||
+        record_index >= THERON_TRACK02_RETRIEVAL_TEXT_COUNT)
+        return 0;
+    source = &world->track02_retrieval_text;
+    if (!source->valid || !source->retrieval_event_relation_proven ||
+        source->host_text_rendering_proven ||
+        !source->raw_message_sizes[record_index] ||
+        source->raw_message_sizes[record_index] >=
+            THERON_TRACK02_RETRIEVAL_TEXT_CAPACITY)
+        return 0;
+    *out_bytes = source->raw_messages[record_index];
+    *out_size = source->raw_message_sizes[record_index];
+    return 1;
+}
+
+int theron_v1_world_bind_track02_campaign_mask_source(
+    Theron_V1_World *world,
+    const Theron_Track02CampaignMaskSource *source,
+    int variant) {
+    unsigned int i;
+    if (!world) return 0;
+    memset(&world->track02_campaign_mask, 0,
+           sizeof(world->track02_campaign_mask));
+    if (!source || !source->valid || source->variant != variant ||
+        (variant != THERON_V1_TRACK02_VARIANT_JP_BIN &&
+         variant != THERON_V1_TRACK02_VARIANT_US_BIN) ||
+        !source->common_source_offset || !source->common_source_bytes ||
+        !source->common_source_fnv1a || source->runtime_address != 0x267cu ||
+        source->descriptor_loader_offset != source->common_source_offset ||
+        source->descriptor_loader_bytes != 0x800u ||
+        source->descriptor_loader_fnv1a != 0x09ca5445u ||
+        source->campaign_bits_mask != 0x7fu ||
+        !source->serialized_campaign_byte_load_proven ||
+        !source->dungeon_ordinal_to_bit_proven ||
+        !source->campaign_mask_merge_proven ||
+        !source->code_resource_launch_proven ||
+        !source->post_dungeon_ordinal_seed_proven ||
+        !source->post_dungeon_parameter_block_copy_proven ||
+        !source->post_dungeon_ordinal_forward_proven ||
+        source->post_dungeon_record_base != 0x03c7u ||
+        source->post_dungeon_record_stride != 4u ||
+        source->post_dungeon_record_sector_count != 4u ||
+        source->post_dungeon_support_record != 0x03e3u ||
+        source->post_dungeon_support_sector_count != 2u ||
+        source->post_dungeon_shared_record != 0x03e7u ||
+        source->post_dungeon_shared_sector_count != 17u ||
+        !source->post_dungeon_record_formula_proven ||
+        !source->post_dungeon_program_load_chain_proven ||
+        !source->post_dungeon_ordinal_dispatch_offset ||
+        source->post_dungeon_ordinal_dispatch_bytes != 0x103u ||
+        !source->post_dungeon_ordinal_dispatch_fnv1a ||
+        !source->post_dungeon_text_opcode_handler_offset ||
+        source->post_dungeon_text_opcode_handler_bytes != 0x21u ||
+        !source->post_dungeon_text_opcode_handler_fnv1a ||
+        !source->post_dungeon_text_selector_offset ||
+        source->post_dungeon_text_selector_bytes != 0x13au ||
+        !source->post_dungeon_text_selector_fnv1a ||
+        !source->post_dungeon_text_ordinal_advance_offset ||
+        source->post_dungeon_text_ordinal_advance_bytes != 0x23u ||
+        !source->post_dungeon_text_ordinal_advance_fnv1a ||
+        source->post_dungeon_text_group != 2u ||
+        !source->post_dungeon_ordinal_text_dispatch_proven ||
+        source->post_dungeon_cd_base_track_bcd != 0x19u ||
+        !source->post_dungeon_cd_base_proven ||
+        !source->descriptor_record_cd_read_proven ||
+        source->artifact_collection_relation_proven)
+        return 0;
+    for (i = 0u; i < THERON_TRACK02_CAMPAIGN_MASK_DUNGEON_COUNT; ++i) {
+        if (!source->dungeon_source_offsets[i] ||
+            !source->dungeon_source_fnv1a[i] ||
+            !source->post_dungeon_program_offsets[i] ||
+            !source->post_dungeon_program_fnv1a[i])
+            return 0;
+    }
+    if (!world->track02_retrieval_text.valid ||
+        world->track02_retrieval_text.variant != variant ||
+        !world->track02_retrieval_text.retrieval_event_relation_proven ||
+        world->track02_retrieval_text.post_dungeon_shared_program_offset ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_shared_program_offset !=
+            source->post_dungeon_shared_program_offset ||
+        world->track02_retrieval_text.post_dungeon_shared_program_fnv1a ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_shared_program_fnv1a !=
+            source->post_dungeon_shared_program_fnv1a ||
+        world->track02_retrieval_text.post_dungeon_ordinal_dispatch_offset ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_ordinal_dispatch_offset !=
+            source->post_dungeon_ordinal_dispatch_offset ||
+        world->track02_retrieval_text.post_dungeon_ordinal_dispatch_fnv1a ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_ordinal_dispatch_fnv1a !=
+            source->post_dungeon_ordinal_dispatch_fnv1a ||
+        world->track02_retrieval_text.post_dungeon_text_opcode_handler_offset ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_text_opcode_handler_offset !=
+            source->post_dungeon_text_opcode_handler_offset ||
+        world->track02_retrieval_text.post_dungeon_text_opcode_handler_fnv1a ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_text_opcode_handler_fnv1a !=
+            source->post_dungeon_text_opcode_handler_fnv1a ||
+        world->track02_retrieval_text.post_dungeon_text_selector_offset ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_text_selector_offset !=
+            source->post_dungeon_text_selector_offset ||
+        world->track02_retrieval_text.post_dungeon_text_selector_fnv1a ==
+            0u ||
+        world->track02_retrieval_text.post_dungeon_text_selector_fnv1a !=
+            source->post_dungeon_text_selector_fnv1a ||
+        world->track02_retrieval_text
+                .post_dungeon_text_ordinal_advance_offset ==
+            0u ||
+        world->track02_retrieval_text
+                .post_dungeon_text_ordinal_advance_offset !=
+            source->post_dungeon_text_ordinal_advance_offset ||
+        world->track02_retrieval_text
+                .post_dungeon_text_ordinal_advance_fnv1a ==
+            0u ||
+        world->track02_retrieval_text
+                .post_dungeon_text_ordinal_advance_fnv1a !=
+            source->post_dungeon_text_ordinal_advance_fnv1a ||
+        world->track02_retrieval_text.text_group !=
+            source->post_dungeon_text_group)
+        return 0;
+    world->track02_campaign_mask = *source;
+    world->track02_campaign_mask.artifact_collection_relation_proven = 1;
+    return 1;
+}
+
+int theron_v1_world_campaign_artifact_mask(
+    const Theron_V1_World *world,
+    uint8_t serialized_campaign_byte,
+    uint8_t *out_artifact_mask) {
+    if (out_artifact_mask) *out_artifact_mask = 0u;
+    if (!world || !out_artifact_mask ||
+        !world->track02_campaign_mask.valid ||
+        !world->track02_campaign_mask.artifact_collection_relation_proven ||
+        world->track02_campaign_mask.runtime_address != 0x267cu ||
+        world->track02_campaign_mask.campaign_bits_mask != 0x7fu)
+        return 0;
+    *out_artifact_mask =
+        (uint8_t)(serialized_campaign_byte &
+                  world->track02_campaign_mask.campaign_bits_mask);
+    return 1;
+}
+
+int theron_v1_world_apply_campaign_artifact_byte(
+    Theron_V1_World *world,
+    uint8_t serialized_campaign_byte) {
+    Theron_DungeonProgression restored;
+    uint8_t artifact_mask;
+    Theron_DungeonID current;
+    if (!world || !theron_v1_world_campaign_artifact_mask(
+            world, serialized_campaign_byte, &artifact_mask))
+        return 0;
+    current = world->progression.current_dungeon;
+    if (current < THERON_DUNGEON_1_AKUTUBA ||
+        current > THERON_DUNGEON_7_DEMON)
+        return 0;
+    theron_v1_dungeon_progression_restore(
+        &restored, artifact_mask, current,
+        world->progression.dungeon_seeds);
+    memcpy(world->progression.dungeon_states, restored.dungeon_states,
+           sizeof(world->progression.dungeon_states));
+    world->progression.quest_items_collected = artifact_mask;
+    world->progression.quest_complete = restored.quest_complete;
+    world->dungeon_complete =
+        (artifact_mask &
+         (uint8_t)THERON_QUEST_ITEM_MASK_FROM_DUNGEON(current)) != 0u;
+    return 1;
+}
+
+int theron_v1_world_object_item_name_raw(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !object || !object->source_origin_valid ||
+        object->source_dungeon < 1u ||
+        object->source_dungeon > THERON_DUNGEON_COUNT ||
+        !object->source_property_valid ||
+        object->source_item_type >= THERON_TRACK02_ITEM_NAME_SOURCE_COUNT)
+        return 0;
+    return theron_v1_world_track02_item_name_raw(
+        world, object->source_dungeon, object->source_item_type,
+        out_bytes, out_size);
+}
+
+int theron_v1_world_object_item_type_code(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    uint8_t *out_code) {
+    const Theron_Track02ItemNameSource *source;
+    if (out_code) *out_code = 0u;
+    if (!world || !object || !out_code || !object->source_origin_valid ||
+        object->source_dungeon < 1u ||
+        object->source_dungeon > THERON_DUNGEON_COUNT ||
+        !object->source_property_valid ||
+        object->source_item_type >= THERON_TRACK02_ITEM_NAME_SOURCE_COUNT)
+        return 0;
+    source = &world->track02_item_names[object->source_dungeon - 1u];
+    if (!source->valid || source->dungeon_id != object->source_dungeon ||
+        object->source_item_type >= source->count)
+        return 0;
+    *out_code = source->raw_type_codes[object->source_item_type];
+    return 1;
+}
+
+int theron_v1_world_object_item_property_raw(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    const Theron_Track02ItemNameSource *source;
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !object || !out_bytes || !out_size ||
+        !object->source_origin_valid || object->source_dungeon < 1u ||
+        object->source_dungeon > THERON_DUNGEON_COUNT ||
+        object->source_item_type >= THERON_TRACK02_ITEM_SLOT_COUNT)
+        return 0;
+    source = &world->track02_item_names[object->source_dungeon - 1u];
+    if (!source->valid || source->dungeon_id != object->source_dungeon)
+        return 0;
+    *out_bytes = source->raw_properties[object->source_item_type];
+    *out_size = THERON_TRACK02_ITEM_PROPERTY_SOURCE_SIZE;
+    return 1;
+}
+
+int theron_v1_world_track19_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int track19_index,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size ||
+        !world->track19_item_names.valid ||
+        track19_index >= world->track19_item_names.count)
+        return 0;
+    *out_bytes = world->track19_item_names.raw_names[track19_index];
+    *out_size = world->track19_item_names.raw_name_sizes[track19_index];
+    return 1;
+}
+
+int theron_v1_world_object_track19_item_name_raw(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    const Theron_Track02ItemNameSource *source;
+    unsigned int index;
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !object || !out_bytes || !out_size ||
+        !object->source_origin_valid || object->source_dungeon != 4u ||
+        !world->track19_item_names.valid ||
+        !world->track19_item_names.item_mapping_proven ||
+        !(world->track19_item_names.mapped_track02_dungeon_mask & (1u << 3)))
+        return 0;
+    index = object->source_item_type;
+    source = &world->track02_item_names[3];
+    if (!source->valid || index >= source->count ||
+        index >= world->track19_item_names.count ||
+        source->raw_type_codes[index] !=
+            world->track19_item_names.raw_type_codes[index]) return 0;
+    return theron_v1_world_track19_item_name_raw(
+        world, index, out_bytes, out_size);
+}
+
+int theron_v1_world_inventory_source_track19_item_name_raw(
+    const Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    const Theron_V1_InventorySourceRecord *item;
+    const Theron_Track02ItemNameSource *source;
+    unsigned int index;
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size || champion_slot < 0 ||
+        champion_slot >= THERON_MAX_CHAMPIONS || inventory_slot < 0 ||
+        inventory_slot >= THERON_INVENTORY_SLOTS) return 0;
+    item = &world->inventory_source[champion_slot][inventory_slot];
+    if (!item->valid || !item->source_origin_valid ||
+        item->source_dungeon != 4u || !item->property_valid ||
+        !world->track19_item_names.valid ||
+        !world->track19_item_names.item_mapping_proven ||
+        !(world->track19_item_names.mapped_track02_dungeon_mask & (1u << 3)))
+        return 0;
+    index = item->item_type;
+    source = &world->track02_item_names[3];
+    if (!source->valid || index >= source->count ||
+        index >= world->track19_item_names.count ||
+        source->raw_type_codes[index] !=
+            world->track19_item_names.raw_type_codes[index] ||
+        (index < THERON_TRACK19_ITEM_PROPERTY_TABLE_COUNT &&
+         memcmp(item->property,
+                world->track19_item_names.raw_properties[index],
+                THERON_TRACK19_ITEM_PROPERTY_RECORD_BYTES) != 0)) return 0;
+    return theron_v1_world_track19_item_name_raw(
+        world, index, out_bytes, out_size);
 }
 
 uint8_t theron_v1_world_track02_spawn_category(
@@ -1737,9 +2746,10 @@ uint8_t theron_v1_world_track02_spawn_category(
         return 0xffu;
     /* A regular-spawn category is a runtime-source receipt, not a property
      * of the static creature type.  Do not fall back to the reconstructed
-     * descriptor table here: direct level loads and JP data have no
-     * authenticated US spawn consumer, so publishing that value would make
-     * inferred data look like a captured semantic field. */
+     * descriptor table here: direct level loads have no authenticated source,
+     * and the JP source block has no authenticated JP runtime consumer, so
+     * publishing that value would make source bytes look like a captured
+     * semantic field. */
     if (!world->track02_spawn_source.authenticated ||
         world->track02_spawn_source.variant !=
             THERON_V1_TRACK02_VARIANT_US_BIN)
@@ -1767,10 +2777,8 @@ int theron_v1_world_bind_track02_monster(
     uint16_t unknown_word,
     int16_t chested)
 {
-    /* Keep every real category-4 source record, including reserved or
-     * sentinel type bytes. spawn_level_creatures() admits only the
-     * authenticated 0..6 roster; no invented live creature is created for
-     * an unknown source byte. */
+    /* Keep every real category-4 source record.  Its type is the raw Track 02
+     * byte; it is not an index into the seven-entry dungeon-label table. */
     if (!world || !health || dungeon_id < 1 ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
@@ -1813,9 +2821,10 @@ int theron_v1_world_bind_track02_generator(
     uint16_t value,
     uint8_t once,
     uint8_t effect,
+    uint8_t revert_effect,
     uint8_t sound,
     uint8_t delay,
-    uint8_t inactive,
+    uint8_t local_effect,
     uint8_t graphism,
     uint8_t target_x,
     uint8_t target_y,
@@ -1848,9 +2857,10 @@ int theron_v1_world_bind_track02_generator(
     out->value = value;
     out->once = once;
     out->effect = effect;
+    out->revert_effect = revert_effect;
     out->sound = sound;
     out->delay = delay;
-    out->inactive = inactive;
+    out->local_effect = local_effect;
     out->graphism = graphism;
     out->target_x = target_x;
     out->target_y = target_y;
@@ -1902,6 +2912,360 @@ int theron_v1_world_bind_track02_source_object(
     return 0;
 }
 
+static Theron_V1_Object *theron_v1_world_live_source_actuator(
+    Theron_V1_World *world, const Theron_V1_SourceObjectRecord *source)
+{
+    if (!world || !source) return NULL;
+    for (int i = 0; i < world->object_count; ++i) {
+        Theron_V1_Object *object = &world->objects[i];
+        if (object->type == THERON_OBJTYPE_SOURCE_ACTUATOR &&
+            object->dungeon_id == source->dungeon_id &&
+            object->level == source->level && object->x == source->x &&
+            object->y == source->y &&
+            object->source_ref == source->source_ref &&
+            object->source_index == source->source_index)
+            return object;
+    }
+    return NULL;
+}
+
+int theron_v1_world_queue_track02_party_events(
+    Theron_V1_World *world, int level, int x, int y,
+    int is_addition, int party_already_on_square,
+    unsigned int party_direction)
+{
+    unsigned int needed = 0u;
+
+    if (!world || world->current_dungeon < 1 ||
+        world->current_dungeon > THERON_DUNGEON_COUNT || level < 0 ||
+        level >= THERON_MAX_LEVELS_PER_DUNGEON || x < 0 ||
+        x >= THERON_MAX_MAP_SIZE || y < 0 || y >= THERON_MAX_MAP_SIZE ||
+        party_direction > 3u || world->party.champion_count < 0 ||
+        world->party.champion_count > THERON_MAX_CHAMPIONS)
+        return -1;
+
+    /* First pass keeps publication atomic if the bounded queue is full. */
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source = &world->source_objects[i];
+        Theron_V1_Object *live;
+        Theron_Actuator actuator;
+        Theron_ActuatorPartyEvent event;
+        if (source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u ||
+            source->dungeon_id != world->current_dungeon ||
+            source->level != level || source->x != x || source->y != y)
+            continue;
+        live = theron_v1_world_live_source_actuator(world, source);
+        if (!live || live->state == TQ_ACT_FLOOR_NONE ||
+            theron_v1_track02_actuator_decode(source->raw, &actuator) != 0 ||
+            theron_v1_track02_actuator_evaluate_party_event(
+                &actuator, is_addition, party_already_on_square,
+                world->party.champion_count, party_direction, &event) != 0)
+            continue;
+        needed += event.triggered != 0u;
+    }
+    if (needed > THERON_MAX_SOURCE_ACTUATOR_EVENTS -
+                     world->source_actuator_event_count)
+        return -2;
+
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source = &world->source_objects[i];
+        Theron_V1_Object *live;
+        Theron_Actuator actuator;
+        Theron_ActuatorPartyEvent result;
+        Theron_V1_SourceActuatorEvent *event;
+        if (source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u ||
+            source->dungeon_id != world->current_dungeon ||
+            source->level != level || source->x != x || source->y != y)
+            continue;
+        live = theron_v1_world_live_source_actuator(world, source);
+        if (!live || live->state == TQ_ACT_FLOOR_NONE ||
+            theron_v1_track02_actuator_decode(source->raw, &actuator) != 0 ||
+            theron_v1_track02_actuator_evaluate_party_event(
+                &actuator, is_addition, party_already_on_square,
+                world->party.champion_count, party_direction, &result) != 0 ||
+            !result.triggered)
+            continue;
+        event = &world->source_actuator_events[
+            world->source_actuator_event_count++];
+        memset(event, 0, sizeof(*event));
+        event->due_tick = world->world_tick + actuator.delay;
+        event->source_ref = source->source_ref;
+        event->source_index = source->source_index;
+        event->dungeon_id = (int16_t)source->dungeon_id;
+        event->level = (int16_t)source->level;
+        event->source_x = (uint8_t)source->x;
+        event->source_y = (uint8_t)source->y;
+        event->effect = result.resolved_effect;
+        event->local_effect = actuator.local_effect;
+        event->sound = actuator.sound;
+        event->delay = actuator.delay;
+        event->local_multiple = actuator.local_multiple;
+        if (actuator.local_effect) {
+            event->target_x = (uint8_t)source->x;
+            event->target_y = (uint8_t)source->y;
+            event->target_facing = 0xffu;
+        } else {
+            event->target_x = actuator.target_x;
+            event->target_y = actuator.target_y;
+            event->target_facing = actuator.target_facing;
+        }
+        if (result.disable_after_dispatch) live->state = TQ_ACT_FLOOR_NONE;
+    }
+    return (int)needed;
+}
+
+int theron_v1_world_resolve_track02_generator_event(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceActuatorEvent *event,
+    unsigned int *out_generator_index)
+{
+    unsigned int match = 0u;
+    unsigned int match_count = 0u;
+    int source_verified = 0;
+
+    if (out_generator_index) *out_generator_index = 0u;
+    if (!world || !event || !out_generator_index || event->local_effect ||
+        event->dungeon_id < 1 ||
+        event->dungeon_id > THERON_DUNGEON_COUNT || event->level < 0 ||
+        event->level >= THERON_MAX_LEVELS_PER_DUNGEON)
+        return -1;
+
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source =
+            &world->source_objects[i];
+        Theron_Actuator actuator;
+        int effect_matches;
+        if (source->dungeon_id != event->dungeon_id ||
+            source->level != event->level || source->x != event->source_x ||
+            source->y != event->source_y ||
+            source->source_ref != event->source_ref ||
+            source->source_index != event->source_index ||
+            source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u ||
+            theron_v1_track02_actuator_decode(source->raw, &actuator) != 0 ||
+            actuator.type != TQ_ACT_FLOOR_PARTY || actuator.local_effect)
+            continue;
+        effect_matches = event->effect == actuator.effect ||
+            ((actuator.effect == TQ_ACT_EFFECT_TOGGLE ||
+              actuator.effect == TQ_ACT_EFFECT_HOLD) &&
+             (event->effect == TQ_ACT_EFFECT_SET ||
+              event->effect == TQ_ACT_EFFECT_CLEAR));
+        if (!effect_matches || event->sound != actuator.sound ||
+            event->delay != actuator.delay ||
+            event->target_x != actuator.target_x ||
+            event->target_y != actuator.target_y ||
+            event->target_facing != actuator.target_facing)
+            continue;
+        source_verified = 1;
+        break;
+    }
+    if (!source_verified) return 0;
+
+    for (unsigned int i = 0; i < world->source_generator_count; ++i) {
+        const Theron_V1_SourceGeneratorRecord *generator =
+            &world->source_generators[i];
+        if (generator->dungeon_id == event->dungeon_id &&
+            generator->level == event->level &&
+            generator->x == event->target_x &&
+            generator->y == event->target_y &&
+            generator->type == TQ_ACT_FLOOR_MONSTER_GEN &&
+            generator->generator_fields_valid) {
+            match = i;
+            ++match_count;
+        }
+    }
+    if (match_count != 1u) return match_count == 0u ? 0 : -1;
+    *out_generator_index = match;
+    return 1;
+}
+
+int theron_v1_world_bind_track02_generator_execution_witness(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceActuatorEvent *event,
+    const Theron_V1_GeneratorExecutionWitness *witness,
+    Theron_V1_GeneratorMaterializationReceipt *out)
+{
+    static const uint8_t drator_0c81_cc55_source[32] = {
+        0xc4,0x46,0xd0,0x1e,0xda,0x20,0x67,0x46,
+        0x29,0x02,0x18,0x69,0x00,0x8d,0x77,0x28,
+        0xfa,0xa5,0x45,0x08,0xa9,0x03,0x28,0x30,
+        0xe6,0xe4,0x45,0x90,0x02,0xd0,0xe0,0xa9
+    };
+    static const uint8_t drator_rng_before[3] = { 0x2a,0x54,0x29 };
+    static const uint8_t drator_rng_after[3] = { 0x98,0x8f,0x29 };
+    static const uint8_t drator_runtime_record[10] = {
+        0xa5,0x00,0x00,0x01,0x20,0xee,0x11,0x03,0x08,0x00
+    };
+    static const uint8_t drator_position_consumer_source[27] = {
+        0xad,0x3b,0x29,0x85,0xb5,0xad,0x3c,0x29,0x85,
+        0xb6,0xad,0x3d,0x29,0x85,0xb4,0xa5,0xb4,0x18,
+        0x69,0x02,0x29,0x03,0x85,0xbb,0x20,0xf8,0x51
+    };
+    static const uint32_t drator_lifecycle_sequence[8] = {
+        0u, 2u, 431u, 467u, 592u, 795u, 936u, 966u
+    };
+    static const uint16_t drator_lifecycle_pc[8] = {
+        0x47b7u, 0xc799u, 0xca7eu, 0xcaa3u,
+        0xcbc9u, 0xcbbeu, 0xc9f3u, 0xca78u
+    };
+    static const uint32_t drator_lifecycle_physical_pc[8] = {
+        0x000d07b7u, 0x000de799u, 0x000dea7eu, 0x000deaa3u,
+        0x000dabc9u, 0x000dabbeu, 0x000da9f3u, 0x000daa78u
+    };
+    unsigned int generator_index = 0u;
+    const Theron_V1_SourceGeneratorRecord *generator;
+    const Theron_V1_SourceObjectRecord *event_source = NULL;
+    const Theron_V1_SourceObjectRecord *generator_source = NULL;
+    Theron_Actuator actuator;
+    Theron_ActuatorGeneratorPlan plan;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!world || !event || !witness || !out ||
+        theron_v1_world_resolve_track02_generator_event(
+            world, event, &generator_index) != 1)
+        return 0;
+    out->event_identity_verified = 1;
+    out->generator_identity_verified = 1;
+    out->generator_index = generator_index;
+    generator = &world->source_generators[generator_index];
+
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source = &world->source_objects[i];
+        if (source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u)
+            continue;
+        if (source->dungeon_id == event->dungeon_id &&
+            source->level == event->level &&
+            source->source_ref == event->source_ref &&
+            source->source_index == event->source_index)
+            event_source = source;
+        if (source->dungeon_id == generator->dungeon_id &&
+            source->level == generator->level &&
+            source->source_ref == generator->source_ref &&
+            source->source_index == generator->source_index)
+            generator_source = source;
+    }
+    if (!event_source || !generator_source) return 0;
+    out->event_raw_verified =
+        memcmp(event_source->raw, witness->event_raw, 8u) == 0;
+    out->generator_raw_verified =
+        memcmp(generator_source->raw, witness->generator_raw, 8u) == 0;
+    if (!out->event_raw_verified || !out->generator_raw_verified ||
+        theron_v1_track02_actuator_decode(generator_source->raw, &actuator) != 0 ||
+        !theron_v1_track02_actuator_generator_plan(&actuator, &plan))
+        return 0;
+
+    out->creature_type_value = plan.creature_type_value;
+    out->count_is_random = plan.count_is_random;
+    out->fixed_count_minus_one = plan.fixed_count_minus_one;
+    out->random_count_bound = plan.random_count_bound;
+    out->toughness = plan.toughness;
+    out->pause = plan.pause;
+    out->rng_return_value = witness->rng_return_value;
+
+    /* The authentic Drator differential capture arms once on leaving (2,3)
+     * and, in a second run, once its re-entry is committed.  The first run's
+     * sequence 1 is byte-identical at the RNG boundary to the second run's
+     * sequence 0.  Consequently the CC55 call below is the sole RNG edge in
+     * the movement/event interval.  Require both sides of that continuity,
+     * the physical mappings and the exact caller bytes; verification flags
+     * alone are not an execution receipt. */
+    out->event_bound_rng_witness_verified =
+        witness->authenticated_track02_execution &&
+        witness->same_execution_window_verified &&
+        witness->rng_return_boundary_verified &&
+        witness->rng_caller_source_bytes_verified &&
+        witness->generator_consumer_contract_verified &&
+        event->dungeon_id == 2 && event->level == 2 &&
+        event->source_ref == 0x0c81u && event->source_x == 2u &&
+        event->source_y == 3u && witness->capture_sequence == 0u &&
+        witness->rng_entry_pc == 0x4667u &&
+        witness->rng_physical_entry_pc == 0x000d0667u &&
+        witness->rng_caller_pc == 0xcc55u &&
+        witness->rng_physical_caller_pc == 0x000d8c55u &&
+        witness->rng_return_value == 0x8fu &&
+        witness->rng_caller_source_size ==
+            sizeof(drator_0c81_cc55_source) &&
+        memcmp(witness->rng_caller_source, drator_0c81_cc55_source,
+               sizeof(drator_0c81_cc55_source)) == 0 &&
+        memcmp(witness->rng_state_before, drator_rng_before,
+               sizeof(drator_rng_before)) == 0 &&
+        memcmp(witness->rng_state_after, drator_rng_after,
+               sizeof(drator_rng_after)) == 0 &&
+        witness->successor_caller_pc == 0x4639u &&
+        witness->successor_physical_caller_pc == 0x000d0639u &&
+        memcmp(witness->successor_state_before, drator_rng_after,
+               sizeof(drator_rng_after)) == 0 &&
+        witness->runtime_materialization_verified &&
+        witness->runtime_copy_pc == 0xcbceu &&
+        witness->runtime_physical_copy_pc == 0x000dabceu &&
+        witness->runtime_slot == 0u &&
+        witness->runtime_record_address == 0x60ffu &&
+        memcmp(witness->runtime_record, drator_runtime_record,
+               sizeof(drator_runtime_record)) == 0 &&
+        witness->runtime_first_consumer_verified &&
+        witness->runtime_first_consumer_pc[0] == 0xc9f3u &&
+        witness->runtime_first_consumer_pc[1] == 0xc9fbu &&
+        witness->runtime_first_consumer_pc[2] == 0xca02u &&
+        witness->runtime_first_consumer_physical_pc[0] == 0x000da9f3u &&
+        witness->runtime_first_consumer_physical_pc[1] == 0x000da9fbu &&
+        witness->runtime_first_consumer_physical_pc[2] == 0x000daa02u &&
+        memcmp(witness->runtime_first_consumer_value,
+               drator_runtime_record, 3u) == 0 &&
+        witness->runtime_unlink_verified &&
+        witness->runtime_unlink_pc == 0xca78u &&
+        witness->runtime_unlink_physical_pc == 0x000daa78u &&
+        witness->runtime_lifecycle_window_verified &&
+        memcmp(witness->runtime_lifecycle_sequence,
+               drator_lifecycle_sequence,
+               sizeof(drator_lifecycle_sequence)) == 0 &&
+        memcmp(witness->runtime_lifecycle_pc, drator_lifecycle_pc,
+               sizeof(drator_lifecycle_pc)) == 0 &&
+        memcmp(witness->runtime_lifecycle_physical_pc,
+               drator_lifecycle_physical_pc,
+               sizeof(drator_lifecycle_physical_pc)) == 0 &&
+        witness->runtime_position_consumer_source_verified &&
+        witness->runtime_position_consumer_pc == 0xc852u &&
+        witness->runtime_position_consumer_raw_offset == 0x000a1612u &&
+        witness->runtime_position_consumer_source_size ==
+            sizeof(drator_position_consumer_source) &&
+        memcmp(witness->runtime_position_consumer_source,
+               drator_position_consumer_source,
+               sizeof(drator_position_consumer_source)) == 0;
+    if (out->event_bound_rng_witness_verified) {
+        out->runtime_slot = witness->runtime_slot;
+        out->runtime_record_address = witness->runtime_record_address;
+        memcpy(out->runtime_record, witness->runtime_record,
+               sizeof(out->runtime_record));
+        memcpy(out->runtime_first_consumer_pc,
+               witness->runtime_first_consumer_pc,
+               sizeof(out->runtime_first_consumer_pc));
+        memcpy(out->runtime_first_consumer_physical_pc,
+               witness->runtime_first_consumer_physical_pc,
+               sizeof(out->runtime_first_consumer_physical_pc));
+        memcpy(out->runtime_first_consumer_value,
+               witness->runtime_first_consumer_value,
+               sizeof(out->runtime_first_consumer_value));
+        out->runtime_unlink_pc = witness->runtime_unlink_pc;
+        out->runtime_unlink_physical_pc =
+            witness->runtime_unlink_physical_pc;
+        out->runtime_lifecycle_window_verified = 1;
+        memcpy(out->runtime_lifecycle_sequence,
+               witness->runtime_lifecycle_sequence,
+               sizeof(out->runtime_lifecycle_sequence));
+        memcpy(out->runtime_lifecycle_pc, witness->runtime_lifecycle_pc,
+               sizeof(out->runtime_lifecycle_pc));
+        memcpy(out->runtime_lifecycle_physical_pc,
+               witness->runtime_lifecycle_physical_pc,
+               sizeof(out->runtime_lifecycle_physical_pc));
+        out->runtime_position_fields_source_verified = 1;
+        out->runtime_x = witness->runtime_record[6];
+        out->runtime_y = witness->runtime_record[7];
+        out->runtime_direction_raw = witness->runtime_record[8];
+        out->runtime_direction = witness->runtime_record[8] & 0x03u;
+    }
+    out->materialization_allowed = out->event_bound_rng_witness_verified;
+    return out->materialization_allowed;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Creature generators — DMWeb ChristopheF maps
  * ══════════════════════════════════════════════════════════════════════ */
@@ -1931,6 +3295,457 @@ void theron_v1_world_tick_generators(Theron_V1_World *world) {
     (void)world;
 }
 
+static int theron_v1_world_set_track02_runtime_tile(
+    Theron_V1_World *world, int dungeon_id, int level, int x, int y,
+    uint8_t tile)
+{
+    Theron_V1_Level *map;
+    unsigned int index = world ? world->source_square_state_count : 0u;
+    if (!world || dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT ||
+        level < 0 || level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[dungeon_id - 1][level])
+        return 0;
+    map = &world->levels[dungeon_id - 1][level];
+    if (!map->source_header_verified || x < 0 || x >= map->width || y < 0 ||
+        y >= map->height || (tile >> 5) != (map->source_tiles[y][x] >> 5))
+        return 0;
+    for (unsigned int i = 0; i < world->source_square_state_count; ++i) {
+        Theron_V1_SourceSquareState *state = &world->source_square_states[i];
+        if (state->dungeon_id == dungeon_id && state->level == level &&
+            state->x == x && state->y == y) {
+            index = i;
+            break;
+        }
+    }
+    if (tile == map->source_tiles[y][x]) {
+        if (index < world->source_square_state_count) {
+            for (unsigned int i = index + 1u;
+                 i < world->source_square_state_count; ++i)
+                world->source_square_states[i - 1u] =
+                    world->source_square_states[i];
+            --world->source_square_state_count;
+            memset(&world->source_square_states[
+                       world->source_square_state_count], 0,
+                   sizeof(world->source_square_states[0]));
+        }
+        return 1;
+    }
+    if (index == world->source_square_state_count) {
+        if (index >= THERON_MAX_SOURCE_SQUARE_STATES) return 0;
+        ++world->source_square_state_count;
+    }
+    world->source_square_states[index].dungeon_id = (int16_t)dungeon_id;
+    world->source_square_states[index].level = (int16_t)level;
+    world->source_square_states[index].x = (uint8_t)x;
+    world->source_square_states[index].y = (uint8_t)y;
+    world->source_square_states[index].tile = tile;
+    return 1;
+}
+
+static int theron_v1_world_set_track02_runtime_object_word(
+    Theron_V1_World *world, const Theron_V1_SourceObjectRecord *source,
+    uint16_t word)
+{
+    unsigned int index;
+    uint16_t current;
+    const uint16_t source_word = source && source->raw_size >= 4u ?
+        ((uint16_t)source->raw[2] | ((uint16_t)source->raw[3] << 8)) : 0u;
+    if (!theron_v1_world_track02_runtime_object_word(
+            world, source, &current))
+        return 0;
+    index = world->source_object_state_count;
+    for (unsigned int i = 0; i < world->source_object_state_count; ++i) {
+        const Theron_V1_SourceObjectState *state =
+            &world->source_object_states[i];
+        if (state->dungeon_id == source->dungeon_id &&
+            state->level == source->level &&
+            state->source_ref == source->source_ref &&
+            state->source_index == source->source_index &&
+            state->category == source->category) {
+            index = i;
+            break;
+        }
+    }
+    if (word == source_word) {
+        if (index < world->source_object_state_count) {
+            for (unsigned int i = index + 1u;
+                 i < world->source_object_state_count; ++i)
+                world->source_object_states[i - 1u] =
+                    world->source_object_states[i];
+            --world->source_object_state_count;
+            memset(&world->source_object_states[
+                       world->source_object_state_count], 0,
+                   sizeof(world->source_object_states[0]));
+        }
+        return 1;
+    }
+    if (index == world->source_object_state_count) {
+        if (index >= THERON_MAX_SOURCE_OBJECT_STATES) return 0;
+        ++world->source_object_state_count;
+    }
+    world->source_object_states[index].dungeon_id =
+        (int16_t)source->dungeon_id;
+    world->source_object_states[index].level = (int16_t)source->level;
+    world->source_object_states[index].source_ref = source->source_ref;
+    world->source_object_states[index].source_index = source->source_index;
+    world->source_object_states[index].word = word;
+    world->source_object_states[index].category = source->category;
+    return 1;
+}
+
+/* Consume only remote square events whose complete original state owner is
+ * represented in the Theron runtime.  The Track 02 map byte remains immutable
+ * provenance; a category-1 live object owns a teleporter's mutable OPEN bit.
+ * Other target families stay queued until their F0238 owner is source-bound. */
+static void theron_v1_world_dispatch_source_actuator_events(
+    Theron_V1_World *world)
+{
+    unsigned int write_index = 0u;
+
+    if (!world) return;
+    for (unsigned int i = 0; i < world->source_actuator_event_count; ++i) {
+        Theron_V1_SourceActuatorEvent event =
+            world->source_actuator_events[i];
+        int consumed = 0;
+        int source_verified = 0;
+
+        for (unsigned int j = 0; j < world->source_object_count; ++j) {
+            const Theron_V1_SourceObjectRecord *source =
+                &world->source_objects[j];
+            Theron_Actuator actuator;
+            int effect_matches;
+            if (source->dungeon_id != event.dungeon_id ||
+                source->level != event.level || source->x != event.source_x ||
+                source->y != event.source_y ||
+                source->source_ref != event.source_ref ||
+                source->source_index != event.source_index ||
+                source->category != THERON_CAT_ACTUATOR ||
+                source->raw_size != 8u ||
+                theron_v1_track02_actuator_decode(
+                    source->raw, &actuator) != 0 ||
+                (actuator.type != TQ_ACT_FLOOR_PARTY &&
+                 actuator.type != TQ_ACT_WALL_TRIGGER))
+                continue;
+            effect_matches = event.effect == actuator.effect ||
+                ((actuator.effect == TQ_ACT_EFFECT_TOGGLE ||
+                  actuator.effect == TQ_ACT_EFFECT_HOLD) &&
+                 (event.effect == TQ_ACT_EFFECT_SET ||
+                  event.effect == TQ_ACT_EFFECT_CLEAR));
+            if (!effect_matches || event.local_effect != actuator.local_effect ||
+                event.sound != actuator.sound || event.delay != actuator.delay ||
+                event.local_multiple != actuator.local_multiple)
+                continue;
+            if (actuator.local_effect) {
+                if (event.target_x != source->x ||
+                    event.target_y != source->y ||
+                    event.target_facing != 0xffu)
+                    continue;
+            } else if (event.target_x != actuator.target_x ||
+                       event.target_y != actuator.target_y ||
+                       event.target_facing != actuator.target_facing) {
+                continue;
+            }
+            source_verified = 1;
+            break;
+        }
+
+        if (source_verified && event.due_tick <= world->world_tick &&
+            event.local_effect && event.local_multiple == 176u) {
+            /* MOVESENS F0270 retains the encoded local value, then F0271
+             * acts only on CLEAR (1) or TOGGLE (2); XP is the separate
+             * value 10.  Every authentic Theron floor-party local event is
+             * 176, so the original consumer is a completed no-op. */
+            consumed = 1;
+        } else if (source_verified && event.due_tick <= world->world_tick &&
+            !event.local_effect &&
+            event.dungeon_id >= 1 &&
+            event.dungeon_id <= THERON_DUNGEON_COUNT && event.level >= 0 &&
+            event.level < THERON_MAX_LEVELS_PER_DUNGEON &&
+            event.target_x < THERON_MAX_MAP_SIZE &&
+            event.target_y < THERON_MAX_MAP_SIZE &&
+            world->level_loaded[event.dungeon_id - 1][event.level]) {
+            Theron_V1_Level *level =
+                &world->levels[event.dungeon_id - 1][event.level];
+            uint8_t source_tile = 0xffu;
+
+            if (event.target_x < level->width &&
+                event.target_y < level->height)
+                source_tile =
+                    level->source_tiles[event.target_y][event.target_x];
+
+            if ((source_tile >> 5) == THERON_TILE_TELEPORTER) {
+                Theron_V1_Object *target = NULL;
+                for (int j = 0; j < world->object_count; ++j) {
+                    Theron_V1_Object *candidate = &world->objects[j];
+                    if (candidate->dungeon_id == event.dungeon_id &&
+                        candidate->level == event.level &&
+                        candidate->x == event.target_x &&
+                        candidate->y == event.target_y &&
+                        candidate->type == THERON_OBJTYPE_TELEPORTER &&
+                        candidate->source_category ==
+                            THERON_CAT_TELEPORTER &&
+                        (candidate->flags & THERON_OBJ_F_TRACK02_COORD_LINK)) {
+                        target = candidate;
+                        break;
+                    }
+                }
+                if (target) {
+                    if (event.effect == TQ_ACT_EFFECT_SET) {
+                        target->state = 1u;
+                        consumed = 1;
+                    } else if (event.effect == TQ_ACT_EFFECT_CLEAR) {
+                        target->state = 0u;
+                        consumed = 1;
+                    } else if (event.effect == TQ_ACT_EFFECT_TOGGLE) {
+                        target->state = target->state ? 0u : 1u;
+                        consumed = 1;
+                    }
+                }
+            } else if ((source_tile >> 5) == THERON_TILE_DOOR) {
+                Theron_V1_Object *target = NULL;
+                for (int j = 0; j < world->object_count; ++j) {
+                    Theron_V1_Object *candidate = &world->objects[j];
+                    if (candidate->dungeon_id == event.dungeon_id &&
+                        candidate->level == event.level &&
+                        candidate->x == event.target_x &&
+                        candidate->y == event.target_y &&
+                        candidate->type == THERON_OBJTYPE_DOOR &&
+                        candidate->source_category == THERON_CAT_DOOR) {
+                        target = candidate;
+                        break;
+                    }
+                }
+                if (target && target->state <= 5u) {
+                    uint8_t effect = event.effect;
+                    if (target->state == 5u) {
+                        consumed = 1;
+                    } else {
+                        if (effect == TQ_ACT_EFFECT_TOGGLE)
+                            effect = target->state == 0u ?
+                                TQ_ACT_EFFECT_CLEAR : TQ_ACT_EFFECT_SET;
+                        if (effect == TQ_ACT_EFFECT_SET) {
+                            if (target->state > 0u) --target->state;
+                            consumed = target->state == 0u;
+                        } else if (effect == TQ_ACT_EFFECT_CLEAR) {
+                            if (target->state < 4u) ++target->state;
+                            consumed = target->state == 4u;
+                        }
+                        if (!consumed &&
+                            (effect == TQ_ACT_EFFECT_SET ||
+                             effect == TQ_ACT_EFFECT_CLEAR)) {
+                            event.effect = effect;
+                            event.due_tick = world->world_tick + 1u;
+                        }
+                    }
+                }
+            } else if ((source_tile >> 5) == THERON_TILE_PIT ||
+                       (source_tile >> 5) == THERON_TILE_FAKEWALL) {
+                const uint8_t open_mask =
+                    (source_tile >> 5) == THERON_TILE_PIT ? 0x08u : 0x04u;
+                uint8_t runtime_tile;
+                uint8_t effect = event.effect;
+                if (theron_v1_world_track02_runtime_tile(
+                        world, event.dungeon_id, event.level,
+                        event.target_x, event.target_y, &runtime_tile)) {
+                    if (effect == TQ_ACT_EFFECT_TOGGLE)
+                        effect = (runtime_tile & open_mask) ?
+                            TQ_ACT_EFFECT_CLEAR : TQ_ACT_EFFECT_SET;
+                    if (effect == TQ_ACT_EFFECT_SET)
+                        runtime_tile |= open_mask;
+                    else if (effect == TQ_ACT_EFFECT_CLEAR)
+                        runtime_tile &= (uint8_t)~open_mask;
+                    if ((effect == TQ_ACT_EFFECT_SET ||
+                         effect == TQ_ACT_EFFECT_CLEAR) &&
+                        theron_v1_world_set_track02_runtime_tile(
+                            world, event.dungeon_id, event.level,
+                            event.target_x, event.target_y, runtime_tile))
+                        consumed = 1;
+                }
+            } else if ((source_tile >> 5) == THERON_TILE_WALL ||
+                       (source_tile >> 5) == THERON_TILE_OPEN) {
+                const int wall =
+                    (source_tile >> 5) == THERON_TILE_WALL;
+                const Theron_V1_SourceObjectRecord *text_target = NULL;
+                const Theron_V1_SourceObjectRecord *gate_target = NULL;
+                unsigned int text_count = 0u;
+                unsigned int gate_count = 0u;
+                int has_unsupported_target = 0;
+                for (unsigned int j = 0;
+                     j < world->source_object_count; ++j) {
+                    const Theron_V1_SourceObjectRecord *target =
+                        &world->source_objects[j];
+                    Theron_Actuator target_actuator;
+                    if (target->dungeon_id != event.dungeon_id ||
+                        target->level != event.level ||
+                        target->x != event.target_x ||
+                        target->y != event.target_y)
+                        continue;
+                    if (target->category == THERON_CAT_TEXT &&
+                        (!wall || target->position == event.target_facing)) {
+                        text_target = target;
+                        ++text_count;
+                    }
+                    if (target->category == THERON_CAT_ACTUATOR &&
+                        target->raw_size == 8u &&
+                        theron_v1_track02_actuator_decode(
+                            target->raw, &target_actuator) == 0 &&
+                        ((wall &&
+                          (target_actuator.type == 5u ||
+                           target_actuator.type == 6u ||
+                           target_actuator.type == 7u ||
+                           target_actuator.type == 8u ||
+                           target_actuator.type == 9u ||
+                           target_actuator.type == 10u ||
+                           target_actuator.type == 14u ||
+                           target_actuator.type == 15u ||
+                           target_actuator.type == 18u)) ||
+                         (!wall && target_actuator.type ==
+                                      TQ_ACT_FLOOR_MONSTER_GEN))) {
+                        if (wall && target_actuator.type ==
+                                        TQ_ACT_WALL_TRIGGER) {
+                            gate_target = target;
+                            ++gate_count;
+                        } else if (wall &&
+                                   (target_actuator.type == 7u ||
+                                    target_actuator.type == 8u ||
+                                    target_actuator.type == 9u ||
+                                    target_actuator.type == 10u ||
+                                    target_actuator.type == 14u ||
+                                    target_actuator.type == 15u) &&
+                                   target->position != event.target_facing) {
+                            /* F0248 launches only from the addressed wall
+                             * cell.  A launcher on another face is an
+                             * authenticated no-op, not an unbound target. */
+                        } else {
+                            has_unsupported_target = 1;
+                        }
+                    }
+                }
+                /* F0248/F0245 still consume an authenticated square event
+                 * when their complete source chain contains no applicable
+                 * text or sensor.  Retain only events that need a mutable
+                 * target owner not yet represented by Theron. */
+                if (!has_unsupported_target && text_count == 0u) {
+                    if (gate_count == 0u) {
+                        consumed = 1;
+                    } else if (wall && gate_count == 1u) {
+                        Theron_Actuator gate;
+                        uint16_t word;
+                        if (theron_v1_track02_actuator_decode(
+                                gate_target->raw, &gate) == 0 &&
+                            theron_v1_world_track02_runtime_object_word(
+                                world, gate_target, &word)) {
+                            const uint8_t runtime_type =
+                                (uint8_t)(word & 0x007fu);
+                            uint16_t data = (word >> 7) & 0x01ffu;
+                            const uint16_t bit =
+                                (uint16_t)(1u << (event.target_facing & 3u));
+                            int trigger_set;
+                            int gate_triggers;
+                            uint8_t resolved_effect = gate.effect;
+                            if (runtime_type == TQ_ACT_FLOOR_NONE) {
+                                consumed = 1;
+                            } else if (runtime_type == TQ_ACT_WALL_TRIGGER) {
+                                if (event.effect == TQ_ACT_EFFECT_TOGGLE)
+                                    data ^= bit;
+                                else if (event.effect == TQ_ACT_EFFECT_SET)
+                                    data |= bit;
+                                else if (event.effect == TQ_ACT_EFFECT_CLEAR)
+                                    data &= (uint16_t)~bit;
+                                data &= 0x01ffu;
+                                trigger_set =
+                                    ((data & 0x000fu) ==
+                                     ((data & 0x00f0u) >> 4)) !=
+                                    gate.revert_effect;
+                                gate_triggers = gate.effect ==
+                                        TQ_ACT_EFFECT_HOLD || trigger_set;
+                                if (gate.effect == TQ_ACT_EFFECT_HOLD)
+                                    resolved_effect = trigger_set ?
+                                        TQ_ACT_EFFECT_SET :
+                                        TQ_ACT_EFFECT_CLEAR;
+                                word = (uint16_t)((data << 7) |
+                                    (gate_triggers && gate.once ? 0u :
+                                     TQ_ACT_WALL_TRIGGER));
+                                if (theron_v1_world_set_track02_runtime_object_word(
+                                        world, gate_target, word)) {
+                                    if (!gate_triggers) {
+                                        consumed = 1;
+                                    } else {
+                                        Theron_V1_Object *live =
+                                            theron_v1_world_live_source_actuator(
+                                                world, gate_target);
+                                        event.due_tick = world->world_tick +
+                                            gate.delay;
+                                        event.source_ref =
+                                            gate_target->source_ref;
+                                        event.source_index =
+                                            gate_target->source_index;
+                                        event.dungeon_id =
+                                            (int16_t)gate_target->dungeon_id;
+                                        event.level =
+                                            (int16_t)gate_target->level;
+                                        event.source_x =
+                                            (uint8_t)gate_target->x;
+                                        event.source_y =
+                                            (uint8_t)gate_target->y;
+                                        event.effect = resolved_effect;
+                                        event.local_effect = gate.local_effect;
+                                        event.sound = gate.sound;
+                                        event.delay = gate.delay;
+                                        event.local_multiple =
+                                            gate.local_multiple;
+                                        if (gate.local_effect) {
+                                            event.target_x =
+                                                (uint8_t)gate_target->x;
+                                            event.target_y =
+                                                (uint8_t)gate_target->y;
+                                            event.target_facing = 0xffu;
+                                        } else {
+                                            event.target_x = gate.target_x;
+                                            event.target_y = gate.target_y;
+                                            event.target_facing =
+                                                gate.target_facing;
+                                        }
+                                        if (gate.once && live)
+                                            live->state = TQ_ACT_FLOOR_NONE;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (!has_unsupported_target && text_count == 1u) {
+                    uint16_t word;
+                    if (theron_v1_world_track02_runtime_object_word(
+                            world, text_target, &word)) {
+                        if (event.effect == TQ_ACT_EFFECT_TOGGLE)
+                            word ^= 0x0001u;
+                        else if (event.effect == TQ_ACT_EFFECT_SET)
+                            word |= 0x0001u;
+                        else if (event.effect == TQ_ACT_EFFECT_CLEAR)
+                            word &= (uint16_t)~0x0001u;
+                        if ((event.effect == TQ_ACT_EFFECT_SET ||
+                             event.effect == TQ_ACT_EFFECT_CLEAR ||
+                             event.effect == TQ_ACT_EFFECT_TOGGLE) &&
+                            theron_v1_world_set_track02_runtime_object_word(
+                                world, text_target, word))
+                            consumed = 1;
+                    }
+                }
+            }
+        }
+
+        if (!consumed) {
+            world->source_actuator_events[write_index] = event;
+            ++write_index;
+        }
+    }
+    for (unsigned int i = write_index;
+         i < world->source_actuator_event_count; ++i)
+        memset(&world->source_actuator_events[i], 0,
+               sizeof(world->source_actuator_events[i]));
+    world->source_actuator_event_count = write_index;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * World tick
  * ══════════════════════════════════════════════════════════════════════ */
@@ -1939,6 +3754,7 @@ void theron_v1_world_tick(Theron_V1_World *world) {
     if (!world) return;
     world->world_tick++;
     theron_v1_tick_timers(world);
+    theron_v1_world_dispatch_source_actuator_events(world);
     theron_v1_creature_ai_tick(world);
     theron_v1_world_tick_generators(world);
 }
@@ -2276,10 +4092,18 @@ int theron_v1_world_runtime_media_bind_level_data_block(
 
 uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
     uint64_t h = THERON_HASH_FNV_OFFSET;
+    uint8_t party_wire[sizeof(uint32_t) +
+                       THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion) +
+                       THERON_PARTY_CONTROL_WIRE_BYTES_V14];
+    size_t party_wire_size;
     if (!world) return 0;
 
     /* Seed: party state */
     h = fnv64_word(h, THERON_HASH_SEED_PARTY);
+    party_wire_size = _tqw_party_pack(
+        &world->party, party_wire, sizeof(party_wire));
+    if (party_wire_size != sizeof(party_wire)) return 0;
+    h = fnv64_bytes(h, party_wire, party_wire_size);
     h = fnv64_word(h, (uint64_t)world->current_dungeon);
     h = fnv64_word(h, (uint64_t)world->current_level);
     h = fnv64_word(h, (uint64_t)world->quest_items_in_dungeon);
@@ -2295,6 +4119,19 @@ uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
         h = fnv64_word(h, (uint64_t)(o->state & 0xFF));
         h = fnv64_word(h, (uint64_t)(o->x) | ((uint64_t)(o->y) << 8));
         h = fnv64_word(h, (uint64_t)o->flags);
+        h = fnv64_word(h, (uint64_t)o->source_ref |
+                              ((uint64_t)o->source_next_ref << 16) |
+                              ((uint64_t)o->source_index << 32));
+        h = fnv64_word(h, (uint64_t)o->source_category |
+                              ((uint64_t)o->source_position << 8) |
+                              ((uint64_t)o->source_origin_valid << 16) |
+                              ((uint64_t)o->source_dungeon << 24) |
+                              ((uint64_t)o->source_level << 32) |
+                              ((uint64_t)o->source_x << 40) |
+                              ((uint64_t)o->source_y << 48));
+        h = fnv64_bytes(h, o->source_raw,
+                        o->source_raw_size <= sizeof(o->source_raw) ?
+                            o->source_raw_size : sizeof(o->source_raw));
     }
 
     /* Seed: creature roster (source-locked combat state) */
@@ -2339,6 +4176,47 @@ uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
         h = fnv64_bytes(h, r->raw, r->raw_size <= sizeof(r->raw) ?
                                       r->raw_size : sizeof(r->raw));
     }
+    h = fnv64_word(h, world->source_actuator_event_count);
+    for (unsigned int i = 0; i < world->source_actuator_event_count; ++i) {
+        const Theron_V1_SourceActuatorEvent *event =
+            &world->source_actuator_events[i];
+        h = fnv64_word(h, event->due_tick);
+        h = fnv64_word(h, (uint64_t)event->source_ref |
+                              ((uint64_t)event->source_index << 16));
+        h = fnv64_word(h, (uint16_t)event->dungeon_id |
+                              ((uint64_t)(uint16_t)event->level << 16) |
+                              ((uint64_t)event->source_x << 32) |
+                              ((uint64_t)event->source_y << 40));
+        h = fnv64_word(h, (uint64_t)event->target_x |
+                              ((uint64_t)event->target_y << 8) |
+                              ((uint64_t)event->target_facing << 16) |
+                              ((uint64_t)event->effect << 24) |
+                              ((uint64_t)event->local_effect << 32) |
+                              ((uint64_t)event->sound << 40) |
+                              ((uint64_t)event->delay << 48));
+        h = fnv64_word(h, event->local_multiple);
+    }
+    h = fnv64_word(h, world->source_square_state_count);
+    for (unsigned int i = 0; i < world->source_square_state_count; ++i) {
+        const Theron_V1_SourceSquareState *state =
+            &world->source_square_states[i];
+        h = fnv64_word(h, (uint16_t)state->dungeon_id |
+                              ((uint64_t)(uint16_t)state->level << 16) |
+                              ((uint64_t)state->x << 32) |
+                              ((uint64_t)state->y << 40) |
+                              ((uint64_t)state->tile << 48));
+    }
+    h = fnv64_word(h, world->source_object_state_count);
+    for (unsigned int i = 0; i < world->source_object_state_count; ++i) {
+        const Theron_V1_SourceObjectState *state =
+            &world->source_object_states[i];
+        h = fnv64_word(h, (uint16_t)state->dungeon_id |
+                              ((uint64_t)(uint16_t)state->level << 16) |
+                              ((uint64_t)state->source_ref << 32) |
+                              ((uint64_t)state->source_index << 48));
+        h = fnv64_word(h, state->word |
+                              ((uint64_t)state->category << 16));
+    }
     h = fnv64_word(h, world->source_generator_count);
     for (unsigned int i = 0; i < world->source_generator_count; ++i) {
         const Theron_V1_SourceGeneratorRecord *r =
@@ -2364,7 +4242,13 @@ uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
             h = fnv64_word(h, (uint64_t)r->source_ref |
                                   ((uint64_t)r->source_next_ref << 16));
             h = fnv64_word(h, (uint64_t)r->source_index |
-                                  ((uint64_t)r->text_ref << 16));
+                                  ((uint64_t)r->text_ref << 16) |
+                                  ((uint64_t)r->source_position << 32));
+            h = fnv64_word(h, (uint64_t)r->source_origin_valid |
+                                  ((uint64_t)r->source_dungeon << 8) |
+                                  ((uint64_t)r->source_level << 16) |
+                                  ((uint64_t)r->source_x << 24) |
+                                  ((uint64_t)r->source_y << 32));
             h = fnv64_bytes(h, r->property, sizeof(r->property));
             h = fnv64_bytes(h, r->source_raw,
                             r->source_raw_size <= sizeof(r->source_raw) ?
@@ -2434,8 +4318,15 @@ static size_t serialize_size(const Theron_V1_World *world) {
         world->timer_count < 0 || world->timer_count > THERON_MAX_TIMERS ||
         world->creature_count < 0 ||
         world->creature_count > THERON_MAX_CREATURES_PER_LEVEL ||
+        world->source_monster_count > THERON_MAX_SOURCE_MONSTERS ||
         world->source_generator_count > THERON_MAX_SOURCE_GENERATORS ||
-        world->source_object_count > THERON_MAX_SOURCE_OBJECT_RECORDS) {
+        world->source_object_count > THERON_MAX_SOURCE_OBJECT_RECORDS ||
+        world->source_actuator_event_count >
+            THERON_MAX_SOURCE_ACTUATOR_EVENTS ||
+        world->source_square_state_count >
+            THERON_MAX_SOURCE_SQUARE_STATES ||
+        world->source_object_state_count >
+            THERON_MAX_SOURCE_OBJECT_STATES) {
         return 0;
     }
     size_t n = 0;
@@ -2468,6 +4359,18 @@ static size_t serialize_size(const Theron_V1_World *world) {
     n += sizeof(uint32_t); /* source object count */
     n += (size_t)world->source_object_count *
          THERON_SOURCE_OBJECT_WIRE_BYTES;
+    n += sizeof(uint32_t); /* queued source actuator event count */
+    n += (size_t)world->source_actuator_event_count *
+         THERON_SOURCE_ACTUATOR_EVENT_WIRE_BYTES;
+    n += sizeof(uint32_t); /* sparse mutable source-square count */
+    n += (size_t)world->source_square_state_count *
+         THERON_SOURCE_SQUARE_STATE_WIRE_BYTES;
+    n += sizeof(uint32_t); /* sparse mutable source-object count */
+    n += (size_t)world->source_object_state_count *
+         THERON_SOURCE_OBJECT_STATE_WIRE_BYTES;
+    n += sizeof(uint32_t); /* authenticated category-4 source count */
+    n += (size_t)world->source_monster_count *
+         THERON_SOURCE_MONSTER_WIRE_BYTES;
     return n;
 }
 
@@ -2549,6 +4452,26 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     for (unsigned int i = 0; i < world->source_object_count; ++i) {
         out = theron_source_object_write(out, &world->source_objects[i]);
     }
+    ww32(out, world->source_actuator_event_count);
+    out += sizeof(uint32_t);
+    for (unsigned int i = 0; i < world->source_actuator_event_count; ++i) {
+        out = theron_source_actuator_event_write(
+            out, &world->source_actuator_events[i]);
+    }
+    ww32(out, world->source_square_state_count);
+    out += sizeof(uint32_t);
+    for (unsigned int i = 0; i < world->source_square_state_count; ++i)
+        out = theron_source_square_state_write(
+            out, &world->source_square_states[i]);
+    ww32(out, world->source_object_state_count);
+    out += sizeof(uint32_t);
+    for (unsigned int i = 0; i < world->source_object_state_count; ++i)
+        out = theron_source_object_state_write(
+            out, &world->source_object_states[i]);
+    ww32(out, world->source_monster_count);
+    out += sizeof(uint32_t);
+    for (unsigned int i = 0; i < world->source_monster_count; ++i)
+        out = theron_source_monster_write(out, &world->source_monsters[i]);
 
     return need;
 }
@@ -2558,15 +4481,15 @@ size_t theron_v1_world_serialize(const Theron_V1_World *world,
     return theroned_world_serialize(world, buf, bufsize);
 }
 
-int theron_v1_world_deserialize(Theron_V1_World *world,
-                                 const void *buf, size_t bufsize) {
+static int theron_v1_world_deserialize_into(Theron_V1_World *world,
+                                            const void *buf,
+                                            size_t bufsize) {
     if (!world || !buf) return -1;
     const uint8_t *in = (const uint8_t *)buf;
-    const size_t fixed_size = sizeof(uint32_t) + sizeof(uint16_t) * 2 +
+    const size_t fixed_prefix = sizeof(uint32_t) + sizeof(uint16_t) * 2 +
         sizeof(uint8_t) * 4 + sizeof(Theron_DungeonProgression) +
-        _tqw_party_pack_size() + sizeof(uint32_t) + sizeof(uint32_t) +
-        sizeof(uint64_t) * 2;
-    if (bufsize < fixed_size) return -1;
+        sizeof(uint32_t);
+    if (bufsize < fixed_prefix) return -1;
 
     uint32_t magic = rw32(in);
     if (magic != THERON_WORLD_SAVE_MAGIC) return -2;
@@ -2575,7 +4498,8 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     uint16_t ver = rw16(in);
     if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
         ver != 6u && ver != 7u && ver != 8u &&
-        ver != 9u && ver != 10u &&
+        ver != 9u && ver != 10u && ver != 11u && ver != 12u && ver != 13u &&
+        ver != 14u && ver != 15u && ver != 16u && ver != 17u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
@@ -2589,10 +4513,10 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     in += sizeof(world->progression);
 
     if (_tqw_party_unpack(&world->party, in,
-                               bufsize - (in - (const uint8_t *)buf)) != 0) {
+                         bufsize - (in - (const uint8_t *)buf), ver) != 0) {
         return -4;
     }
-    in += _tqw_party_pack_size();
+    in += _tqw_party_pack_size_for_version(ver);
 
     if ((size_t)(in - (const uint8_t *)buf) > bufsize - sizeof(uint32_t)) return -1;
     uint32_t oc = rw32(in);
@@ -2600,14 +4524,14 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     if (oc > THERON_MAX_OBJECTS) return -1;
     world->object_count = (int)oc;
     size_t objsz = (size_t)oc * (legacy_host_records ?
-        sizeof(Theron_V1_Object) : theron_object_wire_size());
+        sizeof(Theron_V1_Object) : theron_object_wire_size_for_version(ver));
     if (objsz > bufsize - (size_t)(in - (const uint8_t *)buf)) return -1;
     if (legacy_host_records) {
         memcpy(world->objects, in, objsz);
         in += objsz;
     } else {
         for (uint32_t i = 0; i < oc; ++i) {
-            in = theron_object_read(in, &world->objects[i]);
+            in = theron_object_read(in, &world->objects[i], ver);
         }
     }
 
@@ -2647,8 +4571,25 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     memset(world->creatures, 0, sizeof(world->creatures));
     world->source_generator_count = 0;
     memset(world->source_generators, 0, sizeof(world->source_generators));
+    /* Versions before 18 contain no category-4 ledger.  Continue loads and
+     * authenticates Track 02 before applying such a legacy snapshot, so
+     * preserve that media-owned ledger exactly as older deserialization did.
+     * Version 18 replaces it atomically from the save tail below. */
+    if (ver >= 18u) {
+        world->source_monster_count = 0;
+        memset(world->source_monsters, 0, sizeof(world->source_monsters));
+    }
     world->source_object_count = 0;
     memset(world->source_objects, 0, sizeof(world->source_objects));
+    world->source_actuator_event_count = 0;
+    memset(world->source_actuator_events, 0,
+           sizeof(world->source_actuator_events));
+    world->source_square_state_count = 0;
+    memset(world->source_square_states, 0,
+           sizeof(world->source_square_states));
+    world->source_object_state_count = 0;
+    memset(world->source_object_states, 0,
+           sizeof(world->source_object_states));
     memset(world->generator_spawn_count, 0,
            sizeof(world->generator_spawn_count));
     memset(world->generator_next_tick, 0,
@@ -2740,17 +4681,211 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                                 generator_wire - fixed_runtime_tail;
                         uint32_t source_object_count = rw32(in);
                         in += sizeof(uint32_t);
+                        const size_t source_object_bytes = sizeof(uint32_t) +
+                            (size_t)source_object_count *
+                                THERON_SOURCE_OBJECT_WIRE_BYTES;
                         if (source_object_count >
                                 THERON_MAX_SOURCE_OBJECT_RECORDS ||
-                            source_object_tail != sizeof(uint32_t) +
-                                (size_t)source_object_count *
-                                    THERON_SOURCE_OBJECT_WIRE_BYTES) {
+                            (ver < 15u &&
+                             source_object_tail != source_object_bytes) ||
+                            (ver >= 15u &&
+                             source_object_tail < source_object_bytes +
+                                 sizeof(uint32_t))) {
                             return -1;
                         }
                         world->source_object_count = source_object_count;
                         for (uint32_t i = 0; i < source_object_count; ++i) {
                             in = theron_source_object_read(
                                 in, &world->source_objects[i]);
+                        }
+                        if (ver >= 15u) {
+                            uint32_t event_count = rw32(in);
+                            in += sizeof(uint32_t);
+                            const size_t event_bytes = sizeof(uint32_t) +
+                                (size_t)event_count *
+                                    THERON_SOURCE_ACTUATOR_EVENT_WIRE_BYTES;
+                            if (event_count >
+                                    THERON_MAX_SOURCE_ACTUATOR_EVENTS ||
+                                (ver == 15u &&
+                                 source_object_tail != source_object_bytes +
+                                     event_bytes) ||
+                                (ver >= 16u &&
+                                 source_object_tail < source_object_bytes +
+                                     event_bytes + sizeof(uint32_t)))
+                                return -1;
+                            world->source_actuator_event_count = event_count;
+                            for (uint32_t i = 0; i < event_count; ++i) {
+                                in = theron_source_actuator_event_read(
+                                    in, &world->source_actuator_events[i]);
+                            }
+                            if (ver >= 16u) {
+                                uint32_t state_count = rw32(in);
+                                in += sizeof(uint32_t);
+                                const size_t state_bytes = sizeof(uint32_t) +
+                                    (size_t)state_count *
+                                      THERON_SOURCE_SQUARE_STATE_WIRE_BYTES;
+                                if (state_count >
+                                        THERON_MAX_SOURCE_SQUARE_STATES ||
+                                    (ver == 16u &&
+                                     source_object_tail !=
+                                         source_object_bytes + event_bytes +
+                                         state_bytes) ||
+                                    (ver >= 17u &&
+                                     source_object_tail <
+                                         source_object_bytes + event_bytes +
+                                         state_bytes + sizeof(uint32_t)))
+                                    return -1;
+                                world->source_square_state_count = state_count;
+                                for (uint32_t i = 0; i < state_count; ++i) {
+                                    Theron_V1_SourceSquareState *state =
+                                        &world->source_square_states[i];
+                                    in = theron_source_square_state_read(
+                                        in, state);
+                                    if (state->dungeon_id < 1 ||
+                                        state->dungeon_id >
+                                            THERON_DUNGEON_COUNT ||
+                                        state->level < 0 || state->level >=
+                                            THERON_MAX_LEVELS_PER_DUNGEON ||
+                                        state->x >= THERON_MAX_MAP_SIZE ||
+                                        state->y >= THERON_MAX_MAP_SIZE)
+                                        return -1;
+                                    for (uint32_t j = 0; j < i; ++j) {
+                                        const Theron_V1_SourceSquareState *old =
+                                            &world->source_square_states[j];
+                                        if (old->dungeon_id ==
+                                                state->dungeon_id &&
+                                            old->level == state->level &&
+                                            old->x == state->x &&
+                                            old->y == state->y)
+                                            return -1;
+                                    }
+                                }
+                                if (ver >= 17u) {
+                                    uint32_t object_state_count = rw32(in);
+                                    in += sizeof(uint32_t);
+                                    if (object_state_count >
+                                            THERON_MAX_SOURCE_OBJECT_STATES ||
+                                        (ver == 17u && source_object_tail !=
+                                             source_object_bytes + event_bytes +
+                                             state_bytes + sizeof(uint32_t) +
+                                             (size_t)object_state_count *
+                                               THERON_SOURCE_OBJECT_STATE_WIRE_BYTES) ||
+                                        (ver >= 18u && source_object_tail <
+                                             source_object_bytes + event_bytes +
+                                             state_bytes + sizeof(uint32_t) +
+                                             (size_t)object_state_count *
+                                               THERON_SOURCE_OBJECT_STATE_WIRE_BYTES +
+                                             sizeof(uint32_t)))
+                                        return -1;
+                                    world->source_object_state_count =
+                                        object_state_count;
+                                    for (uint32_t i = 0;
+                                         i < object_state_count; ++i) {
+                                        Theron_V1_SourceObjectState *state =
+                                            &world->source_object_states[i];
+                                        const Theron_V1_SourceObjectRecord *source =
+                                            NULL;
+                                        in = theron_source_object_state_read(
+                                            in, state);
+                                        for (uint32_t j = 0;
+                                             j < source_object_count; ++j) {
+                                            const Theron_V1_SourceObjectRecord *candidate =
+                                                &world->source_objects[j];
+                                            if (candidate->dungeon_id ==
+                                                    state->dungeon_id &&
+                                                candidate->level ==
+                                                    state->level &&
+                                                candidate->source_ref ==
+                                                    state->source_ref &&
+                                                candidate->source_index ==
+                                                    state->source_index &&
+                                                candidate->category ==
+                                                    state->category) {
+                                                source = candidate;
+                                                break;
+                                            }
+                                        }
+                                        if (!source || source->raw_size < 4u ||
+                                            (state->category !=
+                                                 THERON_CAT_TEXT &&
+                                             state->category !=
+                                                 THERON_CAT_ACTUATOR) ||
+                                            (state->category ==
+                                                 THERON_CAT_TEXT &&
+                                             ((state->word ^
+                                               ((uint16_t)source->raw[2] |
+                                                ((uint16_t)source->raw[3] << 8))) &
+                                              (uint16_t)~0x0001u) != 0u))
+                                            return -1;
+                                        for (uint32_t j = 0; j < i; ++j) {
+                                            const Theron_V1_SourceObjectState *old =
+                                                &world->source_object_states[j];
+                                            if (old->dungeon_id ==
+                                                    state->dungeon_id &&
+                                                old->level == state->level &&
+                                                old->source_ref ==
+                                                    state->source_ref &&
+                                                old->source_index ==
+                                                    state->source_index &&
+                                                old->category == state->category)
+                                                return -1;
+                                        }
+                                    }
+                                    if (ver >= 18u) {
+                                        uint32_t monster_count = rw32(in);
+                                        in += sizeof(uint32_t);
+                                        const size_t expected_tail =
+                                            source_object_bytes + event_bytes +
+                                            state_bytes + sizeof(uint32_t) +
+                                            (size_t)object_state_count *
+                                              THERON_SOURCE_OBJECT_STATE_WIRE_BYTES +
+                                            sizeof(uint32_t) +
+                                            (size_t)monster_count *
+                                              THERON_SOURCE_MONSTER_WIRE_BYTES;
+                                        if (monster_count >
+                                                THERON_MAX_SOURCE_MONSTERS ||
+                                            source_object_tail != expected_tail)
+                                            return -1;
+                                        world->source_monster_count =
+                                            monster_count;
+                                        for (uint32_t i = 0;
+                                             i < monster_count; ++i) {
+                                            Theron_V1_SourceMonsterRecord *record =
+                                                &world->source_monsters[i];
+                                            in = theron_source_monster_read(
+                                                in, record);
+                                            if (record->dungeon_id < 1 ||
+                                                record->dungeon_id >
+                                                  THERON_DUNGEON_COUNT ||
+                                                record->level < 0 ||
+                                                record->level >=
+                                                  THERON_MAX_LEVELS_PER_DUNGEON ||
+                                                record->x < 0 || record->x >=
+                                                  THERON_MAX_MAP_SIZE ||
+                                                record->y < 0 || record->y >=
+                                                  THERON_MAX_MAP_SIZE ||
+                                                record->number > 3u ||
+                                                record->raw_size >
+                                                  sizeof(record->raw) ||
+                                                !theron_source_monster_raw_matches(
+                                                    record))
+                                                return -1;
+                                            for (uint32_t j = 0; j < i; ++j) {
+                                                const Theron_V1_SourceMonsterRecord *old =
+                                                    &world->source_monsters[j];
+                                                if (old->dungeon_id ==
+                                                        record->dungeon_id &&
+                                                    old->level == record->level &&
+                                                    old->source_ref ==
+                                                        record->source_ref &&
+                                                    old->source_index ==
+                                                        record->source_index)
+                                                    return -1;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -2761,6 +4896,21 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     }
 
     return 0;
+}
+
+int theron_v1_world_deserialize(Theron_V1_World *world,
+                                const void *buf, size_t bufsize) {
+    Theron_V1_World *candidate;
+    int result;
+
+    if (!world || !buf) return -1;
+    candidate = (Theron_V1_World *)malloc(sizeof(*candidate));
+    if (!candidate) return -1;
+    *candidate = *world;
+    result = theron_v1_world_deserialize_into(candidate, buf, bufsize);
+    if (result == 0) *world = *candidate;
+    free(candidate);
+    return result;
 }
 
 /* ── Source evidence ───────────────────────────────────────────────── */

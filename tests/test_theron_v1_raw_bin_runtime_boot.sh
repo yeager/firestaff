@@ -20,31 +20,64 @@ if [[ ! -f "$track02" ]]; then
     exit 77
 fi
 
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+scratch_root=${FIRESTAFF_TEST_SCRATCH_ROOT:-"$PWD/build/test-scratch"}
+mkdir -p "$scratch_root"
+output=$(mktemp "$scratch_root/firestaff-theron-raw-bin.XXXXXX")
+us_only_root=$(mktemp -d "$scratch_root/firestaff-theron-us-only.XXXXXX")
+trap 'rm -f "$output"; rm -rf "$us_only_root"' EXIT
+ln -s "$track02" "$us_only_root/TQUS02.bin"
+
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game theron \
+    --theron-native us \
     --data-dir "$data_root" \
     --boot-probe \
     --boot-probe-frames 0 \
-    --script 'enter,enter,down,down,down,down,down,down,enter,down,enter' \
-    --boot-probe-expect-phase theron-startup-2 \
-    --boot-probe-expect-level-loaded 0 \
+    --script 'enter,enter,down,down,down,down,down,down,enter,down,enter,tab' \
+    --boot-probe-expect-runtime \
+    --boot-probe-expect-level-loaded 1 \
+    --boot-probe-expect-party 1,0,0 \
+    --boot-probe-expect-champions 2 \
     --boot-probe-expect-asset-md5 "$expected_md5" \
-    --boot-probe-expect-startup-active 1 \
-    --duration 0 2>&1) || {
-    printf '%s\n' "$output" >&2
-    printf '%s\n' 'FAIL: authentic Theron USA raw BIN did not reach the source-backed Soul Room route' >&2
-    exit 1
-}
+    --boot-probe-expect-startup-active 0 \
+    --duration 0 >"$output" 2>&1
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq "assetMd5=$expected_md5" "$output" ||
-   ! grep -Fq 'phase=theron-startup-2' "$output" ||
-   ! grep -Fq 'levelLoaded=0' "$output" ||
-   ! grep -Fq 'startupActive=1' "$output" ||
+   ! grep -Fq 'phase=theron-runtime' "$output" ||
+   ! grep -Fq 'levelLoaded=1' "$output" ||
+   ! grep -Fq 'party=1,0,0 champions=2' "$output" ||
+   grep -Fq 'theronSourceObjects=0' "$output" ||
+   ! grep -Eq 'theronSourceObjects=[1-9][0-9]*' "$output" ||
+   ! grep -Fq 'theronDungeonLevelsLoaded=4' "$output" ||
+   ! grep -Fq 'theronDungeonSourceHeaders=4' "$output" ||
+   ! grep -Eq 'theronDungeonSourceNonzeroTiles=[1-9][0-9]*' "$output" ||
+   ! grep -Fq 'theronActiveChampion=1' "$output" ||
+   ! grep -Fq 'theronTrack01CddaReady=0' "$output" ||
+   ! grep -Fq 'theronSpawnSourceAuthenticated=1' "$output" ||
+   ! grep -Fq 'theronSpawnSourceVariant=2' "$output" ||
+   ! grep -Fq 'theronTrack02ItemNameBanks=7' "$output" ||
+   ! grep -Fq 'theronTrack02ItemNameVariant=2' "$output" ||
+   ! grep -Fq 'theronTrack19NameBankReady=1' "$output" ||
+   ! grep -Fq 'theronTrack19NameVariant=2' "$output" ||
+   ! grep -Fq 'theronTrack19ItemMappingProven=1' "$output" ||
    grep -Fq 'deterministic fallback assets' "$output"; then
     cat "$output" >&2
-    printf '%s\n' 'FAIL: authentic Theron USA raw BIN did not reach the source-backed Soul Room route' >&2
+    printf '%s\n' 'FAIL: authentic Theron USA raw BIN did not reach the source-backed runtime route' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron USA raw BIN reaches the source-backed Soul Room route'
+set +e
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game theron --theron-native jp --data-dir "$us_only_root" \
+    --boot-probe --duration 0 >"$output" 2>&1
+wrong_region_rc=$?
+set -e
+if [[ $wrong_region_rc -ne 2 ]] ||
+   ! grep -Fq 'that region' "$output"; then
+    cat "$output" >&2
+    printf '%s\n' 'FAIL: JP native selection borrowed the available USA Track 02' >&2
+    exit 1
+fi
+
+printf '%s\n' 'PASS: authentic Theron USA raw BIN reaches runtime with source map, party and object records'

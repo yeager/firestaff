@@ -7,7 +7,7 @@
 +static unsigned TheronPCECDCriticalTraceCount;
  static void TheronTracePCECDState(const char *format, ...);
 +static void TheronTracePCECDCriticalState(const char *format, ...);
- 
+
  void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
                                        uint8 accumulator, uint8 x, uint8 y)
  {
@@ -30,7 +30,7 @@
 @@ -152,6 +154,29 @@
   TheronPCECDStateTraceCount++;
  }
- 
+
 +static void TheronTracePCECDCriticalState(const char *format, ...)
 +{
 + va_list args;

@@ -1,0 +1,89 @@
+diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -40,5 +40,7 @@
+
+ namespace MDFN_IEN_PCE
+ {
+
++static bool TheronPostDungeonOrdinalInjected;
++static bool TheronPostDungeonEntryInjected;
+ static FILE *TheronMainRAMLoaderTrace;
+@@ -871,1 +874,77 @@
++	 /* Research-only exact replacement for the System Card CD_READ result.
++	  * The source is the authenticated MODE1/2048 Track 02 image; only the
++	  * proven four-sector LBA 4205 overlay is accepted. */
++	 if(PC == 0xdf26)
++	 {
++	  const char *iso_path = getenv("FIRESTAFF_THERON_POST_DUNGEON_OVERLAY_ISO");
++	  if(iso_path && *iso_path && RdMem(0xdf26) == 0x20 &&
++	     RdMem(0xdf27) == 0x09 && RdMem(0xdf28) == 0xe0 &&
++	     RdMem(0x20f8) == 4 && RdMem(0x20fa) == 0 &&
++	     RdMem(0x20fb) == 0x40)
++	  {
++	   uint8 payload[8192];
++	   uint32 hash = 2166136261U;
++	   FILE *f = fopen(iso_path, "rb");
++	   bool valid = f && !fseek(f, 971L * 2048L, SEEK_SET) &&
++	                fread(payload, 1, sizeof(payload), f) == sizeof(payload);
++	   if(f) fclose(f);
++	   for(unsigned i = 0; valid && i < sizeof(payload); i++)
++	    hash = (hash ^ payload[i]) * 16777619U;
++	   valid = valid && hash == 0x337de858U && payload[0] == 0xa9 &&
++	           payload[1] == 0x09 && payload[2] == 0x8d;
++	   if(valid)
++	   {
++	    for(unsigned i = 0; i < sizeof(payload); i++)
++	     WrMem(0x4000 + i, payload[i]);
++	    fprintf(stderr,
++	            "Theron post-dungeon overlay research load: fnv1a=%08x destination=4000 bytes=8192\n",
++	            hash);
++	    fflush(stderr);
++	    PC = 0xdf29;
++	   }
++	  }
++	 }
++	 /* Research-only entry into the authentic dispatcher already resident in
++	  * System Card RAM.  Page $6d is derived from this exact savestate's
++	  * SysCardRAM chunk; reject unless the complete DMS-SG.001 signature and
++	  * dispatch compare are present. */
++	 if(!TheronPostDungeonEntryInjected && PC == 0x4534)
++	 {
++	  const char *ordinal_text = getenv("FIRESTAFF_THERON_POST_DUNGEON_ORDINAL");
++	  const uint8 original_mpr6 = MPR[6];
++	  if(ordinal_text && ordinal_text[0] >= '0' && ordinal_text[0] <= '6' &&
++	     ordinal_text[1] == '\0')
++	  {
++	   SetMPR(6, 0x6d);
++	   if(RdMem(0xde01) == 'D' && RdMem(0xde02) == 'M' &&
++	      RdMem(0xde03) == 'S' && RdMem(0xde04) == '-' &&
++	      RdMem(0xde05) == 'S' && RdMem(0xde06) == 'G' &&
++	      RdMem(0xde07) == '.' && RdMem(0xde08) == '0' &&
++	      RdMem(0xde09) == '0' && RdMem(0xde0a) == '1' &&
++	      RdMem(0xde38) == 0xc9 && RdMem(0xde39) == 0x06)
++	   {
++	    PC = 0xde21;
++	    TheronPostDungeonEntryInjected = true;
++	   }
++	   else
++	    SetMPR(6, original_mpr6);
++	  }
++	 }
++	 /* Research-only: replace only the ordinal when authentic execution
++	  * reaches the original DMS-SG.001 dispatcher on its own. */
++	 if(!TheronPostDungeonOrdinalInjected && PC == 0xde38)
++	 {
++	  const char *ordinal_text = getenv("FIRESTAFF_THERON_POST_DUNGEON_ORDINAL");
++	  if(ordinal_text && ordinal_text[0] >= '0' && ordinal_text[0] <= '6' &&
++	     ordinal_text[1] == '\0' && RdMem(0xde38) == 0xc9 &&
++	     RdMem(0xde39) == 0x06)
++	  {
++	   A = (uint8)(ordinal_text[0] - '0');
++	   TheronPostDungeonOrdinalInjected = true;
++	   fprintf(stderr,
++	           "Theron post-dungeon research ordinal: ordinal=%u pc=%04x\n",
++	           A, PC);
++	   fflush(stderr);
++	  }
++	 }
+ 	 lastop = RdOp(PC);

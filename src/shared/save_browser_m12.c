@@ -217,6 +217,7 @@ static int nexus_save_slot_from_basename(const char* name,
     return 1;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int theron_tqsv_slot_from_basename(const char* name,
                                           int* outSlot) {
     int slot;
@@ -270,6 +271,7 @@ static int theron_srm_slot_from_basename(const char* name,
     }
     return 1;
 }
+#endif
 
 static int dm2_sksave_slot_from_basename(const char* name,
                                          unsigned char* outSlot,
@@ -356,6 +358,7 @@ static int dm2_sksave_root_from_path(const char* path,
     return 1;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int parent_root_from_path(const char* path,
                                  char* outRoot,
                                  size_t outRootCap) {
@@ -388,6 +391,7 @@ static int parent_root_from_path(const char* path,
     outRoot[len] = '\0';
     return 1;
 }
+#endif
 
 static int validate_csb_original_save_import_path(const char* path) {
     CSB_V1_CSBWinSaveDiscoveryResult discovery;
@@ -490,6 +494,7 @@ static int validate_nexus_fnxs_import_path(const char* path) {
     return result == NEXUS_SAVE_OK;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int validate_theron_tqsv_import_path(const char* path) {
     Theron_SaveSlot slotInfo;
     char saveRoot[512];
@@ -535,6 +540,7 @@ static int validate_theron_srm_import_path(const char* path) {
             kind == THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION_PARTY) &&
            envelope.progression.restored;
 }
+#endif
 
 /* Check if filename matches a launcher-visible save candidate. */
 static int is_save_file(const char* name) {
@@ -542,8 +548,10 @@ static int is_save_file(const char* name) {
     if (!name) return 0;
     if (is_csb_original_save_basename(name)) return 1;
     if (nexus_save_slot_from_basename(name, NULL)) return 1;
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     if (theron_tqsv_slot_from_basename(name, NULL)) return 1;
     if (theron_srm_slot_from_basename(name, NULL)) return 1;
+#endif
     if (dm2_sksave_slot_from_basename(name, NULL, NULL)) return 1;
     len = strlen(name);
     if (len < 15) return 0; /* "firestaff-.sav" minimum */
@@ -568,6 +576,7 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
         snprintf(outId, (size_t)outSize, "nexus");
         return;
     }
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     if (theron_tqsv_slot_from_basename(filename, NULL)) {
         snprintf(outId, (size_t)outSize, "theron");
         return;
@@ -576,6 +585,7 @@ static void extract_game_id(const char* filename, char* outId, int outSize) {
         snprintf(outId, (size_t)outSize, "theron");
         return;
     }
+#endif
     if (dm2_sksave_slot_from_basename(filename, NULL, NULL)) {
         snprintf(outId, (size_t)outSize, "dm2");
         return;
@@ -1054,6 +1064,7 @@ static int try_parse_nexus_fnxs_entry(M12_SaveBrowserEntry* entry) {
     return 1;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int try_parse_theron_tqsv_entry(M12_SaveBrowserEntry* entry) {
     Theron_SaveSlot slotInfo;
     int slot = -1;
@@ -1185,6 +1196,7 @@ static int try_parse_theron_srm_entry(M12_SaveBrowserEntry* entry) {
              slot);
     return 1;
 }
+#endif
 
 static int try_parse_dm1_pc34_vanilla_entry(M12_SaveBrowserEntry* entry) {
     FILE* fp;
@@ -1441,12 +1453,14 @@ static int parse_save_entry(M12_SaveBrowserEntry* entry) {
         if (try_parse_nexus_fnxs_entry(entry)) {
             return 1;
         }
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
         if (try_parse_theron_tqsv_entry(entry)) {
             return 1;
         }
         if (try_parse_theron_srm_entry(entry)) {
             return 1;
         }
+#endif
         if (try_parse_dm1_native_entry(entry)) {
             return 1;
         }
@@ -1964,6 +1978,7 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
         !validate_nexus_fnxs_import_path(importPath)) {
         return -1;
     }
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     if (theron_tqsv_slot_from_basename(base, NULL) &&
         !validate_theron_tqsv_import_path(importPath)) {
         return -1;
@@ -1972,6 +1987,7 @@ int M12_SaveBrowser_ImportFile(const char* dataDir,
         !validate_theron_srm_import_path(importPath)) {
         return -1;
     }
+#endif
     snprintf(dst, sizeof(dst), "%s/%s", dataDir, base);
     if (file_exists(dst)) {
         return -1;

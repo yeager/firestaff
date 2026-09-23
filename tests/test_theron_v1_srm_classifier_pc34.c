@@ -334,7 +334,7 @@ static void test_source_evidence(void) {
     expect_true(ev != NULL && strlen(ev) > 50, "source evidence non-empty");
     expect_true(strstr(ev, "DMWEB_REFERENCE") != NULL, "source cites DMWEB_REFERENCE");
     expect_true(strstr(ev, "Sphenx") != NULL, "source cites Sphenx");
-    expect_true(strstr(ev, "2026-06-27") != NULL, "source has commit-date marker");
+    expect_true(strstr(ev, "Status (") != NULL, "source has dated status marker");
     expect_true(strstr(ev, "gzip-payload probe") != NULL, "source mentions payload probe");
 }
 

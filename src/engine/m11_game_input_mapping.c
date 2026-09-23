@@ -75,9 +75,9 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
 
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
 {
-    /* THQUEST.ASM T520/T560/T600/T700 consumes a four-way PCE pad and has no
-     * strafe command.  This host-only bridge keeps that source boundary
-     * separate from the DM1/CSB A/D strafe convenience mapping. */
+    /* Retail movement-panel capture binds $01/$02 to turns and $04/$06 to
+     * right/left steps. Keep arrows/keypad on turns and expose the lower-row
+     * steps through A/D without changing the normalized M12 vocabulary. */
     switch ((SDL_Scancode)scancode) {
         case SDL_SCANCODE_UP:
         case SDL_SCANCODE_W:
@@ -87,12 +87,14 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
         case SDL_SCANCODE_S:
         case SDL_SCANCODE_KP_2:
             return M12_MENU_INPUT_DOWN;
-        case SDL_SCANCODE_LEFT:
         case SDL_SCANCODE_A:
+            return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDL_SCANCODE_LEFT:
         case SDL_SCANCODE_KP_4:
             return M12_MENU_INPUT_LEFT;
-        case SDL_SCANCODE_RIGHT:
         case SDL_SCANCODE_D:
+            return M12_MENU_INPUT_STRAFE_RIGHT;
+        case SDL_SCANCODE_RIGHT:
         case SDL_SCANCODE_KP_6:
             return M12_MENU_INPUT_RIGHT;
         default:
@@ -111,13 +113,13 @@ M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode)
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         case SDLK_W: return M12_MENU_INPUT_UP;
         case SDLK_S: return M12_MENU_INPUT_DOWN;
-        case SDLK_A: return M12_MENU_INPUT_LEFT;
-        case SDLK_D: return M12_MENU_INPUT_RIGHT;
+        case SDLK_A: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_D: return M12_MENU_INPUT_STRAFE_RIGHT;
 #else
         case SDLK_w: return M12_MENU_INPUT_UP;
         case SDLK_s: return M12_MENU_INPUT_DOWN;
-        case SDLK_a: return M12_MENU_INPUT_LEFT;
-        case SDLK_d: return M12_MENU_INPUT_RIGHT;
+        case SDLK_a: return M12_MENU_INPUT_STRAFE_LEFT;
+        case SDLK_d: return M12_MENU_INPUT_STRAFE_RIGHT;
 #endif
         case SDLK_UP: return M12_MENU_INPUT_UP;
         case SDLK_DOWN: return M12_MENU_INPUT_DOWN;

@@ -19,7 +19,10 @@
  */
 
 #include "theron_v1_chapter_marker.h"
+#include "theron_v1_world.h"
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 #include "theron_v1_track02_dungeon_text.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -56,6 +59,35 @@ static void copy_bounded(char *dst, size_t dst_size, const char *src) {
     if (n >= dst_size) n = dst_size - 1;
     memcpy(dst, src, n);
     dst[n] = '\0';
+}
+
+static const char *quest_item_source_name(
+    const Theron_V1_World *world,
+    unsigned int index,
+    char *buffer,
+    size_t buffer_size) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    const uint8_t *bytes = NULL;
+    size_t size = 0u;
+    size_t i;
+    if (!world || !buffer || buffer_size == 0u ||
+        index >= THERON_DUNGEON_COUNT ||
+        world->track02_item_names[index].variant != 2 ||
+        !theron_v1_world_quest_item_name_raw(
+            world, index, &bytes, &size) || size >= buffer_size)
+        return NULL;
+    for (i = 0u; i < size; ++i) {
+        if (bytes[i] == 0u || bytes[i] >= 0x80u) return NULL;
+    }
+    memcpy(buffer, bytes, size);
+    buffer[size] = '\0';
+    return buffer;
+#else
+    (void)world;
+    (void)buffer;
+    (void)buffer_size;
+    return theron_v1_track02_us_treasure_name(index);
+#endif
 }
 
 /* ── Public API: init / verdict label / source evidence ─────────── */
@@ -108,10 +140,12 @@ const char *theron_v1_chapter_marker_source_evidence(void) {
 
 /* ── Public API: compute ────────────────────────────────────────── */
 
-int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
-                                      const Theron_DungeonProgression *progression,
-                                      const Theron_SaveSlot *save_slot,
-                                      Theron_ChapterMarker *marker) {
+static int theron_v1_chapter_marker_compute_internal(
+    const Theron_V1_BootProfile *profile,
+    const Theron_DungeonProgression *progression,
+    const Theron_SaveSlot *save_slot,
+    const Theron_V1_World *world,
+    Theron_ChapterMarker *marker) {
     if (!marker) return -1;
     theron_v1_chapter_marker_init(marker);
 
@@ -196,25 +230,43 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
             ((items & (uint8_t)(1u << cur_bit)) != 0);
 
         if (have_current_item) {
+            char source_name[THERON_TRACK02_ITEM_NAME_SOURCE_CAPACITY];
             const char *name =
                 (cur_bit >= 0 && cur_bit < THERON_DUNGEON_COUNT)
-                ? theron_v1_track02_us_treasure_name((unsigned int)cur_bit)
-                : "(unknown item)";
-            snprintf(marker->quest_summary,
-                      sizeof(marker->quest_summary),
-                      "%d/7 items collected — last: %s",
-                      collected_count, name);
+                ? quest_item_source_name(
+                    world, (unsigned int)cur_bit, source_name,
+                    sizeof(source_name)) : NULL;
+            if (name) {
+                snprintf(marker->quest_summary,
+                         sizeof(marker->quest_summary),
+                         "%d/7 items collected — last: %s",
+                         collected_count, name);
+            } else {
+                snprintf(marker->quest_summary,
+                         sizeof(marker->quest_summary),
+                         "%d/7 items collected — source name unavailable",
+                         collected_count);
+            }
         } else {
             int next_bit = next_unset_bit(items, (uint8_t)THERON_QUEST_ITEM_COUNT);
+            char source_name[THERON_TRACK02_ITEM_NAME_SOURCE_CAPACITY];
             const char *next_name = "(unknown item)";
             if (next_bit >= 1 && next_bit <= THERON_DUNGEON_COUNT) {
-                next_name = theron_v1_track02_us_treasure_name(
-                    (unsigned int)(next_bit - 1));
+                next_name = quest_item_source_name(
+                    world, (unsigned int)(next_bit - 1), source_name,
+                    sizeof(source_name));
             }
-            snprintf(marker->quest_summary,
-                      sizeof(marker->quest_summary),
-                      "%d/7 items collected — next: %s",
-                      collected_count, next_name);
+            if (next_name) {
+                snprintf(marker->quest_summary,
+                         sizeof(marker->quest_summary),
+                         "%d/7 items collected — next: %s",
+                         collected_count, next_name);
+            } else {
+                snprintf(marker->quest_summary,
+                         sizeof(marker->quest_summary),
+                         "%d/7 items collected — source name unavailable",
+                         collected_count);
+            }
         }
         marker->quest_summary[sizeof(marker->quest_summary) - 1] = '\0';
 
@@ -275,6 +327,23 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
     return 0;
 }
 
+int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
+                                      const Theron_DungeonProgression *progression,
+                                      const Theron_SaveSlot *save_slot,
+                                      Theron_ChapterMarker *marker) {
+    return theron_v1_chapter_marker_compute_internal(
+        profile, progression, save_slot, NULL, marker);
+}
+
+int theron_v1_chapter_marker_compute_world(
+    const Theron_V1_BootProfile *profile,
+    const Theron_V1_World *world,
+    const Theron_SaveSlot *save_slot,
+    Theron_ChapterMarker *marker) {
+    return theron_v1_chapter_marker_compute_internal(
+        profile, world ? &world->progression : NULL, save_slot, world, marker);
+}
+
 int theron_v1_chapter_marker_compute_save(const Theron_V1_BootProfile *profile,
                                            const Theron_DungeonProgression *progression,
                                            const char *save_root,
@@ -287,6 +356,14 @@ int theron_v1_chapter_marker_compute_save(const Theron_V1_BootProfile *profile,
     if (theron_v1_chapter_marker_compute(profile, progression, NULL, marker) != 0) {
         return -1;
     }
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)save_root;
+    copy_bounded(marker->freshest_save_line,
+                 sizeof(marker->freshest_save_line),
+                 "Original Backup RAM Continue is not decoded");
+    return 0;
+#else
 
     /* If no save_root, leave freshest_save empty.  The init-step
      * already filled freshest_save_line with the "not requested"
@@ -353,6 +430,7 @@ int theron_v1_chapter_marker_compute_save(const Theron_V1_BootProfile *profile,
     }
 
     return 0;
+#endif
 }
 
 /* ── Public API: format ─────────────────────────────────────────── */

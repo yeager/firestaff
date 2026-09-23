@@ -769,6 +769,7 @@ typedef struct {
     int partyDir;
     int championCount;
     int runtimeTick;
+    int theronTrack01CddaReady;
     uint32_t dm1WorldTick;
 } M11_BootProbeReceipt;
 

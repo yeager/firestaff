@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-/* These are the source-record shapes at UD $274000 in the authenticated US
- * Track 02 BIN.  Keeping them in a dependency-light header lets the live
+/* These are the source-record shapes at US UD $274018 and JP UD $273818 in
+ * the authenticated retail Track 02 BINs.  Keeping them in a dependency-light header lets the live
  * world retain the verified records without making world.h depend on the
  * complete Track 02 loader (which itself includes world.h). */
 #define THERON_TRACK02_SPAWN_POINTER_COUNT 8u
@@ -16,7 +16,7 @@ extern "C" {
 
 typedef struct {
     uint16_t sprite_desc_offset;
-    uint16_t constant_278a;
+    uint16_t constant_278a; /* regional source-bank word: US $278a, JP $2780 */
     uint16_t spawn_data_offset;
     uint16_t constant_016b;
 } Theron_CreaturePointerEntry;

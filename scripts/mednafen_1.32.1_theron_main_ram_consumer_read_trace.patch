@@ -1,6 +1,8 @@
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -13,0 +14,8 @@
+@@ -10,4 +10,12 @@ void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
+ void TheronPCECDTraceMainRAME009MainRAMStep(uint16 logical_pc,
+                                             uint32 physical_pc);
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc,
@@ -9,9 +11,14 @@
 +void TheronPCECDTraceMainRAMConsumerWrite(uint16 logical_address,
 +                                          uint32 physical_address, uint8 value,
 +                                          uint16 writer_pc, uint32 writer_physical_pc);
-@@ -401,0 +410 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ class alignas(128) HuC6280
+@@ -407,11 +409,30 @@
+ 	// Logical
+ 	INLINE uint8 RdMem(unsigned int address)
+ 	{
 +	 uint8 ret;
-@@ -403 +412,7 @@
+ 	 if(FastPageR[address >> 13])
 -	  return *(uint8*)(FastPageR[address >> 13] + address);
 +	  ret = *(uint8*)(FastPageR[address >> 13] + address);
 +	 else
@@ -20,7 +27,7 @@
 +	  uint8 wmpr = MPR[address >> 13];
 +	  ret = ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
 +	 }
-@@ -405 +420,14 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
 -	 LastLogicalReadAddr = address;
 +	 const uint8 wmpr = MPR[address >> 13];
 +	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
@@ -36,17 +43,25 @@
 +	                                      GetRegister(GSREG_Y), GetRegister(GSREG_SP),
 +	                                      GetRegister(GSREG_P));
 +	 }
-@@ -407,2 +435 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
 -	 uint8 wmpr = MPR[address >> 13];
 -	 return ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
 +	 return ret;
+ 	}
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -108,0 +109,17 @@
+@@ -108,5 +108,26 @@
+ static uint16 TheronPCECDMainRAME009ReturnPC;
+ static unsigned TheronPCECDMainRAME009Sequence;
+ static unsigned TheronPCECDCriticalTraceCount;
 +static FILE *TheronPCECDMainRAMConsumerTrace;
 +static unsigned TheronPCECDMainRAMConsumerTraceCount;
 +static FILE *TheronPCECDMainRAMTargetTrace;
 +static unsigned TheronPCECDMainRAMTargetTraceCount;
++static FILE *TheronPCECDCommandConsumerTrace;
++static unsigned TheronPCECDCommandConsumerTraceCount;
++static bool TheronPCECDCommandConsumerArmed;
++static bool TheronPCECDCommandConsumerTypeSeen;
 +static FILE *TheronPCECDSpawnConsumerTrace;
 +static unsigned TheronPCECDSpawnConsumerTraceCount;
 +static unsigned TheronPCECDMainRAMConsumerTraceLimit(void)
@@ -60,9 +75,9 @@
 + }
 + return limit;
 +}
-@@ -131,0 +149,104 @@
-+}
-+
+ static void TheronTracePCECDState(const char *format, ...);
+ static void TheronTracePCECDCriticalState(const char *format, ...);
+@@ -140,2 +141,232 @@
 +void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc,
@@ -96,6 +111,32 @@
 +           reader_pc >= 0xc96b && reader_pc <= 0xca69,
 +           reader_pc >= 0xcc4c && reader_pc <= 0xcd13);
 +   fflush(TheronPCECDSpawnConsumerTrace);
++  }
++ }
++ if(TheronPCECDCommandConsumerArmed &&
++    logical_address >= 0x2000 && logical_address < 0x4000 &&
++    TheronPCECDCommandConsumerTraceCount < 65536)
++ {
++  if(!TheronPCECDCommandConsumerTrace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE");
++   if(path && *path)
++   {
++    TheronPCECDCommandConsumerTrace = fopen(path, "w");
++    if(TheronPCECDCommandConsumerTrace)
++     fputs("FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE_V1\n"
++           "source=mednafen-pce-instrumented-command-consumer\n",
++           TheronPCECDCommandConsumerTrace);
++   }
++  }
++  if(TheronPCECDCommandConsumerTrace)
++  {
++   fprintf(TheronPCECDCommandConsumerTrace,
++           "command_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x\n",
++           TheronPCECDCommandConsumerTraceCount++, logical_address,
++           physical_address, value, reader_pc, reader_physical_pc,
++           reader_a, reader_x, reader_y, reader_sp, reader_p);
++   fflush(TheronPCECDCommandConsumerTrace);
 +  }
 + }
 + if(logical_address >= 0x2600 && logical_address < 0x2800)
@@ -141,11 +182,112 @@
 +         reader_a, reader_x, reader_y, reader_sp, reader_p);
 + fflush(TheronPCECDMainRAMConsumerTrace);
 +}
-+
 +void TheronPCECDTraceMainRAMConsumerWrite(uint16 logical_address,
 +                                          uint32 physical_address, uint8 value,
 +                                          uint16 writer_pc, uint32 writer_physical_pc)
 +{
++ static FILE *command_trace;
++ static unsigned command_count;
++ static unsigned input_buffer_count;
++ static bool command_armed;
++ static bool command_complete;
++ if(!command_trace && (logical_address == 0x28b8 || logical_address == 0x28b9))
++ {
++  const char *path = getenv("FIRESTAFF_THERON_COMMAND_RAM_TRACE");
++  if(path && *path)
++  {
++   command_trace = fopen(path, "w");
++   if(command_trace)
++    fputs("FIRESTAFF_THERON_COMMAND_RAM_TRACE_V1\n"
++          "source=mednafen-pce-instrumented-command-ram\n", command_trace);
++  }
++ }
++ if(command_trace && !command_complete &&
++    (logical_address == 0x28b8 || logical_address == 0x28b9))
++ {
++  fprintf(command_trace,
++          "input_buffer_write sequence=%u logical_address=%04x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++          input_buffer_count++, logical_address, value, writer_pc,
++          writer_physical_pc);
++  fflush(command_trace);
++ }
++ if(!command_armed && !command_count && logical_address == 0x28b8 &&
++    (value & 0x01))
++ {
++  const char *path = getenv("FIRESTAFF_THERON_COMMAND_RAM_TRACE");
++  if(path && *path)
++  {
++   if(!command_trace) command_trace = fopen(path, "w");
++   if(command_trace)
++   {
++    const char *code_path = getenv("FIRESTAFF_THERON_COMMAND_CODE_SNAPSHOT");
++    const char *before_path = getenv("FIRESTAFF_THERON_COMMAND_RAM_BEFORE_SNAPSHOT");
++    if(code_path && *code_path)
++    {
++     FILE *code_file = fopen(code_path, "wb");
++     if(code_file)
++     {
++      for(unsigned code_offset = 0; code_offset < 65536; code_offset++)
++       fputc(HuCPU.PeekPhysical(0x0d0000 + code_offset), code_file);
++      fclose(code_file);
++     }
++    }
++    if(before_path && *before_path)
++    {
++     FILE *before_file = fopen(before_path, "wb");
++     if(before_file)
++     {
++      for(unsigned ram_offset = 0; ram_offset < 8192; ram_offset++)
++       fputc(HuCPU.PeekPhysical(0x1f0000 + ram_offset), before_file);
++      fclose(before_file);
++     }
++    }
++    command_armed = true;
++    TheronPCECDCommandConsumerArmed = true;
++   }
++  }
++ }
++ if(command_armed && command_count < 65536)
++ {
++  fprintf(command_trace,
++          "command_ram_write sequence=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x\n",
++          command_count++, logical_address, physical_address, value,
++          writer_pc, writer_physical_pc);
++  if(logical_address == 0x2905 && value != 0)
++   TheronPCECDCommandConsumerTypeSeen = true;
++  if(logical_address == 0x2905 && value == 0)
++  {
++   if(TheronPCECDCommandConsumerTypeSeen)
++   {
++    if(TheronPCECDCommandConsumerTrace)
++    {
++     fprintf(TheronPCECDCommandConsumerTrace,
++             "command_consumer_boundary sequence=%u\n",
++             TheronPCECDCommandConsumerTraceCount);
++     fflush(TheronPCECDCommandConsumerTrace);
++    }
++    TheronPCECDCommandConsumerArmed = false;
++   }
++   const char *after_path = getenv("FIRESTAFF_THERON_COMMAND_RAM_AFTER_SNAPSHOT");
++   if(after_path && *after_path)
++   {
++    FILE *after_file = fopen(after_path, "wb");
++    if(after_file)
++    {
++     for(unsigned ram_offset = 0; ram_offset < 8192; ram_offset++)
++      fputc(HuCPU.PeekPhysical(0x1f0000 + ram_offset), after_file);
++     fclose(after_file);
++    }
++   }
++  }
++  if(command_count == 65536)
++  {
++   fputs("command_ram_boundary sequence=65536\n", command_trace);
++   fflush(command_trace);
++   command_armed = false;
++   command_complete = true;
++  }
++ }
 + if(physical_address < 0x1f0000 || physical_address >= 0x1f8000 ||
 +    TheronPCECDMainRAMTargetTraceCount >= 4096)
 +  return;
@@ -166,3 +308,5 @@
 +         physical_address, value, writer_pc, writer_physical_pc);
 + fflush(TheronPCECDMainRAMTargetTrace);
 +}
+ static void TheronTracePCECDState(const char *format, ...)
+ {

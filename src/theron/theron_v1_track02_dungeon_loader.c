@@ -6,7 +6,9 @@
 #include "theron_v1_track02_door.h"
 #include "theron_v1_track02_item_id_map.h"
 #include "theron_v1_track02_item_categories.h"
-#include "theron_v1_track02_item_properties.h"
+#include "theron_v1_track02_item_name_source.h"
+#include "theron_v1_track02_retrieval_text_source.h"
+#include "theron_v1_track02_campaign_mask_source.h"
 #include "theron_v1_world.h"
 #include <stdlib.h>
 #include <string.h>
@@ -44,11 +46,6 @@ static int build_gref_position_table(
 static uint16_t get_item_next_ref(const Theron_ThingData *td,
                                    unsigned int cat, unsigned int id) {
     if (cat >= 16 || id >= td->object_counts[cat]) return THERON_REF_NONE;
-    /* DMBUILDER6/src/dms.h:145-157: category 4 starts with the signed
-     * `chested` field.  It is source provenance, not a linked-list next
-     * reference.  Keep the raw word in the occurrence/record, but never use
-     * it to walk a ground-reference chain (T900 containment owns it). */
-    if (cat == THERON_CAT_MONSTER) return THERON_REF_NONE;
     size_t item_size = theron_item_bytes[cat];
     if (item_size < 2) return THERON_REF_NONE;
     const uint8_t *rec = &td->items[cat][id * item_size];
@@ -71,9 +68,7 @@ static int materialize_source_item(
     size_t raw_size,
     const Theron_Track02ItemRecord *record,
     int property_table_verified,
-    const uint8_t *property_source_data,
-    size_t property_source_size,
-    int property_source_jp,
+    const Theron_Track02ItemNameSource *item_source,
     int *property_bound)
 {
     if (!object || !raw || !record || raw_size > sizeof(object->source_raw) ||
@@ -158,7 +153,7 @@ static int materialize_source_item(
      * selected real variant before passing this gate. */
     if (property_table_verified &&
         (unsigned int)object->item_index <
-            theron_v1_track02_item_property_count()) {
+            THERON_TRACK02_ITEM_SLOT_COUNT) {
         uint8_t expected = 0;
         switch (category) {
         case THERON_CAT_WEAPON:   expected = THERON_ITEM_CAT_WEAPON; break;
@@ -166,27 +161,24 @@ static int materialize_source_item(
         case THERON_CAT_SCROLL:
         case THERON_CAT_POTION:   expected = THERON_ITEM_CAT_CONSUMABLE; break;
         case THERON_CAT_MISC:
-            /* Unlike the record family, the item-table category is source
-             * data and may be retained without naming its T900 action. */
-            expected = theron_v1_track02_item_category(
-                (unsigned int)object->item_index);
+            expected = THERON_ITEM_CAT_SOURCE_MISC;
             break;
         /* DMBUILDER6/src/dms.h: category-9 dm_chest stores chested/data1
          * and has no global item-id field.  Binding its data1 byte through
          * the 66-entry item table would invent a T900 inventory identity. */
         default: break;
         }
-        if ((expected == THERON_ITEM_CAT_COMPASS ||
-             expected == THERON_ITEM_CAT_WEAPON ||
+        if ((expected == THERON_ITEM_CAT_WEAPON ||
              expected == THERON_ITEM_CAT_ARMOR ||
-             expected == THERON_ITEM_CAT_CONSUMABLE) &&
-            theron_v1_track02_item_category((unsigned int)object->item_index) ==
-                expected) {
-            uint8_t source_property[THERON_TRACK02_ITEM_PROPERTY_SIZE];
-            if (!theron_v1_track02_item_property_source_row(
-                    property_source_data, property_source_size, property_source_jp,
-                    (unsigned int)object->item_index, source_property, NULL))
+             expected == THERON_ITEM_CAT_CONSUMABLE ||
+             expected == THERON_ITEM_CAT_SOURCE_MISC)) {
+            const uint8_t *source_property;
+            if (!item_source || !item_source->valid ||
+                (unsigned int)object->item_index >=
+                    THERON_TRACK02_ITEM_SLOT_COUNT)
                 return 0;
+            source_property =
+                item_source->raw_properties[(unsigned int)object->item_index];
             object->source_item_category = expected;
             object->source_property_valid = 1;
             memcpy(object->source_property, source_property,
@@ -291,17 +283,41 @@ int theron_v1_track02_load_full_dungeon_for_variant(
     unsigned int di = (unsigned int)(dungeon_id - 1);
     int property_table_verified;
     size_t property_table_offset = 0u;
+    Theron_Track02ItemNameSource item_name_source;
+    Theron_Track02RetrievalTextSource retrieval_text_source;
+    Theron_Track02CampaignMaskSource campaign_mask_source;
     memset(result, 0, sizeof(*result));
 
-    property_table_verified =
-        theron_v1_track02_item_properties_match_source(
-            ud_data, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN);
-    if (property_table_verified) {
-        (void)theron_v1_track02_item_property_source_row(
-            ud_data, ud_size, variant == THERON_TRACK02_VARIANT_JP_BIN,
-            0u, (uint8_t[THERON_TRACK02_ITEM_PROPERTY_SIZE]){0},
-            &property_table_offset);
-    }
+    /* The item index belongs to this quest block.  Admit its parallel raw
+     * type-code and name tables before any object is materialized; a direct
+     * dungeon load must not depend on startup having preloaded another
+     * table. */
+    if (!theron_v1_track02_decode_item_name_source(
+            ud_data, ud_size,
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2,
+            (unsigned int)dungeon_id, &item_name_source) ||
+        !theron_v1_world_bind_track02_item_name_source(
+            world, &item_name_source,
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2))
+        return -1;
+    if (!theron_v1_track02_decode_retrieval_text_source(
+            ud_data, ud_size,
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2,
+            &retrieval_text_source) ||
+        !theron_v1_world_bind_track02_retrieval_text_source(
+            world, &retrieval_text_source,
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2))
+        return -1;
+    if (!theron_v1_track02_decode_campaign_mask_source(
+            ud_data, ud_size,
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2,
+            &campaign_mask_source) ||
+        !theron_v1_world_bind_track02_campaign_mask_source(
+            world, &campaign_mask_source,
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2))
+        return -1;
+    property_table_verified = 1;
+    property_table_offset = item_name_source.property_source_offset;
     result->source_property_table_verified = property_table_verified;
     result->source_property_table_offset = property_table_offset;
 
@@ -404,7 +420,11 @@ int theron_v1_track02_load_full_dungeon_for_variant(
             obj.y = (int16_t)ty;
             obj.level = (int)map;
             obj.dungeon_id = dungeon_id;
-            obj.flags = (uint32_t)pos;
+            /* Ground-reference position is source-record metadata.  Keep it
+             * away from the low generic mutation flags for every category;
+             * control records at positions 1/2 must not look PICKED_UP or
+             * OPENED before their original consumer has run. */
+            obj.flags = (uint32_t)pos << THERON_OBJ_F_SOURCE_POSITION_SHIFT;
 
             int place = 1;
             Theron_Track02ItemRecord source_record;
@@ -455,40 +475,95 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     free(td);
                     return -1;
                 }
+                /* Bind the same occurrence to the live object before its
+                 * category-specific host representation is selected.  This
+                 * is required for control records too: doors, teleporters,
+                 * text and actuators previously existed in the lossless
+                 * ledger while their live objects had no source identity. */
+                obj.source_ref = ref;
+                obj.source_next_ref = source_record.next_ref;
+                obj.source_index = (uint16_t)id;
+                obj.source_category = (uint8_t)cat;
+                obj.source_position = (uint8_t)pos;
+                obj.source_origin_valid = 1u;
+                obj.source_dungeon = (uint8_t)dungeon_id;
+                obj.source_level = (uint8_t)map;
+                obj.source_x = (uint8_t)tx;
+                obj.source_y = (uint8_t)ty;
+                obj.source_raw_size = (uint8_t)theron_item_bytes[cat];
+                memcpy(obj.source_raw, raw, theron_item_bytes[cat]);
             }
 
             switch (cat) {
             case THERON_CAT_DOOR: {
                 Theron_Door door;
+                /* The map byte and the category-0 record are two independent
+                 * source fields.  A door record supplies material/ornament
+                 * metadata; it must not manufacture a door square when the
+                 * real map says otherwise.  Reject that inconsistent source
+                 * handoff instead of overwriting the authenticated tile. */
+                if (tile_type_at(&dd, map, tx, ty) != THERON_TILE_DOOR) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
                 theron_v1_track02_door_decode(
                     &td->items[cat][id * theron_item_bytes[cat]], &door);
                 obj.type = THERON_OBJTYPE_DOOR;
-                obj.state = door.type;
+                /* `door.type` is the source material bit (wood/iron), not a
+                 * runtime animation state.  Likewise, the two-bit thing
+                 * position must not occupy the low object/door flag bits:
+                 * position 1 previously looked LOCKED and position 2 looked
+                 * BROKEN to the mechanics layer.  Every source door enters
+                 * the level closed; retain its record fields in a dedicated
+                 * non-overlapping metadata range. */
+                obj.state = 0; /* THERON_DOOR_STATE_CLOSED */
                 obj.quantity = door.ornate;
-                obj.flags = (uint32_t)pos |
-                            ((uint32_t)door.opens_up << 8) |
-                            ((uint32_t)door.button << 9) |
-                            ((uint32_t)door.destroyable << 10) |
-                            ((uint32_t)door.bashable << 11);
-                world->levels[di][map].squares[ty][tx] = THERON_SQUARE_DOOR;
+                obj.flags = ((uint32_t)pos <<
+                             THERON_OBJ_F_SOURCE_POSITION_SHIFT);
+                if (door.type) obj.flags |= THERON_OBJ_F_SOURCE_DOOR_IRON;
+                if (door.opens_up)
+                    obj.flags |= THERON_OBJ_F_SOURCE_DOOR_OPENS_UP;
+                if (door.button)
+                    obj.flags |= THERON_OBJ_F_SOURCE_DOOR_BUTTON;
+                if (door.destroyable)
+                    obj.flags |= THERON_OBJ_F_SOURCE_DOOR_DESTROYABLE;
+                if (door.bashable)
+                    obj.flags |= THERON_OBJ_F_SOURCE_DOOR_BASHABLE;
                 result->doors_placed++;
                 break;
             }
             case THERON_CAT_TELEPORTER: {
                 Theron_Teleporter tp;
+                uint8_t source_tile;
+                /* As with doors, the map byte owns the square kind.  A
+                 * category-1 record may describe only a real teleporter
+                 * tile; it must never manufacture geometry. */
+                if (tile_type_at(&dd, map, tx, ty) !=
+                    THERON_TILE_TELEPORTER) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
+                source_tile = dd.maps[map].tiles[tx][ty];
                 theron_v1_track02_teleporter_decode(
                     &td->items[cat][id * theron_item_bytes[cat]], &tp);
                 obj.type = THERON_OBJTYPE_TELEPORTER;
-                obj.state = tp.scope;
+                /* The grid's OPEN bit is the original runtime state.  Keep
+                 * record scope as non-overlapping source metadata instead
+                 * of aliasing it onto the mutable object state. */
+                obj.state = (source_tile & 0x08u) ? 1u : 0u;
                 obj.quantity = tp.rotation;
-                obj.flags = (uint32_t)pos |
+                obj.flags = ((uint32_t)pos <<
+                             THERON_OBJ_F_SOURCE_POSITION_SHIFT) |
+                            ((uint32_t)tp.scope <<
+                             THERON_OBJ_F_SOURCE_TELEPORTER_SCOPE_SHIFT) |
                             ((uint32_t)tp.absolute << 8) |
                             ((uint32_t)tp.sound << 9) |
                             THERON_OBJ_F_TRACK02_COORD_LINK;
                 obj.linked_id = (int)((tp.level_dest << 10) |
                                        (tp.y_dest << 5) |
                                        tp.x_dest);
-                world->levels[di][map].squares[ty][tx] = THERON_SQUARE_TELEPORTER;
                 result->teleporters_placed++;
                 break;
             }
@@ -514,8 +589,9 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                 if (!is_wall && act.type == TQ_ACT_FLOOR_MONSTER_GEN &&
                     theron_v1_world_bind_track02_generator(
                         world, dungeon_id, (int)map, ref, id, (int)tx, (int)ty,
-                        act.type, act.value, act.once, act.effect, act.sound,
-                        act.delay, act.inactive, act.graphism,
+                        act.type, act.value, act.once, act.effect,
+                        act.revert_effect, act.sound,
+                        act.delay, act.local_effect, act.graphism,
                         act.target_x, act.target_y, act.target_facing,
                         act.generator_fields_valid, act.generator_generation,
                         act.generator_toughness, act.generator_pause) != 0) {
@@ -524,15 +600,19 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     return -1;
                 }
 
-                obj.type = 0x04;
+                obj.type = THERON_OBJTYPE_SOURCE_ACTUATOR;
                 obj.state = act.type;
                 obj.quantity = act.value;
                 obj.flags = ((uint32_t)act.graphism << 16) |
                             ((uint32_t)act.effect << 8) |
-                            (uint32_t)pos;
-                if (act.once) obj.flags |= 0x100000;
-                if (act.sound) obj.flags |= 0x200000;
-                if (act.inactive) obj.flags |= 0x400000;
+                            ((uint32_t)pos <<
+                             THERON_OBJ_F_SOURCE_POSITION_SHIFT);
+                if (act.once) obj.flags |= THERON_OBJ_F_SOURCE_ACTUATOR_ONCE;
+                if (act.sound) obj.flags |= THERON_OBJ_F_SOURCE_ACTUATOR_SOUND;
+                if (act.local_effect)
+                    obj.flags |= THERON_OBJ_F_SOURCE_ACTUATOR_LOCAL_EFFECT;
+                if (act.revert_effect)
+                    obj.flags |= THERON_OBJ_F_SOURCE_ACTUATOR_REVERT_EFFECT;
                 obj.linked_id = (int)((act.target_y << 11) |
                                        (act.target_x << 6) |
                                        (act.target_facing << 4));
@@ -590,10 +670,14 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     materialize_source_item(&obj, cat, pos, ref, id, raw,
                                              theron_item_bytes[cat], &source_record,
                                              property_table_verified,
-                                             ud_data, ud_size,
-                                             variant == THERON_TRACK02_VARIANT_JP_BIN,
+                                             &item_name_source,
                                              &property_bound)) {
                     place = 1;
+                    obj.source_origin_valid = 1u;
+                    obj.source_dungeon = (uint8_t)dungeon_id;
+                    obj.source_level = (uint8_t)map;
+                    obj.source_x = (uint8_t)tx;
+                    obj.source_y = (uint8_t)ty;
                     result->items_placed++;
                     result->source_objects_materialized++;
                     result->source_item_properties_bound += property_bound;

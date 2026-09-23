@@ -2,7 +2,9 @@
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_startup_save_resume.h"
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 #include "theron_v1_track02_champion_roster.h"
+#endif
 #include "theron/theron_v1_asset_loader.h"
 
 #include <stdio.h>
@@ -717,7 +719,6 @@ int theron_v1_startup_chapter_inspect_receipt_from_request(
     Theron_StartupChapterInspectReceipt *out_receipt) {
 
     const Theron_V1_World *world;
-    const Theron_DungeonProgression *progression;
     Theron_ChapterMarker marker;
 
     if (!request || !out_receipt) {
@@ -726,10 +727,9 @@ int theron_v1_startup_chapter_inspect_receipt_from_request(
 
     theron_v1_startup_chapter_inspect_receipt_init(out_receipt);
     world = request->world;
-    progression = world ? &world->progression : NULL;
-    theron_v1_chapter_marker_compute(
+    theron_v1_chapter_marker_compute_world(
         (const Theron_V1_BootProfile*)request->boot_profile,
-        progression,
+        world,
         NULL,
         &marker);
     theron_v1_chapter_marker_format(&marker,
@@ -813,9 +813,9 @@ int theron_v1_startup_layout_state_from_request(
     out_state->has_srm_continue = request->has_srm_continue ? 1 : 0;
     out_state->srm_slot = request->srm_slot;
 
-    theron_v1_chapter_marker_compute(
+    theron_v1_chapter_marker_compute_world(
         (const Theron_V1_BootProfile*)request->boot_profile,
-        progression,
+        world,
         NULL,
         &marker);
     snprintf(out_state->chapter_label,
@@ -1055,6 +1055,12 @@ static int tqr_startup_layout_real_roster_class(
     const Theron_StartupLayoutState *state,
     int mirror_index,
     const char *decoded_name) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)state;
+    (void)mirror_index;
+    (void)decoded_name;
+    return -1;
+#else
     int roster_index;
     const Theron_ChampionRecord *record;
     uint8_t best;
@@ -1113,6 +1119,7 @@ static int tqr_startup_layout_real_roster_class(
         }
     }
     return (int)primary_class;
+#endif
 }
 
 int theron_v1_startup_layout_build(
@@ -4197,22 +4204,21 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party) {
 
+#if !defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+    /* Production has hash-verified regional Track 02 roster records.  This
+     * media-free compatibility entry cannot authenticate Theron or selected
+     * companions, so it must not clear the party and then publish an empty
+     * champion as a successful transition.  The runtime-owned
+     * _with_roster() path performs the atomic source-record admission. */
+    if (!flow || !party) return THERON_STARTUP_ERR_NULL;
+    return THERON_STARTUP_ERR_NOT_READY;
+#else
     Theron_StartupResult result = startup_enter_forcefield_base(flow, party);
 
     if (result != THERON_STARTUP_OK) {
         return result;
     }
 
-#if !defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
-    /* A production caller may not have a decoded companion roster yet, but
-     * that must not turn Enter into a no-op.  Keep the source-owned Theron
-     * slot and admit the forcefield transition with no invented companions;
-     * the later runtime/capture gate still decides whether the dungeon can
-     * be published.  Fixture-only mirror population remains below. */
-    party->champion_count = 1;
-    party->active_slot = THERON_CHAMPION_SLOT_THERON;
-    return THERON_STARTUP_OK;
-#else
     int slot = 1;
     int mirror;
 
@@ -4244,7 +4250,7 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
 #endif
 }
 
-Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
+static Theron_StartupResult startup_enter_forcefield_with_roster_base(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party,
     const char *const roster_names[],
@@ -4299,6 +4305,9 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
              ++clear_slot) {
             memset(&party->champions[clear_slot], 0,
                    sizeof(party->champions[clear_slot]));
+            for (int equip = 0; equip < THERON_EQUIP_SLOT_COUNT; ++equip) {
+                party->champions[clear_slot].slots[equip] = -1;
+            }
         }
 
         for (int order = 0;
@@ -4370,6 +4379,59 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
     party->champion_count = slot;
     return THERON_STARTUP_OK;
 #endif
+}
+
+Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
+    Theron_StartupFlow *flow,
+    Theron_V1_Party *party,
+    const char *const roster_names[],
+    int roster_name_count) {
+#if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+    return startup_enter_forcefield_with_roster_base(
+        flow, party, roster_names, roster_name_count);
+#else
+    (void)roster_names;
+    (void)roster_name_count;
+    if (!flow || !party) return THERON_STARTUP_ERR_NULL;
+    return THERON_STARTUP_ERR_NOT_READY;
+#endif
+}
+
+Theron_StartupResult theron_v1_startup_enter_forcefield_with_track02_roster(
+    Theron_StartupFlow *flow,
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    const char *const roster_names[],
+    int roster_name_count) {
+    Theron_StartupFlow saved_flow;
+    Theron_V1_Party saved_party;
+    Theron_StartupResult result;
+    Theron_Track02Variant variant;
+
+    if (!flow || !party || !track02_data || track02_size == 0u ||
+        !md5_hex || !md5_hex[0]) return THERON_STARTUP_ERR_NULL;
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant != THERON_TRACK02_VARIANT_US_BIN &&
+        variant != THERON_TRACK02_VARIANT_JP_BIN)
+        return THERON_STARTUP_ERR_NOT_READY;
+    saved_flow = *flow;
+    saved_party = *party;
+    result = startup_enter_forcefield_with_roster_base(
+        flow, party, roster_names, roster_name_count);
+    if (result != THERON_STARTUP_OK) return result;
+    if ((variant == THERON_TRACK02_VARIANT_US_BIN &&
+         !theron_v1_party_refresh_us_source_records(
+             party, track02_data, track02_size, md5_hex)) ||
+        (variant == THERON_TRACK02_VARIANT_JP_BIN &&
+         !theron_v1_party_refresh_jp_source_records(
+             party, track02_data, track02_size, md5_hex))) {
+        *flow = saved_flow;
+        *party = saved_party;
+        return THERON_STARTUP_ERR_NOT_READY;
+    }
+    return THERON_STARTUP_OK;
 }
 
 Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(

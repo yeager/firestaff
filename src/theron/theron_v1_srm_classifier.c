@@ -55,6 +55,7 @@
 #define TSRM_PATH_SEP '/'
 #endif
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 #define TSRM_PROGRESS_PAYLOAD_BYTES 44u
 #define TSRM_PARTY_BODY_BYTES 40u
 #define TSRM_PARTY_PAYLOAD_BYTES \
@@ -68,8 +69,197 @@ static const uint8_t g_progress_payload_magic[8] = {
 static const uint8_t g_party_payload_magic[8] = {
     'F', 'S', 'T', 'Q', 'P', 'T', 'Y', '1'
 };
+#endif
 
 static uint32_t rd32le(const uint8_t *p);
+
+static uint32_t pce_bram_fnv1a(const uint8_t *data, size_t size) {
+    uint32_t hash = 2166136261u;
+    size_t index;
+    for (index = 0u; index < size; ++index) {
+        hash ^= data[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+Theron_V1PceBramStatus theron_v1_pce_bram_classify(
+    const uint8_t *data, size_t size, Theron_V1PceBramReceipt *out) {
+    static const uint8_t marker[] = {'D', 'M', 'S', '-', 'S', 'G', '.'};
+    size_t index;
+    if (out) { memset(out, 0, sizeof(*out)); out->status = THERON_V1_PCE_BRAM_BAD_INPUT; }
+    if (!data || !out) return THERON_V1_PCE_BRAM_BAD_INPUT;
+    out->size_bytes = size;
+    if (size != THERON_V1_PCE_BRAM_BYTES) {
+        out->status = THERON_V1_PCE_BRAM_WRONG_SIZE;
+        return out->status;
+    }
+    out->bytes_fnv1a = pce_bram_fnv1a(data, size);
+    if (memcmp(data, "HUBM", 4u) != 0) {
+        out->status = THERON_V1_PCE_BRAM_BAD_HEADER;
+        return out->status;
+    }
+    out->hubm_header_seen = 1;
+    for (index = 0x10u; index + sizeof(marker) + 3u <= size; ++index) {
+        if (memcmp(data + index, marker, sizeof(marker)) == 0 &&
+            data[index + 7u] >= '0' && data[index + 7u] <= '9' &&
+            data[index + 8u] >= '0' && data[index + 8u] <= '9' &&
+            data[index + 9u] >= '0' && data[index + 9u] <= '9') {
+            out->theron_save_disk_marker_seen = 1;
+            out->theron_save_disk_marker_offset = index;
+            if (index == 0x16u &&
+                memcmp(data + index, "DMS-SG.001", 10u) == 0 &&
+                ((size_t)data[0x10u] | ((size_t)data[0x11u] << 8u)) ==
+                    THERON_V1_PCE_BRAM_RECORD_BYTES &&
+                data[0x15u] == 0x0bu &&
+                0x20u + THERON_V1_PCE_BRAM_DATA_BYTES <= size) {
+                out->save_record_offset = 0x10u;
+                out->save_record_bytes = THERON_V1_PCE_BRAM_RECORD_BYTES;
+                out->save_data_offset = 0x20u;
+                out->save_data_bytes = THERON_V1_PCE_BRAM_DATA_BYTES;
+                out->save_slot_bytes = THERON_V1_PCE_BRAM_SLOT_BYTES;
+                out->save_slot_count = THERON_V1_PCE_BRAM_SLOT_COUNT;
+                out->save_trailing_bytes = 1u;
+                out->save_record_layout_proven = 1;
+                out->selected_slot_index =
+                    data[0x20u + THERON_V1_PCE_BRAM_SELECTED_SLOT_OFFSET];
+                if (out->selected_slot_index <
+                    THERON_V1_PCE_BRAM_SLOT_COUNT) {
+                    out->selected_slot_offset =
+                        0x20u + (size_t)out->selected_slot_index *
+                                    THERON_V1_PCE_BRAM_SLOT_BYTES;
+                    out->selected_slot_layout_proven = 1;
+                    out->save_body_offset = out->selected_slot_offset;
+                    out->save_body_bytes = 0x86u;
+                    out->serialized_campaign_byte_offset =
+                        out->selected_slot_offset;
+                    out->serialized_campaign_byte =
+                        data[out->selected_slot_offset];
+                    out->save_body_layout_proven = 1;
+                }
+            }
+            out->status = THERON_V1_PCE_BRAM_READY;
+            return out->status;
+        }
+    }
+    out->status = THERON_V1_PCE_BRAM_NO_THERON_SAVE_DISK;
+    return out->status;
+}
+
+Theron_V1PceBramStatus theron_v1_pce_bram_classify_path(
+    const char *path, Theron_V1PceBramReceipt *out) {
+    uint8_t data[THERON_V1_PCE_BRAM_BYTES + 1u];
+    FILE *file;
+    size_t size;
+    if (!path || !out) return THERON_V1_PCE_BRAM_BAD_INPUT;
+    file = fopen(path, "rb");
+    if (!file) { memset(out, 0, sizeof(*out)); out->status = THERON_V1_PCE_BRAM_BAD_INPUT; return out->status; }
+    size = fread(data, 1u, sizeof(data), file);
+    if (ferror(file)) { fclose(file); memset(out, 0, sizeof(*out)); out->status = THERON_V1_PCE_BRAM_BAD_INPUT; return out->status; }
+    fclose(file);
+    return theron_v1_pce_bram_classify(data, size, out);
+}
+
+int theron_v1_pce_bram_decode_original_body(
+    const uint8_t *data, size_t size, Theron_V1PceBramBodyReceipt *out) {
+    Theron_V1PceBramReceipt container;
+    const uint8_t *body;
+    size_t column;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || !out ||
+        theron_v1_pce_bram_classify(data, size, &container) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !container.save_body_layout_proven ||
+        container.save_body_bytes != 0x86u ||
+        container.save_body_offset + container.save_body_bytes > size) {
+        return 0;
+    }
+
+    body = data + container.save_body_offset;
+    out->body_fnv1a = pce_bram_fnv1a(body, container.save_body_bytes);
+    out->ram_267c_campaign_byte = body[0];
+    memcpy(out->ram_267d_2682, body + 1u,
+           sizeof(out->ram_267d_2682));
+    memcpy(out->ram_2683_2689, body + 7u,
+           sizeof(out->ram_2683_2689));
+    for (column = 0u; column < 6u; ++column) {
+        memcpy(out->ram_268a_2701[column], body + 14u + column * 20u,
+               sizeof(out->ram_268a_2701[column]));
+    }
+    out->layout_verified = 1;
+    return 1;
+}
+
+int theron_v1_pce_bram_decode_original_body_path(
+    const char *path, Theron_V1PceBramBodyReceipt *out) {
+    uint8_t data[THERON_V1_PCE_BRAM_BYTES + 1u];
+    FILE *file;
+    size_t size;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!path || !out || !(file = fopen(path, "rb"))) return 0;
+    size = fread(data, 1u, sizeof(data), file);
+    if (ferror(file)) {
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    return theron_v1_pce_bram_decode_original_body(data, size, out);
+}
+
+int theron_v1_pce_bram_decode_original_record(
+    const uint8_t *data, size_t size, Theron_V1PceBramRecordReceipt *out) {
+    Theron_V1PceBramReceipt container;
+    const uint8_t *record_data;
+    size_t slot;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || !out ||
+        theron_v1_pce_bram_classify(data, size, &container) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !container.save_record_layout_proven ||
+        container.save_data_offset != 0x20u ||
+        container.save_data_bytes != THERON_V1_PCE_BRAM_DATA_BYTES ||
+        container.save_slot_bytes != THERON_V1_PCE_BRAM_SLOT_BYTES ||
+        container.save_slot_count != THERON_V1_PCE_BRAM_SLOT_COUNT ||
+        container.save_trailing_bytes != 1u ||
+        container.save_data_offset + container.save_data_bytes > size) {
+        return 0;
+    }
+
+    record_data = data + container.save_data_offset;
+    out->data_fnv1a = pce_bram_fnv1a(record_data,
+                                     THERON_V1_PCE_BRAM_DATA_BYTES);
+    for (slot = 0u; slot < THERON_V1_PCE_BRAM_SLOT_COUNT; ++slot) {
+        memcpy(out->slots[slot],
+               record_data + slot * THERON_V1_PCE_BRAM_SLOT_BYTES,
+               THERON_V1_PCE_BRAM_SLOT_BYTES);
+    }
+    out->selected_slot_index =
+        record_data[THERON_V1_PCE_BRAM_SLOT_COUNT *
+                    THERON_V1_PCE_BRAM_SLOT_BYTES];
+    out->layout_verified = 1;
+    return 1;
+}
+
+int theron_v1_pce_bram_decode_original_record_path(
+    const char *path, Theron_V1PceBramRecordReceipt *out) {
+    uint8_t data[THERON_V1_PCE_BRAM_BYTES + 1u];
+    FILE *file;
+    size_t size;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!path || !out || !(file = fopen(path, "rb"))) return 0;
+    size = fread(data, 1u, sizeof(data), file);
+    if (ferror(file)) {
+        fclose(file);
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    fclose(file);
+    return theron_v1_pce_bram_decode_original_record(data, size, out);
+}
 
 /* ── Path helpers ────────────────────────────────────────────────── */
 
@@ -527,6 +717,7 @@ Theron_V1SrmPayloadProbeStatus theron_v1_srm_probe_gzip_payload(
 #endif
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static void theron_v1_srm_capture_body_evidence(
     const uint8_t *srm_bytes,
     size_t srm_size,
@@ -562,12 +753,21 @@ static void theron_v1_srm_capture_body_evidence(
 #endif
     out_evidence->captured = 1;
 }
+#endif
 
 Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
     const uint8_t *payload,
     size_t payload_size,
     Theron_DungeonProgression *out_progression,
     Theron_V1SrmProgressionReceipt *out_receipt) {
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)payload;
+    (void)payload_size;
+    (void)out_progression;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    return THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+#else
 
     uint8_t version;
     uint8_t current_dungeon_raw;
@@ -658,8 +858,10 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
         out_receipt->restored = 1;
     }
     return THERON_V1_SRM_PROGRESS_IMPORT_OK;
+#endif
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static void copy_fixed_name(char out[24], const uint8_t *src, size_t src_size) {
     size_t n = 0;
     if (!out || !src) return;
@@ -739,6 +941,7 @@ static int import_body_record(Theron_V1_Champion *champion,
     theron_v1_champion_reset_inventory(champion);
     return 1;
 }
+#endif
 
 Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
     const uint8_t *payload,
@@ -746,6 +949,15 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
     Theron_DungeonProgression *out_progression,
     Theron_V1_Party *out_party,
     Theron_V1SrmPartyImportReceipt *out_receipt) {
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)payload;
+    (void)payload_size;
+    (void)out_progression;
+    (void)out_party;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    return THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+#else
 
     uint8_t progress_payload[TSRM_PROGRESS_PAYLOAD_BYTES];
     Theron_DungeonProgression progression;
@@ -812,6 +1024,7 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
         out_receipt->restored = 1;
     }
     return THERON_V1_SRM_PROGRESS_IMPORT_OK;
+#endif
 }
 
 /* ── Body-decode envelope surface ──────────────────────────────────
@@ -843,6 +1056,21 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_envelope(
     uint8_t *scratch,
     size_t scratch_capacity,
     Theron_V1SrmEnvelopeReceipt *out_envelope) {
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)srm_bytes;
+    (void)srm_size;
+    (void)scratch;
+    (void)scratch_capacity;
+    if (out_envelope) {
+        memset(out_envelope, 0, sizeof(*out_envelope));
+        out_envelope->slot_index = -1;
+        out_envelope->kind = THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED;
+        out_envelope->decode_status =
+            THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+    }
+    return THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED;
+#else
 
     Theron_V1SrmPayloadProbeStatus inflate_status;
     size_t payload_size = 0;
@@ -937,6 +1165,7 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_envelope(
     }
 
     return THERON_V1_SRM_ENVELOPE_KIND_NONE;
+#endif
 }
 
 Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
@@ -945,6 +1174,20 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
     uint8_t *scratch,
     size_t scratch_capacity,
     Theron_V1SrmEnvelopeReceipt *out_envelope) {
+
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    (void)path;
+    (void)scratch;
+    (void)scratch_capacity;
+    if (out_envelope) {
+        memset(out_envelope, 0, sizeof(*out_envelope));
+        out_envelope->slot_index = slot_index;
+        out_envelope->kind = THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED;
+        out_envelope->decode_status =
+            THERON_V1_SRM_PROGRESS_IMPORT_UNSUPPORTED_BODY;
+    }
+    return THERON_V1_SRM_ENVELOPE_KIND_UNSUPPORTED;
+#else
 
     struct stat st;
     uint8_t *srm_buf = NULL;
@@ -1014,6 +1257,7 @@ Theron_V1SrmEnvelopeKind theron_v1_srm_decode_path(
     out_envelope->file_size = (uint64_t)srm_size;
     free(srm_buf);
     return kind;
+#endif
 }
 
 int theron_v1_srm_catalog_body_evidence(
@@ -1425,6 +1669,11 @@ const char *theron_v1_srm_progress_import_status_name(Theron_V1SrmProgressImport
 }
 
 const char *theron_v1_srm_source_evidence(void) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    return
+        "Theron original-save boundary: authentic 2 KiB PC Engine HUBM "
+        "Backup RAM only; Firestaff envelope decoders are fixture-only";
+#else
     return
         "Theron V1 SRM (Save RAM) classifier — bounded real-artifact boundary\n"
         "\n"
@@ -1441,7 +1690,16 @@ const char *theron_v1_srm_source_evidence(void) {
         "  - THQUEST.ASM T080  — between-dungeon save/load (no in-dungeon)\n"
         "  - THQUEST.ASM T800  — champion persistence between dungeons\n"
         "\n"
-        "Status (2026-06-27/28):\n"
+        "Status (2026-09-23):\n"
+        "  - Authentic 2 KiB PC Engine HUBM Backup RAM is classified\n"
+        "    separately from gzip SRM and Firestaff TQSV. DMS-SG.001 at\n"
+        "    HUBM offset $16 has a $0199-byte data area: three $88-byte\n"
+        "    slots plus the selected-slot index. The selected slot begins\n"
+        "    with the authenticated $86-byte writer body from RAM $267C,\n"
+        "    whose first byte is the serialized campaign byte. Only its\n"
+        "    independently\n"
+        "    source-bound low seven artifact bits may be applied; all other\n"
+        "    bytes remain preserved but opaque.\n"
         "  - Data-free classifier with 5-slot disk manifest, gzip magic\n"
         "    detection (0x1F 0x8B 0x08), 1 KiB rolling prefix checksum,\n"
         "    present/recognized rollup, and stable string status names.\n"
@@ -1471,13 +1729,11 @@ const char *theron_v1_srm_source_evidence(void) {
         "    caller's envelope buffer.\n"
         "  - Default save-disk root: $HOME/.firestaff/data/theron/save.\n"
         "  - Override: env FIRESTAFF_THERON_SRM_DIR.\n"
-        "  - No real .srm file is present in the local data root on this\n"
-        "    host; the manifest reports present_count=0, recognized_count=0\n"
-        "    on the default root.  This is the expected honest outcome and\n"
-        "    is recorded as a SKIP, not a failure, by the probe and unit\n"
-        "    test.\n"
+        "  - A missing operator-owned artifact remains a clean probe SKIP;\n"
+        "    no test substitutes generated campaign data for a real file.\n"
         "  - Interpreting the real inflated custom Theron save body,\n"
         "    inventory/equipment bytes, and Sphenx champion byte mapping\n"
         "    remains out of scope and is tracked under\n"
         "    docs/FIRESTAFF_GAP_LIST.md A3 'Savegame format (Theron .SRM)'.";
+#endif
 }

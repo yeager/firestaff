@@ -140,6 +140,8 @@ static int test_receipt_init(void)
     ASSERT(receipt.party_y == -1, "init party_y should be -1");
     ASSERT(receipt.party_dir == -1, "init party_dir should be -1");
     ASSERT(receipt.tick_count == -1, "init tick_count should be -1");
+    ASSERT(receipt.active_champion_slot == -1,
+           "init active champion should be unavailable");
     ASSERT(receipt.status_scope != NULL, "init scope should be set");
     ASSERT(receipt.status != NULL, "init status should be set");
     PASS();
@@ -229,15 +231,15 @@ static int test_turn_right(void)
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Strafe rejection
+ * Original turn and lateral movement commands
  * ══════════════════════════════════════════════════════════════════════ */
 
-static int test_strafe_rejected(void)
+static int test_original_turn_and_strafe_commands(void)
 {
     Theron_V1_World world;
     Theron_V1_BootRuntimeInputReceipt receipt;
 
-    TEST("LEFT/RIGHT turn, STRAFE_LEFT/RIGHT ignored");
+    TEST("LEFT/RIGHT turn, STRAFE_LEFT/RIGHT use original commands");
     setup_open_room(&world);
     ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
             M12_MENU_INPUT_LEFT, &receipt) == 1,
@@ -245,12 +247,27 @@ static int test_strafe_rejected(void)
     ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW,
            "LEFT should turn");
     ASSERT(receipt.turned == 1, "LEFT should set turned");
+    ASSERT(receipt.party_dir == THERON_DIR_WEST,
+           "original command $01 should turn north to west");
+
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
+            M12_MENU_INPUT_RIGHT, &receipt) == 1,
+           "RIGHT should fill receipt");
+    ASSERT(receipt.party_dir == THERON_DIR_NORTH,
+           "original command $02 should turn west to north");
 
     ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
             M12_MENU_INPUT_STRAFE_LEFT, &receipt) == 1,
            "STRAFE_LEFT should fill receipt");
-    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
-           "STRAFE_LEFT should be ignored");
+    ASSERT(receipt.moved == 1 && receipt.party_x == 2 &&
+           receipt.party_y == 3 && receipt.party_dir == THERON_DIR_NORTH,
+           "original command $06 should step west without turning");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
+            M12_MENU_INPUT_STRAFE_RIGHT, &receipt) == 1,
+           "STRAFE_RIGHT should fill receipt");
+    ASSERT(receipt.moved == 1 && receipt.party_x == 3 &&
+           receipt.party_y == 3 && receipt.party_dir == THERON_DIR_NORTH,
+           "original command $04 should step east without turning");
     PASS();
     return 1;
 }
@@ -274,6 +291,12 @@ static int test_move_forward(void)
     ASSERT(receipt.moved == 1, "moved flag should be set");
     ASSERT(receipt.party_y == 2, "should step north to y=2");
     ASSERT(receipt.party_x == 3, "x should stay 3");
+    ASSERT(theron_v1_move_party_original_command(
+               &world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+               THERON_MOVE_OK,
+           "original command $03 should move in the current direction");
+    ASSERT(world.party.leader_y == 1,
+           "a second original $03 should continue north");
     ASSERT(strcmp(receipt.status, "THERON ADVANCED") == 0,
            "status should be advanced");
     PASS();
@@ -398,6 +421,156 @@ static int test_idle_tick(void)
     return 1;
 }
 
+static int test_pickup_routes_to_front_cell(void)
+{
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+    Theron_V1_Object object;
+
+    TEST("PICKUP_ITEM takes the object in the facing cell");
+    setup_open_room(&world);
+    memset(&object, 0, sizeof(object));
+    object.type = THERON_OBJTYPE_POTION;
+    object.item_index = 2;
+    object.dungeon_id = 1;
+    object.level = 0;
+    object.x = 3;
+    object.y = 2;
+    ASSERT(theron_v1_object_place(&world, &object) == 0,
+           "front-cell object should be placed");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_PICKUP_ITEM, &receipt) == 1,
+           "pickup input should produce a receipt");
+    ASSERT(receipt.handled == 1 && receipt.picked_up == 1,
+           "pickup receipt should report the mutation");
+    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW,
+           "successful pickup should redraw");
+    ASSERT(strcmp(receipt.status, "ITEM PICKED UP") == 0,
+           "pickup status should identify the source-item route");
+    ASSERT(world.objects[0].flags & THERON_OBJ_F_PICKED_UP,
+           "front-cell object should be marked picked up");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_DROP_ITEM, &receipt) == 1 &&
+           receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+           "drop stays closed without a source-owned slot selection");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_USE_ITEM, &receipt) == 1 &&
+           receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+           "use stays closed without the T900 consumer");
+    PASS();
+    return 1;
+}
+
+static int test_use_routes_to_front_door(void)
+{
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+    Theron_V1_Object door;
+
+    TEST("USE_ITEM operates the door in the facing cell");
+    setup_open_room(&world);
+    memset(&door, 0, sizeof(door));
+    door.type = THERON_OBJTYPE_DOOR;
+    door.state = THERON_DOOR_STATE_CLOSED;
+    door.dungeon_id = 1;
+    door.level = 0;
+    door.x = 3;
+    door.y = 2;
+    ASSERT(theron_v1_object_place(&world, &door) == 0,
+           "front-cell door should be placed");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_USE_ITEM, &receipt) == 1,
+           "use input should produce a receipt");
+    ASSERT(receipt.handled == 1 && receipt.used_front_object == 1,
+           "use receipt should report the front-object mutation");
+    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW,
+           "successful door use should redraw");
+    ASSERT(world.objects[0].state == THERON_DOOR_STATE_OPEN,
+           "front-cell door should be open");
+    ASSERT(strcmp(receipt.status, "FRONT OBJECT USED") == 0,
+           "use status should identify the source interaction route");
+    door.state = THERON_DOOR_STATE_LOCKED;
+    door.flags = THERON_DOOR_F_LOCKED;
+    door.x = 4;
+    ASSERT(theron_v1_object_place(&world, &door) == 0,
+           "locked source door should be placed separately");
+    world.objects[0].x = 4;
+    world.objects[1].x = 3;
+    world.levels[0][0].source_header_verified = 1;
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_USE_ITEM, &receipt) == 1 &&
+           receipt.used_front_object == 0 &&
+           receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+           "source-level locked door must reject the host key fallback");
+    ASSERT(world.objects[1].state == THERON_DOOR_STATE_LOCKED,
+           "rejected locked door must remain locked");
+    PASS();
+    return 1;
+}
+
+static int test_source_inventory_selection_cycles_verified_slots(void)
+{
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+
+    TEST("INVENTORY_TOGGLE selects only source-backed Theron slots");
+    setup_open_room(&world);
+    world.party.champions[0].inventory[3] = 7;
+    world.inventory_source[0][3].valid = 1;
+    world.inventory_source[0][3].item_type = 7;
+    world.party.champions[0].inventory[8] = 11;
+    world.inventory_source[0][8].valid = 1;
+    world.inventory_source[0][8].item_type = 11;
+    world.party.champions[0].inventory[5] = 9;
+    ASSERT(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+               &world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
+               &receipt) == 1,
+           "inventory selection should produce a receipt");
+    ASSERT(receipt.inventory_selected == 1 && receipt.inventory_slot == 3,
+           "first source-backed slot should be selected");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+               &world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE,
+               receipt.inventory_slot, &receipt) == 1,
+           "second inventory selection should produce a receipt");
+    ASSERT(receipt.inventory_selected == 1 && receipt.inventory_slot == 8,
+           "selection should skip compact IDs without source provenance");
+    ASSERT(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+               &world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE,
+               receipt.inventory_slot, &receipt) == 1 &&
+           receipt.inventory_slot == 3,
+           "selection should wrap through authenticated slots");
+    PASS();
+    return 1;
+}
+
+static int test_cycle_selected_living_champions(void)
+{
+    Theron_V1_World world;
+    Theron_V1_BootRuntimeInputReceipt receipt;
+
+    TEST("CYCLE_CHAMPION stays inside the selected living party");
+    setup_open_room(&world);
+    world.party.champion_count = 2;
+    world.party.active_slot = 0;
+    world.party.champions[0].alive = 1;
+    world.party.champions[1].alive = 1;
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_CYCLE_CHAMPION, &receipt) == 1,
+           "cycle input should produce a receipt");
+    ASSERT(receipt.champion_cycled == 1 &&
+           receipt.active_champion_slot == 1 &&
+           world.party.active_slot == 1,
+           "next selected living champion should become active");
+    world.party.champions[0].alive = 0;
+    ASSERT(theron_v1_boot_runtime_handle_m12_input(
+               &world, NULL, M12_MENU_INPUT_CYCLE_CHAMPION, &receipt) == 1,
+           "single-living cycle should still produce a receipt");
+    ASSERT(receipt.champion_cycled == 0 && world.party.active_slot == 1,
+           "dead or unselected slots must not become active");
+    PASS();
+    return 1;
+}
+
 static int test_source_move_advances_tick_without_fixture_stats(void)
 {
     Theron_V1_World world;
@@ -433,13 +606,17 @@ int main(void)
     test_unknown_input();
     test_turn_left();
     test_turn_right();
-    test_strafe_rejected();
+    test_original_turn_and_strafe_commands();
     test_move_forward();
     test_move_backward();
     test_move_blocked();
     test_exit_dungeon();
     test_wait_tick();
     test_idle_tick();
+    test_pickup_routes_to_front_cell();
+    test_source_inventory_selection_cycles_verified_slots();
+    test_use_routes_to_front_door();
+    test_cycle_selected_living_champions();
     test_source_move_advances_tick_without_fixture_stats();
 
     printf("\n=====================================================\n");

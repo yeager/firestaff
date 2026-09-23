@@ -6,7 +6,8 @@
  * This is a data-free route probe: it builds a small synthetic dungeon and
  * walks a deterministic path through movement, explicit door opening, pool recovery,
  * alarm/spawner activation, trigger-linked object activation, teleporter
- * resolution, pit fall damage, post-move drain, and click-route TAKE.
+ * resolution, pit fall damage, and click-route TAKE. Unbound hunger/thirst
+ * drain is deliberately not synthesized by the production runtime.
  *
  * Source: THQUEST.ASM T520/T600/T700/T800/T900
  *         docs/source-lock/movement_features.md
@@ -225,9 +226,9 @@ static void check_summary(const RouteSummary *s) {
     CHECK_INT("teleporter spawn y", s->transition_spawn_y, 10);
 
     CHECK_INT("active champion pit health", s->active_health, 30);
-    CHECK_INT("active champion post-pit stamina", s->active_stamina, 40);
-    CHECK_INT("active champion post-route food", s->active_food, 45);
-    CHECK_INT("active champion post-route water", s->active_water, 45);
+    CHECK_INT("active champion post-pit stamina", s->active_stamina, 45);
+    CHECK_INT("unbound route preserves food", s->active_food, 50);
+    CHECK_INT("unbound route preserves water", s->active_water, 50);
 }
 
 static void check_determinism(void) {

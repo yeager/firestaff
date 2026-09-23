@@ -1,0 +1,40 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -397,6 +397,37 @@
+                                          uint8 reader_a, uint8 reader_x, uint8 reader_y,
+                                          uint8 reader_sp, uint8 reader_p)
+ {
++ static FILE *selected_record_trace;
++ static unsigned selected_record_trace_count;
++ const bool selected_record_probe =
++  (logical_address >= 0x7e49 && logical_address <= 0x7ed0) ||
++  (logical_address >= 0x267c && logical_address <= 0x2701);
++ if(selected_record_probe && selected_record_trace_count < 65536)
++ {
++  if(!selected_record_trace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_SELECTED_RECORD_TRACE");
++   if(path && *path)
++   {
++    selected_record_trace = fopen(path, "w");
++    if(selected_record_trace)
++     fputs("FIRESTAFF_THERON_SELECTED_RECORD_TRACE_V1\n"
++           "source=mednafen-pce-instrumented-selected-record\n",
++           selected_record_trace);
++   }
++  }
++  if(selected_record_trace)
++  {
++   fprintf(selected_record_trace,
++           "selected_record_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x source_slot=%u active_body=%u\n",
++           selected_record_trace_count++, logical_address, physical_address,
++           value, reader_pc, reader_physical_pc, reader_a, reader_x, reader_y,
++           reader_sp, reader_p,
++           logical_address >= 0x7e49 && logical_address <= 0x7ed0,
++           logical_address >= 0x267c && logical_address <= 0x2701);
++   fflush(selected_record_trace);
++  }
++ }
+  if(physical_address >= 0x1f0800 && physical_address < 0x1f1000 &&
+     TheronPCECDE009DestinationConsumerTraceCount <
+      TheronPCECDE009DestinationConsumerTraceLimit)

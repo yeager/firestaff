@@ -1958,8 +1958,16 @@ int theron_v1_boot_startup_view_model_from_snapshot_with_media_receipt(
             world->current_level >= 0 &&
             world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
             world->level_loaded[dungeon_index][world->current_level]) {
-            out_view_model->runtime_level_source =
-                THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
+            const Theron_V1_Level *level =
+                &world->levels[dungeon_index][world->current_level];
+            if (level->source_header_verified) {
+                out_view_model->runtime_level_source =
+                    THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
+                out_view_model->runtime_track02_semantic_handoff = 1;
+            } else {
+                out_view_model->runtime_level_source =
+                    THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM;
+            }
         }
     }
     if (startup_media_receipt) {
@@ -5537,6 +5545,47 @@ int theron_v1_boot_runtime_turn_party(Theron_V1_World *world,
     return 1;
 }
 
+static int theron_v1_boot_runtime_turn_original_command(
+    Theron_V1_World *world,
+    uint8_t command_type,
+    int *out_x,
+    int *out_y,
+    int *out_dir,
+    int *out_tick)
+{
+    if (!world ||
+        theron_v1_turn_party_original_command(world, command_type) != 0) {
+        return 0;
+    }
+    theron_v1_boot_runtime_world_receipt(world,
+                                         out_x,
+                                         out_y,
+                                         out_dir,
+                                         out_tick);
+    return 1;
+}
+
+static int theron_v1_boot_runtime_move_original_command(
+    Theron_V1_World *world,
+    uint8_t command_type,
+    int *out_x,
+    int *out_y,
+    int *out_dir,
+    int *out_tick)
+{
+    int result;
+    if (!world) {
+        return THERON_MOVE_BLOCKED;
+    }
+    result = theron_v1_move_party_original_command(world, command_type);
+    theron_v1_boot_runtime_world_receipt(world,
+                                         out_x,
+                                         out_y,
+                                         out_dir,
+                                         out_tick);
+    return result;
+}
+
 int theron_v1_boot_runtime_move_party(Theron_V1_World *world,
                                       int direction,
                                       int restore_direction,
@@ -5573,30 +5622,31 @@ void theron_v1_boot_runtime_input_receipt_init(
     receipt->party_y = -1;
     receipt->party_dir = -1;
     receipt->tick_count = -1;
+    receipt->active_champion_slot = -1;
+    receipt->inventory_slot = -1;
     receipt->status_scope = "THERON";
     receipt->status = "NO-OP";
 }
 
-int theron_v1_boot_runtime_handle_m12_input(
+int theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
     Theron_V1_World *world,
     const void *boot_profile,
     int m12_input,
+    int selected_inventory_slot,
     Theron_V1_BootRuntimeInputReceipt *out_receipt)
 {
     int move_result;
-    int dir;
-    int old_dir;
 
     if (!world || !out_receipt) {
         return 0;
     }
     theron_v1_boot_runtime_input_receipt_init(out_receipt);
 
-    /* Theron has no strafe.  Arrow Left/Right produce turns (same as
-     * Home/End/Q/E).  STRAFE_LEFT/RIGHT from A/D are ignored. */
+    /* Arrow Left/Right produce turns (same as Home/End/Q/E).  A/D use the
+     * separately captured lower-row Theron movement commands $06/$04. */
     if (m12_input == M12_MENU_INPUT_TURN_LEFT) {
-        (void)theron_v1_boot_runtime_turn_party(
-            world, -1,
+        (void)theron_v1_boot_runtime_turn_original_command(
+            world, THERON_ORIGINAL_COMMAND_TURN_LEFT,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
@@ -5609,8 +5659,8 @@ int theron_v1_boot_runtime_handle_m12_input(
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_TURN_RIGHT) {
-        (void)theron_v1_boot_runtime_turn_party(
-            world, 1,
+        (void)theron_v1_boot_runtime_turn_original_command(
+            world, THERON_ORIGINAL_COMMAND_TURN_RIGHT,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
@@ -5623,8 +5673,8 @@ int theron_v1_boot_runtime_handle_m12_input(
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_LEFT) {
-        (void)theron_v1_boot_runtime_turn_party(
-            world, -1,
+        (void)theron_v1_boot_runtime_turn_original_command(
+            world, THERON_ORIGINAL_COMMAND_TURN_LEFT,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
@@ -5637,8 +5687,8 @@ int theron_v1_boot_runtime_handle_m12_input(
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_RIGHT) {
-        (void)theron_v1_boot_runtime_turn_party(
-            world, 1,
+        (void)theron_v1_boot_runtime_turn_original_command(
+            world, THERON_ORIGINAL_COMMAND_TURN_RIGHT,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
@@ -5652,20 +5702,30 @@ int theron_v1_boot_runtime_handle_m12_input(
     }
     if (m12_input == M12_MENU_INPUT_STRAFE_LEFT ||
         m12_input == M12_MENU_INPUT_STRAFE_RIGHT) {
-        theron_v1_boot_runtime_world_receipt(
-            world,
+        move_result = theron_v1_boot_runtime_move_original_command(
+            world, m12_input == M12_MENU_INPUT_STRAFE_LEFT
+                ? THERON_ORIGINAL_COMMAND_MOVE_LEFT
+                : THERON_ORIGINAL_COMMAND_MOVE_RIGHT,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
             &out_receipt->tick_count);
-        out_receipt->status_scope = "NO-OP";
-        out_receipt->status = "THERON HAS NO STRAFE";
+        out_receipt->handled = 1;
+        out_receipt->blocked = move_result == THERON_MOVE_BLOCKED ? 1 : 0;
+        out_receipt->moved = out_receipt->blocked ? 0 : 1;
+        out_receipt->result = out_receipt->moved
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "MOVE";
+        out_receipt->status = out_receipt->moved
+            ? (m12_input == M12_MENU_INPUT_STRAFE_LEFT
+                ? "THERON STEPPED LEFT" : "THERON STEPPED RIGHT")
+            : "BLOCKED";
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_UP) {
-        dir = world->party.leader_dir & 3;
-        move_result = theron_v1_boot_runtime_move_party(
-            world, dir, -1,
+        move_result = theron_v1_boot_runtime_move_original_command(
+            world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
@@ -5695,10 +5755,8 @@ int theron_v1_boot_runtime_handle_m12_input(
         return 1;
     }
     if (m12_input == M12_MENU_INPUT_DOWN) {
-        old_dir = world->party.leader_dir & 3;
-        dir = (old_dir + 2) & 3;
-        move_result = theron_v1_boot_runtime_move_party(
-            world, dir, old_dir,
+        move_result = theron_v1_boot_runtime_move_original_command(
+            world, THERON_ORIGINAL_COMMAND_MOVE_BACKWARD,
             &out_receipt->party_x,
             &out_receipt->party_y,
             &out_receipt->party_dir,
@@ -5727,6 +5785,193 @@ int theron_v1_boot_runtime_handle_m12_input(
             : "BLOCKED";
         return 1;
     }
+    if (m12_input == M12_MENU_INPUT_PICKUP_ITEM) {
+        uint32_t occupied_before = 0u;
+        int champion_slot = world->party.active_slot;
+        int x = world->party.leader_x +
+            g_theron_dir_dx[world->party.leader_dir & 3];
+        int y = world->party.leader_y +
+            g_theron_dir_dy[world->party.leader_dir & 3];
+        if (champion_slot >= 0 && champion_slot < THERON_MAX_CHAMPIONS) {
+            for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot)
+                if (world->inventory_source[champion_slot][slot].valid)
+                    occupied_before |= (uint32_t)1u << slot;
+        }
+        int pickup_result = theron_v1_click_route(
+            world, x, y, THERON_CMD_TAKE);
+        if (pickup_result == 0 && champion_slot >= 0 &&
+            champion_slot < THERON_MAX_CHAMPIONS) {
+            for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+                if (!(occupied_before & ((uint32_t)1u << slot)) &&
+                    world->inventory_source[champion_slot][slot].valid) {
+                    out_receipt->inventory_slot = slot;
+                    break;
+                }
+            }
+        }
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->picked_up = pickup_result == 0 ? 1 : 0;
+        out_receipt->result = out_receipt->picked_up
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "ITEM";
+        out_receipt->status = out_receipt->picked_up
+            ? "ITEM PICKED UP"
+            : "NOTHING TO PICK UP";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_INVENTORY_TOGGLE) {
+        int champion_slot = world->party.active_slot;
+        int selected = -1;
+        int start = selected_inventory_slot >= 0 &&
+                    selected_inventory_slot < THERON_INVENTORY_SLOTS
+            ? selected_inventory_slot : -1;
+        if (champion_slot >= 0 && champion_slot < THERON_MAX_CHAMPIONS) {
+            for (int offset = 1; offset <= THERON_INVENTORY_SLOTS; ++offset) {
+                int slot = (start + offset) %
+                           THERON_INVENTORY_SLOTS;
+                const Theron_V1_InventorySourceRecord *source =
+                    &world->inventory_source[champion_slot][slot];
+                if (source->valid &&
+                    world->party.champions[champion_slot].inventory[slot] !=
+                        THERON_ITEM_NONE &&
+                    source->item_type ==
+                        world->party.champions[champion_slot].inventory[slot]) {
+                    selected = slot;
+                    break;
+                }
+            }
+        }
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->inventory_slot = selected;
+        out_receipt->inventory_selected = selected >= 0 ? 1 : 0;
+        out_receipt->result = out_receipt->inventory_selected
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "ITEM";
+        out_receipt->status = out_receipt->inventory_selected
+            ? "SOURCE ITEM SELECTED"
+            : "NO SOURCE ITEM";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_DROP_ITEM) {
+        int champion_slot = world->party.active_slot;
+        /* A carried occurrence has no authenticated wall/alcove placement
+         * consumer.  Return it to the party's validated floor square rather
+         * than fabricating a front-wall position from the current facing. */
+        int x = world->party.leader_x;
+        int y = world->party.leader_y;
+        int drop_result = -1;
+        if (champion_slot >= 0 && champion_slot < THERON_MAX_CHAMPIONS &&
+            selected_inventory_slot >= 0 &&
+            selected_inventory_slot < THERON_INVENTORY_SLOTS &&
+            world->current_dungeon >= 1 &&
+            world->current_dungeon <= THERON_DUNGEON_COUNT &&
+            world->current_level >= 0 &&
+            world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+            world->level_loaded[world->current_dungeon - 1]
+                               [world->current_level] &&
+            x >= 0 && y >= 0 &&
+            x < world->levels[world->current_dungeon - 1]
+                             [world->current_level].width &&
+            y < world->levels[world->current_dungeon - 1]
+                             [world->current_level].height &&
+            theron_v1_world_get_square(world, x, y) != THERON_SQUARE_WALL) {
+            drop_result = theron_v1_drop_inventory_source_item(
+                world, champion_slot, selected_inventory_slot, x, y);
+        }
+        theron_v1_boot_runtime_world_receipt(
+            world, &out_receipt->party_x, &out_receipt->party_y,
+            &out_receipt->party_dir, &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->dropped = drop_result >= 0 ? 1 : 0;
+        out_receipt->inventory_slot = out_receipt->dropped
+            ? selected_inventory_slot : -1;
+        out_receipt->result = out_receipt->dropped
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "ITEM";
+        out_receipt->status = out_receipt->dropped
+            ? "ITEM DROPPED" : "NO SELECTED SOURCE ITEM";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_USE_ITEM) {
+        int x = world->party.leader_x +
+            g_theron_dir_dx[world->party.leader_dir & 3];
+        int y = world->party.leader_y +
+            g_theron_dir_dy[world->party.leader_dir & 3];
+        int use_result = theron_v1_click_route(
+            world, x, y, THERON_CMD_USE);
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->used_front_object = use_result == 0 ? 1 : 0;
+        out_receipt->result = out_receipt->used_front_object
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "USE";
+        out_receipt->status = out_receipt->used_front_object
+            ? "FRONT OBJECT USED"
+            : "NOTHING USABLE AHEAD";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_CYCLE_CHAMPION) {
+        int count = world->party.champion_count;
+        int start = world->party.active_slot;
+        int offset;
+        if (count < 1 || count > THERON_MAX_CHAMPIONS || start < 0 ||
+            start >= count) {
+            theron_v1_boot_runtime_world_receipt(
+                world,
+                &out_receipt->party_x,
+                &out_receipt->party_y,
+                &out_receipt->party_dir,
+                &out_receipt->tick_count);
+            out_receipt->status_scope = "CHAMPION";
+            out_receipt->status = "NO SELECTED CHAMPION";
+            return 1;
+        }
+        for (offset = 1; offset <= count; ++offset) {
+            int candidate = (start + offset) % count;
+            if (world->party.champions[candidate].alive) {
+                world->party.active_slot = candidate;
+                break;
+            }
+        }
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->active_champion_slot = world->party.active_slot;
+        out_receipt->champion_cycled = world->party.active_slot != start;
+        out_receipt->result = out_receipt->champion_cycled
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "CHAMPION";
+        out_receipt->status = out_receipt->champion_cycled
+            ? "ACTIVE CHAMPION CHANGED"
+            : "NO OTHER LIVING CHAMPION";
+        return 1;
+    }
     if (m12_input == M12_MENU_INPUT_ACCEPT ||
         m12_input == M12_MENU_INPUT_ACTION) {
         (void)theron_v1_boot_runtime_tick_world(
@@ -5753,6 +5998,16 @@ int theron_v1_boot_runtime_handle_m12_input(
     out_receipt->status_scope = "THERON";
     out_receipt->status = "UNKNOWN INPUT";
     return 1;
+}
+
+int theron_v1_boot_runtime_handle_m12_input(
+    Theron_V1_World *world,
+    const void *boot_profile,
+    int m12_input,
+    Theron_V1_BootRuntimeInputReceipt *out_receipt)
+{
+    return theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+        world, boot_profile, m12_input, -1, out_receipt);
 }
 
 int theron_v1_boot_runtime_handle_idle_tick(
@@ -6537,7 +6792,7 @@ int theron_v1_boot_startup_launch_alloc(
     }
 
     theron_v1_world_init_runtime(out_launch->world);
-    if (!theron_vp_init(out_launch->viewport)) {
+    if (!theron_vp_init_from_data_dir(out_launch->viewport, data_dir)) {
         Theron_StartupHostReceipt receipt;
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
         theron_v1_boot_startup_launch_build_failure_host_receipt(

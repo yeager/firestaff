@@ -109,6 +109,23 @@ metadata/audio media, are optional to admission. Preserve the complete CUE/BIN
 set when you have it so original track layout and future media routes remain
 available.
 
+Preserve the untouched complete CUE/BIN set when available. Firestaff's
+product runtime is native and does not invoke an emulator or require a PC
+Engine System Card. Individual authenticated Track 02 BIN/ISO files remain
+valid native-runtime inputs; a partial dump is never described as a complete
+disc.
+
+When `TQUS02.bin` and `TQJP02.bin` coexist under `theron/`, choose the native
+edition with `firestaff --theron-native us` or
+`firestaff --theron-native jp`. The option resolves only the named canonical
+file and then applies its exact Track 02 hash gate; a missing JP file cannot
+borrow the installed US file, or vice versa.
+
+For native Theron, keeping the matching known full-disc archive beside the
+verified Track 02 also enables original Track 01 title audio automatically.
+The CUE and audio come only from the hash-known regional archive and are
+materialized below Firestaff's private cache.
+
 ## Suggested layout
 
 The launcher searches recursively, so this layout is only for convenience:

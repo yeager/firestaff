@@ -2,7 +2,7 @@ diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
 @@ -7,5 +7,9 @@
- 
+
  namespace MDFN_IEN_PCE
  {
 +void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value);
@@ -13,7 +13,7 @@ diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
  {
 @@ -415,6 +419,14 @@
  	 uint8 wmpr = MPR[address >> 13];
- 
+
  	 LastLogicalWriteAddr = address;
 +	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
 +	 if(physical_address < 0x1f0000 || physical_address >= 0x1f8000)
@@ -23,7 +23,7 @@ diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 +	 TheronPCECDTracePostGeneration7RAMWrite(address, physical_address, V, writer_pc,
 +	                                          (writer_mpr << 13) | (writer_pc & 0x1FFF));
 +	 TheronPCECDTraceDataWrite(address, physical_address, V);
- 
+
  	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
  	}
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
@@ -121,7 +121,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +                             writer_pc, writer_physical_pc, logical_destination, physical_destination, stored_value);
 + TheronPCECDPostGeneration7RAMWriteCount++;
 +}
- 
+
  static void TheronTracePCECDState(const char *format, ...)
  {
 @@ -603,6 +691,10 @@

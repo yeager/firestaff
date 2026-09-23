@@ -5918,12 +5918,10 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff
         out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
         return out_handoff->status;
     }
-    if (out_handoff->seed_table_status !=
-        THERON_TRACK02_SEMANTIC_BINDING_OK) {
-        out_handoff->status = THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
-        return out_handoff->status;
-    }
-
+    /* The descriptor entry-0 seed-table hypothesis is disproven by the real
+     * US/JP corpus and remains diagnostic only.  The authenticated startup
+     * candidate owns its seed in the 12-byte level header; do not require a
+     * synthetic ascending table before admitting that real record. */
     for (i = 0u; i < THERON_TRACK02_DUNGEON_COUNT; ++i) {
         if (out_handoff->seed_table_binding.dungeon_seed_table.seeds[i] ==
             out_handoff->startup_seed) {
@@ -5967,13 +5965,12 @@ int theron_v1_track02_startup_runtime_receipt_from_handoff(
     out_receipt->header_seed = candidate->header_seed;
     out_receipt->header_level_index = candidate->header_level_index;
     out_receipt->progression_seed0 =
-        handoff->seed_table_binding.dungeon_seed_table.seeds[0];
+        handoff->startup_seed;
     out_receipt->ready_for_runtime = handoff->ready_for_runtime ? 1 : 0;
     out_receipt->fallback_visuals_allowed =
         handoff->ready_for_runtime ? 0 : 1;
     out_receipt->valid =
         handoff->status == THERON_TRACK02_LEVEL_HANDOFF_OK &&
-        handoff->seed_table_status == THERON_TRACK02_SEMANTIC_BINDING_OK &&
         handoff->ready_for_runtime &&
         handoff->user_data_offset_valid &&
         candidate->loaded;
@@ -9985,11 +9982,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_tier4_callees(
         0xa0u, 0x4fu, 0xeeu, 0x9fu, 0x4fu, 0x60u
     };
     /* L560B body [0x160b..0x1657): decoded inline by da65 with two
-     * flagged artifact classes: the declared L563D label splits the
-     * BCC operand byte at 0x163d (`.byte $90` plus the garbage `st0
-     * #$EE` / `cld` / `.byte $4F` renderings — the round-18
-     * mid-instruction class), so the media bytes are authoritative:
-     * the real flow is BCC L5641 / INC $4FD8; and the L0000
+     * overlapping-entry classes.  L563D is the BCC operand byte in
+     * the L560B flow (BCC L5641 / INC $4FD8), but authenticated L4943
+     * also calls $563D directly, where the same bytes begin ST0 #$EE /
+     * CLD / BBR4.  Both instruction streams are media-authoritative;
+     * the L0000
      * zero-page-as-absolute renderings are superseded by the media
      * bytes.  The body: the L4FD5/L4FD6 +$11 -> $02:$03 and $5667 ->
      * $00:$01 setup / LDX #$09 / the PHX/$00:$01-save/BSR L5657/JSR
@@ -10487,6 +10484,11 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         0x46u, 0xe3u, 0x00u, 0x00u, 0x02u, 0x00u, 0x00u, 0x00u,
         0x64u, 0x5au, 0x60u
     };
+    static const uint8_t stage2_l491f[] = {
+        0x03u, 0x05u, 0xa5u, 0xf3u, 0x8du, 0x02u, 0x00u, 0xa5u,
+        0xf4u, 0x29u, 0x07u, 0x09u, 0x10u, 0x85u, 0xf4u, 0x8du,
+        0x03u, 0x00u, 0x60u
+    };
     /* L4932 body [0x4932..0x4943): the JSR $4932 target at +0x35
      * inside the bound $45xx routine, decoded inline by da65 ($8932
      * rendering): ST0 #$05 / LDA $F3 / STA $0002 / LDA $F4 / AND #$07
@@ -10499,9 +10501,297 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         0xf4u, 0x29u, 0x07u, 0x85u, 0xf4u, 0x8du, 0x03u, 0x00u,
         0x60u
     };
+    /* L4943 [0x4943..0x49fa): banked graphics/VDC dispatcher immediately
+     * after L4932.  It saves MPR3..MPR6, maps the four banks selected by
+     * L300A, dispatches the authenticated graphics callees, then restores
+     * every MPR and ends exactly at L49FA. */
+    static const uint8_t stage2_l4943[] = {
+        0x43u, 0x08u, 0x48u, 0x43u, 0x10u, 0x48u, 0x43u, 0x20u,
+        0x48u, 0x43u, 0x40u, 0x48u, 0xadu, 0x0au, 0x30u, 0x53u,
+        0x08u, 0x1au, 0x53u, 0x10u, 0x1au, 0x53u, 0x20u, 0x1au,
+        0x53u, 0x40u, 0xadu, 0x00u, 0x00u, 0x48u, 0xa6u, 0x5au,
+        0xf0u, 0x03u, 0x4cu, 0xe2u, 0x49u, 0x89u, 0x04u, 0xd0u,
+        0x03u, 0x4cu, 0x75u, 0x49u, 0x20u, 0x2bu, 0x5eu, 0x4cu,
+        0xe2u, 0x49u, 0x89u, 0x20u, 0xd0u, 0x03u, 0x4cu, 0xe2u,
+        0x49u, 0xadu, 0x69u, 0x3bu, 0xf0u, 0x03u, 0x20u, 0xe4u,
+        0x5cu, 0x20u, 0xb0u, 0x4bu, 0x09u, 0x00u, 0xd0u, 0x06u,
+        0xadu, 0xc3u, 0x47u, 0x0au, 0x90u, 0x29u, 0x03u, 0x08u,
+        0xadu, 0x10u, 0x22u, 0x8du, 0x02u, 0x00u, 0xadu, 0x11u,
+        0x22u, 0x8du, 0x03u, 0x00u, 0xadu, 0x78u, 0x3bu, 0xd0u,
+        0x10u, 0x03u, 0x07u, 0xadu, 0x0cu, 0x22u, 0x8du, 0x02u,
+        0x00u, 0xadu, 0x0du, 0x22u, 0x8du, 0x03u, 0x00u, 0x80u,
+        0x06u, 0x03u, 0x07u, 0x13u, 0x00u, 0x23u, 0x00u, 0x20u,
+        0xdeu, 0x56u, 0x20u, 0x3du, 0x56u, 0x20u, 0xf1u, 0x50u,
+        0xadu, 0xc3u, 0x47u, 0x0au, 0x90u, 0x03u, 0x20u, 0xfau,
+        0x49u, 0x20u, 0x11u, 0x51u, 0x20u, 0x0au, 0x57u, 0x64u,
+        0x59u, 0xadu, 0x78u, 0x3bu, 0xf0u, 0x09u, 0x03u, 0x07u,
+        0x13u, 0x00u, 0x23u, 0x00u, 0x9cu, 0x79u, 0x3bu, 0x68u,
+        0x29u, 0x20u, 0xf0u, 0x06u, 0xeeu, 0x33u, 0x3bu, 0xeeu,
+        0x49u, 0x22u, 0x68u, 0x53u, 0x40u, 0x68u, 0x53u, 0x20u,
+        0x68u, 0x53u, 0x10u, 0x68u, 0x53u, 0x08u, 0x60u
+    };
+    static const uint8_t stage2_l49fa[] = {
+        0xa5u, 0x51u, 0xf0u, 0x03u, 0x20u, 0x09u, 0x4au, 0xa5u,
+        0x50u, 0xf0u, 0x03u, 0x20u, 0x84u, 0x4au, 0x60u
+    };
+    static const uint8_t stage2_l4a09[] = {
+        0xadu, 0xd3u, 0x47u, 0xf0u, 0x48u, 0x20u, 0x32u, 0x49u,
+        0x03u, 0x00u, 0xadu, 0xdbu, 0x47u, 0x8du, 0x02u, 0x00u,
+        0xadu, 0xdcu, 0x47u, 0x8du, 0x03u, 0x00u, 0x03u, 0x02u,
+        0xa2u, 0x20u, 0xc2u, 0xb9u, 0xe0u, 0x47u, 0x8du, 0x02u,
+        0x00u, 0xc8u, 0xb9u, 0xe0u, 0x47u, 0x8du, 0x03u, 0x00u,
+        0xc8u, 0xcau, 0xd0u, 0x1du, 0xadu, 0xd8u, 0x47u, 0x85u,
+        0x3bu, 0xadu, 0xd5u, 0x47u, 0x85u, 0x3au, 0x20u, 0x24u,
+        0x4bu, 0xa2u, 0x20u, 0x03u, 0x00u, 0xa5u, 0x3cu, 0x8du,
+        0x02u, 0x00u, 0xa5u, 0x3du, 0x8du, 0x03u, 0x00u, 0x03u,
+        0x02u, 0xc0u, 0x40u, 0xd0u, 0xceu, 0xadu, 0xbcu, 0x47u,
+        0x85u, 0x38u, 0xadu, 0xbdu, 0x47u, 0x85u, 0x39u, 0xa5u,
+        0x38u, 0x05u, 0x39u, 0xf0u, 0x10u, 0xa5u, 0x38u, 0xd0u,
+        0x02u, 0xc6u, 0x39u, 0xc6u, 0x38u, 0xd0u, 0x06u, 0xa5u,
+        0x39u, 0xd0u, 0x02u, 0x64u, 0x51u, 0xa5u, 0x38u, 0x8du,
+        0xbcu, 0x47u, 0xa5u, 0x39u, 0x8du, 0xbdu, 0x47u, 0x9cu,
+        0xd3u, 0x47u, 0x60u
+    };
+    static const uint8_t stage2_l4a84[] = {
+        0xadu, 0xd4u, 0x47u, 0xf0u, 0x6du, 0x20u, 0x1fu, 0x49u,
+        0x03u, 0x00u, 0xadu, 0x75u, 0x3bu, 0x85u, 0x39u, 0xadu,
+        0x74u, 0x3bu, 0x0au, 0x26u, 0x39u, 0x0au, 0x26u, 0x39u,
+        0x0au, 0x26u, 0x39u, 0x18u, 0x6du, 0xdbu, 0x47u, 0x8du,
+        0x02u, 0x00u, 0xa5u, 0x39u, 0x6du, 0xdcu, 0x47u, 0x8du,
+        0x03u, 0x00u, 0x03u, 0x02u, 0xadu, 0xd8u, 0x47u, 0x18u,
+        0x6du, 0x7au, 0x3bu, 0x85u, 0x38u, 0xadu, 0x7au, 0x3bu,
+        0x0au, 0xa8u, 0xaeu, 0x7bu, 0x3bu, 0xb9u, 0x20u, 0x48u,
+        0x8du, 0x02u, 0x00u, 0xc8u, 0xb9u, 0x20u, 0x48u, 0x8du,
+        0x03u, 0x00u, 0xc8u, 0xe6u, 0x38u, 0xa9u, 0x20u, 0xc5u,
+        0x38u, 0xd0u, 0x1cu, 0xadu, 0x7au, 0x3bu, 0x85u, 0x3bu,
+        0xadu, 0xd5u, 0x47u, 0x85u, 0x3au, 0x44u, 0x41u, 0x64u,
+        0x38u, 0x03u, 0x00u, 0xa5u, 0x3cu, 0x8du, 0x02u, 0x00u,
+        0xa5u, 0x3du, 0x8du, 0x03u, 0x00u, 0x03u, 0x02u, 0xcau,
+        0xd0u, 0xcbu, 0xadu, 0xbau, 0x47u, 0x85u, 0x38u, 0xadu,
+        0xbbu, 0x47u, 0x85u, 0x39u, 0xa5u, 0x38u, 0x05u, 0x39u,
+        0xf0u, 0x10u, 0xa5u, 0x38u, 0xd0u, 0x02u, 0xc6u, 0x39u,
+        0xc6u, 0x38u, 0xd0u, 0x06u, 0xa5u, 0x39u, 0xd0u, 0x02u,
+        0x64u, 0x50u, 0xa5u, 0x38u, 0x8du, 0xbau, 0x47u, 0xa5u,
+        0x39u, 0x8du, 0xbbu, 0x47u, 0x9cu, 0xd4u, 0x47u, 0x60u
+    };
+    static const uint8_t stage2_l4b24[] = {
+        0x64u, 0x3cu, 0xa5u, 0x3bu, 0x4au, 0x66u, 0x3cu, 0x4au,
+        0x66u, 0x3cu, 0x85u, 0x3du, 0xa5u, 0x3au, 0x18u, 0x65u,
+        0x3cu, 0x85u, 0x3cu, 0x90u, 0x02u, 0xe6u, 0x3du, 0x60u
+    };
+    static const uint8_t stage2_l4bb0[] = {
+        0xadu, 0x11u, 0x4cu, 0xf0u, 0x57u, 0xadu, 0x10u, 0x4cu,
+        0x3au, 0x8du, 0x10u, 0x4cu, 0xd0u, 0x4eu, 0xadu, 0x0fu,
+        0x4cu, 0x8du, 0x10u, 0x4cu, 0xa0u, 0x69u, 0xadu, 0x0du,
+        0x4cu, 0xf0u, 0x1cu, 0x49u, 0xffu, 0x1au, 0x8du, 0x0du,
+        0x4cu, 0x10u, 0x02u, 0xa0u, 0xe9u, 0x8cu, 0xe2u, 0x4bu,
+        0x18u, 0x6du, 0x0cu, 0x22u, 0x8du, 0x0cu, 0x22u, 0xadu,
+        0x0du, 0x22u, 0x69u, 0x00u, 0x8du, 0x0du, 0x22u, 0xa0u,
+        0x69u, 0xf0u, 0x1fu, 0xadu, 0x0eu, 0x4cu, 0x49u, 0xffu,
+        0x1au, 0x8du, 0x0eu, 0x4cu, 0x10u, 0x02u, 0xa0u, 0xe9u,
+        0x8cu, 0x05u, 0x4cu, 0x18u, 0x6du, 0x10u, 0x22u, 0x8du,
+        0x10u, 0x22u, 0xadu, 0x11u, 0x22u, 0x69u, 0x00u, 0x8du,
+        0x11u, 0x22u, 0xa9u, 0x01u, 0x60u
+    };
+    static const uint8_t stage2_l56de[] = {
+        0xadu, 0xdbu, 0x58u, 0xf0u, 0x26u, 0xaau, 0x29u, 0x80u,
+        0xf0u, 0x03u, 0x4cu, 0x1au, 0x57u, 0x8au, 0x29u, 0x40u,
+        0xf0u, 0x19u, 0xa9u, 0x00u, 0x8du, 0x02u, 0x04u, 0xa9u,
+        0x00u, 0x8du, 0x03u, 0x04u, 0xe3u, 0xe0u, 0x58u, 0x04u,
+        0x04u, 0x00u, 0x04u, 0xadu, 0xdbu, 0x58u, 0x29u, 0xbfu,
+        0x8du, 0xdbu, 0x58u, 0x60u
+    };
+    static const uint8_t stage2_l570a[] = {
+        0xadu, 0xdbu, 0x58u, 0xf0u, 0x0au, 0x3au, 0x3au, 0xf0u,
+        0x43u, 0x3au, 0xd0u, 0x03u, 0x4cu, 0xc2u, 0x57u, 0x60u
+    };
+    static const uint8_t stage2_l50f1[] = {
+        0xadu, 0xd9u, 0x27u, 0xf0u, 0x1au, 0x20u, 0x32u, 0x49u,
+        0x03u, 0x00u, 0xadu, 0xdau, 0x27u, 0x8du, 0x02u, 0x00u,
+        0xadu, 0xdbu, 0x27u, 0x8du, 0x03u, 0x00u, 0x03u, 0x02u,
+        0xe3u, 0xf1u, 0x4eu, 0x02u, 0x00u, 0x00u, 0x02u, 0x60u
+    };
+    /* L5111 [0x5111..0x533d): the direct JSR $5111 target in L4943.
+     * The main body initializes the $4ef1 staging area, walks eight
+     * 32-byte records, calls L533D, and reaches the local L519F/L517A
+     * bodies through BSR 44 3c / 44 12.  L519F's PHA/PHA/RTS dispatch
+     * consumes the 15 target-minus-one words at $51e8; every target and
+     * handler through $533c is included in the authenticated body. */
+    static const uint8_t stage2_l5111[] = {
+        0x9cu, 0xf1u, 0x4eu, 0x73u, 0xf1u, 0x4eu, 0xf2u, 0x4eu,
+        0xffu, 0x01u, 0xadu, 0xdau, 0x4du, 0xf0u, 0xf0u, 0xa9u,
+        0xf1u, 0x8du, 0xefu, 0x4eu, 0xa9u, 0x4eu, 0x8du, 0xf0u,
+        0x4eu, 0xa9u, 0xefu, 0x85u, 0x48u, 0xa9u, 0x4du, 0x85u,
+        0x49u, 0xa2u, 0x08u, 0xc2u, 0x5au, 0xadu, 0xe9u, 0x4du,
+        0x85u, 0x42u, 0xadu, 0xeau, 0x4du, 0x85u, 0x43u, 0x98u,
+        0x0au, 0xa8u, 0xb1u, 0x42u, 0x8du, 0xedu, 0x4du, 0xc8u,
+        0xb1u, 0x42u, 0x8du, 0xeeu, 0x4du, 0xadu, 0xe3u, 0x4du,
+        0x18u, 0x6du, 0xedu, 0x4du, 0x8du, 0xedu, 0x4du, 0xadu,
+        0xe4u, 0x4du, 0x6du, 0xeeu, 0x4du, 0x8du, 0xeeu, 0x4du,
+        0x44u, 0x3cu, 0x20u, 0x3du, 0x53u, 0x44u, 0x12u, 0xa9u,
+        0x20u, 0x18u, 0x65u, 0x48u, 0x85u, 0x48u, 0x90u, 0x02u,
+        0xe6u, 0x49u, 0x7au, 0xc8u, 0xc0u, 0x08u, 0xd0u, 0xbcu,
+        0x60u, 0xb2u, 0x48u, 0x29u, 0x80u, 0xf0u, 0x1eu, 0xa0u,
+        0x01u, 0xb1u, 0x48u, 0xc8u, 0x85u, 0x3au, 0xb1u, 0x48u,
+        0xc8u, 0x85u, 0x3bu, 0xb1u, 0x48u, 0xc8u, 0x85u, 0x3cu,
+        0xb1u, 0x48u, 0xc8u, 0x85u, 0x3du, 0xb1u, 0x48u, 0xc8u,
+        0x85u, 0x38u, 0x20u, 0x5eu, 0x55u, 0x60u, 0xb2u, 0x48u,
+        0x29u, 0x02u, 0xf0u, 0x42u, 0xa0u, 0x0cu, 0xb1u, 0x48u,
+        0x85u, 0x4au, 0xc8u, 0xb1u, 0x48u, 0x85u, 0x4bu, 0xa0u,
+        0x08u, 0xb1u, 0x48u, 0xf0u, 0x05u, 0x3au, 0x91u, 0x48u,
+        0xd0u, 0x2cu, 0x64u, 0x3eu, 0x64u, 0x3fu, 0xa4u, 0x3eu,
+        0xb1u, 0x4au, 0xe6u, 0x3eu, 0x0au, 0xa8u, 0xa9u, 0xe8u,
+        0x85u, 0x38u, 0xa9u, 0x51u, 0x85u, 0x39u, 0xc8u, 0xb1u,
+        0x38u, 0x48u, 0x88u, 0xb1u, 0x38u, 0x48u, 0x60u, 0xa0u,
+        0x0cu, 0xa5u, 0x4au, 0x18u, 0x65u, 0x3eu, 0x91u, 0x48u,
+        0xc8u, 0x62u, 0x65u, 0x4bu, 0x91u, 0x48u, 0x60u,
+        0x05u, 0x52u, 0x13u, 0x52u, 0x45u, 0x52u, 0x71u, 0x52u,
+        0x7fu, 0x52u, 0x8du, 0x52u, 0xb4u, 0x52u, 0xd8u, 0x52u,
+        0xf1u, 0x52u, 0x0bu, 0x53u, 0x15u, 0x53u, 0x1eu, 0x53u,
+        0x21u, 0x53u, 0x2au, 0x53u, 0x33u, 0x53u, 0xa4u, 0x3eu,
+        0xb1u, 0x4au, 0x85u, 0x38u, 0x20u, 0xf4u, 0x55u, 0xe6u,
+        0x3eu, 0x4cu, 0xbfu, 0x51u, 0xa0u, 0x0eu, 0xb1u, 0x48u,
+        0x85u, 0x42u, 0xc8u, 0xb1u, 0x48u, 0x85u, 0x43u, 0xb2u,
+        0x42u, 0x20u, 0xf4u, 0x55u, 0xa0u, 0x01u, 0xb1u, 0x42u,
+        0xa0u, 0x08u, 0x3au, 0x91u, 0x48u, 0xa9u, 0x02u, 0x18u,
+        0x65u, 0x42u, 0x85u, 0x42u, 0x90u, 0x02u, 0xe6u, 0x43u,
+        0xa0u, 0x0eu, 0xa5u, 0x42u, 0x91u, 0x48u, 0xc8u, 0xa5u,
+        0x43u, 0x91u, 0x48u, 0x4cu, 0xd8u, 0x51u, 0xa4u, 0x3eu,
+        0xb1u, 0x4au, 0x85u, 0x38u, 0xc8u, 0xb1u, 0x4au, 0x85u,
+        0x39u, 0xadu, 0xe3u, 0x4du, 0x18u, 0x65u, 0x38u, 0x85u,
+        0x38u, 0xadu, 0xe4u, 0x4du, 0x65u, 0x39u, 0x85u, 0x39u,
+        0xa0u, 0x0eu, 0xa5u, 0x38u, 0x91u, 0x48u, 0xc8u, 0xa5u,
+        0x39u, 0x91u, 0x48u, 0xe6u, 0x3eu, 0xe6u, 0x3eu, 0x4cu,
+        0xbfu, 0x51u, 0xa4u, 0x3eu, 0xb1u, 0x4au, 0xe6u, 0x3eu,
+        0xa0u, 0x08u, 0x3au, 0x91u, 0x48u, 0x4cu, 0xd8u, 0x51u,
+        0x20u, 0xffu, 0x55u, 0xb2u, 0x42u, 0xd0u, 0x04u, 0xc6u,
+        0x3eu, 0xc6u, 0x3eu, 0x4cu, 0xd8u, 0x51u, 0xa4u, 0x3eu,
+        0xb1u, 0x4au, 0x85u, 0x38u, 0xc8u, 0xb1u, 0x4au, 0x85u,
+        0x39u, 0x64u, 0x3eu, 0xadu, 0xe3u, 0x4du, 0x18u, 0x65u,
+        0x38u, 0x85u, 0x38u, 0xadu, 0xe4u, 0x4du, 0x65u, 0x39u,
+        0x85u, 0x39u, 0xa5u, 0x38u, 0x85u, 0x4au, 0xa5u, 0x39u,
+        0x85u, 0x4bu, 0x4cu, 0xbfu, 0x51u, 0xa4u, 0x3eu, 0xb1u,
+        0x4au, 0xa0u, 0x09u, 0x91u, 0x48u, 0xa5u, 0x3eu, 0x1au,
+        0x18u, 0x65u, 0x4au, 0x85u, 0x4au, 0x90u, 0x02u, 0xe6u,
+        0x4bu, 0x64u, 0x3eu, 0xa0u, 0x0au, 0xa5u, 0x4au, 0x91u,
+        0x48u, 0xc8u, 0xa5u, 0x4bu, 0x91u, 0x48u, 0x4cu, 0xbfu,
+        0x51u, 0xa0u, 0x09u, 0xb1u, 0x48u, 0x3au, 0x91u, 0x48u,
+        0xf0u, 0x0du, 0xa0u, 0x0au, 0xb1u, 0x48u, 0xc8u, 0x85u,
+        0x4au, 0xb1u, 0x48u, 0x85u, 0x4bu, 0x64u, 0x3eu, 0x4cu,
+        0xbfu, 0x51u, 0xa4u, 0x3eu, 0xb1u, 0x4au, 0xaau, 0xbdu,
+        0x80u, 0x27u, 0xc8u, 0xd1u, 0x4au, 0xd0u, 0x03u, 0xc8u,
+        0x80u, 0x8eu, 0x18u, 0xa5u, 0x3eu, 0x69u, 0x04u, 0x85u,
+        0x3eu, 0x4cu, 0xbfu, 0x51u, 0x20u, 0xffu, 0x55u, 0xa9u,
+        0x01u, 0x92u, 0x42u, 0x4cu, 0xd8u, 0x51u, 0x20u, 0xffu,
+        0x55u, 0x62u, 0x92u, 0x42u, 0x4cu, 0xd8u, 0x51u, 0x4cu,
+        0xd8u, 0x51u, 0xb2u, 0x48u, 0x29u, 0xfeu, 0x92u, 0x48u,
+        0x4cu, 0xd8u, 0x51u, 0xb2u, 0x48u, 0x29u, 0xfdu, 0x92u,
+        0x48u, 0x4cu, 0xd8u, 0x51u, 0xb2u, 0x48u, 0x29u, 0x7fu,
+        0x92u, 0x48u, 0x4cu, 0xd8u, 0x51u
+    };
+    static const uint16_t stage2_l5111_command_targets_minus_one[] = {
+        0x5205u, 0x5213u, 0x5245u, 0x5271u, 0x527fu,
+        0x528du, 0x52b4u, 0x52d8u, 0x52f1u, 0x530bu,
+        0x5315u, 0x531eu, 0x5321u, 0x532au, 0x5333u
+    };
+    static const uint8_t stage2_l533d[] = {
+        0xb2,0x48,0x29,0x01,0xf0,0x42,0xa0,0x14,0xb1,0x48,0x85,0x4a,
+        0xc8,0xb1,0x48,0x85,0x4b,0xa0,0x10,0xb1,0x48,0xf0,0x05,0x3a,
+        0x91,0x48,0xd0,0x2c,0x64,0x3e,0x64,0x3f,0xa4,0x3e,0xb1,0x4a,
+        0xe6,0x3e,0x0a,0xa8,0xa9,0x86,0x85,0x38,0xa9,0x53,0x85,0x39,
+        0xc8,0xb1,0x38,0x48,0x88,0xb1,0x38,0x48,0x60,0xa0,0x14,0xa5,
+        0x4a,0x18,0x65,0x3e,0x91,0x48,0xc8,0x62,0x65,0x4b,0x91,0x48,
+        0x60,0xa7,0x53,0xcc,0x53,0x24,0x54,0x27,0x54,0x6d,0x54,0x99,
+        0x54,0xa7,0x54,0xb5,0x54,0xdc,0x54,0x00,0x55,0x19,0x55,0x35,
+        0x55,0x3f,0x55,0x48,0x55,0x4b,0x55,0x54,0x55,0xf5,0x53,0xa4,
+        0x3e,0xb1,0x4a,0x85,0x38,0xc8,0xb1,0x4a,0x85,0x39,0x5a,0x20,
+        0x17,0x56,0x7a,0xc8,0xb1,0x4a,0x85,0x38,0xc8,0xb1,0x4a,0x85,
+        0x39,0x5a,0x20,0x2a,0x56,0x7a,0xc8,0x84,0x3e,0x4c,0x5d,0x53,
+        0xa4,0x3e,0xb1,0x4a,0xaa,0xc8,0xb1,0x4a,0x5a,0xa0,0x02,0x91,
+        0x48,0x88,0x8a,0x91,0x48,0x7a,0xc8,0xb1,0x4a,0xaa,0xc8,0xb1,
+        0x4a,0x5a,0xa0,0x04,0x91,0x48,0x88,0x8a,0x91,0x48,0x7a,0xc8,
+        0x84,0x3e,0x4c,0x5d,0x53,0xa4,0x3e,0xb1,0x4a,0xaa,0x5a,0xbd,
+        0x80,0x27,0xa0,0x01,0x91,0x48,0xc8,0xe8,0xbd,0x80,0x27,0x91,
+        0x48,0x7a,0xc8,0xb1,0x4a,0xaa,0x5a,0xbd,0x80,0x27,0xa0,0x03,
+        0x91,0x48,0xc8,0xe8,0xbd,0x80,0x27,0x91,0x48,0x7a,0xc8,0x84,
+        0x3e,0x4c,0x5d,0x53,0x4c,0x76,0x53,0xa0,0x16,0xb1,0x48,0x85,
+        0x42,0xc8,0xb1,0x48,0x85,0x43,0xc2,0xb2,0x42,0xc8,0x85,0x38,
+        0xb1,0x42,0xc8,0x85,0x39,0x20,0x17,0x56,0xb1,0x42,0xc8,0x85,
+        0x38,0xb1,0x42,0xc8,0x85,0x39,0x20,0x2a,0x56,0xb1,0x42,0xa0,
+        0x10,0x3a,0x91,0x48,0xa9,0x05,0x18,0x65,0x42,0x85,0x42,0x90,
+        0x02,0xe6,0x43,0xa0,0x16,0xa5,0x42,0x91,0x48,0xc8,0xa5,0x43,
+        0x91,0x48,0x4c,0x76,0x53,0xa4,0x3e,0xb1,0x4a,0x85,0x38,0xc8,
+        0xb1,0x4a,0x85,0x39,0xad,0xe3,0x4d,0x18,0x65,0x38,0x85,0x38,
+        0xad,0xe4,0x4d,0x65,0x39,0x85,0x39,0xa0,0x16,0xa5,0x38,0x91,
+        0x48,0xc8,0xa5,0x39,0x91,0x48,0xe6,0x3e,0xe6,0x3e,0x4c,0x5d,
+        0x53,0xa4,0x3e,0xb1,0x4a,0xa0,0x10,0x3a,0x91,0x48,0xe6,0x3e,
+        0x4c,0x76,0x53,0x20,0xff,0x55,0xb2,0x42,0xd0,0x04,0xc6,0x3e,
+        0xc6,0x3e,0x4c,0x76,0x53,0xa4,0x3e,0xb1,0x4a,0x85,0x38,0xc8,
+        0xb1,0x4a,0x85,0x39,0x64,0x3e,0xad,0xe3,0x4d,0x18,0x65,0x38,
+        0x85,0x38,0xad,0xe4,0x4d,0x65,0x39,0x85,0x39,0xa5,0x38,0x85,
+        0x4a,0xa5,0x39,0x85,0x4b,0x4c,0x5d,0x53,0xa4,0x3e,0xb1,0x4a,
+        0xa0,0x11,0x91,0x48,0xa5,0x3e,0x1a,0x18,0x65,0x4a,0x85,0x4a,
+        0x90,0x02,0xe6,0x4b,0x64,0x3e,0xa0,0x12,0xa5,0x4a,0x91,0x48,
+        0xc8,0xa5,0x4b,0x91,0x48,0x4c,0x5d,0x53,0xa0,0x11,0xb1,0x48,
+        0x3a,0x91,0x48,0xf0,0x0d,0xa0,0x12,0xb1,0x48,0xc8,0x85,0x4a,
+        0xb1,0x48,0x85,0x4b,0x64,0x3e,0x4c,0x5d,0x53,0xa4,0x3e,0xb1,
+        0x4a,0xda,0xaa,0xbd,0x80,0x27,0xfa,0xc8,0xd1,0x4a,0xd0,0x03,
+        0xc8,0x80,0x8c,0x18,0xa5,0x3e,0x69,0x04,0x85,0x3e,0x4c,0x5d,
+        0x53,0x20,0xff,0x55,0xa9,0x01,0x92,0x42,0x4c,0x76,0x53,0x20,
+        0xff,0x55,0x62,0x92,0x42,0x4c,0x76,0x53,0x4c,0x76,0x53,0xb2,
+        0x48,0x29,0xfd,0x92,0x48,0x4c,0x76,0x53,0xb2,0x48,0x29,0xfe,
+        0x92,0x48,0x4c,0x76,0x53
+    };
+    static const uint16_t stage2_l533d_command_targets_minus_one[] = {
+        0x53a7u,0x53ccu,0x5424u,0x5427u,0x546du,0x5499u,0x54a7u,0x54b5u,
+        0x54dcu,0x5500u,0x5519u,0x5535u,0x553fu,0x5548u,0x554bu,0x5554u
+    };
+    static const uint8_t stage2_l55ef[] = {
+        0xe6u,0x06u,0xd0u,0x02u,0xe6u,0x07u,0x60u,0xc6u,
+        0x5au,0x20u,0xa0u,0x54u,0x44u,0x03u,0x64u,0x5au,
+        0x60u,0xa5u,0x06u,0x8du,0x02u,0x00u,0xa5u,0x07u,
+        0x8du,0x03u,0x00u,0x60u
+    };
+    static const uint8_t stage2_l5617_entry[] = {0x85u,0x03u,0xa9u,0x67u};
+    static const uint8_t stage2_l562a_entry[] = {0x44u,0x2bu,0x20u,0xa2u,0x52u};
+    static const uint8_t stage2_l563d_entry[] = {
+        0x03u,0xeeu,0xd8u,0x4fu,0x68u,0x85u
+    };
+    static const uint8_t stage2_l55b6[] = {
+        0xa5u,0x06u,0x48u,0xa5u,0x07u,0x48u,0xa5u,0x0eu,
+        0x48u,0xa5u,0x0fu,0x48u,0x44u,0x32u,0xaeu,0x8du,
+        0x4fu,0xcau,0xcau,0x44u,0x24u,0x44u,0x1bu,0x44u,
+        0x11u,0x44u,0x1eu,0x44u,0x23u,0x68u,0x85u,0x0fu,
+        0x68u,0x85u,0x0eu,0x68u,0x85u,0x07u,0x68u,0x85u,
+        0x06u,0x60u
+    };
+    static const uint8_t stage2_l5e2b[] = {
+        0xadu, 0x78u, 0x3bu, 0xd0u, 0x01u, 0x60u, 0xadu, 0x79u,
+        0x3bu, 0x0au, 0xaau, 0x7cu, 0x81u, 0x5eu, 0x03u, 0x06u,
+        0xadu, 0x76u, 0x3bu, 0xd0u, 0x01u, 0x1au, 0x18u, 0x69u,
+        0x3fu, 0x8du, 0x02u, 0x00u, 0xadu, 0x77u, 0x3bu, 0x69u,
+        0x00u, 0x8du, 0x03u, 0x00u, 0x03u, 0x07u, 0xadu, 0x0cu,
+        0x22u, 0x8du, 0x02u, 0x00u, 0xadu, 0x0du, 0x22u, 0x8du,
+        0x03u, 0x00u, 0xeeu, 0x79u, 0x3bu, 0x60u, 0x03u, 0x06u,
+        0xadu, 0x74u, 0x3bu, 0xd0u, 0x01u, 0x1au, 0x18u, 0x69u,
+        0x3fu, 0x8du, 0x02u, 0x00u, 0xadu, 0x75u, 0x3bu, 0x69u,
+        0x00u, 0x8du, 0x03u, 0x00u, 0x03u, 0x07u, 0x13u, 0x00u,
+        0x23u, 0x00u, 0x9cu, 0x79u, 0x3bu, 0x60u
+    };
+    static const uint8_t stage2_l5ce4[] = {
+        0x2cu, 0x69u, 0x3bu, 0x50u, 0x33u, 0xa9u, 0xe0u, 0x85u,
+        0x5cu, 0xa9u, 0x58u, 0x85u, 0x5du, 0x9cu, 0xe0u, 0x58u,
+        0x73u, 0xe0u, 0x58u, 0xe1u, 0x58u, 0xffu, 0x03u, 0xa2u,
+        0x07u, 0x9eu, 0x16u, 0x5eu, 0x9eu, 0x1eu, 0x5eu, 0xcau,
+        0x10u, 0xf7u, 0xadu, 0x69u, 0x3bu, 0x29u, 0xbfu, 0x8du,
+        0x69u, 0x3bu, 0xa9u, 0x01u, 0x8du, 0x27u, 0x5eu, 0xa9u,
+        0x08u, 0x8du, 0x28u, 0x5eu, 0x9cu, 0x26u, 0x5eu, 0x60u
+    };
     Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02Stage2L3114Tier4CalleesReceipt tier4;
     Theron_Track02SignalStatus status;
     size_t stage2_sector;
+    size_t i;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!track02_data || !md5_hex || !out_receipt) {
@@ -10516,6 +10806,50 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
     if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
         !loader.stage2_seed_call_sites_proven) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    status = theron_v1_track02_verify_stage2_l3114_tier4_callees(
+        track02_data, track02_size, md5_hex, &tier4);
+    if (status != THERON_TRACK02_SIGNAL_OK || !tier4.l560b_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    if (sizeof(stage2_l5111_command_targets_minus_one) /
+                sizeof(stage2_l5111_command_targets_minus_one[0]) !=
+            THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_ENTRIES ||
+        THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_OFF +
+                2u * THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_ENTRIES !=
+            THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_HANDLERS_OFF) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    for (i = 0u; i < THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_ENTRIES;
+         ++i) {
+        size_t off = THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_OFF +
+                     2u * i;
+        uint16_t encoded = (uint16_t)stage2_l5111[off] |
+                           ((uint16_t)stage2_l5111[off + 1u] << 8u);
+        uint16_t target = (uint16_t)(encoded + 1u);
+        if (encoded != stage2_l5111_command_targets_minus_one[i] ||
+            target < 0x5206u || target > 0x5334u) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+    }
+    if (sizeof(stage2_l533d_command_targets_minus_one) /
+                sizeof(stage2_l533d_command_targets_minus_one[0]) !=
+            THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_ENTRIES ||
+        THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_OFF +
+                2u * THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_ENTRIES !=
+            THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_HANDLERS_OFF) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    for (i = 0u; i < THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_ENTRIES;
+         ++i) {
+        size_t off = THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_OFF + 2u * i;
+        uint16_t encoded = (uint16_t)stage2_l533d[off] |
+                           ((uint16_t)stage2_l533d[off + 1u] << 8u);
+        if (encoded != stage2_l533d_command_targets_minus_one[i] ||
+            (uint16_t)(encoded + 1u) < 0x53a8u ||
+            (uint16_t)(encoded + 1u) > 0x5555u) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
     }
     stage2_sector = loader.stage2_raw_sector;
     if (!tqr_ipl_user_match(
@@ -10546,8 +10880,106 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         !tqr_ipl_user_match(
             track02_data, track02_size, stage2_sector,
             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_USER_OFFSET,
+            stage2_l491f, sizeof(stage2_l491f)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_USER_OFFSET,
-            stage2_l4932, sizeof(stage2_l4932))) {
+            stage2_l4932, sizeof(stage2_l4932)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_USER_OFFSET,
+            stage2_l4943, sizeof(stage2_l4943)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_USER_OFFSET,
+            stage2_l49fa, sizeof(stage2_l49fa)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_USER_OFFSET,
+            stage2_l4a09, sizeof(stage2_l4a09)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET,
+            stage2_l4a84, sizeof(stage2_l4a84)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET,
+            stage2_l4b24, sizeof(stage2_l4b24)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET,
+            stage2_l4bb0, sizeof(stage2_l4bb0)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_USER_OFFSET,
+            stage2_l56de, sizeof(stage2_l56de)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_USER_OFFSET,
+            stage2_l570a, sizeof(stage2_l570a)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_USER_OFFSET,
+            stage2_l50f1, sizeof(stage2_l50f1)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_USER_OFFSET,
+            stage2_l5111, sizeof(stage2_l5111)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_USER_OFFSET,
+            stage2_l533d, sizeof(stage2_l533d)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_USER_OFFSET,
+            stage2_l55ef, sizeof(stage2_l55ef)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_USER_OFFSET,
+            stage2_l55b6, sizeof(stage2_l55b6)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L5617_OFF,
+            stage2_l5617_entry, sizeof(stage2_l5617_entry)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L562A_OFF,
+            stage2_l562a_entry, sizeof(stage2_l562a_entry)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L563D_OFF,
+            stage2_l563d_entry, sizeof(stage2_l563d_entry)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_USER_OFFSET,
+            stage2_l5e2b, sizeof(stage2_l5e2b)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_USER_OFFSET,
+            stage2_l5ce4, sizeof(stage2_l5ce4))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     /* Span, call-site, and adjacency assertions: every callee window
@@ -10574,6 +11006,26 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_USER_OFFSET ||
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_CPU_ADDRESS !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET ||
         THERON_TRACK02_IPL_STAGE2_45XX_CALL_SITE_L4552_OFF +
                 THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_BYTES >
             THERON_TRACK02_IPL_STAGE2_45XX_ROUTINE_BYTES ||
@@ -10613,12 +11065,170 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_BYTES ||
         sizeof(stage2_l4932) !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES ||
+        sizeof(stage2_l491f) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_BYTES ||
+        sizeof(stage2_l4943) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_BYTES ||
+        sizeof(stage2_l49fa) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_BYTES ||
+        sizeof(stage2_l4a09) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_BYTES ||
+        sizeof(stage2_l4a84) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES ||
+        sizeof(stage2_l4b24) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES ||
+        sizeof(stage2_l4bb0) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES ||
+        sizeof(stage2_l56de) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES ||
+        sizeof(stage2_l570a) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES ||
+        sizeof(stage2_l50f1) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES ||
+        sizeof(stage2_l5111) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_BYTES ||
+        sizeof(stage2_l533d) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_BYTES ||
+        sizeof(stage2_l55ef) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_BYTES ||
+        sizeof(stage2_l55b6) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L55E0_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER2_L55E8_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER2_L55E8_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_USER_OFFSET ||
+        (uint16_t)(THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_CPU_ADDRESS +
+                   THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L563D_OFF + 6u +
+                   (int8_t)stage2_l563d_entry[5]) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_CPU_ADDRESS +
+                THERON_TRACK02_IPL_STAGE2_L55B6_OVERLAP_ENTRY_L55C8_OFF ||
+        stage2_l55ef[THERON_TRACK02_IPL_STAGE2_L55EF_ENTRY_L55F4_OFF] != 0x07u ||
+        stage2_l55ef[THERON_TRACK02_IPL_STAGE2_L55EF_ENTRY_L55FF_OFF] != 0x60u ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_BYTES != 0x555eu ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_BSR_SITE_L519F_OFF] != 0x44u ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_BSR_SITE_L519F_OFF + 1u] != 0x3cu ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_CALL_SITE_L533D_OFF] != 0x20u ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_CALL_SITE_L533D_OFF + 1u] != 0x3du ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_CALL_SITE_L533D_OFF + 2u] != 0x53u ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_BSR_SITE_L517A_OFF] != 0x44u ||
+        stage2_l5111[THERON_TRACK02_IPL_STAGE2_L5111_BSR_SITE_L517A_OFF + 1u] != 0x12u ||
+        sizeof(stage2_l5e2b) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_BYTES ||
+        sizeof(stage2_l5ce4) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_BYTES ||
+        stage2_l5ce4[0x10u] != 0x73u ||
+        stage2_l5ce4[0x11u] != 0xe0u ||
+        stage2_l5ce4[0x12u] != 0x58u ||
+        stage2_l5ce4[0x15u] != 0xffu ||
+        stage2_l5ce4[0x16u] != 0x03u ||
+        stage2_l5e2b[0x0bu] != 0x7cu ||
+        stage2_l5e2b[0x0cu] != 0x81u ||
+        stage2_l5e2b[0x0du] != 0x5eu ||
+        stage2_l5e2b[0x0eu] != 0x03u ||
+        stage2_l5e2b[0x0fu] != 0x06u ||
+        stage2_l5e2b[0x36u] != 0x03u ||
+        stage2_l5e2b[0x37u] != 0x06u ||
+        stage2_l50f1[0x05u] != 0x20u ||
+        stage2_l50f1[0x06u] != 0x32u ||
+        stage2_l50f1[0x07u] != 0x49u ||
+        stage2_l50f1[0x18u] != 0xe3u ||
+        stage2_l50f1[0x19u] != 0xf1u ||
+        stage2_l50f1[0x1au] != 0x4eu ||
+        stage2_l50f1[0x1du] != 0x00u ||
+        stage2_l50f1[0x1eu] != 0x02u ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_USER_OFFSET ||
+        stage2_l56de[0x1cu] != 0xe3u ||
+        stage2_l56de[0x1du] != 0xe0u ||
+        stage2_l56de[0x1eu] != 0x58u ||
+        stage2_l570a[0x0cu] != 0x4cu ||
+        stage2_l570a[0x0du] != 0xc2u ||
+        stage2_l570a[0x0eu] != 0x57u ||
+        stage2_l4bb0[0x29u] != 0x6du ||
+        stage2_l4bb0[0x2au] != 0x0cu ||
+        stage2_l4bb0[0x2bu] != 0x22u ||
+        stage2_l4bb0[0x4cu] != 0x6du ||
+        stage2_l4bb0[0x4du] != 0x10u ||
+        stage2_l4bb0[0x4eu] != 0x22u ||
+        stage2_l4943[0] != 0x43u || stage2_l4943[1] != 0x08u ||
+        stage2_l4943[sizeof(stage2_l4943) - 13u] != 0x68u ||
+        stage2_l4943[sizeof(stage2_l4943) - 1u] != 0x60u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5E2B_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5E2B_OFF + 1u] != 0x2bu ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5E2B_OFF + 2u] != 0x5eu ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5CE4_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5CE4_OFF + 1u] != 0xe4u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5CE4_OFF + 2u] != 0x5cu ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L4BB0_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L4BB0_OFF + 1u] != 0xb0u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L4BB0_OFF + 2u] != 0x4bu ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L56DE_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L56DE_OFF + 1u] != 0xdeu ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L56DE_OFF + 2u] != 0x56u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L563D_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L563D_OFF + 1u] != 0x3du ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L563D_OFF + 2u] != 0x56u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L50F1_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L50F1_OFF + 1u] != 0xf1u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L50F1_OFF + 2u] != 0x50u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L49FA_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L49FA_OFF + 1u] != 0xfau ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L49FA_OFF + 2u] != 0x49u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5111_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5111_OFF + 1u] != 0x11u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5111_OFF + 2u] != 0x51u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L570A_OFF] != 0x20u ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L570A_OFF + 1u] != 0x0au ||
+        stage2_l4943[THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L570A_OFF + 2u] != 0x57u ||
+        stage2_l49fa[THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A09_OFF] != 0x20u ||
+        stage2_l49fa[THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A09_OFF + 1u] != 0x09u ||
+        stage2_l49fa[THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A09_OFF + 2u] != 0x4au ||
+        stage2_l49fa[THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A84_OFF] != 0x20u ||
+        stage2_l49fa[THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A84_OFF + 1u] != 0x84u ||
+        stage2_l49fa[THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A84_OFF + 2u] != 0x4au ||
+        stage2_l4a09[THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4932_OFF] != 0x20u ||
+        stage2_l4a09[THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4932_OFF + 1u] != 0x32u ||
+        stage2_l4a09[THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4932_OFF + 2u] != 0x49u ||
+        stage2_l4a09[THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4B24_OFF] != 0x20u ||
+        stage2_l4a09[THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4B24_OFF + 1u] != 0x24u ||
+        stage2_l4a09[THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4B24_OFF + 2u] != 0x4bu ||
+        stage2_l4a84[THERON_TRACK02_IPL_STAGE2_L4A84_CALL_SITE_L491F_OFF] != 0x20u ||
+        stage2_l4a84[THERON_TRACK02_IPL_STAGE2_L4A84_CALL_SITE_L491F_OFF + 1u] != 0x1fu ||
+        stage2_l4a84[THERON_TRACK02_IPL_STAGE2_L4A84_CALL_SITE_L491F_OFF + 2u] != 0x49u ||
+        stage2_l4a84[THERON_TRACK02_IPL_STAGE2_L4A84_BSR_SITE_L4B24_OFF] != 0x44u ||
+        stage2_l4a84[THERON_TRACK02_IPL_STAGE2_L4A84_BSR_SITE_L4B24_OFF + 1u] != 0x41u ||
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L43D6_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4552_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L458E_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_BYTES +
-                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES !=
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_BYTES +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_BYTES !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
@@ -10638,6 +11248,38 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_BYTES;
     out_receipt->l4932_bytes =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES;
+    out_receipt->l491f_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_BYTES;
+    out_receipt->l4943_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_BYTES;
+    out_receipt->l49fa_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_BYTES;
+    out_receipt->l4a09_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_BYTES;
+    out_receipt->l4a84_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES;
+    out_receipt->l4b24_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES;
+    out_receipt->l4bb0_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES;
+    out_receipt->l56de_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES;
+    out_receipt->l570a_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES;
+    out_receipt->l50f1_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES;
+    out_receipt->l5111_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_BYTES;
+    out_receipt->l533d_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_BYTES;
+    out_receipt->l55ef_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_BYTES;
+    out_receipt->l55b6_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_BYTES;
+    out_receipt->l5e2b_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_BYTES;
+    out_receipt->l5ce4_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_BYTES;
     out_receipt->callees_bound_bytes =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES;
     out_receipt->l424b_cpu_address =
@@ -10652,12 +11294,84 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_CPU_ADDRESS;
     out_receipt->l4932_cpu_address =
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_CPU_ADDRESS;
+    out_receipt->l491f_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_CPU_ADDRESS;
+    out_receipt->l4943_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_CPU_ADDRESS;
+    out_receipt->l49fa_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_CPU_ADDRESS;
+    out_receipt->l4a09_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_CPU_ADDRESS;
+    out_receipt->l4a84_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_CPU_ADDRESS;
+    out_receipt->l4b24_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_CPU_ADDRESS;
+    out_receipt->l4bb0_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_CPU_ADDRESS;
+    out_receipt->l56de_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_CPU_ADDRESS;
+    out_receipt->l570a_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_CPU_ADDRESS;
+    out_receipt->l50f1_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_CPU_ADDRESS;
+    out_receipt->l5111_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_CPU_ADDRESS;
+    out_receipt->l533d_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_CPU_ADDRESS;
+    out_receipt->l55ef_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_CPU_ADDRESS;
+    out_receipt->l55b6_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_CPU_ADDRESS;
+    out_receipt->l5e2b_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_CPU_ADDRESS;
+    out_receipt->l5ce4_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_CPU_ADDRESS;
     out_receipt->l424b_proven = 1;
     out_receipt->l43d6_proven = 1;
     out_receipt->l4552_proven = 1;
     out_receipt->l458e_proven = 1;
     out_receipt->l466b_proven = 1;
     out_receipt->l4932_proven = 1;
+    out_receipt->l491f_proven = 1;
+    out_receipt->l4943_proven = 1;
+    out_receipt->l4943_mpr_bracket_proven = 1;
+    out_receipt->l4943_targets_proven = 1;
+    out_receipt->l49fa_proven = 1;
+    out_receipt->l49fa_targets_proven = 1;
+    out_receipt->l4a09_proven = 1;
+    out_receipt->l4a09_vdc_writes_proven = 1;
+    out_receipt->l4a09_targets_proven = 1;
+    out_receipt->l4a84_proven = 1;
+    out_receipt->l4a84_vdc_writes_proven = 1;
+    out_receipt->l4a84_targets_proven = 1;
+    out_receipt->l4b24_proven = 1;
+    out_receipt->l4bb0_proven = 1;
+    out_receipt->l4bb0_vdc_scroll_writes_proven = 1;
+    out_receipt->l56de_proven = 1;
+    out_receipt->l56de_vram_transfer_proven = 1;
+    out_receipt->l570a_proven = 1;
+    out_receipt->l50f1_proven = 1;
+    out_receipt->l50f1_vdc_transfer_proven = 1;
+    out_receipt->l5111_proven = 1;
+    out_receipt->l5111_local_targets_proven = 1;
+    out_receipt->l5111_command_table_proven = 1;
+    out_receipt->l5111_command_targets_proven = 1;
+    out_receipt->l533d_proven = 1;
+    out_receipt->l533d_command_table_proven = 1;
+    out_receipt->l533d_command_targets_proven = 1;
+    out_receipt->l55ef_proven = 1;
+    out_receipt->l55f4_overlap_entry_proven = 1;
+    out_receipt->l55ff_entry_proven = 1;
+    out_receipt->l5617_overlap_entry_proven = 1;
+    out_receipt->l562a_overlap_entry_proven = 1;
+    out_receipt->l563d_overlap_entry_proven = 1;
+    out_receipt->l55b6_proven = 1;
+    out_receipt->l55c8_overlap_entry_proven = 1;
+    out_receipt->l563d_bbr4_target_proven = 1;
+    out_receipt->l5e2b_proven = 1;
+    out_receipt->l5e2b_vdc_register_dispatch_proven = 1;
+    out_receipt->l5ce4_proven = 1;
+    out_receipt->l5ce4_buffer_init_proven = 1;
     out_receipt->l424b_call_site_proven = 1;
     out_receipt->adjacency_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
@@ -10959,7 +11673,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier2_callees(
      * BNE L82DA to the trailing RTS) with its L47C4 save / INC A /
      * store / JSR L43D6 (target bound in round 21; the internal call
      * site sits at +0x14) / restore — ending at the unbound $3B75
-     * stream (that stream remains an unbound future window). */
+     * stream (now bound with its L4215 caller by the tier-3 verifier). */
     static const uint8_t stage2_l42bf[] = {
         0xe6u, 0x56u, 0xa6u, 0x56u, 0xe0u, 0x10u, 0xd0u, 0x13u,
         0x64u, 0x56u, 0x64u, 0x10u, 0xadu, 0xc4u, 0x47u, 0x48u,
@@ -11080,6 +11794,266 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier2_callees(
     out_receipt->l42bf_proven = 1;
     out_receipt->gap45a6_proven = 1;
     out_receipt->l424b_call_sites_proven = 1;
+    out_receipt->adjacency_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier3_callees(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage245xxTier3CalleesReceipt *out_receipt) {
+    static const uint8_t stage2_l4215[] = {
+        0xa5u, 0x50u, 0xf0u, 0x0bu, 0x20u, 0xa2u, 0x44u, 0xadu,
+        0xd4u, 0x47u, 0xf0u, 0x03u, 0x20u, 0xdbu, 0x42u, 0xa5u,
+        0x51u, 0xf0u, 0x0bu, 0x20u, 0x17u, 0x44u, 0xadu, 0xd3u,
+        0x47u, 0xf0u, 0x03u, 0x20u, 0x4bu, 0x42u, 0xadu, 0xd8u,
+        0x47u, 0x85u, 0x0eu, 0xadu, 0xd5u, 0x47u, 0x85u, 0x0fu,
+        0x20u, 0x8eu, 0x45u, 0xa5u, 0x02u, 0x8du, 0xdbu, 0x47u,
+        0xa5u, 0x03u, 0x8du, 0xdcu, 0x47u, 0x60u
+    };
+    static const uint8_t stage2_l4417[] = {
+        0xa5u, 0x54u, 0x29u, 0x07u, 0xd0u, 0x6eu, 0xa9u, 0x01u,
+        0x8du, 0xd3u, 0x47u, 0xa5u, 0x51u, 0x30u, 0x34u, 0xadu,
+        0xdau, 0x47u, 0x1au, 0x29u, 0x1fu, 0x8du, 0xdau, 0x47u,
+        0x8du, 0xd8u, 0x47u, 0xadu, 0xd9u, 0x47u, 0x1au, 0x29u,
+        0x1fu, 0x8du, 0xd9u, 0x47u, 0xa5u, 0x54u, 0x48u, 0xa5u,
+        0x55u, 0x48u, 0xa9u, 0xf8u, 0x18u, 0x65u, 0x54u, 0x85u,
+        0x54u, 0xa9u, 0x00u, 0x65u, 0x55u, 0x85u, 0x55u, 0x20u,
+        0x52u, 0x45u, 0x68u, 0x85u, 0x55u, 0x68u, 0x85u, 0x54u,
+        0x4cu, 0x8bu, 0x44u, 0xadu, 0xd9u, 0x47u, 0x3au, 0x29u,
+        0x1fu, 0x8du, 0xd9u, 0x47u, 0x8du, 0xd8u, 0x47u, 0xadu,
+        0xdau, 0x47u, 0x3au, 0x29u, 0x1fu, 0x8du, 0xdau, 0x47u,
+        0xa5u, 0x54u, 0x48u, 0xa5u, 0x55u, 0x48u, 0xa9u, 0xf8u,
+        0x18u, 0x65u, 0x54u, 0x85u, 0x54u, 0xa5u, 0x55u, 0xe9u,
+        0x00u, 0x85u, 0x55u, 0x20u, 0x52u, 0x45u, 0x68u, 0x85u,
+        0x55u, 0x68u, 0x85u, 0x54u, 0xa0u, 0x69u, 0xa5u, 0x51u,
+        0x10u, 0x02u, 0xa0u, 0xe9u, 0x8cu, 0x9du, 0x44u, 0x18u,
+        0x65u, 0x54u, 0x85u, 0x54u, 0xa5u, 0x55u, 0x69u, 0x00u,
+        0x85u, 0x55u, 0x60u
+    };
+    static const uint8_t stage2_l44a2[] = {
+        0xa5u, 0x52u, 0x29u, 0x07u, 0xf0u, 0x03u, 0x4cu, 0x19u,
+        0x45u, 0xa9u, 0x01u, 0x8du, 0xd4u, 0x47u, 0xa5u, 0x50u,
+        0x30u, 0x2eu, 0xadu, 0xd7u, 0x47u, 0x1au, 0x29u, 0x3fu,
+        0x8du, 0xd5u, 0x47u, 0x8du, 0xd7u, 0x47u, 0xadu, 0xd6u,
+        0x47u, 0x1au, 0x29u, 0x3fu, 0x8du, 0xd6u, 0x47u, 0xadu,
+        0xd9u, 0x47u, 0x8du, 0xd8u, 0x47u, 0xa5u, 0x52u, 0x48u,
+        0xa5u, 0x53u, 0x48u, 0xe6u, 0x53u, 0x20u, 0x52u, 0x45u,
+        0x68u, 0x85u, 0x53u, 0x68u, 0x85u, 0x52u, 0x80u, 0x37u,
+        0xadu, 0xd6u, 0x47u, 0x3au, 0x29u, 0x3fu, 0x8du, 0xd5u,
+        0x47u, 0x8du, 0xd6u, 0x47u, 0xadu, 0xd7u, 0x47u, 0x3au,
+        0x29u, 0x3fu, 0x8du, 0xd7u, 0x47u, 0xadu, 0xd9u, 0x47u,
+        0x8du, 0xd8u, 0x47u, 0xa5u, 0x52u, 0x48u, 0xa5u, 0x53u,
+        0x48u, 0xa9u, 0xf8u, 0x18u, 0x65u, 0x52u, 0x85u, 0x52u,
+        0xa5u, 0x53u, 0xe9u, 0x00u, 0x85u, 0x53u, 0x20u, 0x52u,
+        0x45u, 0x68u, 0x85u, 0x53u, 0x68u, 0x85u, 0x52u
+    };
+    static const uint8_t stage2_l42db[] = {
+        0xadu, 0x75u, 0x3bu, 0x85u, 0x0fu, 0xadu, 0x74u, 0x3bu,
+        0x46u, 0x0fu, 0x6au, 0x4au, 0x4au, 0x8du, 0x7au, 0x3bu,
+        0xadu, 0x76u, 0x3bu, 0x38u, 0xedu, 0x74u, 0x3bu, 0x85u,
+        0x0eu, 0xadu, 0x77u, 0x3bu, 0xedu, 0x75u, 0x3bu, 0x85u,
+        0x0fu, 0xa5u, 0x0eu, 0x46u, 0x0fu, 0x6au, 0x4au, 0x4au,
+        0x8du, 0x7bu, 0x3bu, 0x64u, 0x13u, 0x20u, 0xd6u, 0x43u,
+        0xadu, 0xb9u, 0x47u, 0x85u, 0x11u, 0xc2u, 0xb1u, 0x4eu,
+        0x85u, 0x14u, 0xc8u, 0xb1u, 0x4eu, 0x85u, 0x15u, 0x20u,
+        0xa1u, 0x43u, 0xa5u, 0x58u, 0x4au, 0x49u, 0x03u, 0xaau,
+        0xcau, 0x64u, 0x12u, 0x64u, 0x13u, 0x44u, 0x5cu, 0xc6u,
+        0x11u, 0xcau, 0xd0u, 0xf9u, 0x20u, 0x58u, 0x43u, 0xa5u,
+        0x58u, 0x29u, 0x01u, 0x85u, 0x58u, 0xc2u, 0xb1u, 0x4eu,
+        0x85u, 0x14u, 0xc8u, 0xb1u, 0x4eu, 0x85u, 0x15u, 0x20u,
+        0xa1u, 0x43u, 0xa2u, 0x02u, 0x64u, 0x12u, 0x44u, 0x3bu,
+        0xc6u, 0x11u, 0xf0u, 0x08u, 0xcau, 0xd0u, 0xf7u, 0x20u,
+        0x58u, 0x43u, 0x80u, 0xe1u, 0x60u, 0xa9u, 0x20u, 0x18u,
+        0x65u, 0x4eu, 0x85u, 0x4eu, 0xa9u, 0x00u, 0x65u, 0x4fu,
+        0x85u, 0x4fu, 0xe6u, 0x57u, 0xa6u, 0x57u, 0xe0u, 0x10u,
+        0xd0u, 0x18u, 0x64u, 0x57u, 0xadu, 0xc4u, 0x47u, 0x48u,
+        0xaeu, 0xbeu, 0x47u, 0x86u, 0x0eu, 0x18u, 0x65u, 0x0eu,
+        0x8du, 0xc4u, 0x47u, 0x20u, 0xd6u, 0x43u, 0x68u, 0x8du,
+        0xc4u, 0x47u, 0x60u, 0xdau, 0xa4u, 0x12u, 0xa6u, 0x13u,
+        0xb1u, 0x00u, 0x9du, 0x20u, 0x48u, 0xc8u, 0xe8u, 0xb1u,
+        0x00u, 0x9du, 0x20u, 0x48u, 0xc8u, 0xe8u, 0xc8u, 0xc8u,
+        0x84u, 0x12u, 0x86u, 0x13u, 0xfau, 0x60u
+    };
+    /* L4519 [0x4519..0x4552): the JMP target at L44A2+0x06 and the
+     * fall-through path after that coordinate update.  It normalizes the
+     * signed $52:$53 pair against L3B70:L3B71 and ends exactly at the
+     * already-bound L4552 entry. */
+    static const uint8_t stage2_l4519[] = {
+        0xa5u, 0x50u, 0x10u, 0x19u, 0xa5u, 0x52u, 0x05u, 0x53u,
+        0xd0u, 0x0au, 0xadu, 0x70u, 0x3bu, 0x85u, 0x52u, 0xadu,
+        0x71u, 0x3bu, 0x85u, 0x53u, 0xa5u, 0x52u, 0xd0u, 0x02u,
+        0xc6u, 0x53u, 0xc6u, 0x52u, 0x60u, 0xe6u, 0x52u, 0xd0u,
+        0x02u, 0xe6u, 0x53u, 0xa5u, 0x52u, 0x38u, 0xedu, 0x70u,
+        0x3bu, 0x85u, 0x0eu, 0xa5u, 0x53u, 0xedu, 0x71u, 0x3bu,
+        0x05u, 0x0eu, 0xd0u, 0x04u, 0x64u, 0x52u, 0x64u, 0x53u,
+        0x60u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt)
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven)
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_USER_OFFSET,
+            stage2_l4215, sizeof(stage2_l4215)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_USER_OFFSET,
+            stage2_l4417, sizeof(stage2_l4417)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_USER_OFFSET,
+            stage2_l44a2, sizeof(stage2_l44a2)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_USER_OFFSET,
+            stage2_l42db, sizeof(stage2_l42db)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_USER_OFFSET,
+            stage2_l4519, sizeof(stage2_l4519)))
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+
+    if (sizeof(stage2_l4215) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_BYTES ||
+        sizeof(stage2_l4417) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_BYTES ||
+        sizeof(stage2_l44a2) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_BYTES ||
+        sizeof(stage2_l42db) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_BYTES ||
+        sizeof(stage2_l4519) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_BYTES ||
+        sizeof(stage2_l4215) + sizeof(stage2_l4417) +
+                sizeof(stage2_l44a2) + sizeof(stage2_l42db) +
+                sizeof(stage2_l4519) !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_BOUND_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4552_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L4417_OFF + 3u >
+            sizeof(stage2_l4215) ||
+        THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L424B_OFF + 3u >
+            sizeof(stage2_l4215) ||
+        THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L458E_OFF + 3u >
+            sizeof(stage2_l4215) ||
+        THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L44A2_OFF + 3u >
+            sizeof(stage2_l4215) ||
+        THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L42DB_OFF + 3u >
+            sizeof(stage2_l4215) ||
+        THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_A_OFF + 3u >
+            sizeof(stage2_l4417) ||
+        THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_B_OFF + 3u >
+            sizeof(stage2_l4417) ||
+        THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_A_OFF + 3u >
+            sizeof(stage2_l44a2) ||
+        THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_B_OFF + 3u >
+            sizeof(stage2_l44a2) ||
+        THERON_TRACK02_IPL_STAGE2_L44A2_JUMP_SITE_L4519_OFF + 3u >
+            sizeof(stage2_l44a2) ||
+        THERON_TRACK02_IPL_STAGE2_L42DB_LOCAL4358_OFF >=
+            sizeof(stage2_l42db) ||
+        THERON_TRACK02_IPL_STAGE2_L42DB_LOCAL4386_OFF >=
+            sizeof(stage2_l42db) ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L4417_OFF] != 0x20u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L4417_OFF + 1u] != 0x17u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L4417_OFF + 2u] != 0x44u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L424B_OFF + 1u] != 0x4bu ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L424B_OFF + 2u] != 0x42u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L458E_OFF + 1u] != 0x8eu ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L458E_OFF + 2u] != 0x45u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L44A2_OFF + 1u] != 0xa2u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L44A2_OFF + 2u] != 0x44u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L42DB_OFF] != 0x20u ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L42DB_OFF + 1u] != 0xdbu ||
+        stage2_l4215[THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L42DB_OFF + 2u] != 0x42u ||
+        stage2_l4417[THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_A_OFF + 1u] != 0x52u ||
+        stage2_l4417[THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_A_OFF + 2u] != 0x45u ||
+        stage2_l4417[THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_B_OFF + 1u] != 0x52u ||
+        stage2_l4417[THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_B_OFF + 2u] != 0x45u ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_A_OFF + 1u] != 0x52u ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_A_OFF + 2u] != 0x45u ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_B_OFF + 1u] != 0x52u ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_B_OFF + 2u] != 0x45u ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_JUMP_SITE_L4519_OFF] != 0x4cu ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_JUMP_SITE_L4519_OFF + 1u] != 0x19u ||
+        stage2_l44a2[THERON_TRACK02_IPL_STAGE2_L44A2_JUMP_SITE_L4519_OFF + 2u] != 0x45u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43D6_A_OFF + 1u] != 0xd6u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43D6_A_OFF + 2u] != 0x43u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43A1_A_OFF + 1u] != 0xa1u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43A1_A_OFF + 2u] != 0x43u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_LOCAL4358_A_OFF + 1u] != 0x58u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_LOCAL4358_A_OFF + 2u] != 0x43u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43A1_B_OFF + 1u] != 0xa1u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43A1_B_OFF + 2u] != 0x43u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_LOCAL4358_B_OFF + 1u] != 0x58u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_LOCAL4358_B_OFF + 2u] != 0x43u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43D6_B_OFF + 1u] != 0xd6u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43D6_B_OFF + 2u] != 0x43u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_BSR_LOCAL4386_A_OFF] != 0x44u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_BSR_LOCAL4386_A_OFF + 1u] != 0x5cu ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_BSR_LOCAL4386_B_OFF] != 0x44u ||
+        stage2_l42db[THERON_TRACK02_IPL_STAGE2_L42DB_BSR_LOCAL4386_B_OFF + 1u] != 0x3bu)
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->l4215_bytes = sizeof(stage2_l4215);
+    out_receipt->l4417_bytes = sizeof(stage2_l4417);
+    out_receipt->l44a2_bytes = sizeof(stage2_l44a2);
+    out_receipt->l42db_bytes = sizeof(stage2_l42db);
+    out_receipt->l4519_bytes = sizeof(stage2_l4519);
+    out_receipt->tier3_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_BOUND_BYTES;
+    out_receipt->l4215_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_CPU_ADDRESS;
+    out_receipt->l4417_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_CPU_ADDRESS;
+    out_receipt->l44a2_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_CPU_ADDRESS;
+    out_receipt->l42db_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_CPU_ADDRESS;
+    out_receipt->l4519_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_CPU_ADDRESS;
+    out_receipt->l4215_proven = 1;
+    out_receipt->l4417_proven = 1;
+    out_receipt->l44a2_proven = 1;
+    out_receipt->l42db_proven = 1;
+    out_receipt->l4519_proven = 1;
+    out_receipt->local_subroutines_proven = 1;
+    out_receipt->caller_targets_proven = 1;
+    out_receipt->existing_callee_targets_proven = 1;
     out_receipt->adjacency_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }

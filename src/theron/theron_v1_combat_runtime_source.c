@@ -95,7 +95,11 @@ static int theron_v1_publish_source_group(
         memset(creature, 0, sizeof(*creature));
         creature->id = ((int)record->source_ref << 2) | (int)slot;
         if (creature->id <= 0) creature->id = world->creature_count;
-        creature->type = (uint8_t)(record->type + 1u);
+        /* Category-4 byte 4 is the authentic source type.  The legacy
+         * Theron_CreatureType argument above is only a compatibility
+         * selector for locating this explicit source occurrence; it does
+         * not authorize remapping the published source byte. */
+        creature->type = record->type;
         creature->level = (uint8_t)level;
         creature->dungeon_id = dungeon_id;
         creature->x = record->x;
@@ -119,8 +123,9 @@ static int theron_v1_publish_source_group(
         creature->source_direction_flags = record->direction_flags;
         creature->source_flags_word = record->flags_word;
         creature->source_unknown_word = record->unknown_word;
-        creature->source_spawn_category =
-            theron_v1_world_track02_spawn_category(world, record->type);
+        /* The seven-entry regular-spawn descriptor has no authenticated
+         * index join to category-4's raw type byte. */
+        creature->source_spawn_category = 0xffu;
         creature->source_raw_size = record->raw_size;
         memcpy(creature->source_raw, record->raw,
                sizeof(creature->source_raw));

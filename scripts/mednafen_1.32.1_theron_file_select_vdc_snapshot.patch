@@ -1,0 +1,183 @@
+diff --git a/src/pce/input.h b/src/pce/input.h
+--- a/src/pce/input.h
++++ b/src/pce/input.h
+@@ -31,6 +31,8 @@
+ void INPUT_AdjustTS(int32 delta_timestamp);
+
+ uint16 INPUT_HESHack(void);
++bool TheronFileSelectInputIssued(void);
++unsigned TheronScriptInputFrame(void);
+
+ };
+
+diff --git a/src/pce/input.cpp b/src/pce/input.cpp
+--- a/src/pce/input.cpp
++++ b/src/pce/input.cpp
+@@ -32,6 +32,10 @@
+
+ namespace MDFN_IEN_PCE
+ {
++static bool theron_file_select_input_issued = false;
++static unsigned theron_public_script_frame = 0;
++bool TheronFileSelectInputIssued(void) { return theron_file_select_input_issued; }
++unsigned TheronScriptInputFrame(void) { return theron_public_script_frame; }
+
+ enum
+ {
+@@ -225,6 +229,7 @@
+  static unsigned theron_script_event_count = 0;
+  static uint16 theron_script_original_port0 = 0;
+  static bool theron_script_applied = false;
++ theron_public_script_frame = theron_script_frame;
+  static struct
+  {
+   unsigned frame;
+@@ -323,6 +328,8 @@
+    const unsigned duration = theron_script_events[event_index].duration;
+    if(!theron_script_events[event_index].emitted && theron_script_frame == start)
+    {
++    if(theron_script_events[event_index].mask & 0x0001)
++     theron_file_select_input_issued = true;
+     if(theron_input_trace)
+      fprintf(theron_input_trace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u\n",
+              theron_script_frame, theron_script_events[event_index].key,
+diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -75,6 +75,7 @@
+
+ // Accessed in debug.cpp
+ static bool TheronGraphicsSnapshotDumped = false;
++static unsigned TheronGraphicsSnapshotFrameEnd = ~0U;
+ static void TheronDumpGraphicsSnapshot(void)
+ {
+  const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
+@@ -132,14 +133,37 @@
+          (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VDR, NULL, 0),
+          (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VCR, NULL, 0),
+          (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_CR, NULL, 0));
++ if(TheronGraphicsSnapshotFrameEnd != ~0U)
++  fprintf(vdc_file, "snapshot_frame_end=%u\n", TheronGraphicsSnapshotFrameEnd);
+  fclose(vram_file);
+  fclose(vce_file);
+  fclose(vdc_file);
+  fclose(sat_file);
+  if(ram_file) fclose(ram_file);
+  if(bram_file) fclose(bram_file);
+  TheronGraphicsSnapshotDumped = true;
+ }
++static void TheronMaybeDumpFrameEndSnapshot(void)
++{
++ static bool initialized = false;
++ static unsigned target = ~0U;
++ static bool dumped = false;
++ if(!initialized)
++ {
++  const char *value = getenv("FIRESTAFF_THERON_FRAME_END_SNAPSHOT_FRAME");
++  if(value && *value)
++   target = strtoul(value, NULL, 10);
++  initialized = true;
++ }
++ if(!dumped && TheronFileSelectInputIssued() &&
++    TheronScriptInputFrame() == target)
++ {
++  TheronGraphicsSnapshotFrameEnd = target;
++  TheronGraphicsSnapshotDumped = false;
++  TheronDumpGraphicsSnapshot();
++  dumped = true;
++ }
++}
+ static uint8 BaseRAM[32768]; // 8KB for PCE, 32KB for Super Grafx
+ uint8 PCE_PeekMainRAM(uint32 A)
+ {
+@@ -257,6 +281,7 @@
+ static unsigned TheronSCSIGenerationVDCSnapshotRowTarget = 0;
+ static bool TheronSCSIGenerationVDCSnapshotTargetInitialized = false;
+ static bool TheronSCSIGenerationVDCSnapshotPending = false;
++static bool TheronFileSelectVDCSnapshotPending = false;
+ static unsigned TheronGetVDCIOTraceLimit(void)
+ {
+  const char *value;
+@@ -276,11 +301,56 @@
+ static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
+ {
++ static FILE *file_select_vdc_trace = NULL;
++ static unsigned file_select_vdc_count = 0;
++ static unsigned file_select_vdc_target = 0;
++ static bool file_select_vdc_initialized = false;
+  const char *path;
+  uint16 writer_pc;
+  uint32 writer_physical_pc;
+  const unsigned scsi_generation =
+   Mednafen::TheronSCSICDReadCommandGeneration();
++ if(!file_select_vdc_initialized)
++ {
++  const char *target = getenv("FIRESTAFF_THERON_FILE_SELECT_VDC_FRAME");
++  file_select_vdc_target = target ? strtoul(target, NULL, 10) : 8580U;
++  file_select_vdc_initialized = true;
++ }
++ if(TheronFileSelectInputIssued() &&
++    TheronScriptInputFrame() == file_select_vdc_target &&
++    file_select_vdc_count < 65536)
++ {
++  const uint16 file_select_writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++  const uint32 file_select_writer_physical_pc =
++   (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (file_select_writer_pc >> 13)) << 13) |
++   (file_select_writer_pc & 0x1fff);
++  if(!file_select_vdc_trace)
++  {
++   const char *file_select_path = getenv("FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE");
++   if(file_select_path && *file_select_path)
++   {
++    file_select_vdc_trace = fopen(file_select_path, "w");
++    if(file_select_vdc_trace)
++     fputs("source=mednafen-pce-instrumented-file-select-vdc\n", file_select_vdc_trace);
++   }
++  }
++  if(file_select_vdc_trace)
++  {
++   fprintf(file_select_vdc_trace,
++           "file_select_vdc_write sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
++           file_select_vdc_count++, TheronScriptInputFrame(),
++           HuCPU.GetLastLogicalWriteAddr(), physical, value,
++           file_select_writer_pc, file_select_writer_physical_pc,
++           HuCPU.GetRegister(HuC6280::GSREG_A),
++           HuCPU.GetRegister(HuC6280::GSREG_X),
++           HuCPU.GetRegister(HuC6280::GSREG_Y));
++   if(file_select_vdc_count == 525)
++    TheronFileSelectVDCSnapshotPending = true;
++   if((file_select_vdc_count & 0xff) == 0)
++    fflush(file_select_vdc_trace);
++  }
++ }
+
++
+  if(!TheronSCSIGenerationVDCSnapshotTargetInitialized)
+  {
+   const char *target = getenv(
+@@ -362,8 +432,15 @@
+ static void TheronTraceVDCIOPostWrite(void)
+ {
+  if(!TheronVDCIOSnapshotPending &&
+-    !TheronSCSIGenerationVDCSnapshotPending)
++    !TheronSCSIGenerationVDCSnapshotPending &&
++    !TheronFileSelectVDCSnapshotPending)
+   return;
++ if(TheronFileSelectVDCSnapshotPending)
++ {
++  TheronFileSelectVDCSnapshotPending = false;
++  TheronGraphicsSnapshotDumped = false;
++  TheronDumpGraphicsSnapshot();
++ }
+  if(TheronVDCIOSnapshotPending)
+  {
+   TheronVDCIOSnapshotPending = false;
+@@ -1286,6 +1363,8 @@
+   }
+  } while(!rp_rv);
+
++ TheronMaybeDumpFrameEndSnapshot();
++
+  //printf("%d\n", MDFND_GetTime() - t);
+
+  // End loop here.

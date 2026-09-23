@@ -1,6 +1,12 @@
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_thing_data.h"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,23 +122,25 @@ static void test_source_category_layout(void) {
 }
 
 static void test_source_projectile_records(void) {
-    const uint8_t missile[] = {0x34, 0x12, 0x80, 0x05, 0x09, 0x44, 0x00, 0x7f};
-    const uint8_t cloud[] = {0x78, 0x56, 0x09, 0x03};
+    /* Authentic US AKUTUBA category-14/15 index-0 rows.  test_all_dungeons()
+     * also compares these bytes to the loaded Track 02 tables. */
+    const uint8_t missile[] = {0xff, 0xff, 0x10, 0x10, 0x01, 0x00, 0x00, 0x00};
+    const uint8_t cloud[] = {0xff, 0xff, 0x2e, 0x0e};
     Theron_Track02ItemRecord record;
 
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_MISSILE, missile, sizeof(missile), &record));
-    assert(record.next_ref == 0x1234u &&
-           record.value.missile.unknown1 == 0x80u &&
-           record.value.missile.spell == 0x05u &&
-           record.value.missile.power == 0x09u &&
-           record.value.missile.unknown2 == 0x44u &&
+    assert(record.next_ref == 0xffffu &&
+           record.value.missile.unknown1 == 0x10u &&
+           record.value.missile.spell == 0x10u &&
+           record.value.missile.power == 0x01u &&
+           record.value.missile.unknown2 == 0x00u &&
            record.value.missile.zero == 0x00u &&
-           record.value.missile.e == 0x7fu);
+           record.value.missile.e == 0x00u);
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_CLOUD, cloud, sizeof(cloud), &record));
-    assert(record.next_ref == 0x5678u && record.value.cloud.power == 0x09u &&
-           record.value.cloud.spell == 0x03u);
+    assert(record.next_ref == 0xffffu && record.value.cloud.power == 0x2eu &&
+           record.value.cloud.spell == 0x0eu);
     assert(!theron_v1_track02_item_record_decode(
         THERON_CAT_MISSILE, missile, sizeof(missile) - 1u, &record));
     assert(!theron_v1_track02_item_record_decode(
@@ -141,61 +149,85 @@ static void test_source_projectile_records(void) {
 }
 
 static void test_source_control_record_fields(void) {
-    const uint8_t door[] = {0x34, 0x12, 0x61, 0x00};
-    const uint8_t teleporter[] = {0x78, 0x56, 0xE1, 0xA4, 0x2B, 0x01};
-    const uint8_t text[] = {0x34, 0x12, 0x2D, 0x5A};
-    const uint8_t actuator[] = {0x34, 0x12, 0x81, 0x01, 0x9D, 0xF2,
-                                0x00, 0xA0};
+    /* Authentic US AKUTUBA category rows: door 0, teleporter 0, text 0 and
+     * the B4 square's actuator 5.  test_all_dungeons() below also compares
+     * these constants to the loaded Track 02 tables before using them as
+     * focused decoder regressions. */
+    const uint8_t door[] = {0xFE, 0xFF, 0x21, 0x00};
+    const uint8_t teleporter[] = {0x00, 0x08, 0x62, 0x74, 0x00, 0x00};
+    const uint8_t text[] = {0xFE, 0xFF, 0x00, 0x00};
+    /* Authentic US/JP AKUTUBA M0 (2,1), category-3 index 5.  This is the
+     * party actuator chained after the closed B4 teleporter, retained from
+     * raw Track 02 as feff0300a4078018. */
+    const uint8_t actuator[] = {0xFE, 0xFF, 0x03, 0x00, 0xA4, 0x07,
+                                0x80, 0x18};
     Theron_Track02ItemRecord record;
 
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_DOOR, door, sizeof(door), &record));
-    assert(record.next_ref == 0x1234u && record.value.door.type == 1u &&
+    assert(record.next_ref == 0xFFFEu && record.value.door.type == 1u &&
            record.value.door.ornate == 0u && record.value.door.opens_up == 1u &&
-           record.value.door.button == 1u && record.value.door.destroyable == 0u &&
+           record.value.door.button == 0u && record.value.door.destroyable == 0u &&
            record.value.door.bashable == 0u);
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_TELEPORTER, teleporter, sizeof(teleporter), &record));
-    assert(record.value.teleporter.xdest == 1u &&
-           record.value.teleporter.ydest == 7u &&
+    assert(record.next_ref == 0x0800u &&
+           record.value.teleporter.xdest == 2u &&
+           record.value.teleporter.ydest == 3u &&
            record.value.teleporter.rotation == 1u &&
-           record.value.teleporter.absolute == 0u &&
-           record.value.teleporter.scope == 1u &&
-           record.value.teleporter.sound == 1u &&
-           record.value.teleporter.ldest == 1u &&
+           record.value.teleporter.absolute == 1u &&
+           record.value.teleporter.scope == 3u &&
+           record.value.teleporter.sound == 0u &&
+           record.value.teleporter.ldest == 0u &&
            record.value.teleporter.unused == 0u);
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_TEXT, text, sizeof(text), &record));
-    assert(record.value.text.visible == 1u && record.value.text.flag2 == 0u &&
-           record.value.text.flag3 == 1u && record.value.text.offset == 0x0B45u);
+    assert(record.next_ref == 0xFFFEu &&
+           record.value.text.visible == 0u && record.value.text.flag2 == 0u &&
+           record.value.text.flag3 == 0u && record.value.text.offset == 0u);
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_ACTUATOR, actuator, sizeof(actuator), &record));
-    assert(record.value.actuator.type == 1u &&
-           record.value.actuator.value == 3u &&
-           record.value.actuator.effect == 3u &&
-           record.value.actuator.graphism == 15u &&
-           record.value.actuator.target_x == 0u &&
-           record.value.actuator.target_y == 20u &&
-           record.value.actuator.facing == 0u);
+    assert(record.next_ref == 0xFFFEu &&
+           record.value.actuator.type == 3u &&
+           record.value.actuator.value == 0u &&
+           record.value.actuator.unreferenced_bit0 == 0u &&
+           record.value.actuator.unreferenced_bit1 == 0u &&
+           record.value.actuator.once == 1u &&
+           record.value.actuator.effect == 0u &&
+           record.value.actuator.revert_effect == 1u &&
+           record.value.actuator.sound == 0u &&
+           record.value.actuator.delay == 15u &&
+           record.value.actuator.local_effect == 0u &&
+           record.value.actuator.graphism == 0u &&
+           record.value.actuator.target_x == 2u &&
+           record.value.actuator.target_y == 3u &&
+           record.value.actuator.facing == 0u &&
+           record.value.actuator.local_multiple == 0x0880u);
     printf("  source door/teleporter/text/actuator fields OK\n");
 }
 
 static void test_source_monster_chested_field(void) {
+    /* Authentic US AKUTUBA category-4 index-0 row: generic next reference,
+     * followed by the 14-byte dm_monster payload. */
     const uint8_t monster[] = {
-        0xFE, 0xFF, /* chested = -2, not a next reference */
-        0x03, 0xA1, /* type, packed position */
-        0x0A, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x60, 0x00, /* flags: number = 3 */
-        0x07, 0x04  /* source direction byte is high byte */
+        0xfe, 0xff, 0xfe, 0xff, 0x0a, 0x01, 0x3b, 0x00,
+        0x25, 0x00, 0x24, 0x00, 0x25, 0x00, 0x20, 0x04
     };
     Theron_Track02ItemRecord record;
 
     assert(theron_v1_track02_item_record_decode(
         THERON_CAT_MONSTER, monster, sizeof(monster), &record));
+    assert(record.next_ref == 0xfffeu);
     assert(record.value.monster.chested == -2);
-    assert(record.value.monster.type == 3u);
-    assert(record.value.monster.position == 0xA1u);
-    assert(record.value.monster.number == 3u);
+    assert(record.value.monster.type == 0x0au);
+    assert(record.value.monster.position == 0x01u);
+    assert(record.value.monster.health[0] == 0x003bu);
+    assert(record.value.monster.health[1] == 0x0025u);
+    assert(record.value.monster.health[2] == 0x0024u);
+    assert(record.value.monster.health[3] == 0x0025u);
+    assert(record.value.monster.flags_word == 0x0420u);
+    assert(record.value.monster.number == 1u);
+    assert(record.value.monster.unknown_word == 0u);
     assert(record.value.monster.direction_flags == 0x04u);
     printf("  source monster chested field layout OK\n");
 }
@@ -215,9 +247,17 @@ static void test_real_item_records(const Theron_ThingData *td,
     };
 
     assert(dungeon_index < 7u);
-    for (unsigned int cat = 0; cat <= THERON_CAT_MISC; ++cat) {
-        if (require_us_counts)
+    for (unsigned int cat = 0; cat < THERON_ITEM_CATEGORY_COUNT; ++cat) {
+        if (require_us_counts && cat <= THERON_CAT_MISC)
             assert(td->object_counts[cat] == expected[dungeon_index][cat]);
+        if (cat == THERON_CAT_MISSILE)
+            assert(td->object_counts[cat] == 60u);
+        if (cat == THERON_CAT_CLOUD)
+            assert(td->object_counts[cat] == 50u);
+        if (theron_item_bytes[cat] == 0u) {
+            assert(td->object_counts[cat] == 0u);
+            continue;
+        }
         if (td->object_counts[cat] == 0u)
             continue;
         size_t bytes = (size_t)td->object_counts[cat] *
@@ -239,11 +279,13 @@ static void test_real_item_records(const Theron_ThingData *td,
                 assert(theron_v1_track02_item_record_decode(
                     cat, raw, theron_item_bytes[cat], &record));
                 assert(record.category == cat);
-                if (cat == THERON_CAT_MONSTER)
+                if (cat == THERON_CAT_MONSTER) {
+                    assert(record.next_ref ==
+                           ((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)));
                     assert(record.value.monster.chested ==
-                           (int16_t)((uint16_t)raw[0] |
-                                     ((uint16_t)raw[1] << 8)));
-                else
+                           (int16_t)((uint16_t)raw[2] |
+                                     ((uint16_t)raw[3] << 8)));
+                } else
                     assert(record.next_ref ==
                            ((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)));
             }
@@ -278,6 +320,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
         Theron_DungeonData dd;
         assert(theron_v1_track02_dungeon_map_load_for_variant(
             ud, ud_size, variant, d, &dd));
+        assert(dd.object_counts[THERON_CAT_MISSILE] == 60u);
+        assert(dd.object_counts[THERON_CAT_CLOUD] == 50u);
 
         unsigned int total_tiles = 0;
         uint8_t flat_tiles[4096];
@@ -299,6 +343,38 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
         int ok = theron_v1_track02_thing_data_load_for_variant(
             ud, ud_size, variant, d, dd.object_counts, gref_count, td);
         assert(ok);
+
+        if (variant == THERON_TRACK02_VARIANT_US_BIN && d == 0) {
+            static const uint8_t real_control_rows[4][8] = {
+                {0xfe, 0xff, 0x21, 0x00},
+                {0x00, 0x08, 0x62, 0x74, 0x00, 0x00},
+                {0xfe, 0xff, 0x00, 0x00},
+                {0xfe, 0xff, 0x03, 0x00, 0xa4, 0x07, 0x80, 0x18}
+            };
+            const unsigned int ids[] = {0u, 0u, 0u, 5u};
+            for (unsigned int cat = 0; cat < 4u; ++cat)
+                assert(memcmp(&td->items[cat][ids[cat] * theron_item_bytes[cat]],
+                              real_control_rows[cat],
+                              theron_item_bytes[cat]) == 0);
+            {
+                static const uint8_t real_monster[] = {
+                    0xfe, 0xff, 0xfe, 0xff, 0x0a, 0x01, 0x3b, 0x00,
+                    0x25, 0x00, 0x24, 0x00, 0x25, 0x00, 0x20, 0x04
+                };
+                static const uint8_t real_missile[] = {
+                    0xff, 0xff, 0x10, 0x10, 0x01, 0x00, 0x00, 0x00
+                };
+                static const uint8_t real_cloud[] = {
+                    0xff, 0xff, 0x2e, 0x0e
+                };
+                assert(memcmp(td->items[THERON_CAT_MONSTER], real_monster,
+                              sizeof(real_monster)) == 0);
+                assert(memcmp(td->items[THERON_CAT_MISSILE], real_missile,
+                              sizeof(real_missile)) == 0);
+                assert(memcmp(td->items[THERON_CAT_CLOUD], real_cloud,
+                              sizeof(real_cloud)) == 0);
+            }
+        }
 
         assert(td->ground_ref_count == gref_count);
         test_real_item_records(td, d,

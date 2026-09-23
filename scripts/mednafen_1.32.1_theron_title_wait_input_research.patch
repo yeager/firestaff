@@ -1,0 +1,36 @@
+diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -40,5 +40,6 @@ namespace MDFN_IEN_PCE
+ {
+
+ static bool TheronPostDungeonOrdinalInjected;
+ static bool TheronPostDungeonEntryInjected;
++static bool TheronTitleWaitInputInjected;
+ static FILE *TheronMainRAMLoaderTrace;
+@@ -874,3 +875,25 @@ NO_INLINE void HuC6280::RunSub(void)
++	 /* Research-only one-shot controller value at the original title wait.
++	  * Require the complete local opcode signature before touching game RAM. */
++	 if(!TheronTitleWaitInputInjected && (PC & 0x1fff) == 0x0865)
++	 {
++	  const char *value = getenv("FIRESTAFF_THERON_TITLE_WAIT_INPUT");
++	  if(value && !strcmp(value, "run") &&
++	     RdMem((PC - 3) & 0xffff) == 0x20 &&
++	     RdMem((PC - 2) & 0xffff) == 0x63 &&
++	     RdMem((PC - 1) & 0xffff) == 0xe0 && RdMem(PC) == 0xad &&
++	     RdMem((PC + 1) & 0xffff) == 0x28 &&
++	     RdMem((PC + 2) & 0xffff) == 0x22 &&
++	     RdMem((PC + 3) & 0xffff) == 0xea &&
++	     RdMem((PC + 4) & 0xffff) == 0xea &&
++	     RdMem((PC + 5) & 0xffff) == 0xd0)
++	  {
++	   WrMem(0x2228, 0x08);
++	   TheronTitleWaitInputInjected = true;
++	   fprintf(stderr,
++	           "Theron title-wait research input: value=08 pc=%04x\n", PC);
++	   fflush(stderr);
++	  }
++	 }
+ 	 /* Research-only exact replacement for the System Card CD_READ result.
+ 	  * The source is the authenticated MODE1/2048 Track 02 image; only the
+ 	  * proven four-sector LBA 4205 overlay is accepted. */

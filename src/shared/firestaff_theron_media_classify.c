@@ -218,7 +218,8 @@ static void th_finalize(FirestaffTheronMediaStatus* status) {
     status->launch_candidate = status->has_cue
         ? status->has_valid_track02_mode1 : status->has_track02_data;
     if (status->has_cue) {
-        if (status->iso_file_count > 0 && status->ogg_file_count > 0) {
+        if (status->iso_file_count > 0 &&
+            (status->ogg_file_count > 0 || status->wav_file_count > 0)) {
             status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE;
         } else if (status->bin_file_count > 0) {
             status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE;
@@ -302,6 +303,8 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
                 ++status->iso_file_count;
             } else if (th_has_ext(current_file, ".ogg")) {
                 ++status->ogg_file_count;
+            } else if (th_has_ext(current_file, ".wav")) {
+                ++status->wav_file_count;
             }
             continue;
         }
@@ -930,7 +933,7 @@ const char* FirestaffTheronMedia_LayoutLabel(FirestaffTheronMediaLayout layout) 
         case FIRESTAFF_THERON_MEDIA_LAYOUT_RAW_BIN: return "raw Track 02 BIN";
         case FIRESTAFF_THERON_MEDIA_LAYOUT_ISO: return "Track 02 ISO";
         case FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE: return "BIN/CUE Track 02";
-        case FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE: return "ISO/OGG CUE";
+        case FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE: return "ISO/audio CUE";
         case FIRESTAFF_THERON_MEDIA_LAYOUT_OGG_ONLY: return "OGG audio only";
         case FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN:
         default: return "unknown";
@@ -955,7 +958,7 @@ int FirestaffTheronMedia_SelfTest(void) {
         "  TRACK 02 MODE1/2352\n"
         "    INDEX 01 00:00:00\n";
     const char* iso_ogg_cue =
-        "REM Firestaff synthetic Theron ISO/OGG layout\n"
+        "REM Firestaff Theron ISO/OGG parser fixture\n"
         "FILE \"Track01.ogg\" OGG\n"
         "  TRACK 01 AUDIO\n"
         "    INDEX 01 00:00:00\n"
@@ -1004,7 +1007,9 @@ int FirestaffTheronMedia_SelfTest(void) {
                                            strlen(unquoted_iso_cue), &s) == 0,
              &failures);
     th_check(s.has_valid_track02_mode1 == 1 &&
-             strcmp(s.track02_path, "TQUS02.iso") == 0,
+             strcmp(s.track02_path, "TQUS02.iso") == 0 &&
+             s.layout == FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE &&
+             s.wav_file_count == 1,
              &failures);
     th_check(FirestaffTheronMedia_ParseCue(nonbinary_track02_cue,
                                            strlen(nonbinary_track02_cue), &s) != 0,

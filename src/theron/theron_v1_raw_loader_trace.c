@@ -555,6 +555,2207 @@ int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
     return 1;
 }
 
+int theron_v1_raw_loader_trace_bind_game_e009_destination(
+    const char *capture, const char *cd_capture,
+    const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009DestinationReceipt *out)
+{
+    static const uint8_t expected_parameters[8] = {
+        0x01u, 0x00u, 0x00u, 0x28u, 0x00u, 0x03u, 0xffu, 0x01u
+    };
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t line_number = 0u;
+    size_t source_count = 0u;
+    size_t dispatch2_count = 0u;
+    size_t dispatch3_count = 0u;
+    size_t receipt_count = 0u;
+    size_t dispatch2_line = 0u;
+    size_t receipt_line = 0u;
+    size_t dispatch3_line = 0u;
+    size_t cd_source_count = 0u;
+    size_t enter1_count = 0u;
+    size_t scsi_count = 0u;
+    size_t return_count = 0u;
+    size_t enter2_count = 0u;
+    size_t enter1_line = 0u;
+    size_t scsi_line = 0u;
+    size_t return_line = 0u;
+    size_t enter2_line = 0u;
+    unsigned int sequence = 0u;
+    unsigned int logical_pc = 0u;
+    unsigned int physical_pc = 0u;
+    unsigned int a = 0u;
+    unsigned int x = 0u;
+    unsigned int y = 0u;
+    unsigned int caller_pc = 0u;
+    unsigned int caller_physical_pc = 0u;
+    unsigned int completion_pc = 0u;
+    unsigned int completion_physical_pc = 0u;
+    unsigned int parameters[8] = {0u};
+    unsigned int destination = 0u;
+    unsigned int call_mpr = 0u;
+    unsigned int completion_mpr = 0u;
+    unsigned int destination_physical = 0u;
+    unsigned int payload_bytes = 0u;
+    unsigned int bounded = 0u;
+    unsigned int span_bytes = 0u;
+    unsigned int span_checksum = 0u;
+    unsigned int payload_checksum = 0u;
+    unsigned int scsi_generation = 0u;
+    unsigned int scsi_lba = 0u;
+    unsigned int scsi_sector_count = 0u;
+    unsigned int enter_return_pc = 0u;
+    unsigned int expected_return_pc = 0u;
+    unsigned int return_logical_pc = 0u;
+    unsigned int return_physical_pc = 0u;
+    unsigned int return_matched = 0u;
+    uint8_t cdb[6];
+    uint32_t raw_record;
+    size_t user_offset;
+    size_t i;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!capture || !cd_capture || !track02_data || !track02_md5 || !out ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
+
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        ++line_number;
+        if (length == strlen("source=mednafen-pce-instrumented") &&
+            memcmp(line, "source=mednafen-pce-instrumented", length) == 0) {
+            ++source_count;
+        } else if (sscanf(line,
+                   "game_main_ram_e009_dispatch sequence=%u logical_pc=%x physical_pc=%x target=e009 a=%x x=%x y=%x%n",
+                   &sequence, &logical_pc, &physical_pc, &a, &x, &y,
+                   &consumed) == 6 && consumed == (int)length &&
+                   logical_pc == 0x3840u && physical_pc == 0x1f1840u) {
+            if (sequence == 2u) {
+                if (a != 0x20u || x != 0x03u || y != 0x02u) return 0;
+                ++dispatch2_count;
+                dispatch2_line = line_number;
+            } else if (sequence == 3u) {
+                if (a != 0x20u || x != 0x00u || y != 0x04u) return 0;
+                ++dispatch3_count;
+                dispatch3_line = line_number;
+            }
+        } else if (length >= strlen("game_main_ram_e009_destination_receipt ") &&
+                   memcmp(line, "game_main_ram_e009_destination_receipt ",
+                          strlen("game_main_ram_e009_destination_receipt ")) == 0) {
+            consumed = 0;
+            if (++receipt_count != 1u || sscanf(line,
+                "game_main_ram_e009_destination_receipt caller_pc=%x caller_physical_pc=%x completion_pc=%x completion_physical_pc=%x f8=%x f9=%x fa=%x fb=%x fc=%x fd=%x fe=%x ff=%x destination=%x destination_call_mpr=%x destination_completion_mpr=%x destination_physical=%x bytes=%u bounded=%u span_bytes=%u span_fnv1a=%x payload_fnv1a=%x%n",
+                &caller_pc, &caller_physical_pc, &completion_pc,
+                &completion_physical_pc, &parameters[0], &parameters[1],
+                &parameters[2], &parameters[3], &parameters[4], &parameters[5],
+                &parameters[6], &parameters[7], &destination, &call_mpr,
+                &completion_mpr, &destination_physical, &payload_bytes,
+                &bounded, &span_bytes, &span_checksum, &payload_checksum,
+                &consumed) != 21 || consumed != (int)length) return 0;
+            receipt_line = line_number;
+        }
+    }
+
+    line_number = 0u;
+    cursor = cd_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        ++line_number;
+        if (length == strlen("source=mednafen-pce-instrumented-cd-state") &&
+            memcmp(line, "source=mednafen-pce-instrumented-cd-state",
+                   length) == 0) {
+            ++cd_source_count;
+        } else if (sscanf(line,
+                   "main_ram_e009_enter sequence=%u logical_pc=%x physical_pc=%x return_pc=%x a=%x x=%x y=%x%n",
+                   &sequence, &logical_pc, &physical_pc, &enter_return_pc,
+                   &a, &x, &y, &consumed) == 7 && consumed == (int)length &&
+                   logical_pc == 0x3840u && physical_pc == 0x1f1840u) {
+            if (sequence == 1u) {
+                if (a != 0x20u || x != 0x03u || y != 0x02u ||
+                    enter_return_pc != 0x3843u) return 0;
+                ++enter1_count;
+                enter1_line = line_number;
+            } else if (sequence == 2u) {
+                if (a != 0x20u || x != 0x00u || y != 0x04u ||
+                    enter_return_pc != 0x3843u) return 0;
+                ++enter2_count;
+                enter2_line = line_number;
+            }
+        } else if (length >= strlen("scsi_read_command ") &&
+                   memcmp(line, "scsi_read_command ",
+                          strlen("scsi_read_command ")) == 0) {
+            unsigned int parsed_generation = 0u;
+            unsigned int parsed_lba = 0u;
+            unsigned int parsed_count = 0u;
+            uint8_t parsed_cdb[6];
+            if (tqr_trace_parse_scsi_read6(line, length, &parsed_generation,
+                    &parsed_lba, &parsed_count, parsed_cdb) &&
+                parsed_generation == 5u) {
+                if (++scsi_count != 1u) return 0;
+                scsi_generation = parsed_generation;
+                scsi_lba = parsed_lba;
+                scsi_sector_count = parsed_count;
+                memcpy(cdb, parsed_cdb, sizeof(cdb));
+                scsi_line = line_number;
+            }
+        } else if (sscanf(line,
+                   "main_ram_e009_return sequence=%u expected_return_pc=%x logical_pc=%x physical_pc=%x matched=%u%n",
+                   &sequence, &expected_return_pc, &return_logical_pc,
+                   &return_physical_pc, &return_matched, &consumed) == 5 &&
+                   consumed == (int)length && sequence == 1u) {
+            ++return_count;
+            return_line = line_number;
+        }
+    }
+
+    if (source_count != 1u || dispatch2_count != 1u || dispatch3_count != 1u ||
+        receipt_count != 1u || !(dispatch2_line < receipt_line &&
+        receipt_line < dispatch3_line) || cd_source_count != 1u ||
+        enter1_count != 1u || scsi_count != 1u || return_count != 1u ||
+        enter2_count != 1u || !(enter1_line < scsi_line &&
+        scsi_line < return_line && return_line < enter2_line) ||
+        caller_pc != 0x3840u || caller_physical_pc != 0x1f1840u ||
+        completion_pc != 0x3840u || completion_physical_pc != 0x1f1840u ||
+        destination != 0x2800u || call_mpr != 0xf8u ||
+        completion_mpr != 0xf8u || destination_physical != 0x1f0800u ||
+        payload_bytes != THERON_TRACK02_RAW_USER_DATA_BYTES || bounded != 1u ||
+        span_bytes != 32u || expected_return_pc != 0x3843u ||
+        return_logical_pc != 0x3b36u || return_physical_pc != 0x1f1b36u ||
+        return_matched != 0u || scsi_sector_count != 1u ||
+        scsi_lba < TQR_TRACE_TRACK02_LBA_BASE) return 0;
+    for (i = 0u; i < sizeof(expected_parameters); ++i) {
+        if (parameters[i] > 0xffu ||
+            parameters[i] != expected_parameters[i]) return 0;
+    }
+    raw_record = scsi_lba - TQR_TRACE_TRACK02_LBA_BASE;
+    if (raw_record != THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US ||
+        (size_t)raw_record >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        cdb[0] != 0x08u) return 0;
+    user_offset = (size_t)raw_record * THERON_TRACK02_RAW_SECTOR_BYTES +
+        THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    if (span_checksum != tqr_trace_fnv1a_bytes(
+            track02_data + user_offset, span_bytes) ||
+        payload_checksum != tqr_trace_fnv1a_bytes(
+            track02_data + user_offset, payload_bytes)) return 0;
+
+    out->valid = 1;
+    out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->caller_pc = (uint16_t)caller_pc;
+    out->caller_physical_pc = caller_physical_pc;
+    out->completion_pc = (uint16_t)completion_pc;
+    out->completion_physical_pc = completion_physical_pc;
+    for (i = 0u; i < sizeof(out->parameters); ++i)
+        out->parameters[i] = (uint8_t)parameters[i];
+    out->destination = (uint16_t)destination;
+    out->destination_physical = destination_physical;
+    out->payload_bytes = payload_bytes;
+    out->payload_span_checksum = span_checksum;
+    out->payload_checksum = payload_checksum;
+    out->scsi_generation = scsi_generation;
+    out->scsi_lba = scsi_lba;
+    out->scsi_sector_count = scsi_sector_count;
+    out->raw_track02_record = raw_record;
+    out->asynchronous_resume_observed = 1;
+    out->next_dispatch_completion_observed = 1;
+    out->mode1_payload_verified = 1;
+    out->payload_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_game_e009_consumer(
+    const Theron_V1RawLoaderTraceGameE009DestinationReceipt *destination,
+    const char *consumer_capture, const uint8_t *track02_data,
+    size_t track02_size, const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009ConsumerReceipt *out)
+{
+    static const unsigned int expected_logical[5] = {
+        0x2d13u, 0x2d14u, 0x2d15u, 0x2d16u, 0x2d17u
+    };
+    static const unsigned int expected_reader_pc[5] = {
+        0x37e2u, 0x37e9u, 0x37f7u, 0x37fcu, 0x3802u
+    };
+    static const uint8_t expected_value[5] = {
+        0xf9u, 0x02u, 0x04u, 0x00u, 0x20u
+    };
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t source_count = 0u;
+    size_t enter1_count = 0u;
+    size_t resume1_count = 0u;
+    size_t enter2_count = 0u;
+    size_t read_count = 0u;
+    size_t code_count = 0u;
+    size_t phase = 0u;
+    size_t user_offset;
+    size_t i;
+    unsigned int sequence = 0u;
+    unsigned int logical_pc = 0u;
+    unsigned int physical_pc = 0u;
+    unsigned int expected_pc = 0u;
+    unsigned int a = 0u, x = 0u, y = 0u;
+    unsigned int matched = 0u;
+    unsigned int logical_address = 0u, physical_address = 0u, value = 0u;
+    unsigned int reader_pc = 0u, reader_physical_pc = 0u;
+    unsigned int sp = 0u, p = 0u;
+    unsigned int system_card_copy = 0u, debugger_completion_hash = 0u;
+    unsigned int provenance_valid = 0u, provenance_value_match = 0u;
+    unsigned int source_lba = 0u, source_offset = 0u;
+    unsigned long long fifo_sequence = 0u;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!destination || !destination->valid || !consumer_capture ||
+        !track02_data || !track02_md5 || !out ||
+        destination->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(destination->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        destination->raw_track02_record !=
+            THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US ||
+        destination->destination != 0x2800u ||
+        destination->destination_physical != 0x1f0800u ||
+        destination->payload_bytes != THERON_TRACK02_RAW_USER_DATA_BYTES ||
+        destination->payload_checksum != 0x33a90342u ||
+        !destination->asynchronous_resume_observed ||
+        !destination->next_dispatch_completion_observed ||
+        !destination->mode1_payload_verified ||
+        destination->payload_semantics_proven ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        (size_t)destination->raw_track02_record >=
+            track02_size / THERON_TRACK02_RAW_SECTOR_BYTES) return 0;
+
+    user_offset = (size_t)destination->raw_track02_record *
+        THERON_TRACK02_RAW_SECTOR_BYTES + THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    if (tqr_trace_fnv1a_bytes(track02_data + user_offset,
+            THERON_TRACK02_RAW_USER_DATA_BYTES) !=
+        destination->payload_checksum) return 0;
+
+    cursor = consumer_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-e009-destination-consumer") &&
+            memcmp(line, "source=mednafen-pce-instrumented-e009-destination-consumer",
+                   length) == 0) {
+            if (++source_count != 1u || phase != 0u) return 0;
+        } else if (sscanf(line,
+                   "e009_destination_boundary kind=enter sequence=%u logical_pc=%x physical_pc=%x a=%x x=%x y=%x%n",
+                   &sequence, &logical_pc, &physical_pc, &a, &x, &y,
+                   &consumed) == 6 && consumed == (int)length) {
+            if (sequence == 1u) {
+                if (++enter1_count != 1u || phase != 0u ||
+                    logical_pc != 0x3840u || physical_pc != 0x1f1840u ||
+                    a != 0x20u || x != 0x03u || y != 0x02u) return 0;
+                phase = 1u;
+            } else if (sequence == 2u) {
+                if (++enter2_count != 1u || phase != 2u || read_count != 5u ||
+                    logical_pc != 0x3840u || physical_pc != 0x1f1840u ||
+                    a != 0x20u || x != 0x00u || y != 0x04u) return 0;
+                phase = 3u;
+            }
+        } else if (sscanf(line,
+                   "e009_destination_boundary kind=resume sequence=%u expected_pc=%x logical_pc=%x physical_pc=%x matched=%u%n",
+                   &sequence, &expected_pc, &logical_pc, &physical_pc,
+                   &matched, &consumed) == 5 && consumed == (int)length &&
+                   sequence == 1u) {
+            if (++resume1_count != 1u || phase != 1u ||
+                expected_pc != 0x3843u || logical_pc != 0x3b36u ||
+                physical_pc != 0x1f1b36u || matched != 0u) return 0;
+            phase = 2u;
+        } else if (sscanf(line,
+                   "e009_consumer_code_byte logical_address=%x physical_address=%x value=%x boundary_sequence=%u%n",
+                   &logical_address, &physical_address, &value, &sequence,
+                   &consumed) == 4 && consumed == (int)length && phase == 2u) {
+            if (code_count >= sizeof(out->code_bytes) || sequence != 1u ||
+                logical_address != 0x37c8u + code_count ||
+                physical_address != 0x1f17c8u + code_count || value > 0xffu)
+                return 0;
+            out->code_bytes[code_count++] = (uint8_t)value;
+        } else if (sscanf(line,
+                   "e009_destination_read sequence=%u logical_address=%x physical_address=%x value=%x reader_pc=%x reader_physical_pc=%x a=%x x=%x y=%x sp=%x p=%x system_card_copy=%u debugger_completion_hash=%u provenance_valid=%u provenance_value_match=%u source_lba=%u source_offset=%u fifo_sequence=%llu%n",
+                   &sequence, &logical_address, &physical_address, &value,
+                   &reader_pc, &reader_physical_pc, &a, &x, &y, &sp, &p,
+                   &system_card_copy, &debugger_completion_hash,
+                   &provenance_valid, &provenance_value_match, &source_lba,
+                   &source_offset, &fifo_sequence, &consumed) == 18 &&
+                   consumed == (int)length && phase == 2u) {
+            if (code_count != sizeof(out->code_bytes) || read_count >= 5u ||
+                system_card_copy != 0u ||
+                debugger_completion_hash != 0u ||
+                logical_address != expected_logical[read_count] ||
+                physical_address != 0x1f0000u + expected_logical[read_count] -
+                    0x2000u || value != expected_value[read_count] ||
+                reader_pc != expected_reader_pc[read_count] ||
+                reader_physical_pc != 0x1f0000u +
+                    expected_reader_pc[read_count] - 0x2000u) return 0;
+            ++read_count;
+        } else if (phase == 2u &&
+                   length >= strlen("e009_destination_read ") &&
+                   memcmp(line, "e009_destination_read ",
+                          strlen("e009_destination_read ")) == 0) {
+            return 0;
+        }
+    }
+
+    if (source_count != 1u || enter1_count != 1u || resume1_count != 1u ||
+        enter2_count != 1u || read_count != 5u ||
+        code_count != sizeof(out->code_bytes) || phase != 3u) return 0;
+
+    /* The captured main-RAM range crosses a raw-sector boundary.  Compare it
+     * as two MODE1 user-data fragments; raw sync/header/ECC bytes are never
+     * mistaken for loaded program bytes. */
+    if ((size_t)0x4c5u >= track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+        memcmp(out->code_bytes,
+            track02_data + (size_t)0x4c4u * THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET + 0x7c8u,
+            56u) != 0 ||
+        memcmp(out->code_bytes + 56u,
+            track02_data + (size_t)0x4c5u * THERON_TRACK02_RAW_SECTOR_BYTES +
+                THERON_TRACK02_RAW_USER_DATA_OFFSET,
+            64u) != 0) return 0;
+
+    /* Source-bound HuC6280 opcodes at $3806 load base $2803, multiply an
+     * opaque byte by six with a three-step shift/add loop, and use the result
+     * as the ($00),Y source.  The first observed address closes the relation;
+     * the byte is not assigned a gameplay meaning. */
+    if (out->code_bytes[0x3eu] != 0xadu ||
+        out->code_bytes[0x3fu] != 0xd6u ||
+        out->code_bytes[0x40u] != 0x37u ||
+        out->code_bytes[0x41u] != 0x85u ||
+        out->code_bytes[0x42u] != 0x00u ||
+        out->code_bytes[0x43u] != 0xadu ||
+        out->code_bytes[0x44u] != 0xd7u ||
+        out->code_bytes[0x45u] != 0x37u ||
+        out->code_bytes[0x46u] != 0x85u ||
+        out->code_bytes[0x47u] != 0x01u ||
+        out->code_bytes[0x4fu] != 0xa9u ||
+        out->code_bytes[0x50u] != 0x06u ||
+        out->code_bytes[0x53u] != 0xa2u ||
+        out->code_bytes[0x54u] != 0x03u ||
+        (uint16_t)(0x2803u + 6u * 0xd8u) != expected_logical[0]) return 0;
+    for (i = 0u; i < 5u; ++i) {
+        size_t media_offset = 0x513u + i;
+        if (track02_data[user_offset + media_offset] != expected_value[i])
+            return 0;
+        out->logical_addresses[i] = (uint16_t)expected_logical[i];
+        out->physical_addresses[i] = 0x1f0000u + expected_logical[i] - 0x2000u;
+        out->reader_pcs[i] = (uint16_t)expected_reader_pc[i];
+        out->reader_physical_pcs[i] = 0x1f0000u + expected_reader_pc[i] - 0x2000u;
+        out->media_offsets[i] = media_offset;
+        out->values[i] = expected_value[i];
+    }
+    out->valid = 1;
+    out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->raw_track02_record = destination->raw_track02_record;
+    out->code_checksum = tqr_trace_fnv1a_bytes(out->code_bytes,
+        sizeof(out->code_bytes));
+    out->code_first_record = 0x4c4u;
+    out->code_first_user_offset = 0x7c8u;
+    out->code_second_record = 0x4c5u;
+    out->code_second_user_offset = 0u;
+    out->pointer_base = 0x2803u;
+    out->pointer_stride = 6u;
+    out->resolved_index = 0xd8u;
+    out->resolved_pointer = 0x2d13u;
+    out->code_media_verified = 1;
+    out->address_construction_verified = 1;
+    out->source_bytes_verified = 1;
+    out->read_order_verified = 1;
+    out->next_dispatch_observed = 1;
+    out->field_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_game_e009_next_parameters(
+    const Theron_V1RawLoaderTraceGameE009ConsumerReceipt *consumer,
+    const char *main_ram_loader_capture,
+    Theron_V1RawLoaderTraceGameE009NextParametersReceipt *out)
+{
+    static const unsigned int offsets[] = {
+        0u, 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 12u,
+        26u, 27u, 28u, 29u, 30u, 31u, 32u, 33u
+    };
+    static const unsigned int addresses[] = {
+        0x2025u, 0x2024u, 0x2023u, 0x2022u, 0x201eu, 0x37d0u,
+        0x37d1u, 0x2025u, 0x2020u, 0x2021u, 0x201eu, 0x201fu,
+        0x20f8u, 0x20f9u, 0x20fau, 0x20fbu, 0x20fcu, 0x20fdu,
+        0x20feu, 0x20ffu
+    };
+    static const unsigned int values[] = {
+        0x01u, 0xf8u, 0x06u, 0x00u, 0x04u, 0x00u, 0x20u, 0xfeu,
+        0x00u, 0x10u, 0x00u, 0x20u, 0x00u, 0x20u, 0x00u, 0x10u,
+        0x00u, 0x06u, 0xf8u, 0xfeu
+    };
+    static const unsigned int writer_pcs[] = {
+        0x37dfu, 0x37e7u, 0x37eeu, 0x37f4u, 0x37f9u, 0x37ffu,
+        0x3805u, 0x36d9u, 0x36deu, 0x36e3u, 0x36e8u, 0x36f0u,
+        0x383du, 0x383du, 0x383du, 0x383du, 0x383du, 0x383du,
+        0x383du, 0x383du
+    };
+    const char *cursor;
+    const char *line;
+    size_t length;
+    size_t source_count = 0u, tii_count = 0u, matched_count = 0u;
+    unsigned int base_sequence = 0u;
+    unsigned int sequence, address, physical, value, writer_pc, writer_physical;
+    unsigned int logical_pc, physical_pc, source, destination, transfer_length;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!consumer || !consumer->valid || !main_ram_loader_capture || !out ||
+        consumer->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(consumer->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        !consumer->code_media_verified ||
+        !consumer->address_construction_verified ||
+        !consumer->source_bytes_verified || !consumer->read_order_verified ||
+        consumer->field_semantics_proven) return 0;
+
+    cursor = main_ram_loader_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-main-ram-loader") &&
+            memcmp(line, "source=mednafen-pce-instrumented-main-ram-loader",
+                   length) == 0) {
+            if (++source_count != 1u) return 0;
+        } else if (sscanf(line,
+                   "main_ram_loader_block_transfer logical_pc=%x physical_pc=%x operation=tii source=%x destination=%x length=%x%n",
+                   &logical_pc, &physical_pc, &source, &destination,
+                   &transfer_length, &consumed) == 5 &&
+                   consumed == (int)length && logical_pc == 0x3836u) {
+            if (++tii_count != 1u || physical_pc != 0x1f1836u ||
+                source != 0x201eu || destination != 0x20f8u ||
+                transfer_length != 8u) return 0;
+        } else if (sscanf(line,
+                   "main_ram_loader_write sequence=%u dispatch_sequence=unbound logical_destination=%x physical_destination=%x value=%x writer_pc=%x writer_physical_pc=%x%n",
+                   &sequence, &address, &physical, &value, &writer_pc,
+                   &writer_physical, &consumed) == 6 &&
+                   consumed == (int)length) {
+            if (matched_count == 0u && address == addresses[0] &&
+                value == values[0] && writer_pc == writer_pcs[0])
+                base_sequence = sequence;
+            if (matched_count < sizeof(offsets) / sizeof(offsets[0]) &&
+                base_sequence != 0u &&
+                sequence == base_sequence + offsets[matched_count]) {
+                if (address != addresses[matched_count] ||
+                    physical != 0x1f0000u + address - 0x2000u ||
+                    value != values[matched_count] ||
+                    writer_pc != writer_pcs[matched_count] ||
+                    writer_physical != 0x1f0000u + writer_pc - 0x2000u)
+                    return 0;
+                ++matched_count;
+            }
+        }
+    }
+    if (source_count != 1u || tii_count != 1u ||
+        matched_count != sizeof(offsets) / sizeof(offsets[0])) return 0;
+
+    out->valid = 1;
+    out->variant = consumer->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+        consumer->track02_md5);
+    {
+        size_t i;
+        for (i = 0u; i < sizeof(out->consumer_outputs); ++i)
+            out->consumer_outputs[i] = (uint8_t)values[i];
+        for (i = 0u; i < sizeof(out->next_parameters); ++i)
+            out->next_parameters[i] = (uint8_t)values[12u + i];
+    }
+    out->first_write_sequence = base_sequence;
+    out->tii_pc = 0x3836u;
+    out->tii_source = 0x201eu;
+    out->tii_destination = 0x20f8u;
+    out->tii_length = 8u;
+    out->consumer_output_writes_verified = 1;
+    out->tii_verified = 1;
+    out->next_parameters_verified = 1;
+    out->parameter_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_game_e009_vdc_payload(
+    const Theron_V1RawLoaderTraceGameE009NextParametersReceipt *parameters,
+    const char *cd_capture, const char *vdc_capture,
+    const uint8_t *track02_data, size_t track02_size,
+    const uint8_t *vram_snapshot, size_t vram_snapshot_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009VdcReceipt *out)
+{
+    static const uint8_t expected_parameters[8] = {
+        0x00u, 0x20u, 0x00u, 0x10u, 0x00u, 0x06u, 0xf8u, 0xfeu
+    };
+    static const unsigned int setup_address[4] = {0u, 2u, 3u, 0u};
+    static const unsigned int setup_value[4] = {0u, 0u, 0x10u, 2u};
+    static const unsigned int setup_pc[4] = {0xecd4u, 0xf341u, 0xf346u, 0xecdeu};
+    const char *cursor, *line;
+    size_t length, cd_source_count = 0u, command_count = 0u;
+    size_t vdc_source_count = 0u, generation_rows = 0u, unique_rows = 0u;
+    size_t boundary_count = 0u;
+    size_t payload_index = 0u, i;
+    unsigned int generation = 0u, lba = 0u, sector_count = 0u;
+    unsigned int sequence, row_generation, timestamp, address, physical;
+    unsigned int value, writer_pc, writer_physical;
+    unsigned int boundary_generation, boundary_rows, boundary_sequence;
+    unsigned int boundary_timestamp, boundary_first, boundary_last;
+    unsigned int boundary_words, boundary_hash;
+    unsigned int previous_sequence = 0u;
+    uint8_t cdb[6], parsed_cdb[6];
+    uint32_t first_record;
+    uint32_t hash = 2166136261u;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!parameters || !parameters->valid || !cd_capture || !vdc_capture ||
+        !track02_data || !vram_snapshot || !track02_md5 || !out ||
+        parameters->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(parameters->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        memcmp(parameters->next_parameters, expected_parameters,
+            sizeof(expected_parameters)) != 0 ||
+        !parameters->consumer_output_writes_verified ||
+        !parameters->tii_verified || !parameters->next_parameters_verified ||
+        parameters->parameter_semantics_proven ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        vram_snapshot_size != 65536u) return 0;
+
+    cursor = cd_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented-cd-state") &&
+            memcmp(line, "source=mednafen-pce-instrumented-cd-state",
+                length) == 0) {
+            ++cd_source_count;
+        } else if (length >= strlen("scsi_read_command ") &&
+                   memcmp(line, "scsi_read_command ",
+                       strlen("scsi_read_command ")) == 0) {
+            unsigned int parsed_generation = 0u, parsed_lba = 0u;
+            unsigned int parsed_sector_count = 0u;
+            if (tqr_trace_parse_scsi_read6(line, length, &parsed_generation,
+                    &parsed_lba, &parsed_sector_count, parsed_cdb) &&
+                parsed_generation == 6u) {
+                if (++command_count != 1u) return 0;
+                generation = parsed_generation;
+                lba = parsed_lba;
+                sector_count = parsed_sector_count;
+                memcpy(cdb, parsed_cdb, sizeof(cdb));
+            }
+        }
+    }
+    if (cd_source_count != 1u || command_count != 1u || lba != 5018u ||
+        sector_count != 4u || cdb[0] != 0x08u ||
+        lba < TQR_TRACE_TRACK02_LBA_BASE) return 0;
+    first_record = lba - TQR_TRACE_TRACK02_LBA_BASE;
+    if (first_record != 0x7d9u ||
+        (size_t)first_record + sector_count >
+            track02_size / THERON_TRACK02_RAW_SECTOR_BYTES) return 0;
+
+    cursor = vdc_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-scsi-generation-vdc") &&
+            memcmp(line, "source=mednafen-pce-instrumented-scsi-generation-vdc",
+                length) == 0) {
+            ++vdc_source_count;
+        } else if (sscanf(line,
+                   "scsi_generation_vdc_write sequence=%u scsi_generation=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x%n",
+                   &sequence, &row_generation, &timestamp, &address, &physical,
+                   &value, &writer_pc, &writer_physical, &consumed) == 8 &&
+                   consumed == (int)length && row_generation == 6u) {
+            ++generation_rows;
+            if (value > 0xffu || physical != 0x1fe000u + address ||
+                writer_pc < 0xe000u || writer_physical != writer_pc - 0xe000u ||
+                (generation_rows > 1u && sequence != previous_sequence + 1u))
+                return 0;
+            previous_sequence = sequence;
+            if (generation_rows <= 4u) {
+                size_t setup_index = generation_rows - 1u;
+                if (address != setup_address[setup_index] ||
+                    value != setup_value[setup_index] ||
+                    writer_pc != setup_pc[setup_index]) return 0;
+            } else {
+                size_t record = first_record + payload_index /
+                    THERON_TRACK02_RAW_USER_DATA_BYTES;
+                size_t offset = payload_index %
+                    THERON_TRACK02_RAW_USER_DATA_BYTES;
+                uint8_t media_byte;
+                if (payload_index >= 4u * THERON_TRACK02_RAW_USER_DATA_BYTES ||
+                    address != 2u + (payload_index & 1u) ||
+                    writer_pc != 0xeb35u) return 0;
+                media_byte = track02_data[record *
+                    THERON_TRACK02_RAW_SECTOR_BYTES +
+                    THERON_TRACK02_RAW_USER_DATA_OFFSET + offset];
+                if (value != media_byte) return 0;
+                hash ^= media_byte;
+                hash *= 16777619u;
+                ++payload_index;
+            }
+            ++unique_rows;
+        } else if (sscanf(line,
+                   "scsi_generation_vdc_snapshot_boundary scsi_generation=%u generation_rows=%u sequence=%u timestamp=%u first_vram_word=%x last_vram_word=%x vram_words=%u vram_fnv1a=%x%n",
+                   &boundary_generation, &boundary_rows, &boundary_sequence,
+                   &boundary_timestamp, &boundary_first, &boundary_last,
+                   &boundary_words, &boundary_hash, &consumed) == 8 &&
+                   consumed == (int)length) {
+            if (++boundary_count != 1u || boundary_generation != 6u ||
+                boundary_rows != 8196u || boundary_sequence != 8198u ||
+                boundary_first != 0x1000u || boundary_last != 0x2fffu ||
+                boundary_words != 8192u || boundary_hash != 0xa0e05797u)
+                return 0;
+        }
+    }
+    if (vdc_source_count != 1u || boundary_count != 1u ||
+        generation_rows != 8196u ||
+        unique_rows != 8196u || payload_index != 8192u ||
+        hash != 0x4859675du) return 0;
+    for (i = 0u; i < 8192u; ++i) {
+        size_t record = first_record + i /
+            THERON_TRACK02_RAW_USER_DATA_BYTES;
+        size_t offset = i % THERON_TRACK02_RAW_USER_DATA_BYTES;
+        uint8_t media_byte = track02_data[record *
+            THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET + offset];
+        if (vram_snapshot[0x2000u + i] != media_byte) return 0;
+    }
+    if (tqr_trace_fnv1a_bytes(vram_snapshot + 0x2000u, 0x2000u) !=
+            0x4859675du ||
+        tqr_trace_fnv1a_bytes(vram_snapshot + 0x2000u, 0x4000u) !=
+            0xa0e05797u ||
+        tqr_trace_fnv1a_bytes(vram_snapshot, vram_snapshot_size) !=
+            0xedfc7797u) return 0;
+
+    out->valid = 1;
+    out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->scsi_generation = generation;
+    out->scsi_lba = lba;
+    out->scsi_sector_count = sector_count;
+    out->first_raw_track02_record = first_record;
+    out->payload_bytes = payload_index;
+    out->payload_checksum = hash;
+    out->vdc_write_pc = 0xeb35u;
+    out->vdc_write_physical_pc = 0x000b35u;
+    out->vdc_payload_writes = generation_rows - 4u;
+    out->first_vram_word = 0x1000u;
+    out->last_vram_word = 0x1fffu;
+    out->vram_word_count = 4096u;
+    out->vram_snapshot_checksum = 0x4859675du;
+    out->full_vram_snapshot_checksum =
+        tqr_trace_fnv1a_bytes(vram_snapshot, vram_snapshot_size);
+    out->read6_verified = 1;
+    out->vdc_setup_verified = 1;
+    out->repeated_word_writes_verified = 0;
+    out->single_word_writes_verified = 1;
+    out->vram_destination_verified = 1;
+    out->vram_snapshot_verified = 1;
+    out->mode1_payload_verified = 1;
+    out->payload_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_game_e009_vdc_presentation(
+    const Theron_V1RawLoaderTraceGameE009VdcReceipt *payload,
+    const char *vdc_capture, const char *vdc_state_capture,
+    const uint8_t *pre_vram_snapshot, size_t pre_vram_snapshot_size,
+    const uint8_t *post_vram_snapshot, size_t post_vram_snapshot_size,
+    const uint8_t *vce_snapshot, size_t vce_snapshot_size,
+    const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009VdcPresentationReceipt *out)
+{
+    const char *cursor, *line;
+    size_t length, source_count = 0u, row_count = 0u, boundary_count = 0u;
+    size_t state_source_count = 0u, state_count = 0u, commits = 0u, i;
+    size_t code_count = 0u;
+    unsigned int sequence, generation, timestamp, logical, physical, value;
+    unsigned int writer_pc, writer_physical, previous_sequence = 0u;
+    unsigned int boundary_generation, boundary_rows, boundary_sequence;
+    unsigned int boundary_timestamp, boundary_first, boundary_last;
+    unsigned int boundary_words, boundary_hash;
+    unsigned int vdc, bxr, byr, mwr, hsr, hdr, vsr, vdr, vcr, cr;
+    unsigned int code_generation, code_physical, code_value;
+    uint16_t bat[2048];
+    uint8_t selected_register = 0u, vwr_low = 0u;
+    uint16_t mawr = 0u;
+    unsigned int have_vwr_low = 0u;
+    uint8_t seen_tiles[0x200] = {0u};
+    uint8_t code[512];
+    size_t source_cells = 0u, unique_tiles = 0u;
+    size_t background_pixels = 0u, nonzero_pixels = 0u;
+    uint32_t background_hash = 2166136261u;
+    uint32_t color_hash = 2166136261u;
+    uint16_t first_tile = 0xffffu, last_tile = 0u;
+    Theron_Track02Stage2Enclosing45xxCalleesReceipt stage2_callees;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!payload || !payload->valid || !vdc_capture || !vdc_state_capture ||
+        !pre_vram_snapshot || !post_vram_snapshot || !vce_snapshot ||
+        !track02_data || !track02_md5 || !out ||
+        payload->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(payload->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        !payload->read6_verified || !payload->vdc_setup_verified ||
+        payload->repeated_word_writes_verified ||
+        !payload->single_word_writes_verified ||
+        !payload->vram_destination_verified || !payload->vram_snapshot_verified ||
+        payload->payload_semantics_proven || pre_vram_snapshot_size != 65536u ||
+        post_vram_snapshot_size != 65536u || vce_snapshot_size != 1024u ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u ||
+        tqr_trace_fnv1a_bytes(pre_vram_snapshot, pre_vram_snapshot_size) !=
+            0xedfc7797u || payload->full_vram_snapshot_checksum != 0xedfc7797u)
+        return 0;
+    if (theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+            track02_data, track02_size, track02_md5, &stage2_callees) !=
+            THERON_TRACK02_SIGNAL_OK || !stage2_callees.valid ||
+        !stage2_callees.l466b_proven) return 0;
+    for (i = 0u; i < 2048u; ++i)
+        bat[i] = (uint16_t)(pre_vram_snapshot[i * 2u] |
+            ((uint16_t)pre_vram_snapshot[i * 2u + 1u] << 8));
+
+    cursor = vdc_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-scsi-generation-vdc") &&
+            memcmp(line, "source=mednafen-pce-instrumented-scsi-generation-vdc",
+                length) == 0) {
+            ++source_count;
+        } else if (sscanf(line,
+                   "scsi_generation_vdc_write sequence=%u scsi_generation=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x%n",
+                   &sequence, &generation, &timestamp, &logical, &physical,
+                   &value, &writer_pc, &writer_physical, &consumed) == 8 &&
+                   consumed == (int)length && generation == 7u) {
+            uint32_t normalized = physical & 0x7fffffffu;
+            unsigned int port;
+            if (row_count == 0u) {
+                if (sequence != 8198u) return 0;
+            } else if (sequence != previous_sequence + 1u) return 0;
+            previous_sequence = sequence;
+            ++row_count;
+            if (value > 0xffu || normalized < 0x1fe000u ||
+                normalized > 0x1fe003u) return 0;
+            port = normalized - 0x1fe000u;
+            if (port == 0u) {
+                selected_register = (uint8_t)(value & 0x1fu);
+            } else if (port == 2u) {
+                if (selected_register == 0u)
+                    mawr = (uint16_t)((mawr & 0xff00u) | value);
+                else if (selected_register == 2u) {
+                    vwr_low = (uint8_t)value;
+                    have_vwr_low = 1u;
+                }
+            } else if (port == 3u) {
+                if (selected_register == 0u)
+                    mawr = (uint16_t)((mawr & 0x00ffu) | (value << 8));
+                else if (selected_register == 2u && have_vwr_low) {
+                    if (mawr < 2048u)
+                        bat[mawr] = (uint16_t)(vwr_low | (value << 8));
+                    ++mawr;
+                    ++commits;
+                }
+            }
+        } else if (sscanf(line,
+                   "scsi_generation_vdc_snapshot_boundary scsi_generation=%u generation_rows=%u sequence=%u timestamp=%u first_vram_word=%x last_vram_word=%x vram_words=%u vram_fnv1a=%x%n",
+                   &boundary_generation, &boundary_rows, &boundary_sequence,
+                   &boundary_timestamp, &boundary_first, &boundary_last,
+                   &boundary_words, &boundary_hash, &consumed) == 8 &&
+                   consumed == (int)length && boundary_generation == 7u) {
+            if (++boundary_count != 1u || boundary_rows != 2187u ||
+                boundary_sequence != 10385u || boundary_first != 0x1000u ||
+                boundary_last != 0x2fffu || boundary_words != 8192u ||
+                boundary_hash != 0xa0e05797u) return 0;
+        } else if (sscanf(line,
+                   "scsi_generation_vdc_code_byte scsi_generation=%u physical_address=%x value=%x%n",
+                   &code_generation, &code_physical, &code_value,
+                   &consumed) == 3 && consumed == (int)length &&
+                   code_generation == 7u) {
+            if (code_count >= sizeof(code) ||
+                code_physical != 0x104600u + code_count || code_value > 0xffu)
+                return 0;
+            code[code_count++] = (uint8_t)code_value;
+        }
+    }
+    if (source_count != 1u || row_count != 2187u || boundary_count != 1u ||
+        commits != 1024u || code_count != sizeof(code)) return 0;
+    for (i = 0u; i < 2048u; ++i) {
+        uint16_t post_word = (uint16_t)(post_vram_snapshot[i * 2u] |
+            ((uint16_t)post_vram_snapshot[i * 2u + 1u] << 8));
+        if (bat[i] != post_word) return 0;
+    }
+    if (tqr_trace_fnv1a_bytes(post_vram_snapshot, post_vram_snapshot_size) !=
+            0xd9d48117u ||
+        tqr_trace_fnv1a_bytes(post_vram_snapshot, 4096u) != 0x4740a645u ||
+        tqr_trace_fnv1a_bytes(post_vram_snapshot + 0x2000u, 0x2000u) !=
+            payload->vram_snapshot_checksum) return 0;
+    {
+        size_t code_media_offset = (size_t)0x4d0u *
+            THERON_TRACK02_RAW_SECTOR_BYTES +
+            THERON_TRACK02_RAW_USER_DATA_OFFSET + 0x600u;
+        if ((size_t)0x4d0u >=
+                track02_size / THERON_TRACK02_RAW_SECTOR_BYTES ||
+            code_media_offset + sizeof(code) > track02_size ||
+            memcmp(code, track02_data + code_media_offset, 0x8du) != 0 ||
+            memcmp(code + 0x92u, track02_data + code_media_offset + 0x92u,
+                0x126u) != 0 ||
+            tqr_trace_fnv1a_bytes(code, sizeof(code)) != 0x3e3745f7u ||
+            tqr_trace_fnv1a_bytes(code, 0x8du) != 0xe8f39f3cu ||
+            tqr_trace_fnv1a_bytes(code + 0x92u, 0x126u) != 0xd156f430u)
+            return 0;
+    }
+    if (code[0x6fu] != 0xa5u || code[0x70u] != 0x02u ||
+        code[0x71u] != 0x8du || code[0x72u] != 0x02u ||
+        code[0x73u] != 0x00u || code[0x74u] != 0xa5u ||
+        code[0x75u] != 0x03u || code[0x76u] != 0x8du ||
+        code[0x77u] != 0x03u || code[0x78u] != 0x00u ||
+        code[0x79u] != 0x03u || code[0x7au] != 0x02u ||
+        code[0x8cu] != 0xe3u || code[0x8du] != 0xe0u ||
+        code[0x8eu] != 0x47u || code[0x8fu] != 0x02u ||
+        code[0x90u] != 0x00u || code[0x91u] != 0x40u ||
+        code[0x92u] != 0x00u ||
+        tqr_trace_fnv1a_bytes(code + 0x8cu, 7u) != 0x37013231u ||
+        tqr_trace_fnv1a_bytes(code + 0x1e0u, 32u) != 0xda633f05u)
+        return 0;
+
+    cursor = vdc_state_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("FIRESTAFF_THERON_VDC_STATE_V1") &&
+            memcmp(line, "FIRESTAFF_THERON_VDC_STATE_V1", length) == 0)
+            ++state_source_count;
+        else if (sscanf(line,
+                    "vdc=%u bxr=%x byr=%x mwr=%x hsr=%x hdr=%x vsr=%x vdr=%x vcr=%x cr=%x%n",
+                    &vdc, &bxr, &byr, &mwr, &hsr, &hdr, &vsr, &vdr, &vcr,
+                    &cr, &consumed) == 10 && consumed == (int)length)
+            ++state_count;
+    }
+    if (state_source_count != 1u || state_count != 1u || vdc != 0u ||
+        bxr != 0u || byr != 0u || mwr != 0x10u || hdr != 0x041fu ||
+        vdr != 0x00efu || cr != 0x0088u) return 0;
+
+    for (i = 0u; i < 30u * 32u; ++i) {
+        size_t x = i % 32u, y = i / 32u;
+        uint16_t tile = (uint16_t)(bat[y * 64u + x] & 0x0fffu);
+        if (tile < 0x100u || tile > 0x2ffu) return 0;
+        ++source_cells;
+        if (tile < first_tile) first_tile = tile;
+        if (tile > last_tile) last_tile = tile;
+        if (!seen_tiles[tile - 0x100u]) {
+            seen_tiles[tile - 0x100u] = 1u;
+            ++unique_tiles;
+        }
+    }
+    if (source_cells != 960u || unique_tiles != 124u ||
+        first_tile != 0x110u || last_tile != 0x18fu) return 0;
+    for (i = 0u; i < 30u * 8u; ++i) {
+        size_t tile_y = i / 8u, row = i % 8u, tile_x, pixel_x;
+        for (tile_x = 0u; tile_x < 32u; ++tile_x) {
+            uint16_t tile = (uint16_t)(bat[tile_y * 64u + tile_x] & 0x0fffu);
+            const uint8_t *bytes = post_vram_snapshot + (size_t)tile * 32u;
+            uint8_t planes[4];
+            planes[0] = bytes[row * 2u];
+            planes[1] = bytes[row * 2u + 1u];
+            planes[2] = bytes[16u + row * 2u];
+            planes[3] = bytes[16u + row * 2u + 1u];
+            for (pixel_x = 0u; pixel_x < 8u; ++pixel_x) {
+                unsigned int bit = 7u - (unsigned int)pixel_x;
+                uint8_t pixel = (uint8_t)(((planes[0] >> bit) & 1u) |
+                    (((planes[1] >> bit) & 1u) << 1) |
+                    (((planes[2] >> bit) & 1u) << 2) |
+                    (((planes[3] >> bit) & 1u) << 3));
+                background_hash ^= pixel;
+                background_hash *= 16777619u;
+                color_hash ^= vce_snapshot[(size_t)pixel * 2u];
+                color_hash *= 16777619u;
+                color_hash ^= vce_snapshot[(size_t)pixel * 2u + 1u];
+                color_hash *= 16777619u;
+                ++background_pixels;
+                if (pixel != 0u) ++nonzero_pixels;
+            }
+        }
+    }
+    if (background_pixels != 61440u || nonzero_pixels != 3373u ||
+        background_hash != 0x2c2cfb4du || color_hash != 0x3fde1dc5u ||
+        tqr_trace_fnv1a_bytes(vce_snapshot, vce_snapshot_size) != 0x1f116dc5u ||
+        tqr_trace_fnv1a_bytes(vce_snapshot, 32u) != 0x0b2ae445u) return 0;
+
+    out->valid = 1;
+    out->variant = payload->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+        payload->track02_md5);
+    out->scsi_generation = 7u;
+    out->vdc_rows = row_count;
+    out->vwr_commits = commits;
+    out->pre_vram_checksum = 0xedfc7797u;
+    out->post_vram_checksum = 0xd9d48117u;
+    out->bat_checksum = 0x4740a645u;
+    out->first_source_tile = first_tile;
+    out->last_source_tile = last_tile;
+    out->active_bat_cells = 960u;
+    out->source_backed_active_cells = source_cells;
+    out->unique_source_tiles = unique_tiles;
+    out->background_index_pixels = background_pixels;
+    out->nonzero_background_pixels = nonzero_pixels;
+    out->background_index_checksum = background_hash;
+    out->vce_checksum = 0x1f116dc5u;
+    out->palette_zero_checksum = 0x0b2ae445u;
+    out->background_color_checksum = color_hash;
+    out->code_snapshot_checksum = 0x3e3745f7u;
+    out->code_track02_record = 0x4d0u;
+    out->code_track02_user_offset = 0x600u;
+    out->source_code_bytes = 0x8du + 0x126u;
+    out->tia_pc = 0x468cu;
+    out->tia_source = 0x47e0u;
+    out->tia_destination = 0x0002u;
+    out->tia_length = 0x0040u;
+    out->generated_bat_row_checksum = 0xda633f05u;
+    out->vdc_replay_verified = 1;
+    out->background_enabled = 1;
+    out->active_bat_source_verified = 1;
+    out->background_pixels_verified = 1;
+    out->vce_palette_verified = 1;
+    out->code_media_verified = 1;
+    out->stage2_l466b_verified = 1;
+    out->self_modifying_tia_verified = 1;
+    out->tile_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_game_generation49_graphics(
+    const Theron_V1RawLoaderTraceGameE009VdcPresentationReceipt *presentation,
+    const char *cd_capture, const char *vdc_capture,
+    const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameGeneration49GraphicsReceipt *out)
+{
+    static const unsigned int setup_address[4] = {0u, 2u, 3u, 0u};
+    static const unsigned int setup_value[4] = {0u, 0u, 0x10u, 2u};
+    static const unsigned int setup_pc[4] = {0xecd4u, 0xf341u, 0xf346u, 0xecdeu};
+    const char *cursor, *line;
+    size_t length, cd_sources = 0u, commands = 0u, vdc_sources = 0u;
+    size_t rows = 0u, payload_index = 0u, boundaries = 0u;
+    unsigned int generation = 0u, lba = 0u, sectors = 0u;
+    unsigned int sequence, row_generation, timestamp, address, physical;
+    unsigned int value, writer_pc, writer_physical, previous_sequence = 0u;
+    unsigned int boundary_generation, boundary_rows, boundary_sequence;
+    unsigned int boundary_timestamp, boundary_first, boundary_last;
+    unsigned int boundary_words, boundary_hash;
+    uint8_t cdb[6], parsed_cdb[6];
+    uint32_t first_record, hash = 2166136261u;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!presentation || !presentation->valid || !cd_capture || !vdc_capture ||
+        !track02_data || !track02_md5 || !out ||
+        presentation->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !presentation->vdc_replay_verified ||
+        !presentation->stage2_l466b_verified ||
+        presentation->tile_semantics_proven ||
+        strcmp(presentation->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
+
+    cursor = cd_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented-cd-state") &&
+            memcmp(line, "source=mednafen-pce-instrumented-cd-state", length) == 0)
+            ++cd_sources;
+        else if (length >= strlen("scsi_read_command ") &&
+                 memcmp(line, "scsi_read_command ", strlen("scsi_read_command ")) == 0) {
+            unsigned int parsed_generation, parsed_lba, parsed_sectors;
+            if (tqr_trace_parse_scsi_read6(line, length, &parsed_generation,
+                    &parsed_lba, &parsed_sectors, parsed_cdb) &&
+                parsed_generation == 49u) {
+                if (++commands != 1u) return 0;
+                generation = parsed_generation; lba = parsed_lba;
+                sectors = parsed_sectors;
+                memcpy(cdb, parsed_cdb, sizeof(cdb));
+            }
+        }
+    }
+    if (cd_sources != 1u || commands != 1u || generation != 49u ||
+        lba != 4622u || sectors != 12u || cdb[0] != 0x08u ||
+        lba < TQR_TRACE_TRACK02_LBA_BASE) return 0;
+    first_record = lba - TQR_TRACE_TRACK02_LBA_BASE;
+    if (first_record != 0x64du ||
+        (size_t)first_record + sectors >
+            track02_size / THERON_TRACK02_RAW_SECTOR_BYTES) return 0;
+
+    cursor = vdc_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-scsi-generation-vdc") &&
+            memcmp(line, "source=mednafen-pce-instrumented-scsi-generation-vdc",
+                length) == 0) ++vdc_sources;
+        else if (sscanf(line,
+                "scsi_generation_vdc_write sequence=%u scsi_generation=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x%n",
+                &sequence, &row_generation, &timestamp, &address, &physical,
+                &value, &writer_pc, &writer_physical, &consumed) == 8 &&
+                consumed == (int)length && row_generation == 49u) {
+            uint32_t normalized = physical & 0x7fffffffu;
+            ++rows;
+            if (value > 0xffu || normalized != 0x1fe000u + address ||
+                writer_pc < 0xe000u || writer_physical != writer_pc - 0xe000u ||
+                (rows == 1u && sequence != 15006u) ||
+                (rows > 1u && sequence != previous_sequence + 1u)) return 0;
+            previous_sequence = sequence;
+            if (rows <= 4u) {
+                size_t setup_index = rows - 1u;
+                if (address != setup_address[setup_index] ||
+                    value != setup_value[setup_index] ||
+                    writer_pc != setup_pc[setup_index]) return 0;
+            } else {
+                size_t record = first_record + payload_index /
+                    THERON_TRACK02_RAW_USER_DATA_BYTES;
+                size_t offset = payload_index % THERON_TRACK02_RAW_USER_DATA_BYTES;
+                uint8_t media_byte;
+                if (payload_index >= 12u * THERON_TRACK02_RAW_USER_DATA_BYTES ||
+                    address != 2u + (payload_index & 1u) ||
+                    writer_pc != 0xeb35u) return 0;
+                media_byte = track02_data[record * THERON_TRACK02_RAW_SECTOR_BYTES +
+                    THERON_TRACK02_RAW_USER_DATA_OFFSET + offset];
+                if (value != media_byte) return 0;
+                hash ^= media_byte; hash *= 16777619u;
+                ++payload_index;
+            }
+        } else if (sscanf(line,
+                "scsi_generation_vdc_snapshot_boundary scsi_generation=%u generation_rows=%u sequence=%u timestamp=%u first_vram_word=%x last_vram_word=%x vram_words=%u vram_fnv1a=%x%n",
+                &boundary_generation, &boundary_rows, &boundary_sequence,
+                &boundary_timestamp, &boundary_first, &boundary_last,
+                &boundary_words, &boundary_hash, &consumed) == 8 &&
+                consumed == (int)length && boundary_generation == 49u) {
+            if (++boundaries != 1u || boundary_rows != 24580u ||
+                boundary_sequence != 39586u || boundary_first != 0x1000u ||
+                boundary_last != 0x2fffu || boundary_words != 8192u ||
+                boundary_hash != 0xc94298deu) return 0;
+        }
+    }
+    if (vdc_sources != 1u || boundaries != 1u || rows != 24580u ||
+        payload_index != 24576u ||
+        hash != 0x01551f76u) return 0;
+
+    out->valid = 1;
+    out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->scsi_generation = generation; out->scsi_lba = lba;
+    out->scsi_sector_count = sectors; out->first_raw_track02_record = first_record;
+    out->payload_bytes = payload_index; out->payload_checksum = hash;
+    out->vdc_rows = rows; out->vdc_payload_rows = rows - 4u;
+    out->first_vram_word = 0x1000u; out->last_vram_word = 0x6fffu;
+    out->read6_verified = 1; out->vdc_setup_verified = 1;
+    out->repeated_writes_verified = 0; out->single_writes_verified = 1;
+    out->media_bytes_verified = 1;
+    out->graphics_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_game_generation51_frame(
+    const Theron_V1RawLoaderTraceGameGeneration49GraphicsReceipt *graphics,
+    const char *vdc_capture, const char *vdc_state_capture,
+    const uint8_t *vram_snapshot, size_t vram_snapshot_size,
+    const uint8_t *vce_snapshot, size_t vce_snapshot_size,
+    const uint8_t *sat_snapshot, size_t sat_snapshot_size,
+    const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameGeneration51FrameReceipt *out)
+{
+    const char *cursor, *line;
+    size_t length, sources = 0u, rows = 0u, boundaries = 0u;
+    size_t l466b = 0u, l4943 = 0u, l50f1 = 0u, l5111 = 0u;
+    size_t state_sources = 0u, states = 0u;
+    unsigned int sequence, generation, timestamp, logical, physical, value;
+    unsigned int pc, physical_pc, previous_sequence = 0u;
+    unsigned int bg, br, bs, bt, bf, bl, bw, bh;
+    unsigned int vdc, bxr, byr, mwr, hsr, hdr, vsr, vdr, vcr, cr;
+    Theron_Track02Stage2Enclosing45xxCalleesReceipt stage2;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!graphics || !graphics->valid || !vdc_capture || !vdc_state_capture ||
+        !vram_snapshot || !vce_snapshot || !sat_snapshot || !track02_data ||
+        !track02_md5 || !out || !graphics->media_bytes_verified ||
+        graphics->repeated_writes_verified || !graphics->single_writes_verified ||
+        graphics->graphics_semantics_proven ||
+        strcmp(graphics->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        vram_snapshot_size != 65536u || vce_snapshot_size != 1024u ||
+        sat_snapshot_size != 512u ||
+        tqr_trace_fnv1a_bytes(vram_snapshot, vram_snapshot_size) != 0xde27fc7eu ||
+        tqr_trace_fnv1a_bytes(vce_snapshot, vce_snapshot_size) != 0x88629e93u ||
+        tqr_trace_fnv1a_bytes(sat_snapshot, sat_snapshot_size) != 0x4d7705c5u)
+        return 0;
+    if (theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+            track02_data, track02_size, track02_md5, &stage2) !=
+            THERON_TRACK02_SIGNAL_OK || !stage2.valid || !stage2.l466b_proven ||
+        !stage2.l4943_proven || !stage2.l50f1_proven || !stage2.l5111_proven ||
+        !stage2.l50f1_vdc_transfer_proven || !stage2.l5111_command_table_proven)
+        return 0;
+
+    cursor = vdc_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-scsi-generation-vdc") &&
+            memcmp(line, "source=mednafen-pce-instrumented-scsi-generation-vdc",
+                length) == 0) ++sources;
+        else if (sscanf(line,
+                "scsi_generation_vdc_write sequence=%u scsi_generation=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x%n",
+                &sequence, &generation, &timestamp, &logical, &physical, &value,
+                &pc, &physical_pc, &consumed) == 8 && consumed == (int)length &&
+                generation == 51u && boundaries == 0u) {
+            if ((rows == 0u && sequence != 39592u) ||
+                (rows > 0u && sequence != previous_sequence + 1u)) return 0;
+            previous_sequence = sequence; ++rows;
+            if (pc >= 0x466fu && pc <= 0x4693u) ++l466b;
+            if (pc >= 0x4934u && pc <= 0x4942u) ++l4943;
+            if (pc >= 0x50f1u && pc <= 0x5110u) ++l50f1;
+            if (pc == 0x5110u) ++l5111;
+        } else if (sscanf(line,
+                "scsi_generation_vdc_snapshot_boundary scsi_generation=%u generation_rows=%u sequence=%u timestamp=%u first_vram_word=%x last_vram_word=%x vram_words=%u vram_fnv1a=%x%n",
+                &bg, &br, &bs, &bt, &bf, &bl, &bw, &bh, &consumed) == 8 &&
+                consumed == (int)length && bg == 51u) {
+            if (++boundaries != 1u || br != 54842u || bs != 94434u ||
+                bf != 0x1000u || bl != 0x2fffu || bw != 8192u ||
+                bh != 0xc94298deu || rows != br) return 0;
+            break;
+        }
+    }
+    if (sources != 1u || boundaries != 1u || rows != 54842u ||
+        l466b != 2176u || l4943 != 15u || l50f1 != 2064u || l5111 != 2048u)
+        return 0;
+
+    cursor = vdc_state_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("FIRESTAFF_THERON_VDC_STATE_V1") &&
+            memcmp(line, "FIRESTAFF_THERON_VDC_STATE_V1", length) == 0)
+            ++state_sources;
+        else if (sscanf(line,
+                "vdc=%u bxr=%x byr=%x mwr=%x hsr=%x hdr=%x vsr=%x vdr=%x vcr=%x cr=%x%n",
+                &vdc, &bxr, &byr, &mwr, &hsr, &hdr, &vsr, &vdr, &vcr, &cr,
+                &consumed) == 10 && consumed == (int)length) ++states;
+    }
+    if (state_sources != 1u || states != 1u || vdc != 0u || bxr != 0u ||
+        byr != 0u || mwr != 0x10u || hdr != 0x041fu || vdr != 0x00efu ||
+        cr != 0x0048u) return 0;
+
+    out->valid = 1; out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->scsi_generation = 51u; out->generation_rows = rows;
+    out->boundary_sequence = 94434u; out->vram_checksum = 0xde27fc7eu;
+    out->vce_checksum = 0x88629e93u; out->sat_checksum = 0x4d7705c5u;
+    out->l466b_writer_rows = l466b; out->l4943_writer_rows = l4943;
+    out->l50f1_writer_rows = l50f1; out->l5111_writer_rows = l5111;
+    out->atomic_snapshot_verified = 1; out->stage2_control_flow_verified = 1;
+    out->stable_loop_boundary_verified = 1; out->screen_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_file_select_text_source(
+    const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceFileSelectTextSourceReceipt *out)
+{
+    static const size_t play_raw_offsets[3] = {2959246u, 2963770u, 2968474u};
+    static const size_t load_raw_offsets[3] = {2959274u, 2963795u, 2968499u};
+    static const uint32_t records[3] = {0x4eau, 0x4ecu, 0x4eeu};
+    static const uint16_t sector_offsets[3] = {0x1aeu, 0x0fau, 0x0fau};
+    size_t i;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!track02_data || !track02_md5 || !out ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0)
+        return 0;
+    for (i = 0u; i < 3u; ++i) {
+        size_t play = play_raw_offsets[i], load = load_raw_offsets[i];
+        size_t expected_user = (size_t)records[i] * 2048u +
+            (size_t)sector_offsets[i] - 16u;
+        size_t converted_user = 0u;
+        if (play > track02_size || 23u > track02_size - play ||
+            load > track02_size || 23u > track02_size - load ||
+            play / 2352u != records[i] || play % 2352u != sector_offsets[i] ||
+            theron_v1_track02_raw_offset_to_user_offset(play, track02_size,
+                track02_md5, &converted_user) != THERON_TRACK02_SIGNAL_OK ||
+            converted_user != expected_user ||
+            tqr_trace_fnv1a_bytes(track02_data + play, 23u) != 0xef1550adu ||
+            tqr_trace_fnv1a_bytes(track02_data + load, 23u) != 0xaa654403u)
+            return 0;
+        out->raw_track02_record[i] = records[i];
+        out->raw_sector_offset[i] = sector_offsets[i];
+        out->user_data_offset[i] = converted_user;
+    }
+    out->valid = 1;
+    out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->occurrence_count = 3u;
+    out->play_prompt_checksum = 0xef1550adu;
+    out->load_prompt_checksum = 0xaa654403u;
+    out->mode1_coordinates_verified = 1;
+    out->source_text_verified = 1;
+    out->screen_consumer_proven = 0;
+    return 1;
+}
+
+#define TQR_FILE_SELECT_ENCODED_BYTES 195u
+
+static int tqr_trace_find_file_select_ram_span(
+    const char *capture, const char *row_name, unsigned int expected_pc,
+    uint32_t first_physical, const uint8_t *expected,
+    unsigned int *out_frame, uint32_t *out_physical_pc)
+{
+    const char *cursor = capture, *line;
+    size_t length, index = 0u;
+    unsigned int matches = 0u, frame = 0u, row_frame, sequence;
+    unsigned int logical, physical, value, pc, physical_pc;
+    uint32_t candidate_physical_pc = 0u;
+    int consumed;
+
+    if (!capture || !row_name || !expected || !out_frame || !out_physical_pc)
+        return 0;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (strcmp(row_name, "file_select_source_write") == 0) {
+            if (sscanf(line,
+                    "file_select_source_write sequence=%u frame=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x%n",
+                    &sequence, &row_frame, &logical, &physical, &value, &pc,
+                    &physical_pc, &consumed) != 7 || consumed != (int)length)
+                continue;
+        } else {
+            if (sscanf(line,
+                    "file_select_read sequence=%u frame=%u logical_address=%x physical_address=%x value=%x reader_pc=%x reader_physical_pc=%x%n",
+                    &sequence, &row_frame, &logical, &physical, &value, &pc,
+                    &physical_pc, &consumed) != 7 || consumed != (int)length)
+                continue;
+        }
+        if (pc == expected_pc && physical == first_physical + index &&
+            value == expected[index] &&
+            (index == 0u || (row_frame == frame &&
+             physical_pc == candidate_physical_pc))) {
+            if (index == 0u) {
+                frame = row_frame;
+                candidate_physical_pc = physical_pc;
+            }
+            if (++index == TQR_FILE_SELECT_ENCODED_BYTES) {
+                ++matches;
+                *out_frame = frame;
+                *out_physical_pc = candidate_physical_pc;
+                index = 0u;
+            }
+        } else if (pc == expected_pc && physical == first_physical) {
+            index = value == expected[0] ? 1u : 0u;
+            frame = row_frame;
+            candidate_physical_pc = physical_pc;
+        }
+    }
+    return matches == 1u;
+}
+
+int theron_v1_raw_loader_trace_bind_file_select_encoded_transport(
+    const char *cd_capture, const char *source_write_capture,
+    const char *source_read_capture, const char *consumer_read_capture,
+    const char *vdc_capture, const uint8_t *track02_data,
+    size_t track02_size, const char *track02_md5,
+    Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt *out)
+{
+    static const unsigned int setup_address[13] = {
+        0u, 2u, 3u, 0u, 2u, 3u, 0u, 2u, 3u, 0u, 2u, 3u, 0u
+    };
+    static const unsigned int setup_value[13] = {
+        0x08u, 0xe8u, 0x00u, 0x07u, 0x00u, 0x00u, 0x05u,
+        0xc8u, 0x00u, 0x00u, 0x00u, 0x08u, 0x02u
+    };
+    static const unsigned int setup_pc[13] = {
+        0x4993u, 0x4999u, 0x499fu, 0x49a6u, 0x49acu, 0x49b2u,
+        0x4934u, 0x4939u, 0x4942u, 0x50fbu, 0x5101u, 0x5107u,
+        0x5109u
+    };
+    const size_t raw_sector = 0x67bu;
+    const size_t raw_offset = raw_sector * THERON_TRACK02_RAW_SECTOR_BYTES;
+    const uint8_t *payload;
+    const char *cursor, *line;
+    size_t length;
+    unsigned int generation, opcode, lba, count;
+    unsigned int observed_lba, bytes, sector_hash, span_offset, span_bytes;
+    unsigned int span_hash, read6_count = 0u, sector_count = 0u;
+    unsigned int loader_frame = 0u, transfer_frame = 0u, consumer_frame = 0u;
+    unsigned int presentation_frame = 0u, presentation_reads = 0u;
+    unsigned int vdc_frame = 0u, vdc_rows = 0u, vdc_total_rows = 0u;
+    unsigned int vdc_sources = 0u;
+    unsigned int parsed_frame = 0u;
+    uint32_t loader_physical_pc = 0u, transfer_physical_pc = 0u;
+    uint32_t consumer_physical_pc = 0u;
+    unsigned int sequence, logical, physical, value, pc, physical_pc;
+    uint8_t vdc_payload[512];
+    uint8_t selected_register = 0u;
+    uint16_t mawr = 0u, first_vram_word = 0xffffu, last_vram_word = 0u;
+    size_t vdc_payload_index = 0u, vram_words = 0u;
+    unsigned int have_vwr_low = 0u;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!out || !cd_capture || !source_write_capture || !source_read_capture ||
+        !consumer_read_capture || !vdc_capture ||
+        !track02_data || !track02_md5 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        raw_offset > track02_size || THERON_TRACK02_RAW_SECTOR_BYTES >
+            track02_size - raw_offset)
+        return 0;
+    payload = track02_data + raw_offset + THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    if (tqr_trace_fnv1a_bytes(track02_data + raw_offset,
+            THERON_TRACK02_RAW_SECTOR_BYTES) != 0xfcc73c77u ||
+        tqr_trace_fnv1a_bytes(payload, TQR_FILE_SELECT_ENCODED_BYTES) !=
+            0xefad54b3u)
+        return 0;
+
+    cursor = cd_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (sscanf(line,
+                "scsi_read_command generation=%u opcode=%x cdb=%*12s start_lba=%u sector_count=%u%n",
+                &generation, &opcode, &lba, &count, &consumed) == 4 &&
+            consumed == (int)length && generation == 12u) {
+            if (opcode != 8u || lba != 4668u || count != 1u) return 0;
+            ++read6_count;
+        } else if (sscanf(line,
+                "cd_interface_raw_sector_read lba=%u bytes=%u sector_fnv1a=%x span_offset=%u span_bytes=%u span_fnv1a=%x%n",
+                &observed_lba, &bytes, &sector_hash, &span_offset, &span_bytes,
+                &span_hash, &consumed) == 6 && consumed == (int)length &&
+                observed_lba == 4668u) {
+            if (bytes != 2352u || sector_hash != 0xfcc73c77u ||
+                span_offset != 0u || span_bytes != 32u ||
+                span_hash != 0xf58a8575u) return 0;
+            ++sector_count;
+        }
+    }
+    cursor = consumer_read_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (sscanf(line,
+                "file_select_read sequence=%u frame=%u logical_address=%x physical_address=%x value=%x reader_pc=%x reader_physical_pc=%x%n",
+                &sequence, &parsed_frame, &logical, &physical, &value,
+                &pc, &physical_pc, &consumed) == 7 &&
+            consumed == (int)length && logical == 0x7d58u &&
+            physical == 0x0d1d58u && value == 0x02u && pc == 0x514bu &&
+            physical_pc == 0x10514bu) {
+            presentation_frame = parsed_frame;
+            ++presentation_reads;
+        }
+    }
+    cursor = vdc_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-file-select-vdc") &&
+            memcmp(line, "source=mednafen-pce-instrumented-file-select-vdc",
+                length) == 0) {
+            ++vdc_sources;
+        } else if (sscanf(line,
+                "file_select_vdc_write sequence=%u frame=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x%*[^\n]%n",
+                &sequence, &vdc_frame, &logical, &physical, &value, &pc,
+                &physical_pc, &consumed) >= 7) {
+            uint32_t normalized = physical & 0x7fffffffu;
+            unsigned int port;
+            if (sequence != vdc_total_rows || vdc_frame != 8580u ||
+                value > 0xffu ||
+                normalized < 0x1fe000u || normalized > 0x1fe003u)
+                return 0;
+            port = normalized - 0x1fe000u;
+            if (vdc_total_rows < 13u) {
+                if (port != setup_address[vdc_total_rows] ||
+                    value != setup_value[vdc_total_rows] ||
+                    pc != setup_pc[vdc_total_rows] ||
+                    physical_pc != 0x100000u + pc) return 0;
+            } else {
+                if (pc != 0x5110u || physical_pc != 0x105110u ||
+                    port != 2u + (vdc_payload_index & 1u) ||
+                    vdc_payload_index >= sizeof(vdc_payload)) return 0;
+                vdc_payload[vdc_payload_index++] = (uint8_t)value;
+                ++vdc_rows;
+            }
+            if (port == 0u) selected_register = (uint8_t)(value & 0x1fu);
+            else if (port == 2u) {
+                if (selected_register == 0u)
+                    mawr = (uint16_t)((mawr & 0xff00u) | value);
+                else if (selected_register == 2u) {
+                    have_vwr_low = 1u;
+                }
+            } else if (port == 3u) {
+                if (selected_register == 0u)
+                    mawr = (uint16_t)((mawr & 0x00ffu) | (value << 8));
+                else if (selected_register == 2u && have_vwr_low) {
+                    if (vram_words == 0u) first_vram_word = mawr;
+                    last_vram_word = mawr++;
+                    ++vram_words;
+                    have_vwr_low = 0u;
+                }
+            }
+            ++vdc_total_rows;
+        }
+    }
+    if (read6_count != 1u || sector_count != 1u ||
+        !tqr_trace_find_file_select_ram_span(source_write_capture,
+            "file_select_source_write", 0xea9eu, 0x0ddc5bu, payload,
+            &loader_frame, &loader_physical_pc) ||
+        !tqr_trace_find_file_select_ram_span(source_write_capture,
+            "file_select_source_write", 0x3446u, 0x0d1d3du, payload,
+            &transfer_frame, &transfer_physical_pc) ||
+        !tqr_trace_find_file_select_ram_span(source_read_capture,
+            "file_select_read", 0x3446u, 0x0ddc5bu, payload,
+            &consumer_frame, &consumer_physical_pc) ||
+        loader_physical_pc != 0x000a9eu ||
+        transfer_physical_pc != 0x1f1446u ||
+        consumer_physical_pc != 0x1f1446u ||
+        presentation_reads != 1u || vdc_sources != 1u ||
+        vdc_total_rows != 525u || vdc_rows != 512u ||
+        vdc_payload_index != sizeof(vdc_payload) ||
+        tqr_trace_fnv1a_bytes(vdc_payload, sizeof(vdc_payload)) != 0xa8007f15u ||
+        vram_words != 256u || first_vram_word != 0x0800u ||
+        last_vram_word != 0x08ffu ||
+        presentation_frame != vdc_frame ||
+        !(loader_frame < transfer_frame && transfer_frame == consumer_frame &&
+          transfer_frame < presentation_frame))
+        return 0;
+
+    out->valid = 1;
+    out->variant = THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", track02_md5);
+    out->scsi_generation = 12u;
+    out->scsi_lba = 4668u;
+    out->raw_track02_record = (uint32_t)raw_sector;
+    out->raw_user_data_offset = raw_offset +
+        THERON_TRACK02_RAW_USER_DATA_OFFSET;
+    out->byte_count = TQR_FILE_SELECT_ENCODED_BYTES;
+    out->raw_sector_checksum = 0xfcc73c77u;
+    out->payload_checksum = 0xefad54b3u;
+    out->loader_frame = loader_frame;
+    out->loader_pc = 0xea9eu;
+    out->loader_physical_pc = loader_physical_pc;
+    out->source_physical_first = 0x0ddc5bu;
+    out->transfer_frame = transfer_frame;
+    out->transfer_pc = 0x3446u;
+    out->transfer_physical_pc = transfer_physical_pc;
+    out->destination_physical_first = 0x0d1d3du;
+    out->presentation_frame = presentation_frame;
+    out->presentation_source_reader_pc = 0x514bu;
+    out->presentation_source_reader_physical_pc = 0x10514bu;
+    out->vdc_writer_pc = 0x5110u;
+    out->vdc_writer_physical_pc = 0x105110u;
+    out->vdc_setup_rows = 13u;
+    out->vdc_payload_rows = 512u;
+    out->vdc_payload_checksum = 0xa8007f15u;
+    out->first_vram_word = 0x0800u;
+    out->last_vram_word = 0x08ffu;
+    out->vram_word_count = 256u;
+    out->read6_verified = 1;
+    out->media_to_source_ram_verified = 1;
+    out->source_to_destination_ram_verified = 1;
+    out->destination_consumer_verified = 1;
+    out->destination_to_vdc_verified = 1;
+    out->vdc_destination_replay_verified = 1;
+    out->text_or_glyph_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_file_select_sat_frame(
+    const Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt *transport,
+    const char *vdc_state_capture,
+    const uint8_t *vram_snapshot, size_t vram_snapshot_size,
+    const uint8_t *vce_snapshot, size_t vce_snapshot_size,
+    const uint8_t *sat_snapshot, size_t sat_snapshot_size,
+    Theron_V1RawLoaderTraceFileSelectSatFrameReceipt *out)
+{
+    const char *cursor, *line;
+    size_t length, state_sources = 0u, states = 0u, i;
+    size_t nonzero_sat_entries = 0u, visible_sat_entries = 0u;
+    size_t bat_references = 0u;
+    size_t nonzero_frame_pixels = 0u, background_source_pixels = 0u;
+    size_t sprite_source_pixels = 0u, unique_source_indices = 0u;
+    uint16_t *frame = NULL;
+    uint8_t source_seen[512] = {0};
+    uint32_t frame_source_checksum = 2166136261u;
+    uint32_t frame_color_checksum = 2166136261u;
+    uint16_t sprite_min_x = 256u, sprite_max_x = 0u;
+    uint16_t sprite_min_y = 240u, sprite_max_y = 0u;
+    unsigned int vdc, bxr, byr, mwr, hsr, hdr, vsr, vdr, vcr, cr;
+    int consumed = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!transport || !transport->valid || !vdc_state_capture ||
+        !vram_snapshot || !vce_snapshot || !sat_snapshot || !out ||
+        transport->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(transport->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        transport->presentation_frame != 8580u ||
+        !transport->destination_to_vdc_verified ||
+        !transport->vdc_destination_replay_verified ||
+        transport->vdc_payload_checksum != 0xa8007f15u ||
+        transport->first_vram_word != 0x0800u ||
+        transport->last_vram_word != 0x08ffu ||
+        transport->text_or_glyph_semantics_proven ||
+        vram_snapshot_size != 65536u || vce_snapshot_size != 1024u ||
+        sat_snapshot_size != 512u ||
+        tqr_trace_fnv1a_bytes(vram_snapshot, vram_snapshot_size) != 0x832b4d13u ||
+        tqr_trace_fnv1a_bytes(vce_snapshot, vce_snapshot_size) != 0x5376a91bu ||
+        tqr_trace_fnv1a_bytes(sat_snapshot, sat_snapshot_size) != 0xa8007f15u ||
+        tqr_trace_fnv1a_bytes(vram_snapshot + 0x1000u, 512u) != 0xa8007f15u ||
+        memcmp(vram_snapshot + 0x1000u, sat_snapshot, 512u) != 0)
+        return 0;
+
+    cursor = vdc_state_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("FIRESTAFF_THERON_VDC_STATE_V1") &&
+            memcmp(line, "FIRESTAFF_THERON_VDC_STATE_V1", length) == 0)
+            ++state_sources;
+        else if (sscanf(line,
+                "vdc=%u bxr=%x byr=%x mwr=%x hsr=%x hdr=%x vsr=%x vdr=%x vcr=%x cr=%x%n",
+                &vdc, &bxr, &byr, &mwr, &hsr, &hdr, &vsr, &vdr, &vcr, &cr,
+                &consumed) == 10 && consumed == (int)length) ++states;
+    }
+    if (state_sources != 1u || states != 1u || vdc != 0u || bxr != 0u ||
+        byr != 0x00e8u || mwr != 0x0010u || hdr != 0x041fu ||
+        vdr != 0x00efu || cr != 0x00c8u) return 0;
+
+    for (i = 0u; i < 64u; ++i) {
+        size_t byte_index;
+        int nonzero = 0;
+        for (byte_index = 0u; byte_index < 8u; ++byte_index)
+            if (sat_snapshot[i * 8u + byte_index] != 0u) nonzero = 1;
+        if (nonzero) {
+            uint16_t syw, sxw, pn, flags;
+            static const uint16_t expected_y[3] = {0x0130u, 0x0040u, 0x00f0u};
+            static const uint16_t expected_x[6] = {
+                0x00e0u, 0x00c0u, 0x00a0u, 0x0080u, 0x0060u, 0x0040u
+            };
+            if (i >= 18u) return 0;
+            syw = (uint16_t)(sat_snapshot[i * 8u] |
+                ((uint16_t)sat_snapshot[i * 8u + 1u] << 8));
+            sxw = (uint16_t)(sat_snapshot[i * 8u + 2u] |
+                ((uint16_t)sat_snapshot[i * 8u + 3u] << 8));
+            pn = (uint16_t)(sat_snapshot[i * 8u + 4u] |
+                ((uint16_t)sat_snapshot[i * 8u + 5u] << 8));
+            flags = (uint16_t)(sat_snapshot[i * 8u + 6u] |
+                ((uint16_t)sat_snapshot[i * 8u + 7u] << 8));
+            if (syw != expected_y[i / 6u] || sxw != expected_x[i % 6u] ||
+                pn != 0x0210u || flags != (i < 6u ? 0x0180u : 0x3180u))
+                return 0;
+            ++nonzero_sat_entries;
+            if (i >= 6u) ++visible_sat_entries;
+        } else if (i < 18u) return 0;
+    }
+    for (i = 0u; i < 2048u; ++i) {
+        uint16_t word = (uint16_t)(vram_snapshot[i * 2u] |
+            ((uint16_t)vram_snapshot[i * 2u + 1u] << 8));
+        uint16_t index = (uint16_t)(word & 0x0fffu);
+        if (index >= 0x0080u && index <= 0x008fu) ++bat_references;
+    }
+    if (nonzero_sat_entries != 18u || visible_sat_entries != 12u ||
+        bat_references != 0u ||
+        tqr_trace_fnv1a_bytes(vram_snapshot + 0x8400u, 1024u) != 0xba5526c5u)
+        return 0;
+
+    frame = (uint16_t *)calloc(256u * 240u, sizeof(*frame));
+    if (!frame) return 0;
+    for (i = 0u; i < 256u * 240u; ++i) {
+        unsigned int x = (unsigned int)(i % 256u);
+        unsigned int y = (unsigned int)(i / 256u);
+        unsigned int sx = (bxr + x) & 0x01ffu;
+        unsigned int sy = (byr + y) & 0x00ffu;
+        size_t bat_byte = ((size_t)(sy >> 3) * 64u + (sx >> 3)) * 2u;
+        uint16_t bat = (uint16_t)vram_snapshot[bat_byte] |
+            ((uint16_t)vram_snapshot[bat_byte + 1u] << 8);
+        size_t pattern_byte = (size_t)(bat & 0x0fffu) * 32u +
+            (size_t)(sy & 7u) * 2u;
+        unsigned int bit = 7u - (sx & 7u);
+        unsigned int pixel =
+            ((vram_snapshot[pattern_byte] >> bit) & 1u) |
+            (((vram_snapshot[pattern_byte + 1u] >> bit) & 1u) << 1) |
+            (((vram_snapshot[pattern_byte + 16u] >> bit) & 1u) << 2) |
+            (((vram_snapshot[pattern_byte + 17u] >> bit) & 1u) << 3);
+        if (pixel) frame[i] = (uint16_t)(((bat >> 12) << 4) | pixel);
+    }
+    for (i = 0u; i < 240u; ++i) {
+        struct TqrFileSelectSpritePiece {
+            uint16_t flags, pattern, palette;
+            int x, row;
+        } active[16];
+        int active_count = 0;
+        size_t sprite;
+        for (sprite = 0u; sprite < 64u && active_count < 16; ++sprite) {
+            const uint8_t *s = sat_snapshot + sprite * 8u;
+            uint16_t syw = (uint16_t)s[0] | ((uint16_t)s[1] << 8);
+            uint16_t sxw = (uint16_t)s[2] | ((uint16_t)s[3] << 8);
+            uint16_t pn = (uint16_t)s[4] | ((uint16_t)s[5] << 8);
+            uint16_t flags = (uint16_t)s[6] | ((uint16_t)s[7] << 8);
+            static const int heights[4] = {16, 32, 64, 64};
+            static const unsigned int masks[4] = {~0u, ~2u, ~6u, ~6u};
+            int sy = (int)(syw & 0x03ffu) - 0x40;
+            int height = heights[(flags >> 12) & 3u];
+            int width = (flags & 0x0100u) ? 32 : 16;
+            int row, half;
+            unsigned int base;
+            if ((int)i < sy || (int)i >= sy + height) continue;
+            row = (int)i - sy;
+            if (flags & 0x8000u) row = height - 1 - row;
+            base = ((pn >> 1) & 0x03ffu) & masks[(flags >> 12) & 3u];
+            base |= (unsigned int)(row & 0x30) >> 3;
+            if (width == 32) base &= ~1u;
+            for (half = 0; half < width / 16 && active_count < 16; ++half) {
+                unsigned int pattern = base | (unsigned int)half;
+                if ((flags & 0x0800u) && width == 32) pattern ^= 1u;
+                active[active_count].flags = flags;
+                active[active_count].pattern = (uint16_t)pattern;
+                active[active_count].palette = (uint16_t)((flags & 0xfu) << 4);
+                active[active_count].x =
+                    (int)(sxw & 0x03ffu) - 0x20 + half * 16;
+                active[active_count].row = row & 15;
+                ++active_count;
+            }
+        }
+        while (active_count-- > 0) {
+            const struct TqrFileSelectSpritePiece *sp = &active[active_count];
+            size_t word_base = (size_t)sp->pattern * 64u + (size_t)sp->row;
+            uint16_t planes[4];
+            int plane, px;
+            if (word_base + 48u >= vram_snapshot_size / 2u) continue;
+            for (plane = 0; plane < 4; ++plane) {
+                size_t byte = (word_base + (size_t)plane * 16u) * 2u;
+                planes[plane] = (uint16_t)vram_snapshot[byte] |
+                    ((uint16_t)vram_snapshot[byte + 1u] << 8);
+            }
+            for (px = 0; px < 16; ++px) {
+                int bit = (sp->flags & 0x0800u) ? px : 15 - px;
+                int dx = sp->x + px;
+                unsigned int pixel = 0u;
+                uint16_t *destination;
+                if (dx < 0 || dx >= 256) continue;
+                for (plane = 0; plane < 4; ++plane)
+                    pixel |= ((planes[plane] >> bit) & 1u) << plane;
+                if (!pixel) continue;
+                destination = &frame[i * 256u + (size_t)dx];
+                if ((*destination & 0x0fu) == 0u || (sp->flags & 0x0080u))
+                    *destination = (uint16_t)(0x100u | sp->palette | pixel);
+            }
+        }
+    }
+    for (i = 0u; i < 256u * 240u; ++i) {
+        uint16_t source = frame[i] & 0x01ffu;
+        size_t color_byte = (size_t)source * 2u;
+        frame_source_checksum = tqr_trace_fnv1a_u16(
+            frame_source_checksum, source);
+        frame_color_checksum ^= vce_snapshot[color_byte];
+        frame_color_checksum *= 16777619u;
+        frame_color_checksum ^= vce_snapshot[color_byte + 1u];
+        frame_color_checksum *= 16777619u;
+        if (!source_seen[source]) {
+            source_seen[source] = 1u;
+            ++unique_source_indices;
+        }
+        if (source) ++nonzero_frame_pixels;
+        if (source > 0u && source < 0x100u) ++background_source_pixels;
+        if (source >= 0x100u) {
+            uint16_t x = (uint16_t)(i % 256u);
+            uint16_t y = (uint16_t)(i / 256u);
+            ++sprite_source_pixels;
+            if (x < sprite_min_x) sprite_min_x = x;
+            if (x > sprite_max_x) sprite_max_x = x;
+            if (y < sprite_min_y) sprite_min_y = y;
+            if (y > sprite_max_y) sprite_max_y = y;
+        }
+    }
+    free(frame);
+    if (nonzero_frame_pixels != 43087u ||
+        background_source_pixels != 18511u ||
+        sprite_source_pixels != 24576u || unique_source_indices != 40u ||
+        frame_source_checksum != 0x7622aee1u ||
+        frame_color_checksum != 0x8f1cf573u ||
+        sprite_min_x != 32u || sprite_max_x != 223u ||
+        sprite_min_y != 0u || sprite_max_y != 239u ||
+        vce_snapshot[514u] != 0u || vce_snapshot[515u] != 0u)
+        return 0;
+
+    out->valid = 1;
+    out->variant = transport->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+        transport->track02_md5);
+    out->frame = 8580u;
+    out->first_vram_word = 0x0800u;
+    out->last_vram_word = 0x08ffu;
+    out->byte_count = 512u;
+    out->staging_checksum = 0xa8007f15u;
+    out->vram_checksum = 0x832b4d13u;
+    out->vce_checksum = 0x5376a91bu;
+    out->sat_checksum = 0xa8007f15u;
+    out->nonzero_sat_entries = nonzero_sat_entries;
+    out->visible_sat_entries = visible_sat_entries;
+    out->first_sprite_pattern = 0x0108u;
+    out->last_sprite_pattern = 0x010fu;
+    out->sprite_pattern_bytes = 1024u;
+    out->sprite_pattern_checksum = 0xba5526c5u;
+    out->bat_reference_count = bat_references;
+    out->frame_pixels = 256u * 240u;
+    out->nonzero_frame_pixels = nonzero_frame_pixels;
+    out->background_source_pixels = background_source_pixels;
+    out->sprite_source_pixels = sprite_source_pixels;
+    out->unique_source_indices = unique_source_indices;
+    out->frame_source_checksum = frame_source_checksum;
+    out->frame_color_checksum = frame_color_checksum;
+    out->sprite_source_index = 0x0101u;
+    out->sprite_color = 0x0000u;
+    out->sprite_min_x = sprite_min_x;
+    out->sprite_max_x = sprite_max_x;
+    out->sprite_min_y = sprite_min_y;
+    out->sprite_max_y = sprite_max_y;
+    out->byr = (uint16_t)byr;
+    out->mwr = (uint16_t)mwr;
+    out->cr = (uint16_t)cr;
+    out->atomic_snapshot_verified = 1;
+    out->vram_sat_identity_verified = 1;
+    out->sat_record_layout_verified = 1;
+    out->sprite_pattern_range_verified = 1;
+    out->frame_composition_verified = 1;
+    out->vce_color_composition_verified = 1;
+    out->sprite_or_screen_semantics_proven = 0;
+    return 1;
+}
+
+static int tqr_trace_file_select_frame_end_state(
+    const char *capture, unsigned int expected_frame, uint16_t expected_byr)
+{
+    const char *cursor = capture, *line;
+    size_t length, sources = 0u, states = 0u, markers = 0u;
+    unsigned int vdc, bxr, byr, mwr, hsr, hdr, vsr, vdr, vcr, cr, frame;
+    int consumed;
+
+    if (!capture) return 0;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("FIRESTAFF_THERON_VDC_STATE_V1") &&
+            memcmp(line, "FIRESTAFF_THERON_VDC_STATE_V1", length) == 0)
+            ++sources;
+        else if (sscanf(line,
+                "vdc=%u bxr=%x byr=%x mwr=%x hsr=%x hdr=%x vsr=%x vdr=%x vcr=%x cr=%x%n",
+                &vdc, &bxr, &byr, &mwr, &hsr, &hdr, &vsr, &vdr, &vcr, &cr,
+                &consumed) == 10 && consumed == (int)length) {
+            if (vdc != 0u || bxr != 0u || byr != expected_byr ||
+                mwr != 0x0010u || hsr != 0x0202u || hdr != 0x041fu ||
+                vsr != 0x0f02u || vdr != 0x00efu || vcr != 0x0004u ||
+                cr != 0x00c8u) return 0;
+            ++states;
+        } else if (sscanf(line, "snapshot_frame_end=%u%n", &frame,
+                &consumed) == 1 && consumed == (int)length) {
+            if (frame != expected_frame) return 0;
+            ++markers;
+        } else return 0;
+    }
+    return sources == 1u && states == 1u && markers == 1u;
+}
+
+static int tqr_trace_compose_file_select_source_frame(
+    const uint8_t *vram, size_t vram_size,
+    const uint8_t *sat, size_t sat_size, uint16_t bxr, uint16_t byr,
+    uint16_t *frame)
+{
+    size_t i;
+    if (!vram || vram_size != 65536u || !sat || sat_size != 512u ||
+        !frame) return 0;
+    memset(frame, 0, 256u * 240u * sizeof(*frame));
+    for (i = 0u; i < 256u * 240u; ++i) {
+        unsigned int x = (unsigned int)(i % 256u);
+        unsigned int y = (unsigned int)(i / 256u);
+        unsigned int sx = (bxr + x) & 0x01ffu;
+        unsigned int sy = (byr + y) & 0x00ffu;
+        size_t bat_byte = ((size_t)(sy >> 3) * 64u + (sx >> 3)) * 2u;
+        uint16_t bat = (uint16_t)vram[bat_byte] |
+            ((uint16_t)vram[bat_byte + 1u] << 8);
+        size_t pattern_byte = (size_t)(bat & 0x0fffu) * 32u +
+            (size_t)(sy & 7u) * 2u;
+        unsigned int bit = 7u - (sx & 7u);
+        unsigned int pixel =
+            ((vram[pattern_byte] >> bit) & 1u) |
+            (((vram[pattern_byte + 1u] >> bit) & 1u) << 1) |
+            (((vram[pattern_byte + 16u] >> bit) & 1u) << 2) |
+            (((vram[pattern_byte + 17u] >> bit) & 1u) << 3);
+        if (pixel) frame[i] = (uint16_t)(((bat >> 12) << 4) | pixel);
+    }
+    for (i = 0u; i < 240u; ++i) {
+        struct TqrScrollSpritePiece {
+            uint16_t flags, pattern, palette;
+            int x, row;
+        } active[16];
+        int active_count = 0;
+        size_t sprite;
+        for (sprite = 0u; sprite < 64u && active_count < 16; ++sprite) {
+            const uint8_t *s = sat + sprite * 8u;
+            uint16_t syw = (uint16_t)s[0] | ((uint16_t)s[1] << 8);
+            uint16_t sxw = (uint16_t)s[2] | ((uint16_t)s[3] << 8);
+            uint16_t pn = (uint16_t)s[4] | ((uint16_t)s[5] << 8);
+            uint16_t flags = (uint16_t)s[6] | ((uint16_t)s[7] << 8);
+            static const int heights[4] = {16, 32, 64, 64};
+            static const unsigned int masks[4] = {~0u, ~2u, ~6u, ~6u};
+            int sy = (int)(syw & 0x03ffu) - 0x40;
+            int height = heights[(flags >> 12) & 3u];
+            int width = (flags & 0x0100u) ? 32 : 16;
+            int row, half;
+            unsigned int base;
+            if ((int)i < sy || (int)i >= sy + height) continue;
+            row = (int)i - sy;
+            if (flags & 0x8000u) row = height - 1 - row;
+            base = ((pn >> 1) & 0x03ffu) & masks[(flags >> 12) & 3u];
+            base |= (unsigned int)(row & 0x30) >> 3;
+            if (width == 32) base &= ~1u;
+            for (half = 0; half < width / 16 && active_count < 16; ++half) {
+                unsigned int pattern = base | (unsigned int)half;
+                if ((flags & 0x0800u) && width == 32) pattern ^= 1u;
+                active[active_count].flags = flags;
+                active[active_count].pattern = (uint16_t)pattern;
+                active[active_count].palette = (uint16_t)((flags & 0xfu) << 4);
+                active[active_count].x =
+                    (int)(sxw & 0x03ffu) - 0x20 + half * 16;
+                active[active_count].row = row & 15;
+                ++active_count;
+            }
+        }
+        while (active_count-- > 0) {
+            const struct TqrScrollSpritePiece *sp = &active[active_count];
+            size_t word_base = (size_t)sp->pattern * 64u + (size_t)sp->row;
+            uint16_t planes[4];
+            int plane, px;
+            if (word_base + 48u >= vram_size / 2u) continue;
+            for (plane = 0; plane < 4; ++plane) {
+                size_t byte = (word_base + (size_t)plane * 16u) * 2u;
+                planes[plane] = (uint16_t)vram[byte] |
+                    ((uint16_t)vram[byte + 1u] << 8);
+            }
+            for (px = 0; px < 16; ++px) {
+                int bit = (sp->flags & 0x0800u) ? px : 15 - px;
+                int dx = sp->x + px;
+                unsigned int pixel = 0u;
+                uint16_t *destination;
+                if (dx < 0 || dx >= 256) continue;
+                for (plane = 0; plane < 4; ++plane)
+                    pixel |= ((planes[plane] >> bit) & 1u) << plane;
+                if (!pixel) continue;
+                destination = &frame[i * 256u + (size_t)dx];
+                if ((*destination & 0x0fu) == 0u || (sp->flags & 0x0080u))
+                    *destination = (uint16_t)(0x100u | sp->palette | pixel);
+            }
+        }
+    }
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_file_select_scroll_transition(
+    const Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt *transport,
+    const char *vdc_capture, const char *pre_vdc_state_capture,
+    const uint8_t *pre_vram, size_t pre_vram_size,
+    const uint8_t *pre_vce, size_t pre_vce_size,
+    const uint8_t *pre_sat, size_t pre_sat_size,
+    const char *post_vdc_state_capture,
+    const uint8_t *post_vram, size_t post_vram_size,
+    const uint8_t *post_vce, size_t post_vce_size,
+    const uint8_t *post_sat, size_t post_sat_size,
+    Theron_V1RawLoaderTraceFileSelectScrollReceipt *out)
+{
+    const char *cursor, *line;
+    size_t length, rows = 0u, sources = 0u, i;
+    uint16_t *pre_frame = NULL, *post_frame = NULL;
+    uint32_t pre_source = 2166136261u, post_source = 2166136261u;
+    uint32_t pre_color = 2166136261u, post_color = 2166136261u;
+    size_t pre_nonzero = 0u, post_nonzero = 0u, sprite_pixels = 0u;
+    size_t changed = 0u, changed_sprite = 0u;
+    uint16_t min_x = 256u, max_x = 0u, min_y = 240u, max_y = 0u;
+    unsigned int sequence, frame, logical, physical, value, pc, physical_pc;
+    unsigned int a, x, y;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!transport || !transport->valid || !vdc_capture || !out ||
+        transport->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(transport->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        transport->presentation_frame != 8580u ||
+        !transport->destination_to_vdc_verified ||
+        !transport->vdc_destination_replay_verified ||
+        !tqr_trace_file_select_frame_end_state(
+            pre_vdc_state_capture, 8579u, 0x00e9u) ||
+        !tqr_trace_file_select_frame_end_state(
+            post_vdc_state_capture, 8581u, 0x00e8u) ||
+        pre_vram_size != 65536u || post_vram_size != 65536u ||
+        pre_vce_size != 1024u || post_vce_size != 1024u ||
+        pre_sat_size != 512u || post_sat_size != 512u ||
+        memcmp(pre_vram, post_vram, pre_vram_size) != 0 ||
+        memcmp(pre_vce, post_vce, pre_vce_size) != 0 ||
+        memcmp(pre_sat, post_sat, pre_sat_size) != 0 ||
+        tqr_trace_fnv1a_bytes(pre_vram, pre_vram_size) != 0x832b4d13u ||
+        tqr_trace_fnv1a_bytes(pre_vce, pre_vce_size) != 0x5376a91bu ||
+        tqr_trace_fnv1a_bytes(pre_sat, pre_sat_size) != 0xa8007f15u)
+        return 0;
+
+    cursor = vdc_capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        consumed = 0;
+        if (length == strlen("source=mednafen-pce-instrumented-file-select-vdc") &&
+            memcmp(line, "source=mednafen-pce-instrumented-file-select-vdc",
+                length) == 0) {
+            ++sources;
+            continue;
+        }
+        if (sscanf(line,
+                "file_select_vdc_write sequence=%u frame=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x a=%x x=%x y=%x%n",
+                &sequence, &frame, &logical, &physical, &value, &pc,
+                &physical_pc, &a, &x, &y, &consumed) != 10 ||
+            consumed != (int)length || sequence != rows || frame != 8580u)
+            return 0;
+        if ((rows == 0u && (logical != 0x21ddu || value != 0x08u ||
+                pc != 0x4993u || physical_pc != 0x104993u)) ||
+            (rows == 1u && (logical != 0x0002u || value != 0xe8u ||
+                pc != 0x4999u || physical_pc != 0x104999u)) ||
+            (rows == 2u && (logical != 0x0003u || value != 0x00u ||
+                pc != 0x499fu || physical_pc != 0x10499fu))) return 0;
+        ++rows;
+    }
+    if (sources != 1u || rows != 525u) return 0;
+
+    pre_frame = (uint16_t *)malloc(256u * 240u * sizeof(*pre_frame));
+    post_frame = (uint16_t *)malloc(256u * 240u * sizeof(*post_frame));
+    if (!pre_frame || !post_frame ||
+        !tqr_trace_compose_file_select_source_frame(pre_vram, pre_vram_size,
+            pre_sat, pre_sat_size, 0u, 0x00e9u, pre_frame) ||
+        !tqr_trace_compose_file_select_source_frame(post_vram, post_vram_size,
+            post_sat, post_sat_size, 0u, 0x00e8u, post_frame)) {
+        free(pre_frame); free(post_frame); return 0;
+    }
+    for (i = 0u; i < 256u * 240u; ++i) {
+        uint16_t before = pre_frame[i] & 0x01ffu;
+        uint16_t after = post_frame[i] & 0x01ffu;
+        size_t before_color = (size_t)before * 2u;
+        size_t after_color = (size_t)after * 2u;
+        pre_source = tqr_trace_fnv1a_u16(pre_source, before);
+        post_source = tqr_trace_fnv1a_u16(post_source, after);
+        pre_color ^= pre_vce[before_color]; pre_color *= 16777619u;
+        pre_color ^= pre_vce[before_color + 1u]; pre_color *= 16777619u;
+        post_color ^= post_vce[after_color]; post_color *= 16777619u;
+        post_color ^= post_vce[after_color + 1u]; post_color *= 16777619u;
+        if (before) ++pre_nonzero;
+        if (after) ++post_nonzero;
+        if (before >= 0x100u) ++sprite_pixels;
+        if (before != after) {
+            uint16_t px = (uint16_t)(i % 256u);
+            uint16_t py = (uint16_t)(i / 256u);
+            ++changed;
+            if (before >= 0x100u || after >= 0x100u) ++changed_sprite;
+            if (px < min_x) min_x = px;
+            if (px > max_x) max_x = px;
+            if (py < min_y) min_y = py;
+            if (py > max_y) max_y = py;
+        }
+    }
+    free(pre_frame); free(post_frame);
+    if (pre_source != 0xaf183e0du || post_source != 0x7622aee1u ||
+        pre_color != 0x68fe4a69u || post_color != 0x8f1cf573u ||
+        pre_nonzero != 43047u || post_nonzero != 43087u ||
+        sprite_pixels != 24576u || changed != 12644u || changed_sprite != 0u ||
+        min_x != 32u || max_x != 223u || min_y != 64u || max_y != 175u)
+        return 0;
+
+    out->valid = 1;
+    out->variant = transport->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
+        transport->track02_md5);
+    out->pre_frame = 8579u; out->update_frame = 8580u; out->post_frame = 8581u;
+    out->pre_byr = 0x00e9u; out->post_byr = 0x00e8u;
+    out->register_select_pc = 0x4993u;
+    out->low_byte_writer_pc = 0x4999u;
+    out->high_byte_writer_pc = 0x499fu;
+    out->vram_checksum = 0x832b4d13u;
+    out->vce_checksum = 0x5376a91bu;
+    out->sat_checksum = 0xa8007f15u;
+    out->pre_source_checksum = pre_source; out->post_source_checksum = post_source;
+    out->pre_color_checksum = pre_color; out->post_color_checksum = post_color;
+    out->pre_nonzero_pixels = pre_nonzero; out->post_nonzero_pixels = post_nonzero;
+    out->sprite_pixels = sprite_pixels; out->changed_pixels = changed;
+    out->changed_sprite_pixels = changed_sprite;
+    out->changed_min_x = min_x; out->changed_max_x = max_x;
+    out->changed_min_y = min_y; out->changed_max_y = max_y;
+    out->frame_end_markers_verified = 1;
+    out->graphics_snapshots_identical = 1;
+    out->game_byr_write_verified = 1;
+    out->composition_delta_verified = 1;
+    out->sprite_mask_static_verified = 1;
+    out->screen_semantics_proven = 0;
+    return 1;
+}
+
+int theron_v1_raw_loader_trace_bind_file_select_scroll_driver(
+    const Theron_V1RawLoaderTraceFileSelectScrollReceipt *scroll,
+    const uint8_t *code_snapshot, size_t code_snapshot_size,
+    const uint8_t *ram_snapshot, size_t ram_snapshot_size,
+    const char *scroll_ram_capture,
+    const char *scroll_control_capture,
+    Theron_V1RawLoaderTraceFileSelectScrollDriverReceipt *out)
+{
+    static const uint8_t signed_loop[] = {
+        0xa5,0x51,0x05,0x50,0xf0,0x26,0xa5,0x51,0x18,0x6d,0x10,0x22,
+        0x8d,0x10,0x22,0xa0,0x69,0xa5,0x50,0x10,0x02,0xa0,0xe9,0x8c,
+        0x99,0x41,0x18,0x6d,0x0c,0x22,0x8d,0x0c,0x22,0xad,0x0d,0x22,
+        0x69,0x00,0x8d,0x0d,0x22,0x20,0x15,0x42,0x60
+    };
+    static const uint8_t byr_load[] = {
+        0xad,0x10,0x22,0x8d,0x02,0x00,0xad,0x11,0x22,0x8d,0x03,0x00
+    };
+    static const uint8_t next_control_loop[] = {
+        0xc6,0x38,0xd0,0x06,0xa5,0x39,0xd0,0x02,0x64,0x50,0xa5,0x38,
+        0x8d,0xba,0x47,0xa5,0x39,0x8d,0xbb,0x47,0x9c,0xd4,0x47,0x60
+    };
+    const char *cursor, *line;
+    size_t length, rows, sources;
+    unsigned int sequence, frame, logical, physical, old_value, value;
+    unsigned int pc, physical_pc, a, x, y, group, slot;
+    int consumed, ram_boundary = 0, control_boundary = 0;
+    int next_phase_setup = 0, next_phase_stop = 0, next_phase_reset = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!scroll || !scroll->valid || !out || !code_snapshot || !ram_snapshot ||
+        !scroll_ram_capture || !scroll_control_capture ||
+        scroll->variant != THERON_TRACK02_VARIANT_US_BIN ||
+        strcmp(scroll->track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        scroll->update_frame != 8580u || !scroll->game_byr_write_verified ||
+        code_snapshot_size != 16384u || ram_snapshot_size != 8192u ||
+        tqr_trace_fnv1a_bytes(code_snapshot, code_snapshot_size) != 0x0408d000u ||
+        tqr_trace_fnv1a_bytes(ram_snapshot, ram_snapshot_size) != 0x6908b113u ||
+        memcmp(code_snapshot + 0x0175u, signed_loop, sizeof(signed_loop)) != 0 ||
+        memcmp(code_snapshot + 0x0993u, byr_load, sizeof(byr_load)) != 0 ||
+        memcmp(code_snapshot + 0x0b0cu, next_control_loop,
+            sizeof(next_control_loop)) != 0 ||
+        ram_snapshot[0x020cu] != 0u || ram_snapshot[0x020du] != 0u ||
+        ram_snapshot[0x0210u] != 0xe8u || ram_snapshot[0x0211u] != 0u)
+        return 0;
+
+    cursor = scroll_ram_capture; rows = 0u; sources = 0u;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented-file-select-scroll-ram") &&
+            memcmp(line, "source=mednafen-pce-instrumented-file-select-scroll-ram", length) == 0) {
+            ++sources; continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                "file_select_scroll_ram_write sequence=%u frame=%u logical_address=%x physical_address=%x old=%x value=%x writer_pc=%x writer_physical_pc=%x a=%x x=%x y=%x%n",
+                &sequence, &frame, &logical, &physical, &old_value, &value,
+                &pc, &physical_pc, &a, &x, &y, &consumed) != 11 ||
+            consumed != (int)length || sequence != rows) return 0;
+        if (sequence < 432u) {
+            group = sequence / 3u; slot = sequence % 3u;
+            if (frame != 8522u + group * 8u) return 0;
+            if (slot == 0u) {
+                if (logical != 0x2210u || physical != 0x1f0210u ||
+                    old_value != 0xf0u - group || value != 0xefu - group ||
+                    pc != 0x4184u || physical_pc != 0x104184u) return 0;
+            } else if (slot == 1u) {
+                if (logical != 0x220cu || physical != 0x1f020cu ||
+                    old_value != 0u || value != 0u || pc != 0x4196u ||
+                    physical_pc != 0x104196u) return 0;
+            } else if (logical != 0x220du || physical != 0x1f020du ||
+                       old_value != 0u || value != 0u || pc != 0x419eu ||
+                       physical_pc != 0x10419eu) return 0;
+        } else if (sequence == 432u) {
+            if (frame != 10310u || logical != 0x220cu || old_value != 0u ||
+                value != 0u || pc != 0x4005u) return 0;
+            ram_boundary = 1;
+        }
+        ++rows;
+    }
+    if (sources != 1u || rows < 433u || !ram_boundary) return 0;
+
+    cursor = scroll_control_capture; rows = 0u; sources = 0u;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (length == strlen("source=mednafen-pce-instrumented-file-select-scroll-control") &&
+            memcmp(line, "source=mednafen-pce-instrumented-file-select-scroll-control", length) == 0) {
+            ++sources; continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                "file_select_scroll_control_write sequence=%u frame=%u logical_address=%x physical_address=%x old=%x value=%x writer_pc=%x writer_physical_pc=%x a=%x x=%x y=%x%n",
+                &sequence, &frame, &logical, &physical, &old_value, &value,
+                &pc, &physical_pc, &a, &x, &y, &consumed) != 11 ||
+            consumed != (int)length || sequence != rows) return 0;
+        if (sequence < 288u) {
+            group = sequence / 2u; slot = sequence % 2u;
+            if (frame != 8524u + group * 8u) return 0;
+            if (slot == 0u) {
+                if (logical != 0x47bcu || physical != 0x1047bcu ||
+                    old_value != 0x90u - group || value != 0x8fu - group ||
+                    pc != 0x4a7bu || physical_pc != 0x104a7bu) return 0;
+            } else if (logical != 0x47bdu || physical != 0x1047bdu ||
+                       old_value != 0u || value != 0u || pc != 0x4a80u ||
+                       physical_pc != 0x104a80u) return 0;
+        } else if (sequence == 288u) {
+            if (frame != 10310u || logical != 0x47bau || old_value != 0u ||
+                value != 0u || pc != 0x45b0u) return 0;
+            control_boundary = 1;
+        } else if (sequence >= 2340u && sequence <= 2345u) {
+            static const unsigned int setup_address[6] = {
+                0x47bcu, 0x47bau, 0x47bdu, 0x47bbu, 0x47bcu, 0x47bdu
+            };
+            static const unsigned int setup_old[6] = { 0u, 0u, 0u, 0u, 0x40u, 0u };
+            static const unsigned int setup_value[6] = { 0x40u, 0x40u, 0u, 0u, 0u, 0u };
+            static const unsigned int setup_pc[6] = {
+                0x40f9u, 0x40fcu, 0x4101u, 0x4104u, 0x413fu, 0x4142u
+            };
+            slot = sequence - 2340u;
+            if (frame != 10632u || logical != setup_address[slot] ||
+                old_value != setup_old[slot] || value != setup_value[slot] ||
+                pc != setup_pc[slot] || physical_pc != 0x100000u + setup_pc[slot])
+                return 0;
+            if (sequence == 2345u) next_phase_setup = 1;
+        } else if (sequence >= 2346u && sequence <= 2473u) {
+            group = (sequence - 2346u) / 2u;
+            slot = (sequence - 2346u) % 2u;
+            if (frame != 10644u + group * 10u) return 0;
+            if (slot == 0u) {
+                if (logical != 0x47bau || physical != 0x1047bau ||
+                    old_value != 0x40u - group || value != 0x3fu - group ||
+                    pc != 0x4b1bu || physical_pc != 0x104b1bu) return 0;
+            } else if (logical != 0x47bbu || physical != 0x1047bbu ||
+                       old_value != 0u || value != 0u || pc != 0x4b20u ||
+                       physical_pc != 0x104b20u) return 0;
+            if (sequence == 2473u) next_phase_stop = 1;
+        } else if (sequence >= 2474u && sequence <= 2477u) {
+            if (frame != 11578u || logical != 0x47bau + sequence - 2474u ||
+                old_value != 0u || value != 0u || pc != 0x45b0u ||
+                physical_pc != 0x1045b0u) return 0;
+            if (sequence == 2477u) next_phase_reset = 1;
+        }
+        ++rows;
+    }
+    if (sources != 1u || rows < 2478u || !control_boundary ||
+        !next_phase_setup || !next_phase_stop || !next_phase_reset) return 0;
+
+    out->valid = 1; out->variant = scroll->variant;
+    snprintf(out->track02_md5, sizeof(out->track02_md5), "%s", scroll->track02_md5);
+    out->code_checksum = 0x0408d000u; out->ram_checksum = 0x6908b113u;
+    out->byr_source_address = 0x2210u; out->byr_load_pc = 0x4993u;
+    out->scroll_writer_pc = 0x4184u;
+    out->countdown_low_writer_pc = 0x4a7bu;
+    out->countdown_high_writer_pc = 0x4a80u;
+    out->first_scroll_frame = 8522u; out->presented_scroll_frame = 8580u;
+    out->final_scroll_frame = 9666u; out->final_countdown_frame = 9668u;
+    out->update_interval_frames = 8u; out->scroll_updates = 144u;
+    out->countdown_updates = 144u; out->initial_byr = 0x00f0u;
+    out->final_byr = 0x0060u; out->initial_countdown = 0x0090u;
+    out->final_countdown = 0u;
+    out->next_phase_start_frame = 10632u;
+    out->next_phase_final_frame = 11274u;
+    out->next_phase_reset_frame = 11578u;
+    out->next_phase_interval_frames = 10u;
+    out->next_phase_updates = 64u;
+    out->next_phase_initial_countdown = 0x0040u;
+    out->next_phase_final_countdown = 0u;
+    out->next_phase_low_writer_pc = 0x4b1bu;
+    out->next_phase_high_writer_pc = 0x4b20u;
+    out->code_path_verified = 1;
+    out->ram_snapshot_verified = 1; out->signed_scroll_loop_verified = 1;
+    out->zero_stop_verified = 1; out->next_control_phase_verified = 1;
+    out->screen_semantics_proven = 0;
+    return 1;
+}
+
 int theron_v1_raw_loader_trace_import_game_owned_fifo_payload_file(
     const char *path, const uint8_t *track02_data, size_t track02_size,
     const char *track02_md5, Theron_V1RawLoaderTraceGamePayloadReceipt *out)

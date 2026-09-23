@@ -616,14 +616,13 @@ static void run_production_forcefield_transition_without_roster(void) {
                 "production Theron-only startup reaches Soul Room");
     memset(&party, 0, sizeof(party));
     expect_true(theron_v1_startup_enter_forcefield(&flow, &party) ==
-                    THERON_STARTUP_OK,
-                "production Enter admits forcefield without fixture roster");
-    expect_true(flow.forcefield_entered == 1 &&
-                    flow.phase == THERON_STARTUP_PHASE_IN_DUNGEON,
-                "production Enter keeps the forcefield transition state");
-    expect_true(party.champion_count == 1 &&
-                    party.active_slot == THERON_CHAMPION_SLOT_THERON,
-                "production Enter retains only the source-owned Theron slot");
+                    THERON_STARTUP_ERR_NOT_READY,
+                "production Enter rejects a missing Track 02 roster");
+    expect_true(flow.forcefield_entered == 0 &&
+                    flow.phase == THERON_STARTUP_PHASE_SOUL_ROOM,
+                "rejected production Enter preserves the Soul Room state");
+    expect_true(party.champion_count == 0,
+                "rejected production Enter does not invent an empty Theron");
 }
 
 static void run_keyboard_arrow_forcefield_focus_regression(void) {
@@ -639,6 +638,7 @@ static void run_production_forcefield_binds_selected_records_without_names(void)
     Theron_StartupFlow flow;
     Theron_DungeonProgression progression;
     Theron_V1_Party party;
+    Theron_StartupPhase phase_before;
 
     theron_v1_startup_flow_init(&flow);
     theron_v1_dungeon_progression_init(&progression);
@@ -652,16 +652,13 @@ static void run_production_forcefield_binds_selected_records_without_names(void)
                     THERON_STARTUP_OK,
                 "production roster handoff selects two mirrors");
     memset(&party, 0, sizeof(party));
+    phase_before = flow.phase;
     expect_true(theron_v1_startup_enter_forcefield_with_roster(
-                    &flow, &party, NULL, 0) == THERON_STARTUP_OK,
-                "production roster handoff succeeds without text names");
-    expect_true(party.champion_count == 3 &&
-                    party.champions[1].health == 550 &&
-                    party.champions[2].health == 450,
-                "production roster handoff binds real Track 02 companion records");
-    expect_true(party.champions[1].name[0] == '\0' &&
-                    party.champions[2].name[0] == '\0',
-                "production roster handoff keeps unavailable text names empty");
+                    &flow, &party, NULL, 0) == THERON_STARTUP_ERR_NOT_READY,
+                "production roster handoff rejects missing Track 02 media");
+    expect_true(flow.phase == phase_before && flow.forcefield_entered == 0 &&
+                    party.champion_count == 0,
+                "rejected media-free roster handoff preserves startup state");
 }
 
 static void run_real_us_roster_text_forcefield_handoff_if_available(void) {
@@ -714,8 +711,9 @@ static void run_real_us_roster_text_forcefield_handoff_if_available(void) {
                     THERON_STARTUP_OK,
                 "real US roster handoff selects two Soul Room mirrors");
     memset(&party, 0, sizeof(party));
-    expect_true(theron_v1_startup_enter_forcefield_with_roster(
+    expect_true(theron_v1_startup_enter_forcefield_with_track02_roster(
                     &flow, &party,
+                    track02, track02_bytes, THERON_TRACK02_MD5_US_BIN,
                     roster_name_ptrs,
                     receipt.startup_roster_name_count) == THERON_STARTUP_OK,
                 "real US roster text reaches production forcefield handoff");

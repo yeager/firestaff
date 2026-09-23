@@ -27,6 +27,7 @@ add_custom_target(firestaff_gettext_catalogs ALL
 if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
 endif()
+
 if("${FIRESTAFF_WORKSPACE_DATA_DIR}" STREQUAL "")
     message(FATAL_ERROR "FIRESTAFF_WORKSPACE_DATA_DIR must not be empty")
 endif()
@@ -35,6 +36,28 @@ endif()
 # CTest include later in this file. Initialize CTest here so their add_test()
 # calls are registered instead of silently disappearing from the test plan.
 include(CTest)
+
+if(BUILD_TESTING AND
+   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_quest_item_names.c")
+    add_executable(test_theron_v1_track02_quest_item_names
+        tests/test_theron_v1_track02_quest_item_names.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_retrieval_text_source.c
+        src/theron/theron_v1_track02_campaign_mask_source.c
+        src/theron/theron_v1_track02_dungeon_map.c
+        src/theron/theron_v1_track02_thing_data.c)
+    target_include_directories(test_theron_v1_track02_quest_item_names PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_quest_item_names PRIVATE
+            -UNDEBUG -Wall -Wextra -Werror -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_quest_item_names PRIVATE
+            /UNDEBUG)
+    endif()
+    add_test(NAME theron_v1_track02_quest_item_names
+        COMMAND test_theron_v1_track02_quest_item_names)
+endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_text.c")
     add_executable(test_nexus_v1_text
@@ -7236,8 +7259,7 @@ endif()
 # fixtures and the production libraries.
 add_library(firestaff_theron_world_support STATIC
     src/theron/theron_v1_track02_thing_data.c
-    src/theron/theron_v1_track02_dungeon_map.c
-    src/theron/theron_v1_track02_jp_roster_receipt.c)
+    src/theron/theron_v1_track02_dungeon_map.c)
 target_include_directories(firestaff_theron_world_support PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(NOT MSVC)
@@ -7253,6 +7275,13 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_source\\.c$")
 # Theron's Quest has no authenticated BUY/SELL/SHOP consumer or price array;
 # keep the bounded shop helper fixture-only until a real Track 02 owner exists.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_shop\\.c$")
+# TQSV is Firestaff's retired host save container, not original Theron data.
+# Fixture targets that exercise its historical codec compile it explicitly.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_save_load\\.c$")
+# FSTQPTY1 is a Firestaff-only test envelope.  Keep its writer/reader out of
+# the shipped Theron archive; authentic PC Engine HUBM Backup RAM is admitted
+# separately and remains fail-closed until its original body is decoded.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_srm_runtime\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
@@ -7266,17 +7295,56 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 # fixtures and the production archive share one dependency closure.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_thing_data\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_map\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_jp_roster_receipt\\.c$")
+# These two checked-in string catalogs are historical analysis fixtures. The
+# production runtime now reads every dungeon-local US/JP item-name table from
+# authenticated Track 02 media through theron_v1_track02_item_name_source.c.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_item_names\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dm1_item_names\\.c$")
+# The former 66-byte "category" catalog was a reinterpretation of dungeon
+# 7's regional type-code table. Production retains each real dungeon table
+# through item_name_source and uses the thing record's own category family.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_item_categories\\.c$")
+# The checked-in 66-row property catalog is retained only for historical
+# fixture tests. Production authenticates dungeon-local Track 02 banks and
+# hashes the complete real Track 19 table directly from the selected media.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_item_properties\\.c$")
+# The readable US Track 19 name catalog is an analysis fixture. Production
+# parses the exact hash-verified ISO span in item_names_runtime.c instead.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track19_item_names\\.c$")
+# The readable US level-label catalog is likewise fixture-only. Production
+# validates and parses the complete source span in level_labels_runtime.c.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track19_level_labels\\.c$")
+# These readable US Track 02 text catalogs have no production consumer and
+# duplicate bytes available in authenticated media. Keep them only in their
+# explicit historical fixture targets; runtime text must come from real data.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_ui_strings\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_save_strings\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_text_strings\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_spell_action_names\\.c$")
+# Action costs/secondary bytes are consumed only by the fixture-only inferred
+# combat implementation. Production combat is fail-closed until its original
+# consumer is authenticated, so do not link this static table there.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_spell_descriptors\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_champion_strings\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_combat_messages\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_lore\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_font_glyphs\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_full_item_names\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_hud_strings\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_level_labels\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_action_params\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_class_base_stats\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_class_skill_params\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_creature_names\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_descriptor\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_champion_roster\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_text\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_source.c
         src/theron/theron_v1_track02_text_decode.c
-        src/theron/theron_v1_track02_dungeon_text.c
-        src/theron/theron_v1_track02_item_properties.c
         src/theron/theron_v1_track02_creature_spawn.c
         src/theron/theron_v1_track02_creature_spawn_source.c
-        src/theron/theron_v1_track02_item_categories.c
-        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v22_shapes_runtime_noop.c
         src/theron/theron_v2_hud_widget_assets_runtime_noop.c
         src/theron/theron_v1_ui_chrome_runtime_noop.c
@@ -7389,6 +7457,7 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
+    src/shared/firestaff_nexus_mednafen.c
     src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
@@ -7825,7 +7894,9 @@ set(M12_SOURCES
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(firestaff_m12 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lzma_sdk)
-target_compile_definitions(firestaff_m12 PRIVATE FIRESTAFF_HAS_NATIVE_7Z=1)
+target_compile_definitions(firestaff_m12 PRIVATE
+    FIRESTAFF_HAS_NATIVE_7Z=1
+    FIRESTAFF_THERON_PRODUCTION=1)
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Asset-status test hooks are deliberately excluded from the production M12
@@ -8032,7 +8103,7 @@ add_executable(firestaff_theron_v1_mechanics_champions_probe
     src/theron/theron_v1_track02_creature_spawn.c
     src/theron/theron_v1_track02_item_categories.c
     src/theron/theron_v1_track02_spell_descriptors.c
-    src/theron/theron_v1_track02_spell_descriptors.c
+    src/theron/theron_v1_track02_font_glyphs.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_asset_loader.c
     src/theron/theron_v1_palette.c
@@ -8096,6 +8167,10 @@ set_tests_properties(theron_v1_dungeon_progression_determinism_probe PROPERTIES
 add_executable(firestaff_theron_v1_startup_flow_probe
     probes/theron/firestaff_theron_v1_startup_flow_probe.c
     src/theron/theron_v1_startup_flow.c
+    # Fixture save claims are intentionally unavailable from the production
+    # library, so this fixture probe owns its non-production implementation.
+    src/theron/theron_v1_startup_save_resume.c
+    src/theron/theron_v1_save_load.c
     src/theron/theron_v1_startup_media.c
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_champions.c
@@ -8139,6 +8214,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup
         probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c
         src/theron/theron_v1_startup_receipt.c
         src/theron/theron_v1_chapter_marker.c
+        src/theron/theron_v1_save_load.c
+        src/theron/theron_v1_track02_dungeon_text.c
     )
     target_include_directories(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -8162,6 +8239,9 @@ endif()
 
 add_executable(firestaff_theron_v1_startup_save_resume_probe
     probes/theron/firestaff_theron_v1_startup_save_resume_probe.c
+    src/theron/theron_v1_startup_save_resume.c
+    src/theron/theron_v1_srm_classifier.c
+    src/theron/theron_v1_save_load.c
 )
 target_include_directories(firestaff_theron_v1_startup_save_resume_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -8180,15 +8260,34 @@ set_tests_properties(theron_v1_startup_save_resume_probe PROPERTIES
     LABELS "tier4;theron;startup;save;resume"
 )
 
+add_executable(test_theron_v1_production_tqsv_gate
+    tests/test_theron_v1_production_tqsv_gate.c)
+target_include_directories(test_theron_v1_production_tqsv_gate PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_theron_v1_production_tqsv_gate PRIVATE
+    firestaff_theron firestaff_m12 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(test_theron_v1_production_tqsv_gate PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME theron_v1_production_tqsv_gate
+    COMMAND test_theron_v1_production_tqsv_gate)
+set_tests_properties(theron_v1_production_tqsv_gate PROPERTIES
+    LABELS "tier1;theron;production;save;no-synthetic")
+
 add_executable(test_theron_v1_startup_save_resume_pc34
     tests/test_theron_v1_startup_save_resume_pc34.c
     # Compile the startup implementation into this fixture target so its
     # fixture-only fallback definition is effective. Production continues to
     # link the source-bound firestaff_theron library unchanged.
     src/theron/theron_v1_startup_flow.c
+    src/theron/theron_v1_startup_save_resume.c
+    src/theron/theron_v1_srm_classifier.c
+    src/theron/theron_v1_save_load.c
     src/theron/theron_v1_startup_receipt.c
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_track02_level_data_blocks.c
+    src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
     src/theron/theron_v1_track02_text_decode.c
@@ -9256,6 +9355,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
         PRIVATE firestaff_v2)
@@ -10252,6 +10356,7 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v2_phase_gate_pc34.c
     src/theron/theron_v2_presentation_mode_pc34.c
     src/theron/theron_v1_track02.c
+    src/theron/theron_v1_track02_font_glyphs.c
     src/theron/theron_v1_viewport.c
     src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_palette.c
@@ -10461,6 +10566,7 @@ add_executable(firestaff_theron_v1_first_room_runtime_probe
     src/theron/theron_v1_track02_level_data_blocks.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_track02.c
+    src/theron/theron_v1_track02_font_glyphs.c
     src/theron/theron_v1_mechanics.c
     src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
@@ -12222,6 +12328,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
         )
         target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
             firestaff_v2
@@ -13408,7 +13519,9 @@ if(BUILD_TESTING)
        AND TARGET firestaff_theron
        AND NOT TARGET firestaff_theron_v1_srm_real_artifact_readiness_probe)
         add_executable(firestaff_theron_v1_srm_real_artifact_readiness_probe
-            probes/theron/firestaff_theron_v1_srm_real_artifact_readiness_probe.c)
+            probes/theron/firestaff_theron_v1_srm_real_artifact_readiness_probe.c
+            src/theron/theron_v1_srm_classifier.c
+            src/theron/theron_v1_save_load.c)
         target_link_libraries(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE firestaff_theron)
         target_include_directories(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         if(NOT MSVC)
@@ -26478,6 +26591,11 @@ endif()
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
         firestaff_v2
@@ -26526,6 +26644,11 @@ endif()
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE
         firestaff_v2
@@ -26570,6 +26693,11 @@ endif()
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
         firestaff_v2
@@ -26617,6 +26745,11 @@ endif()
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_asset_status_dm1_zip_required_materialization PRIVATE
         firestaff_v2
@@ -26673,7 +26806,7 @@ endif()
         src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_csb_archive_required_split PRIVATE
-        firestaff_v2
+        firestaff_v2 firestaff_theron
     )
     target_include_directories(test_csb_archive_required_split PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -26723,7 +26856,7 @@ endif()
         src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_dm2_iso_required_cache_gate PRIVATE
-        firestaff_v2
+        firestaff_v2 firestaff_theron
     )
     target_include_directories(test_asset_status_dm2_iso_required_cache_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -26767,7 +26900,7 @@ endif()
         src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
-        firestaff_v2
+        firestaff_v2 firestaff_theron
     )
     target_include_directories(test_dm1_pc34_multilanguage_required_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -26800,6 +26933,11 @@ endif()
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
         firestaff_v2
@@ -26843,6 +26981,11 @@ endif()
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE
         firestaff_v2
@@ -27269,6 +27412,7 @@ endif()
         tests/test_m12_quick_resume_gate.c
         tests/csbwin_resume_fixture.c
         src/csb/csb_v1_save_import_path_pc34_compat.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_m12_quick_resume_gate PRIVATE firestaff_m12)
     if(NOT MSVC)
@@ -42751,6 +42895,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_data_validator_hash_scan PRIVATE
@@ -42796,6 +42945,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_firestaff_asset_pipeline_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_asset_pipeline_hash_scan PRIVATE
@@ -42840,6 +42994,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
     # Local asset_status_m12.c references asset_find_by_md5 etc, which live
@@ -45191,6 +45350,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_dungeon_progression
         tests/theron_v1_dungeon_progression_test.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_theron_v1_dungeon_progression PRIVATE
         firestaff_theron
@@ -45271,6 +45431,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_track02_full_item_names
         tests/test_theron_v1_track02_full_item_names.c
+        src/theron/theron_v1_track02_full_item_names.c
     )
     target_link_libraries(test_theron_v1_track02_full_item_names PRIVATE
         firestaff_theron
@@ -45291,6 +45452,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_save_load
         tests/theron_v1_save_load_test.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_theron_v1_save_load PRIVATE
         firestaff_theron
@@ -45321,6 +45483,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_combat_runtime_source
         COMMAND test_theron_v1_combat_runtime_source)
+    set_tests_properties(theron_v1_combat_runtime_source PROPERTIES
+        LABELS "theron;production;real-media;no-fallback")
 
     add_executable(test_theron_v1_combat_mechanics
         tests/test_theron_v1_combat_mechanics.c
@@ -45430,7 +45594,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_viewport_renderer_probe
         probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
         src/theron/theron_v1_viewport.c
-    src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_track02_font_glyphs.c
     )
     target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
         firestaff_theron
@@ -45457,11 +45622,19 @@ if(BUILD_TESTING AND THERON_SOURCES)
         tests/test_theron_rendering.c
         src/theron/theron_v1_ui_chrome_runtime_noop.c
         src/theron/theron_v1_viewport.c
-    src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_track02_font_glyphs.c
     )
     target_link_libraries(test_theron_rendering PRIVATE
         firestaff_theron firestaff_m12 firestaff_m10 m
     )
+    # This fixture deliberately supplies the source-faithful viewport ahead
+    # of the production archive's fail-closed viewport seam.  Some static
+    # linkers rescan firestaff_theron through M11/M12 and see both providers;
+    # keep that override local to this non-production rendering test.
+    if(MSVC)
+        target_link_options(test_theron_rendering PRIVATE /FORCE:MULTIPLE)
+    endif()
     target_include_directories(test_theron_rendering PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
@@ -45522,6 +45695,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_save_header_rejection
         tests/test_theron_v1_save_header_rejection.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_theron_v1_save_header_rejection PRIVATE
         firestaff_theron
@@ -45550,6 +45724,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_save_progress_roundtrip_pc34
         tests/test_theron_v1_save_progress_roundtrip_pc34.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_theron_v1_save_progress_roundtrip_pc34 PRIVATE
         firestaff_theron
@@ -45575,6 +45750,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_srm_classifier_pc34
         tests/test_theron_v1_srm_classifier_pc34.c
+        src/theron/theron_v1_srm_classifier.c
     )
     target_link_libraries(test_theron_v1_srm_classifier_pc34 PRIVATE
         firestaff_theron
@@ -45589,6 +45765,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_srm_classifier
         COMMAND test_theron_v1_srm_classifier_pc34
     )
+
+    add_executable(test_theron_v1_pce_bram_real_artifact
+        tests/test_theron_v1_pce_bram_real_artifact.c
+    )
+    target_link_libraries(test_theron_v1_pce_bram_real_artifact PRIVATE
+        firestaff_theron firestaff_m12 firestaff_m10 m)
+    target_include_directories(test_theron_v1_pce_bram_real_artifact PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_pce_bram_real_artifact PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    if(UNIX)
+        add_test(NAME theron_v1_pce_bram_real_artifact
+            COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_pce_bram_real_artifact.sh
+                $<TARGET_FILE:test_theron_v1_pce_bram_real_artifact>)
+        set_tests_properties(theron_v1_pce_bram_real_artifact PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;save;backup-ram;no-synthetic")
+    endif()
 
     add_executable(test_theron_v1_srm_opaque_admission
         tests/test_theron_v1_srm_opaque_admission.c
@@ -45623,6 +45819,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/theron/theron_v1_vram_trace_loader.c
         src/theron/theron_v1_viewport.c
         src/theron/theron_v1_palette.c
+        src/theron/theron_v1_track02_font_glyphs.c
     )
     target_link_libraries(test_theron_v1_vram_trace_loader PRIVATE
         firestaff_theron firestaff_m12)
@@ -45720,6 +45917,8 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_srm_body_decode_pc34
         tests/test_theron_v1_srm_body_decode_pc34.c
+        src/theron/theron_v1_srm_classifier.c
+        src/theron/theron_v1_srm_runtime.c
     )
     target_link_libraries(test_theron_v1_srm_body_decode_pc34 PRIVATE
         firestaff_theron
@@ -45806,6 +46005,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_m11_direct_launch
         tests/theron_v1_m11_direct_launch_test.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE
         firestaff_theron
@@ -45921,8 +46121,35 @@ if(BUILD_TESTING AND THERON_SOURCES)
             SKIP_RETURN_CODE 77
             LABELS "theron;real-media;runtime;source-only"
             ENVIRONMENT
-                "FIRESTAFF_THERON_JP_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin")
+                "FIRESTAFF_THERON_JP_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin")
     endif()
+    add_test(
+        NAME theron_v1_jp_raw_bin_startup
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_raw_bin_startup.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_jp_raw_bin_startup PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;startup"
+    )
+    add_test(
+        NAME theron_v1_scan_verified_editions
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_scan_verified_editions.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_scan_verified_editions PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;scanner"
+    )
+    add_test(
+        NAME theron_v1_cli_authenticated_capture
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_cli_authenticated_capture.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_cli_authenticated_capture PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;rendering"
+    )
 endif()
 
 # ── Theron V1 Phase 5 — Launcher Scan Reuse Test ──────────────────
@@ -46106,6 +46333,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_item_name_source.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
     )
     target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         firestaff_v2
@@ -47709,6 +47941,160 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_raw_loader_trace_import_probe
     )
 
+    add_executable(test_theron_v1_game_e009_destination_real_capture
+        tests/test_theron_v1_game_e009_destination_real_capture.c
+    )
+    target_link_libraries(test_theron_v1_game_e009_destination_real_capture PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_game_e009_destination_real_capture PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_game_e009_destination_real_capture PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME theron_v1_game_e009_destination_real_capture
+        COMMAND test_theron_v1_game_e009_destination_real_capture
+    )
+    set_tests_properties(theron_v1_game_e009_destination_real_capture PROPERTIES
+        SKIP_RETURN_CODE 77
+    )
+
+    add_executable(test_theron_v1_file_select_text_source_real_data
+        tests/test_theron_v1_file_select_text_source_real_data.c
+    )
+    target_link_libraries(test_theron_v1_file_select_text_source_real_data PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_file_select_text_source_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_file_select_text_source_real_data PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME theron_v1_file_select_text_source_real_data
+        COMMAND test_theron_v1_file_select_text_source_real_data
+    )
+    set_tests_properties(theron_v1_file_select_text_source_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+    )
+
+    add_executable(test_theron_v1_file_select_encoded_transport_real_data
+        tests/test_theron_v1_file_select_encoded_transport_real_data.c
+    )
+    target_link_libraries(test_theron_v1_file_select_encoded_transport_real_data PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_file_select_encoded_transport_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_file_select_encoded_transport_real_data PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME theron_v1_file_select_encoded_transport_real_data
+        COMMAND test_theron_v1_file_select_encoded_transport_real_data
+    )
+    set_tests_properties(theron_v1_file_select_encoded_transport_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+    )
+
+    add_executable(test_theron_v1_file_select_sat_frame_real_data
+        tests/test_theron_v1_file_select_sat_frame_real_data.c
+    )
+    target_link_libraries(test_theron_v1_file_select_sat_frame_real_data PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_file_select_sat_frame_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_file_select_sat_frame_real_data PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_file_select_sat_frame_real_data COMMAND test_theron_v1_file_select_sat_frame_real_data)
+    set_tests_properties(theron_v1_file_select_sat_frame_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(test_theron_v1_file_select_scroll_transition_real_data
+        tests/test_theron_v1_file_select_scroll_transition_real_data.c
+    )
+    target_link_libraries(test_theron_v1_file_select_scroll_transition_real_data PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_file_select_scroll_transition_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_file_select_scroll_transition_real_data PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_file_select_scroll_transition_real_data COMMAND test_theron_v1_file_select_scroll_transition_real_data)
+    set_tests_properties(theron_v1_file_select_scroll_transition_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(test_theron_v1_file_select_scroll_driver_real_data
+        tests/test_theron_v1_file_select_scroll_driver_real_data.c
+    )
+    target_link_libraries(test_theron_v1_file_select_scroll_driver_real_data PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_file_select_scroll_driver_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_file_select_scroll_driver_real_data PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_file_select_scroll_driver_real_data COMMAND test_theron_v1_file_select_scroll_driver_real_data)
+    set_tests_properties(theron_v1_file_select_scroll_driver_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(test_theron_v1_generation6_single_write_real_data
+        tests/test_theron_v1_generation6_single_write_real_data.c
+    )
+    target_link_libraries(test_theron_v1_generation6_single_write_real_data PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_generation6_single_write_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_generation6_single_write_real_data PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME theron_v1_generation6_single_write_real_data
+        COMMAND test_theron_v1_generation6_single_write_real_data
+    )
+    set_tests_properties(theron_v1_generation6_single_write_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+    )
+
+    add_executable(test_theron_v1_generation7_single_write_real_data
+        tests/test_theron_v1_generation7_single_write_real_data.c
+    )
+    target_link_libraries(test_theron_v1_generation7_single_write_real_data PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_generation7_single_write_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_generation7_single_write_real_data PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_generation7_single_write_real_data COMMAND test_theron_v1_generation7_single_write_real_data)
+    set_tests_properties(theron_v1_generation7_single_write_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(test_theron_v1_generation49_single_write_real_data
+        tests/test_theron_v1_generation49_single_write_real_data.c
+    )
+    target_link_libraries(test_theron_v1_generation49_single_write_real_data PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_generation49_single_write_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_generation49_single_write_real_data PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_generation49_single_write_real_data COMMAND test_theron_v1_generation49_single_write_real_data)
+    set_tests_properties(theron_v1_generation49_single_write_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
+    add_executable(test_theron_v1_generation51_single_write_real_data
+        tests/test_theron_v1_generation51_single_write_real_data.c
+    )
+    target_link_libraries(test_theron_v1_generation51_single_write_real_data PRIVATE firestaff_theron)
+    target_include_directories(test_theron_v1_generation51_single_write_real_data PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_generation51_single_write_real_data PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_generation51_single_write_real_data COMMAND test_theron_v1_generation51_single_write_real_data)
+    set_tests_properties(theron_v1_generation51_single_write_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
     add_executable(firestaff_theron_v1_raw_loader_trace_stage3_sector_probe
         probes/theron/firestaff_theron_v1_raw_loader_trace_stage3_sector_probe.c
     )
@@ -47951,6 +48337,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     # docs/THERON_CAPTURE_READINESS.md for the readiness statement.
     add_executable(firestaff_theron_v1_srm_classifier_probe
         probes/theron/firestaff_theron_v1_srm_classifier_probe.c
+        src/theron/theron_v1_srm_classifier.c
     )
     target_link_libraries(firestaff_theron_v1_srm_classifier_probe PRIVATE
         firestaff_theron
@@ -47971,6 +48358,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     # gzip-body inflate into progression/party envelope receipts.
     add_executable(firestaff_theron_v1_srm_body_decode_probe
         probes/theron/firestaff_theron_v1_srm_body_decode_probe.c
+        src/theron/theron_v1_srm_classifier.c
     )
     target_link_libraries(firestaff_theron_v1_srm_body_decode_probe PRIVATE
         firestaff_theron
@@ -52498,6 +52886,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_ros
         tests/test_theron_v1_track02_champion_roster.c
         src/theron/theron_v1_track02_champion_roster.c
         src/theron/theron_v1_track02_jp_roster_receipt.c
+        src/theron/theron_v1_track02_us_roster_receipt.c
+        src/theron/theron_v1_dungeon_handoff.c
         src/theron/theron_v1_champions.c
     )
     target_include_directories(test_theron_v1_track02_champion_roster PRIVATE
@@ -52509,6 +52899,63 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_ros
         NAME theron_v1_track02_champion_roster
         COMMAND test_theron_v1_track02_champion_roster
     )
+endif()
+
+if(BUILD_TESTING)
+add_executable(test_theron_v1_original_command_capture
+    tests/test_theron_v1_original_command_capture.c)
+target_include_directories(test_theron_v1_original_command_capture
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(test_theron_v1_original_command_capture PRIVATE
+    firestaff_theron firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(test_theron_v1_original_command_capture PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME theron_v1_original_command_capture
+    COMMAND test_theron_v1_original_command_capture)
+set_tests_properties(theron_v1_original_command_capture PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "theron;real-media;original-runtime;command;no-semantics")
+
+add_executable(test_theron_v1_track02_regional_roster_production
+    tests/test_theron_v1_track02_regional_roster_production.c
+    src/theron/theron_v1_champions.c
+    src/theron/theron_v1_track02_us_roster_receipt.c
+    src/theron/theron_v1_track02_jp_roster_receipt.c
+    src/theron/theron_v1_dungeon_handoff.c)
+target_include_directories(test_theron_v1_track02_regional_roster_production
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_definitions(test_theron_v1_track02_regional_roster_production
+    PRIVATE FIRESTAFF_THERON_PRODUCTION=1)
+if(NOT MSVC)
+    target_compile_options(test_theron_v1_track02_regional_roster_production
+        PRIVATE -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME theron_v1_track02_regional_roster_production
+    COMMAND test_theron_v1_track02_regional_roster_production)
+set_tests_properties(theron_v1_track02_regional_roster_production PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "theron;real-media;roster;production")
+
+add_executable(test_theron_v1_chapter_marker_production_text_gate
+    tests/test_theron_v1_chapter_marker_production_text_gate.c
+    src/theron/theron_v1_chapter_marker.c
+    src/theron/theron_v1_dungeon_progression.c
+    src/theron/theron_v1_track02_item_name_source.c)
+target_include_directories(test_theron_v1_chapter_marker_production_text_gate
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_definitions(test_theron_v1_chapter_marker_production_text_gate
+    PRIVATE FIRESTAFF_THERON_PRODUCTION=1)
+if(NOT MSVC)
+    target_compile_options(test_theron_v1_chapter_marker_production_text_gate
+        PRIVATE -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME theron_v1_chapter_marker_production_text_gate
+    COMMAND test_theron_v1_chapter_marker_production_text_gate)
+set_tests_properties(theron_v1_chapter_marker_production_text_gate PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "theron;production;text;hygiene")
 endif()
 
 # Theron Track 02 spell/action names + skill levels (real data from UD 0x09EEA3/0x089B6B)
@@ -52622,7 +53069,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
     target_include_directories(test_theron_v1_track02_actuator PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_actuator PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_actuator PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_actuator PRIVATE
+            /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_track02_actuator
@@ -52663,12 +53114,16 @@ add_executable(test_theron_v1_track02_dungeon_loader
         src/theron/theron_v1_track02_item_id_map.c
     )
     target_link_libraries(test_theron_v1_track02_dungeon_loader PRIVATE
-        firestaff_theron
+        firestaff_theron firestaff_m12 m
     )
     target_include_directories(test_theron_v1_track02_dungeon_loader PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_dungeon_loader PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_dungeon_loader PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_dungeon_loader PRIVATE
+            /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_track02_dungeon_loader
@@ -52721,11 +53176,14 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_transition_receipt.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_mednafen_transition_receipt.c")
     add_executable(test_theron_v1_mednafen_transition_receipt
-        tests/test_theron_v1_mednafen_transition_receipt.c)
-    target_link_libraries(test_theron_v1_mednafen_transition_receipt PRIVATE firestaff_theron)
+        tests/test_theron_v1_mednafen_transition_receipt.c
+        src/theron/theron_v1_mednafen_transition_receipt.c)
     target_include_directories(test_theron_v1_mednafen_transition_receipt PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
-    if(NOT MSVC)
+    if(MSVC)
+        target_compile_options(test_theron_v1_mednafen_transition_receipt PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(test_theron_v1_mednafen_transition_receipt PRIVATE -UNDEBUG)
         target_compile_options(test_theron_v1_mednafen_transition_receipt PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME theron_v1_mednafen_transition_receipt
@@ -52954,7 +53412,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_rng_source.c"
     target_include_directories(test_theron_v1_rng_source PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_rng_source PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_rng_source PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_rng_source PRIVATE /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_rng_source
@@ -53517,6 +53978,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_export_import_m12
         tests/csbwin_resume_fixture.c
         src/shared/save_browser_m12.c
         src/dm1/dm1_v1_save_load.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_save_browser_export_import_m12 PRIVATE firestaff_m10 firestaff_dm2 firestaff_nexus firestaff_theron)
     if(NOT MSVC)
@@ -53541,6 +54003,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_save_browser_input_delete_m12.
         tests/test_save_browser_input_delete_m12.c
         src/shared/save_browser_m12.c
         src/dm1/dm1_v1_save_load.c
+        src/theron/theron_v1_save_load.c
     )
     target_link_libraries(test_save_browser_input_delete_m12 PRIVATE
         firestaff_m10

@@ -35,8 +35,8 @@ extern "C" {
  *   Bit order: MSB (bit 7) = leftmost pixel (HuC6270 VRAM byte order)
  *
  * Palette formats:
- *   VCE snapshots are BGR333: bits [8:6] = B, [5:3] = G,
- *   [2:0] = R. This is the native HuC6260 9-bit colour word.
+ *   VCE snapshots use the native HuC6260 9-bit colour word:
+ *   bits [8:6] = G, [5:3] = R, [2:0] = B.
  *   The generic packed-buffer helper below also retains BGR444 support,
  *   but it must not be used for an authentic VCE snapshot.
  *
@@ -143,13 +143,13 @@ static inline uint32_t tqr_bgr444_to_rgba(uint16_t bgr444) {
     return 0xFF000000U | (r << 16) | (g << 8) | b;
 }
 
-/* BGR333 → RGBA8 expansion (real PCE HuC6260 VCE format).
- * 9-bit color: B[8:6] G[5:3] R[2:0], 3 bits per channel.
+/* HuC6260 GRB333 → RGBA8 expansion (real PCE VCE format).
+ * 9-bit color: G[8:6] R[5:3] B[2:0], 3 bits per channel.
  * Multiply by 36 to expand 0-7 → 0-252. */
 static inline uint32_t tqr_bgr333_to_rgba(uint16_t bgr333) {
-    unsigned r =  bgr333        & 0x7;
-    unsigned g = (bgr333 >> 3)  & 0x7;
-    unsigned b = (bgr333 >> 6)  & 0x7;
+    unsigned b =  bgr333        & 0x7;
+    unsigned r = (bgr333 >> 3)  & 0x7;
+    unsigned g = (bgr333 >> 6)  & 0x7;
     return 0xFF000000U | ((r * 36) << 16) | ((g * 36) << 8) | (b * 36);
 }
 

@@ -15,6 +15,7 @@ typedef enum {
     FIRESTAFF_THERON_MEDIA_LAYOUT_RAW_BIN,
     FIRESTAFF_THERON_MEDIA_LAYOUT_ISO,
     FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE,
+    /* ISO data tracks with original WAV or archive-transcoded OGG CDDA. */
     FIRESTAFF_THERON_MEDIA_LAYOUT_ISO_OGG_CUE,
     FIRESTAFF_THERON_MEDIA_LAYOUT_OGG_ONLY
 } FirestaffTheronMediaLayout;
@@ -34,6 +35,7 @@ typedef struct {
     int has_valid_track02_mode1;
     int audio_track_count;
     int ogg_file_count;
+    int wav_file_count;
     int bin_file_count;
     int iso_file_count;
     int launch_candidate;

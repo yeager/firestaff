@@ -17,6 +17,7 @@
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_item_properties.h"
+#include "theron_v1_track02_ground_ref.h"
 #include "theron_v1_track02_item_categories.h"
 #include "theron_v1_world.h"
 
@@ -141,32 +142,25 @@ static void test_scripted_creature_spawn_requires_source_stats(void) {
     CHECK_INT("rejected DEMON does not publish a creature", w.creature_count, 0);
 }
 
-static void test_champion_attack_kills_creature(void) {
-    printf("[test:champion_attack_kills_creature]\n");
+static void test_unbound_champion_attack_fails_closed(void) {
+    printf("[test:unbound_champion_attack_fails_closed]\n");
     Theron_V1_World w;
     make_world(&w);
 
     int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
-    int killed = 0;
-    int attacks = 0;
-    while (attacks < 100) {
-        int rc = theron_v1_champion_attack(&w, 0, cid);
-        if (rc < 0) break;
-        attacks++;
-        Theron_V1_Creature *c = theron_v1_creature_by_id(&w, cid);
-        if (!c || !(c->flags & THERON_CF_ACTIVE)) {
-            killed = 1;
-            break;
-        }
-    }
-    CHECK_INT("creature eventually killed", killed, 1);
-    CHECK_INT("unbound drop record does not publish loot", w.object_count, 0);
+    Theron_V1_Creature *c = theron_v1_creature_by_id(&w, cid);
+    int hp_before = c ? c->hp : -1;
+    CHECK_INT("unbound champion attack is rejected",
+              theron_v1_champion_attack(&w, 0, cid), -1);
+    CHECK(c != NULL && c->hp == hp_before,
+          "rejected champion attack leaves creature unchanged");
+    CHECK_INT("rejected attack does not publish loot", w.object_count, 0);
 }
 
-static void test_creature_attack_champion(void) {
-    printf("[test:creature_attack_champion]\n");
+static void test_unbound_creature_attack_fails_closed(void) {
+    printf("[test:unbound_creature_attack_fails_closed]\n");
     Theron_V1_World w;
     make_world(&w);
 
@@ -175,9 +169,9 @@ static void test_creature_attack_champion(void) {
                                        9, 8);
     int hp_before = w.party.champions[0].health;
     Theron_CombatResult r = theron_v1_creature_attack_champion(&w, cid, 0);
-    CHECK_INT("creature attack returns HIT or KILL",
-              r == THERON_COMBAT_HIT || r == THERON_COMBAT_KILL, 1);
-    CHECK_INT("champion health decreased", w.party.champions[0].health < hp_before, 1);
+    CHECK_INT("unbound creature attack cannot hit", r, THERON_COMBAT_MISS);
+    CHECK_INT("rejected creature attack preserves champion health",
+              w.party.champions[0].health, hp_before);
 }
 
 static void test_creature_drop_loot(void) {
@@ -216,12 +210,12 @@ static void test_spell_casting(void) {
     w.party.champions[0].max_mana = 100;
     w.party.champions[0].anti_magic = 20;
 
-    /* HEAL (index 35, cost 2) — self-heal */
+    /* Spell consumers are not yet bound to authentic executable evidence. */
     w.party.champions[0].health = 20;
     int rc = theron_v1_champion_cast_spell(&w, 0, 35, -1);
-    CHECK_INT("HEAL succeeds", rc, 0);
-    CHECK_INT("HEAL restores HP", w.party.champions[0].health > 20, 1);
-    CHECK_INT("HEAL deducts mana", w.party.champions[0].mana < 100, 1);
+    CHECK_INT("unbound HEAL is rejected", rc, -1);
+    CHECK_INT("rejected HEAL preserves HP", w.party.champions[0].health, 20);
+    CHECK_INT("rejected HEAL preserves mana", w.party.champions[0].mana, 100);
 
     /* Invalid spell index */
     rc = theron_v1_champion_cast_spell(&w, 0, 5, -1);
@@ -233,8 +227,8 @@ static void test_spell_casting(void) {
                                        w.current_dungeon, w.current_level,
                                        9, 8);
     rc = theron_v1_champion_cast_spell(&w, 0, 20, cid);
-    CHECK_INT("FIREBALL returns 0 or 1", rc >= 0, 1);
-    CHECK_INT("FIREBALL costs mana", w.party.champions[0].mana < 100, 1);
+    CHECK_INT("unbound FIREBALL is rejected", rc, -1);
+    CHECK_INT("rejected FIREBALL preserves mana", w.party.champions[0].mana, 100);
 
     /* Insufficient mana */
     w.party.champions[0].mana = 1;
@@ -249,17 +243,17 @@ static void test_spell_casting(void) {
     Theron_V1_Creature *c2 = theron_v1_creature_by_id(&w, cid2);
     int hp_before = c2 ? c2->hp : 0;
     rc = theron_v1_champion_cast_spell(&w, 0, 23, cid2);
-    CHECK_INT("LIGHTNING returns 0 or 1", rc >= 0, 1);
+    CHECK_INT("unbound LIGHTNING is rejected", rc, -1);
     if (c2 && (c2->flags & THERON_CF_ACTIVE))
-        CHECK_INT("LIGHTNING deals damage", c2->hp < hp_before, 1);
+        CHECK_INT("rejected LIGHTNING preserves creature HP", c2->hp, hp_before);
 
     /* SPELLSHIELD (index 33, cost 30) — buff, no target */
     w.party.champions[0].mana = 100;
     int am_before = w.party.champions[0].anti_magic;
     rc = theron_v1_champion_cast_spell(&w, 0, 33, -1);
-    CHECK_INT("SPELLSHIELD succeeds", rc, 0);
-    CHECK_INT("SPELLSHIELD boosts anti_magic",
-              w.party.champions[0].anti_magic > am_before, 1);
+    CHECK_INT("unbound SPELLSHIELD is rejected", rc, -1);
+    CHECK_INT("rejected SPELLSHIELD preserves anti_magic",
+              w.party.champions[0].anti_magic, am_before);
 
     /* STUN (index 31, cost 7) — paralyzes creature */
     w.party.champions[0].mana = 100;
@@ -267,11 +261,11 @@ static void test_spell_casting(void) {
                                         w.current_dungeon, w.current_level,
                                         11, 8);
     rc = theron_v1_champion_cast_spell(&w, 0, 31, cid3);
-    CHECK_INT("STUN returns 0 or 1", rc >= 0, 1);
+    CHECK_INT("unbound STUN is rejected", rc, -1);
     Theron_V1_Creature *c3 = theron_v1_creature_by_id(&w, cid3);
     if (c3 && (c3->flags & THERON_CF_ACTIVE))
-        CHECK_INT("STUN paralyzes creature",
-                  (c3->flags & THERON_CF_PARALYZED) != 0, 1);
+        CHECK_INT("rejected STUN does not paralyze creature",
+                  (c3->flags & THERON_CF_PARALYZED) != 0, 0);
 }
 
 static void test_armed_combat_uses_item_properties(void) {
@@ -298,7 +292,7 @@ static void test_armed_combat_uses_item_properties(void) {
         CHECK_INT("MAIL AKETON b4 defense", mail->b4, 0x0F);
     }
 
-    /* Armed attack should deal more damage than unarmed */
+    /* Static fixture properties do not authorize production combat. */
     int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
@@ -306,10 +300,9 @@ static void test_armed_combat_uses_item_properties(void) {
     CHECK(c != NULL, "creature spawned for armed combat test");
     if (c) {
         int hp_before = c->hp;
-        theron_v1_champion_attack(&w, 0, cid);
-        int armed_damage = hp_before - c->hp;
-        CHECK_INT("armed attack deals significant damage",
-                  armed_damage > 5, 1);
+        CHECK_INT("unbound armed attack is rejected",
+                  theron_v1_champion_attack(&w, 0, cid), -1);
+        CHECK_INT("rejected armed attack preserves creature HP", c->hp, hp_before);
     }
 }
 
@@ -465,11 +458,12 @@ static void test_door_mechanics(void) {
     CHECK_INT("closed door blocks movement", moved, THERON_MOVE_BLOCKED);
     CHECK_INT("position unchanged on blocked door", w.party.leader_x, 8);
 
-    CHECK_INT("door_open succeeds", theron_v1_door_open(&w, 9, 8), 0);
+    CHECK_INT("synthetic locked door open is rejected",
+              theron_v1_door_open(&w, 9, 8), -1);
 
     moved = theron_v1_move_party(&w, THERON_DIR_EAST);
-    CHECK_INT("open door allows movement", moved, THERON_MOVE_OK);
-    CHECK_INT("position after open door", w.party.leader_x, 9);
+    CHECK_INT("rejected door remains blocked", moved, THERON_MOVE_BLOCKED);
+    CHECK_INT("position remains before rejected door", w.party.leader_x, 8);
 }
 
 static void test_pit_mechanics(void) {
@@ -582,8 +576,8 @@ static void test_altar_resurrect_mechanics(void) {
 
     moved = theron_v1_move_party(&w, THERON_DIR_EAST);
     CHECK_INT("altar move returns OK", moved, THERON_MOVE_OK);
-    CHECK_INT("dead champion revived", w.party.champions[1].alive, 1);
-    CHECK_INT("resurrection gold cost spent", w.party.gold, 500u);
+    CHECK_INT("unbound altar does not revive", w.party.champions[1].alive, 0);
+    CHECK_INT("unbound altar does not spend gold", w.party.gold, 1000u);
 }
 
 static void test_mechanics_sound_ids_valid(void) {
@@ -786,7 +780,6 @@ static void test_source_item_pickup_provenance(void) {
     Theron_V1_World w;
     Theron_V1_Object object;
     Theron_V1_Object unbound;
-    const Theron_V1_InventorySourceRecord *carried;
 
     make_world(&w);
     w.current_dungeon = 1;
@@ -841,105 +834,8 @@ static void test_source_item_pickup_provenance(void) {
               theron_v1_object_place(&w, &object), 0);
     CHECK_INT("bound weapon without property row rejected",
               theron_v1_click_route(&w, 1, 2, THERON_CMD_TAKE), -1);
-    memset(&object, 0, sizeof(object));
-    object.type = THERON_OBJTYPE_WEAPON;
-    object.item_index = 6;
-    object.dungeon_id = w.current_dungeon;
-    object.quantity = 3;
-    object.level = 0;
-    object.x = 2;
-    object.y = 2;
-    object.source_ref = 0x1234u;
-    object.source_next_ref = 0x2345u;
-    object.source_index = 7u;
-    object.source_category = THERON_CAT_WEAPON;
-    object.source_item_type = 6u;
-    object.source_item_category = THERON_ITEM_CAT_WEAPON;
-    object.source_keep = 1u;
-    object.source_cursed = 1u;
-    object.source_poisoned = 1u;
-    object.source_raw_size = 4u;
-    object.source_raw[0] = 0x45u;
-    object.source_raw[1] = 0x23u;
-    object.source_raw[2] = 0x86u;
-    object.source_raw[3] = 0x0fu;
-    object.source_property_valid = 1u;
-    memcpy(object.source_property,
-           theron_v1_track02_item_property(6u),
-           sizeof(object.source_property));
-    CHECK_INT("source item occurrence binds",
-              theron_v1_world_bind_track02_source_object(
-                  &w, w.current_dungeon, 0, object.source_ref,
-                  object.source_next_ref, object.source_index,
-                  object.source_category, 0u, object.x, object.y,
-                  object.source_raw, object.source_raw_size), 0);
-    CHECK_INT("source weapon placed", theron_v1_object_place(&w, &object), 0);
-    CHECK_INT("source weapon picked up",
-              theron_v1_click_route(&w, 2, 2, THERON_CMD_TAKE), 0);
-    CHECK(theron_v1_object_at_in_dungeon(&w, w.current_dungeon, 0, 2, 2) == NULL,
-          "picked source object leaves active floor lookup");
-    for (int object_index = 0; object_index < w.object_count; ++object_index) {
-        if (w.objects[object_index].source_ref == 0x1234u) {
-            w.objects[object_index].flags &= ~THERON_OBJ_F_PICKED_UP;
-            w.objects[object_index].flags |= THERON_OBJ_F_DESTROYED;
-            break;
-        }
-    }
-    CHECK(theron_v1_object_at_in_dungeon(&w, w.current_dungeon, 0, 2, 2) == NULL,
-          "destroyed source object leaves active floor lookup");
-    CHECK_INT("compact inventory keeps source item id",
-              w.party.champions[0].inventory[0], 6);
-    carried = theron_v1_inventory_source_at(&w, 0, 0);
-    CHECK(carried && carried->valid, "inventory source record valid");
-    CHECK_INT("inventory source category", carried->category,
-              THERON_CAT_WEAPON);
-    CHECK_INT("inventory source ref", carried->source_ref, 0x1234);
-    CHECK_INT("inventory source charges", carried->charges, 3);
-    CHECK_INT("inventory source curse", carried->cursed, 1);
-    CHECK_INT("inventory source property", carried->property[1], 0x2f);
-    w.levels[0][0].source_item_property_table_verified = 0;
-    CHECK_INT("missing source property table rejects drop",
-              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
-    w.levels[0][0].source_item_property_table_verified = 1;
-    w.inventory_source[0][0].source_raw_size = 17u;
-    CHECK_INT("oversized source item bytes rejected on drop",
-              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
-    w.inventory_source[0][0].source_raw_size = 4u;
-    w.inventory_source[0][0].property[5] ^= 0x01u;
-    w.inventory_source[0][0].item_category = THERON_ITEM_CAT_ARMOR;
-    CHECK_INT("mutated source category rejected on drop",
-              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
-    w.inventory_source[0][0].item_category = THERON_ITEM_CAT_WEAPON;
-    CHECK_INT("mutated property row rejected on drop",
-              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
-    w.inventory_source[0][0].property[5] ^= 0x01u;
-
-    carried = theron_v1_inventory_source_at(&w, 0, 0);
-    CHECK(carried && carried->source_raw_size == 4u &&
-              carried->source_raw[2] == 0x86u,
-          "inventory keeps exact source item bytes");
-    CHECK_INT("source inventory slot swap succeeds",
-              theron_v1_swap_inventory_source_slots(&w, 0, 0, 1), 0);
-    CHECK_INT("swapped compact inventory id", w.party.champions[0].inventory[1], 6);
-    carried = theron_v1_inventory_source_at(&w, 0, 1);
-    CHECK(carried && carried->valid && carried->source_raw[2] == 0x86u,
-          "swapped slot retains exact source item bytes");
-    w.inventory_source[0][1].source_raw[2] ^= 0x01u;
-    CHECK_INT("tampered source item drop rejected",
-              theron_v1_drop_inventory_source_item(&w, 0, 1, 3, 4), -1);
-    w.inventory_source[0][1].source_raw[2] = 0x86u;
-    CHECK(theron_v1_drop_inventory_source_item(&w, 0, 1, 3, 4) > 0,
-          "source item drop succeeds");
-    CHECK_INT("dropped source item id", w.objects[w.object_count - 1].item_index,
-              6);
-    CHECK_INT("dropped source item charges",
-              w.objects[w.object_count - 1].quantity, 3);
-    CHECK_INT("dropped source item ref",
-              w.objects[w.object_count - 1].source_ref, 0x1234);
-    CHECK_INT("dropped source clears inventory",
-              w.party.champions[0].inventory[0], THERON_ITEM_NONE);
-    CHECK(!theron_v1_inventory_source_at(&w, 0, 0)->valid,
-          "dropped source clears provenance slot");
+    /* Positive pickup/drop round trips now run only in the real Track 02
+     * dungeon-loader corpus test, where the owning dungeon bank is bound. */
 }
 
 int main(void) {
@@ -948,8 +844,8 @@ int main(void) {
     test_sound_validation();
     test_creature_spawn_and_lookup();
     test_scripted_creature_spawn_requires_source_stats();
-    test_champion_attack_kills_creature();
-    test_creature_attack_champion();
+    test_unbound_champion_attack_fails_closed();
+    test_unbound_creature_attack_fails_closed();
     test_creature_drop_loot();
     test_hp_modification_clamps();
     test_object_table_apply_to_world();

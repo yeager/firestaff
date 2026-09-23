@@ -256,7 +256,8 @@ int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
      * route is authoritative original data and overrides the block.
      * Source: theron_v1_asset_loader.h synthetic_rendering_blocked contract;
      * docs/source-lock/tqr_v1_track02_graphics_format_real_media_2026-07-11.md. */
-    return bundle->track03_data != NULL &&
+    return !bundle->synthetic_rendering_blocked &&
+           bundle->track03_data != NULL &&
            bundle->palette.tile_count > 0 &&
            bundle->palette_route_verified;
 }

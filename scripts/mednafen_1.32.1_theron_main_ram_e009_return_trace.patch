@@ -16,7 +16,7 @@
 	   TheronPCECDTraceMainRAMLoaderE009Call(PC, physical_pc, A, X, Y);
 +	  TheronPCECDTraceMainRAMLoaderE009Return(PC, physical_pc);
 	 }
- 
+
 	 PC++;
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
@@ -52,5 +52,5 @@
 +                             logical_pc, physical_pc);
 + TheronPCECDMainRAMLoaderE009ReturnPending = false;
  }
- 
+
  void TheronPCECDTraceG4MainRAMRead(uint16 logical_address, uint32 physical_address,

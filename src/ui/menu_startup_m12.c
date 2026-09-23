@@ -3242,6 +3242,7 @@ static int m12_is_valid_nexus_quick_resume_path(const char* path) {
     return result == NEXUS_SAVE_OK;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int m12_theron_tqsv_root_and_slot_from_path(const char* path,
                                                    char* outRoot,
                                                    size_t outRootCap,
@@ -3381,6 +3382,7 @@ static int m12_is_valid_theron_quick_resume_path(const char* path) {
     }
     return theron_v1_save_verify_slot(saveRoot, slot) ? 1 : 0;
 }
+#endif
 
 static int m12_is_valid_dm2_quick_resume_path(const char* path) {
     DM2_SKSaveCorpusReceipt corpus;
@@ -3404,8 +3406,11 @@ static int m12_is_quick_resume_game_supported(const char* gameId) {
     return gameId && (strcmp(gameId, "dm1") == 0 ||
                       strcmp(gameId, "csb") == 0 ||
                       strcmp(gameId, "dm2") == 0 ||
-                      strcmp(gameId, "nexus") == 0 ||
-                      strcmp(gameId, "theron") == 0);
+                      strcmp(gameId, "nexus") == 0
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
+                      || strcmp(gameId, "theron") == 0
+#endif
+                      );
 }
 
 static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
@@ -3425,9 +3430,11 @@ static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
     if (strcmp(gameId, "nexus") == 0) {
         return m12_is_valid_nexus_quick_resume_path(path);
     }
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     if (strcmp(gameId, "theron") == 0) {
         return m12_is_valid_theron_quick_resume_path(path);
     }
+#endif
     return 0;
 }
 
@@ -3590,6 +3597,7 @@ static int m12_infer_quick_resume_game_id(const char* path,
         m12_try_quick_resume_candidate("nexus", path, outId, outSize)) {
         return 1;
     }
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     {
         char tqsvRoot[512];
         int tqsvSlot = -1;
@@ -3616,6 +3624,7 @@ static int m12_infer_quick_resume_game_id(const char* path,
             return 1;
         }
     }
+#endif
     if (m12_try_quick_resume_candidate("dm1", path, outId, outSize)) {
         return 1;
     }

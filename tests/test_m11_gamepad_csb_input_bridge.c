@@ -82,17 +82,16 @@ int main(void) {
                                      M12_AXIS_ROLE_MOVE, 15999, 1) ==
           M12_MENU_INPUT_NONE);
 
-    /* Theron has the PC Engine's four-way pad, not the DM strafe pair.
-     * Keep this host mapping source-specific so DM1/CSB retain their
-     * existing A/D strafe bindings. */
+    /* Theron's retail movement panel has separate turn and side-step
+     * commands. Arrows/keypad turn; A/D reach original commands $06/$04. */
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_W) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_S) ==
           M12_MENU_INPUT_DOWN);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_A) ==
-          M12_MENU_INPUT_LEFT);
+          M12_MENU_INPUT_STRAFE_LEFT);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_D) ==
-          M12_MENU_INPUT_RIGHT);
+          M12_MENU_INPUT_STRAFE_RIGHT);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_8) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_2) ==
@@ -106,9 +105,9 @@ int main(void) {
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_S) ==
           M12_MENU_INPUT_DOWN);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_A) ==
-          M12_MENU_INPUT_LEFT);
+          M12_MENU_INPUT_STRAFE_LEFT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_D) ==
-          M12_MENU_INPUT_RIGHT);
+          M12_MENU_INPUT_STRAFE_RIGHT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_UP) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_DOWN) ==

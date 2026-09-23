@@ -12,7 +12,6 @@ palette ownership, or later-level runtime handoff.
 |---------|--------|------|-----|--------|
 | US Track 19 | `TQUS19.iso` | 5,984,256 | `51b40a17b92a30339957ba564aa0015c` | Envelope present |
 | JP Track 19 | `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | Envelope present |
-| JP Rev. 1 Track 19 raw BIN | `Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin` | 7,752,192 | `27d54f58154662885bb67d5967e5111e` | Same envelope after the CUE's 224-sector INDEX 00 pregap |
 | US retail Track 02 concatenation | `TQUS19.iso + TQUS02End.iso` | canonical image | `ceb02343868f80cec899e9b239aff2da` | Same envelope bytes |
 
 The Track 19 US and JP images both contain the exact 12-byte header at byte
@@ -39,6 +38,42 @@ source loader/disassembly supplies that consumer relation.
 
 The Track 19 inventory probe mutates one envelope byte for each real variant
 and requires validation to fail, preserving the fail-closed intake contract.
-For the JP Rev. 1 raw BIN, the product retains the physical source identity
-and performs the CUE-defined pregap/header removal only in memory before the
-same validation; it does not create an ISO file.
+
+## Regional Item-name Bank — 2026-08-20
+
+The same complete-file gate now carries all 69 item-name records into the live
+native world. The US name span is `0x0e9271..0x0e951e` with FNV-1a
+`0x5be5602d`; the JP span is `0x0e92b1..0x0e955e` with FNV-1a `0x1020ac88`.
+US bytes are retained as source ASCII. JP bytes are retained losslessly as
+Shift-JIS and are not passed to a host text renderer.
+
+Production parses those real spans directly. The readable US 69-name catalog
+is excluded from the runtime archive and remains available only to historical
+fixtures. The same applies to the 15 readable US level labels: production
+parses the exact `0x203a3b..0x203ac2` span after verifying FNV-1a `7f7d9f67`.
+The inventory probe mutates both source spans and requires rejection.
+
+Immediately before each 69-name span is a six-byte separator preceded by a
+69-byte source type-code table. The US table is at `0x0e9226` with FNV-1a
+`21533bb5`; the JP table is at `0x0e9266` with FNV-1a `f9c3eabb`. Runtime now
+authenticates and retains all 69 bytes in the regional name bank. A changed
+type-code byte is rejected independently of name and property mutations.
+Both tables are byte-identical to their edition's dungeon-4 Track 02 type-code
+table. The world binder also compares the complete 396-byte property tables.
+When both comparisons pass in the same authenticated regional session, it
+opens the positional Track 02 dungeon-4→Track 19 index mapping. Other dungeons
+remain closed. The object accessor checks source origin, mapped dungeon, index
+bounds and the individual type code before returning raw name bytes.
+
+Production chooses `TQUS19.iso` or `TQJP19.iso` only from the authenticated
+Track 02 region and then requires the exact Track 19 MD5 above. The bank is
+available by explicit Track 19 index and, for dungeon 4 only, by a source-owned
+Track 02 object. `item_mapping_proven` is set only in a world containing both
+matching banks. `host_text_rendering_proven` remains zero.
+
+The six other dungeon banks were checked rather than assumed to share this
+layout. Exact source-name matching finds many unique labels, but their mapped
+type codes and property rows do not preserve the Track 19 positions. No other
+dungeon therefore receives a positional mapping. The selected-inventory
+receipt uses the proven Track 19 accessor for dungeon 4 and retains the
+authenticated dungeon-local Track 02 name path elsewhere.

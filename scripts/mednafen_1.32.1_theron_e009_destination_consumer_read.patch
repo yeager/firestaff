@@ -1,0 +1,33 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -196,6 +196,30 @@
+                                          uint8 reader_a, uint8 reader_x, uint8 reader_y,
+                                          uint8 reader_sp, uint8 reader_p)
+ {
++ if(physical_address >= 0x1f0800 && physical_address < 0x1f1000 &&
++    TheronPCECDE009DestinationConsumerTraceCount <
++     TheronPCECDE009DestinationConsumerTraceLimit)
++ {
++  TheronPCECDGetE009DestinationConsumerTrace();
++  if(TheronPCECDE009DestinationConsumerTrace)
++  {
++   const TheronPCECDMainRAMProvenance *provenance =
++    &TheronPCECDMainRAMProvenanceMap[physical_address];
++   fprintf(TheronPCECDE009DestinationConsumerTrace,
++           "e009_destination_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x a=%02x x=%02x y=%02x sp=%02x p=%02x system_card_copy=%u debugger_completion_hash=%u provenance_valid=%u provenance_value_match=%u source_lba=%u source_offset=%u fifo_sequence=%llu\n",
++           TheronPCECDE009DestinationConsumerTraceCount++, logical_address,
++           physical_address, value, reader_pc, reader_physical_pc,
++           reader_a, reader_x, reader_y, reader_sp, reader_p,
++           reader_pc == 0xcb22 && reader_physical_pc == 0x002b22,
++           reader_pc == 0x3840 && reader_physical_pc == 0x1f1840,
++           provenance->valid ? 1 : 0,
++           provenance->valid && provenance->value == value ? 1 : 0,
++           provenance->valid ? provenance->source_lba : 0,
++           provenance->valid ? provenance->source_offset : 0,
++           (unsigned long long)(provenance->valid ? provenance->fifo_sequence : 0));
++   fflush(TheronPCECDE009DestinationConsumerTrace);
++  }
++ }
+  bool spawn_consumer_probe =
+   logical_address == 0x5d64 || logical_address == 0x5d6a ||
+   (reader_pc >= 0xc96b && reader_pc <= 0xca69) ||

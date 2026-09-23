@@ -78,33 +78,35 @@ typedef struct {
 
 typedef struct {
     uint8_t type;
-    uint8_t value;
-    uint8_t bit1;
-    uint8_t bit2;
+    uint16_t value;
+    uint8_t unreferenced_bit0;
+    uint8_t unreferenced_bit1;
     uint8_t once;
     uint8_t effect;
+    uint8_t revert_effect;
     uint8_t sound;
     uint8_t delay;
-    uint8_t inactive;
+    uint8_t local_effect;
     uint8_t graphism;
     uint8_t target_x;
     uint8_t target_y;
     uint8_t facing;
+    uint16_t local_multiple;
 } Theron_Track02ActuatorRecord;
 
 typedef struct {
-    /* DMBUILDER6/src/dms.h:145-157: category 4 starts with the signed
-     * chested field, unlike the linked-list records in most other
-     * categories. Keep it distinct so a future T900 loot consumer cannot
-     * mistake containment state for a reference link. */
+    /* This structure is the 14-byte dm_monster payload after the generic
+     * two-byte item-list next reference.  DMBUILDER6/src/item.c:getItem()
+     * advances one short before returning the dms.h dm_monster pointer. */
     int16_t chested;
     uint8_t type;
     uint8_t position;
     uint16_t health[4];
     uint8_t number;
     uint8_t direction_flags;
-    /* Preserve the two source words verbatim until the original AI/T900
-     * consumers assign their bit-level meanings. */
+    /* The final source word contains both low flags/number and the high
+     * direction byte. `unknown_word` is retained for save/API compatibility
+     * but is zero for this 16-byte Track 02 record layout. */
     uint16_t flags_word;
     uint16_t unknown_word;
 } Theron_Track02MonsterRecord;

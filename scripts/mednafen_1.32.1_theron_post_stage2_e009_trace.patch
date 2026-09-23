@@ -7,13 +7,13 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
  static unsigned TheronIrq2TracePostStage2PhysicalPageCount;
 +static unsigned TheronIrq2TracePostStage2NonSystemCardE009Count;
 +static bool TheronIrq2TracePostStage2NonSystemCardE009Seen[65536];
- 
+
  static void FlushTheronIrq2Trace(void)
  {
 @@ -216,6 +217,28 @@ static void DoTheronIrq2Trace(const uint32 PC)
   }
  }
- 
+
 +if(TheronIrq2TracePostStage2ExecutionActive &&
 +   TheronIrq2TracePostStage2NonSystemCardE009Count < 16 &&
 +   !TheronIrq2TracePostStage2NonSystemCardE009Seen[logical_pc] &&

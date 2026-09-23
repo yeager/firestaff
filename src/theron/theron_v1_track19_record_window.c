@@ -8,19 +8,16 @@ int theron_v1_track19_item_property_table_validate(
     const size_t offset = japanese_variant
         ? THERON_TRACK19_ITEM_PROPERTY_TABLE_JP_OFFSET
         : THERON_TRACK19_ITEM_PROPERTY_TABLE_US_OFFSET;
-    unsigned int i;
+    uint32_t hash = 2166136261u;
+    size_t i;
 
     if (!iso || iso_size < offset + THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES)
         return 0;
-    for (i = 0u; i < THERON_TRACK19_ITEM_PROPERTY_TABLE_COUNT; ++i) {
-        const Theron_ItemPropertyRecord *record =
-            theron_v1_track02_item_property(i);
-        if (!record || memcmp(iso + offset +
-                              i * THERON_TRACK19_ITEM_PROPERTY_RECORD_BYTES,
-                              record,
-                              THERON_TRACK19_ITEM_PROPERTY_RECORD_BYTES) != 0)
-            return 0;
+    for (i = 0u; i < THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES; ++i) {
+        hash ^= iso[offset + i];
+        hash *= 16777619u;
     }
+    if (hash != THERON_TRACK19_ITEM_PROPERTY_TABLE_FNV1A) return 0;
     if (out_offset) *out_offset = offset;
     if (out_bytes) *out_bytes = THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES;
     return 1;

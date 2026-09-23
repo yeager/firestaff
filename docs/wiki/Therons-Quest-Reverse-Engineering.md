@@ -453,10 +453,10 @@ checksum.
 
 ### SRM disk-slot classifier (`theron_v1_srm_classifier.h`, `theron_v1_srm_runtime.h`)
 
-Models the real PC Engine "Save Disk" cartridge / community `.srm` files
-(credited to Sphenx via DMWeb), which are **completely different from DM's
-save format** — a **gzip-framed custom format with a header**. Firestaff's
-runtime interchange targets a bounded body it calls **`FSTQPTY1`**:
+The SRM tooling classifies historical community gzip artifacts while keeping
+unknown bodies opaque. `FSTQPRG1` and `FSTQPTY1` are explicitly
+Firestaff-defined fixture/interchange envelopes; production does not present
+either one as an original Theron's Quest save or a Continue route.
 
 - Files are `~/.firestaff/data/theron/save/slotN.srm`
   (override `FIRESTAFF_THERON_SRM_DIR`), 5 disk slots.
@@ -471,11 +471,9 @@ runtime interchange targets a bounded body it calls **`FSTQPTY1`**:
 - **Export is no-replace/atomic**: `theron_v1_srm_runtime_export_path()`
   writes a gzip-wrapped `FSTQPTY1` body and "never overwrites a destination
   until compression and the complete write have succeeded."
-- **Continue path** (`theron_v1_srm_runtime_continue_path()`) is the single
-  runtime route: read/decode a real `.srm`, restore party/progression/
-  quest/level bytes, then **derive and bind Track02 media identity** from
-  supplied hash-profiled Track 02 bytes — no world state changes until both
-  restore and media identity verification succeed.
+- The fixture runtime can transactionally exercise progression/party restore
+  and Track 02 identity binding. This is test infrastructure, not production
+  proof of the original save-body layout.
 - Receipt (`Theron_V1SrmRuntimeReceipt`) carries dungeon, level, quest_mask,
   champion_count, party_gold, and `Theron_RuntimeMediaIdentity
   track02_identity` — i.e. the save is bound to a specific verified disc
@@ -488,6 +486,14 @@ runtime interchange targets a bounded body it calls **`FSTQPTY1`**:
 / `theron_v1_srm_launch_discovery.h` build the surrounding discovery and
 attestation pipeline for real-world `.srm` corpora, keeping any body whose
 format is not yet decoded strictly non-launchable.
+
+Separately, authentic 2 KiB PC Engine Backup RAM with `HUBM` and
+`DMS-SG.001` is classified exactly. The complete `$0199`-byte data area is
+preserved as three `$88`-byte slots plus the original selected-slot index at
+data offset `$0198`. Each selected slot begins with the original `$86`-byte
+writer body. Its first byte is the proven campaign byte. The remaining fields
+are not, so this route restores no party, inventory, dungeon or full Continue
+state.
 
 ---
 

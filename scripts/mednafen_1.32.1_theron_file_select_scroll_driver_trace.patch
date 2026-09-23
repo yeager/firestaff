@@ -1,0 +1,126 @@
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -339,6 +339,25 @@
+   }
+   if(file_select_vdc_trace)
+   {
++   if(file_select_vdc_count == 0)
++   {
++    const char *code_path = getenv("FIRESTAFF_THERON_FILE_SELECT_DRIVER_CODE_SNAPSHOT");
++    const char *ram_path = getenv("FIRESTAFF_THERON_FILE_SELECT_DRIVER_RAM_SNAPSHOT");
++    FILE *code_file = code_path && *code_path ? fopen(code_path, "wb") : NULL;
++    FILE *ram_file = ram_path && *ram_path ? fopen(ram_path, "wb") : NULL;
++    if(code_file)
++    {
++     for(unsigned address = 0x104000; address < 0x108000; address++)
++      fputc(PCEDBG_MemPeek(address, 1, false, false), code_file);
++     fclose(code_file);
++    }
++    if(ram_file)
++    {
++     for(unsigned address = 0; address < 8192; address++)
++      fputc(PCE_PeekMainRAM(address), ram_file);
++     fclose(ram_file);
++    }
++   }
+    fprintf(file_select_vdc_trace,
+            "file_select_vdc_write sequence=%u frame=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
+            file_select_vdc_count++, TheronScriptInputFrame(),
+@@ -497,9 +516,45 @@
+  return(BaseRAM[A & 0x1FFF]);
+ }
+
++static void TheronTraceFileSelectScrollRAMWrite(uint32 physical, uint8 value)
++{
++ static FILE *trace = NULL;
++ static unsigned count = 0;
++ const unsigned offset = physical & 0x1fff;
++ uint16 pc;
++ uint32 physical_pc;
++ if(!TheronFileSelectInputIssued() ||
++    (offset != 0x020c && offset != 0x020d &&
++     offset != 0x0210 && offset != 0x0211) || count >= 1024)
++  return;
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_FILE_SELECT_SCROLL_RAM_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-instrumented-file-select-scroll-ram\n", trace);
++ }
++ pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++ physical_pc =
++  (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (pc >> 13)) << 13) |
++  (pc & 0x1fff);
++ fprintf(trace,
++         "file_select_scroll_ram_write sequence=%u frame=%u logical_address=%04x physical_address=%06x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
++         count++, TheronScriptInputFrame(), offset + 0x2000, physical,
++         BaseRAM[offset], value, pc, physical_pc,
++         HuCPU.GetRegister(HuC6280::GSREG_A),
++         HuCPU.GetRegister(HuC6280::GSREG_X),
++         HuCPU.GetRegister(HuC6280::GSREG_Y));
++ fflush(trace);
++}
++
+ static DECLFW(BaseRAMWrite)
+ {
+  TheronTracePCECDDataDestination(A, V);
++ TheronTraceFileSelectScrollRAMWrite(A, V);
+  BaseRAM[A & 0x1FFF] = V;
+ }
+
+--- a/src/pce/huc.cpp
++++ b/src/pce/huc.cpp
+@@ -31,6 +31,9 @@
+ namespace MDFN_IEN_PCE
+ {
+
++bool TheronFileSelectInputIssued(void);
++unsigned TheronScriptInputFrame(void);
++
+ static const uint8 BRAM_Init_String[8] = { 'H', 'U', 'B', 'M', 0x00, 0x88, 0x10, 0x80 }; //"HUBM\x00\x88\x10\x80";
+ static bool BRAM_Disabled;       // Cached at game load, don't remove this caching behavior or save game loss may result(if we ever get a GUI).
+
+@@ -144,6 +147,39 @@
+
+ static DECLFW(CDRAMWrite)
+ {
++ static FILE *file_select_scroll_control_trace = NULL;
++ static unsigned file_select_scroll_control_count = 0;
++ const unsigned offset = A - 0x80 * 8192;
++ if(TheronFileSelectInputIssued() && offset >= 0x47ba && offset <= 0x47bd &&
++    file_select_scroll_control_count < 4096)
++ {
++  if(!file_select_scroll_control_trace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_FILE_SELECT_SCROLL_CONTROL_TRACE");
++   if(path && *path)
++   {
++    file_select_scroll_control_trace = fopen(path, "w");
++    if(file_select_scroll_control_trace)
++     fputs("source=mednafen-pce-instrumented-file-select-scroll-control\n",
++           file_select_scroll_control_trace);
++   }
++  }
++  if(file_select_scroll_control_trace)
++  {
++   const uint16 pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++   const uint32 physical_pc =
++    (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (pc >> 13)) << 13) |
++    (pc & 0x1fff);
++   fprintf(file_select_scroll_control_trace,
++           "file_select_scroll_control_write sequence=%u frame=%u logical_address=%04x physical_address=%06x old=%02x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
++           file_select_scroll_control_count++, TheronScriptInputFrame(),
++           offset, A, CDRAM[offset], V, pc, physical_pc,
++           HuCPU.GetRegister(HuC6280::GSREG_A),
++           HuCPU.GetRegister(HuC6280::GSREG_X),
++           HuCPU.GetRegister(HuC6280::GSREG_Y));
++   fflush(file_select_scroll_control_trace);
++  }
++ }
+  CDRAM[A - 0x80 * 8192] = V;
+ }
+

@@ -157,9 +157,9 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
                                          int processedValue,
                                          int gameplayActive);
 
-/* Theron host controls.  The PC Engine controller has no strafe action:
-   W/S are forward/backward, A/D are turn-left/turn-right, mouse button 1/2
-   are Button I/II, and a short/long touch is the same Button I/II pair. */
+/* Theron host controls. W/S are forward/backward, A/D are the original
+   lower-panel left/right steps, arrow Left/Right turn, mouse button 1/2 are
+   Button I/II, and a short/long touch is the same Button I/II pair. */
 M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode);
 M12_MenuInput M11_TheronNavigationInputFromKeycode(int keycode);
 M12_MenuInput M11_TheronMouseButtonToInput(int button);

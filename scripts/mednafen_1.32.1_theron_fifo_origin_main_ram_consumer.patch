@@ -5,7 +5,7 @@
  void TheronPCECDTraceGameWindowRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
  void TheronPCECDTraceParameterWindowRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
 +void TheronPCECDTraceFifoOriginMainRAMRead(uint16 logical_address, uint32 physical_address, uint8 value, uint16 reader_pc, uint32 reader_physical_pc);
- 
+
  class alignas(128) HuC6280
  {
 @@ -414,6 +415,13 @@
@@ -43,7 +43,7 @@
 +static unsigned TheronPCECDFifoOriginMainRAMHead;
 +static unsigned TheronPCECDFifoOriginMainRAMCount;
 +static unsigned TheronPCECDFifoOriginMainRAMConsumerCount;
- 
+
  static bool TheronPCECDTraceSelectedGeneration(unsigned generation)
  {
 @@ -235,6 +250,28 @@
@@ -73,7 +73,7 @@
 +  return;
 + }
  }
- 
+
  static void TheronPCECDTraceDataOrigin(uint16 cpu_pc, uint16 port,
 @@ -273,6 +310,14 @@
  void TheronPCECDTraceDataWrite(uint16 logical_destination, uint32 physical_destination, uint8 stored_value,

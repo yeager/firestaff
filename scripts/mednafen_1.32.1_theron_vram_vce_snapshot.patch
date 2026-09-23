@@ -1,24 +1,53 @@
 --- a/src/pce/pce.cpp
 +++ b/src/pce/pce.cpp
-@@ -76,2 +76,34 @@
+@@ -76,2 +76,86 @@
  // Accessed in debug.cpp
++static bool TheronGraphicsSnapshotDumped = false;
 +static void TheronDumpGraphicsSnapshot(void)
 +{
 + const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
 + const char *vce_path = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
++ const char *vdc_path = getenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT");
++ const char *sat_path = getenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT");
++ const char *ram_path = getenv("FIRESTAFF_THERON_MAIN_RAM_SNAPSHOT");
++ const char *bram_path = getenv("FIRESTAFF_THERON_BRAM_SNAPSHOT");
 + FILE *vram_file;
 + FILE *vce_file;
++ FILE *vdc_file;
++ FILE *sat_file;
++ FILE *ram_file = NULL;
++ FILE *bram_file = NULL;
 + unsigned i;
-+ if(!vce || !vram_path || !*vram_path || !vce_path || !*vce_path)
++ if(TheronGraphicsSnapshotDumped || !vce ||
++    !vram_path || !*vram_path || !vce_path || !*vce_path ||
++    !vdc_path || !*vdc_path || !sat_path || !*sat_path)
 +  return;
 + vram_file = fopen(vram_path, "wb");
 + vce_file = fopen(vce_path, "wb");
-+ if(!vram_file || !vce_file)
++ vdc_file = fopen(vdc_path, "w");
++ sat_file = fopen(sat_path, "wb");
++ if(ram_path && *ram_path)
++  ram_file = fopen(ram_path, "wb");
++ if(bram_path && *bram_path)
++  bram_file = fopen(bram_path, "wb");
++ if(!vram_file || !vce_file || !vdc_file || !sat_file ||
++    ((ram_path && *ram_path) && !ram_file) ||
++    ((bram_path && *bram_path) && !bram_file))
 + {
 +  if(vram_file) fclose(vram_file);
 +  if(vce_file) fclose(vce_file);
++  if(vdc_file) fclose(vdc_file);
++  if(sat_file) fclose(sat_file);
++  if(ram_file) fclose(ram_file);
++  if(bram_file) fclose(bram_file);
 +  return;
 + }
++ if(ram_file)
++  for(i = 0; i < 8192; i++)
++   fputc(PCE_PeekMainRAM(i), ram_file);
++ if(bram_file)
++  for(i = 0; i < 2048; i++)
++   fputc(HuC_PeekBRAM(i), bram_file);
 + for(i = 0; i < 32768; i++)
 + {
 +  uint16 word = vce->PeekVDCVRAM(0, i);
@@ -31,11 +60,34 @@
 +  fputc(word & 0xff, vce_file);
 +  fputc((word >> 8) & 0xff, vce_file);
 + }
++ for(i = 0; i < 256; i++)
++ {
++  uint16 word = vce->PeekVDCSAT(0, i);
++  fputc(word & 0xff, sat_file);
++  fputc((word >> 8) & 0xff, sat_file);
++ }
++ fputs("FIRESTAFF_THERON_VDC_STATE_V1\n", vdc_file);
++ fprintf(vdc_file,
++         "vdc=0 bxr=%04x byr=%04x mwr=%04x hsr=%04x hdr=%04x vsr=%04x vdr=%04x vcr=%04x cr=%04x\n",
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_BXR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_BYR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_MWR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_HSR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_HDR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VSR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VDR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_VCR, NULL, 0),
++         (unsigned)vce->GetRegisterVDC(0, VDC::GSREG_CR, NULL, 0));
 + fclose(vram_file);
 + fclose(vce_file);
++ fclose(vdc_file);
++ fclose(sat_file);
++ if(ram_file) fclose(ram_file);
++ if(bram_file) fclose(bram_file);
++ TheronGraphicsSnapshotDumped = true;
 +}
  static uint8 BaseRAM[32768]; // 8KB for PCE, 32KB for Super Grafx
-@@ -739,5 +771,6 @@
+@@ -739,5 +823,6 @@
  static MDFN_COLD void CloseGame(void)
  {
   HuC_SaveNV();

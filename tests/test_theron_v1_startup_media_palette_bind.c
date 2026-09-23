@@ -224,8 +224,19 @@ static void check_real_us_roster_reaches_party(
     CHECK(theron_v1_startup_select_mirror(&flow, 6) == THERON_STARTUP_OK);
     CHECK(theron_v1_startup_select_mirror(&flow, 2) == THERON_STARTUP_OK);
     memset(&party, 0, sizeof(party));
-    CHECK(theron_v1_startup_enter_forcefield_with_roster(
-              &flow, &party, names, receipt.startup_roster_name_count) ==
+    {
+        Theron_StartupFlow saved_flow = flow;
+        Theron_V1_Party saved_party = party;
+        CHECK(theron_v1_startup_enter_forcefield_with_track02_roster(
+                  &flow, &party, track02, 1u, md5,
+                  names, receipt.startup_roster_name_count) ==
+              THERON_STARTUP_ERR_NOT_READY);
+        CHECK(memcmp(&flow, &saved_flow, sizeof(flow)) == 0);
+        CHECK(memcmp(&party, &saved_party, sizeof(party)) == 0);
+    }
+    CHECK(theron_v1_startup_enter_forcefield_with_track02_roster(
+              &flow, &party, track02, track02_bytes, md5,
+              names, receipt.startup_roster_name_count) ==
           THERON_STARTUP_OK);
     CHECK(strcmp(party.champions[THERON_CHAMPION_SLOT_THERON].name,
                  "THERON") == 0);
