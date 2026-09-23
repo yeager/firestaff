@@ -7,6 +7,27 @@ language="${FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE:-en}"
 user_save="${FIRESTAFF_CSB_FMTOWNS_USER_SAVE:-}"
 edition_arg=""
 expected_media="$data_dir"
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+entrance_capture_dir=""
+isolated_home=""
+
+cleanup_entrance_capture() {
+    if [ -n "$entrance_capture_dir" ] && [ -d "$entrance_capture_dir" ]; then
+        find "$entrance_capture_dir" -depth -delete
+    fi
+    entrance_capture_dir=""
+}
+cleanup_test_artifacts() {
+    cleanup_entrance_capture
+    if [ -n "$isolated_home" ] && [ -d "$isolated_home" ]; then
+        find "$isolated_home" -depth -delete
+    fi
+    isolated_home=""
+}
+
+run_firestaff() {
+    HOME="$isolated_home" "$firestaff_cli" "$@"
+}
 
 # The F31 package is admitted by Firestaff's native ZIP/CD readers.  This
 # regression must not inherit the optional external archive scan facility.
@@ -23,6 +44,9 @@ if [ ! -e "$data_dir" ]; then
     echo "SKIP: local CSB FM Towns data is unavailable: $data_dir"
     exit 77
 fi
+mkdir -p "$scratch_root"
+isolated_home=$(mktemp -d "$scratch_root/csb-fmtowns-home.XXXXXX")
+trap cleanup_test_artifacts EXIT HUP INT TERM
 if [ -f "$data_dir" ]; then
     # The F31 title/game package is consumed directly from this archive.  Do
     # not let a native start, input, or menu route rewrite supplied media.
@@ -41,7 +65,7 @@ fi
 # CHTWE enters the original MINI.DAT campaign.  The first receipt proves the
 # direct CLI route did not fall back to a PC/Amiga title; the second advances
 # the real native sequence without injecting a synthetic save or input.
-title_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+title_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
     --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
     --boot-probe-frames 2 --boot-probe-expect-startup-active 1 \
     --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
@@ -58,7 +82,7 @@ case "$title_output" in
         ;;
 esac
 
-switch_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+switch_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
     --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
     --boot-probe-frames 700 --boot-probe-expect-phase csb-fmtowns-switch \
     --boot-probe-expect-startup-active 1 \
@@ -82,7 +106,7 @@ esac
 # bootstrap dungeon which used to leak through the CLI receipt.
 for mode in v1 v20 v21; do
 case "$mode" in v1) expected_mode=0;; v20) expected_mode=1;; v21) expected_mode=2;; esac
-runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+runtime_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
     --presentation-mode "$mode" \
     --width 320 --height 200 --scale-mode 4 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
     --boot-probe --boot-probe-frames 1200 \
@@ -115,13 +139,9 @@ done
 # than the closed Prison doors.  Capture the actual indexed presentation from
 # the user-owned ZIP, without materialising any member, and bind it to the
 # executable's authenticated C28 six-bit palette.
-scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
-mkdir -p "$scratch_root"
 entrance_capture_dir=$(mktemp -d "$scratch_root/csb-fmtowns-entrance.XXXXXX")
-cleanup_entrance_capture() { find "$entrance_capture_dir" -depth -delete; }
-trap cleanup_entrance_capture EXIT HUP INT TERM
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$entrance_capture_dir" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy run_firestaff \
     --presentation-mode v1 --width 320 --height 200 \
     --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
     --boot-probe --boot-probe-frames 720 \
@@ -204,7 +224,7 @@ for modern_mode in v20 v21; do
     modern_capture_dir="$entrance_capture_dir/$modern_mode"
     mkdir -p "$modern_capture_dir"
     FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$modern_capture_dir" \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy run_firestaff \
         --presentation-mode "$modern_mode" --width 320 --height 200 \
         --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
         --boot-probe --boot-probe-frames 720 \
@@ -262,7 +282,6 @@ for mode in ("v20", "v21"):
             f"broad_red={broad_red})")
     print(f"PASS: CSB FM Towns {mode} closed Entrance nonblack={nonblack} colours={colours}")
 PY
-trap - EXIT HUP INT TERM
 cleanup_entrance_capture
 
 # An explicit F31 save is a distinct C03/F0435 route.  It must not replay
@@ -274,7 +293,7 @@ if [ -n "$user_save" ]; then
         echo "FAIL: requested F31 user save is unavailable: $user_save" >&2
         exit 1
     fi
-    resume_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    resume_output="$(SDL_VIDEODRIVER=dummy run_firestaff \
         --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
         --save "$user_save" --boot-probe --boot-probe-expect-phase inactive \
         --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 \
@@ -298,7 +317,7 @@ fi
 # selected CSB row, and Enter must admit the source-owned F31 TITLE.ANM
 # boundary. SWITCHTW/MINI.DAT is a later, separately tested input route.
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    SDL_VIDEODRIVER=dummy run_firestaff \
     --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
     --script enter,enter,enter --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
@@ -326,7 +345,7 @@ esac
 # request survives game card -> FM Towns card -> Original card navigation;
 # no keyboard token chooses the platform or presentation here.
 mouse_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    SDL_VIDEODRIVER=dummy run_firestaff \
     --width 1920 --height 1080 --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
     --script 'click:1000:200,click:400:400,click:300:400' --duration 2000 2>&1)" || {
     printf '%s\n' "$mouse_output" >&2
@@ -343,7 +362,7 @@ esac
 
 if [ -n "$user_save" ]; then
     menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-        SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        SDL_VIDEODRIVER=dummy run_firestaff \
         --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
         --save "$user_save" --script enter,enter,enter --duration 1000 2>&1)" || {
         printf '%s\n' "$menu_resume_output" >&2
