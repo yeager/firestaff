@@ -22,6 +22,14 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   transition and save consumers. Regional champion records and source-backed
   pickup/drop are bound, but broader item-use semantics remain gated; the
   current all-seven dungeon loader remains source-only.
+  A fresh 2026-09-23 JP Rev 1 cold-start replay authenticated the raw Track 02
+  sectors (`b7afb338ad31be1025b53f9aff12d73a`) and emitted 24 raw-sector spans,
+  but no authenticated CD-to-RAM receipt, zero main-RAM E009 data reads, and
+  no dungeon-state handoff. A second replay using the existing opcode-gated menu
+  research hooks did not match any hook signatures and reached the same
+  boundary. The Mednafen transport receipt parser now identifies JP and US
+  Track 02 hashes separately; that tooling support does not promote the JP
+  capture to a gameplay or source-consumer witness.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. Authentic Backup RAM decoding and transactional
   Continue integration are implemented; runtime validation remains open.
