@@ -1,8 +1,23 @@
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static int isolate_missing_save_data(void) {
+#if defined(_WIN32)
+    return _putenv_s("FIRESTAFF_THERON_BRAM_PATH", "") == 0 &&
+           _putenv_s("HOME", "") == 0;
+#else
+    return unsetenv("FIRESTAFF_THERON_BRAM_PATH") == 0 &&
+           setenv("HOME", "", 1) == 0;
+#endif
+}
 
 int main(void) {
     Theron_V1StartupSaveResume snapshot;
@@ -11,16 +26,33 @@ int main(void) {
     char receipt[128];
 
     memset(&snapshot, 0, sizeof(snapshot));
+    if (!isolate_missing_save_data()) {
+        fputs("FAIL: could not isolate the production save-data environment\n",
+              stderr);
+        return 1;
+    }
     if (!theron_v1_startup_save_resume_evaluate(
-            "/path/that/does/not/exist", &snapshot) ||
-        snapshot.tqsv_total_slots != 0 ||
+            "/path/that/does/not/exist", &snapshot)) {
+        fputs("FAIL: production save/resume evaluation failed\n", stderr);
+        return 1;
+    }
+    if (snapshot.tqsv_total_slots != 0 ||
         snapshot.tqsv_valid_slots != 0 ||
         snapshot.tqsv_active_slot != -1 ||
-        snapshot.srm_total_slots != 0 ||
-        snapshot.srm_first_decoded_slot != -1 ||
         snapshot.resume_claim == THERON_V1_STARTUP_RESUME_TQSV ||
         snapshot.resume_claim == THERON_V1_STARTUP_RESUME_DUAL) {
-        fputs("FAIL: production advertised a TQSV Continue route\n", stderr);
+        fputs("FAIL: production advertised a synthetic TQSV Continue route\n",
+              stderr);
+        return 1;
+    }
+    if (snapshot.srm_total_slots != THERON_V1_PCE_BRAM_SLOT_COUNT ||
+        snapshot.srm_present_slots != 0 ||
+        snapshot.srm_recognized_slots != 0 ||
+        snapshot.srm_first_recognized_slot != -1 ||
+        snapshot.srm_first_decoded_slot != -1 ||
+        snapshot.resume_claim == THERON_V1_STARTUP_RESUME_SRM) {
+        fputs("FAIL: production advertised an unauthenticated Backup RAM Continue route\n",
+              stderr);
         return 1;
     }
     if (theron_v1_startup_save_resume_apply_explicit_path(

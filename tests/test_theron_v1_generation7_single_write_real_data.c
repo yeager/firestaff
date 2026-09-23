@@ -29,5 +29,8 @@ int main(void) {
     for (i = 0; i < 8; ++i) free(d[i]);
     puts("PASS: authentic generation-7 BAT uses one hardware write per word"); return 0;
 fail:
-    for (i = 0; i < 8; ++i) free(d[i]); return 1;
+    for (i = 0; i < 8; ++i) {
+        free(d[i]);
+    }
+    return 1;
 }
