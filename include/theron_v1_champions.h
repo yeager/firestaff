@@ -135,6 +135,12 @@ typedef struct {
     int16_t  priest_level;
     int16_t  wizard_level;
 
+    /* Original PC Engine T800 state: 20 skill ordinals, each with the
+     * temporary 16-bit and persistent 32-bit experience consumed by the
+     * regional dungeon code. */
+    uint16_t skill_temporary_experience[20];
+    uint32_t skill_experience[20];
+
     /* Wound bitmask (persists) */
     uint8_t  wounds;
 

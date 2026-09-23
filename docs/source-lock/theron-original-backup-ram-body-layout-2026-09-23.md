@@ -40,15 +40,21 @@ file-manager overlay (four MODE1 sectors, MD5
   `$DDF9` (`00 88 10`) and `$DDFC` (`00 00 01`) with `$42B8`, producing
   offsets `$0000`, `$0088`, or `$0110`, then calls `$E04E` for `$86` bytes;
 - the authentic Akutuba-complete image has data FNV-1a `0ce6b7ba`;
-- slot 0 begins with the `$86` writer bytes, followed by two still-opaque
+- slot 0 begins with the `$86` writer bytes, followed by two transport-padding
   bytes; slots 1 and 2 are zero and the selected-slot index is 0 in this
   artifact.
 
 Firestaff therefore preserves and exposes all 409 original bytes and selects
 only indices 0–2 through the original
 `$0198 → $278C → INY → $42B8 → {0000,0088,0110}` route. It does not interpret
-the two per-slot tail bytes or any other opaque field until their consumers
-are independently proven.
+the two per-slot tail bytes as gameplay state. The independently byte-bound
+US and JP Stage 2 routines read `$88` bytes when transporting one selected
+slot, then initialize a slot by writing zero to its first byte and using an
+overlapping `TII` of length `$87` to clear the remaining bytes. The dungeon
+handoff stores only the selected-slot ordinal; `DMS-SG.001` subsequently
+copies exactly `$86` bytes into `$267C..$2701`. No tail byte reaches the
+gameplay restore buffer. The final two bytes are therefore transport padding,
+not an unresolved Continue field.
 
 A fresh ordinal-0 run against the authenticated savestate reproduced the
 original BRAM MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`. At the same hook point,
@@ -133,10 +139,15 @@ copy:
 The classifier now exposes this typed projection alongside the unchanged raw
 address projection. Its real-artifact regression requires the exact restore,
 clamp, attribute-compare and skill-experience consumer bytes in all seven US
-and all seven JP dungeon copies. Production Continue remains fail-closed
-until these proven Theron fields are applied transactionally to the native
-world and the two opaque per-slot tail bytes are classified or proven
-irrelevant to the selected-slot handoff.
+and all seven JP dungeon copies, plus each region's `$88`-byte Stage 2 slot
+transport and clear routine. The native transactional restore now applies the
+campaign byte, initializes Theron's current and maximum vitals from the saved
+maxima, restores the seven attributes and preserves all 20 temporary and
+persistent skill-experience pairs. It requires an authenticated roster-owned
+`THERON` in party slot zero and leaves companions, inventory, equipment,
+position and loaded dungeon media unchanged on both success and rejection.
+Production Continue remains fail-closed until startup discovery and the
+explicit Continue action select this original Backup RAM route.
 
 The checked-in capture hook is
 `scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch`. The copyrighted

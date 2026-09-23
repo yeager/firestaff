@@ -121,6 +121,7 @@ Theron_V1PceBramStatus theron_v1_pce_bram_classify(
                 out->save_slot_bytes = THERON_V1_PCE_BRAM_SLOT_BYTES;
                 out->save_slot_count = THERON_V1_PCE_BRAM_SLOT_COUNT;
                 out->save_trailing_bytes = 1u;
+                out->save_slot_tail_unconsumed_padding = 1;
                 out->save_record_layout_proven = 1;
                 out->selected_slot_index =
                     data[0x20u + THERON_V1_PCE_BRAM_SELECTED_SLOT_OFFSET];
@@ -256,6 +257,7 @@ int theron_v1_pce_bram_decode_original_record(
     out->selected_slot_index =
         record_data[THERON_V1_PCE_BRAM_SLOT_COUNT *
                     THERON_V1_PCE_BRAM_SLOT_BYTES];
+    out->slot_tail_unconsumed_padding = 1;
     out->layout_verified = 1;
     return 1;
 }

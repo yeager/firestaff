@@ -15,6 +15,7 @@
 #define SAVE_MANAGER_READ_PC 0x413du
 #define SAVE_MANAGER_WRITE_ARGS_PC 0x4182u
 #define STAGE2_HANDOFF_RAW_SECTOR_INDEX 1224u
+#define JP_STAGE2_HANDOFF_RAW_SECTOR_INDEX 1223u
 #define STAGE2_HANDOFF_USER_OFFSET 151u
 #define STAGE2_SAVE_SUPPORT_USER_OFFSET 0x3d1fu
 #define STAGE2_SELECTED_SLOT_USER_OFFSET 0x3d74u
@@ -68,6 +69,26 @@ static int load_exact(const char *path, uint8_t *bytes, size_t size) {
         !ferror(file);
     fclose(file);
     return ok;
+}
+
+static uint8_t *load_file(const char *path, size_t *out_size) {
+    FILE *file = fopen(path, "rb");
+    long size;
+    uint8_t *bytes;
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0L || fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)size;
+    return bytes;
 }
 
 int main(int argc, char **argv) {
@@ -253,6 +274,28 @@ int main(int argc, char **argv) {
         0x8d, 0xae, 0x7d, 0x8d, 0xb0, 0x7d, 0xee, 0xaf,
         0x7d, 0xd0, 0x03, 0xee, 0xb0, 0x7d
     };
+    static const uint8_t stage2_slot_read[] = {
+        0xa9, 0x72, 0x85, 0xf8, 0xa9, 0x7c, 0x85, 0xf9,
+        0xa9, 0x49, 0x85, 0xfa, 0xa9, 0x7e, 0x85, 0xfb,
+        0xa9, 0x88, 0x85, 0xfc, 0xa9, 0x00, 0x85, 0xfd,
+        0x20, 0xbd, 0x7d, 0x20, 0x4e, 0xe0
+    };
+    static const uint8_t stage2_slot_clear[] = {
+        0x62, 0x92, 0x00, 0x73, 0x49, 0x7e, 0x4a, 0x7e,
+        0x87, 0x00, 0xad, 0x8d, 0x27, 0xf0, 0x04, 0xa9,
+        0x80, 0x92, 0x00, 0x60
+    };
+    static const uint8_t jp_stage2_slot_read[] = {
+        0xa9, 0x74, 0x85, 0xf8, 0xa9, 0x7c, 0x85, 0xf9,
+        0xa9, 0x4b, 0x85, 0xfa, 0xa9, 0x7e, 0x85, 0xfb,
+        0xa9, 0x88, 0x85, 0xfc, 0xa9, 0x00, 0x85, 0xfd,
+        0x20, 0xbf, 0x7d, 0x20, 0x4e, 0xe0
+    };
+    static const uint8_t jp_stage2_slot_clear[] = {
+        0x62, 0x92, 0x00, 0x73, 0x4b, 0x7e, 0x4c, 0x7e,
+        0x87, 0x00, 0xad, 0x8d, 0x27, 0xf0, 0x04, 0xa9,
+        0x80, 0x92, 0x00, 0x60
+    };
     size_t field;
     size_t index;
     if (argc != 7) return 2;
@@ -267,6 +310,7 @@ int main(int argc, char **argv) {
         receipt.save_slot_bytes != THERON_V1_PCE_BRAM_SLOT_BYTES ||
         receipt.save_slot_count != THERON_V1_PCE_BRAM_SLOT_COUNT ||
         receipt.save_trailing_bytes != 1u ||
+        !receipt.save_slot_tail_unconsumed_padding ||
         !receipt.selected_slot_layout_proven ||
         receipt.selected_slot_index != 0u ||
         receipt.selected_slot_offset != 0x20u ||
@@ -328,7 +372,8 @@ int main(int argc, char **argv) {
         return 1;
     }
     if (!theron_v1_pce_bram_decode_original_record_path(argv[1], &record) ||
-        !record.layout_verified || record.data_fnv1a != 0x0ce6b7bau ||
+        !record.layout_verified || !record.slot_tail_unconsumed_padding ||
+        record.data_fnv1a != 0x0ce6b7bau ||
         memcmp(record.slots[0], &body.ram_267c_campaign_byte, 1u) != 0 ||
         memcmp(record.slots[0] + 1u, body.ram_267d_2682, 6u) != 0 ||
         record.slots[0][0x86u] != 0u || record.slots[0][0x87u] != 0u ||
@@ -462,6 +507,20 @@ int main(int argc, char **argv) {
                   stderr);
             return 1;
         }
+        if (STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES + 0x3ce1u +
+                    sizeof(stage2_slot_read) > user_data_size ||
+            memcmp(user_data +
+                       STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                       0x3ce1u,
+                   stage2_slot_read, sizeof(stage2_slot_read)) != 0 ||
+            memcmp(user_data +
+                       STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                       0x3da9u,
+                   stage2_slot_clear, sizeof(stage2_slot_clear)) != 0) {
+            free(user_data);
+            fputs("original Stage 2 $88-byte slot transport drifted\n", stderr);
+            return 1;
+        }
         for (index = 0u; index < 7u; ++index) {
             size_t store_offset =
                 us_dungeon_store_sectors[index] * USER_SECTOR_BYTES;
@@ -516,6 +575,20 @@ int main(int argc, char **argv) {
         fputs("authentic JP Track 02 could not be read\n", stderr);
         return 1;
     }
+    if (JP_STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES + 0x3ce3u +
+                sizeof(jp_stage2_slot_read) > user_data_size ||
+        memcmp(user_data +
+                   JP_STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                   0x3ce3u,
+               jp_stage2_slot_read, sizeof(jp_stage2_slot_read)) != 0 ||
+        memcmp(user_data +
+                   JP_STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                   0x3dabu,
+               jp_stage2_slot_clear, sizeof(jp_stage2_slot_clear)) != 0) {
+        free(user_data);
+        fputs("original JP Stage 2 $88-byte slot transport drifted\n", stderr);
+        return 1;
+    }
     for (index = 0u; index < 7u; ++index) {
         size_t restore_offset =
             jp_dungeon_store_sectors[index] * USER_SECTOR_BYTES +
@@ -559,6 +632,20 @@ int main(int argc, char **argv) {
     }
     free(user_data);
     theron_v1_world_init(&world);
+    {
+        size_t track02_raw_size = 0u;
+        uint8_t *track02_raw = load_file(argv[3], &track02_raw_size);
+        world.party.champion_count = THERON_MAX_CHAMPIONS;
+        if (!track02_raw || !theron_v1_party_refresh_us_source_records(
+                &world.party, track02_raw, track02_raw_size,
+                THERON_TRACK02_MD5_US_BIN)) {
+            free(track02_raw);
+            fputs("authentic US roster did not initialize the test party\n",
+                  stderr);
+            return 1;
+        }
+        free(track02_raw);
+    }
     if (!theron_v1_world_bind_track02_retrieval_text_source(
             &world, &retrieval, 2) ||
         !theron_v1_world_bind_track02_campaign_mask_source(&world, &source, 2)) {
@@ -586,6 +673,88 @@ int main(int argc, char **argv) {
         fputs("bounded real Backup RAM campaign restore changed unproven state\n",
               stderr);
         return 1;
+    }
+    {
+        Theron_V1PceBramBodyReceipt restored_body;
+        Theron_V1_Party before_party;
+        uint32_t before_seeds[THERON_DUNGEON_COUNT];
+        uint8_t before_inventory[THERON_INVENTORY_SLOTS];
+        int16_t before_slots[THERON_EQUIP_SLOT_COUNT];
+
+        if (strcmp(world.party.champions[0].name, "THERON") != 0) {
+            fputs("authentic roster did not retain Theron in slot zero\n",
+                  stderr);
+            return 1;
+        }
+        world.party.champions[0].health = 1;
+        world.party.champions[0].max_health = 2;
+        world.party.champions[0].stamina = 3;
+        world.party.champions[0].max_stamina = 4;
+        world.party.champions[0].mana = 5;
+        world.party.champions[0].max_mana = 6;
+        world.party.champions[0].luck = 7;
+        world.party.champions[0].strength = 8;
+        world.party.champions[0].dexterity = 9;
+        world.party.champions[0].wisdom = 10;
+        world.party.champions[0].vitality = 11;
+        world.party.champions[0].anti_magic = 12;
+        world.party.champions[0].anti_fire = 13;
+        memset(world.party.champions[0].skill_temporary_experience, 0,
+               sizeof(world.party.champions[0].skill_temporary_experience));
+        memset(world.party.champions[0].skill_experience, 0,
+               sizeof(world.party.champions[0].skill_experience));
+        before_party = world.party;
+        memcpy(before_inventory, world.party.champions[0].inventory,
+               sizeof(before_inventory));
+        memcpy(before_slots, world.party.champions[0].slots,
+               sizeof(before_slots));
+        memcpy(before_seeds, world.progression.dungeon_seeds,
+               sizeof(before_seeds));
+
+        if (!theron_v1_startup_restore_pce_bram_theron_path(
+                &world, argv[1], &receipt, &restored_body) ||
+            !restored_body.semantics_verified ||
+            world.party.champions[0].health != 175 ||
+            world.party.champions[0].max_health != 175 ||
+            world.party.champions[0].stamina != 1500 ||
+            world.party.champions[0].max_stamina != 1500 ||
+            world.party.champions[0].mana != 50 ||
+            world.party.champions[0].max_mana != 50 ||
+            world.party.champions[0].luck != 80 ||
+            world.party.champions[0].strength != 50 ||
+            world.party.champions[0].dexterity != 40 ||
+            world.party.champions[0].wisdom != 40 ||
+            world.party.champions[0].vitality != 45 ||
+            world.party.champions[0].anti_magic != 40 ||
+            world.party.champions[0].anti_fire != 45 ||
+            memcmp(world.party.champions[0].skill_temporary_experience,
+                   body.theron_skill_temporary_experience,
+                   sizeof(body.theron_skill_temporary_experience)) != 0 ||
+            memcmp(world.party.champions[0].skill_experience,
+                   body.theron_skill_experience,
+                   sizeof(body.theron_skill_experience)) != 0 ||
+            memcmp(world.party.champions[0].inventory, before_inventory,
+                   sizeof(before_inventory)) != 0 ||
+            memcmp(world.party.champions[0].slots, before_slots,
+                   sizeof(before_slots)) != 0 ||
+            memcmp(&world.party.champions[1], &before_party.champions[1],
+                   sizeof(world.party.champions) -
+                       sizeof(world.party.champions[0])) != 0 ||
+            memcmp(before_seeds, world.progression.dungeon_seeds,
+                   sizeof(before_seeds)) != 0) {
+            fputs("authentic Theron body was not transactionally restored\n",
+                  stderr);
+            return 1;
+        }
+        memcpy(world.party.champions[0].name, "NOT-THERON", 11u);
+        before_party = world.party;
+        if (theron_v1_startup_restore_pce_bram_theron_path(
+                &world, argv[1], &receipt, &restored_body) ||
+            memcmp(&world.party, &before_party, sizeof(before_party)) != 0) {
+            fputs("non-Theron slot reached transactional body restore\n",
+                  stderr);
+            return 1;
+        }
     }
     puts("PASS: authentic three-slot Backup RAM record matches original read/write code and writer RAM");
     return 0;

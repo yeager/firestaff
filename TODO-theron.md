@@ -33,9 +33,13 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   every section back to their region-specific live-RAM columns. Their
   downstream consumers now identify Theron's three maximum vitals, seven
   maximum attributes and all 20 temporary/persistent skill-experience pairs.
-  Remaining work is to apply those proven fields transactionally to the
-  native world and resolve or exclude the two opaque bytes at the end of each
-  `$88`-byte slot before enabling Continue.
+  Both regional Stage 2 routines also prove that the final two bytes of each
+  `$88`-byte slot are cleared transport padding and never enter the `$86`-byte
+  gameplay restore. The proven body fields now apply transactionally to an
+  authenticated roster-owned Theron while companions, inventory, equipment,
+  position and loaded media remain unchanged. Remaining work is to connect
+  original Backup RAM discovery and the explicit startup Continue action to
+  this route.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do

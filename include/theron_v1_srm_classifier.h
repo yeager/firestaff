@@ -109,6 +109,7 @@ typedef struct {
     size_t save_slot_bytes;
     size_t save_slot_count;
     size_t save_trailing_bytes;
+    int save_slot_tail_unconsumed_padding;
     uint8_t selected_slot_index;
     size_t selected_slot_offset;
     int selected_slot_layout_proven;
@@ -144,10 +145,12 @@ typedef struct {
 
 /* Byte-exact projection of the complete original DMS-SG.001 data area.
  * The authenticated file-manager overlay reads or writes $0199 bytes: three
- * $88-byte slots followed by the selected-slot index.  The two bytes after
- * each writer-owned $86-byte body remain deliberately opaque. */
+ * $88-byte slots followed by the selected-slot index.  Each slot's final two
+ * bytes are transport padding: Stage 2 clears all $88 bytes while the only
+ * dungeon gameplay load copies exactly the first $86 bytes to $267C. */
 typedef struct {
     int layout_verified;
+    int slot_tail_unconsumed_padding;
     uint32_t data_fnv1a;
     uint8_t slots[THERON_V1_PCE_BRAM_SLOT_COUNT]
                  [THERON_V1_PCE_BRAM_SLOT_BYTES];

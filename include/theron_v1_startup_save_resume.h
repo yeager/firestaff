@@ -267,6 +267,16 @@ int theron_v1_startup_restore_pce_bram_campaign_path(
     const char *save_path,
     Theron_V1PceBramReceipt *out_receipt);
 
+/* Restore the source-proven campaign byte and Theron's original T800
+ * maximum vital, maximum attribute and 20-skill experience state.  Companion
+ * selection, inventory, position and dungeon runtime state are not present
+ * in the between-dungeon body and remain unchanged. */
+int theron_v1_startup_restore_pce_bram_theron_path(
+    Theron_V1_World *world,
+    const char *save_path,
+    Theron_V1PceBramReceipt *out_receipt,
+    Theron_V1PceBramBodyReceipt *out_body);
+
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;
  * the caller still owns UI state, status text, and subsequent level load. */
