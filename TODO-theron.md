@@ -28,8 +28,10 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   original T080/T800 save consumer. The original writer layout is now bound
   byte-for-byte as 1 + 6 + 7 + 6×20 bytes. The writer has now been proven to
   read only `$267C` after loading a slot and to overwrite `$267D..$2701` from
-  live RAM; it is not their restore consumer. Remaining work is to find the
-  separate load/use consumer and identify those neutral fields.
+  live RAM; it is not their restore consumer. The separate US restore routine
+  is now byte-bound in all seven dungeon blocks and copies every section back
+  to its live-RAM columns. Remaining work is to prove the JP routine and
+  identify the neutral fields through their downstream gameplay consumers.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do

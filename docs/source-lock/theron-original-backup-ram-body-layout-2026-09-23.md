@@ -88,12 +88,22 @@ does read all `$0199` bytes to `$7E49`, derives the selected slot pointer as
 That establishes record and slot ownership, but not a gameplay restore
 meaning for the individual body fields.
 
-The six final arrays in the `$86` writer body are column-major fields for
-twenty source records. Their
-gameplay meanings are deliberately left unspecified until a separate
-load/use consumer is captured. Firestaff may preserve and inspect these
-bytes, but production Continue must remain fail-closed for party, inventory,
-position and dungeon restoration until those joins are proven.
+The separate restore consumer is now byte-bound in all seven authenticated US
+dungeon blocks. Each copy begins at block offset `$0248` (logical `$2248`):
+it rejects a zero campaign byte or a masked value of seven or more, then copies
+the six-byte section to `$2978/$2980` and `$297C/$2984`, the seven-byte section
+to `$29F4/$2A10`, and the six 20-byte columns to `$2A2C`, `$2A7C`, `$2ACC`,
+`$2B1C`, `$2B6C` and `$2BBC`. This is the exact inverse data direction missing
+from the writer analysis, including the duplicate destinations in the first
+two sections.
+
+The six final arrays are therefore proven column-major restore inputs for
+twenty live records. Their gameplay meanings are still deliberately left
+unspecified until downstream consumers identify the individual columns and
+records. The corresponding JP routine also requires its own regional proof.
+Firestaff may preserve and inspect these bytes, but production Continue must
+remain fail-closed for party, inventory, position and dungeon restoration
+until those semantic joins are proven.
 
 The checked-in capture hook is
 `scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch`. The copyrighted
