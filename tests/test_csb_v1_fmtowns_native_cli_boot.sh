@@ -84,7 +84,7 @@ for mode in v1 v20 v21; do
 case "$mode" in v1) expected_mode=0;; v20) expected_mode=1;; v21) expected_mode=2;; esac
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --presentation-mode "$mode" \
-    --width 320 --height 200 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --width 320 --height 200 --scale-mode 4 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
     --boot-probe --boot-probe-frames 1200 \
     --script 'wait700,click:52:110,wait10,click:250:50,wait240' \
     --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
