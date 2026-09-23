@@ -98,15 +98,35 @@ typedef struct {
     int                   vram_trace_loaded;  /* 1=real VRAM trace data bound */
     uint8_t              *vram_trace_data;    /* 64KB VRAM snapshot (owned) */
     uint8_t              *vce_trace_data;     /* 1KB VCE palette snapshot (owned) */
+    uint8_t              *vdc_sat_trace_data; /* 512-byte SAT snapshot (owned) */
+    uint16_t             *vdc_source_frame;   /* native 9-bit VCE indices (owned) */
+    uint16_t              host_palette_source_indices[256];
+    uint16_t              host_palette_source_count;
     /* Raw VDC BAT binding for the captured window.  Each entry is an atlas
      * index, or -1 when that BAT cell was not admitted.  This is a source
      * receipt only; it is not a dungeon-square/material mapping. */
-    int16_t               bat_atlas_indices[2048];
+    int16_t               bat_atlas_indices[4096];
     /* Source-bound relation between admitted BAT palette-group bits and the
      * authenticated VCE snapshot.  This is a hardware-screen binding only;
      * it is not a dungeon-square, perspective, HUD, or object mapping. */
     int                  vce_palette_relation_verified;
     uint16_t             bat_palette_group_mask;
+    int                  vdc_state_loaded;
+    uint16_t             vdc_bxr;
+    uint16_t             vdc_byr;
+    uint16_t             vdc_mwr;
+    uint16_t             vdc_hdr;
+    uint16_t             vdc_vdr;
+    uint16_t             vdc_cr;
+    uint16_t             vdc_bat_width;
+    uint16_t             vdc_bat_height;
+    uint16_t             vdc_display_width;
+    uint16_t             vdc_display_height;
+    int                  vdc_sat_loaded;
+    int                  vdc_input_screen_relation_verified;
+    uint16_t             vdc_source_input_mask;
+    uint16_t             vdc_source_input_result;
+    uint16_t             vdc_source_input_hold_frames;
 } Theron_V1_Viewport;
 
 /* ── Camera / party view state ──────────────────────────────────── */
@@ -138,6 +158,13 @@ typedef struct {
 /* Initialize viewport: alloc planar framebuffer + init palette.
  * Must be called before any render.  Returns 0 on error. */
 int theron_vp_init(Theron_V1_Viewport *vp);
+
+/* Initialize and discover an authenticated atomic capture from the normal
+ * Theron data root.  Accepted layouts are <data_dir>/capture/trace.* and
+ * <data_dir>/trace.*.  Every component still passes the closed hash/replay
+ * gate; this is path discovery only, not a trust expansion. */
+int theron_vp_init_from_data_dir(Theron_V1_Viewport *vp,
+                                 const char *data_dir);
 
 /* Free viewport resources (palette tiles + framebuffer). */
 void theron_vp_free(Theron_V1_Viewport *vp);

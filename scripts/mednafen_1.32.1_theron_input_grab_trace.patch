@@ -6,6 +6,6 @@ diff --git a/src/drivers/input.cpp b/src/drivers/input.cpp
    {
     InputGrab = !InputGrab;
 +   TheronTraceHostInput("input_grab_state enabled=%u\n", InputGrab ? 1 : 0);
- 
+
    MDFN_Notify(MDFN_NOTICE_STATUS, _("Input grabbing: %s"), InputGrab ? _("On") : _("Off"));
    }

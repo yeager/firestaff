@@ -196,8 +196,9 @@ typedef enum {
 
 /* ── API — party management ─────────────────────────────────────── */
 
-/* Init party to fresh state: 1 Theron + 3 blank companion templates.
- * dungeon_index = 1..7 (THERON_DUNGEON_1..THERON_DUNGEON_7). */
+/* Fixture builds initialise the historical four-member roster. Production
+ * starts with an empty party and admits champions only through authenticated
+ * regional Track 02 records. */
 void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
 
 /* Refresh the selected party from the authenticated JP Track 02 roster
@@ -207,6 +208,15 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
  * media is the known JP BIN and every selected champion has a matching
  * source record. */
 int theron_v1_party_refresh_jp_source_records(
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex);
+
+/* US counterpart: decodes the complete packed 5-bit roster from the known
+ * US raw BIN and replaces every selected champion's numeric state from those
+ * regional source bytes. */
+int theron_v1_party_refresh_us_source_records(
     Theron_V1_Party *party,
     const uint8_t *track02_data,
     size_t track02_size,

@@ -1,23 +1,35 @@
+diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -21,0 +22 @@
+@@ -16,5 +16,6 @@
+ void TheronPCECDTraceMainRAMConsumerWrite(uint16 logical_address,
+                                           uint32 physical_address, uint8 value,
+                                           uint16 writer_pc, uint32 writer_physical_pc);
 +void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
-@@ -460,0 +461,6 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ class alignas(128) HuC6280
+@@ -457,5 +458,11 @@
+FIRESTAFF_PATCH_TAB_CONTEXT  TheronPCECDTraceMainRAMConsumerWrite(
+FIRESTAFF_PATCH_TAB_CONTEXT   address, physical_address, V, writer_pc, writer_physical_pc);
+FIRESTAFF_PATCH_TAB_CONTEXT }
+FIRESTAFF_PATCH_BLANK_CONTEXT
 +	 const uint16 writer_pc = GetRegister(GSREG_PC);
 +	 const uint8 writer_mpr = MPR[writer_pc >> 13];
 +	 const uint32 writer_physical_pc =
-+  (writer_mpr << 13) | (writer_pc & 0x1FFF);
-+ TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
-+                                     writer_physical_pc);
++	  (writer_mpr << 13) | (writer_pc & 0x1FFF);
++	 TheronPCECDTraceMainRAMLoaderWrite(address, physical_address, V, writer_pc,
++	                                     writer_physical_pc);
+FIRESTAFF_PATCH_TAB_CONTEXT WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
 @@ -133,4 +133,6 @@
- static unsigned TheronPCECDMainRAMConsumerTraceCount;
  static FILE *TheronPCECDMainRAMTargetTrace;
  static unsigned TheronPCECDMainRAMTargetTraceCount;
 +static FILE *TheronPCECDMainRAMLoaderWriteTrace;
 +static unsigned TheronPCECDMainRAMLoaderWriteTraceCount;
- static FILE *TheronPCECDSpawnConsumerTrace;
+ static FILE *TheronPCECDCommandConsumerTrace;
+ static unsigned TheronPCECDCommandConsumerTraceCount;
 @@ -260,3 +262,25 @@
   fflush(TheronPCECDMainRAMTargetTrace);
  }

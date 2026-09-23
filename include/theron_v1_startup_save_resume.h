@@ -16,12 +16,15 @@
  * Bounded handoff between the boot profile, the bounded SRM (Save Disk)
  * classifier, and the bounded Firestaff-native .tqsv slot enumerator.
  *
- * What this module does:
- *   - Resolves both save roots (in-game .tqsv + Save Disk .srm) from
- *     the boot profile and/or env overrides so the launch path can
- *     read a single, deterministic save/resume state at startup.
- *   - Classifies staged .srm (Save Disk) and .tqsv (in-game) slots
- *     into a single Theron_V1StartupSaveResume snapshot:
+ * Production admits neither Firestaff-native .tqsv nor the synthetic
+ * FSTQPRG1/FSTQPTY1 gzip envelopes as an original Continue route.  The
+ * fields and helpers below remain a stable fixture/tooling contract while
+ * authentic Save Disk semantics are reconstructed.
+ *
+ * In fixture/tooling builds this module:
+ *   - Resolves .tqsv and synthetic .srm roots from the boot profile and/or
+ *     environment overrides.
+ *   - Classifies those fixture slots into one startup snapshot:
  *       * SOURCES_LIVE             — at least one save slot usable.
  *       * SKIP_SAFE_NO_SAVE_ROOT   — neither root exists; the
  *                                    startup path must keep the game
@@ -33,8 +36,7 @@
  *                                    the .srm gzip-deflate path nor a
  *                                    .tqsv with valid TQR header/
  *                                    footer recognized them.
- *   - Computes a bounded resume claim (the maximum a launchable
- *     gate can prove without a real .srm body decode):
+ *   - Computes a bounded fixture resume claim:
  *       * 0   = NO_RESUME_CLAIM   (clean fresh boot, no auto-resume)
  *       * 1   = TQSV_RESUME_CLAIM (a valid .tqsv slot is present;
  *                                 the gate can offer "Continue" but
@@ -57,9 +59,9 @@
  *     payloads stay UNSUPPORTED_BODY (no claim).
  *
  * What this module does NOT do (kept honest):
- *   - It does not decode a real Sphenx/Greatstone custom save body.
- *     Unknown real .srm payloads stay UNSUPPORTED_BODY and are not
- *     promoted into runtime state.
+ *   - It preserves and classifies the complete original three-slot
+ *     DMS-SG.001 record, but applies only the proven campaign byte. The
+ *     remaining opaque bytes are not yet a Continue operation.
  *   - It does not auto-resume the game. The gate only reports the
  *     highest-bounded resume claim; the M12/M11 startup layer still
  *     owns the explicit "Continue" UX.
@@ -103,13 +105,13 @@ typedef struct {
     Theron_V1StartupSkipSafeVerdict verdict;
     Theron_V1StartupResumeClaim    resume_claim;
 
-    /* ── .tqsv (Firestaff-native in-game saves) rollup ── */
+    /* ── .tqsv fixture/tooling rollup (always empty in production) ── */
     int tqsv_total_slots;          /* 0..THERON_SAVE_SLOT_COUNT */
     int tqsv_valid_slots;          /* 0..total */
     int tqsv_active_slot;          /* first valid slot, or -1 */
     uint32_t tqsv_active_timestamp;/* 0 if no valid slot */
 
-    /* ── .srm (Save Disk cartridge) rollup ── */
+    /* ── synthetic .srm fixture rollup (always empty in production) ── */
     int srm_total_slots;           /* 0..THERON_V1_SRM_DISK_SLOT_COUNT */
     int srm_present_slots;         /* 0..total */
     int srm_recognized_slots;      /* 0..total */
@@ -255,6 +257,15 @@ int theron_v1_startup_save_resume_state_receipt(
     const Theron_V1StartupSaveResume *snapshot,
     int snapshot_ready,
     Theron_StartupStateReceipt *out_receipt);
+
+/* Restore only the campaign artifact bits whose original Save Disk mapping
+ * is proven.  This is intentionally not a Continue operation: the remaining
+ * original body fields do not yet prove current dungeon, party or inventory.
+ * The world must already carry the hash-bound Track 02 campaign source. */
+int theron_v1_startup_restore_pce_bram_campaign_path(
+    Theron_V1_World *world,
+    const char *save_path,
+    Theron_V1PceBramReceipt *out_receipt);
 
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;

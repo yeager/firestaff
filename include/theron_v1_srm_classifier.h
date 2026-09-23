@@ -80,6 +80,91 @@
  * rather than silently growing the heap. */
 #define THERON_V1_SRM_BODY_DECODE_MAX_BYTES 4096u
 
+#define THERON_V1_PCE_BRAM_BYTES 2048u
+#define THERON_V1_PCE_BRAM_RECORD_BYTES 0x01a9u
+#define THERON_V1_PCE_BRAM_DATA_BYTES 0x0199u
+#define THERON_V1_PCE_BRAM_SLOT_BYTES 0x0088u
+#define THERON_V1_PCE_BRAM_SLOT_COUNT 3u
+#define THERON_V1_PCE_BRAM_SELECTED_SLOT_OFFSET 0x0198u
+
+typedef enum {
+    THERON_V1_PCE_BRAM_BAD_INPUT = -1,
+    THERON_V1_PCE_BRAM_WRONG_SIZE = -2,
+    THERON_V1_PCE_BRAM_BAD_HEADER = -3,
+    THERON_V1_PCE_BRAM_NO_THERON_SAVE_DISK = -4,
+    THERON_V1_PCE_BRAM_READY = 1
+} Theron_V1PceBramStatus;
+
+typedef struct {
+    Theron_V1PceBramStatus status;
+    size_t size_bytes;
+    uint32_t bytes_fnv1a;
+    int hubm_header_seen;
+    int theron_save_disk_marker_seen;
+    size_t theron_save_disk_marker_offset;
+    size_t save_record_offset;
+    size_t save_record_bytes;
+    size_t save_data_offset;
+    size_t save_data_bytes;
+    size_t save_slot_bytes;
+    size_t save_slot_count;
+    size_t save_trailing_bytes;
+    uint8_t selected_slot_index;
+    size_t selected_slot_offset;
+    int selected_slot_layout_proven;
+    int save_record_layout_proven;
+    size_t save_body_offset;
+    size_t save_body_bytes;
+    size_t serialized_campaign_byte_offset;
+    uint8_t serialized_campaign_byte;
+    int save_body_layout_proven;
+} Theron_V1PceBramReceipt;
+
+/* Byte-exact projection of the original DMS-SG.001 writer.  The authentic
+ * System Card routine writes one byte to $267C, six bytes to $267D..$2682,
+ * seven bytes to $2683..$2689, then six 20-byte columns to $268A..$2701.
+ * Only the first byte has independently proven campaign semantics.  The
+ * neutral address-based names deliberately avoid inventing meanings for the
+ * remaining original fields. */
+typedef struct {
+    int layout_verified;
+    uint32_t body_fnv1a;
+    uint8_t ram_267c_campaign_byte;
+    uint8_t ram_267d_2682[6];
+    uint8_t ram_2683_2689[7];
+    uint8_t ram_268a_2701[6][20];
+} Theron_V1PceBramBodyReceipt;
+
+/* Byte-exact projection of the complete original DMS-SG.001 data area.
+ * The authenticated file-manager overlay reads or writes $0199 bytes: three
+ * $88-byte slots followed by the selected-slot index.  The two bytes after
+ * each writer-owned $86-byte body remain deliberately opaque. */
+typedef struct {
+    int layout_verified;
+    uint32_t data_fnv1a;
+    uint8_t slots[THERON_V1_PCE_BRAM_SLOT_COUNT]
+                 [THERON_V1_PCE_BRAM_SLOT_BYTES];
+    uint8_t selected_slot_index;
+} Theron_V1PceBramRecordReceipt;
+
+/* Classify raw PC Engine Backup RAM emitted by an original-emulator run.
+ * The DMS-SG.001 data area begins at HUBM offset $20 and is $0199 bytes.
+ * Its first $88-byte slot begins with the authenticated writer's $86-byte
+ * RAM $267C body, so the first byte is retained as the serialized campaign
+ * byte without assigning semantics to the rest of the record. */
+Theron_V1PceBramStatus theron_v1_pce_bram_classify(
+    const uint8_t *data, size_t size, Theron_V1PceBramReceipt *out);
+Theron_V1PceBramStatus theron_v1_pce_bram_classify_path(
+    const char *path, Theron_V1PceBramReceipt *out);
+int theron_v1_pce_bram_decode_original_body(
+    const uint8_t *data, size_t size, Theron_V1PceBramBodyReceipt *out);
+int theron_v1_pce_bram_decode_original_body_path(
+    const char *path, Theron_V1PceBramBodyReceipt *out);
+int theron_v1_pce_bram_decode_original_record(
+    const uint8_t *data, size_t size, Theron_V1PceBramRecordReceipt *out);
+int theron_v1_pce_bram_decode_original_record_path(
+    const char *path, Theron_V1PceBramRecordReceipt *out);
+
 /* Bounded gzip header receipt for one .srm buffer: validates the magic,
  * deflate method, reserved flag bits and the optional
  * FEXTRA/FNAME/FCOMMENT/FHCRC spans, then records the header metadata.
@@ -454,8 +539,10 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
  * Accepted magic: "FSTQPTY1".  This is not the Sphenx/Greatstone real-body
  * layout.  Unknown real bodies still return UNSUPPORTED_BODY.  The imported
  * champion body fields deliberately exclude inventory/equipment because the
- * real Save Disk body is not decoded yet and THQUEST.ASM T080/T800 only lets
- * this gate prove between-dungeon state restoration safely. */
+ * most of the real Save Disk body is not decoded yet.  Its first byte is now
+ * independently bound to RAM $267C and the seven campaign artifact bits, but
+ * THQUEST.ASM T080/T800 still does not prove the party record layout used by
+ * the original body. */
 Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
     const uint8_t *payload,
     size_t payload_size,

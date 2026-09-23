@@ -110,7 +110,7 @@ int tqr_palette_load_group(TQR_PaletteState *pal,
     }
     for (int i = 0; i < count; i++) {
         uint16_t bgr = (uint16_t)(data[i*2] | (data[i*2+1] << 8));
-        /* PCE VCE RAM stores a 9-bit BGR333 word in a 16-bit little-endian
+        /* PCE VCE RAM stores a 9-bit GRB333 word in a 16-bit little-endian
          * slot. Keep the source word intact; do not reinterpret it as the
          * unrelated 12-bit BGR444 format. */
         pal->entries[start + i].bgr333 = (uint16_t)(bgr & 0x01ffu);

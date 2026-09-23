@@ -1,6 +1,7 @@
 #include "theron_v1_track02_jp_roster_receipt.h"
 
 #include "theron_v1_track02.h"
+#include "theron_v1_dungeon_handoff.h"
 
 #include <string.h>
 
@@ -69,6 +70,8 @@ int theron_v1_track02_jp_roster_read(
                THERON_TRACK02_JP_ROSTER_COUNT);
     if (!track02_data || !md5_hex ||
         strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) != 0 ||
+        !theron_v1_track02_raw_bytes_match_md5(
+            track02_data, track02_size, md5_hex) ||
         track02_size <= THERON_JP_ROSTER_RAW_OFFSET) {
         return 0;
     }

@@ -18,11 +18,12 @@ static void test_load_raw(void) {
     vram[0] = 0x00; vram[1] = 0x38;
     vram[2] = 0x01; vram[3] = 0x48;
     vram[4] = 0x02; vram[5] = 0x58;
-    /* Put a non-zero tile at VRAM byte 0x1000 (tile 0 at word $0800). */
+    /* Historical fixture bytes retained for raw-copy coverage only. */
     for (int i = 0; i < 32; i++) vram[0x1000 + i] = (uint8_t)(i + 1);
 
-    /* Put a BGR333 color in VCE entry 1: R=7, G=0, B=0 → 0x0007 LE */
-    vce[2] = 0x07;
+    /* Put a HuC6260 GRB333 color in VCE entry 1:
+     * R=7, G=0, B=0 → 0x0038 LE. */
+    vce[2] = 0x38;
     vce[3] = 0x00;
 
     int rc = theron_v1_vram_trace_load_raw(&vp, vram, THERON_VRAM_SIZE,
@@ -84,7 +85,7 @@ static void test_load_tqtr_extended_vram_alignment(void) {
     memset(vce, 0, sizeof(vce));
     memset(extension, 0xee, sizeof(extension));
     memset(vce_extension, 0xdd, sizeof(vce_extension));
-    vce[2] = 0x07; /* VCE entry 1: red in BGR333. */
+    vce[2] = 0x38; /* VCE entry 1: red in HuC6260 GRB333. */
 
     file = fopen(path, "wb");
     assert(file != NULL);
@@ -127,10 +128,11 @@ static void test_populate_tiles(void) {
     memset(vce, 0, sizeof(vce));
 
     /* BAT words select three source tiles with distinct palette groups. */
-    vram[0] = 0x00; vram[1] = 0x38;
-    vram[2] = 0x01; vram[3] = 0x48;
-    vram[4] = 0x02; vram[5] = 0x58;
-    /* Create 3 source tiles. */
+    vram[0] = 0x80; vram[1] = 0x30;
+    vram[2] = 0x81; vram[3] = 0x40;
+    vram[4] = 0x82; vram[5] = 0x50;
+    /* Create three source tiles at their actual hardware indices 128..130.
+     * Lower indices overlap the BAT itself in this layout. */
     for (int t = 0; t < 3; t++)
         for (int i = 0; i < 32; i++)
             vram[0x1000 + t * 32 + i] = (uint8_t)(t + 1);
@@ -146,18 +148,19 @@ static void test_populate_tiles(void) {
                                                    (1u << 4) |
                                                    (1u << 5)));
     assert(vp.palette.tile_count == 3);
-    assert(vp.palette.tiles[0].vram_index == 0);
+    assert(vp.palette.tiles[0].vram_index == 128);
     assert(vp.palette.tiles[0].pal_group == 3);
-    assert(vp.palette.tiles[1].vram_index == 1);
+    assert(vp.palette.tiles[1].vram_index == 129);
     assert(vp.palette.tiles[1].pal_group == 4);
-    assert(vp.palette.tiles[2].vram_index == 2);
+    assert(vp.palette.tiles[2].vram_index == 130);
     assert(vp.palette.tiles[2].pal_group == 5);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 0) == 0);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 1) == 1);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 2) == 2);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 3) == -1);
     assert(theron_v1_vram_trace_render_bat_preview(&vp, 0, 3, 1, 0, 0) == 3);
-    assert(framebuffer[0] != 0 || framebuffer[8] != 0 || framebuffer[16] != 0);
+    assert(framebuffer[7] != 0 || framebuffer[15] != 0 ||
+           framebuffer[23] != 0);
     /* The source tile bytes are planar 4bpp (all 0x01 for tile 0).  After
      * decoding, the rightmost pixel of the first tile is palette index 15,
      * then BAT group 3 contributes the indexed base 48. */
@@ -167,7 +170,7 @@ static void test_populate_tiles(void) {
 
     assert(theron_v1_vram_trace_populate_tiles(&vp, -1, 32, 32) == -1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 65, 1) == -1);
-    assert(theron_v1_vram_trace_populate_tiles(&vp, 1900, 8, 4) == -1);
+    assert(theron_v1_vram_trace_populate_tiles(&vp, 4080, 8, 4) == -1);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 2048) == -1);
 
     assert(theron_v1_vram_trace_render_authenticated_screen(&vp) > 0);
@@ -177,7 +180,7 @@ static void test_populate_tiles(void) {
 }
 
 static void test_bgr333_decode(void) {
-    /* BGR333: B[8:6] G[5:3] R[2:0]
+    /* HuC6260 GRB333: G[8:6] R[5:3] B[2:0]
      * White: R=7 G=7 B=7 → 0x01FF */
     uint32_t white = tqr_bgr333_to_rgba(0x01FF);
     unsigned r = (white >> 16) & 0xFF;
@@ -189,12 +192,21 @@ static void test_bgr333_decode(void) {
     uint32_t black = tqr_bgr333_to_rgba(0x0000);
     assert((black & 0x00FFFFFF) == 0);
 
-    /* Pure blue: B=7, G=0, R=0 → 0x01C0 */
-    uint32_t blue = tqr_bgr333_to_rgba(0x01C0);
+    /* Pure blue: B=7, G=0, R=0 → 0x0007 */
+    uint32_t blue = tqr_bgr333_to_rgba(0x0007);
     r = (blue >> 16) & 0xFF;
     g = (blue >> 8) & 0xFF;
     b = blue & 0xFF;
     assert(r == 0 && g == 0 && b == 252);
+
+    /* Keep red and green bit lanes distinct; swapping these was previously
+     * hidden by white/black-only coverage. */
+    uint32_t red = tqr_bgr333_to_rgba(0x0038);
+    uint32_t green = tqr_bgr333_to_rgba(0x01C0);
+    assert(((red >> 16) & 0xFF) == 252 &&
+           ((red >> 8) & 0xFF) == 0 && (red & 0xFF) == 0);
+    assert(((green >> 16) & 0xFF) == 0 &&
+           ((green >> 8) & 0xFF) == 252 && (green & 0xFF) == 0);
 
     printf("PASS: test_bgr333_decode\n");
 }

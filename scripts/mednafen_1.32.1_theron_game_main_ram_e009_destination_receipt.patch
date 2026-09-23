@@ -1,0 +1,102 @@
+--- a/src/drivers/debugger.cpp
++++ b/src/drivers/debugger.cpp
+@@ -177,5 +177,16 @@
+  * assign a media, level, object, or transition interpretation. */
+ static unsigned TheronIrq2TraceGameMainRamE009DispatchCount;
++/* One bounded raw receipt for the first copied game-loader call.  The raw
++ * $20f8..$20ff work bytes are retained verbatim: this hook does not interpret
++ * them as an LBA.  The destination is only the little-endian $20fa/$20fb
++ * value observed at the call boundary. */
++static bool TheronIrq2TraceGameMainRamE009DestinationPending;
++static bool TheronIrq2TraceGameMainRamE009DestinationComplete;
++static uint32 TheronIrq2TraceGameMainRamE009CallerPC;
++static uint32 TheronIrq2TraceGameMainRamE009CallerPhysicalPC;
++static uint8 TheronIrq2TraceGameMainRamE009Params[8];
++static uint32 TheronIrq2TraceGameMainRamE009Destination;
++static uint32 TheronIrq2TraceGameMainRamE009DestinationCallMPR;
+ static FILE *TheronIrq2TraceSpawnRegisters;
+ static unsigned TheronIrq2TraceSpawnRegisterSamples;
+ static FILE *TheronIrq2TraceRngConsumer;
+@@ -1025,6 +1036,57 @@
+   FlushTheronIrq2Trace();
+  }
+
++ /* The copied loader is asynchronous: the first main-RAM resume only starts
++  * the wait path.  Hash the completed logical destination at the next real
++  * $3840 dispatch, before that dispatch is observed below. */
++ if(TheronIrq2TraceGameMainRamE009DestinationPending &&
++    trace_physical_pc >= 0x1f0000 && trace_physical_pc < 0x1f8000 &&
++    logical_pc == TheronIrq2TraceGameMainRamE009CallerPC &&
++    TheronIrq2TraceGameMainRamE009DispatchCount >= 2)
++ {
++  const uint32 destination = TheronIrq2TraceGameMainRamE009Destination;
++  const uint32 byte_count =
++   (uint32)TheronIrq2TraceGameMainRamE009Params[0] * 2048U;
++  const uint32 destination_resume_mpr = trace_regs->GetRegister(
++   trace_regs->Regs[6 + (destination >> 13)].id, NULL, 0) & 0xff;
++  const uint32 destination_physical =
++   (destination_resume_mpr << 13) | (destination & 0x1fff);
++  const bool bounded = byte_count > 0 && byte_count <= 0x8000 &&
++                       destination + byte_count <= 0x10000;
++  uint32 payload_hash = 2166136261U;
++  uint32 span_hash = 2166136261U;
++  uint32 destination_offset;
++
++  if(bounded)
++  {
++   for(destination_offset = 0; destination_offset < byte_count;
++       destination_offset++)
++   {
++    const uint32 value = CurGame->Debugger->MemPeek(
++     destination + destination_offset, 1, true, true) & 0xff;
++    payload_hash = (payload_hash ^ value) * 16777619U;
++    if(destination_offset < 32)
++     span_hash = (span_hash ^ value) * 16777619U;
++   }
++  }
++  TheronIrq2Trace->print_format("game_main_ram_e009_destination_receipt caller_pc=%04x caller_physical_pc=%06x completion_pc=%04x completion_physical_pc=%06x f8=%02x f9=%02x fa=%02x fb=%02x fc=%02x fd=%02x fe=%02x ff=%02x destination=%04x destination_call_mpr=%02x destination_completion_mpr=%02x destination_physical=%06x bytes=%u bounded=%u span_bytes=%u span_fnv1a=%08x payload_fnv1a=%08x\n",
++                                TheronIrq2TraceGameMainRamE009CallerPC,
++                                TheronIrq2TraceGameMainRamE009CallerPhysicalPC,
++                                logical_pc, trace_physical_pc,
++                                TheronIrq2TraceGameMainRamE009Params[0], TheronIrq2TraceGameMainRamE009Params[1],
++                                TheronIrq2TraceGameMainRamE009Params[2], TheronIrq2TraceGameMainRamE009Params[3],
++                                TheronIrq2TraceGameMainRamE009Params[4], TheronIrq2TraceGameMainRamE009Params[5],
++                                TheronIrq2TraceGameMainRamE009Params[6], TheronIrq2TraceGameMainRamE009Params[7],
++                                destination, TheronIrq2TraceGameMainRamE009DestinationCallMPR,
++                                destination_resume_mpr, destination_physical, byte_count,
++                                bounded ? 1 : 0,
++                                bounded && byte_count < 32 ? byte_count : (bounded ? 32 : 0),
++                                bounded ? span_hash : 0, bounded ? payload_hash : 0);
++  TheronIrq2TraceGameMainRamE009DestinationPending = false;
++  TheronIrq2TraceGameMainRamE009DestinationComplete = true;
++  FlushTheronIrq2Trace();
++ }
++
+  /* Preserve game-owned copied-loader control edges separately from the
+   * System Card envelope. trace_physical_pc is the physical PCE address here; only the
+   * 32 KiB main-RAM window is admitted and the output is intentionally raw. */
+@@ -1037,6 +1098,24 @@
+   const uint32 reg_x = trace_regs->GetRegister(trace_regs->Regs[2].id, NULL, 0) & 0xff;
+   const uint32 reg_y = trace_regs->GetRegister(trace_regs->Regs[3].id, NULL, 0) & 0xff;
+
++  if(logical_pc == 0x3840 &&
++     !TheronIrq2TraceGameMainRamE009DestinationPending &&
++     !TheronIrq2TraceGameMainRamE009DestinationComplete)
++  {
++   unsigned parameter_offset;
++   for(parameter_offset = 0; parameter_offset < 8; parameter_offset++)
++    TheronIrq2TraceGameMainRamE009Params[parameter_offset] =
++     CurGame->Debugger->MemPeek(0x20f8 + parameter_offset, 1, true, true) & 0xff;
++   TheronIrq2TraceGameMainRamE009CallerPC = logical_pc;
++   TheronIrq2TraceGameMainRamE009CallerPhysicalPC = trace_physical_pc;
++   TheronIrq2TraceGameMainRamE009Destination =
++    TheronIrq2TraceGameMainRamE009Params[2] |
++    (TheronIrq2TraceGameMainRamE009Params[3] << 8);
++   TheronIrq2TraceGameMainRamE009DestinationCallMPR = trace_regs->GetRegister(
++    trace_regs->Regs[6 + (TheronIrq2TraceGameMainRamE009Destination >> 13)].id,
++    NULL, 0) & 0xff;
++   TheronIrq2TraceGameMainRamE009DestinationPending = true;
++  }
+   TheronIrq2TraceGameMainRamE009DispatchCount++;
+   TheronIrq2Trace->print_format("game_main_ram_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x target=e009 a=%02x x=%02x y=%02x\n",
+                                 TheronIrq2TraceGameMainRamE009DispatchCount,

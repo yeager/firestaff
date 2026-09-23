@@ -1,0 +1,70 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -299,6 +299,24 @@
+ static unsigned TheronPCECDMainRAMLoaderWriteTraceCount;
+ static FILE *TheronPCECDSpawnConsumerTrace;
+ static unsigned TheronPCECDSpawnConsumerTraceCount;
++static FILE *TheronPCECDE009DestinationConsumerTrace;
++static unsigned TheronPCECDE009DestinationConsumerTraceCount;
++static const unsigned TheronPCECDE009DestinationConsumerTraceLimit = 32768;
++static FILE *TheronPCECDGetE009DestinationConsumerTrace(void)
++{
++ if(!TheronPCECDE009DestinationConsumerTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_E009_DESTINATION_CONSUMER_TRACE");
++  if(path && *path)
++  {
++   TheronPCECDE009DestinationConsumerTrace = fopen(path, "w");
++   if(TheronPCECDE009DestinationConsumerTrace)
++    fputs("source=mednafen-pce-instrumented-e009-destination-consumer\n",
++          TheronPCECDE009DestinationConsumerTrace);
++  }
++ }
++ return TheronPCECDE009DestinationConsumerTrace;
++}
+ static unsigned TheronPCECDMainRAMConsumerTraceLimit(void)
+ {
+  static unsigned limit;
+@@ -316,22 +334,42 @@
+ void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
+                                       uint8 accumulator, uint8 x, uint8 y)
+ {
++ FILE *destination_trace = TheronPCECDGetE009DestinationConsumerTrace();
+  TheronPCECDMainRAME009Active = true;
+  TheronPCECDMainRAME009ReturnPC = (uint16)(logical_pc + 3);
+  TheronTracePCECDCriticalState("main_ram_e009_enter sequence=%u logical_pc=%04x physical_pc=%06x return_pc=%04x a=%02x x=%02x y=%02x\n",
+                        TheronPCECDMainRAME009Sequence, logical_pc, physical_pc,
+                        TheronPCECDMainRAME009ReturnPC, accumulator, x, y);
++ if(destination_trace)
++ {
++  fprintf(destination_trace,
++          "e009_destination_boundary kind=enter sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x\n",
++          TheronPCECDMainRAME009Sequence, logical_pc, physical_pc,
++          accumulator, x, y);
++  fflush(destination_trace);
++ }
+ }
+
+ void TheronPCECDTraceMainRAME009MainRAMStep(uint16 logical_pc,
+                                             uint32 physical_pc)
+ {
++ FILE *destination_trace;
+  if(!TheronPCECDMainRAME009Active)
+   return;
++ destination_trace = TheronPCECDGetE009DestinationConsumerTrace();
+  TheronTracePCECDCriticalState("main_ram_e009_return sequence=%u expected_return_pc=%04x logical_pc=%04x physical_pc=%06x matched=%u\n",
+                        TheronPCECDMainRAME009Sequence++,
+                        TheronPCECDMainRAME009ReturnPC, logical_pc, physical_pc,
+                        logical_pc == TheronPCECDMainRAME009ReturnPC ? 1 : 0);
++ if(destination_trace)
++ {
++  fprintf(destination_trace,
++          "e009_destination_boundary kind=resume sequence=%u expected_pc=%04x logical_pc=%04x physical_pc=%06x matched=%u\n",
++          TheronPCECDMainRAME009Sequence - 1,
++          TheronPCECDMainRAME009ReturnPC, logical_pc, physical_pc,
++          logical_pc == TheronPCECDMainRAME009ReturnPC ? 1 : 0);
++  fflush(destination_trace);
++ }
+  TheronPCECDMainRAME009Active = false;
+ }
+

@@ -22,69 +22,34 @@ FIRESTAFF_PATCH_BLANK_CONTEXT
 +                                      uint16 writer_pc, uint32 writer_physical_pc);
  class alignas(128) HuC6280
 @@ -420,8 +428,12 @@
-FIRESTAFF_PATCH_BLANK_CONTEXT
  	 const uint8 wmpr = MPR[address >> 13];
  	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
-+	 const uint16 reader_pc = GetRegister(GSREG_PC);
+FIRESTAFF_PATCH_TAB_CONTEXT const uint16 reader_pc = GetRegister(GSREG_PC);
 +	 const uint8 reader_mpr = MPR[reader_pc >> 13];
 +	 TheronPCECDTraceMainRAMProvenanceRead(physical_address, ret, reader_pc,
 +	                                      (reader_mpr << 13) | (reader_pc & 0x1FFF));
 +	 TheronPCECDTraceRecordWatchRead(address, physical_address, ret, reader_pc,
 +	                                 (reader_mpr << 13) | (reader_pc & 0x1FFF));
- 	 if(physical_address >= 0x1f0000 && physical_address < 0x1f8000)
+FIRESTAFF_PATCH_TAB_CONTEXT if((physical_address >= 0x1f0000 && physical_address < 0x1f8000) ||
+FIRESTAFF_PATCH_TAB_CONTEXT    (reader_pc >= 0xc600 && reader_pc <= 0xcd13))
  	 {
--	  const uint16 reader_pc = GetRegister(GSREG_PC);
 -	  const uint8 reader_mpr = MPR[reader_pc >> 13];
  	  const uint32 reader_physical_pc = (reader_mpr << 13) | (reader_pc & 0x1FFF);
-@@ -467,5 +477,13 @@
- 	  TheronPCECDTraceMainRAMConsumerWrite(
- 	   address, physical_address, V, writer_pc, writer_physical_pc);
- 	 }
-+	 TheronPCECDTraceMainRAMProvenanceWrite(address, physical_address, V,
-+	                                       GetRegister(GSREG_PC),
-+	                                       (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                       (GetRegister(GSREG_PC) & 0x1FFF));
-+	 TheronPCECDTraceRecordWatchWrite(address, physical_address, V,
-+	                                  GetRegister(GSREG_PC),
-+	                                  (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                  (GetRegister(GSREG_PC) & 0x1FFF));
- 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
- 	}
-@@ -480,8 +494,16 @@
- 	  const uint8 writer_mpr = MPR[writer_pc >> 13];
- 	  const uint32 writer_physical_pc =
- 	   (writer_mpr << 13) | (writer_pc & 0x1FFF);
- 	  TheronPCECDTraceMainRAMConsumerWrite(
- 	   address & 0x1FFFu, address, data, writer_pc, writer_physical_pc);
- 	 }
-+	 TheronPCECDTraceMainRAMProvenanceWrite(address & 0x1FFFu, address, data,
-+	                                        GetRegister(GSREG_PC),
-+	                                        (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                        (GetRegister(GSREG_PC) & 0x1FFF));
-+	 TheronPCECDTraceRecordWatchWrite(address & 0x1FFFu, address, data,
-+	                                  GetRegister(GSREG_PC),
-+	                                  (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
-+	                                  (GetRegister(GSREG_PC) & 0x1FFF));
- 	 WriteMap[(address >> 13) & 0xFF](address, data);
- 	}
 diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
 --- a/src/pce/pce.cpp
 +++ b/src/pce/pce.cpp
-@@ -163,6 +163,10 @@
- if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value,
-                                   &source_lba, &source_offset, &fifo_sequence))
-   return;
+@@ -242,3 +242,5 @@
  if(read_value != stored_value)
   return;
 + TheronPCECDTraceSeedMainRAMProvenance(physical, stored_value, source_lba,
 +                                       source_offset, fifo_sequence);
-+if(trace_count >= 256)
-+ return;
- writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
+  writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -115,0 +116,181 @@
+@@ -126,4 +126,187 @@
+ static unsigned TheronPCECDE009DestinationConsumerTraceCount;
+ static const unsigned TheronPCECDE009DestinationConsumerTraceLimit = 32768;
 +struct TheronPCECDMainRAMProvenance
 +{
 + bool valid;
@@ -219,6 +184,8 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +static bool TheronPCECDRecordWatchAddress(uint16 logical_address)
 +{
 + return (logical_address >= 0x6000 && logical_address < 0x6100) ||
++        logical_address == 0x2031 ||
++        (logical_address >= 0x203f && logical_address <= 0x2041) ||
 +        (logical_address >= 0x611d && logical_address <= 0x6126) ||
 +        (logical_address >= 0x2935 && logical_address <= 0x293e);
 +}
@@ -266,3 +233,5 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +  TheronPCECDRecordWatchTraceCount++;
 + }
 +}
+ static FILE *TheronPCECDGetE009DestinationConsumerTrace(void)
+ {

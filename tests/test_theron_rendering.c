@@ -965,16 +965,14 @@ static int test_runtime_render_frame_blocks_verified_track02(void) {
 }
 
 static int test_runtime_render_frame_allows_with_tile_bank(void) {
-    TEST("Runtime: boot render frame draws when a graphics bank is bound");
+    TEST("Runtime: constructed graphics bank cannot override an explicit synthetic block");
 
     TrAssetBundle bundle;
     memset(&bundle, 0, sizeof(bundle));
     tqr_palette_init_defaults(&bundle.palette);
 
-    /* A synthetic graphics bank: one non-empty tile + a Track 03 marker.
-     * Even with synthetic_rendering_blocked set, a real tile bank plus a
-     * verified HuC6260 palette route overrides the block and lets V1
-     * rendering proceed. */
+    /* A constructed graphics bank must not clear an explicit synthetic-data
+     * block, even if a fixture marks its palette route as verified. */
     static const uint8_t tile_data[16] = {
         0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
         0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
@@ -994,8 +992,8 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
     bundle.synthetic_rendering_blocked = 1;
     tr_asset_mark_palette_route_verified(&bundle);
 
-    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle),
-           "bundle with tile bank and verified palette route allows V1 rendering");
+    ASSERT(!tr_asset_generated_v1_rendering_allowed(&bundle),
+           "constructed tile bank must remain blocked");
 
     Theron_V1_World world;
     Theron_V1_Viewport vp;
@@ -1024,8 +1022,8 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
 
     int ok = theron_v1_boot_runtime_render_frame(&world, &vp, &bundle,
                                                  0, 0, fb, 320, 200);
-    ASSERT(ok == 1,
-           "runtime render must draw when a graphics bank is bound");
+    ASSERT(ok == 0,
+           "runtime render must reject an explicitly blocked constructed bank");
 
     int has_content = 0;
     for (int y = 24; y < 200 && !has_content; y++) {
@@ -1033,8 +1031,8 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
             if (fb[y * 320 + x] != 0) { has_content = 1; break; }
         }
     }
-    ASSERT(has_content,
-           "viewport region should contain non-zero pixels after render");
+    ASSERT(!has_content,
+           "blocked constructed bank must leave the viewport untouched");
 
     theron_vp_free(&vp);
     tr_asset_free(&bundle);

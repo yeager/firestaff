@@ -483,7 +483,11 @@ void theron_v1_dungeon_progression_print(const Theron_DungeonProgression *prog) 
         int collected = (prog->quest_items_collected & bit) != 0;
         printf("  [%u] %-22s %s\n",
                id,
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+               "source name unavailable",
+#else
                theron_v1_track02_us_treasure_name((unsigned int)i),
+#endif
                collected ? "COLLECTED" : "pending");
     }
     printf("=======================================\n");

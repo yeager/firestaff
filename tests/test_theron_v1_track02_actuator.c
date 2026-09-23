@@ -2,6 +2,9 @@
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_item_id_map.h"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +57,42 @@ static void test_value_fix(void) {
     assert(theron_v1_track02_actuator_needs_value_fix(TQ_ACT_FLOOR_CARRIED_ITEM, 0));
     assert(!theron_v1_track02_actuator_needs_value_fix(TQ_ACT_FLOOR_PARTY, 0));
     printf("  Value fix check OK\n");
+}
+
+static void test_real_reverted_party_event_gate(void) {
+    /* US Akutuba map 0 (2,1), repeated identically at all seven dungeon
+     * entries: floor-party, OnceOnly, SET, RevertEffect, delay 15. */
+    static const uint8_t raw[8] = {
+        0xfe, 0xff, 0x03, 0x00, 0xa4, 0x07, 0x80, 0x18
+    };
+    Theron_Actuator actuator;
+    Theron_ActuatorPartyEvent event;
+
+    assert(theron_v1_track02_actuator_decode(raw, &actuator) == 0);
+    assert(actuator.type == TQ_ACT_FLOOR_PARTY);
+    assert(actuator.effect == TQ_ACT_EFFECT_SET);
+    assert(actuator.revert_effect == 1u && actuator.once == 1u);
+    assert(actuator.local_multiple == 0x0880u);
+
+    assert(theron_v1_track02_actuator_evaluate_party_event(
+               &actuator, 1, 0, 2, 0, &event) == 0);
+    assert(event.triggered == 0u && event.disable_after_dispatch == 0u);
+    assert(theron_v1_track02_actuator_evaluate_party_event(
+               &actuator, 0, 1, 2, 0, &event) == 0);
+    assert(event.triggered == 0u && event.disable_after_dispatch == 0u);
+
+    /* F0276 only reaches RevertEffect when the occupancy precheck says the
+     * square does not already contain the party. */
+    assert(theron_v1_track02_actuator_evaluate_party_event(
+               &actuator, 0, 0, 2, 0, &event) == 0);
+    assert(event.triggered == 1u && event.resolved_effect == TQ_ACT_EFFECT_SET);
+    assert(event.disable_after_dispatch == 1u);
+
+    /* F0276 rejects an empty party before applying RevertEffect. */
+    assert(theron_v1_track02_actuator_evaluate_party_event(
+               &actuator, 0, 1, 0, 0, &event) == 0);
+    assert(event.triggered == 0u);
+    printf("  Authentic reverted floor-party event gate OK\n");
 }
 
 static const char *find_track02(void) {
@@ -158,6 +197,7 @@ int main(void) {
     printf("test_theron_v1_track02_actuator\n");
     test_decode_basic();
     test_value_fix();
+    test_real_reverted_party_event_gate();
 
     const char *path = find_track02();
     if (!path) {

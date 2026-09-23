@@ -36,6 +36,19 @@ extern "C" {
 #define THERON_DIR_WEST   3
 #define THERON_DIR_COUNT  4
 
+/* Authentic PCE command types captured from the retail US runtime.
+ * Button I at click $7b/$8f queues $01 and drives $203f 1->0;
+ * click $98/$8f queues $02 and drives $203f 1->2.  The original routine
+ * $d900..$d92e applies the delta modulo four to $2944/$2948.
+ * Click $8a/$8f queues $03; the original movement path commits party
+ * coordinates $02/$03->$03/$03 via TII $20b4,$2040,$0002 at $c1fa. */
+#define THERON_ORIGINAL_COMMAND_TURN_LEFT   0x01u
+#define THERON_ORIGINAL_COMMAND_TURN_RIGHT  0x02u
+#define THERON_ORIGINAL_COMMAND_MOVE_FORWARD 0x03u
+#define THERON_ORIGINAL_COMMAND_MOVE_RIGHT    0x04u
+#define THERON_ORIGINAL_COMMAND_MOVE_BACKWARD 0x05u
+#define THERON_ORIGINAL_COMMAND_MOVE_LEFT     0x06u
+
 /* ── Door state ──────────────────────────────────────────────────── */
 /* TQR door square state machine (mirrors DM1 C0-C5 states) */
 #define THERON_DOOR_STATE_CLOSED        0   /* solid barrier */
@@ -91,7 +104,11 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command);
  *   turn:      -1 = left 90°, +1 = right 90°
  */
 int theron_v1_move_party(Theron_V1_World *world, int direction);
+int theron_v1_move_party_original_command(Theron_V1_World *world,
+                                           uint8_t command_type);
 int theron_v1_turn_party(Theron_V1_World *world, int turn);
+int theron_v1_turn_party_original_command(Theron_V1_World *world,
+                                           uint8_t command_type);
 
 /* ── Movement result detail ────────────────────────────────────────── */
 typedef enum {

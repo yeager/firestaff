@@ -25,6 +25,8 @@ main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_
 main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
 ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
+file_select_vdc_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch
+file_select_scroll_driver_patch_file=$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch
 adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
 adpcm_fifo_direct_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
@@ -103,6 +105,13 @@ fi
 if ! grep -Fq 'TheronIrq2TraceRngWindowStep++, logical_pc, trace_physical_pc' "$rng_consumer_patch_file" ||
    grep -Fq 'TheronIrq2TraceRngWindowStep++, logical_pc, PC' "$rng_consumer_patch_file"; then
     printf 'FAIL: RNG consumer trace must use the MPR-derived physical HuC6280 PC\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'source=mednafen-pce-instrumented-rng-generator-context-v1' "$rng_consumer_patch_file" ||
+   ! grep -Fq 'bytes=8192 hex=' "$rng_consumer_patch_file" ||
+   ! grep -Fq 'caller_bytes=32 caller_hex=' "$rng_consumer_patch_file" ||
+   ! grep -Fq 'MemPeek(0x2000u + ram_offset' "$rng_consumer_patch_file"; then
+    printf 'FAIL: RNG capture patch must preserve the full authentic main-RAM context at each entry\n' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file" ||
@@ -190,6 +199,26 @@ if ! grep -Fq 'post_stage2_non_system_card_e00f_call caller_pc=%04x physical_pc=
 fi
 if ! grep -Fq 'if(ok && trace_count < 4096)' "$later_raw_patch_file"; then
     printf 'FAIL: later raw-sector patch no longer retains the bounded extended SCSI witness window\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_VDC_TRACE' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'file_select_vdc_count == 525' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'TheronFileSelectVDCSnapshotPending = true' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'TheronGraphicsSnapshotDumped = false' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_FRAME_END_SNAPSHOT_FRAME' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'snapshot_frame_end=%u' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'TheronMaybeDumpFrameEndSnapshot();' "$file_select_vdc_patch_file" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_file_select_vdc_snapshot.patch' \
+       "$repo/scripts/build_mednafen_theron_irq2_trace.sh"; then
+    printf 'FAIL: file-select VDC patch no longer snapshots the authentic write or frame-end boundary\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_DRIVER_CODE_SNAPSHOT' "$file_select_scroll_driver_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_DRIVER_RAM_SNAPSHOT' "$file_select_scroll_driver_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_SCROLL_RAM_TRACE' "$file_select_scroll_driver_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_FILE_SELECT_SCROLL_CONTROL_TRACE' "$file_select_scroll_driver_patch_file" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch' "$build_script"; then
+    printf 'FAIL: file-select scroll-driver patch no longer retains code, RAM, and countdown evidence\n' >&2
     exit 1
 fi
 if ! grep -Fq 'pce_cd_data_read cpu_pc=%04x data=%02x scsi_generation=%u' "$later_fifo_patch_file" ||
@@ -349,6 +378,14 @@ if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offse
    ! grep -Fq 'ram_provenance_trace="${trace}.ram-provenance"' "$capture_script" ||
    ! grep -Fq 'ram_provenance_trace.patch' "$build_script"; then
     printf '%s\n' 'FAIL: RAM provenance chain capture is missing or not wired into the live trace' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'command_consumer_read sequence=%u' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'command_consumer_boundary sequence=%u' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'logical_address >= 0x2000 && logical_address < 0x4000' "$main_ram_consumer_patch_file" ||
+   ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE="$command_consumer_trace"' "$capture_script"; then
+    printf '%s\n' 'FAIL: atomic command consumer read window is missing or unwired' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||

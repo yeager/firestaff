@@ -691,9 +691,20 @@ Theron_StartupResult theron_v1_startup_toggle_mirror(
 Theron_StartupResult theron_v1_startup_enter_forcefield(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party);
+/* Production callers must use the regional Track 02 roster path below.
+ * The media-free helper above is fixture-only and returns NOT_READY in the
+ * production library instead of constructing an unauthenticated party. */
 Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party,
+    const char *const roster_names[],
+    int roster_name_count);
+Theron_StartupResult theron_v1_startup_enter_forcefield_with_track02_roster(
+    Theron_StartupFlow *flow,
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
     const char *const roster_names[],
     int roster_name_count);
 Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(

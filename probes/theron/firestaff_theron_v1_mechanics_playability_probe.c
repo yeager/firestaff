@@ -4,9 +4,10 @@
  * Theron's Quest V1 — Real-Data Mechanics Playability Probe
  *
  * Headless mechanics verification against the authentic JP/US Track 02
- * Hall-of-Records level-0 grid.  Unlike the synthetic cross-route probe,
- * this probe loads the real startup candidate bytes and exercises movement,
- * turning, and blocking on the actual 32x27 loader-accepted grid.
+ * Hall-of-Records and full AKUTUBA dungeon. Unlike the synthetic cross-route
+ * probe, this probe contains no constructed levels or object tables: it loads
+ * real startup and full-dungeon bytes, then exercises movement, turning,
+ * blocking and stairs on the decoded Track 02 grids.
  *
  * Run:
  *   ./build/firestaff_theron_v1_mechanics_playability_probe
@@ -31,6 +32,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_dungeon_loader.h"
 #include "theron_v1_world.h"
 
 #if defined(_WIN32)
@@ -189,6 +191,29 @@ static int find_adjacent_floor(const Theron_V1_Level *level,
     return 0;
 }
 
+static int find_adjacent_door_approach(const Theron_V1_Level *level,
+                                       int sx, int sy,
+                                       int *out_x, int *out_y) {
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+    int i;
+    for (i = 0; i < 4; i++) {
+        int nx = sx + dx[i];
+        int ny = sy + dy[i];
+        uint8_t tile;
+        if (nx < 0 || nx >= level->width || ny < 0 || ny >= level->height)
+            continue;
+        tile = level->squares[ny][nx];
+        if (tile != THERON_SQUARE_WALL && tile != THERON_SQUARE_SECRET &&
+            tile != THERON_SQUARE_DOOR) {
+            *out_x = nx;
+            *out_y = ny;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int direction_from_delta(int dx, int dy) {
     if (dy < 0) return THERON_DIR_NORTH;
     if (dy > 0) return THERON_DIR_SOUTH;
@@ -209,23 +234,9 @@ static void setup_world_from_level(Theron_V1_World *world,
     world->party.leader_x = level->start_x;
     world->party.leader_y = level->start_y;
     world->party.leader_dir = level->start_dir;
-    world->party.active_slot = 0;
-    world->party.gold = 1000;
-
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
-        Theron_V1_Champion *c = &world->party.champions[i];
-        c->alive = 1;
-        c->health = 50;
-        c->max_health = 50;
-        c->stamina = 50;
-        c->max_stamina = 50;
-        c->food = 50;
-        c->water = 50;
-        c->strength = 14;
-        c->dexterity = 12;
-        c->vitality = 12;
-        c->anti_magic = 2;
-    }
+    /* Movement evidence needs only the authenticated map and its source
+     * pose. Do not seed fixture champions, stats or gold beside real media;
+     * roster/state consumers have separate regional source receipts. */
 }
 
 /* ── Real-data test cases ──────────────────────────────────────────── */
@@ -333,6 +344,58 @@ static void test_floor_movement_on_real_grid(Theron_V1_World *world,
     CHECK_INT("floor move updates dir", world->party.leader_dir, dir);
 
     world->party.leader_dir = original_dir;
+}
+
+static void test_original_commands_on_real_grid(
+    Theron_V1_World *world, const Theron_V1_Level *level) {
+    static const uint8_t commands[] = {
+        THERON_ORIGINAL_COMMAND_MOVE_FORWARD,
+        THERON_ORIGINAL_COMMAND_MOVE_RIGHT,
+        THERON_ORIGINAL_COMMAND_MOVE_BACKWARD,
+        THERON_ORIGINAL_COMMAND_MOVE_LEFT
+    };
+    int sx, sy, fx, fy, wx, wy;
+    int floor_dir, wall_dir;
+    size_t i;
+
+    printf("[test:original_commands_on_real_grid]\n");
+    if (!find_floor_with_neighbours(level, &sx, &sy) ||
+        !find_adjacent_floor(level, sx, sy, &fx, &fy) ||
+        !find_adjacent_wall(level, sx, sy, &wx, &wy)) {
+        printf("  [SKIP] need one real floor with floor and wall neighbours\n");
+        g_skip++;
+        return;
+    }
+    floor_dir = direction_from_delta(fx - sx, fy - sy);
+    wall_dir = direction_from_delta(wx - sx, wy - sy);
+    for (i = 0u; i < sizeof(commands) / sizeof(commands[0]); ++i) {
+        int relative = (int)commands[i] -
+                       THERON_ORIGINAL_COMMAND_MOVE_FORWARD;
+        int facing = (floor_dir - relative + THERON_DIR_COUNT) & 3;
+        int result;
+        world->party.leader_x = sx;
+        world->party.leader_y = sy;
+        world->party.leader_dir = facing;
+        result = theron_v1_move_party_original_command(world, commands[i]);
+        CHECK_INT("original command crosses real floor", result,
+                  THERON_MOVE_OK);
+        CHECK_INT("original command real-floor x", world->party.leader_x, fx);
+        CHECK_INT("original command real-floor y", world->party.leader_y, fy);
+        CHECK_INT("relative command preserves facing",
+                  world->party.leader_dir, facing);
+
+        facing = (wall_dir - relative + THERON_DIR_COUNT) & 3;
+        world->party.leader_x = sx;
+        world->party.leader_y = sy;
+        world->party.leader_dir = facing;
+        result = theron_v1_move_party_original_command(world, commands[i]);
+        CHECK_INT("original command blocks on real wall", result,
+                  THERON_MOVE_BLOCKED);
+        CHECK_INT("real wall preserves x", world->party.leader_x, sx);
+        CHECK_INT("real wall preserves y", world->party.leader_y, sy);
+        CHECK_INT("blocked relative command preserves facing",
+                  world->party.leader_dir, facing);
+    }
 }
 
 static void test_get_move_result_on_real_grid(Theron_V1_World *world,
@@ -474,108 +537,159 @@ static void test_object_table_decode_and_apply_real_data(
               world->object_count, before);
 }
 
-static void add_synthetic_level_1(Theron_V1_World *world) {
-    Theron_V1_Level *lvl = &world->levels[0][1];
-    lvl->width = 16;
-    lvl->height = 16;
-    lvl->level_index = 1;
-    lvl->start_x = 2;
-    lvl->start_y = 2;
-    lvl->start_dir = THERON_DIR_NORTH;
-    for (int y = 0; y < 16; y++) {
-        for (int x = 0; x < 16; x++) {
-            lvl->squares[y][x] = THERON_SQUARE_FLOOR;
-        }
+static void test_real_full_dungeon_and_stairs(
+    const uint8_t *data, size_t size, const char *md5,
+    Theron_Track02Variant variant) {
+    Theron_V1_World *world;
+    Theron_DungeonLoadResult result;
+    uint8_t *user_data = NULL;
+    size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
+    int stair_level = -1, stair_x = -1, stair_y = -1;
+    int approach_x = -1, approach_y = -1;
+    int expected_level = -1;
+    Theron_V1_World *door_world = NULL;
+    Theron_V1_Object *door = NULL;
+    int door_approach_x = -1, door_approach_y = -1;
+
+    printf("[test:real_full_dungeon_and_stairs]\n");
+    world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+    if (!world) {
+        printf("  [FAIL] allocate full real dungeon world\n");
+        g_fail++;
+        return;
     }
-    world->level_loaded[0][1] = 1;
-}
-
-static void test_synthetic_multi_level_object_table(Theron_V1_World *world,
-                                                    const Theron_V1_Level *level) {
-    Theron_Track02ObjectTable table = {0};
-
-    printf("[test:synthetic_multi_level_object_table]\n");
-
-    setup_world_from_level(world, level);
-    add_synthetic_level_1(world);
-
-    table.declared_record_count = 2u;
-    table.record_count = 2u;
-
-    table.records[0].object_id = 1u;
-    table.records[0].kind = THERON_OBJTYPE_DOOR;
-    table.records[0].x = 9u;
-    table.records[0].y = 8u;
-    table.records[0].level_index = 0u;
-
-    table.records[1].object_id = 2u;
-    table.records[1].kind = THERON_OBJTYPE_PIT;
-    table.records[1].x = 5u;
-    table.records[1].y = 5u;
-    table.records[1].level_index = 1u;
-
-    CHECK_INT("apply multi-level object table across dungeon",
-              theron_v1_world_apply_track02_object_table_for_dungeon(
-                  world, world->current_dungeon, &table), 0);
-    CHECK_INT("level-0 door tile set",
-              world->levels[0][0].squares[8][9], THERON_SQUARE_DOOR);
-    CHECK_INT("level-1 pit tile set",
-              world->levels[0][1].squares[5][5], THERON_SQUARE_PIT);
-}
-
-static void test_synthetic_level_transition(Theron_V1_World *world,
-                                            const Theron_V1_Level *level) {
-    int sx, sy, fx, fy, dir, moved;
-
-    printf("[test:synthetic_level_transition]\n");
-
-    setup_world_from_level(world, level);
-    add_synthetic_level_1(world);
-
-    /* The real Hall-of-Records start pose may be walled in, so scan the
-     * whole level for a floor square with an adjacent floor square and run
-     * the synthetic stairs transition there. */
-    sx = -1;
-    sy = -1;
-    fx = -1;
-    fy = -1;
-    for (int y = 0; y < level->height && sx < 0; y++) {
-        for (int x = 0; x < level->width && sx < 0; x++) {
-            if (level->squares[y][x] == THERON_SQUARE_FLOOR &&
-                find_adjacent_floor(level, x, y, &fx, &fy)) {
-                sx = x;
-                sy = y;
+    if (theron_v1_track02_raw_user_data_size(
+            size, md5, &sector_count, &user_data_size) !=
+            THERON_TRACK02_SIGNAL_OK || sector_count == 0u ||
+        !(user_data = (uint8_t *)malloc(user_data_size)) ||
+        theron_v1_track02_copy_raw_user_data(
+            data, size, md5, user_data, user_data_size, &copied_size) !=
+            THERON_TRACK02_SIGNAL_OK || copied_size != user_data_size) {
+        printf("  [FAIL] normalize authentic raw sectors\n");
+        g_fail++;
+        free(user_data);
+        free(world);
+        return;
+    }
+    theron_v1_world_init(world);
+    world->current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    CHECK_INT("load complete real dungeon",
+              theron_v1_track02_load_full_dungeon_for_variant(
+                  world, THERON_DUNGEON_1_AKUTUBA,
+                  user_data, user_data_size,
+                  variant, &result), 0);
+    CHECK_INT("real dungeon has multiple levels", result.levels_loaded > 1, 1);
+    for (int level_index = 0; level_index < result.levels_loaded; ++level_index) {
+        const Theron_V1_Level *level = &world->levels[0][level_index];
+        CHECK_INT("real level header verified", level->source_header_verified, 1);
+        for (int y = 0; y < level->height && stair_level < 0; ++y) {
+            for (int x = 0; x < level->width && stair_level < 0; ++x) {
+                uint8_t tile = level->squares[y][x];
+                int destination = tile == THERON_SQUARE_STAIRS_UP
+                    ? level_index - 1 : level_index + 1;
+                if ((tile == THERON_SQUARE_STAIRS_UP ||
+                     tile == THERON_SQUARE_STAIRS_DOWN) &&
+                    destination >= 0 && destination < result.levels_loaded &&
+                    find_adjacent_floor(level, x, y,
+                                        &approach_x, &approach_y)) {
+                    stair_level = level_index;
+                    stair_x = x;
+                    stair_y = y;
+                    expected_level = destination;
+                }
             }
         }
     }
-    if (sx < 0) {
-        printf("  [SKIP] no adjacent floor pair for synthetic stairs\n");
-        g_skip++;
+    door_world = (Theron_V1_World *)calloc(1u, sizeof(*door_world));
+    for (int dungeon_id = 1;
+         door_world && dungeon_id <= THERON_DUNGEON_COUNT && !door;
+         ++dungeon_id) {
+        Theron_DungeonLoadResult door_result;
+        theron_v1_world_init(door_world);
+        door_world->current_dungeon = dungeon_id;
+        if (theron_v1_track02_load_full_dungeon_for_variant(
+                door_world, dungeon_id, user_data, user_data_size,
+                variant, &door_result) != 0) {
+            continue;
+        }
+        for (int i = 0; i < door_world->object_count && !door; ++i) {
+            Theron_V1_Object *candidate = &door_world->objects[i];
+            if (candidate->type == THERON_OBJTYPE_DOOR &&
+                candidate->source_origin_valid &&
+                candidate->source_category == THERON_CAT_DOOR &&
+                candidate->source_raw_size == 4u &&
+                candidate->level >= 0 &&
+                candidate->level < door_result.levels_loaded &&
+                find_adjacent_door_approach(
+                    &door_world->levels[dungeon_id - 1][candidate->level],
+                    candidate->x, candidate->y,
+                    &door_approach_x, &door_approach_y)) {
+                door = candidate;
+            }
+        }
+    }
+    CHECK_INT("real dungeon exposes a source-backed door edge", door != NULL, 1);
+    if (door) {
+        int door_x = door->x;
+        int door_y = door->y;
+        int door_level = door->level;
+        door_world->current_level = door_level;
+        door_world->party.leader_x = door_approach_x;
+        door_world->party.leader_y = door_approach_y;
+        door_world->party.leader_dir = direction_from_delta(
+            door_x - door_approach_x, door_y - door_approach_y);
+        CHECK_INT("real closed door blocks original forward command",
+                  theron_v1_move_party_original_command(
+                      door_world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD),
+                  THERON_MOVE_BLOCKED);
+        CHECK_INT("blocked real door preserves party x",
+                  door_world->party.leader_x, door_approach_x);
+        CHECK_INT("blocked real door preserves party y",
+                  door_world->party.leader_y, door_approach_y);
+        CHECK_INT("uncaptured direct open rejects real door",
+                  theron_v1_door_open(door_world, door_x, door_y), -1);
+        CHECK_INT("uncaptured USE rejects real door",
+                  theron_v1_click_route(door_world, door_x, door_y,
+                                        THERON_CMD_USE), -1);
+        CHECK_INT("rejected real door interactions preserve closed state",
+                  door->state, THERON_DOOR_STATE_CLOSED);
+    }
+    if (stair_level < 0) {
+        printf("  [FAIL] no traversable authentic stair edge\n");
+        g_fail++;
+        free(door_world);
+        free(user_data);
+        free(world);
         return;
     }
-
-    world->party.leader_x = sx;
-    world->party.leader_y = sy;
-    world->levels[0][0].squares[fy][fx] = THERON_SQUARE_STAIRS_DOWN;
-    dir = direction_from_delta(fx - sx, fy - sy);
-    world->party.leader_dir = dir;
-
-    moved = theron_v1_move_party(world, dir);
-    CHECK_INT("stairs move returns STAIRS", moved, THERON_MOVE_STAIRS);
-    CHECK_INT("current level advanced to 1", world->current_level, 1);
-    CHECK_INT("party x on level 1", world->party.leader_x, fx);
-    CHECK_INT("party y on level 1", world->party.leader_y, fy);
+    world->current_level = stair_level;
+    world->party.leader_x = approach_x;
+    world->party.leader_y = approach_y;
+    world->party.leader_dir = direction_from_delta(
+        stair_x - approach_x, stair_y - approach_y);
+    CHECK_INT("original forward command traverses real stairs",
+              theron_v1_move_party_original_command(
+                  world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD),
+              THERON_MOVE_STAIRS);
+    CHECK_INT("real stairs select loaded destination level",
+              world->current_level, expected_level);
+    free(door_world);
+    free(user_data);
+    free(world);
 }
 
 /* ── Probe one real Track 02 image ─────────────────────────────────── */
 static void probe_real_track02(const char *label,
                                const char *path,
-                               const char *expected_md5) {
+                               const char *expected_md5,
+                               Theron_Track02Variant variant) {
     char local_md5[33];
     uint8_t *data = NULL;
     size_t size = 0;
     Theron_Track02BankSignal signal;
     Theron_Track02SignalStatus signal_status;
+    Theron_Track02StartupSemanticHandoff semantic_handoff;
+    Theron_Track02StartupRuntimeReceipt startup_receipt;
     Theron_V1_Level level;
     Theron_Track02LevelHandoff handoff;
     Theron_Track02LevelHandoffStatus status;
@@ -618,6 +732,25 @@ static void probe_real_track02(const char *label,
         return;
     }
 
+    memset(&semantic_handoff, 0, sizeof(semantic_handoff));
+    memset(&startup_receipt, 0, sizeof(startup_receipt));
+    CHECK_INT("real startup semantic handoff uses authenticated level header",
+              theron_v1_track02_bind_startup_semantic_handoff(
+                  data, size, local_md5, signal.descriptor_offsets[0],
+                  &semantic_handoff),
+              THERON_TRACK02_LEVEL_HANDOFF_OK);
+    CHECK_INT("real startup semantic handoff is runtime-ready",
+              semantic_handoff.ready_for_runtime, 1);
+    CHECK_INT("real startup seed comes from level header",
+              (int)semantic_handoff.startup_seed, (int)0x0108e938u);
+    CHECK_INT("real startup runtime receipt is valid without synthetic table",
+              theron_v1_track02_startup_runtime_receipt_from_handoff(
+                  &semantic_handoff, &startup_receipt), 1);
+    CHECK_INT("real runtime progression seed is the authentic header seed",
+              (int)startup_receipt.progression_seed0, (int)0x0108e938u);
+    CHECK_INT("real runtime receipt keeps fallback visuals blocked",
+              startup_receipt.fallback_visuals_allowed, 0);
+
     memset(&level, 0, sizeof(level));
     memset(&handoff, 0, sizeof(handoff));
     status = theron_v1_track02_load_initial_level_candidate(
@@ -652,6 +785,9 @@ static void probe_real_track02(const char *label,
     test_floor_movement_on_real_grid(&world, &level);
 
     setup_world_from_level(&world, &level);
+    test_original_commands_on_real_grid(&world, &level);
+
+    setup_world_from_level(&world, &level);
     test_get_move_result_on_real_grid(&world, &level);
 
     setup_world_from_level(&world, &level);
@@ -663,15 +799,7 @@ static void probe_real_track02(const char *label,
     setup_world_from_level(&world, &level);
     test_object_table_decode_and_apply_real_data(data, size, local_md5, &world);
 
-    /* Multi-level object-tail and level-transition smoke tests.  These use
-     * the real level 0 as a base and attach a synthetic level 1; they verify
-     * the new decoder/world mechanics without claiming real Track 02 evidence
-     * for non-startup levels. */
-    setup_world_from_level(&world, &level);
-    test_synthetic_multi_level_object_table(&world, &level);
-
-    setup_world_from_level(&world, &level);
-    test_synthetic_level_transition(&world, &level);
+    test_real_full_dungeon_and_stairs(data, size, local_md5, variant);
 
     free(data);
 }
@@ -691,8 +819,10 @@ int main(int argc, char **argv) {
 
     test_sound_validation();
 
-    probe_real_track02("US", path_us, THERON_TRACK02_MD5_US_BIN);
-    probe_real_track02("JP", path_jp, THERON_TRACK02_MD5_JP_BIN);
+    probe_real_track02("US", path_us, THERON_TRACK02_MD5_US_BIN,
+                       THERON_TRACK02_VARIANT_US_BIN);
+    probe_real_track02("JP", path_jp, THERON_TRACK02_MD5_JP_BIN,
+                       THERON_TRACK02_VARIANT_JP_BIN);
 
     printf("\n== Summary ==\n");
     printf("PASS: %d  FAIL: %d  SKIP: %d\n", g_pass, g_fail, g_skip);

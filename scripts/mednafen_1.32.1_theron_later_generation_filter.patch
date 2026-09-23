@@ -19,7 +19,7 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 + }
 + return generation >= minimum_generation;
 +}
- 
+
  static void TheronPCECDTraceFifoReceipt(const char *format, ...)
  {
 @@ -791,10 +805,12 @@

@@ -6,15 +6,16 @@
  * rendering with authentic game data instead of synthetic placeholders.
  *
  * VRAM layout (word-addressed, 64KB = 32K words):
- *   The authenticated dungeon snapshot has its BAT at $0000 and its tile
- *   patterns in the remaining VRAM. Older fixture snapshots use a $1000
- *   tile-data base. The loader tries the fixture layout first and falls back
- *   to the observed source layout only when the BAT yields no valid tiles.
+ *   BAT bits 0..10 are hardware tile indices.  Each index addresses one
+ *   32-byte background pattern from VRAM byte zero; there is no relocatable
+ *   host-side tile base.  A historical fixture used a synthetic $1000 base,
+ *   but applying it to retail captures shifts every selected pattern.
  *
  * VCE layout: 512 × 16-bit LE words, BGR333 format.
  */
 
 #include "theron_v1_vram_trace_loader.h"
+#include "theron_v1_mednafen_vdc_io_trace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +64,7 @@ int theron_v1_vram_trace_load_raw(Theron_V1_Viewport *vp,
     memcpy(vp->vram_trace_data, vram_data, THERON_VRAM_SIZE);
     memcpy(vp->vce_trace_data, vce_data, THERON_VCE_SIZE);
 
-    for (int i = 0; i < 2048; ++i)
+    for (int i = 0; i < THERON_VDC_BAT_MAX_WORDS; ++i)
         vp->bat_atlas_indices[i] = -1;
     vp->vce_palette_relation_verified = 0;
     vp->bat_palette_group_mask = 0;
@@ -210,6 +211,207 @@ int theron_v1_vram_trace_load_known_capture_files(
     return -1;
 }
 
+static int theron_v1_vdc_state_load_verified(
+    Theron_V1_Viewport *vp, const char *path, uint32_t expected_fnv1a) {
+    FILE *file;
+    char header[64];
+    char row[256];
+    unsigned bxr, byr, mwr, hsr, hdr, vsr, vdr, vcr, cr;
+    static const uint16_t widths[4] = {32u, 64u, 128u, 128u};
+    int trailing;
+
+    if (!vp || !path || !path[0] || expected_fnv1a == 0u ||
+        theron_vram_trace_fnv1a_file(path) != expected_fnv1a ||
+        !(file = fopen(path, "r"))) return -1;
+    if (!fgets(header, sizeof(header), file) ||
+        strcmp(header, "FIRESTAFF_THERON_VDC_STATE_V1\n") != 0 ||
+        !fgets(row, sizeof(row), file) ||
+        sscanf(row,
+               "vdc=0 bxr=%4x byr=%4x mwr=%4x hsr=%4x hdr=%4x vsr=%4x vdr=%4x vcr=%4x cr=%4x",
+               &bxr, &byr, &mwr, &hsr, &hdr, &vsr, &vdr, &vcr, &cr) != 9) {
+        fclose(file);
+        return -1;
+    }
+    do {
+        trailing = fgetc(file);
+    } while (trailing == '\n' || trailing == '\r' || trailing == ' ' ||
+             trailing == '\t');
+    fclose(file);
+    if (trailing != EOF || bxr > 0x03ffu || byr > 0x01ffu ||
+        vdr > 0x01ffu) return -1;
+
+    vp->vdc_bxr = (uint16_t)bxr;
+    vp->vdc_byr = (uint16_t)byr;
+    vp->vdc_mwr = (uint16_t)mwr;
+    vp->vdc_hdr = (uint16_t)hdr;
+    vp->vdc_vdr = (uint16_t)vdr;
+    vp->vdc_cr = (uint16_t)cr;
+    vp->vdc_bat_width = widths[(mwr >> 4) & 3u];
+    vp->vdc_bat_height = (mwr & 0x40u) ? 64u : 32u;
+    vp->vdc_display_width = (uint16_t)(((hdr & 0x7fu) + 1u) * 8u);
+    vp->vdc_display_height = (uint16_t)((vdr & 0x01ffu) + 1u);
+    /* The first admitted bundle is deliberately exact.  Later geometries
+     * require their own authenticated triple and framebuffer audit. */
+    if (vp->vdc_bat_width != 64u || vp->vdc_bat_height != 64u ||
+        vp->vdc_display_width != 320u || vp->vdc_display_height != 200u)
+        return -1;
+    vp->vdc_state_loaded = 1;
+    (void)hsr;
+    (void)vsr;
+    (void)vcr;
+    return 0;
+}
+
+int theron_v1_vram_trace_load_known_capture_bundle(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    const char *vdc_state_path,
+    const char *vdc_sat_path) {
+    /* Legacy source compatibility only.  Four files cannot prove that the
+     * snapshot and producer stream share an endpoint; production requires
+     * theron_v1_vram_trace_load_known_atomic_capture_bundle(). */
+    (void)vp;
+    (void)vram_path;
+    (void)vce_path;
+    (void)vdc_state_path;
+    (void)vdc_sat_path;
+    return -1;
+}
+
+int theron_v1_vram_trace_load_known_atomic_capture_bundle(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    const char *vdc_state_path,
+    const char *vdc_sat_path,
+    const char *vdc_io_path) {
+    Theron_V1VdcIoTrace trace;
+    Theron_V1VdcIoVramReplayReceipt replay;
+    static const struct {
+        uint32_t vram_fnv1a;
+        uint32_t vce_fnv1a;
+        uint32_t vdc_state_fnv1a;
+        uint32_t sat_fnv1a;
+        uint32_t vdc_io_fnv1a;
+        uint32_t vwr_commit_count;
+        uint32_t written_word_count;
+    } known[] = {
+        /* Stable authenticated active-dungeon frame. */
+        {0x6cb9f191u, 0x6fb303b5u, 0x61478026u, 0x80f4c57bu,
+         0x282eac4au, 25890u, 8816u},
+        /* Same original savestate/media after scripted RIGHT at emulated
+         * frame 1 for ten frames. The original input poll observed raw
+         * $0020 / nibble $3d before this distinct atomic screen formed. */
+        {0x7dd24066u, 0x6fb303b5u, 0x61478026u, 0x7e6da7e3u,
+         0xb96a56e5u, 25890u, 8784u},
+        /* Same source state with LEFT $0080 / nibble $37. */
+        {0xe4261226u, 0x6fb303b5u, 0x61478026u, 0x484aaf93u,
+         0x2e37df95u, 25890u, 8784u}
+    };
+    FILE *sat_file;
+    size_t known_index;
+    int replay_verified;
+
+    if (!vp || !vram_path || !vce_path || !vdc_state_path ||
+        !vdc_sat_path || !vdc_io_path) {
+        return -1;
+    }
+    for (known_index = 0u;
+         known_index < sizeof(known) / sizeof(known[0]);
+         ++known_index) {
+        if (theron_vram_trace_fnv1a_file(vram_path) ==
+                known[known_index].vram_fnv1a &&
+            theron_vram_trace_fnv1a_file(vce_path) ==
+                known[known_index].vce_fnv1a &&
+            theron_vram_trace_fnv1a_file(vdc_state_path) ==
+                known[known_index].vdc_state_fnv1a &&
+            theron_vram_trace_fnv1a_file(vdc_sat_path) ==
+                known[known_index].sat_fnv1a &&
+            theron_vram_trace_fnv1a_file(vdc_io_path) ==
+                known[known_index].vdc_io_fnv1a)
+            break;
+    }
+    if (known_index == sizeof(known) / sizeof(known[0]) ||
+        !theron_v1_mednafen_vdc_io_trace_load_file(vdc_io_path, &trace))
+        return -1;
+    replay_verified = theron_v1_mednafen_vdc_io_verify_vram_snapshot(
+        &trace, vram_path, &replay);
+    theron_v1_mednafen_vdc_io_trace_free(&trace);
+    if (!replay_verified ||
+        replay.vwr_commit_count != known[known_index].vwr_commit_count ||
+        replay.written_word_count != known[known_index].written_word_count ||
+        replay.matched_word_count != known[known_index].written_word_count ||
+        replay.mismatched_word_count != 0u ||
+        replay.semantic_publication_allowed) return -1;
+
+    if (theron_v1_vram_trace_load_verified_files(
+            vp, vram_path, vce_path, known[known_index].vram_fnv1a,
+            known[known_index].vce_fnv1a) != 0 ||
+        theron_v1_vdc_state_load_verified(vp, vdc_state_path,
+                                          known[known_index].vdc_state_fnv1a) != 0 ||
+        theron_vram_trace_fnv1a_file(vdc_sat_path) !=
+            known[known_index].sat_fnv1a ||
+        !(sat_file = fopen(vdc_sat_path, "rb"))) {
+        if (vp->vram_trace_loaded) theron_v1_vram_trace_unload(vp);
+        return -1;
+    }
+    vp->vdc_sat_trace_data = (uint8_t *)malloc(THERON_VDC_SAT_SIZE);
+    if (!vp->vdc_sat_trace_data ||
+        fread(vp->vdc_sat_trace_data, 1, THERON_VDC_SAT_SIZE, sat_file) !=
+            THERON_VDC_SAT_SIZE || fgetc(sat_file) != EOF) {
+        fclose(sat_file);
+        theron_v1_vram_trace_unload(vp);
+        return -1;
+    }
+    fclose(sat_file);
+    vp->vdc_sat_loaded = 1;
+    return 0;
+}
+
+int theron_v1_vram_trace_load_known_atomic_input_capture_bundle(
+    Theron_V1_Viewport *vp,
+    const char *vram_path,
+    const char *vce_path,
+    const char *vdc_state_path,
+    const char *vdc_sat_path,
+    const char *vdc_io_path,
+    const char *input_path,
+    const char *transition_path) {
+    uint16_t mask;
+    uint16_t result;
+    uint32_t input_hash;
+    uint32_t transition_hash;
+    uint32_t vram_hash;
+    uint32_t io_hash;
+    if (!vp || !input_path || !transition_path) return -1;
+    input_hash = theron_vram_trace_fnv1a_file(input_path);
+    transition_hash = theron_vram_trace_fnv1a_file(transition_path);
+    vram_hash = theron_vram_trace_fnv1a_file(vram_path);
+    io_hash = theron_vram_trace_fnv1a_file(vdc_io_path);
+    if (input_hash == 0xd5791561u && transition_hash == 0x71f9ac0cu &&
+        vram_hash == 0x7dd24066u && io_hash == 0xb96a56e5u) {
+        mask = 0x0020u;
+        result = 0x003du;
+    } else if (input_hash == 0x811e9c8fu &&
+               transition_hash == 0x71822191u &&
+               vram_hash == 0xe4261226u && io_hash == 0x2e37df95u) {
+        mask = 0x0080u;
+        result = 0x0037u;
+    } else {
+        return -1;
+    }
+    if (theron_v1_vram_trace_load_known_atomic_capture_bundle(
+            vp, vram_path, vce_path, vdc_state_path, vdc_sat_path,
+            vdc_io_path) != 0)
+        return -1;
+    vp->vdc_input_screen_relation_verified = 1;
+    vp->vdc_source_input_mask = mask;
+    vp->vdc_source_input_result = result;
+    vp->vdc_source_input_hold_frames = 10u;
+    return 0;
+}
+
 int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
                                    const char *tqtr_path) {
     if (!vp || !tqtr_path) return -1;
@@ -258,12 +460,23 @@ void theron_v1_vram_trace_unload(Theron_V1_Viewport *vp) {
     if (!vp) return;
     free(vp->vram_trace_data);
     free(vp->vce_trace_data);
+    free(vp->vdc_sat_trace_data);
+    free(vp->vdc_source_frame);
     vp->vram_trace_data = NULL;
     vp->vce_trace_data = NULL;
+    vp->vdc_sat_trace_data = NULL;
+    vp->vdc_source_frame = NULL;
     vp->vram_trace_loaded = 0;
+    vp->vdc_state_loaded = 0;
+    vp->vdc_sat_loaded = 0;
+    vp->vdc_input_screen_relation_verified = 0;
+    vp->vdc_source_input_mask = 0u;
+    vp->vdc_source_input_result = 0u;
+    vp->vdc_source_input_hold_frames = 0u;
+    vp->host_palette_source_count = 0;
     vp->vce_palette_relation_verified = 0;
     vp->bat_palette_group_mask = 0;
-    for (int i = 0; i < 2048; ++i)
+    for (int i = 0; i < THERON_VDC_BAT_MAX_WORDS; ++i)
         vp->bat_atlas_indices[i] = -1;
     tqr_palette_free_tiles(&vp->palette);
 }
@@ -272,13 +485,11 @@ static int theron_v1_vram_trace_populate_tiles_with_base(
     Theron_V1_Viewport *vp, int bat_start_word, int bat_w, int bat_h,
     int tile_base_byte) {
     if (!vp || !vp->vram_trace_loaded || !vp->vram_trace_data) return -1;
-    /* The PCE BAT occupies 2048 words (64 columns × 32 rows).  The
-     * current atlas population still loads the complete authenticated BG
-     * tile span, but reject an invalid caller window before treating the
-     * trace as a usable VRAM binding. */
+    /* The authenticated MWR may select a 64x64 BAT. */
     if (bat_start_word < 0 || bat_w <= 0 || bat_h <= 0 ||
-        bat_w > 64 || bat_h > 32 || bat_start_word >= 2048 ||
-        bat_start_word + (bat_h - 1) * 64 + (bat_w - 1) >= 2048) {
+        bat_w > 64 || bat_h > 64 ||
+        bat_start_word >= THERON_VDC_BAT_MAX_WORDS ||
+        bat_start_word + bat_w * bat_h > THERON_VDC_BAT_MAX_WORDS) {
         return -1;
     }
 
@@ -301,20 +512,28 @@ static int theron_v1_vram_trace_populate_tiles_with_base(
         return -1;
 
     tqr_palette_free_tiles(&vp->palette);
-    for (int i = 0; i < 2048; ++i)
+    for (int i = 0; i < THERON_VDC_BAT_MAX_WORDS; ++i)
         vp->bat_atlas_indices[i] = -1;
 
     int loaded = 0;
     uint16_t palette_group_mask = 0;
     for (int y = 0; y < bat_h; ++y) {
         for (int x = 0; x < bat_w; ++x) {
-            int bat_word = bat_start_word + y * 64 + x;
+            int bat_word = bat_start_word + y * bat_w + x;
             uint16_t bat = (uint16_t)vram[bat_word * 2] |
                            ((uint16_t)vram[bat_word * 2 + 1] << 8);
-            int tile_index = (int)(bat & 0x07FFu);
+            int tile_index = (int)(bat & 0x0FFFu);
             int pal_group = (int)((bat >> 12) & 0x0Fu);
-            int off = tile_base_byte + tile_index * THERON_VRAM_TILE_BYTES;
+            int off;
             int atlas_index;
+
+            /* HuC6270 BAT exposes twelve tile bits, but the retail PCE has
+             * 64 KiB VRAM: only 2,048 32-byte background patterns exist.
+             * Mednafen treats a set bit 11 as an unmapped background read.
+             * Masking it away aliases the cell to unrelated real graphics
+             * and produces a colourful but false frame. */
+            if (tile_index >= 2048) continue;
+            off = tile_base_byte + tile_index * THERON_VRAM_TILE_BYTES;
 
             if (off < tile_base_byte ||
                 off + THERON_VRAM_TILE_BYTES > 0xFE00 ||
@@ -366,21 +585,18 @@ static int theron_v1_vram_trace_populate_tiles_with_base(
 int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
                                         int bat_start_word,
                                         int bat_w, int bat_h) {
-    int loaded = theron_v1_vram_trace_populate_tiles_with_base(
-        vp, bat_start_word, bat_w, bat_h, 0x1000);
-
-    if (loaded != 0) return loaded;
-    /* The real dungeon capture has BAT words at $0000 whose tile indices
-     * address patterns from VRAM byte zero.  Only use this source-observed
-     * route when the historical fixture base produced no admissible tile;
-     * never silently merge the two layouts. */
+    /* HuC6270 background patterns are addressed directly by the BAT tile
+     * index.  Never reintroduce the old synthetic fixture offset here: it
+     * can still produce in-bounds bytes and therefore looks superficially
+     * successful while rendering unrelated retail patterns. */
     return theron_v1_vram_trace_populate_tiles_with_base(
         vp, bat_start_word, bat_w, bat_h, 0);
 }
 
 int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
                                          int bat_word) {
-    if (!vp || !vp->vram_trace_loaded || bat_word < 0 || bat_word >= 2048)
+    if (!vp || !vp->vram_trace_loaded || bat_word < 0 ||
+        bat_word >= THERON_VDC_BAT_MAX_WORDS)
         return -1;
     return vp->bat_atlas_indices[bat_word];
 }
@@ -437,7 +653,12 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
                      * source-owned group in the indexed frame; copying only
                      * the four-bit tile value silently collapsed every real
                      * palette group into group zero. */
-                    dst[px] = (uint8_t)(palette_base + src[px]);
+                    /* HuC6260 shares background colour zero across all BG
+                     * palette groups.  Group-local entry zero is not drawn;
+                     * Mednafen resolves it to VCE entry 0. */
+                    dst[px] = src[px] == 0u
+                        ? 0u
+                        : (uint8_t)(palette_base + src[px]);
                 }
             }
             ++copied;
@@ -447,10 +668,143 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
 }
 
 int theron_v1_vram_trace_render_authenticated_screen(Theron_V1_Viewport *vp) {
-    if (!vp || !vp->vram_trace_loaded || !vp->fb.data ||
-        vp->fb.w < TQR_VIEWPORT_W || vp->fb.h < TQR_VIEWPORT_H) {
+    if (!vp || !vp->vram_trace_loaded || !vp->fb.data) {
         return -1;
     }
+    if (vp->vdc_state_loaded) {
+        int rendered = 0;
+        int bat_width = vp->vdc_bat_width;
+        int bat_height = vp->vdc_bat_height;
+        size_t frame_pixels;
+        if (bat_width <= 0 || bat_height <= 0 ||
+            vp->vdc_display_width > vp->fb.w ||
+            vp->vdc_display_height > vp->fb.h || !vp->vdc_sat_loaded ||
+            !vp->vdc_sat_trace_data) return -1;
+        frame_pixels = (size_t)vp->vdc_display_width *
+                       (size_t)vp->vdc_display_height;
+        if (!vp->vdc_source_frame) {
+            vp->vdc_source_frame = (uint16_t *)malloc(
+                frame_pixels * sizeof(*vp->vdc_source_frame));
+            if (!vp->vdc_source_frame) return -1;
+        }
+        memset(vp->fb.data, 0,
+               (size_t)vp->fb.stride * (size_t)vp->fb.h);
+        memset(vp->vdc_source_frame, 0,
+               frame_pixels * sizeof(*vp->vdc_source_frame));
+        for (int y = 0; y < vp->vdc_display_height; ++y) {
+            unsigned sy = ((unsigned)vp->vdc_byr + (unsigned)y) &
+                          (unsigned)(bat_height * TQR_TILE_DIM - 1);
+            for (int x = 0; x < vp->vdc_display_width; ++x) {
+                unsigned sx = ((unsigned)vp->vdc_bxr + (unsigned)x) &
+                              (unsigned)(bat_width * TQR_TILE_DIM - 1);
+                int bat_word = (int)((sy >> 3) * (unsigned)bat_width +
+                                     (sx >> 3));
+                int atlas_index = vp->bat_atlas_indices[bat_word];
+                const TQR_Tile *tile;
+                uint8_t decoded[64];
+                uint8_t pixel;
+                if (atlas_index < 0 || atlas_index >= vp->palette.tile_count)
+                    continue;
+                tile = &vp->palette.tiles[atlas_index];
+                if (!tile->data) continue;
+                tqr_decode_tile(decoded, tile->data, tile->bpp);
+                pixel = decoded[(sy & 7u) * 8u + (sx & 7u)];
+                vp->vdc_source_frame[y * vp->vdc_display_width + x] = pixel == 0u
+                    ? 0u
+                    : (uint16_t)(tile->pal_group * TQR_PALETTE_GROUP_SIZE +
+                                 pixel);
+                ++rendered;
+            }
+        }
+        /* HuC6270 SAT composition.  The hardware selects the first sixteen
+         * matching SAT pieces for each scanline, then draws them in reverse
+         * order so the lower SAT number wins.  A 32-pixel sprite consumes
+         * two pieces, exactly as Mednafen's FetchSpriteData path does. */
+        for (int y = 0; y < vp->vdc_display_height; ++y) {
+            struct SpritePiece {
+                uint16_t flags, pattern, palette;
+                int x, row;
+            } active[16];
+            int active_count = 0;
+            for (int sprite = 0; sprite < 64 && active_count < 16; ++sprite) {
+                const uint8_t *s = vp->vdc_sat_trace_data + sprite * 8;
+                uint16_t syw = (uint16_t)s[0] | ((uint16_t)s[1] << 8);
+                uint16_t sxw = (uint16_t)s[2] | ((uint16_t)s[3] << 8);
+                uint16_t pn = (uint16_t)s[4] | ((uint16_t)s[5] << 8);
+                uint16_t flags = (uint16_t)s[6] | ((uint16_t)s[7] << 8);
+                static const int heights[4] = {16, 32, 64, 64};
+                static const unsigned masks[4] = {~0u, ~2u, ~6u, ~6u};
+                int sy = (int)(syw & 0x03ffu) - 0x40;
+                int height = heights[(flags >> 12) & 3u];
+                int width = (flags & 0x0100u) ? 32 : 16;
+                int row;
+                unsigned base;
+                if (y < sy || y >= sy + height) continue;
+                row = y - sy;
+                if (flags & 0x8000u) row = height - 1 - row;
+                base = ((pn >> 1) & 0x03ffu) & masks[(flags >> 12) & 3u];
+                base |= (unsigned)(row & 0x30) >> 3;
+                if (width == 32) base &= ~1u;
+                for (int half = 0; half < width / 16 && active_count < 16;
+                     ++half) {
+                    unsigned pattern = base | (unsigned)half;
+                    int piece_x = (int)(sxw & 0x03ffu) - 0x20 + half * 16;
+                    if ((flags & 0x0800u) && width == 32) pattern ^= 1u;
+                    active[active_count].flags = flags;
+                    active[active_count].pattern = (uint16_t)pattern;
+                    active[active_count].palette = (uint16_t)((flags & 0xfu) << 4);
+                    active[active_count].x = piece_x;
+                    active[active_count].row = row & 15;
+                    ++active_count;
+                }
+            }
+            for (int ai = active_count - 1; ai >= 0; --ai) {
+                const struct SpritePiece *sp = &active[ai];
+                size_t word_base = (size_t)sp->pattern * 64u +
+                                   (size_t)sp->row;
+                uint16_t planes[4];
+                if (word_base + 48u >= THERON_VRAM_SIZE / 2u) continue;
+                for (int plane = 0; plane < 4; ++plane) {
+                    size_t byte = (word_base + (size_t)plane * 16u) * 2u;
+                    planes[plane] = (uint16_t)vp->vram_trace_data[byte] |
+                        ((uint16_t)vp->vram_trace_data[byte + 1] << 8);
+                }
+                for (int px = 0; px < 16; ++px) {
+                    int bit = (sp->flags & 0x0800u) ? px : 15 - px;
+                    unsigned pixel = 0;
+                    int dx = sp->x + px;
+                    uint16_t *dst;
+                    if (dx < 0 || dx >= vp->vdc_display_width) continue;
+                    for (int plane = 0; plane < 4; ++plane)
+                        pixel |= ((planes[plane] >> bit) & 1u) << plane;
+                    if (!pixel) continue;
+                    dst = &vp->vdc_source_frame[
+                        y * vp->vdc_display_width + dx];
+                    if ((*dst & 0x0fu) == 0u || (sp->flags & 0x0080u))
+                        *dst = (uint16_t)(0x100u | sp->palette | pixel);
+                }
+            }
+        }
+        /* M11 is an 8-bit indexed surface.  Compact only the source entries
+         * actually present in this exact frame; this is an identity remap,
+         * not quantisation or generated colour data. */
+        vp->host_palette_source_count = 0;
+        for (size_t p = 0; p < frame_pixels; ++p) {
+            uint16_t source = vp->vdc_source_frame[p] & 0x01ffu;
+            uint16_t host;
+            for (host = 0; host < vp->host_palette_source_count; ++host)
+                if (vp->host_palette_source_indices[host] == source) break;
+            if (host == vp->host_palette_source_count) {
+                if (host >= 256u) return -1;
+                vp->host_palette_source_indices[host] = source;
+                ++vp->host_palette_source_count;
+            }
+            vp->fb.data[p] = (uint8_t)host;
+        }
+        return rendered;
+    }
+    if (vp->fb.w < TQR_VIEWPORT_W || vp->fb.h < TQR_VIEWPORT_H)
+        return -1;
     /* The capture is a native 256x224 VDC screen. BAT cells are laid out in
      * the source's 64-cell stride; the admitted screen window is the first
      * 32 columns by 28 rows. Keep this separate from the unresolved

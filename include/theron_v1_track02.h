@@ -2157,14 +2157,12 @@ typedef struct {
 /* Compose the bounded Track 02 startup evidence into one runtime-facing
  * handoff summary.
  *
- * This does not broaden the decoder claim: the only semantic descriptor role
- * consumed here is entry 0's DUNGEON_SEED_TABLE, and the only level payload is
- * the hash/anchor-gated 32x27 initial startup candidate.  ready_for_runtime is
- * true only when both gates are OK and the candidate has a logical MODE1/2048
- * user-data offset.  startup_seed_in_seed_table is reported as diagnostic
- * evidence only because the source-locked startup payload seed is distinct
- * from the seven progression dungeon seeds.  Real Track 02 images may still
- * report NO_LEVEL while the descriptor seed-window semantics are hardened.
+ * The runtime payload is the hash/anchor-gated 32x27 initial candidate and its
+ * own authenticated 12-byte header.  ready_for_runtime requires that record
+ * plus a logical MODE1/2048 user-data offset.  The retired descriptor entry-0
+ * dungeon-seed hypothesis is retained only as diagnostic output and is never
+ * an admission gate; real US/JP Track 02 images do not contain that synthetic
+ * ascending seed table.
  */
 Theron_Track02LevelHandoffStatus theron_v1_track02_bind_startup_semantic_handoff(
     const uint8_t *track02_data,
@@ -2804,12 +2802,11 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * at the bound L54A0, which ends at L54AF [0x14af..0x14c5); L535E
  * [0x135e..0x136e) ends at the bound L536E; L4F7A [0x0f7a..0x0f89)
  * starts where the bound L4F66 ends; L560B [0x160b..0x1657) starts
- * where the bound L5600 ends.  L560B carries a da65 mid-instruction
- * label artifact (the round-18 class): the declared L563D label sits
- * on the BCC operand byte at 0x163d (da65 emitted `.byte $90` plus
- * the garbage `st0 #$EE` / `cld` / `.byte $4F` renderings), so the
- * media bytes are authoritative — the real flow is BCC L5641 /
- * INC $4FD8.  L560B's L0000 renderings are da65's zero-page-as-
+ * where the bound L5600 ends.  L560B carries an overlapping-entry
+ * class: L563D is the BCC operand byte in the main flow (BCC L5641 /
+ * INC $4FD8), while authenticated L4943 also calls that byte directly
+ * as a second valid instruction stream.  L560B's L0000 renderings are
+ * da65's zero-page-as-
  * absolute form, superseded by the media bytes.  L535E's stores
  * confirm da65's `a:$02`/`a:$03` absolute form.  Tier-5 windows
  * (L5403, L541E, L52A2, L52C8, L5657, L54C5, the LE063 targets, the
@@ -2915,10 +2912,10 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * bytes are the as-loaded image, and da65's `a:$02`/`a:$03` renderings
  * confirm the 3-byte absolute VDC-data stores.  L4552 ends exactly at
  * L458E; L466B ends exactly at the bound L4696 body; L458E ends at the
- * unbound STZ L47B8 / TII gap routine [0x45a6..0x45b1); L424B ends at
- * the unbound L42BF; L43D6 ends before the unbound $4417 stream; L4932
- * ends before the unbound TMA/PHA stream.  L424B's own callees (L43A1,
- * L42BF) and every other stream remain unbound future windows.  No
+ * now-bound STZ L47B8 / TII gap routine [0x45a6..0x45b1); L424B ends
+ * at the bound L42BF; L43D6 ends at the bound L4417 stream; L4932 ends
+ * at the bound L4943 TMA/PHA dispatcher.  L424B's own callees (L43A1,
+ * L42BF) are bound by a later receipt.  No
  * semantics, System Card base or bank-mapping arithmetic, record
  * semantics, or graphics role follows. */
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_USER_OFFSET 0x424bu
@@ -2939,6 +2936,84 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_USER_OFFSET 0x4932u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_CPU_ADDRESS 0x4932u
 #define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES 0x11u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_USER_OFFSET 0x491fu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_CPU_ADDRESS 0x491fu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L491F_BYTES 0x13u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_USER_OFFSET 0x4943u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_CPU_ADDRESS 0x4943u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4943_BYTES 0xb7u
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5E2B_OFF 0x2cu
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5CE4_OFF 0x3eu
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L4BB0_OFF 0x41u
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L56DE_OFF 0x77u
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L563D_OFF 0x7au
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L50F1_OFF 0x7du
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L49FA_OFF 0x86u
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L5111_OFF 0x89u
+#define THERON_TRACK02_IPL_STAGE2_L4943_CALL_SITE_L570A_OFF 0x8cu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_USER_OFFSET 0x49fau
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_CPU_ADDRESS 0x49fau
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L49FA_BYTES 0x0fu
+#define THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A09_OFF 0x04u
+#define THERON_TRACK02_IPL_STAGE2_L49FA_CALL_SITE_L4A84_OFF 0x0bu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_USER_OFFSET 0x4a09u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_CPU_ADDRESS 0x4a09u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A09_BYTES 0x7bu
+#define THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4932_OFF 0x05u
+#define THERON_TRACK02_IPL_STAGE2_L4A09_CALL_SITE_L4B24_OFF 0x36u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_USER_OFFSET 0x4a84u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_CPU_ADDRESS 0x4a84u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4A84_BYTES 0xa0u
+#define THERON_TRACK02_IPL_STAGE2_L4A84_CALL_SITE_L491F_OFF 0x05u
+#define THERON_TRACK02_IPL_STAGE2_L4A84_BSR_SITE_L4B24_OFF 0x5du
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_USER_OFFSET 0x4b24u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_CPU_ADDRESS 0x4b24u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4B24_BYTES 0x18u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_USER_OFFSET 0x4bb0u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_CPU_ADDRESS 0x4bb0u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4BB0_BYTES 0x5du
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_USER_OFFSET 0x56deu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_CPU_ADDRESS 0x56deu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L56DE_BYTES 0x2cu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_USER_OFFSET 0x570au
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_CPU_ADDRESS 0x570au
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L570A_BYTES 0x10u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_USER_OFFSET 0x50f1u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_CPU_ADDRESS 0x50f1u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L50F1_BYTES 0x20u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_USER_OFFSET 0x5111u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_CPU_ADDRESS 0x5111u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5111_BYTES 0x22cu
+#define THERON_TRACK02_IPL_STAGE2_L5111_BSR_SITE_L519F_OFF 0x50u
+#define THERON_TRACK02_IPL_STAGE2_L5111_CALL_SITE_L533D_OFF 0x52u
+#define THERON_TRACK02_IPL_STAGE2_L5111_BSR_SITE_L517A_OFF 0x55u
+#define THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_OFF 0xd7u
+#define THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_TABLE_ENTRIES 15u
+#define THERON_TRACK02_IPL_STAGE2_L5111_COMMAND_HANDLERS_OFF 0xf5u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_USER_OFFSET 0x533du
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_CPU_ADDRESS 0x533du
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L533D_BYTES 0x221u
+#define THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_OFF 0x49u
+#define THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_TABLE_ENTRIES 16u
+#define THERON_TRACK02_IPL_STAGE2_L533D_COMMAND_HANDLERS_OFF 0x69u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_USER_OFFSET 0x15efu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_CPU_ADDRESS 0x55efu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55EF_BYTES 0x1cu
+#define THERON_TRACK02_IPL_STAGE2_L55EF_ENTRY_L55F4_OFF 0x05u
+#define THERON_TRACK02_IPL_STAGE2_L55EF_ENTRY_L55FF_OFF 0x10u
+#define THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L5617_OFF 0x0cu
+#define THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L562A_OFF 0x1fu
+#define THERON_TRACK02_IPL_STAGE2_L560B_ENTRY_L563D_OFF 0x32u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_USER_OFFSET 0x15b6u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_CPU_ADDRESS 0x55b6u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_BYTES 0x2au
+#define THERON_TRACK02_IPL_STAGE2_L55B6_OVERLAP_ENTRY_L55C8_OFF 0x12u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_USER_OFFSET 0x5e2bu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_CPU_ADDRESS 0x5e2bu
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_BYTES 0x56u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_USER_OFFSET 0x5ce4u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_CPU_ADDRESS 0x5ce4u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_BYTES 0x38u
 
 /* $45xx-callee call-site invariants: byte offset of each JSR opcode
  * within the bound $45xx routine body (call_site offset + 3 <=
@@ -2954,7 +3029,7 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 
 /* Same-image bytes bound by the stage-two enclosing-$45xx-callees
  * verifier. */
-#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES 0x145u
+#define THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES 0x92bu
 
 /* L3114 tier-5 callees: the remaining callees of the bound tier-4
  * bodies (L53C4's BSR L5403; L560B's BSR L5657 / JSR L52A2 / JSR
@@ -3028,15 +3103,15 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * address to its image offset exactly like the round-16 L4696 pinning;
  * L42BF's own JSR $43D6 at +0x14 targets the round-21 L43D6 body.
  * L43A1 [0x43a1..0x43d6) ends exactly at the bound L43D6 body.  L42BF
- * [0x42bf..0x42db) ends at the unbound $3B75 stream.  The $45A6 TII
+ * [0x42bf..0x42db) ends at the bound L42DB body.  The $45A6 TII
  * gap stream [0x45a6..0x45b1) (STZ L47B8 / TII $47B8,$47B9,$00A7 /
  * RTS) sits between the bound L458E and the bound $45xx routine; it is
  * called only from the unbound $401C stream (JSR $45A6 at image
  * 0x401c), so its entry CPU address is not pinned (the $45xx-routine
  * precedent) and the receipt carries 0 for it; its span ends exactly
  * at the bound $45xx routine (adjacency compile-time-asserted).  The
- * $3B75 stream, the $4417 stream, and the $4943 stream remain unbound
- * future windows.  No semantics, System Card base or bank-mapping
+ * L42DB and L4943 are bound by later receipts.  No semantics, System
+ * Card base or bank-mapping
  * arithmetic, record semantics, or graphics role follows. */
 #define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_USER_OFFSET 0x43a1u
 #define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_CPU_ADDRESS 0x43a1u
@@ -3060,6 +3135,54 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 /* Same-image bytes bound by the stage-two $45xx-lane tier-2
  * verifier. */
 #define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_BOUND_BYTES 0x5cu
+
+/* $45xx-lane frame dispatcher and its source-coordinate update callees.
+ * L4215 [0x4215..0x424b) conditionally calls L44A2/L42DB for $50 and
+ * L4417/L424B for $51, then derives L47DB:L47DC through the already-bound
+ * L458E body.  L4417 [0x4417..0x44a2) updates L47D3 and the wrapped
+ * L47D8/L47D9/L47DA coordinates, calls the already-bound L4552 body, and
+ * applies the signed $51 direction.  L42DB [0x42db..0x43a1) performs the
+ * paired $50 coordinate path, including local L4358/L4386, and calls the
+ * already-bound L43A1/L43D6 bodies.  L4519 [0x4519..0x4552) is L44A2's
+ * signed-pair normalization continuation and ends at the bound L4552 entry.
+ * These are original bank-2 bytes; no host rendering or gameplay meaning is
+ * inferred by this binding. */
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_USER_OFFSET 0x4215u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_CPU_ADDRESS 0x4215u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4215_BYTES 0x36u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_USER_OFFSET 0x4417u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_CPU_ADDRESS 0x4417u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4417_BYTES 0x8bu
+#define THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L4417_OFF 0x13u
+#define THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L424B_OFF 0x1bu
+#define THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L458E_OFF 0x28u
+#define THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_A_OFF 0x37u
+#define THERON_TRACK02_IPL_STAGE2_L4417_CALL_SITE_L4552_B_OFF 0x6bu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_USER_OFFSET 0x44a2u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_CPU_ADDRESS 0x44a2u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L44A2_BYTES 0x77u
+#define THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L44A2_OFF 0x04u
+#define THERON_TRACK02_IPL_STAGE2_L4215_CALL_SITE_L42DB_OFF 0x0cu
+#define THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_A_OFF 0x35u
+#define THERON_TRACK02_IPL_STAGE2_L44A2_CALL_SITE_L4552_B_OFF 0x6eu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_USER_OFFSET 0x42dbu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_CPU_ADDRESS 0x42dbu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L42DB_BYTES 0xc6u
+#define THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43D6_A_OFF 0x2du
+#define THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43A1_A_OFF 0x3fu
+#define THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_LOCAL4358_A_OFF 0x54u
+#define THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43A1_B_OFF 0x67u
+#define THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_LOCAL4358_B_OFF 0x77u
+#define THERON_TRACK02_IPL_STAGE2_L42DB_CALL_SITE_L43D6_B_OFF 0xa3u
+#define THERON_TRACK02_IPL_STAGE2_L42DB_BSR_LOCAL4386_A_OFF 0x4du
+#define THERON_TRACK02_IPL_STAGE2_L42DB_BSR_LOCAL4386_B_OFF 0x6eu
+#define THERON_TRACK02_IPL_STAGE2_L42DB_LOCAL4358_OFF 0x7du
+#define THERON_TRACK02_IPL_STAGE2_L42DB_LOCAL4386_OFF 0xabu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_USER_OFFSET 0x4519u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_CPU_ADDRESS 0x4519u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_L4519_BYTES 0x39u
+#define THERON_TRACK02_IPL_STAGE2_L44A2_JUMP_SITE_L4519_OFF 0x06u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER3_BOUND_BYTES 0x237u
 
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
@@ -3557,7 +3680,27 @@ typedef struct {
  * the media bytes), L43D6 [0x43d6..0x4417), L4552 [0x4552..0x458e)
  * (ends at L458E), L458E [0x458e..0x45a6), L466B [0x466b..0x4696)
  * (self-modifying TIA setup — the media bytes are the as-loaded image;
- * ends at the bound L4696 body), and L4932 [0x4932..0x4943) — all
+ * ends at the bound L4696 body), L4932 [0x4932..0x4943), and adjacent
+ * L4943 [0x4943..0x49fa), which brackets its banked graphics/VDC
+ * dispatch with MPR3..MPR6 save/restore, L49FA [0x49fa..0x4a09),
+ * which selects the L4A09/L4A84 paths, and L4A09 [0x4a09..0x4a84),
+ * L4A84 [0x4a84..0x4b24), and shared L4B24 [0x4b24..0x4b3c), which
+ * perform the paired VDC updates and address calculation.  L491F
+ * [0x491f..0x4932) provides L4A84's adjacent CR-enable path; L4BB0
+ * [0x4bb0..0x4c0d) updates the four scroll registers; L56DE/L570A
+ * [0x56de..0x571a) select and transfer the dynamic 1 KiB block; L50F1
+ * [0x50f1..0x5111) performs the 512-byte VDC transfer; L5111
+ * [0x5111..0x533d) prepares eight object slots, includes its local
+ * L517A/L519F control bodies, and binds the 15-entry L51E8 command
+ * table with every handler through L5334; L533D [0x533d..0x555e)
+ * binds the corresponding 16-entry secondary command family; L55EF
+ * [0x15ef..0x160b) binds the overlapping L55F4/L55FF entries, while
+ * authenticated offsets inside the already-bound L560B body prove the
+ * L5617/L562A/L563D entries; L55B6 [0x15b6..0x15e0) binds L563D's
+ * signed BBR4 target at the overlapping L55C8 entry; L5E2B
+ * [0x5e2b..0x5e81) dispatches VDC register 6/7 updates; and L5CE4
+ * [0x5ce4..0x5d1c) initializes and clears the producer's 1 KiB buffer
+ * at $58e0 — all
  * listed inline by da65 under its linear map ($824B/$83D6/$8552/$858E/
  * $866B/$8932 renderings) and byte-matched against the authenticated
  * US stage-two image.  The CPU entry addresses are pinned by the JSR
@@ -3565,7 +3708,7 @@ typedef struct {
  * the call-site offsets inside the $45xx body, the internal JSR L43D6
  * at L424B+0x02, and the L4552->L458E and L466B->L4696 adjacencies are
  * compile-time asserted.  Proven for the US body only; L424B's L43A1/
- * L42BF callees and every other stream remain unbound future windows;
+ * L42BF callees are bound by a later receipt;
  * no semantics, System Card base or bank-mapping arithmetic, record
  * semantics, or graphics role follows. */
 typedef struct {
@@ -3579,6 +3722,22 @@ typedef struct {
     size_t l458e_bytes;
     size_t l466b_bytes;
     size_t l4932_bytes;
+    size_t l491f_bytes;
+    size_t l4943_bytes;
+    size_t l49fa_bytes;
+    size_t l4a09_bytes;
+    size_t l4a84_bytes;
+    size_t l4b24_bytes;
+    size_t l4bb0_bytes;
+    size_t l56de_bytes;
+    size_t l570a_bytes;
+    size_t l50f1_bytes;
+    size_t l5111_bytes;
+    size_t l533d_bytes;
+    size_t l55ef_bytes;
+    size_t l55b6_bytes;
+    size_t l5e2b_bytes;
+    size_t l5ce4_bytes;
     size_t callees_bound_bytes;
     uint16_t l424b_cpu_address;
     uint16_t l43d6_cpu_address;
@@ -3586,12 +3745,68 @@ typedef struct {
     uint16_t l458e_cpu_address;
     uint16_t l466b_cpu_address;
     uint16_t l4932_cpu_address;
+    uint16_t l491f_cpu_address;
+    uint16_t l4943_cpu_address;
+    uint16_t l49fa_cpu_address;
+    uint16_t l4a09_cpu_address;
+    uint16_t l4a84_cpu_address;
+    uint16_t l4b24_cpu_address;
+    uint16_t l4bb0_cpu_address;
+    uint16_t l56de_cpu_address;
+    uint16_t l570a_cpu_address;
+    uint16_t l50f1_cpu_address;
+    uint16_t l5111_cpu_address;
+    uint16_t l533d_cpu_address;
+    uint16_t l55ef_cpu_address;
+    uint16_t l55b6_cpu_address;
+    uint16_t l5e2b_cpu_address;
+    uint16_t l5ce4_cpu_address;
     int l424b_proven;
     int l43d6_proven;
     int l4552_proven;
     int l458e_proven;
     int l466b_proven;
     int l4932_proven;
+    int l491f_proven;
+    int l4943_proven;
+    int l4943_mpr_bracket_proven;
+    int l4943_targets_proven;
+    int l49fa_proven;
+    int l49fa_targets_proven;
+    int l4a09_proven;
+    int l4a09_vdc_writes_proven;
+    int l4a09_targets_proven;
+    int l4a84_proven;
+    int l4a84_vdc_writes_proven;
+    int l4a84_targets_proven;
+    int l4b24_proven;
+    int l4bb0_proven;
+    int l4bb0_vdc_scroll_writes_proven;
+    int l56de_proven;
+    int l56de_vram_transfer_proven;
+    int l570a_proven;
+    int l50f1_proven;
+    int l50f1_vdc_transfer_proven;
+    int l5111_proven;
+    int l5111_local_targets_proven;
+    int l5111_command_table_proven;
+    int l5111_command_targets_proven;
+    int l533d_proven;
+    int l533d_command_table_proven;
+    int l533d_command_targets_proven;
+    int l55ef_proven;
+    int l55f4_overlap_entry_proven;
+    int l55ff_entry_proven;
+    int l5617_overlap_entry_proven;
+    int l562a_overlap_entry_proven;
+    int l563d_overlap_entry_proven;
+    int l55b6_proven;
+    int l55c8_overlap_entry_proven;
+    int l563d_bbr4_target_proven;
+    int l5e2b_proven;
+    int l5e2b_vdc_register_dispatch_proven;
+    int l5ce4_proven;
+    int l5ce4_buffer_init_proven;
     int l424b_call_site_proven;
     int adjacency_proven;
 } Theron_Track02Stage2Enclosing45xxCalleesReceipt;
@@ -3658,7 +3873,7 @@ typedef struct {
  * rendering superseded by the media 85 00; ends exactly at the bound
  * L43D6 body), L42BF [0x42bf..0x42db) (the $56 $10-counter with its
  * L47C4 save/increment/JSR L43D6/restore — the internal JSR $43D6 at
- * +0x14 targets the round-21 body; ends at the unbound $3B75 stream),
+ * +0x14 targets the round-21 body; ends at the bound L42DB body),
  * and the $45A6 TII gap stream [0x45a6..0x45b1) (STZ L47B8 /
  * TII $47B8,$47B9,$00A7 / RTS — called only from the unbound $401C
  * stream, so its entry CPU address is not pinned and the receipt
@@ -3668,8 +3883,8 @@ typedef struct {
  * L424B call-site offsets (+0x19/+0x45 L43A1, +0x2d/+0x55 L42BF), the
  * internal L42BF JSR L43D6 at +0x14, and the L43A1->L43D6 and
  * $45A6->$45xx-routine adjacencies are compile-time asserted.  Proven
- * for the US body only; the $3B75/$4417/$4943 streams remain unbound
- * future windows; no semantics, System Card base or bank-mapping
+ * for the US body only; L42DB and L4943 are bound by later receipts;
+ * no semantics, System Card base or bank-mapping
  * arithmetic, record semantics, or graphics role follows. */
 typedef struct {
     int valid;
@@ -3689,6 +3904,33 @@ typedef struct {
     int l424b_call_sites_proven;
     int adjacency_proven;
 } Theron_Track02Stage245xxTier2CalleesReceipt;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t l4215_bytes;
+    size_t l4417_bytes;
+    size_t l44a2_bytes;
+    size_t l42db_bytes;
+    size_t l4519_bytes;
+    size_t tier3_bound_bytes;
+    uint16_t l4215_cpu_address;
+    uint16_t l4417_cpu_address;
+    uint16_t l44a2_cpu_address;
+    uint16_t l42db_cpu_address;
+    uint16_t l4519_cpu_address;
+    int l4215_proven;
+    int l4417_proven;
+    int l44a2_proven;
+    int l42db_proven;
+    int l4519_proven;
+    int local_subroutines_proven;
+    int caller_targets_proven;
+    int existing_callee_targets_proven;
+    int adjacency_proven;
+} Theron_Track02Stage245xxTier3CalleesReceipt;
 
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
@@ -3933,6 +4175,18 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier2_callees(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage245xxTier2CalleesReceipt *out_receipt);
+
+/* Binds the exact US bank-2 L4215 frame-dispatch body and its
+ * L42DB/L4417/L44A2/L4519 coordinate-update callees, including L42DB's local
+ * L4358/L4386 routines.  The verifier pins their encoded JSR/JMP/BSR targets
+ * to the local entries and the already-bound L424B/L43A1/L43D6/L4552/L458E
+ * bodies, and requires each linear span to meet its adjacent bound body.  JP
+ * and any changed byte fail closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier3_callees(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage245xxTier3CalleesReceipt *out_receipt);
 
 /* Command stream VM semantic roles.  The 10 jump-table handlers implement
  * a bytecoded command interpreter: the stream at $6000 contains variable-

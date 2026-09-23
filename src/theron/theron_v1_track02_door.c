@@ -51,7 +51,7 @@ int theron_v1_track02_teleporter_decode(const uint8_t *raw6, Theron_Teleporter *
     out->absolute  = (uint8_t)((w1 >> 12) & 1);
     out->scope     = (uint8_t)((w1 >> 13) & 0x03);
     out->sound     = (uint8_t)((w1 >> 15) & 1);
-    out->level_dest = (uint8_t)((w2 >> 8) & 0x0F);
+    out->level_dest = (uint8_t)((w2 >> 8) & 0x3F);
 
     return 0;
 }

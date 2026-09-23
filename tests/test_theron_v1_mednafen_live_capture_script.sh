@@ -8,15 +8,51 @@ quartz_grab_helper=$repo/scripts/send_theron_macos_quartz_chord.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 adpcm_context_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch
+adpcm_playback_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_playback_trace.patch
 state_autoload_patch=$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch
+post_dungeon_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_dungeon_ordinal_research.patch
+save_manager_dump_patch=$repo/scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch
+title_wait_patch=$repo/scripts/mednafen_1.32.1_theron_title_wait_input_research.patch
+drator_menu_patch=$repo/scripts/mednafen_1.32.1_theron_drator_menu_route_research.patch
 irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 consumer_read_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
+ram_provenance_patch=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
 loader_write_v3_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch
 input_grab_patch=$repo/scripts/mednafen_1.32.1_theron_input_grab_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 
 if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'mkdir -p "$home_dir/sav"' "$script" ||
+   ! grep -Fq -- '-filesys.path_sav "$home_dir/sav"' "$script"; then
+    printf '%s\n' 'FAIL: isolated captures must bind Mednafen backup RAM to the private capture home' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_TITLE_WAIT_INPUT="$title_wait_input"' "$script" ||
+   ! grep -Fq 'RdMem((PC - 3) & 0xffff) == 0x20' "$title_wait_patch" ||
+   ! grep -Fq '(PC & 0x1fff) == 0x0865' "$title_wait_patch" ||
+   ! grep -Fq 'WrMem(0x2228, 0x08)' "$title_wait_patch"; then
+    printf '%s\n' 'FAIL: title-wait research input is not signature-bound and wired into capture' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_MENU_ROUTE="$menu_route"' "$script" ||
+   ! grep -Fq 'PC == 0x6e44' "$drator_menu_patch" ||
+   ! grep -Fq 'PC == 0x6dbd' "$drator_menu_patch" ||
+   ! grep -Fq 'WrMem(0x2228, 0x01)' "$drator_menu_patch"; then
+    printf '%s\n' 'FAIL: Drator research route is not signature-bound and wired into capture' >&2
+    exit 1
+fi
+if ! grep -Fq '!strcmp(route, "drator-generator")' "$drator_menu_patch" ||
+   ! grep -Fq 'TheronDratorGeneratorRouteStage == 0 && TheronDratorMenuStage == 0' "$drator_menu_patch" ||
+   ! grep -Fq 'if(phase >= 1u && phase <= 5u) return 0x0008' "$drator_menu_patch" ||
+   ! grep -Fq 'const unsigned row = scan_frame / 270' "$drator_menu_patch" ||
+   ! grep -Fq 'if(row < 10)' "$drator_menu_patch" ||
+   ! grep -Fq 'if(TheronDratorGeneratorRouteStage == 3 && frame <= 240)' "$drator_menu_patch" ||
+   ! grep -Fq '++TheronDratorGeneratorRouteDelay >= 5000' "$drator_menu_patch" ||
+   ! grep -Fq 'buttons |= TheronDratorGeneratorInputMask()' "$drator_menu_patch"; then
+    printf '%s\n' 'FAIL: Drator generator route lost its source-derived panel targeting or gamepad edge' >&2
     exit 1
 fi
 if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
@@ -63,6 +99,18 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi
+if [[ ! -f "$consumer_read_patch" ]] ||
+   ! grep -Fq '@@ -407,11 +409,30 @@' "$consumer_read_patch" ||
+   ! grep -Fq 'const uint16 reader_pc = GetRegister(GSREG_PC);' "$consumer_read_patch"; then
+    printf 'FAIL: main-RAM consumer patch must retain its applicable hunk span and reader context\n' >&2
+    exit 1
+fi
+if [[ ! -f "$ram_provenance_patch" ]] ||
+   ! grep -Fq '@@ -420,8 +428,12 @@' "$ram_provenance_patch" ||
+   ! grep -Fq 'const uint8 reader_mpr = MPR[reader_pc >> 13];' "$ram_provenance_patch"; then
+    printf 'FAIL: RAM-provenance patch must follow the consumer-reader patch context\n' >&2
+    exit 1
+fi
 if [[ ! -f "$adpcm_context_patch" ]] ||
    ! grep -Fq 'static void TheronTracePCECDAdpcm(const char *format, ...)' "$adpcm_context_patch" ||
    ! grep -Fq 'ADPCM.ReadBuffer = ADPCM.RAM[adpcm_address];' "$adpcm_context_patch" ||
@@ -72,6 +120,14 @@ if [[ ! -f "$adpcm_context_patch" ]] ||
    ! grep -Fq 'mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch' "$build_script" ||
    grep -Fq '< "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch"' "$build_script"; then
     printf 'FAIL: the capture build must use the context-bound ADPCM patch, not stale line-only hunks\n' >&2
+    exit 1
+fi
+if [[ ! -f "$adpcm_playback_patch" ]] ||
+   ! grep -Fq 'FIRESTAFF_THERON_ADPCM_PLAYBACK_TRACE' "$script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_adpcm_playback_trace.patch' "$build_script" ||
+   ! grep -Fq 'adpcm_control_result cpu_pc=%04x physical_pc=%06x' "$adpcm_playback_patch" ||
+   ! grep -Fq 'playback_start=%u' "$adpcm_playback_patch"; then
+    printf 'FAIL: Theron capture no longer retains CPU/MPR-bound ADPCM playback starts\n' >&2
     exit 1
 fi
 if [[ ! -f "$input_grab_patch" ]] ||
@@ -91,13 +147,28 @@ if [[ ! -f "$loader_write_v3_patch" ]] ||
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_vram_vce_snapshot.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot"' "$script" ||
-   ! grep -Fq 'FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot"' "$script"; then
-    printf 'FAIL: live capture must retain authentic VDC VRAM and VCE palette snapshots\n' >&2
+   ! grep -Fq 'FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VDC_STATE_SNAPSHOT="$vdc_state_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VDC_SAT_SNAPSHOT="$vdc_sat_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_SNAPSHOT="$main_ram_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_BRAM_SNAPSHOT="$bram_snapshot"' "$script" ||
+   ! grep -Fq "require_snapshot_size \"\$vdc_sat_snapshot\" 512" "$script" ||
+   ! grep -Fq "require_snapshot_size \"\$main_ram_snapshot\" 8192" "$script" ||
+   ! grep -Fq "require_snapshot_size \"\$bram_snapshot\" 2048" "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VDC_STATE_V1' "$script" ||
+   ! grep -Fq 'same-instant HuC6270 register snapshot' "$script" ||
+   ! grep -Fq 'VDC::GSREG_MWR' "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"; then
+    printf 'FAIL: live capture must retain same-instant VDC VRAM, VCE palette and HuC6270 register snapshots\n' >&2
     exit 1
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE="$vdc_io_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_VDC_IO_TRACE_LIMIT' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE_LIMIT="$vdc_io_trace_limit"' "$script" ||
+   ! grep -Fq 'sequence=${vdc_io_trace_limit}' "$script" ||
+   ! grep -Fq 'TheronTraceVDCIOPostWrite' "$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch" ||
+   ! grep -Fq 'TheronGraphicsSnapshotDumped' "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch" ||
    ! grep -Fq 'writer_physical_pc=%06x' "$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"; then
     printf 'FAIL: live capture must retain the side-effect-free VDC I/O writer trace\n' >&2
     exit 1
@@ -115,6 +186,12 @@ if ! grep -Fq 'mednafen_1.32.1_theron_rng_consumer_trace.patch' "$build_script" 
    ! grep -Fq 'rng_code_windows=%s' "$script" ||
    ! grep -Fq 'rng_consumer_window sequence=%u step=%u pc=%04x physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_RNG_CODE_TRACE' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_STATE_TRACE' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'rng_state_boundary sequence=%u kind=%s pc=%04x physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'caller_physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'source=mednafen-pce-instrumented-rng-state-v2' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'rng_state_physical_pc == 0x000d0667' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq '0x2100u + ((reg_sp + 1u)' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'rng_code_window entry=%s logical_pc=%04x physical_pc=%08x' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'logical_pc == 0x5d64' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'logical_pc == 0x5d6a' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"; then
@@ -140,9 +217,29 @@ fi
 if ! grep -Fq 'trace_files_are_line_delimited()' "$script" ||
    ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$script" ||
    ! grep -Fq 'existing_trace_files' "$script" ||
-   ! grep -Fq '"$rng_code_trace" "$vdc_io_trace"' "$script" ||
+   ! grep -Fq '"$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace"' "$script" ||
    ! grep -Fq 'Mednafen emitted a literal backslash-n in a trace record' "$script"; then
     printf 'FAIL: capture script must reject merged literal-backslash-n trace rows\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_RAM_TRACE="$command_ram_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE="$command_consumer_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CODE_SNAPSHOT="$command_code_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_COMMAND_RAM_BEFORE_SNAPSHOT="$command_ram_before_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_COMMAND_RAM_AFTER_SNAPSHOT="$command_ram_after_snapshot"' "$script" ||
+   ! grep -Fq 'command_ram_boundary sequence=65536' "$script" ||
+   ! grep -Fq 'input-only control emitted command snapshot sidecars' "$script" ||
+   ! grep -Fq 'command_before_ram_snapshot_bytes=8192' "$script" ||
+   ! grep -Fq 'command_after_ram_snapshot_bytes=8192' "$script" ||
+   ! grep -Fq 'command_consumer_boundary sequence=' "$script" ||
+   ! grep -Fq 'command_consumer_reads=' "$script" ||
+   ! grep -Fq 'command_consumer_source_reads=' "$script" ||
+   ! grep -Fq 'RNG state trace is not a contiguous entry/return sequence' "$script" ||
+   ! grep -Fq 'command_consumer_post_dispatch_source_reads=' "$script" ||
+   ! grep -Fq 'address == "2905" && pc == "d34d"' "$script" ||
+   ! grep -Fq 'logical_address=[23][0-9a-f][0-9a-f][0-9a-f]' "$script" ||
+   ! grep -Fq 'count >= 65536' "$script"; then
+    printf '%s\n' 'FAIL: capture must retain an atomic authentic command/RAM/code window' >&2
     exit 1
 fi
 if [[ ! -f "$quartz_helper" ]] ||
@@ -235,6 +332,15 @@ if ! grep -Fq 'MODE1/2048' "$script" ||
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     printf 'FAIL: capture script must retain a raw controller input receipt\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'theron_input_read_count < theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch" ||
+   grep -Fq 'theron_input_read_count <= theron_input_read_trace_limit' "$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"; then
+    printf 'FAIL: input-result evidence must stop at the configured trace limit\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'TheronIrq2TraceCriticalSamples[critical_slot] < 4096' "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"; then
+    printf 'FAIL: IRQ evidence must remain bounded during System Card polling loops\n' >&2
     exit 1
 fi
 if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
@@ -390,6 +496,44 @@ if ! grep -Fq 'autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}' "$script" ||
     printf 'FAIL: capture script and Mednafen patch must retain authentic movie-replay provenance\n' >&2
     exit 1
 fi
+if ! grep -Fq 'post_dungeon_ordinal=${THERON_CAPTURE_POST_DUNGEON_ORDINAL:-}' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_POST_DUNGEON_ORDINAL must be 0..6' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_POST_DUNGEON_ORDINAL="$post_dungeon_ordinal"' "$script"; then
+    printf 'FAIL: capture script must retain bounded post-dungeon research provenance\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'save_manager_code_dump="${trace}.save-manager-code"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump"' "$script" ||
+   ! grep -Fq 'SetMPR(6, 0x6d)' "$save_manager_dump_patch" ||
+   ! grep -Fq 'for(unsigned i = 0; i < 8192; i++)' "$save_manager_dump_patch" ||
+   ! grep -Fq 'SetMPR(6, original_mpr6)' "$save_manager_dump_patch" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_save_manager_code_dump.patch' "$build_script"; then
+    printf 'FAIL: authentic read-only save-manager code capture was not retained\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_POST_DUNGEON_OVERLAY_ISO="$post_dungeon_overlay_iso"' "$script" ||
+   ! grep -Fq 'post_dungeon_overlay_replay=%s' "$script" ||
+   ! grep -Fq 'hash == 0x337de858U' "$post_dungeon_patch_file" ||
+   ! grep -Fq 'PC = 0xdf29' "$post_dungeon_patch_file"; then
+    printf 'FAIL: bounded real-US post-dungeon overlay replay was not retained\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'dungeon_bank_20da=%s' "$script" ||
+   ! grep -Fq 'dungeon_bank_20db=%s' "$script" ||
+   ! grep -Fq 'od -An -tx1 -j 218 -N 1 "$main_ram_snapshot"' "$script" ||
+   ! grep -Fq 'od -An -tx1 -j 219 -N 1 "$main_ram_snapshot"' "$script"; then
+    printf 'FAIL: capture receipt must retain original dungeon-bank selector bytes\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'party_direction_203f=%s' "$script" ||
+   ! grep -Fq 'current_level_2031=%s' "$script" ||
+   ! grep -Fq 'party_x_2040=%s' "$script" ||
+   ! grep -Fq 'party_y_2041=%s' "$script" ||
+   ! grep -Fq 'runtime_byte_2038=%s' "$script"; then
+    printf '%s\n' 'FAIL: live transition receipt must preserve raw party-position provenance' >&2
+    exit 1
+fi
 if ! grep -Fq 'dynamic CPU receipts lack a complete authentic raw-sector receipt' "$script" ||
    ! grep -Fq 'sector_fnv1a=' "$script" ||
    ! grep -Fq 'span_offset=0 span_bytes=32 span_fnv1a=' "$script"; then
@@ -458,6 +602,12 @@ if ! grep -Fq 'record_c3a0_window=%u' "$irq2_patch" ||
    ! grep -Fq 'c3a0_a9=%02x c3a0_ab=%02x c3a0_ac=%02x c3a0_2998=%02x c3a0_299c=%02x' "$irq2_patch" ||
    ! grep -Fq 'record_c3a0_window_seen' "$repo/src/theron/theron_v1_mednafen_spawn_consumer_trace.c"; then
     printf 'FAIL: live capture must preserve the source-locked C3A0 caller window and table inputs\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'rng_generator_context_trace="${trace}.rng-generator-context"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_GENERATOR_CONTEXT_TRACE="$rng_generator_context_trace"' "$script" ||
+   ! grep -Fq 'rng_generator_contexts=%s' "$script"; then
+    printf 'FAIL: live capture must retain the per-RNG authentic 8 KiB generator context\n' >&2
     exit 1
 fi
 if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$script" ||

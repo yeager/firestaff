@@ -16,15 +16,12 @@
  *   - the main THQUEST.BIN game binary is not disassembled locally,
  *     and the lane's Track 02 descriptor binding is shape-driven only
  *     (TODO.md Nexus/Theron sections).
- * What this module therefore inventories is the IMPLEMENTED Theron
- * chrome geometry the Firestaff lane actually renders and hit-guards
- * today — host-authored constants anchored to THQUEST.ASM T600/T900
- * claims:
- *   - V1 chrome (320x240 extended canvas): TQR_* constants in
- *     include/theron_v1_viewport.h + the TR_UI_ / TR_CHAMP_SLOT_
- *     defines in src/theron/theron_v1_ui_chrome.h, the same six zone
- *     kinds the existing theron_v2_hud_target_size_pc34 audit
- *     consumes;
+ * The former V1 entries copied Firestaff's host-authored 320x240 chrome
+ * geometry. They were not original Theron data and are no longer published.
+ * Authentic runtime captures prove individual original points and command
+ * codes, but not full rectangle bounds, so the V1 view deliberately has zero
+ * zones until the original table or a complete boundary trace is recovered.
+ * This module inventories only:
  *   - V2 HUD overlay (256x224 PC Engine native framebuffer):
  *     the THERON_V2_HUD_ / THERON_V2_CHAMP_BAR_ / THERON_V2_ACTION_
  *     constants in include/theron_v2_hud_overlay_pc34.h plus the
@@ -39,11 +36,8 @@
  * presentational indicators, not command targets — commandId 0 marks
  * "no command bound" honestly.
  *
- * Coordinate spaces: V1 view zones live in the 320x240 extended
- * canvas (TQR_SCREEN_W/H); V2 view zones live in the 256x224 native
- * framebuffer (TQR_FB_W/H).  Both are stored screen-relative in
- * their own space; the view enum tells the caller which space a
- * zone uses.
+ * Coordinate spaces: the V1 enum is retained for fail-closed queries. V2
+ * view zones live in the 256x224 native framebuffer (TQR_FB_W/H).
  *
  * The matrix is evidence/probe data only; it does not replace
  * controller routing or the gesture runtime.
@@ -52,7 +46,7 @@
 #include "touch_click_zone_matrix_pc34_compat.h"
 
 typedef enum TheronTouchClickViewPc34Compat {
-    THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT = 1, /* 320x240 ext */
+    THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT = 1, /* no admitted zones */
     THERON_TOUCH_CLICK_VIEW_V2_HUD_OVERLAY_PC34_COMPAT /* 256x224     */
 } TheronTouchClickViewPc34Compat;
 

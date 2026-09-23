@@ -1,0 +1,21 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -368,6 +368,18 @@
+           TheronPCECDMainRAME009Sequence - 1,
+           TheronPCECDMainRAME009ReturnPC, logical_pc, physical_pc,
+           logical_pc == TheronPCECDMainRAME009ReturnPC ? 1 : 0);
++  if(TheronPCECDMainRAME009Sequence - 1 == 1 &&
++     logical_pc == 0x3b36 && physical_pc == 0x1f1b36)
++  {
++   unsigned address;
++   for(address = 0x37c8; address <= 0x383f; address++)
++   {
++    const uint32 code_physical = 0x1f0000 + address - 0x2000;
++    fprintf(destination_trace,
++            "e009_consumer_code_byte logical_address=%04x physical_address=%06x value=%02x boundary_sequence=1\n",
++            address, code_physical, PCE_PeekMainRAM(code_physical));
++   }
++  }
+   fflush(destination_trace);
+  }
+  TheronPCECDMainRAME009Active = false;

@@ -1325,6 +1325,54 @@ newline-delimited records. Its primary game-code writers were physical PCs in
 and data sequence. This proves that the original runtime, rather than
 Firestaff, drove the captured VDC destination.
 
+The parser must preserve two Mednafen-specific transport details visible in
+that file.  The raw bus address may carry bit 31 (`$801FE000/$801FE002/
+$801FE003`); the normalized port address is the value with that marker
+cleared, and no other high bits are admitted.  `HuCPU.Timestamp()` is
+diagnostic rather than an ordering authority.  The legacy capture contains
+23 regressions; the later same-instant capture also proves small backwards
+steps between adjacent records.  The contiguous producer sequence supplies
+the order, while every timestamp regression is retained and counted.
+After complete validation the parser may retain all 65,536 records in a
+bounded replay array, preserving sequence, epoch-local timestamp, raw and
+normalized address, value, writer identity and A/X/Y.  A preliminary exact
+port replay produces 26,048 VWR word commits.  Of the 7,328 VRAM word
+addresses written, 6,898 equal the captured final snapshot and 430 do not;
+therefore the current trace and snapshot endpoints are not yet admitted as
+one atomic frame boundary, and replay must not mutate production viewport
+state until that boundary is captured or correlated.
+
+The instrumented capture route now freezes VRAM, VCE, HuC6270 registers and
+SAT immediately after write sequence 65,535 has passed through the original
+VDC, then appends `vdc_snapshot_boundary sequence=65536 timestamp=...`.
+The snapshot dumper is one-shot so the later CloseGame path cannot overwrite
+that state.  New capture admission requires this footer; legacy V1 traces
+without it remain parseable as transport evidence but cannot authorize
+production replay mutation.
+
+The first atomic Cocoa capture used the hash-verified US disc, System Card
+3.0 and a real dungeon save state.  Its 65,536 port records produce 25,890
+VWR commits and touch 8,816 distinct VRAM words.  The bounded C replay now
+matches all 8,816 words against the simultaneous snapshot, with zero
+mismatches.  Replaying the legacy unbounded capture through the same hardware
+rules retains its earlier 430 mismatches, so the check distinguishes an
+atomic bundle from two merely well-formed files.  The replay receipt still
+sets `semantic_publication_allowed=0`.
+
+A second atomic Cocoa run started from the complete US disc rather than a
+save state.  In one process it retained 161 raw-sector spans, 51 SCSI reads,
+two byte-exact Track 02 FIFO-to-RAM transport receipts, 32 main-RAM `$E009`
+dispatches and the VDC boundary.  Its 31,794 VWR commits touch 24,576 distinct
+VRAM words; all 24,576 match the simultaneous 256x240 startup snapshot.  The
+two FIFO receipts are System Card writes to physical `$1F01E7`, with no
+provenance copy, so they do not yet prove a game-owned source-to-VDC chain.
+
+Production admission now requires the five-file 320x200 bundle: VRAM, VCE,
+HuC6270 state, SAT and the complete VDC-I/O stream.  The closed identities are
+checked before replay, and replay must match all 8,816 touched words.  The
+former four-file loader always rejects, including when handed its historical
+hash-allowlisted files.
+
 It is deliberately not a source-to-VRAM admission by itself: the same replay
 still had zero authenticated CD-to-main-RAM receipts and no live level
 transition. In particular, a writer PC and a VDC address do not identify the
@@ -1335,9 +1383,9 @@ same execution.
 
 Firestaff now validates this sidecar through
 `theron_v1_mednafen_vdc_io_trace_parse_file()`: header, contiguous sequence,
-monotonic timestamps, bounded addresses/registers and writer coordinates are
-all checked. The parser remains provenance-only and does not change the
-negative semantic conclusion above.
+bounded timestamp fields, addresses/registers and writer coordinates are all
+checked. The parser remains provenance-only and does not change the negative
+semantic conclusion above.
 
 ## 2026-08-14 — r30 state replay repeats the rejected `$B0E5` overlay
 
@@ -1411,6 +1459,33 @@ AI, combat, loot, T700, or T900 semantics.
 The source-bound US/JP mechanics-playability probe independently passes 79/79;
 that result covers the authenticated grid/loader path only and is not merged
 with this negative runtime replay.
+
+## 2026-08-20 — authenticated file-select scroll driver and zero stop
+
+A deterministic cold US run (`run@480:30,i@8520:10`) captured the executed
+16 KiB game-code bank, the 8 KiB base-RAM image, base-RAM writes, and CD-RAM
+control writes. The code snapshot has FNV-1a `0408d000`; at logical `$4993`
+it loads `$2210/$2211` and writes those bytes to VDC BYR. The signed movement
+loop at `$4175..$41A1` self-modifies the arithmetic opcode at `$4199` and
+writes the vertical value through `$4184`.
+
+The real write trace contains 144 exact eight-frame updates from `$F0` to
+`$60`, ending at frame 9666. The paired control trace contains 144 exact
+decrements of `$47BC/$47BD` from `$0090` to `$0000`, ending at frame 9668.
+Neither trace records another relevant write before the next initialization
+at frame 10310. `theron_v1_raw_loader_trace_bind_file_select_scroll_driver`
+checks every update, the code and RAM identities, and that boundary; its
+real-data regression rejects a modified code byte and a modified zero-stop
+row. This establishes the scroll producer and stopping condition only. It
+does not name the screen, sprites, prompt, or source payload semantics.
+
+The same authentic control trace continues beyond that boundary. At frame
+10632, code around `$40F9..$4142` initializes `$47BA/$47BB` to `$0040`.
+Executed loop bytes at `$4B0C..$4B23` then publish 64 decrements through
+`$4B1B/$4B20`, one every ten frames, reaching `$0000` at frame 11274. The
+next reset begins at frame 11578. The receipt now verifies this full second
+phase and rejects a modified second stop row, while leaving all screen and
+payload semantics closed.
 
 ## 2026-08-13 — source-gated object publication is transactional
 

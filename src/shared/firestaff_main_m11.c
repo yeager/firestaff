@@ -18,6 +18,7 @@
 #include "firestaff_version.h"
 #include "fs_portable_compat.h"
 #include "render_sdl_m11.h"
+#include "firestaff_nexus_mednafen.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +41,12 @@ static void usage(const char* prog) {
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
+            "  --theron-vram-snapshot <path>  Authenticated 64 KiB Theron VDC VRAM capture (requires --theron-vce-snapshot)\n"
+            "  --theron-vce-snapshot <path>   Authenticated 1 KiB Theron VCE palette capture (requires --theron-vram-snapshot)\n"
+            "  --theron-vdc-state <path>      Authenticated Theron HuC6270 register snapshot (requires VRAM/VCE)\n"
+            "  --theron-vdc-sat <path>        Authenticated 512-byte Theron HuC6270 SAT snapshot (requires VRAM/VCE/state)\n"
+            "  --theron-vdc-io <path>         Atomic 65,536-write Theron VDC trace (requires VRAM/VCE/state/SAT)\n"
+            "  --theron-native <us|jp>   Select a hash-verified native Track 02 edition from the data directory\n"
             "  --save <path>       Resume a validated save for --game\n"
             "  --csb-hint-oracle   Open Atari R1 CSB Utility Disk Hint Oracle (requires --data-dir; optional --save MINI.DAT)\n"
             "  --csb-utility-disk  Open the verified FM Towns CSB C06 Utility Disk\n"
@@ -129,6 +136,33 @@ static int parse_ui_language(const char* value, int* out_index) {
     return 0;
 }
 
+static int resolve_theron_native_track02(
+    const char* requestedDataDir,
+    const char* region,
+    char outPath[FSP_PATH_MAX]) {
+    char root[FSP_PATH_MAX];
+    char theronRoot[FSP_PATH_MAX];
+    const char* filename;
+
+    if (!region || !outPath ||
+        (strcmp(region, "us") != 0 && strcmp(region, "jp") != 0) ||
+        !FSP_ResolveDataDir(root, sizeof(root), requestedDataDir)) {
+        return 0;
+    }
+    filename = strcmp(region, "jp") == 0 ? "TQJP02.bin" : "TQUS02.bin";
+    if (FSP_JoinPath(outPath, FSP_PATH_MAX, root, filename) &&
+        FSP_FileExists(outPath)) {
+        return 1;
+    }
+    if (FSP_JoinPath(theronRoot, sizeof(theronRoot), root, "theron") &&
+        FSP_JoinPath(outPath, FSP_PATH_MAX, theronRoot, filename) &&
+        FSP_FileExists(outPath)) {
+        return 1;
+    }
+    outPath[0] = '\0';
+    return 0;
+}
+
 static void print_csb_verified_source_media(const M12_AssetStatus* status) {
     const char* dataRoot;
     const char* hashes[FIRESTAFF_FINGERPRINT_COUNT + 1U];
@@ -213,6 +247,28 @@ static void print_csb_verified_editions(const M12_AssetStatus* status) {
     }
 }
 
+static void print_theron_verified_editions(const M12_AssetStatus* status) {
+    size_t count;
+    size_t i;
+    int heading_printed = 0;
+    if (!status) return;
+    count = M12_AssetStatus_GetVersionCount("theron");
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(status, "theron", i);
+        if (!version || !version->matched || !version->label ||
+            version->matchedPath[0] == '\0') {
+            continue;
+        }
+        if (!heading_printed) {
+            printf("  Verified Theron editions:\n");
+            heading_printed = 1;
+        }
+        printf("    %-26s FOUND  %s\n", version->label,
+               version->matchedPath);
+    }
+}
+
 static void print_scan_game(const M12_AssetStatus* status,
                             const char* gameId,
                             const char* title,
@@ -272,6 +328,7 @@ static void print_scan_game(const M12_AssetStatus* status,
     if (strcmp(gameId, "theron") == 0) {
         const FirestaffTheronMediaStatus* media =
             M12_AssetStatus_GetTheronMediaStatus(status);
+        print_theron_verified_editions(status);
         /* A non-Theron CUE/BIN can be present beside otherwise valid game
          * data (for example the FM Towns CSB disc).  The broad filesystem
          * classifier intentionally records its layout for later Theron
@@ -456,11 +513,50 @@ static int parse_architecture(const char* value, int* out_architecture) {
     return 1;
 }
 
+/* Nexus is kept fail-closed in the native runtime until a source-owned Saturn
+ * title/display consumer is captured.  This explicit route starts the user's
+ * unmodified retail CUE in Mednafen instead; it neither decodes nor claims a
+ * Firestaff-native title/menu.  No shell is involved, so paths with spaces
+ * (including the retail disc name) remain exact arguments. */
+static int launch_nexus_mednafen(const char* mednafen,
+                                 const char* bios,
+                                 const char* requested_disc,
+                                 const char* data_dir) {
+    Firestaff_NexusMednafenLaunch launch;
+    int rc;
+    if (!Firestaff_NexusMednafen_Discover(data_dir, mednafen, requested_disc,
+                                          bios, &launch)) {
+        fprintf(stderr,
+                "firestaff: Nexus Mednafen launch needs an executable, a readable .cue and (if supplied) a readable BIOS\n");
+        return 2;
+    }
+    printf("FIRESTAFF NEXUS EXTERNAL LAUNCH: emulator=%s disc=%s bios=%s\n",
+           launch.emulator, launch.disc,
+           launch.hasBios ? launch.bios : "configured-by-mednafen");
+    fflush(stdout);
+    rc = Firestaff_NexusMednafen_Launch(&launch);
+    if (rc < 0) {
+        fprintf(stderr, "firestaff: could not start Mednafen\n");
+        return 1;
+    }
+    return rc;
+}
+
 int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
     int verbose = 0;
     int theronAuthenticatedFallback = 0;
+    const char* theronVramSnapshot = NULL;
+    const char* theronVceSnapshot = NULL;
+    const char* theronVdcStateSnapshot = NULL;
+    const char* theronVdcSatSnapshot = NULL;
+    const char* theronVdcIoTrace = NULL;
+    const char* nexusMednafen = NULL;
+    const char* nexusDisc = NULL;
+    const char* nexusBios = NULL;
+    const char* theronNative = NULL;
+    char theronNativePath[FSP_PATH_MAX] = {0};
     M11_PhaseA_SetDefaultOptions(&opts);
 
     for (int i = 1; i < argc; ++i) {
@@ -502,6 +598,12 @@ int main(int argc, char** argv) {
             }
             continue;
         }
+        if (strcmp(a, "--theron-native") == 0 && i + 1 < argc) {
+            theronNative = argv[++i];
+            opts.gameId = "theron";
+            opts.directLaunch = 1;
+            continue;
+        }
         if (strcmp(a, "--csb-hint-oracle") == 0) {
             opts.csbHintOracle = 1;
             opts.directLaunch = 1;
@@ -516,6 +618,26 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--theron-authenticated-fallback") == 0) {
             theronAuthenticatedFallback = 1;
+            continue;
+        }
+        if (strcmp(a, "--theron-vram-snapshot") == 0 && i + 1 < argc) {
+            theronVramSnapshot = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--theron-vce-snapshot") == 0 && i + 1 < argc) {
+            theronVceSnapshot = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--theron-vdc-state") == 0 && i + 1 < argc) {
+            theronVdcStateSnapshot = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--theron-vdc-sat") == 0 && i + 1 < argc) {
+            theronVdcSatSnapshot = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--theron-vdc-io") == 0 && i + 1 < argc) {
+            theronVdcIoTrace = argv[++i];
             continue;
         }
         if (strcmp(a, "--scan-data") == 0 ||
@@ -765,6 +887,38 @@ int main(int argc, char** argv) {
         opts.directLaunch = 0;
     }
 
+    if (!((theronVramSnapshot == NULL && theronVceSnapshot == NULL &&
+           theronVdcStateSnapshot == NULL && theronVdcSatSnapshot == NULL &&
+           theronVdcIoTrace == NULL) ||
+          (theronVramSnapshot != NULL && theronVceSnapshot != NULL &&
+           theronVdcStateSnapshot != NULL && theronVdcSatSnapshot != NULL &&
+           theronVdcIoTrace != NULL))) {
+        fprintf(stderr,
+                "firestaff: Theron VRAM, VCE, VDC-state, SAT and VDC-I/O must be supplied together\n");
+        return 2;
+    }
+    if (theronVramSnapshot &&
+        (!opts.gameId || strcmp(opts.gameId, "theron") != 0)) {
+        fprintf(stderr,
+                "firestaff: Theron VRAM/VCE snapshots require --game theron\n");
+        return 2;
+    }
+    if (theronVramSnapshot) {
+#if defined(_WIN32)
+        _putenv_s("FIRESTAFF_THERON_VRAM_SNAPSHOT", theronVramSnapshot);
+        _putenv_s("FIRESTAFF_THERON_VCE_SNAPSHOT", theronVceSnapshot);
+        _putenv_s("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", theronVdcStateSnapshot);
+        _putenv_s("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", theronVdcSatSnapshot);
+        _putenv_s("FIRESTAFF_THERON_VDC_IO_TRACE", theronVdcIoTrace);
+#else
+        setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", theronVramSnapshot, 1);
+        setenv("FIRESTAFF_THERON_VCE_SNAPSHOT", theronVceSnapshot, 1);
+        setenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", theronVdcStateSnapshot, 1);
+        setenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", theronVdcSatSnapshot, 1);
+        setenv("FIRESTAFF_THERON_VDC_IO_TRACE", theronVdcIoTrace, 1);
+#endif
+    }
+
     if (theronAuthenticatedFallback) {
 #if defined(_WIN32)
         _putenv_s("FIRESTAFF_THERON_ALLOW_AUTHENTICATED_FALLBACK", "1");
@@ -775,6 +929,41 @@ int main(int argc, char** argv) {
 
     if (scanData) {
         return run_data_scan(opts.dataDir, verbose);
+    }
+
+    if (theronNative) {
+        if ((strcmp(theronNative, "us") != 0 &&
+             strcmp(theronNative, "jp") != 0) ||
+            !opts.gameId || strcmp(opts.gameId, "theron") != 0 ||
+            !resolve_theron_native_track02(
+                opts.dataDir, theronNative, theronNativePath)) {
+            fprintf(stderr,
+                    "firestaff: --theron-native requires us|jp and that region's TQUS02.bin/TQJP02.bin below the selected data directory\n");
+            return 2;
+        }
+        /* Pass the exact regional file into the existing hash-first scanner.
+         * No sibling edition can become a fallback after this point. */
+        opts.dataDir = theronNativePath;
+    }
+
+    if (nexusMednafen || nexusDisc || nexusBios) {
+        if (!nexusMednafen) {
+            fprintf(stderr,
+                    "firestaff: --nexus-disc and --nexus-bios require --nexus-mednafen\n");
+            return 2;
+        }
+        if (!opts.gameId || strcmp(opts.gameId, "nexus") != 0) {
+            fprintf(stderr,
+                    "firestaff: --nexus-mednafen requires --game nexus\n");
+            return 2;
+        }
+        if (opts.bootProbe) {
+            fprintf(stderr,
+                    "firestaff: --nexus-mednafen cannot be combined with --boot-probe\n");
+            return 2;
+        }
+        return launch_nexus_mednafen(nexusMednafen, nexusBios, nexusDisc,
+                                     opts.dataDir);
     }
 
     if (opts.bootProbe && !opts.gameId) {

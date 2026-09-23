@@ -8,7 +8,7 @@
  * Format from gbsphenx/dmbuilder (item.c itemBytes[], loaddungeon.c).
  * Item data is split across two regions per quest block:
  *   offset[3] = items part 1 (categories 0..N-1)
- *   offset[4] = items part 2 (categories N..10), always at xB800 alignment
+ *   offset[4] = items part 2 (categories N..15), always at xB800 alignment
  * Split point N varies per dungeon (iItemDataPart2StartIndex).
  */
 
@@ -95,38 +95,41 @@ int theron_v1_track02_item_record_decode(
         uint16_t effect = read_le16(raw + 4u);
         uint16_t target = read_le16(raw + 6u);
         out->value.actuator.type = (uint8_t)(type & 0x7Fu);
-        out->value.actuator.value = (uint8_t)((type >> 7) & 0x01FFu);
-        out->value.actuator.bit1 = (uint8_t)(effect & 1u);
-        out->value.actuator.bit2 = (uint8_t)((effect >> 1) & 1u);
+        out->value.actuator.value = (uint16_t)((type >> 7) & 0x01FFu);
+        out->value.actuator.unreferenced_bit0 = (uint8_t)(effect & 1u);
+        out->value.actuator.unreferenced_bit1 =
+            (uint8_t)((effect >> 1) & 1u);
         out->value.actuator.once = (uint8_t)((effect >> 2) & 1u);
-        out->value.actuator.effect = (uint8_t)((effect >> 3) & 7u);
+        out->value.actuator.effect = (uint8_t)((effect >> 3) & 3u);
+        out->value.actuator.revert_effect =
+            (uint8_t)((effect >> 5) & 1u);
         out->value.actuator.sound = (uint8_t)((effect >> 6) & 1u);
         out->value.actuator.delay = (uint8_t)((effect >> 7) & 0x0Fu);
-        out->value.actuator.inactive = (uint8_t)((effect >> 11) & 1u);
+        out->value.actuator.local_effect =
+            (uint8_t)((effect >> 11) & 1u);
         out->value.actuator.graphism = (uint8_t)((effect >> 12) & 0x0Fu);
         /* DMBUILDER6/src/actuator.h: target word is
          * bit1..4, facing:2, xdest:5, ydest:5. */
         out->value.actuator.target_x = (uint8_t)((target >> 6) & 0x1Fu);
         out->value.actuator.target_y = (uint8_t)((target >> 11) & 0x1Fu);
         out->value.actuator.facing = (uint8_t)((target >> 4) & 3u);
+        out->value.actuator.local_multiple = target & 0x0FFFu;
         break;
     }
     case THERON_CAT_MONSTER: {
         uint16_t flags;
-        uint16_t unknown;
-        /* DMBUILDER6/src/dms.h:145-157: the first word is `chested`, not
-         * the generic linked-list next reference. */
-        out->value.monster.chested = (int16_t)read_le16(raw);
-        out->value.monster.type = raw[2];
-        out->value.monster.position = raw[3];
+        /* DMBUILDER6/src/item.c:getItem() skips the generic next-reference
+         * word before exposing dms.h's 14-byte dm_monster payload. */
+        out->value.monster.chested = (int16_t)read_le16(raw + 2u);
+        out->value.monster.type = raw[4];
+        out->value.monster.position = raw[5];
         for (unsigned int i = 0; i < 4u; ++i)
-            out->value.monster.health[i] = read_le16(raw + 4u + i * 2u);
-        flags = read_le16(raw + 12u);
-        unknown = read_le16(raw + 14u);
+            out->value.monster.health[i] = read_le16(raw + 6u + i * 2u);
+        flags = read_le16(raw + 14u);
         out->value.monster.number = (uint8_t)((flags >> 5) & 0x03u);
-        out->value.monster.direction_flags = (uint8_t)(unknown >> 8);
+        out->value.monster.direction_flags = (uint8_t)(flags >> 8);
         out->value.monster.flags_word = flags;
-        out->value.monster.unknown_word = unknown;
+        out->value.monster.unknown_word = 0u;
         break;
     }
     case THERON_CAT_WEAPON: {
@@ -264,7 +267,7 @@ int theron_v1_track02_thing_data_load_for_variant(
     }
 
     pos = UD_BASE + qb.items_part2_offset;
-    for (unsigned int cat = split; cat < 11; cat++) {
+    for (unsigned int cat = split; cat < THERON_ITEM_CATEGORY_COUNT; cat++) {
         size_t item_size = theron_item_bytes[cat];
         size_t n = object_counts[cat];
         size_t total = item_size * n;

@@ -1,10 +1,12 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include "theron_v1_boot.h"
+#include "theron_v1_dungeon_handoff.h"
 #include "theron_v1_track02_dungeon_loader.h"
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_creature_spawn.h"
+#include "theron_v1_track02_item_name_source.h"
 #include "theron_v1_champions.h"
 
 #include <stdio.h>
@@ -14,6 +16,9 @@
 static int theron_v1_startup_runtime_has_verified_track02_request(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
+    const char *md5_hex);
+
+static int theron_v1_startup_runtime_has_declared_track02_identity(
     const char *md5_hex);
 
 typedef struct {
@@ -33,6 +38,7 @@ int theron_v1_startup_runtime_load_source_dungeon(
     Theron_Track02Variant dungeon_data_variant;
     Theron_DungeonLoadResult load_result;
     Theron_Track02SpawnSource spawn_source;
+    Theron_Track02ItemNameSource item_name_source;
     uint8_t *user_data;
     size_t sectors, user_size, i;
     int iso_pregap_normalized = 0;
@@ -46,17 +52,21 @@ int theron_v1_startup_runtime_load_source_dungeon(
         variant != THERON_TRACK02_VARIANT_US_BIN &&
         variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW &&
         variant != THERON_TRACK02_VARIANT_US_ISO) return 0;
-    /* Bind the raw US spawn records before converting the BIN into a
+    /* Bind the regional raw spawn records before converting the BIN into a
      * user-data view.  This is the source-record -> live-world boundary;
      * RNG, AI, combat, generator, T700 and T900 consumers remain separate
-     * gates.  JP is marked as a different layout and intentionally remains
-     * unbound here. */
+     * gates.  JP source records are retained, while their runtime category
+     * consumer remains closed in theron_v1_world_track02_spawn_category(). */
     memset(&spawn_source, 0, sizeof(spawn_source));
-    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_BIN) {
         if (track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
+        Theron_V1Track02Variant spawn_variant =
+            variant == THERON_TRACK02_VARIANT_US_BIN ?
+                THERON_V1_TRACK02_VARIANT_US_BIN :
+                THERON_V1_TRACK02_VARIANT_JP_BIN;
         if (!theron_v1_track02_decode_spawn_source(
-                track02, track02_size,
-                THERON_V1_TRACK02_VARIANT_US_BIN, &spawn_source) ||
+                track02, track02_size, spawn_variant, &spawn_source) ||
             !theron_v1_world_bind_track02_spawn_source(
                 world, &spawn_source, (int)variant)) return 0;
     } else if (variant == THERON_TRACK02_VARIANT_US_ISO) {
@@ -98,6 +108,22 @@ int theron_v1_startup_runtime_load_source_dungeon(
     dungeon_data_variant = variant;
 
 load_dungeon:
+    /* Every quest block owns a different 66-entry name table.  Bind all
+     * seven from this authenticated regional medium so a later dungeon
+     * transition never borrows dungeon 7's old host table or another
+     * region's labels. */
+    for (i = 1u; i <= THERON_DUNGEON_COUNT; ++i) {
+        int item_name_variant =
+            dungeon_data_variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2;
+        if (!theron_v1_track02_decode_item_name_source(
+                user_data, user_size, item_name_variant, (unsigned int)i,
+                &item_name_source) ||
+            !theron_v1_world_bind_track02_item_name_source(
+                world, &item_name_source, item_name_variant)) {
+            free(user_data);
+            return 0;
+        }
+    }
     memset(&load_result, 0, sizeof(load_result));
     loaded = theron_v1_track02_load_full_dungeon_for_variant(
         world, (int)dungeon_id, user_data, user_size, dungeon_data_variant,
@@ -144,11 +170,6 @@ static void theron_v1_startup_copy_level_anchor_receipt_u64(
     const uint16_t in_height[THERON_TRACK02_MAX_BANK_ANCHORS],
     const uint32_t in_seed[THERON_TRACK02_MAX_BANK_ANCHORS],
     const uint16_t in_level_index[THERON_TRACK02_MAX_BANK_ANCHORS]);
-
-static int theron_v1_startup_runtime_publish_track02_route(
-    Theron_V1_World *world,
-    Theron_DungeonID dungeon_id,
-    const Theron_Track02DungeonRoute *route);
 
 static uint32_t theron_v1_startup_runtime_fnv1a32(const uint8_t *bytes,
                                                    size_t byte_count) {
@@ -268,6 +289,16 @@ int theron_v1_startup_runtime_load_initial_level_verified_only(
         }
         return 0;
     }
+    /* Production raw-BIN startup must use the same full source loader as an
+     * interactive forcefield transition.  The older semantic entry below is
+     * intentionally retained for ISO/capture-bound routes, but routing a
+     * verified raw BIN through it here discarded the already decoded source
+     * object occurrences at the direct-launch boundary. */
+    if (theron_v1_startup_runtime_load_source_dungeon(
+            world, hucard_rom, hucard_rom_size, md5_hex, dungeon_id,
+            receipt, receipt_cap)) {
+        return 1;
+    }
     return theron_v1_startup_runtime_load_initial_level(
         world, hucard_rom, hucard_rom_size, md5_hex, dungeon_id,
         receipt, receipt_cap);
@@ -288,9 +319,6 @@ static int theron_v1_startup_runtime_inspect_track02_initial_level(
     Theron_Track02SignalStatus signal_status;
     Theron_Track02UserDataWindowCatalog user_window_catalog;
     Theron_Track02StartupTextMarkerCatalog text_marker_catalog;
-    Theron_Track02StartupBitmapCatalog bitmap_catalog;
-    Theron_Track02StartupBitmapAtlas bitmap_atlas;
-    int bitmap_atlas_ready = 0;
     Theron_Track02LevelHandoffStatus last_semantic_status =
         THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     Theron_Track02SemanticBindingStatus last_seed_status =
@@ -385,41 +413,11 @@ static int theron_v1_startup_runtime_inspect_track02_initial_level(
         }
     }
 
-    memset(&bitmap_catalog, 0, sizeof(bitmap_catalog));
-    memset(&bitmap_atlas, 0, sizeof(bitmap_atlas));
-    if (theron_v1_track02_catalog_startup_bitmap_samples(
-            hucard_rom, hucard_rom_size, md5_hex, &bitmap_catalog) ==
-            THERON_TRACK02_SIGNAL_OK &&
-        theron_v1_track02_build_startup_bitmap_atlas_wide(
-            &bitmap_catalog, &bitmap_atlas) == THERON_TRACK02_SIGNAL_OK) {
-        bitmap_atlas_ready = 1;
-    }
-
     for (anchor = 0u; anchor < signal.anchor_count; ++anchor) {
         Theron_Track02StartupSemanticHandoff semantic_handoff;
         Theron_Track02LevelHandoff semantic_level_handoff;
         Theron_Track02LevelHandoffStatus semantic_status;
         Theron_V1_Level semantic_level;
-
-        if (bitmap_atlas_ready) {
-            Theron_Track02DungeonRoute route;
-            if (theron_v1_track02_load_verified_dungeon_route(
-                    hucard_rom, hucard_rom_size, md5_hex,
-                    signal.descriptor_offsets[anchor], dungeon_id,
-                    &bitmap_atlas, &route) == THERON_TRACK02_DUNGEON_ROUTE_OK &&
-                theron_v1_startup_runtime_publish_track02_route(world,
-                                                                 dungeon_id,
-                                                                 &route)) {
-                if (receipt && receipt_cap > 0u) {
-                    snprintf(receipt, receipt_cap,
-                             "Track 02 dungeon route stage=%d anchor=%zu level=0x%zx object=0x%zx rows=%zu bitmap=0x%08x",
-                             (int)dungeon_id, anchor, route.level_raw_offset,
-                             route.object_raw_offset, route.objects.record_count,
-                             (unsigned)route.bitmap_atlas.checksum);
-                }
-                return 1;
-            }
-        }
 
         semantic_status = theron_v1_track02_load_startup_semantic_level(
             hucard_rom,
@@ -534,46 +532,6 @@ static int theron_v1_startup_runtime_try_track02_initial_level(
         receipt_cap);
 }
 
-static int theron_v1_startup_runtime_publish_track02_route(
-    Theron_V1_World *world,
-    Theron_DungeonID dungeon_id,
-    const Theron_Track02DungeonRoute *route) {
-    size_t i;
-
-    if (!world || !route || !route->valid ||
-        route->objects.record_count > THERON_MAX_OBJECTS ||
-        dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
-        dungeon_id > THERON_DUNGEON_COUNT) return 0;
-
-    world->current_dungeon = dungeon_id;
-    world->current_level = 0;
-    world->levels[(int)dungeon_id - 1][0] = route->level;
-    world->levels[(int)dungeon_id - 1][0].thing_count = 0;
-    world->level_loaded[(int)dungeon_id - 1][0] = 1;
-    world->object_count = 0;
-    for (i = 0u; i < route->objects.record_count; ++i) {
-        const Theron_Track02ObjectTableRecord *record = &route->objects.records[i];
-        Theron_V1_Object object;
-        if (record->level_index != 0u || record->x >= route->level.width ||
-            record->y >= route->level.height || record->kind == 0u ||
-            record->kind > THERON_OBJTYPE_QUEST_ITEM) return 0;
-        memset(&object, 0, sizeof(object));
-        object.type = record->kind;
-        object.state = record->flags & 0x03u;
-        object.x = record->x;
-        object.y = record->y;
-        object.level = record->level_index;
-        object.dungeon_id = dungeon_id;
-        object.quantity = record->argument ? record->argument : 1;
-        object.flags = record->flags;
-        if (theron_v1_object_place(world, &object) != 0) return 0;
-        ++world->levels[(int)dungeon_id - 1][0].thing_count;
-    }
-    theron_v1_party_place(world, route->level.start_x, route->level.start_y,
-                          route->level.start_dir);
-    return 1;
-}
-
 static int theron_v1_startup_runtime_has_verified_track02_request(
     const uint8_t *hucard_rom,
     size_t hucard_rom_size,
@@ -584,7 +542,17 @@ static int theron_v1_startup_runtime_has_verified_track02_request(
         return 0;
     }
     return theron_v1_track02_variant_for_md5(md5_hex) !=
-        THERON_TRACK02_VARIANT_UNKNOWN;
+               THERON_TRACK02_VARIANT_UNKNOWN &&
+           theron_v1_track02_raw_bytes_match_md5(
+               hucard_rom, hucard_rom_size, md5_hex);
+}
+
+static int theron_v1_startup_runtime_has_declared_track02_identity(
+    const char *md5_hex) {
+
+    return md5_hex && md5_hex[0] != '\0' &&
+           theron_v1_track02_variant_for_md5(md5_hex) !=
+               THERON_TRACK02_VARIANT_UNKNOWN;
 }
 
 int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
@@ -908,6 +876,15 @@ int theron_v1_startup_runtime_load_initial_level(
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
             hucard_rom, hucard_rom_size, md5_hex);
+    if (!verified_track02_request &&
+        theron_v1_startup_runtime_has_declared_track02_identity(md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt,
+                     receipt_cap,
+                     "Track 02 bytes do not match the declared source identity; fallback visuals blocked");
+        }
+        return 0;
+    }
     if (theron_v1_startup_runtime_try_track02_initial_level(world,
                                                             hucard_rom,
                                                             hucard_rom_size,
@@ -1667,6 +1644,8 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     const char *const *effective_roster_names = NULL;
     int effective_roster_name_count = 0;
     Theron_StartupResult result;
+    Theron_StartupFlow saved_flow;
+    Theron_V1_World *saved_world = NULL;
     int verified_track02_request = 0;
     Theron_StartupMediaStateReceipt media_receipt;
 
@@ -1686,6 +1665,14 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
             request->hucard_rom, request->hucard_rom_size, request->md5_hex);
+    if (!verified_track02_request) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Track 02 bytes do not match the declared source identity");
+        }
+        if (out_result) out_result->result = THERON_STARTUP_ERR_NOT_READY;
+        return 0;
+    }
     if (verified_track02_request &&
         (theron_v1_track02_variant_for_md5(request->md5_hex) ==
              THERON_TRACK02_VARIANT_US_BIN ||
@@ -1719,9 +1706,20 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         effective_roster_name_count = request->roster_name_count;
     }
 
-    result = theron_v1_startup_enter_forcefield_with_roster(
+    saved_world = (Theron_V1_World *)malloc(sizeof(*saved_world));
+    if (!saved_world) {
+        if (out_result) out_result->result = THERON_STARTUP_ERR_NOT_READY;
+        return 0;
+    }
+    saved_flow = *flow;
+    *saved_world = *world;
+
+    result = theron_v1_startup_enter_forcefield_with_track02_roster(
         flow,
         &world->party,
+        request->hucard_rom,
+        request->hucard_rom_size,
+        request->md5_hex,
         effective_roster_names,
         effective_roster_name_count);
     if (result != THERON_STARTUP_OK) {
@@ -1734,31 +1732,17 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         if (out_result) {
             out_result->result = result;
         }
-        return 0;
-    }
-
-    /* The JP roster receipt is now consumed at the same authenticated
-     * forcefield boundary as the party handoff.  It updates only source
-     * roster bytes; portrait ownership and T900 inventory semantics remain
-     * independently gated. */
-    if (theron_v1_track02_variant_for_md5(request->md5_hex) ==
-            THERON_TRACK02_VARIANT_JP_BIN &&
-        !theron_v1_party_refresh_jp_source_records(
-            &world->party, request->hucard_rom, request->hucard_rom_size,
-            request->md5_hex)) {
-        if (receipt && receipt_cap > 0u) {
-            snprintf(receipt, receipt_cap,
-                     "JP Track 02 roster admission failed; party left unchanged");
-        }
-        if (out_result) out_result->result = THERON_STARTUP_ERR_NOT_READY;
+        *flow = saved_flow;
+        *world = *saved_world;
+        free(saved_world);
         return 0;
     }
 
     level_load_context.hucard_rom = request->hucard_rom;
     level_load_context.hucard_rom_size = request->hucard_rom_size;
     level_load_context.md5_hex = request->md5_hex;
-    /* `enter_forcefield_with_roster()` has already replaced the fixture
-     * party with source-bound roster records.  Do not clear that party here:
+    /* The atomic Track 02 roster handoff has already replaced the fixture
+     * party with source-bound regional records.  Do not clear that party here:
      * the old cleanup erased the real HP/skills/equipment immediately before
      * the authenticated level-load gate.  Fixture callers remain isolated by
      * the compile-time fallback route; a verified request must retain its
@@ -1787,6 +1771,9 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                                                               verified_track02_request,
                                                               &media_receipt,
                                                               out_result);
+        *flow = saved_flow;
+        *world = *saved_world;
+        free(saved_world);
         return 0;
     }
 
@@ -1857,6 +1844,7 @@ int theron_v1_startup_runtime_enter_from_forcefield(
                 all_routes.startup_level_anchor_level_index);
         }
     }
+    free(saved_world);
     return 1;
 }
 

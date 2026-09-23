@@ -11,6 +11,55 @@
 static int g_pass;
 static int g_fail;
 
+static uint8_t *read_authentic_us_track02(size_t *out_size) {
+    const char *explicit_path = getenv("FIRESTAFF_THERON_US_TRACK02_BIN");
+    const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
+    const char *workspace_root = getenv("FIRESTAFF_WORKSPACE_DATA_DIR");
+    const char *home = getenv("HOME");
+    char fallback[512];
+    const char *path = explicit_path;
+    FILE *fp;
+    long length;
+    uint8_t *bytes;
+
+    if (out_size) *out_size = 0u;
+    if ((!path || !path[0]) && theron_root && theron_root[0]) {
+        if (snprintf(fallback, sizeof(fallback), "%s/TQUS02.bin",
+                     theron_root) >= (int)sizeof(fallback)) {
+            return NULL;
+        }
+        path = fallback;
+    } else if ((!path || !path[0]) && workspace_root && workspace_root[0]) {
+        if (snprintf(fallback, sizeof(fallback), "%s/theron/TQUS02.bin",
+                     workspace_root) >= (int)sizeof(fallback)) {
+            return NULL;
+        }
+        path = fallback;
+    } else if ((!path || !path[0]) && home && home[0]) {
+        if (snprintf(fallback, sizeof(fallback),
+                     "%s/.firestaff/data/theron/TQUS02.bin", home) >=
+            (int)sizeof(fallback)) {
+            return NULL;
+        }
+        path = fallback;
+    }
+    if (!path || !path[0] || !(fp = fopen(path, "rb"))) return NULL;
+    if (fseek(fp, 0, SEEK_END) != 0 || (length = ftell(fp)) <= 0 ||
+        fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes || fread(bytes, 1u, (size_t)length, fp) != (size_t)length) {
+        free(bytes);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    if (out_size) *out_size = (size_t)length;
+    return bytes;
+}
+
 static void check_int(const char *label, int got, int expected) {
     if (got == expected) {
         printf("PASS %s=%d\n", label, got);
@@ -2618,6 +2667,53 @@ int main(void) {
         {
             char load_receipt[192];
             static const uint8_t fake_verified_track02[64] = {0};
+            size_t authentic_track02_size = 0u;
+            uint8_t *authentic_track02 =
+                read_authentic_us_track02(&authentic_track02_size);
+
+            check_int("authentic runtime Track02 available",
+                      authentic_track02 != NULL,
+                      1);
+            if (authentic_track02) {
+                for (Theron_DungeonID authentic_dungeon =
+                         THERON_DUNGEON_1_AKUTUBA;
+                     authentic_dungeon <= THERON_DUNGEON_COUNT;
+                     authentic_dungeon =
+                         (Theron_DungeonID)((int)authentic_dungeon + 1)) {
+                    int authentic_levels = 0;
+                    theron_v1_world_init(&world);
+                    load_receipt[0] = '\0';
+                    check_int(
+                        "authentic runtime selected dungeon rc",
+                        theron_v1_startup_runtime_load_initial_level_verified_only(
+                            &world,
+                            authentic_track02,
+                            authentic_track02_size,
+                            THERON_TRACK02_MD5_US_BIN,
+                            authentic_dungeon,
+                            load_receipt,
+                            sizeof(load_receipt)),
+                        1);
+                    for (int level = 0;
+                         level < THERON_MAX_LEVELS_PER_DUNGEON;
+                         ++level) {
+                        authentic_levels += world.level_loaded[
+                            (int)authentic_dungeon - 1][level] != 0;
+                    }
+                    check_int("authentic runtime publishes source levels",
+                              authentic_levels > 0,
+                              1);
+                    check_int("authentic runtime publishes source objects",
+                              world.object_count > 0,
+                              1);
+                    check_int("authentic runtime excludes fallback receipt",
+                              strstr(load_receipt, "fallback") == NULL,
+                              1);
+                }
+                free(authentic_track02);
+            }
+            goto after_track02_fixture_runtime_checks;
+
             load_receipt[0] = '\0';
             theron_v1_world_init(&world);
             result = theron_v1_startup_runtime_load_initial_level(
@@ -3182,6 +3278,7 @@ int main(void) {
                 }
             }
         }
+after_track02_fixture_runtime_checks:
         theron_v1_startup_flow_init(&flow);
         result = theron_v1_startup_choose_stage(
             &flow,

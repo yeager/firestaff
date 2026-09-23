@@ -46,7 +46,8 @@ static int write_source_bmp(const char *path,
         int x;
         for (x = 0; x < viewport->fb.w; ++x) {
             uint8_t index = viewport->fb.data[y * viewport->fb.stride + x];
-            uint32_t rgba = viewport->palette.entries[index].rgba;
+            uint16_t source = viewport->host_palette_source_indices[index];
+            uint32_t rgba = viewport->palette.entries[source].rgba;
             uint8_t pixel[3] = {
                 (uint8_t)(rgba & 0xffu),
                 (uint8_t)((rgba >> 8) & 0xffu),
@@ -64,31 +65,47 @@ static int write_source_bmp(const char *path,
 int main(void) {
     const char *vram_path = getenv("THERON_VRAM_SNAPSHOT");
     const char *vce_path = getenv("THERON_VCE_SNAPSHOT");
+    const char *vdc_path = getenv("THERON_VDC_STATE_SNAPSHOT");
+    const char *sat_path = getenv("THERON_VDC_SAT_SNAPSHOT");
+    const char *vdc_io_path = getenv("THERON_VDC_IO_TRACE");
+    const char *capture_root = getenv("THERON_CAPTURE_ROOT");
     Theron_V1_Viewport viewport;
     int loaded;
     int preview_cells;
     int screen_cells;
     unsigned char m11_framebuffer[320u * 200u] = {0};
-    unsigned char expected_screen[TQR_FB_W * TQR_FB_H];
+    unsigned char expected_screen[320u * 224u];
     size_t preview_nonzero;
     size_t presented_nonzero;
     size_t boot_presented_nonzero;
     size_t vram_nonzero;
     size_t vce_nonzero;
+    size_t sprite_pixels = 0u;
 
-    if (!vram_path || !vram_path[0] || !vce_path || !vce_path[0]) {
-        puts("SKIP: THERON_VRAM_SNAPSHOT and THERON_VCE_SNAPSHOT are not set");
+    if (!vram_path || !vram_path[0] || !vce_path || !vce_path[0] ||
+        !vdc_path || !vdc_path[0] || !sat_path || !sat_path[0] ||
+        !vdc_io_path || !vdc_io_path[0]) {
+        puts("SKIP: atomic Theron VRAM/VCE/VDC-state/SAT/VDC-I/O bundle is not set");
         return 77;
     }
 #ifdef _WIN32
     _putenv_s("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path);
     _putenv_s("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path);
+    _putenv_s("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", vdc_path);
+    _putenv_s("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", sat_path);
+    _putenv_s("FIRESTAFF_THERON_VDC_IO_TRACE", vdc_io_path);
 #else
     setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path, 1);
     setenv("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path, 1);
+    setenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", vdc_path, 1);
+    setenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", sat_path, 1);
+    setenv("FIRESTAFF_THERON_VDC_IO_TRACE", vdc_io_path, 1);
 #endif
     memset(&viewport, 0, sizeof(viewport));
-    if (!theron_vp_init(&viewport) || !viewport.vram_trace_loaded ||
+    if (!(capture_root && capture_root[0]
+              ? theron_vp_init_from_data_dir(&viewport, capture_root)
+              : theron_vp_init(&viewport)) ||
+        !viewport.vram_trace_loaded ||
         !viewport.vram_trace_data || !viewport.vce_trace_data) {
         fprintf(stderr, "FAIL: production viewport did not initialize or bind real VRAM/VCE\n");
         return 1;
@@ -98,9 +115,26 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
+    if (getenv("THERON_EXPECT_INPUT_SCREEN_RELATION")) {
+        int expect_left = strcmp(
+            getenv("THERON_EXPECT_INPUT_SCREEN_RELATION"), "left") == 0;
+        uint16_t expected_mask = expect_left ? 0x0080u : 0x0020u;
+        uint16_t expected_result = expect_left ? 0x0037u : 0x003du;
+        if (
+        (!viewport.vdc_input_screen_relation_verified ||
+         viewport.vdc_source_input_mask != expected_mask ||
+         viewport.vdc_source_input_result != expected_result ||
+         viewport.vdc_source_input_hold_frames != 10u)) {
+        fprintf(stderr,
+                "FAIL: authenticated directional input was not bound to its screen\n");
+        theron_vp_free(&viewport);
+        return 1;
+        }
+    }
     vram_nonzero = nonzero_bytes(viewport.vram_trace_data, THERON_VRAM_SIZE);
     vce_nonzero = nonzero_bytes(viewport.vce_trace_data, THERON_VCE_SIZE);
-    loaded = theron_v1_vram_trace_populate_tiles(&viewport, 0, 64, 32);
+    loaded = theron_v1_vram_trace_populate_tiles(
+        &viewport, 0, viewport.vdc_bat_width, viewport.vdc_bat_height);
     if (vram_nonzero == 0u || vce_nonzero == 0u || loaded <= 0 ||
         viewport.palette.tile_count <= 0 ||
         !theron_v1_vram_trace_palette_relation_verified(&viewport)) {
@@ -108,8 +142,12 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
-    preview_cells = theron_v1_vram_trace_render_bat_preview(
-        &viewport, 0, 32, 28, 0, 0);
+    preview_cells = loaded;
+    if (theron_v1_vram_trace_render_authenticated_screen(&viewport) <= 0) {
+        fprintf(stderr, "FAIL: register-bound BAT preview produced no frame\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
     preview_nonzero = nonzero_bytes(viewport.fb.data,
                                     (size_t)viewport.fb.stride * viewport.fb.h);
     if (preview_cells <= 0 || preview_nonzero == 0u) {
@@ -120,18 +158,32 @@ int main(void) {
     memset(viewport.fb.data, 0,
            (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
     screen_cells = theron_v1_vram_trace_render_authenticated_screen(&viewport);
-    if (screen_cells != preview_cells || screen_cells <= 0 ||
+    if (screen_cells <= 0 ||
         nonzero_bytes(viewport.fb.data,
                       (size_t)viewport.fb.stride * viewport.fb.h) == 0u) {
         fprintf(stderr, "FAIL: authenticated native screen produced no pixels\n");
         theron_vp_free(&viewport);
         return 1;
     }
-    memcpy(expected_screen, viewport.fb.data, sizeof(expected_screen));
+    for (size_t p = 0u;
+         p < (size_t)viewport.vdc_display_width * viewport.vdc_display_height;
+         ++p) {
+        if (viewport.vdc_source_frame[p] >= 0x100u) ++sprite_pixels;
+    }
+    if (sprite_pixels == 0u || viewport.host_palette_source_count == 0u ||
+        viewport.host_palette_source_count > 256u) {
+        fprintf(stderr,
+                "FAIL: authenticated SAT produced no losslessly mapped sprite pixels\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
+    memcpy(expected_screen, viewport.fb.data,
+           (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
     memset(viewport.fb.data, 0,
            (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
     theron_vp_render_dungeon(&viewport, NULL);
-    if (memcmp(expected_screen, viewport.fb.data, sizeof(expected_screen)) != 0) {
+    if (memcmp(expected_screen, viewport.fb.data,
+               (size_t)viewport.fb.stride * (size_t)viewport.fb.h) != 0) {
         fprintf(stderr,
                 "FAIL: production dungeon route diverged from authenticated screen route\n");
         theron_vp_free(&viewport);
@@ -184,9 +236,11 @@ int main(void) {
     printf("PASS: vram_nonzero=%zu vce_nonzero=%zu bat_tiles=%d "
            "preview_cells=%d preview_nonzero=%zu presented_nonzero=%zu "
            "boot_presented_nonzero=%zu palette_entries=512 "
+           "host_entries=%u sprite_pixels=%zu "
            "pixels=source_only\n",
            vram_nonzero, vce_nonzero, loaded, preview_cells, preview_nonzero,
-           presented_nonzero, boot_presented_nonzero);
+           presented_nonzero, boot_presented_nonzero,
+           viewport.host_palette_source_count, sprite_pixels);
     theron_vp_free(&viewport);
     return 0;
 }

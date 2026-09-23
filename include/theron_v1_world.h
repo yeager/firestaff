@@ -21,7 +21,11 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
 #include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_track02_spawn_binding.h"
+#include "theron_v1_track02_item_name_source.h"
+#include "theron_v1_track02_retrieval_text_source.h"
+#include "theron_v1_track02_campaign_mask_source.h"
 #include "theron_v1_track02_text_decode.h"
+#include "theron_v1_track19_inventory.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -251,6 +255,9 @@ typedef struct {
     uint16_t source_cumulative_column_items;
     int   start_x, start_y;    /* party spawn position (THQUEST.ASM T520) */
     int   start_dir;            /* 0=N 1=E 2=S 3=W */
+    /* Exact Track 02 map bytes, including the source-owned low-nibble
+     * runtime attributes (for example teleporter OPEN = 0x08). */
+    uint8_t source_tiles[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
     uint8_t squares[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
     int   has_3d_geometry;
     int   geometry_offset;
@@ -286,6 +293,10 @@ typedef enum {
      * deliberately not a guessed food/key/equipment meaning; the original
      * T900 consumer still owns that distinction. */
     THERON_OBJTYPE_SOURCE_ITEM  = 19,
+    /* Neutral carrier for a real category-3 actuator.  It must not alias the
+     * fixture BUTTON kind before the original linked-actuator consumer is
+     * authenticated. */
+    THERON_OBJTYPE_SOURCE_ACTUATOR = 20,
     THERON_OBJTYPE_QUEST_ITEM   = 128,
 } Theron_V1_ObjectType;
 
@@ -299,6 +310,23 @@ typedef enum {
  * not as a host object-table id.  Fixture object chains omit this bit and
  * retain the explicit object-id contract. */
 #define THERON_OBJ_F_TRACK02_COORD_LINK (1U << 6)
+/* Authenticated Track 02 door-record metadata.  Keep these bits separate
+ * from THERON_DOOR_F_* and the generic object mutation flags: source
+ * position/type describe the record and must never masquerade as LOCKED,
+ * BROKEN, PICKED_UP, or another runtime state. */
+#define THERON_OBJ_F_SOURCE_POSITION_SHIFT      28u
+#define THERON_OBJ_F_SOURCE_POSITION_MASK       (3U << 28)
+#define THERON_OBJ_F_SOURCE_ACTUATOR_ONCE        (1U << 20)
+#define THERON_OBJ_F_SOURCE_ACTUATOR_SOUND       (1U << 21)
+#define THERON_OBJ_F_SOURCE_ACTUATOR_LOCAL_EFFECT (1U << 22)
+#define THERON_OBJ_F_SOURCE_ACTUATOR_REVERT_EFFECT (1U << 23)
+#define THERON_OBJ_F_SOURCE_DOOR_IRON           (1U << 16)
+#define THERON_OBJ_F_SOURCE_DOOR_OPENS_UP       (1U << 17)
+#define THERON_OBJ_F_SOURCE_DOOR_BUTTON         (1U << 18)
+#define THERON_OBJ_F_SOURCE_DOOR_DESTROYABLE    (1U << 19)
+#define THERON_OBJ_F_SOURCE_DOOR_BASHABLE       (1U << 20)
+#define THERON_OBJ_F_SOURCE_TELEPORTER_SCOPE_SHIFT 21u
+#define THERON_OBJ_F_SOURCE_TELEPORTER_SCOPE_MASK  (3U << 21)
 
 typedef struct {
     int      id;
@@ -320,6 +348,11 @@ typedef struct {
     uint16_t source_index;
     uint8_t  source_category;
     uint8_t  source_position;
+    uint8_t  source_origin_valid;
+    uint8_t  source_dungeon;
+    uint8_t  source_level;
+    uint8_t  source_x;
+    uint8_t  source_y;
     uint8_t  source_raw_size;
     uint8_t  source_raw[16];
     uint8_t  source_item_type;
@@ -393,9 +426,10 @@ typedef struct {
     uint16_t value;
     uint8_t once;
     uint8_t effect;
+    uint8_t revert_effect;
     uint8_t sound;
     uint8_t delay;
-    uint8_t inactive;
+    uint8_t local_effect;
     uint8_t graphism;
     uint8_t target_x;
     uint8_t target_y;
@@ -426,6 +460,56 @@ typedef struct {
     uint8_t raw[16];
 } Theron_V1_SourceObjectRecord;
 
+/* F0276/F0272 dispatch envelope produced from an authenticated category-3
+ * floor-party record.  Queueing preserves the original decision and delay;
+ * target mutation belongs to the separate, source-bound consumer. */
+#define THERON_MAX_SOURCE_ACTUATOR_EVENTS 256u
+
+typedef struct {
+    uint64_t due_tick;
+    uint16_t source_ref;
+    uint16_t source_index;
+    int16_t dungeon_id;
+    int16_t level;
+    uint8_t source_x;
+    uint8_t source_y;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t target_facing;
+    uint8_t effect;
+    uint8_t local_effect;
+    uint8_t sound;
+    uint8_t delay;
+    uint16_t local_multiple;
+} Theron_V1_SourceActuatorEvent;
+
+#define THERON_MAX_SOURCE_SQUARE_STATES 1024u
+
+/* Sparse mutable overlay for source map bits such as PIT/FAKEWALL OPEN.
+ * source_tiles remains the exact Track 02 byte; only entries that differ
+ * from that byte are retained here and serialized. */
+typedef struct {
+    int16_t dungeon_id;
+    int16_t level;
+    uint8_t x;
+    uint8_t y;
+    uint8_t tile;
+} Theron_V1_SourceSquareState;
+
+#define THERON_MAX_SOURCE_OBJECT_STATES 1024u
+
+/* Sparse mutable replacement for source record word 1 (raw bytes 2..3).
+ * The immutable source occurrence remains authoritative for identity and
+ * all other fields. */
+typedef struct {
+    int16_t dungeon_id;
+    int16_t level;
+    uint16_t source_ref;
+    uint16_t source_index;
+    uint16_t word;
+    uint8_t category;
+} Theron_V1_SourceObjectState;
+
 /* Runtime provenance for a carried Track 02 object.  The legacy champion
  * array keeps its compact item ID for compatibility; this parallel record
  * preserves the source payload needed by the future T900 inventory/equip/use
@@ -446,6 +530,12 @@ typedef struct {
     uint16_t source_ref;
     uint16_t source_next_ref;
     uint16_t source_index;
+    uint8_t source_position;
+    uint8_t source_origin_valid;
+    uint8_t source_dungeon;
+    uint8_t source_level;
+    uint8_t source_x;
+    uint8_t source_y;
     uint16_t text_ref;
     int16_t chested;
     uint16_t data1;
@@ -544,12 +634,35 @@ struct Theron_V1_World {
      * valid for JP. */
     Theron_Track02SpawnSource track02_spawn_source;
     int track02_spawn_source_variant;
+    /* Complete authentic Track 19 name table for the selected region.
+     * Names are addressable only by their explicit Track 19 table index;
+     * no Track 02 object/type mapping or JP host-font rendering is implied. */
+    Theron_V1Track19ItemNameBank track19_item_names;
+    Theron_Track02ItemNameSource
+        track02_item_names[THERON_DUNGEON_COUNT];
+    /* Seven regional completion-message records from the authenticated
+     * Track 02 UI bank.  This source is addressable by record index only;
+     * it does not promote an inventory action to a retrieval event. */
+    Theron_Track02RetrievalTextSource track02_retrieval_text;
+    /* Hash-verified original campaign/dungeon byte at $267c. This receipt is
+     * evidence only and must remain detached from artifact collection until
+     * an original event consumer proves that relation. */
+    Theron_Track02CampaignMaskSource track02_campaign_mask;
     Theron_V1_SourceGeneratorRecord
         source_generators[THERON_MAX_SOURCE_GENERATORS];
     unsigned int source_generator_count;
     Theron_V1_SourceObjectRecord
         source_objects[THERON_MAX_SOURCE_OBJECT_RECORDS];
     unsigned int source_object_count;
+    Theron_V1_SourceActuatorEvent
+        source_actuator_events[THERON_MAX_SOURCE_ACTUATOR_EVENTS];
+    unsigned int source_actuator_event_count;
+    Theron_V1_SourceSquareState
+        source_square_states[THERON_MAX_SOURCE_SQUARE_STATES];
+    unsigned int source_square_state_count;
+    Theron_V1_SourceObjectState
+        source_object_states[THERON_MAX_SOURCE_OBJECT_STATES];
+    unsigned int source_object_state_count;
     Theron_V1_InventorySourceRecord
         inventory_source[THERON_MAX_CHAMPIONS][THERON_INVENTORY_SLOTS];
 
@@ -638,6 +751,12 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
                                            int sub_level_index);
 
 uint8_t theron_v1_world_get_square(const Theron_V1_World *world, int x, int y);
+int theron_v1_world_track02_runtime_tile(
+    const Theron_V1_World *world, int dungeon_id, int level, int x, int y,
+    uint8_t *out_tile);
+int theron_v1_world_track02_runtime_object_word(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceObjectRecord *source, uint16_t *out_word);
 
 /* Decode dungeon text data into the world's text table.
  * codons/count come from Theron_ThingData.text_data/text_data_count. */
@@ -743,6 +862,84 @@ int theron_v1_world_bind_track02_spawn_source(
     Theron_V1_World *world,
     const Theron_Track02SpawnSource *source,
     int variant);
+int theron_v1_world_bind_track19_item_name_bank(
+    Theron_V1_World *world,
+    const Theron_V1Track19ItemNameBank *bank,
+    int variant);
+int theron_v1_world_bind_track02_item_name_source(
+    Theron_V1_World *world,
+    const Theron_Track02ItemNameSource *source,
+    int variant);
+int theron_v1_world_track02_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int dungeon_id,
+    unsigned int item_index,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_quest_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int quest_index,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_bind_track02_retrieval_text_source(
+    Theron_V1_World *world,
+    const Theron_Track02RetrievalTextSource *source,
+    int variant);
+int theron_v1_world_retrieval_text_record_raw(
+    const Theron_V1_World *world,
+    unsigned int record_index,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_bind_track02_campaign_mask_source(
+    Theron_V1_World *world,
+    const Theron_Track02CampaignMaskSource *source,
+    int variant);
+
+/* Decode the seven artifact-completion bits from original RAM $267C only
+ * after the world has cross-bound the campaign writer and retrieval-message
+ * selector. Bit 7 is preserved by the original serializer but is not part of
+ * the artifact mask. */
+int theron_v1_world_campaign_artifact_mask(
+    const Theron_V1_World *world,
+    uint8_t serialized_campaign_byte,
+    uint8_t *out_artifact_mask);
+
+/* Apply an original DMS-SG.001 byte loaded at RAM $267C to the live
+ * progression. The current dungeon, level, timers and seeds remain owned by
+ * the existing world; only source-proven completion states are refreshed. */
+int theron_v1_world_apply_campaign_artifact_byte(
+    Theron_V1_World *world,
+    uint8_t serialized_campaign_byte);
+int theron_v1_world_object_item_name_raw(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_object_item_type_code(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    uint8_t *out_code);
+int theron_v1_world_object_item_property_raw(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_track19_item_name_raw(
+    const Theron_V1_World *world,
+    unsigned int track19_index,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_object_track19_item_name_raw(
+    const Theron_V1_World *world,
+    const Theron_V1_Object *object,
+    const uint8_t **out_bytes,
+    size_t *out_size);
+int theron_v1_world_inventory_source_track19_item_name_raw(
+    const Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    const uint8_t **out_bytes,
+    size_t *out_size);
 uint8_t theron_v1_world_track02_spawn_category(
     const Theron_V1_World *world,
     unsigned int creature_index);
@@ -774,9 +971,10 @@ int theron_v1_world_bind_track02_generator(
     uint16_t value,
     uint8_t once,
     uint8_t effect,
+    uint8_t revert_effect,
     uint8_t sound,
     uint8_t delay,
-    uint8_t inactive,
+    uint8_t local_effect,
     uint8_t graphism,
     uint8_t target_x,
     uint8_t target_y,
@@ -798,6 +996,114 @@ int theron_v1_world_bind_track02_source_object(
     int y,
     const uint8_t *raw,
     uint8_t raw_size);
+int theron_v1_world_queue_track02_party_events(
+    Theron_V1_World *world, int level, int x, int y,
+    int is_addition, int party_already_on_square,
+    unsigned int party_direction);
+
+/* Resolve one verified floor-party event to the unique authentic Track 02
+ * monster-generator record at its target square. This publishes identity
+ * only: it consumes no RNG, schedules no timer and creates no creature. */
+int theron_v1_world_resolve_track02_generator_event(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceActuatorEvent *event,
+    unsigned int *out_generator_index);
+
+/* Dynamic provenance required before a resolved source generator may create
+ * a group.  The raw records must be copied from the same authenticated
+ * Track 02 execution as the RNG edge.  The *_verified flags are outputs
+ * of capture/source correlation, not permissions a gameplay caller may
+ * synthesize. */
+typedef struct {
+    int authenticated_track02_execution;
+    int same_execution_window_verified;
+    int rng_return_boundary_verified;
+    int rng_caller_source_bytes_verified;
+    int generator_consumer_contract_verified;
+    uint32_t capture_sequence;
+    uint16_t rng_entry_pc;
+    uint32_t rng_physical_entry_pc;
+    uint16_t rng_caller_pc;
+    uint32_t rng_physical_caller_pc;
+    uint8_t rng_return_value;
+    uint8_t rng_caller_source_size;
+    uint8_t rng_caller_source[32];
+    uint8_t rng_state_before[3];
+    uint8_t rng_state_after[3];
+    uint16_t successor_caller_pc;
+    uint32_t successor_physical_caller_pc;
+    uint8_t successor_state_before[3];
+    int runtime_materialization_verified;
+    uint16_t runtime_copy_pc;
+    uint32_t runtime_physical_copy_pc;
+    uint8_t runtime_slot;
+    uint16_t runtime_record_address;
+    uint8_t runtime_record[10];
+    int runtime_first_consumer_verified;
+    uint16_t runtime_first_consumer_pc[3];
+    uint32_t runtime_first_consumer_physical_pc[3];
+    uint8_t runtime_first_consumer_value[3];
+    int runtime_unlink_verified;
+    uint16_t runtime_unlink_pc;
+    uint32_t runtime_unlink_physical_pc;
+    int runtime_lifecycle_window_verified;
+    uint32_t runtime_lifecycle_sequence[8];
+    uint16_t runtime_lifecycle_pc[8];
+    uint32_t runtime_lifecycle_physical_pc[8];
+    int runtime_position_consumer_source_verified;
+    uint16_t runtime_position_consumer_pc;
+    uint32_t runtime_position_consumer_raw_offset;
+    uint8_t runtime_position_consumer_source_size;
+    uint8_t runtime_position_consumer_source[27];
+    uint8_t event_raw[8];
+    uint8_t generator_raw[8];
+} Theron_V1_GeneratorExecutionWitness;
+
+typedef struct {
+    int event_identity_verified;
+    int event_raw_verified;
+    int generator_identity_verified;
+    int generator_raw_verified;
+    int event_bound_rng_witness_verified;
+    int materialization_allowed;
+    unsigned int generator_index;
+    uint16_t creature_type_value;
+    uint8_t count_is_random;
+    uint8_t fixed_count_minus_one;
+    uint8_t random_count_bound;
+    uint8_t toughness;
+    uint8_t pause;
+    uint8_t rng_return_value;
+    uint8_t runtime_slot;
+    uint16_t runtime_record_address;
+    uint8_t runtime_record[10];
+    uint16_t runtime_first_consumer_pc[3];
+    uint32_t runtime_first_consumer_physical_pc[3];
+    uint8_t runtime_first_consumer_value[3];
+    uint16_t runtime_unlink_pc;
+    uint32_t runtime_unlink_physical_pc;
+    int runtime_lifecycle_window_verified;
+    uint32_t runtime_lifecycle_sequence[8];
+    uint16_t runtime_lifecycle_pc[8];
+    uint32_t runtime_lifecycle_physical_pc[8];
+    /* Legacy field names below describe the working hypothesis only.  The
+     * authenticated C852 span proves byte copies and the two-bit transform,
+     * not host-local coordinates or a direction consumer. */
+    int runtime_position_fields_source_verified;
+    uint8_t runtime_x;
+    uint8_t runtime_y;
+    uint8_t runtime_direction_raw;
+    uint8_t runtime_direction;
+} Theron_V1_GeneratorMaterializationReceipt;
+
+/* Correlates an event, its unique type-6 record and a live RNG witness.
+ * Returns 1 only when all source and execution joins are complete.  It does
+ * not consume the event or create a creature. */
+int theron_v1_world_bind_track02_generator_execution_witness(
+    const Theron_V1_World *world,
+    const Theron_V1_SourceActuatorEvent *event,
+    const Theron_V1_GeneratorExecutionWitness *witness,
+    Theron_V1_GeneratorMaterializationReceipt *out);
 void theron_v1_world_init_generators(Theron_V1_World *world);
 void theron_v1_world_tick_generators(Theron_V1_World *world);
 
@@ -872,9 +1178,12 @@ void     theron_v1_world_hash_inject(Theron_V1_World *world, uint64_t seed);
 int   theron_v1_check_quest_item(const Theron_V1_World *world);
 uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
-/* ── Binary serialization ─────────────────────────────────────────── */
+/* ── Portable in-memory world snapshots ────────────────────────────
+ * This private TRNW format is used for deterministic world round-trips.
+ * It is separate from the user-facing between-dungeon slotN.tqsv format in
+ * theron_v1_save_load.h; changing this version does not change TQSV. */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 11
+#define THERON_WORLD_SAVE_VERSION 18
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

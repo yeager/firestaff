@@ -27104,6 +27104,11 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyY = state->theronState.party_y;
         out->partyDir = state->theronState.party_dir;
         out->runtimeTick = state->theronState.tick_count;
+        out->theronTrack01CddaReady =
+            state->theronTrack01CddaHandoff.status ==
+                THERON_TRACK01_CDDA_AVAILABLE &&
+            state->theronTrack01CddaHandoff.playback_handoff_ready &&
+            state->theronTrack01CddaHandoff.original_cdda;
         out->mapIndex = -1;
         out->championCount = -1;
         if (m11_theron_boot_runtime_startup_full_start_receipt(
@@ -29436,6 +29441,48 @@ static int m11_theron_startup_has_verified_runtime_surfaces(
     return 1;
 }
 
+static void m11_theron_bind_track19_item_names(
+    M11_GameViewState *state,
+    const char *data_dir,
+    const char *verified_track02_path,
+    const char *verified_track02_md5) {
+    Theron_V1_World *world;
+    Theron_V1Track19ItemNameBank bank;
+    char sibling_root[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
+    char candidate[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
+    const char *leaf;
+    int variant;
+    int loaded = 0;
+
+    if (!state || !state->theronWorld || !data_dir ||
+        !verified_track02_path || !verified_track02_md5) return;
+    if (strcmp(verified_track02_md5,
+               "b7afb338ad31be1025b53f9aff12d73a") == 0) {
+        variant = THERON_TRACK02_VARIANT_JP_BIN;
+        leaf = "TQJP19.iso";
+    } else if (strcmp(verified_track02_md5,
+                      "f23601102138f87c33025877767ebf76") == 0) {
+        variant = THERON_TRACK02_VARIANT_US_BIN;
+        leaf = "TQUS19.iso";
+    } else {
+        return;
+    }
+    world = (Theron_V1_World *)state->theronWorld;
+    if (FSP_ParentDir(sibling_root, sizeof(sibling_root),
+                      verified_track02_path) &&
+        FSP_JoinPath(candidate, sizeof(candidate), sibling_root, leaf)) {
+        loaded = theron_v1_track19_item_name_bank_file(candidate, &bank);
+    }
+    if (!loaded &&
+        FSP_JoinPath(candidate, sizeof(candidate), data_dir, leaf)) {
+        loaded = theron_v1_track19_item_name_bank_file(candidate, &bank);
+    }
+    if (loaded) {
+        (void)theron_v1_world_bind_track19_item_name_bank(
+            world, &bank, variant);
+    }
+}
+
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
                                     const char* launcherSourceId,
@@ -29458,7 +29505,6 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     char discovered_cdda_cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
     char cdda_search_root[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
     int savedDebugHUD;
-    int raw_track02_bypass = 0;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
@@ -29512,11 +29558,12 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
          * CUE unusable from the start menu before the verified startup
          * loader could run.
          *
-         * Retain the raw-only convenience below: only MODE1/2352 supplies
-         * the separately verified initial-level path, so ISO continues at
-         * the title/stage-select boundary.  It neither auto-loads a dungeon
-         * nor promotes any level, object, AI, T700, or T900 semantics. */
-        raw_track02_bypass = campaignMedia->direct_media.mode1_2352 != 0;
+         * Raw MODE1/2352 also stays on that original startup state machine.
+         * Auto-loading its first dungeon here used to skip title, stage
+         * selection and Soul Room, leaving fixture-initialized champions as
+         * the apparent party.  The forcefield callback below already owns
+         * the verified raw map/object handoff, so no direct-load shortcut is
+         * needed. */
     }
     memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;
@@ -29590,6 +29637,8 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
         goto fail;
     }
+    m11_theron_bind_track19_item_names(
+        state, dataDir, verifiedPath, verifiedMd5);
     /* Source kind records Track 02 media. Keep the launcher game identity
      * stable across raw BIN/CUE and converted ISO paths so startup receipts,
      * saves, and direct boot probes all refer to the selected game. */
@@ -29631,31 +29680,6 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     }
     m11_theron_bind_track01_cdda_handoff(state, cdda_cue_path, verifiedMd5);
     m11_theron_update_track01_cdda_lifecycle(state);
-    if (raw_track02_bypass) {
-        /* Auto-load the initial AKUTUBA level for raw MODE1/2352
-         * media that bypasses the capture-required gate. This produces the
-         * same TQR level load marker the interactive title -> stage select
-         * -> soul room -> forcefield path would have emitted, without
-         * requiring pre-existing capture artifacts. */
-        Theron_V1_World *world = (Theron_V1_World *)state->theronWorld;
-        TrAssetBundle *assets = (TrAssetBundle *)state->theronAssets;
-        char level_receipt[256];
-        if (world && assets && assets->hucard_rom && assets->hucard_rom_size > 0u &&
-            theron_v1_startup_runtime_load_initial_level_verified_only(
-                world,
-                assets->hucard_rom,
-                assets->hucard_rom_size,
-                verifiedMd5,
-                THERON_DUNGEON_1_AKUTUBA,
-                level_receipt,
-                sizeof(level_receipt))) {
-            state->theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
-            state->theronState.level_loaded = 1;
-            state->theronState.party_x = world->party.leader_x;
-            state->theronState.party_y = world->party.leader_y;
-            state->theronState.party_dir = world->party.leader_dir;
-        }
-    }
     if (sectorRecordCorpus &&
         !M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(
             state, sectorRecordCorpus)) {
@@ -34709,10 +34733,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
          * MOVESENS.C F0267/F0268 (DM-family analogue). */
         {
             Theron_V1_BootRuntimeInputReceipt receipt;
-            if (!theron_v1_boot_runtime_handle_m12_input(
+            if (!theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                     world,
                     state->theronBootProfile,
                     (int)input,
+                    state->inventorySelectedSlot,
                     &receipt)) {
                 return M11_GAME_INPUT_IGNORED;
             }
@@ -34720,6 +34745,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->theronState.party_y = receipt.party_y;
             state->theronState.party_dir = receipt.party_dir;
             state->theronState.tick_count = receipt.tick_count;
+            if (receipt.picked_up && receipt.inventory_slot >= 0)
+                state->inventorySelectedSlot = receipt.inventory_slot;
+            if (receipt.inventory_selected && receipt.inventory_slot >= 0)
+                state->inventorySelectedSlot = receipt.inventory_slot;
+            if (receipt.dropped || receipt.champion_cycled)
+                state->inventorySelectedSlot = -1;
             if (receipt.result ==
                 THERON_V1_BOOT_RUNTIME_INPUT_RESULT_EXIT_DUNGEON) {
                 return m11_theron_apply_startup_action_host_receipt(
@@ -67997,8 +68028,9 @@ static int m11_theron_install_authenticated_vce_palette(
         return 0;
     }
     memset(rgb6, 0, sizeof(rgb6));
-    for (i = 0; i < 256; ++i) {
-        const uint32_t rgba = viewport->palette.entries[i].rgba;
+    for (i = 0; i < viewport->host_palette_source_count; ++i) {
+        const uint16_t source = viewport->host_palette_source_indices[i];
+        const uint32_t rgba = viewport->palette.entries[source].rgba;
         rgb6[i][0] = (uint8_t)((rgba >> 18) & 0x3fu);
         rgb6[i][1] = (uint8_t)((rgba >> 10) & 0x3fu);
         rgb6[i][2] = (uint8_t)((rgba >> 2) & 0x3fu);

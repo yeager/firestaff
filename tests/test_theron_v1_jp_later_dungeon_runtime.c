@@ -9,19 +9,19 @@
 
 static const char *find_jp_track02(void) {
     const char *configured = getenv("FIRESTAFF_THERON_JP_TRACK02");
-    static const char *const candidates[] = {
-        "<local-home>/.firestaff/data/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin",
-        NULL
-    };
-    unsigned int i;
+    const char *home;
+    static char standard_path[1024];
     if (configured && configured[0]) {
         FILE *f = fopen(configured, "rb");
         if (f) { fclose(f); return configured; }
         return NULL;
     }
-    for (i = 0u; candidates[i]; ++i) {
-        FILE *f = fopen(candidates[i], "rb");
-        if (f) { fclose(f); return candidates[i]; }
+    home = getenv("HOME");
+    if (home && home[0] &&
+        snprintf(standard_path, sizeof(standard_path),
+                 "%s/.firestaff/data/theron/TQJP02.bin", home) > 0) {
+        FILE *f = fopen(standard_path, "rb");
+        if (f) { fclose(f); return standard_path; }
     }
     return NULL;
 }
@@ -47,6 +47,9 @@ static unsigned char *read_file(const char *path, size_t *out_size) {
 }
 
 int main(void) {
+    static const unsigned int expected_map_counts[THERON_DUNGEON_COUNT] = {
+        4u, 8u, 5u, 6u, 3u, 4u, 4u
+    };
     const char *path = find_jp_track02();
     unsigned char *track02;
     size_t track02_size;
@@ -55,6 +58,7 @@ int main(void) {
     char md5[33];
     Theron_DungeonID dungeon_id;
     unsigned int total_source_objects = 0u;
+    unsigned int total_source_maps = 0u;
 
     if (!path) {
         puts("SKIP: authentic Theron JP Track 02 is not staged");
@@ -72,6 +76,7 @@ int main(void) {
          dungeon_id <= THERON_DUNGEON_7_DEMON;
          dungeon_id = (Theron_DungeonID)(dungeon_id + 1)) {
         const int slot = (int)dungeon_id - 1;
+        unsigned int loaded_maps = 0u;
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
         if (!theron_v1_startup_runtime_load_source_dungeon(
@@ -91,10 +96,43 @@ int main(void) {
             free(track02);
             return 1;
         }
+        if (!world.source_thing_directory_verified[slot]) {
+            fprintf(stderr,
+                    "FAIL: JP dungeon %d thing directory is not source-verified\n",
+                    (int)dungeon_id);
+            free(track02);
+            return 1;
+        }
+        for (unsigned int level = 0u;
+             level < THERON_MAX_LEVELS_PER_DUNGEON; ++level) {
+            const Theron_V1_Level *source_level = &world.levels[slot][level];
+            if (!world.level_loaded[slot][level]) continue;
+            if (!source_level->source_header_verified ||
+                !source_level->source_item_property_table_verified ||
+                source_level->width <= 0 || source_level->height <= 0 ||
+                source_level->width > THERON_MAX_MAP_SIZE ||
+                source_level->height > THERON_MAX_MAP_SIZE) {
+                fprintf(stderr,
+                        "FAIL: JP dungeon %d map %u lacks its authenticated source envelope\n",
+                        (int)dungeon_id, level);
+                free(track02);
+                return 1;
+            }
+            ++loaded_maps;
+        }
+        if (loaded_maps != expected_map_counts[slot]) {
+            fprintf(stderr,
+                    "FAIL: JP dungeon %d loaded %u source maps, expected %u\n",
+                    (int)dungeon_id, loaded_maps,
+                    expected_map_counts[slot]);
+            free(track02);
+            return 1;
+        }
+        total_source_maps += loaded_maps;
         total_source_objects += world.source_object_count;
     }
-    printf("PASS: authentic JP Track 02 binds all seven source dungeons (%u source objects)\n",
-           total_source_objects);
+    printf("PASS: authentic JP Track 02 binds all seven source dungeons (%u maps, %u source objects)\n",
+           total_source_maps, total_source_objects);
     free(track02);
     return 0;
 }

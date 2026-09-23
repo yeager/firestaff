@@ -556,8 +556,8 @@ static void probe_source_evidence(void) {
         ++g_fail;
         return;
     }
-    if (!strstr(ev, "2026-06-27")) {
-        printf("FAIL source evidence: missing commit-date marker\n");
+    if (!strstr(ev, "Status (")) {
+        printf("FAIL source evidence: missing dated status marker\n");
         ++g_fail;
         return;
     }

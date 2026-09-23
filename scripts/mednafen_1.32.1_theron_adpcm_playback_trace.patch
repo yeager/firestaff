@@ -1,0 +1,86 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -673,6 +673,31 @@
+  va_end(args);
+  fflush(TheronPCECDAdpcmTrace);
+  TheronPCECDAdpcmTraceCount++;
++}
++
++static FILE *TheronPCECDAdpcmPlaybackTrace;
++static unsigned TheronPCECDAdpcmPlaybackTraceCount;
++
++static void TheronTracePCECDAdpcmPlayback(const char *format, ...)
++{
++ va_list args;
++ if(TheronPCECDAdpcmPlaybackTraceCount >= 4096)
++  return;
++ if(!TheronPCECDAdpcmPlaybackTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_ADPCM_PLAYBACK_TRACE");
++  if(!path || !*path)
++   return;
++  TheronPCECDAdpcmPlaybackTrace = fopen(path, "a");
++  if(!TheronPCECDAdpcmPlaybackTrace)
++   return;
++  fputs("source=mednafen-pce-instrumented-adpcm-playback-v1\n", TheronPCECDAdpcmPlaybackTrace);
++ }
++ va_start(args, format);
++ vfprintf(TheronPCECDAdpcmPlaybackTrace, format, args);
++ va_end(args);
++ fflush(TheronPCECDAdpcmPlaybackTrace);
++ TheronPCECDAdpcmPlaybackTraceCount++;
+ }
+
+ static int32 CalcNextEvent(int32 base)
+@@ -1362,6 +1387,17 @@
+ 			break;
+
+ 		case 0xd:
++		        {
++		         const uint16 pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++		         const uint32 physical_pc =
++		          (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (pc >> 13)) << 13) |
++		          (pc & 0x1fff);
++		         TheronTracePCECDAdpcmPlayback(
++		          "adpcm_control_write cpu_pc=%04x physical_pc=%06x value=%02x addr=%04x read_addr=%04x length=%04x rate=%02x last_cmd=%02x playing_before=%u\n",
++		          pc, physical_pc, data, ADPCM.Addr, ADPCM.ReadAddr,
++		          ADPCM.LengthCount, ADPCM.SampleFreq, ADPCM.LastCmd,
++		          ADPCM.Playing ? 1 : 0);
++		        }
+ 		        ADPCM_DEBUG("Write180D: %02x\n", V);
+ 		        if(data & 0x80)
+ 		        {
+@@ -1426,6 +1462,17 @@
+ 		        }
+ 		        ADPCM.LastCmd = data;
+ 			UpdateADPCMIRQState();
++		        {
++		         const uint16 pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++		         const uint32 physical_pc =
++		          (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (pc >> 13)) << 13) |
++		          (pc & 0x1fff);
++		         TheronTracePCECDAdpcmPlayback(
++		          "adpcm_control_result cpu_pc=%04x physical_pc=%06x value=%02x addr=%04x read_addr=%04x length=%04x rate=%02x playing_after=%u playback_start=%u\n",
++		          pc, physical_pc, data, ADPCM.Addr, ADPCM.ReadAddr,
++		          ADPCM.LengthCount, ADPCM.SampleFreq, ADPCM.Playing ? 1 : 0,
++		          (data & 0x20) && ADPCM.Playing ? 1 : 0);
++		        }
+ 			break;
+
+ 		case 0xe:		// Set ADPCM playback rate
+@@ -1436,6 +1483,15 @@
+
+ 			 ADPCM_DEBUG("Freq: %02x\n", freq);
+ 			}
++		        {
++		         const uint16 pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++		         const uint32 physical_pc =
++		          (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (pc >> 13)) << 13) |
++		          (pc & 0x1fff);
++		         TheronTracePCECDAdpcmPlayback(
++		          "adpcm_rate_write cpu_pc=%04x physical_pc=%06x value=%02x rate=%02x\n",
++		          pc, physical_pc, data, ADPCM.SampleFreq);
++		        }
+ 			break;
+
+ 		case 0xf:

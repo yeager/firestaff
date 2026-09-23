@@ -2,9 +2,11 @@
 
 #include <string.h>
 
-/* Source-anchored Theron per-view zone inventory — implemented chrome
- * geometry, NOT an extracted original table (see the header's
- * provenance block).  The matrix is evidence/probe data only. */
+/* Theron's original V1 hit rectangles are not yet recovered.  Do not expose
+ * Firestaff's host-authored chrome boxes as original game data.  The table
+ * therefore contains only the explicitly modern V2 presentation overlay;
+ * the V1 view fails closed until an authenticated original rectangle table
+ * or a complete runtime boundary trace is admitted. */
 
 #define TR_V1 THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT
 #define TR_V2 THERON_TOUCH_CLICK_VIEW_V2_HUD_OVERLAY_PC34_COMPAT
@@ -12,26 +14,6 @@
 #define TR_LEFT TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT
 
 static const TheronTouchClickZonePc34Compat kTheronTouchClickZones[] = {
-    /* ── V1 chrome, 320x240 extended canvas (TQR_SCREEN_W/H) ────── */
-    {  1u, 0u, TR_V1, TR_SCR, TR_LEFT,   0,   0, 320,  24, "chrome.topbar",
-       "theron_v1_viewport.h TQR_SCREEN_W/TQR_TOPBAR_H (320,24); theron_v1_ui_chrome.h TR_UI_TOPBAR (1<<0); anchored to THQUEST.ASM T600" },
-    {  0u, 1u, TR_V1, TR_SCR, TR_LEFT,  32,  24, 192, 160, "chrome.viewport",
-       "theron_v1_viewport.h TQR_VP_X/Y/W/H (32,24,192,160); no TR_UI flag and no command bound — gamepad-driven original; anchored to THQUEST.ASM T600" },
-    {  2u, 2u, TR_V1, TR_SCR, TR_LEFT, 224,  24,  96, 160, "chrome.right_panel",
-       "theron_v1_viewport.h TQR_SCREEN_W-TQR_RIGHT_W=224, TQR_RIGHT_W (96), y=TQR_TOPBAR_H, h=SCREEN_H-TOPBAR_H-BOTTOM_H=160; theron_v1_ui_chrome.h TR_UI_RIGHT_PANEL (1<<1)" },
-    {  4u, 3u, TR_V1, TR_SCR, TR_LEFT,   0, 184, 320,  56, "chrome.bottom_panel",
-       "theron_v1_viewport.h TQR_SCREEN_H-TQR_BOTTOM_H=184, TQR_BOTTOM_H (56); theron_v1_ui_chrome.h TR_UI_BOTTOM_PANEL (1<<2)" },
-    {  8u, 4u, TR_V1, TR_SCR, TR_LEFT,   0, 184, 320,  16, "chrome.message_bar",
-       "theron_v1_viewport.h TQR_CHAMP_SLOT_Y=184, TQR_MSG_H (16); theron_v1_ui_chrome.h TR_UI_MESSAGE (1<<3); nested inside bottom_panel (coarse source panels)" },
-    {  0u, 5u, TR_V1, TR_SCR, TR_LEFT,   0, 184,  80,  56, "champion.slot_0",
-       "theron_v1_ui_chrome.h TR_CHAMP_SLOT_W/H (80,56) slot 0 at x=0, y=TQR_CHAMP_SLOT_Y=184; nested inside bottom_panel/message_bar (coarse source panels)" },
-    {  0u, 6u, TR_V1, TR_SCR, TR_LEFT,  80, 184,  80,  56, "champion.slot_1",
-       "theron_v1_ui_chrome.h TR_CHAMP_SLOT_W/H (80,56) slot 1 at x=80, y=184" },
-    {  0u, 7u, TR_V1, TR_SCR, TR_LEFT, 160, 184,  80,  56, "champion.slot_2",
-       "theron_v1_ui_chrome.h TR_CHAMP_SLOT_W/H (80,56) slot 2 at x=160, y=184" },
-    {  0u, 8u, TR_V1, TR_SCR, TR_LEFT, 240, 184,  80,  56, "champion.slot_3",
-       "theron_v1_ui_chrome.h TR_CHAMP_SLOT_W/H (80,56) slot 3 at x=240, y=184" },
-
     /* ── V2 HUD overlay, 256x224 PC Engine native (TQR_FB_W/H) ──── */
     {  0u, 0u, TR_V2, TR_SCR, TR_LEFT,   4,   0,  24,  24, "hud.compass",
        "theron_v2_hud_overlay_pc34.h THERON_V2_HUD_COMPASS_CX/CY (16,12) center +/- 12; production HUD seam remains no-draw; presentation-only indicator" },
@@ -139,19 +121,15 @@ const char* THERON_TOUCHCLICK_Compat_GetViewName(
 }
 
 const char* THERON_TOUCHCLICK_Compat_GetSourceEvidence(void) {
-    return "Implemented-geometry inventory (NOT an extracted original "
-           "table): ReDMCSB WIP20210206 verified 2026-07-20 to contain "
+    return "V1 original zones fail closed: ReDMCSB WIP20210206 verified "
+           "2026-07-20 to contain "
            "zero Theron/TurboGrafx coverage (1184 files); the only local "
            "disassembly is the IPL + stage2 boot loaders "
            "(docs/source-lock/theron-disassembly/, da65 HuC6280) with no "
-           "input/UI-zone code; THQUEST.BIN is not disassembled locally.  "
-           "V1 chrome zones from include/theron_v1_viewport.h "
-           "(TQR_SCREEN_W/H 320x240, TQR_VP_X/Y/W/H 32/24/192/160, "
-           "TQR_TOPBAR_H 24, TQR_RIGHT_W 96, TQR_BOTTOM_H 56, TQR_MSG_H "
-           "16, TQR_CHAMP_SLOT_W/H/Y 80/56/184) and "
-           "src/theron/theron_v1_ui_chrome.h (TR_UI_TOPBAR/RIGHT_PANEL/"
-           "BOTTOM_PANEL/MESSAGE bits), the same six zone kinds the "
-           "theron_v2_hud_target_size_pc34 audit consumes; V2 overlay "
+           "input/UI-zone code. Authentic US runtime captures now prove "
+           "command $50 at $3c/$78 and command $74 at $79/$62, but neither "
+           "single point proves rectangle bounds, so no V1 hit zone is "
+           "published. V2 overlay "
            "zones from include/theron_v2_hud_overlay_pc34.h "
            "(THERON_V2_HUD_COMPASS_CX/CY 16/12, QUEST 64/4, DUNGEON "
            "160/4, RELIC 220/4, CHAMP_BAR 4+62i/184/60x8, ACTION "

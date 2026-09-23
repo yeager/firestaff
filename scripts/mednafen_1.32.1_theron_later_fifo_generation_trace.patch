@@ -14,9 +14,9 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
 @@ -90,5 +90,7 @@ using namespace Mednafen;
- 
+
  #include "pcecd.h"
- 
+
 +namespace Mednafen { unsigned TheronSCSITraceCurrentReadGeneration(void); }
 +
  namespace MDFN_IEN_PCE

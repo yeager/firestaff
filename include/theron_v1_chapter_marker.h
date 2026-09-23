@@ -33,6 +33,8 @@
 #include <stdint.h>
 
 #include "theron_v1_boot.h"
+
+typedef struct Theron_V1_World Theron_V1_World;
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_save_load.h"
 
@@ -148,6 +150,15 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
                                      const Theron_DungeonProgression *progression,
                                      const Theron_SaveSlot *save_slot,
                                      Theron_ChapterMarker *marker);
+
+/* Project the same marker from a live world and its authenticated Track 02
+ * name banks. US ASCII is admitted; JP Shift-JIS remains unavailable until
+ * its host rendering contract is proven. */
+int theron_v1_chapter_marker_compute_world(
+    const Theron_V1_BootProfile *profile,
+    const Theron_V1_World *world,
+    const Theron_SaveSlot *save_slot,
+    Theron_ChapterMarker *marker);
 
 /* Enumerate saves/theron/ under save_root and pick the freshest
  * valid slot, then call theron_v1_chapter_marker_compute().

@@ -61,6 +61,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_mac_input.h"
 #include "fs_gesture_navigation_gate.h"
+#include "theron_v1_world.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -4454,6 +4455,13 @@ static void m11_phase_a_print_boot_probe_receipt(
     int dm2SceneReady = 0;
 
     memset(&dm2Scene, 0, sizeof(dm2Scene));
+    int theronTrack02ItemNameBanks = 0;
+    int theronTrack02ItemNameVariant = 0;
+    int theronDungeonLevelsLoaded = 0;
+    int theronDungeonSourceHeaders = 0;
+    size_t theronDungeonSourceNonzeroTiles = 0u;
+    size_t theronSelectedItemNameBytes = 0u;
+    uint32_t theronSelectedItemNameFnv1a = 0u;
     if (menuState && gameId && gameId[0] != '\0') {
         runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                        gameId);
@@ -4491,6 +4499,66 @@ static void m11_phase_a_print_boot_probe_receipt(
     if (gameView && receipt.sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         dm2SceneReady = dm2_v1_runtime_graphicsset_scene_receipt(&dm2Scene);
     }
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+        gameView->theronWorld) {
+        const Theron_V1_World *world =
+            (const Theron_V1_World *)gameView->theronWorld;
+        unsigned int i;
+        int level_index;
+        for (i = 0u; i < THERON_DUNGEON_COUNT; ++i) {
+            if (world->track02_item_names[i].valid) {
+                ++theronTrack02ItemNameBanks;
+                if (!theronTrack02ItemNameVariant)
+                    theronTrack02ItemNameVariant =
+                        world->track02_item_names[i].variant;
+            }
+        }
+        if (world->current_dungeon >= THERON_DUNGEON_1_AKUTUBA &&
+            world->current_dungeon <= THERON_DUNGEON_COUNT) {
+            int dungeon_index = world->current_dungeon - 1;
+            for (level_index = 0;
+                 level_index < THERON_MAX_LEVELS_PER_DUNGEON;
+                 ++level_index) {
+                const Theron_V1_Level *level;
+                int y, x;
+                if (!world->level_loaded[dungeon_index][level_index]) continue;
+                ++theronDungeonLevelsLoaded;
+                level = &world->levels[dungeon_index][level_index];
+                if (level->source_header_verified)
+                    ++theronDungeonSourceHeaders;
+                for (y = 0; y < level->height; ++y)
+                    for (x = 0; x < level->width; ++x)
+                        if (level->source_tiles[y][x] != 0u)
+                            ++theronDungeonSourceNonzeroTiles;
+            }
+        }
+        if (gameView->inventorySelectedSlot >= 0 &&
+            gameView->inventorySelectedSlot < THERON_INVENTORY_SLOTS &&
+            world->party.active_slot >= 0 &&
+            world->party.active_slot < THERON_MAX_CHAMPIONS) {
+            const Theron_V1_InventorySourceRecord *item =
+                &world->inventory_source[world->party.active_slot]
+                                        [gameView->inventorySelectedSlot];
+            const uint8_t *name = NULL;
+            size_t name_size = 0u;
+            if (item->valid && item->source_origin_valid &&
+                (theron_v1_world_inventory_source_track19_item_name_raw(
+                     world, world->party.active_slot,
+                     gameView->inventorySelectedSlot, &name, &name_size) ||
+                 theron_v1_world_track02_item_name_raw(
+                     world, item->source_dungeon, item->item_type,
+                     &name, &name_size))) {
+                uint32_t hash = 2166136261u;
+                size_t at;
+                for (at = 0u; at < name_size; ++at) {
+                    hash ^= name[at];
+                    hash *= 16777619u;
+                }
+                theronSelectedItemNameBytes = name_size;
+                theronSelectedItemNameFnv1a = hash;
+            }
+        }
+    }
     {
         DM1_V1_StartupHoCBootProbeLogReceipt_PC34 dm1Log;
         memset(&dm1Log, 0, sizeof(dm1Log));
@@ -4498,7 +4566,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             &receipt.dm1HoCBootSummary,
             &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1HocCandidatePanel=%d dm1HocCandidateOrdinal=%d dm1HocCandidatePartyIndex=%d dm1InventoryPanel=%d dm1FoodWaterPanel=%d dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d dm1StartupHandoffExecuted=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d dm1FmtownsMenuFontLoaded=%d %s\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u theronSourceObjects=%u theronDungeonLevelsLoaded=%d theronDungeonSourceHeaders=%d theronDungeonSourceNonzeroTiles=%zu theronActiveChampion=%d theronTrack01CddaReady=%d theronSpawnSourceAuthenticated=%d theronSpawnSourceVariant=%d theronTrack02ItemNameBanks=%d theronTrack02ItemNameVariant=%d theronSelectedItemNameBytes=%zu theronSelectedItemNameFnv1a=%u theronTrack19NameBankReady=%d theronTrack19NameVariant=%d theronTrack19ItemMappingProven=%d csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1HocCandidatePanel=%d dm1HocCandidateOrdinal=%d dm1HocCandidatePartyIndex=%d dm1InventoryPanel=%d dm1FoodWaterPanel=%d dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d dm1StartupHandoffExecuted=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d dm1FmtownsMenuFontLoaded=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -4538,6 +4606,49 @@ static void m11_phase_a_print_boot_probe_receipt(
             (unsigned int)dm2Scene.scene_colorkey,
             (unsigned int)dm2Scene.scene_flags,
             (unsigned int)dm2Scene.interface_palette_hash,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->source_object_count
+                : 0u,
+            theronDungeonLevelsLoaded,
+            theronDungeonSourceHeaders,
+            theronDungeonSourceNonzeroTiles,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->party.active_slot
+                : -1,
+            receipt.theronTrack01CddaReady,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->track02_spawn_source.authenticated
+                : 0,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->track02_spawn_source_variant
+                : 0,
+            theronTrack02ItemNameBanks,
+            theronTrack02ItemNameVariant,
+            theronSelectedItemNameBytes,
+            (unsigned int)theronSelectedItemNameFnv1a,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->track19_item_names.valid
+                : 0,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->track19_item_names.variant
+                : 0,
+            gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    gameView->theronWorld
+                ? ((const Theron_V1_World *)gameView->theronWorld)
+                      ->track19_item_names.item_mapping_proven
+                : 0,
             gameView ? (unsigned int)gameView->csbState.runtime_viewport_pixel_hash : 0u,
             gameView ? gameView->csbState.runtime_v22_cells_painted : 0,
             (unsigned int)receipt.dm1WorldTick,

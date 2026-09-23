@@ -55,8 +55,8 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pcecd_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
@@ -94,6 +94,8 @@ adpcm_context_rendered="$build_root/theron-adpcm-fifo-ram-trace.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$adpcm_context_patch" > "$adpcm_context_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$adpcm_context_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_adpcm_playback_trace.patch"
 main_ram_consumer_read_patch="$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
 main_ram_consumer_read_rendered="$build_root/theron-main-ram-consumer-read.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$main_ram_consumer_read_patch" \
@@ -104,6 +106,12 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < <(sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
         "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_write_trace.patch")
 patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_e009_destination_consumer_trace.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_e009_destination_consumer_read.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_e009_consumer_code_snapshot.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch"
@@ -111,14 +119,25 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch"
+loader_write_patch="$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch"
+loader_write_rendered="$build_root/theron-main-ram-loader-write.rendered.patch"
+sed \
+    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
+    "$loader_write_patch" > "$loader_write_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$loader_write_rendered"
 ram_provenance_patch="$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch"
 ram_provenance_rendered="$build_root/theron-ram-provenance.rendered.patch"
-sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$ram_provenance_patch" \
+sed \
+    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_TAB_CONTEXT/ \t/' \
+    "$ram_provenance_patch" \
     > "$ram_provenance_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$ram_provenance_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$ram_provenance_rendered"
+    < "$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
 vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
 vdc_io_rendered="$build_root/theron-vdc-io-trace.rendered.patch"
 sed \
@@ -127,6 +146,24 @@ sed \
     -e $'s/^FIRESTAFF_PATCH_VDC_BREAK_CONTEXT$/ \t       break;/' \
     "$vdc_io_patch" > "$vdc_io_rendered"
 patch -d "$build_root/source" -p1 --batch --forward < "$vdc_io_rendered"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_scsi_generation_vdc_trace.patch"
+git -C "$build_root/source" apply \
+    "$repo/scripts/mednafen_1.32.1_theron_file_select_vdc_snapshot.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_file_select_scroll_driver_trace.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_game_main_ram_e009_destination_receipt.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_post_dungeon_ordinal_research.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_title_wait_input_research.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_drator_menu_route_research.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch"
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
 
 # The FIFO-origin extension is capture-only. It carries raw LBA/offset/FIFO
 # provenance into the CD-transfer receipt; it does not assign level, object,

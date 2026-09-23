@@ -42,9 +42,14 @@ capture_input_grab_delay=${THERON_CAPTURE_INPUT_GRAB_DELAY:-2}
 replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
+post_dungeon_ordinal=${THERON_CAPTURE_POST_DUNGEON_ORDINAL:-}
+title_wait_input=${THERON_CAPTURE_TITLE_WAIT_INPUT:-}
+menu_route=${THERON_CAPTURE_MENU_ROUTE:-}
+replay_post_dungeon_overlay=${THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY:-0}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
+vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -77,6 +82,11 @@ fi
 if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
    (( main_ram_consumer_sample_limit < 4096 || main_ram_consumer_sample_limit > 1048576 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT must be an integer from 4096 through 1048576' >&2
+    exit 1
+fi
+if [[ ! "$vdc_io_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( vdc_io_trace_limit < 65536 || vdc_io_trace_limit > 2097152 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_VDC_IO_TRACE_LIMIT must be an integer from 65536 through 2097152' >&2
     exit 1
 fi
 
@@ -374,6 +384,23 @@ fi
 if [[ -n "$autoload_state" && -n "$autoload_movie" ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_AUTOLOAD_STATE and THERON_CAPTURE_AUTOLOAD_MOVIE cannot be combined' >&2
     exit 1
+fi
+if [[ -n "$post_dungeon_ordinal" && ! "$post_dungeon_ordinal" =~ ^[0-6]$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_POST_DUNGEON_ORDINAL must be 0..6' >&2
+    exit 1
+fi
+if [[ "$replay_post_dungeon_overlay" != 0 && "$replay_post_dungeon_overlay" != 1 ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_POST_DUNGEON_OVERLAY must be 0 or 1' >&2
+    exit 1
+fi
+post_dungeon_overlay_iso=
+if [[ "$replay_post_dungeon_overlay" == 1 ]]; then
+    if [[ -z "$post_dungeon_ordinal" || "$track02_mode" != MODE1/2048 ||
+          "$track02_md5" != ceb02343868f80cec899e9b239aff2da ]]; then
+        printf '%s\n' 'FAIL: post-dungeon overlay replay requires an ordinal and the exact US MODE1/2048 Track 02' >&2
+        exit 1
+    fi
+    post_dungeon_overlay_iso=$track02_path
 fi
 if [[ "$host_input_requested" == 1 ]]; then
     if [[ -z "$configured_home" ]]; then
@@ -674,7 +701,7 @@ require_instrumented_mednafen_binary() {
     # run: an empty trace is not capture evidence. The runtime needs both the
     # general CPU/CD producer, main-RAM control-flow producer, and the
     # game-owned main-RAM consumer-read producer.
-    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE FIRESTAFF_THERON_RAM_PROVENANCE_TRACE FIRESTAFF_THERON_RECORD_WATCH_TRACE FIRESTAFF_THERON_RNG_CONSUMER_TRACE FIRESTAFF_THERON_VDC_IO_TRACE; do
+    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE FIRESTAFF_THERON_SELECTED_RECORD_TRACE FIRESTAFF_THERON_RAM_PROVENANCE_TRACE FIRESTAFF_THERON_RECORD_WATCH_TRACE FIRESTAFF_THERON_RNG_CONSUMER_TRACE FIRESTAFF_THERON_VDC_IO_TRACE; do
         if ! grep -aFq "$marker" "$binary" 2>/dev/null; then
             printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation; build it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
             return 1
@@ -745,9 +772,11 @@ trace_dir=$(dirname -- "$trace")
 capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scratch"}
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
+adpcm_playback_trace="${trace}.adpcm-playback"
 input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
+selected_record_trace="${trace}.selected-record"
 main_ram_target_trace="${trace}.main-ram-target"
 ram_provenance_trace="${trace}.ram-provenance"
 record_watch_trace="${trace}.record-watch"
@@ -755,9 +784,21 @@ spawn_consumer_trace="${trace}.spawn-consumer"
 spawn_register_trace="${trace}.spawn-registers"
 rng_consumer_trace="${trace}.rng-consumer"
 rng_code_trace="${trace}.rng-code"
+rng_state_trace="${trace}.rng-state"
+rng_generator_context_trace="${trace}.rng-generator-context"
 vram_snapshot="${trace}.vram"
 vce_snapshot="${trace}.vce"
+vdc_state_snapshot="${trace}.vdc-state"
+vdc_sat_snapshot="${trace}.sat"
 vdc_io_trace="${trace}.vdc-io"
+main_ram_snapshot="${trace}.ram"
+bram_snapshot="${trace}.bram"
+save_manager_code_dump="${trace}.save-manager-code"
+command_ram_trace="${trace}.command-ram"
+command_consumer_trace="${trace}.command-consumer"
+command_code_snapshot="${trace}.command-code"
+command_ram_before_snapshot="${trace}.command-before.ram"
+command_ram_after_snapshot="${trace}.command-after.ram"
 transition_receipt="${trace}.transition"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
@@ -771,7 +812,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_io_trace" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
@@ -792,6 +833,7 @@ if [[ -n "$configured_home" ]]; then
         find "$home_dir/sav" -type f -name '*.sav' ! -size 2048c -delete
     fi
 fi
+mkdir -p "$home_dir/sav"
 link_capture_cue_members() {
     local source_cue=$1
     local destination_dir=$2
@@ -886,12 +928,18 @@ launch=(
     FIRESTAFF_THERON_IRQ2_TRACE="$trace" \
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
+    FIRESTAFF_THERON_ADPCM_PLAYBACK_TRACE="$adpcm_playback_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
     FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
+    FIRESTAFF_THERON_POST_DUNGEON_ORDINAL="$post_dungeon_ordinal" \
+    FIRESTAFF_THERON_POST_DUNGEON_OVERLAY_ISO="$post_dungeon_overlay_iso" \
+    FIRESTAFF_THERON_TITLE_WAIT_INPUT="$title_wait_input" \
+    FIRESTAFF_THERON_MENU_ROUTE="$menu_route" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_SELECTED_RECORD_TRACE="$selected_record_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_SAMPLE_LIMIT="$main_ram_consumer_sample_limit" \
     FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \
     FIRESTAFF_THERON_RAM_PROVENANCE_TRACE="$ram_provenance_trace" \
@@ -904,9 +952,22 @@ launch=(
     FIRESTAFF_THERON_RNG_CONSUMER_SAMPLE_LIMIT="$rng_consumer_sample_limit" \
     FIRESTAFF_THERON_RNG_CONSUMER_WINDOW_LIMIT="$rng_consumer_window_limit" \
     FIRESTAFF_THERON_RNG_CODE_TRACE="$rng_code_trace" \
+    FIRESTAFF_THERON_RNG_STATE_TRACE="$rng_state_trace" \
+    FIRESTAFF_THERON_RNG_GENERATOR_CONTEXT_TRACE="$rng_generator_context_trace" \
     FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot" \
     FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot" \
+    FIRESTAFF_THERON_VDC_STATE_SNAPSHOT="$vdc_state_snapshot" \
+    FIRESTAFF_THERON_VDC_SAT_SNAPSHOT="$vdc_sat_snapshot" \
     FIRESTAFF_THERON_VDC_IO_TRACE="$vdc_io_trace" \
+    FIRESTAFF_THERON_MAIN_RAM_SNAPSHOT="$main_ram_snapshot" \
+    FIRESTAFF_THERON_BRAM_SNAPSHOT="$bram_snapshot" \
+    FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP="$save_manager_code_dump" \
+    FIRESTAFF_THERON_COMMAND_RAM_TRACE="$command_ram_trace" \
+    FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE="$command_consumer_trace" \
+    FIRESTAFF_THERON_COMMAND_CODE_SNAPSHOT="$command_code_snapshot" \
+    FIRESTAFF_THERON_COMMAND_RAM_BEFORE_SNAPSHOT="$command_ram_before_snapshot" \
+    FIRESTAFF_THERON_COMMAND_RAM_AFTER_SNAPSHOT="$command_ram_after_snapshot" \
+    FIRESTAFF_THERON_VDC_IO_TRACE_LIMIT="$vdc_io_trace_limit" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
@@ -914,6 +975,7 @@ launch=(
     -which_medium 0 \
     -sound "$capture_sound" \
     -video.driver softfb \
+    -filesys.path_sav "$home_dir/sav" \
     -pce.input.multitap 0 \
     -pce.input.port1 gamepad \
     -"$capture_arcadecard_setting" 0 \
@@ -1118,15 +1180,127 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$vdc_io_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
+    exit 1
+fi
+if [[ -s "$command_consumer_trace" ]] && ! awk '
+    NR == 1 { if ($0 != "FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE_V1") exit 1; next }
+    NR == 2 { if ($0 != "source=mednafen-pce-instrumented-command-consumer") exit 1; next }
+    /^command_consumer_read / {
+        expected = "sequence=" (count + 0) " "
+        if (index($0, expected) == 0 || $0 !~ /^command_consumer_read sequence=[0-9]+ logical_address=[0-9a-f]{4} physical_address=[0-9a-f]{6} value=[0-9a-f]{2} reader_pc=[0-9a-f]{4} reader_physical_pc=[0-9a-f]{6} a=[0-9a-f]{2} x=[0-9a-f]{2} y=[0-9a-f]{2} sp=[0-9a-f]{2} p=[0-9a-f]{2}$/) exit 1
+        if ($0 !~ / logical_address=[23][0-9a-f][0-9a-f][0-9a-f] /) exit 1
+        count++
+        next
+    }
+    /^command_consumer_boundary / {
+        if ($0 != "command_consumer_boundary sequence=" count) exit 1
+        boundary = 1
+        next
+    }
+    { exit 1 }
+    END { if (NR < 4 || !count || count >= 65536 || !boundary || $0 != "command_consumer_boundary sequence=" count) exit 1 }
+' "$command_consumer_trace"; then
+    printf '%s\n' 'FAIL: command consumer trace is not one atomically bounded V1 read window' >&2
+    exit 1
+fi
+if [[ -s "$rng_state_trace" ]] && ! awk '
+    NR == 1 { if ($0 != "source=mednafen-pce-instrumented-rng-state-v2") exit 1; next }
+    /^rng_state_boundary / {
+        sequence = kind = pc = physical = caller = caller_physical = b9 = ba = ""
+        for (i = 1; i <= NF; i++) {
+            if ($i ~ /^sequence=/) sequence = substr($i, 10) + 0
+            if ($i ~ /^kind=/) kind = substr($i, 6)
+            if ($i ~ /^pc=/) pc = substr($i, 4)
+            if ($i ~ /^physical_pc=/) physical = substr($i, 13)
+            if ($i ~ /^caller_pc=/) caller = substr($i, 11)
+            if ($i ~ /^caller_physical_pc=/) caller_physical = substr($i, 20)
+            if ($i ~ /^r28b9=/) b9 = substr($i, 7)
+            if ($i ~ /^r28ba=/) ba = substr($i, 7)
+        }
+        if (sequence != expected_sequence || caller == "" ||
+            caller_physical == "") exit 1
+        if (!pending) {
+            if (kind != "entry" || pc != "4667" || physical != "000d0667") exit 1
+            if (have_previous && (b9 != previous_b9 || ba != previous_ba)) exit 1
+            entry_caller = caller
+            pending = 1
+        } else {
+            if (kind != "return" || pc != "467e" || physical != "000d067e" || caller != entry_caller) exit 1
+            previous_b9 = b9
+            previous_ba = ba
+            have_previous = 1
+            pending = 0
+            expected_sequence++
+        }
+        next
+    }
+    { exit 1 }
+    END { if (NR < 3 || pending || expected_sequence == 0) exit 1 }
+' "$rng_state_trace"; then
+    printf '%s\n' 'FAIL: RNG state trace is not a contiguous entry/return sequence' >&2
     exit 1
 fi
 require_snapshot_size "$vram_snapshot" 65536 'VDC VRAM' || exit 1
 require_snapshot_size "$vce_snapshot" 1024 'VCE palette RAM' || exit 1
+require_snapshot_size "$vdc_sat_snapshot" 512 'VDC sprite attribute table' || exit 1
+require_snapshot_size "$main_ram_snapshot" 8192 'PCE main RAM' || exit 1
+require_snapshot_size "$bram_snapshot" 2048 'PCE backup RAM' || exit 1
+if [[ -s "$command_ram_trace" ]]; then
+    if ! awk '
+        NR == 1 { if ($0 != "FIRESTAFF_THERON_COMMAND_RAM_TRACE_V1") exit 1; next }
+        NR == 2 { if ($0 != "source=mednafen-pce-instrumented-command-ram") exit 1; next }
+        /^input_buffer_write / {
+            expected = "sequence=" (input_seen + 0) " "
+            if (index($0, expected) == 0 || $0 !~ /^input_buffer_write sequence=[0-9]+ logical_address=28b[89] value=[0-9a-f][0-9a-f] writer_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f] writer_physical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/) exit 1
+            input_seen++
+            next
+        }
+        /^command_ram_write / {
+            expected = "sequence=" (command_count + 0) " "
+            if (index($0, expected) == 0 || $0 !~ /^command_ram_write sequence=[0-9]+ logical_address=[0-9a-f][0-9a-f][0-9a-f][0-9a-f] physical_address=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f] value=[0-9a-f][0-9a-f] writer_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f] writer_physical_pc=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]$/) exit 1
+            command_seen = 1
+            command_count++
+            next
+        }
+        /^command_ram_boundary / {
+            if ($0 != "command_ram_boundary sequence=65536" || command_count != 65536) exit 1
+            boundary_seen = 1
+            next
+        }
+        { exit 1 }
+        END {
+            if (NR < 3 || !input_seen) exit 1
+            if (command_seen &&
+                (command_count != 65536 || !boundary_seen ||
+                 $0 != "command_ram_boundary sequence=65536")) exit 1
+            if (!command_seen && boundary_seen) exit 1
+        }
+    ' "$command_ram_trace"; then
+        printf '%s\n' 'FAIL: command RAM trace is not one atomically bounded V1 command window' >&2
+        exit 1
+    fi
+    if grep -Fq 'command_ram_write sequence=0 ' "$command_ram_trace"; then
+        require_snapshot_size "$command_code_snapshot" 65536 'command code bank' || exit 1
+        require_snapshot_size "$command_ram_before_snapshot" 8192 'command-before PCE main RAM' || exit 1
+        require_snapshot_size "$command_ram_after_snapshot" 8192 'command-after PCE main RAM' || exit 1
+    elif [[ -e "$command_code_snapshot" || -e "$command_ram_before_snapshot" ||
+            -e "$command_ram_after_snapshot" ]]; then
+        printf '%s\n' 'FAIL: input-only control emitted command snapshot sidecars' >&2
+        exit 1
+    fi
+fi
+if [[ ! -s "$vdc_state_snapshot" ]] ||
+   ! grep -Fqx 'FIRESTAFF_THERON_VDC_STATE_V1' "$vdc_state_snapshot" ||
+   ! grep -Eq '^vdc=0 bxr=[0-9a-f]{4} byr=[0-9a-f]{4} mwr=[0-9a-f]{4} hsr=[0-9a-f]{4} hdr=[0-9a-f]{4} vsr=[0-9a-f]{4} vdr=[0-9a-f]{4} vcr=[0-9a-f]{4} cr=[0-9a-f]{4}$' "$vdc_state_snapshot"; then
+    printf 'BLOCKED: capture lacks the same-instant HuC6270 register snapshot (exit=%s)\n' "$status"
+    exit 1
+fi
 if [[ ! -s "$vdc_io_trace" ]] ||
-   ! grep -Fqx 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$vdc_io_trace"; then
-    printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked VDC I/O trace' >&2
+   ! grep -Fqx 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$vdc_io_trace" ||
+   ! grep -Eq "^vdc_snapshot_boundary sequence=${vdc_io_trace_limit} timestamp=[0-9]+$" "$vdc_io_trace"; then
+    printf '%s\n' 'FAIL: Mednafen did not produce an atomically bounded VDC I/O/snapshot trace' >&2
     exit 1
 fi
 # The loader receipt is separate from the later dynamic game-data handoff.
@@ -1194,9 +1368,62 @@ transition_spawn_preconsumer_4644_count=$(trace_count '^spawn_consumer_registers
 transition_spawn_helper_4667_count=$(trace_count '^spawn_consumer_registers .*helper_4667=1' "$spawn_register_trace")
 transition_spawn_helper_4667_special_count=$(perl -ne 'if (/^spawn_consumer_registers .*helper_4667=1/ && / b3=([0-9a-fA-F]+)/ && ((hex($1) & 7) == 4)) { $count++ } END { print $count || 0 }' "$spawn_register_trace" 2>/dev/null || printf '0')
 transition_rng_consumer_sample_count=$(trace_count '^rng_consumer_window ' "$rng_consumer_trace")
+transition_rng_state_boundary_count=$(trace_count '^rng_state_boundary ' "$rng_state_trace")
+transition_rng_generator_context_count=$(trace_count '^rng_generator_context ' "$rng_generator_context_trace")
 transition_rng_code_window_count=$(trace_count '^rng_code_window ' "$rng_code_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
+transition_command_ram_write_count=$(trace_count '^command_ram_write ' "$command_ram_trace")
+transition_command_input_write_count=$(trace_count '^input_buffer_write ' "$command_ram_trace")
+transition_command_consumer_read_count=$(trace_count '^command_consumer_read ' "$command_consumer_trace")
+transition_command_consumer_source_read_count=$(if [[ -s "$command_consumer_trace" ]]; then awk '
+    /^command_consumer_read / {
+        for (i = 1; i <= NF; i++) {
+            if ($i ~ /^logical_address=/) {
+                address = substr($i, 17)
+                if (address >= "2600" && address < "2800") count++
+            }
+        }
+    }
+    END { print count + 0 }
+' "$command_consumer_trace"; else printf '0\n'; fi)
+transition_command_consumer_post_dispatch_source_read_count=$(if [[ -s "$command_consumer_trace" ]]; then awk '
+    /^command_consumer_read / {
+        address = ""
+        pc = ""
+        for (i = 1; i <= NF; i++) {
+            if ($i ~ /^logical_address=/) address = substr($i, 17)
+            if ($i ~ /^reader_pc=/) pc = substr($i, 11)
+        }
+        if (!dispatched && address == "2905" && pc == "d34d") {
+            dispatched = 1
+            next
+        }
+        if (dispatched && address >= "2600" && address < "2800") count++
+    }
+    END { print count + 0 }
+' "$command_consumer_trace"; else printf '0\n'; fi)
+transition_dungeon_bank_da=unavailable
+transition_dungeon_bank_db=unavailable
+transition_runtime_2038=unavailable
+transition_current_level_2031=unavailable
+transition_party_direction_203f=unavailable
+transition_party_x_2040=unavailable
+transition_party_y_2041=unavailable
+if [[ -f "$main_ram_snapshot" ]] &&
+   [[ $(wc -c < "$main_ram_snapshot") -eq 8192 ]]; then
+    # BaseRAM is mapped at logical $2000, so snapshot offsets $DA/$DB are
+    # the original engine's $20DA/$20DB dungeon-bank selectors. Reporting
+    # the raw bytes is provenance only; dungeon identity is source-locked
+    # separately.
+    transition_dungeon_bank_da=$(od -An -tx1 -j 218 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_dungeon_bank_db=$(od -An -tx1 -j 219 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_runtime_2038=$(od -An -tx1 -j 56 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_current_level_2031=$(od -An -tx1 -j 49 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_party_direction_203f=$(od -An -tx1 -j 63 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_party_x_2040=$(od -An -tx1 -j 64 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+    transition_party_y_2041=$(od -An -tx1 -j 65 -N 1 "$main_ram_snapshot" | tr -d '[:space:]')
+fi
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'mednafen_module=%s\n' "$capture_mednafen_module"
@@ -1205,6 +1432,7 @@ transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
     printf 'track02_md5=%s\n' "$track02_md5"
     printf 'system_card_md5=%s\n' "$system_card_md5"
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
+    printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'host_sdl_events=%s\n' "$transition_host_sdl_event_count"
@@ -1258,10 +1486,33 @@ transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
     printf 'rng_consumer_sample_limit=%s\n' "$rng_consumer_sample_limit"
     printf 'rng_consumer_window_limit=%s\n' "$rng_consumer_window_limit"
     printf 'rng_code_windows=%s\n' "$transition_rng_code_window_count"
+    printf 'rng_state_boundaries=%s\n' "$transition_rng_state_boundary_count"
+    printf 'rng_generator_contexts=%s\n' "$transition_rng_generator_context_count"
+    printf 'dungeon_bank_20da=%s\n' "$transition_dungeon_bank_da"
+    printf 'dungeon_bank_20db=%s\n' "$transition_dungeon_bank_db"
+    printf 'runtime_byte_2038=%s\n' "$transition_runtime_2038"
+    printf 'current_level_2031=%s\n' "$transition_current_level_2031"
+    printf 'party_direction_203f=%s\n' "$transition_party_direction_203f"
+    printf 'party_x_2040=%s\n' "$transition_party_x_2040"
+    printf 'party_y_2041=%s\n' "$transition_party_y_2041"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'
+    printf 'main_ram_snapshot_bytes=8192\n'
+    printf 'bram_snapshot_bytes=2048\n'
     printf 'vce_palette_snapshot_bytes=1024\n'
     printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"
+    printf 'vdc_io_trace_limit=%s\n' "$vdc_io_trace_limit"
+    printf 'command_ram_writes=%s\n' "$transition_command_ram_write_count"
+    printf 'command_input_buffer_writes=%s\n' "$transition_command_input_write_count"
+    printf 'command_consumer_reads=%s\n' "$transition_command_consumer_read_count"
+    printf 'command_consumer_source_reads=%s\n' "$transition_command_consumer_source_read_count"
+    printf 'command_consumer_post_dispatch_source_reads=%s\n' \
+        "$transition_command_consumer_post_dispatch_source_read_count"
+    if [[ "$transition_command_ram_write_count" -gt 0 ]]; then
+        printf 'command_code_snapshot_bytes=65536\n'
+        printf 'command_before_ram_snapshot_bytes=8192\n'
+        printf 'command_after_ram_snapshot_bytes=8192\n'
+    fi
     trace_input_order_receipt "$input_trace"
     if [[ "$host_input_requested" == 1 ]]; then
         if [[ -n "$host_key_sequence" ]]; then

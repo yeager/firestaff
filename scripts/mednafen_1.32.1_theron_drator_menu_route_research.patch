@@ -1,0 +1,195 @@
+diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -42,4 +42,53 @@ namespace MDFN_IEN_PCE
+ static bool TheronPostDungeonOrdinalInjected;
+ static bool TheronPostDungeonEntryInjected;
+ static bool TheronTitleWaitInputInjected;
++static unsigned TheronDratorMenuStage;
++static unsigned TheronDratorScenarioStep;
++static unsigned TheronDratorOverlayAcceptCount;
++static unsigned TheronDratorTwoChoiceStep;
++static unsigned TheronDratorPostScenarioAcceptCount;
++static unsigned TheronDratorGeneratorRouteStage;
++static unsigned TheronDratorGeneratorRouteDelay;
++static unsigned TheronDratorGeneratorInputStartFrame;
++unsigned TheronScriptInputFrame(void);
++uint16 TheronDratorGeneratorInputMask(void)
++{
++ if(TheronDratorGeneratorRouteStage == 0 && TheronDratorMenuStage == 0)
++ {
++  const unsigned phase = TheronScriptInputFrame() % 300u;
++  if(phase >= 1u && phase <= 5u) return 0x0008;
++ }
++ if(TheronDratorGeneratorRouteStage == 1 || TheronDratorGeneratorRouteStage == 3)
++ {
++  const unsigned route_frame = TheronScriptInputFrame() - TheronDratorGeneratorInputStartFrame;
++  const unsigned warmup = TheronDratorGeneratorRouteStage == 1 ? 900 : 120;
++  if(route_frame <= warmup) return 0;
++  const unsigned frame = route_frame - warmup;
++  uint16 mask = 0;
++  /* Controller-only panel discovery.  Stage 3 first returns the cursor to
++   * the upper panel area; alternating rows then sweep horizontally with a
++   * clean Button-I edge at every sample. */
++  if(TheronDratorGeneratorRouteStage == 3 && frame <= 240)
++   return 0x0010;
++  const unsigned scan_frame = frame - 1 -
++                               (TheronDratorGeneratorRouteStage == 3 ? 240 : 0);
++  const unsigned row = scan_frame / 270;
++  const unsigned row_frame = scan_frame % 270;
++  if(row < 10)
++  {
++   if(row_frame < 240)
++   {
++    const unsigned sample_frame = row_frame % 20;
++    if(sample_frame < 15)
++     mask |= (row & 1) ? 0x0080 : 0x0020;
++    else
++     mask |= 0x0001;
++   }
++   else
++    mask |= 0x0040;
++  }
++  return mask;
++ }
++ return 0;
++}
+ static FILE *TheronMainRAMLoaderTrace;
+@@ -876,1 +925,124 @@ NO_INLINE void HuC6280::RunSub(void)
++	 /* Research-only navigation through the original title and scenario menus.
++	  * Every write is gated by the exact executing opcode sequence. */
++	 {
++	  const char *route = getenv("FIRESTAFF_THERON_MENU_ROUTE");
++	  if(route && (!strcmp(route, "drator") ||
++	               !strcmp(route, "drator-generator")))
++	  {
++	   if(TheronDratorMenuStage == 0 && PC == 0x7557 &&
++	      RdMem(0x7552) == 0x44 && RdMem(0x7553) == 0xf5 &&
++	      RdMem(0x7554) == 0x20 && RdMem(0x7555) == 0x63 &&
++	      RdMem(0x7556) == 0xe0 && RdMem(0x7557) == 0xad &&
++	      RdMem(0x7558) == 0x2d && RdMem(0x7559) == 0x22)
++	   {
++	    WrMem(0x222d, 0x01);
++	    TheronDratorMenuStage = 1;
++	    fprintf(stderr, "Theron Drator route: title input pc=%04x\n", PC);
++	    fflush(stderr);
++	   }
++	   else if(TheronDratorMenuStage <= 1 && PC == 0x6e44 &&
++	           RdMem(0x6e3e) == 0x20 && RdMem(0x6e3f) == 0x49 &&
++	           RdMem(0x6e40) == 0x75 && RdMem(0x6e41) == 0x20 &&
++	           RdMem(0x6e42) == 0x63 && RdMem(0x6e43) == 0xe0 &&
++	           RdMem(0x6e44) == 0xad && RdMem(0x6e45) == 0x28 &&
++	           RdMem(0x6e46) == 0x22)
++	   {
++	    WrMem(0x2228, TheronDratorTwoChoiceStep++ == 0 ? 0x10 : 0x01);
++	    if(TheronDratorTwoChoiceStep == 2)
++	     TheronDratorMenuStage = 2;
++	    fprintf(stderr, "Theron Drator route: two-choice step=%u pc=%04x\n",
++	            TheronDratorTwoChoiceStep, PC);
++	    fflush(stderr);
++	   }
++	   else if(TheronDratorMenuStage >= 2 && TheronDratorMenuStage <= 4 &&
++	           TheronDratorOverlayAcceptCount < 32 && PC == 0x5c97 &&
++	           RdMem(0x5c94) == 0x20 && RdMem(0x5c95) == 0x63 &&
++	           RdMem(0x5c96) == 0xe0 && RdMem(0x5c97) == 0xad &&
++	           RdMem(0x5c98) == 0x2d && RdMem(0x5c99) == 0x22)
++	   {
++	    WrMem(0x222d, 0x01);
++	    if(TheronDratorMenuStage == 2)
++	     TheronDratorMenuStage = 3;
++	    TheronDratorOverlayAcceptCount++;
++	    fprintf(stderr, "Theron Drator route: overlay accept=%u pc=%04x\n",
++	            TheronDratorOverlayAcceptCount, PC);
++	    fflush(stderr);
++	   }
++	   else if(TheronDratorMenuStage == 3 && PC == 0x6dbd &&
++	           RdMem(0x6dba) == 0x20 && RdMem(0x6dbb) == 0x63 &&
++	           RdMem(0x6dbc) == 0xe0 && RdMem(0x6dbd) == 0xad &&
++	           RdMem(0x6dbe) == 0x28 && RdMem(0x6dbf) == 0x22)
++	   {
++	    WrMem(0x2228, 0x01);
++	    TheronDratorScenarioStep++;
++	    TheronDratorMenuStage = 4;
++	    fprintf(stderr, "Theron Drator route: scenario step=%u pc=%04x\n",
++	            TheronDratorScenarioStep, PC);
++	    fflush(stderr);
++	   }
++	   else if(TheronDratorMenuStage == 4 &&
++	           TheronDratorPostScenarioAcceptCount < 32 && PC == 0x7557 &&
++	           RdMem(0x7552) == 0x44 && RdMem(0x7553) == 0xf5 &&
++	           RdMem(0x7554) == 0x20 && RdMem(0x7555) == 0x63 &&
++	           RdMem(0x7556) == 0xe0 && RdMem(0x7557) == 0xad &&
++	           RdMem(0x7558) == 0x2d && RdMem(0x7559) == 0x22)
++	   {
++	    WrMem(0x222d, 0x01);
++	    TheronDratorPostScenarioAcceptCount++;
++	    fprintf(stderr, "Theron Drator route: post-scenario accept=%u pc=%04x\n",
++	            TheronDratorPostScenarioAcceptCount, PC);
++	    fflush(stderr);
++	   }
++	  }
++	  if(route && !strcmp(route, "drator-generator") &&
++	     TheronDratorMenuStage == 4)
++	  {
++	   const uint8 level = RdMem(0x2031);
++	   const uint8 direction = RdMem(0x203f);
++	   const uint8 party_x = RdMem(0x2040);
++	   const uint8 party_y = RdMem(0x2041);
++	   /* The route begins only at the authenticated Drator cold-start tuple.
++	    * $2228 is the original controller-result byte already used by the
++	    * signature-bound menu waits above.  Pulses are separated by a long
++	    * release interval so every turn is a distinct original input edge. */
++	   if(TheronDratorGeneratorRouteStage == 0 && level == 0x02 &&
++	      direction == 0x01 && party_x == 0x02 && party_y == 0x03)
++	   {
++	    TheronDratorGeneratorRouteStage = 1;
++	    TheronDratorGeneratorRouteDelay = 0;
++	    TheronDratorGeneratorInputStartFrame = TheronScriptInputFrame();
++	    fprintf(stderr, "Theron Drator generator route: start level=%02x x=%02x y=%02x direction=%02x input_frame=%u\n",
++	            level, party_x, party_y, direction, TheronScriptInputFrame());
++	    fflush(stderr);
++	   }
++	   else if(TheronDratorGeneratorRouteStage == 1)
++	   {
++	    if(party_x != 0x02 || party_y != 0x03)
++	    {
++	     TheronDratorGeneratorRouteStage = 2;
++	     TheronDratorGeneratorRouteDelay = 0;
++	     fprintf(stderr, "Theron Drator generator route: left-event x=%02x y=%02x direction=%02x input_frame=%u\n",
++	             party_x, party_y, direction, TheronScriptInputFrame());
++	     fflush(stderr);
++	    }
++	   }
++	   else if(TheronDratorGeneratorRouteStage == 2 &&
++	           ++TheronDratorGeneratorRouteDelay >= 5000)
++	   {
++	    TheronDratorGeneratorRouteStage = 3;
++	    TheronDratorGeneratorRouteDelay = 0;
++	    TheronDratorGeneratorInputStartFrame = TheronScriptInputFrame();
++	   }
++	   else if(TheronDratorGeneratorRouteStage == 3)
++	   {
++	    if(party_x == 0x02 && party_y == 0x03)
++	    {
++	     TheronDratorGeneratorRouteStage = 8;
++	     fprintf(stderr, "Theron Drator generator route: reentered-event level=%02x x=%02x y=%02x direction=%02x\n",
++	             level, party_x, party_y, direction);
++	     fflush(stderr);
++	    }
++	   }
++	  }
++	 }
+ 	 /* Research-only one-shot controller value at the original title wait.
+diff --git a/src/pce/input/gamepad.cpp b/src/pce/input/gamepad.cpp
+--- a/src/pce/input/gamepad.cpp
++++ b/src/pce/input/gamepad.cpp
+@@ -24,3 +24,4 @@ namespace MDFN_IEN_PCE
+ {
++uint16 TheronDratorGeneratorInputMask(void);
+
+ class PCE_Input_Gamepad : public PCE_Input_Device
+@@ -97,3 +98,4 @@ void PCE_Input_Gamepad::Update(const uint8* data)
+ {
+  buttons = MDFN_de16lsb(data);
++ buttons |= TheronDratorGeneratorInputMask();
+  if(theron_script_run_hold &&

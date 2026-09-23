@@ -51,10 +51,10 @@ static int test_inventory(void) {
     unsigned int count = THERON_TOUCHCLICK_Compat_GetZoneCount();
     unsigned int i;
     printf("[inventory] zones=%u\n", count);
-    CHECK(count == 26, "Theron implemented-geometry inventory is the pinned 26 zones");
+    CHECK(count == 17, "only the modern V2 presentation inventory is published");
     CHECK(THERON_TOUCHCLICK_Compat_GetViewZoneCount(
-              THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT) == 9,
-          "V1 chrome view carries 9 zones");
+              THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT) == 0,
+          "unrecovered original V1 rectangles fail closed");
     CHECK(THERON_TOUCHCLICK_Compat_GetViewZoneCount(
               THERON_TOUCH_CLICK_VIEW_V2_HUD_OVERLAY_PC34_COMPAT) == 17,
           "V2 HUD overlay view carries 17 zones");
@@ -129,14 +129,10 @@ static void check_family_disjoint(const char* prefix, int expected,
 
 static void test_disjoint_families(int zoneCount) {
     printf("[disjoint-families]\n");
-    check_family_disjoint("champion.slot_", 4, zoneCount);
+    check_family_disjoint("champion.slot_", 0, zoneCount);
     check_family_disjoint("hud.rune_slot_", 4, zoneCount);
     check_family_disjoint("hud.champion_bar_", 4, zoneCount);
     check_family_disjoint("action.", 5, zoneCount);
-    /* The V1 coarse panels intentionally nest (message_bar and the
-     * champion slots sit inside bottom_panel) — that is the documented
-     * coarse-panel layout of the implemented chrome, not an overlap
-     * defect, and is therefore not asserted disjoint. */
 }
 
 /* ── 3. hit-test probes ─────────────────────────────────────────────── */
@@ -154,22 +150,10 @@ static void probe(TheronTouchClickViewPc34Compat view, int x, int y,
 static void test_hit_test_probes(void) {
     TheronTouchClickZonePc34Compat z;
     printf("[hit-test-probes]\n");
-    /* V1 chrome (320x240 extended canvas) */
-    probe(THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT, 160, 10,
-          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 1u,
-          "click in the top bar dispatches the TR_UI_TOPBAR zone id");
-    probe(THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT, 100, 100,
-          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 0u,
-          "click in the viewport hits the no-command viewport zone");
-    probe(THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT, 270, 100,
-          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 2u,
-          "click in the right panel dispatches TR_UI_RIGHT_PANEL");
-    probe(THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT, 160, 200,
-          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 4u,
-          "click in the bottom panel hits the coarse panel first (source order)");
-    probe(THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT, 10, 186,
-          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 4u,
-          "click over the message strip still hits bottom_panel first (source order)");
+    CHECK(!THERON_TOUCHCLICK_Compat_HitTestInView(
+              THERON_TOUCH_CLICK_VIEW_V1_CHROME_PC34_COMPAT, 121, 98,
+              TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &z),
+          "an observed original V1 point is not widened into an invented rectangle");
     /* V2 HUD overlay (256x224 native framebuffer) */
     probe(THERON_TOUCH_CLICK_VIEW_V2_HUD_OVERLAY_PC34_COMPAT, 16, 12,
           TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 0u,
@@ -298,20 +282,20 @@ static void test_decisions_and_counts(int zoneCount) {
                scale, expectedBelowMin[scale], expectedBelowRec[scale]);
     }
 
-    /* ── Pinned implemented-geometry contract (Theron chrome) ────── */
+    /* Pinned modern-presentation geometry; original V1 contributes zero. */
     CHECK(decisionCount[0] == 7,
           "exactly seven never-lifts zones (4x4 rune slots + 5px text glyph boxes — presentation-only indicators, consistent with the gesture runtime binding no commands there)");
-    CHECK(decisionCount[1] == 9, "floor-at-1x count pinned");
-    CHECK(decisionCount[2] == 6,
-          "needs-2x count (16px message bar, 24px top bar/compass, 14px action strip cells, 8px champion bars, ...)");
+    CHECK(decisionCount[1] == 1, "floor-at-1x count pinned");
+    CHECK(decisionCount[2] == 5,
+          "needs-2x count for modern compass and action cells");
     CHECK(decisionCount[3] == 4, "needs-3x count pinned");
     CHECK(decisionCount[4] == 0, "no zone needs 4x");
-    CHECK(expectedBelowMin[1] == 17, "1x below-minimum count pinned");
+    CHECK(expectedBelowMin[1] == 16, "1x below-minimum count pinned");
     CHECK(expectedBelowMin[2] == 11, "2x below-minimum count pinned");
     CHECK(expectedBelowMin[3] == 7,  "3x below-minimum count pinned");
     CHECK(expectedBelowMin[4] == 7,  "4x below-minimum count pinned");
-    CHECK(expectedBelowRec[1] == 19, "1x below-recommended count pinned");
-    CHECK(expectedBelowRec[2] == 17, "2x below-recommended count pinned");
+    CHECK(expectedBelowRec[1] == 17, "1x below-recommended count pinned");
+    CHECK(expectedBelowRec[2] == 16, "2x below-recommended count pinned");
     CHECK(expectedBelowRec[3] == 16, "3x below-recommended count pinned");
     CHECK(expectedBelowRec[4] == 11, "4x below-recommended count pinned");
 }

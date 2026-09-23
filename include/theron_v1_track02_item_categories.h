@@ -8,11 +8,10 @@
 extern "C" {
 #endif
 
-/* Source: US Track 02 BIN, UD 0x21A046.
- * 66-byte category/type table, one byte per primary item name.
- * Values: 0x22 = COMPASS (unique), 0x80 = weapon, 0x81 = armor, 0x82 = consumable.
- * This category table is not a T900 drop record; no drop resolver is exposed
- * until an original drop consumer and item-selection record are decoded. */
+/* Historical dungeon-7 analysis fixture from US Track 02 UD 0x21A046.
+ * These bytes are dungeon-local type codes, not global semantic categories.
+ * Production uses Theron_Track02ItemNameSource for all seven US/JP tables and
+ * the thing record's own category family.  Keep this API fixture-only. */
 
 #define THERON_TRACK02_ITEM_CATEGORY_COUNT  66u
 
@@ -20,6 +19,9 @@ extern "C" {
 #define THERON_ITEM_CAT_WEAPON      0x80
 #define THERON_ITEM_CAT_ARMOR       0x81
 #define THERON_ITEM_CAT_CONSUMABLE  0x82
+/* Neutral carried category copied from the authentic thing-record family.
+ * Unlike the legacy Demon-bank values above, this is not a type-table byte. */
+#define THERON_ITEM_CAT_SOURCE_MISC 0x0au
 
 uint8_t theron_v1_track02_item_category(unsigned int index);
 size_t theron_v1_track02_item_category_count(void);

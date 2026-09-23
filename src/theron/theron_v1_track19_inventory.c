@@ -27,6 +27,32 @@ static size_t theron_v1_track19_pregap_sectors(const char *md5,
     return 0u;
 }
 
+int theron_v1_track19_item_type_codes_from_iso(
+        const uint8_t *iso, size_t iso_size, int japanese_variant,
+        uint8_t out_codes[THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT],
+        size_t *out_offset, uint32_t *out_fnv1a) {
+    const size_t offset = japanese_variant
+        ? THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET
+        : THERON_V1_TRACK19_ITEM_TYPE_CODE_US_OFFSET;
+    const uint32_t expected = japanese_variant
+        ? THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A
+        : THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A;
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!iso || !out_codes ||
+        iso_size < offset + THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT) return 0;
+    for (i = 0u; i < THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT; ++i) {
+        hash ^= iso[offset + i];
+        hash *= 16777619u;
+    }
+    if (hash != expected) return 0;
+    memcpy(out_codes, iso + offset, THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT);
+    if (out_offset) *out_offset = offset;
+    if (out_fnv1a) *out_fnv1a = hash;
+    return 1;
+}
+
 int theron_v1_track19_inventory(const char *md5,
                                 size_t bytes,
                                 Theron_V1Track19InventoryReceipt *out) {
@@ -191,6 +217,17 @@ int theron_v1_track19_inventory_file(
         }
         out->level_label_table_verified = 1;
     }
+    {
+        uint8_t type_codes[THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT];
+        if (!theron_v1_track19_item_type_codes_from_iso(
+                data, normalized_bytes, strcmp(out->variant, "jp") == 0,
+                type_codes, &out->item_type_code_table_offset,
+                &out->item_type_code_table_fnv1a)) {
+            free(data);
+            return 0;
+        }
+        out->item_type_code_table_verified = 1;
+    }
     if (!theron_v1_track19_opaque_record_window_validate(
             data, normalized_bytes, strcmp(out->variant, "jp") == 0,
             &out->opaque_record_window_offset,
@@ -225,5 +262,108 @@ int theron_v1_track19_inventory_file(
     out->startup_level_nonzero_payload_bytes = envelope.nonzero_payload_bytes;
     out->startup_level_payload_fnv1a = envelope.payload_fnv1a;
     free(data);
+    return 1;
+}
+
+int theron_v1_track19_item_name_bank_file(
+        const char *path, Theron_V1Track19ItemNameBank *out) {
+    Theron_V1Track19InventoryReceipt inventory;
+    FILE *file;
+    long file_size;
+    size_t source_bytes, sector_bytes, sector_count, normalized_bytes;
+    uint8_t *data;
+    unsigned int i;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!path || !out ||
+        !theron_v1_track19_inventory_file(path, &inventory) ||
+        !inventory.item_name_table_verified ||
+        !(file = fopen(path, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || file_size > 64L * 1024L * 1024L ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file); return 0;
+    }
+    source_bytes = (size_t)file_size;
+    sector_bytes = inventory.mode1_2352 ? 2352u : 2048u;
+    sector_count = source_bytes / sector_bytes;
+    normalized_bytes = sector_count * 2048u;
+    data = (uint8_t *)malloc(normalized_bytes);
+    if (!data) { fclose(file); return 0; }
+    if (inventory.mode1_2048) {
+        if (fread(data, 1u, normalized_bytes, file) != normalized_bytes) {
+            free(data); fclose(file); return 0;
+        }
+    } else {
+        for (i = 0u; i < sector_count; ++i) {
+            if (fseek(file, (long)(i * 2352u + 16u), SEEK_SET) != 0 ||
+                fread(data + i * 2048u, 1u, 2048u, file) != 2048u) {
+                free(data); fclose(file); return 0;
+            }
+        }
+    }
+    fclose(file);
+    if (strcmp(inventory.variant, "us") == 0) {
+        char name[THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY];
+        out->variant = 2;
+        out->source_span_fnv1a = 0x5be5602du;
+        out->type_code_source_offset =
+            THERON_V1_TRACK19_ITEM_TYPE_CODE_US_OFFSET;
+        out->type_code_source_fnv1a =
+            THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A;
+        for (i = 0u; i < THERON_V1_TRACK19_ITEM_NAME_COUNT; ++i) {
+            size_t length;
+            if (!theron_v1_track19_us_item_name_from_iso(
+                    data, normalized_bytes, i, name, sizeof(name)) ||
+                (length = strlen(name)) == 0u ||
+                length >= THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY) {
+                free(data); memset(out, 0, sizeof(*out)); return 0;
+            }
+            memcpy(out->raw_names[i], name, length);
+            out->raw_name_sizes[i] = (uint8_t)length;
+        }
+    } else if (strcmp(inventory.variant, "jp") == 0) {
+        out->variant = 1;
+        out->source_span_fnv1a = 0x1020ac88u;
+        out->type_code_source_offset =
+            THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET;
+        out->type_code_source_fnv1a =
+            THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A;
+        for (i = 0u; i < THERON_V1_TRACK19_ITEM_NAME_COUNT; ++i) {
+            size_t length = 0u;
+            if (!theron_v1_track19_jp_item_name_from_iso(
+                    data, normalized_bytes, i, out->raw_names[i],
+                    THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY, &length) ||
+                length == 0u ||
+                length >= THERON_V1_TRACK19_ITEM_NAME_RAW_CAPACITY) {
+                free(data); memset(out, 0, sizeof(*out)); return 0;
+            }
+            out->raw_name_sizes[i] = (uint8_t)length;
+        }
+    } else {
+        free(data); return 0;
+    }
+    if (!theron_v1_track19_item_type_codes_from_iso(
+            data, normalized_bytes, out->variant == 1,
+            out->raw_type_codes, NULL, NULL)) {
+        free(data); memset(out, 0, sizeof(*out)); return 0;
+    }
+    {
+        const size_t property_offset = out->variant == 1
+            ? THERON_TRACK19_ITEM_PROPERTY_TABLE_JP_OFFSET
+            : THERON_TRACK19_ITEM_PROPERTY_TABLE_US_OFFSET;
+        memcpy(out->raw_properties, data + property_offset,
+               THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES);
+        out->property_source_fnv1a =
+            THERON_TRACK19_ITEM_PROPERTY_TABLE_FNV1A;
+    }
+    free(data);
+    out->valid = 1;
+    out->count = THERON_V1_TRACK19_ITEM_NAME_COUNT;
+    snprintf(out->source_md5, sizeof(out->source_md5), "%s",
+             inventory.source_md5);
+    out->item_mapping_proven = 0;
+    out->mapped_track02_dungeon_mask = 0u;
+    out->host_text_rendering_proven = 0;
     return 1;
 }

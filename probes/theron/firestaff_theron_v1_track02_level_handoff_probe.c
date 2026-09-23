@@ -717,7 +717,7 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
               0x0108e938u);
     check_u32("synthetic startup semantic receipt progression seed0",
               startup_receipt.progression_seed0,
-              313u);
+              0x0108e938u);
     status = theron_v1_track02_load_startup_semantic_level(
         track,
         sizeof(track),

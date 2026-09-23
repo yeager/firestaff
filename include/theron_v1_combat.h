@@ -48,7 +48,10 @@ extern "C" {
 #define THERON_CREATURE_SLOT_SUICIDER  4   /* kamikaze bomb creature */
 #define THERON_CREATURE_SLOT_COUNT      5
 
-/* ── Creature type IDs — 7 real creature types from Track 02 UD 0x2741EF ── */
+/* Legacy host combat slots.  The seven strings at Track 02 UD 0x2741EF are
+ * dungeon/region labels, not category-4 creature type IDs.  Authentic
+ * category-4 groups retain their raw type byte and do not map through this
+ * fixture-era enum. */
 typedef enum {
     THERON_CREATURE_NONE          = 0,
     THERON_CREATURE_AKUTUBA       = 1,   /* Dungeon 0 creature */
@@ -172,9 +175,10 @@ typedef struct {
     uint8_t    source_direction_flags;
     uint16_t   source_flags_word;
     uint16_t   source_unknown_word;
-    /* Track 02 regular-spawn category from the authenticated creature
-     * descriptor.  0xff means the source has no regular-spawn descriptor
-     * (currently scripted THIEF/DEMON); it is not a gameplay default. */
+    /* Track 02 regular-spawn category from an authenticated runtime join.
+     * Static category-4 groups currently carry 0xff because their raw type
+     * byte has no proven index join to the separate seven-entry descriptor;
+     * 0xff is not a gameplay default. */
     uint8_t    source_spawn_category;
     uint8_t    source_raw_size;
     uint8_t    source_raw[16];

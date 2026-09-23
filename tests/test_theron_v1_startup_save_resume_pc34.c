@@ -310,6 +310,41 @@ static int write_bytes(const char *path, const uint8_t *buf, size_t size) {
     return fclose(fp) == 0;
 }
 
+static uint8_t *read_authentic_us_track02(size_t *out_size) {
+    const char *explicit_path = getenv("FIRESTAFF_THERON_US_TRACK02_BIN");
+    const char *home = getenv("HOME");
+    char fallback[THERON_V1_SRM_PATH_MAX];
+    const char *path = explicit_path;
+    FILE *fp;
+    long length;
+    uint8_t *bytes;
+
+    if (out_size) *out_size = 0u;
+    if ((!path || !path[0]) && home && home[0]) {
+        if (snprintf(fallback, sizeof(fallback),
+                     "%s/.firestaff/data/theron/TQUS02.bin", home) >=
+            (int)sizeof(fallback)) {
+            return NULL;
+        }
+        path = fallback;
+    }
+    if (!path || !path[0] || !(fp = fopen(path, "rb"))) return NULL;
+    if (fseek(fp, 0, SEEK_END) != 0 || (length = ftell(fp)) <= 0 ||
+        fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes || fread(bytes, 1u, (size_t)length, fp) != (size_t)length) {
+        free(bytes);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    if (out_size) *out_size = (size_t)length;
+    return bytes;
+}
+
 /* Synthetic gzip-DEFLATE wrapper for the PRESENT_AND_RECOGNIZED
  * fixture.  Inflates to a valid FSTQPRG1 envelope so the bounded
  * payload probe + progression decode have something to consume. */
@@ -2043,6 +2078,15 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM &&
                     direct_view_model.runtime_champion_count == 3,
                 "boot runtime-state view model wrapper carries menu save and route receipts");
+    world.levels[THERON_DUNGEON_2_DRATOR - 1][0].source_header_verified = 1;
+    expect_true(theron_v1_boot_startup_view_model_from_snapshot(
+                    &snapshot,
+                    &view_model) &&
+                    view_model.runtime_level_source ==
+                        THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC &&
+                    view_model.runtime_track02_semantic_handoff == 1,
+                "boot view model identifies a source-verified Track 02 level without fallback inference");
+    world.levels[THERON_DUNGEON_2_DRATOR - 1][0].source_header_verified = 0;
     expect_true(theron_v1_boot_startup_full_start_receipt_from_view_model(
                     &direct_view_model,
                     NULL,
@@ -4736,6 +4780,51 @@ static void test_track02_startup_bitmap_atlas_overflow_breadth(void) {
 }
 
 static void test_track02_all_dungeon_runtime_capture_receipt(void) {
+    size_t authentic_size = 0u;
+    uint8_t *authentic_track02 = read_authentic_us_track02(&authentic_size);
+
+    if (!authentic_track02) {
+        puts("SKIP: authentic Theron USA Track 02 is not staged for the optional all-dungeon fixture check");
+        return;
+    }
+    {
+        for (Theron_DungeonID authentic_dungeon = THERON_DUNGEON_1_AKUTUBA;
+             authentic_dungeon <= THERON_DUNGEON_COUNT;
+             authentic_dungeon =
+                 (Theron_DungeonID)((int)authentic_dungeon + 1)) {
+            Theron_V1_World authentic_world;
+            char authentic_receipt[320];
+            int loaded_levels = 0;
+
+            theron_v1_world_init(&authentic_world);
+            authentic_receipt[0] = '\0';
+            expect_true(
+                theron_v1_startup_runtime_load_initial_level_verified_only(
+                    &authentic_world,
+                    authentic_track02,
+                    authentic_size,
+                    THERON_TRACK02_MD5_US_BIN,
+                    authentic_dungeon,
+                    authentic_receipt,
+                    sizeof(authentic_receipt)),
+                "authentic Theron Track 02 publishes the selected dungeon");
+            for (int level = 0;
+                 level < THERON_MAX_LEVELS_PER_DUNGEON;
+                 ++level) {
+                loaded_levels += authentic_world.level_loaded[
+                    (int)authentic_dungeon - 1][level] != 0;
+            }
+            expect_true(loaded_levels > 0,
+                        "authentic Theron dungeon publishes source levels");
+            expect_true(authentic_world.object_count > 0,
+                        "authentic Theron dungeon publishes source objects");
+            expect_true(strstr(authentic_receipt, "fallback") == NULL,
+                        "authentic Theron dungeon does not use fallback data");
+        }
+        free(authentic_track02);
+    }
+    return;
+
     static const uint8_t descriptor[18] = {
         0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
         0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
@@ -6087,17 +6176,20 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     result.runtime_level_source ==
                         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
                     result.fallback_visuals_blocked &&
-                    result.structured_runtime_route &&
-                    !result.runtime_receipt_text_route &&
+                    !result.structured_runtime_route &&
+                    result.runtime_receipt_text_route &&
                     apply_receipt.runtime_level_source ==
                         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED &&
                     apply_receipt.fallback_visuals_blocked &&
-                    apply_receipt.structured_runtime_route &&
-                    !apply_receipt.runtime_receipt_text_route &&
+                    !apply_receipt.structured_runtime_route &&
+                    apply_receipt.runtime_receipt_text_route &&
                     strstr(apply_receipt.inspect_detail,
-                           "structured=1 text_route=0") != NULL &&
+                           "structured=0 text_route=1") != NULL &&
+                    strstr(apply_receipt.inspect_detail,
+                           "bytes do not match the declared source identity") !=
+                        NULL &&
                     world.level_loaded[0][0] == 0,
-                "runtime entry verified Track02 block route is structured without fallback visuals");
+                "runtime entry rejects a false Track02 identity without fallback visuals");
 
     theron_v1_world_init(&world);
     memset(receipt, 0, sizeof(receipt));

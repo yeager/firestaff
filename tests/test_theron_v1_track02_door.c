@@ -52,6 +52,15 @@ static void test_teleporter_decode_basic(void) {
     printf("  Teleporter basic decode OK\n");
 }
 
+static void test_teleporter_level_destination_uses_six_bits(void) {
+    /* w2 bits 8..13 are the source ldest field.  Values above 15 are outside
+     * the current seven-level corpus but must remain lossless at decode. */
+    const uint8_t raw[6] = {0, 0, 0, 0, 0, 0x2A};
+    Theron_Teleporter tp;
+    assert(theron_v1_track02_teleporter_decode(raw, &tp) == 0);
+    assert(tp.level_dest == 42u);
+}
+
 static const char *find_track02(void) {
     const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     const char *home = getenv("HOME");
@@ -140,6 +149,7 @@ int main(void) {
     printf("test_theron_v1_track02_door\n");
     test_door_decode_basic();
     test_teleporter_decode_basic();
+    test_teleporter_level_destination_uses_six_bits();
 
     const char *path = find_track02();
     if (!path) {

@@ -21,7 +21,6 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_world.h"
 #include "theron_v1_track02_thing_data.h"
-#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_item_categories.h"
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +49,23 @@ static uint8_t look_ahead(const Theron_V1_World *world, int x, int y) {
 /* ── Helper: canonicalize direction (-1 left, +1 right) ──────────── */
 static int normalize_dir(int dir) {
     return ((dir % THERON_DIR_COUNT) + THERON_DIR_COUNT) % THERON_DIR_COUNT;
+}
+
+/* Control-square consumers own a source category, not whichever object was
+ * placed first at the coordinate.  Track 02 currently orders all real US/JP
+ * door and teleporter occurrences first, but that ordering is not a runtime
+ * identity and may change after inventory/object mutations. */
+static Theron_V1_Object *theron_v1_control_object_at(
+    Theron_V1_World *world, int level, int x, int y, uint8_t type) {
+    if (!world) return NULL;
+    for (int i = 0; i < world->object_count; ++i) {
+        Theron_V1_Object *candidate = &world->objects[i];
+        if (candidate->dungeon_id == world->current_dungeon &&
+            candidate->level == level && candidate->x == x &&
+            candidate->y == y && candidate->type == type)
+            return candidate;
+    }
+    return NULL;
 }
 
 /* LOCKED is a sentinel state, not a later opening animation frame.  Keep
@@ -105,6 +121,41 @@ static int theron_v1_source_level_requires_item_provenance(
 static int theron_v1_source_level_needs_stat_consumer(
     const Theron_V1_World *world);
 
+/* Original US movement consumer $C332-$C347: a source pit (type $40)
+ * enters the fall route only when OPEN ($08) is set, IMAGINARY ($01) is
+ * clear, and the party levitation byte is zero.  Return whether this is an
+ * authenticated source pit separately from whether it needs the unresolved
+ * fall consumer, so closed/imaginary/levitated pits can remain passable. */
+static int theron_v1_source_pit_requires_fall(
+    const Theron_V1_World *world, int x, int y, int *is_source_pit) {
+    const Theron_V1_Level *level;
+    uint8_t source_tile;
+
+    if (is_source_pit) *is_source_pit = 0;
+    if (!world || world->current_dungeon < 1 ||
+        world->current_dungeon > THERON_DUNGEON_COUNT ||
+        world->current_level < 0 ||
+        world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        x < 0 || x >= THERON_MAX_MAP_SIZE ||
+        y < 0 || y >= THERON_MAX_MAP_SIZE ||
+        !world->level_loaded[world->current_dungeon - 1]
+                            [world->current_level]) {
+        return 0;
+    }
+    level = &world->levels[world->current_dungeon - 1]
+                          [world->current_level];
+    if (!level->source_header_verified) return 0;
+    if (!theron_v1_world_track02_runtime_tile(
+            world, world->current_dungeon, world->current_level,
+            x, y, &source_tile))
+        return 0;
+    if ((source_tile & 0xe0u) != 0x40u) return 0;
+    if (is_source_pit) *is_source_pit = 1;
+    return !world->party.levitating &&
+           (source_tile & 0x08u) != 0u &&
+           (source_tile & 0x01u) == 0u;
+}
+
 static int theron_v1_source_item_category_is_carryable(uint8_t category) {
     /* T900 inventory ownership is defined for the decoded carried-object
      * categories. Monster, actuator and raw-only categories are not items. */
@@ -121,6 +172,7 @@ static uint8_t theron_v1_source_item_category_for_record(uint8_t category) {
     case THERON_CAT_CLOTHING: return THERON_ITEM_CAT_ARMOR;
     case THERON_CAT_SCROLL:
     case THERON_CAT_POTION:   return THERON_ITEM_CAT_CONSUMABLE;
+    case THERON_CAT_MISC:     return THERON_ITEM_CAT_SOURCE_MISC;
     default:                  return 0u;
     }
 }
@@ -133,9 +185,10 @@ static uint8_t theron_v1_source_item_category_for_record(uint8_t category) {
  * Source: DMBUILDER6/src/dms.h:69-176 and
  * theron_v1_track02_item_record_decode(). */
 static int theron_v1_source_item_record_matches_object(
-    const Theron_V1_Object *object) {
+    const Theron_V1_World *world, const Theron_V1_Object *object) {
     Theron_Track02ItemRecord record;
-    const Theron_ItemPropertyRecord *property;
+    const uint8_t *property;
+    size_t property_size;
 
     if (!object || !theron_v1_source_item_category_is_carryable(
                        object->source_category) ||
@@ -145,18 +198,12 @@ static int theron_v1_source_item_record_matches_object(
             object->source_raw_size, &record) ||
         record.next_ref != object->source_next_ref ||
         !object->source_property_valid ||
-        (object->source_category != THERON_CAT_MISC &&
-         object->source_item_category !=
-             theron_v1_source_item_category_for_record(
-                 object->source_category)) ||
-        (object->source_category == THERON_CAT_MISC &&
-         (object->source_item_category != THERON_ITEM_CAT_COMPASS &&
-          object->source_item_category != THERON_ITEM_CAT_WEAPON &&
-          object->source_item_category != THERON_ITEM_CAT_ARMOR &&
-          object->source_item_category != THERON_ITEM_CAT_CONSUMABLE)) ||
-        object->source_item_type >= theron_v1_track02_item_property_count() ||
-        !(property = theron_v1_track02_item_property(
-                  object->source_item_type)) ||
+        object->source_item_category !=
+            theron_v1_source_item_category_for_record(
+                object->source_category) ||
+        !theron_v1_world_object_item_property_raw(
+            world, object, &property, &property_size) ||
+        property_size != sizeof(object->source_property) ||
         memcmp(object->source_property, property,
                sizeof(object->source_property)) != 0) {
         return 0;
@@ -193,20 +240,25 @@ static int theron_v1_source_item_record_matches_object(
 
 static int theron_v1_source_item_occurrence_exists(
     const Theron_V1_World *world, const Theron_V1_Object *object) {
-    if (!world || !object || object->source_ref == 0u ||
-        object->source_raw_size == 0u ||
+    if (!world || !object || object->source_raw_size == 0u ||
         object->source_raw_size > sizeof(object->source_raw)) {
         return 0;
     }
     for (unsigned int i = 0u; i < world->source_object_count; ++i) {
         const Theron_V1_SourceObjectRecord *source =
             &world->source_objects[i];
-        if (source->dungeon_id != object->dungeon_id ||
-            source->level != object->level ||
+        if (source->dungeon_id != (object->source_origin_valid ?
+                                      object->source_dungeon :
+                                      object->dungeon_id) ||
+            source->level != (object->source_origin_valid ?
+                                  object->source_level : object->level) ||
+            (object->source_origin_valid &&
+             (source->x != object->source_x || source->y != object->source_y)) ||
             source->source_ref != object->source_ref ||
             source->next_ref != object->source_next_ref ||
             source->source_index != object->source_index ||
             source->category != object->source_category ||
+            source->position != object->source_position ||
             source->raw_size != object->source_raw_size ||
             memcmp(source->raw, object->source_raw, source->raw_size) != 0) {
             continue;
@@ -214,6 +266,25 @@ static int theron_v1_source_item_occurrence_exists(
         return 1;
     }
     return 0;
+}
+
+static int theron_v1_is_unresolved_source_door(
+    const Theron_V1_World *world, const Theron_V1_Object *object) {
+    if (!world || !object || !object->source_origin_valid ||
+        object->source_category != THERON_CAT_DOOR ||
+        object->source_raw_size != 4u ||
+        !theron_v1_source_item_occurrence_exists(world, object)) {
+        return 0;
+    }
+    if (object->source_dungeon < 1u ||
+        object->source_dungeon > THERON_DUNGEON_COUNT ||
+        object->source_level >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return 0;
+    }
+    return world->level_loaded[object->source_dungeon - 1u]
+                              [object->source_level] &&
+           world->levels[object->source_dungeon - 1u]
+                        [object->source_level].source_header_verified;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -245,22 +316,41 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         return (int)tile;
     case THERON_CMD_USE: {
         /* Check for any object at (x,y) that can be used */
-        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
-                                world, world->current_dungeon,
-                                world->current_level, x, y);
-        if (o && o->type == THERON_OBJTYPE_DOOR) {
+        Theron_V1_Object *o = theron_v1_control_object_at(
+            world, world->current_level, x, y, THERON_OBJTYPE_DOOR);
+        if (o) {
             /* Door found — open it (handles locked auto-unlock) */
             return theron_v1_door_open(world, x, y);
         }
         return -1;
     }
     case THERON_CMD_TAKE: {
-        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
-                                world, world->current_dungeon,
-                                world->current_level, x, y);
+        Theron_V1_Object *o = NULL;
         Theron_V1_Champion *champion;
         int item_id;
         int inventory_slot = -1;
+        if (theron_v1_source_level_requires_item_provenance(world)) {
+            /* Ground-reference traversal materializes objects in authentic
+             * chain order.  Select the first remaining carryable occurrence,
+             * not merely the first control/chest/monster record at the cell.
+             * This also lets a later TAKE advance past an already-carried
+             * occurrence without inventing an item or reordering the chain. */
+            for (int i = 0; i < world->object_count; ++i) {
+                Theron_V1_Object *candidate = &world->objects[i];
+                if (candidate->dungeon_id == world->current_dungeon &&
+                    candidate->level == world->current_level &&
+                    candidate->x == x && candidate->y == y &&
+                    !(candidate->flags & THERON_OBJ_F_PICKED_UP) &&
+                    theron_v1_source_item_category_is_carryable(
+                        candidate->source_category)) {
+                    o = candidate;
+                    break;
+                }
+            }
+        } else {
+            o = theron_v1_object_at_in_dungeon(
+                world, world->current_dungeon, world->current_level, x, y);
+        }
         if (!o || (o->flags & THERON_OBJ_F_PICKED_UP)) return -1;
         if (o->type == THERON_OBJTYPE_CHEST) return 0;
         item_id = object_item_id(o);
@@ -271,7 +361,7 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
                  o->source_category) ||
              !o->source_property_valid ||
              o->source_item_type != (uint8_t)item_id ||
-             !theron_v1_source_item_record_matches_object(o) ||
+             !theron_v1_source_item_record_matches_object(world, o) ||
              !theron_v1_source_item_occurrence_exists(world, o))) {
             /* ReDMCSB THQUEST T900 owns the object/category transition. A
              * real Track 02 level must never turn an unbound host object into
@@ -312,6 +402,38 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
             carried->source_ref = o->source_ref;
             carried->source_next_ref = o->source_next_ref;
             carried->source_index = o->source_index;
+            carried->source_position = o->source_position;
+            if (o->source_origin_valid) {
+                carried->source_origin_valid = 1u;
+                carried->source_dungeon = o->source_dungeon;
+                carried->source_level = o->source_level;
+                carried->source_x = o->source_x;
+                carried->source_y = o->source_y;
+            }
+            for (unsigned int source_i = 0u;
+                 source_i < world->source_object_count; ++source_i) {
+                const Theron_V1_SourceObjectRecord *source =
+                    &world->source_objects[source_i];
+                if ((!o->source_origin_valid ||
+                     (source->dungeon_id == o->source_dungeon &&
+                      source->level == o->source_level &&
+                      source->x == o->source_x && source->y == o->source_y)) &&
+                    source->source_ref == o->source_ref &&
+                    source->next_ref == o->source_next_ref &&
+                    source->source_index == o->source_index &&
+                    source->category == o->source_category &&
+                    source->position == o->source_position &&
+                    source->raw_size == o->source_raw_size &&
+                    memcmp(source->raw, o->source_raw,
+                           source->raw_size) == 0) {
+                    carried->source_origin_valid = 1u;
+                    carried->source_dungeon = (uint8_t)source->dungeon_id;
+                    carried->source_level = (uint8_t)source->level;
+                    carried->source_x = (uint8_t)source->x;
+                    carried->source_y = (uint8_t)source->y;
+                    break;
+                }
+            }
             carried->text_ref = o->source_text_ref;
             carried->chested = o->source_chested;
             carried->data1 = o->source_data1;
@@ -352,6 +474,53 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
 /* Forward-declare for mutual recursion */
 static int move_party_internal(Theron_V1_World *world, int direction);
 
+static int queue_party_pose_change_events(
+    Theron_V1_World *world,
+    int old_level, int old_x, int old_y, unsigned int old_direction,
+    int old_party_square,
+    int new_level, int new_x, int new_y, unsigned int new_direction,
+    int new_party_square)
+{
+    unsigned int upper_bound = 0u;
+    const unsigned int queued_before = world->source_actuator_event_count;
+
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source = &world->source_objects[i];
+        if (source->category != THERON_CAT_ACTUATOR || source->raw_size != 8u ||
+            source->dungeon_id != world->current_dungeon)
+            continue;
+        if (source->level == old_level &&
+            source->x == old_x && source->y == old_y)
+            ++upper_bound;
+        if (source->level == new_level &&
+            source->x == new_x && source->y == new_y)
+            ++upper_bound;
+    }
+    if (upper_bound > THERON_MAX_SOURCE_ACTUATOR_EVENTS - queued_before)
+        return 0;
+
+    /* CLIKMENU.C F0365 publishes removal before addition.  Its normal
+     * removal call still reports partySquare=1; the destination addition
+     * reports that the party was not already present there. */
+    if (theron_v1_world_queue_track02_party_events(
+            world, old_level, old_x, old_y, 0, old_party_square,
+            old_direction) < 0 ||
+        theron_v1_world_queue_track02_party_events(
+            world, new_level, new_x, new_y, 1, new_party_square,
+            new_direction) < 0) {
+        /* The capacity preflight makes this unreachable for valid loaded
+         * records.  Keep any failure from publishing a partial queue. */
+        while (world->source_actuator_event_count > queued_before) {
+            --world->source_actuator_event_count;
+            memset(&world->source_actuator_events[
+                       world->source_actuator_event_count], 0,
+                   sizeof(world->source_actuator_events[0]));
+        }
+        return 0;
+    }
+    return 1;
+}
+
 Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int direction) {
     if (!world) return THERON_MOVE_BLOCKED;
     int dir = normalize_dir(direction);
@@ -383,8 +552,11 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_SPECIAL;
     }
     if (tile == THERON_SQUARE_PIT) {
-        if (theron_v1_source_level_needs_stat_consumer(world))
+        int is_source_pit = 0;
+        if (theron_v1_source_pit_requires_fall(
+                world, nx, ny, &is_source_pit))
             return THERON_MOVE_BLOCKED;
+        if (is_source_pit) return THERON_MOVE_OK;
         /* Phase 5 pit logic: fall through */
         return THERON_MOVE_PIT_FALL;
     }
@@ -401,6 +573,21 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_STAIRS;
     }
     if (tile == THERON_SQUARE_TELEPORTER) {
+        const Theron_V1_Object *teleporter = NULL;
+        for (int i = 0; i < world->object_count; ++i) {
+            const Theron_V1_Object *candidate = &world->objects[i];
+            if (candidate->dungeon_id == world->current_dungeon &&
+                candidate->level == world->current_level &&
+                candidate->x == nx && candidate->y == ny &&
+                candidate->type == THERON_OBJTYPE_TELEPORTER) {
+                teleporter = candidate;
+                break;
+            }
+        }
+        if (teleporter &&
+            (teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
+            teleporter->state == 0u)
+            return THERON_MOVE_OK;
         return THERON_MOVE_TELEPORT;
     }
     if (tile == THERON_SQUARE_EXIT) {
@@ -419,9 +606,26 @@ int theron_v1_move_party(Theron_V1_World *world, int direction) {
     return move_party_internal(world, direction);
 }
 
+int theron_v1_move_party_original_command(Theron_V1_World *world,
+                                           uint8_t command_type) {
+    int facing;
+    int result;
+    if (!world || command_type < THERON_ORIGINAL_COMMAND_MOVE_FORWARD ||
+        command_type > THERON_ORIGINAL_COMMAND_MOVE_LEFT)
+        return THERON_MOVE_BLOCKED;
+    facing = world->party.leader_dir & 3;
+    result = theron_v1_move_party(
+        world, (facing + command_type -
+                THERON_ORIGINAL_COMMAND_MOVE_FORWARD) & 3);
+    world->party.leader_dir = (int8_t)facing;
+    return result;
+}
+
 static int move_party_internal(Theron_V1_World *world, int direction) {
     if (!world) return THERON_MOVE_BLOCKED;
     int dir = normalize_dir(direction);
+    const unsigned int party_direction =
+        (unsigned int)(world->party.leader_dir & 3);
     int nx = world->party.leader_x + g_theron_dir_dx[dir];
     int ny = world->party.leader_y + g_theron_dir_dy[dir];
     uint8_t tile = look_ahead(world, nx, ny);
@@ -456,9 +660,8 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     if (tile == THERON_SQUARE_DOOR) {
         /* Doors block movement unless already open or quarter-open.
          * Block if locked or fully closed. */
-        Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
-                                world, world->current_dungeon,
-                                world->current_level, nx, ny);
+        Theron_V1_Object *d = theron_v1_control_object_at(
+            world, world->current_level, nx, ny, THERON_OBJTYPE_DOOR);
         /* T900 separates the door-use command from the movement route:
          * stepping onto a closed/locked door does not implicitly consume a
          * key or mutate the object.  The explicit door_open route owns that
@@ -472,6 +675,17 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: teleporter ── */
     if (tile == THERON_SQUARE_TELEPORTER) {
+        Theron_V1_Object *teleporter = theron_v1_control_object_at(
+            world, world->current_level, nx, ny,
+            THERON_OBJTYPE_TELEPORTER);
+        /* An authenticated Track 02 pad with the source OPEN attribute
+         * clear is ordinary passable floor.  AKUTUBA M0 (2,1), raw B4,
+         * exercises this route in the original; B8 pads activate. */
+        if (teleporter &&
+            (teleporter->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
+            teleporter->state == 0u) {
+            tile = THERON_SQUARE_FLOOR;
+        } else {
         /* The resolver is transactional: an incomplete/cyclic destination
          * leaves party and transition state untouched and returns -1.  Do
          * not turn that failed source-data lookup into a successful move. */
@@ -479,18 +693,26 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
             return THERON_MOVE_BLOCKED;
         theron_v1_apply_post_move_effects(world);
         return THERON_MOVE_TELEPORT;
+        }
     }
 
     /* ── Special squares: pit ── */
     if (tile == THERON_SQUARE_PIT) {
-        /* The fixture pit damage path is not the authenticated T700
-         * consumer.  Do not let a source-bound pit fall through as floor. */
-        if (theron_v1_source_level_needs_stat_consumer(world))
+        int is_source_pit = 0;
+        /* The original source gate is proven, but its damage/level-transition
+         * tail is not.  Block only an actual open, non-imaginary pit that
+         * would enter that unresolved tail; the other source forms commit as
+         * ordinary movement in the original. */
+        if (theron_v1_source_pit_requires_fall(
+                world, nx, ny, &is_source_pit))
             return THERON_MOVE_BLOCKED;
+        if (is_source_pit) tile = THERON_SQUARE_FLOOR;
+        else {
         bool fell = theron_v1_pit_check_and_trigger(world, nx, ny);
         if (fell) {
             theron_v1_apply_post_move_effects(world);
             return THERON_MOVE_PIT_FALL;
+        }
         }
         /* Fall-through to normal move if pit is blocked/imaginary */
     }
@@ -506,8 +728,20 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
         if (theron_v1_source_level_requires_item_provenance(world))
             return THERON_MOVE_BLOCKED;
         /* Teleporter-style result: queue transition but don't move */
-        if (theron_v1_check_transition(world, nx, ny) == 0 ||
-            theron_v1_transition_execute(world) < 0)
+        if (theron_v1_check_transition(world, nx, ny) == 0)
+            return THERON_MOVE_BLOCKED;
+        /* MOVESENS.C F0267 reaches the entered stair square's F0276 pass
+         * before CLIKMENU.C F0366 hands the party to F0364.  A cross-map
+         * destination is deferred and does not run a second add pass here. */
+        if (!queue_party_pose_change_events(
+                world,
+                world->current_level, world->party.leader_x,
+                world->party.leader_y, party_direction, 1,
+                world->current_level, nx, ny, party_direction, 0)) {
+            world->transition_pending = 0;
+            return THERON_MOVE_BLOCKED;
+        }
+        if (theron_v1_transition_execute(world) < 0)
             return THERON_MOVE_BLOCKED;
         theron_v1_apply_post_move_effects(world);
         return THERON_MOVE_STAIRS;
@@ -524,6 +758,12 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     }
 
     /* ── Normal floor move ── */
+    if (!queue_party_pose_change_events(
+            world,
+            world->current_level, world->party.leader_x,
+            world->party.leader_y, party_direction, 1,
+            world->current_level, nx, ny, party_direction, 0))
+        return THERON_MOVE_BLOCKED;
     world->party.leader_x = nx;
     world->party.leader_y = ny;
     world->party.leader_dir = dir;
@@ -571,10 +811,26 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
 int theron_v1_turn_party(Theron_V1_World *world, int turn) {
     if (!world) return -1;
-    int d = world->party.leader_dir;
-    d = ((d + turn) % THERON_DIR_COUNT + THERON_DIR_COUNT) % THERON_DIR_COUNT;
-    world->party.leader_dir = d;
+    int old_direction = world->party.leader_dir;
+    int new_direction = ((old_direction + turn) % THERON_DIR_COUNT +
+                         THERON_DIR_COUNT) % THERON_DIR_COUNT;
+    if (!queue_party_pose_change_events(
+            world, world->current_level, world->party.leader_x,
+            world->party.leader_y, (unsigned int)old_direction, 1,
+            world->current_level, world->party.leader_x,
+            world->party.leader_y, (unsigned int)new_direction, 1))
+        return -1;
+    world->party.leader_dir = new_direction;
     return 0;
+}
+
+int theron_v1_turn_party_original_command(Theron_V1_World *world,
+                                           uint8_t command_type) {
+    if (command_type == THERON_ORIGINAL_COMMAND_TURN_LEFT)
+        return theron_v1_turn_party(world, -1);
+    if (command_type == THERON_ORIGINAL_COMMAND_TURN_RIGHT)
+        return theron_v1_turn_party(world, 1);
+    return -1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -583,10 +839,15 @@ int theron_v1_turn_party(Theron_V1_World *world, int turn) {
 
 int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
-    Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
-        world, world->current_dungeon, world->current_level, x, y);
-    if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
+    Theron_V1_Object *d = theron_v1_control_object_at(
+        world, world->current_level, x, y, THERON_OBJTYPE_DOOR);
+    if (!d) return -1;
     if (theron_v1_door_state_is_passable(d->state)) return 0;
+    /* Track 02 proves the door occurrence and its static record fields, but
+     * not the T900 button/actuator consumer which changes runtime state.
+     * Keep real doors closed instead of applying the host fixture's instant
+     * open transition to authentic dungeon data. */
+    if (theron_v1_is_unresolved_source_door(world, d)) return -1;
     if (d->state == THERON_DOOR_STATE_LOCKED)
         d->flags |= THERON_DOOR_F_LOCKED;
     if (d->flags & THERON_DOOR_F_BROKEN) return -1;
@@ -623,10 +884,11 @@ int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_door_close(Theron_V1_World *world, int x, int y) {
     if (!world) return -1;
-    Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
-        world, world->current_dungeon, world->current_level, x, y);
-    if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
+    Theron_V1_Object *d = theron_v1_control_object_at(
+        world, world->current_level, x, y, THERON_OBJTYPE_DOOR);
+    if (!d) return -1;
     if (d->state == THERON_DOOR_STATE_DESTROYED) return -1;
+    if (theron_v1_is_unresolved_source_door(world, d)) return -1;
     d->state = THERON_DOOR_STATE_CLOSED;
     theron_v1_play_sound(THERON_SOUND_DOOR_CLOSE);
     return 0;
@@ -634,21 +896,19 @@ int theron_v1_door_close(Theron_V1_World *world, int x, int y) {
 
 int theron_v1_door_is_open(const Theron_V1_World *world, int x, int y) {
     if (!world) return 0;
-    const Theron_V1_Object *d = (const Theron_V1_Object *)
-        theron_v1_object_at_in_dungeon((Theron_V1_World *)world,
-                                       world->current_dungeon,
-                                       world->current_level, x, y);
-    if (!d || d->type != THERON_OBJTYPE_DOOR) return 0;
+    const Theron_V1_Object *d = theron_v1_control_object_at(
+        (Theron_V1_World *)world, world->current_level, x, y,
+        THERON_OBJTYPE_DOOR);
+    if (!d) return 0;
     return theron_v1_door_state_is_passable(d->state);
 }
 
 int theron_v1_door_is_locked(const Theron_V1_World *world, int x, int y) {
     if (!world) return 0;
-    const Theron_V1_Object *d = (const Theron_V1_Object *)
-        theron_v1_object_at_in_dungeon((Theron_V1_World *)world,
-                                       world->current_dungeon,
-                                       world->current_level, x, y);
-    if (!d || d->type != THERON_OBJTYPE_DOOR) return 0;
+    const Theron_V1_Object *d = theron_v1_control_object_at(
+        (Theron_V1_World *)world, world->current_level, x, y,
+        THERON_OBJTYPE_DOOR);
+    if (!d) return 0;
     return d->state == THERON_DOOR_STATE_LOCKED ||
            (d->flags & THERON_DOOR_F_LOCKED) != 0;
 }
@@ -658,9 +918,9 @@ int theron_v1_door_unlock_with_key(Theron_V1_World *world,
     if (!world) return -1;
     if (key_item != THERON_ITEM_KEY) return -1;
     if (theron_v1_source_level_requires_item_provenance(world)) return -1;
-    Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
-        world, world->current_dungeon, world->current_level, x, y);
-    if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
+    Theron_V1_Object *d = theron_v1_control_object_at(
+        world, world->current_level, x, y, THERON_OBJTYPE_DOOR);
+    if (!d) return -1;
     d->flags &= ~THERON_DOOR_F_LOCKED;
     return theron_v1_door_open(world, x, y);
 }
@@ -728,9 +988,11 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
     int current_level = world->current_level;
 
     while (iteration < THERON_TELEPORTER_CHAIN_MAX) {
-        Theron_V1_Object *o = theron_v1_object_at_in_dungeon(
-            world, world->current_dungeon, current_level, cx, cy);
-        if (!o || o->type != THERON_OBJTYPE_TELEPORTER) break;
+        Theron_V1_Object *o = theron_v1_control_object_at(
+            world, current_level, cx, cy, THERON_OBJTYPE_TELEPORTER);
+        if (!o) break;
+        if ((o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) && o->state == 0u)
+            return -1;
 
         /* Find the teleporter's target */
         int link_id = o->linked_id;
@@ -740,63 +1002,68 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
         if (o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) {
             target_x = link_id & 0x1F;
             target_y = (link_id >> 5) & 0x1F;
-            target_level = (link_id >> 10) & 0x0F;
+            target_level = (link_id >> 10) & 0x3F;
+            /* Original $C27A-$C2D8 decodes the packed destination directly,
+             * copies x/y through TII $20B4,$2040,$0002, then re-enters the
+             * tile test at $C240.  The destination does not need an object
+             * endpoint unless its map byte is itself a teleporter. */
+            int dungeon_slot = world->current_dungeon - 1;
+            Theron_V1_Level *destination = NULL;
+            Theron_V1_Object *target_teleporter = NULL;
+            if (dungeon_slot < 0 || dungeon_slot >= THERON_DUNGEON_COUNT ||
+                target_level < 0 ||
+                target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                !world->level_loaded[dungeon_slot][target_level])
+                return -1;
+            destination = &world->levels[dungeon_slot][target_level];
+            if (target_x < 0 || target_x >= destination->width ||
+                target_y < 0 || target_y >= destination->height ||
+                destination->squares[target_y][target_x] ==
+                    THERON_SQUARE_WALL)
+                return -1;
+
+            if (destination->squares[target_y][target_x] ==
+                THERON_SQUARE_TELEPORTER) {
+                target_teleporter = theron_v1_control_object_at(
+                    world, target_level, target_x, target_y,
+                    THERON_OBJTYPE_TELEPORTER);
+                /* A teleporter map byte without its source record is an
+                 * incomplete bank.  Do not infer a destination. */
+                if (!target_teleporter ||
+                    !(target_teleporter->flags &
+                      THERON_OBJ_F_TRACK02_COORD_LINK))
+                    return -1;
+                if (target_teleporter->state != 0u) {
+                    cx = target_x;
+                    cy = target_y;
+                    current_level = target_level;
+                    iteration++;
+                    continue;
+                }
+                /* $C24C AND #$08 falls through to the ordinary movement
+                 * completion branch when the destination pad is closed.
+                 * Ten real US and ten JP links exercise this terminal case. */
+            }
+
+            world->transition_spawn_x = target_x;
+            world->transition_spawn_y = target_y;
+            world->transition_pending = 1;
+            world->transition_type = THERON_TRANSITION_TELEPORTER;
+            world->transition_target_level = target_level;
+            world->party.leader_x = target_x;
+            world->party.leader_y = target_y;
+            theron_v1_play_sound(THERON_SOUND_TELEPORT);
+            return 0;
         }
         Theron_V1_Object *target = NULL;
         for (int i = 0; i < world->object_count; i++) {
-            if ((o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
-                world->objects[i].dungeon_id == world->current_dungeon &&
-                world->objects[i].level == target_level &&
-                world->objects[i].x == target_x &&
-                world->objects[i].y == target_y) {
-                target = &world->objects[i];
-                break;
-            }
-            if (!(o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) &&
-                world->objects[i].dungeon_id == world->current_dungeon &&
+            if (world->objects[i].dungeon_id == world->current_dungeon &&
                 world->objects[i].id == link_id) {
                 target = &world->objects[i];
                 break;
             }
         }
         if (!target) {
-            if (o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) {
-                /* Track 02 teleporter records are coordinate destinations.
-                 * DMBUILDER6/src/dms.h:98-108 stores xdest/ydest/ldest in
-                 * the record itself; the destination need not have a second
-                 * object record.  The old object-only gate made authentic
-                 * US destinations such as AKUTUBA M0 (0,0)->(2,3)
-                 * unreachable. */
-                int dungeon_slot = world->current_dungeon - 1;
-                Theron_V1_Level *destination = NULL;
-                if (dungeon_slot < 0 || dungeon_slot >= THERON_DUNGEON_COUNT ||
-                    target_level < 0 ||
-                    target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
-                    !world->level_loaded[dungeon_slot][target_level])
-                    return -1;
-                destination = &world->levels[dungeon_slot][target_level];
-                if (target_x < 0 || target_x >= destination->width ||
-                    target_y < 0 || target_y >= destination->height)
-                    return -1;
-                if (destination->squares[target_y][target_x] ==
-                    THERON_SQUARE_WALL)
-                    return -1;
-                /* A teleporter square still needs its source-owned record so
-                 * a malformed/incomplete directory cannot silently land on
-                 * an unbound pad. */
-                if (destination->squares[target_y][target_x] ==
-                        THERON_SQUARE_TELEPORTER)
-                    return -1;
-                world->transition_spawn_x = target_x;
-                world->transition_spawn_y = target_y;
-                world->transition_pending = 1;
-                world->transition_type = THERON_TRANSITION_TELEPORTER;
-                world->transition_target_level = target_level;
-                world->party.leader_x = target_x;
-                world->party.leader_y = target_y;
-                theron_v1_play_sound(THERON_SOUND_TELEPORT);
-                return 0;
-            }
             /* A non-Track-02 object link without an endpoint is incomplete.
              * Keep the fixture/object-id route fail-closed. */
             return -1;
@@ -859,7 +1126,8 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
     int revived_count = 0;
 
     /* Check for dead champions */
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
+    for (int i = 0; i < world->party.champion_count &&
+                        i < THERON_MAX_CHAMPIONS; i++) {
         Theron_V1_Champion *c = &world->party.champions[i];
         if (!c->alive && c->health == 0) {
             total_cost += cost_per_champion;
@@ -874,7 +1142,8 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
     int revived_slot = -1;
 
     /* Revive all dead champions */
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
+    for (int i = 0; i < world->party.champion_count &&
+                        i < THERON_MAX_CHAMPIONS; i++) {
         Theron_V1_Champion *c = &world->party.champions[i];
         if (!c->alive && c->health == 0) {
             c->health = c->max_health >> 1; /* half max HP on resurrection */
@@ -946,7 +1215,8 @@ void theron_v1_apply_post_move_effects(Theron_V1_World *world) {
 
     world->world_tick++;
 
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
+    for (int i = 0; i < world->party.champion_count &&
+                        i < THERON_MAX_CHAMPIONS; i++) {
         Theron_V1_Champion *c = &world->party.champions[i];
         if (!c->alive) continue;
 
@@ -1031,7 +1301,8 @@ int theron_v1_pool_use(Theron_V1_World *world, int x, int y) {
         world, world->current_dungeon, world->current_level, x, y);
     if (!p || p->type != THERON_OBJTYPE_POOL) return -1;
 
-    for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
+    for (int i = 0; i < world->party.champion_count &&
+                        i < THERON_MAX_CHAMPIONS; i++) {
         Theron_V1_Champion *c = &world->party.champions[i];
         if (!c->alive) continue;
         c->water = c->max_stamina;  /* restore water/stamina */

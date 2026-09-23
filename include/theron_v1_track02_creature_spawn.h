@@ -44,11 +44,10 @@ size_t theron_v1_track02_spawn_zone_count(void);
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index);
 
 /* Authenticated source decode for the pointer/regular-spawn records.  The
- * input is the complete raw MODE1/2352 US Track 02 BIN, not a host-generated
- * table and not a stripped user-data buffer.  The decoder verifies the exact
- * US Track 02 MD5 before it reads the source bytes at UD 0x274000. The JP BIN
- * has a different layout at these addresses and is rejected until its own
- * source offsets are authenticated. */
+ * input is a complete raw MODE1/2352 retail Track 02 BIN, not a host-generated
+ * table or stripped user-data buffer.  The decoder verifies the exact regional
+ * MD5 before reading US UD $274018 or JP UD $273818 and their region-specific
+ * roster markers. */
 /* Returns 1 only for a complete, hash-verified retail BIN whose pointer and
  * regular-spawn records can be read safely.  The output is cleared on every
  * failure.  This binds source records only; it does not authorize RNG,
@@ -58,6 +57,27 @@ int theron_v1_track02_decode_spawn_source(
     size_t raw_track02_bytes,
     Theron_V1Track02Variant variant,
     Theron_Track02SpawnSource *out);
+
+/* Static retail-code receipt for the regional regular-spawn consumer.  It
+ * authenticates the complete instruction span corresponding to the US
+ * `$B0E5..$B1F1` disassembly and its relocated JP counterpart.  Static code
+ * ownership is not proof that either path executed in a captured session. */
+typedef struct {
+    int valid;
+    Theron_V1Track02Variant variant;
+    uint32_t user_data_offset;
+    uint32_t byte_count;
+    uint32_t checksum;
+    int regional_code_verified;
+    int runtime_execution_proven;
+    int category_semantics_proven;
+} Theron_Track02SpawnConsumerSourceReceipt;
+
+int theron_v1_track02_bind_spawn_consumer_source(
+    const uint8_t *raw_track02,
+    size_t raw_track02_bytes,
+    Theron_V1Track02Variant variant,
+    Theron_Track02SpawnConsumerSourceReceipt *out);
 
 /* Reserved result shape for a future captured spawn consumer.  No host seed
  * may stand in for the original RNG.  Until the HuC6280 RNG return contract

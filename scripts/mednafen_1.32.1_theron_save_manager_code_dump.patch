@@ -1,0 +1,56 @@
+diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -44,2 +44,3 @@
+ static bool TheronPostDungeonOrdinalInjected;
++static bool TheronSaveManagerCodeDumped;
+ static bool TheronPostDungeonEntryInjected;
+@@ -1100,4 +1101,43 @@ static uint32 RunSub(void)
+ 	 }
++	 /* Research-only, read-only capture of the authentic System Card page
++	  * containing DMS-SG.001.  The exact signature is checked after mapping
++	  * physical page $6D, and the caller's MPR6 mapping is restored before
++	  * emulation continues.  The dump is evidence for decoding the original
++	  * 134-byte Backup RAM body; it never supplies bytes to the game. */
++	 if(!TheronSaveManagerCodeDumped && PC == 0x4534)
++	 {
++	  const char *dump_path = getenv("FIRESTAFF_THERON_SAVE_MANAGER_CODE_DUMP");
++	  if(dump_path && *dump_path)
++	  {
++	   const uint8 original_mpr6 = MPR[6];
++	   SetMPR(6, 0x6d);
++	   if(RdMem(0xde01) == 'D' && RdMem(0xde02) == 'M' &&
++	      RdMem(0xde03) == 'S' && RdMem(0xde04) == '-' &&
++	      RdMem(0xde05) == 'S' && RdMem(0xde06) == 'G' &&
++	      RdMem(0xde07) == '.' && RdMem(0xde08) == '0' &&
++	      RdMem(0xde09) == '0' && RdMem(0xde0a) == '1' &&
++	      RdMem(0xde38) == 0xc9 && RdMem(0xde39) == 0x06)
++	   {
++	    FILE *dump_file = fopen(dump_path, "wb");
++	    if(dump_file)
++	    {
++	     bool complete = true;
++	     for(unsigned i = 0; i < 8192; i++)
++	      if(fputc(RdMem(0xc000 + i), dump_file) == EOF)
++	       complete = false;
++	     complete = !fclose(dump_file) && complete;
++	     if(complete)
++	     {
++	      TheronSaveManagerCodeDumped = true;
++	      fprintf(stderr,
++	              "Theron authentic save-manager code dumped: page=6d bytes=8192 path=%s\n",
++	              dump_path);
++	      fprintf(stderr,
++	              "Theron authentic save-manager selection: mpr1=%02x mpr2=%02x ram_278c=%02x overlay_42b7=%02x overlay_42b8=%02x\n",
++	              MPR[1], MPR[2], RdMem(0x278c), RdMem(0x42b7),
++	              RdMem(0x42b8));
++	      fflush(stderr);
++	     }
++	    }
++	   }
++	   SetMPR(6, original_mpr6);
++	  }
++	 }
+ 	 /* Research-only entry into the authentic dispatcher already resident in
+ 	  * System Card RAM.  Page $6d is derived from this exact savestate's
+ 	  * SysCardRAM chunk; reject unless the complete DMS-SG.001 signature and

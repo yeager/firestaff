@@ -257,6 +257,394 @@ typedef struct {
     int payload_semantics_proven;
 } Theron_V1RawLoaderTraceGamePayloadReceipt;
 
+/* The first US copied-loader `$3840 -> $e009` call is asynchronous.  This
+ * receipt joins its raw `$20f8..$20ff` parameters, the same-session READ(6),
+ * and the completed `$2800` RAM block observed at the next `$3840` dispatch
+ * to the exact MODE1 user data in authenticated Track 02 record `$4e0`.
+ * The parameter bytes remain opaque; no record grammar or payload semantics
+ * are inferred. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint16_t caller_pc;
+    uint32_t caller_physical_pc;
+    uint16_t completion_pc;
+    uint32_t completion_physical_pc;
+    uint8_t parameters[8];
+    uint16_t destination;
+    uint32_t destination_physical;
+    size_t payload_bytes;
+    uint32_t payload_span_checksum;
+    uint32_t payload_checksum;
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    uint32_t raw_track02_record;
+    int asynchronous_resume_observed;
+    int next_dispatch_completion_observed;
+    int mode1_payload_verified;
+    int payload_semantics_proven;
+} Theron_V1RawLoaderTraceGameE009DestinationReceipt;
+
+/* Ordered game-owned reads from the first completed US `$2800` payload before
+ * the following `$3840 -> $e009` dispatch.  Every byte is rechecked against
+ * the already-bound MODE1 user data.  The five values are deliberately
+ * opaque: this proves a consumer path, not their record or gameplay meaning. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t raw_track02_record;
+    uint16_t logical_addresses[5];
+    uint32_t physical_addresses[5];
+    uint16_t reader_pcs[5];
+    uint32_t reader_physical_pcs[5];
+    size_t media_offsets[5];
+    uint8_t values[5];
+    uint8_t code_bytes[120];
+    uint32_t code_checksum;
+    uint32_t code_first_record;
+    size_t code_first_user_offset;
+    uint32_t code_second_record;
+    size_t code_second_user_offset;
+    uint16_t pointer_base;
+    uint8_t pointer_stride;
+    uint8_t resolved_index;
+    uint16_t resolved_pointer;
+    int code_media_verified;
+    int address_construction_verified;
+    int source_bytes_verified;
+    int read_order_verified;
+    int next_dispatch_observed;
+    int field_semantics_proven;
+} Theron_V1RawLoaderTraceGameE009ConsumerReceipt;
+
+/* An ordered RAM-write join from the first source-bound consumer through the
+ * `$3836` TII into the following eight-byte `$20f8` parameter block.  Values
+ * are retained as opaque bytes; no SCSI or record-field meaning is assigned. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint8_t consumer_outputs[7];
+    uint8_t next_parameters[8];
+    unsigned int first_write_sequence;
+    uint16_t tii_pc;
+    uint16_t tii_source;
+    uint16_t tii_destination;
+    uint16_t tii_length;
+    int consumer_output_writes_verified;
+    int tii_verified;
+    int next_parameters_verified;
+    int parameter_semantics_proven;
+} Theron_V1RawLoaderTraceGameE009NextParametersReceipt;
+
+/* The following US `$e009` call streams four MODE1 sectors directly through
+ * HuC6270 VDC data ports.  This receipt binds the opaque parameter block to
+ * READ(6) generation 6 and the byte-exact VDC write stream. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    uint32_t first_raw_track02_record;
+    size_t payload_bytes;
+    uint32_t payload_checksum;
+    uint16_t vdc_write_pc;
+    uint32_t vdc_write_physical_pc;
+    size_t vdc_payload_writes;
+    uint16_t first_vram_word;
+    uint16_t last_vram_word;
+    size_t vram_word_count;
+    uint32_t vram_snapshot_checksum;
+    uint32_t full_vram_snapshot_checksum;
+    int read6_verified;
+    int vdc_setup_verified;
+    int repeated_word_writes_verified;
+    int single_word_writes_verified;
+    int vram_destination_verified;
+    int vram_snapshot_verified;
+    int mode1_payload_verified;
+    int payload_semantics_proven;
+} Theron_V1RawLoaderTraceGameE009VdcReceipt;
+
+/* The first post-load BAT construction observed in generation 7.  It replays
+ * the original VDC writes from the generation-6 snapshot and proves which
+ * source-bound tiles are addressed by the enabled 32x30 background. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int scsi_generation;
+    size_t vdc_rows;
+    size_t vwr_commits;
+    uint32_t pre_vram_checksum;
+    uint32_t post_vram_checksum;
+    uint32_t bat_checksum;
+    uint16_t first_source_tile;
+    uint16_t last_source_tile;
+    size_t active_bat_cells;
+    size_t source_backed_active_cells;
+    size_t unique_source_tiles;
+    size_t background_index_pixels;
+    size_t nonzero_background_pixels;
+    uint32_t background_index_checksum;
+    uint32_t vce_checksum;
+    uint32_t palette_zero_checksum;
+    uint32_t background_color_checksum;
+    uint32_t code_snapshot_checksum;
+    uint32_t code_track02_record;
+    size_t code_track02_user_offset;
+    size_t source_code_bytes;
+    uint16_t tia_pc;
+    uint16_t tia_source;
+    uint16_t tia_destination;
+    uint16_t tia_length;
+    uint32_t generated_bat_row_checksum;
+    int vdc_replay_verified;
+    int background_enabled;
+    int active_bat_source_verified;
+    int background_pixels_verified;
+    int vce_palette_verified;
+    int code_media_verified;
+    int stage2_l466b_verified;
+    int self_modifying_tia_verified;
+    int tile_semantics_proven;
+} Theron_V1RawLoaderTraceGameE009VdcPresentationReceipt;
+
+/* The later 12-sector graphics transfer observed as SCSI generation 49.
+ * This binds only the original READ(6) bytes and their ordered VDC-port
+ * writes.  It does not assign title, menu, dungeon, tile, or image meaning. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    unsigned int scsi_sector_count;
+    uint32_t first_raw_track02_record;
+    size_t payload_bytes;
+    uint32_t payload_checksum;
+    size_t vdc_rows;
+    size_t vdc_payload_rows;
+    uint16_t first_vram_word;
+    uint16_t last_vram_word;
+    int read6_verified;
+    int vdc_setup_verified;
+    int repeated_writes_verified;
+    int single_writes_verified;
+    int media_bytes_verified;
+    int graphics_semantics_proven;
+} Theron_V1RawLoaderTraceGameGeneration49GraphicsReceipt;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int scsi_generation;
+    size_t generation_rows;
+    unsigned int boundary_sequence;
+    uint32_t vram_checksum;
+    uint32_t vce_checksum;
+    uint32_t sat_checksum;
+    size_t l466b_writer_rows;
+    size_t l4943_writer_rows;
+    size_t l50f1_writer_rows;
+    size_t l5111_writer_rows;
+    int atomic_snapshot_verified;
+    int stage2_control_flow_verified;
+    int stable_loop_boundary_verified;
+    int screen_semantics_proven;
+} Theron_V1RawLoaderTraceGameGeneration51FrameReceipt;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    size_t occurrence_count;
+    uint32_t raw_track02_record[3];
+    uint16_t raw_sector_offset[3];
+    size_t user_data_offset[3];
+    uint32_t play_prompt_checksum;
+    uint32_t load_prompt_checksum;
+    int mode1_coordinates_verified;
+    int source_text_verified;
+    int screen_consumer_proven;
+} Theron_V1RawLoaderTraceFileSelectTextSourceReceipt;
+
+/* Same-run receipt for the encoded file-select transport discovered after
+ * the prompt source was catalogued. The VDC replay proves its pattern-VRAM
+ * destination; the 195-byte encoding and glyph meaning remain opaque. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int scsi_generation;
+    unsigned int scsi_lba;
+    uint32_t raw_track02_record;
+    size_t raw_user_data_offset;
+    size_t byte_count;
+    uint32_t raw_sector_checksum;
+    uint32_t payload_checksum;
+    unsigned int loader_frame;
+    uint16_t loader_pc;
+    uint32_t loader_physical_pc;
+    uint32_t source_physical_first;
+    unsigned int transfer_frame;
+    uint16_t transfer_pc;
+    uint32_t transfer_physical_pc;
+    uint32_t destination_physical_first;
+    unsigned int presentation_frame;
+    uint16_t presentation_source_reader_pc;
+    uint32_t presentation_source_reader_physical_pc;
+    uint16_t vdc_writer_pc;
+    uint32_t vdc_writer_physical_pc;
+    size_t vdc_setup_rows;
+    size_t vdc_payload_rows;
+    uint32_t vdc_payload_checksum;
+    uint16_t first_vram_word;
+    uint16_t last_vram_word;
+    size_t vram_word_count;
+    int read6_verified;
+    int media_to_source_ram_verified;
+    int source_to_destination_ram_verified;
+    int destination_consumer_verified;
+    int destination_to_vdc_verified;
+    int vdc_destination_replay_verified;
+    int text_or_glyph_semantics_proven;
+} Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt;
+
+/* Atomic frame-8580 graphics snapshot taken immediately after the encoded
+ * transport's final VWR byte. It proves that VRAM $0800..$08ff mirrors the
+ * hardware SAT snapshot; individual sprite and screen meaning stays closed. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int frame;
+    uint16_t first_vram_word;
+    uint16_t last_vram_word;
+    size_t byte_count;
+    uint32_t staging_checksum;
+    uint32_t vram_checksum;
+    uint32_t vce_checksum;
+    uint32_t sat_checksum;
+    size_t nonzero_sat_entries;
+    size_t visible_sat_entries;
+    uint16_t first_sprite_pattern;
+    uint16_t last_sprite_pattern;
+    size_t sprite_pattern_bytes;
+    uint32_t sprite_pattern_checksum;
+    size_t bat_reference_count;
+    size_t frame_pixels;
+    size_t nonzero_frame_pixels;
+    size_t background_source_pixels;
+    size_t sprite_source_pixels;
+    size_t unique_source_indices;
+    uint32_t frame_source_checksum;
+    uint32_t frame_color_checksum;
+    uint16_t sprite_source_index;
+    uint16_t sprite_color;
+    uint16_t sprite_min_x;
+    uint16_t sprite_max_x;
+    uint16_t sprite_min_y;
+    uint16_t sprite_max_y;
+    uint16_t byr;
+    uint16_t mwr;
+    uint16_t cr;
+    int atomic_snapshot_verified;
+    int vram_sat_identity_verified;
+    int sat_record_layout_verified;
+    int sprite_pattern_range_verified;
+    int frame_composition_verified;
+    int vce_color_composition_verified;
+    int sprite_or_screen_semantics_proven;
+} Theron_V1RawLoaderTraceFileSelectSatFrameReceipt;
+
+/* Authentic frame-end comparison around the frame-8580 BYR write.  It binds
+ * the one-line background scroll to executed game code while keeping any
+ * file-select, prompt, or other screen interpretation closed. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    unsigned int pre_frame;
+    unsigned int update_frame;
+    unsigned int post_frame;
+    uint16_t pre_byr;
+    uint16_t post_byr;
+    uint16_t register_select_pc;
+    uint16_t low_byte_writer_pc;
+    uint16_t high_byte_writer_pc;
+    uint32_t vram_checksum;
+    uint32_t vce_checksum;
+    uint32_t sat_checksum;
+    uint32_t pre_source_checksum;
+    uint32_t post_source_checksum;
+    uint32_t pre_color_checksum;
+    uint32_t post_color_checksum;
+    size_t pre_nonzero_pixels;
+    size_t post_nonzero_pixels;
+    size_t sprite_pixels;
+    size_t changed_pixels;
+    size_t changed_sprite_pixels;
+    uint16_t changed_min_x;
+    uint16_t changed_max_x;
+    uint16_t changed_min_y;
+    uint16_t changed_max_y;
+    int frame_end_markers_verified;
+    int graphics_snapshots_identical;
+    int game_byr_write_verified;
+    int composition_delta_verified;
+    int sprite_mask_static_verified;
+    int screen_semantics_proven;
+} Theron_V1RawLoaderTraceFileSelectScrollReceipt;
+
+/* Executed-code and write-trace proof for the producer behind the authenticated
+ * frame-8580 BYR transition.  The receipt stops at register/RAM mechanics and
+ * deliberately assigns no screen meaning to the pixels. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    char track02_md5[33];
+    uint32_t code_checksum;
+    uint32_t ram_checksum;
+    uint16_t byr_source_address;
+    uint16_t byr_load_pc;
+    uint16_t scroll_writer_pc;
+    uint16_t countdown_low_writer_pc;
+    uint16_t countdown_high_writer_pc;
+    unsigned int first_scroll_frame;
+    unsigned int presented_scroll_frame;
+    unsigned int final_scroll_frame;
+    unsigned int final_countdown_frame;
+    unsigned int update_interval_frames;
+    unsigned int scroll_updates;
+    unsigned int countdown_updates;
+    unsigned int next_phase_start_frame;
+    unsigned int next_phase_final_frame;
+    unsigned int next_phase_reset_frame;
+    unsigned int next_phase_interval_frames;
+    unsigned int next_phase_updates;
+    uint16_t initial_byr;
+    uint16_t final_byr;
+    uint16_t initial_countdown;
+    uint16_t final_countdown;
+    uint16_t next_phase_initial_countdown;
+    uint16_t next_phase_final_countdown;
+    uint16_t next_phase_low_writer_pc;
+    uint16_t next_phase_high_writer_pc;
+    int code_path_verified;
+    int ram_snapshot_verified;
+    int signed_scroll_loop_verified;
+    int zero_stop_verified;
+    int next_control_phase_verified;
+    int screen_semantics_proven;
+} Theron_V1RawLoaderTraceFileSelectScrollDriverReceipt;
+
 /* A byte-level join between an authenticated game-RAM payload receipt and the
  * one source-locked initial envelope. It proves only that a captured byte
  * lies within the already-bounded raw-media envelope; it does not decode that
@@ -994,6 +1382,132 @@ int theron_v1_raw_loader_trace_bind_game_owned_fifo_payload(
     size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceGamePayloadReceipt *out);
+
+/* Fail-closed binder for the authentic US cold-start receipt described by
+ * `Theron_V1RawLoaderTraceGameE009DestinationReceipt`. `capture` and
+ * `cd_capture` are the two source-marked sidecars from the same instrumented
+ * Mednafen session. */
+int theron_v1_raw_loader_trace_bind_game_e009_destination(
+    const char *capture,
+    const char *cd_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009DestinationReceipt *out);
+
+/* Binds the first ordered game-owned consumer reads to an already admitted
+ * destination receipt and to the same authenticated Track 02 image. */
+int theron_v1_raw_loader_trace_bind_game_e009_consumer(
+    const Theron_V1RawLoaderTraceGameE009DestinationReceipt *destination,
+    const char *consumer_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009ConsumerReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_game_e009_next_parameters(
+    const Theron_V1RawLoaderTraceGameE009ConsumerReceipt *consumer,
+    const char *main_ram_loader_capture,
+    Theron_V1RawLoaderTraceGameE009NextParametersReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_game_e009_vdc_payload(
+    const Theron_V1RawLoaderTraceGameE009NextParametersReceipt *parameters,
+    const char *cd_capture,
+    const char *vdc_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const uint8_t *vram_snapshot,
+    size_t vram_snapshot_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009VdcReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_game_e009_vdc_presentation(
+    const Theron_V1RawLoaderTraceGameE009VdcReceipt *payload,
+    const char *vdc_capture,
+    const char *vdc_state_capture,
+    const uint8_t *pre_vram_snapshot,
+    size_t pre_vram_snapshot_size,
+    const uint8_t *post_vram_snapshot,
+    size_t post_vram_snapshot_size,
+    const uint8_t *vce_snapshot,
+    size_t vce_snapshot_size,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameE009VdcPresentationReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_game_generation49_graphics(
+    const Theron_V1RawLoaderTraceGameE009VdcPresentationReceipt *presentation,
+    const char *cd_capture,
+    const char *vdc_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameGeneration49GraphicsReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_game_generation51_frame(
+    const Theron_V1RawLoaderTraceGameGeneration49GraphicsReceipt *graphics,
+    const char *vdc_capture,
+    const char *vdc_state_capture,
+    const uint8_t *vram_snapshot,
+    size_t vram_snapshot_size,
+    const uint8_t *vce_snapshot,
+    size_t vce_snapshot_size,
+    const uint8_t *sat_snapshot,
+    size_t sat_snapshot_size,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceGameGeneration51FrameReceipt *out);
+
+/* Verifies all three US Track 02 copies of the file-select prompts at their
+ * physical MODE1/2352 coordinates.  This is source ownership only; a screen
+ * consumer remains closed until a same-run CPU text-read trace is captured. */
+int theron_v1_raw_loader_trace_bind_file_select_text_source(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceFileSelectTextSourceReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_file_select_encoded_transport(
+    const char *cd_capture,
+    const char *source_write_capture,
+    const char *source_read_capture,
+    const char *consumer_read_capture,
+    const char *vdc_capture,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_file_select_sat_frame(
+    const Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt *transport,
+    const char *vdc_state_capture,
+    const uint8_t *vram_snapshot, size_t vram_snapshot_size,
+    const uint8_t *vce_snapshot, size_t vce_snapshot_size,
+    const uint8_t *sat_snapshot, size_t sat_snapshot_size,
+    Theron_V1RawLoaderTraceFileSelectSatFrameReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_file_select_scroll_transition(
+    const Theron_V1RawLoaderTraceFileSelectEncodedTransportReceipt *transport,
+    const char *vdc_capture,
+    const char *pre_vdc_state_capture,
+    const uint8_t *pre_vram, size_t pre_vram_size,
+    const uint8_t *pre_vce, size_t pre_vce_size,
+    const uint8_t *pre_sat, size_t pre_sat_size,
+    const char *post_vdc_state_capture,
+    const uint8_t *post_vram, size_t post_vram_size,
+    const uint8_t *post_vce, size_t post_vce_size,
+    const uint8_t *post_sat, size_t post_sat_size,
+    Theron_V1RawLoaderTraceFileSelectScrollReceipt *out);
+
+int theron_v1_raw_loader_trace_bind_file_select_scroll_driver(
+    const Theron_V1RawLoaderTraceFileSelectScrollReceipt *scroll,
+    const uint8_t *code_snapshot, size_t code_snapshot_size,
+    const uint8_t *ram_snapshot, size_t ram_snapshot_size,
+    const char *scroll_ram_capture,
+    const char *scroll_control_capture,
+    Theron_V1RawLoaderTraceFileSelectScrollDriverReceipt *out);
 
 /* Bounded file wrapper for one staged original consumer transcript.  The
  * imported receipt is still byte provenance only: no object, level, bitmap,

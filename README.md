@@ -37,7 +37,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, Amiga, FM Towns and Macintosh have real-media startup and selected runtime coverage. Title timing/palette, menu handoff, input, audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | PC Engine/TurboGrafx real-media startup and initial dungeon parsing work; later presentation and level-transition evidence is still required. |
+| Theron's Quest | Native US and Japanese Track 02 startup and source-dungeon loading work; presentation, transitions and later gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
 
@@ -81,6 +81,9 @@ and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
 Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
 forward, Down/S moves backward, and Left/A and Right/D turn while held.
+Tab selects the next living member of the Soul Room party and G picks up a
+source-verified item in the facing cell. P drops that explicitly selected
+source item on the party square, and U uses a door in the facing cell.
 Keypad 8/2/4/6 provides the same four directions. Left and right mouse
 buttons are Button I and Button II; mouse motion only moves the normal pointer
 and never changes the selected object or jumps between controls. On touch
@@ -88,7 +91,9 @@ screens, a short touch is Button I and a long touch is Button II.
 
 ### Theron's Quest runtime status
 
-README screenshots are Firestaff-rendered screenshots only. Original-media
+The native Track 02 runtime can select co-located US or Japanese data
+explicitly with `--theron-native us` or `--theron-native jp`. README
+screenshots are Firestaff-rendered screenshots only. Original-media
 emulator captures are kept out of the public README and are not presented as
 Firestaff output. Theron's Quest remains in source-bound runtime bring-up;
 see the [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
@@ -258,11 +263,16 @@ FM Towns selection remains the English edition.
 ### Theron's Quest (PC Engine CD)
 
 Place the original US Track 02 BIN in `.firestaff/data/theron/` (or pass a
-data root that contains `theron/TQUS02.bin`) and start it normally:
+data root that contains `theron/TQUS02.bin`). When both regions are installed,
+select either one without moving files:
 
 ```bash
-./build/firestaff --game theron --data-dir "$HOME/.firestaff/data"
+./build/firestaff --theron-native us --data-dir "$HOME/.firestaff/data"
+./build/firestaff --theron-native jp --data-dir "$HOME/.firestaff/data"
 ```
+
+When a complete CUE is present, native startup may bind matching original
+Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 
 The title accepts Enter, followed by the stage and Soul Room selections. The
 Japanese Rev 1 CUE then reaches the bounded native Akutuba runtime through
@@ -277,20 +287,24 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ./build/firestaff \
   --boot-probe-expect-startup-active 0
 ```
 
-This confirms the source-backed title → stage → Soul Room → initial runtime
-handoff, not broad PC Engine gameplay parity. Uncaptured later-level/object
-publication, creature AI, combat, generator, sound-effect and text-control
-semantics remain unavailable rather than being replaced with host behavior.
-`--csb-utility-disk` opens the separately preserved FM Towns Utility Disk
-after normal verified CSB startup; it implies `--game csb --platform fm-towns`
-and fails closed if that package is unavailable. The start menu also has a
-dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from the
-Atari Hint Oracle (`--csb-hint-oracle`) and never substitutes its data or UI.
-The Hint Oracle needs `--data-dir <root>` containing its matching verified
-files; those files may be loose or inside a supported archive. The Japanese
-Utility Disk chooser additionally requires the user's authorised FM Towns
-font ROM for original Shift-JIS glyphs. Firestaff never substitutes a system
-font or installs the ROM into game data.
+This confirms the native source-backed runtime route, not a recovered PC
+Engine CD-runtime semantic handoff. Uncaptured creature AI, combat, generator,
+sound-effect and text-control semantics remain unavailable rather than being
+replaced with host behavior.
+`--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk
+after the normal verified CSB F31 boot; it implies `--game csb --platform
+fm-towns` and fails closed if that package is unavailable. The start menu also
+has a dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from
+the Atari R1 Hint Oracle (`--csb-hint-oracle`) and never substitutes its data
+or UI. The Hint Oracle needs `--data-dir <root>` containing the verified Atari
+R1 `HCSB.HTC`, `HCSB.DAT` and native `MINI.DAT`; those files may be loose or
+inside a supported archive. `--save <MINI.DAT>` is optional and selects an
+explicit native save instead of the verified R1 `MINI.DAT` found in that root.
+The initial Japanese C06 Utility chooser additionally requires the user's
+authorised 256 KiB `FMT_FNT.ROM`; set `FIRESTAFF_FMTOWNS_FONT_ROM` to that
+file before launch. Firestaff uses the ROM only for its original Shift-JIS
+glyphs and keeps the route closed if the file is missing or malformed; it
+never substitutes a system font or installs the ROM into game data.
 
 Run the local test suite with:
 

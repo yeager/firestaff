@@ -28,6 +28,14 @@ int main(void) {
     assert(theron_v1_rng_mod(&state, 0x20u) == 0x04u);
     assert(theron_v1_rng_mod(&state, 0x00u) == 0u);
 
+    /* Four authentic 8192-byte Mednafen RAM snapshots have distinct full
+     * MD5s but the same bytes at logical $28b9-$28bb: 1a 62 29.  This is
+     * seed zero after two source steps, not a host-selected test seed. */
+    state.state_28b9 = 0x1au;
+    state.state_28ba = 0x62u;
+    state.state_28bb = 0x29u;
+    assert(theron_v1_rng_next(&state) == 0x9du);
+
     {
         uint8_t remainder = 0xffu;
         assert(theron_v1_source_divide_u16_u8(450u, 10u, &remainder) == 45u);
