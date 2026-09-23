@@ -69,6 +69,9 @@ done
 # Reapply reviewed terminology after msgmerge.  It updates only explicit
 # source-owned entries and leaves unknown player text as an honest fallback.
 python3 "$ROOT/po/refresh_major_language_catalogs.py" --po-dir "$WORK_PO"
+# Apply the reviewed startup-menu translations after msgmerge so newly added
+# source strings receive explicit locale values in the same working tree.
+FIRESTAFF_PO_DIR="$WORK_PO" python3 "$ROOT/po/translations_other.py" startup-menu
 msguniq --use-first --no-wrap --output-file="$WORK_PO/firestaff_studio.pot.canonical" "$WORK_PO/firestaff_studio.pot"
 mv -- "$WORK_PO/firestaff_studio.pot.canonical" "$WORK_PO/firestaff_studio.pot"
 for catalog in "$WORK_PO/studio"/*.po; do

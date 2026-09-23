@@ -432,7 +432,8 @@ def apply_other_translations(domain, lang_table):
     Uses msgstr=msgid fallback for keys not in the table.
     """
     import os
-    po_dir = os.path.dirname(os.path.abspath(__file__))
+    po_dir = os.environ.get(
+        'FIRESTAFF_PO_DIR', os.path.dirname(os.path.abspath(__file__)))
     total_updated = 0
     for lang, table in lang_table.items():
         path = os.path.join(po_dir, f'{domain}.{lang}.po')
@@ -1265,6 +1266,9 @@ STARTUP_MENU_EN = {k: k for k in [
     'CHANGES SAVE IMMEDIATELY TO CONFIG',
     'LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK',
     'ENTER OR ESC RETURNS TO MENU', 'READY TO LAUNCH',
+    'TITLE START AVAILABLE', 'MENU AND CAPTURE PROOFS NOT READY',
+    'TITLE START', 'VERIFIED SOURCE DATA',
+    'VERIFIED TITLE START; MENU AND CAPTURE STILL GATED',
     'ESC RETURNS TO MENU', 'VALIDATOR SCAFFOLD ONLY',
     'ADD VERIFIED RETAIL HASHES', 'GAME DATA NOT FOUND',
     'CHECK FIRESTAFF DATA DIR', 'ART SLOT READY', 'ART SLOT EMPTY',
@@ -1296,6 +1300,13 @@ STARTUP_MENU['sv'] = {k: v for k, v in {
         'VÄNSTER/HÖGER CYKEL   ENTER AVANCERA   ESC TILLBAKA',
     'ENTER OR ESC RETURNS TO MENU': 'ENTER ELLER ESC ÅTERGÅR TILL MENYN',
     'READY TO LAUNCH': 'REDO ATT STARTA',
+    'TITLE START AVAILABLE': 'TITELN KAN STARTAS',
+    'MENU AND CAPTURE PROOFS NOT READY':
+        'MENY OCH BILDFÅNGST ÄR INTE KLARA',
+    'TITLE START': 'STARTA TITELN',
+    'VERIFIED SOURCE DATA': 'VERIFIERADE SPELDATA',
+    'VERIFIED TITLE START; MENU AND CAPTURE STILL GATED':
+        'TITELSTART VERIFIERAD; MENY OCH BILDFÅNGST ÅTERSTÅR',
     'ESC RETURNS TO MENU': 'ESC ÅTERGÅR TILL MENYN',
     'VALIDATOR SCAFFOLD ONLY': 'ENDAST VALIDATOR-MALL',
     'ADD VERIFIED RETAIL HASHES': 'LÄGG TILL VERIFIERADE DETALJHANDEL-HASHAR',
@@ -1343,6 +1354,8 @@ STARTUP_MENU['fr'] = {k: v for k, v in {
     'ENTER OR ESC RETURNS TO MENU':
         'ENTRÉE OU ÉCHAP RETOURNE AU MENU',
     'READY TO LAUNCH': 'PRÊT À LANCER',
+    'TITLE START': 'LANCER LE JEU',
+    'VERIFIED SOURCE DATA': 'DONNÉES DE JEU VÉRIFIÉES',
     'ESC RETURNS TO MENU': 'ÉCHAP RETOURNE AU MENU',
     'VALIDATOR SCAFFOLD ONLY': 'ÉCHAFAUDAGE VALIDATEUR UNIQUEMENT',
     'ADD VERIFIED RETAIL HASHES': 'AJOUTER HASHES COMMERCE VÉRIFIÉS',
@@ -1388,6 +1401,8 @@ STARTUP_MENU['de'] = {k: v for k, v in {
     'ENTER OR ESC RETURNS TO MENU':
         'ENTER ODER ESC KEHREN ZUM MENÜ ZURÜCK',
     'READY TO LAUNCH': 'BEREIT ZUM STARTEN',
+    'TITLE START': 'TITEL STARTEN',
+    'VERIFIED SOURCE DATA': 'VERIFIZIERTE SPIELDATEN',
     'ESC RETURNS TO MENU': 'ESC KEHRT ZUM MENÜ ZURÜCK',
     'VALIDATOR SCAFFOLD ONLY': 'NUR VALIDATOR-GERÜST',
     'ADD VERIFIED RETAIL HASHES':
@@ -1437,6 +1452,8 @@ STARTUP_MENU['ja'] = {k: v for k, v in {
     'ENTER OR ESC RETURNS TO MENU':
         'ENTER または ESC でメニューに戻る',
     'READY TO LAUNCH': '起動準備完了',
+    'TITLE START': 'タイトルを開始',
+    'VERIFIED SOURCE DATA': '検証済みゲームデータ',
     'ESC RETURNS TO MENU': 'ESC でメニューに戻る',
     'VALIDATOR SCAFFOLD ONLY': 'バリデーター足場のみ',
     'ADD VERIFIED RETAIL HASHES':
@@ -1490,6 +1507,8 @@ STARTUP_MENU['zh'] = {k: v for k, v in {
     'ENTER OR ESC RETURNS TO MENU':
         'ENTER 或 ESC 返回菜单',
     'READY TO LAUNCH': '准备启动',
+    'TITLE START': '启动标题',
+    'VERIFIED SOURCE DATA': '已验证的游戏数据',
     'ESC RETURNS TO MENU': 'ESC 返回菜单',
     'VALIDATOR SCAFFOLD ONLY': '仅验证器框架',
     'ADD VERIFIED RETAIL HASHES': '添加经验证的零售哈希',
@@ -1536,6 +1555,10 @@ STARTUP_MENU.update({
     'ko': {k: k for k in STARTUP_MENU_EN},
     'tr': {k: k for k in STARTUP_MENU_EN},
 })
+
+# Indonesian retains its checked-in translations and uses explicit English
+# fallback only for new source strings without a reviewed Indonesian value.
+STARTUP_MENU['id'] = {}
 
 
 if __name__ == '__main__':

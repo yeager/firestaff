@@ -174,6 +174,7 @@ msgstr "Taal"
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
 #: scripts/firestaff_savegame_editor.py:957
+#, python-brace-format
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -231,10 +232,12 @@ msgstr "Annuleer"
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
+#, python-brace-format
 msgid "Imported .fsart: {}"
 msgstr "Geïmporteerd .fsart: {}"
 
 #: scripts/firestaff_artpack_studio.py:2024
+#, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "Neergezet doel geladen: {}"
 
@@ -247,6 +250,7 @@ msgid "Select V1/reference asset root"
 msgstr "V1/referentie asset-root selecteren"
 
 #: scripts/firestaff_artpack_studio.py:2073
+#, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "{} artpack geopend: {}"
 
@@ -255,6 +259,7 @@ msgid "Open artpack failed"
 msgstr "Artpack openen mislukt"
 
 #: scripts/firestaff_artpack_studio.py:2122
+#, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "{} V1/referentie assets gescand"
 
@@ -279,6 +284,7 @@ msgid "Images"
 msgstr "Afbeeldingen"
 
 #: scripts/firestaff_artpack_studio.py:2195
+#, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "Referentie geladen: {}"
 
@@ -287,6 +293,7 @@ msgid "Load V2.2 target image"
 msgstr "V2.2-doelafbeelding laden"
 
 #: scripts/firestaff_artpack_studio.py:2205
+#, python-brace-format
 msgid "Loaded target: {}"
 msgstr "Doel geladen: {}"
 
@@ -299,10 +306,12 @@ msgid "Game data"
 msgstr "Spelgegevens"
 
 #: scripts/firestaff_artpack_studio.py:2238
+#, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "Spelgegevens geïmporteerd: {} ({})"
 
 #: scripts/firestaff_artpack_studio.py:2240
+#, python-brace-format
 msgid "Warnings: {}"
 msgstr "Waarschuwingen: {}"
 
@@ -331,6 +340,7 @@ msgid "No target image"
 msgstr "Geen doelafbeelding"
 
 #: scripts/firestaff_artpack_studio.py:2292
+#, python-brace-format
 msgid "Imported {}/{}"
 msgstr "Geïmporteerd {}/{}"
 
@@ -340,10 +350,12 @@ msgid "Import failed"
 msgstr "Import mislukt"
 
 #: scripts/firestaff_artpack_studio.py:2307
+#, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "Bewerkte afbeelding opgeslagen: {}"
 
 #: scripts/firestaff_artpack_studio.py:2335
+#, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "AI-prompt geschreven: {}"
 
@@ -373,10 +385,12 @@ msgid "AI batch"
 msgstr "AI-batch"
 
 #: scripts/firestaff_artpack_studio.py:2390
+#, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "Hoeveel assets genereren? {} beschikbaar."
 
 #: scripts/firestaff_artpack_studio.py:2413
+#, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "AI-batch heeft {} assets gegenereerd/geïmporteerd"
 
@@ -401,10 +415,12 @@ msgid "Validation passed"
 msgstr "Validatie geslaagd"
 
 #: scripts/firestaff_artpack_studio.py:2431
+#, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "V2.2 runtime-cache gebouwd: {} ({} bytes)"
 
 #: scripts/firestaff_artpack_studio.py:2432
+#, python-brace-format
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -429,6 +445,7 @@ msgid "Reviewer name:"
 msgstr "Naam beoordelaar:"
 
 #: scripts/firestaff_artpack_studio.py:2442
+#, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "Ontvangstbewijs geschreven: {}"
 
@@ -446,6 +463,7 @@ msgid "Firestaff artpack"
 msgstr "Firestaff artpack"
 
 #: scripts/firestaff_artpack_studio.py:2458
+#, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr "Geëxporteerd .fsart: {}"
 
@@ -611,6 +629,7 @@ msgid "Graphics Override"
 msgstr "Grafische overschrijving"
 
 #: scripts/firestaff_dungeon_studio.py:623
+#, python-brace-format
 msgid "Import {}..."
 msgstr "{} importeren..."
 
@@ -645,6 +664,7 @@ msgid "New dungeon created"
 msgstr "Nieuwe dungeon aangemaakt"
 
 #: scripts/firestaff_dungeon_studio.py:1060
+#, python-brace-format
 msgid "Opened: {}"
 msgstr "Geopend: {}"
 
@@ -661,6 +681,7 @@ msgstr "Fout"
 
 #: scripts/firestaff_dungeon_studio.py:1070
 #: scripts/firestaff_savegame_editor.py:577
+#, python-brace-format
 msgid "Saved: {}"
 msgstr "Opgeslagen: {}"
 
@@ -677,10 +698,12 @@ msgid "Apply"
 msgstr "Toepassen"
 
 #: scripts/firestaff_dungeon_studio.py:1148
+#, python-brace-format
 msgid "Maps: {}"
 msgstr "Kaarten: {}"
 
 #: scripts/firestaff_dungeon_studio.py:1149
+#, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "Huidig: {} ({}×{})"
 
@@ -689,6 +712,7 @@ msgid "Tiles:"
 msgstr "Tegels:"
 
 #: scripts/firestaff_dungeon_studio.py:1155
+#, python-brace-format
 msgid "Things: {}"
 msgstr "Objecten: {}"
 
@@ -697,6 +721,7 @@ msgid "Dungeon Statistics"
 msgstr "Dungeon-statistieken"
 
 #: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "Kaart {} \"{}\": allemaal muren"
 
@@ -722,6 +747,7 @@ msgid "Dungeon is valid!"
 msgstr "Dungeon is geldig!"
 
 #: scripts/firestaff_dungeon_studio.py:1189
+#, python-brace-format
 msgid "Import {}"
 msgstr "{} importeren"
 
@@ -734,6 +760,7 @@ msgid "Pillow is required for graphics import"
 msgstr "Pillow is vereist voor grafische import"
 
 #: scripts/firestaff_dungeon_studio.py:1200
+#, python-brace-format
 msgid "Could not load image: {}"
 msgstr "Kan afbeelding niet laden: {}"
 
@@ -742,6 +769,7 @@ msgid "Resize?"
 msgstr "Formaat wijzigen?"
 
 #: scripts/firestaff_dungeon_studio.py:1204
+#, python-brace-format
 msgid ""
 "Image is {}×{}, expected {}×{}.\n"
 "Resize to fit?"
@@ -750,6 +778,7 @@ msgstr ""
 "Formaat aanpassen?"
 
 #: scripts/firestaff_dungeon_studio.py:1216
+#, python-brace-format
 msgid "{} imported from {}"
 msgstr "{} geïmporteerd van {}"
 
@@ -1167,6 +1196,7 @@ msgstr "Levensduur bevriezen actief (0/1)"
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
+#, python-brace-format
 msgid "Champion {}"
 msgstr "Kampioen {}"
 
@@ -1217,6 +1247,7 @@ msgid "Unrecognized savegame format."
 msgstr "Niet-herkend savegame-formaat."
 
 #: scripts/firestaff_savegame_editor.py:571
+#, python-brace-format
 msgid "Loaded: {}"
 msgstr "Doel geladen: {}"
 
@@ -1231,6 +1262,7 @@ msgid "Warning"
 msgstr "Waarschuwingen"
 
 #: scripts/firestaff_savegame_editor.py:586
+#, python-brace-format
 msgid "Saved as: {}"
 msgstr "Opgeslagen: {}"
 

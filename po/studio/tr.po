@@ -177,6 +177,7 @@ msgstr "Dil"
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
 #: scripts/firestaff_savegame_editor.py:957
+#, python-brace-format
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -234,10 +235,12 @@ msgstr "İptal"
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
+#, python-brace-format
 msgid "Imported .fsart: {}"
 msgstr "İçe aktarılan .fsart: {}"
 
 #: scripts/firestaff_artpack_studio.py:2024
+#, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "İndirilen hedef yüklendi: {}"
 
@@ -250,6 +253,7 @@ msgid "Select V1/reference asset root"
 msgstr "V1/referans varlık kökünü seçin"
 
 #: scripts/firestaff_artpack_studio.py:2073
+#, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "{} artpack açıldı: {}"
 
@@ -258,6 +262,7 @@ msgid "Open artpack failed"
 msgstr "Artpack'i açma işlemi başarısız oldu"
 
 #: scripts/firestaff_artpack_studio.py:2122
+#, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "{} V1/referans varlığı tarandı"
 
@@ -282,6 +287,7 @@ msgid "Images"
 msgstr "Görseller"
 
 #: scripts/firestaff_artpack_studio.py:2195
+#, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "Yüklenen referans: {}"
 
@@ -290,6 +296,7 @@ msgid "Load V2.2 target image"
 msgstr "V2.2 hedef resmini yükle"
 
 #: scripts/firestaff_artpack_studio.py:2205
+#, python-brace-format
 msgid "Loaded target: {}"
 msgstr "Yüklenen hedef: {}"
 
@@ -302,10 +309,12 @@ msgid "Game data"
 msgstr "Oyun verileri"
 
 #: scripts/firestaff_artpack_studio.py:2238
+#, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "İçe aktarılan oyun verileri: {} ({})"
 
 #: scripts/firestaff_artpack_studio.py:2240
+#, python-brace-format
 msgid "Warnings: {}"
 msgstr "Uyarılar: {}"
 
@@ -334,6 +343,7 @@ msgid "No target image"
 msgstr "Hedef resim yok"
 
 #: scripts/firestaff_artpack_studio.py:2292
+#, python-brace-format
 msgid "Imported {}/{}"
 msgstr "{}/{} içe aktarıldı"
 
@@ -343,10 +353,12 @@ msgid "Import failed"
 msgstr "İçe aktarma başarısız oldu"
 
 #: scripts/firestaff_artpack_studio.py:2307
+#, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "Düzenlenen resim kaydedildi: {}"
 
 #: scripts/firestaff_artpack_studio.py:2335
+#, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "AI istemini yazdı: {}"
 
@@ -376,10 +388,12 @@ msgid "AI batch"
 msgstr "AI toplu"
 
 #: scripts/firestaff_artpack_studio.py:2390
+#, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "Kaç varlık oluşturulsun? {} mevcut."
 
 #: scripts/firestaff_artpack_studio.py:2413
+#, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "AI tarafından toplu olarak oluşturulan/içe aktarılan {} varlık"
 
@@ -404,10 +418,12 @@ msgid "Validation passed"
 msgstr "Doğrulama başarılı oldu"
 
 #: scripts/firestaff_artpack_studio.py:2431
+#, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Dahili V2.2 çalışma zamanı önbelleği: {} ({} bayt)"
 
 #: scripts/firestaff_artpack_studio.py:2432
+#, python-brace-format
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -432,6 +448,7 @@ msgid "Reviewer name:"
 msgstr "İnceleyenin adı:"
 
 #: scripts/firestaff_artpack_studio.py:2442
+#, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "Makbuz yazıldı: {}"
 
@@ -449,6 +466,7 @@ msgid "Firestaff artpack"
 msgstr "Firestaff resim paketi"
 
 #: scripts/firestaff_artpack_studio.py:2458
+#, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr "Dışa aktarılan .fsart: {}"
 
@@ -614,6 +632,7 @@ msgid "Graphics Override"
 msgstr "Grafikleri Geçersiz Kılma"
 
 #: scripts/firestaff_dungeon_studio.py:623
+#, python-brace-format
 msgid "Import {}..."
 msgstr "{}'ı içe aktar..."
 
@@ -648,6 +667,7 @@ msgid "New dungeon created"
 msgstr "Yeni zindan oluşturuldu"
 
 #: scripts/firestaff_dungeon_studio.py:1060
+#, python-brace-format
 msgid "Opened: {}"
 msgstr "Açıldı: {}"
 
@@ -664,6 +684,7 @@ msgstr "Hata"
 
 #: scripts/firestaff_dungeon_studio.py:1070
 #: scripts/firestaff_savegame_editor.py:577
+#, python-brace-format
 msgid "Saved: {}"
 msgstr "Kaydedildi: {}"
 
@@ -680,10 +701,12 @@ msgid "Apply"
 msgstr "Uygula"
 
 #: scripts/firestaff_dungeon_studio.py:1148
+#, python-brace-format
 msgid "Maps: {}"
 msgstr "Haritalar: {}"
 
 #: scripts/firestaff_dungeon_studio.py:1149
+#, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "Güncel: {} ({}×{})"
 
@@ -692,6 +715,7 @@ msgid "Tiles:"
 msgstr "Fayans:"
 
 #: scripts/firestaff_dungeon_studio.py:1155
+#, python-brace-format
 msgid "Things: {}"
 msgstr "Şeyler: {}"
 
@@ -700,6 +724,7 @@ msgid "Dungeon Statistics"
 msgstr "Zindan İstatistikleri"
 
 #: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "Harita {} \"{}\": tüm duvarlar"
 
@@ -725,6 +750,7 @@ msgid "Dungeon is valid!"
 msgstr "Zindan geçerlidir!"
 
 #: scripts/firestaff_dungeon_studio.py:1189
+#, python-brace-format
 msgid "Import {}"
 msgstr "{}'ı içe aktar"
 
@@ -737,6 +763,7 @@ msgid "Pillow is required for graphics import"
 msgstr "Pillow is required for graphics import"
 
 #: scripts/firestaff_dungeon_studio.py:1200
+#, python-brace-format
 msgid "Could not load image: {}"
 msgstr "Resim yüklenemedi: {}"
 
@@ -745,6 +772,7 @@ msgid "Resize?"
 msgstr "Yeniden boyutlandırılsın mı?"
 
 #: scripts/firestaff_dungeon_studio.py:1204
+#, python-brace-format
 msgid ""
 "Image is {}×{}, expected {}×{}.\n"
 "Resize to fit?"
@@ -753,6 +781,7 @@ msgstr ""
 "Sığacak şekilde yeniden boyutlandırılsın mı?"
 
 #: scripts/firestaff_dungeon_studio.py:1216
+#, python-brace-format
 msgid "{} imported from {}"
 msgstr "{}, {} kaynağından içe aktarıldı"
 
@@ -1170,6 +1199,7 @@ msgstr "Hayatı Dondur aktif (0/1)"
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
+#, python-brace-format
 msgid "Champion {}"
 msgstr "Şampiyon {}"
 
@@ -1220,6 +1250,7 @@ msgid "Unrecognized savegame format."
 msgstr "Tanınmayan kayıtlı oyun biçimi."
 
 #: scripts/firestaff_savegame_editor.py:571
+#, python-brace-format
 msgid "Loaded: {}"
 msgstr "Yüklendi: {}"
 
@@ -1234,6 +1265,7 @@ msgid "Warning"
 msgstr "Uyarı"
 
 #: scripts/firestaff_savegame_editor.py:586
+#, python-brace-format
 msgid "Saved as: {}"
 msgstr "Şu şekilde kaydedildi: {}"
 

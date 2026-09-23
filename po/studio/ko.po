@@ -174,6 +174,7 @@ msgstr "언어"
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
 #: scripts/firestaff_savegame_editor.py:957
+#, python-brace-format
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -231,10 +232,12 @@ msgstr "취소"
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
+#, python-brace-format
 msgid "Imported .fsart: {}"
 msgstr ".fsart 가져옴: {}"
 
 #: scripts/firestaff_artpack_studio.py:2024
+#, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "드롭된 타겟 로드됨: {}"
 
@@ -247,6 +250,7 @@ msgid "Select V1/reference asset root"
 msgstr "V1/참조 에셋 루트 선택"
 
 #: scripts/firestaff_artpack_studio.py:2073
+#, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "{} 아트팩 열림: {}"
 
@@ -255,6 +259,7 @@ msgid "Open artpack failed"
 msgstr "아트팩 열기 실패"
 
 #: scripts/firestaff_artpack_studio.py:2122
+#, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "{} V1/참조 에셋 스캔됨"
 
@@ -279,6 +284,7 @@ msgid "Images"
 msgstr "이미지"
 
 #: scripts/firestaff_artpack_studio.py:2195
+#, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "참조 로드됨: {}"
 
@@ -287,6 +293,7 @@ msgid "Load V2.2 target image"
 msgstr "V2.2 타겟 이미지 불러오기"
 
 #: scripts/firestaff_artpack_studio.py:2205
+#, python-brace-format
 msgid "Loaded target: {}"
 msgstr "타겟 로드됨: {}"
 
@@ -299,10 +306,12 @@ msgid "Game data"
 msgstr "게임 데이터"
 
 #: scripts/firestaff_artpack_studio.py:2238
+#, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "게임 데이터 가져옴: {} ({})"
 
 #: scripts/firestaff_artpack_studio.py:2240
+#, python-brace-format
 msgid "Warnings: {}"
 msgstr "경고: {}"
 
@@ -331,6 +340,7 @@ msgid "No target image"
 msgstr "타겟 이미지 없음"
 
 #: scripts/firestaff_artpack_studio.py:2292
+#, python-brace-format
 msgid "Imported {}/{}"
 msgstr "가져옴 {}/{}"
 
@@ -340,10 +350,12 @@ msgid "Import failed"
 msgstr "가져오기 실패"
 
 #: scripts/firestaff_artpack_studio.py:2307
+#, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "편집된 이미지 저장됨: {}"
 
 #: scripts/firestaff_artpack_studio.py:2335
+#, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "AI 프롬프트 작성됨: {}"
 
@@ -373,10 +385,12 @@ msgid "AI batch"
 msgstr "AI 배치"
 
 #: scripts/firestaff_artpack_studio.py:2390
+#, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "몇 개의 에셋을 생성하시겠습니까? {} 사용 가능."
 
 #: scripts/firestaff_artpack_studio.py:2413
+#, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "AI 배치가 {} 에셋을 생성/가져옴"
 
@@ -401,10 +415,12 @@ msgid "Validation passed"
 msgstr "검증 통과"
 
 #: scripts/firestaff_artpack_studio.py:2431
+#, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "V2.2 런타임 캐시 빌드됨: {} ({} 바이트)"
 
 #: scripts/firestaff_artpack_studio.py:2432
+#, python-brace-format
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -429,6 +445,7 @@ msgid "Reviewer name:"
 msgstr "리뷰어 이름:"
 
 #: scripts/firestaff_artpack_studio.py:2442
+#, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "영수증 작성됨: {}"
 
@@ -446,6 +463,7 @@ msgid "Firestaff artpack"
 msgstr "Firestaff 아트팩"
 
 #: scripts/firestaff_artpack_studio.py:2458
+#, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr ".fsart 내보냄: {}"
 
@@ -611,6 +629,7 @@ msgid "Graphics Override"
 msgstr "그래픽 재정의"
 
 #: scripts/firestaff_dungeon_studio.py:623
+#, python-brace-format
 msgid "Import {}..."
 msgstr "{} 가져오기..."
 
@@ -645,6 +664,7 @@ msgid "New dungeon created"
 msgstr "새 던전이 생성되었습니다"
 
 #: scripts/firestaff_dungeon_studio.py:1060
+#, python-brace-format
 msgid "Opened: {}"
 msgstr "열림: {}"
 
@@ -661,6 +681,7 @@ msgstr "오류"
 
 #: scripts/firestaff_dungeon_studio.py:1070
 #: scripts/firestaff_savegame_editor.py:577
+#, python-brace-format
 msgid "Saved: {}"
 msgstr "저장됨: {}"
 
@@ -677,10 +698,12 @@ msgid "Apply"
 msgstr "적용"
 
 #: scripts/firestaff_dungeon_studio.py:1148
+#, python-brace-format
 msgid "Maps: {}"
 msgstr "맵: {}"
 
 #: scripts/firestaff_dungeon_studio.py:1149
+#, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "현재: {} ({}×{})"
 
@@ -689,6 +712,7 @@ msgid "Tiles:"
 msgstr "타일:"
 
 #: scripts/firestaff_dungeon_studio.py:1155
+#, python-brace-format
 msgid "Things: {}"
 msgstr "오브젝트: {}"
 
@@ -697,6 +721,7 @@ msgid "Dungeon Statistics"
 msgstr "던전 통계"
 
 #: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "맵 {} \"{}\": 모두 벽"
 
@@ -722,6 +747,7 @@ msgid "Dungeon is valid!"
 msgstr "던전이 유효합니다!"
 
 #: scripts/firestaff_dungeon_studio.py:1189
+#, python-brace-format
 msgid "Import {}"
 msgstr "{} 가져오기"
 
@@ -734,6 +760,7 @@ msgid "Pillow is required for graphics import"
 msgstr "그래픽 가져오기에 Pillow가 필요합니다"
 
 #: scripts/firestaff_dungeon_studio.py:1200
+#, python-brace-format
 msgid "Could not load image: {}"
 msgstr "이미지를 불러올 수 없습니다: {}"
 
@@ -742,6 +769,7 @@ msgid "Resize?"
 msgstr "크기 조절?"
 
 #: scripts/firestaff_dungeon_studio.py:1204
+#, python-brace-format
 msgid ""
 "Image is {}×{}, expected {}×{}.\n"
 "Resize to fit?"
@@ -750,6 +778,7 @@ msgstr ""
 "크기를 조절하시겠습니까?"
 
 #: scripts/firestaff_dungeon_studio.py:1216
+#, python-brace-format
 msgid "{} imported from {}"
 msgstr "{}을(를) {}에서 가져왔습니다"
 
@@ -1167,6 +1196,7 @@ msgstr "생명 동결 활성(0/1)"
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
+#, python-brace-format
 msgid "Champion {}"
 msgstr "챔피언 {}"
 
@@ -1217,6 +1247,7 @@ msgid "Unrecognized savegame format."
 msgstr "인식할 수 없는 저장 게임 형식입니다."
 
 #: scripts/firestaff_savegame_editor.py:571
+#, python-brace-format
 msgid "Loaded: {}"
 msgstr "타겟 로드됨: {}"
 
@@ -1231,6 +1262,7 @@ msgid "Warning"
 msgstr "경고"
 
 #: scripts/firestaff_savegame_editor.py:586
+#, python-brace-format
 msgid "Saved as: {}"
 msgstr "저장됨: {}"
 

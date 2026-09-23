@@ -17,1728 +17,1749 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/ui/menu_startup_m12.c:234 src/ui/menu_startup_m12.c:5249
+#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5310
 msgid "ACCESSIBILITY"
 msgstr "アクセシビリティ"
 
-#: src/ui/menu_startup_m12.c:234 src/ui/menu_startup_m12.c:5246
+#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5307
 msgid "AUDIO"
 msgstr "音声"
 
-#: src/ui/menu_startup_m12.c:234
+#: src/ui/menu_startup_m12.c:235
 msgid "CONTROLS"
 msgstr "操作設定"
 
-#: src/ui/menu_startup_m12.c:234 src/ui/menu_startup_m12.c:1861
-#: src/ui/menu_startup_m12.c:1873
+#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:1863
+#: src/ui/menu_startup_m12.c:1875
 msgid "GAME"
 msgstr "ゲーム"
 
-#: src/ui/menu_startup_m12.c:234 src/ui/menu_startup_m12.c:5231
-#: src/ui/menu_startup_m12.c:9910
+#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5292
+#: src/ui/menu_startup_m12.c:10310
 msgid "GRAPHICS"
 msgstr "グラフィック"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5252
+#: src/ui/menu_startup_m12.c:236 src/ui/menu_startup_m12.c:5313
 msgid "ONLINE"
 msgstr "オンライン"
 
-#: src/ui/menu_startup_m12.c:248
+#: src/ui/menu_startup_m12.c:249
 msgid "Graphics Mode"
 msgstr "グラフィックモード"
 
-#: src/ui/menu_startup_m12.c:248 src/ui/menu_startup_m12.c:262
+#: src/ui/menu_startup_m12.c:249 src/ui/menu_startup_m12.c:263
 msgid "Original"
 msgstr "オリジナル"
 
-#: src/ui/menu_startup_m12.c:249
+#: src/ui/menu_startup_m12.c:250
 msgid "Game Version"
 msgstr "ゲームバージョン"
 
-#: src/ui/menu_startup_m12.c:249
+#: src/ui/menu_startup_m12.c:250
 msgid "V1"
 msgstr "V1"
 
-#: src/ui/menu_startup_m12.c:250
+#: src/ui/menu_startup_m12.c:251
 msgid "English"
 msgstr "英語"
 
-#: src/ui/menu_startup_m12.c:250
+#: src/ui/menu_startup_m12.c:251
 msgid "Language"
 msgstr "言語"
 
-#: src/ui/menu_startup_m12.c:251
+#: src/ui/menu_startup_m12.c:252
 msgid "Game Speed"
 msgstr "ゲーム速度"
 
-#: src/ui/menu_startup_m12.c:251
+#: src/ui/menu_startup_m12.c:252
 msgid "Normal"
 msgstr "標準"
 
-#: src/ui/menu_startup_m12.c:252
+#: src/ui/menu_startup_m12.c:253
 msgid "Classic"
 msgstr "クラシック"
 
-#: src/ui/menu_startup_m12.c:252
+#: src/ui/menu_startup_m12.c:253
 msgid "Movement Mode"
 msgstr "移動モード"
 
-#: src/ui/menu_startup_m12.c:253
+#: src/ui/menu_startup_m12.c:254
 msgid "Cheats"
 msgstr "チート"
 
-#: src/ui/menu_startup_m12.c:253
+#: src/ui/menu_startup_m12.c:254
 msgid "Off"
 msgstr "オフ"
 
-#: src/ui/menu_startup_m12.c:258
+#: src/ui/menu_startup_m12.c:259
 msgid "Maximized"
 msgstr "最大化"
 
-#: src/ui/menu_startup_m12.c:258
+#: src/ui/menu_startup_m12.c:259
 msgid "Window Mode"
 msgstr "ウィンドウモード"
 
-#: src/ui/menu_startup_m12.c:259
+#: src/ui/menu_startup_m12.c:260
 msgid "16:9"
 msgstr "16:9"
 
-#: src/ui/menu_startup_m12.c:259
+#: src/ui/menu_startup_m12.c:260
 msgid "Display Format"
 msgstr "表示形式"
 
-#: src/ui/menu_startup_m12.c:260 src/ui/menu_startup_m12.c:261
+#: src/ui/menu_startup_m12.c:261 src/ui/menu_startup_m12.c:262
 msgid "On"
 msgstr "オン"
 
-#: src/ui/menu_startup_m12.c:260
+#: src/ui/menu_startup_m12.c:261
 msgid "VSync"
 msgstr "VSync"
 
-#: src/ui/menu_startup_m12.c:261
+#: src/ui/menu_startup_m12.c:262
 msgid "Integer Scaling"
 msgstr "整数スケーリング"
 
-#: src/ui/menu_startup_m12.c:262
+#: src/ui/menu_startup_m12.c:263
 msgid "Viewport Style"
 msgstr "ビューポート様式"
 
-#: src/ui/menu_startup_m12.c:263
+#: src/ui/menu_startup_m12.c:264
 msgid "Original VGA"
 msgstr "オリジナルVGA"
 
-#: src/ui/menu_startup_m12.c:263
+#: src/ui/menu_startup_m12.c:264
 msgid "Palette Mode"
 msgstr "パレットモード"
 
-#: src/ui/menu_startup_m12.c:393 src/ui/menu_startup_m12.c:423
-#: src/ui/menu_startup_m12.c:462 src/ui/menu_startup_m12.c:468
-#: src/ui/menu_startup_m12.c:471 src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:395 src/ui/menu_startup_m12.c:425
+#: src/ui/menu_startup_m12.c:464 src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:473 src/ui/menu_startup_m12.c:479
 msgid "ORIGINAL"
 msgstr "オリジナル"
 
-#: src/ui/menu_startup_m12.c:423
+#: src/ui/menu_startup_m12.c:425
 msgid "PATCHED"
-msgstr "パッチ適用済み"
+msgstr "パッチ済み"
 
-#: src/ui/menu_startup_m12.c:435
+#: src/ui/menu_startup_m12.c:437
 msgid "DE"
 msgstr "DE"
 
-#: src/ui/menu_startup_m12.c:435
+#: src/ui/menu_startup_m12.c:437
 msgid "EN"
 msgstr "EN"
 
-#: src/ui/menu_startup_m12.c:435
+#: src/ui/menu_startup_m12.c:437
 msgid "FR"
 msgstr "FR"
 
-#: src/ui/menu_startup_m12.c:435
+#: src/ui/menu_startup_m12.c:437
 msgid "JA"
 msgstr "JA"
 
-#: src/ui/menu_startup_m12.c:435
+#: src/ui/menu_startup_m12.c:437
 msgid "SV"
 msgstr "SV"
 
-#: src/ui/menu_startup_m12.c:435
+#: src/ui/menu_startup_m12.c:437
 msgid "ZH"
 msgstr "ZH"
 
-#: src/ui/menu_startup_m12.c:436
+#: src/ui/menu_startup_m12.c:438
 msgid "CS"
 msgstr "CS"
 
-#: src/ui/menu_startup_m12.c:436
+#: src/ui/menu_startup_m12.c:438
 msgid "DA"
 msgstr "DA"
 
-#: src/ui/menu_startup_m12.c:436
+#: src/ui/menu_startup_m12.c:438
 msgid "ES"
 msgstr "ES"
 
-#: src/ui/menu_startup_m12.c:436
+#: src/ui/menu_startup_m12.c:438
 msgid "FI"
 msgstr "FI"
 
-#: src/ui/menu_startup_m12.c:436
+#: src/ui/menu_startup_m12.c:438
 msgid "HU"
 msgstr "HU"
 
-#: src/ui/menu_startup_m12.c:436
+#: src/ui/menu_startup_m12.c:438
 msgid "IT"
 msgstr "IT"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "ID"
 msgstr "ID"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "KO"
 msgstr "KO"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "NL"
 msgstr "NL"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "NO"
 msgstr "NO"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "PL"
 msgstr "PL"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "PT"
 msgstr "PT"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "RU"
 msgstr "RU"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:439
 msgid "TR"
 msgstr "TR"
 
-#: src/ui/menu_startup_m12.c:438 src/ui/menu_startup_m12.c:444
-#: src/ui/menu_startup_m12.c:466 src/ui/menu_startup_m12.c:469
-#: src/ui/menu_startup_m12.c:4696 src/ui/menu_startup_m12.c:4840
+#: src/ui/menu_startup_m12.c:440 src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:468 src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:4757 src/ui/menu_startup_m12.c:4901
 msgid "AUTO"
 msgstr "自動"
 
-#: src/ui/menu_startup_m12.c:441
+#: src/ui/menu_startup_m12.c:443
 msgid "DEUTSCH"
-msgstr "DEUTSCH"
+msgstr "ドイツ語"
 
-#: src/ui/menu_startup_m12.c:441
+#: src/ui/menu_startup_m12.c:443
 msgid "ENGLISH"
-msgstr "ENGLISH"
+msgstr "英語"
 
-#: src/ui/menu_startup_m12.c:441
+#: src/ui/menu_startup_m12.c:443
 msgid "FRANÇAIS"
 msgstr "FRANCAIS"
 
-#: src/ui/menu_startup_m12.c:441
+#: src/ui/menu_startup_m12.c:443
 msgid "SVENSKA"
-msgstr "SVENSKA"
+msgstr "スウェーデン語"
 
-#: src/ui/menu_startup_m12.c:441
+#: src/ui/menu_startup_m12.c:443
 msgid "日本語"
 msgstr "日本語"
 
-#: src/ui/menu_startup_m12.c:441
+#: src/ui/menu_startup_m12.c:443
 msgid "简体中文"
 msgstr "简体中文"
 
-#: src/ui/menu_startup_m12.c:442
+#: src/ui/menu_startup_m12.c:444
 msgid "DANSK"
 msgstr "ダンスク"
 
-#: src/ui/menu_startup_m12.c:442
+#: src/ui/menu_startup_m12.c:444
 msgid "ESPAÑOL"
 msgstr "エスパニョール"
 
-#: src/ui/menu_startup_m12.c:442
+#: src/ui/menu_startup_m12.c:444
 msgid "ITALIANO"
 msgstr "イタリアーノ"
 
-#: src/ui/menu_startup_m12.c:442
+#: src/ui/menu_startup_m12.c:444
 msgid "MAGYAR"
 msgstr "マジャール語"
 
-#: src/ui/menu_startup_m12.c:442
+#: src/ui/menu_startup_m12.c:444
 msgid "SUOMI"
 msgstr "スオミ"
 
-#: src/ui/menu_startup_m12.c:442
+#: src/ui/menu_startup_m12.c:444
 msgid "ČEŠTINA"
 msgstr "チェスティナ"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:445
 msgid "NEDERLANDS"
 msgstr "オランダ"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:445
 msgid "NORSK BOKMÅL"
 msgstr "ノルスク・ボクモール"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:445
 msgid "POLSKI"
 msgstr "ポルスキー"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:445
 msgid "PORTUGUÊS"
 msgstr "ポルトガル語"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:445
 msgid "한국어"
 msgstr "한국어"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:446
 msgid "BAHASA INDONESIA"
 msgstr "インドネシア語"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:446
 msgid "TÜRKÇE"
 msgstr "トルコ語"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:446
 msgid "РУССКИЙ"
 msgstr "РУССКИЙ"
 
-#: src/ui/menu_startup_m12.c:448 src/ui/menu_startup_m12.c:464
-#: src/ui/menu_startup_m12.c:470 src/ui/menu_startup_m12.c:472
-#: src/ui/menu_startup_m12.c:473 src/ui/menu_startup_m12.c:474
-#: src/ui/menu_startup_m12.c:4826 src/ui/menu_startup_m12.c:4931
+#: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:4887 src/ui/menu_startup_m12.c:4992
 msgid "OFF"
 msgstr "オフ"
 
-#: src/ui/menu_startup_m12.c:448 src/ui/menu_startup_m12.c:464
+#: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
 #: src/ui/menu_startup_render_modern_m12.c:2363
 msgid "ON"
 msgstr "オン"
 
-#: src/ui/menu_startup_m12.c:449
+#: src/ui/menu_startup_m12.c:451
 msgid "FASTER"
-msgstr "速い"
+msgstr "より速い"
 
-#: src/ui/menu_startup_m12.c:449
+#: src/ui/menu_startup_m12.c:451
 msgid "NORMAL"
-msgstr "標準"
+msgstr "ノーマル"
 
-#: src/ui/menu_startup_m12.c:449
+#: src/ui/menu_startup_m12.c:451
 msgid "SLOWER"
-msgstr "遅い"
+msgstr "より遅い"
 
-#: src/ui/menu_startup_m12.c:455
+#: src/ui/menu_startup_m12.c:457
 msgid "FIT"
 msgstr "フィット"
 
-#: src/ui/menu_startup_m12.c:455
+#: src/ui/menu_startup_m12.c:457
 msgid "FIT SMOOTH"
 msgstr "スムーズ"
 
-#: src/ui/menu_startup_m12.c:465
+#: src/ui/menu_startup_m12.c:467
 msgid "LINEAR"
 msgstr "リニア"
 
-#: src/ui/menu_startup_m12.c:465
+#: src/ui/menu_startup_m12.c:467
 msgid "NEAREST"
 msgstr "ニアレスト"
 
-#: src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:468
 msgid "OPENGL"
-msgstr "OPENGL"
+msgstr "OpenGL"
 
-#: src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:468
 msgid "SDL"
 msgstr "SDL"
 
-#: src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:468
 msgid "SOFTWARE"
 msgstr "ソフトウェア"
 
-#: src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:468
 msgid "VULKAN"
-msgstr "VULKAN"
+msgstr "Vulkan"
 
-#: src/ui/menu_startup_m12.c:467
+#: src/ui/menu_startup_m12.c:469
 msgid "AVAILABLE"
 msgstr "利用可能"
 
-#: src/ui/menu_startup_m12.c:467
+#: src/ui/menu_startup_m12.c:469
 msgid "UNAVAILABLE"
 msgstr "利用不可"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:470
 msgid "EXPANDED"
 msgstr "拡張"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:470
 msgid "WIDESCREEN"
 msgstr "ワイドスクリーン"
 
-#: src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:471
 msgid "GAMEPAD"
 msgstr "ゲームパッド"
 
-#: src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:471
 msgid "KEYBOARD+MOUSE"
 msgstr "キーボード+マウス"
 
-#: src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:471
 msgid "TOUCH"
 msgstr "タッチ"
 
-#: src/ui/menu_startup_m12.c:470 src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_m12.c:475
 msgid "FULL"
 msgstr "フル"
 
-#: src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:472
 msgid "LARGE"
 msgstr "大"
 
-#: src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:472
 msgid "MINIMAL"
 msgstr "最小限"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:473
 msgid "FAST"
 msgstr "速い"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:473
 msgid "SMOOTH"
 msgstr "スムーズ"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:474
 msgid "COORDS"
 msgstr "座標"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:474
 msgid "DRAW ORDER"
 msgstr "描画順序"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:474
 msgid "QUEUE"
 msgstr "キュー"
 
-#: src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:475
 msgid "QUICK"
 msgstr "クイック"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:476
 msgid "DEUT"
 msgstr "DEUT"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:476
 msgid "PROT"
 msgstr "PROT"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:476
 msgid "TRIT"
 msgstr "TRIT"
 
-#: src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:477
 msgid "AMIGA"
 msgstr "AMIGA"
 
-#: src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:477
 msgid "CGA"
 msgstr "CGA"
 
-#: src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:477
 msgid "CLASSIC"
 msgstr "クラシック"
 
-#: src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:477
 msgid "DARK"
 msgstr "ダーク"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:478
 msgid "DUNGEON"
 msgstr "ダンジョン"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:478
 msgid "STARS"
 msgstr "星"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:478
 msgid "STATIC"
 msgstr "スタティック"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:478
 msgid "TORCH"
 msgstr "トーチ"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:479
 msgid "CUSTOM"
 msgstr "カスタム"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:479
 msgid "REMASTERED"
 msgstr "リマスター版"
 
-#: src/ui/menu_startup_m12.c:753 src/ui/menu_startup_m12.c:774
-#: src/ui/menu_startup_m12.c:9375 src/ui/menu_startup_m12.c:9818
+#: src/ui/menu_startup_m12.c:755 src/ui/menu_startup_m12.c:776
+#: src/ui/menu_startup_m12.c:9775 src/ui/menu_startup_m12.c:10218
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2626
 msgid "DUNGEON MASTER"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:754 src/ui/menu_startup_m12.c:784
-#: src/ui/menu_startup_m12.c:9377 src/ui/menu_startup_m12.c:9832
+#: src/ui/menu_startup_m12.c:756 src/ui/menu_startup_m12.c:786
+#: src/ui/menu_startup_m12.c:9777 src/ui/menu_startup_m12.c:10232
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2629
 msgid "CHAOS STRIKES BACK"
 msgstr "Chaos Strikes Back"
 
-#: src/ui/menu_startup_m12.c:755 src/ui/menu_startup_m12.c:794
+#: src/ui/menu_startup_m12.c:757 src/ui/menu_startup_m12.c:796
 #: src/ui/menu_startup_render_modern_m12.c:1476
 msgid "DUNGEON MASTER II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:756
+#: src/ui/menu_startup_m12.c:758
 msgid "DUNGEON MASTER NEXUS"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:758
+#: src/ui/menu_startup_m12.c:760
 msgid "THERON'S QUEST"
 msgstr "Theron's Quest"
 
-#: src/ui/menu_startup_m12.c:759
+#: src/ui/menu_startup_m12.c:761
 msgid "CSB UTILITY DISK (FM TOWNS)"
 msgstr "CSB ユーティリティディスク (FM TOWNS)"
 
-#: src/ui/menu_startup_m12.c:760
+#: src/ui/menu_startup_m12.c:762
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB ユーティリティ ディスク — ヒント オラクル"
 
-#: src/ui/menu_startup_m12.c:761 src/ui/menu_startup_m12.c:10752
-#: src/ui/menu_startup_m12.c:10755 src/ui/menu_startup_render_modern_m12.c:2026
+#: src/ui/menu_startup_m12.c:763 src/ui/menu_startup_m12.c:11152
+#: src/ui/menu_startup_m12.c:11155 src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "伝承の博物館"
 
-#: src/ui/menu_startup_m12.c:762 src/ui/menu_startup_m12.c:7807
-#: src/ui/menu_startup_m12.c:8376 src/ui/menu_startup_m12.c:9571
-#: src/ui/menu_startup_m12.c:10787 src/ui/menu_startup_m12.c:10790
-#: src/ui/menu_startup_m12.c:10934
+#: src/ui/menu_startup_m12.c:764 src/ui/menu_startup_m12.c:8130
+#: src/ui/menu_startup_m12.c:8699 src/ui/menu_startup_m12.c:9971
+#: src/ui/menu_startup_m12.c:11187 src/ui/menu_startup_m12.c:11190
+#: src/ui/menu_startup_m12.c:11335
 msgid "SETTINGS"
 msgstr "設定"
 
-#: src/ui/menu_startup_m12.c:775
+#: src/ui/menu_startup_m12.c:777
 msgid "THE ORIGINAL DUNGEON CRAWL"
 msgstr "元祖ダンジョンクロール"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:779
 msgid "1987 FTL GAMES"
 msgstr "1987年 FTLゲームズ"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:779
 msgid "CHAMPIONS ENTER THE DUNGEON"
 msgstr "勇者たちがダンジョンに足を踏み入れる"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:779
 msgid "FOUR PORTRAITS BECOME A PARTY"
 msgstr "4枚の肖像画がパーティとなる"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:779
 msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
 msgstr "リアルタイムの緊迫感が伝説を形作る"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:779
 msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
 msgstr "ファイアスタッフが物語の中心となる秘宝"
 
-#: src/ui/menu_startup_m12.c:778
+#: src/ui/menu_startup_m12.c:780
 msgid "KEY LORE THREADS"
 msgstr "物語の主な流れ"
 
-#: src/ui/menu_startup_m12.c:778
+#: src/ui/menu_startup_m12.c:780
 msgid "LORD CHAOS SHATTERS ORDER"
 msgstr "ロード・ケイオスが秩序を打ち砕く"
 
-#: src/ui/menu_startup_m12.c:778
+#: src/ui/menu_startup_m12.c:780
 msgid "RA RETURNS AS MASTER OF BALANCE"
 msgstr "ラーが均衡の支配者として帰還する"
 
-#: src/ui/menu_startup_m12.c:778
+#: src/ui/menu_startup_m12.c:780
 msgid "THE DUNGEON IS BOTH TEST AND PRISON"
 msgstr "ダンジョンは試練であり牢獄でもある"
 
-#: src/ui/menu_startup_m12.c:778
+#: src/ui/menu_startup_m12.c:780
 msgid "THE GREY LORD IS DIVIDED"
 msgstr "グレイロードは分かたれし存在"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:781
 msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
 msgstr "Firestaff は憶測ではなく証拠を記録する"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:781
 msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
 msgstr "GRAPHICS.DAT と DUNGEON.DAT は検証済み"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:781
 msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
 msgstr "ハッシュ化されたオリジナルデータはユーザー提供のまま"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:781
 msgid "PC AND ATARI ST LINEAGE MATTERS"
 msgstr "PC版とAtari ST版の系譜が重要"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:781
 msgid "PRESERVATION NOTES"
 msgstr "保存に関する注記"
 
-#: src/ui/menu_startup_m12.c:785
+#: src/ui/menu_startup_m12.c:787
 msgid "THE CHAMPIONS RETURN"
 msgstr "勇者たちの帰還"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:789
 msgid "CSB REWARDS MAP MEMORY AND NERVE"
 msgstr "CSB はマップの記憶力と度胸に報いる"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:789
 msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
 msgstr "Dungeon Master のシステムがより密になる"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:789
 msgid "EXPANSION AND SEQUEL DESIGN"
 msgstr "拡張作品にして続編のデザイン"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:789
 msgid "FOUR PATHS TEST MASTERY"
 msgstr "4つの道が熟練度を試す"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:789
 msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
 msgstr "コーバムの探求が単純な地下探索に取って代わる"
 
-#: src/ui/menu_startup_m12.c:788
+#: src/ui/menu_startup_m12.c:790
 msgid "CHAOS STILL CASTS A LONG SHADOW"
 msgstr "ケイオスは今なお長い影を落とす"
 
-#: src/ui/menu_startup_m12.c:788 src/ui/menu_startup_m12.c:798
+#: src/ui/menu_startup_m12.c:790 src/ui/menu_startup_m12.c:800
 msgid "LORE SHAPE"
 msgstr "物語の形"
 
-#: src/ui/menu_startup_m12.c:788
+#: src/ui/menu_startup_m12.c:790
 msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
 msgstr "帰還した勇者たちはより厳しい迷宮に挑む"
 
-#: src/ui/menu_startup_m12.c:788
+#: src/ui/menu_startup_m12.c:790
 msgid "THE PLAYER HUNTS CORBUM MATERIAL"
 msgstr "プレイヤーはコーバムの素材を追い求める"
 
-#: src/ui/menu_startup_m12.c:788
+#: src/ui/menu_startup_m12.c:790
 msgid "THE WORLD FEELS OLDER AND LESS SAFE"
 msgstr "世界はより古く、より危険に感じられる"
 
-#: src/ui/menu_startup_m12.c:789 src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:801
 msgid "ARCHIVE STATUS"
 msgstr "アーカイブ状況"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:791
 msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
 msgstr "CSBGRAPH.DAT と CSB.DAT は追跡管理されている"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:791
 msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
 msgstr "ランチャーは一致した場合のみ準備完了と表示する"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:791
 msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
 msgstr "博物館の内容は静的かつ範囲が限定されている"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:791
 msgid "VERSION SLOTS USE HASH EVIDENCE"
 msgstr "バージョンスロットはハッシュ証拠を使用する"
 
-#: src/ui/menu_startup_m12.c:795
+#: src/ui/menu_startup_m12.c:797
 msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
 msgstr "最初のダンジョンの外に広がる伝説"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:799
 msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
 msgstr "DM2 はパーティ生存の核となる要素を維持する"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:799
 msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
 msgstr "手下や天候がリズムを変える"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:799
 msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
 msgstr "屋外や店舗の空間が形式を拡張する"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:799
 msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
 msgstr "シリーズは最初の迷宮を超えて進化する"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:799
 msgid "THE SKULLKEEP ERA"
 msgstr "スカルキープの時代"
 
-#: src/ui/menu_startup_m12.c:798
+#: src/ui/menu_startup_m12.c:800
 msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
 msgstr "技術と魔法が舞台を共有する"
 
-#: src/ui/menu_startup_m12.c:798
+#: src/ui/menu_startup_m12.c:800
 msgid "THE PLAYER ASSEMBLES AND SURVIVES"
 msgstr "プレイヤーは編成し、生き延びる"
 
-#: src/ui/menu_startup_m12.c:798
+#: src/ui/menu_startup_m12.c:800
 msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
 msgstr "雰囲気はより奇妙で機械的になる"
 
-#: src/ui/menu_startup_m12.c:798
+#: src/ui/menu_startup_m12.c:800
 msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
 msgstr "世界はマウント・アナイアスよりも広大"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:801
 msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
 msgstr "バイナリアセットは今回の対象外"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:801
 msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
 msgstr "ここでの内容はデータの羅列ではなく案内である"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:801
 msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
 msgstr "DM2GRAPHICS.DAT と DM2DUNGEON.DAT は追跡管理されている"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:801
 msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
 msgstr "対応バージョンは今後増える可能性がある"
 
-#: src/ui/menu_startup_m12.c:804
+#: src/ui/menu_startup_m12.c:806
 msgid "FIRESTAFF PROJECT"
 msgstr "Firestaff プロジェクト"
 
-#: src/ui/menu_startup_m12.c:805
+#: src/ui/menu_startup_m12.c:807
 msgid "ABOUT AND CREDITS"
 msgstr "概要とクレジット"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:809
 msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
 msgstr "決定論的でモジュール式、博物館級の品質"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:809
 msgid "OPEN DUNGEON MASTER ENGINE"
 msgstr "オープンな Dungeon Master エンジン"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:809
 msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
 msgstr "オリジナルデータは同梱せず検証のみ行う"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:809
 msgid "PROJECT PURPOSE"
 msgstr "プロジェクトの目的"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:809
 msgid "V1 PRESERVES BASELINE BEHAVIOUR"
 msgstr "V1 は基準となる挙動を保持する"
 
-#: src/ui/menu_startup_m12.c:808
+#: src/ui/menu_startup_m12.c:810
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "クリストフ・フォンタネルが貴重な歴史を記録した"
 
-#: src/ui/menu_startup_m12.c:808 src/ui/menu_startup_m12.c:10769
-#: src/ui/menu_startup_m12.c:10772
+#: src/ui/menu_startup_m12.c:810 src/ui/menu_startup_m12.c:11169
+#: src/ui/menu_startup_m12.c:11172
 msgid "CREDITS"
 msgstr "クレジット"
 
-#: src/ui/menu_startup_m12.c:808
+#: src/ui/menu_startup_m12.c:810
 msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
 msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
 
-#: src/ui/menu_startup_m12.c:808
+#: src/ui/menu_startup_m12.c:810
 msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
 msgstr "FTL Games と Software Heaven がオリジナルを制作した"
 
-#: src/ui/menu_startup_m12.c:808
+#: src/ui/menu_startup_m12.c:810
 msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
 msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:811
 msgid "NO CLAIM OF OFFICIAL AFFILIATION"
 msgstr "公式との提携を主張するものではありません"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:811
 msgid "PROJECT BOUNDARIES"
 msgstr "プロジェクトの範囲"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:811
 msgid "REGRESSION PROBES GUARD MENU STABILITY"
 msgstr "回帰テストがメニューの安定性を守る"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:811
 msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
 msgstr "リポジトリ内の管理テキストは英語のまま"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:811
 msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
 msgstr "ユーザー提供の正規版データが必要です"
 
-#: src/ui/menu_startup_m12.c:814
+#: src/ui/menu_startup_m12.c:816
 msgid "TECHNICAL ARCHIVE"
 msgstr "技術アーカイブ"
 
-#: src/ui/menu_startup_m12.c:815
+#: src/ui/menu_startup_m12.c:817
 msgid "SOURCE EVIDENCE AND VERIFICATION"
 msgstr "ソースの証拠と検証"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:819
 msgid "EVIDENCE MODEL"
 msgstr "証拠モデル"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:819
 msgid "KNOWN FILES ARE MATCHED BY HASH"
 msgstr "既知のファイルはハッシュで照合される"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:819
 msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
 msgstr "不明なオリジナルへの黙示的なフォールバックは行わない"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:819
 msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
 msgstr "実行時経路は不足データを安全に報告する"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:819
 msgid "VERSION MATRICES STAY EXPLICIT"
 msgstr "バージョン対応表は明示的なまま"
 
-#: src/ui/menu_startup_m12.c:818
+#: src/ui/menu_startup_m12.c:820
 msgid "ESCAPE RETURNS BEFORE EXITING"
 msgstr "ESC で終了前にメニューへ戻る"
 
-#: src/ui/menu_startup_m12.c:818
+#: src/ui/menu_startup_m12.c:820
 msgid "KEYBOARD INPUT IS BOUNDED"
 msgstr "キーボード入力は範囲が制限されている"
 
-#: src/ui/menu_startup_m12.c:818
+#: src/ui/menu_startup_m12.c:820
 msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
 msgstr "マウス入力は共有状態を経由して処理される"
 
-#: src/ui/menu_startup_m12.c:818
+#: src/ui/menu_startup_m12.c:820
 msgid "STARTUP MENU"
 msgstr "スタートアップメニュー"
 
-#: src/ui/menu_startup_m12.c:818
+#: src/ui/menu_startup_m12.c:820
 msgid "UNKNOWN KEYS ARE NO OPS"
 msgstr "不明なキーは無視される"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:821
 msgid "ADD INTERVIEW AND TIMELINE SOURCES"
 msgstr "インタビューと年表の資料を追加する"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:821
 msgid "ADD MANUAL EXCERPT REFERENCES"
 msgstr "マニュアル抜粋の参照を追加する"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:821
 msgid "ADD SMALL CURATED SCREEN PANELS"
 msgstr "厳選された小さな画面パネルを追加する"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:821
 msgid "FUTURE MUSEUM WORK"
 msgstr "博物館の今後の作業"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:821
 msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
 msgstr "ライセンス取得までは大容量アセットを含めない"
 
-#: src/ui/menu_startup_m12.c:891
+#: src/ui/menu_startup_m12.c:893
 msgid "FULLSCREEN"
 msgstr "フルスクリーン"
 
-#: src/ui/menu_startup_m12.c:891
+#: src/ui/menu_startup_m12.c:893
 msgid "MAXIMIZED"
 msgstr "最大化"
 
-#: src/ui/menu_startup_m12.c:891
+#: src/ui/menu_startup_m12.c:893
 msgid "WINDOWED"
 msgstr "ウィンドウ"
 
-#: src/ui/menu_startup_m12.c:1021
+#: src/ui/menu_startup_m12.c:1023
 msgid "FRONTEND PREVIEW"
-msgstr "フロントエンドプレビュー"
-
-#: src/ui/menu_startup_m12.c:1022
-msgid "SELECT A DESTINATION"
-msgstr "行き先を選択"
+msgstr "フロントエンド プレビュー"
 
 #: src/ui/menu_startup_m12.c:1024
+msgid "SELECT A DESTINATION"
+msgstr "目的地を選択"
+
+#: src/ui/menu_startup_m12.c:1026
 msgid "STATUS"
 msgstr "ステータス"
 
-#: src/ui/menu_startup_m12.c:1025
-msgid "LAUNCHER DESTINATIONS"
-msgstr "ランチャーの行き先"
-
-#: src/ui/menu_startup_m12.c:1026
-msgid "DATA DIR"
-msgstr "データフォルダ"
-
 #: src/ui/menu_startup_m12.c:1027
-msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "上下 移動   ENTER 開く   ESC 終了"
+msgid "LAUNCHER DESTINATIONS"
+msgstr "ランチャー目的地"
 
 #: src/ui/menu_startup_m12.c:1028
-msgid "PERSISTED OPTIONS"
-msgstr "保存される設定"
+msgid "DATA DIR"
+msgstr "データディレクトリ"
 
-#: src/ui/menu_startup_m12.c:1029 src/ui/menu_startup_m12.c:9908
-#: src/ui/menu_startup_m12.c:11974
+#: src/ui/menu_startup_m12.c:1029
+msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "上下で移動   ENTERで開く   ESCで終了"
+
+#: src/ui/menu_startup_m12.c:1030
+msgid "PERSISTED OPTIONS"
+msgstr "保存されたオプション"
+
+#: src/ui/menu_startup_m12.c:1031 src/ui/menu_startup_m12.c:10308
+#: src/ui/menu_startup_m12.c:12379
 msgid "LANGUAGE"
 msgstr "言語"
 
-#: src/ui/menu_startup_m12.c:1030
+#: src/ui/menu_startup_m12.c:1032
 msgid "GRAPHICS MODE"
-msgstr "グラフィックモード"
+msgstr "グラフィックス モード"
 
-#: src/ui/menu_startup_m12.c:1031
+#: src/ui/menu_startup_m12.c:1033
 msgid "RENDERER BACKEND"
 msgstr "レンダラーバックエンド"
 
-#: src/ui/menu_startup_m12.c:1032
-msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "レンダラーバックエンドが利用できません"
-
-#: src/ui/menu_startup_m12.c:1033
-msgid "WINDOW MODE"
-msgstr "ウィンドウモード"
-
 #: src/ui/menu_startup_m12.c:1034
-msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "変更は即座に設定ファイルに保存されます"
+msgid "RENDERER BACKEND UNAVAILABLE"
+msgstr "レンダラー利用不可"
 
 #: src/ui/menu_startup_m12.c:1035
-msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "左右 切替   ENTER 進む   ESC 戻る"
+msgid "WINDOW MODE"
+msgstr "ウィンドウ モード"
 
 #: src/ui/menu_startup_m12.c:1036
+msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "変更は即座に設定に保存"
+
+#: src/ui/menu_startup_m12.c:1037
+msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "左右で切替   ENTERで進行   ESCで戻る"
+
+#: src/ui/menu_startup_m12.c:1038
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER または ESC でメニューに戻る"
 
-#: src/ui/menu_startup_m12.c:1037 src/ui/menu_startup_m12.c:7817
+#: src/ui/menu_startup_m12.c:1039 src/ui/menu_startup_m12.c:8140
 msgid "READY TO LAUNCH"
 msgstr "起動準備完了"
 
-#: src/ui/menu_startup_m12.c:1038
+#: src/ui/menu_startup_m12.c:1040
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC でメニューに戻る"
 
-#: src/ui/menu_startup_m12.c:1039
-msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "検証機能は未実装（暫定版）"
-
-#: src/ui/menu_startup_m12.c:1040
-msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "検証済みの正規版ハッシュを追加してください"
-
 #: src/ui/menu_startup_m12.c:1041
-msgid "GAME DATA NOT FOUND"
-msgstr "ゲームデータが見つかりません"
+msgid "VALIDATOR SCAFFOLD ONLY"
+msgstr "バリデーター足場のみ"
 
 #: src/ui/menu_startup_m12.c:1042
-msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "Firestaff のデータフォルダを確認してください"
+msgid "ADD VERIFIED RETAIL HASHES"
+msgstr "検証済み小売ハッシュを追加"
 
 #: src/ui/menu_startup_m12.c:1043
+msgid "GAME DATA NOT FOUND"
+msgstr "ゲームデータなし"
+
+#: src/ui/menu_startup_m12.c:1044
+msgid "CHECK FIRESTAFF DATA DIR"
+msgstr "Firestaff データディレクトリを確認"
+
+#: src/ui/menu_startup_m12.c:1045
 msgid "ORIGINAL FILES NOT FOUND"
 msgstr "オリジナルファイルが見つかりません"
 
-#: src/ui/menu_startup_m12.c:1044
+#: src/ui/menu_startup_m12.c:1046
 msgid "COPY YOUR RETAIL GAME FILES INTO:"
 msgstr "以下のフォルダに正規版のゲームファイルをコピーしてください:"
 
-#: src/ui/menu_startup_m12.c:1045
+#: src/ui/menu_startup_m12.c:1047
 msgid "ART SLOT READY"
 msgstr "アートスロット準備完了"
 
-#: src/ui/menu_startup_m12.c:1046
-msgid "ART SLOT EMPTY"
-msgstr "アートスロットが空です"
-
-#: src/ui/menu_startup_m12.c:1047
-msgid "DROP ART INTO SLOT"
-msgstr "アートをスロットにドロップしてください"
-
 #: src/ui/menu_startup_m12.c:1048
+msgid "ART SLOT EMPTY"
+msgstr "アートスロット空"
+
+#: src/ui/menu_startup_m12.c:1049
+msgid "DROP ART INTO SLOT"
+msgstr "スロットにアートをドロップ"
+
+#: src/ui/menu_startup_m12.c:1050
 msgid "CARD ART ACTIVE"
 msgstr "カードアート有効"
 
-#: src/ui/menu_startup_m12.c:1049
+#: src/ui/menu_startup_m12.c:1051
 msgid "CARD ART SLOT"
 msgstr "カードアートスロット"
 
-#: src/ui/menu_startup_m12.c:1050
+#: src/ui/menu_startup_m12.c:1052
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "ゲームデータアーカイブにはツールが必要です"
 
-#: src/ui/menu_startup_m12.c:1051
+#: src/ui/menu_startup_m12.c:1053
 #, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr "アーカイブ: %s  インストール: %s"
 
-#: src/ui/menu_startup_m12.c:1052
+#: src/ui/menu_startup_m12.c:1054
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "インストール後、ゲームデータを再スキャンしてください"
 
-#: src/ui/menu_startup_m12.c:1863 src/ui/menu_startup_m12.c:8387
+#: src/ui/menu_startup_m12.c:1865 src/ui/menu_startup_m12.c:8710
 msgid "Dungeon Master"
-msgstr "Dungeon Master"
+msgstr "ダンジョン・マスター"
 
-#: src/ui/menu_startup_m12.c:1865 src/ui/menu_startup_m12.c:8387
+#: src/ui/menu_startup_m12.c:1867 src/ui/menu_startup_m12.c:8710
 msgid "Chaos Strikes Back"
-msgstr "Chaos Strikes Back"
+msgstr "カオス・ストライクス・バック"
 
-#: src/ui/menu_startup_m12.c:1868
+#: src/ui/menu_startup_m12.c:1870
 msgid "Dungeon Master II: The Legend of Skullkeep"
 msgstr "Dungeon Master II: The Legend of Skullkeep"
 
-#: src/ui/menu_startup_m12.c:1870
+#: src/ui/menu_startup_m12.c:1872
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1872 src/ui/menu_startup_m12.c:8388
+#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8711
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
-#: src/ui/menu_startup_m12.c:1893 src/ui/menu_startup_m12.c:2494
-#: src/ui/menu_startup_m12.c:2545
+#: src/ui/menu_startup_m12.c:1895 src/ui/menu_startup_m12.c:2522
+#: src/ui/menu_startup_m12.c:2573
 msgid "STARTING"
 msgstr "起動中"
 
-#: src/ui/menu_startup_m12.c:1895
+#: src/ui/menu_startup_m12.c:1897
 msgid "CHECKING CACHED RESUME PATHS"
 msgstr "キャッシュされた再開パスの確認"
 
-#: src/ui/menu_startup_m12.c:1897
+#: src/ui/menu_startup_m12.c:1899
 msgid "CHECKING DIRECT LAUNCH PATH"
 msgstr "直接起動パスの確認"
 
-#: src/ui/menu_startup_m12.c:1899
+#: src/ui/menu_startup_m12.c:1901
 msgid "CHECKING EXPLICIT FILE REQUEST"
 msgstr "明示的なファイルリクエストのチェック"
 
-#: src/ui/menu_startup_m12.c:1901
+#: src/ui/menu_startup_m12.c:1903
 msgid "BUILDING SEARCH ROOTS"
 msgstr "建物探索ルーツ"
 
-#: src/ui/menu_startup_m12.c:1903
+#: src/ui/menu_startup_m12.c:1905
 msgid "CHECKING ORIGINAL FILE CANDIDATES"
 msgstr "オリジナルファイル候補の確認"
 
-#: src/ui/menu_startup_m12.c:1905
+#: src/ui/menu_startup_m12.c:1907
 msgid "MATCHING GAME VERSIONS"
 msgstr "一致するゲームのバージョン"
 
-#: src/ui/menu_startup_m12.c:1907
+#: src/ui/menu_startup_m12.c:1909
 msgid "MATCHING REQUIRED FILES"
 msgstr "必要なファイルの一致"
 
-#: src/ui/menu_startup_m12.c:1909
+#: src/ui/menu_startup_m12.c:1911
 msgid "MATERIALIZING LAUNCH CACHE"
 msgstr "起動キャッシュの具体化"
 
-#: src/ui/menu_startup_m12.c:1911
+#: src/ui/menu_startup_m12.c:1913
 msgid "REFRESHING MEDIA METADATA"
 msgstr "メディアメタデータの更新"
 
-#: src/ui/menu_startup_m12.c:1965 src/ui/menu_startup_m12.c:4947
-#: src/ui/menu_startup_m12.c:5187
+#: src/ui/menu_startup_m12.c:1967 src/ui/menu_startup_m12.c:5008
+#: src/ui/menu_startup_m12.c:5248
 msgid "NOT SET"
 msgstr "未設定"
 
-#: src/ui/menu_startup_m12.c:2089
+#: src/ui/menu_startup_m12.c:2091
 msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
 msgstr "ファイルマネージャーでゲームファイルを Documents/Firestaff/data にコピーしてください"
 
-#: src/ui/menu_startup_m12.c:2091
+#: src/ui/menu_startup_m12.c:2093
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "「ファイル」アプリを使ってゲームファイルをこのアプリの Firestaff/data にコピーしてください"
 
-#: src/ui/menu_startup_m12.c:2093
+#: src/ui/menu_startup_m12.c:2095
 msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
 msgstr "以下のフォルダに正規版のゲームファイルをコピーしてください:"
 
-#: src/ui/menu_startup_m12.c:2112
+#: src/ui/menu_startup_m12.c:2114
 msgid "NO GAME DATA FOUND"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_m12.c:2211
+#: src/ui/menu_startup_m12.c:2167 src/ui/menu_startup_m12.c:9463
+#: src/ui/menu_startup_m12.c:9578
+msgid "TITLE START AVAILABLE"
+msgstr "TITLE START AVAILABLE"
+
+#: src/ui/menu_startup_m12.c:2214
 msgid "DATA DIRECTORY UPDATED"
 msgstr "データディレクトリが更新されました"
 
-#: src/ui/menu_startup_m12.c:2212 src/ui/menu_startup_m12.c:2939
+#: src/ui/menu_startup_m12.c:2215 src/ui/menu_startup_m12.c:2979
 msgid "DATA DIRECTORY UNCHANGED"
 msgstr "データディレクトリは変更されていません"
 
-#: src/ui/menu_startup_m12.c:2254 src/ui/menu_startup_m12.c:2344
-#: src/ui/menu_startup_m12.c:2493 src/ui/menu_startup_m12.c:2544
-#: src/ui/menu_startup_m12.c:12558
+#: src/ui/menu_startup_m12.c:2257 src/ui/menu_startup_m12.c:2355
+#: src/ui/menu_startup_m12.c:2521 src/ui/menu_startup_m12.c:2572
+#: src/ui/menu_startup_m12.c:12963
 msgid "SCANNING GAME DATA"
 msgstr "ゲームデータをスキャン中"
 
-#: src/ui/menu_startup_m12.c:2343
+#: src/ui/menu_startup_m12.c:2354
 msgid "CANCELLING DATA SCAN"
 msgstr "データスキャンのキャンセル"
 
-#: src/ui/menu_startup_m12.c:2346
+#: src/ui/menu_startup_m12.c:2357
 msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr "現在のファイルのチェックが完了するのを待っています"
 
-#: src/ui/menu_startup_m12.c:2463 src/ui/menu_startup_m12.c:2527
+#: src/ui/menu_startup_m12.c:2486 src/ui/menu_startup_m12.c:2556
 msgid "DATA DIRECTORY NOT FOUND"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_m12.c:2464 src/ui/menu_startup_m12.c:2528
-#: src/ui/menu_startup_m12.c:12527
+#: src/ui/menu_startup_m12.c:2487 src/ui/menu_startup_m12.c:2557
+#: src/ui/menu_startup_m12.c:2603 src/ui/menu_startup_m12.c:12932
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "既存のフォルダーを選択してください"
 
-#: src/ui/menu_startup_m12.c:2563 src/ui/menu_startup_m12.c:12523
+#: src/ui/menu_startup_m12.c:2599 src/ui/menu_startup_m12.c:12928
 msgid "DATA SCAN CANCELLED"
 msgstr "データスキャンがキャンセルされました"
 
-#: src/ui/menu_startup_m12.c:2564 src/ui/menu_startup_m12.c:12526
+#: src/ui/menu_startup_m12.c:2600 src/ui/menu_startup_m12.c:12929
+msgid "DATA SCAN FAILED"
+msgstr "データスキャンに失敗しました"
+
+#: src/ui/menu_startup_m12.c:2602 src/ui/menu_startup_m12.c:12931
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "ゲームの可用性は更新されませんでした"
 
-#: src/ui/menu_startup_m12.c:2586
+#: src/ui/menu_startup_m12.c:2626
 msgid "SAVE MANIFEST EXPORTED"
 msgstr "エクスポートされたマニフェストを保存"
 
-#: src/ui/menu_startup_m12.c:2587
+#: src/ui/menu_startup_m12.c:2627
 msgid "SAVE FILES ARE NOT COPIED"
 msgstr "保存ファイルはコピーされません"
 
-#: src/ui/menu_startup_m12.c:2591
+#: src/ui/menu_startup_m12.c:2631
 msgid "EXPORT FAILED"
 msgstr "エクスポートに失敗しました"
 
-#: src/ui/menu_startup_m12.c:2592
+#: src/ui/menu_startup_m12.c:2632
 msgid "CHECK YOUR SETTINGS FOLDER"
 msgstr "設定フォルダーを確認してください"
 
-#: src/ui/menu_startup_m12.c:2706 src/ui/menu_startup_m12.c:2845
+#: src/ui/menu_startup_m12.c:2746 src/ui/menu_startup_m12.c:2885
 msgid "DM1 PC34 SAVE EXPORTED"
 msgstr "DM1 PC34 保存エクスポート済み"
 
-#: src/ui/menu_startup_m12.c:2712 src/ui/menu_startup_m12.c:2852
+#: src/ui/menu_startup_m12.c:2752 src/ui/menu_startup_m12.c:2892
 msgid "PC34 EXPORT FAILED"
 msgstr "PC34 エクスポートに失敗しました"
 
-#: src/ui/menu_startup_m12.c:2713
+#: src/ui/menu_startup_m12.c:2753
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "クイックレジュームを確認 保存"
 
-#: src/ui/menu_startup_m12.c:2740 src/ui/menu_startup_m12.c:12263
+#: src/ui/menu_startup_m12.c:2780 src/ui/menu_startup_m12.c:12668
 msgid "NO SAVES FOUND"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_m12.c:2741
+#: src/ui/menu_startup_m12.c:2781
 msgid "SAVE A GAME FIRST"
 msgstr "まずゲームを保存してください"
 
-#: src/ui/menu_startup_m12.c:2853
+#: src/ui/menu_startup_m12.c:2893
 msgid "SELECT A VALID DM1 SAVE"
 msgstr "有効な DM1 保存を選択してください"
 
-#: src/ui/menu_startup_m12.c:2878
+#: src/ui/menu_startup_m12.c:2918
 msgid "SAVE MANIFEST IMPORTED"
 msgstr "インポートされたマニフェストを保存"
 
-#: src/ui/menu_startup_m12.c:2879
+#: src/ui/menu_startup_m12.c:2919
 msgid "QUICK RESUME PATH UPDATED"
 msgstr "クイック再開パスが更新されました"
 
-#: src/ui/menu_startup_m12.c:2883
+#: src/ui/menu_startup_m12.c:2923
 msgid "IMPORT FAILED"
 msgstr "インポートに失敗しました"
 
-#: src/ui/menu_startup_m12.c:2884
+#: src/ui/menu_startup_m12.c:2924
 msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr "最初に保存マニフェストをエクスポートする"
 
-#: src/ui/menu_startup_m12.c:2927
+#: src/ui/menu_startup_m12.c:2967
 msgid "CHOOSE GAME DATA FOLDER"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_m12.c:2928
+#: src/ui/menu_startup_m12.c:2968
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "ランチャーは選択後に再スキャンします"
 
-#: src/ui/menu_startup_m12.c:2973
+#: src/ui/menu_startup_m12.c:3013
 msgid "UNICODE FONT SELECTED"
 msgstr "UNICODEフォントが選択されました"
 
-#: src/ui/menu_startup_m12.c:2979 src/ui/menu_startup_m12.c:3001
+#: src/ui/menu_startup_m12.c:3019 src/ui/menu_startup_m12.c:3041
 msgid "UNICODE FONT UNCHANGED"
 msgstr "Unicode フォントは変更されません"
 
-#: src/ui/menu_startup_m12.c:2980 src/ui/menu_startup_m12.c:3042
+#: src/ui/menu_startup_m12.c:3020 src/ui/menu_startup_m12.c:3082
 msgid "NO FILE SELECTED"
 msgstr "ファイルが選択されていません"
 
-#: src/ui/menu_startup_m12.c:2995
+#: src/ui/menu_startup_m12.c:3035
 msgid "CHOOSE UNICODE FONT"
 msgstr "UNICODEフォントを選択してください"
 
-#: src/ui/menu_startup_m12.c:2996
+#: src/ui/menu_startup_m12.c:3036
 msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "幅広い TTF または OTF フォントを選択してください"
 
-#: src/ui/menu_startup_m12.c:3002 src/ui/menu_startup_m12.c:3064
+#: src/ui/menu_startup_m12.c:3042 src/ui/menu_startup_m12.c:3104
 msgid "NATIVE FILE DIALOG DISABLED"
 msgstr "ネイティブ ファイル ダイアログが無効になりました"
 
-#: src/ui/menu_startup_m12.c:3029
+#: src/ui/menu_startup_m12.c:3069
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 アートパックが選択されました"
 
-#: src/ui/menu_startup_m12.c:3034
+#: src/ui/menu_startup_m12.c:3074
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 アートパックが拒否されました"
 
-#: src/ui/menu_startup_m12.c:3041 src/ui/menu_startup_m12.c:3063
+#: src/ui/menu_startup_m12.c:3081 src/ui/menu_startup_m12.c:3103
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 アートパックは変更されていません"
 
-#: src/ui/menu_startup_m12.c:3057
+#: src/ui/menu_startup_m12.c:3097
 msgid "CHOOSE V2.2 ARTPACK"
 msgstr "V2.2 アートパックを選択してください"
 
-#: src/ui/menu_startup_m12.c:3058
+#: src/ui/menu_startup_m12.c:3098
 msgid "SELECT A .FSART FILE"
 msgstr "行き先を選択"
 
-#: src/ui/menu_startup_m12.c:4924
+#: src/ui/menu_startup_m12.c:4985
 msgid "NEEDS LOGIN"
 msgstr "ログインが必要です"
 
-#: src/ui/menu_startup_m12.c:4926
+#: src/ui/menu_startup_m12.c:4987
 msgid "READY"
 msgstr "準備完了"
 
-#: src/ui/menu_startup_m12.c:4928
+#: src/ui/menu_startup_m12.c:4989
 msgid "BACKEND PENDING"
 msgstr "バックエンド保留中"
 
-#: src/ui/menu_startup_m12.c:4953
+#: src/ui/menu_startup_m12.c:5014
 msgid "SET"
 msgstr "ストレッチ"
 
-#: src/ui/menu_startup_m12.c:4970 src/ui/menu_startup_m12.c:5183
+#: src/ui/menu_startup_m12.c:5031 src/ui/menu_startup_m12.c:5244
 msgid "EDITING"
 msgstr "設定"
 
-#: src/ui/menu_startup_m12.c:5075
+#: src/ui/menu_startup_m12.c:5136
 msgid "SCALE"
 msgstr "スケール"
 
-#: src/ui/menu_startup_m12.c:5076 src/ui/menu_startup_m12.c:12022
+#: src/ui/menu_startup_m12.c:5137 src/ui/menu_startup_m12.c:12427
 msgid "ASPECT RATIO"
 msgstr "アスペクト比"
 
-#: src/ui/menu_startup_m12.c:5077
+#: src/ui/menu_startup_m12.c:5138
 msgid "PIXEL SNAP"
 msgstr "ピクセルスナップ"
 
-#: src/ui/menu_startup_m12.c:5078
+#: src/ui/menu_startup_m12.c:5139
 msgid "FILTER"
 msgstr "フィルター"
 
-#: src/ui/menu_startup_m12.c:5079
+#: src/ui/menu_startup_m12.c:5140
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5080
+#: src/ui/menu_startup_m12.c:5141
 msgid "FPS OVERLAY"
 msgstr "FPSオーバーレイ"
 
-#: src/ui/menu_startup_m12.c:5081
+#: src/ui/menu_startup_m12.c:5142
 msgid "VIEWPORT STYLE"
 msgstr "ビューポートスタイル"
 
-#: src/ui/menu_startup_m12.c:5082
+#: src/ui/menu_startup_m12.c:5143
 msgid "INPUT MODE"
 msgstr "ウィンドウモード"
 
-#: src/ui/menu_startup_m12.c:5084
+#: src/ui/menu_startup_m12.c:5145
 msgid "TOUCH CONTROLS"
 msgstr "操作設定"
 
-#: src/ui/menu_startup_m12.c:5085
+#: src/ui/menu_startup_m12.c:5146
 msgid "MOVEMENT MODE"
 msgstr "移動モード"
 
-#: src/ui/menu_startup_m12.c:5086
+#: src/ui/menu_startup_m12.c:5147
 msgid "SMOOTH TURN PAN"
 msgstr "スムーズな回転パン"
 
-#: src/ui/menu_startup_m12.c:5087
+#: src/ui/menu_startup_m12.c:5148
 msgid "DATA DIRECTORY"
 msgstr "データフォルダ"
 
-#: src/ui/menu_startup_m12.c:5088
+#: src/ui/menu_startup_m12.c:5149
 msgid "ORIGINAL DATA"
 msgstr "オリジナル"
 
-#: src/ui/menu_startup_m12.c:5089
+#: src/ui/menu_startup_m12.c:5150
 msgid "DEBUG OVERLAY"
 msgstr "デバッグオーバーレイ"
 
-#: src/ui/menu_startup_m12.c:5090
+#: src/ui/menu_startup_m12.c:5151
 msgid "DEVELOPER GATES"
 msgstr "開発者ゲート"
 
-#: src/ui/menu_startup_m12.c:5091
+#: src/ui/menu_startup_m12.c:5152
 msgid "MASTER VOLUME"
 msgstr "リマスター版"
 
-#: src/ui/menu_startup_m12.c:5092
+#: src/ui/menu_startup_m12.c:5153
 msgid "MUSIC VOLUME"
 msgstr "音楽の音量"
 
-#: src/ui/menu_startup_m12.c:5093
+#: src/ui/menu_startup_m12.c:5154
 msgid "SFX VOLUME"
 msgstr "効果音ボリューム"
 
-#: src/ui/menu_startup_m12.c:5094
+#: src/ui/menu_startup_m12.c:5155
 msgid "MUTE AUDIO"
 msgstr "音声"
 
-#: src/ui/menu_startup_m12.c:5095
+#: src/ui/menu_startup_m12.c:5156
 msgid "AUDIO DEVICE"
 msgstr "オーディオデバイス"
 
-#: src/ui/menu_startup_m12.c:5096
+#: src/ui/menu_startup_m12.c:5157
 msgid "BRIGHTNESS"
 msgstr "明るさ"
 
-#: src/ui/menu_startup_m12.c:5097
+#: src/ui/menu_startup_m12.c:5158
 msgid "FONT SCALE"
 msgstr "スケール"
 
-#: src/ui/menu_startup_m12.c:5098
+#: src/ui/menu_startup_m12.c:5159
 msgid "UNICODE FONT"
 msgstr "ユニコードフォント"
 
-#: src/ui/menu_startup_m12.c:5099
+#: src/ui/menu_startup_m12.c:5160
 msgid "HIGH CONTRAST"
 msgstr "ハイコントラスト"
 
-#: src/ui/menu_startup_m12.c:5100
+#: src/ui/menu_startup_m12.c:5161
 msgid "COLORBLIND"
 msgstr "色盲"
 
-#: src/ui/menu_startup_m12.c:5101
+#: src/ui/menu_startup_m12.c:5162
 msgid "AUTO PAUSE"
 msgstr "オートポーズ"
 
-#: src/ui/menu_startup_m12.c:5102
+#: src/ui/menu_startup_m12.c:5163
 msgid "THEME"
 msgstr "テーマ"
 
-#: src/ui/menu_startup_m12.c:5103
+#: src/ui/menu_startup_m12.c:5164
 msgid "BACKGROUND"
 msgstr "背景"
 
-#: src/ui/menu_startup_m12.c:5104
+#: src/ui/menu_startup_m12.c:5165
 msgid "QUICK RESUME"
 msgstr "クイックレジューム"
 
-#: src/ui/menu_startup_m12.c:5105
+#: src/ui/menu_startup_m12.c:5166
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 アートパック"
 
-#: src/ui/menu_startup_m12.c:5106
+#: src/ui/menu_startup_m12.c:5167
 msgid "RETROACHIEVEMENTS"
 msgstr "レトロアチーブメント"
 
-#: src/ui/menu_startup_m12.c:5107
+#: src/ui/menu_startup_m12.c:5168
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "レトロアチーブメントハードコア"
 
-#: src/ui/menu_startup_m12.c:5108
+#: src/ui/menu_startup_m12.c:5169
 msgid "RETROACHIEVEMENTS USER"
 msgstr "レトロアチーブメントユーザー"
 
-#: src/ui/menu_startup_m12.c:5109
+#: src/ui/menu_startup_m12.c:5170
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "レトロアチーブメント API トークン"
 
-#: src/ui/menu_startup_m12.c:5110
+#: src/ui/menu_startup_m12.c:5171
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "レトロアチーブメントサーバー"
 
-#: src/ui/menu_startup_m12.c:5111 src/ui/menu_startup_m12.c:12218
+#: src/ui/menu_startup_m12.c:5172 src/ui/menu_startup_m12.c:12623
 msgid "SAVE BROWSER"
 msgstr "ブラウザを保存"
 
-#: src/ui/menu_startup_m12.c:5112
+#: src/ui/menu_startup_m12.c:5173
 msgid "SESSION TIMER"
 msgstr "セッションタイマー"
 
-#: src/ui/menu_startup_m12.c:5113
+#: src/ui/menu_startup_m12.c:5174
 msgid "MINIMAP"
 msgstr "最小限"
 
-#: src/ui/menu_startup_m12.c:5114
+#: src/ui/menu_startup_m12.c:5175
 msgid "AUTOMAP"
 msgstr "自動"
 
-#: src/ui/menu_startup_m12.c:5115
+#: src/ui/menu_startup_m12.c:5176
 msgid "COMBAT LOG"
 msgstr "戦闘ログ"
 
-#: src/ui/menu_startup_m12.c:5116
+#: src/ui/menu_startup_m12.c:5177
 msgid "SOUNDTRACK"
 msgstr "サウンドトラック"
 
-#: src/ui/menu_startup_m12.c:5117
+#: src/ui/menu_startup_m12.c:5178
 msgid "AMBIENT SOUND"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_m12.c:5118
+#: src/ui/menu_startup_m12.c:5179
 msgid "AMBIENT VOLUME"
 msgstr "アンビエントの音量"
 
-#: src/ui/menu_startup_m12.c:5119
+#: src/ui/menu_startup_m12.c:5180
 msgid "UI SCALE"
 msgstr "スケール"
 
-#: src/ui/menu_startup_m12.c:5120
+#: src/ui/menu_startup_m12.c:5181
 msgid "UI FONT"
 msgstr "UIフォント"
 
-#: src/ui/menu_startup_m12.c:5121
+#: src/ui/menu_startup_m12.c:5182
 msgid "CUSTOM MUSIC"
 msgstr "カスタム"
 
-#: src/ui/menu_startup_m12.c:5122
+#: src/ui/menu_startup_m12.c:5183
 msgid "CUSTOM DUNGEONS"
 msgstr "ダンジョン"
 
-#: src/ui/menu_startup_m12.c:5123
+#: src/ui/menu_startup_m12.c:5184
 msgid "SCREENSHOTS"
 msgstr "スクリーンショット"
 
-#: src/ui/menu_startup_m12.c:5124
+#: src/ui/menu_startup_m12.c:5185
 msgid "ARTPACK"
 msgstr "アートパック"
 
-#: src/ui/menu_startup_m12.c:5125
+#: src/ui/menu_startup_m12.c:5186
 msgid "STREAMER MODE"
 msgstr "ストリーマーモード"
 
-#: src/ui/menu_startup_m12.c:5129
+#: src/ui/menu_startup_m12.c:5190
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "エクスポート DM1 PC34 保存"
 
-#: src/ui/menu_startup_m12.c:5130
+#: src/ui/menu_startup_m12.c:5191
 msgid "EXPORT SAVE MANIFEST"
 msgstr "エクスポート保存マニフェスト"
 
-#: src/ui/menu_startup_m12.c:5131
+#: src/ui/menu_startup_m12.c:5192
 msgid "IMPORT SAVE MANIFEST"
 msgstr "インポート保存マニフェスト"
 
-#: src/ui/menu_startup_m12.c:5192
+#: src/ui/menu_startup_m12.c:5253
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5210
+#: src/ui/menu_startup_m12.c:5271
 msgid "WRITE PC34..."
 msgstr "PC34に書き込む..."
 
-#: src/ui/menu_startup_m12.c:5211
+#: src/ui/menu_startup_m12.c:5272
 msgid "WRITE..."
 msgstr "書く..."
 
-#: src/ui/menu_startup_m12.c:5212
+#: src/ui/menu_startup_m12.c:5273
 msgid "READ..."
 msgstr "読む..."
 
-#: src/ui/menu_startup_m12.c:5228
+#: src/ui/menu_startup_m12.c:5289
 msgid "GENERAL"
 msgstr "全般"
 
-#: src/ui/menu_startup_m12.c:5234 src/ui/menu_startup_m12.c:11913
+#: src/ui/menu_startup_m12.c:5295 src/ui/menu_startup_m12.c:12318
 msgid "RENDERER"
 msgstr "レンダラー"
 
-#: src/ui/menu_startup_m12.c:5237
+#: src/ui/menu_startup_m12.c:5298
 msgid "INPUT"
 msgstr "入力"
 
-#: src/ui/menu_startup_m12.c:5240
+#: src/ui/menu_startup_m12.c:5301
 msgid "DATA"
 msgstr "データフォルダ"
 
-#: src/ui/menu_startup_m12.c:5243
+#: src/ui/menu_startup_m12.c:5304
 msgid "DEBUG"
 msgstr "デバッグ"
 
-#: src/ui/menu_startup_m12.c:5254
+#: src/ui/menu_startup_m12.c:5315
 msgid "APPEARANCE"
 msgstr "外観"
 
-#: src/ui/menu_startup_m12.c:5526 src/ui/menu_startup_m12.c:5569
+#: src/ui/menu_startup_m12.c:5776 src/ui/menu_startup_m12.c:5830
 msgid "DATA FILES NOT FOUND"
 msgstr "オリジナルファイルが見つかりません"
 
-#: src/ui/menu_startup_m12.c:5569
+#: src/ui/menu_startup_m12.c:5830
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER または ESC でメニューに戻る"
 
-#: src/ui/menu_startup_m12.c:5570
+#: src/ui/menu_startup_m12.c:5831
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "このゲームはまだサポートされていません"
 
-#: src/ui/menu_startup_m12.c:5690
+#: src/ui/menu_startup_m12.c:5965
 msgid "NO DM1 SAVES FOUND"
 msgstr "ゲームデータが見つかりません"
 
-#: src/ui/menu_startup_m12.c:5691
+#: src/ui/menu_startup_m12.c:5966
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "最初に DM1 を保存またはインポートしてください"
 
-#: src/ui/menu_startup_m12.c:6113
+#: src/ui/menu_startup_m12.c:6388
 msgid "LOADING SAVE"
 msgstr "ロードセーブ中"
 
-#: src/ui/menu_startup_m12.c:6153
+#: src/ui/menu_startup_m12.c:6428
 msgid "IMPORTING PARTY"
 msgstr "輸入当事者"
 
-#: src/ui/menu_startup_m12.c:6192
+#: src/ui/menu_startup_m12.c:6467
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "DM1 パーティーを CSB にインポートしますか?"
 
-#: src/ui/menu_startup_m12.c:6194
+#: src/ui/menu_startup_m12.c:6469
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "インポートを入力 / ESC でキャンセル"
 
-#: src/ui/menu_startup_m12.c:6206
+#: src/ui/menu_startup_m12.c:6481
 msgid "ESC SETTINGS"
 msgstr "設定"
 
-#: src/ui/menu_startup_m12.c:6210
+#: src/ui/menu_startup_m12.c:6485
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "ロードアクションを入力 CSB にインポート エクスポートを保存 PC34 ESC 設定"
 
-#: src/ui/menu_startup_m12.c:6212
+#: src/ui/menu_startup_m12.c:6487
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER または ESC でメニューに戻る"
 
-#: src/ui/menu_startup_m12.c:7602 src/ui/menu_startup_m12.c:7814
+#: src/ui/menu_startup_m12.c:7925 src/ui/menu_startup_m12.c:8137
 msgid "NO SOURCE"
 msgstr "ソースなし"
 
-#: src/ui/menu_startup_m12.c:7810
+#: src/ui/menu_startup_m12.c:8133
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "オリジナル"
 
-#: src/ui/menu_startup_m12.c:7819
+#: src/ui/menu_startup_m12.c:8142
 msgid "MISSING OR MISMATCHED"
 msgstr "不足または不一致"
 
-#: src/ui/menu_startup_m12.c:8376
+#: src/ui/menu_startup_m12.c:8699
 msgid "EXTRAS"
 msgstr "エクストラ"
 
-#: src/ui/menu_startup_m12.c:8376
+#: src/ui/menu_startup_m12.c:8699
 msgid "PLAY"
 msgstr "プレイ"
 
-#: src/ui/menu_startup_m12.c:8376
+#: src/ui/menu_startup_m12.c:8699
 msgid "QUIT"
 msgstr "終了"
 
-#: src/ui/menu_startup_m12.c:8380
+#: src/ui/menu_startup_m12.c:8703
 msgid "Start or continue a game"
 msgstr "ゲームを開始または再開する"
 
-#: src/ui/menu_startup_m12.c:8381
+#: src/ui/menu_startup_m12.c:8704
 msgid "Display, video, audio and controls"
 msgstr "表示、映像、音声、操作の設定"
 
-#: src/ui/menu_startup_m12.c:8382
+#: src/ui/menu_startup_m12.c:8705
 msgid "Museum, bestiary, spell reference and more"
 msgstr "博物館、モンスター図鑑、呪文リファレンスなど"
 
-#: src/ui/menu_startup_m12.c:8383
+#: src/ui/menu_startup_m12.c:8706
 msgid "Exit Firestaff"
 msgstr "Firestaff を終了する"
 
-#: src/ui/menu_startup_m12.c:8388
+#: src/ui/menu_startup_m12.c:8711
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8388
+#: src/ui/menu_startup_m12.c:8711
 msgid "Dungeon Master II"
-msgstr "Dungeon Master II"
+msgstr "ダンジョン・マスター II"
 
-#: src/ui/menu_startup_m12.c:8397
+#: src/ui/menu_startup_m12.c:8720
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8398 src/ui/menu_startup_m12.c:8399
+#: src/ui/menu_startup_m12.c:8721 src/ui/menu_startup_m12.c:8722
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8400
+#: src/ui/menu_startup_m12.c:8723
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / サターン版はキャプチャ待ち"
 
-#: src/ui/menu_startup_m12.c:8401
+#: src/ui/menu_startup_m12.c:8724
 msgid "V1 Only (Phase 1)"
 msgstr "V1 のみ（フェーズ1）"
 
-#: src/ui/menu_startup_m12.c:8404 src/ui/menu_startup_m12.c:8405
-#: src/ui/menu_startup_m12.c:8406 src/ui/menu_startup_m12.c:8407
-#: src/ui/menu_startup_m12.c:8408
+#: src/ui/menu_startup_m12.c:8727 src/ui/menu_startup_m12.c:8728
+#: src/ui/menu_startup_m12.c:8729 src/ui/menu_startup_m12.c:8730
+#: src/ui/menu_startup_m12.c:8731
 msgid "No data files"
 msgstr "データファイルなし"
 
-#: src/ui/menu_startup_m12.c:9220
+#: src/ui/menu_startup_m12.c:9464
+msgid "MENU AND CAPTURE PROOFS NOT READY"
+msgstr "MENU AND CAPTURE PROOFS NOT READY"
+
+#: src/ui/menu_startup_m12.c:9465
+msgid "TITLE START"
+msgstr "タイトルを開始"
+
+#: src/ui/menu_startup_m12.c:9466
+msgid "VERIFIED SOURCE DATA"
+msgstr "検証済みゲームデータ"
+
+#: src/ui/menu_startup_m12.c:9582
+msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
+msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
+
+#: src/ui/menu_startup_m12.c:9620
 msgid "New Game (Original)"
 msgstr "ニューゲーム（オリジナル）"
 
-#: src/ui/menu_startup_m12.c:9221
+#: src/ui/menu_startup_m12.c:9621
 msgid "New Game (Original + Filters)"
 msgstr "ニューゲーム（オリジナル＋フィルター）"
 
-#: src/ui/menu_startup_m12.c:9222
+#: src/ui/menu_startup_m12.c:9622
 msgid "New Game (Original 10x Upscale)"
 msgstr "ニューゲーム（オリジナル 10倍アップスケール）"
 
-#: src/ui/menu_startup_m12.c:9223
+#: src/ui/menu_startup_m12.c:9623
 msgid "Continue Saved Game"
 msgstr "セーブデータから再開"
 
-#: src/ui/menu_startup_m12.c:9224
+#: src/ui/menu_startup_m12.c:9624
 msgid "New Game (Modern Graphics)"
 msgstr "ニューゲーム（モダングラフィック）"
 
-#: src/ui/menu_startup_m12.c:9232
+#: src/ui/menu_startup_m12.c:9632
 msgid "Museum of Lore"
 msgstr "伝承の博物館"
 
-#: src/ui/menu_startup_m12.c:9233
+#: src/ui/menu_startup_m12.c:9633
 msgid "Manual / Docs"
 msgstr "マニュアル / ドキュメント"
 
-#: src/ui/menu_startup_m12.c:9234
+#: src/ui/menu_startup_m12.c:9634
 msgid "Bestiary"
 msgstr "モンスター図鑑"
 
-#: src/ui/menu_startup_m12.c:9235
+#: src/ui/menu_startup_m12.c:9635
 msgid "Spell Reference"
 msgstr "呪文リファレンス"
 
-#: src/ui/menu_startup_m12.c:9236
+#: src/ui/menu_startup_m12.c:9636
 msgid "Map Viewer"
 msgstr "マップビューアー"
 
-#: src/ui/menu_startup_m12.c:9237
+#: src/ui/menu_startup_m12.c:9637
 msgid "Item Encyclopedia"
 msgstr "アイテム図鑑"
 
-#: src/ui/menu_startup_m12.c:9238
+#: src/ui/menu_startup_m12.c:9638
 msgid "Changelog"
 msgstr "更新履歴"
 
-#: src/ui/menu_startup_m12.c:9239
+#: src/ui/menu_startup_m12.c:9639
 msgid "Screenshot Gallery"
 msgstr "スクリーンショットギャラリー"
 
-#: src/ui/menu_startup_m12.c:9268
+#: src/ui/menu_startup_m12.c:9668
 msgid "NO DATA SOURCE YET"
 msgstr "ソースなし"
 
-#: src/ui/menu_startup_m12.c:9341
+#: src/ui/menu_startup_m12.c:9741
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "上下 移動  |  Enter 選択"
 
-#: src/ui/menu_startup_m12.c:9365
+#: src/ui/menu_startup_m12.c:9765
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape 戻る  |  上下 移動  |  Enter 選択"
 
-#: src/ui/menu_startup_m12.c:9394
+#: src/ui/menu_startup_m12.c:9794
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape 戻る  |  上下 移動  |  Enter 開始"
 
-#: src/ui/menu_startup_m12.c:9418
+#: src/ui/menu_startup_m12.c:9818
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape 戻る  |  上下 移動  |  Enter 開く"
 
-#: src/ui/menu_startup_m12.c:9562
+#: src/ui/menu_startup_m12.c:9962
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > タブ切替   上下 移動   Enter 変更"
 
-#: src/ui/menu_startup_m12.c:11890
+#: src/ui/menu_startup_m12.c:12295
 msgid "GAME OPTIONS"
 msgstr "ゲームオプション"
 
-#: src/ui/menu_startup_m12.c:11927
+#: src/ui/menu_startup_m12.c:12332
 msgid "ARCHITECTURE"
 msgstr "アーカイブ状況"
 
-#: src/ui/menu_startup_m12.c:11940
+#: src/ui/menu_startup_m12.c:12345
 msgid "VERSION"
 msgstr "バージョン"
 
-#: src/ui/menu_startup_m12.c:11961
+#: src/ui/menu_startup_m12.c:12366
 msgid "PATCH"
 msgstr "パッチ"
 
-#: src/ui/menu_startup_m12.c:11987
+#: src/ui/menu_startup_m12.c:12392
 msgid "CHEATS"
 msgstr "チート"
 
-#: src/ui/menu_startup_m12.c:12000
+#: src/ui/menu_startup_m12.c:12405
 msgid "SPEED"
 msgstr "速度"
 
-#: src/ui/menu_startup_m12.c:12012
+#: src/ui/menu_startup_m12.c:12417
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "チートを有効にすると速度／ホットキーが解放されます"
 
-#: src/ui/menu_startup_m12.c:12034
+#: src/ui/menu_startup_m12.c:12439
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "V1 オリジナルモードによりロック中"
 
-#: src/ui/menu_startup_m12.c:12044
+#: src/ui/menu_startup_m12.c:12449
 msgid "RESOLUTION"
 msgstr "解像度"
 
-#: src/ui/menu_startup_m12.c:12058
+#: src/ui/menu_startup_m12.c:12463
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "V1 オリジナルモードによりロック中"
 
-#: src/ui/menu_startup_m12.c:12079
+#: src/ui/menu_startup_m12.c:12484
 msgid "> DATA FILES NOT FOUND"
 msgstr "オリジナルファイルが見つかりません"
 
-#: src/ui/menu_startup_m12.c:12081
+#: src/ui/menu_startup_m12.c:12486
 msgid "> RENDERER UNAVAILABLE"
 msgstr "レンダラーバックエンドが利用できません"
 
-#: src/ui/menu_startup_m12.c:12082
+#: src/ui/menu_startup_m12.c:12487
 msgid "> LAUNCH"
 msgstr "> 起動"
 
-#: src/ui/menu_startup_m12.c:12095
+#: src/ui/menu_startup_m12.c:12500
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: 戻る  矢印キー: 移動  ENTER: 選択"
-
-#: src/ui/menu_startup_m12.c:12524
-msgid "DATA SCAN FAILED"
-msgstr "データスキャンに失敗しました"
 
 #: src/ui/menu_startup_render_modern_m12.c:1321
 msgid "COMING SOON"

@@ -174,6 +174,7 @@ msgstr "Limbă"
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
 #: scripts/firestaff_savegame_editor.py:957
+#, python-brace-format
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -231,10 +232,12 @@ msgstr ""
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
+#, python-brace-format
 msgid "Imported .fsart: {}"
 msgstr ".fsart importat: {}"
 
 #: scripts/firestaff_artpack_studio.py:2024
+#, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "Țintă plasată încărcată: {}"
 
@@ -247,6 +250,7 @@ msgid "Select V1/reference asset root"
 msgstr "Selectează rădăcina resurselor V1/referință"
 
 #: scripts/firestaff_artpack_studio.py:2073
+#, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "Deschis {} artpack: {}"
 
@@ -255,6 +259,7 @@ msgid "Open artpack failed"
 msgstr "Deschiderea artpack-ului a eșuat"
 
 #: scripts/firestaff_artpack_studio.py:2122
+#, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "{} resurse V1/referință scanate"
 
@@ -279,6 +284,7 @@ msgid "Images"
 msgstr "Imagini"
 
 #: scripts/firestaff_artpack_studio.py:2195
+#, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "Referință încărcată: {}"
 
@@ -287,6 +293,7 @@ msgid "Load V2.2 target image"
 msgstr "Încarcă imaginea țintă V2.2"
 
 #: scripts/firestaff_artpack_studio.py:2205
+#, python-brace-format
 msgid "Loaded target: {}"
 msgstr "Țintă încărcată: {}"
 
@@ -299,10 +306,12 @@ msgid "Game data"
 msgstr "Date de joc"
 
 #: scripts/firestaff_artpack_studio.py:2238
+#, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "Date de joc importate: {} ({})"
 
 #: scripts/firestaff_artpack_studio.py:2240
+#, python-brace-format
 msgid "Warnings: {}"
 msgstr "Avertismente: {}"
 
@@ -331,6 +340,7 @@ msgid "No target image"
 msgstr "Nicio imagine țintă"
 
 #: scripts/firestaff_artpack_studio.py:2292
+#, python-brace-format
 msgid "Imported {}/{}"
 msgstr "Importat {}/{}"
 
@@ -340,10 +350,12 @@ msgid "Import failed"
 msgstr "Importul a eșuat"
 
 #: scripts/firestaff_artpack_studio.py:2307
+#, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "Imagine editată salvată: {}"
 
 #: scripts/firestaff_artpack_studio.py:2335
+#, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "Prompt AI scris: {}"
 
@@ -373,10 +385,12 @@ msgid "AI batch"
 msgstr "Lot AI"
 
 #: scripts/firestaff_artpack_studio.py:2390
+#, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "Câte resurse să se genereze? {} disponibile."
 
 #: scripts/firestaff_artpack_studio.py:2413
+#, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "Lot AI a generat/importat {} resurse"
 
@@ -401,10 +415,12 @@ msgid "Validation passed"
 msgstr "Validare trecută"
 
 #: scripts/firestaff_artpack_studio.py:2431
+#, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Cache de rulare V2.2 construit: {} ({} octeți)"
 
 #: scripts/firestaff_artpack_studio.py:2432
+#, python-brace-format
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -429,6 +445,7 @@ msgid "Reviewer name:"
 msgstr "Numele recenzorului:"
 
 #: scripts/firestaff_artpack_studio.py:2442
+#, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "Chitanță scrisă: {}"
 
@@ -446,6 +463,7 @@ msgid "Firestaff artpack"
 msgstr "Artpack Firestaff"
 
 #: scripts/firestaff_artpack_studio.py:2458
+#, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr ".fsart exportat: {}"
 
@@ -611,6 +629,7 @@ msgid "Graphics Override"
 msgstr "Suprascriere grafică"
 
 #: scripts/firestaff_dungeon_studio.py:623
+#, python-brace-format
 msgid "Import {}..."
 msgstr "Importă {}..."
 
@@ -645,6 +664,7 @@ msgid "New dungeon created"
 msgstr "Temniță nouă creată"
 
 #: scripts/firestaff_dungeon_studio.py:1060
+#, python-brace-format
 msgid "Opened: {}"
 msgstr "Deschis: {}"
 
@@ -661,6 +681,7 @@ msgstr "Eroare"
 
 #: scripts/firestaff_dungeon_studio.py:1070
 #: scripts/firestaff_savegame_editor.py:577
+#, python-brace-format
 msgid "Saved: {}"
 msgstr "Salvat: {}"
 
@@ -677,10 +698,12 @@ msgid "Apply"
 msgstr "Aplică"
 
 #: scripts/firestaff_dungeon_studio.py:1148
+#, python-brace-format
 msgid "Maps: {}"
 msgstr "Hărți: {}"
 
 #: scripts/firestaff_dungeon_studio.py:1149
+#, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "Curentă: {} ({}×{})"
 
@@ -689,6 +712,7 @@ msgid "Tiles:"
 msgstr "Dale:"
 
 #: scripts/firestaff_dungeon_studio.py:1155
+#, python-brace-format
 msgid "Things: {}"
 msgstr "Obiecte: {}"
 
@@ -697,6 +721,7 @@ msgid "Dungeon Statistics"
 msgstr "Statistici temniță"
 
 #: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "Harta {} \"{}\": toți pereții"
 
@@ -722,6 +747,7 @@ msgid "Dungeon is valid!"
 msgstr "Temnița este validă!"
 
 #: scripts/firestaff_dungeon_studio.py:1189
+#, python-brace-format
 msgid "Import {}"
 msgstr "Importă {}"
 
@@ -734,6 +760,7 @@ msgid "Pillow is required for graphics import"
 msgstr "Pillow este necesar pentru importul grafic"
 
 #: scripts/firestaff_dungeon_studio.py:1200
+#, python-brace-format
 msgid "Could not load image: {}"
 msgstr "Nu s-a putut încărca imaginea: {}"
 
@@ -742,6 +769,7 @@ msgid "Resize?"
 msgstr "Redimensionare?"
 
 #: scripts/firestaff_dungeon_studio.py:1204
+#, python-brace-format
 msgid ""
 "Image is {}×{}, expected {}×{}.\n"
 "Resize to fit?"
@@ -750,6 +778,7 @@ msgstr ""
 "Redimensionare?"
 
 #: scripts/firestaff_dungeon_studio.py:1216
+#, python-brace-format
 msgid "{} imported from {}"
 msgstr "{} importat din {}"
 
@@ -1167,6 +1196,7 @@ msgstr ""
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
+#, python-brace-format
 msgid "Champion {}"
 msgstr ""
 
@@ -1217,6 +1247,7 @@ msgid "Unrecognized savegame format."
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:571
+#, python-brace-format
 msgid "Loaded: {}"
 msgstr "Încărcat: {}"
 
@@ -1231,6 +1262,7 @@ msgid "Warning"
 msgstr "Avertisment"
 
 #: scripts/firestaff_savegame_editor.py:586
+#, python-brace-format
 msgid "Saved as: {}"
 msgstr "Salvat ca: {}"
 

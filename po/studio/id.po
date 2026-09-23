@@ -176,6 +176,7 @@ msgstr "Bahasa"
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
 #: scripts/firestaff_savegame_editor.py:957
+#, python-brace-format
 msgid ""
 "Language set to {}.\n"
 "Restart app for full effect."
@@ -233,10 +234,12 @@ msgstr "Batalkan"
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
+#, python-brace-format
 msgid "Imported .fsart: {}"
 msgstr ".fsart yang diimpor: {}"
 
 #: scripts/firestaff_artpack_studio.py:2024
+#, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "Target yang dijatuhkan dimuat: {}"
 
@@ -249,6 +252,7 @@ msgid "Select V1/reference asset root"
 msgstr "Pilih V1/akar aset referensi"
 
 #: scripts/firestaff_artpack_studio.py:2073
+#, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "Membuka {} artpack: {}"
 
@@ -257,6 +261,7 @@ msgid "Open artpack failed"
 msgstr "Buka artpack gagal"
 
 #: scripts/firestaff_artpack_studio.py:2122
+#, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "Memindai {} aset V1/referensi"
 
@@ -281,6 +286,7 @@ msgid "Images"
 msgstr "Gambar"
 
 #: scripts/firestaff_artpack_studio.py:2195
+#, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "Referensi yang dimuat: {}"
 
@@ -289,6 +295,7 @@ msgid "Load V2.2 target image"
 msgstr "Muat gambar target V2.2"
 
 #: scripts/firestaff_artpack_studio.py:2205
+#, python-brace-format
 msgid "Loaded target: {}"
 msgstr "Target yang dimuat: {}"
 
@@ -301,10 +308,12 @@ msgid "Game data"
 msgstr "Data permainan"
 
 #: scripts/firestaff_artpack_studio.py:2238
+#, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "Data permainan yang diimpor: {} ({})"
 
 #: scripts/firestaff_artpack_studio.py:2240
+#, python-brace-format
 msgid "Warnings: {}"
 msgstr "Peringatan: {}"
 
@@ -333,6 +342,7 @@ msgid "No target image"
 msgstr "Tidak ada gambar sasaran"
 
 #: scripts/firestaff_artpack_studio.py:2292
+#, python-brace-format
 msgid "Imported {}/{}"
 msgstr "Diimpor {}/{}"
 
@@ -342,10 +352,12 @@ msgid "Import failed"
 msgstr "Impor gagal"
 
 #: scripts/firestaff_artpack_studio.py:2307
+#, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "Gambar yang telah diedit disimpan: {}"
 
 #: scripts/firestaff_artpack_studio.py:2335
+#, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "Menulis perintah AI: {}"
 
@@ -375,10 +387,12 @@ msgid "AI batch"
 msgstr "kumpulan AI"
 
 #: scripts/firestaff_artpack_studio.py:2390
+#, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "Hasilkan berapa banyak aset? {} tersedia."
 
 #: scripts/firestaff_artpack_studio.py:2413
+#, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "AI batch menghasilkan/mengimpor aset {}"
 
@@ -403,10 +417,12 @@ msgid "Validation passed"
 msgstr "Validasi berhasil"
 
 #: scripts/firestaff_artpack_studio.py:2431
+#, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Cache runtime V2.2 yang dibuat: {} ({} byte)"
 
 #: scripts/firestaff_artpack_studio.py:2432
+#, python-brace-format
 msgid ""
 "Built {}\n"
 "{} bytes"
@@ -431,6 +447,7 @@ msgid "Reviewer name:"
 msgstr "Nama pengulas:"
 
 #: scripts/firestaff_artpack_studio.py:2442
+#, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "Menulis tanda terima: {}"
 
@@ -448,6 +465,7 @@ msgid "Firestaff artpack"
 msgstr "Paket seni pemadam kebakaran"
 
 #: scripts/firestaff_artpack_studio.py:2458
+#, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr ".fsart yang diekspor: {}"
 
@@ -613,6 +631,7 @@ msgid "Graphics Override"
 msgstr "Penggantian Grafis"
 
 #: scripts/firestaff_dungeon_studio.py:623
+#, python-brace-format
 msgid "Import {}..."
 msgstr "Impor {}..."
 
@@ -647,6 +666,7 @@ msgid "New dungeon created"
 msgstr "Penjara bawah tanah baru telah dibuat"
 
 #: scripts/firestaff_dungeon_studio.py:1060
+#, python-brace-format
 msgid "Opened: {}"
 msgstr "Dibuka: {}"
 
@@ -663,6 +683,7 @@ msgstr "Kesalahan"
 
 #: scripts/firestaff_dungeon_studio.py:1070
 #: scripts/firestaff_savegame_editor.py:577
+#, python-brace-format
 msgid "Saved: {}"
 msgstr "Disimpan: {}"
 
@@ -679,10 +700,12 @@ msgid "Apply"
 msgstr "Terapkan"
 
 #: scripts/firestaff_dungeon_studio.py:1148
+#, python-brace-format
 msgid "Maps: {}"
 msgstr "Peta: {}"
 
 #: scripts/firestaff_dungeon_studio.py:1149
+#, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "Saat ini: {} ({}×{})"
 
@@ -691,6 +714,7 @@ msgid "Tiles:"
 msgstr "Ubin:"
 
 #: scripts/firestaff_dungeon_studio.py:1155
+#, python-brace-format
 msgid "Things: {}"
 msgstr "Hal-hal: {}"
 
@@ -699,6 +723,7 @@ msgid "Dungeon Statistics"
 msgstr "Statistik Penjara Bawah Tanah"
 
 #: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "Petakan {} \"{}\": semua dinding"
 
@@ -724,6 +749,7 @@ msgid "Dungeon is valid!"
 msgstr "Penjara bawah tanah valid!"
 
 #: scripts/firestaff_dungeon_studio.py:1189
+#, python-brace-format
 msgid "Import {}"
 msgstr "Impor {}"
 
@@ -736,6 +762,7 @@ msgid "Pillow is required for graphics import"
 msgstr "Bantal diperlukan untuk impor grafis"
 
 #: scripts/firestaff_dungeon_studio.py:1200
+#, python-brace-format
 msgid "Could not load image: {}"
 msgstr "Tidak dapat memuat gambar: {}"
 
@@ -744,6 +771,7 @@ msgid "Resize?"
 msgstr "Ubah ukuran?"
 
 #: scripts/firestaff_dungeon_studio.py:1204
+#, python-brace-format
 msgid ""
 "Image is {}×{}, expected {}×{}.\n"
 "Resize to fit?"
@@ -752,6 +780,7 @@ msgstr ""
 "Ubah ukuran agar pas?"
 
 #: scripts/firestaff_dungeon_studio.py:1216
+#, python-brace-format
 msgid "{} imported from {}"
 msgstr "{} diimpor dari {}"
 
@@ -1169,6 +1198,7 @@ msgstr "Bekukan Kehidupan aktif (0/1)"
 #: scripts/firestaff_savegame_editor.py:380
 #: scripts/firestaff_savegame_editor.py:383
 #: scripts/firestaff_savegame_editor.py:768
+#, python-brace-format
 msgid "Champion {}"
 msgstr "Juara {}"
 
@@ -1219,6 +1249,7 @@ msgid "Unrecognized savegame format."
 msgstr "Format savegame tidak dikenal."
 
 #: scripts/firestaff_savegame_editor.py:571
+#, python-brace-format
 msgid "Loaded: {}"
 msgstr "Dimuat: {}"
 
@@ -1233,6 +1264,7 @@ msgid "Warning"
 msgstr "Peringatan"
 
 #: scripts/firestaff_savegame_editor.py:586
+#, python-brace-format
 msgid "Saved as: {}"
 msgstr "Disimpan sebagai: {}"
 
