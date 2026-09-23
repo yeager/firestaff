@@ -68,7 +68,9 @@ static int set_count(const char *key, const char *value,
     return 1;
 }
 
-static Theron_V1MednafenRegion region_for_track02_md5(const char *md5) {
+Theron_V1MednafenRegion theron_v1_mednafen_transition_region_for_track02_md5(
+    const char *md5) {
+    if (!md5) return THERON_V1_MEDNAFEN_REGION_UNKNOWN;
     if (strcmp(md5, THERON_JP_TRACK02_MD1_2352_MD5) == 0 ||
         strcmp(md5, THERON_JP_TRACK02_MODE1_2048_MD5) == 0)
         return THERON_V1_MEDNAFEN_REGION_JP;
@@ -121,7 +123,8 @@ int theron_v1_mednafen_transition_receipt_parse_file(
             track02_mode_2048 = strcmp(value, "MODE1/2048") == 0;
             receipt.mode_verified = 1;
         } else if (strcmp(key, "track02_md5") == 0) {
-            Theron_V1MednafenRegion region = region_for_track02_md5(value);
+            Theron_V1MednafenRegion region =
+                theron_v1_mednafen_transition_region_for_track02_md5(value);
             if (receipt.track02_md5_verified ||
                 region == THERON_V1_MEDNAFEN_REGION_UNKNOWN) goto reject;
             snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", value);

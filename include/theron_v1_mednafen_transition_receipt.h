@@ -55,6 +55,8 @@ typedef struct {
     char source_trace_path[THERON_V1_MEDNAFEN_TRANSITION_PATH_CAPACITY];
 } Theron_V1MednafenTransitionReceipt;
 
+Theron_V1MednafenRegion theron_v1_mednafen_transition_region_for_track02_md5(
+    const char *track02_md5);
 int theron_v1_mednafen_transition_receipt_parse_file(
     const char *path, Theron_V1MednafenTransitionReceipt *out);
 
