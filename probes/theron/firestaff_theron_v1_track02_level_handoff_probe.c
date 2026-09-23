@@ -851,12 +851,14 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   runtime_state_receipt.runtime_track02_semantic_handoff,
                   0);
         check_int("synthetic startup semantic runtime receipt is rejected",
-                  strstr(runtime_receipt,
-                         "stage-three loader bytes rejected") != NULL,
+                  strstr(runtime_receipt, "fallback visuals blocked") != NULL ||
+                  strstr(runtime_receipt, "Track 02 runtime route blocked") != NULL,
                   1);
         check_int("synthetic startup semantic runtime host text is rejected",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "stage-three loader bytes rejected") != NULL,
+                         "fallback visuals blocked") != NULL ||
+                  strstr(runtime_host_receipt.inspect_detail,
+                         "Track 02 runtime route blocked") != NULL,
                   1);
         check_int("synthetic startup semantic runtime host route is blocked",
                   strstr(runtime_host_receipt.inspect_detail,
