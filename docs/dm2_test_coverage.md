@@ -74,6 +74,14 @@ Macintosh edition retains its source 256-row `PalIRGB`/`dtPalette16` pair,
 whereas the Amiga HUD uses its own authenticated 16-colour
 `INTERFACE_GENERAL/0` palette receipt; neither route reuses a PC
 local-palette assumption.
+
+On the current clean local build, the Amiga regression reaches New Game and
+UP movement (`party=1,7,0`) from the authenticated installer ZIP, but the
+initial dungeon frame is rejected: `dm2FrameAccepted=0`,
+`dm2RealAssets=0`, `dm2NoCoreFallbacks=0`, and no GRAPHICSSET scene receipt is
+published. This is an open runtime defect, not passing Amiga frame coverage;
+the strict real-media assertions stay in place until the source-owned G1/GDAT
+scene transaction is fixed.
 PC coordinates or extracted media.
 
 `dm2_v1_dos_sksave_archive_menu_resume` adds the corresponding resume route:

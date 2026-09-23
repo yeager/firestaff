@@ -142,8 +142,10 @@ Reviewed 2026-08-29. Completed work only.
   `INTERFACE_GENERAL/0` PalIRGB field 0 rather than PC field `0xfe`/PAL16.
   Its runtime HUD uses the source palette's physical-index receipt, matching
   the original 4-bit Amiga images without a fabricated local palette. The ZIP
-  remains memory-owned through the native installer path and now produces an
-  accepted M11 frame with real assets and no fallback drawing.
+  remains memory-owned through the native installer path. A current clean
+  local probe contradicts the earlier frame-acceptance claim: movement works,
+  but the initial M11 dungeon frame is rejected. See `TODO-dm2.md` for the
+  reproduced receipt and required follow-up.
 - The authentic Macintosh retail ZIP now keeps its normal 256-row
   `PalIRGB`/`dtPalette16` pair rather than being mistaken for the Amiga
   16-colour palette layout solely because both formats are big-endian. Its
