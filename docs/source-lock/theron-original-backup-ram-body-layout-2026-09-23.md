@@ -97,13 +97,22 @@ to `$29F4/$2A10`, and the six 20-byte columns to `$2A2C`, `$2A7C`, `$2ACC`,
 from the writer analysis, including the duplicate destinations in the first
 two sections.
 
+The corresponding restore consumer is now independently byte-bound against
+the authenticated JP Track 02 as well. Its seven identical copies begin at
+user-data offsets `$081A45`, `$0C1A45`, `$101A45`, `$141A45`, `$181A45`,
+`$1C1A45` and `$201A45` (sector-local offset `$0245` in sectors 259, 387,
+515, 643, 771, 899 and 1027). The control flow and `$267C..$2701` inputs are
+the same as in the US routine. Every JP live-RAM destination is one byte below
+its US counterpart: `$2977/$297F`, `$297B/$2983`, `$29F3/$2A0F`, `$2A2B`,
+`$2A7B`, `$2ACB`, `$2B1B`, `$2B6B` and `$2BBB`. This regional difference is
+verified directly rather than inferred from US media.
+
 The six final arrays are therefore proven column-major restore inputs for
-twenty live records. Their gameplay meanings are still deliberately left
-unspecified until downstream consumers identify the individual columns and
-records. The corresponding JP routine also requires its own regional proof.
-Firestaff may preserve and inspect these bytes, but production Continue must
-remain fail-closed for party, inventory, position and dungeon restoration
-until those semantic joins are proven.
+twenty live records in both regions. Their gameplay meanings are still
+deliberately left unspecified until downstream consumers identify the
+individual columns and records. Firestaff may preserve and inspect these
+bytes, but production Continue must remain fail-closed for party, inventory,
+position and dungeon restoration until those semantic joins are proven.
 
 The checked-in capture hook is
 `scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch`. The copyrighted

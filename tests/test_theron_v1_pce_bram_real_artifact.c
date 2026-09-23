@@ -18,7 +18,8 @@
 #define STAGE2_HANDOFF_USER_OFFSET 151u
 #define STAGE2_SAVE_SUPPORT_USER_OFFSET 0x3d1fu
 #define STAGE2_SELECTED_SLOT_USER_OFFSET 0x3d74u
-#define DUNGEON_RESTORE_USER_OFFSET 0x248u
+#define US_DUNGEON_RESTORE_USER_OFFSET 0x248u
+#define JP_DUNGEON_RESTORE_USER_OFFSET 0x245u
 
 static uint8_t *load_track02_user_data(const char *path, size_t *out_size) {
     FILE *file = fopen(path, "rb");
@@ -128,8 +129,30 @@ int main(int argc, char **argv) {
         0xc8, 0xc8, 0xc8, 0xc8, 0xe8, 0xe0, 0x14, 0x90,
         0xd3, 0x60
     };
-    static const size_t dungeon_store_sectors[7] = {
+    static const uint8_t jp_dungeon_save_body_restore[] = {
+        0xad, 0x7c, 0x26, 0xf0, 0x06, 0x29, 0x7f, 0xc9,
+        0x07, 0x90, 0x01, 0x60, 0x82, 0xc2,
+        0xbd, 0x7d, 0x26, 0x99, 0x77, 0x29, 0x99, 0x7f,
+        0x29, 0xbd, 0x7e, 0x26, 0x99, 0x7b, 0x29, 0x99,
+        0x83, 0x29, 0x98, 0x18, 0x69, 0x10, 0xa8, 0xe8,
+        0xe8, 0xe0, 0x06, 0x90, 0xe3, 0x82, 0xc2,
+        0xbd, 0x83, 0x26, 0x99, 0xf3, 0x29, 0x99, 0x0f,
+        0x2a, 0xc8, 0xc8, 0xc8, 0xc8, 0xe8, 0xe0, 0x07,
+        0x90, 0xee, 0x82, 0xc2,
+        0xbd, 0x8a, 0x26, 0x99, 0x2b, 0x2a,
+        0xbd, 0x9e, 0x26, 0x99, 0x7b, 0x2a,
+        0xbd, 0xb2, 0x26, 0x99, 0xcb, 0x2a,
+        0xbd, 0xc6, 0x26, 0x99, 0x1b, 0x2b,
+        0xbd, 0xda, 0x26, 0x99, 0x6b, 0x2b,
+        0xbd, 0xee, 0x26, 0x99, 0xbb, 0x2b,
+        0xc8, 0xc8, 0xc8, 0xc8, 0xe8, 0xe0, 0x14, 0x90,
+        0xd3, 0x60
+    };
+    static const size_t us_dungeon_store_sectors[7] = {
         260u, 388u, 516u, 644u, 772u, 900u, 1028u
+    };
+    static const size_t jp_dungeon_store_sectors[7] = {
+        259u, 387u, 515u, 643u, 771u, 899u, 1027u
     };
     static const uint8_t dms_slot_offset_lookup[] = {
         0xac, 0xb8, 0x42, 0xb9, 0xf8, 0xdd, 0x85, 0xfe,
@@ -176,7 +199,7 @@ int main(int argc, char **argv) {
     };
     size_t field;
     size_t index;
-    if (argc != 6) return 2;
+    if (argc != 7) return 2;
     if (theron_v1_pce_bram_classify_path(argv[1], &receipt) != THERON_V1_PCE_BRAM_READY ||
         receipt.size_bytes != THERON_V1_PCE_BRAM_BYTES || !receipt.hubm_header_seen ||
         !receipt.theron_save_disk_marker_seen || receipt.theron_save_disk_marker_offset != 0x16u ||
@@ -359,7 +382,7 @@ int main(int argc, char **argv) {
         }
         for (index = 0u; index < 7u; ++index) {
             size_t store_offset =
-                dungeon_store_sectors[index] * USER_SECTOR_BYTES;
+                us_dungeon_store_sectors[index] * USER_SECTOR_BYTES;
             if (store_offset + sizeof(dungeon_selected_slot_store) >
                     user_data_size ||
                 memcmp(user_data + store_offset,
@@ -370,10 +393,10 @@ int main(int argc, char **argv) {
                       stderr);
                 return 1;
             }
-            if (store_offset + DUNGEON_RESTORE_USER_OFFSET +
+            if (store_offset + US_DUNGEON_RESTORE_USER_OFFSET +
                     sizeof(dungeon_save_body_restore) > user_data_size ||
                 memcmp(user_data + store_offset +
-                           DUNGEON_RESTORE_USER_OFFSET,
+                           US_DUNGEON_RESTORE_USER_OFFSET,
                        dungeon_save_body_restore,
                        sizeof(dungeon_save_body_restore)) != 0) {
                 free(user_data);
@@ -381,6 +404,27 @@ int main(int argc, char **argv) {
                       stderr);
                 return 1;
             }
+        }
+    }
+    free(user_data);
+    user_data = load_track02_user_data(argv[6], &user_data_size);
+    if (!user_data) {
+        fputs("authentic JP Track 02 could not be read\n", stderr);
+        return 1;
+    }
+    for (index = 0u; index < 7u; ++index) {
+        size_t restore_offset =
+            jp_dungeon_store_sectors[index] * USER_SECTOR_BYTES +
+            JP_DUNGEON_RESTORE_USER_OFFSET;
+        if (restore_offset + sizeof(jp_dungeon_save_body_restore) >
+                user_data_size ||
+            memcmp(user_data + restore_offset,
+                   jp_dungeon_save_body_restore,
+                   sizeof(jp_dungeon_save_body_restore)) != 0) {
+            free(user_data);
+            fputs("original JP dungeon save-body restore consumer drifted\n",
+                  stderr);
+            return 1;
         }
     }
     free(user_data);
