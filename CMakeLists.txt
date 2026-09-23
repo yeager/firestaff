@@ -38004,10 +38004,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     src/dm1/dm1_v1_g0205_pc34_compat.c
     src/shared/asset_loader_m11.c
 )
-set_tests_properties(dm1_v1_viewport_wall_field_original_material_gate PROPERTIES
-    SKIP_RETURN_CODE 77
-    ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
-    LABELS "dm1;dos;pc34;viewport;wall;teleporter;real-media;in-memory;skip-safe")
+if(BUILD_TESTING)
+    set_tests_properties(dm1_v1_viewport_wall_field_original_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;viewport;wall;teleporter;real-media;in-memory;skip-safe")
+endif()
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_center_door_render_pc34_compat
     tests/test_dm1_v1_center_door_render_pc34_compat.c
@@ -38903,20 +38905,22 @@ endif()
 # These source-lock scripts execute a focused C binary.  Bind that binary to
 # the active CTest build tree rather than accepting a stale in-tree `build/`
 # directory left by another configuration.
-set_tests_properties(
-    pass510_dm1_v1_viewport_wall_parity_flip_source_lock
-    pass515_dm1_v1_d0_side_wall_occlusion_source_lock
-    pass516_dm1_v1_d1_d0_wall_occlusion_source_lock
-    pass583_dm1_v1_d0_side_field_occlusion_source_lock
-    pass519_dm1_v1_d1c_door_front_field_source_lock
-    pass560_dm1_v1_mirrored_door_front_source_lock
-    pass561_dm1_v1_far_door_front_source_lock
-    pass562_dm1_v1_d2_far_side_wall_source_lock
-    pass563_dm1_v1_d1_side_wall_source_lock
-    pass565_dm1_v1_d1_side_door_front_source_lock
-    pass570_dm1_v1_d2c_front_order_source_lock
-    pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock
-    PROPERTIES ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}")
+if(BUILD_TESTING)
+    set_tests_properties(
+        pass510_dm1_v1_viewport_wall_parity_flip_source_lock
+        pass515_dm1_v1_d0_side_wall_occlusion_source_lock
+        pass516_dm1_v1_d1_d0_wall_occlusion_source_lock
+        pass583_dm1_v1_d0_side_field_occlusion_source_lock
+        pass519_dm1_v1_d1c_door_front_field_source_lock
+        pass560_dm1_v1_mirrored_door_front_source_lock
+        pass561_dm1_v1_far_door_front_source_lock
+        pass562_dm1_v1_d2_far_side_wall_source_lock
+        pass563_dm1_v1_d1_side_wall_source_lock
+        pass565_dm1_v1_d1_side_door_front_source_lock
+        pass570_dm1_v1_d2c_front_order_source_lock
+        pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock
+        PROPERTIES ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}")
+endif()
 
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)

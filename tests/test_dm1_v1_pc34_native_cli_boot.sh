@@ -33,7 +33,7 @@ probe() {
 
 probe --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 120 \
     --duration 0
-probe --menu --game dm1 --platform pc --data-dir "$archive" --script "$menu_original" \
+probe --game dm1 --platform pc --data-dir "$archive" --script "$menu_original" \
     --boot-probe --boot-probe-frames 120 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
@@ -63,7 +63,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # `up` input advances to y=4; this proves the selected archive has reached
 # the actual M11 movement route rather than only a title/startup receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
+    --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
     --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
@@ -84,7 +84,7 @@ probe_runtime_input() {
     local expected_party=$2
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm1 --platform pc --data-dir "$archive" \
+        --game dm1 --platform pc --data-dir "$archive" \
         --boot-probe --boot-probe-frames 500 --script "$input" --duration 0 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1
@@ -183,7 +183,7 @@ PY
 # the 1600x1000 presentation rectangle. This protects the normal SDL pointer
 # transform, rather than merely the boot probe's 320x200 convenience route.
 hoc_scaled_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --presentation-mode v1 --width 1920 --height 1080 \
+    --presentation-mode v1 --width 1920 --height 1080 --scale-mode 4 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
     --script "${hoc_route%click:112:83,wait5}click:744:464,wait5" --duration 0 2>&1) || {
@@ -203,7 +203,7 @@ fi
 # 16:9 click; this caught variants where C040 worked only in Original mode.
 hoc_modern_output=$(FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$hoc_modern_capture_dir" \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --presentation-mode v20 --width 1920 --height 1080 \
+    --presentation-mode v20 --width 1920 --height 1080 --scale-mode 4 \
     --game dm1 --platform pc --data-dir "$archive" \
     --boot-probe --boot-probe-frames 720 \
     --script "${hoc_route%click:112:83,wait5}click:744:464,wait5" --duration 0 2>&1) || {

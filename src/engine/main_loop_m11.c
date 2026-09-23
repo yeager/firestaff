@@ -7115,6 +7115,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
         menuInitOptions.looseFilesOnlyAssetScan =
             (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
+        /* In an interactive menu, --game is only an initial selection. Scan
+         * the complete data root so every other installed game remains
+         * available from its card. An explicit file/container path is already
+         * a precise media selection: keep its selected-game scan so a sibling
+         * loose copy cannot silently replace the source the user chose. */
+        menuInitOptions.scanAllGames =
+            o->menuRequested &&
+                    (!o->dataDir || o->dataDir[0] == '\0' ||
+                     FSP_DirExists(o->dataDir))
+                ? 1
+                : 0;
         /* The card launcher must make real-data availability visible before
          * it lets a player choose a platform.  Skipping this scan for an
          * ordinary --menu run made every card unavailable and quietly turned
