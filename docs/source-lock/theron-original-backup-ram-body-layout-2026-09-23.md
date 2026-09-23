@@ -109,10 +109,34 @@ verified directly rather than inferred from US media.
 
 The six final arrays are therefore proven column-major restore inputs for
 twenty live records in both regions. Their gameplay meanings are still
-deliberately left unspecified until downstream consumers identify the
-individual columns and records. Firestaff may preserve and inspect these
-bytes, but production Continue must remain fail-closed for party, inventory,
-position and dungeon restoration until those semantic joins are proven.
+identified by the downstream arithmetic consumers in every regional dungeon
+copy:
+
+- `$267D..$2682` contains Theron's maximum health, stamina and mana as three
+  little-endian 16-bit values. The restore routine writes each value to both
+  the current and maximum live fields. A later clamp compares each current
+  field with its maximum and copies the maximum back when current is greater.
+  The authentic progressed body decodes to 175, 1500 and 50, exactly matching
+  Theron's hash-bound regional roster record.
+- `$2683..$2689` contains Theron's seven maximum attributes in roster order:
+  luck, strength, dexterity, wisdom, vitality, anti-magic and anti-fire. The
+  restore routine initializes both current and maximum attribute columns. A
+  seven-iteration consumer compares the two columns with a four-byte stride.
+  The authentic values `80, 50, 40, 40, 45, 40, 45` match the regional roster.
+- `$268A/$269E` are the low/high columns of a 16-bit temporary-experience
+  value for each of 20 skill ordinals. `$26B2/$26C6/$26DA/$26EE` are the four
+  little-endian columns of the corresponding 32-bit persistent experience.
+  The original level consumer loads the four persistent columns, adds the two
+  temporary columns with carry and evaluates the result. Separate consumers
+  update the 16-bit and 32-bit values with carry propagation.
+
+The classifier now exposes this typed projection alongside the unchanged raw
+address projection. Its real-artifact regression requires the exact restore,
+clamp, attribute-compare and skill-experience consumer bytes in all seven US
+and all seven JP dungeon copies. Production Continue remains fail-closed
+until these proven Theron fields are applied transactionally to the native
+world and the two opaque per-slot tail bytes are classified or proven
+irrelevant to the selected-slot handoff.
 
 The checked-in capture hook is
 `scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch`. The copyrighted

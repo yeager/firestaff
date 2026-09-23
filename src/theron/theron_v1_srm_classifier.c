@@ -71,6 +71,7 @@ static const uint8_t g_party_payload_magic[8] = {
 };
 #endif
 
+static uint16_t rd16le(const uint8_t *p);
 static uint32_t rd32le(const uint8_t *p);
 
 static uint32_t pce_bram_fnv1a(const uint8_t *data, size_t size) {
@@ -187,6 +188,22 @@ int theron_v1_pce_bram_decode_original_body(
         memcpy(out->ram_268a_2701[column], body + 14u + column * 20u,
                sizeof(out->ram_268a_2701[column]));
     }
+    out->theron_max_health = rd16le(out->ram_267d_2682);
+    out->theron_max_stamina = rd16le(out->ram_267d_2682 + 2u);
+    out->theron_max_mana = rd16le(out->ram_267d_2682 + 4u);
+    memcpy(out->theron_max_attributes, out->ram_2683_2689,
+           sizeof(out->theron_max_attributes));
+    for (column = 0u; column < 20u; ++column) {
+        out->theron_skill_temporary_experience[column] =
+            (uint16_t)out->ram_268a_2701[0][column] |
+            ((uint16_t)out->ram_268a_2701[1][column] << 8);
+        out->theron_skill_experience[column] =
+            (uint32_t)out->ram_268a_2701[2][column] |
+            ((uint32_t)out->ram_268a_2701[3][column] << 8) |
+            ((uint32_t)out->ram_268a_2701[4][column] << 16) |
+            ((uint32_t)out->ram_268a_2701[5][column] << 24);
+    }
+    out->semantics_verified = 1;
     out->layout_verified = 1;
     return 1;
 }

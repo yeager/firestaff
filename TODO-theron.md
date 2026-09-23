@@ -30,9 +30,12 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   read only `$267C` after loading a slot and to overwrite `$267D..$2701` from
   live RAM; it is not their restore consumer. The separate US and JP restore
   routines are now byte-bound in all seven regional dungeon blocks and copy
-  every section back to their region-specific live-RAM columns. Remaining
-  work is to identify the neutral fields through their downstream gameplay
-  consumers.
+  every section back to their region-specific live-RAM columns. Their
+  downstream consumers now identify Theron's three maximum vitals, seven
+  maximum attributes and all 20 temporary/persistent skill-experience pairs.
+  Remaining work is to apply those proven fields transactionally to the
+  native world and resolve or exclude the two opaque bytes at the end of each
+  `$88`-byte slot before enabling Continue.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do

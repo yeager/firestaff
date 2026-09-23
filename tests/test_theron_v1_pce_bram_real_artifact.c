@@ -154,6 +154,62 @@ int main(int argc, char **argv) {
     static const size_t jp_dungeon_store_sectors[7] = {
         259u, 387u, 515u, 643u, 771u, 899u, 1027u
     };
+    static const uint8_t us_max_vitals_clamp[] = {
+        0xbd, 0x80, 0x29, 0xdd, 0x78, 0x29, 0xbd, 0x84, 0x29,
+        0xfd, 0x7c, 0x29, 0xb0, 0x0c, 0xbd, 0x80, 0x29, 0x9d,
+        0x78, 0x29, 0xbd, 0x84, 0x29, 0x9d, 0x7c, 0x29
+    };
+    static const uint8_t jp_max_vitals_clamp[] = {
+        0xbd, 0x7f, 0x29, 0xdd, 0x77, 0x29, 0xbd, 0x83, 0x29,
+        0xfd, 0x7b, 0x29, 0xb0, 0x0c, 0xbd, 0x7f, 0x29, 0x9d,
+        0x77, 0x29, 0xbd, 0x83, 0x29, 0x9d, 0x7b, 0x29
+    };
+    static const uint8_t us_max_attribute_compare[] = {
+        0xbd, 0xf4, 0x29, 0xdd, 0x10, 0x2a, 0xb0, 0x02, 0xa0,
+        0x0c, 0x8a, 0x18, 0x69, 0x04, 0xc9, 0x1c, 0x90, 0xed
+    };
+    static const uint8_t jp_max_attribute_compare[] = {
+        0xbd, 0xf3, 0x29, 0xdd, 0x0f, 0x2a, 0xb0, 0x02, 0xa0,
+        0x0c, 0x8a, 0x18, 0x69, 0x04, 0xc9, 0x1c, 0x90, 0xed
+    };
+    static const uint8_t us_skill_experience_read[] = {
+        0xb9, 0xcc, 0x2a, 0x85, 0xb1, 0xb9, 0x1c, 0x2b, 0x85, 0xb2,
+        0xb9, 0x6c, 0x2b, 0x85, 0xb3, 0xb9, 0xbc, 0x2b, 0x85, 0xb4
+    };
+    static const uint8_t jp_skill_experience_read[] = {
+        0xb9, 0xcb, 0x2a, 0x85, 0xb1, 0xb9, 0x1b, 0x2b, 0x85, 0xb2,
+        0xb9, 0x6b, 0x2b, 0x85, 0xb3, 0xb9, 0xbb, 0x2b, 0x85, 0xb4
+    };
+    static const uint8_t us_skill_temporary_add[] = {
+        0xb9, 0x2c, 0x2a, 0x18, 0x65, 0xb1, 0x85, 0xb1, 0xb9,
+        0x7c, 0x2a, 0x65, 0xb2, 0x85, 0xb2, 0xa5, 0xb3, 0x69,
+        0x00, 0x85, 0xb3, 0xa5, 0xb4, 0x69, 0x00, 0x85, 0xb4, 0x60
+    };
+    static const uint8_t jp_skill_temporary_add[] = {
+        0xb9, 0x2b, 0x2a, 0x18, 0x65, 0xb1, 0x85, 0xb1, 0xb9,
+        0x7b, 0x2a, 0x65, 0xb2, 0x85, 0xb2, 0xa5, 0xb3, 0x69,
+        0x00, 0x85, 0xb3, 0xa5, 0xb4, 0x69, 0x00, 0x85, 0xb4, 0x60
+    };
+    static const uint8_t us_skill_temporary_update[] = {
+        0x79, 0x2c, 0x2a, 0x99, 0x2c, 0x2a, 0xb9, 0x7c,
+        0x2a, 0x69, 0x00, 0x99, 0x7c, 0x2a
+    };
+    static const uint8_t jp_skill_temporary_update[] = {
+        0x79, 0x2b, 0x2a, 0x99, 0x2b, 0x2a, 0xb9, 0x7b,
+        0x2a, 0x69, 0x00, 0x99, 0x7b, 0x2a
+    };
+    static const uint8_t us_skill_experience_update[] = {
+        0xb9, 0xcc, 0x2a, 0x18, 0x65, 0xb8, 0x99, 0xcc, 0x2a,
+        0xb9, 0x1c, 0x2b, 0x65, 0xb9, 0x99, 0x1c, 0x2b,
+        0xb9, 0x6c, 0x2b, 0x69, 0x00, 0x99, 0x6c, 0x2b,
+        0xb9, 0xbc, 0x2b, 0x69, 0x00, 0x99, 0xbc, 0x2b, 0x60
+    };
+    static const uint8_t jp_skill_experience_update[] = {
+        0xb9, 0xcb, 0x2a, 0x18, 0x65, 0xb8, 0x99, 0xcb, 0x2a,
+        0xb9, 0x1b, 0x2b, 0x65, 0xb9, 0x99, 0x1b, 0x2b,
+        0xb9, 0x6b, 0x2b, 0x69, 0x00, 0x99, 0x6b, 0x2b,
+        0xb9, 0xbb, 0x2b, 0x69, 0x00, 0x99, 0xbb, 0x2b, 0x60
+    };
     static const uint8_t dms_slot_offset_lookup[] = {
         0xac, 0xb8, 0x42, 0xb9, 0xf8, 0xdd, 0x85, 0xfe,
         0xb9, 0xfb, 0xdd, 0x85, 0xff, 0x20, 0x4e, 0xe0
@@ -228,7 +284,8 @@ int main(int argc, char **argv) {
         return 1;
     }
     if (!theron_v1_pce_bram_decode_original_body_path(argv[1], &body) ||
-        !body.layout_verified || body.body_fnv1a != 0xb37e696eu ||
+        !body.layout_verified || !body.semantics_verified ||
+        body.body_fnv1a != 0xb37e696eu ||
         body.ram_267c_campaign_byte != 0x01u ||
         memcmp(body.ram_267d_2682,
                "\xaf\x00\xdc\x05\x32\x00", 6u) != 0 ||
@@ -239,6 +296,31 @@ int main(int argc, char **argv) {
         fputs("authentic Backup RAM body did not match original writer layout\n",
               stderr);
         return 1;
+    }
+    if (body.theron_max_health != 175u ||
+        body.theron_max_stamina != 1500u ||
+        body.theron_max_mana != 50u ||
+        memcmp(body.theron_max_attributes,
+               "\x50\x32\x28\x28\x2d\x28\x2d", 7u) != 0) {
+        fputs("authentic Theron maximum vitals/attributes were not decoded\n",
+              stderr);
+        return 1;
+    }
+    for (index = 0u; index < 20u; ++index) {
+        uint16_t temporary =
+            (uint16_t)body.ram_268a_2701[0][index] |
+            ((uint16_t)body.ram_268a_2701[1][index] << 8);
+        uint32_t experience =
+            (uint32_t)body.ram_268a_2701[2][index] |
+            ((uint32_t)body.ram_268a_2701[3][index] << 8) |
+            ((uint32_t)body.ram_268a_2701[4][index] << 16) |
+            ((uint32_t)body.ram_268a_2701[5][index] << 24);
+        if (body.theron_skill_temporary_experience[index] != temporary ||
+            body.theron_skill_experience[index] != experience) {
+            fputs("authentic Theron skill experience was not decoded\n",
+                  stderr);
+            return 1;
+        }
     }
     if (theron_v1_pce_bram_decode_original_body_path(argv[2], &rejected_body) ||
         rejected_body.layout_verified) {
@@ -404,6 +486,28 @@ int main(int argc, char **argv) {
                       stderr);
                 return 1;
             }
+            if (memcmp(user_data + store_offset + 0x49edu,
+                       us_max_vitals_clamp,
+                       sizeof(us_max_vitals_clamp)) != 0 ||
+                memcmp(user_data + store_offset + 0x5b22u,
+                       us_max_attribute_compare,
+                       sizeof(us_max_attribute_compare)) != 0 ||
+                memcmp(user_data + store_offset + 0x4ebau,
+                       us_skill_experience_read,
+                       sizeof(us_skill_experience_read)) != 0 ||
+                memcmp(user_data + store_offset + 0x4f92u,
+                       us_skill_temporary_add,
+                       sizeof(us_skill_temporary_add)) != 0 ||
+                memcmp(user_data + store_offset + 0x504du,
+                       us_skill_temporary_update,
+                       sizeof(us_skill_temporary_update)) != 0 ||
+                memcmp(user_data + store_offset + 0x5247u,
+                       us_skill_experience_update,
+                       sizeof(us_skill_experience_update)) != 0) {
+                free(user_data);
+                fputs("original US Theron field consumers drifted\n", stderr);
+                return 1;
+            }
         }
     }
     free(user_data);
@@ -425,6 +529,32 @@ int main(int argc, char **argv) {
             fputs("original JP dungeon save-body restore consumer drifted\n",
                   stderr);
             return 1;
+        }
+        {
+            size_t store_offset =
+                jp_dungeon_store_sectors[index] * USER_SECTOR_BYTES;
+            if (memcmp(user_data + store_offset + 0x49dau,
+                       jp_max_vitals_clamp,
+                       sizeof(jp_max_vitals_clamp)) != 0 ||
+                memcmp(user_data + store_offset + 0x5b0fu,
+                       jp_max_attribute_compare,
+                       sizeof(jp_max_attribute_compare)) != 0 ||
+                memcmp(user_data + store_offset + 0x4ea7u,
+                       jp_skill_experience_read,
+                       sizeof(jp_skill_experience_read)) != 0 ||
+                memcmp(user_data + store_offset + 0x4f7fu,
+                       jp_skill_temporary_add,
+                       sizeof(jp_skill_temporary_add)) != 0 ||
+                memcmp(user_data + store_offset + 0x503au,
+                       jp_skill_temporary_update,
+                       sizeof(jp_skill_temporary_update)) != 0 ||
+                memcmp(user_data + store_offset + 0x5234u,
+                       jp_skill_experience_update,
+                       sizeof(jp_skill_experience_update)) != 0) {
+                free(user_data);
+                fputs("original JP Theron field consumers drifted\n", stderr);
+                return 1;
+            }
         }
     }
     free(user_data);

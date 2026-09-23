@@ -123,16 +123,23 @@ typedef struct {
 /* Byte-exact projection of the original DMS-SG.001 writer.  The authentic
  * System Card routine writes one byte to $267C, six bytes to $267D..$2682,
  * seven bytes to $2683..$2689, then six 20-byte columns to $268A..$2701.
- * Only the first byte has independently proven campaign semantics.  The
- * neutral address-based names deliberately avoid inventing meanings for the
- * remaining original fields. */
+ * The address-based members preserve that exact source layout.  The typed
+ * projection is admitted only by the independently byte-bound US and JP
+ * restore and downstream gameplay consumers. */
 typedef struct {
     int layout_verified;
+    int semantics_verified;
     uint32_t body_fnv1a;
     uint8_t ram_267c_campaign_byte;
     uint8_t ram_267d_2682[6];
     uint8_t ram_2683_2689[7];
     uint8_t ram_268a_2701[6][20];
+    uint16_t theron_max_health;
+    uint16_t theron_max_stamina;
+    uint16_t theron_max_mana;
+    uint8_t theron_max_attributes[7];
+    uint16_t theron_skill_temporary_experience[20];
+    uint32_t theron_skill_experience[20];
 } Theron_V1PceBramBodyReceipt;
 
 /* Byte-exact projection of the complete original DMS-SG.001 data area.
