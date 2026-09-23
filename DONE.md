@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-23: Startup-menu audio-device preferences now decode quoted TOML
+  strings before storing them, so names containing quotes or backslashes remain
+  stable across repeated save/load cycles. A focused regression covers that
+  round trip with an isolated config directory; the existing M12 settings-tab
+  navigation regression also passes. Removed the committed
+  `startup-menu.toml`, which contained machine-specific paths and an
+  exponentially escaped audio-device value, and ignored that per-user file.
+  Both focused regressions pass.
+
 - 2026-09-06: M10 projectile collision admission now checks current-cell
   party/group occupants before forward movement (PROJEXPL.C F0219:687-697).
   It uses the source square's GROUP rather than requiring an active AI row,

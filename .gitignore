@@ -1,6 +1,9 @@
 # CMake build output
 /build/
 
+# Per-user launcher preferences must never be committed with source.
+/startup-menu.toml
+
 # Gettext binary catalogs are generated from tracked .po sources by CMake.
 *.mo
 

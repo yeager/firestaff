@@ -573,7 +573,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
         return;
     }
     if (m12_string_equals(key, "audio_device_name")) {
-        snprintf(config->audioDeviceName, sizeof(config->audioDeviceName), "%s", value);
+        if (m12_read_quoted_value(quoted, sizeof(quoted), value)) {
+            m12_copy_string(config->audioDeviceName,
+                            sizeof(config->audioDeviceName), quoted);
+        }
         return;
     }
     if (m12_string_equals(key, "game_speed_multiplier")) {

@@ -27408,6 +27408,21 @@ endif()
     set_tests_properties(m12_all_games_boot_readiness_contract_fixture PROPERTIES
         LABELS "tier1;m12;startup;synthetic_fixture;contract_only")
 
+    add_executable(test_m12_config_audio_device_roundtrip
+        tests/test_m12_config_audio_device_roundtrip.c)
+    target_link_libraries(test_m12_config_audio_device_roundtrip PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_config_audio_device_roundtrip PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_config_audio_device_roundtrip
+        COMMAND test_m12_config_audio_device_roundtrip
+    )
+    set_tests_properties(m12_config_audio_device_roundtrip PROPERTIES
+        LABELS "tier1;m12;startup;config"
+        ENVIRONMENT
+            "HOME=${CMAKE_CURRENT_BINARY_DIR}/m12_config_audio_device_test_home;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/m12_config_audio_device_test_home;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/m12_config_audio_device_test_xdg")
+
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c
         tests/csbwin_resume_fixture.c
