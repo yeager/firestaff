@@ -99,6 +99,8 @@ int main(int argc, char **argv) {
     Theron_V1PceBramRecordReceipt rejected_record;
     Theron_Track02CampaignMaskSource source;
     Theron_Track02RetrievalTextSource retrieval;
+    Theron_V1StartupSaveResume startup_save;
+    Theron_V1StartupContinueAvailability availability;
     Theron_V1_World world;
     uint8_t *user_data;
     uint8_t main_ram[8192];
@@ -651,6 +653,55 @@ int main(int argc, char **argv) {
         !theron_v1_world_bind_track02_campaign_mask_source(&world, &source, 2)) {
         fputs("authentic campaign source did not bind to the world\n", stderr);
         return 1;
+    }
+    if (!theron_v1_startup_save_resume_evaluate(NULL, &startup_save) ||
+        startup_save.resume_claim != THERON_V1_STARTUP_RESUME_SRM ||
+        startup_save.srm_first_decoded_slot != 0 ||
+        strcmp(startup_save.srm_root, argv[1]) != 0) {
+        fputs("startup did not discover authentic Backup RAM\n", stderr);
+        return 1;
+    }
+    memset(&startup_save, 0, sizeof(startup_save));
+    startup_save.tqsv_active_slot = -1;
+    startup_save.srm_first_recognized_slot = -1;
+    startup_save.srm_first_decoded_slot = -1;
+    if (!theron_v1_startup_save_resume_apply_explicit_path(
+            &startup_save, argv[1], NULL) ||
+        startup_save.resume_claim != THERON_V1_STARTUP_RESUME_SRM ||
+        startup_save.srm_first_decoded_slot != 0 ||
+        startup_save.srm_progress_import_status !=
+            THERON_V1_SRM_PROGRESS_IMPORT_OK ||
+        strcmp(startup_save.srm_root, argv[1]) != 0 ||
+        !theron_v1_startup_continue_availability_from_state(
+            startup_save.resume_claim,
+            startup_save.tqsv_active_slot,
+            startup_save.srm_first_decoded_slot,
+            startup_save.srm_progress_import_status,
+            &availability) ||
+        !availability.has_srm_continue || !availability.has_any_continue) {
+        fputs("authentic Backup RAM was not offered to startup Continue\n",
+              stderr);
+        return 1;
+    }
+    {
+        Theron_V1_World continued_world = world;
+        char continue_receipt[160];
+        if (!theron_v1_startup_continue_srm_apply(
+                &continued_world,
+                startup_save.srm_root,
+                startup_save.srm_first_decoded_slot,
+                continue_receipt,
+                sizeof(continue_receipt)) ||
+            strstr(continue_receipt, "original Backup RAM") == NULL ||
+            continued_world.party.champions[0].max_health != 175 ||
+            continued_world.party.champions[0].max_stamina != 1500 ||
+            continued_world.party.champions[0].max_mana != 50 ||
+            continued_world.object_count != 0 ||
+            continued_world.timer_count != 0) {
+            fputs("startup Continue did not consume authentic Backup RAM\n",
+                  stderr);
+            return 1;
+        }
     }
     world.progression.current_dungeon = THERON_DUNGEON_5_SHADO;
     world.progression.current_level = 2u;

@@ -24,4 +24,5 @@ done
     [ -f "$main_ram" ] && [ "$(wc -c < "$main_ram" | tr -d ' ')" = 8192 ] &&
     [ -f "$save_manager_code" ] && [ "$(wc -c < "$save_manager_code" | tr -d ' ')" = 8192 ] &&
     [ -n "$invalid" ] && [ -f "$track02" ] && [ -f "$jp_track02" ] || exit 77
+export FIRESTAFF_THERON_BRAM_PATH="$valid"
 exec "$probe" "$valid" "$invalid" "$track02" "$main_ram" "$save_manager_code" "$jp_track02"

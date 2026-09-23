@@ -146,8 +146,15 @@ maxima, restores the seven attributes and preserves all 20 temporary and
 persistent skill-experience pairs. It requires an authenticated roster-owned
 `THERON` in party slot zero and leaves companions, inventory, equipment,
 position and loaded dungeon media unchanged on both success and rejection.
-Production Continue remains fail-closed until startup discovery and the
-explicit Continue action select this original Backup RAM route.
+The production startup gate now selects this original Backup RAM route. It
+accepts either an explicitly supplied `.bram` path or
+`FIRESTAFF_THERON_BRAM_PATH`, and falls
+back to the authenticated artifact in `$HOME/.firestaff/data/theron`. The
+complete container, selected slot, transport-padding proof and body semantics
+must all pass before the title menu advertises Continue. The explicit action
+then reclassifies the file and selected ordinal before applying the
+transactional Theron restore; Firestaff-native `.tqsv` and synthetic SRM
+envelopes remain disabled in production.
 
 The checked-in capture hook is
 `scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch`. The copyrighted

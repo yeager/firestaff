@@ -14,8 +14,8 @@
  *   - THQUEST.ASM T800  — champion persistence between dungeons
  *
  * Status (this commit):
- *   - Data-free; never reads/parses user game data without explicit
- *     boot_save_root or FIRESTAFF_THERON_SRM_DIR + a staged file.
+ *   - Reads only an explicit save path, an explicit Backup RAM override or
+ *     the canonical user-owned Theron data path.
  *   - On a clean host (no save root staged) the gate reports
  *     SKIP_SAFE_NO_SAVE_ROOT and resume_claim = NONE.  This is the
  *     expected honest outcome and is recorded as a SKIP, not a
@@ -24,8 +24,8 @@
  *     (5-slot disk manifest, gzip magic/method detection) and
  *     theron_v1_save_load (8-slot .tqsv enumerate/verify) without
  *     re-implementing them.
- *   - It does not decode real Sphenx/Greatstone custom save bodies;
- *     unknown real .srm payloads stay UNSUPPORTED_BODY.
+ *   - It decodes the authenticated original PC Engine DMS-SG.001 Backup RAM
+ *     body. Unknown Sphenx/Greatstone custom .srm payloads remain unsupported.
  *   - It does not auto-resume the game; the resume-claim level is a
  *     bounded receipt for the M12/M11 startup layer, not a runtime
  *     mutation.  The startup layer still owns the explicit "Continue"
@@ -154,7 +154,6 @@ static int path_has_suffix(const char *path, const char *suffix) {
            strcmp(path + path_len - suffix_len, suffix) == 0;
 }
 
-#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static void recompute_verdict_and_claim(Theron_V1StartupSaveResume *snap) {
     if (!snap) {
         return;
@@ -168,7 +167,6 @@ static void recompute_verdict_and_claim(Theron_V1StartupSaveResume *snap) {
               sizeof(snap->resume_claim_name),
               theron_v1_startup_save_resume_claim_name(snap->resume_claim));
 }
-#endif
 
 /* ── Root resolution ──────────────────────────────────────────────── */
 
@@ -192,15 +190,45 @@ static void resolve_tqsv_root(const char *boot_save_root,
 #endif
 }
 
-/* srm_root is resolved by the existing theron_v1_srm_default_root
- * helper (env override, then $HOME/.firestaff/data/theron/save, then
- * ./theron-save).  This gate does not introduce a parallel resolver. */
+/* Fixture SRM roots retain their existing resolver. Production resolves only
+ * a classifier-verified original Backup RAM image. */
 static void resolve_srm_root(char out[THERON_V1_SRM_PATH_MAX]) {
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    const char *override_path;
+    const char *home;
+    Theron_V1PceBramReceipt receipt;
+#endif
     if (!out) return;
     out[0] = '\0';
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+    override_path = getenv("FIRESTAFF_THERON_BRAM_PATH");
+    if (override_path && override_path[0] &&
+        theron_v1_pce_bram_classify_path(override_path, &receipt) ==
+            THERON_V1_PCE_BRAM_READY &&
+        receipt.save_body_layout_proven &&
+        receipt.save_slot_tail_unconsumed_padding) {
+        copy_name(out, THERON_V1_SRM_PATH_MAX, override_path);
+        return;
+    }
+    home = getenv("HOME");
+    if (home && home[0]) {
+        snprintf(out, THERON_V1_SRM_PATH_MAX,
+                 "%s/.firestaff/data/theron/"
+                 "theron-us-akutuba-complete-authentic.bram",
+                 home);
+        if (theron_v1_pce_bram_classify_path(out, &receipt) ==
+                THERON_V1_PCE_BRAM_READY &&
+            receipt.save_body_layout_proven &&
+            receipt.save_slot_tail_unconsumed_padding) {
+            return;
+        }
+        out[0] = '\0';
+    }
+#else
     if (!theron_v1_srm_default_root(out)) {
         out[0] = '\0';
     }
+#endif
 }
 
 /* ── Verdict + claim computation ──────────────────────────────────── */
@@ -320,11 +348,26 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
     snap->srm_party_champion_count = 0;
     snap->srm_party_gold = 0u;
 #if defined(FIRESTAFF_THERON_PRODUCTION)
-    /* FSTQPRG1/FSTQPTY1 are Firestaff fixture envelopes, not an
-     * authenticated Theron's Quest Save Disk format.  Real 2 KiB PC Engine
-     * Backup RAM is admitted only through the bounded HUBM classifier below;
-     * it does not yet prove enough fields for Continue. */
-    snap->srm_total_slots = 0;
+    Theron_V1PceBramReceipt bram;
+    Theron_V1PceBramBodyReceipt body;
+    snap->srm_total_slots = THERON_V1_PCE_BRAM_SLOT_COUNT;
+    if (snap->srm_root[0] &&
+        theron_v1_pce_bram_classify_path(snap->srm_root, &bram) ==
+            THERON_V1_PCE_BRAM_READY &&
+        bram.save_body_layout_proven &&
+        bram.save_slot_tail_unconsumed_padding &&
+        bram.selected_slot_index < THERON_V1_PCE_BRAM_SLOT_COUNT &&
+        theron_v1_pce_bram_decode_original_body_path(snap->srm_root, &body) &&
+        body.layout_verified && body.semantics_verified) {
+        snap->srm_present_slots = 1;
+        snap->srm_recognized_slots = 1;
+        snap->srm_first_recognized_slot = (int)bram.selected_slot_index;
+        snap->srm_first_recognized_checksum32 = bram.bytes_fnv1a;
+        snap->srm_first_decoded_slot = (int)bram.selected_slot_index;
+        snap->srm_progress_import_status =
+            THERON_V1_SRM_PROGRESS_IMPORT_OK;
+        snap->srm_progress_import_ran = 1;
+    }
     return;
 #endif
     memset(envelopes, 0, sizeof(envelopes));
@@ -481,6 +524,32 @@ int theron_v1_startup_save_resume_apply_explicit_path(
 
     if (!snap || !save_path || !save_path[0]) {
         return 0;
+    }
+
+    if (path_has_suffix(save_path, ".bram")) {
+        Theron_V1PceBramReceipt bram;
+        Theron_V1PceBramBodyReceipt body;
+        if (theron_v1_pce_bram_classify_path(save_path, &bram) !=
+                THERON_V1_PCE_BRAM_READY ||
+            !bram.save_body_layout_proven ||
+            !bram.save_slot_tail_unconsumed_padding ||
+            bram.selected_slot_index >= THERON_V1_PCE_BRAM_SLOT_COUNT ||
+            !theron_v1_pce_bram_decode_original_body_path(save_path, &body) ||
+            !body.layout_verified || !body.semantics_verified) {
+            return 0;
+        }
+        copy_name(snap->srm_root, sizeof(snap->srm_root), save_path);
+        snap->srm_total_slots = THERON_V1_PCE_BRAM_SLOT_COUNT;
+        snap->srm_present_slots = 1;
+        snap->srm_recognized_slots = 1;
+        snap->srm_first_recognized_slot = (int)bram.selected_slot_index;
+        snap->srm_first_recognized_checksum32 = bram.bytes_fnv1a;
+        snap->srm_first_decoded_slot = (int)bram.selected_slot_index;
+        snap->srm_progress_import_status =
+            THERON_V1_SRM_PROGRESS_IMPORT_OK;
+        snap->srm_progress_import_ran = 1;
+        recompute_verdict_and_claim(snap);
+        return 1;
     }
 
 #if defined(FIRESTAFF_THERON_PRODUCTION)
@@ -996,14 +1065,26 @@ int theron_v1_startup_continue_srm_apply(
         receipt[0] = '\0';
     }
 #if defined(FIRESTAFF_THERON_PRODUCTION)
-    (void)world;
-    (void)srm_root;
-    (void)slot_index;
+    Theron_V1PceBramReceipt bram;
+    Theron_V1PceBramBodyReceipt body;
+    if (!world || !srm_root || !srm_root[0] ||
+        theron_v1_pce_bram_classify_path(srm_root, &bram) !=
+            THERON_V1_PCE_BRAM_READY ||
+        slot_index != (int)bram.selected_slot_index ||
+        !theron_v1_startup_restore_pce_bram_theron_path(
+            world, srm_root, &bram, &body)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "Original Backup RAM Continue failed");
+        }
+        return 0;
+    }
+    theron_v1_startup_continue_reset_world_runtime(world);
     if (receipt && receipt_cap > 0u) {
         snprintf(receipt, receipt_cap,
-                 "Firestaff SRM envelopes are not an authenticated original-save route");
+                 "continued original Backup RAM slot=%d", slot_index);
     }
-    return 0;
+    return 1;
 #endif
     if (!world) {
         return 0;
@@ -1277,8 +1358,14 @@ int theron_v1_startup_continue_availability_from_state(
     out_availability->tqsv_slot = tqsv_slot_index;
     out_availability->srm_slot = srm_slot_index;
 #if defined(FIRESTAFF_THERON_PRODUCTION)
-    (void)resume_claim;
-    (void)srm_import_status;
+    out_availability->has_srm_continue =
+        srm_slot_index >= 0 &&
+        srm_slot_index < (int)THERON_V1_PCE_BRAM_SLOT_COUNT &&
+        srm_import_status == THERON_V1_SRM_PROGRESS_IMPORT_OK &&
+        (resume_claim == THERON_V1_STARTUP_RESUME_SRM ||
+         resume_claim == THERON_V1_STARTUP_RESUME_DUAL);
+    out_availability->has_any_continue =
+        out_availability->has_srm_continue;
     return 1;
 #else
     out_availability->has_tqsv_continue =

@@ -37,9 +37,11 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   `$88`-byte slot are cleared transport padding and never enter the `$86`-byte
   gameplay restore. The proven body fields now apply transactionally to an
   authenticated roster-owned Theron while companions, inventory, equipment,
-  position and loaded media remain unchanged. Remaining work is to connect
-  original Backup RAM discovery and the explicit startup Continue action to
-  this route.
+  position and loaded media remain unchanged. Production startup now detects
+  the verified real Backup RAM artifact (or an explicit
+  `FIRESTAFF_THERON_BRAM_PATH`) and the explicit Continue action uses this
+  transactional route. Remaining save work is runtime validation of that
+  host action together with the authenticated dungeon-entry capture.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do

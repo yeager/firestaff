@@ -17,9 +17,10 @@
  * classifier, and the bounded Firestaff-native .tqsv slot enumerator.
  *
  * Production admits neither Firestaff-native .tqsv nor the synthetic
- * FSTQPRG1/FSTQPTY1 gzip envelopes as an original Continue route.  The
- * fields and helpers below remain a stable fixture/tooling contract while
- * authentic Save Disk semantics are reconstructed.
+ * FSTQPRG1/FSTQPTY1 gzip envelopes as an original Continue route. It does
+ * admit a classifier-verified original 2 KiB PC Engine Backup RAM image and
+ * exposes its selected DMS-SG.001 slot through the stable SRM-facing startup
+ * fields below.
  *
  * In fixture/tooling builds this module:
  *   - Resolves .tqsv and synthetic .srm roots from the boot profile and/or
@@ -59,9 +60,6 @@
  *     payloads stay UNSUPPORTED_BODY (no claim).
  *
  * What this module does NOT do (kept honest):
- *   - It preserves and classifies the complete original three-slot
- *     DMS-SG.001 record, but applies only the proven campaign byte. The
- *     remaining opaque bytes are not yet a Continue operation.
  *   - It does not auto-resume the game. The gate only reports the
  *     highest-bounded resume claim; the M12/M11 startup layer still
  *     owns the explicit "Continue" UX.
@@ -239,9 +237,10 @@ typedef struct {
 /* Resolve both save roots deterministically:
  *   tqsv_root: profile->save_root when non-empty, otherwise
  *              theron_v1_save_default_root() result.
- *   srm_root:  env override `FIRESTAFF_THERON_SRM_DIR` if non-empty,
- *              otherwise `$HOME/.firestaff/data/theron/save`, then
- *              `./theron-save`.
+ *   srm_root:  fixture builds use `FIRESTAFF_THERON_SRM_DIR` and the legacy
+ *              slot directory. Production uses a verified path from
+ *              `FIRESTAFF_THERON_BRAM_PATH`, otherwise the canonical real
+ *              artifact under `$HOME/.firestaff/data/theron`.
  *
  * `boot_save_root` may be NULL or empty; it is consulted only when
  * non-empty.  `out_snapshot` is always populated (zeroed first) so
