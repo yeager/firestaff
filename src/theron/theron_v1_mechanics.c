@@ -561,6 +561,11 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_PIT_FALL;
     }
     if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN) {
+        /* The preview must not promise a transition that the mutating route
+         * deliberately rejects for authenticated Track 02 until the original
+         * stairs consumer is bound. */
+        if (theron_v1_source_level_requires_item_provenance(world))
+            return THERON_MOVE_BLOCKED;
         int target_level = world->current_level +
             (tile == THERON_SQUARE_STAIRS_UP ? -1 : 1);
         if (target_level < 0 ||

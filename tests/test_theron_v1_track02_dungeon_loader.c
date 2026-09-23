@@ -2937,7 +2937,7 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
                     world.party.leader_y = old_y;
                     world.party.leader_dir = (int8_t)direction;
                     if (theron_v1_get_move_result(&world, direction) !=
-                            THERON_MOVE_STAIRS)
+                            THERON_MOVE_BLOCKED)
                         continue;
                     stair_source = source;
                     approach_direction = direction;
@@ -2967,8 +2967,14 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
         world.source_actuator_event_count = 0u;
         memset(world.source_actuator_events, 0,
                sizeof(world.source_actuator_events));
+        assert(theron_v1_get_move_result(&world, approach_direction) ==
+               THERON_MOVE_BLOCKED);
         assert(theron_v1_move_party(&world, approach_direction) ==
-               THERON_MOVE_STAIRS);
+               THERON_MOVE_BLOCKED);
+        assert(world.current_level == stair_source->level &&
+               world.party.leader_x == approach_x &&
+               world.party.leader_y == approach_y &&
+               world.transition_pending == 0u);
         assert(world.source_actuator_event_count == 0u);
         for (unsigned int i = 0; i < world.source_object_count; ++i) {
             const Theron_V1_SourceObjectRecord *target =
@@ -2995,8 +3001,8 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
             assert((runtime_tile_0 & 0x08u) != 0u &&
                    (runtime_tile_1 & 0x08u) != 0u);
         }
-        printf("  authentic stair party actuator confirms two already-open "
-               "pit SETs and consumes one empty wall target before handoff: "
+        printf("  authentic stair party actuator is retained while "
+               "unbound transition remains blocked: "
                "d=%d m=%d (%d,%d) ref=%04x index=%u raw=",
                stair_source->dungeon_id, stair_source->level,
                stair_source->x, stair_source->y, stair_source->source_ref,
