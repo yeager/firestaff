@@ -33,11 +33,14 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   PCE inputs through frame 9600 and again produced 24 raw-sector spans, zero
   byte-exact origin-RAM or authenticated CD-to-RAM receipts, one game-owned
   `$E009` dispatch, zero `$E009` data reads, no command-buffer consumer reads,
-  and no dungeon-state handoff. The private capture remains on trv2; its raw
-  media and trace files are not part of the repository. The Mednafen transport
-  receipt parser now identifies JP and US Track 02 hashes separately, but
-  that tooling change does not make these captures gameplay or
-  source-consumer witnesses.
+  and no dungeon-state handoff. Its bounded PCE input-result trace recorded
+  6,235 reads of controller register `$1000` returning `0x37` (scripted Run)
+  against the neutral `0x3f`; this confirms hardware-level input delivery,
+  not a game action or transition. The private capture remains on trv2; its
+  raw media and trace files are not part of the repository. The Mednafen
+  transport receipt parser now identifies JP and US Track 02 hashes
+  separately, but that tooling change does not make these captures gameplay
+  or source-consumer witnesses.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. Authentic Backup RAM decoding and transactional
   Continue integration are implemented; runtime validation remains open.
