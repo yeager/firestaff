@@ -11,6 +11,12 @@ typedef enum {
     THERON_V1_MEDNAFEN_TRANSITION_READY
 } Theron_V1MednafenTransitionStatus;
 
+typedef enum {
+    THERON_V1_MEDNAFEN_REGION_UNKNOWN = 0,
+    THERON_V1_MEDNAFEN_REGION_JP,
+    THERON_V1_MEDNAFEN_REGION_US
+} Theron_V1MednafenRegion;
+
 /* Same-session transport admission for an explicitly captured original run.
  * The receipt proves authenticated media/loader transport only. Runtime
  * target/spawn/RNG counters are retained as observations, but this type
@@ -22,6 +28,7 @@ typedef struct {
     int pce_module_verified;
     int mode_verified;
     int track02_md5_verified;
+    Theron_V1MednafenRegion region;
     int system_card_md5_verified;
     int transition_observed;
     int transport_verified;

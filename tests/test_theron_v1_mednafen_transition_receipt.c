@@ -39,6 +39,21 @@ static const char *iso_fixture =
     "rng_consumer_samples=0\nvdc_vram_snapshot_bytes=65536\n"
     "vce_palette_snapshot_bytes=1024\nvdc_io_writes=1\ntransition=observed\n";
 
+static const char *jp_fixture =
+    "source=authentic-mednafen-transition-receipt\n"
+    "mednafen_module=pce\n"
+    "track02_mode=MODE1/2352\n"
+    "track02_md5=b7afb338ad31be1025b53f9aff12d73a\n"
+    "system_card_md5=ff1a674273fe3540ccef576376407d1d\n"
+    "input_transactions=1\ncd_irq_callbacks=1\nraw_sector_spans=1\n"
+    "scsi_read_commands=1\nscsi_read_sector_bindings=1\n"
+    "byte_exact_origin_ram_receipts=1\nauthenticated_cd_ram_receipts=1\n"
+    "game_main_ram_e009_dispatches=1\nmain_ram_consumer_reads=1\n"
+    "main_ram_target_reads=0\nmain_ram_target_writes=0\n"
+    "spawn_consumer_reads=0\nspawn_entry_b0e5_samples=0\n"
+    "rng_consumer_samples=0\nvdc_vram_snapshot_bytes=65536\n"
+    "vce_palette_snapshot_bytes=1024\nvdc_io_writes=1\ntransition=observed\n";
+
 int main(void) {
 #if defined(_WIN32)
     puts("SKIP: POSIX temporary receipt fixture");
@@ -100,6 +115,23 @@ int main(void) {
     assert(receipt.transport_verified && !receipt.semantic_publication_allowed);
     assert(strcmp(receipt.track02_md5,
                   "ceb02343868f80cec899e9b239aff2da") == 0);
+    assert(receipt.region == THERON_V1_MEDNAFEN_REGION_US);
+    unlink(path);
+
+    assert(snprintf(path, sizeof(path), "%s/firestaff-theron-transition-XXXXXX",
+                    tmpdir) > 0);
+    fd = mkstemp(path);
+    assert(fd >= 0);
+    file = fdopen(fd, "wb");
+    assert(file);
+    assert(fputs(jp_fixture, file) >= 0);
+    assert(fclose(file) == 0);
+    assert(theron_v1_mednafen_transition_receipt_parse_file(path, &receipt));
+    assert(receipt.status == THERON_V1_MEDNAFEN_TRANSITION_READY);
+    assert(receipt.transport_verified && !receipt.semantic_publication_allowed);
+    assert(receipt.region == THERON_V1_MEDNAFEN_REGION_JP);
+    assert(strcmp(receipt.track02_md5,
+                  "b7afb338ad31be1025b53f9aff12d73a") == 0);
     unlink(path);
 
     {

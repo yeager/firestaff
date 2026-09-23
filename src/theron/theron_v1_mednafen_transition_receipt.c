@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define THERON_US_TRACK02_MD5 "f23601102138f87c33025877767ebf76"
+#define THERON_JP_TRACK02_MD1_2352_MD5 "b7afb338ad31be1025b53f9aff12d73a"
+#define THERON_US_TRACK02_MD1_2352_MD5 "f23601102138f87c33025877767ebf76"
+#define THERON_JP_TRACK02_MODE1_2048_MD5 "397039af02d50d15c70b74088eb8a1cb"
 #define THERON_US_TRACK02_MODE1_2048_MD5 "ceb02343868f80cec899e9b239aff2da"
 #define THERON_SYSTEM_CARD_MD5 "ff1a674273fe3540ccef576376407d1d"
 
@@ -66,6 +68,16 @@ static int set_count(const char *key, const char *value,
     return 1;
 }
 
+static Theron_V1MednafenRegion region_for_track02_md5(const char *md5) {
+    if (strcmp(md5, THERON_JP_TRACK02_MD1_2352_MD5) == 0 ||
+        strcmp(md5, THERON_JP_TRACK02_MODE1_2048_MD5) == 0)
+        return THERON_V1_MEDNAFEN_REGION_JP;
+    if (strcmp(md5, THERON_US_TRACK02_MD1_2352_MD5) == 0 ||
+        strcmp(md5, THERON_US_TRACK02_MODE1_2048_MD5) == 0)
+        return THERON_V1_MEDNAFEN_REGION_US;
+    return THERON_V1_MEDNAFEN_REGION_UNKNOWN;
+}
+
 int theron_v1_mednafen_transition_receipt_parse_file(
     const char *path, Theron_V1MednafenTransitionReceipt *out) {
     Theron_V1MednafenTransitionReceipt receipt = {0};
@@ -109,10 +121,11 @@ int theron_v1_mednafen_transition_receipt_parse_file(
             track02_mode_2048 = strcmp(value, "MODE1/2048") == 0;
             receipt.mode_verified = 1;
         } else if (strcmp(key, "track02_md5") == 0) {
+            Theron_V1MednafenRegion region = region_for_track02_md5(value);
             if (receipt.track02_md5_verified ||
-                (strcmp(value, THERON_US_TRACK02_MD5) != 0 &&
-                 strcmp(value, THERON_US_TRACK02_MODE1_2048_MD5) != 0)) goto reject;
+                region == THERON_V1_MEDNAFEN_REGION_UNKNOWN) goto reject;
             snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", value);
+            receipt.region = region;
             receipt.track02_md5_verified = 1;
         } else if (strcmp(key, "system_card_md5") == 0) {
             if (receipt.system_card_md5_verified ||
@@ -139,9 +152,11 @@ int theron_v1_mednafen_transition_receipt_parse_file(
         receipt.game_main_ram_e009_dispatches == 0u ||
         receipt.main_ram_consumer_reads == 0u ||
         (track02_mode_2048 &&
+         strcmp(receipt.track02_md5, THERON_JP_TRACK02_MODE1_2048_MD5) != 0 &&
          strcmp(receipt.track02_md5, THERON_US_TRACK02_MODE1_2048_MD5) != 0) ||
         (!track02_mode_2048 &&
-         strcmp(receipt.track02_md5, THERON_US_TRACK02_MD5) != 0) ||
+         strcmp(receipt.track02_md5, THERON_JP_TRACK02_MD1_2352_MD5) != 0 &&
+         strcmp(receipt.track02_md5, THERON_US_TRACK02_MD1_2352_MD5) != 0) ||
         receipt.vdc_vram_snapshot_bytes != 65536u ||
         receipt.vce_palette_snapshot_bytes != 1024u ||
         receipt.vdc_io_writes == 0u) goto reject_after_close;
