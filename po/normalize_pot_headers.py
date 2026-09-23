@@ -3,10 +3,60 @@
 from __future__ import annotations
 
 import argparse
+import ast
+import string
 from pathlib import Path
 
 STAMP = "1970-01-01 00:00+0000"
 CONTACT = "Firestaff Localization Team <daniel@danielnylander.se>"
+
+
+def normalize_python_brace_flags(lines: list[str]) -> list[str]:
+    """Keep Python format flags stable across gettext versions.
+
+    Newer xgettext releases infer ``python-brace-format`` automatically while
+    Ubuntu 24.04's xgettext does not. Infer the flag from each Python msgid so
+    generated catalogs remain identical across platforms.
+    """
+    formatter = string.Formatter()
+    index = 0
+    while index < len(lines):
+        if not lines[index].startswith("msgid "):
+            index += 1
+            continue
+
+        fragments = [lines[index][len("msgid "):]]
+        cursor = index + 1
+        while cursor < len(lines) and not lines[cursor].startswith("msgstr "):
+            if lines[cursor].startswith('"'):
+                fragments.append(lines[cursor])
+            cursor += 1
+        try:
+            msgid = "".join(ast.literal_eval(fragment) for fragment in fragments)
+            has_brace_fields = any(
+                field_name is not None
+                for _, field_name, _, _ in formatter.parse(msgid)
+            )
+        except (SyntaxError, ValueError):
+            has_brace_fields = False
+
+        if has_brace_fields:
+            block_start = index
+            while block_start > 0 and lines[block_start - 1] != "":
+                block_start -= 1
+            flag_index = next(
+                (i for i in range(block_start, index)
+                 if lines[i].startswith("#, ")),
+                None,
+            )
+            if flag_index is None:
+                lines.insert(index, "#, python-brace-format")
+                index += 1
+                cursor += 1
+            elif "python-brace-format" not in lines[flag_index].split(", "):
+                lines[flag_index] += ", python-brace-format"
+        index = cursor + 1
+    return lines
 
 
 def normalize(path: Path, project: str) -> None:
@@ -42,7 +92,10 @@ def normalize(path: Path, project: str) -> None:
         '"Content-Type: text/plain; charset=UTF-8\\n"',
         '"Content-Transfer-Encoding: 8bit\\n"',
     ]
-    path.write_text("\n".join(lines[:msgid_index] + header + lines[end:]) + "\n", encoding="utf-8")
+    normalized = lines[:msgid_index] + header + lines[end:]
+    if project == "firestaff-studio":
+        normalized = normalize_python_brace_flags(normalized)
+    path.write_text("\n".join(normalized) + "\n", encoding="utf-8")
 
 
 def main() -> int:
