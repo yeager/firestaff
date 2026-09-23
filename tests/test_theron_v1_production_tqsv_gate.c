@@ -3,6 +3,7 @@
 #endif
 
 #include "theron_v1_startup_save_resume.h"
+#include "theron_v1_srm_classifier.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -87,8 +88,8 @@ int main(void) {
         return 1;
     }
     if (!theron_v1_startup_continue_availability_from_state(
-            THERON_V1_STARTUP_RESUME_DUAL, 0, 0,
-            THERON_V1_SRM_PROGRESS_IMPORT_OK, &availability) ||
+            THERON_V1_STARTUP_RESUME_TQSV, 0, -1,
+            THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT, &availability) ||
         availability.has_tqsv_continue || availability.has_srm_continue ||
         availability.has_any_continue) {
         fputs("FAIL: production advertised a synthetic Continue route\n",
