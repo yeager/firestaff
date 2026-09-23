@@ -78,10 +78,20 @@ treat opcodes `$82` and `$C2` as generic no-ops can obscure those loop bounds.
 The address expressions above therefore record the original machine-code
 accesses directly, rather than inferred host-side field names.
 
+The access direction is now independently locked as well. After `$E04E`
+returns the selected `$86`-byte body at `$267C`, this routine reads only
+`$267C`: it merges the new campaign bit there and then overwrites every byte
+from `$267D` through `$2701` from the live-RAM sources listed above. It has no
+restore read of those 133 bytes. The authenticated 17-sector Stage 2 program
+does read all `$0199` bytes to `$7E49`, derives the selected slot pointer as
+`$7E49 + $88 × $278C`, and patches its slot-local operations to that pointer.
+That establishes record and slot ownership, but not a gameplay restore
+meaning for the individual body fields.
+
 The six final arrays in the `$86` writer body are column-major fields for
 twenty source records. Their
-gameplay meanings are deliberately left unspecified until the corresponding
-load/use consumers are captured. Firestaff may preserve and inspect these
+gameplay meanings are deliberately left unspecified until a separate
+load/use consumer is captured. Firestaff may preserve and inspect these
 bytes, but production Continue must remain fail-closed for party, inventory,
 position and dungeon restoration until those joins are proven.
 

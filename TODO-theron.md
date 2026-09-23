@@ -26,8 +26,10 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound
-  byte-for-byte as 1 + 6 + 7 + 6×20 bytes; remaining work is to identify the
-  load/use semantics of the neutral `$267D..$2701` fields.
+  byte-for-byte as 1 + 6 + 7 + 6×20 bytes. The writer has now been proven to
+  read only `$267C` after loading a slot and to overwrite `$267D..$2701` from
+  live RAM; it is not their restore consumer. Remaining work is to find the
+  separate load/use consumer and identify those neutral fields.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do

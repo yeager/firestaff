@@ -16,6 +16,8 @@
 #define SAVE_MANAGER_WRITE_ARGS_PC 0x4182u
 #define STAGE2_HANDOFF_RAW_SECTOR_INDEX 1224u
 #define STAGE2_HANDOFF_USER_OFFSET 151u
+#define STAGE2_SAVE_SUPPORT_USER_OFFSET 0x3d1fu
+#define STAGE2_SELECTED_SLOT_USER_OFFSET 0x3d74u
 
 static uint8_t *load_track02_user_data(const char *path, size_t *out_size) {
     FILE *file = fopen(path, "rb");
@@ -116,6 +118,42 @@ int main(int argc, char **argv) {
     static const uint8_t dms_slot_offset_table[] = {
         0x00, 0x88, 0x10, 0x00, 0x00, 0x01
     };
+    static const uint8_t original_body_refresh_prefix[] = {
+        0x68, 0x0d, 0x7c, 0x26, 0x8d, 0x7c, 0x26,
+        0x82, 0xc2, 0xb9, 0x80, 0x29, 0x9d, 0x7d, 0x26,
+        0xb9, 0x84, 0x29, 0x9d, 0x7e, 0x26, 0x98, 0x18,
+        0x69, 0x10, 0xa8, 0xe8, 0xe8, 0xe0, 0x06, 0x90, 0xe9
+    };
+    static const uint8_t original_body_refresh_seven[] = {
+        0x82, 0xc2, 0xb9, 0x10, 0x2a, 0x9d, 0x83, 0x26,
+        0xc8, 0xc8, 0xc8, 0xc8, 0xe8, 0xe0, 0x07, 0x90, 0xf1
+    };
+    static const uint8_t original_body_refresh_columns[] = {
+        0x82, 0xc2, 0xb9, 0x2c, 0x2a, 0x9d, 0x8a, 0x26,
+        0xb9, 0x7c, 0x2a, 0x9d, 0x9e, 0x26,
+        0xb9, 0xcc, 0x2a, 0x9d, 0xb2, 0x26,
+        0xb9, 0x1c, 0x2b, 0x9d, 0xc6, 0x26,
+        0xb9, 0x6c, 0x2b, 0x9d, 0xda, 0x26,
+        0xb9, 0xbc, 0x2b, 0x9d, 0xee, 0x26,
+        0xc8, 0xc8, 0xc8, 0xc8, 0xe8, 0xe0, 0x14, 0x90, 0xd3
+    };
+    static const uint8_t stage2_full_record_read[] = {
+        0xa9, 0x72, 0x85, 0xf8, 0xa9, 0x7c, 0x85, 0xf9,
+        0xa9, 0x49, 0x85, 0xfa, 0xa9, 0x7e, 0x85, 0xfb,
+        0xa9, 0x99, 0x85, 0xfc, 0xa9, 0x01, 0x85, 0xfd,
+        0xa9, 0x00, 0x85, 0xfe, 0xa9, 0x00, 0x85, 0xff,
+        0x20, 0x4e, 0xe0, 0xa9, 0x72, 0x85, 0xf8,
+        0xa9, 0x7c, 0x85, 0xf9, 0x20, 0x54, 0xe0
+    };
+    static const uint8_t stage2_selected_slot_pointer[] = {
+        0xa9, 0x49, 0x85, 0x00, 0xa9, 0x7e, 0x85, 0x01,
+        0xae, 0x8c, 0x27, 0xf0, 0x10, 0x18, 0xa5, 0x00,
+        0x69, 0x88, 0x85, 0x00, 0xa5, 0x01, 0x69, 0x00,
+        0x85, 0x01, 0xca, 0xd0, 0xf0, 0xa5, 0x00,
+        0x8d, 0xad, 0x7d, 0x8d, 0xaf, 0x7d, 0xa5, 0x01,
+        0x8d, 0xae, 0x7d, 0x8d, 0xb0, 0x7d, 0xee, 0xaf,
+        0x7d, 0xd0, 0x03, 0xee, 0xb0, 0x7d
+    };
     size_t field;
     size_t index;
     if (argc != 6) return 2;
@@ -199,6 +237,18 @@ int main(int argc, char **argv) {
         fputs("original selected-slot offset lookup drifted\n", stderr);
         return 1;
     }
+    if (memcmp(save_manager_code + 0x1e73u,
+               original_body_refresh_prefix,
+               sizeof(original_body_refresh_prefix)) != 0 ||
+        memcmp(save_manager_code + 0x1e93u,
+               original_body_refresh_seven,
+               sizeof(original_body_refresh_seven)) != 0 ||
+        memcmp(save_manager_code + 0x1ea4u,
+               original_body_refresh_columns,
+               sizeof(original_body_refresh_columns)) != 0) {
+        fputs("original body refresh read/write direction drifted\n", stderr);
+        return 1;
+    }
     for (index = 0u; index < 3u; ++index) {
         uint16_t base = (uint16_t)(0x2980u + index * 0x10u);
         if (body.ram_267d_2682[index * 2u] !=
@@ -264,6 +314,27 @@ int main(int argc, char **argv) {
                    sizeof(stage2_selected_slot_handoff)) != 0) {
             free(user_data);
             fputs("original selected-slot Stage 2 handoff drifted\n", stderr);
+            return 1;
+        }
+        if (STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                    STAGE2_SAVE_SUPPORT_USER_OFFSET +
+                    sizeof(stage2_full_record_read) > user_data_size ||
+            memcmp(user_data +
+                       STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                       STAGE2_SAVE_SUPPORT_USER_OFFSET,
+                   stage2_full_record_read,
+                   sizeof(stage2_full_record_read)) != 0 ||
+            STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                    STAGE2_SELECTED_SLOT_USER_OFFSET +
+                    sizeof(stage2_selected_slot_pointer) > user_data_size ||
+            memcmp(user_data +
+                       STAGE2_HANDOFF_RAW_SECTOR_INDEX * USER_SECTOR_BYTES +
+                       STAGE2_SELECTED_SLOT_USER_OFFSET,
+                   stage2_selected_slot_pointer,
+                   sizeof(stage2_selected_slot_pointer)) != 0) {
+            free(user_data);
+            fputs("original Stage 2 full-record/slot selector drifted\n",
+                  stderr);
             return 1;
         }
         for (index = 0u; index < 7u; ++index) {
