@@ -9,7 +9,13 @@ set -eu
 firestaff_cli="${1:?Firestaff executable is required}"
 build_root="${2:?CTest build directory is required}"
 data_root="${FIRESTAFF_NEXUS_DATA_DIR:-$HOME/.firestaff/data/nexus}"
-cue="$data_root/Dungeon Master Nexus (Japan).cue"
+if [ -n "${FIRESTAFF_NEXUS_CUE:-}" ]; then
+    cue=$FIRESTAFF_NEXUS_CUE
+elif [ -f "$data_root/Dungeon Master Nexus (Japan).cue" ]; then
+    cue="$data_root/Dungeon Master Nexus (Japan).cue"
+else
+    cue="$data_root/Dungeon Master Nexus (English).cue"
+fi
 
 if [ ! -x "$firestaff_cli" ] || [ ! -f "$cue" ]; then
     echo "SKIP: authentic Nexus Saturn CUE or Firestaff executable is unavailable"
@@ -27,7 +33,7 @@ unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_EXIT_AFTER_LAUNCH=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
     "$firestaff_cli" --width 1920 --height 1080 --menu --game nexus \
-    --platform saturn --data-dir "$data_root" \
+    --platform saturn --data-dir "$cue" \
     --script 'wait20,click:700:728,wait20,click:410:405,wait20,click:450:405,wait20' \
     --duration 3000 2>&1)" || {
     printf '%s\n' "$output" >&2
