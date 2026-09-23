@@ -271,7 +271,11 @@ and runtime state.
 .SH BOOT PROBE OPTIONS
 Boot-probe options are for automated tests and package verification. They
 start the selected game, inspect the boot receipt, and fail when expectations
-do not match.
+do not match. They exercise the selected-game launch path and cannot be
+combined with
+.BR --menu ;
+use launcher input scripts without boot-probe options to verify start-menu
+navigation and handoff.
 .TP
 .B --boot-probe
 Enable deterministic boot-probe mode. Requires

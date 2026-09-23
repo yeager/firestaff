@@ -2174,8 +2174,10 @@ static void draw_game_card_flow(M12_ModernCanvas* c,
         for (int i = 0; i < count; ++i) {
             int col = i % 3, row = i / 3;
             int x = rowX + col * (cardW + gap), y = rowY + row * (cardH + gap);
-            int ready = M12_AssetStatus_GameHasMatchedArchitecture(
-                &state->assetStatus, entry->gameId, platforms[i]);
+            int ready = M12_AssetStatus_GameAvailable(
+                            &state->assetStatus, entry->gameId) &&
+                        M12_AssetStatus_GameHasMatchedArchitecture(
+                            &state->assetStatus, entry->gameId, platforms[i]);
             draw_mode_choice_card(c, state, x, y, cardW, cardH, M12_Architecture_Label(platforms[i]),
                                   ready ? "GAME DATA VERIFIED" : "GAME DATA NOT FOUND",
                                   ready ? "SELECT TO CONTINUE" : "CANNOT START", i == selected,
@@ -2287,6 +2289,23 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     int soundtrackIdx = state->settings.soundtrackMode;
     if (soundtrackIdx < 0) soundtrackIdx = 0;
     if (soundtrackIdx > 2) soundtrackIdx = 2;
+    int selectedVersionHasData =
+        M12_AssetStatus_GameAvailable(&state->assetStatus, entry->gameId) &&
+        ver && ver->matched;
+    if (selectedVersionHasData && opts->architectureIndex == M12_ARCH_AUTO) {
+        selectedVersionHasData =
+            M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &state->assetStatus, entry->gameId, M12_ARCH_AUTO) ==
+            opts->versionIndex;
+    } else if (selectedVersionHasData) {
+        selectedVersionHasData =
+            M12_AssetStatus_GetVersionArchitecture(entry->gameId,
+                                                  (size_t)opts->versionIndex) ==
+                opts->architectureIndex &&
+            M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &state->assetStatus, entry->gameId,
+                opts->architectureIndex) >= 0;
+    }
 
     int rowX = panelX + 36;
     int rowW = panelW - 72;
@@ -2317,8 +2336,9 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         int y0 = gridY;
         draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "VERSION", verLabel,
                        sel == M12_GAME_OPT_ROW_VERSION, 0);
-        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "DATA", ver && ver->matched ? "VERIFIED" : "MISSING",
-                       sel == M12_GAME_OPT_ROW_VERSION, ver && ver->matched ? 0 : 1);
+        draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "ARCHITECTURE",
+                       M12_Architecture_Label(opts->architectureIndex),
+                       sel == M12_GAME_OPT_ROW_ARCHITECTURE, 0);
         draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "PATCH", patchLabel,
                        sel == M12_GAME_OPT_ROW_PATCH, 0);
         draw_info_tile(c, state, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "LANGUAGE", langLabel,
@@ -2372,8 +2392,9 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         }
 
         y0 += tileH + tileGap;
-        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "CUSTOM DUNGEON",
-                       state->settings.customDungeonPath[0] ? "SET" : "NONE", 0, 0);
+        draw_info_tile(c, state, x0 + 0 * (tileW + tileGap), y0, tileW, tileH, "DATA",
+                       selectedVersionHasData ? "VERIFIED" : "MISSING", 0,
+                       selectedVersionHasData ? 0 : 1);
         draw_info_tile(c, state, x0 + 1 * (tileW + tileGap), y0, tileW, tileH, "SCREENSHOTS",
                        state->settings.screenshotPath[0] ? "CUSTOM" : "DEFAULT", 0, 0);
         draw_info_tile(c, state, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "AUDIO",

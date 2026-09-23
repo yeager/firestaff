@@ -34,6 +34,7 @@
 #include <process.h>
 #include <sys/stat.h>
 #define TEST_MKDIR(path) _mkdir(path)
+#define TEST_RMDIR(path) _rmdir(path)
 #define TEST_PATH_SEP "\\"
 #define TEST_GETPID() _getpid()
 #define TEST_STAT_STRUCT struct _stat
@@ -46,6 +47,7 @@ static void test_setenv(const char* name, const char* value) {
 #include <sys/stat.h>
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_RMDIR(path) rmdir(path)
 #define TEST_PATH_SEP "/"
 #define TEST_GETPID() getpid()
 #define TEST_STAT_STRUCT struct stat
@@ -104,14 +106,18 @@ static void dismiss_initial_message(M12_StartupMenuState* state) {
 }
 
 static void make_empty_data_dir(char out[512]) {
-    int rc = snprintf(out, 512,
-                      "%s%sfirestaff_direct_launch_empty_%ld",
-                      (getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp"),
-                      TEST_PATH_SEP, (long)TEST_GETPID());
+    int rc = snprintf(out, 512, "firestaff_direct_launch_empty_%ld",
+                      (long)TEST_GETPID());
     if (rc > 0 && rc < 512) {
         (void)TEST_MKDIR(out);
     } else {
         out[0] = '\0';
+    }
+}
+
+static void remove_empty_data_dir(const char* path) {
+    if (path && path[0]) {
+        (void)TEST_RMDIR(path);
     }
 }
 
@@ -126,18 +132,6 @@ static const char* default_data_root(char fallback[512]) {
     }
     snprintf(fallback, 512, "%s/.firestaff/data", home);
     return fallback;
-}
-
-static int run_heavy_real_data_case(const char* game_id) {
-    const char* all = getenv("FIRESTAFF_DIRECT_LAUNCH_REAL_DATA_ALL");
-    if (all && all[0] && strcmp(all, "0") != 0) {
-        return 1;
-    }
-    if (!game_id) {
-        return 0;
-    }
-    return strcmp(game_id, "nexus") != 0 &&
-           strcmp(game_id, "theron") != 0;
 }
 
 static int local_dir_exists(const char* path) {
@@ -242,6 +236,7 @@ static void run_empty_data_rejection(void) {
                     "direct launch refuses null game id");
         M12_StartupMenu_Destroy(&menu);
     }
+    remove_empty_data_dir(empty_dir);
 }
 
 static void run_boot_probe_empty_data_rejection(void) {
@@ -274,6 +269,15 @@ static void run_boot_probe_empty_data_rejection(void) {
     opts.script = "enter,bogus";
     expect_true(M11_PhaseA_Run(&opts) == 5,
                 "boot-probe refuses invalid script tokens before data scan");
+
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.bootProbe = 1;
+    opts.menuRequested = 1;
+    opts.gameId = "dm1";
+    opts.dataDir = empty_dir;
+    opts.durationMs = 0;
+    expect_true(M11_PhaseA_Run(&opts) == 2,
+                "boot-probe refuses a menu request instead of silently bypassing M12");
 
     M11_PhaseA_SetDefaultOptions(&opts);
     expect_true(opts.menuRequested == 0,
@@ -347,6 +351,7 @@ static void run_boot_probe_empty_data_rejection(void) {
     opts.durationMs = 0;
     expect_true(M11_PhaseA_Run(&opts) == 2,
                 "CSB Utility Disk route rejects a non-CSB game before renderer startup");
+    remove_empty_data_dir(empty_dir);
 }
 
 static void run_real_data_handoff_if_available(void) {
@@ -375,14 +380,6 @@ static void run_real_data_handoff_if_available(void) {
 
         expectedAssetMd5[0] = '\0';
 
-        if (!run_heavy_real_data_case(kCases[i].gameId)) {
-            char msg[128];
-            snprintf(msg, sizeof(msg),
-                     "skipping heavy %s real-data direct-launch case without opt-in",
-                     kCases[i].gameId);
-            expect_skip(msg);
-            continue;
-        }
         case_data_dir = game_scoped_data_root(data_dir,
                                              kCases[i].gameId,
                                              scoped_dir);
@@ -457,6 +454,54 @@ static void run_real_data_handoff_if_available(void) {
                     "direct launch prepared intent is valid");
         expect_true(intent.gameId && strcmp(intent.gameId, kCases[i].gameId) == 0,
                     "direct launch prepared intent keeps game id");
+        if (strcmp(kCases[i].gameId, "theron") == 0 &&
+            intent.options.versionIndex >= 0) {
+            const M12_AssetVersionStatus* selectedVersion =
+                M12_AssetStatus_GetVersion(&menu.assetStatus, "theron",
+                    (size_t)intent.options.versionIndex);
+            const Theron_V1Track02CampaignMediaDiscoveryReceipt* campaign =
+                M12_AssetStatus_GetTheronCampaignMedia(&menu.assetStatus);
+            const FirestaffTheronMediaStatus* theronMedia =
+                M12_AssetStatus_GetTheronMediaStatus(&menu.assetStatus);
+            const char* selectedMediaPath =
+                M12_AssetStatus_GetTheronLaunchMediaPathForVersion(
+                    &menu.assetStatus,
+                    (size_t)intent.options.versionIndex);
+            int otherMatchedVersion = 0;
+            size_t versionIndex;
+            for (versionIndex = 0;
+                 versionIndex < M12_AssetStatus_GetVersionCount("theron");
+                 ++versionIndex) {
+                const M12_AssetVersionStatus* candidate =
+                    M12_AssetStatus_GetVersion(&menu.assetStatus, "theron",
+                                               versionIndex);
+                if (candidate && candidate->matched &&
+                    (int)versionIndex != intent.options.versionIndex) {
+                    otherMatchedVersion = 1;
+                    break;
+                }
+            }
+            if (selectedVersion && selectedVersion->matched && theronMedia) {
+                const char* expectedMediaPath =
+                    theronMedia->paired_track01_track02 &&
+                    strcmp(theronMedia->track02_path,
+                           selectedVersion->matchedPath) == 0
+                    ? theronMedia->cue_path
+                    : selectedVersion->matchedPath;
+                expect_true(selectedMediaPath && expectedMediaPath[0] &&
+                                strcmp(selectedMediaPath, expectedMediaPath) == 0,
+                            "Theron launch media path follows selected verified version");
+            }
+            if (otherMatchedVersion) {
+                expect_true(selectedVersion && selectedVersion->matched &&
+                                campaign &&
+                                strcmp(campaign->track02_md5,
+                                       selectedVersion->matchedMd5) == 0,
+                            "Theron direct launch scans campaign media for selected version");
+            } else {
+                expect_skip("Theron campaign-version mismatch needs multiple matched real releases");
+            }
+        }
 
         M11_GameView_Init(&view);
         expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
@@ -584,6 +629,63 @@ static void run_real_data_handoff_if_available(void) {
         }
 
         M11_GameView_Shutdown(&view);
+        /* Repeat the same authentic-data handoff through the visible startup
+         * cards.  Custom enters the detailed options page without persisting
+         * a changed presentation preset, so the test exercises the Launch
+         * action without changing the user's config. */
+        menu.launchRequested = 0;
+        menu.quickResumeLaunchRequested = 0;
+        menu.view = M12_MENU_VIEW_MAIN;
+        menu.selectedIndex = kCases[i].slot;
+        menu.gameOptions[kCases[i].slot].architectureIndex = M12_ARCH_AUTO;
+        menu.gameOptions[kCases[i].slot].versionIndex = autoVersionIndex;
+        menu.gameOptions[kCases[i].slot].presentationModeIndex =
+            M12_PRESENTATION_V1_ORIGINAL;
+        menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        expect_true(menu.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                        menu.gameCardFlowStage == 0,
+                    "real-data menu launch opens platform cards");
+        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        expect_true(menu.gameCardFlowStage == 1,
+                    "real-data menu launch accepts a verified platform card");
+        menu.gameCardSelected = 2;
+        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        expect_true(menu.gameCardFlowStage == 2,
+                    "real-data menu launch enters detailed custom options");
+        menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        expect_true(menu.launchRequested == 1,
+                    "real-data menu Launch action admits the selected game");
+        {
+            int selectedVersionIndex =
+                menu.gameOptions[kCases[i].slot].versionIndex;
+            int selectedArchitecture =
+                menu.gameOptions[kCases[i].slot].architectureIndex;
+            const M12_AssetVersionStatus* selectedVersion =
+                selectedVersionIndex >= 0
+                ? M12_AssetStatus_GetVersion(&menu.assetStatus,
+                                             kCases[i].gameId,
+                                             (size_t)selectedVersionIndex)
+                : NULL;
+            intent = M12_StartupMenu_GetLaunchIntent(&menu);
+            expect_true(intent.valid == 1 && intent.gameId &&
+                            strcmp(intent.gameId, kCases[i].gameId) == 0,
+                        "real-data menu produces a valid selected-entry intent");
+            expect_true(selectedVersion && selectedVersion->matched &&
+                            intent.versionId && selectedVersion->versionId &&
+                            strcmp(intent.versionId,
+                                   selectedVersion->versionId) == 0 &&
+                            intent.options.versionIndex == selectedVersionIndex &&
+                            intent.options.architectureIndex == selectedArchitecture,
+                        "menu launch intent preserves its authenticated platform edition");
+        }
+        M11_GameView_Init(&view);
+        expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1 &&
+                        view.active && view.startedFromLauncher &&
+                        strcmp(view.sourceId, kCases[i].gameId) == 0,
+                    "real-data startup menu reaches the M11 game handoff");
+        M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
 
         if (strcmp(kCases[i].gameId, "csb") == 0 &&
@@ -642,14 +744,16 @@ static void run_real_data_handoff_if_available(void) {
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
                 opts.bootProbeFrames = 240;
                 /* Prove the first real PC34 command after Prison as well as
-                 * the title/entrance handoff. ReDMCSB ENTRANCE.C F0806
-                 * releases the HUD only after the door sequence; COMMAND.C
-                 * F0361/F0380 then routes the first forward key through the
-                 * CSB queue. The authenticated local dungeon begins at
+                 * the title/entrance handoff. ReDMCSB ENTRANCE.C
+                 * F0439_STARTEND_DrawEntrance (lines 371, 851-881) keeps the
+                 * entrance active until its source command queue changes
+                 * state; COMMAND.C F0361/F0380 (lines 1709, 2045) processes
+                 * that input. The authenticated local dungeon begins at
                  * (9,0,2), whose first forward step is (9,1,2). */
                 opts.script = "key:enter,up";
-                /* ReDMCSB LOADSAVE.C F0435 uses DUNGEON.DAT's
-                 * InitialPartyLocation, not a generic fixed spawn.
+                /* ReDMCSB LOADSAVE.C decodes the dungeon header's
+                 * InitialPartyLocation (lines 1941-1943), not a generic
+                 * fixed spawn.
                  * The verified local CSB header encodes (9,0,2). */
                 opts.bootProbeExpectPartyX = 9;
                 opts.bootProbeExpectPartyY = 1;
@@ -657,9 +761,8 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectChampionCount = 0;
             } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 int rc = snprintf(appdata_dir, sizeof(appdata_dir),
-                                  "%s%sfirestaff_nexus_boot_probe_appdata_%ld",
-                                  (getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp"),
-                                  TEST_PATH_SEP, (long)TEST_GETPID());
+                                  "firestaff_nexus_boot_probe_appdata_%ld",
+                                  (long)TEST_GETPID());
                 if (rc > 0 && rc < (int)sizeof(appdata_dir)) {
                     (void)TEST_MKDIR(appdata_dir);
                     test_setenv("APPDATA", appdata_dir);
@@ -704,6 +807,7 @@ static void run_real_data_handoff_if_available(void) {
                         "boot-probe advances selected-entry startup frames");
             if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 test_setenv("APPDATA", NULL);
+                remove_empty_data_dir(appdata_dir);
             }
             if (strcmp(kCases[i].gameId, "csb") == 0 &&
                 autoArchitecture == M12_ARCH_PC) {

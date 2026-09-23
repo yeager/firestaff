@@ -61,8 +61,10 @@ parity.
 | Macintosh EN retail ZIP | `dm2_v1_mac_native_cli_boot` | `5cab25f6b975957eae4a203174e7f2a6` |
 | FM Towns HME-242 ZIP | `dm2_v1_fmtowns_native_cli_boot` | `027ff3b8ddc2c4c4cdda7ada0b0bc46c` |
 
-Every probe enters through Firestaff's start menu (`--menu`) before it reaches
-the original startup path. The Macintosh probe dismisses its retained title
+The boot probes enter through the selected-game CLI path; `--boot-probe` is
+not a start-menu test. The real-media `m11_direct_launch_prepare_all_games`
+case separately drives the launcher cards and verifies the selected platform
+handoff. The Macintosh probe dismisses its retained title
 movie, dispatches the original New Game event and selects a source-owned
 viewport mirror. The FM Towns probe preserves its AUTOEXEC/SWOOSH/TITLE/SKULL
 handoff before the source-space mirror selection. All routes refuse unrelated

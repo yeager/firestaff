@@ -18,7 +18,8 @@ if [[ "$MODE" == "--check" ]]; then
     WORK_PO="$SCRATCH/po"
 fi
 # Explicit source/keyword lists prevent debug literals becoming UI strings.
-xgettext --keyword=_ --keyword=m12_tr:2 --keyword=m12_translate_for_locale:2 \
+xgettext --keyword=_ --keyword=m12_tr:2 \
+    --keyword=M12_StartupMenu_Translate:2 --keyword=m12_translate_for_locale:2 \
     --keyword=modern_tr:2 --language=C --from-code=UTF-8 --sort-by-file \
     --no-wrap --package-name=firestaff-startup-menu --copyright-holder=Firestaff \
     --msgid-bugs-address=daniel@danielnylander.se --directory="$ROOT" \

@@ -379,17 +379,26 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
     }
     gameId = entry ? entry->gameId : NULL;
     menuState->launchRequested = 0;
+    menuState->quickResumeLaunchRequested = 0;
+    /* A failed CSB import is a completed launch attempt. Do not leave its
+     * source path attached to a later, unrelated CSB launch intent. */
+    menuState->csbImportDm1LaunchRequested = 0;
+    menuState->csbImportDm1SavePath[0] = '\0';
     menuState->view = M12_MENU_VIEW_MESSAGE;
     if (gameId && strcmp(gameId, "nexus") == 0) {
-        menuState->messageLine1 = "NEXUS LOAD FAILED";
-        menuState->messageLine2 = "CHECK ISO/BIN OR EXTRACTED FILES";
+        menuState->messageLine1 = M12_StartupMenu_Translate(
+            menuState, "NEXUS LOAD FAILED");
+        menuState->messageLine2 = M12_StartupMenu_Translate(
+            menuState, "CHECK ISO/BIN OR EXTRACTED FILES");
     } else if (gameId && strcmp(gameId, "theron") == 0) {
         /* This generic launcher path covers both invalid media and a valid
          * Track 02 whose later original graphics route is still unavailable.
          * The message must not imply that a hash-verified CUE/BIN is corrupt.
          */
-        menuState->messageLine1 = "THERON STARTUP FAILED";
-        menuState->messageLine2 = "VERIFY CUE/BIN AND STARTUP DETAILS";
+        menuState->messageLine1 = M12_StartupMenu_Translate(
+            menuState, "THERON STARTUP FAILED");
+        menuState->messageLine2 = M12_StartupMenu_Translate(
+            menuState, "VERIFY CUE/BIN AND STARTUP DETAILS");
     } else if (gameId && strcmp(gameId, "dm2") == 0) {
         /* DM2's original startup/load path owns its dialogue surface.  No
          * source-owned c_gui_draw producer is connected to this generic M11
@@ -406,13 +415,18 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState->view = M12_MENU_VIEW_MAIN;
         return;
     } else if (gameId && strcmp(gameId, "csb") == 0) {
-        menuState->messageLine1 = "CSB LOAD FAILED";
-        menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";
+        menuState->messageLine1 = M12_StartupMenu_Translate(
+            menuState, "CSB LOAD FAILED");
+        menuState->messageLine2 = M12_StartupMenu_Translate(
+            menuState, "CHECK GRAPHICS/DUNGEON DATA");
     } else {
-        menuState->messageLine1 = "DUNGEON LOAD FAILED";
-        menuState->messageLine2 = "CHECK DUNGEON.DAT";
+        menuState->messageLine1 = M12_StartupMenu_Translate(
+            menuState, "DUNGEON LOAD FAILED");
+        menuState->messageLine2 = M12_StartupMenu_Translate(
+            menuState, "CHECK DUNGEON.DAT");
     }
-    menuState->messageLine3 = "ESC RETURNS TO MENU";
+    menuState->messageLine3 = M12_StartupMenu_Translate(
+        menuState, "ESC RETURNS TO MENU");
 }
 
 static void m11_draw_launcher_legacy(const M12_StartupMenuState* menuState,
@@ -3539,6 +3553,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         return 0;
     }
     if (!M12_StartupMenu_PrepareSelectedGameLaunch(menuState)) {
+        /* A launch gate can be ready while its edition-specific runtime
+         * preparation still fails (for example, a required native package
+         * handoff cannot be bound). Do not leave the launcher on its stale
+         * READY message with launchRequested latched; use the same
+         * game-specific failure path as a rejected M11 open. */
+        m11_set_launch_failed_message(menuState);
         return 0;
     }
     launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
@@ -3887,9 +3907,12 @@ static int m11_open_csb_fmtowns_utility_from_menu(
 unavailable:
     menuState->launchRequested = 0;
     menuState->view = M12_MENU_VIEW_MESSAGE;
-    menuState->messageLine1 = "CSB UTILITY DISK NOT READY";
-    menuState->messageLine2 = "VERIFIED FM TOWNS CSB MEDIA REQUIRED";
-    menuState->messageLine3 = "ESC RETURNS TO MENU";
+    menuState->messageLine1 = M12_StartupMenu_Translate(
+        menuState, "CSB UTILITY DISK NOT READY");
+    menuState->messageLine2 = M12_StartupMenu_Translate(
+        menuState, "VERIFIED FM TOWNS CSB MEDIA REQUIRED");
+    menuState->messageLine3 = M12_StartupMenu_Translate(
+        menuState, "ESC RETURNS TO MENU");
     return 0;
 }
 
@@ -3907,9 +3930,12 @@ static int m11_open_csb_hint_oracle_from_menu(
         !M11_GameView_StartCsbHintOracle(gameView, data_dir, NULL)) {
         menuState->csbHintOracleLaunchRequested = 0;
         menuState->view = M12_MENU_VIEW_MESSAGE;
-        menuState->messageLine1 = "CSB UTILITY DISK NOT READY";
-        menuState->messageLine2 = "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED";
-        menuState->messageLine3 = "ESC RETURNS TO MENU";
+        menuState->messageLine1 = M12_StartupMenu_Translate(
+            menuState, "CSB UTILITY DISK NOT READY");
+        menuState->messageLine2 = M12_StartupMenu_Translate(
+            menuState, "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED");
+        menuState->messageLine3 = M12_StartupMenu_Translate(
+            menuState, "ESC RETURNS TO MENU");
         return 0;
     }
     menuState->csbHintOracleLaunchRequested = 0;
@@ -3994,12 +4020,29 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
                 }
             }
             if (gameId && strcmp(gameId, "theron") == 0) {
+                /* Resolve the same version that the launch intent will use.
+                 * The catalogue's first match can be a different edition
+                 * from an explicit or AUTO-selected version, which would
+                 * bind campaign media from one release to another. */
+                M12_LaunchIntent selectedIntent =
+                    M12_StartupMenu_GetLaunchIntent(menuState);
                 const M12_AssetVersionStatus* version =
-                    M12_AssetStatus_GetFirstMatchedVersion(&menuState->assetStatus, gameId);
+                    selectedIntent.options.versionIndex >= 0
+                    ? M12_AssetStatus_GetVersion(
+                          &menuState->assetStatus, gameId,
+                          (size_t)selectedIntent.options.versionIndex)
+                    : NULL;
+                const char* mediaPath =
+                    selectedIntent.options.versionIndex >= 0
+                    ? M12_AssetStatus_GetTheronLaunchMediaPathForVersion(
+                          &menuState->assetStatus,
+                          (size_t)selectedIntent.options.versionIndex)
+                    : NULL;
                 if (version && version->matchedPath[0] != '\0' &&
-                    version->matchedMd5[0] != '\0') {
+                    version->matchedMd5[0] != '\0' &&
+                    mediaPath && strstr(version->matchedPath, "::") == NULL) {
                     M12_StartupMenu_ScanTheronCampaignMedia(
-                        menuState, version->matchedPath, version->matchedMd5, NULL);
+                        menuState, mediaPath, version->matchedMd5, NULL);
                 }
             }
             intent = M12_StartupMenu_GetLaunchIntent(menuState);
@@ -4168,7 +4211,11 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
     int applied = 0;
 
     if (!menuState || architecture <= M12_ARCH_AUTO ||
-        architecture >= M12_ARCH_COUNT) {
+        architecture >= M12_ARCH_COUNT ||
+        architecture == M12_ARCH_PC98 ||
+        architecture == M12_ARCH_X68000 ||
+        (gameId && strcmp(gameId, "csb") == 0 &&
+         architecture == M12_ARCH_PC)) {
         return 0;
     }
     if (gameId && gameId[0] != '\0') {
@@ -4192,7 +4239,9 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
         int matched;
         for (versionIndex = 0U; versionIndex < count; ++versionIndex) {
             if (M12_AssetStatus_GetVersionArchitecture(id, versionIndex) !=
-                architecture) {
+                    architecture ||
+                (strcmp(id, "csb") == 0 &&
+                 architecture == M12_ARCH_PC)) {
                 continue;
             }
             if (first < 0) first = (int)versionIndex;
@@ -7120,6 +7169,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_Options runtimeOptions;
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
+    /* Keep the public options boundary consistent with the CLI parser:
+     * requesting the interactive launcher always disables direct launch. */
+    if (runtimeOptions.menuRequested) {
+        runtimeOptions.directLaunch = 0;
+    }
     if (runtimeOptions.csbHintOracle && (!runtimeOptions.dataDir ||
                                          !runtimeOptions.dataDir[0])) {
         fprintf(stderr, "firestaff: --csb-hint-oracle requires --data-dir\n");
@@ -7133,6 +7187,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     if (runtimeOptions.bootProbe && (!runtimeOptions.gameId || runtimeOptions.gameId[0] == '\0')) {
         fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
+        return 2;
+    }
+    if (runtimeOptions.bootProbe && runtimeOptions.menuRequested) {
+        fprintf(stderr,
+                "firestaff: --boot-probe exercises direct launch and cannot be combined with --menu\n");
         return 2;
     }
     if (runtimeOptions.gameId && strcmp(runtimeOptions.gameId, "dm1") == 0 &&

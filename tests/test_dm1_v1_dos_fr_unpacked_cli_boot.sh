@@ -24,7 +24,7 @@ probe() {
 
 probe --game dm1 --platform pc --data-dir "$data_dir" \
     --boot-probe --boot-probe-frames 2 --duration 0
-probe --game dm1 --menu --platform pc --data-dir "$data_dir" \
+probe --game dm1 --platform pc --data-dir "$data_dir" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
@@ -45,7 +45,7 @@ fi
 # native forward input lands at y=4. Check that source-owned movement after the
 # launcher handoff rather than only accepting a title/runtime receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform pc --data-dir "$data_dir" \
+    --game dm1 --platform pc --data-dir "$data_dir" \
     --script up --boot-probe --boot-probe-frames 500 --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1

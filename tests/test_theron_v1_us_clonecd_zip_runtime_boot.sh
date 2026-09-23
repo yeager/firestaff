@@ -95,9 +95,9 @@ if ! grep -Fq 'Verified Track 02 accepted:' <<<"$mouse_output" ||
     exit 1
 fi
 
-assert_route 'boot-probe launcher selection authentic CloneCD ZIP' theron-startup-2 \
+assert_route 'boot-probe startup inputs authentic CloneCD ZIP' theron-startup-2 \
     env FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 "$app" \
-    --menu --game theron --platform pce --data-dir "$archive" \
+    --game theron --platform pce --data-dir "$archive" \
     --script 'down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter' \
     --boot-probe --boot-probe-frames 2 --duration 0
 

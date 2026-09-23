@@ -1,20 +1,51 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Firestaff
-# This file is distributed under the same license as the firestaff-startup-menu package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
-msgid ""
+#: src/engine/main_loop_m11.c:390
+msgid "NEXUS LOAD FAILED"
 msgstr ""
-"Project-Id-Version: firestaff-startup-menu\n"
-"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
-"POT-Creation-Date: 1970-01-01 00:00+0000\n"
-"PO-Revision-Date: 1970-01-01 00:00+0000\n"
-"Last-Translator: Firestaff Localization Team <daniel@danielnylander.se>\n"
-"Language-Team: Firestaff Localization Team <daniel@danielnylander.se>\n"
-"Language: en\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+
+#: src/engine/main_loop_m11.c:392
+msgid "CHECK ISO/BIN OR EXTRACTED FILES"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:399
+msgid "THERON STARTUP FAILED"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:401
+msgid "VERIFY CUE/BIN AND STARTUP DETAILS"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:419
+msgid "CSB LOAD FAILED"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:421
+msgid "CHECK GRAPHICS/DUNGEON DATA"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:424
+msgid "DUNGEON LOAD FAILED"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:426
+msgid "CHECK DUNGEON.DAT"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:429 src/engine/main_loop_m11.c:3915
+#: src/engine/main_loop_m11.c:3938 src/ui/menu_startup_m12.c:1040
+msgid "ESC RETURNS TO MENU"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:3911 src/engine/main_loop_m11.c:3934
+msgid "CSB UTILITY DISK NOT READY"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:3913
+msgid "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
+msgstr ""
+
+#: src/engine/main_loop_m11.c:3936
+msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
+msgstr ""
 
 #: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5310
 msgid "ACCESSIBILITY"
@@ -314,7 +345,7 @@ msgid "OFF"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
-#: src/ui/menu_startup_render_modern_m12.c:2363
+#: src/ui/menu_startup_render_modern_m12.c:2383
 msgid "ON"
 msgstr ""
 
@@ -366,7 +397,7 @@ msgstr ""
 msgid "AVAILABLE"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:469 src/ui/menu_startup_render_modern_m12.c:1978
 msgid "UNAVAILABLE"
 msgstr ""
 
@@ -481,14 +512,14 @@ msgstr ""
 #: src/ui/menu_startup_m12.c:755 src/ui/menu_startup_m12.c:776
 #: src/ui/menu_startup_m12.c:9775 src/ui/menu_startup_m12.c:10218
 #: src/ui/menu_startup_render_modern_m12.c:1474
-#: src/ui/menu_startup_render_modern_m12.c:2626
+#: src/ui/menu_startup_render_modern_m12.c:2647
 msgid "DUNGEON MASTER"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:756 src/ui/menu_startup_m12.c:786
 #: src/ui/menu_startup_m12.c:9777 src/ui/menu_startup_m12.c:10232
 #: src/ui/menu_startup_render_modern_m12.c:1475
-#: src/ui/menu_startup_render_modern_m12.c:2629
+#: src/ui/menu_startup_render_modern_m12.c:2650
 msgid "CHAOS STRIKES BACK"
 msgstr ""
 
@@ -514,7 +545,8 @@ msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:763 src/ui/menu_startup_m12.c:11152
-#: src/ui/menu_startup_m12.c:11155 src/ui/menu_startup_render_modern_m12.c:2026
+#: src/ui/menu_startup_m12.c:11155 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr ""
 
@@ -921,10 +953,6 @@ msgstr ""
 
 #: src/ui/menu_startup_m12.c:1039 src/ui/menu_startup_m12.c:8140
 msgid "READY TO LAUNCH"
-msgstr ""
-
-#: src/ui/menu_startup_m12.c:1040
-msgid "ESC RETURNS TO MENU"
 msgstr ""
 
 #: src/ui/menu_startup_m12.c:1041
@@ -1554,7 +1582,7 @@ msgstr ""
 msgid "MISSING OR MISMATCHED"
 msgstr ""
 
-#: src/ui/menu_startup_m12.c:8699
+#: src/ui/menu_startup_m12.c:8699 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr ""
 
@@ -1760,12 +1788,31 @@ msgstr ""
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr ""
 
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Firestaff
+# This file is distributed under the same license as the firestaff-startup-menu package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#: src/ui/menu_startup_render_modern_m12.c:110
+msgid ""
+msgstr ""
+"Project-Id-Version: firestaff-startup-menu\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 1970-01-01 00:00+0000\n"
+"PO-Revision-Date: 1970-01-01 00:00+0000\n"
+"Last-Translator: Firestaff Localization Team <daniel@danielnylander.se>\n"
+"Language-Team: Firestaff Localization Team <daniel@danielnylander.se>\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
 #: src/ui/menu_startup_render_modern_m12.c:1321
 msgid "COMING SOON"
 msgstr ""
 
 #: src/ui/menu_startup_render_modern_m12.c:1431
-#: src/ui/menu_startup_render_modern_m12.c:2471
+#: src/ui/menu_startup_render_modern_m12.c:2492
 msgid "FIRESTAFF"
 msgstr ""
 
@@ -1805,6 +1852,14 @@ msgstr ""
 msgid "< BACK"
 msgstr ""
 
+#: src/ui/menu_startup_render_modern_m12.c:1875
+msgid "CHANGES ARE PERSISTED IMMEDIATELY"
+msgstr ""
+
+#: src/ui/menu_startup_render_modern_m12.c:1956
+msgid "EXPLORE FIRESTAFF"
+msgstr ""
+
 #: src/ui/menu_startup_render_modern_m12.c:2030
 msgid "PRESERVATION NOTES, SERIES LORE, AND PROJECT CREDITS"
 msgstr ""
@@ -1822,23 +1877,23 @@ msgstr ""
 msgid "CHOOSE PLATFORM"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2187
+#: src/ui/menu_startup_render_modern_m12.c:2189
 msgid "NO SUPPORTED NATIVE PLATFORM"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2196
+#: src/ui/menu_startup_render_modern_m12.c:2198
 msgid "CHOOSE PRESENTATION"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2419
+#: src/ui/menu_startup_render_modern_m12.c:2440
 msgid "LAUNCH >"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2488
-#: src/ui/menu_startup_render_modern_m12.c:2612
+#: src/ui/menu_startup_render_modern_m12.c:2509
+#: src/ui/menu_startup_render_modern_m12.c:2633
 msgid "OK"
 msgstr ""
 
-#: src/ui/menu_startup_render_modern_m12.c:2552
+#: src/ui/menu_startup_render_modern_m12.c:2573
 msgid "CANCEL"
 msgstr ""

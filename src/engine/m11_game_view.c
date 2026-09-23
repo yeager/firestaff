@@ -26460,6 +26460,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         spec.fontScale = menuState->settings.fontScale;
     }
     if (menuState->quickResumeAvailable &&
+        menuState->quickResumeLaunchRequested &&
         menuState->quickResumeSavePath[0] != '\0' &&
         menuState->quickResumeGameId[0] != '\0' &&
         entry->gameId &&

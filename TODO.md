@@ -1,5 +1,14 @@
 # Firestaff TODO — active cross-game work
 
+- Extend real-media start-menu launch coverage for DM1, CSB, DM2, Nexus and
+  Theron's Quest. `m11_direct_launch_prepare_all_games` now drives the game-card,
+  verified-platform and custom-options screens with installed original media,
+  checks that the launch intent retains the authenticated edition selected on
+  the platform card, and reaches M11 through that intent. It still needs to
+  advance each game from this same menu handoff to its first source-owned
+  runtime frame; the separate boot-probe cases do not prove that menu path.
+  Keep this separate from visual parity.
+
 - Extend F0219 current-cell collision coverage to original-media encounters,
   half-square creature footprints, nonmaterial/Black Flame cases and inactive
   group destinations. The source-cell tests cover centered and quarter-cell
@@ -115,7 +124,7 @@
   Amiga, including panel geometry, same-owner refresh and owner switching;
   successful startup alone does not establish inventory interaction parity.
 
-Reviewed 2026-08-25. This file contains only work that is still open. Game
+Reviewed 2026-09-23. This file contains only work that is still open. Game
 details and acceptance evidence belong in `TODO-<game>.md`; completed work is
 recorded in `DONE-<game>.md`. Historical mixed logs are retained as
 `HISTORY-archived-2026-08-08.md` and in Git history, not as active work.

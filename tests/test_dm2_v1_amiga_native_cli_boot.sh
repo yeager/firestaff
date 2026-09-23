@@ -31,7 +31,7 @@ probe_input() {
     input=$1
     expected_party=$2
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm2 --platform amiga --data-dir "$archive" --boot-probe \
+        --game dm2 --platform amiga --data-dir "$archive" --boot-probe \
         --boot-probe-frames 2000 --script "key:enter,key:enter,key:enter,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }

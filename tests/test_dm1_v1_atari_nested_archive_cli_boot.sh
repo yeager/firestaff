@@ -51,7 +51,7 @@ probe() {
 
 probe --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
-probe --menu --game dm1 --platform atari-st --data-dir "$archive" \
+probe --game dm1 --platform atari-st --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
@@ -72,7 +72,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --duration 3000 >/dev/null 2>&1
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform atari-st --data-dir "$archive" \
+    --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
@@ -93,7 +93,7 @@ probe_runtime_input() {
     local expected_party=$2
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm1 --platform atari-st --data-dir "$archive" \
+        --game dm1 --platform atari-st --data-dir "$archive" \
         --boot-probe --boot-probe-frames 500 --script "$input" --duration 0 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1

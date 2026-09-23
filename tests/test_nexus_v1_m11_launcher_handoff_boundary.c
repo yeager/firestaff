@@ -30,12 +30,14 @@
 #include <direct.h>
 #include <process.h>
 #define TEST_MKDIR(path) _mkdir(path)
+#define TEST_RMDIR(path) _rmdir(path)
 #define TEST_PATH_SEP "\\"
 #define TEST_GETPID() _getpid()
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_RMDIR(path) rmdir(path)
 #define TEST_PATH_SEP "/"
 #define TEST_GETPID() getpid()
 #endif
@@ -108,14 +110,18 @@ static int count_diff_pixels(const unsigned char* a,
 }
 
 static void make_empty_data_dir(char out[512]) {
-    int rc = snprintf(out, 512,
-                      "%s%sfirestaff_nexus_launcher_empty_%ld",
-                      (getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp"),
-                      TEST_PATH_SEP, (long)TEST_GETPID());
+    int rc = snprintf(out, 512, "firestaff_nexus_launcher_empty_%ld",
+                      (long)TEST_GETPID());
     if (rc > 0 && rc < 512) {
         (void)TEST_MKDIR(out);
     } else {
         out[0] = '\0';
+    }
+}
+
+static void remove_empty_data_dir(const char* path) {
+    if (path && path[0]) {
+        (void)TEST_RMDIR(path);
     }
 }
 
@@ -157,6 +163,8 @@ static void run_empty_launcher_boundary(void) {
                 "Nexus launch intent carries gameId=\"nexus\"");
     expect_true(intent.valid == 0,
                 "Nexus launch intent is invalid when assets are absent");
+    M12_StartupMenu_Destroy(&menu);
+    remove_empty_data_dir(empty_dir);
 }
 
 static void run_nexus_runtime_path_resolution(void) {
@@ -288,9 +296,27 @@ static void run_real_launcher_handoff_if_available(void) {
     menu.activatedIndex = 3;
     menu.launchRequested = 1;
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    /* Keep assertions stable across host locales. */
+    menu.settings.languageIndex = 0;
+    menu.languageExplicit = 1;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
                 "M12 Nexus launch intent is valid with real staged data");
+    expect_true(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&menu, 3),
+                       "TITLE START AVAILABLE") == 0,
+                "M12 labels a verified Nexus title handoff without claiming full readiness");
+    expect_true(strcmp(M12_StartupMenu_GetDataStatusValue(&menu),
+                       "TITLE START AVAILABLE: 1") == 0,
+                "data summary counts the title-only route without claiming full readiness");
+    {
+        M12_StartupLaunchGate gate;
+        expect_true(M12_StartupMenu_GetLaunchGate(&menu, 3, &gate) == 1 &&
+                        gate.canLaunch == 1 &&
+                        gate.fullStartGraphicsReady == 0 &&
+                        gate.startupContractReady == 0 &&
+                        gate.packagedCaptureReady == 0,
+                    "Nexus launch gate admits title handoff while retaining menu/capture blockers");
+    }
     expect_true(intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL,
                 "M12 Nexus launch intent uses V1 original presentation");
     if (!intent.valid) {

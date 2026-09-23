@@ -1,3 +1,18 @@
+# Firestaff — Unreleased
+
+## User-facing changes
+
+- `Launcher`: `--menu --game` now keeps an explicitly selected archive or data
+  file as the launch source even when a sibling loose copy of that edition is
+  also installed.
+- `Launcher`: start failures for DM1, CSB, Nexus and Theron's Quest, including
+  CSB's FM Towns Utility Disk and Atari R1 Hint Oracle, now use the selected
+  launcher language.
+- `Quick Resume`: follows the saved game's presentation mode and admits V2.2
+  only through that game's normal launch gate.
+- `Game options`: the modern launcher view now reads the selected title's own
+  options for Nexus and Theron's Quest instead of reusing DM2's options.
+
 # Firestaff v3.0.347
 
 ## Developer changes

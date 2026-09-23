@@ -58,11 +58,8 @@
 #define M12_HIT_SETTINGS_TWO_COLUMN_THRESHOLD 8
 #define M12_HIT_SETTINGS_COLUMN_GAP 24
 
-/* Game options rows (8 rows: version, patch, language, cheats, speed,
- * aspect, resolution, launch). Renderer draws rows 0..6 at step 52,
- * and the launch row as a dedicated button at the panel bottom. */
-#define M12_HIT_GAMEOPT_ROW_Y0      (M12_HIT_GAMEOPT_PANEL_Y + 76)
-#define M12_HIT_GAMEOPT_ROW_STEP    52
+/* The modern game-options panel uses a four-column tile grid. The launch
+ * button is a separate hit target below the grid. */
 
 #define M12_HIT_LANGUAGE_POPUP_X      (M12_HIT_PANEL_X + M12_HIT_ROW_INDENT + M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT - 632)
 #define M12_HIT_LANGUAGE_POPUP_Y      (M12_HIT_SETTINGS_ROW_Y0 + 56)
@@ -244,9 +241,10 @@ static int m12_hit_gameopt_tile(int x, int y, M12_MouseHit* out) {
                              M12_HIT_CYCLE_SPLIT_DEN ? 1 : -1;
     if (grid_row == 0) {
         if (column == 0) out->index = M12_GAME_OPT_ROW_VERSION;
+        else if (column == 1) out->index = M12_GAME_OPT_ROW_ARCHITECTURE;
         else if (column == 2) out->index = M12_GAME_OPT_ROW_PATCH;
         else if (column == 3) out->index = M12_GAME_OPT_ROW_LANGUAGE;
-        else return 0; /* DATA is a read-only asset status. */
+        else return 0; /* No other interactive tile on this row. */
     } else if (grid_row == 1) {
         if (column == 0) out->index = M12_GAME_OPT_ROW_CHEATS;
         else if (column == 1 || column == 2) out->index = M12_GAME_OPT_ROW_SPEED;

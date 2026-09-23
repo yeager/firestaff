@@ -41,7 +41,7 @@ probe_input() {
     input=$1
     expected_party=$2
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm2 --platform mac --data-dir "$archive" --boot-probe \
+        --game dm2 --platform mac --data-dir "$archive" --boot-probe \
         --boot-probe-frames 2000 --width 320 --height 200 \
         --script "key:enter,key:enter,click:100:60,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \

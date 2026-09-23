@@ -880,9 +880,15 @@ int main(int argc, char** argv) {
     }
 
     opts.verbose = verbose;
-    /* `--menu --game dm1` is the documented card-flow invocation.  Options
-     * may appear in either order, so resolve this once after parsing rather
-     * than allowing a later --game or --boot-probe to bypass M12. */
+    /* A boot probe emits an M11 receipt after a direct selected-game launch;
+     * it does not exercise M12 card navigation. Reject the conflicting
+     * request instead of silently turning `--menu --boot-probe` into a
+     * different test. */
+    if (opts.menuRequested && opts.bootProbe) {
+        fprintf(stderr,
+                "firestaff: --boot-probe exercises direct launch and cannot be combined with --menu\n");
+        return 2;
+    }
     if (opts.menuRequested) {
         opts.directLaunch = 0;
     }

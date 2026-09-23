@@ -26,7 +26,7 @@ probe() {
 }
 
 probe --game dm1 --platform amiga --data-dir "$archive" --boot-probe --boot-probe-frames 2 --duration 0
-probe --menu --game dm1 --platform amiga --data-dir "$archive" --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
+probe --game dm1 --platform amiga --data-dir "$archive" --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform amiga --data-dir "$archive" --script enter,enter,enter --duration 1000 2>&1)" || {
@@ -36,7 +36,7 @@ grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" &&
 grep -Fq "dataDir=$archive" <<<"$menu_output" &&
 grep -Fq 'handoff=amiga-img2' <<<"$menu_output"
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform amiga --data-dir "$archive" \
+    --game dm1 --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2; exit 1;
 }
@@ -57,7 +57,7 @@ probe_runtime_input() {
     local expected_party=$2
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-        --menu --game dm1 --platform amiga --data-dir "$archive" \
+        --game dm1 --platform amiga --data-dir "$archive" \
         --boot-probe --boot-probe-frames 500 --script "$input" --duration 0 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1
