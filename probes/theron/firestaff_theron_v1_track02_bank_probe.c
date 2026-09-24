@@ -30,6 +30,7 @@ static int g_fail = 0;
 static int g_skip = 0;
 
 static void check_int(const char *label, int got, int want);
+static int read_file(const char *path, uint8_t **out_data, size_t *out_size);
 
 static int write_probe_file(const char *path, const char *text) {
     FILE *fp;
@@ -231,6 +232,30 @@ static void probe_quest_blocks(const uint8_t *data, size_t size,
             ++g_fail;
         }
     }
+}
+
+static void probe_clonecd_quest_blocks_real_data(void) {
+    const char *path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
+    uint8_t *data = NULL;
+    size_t size = 0u;
+    char md5_hex[33] = {0};
+
+    if (!path || !path[0]) return;
+    if (!read_file(path, &data, &size)) {
+        printf("FAIL CloneCD quest blocks: could not read %s\n", path);
+        ++g_fail;
+        return;
+    }
+    check_int("CloneCD Track 02 authentic MD5 calculation",
+              m12_file_md5_hex(path, md5_hex), 1);
+    check_int("CloneCD Track 02 authentic MD5",
+              strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0, 1);
+    if (strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0) {
+        probe_quest_blocks(data, size, THERON_TRACK02_VARIANT_US_CLONECD_RAW,
+                           g_us_quest_block_hashes, "US CloneCD");
+        printf("US CloneCD real Track 02: authenticated seven quest-block hashes\n");
+    }
+    free(data);
 }
 
 static void check_gt_size(const char *label, size_t got, size_t floor) {
@@ -1890,6 +1915,7 @@ int main(void) {
                                       "theron/TQJP02.bin",
                                       g_jp_audio_bank_ids,
                                       g_jp_bin_span_offsets);
+    probe_clonecd_quest_blocks_real_data();
     probe_raw_bin_positive_fixture("US raw BIN synthetic anchors",
                                    THERON_TRACK02_MD5_US_BIN,
                                    THERON_TRACK02_VARIANT_US_BIN,

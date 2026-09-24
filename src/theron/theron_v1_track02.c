@@ -174,12 +174,19 @@ Theron_Track02BlockStatus theron_v1_track02_extract_quest_block(
         dungeon_index >= THERON_TRACK02_QUEST_BLOCK_COUNT)
         return THERON_TRACK02_BLOCK_BAD_INPUT;
     if (variant != THERON_TRACK02_VARIANT_US_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW &&
         variant != THERON_TRACK02_VARIANT_JP_BIN)
         return THERON_TRACK02_BLOCK_UNSUPPORTED_VARIANT;
-    raw_offset = (variant == THERON_TRACK02_VARIANT_US_BIN ?
+    raw_offset = (variant == THERON_TRACK02_VARIANT_US_BIN ||
+                  variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ?
         TQR_US_BIN_FIRST_QUEST_BLOCK_OFFSET : TQR_JP_BIN_FIRST_QUEST_BLOCK_OFFSET) +
         (dungeon_index * THERON_TRACK02_QUEST_BLOCK_BYTES /
          THERON_TRACK02_RAW_USER_DATA_BYTES) * THERON_TRACK02_RAW_SECTOR_BYTES;
+    if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        if (raw_offset < TQR_US_CLONECD_OMITTED_PREGAP_BYTES)
+            return THERON_TRACK02_BLOCK_OUT_OF_RANGE;
+        raw_offset -= TQR_US_CLONECD_OMITTED_PREGAP_BYTES;
+    }
     while (copied < THERON_TRACK02_QUEST_BLOCK_BYTES) {
         size_t sector = raw_offset +
             (copied / THERON_TRACK02_RAW_USER_DATA_BYTES) * THERON_TRACK02_RAW_SECTOR_BYTES;
