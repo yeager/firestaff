@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "theron_v1_mechanics.h"
 #include "theron_v1_startup_save_resume.h"
 #include "theron_v1_world.h"
 
@@ -152,6 +153,93 @@ int main(int argc, char** argv) {
                 view.theronState.startup_phase,
                 view.theronState.selected_dungeon,
                 view.theronState.level_loaded);
+    } else if (view.theronState.startup_roster_name_count <= 0 ||
+               M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                   M11_GAME_INPUT_REDRAW ||
+               view.theronState.startup_phase !=
+                   THERON_STARTUP_PHASE_READY ||
+               view.theronState.selected_mirrors_mask == 0) {
+        ++failures;
+        fprintf(stderr,
+                "FAIL: authentic Track 02 roster admits a Soul Room champion selection without a generated name (phase=%d roster=%d mirrors=0x%x)\n",
+                view.theronState.startup_phase,
+                view.theronState.startup_roster_name_count,
+                view.theronState.selected_mirrors_mask);
+    }
+    if (view.theronState.startup_phase == THERON_STARTUP_PHASE_READY &&
+        view.theronState.selected_dungeon == 2 &&
+        view.theronState.selected_mirrors_mask != 0) {
+        for (i = 0;
+             i <= THERON_STARTUP_HERO_MIRROR_COUNT &&
+             view.theronState.startup_cursor !=
+                 THERON_STARTUP_HERO_MIRROR_COUNT;
+             ++i) {
+            if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) !=
+                M11_GAME_INPUT_REDRAW) {
+                break;
+            }
+        }
+        if (view.theronState.startup_cursor !=
+            THERON_STARTUP_HERO_MIRROR_COUNT) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: authentic Soul Room navigation reaches the forcefield after source roster selection (cursor=%d)\n",
+                    view.theronState.startup_cursor);
+        } else if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                       M11_GAME_INPUT_REDRAW ||
+                   view.theronState.startup_phase !=
+                       THERON_STARTUP_PHASE_IN_DUNGEON ||
+                   !view.theronState.level_loaded ||
+                   world->current_dungeon != 2 ||
+                   world->current_level != 0 ||
+                   world->object_count <= 0 ||
+                   world->party.champion_count != 2) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: authenticated Continue -> dungeon 2 forcefield handoff loads original level and selected party (phase=%d dungeon=%d level_loaded=%d world=%d/%d objects=%d champions=%d)\n",
+                    view.theronState.startup_phase,
+                    view.theronState.selected_dungeon,
+                    view.theronState.level_loaded,
+                    world->current_dungeon,
+                    world->current_level,
+                    world->object_count,
+                    world->party.champion_count);
+        } else {
+            static const int relative_directions[4] = { 0, 1, 2, 3 };
+            static const int movement_inputs[4] = {
+                M12_MENU_INPUT_UP,
+                M12_MENU_INPUT_STRAFE_RIGHT,
+                M12_MENU_INPUT_DOWN,
+                M12_MENU_INPUT_STRAFE_LEFT
+            };
+            int moved = 0;
+            int start_x = world->party.leader_x;
+            int start_y = world->party.leader_y;
+            int facing = world->party.leader_dir & 3;
+            for (i = 0; i < 4 && !moved; ++i) {
+                int direction = (facing + relative_directions[i]) & 3;
+                int target_x = start_x + g_theron_dir_dx[direction];
+                int target_y = start_y + g_theron_dir_dy[direction];
+                uint8_t target_square;
+                if (target_x < 0 || target_y < 0 ||
+                    target_x >= world->levels[1][0].width ||
+                    target_y >= world->levels[1][0].height) {
+                    continue;
+                }
+                target_square = theron_v1_world_get_square(
+                    world, target_x, target_y);
+                if (!THERON_SQUARE_IS_PASSABLE(target_square)) continue;
+                (void)M11_GameView_HandleInput(&view, movement_inputs[i]);
+                moved = world->party.leader_x != start_x ||
+                        world->party.leader_y != start_y;
+            }
+            if (!moved) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: native movement reaches an adjacent passable tile in the authentic dungeon 2 map (start=%d,%d facing=%d)\n",
+                        start_x, start_y, facing);
+            }
+        }
     }
     M11_GameView_Shutdown(&view);
     if (failures) {

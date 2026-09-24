@@ -80,16 +80,16 @@ acquired or verified.
   does not establish title/menu selection or gameplay. The trace remains
   private on trv2.
 - Validate the production Continue action end-to-end with authenticated
-  dungeon-entry capture. The production M11 Continue action is now verified
-  against the authentic US Track 02 and 2 KiB Backup RAM artifact: startup
-  admits slot 0, the explicit menu action emits the original-slot receipt and
-  restores Theron's captured stats. The real-media test then skips completed
-  Akutuba, selects unlocked dungeon 2 and reaches its Soul Room without
-  claiming that a dungeon level is loaded; it compares all seven attributes
-  and all 20 temporary/persistent skill-experience pairs with the decoded
-  authentic save body. Forcefield admission and authenticated dungeon entry
-  remain open; JP Continue and separate US/JP dungeon-entry runtime evidence
-  remain unverified.
+  dungeon-entry capture. The native M11 route is now verified with authentic
+  US Track 02 and a 2 KiB Akutuba-complete Backup RAM artifact: it admits slot
+  0, restores all seven attributes and all 20 temporary/persistent
+  skill-experience pairs against the decoded body, skips completed Akutuba,
+  selects the next available Track 02 champion and loads dungeon 2, level 0,
+  through Soul Room and forcefield. The original-emulator transition has not
+  yet been captured for parity, and JP Continue and separate JP runtime
+  evidence remain unverified. The same authentic run also verifies a native
+  movement command from the entrance onto a passable neighbor in the real
+  loaded map; movement parity beyond that bounded step remains open.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound

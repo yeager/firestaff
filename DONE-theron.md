@@ -5,13 +5,18 @@
 - Extended the M11 Continue regression with the authentic US Track 02 and
   Akutuba-complete 2 KiB Backup RAM capture (`ffabc8d19b0915d4d9632a7ae2e90a97`).
   After restoring the completed Akutuba chapter, the real progression skips
-  that completed stage, focuses unlocked dungeon 2, and enters its Soul Room.
+  it, focuses unlocked dungeon 2, selects a source-backed Track 02 champion,
+  and enters that dungeon through the Soul Room and forcefield.
   The integration now compares all seven restored attributes and all 20
   temporary/persistent skill-experience pairs directly with the decoded,
-  source-verified real Backup RAM body.
-  The test explicitly verifies that this remains before forcefield admission
-  and does not claim a dungeon level is loaded. The real-media test passes on
-  TRV2; JP Continue and authenticated dungeon entry remain open.
+  source-verified real Backup RAM body. It requires the native runtime to load
+  dungeon 2, level 0, with the selected two-member party and original objects.
+  After load, the test locates a passable neighboring tile in that same
+  authentic map and verifies a native input moves the party there; it does
+  not mistake the map-edge-blocked forward direction for a missing route.
+  This verifies a real-media native route, not parity against a separate
+  original-emulator transition capture. The real-media test passes on TRV2;
+  JP Continue, later stages and original transition parity remain open.
 
 ## 2026-09-24 — Production pickup admission test
 

@@ -30,7 +30,7 @@ real-media evidence.
 | Chaos Strikes Back | Verified bounded routes on Atari ST, Amiga and FM Towns; no original DOS/PC release. | [CSB platform rows](PLATFORM_STATUS.md#chaos-strikes-back) |
 | Dungeon Master II: Skullkeep | Verified bounded routes on DOS, Amiga, FM Towns and the listed Macintosh editions. | [DM2 platform rows](PLATFORM_STATUS.md#dungeon-master-ii-the-legend-of-skullkeep) |
 | DM Nexus | Verified bounded Japanese Saturn route, not production gameplay. The measured implementation coverage is documented separately. | [Nexus platform row](PLATFORM_STATUS.md#dm-nexus), [Nexus completion](NEXUS_COMPLETION.md) |
-| Theron's Quest | JP is a verified bounded runtime route and US a verified startup route; neither establishes end-to-end gameplay. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest) |
+| Theron's Quest | JP is a verified bounded runtime route; US has a verified, authentic Continue-to-dungeon-2 native route. Neither establishes complete gameplay or original-emulator parity. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest) |
 
 Nexus is the sole exception with an explicitly defined numeric measurement:
 44.0% implementation coverage across its six measured domains, 33.1% for its
