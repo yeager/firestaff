@@ -27,6 +27,13 @@ The authentic JP raw BIN remains the source for all seven dungeon maps and
 their local item tables. The actual JP Rev. 1 ISO dungeon banks are not yet
 acquired or verified.
 
+The local combined US/JP RAR passes its archive CRC test, but Firestaff does
+not accept RAR4 as a launch input. Its US CUE names `TQUS02.iso`, which is not
+an archive member; the archive has `TQUS02End.iso` instead. The separate
+authentic `TQUS02.bin` is hash-verified and currently supplies the working US
+route. Direct RAR ingestion or a complete authentic CUE package remains open;
+no substitute game data has been generated.
+
 - Bind the verified Japanese Rev 1 Track 02 source dungeons to captured
   transition and save consumers. Regional champion records and source-backed
   pickup/drop are bound, but broader item-use semantics remain gated; the
