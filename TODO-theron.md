@@ -38,6 +38,12 @@ x=3, y=0)`. This is bounded host-runtime movement on the real Japanese map;
 it does not establish parity against a Japanese original-runtime capture,
 JP Continue, or movement behavior in later dungeons.
 
+The authentic US CloneCD ZIP menu-to-runtime regression now also sends the
+same six native movement inputs on Akutuba and requires the resulting party
+pose `(direction=2, x=3, y=0)` with three source-backed champions. This
+extends the bounded movement check to the real US launch route; it does not
+establish visual/gameplay parity or movement behavior in later dungeons.
+
 The local combined US/JP RAR passes its archive CRC test, but Firestaff does
 not accept RAR4 as a launch input. Its US CUE names `TQUS02.iso`, which is not
 an archive member; the archive has `TQUS02End.iso` instead. The separate

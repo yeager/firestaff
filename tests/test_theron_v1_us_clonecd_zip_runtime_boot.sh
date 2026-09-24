@@ -42,6 +42,7 @@ assert_route() {
     if [[ "$expected_phase" == theron-runtime ]] &&
        { ! grep -Fq 'startedFromLauncher=1' <<<"$output" ||
          ! grep -Fq 'levelLoaded=1' <<<"$output" ||
+         ! grep -Fq 'party=2,3,0 champions=3' <<<"$output" ||
          ! grep -Eq 'theronSourceObjects=[1-9][0-9]*' <<<"$output"; }; then
         printf '%s\n' "$output" >&2
         printf 'FAIL: %s did not load source-owned Theron runtime data\n' "$label" >&2
@@ -106,7 +107,8 @@ fi
 assert_route 'boot-probe launch inputs authentic CloneCD ZIP' theron-runtime \
     env FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 "$app" \
     --game theron --platform pce --data-dir "$archive" \
-    --script 'down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter' \
-    --boot-probe --boot-probe-frames 2 --duration 0
+    --script 'down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter,up,right,down,left,up,up' \
+    --boot-probe --boot-probe-frames 2 --boot-probe-expect-party 2,3,0 \
+    --boot-probe-expect-champions 3 --duration 0
 
-printf '%s\n' 'PASS: authentic Theron USA CloneCD ZIP reaches native direct and start-menu routes in memory'
+printf '%s\n' 'PASS: authentic Theron USA CloneCD ZIP reaches native start-menu runtime and accepts six movement inputs'

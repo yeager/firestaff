@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — Native movement from the authentic US CloneCD route
+
+- Extended the real US CloneCD ZIP menu-to-runtime regression with six native
+  movement inputs on the source-backed Akutuba map. It requires the resulting
+  party pose `(direction=2, x=3, y=0)`, all three source-backed champions and
+  source objects, while continuing to reject fallback graphics. This is a
+  bounded native route through authentic US media, not original-runtime visual
+  or gameplay parity and not later-dungeon movement evidence.
+
 ## 2026-09-24 — Native movement on the authentic Japanese Akutuba map
 
 - Extended the real JP raw-BIN M11 regression with six native directional
