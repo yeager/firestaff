@@ -33,6 +33,15 @@
   ordinary M12 handoff cases pass for DM1 and CSB; DM1's zero-champion startup
   and CSB's zero-champion startup remain open gameplay gaps in TODO.
 
+- 2026-09-24: Fixed native startup from authentic Theron's Quest US
+  CloneCD-derived raw CUE/BIN media. Its Track 02 slice omits the 225-sector
+  pregap, so campaign-mask and retrieval-text decoders now use CloneCD's
+  compact source layout while the verified receipts retain the normalized US
+  regional identity. On TRV2, the real-media CUE regression passed; the full
+  all-games launch gate also passed (207 passed, 0 failed, 3 optional skips).
+  The separate authentic ZIP CLI and keyboard-card routes pass; its mouse-card
+  route remains an unresolved failing test and is not claimed as complete.
+
 - 2026-09-24: The all-games direct-launch integration now advances Theron's
   authentic Japanese M12-selected edition through the ordinary M12-to-M11
   handoff and source-owned startup inputs, then asserts its loaded runtime

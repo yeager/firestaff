@@ -65,6 +65,7 @@ static int boot_init_source_theron_party(
     Theron_Track02RetrievalTextSource retrieval_source;
     Theron_Track02Variant variant;
     int regional_variant;
+    int source_layout_variant;
     int initialized;
 
     if (!profile || !world || !profile->assets_verified ||
@@ -78,6 +79,13 @@ static int boot_init_source_theron_party(
     }
     variant = theron_v1_track02_variant_for_md5(profile->graphics_md5);
     regional_variant = variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2;
+    /* The CloneCD Track 02 slice omits its 225-sector pregap. Its source
+     * decoders need that compact layout variant to relocate offsets; the
+     * decoded receipts themselves are then bound under the normalized US
+     * regional variant, like the full raw BIN and ISO paths. */
+    source_layout_variant =
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+            ? (int)variant : regional_variant;
     initialized =
         theron_v1_track02_raw_bytes_match_md5(
             bytes, length, profile->graphics_md5) &&
@@ -119,10 +127,10 @@ static int boot_init_source_theron_party(
         }
         initialized = initialized && user_data != NULL &&
             theron_v1_track02_decode_campaign_mask_source(
-                user_data, user_data_size, regional_variant,
+                user_data, user_data_size, source_layout_variant,
                 &campaign_source) &&
             theron_v1_track02_decode_retrieval_text_source(
-                user_data, user_data_size, regional_variant,
+                user_data, user_data_size, source_layout_variant,
                 &retrieval_source) &&
             theron_v1_world_bind_track02_retrieval_text_source(
                 world, &retrieval_source, regional_variant) &&
