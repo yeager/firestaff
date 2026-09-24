@@ -6728,6 +6728,44 @@ static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
  * G0021 palette consumer needs the same source light-index decision. */
 static int m11_compute_dungeon_palette_index(const M11_GameViewState* state);
 
+/* ReDMCSB DATA.C G0021 (MEDIA425), lines 218-230, records the six Atari ST
+ * dungeon palettes alongside their shared Amiga/DOS table. F0462 installs
+ * row zero at STARTUP2.C:1274; DRAWVIEW.C:744,776,880,1040 selects rows as
+ * light changes. The Atari values are 3-bit RGB register words, so expand
+ * each channel to RGB6 without borrowing the PC VGA palette. */
+static int m11_dm1_atari_st_dungeon_palette_rgb6(
+    const M11_GameViewState *state, uint8_t out_rgb6[256][3])
+{
+    static const uint16_t dungeon_palette_rgb3[6][16] = {
+        {0x000u,0x333u,0x444u,0x310u,0x066u,0x420u,0x040u,0x060u,
+         0x700u,0x750u,0x643u,0x770u,0x222u,0x555u,0x007u,0x777u},
+        {0x000u,0x222u,0x333u,0x310u,0x066u,0x410u,0x030u,0x050u,
+         0x600u,0x640u,0x532u,0x760u,0x111u,0x444u,0x006u,0x666u},
+        {0x000u,0x111u,0x222u,0x210u,0x066u,0x310u,0x020u,0x040u,
+         0x500u,0x530u,0x421u,0x750u,0x000u,0x333u,0x005u,0x555u},
+        {0x000u,0x000u,0x111u,0x100u,0x066u,0x210u,0x010u,0x030u,
+         0x400u,0x420u,0x310u,0x640u,0x000u,0x222u,0x004u,0x444u},
+        {0x000u,0x000u,0x000u,0x000u,0x066u,0x100u,0x000u,0x020u,
+         0x300u,0x310u,0x200u,0x530u,0x000u,0x111u,0x003u,0x333u},
+        {0x000u,0x000u,0x000u,0x000u,0x066u,0x000u,0x000u,0x010u,
+         0x200u,0x200u,0x100u,0x320u,0x000u,0x000u,0x002u,0x222u}
+    };
+    int palette_index;
+    int color;
+
+    if (!state || !out_rgb6 || !state->assetLoader.atariStDm1) return 0;
+    palette_index = m11_compute_dungeon_palette_index(state);
+    if (palette_index < 0) palette_index = 0;
+    if (palette_index > 5) palette_index = 5;
+    for (color = 0; color < 256; ++color) {
+        const uint16_t source = dungeon_palette_rgb3[palette_index][color & 15];
+        out_rgb6[color][0] = (uint8_t)(((source >> 8) & 7u) * 9u);
+        out_rgb6[color][1] = (uint8_t)(((source >> 4) & 7u) * 9u);
+        out_rgb6[color][2] = (uint8_t)((source & 7u) * 9u);
+    }
+    return 1;
+}
+
 /* The Amiga APPB/KAOS routes enter C03_GAME outside the PC3.4
  * C017/C040 runtime-session consumer below.  The first independently-bound
  * live game surface is C013: PANEL.C F0395 calls MENUDRAW.C F0021/F0660 to
@@ -42710,13 +42748,13 @@ static void m11_draw_viewport_background(const M11_GameViewState* state,
                DM1_VIEWPORT_WIDTH);
     }
     provider.state = state;
-    /* F20E/F20J (FM Towns) is MEDIA020, not PC 3.4 MEDIA720.  Its
-     * GRAPHICS.DAT contains 575 original records and DEFS.H gives
-     * M644/M650 = 75 (floor) and M651 = 76 (ceiling); applying I34's
-     * 78/79 selects unrelated records and clears the live view. */
+    /* Atari ST and FM Towns use the MEDIA020 graphics order, not PC 3.4
+     * MEDIA720. ReDMCSB DEFS.H:2270-2289 assigns M650/M651 to records 75/76;
+     * PC34's 78/79 are unrelated door records in these original packages. */
     provider.floor_graphic = (unsigned int)
-        ((state->assetLoader.legacyDm1 &&
-          !state->assetLoader.legacyBigEndian)
+        ((state->assetLoader.atariStDm1 ||
+          (state->assetLoader.legacyDm1 &&
+           !state->assetLoader.legacyBigEndian))
              ? 75 + floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT
              : M11_GFX_FIRST_FLOOR_SET +
                    floor_set * M11_GFX_FLOOR_SET_GRAPHIC_COUNT);
@@ -68578,6 +68616,18 @@ void M11_GameView_Draw(M11_GameViewState* state,
          * and visibly change authentic CSB colours. */
         (void)csb_v22_inplace_draw_set_indexed_palette_rgb6(rgb6);
         }
+    } else if (state && m11_is_dm1_source_kind(state->sourceKind) &&
+               state->assetLoader.atariStDm1) {
+        uint8_t rgb6[256][3];
+        /* Atari startup reaches M11 with authentic ST indices in its live
+         * framebuffer. Keep the DATA.C Atari palette active after F0462 so
+         * the source-owned dungeon page is visible instead of black. */
+        if (m11_dm1_atari_st_dungeon_palette_rgb6(state, rgb6)) {
+            (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+        } else {
+            M11_Render_ClearIndexedPaletteRgb6();
+        }
+        csb_v22_inplace_draw_clear_indexed_palette();
     } else if (state && m11_is_dm1_fmtowns(state) &&
                state->dm1FmtownsStartupReceiptValid &&
                state->dm1FmtownsStartupReceipt.game_dungeon_palettes_verified) {

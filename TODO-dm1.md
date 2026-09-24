@@ -207,16 +207,17 @@
   German Atari ST 1.2 and French Atari ST 1.3 now reach `dm1-runtime` through
   M12, but both source receipts have `championCount=0`; verify the original
   Champion Hall selection route into a playable party before closing that gap.
-- Investigate DM1 Atari ST runtime rendering with authentic German Atari ST
-  v1.2 STX: the presented 320x200 capture is all black even though the normal
-  M12 handoff mounts the dungeon and the live F0128 receipt reports a valid,
-  ready, dispatched plan. The M11 draw prelude clears indexed palettes for
-  Atari DM1 and only installs DM1 FM Towns dungeon palettes. ReDMCSB documents
-  a distinct Atari initialization (`DATA.C:792`) but its admitted palette
-  values are not present in the current local source/reference set. Locate
-  and bind the exact Atari runtime palette owner/values and prove non-black
-  real-media pixels before changing palette behavior; do not substitute the
-  PC VGA palette or infer values from the black capture.
+- Complete Atari ST campaign start through the source-owned Champion Hall
+  selection before claiming a playable start. German Atari ST 1.2 now presents
+  authentic source pixels through the normal M12 menu: ReDMCSB DEFS.H
+  MEDIA020 binds floor/ceiling records 75/76, and DATA.C's six Atari RGB3
+  dungeon palettes are installed in the M11 indexed renderer. A captured
+  320x200 first runtime frame has 17,773 nonblack pixels in six colours; this
+  is a visible-frame smoke check, not visual parity. The M12 handoff still
+  reports `championCount=0`, and the live view lacks a verified recruitment
+  route to a playable party. Implement and verify the authentic F0435/F0462
+  start path for Atari without inventing champions or treating the black
+  exterior/partial floor view as a complete game start.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,

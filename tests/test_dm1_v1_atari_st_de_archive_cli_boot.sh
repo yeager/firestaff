@@ -60,15 +60,21 @@ case "$app" in
     *) app_dir=. ;;
 esac
 runtime_probe="$app_dir/dm1-atari-st-de-runtime-$$.json"
-trap 'rm -f "$runtime_probe"' EXIT
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+capture_dir=$(mktemp -d "$scratch_root/dm1-atari-runtime.XXXXXX")
+trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir"' EXIT
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$archive" \
     --script 'enter,enter,enter,wait30,enter,wait60,enter' \
     --duration 20000 >/dev/null 2>&1
-python3 - "$runtime_probe" <<'PY'
+python3 - "$runtime_probe" "$capture_dir" <<'PY'
 import json
+import pathlib
+import struct
 import sys
 
 with open(sys.argv[1], encoding="utf-8") as probe_file:
@@ -84,7 +90,34 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
     raise SystemExit(f"FAIL: authentic German DM1 Atari start menu did not reach its source runtime state: {probe}")
-print("PASS: authentic German DM1 Atari start menu reached its source runtime state")
+captures = list(pathlib.Path(sys.argv[2]).glob("*.bmp"))
+if len(captures) != 1:
+    raise SystemExit(f"FAIL: expected one presented Atari runtime frame, got {len(captures)}")
+bitmap = captures[0].read_bytes()
+if len(bitmap) < 54 or bitmap[:2] != b"BM":
+    raise SystemExit("FAIL: Atari runtime capture is not a BMP")
+offset = struct.unpack_from("<I", bitmap, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", bitmap, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", bitmap, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if (width, height, bits) != (320, 200, 24) or offset + stride * height > len(bitmap):
+    raise SystemExit("FAIL: unexpected Atari runtime capture geometry")
+nonblack = 0
+colours = set()
+for row in range(height):
+    start = offset + row * stride
+    for column in range(width):
+        pixel = bitmap[start + column * 3:start + column * 3 + 3]
+        if pixel != b"\0\0\0":
+            nonblack += 1
+            colours.add(pixel)
+if nonblack < 10000 or len(colours) < 4:
+    raise SystemExit(
+        "FAIL: authentic Atari start-menu runtime remains black "
+        f"(nonblack={nonblack}, colours={len(colours)})")
+print("PASS: authentic German DM1 Atari start menu reached runtime and presented "
+      f"nonblack source pixels={nonblack} colours={len(colours)}")
 PY
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

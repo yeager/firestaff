@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-24: Fixed the all-black Atari ST runtime presentation by binding
+  MEDIA020 floor/ceiling graphics 75/76 and the six Atari RGB3 dungeon
+  palettes from ReDMCSB `DEFS.H` and `DATA.C` to M11. The authentic German
+  Atari ST v1.2 menu route now presents 17,773 nonblack pixels across six
+  colours in its 320x200 first runtime capture. The integration test checks
+  only for a visible multicolour frame, not visual parity. The campaign still
+  reaches M11 with no recruited champion (`championCount=0`); the Atari
+  Champion Hall/new-game flow remains open in `TODO-dm1.md`.
+
 - 2026-09-24: Fixed the Atari ST startup handoff so the authentic C001 title
   frame and source zoom sequence execute before the entrance sequence in both
   direct CLI and M12 launches. The runtime receipt now records title
