@@ -31,7 +31,7 @@ msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
 #: src/engine/main_loop_m11.c:429 src/engine/main_loop_m11.c:3916
-#: src/engine/main_loop_m11.c:3939 src/ui/menu_startup_m12.c:1040
+#: src/engine/main_loop_m11.c:3939 src/ui/menu_startup_m12.c:1043
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC RETURNS TO MENU"
 
@@ -47,1744 +47,1744 @@ msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5310
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5391
 msgid "ACCESSIBILITY"
 msgstr "ACCESSIBILITÀ"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5307
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5388
 msgid "AUDIO"
 msgstr "AUDIO"
 
-#: src/ui/menu_startup_m12.c:235
+#: src/ui/menu_startup_m12.c:237
 msgid "CONTROLS"
 msgstr "COMANDI"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:1863
-#: src/ui/menu_startup_m12.c:1875
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:1866
+#: src/ui/menu_startup_m12.c:1878
 msgid "GAME"
 msgstr "GIOCO"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5292
-#: src/ui/menu_startup_m12.c:10310
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5373
+#: src/ui/menu_startup_m12.c:10391
 msgid "GRAPHICS"
 msgstr "GRAFICA"
 
-#: src/ui/menu_startup_m12.c:236 src/ui/menu_startup_m12.c:5313
+#: src/ui/menu_startup_m12.c:238 src/ui/menu_startup_m12.c:5394
 msgid "ONLINE"
 msgstr "ONLINE"
 
-#: src/ui/menu_startup_m12.c:249
+#: src/ui/menu_startup_m12.c:251
 msgid "Graphics Mode"
 msgstr "Modalità grafica"
 
-#: src/ui/menu_startup_m12.c:249 src/ui/menu_startup_m12.c:263
+#: src/ui/menu_startup_m12.c:251 src/ui/menu_startup_m12.c:265
 msgid "Original"
 msgstr "Originale"
 
-#: src/ui/menu_startup_m12.c:250
+#: src/ui/menu_startup_m12.c:252
 msgid "Game Version"
 msgstr "Versione di gioco"
 
-#: src/ui/menu_startup_m12.c:250
+#: src/ui/menu_startup_m12.c:252
 msgid "V1"
 msgstr "V1"
 
-#: src/ui/menu_startup_m12.c:251
+#: src/ui/menu_startup_m12.c:253
 msgid "English"
 msgstr "Inglese"
 
-#: src/ui/menu_startup_m12.c:251
+#: src/ui/menu_startup_m12.c:253
 msgid "Language"
 msgstr "Lingua"
 
-#: src/ui/menu_startup_m12.c:252
+#: src/ui/menu_startup_m12.c:254
 msgid "Game Speed"
 msgstr "Velocità di gioco"
 
-#: src/ui/menu_startup_m12.c:252
+#: src/ui/menu_startup_m12.c:254
 msgid "Normal"
 msgstr "Normale"
 
-#: src/ui/menu_startup_m12.c:253
+#: src/ui/menu_startup_m12.c:255
 msgid "Classic"
 msgstr "Classico"
 
-#: src/ui/menu_startup_m12.c:253
+#: src/ui/menu_startup_m12.c:255
 msgid "Movement Mode"
 msgstr "Modalità di movimento"
 
-#: src/ui/menu_startup_m12.c:254
+#: src/ui/menu_startup_m12.c:256
 msgid "Cheats"
 msgstr "Trucchi"
 
-#: src/ui/menu_startup_m12.c:254
+#: src/ui/menu_startup_m12.c:256
 msgid "Off"
 msgstr "Spento"
 
-#: src/ui/menu_startup_m12.c:259
+#: src/ui/menu_startup_m12.c:261
 msgid "Maximized"
 msgstr "Massimizzato"
 
-#: src/ui/menu_startup_m12.c:259
+#: src/ui/menu_startup_m12.c:261
 msgid "Window Mode"
 msgstr "Modalità finestra"
 
-#: src/ui/menu_startup_m12.c:260
+#: src/ui/menu_startup_m12.c:262
 msgid "16:9"
 msgstr "16:9"
 
-#: src/ui/menu_startup_m12.c:260
+#: src/ui/menu_startup_m12.c:262
 msgid "Display Format"
 msgstr "Formato schermo"
 
-#: src/ui/menu_startup_m12.c:261 src/ui/menu_startup_m12.c:262
+#: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:264
 msgid "On"
 msgstr "Acceso"
 
-#: src/ui/menu_startup_m12.c:261
+#: src/ui/menu_startup_m12.c:263
 msgid "VSync"
 msgstr "VSync"
 
-#: src/ui/menu_startup_m12.c:262
+#: src/ui/menu_startup_m12.c:264
 msgid "Integer Scaling"
 msgstr "Scalatura intera"
 
-#: src/ui/menu_startup_m12.c:263
+#: src/ui/menu_startup_m12.c:265
 msgid "Viewport Style"
 msgstr "Stile visuale"
 
-#: src/ui/menu_startup_m12.c:264
+#: src/ui/menu_startup_m12.c:266
 msgid "Original VGA"
 msgstr "VGA originale"
 
-#: src/ui/menu_startup_m12.c:264
+#: src/ui/menu_startup_m12.c:266
 msgid "Palette Mode"
 msgstr "Modalità tavolozza"
 
-#: src/ui/menu_startup_m12.c:395 src/ui/menu_startup_m12.c:425
-#: src/ui/menu_startup_m12.c:464 src/ui/menu_startup_m12.c:470
-#: src/ui/menu_startup_m12.c:473 src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:398 src/ui/menu_startup_m12.c:428
+#: src/ui/menu_startup_m12.c:467 src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:476 src/ui/menu_startup_m12.c:482
 msgid "ORIGINAL"
 msgstr "ORIGINAL"
 
-#: src/ui/menu_startup_m12.c:425
+#: src/ui/menu_startup_m12.c:428
 msgid "PATCHED"
 msgstr "PATCHED"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "DE"
 msgstr "DE"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "EN"
 msgstr "EN"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "FR"
 msgstr "FR"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "JA"
 msgstr "JA"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "SV"
 msgstr "SV"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "ZH"
 msgstr "ZH"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "CS"
 msgstr "CS"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "DA"
 msgstr "DA"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "ES"
 msgstr "ES"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "FI"
 msgstr "FI"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "HU"
 msgstr "HU"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "IT"
 msgstr "IT"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "ID"
 msgstr "ID"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "KO"
 msgstr "KO"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "NL"
 msgstr "NL"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "NO"
 msgstr "NO"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "PL"
 msgstr "PL"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "PT"
 msgstr "PT"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "RU"
 msgstr "RU"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "TR"
 msgstr "TR"
 
-#: src/ui/menu_startup_m12.c:440 src/ui/menu_startup_m12.c:446
-#: src/ui/menu_startup_m12.c:468 src/ui/menu_startup_m12.c:471
-#: src/ui/menu_startup_m12.c:4757 src/ui/menu_startup_m12.c:4901
+#: src/ui/menu_startup_m12.c:443 src/ui/menu_startup_m12.c:449
+#: src/ui/menu_startup_m12.c:471 src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:4838 src/ui/menu_startup_m12.c:4982
 msgid "AUTO"
 msgstr "AUTO"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "DEUTSCH"
 msgstr "DEUTSCH"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "ENGLISH"
 msgstr "ENGLISH"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "FRANÇAIS"
 msgstr "FRANCAIS"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "SVENSKA"
 msgstr "SVENSKA"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "日本語"
 msgstr "日本語"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "简体中文"
 msgstr "简体中文"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "DANSK"
 msgstr "DANSK"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "ESPAÑOL"
 msgstr "ESPAÑOL"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "ITALIANO"
 msgstr "ENGLISH"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "MAGYAR"
 msgstr "MAGIARO"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "SUOMI"
 msgstr "SUOMI"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "ČEŠTINA"
 msgstr "ČESTINA"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "NEDERLANDS"
 msgstr "NEDERLANDS"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "NORSK BOKMÅL"
 msgstr "NORSK BOKMÅL"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "POLSKI"
 msgstr "POLSKI"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "PORTUGUÊS"
 msgstr "PORTOGHESE"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "한국어"
 msgstr "한국어"
 
-#: src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:449
 msgid "BAHASA INDONESIA"
 msgstr "BAHASA INDONESIA"
 
-#: src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:449
 msgid "TÜRKÇE"
 msgstr "TÜRKÇE"
 
-#: src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:449
 msgid "РУССКИЙ"
 msgstr "РУССКИЙ"
 
-#: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
-#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_m12.c:474
-#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:476
-#: src/ui/menu_startup_m12.c:4887 src/ui/menu_startup_m12.c:4992
+#: src/ui/menu_startup_m12.c:453 src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:478 src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:4968 src/ui/menu_startup_m12.c:5073
 msgid "OFF"
 msgstr "OFF"
 
-#: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:453 src/ui/menu_startup_m12.c:469
 #: src/ui/menu_startup_render_modern_m12.c:2383
 msgid "ON"
 msgstr "ON"
 
-#: src/ui/menu_startup_m12.c:451
+#: src/ui/menu_startup_m12.c:454
 msgid "FASTER"
 msgstr "FASTER"
 
-#: src/ui/menu_startup_m12.c:451
+#: src/ui/menu_startup_m12.c:454
 msgid "NORMAL"
 msgstr "NORMAL"
 
-#: src/ui/menu_startup_m12.c:451
+#: src/ui/menu_startup_m12.c:454
 msgid "SLOWER"
 msgstr "SLOWER"
 
-#: src/ui/menu_startup_m12.c:457
+#: src/ui/menu_startup_m12.c:460
 msgid "FIT"
 msgstr "ADATTA"
 
-#: src/ui/menu_startup_m12.c:457
+#: src/ui/menu_startup_m12.c:460
 msgid "FIT SMOOTH"
 msgstr "FLUIDO"
 
-#: src/ui/menu_startup_m12.c:467
+#: src/ui/menu_startup_m12.c:470
 msgid "LINEAR"
 msgstr "LINEARE"
 
-#: src/ui/menu_startup_m12.c:467
+#: src/ui/menu_startup_m12.c:470
 msgid "NEAREST"
 msgstr "PIÙ VICINO"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "OPENGL"
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "SDL"
 msgstr "SDL"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "SOFTWARE"
 msgstr "SOFTWARE"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "VULKAN"
 msgstr "VULKAN"
 
-#: src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:472
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:469 src/ui/menu_startup_render_modern_m12.c:1978
+#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_render_modern_m12.c:1978
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
-#: src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:473
 msgid "EXPANDED"
 msgstr "ESPANSO"
 
-#: src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:473
 msgid "WIDESCREEN"
 msgstr "SCHERMO PANORAMICO"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:474
 msgid "GAMEPAD"
 msgstr "CONTROLLER"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:474
 msgid "KEYBOARD+MOUSE"
 msgstr "TASTIERA+MOUSE"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:474
 msgid "TOUCH"
 msgstr "TOCCO"
 
-#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:478
 msgid "FULL"
 msgstr "COMPLETO"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:475
 msgid "LARGE"
 msgstr "GRANDE"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:475
 msgid "MINIMAL"
 msgstr "MINIMO"
 
-#: src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:476
 msgid "FAST"
 msgstr "VELOCE"
 
-#: src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:476
 msgid "SMOOTH"
 msgstr "FLUIDO"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:477
 msgid "COORDS"
 msgstr "COORDINATE"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:477
 msgid "DRAW ORDER"
 msgstr "ORDINE DI DISEGNO"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:477
 msgid "QUEUE"
 msgstr "CODA"
 
-#: src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:478
 msgid "QUICK"
 msgstr "RAPIDO"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:479
 msgid "DEUT"
 msgstr "DEUT"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:479
 msgid "PROT"
 msgstr "PROT"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:479
 msgid "TRIT"
 msgstr "TRIT"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "AMIGA"
 msgstr "AMIGA"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "CGA"
 msgstr "CGA"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "CLASSIC"
 msgstr "CLASSICO"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "DARK"
 msgstr "SCURO"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "DUNGEON"
 msgstr "SOTTERRANEO"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "STARS"
 msgstr "STELLE"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "STATIC"
 msgstr "STATICO"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "TORCH"
 msgstr "TORCIA"
 
-#: src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:482
 msgid "CUSTOM"
 msgstr "PERSONALIZZATO"
 
-#: src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:482
 msgid "REMASTERED"
 msgstr "RIMASTERIZZATO"
 
-#: src/ui/menu_startup_m12.c:755 src/ui/menu_startup_m12.c:776
-#: src/ui/menu_startup_m12.c:9775 src/ui/menu_startup_m12.c:10218
+#: src/ui/menu_startup_m12.c:758 src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:9856 src/ui/menu_startup_m12.c:10299
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2647
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
-#: src/ui/menu_startup_m12.c:756 src/ui/menu_startup_m12.c:786
-#: src/ui/menu_startup_m12.c:9777 src/ui/menu_startup_m12.c:10232
+#: src/ui/menu_startup_m12.c:759 src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:9858 src/ui/menu_startup_m12.c:10313
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2650
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
-#: src/ui/menu_startup_m12.c:757 src/ui/menu_startup_m12.c:796
+#: src/ui/menu_startup_m12.c:760 src/ui/menu_startup_m12.c:799
 #: src/ui/menu_startup_render_modern_m12.c:1476
 msgid "DUNGEON MASTER II"
 msgstr "DUNGEON MASTER II"
 
-#: src/ui/menu_startup_m12.c:758
+#: src/ui/menu_startup_m12.c:761
 msgid "DUNGEON MASTER NEXUS"
 msgstr "DUNGEON MASTER NEXUS"
 
-#: src/ui/menu_startup_m12.c:760
+#: src/ui/menu_startup_m12.c:763
 msgid "THERON'S QUEST"
 msgstr "THERON'S QUEST"
 
-#: src/ui/menu_startup_m12.c:761
+#: src/ui/menu_startup_m12.c:764
 msgid "CSB UTILITY DISK (FM TOWNS)"
 msgstr "DISCO UTILITY CSB (FM TOWNS)"
 
-#: src/ui/menu_startup_m12.c:762
+#: src/ui/menu_startup_m12.c:765
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "DISCO UTILITY CSB — SUGGERIMENTO ORACLE"
 
-#: src/ui/menu_startup_m12.c:763 src/ui/menu_startup_m12.c:11152
-#: src/ui/menu_startup_m12.c:11155 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:766 src/ui/menu_startup_m12.c:11233
+#: src/ui/menu_startup_m12.c:11236 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "MUSEO DELLA TRADIZIONE"
 
-#: src/ui/menu_startup_m12.c:764 src/ui/menu_startup_m12.c:8130
-#: src/ui/menu_startup_m12.c:8699 src/ui/menu_startup_m12.c:9971
-#: src/ui/menu_startup_m12.c:11187 src/ui/menu_startup_m12.c:11190
-#: src/ui/menu_startup_m12.c:11335
+#: src/ui/menu_startup_m12.c:767 src/ui/menu_startup_m12.c:8211
+#: src/ui/menu_startup_m12.c:8780 src/ui/menu_startup_m12.c:10052
+#: src/ui/menu_startup_m12.c:11268 src/ui/menu_startup_m12.c:11271
+#: src/ui/menu_startup_m12.c:11416
 msgid "SETTINGS"
 msgstr "SETTINGS"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:780
 msgid "THE ORIGINAL DUNGEON CRAWL"
 msgstr "L'ORIGINALE DUNGEON CRAWL"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "1987 FTL GAMES"
 msgstr "1987 FTL GAMES"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "CHAMPIONS ENTER THE DUNGEON"
 msgstr "I CAMPIONI ENTRANO NEL DUNGEON"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "FOUR PORTRAITS BECOME A PARTY"
 msgstr "QUATTRO RITRATTI DIVENTANO UN GRUPPO"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
 msgstr "LA PRESSIONE IN TEMPO REALE DEFINISCE LA LEGGENDA"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
 msgstr "IL FIRESTAFF È LA RELIQUIA CENTRALE"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "KEY LORE THREADS"
 msgstr "TEMI CHIAVE DELLA TRAMA"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "LORD CHAOS SHATTERS ORDER"
 msgstr "LORD CHAOS FRANTUMA L'ORDINE"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "RA RETURNS AS MASTER OF BALANCE"
 msgstr "RA RITORNA COME MAESTRO DELL'EQUILIBRIO"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "THE DUNGEON IS BOTH TEST AND PRISON"
 msgstr "IL DUNGEON È SIA PROVA CHE PRIGIONE"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "THE GREY LORD IS DIVIDED"
 msgstr "IL SIGNORE GRIGIO È DIVISO"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
 msgstr "FIRESTAFF REGISTRA PROVE NON CONGETTURE"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
 msgstr "GRAPHICS DAT E DUNGEON DAT SONO VERIFICATI"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
 msgstr "I DATI ORIGINALI CON HASH RESTANO FORNITI DALL'UTENTE"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "PC AND ATARI ST LINEAGE MATTERS"
 msgstr "LA DISCENDENZA PC E ATARI ST CONTA"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "PRESERVATION NOTES"
 msgstr "NOTE DI CONSERVAZIONE"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:790
 msgid "THE CHAMPIONS RETURN"
 msgstr "IL RITORNO DEI CAMPIONI"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "CSB REWARDS MAP MEMORY AND NERVE"
 msgstr "CSB PREMIA LA MEMORIA DELLA MAPPA E IL CORAGGIO"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
 msgstr "I SISTEMI DI DUNGEON MASTER DIVENTANO PIÙ DENSI"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "EXPANSION AND SEQUEL DESIGN"
 msgstr "DESIGN DI ESPANSIONE E SEQUEL"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "FOUR PATHS TEST MASTERY"
 msgstr "QUATTRO PERCORSI METTONO ALLA PROVA LA MAESTRIA"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
 msgstr "LA RICERCA DEL CORBUM SOSTITUISCE LA SEMPLICE DISCESA"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "CHAOS STILL CASTS A LONG SHADOW"
 msgstr "CHAOS PROIETTA ANCORA UN'OMBRA LUNGA"
 
-#: src/ui/menu_startup_m12.c:790 src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:803
 msgid "LORE SHAPE"
 msgstr "STRUTTURA DELLA TRAMA"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
 msgstr "I CAMPIONI DI RITORNO AFFRONTANO UN LABIRINTO PIÙ DIFFICILE"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "THE PLAYER HUNTS CORBUM MATERIAL"
 msgstr "IL GIOCATORE CACCIA IL MATERIALE CORBUM"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "THE WORLD FEELS OLDER AND LESS SAFE"
 msgstr "IL MONDO SEMBRA PIÙ ANTICO E MENO SICURO"
 
-#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:794 src/ui/menu_startup_m12.c:804
 msgid "ARCHIVE STATUS"
 msgstr "STATO ARCHIVIO"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
 msgstr "CSBGRAPH DAT E CSB DAT SONO TRACCIATI"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
 msgstr "IL LAUNCHER MOSTRA PRONTO SOLO SE CORRISPONDE"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
 msgstr "IL CONTENUTO DEL MUSEO RESTA STATICO E LIMITATO"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "VERSION SLOTS USE HASH EVIDENCE"
 msgstr "GLI SLOT DI VERSIONE USANO PROVE HASH"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:800
 msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
 msgstr "LA LEGGENDA OLTRE IL PRIMO DUNGEON"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
 msgstr "DM2 MANTIENE IL NUCLEO DI SOPRAVVIVENZA DEL GRUPPO"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
 msgstr "SGHERRI E METEO CAMBIANO IL RITMO"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
 msgstr "SPAZI ESTERNI E NEGOZI AMPLIANO LA FORMULA"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
 msgstr "LA SERIE VA OLTRE IL LABIRINTO ORIGINALE"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "THE SKULLKEEP ERA"
 msgstr "L'ERA DI SKULLKEEP"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
 msgstr "TECNOLOGIA E MAGIA CONDIVIDONO LA SCENA"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "THE PLAYER ASSEMBLES AND SURVIVES"
 msgstr "IL GIOCATORE SI ORGANIZZA E SOPRAVVIVE"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
 msgstr "IL TONO È PIÙ STRANO E PIÙ MECCANICO"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
 msgstr "IL MONDO È PIÙ VASTO DEL MONTE ANAIAS"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
 msgstr "GLI ASSET BINARI RESTANO FUORI DA QUESTA FASE"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
 msgstr "IL CONTENUTO QUI È UNA GUIDA, NON UN DUMP DI DATI"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
 msgstr "DM2GRAPHICS DAT E DM2DUNGEON DAT SONO TRACCIATI"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
 msgstr "LE VERSIONI SUPPORTATE POSSONO AUMENTARE NEL TEMPO"
 
-#: src/ui/menu_startup_m12.c:806
+#: src/ui/menu_startup_m12.c:809
 msgid "FIRESTAFF PROJECT"
 msgstr "PROGETTO FIRESTAFF"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:810
 msgid "ABOUT AND CREDITS"
 msgstr "INFORMAZIONI E CREDITI"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
 msgstr "DETERMINISTICO, MODULARE, DI LIVELLO MUSEALE"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "OPEN DUNGEON MASTER ENGINE"
 msgstr "MOTORE DUNGEON MASTER APERTO"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
 msgstr "I DATI ORIGINALI SONO VERIFICATI, NON INCLUSI"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "PROJECT PURPOSE"
 msgstr "SCOPO DEL PROGETTO"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "V1 PRESERVES BASELINE BEHAVIOUR"
 msgstr "V1 PRESERVA IL COMPORTAMENTO DI BASE"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL HA DOCUMENTATO UNA STORIA FONDAMENTALE"
 
-#: src/ui/menu_startup_m12.c:810 src/ui/menu_startup_m12.c:11169
-#: src/ui/menu_startup_m12.c:11172
+#: src/ui/menu_startup_m12.c:813 src/ui/menu_startup_m12.c:11250
+#: src/ui/menu_startup_m12.c:11253
 msgid "CREDITS"
 msgstr "CREDITI"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
 msgstr "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
 msgstr "FTL GAMES E SOFTWARE HEAVEN HANNO CREATO GLI ORIGINALI"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
 msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "NO CLAIM OF OFFICIAL AFFILIATION"
 msgstr "NESSUNA RIVENDICAZIONE DI AFFILIAZIONE UFFICIALE"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "PROJECT BOUNDARIES"
 msgstr "LIMITI DEL PROGETTO"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "REGRESSION PROBES GUARD MENU STABILITY"
 msgstr "I TEST DI REGRESSIONE PROTEGGONO LA STABILITÀ DEL MENU"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
 msgstr "IL TESTO TRACCIATO RESTA IN INGLESE NEL REPOSITORY"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
 msgstr "SONO NECESSARI I DATI ORIGINALI FORNITI DALL'UTENTE"
 
-#: src/ui/menu_startup_m12.c:816
+#: src/ui/menu_startup_m12.c:819
 msgid "TECHNICAL ARCHIVE"
 msgstr "ARCHIVIO TECNICO"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:820
 msgid "SOURCE EVIDENCE AND VERIFICATION"
 msgstr "PROVE DELLE FONTI E VERIFICA"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "EVIDENCE MODEL"
 msgstr "MODELLO DI VERIFICA"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "KNOWN FILES ARE MATCHED BY HASH"
 msgstr "I FILE NOTI VENGONO ABBINATI TRAMITE HASH"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
 msgstr "NESSUN RIPIEGO SILENZIOSO SU ORIGINALI SCONOSCIUTI"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
 msgstr "I PERCORSI DI RUNTIME SEGNALANO I DATI MANCANTI IN SICUREZZA"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "VERSION MATRICES STAY EXPLICIT"
 msgstr "LE MATRICI DI VERSIONE RESTANO ESPLICITE"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "ESCAPE RETURNS BEFORE EXITING"
 msgstr "ESC TORNA INDIETRO PRIMA DI USCIRE"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "KEYBOARD INPUT IS BOUNDED"
 msgstr "L'INPUT DA TASTIERA È LIMITATO"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
 msgstr "I CLIC DEL MOUSE PASSANO ATTRAVERSO LO STATO CONDIVISO"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "STARTUP MENU"
 msgstr "MENU DI AVVIO"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "UNKNOWN KEYS ARE NO OPS"
 msgstr "I TASTI SCONOSCIUTI NON HANNO EFFETTO"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "ADD INTERVIEW AND TIMELINE SOURCES"
 msgstr "AGGIUNGI FONTI DI INTERVISTE E CRONOLOGIA"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "ADD MANUAL EXCERPT REFERENCES"
 msgstr "AGGIUNGI RIFERIMENTI A ESTRATTI DEL MANUALE"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "ADD SMALL CURATED SCREEN PANELS"
 msgstr "AGGIUNGI PICCOLI PANNELLI SELEZIONATI"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "FUTURE MUSEUM WORK"
 msgstr "LAVORI FUTURI DEL MUSEO"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
 msgstr "TIENI FUORI GLI ASSET DI GRANDI DIMENSIONI FINO ALLA LICENZA"
 
-#: src/ui/menu_startup_m12.c:893
+#: src/ui/menu_startup_m12.c:896
 msgid "FULLSCREEN"
 msgstr "FULLSCREEN"
 
-#: src/ui/menu_startup_m12.c:893
+#: src/ui/menu_startup_m12.c:896
 msgid "MAXIMIZED"
 msgstr "MASSIMIZZATO"
 
-#: src/ui/menu_startup_m12.c:893
+#: src/ui/menu_startup_m12.c:896
 msgid "WINDOWED"
 msgstr "WINDOWED"
 
-#: src/ui/menu_startup_m12.c:1023
+#: src/ui/menu_startup_m12.c:1026
 msgid "FRONTEND PREVIEW"
 msgstr "FRONTEND PREVIEW"
 
-#: src/ui/menu_startup_m12.c:1024
+#: src/ui/menu_startup_m12.c:1027
 msgid "SELECT A DESTINATION"
 msgstr "SELECT A DESTINATION"
 
-#: src/ui/menu_startup_m12.c:1026
+#: src/ui/menu_startup_m12.c:1029
 msgid "STATUS"
 msgstr "STATUS"
 
-#: src/ui/menu_startup_m12.c:1027
+#: src/ui/menu_startup_m12.c:1030
 msgid "LAUNCHER DESTINATIONS"
 msgstr "LAUNCHER DESTINATIONS"
 
-#: src/ui/menu_startup_m12.c:1028
+#: src/ui/menu_startup_m12.c:1031
 msgid "DATA DIR"
 msgstr "DATA DIR"
 
-#: src/ui/menu_startup_m12.c:1029
+#: src/ui/menu_startup_m12.c:1032
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 
-#: src/ui/menu_startup_m12.c:1030
+#: src/ui/menu_startup_m12.c:1033
 msgid "PERSISTED OPTIONS"
 msgstr "PERSISTED OPTIONS"
 
-#: src/ui/menu_startup_m12.c:1031 src/ui/menu_startup_m12.c:10308
-#: src/ui/menu_startup_m12.c:12379
+#: src/ui/menu_startup_m12.c:1034 src/ui/menu_startup_m12.c:10389
+#: src/ui/menu_startup_m12.c:12460
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
-#: src/ui/menu_startup_m12.c:1032
+#: src/ui/menu_startup_m12.c:1035
 msgid "GRAPHICS MODE"
 msgstr "GRAPHICS MODE"
 
-#: src/ui/menu_startup_m12.c:1033
+#: src/ui/menu_startup_m12.c:1036
 msgid "RENDERER BACKEND"
 msgstr "RENDERER BACKEND"
 
-#: src/ui/menu_startup_m12.c:1034
+#: src/ui/menu_startup_m12.c:1037
 msgid "RENDERER BACKEND UNAVAILABLE"
 msgstr "RENDERER BACKEND UNAVAILABLE"
 
-#: src/ui/menu_startup_m12.c:1035
+#: src/ui/menu_startup_m12.c:1038
 msgid "WINDOW MODE"
 msgstr "WINDOW MODE"
 
-#: src/ui/menu_startup_m12.c:1036
+#: src/ui/menu_startup_m12.c:1039
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
 msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
 
-#: src/ui/menu_startup_m12.c:1037
+#: src/ui/menu_startup_m12.c:1040
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 
-#: src/ui/menu_startup_m12.c:1038
+#: src/ui/menu_startup_m12.c:1041
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER OR ESC RETURNS TO MENU"
 
-#: src/ui/menu_startup_m12.c:1039 src/ui/menu_startup_m12.c:8140
+#: src/ui/menu_startup_m12.c:1042 src/ui/menu_startup_m12.c:8221
 msgid "READY TO LAUNCH"
 msgstr "READY TO LAUNCH"
 
-#: src/ui/menu_startup_m12.c:1041
+#: src/ui/menu_startup_m12.c:1044
 msgid "VALIDATOR SCAFFOLD ONLY"
 msgstr "VALIDATOR SCAFFOLD ONLY"
 
-#: src/ui/menu_startup_m12.c:1042
+#: src/ui/menu_startup_m12.c:1045
 msgid "ADD VERIFIED RETAIL HASHES"
 msgstr "ADD VERIFIED RETAIL HASHES"
 
-#: src/ui/menu_startup_m12.c:1043
+#: src/ui/menu_startup_m12.c:1046
 msgid "GAME DATA NOT FOUND"
 msgstr "GAME DATA NOT FOUND"
 
-#: src/ui/menu_startup_m12.c:1044
+#: src/ui/menu_startup_m12.c:1047
 msgid "CHECK FIRESTAFF DATA DIR"
 msgstr "CHECK FIRESTAFF DATA DIR"
 
-#: src/ui/menu_startup_m12.c:1045
+#: src/ui/menu_startup_m12.c:1048
 msgid "ORIGINAL FILES NOT FOUND"
 msgstr "FILE ORIGINALI NON TROVATI"
 
-#: src/ui/menu_startup_m12.c:1046
+#: src/ui/menu_startup_m12.c:1049
 msgid "COPY YOUR RETAIL GAME FILES INTO:"
 msgstr "COPIA I TUOI FILE ORIGINALI DEL GIOCO IN:"
 
-#: src/ui/menu_startup_m12.c:1047
+#: src/ui/menu_startup_m12.c:1050
 msgid "ART SLOT READY"
 msgstr "ART SLOT READY"
 
-#: src/ui/menu_startup_m12.c:1048
+#: src/ui/menu_startup_m12.c:1051
 msgid "ART SLOT EMPTY"
 msgstr "ART SLOT EMPTY"
 
-#: src/ui/menu_startup_m12.c:1049
+#: src/ui/menu_startup_m12.c:1052
 msgid "DROP ART INTO SLOT"
 msgstr "DROP ART INTO SLOT"
 
-#: src/ui/menu_startup_m12.c:1050
+#: src/ui/menu_startup_m12.c:1053
 msgid "CARD ART ACTIVE"
 msgstr "CARD ART ACTIVE"
 
-#: src/ui/menu_startup_m12.c:1051
+#: src/ui/menu_startup_m12.c:1054
 msgid "CARD ART SLOT"
 msgstr "CARD ART SLOT"
 
-#: src/ui/menu_startup_m12.c:1052
+#: src/ui/menu_startup_m12.c:1055
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "L'ARCHIVIO DATI DI GIOCO RICHIEDE UNO STRUMENTO"
 
-#: src/ui/menu_startup_m12.c:1053
+#: src/ui/menu_startup_m12.c:1056
 #, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr "ARCHIVIO: %s  INSTALLA: %s"
 
-#: src/ui/menu_startup_m12.c:1054
+#: src/ui/menu_startup_m12.c:1057
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "INSTALLALO, POI RISCANSIONA I DATI DI GIOCO"
 
-#: src/ui/menu_startup_m12.c:1865 src/ui/menu_startup_m12.c:8710
+#: src/ui/menu_startup_m12.c:1868 src/ui/menu_startup_m12.c:8791
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1867 src/ui/menu_startup_m12.c:8710
+#: src/ui/menu_startup_m12.c:1870 src/ui/menu_startup_m12.c:8791
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
-#: src/ui/menu_startup_m12.c:1870
+#: src/ui/menu_startup_m12.c:1873
 msgid "Dungeon Master II: The Legend of Skullkeep"
 msgstr "Dungeon Master II: The Legend of Skullkeep"
 
-#: src/ui/menu_startup_m12.c:1872
+#: src/ui/menu_startup_m12.c:1875
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8711
+#: src/ui/menu_startup_m12.c:1877 src/ui/menu_startup_m12.c:8792
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
-#: src/ui/menu_startup_m12.c:1895 src/ui/menu_startup_m12.c:2522
-#: src/ui/menu_startup_m12.c:2573
+#: src/ui/menu_startup_m12.c:1898 src/ui/menu_startup_m12.c:2525
+#: src/ui/menu_startup_m12.c:2576
 msgid "STARTING"
 msgstr "AVVIO"
 
-#: src/ui/menu_startup_m12.c:1897
+#: src/ui/menu_startup_m12.c:1900
 msgid "CHECKING CACHED RESUME PATHS"
 msgstr "CONTROLLO DEI PERCORSI DEL RESUME NELLA CACHE"
 
-#: src/ui/menu_startup_m12.c:1899
+#: src/ui/menu_startup_m12.c:1902
 msgid "CHECKING DIRECT LAUNCH PATH"
 msgstr "VERIFICA DEL PERCORSO DI AVVIO DIRETTO"
 
-#: src/ui/menu_startup_m12.c:1901
+#: src/ui/menu_startup_m12.c:1904
 msgid "CHECKING EXPLICIT FILE REQUEST"
 msgstr "VERIFICA RICHIESTA FILE ESPLICITA"
 
-#: src/ui/menu_startup_m12.c:1903
+#: src/ui/menu_startup_m12.c:1906
 msgid "BUILDING SEARCH ROOTS"
 msgstr "COSTRUIRE LE RADICI DELLA RICERCA"
 
-#: src/ui/menu_startup_m12.c:1905
+#: src/ui/menu_startup_m12.c:1908
 msgid "CHECKING ORIGINAL FILE CANDIDATES"
 msgstr "VERIFICA FILE ORIGINALE CANDIDATI"
 
-#: src/ui/menu_startup_m12.c:1907
+#: src/ui/menu_startup_m12.c:1910
 msgid "MATCHING GAME VERSIONS"
 msgstr "VERSIONI DI GIOCO ABBINATE"
 
-#: src/ui/menu_startup_m12.c:1909
+#: src/ui/menu_startup_m12.c:1912
 msgid "MATCHING REQUIRED FILES"
 msgstr "FILE RICHIESTI CORRISPONDENTI"
 
-#: src/ui/menu_startup_m12.c:1911
+#: src/ui/menu_startup_m12.c:1914
 msgid "MATERIALIZING LAUNCH CACHE"
 msgstr "MATERIALIZZAZIONE DELLA CACHE DI LANCIO"
 
-#: src/ui/menu_startup_m12.c:1913
+#: src/ui/menu_startup_m12.c:1916
 msgid "REFRESHING MEDIA METADATA"
 msgstr "AGGIORNAMENTO DEI METADATI MEDIA"
 
-#: src/ui/menu_startup_m12.c:1967 src/ui/menu_startup_m12.c:5008
-#: src/ui/menu_startup_m12.c:5248
+#: src/ui/menu_startup_m12.c:1970 src/ui/menu_startup_m12.c:5089
+#: src/ui/menu_startup_m12.c:5329
 msgid "NOT SET"
 msgstr "NON IMPOSTATO"
 
-#: src/ui/menu_startup_m12.c:2091
+#: src/ui/menu_startup_m12.c:2094
 msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
 msgstr "COPIA I FILE DI GIOCO IN Documents/Firestaff/data USANDO UN FILE MANAGER"
 
-#: src/ui/menu_startup_m12.c:2093
+#: src/ui/menu_startup_m12.c:2096
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "USA L'APP FILE PER COPIARE I FILE DI GIOCO IN Firestaff/data IN QUESTA APP"
 
-#: src/ui/menu_startup_m12.c:2095
+#: src/ui/menu_startup_m12.c:2098
 msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
 msgstr "COPIA I TUOI FILE ORIGINALI DEL GIOCO IN:"
 
-#: src/ui/menu_startup_m12.c:2114
+#: src/ui/menu_startup_m12.c:2117
 msgid "NO GAME DATA FOUND"
 msgstr "NESSUN DATO DI GIOCO TROVATO"
 
-#: src/ui/menu_startup_m12.c:2167 src/ui/menu_startup_m12.c:9463
-#: src/ui/menu_startup_m12.c:9578
+#: src/ui/menu_startup_m12.c:2170 src/ui/menu_startup_m12.c:9544
+#: src/ui/menu_startup_m12.c:9659
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:2214
+#: src/ui/menu_startup_m12.c:2217
 msgid "DATA DIRECTORY UPDATED"
 msgstr "DIRECTORY DATI AGGIORNATA"
 
-#: src/ui/menu_startup_m12.c:2215 src/ui/menu_startup_m12.c:2979
+#: src/ui/menu_startup_m12.c:2218 src/ui/menu_startup_m12.c:2982
 msgid "DATA DIRECTORY UNCHANGED"
 msgstr "DIRECTORY DATI INVARIATO"
 
-#: src/ui/menu_startup_m12.c:2257 src/ui/menu_startup_m12.c:2355
-#: src/ui/menu_startup_m12.c:2521 src/ui/menu_startup_m12.c:2572
-#: src/ui/menu_startup_m12.c:12963
+#: src/ui/menu_startup_m12.c:2260 src/ui/menu_startup_m12.c:2358
+#: src/ui/menu_startup_m12.c:2524 src/ui/menu_startup_m12.c:2575
+#: src/ui/menu_startup_m12.c:13044
 msgid "SCANNING GAME DATA"
 msgstr "SCANSIONE DATI DI GIOCO"
 
-#: src/ui/menu_startup_m12.c:2354
+#: src/ui/menu_startup_m12.c:2357
 msgid "CANCELLING DATA SCAN"
 msgstr "ANNULLAMENTO SCANSIONE DATI"
 
-#: src/ui/menu_startup_m12.c:2357
+#: src/ui/menu_startup_m12.c:2360
 msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr "IN ATTESA DEL TERMINE DEL CONTROLLO DEL FILE CORRENTE"
 
-#: src/ui/menu_startup_m12.c:2486 src/ui/menu_startup_m12.c:2556
+#: src/ui/menu_startup_m12.c:2489 src/ui/menu_startup_m12.c:2559
 msgid "DATA DIRECTORY NOT FOUND"
 msgstr "DATI DI GIOCO NON TROVATI"
 
-#: src/ui/menu_startup_m12.c:2487 src/ui/menu_startup_m12.c:2557
-#: src/ui/menu_startup_m12.c:2603 src/ui/menu_startup_m12.c:12932
+#: src/ui/menu_startup_m12.c:2490 src/ui/menu_startup_m12.c:2560
+#: src/ui/menu_startup_m12.c:2606 src/ui/menu_startup_m12.c:13013
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "SCEGLI UNA CARTELLA ESISTENTE"
 
-#: src/ui/menu_startup_m12.c:2599 src/ui/menu_startup_m12.c:12928
+#: src/ui/menu_startup_m12.c:2602 src/ui/menu_startup_m12.c:13009
 msgid "DATA SCAN CANCELLED"
 msgstr "SCANSIONE DATI ANNULLATA"
 
-#: src/ui/menu_startup_m12.c:2600 src/ui/menu_startup_m12.c:12929
+#: src/ui/menu_startup_m12.c:2603 src/ui/menu_startup_m12.c:13010
 msgid "DATA SCAN FAILED"
 msgstr "SCANSIONE DATI FALLITA"
 
-#: src/ui/menu_startup_m12.c:2602 src/ui/menu_startup_m12.c:12931
+#: src/ui/menu_startup_m12.c:2605 src/ui/menu_startup_m12.c:13012
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "LA DISPONIBILITÀ DEL GIOCO NON È STATA AGGIORNATA"
 
-#: src/ui/menu_startup_m12.c:2626
+#: src/ui/menu_startup_m12.c:2629
 msgid "SAVE MANIFEST EXPORTED"
 msgstr "SALVA MANIFEST ESPORTATO"
 
-#: src/ui/menu_startup_m12.c:2627
+#: src/ui/menu_startup_m12.c:2630
 msgid "SAVE FILES ARE NOT COPIED"
 msgstr "I FILE DI SALVATAGGIO NON VENGONO COPIATI"
 
-#: src/ui/menu_startup_m12.c:2631
+#: src/ui/menu_startup_m12.c:2634
 msgid "EXPORT FAILED"
 msgstr "ESPORTAZIONE NON FALLITA"
 
-#: src/ui/menu_startup_m12.c:2632
+#: src/ui/menu_startup_m12.c:2635
 msgid "CHECK YOUR SETTINGS FOLDER"
 msgstr "CONTROLLA LA TUA CARTELLA IMPOSTAZIONI"
 
-#: src/ui/menu_startup_m12.c:2746 src/ui/menu_startup_m12.c:2885
+#: src/ui/menu_startup_m12.c:2749 src/ui/menu_startup_m12.c:2888
 msgid "DM1 PC34 SAVE EXPORTED"
 msgstr "DM1 PC34 SALVA ESPORTATO"
 
-#: src/ui/menu_startup_m12.c:2752 src/ui/menu_startup_m12.c:2892
+#: src/ui/menu_startup_m12.c:2755 src/ui/menu_startup_m12.c:2895
 msgid "PC34 EXPORT FAILED"
 msgstr "ESPORTAZIONE PC34 NON FALLITA"
 
-#: src/ui/menu_startup_m12.c:2753
+#: src/ui/menu_startup_m12.c:2756
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "VERIFICA SALVATAGGIO RIPRESA RAPIDO"
 
-#: src/ui/menu_startup_m12.c:2780 src/ui/menu_startup_m12.c:12668
+#: src/ui/menu_startup_m12.c:2783 src/ui/menu_startup_m12.c:12749
 msgid "NO SAVES FOUND"
 msgstr "NESSUN DATO DI GIOCO TROVATO"
 
-#: src/ui/menu_startup_m12.c:2781
+#: src/ui/menu_startup_m12.c:2784
 msgid "SAVE A GAME FIRST"
 msgstr "PRIMA SALVA UNA PARTITA"
 
-#: src/ui/menu_startup_m12.c:2893
+#: src/ui/menu_startup_m12.c:2896
 msgid "SELECT A VALID DM1 SAVE"
 msgstr "SELEZIONA UN SALVATAGGIO DM1 VALIDO"
 
-#: src/ui/menu_startup_m12.c:2918
+#: src/ui/menu_startup_m12.c:2921
 msgid "SAVE MANIFEST IMPORTED"
 msgstr "SALVA MANIFEST IMPORTATO"
 
-#: src/ui/menu_startup_m12.c:2919
+#: src/ui/menu_startup_m12.c:2922
 msgid "QUICK RESUME PATH UPDATED"
 msgstr "PERCORSO DI RESUME RAPIDO AGGIORNATO"
 
-#: src/ui/menu_startup_m12.c:2923
+#: src/ui/menu_startup_m12.c:2926
 msgid "IMPORT FAILED"
 msgstr "IMPORTAZIONE NON FALLITA"
 
-#: src/ui/menu_startup_m12.c:2924
+#: src/ui/menu_startup_m12.c:2927
 msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr "ESPORTARE PRIMA UN MANIFEST DI SALVATAGGIO"
 
-#: src/ui/menu_startup_m12.c:2967
+#: src/ui/menu_startup_m12.c:2970
 msgid "CHOOSE GAME DATA FOLDER"
 msgstr "NESSUN DATO DI GIOCO TROVATO"
 
-#: src/ui/menu_startup_m12.c:2968
+#: src/ui/menu_startup_m12.c:2971
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "IL LANCIATORI EFFETTUERA' UNA NUOVA SCANSIONE DOPO LA SELEZIONE"
 
-#: src/ui/menu_startup_m12.c:3013
+#: src/ui/menu_startup_m12.c:3016
 msgid "UNICODE FONT SELECTED"
 msgstr "CARATTERE UNICODE SELEZIONATO"
 
-#: src/ui/menu_startup_m12.c:3019 src/ui/menu_startup_m12.c:3041
+#: src/ui/menu_startup_m12.c:3022 src/ui/menu_startup_m12.c:3044
 msgid "UNICODE FONT UNCHANGED"
 msgstr "CARATTERE UNICODE INVARIATO"
 
-#: src/ui/menu_startup_m12.c:3020 src/ui/menu_startup_m12.c:3082
+#: src/ui/menu_startup_m12.c:3023 src/ui/menu_startup_m12.c:3085
 msgid "NO FILE SELECTED"
 msgstr "NESSUN FILE SELEZIONATO"
 
-#: src/ui/menu_startup_m12.c:3035
+#: src/ui/menu_startup_m12.c:3038
 msgid "CHOOSE UNICODE FONT"
 msgstr "SCEGLI CARATTERE UNICODE"
 
-#: src/ui/menu_startup_m12.c:3036
+#: src/ui/menu_startup_m12.c:3039
 msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "SELEZIONA UN FONT TTF O OTF AMPIO"
 
-#: src/ui/menu_startup_m12.c:3042 src/ui/menu_startup_m12.c:3104
+#: src/ui/menu_startup_m12.c:3045 src/ui/menu_startup_m12.c:3107
 msgid "NATIVE FILE DIALOG DISABLED"
 msgstr "DIALOGO FILE NATIVO DISABILITATO"
 
-#: src/ui/menu_startup_m12.c:3069
+#: src/ui/menu_startup_m12.c:3072
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "PACCHETTO ARTISTICO V2.2 SELEZIONATO"
 
-#: src/ui/menu_startup_m12.c:3074
+#: src/ui/menu_startup_m12.c:3077
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "ARTPACK V2.2 RIFIUTATO"
 
-#: src/ui/menu_startup_m12.c:3081 src/ui/menu_startup_m12.c:3103
+#: src/ui/menu_startup_m12.c:3084 src/ui/menu_startup_m12.c:3106
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "ARTPACK V2.2 INVARIATO"
 
-#: src/ui/menu_startup_m12.c:3097
+#: src/ui/menu_startup_m12.c:3100
 msgid "CHOOSE V2.2 ARTPACK"
 msgstr "SCEGLI ARTPACK V2.2"
 
-#: src/ui/menu_startup_m12.c:3098
+#: src/ui/menu_startup_m12.c:3101
 msgid "SELECT A .FSART FILE"
 msgstr "SELEZIONA UNA DESTINAZIONE"
 
-#: src/ui/menu_startup_m12.c:4985
+#: src/ui/menu_startup_m12.c:5066
 msgid "NEEDS LOGIN"
 msgstr "È NECESSARIO LOGIN"
 
-#: src/ui/menu_startup_m12.c:4987
+#: src/ui/menu_startup_m12.c:5068
 msgid "READY"
 msgstr "PRONTO"
 
-#: src/ui/menu_startup_m12.c:4989
+#: src/ui/menu_startup_m12.c:5070
 msgid "BACKEND PENDING"
 msgstr "BACKEND IN ATTESA"
 
-#: src/ui/menu_startup_m12.c:5014
+#: src/ui/menu_startup_m12.c:5095
 msgid "SET"
 msgstr "ADATTA A SCHERMO"
 
-#: src/ui/menu_startup_m12.c:5031 src/ui/menu_startup_m12.c:5244
+#: src/ui/menu_startup_m12.c:5112 src/ui/menu_startup_m12.c:5325
 msgid "EDITING"
 msgstr "IMPOSTAZIONI"
 
-#: src/ui/menu_startup_m12.c:5136
+#: src/ui/menu_startup_m12.c:5217
 msgid "SCALE"
 msgstr "SCALE"
 
-#: src/ui/menu_startup_m12.c:5137 src/ui/menu_startup_m12.c:12427
+#: src/ui/menu_startup_m12.c:5218 src/ui/menu_startup_m12.c:12508
 msgid "ASPECT RATIO"
 msgstr "ASPECT RATIO"
 
-#: src/ui/menu_startup_m12.c:5138
+#: src/ui/menu_startup_m12.c:5219
 msgid "PIXEL SNAP"
 msgstr "PIXEL SNAP"
 
-#: src/ui/menu_startup_m12.c:5139
+#: src/ui/menu_startup_m12.c:5220
 msgid "FILTER"
 msgstr "FILTER"
 
-#: src/ui/menu_startup_m12.c:5140
+#: src/ui/menu_startup_m12.c:5221
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5141
+#: src/ui/menu_startup_m12.c:5222
 msgid "FPS OVERLAY"
 msgstr "SOVRAPPOSIZIONE FPS"
 
-#: src/ui/menu_startup_m12.c:5142
+#: src/ui/menu_startup_m12.c:5223
 msgid "VIEWPORT STYLE"
 msgstr "STILE VISUALIZZAZIONE"
 
-#: src/ui/menu_startup_m12.c:5143
+#: src/ui/menu_startup_m12.c:5224
 msgid "INPUT MODE"
 msgstr "MODALITÀ FINESTRA"
 
-#: src/ui/menu_startup_m12.c:5145
+#: src/ui/menu_startup_m12.c:5226
 msgid "TOUCH CONTROLS"
 msgstr "COMANDI"
 
-#: src/ui/menu_startup_m12.c:5146
+#: src/ui/menu_startup_m12.c:5227
 msgid "MOVEMENT MODE"
 msgstr "MODALITÀ DI MOVIMENTO"
 
-#: src/ui/menu_startup_m12.c:5147
+#: src/ui/menu_startup_m12.c:5228
 msgid "SMOOTH TURN PAN"
 msgstr "PADELLA GIREVOLE LISCIA"
 
-#: src/ui/menu_startup_m12.c:5148
+#: src/ui/menu_startup_m12.c:5229
 msgid "DATA DIRECTORY"
 msgstr "DIR DATI"
 
-#: src/ui/menu_startup_m12.c:5149
+#: src/ui/menu_startup_m12.c:5230
 msgid "ORIGINAL DATA"
 msgstr "ORIGINALE"
 
-#: src/ui/menu_startup_m12.c:5150
+#: src/ui/menu_startup_m12.c:5231
 msgid "DEBUG OVERLAY"
 msgstr "SOVRAPPOSIZIONE DEBUG"
 
-#: src/ui/menu_startup_m12.c:5151
+#: src/ui/menu_startup_m12.c:5232
 msgid "DEVELOPER GATES"
 msgstr "CANCELLI PER SVILUPPATORE"
 
-#: src/ui/menu_startup_m12.c:5152
+#: src/ui/menu_startup_m12.c:5233
 msgid "MASTER VOLUME"
 msgstr "RIMASTERIZZATO"
 
-#: src/ui/menu_startup_m12.c:5153
+#: src/ui/menu_startup_m12.c:5234
 msgid "MUSIC VOLUME"
 msgstr "VOLUME DELLA MUSICA"
 
-#: src/ui/menu_startup_m12.c:5154
+#: src/ui/menu_startup_m12.c:5235
 msgid "SFX VOLUME"
 msgstr "VOLUME EFFETTI EFFETTIVI"
 
-#: src/ui/menu_startup_m12.c:5155
+#: src/ui/menu_startup_m12.c:5236
 msgid "MUTE AUDIO"
 msgstr "AUDIO"
 
-#: src/ui/menu_startup_m12.c:5156
+#: src/ui/menu_startup_m12.c:5237
 msgid "AUDIO DEVICE"
 msgstr "DISPOSITIVO AUDIO"
 
-#: src/ui/menu_startup_m12.c:5157
+#: src/ui/menu_startup_m12.c:5238
 msgid "BRIGHTNESS"
 msgstr "LUMINOSITÀ"
 
-#: src/ui/menu_startup_m12.c:5158
+#: src/ui/menu_startup_m12.c:5239
 msgid "FONT SCALE"
 msgstr "SCALA"
 
-#: src/ui/menu_startup_m12.c:5159
+#: src/ui/menu_startup_m12.c:5240
 msgid "UNICODE FONT"
 msgstr "CARATTERE UNICODE"
 
-#: src/ui/menu_startup_m12.c:5160
+#: src/ui/menu_startup_m12.c:5241
 msgid "HIGH CONTRAST"
 msgstr "ALTO CONTRASTO"
 
-#: src/ui/menu_startup_m12.c:5161
+#: src/ui/menu_startup_m12.c:5242
 msgid "COLORBLIND"
 msgstr "DALTONICI"
 
-#: src/ui/menu_startup_m12.c:5162
+#: src/ui/menu_startup_m12.c:5243
 msgid "AUTO PAUSE"
 msgstr "PAUSA AUTOMATICA"
 
-#: src/ui/menu_startup_m12.c:5163
+#: src/ui/menu_startup_m12.c:5244
 msgid "THEME"
 msgstr "TEMA"
 
-#: src/ui/menu_startup_m12.c:5164
+#: src/ui/menu_startup_m12.c:5245
 msgid "BACKGROUND"
 msgstr "SFONDO"
 
-#: src/ui/menu_startup_m12.c:5165
+#: src/ui/menu_startup_m12.c:5246
 msgid "QUICK RESUME"
 msgstr "RESUME RAPIDO"
 
-#: src/ui/menu_startup_m12.c:5166
+#: src/ui/menu_startup_m12.c:5247
 msgid "V2.2 ARTPACK"
 msgstr "PACCHETTO ARTE V2.2"
 
-#: src/ui/menu_startup_m12.c:5167
+#: src/ui/menu_startup_m12.c:5248
 msgid "RETROACHIEVEMENTS"
 msgstr "RETROCONSEGNE"
 
-#: src/ui/menu_startup_m12.c:5168
+#: src/ui/menu_startup_m12.c:5249
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "RETRO REALIZZAZIONI HARDCORE"
 
-#: src/ui/menu_startup_m12.c:5169
+#: src/ui/menu_startup_m12.c:5250
 msgid "RETROACHIEVEMENTS USER"
 msgstr "UTENTE RETROACHEVEMENTS"
 
-#: src/ui/menu_startup_m12.c:5170
+#: src/ui/menu_startup_m12.c:5251
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "TOKEN API RETROACCEDIMENTI"
 
-#: src/ui/menu_startup_m12.c:5171
+#: src/ui/menu_startup_m12.c:5252
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "SERVER RETROACHEVEMENTS"
 
-#: src/ui/menu_startup_m12.c:5172 src/ui/menu_startup_m12.c:12623
+#: src/ui/menu_startup_m12.c:5253 src/ui/menu_startup_m12.c:12704
 msgid "SAVE BROWSER"
 msgstr "SALVA BROWSER"
 
-#: src/ui/menu_startup_m12.c:5173
+#: src/ui/menu_startup_m12.c:5254
 msgid "SESSION TIMER"
 msgstr "TIMER DELLA SESSIONE"
 
-#: src/ui/menu_startup_m12.c:5174
+#: src/ui/menu_startup_m12.c:5255
 msgid "MINIMAP"
 msgstr "MINIMO"
 
-#: src/ui/menu_startup_m12.c:5175
+#: src/ui/menu_startup_m12.c:5256
 msgid "AUTOMAP"
 msgstr "AUTOMATICO"
 
-#: src/ui/menu_startup_m12.c:5176
+#: src/ui/menu_startup_m12.c:5257
 msgid "COMBAT LOG"
 msgstr "REGISTRO DI COMBATTIMENTO"
 
-#: src/ui/menu_startup_m12.c:5177
+#: src/ui/menu_startup_m12.c:5258
 msgid "SOUNDTRACK"
 msgstr "COLONNA SONORA"
 
-#: src/ui/menu_startup_m12.c:5178
+#: src/ui/menu_startup_m12.c:5259
 msgid "AMBIENT SOUND"
 msgstr "DATI DI GIOCO NON TROVATI"
 
-#: src/ui/menu_startup_m12.c:5179
+#: src/ui/menu_startup_m12.c:5260
 msgid "AMBIENT VOLUME"
 msgstr "VOLUME AMBIENTE"
 
-#: src/ui/menu_startup_m12.c:5180
+#: src/ui/menu_startup_m12.c:5261
 msgid "UI SCALE"
 msgstr "SCALA"
 
-#: src/ui/menu_startup_m12.c:5181
+#: src/ui/menu_startup_m12.c:5262
 msgid "UI FONT"
 msgstr "CARATTERE DELL'UI"
 
-#: src/ui/menu_startup_m12.c:5182
+#: src/ui/menu_startup_m12.c:5263
 msgid "CUSTOM MUSIC"
 msgstr "PERSONALIZZATO"
 
-#: src/ui/menu_startup_m12.c:5183
+#: src/ui/menu_startup_m12.c:5264
 msgid "CUSTOM DUNGEONS"
 msgstr "SOTTERRANEO"
 
-#: src/ui/menu_startup_m12.c:5184
+#: src/ui/menu_startup_m12.c:5265
 msgid "SCREENSHOTS"
 msgstr "SCHERMATE"
 
-#: src/ui/menu_startup_m12.c:5185
+#: src/ui/menu_startup_m12.c:5266
 msgid "ARTPACK"
 msgstr "ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5186
+#: src/ui/menu_startup_m12.c:5267
 msgid "STREAMER MODE"
 msgstr "MODALITÀ STREAMING"
 
-#: src/ui/menu_startup_m12.c:5190
+#: src/ui/menu_startup_m12.c:5271
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "ESPORTA DM1 PC34 SALVA"
 
-#: src/ui/menu_startup_m12.c:5191
+#: src/ui/menu_startup_m12.c:5272
 msgid "EXPORT SAVE MANIFEST"
 msgstr "ESPORTA SALVA MANIFEST"
 
-#: src/ui/menu_startup_m12.c:5192
+#: src/ui/menu_startup_m12.c:5273
 msgid "IMPORT SAVE MANIFEST"
 msgstr "IMPORTA SALVA MANIFEST"
 
-#: src/ui/menu_startup_m12.c:5253
+#: src/ui/menu_startup_m12.c:5334
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5271
+#: src/ui/menu_startup_m12.c:5352
 msgid "WRITE PC34..."
 msgstr "SCRIVI PC34..."
 
-#: src/ui/menu_startup_m12.c:5272
+#: src/ui/menu_startup_m12.c:5353
 msgid "WRITE..."
 msgstr "SCRIVI..."
 
-#: src/ui/menu_startup_m12.c:5273
+#: src/ui/menu_startup_m12.c:5354
 msgid "READ..."
 msgstr "LEGGI..."
 
-#: src/ui/menu_startup_m12.c:5289
+#: src/ui/menu_startup_m12.c:5370
 msgid "GENERAL"
 msgstr "GENERALE"
 
-#: src/ui/menu_startup_m12.c:5295 src/ui/menu_startup_m12.c:12318
+#: src/ui/menu_startup_m12.c:5376 src/ui/menu_startup_m12.c:12399
 msgid "RENDERER"
 msgstr "RENDERER"
 
-#: src/ui/menu_startup_m12.c:5298
+#: src/ui/menu_startup_m12.c:5379
 msgid "INPUT"
 msgstr "INGRESSO"
 
-#: src/ui/menu_startup_m12.c:5301
+#: src/ui/menu_startup_m12.c:5382
 msgid "DATA"
 msgstr "DIR DATI"
 
-#: src/ui/menu_startup_m12.c:5304
+#: src/ui/menu_startup_m12.c:5385
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: src/ui/menu_startup_m12.c:5315
+#: src/ui/menu_startup_m12.c:5396
 msgid "APPEARANCE"
 msgstr "ASPETTO"
 
-#: src/ui/menu_startup_m12.c:5776 src/ui/menu_startup_m12.c:5830
+#: src/ui/menu_startup_m12.c:5857 src/ui/menu_startup_m12.c:5911
 msgid "DATA FILES NOT FOUND"
 msgstr "FILE ORIGINALI NON TROVATI"
 
-#: src/ui/menu_startup_m12.c:5830
+#: src/ui/menu_startup_m12.c:5911
 msgid "ENTER FOR GAME MENU"
 msgstr "INVIO O ESC TORNA AL MENU"
 
-#: src/ui/menu_startup_m12.c:5831
+#: src/ui/menu_startup_m12.c:5912
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "QUESTO GIOCO NON È ANCORA SUPPORTATO"
 
-#: src/ui/menu_startup_m12.c:5965
+#: src/ui/menu_startup_m12.c:6046
 msgid "NO DM1 SAVES FOUND"
 msgstr "NESSUN DATO DI GIOCO TROVATO"
 
-#: src/ui/menu_startup_m12.c:5966
+#: src/ui/menu_startup_m12.c:6047
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "SALVARE O IMPORTARE PRIMA DM1"
 
-#: src/ui/menu_startup_m12.c:6388
+#: src/ui/menu_startup_m12.c:6469
 msgid "LOADING SAVE"
 msgstr "CARICAMENTO SALVA"
 
-#: src/ui/menu_startup_m12.c:6428
+#: src/ui/menu_startup_m12.c:6509
 msgid "IMPORTING PARTY"
 msgstr "PARTITO IMPORTATORE"
 
-#: src/ui/menu_startup_m12.c:6467
+#: src/ui/menu_startup_m12.c:6548
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "IMPORTARE PARTY DM1 IN CSB?"
 
-#: src/ui/menu_startup_m12.c:6469
+#: src/ui/menu_startup_m12.c:6550
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "INSERISCI IMPORTAZIONI / ESC ANNULLA"
 
-#: src/ui/menu_startup_m12.c:6481
+#: src/ui/menu_startup_m12.c:6562
 msgid "ESC SETTINGS"
 msgstr "IMPOSTAZIONI"
 
-#: src/ui/menu_startup_m12.c:6485
+#: src/ui/menu_startup_m12.c:6566
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "ENTER CARICA AZIONE IMPORTA SU CSB SALVA ESPORTA PC34 IMPOSTAZIONI ESC"
 
-#: src/ui/menu_startup_m12.c:6487
+#: src/ui/menu_startup_m12.c:6568
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "INVIO O ESC TORNA AL MENU"
 
-#: src/ui/menu_startup_m12.c:7925 src/ui/menu_startup_m12.c:8137
+#: src/ui/menu_startup_m12.c:8006 src/ui/menu_startup_m12.c:8218
 msgid "NO SOURCE"
 msgstr "NESSUNA FONTE"
 
-#: src/ui/menu_startup_m12.c:8133
+#: src/ui/menu_startup_m12.c:8214
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "ORIGINALE"
 
-#: src/ui/menu_startup_m12.c:8142
+#: src/ui/menu_startup_m12.c:8223
 msgid "MISSING OR MISMATCHED"
 msgstr "MANCANTE O NON CORRISPONDENTE"
 
-#: src/ui/menu_startup_m12.c:8699 src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_m12.c:8780 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr "EXTRA"
 
-#: src/ui/menu_startup_m12.c:8699
+#: src/ui/menu_startup_m12.c:8780
 msgid "PLAY"
 msgstr "GIOCA"
 
-#: src/ui/menu_startup_m12.c:8699
+#: src/ui/menu_startup_m12.c:8780
 msgid "QUIT"
 msgstr "ESCI"
 
-#: src/ui/menu_startup_m12.c:8703
+#: src/ui/menu_startup_m12.c:8784
 msgid "Start or continue a game"
 msgstr "Avvia o continua una partita"
 
-#: src/ui/menu_startup_m12.c:8704
+#: src/ui/menu_startup_m12.c:8785
 msgid "Display, video, audio and controls"
 msgstr "Schermo, video, audio e comandi"
 
-#: src/ui/menu_startup_m12.c:8705
+#: src/ui/menu_startup_m12.c:8786
 msgid "Museum, bestiary, spell reference and more"
 msgstr "Museo, bestiario, guida agli incantesimi e altro"
 
-#: src/ui/menu_startup_m12.c:8706
+#: src/ui/menu_startup_m12.c:8787
 msgid "Exit Firestaff"
 msgstr "Esci da Firestaff"
 
-#: src/ui/menu_startup_m12.c:8711
+#: src/ui/menu_startup_m12.c:8792
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8711
+#: src/ui/menu_startup_m12.c:8792
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:8720
+#: src/ui/menu_startup_m12.c:8801
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8721 src/ui/menu_startup_m12.c:8722
+#: src/ui/menu_startup_m12.c:8802 src/ui/menu_startup_m12.c:8803
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8723
+#: src/ui/menu_startup_m12.c:8804
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / ACQUISIZIONE SATURN LIMITATA"
 
-#: src/ui/menu_startup_m12.c:8724
+#: src/ui/menu_startup_m12.c:8805
 msgid "V1 Only (Phase 1)"
 msgstr "Solo V1 (Fase 1)"
 
-#: src/ui/menu_startup_m12.c:8727 src/ui/menu_startup_m12.c:8728
-#: src/ui/menu_startup_m12.c:8729 src/ui/menu_startup_m12.c:8730
-#: src/ui/menu_startup_m12.c:8731
+#: src/ui/menu_startup_m12.c:8808 src/ui/menu_startup_m12.c:8809
+#: src/ui/menu_startup_m12.c:8810 src/ui/menu_startup_m12.c:8811
+#: src/ui/menu_startup_m12.c:8812
 msgid "No data files"
 msgstr "Nessun file di dati"
 
-#: src/ui/menu_startup_m12.c:9464
+#: src/ui/menu_startup_m12.c:9545
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:9465
+#: src/ui/menu_startup_m12.c:9546
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:9466
+#: src/ui/menu_startup_m12.c:9547
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:9582
+#: src/ui/menu_startup_m12.c:9663
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:9620
+#: src/ui/menu_startup_m12.c:9701
 msgid "New Game (Original)"
 msgstr "Nuova partita (originale)"
 
-#: src/ui/menu_startup_m12.c:9621
+#: src/ui/menu_startup_m12.c:9702
 msgid "New Game (Original + Filters)"
 msgstr "Nuova partita (originale + filtri)"
 
-#: src/ui/menu_startup_m12.c:9622
+#: src/ui/menu_startup_m12.c:9703
 msgid "New Game (Original 10x Upscale)"
 msgstr "Nuova partita (originale upscaling 10x)"
 
-#: src/ui/menu_startup_m12.c:9623
+#: src/ui/menu_startup_m12.c:9704
 msgid "Continue Saved Game"
 msgstr "Continua partita salvata"
 
-#: src/ui/menu_startup_m12.c:9624
+#: src/ui/menu_startup_m12.c:9705
 msgid "New Game (Modern Graphics)"
 msgstr "Nuova partita (grafica moderna)"
 
-#: src/ui/menu_startup_m12.c:9632
+#: src/ui/menu_startup_m12.c:9713
 msgid "Museum of Lore"
 msgstr "Museo della tradizione"
 
-#: src/ui/menu_startup_m12.c:9633
+#: src/ui/menu_startup_m12.c:9714
 msgid "Manual / Docs"
 msgstr "Manuale / Documentazione"
 
-#: src/ui/menu_startup_m12.c:9634
+#: src/ui/menu_startup_m12.c:9715
 msgid "Bestiary"
 msgstr "Bestiario"
 
-#: src/ui/menu_startup_m12.c:9635
+#: src/ui/menu_startup_m12.c:9716
 msgid "Spell Reference"
 msgstr "Guida agli incantesimi"
 
-#: src/ui/menu_startup_m12.c:9636
+#: src/ui/menu_startup_m12.c:9717
 msgid "Map Viewer"
 msgstr "Visualizzatore mappe"
 
-#: src/ui/menu_startup_m12.c:9637
+#: src/ui/menu_startup_m12.c:9718
 msgid "Item Encyclopedia"
 msgstr "Enciclopedia degli oggetti"
 
-#: src/ui/menu_startup_m12.c:9638
+#: src/ui/menu_startup_m12.c:9719
 msgid "Changelog"
 msgstr "Registro modifiche"
 
-#: src/ui/menu_startup_m12.c:9639
+#: src/ui/menu_startup_m12.c:9720
 msgid "Screenshot Gallery"
 msgstr "Galleria screenshot"
 
-#: src/ui/menu_startup_m12.c:9668
+#: src/ui/menu_startup_m12.c:9749
 msgid "NO DATA SOURCE YET"
 msgstr "NESSUNA FONTE"
 
-#: src/ui/menu_startup_m12.c:9741
+#: src/ui/menu_startup_m12.c:9822
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "Su/Giù naviga  |  Invio seleziona"
 
-#: src/ui/menu_startup_m12.c:9765
+#: src/ui/menu_startup_m12.c:9846
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape indietro  |  Su/Giù naviga  |  Invio seleziona"
 
-#: src/ui/menu_startup_m12.c:9794
+#: src/ui/menu_startup_m12.c:9875
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape indietro  |  Su/Giù naviga  |  Invio avvia"
 
-#: src/ui/menu_startup_m12.c:9818
+#: src/ui/menu_startup_m12.c:9899
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape indietro  |  Su/Giù naviga  |  Invio apri"
 
-#: src/ui/menu_startup_m12.c:9962
+#: src/ui/menu_startup_m12.c:10043
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > cambia scheda   Su/Giù naviga   Invio modifica"
 
-#: src/ui/menu_startup_m12.c:12295
+#: src/ui/menu_startup_m12.c:12376
 msgid "GAME OPTIONS"
 msgstr "OPZIONI DI GIOCO"
 
-#: src/ui/menu_startup_m12.c:12332
+#: src/ui/menu_startup_m12.c:12413
 msgid "ARCHITECTURE"
 msgstr "STATO ARCHIVIO"
 
-#: src/ui/menu_startup_m12.c:12345
+#: src/ui/menu_startup_m12.c:12426
 msgid "VERSION"
 msgstr "VERSIONE"
 
-#: src/ui/menu_startup_m12.c:12366
+#: src/ui/menu_startup_m12.c:12447
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:12392
+#: src/ui/menu_startup_m12.c:12473
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:12405
+#: src/ui/menu_startup_m12.c:12486
 msgid "SPEED"
 msgstr "SPEED"
 
-#: src/ui/menu_startup_m12.c:12417
+#: src/ui/menu_startup_m12.c:12498
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "ABILITA I TRUCCHI PER SBLOCCARE VELOCITÀ / TASTI RAPIDI"
 
-#: src/ui/menu_startup_m12.c:12439
+#: src/ui/menu_startup_m12.c:12520
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "BLOCCATO DALLA MODALITÀ V1 ORIGINALE"
 
-#: src/ui/menu_startup_m12.c:12449
+#: src/ui/menu_startup_m12.c:12530
 msgid "RESOLUTION"
 msgstr "RESOLUTION"
 
-#: src/ui/menu_startup_m12.c:12463
+#: src/ui/menu_startup_m12.c:12544
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "BLOCCATO DALLA MODALITÀ V1 ORIGINALE"
 
-#: src/ui/menu_startup_m12.c:12484
+#: src/ui/menu_startup_m12.c:12565
 msgid "> DATA FILES NOT FOUND"
 msgstr "FILE ORIGINALI NON TROVATI"
 
-#: src/ui/menu_startup_m12.c:12486
+#: src/ui/menu_startup_m12.c:12567
 msgid "> RENDERER UNAVAILABLE"
 msgstr "BACKEND DI RENDERING NON DISPONIBILE"
 
-#: src/ui/menu_startup_m12.c:12487
+#: src/ui/menu_startup_m12.c:12568
 msgid "> LAUNCH"
 msgstr "> AVVIA"
 
-#: src/ui/menu_startup_m12.c:12500
+#: src/ui/menu_startup_m12.c:12581
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: INDIETRO  FRECCE: NAVIGA  INVIO: SELEZIONA"
 

@@ -31,7 +31,7 @@ msgid "CHECK DUNGEON.DAT"
 msgstr "CHECK DUNGEON.DAT"
 
 #: src/engine/main_loop_m11.c:429 src/engine/main_loop_m11.c:3916
-#: src/engine/main_loop_m11.c:3939 src/ui/menu_startup_m12.c:1040
+#: src/engine/main_loop_m11.c:3939 src/ui/menu_startup_m12.c:1043
 msgid "ESC RETURNS TO MENU"
 msgstr "ESC RETURNS TO MENU"
 
@@ -47,1744 +47,1744 @@ msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5310
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5391
 msgid "ACCESSIBILITY"
 msgstr "접근성"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5307
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5388
 msgid "AUDIO"
 msgstr "오디오"
 
-#: src/ui/menu_startup_m12.c:235
+#: src/ui/menu_startup_m12.c:237
 msgid "CONTROLS"
 msgstr "조작"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:1863
-#: src/ui/menu_startup_m12.c:1875
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:1866
+#: src/ui/menu_startup_m12.c:1878
 msgid "GAME"
 msgstr "게임"
 
-#: src/ui/menu_startup_m12.c:235 src/ui/menu_startup_m12.c:5292
-#: src/ui/menu_startup_m12.c:10310
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5373
+#: src/ui/menu_startup_m12.c:10391
 msgid "GRAPHICS"
 msgstr "그래픽"
 
-#: src/ui/menu_startup_m12.c:236 src/ui/menu_startup_m12.c:5313
+#: src/ui/menu_startup_m12.c:238 src/ui/menu_startup_m12.c:5394
 msgid "ONLINE"
 msgstr "온라인"
 
-#: src/ui/menu_startup_m12.c:249
+#: src/ui/menu_startup_m12.c:251
 msgid "Graphics Mode"
 msgstr "그래픽 모드"
 
-#: src/ui/menu_startup_m12.c:249 src/ui/menu_startup_m12.c:263
+#: src/ui/menu_startup_m12.c:251 src/ui/menu_startup_m12.c:265
 msgid "Original"
 msgstr "오리지널"
 
-#: src/ui/menu_startup_m12.c:250
+#: src/ui/menu_startup_m12.c:252
 msgid "Game Version"
 msgstr "게임 버전"
 
-#: src/ui/menu_startup_m12.c:250
+#: src/ui/menu_startup_m12.c:252
 msgid "V1"
 msgstr "V1"
 
-#: src/ui/menu_startup_m12.c:251
+#: src/ui/menu_startup_m12.c:253
 msgid "English"
 msgstr "영어"
 
-#: src/ui/menu_startup_m12.c:251
+#: src/ui/menu_startup_m12.c:253
 msgid "Language"
 msgstr "언어"
 
-#: src/ui/menu_startup_m12.c:252
+#: src/ui/menu_startup_m12.c:254
 msgid "Game Speed"
 msgstr "게임 속도"
 
-#: src/ui/menu_startup_m12.c:252
+#: src/ui/menu_startup_m12.c:254
 msgid "Normal"
 msgstr "보통"
 
-#: src/ui/menu_startup_m12.c:253
+#: src/ui/menu_startup_m12.c:255
 msgid "Classic"
 msgstr "클래식"
 
-#: src/ui/menu_startup_m12.c:253
+#: src/ui/menu_startup_m12.c:255
 msgid "Movement Mode"
 msgstr "이동 모드"
 
-#: src/ui/menu_startup_m12.c:254
+#: src/ui/menu_startup_m12.c:256
 msgid "Cheats"
 msgstr "치트"
 
-#: src/ui/menu_startup_m12.c:254
+#: src/ui/menu_startup_m12.c:256
 msgid "Off"
 msgstr "끄기"
 
-#: src/ui/menu_startup_m12.c:259
+#: src/ui/menu_startup_m12.c:261
 msgid "Maximized"
 msgstr "최대화"
 
-#: src/ui/menu_startup_m12.c:259
+#: src/ui/menu_startup_m12.c:261
 msgid "Window Mode"
 msgstr "창 모드"
 
-#: src/ui/menu_startup_m12.c:260
+#: src/ui/menu_startup_m12.c:262
 msgid "16:9"
 msgstr "16:9"
 
-#: src/ui/menu_startup_m12.c:260
+#: src/ui/menu_startup_m12.c:262
 msgid "Display Format"
 msgstr "화면 형식"
 
-#: src/ui/menu_startup_m12.c:261 src/ui/menu_startup_m12.c:262
+#: src/ui/menu_startup_m12.c:263 src/ui/menu_startup_m12.c:264
 msgid "On"
 msgstr "켜기"
 
-#: src/ui/menu_startup_m12.c:261
+#: src/ui/menu_startup_m12.c:263
 msgid "VSync"
 msgstr "VSync"
 
-#: src/ui/menu_startup_m12.c:262
+#: src/ui/menu_startup_m12.c:264
 msgid "Integer Scaling"
 msgstr "정수 배율 스케일링"
 
-#: src/ui/menu_startup_m12.c:263
+#: src/ui/menu_startup_m12.c:265
 msgid "Viewport Style"
 msgstr "뷰포트 스타일"
 
-#: src/ui/menu_startup_m12.c:264
+#: src/ui/menu_startup_m12.c:266
 msgid "Original VGA"
 msgstr "오리지널 VGA"
 
-#: src/ui/menu_startup_m12.c:264
+#: src/ui/menu_startup_m12.c:266
 msgid "Palette Mode"
 msgstr "팔레트 모드"
 
-#: src/ui/menu_startup_m12.c:395 src/ui/menu_startup_m12.c:425
-#: src/ui/menu_startup_m12.c:464 src/ui/menu_startup_m12.c:470
-#: src/ui/menu_startup_m12.c:473 src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:398 src/ui/menu_startup_m12.c:428
+#: src/ui/menu_startup_m12.c:467 src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:476 src/ui/menu_startup_m12.c:482
 msgid "ORIGINAL"
 msgstr "ORIGINAL"
 
-#: src/ui/menu_startup_m12.c:425
+#: src/ui/menu_startup_m12.c:428
 msgid "PATCHED"
 msgstr "PATCHED"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "DE"
 msgstr "DE"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "EN"
 msgstr "EN"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "FR"
 msgstr "FR"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "JA"
 msgstr "JA"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "SV"
 msgstr "SV"
 
-#: src/ui/menu_startup_m12.c:437
+#: src/ui/menu_startup_m12.c:440
 msgid "ZH"
 msgstr "ZH"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "CS"
 msgstr "CS"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "DA"
 msgstr "DA"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "ES"
 msgstr "ES"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "FI"
 msgstr "FI"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "HU"
 msgstr "HU"
 
-#: src/ui/menu_startup_m12.c:438
+#: src/ui/menu_startup_m12.c:441
 msgid "IT"
 msgstr "IT"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "ID"
 msgstr "ID"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "KO"
 msgstr "KO"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "NL"
 msgstr "NL"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "NO"
 msgstr "NO"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "PL"
 msgstr "PL"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "PT"
 msgstr "PT"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "RU"
 msgstr "RU"
 
-#: src/ui/menu_startup_m12.c:439
+#: src/ui/menu_startup_m12.c:442
 msgid "TR"
 msgstr "TR"
 
-#: src/ui/menu_startup_m12.c:440 src/ui/menu_startup_m12.c:446
-#: src/ui/menu_startup_m12.c:468 src/ui/menu_startup_m12.c:471
-#: src/ui/menu_startup_m12.c:4757 src/ui/menu_startup_m12.c:4901
+#: src/ui/menu_startup_m12.c:443 src/ui/menu_startup_m12.c:449
+#: src/ui/menu_startup_m12.c:471 src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:4838 src/ui/menu_startup_m12.c:4982
 msgid "AUTO"
 msgstr "AUTO"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "DEUTSCH"
 msgstr "DEUTSCH"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "ENGLISH"
 msgstr "ENGLISH"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "FRANÇAIS"
 msgstr "FRANCAIS"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "SVENSKA"
 msgstr "SVENSKA"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "日本語"
 msgstr "일본어"
 
-#: src/ui/menu_startup_m12.c:443
+#: src/ui/menu_startup_m12.c:446
 msgid "简体中文"
 msgstr "简体中文"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "DANSK"
 msgstr "덴마크"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "ESPAÑOL"
 msgstr "에스파올"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "ITALIANO"
 msgstr "이탈리아노"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "MAGYAR"
 msgstr "마자르"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "SUOMI"
 msgstr "수오미"
 
-#: src/ui/menu_startup_m12.c:444
+#: src/ui/menu_startup_m12.c:447
 msgid "ČEŠTINA"
 msgstr "체스티나"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "NEDERLANDS"
 msgstr "네덜란드"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "NORSK BOKMÅL"
 msgstr "노르스크 복몰"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "POLSKI"
 msgstr "폴스키"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "PORTUGUÊS"
 msgstr "포르투갈"
 
-#: src/ui/menu_startup_m12.c:445
+#: src/ui/menu_startup_m12.c:448
 msgid "한국어"
 msgstr "한국어"
 
-#: src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:449
 msgid "BAHASA INDONESIA"
 msgstr "바하사 인도네시아"
 
-#: src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:449
 msgid "TÜRKÇE"
 msgstr "터키"
 
-#: src/ui/menu_startup_m12.c:446
+#: src/ui/menu_startup_m12.c:449
 msgid "РУССКИЙ"
 msgstr "РУССКИЙ"
 
-#: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
-#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_m12.c:474
-#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:476
-#: src/ui/menu_startup_m12.c:4887 src/ui/menu_startup_m12.c:4992
+#: src/ui/menu_startup_m12.c:453 src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:478 src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:4968 src/ui/menu_startup_m12.c:5073
 msgid "OFF"
 msgstr "OFF"
 
-#: src/ui/menu_startup_m12.c:450 src/ui/menu_startup_m12.c:466
+#: src/ui/menu_startup_m12.c:453 src/ui/menu_startup_m12.c:469
 #: src/ui/menu_startup_render_modern_m12.c:2383
 msgid "ON"
 msgstr "ON"
 
-#: src/ui/menu_startup_m12.c:451
+#: src/ui/menu_startup_m12.c:454
 msgid "FASTER"
 msgstr "FASTER"
 
-#: src/ui/menu_startup_m12.c:451
+#: src/ui/menu_startup_m12.c:454
 msgid "NORMAL"
 msgstr "NORMAL"
 
-#: src/ui/menu_startup_m12.c:451
+#: src/ui/menu_startup_m12.c:454
 msgid "SLOWER"
 msgstr "SLOWER"
 
-#: src/ui/menu_startup_m12.c:457
+#: src/ui/menu_startup_m12.c:460
 msgid "FIT"
 msgstr "맞춤"
 
-#: src/ui/menu_startup_m12.c:457
+#: src/ui/menu_startup_m12.c:460
 msgid "FIT SMOOTH"
 msgstr "부드럽게"
 
-#: src/ui/menu_startup_m12.c:467
+#: src/ui/menu_startup_m12.c:470
 msgid "LINEAR"
 msgstr "선형"
 
-#: src/ui/menu_startup_m12.c:467
+#: src/ui/menu_startup_m12.c:470
 msgid "NEAREST"
 msgstr "최근접"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "OPENGL"
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "SDL"
 msgstr "SDL"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "SOFTWARE"
 msgstr "SOFTWARE"
 
-#: src/ui/menu_startup_m12.c:468
+#: src/ui/menu_startup_m12.c:471
 msgid "VULKAN"
 msgstr "VULKAN"
 
-#: src/ui/menu_startup_m12.c:469
+#: src/ui/menu_startup_m12.c:472
 msgid "AVAILABLE"
 msgstr "AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:469 src/ui/menu_startup_render_modern_m12.c:1978
+#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_render_modern_m12.c:1978
 msgid "UNAVAILABLE"
 msgstr "UNAVAILABLE"
 
-#: src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:473
 msgid "EXPANDED"
 msgstr "확장됨"
 
-#: src/ui/menu_startup_m12.c:470
+#: src/ui/menu_startup_m12.c:473
 msgid "WIDESCREEN"
 msgstr "와이드스크린"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:474
 msgid "GAMEPAD"
 msgstr "게임패드"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:474
 msgid "KEYBOARD+MOUSE"
 msgstr "키보드+마우스"
 
-#: src/ui/menu_startup_m12.c:471
+#: src/ui/menu_startup_m12.c:474
 msgid "TOUCH"
 msgstr "터치"
 
-#: src/ui/menu_startup_m12.c:472 src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:478
 msgid "FULL"
 msgstr "전체"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:475
 msgid "LARGE"
 msgstr "크게"
 
-#: src/ui/menu_startup_m12.c:472
+#: src/ui/menu_startup_m12.c:475
 msgid "MINIMAL"
 msgstr "최소"
 
-#: src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:476
 msgid "FAST"
 msgstr "빠름"
 
-#: src/ui/menu_startup_m12.c:473
+#: src/ui/menu_startup_m12.c:476
 msgid "SMOOTH"
 msgstr "부드럽게"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:477
 msgid "COORDS"
 msgstr "좌표"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:477
 msgid "DRAW ORDER"
 msgstr "그리기 순서"
 
-#: src/ui/menu_startup_m12.c:474
+#: src/ui/menu_startup_m12.c:477
 msgid "QUEUE"
 msgstr "대기열"
 
-#: src/ui/menu_startup_m12.c:475
+#: src/ui/menu_startup_m12.c:478
 msgid "QUICK"
 msgstr "빠른"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:479
 msgid "DEUT"
 msgstr "녹색맹"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:479
 msgid "PROT"
 msgstr "적색맹"
 
-#: src/ui/menu_startup_m12.c:476
+#: src/ui/menu_startup_m12.c:479
 msgid "TRIT"
 msgstr "청색맹"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "AMIGA"
 msgstr "AMIGA"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "CGA"
 msgstr "CGA"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "CLASSIC"
 msgstr "클래식"
 
-#: src/ui/menu_startup_m12.c:477
+#: src/ui/menu_startup_m12.c:480
 msgid "DARK"
 msgstr "다크"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "DUNGEON"
 msgstr "던전"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "STARS"
 msgstr "별"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "STATIC"
 msgstr "스태틱"
 
-#: src/ui/menu_startup_m12.c:478
+#: src/ui/menu_startup_m12.c:481
 msgid "TORCH"
 msgstr "횃불"
 
-#: src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:482
 msgid "CUSTOM"
 msgstr "사용자 지정"
 
-#: src/ui/menu_startup_m12.c:479
+#: src/ui/menu_startup_m12.c:482
 msgid "REMASTERED"
 msgstr "리마스터"
 
-#: src/ui/menu_startup_m12.c:755 src/ui/menu_startup_m12.c:776
-#: src/ui/menu_startup_m12.c:9775 src/ui/menu_startup_m12.c:10218
+#: src/ui/menu_startup_m12.c:758 src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:9856 src/ui/menu_startup_m12.c:10299
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2647
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
-#: src/ui/menu_startup_m12.c:756 src/ui/menu_startup_m12.c:786
-#: src/ui/menu_startup_m12.c:9777 src/ui/menu_startup_m12.c:10232
+#: src/ui/menu_startup_m12.c:759 src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:9858 src/ui/menu_startup_m12.c:10313
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2650
 msgid "CHAOS STRIKES BACK"
 msgstr "CHAOS STRIKES BACK"
 
-#: src/ui/menu_startup_m12.c:757 src/ui/menu_startup_m12.c:796
+#: src/ui/menu_startup_m12.c:760 src/ui/menu_startup_m12.c:799
 #: src/ui/menu_startup_render_modern_m12.c:1476
 msgid "DUNGEON MASTER II"
 msgstr "DUNGEON MASTER II"
 
-#: src/ui/menu_startup_m12.c:758
+#: src/ui/menu_startup_m12.c:761
 msgid "DUNGEON MASTER NEXUS"
 msgstr "DUNGEON MASTER NEXUS"
 
-#: src/ui/menu_startup_m12.c:760
+#: src/ui/menu_startup_m12.c:763
 msgid "THERON'S QUEST"
 msgstr "THERON'S QUEST"
 
-#: src/ui/menu_startup_m12.c:761
+#: src/ui/menu_startup_m12.c:764
 msgid "CSB UTILITY DISK (FM TOWNS)"
 msgstr "CSB 유틸리티 디스크(FM 타운스)"
 
-#: src/ui/menu_startup_m12.c:762
+#: src/ui/menu_startup_m12.c:765
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB 유틸리티 디스크 — 힌트 오라클"
 
-#: src/ui/menu_startup_m12.c:763 src/ui/menu_startup_m12.c:11152
-#: src/ui/menu_startup_m12.c:11155 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:766 src/ui/menu_startup_m12.c:11233
+#: src/ui/menu_startup_m12.c:11236 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "전설의 박물관"
 
-#: src/ui/menu_startup_m12.c:764 src/ui/menu_startup_m12.c:8130
-#: src/ui/menu_startup_m12.c:8699 src/ui/menu_startup_m12.c:9971
-#: src/ui/menu_startup_m12.c:11187 src/ui/menu_startup_m12.c:11190
-#: src/ui/menu_startup_m12.c:11335
+#: src/ui/menu_startup_m12.c:767 src/ui/menu_startup_m12.c:8211
+#: src/ui/menu_startup_m12.c:8780 src/ui/menu_startup_m12.c:10052
+#: src/ui/menu_startup_m12.c:11268 src/ui/menu_startup_m12.c:11271
+#: src/ui/menu_startup_m12.c:11416
 msgid "SETTINGS"
 msgstr "SETTINGS"
 
-#: src/ui/menu_startup_m12.c:777
+#: src/ui/menu_startup_m12.c:780
 msgid "THE ORIGINAL DUNGEON CRAWL"
 msgstr "오리지널 던전 크롤"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "1987 FTL GAMES"
 msgstr "1987년 FTL 게임즈"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "CHAMPIONS ENTER THE DUNGEON"
 msgstr "챔피언들이 던전에 들어서다"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "FOUR PORTRAITS BECOME A PARTY"
 msgstr "네 개의 초상화가 파티가 되다"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "REAL TIME PRESSURE DEFINES THE LEGEND"
 msgstr "실시간 압박감이 전설을 정의하다"
 
-#: src/ui/menu_startup_m12.c:779
+#: src/ui/menu_startup_m12.c:782
 msgid "THE FIRESTAFF IS THE CENTRAL RELIC"
 msgstr "파이어스태프는 핵심 유물이다"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "KEY LORE THREADS"
 msgstr "핵심 이야기 갈래"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "LORD CHAOS SHATTERS ORDER"
 msgstr "카오스 경이 질서를 무너뜨리다"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "RA RETURNS AS MASTER OF BALANCE"
 msgstr "라가 균형의 지배자로 돌아오다"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "THE DUNGEON IS BOTH TEST AND PRISON"
 msgstr "던전은 시험이자 감옥이다"
 
-#: src/ui/menu_startup_m12.c:780
+#: src/ui/menu_startup_m12.c:783
 msgid "THE GREY LORD IS DIVIDED"
 msgstr "그레이 로드는 분열되어 있다"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "FIRESTAFF RECORDS EVIDENCE NOT GUESSWORK"
 msgstr "Firestaff는 추측이 아닌 증거를 기록한다"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "GRAPHICS DAT AND DUNGEON DAT ARE VERIFIED"
 msgstr "GRAPHICS.DAT와 DUNGEON.DAT가 검증되었다"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "HASHED ORIGINAL DATA STAYS USER SUPPLIED"
 msgstr "해시로 검증된 오리지널 데이터는 사용자가 직접 제공한다"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "PC AND ATARI ST LINEAGE MATTERS"
 msgstr "PC와 아타리 ST 계보가 중요하다"
 
-#: src/ui/menu_startup_m12.c:781
+#: src/ui/menu_startup_m12.c:784
 msgid "PRESERVATION NOTES"
 msgstr "보존 기록"
 
-#: src/ui/menu_startup_m12.c:787
+#: src/ui/menu_startup_m12.c:790
 msgid "THE CHAMPIONS RETURN"
 msgstr "챔피언들이 돌아오다"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "CSB REWARDS MAP MEMORY AND NERVE"
 msgstr "CSB는 지도 기억력과 담력을 보상한다"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "DUNGEON MASTER SYSTEMS BECOME DENSER"
 msgstr "Dungeon Master의 시스템이 더 촘촘해지다"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "EXPANSION AND SEQUEL DESIGN"
 msgstr "확장판이자 속편으로서의 설계"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "FOUR PATHS TEST MASTERY"
 msgstr "네 갈래 길이 숙련도를 시험하다"
 
-#: src/ui/menu_startup_m12.c:789
+#: src/ui/menu_startup_m12.c:792
 msgid "THE CORBUM QUEST REPLACES SIMPLE DESCENT"
 msgstr "코르붐 탐색이 단순한 하강을 대신하다"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "CHAOS STILL CASTS A LONG SHADOW"
 msgstr "카오스는 여전히 긴 그림자를 드리운다"
 
-#: src/ui/menu_startup_m12.c:790 src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:793 src/ui/menu_startup_m12.c:803
 msgid "LORE SHAPE"
 msgstr "이야기의 형태"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "RETURNING CHAMPIONS FACE A HARDER MAZE"
 msgstr "돌아온 챔피언들은 더 어려운 미로를 마주한다"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "THE PLAYER HUNTS CORBUM MATERIAL"
 msgstr "플레이어는 코르붐 물질을 찾아 나선다"
 
-#: src/ui/menu_startup_m12.c:790
+#: src/ui/menu_startup_m12.c:793
 msgid "THE WORLD FEELS OLDER AND LESS SAFE"
 msgstr "세계는 더 오래되고 덜 안전하게 느껴진다"
 
-#: src/ui/menu_startup_m12.c:791 src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:794 src/ui/menu_startup_m12.c:804
 msgid "ARCHIVE STATUS"
 msgstr "아카이브 상태"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "CSBGRAPH DAT AND CSB DAT ARE TRACKED"
 msgstr "CSBGRAPH.DAT와 CSB.DAT가 추적된다"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "LAUNCHER SHOWS READY ONLY WHEN MATCHED"
 msgstr "런처는 데이터가 일치할 때만 준비 완료로 표시한다"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "MUSEUM CONTENT STAYS STATIC AND BOUNDED"
 msgstr "박물관 콘텐츠는 고정되어 있고 범위가 제한된다"
 
-#: src/ui/menu_startup_m12.c:791
+#: src/ui/menu_startup_m12.c:794
 msgid "VERSION SLOTS USE HASH EVIDENCE"
 msgstr "버전 슬롯은 해시 증거를 사용한다"
 
-#: src/ui/menu_startup_m12.c:797
+#: src/ui/menu_startup_m12.c:800
 msgid "THE LEGEND OUTSIDE THE FIRST DUNGEON"
 msgstr "첫 번째 던전 너머의 전설"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "DM2 KEEPS THE PARTY SURVIVAL CORE"
 msgstr "DM2는 파티 생존의 핵심을 유지한다"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "MINIONS AND WEATHER CHANGE THE RHYTHM"
 msgstr "부하들과 날씨가 리듬을 바꾼다"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "OUTDOOR AND SHOP SPACES EXPAND THE FORM"
 msgstr "야외 공간과 상점이 형식을 확장한다"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "THE SERIES MOVES BEYOND THE ORIGINAL MAZE"
 msgstr "시리즈는 오리지널 미로를 넘어선다"
 
-#: src/ui/menu_startup_m12.c:799
+#: src/ui/menu_startup_m12.c:802
 msgid "THE SKULLKEEP ERA"
 msgstr "스컬킵의 시대"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "TECHNOLOGY AND MAGIC SHARE THE STAGE"
 msgstr "기술과 마법이 무대를 함께한다"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "THE PLAYER ASSEMBLES AND SURVIVES"
 msgstr "플레이어는 모으고 살아남는다"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "THE TONE IS STRANGER AND MORE MECHANICAL"
 msgstr "분위기는 더 낯설고 더 기계적이다"
 
-#: src/ui/menu_startup_m12.c:800
+#: src/ui/menu_startup_m12.c:803
 msgid "THE WORLD IS BROADER THAN MOUNT ANAIAS"
 msgstr "세계는 아나이아스 산보다 더 넓다"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "BINARY ASSETS REMAIN OUTSIDE THIS PASS"
 msgstr "바이너리 자산은 이번 작업 범위 밖이다"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "CONTENT HERE IS A GUIDE NOT A DATA DUMP"
 msgstr "여기 내용은 데이터 덤프가 아닌 안내다"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "DM2GRAPHICS DAT AND DM2DUNGEON DAT ARE TRACKED"
 msgstr "DM2GRAPHICS.DAT와 DM2DUNGEON.DAT가 추적된다"
 
-#: src/ui/menu_startup_m12.c:801
+#: src/ui/menu_startup_m12.c:804
 msgid "SUPPORTED VERSIONS CAN GROW OVER TIME"
 msgstr "지원 버전은 시간이 지나며 늘어날 수 있다"
 
-#: src/ui/menu_startup_m12.c:806
+#: src/ui/menu_startup_m12.c:809
 msgid "FIRESTAFF PROJECT"
 msgstr "Firestaff 프로젝트"
 
-#: src/ui/menu_startup_m12.c:807
+#: src/ui/menu_startup_m12.c:810
 msgid "ABOUT AND CREDITS"
 msgstr "정보 및 제작진"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "DETERMINISTIC MODULAR MUSEUM GRADE"
 msgstr "결정론적이고 모듈화된 박물관급 품질"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "OPEN DUNGEON MASTER ENGINE"
 msgstr "오픈 Dungeon Master 엔진"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "ORIGINAL DATA IS VERIFIED NOT BUNDLED"
 msgstr "오리지널 데이터는 번들이 아닌 검증 방식이다"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "PROJECT PURPOSE"
 msgstr "프로젝트 목적"
 
-#: src/ui/menu_startup_m12.c:809
+#: src/ui/menu_startup_m12.c:812
 msgid "V1 PRESERVES BASELINE BEHAVIOUR"
 msgstr "V1은 기본 동작을 그대로 보존한다"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "크리스토프 퐁타넬이 중요한 역사를 기록했다"
 
-#: src/ui/menu_startup_m12.c:810 src/ui/menu_startup_m12.c:11169
-#: src/ui/menu_startup_m12.c:11172
+#: src/ui/menu_startup_m12.c:813 src/ui/menu_startup_m12.c:11250
+#: src/ui/menu_startup_m12.c:11253
 msgid "CREDITS"
 msgstr "제작진"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "DANIEL NYLANDER 2026 GITHUB.COM/YEAGER/FIRESTAFF"
 msgstr "Daniel Nylander 2026 github.com/yeager/firestaff"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "FTL GAMES AND SOFTWARE HEAVEN CREATED THE ORIGINALS"
 msgstr "FTL Games와 Software Heaven이 오리지널을 만들었다"
 
-#: src/ui/menu_startup_m12.c:810
+#: src/ui/menu_startup_m12.c:813
 msgid "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
 msgstr "REDMCSB SKPROJECT SDL3 ZLIB DMWEB"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "NO CLAIM OF OFFICIAL AFFILIATION"
 msgstr "공식 제휴를 주장하지 않습니다"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "PROJECT BOUNDARIES"
 msgstr "프로젝트 범위"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "REGRESSION PROBES GUARD MENU STABILITY"
 msgstr "회귀 테스트가 메뉴 안정성을 지킨다"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "TRACKED TEXT STAYS ENGLISH IN THE REPO"
 msgstr "저장소 내 추적 텍스트는 영어로 유지된다"
 
-#: src/ui/menu_startup_m12.c:811
+#: src/ui/menu_startup_m12.c:814
 msgid "USER SUPPLIED RETAIL DATA IS REQUIRED"
 msgstr "사용자가 제공하는 정식판 데이터가 필요합니다"
 
-#: src/ui/menu_startup_m12.c:816
+#: src/ui/menu_startup_m12.c:819
 msgid "TECHNICAL ARCHIVE"
 msgstr "기술 아카이브"
 
-#: src/ui/menu_startup_m12.c:817
+#: src/ui/menu_startup_m12.c:820
 msgid "SOURCE EVIDENCE AND VERIFICATION"
 msgstr "소스 증거 및 검증"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "EVIDENCE MODEL"
 msgstr "증거 모델"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "KNOWN FILES ARE MATCHED BY HASH"
 msgstr "알려진 파일은 해시로 일치시킵니다"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "NO SILENT FALLBACK TO UNKNOWN ORIGINALS"
 msgstr "알 수 없는 오리지널로 조용히 대체하지 않습니다"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "RUNTIME PATHS REPORT MISSING DATA SAFELY"
 msgstr "런타임 경로는 누락된 데이터를 안전하게 보고합니다"
 
-#: src/ui/menu_startup_m12.c:819
+#: src/ui/menu_startup_m12.c:822
 msgid "VERSION MATRICES STAY EXPLICIT"
 msgstr "버전 매트릭스는 명시적으로 유지됩니다"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "ESCAPE RETURNS BEFORE EXITING"
 msgstr "ESC를 누르면 종료 전에 메뉴로 돌아갑니다"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "KEYBOARD INPUT IS BOUNDED"
 msgstr "키보드 입력은 제한되어 있습니다"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "MOUSE HITS ROUTE THROUGH SHARED STATE"
 msgstr "마우스 입력은 공유 상태를 거쳐 처리됩니다"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "STARTUP MENU"
 msgstr "시작 메뉴"
 
-#: src/ui/menu_startup_m12.c:820
+#: src/ui/menu_startup_m12.c:823
 msgid "UNKNOWN KEYS ARE NO OPS"
 msgstr "알 수 없는 키는 아무 동작도 하지 않습니다"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "ADD INTERVIEW AND TIMELINE SOURCES"
 msgstr "인터뷰 및 연대기 자료 추가"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "ADD MANUAL EXCERPT REFERENCES"
 msgstr "설명서 발췌 참고 자료 추가"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "ADD SMALL CURATED SCREEN PANELS"
 msgstr "엄선된 소형 화면 패널 추가"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "FUTURE MUSEUM WORK"
 msgstr "향후 박물관 작업"
 
-#: src/ui/menu_startup_m12.c:821
+#: src/ui/menu_startup_m12.c:824
 msgid "KEEP LARGE ASSETS OUT UNTIL LICENSED"
 msgstr "라이선스 확보 전까지 대용량 자산 제외"
 
-#: src/ui/menu_startup_m12.c:893
+#: src/ui/menu_startup_m12.c:896
 msgid "FULLSCREEN"
 msgstr "FULLSCREEN"
 
-#: src/ui/menu_startup_m12.c:893
+#: src/ui/menu_startup_m12.c:896
 msgid "MAXIMIZED"
 msgstr "최대화"
 
-#: src/ui/menu_startup_m12.c:893
+#: src/ui/menu_startup_m12.c:896
 msgid "WINDOWED"
 msgstr "WINDOWED"
 
-#: src/ui/menu_startup_m12.c:1023
+#: src/ui/menu_startup_m12.c:1026
 msgid "FRONTEND PREVIEW"
 msgstr "FRONTEND PREVIEW"
 
-#: src/ui/menu_startup_m12.c:1024
+#: src/ui/menu_startup_m12.c:1027
 msgid "SELECT A DESTINATION"
 msgstr "SELECT A DESTINATION"
 
-#: src/ui/menu_startup_m12.c:1026
+#: src/ui/menu_startup_m12.c:1029
 msgid "STATUS"
 msgstr "STATUS"
 
-#: src/ui/menu_startup_m12.c:1027
+#: src/ui/menu_startup_m12.c:1030
 msgid "LAUNCHER DESTINATIONS"
 msgstr "LAUNCHER DESTINATIONS"
 
-#: src/ui/menu_startup_m12.c:1028
+#: src/ui/menu_startup_m12.c:1031
 msgid "DATA DIR"
 msgstr "DATA DIR"
 
-#: src/ui/menu_startup_m12.c:1029
+#: src/ui/menu_startup_m12.c:1032
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 
-#: src/ui/menu_startup_m12.c:1030
+#: src/ui/menu_startup_m12.c:1033
 msgid "PERSISTED OPTIONS"
 msgstr "PERSISTED OPTIONS"
 
-#: src/ui/menu_startup_m12.c:1031 src/ui/menu_startup_m12.c:10308
-#: src/ui/menu_startup_m12.c:12379
+#: src/ui/menu_startup_m12.c:1034 src/ui/menu_startup_m12.c:10389
+#: src/ui/menu_startup_m12.c:12460
 msgid "LANGUAGE"
 msgstr "LANGUAGE"
 
-#: src/ui/menu_startup_m12.c:1032
+#: src/ui/menu_startup_m12.c:1035
 msgid "GRAPHICS MODE"
 msgstr "GRAPHICS MODE"
 
-#: src/ui/menu_startup_m12.c:1033
+#: src/ui/menu_startup_m12.c:1036
 msgid "RENDERER BACKEND"
 msgstr "RENDERER BACKEND"
 
-#: src/ui/menu_startup_m12.c:1034
+#: src/ui/menu_startup_m12.c:1037
 msgid "RENDERER BACKEND UNAVAILABLE"
 msgstr "RENDERER BACKEND UNAVAILABLE"
 
-#: src/ui/menu_startup_m12.c:1035
+#: src/ui/menu_startup_m12.c:1038
 msgid "WINDOW MODE"
 msgstr "WINDOW MODE"
 
-#: src/ui/menu_startup_m12.c:1036
+#: src/ui/menu_startup_m12.c:1039
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
 msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
 
-#: src/ui/menu_startup_m12.c:1037
+#: src/ui/menu_startup_m12.c:1040
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
 
-#: src/ui/menu_startup_m12.c:1038
+#: src/ui/menu_startup_m12.c:1041
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER OR ESC RETURNS TO MENU"
 
-#: src/ui/menu_startup_m12.c:1039 src/ui/menu_startup_m12.c:8140
+#: src/ui/menu_startup_m12.c:1042 src/ui/menu_startup_m12.c:8221
 msgid "READY TO LAUNCH"
 msgstr "READY TO LAUNCH"
 
-#: src/ui/menu_startup_m12.c:1041
+#: src/ui/menu_startup_m12.c:1044
 msgid "VALIDATOR SCAFFOLD ONLY"
 msgstr "VALIDATOR SCAFFOLD ONLY"
 
-#: src/ui/menu_startup_m12.c:1042
+#: src/ui/menu_startup_m12.c:1045
 msgid "ADD VERIFIED RETAIL HASHES"
 msgstr "ADD VERIFIED RETAIL HASHES"
 
-#: src/ui/menu_startup_m12.c:1043
+#: src/ui/menu_startup_m12.c:1046
 msgid "GAME DATA NOT FOUND"
 msgstr "GAME DATA NOT FOUND"
 
-#: src/ui/menu_startup_m12.c:1044
+#: src/ui/menu_startup_m12.c:1047
 msgid "CHECK FIRESTAFF DATA DIR"
 msgstr "CHECK FIRESTAFF DATA DIR"
 
-#: src/ui/menu_startup_m12.c:1045
+#: src/ui/menu_startup_m12.c:1048
 msgid "ORIGINAL FILES NOT FOUND"
 msgstr "오리지널 파일을 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:1046
+#: src/ui/menu_startup_m12.c:1049
 msgid "COPY YOUR RETAIL GAME FILES INTO:"
 msgstr "정식판 게임 파일을 다음 위치에 복사하세요:"
 
-#: src/ui/menu_startup_m12.c:1047
+#: src/ui/menu_startup_m12.c:1050
 msgid "ART SLOT READY"
 msgstr "ART SLOT READY"
 
-#: src/ui/menu_startup_m12.c:1048
+#: src/ui/menu_startup_m12.c:1051
 msgid "ART SLOT EMPTY"
 msgstr "ART SLOT EMPTY"
 
-#: src/ui/menu_startup_m12.c:1049
+#: src/ui/menu_startup_m12.c:1052
 msgid "DROP ART INTO SLOT"
 msgstr "DROP ART INTO SLOT"
 
-#: src/ui/menu_startup_m12.c:1050
+#: src/ui/menu_startup_m12.c:1053
 msgid "CARD ART ACTIVE"
 msgstr "CARD ART ACTIVE"
 
-#: src/ui/menu_startup_m12.c:1051
+#: src/ui/menu_startup_m12.c:1054
 msgid "CARD ART SLOT"
 msgstr "CARD ART SLOT"
 
-#: src/ui/menu_startup_m12.c:1052
+#: src/ui/menu_startup_m12.c:1055
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "게임 데이터 압축 파일에 도구가 필요합니다"
 
-#: src/ui/menu_startup_m12.c:1053
+#: src/ui/menu_startup_m12.c:1056
 #, c-format
 msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr "압축 파일: %s  설치: %s"
 
-#: src/ui/menu_startup_m12.c:1054
+#: src/ui/menu_startup_m12.c:1057
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "설치한 후 게임 데이터를 다시 검색하세요"
 
-#: src/ui/menu_startup_m12.c:1865 src/ui/menu_startup_m12.c:8710
+#: src/ui/menu_startup_m12.c:1868 src/ui/menu_startup_m12.c:8791
 msgid "Dungeon Master"
 msgstr "Dungeon Master"
 
-#: src/ui/menu_startup_m12.c:1867 src/ui/menu_startup_m12.c:8710
+#: src/ui/menu_startup_m12.c:1870 src/ui/menu_startup_m12.c:8791
 msgid "Chaos Strikes Back"
 msgstr "Chaos Strikes Back"
 
-#: src/ui/menu_startup_m12.c:1870
+#: src/ui/menu_startup_m12.c:1873
 msgid "Dungeon Master II: The Legend of Skullkeep"
 msgstr "Dungeon Master II: The Legend of Skullkeep"
 
-#: src/ui/menu_startup_m12.c:1872
+#: src/ui/menu_startup_m12.c:1875
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8711
+#: src/ui/menu_startup_m12.c:1877 src/ui/menu_startup_m12.c:8792
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
-#: src/ui/menu_startup_m12.c:1895 src/ui/menu_startup_m12.c:2522
-#: src/ui/menu_startup_m12.c:2573
+#: src/ui/menu_startup_m12.c:1898 src/ui/menu_startup_m12.c:2525
+#: src/ui/menu_startup_m12.c:2576
 msgid "STARTING"
 msgstr "시작 중"
 
-#: src/ui/menu_startup_m12.c:1897
+#: src/ui/menu_startup_m12.c:1900
 msgid "CHECKING CACHED RESUME PATHS"
 msgstr "캐시된 이력서 경로 확인"
 
-#: src/ui/menu_startup_m12.c:1899
+#: src/ui/menu_startup_m12.c:1902
 msgid "CHECKING DIRECT LAUNCH PATH"
 msgstr "직접 실행 경로 확인"
 
-#: src/ui/menu_startup_m12.c:1901
+#: src/ui/menu_startup_m12.c:1904
 msgid "CHECKING EXPLICIT FILE REQUEST"
 msgstr "명시적인 파일 요청 확인 중"
 
-#: src/ui/menu_startup_m12.c:1903
+#: src/ui/menu_startup_m12.c:1906
 msgid "BUILDING SEARCH ROOTS"
 msgstr "검색 루트 구축"
 
-#: src/ui/menu_startup_m12.c:1905
+#: src/ui/menu_startup_m12.c:1908
 msgid "CHECKING ORIGINAL FILE CANDIDATES"
 msgstr "원본 파일 후보 확인"
 
-#: src/ui/menu_startup_m12.c:1907
+#: src/ui/menu_startup_m12.c:1910
 msgid "MATCHING GAME VERSIONS"
 msgstr "일치하는 게임 버전"
 
-#: src/ui/menu_startup_m12.c:1909
+#: src/ui/menu_startup_m12.c:1912
 msgid "MATCHING REQUIRED FILES"
 msgstr "필수 파일 일치"
 
-#: src/ui/menu_startup_m12.c:1911
+#: src/ui/menu_startup_m12.c:1914
 msgid "MATERIALIZING LAUNCH CACHE"
 msgstr "실행 캐시 구체화 중"
 
-#: src/ui/menu_startup_m12.c:1913
+#: src/ui/menu_startup_m12.c:1916
 msgid "REFRESHING MEDIA METADATA"
 msgstr "새로운 미디어 메타데이터"
 
-#: src/ui/menu_startup_m12.c:1967 src/ui/menu_startup_m12.c:5008
-#: src/ui/menu_startup_m12.c:5248
+#: src/ui/menu_startup_m12.c:1970 src/ui/menu_startup_m12.c:5089
+#: src/ui/menu_startup_m12.c:5329
 msgid "NOT SET"
 msgstr "설정되지 않음"
 
-#: src/ui/menu_startup_m12.c:2091
+#: src/ui/menu_startup_m12.c:2094
 msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
 msgstr "파일 관리자를 사용하여 게임 파일을 Documents/Firestaff/data에 복사하세요"
 
-#: src/ui/menu_startup_m12.c:2093
+#: src/ui/menu_startup_m12.c:2096
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "파일 앱을 사용하여 게임 파일을 이 앱의 Firestaff/data에 복사하세요"
 
-#: src/ui/menu_startup_m12.c:2095
+#: src/ui/menu_startup_m12.c:2098
 msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
 msgstr "정식판 게임 파일을 다음 위치에 복사하세요:"
 
-#: src/ui/menu_startup_m12.c:2114
+#: src/ui/menu_startup_m12.c:2117
 msgid "NO GAME DATA FOUND"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:2167 src/ui/menu_startup_m12.c:9463
-#: src/ui/menu_startup_m12.c:9578
+#: src/ui/menu_startup_m12.c:2170 src/ui/menu_startup_m12.c:9544
+#: src/ui/menu_startup_m12.c:9659
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:2214
+#: src/ui/menu_startup_m12.c:2217
 msgid "DATA DIRECTORY UPDATED"
 msgstr "데이터 디렉토리가 업데이트되었습니다."
 
-#: src/ui/menu_startup_m12.c:2215 src/ui/menu_startup_m12.c:2979
+#: src/ui/menu_startup_m12.c:2218 src/ui/menu_startup_m12.c:2982
 msgid "DATA DIRECTORY UNCHANGED"
 msgstr "데이터 디렉토리는 변경되지 않았습니다."
 
-#: src/ui/menu_startup_m12.c:2257 src/ui/menu_startup_m12.c:2355
-#: src/ui/menu_startup_m12.c:2521 src/ui/menu_startup_m12.c:2572
-#: src/ui/menu_startup_m12.c:12963
+#: src/ui/menu_startup_m12.c:2260 src/ui/menu_startup_m12.c:2358
+#: src/ui/menu_startup_m12.c:2524 src/ui/menu_startup_m12.c:2575
+#: src/ui/menu_startup_m12.c:13044
 msgid "SCANNING GAME DATA"
 msgstr "게임 데이터 검색 중"
 
-#: src/ui/menu_startup_m12.c:2354
+#: src/ui/menu_startup_m12.c:2357
 msgid "CANCELLING DATA SCAN"
 msgstr "데이터 스캔 취소 중"
 
-#: src/ui/menu_startup_m12.c:2357
+#: src/ui/menu_startup_m12.c:2360
 msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr "현재 파일 확인이 완료되기를 기다리는 중"
 
-#: src/ui/menu_startup_m12.c:2486 src/ui/menu_startup_m12.c:2556
+#: src/ui/menu_startup_m12.c:2489 src/ui/menu_startup_m12.c:2559
 msgid "DATA DIRECTORY NOT FOUND"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:2487 src/ui/menu_startup_m12.c:2557
-#: src/ui/menu_startup_m12.c:2603 src/ui/menu_startup_m12.c:12932
+#: src/ui/menu_startup_m12.c:2490 src/ui/menu_startup_m12.c:2560
+#: src/ui/menu_startup_m12.c:2606 src/ui/menu_startup_m12.c:13013
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "기존 폴더 선택"
 
-#: src/ui/menu_startup_m12.c:2599 src/ui/menu_startup_m12.c:12928
+#: src/ui/menu_startup_m12.c:2602 src/ui/menu_startup_m12.c:13009
 msgid "DATA SCAN CANCELLED"
 msgstr "데이터 스캔이 취소되었습니다."
 
-#: src/ui/menu_startup_m12.c:2600 src/ui/menu_startup_m12.c:12929
+#: src/ui/menu_startup_m12.c:2603 src/ui/menu_startup_m12.c:13010
 msgid "DATA SCAN FAILED"
 msgstr "데이터 스캔 실패"
 
-#: src/ui/menu_startup_m12.c:2602 src/ui/menu_startup_m12.c:12931
+#: src/ui/menu_startup_m12.c:2605 src/ui/menu_startup_m12.c:13012
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "게임 가용성이 업데이트되지 않았습니다."
 
-#: src/ui/menu_startup_m12.c:2626
+#: src/ui/menu_startup_m12.c:2629
 msgid "SAVE MANIFEST EXPORTED"
 msgstr "내보낸 매니페스트 저장"
 
-#: src/ui/menu_startup_m12.c:2627
+#: src/ui/menu_startup_m12.c:2630
 msgid "SAVE FILES ARE NOT COPIED"
 msgstr "저장 파일은 복사되지 않습니다"
 
-#: src/ui/menu_startup_m12.c:2631
+#: src/ui/menu_startup_m12.c:2634
 msgid "EXPORT FAILED"
 msgstr "내보내기 실패"
 
-#: src/ui/menu_startup_m12.c:2632
+#: src/ui/menu_startup_m12.c:2635
 msgid "CHECK YOUR SETTINGS FOLDER"
 msgstr "설정 폴더를 확인하세요"
 
-#: src/ui/menu_startup_m12.c:2746 src/ui/menu_startup_m12.c:2885
+#: src/ui/menu_startup_m12.c:2749 src/ui/menu_startup_m12.c:2888
 msgid "DM1 PC34 SAVE EXPORTED"
 msgstr "DM1 PC34 저장 내보내기됨"
 
-#: src/ui/menu_startup_m12.c:2752 src/ui/menu_startup_m12.c:2892
+#: src/ui/menu_startup_m12.c:2755 src/ui/menu_startup_m12.c:2895
 msgid "PC34 EXPORT FAILED"
 msgstr "PC34 내보내기 실패"
 
-#: src/ui/menu_startup_m12.c:2753
+#: src/ui/menu_startup_m12.c:2756
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "빠른 이력서 확인 저장"
 
-#: src/ui/menu_startup_m12.c:2780 src/ui/menu_startup_m12.c:12668
+#: src/ui/menu_startup_m12.c:2783 src/ui/menu_startup_m12.c:12749
 msgid "NO SAVES FOUND"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:2781
+#: src/ui/menu_startup_m12.c:2784
 msgid "SAVE A GAME FIRST"
 msgstr "먼저 게임을 저장하세요"
 
-#: src/ui/menu_startup_m12.c:2893
+#: src/ui/menu_startup_m12.c:2896
 msgid "SELECT A VALID DM1 SAVE"
 msgstr "유효한 DM1 저장을 선택하세요"
 
-#: src/ui/menu_startup_m12.c:2918
+#: src/ui/menu_startup_m12.c:2921
 msgid "SAVE MANIFEST IMPORTED"
 msgstr "가져온 매니페스트 저장"
 
-#: src/ui/menu_startup_m12.c:2919
+#: src/ui/menu_startup_m12.c:2922
 msgid "QUICK RESUME PATH UPDATED"
 msgstr "빠른 재개 경로가 업데이트되었습니다."
 
-#: src/ui/menu_startup_m12.c:2923
+#: src/ui/menu_startup_m12.c:2926
 msgid "IMPORT FAILED"
 msgstr "가져오기 실패"
 
-#: src/ui/menu_startup_m12.c:2924
+#: src/ui/menu_startup_m12.c:2927
 msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr "먼저 저장 매니페스트 내보내기"
 
-#: src/ui/menu_startup_m12.c:2967
+#: src/ui/menu_startup_m12.c:2970
 msgid "CHOOSE GAME DATA FOLDER"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:2968
+#: src/ui/menu_startup_m12.c:2971
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "선택 후 실행 프로그램이 다시 검색됩니다."
 
-#: src/ui/menu_startup_m12.c:3013
+#: src/ui/menu_startup_m12.c:3016
 msgid "UNICODE FONT SELECTED"
 msgstr "유니코드 글꼴이 선택됨"
 
-#: src/ui/menu_startup_m12.c:3019 src/ui/menu_startup_m12.c:3041
+#: src/ui/menu_startup_m12.c:3022 src/ui/menu_startup_m12.c:3044
 msgid "UNICODE FONT UNCHANGED"
 msgstr "유니코드 글꼴은 변경되지 않았습니다."
 
-#: src/ui/menu_startup_m12.c:3020 src/ui/menu_startup_m12.c:3082
+#: src/ui/menu_startup_m12.c:3023 src/ui/menu_startup_m12.c:3085
 msgid "NO FILE SELECTED"
 msgstr "선택된 파일이 없습니다"
 
-#: src/ui/menu_startup_m12.c:3035
+#: src/ui/menu_startup_m12.c:3038
 msgid "CHOOSE UNICODE FONT"
 msgstr "유니코드 글꼴을 선택하세요"
 
-#: src/ui/menu_startup_m12.c:3036
+#: src/ui/menu_startup_m12.c:3039
 msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "광범위한 TTF 또는 OTF 글꼴을 선택하세요"
 
-#: src/ui/menu_startup_m12.c:3042 src/ui/menu_startup_m12.c:3104
+#: src/ui/menu_startup_m12.c:3045 src/ui/menu_startup_m12.c:3107
 msgid "NATIVE FILE DIALOG DISABLED"
 msgstr "기본 파일 대화 상자가 비활성화되었습니다."
 
-#: src/ui/menu_startup_m12.c:3069
+#: src/ui/menu_startup_m12.c:3072
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 아트팩 선택"
 
-#: src/ui/menu_startup_m12.c:3074
+#: src/ui/menu_startup_m12.c:3077
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 아트팩이 거부됨"
 
-#: src/ui/menu_startup_m12.c:3081 src/ui/menu_startup_m12.c:3103
+#: src/ui/menu_startup_m12.c:3084 src/ui/menu_startup_m12.c:3106
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 아트팩 변경되지 않음"
 
-#: src/ui/menu_startup_m12.c:3097
+#: src/ui/menu_startup_m12.c:3100
 msgid "CHOOSE V2.2 ARTPACK"
 msgstr "V2.2 아트팩 선택"
 
-#: src/ui/menu_startup_m12.c:3098
+#: src/ui/menu_startup_m12.c:3101
 msgid "SELECT A .FSART FILE"
 msgstr "목적지 선택"
 
-#: src/ui/menu_startup_m12.c:4985
+#: src/ui/menu_startup_m12.c:5066
 msgid "NEEDS LOGIN"
 msgstr "로그인이 필요합니다"
 
-#: src/ui/menu_startup_m12.c:4987
+#: src/ui/menu_startup_m12.c:5068
 msgid "READY"
 msgstr "준비"
 
-#: src/ui/menu_startup_m12.c:4989
+#: src/ui/menu_startup_m12.c:5070
 msgid "BACKEND PENDING"
 msgstr "백엔드 보류 중"
 
-#: src/ui/menu_startup_m12.c:5014
+#: src/ui/menu_startup_m12.c:5095
 msgid "SET"
 msgstr "늘이기"
 
-#: src/ui/menu_startup_m12.c:5031 src/ui/menu_startup_m12.c:5244
+#: src/ui/menu_startup_m12.c:5112 src/ui/menu_startup_m12.c:5325
 msgid "EDITING"
 msgstr "설정"
 
-#: src/ui/menu_startup_m12.c:5136
+#: src/ui/menu_startup_m12.c:5217
 msgid "SCALE"
 msgstr "SCALE"
 
-#: src/ui/menu_startup_m12.c:5137 src/ui/menu_startup_m12.c:12427
+#: src/ui/menu_startup_m12.c:5218 src/ui/menu_startup_m12.c:12508
 msgid "ASPECT RATIO"
 msgstr "ASPECT RATIO"
 
-#: src/ui/menu_startup_m12.c:5138
+#: src/ui/menu_startup_m12.c:5219
 msgid "PIXEL SNAP"
 msgstr "PIXEL SNAP"
 
-#: src/ui/menu_startup_m12.c:5139
+#: src/ui/menu_startup_m12.c:5220
 msgid "FILTER"
 msgstr "FILTER"
 
-#: src/ui/menu_startup_m12.c:5140
+#: src/ui/menu_startup_m12.c:5221
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5141
+#: src/ui/menu_startup_m12.c:5222
 msgid "FPS OVERLAY"
 msgstr "FPS 오버레이"
 
-#: src/ui/menu_startup_m12.c:5142
+#: src/ui/menu_startup_m12.c:5223
 msgid "VIEWPORT STYLE"
 msgstr "뷰포트 스타일"
 
-#: src/ui/menu_startup_m12.c:5143
+#: src/ui/menu_startup_m12.c:5224
 msgid "INPUT MODE"
 msgstr "창 모드"
 
-#: src/ui/menu_startup_m12.c:5145
+#: src/ui/menu_startup_m12.c:5226
 msgid "TOUCH CONTROLS"
 msgstr "조작"
 
-#: src/ui/menu_startup_m12.c:5146
+#: src/ui/menu_startup_m12.c:5227
 msgid "MOVEMENT MODE"
 msgstr "이동 모드"
 
-#: src/ui/menu_startup_m12.c:5147
+#: src/ui/menu_startup_m12.c:5228
 msgid "SMOOTH TURN PAN"
 msgstr "부드러운 회전 팬"
 
-#: src/ui/menu_startup_m12.c:5148
+#: src/ui/menu_startup_m12.c:5229
 msgid "DATA DIRECTORY"
 msgstr "데이터 폴더"
 
-#: src/ui/menu_startup_m12.c:5149
+#: src/ui/menu_startup_m12.c:5230
 msgid "ORIGINAL DATA"
 msgstr "오리지널"
 
-#: src/ui/menu_startup_m12.c:5150
+#: src/ui/menu_startup_m12.c:5231
 msgid "DEBUG OVERLAY"
 msgstr "디버그 오버레이"
 
-#: src/ui/menu_startup_m12.c:5151
+#: src/ui/menu_startup_m12.c:5232
 msgid "DEVELOPER GATES"
 msgstr "개발자 게이트"
 
-#: src/ui/menu_startup_m12.c:5152
+#: src/ui/menu_startup_m12.c:5233
 msgid "MASTER VOLUME"
 msgstr "리마스터"
 
-#: src/ui/menu_startup_m12.c:5153
+#: src/ui/menu_startup_m12.c:5234
 msgid "MUSIC VOLUME"
 msgstr "음악 볼륨"
 
-#: src/ui/menu_startup_m12.c:5154
+#: src/ui/menu_startup_m12.c:5235
 msgid "SFX VOLUME"
 msgstr "SFX 볼륨"
 
-#: src/ui/menu_startup_m12.c:5155
+#: src/ui/menu_startup_m12.c:5236
 msgid "MUTE AUDIO"
 msgstr "오디오"
 
-#: src/ui/menu_startup_m12.c:5156
+#: src/ui/menu_startup_m12.c:5237
 msgid "AUDIO DEVICE"
 msgstr "오디오 장치"
 
-#: src/ui/menu_startup_m12.c:5157
+#: src/ui/menu_startup_m12.c:5238
 msgid "BRIGHTNESS"
 msgstr "밝기"
 
-#: src/ui/menu_startup_m12.c:5158
+#: src/ui/menu_startup_m12.c:5239
 msgid "FONT SCALE"
 msgstr "배율"
 
-#: src/ui/menu_startup_m12.c:5159
+#: src/ui/menu_startup_m12.c:5240
 msgid "UNICODE FONT"
 msgstr "유니코드 글꼴"
 
-#: src/ui/menu_startup_m12.c:5160
+#: src/ui/menu_startup_m12.c:5241
 msgid "HIGH CONTRAST"
 msgstr "고대비"
 
-#: src/ui/menu_startup_m12.c:5161
+#: src/ui/menu_startup_m12.c:5242
 msgid "COLORBLIND"
 msgstr "색맹"
 
-#: src/ui/menu_startup_m12.c:5162
+#: src/ui/menu_startup_m12.c:5243
 msgid "AUTO PAUSE"
 msgstr "자동 일시중지"
 
-#: src/ui/menu_startup_m12.c:5163
+#: src/ui/menu_startup_m12.c:5244
 msgid "THEME"
 msgstr "테마"
 
-#: src/ui/menu_startup_m12.c:5164
+#: src/ui/menu_startup_m12.c:5245
 msgid "BACKGROUND"
 msgstr "배경"
 
-#: src/ui/menu_startup_m12.c:5165
+#: src/ui/menu_startup_m12.c:5246
 msgid "QUICK RESUME"
 msgstr "빠른 재개"
 
-#: src/ui/menu_startup_m12.c:5166
+#: src/ui/menu_startup_m12.c:5247
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 아트팩"
 
-#: src/ui/menu_startup_m12.c:5167
+#: src/ui/menu_startup_m12.c:5248
 msgid "RETROACHIEVEMENTS"
 msgstr "역업적"
 
-#: src/ui/menu_startup_m12.c:5168
+#: src/ui/menu_startup_m12.c:5249
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "역업적 하드코어"
 
-#: src/ui/menu_startup_m12.c:5169
+#: src/ui/menu_startup_m12.c:5250
 msgid "RETROACHIEVEMENTS USER"
 msgstr "재업적 사용자"
 
-#: src/ui/menu_startup_m12.c:5170
+#: src/ui/menu_startup_m12.c:5251
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "역업적 API 토큰"
 
-#: src/ui/menu_startup_m12.c:5171
+#: src/ui/menu_startup_m12.c:5252
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "역업적 서버"
 
-#: src/ui/menu_startup_m12.c:5172 src/ui/menu_startup_m12.c:12623
+#: src/ui/menu_startup_m12.c:5253 src/ui/menu_startup_m12.c:12704
 msgid "SAVE BROWSER"
 msgstr "브라우저 저장"
 
-#: src/ui/menu_startup_m12.c:5173
+#: src/ui/menu_startup_m12.c:5254
 msgid "SESSION TIMER"
 msgstr "세션 타이머"
 
-#: src/ui/menu_startup_m12.c:5174
+#: src/ui/menu_startup_m12.c:5255
 msgid "MINIMAP"
 msgstr "최소"
 
-#: src/ui/menu_startup_m12.c:5175
+#: src/ui/menu_startup_m12.c:5256
 msgid "AUTOMAP"
 msgstr "자동"
 
-#: src/ui/menu_startup_m12.c:5176
+#: src/ui/menu_startup_m12.c:5257
 msgid "COMBAT LOG"
 msgstr "전투 기록"
 
-#: src/ui/menu_startup_m12.c:5177
+#: src/ui/menu_startup_m12.c:5258
 msgid "SOUNDTRACK"
 msgstr "사운드트랙"
 
-#: src/ui/menu_startup_m12.c:5178
+#: src/ui/menu_startup_m12.c:5259
 msgid "AMBIENT SOUND"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:5179
+#: src/ui/menu_startup_m12.c:5260
 msgid "AMBIENT VOLUME"
 msgstr "주변 볼륨"
 
-#: src/ui/menu_startup_m12.c:5180
+#: src/ui/menu_startup_m12.c:5261
 msgid "UI SCALE"
 msgstr "배율"
 
-#: src/ui/menu_startup_m12.c:5181
+#: src/ui/menu_startup_m12.c:5262
 msgid "UI FONT"
 msgstr "UI 글꼴"
 
-#: src/ui/menu_startup_m12.c:5182
+#: src/ui/menu_startup_m12.c:5263
 msgid "CUSTOM MUSIC"
 msgstr "사용자 지정"
 
-#: src/ui/menu_startup_m12.c:5183
+#: src/ui/menu_startup_m12.c:5264
 msgid "CUSTOM DUNGEONS"
 msgstr "던전"
 
-#: src/ui/menu_startup_m12.c:5184
+#: src/ui/menu_startup_m12.c:5265
 msgid "SCREENSHOTS"
 msgstr "스크린샷"
 
-#: src/ui/menu_startup_m12.c:5185
+#: src/ui/menu_startup_m12.c:5266
 msgid "ARTPACK"
 msgstr "아트팩"
 
-#: src/ui/menu_startup_m12.c:5186
+#: src/ui/menu_startup_m12.c:5267
 msgid "STREAMER MODE"
 msgstr "스트리머 모드"
 
-#: src/ui/menu_startup_m12.c:5190
+#: src/ui/menu_startup_m12.c:5271
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "DM1 PC34 저장 내보내기"
 
-#: src/ui/menu_startup_m12.c:5191
+#: src/ui/menu_startup_m12.c:5272
 msgid "EXPORT SAVE MANIFEST"
 msgstr "내보내기 저장 매니페스트"
 
-#: src/ui/menu_startup_m12.c:5192
+#: src/ui/menu_startup_m12.c:5273
 msgid "IMPORT SAVE MANIFEST"
 msgstr "저장 매니페스트 가져오기"
 
-#: src/ui/menu_startup_m12.c:5253
+#: src/ui/menu_startup_m12.c:5334
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5271
+#: src/ui/menu_startup_m12.c:5352
 msgid "WRITE PC34..."
 msgstr "PC34 쓰기..."
 
-#: src/ui/menu_startup_m12.c:5272
+#: src/ui/menu_startup_m12.c:5353
 msgid "WRITE..."
 msgstr "쓰기..."
 
-#: src/ui/menu_startup_m12.c:5273
+#: src/ui/menu_startup_m12.c:5354
 msgid "READ..."
 msgstr "읽기..."
 
-#: src/ui/menu_startup_m12.c:5289
+#: src/ui/menu_startup_m12.c:5370
 msgid "GENERAL"
 msgstr "일반"
 
-#: src/ui/menu_startup_m12.c:5295 src/ui/menu_startup_m12.c:12318
+#: src/ui/menu_startup_m12.c:5376 src/ui/menu_startup_m12.c:12399
 msgid "RENDERER"
 msgstr "RENDERER"
 
-#: src/ui/menu_startup_m12.c:5298
+#: src/ui/menu_startup_m12.c:5379
 msgid "INPUT"
 msgstr "입력"
 
-#: src/ui/menu_startup_m12.c:5301
+#: src/ui/menu_startup_m12.c:5382
 msgid "DATA"
 msgstr "데이터 폴더"
 
-#: src/ui/menu_startup_m12.c:5304
+#: src/ui/menu_startup_m12.c:5385
 msgid "DEBUG"
 msgstr "디버그"
 
-#: src/ui/menu_startup_m12.c:5315
+#: src/ui/menu_startup_m12.c:5396
 msgid "APPEARANCE"
 msgstr "외관"
 
-#: src/ui/menu_startup_m12.c:5776 src/ui/menu_startup_m12.c:5830
+#: src/ui/menu_startup_m12.c:5857 src/ui/menu_startup_m12.c:5911
 msgid "DATA FILES NOT FOUND"
 msgstr "오리지널 파일을 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:5830
+#: src/ui/menu_startup_m12.c:5911
 msgid "ENTER FOR GAME MENU"
 msgstr "ENTER 또는 ESC로 메뉴로 돌아갑니다"
 
-#: src/ui/menu_startup_m12.c:5831
+#: src/ui/menu_startup_m12.c:5912
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "이 게임은 아직 지원되지 않습니다"
 
-#: src/ui/menu_startup_m12.c:5965
+#: src/ui/menu_startup_m12.c:6046
 msgid "NO DM1 SAVES FOUND"
 msgstr "게임 데이터를 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:5966
+#: src/ui/menu_startup_m12.c:6047
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "먼저 DM1을 저장하거나 가져오세요"
 
-#: src/ui/menu_startup_m12.c:6388
+#: src/ui/menu_startup_m12.c:6469
 msgid "LOADING SAVE"
 msgstr "저장 로드 중"
 
-#: src/ui/menu_startup_m12.c:6428
+#: src/ui/menu_startup_m12.c:6509
 msgid "IMPORTING PARTY"
 msgstr "수입국"
 
-#: src/ui/menu_startup_m12.c:6467
+#: src/ui/menu_startup_m12.c:6548
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "DM1 파티를 CSB로 가져오시겠습니까?"
 
-#: src/ui/menu_startup_m12.c:6469
+#: src/ui/menu_startup_m12.c:6550
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "가져오기 입력 / ESC 취소"
 
-#: src/ui/menu_startup_m12.c:6481
+#: src/ui/menu_startup_m12.c:6562
 msgid "ESC SETTINGS"
 msgstr "설정"
 
-#: src/ui/menu_startup_m12.c:6485
+#: src/ui/menu_startup_m12.c:6566
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "로드 작업 입력 CSB로 가져오기 내보내기 PC34 ESC 설정 저장"
 
-#: src/ui/menu_startup_m12.c:6487
+#: src/ui/menu_startup_m12.c:6568
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "ENTER 또는 ESC로 메뉴로 돌아갑니다"
 
-#: src/ui/menu_startup_m12.c:7925 src/ui/menu_startup_m12.c:8137
+#: src/ui/menu_startup_m12.c:8006 src/ui/menu_startup_m12.c:8218
 msgid "NO SOURCE"
 msgstr "소스 없음"
 
-#: src/ui/menu_startup_m12.c:8133
+#: src/ui/menu_startup_m12.c:8214
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "오리지널"
 
-#: src/ui/menu_startup_m12.c:8142
+#: src/ui/menu_startup_m12.c:8223
 msgid "MISSING OR MISMATCHED"
 msgstr "누락 또는 불일치"
 
-#: src/ui/menu_startup_m12.c:8699 src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_m12.c:8780 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr "부가 기능"
 
-#: src/ui/menu_startup_m12.c:8699
+#: src/ui/menu_startup_m12.c:8780
 msgid "PLAY"
 msgstr "플레이"
 
-#: src/ui/menu_startup_m12.c:8699
+#: src/ui/menu_startup_m12.c:8780
 msgid "QUIT"
 msgstr "종료"
 
-#: src/ui/menu_startup_m12.c:8703
+#: src/ui/menu_startup_m12.c:8784
 msgid "Start or continue a game"
 msgstr "게임을 시작하거나 이어서 플레이합니다"
 
-#: src/ui/menu_startup_m12.c:8704
+#: src/ui/menu_startup_m12.c:8785
 msgid "Display, video, audio and controls"
 msgstr "화면, 영상, 오디오 및 조작 설정"
 
-#: src/ui/menu_startup_m12.c:8705
+#: src/ui/menu_startup_m12.c:8786
 msgid "Museum, bestiary, spell reference and more"
 msgstr "박물관, 몬스터 도감, 주문 참고서 등"
 
-#: src/ui/menu_startup_m12.c:8706
+#: src/ui/menu_startup_m12.c:8787
 msgid "Exit Firestaff"
 msgstr "Firestaff 종료"
 
-#: src/ui/menu_startup_m12.c:8711
+#: src/ui/menu_startup_m12.c:8792
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8711
+#: src/ui/menu_startup_m12.c:8792
 msgid "Dungeon Master II"
 msgstr "Dungeon Master II"
 
-#: src/ui/menu_startup_m12.c:8720
+#: src/ui/menu_startup_m12.c:8801
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8721 src/ui/menu_startup_m12.c:8722
+#: src/ui/menu_startup_m12.c:8802 src/ui/menu_startup_m12.c:8803
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8723
+#: src/ui/menu_startup_m12.c:8804
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1 / 새턴 캡처 제한됨"
 
-#: src/ui/menu_startup_m12.c:8724
+#: src/ui/menu_startup_m12.c:8805
 msgid "V1 Only (Phase 1)"
 msgstr "V1만 지원 (1단계)"
 
-#: src/ui/menu_startup_m12.c:8727 src/ui/menu_startup_m12.c:8728
-#: src/ui/menu_startup_m12.c:8729 src/ui/menu_startup_m12.c:8730
-#: src/ui/menu_startup_m12.c:8731
+#: src/ui/menu_startup_m12.c:8808 src/ui/menu_startup_m12.c:8809
+#: src/ui/menu_startup_m12.c:8810 src/ui/menu_startup_m12.c:8811
+#: src/ui/menu_startup_m12.c:8812
 msgid "No data files"
 msgstr "데이터 파일 없음"
 
-#: src/ui/menu_startup_m12.c:9464
+#: src/ui/menu_startup_m12.c:9545
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:9465
+#: src/ui/menu_startup_m12.c:9546
 msgid "TITLE START"
 msgstr "TITLE START"
 
-#: src/ui/menu_startup_m12.c:9466
+#: src/ui/menu_startup_m12.c:9547
 msgid "VERIFIED SOURCE DATA"
 msgstr "VERIFIED SOURCE DATA"
 
-#: src/ui/menu_startup_m12.c:9582
+#: src/ui/menu_startup_m12.c:9663
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:9620
+#: src/ui/menu_startup_m12.c:9701
 msgid "New Game (Original)"
 msgstr "새 게임 (오리지널)"
 
-#: src/ui/menu_startup_m12.c:9621
+#: src/ui/menu_startup_m12.c:9702
 msgid "New Game (Original + Filters)"
 msgstr "새 게임 (오리지널 + 필터)"
 
-#: src/ui/menu_startup_m12.c:9622
+#: src/ui/menu_startup_m12.c:9703
 msgid "New Game (Original 10x Upscale)"
 msgstr "새 게임 (오리지널 10배 업스케일)"
 
-#: src/ui/menu_startup_m12.c:9623
+#: src/ui/menu_startup_m12.c:9704
 msgid "Continue Saved Game"
 msgstr "저장된 게임 이어하기"
 
-#: src/ui/menu_startup_m12.c:9624
+#: src/ui/menu_startup_m12.c:9705
 msgid "New Game (Modern Graphics)"
 msgstr "새 게임 (모던 그래픽)"
 
-#: src/ui/menu_startup_m12.c:9632
+#: src/ui/menu_startup_m12.c:9713
 msgid "Museum of Lore"
 msgstr "이야기 박물관"
 
-#: src/ui/menu_startup_m12.c:9633
+#: src/ui/menu_startup_m12.c:9714
 msgid "Manual / Docs"
 msgstr "설명서 / 문서"
 
-#: src/ui/menu_startup_m12.c:9634
+#: src/ui/menu_startup_m12.c:9715
 msgid "Bestiary"
 msgstr "몬스터 도감"
 
-#: src/ui/menu_startup_m12.c:9635
+#: src/ui/menu_startup_m12.c:9716
 msgid "Spell Reference"
 msgstr "주문 참고서"
 
-#: src/ui/menu_startup_m12.c:9636
+#: src/ui/menu_startup_m12.c:9717
 msgid "Map Viewer"
 msgstr "지도 보기"
 
-#: src/ui/menu_startup_m12.c:9637
+#: src/ui/menu_startup_m12.c:9718
 msgid "Item Encyclopedia"
 msgstr "아이템 백과사전"
 
-#: src/ui/menu_startup_m12.c:9638
+#: src/ui/menu_startup_m12.c:9719
 msgid "Changelog"
 msgstr "변경 내역"
 
-#: src/ui/menu_startup_m12.c:9639
+#: src/ui/menu_startup_m12.c:9720
 msgid "Screenshot Gallery"
 msgstr "스크린샷 갤러리"
 
-#: src/ui/menu_startup_m12.c:9668
+#: src/ui/menu_startup_m12.c:9749
 msgid "NO DATA SOURCE YET"
 msgstr "소스 없음"
 
-#: src/ui/menu_startup_m12.c:9741
+#: src/ui/menu_startup_m12.c:9822
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "위/아래 이동  |  Enter 선택"
 
-#: src/ui/menu_startup_m12.c:9765
+#: src/ui/menu_startup_m12.c:9846
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape 뒤로  |  위/아래 이동  |  Enter 선택"
 
-#: src/ui/menu_startup_m12.c:9794
+#: src/ui/menu_startup_m12.c:9875
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape 뒤로  |  위/아래 이동  |  Enter 시작"
 
-#: src/ui/menu_startup_m12.c:9818
+#: src/ui/menu_startup_m12.c:9899
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape 뒤로  |  위/아래 이동  |  Enter 열기"
 
-#: src/ui/menu_startup_m12.c:9962
+#: src/ui/menu_startup_m12.c:10043
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > 탭 전환   위/아래 이동   Enter 변경"
 
-#: src/ui/menu_startup_m12.c:12295
+#: src/ui/menu_startup_m12.c:12376
 msgid "GAME OPTIONS"
 msgstr "게임 옵션"
 
-#: src/ui/menu_startup_m12.c:12332
+#: src/ui/menu_startup_m12.c:12413
 msgid "ARCHITECTURE"
 msgstr "아카이브 상태"
 
-#: src/ui/menu_startup_m12.c:12345
+#: src/ui/menu_startup_m12.c:12426
 msgid "VERSION"
 msgstr "버전"
 
-#: src/ui/menu_startup_m12.c:12366
+#: src/ui/menu_startup_m12.c:12447
 msgid "PATCH"
 msgstr "PATCH"
 
-#: src/ui/menu_startup_m12.c:12392
+#: src/ui/menu_startup_m12.c:12473
 msgid "CHEATS"
 msgstr "CHEATS"
 
-#: src/ui/menu_startup_m12.c:12405
+#: src/ui/menu_startup_m12.c:12486
 msgid "SPEED"
 msgstr "SPEED"
 
-#: src/ui/menu_startup_m12.c:12417
+#: src/ui/menu_startup_m12.c:12498
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "치트를 켜면 속도 / 단축키가 해제됩니다"
 
-#: src/ui/menu_startup_m12.c:12439
+#: src/ui/menu_startup_m12.c:12520
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "V1 오리지널 모드에 의해 잠김"
 
-#: src/ui/menu_startup_m12.c:12449
+#: src/ui/menu_startup_m12.c:12530
 msgid "RESOLUTION"
 msgstr "RESOLUTION"
 
-#: src/ui/menu_startup_m12.c:12463
+#: src/ui/menu_startup_m12.c:12544
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "V1 오리지널 모드에 의해 잠김"
 
-#: src/ui/menu_startup_m12.c:12484
+#: src/ui/menu_startup_m12.c:12565
 msgid "> DATA FILES NOT FOUND"
 msgstr "오리지널 파일을 찾을 수 없습니다"
 
-#: src/ui/menu_startup_m12.c:12486
+#: src/ui/menu_startup_m12.c:12567
 msgid "> RENDERER UNAVAILABLE"
 msgstr "렌더러 백엔드를 사용할 수 없음"
 
-#: src/ui/menu_startup_m12.c:12487
+#: src/ui/menu_startup_m12.c:12568
 msgid "> LAUNCH"
 msgstr "> 실행"
 
-#: src/ui/menu_startup_m12.c:12500
+#: src/ui/menu_startup_m12.c:12581
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC: 뒤로  방향키: 이동  ENTER: 선택"
 
