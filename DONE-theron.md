@@ -23,6 +23,14 @@
   källägda startvägen, inte JP Continue, kampanjövergångar eller visuell
   paritet.
 
+## 2026-09-24 — JP rå-BIN genom M12/M11 på trv2
+
+- `theron_v1_m11_launcher_handoff_boundary` passerar med 62 kontroller och
+  2 skip. Den autentiska japanska Track 02-råfilen hittas i användarens
+  datakatalog och förs genom M12/M11 med sin verifierade regionsidentitet.
+  US CUE- och rostertextfallen hoppas över eftersom motsvarande filer saknas
+  där; testet bevisar inte JP Continue eller en hel kampanjövergång.
+
 ## 2026-09-24 — Authentic Continue to the next unlocked chapter
 
 - Extended the M11 Continue regression with the authentic US Track 02 and
