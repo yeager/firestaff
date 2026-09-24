@@ -781,7 +781,7 @@ int main(void)
         csb_v1_fmtowns_game_startup_state_free(&user_save_state);
 #ifndef _WIN32
         {
-            char stale_dir[] = "/tmp/firestaff-f31-stale-XXXXXX";
+            char stale_dir[] = "firestaff-f31-stale-XXXXXX";
             char stale_path[512];
             CSB_V1_FmtownsStartupState stale_state;
 
@@ -843,7 +843,7 @@ int main(void)
          * a CSBGAME-JP.BAK convention. */
 #ifndef _WIN32
         {
-            char writeback_dir[] = "/tmp/firestaff-f31-writeback-XXXXXX";
+            char writeback_dir[] = "firestaff-f31-writeback-XXXXXX";
             char writeback_path[512];
             int writeback_staged = 0;
 
@@ -930,7 +930,7 @@ int main(void)
               "legacy F31 handoff also admits the authentic Prison save");
 #ifndef _WIN32
         {
-            char recovery_dir[] = "/tmp/firestaff-f31-recovery-XXXXXX";
+            char recovery_dir[] = "firestaff-f31-recovery-XXXXXX";
             char selected_path[512];
             char backup_path[512];
             CHECK(mkdtemp(recovery_dir) != NULL &&
@@ -1253,7 +1253,7 @@ int main(void)
 #ifndef _WIN32
     if (language == CSB_FMTOWNS_SWITCH_ENGLISH &&
         utility_portrait_catalog.valid && utility_portrait_catalog.entry_count > 0u) {
-        char temporary_dir[] = "/tmp/firestaff-csb-cmp-save-XXXXXX";
+        char temporary_dir[] = "firestaff-csb-cmp-save-XXXXXX";
         CSB_V1_FmtownsUtilityPortraitCatalog copied_catalog =
             utility_portrait_catalog;
         CSB_V1_PartyState copied_party = mini_party;
@@ -1677,7 +1677,7 @@ int main(void)
          * runtime.  Keep the new M746 medium in a private directory and
          * reopen it through F0435 before continuing with the editor tests. */
         {
-            char utility_dir[] = "/tmp/firestaff-csb-c06-game-XXXXXX";
+            char utility_dir[] = "firestaff-csb-c06-game-XXXXXX";
             char utility_save_path[1024];
             char utility_backup_path[1024];
             CSB_V1_FmtownsUserSaveReceipt utility_save;
@@ -2860,7 +2860,7 @@ int main(void)
          * bytes: the temporary directory is removed before this test exits. */
 #ifndef _WIN32
         if (!user_save_path || !user_save_path[0]) {
-            char bootstrap_dir[] = "/tmp/firestaff-csb-bootstrap-XXXXXX";
+            char bootstrap_dir[] = "firestaff-csb-bootstrap-XXXXXX";
             char bootstrap_save_path[1024];
             char bootstrap_stage_path[1024];
             CSB_V1_BootProfile *bootstrap_profile =
@@ -2932,7 +2932,8 @@ int main(void)
                                ? user_save_path : direct_handoff.startup_mini_path),
               "F31 resume test selects the authentic native save candidate");
         if (user_save_path && user_save_path[0]) {
-            CHECK(!M11_GameView_QuickSave(&view) &&
+            int save_result = M11_GameView_QuickSave(&view);
+            CHECK(!save_result &&
                       strcmp(view.lastAction, "SAVE") == 0 &&
                       strcmp(view.lastOutcome,
                              language == CSB_FMTOWNS_SWITCH_JAPANESE
@@ -2940,7 +2941,8 @@ int main(void)
                                  : "FM TOWNS NATIVE SAVE FAILED") == 0,
                   "F31 MINI.DAT session cannot overwrite a distinct resumed slot");
         } else {
-            CHECK(!M11_GameView_QuickSave(&view) &&
+            int save_result = M11_GameView_QuickSave(&view);
+            CHECK(!save_result &&
                       strcmp(view.lastAction, "SAVE") == 0 &&
                       strcmp(view.lastOutcome,
                              "FM TOWNS NATIVE WRITEBACK REQUIRED") == 0,
@@ -2976,7 +2978,7 @@ int main(void)
               "F31 native resume restores the saved source-owned party state");
 #ifndef _WIN32
         if (user_save_path && user_save_path[0]) {
-            char recovery_dir[] = "/tmp/firestaff-f31-m11-recovery-XXXXXX";
+            char recovery_dir[] = "firestaff-f31-m11-recovery-XXXXXX";
             char selected_path[512];
             char backup_path[512];
 

@@ -1,5 +1,11 @@
 # Firestaff DONE — CSB
 
+- 2026-09-24: FM Towns M11 now validates the selected native save filename
+  before preparing a filesystem parent directory. This makes a read-only
+  packed `MINI.DAT` fail at the explicit native-writeback boundary instead of
+  being misreported as a filesystem save failure. The authentic-media
+  `csb_v1_fmtowns_ja_m11_real_media_handoff` regression passes.
+
 - 2026-09-24: M12's Quick Resume gate now validates an external FM Towns
   `CSBGAME-JP.DAT` against the selected, hash-verified F31J C03 program using
   the native F0435 reader. A real-media regression confirms the Japanese save

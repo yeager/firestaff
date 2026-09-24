@@ -29774,8 +29774,7 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
          * MINI.DAT on its first save; later F0433 calls update that same
          * authenticated slot.  No Firestaff envelope is involved. */
         if (!state->csbBootProfile ||
-            !m11_csb_fmtowns_native_save_path(path, sizeof(path)) ||
-            !dm1_v1_save_prepare_parent_directory_pc34(path)) {
+            !m11_csb_fmtowns_native_save_path(path, sizeof(path))) {
             m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
             return 0;
         }
@@ -29786,6 +29785,13 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
                 m11_set_status(state, "SAVE", "FM TOWNS NATIVE WRITEBACK REQUIRED");
                 return 0;
             }
+        }
+        /* A packed archive::member locator such as the read-only CD
+         * MINI.DAT cannot have a host parent directory. Reject it at the
+         * source save-slot boundary above before trying filesystem setup. */
+        if (!dm1_v1_save_prepare_parent_directory_pc34(path)) {
+            m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
+            return 0;
         }
         {
             FILE *existing = fopen(path, "rb");
