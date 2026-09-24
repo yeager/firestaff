@@ -41,13 +41,16 @@
   SWSH and PC34 special palettes, and routes entrance input through Atari's
   source mouse command. Authentic English, German and French Atari ST M12
   regressions now require the applied startup handoff and HoC first-frame
-  receipt before accepting the live runtime state. Fresh Atari launches still
-  begin with zero champions; recruiting a party and proving a playable
-  campaign remain open. The Atari receipt now requires TITLE.C F0437 before
-  ENTRANCE.C F0441, but Atari's F0437 presentation and palette are not yet
-  implemented; the current route starts at the common entrance. The
-  headless receipt intentionally does not claim the host capture aggregate,
-  and visual parity remains deferred.
+  receipt before accepting the live runtime state. Source review of ReDMCSB
+  STARTUP1.C:160-173 shows the Atari path continues after F0441 through the
+  F0435 load loop and F0462_StartGame before runtime. Firestaff currently
+  hands off to the dungeon runtime immediately after F0441, so its HoC first
+  frame is not proof of a source-owned campaign start; fresh Atari launches
+  still have zero champions. Implement the authenticated F0435/F0462 new-game
+  transition and candidate recruitment into a playable party. The Atari
+  receipt covers title/entrance only; its F0437 presentation/palette and the
+  post-entrance campaign handoff remain open. Headless receipts do not claim
+  host capture, and visual parity remains deferred.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.
