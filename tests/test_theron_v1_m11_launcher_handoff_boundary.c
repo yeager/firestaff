@@ -599,6 +599,15 @@ static void run_explicit_real_cue_campaign_if_available(void) {
                     view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
                     view.theronState.startup_media_ready,
                 "explicit authentic MODE1/2048 CUE opens the source-backed Theron title gate");
+    if (strcmp(intake.track02_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
+        const Theron_V1_World *world =
+            (const Theron_V1_World *)view.theronWorld;
+        expect_true(world && world->track19_item_names.valid &&
+                        world->track19_item_names.variant == 1 &&
+                        strcmp(world->track19_item_names.source_md5,
+                               "27d54f58154662885bb67d5967e5111e") == 0,
+                    "authentic JP CUE binds the hash-verified raw Track 19 name bank");
+    }
     if (opened == 1 && !view.theronState.dungeon_capture_required) {
         int i;
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==

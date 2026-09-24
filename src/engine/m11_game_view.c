@@ -29487,7 +29487,8 @@ static void m11_theron_bind_track19_item_names(
     Theron_V1Track19ItemNameBank bank;
     char sibling_root[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
     char candidate[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
-    const char *leaf;
+    const char *leaves[2];
+    size_t leaf_count = 0u;
     int variant;
     int loaded = 0;
 
@@ -29496,23 +29497,41 @@ static void m11_theron_bind_track19_item_names(
     if (strcmp(verified_track02_md5,
                "b7afb338ad31be1025b53f9aff12d73a") == 0) {
         variant = THERON_TRACK02_VARIANT_JP_BIN;
-        leaf = "TQJP19.iso";
+        /* The authentic JP Rev 1 CUE corpus names its MODE1/2352 raw Track
+         * 19 by the full retail track filename. Prefer it when present; the
+         * reader authenticates its complete hash and strips only the known
+         * 224-sector pregap before validating the source tables. */
+        leaves[leaf_count++] =
+            "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin";
+        leaves[leaf_count++] = "TQJP19.iso";
     } else if (strcmp(verified_track02_md5,
                       "f23601102138f87c33025877767ebf76") == 0) {
         variant = THERON_TRACK02_VARIANT_US_BIN;
-        leaf = "TQUS19.iso";
+        leaves[leaf_count++] = "TQUS19.iso";
     } else {
         return;
     }
     world = (Theron_V1_World *)state->theronWorld;
     if (FSP_ParentDir(sibling_root, sizeof(sibling_root),
-                      verified_track02_path) &&
-        FSP_JoinPath(candidate, sizeof(candidate), sibling_root, leaf)) {
-        loaded = theron_v1_track19_item_name_bank_file(candidate, &bank);
+                      verified_track02_path)) {
+        size_t i;
+        for (i = 0u; i < leaf_count && !loaded; ++i) {
+            if (FSP_JoinPath(candidate, sizeof(candidate), sibling_root,
+                             leaves[i])) {
+                loaded = theron_v1_track19_item_name_bank_file(candidate,
+                                                                &bank);
+            }
+        }
     }
-    if (!loaded &&
-        FSP_JoinPath(candidate, sizeof(candidate), data_dir, leaf)) {
-        loaded = theron_v1_track19_item_name_bank_file(candidate, &bank);
+    {
+        size_t i;
+        for (i = 0u; i < leaf_count && !loaded; ++i) {
+            if (FSP_JoinPath(candidate, sizeof(candidate), data_dir,
+                             leaves[i])) {
+                loaded = theron_v1_track19_item_name_bank_file(candidate,
+                                                                &bank);
+            }
+        }
     }
     if (loaded) {
         (void)theron_v1_world_bind_track19_item_name_bank(
