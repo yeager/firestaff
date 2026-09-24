@@ -4,9 +4,11 @@
   search root instead of widening the scan to its parent directory. A parent
   scan had spent 23.6 seconds inflating and hashing unrelated neighboring
   archives before the direct Atari start; the same authentic STX now reaches
-  the M11 boot probe in under 0.2 seconds after renderer initialization. The
-  Atari animation is held in a hash-verified, process-local session for its
-  source VBlanks and SND1 cues; no game files are written to disk. The full
+  the M11 boot probe in under 0.2 seconds after renderer initialization.
+  Extension matching is case-insensitive, and the M12 regression preserves
+  mixed-case `.St`, `.sTx`, and `.MsA` selections as their exact media roots.
+  The Atari animation is held in a hash-verified, process-local session for
+  its source VBlanks and SND1 cues; no game files are written to disk. The full
   authentic Atari CLI matrix, including M12 menu start through live gameplay,
   passes. The source state still has no champions, so no playable-party claim
   is made.
