@@ -17,19 +17,6 @@ Reviewed 2026-08-29. Only open work is listed here.
   original-vs-Firestaff pixel parity. Remaining work is outdoor's distinct
   composition, transition stretching and same-tuple original-capture
   comparison; retain only GDAT-owned pixels.
-- Fix Amiga indoor M11 scene admission before claiming an accepted real-data
-  runtime frame. A clean local build using the staged retail installer ZIP
-  (authenticated GRAPHICS.DAT MD5 `1c940ea95703eaea0ecdf84d17e954b9`) reaches
-  `dm2-runtime`, loads the original level, and applies source movement
-  (`party=1,7,0` after UP), but reports `dm2FrameAccepted=0`,
-  `dm2RealAssets=0`, `dm2NoCoreFallbacks=0`, and a zero scene receipt. Keep
-  rendering fail-closed; do not weaken the native CLI regression or paint a
-  substitute viewport. Temporary local diagnostics identify the first failed
-  material as indoor wall-plan field `0x23` for GRAPHICSSET 2 (GDAT version
-  5), before any wall commands are committed. Trace this Amiga record and the
-  related RAW4 destination table against SKProject and the original
-  big-endian data, then verify the full input matrix and M11 frame with that
-  archive.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they

@@ -35,8 +35,11 @@
   the original GDAT New Game rectangle through the normal SDL input mapper.
   It checks the loaded retail party at `(map=0,x=1,y=8,direction=0,count=1)`
   and requires a visible 320×200 runtime capture. The direct boot-probe input
-  matrix remains a separate check. Initial dungeon frame acceptance and
-  broader Amiga gameplay/render parity remain open in `TODO-dm2.md`.
+  matrix remains a separate check. The Amiga big-endian RAW4 decoding fix
+  restores source wall-rectangle geometry for GDAT v5, allowing the initial
+  indoor frame and authentic movement matrix to use real assets without
+  fallback draws. Same-state comparison with the original Amiga renderer and
+  broader gameplay/render parity remain open in `TODO-dm2.md`.
 
 ## 2026-09-16 — FM Towns New Game real-media revalidation
 
