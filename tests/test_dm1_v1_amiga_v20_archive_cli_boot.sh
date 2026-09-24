@@ -41,9 +41,11 @@ probe --game dm1 --platform amiga --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 
 # The ordinary v2.0 save disk is ZIP -> ADF inside the same preservation
-# package.  Exercise its real F0435 session through direct CLI and the M12
-# card flow, without extracting or rewriting any member.  These tuple values
-# are read from the authenticated DMGAMEG.DAT body, not a generated fixture.
+# package. Exercise its real F0435 session through direct CLI, without
+# extracting or rewriting any member. These tuple values are read from the
+# authenticated DMGAMEG.DAT body, not a generated fixture. The M12 menu path
+# below separately verifies that the selected nested ADF remains the launch
+# owner; boot-probe deliberately cannot be combined with --menu.
 probe_save_resume() {
     probe "$@" --save "$selected_save" --boot-probe \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
@@ -53,8 +55,6 @@ probe_save_resume() {
         --boot-probe-expect-runtime-tick-max 292 --duration 0
 }
 probe_save_resume --game dm1 --platform amiga --data-dir "$archive"
-probe_save_resume --menu --game dm1 --platform amiga --data-dir "$archive" \
-    --script enter,enter,enter
 
 # Apply one source-backed input per fresh resume.  The right-strafe is
 # particularly important: this exact original session crosses from map 0 to
