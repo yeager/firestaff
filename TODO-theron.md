@@ -41,6 +41,15 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   transport receipt parser now identifies JP and US Track 02 hashes
   separately, but that tooling change does not make these captures gameplay
   or source-consumer witnesses.
+  A fresh 2026-09-24 US replay used the authentic raw Track 02
+  (`f23601102138f87c33025877767ebf76`), System Card 3.0, and the existing
+  2 KiB SRAM (`ffabc8d19b0915d4d9632a7ae2e90a97`). It delivered a documented
+  RUN/D-pad/Button-I sequence; the PCE input trace observed active-low RUN,
+  direction, and Button-I reads. The run emitted 25 raw-sector spans and one
+  game-owned E009 dispatch/entry, but zero E009 data reads, zero authenticated
+  CD-to-RAM receipts, and no dungeon-state handoff. Thus controller delivery
+  is now evidenced, but menu selection and level loading are not; the private
+  capture remains on trv2 and does not promote gameplay semantics.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. The production M11 Continue action is now verified
   against the authentic US Track 02 and 2 KiB Backup RAM artifact: startup
