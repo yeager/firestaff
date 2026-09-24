@@ -3771,6 +3771,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                     entranceRuntimeHandoff;
                 M11_EntranceCommand entranceCommand =
                     M11_ENTRANCE_COMMAND_NONE;
+                int titlePlayed = 0;
                 int oldFastForward = g_m11_intro_delay_fast_forward;
 
                 memset(&entrancePlan, 0, sizeof(entrancePlan));
@@ -3797,6 +3798,21 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                 if (bootProbe) {
                     g_m11_intro_delay_fast_forward = 1;
                 }
+                /* ReDMCSB STARTUP1.C:143 runs F0437 before F0441 on Atari
+                 * ST. Use the decoded C001 title from this authenticated
+                 * Atari GRAPHICS.DAT; do not substitute a PC TITLE.DAT bank
+                 * or claim the title phase was consumed without presenting
+                 * its original source surface. */
+                M11_Render_RaiseWindow();
+                if (!m11_play_redmcsb_title_graphic_intro_if_available(
+                        menuState, gameView, "dm1", &titlePlayed,
+                        &entrancePlan.media_receipt) || !titlePlayed) {
+                    g_m11_intro_delay_fast_forward = oldFastForward;
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
                 entranceCommand = m11_play_redmcsb_entrance_transition(
                     gameView, -1,
                     &entrancePlan.entrance_full_start_receipt,
@@ -3809,7 +3825,7 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                     return 0;
                 }
 
-                entranceOutcome.title_played = 0;
+                entranceOutcome.title_played = titlePlayed;
                 entranceOutcome.entrance_command = (int)entranceCommand;
                 entranceOutcome.action =
                     DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34;

@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-24: Fixed the Atari ST startup handoff so the authentic C001 title
+  frame and source zoom sequence execute before the entrance sequence in both
+  direct CLI and M12 launches. The runtime receipt now records title
+  consumption only after an original title frame was presented. All six local
+  `dm1_v1_atari` CTest cases passed with authentic DE/FR Atari media and the
+  nested English archive. Champion selection and Atari pixel parity remain
+  open.
+
 - 2026-09-24: The authentic nested English Atari ST v1.2 archive now has a
   normal M12 start-menu regression that continues through the source-owned
   title/entrance input and asserts the first `dm1-runtime` frame. This closes
