@@ -226,13 +226,25 @@ static int verify_real_jp_item_table(void) {
      * Direct mutation checks below intentionally remain ISO-only. */
     if (strstr(path, "(Track 19).bin") != NULL) {
         Theron_V1Track19InventoryReceipt receipt;
-
-        return theron_v1_track19_inventory_file(path, &receipt) &&
-            receipt.mode1_2352 && receipt.sector_count == 3296u &&
-            receipt.item_name_table_verified &&
-            receipt.level_label_table_verified &&
-            receipt.item_property_table_verified &&
-            receipt.startup_level_envelope_verified;
+        int loaded = theron_v1_track19_inventory_file(path, &receipt);
+        if (!loaded || !receipt.mode1_2352 || receipt.sector_count != 3296u ||
+            !receipt.item_name_table_verified ||
+            !receipt.level_label_table_verified ||
+            !receipt.item_property_table_verified ||
+            !receipt.startup_level_envelope_verified) {
+            fprintf(stderr,
+                    "FAIL: authentic JP Track 19 raw intake: loaded=%d "
+                    "mode1_2352=%d sectors=%zu names=%d labels=%d "
+                    "properties=%d startup_envelope=%d md5=%s\n",
+                    loaded, receipt.mode1_2352, receipt.sector_count,
+                    receipt.item_name_table_verified,
+                    receipt.level_label_table_verified,
+                    receipt.item_property_table_verified,
+                    receipt.startup_level_envelope_verified,
+                    receipt.source_md5);
+            return 0;
+        }
+        return 1;
     }
     file = fopen(path, "rb");
     if (!file || fseek(file, 0L, SEEK_END) != 0 ||
@@ -429,7 +441,38 @@ int main(void) {
          file_receipt.startup_level_payload_fnv1a == 0u ||
          file_receipt.startup_usable || file_receipt.level_usable ||
          file_receipt.bitmap_usable ||
-         file_receipt.source_md5[0] == '\0')) return 1;
+         file_receipt.source_md5[0] == '\0')) {
+        fprintf(stderr,
+                "FAIL: US Track 19 file receipt: names=%d types=%d "
+                "type_offset=0x%zx type_hash=%08x labels=%d properties=%d "
+                "property_offset=0x%zx property_bytes=%zu opaque=%d "
+                "opaque_offset=0x%zx opaque_bytes=%zu envelope=%d "
+                "envelope_offset=0x%zx envelope_bytes=%zu "
+                "envelope_hash=%08x dimensions=%ux%u payload=%zu "
+                "nonzero=%zu payload_hash=%08x source_md5=%s\n",
+                file_receipt.item_name_table_verified,
+                file_receipt.item_type_code_table_verified,
+                file_receipt.item_type_code_table_offset,
+                file_receipt.item_type_code_table_fnv1a,
+                file_receipt.level_label_table_verified,
+                file_receipt.item_property_table_verified,
+                file_receipt.item_property_table_offset,
+                file_receipt.item_property_table_bytes,
+                file_receipt.opaque_record_window_verified,
+                file_receipt.opaque_record_window_offset,
+                file_receipt.opaque_record_window_bytes,
+                file_receipt.startup_level_envelope_verified,
+                file_receipt.startup_level_envelope_offset,
+                file_receipt.startup_level_envelope_bytes,
+                file_receipt.startup_level_envelope_fnv1a,
+                (unsigned int)file_receipt.startup_level_width,
+                (unsigned int)file_receipt.startup_level_height,
+                file_receipt.startup_level_payload_bytes,
+                file_receipt.startup_level_nonzero_payload_bytes,
+                file_receipt.startup_level_payload_fnv1a,
+                file_receipt.source_md5);
+        return 1;
+    }
     if (real_jp_iso && real_jp_iso[0] &&
         (!theron_v1_track19_inventory_file(real_jp_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
@@ -463,7 +506,38 @@ int main(void) {
          file_receipt.startup_level_payload_fnv1a == 0u ||
          file_receipt.startup_usable || file_receipt.level_usable ||
          file_receipt.bitmap_usable ||
-         file_receipt.source_md5[0] == '\0')) return 1;
+         file_receipt.source_md5[0] == '\0')) {
+        fprintf(stderr,
+                "FAIL: JP Track 19 file receipt: names=%d types=%d "
+                "type_offset=0x%zx type_hash=%08x labels=%d properties=%d "
+                "property_offset=0x%zx property_bytes=%zu opaque=%d "
+                "opaque_offset=0x%zx opaque_bytes=%zu envelope=%d "
+                "envelope_offset=0x%zx envelope_bytes=%zu "
+                "envelope_hash=%08x dimensions=%ux%u payload=%zu "
+                "nonzero=%zu payload_hash=%08x source_md5=%s\n",
+                file_receipt.item_name_table_verified,
+                file_receipt.item_type_code_table_verified,
+                file_receipt.item_type_code_table_offset,
+                file_receipt.item_type_code_table_fnv1a,
+                file_receipt.level_label_table_verified,
+                file_receipt.item_property_table_verified,
+                file_receipt.item_property_table_offset,
+                file_receipt.item_property_table_bytes,
+                file_receipt.opaque_record_window_verified,
+                file_receipt.opaque_record_window_offset,
+                file_receipt.opaque_record_window_bytes,
+                file_receipt.startup_level_envelope_verified,
+                file_receipt.startup_level_envelope_offset,
+                file_receipt.startup_level_envelope_bytes,
+                file_receipt.startup_level_envelope_fnv1a,
+                (unsigned int)file_receipt.startup_level_width,
+                (unsigned int)file_receipt.startup_level_height,
+                file_receipt.startup_level_payload_bytes,
+                file_receipt.startup_level_nonzero_payload_bytes,
+                file_receipt.startup_level_payload_fnv1a,
+                file_receipt.source_md5);
+        return 1;
+    }
     if (real_iso && real_iso[0]) {
         if (!theron_v1_track19_item_name_bank_file(real_iso, &name_bank) ||
             !name_bank.valid || name_bank.variant != 2 ||
@@ -496,14 +570,34 @@ int main(void) {
                 THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET ||
             name_bank.type_code_source_fnv1a !=
                 THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A ||
-            strcmp(name_bank.source_md5,
-                   "f9f069a5e489b91207f3156059b756f1") != 0 ||
+            strcmp(name_bank.source_md5, file_receipt.source_md5) != 0 ||
             name_bank.item_mapping_proven ||
             name_bank.host_text_rendering_proven ||
             name_bank.raw_name_sizes[0] != sizeof(jp_first_name) ||
             memcmp(name_bank.raw_names[0], jp_first_name,
-                   sizeof(jp_first_name)) != 0)
+                   sizeof(jp_first_name)) != 0) {
+            fprintf(stderr,
+                    "FAIL: JP Track 19 item-name bank: valid=%d variant=%d "
+                    "count=%zu span=%08x type_offset=0x%zx type_hash=%08x "
+                    "source_md5=%s mapping=%d host_text=%d first_size=%u "
+                    "first_bytes=%02x%02x%02x%02x%02x%02x%02x%02x\n",
+                    name_bank.valid, name_bank.variant, name_bank.count,
+                    name_bank.source_span_fnv1a,
+                    name_bank.type_code_source_offset,
+                    name_bank.type_code_source_fnv1a, name_bank.source_md5,
+                    name_bank.item_mapping_proven,
+                    name_bank.host_text_rendering_proven,
+                    (unsigned int)name_bank.raw_name_sizes[0],
+                    (unsigned int)name_bank.raw_names[0][0],
+                    (unsigned int)name_bank.raw_names[0][1],
+                    (unsigned int)name_bank.raw_names[0][2],
+                    (unsigned int)name_bank.raw_names[0][3],
+                    (unsigned int)name_bank.raw_names[0][4],
+                    (unsigned int)name_bank.raw_names[0][5],
+                    (unsigned int)name_bank.raw_names[0][6],
+                    (unsigned int)name_bank.raw_names[0][7]);
             return 1;
+        }
         for (name_index = 0u; name_index < name_bank.count; ++name_index)
             if (name_bank.raw_name_sizes[name_index] == 0u) return 1;
         {

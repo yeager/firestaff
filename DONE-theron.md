@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — JP Track 19 raw BIN keeps its authenticated pregap
+
+- `theron_v1_track19_inventory_probe` now passes against the original Japanese
+  Rev. 1 Track 19 raw BIN on trv2 (`27d54f58154662885bb67d5967e5111e`). The
+  item-name-bank reader now strips the CUE-authenticated 224-sector pregap,
+  just like the Track 19 inventory reader, and the world admission gate accepts
+  the authenticated raw-track hash as well as the normalized ISO hash after
+  validating the source tables. JP Shift-JIS bytes remain opaque; this does
+  not claim host glyph rendering or T900 semantic parity. The local
+  `theron_v1_track19_inventory_probe` and `theron_v1_track02_dungeon_loader`
+  tests also pass.
+
 ## 2026-09-24 — JP Track 02 källkartor verifierade på trv2
 
 - Byggde aktuell `main`-arbetskopia i en isolerad Linux-katalog på trv2 och

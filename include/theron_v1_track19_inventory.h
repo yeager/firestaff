@@ -48,6 +48,10 @@ typedef struct {
 #define THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET 0x0E9266u
 #define THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A 0x21533BB5u
 #define THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A 0xF9C3EABBu
+#define THERON_V1_TRACK19_JP_REV1_RAW_MD5 \
+    "27d54f58154662885bb67d5967e5111e"
+#define THERON_V1_TRACK19_JP_REV1_RAW_BYTES 7752192u
+#define THERON_V1_TRACK19_JP_REV1_PREGAP_SECTORS 224u
 
 /* Lossless runtime bank for the authenticated Track 19 name/type/property
  * tables. JP names remain Shift-JIS bytes. The file reader asserts no Track

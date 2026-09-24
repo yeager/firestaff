@@ -2198,10 +2198,11 @@ static void theron_v1_world_refresh_track19_item_mapping(
 }
 
 int theron_v1_world_bind_track19_item_name_bank(
-    Theron_V1_World *world,
-    const Theron_V1Track19ItemNameBank *bank,
-    int variant) {
+        Theron_V1_World *world,
+        const Theron_V1Track19ItemNameBank *bank,
+        int variant) {
     const char *expected_md5;
+    const char *expected_raw_md5 = NULL;
     uint32_t expected_span;
     uint32_t expected_type_codes;
     size_t expected_type_offset;
@@ -2213,6 +2214,9 @@ int theron_v1_world_bind_track19_item_name_bank(
            sizeof(world->track19_item_names));
     if (variant == THERON_V1_TRACK02_VARIANT_JP_BIN) {
         expected_md5 = "f9f069a5e489b91207f3156059b756f1";
+        /* The exact Rev. 1 raw transport normalizes to these same checked
+         * tables after its 224-sector CUE pregap is removed. */
+        expected_raw_md5 = THERON_V1_TRACK19_JP_REV1_RAW_MD5;
         expected_span = 0x1020ac88u;
         expected_type_codes = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_FNV1A;
         expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET;
@@ -2231,7 +2235,9 @@ int theron_v1_world_bind_track19_item_name_bank(
         bank->type_code_source_fnv1a != expected_type_codes ||
         bank->property_source_fnv1a !=
             THERON_TRACK19_ITEM_PROPERTY_TABLE_FNV1A ||
-        strcmp(bank->source_md5, expected_md5) != 0 ||
+        (strcmp(bank->source_md5, expected_md5) != 0 &&
+         (!expected_raw_md5 ||
+          strcmp(bank->source_md5, expected_raw_md5) != 0)) ||
         bank->item_mapping_proven || bank->mapped_track02_dungeon_mask != 0u ||
         bank->host_text_rendering_proven)
         return 0;
