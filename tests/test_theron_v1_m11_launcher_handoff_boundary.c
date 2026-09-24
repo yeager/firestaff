@@ -614,15 +614,22 @@ static void run_explicit_real_cue_campaign_if_available(void) {
         for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
             (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_RIGHT);
         }
-        expect_true(view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_SOUL_ROOM &&
-                        view.theronState.level_loaded == 0 &&
-                        M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
-                            M11_GAME_INPUT_RETURN_TO_MENU &&
+        M11_GameInputResult iso_enter = M11_GameView_HandleInput(
+            &view, M12_MENU_INPUT_ACCEPT);
+        Theron_V1_World *world = (Theron_V1_World *)view.theronWorld;
+        expect_true(iso_enter != M11_GAME_INPUT_RETURN_TO_MENU &&
                         view.theronState.startup_phase ==
-                            THERON_STARTUP_PHASE_SOUL_ROOM &&
-                        view.theronState.level_loaded == 0,
-                    "explicit authentic MODE1/2048 CUE preserves the forcefield gate until ISO source records are proven");
+                            THERON_STARTUP_PHASE_IN_DUNGEON &&
+                        view.theronState.level_loaded == 1 &&
+                        world != NULL && world->source_object_count == 291u &&
+                        world->level_loaded[0][0] == 1 &&
+                        world->level_loaded[0][1] == 1 &&
+                        world->level_loaded[0][2] == 1 &&
+                        world->level_loaded[0][3] == 1 &&
+                        world->source_thing_directory_verified[0] == 1 &&
+                        world->party.champion_count == 1 &&
+                        world->party.champions[THERON_CHAMPION_SLOT_THERON].health == 175,
+                    "explicit authentic MODE1/2048 CUE loads the source-backed initial dungeon at the forcefield");
     }
     M11_GameView_Shutdown(&view);
 }

@@ -71,14 +71,6 @@ static int boot_init_source_theron_party(
         !theron_v1_track02_variant_for_md5(profile->graphics_md5)) {
         return 0;
     }
-    /* The verified US ISO is a 2048-byte user-data image.  The source party
-     * and campaign-mask decoders below consume raw 2352-byte sectors, so
-     * they cannot initialize this edition.  The authenticated ISO startup
-     * route remains valid; it simply has no raw-sector party receipt. */
-    if (theron_v1_track02_variant_for_md5(profile->graphics_md5) ==
-        THERON_TRACK02_VARIANT_US_ISO) {
-        return 1;
-    }
     if (!asset_read_path_alloc(profile->graphics_path, &bytes, &length) ||
         !bytes || length == 0u || length > 128u * 1024u * 1024u) {
         free(bytes);
@@ -90,17 +82,42 @@ static int boot_init_source_theron_party(
         theron_v1_track02_raw_bytes_match_md5(
             bytes, length, profile->graphics_md5) &&
         theron_v1_party_init_theron_from_track02(
-            &world->party, bytes, length, profile->graphics_md5) &&
-        theron_v1_track02_raw_user_data_size(
+            &world->party, bytes, length, profile->graphics_md5);
+    if (initialized && variant == THERON_TRACK02_VARIANT_US_ISO) {
+        initialized = length % THERON_TRACK02_RAW_USER_DATA_BYTES == 0u;
+    } else if (initialized) {
+        initialized = theron_v1_track02_raw_user_data_size(
             length, profile->graphics_md5, &sector_count,
             &user_data_size) == THERON_TRACK02_SIGNAL_OK;
+    }
     if (initialized) {
-        user_data = (uint8_t *)malloc(user_data_size);
-        initialized = user_data != NULL &&
-            theron_v1_track02_copy_raw_user_data(
-                bytes, length, profile->graphics_md5,
-                user_data, user_data_size, &user_data_size) ==
-                THERON_TRACK02_SIGNAL_OK &&
+        if (variant == THERON_TRACK02_VARIANT_US_ISO) {
+            /* Preserve the source's raw-user-data address space for the
+             * records shared with US MODE1/2352. The absent 225-sector
+             * pregap is coordinate padding only; every copied nonzero byte
+             * remains from the hash-verified 2048-byte ISO. */
+            const size_t pregap_bytes =
+                225u * THERON_TRACK02_RAW_USER_DATA_BYTES;
+            if (length > SIZE_MAX - pregap_bytes) {
+                initialized = 0;
+            } else {
+                user_data_size = pregap_bytes + length;
+                user_data = (uint8_t *)calloc(user_data_size, 1u);
+                if (user_data) {
+                    memcpy(user_data + pregap_bytes, bytes, length);
+                } else {
+                    initialized = 0;
+                }
+            }
+        } else {
+            user_data = (uint8_t *)malloc(user_data_size);
+            initialized = user_data != NULL &&
+                theron_v1_track02_copy_raw_user_data(
+                    bytes, length, profile->graphics_md5,
+                    user_data, user_data_size, &user_data_size) ==
+                    THERON_TRACK02_SIGNAL_OK;
+        }
+        initialized = initialized && user_data != NULL &&
             theron_v1_track02_decode_campaign_mask_source(
                 user_data, user_data_size, regional_variant,
                 &campaign_source) &&

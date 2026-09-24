@@ -280,7 +280,8 @@ int theron_v1_party_refresh_us_source_records(
 
     if (!party || !track02_data || !md5_hex ||
         (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) != 0 &&
-         strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0) ||
+         strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0 &&
+         strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) != 0) ||
         !theron_v1_track02_us_roster_read(
             track02_data, track02_size, md5_hex, records)) return 0;
     if (party->champion_count < 0 ||
@@ -339,7 +340,8 @@ int theron_v1_party_init_theron_from_track02(
     }
 
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
-        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
+        variant == THERON_TRACK02_VARIANT_US_ISO) {
         Theron_Track02UsRosterReceipt records[THERON_TRACK02_US_ROSTER_COUNT];
         Theron_Track02JpRosterReceipt common;
         const Theron_Track02UsRosterReceipt *source = &records[0];

@@ -100,30 +100,56 @@ int theron_v1_track02_us_roster_read(
         THERON_TRACK02_US_ROSTER_COUNT]) {
     UsGlyphCursor cursor;
     size_t offset_shift;
+    size_t source_offset = THERON_US_ROSTER_RAW_OFFSET;
+    size_t source_end = THERON_US_ROSTER_RAW_END;
 
     if (!out_records) return 0;
     memset(out_records, 0,
            sizeof(*out_records) * THERON_TRACK02_US_ROSTER_COUNT);
     if (!track02_data || !md5_hex ||
         (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) != 0 &&
-         strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0) ||
+         strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0 &&
+         strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) != 0) ||
         !theron_v1_track02_raw_bytes_match_md5(
             track02_data, track02_size, md5_hex)) {
         return 0;
     }
     offset_shift = strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0
-        ? 225u * THERON_TRACK02_RAW_SECTOR_BYTES : 0u;
-    if (THERON_US_ROSTER_RAW_OFFSET < offset_shift ||
-        track02_size < THERON_US_ROSTER_RAW_END - offset_shift ||
-        fnv1a32(track02_data + THERON_US_ROSTER_RAW_OFFSET - offset_shift,
+        ? 225u * THERON_TRACK02_RAW_SECTOR_BYTES
+        : 0u;
+    if (strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) == 0) {
+        const size_t pregap_sectors = 225u;
+        const size_t raw_offsets[2] = {
+            THERON_US_ROSTER_RAW_OFFSET, THERON_US_ROSTER_RAW_END
+        };
+        size_t mapped[2];
+        for (size_t i = 0u; i < 2u; ++i) {
+            size_t sector = raw_offsets[i] / THERON_TRACK02_RAW_SECTOR_BYTES;
+            size_t in_sector = raw_offsets[i] % THERON_TRACK02_RAW_SECTOR_BYTES;
+            if (sector < pregap_sectors || in_sector < 16u ||
+                in_sector >= 16u + THERON_TRACK02_RAW_USER_DATA_BYTES) {
+                return 0;
+            }
+            mapped[i] = (sector - pregap_sectors) *
+                            THERON_TRACK02_RAW_USER_DATA_BYTES +
+                        in_sector - 16u;
+        }
+        source_offset = mapped[0];
+        source_end = mapped[1];
+    } else {
+        source_offset -= offset_shift;
+        source_end -= offset_shift;
+    }
+    if (source_end < source_offset || track02_size < source_end ||
+        fnv1a32(track02_data + source_offset,
                 THERON_US_ROSTER_RAW_END - THERON_US_ROSTER_RAW_OFFSET) !=
             THERON_US_ROSTER_FNV1A) {
         return 0;
     }
     cursor.bytes = track02_data;
     cursor.size = track02_size;
-    cursor.raw_offset = THERON_US_ROSTER_RAW_OFFSET - offset_shift;
-    cursor.raw_end = THERON_US_ROSTER_RAW_END - offset_shift;
+    cursor.raw_offset = source_offset;
+    cursor.raw_end = source_end;
     cursor.slot = 0u;
 
     for (unsigned int index = 0u;

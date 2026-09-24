@@ -1698,7 +1698,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
     if (variant == THERON_TRACK02_VARIANT_US_BIN ||
-        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
+        variant == THERON_TRACK02_VARIANT_US_ISO) {
         /* The names are source-bound through the authenticated codon stream.
          * Its title/control fields still require the executing US text
          * consumer, so this route publishes names only. */

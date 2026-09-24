@@ -98,9 +98,11 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   transactional route.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
-- Verify JP and US runtime, save and later-dungeon behavior separately. Do
-  not infer JP offsets or gameplay semantics from US media; the US startup
-  receipt does not establish campaign or transition parity.
+- Verify JP and US runtime, save and later-dungeon behavior separately. The
+  authentic US MODE1/2048 ISO now reaches the source-backed Akutuba
+  forcefield handoff; this does not establish complete campaign, gameplay,
+  visual or transition parity. Do not infer JP offsets or gameplay semantics
+  from US media.
 # Firestaff TODO - THERON
 
 ## 2026-08-20 — rå japansk Track 02 når spelruntimen

@@ -1682,7 +1682,9 @@ int theron_v1_startup_runtime_enter_from_forcefield(
          theron_v1_track02_variant_for_md5(request->md5_hex) ==
              THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
          theron_v1_track02_variant_for_md5(request->md5_hex) ==
-             THERON_TRACK02_VARIANT_JP_BIN)) {
+             THERON_TRACK02_VARIANT_JP_BIN ||
+         theron_v1_track02_variant_for_md5(request->md5_hex) ==
+             THERON_TRACK02_VARIANT_US_ISO)) {
         memset(&source_roster_catalog, 0, sizeof(source_roster_catalog));
         if (theron_v1_track02_catalog_startup_roster_names(
                 request->hucard_rom, request->hucard_rom_size,

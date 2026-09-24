@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — US MODE1/2048 ISO forcefield source handoff
+
+- The authentic split-image US Track 02 ISO now binds the same source-defined
+  Theron roster records as raw MODE1/2352. Its raw-sector roster interval is
+  translated by sector and user-data offset (not by subtracting a flat byte
+  pregap), then checked against the existing record FNV and full ISO MD5.
+- Startup normalizes the absent 225-sector pregap as zeroed address space
+  only, preserving every ISO byte. The real US ISO CUE now passes M12→M11,
+  source roster initialization, and the forcefield handoff into Akutuba: four
+  authentic maps and 291 source objects load. Visual capture remains gated;
+  this does not claim bitmap parity or later-dungeon/gameplay parity.
+- Verification: `theron_v1_m11_launcher_handoff_boundary` with the authentic
+  CUE/ISO under the isolated data root (49 passed, 0 failed, 1 media-optional
+  skip).
+
 ## 2026-09-24 — JP/US spawn consumer source comparison
 
 - The two independently hash-authenticated retail spans are each 269 bytes.
