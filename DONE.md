@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Normal CLI scripts now honor `waitN` / `wait:N` as main-loop
+  frames and emit both mouse-down and mouse-up for `click:x:y`, matching a
+  complete left click. The release is required by the source-owned CSB Amiga
+  A31 AppB language selector. With authentic A31 media, the M12 start-menu
+  route now verifies the handoff through its first loaded runtime frame.
+  Authentic DM1 PC 3.4 start-menu/runtime, Original/Modern C040, C007 and the
+  complete native input matrix still pass. The focused build and launcher
+  contract test pass; the remote CSB test skips because that host has no game
+  media. Cross-platform launch coverage remains open in TODO.
+
 - 2026-09-23: Startup-menu audio-device preferences now decode quoted TOML
   strings before storing them, so names containing quotes or backslashes remain
   stable across repeated save/load cycles. A focused regression covers that

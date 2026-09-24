@@ -130,11 +130,19 @@ echo "PASS: native CSB Amiga CLI title input reaches the complete runtime input 
 # well.  This is intentionally separate from --boot-probe: that flag enters
 # the direct-launch path and cannot prove Enter on the visible game row keeps
 # the A31 program/title owner. Its receipt must report the admitted native
-# A31M title or A31E C03 boundary. ReDMCSB COMPILE.H:199-213, 246-269.
-menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+# A31M title or A31E C03 boundary, then advance that exact handoff to runtime.
+# ReDMCSB COMPILE.H:199-213, 246-269.
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+menu_probe_json="$test_scratch/csb-menu-runtime-$$.json"
+trap 'rm -f "$menu_probe_json"' EXIT
+menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
     SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --width 320 --height 200 \
     --menu --game csb --data-dir "$data_dir" --platform amiga \
-    --script enter,enter,enter --duration 1000 2>&1)" || {
+    --script 'enter,enter,enter,wait:1000,click:100:100,key:enter,up' \
+    --duration 30000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
@@ -149,4 +157,17 @@ case "$menu_output" in
         ;;
 esac
 
-echo "PASS: native CSB Amiga start-menu launch retains its selected media"
+python3 - "$menu_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        startup["receiptReady"] != 1 or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["phase"] != "inactive"):
+    raise SystemExit(f"FAIL: authentic CSB Amiga menu did not reach runtime: {probe}")
+print("PASS: authentic CSB Amiga start menu reached its source-owned runtime frame")
+PY

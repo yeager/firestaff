@@ -7,9 +7,10 @@
   the platform card, and reaches M11 through that intent. It still needs to
   advance each game from this same menu handoff to its first source-owned
   runtime frame; the separate boot-probe cases do not prove that menu path.
-  The authentic DM1 PC 3.4 route now has this runtime-frame assertion. Other
-  DM1 editions and the other four titles still need equivalent evidence. Keep
-  this separate from visual parity.
+  Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
+  assertion. The CSB route waits through TITL.DAT and uses the native AppB
+  language choice. Other DM1 editions, DM2, Nexus and Theron still need
+  equivalent evidence. Keep this separate from visual parity.
 
 - Extend F0219 current-cell collision coverage to original-media encounters,
   half-square creature footprints, nonmaterial/Black Flame cases and inactive

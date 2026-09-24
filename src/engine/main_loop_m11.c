@@ -1968,7 +1968,8 @@ static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
 
 static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
-static M12_MenuInput m11_next_script_input(const char** cursor);
+static M12_MenuInput m11_next_script_input(const char** cursor,
+                                          int* outWaitFrames);
 static M12_MenuInput m11_map_script_token(const char* token, size_t len);
 static int m11_push_script_event_token(const char* token, size_t len);
 static int m11_script_event_token_is_valid(const char* token, size_t len);
@@ -4383,7 +4384,7 @@ static int m11_script_next_token(const char** cursor,
     return 1;
 }
 
-static int m11_boot_probe_script_wait_frames(const char* token, size_t len) {
+static int m11_script_wait_frames(const char* token, size_t len) {
     unsigned long value = 0UL;
     size_t pos = 0U;
     if (!token || len == 0U) {
@@ -4440,7 +4441,7 @@ static int m11_phase_a_apply_boot_probe_script(M11_GameViewState* gameView,
         if (!m11_script_next_token(&cursor, &token, &tokenLen)) {
             break;
         }
-        waitFrames = m11_boot_probe_script_wait_frames(token, tokenLen);
+        waitFrames = m11_script_wait_frames(token, tokenLen);
         if (waitFrames >= 0) {
             m11_phase_a_advance_boot_probe_frames(gameView, waitFrames);
             waited += waitFrames;
@@ -5340,6 +5341,12 @@ static int m11_push_script_event_token(const char* token, size_t len) {
         ev.button.y = y;
 #endif
         SDL_PushEvent(&ev);
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+        ev.type = SDL_EVENT_MOUSE_BUTTON_UP;
+#else
+        ev.type = SDL_MOUSEBUTTONUP;
+#endif
+        SDL_PushEvent(&ev);
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
@@ -5540,7 +5547,7 @@ int M11_BootProbeScript_Validate(const char* script,
         if (!m11_script_next_token(&cursor, &token, &tokenLen)) {
             break;
         }
-        if (m11_boot_probe_script_wait_frames(token, tokenLen) >= 0 ||
+        if (m11_script_wait_frames(token, tokenLen) >= 0 ||
             m11_script_event_token_is_valid(token, tokenLen) ||
             m11_map_script_token(token, tokenLen) != M12_MENU_INPUT_NONE) {
             recognized = 1;
@@ -5808,9 +5815,13 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
     return M12_MENU_INPUT_NONE;
 }
 
-static M12_MenuInput m11_next_script_input(const char** cursor) {
+static M12_MenuInput m11_next_script_input(const char** cursor,
+                                          int* outWaitFrames) {
     const char* start;
     const char* end;
+    if (outWaitFrames) {
+        *outWaitFrames = 0;
+    }
     if (!cursor || !*cursor) {
         return M12_MENU_INPUT_NONE;
     }
@@ -5827,6 +5838,16 @@ static M12_MenuInput m11_next_script_input(const char** cursor) {
         ++end;
     }
     *cursor = end;
+    {
+        int waitFrames = m11_script_wait_frames(start,
+                                                (size_t)(end - start));
+        if (waitFrames >= 0) {
+            if (outWaitFrames) {
+                *outWaitFrames = waitFrames;
+            }
+            return M12_MENU_INPUT_NONE;
+        }
+    }
     if (m11_push_script_event_token(start, (size_t)(end - start))) {
         return M12_MENU_INPUT_NONE;
     }
@@ -7245,6 +7266,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M12_StartupMenuState menuState;
     M11_GameViewState gameView;
     const char* scriptCursor = o->script;
+    int scriptWaitFramesRemaining = 0;
     unsigned char* launcherFramebuffer = NULL;
     unsigned char* modernRgba = NULL;
     int useModern = 0;
@@ -8116,8 +8138,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
         lastLoopTick = now;
 
-        if (scriptCursor && *scriptCursor != '\0') {
-            input = m11_next_script_input(&scriptCursor);
+        if (scriptWaitFramesRemaining > 0) {
+            --scriptWaitFramesRemaining;
+        } else if (scriptCursor && *scriptCursor != '\0') {
+            int waitFrames = 0;
+            input = m11_next_script_input(&scriptCursor, &waitFrames);
+            scriptWaitFramesRemaining = waitFrames;
         }
         int menuPointerChanged = 0;
         if (input == M12_MENU_INPUT_NONE) {

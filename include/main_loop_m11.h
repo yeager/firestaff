@@ -36,9 +36,10 @@ typedef struct {
     int presentEveryMs;    /* How often to present during the loop.
                               Default 16 (≈60Hz). */
     const char* script;    /* Optional comma-separated input script:
-                              up,down,left,right,enter,action,esc.  In boot-probe
-                              mode, waitN / wait:N tokens advance N idle
-                              frames without input. */
+                              up,down,left,right,enter,action,esc and click:x:y.
+                              A click emits press and release. waitN / wait:N
+                              pauses later tokens for N loop frames; boot-probe
+                              mode advances N source frames. */
     const char* dataDir;   /* Optional override for asset detection.
                               Falls back to FIRESTAFF_DATA. */
     const char* savePath;  /* Optional validated save to resume after launch. */
