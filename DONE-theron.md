@@ -1,5 +1,15 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — Native movement on the authentic Japanese Akutuba map
+
+- Extended the real JP raw-BIN M11 regression with six native directional
+  inputs and an exact final pose assertion (`direction=2, x=3, y=0`). The test
+  uses the hash-authenticated Japanese Rev. 1 Track 02 and Track 19 plus its
+  complete authentic CUE, and continues to reject fallback graphics. It
+  proves a bounded native movement route on the authentic source map, not
+  parity with a Japanese original-runtime capture or movement in later
+  dungeons.
+
 ## 2026-09-24 — JP Track 19 raw BIN keeps its authenticated pregap
 
 - `theron_v1_track19_inventory_probe` now passes against the original Japanese

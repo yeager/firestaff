@@ -27,8 +27,9 @@ jp_archive="$data_root/Dungeon Master - Theron's Quest (Japan).7z"
 if [[ ! -f "$jp_archive" ]]; then
     jp_archive="$data_root/Dungeon Master - Theron's Quest (Japan) (1).7z"
 fi
-if [[ ! -f "$jp_archive" ]]; then
-    printf 'SKIP: authentic Theron JP full-disc archive is not staged\n'
+if [[ ! -f "$jp_archive" &&
+      ! -f "$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue" ]]; then
+    printf 'SKIP: authentic Theron JP full-disc archive or CUE is not staged\n'
     exit 77
 fi
 FIRESTAFF_THERON_MEDNAFEN_CACHE="$audio_cache" \
@@ -38,10 +39,10 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --data-dir "$data_root" \
     --boot-probe \
     --boot-probe-frames 0 \
-    --script 'enter,enter,enter,action,tab' \
+    --script 'enter,enter,enter,action,tab,up,right,down,left,up,up' \
     --boot-probe-expect-runtime \
     --boot-probe-expect-level-loaded 1 \
-    --boot-probe-expect-party 1,0,0 \
+    --boot-probe-expect-party 2,3,0 \
     --boot-probe-expect-champions 2 \
     --boot-probe-expect-asset-md5 "$expected_md5" \
     --boot-probe-expect-startup-active 0 \
@@ -51,7 +52,7 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq "assetMd5=$expected_md5" "$output" ||
    ! grep -Fq 'phase=theron-runtime' "$output" ||
    ! grep -Fq 'levelLoaded=1' "$output" ||
-   ! grep -Fq 'party=1,0,0 champions=2' "$output" ||
+   ! grep -Fq 'party=2,3,0 champions=2' "$output" ||
    grep -Fq 'theronSourceObjects=0' "$output" ||
    ! grep -Eq 'theronSourceObjects=[1-9][0-9]*' "$output" ||
    ! grep -Fq 'theronDungeonLevelsLoaded=4' "$output" ||
@@ -75,4 +76,4 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime with source map, party and object records'
+printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime and accepts six native movement inputs across its source map'

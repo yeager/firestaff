@@ -32,6 +32,12 @@ The authentic JP raw BIN remains the source for all seven dungeon maps and
 their local item tables. The actual JP Rev. 1 ISO dungeon banks are not yet
 acquired or verified.
 
+The JP raw-BIN M11 regression now also sends six native movement commands
+through authentic Akutuba and requires the resulting party pose `(direction=2,
+x=3, y=0)`. This is bounded host-runtime movement on the real Japanese map;
+it does not establish parity against a Japanese original-runtime capture,
+JP Continue, or movement behavior in later dungeons.
+
 The local combined US/JP RAR passes its archive CRC test, but Firestaff does
 not accept RAR4 as a launch input. Its US CUE names `TQUS02.iso`, which is not
 an archive member; the archive has `TQUS02End.iso` instead. The separate
