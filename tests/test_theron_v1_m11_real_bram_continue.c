@@ -192,6 +192,7 @@ int main(int argc, char** argv) {
                    !view.theronState.level_loaded ||
                    world->current_dungeon != 2 ||
                    world->current_level != 0 ||
+                   !world->levels[1][0].source_header_verified ||
                    world->object_count <= 0 ||
                    world->party.champion_count != 2) {
             ++failures;
@@ -205,39 +206,119 @@ int main(int argc, char** argv) {
                     world->object_count,
                     world->party.champion_count);
         } else {
-            static const int relative_directions[4] = { 0, 1, 2, 3 };
             static const int movement_inputs[4] = {
                 M12_MENU_INPUT_UP,
                 M12_MENU_INPUT_STRAFE_RIGHT,
                 M12_MENU_INPUT_DOWN,
                 M12_MENU_INPUT_STRAFE_LEFT
             };
-            int moved = 0;
+            int16_t parent_x[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
+            int16_t parent_y[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
+            int16_t queue_x[THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE];
+            int16_t queue_y[THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE];
+            int8_t parent_direction[THERON_MAX_MAP_SIZE]
+                                   [THERON_MAX_MAP_SIZE];
+            uint8_t visited[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE] = {{0}};
+            int path_directions[THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE];
+            int path_length = 0;
+            int queue_head = 0;
+            int queue_tail = 0;
+            int target_x = -1;
+            int target_y = -1;
             int start_x = world->party.leader_x;
             int start_y = world->party.leader_y;
             int facing = world->party.leader_dir & 3;
-            for (i = 0; i < 4 && !moved; ++i) {
-                int direction = (facing + relative_directions[i]) & 3;
-                int target_x = start_x + g_theron_dir_dx[direction];
-                int target_y = start_y + g_theron_dir_dy[direction];
-                uint8_t target_square;
-                if (target_x < 0 || target_y < 0 ||
-                    target_x >= world->levels[1][0].width ||
-                    target_y >= world->levels[1][0].height) {
-                    continue;
-                }
-                target_square = theron_v1_world_get_square(
-                    world, target_x, target_y);
-                if (!THERON_SQUARE_IS_PASSABLE(target_square)) continue;
-                (void)M11_GameView_HandleInput(&view, movement_inputs[i]);
-                moved = world->party.leader_x != start_x ||
-                        world->party.leader_y != start_y;
+            int moved_steps = 0;
+            memset(parent_x, 0xff, sizeof(parent_x));
+            memset(parent_y, 0xff, sizeof(parent_y));
+            memset(parent_direction, 0xff, sizeof(parent_direction));
+            if (start_x >= 0 && start_y >= 0 &&
+                start_x < world->levels[1][0].width &&
+                start_y < world->levels[1][0].height &&
+                theron_v1_world_get_square(world, start_x, start_y) ==
+                    THERON_SQUARE_FLOOR) {
+                queue_x[queue_tail] = (int16_t)start_x;
+                queue_y[queue_tail++] = (int16_t)start_y;
+                visited[start_y][start_x] = 1u;
             }
-            if (!moved) {
+            while (queue_head < queue_tail && target_x < 0) {
+                int x = queue_x[queue_head];
+                int y = queue_y[queue_head++];
+                int depth = 0;
+                int walk_x = x;
+                int walk_y = y;
+                while (walk_x != start_x || walk_y != start_y) {
+                    int px = parent_x[walk_y][walk_x];
+                    int py = parent_y[walk_y][walk_x];
+                    if (px < 0 || py < 0 || ++depth >= 3) break;
+                    walk_x = px;
+                    walk_y = py;
+                }
+                if ((x != start_x || y != start_y) && depth >= 3) {
+                    target_x = x;
+                    target_y = y;
+                    break;
+                }
+                for (int direction = 0; direction < THERON_DIR_COUNT;
+                     ++direction) {
+                    int nx = x + g_theron_dir_dx[direction];
+                    int ny = y + g_theron_dir_dy[direction];
+                    if (nx < 0 || ny < 0 ||
+                        nx >= world->levels[1][0].width ||
+                        ny >= world->levels[1][0].height ||
+                        visited[ny][nx] ||
+                        theron_v1_world_get_square(world, nx, ny) !=
+                            THERON_SQUARE_FLOOR) {
+                        continue;
+                    }
+                    visited[ny][nx] = 1u;
+                    parent_x[ny][nx] = (int16_t)x;
+                    parent_y[ny][nx] = (int16_t)y;
+                    parent_direction[ny][nx] = (int8_t)direction;
+                    queue_x[queue_tail] = (int16_t)nx;
+                    queue_y[queue_tail++] = (int16_t)ny;
+                }
+            }
+            if (target_x >= 0) {
+                int x = target_x;
+                int y = target_y;
+                while (x != start_x || y != start_y) {
+                    int previous_x = parent_x[y][x];
+                    int previous_y = parent_y[y][x];
+                    if (previous_x < 0 || previous_y < 0 ||
+                        path_length >=
+                            THERON_MAX_MAP_SIZE * THERON_MAX_MAP_SIZE) {
+                        path_length = 0;
+                        break;
+                    }
+                    path_directions[path_length++] = parent_direction[y][x];
+                    x = previous_x;
+                    y = previous_y;
+                }
+            }
+            for (i = path_length - 1; i >= 0; --i) {
+                int direction = path_directions[i];
+                int relative = (direction - facing + THERON_DIR_COUNT) & 3;
+                int next_x = world->party.leader_x +
+                    g_theron_dir_dx[direction];
+                int next_y = world->party.leader_y +
+                    g_theron_dir_dy[direction];
+                if (M11_GameView_HandleInput(
+                        &view, movement_inputs[relative]) !=
+                        M11_GAME_INPUT_REDRAW ||
+                    world->current_dungeon != 2 ||
+                    world->current_level != 0 ||
+                    world->party.leader_x != next_x ||
+                    world->party.leader_y != next_y) {
+                    break;
+                }
+                ++moved_steps;
+            }
+            if (moved_steps < 3) {
                 ++failures;
                 fprintf(stderr,
-                        "FAIL: native movement reaches an adjacent passable tile in the authentic dungeon 2 map (start=%d,%d facing=%d)\n",
-                        start_x, start_y, facing);
+                        "FAIL: native input traverses three source-map floor steps after authentic Continue (start=%d,%d facing=%d path=%d moved=%d)\n",
+                        start_x, start_y, facing, path_length, moved_steps);
             }
         }
     }

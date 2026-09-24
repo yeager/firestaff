@@ -13,9 +13,10 @@
   temporary/persistent skill-experience pairs directly with the decoded,
   source-verified real Backup RAM body. It requires the native runtime to load
   dungeon 2, level 0, with the selected two-member party and original objects.
-  After load, the test locates a passable neighboring tile in that same
-  authentic map and verifies a native input moves the party there; it does
-  not mistake the map-edge-blocked forward direction for a missing route.
+  After load, a breadth-first walk over the authentic floor tiles finds a
+  three-step route, and the test verifies all three native movement inputs
+  move the party along it. It does not mistake the map-edge-blocked forward
+  direction for a missing route.
   This verifies a real-media native route, not parity against a separate
   original-emulator transition capture. The real-media test passes on TRV2;
   JP Continue, later stages and original transition parity remain open.

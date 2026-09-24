@@ -88,8 +88,8 @@ acquired or verified.
   through Soul Room and forcefield. The original-emulator transition has not
   yet been captured for parity, and JP Continue and separate JP runtime
   evidence remain unverified. The same authentic run also verifies a native
-  movement command from the entrance onto a passable neighbor in the real
-  loaded map; movement parity beyond that bounded step remains open.
+  three-step native movement route through floor tiles in the real loaded
+  map; movement parity beyond that bounded route remains open.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound
