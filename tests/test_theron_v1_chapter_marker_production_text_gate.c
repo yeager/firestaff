@@ -84,6 +84,7 @@ int main(void) {
     Theron_V1_World *world;
     const char *home = getenv("HOME");
     char path[1024];
+    char formatted[THERON_CHAPTER_MARKER_REPORT_MAX];
 
     memset(&profile, 0, sizeof(profile));
     profile.assets_verified = 1;
@@ -155,6 +156,15 @@ int main(void) {
                 fprintf(stderr,
                         "FAIL: authentic JP quest name %u was not converted: %s\n",
                         i + 1u, marker.quest_summary);
+                free(world);
+                return 1;
+            }
+            if (theron_v1_chapter_marker_format(
+                    &marker, formatted, sizeof(formatted)) == 0u ||
+                strstr(formatted, expected[i]) == NULL) {
+                fprintf(stderr,
+                        "FAIL: authentic JP quest name %u did not reach the host marker formatter\n",
+                        i + 1u);
                 free(world);
                 return 1;
             }
