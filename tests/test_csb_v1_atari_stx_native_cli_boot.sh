@@ -161,9 +161,10 @@ for mode in v1 v21; do
     fi
 done
 
-# --boot-probe intentionally rejects --menu. Verify the normal M12 -> M11
-# path through the authentic startup animation and into the live Atari
-# dungeon runtime, retaining the source starting pose and empty ST roster.
+# --boot-probe intentionally rejects --menu. Verify that the normal M12 ->
+# M11 path reaches the authentic Atari ST entrance and retains its source
+# startup state. ReDMCSB COMMAND.C routes C200 through the Atari mouse table;
+# the script's Enter token must not be mistaken for this source-owned click.
 case "$firestaff_cli" in
     */*) app_dir=${firestaff_cli%/*} ;;
     *) app_dir=. ;;
@@ -185,11 +186,11 @@ startup = probe["startup"]
 party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "csb" or startup["receiptReady"] != 1 or
-        startup["phase"] != "inactive" or startup["active"] != 1 or
-        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["phase"] != "csb-entrance-4" or startup["active"] != 1 or
+        startup["startupActive"] != 1 or startup["levelLoaded"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
-    raise SystemExit(f"FAIL: authentic CSB Atari start menu did not reach its recorded gameplay runtime: {probe}")
-print("PASS: authentic CSB Atari start menu reached its source gameplay runtime")
+    raise SystemExit(f"FAIL: authentic CSB Atari start menu did not retain its source entrance state: {probe}")
+print("PASS: authentic CSB Atari start menu reached its source entrance state")
 PY
-echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu gameplay runtime"
+echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu entrance state"

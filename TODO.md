@@ -18,10 +18,12 @@
   original SWSH/TITL and GDAT New Game pointer route. DM2 French DOS now also
   reaches its authenticated initial party through the normal M12 → MVE →
   New-Game route, with direct-probe movement checked separately. The optional
-  authentic CSB Atari ST 2.0 route now likewise completes ordinary M12
-  selection, ANIMATE.SCR/FTLCODE startup and reaches live source runtime at
-  map 0, (9,0), south. Its initial state has zero champions, so this does not
-  prove a playable campaign party. The optional
+  authentic CSB Atari ST route now completes ordinary M12 selection and
+  ANIMATE.SCR/FTLCODE startup through the source-owned entrance view. Reaching
+  gameplay from that Atari entrance remains unverified; the authentic C200
+  primary-mouse command must be tested through the normal CLI route. Its
+  initial state has zero champions, so this does not prove a playable campaign
+  party. The optional
   French DOS original-save regression's M12 leg now uses normal Quick Resume
   and a runtime receipt (not the rejected `--menu --boot-probe` pair), but this
   local checkout lacks the authentic unpacked French EUDATA needed to execute

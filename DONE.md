@@ -76,8 +76,9 @@
 
 - 2026-09-24: Fixed the authentic CSB Atari ST test's invalid `--menu` plus
   `--boot-probe` combination. Its normal M12-to-M11 route now asserts the
-  runtime receipt through `csb-entrance-4`; zero champions and active startup
-  remain explicit evidence limits.
+  source-owned entrance state at `csb-entrance-4`. Reaching gameplay through
+  the Atari C200 primary-mouse command remains open in TODO; the initial roster
+  still has zero champions.
 
 - 2026-09-24: Fixed the two standalone Theron roster test targets to link
   `firestaff_theron`, which supplies the production Track 02 MD5-to-variant
