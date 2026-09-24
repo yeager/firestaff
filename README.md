@@ -20,8 +20,9 @@ Theron's Quest.
 
 ## Current status
 
-The status below was reviewed on 2026-09-12. It reports what has been exercised
-with real media, not a claim of complete game parity.
+The table was last fully reviewed on 2026-09-12; the Theron's Quest row was
+updated on 2026-09-24. It reports what has been exercised with real media, not
+a claim of complete game parity.
 
 Firestaff detects real media and exposes only paths with a verified handoff; it
 never borrows data from another edition to fill a gap. The detailed status is kept in
@@ -37,7 +38,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Chaos Strikes Back | Amiga, Atari ST and FM Towns startup routes have real-media coverage. FM Towns uses its own authenticated entrance palette and MINI.DAT bootstrap state. Campaign, saves and presentation parity are still being completed. |
 | Dungeon Master II: Skullkeep | DOS, FM Towns and Macintosh have real-media startup and selected runtime coverage. Amiga startup and source movement are covered, but its initial M11 viewport currently fails the real-GDAT frame receipt and remains fail-closed. Title timing/palette, menu handoff, input, audio and dungeon-composition parity remain open per edition. |
 | DM Nexus | Saturn disc parsing and native MAPD title rendering work from the original CUE/BIN; later menu, HUD and dungeon presentation remain capture-gated. |
-| Theron's Quest | Native US and Japanese Track 02 startup and source-dungeon loading work; presentation, transitions and later gameplay remain evidence-gated. |
+| Theron's Quest | Authentic US and Japanese Track 02 media reach bounded native routes, and source-only loaders verify all seven dungeons in both regions. Full presentation, transitions, saves and gameplay remain evidence-gated. |
 
 ### Dungeon Master II: Skullkeep
 

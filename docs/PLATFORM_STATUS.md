@@ -125,8 +125,8 @@ route receipts, not a claim of complete campaign, save, audio or pixel parity.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| PC Engine/TurboGrafx-16 Japanese | **Verified route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room and Akutuba runtime (`party=1,0,0`). Its Track 02 source consumer binds all seven campaign dungeons (2,266 source objects; Drator: 8 maps/291 objects); identity and level framing are verified. | Captured transitions, bitmap/palette binding, saves and positive gameplay behavior. |
-| PC Engine/TurboGrafx-16 US | **Verified startup route** | Authentic CloneCD ZIP (`.ccd` + bounded `.img` Track 02 slice) starts natively from memory through CLI and start menu; title and scripted Soul Room startup are verified. | US gameplay handoff, captures, saves and later-dungeon proof. |
+| PC Engine/TurboGrafx-16 Japanese | **Verified bounded route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room and Akutuba runtime (`party=1,0,0`). Its source-only Track 02 loader binds all seven campaign dungeons (2,266 source-object records; Drator: 8 maps/291 objects); identity and level framing are verified. | Complete campaign transitions, bitmap/palette and HUD binding, save-body semantics and end-to-end gameplay. |
+| PC Engine/TurboGrafx-16 US | **Verified bounded routes** | Authentic CloneCD ZIP (`.ccd` + bounded `.img` Track 02 slice) starts natively from memory through CLI and start menu. The authentic MODE1/2048 ISO reaches the source-backed Akutuba forcefield handoff; its seven dungeon sources match the raw Track 02 user-data after the 225-sector pregap (34 maps and 2,269 source-object records). | Later campaign progression, save-body semantics, original presentation, combat/item/AI/audio parity and end-to-end gameplay. |
 
 ## Data and preservation rules
 
