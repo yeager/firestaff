@@ -17,6 +17,12 @@ static const uint32_t g_us_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
     0xf7ccbfe9u, 0xf1a6b37au, 0x3c56f832u, 0xdf34534bu,
     0xa1928360u, 0x64749f2fu, 0x33b93910u
 };
+/* The authenticated CloneCD Track 02 shares the first six US compressed
+ * level spans, but its final span differs from the legacy US BIN. */
+static const uint32_t g_us_clonecd_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
+    0xf7ccbfe9u, 0xf1a6b37au, 0x3c56f832u, 0xdf34534bu,
+    0xa1928360u, 0x64749f2fu, 0xc3853910u
+};
 static const uint32_t g_jp_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
     0xa8818e93u, 0x13142c8fu, 0x4087881au, 0x5bc73358u,
     0x326eff1fu, 0xff96a9afu, 0x930a5bf6u
@@ -106,6 +112,11 @@ const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block_for_variant(
     Theron_Track02Variant variant, unsigned int level) {
     if (level >= THERON_TRACK02_LEVEL_COUNT) return NULL;
     if (variant == THERON_TRACK02_VARIANT_US_BIN) return &g_level_blocks[level];
+    /* CloneCD begins at the US Track 02 INDEX 01 and omits the 225-sector
+     * pregap present in the legacy raw BIN.  Its logical user-data offsets
+     * therefore match the authenticated US ISO projection. */
+    if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW)
+        return &g_us_iso_level_blocks[level];
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) return &g_jp_level_blocks[level];
     if (variant == THERON_TRACK02_VARIANT_US_ISO)
         return &g_us_iso_level_blocks[level];
@@ -131,6 +142,8 @@ int theron_v1_track02_level_data_block_read(
     if (!user_data) return 0;
     if (variant == THERON_TRACK02_VARIANT_US_BIN)
         expected_hashes = g_us_compressed_fnv1a;
+    else if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW)
+        expected_hashes = g_us_clonecd_compressed_fnv1a;
     else if (variant == THERON_TRACK02_VARIANT_JP_BIN)
         expected_hashes = g_jp_compressed_fnv1a;
     else if (variant == THERON_TRACK02_VARIANT_US_ISO)

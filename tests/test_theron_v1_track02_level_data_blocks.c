@@ -291,6 +291,10 @@ int main(void) {
 
     verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_RAW", "TQUS02.bin",
                                      THERON_TRACK02_VARIANT_US_BIN, "US");
+    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_CLONECD_RAW",
+                                     "raw-us-clonecd/TQUS02.bin",
+                                     THERON_TRACK02_VARIANT_US_CLONECD_RAW,
+                                     "US CloneCD");
     verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_JP_RAW",
                                      "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin",
                                      THERON_TRACK02_VARIANT_JP_BIN, "JP");
