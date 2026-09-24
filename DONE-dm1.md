@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-24: The authentic nested English Atari ST v1.2 archive now has a
+  normal M12 start-menu regression that continues through the source-owned
+  title/entrance input and asserts the first `dm1-runtime` frame. This closes
+  the previous gap where the menu test stopped at the M12→M11 handoff and
+  only a separate `--boot-probe` reached runtime. Verification used the
+  supplied ZIP→ZIP→STX original media; broader Atari editions and pixel parity
+  remain open.
+
 - 2026-09-24: Extended the authentic PC 3.4 launcher regression to inspect
   M11's source-owned startup receipt after the actual game-card → PC → Original
   menu route. It now proves that launch handed off to `dm1-runtime` with the

@@ -62,6 +62,36 @@ grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" &&
 grep -Fq "dataDir=$archive" <<<"$menu_output" &&
 grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu_output"
 
+# Unlike --boot-probe, this follows the ordinary M12 → M11 path with the
+# authenticated nested archive. The first three Enter inputs select the game,
+# Atari card and Original options; subsequent source inputs advance the Atari
+# title/entrance owner. Keep the receipt tied to the real menu handoff so a
+# direct-launch probe cannot satisfy this first-runtime assertion.
+test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$test_scratch"
+menu_probe_json="$test_scratch/dm1-atari-menu-runtime-$$.json"
+trap 'rm -f "$menu_probe_json"' EXIT
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform atari-st --data-dir "$archive" \
+    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
+    --duration 20000 >/dev/null 2>&1
+python3 - "$menu_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime"):
+    raise SystemExit(f"FAIL: authentic DM1 Atari start menu did not reach runtime: {probe}")
+print("PASS: authentic DM1 Atari ST start menu reached its source-owned runtime frame")
+PY
+
 # The third platform card is Atari ST.  This verifies pointer-only card
 # selection against the supplied nested preservation archive.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \

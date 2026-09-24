@@ -9,8 +9,10 @@
   runtime frame; the separate boot-probe cases do not prove that menu path.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
-  language choice. Other DM1 editions, DM2, Nexus and Theron still need
-  equivalent evidence. Keep this separate from visual parity.
+  language choice. Authentic DM1 Atari ST v1.2 now also follows normal M12
+  selection and source title/entrance input to its first runtime frame; other
+  DM1 editions, DM2, Nexus and Theron still need equivalent evidence. Keep
+  this separate from visual parity.
 
 - Extend F0219 current-cell collision coverage to original-media encounters,
   half-square creature footprints, nonmaterial/Black Flame cases and inactive
