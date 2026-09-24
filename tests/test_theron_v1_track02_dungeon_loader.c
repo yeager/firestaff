@@ -23,19 +23,34 @@
 #define SYNC_OFFSET 16
 
 static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
-    FILE *fp = fopen(path, "rb");
+    FILE *fp;
+    long fsize;
+    uint8_t *raw;
+    size_t sectors;
+    size_t ud_size;
+    uint8_t *ud;
+
+    if (!path || !out_size) return NULL;
+    fp = fopen(path, "rb");
     if (!fp) return NULL;
-    fseek(fp, 0, SEEK_END);
-    long fsize = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    if (fsize <= 0) { fclose(fp); return NULL; }
-    uint8_t *raw = malloc((size_t)fsize);
+    if (fseek(fp, 0, SEEK_END) != 0 ||
+        (fsize = ftell(fp)) <= 0 ||
+        fseek(fp, 0, SEEK_SET) != 0 ||
+        (size_t)fsize % SECTOR_SIZE != 0u) {
+        fclose(fp);
+        return NULL;
+    }
+    raw = (uint8_t *)malloc((size_t)fsize);
     if (!raw) { fclose(fp); return NULL; }
-    fread(raw, 1, (size_t)fsize, fp);
+    if (fread(raw, 1u, (size_t)fsize, fp) != (size_t)fsize) {
+        free(raw);
+        fclose(fp);
+        return NULL;
+    }
     fclose(fp);
-    size_t sectors = (size_t)fsize / SECTOR_SIZE;
-    size_t ud_size = sectors * UD_PER_SECTOR;
-    uint8_t *ud = calloc(1, ud_size);
+    sectors = (size_t)fsize / SECTOR_SIZE;
+    ud_size = sectors * UD_PER_SECTOR;
+    ud = (uint8_t *)calloc(1u, ud_size);
     if (!ud) { free(raw); return NULL; }
     for (size_t s = 0; s < sectors; s++)
         memcpy(ud + s * UD_PER_SECTOR, raw + s * SECTOR_SIZE + SYNC_OFFSET, UD_PER_SECTOR);
