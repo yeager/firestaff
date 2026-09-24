@@ -111,6 +111,8 @@ int main(void)
                 media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED ||
                 media.failure_reason !=
                     THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY ||
+                strcmp(theron_v1_track02_campaign_media_failure_reason_id(
+                           &media), "source_content_empty") ||
                 media.launchable_direct_media ||
                 media.direct_media.status !=
                     THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED ||
