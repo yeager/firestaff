@@ -16,6 +16,13 @@
   når en laddad runtime-nivå med källobjekt och utan fallback. Kortsekvensens
   väntan anpassades till testfönstret så att alla klick hinner skickas.
 
+## 2026-09-24 — japansk Rev. 1 CUE-start verifierad på trv2
+
+- `theron_v1_jp_cue_runtime_boot` passerar mot den kompletta autentiska
+  japanska Rev. 1 CUE-skivan och dess spårfiler på trv2. Det bekräftar den
+  källägda startvägen, inte JP Continue, kampanjövergångar eller visuell
+  paritet.
+
 ## 2026-09-24 — Authentic Continue to the next unlocked chapter
 
 - Extended the M11 Continue regression with the authentic US Track 02 and
