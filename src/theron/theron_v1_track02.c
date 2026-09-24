@@ -1491,7 +1491,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
         Theron_Track02StartupTextMarkerKind kind =
             THERON_TRACK02_STARTUP_TEXT_UNKNOWN;
 
-        if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+            variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
             size_t local_offset = 0u;
             if (!bytes_find(cursor,
                             remaining,

@@ -180,6 +180,9 @@ static void check_real_us_roster(const char *path, const char *md5) {
           (int)theron_v1_track02_variant_for_md5(md5));
     CHECK(receipt.startup_roster_name_status == THERON_TRACK02_SIGNAL_OK);
     CHECK(receipt.startup_roster_name_count == 8);
+    CHECK(receipt.startup_text_prompt_status == THERON_TRACK02_SIGNAL_OK);
+    CHECK(strcmp(receipt.startup_text_prompt,
+                 "GO AWAY AND RESURRECT THERON") == 0);
     for (i = 0u; i < 8u; ++i) {
         CHECK(strcmp(receipt.startup_roster_names[i], names[i]) == 0);
         /* US title/control fields are intentionally not promoted yet. */
