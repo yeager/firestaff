@@ -513,13 +513,19 @@ static void check_title_to_menu_boundary(void) {
                  atariMedia.handled &&
                  atariMedia.platform ==
                      DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
-                 !atariMedia.play_swsh && !atariMedia.play_title &&
+                 !atariMedia.play_swsh && atariMedia.play_title &&
+                 atariMedia.title_menu_eligible &&
+                 atariMedia.title_source_animation_steps ==
+                     V1_TitleFrontend_GetSourceAnimationStepCount() &&
+                 atariMedia.title_menu_boundary_frame ==
+                     V1_TitleFrontend_GetSourceAnimationStepCount() + 1u &&
                  atariMedia.play_entrance &&
                  atariMedia.entrance_palette == -1 &&
                  atariMedia.entrance_palette_entry_count == 0U &&
                  atariMedia.entrance_palette_fingerprint == 0U &&
                  atariMedia.source_evidence &&
                  strstr(atariMedia.source_evidence, "STARTUP1.C:160-170") != NULL &&
+                 strstr(atariMedia.source_evidence, "calls F0437 then F0441") != NULL &&
                  dm1_v1_startup_entrance_timing_receipt_valid_pc34(
                      &atariMedia),
              1);
@@ -700,7 +706,7 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.entrance_palette_fingerprint == 0U,
              1);
     badMedia = atariMedia;
-    badMedia.play_title = 1;
+    badMedia.play_title = 0;
     expect_i("DM1 Atari media validator rejects a fabricated PC title phase",
              dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
              0);
@@ -3231,8 +3237,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
                   !runtime_handoff.full_graphics_consumed &&
                   !runtime_handoff.hoc_runtime_ready),
              1);
-    expect_i("DM1 Atari C200 handoff reaches Hall without PC title or SWSH",
-             ((outcome.title_played = 0,
+    expect_i("DM1 Atari C200 handoff reaches Hall after Atari title without SWSH",
+             ((outcome.title_played = 1,
                outcome.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
                outcome.action =
                    DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34,
@@ -3247,8 +3253,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
               runtime_handoff.hoc_runtime_ready &&
              runtime_handoff.hoc_first_frame_ready),
              1);
-    atari_media.play_title = 1;
-    expect_i("DM1 Atari runtime handoff rejects a forged PC title phase",
+    atari_media.title_source_animation_steps = 0;
+    expect_i("DM1 Atari runtime handoff rejects a forged title-step count",
              !dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
                  "dm1", "dm1", &atari_media, &outcome,
                  &apply_result, &runtime_handoff),

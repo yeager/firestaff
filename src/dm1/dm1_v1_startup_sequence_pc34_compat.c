@@ -1291,9 +1291,9 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
         return 0;
     }
 
-    /* ReDMCSB's startup prefix is platform-specific: the PC route consumes
-     * SWSH.C and TITLE.C F0437 before ENTRANCE.C F0441, while Atari
-     * STARTUP1.C:160-170 calls F0437 then F0441 directly. The media receipt
+    /* ReDMCSB's startup prefix is platform-specific: PC consumes SWSH.C,
+     * Atari skips SWSH, and both consume TITLE.C F0437 before ENTRANCE.C
+     * F0441. The media receipt
      * determines which phases are required before this DM1-owned boundary
      * can expose the Hall/runtime frame. */
     receipt.handled = 1;
@@ -4961,13 +4961,14 @@ int dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
         return 0;
     }
     if (receipt.handled) {
-        /* ReDMCSB STARTUP1.C:160-170 enters F0437/F0441 directly for Atari
-         * ST.  ENTRANCE.C F0441:850-883 consumes C200 from the Atari mouse
-         * command queue; COMMAND.C:64 maps the source rectangle. The PC
-         * SWSH/title and PC34 palette receipts do not apply to this route. */
+        /* ReDMCSB STARTUP1.C:160-170 invokes F0437 before F0441 on Atari
+         * ST too. ENTRANCE.C F0441:850-883 consumes C200 from the Atari
+         * mouse command queue; COMMAND.C:64 maps the source rectangle. The
+         * PC SWSH and PC34 palette receipts do not apply to this route. */
         receipt.platform = DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST;
         receipt.play_swsh = 0;
-        receipt.play_title = 0;
+        receipt.play_title = 1;
+        receipt.title_menu_eligible = 1;
         receipt.play_entrance = 1;
         receipt.entrance_auto_enter_ms = 0;
         receipt.entrance_palette = -1;
@@ -4977,7 +4978,8 @@ int dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
         receipt.entrance_credits_palette_entry_count = 0;
         receipt.entrance_credits_palette_fingerprint = 0U;
         receipt.source_evidence =
-            "ReDMCSB STARTUP1.C:160-170; ENTRANCE.C:850-883; "
+            "ReDMCSB STARTUP1.C:160-170 calls F0437 then F0441; "
+            "TITLE.C:309-409; ENTRANCE.C:850-883; "
             "COMMAND.C:64,2438";
     }
     *out_receipt = receipt;
@@ -5394,7 +5396,12 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
         DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST) {
         return media_receipt->play_entrance &&
                        !media_receipt->play_swsh &&
-                       !media_receipt->play_title &&
+                       media_receipt->play_title &&
+                       media_receipt->title_menu_eligible &&
+                       media_receipt->title_source_animation_steps ==
+                           V1_TitleFrontend_GetSourceAnimationStepCount() &&
+                       media_receipt->title_menu_boundary_frame ==
+                           V1_TitleFrontend_GetSourceAnimationStepCount() + 1u &&
                        media_receipt->entrance_palette == -1 &&
                        media_receipt->entrance_palette_entry_count == 0U &&
                        media_receipt->entrance_palette_fingerprint == 0U &&

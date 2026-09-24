@@ -12,6 +12,12 @@
   completeness. Atari's F0437 title presentation and recruitable champions
   remain open.
 
+- 2026-09-24: Corrected DM1 Atari ST's startup media receipt to preserve
+  ReDMCSB STARTUP1.C's F0437-before-F0441 order. The Atari plan now requires a
+  typed F0437 completion boundary without borrowing PC34 SWSH timing or
+  palettes. Startup state-machine and sequence gates pass; Atari F0437's
+  original-pixel presentation and palette remain open.
+
 - 2026-09-24: Extended the DM1 F0128 M11 wiring regression with an optional
   authentic Atari ST v1.2 runtime path. It enters through the normal M12
   launcher handoff and proves the source dungeon is mounted and its live

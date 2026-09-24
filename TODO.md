@@ -35,14 +35,15 @@
   makes the PC34 path report `dm1StartupHandoffExecuted=1`, but the same
   authentic-media probe still has `dm1CompleteEntranceToHoC=0` because that
   aggregate also requires a real host-window/presented-pixel capture chain.
-  Atari now uses a distinct STARTUP1.C/F0437/F0441 media receipt, skips the PC
-  SWSH/title and special palettes, and routes entrance input through Atari's
+  Atari now uses a distinct STARTUP1.C/F0437/F0441 media receipt, skips PC
+  SWSH and PC34 special palettes, and routes entrance input through Atari's
   source mouse command. Authentic English, German and French Atari ST M12
   regressions now require the applied startup handoff and HoC first-frame
   receipt before accepting the live runtime state. Fresh Atari launches still
   begin with zero champions; recruiting a party and proving a playable
-  campaign remain open. Atari's own F0437 title presentation also remains
-  unimplemented; the current route starts at the common entrance. The
+  campaign remain open. The Atari receipt now requires TITLE.C F0437 before
+  ENTRANCE.C F0441, but Atari's F0437 presentation and palette are not yet
+  implemented; the current route starts at the common entrance. The
   headless receipt intentionally does not claim the host capture aggregate,
   and visual parity remains deferred.
   Other DM1 editions, remaining DM2 platforms, Nexus
