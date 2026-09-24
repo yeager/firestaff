@@ -11028,7 +11028,9 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
      * L4696 class — the encoded $4xxx address equals the image offset);
      * every $45xx call-site offset lands inside the bound $45xx body;
      * the internal JSR L43D6 sits at +0x02 inside the bound L424B
-     * body; the L4552->L458E and L466B->L4696 adjacencies hold; the
+     * body, whose BSR-local subroutine ends at $42BE immediately before
+     * the separate L42BF entry; the L4552->L458E and L466B->L4696
+     * adjacencies hold; the
      * static byte counts chain. */
     if (THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_USER_OFFSET +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES >
@@ -11087,6 +11089,9 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
         THERON_TRACK02_IPL_STAGE2_L424B_CALL_SITE_L43D6_OFF +
                 THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_BYTES >
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L42BF_USER_OFFSET ||
         THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4552_USER_OFFSET +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4552_BYTES !=
             THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L458E_USER_OFFSET ||
@@ -11269,7 +11274,7 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_enclosing_45xx_callee
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L55B6_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5E2B_BYTES +
                 THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L5CE4_BYTES !=
-            THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES) {
+                THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
     out_receipt->valid = 1;

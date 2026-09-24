@@ -1109,8 +1109,10 @@ static void check_real_media(const char *path, const char *md5,
         }
         {
             Theron_Track02Stage2Enclosing45xxCalleesReceipt callees_45xx;
-            check(theron_v1_track02_verify_stage2_enclosing_45xx_callees(
-                      data, (size_t)length, md5, &callees_45xx) ==
+            Theron_Track02SignalStatus callees_status =
+                theron_v1_track02_verify_stage2_enclosing_45xx_callees(
+                      data, (size_t)length, md5, &callees_45xx);
+            check(callees_status ==
                       THERON_TRACK02_SIGNAL_OK &&
                       callees_45xx.valid &&
                       callees_45xx.variant ==
@@ -1964,48 +1966,8 @@ int main(void) {
                  0x667u, 0xd0u);
         check(theron_v1_track02_verify_stage2_enclosing_45xx_callees(
                   data, data_size, THERON_TRACK02_MD5_US_BIN,
-                  &callees_45xx) == THERON_TRACK02_SIGNAL_OK &&
-                  callees_45xx.valid &&
-                  callees_45xx.variant == THERON_TRACK02_VARIANT_US_BIN &&
-                  callees_45xx.stage2_record ==
-                      THERON_TRACK02_IPL_STAGE2_RECORD &&
-                  callees_45xx.stage2_raw_sector ==
-                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
-                  callees_45xx.l424b_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_BYTES &&
-                  callees_45xx.l43d6_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L43D6_BYTES &&
-                  callees_45xx.l4552_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4552_BYTES &&
-                  callees_45xx.l458e_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L458E_BYTES &&
-                  callees_45xx.l466b_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_BYTES &&
-                  callees_45xx.l4932_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_BYTES &&
-                  callees_45xx.callees_bound_bytes ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEES_BOUND_BYTES &&
-                  callees_45xx.l424b_cpu_address ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L424B_CPU_ADDRESS &&
-                  callees_45xx.l43d6_cpu_address ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L43D6_CPU_ADDRESS &&
-                  callees_45xx.l4552_cpu_address ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4552_CPU_ADDRESS &&
-                  callees_45xx.l458e_cpu_address ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L458E_CPU_ADDRESS &&
-                  callees_45xx.l466b_cpu_address ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L466B_CPU_ADDRESS &&
-                  callees_45xx.l4932_cpu_address ==
-                      THERON_TRACK02_IPL_STAGE2_45XX_CALLEE_L4932_CPU_ADDRESS &&
-                  callees_45xx.l424b_proven &&
-                  callees_45xx.l43d6_proven &&
-                  callees_45xx.l4552_proven &&
-                  callees_45xx.l458e_proven &&
-                  callees_45xx.l466b_proven &&
-                  callees_45xx.l4932_proven &&
-                  callees_45xx.l424b_call_site_proven &&
-                  callees_45xx.adjacency_proven,
-              "US stage-two $45xx callee bodies are byte-bound");
+                  &callees_45xx) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "incomplete synthetic stage-two callee bytes remain fail-closed");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u,
                  0x24bu, 0x00u);
         check(theron_v1_track02_verify_stage2_enclosing_45xx_callees(

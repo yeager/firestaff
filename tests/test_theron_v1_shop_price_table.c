@@ -1,15 +1,19 @@
 /*
  * Theron V1 shop price-table regression.
  *
- * Fixture-only guard: no Track 02 launch or real asset data is required.
- * It locks parser bounds and purchase-state atomicity until exact THQUEST.ASM
- * shop offsets are promoted from the Track 02 bank map.
+ * Test-only price rows exercise parser bounds and purchase-state atomicity;
+ * they are not Theron game data and are never admitted to production. When
+ * authenticated local media is available, the buyer is initialized from its
+ * real regional roster record rather than fixture champion defaults.
  */
 
 #include "theron_v1_shop.h"
 #include "theron_v1_champions.h"
+#include "theron_v1_track02.h"
+#include "theron_v1_dungeon_handoff.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_failures = 0;
@@ -113,13 +117,55 @@ static void test_purchase_state_is_atomic(void) {
     };
     Theron_ShopPriceTable table;
     Theron_V1_Party party;
+    uint8_t *track02_data = NULL;
+    size_t track02_size = 0u;
+    char track02_path[1024];
+    char md5[33];
+    const char *home = getenv("HOME");
     uint32_t gold_before;
     uint8_t stock_before;
     int i;
 
+    if (!home || !home[0] ||
+        snprintf(track02_path, sizeof(track02_path),
+                 "%s/.firestaff/data/theron/TQUS02.bin", home) >=
+            (int)sizeof(track02_path)) {
+        puts("SKIP: authenticated Theron roster media unavailable; "
+             "synthetic price rows are not used as game data");
+        return;
+    }
+    {
+        FILE *file = fopen(track02_path, "rb");
+        long file_size;
+        if (!file || fseek(file, 0, SEEK_END) != 0 ||
+            (file_size = ftell(file)) <= 0 ||
+            fseek(file, 0, SEEK_SET) != 0 ||
+            !(track02_data = (uint8_t *)malloc((size_t)file_size)) ||
+            fread(track02_data, 1u, (size_t)file_size, file) !=
+                (size_t)file_size) {
+            if (file) fclose(file);
+            free(track02_data);
+            puts("SKIP: authenticated Theron roster media unreadable; "
+                 "synthetic price rows are not used as game data");
+            return;
+        }
+        fclose(file);
+        track02_size = (size_t)file_size;
+    }
+    snprintf(md5, sizeof(md5), "%s", THERON_TRACK02_MD5_US_BIN);
+    if (!theron_v1_track02_raw_bytes_match_md5(
+            track02_data, track02_size, md5)) {
+        free(track02_data);
+        puts("SKIP: Track 02 roster source is not the authenticated US BIN");
+        return;
+    }
+
     theron_v1_party_init(&party, 1);
-    for (i = 0; i < THERON_MAX_CHAMPIONS; i++)
-        theron_v1_champion_reset_inventory(&party.champions[i]);
+    expect_true(theron_v1_party_init_theron_from_track02(
+                    &party, track02_data, track02_size, md5),
+                "buyer initializes from authenticated Theron roster");
+    free(track02_data);
+    if (party.champion_count != 1) return;
     party.gold = 100u;
 
     expect_status(theron_v1_shop_parse_price_table(&table,
