@@ -67,6 +67,23 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
+menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game theron --platform pce \
+    --data-dir "$track02" \
+    --script 'wait20,click:1173:728,wait20,click:410:405,wait20,click:450:405,wait20' \
+    --duration 3000 2>&1) || {
+        printf '%s\n' "$menu_output" >&2
+        printf '%s\n' 'FAIL: authentic raw Track 02 did not launch through mouse-selected M12 cards' >&2
+        exit 1
+    }
+if ! grep -Fq '[TQR] Verified Track 02 accepted:' <<<"$menu_output" ||
+   grep -Fq 'deterministic fallback assets' <<<"$menu_output"; then
+    printf '%s\n' "$menu_output" >&2
+    printf '%s\n' 'FAIL: mouse-selected M12 cards lost the authentic Track 02 route' >&2
+    exit 1
+fi
+
 set +e
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game theron --theron-native jp --data-dir "$us_only_root" \

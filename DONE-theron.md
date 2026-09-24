@@ -18,8 +18,17 @@
   move the party along it. It does not mistake the map-edge-blocked forward
   direction for a missing route.
   This verifies a real-media native route, not parity against a separate
-  original-emulator transition capture. The real-media test passes on TRV2;
-  JP Continue, later stages and original transition parity remain open.
+  original-emulator transition capture. The current version passes locally;
+  the earlier bounded Continue route also passed on TRV2. JP Continue, later
+  stages and original transition parity remain open.
+
+## 2026-09-24 — authentic raw BIN launch through M12 mouse cards
+
+- Extended the raw US Track 02 real-media regression to select Theron's game,
+  PC Engine platform and Original presentation using only M12 mouse clicks.
+  The verified retail BIN reaches native startup with no fallback assets.
+  This establishes the raw-BIN mouse route; the separate CloneCD ZIP mouse
+  route remains unverified when that archive is not staged.
 
 ## 2026-09-24 — Production pickup admission test
 
