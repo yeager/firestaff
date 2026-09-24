@@ -26719,8 +26719,12 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
     facts.launch_path_intro_not_bypassed =
         state && !state->dm1StartupIntroBypassed ? 1 : 0;
     facts.captured_after_first_frame_render = 1;
+    /* Loading retail graphics proves their availability, not that a host
+     * frame captured them.  Keep the capture receipt closed for dummy and
+     * headless probes even when the source assets are present. */
     facts.captured_from_real_assets =
-        state && state->assetsAvailable && state->assetLoader.fileState &&
+        host_window_present && presented_capture_ready && state &&
+        state->assetsAvailable && state->assetLoader.fileState &&
         hoc_assets_ready;
     facts.observed_required_graphics_hash_match =
         facts.captured_from_real_assets;
@@ -26738,9 +26742,11 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
         host_window_present &&
         presented_capture_ready;
     facts.observed_c026_portrait_asset =
-        portraits && portraits->loaded && portraits->pixels ? 1 : 0;
+        host_window_present && presented_capture_ready && portraits &&
+        portraits->loaded && portraits->pixels ? 1 : 0;
     facts.observed_c346_mirror_backing_asset =
-        backing && backing->loaded && backing->pixels ? 1 : 0;
+        host_window_present && presented_capture_ready && backing &&
+        backing->loaded && backing->pixels ? 1 : 0;
     /* ReDMCSB DUNGEON.C F0172:2573/2608-2612 publishes C127 only for the
      * current visible wall face. DUNVIEW.C F0115:5645-5683 consumes the
      * current floor/projectile materialization decision. Do not promote the
