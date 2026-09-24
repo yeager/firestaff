@@ -11,11 +11,17 @@ bram=${FIRESTAFF_THERON_AUTHENTIC_PROGRESS_BRAM:-"$theron_root/theron-us-akutuba
     [ -f "$bram" ] && [ "$(wc -c < "$bram" | tr -d ' ')" = 2048 ] || exit 77
 if command -v md5 >/dev/null 2>&1; then
     track02_md5=$(md5 -q "$track02")
+    bram_md5=$(md5 -q "$bram")
 else
     track02_md5=$(md5sum "$track02" | awk '{print $1}')
+    bram_md5=$(md5sum "$bram" | awk '{print $1}')
 fi
 [ "$track02_md5" = f23601102138f87c33025877767ebf76 ] || {
     echo "FAIL: US Track 02 is not the authenticated original" >&2
+    exit 1
+}
+[ "$bram_md5" = ffabc8d19b0915d4d9632a7ae2e90a97 ] || {
+    echo "FAIL: Backup RAM is not the authenticated Akutuba-complete capture" >&2
     exit 1
 }
 exec "$probe" "$data_root" "$track02" "$bram"
