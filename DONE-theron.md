@@ -8,6 +8,14 @@
   34 kartor och 2 269 källobjekt. Detta verifierar kart- och objektdata, inte
   JP-fortsättning, kampanjövergångar eller visuell paritet.
 
+## 2026-09-24 — autentisk CloneCD ZIP genom musklicksflödet
+
+- Hela `theron_v1_us_clonecd_zip_runtime_boot` passerar på trv2 mot det
+  befintliga autentiska ZIP-arkivet. Direktstart, Original- och Modern-korten,
+  musklick genom spel/plattform/presentation samt det vanliga M12→M11-flödet
+  når en laddad runtime-nivå med källobjekt och utan fallback. Kortsekvensens
+  väntan anpassades till testfönstret så att alla klick hinner skickas.
+
 ## 2026-09-24 — Authentic Continue to the next unlocked chapter
 
 - Extended the M11 Continue regression with the authentic US Track 02 and
@@ -35,8 +43,8 @@
 - Extended the raw US Track 02 real-media regression to select Theron's game,
   PC Engine platform and Original presentation using only M12 mouse clicks.
   The verified retail BIN reaches native startup with no fallback assets.
-  This establishes the raw-BIN mouse route; the separate CloneCD ZIP mouse
-  route remains unverified when that archive is not staged.
+  This establishes the raw-BIN mouse route; the separate authentic CloneCD
+  ZIP routes are verified on trv2.
 
 ## 2026-09-24 — Production pickup admission test
 

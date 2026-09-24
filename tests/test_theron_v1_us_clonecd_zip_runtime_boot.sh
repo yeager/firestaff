@@ -39,6 +39,14 @@ assert_route() {
         printf 'FAIL: %s did not reach the source-backed Theron route\n' "$label" >&2
         exit 1
     fi
+    if [[ "$expected_phase" == theron-runtime ]] &&
+       { ! grep -Fq 'startedFromLauncher=1' <<<"$output" ||
+         ! grep -Fq 'levelLoaded=1' <<<"$output" ||
+         ! grep -Eq 'theronSourceObjects=[1-9][0-9]*' <<<"$output"; }; then
+        printf '%s\n' "$output" >&2
+        printf 'FAIL: %s did not load source-owned Theron runtime data\n' "$label" >&2
+        exit 1
+    fi
 }
 
 assert_route 'direct authentic CloneCD ZIP' theron-startup-0 \
@@ -81,8 +89,8 @@ mouse_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game theron --platform pce \
     --data-dir "$archive" \
-    --script 'wait20,click:1173:728,wait20,click:410:405,wait20,click:450:405,wait20' \
-    --duration 3000 2>&1) || {
+    --script 'wait2,click:1173:728,wait2,click:410:405,wait2,click:450:405,wait2' \
+    --duration 5000 2>&1) || {
         printf '%s\n' "$mouse_output" >&2
         printf 'FAIL: mouse card flow did not launch the authentic CloneCD ZIP\n' >&2
         exit 1
@@ -95,7 +103,7 @@ if ! grep -Fq 'Verified Track 02 accepted:' <<<"$mouse_output" ||
     exit 1
 fi
 
-assert_route 'boot-probe startup inputs authentic CloneCD ZIP' theron-startup-2 \
+assert_route 'boot-probe launch inputs authentic CloneCD ZIP' theron-runtime \
     env FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 "$app" \
     --game theron --platform pce --data-dir "$archive" \
     --script 'down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter' \

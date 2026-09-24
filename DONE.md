@@ -39,8 +39,9 @@
   compact source layout while the verified receipts retain the normalized US
   regional identity. On TRV2, the real-media CUE regression passed; the full
   all-games launch gate also passed (207 passed, 0 failed, 3 optional skips).
-  The separate authentic ZIP CLI and keyboard-card routes pass; its mouse-card
-  route remains an unresolved failing test and is not claimed as complete.
+  The authentic ZIP's direct, keyboard-card and mouse-card routes also pass on
+  TRV2, including the normal launcher handoff into a source-backed runtime.
+  These startup receipts do not claim complete Theron gameplay or parity.
 
 - 2026-09-24: The all-games direct-launch integration now advances Theron's
   authentic Japanese M12-selected edition through the ordinary M12-to-M11

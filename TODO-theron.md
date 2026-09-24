@@ -20,11 +20,11 @@ across the seven dungeons with identical tile grids and property provenance.
 The supplied US CloneCD ZIP is also a native source owner: its `.ccd` and
 bounded `.img` Track 02 slice reach the title/startup route directly in memory
 without an emulator, BIOS, extracted game tree or fallback graphics.
-On trv2, the latest ZIP regression confirms direct launch and keyboard
-selection of Original and Modern, but its mouse-only card sequence exits with
-`launch smoke failed: no launch reached before exit`. The matching authentic
-raw-CUE route passes there; ZIP mouse-card launch remains open and must not be
-claimed as complete.
+On trv2, the full ZIP regression now passes direct launch, keyboard selection
+of Original and Modern, the mouse-only card route and the normal launcher
+handoff into a source-backed runtime level. Its wait tokens were shortened so
+the three clicks fit inside the phase-A test window; no game-data substitute
+or fallback was involved.
 The 149-sector JP Rev. 1 `TQJP02End.iso` matches its known hash but the
 supplied bytes are entirely zero-filled. It is not usable dungeon content;
 both the source loader and campaign-media launch intake explicitly reject it.
