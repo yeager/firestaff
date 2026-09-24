@@ -13,15 +13,15 @@
  * Theron-specific:
  *   - 4-direction compass (N=0, E=1, S=2, W=3).  Diagonals are not used.
  *   - Walk is single-axis (party moves one tile on X or Y per step).
- *   - "Stairs" do not exist in Theron; teleporter chains replace them
- *     and are handled by theron_v1_dungeon_progression (F0364 in
- *     ReDMCSB CLIKMENU.C).  This module exposes a fade animation for
- *     the V2 presenter to use, but it never touches V1 state.
+ *   - Authenticated Track 02 maps contain stairs-class tiles. Their
+ *     transition consumer is not yet bound, so this presentation module
+ *     does not infer stair destinations or substitute teleporter behavior.
+ *     Its fade animation is generic and never touches V1 state.
  *
  * Easing:
  *   - Walk: ease-out cubic  — snappy but not jarring
  *   - Turn: ease-out quad   — quick rotation snap
- *   - Fade (teleporter): ease-in-out cubic — deliberate dissolve
+ *   - Fade: ease-in-out cubic — generic dissolve interpolation
  *
  * Phase gate: this module is presentation-only and is gated by the
  * THERON_V2_PHASE_DOMAIN_SMOOTH_MOVEMENT_PRESENTATION domain in
@@ -72,9 +72,10 @@ void theron_v2_smooth_start_walk(float fx, float tx, float fy, float ty);
  * +180 path through 0, not the -180 path through 180). */
 void theron_v2_smooth_start_turn(float fa, float ta);
 
-/* Start a smooth fade animation.  fade_to in [0.0, 1.0]: 0 = fully
- * visible, 1 = fully faded.  Used by V2 presenter for teleporter
- * chain transitions.  Duration: 1 V1 tick (ease-in-out cubic). */
+/* Start a generic smooth fade animation.  fade_to in [0.0, 1.0]:
+ * 0 = fully visible, 1 = fully faded.  This helper does not establish
+ * teleporter or stair transition semantics.  Duration: 1 V1 tick
+ * (ease-in-out cubic). */
 void theron_v2_smooth_start_fade(float from, float to);
 
 /* Per-frame update.  Drives all anims forward by clock->dt_ms.  No-op

@@ -3,7 +3,7 @@
  *
  * Theron V2.2 smooth movement unit test. Mirrors test_csb_v2_smooth_movement
  * with the theron_ prefix and Theron-specific behaviour (4-direction
- * compass, single-axis walk, teleporter fade replaces stairs).
+ * compass and single-axis walk; fade remains transition-agnostic).
  *
  * Build: see CMakeLists.txt `test_theron_v2_smooth_movement_pc34` target.
  */
@@ -224,6 +224,9 @@ static void t_source_evidence_non_null(void) {
         CHECK(strstr(ev, "F0366") != NULL);
         CHECK(strstr(ev, "HuC6260") != NULL);
         CHECK(strstr(ev, "F0380") != NULL);
+        CHECK(strstr(ev, "stairs-class tiles") != NULL);
+        CHECK(strstr(ev, "consumer remains unbound") != NULL);
+        CHECK(strstr(ev, "Fade is generic only") != NULL);
     }
 }
 

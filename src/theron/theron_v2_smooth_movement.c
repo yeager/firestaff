@@ -12,8 +12,8 @@
  * Easing matches the cross-game V2 pattern:
  *   - Walk  : ease-out cubic   (CSB V2 / DM1 V2 / DM2 V2)
  *   - Turn  : ease-out quad    (CSB V2 / DM1 V2 / DM2 V2)
- *   - Fade  : ease-in-out cubic (replaces DM1 V2 stairs easing,
- *             since Theron has no "stairs" — only teleporter chains)
+ *   - Fade  : ease-in-out cubic (generic presentation interpolation;
+ *             it does not imply a Theron transition type)
  *
  * Source: THQUEST.ASM T520, T560, T600, T700; ReDMCSB CLIKMENU.C
  *         F0365/F0366/F0364; ReDMCSB COMMAND.C F0380; ReDMCSB
@@ -134,6 +134,7 @@ const char *theron_v2_smooth_source_evidence(void) {
            "        HuC6260/HuC6270 VDC/VCE; HuC6280 CPU; ADPCM\n"
            "Reference: csb_v2_smooth_movement.c (cross-game V2 pattern)\n"
            "           dm1_v2_smooth_movement_pc34.c, dm2_v2_smooth_movement.c\n"
-           "Theron-specific: 4-direction compass (N/E/S/W), single-axis walk,\n"
-           "                 teleporter fade replaces DM1/CSB/DM2 stairs.\n";
+           "Theron-specific: 4-direction compass (N/E/S/W), single-axis walk.\n"
+           "                 Track 02 has stairs-class tiles; their V1 transition\n"
+           "                 consumer remains unbound. Fade is generic only.\n";
 }
