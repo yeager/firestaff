@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Made M11's `--scale-mode` parser reject malformed and out-of-range
+  values before renderer initialization. It accepts the documented numeric
+  modes 0..5 and equivalent `1x`, `2x`, `3x`, `4x`, `fit`, and `stretch`
+  names. The data-free CLI regression covers every accepted form plus blank,
+  nonnumeric, uppercase, negative and out-of-range input. The local M11 build
+  and CLI regression pass.
+
 - 2026-09-24: DM1 Atari ST now has a platform-specific M12-to-HoC handoff.
   Its receipt follows STARTUP1.C's direct entrance route, excludes the PC34
   SWSH/title and special-palette phases, and requires the common entrance

@@ -35,7 +35,7 @@ static void usage(const char* prog) {
             "  --duration <ms>    Run for specified milliseconds (-1 = run until exit, 0 = single frame)\n"
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
-            "  --scale-mode <n>    Window scaling: 0=1x, 1=2x, 2=3x, 3=4x, 4=fit, 5=stretch\n"
+            "  --scale-mode <mode> Window scaling: 0..5 or 1x, 2x, 3x, 4x, fit, stretch\n"
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --lang <code>      Set launcher/game UI language (en, sv, fr, de, ja, zh, cs, da, es, fi, hu, it, ko, nl, no, pl, pt, ru, tr, id)\n"
             "  --script <cmds>     Comma-separated inputs; click:x:y presses and releases, waitN delays later inputs\n"
@@ -134,6 +134,31 @@ static int parse_ui_language(const char* value, int* out_index) {
         }
     }
     return 0;
+}
+
+static int parse_scale_mode(const char* value, int* out_mode) {
+    static const char* const names[] = {
+        "1x", "2x", "3x", "4x", "fit", "stretch"
+    };
+    char* end = NULL;
+    long parsed;
+    size_t i;
+    if (!value || !value[0] || !out_mode) return 0;
+    for (i = 0U; i < sizeof(names) / sizeof(names[0]); ++i) {
+        if (strcmp(value, names[i]) == 0) {
+            *out_mode = (int)i;
+            return 1;
+        }
+    }
+    for (i = 0U; value[i]; ++i) {
+        if (value[i] < '0' || value[i] > '9') return 0;
+    }
+    parsed = strtol(value, &end, 10);
+    if (end == value || *end != '\0' || parsed < 0 || parsed > 5) {
+        return 0;
+    }
+    *out_mode = (int)parsed;
+    return 1;
 }
 
 static int resolve_theron_native_track02(
@@ -832,7 +857,11 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (strcmp(a, "--scale-mode") == 0 && i + 1 < argc) {
-            opts.scaleMode = atoi(argv[++i]);
+            if (!parse_scale_mode(argv[++i], &opts.scaleMode)) {
+                fprintf(stderr,
+                        "firestaff: --scale-mode must be 0..5 (1x, 2x, 3x, 4x, fit, stretch)\n");
+                return 2;
+            }
             opts.scaleModeOverride = 1;
             continue;
         }
