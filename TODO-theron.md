@@ -83,10 +83,11 @@ acquired or verified.
   dungeon-entry capture. The production M11 Continue action is now verified
   against the authentic US Track 02 and 2 KiB Backup RAM artifact: startup
   admits slot 0, the explicit menu action emits the original-slot receipt and
-  restores Theron's captured stats. The test confirms Continue returns to the
-  stage boundary with no level loaded; authenticated dungeon entry remains
-  open. JP Continue and separate US/JP dungeon-entry runtime evidence remain
-  unverified.
+  restores Theron's captured stats. The real-media test then skips completed
+  Akutuba, selects unlocked dungeon 2 and reaches its Soul Room without
+  claiming that a dungeon level is loaded. Forcefield admission and
+  authenticated dungeon entry remain open; JP Continue and separate US/JP
+  dungeon-entry runtime evidence remain unverified.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound

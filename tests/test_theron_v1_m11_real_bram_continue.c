@@ -92,6 +92,29 @@ int main(int argc, char** argv) {
                 world->party.champions[0].max_mana,
                 world->object_count, world->timer_count);
     }
+    if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) !=
+            M11_GAME_INPUT_REDRAW ||
+        view.theronState.startup_phase !=
+            THERON_STARTUP_PHASE_STAGE_SELECT ||
+        view.theronState.selected_dungeon != 2) {
+        ++failures;
+        fprintf(stderr,
+                "FAIL: authentic Continue skips the completed first chapter and focuses unlocked dungeon 2 (phase=%d dungeon=%d)\n",
+                view.theronState.startup_phase,
+                view.theronState.selected_dungeon);
+    } else if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                   M11_GAME_INPUT_REDRAW ||
+               view.theronState.startup_phase !=
+                   THERON_STARTUP_PHASE_SOUL_ROOM ||
+               view.theronState.selected_dungeon != 2 ||
+               view.theronState.level_loaded) {
+        ++failures;
+        fprintf(stderr,
+                "FAIL: authentic Continue enters the source-backed next chapter's Soul Room before forcefield admission (phase=%d dungeon=%d level_loaded=%d)\n",
+                view.theronState.startup_phase,
+                view.theronState.selected_dungeon,
+                view.theronState.level_loaded);
+    }
     M11_GameView_Shutdown(&view);
     if (failures) {
         fprintf(stderr, "Theron authenticated M11 Continue FAILED (%d checks)\n",
