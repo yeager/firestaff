@@ -32,11 +32,12 @@ The authentic JP raw BIN remains the source for all seven dungeon maps and
 their local item tables. The actual JP Rev. 1 ISO dungeon banks are not yet
 acquired or verified.
 
-The JP raw-BIN M11 regression now also sends six native movement commands
-through authentic Akutuba and requires the resulting party pose `(direction=2,
-x=3, y=0)`. This is bounded host-runtime movement on the real Japanese map;
-it does not establish parity against a Japanese original-runtime capture,
-JP Continue, or movement behavior in later dungeons.
+The JP raw-BIN M11 and full-CUE startup regressions now send six native
+movement commands through authentic Akutuba and require the resulting party
+pose `(direction=2, x=3, y=0)`. The raw-BIN route starts with two champions;
+the CUE route starts with one. This is bounded host-runtime movement on the
+real Japanese map; it does not establish parity against a Japanese
+original-runtime capture, JP Continue, or movement behavior in later dungeons.
 
 The authentic US CloneCD ZIP menu-to-runtime regression now also sends the
 same six native movement inputs on Akutuba and requires the resulting party

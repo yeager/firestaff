@@ -35,11 +35,12 @@ output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --data-dir "$cue" \
     --boot-probe \
     --boot-probe-frames 0 \
-    --script 'enter,enter,action' \
+    --script 'enter,enter,action,up,right,down,left,up,up' \
     --boot-probe-expect-phase theron-runtime \
     --boot-probe-expect-runtime \
     --boot-probe-expect-level-loaded 1 \
-    --boot-probe-expect-party 1,0,0 \
+    --boot-probe-expect-party 2,3,0 \
+    --boot-probe-expect-champions 1 \
     --boot-probe-expect-startup-active 0 \
     --duration 0 2>&1) || {
     printf '%s\n' "$output" >&2
@@ -51,11 +52,11 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' <<<"$output" ||
    ! grep -Eq "assetMd5=($expected_md5_raw|$expected_md5_iso)" <<<"$output" ||
    ! grep -Fq 'phase=theron-runtime' <<<"$output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$output" ||
-   ! grep -Fq 'party=1,0,0' <<<"$output" ||
+   ! grep -Fq 'party=2,3,0 champions=1' <<<"$output" ||
    ! grep -Fq 'startupActive=0' <<<"$output"; then
     printf '%s\n' "$output" >&2
     printf '%s\n' 'FAIL: authentic Theron JP CUE did not reach the native Track 02 Akutuba runtime route' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron JP CUE reaches the native Track 02 Akutuba runtime route'
+printf '%s\n' 'PASS: authentic Theron JP CUE reaches Akutuba runtime and accepts six native movement inputs'

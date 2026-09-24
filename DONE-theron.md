@@ -1,5 +1,14 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — Native movement through the authentic JP CUE route
+
+- Extended the full Japanese Rev. 1 CUE boot regression with six native
+  movement inputs on its source-backed Akutuba map. It requires the final pose
+  `(direction=2, x=3, y=0)` with the route's single source-backed champion,
+  alongside its existing authentic-media and no-fallback checks. This is
+  bounded host-runtime movement, not Japanese original-runtime parity or
+  later-dungeon evidence.
+
 ## 2026-09-24 — Native movement from the authentic US CloneCD route
 
 - Extended the real US CloneCD ZIP menu-to-runtime regression with six native
