@@ -34,6 +34,7 @@ static const char *find_standard_us_bin(void) {
 
 static const char *find_real_us_cue(void) {
     const char *override = getenv("FIRESTAFF_THERON_CUE");
+    const char *media_root = getenv("FIRESTAFF_THERON_TRACK02_MEDIA_ROOT");
     const char *home = getenv("HOME");
     static char path[512];
     FILE *file;
@@ -43,6 +44,15 @@ static const char *find_real_us_cue(void) {
         if (file) {
             fclose(file);
             return override;
+        }
+    }
+    if (media_root && media_root[0] &&
+        snprintf(path, sizeof(path), "%s/TQUS.cue", media_root) <
+            (int)sizeof(path)) {
+        file = fopen(path, "rb");
+        if (file) {
+            fclose(file);
+            return path;
         }
     }
     if (!home || !home[0] || snprintf(path, sizeof(path),
@@ -56,6 +66,7 @@ static const char *find_real_us_cue(void) {
 
 static const char *find_real_jp_cue(void) {
     const char *override = getenv("FIRESTAFF_THERON_JP_CUE");
+    const char *media_root = getenv("FIRESTAFF_THERON_TRACK02_MEDIA_ROOT");
     const char *home = getenv("HOME");
     static char path[512];
     FILE *file;
@@ -65,6 +76,15 @@ static const char *find_real_jp_cue(void) {
         if (file) {
             fclose(file);
             return override;
+        }
+    }
+    if (media_root && media_root[0] &&
+        snprintf(path, sizeof(path), "%s/TQJP.cue", media_root) <
+            (int)sizeof(path)) {
+        file = fopen(path, "rb");
+        if (file) {
+            fclose(file);
+            return path;
         }
     }
     if (!home || !home[0] || snprintf(path, sizeof(path),
