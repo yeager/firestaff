@@ -45,6 +45,12 @@ pose `(direction=2, x=3, y=0)` with three source-backed champions. This
 extends the bounded movement check to the real US launch route; it does not
 establish visual/gameplay parity or movement behavior in later dungeons.
 
+The raw-US-BIN mouse-card regression now uses the same bounded inter-click
+waits and phase-A window as the passing CloneCD mouse route. On trv2 it passes
+through the original/platform/presentation cards while preserving the verified
+raw Track 02 route; this corrects the test timing only and does not change
+product input behavior.
+
 The registered `theron_v1_jp_later_dungeon_runtime` regression now binds and
 checks both authentic regional raw Track 02 files separately. On trv2, the JP
 and US sources each passed all seven source-dungeon handoffs (34 maps and

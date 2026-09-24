@@ -71,8 +71,8 @@ menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game theron --platform pce \
     --data-dir "$track02" \
-    --script 'wait20,click:1173:728,wait20,click:410:405,wait20,click:450:405,wait20' \
-    --duration 3000 2>&1) || {
+    --script 'wait2,click:1173:728,wait2,click:410:405,wait2,click:450:405,wait2' \
+    --duration 5000 2>&1) || {
         printf '%s\n' "$menu_output" >&2
         printf '%s\n' 'FAIL: authentic raw Track 02 did not launch through mouse-selected M12 cards' >&2
         exit 1
