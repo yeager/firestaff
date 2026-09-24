@@ -22,9 +22,13 @@ scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 menu_capture=$(mktemp -d "$scratch_root/dm2-dos-menu.XXXXXX")
 intro_capture=$(mktemp -d "$scratch_root/dm2-dos-intro.XXXXXX")
+runtime_capture=$(mktemp -d "$scratch_root/dm2-dos-runtime.XXXXXX")
+runtime_probe="$scratch_root/dm2-dos-menu-runtime-$$.json"
 cleanup_menu_capture() {
     find "$menu_capture" -depth -delete
     find "$intro_capture" -depth -delete
+    find "$runtime_capture" -depth -delete
+    rm -f "$runtime_probe"
 }
 trap cleanup_menu_capture EXIT HUP INT TERM
 
@@ -135,6 +139,58 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game dm2 --platform pc --data-dir "$archive" \
     --script 'wait20,click:1645:262,wait20,click:934:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
+
+# Exercise the ordinary M12 → M11 path through DOS's admitted MVE intro,
+# source New-Game command and first loaded dungeon frame. The intro owns its
+# input while it plays, so wait through its authentic frame sequence before
+# sending the source-menu Enter keys. This is intentionally separate from
+# --boot-probe, which bypasses the normal presentation/event loop.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --menu --game dm2 --platform pc \
+    --data-dir "$archive" \
+    --script 'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter' \
+    --duration 30000 >/dev/null 2>&1
+python3 - "$runtime_probe" "$runtime_capture" <<'PY'
+import json
+from pathlib import Path
+import struct
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm2" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm2-runtime" or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 8, 0, 1)):
+    raise SystemExit(f"FAIL: authentic DM2 DOS start menu did not reach runtime: {probe}")
+
+frames = list(Path(sys.argv[2]).glob("*.bmp"))
+if len(frames) != 1:
+    raise SystemExit("FAIL: expected one presented DM2 DOS runtime frame")
+blob = frames[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM2 DOS runtime screenshot is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if ((width, height, bits) != (320, 200, 24) or
+        offset + stride * height != len(blob)):
+    raise SystemExit("FAIL: invalid DM2 DOS runtime screenshot geometry")
+pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
+          for y in range(height) for x in range(width)]
+if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 32:
+    raise SystemExit("FAIL: DM2 DOS runtime frame was not visibly presented")
+print("PASS: authentic DM2 DOS start menu reached and presented its first runtime frame")
+PY
 
 probe_input() {
     input=$1

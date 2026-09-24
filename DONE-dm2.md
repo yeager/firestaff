@@ -1,5 +1,14 @@
 # Firestaff DONE — DM2
 
+## 2026-09-24 — DOS start-menu runtime handoff
+
+- The authentic DOS English ZIP now has a normal M12→M11 regression through
+  the source MVE intro and New-Game event. It checks the first source-owned
+  runtime receipt for the retail initial party and requires a visible 320×200
+  presented frame. The wait keeps the source menu keys from being consumed by
+  the movie owner. Direct `--boot-probe` coverage remains a separate path.
+  Other DM2 editions/platforms still need equivalent first-runtime evidence.
+
 ## 2026-09-16 — FM Towns New Game real-media revalidation
 
 - Rebuilt and ran the full M11 FM Towns real-media gameplay regression against

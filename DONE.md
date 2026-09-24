@@ -6,8 +6,10 @@
   A31 AppB language selector. With authentic A31 media, the M12 start-menu
   route now verifies the handoff through its first loaded runtime frame.
   Authentic DM1 PC 3.4 and Atari ST v1.2 start-menu routes now verify their
-  first runtime frame; PC 3.4 Original/Modern C040, C007 and the complete
-  native input matrix still pass. The focused build and launcher
+  first runtime frame. The authentic DM2 DOS English start menu also passes
+  through its source MVE intro to the first presented runtime frame.
+  PC 3.4 Original/Modern C040, C007 and the complete native input matrix
+  still pass. The focused build and launcher
   contract test pass; the remote CSB test skips because that host has no game
   media. Cross-platform launch coverage remains open in TODO.
 
