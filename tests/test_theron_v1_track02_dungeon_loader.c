@@ -4710,13 +4710,31 @@ int main(void) {
     test_object_binding_rejects_unverified_locations();
     test_jp_rev1_iso_dungeon_boundary();
 
+    const char *jp_path = find_jp_track02();
+    if (jp_path) {
+        size_t jp_ud_size = 0;
+        uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);
+        if (jp_ud) {
+            raw = load_raw_bytes(jp_path, &raw_size);
+            assert(raw != NULL);
+            test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
+            test_real_item_name_sources(jp_ud, jp_ud_size, 1);
+            test_real_sarmon_track19_mapping(jp_ud, jp_ud_size, 1);
+            free(raw);
+            free(jp_ud);
+        }
+    } else {
+        printf("  SKIP: Japanese Track 02 BIN not found\n");
+    }
+
     const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
     if (clonecd_path && clonecd_path[0])
         test_real_clonecd_dungeons(clonecd_path);
 
     const char *path = find_track02();
     if (!path) {
-        printf("  SKIP: Track 02 BIN not found\n");
+        printf("  SKIP: US Track 02 BIN not found\n");
+        printf("PASS\n");
         return 0;
     }
     size_t ud_size = 0;
@@ -4737,25 +4755,9 @@ int main(void) {
     test_real_source_ledgers_survive_other_dungeon_reload(ud, ud_size);
     test_real_campaign_source_capacity(ud, ud_size);
 
-    const char *jp_path = find_jp_track02();
     test_authenticated_world_spawn_binding(path, jp_path);
     free(raw);
     free(ud);
-    if (jp_path) {
-        size_t jp_ud_size = 0;
-        uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);
-        if (jp_ud) {
-            raw = load_raw_bytes(jp_path, &raw_size);
-            assert(raw != NULL);
-            test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
-            test_real_item_name_sources(jp_ud, jp_ud_size, 1);
-            test_real_sarmon_track19_mapping(jp_ud, jp_ud_size, 1);
-            free(raw);
-            free(jp_ud);
-        }
-    } else {
-        printf("  SKIP: Japanese Track 02 BIN not found\n");
-    }
     printf("PASS\n");
     return 0;
 }

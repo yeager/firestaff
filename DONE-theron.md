@@ -31,6 +31,12 @@
   US CUE- och rostertextfallen hoppas över eftersom motsvarande filer saknas
   där; testet bevisar inte JP Continue eller en hel kampanjövergång.
 
+- Den fristående `theron_v1_track02_dungeon_loader` körningen verifierar nu
+  JP Rev. 1 oberoende av US BIN: alla sju dungeonernas källobjekt och lokala
+  itemnamns-/typkodstabeller lästes från den autentiska råfilen på trv2.
+  Det lokala kombinerade US/JP-testet passerar fortfarande; saknad JP ISO och
+  US BIN på trv2 rapporteras som separata, valfria skip.
+
 ## 2026-09-24 — Authentic Continue to the next unlocked chapter
 
 - Extended the M11 Continue regression with the authentic US Track 02 and
