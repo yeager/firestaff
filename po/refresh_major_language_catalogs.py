@@ -286,7 +286,10 @@ def _csb_fmtowns_jp_m564_index_map(po_dir: Path) -> dict[str, str]:
         raise ValueError(
             "CSB FM Towns M564 source order changed: "
             f"english={len(english)} japanese={len(japanese)}")
-    return dict(zip(japanese[action_count:], english[:177], strict=True))
+    # The length contract above guarantees equal iterables. Avoid zip's
+    # ``strict`` keyword so this source tool also runs on Python 3.9, which is
+    # still present on some developer hosts and CI images.
+    return dict(zip(japanese[action_count:], english[:177]))
 
 
 def refresh_csb_fmtowns_jp_object_names(po_dir: Path, language: str) -> int:
