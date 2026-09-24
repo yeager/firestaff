@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — Production pickup admission test
+
+- Corrected the production runtime-input regression to reflect source-owned
+  startup: pickup stays closed until an authenticated champion is admitted,
+  rather than relying on the synthetic roster used by fixture builds. The
+  authentic Track 02 dungeon-loader regression still exercises successful
+  item pickup, slot provenance, resume and drop.
+
 ## 2026-09-24 — JP Rev. 1 ISO dungeon-data boundary
 
 - The hash-identified 305,152-byte `TQJP02End.iso`

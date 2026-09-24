@@ -427,7 +427,7 @@ static int test_pickup_routes_to_front_cell(void)
     Theron_V1_BootRuntimeInputReceipt receipt;
     Theron_V1_Object object;
 
-    TEST("PICKUP_ITEM takes the object in the facing cell");
+    TEST("PICKUP_ITEM fails closed before a source party is admitted");
     setup_open_room(&world);
     memset(&object, 0, sizeof(object));
     object.type = THERON_OBJTYPE_POTION;
@@ -441,14 +441,16 @@ static int test_pickup_routes_to_front_cell(void)
     ASSERT(theron_v1_boot_runtime_handle_m12_input(
                &world, NULL, M12_MENU_INPUT_PICKUP_ITEM, &receipt) == 1,
            "pickup input should produce a receipt");
-    ASSERT(receipt.handled == 1 && receipt.picked_up == 1,
-           "pickup receipt should report the mutation");
-    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW,
-           "successful pickup should redraw");
-    ASSERT(strcmp(receipt.status, "ITEM PICKED UP") == 0,
-           "pickup status should identify the source-item route");
-    ASSERT(world.objects[0].flags & THERON_OBJ_F_PICKED_UP,
-           "front-cell object should be marked picked up");
+    ASSERT(world.party.champion_count == 0,
+           "production test world must not invent a source champion");
+    ASSERT(receipt.handled == 1 && receipt.picked_up == 0,
+           "pickup must not mutate an object without an admitted champion");
+    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
+           "unavailable pickup should not request a redraw");
+    ASSERT(strcmp(receipt.status, "NOTHING TO PICK UP") == 0,
+           "pickup status should report the closed source-item route");
+    ASSERT(!(world.objects[0].flags & THERON_OBJ_F_PICKED_UP),
+           "unadmitted source party must leave the object untouched");
     ASSERT(theron_v1_boot_runtime_handle_m12_input(
                &world, NULL, M12_MENU_INPUT_DROP_ITEM, &receipt) == 1 &&
            receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
