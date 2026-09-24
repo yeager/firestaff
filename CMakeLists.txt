@@ -52886,6 +52886,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_ros
     )
     target_include_directories(test_theron_v1_track02_champion_roster PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_theron_v1_track02_champion_roster PRIVATE
+        firestaff_theron)
     if(NOT MSVC)
         target_compile_options(test_theron_v1_track02_champion_roster PRIVATE -Wall -Wextra -O2)
     endif()
@@ -52922,6 +52924,8 @@ target_include_directories(test_theron_v1_track02_regional_roster_production
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_compile_definitions(test_theron_v1_track02_regional_roster_production
     PRIVATE FIRESTAFF_THERON_PRODUCTION=1)
+target_link_libraries(test_theron_v1_track02_regional_roster_production PRIVATE
+    firestaff_theron)
 if(NOT MSVC)
     target_compile_options(test_theron_v1_track02_regional_roster_production
         PRIVATE -Wall -Wextra -Werror -O2)

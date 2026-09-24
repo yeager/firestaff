@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Fixed the two standalone Theron roster test targets to link
+  `firestaff_theron`, which supplies the production Track 02 MD5-to-variant
+  resolver required by the champion initialization path. Both focused roster
+  tests now link and pass on the local macOS build.
+
 - 2026-09-24: Normal CLI scripts now honor `waitN` / `wait:N` as main-loop
   frames and emit both mouse-down and mouse-up for `click:x:y`, matching a
   complete left click. The release is required by the source-owned CSB Amiga
