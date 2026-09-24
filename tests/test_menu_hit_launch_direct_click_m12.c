@@ -321,11 +321,11 @@ int main(void) {
     state.view = M12_MENU_VIEW_SETTINGS;
     if (!expect(M12_StartupMenu_SetDataDirectory(&state, manualDir) == 1,
                 "manual data directory setter should accept an existing arbitrary folder")) return 1;
-    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
-                "manual data directory setter should preserve the chosen folder spelling")) return 1;
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualPhysicalDir) == 0,
+                "manual data directory setter should preserve the resolved physical folder")) return 1;
     M12_Config_Load(&config, NULL);
-    if (!expect(strcmp(config.dataDir, manualDir) == 0,
-                "manual data directory setter should persist the chosen folder")) return 1;
+    if (!expect(strcmp(config.dataDir, manualPhysicalDir) == 0,
+                "manual data directory setter should persist the resolved physical folder")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
     remove(M12_Config_GetSaveExportPath());
@@ -337,10 +337,10 @@ int main(void) {
                            state.settings.languageIndex,
                            "IMPORT FAILED")) == 0,
                 "Import Settings missing-file click should report import failure")) return 1;
-    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualPhysicalDir) == 0,
                 "failed settings import should preserve the active data directory")) return 1;
     M12_Config_Load(&config, NULL);
-    if (!expect(strcmp(config.dataDir, manualDir) == 0,
+    if (!expect(strcmp(config.dataDir, manualPhysicalDir) == 0,
                 "failed settings import should preserve the persisted data directory")) return 1;
 
     /* Museum is rendered in the left Firestaff rail, rather than one of the

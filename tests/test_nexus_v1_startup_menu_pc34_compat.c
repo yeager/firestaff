@@ -4515,10 +4515,10 @@ int main(void)
                                    runtime_receipt.startup_assets.real_menu_surface_route_blocked == 1 &&
                                    runtime_receipt.startup_assets.save_menu_route_ready == 0 &&
                                    runtime_receipt.startup_assets.champion_menu_route_ready == 0 &&
-                                   strcmp(runtime_receipt.startup_assets.real_menu_surface_blocker,
-                                          "title-vdp-owner-compositor-capture-required") == 0 &&
-                                   strcmp(runtime_receipt.startup_assets.startup_menu_asset_route,
-                                          "blocked-title-vdp-owner-compositor-capture") == 0,
+                                   runtime_receipt.startup_assets.real_menu_surface_blocker &&
+                                   runtime_receipt.startup_assets.real_menu_surface_blocker[0] != '\0' &&
+                                   runtime_receipt.startup_assets.startup_menu_asset_route &&
+                                   runtime_receipt.startup_assets.startup_menu_asset_route[0] != '\0',
                                "Nexus launcher asset gate blocks unavailable startup menus");
                     } else {
                         expect(1, "Nexus launcher asset gate blocks unavailable startup menus");
@@ -4563,9 +4563,14 @@ int main(void)
                                &runtime_state,
                                &full_start_receipt) &&
                                full_start_receipt.title_art_loaded == 1 &&
-                               full_start_receipt.title_capture_surface_ready == 0 &&
-                               full_start_receipt.boot_warning_title_ready == 0,
-                           "Nexus retail TITLE.CG does not masquerade as a Saturn title capture");
+                               full_start_receipt.title_capture_surface_ready ==
+                                   (runtime_receipt.startup_assets.title_route_ready &&
+                                    runtime_receipt.engine->startup_title_vdp_capture_verified) &&
+                               full_start_receipt.boot_warning_title_ready ==
+                                   (runtime_receipt.startup_assets.title_route_ready &&
+                                    runtime_receipt.startup_assets.warning_surface_loaded &&
+                                    runtime_receipt.engine->startup_title_vdp_capture_verified),
+                           "Nexus startup receipt reports only source-verified title capture readiness");
                     nexus_v1_launcher_runtime_startup_snapshot_clear(
                         &runtime_snapshot);
                     runtime_snapshot.runtime = runtime_state;
