@@ -152,8 +152,8 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
                                      Theron_ChapterMarker *marker);
 
 /* Project the same marker from a live world and its authenticated Track 02
- * name banks. US ASCII is admitted; JP Shift-JIS remains unavailable until
- * its host rendering contract is proven. */
+ * name banks. US ASCII is copied and validated JP Shift-JIS is converted to
+ * UTF-8 for host text consumers; this does not implement the game's renderer. */
 int theron_v1_chapter_marker_compute_world(
     const Theron_V1_BootProfile *profile,
     const Theron_V1_World *world,

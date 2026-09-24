@@ -65,13 +65,14 @@ static uint8_t *load_user_data(const char *path, size_t *out_size) {
 
 static int bind_real_bank(Theron_V1_World *world,
                           const char *path,
-                          int variant) {
+                          int variant,
+                          unsigned int dungeon_id) {
     Theron_Track02ItemNameSource source;
     size_t user_data_size = 0u;
     uint8_t *user_data = load_user_data(path, &user_data_size);
     int ok = user_data && theron_v1_track02_decode_item_name_source(
-        user_data, user_data_size, variant, 1u, &source);
-    if (ok) world->track02_item_names[0] = source;
+        user_data, user_data_size, variant, dungeon_id, &source);
+    if (ok) world->track02_item_names[dungeon_id - 1u] = source;
     free(user_data);
     return ok;
 }
@@ -113,7 +114,7 @@ int main(void) {
         }
         fclose(source);
     }
-    if (!bind_real_bank(world, path, 2) ||
+    if (!bind_real_bank(world, path, 2, 1u) ||
         theron_v1_chapter_marker_compute_world(
             &profile, world, NULL, &marker) != 0 ||
         strstr(marker.quest_summary, "next: SHIELD DEFIANT") == NULL) {
@@ -132,17 +133,34 @@ int main(void) {
         }
         fclose(source);
     }
-    if (!bind_real_bank(world, path, 1) ||
-        theron_v1_chapter_marker_compute_world(
-            &profile, world, NULL, &marker) != 0 ||
-        strstr(marker.quest_summary, "source name unavailable") == NULL ||
-        strstr(marker.quest_summary, "SHIELD DEFIANT") != NULL) {
-        fputs("FAIL: production marker treated JP Shift-JIS as host text\n",
-              stderr);
-        free(world);
-        return 1;
+    {
+        static const char *const expected[] = {
+            "デフィアントシールド", "タザブーツ", "タザグリーブ",
+            "ソウルケージ", "タザアーマー", "タザヘルメット", "復讐の剣"
+        };
+        unsigned int i;
+        for (i = 0u; i < 7u; ++i) {
+            if (!bind_real_bank(world, path, 1, i + 1u)) {
+                fputs("FAIL: could not bind authentic JP name bank\n", stderr);
+                free(world);
+                return 1;
+            }
+            world->progression.quest_items_collected =
+                (uint8_t)(1u << i);
+            world->progression.current_dungeon = (Theron_DungeonID)(i + 1u);
+            if (theron_v1_chapter_marker_compute_world(
+                    &profile, world, NULL, &marker) != 0 ||
+                strstr(marker.quest_summary, expected[i]) == NULL ||
+                strstr(marker.quest_summary, "source name unavailable") != NULL) {
+                fprintf(stderr,
+                        "FAIL: authentic JP quest name %u was not converted: %s\n",
+                        i + 1u, marker.quest_summary);
+                free(world);
+                return 1;
+            }
+        }
     }
     free(world);
-    puts("PASS: production marker uses real US text and gates JP Shift-JIS");
+    puts("PASS: production marker uses real US text and converts all seven authentic JP names");
     return 0;
 }

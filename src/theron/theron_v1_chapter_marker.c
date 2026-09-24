@@ -26,6 +26,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+#include "firestaff_cp932.h"
+#endif
 
 /* Quest item display names come from the authenticated US Track 02 retrieval
  * table (UD 0x27715B-0x277272). Keep one source-owned order for both the
@@ -70,18 +73,49 @@ static const char *quest_item_source_name(
     const uint8_t *bytes = NULL;
     size_t size = 0u;
     size_t i;
+    const Theron_Track02ItemNameSource *source;
+    unsigned int item_index;
     if (!world || !buffer || buffer_size == 0u ||
-        index >= THERON_DUNGEON_COUNT ||
-        world->track02_item_names[index].variant != 2 ||
-        !theron_v1_world_quest_item_name_raw(
-            world, index, &bytes, &size) || size >= buffer_size)
+        index >= THERON_DUNGEON_COUNT)
         return NULL;
-    for (i = 0u; i < size; ++i) {
-        if (bytes[i] == 0u || bytes[i] >= 0x80u) return NULL;
+    source = &world->track02_item_names[index];
+    if (!source->valid || !source->object_item_index_relation_proven ||
+        source->dungeon_id != index + 1u)
+        return NULL;
+    item_index = index == 0u ? 41u : index == 1u ? 63u :
+                 index == 2u ? 45u : index == 3u ? 43u :
+                 index == 4u ? 44u : index == 5u ? 43u : 7u;
+    if (item_index >= source->count ||
+        source->raw_name_sizes[item_index] == 0u)
+        return NULL;
+    bytes = source->raw_names[item_index];
+    size = source->raw_name_sizes[item_index];
+    if (source->variant == 2) {
+        if (size >= buffer_size) return NULL;
+        for (i = 0u; i < size; ++i) {
+            if (bytes[i] < 0x20u || bytes[i] > 0x7eu) return NULL;
+        }
+        memcpy(buffer, bytes, size);
+        buffer[size] = '\0';
+        return buffer;
     }
-    memcpy(buffer, bytes, size);
-    buffer[size] = '\0';
-    return buffer;
+    if (source->variant != 1) return NULL;
+    for (i = 0u; i < size;) {
+        uint8_t lead = bytes[i++];
+        if (lead >= 0x20u && lead <= 0x7eu) continue;
+        if (lead >= 0xa1u && lead <= 0xdfu) continue;
+        if (!((lead >= 0x81u && lead <= 0x9fu) ||
+              (lead >= 0xe0u && lead <= 0xfcu)) || i >= size)
+            return NULL;
+        {
+            uint8_t trail = bytes[i++];
+            if (trail < 0x40u || trail > 0xfcu || trail == 0x7fu)
+                return NULL;
+        }
+    }
+    return firestaff_cp932_to_utf8((const char *)bytes, size,
+                                   buffer, buffer_size) >= 0
+        ? buffer : NULL;
 #else
     (void)world;
     (void)buffer;
@@ -230,7 +264,7 @@ static int theron_v1_chapter_marker_compute_internal(
             ((items & (uint8_t)(1u << cur_bit)) != 0);
 
         if (have_current_item) {
-            char source_name[THERON_TRACK02_ITEM_NAME_SOURCE_CAPACITY];
+            char source_name[THERON_CHAPTER_MARKER_LABEL_MAX];
             const char *name =
                 (cur_bit >= 0 && cur_bit < THERON_DUNGEON_COUNT)
                 ? quest_item_source_name(
@@ -249,7 +283,7 @@ static int theron_v1_chapter_marker_compute_internal(
             }
         } else {
             int next_bit = next_unset_bit(items, (uint8_t)THERON_QUEST_ITEM_COUNT);
-            char source_name[THERON_TRACK02_ITEM_NAME_SOURCE_CAPACITY];
+            char source_name[THERON_CHAPTER_MARKER_LABEL_MAX];
             const char *next_name = "(unknown item)";
             if (next_bit >= 1 && next_bit <= THERON_DUNGEON_COUNT) {
                 next_name = quest_item_source_name(

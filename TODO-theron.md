@@ -2987,8 +2987,10 @@ av bankladdningen. Se
 - The seven regional raw names are now bound from real Track 02 media.
 - ✅ Startup chapter inspection and layout now surface US bytes from the
   world-owned source bank rather than a compiled label table.
-- JP bytes remain Shift-JIS and must not be copied into UTF-8 launcher strings
-  until the original rendering/transcoding contract is implemented and proven.
+- ✅ The host chapter marker strictly converts hash-verified JP quest names
+  from Shift-JIS/CP932 to UTF-8 using the shared rejecting decoder; all seven
+  authentic JP Track 02 names are tested. This is a host text projection only,
+  not evidence for the game's original VDC glyph/rendering behavior.
 - ✅ The chapter-marker API accepts the live world and keeps the production
   `source name unavailable` result whenever the relevant bank or safe rendering
   path is absent.
