@@ -228,6 +228,15 @@ int theron_v1_party_refresh_us_source_records(
     size_t track02_size,
     const char *md5_hex);
 
+/* Initialize Theron from authenticated roster record zero when a production
+ * world is empty. The caller supplies raw Track 02 bytes and their verified
+ * regional identity; no fixture roster is consulted. */
+int theron_v1_party_init_theron_from_track02(
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex);
+
 /* Remove all fixture-only champion state from a verified Track 02 handoff.
  * Names, portraits, classes and numeric records stay unavailable until the
  * original champion records are decoded. */

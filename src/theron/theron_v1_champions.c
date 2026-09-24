@@ -320,6 +320,67 @@ int theron_v1_party_refresh_us_source_records(
     return 1;
 }
 
+int theron_v1_party_init_theron_from_track02(
+    Theron_V1_Party *party,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex) {
+    Theron_V1_Champion champion;
+    Theron_Track02Variant variant;
+
+    if (!party || !track02_data || !md5_hex || party->champion_count != 0) {
+        return 0;
+    }
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    memset(&champion, 0, sizeof(champion));
+    champion.portrait_index = THERON_PORTRAIT_UNAVAILABLE;
+    for (int equip = 0; equip < THERON_EQUIP_SLOT_COUNT; ++equip) {
+        champion.slots[equip] = -1;
+    }
+
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        Theron_Track02UsRosterReceipt records[THERON_TRACK02_US_ROSTER_COUNT];
+        Theron_Track02JpRosterReceipt common;
+        const Theron_Track02UsRosterReceipt *source = &records[0];
+        if (!theron_v1_track02_us_roster_read(
+                track02_data, track02_size, md5_hex, records) ||
+            !source->valid) {
+            return 0;
+        }
+        memset(&common, 0, sizeof(common));
+        common.valid = source->valid;
+        snprintf(common.name, sizeof(common.name), "%s", source->name);
+        common.sex = source->sex;
+        common.hp = source->hp;
+        common.stamina = source->stamina;
+        common.mana = source->mana;
+        memcpy(common.attributes, source->attributes,
+               sizeof(common.attributes));
+        memcpy(common.skills, source->skills, sizeof(common.skills));
+        apply_jp_record_to_champion(&champion, &common);
+    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        Theron_Track02JpRosterReceipt records[THERON_TRACK02_JP_ROSTER_COUNT];
+        if (!theron_v1_track02_jp_roster_read(
+                track02_data, track02_size, md5_hex, records) ||
+            !records[0].valid) {
+            return 0;
+        }
+        apply_jp_record_to_champion(&champion, &records[0]);
+    } else {
+        return 0;
+    }
+
+    /* Champion index zero is the source-defined protagonist in both
+     * regional roster tables. Keep the internal actor key stable while the
+     * region-specific display text remains owned by its media receipt. */
+    snprintf(champion.name, sizeof(champion.name), "THERON");
+    party->champions[0] = champion;
+    party->champion_count = 1;
+    party->active_slot = THERON_CHAMPION_SLOT_THERON;
+    return 1;
+}
+
 #if defined(THERON_CHAMPION_FIXTURE_HELPERS)
 
 /* Fixture-only reset. Production startup now keeps source-bound roster

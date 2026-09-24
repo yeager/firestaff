@@ -46016,47 +46016,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
-# ── Theron V1 Phase 5 — M11 Direct Launch Test ─────────────────────
-if(BUILD_TESTING AND THERON_SOURCES)
-    add_executable(test_theron_v1_m11_direct_launch
-        tests/theron_v1_m11_direct_launch_test.c
-        src/theron/theron_v1_save_load.c
+if(BUILD_TESTING AND TARGET firestaff_theron)
+    add_executable(test_theron_v1_m11_real_bram_continue
+        tests/test_theron_v1_m11_real_bram_continue.c
     )
-    target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE
-        firestaff_theron
-    )
-    target_include_directories(test_theron_v1_m11_direct_launch PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
+    target_link_libraries(test_theron_v1_m11_real_bram_continue PRIVATE
+        firestaff_theron firestaff_m12 firestaff_m11 firestaff_m10)
+    target_include_directories(test_theron_v1_m11_real_bram_continue PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_m11_direct_launch PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_m11_real_bram_continue PRIVATE
+            -Wall -Wextra -Werror -O2)
     endif()
-    # M11 handoff test exercises M11_GameView_* and M12 md5 helpers.
-    if(TARGET firestaff_m12)
-        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m12)
+    if(UNIX)
+        add_test(NAME theron_v1_m11_real_bram_continue
+            COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_m11_real_bram_continue.sh
+                $<TARGET_FILE:test_theron_v1_m11_real_bram_continue>)
+        set_tests_properties(theron_v1_m11_real_bram_continue PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;save;backup-ram;no-synthetic")
     endif()
-    if(TARGET firestaff_m11)
-        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m11)
-    endif()
-    # M10 is needed to resolve m11_game_view.c transitive refs (m11_game_text
-    # helpers in M10 reference m12 symbols through the launcher handoff path).
-    if(TARGET firestaff_m10)
-        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m10)
-    endif()
-    # m11_game_view.c references M12 symbols (M12_PresentationMode_*,
-    # M12_StartupMenu_*, M12_Config_*). Those are defined in
-    # firestaff_m12.a which is already linked above, but on GNU ld and
-    # MinGW the cross-archive reference from M11 into M12 is not
-    # resolved when M12 is scanned before M11. Re-link M12 after the
-    # M11 archive to close the cycle (macOS ld resolves the cycle
-    # implicitly).
-    if(TARGET firestaff_m12)
-        target_link_libraries(test_theron_v1_m11_direct_launch PRIVATE firestaff_m12)
-    endif()
-    add_test(
-        NAME theron_v1_m11_direct_launch
-        COMMAND test_theron_v1_m11_direct_launch
-    )
 
     add_test(
         NAME theron_v1_raw_cue_runtime_boot

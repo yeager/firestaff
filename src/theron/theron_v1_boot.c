@@ -39,6 +39,11 @@
 #include "theron_v1_mechanics.h"
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_champions.h"
+#include "theron_v1_dungeon_handoff.h"
+#include "theron_v1_track02_campaign_mask_source.h"
+#include "theron_v1_track02_retrieval_text_source.h"
+#include "theron_v1_track02.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
 #include "theron_v2_hud_widget_assets_pc34.h"
@@ -47,6 +52,63 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+
+static int boot_init_source_theron_party(
+    const Theron_V1_BootProfile *profile,
+    Theron_V1_World *world) {
+    uint8_t *bytes = NULL;
+    uint8_t *user_data = NULL;
+    size_t length = 0u;
+    size_t user_data_size = 0u;
+    size_t sector_count = 0u;
+    Theron_Track02CampaignMaskSource campaign_source;
+    Theron_Track02RetrievalTextSource retrieval_source;
+    Theron_Track02Variant variant;
+    int regional_variant;
+    int initialized;
+
+    if (!profile || !world || !profile->assets_verified ||
+        !theron_v1_track02_variant_for_md5(profile->graphics_md5)) {
+        return 0;
+    }
+    if (!asset_read_path_alloc(profile->graphics_path, &bytes, &length) ||
+        !bytes || length == 0u || length > 128u * 1024u * 1024u) {
+        free(bytes);
+        return 0;
+    }
+    variant = theron_v1_track02_variant_for_md5(profile->graphics_md5);
+    regional_variant = variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2;
+    initialized =
+        theron_v1_track02_raw_bytes_match_md5(
+            bytes, length, profile->graphics_md5) &&
+        theron_v1_party_init_theron_from_track02(
+            &world->party, bytes, length, profile->graphics_md5) &&
+        theron_v1_track02_raw_user_data_size(
+            length, profile->graphics_md5, &sector_count,
+            &user_data_size) == THERON_TRACK02_SIGNAL_OK;
+    if (initialized) {
+        user_data = (uint8_t *)malloc(user_data_size);
+        initialized = user_data != NULL &&
+            theron_v1_track02_copy_raw_user_data(
+                bytes, length, profile->graphics_md5,
+                user_data, user_data_size, &user_data_size) ==
+                THERON_TRACK02_SIGNAL_OK &&
+            theron_v1_track02_decode_campaign_mask_source(
+                user_data, user_data_size, regional_variant,
+                &campaign_source) &&
+            theron_v1_track02_decode_retrieval_text_source(
+                user_data, user_data_size, regional_variant,
+                &retrieval_source) &&
+            theron_v1_world_bind_track02_retrieval_text_source(
+                world, &retrieval_source, regional_variant) &&
+            theron_v1_world_bind_track02_campaign_mask_source(
+                world, &campaign_source, regional_variant);
+    }
+    free(bytes);
+    free(user_data);
+    (void)sector_count;
+    return initialized;
+}
 
 /* ── Path separator ─────────────────────────────────────────────── */
 
@@ -6792,6 +6854,20 @@ int theron_v1_boot_startup_launch_alloc(
     }
 
     theron_v1_world_init_runtime(out_launch->world);
+    if (out_launch->profile->assets_verified &&
+        !boot_init_source_theron_party(out_launch->profile,
+                                       out_launch->world)) {
+        Theron_StartupHostReceipt receipt;
+        out_launch->prepare_result =
+            THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED;
+        theron_v1_boot_startup_launch_build_failure_host_receipt(
+            out_launch->prepare_result, &receipt);
+        theron_v1_boot_startup_launch_cleanup(out_launch);
+        out_launch->prepare_result =
+            THERON_V1_BOOT_STARTUP_PREPARE_VERIFY_FAILED;
+        out_launch->launch_host_receipt = receipt;
+        return 0;
+    }
     if (!theron_vp_init_from_data_dir(out_launch->viewport, data_dir)) {
         Theron_StartupHostReceipt receipt;
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;
