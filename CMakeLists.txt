@@ -27429,6 +27429,10 @@ endif()
         src/csb/csb_v1_save_import_path_pc34_compat.c
         src/theron/theron_v1_save_load.c
     )
+    target_compile_definitions(test_m12_quick_resume_gate PRIVATE
+        # Keep the test's feature guards aligned with the production M12
+        # library; Theron Quick Resume remains outside this build target.
+        FIRESTAFF_THERON_PRODUCTION=1)
     target_link_libraries(test_m12_quick_resume_gate PRIVATE firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_m12_quick_resume_gate PRIVATE -Wall -Wextra -O2)

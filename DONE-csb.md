@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-24: Fixed normal CSB Quick Resume so an authenticated save admitted
+  by the complete native resume predicate crosses M12's launch intent without
+  requiring the separate optional CSBWin DSA-corpus identity. The regression
+  starts from a valid serialized CSB save with that identity unset and checks
+  that the exact path reaches the intent. DSA-bearing original-media resume
+  remains deferred with the missing source corpus documented below.
+
 - 2026-09-24: Fixed the Atari ST real-media test so it no longer combines
   incompatible `--menu` and `--boot-probe` modes. Direct CLI probes still
   verify Original/Modern presentation; the normal menu route now verifies its

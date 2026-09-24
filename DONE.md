@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Fixed CSB Quick Resume dropping a validated save path unless an
+  optional DSA-corpus identity had been bound. The M12 intent now carries the
+  exact path for an ordinary CSB save after its native full-resume validation;
+  the focused gate passes with the DSA identity explicitly unset. Authentic
+  DSA-bearing save behavior remains an open media-corpus item.
+
 - 2026-09-24: Fixed DM2's explicit `--menu --game dm2 --save` path so Enter
   selects M12 Quick Resume instead of discarding the path on a new-game row.
   Against the authentic DOS ZIP, direct resume and M12 resume now verify all

@@ -82,7 +82,7 @@ static int test_real_amiga_virtual_save_quick_resume(void) {
         return expect(0, "real Amiga virtual save path must fit");
     }
     M12_Config_SetLastSavePath(virtual_path);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 1 &&
                 strcmp(state.quickResumeGameId, "dm1") == 0 &&
@@ -99,6 +99,8 @@ static int test_real_amiga_virtual_save_quick_resume(void) {
 }
 
 static void force_dm1_available(M12_StartupMenuState* state) {
+    state->settings.languageIndex = 0;
+    state->languageExplicit = 1;
     state->entries[0].title = "DUNGEON MASTER";
     state->entries[0].gameId = "dm1";
     state->entries[0].kind = M12_MENU_ENTRY_GAME;
@@ -117,12 +119,12 @@ static void force_dm1_available(M12_StartupMenuState* state) {
 }
 
 static void force_csb_available(M12_StartupMenuState* state) {
-    /* The CSB quick-resume save path only crosses the launch-intent
-     * boundary once a verified CSB save-candidate identity is bound
-     * (the discovery consumer's effect; the corpus discovery itself is
-     * not wired into the launch flow yet). */
-    M12_StartupMenu_BindCSBSaveCandidateIdentity(state, 0x43425331u);
+    /* Keep the optional DSA-corpus identity absent. Ordinary CSB saves are
+     * admitted by the same complete F0435 resume predicate as M11 and must
+     * still cross the launcher intent boundary without a DSA-only receipt. */
     state->entries[1].title = "CHAOS STRIKES BACK";
+    state->settings.languageIndex = 0;
+    state->languageExplicit = 1;
     state->entries[1].gameId = "csb";
     state->entries[1].kind = M12_MENU_ENTRY_GAME;
     state->entries[1].sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG;
@@ -196,6 +198,8 @@ static void force_dm2_available(M12_StartupMenuState* state) {
 #endif
 
 static void force_nexus_available(M12_StartupMenuState* state) {
+    state->settings.languageIndex = 0;
+    state->languageExplicit = 1;
     state->entries[3].title = "DUNGEON MASTER NEXUS";
     state->entries[3].gameId = "nexus";
     state->entries[3].kind = M12_MENU_ENTRY_GAME;
@@ -219,7 +223,10 @@ static void force_nexus_available(M12_StartupMenuState* state) {
     state->messageLine3 = "";
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static void force_theron_available(M12_StartupMenuState* state) {
+    state->settings.languageIndex = 0;
+    state->languageExplicit = 1;
     /* The Theron launch intent also requires a launch-ready campaign
      * media discovery receipt (Track 02 identity gate).  Publish a
      * synthetic direct-media receipt mirroring a verified US BIN. */
@@ -270,6 +277,7 @@ static void force_theron_available(M12_StartupMenuState* state) {
     state->messageLine2 = "";
     state->messageLine3 = "";
 }
+#endif
 
 static int write_fake_quicksave(const char* path) {
     static const unsigned char hdr[16] = {
@@ -795,6 +803,7 @@ static int write_nexus_fnxs_save(const char* path) {
     return result == NEXUS_SAVE_OK;
 }
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
 static int write_theron_tqsv_save(const char* root,
                                   int slot,
                                   char* outPath,
@@ -822,6 +831,7 @@ static int write_theron_tqsv_save(const char* root,
     theron_v1_save_slot_path(root, slot, outPath, outPathSize);
     return 1;
 }
+#endif
 
 static __attribute__((unused)) int write_theron_srm_save(const char* root,
                                  int slot,
@@ -862,8 +872,8 @@ static int select_save_entry(M12_StartupMenuState* state,
 }
 
 int main(void) {
-    char tmpTemplate[] = "/tmp/firestaff-m12-qr-XXXXXX";
-    char noDm1Template[] = "/tmp/firestaff-m12-csb-no-dm1-XXXXXX";
+    char tmpTemplate[] = "firestaff-m12-qr-XXXXXX";
+    char noDm1Template[] = "firestaff-m12-csb-no-dm1-XXXXXX";
     char savePath[512];
     char csbSavePath[512];
     char csbBrowserSavePath[512];
@@ -882,11 +892,12 @@ int main(void) {
     char nexusSavePath[512];
     char nexusBrowserSavePath[512];
     char nexusSlotSavePath[512];
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     char theronSaveRoot[512];
     char theronSlotSavePath[512];
     char theronSrmSavePath[512];
+#endif
     const char* atariMiniPath;
-    (void)theronSrmSavePath;
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
@@ -905,7 +916,7 @@ int main(void) {
     if (!test_real_amiga_virtual_save_quick_resume()) return 1;
 
     M12_Config_SetLastSavePath("");
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 0, "no-save must disable quick Resume")) return 1;
 
@@ -913,7 +924,7 @@ int main(void) {
     if (!expect(write_fake_quicksave(savePath), "should write fake quicksave")) return 1;
     M12_Config_SetLastSavePath(savePath);
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 1, "valid DM1 quicksave must enable quick Resume")) return 1;
     if (!expect(strcmp(state.quickResumeGameId, "dm1") == 0, "quick Resume should identify dm1")) return 1;
@@ -926,7 +937,7 @@ int main(void) {
 
     if (!expect(write_serialized_dm1_quicksave(savePath),
                 "should replace fake quicksave with serialized DM1 quicksave")) return 1;
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(M12_StartupMenu_ExportQuickResumeDM1PC34(&state, pc34Path,
                                                          (int)sizeof(pc34Path)) == 0,
@@ -985,7 +996,7 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS,
                 "default Enter on DM1 should enter the normal launch path")) return 1;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     state.selectedIndex = -1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -997,7 +1008,7 @@ int main(void) {
     if (!expect(intent.savePath && strcmp(intent.savePath, savePath) == 0,
                 "Resume launch intent must carry exact save path")) return 1;
 
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     state.selectedIndex = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -1016,7 +1027,7 @@ int main(void) {
     if (!expect(write_original_pc34_dm1_save_file(originalDm1SavePath),
                 "should write original PC34 DM1 save fixture")) return 1;
     M12_Config_SetLastSavePath(originalDm1SavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "original PC34 DM1 save must enable quick Resume")) return 1;
@@ -1040,7 +1051,7 @@ int main(void) {
     if (!expect(write_original_pc34_dm1_save_file(originalDm1SavePath),
                 "should write original PC34 DM1 DMSAVE.DAT fixture")) return 1;
     M12_Config_SetLastSavePath(originalDm1SavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_dm1_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "original DM1 DMSAVE.DAT must enable quick Resume by content")) return 1;
@@ -1059,7 +1070,7 @@ int main(void) {
     if (!expect(write_fake_quicksave(csbSavePath),
                 "should write fake CSB quicksave envelope")) return 1;
     M12_Config_SetLastSavePath(csbSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSB quick Resume must reject DM1-shaped quicksave bytes")) return 1;
@@ -1067,7 +1078,7 @@ int main(void) {
     if (!expect(write_raw_csbgame_roster_quicksave(csbSavePath),
                 "should write raw CSBGAME roster quicksave")) return 1;
     M12_Config_SetLastSavePath(csbSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "compact CSBGAME roster must not enable CSB quick Resume")) return 1;
@@ -1077,7 +1088,7 @@ int main(void) {
     if (!expect(write_raw_csbgame_roster_quicksave(originalCsbGameBrowserSavePath),
                 "should write original-name CSBGAME.DAT quick Resume fixture")) return 1;
     M12_Config_SetLastSavePath(originalCsbGameBrowserSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "compact CSBGAME.DAT must not enable CSB quick Resume")) return 1;
@@ -1087,7 +1098,7 @@ int main(void) {
     if (!expect(write_raw_csbgame_roster_quicksave(originalCsbGameSlotSavePath),
                 "should write original-name CSBGAME2.DAT quick Resume fixture")) return 1;
     M12_Config_SetLastSavePath(originalCsbGameSlotSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "compact CSBGAME2.DAT must not enable CSB quick Resume")) return 1;
@@ -1103,7 +1114,7 @@ int main(void) {
         if (!expect(csb_v1_runtime_can_load_resume_path(atariMiniPath) == 1,
                     "original Atari MINI.DAT must pass the CSB resume verifier")) return 1;
         M12_Config_SetLastSavePath(atariMiniPath);
-        M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+        M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
         force_csb_available(&state);
         if (!expect(state.quickResumeAvailable == 1,
                     "original MINI.DAT must enable CSB quick Resume by content")) return 1;
@@ -1122,7 +1133,7 @@ int main(void) {
     if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 0),
                 "should write CSBWin verified-body quicksave")) return 1;
     M12_Config_SetLastSavePath(csbSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSBWin body discovery must not advertise Resume before full world handoff")) return 1;
@@ -1131,7 +1142,7 @@ int main(void) {
                     originalCsbWinSlotSavePath, 0),
                 "should write original-slot CSBWin quicksave")) return 1;
     M12_Config_SetLastSavePath(originalCsbWinSlotSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 1 &&
                 strcmp(state.quickResumeSavePath, originalCsbWinSlotSavePath) == 0,
@@ -1144,7 +1155,7 @@ int main(void) {
                     importedCsbWinQuickResumePath, 0),
                 "should write imported-name CSBWin quicksave")) return 1;
     M12_Config_SetLastSavePath(importedCsbWinQuickResumePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSBWin body under an unknown filename must not advertise Resume")) return 1;
@@ -1156,7 +1167,7 @@ int main(void) {
                     wrongKnownGameQuickResumePath, 0),
                 "should write known-other-game CSBWin quicksave")) return 1;
     M12_Config_SetLastSavePath(wrongKnownGameQuickResumePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "known DM2 firestaff name must not be reclassified as CSB")) return 1;
@@ -1164,7 +1175,7 @@ int main(void) {
     if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 1),
                 "should write corrupt CSBWin quicksave")) return 1;
     M12_Config_SetLastSavePath(csbSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "corrupt CSBWin save must not enable CSB quick Resume")) return 1;
@@ -1172,7 +1183,7 @@ int main(void) {
     if (!expect(write_serialized_csb_quicksave(csbSavePath),
                 "should write serialized CSB runtime quicksave")) return 1;
     M12_Config_SetLastSavePath(csbSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "valid CSB runtime save must enable quick Resume")) return 1;
@@ -1180,6 +1191,8 @@ int main(void) {
                 "quick Resume should identify csb")) return 1;
     if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
                 "CSB quick Resume should retain save path")) return 1;
+    if (!expect(state.csbSaveCandidateIdentity == 0u,
+                "ordinary CSB resume must not require the optional DSA candidate identity")) return 1;
     state.selectedIndex = -1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1,
@@ -1317,7 +1330,7 @@ int main(void) {
     if (!expect(write_nexus_fnxs_save(nexusSavePath),
                 "should write Nexus FNXS quick Resume save")) return 1;
     M12_Config_SetLastSavePath(nexusSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_nexus_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "Nexus FNXS save must enable quick Resume")) return 1;
@@ -1374,7 +1387,7 @@ int main(void) {
     if (!expect(write_nexus_fnxs_save(nexusSlotSavePath),
                 "should write Nexus manager slot save")) return 1;
     M12_Config_SetLastSavePath(nexusSlotSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_nexus_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "Nexus manager slot save must enable quick Resume")) return 1;
@@ -1410,6 +1423,7 @@ int main(void) {
                 strcmp(intent.savePath, nexusSlotSavePath) == 0,
                 "save browser Nexus manager slot should carry exact path")) return 1;
 
+#if !defined(FIRESTAFF_THERON_PRODUCTION)
     snprintf(theronSaveRoot, sizeof(theronSaveRoot),
              "%s/saves/theron", tmpTemplate);
     if (!expect(write_theron_tqsv_save(theronSaveRoot,
@@ -1418,7 +1432,7 @@ int main(void) {
                                        sizeof(theronSlotSavePath)),
                 "should write Theron .tqsv browser slot")) return 1;
     M12_Config_SetLastSavePath(theronSlotSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_theron_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "Theron .tqsv slot must enable quick Resume")) return 1;
@@ -1463,7 +1477,7 @@ int main(void) {
                                       sizeof(theronSrmSavePath)),
                 "should write Theron .srm browser slot")) return 1;
     M12_Config_SetLastSavePath(theronSrmSavePath);
-    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    M12_StartupMenu_InitWithDataDir(&state, "firestaff-test-no-assets", NULL);
     force_theron_available(&state);
     if (!expect(state.quickResumeAvailable == 1,
                 "Theron .srm slot must enable quick Resume when decoded")) return 1;
@@ -1501,6 +1515,7 @@ int main(void) {
                 strcmp(intent.savePath, theronSrmSavePath) == 0,
                 "save browser Theron launch intent should carry exact .srm path")) return 1;
 #endif
+#endif /* !FIRESTAFF_THERON_PRODUCTION */
 
     snprintf(nativeSavePath, sizeof(nativeSavePath),
              "%s/firestaff-dm1-browser.sav", tmpTemplate);
@@ -1604,8 +1619,14 @@ int main(void) {
              "%s/firestaff-csb-only.sav", noDm1Template);
     if (!expect(write_raw_csbgame_roster_quicksave(noDm1CsbSavePath),
                 "should write CSB-only save browser fixture")) return 1;
+    /* Prior cases deliberately left a valid CSB quick-resume path in the
+     * process configuration. Clear it so this case isolates the no-DM1
+     * import blocker instead of opening the unrelated Continue row. */
+    M12_Config_SetLastSavePath("");
     M12_StartupMenu_InitWithDataDir(&state, noDm1Template, NULL);
     force_csb_available(&state);
+    state.settings.languageIndex = 0;
+    state.languageExplicit = 1;
     state.selectedIndex = 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACTION);
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE &&

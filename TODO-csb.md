@@ -98,6 +98,12 @@ missing source material. Later work must record media hashes and provenance
 before using newly supplied captures; it must never generate a replacement
 corpus.
 
+The ordinary M12 Quick Resume path now carries fully validated CSB saves even
+when the optional DSA-corpus identity is absent. Wire the separate
+`M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery` receipt into the real
+CSBWin DSA-bearing save path before claiming DSA resume parity; only the unit
+test currently consumes that discovery receipt.
+
 The separately obtained CSBWin compatibility corpus is also not an admissible
 substitute: a private non-sanitized CSBWin reference build reaches its
 graphics-table decoder but resolves an impossible graphic identifier and then

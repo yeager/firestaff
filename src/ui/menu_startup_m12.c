@@ -13712,9 +13712,7 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         state->quickResumeSavePath[0] != '\0' &&
         state->quickResumeGameId[0] != '\0' &&
         intent.gameId &&
-        strcmp(state->quickResumeGameId, intent.gameId) == 0 &&
-        (strcmp(intent.gameId, "csb") != 0 ||
-         state->csbSaveCandidateIdentity != 0u)) {
+        strcmp(state->quickResumeGameId, intent.gameId) == 0) {
         intent.savePath = state->quickResumeSavePath;
     }
     if (state->csbImportDm1LaunchRequested &&
