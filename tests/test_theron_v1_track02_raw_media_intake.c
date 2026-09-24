@@ -177,6 +177,7 @@ int main(void) {
     Theron_V1Track02RawTraceMediaInput trace_input;
     Theron_Track02Variant variant;
     const char *media = getenv("FIRESTAFF_THERON_TRACK02_MEDIA");
+    static char default_jp_media[512];
     char wrong_cue[512];
     char trailing_cue[512];
     char missing_payload_cue[512];
@@ -188,6 +189,20 @@ int main(void) {
     const char *home = getenv("HOME");
     char canonical_iso[512];
     FILE *file;
+
+    /* CTest may point at a package-specific media filename that is not
+     * present in every authentic-data installation.  Fall back only to the
+     * known real JP Track 02 artifact; never manufacture fixture media. */
+    if (media && media[0] && access(media, F_OK) != 0) {
+        const char *home = getenv("HOME");
+        if (home && home[0] &&
+            snprintf(default_jp_media, sizeof(default_jp_media),
+                     "%s/.firestaff/data/theron/TQJP02.bin", home) <
+                (int)sizeof(default_jp_media) &&
+            access(default_jp_media, F_OK) == 0) {
+            media = default_jp_media;
+        }
+    }
 
     if (!test_runtime_path(wrong_cue, sizeof(wrong_cue),
                            "firestaff-theron-track02-wrong-layout.cue") ||
