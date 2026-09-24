@@ -6265,34 +6265,40 @@ static int m11_csb_prepare_atari_st_animation_handoff(
 {
     const CSB_V1_BootProfile *profile;
     CSB_V1_AtariStAnimationTraceReceipt trace;
-    char user_data[FSP_PATH_MAX];
-    char cache_root[FSP_PATH_MAX];
+    CSB_V1_AtariStAnimationSession *session = NULL;
 
     if (!state || !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
-         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
-        !FSP_GetUserDataDir(user_data,
-            sizeof(user_data)) || !FSP_JoinPath(cache_root,
-            sizeof(cache_root), user_data, "cache")) return 0;
+    if (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+        profile->variant_id != CSB_V1_VARIANT_ST21_EN) return 0;
     memset(&trace, 0, sizeof(trace));
     state->csbAtariStAnimationSourceRoot[0] = '\0';
     if (profile->asset_root[0] &&
-        csb_v1_atari_st_animation_trace_from_root(profile->asset_root,
-            cache_root, &trace) && trace.valid &&
+        csb_v1_atari_st_animation_session_open(profile->asset_root,
+            &session, &trace,
+            state->csbAtariStAnimationSoundData,
+            state->csbAtariStAnimationSoundBytes) && trace.valid &&
         trace.waited_vbl_count != 0u) {
+        state->csbAtariStAnimationSession = session;
         snprintf(state->csbAtariStAnimationSourceRoot,
                  sizeof(state->csbAtariStAnimationSourceRoot), "%s",
                  profile->asset_root);
-    } else if (profile->utility_search_root[0] &&
-               csb_v1_atari_st_animation_trace_from_root(
-                   profile->utility_search_root, cache_root, &trace) &&
-               trace.valid && trace.waited_vbl_count != 0u) {
+    } else {
+        csb_v1_atari_st_animation_session_close(session);
+        session = NULL;
+        if (!profile->utility_search_root[0] ||
+            !csb_v1_atari_st_animation_session_open(
+                profile->utility_search_root, &session, &trace,
+                state->csbAtariStAnimationSoundData,
+                state->csbAtariStAnimationSoundBytes) || !trace.valid ||
+            trace.waited_vbl_count == 0u) {
+            csb_v1_atari_st_animation_session_close(session);
+            return 0;
+        }
+        state->csbAtariStAnimationSession = session;
         snprintf(state->csbAtariStAnimationSourceRoot,
                  sizeof(state->csbAtariStAnimationSourceRoot), "%s",
                  profile->utility_search_root);
-    } else {
-        return 0;
     }
     if (trace.played_sound_count >
         CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS) return 0;
@@ -6300,24 +6306,12 @@ static int m11_csb_prepare_atari_st_animation_handoff(
     state->csbAtariStAnimationSoundCount = trace.played_sound_count;
     memset(state->csbAtariStAnimationSoundPlayed, 0,
            sizeof(state->csbAtariStAnimationSoundPlayed));
-    memset(state->csbAtariStAnimationSoundBytes, 0,
-           sizeof(state->csbAtariStAnimationSoundBytes));
-    {
-        uint16_t sound_index;
-        for (sound_index = 0u;
-             sound_index < state->csbAtariStAnimationSoundCount;
-             ++sound_index) {
-            if (!csb_v1_atari_st_animation_copy_played_sound_from_root(
-                    state->csbAtariStAnimationSourceRoot, cache_root, sound_index,
-                    state->csbAtariStAnimationSoundData[sound_index],
-                    sizeof(state->csbAtariStAnimationSoundData[sound_index]),
-                    &state->csbAtariStAnimationSoundBytes[sound_index],
-                    &state->csbAtariStAnimationSoundPeriods[sound_index],
-                    &state->csbAtariStAnimationSoundVbls[sound_index], NULL)) {
-                return 0;
-            }
-        }
-    }
+    memcpy(state->csbAtariStAnimationSoundPeriods,
+           trace.played_sound_periods,
+           sizeof(state->csbAtariStAnimationSoundPeriods));
+    memcpy(state->csbAtariStAnimationSoundVbls,
+           trace.played_sound_vbls,
+           sizeof(state->csbAtariStAnimationSoundVbls));
     state->csbAtariStRuntimeHandoffComplete = 0;
     return 1;
 }
@@ -12083,8 +12077,6 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
                                             int framebuffer_height)
 {
     const CSB_V1_BootProfile *profile;
-    char user_data[FSP_PATH_MAX];
-    char cache_root[FSP_PATH_MAX];
     uint8_t rgb6[256][3];
     int color;
 
@@ -12095,20 +12087,17 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
          profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
-        !state->csbAtariStAnimationSourceRoot[0] || !FSP_GetUserDataDir(user_data,
-            sizeof(user_data)) || !FSP_JoinPath(cache_root,
-            sizeof(cache_root), user_data, "cache")) {
+        !state->csbAtariStAnimationSourceRoot[0] ||
+        !state->csbAtariStAnimationSession) {
         return 0;
     }
     if (!state->csbAtariStAnimationFrameBound ||
         state->csbAtariStAnimationFrameVbl != state->csbAtariStAnimationVbl) {
-        CSB_V1_AtariStAnimationTraceReceipt trace;
-        memset(&trace, 0, sizeof(trace));
-        if (!csb_v1_atari_st_animation_decode_frame_at_vbl_from_root_indexed(
-                state->csbAtariStAnimationSourceRoot, cache_root,
+        if (!csb_v1_atari_st_animation_session_decode_frame_at_vbl_indexed(
+                state->csbAtariStAnimationSession,
                 state->csbAtariStAnimationVbl,
                 state->csbAtariStAnimationPixels,
-                state->csbAtariStAnimationPalette, &trace) || !trace.valid) {
+                state->csbAtariStAnimationPalette)) {
             return 0;
         }
         state->csbAtariStAnimationFrameVbl = state->csbAtariStAnimationVbl;
@@ -24319,6 +24308,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         state->csbViewportWallWidths[i] = 0;
         state->csbViewportWallHeights[i] = 0;
     }
+    csb_v1_atari_st_animation_session_close(
+        state->csbAtariStAnimationSession);
+    state->csbAtariStAnimationSession = NULL;
     if (state->csbBootProfile) {
         csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
         free(state->csbBootProfile);

@@ -105,6 +105,14 @@ static int m12_explicit_path_is_archive(const char* path) {
     extension = strrchr(path, '.');
     return extension &&
         (strcmp(extension, ".7z") == 0 || strcmp(extension, ".7Z") == 0 ||
+         /* A selected Atari disk image is already a precise media root.
+          * Promoting ST/STX/MSA to its parent can expand the single-game
+          * launch into every neighboring archive (including unrelated,
+          * multi-gigabyte editions) before the Atari-specific admission
+          * below has a chance to bind the requested image. */
+         strcmp(extension, ".st") == 0 || strcmp(extension, ".ST") == 0 ||
+         strcmp(extension, ".stx") == 0 || strcmp(extension, ".STX") == 0 ||
+         strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0 ||
          /* The CSB FM Towns retail CD is commonly distributed as a RAR.
           * A direct selection must remain that exact container: otherwise
           * scanning its parent can silently bind a sibling PC/Amiga cache

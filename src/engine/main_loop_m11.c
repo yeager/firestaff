@@ -2587,9 +2587,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           }
       }
       /* CSB PC3.4 has its own SWSHSND.C F0908 DMA sample.  The audio
-       * transport already accepts that exact source format, but the old M11
-       * prelude only initialized the DM1 PSG branch.  Scan the selected CSB
-       * root through the normal hash-first boot profile and queue only the
+       * transport accepts that exact source format, but the old M11 prelude
+       * initialized only the DM1 PSG branch.  Scan the selected CSB root
+       * through the normal hash-first boot profile and queue only the
        * authenticated 9,078-byte source buffer.  Missing media remains
        * silent: no DM1 cue or generated substitute is permitted. */
       if (gameId && strcmp(gameId, "csb") == 0 && dataDir && dataDir[0]) {

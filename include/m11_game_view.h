@@ -1743,6 +1743,7 @@ typedef struct {
      * authentic STX may retain ANIMATE.SCR/DAT only in its original media
      * container.  Keep that hash-verified source root separate. */
     char csbAtariStAnimationSourceRoot[512];
+    CSB_V1_AtariStAnimationSession *csbAtariStAnimationSession;
     int csbAtariStAnimationClockStarted;
     int csbAtariStAnimationFrameBound;
     int csbAtariStRuntimeHandoffComplete;

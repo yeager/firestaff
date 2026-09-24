@@ -48,6 +48,9 @@ typedef struct {
     uint16_t failed_instruction_index;
 } CSB_V1_AtariStAnimationTraceReceipt;
 
+typedef struct CSB_V1_AtariStAnimationSession
+    CSB_V1_AtariStAnimationSession;
+
 /* Decode one documented Atari ST P4B1 palette: 16 big-endian ST RGB words.
  * Each output entry is RGB888. */
 int csb_v1_atari_st_animation_decode_p4b1_palette(
@@ -66,6 +69,21 @@ int csb_v1_atari_st_animation_validate_assets(
 int csb_v1_atari_st_animation_trace_script(
     const char *animate_dat_path, const uint8_t *script, size_t script_size,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
+/* Keep a hash-verified original Atari startup pair in process memory while
+ * its animation plays. Every frame reuses the admitted bytes and parsed item
+ * table instead of rescanning/reopening the selected STX container. */
+int csb_v1_atari_st_animation_session_open(
+    const char *search_root, CSB_V1_AtariStAnimationSession **out_session,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt,
+    uint8_t out_sound_bytes[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS][4096],
+    size_t out_sound_sizes[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS]);
+void csb_v1_atari_st_animation_session_close(
+    CSB_V1_AtariStAnimationSession *session);
+int csb_v1_atari_st_animation_session_decode_frame_at_vbl_indexed(
+    CSB_V1_AtariStAnimationSession *session, uint32_t target_vbl,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3]);
 
 /* Resolve and rasterize the final Atari ST animation screen through the
  * original script state. The selected IMG1/P4B1 pair must come from the

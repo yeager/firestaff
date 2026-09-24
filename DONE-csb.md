@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+- 2026-09-24: Kept explicitly selected Atari ST, STX, and MSA media as the M12
+  search root instead of widening the scan to its parent directory. A parent
+  scan had spent 23.6 seconds inflating and hashing unrelated neighboring
+  archives before the direct Atari start; the same authentic STX now reaches
+  the M11 boot probe in under 0.2 seconds after renderer initialization. The
+  Atari animation is held in a hash-verified, process-local session for its
+  source VBlanks and SND1 cues; no game files are written to disk. The full
+  authentic Atari CLI matrix, including M12 menu start through live gameplay,
+  passes. The source state still has no champions, so no playable-party claim
+  is made.
+
 - 2026-09-24: FM Towns M11 now validates the selected native save filename
   before preparing a filesystem parent directory. This makes a read-only
   packed `MINI.DAT` fail at the explicit native-writeback boundary instead of
@@ -21,11 +32,11 @@
   remains deferred with the missing source corpus documented below.
 
 - 2026-09-24: Fixed the Atari ST real-media test so it no longer combines
-  incompatible `--menu` and `--boot-probe` modes. Direct CLI probes still
-  verify Original/Modern presentation; the normal menu route now verifies its
-  runtime receipt against the authentic STX through `csb-entrance-4`. The
-  receipt has a loaded level but zero champions and active startup, so this
-  remains an entrance boundary, not proof of a playable campaign party.
+  incompatible `--menu` and `--boot-probe` modes. Direct CLI probes verify
+  Original/Modern presentation; the normal menu route verifies that the
+  authentic STX reaches the live source gameplay runtime at map 0, position
+  (9,0), facing south. This source state has zero champions, so it is not proof
+  of a playable campaign party.
 
 - 2026-09-16: Revalidated native launch coverage against the supplied retail
   Atari STX, Amiga ZIP/ADF, and FM Towns ZIP without external runtime

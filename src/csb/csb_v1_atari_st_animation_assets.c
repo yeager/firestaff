@@ -9,6 +9,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct CSB_V1_AtariStAnimationSession {
+    uint8_t *script;
+    size_t script_size;
+    CSB_AtariStLoader loader;
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+};
+
+static int csb_v1_atari_st_animation_decode_frame_loaded(
+    CSB_AtariStLoader *loader, const uint8_t *script, size_t script_size,
+    uint32_t target_vbl,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    const CSB_V1_AtariStAnimationTraceReceipt *known_trace,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
 static int csb_v1_atari_st_animation_item_type_matches(
     uint16_t item_index, uint16_t item_type)
 {
@@ -296,11 +311,10 @@ int csb_v1_atari_st_animation_validate_assets(
     return valid;
 }
 
-int csb_v1_atari_st_animation_trace_script(
-    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+static int csb_v1_atari_st_animation_trace_loaded(
+    CSB_AtariStLoader *loader, const uint8_t *script, size_t script_size,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
 {
-    CSB_AtariStLoader loader;
     CSB_V1_AnimationScriptInstruction instructions[
         CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS];
     csb_v1_atari_st_animation_slot slots[256];
@@ -314,12 +328,10 @@ int csb_v1_atari_st_animation_trace_script(
     int valid = 1;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!animate_dat_path || !script ||
+    if (!loader || !loader->loaded || !script ||
         csb_v1_animation_script_parse(script, script_size, instructions,
             CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS, &instruction_count) !=
             CSB_V1_ANIMATION_SCRIPT_OK) return 0;
-    csb_atari_st_graphics_loader_init(&loader);
-    if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path)) return 0;
     memset(slots, 0, sizeof(slots));
     memset(loop_pc, 0, sizeof(loop_pc));
 
@@ -334,7 +346,7 @@ int csb_v1_atari_st_animation_trace_script(
                 stopped = 1;
                 break;
             case 3u: /* Load item */
-                if (p[0] >= loader.item_count || p[1] >= 256u ||
+                if (p[0] >= loader->item_count || p[1] >= 256u ||
                     !csb_v1_atari_st_animation_item_type_matches(p[0], p[2])) {
                     valid = 0;
                     break;
@@ -547,18 +559,33 @@ int csb_v1_atari_st_animation_trace_script(
         out_receipt->final_palette_item = active_palette_item;
         out_receipt->valid = valid && stopped;
     }
-    csb_atari_st_graphics_loader_close(&loader);
     return valid && stopped;
 }
 
-int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
+int csb_v1_atari_st_animation_trace_script(
     const char *animate_dat_path, const uint8_t *script, size_t script_size,
-    uint32_t target_vbl,
-    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
-    uint8_t out_palette[16][3],
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
 {
     CSB_AtariStLoader loader;
+    int result;
+    if (!animate_dat_path || !script) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path))
+        return 0;
+    result = csb_v1_atari_st_animation_trace_loaded(&loader, script,
+        script_size, out_receipt);
+    csb_atari_st_graphics_loader_close(&loader);
+    return result;
+}
+
+static int csb_v1_atari_st_animation_decode_frame_loaded(
+    CSB_AtariStLoader *loader, const uint8_t *script, size_t script_size,
+    uint32_t target_vbl,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    const CSB_V1_AtariStAnimationTraceReceipt *known_trace,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
     CSB_V1_AnimationScriptInstruction instructions[
         CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS];
     CSB_V1_AtariStAnimationTraceReceipt trace;
@@ -573,14 +600,14 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
     uint16_t slot_index;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!animate_dat_path || !script || !out_indexed || !out_palette ||
-        !csb_v1_atari_st_animation_trace_script(animate_dat_path, script,
-            script_size, &trace) || !trace.valid ||
-        csb_v1_animation_script_parse(script, script_size, instructions,
+    if (!loader || !loader->loaded || !script || !out_indexed || !out_palette)
+        return 0;
+    if (known_trace) trace = *known_trace;
+    else if (!csb_v1_atari_st_animation_trace_loaded(loader, script,
+                 script_size, &trace)) return 0;
+    if (!trace.valid || csb_v1_animation_script_parse(script, script_size, instructions,
             CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS, &instruction_count) !=
             CSB_V1_ANIMATION_SCRIPT_OK) return 0;
-    csb_atari_st_graphics_loader_init(&loader);
-    if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path)) return 0;
     memset(slots, 0, sizeof(slots));
     memset(loop_pc, 0, sizeof(loop_pc));
 
@@ -595,7 +622,7 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
             pc = instruction_count;
             break;
         case 3u:
-            if (p[0] >= loader.item_count || p[1] >= 256u ||
+            if (p[0] >= loader->item_count || p[1] >= 256u ||
                 !csb_v1_atari_st_animation_item_type_matches(p[0], p[2]))
                 goto done;
             csb_v1_atari_st_animation_slot_release(&slots[p[1]]);
@@ -609,7 +636,7 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
             break;
         case 5u:
             if (p[0] >= 256u || p[1] >= 256u || p[2] >= 256u ||
-                !csb_v1_atari_st_animation_slot_decode_img1(&loader,
+                !csb_v1_atari_st_animation_slot_decode_img1(loader,
                     &slots[p[0]]) ||
                 !csb_v1_atari_st_animation_slot_copy_image(&slots[p[1]],
                     &slots[p[0]], 1)) goto done;
@@ -626,7 +653,7 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
              * therefore part of the source operation, not a replacement
              * heuristic. */
             if (p[0] >= 256u || p[1] >= 256u || p[2] >= 256u || p[3] >= 256u ||
-                !csb_v1_atari_st_animation_slot_decode_img1(&loader,
+                !csb_v1_atari_st_animation_slot_decode_img1(loader,
                     &slots[p[0]]) || !slots[p[1]].pixels ||
                 !csb_v1_atari_st_animation_blit_transparent(&slots[p[0]],
                     &slots[p[1]], &slots[p[2]], slots[p[3]].box_left,
@@ -741,7 +768,7 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
             break;
         case 29u:
             if (p[0] >= 256u || p[1] >= 256u ||
-                !csb_v1_atari_st_animation_slot_decode_img1(&loader,
+                !csb_v1_atari_st_animation_slot_decode_img1(loader,
                     &slots[p[0]]) ||
                 !csb_v1_atari_st_animation_slot_copy_image(&slots[p[1]],
                     &slots[p[0]], 0)) goto done;
@@ -769,7 +796,7 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
                     CSB_V1_ATARI_ST_ANIMATION_HEIGHT ||
                 screen_size != CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES ||
                 active_palette_item == 0xffffu ||
-                !csb_v1_atari_st_animation_read_item(&loader,
+                !csb_v1_atari_st_animation_read_item(loader,
                     active_palette_item, &palette_bytes, &palette_size) ||
                 !csb_v1_atari_st_animation_decode_p4b1_palette(palette_bytes,
                     palette_size, out_palette)) {
@@ -785,8 +812,107 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
 done:
     for (slot_index = 0u; slot_index < 256u; ++slot_index)
         csb_v1_atari_st_animation_slot_release(&slots[slot_index]);
-    csb_atari_st_graphics_loader_close(&loader);
     if (result && out_receipt) *out_receipt = trace;
+    return result;
+}
+
+int csb_v1_atari_st_animation_session_open(
+    const char *search_root, CSB_V1_AtariStAnimationSession **out_session,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt,
+    uint8_t out_sound_bytes[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS][4096],
+    size_t out_sound_sizes[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS])
+{
+    CSB_V1_AtariStAnimationDiscoveryReceipt discovery;
+    CSB_V1_AtariStAnimationSession *session = NULL;
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+    char script_path[ASSET_PATH_MAX];
+    char data_path[ASSET_PATH_MAX];
+    uint16_t sound_index;
+
+    if (out_session) *out_session = NULL;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (out_sound_sizes)
+        memset(out_sound_sizes, 0,
+               sizeof(size_t) * CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS);
+    if (!search_root || !out_session || !out_sound_bytes || !out_sound_sizes ||
+        !csb_v1_atari_st_animation_discover(search_root, &discovery) ||
+        !csb_v1_atari_st_animation_materialize(&discovery, NULL,
+            script_path, data_path)) return 0;
+
+    session = (CSB_V1_AtariStAnimationSession *)calloc(1u, sizeof(*session));
+    if (!session) return 0;
+    csb_atari_st_graphics_loader_init(&session->loader);
+    session->script = csb_v1_atari_st_animation_read_file(script_path,
+        &session->script_size);
+    if (!session->script ||
+        !csb_atari_st_graphics_loader_open(&session->loader, data_path) ||
+        !csb_v1_atari_st_animation_trace_loaded(&session->loader,
+            session->script, session->script_size, &trace) || !trace.valid ||
+        trace.played_sound_count >
+            CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS) {
+        csb_v1_atari_st_animation_session_close(session);
+        return 0;
+    }
+    for (sound_index = 0u; sound_index < trace.played_sound_count;
+         ++sound_index) {
+        uint8_t *sound = NULL;
+        size_t sound_size = 0u;
+        if (!csb_v1_atari_st_animation_item_type_matches(
+                trace.played_sound_items[sound_index], 2u) ||
+            trace.played_sound_periods[sound_index] <= 10u ||
+            !csb_v1_atari_st_animation_read_item(&session->loader,
+                trace.played_sound_items[sound_index], &sound, &sound_size) ||
+            sound_size == 0u || sound_size > 4096u) {
+            free(sound);
+            csb_v1_atari_st_animation_session_close(session);
+            return 0;
+        }
+        memcpy(out_sound_bytes[sound_index], sound, sound_size);
+        out_sound_sizes[sound_index] = sound_size;
+        free(sound);
+    }
+    if (out_receipt) *out_receipt = trace;
+    session->trace = trace;
+    *out_session = session;
+    return 1;
+}
+
+void csb_v1_atari_st_animation_session_close(
+    CSB_V1_AtariStAnimationSession *session)
+{
+    if (!session) return;
+    csb_atari_st_graphics_loader_close(&session->loader);
+    free(session->script);
+    free(session);
+}
+
+int csb_v1_atari_st_animation_session_decode_frame_at_vbl_indexed(
+    CSB_V1_AtariStAnimationSession *session, uint32_t target_vbl,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3])
+{
+    if (!session) return 0;
+    return csb_v1_atari_st_animation_decode_frame_loaded(&session->loader,
+        session->script, session->script_size, target_vbl, out_indexed,
+        out_palette, &session->trace, NULL);
+}
+
+int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint32_t target_vbl,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_AtariStLoader loader;
+    int result;
+    if (!animate_dat_path || !script) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path))
+        return 0;
+    result = csb_v1_atari_st_animation_decode_frame_loaded(&loader, script,
+        script_size, target_vbl, out_indexed, out_palette, NULL, out_receipt);
+    csb_atari_st_graphics_loader_close(&loader);
     return result;
 }
 

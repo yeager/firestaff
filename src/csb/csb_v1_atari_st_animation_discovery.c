@@ -69,7 +69,9 @@ int csb_v1_atari_st_animation_discover(
             &script_virtual) ||
         !csb_v1_atari_st_animation_source_identity(paths[1], data_identity,
             &data_virtual) || script_virtual != data_virtual ||
-        strcmp(script_identity, data_identity) != 0) return 0;
+        strcmp(script_identity, data_identity) != 0) {
+        return 0;
+    }
     snprintf(out->script_path, sizeof(out->script_path), "%s", paths[0]);
     snprintf(out->data_path, sizeof(out->data_path), "%s", paths[1]);
     snprintf(out->source_identity, sizeof(out->source_identity), "%s",

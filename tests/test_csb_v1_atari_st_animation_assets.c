@@ -195,6 +195,27 @@ int main(void)
                   "launcher route copies the second original SND1 stream");
         }
         free(rgba);
+        {
+            CSB_V1_AtariStAnimationSession *session = NULL;
+            CSB_V1_AtariStAnimationTraceReceipt session_trace;
+            uint8_t sound_bytes[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS][4096];
+            size_t sound_sizes[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+            uint8_t session_pixels[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
+            uint8_t session_palette[16][3];
+            uint32_t vbl;
+            int session_ok = csb_v1_atari_st_animation_session_open(root,
+                &session, &session_trace, sound_bytes, sound_sizes) &&
+                session_trace.valid && session_trace.played_sound_count == 2u &&
+                sound_sizes[0] > 2u && sound_sizes[1] > 2u;
+            for (vbl = 1u; session_ok && vbl <= 60u; ++vbl) {
+                session_ok =
+                    csb_v1_atari_st_animation_session_decode_frame_at_vbl_indexed(
+                        session, vbl, session_pixels, session_palette);
+            }
+            CHECK(session_ok,
+                  "one authenticated Atari startup session reuses its media for source VBlank frames and sounds");
+            csb_v1_atari_st_animation_session_close(session);
+        }
     }
     return failures == 0 ? 0 : 1;
 }
