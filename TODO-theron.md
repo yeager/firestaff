@@ -60,6 +60,16 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   authenticated CD-to-RAM receipts, and no dungeon-state handoff. These are
   negative startup/input observations only. Their raw traces and screenshots
   remain private on trv2 and are not promoted as public game captures.
+  A further 2026-09-24 JP Rev 1 X11 capture used the Linux profile's actual
+  `command.toggle_grab` binding (Ctrl+Shift+E; the earlier attempt incorrectly
+  sent Ctrl+Shift+G) and waited through the documented eight-second BIOS
+  startup window before sending RUN. The instrumented PCE register trace then
+  observed controller value `0x0008` during RUN, confirming gamepad delivery;
+  nevertheless the frame became black and the final receipt still had 24 raw
+  sectors, zero authenticated CD-to-RAM receipts, zero E009 data reads and
+  `transition=missing`. This improves the input-delivery diagnosis only; it
+  does not establish title/menu selection or gameplay. The trace remains
+  private on trv2.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. The production M11 Continue action is now verified
   against the authentic US Track 02 and 2 KiB Backup RAM artifact: startup
