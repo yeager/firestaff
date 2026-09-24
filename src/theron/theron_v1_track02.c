@@ -1194,13 +1194,28 @@ static Theron_Track02SignalStatus tqr_catalog_us_roster_names(
         "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN",
         "DOTAN", "PENTAI"
     };
-    const size_t stream_start = 0x0B46C8u;
-    const size_t stream_end = 0x0B4AC8u;
-    size_t cursor = stream_start;
+    const size_t us_bin_stream_start = 0x0B46C8u;
+    const size_t us_bin_stream_end = 0x0B4AC8u;
+    const Theron_Track02Variant variant =
+        theron_v1_track02_variant_for_md5(md5_hex);
+    size_t stream_start = us_bin_stream_start;
+    size_t stream_end = us_bin_stream_end;
+    size_t cursor;
     size_t i;
 
-    if (theron_v1_track02_variant_for_md5(md5_hex) !=
-            THERON_TRACK02_VARIANT_US_BIN || stream_start >= track02_size ||
+    if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        if (stream_start < TQR_US_CLONECD_OMITTED_PREGAP_BYTES ||
+            stream_end < TQR_US_CLONECD_OMITTED_PREGAP_BYTES) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        stream_start -= TQR_US_CLONECD_OMITTED_PREGAP_BYTES;
+        stream_end -= TQR_US_CLONECD_OMITTED_PREGAP_BYTES;
+    } else if (variant != THERON_TRACK02_VARIANT_US_BIN) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    cursor = stream_start;
+
+    if (stream_start >= track02_size ||
         stream_end > track02_size) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
@@ -1659,7 +1674,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
 
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
-    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
         /* The names are source-bound through the authenticated codon stream.
          * Its title/control fields still require the executing US text
          * consumer, so this route publishes names only. */

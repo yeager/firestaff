@@ -176,7 +176,8 @@ static void check_real_us_roster(const char *path, const char *md5) {
     memset(&receipt, 0, sizeof(receipt));
     theron_v1_startup_media_capture_track02_state_receipt(
         track02, track02_bytes, md5, &receipt);
-    CHECK(receipt.track02_variant == THERON_TRACK02_VARIANT_US_BIN);
+    CHECK(receipt.track02_variant ==
+          (int)theron_v1_track02_variant_for_md5(md5));
     CHECK(receipt.startup_roster_name_status == THERON_TRACK02_SIGNAL_OK);
     CHECK(receipt.startup_roster_name_count == 8);
     for (i = 0u; i < 8u; ++i) {
@@ -274,6 +275,12 @@ int main(void) {
         if (variant == THERON_TRACK02_VARIANT_US_BIN ||
             variant == THERON_TRACK02_VARIANT_JP_BIN) {
             check_real_palette(real_path, real_md5, "environment");
+        }
+        if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+            check_real_jp_roster(real_path, real_md5);
+        }
+        if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+            check_real_us_roster(real_path, real_md5);
         }
         free(real_track02);
     } else {
