@@ -119,7 +119,7 @@ static void probe_real_media(void) {
     char clonecd_fallback[512];
     const char *jp_path = resolve_track02_path(
         "FIRESTAFF_THERON_TRACK02_JP_BIN",
-        "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin",
+        "TQJP02.bin",
         jp_fallback, sizeof(jp_fallback));
     const char *us_path = resolve_track02_path(
         "FIRESTAFF_THERON_TRACK02_US_BIN", "TQUS02.bin",
