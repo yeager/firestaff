@@ -1112,6 +1112,59 @@ static unsigned int assert_real_active_to_inactive_teleporter_links(
     return verified;
 }
 
+/* Every admitted Track 02 coordinate link must land within a loaded map
+ * square in its own authentic dungeon bank.  This checks source/map
+ * coherence only; it deliberately does not decide whether a destination
+ * teleporter should chain or settle. */
+static unsigned int assert_real_active_teleporter_destinations_are_loaded(
+    const Theron_V1_World *world) {
+    unsigned int verified = 0u;
+
+    for (int i = 0; i < world->object_count; ++i) {
+        const Theron_V1_Object *source = &world->objects[i];
+        int dungeon_slot;
+        int target_level;
+        int target_x;
+        int target_y;
+        const Theron_V1_Level *destination;
+
+        if (source->type != THERON_OBJTYPE_TELEPORTER ||
+            !(source->flags & THERON_OBJ_F_TRACK02_COORD_LINK) ||
+            source->state == 0u)
+            continue;
+
+        dungeon_slot = source->dungeon_id - 1;
+        target_x = source->linked_id & 0x1f;
+        target_y = (source->linked_id >> 5) & 0x1f;
+        target_level = (source->linked_id >> 10) & 0x3f;
+        assert(dungeon_slot >= 0 && dungeon_slot < THERON_DUNGEON_COUNT);
+        assert(target_level >= 0 &&
+               target_level < THERON_MAX_LEVELS_PER_DUNGEON);
+        assert(world->level_loaded[dungeon_slot][target_level]);
+        destination = &world->levels[dungeon_slot][target_level];
+        assert(target_x >= 0 && target_x < destination->width);
+        assert(target_y >= 0 && target_y < destination->height);
+        if (destination->squares[target_y][target_x] ==
+            THERON_SQUARE_TELEPORTER) {
+            const Theron_V1_Object *endpoint = NULL;
+            for (int j = 0; j < world->object_count; ++j) {
+                const Theron_V1_Object *candidate = &world->objects[j];
+                if (candidate->type == THERON_OBJTYPE_TELEPORTER &&
+                    candidate->dungeon_id == source->dungeon_id &&
+                    candidate->level == target_level &&
+                    candidate->x == target_x && candidate->y == target_y) {
+                    endpoint = candidate;
+                    break;
+                }
+            }
+            assert(endpoint != NULL);
+            assert(endpoint->flags & THERON_OBJ_F_TRACK02_COORD_LINK);
+        }
+        ++verified;
+    }
+    return verified;
+}
+
 static void assert_real_pit_open_gate(
     Theron_V1_World *world, unsigned int *closed_count,
     unsigned int *open_count) {
@@ -1930,6 +1983,7 @@ static void test_all_dungeons(
     unsigned int carryable_not_first = 0u;
     unsigned int nonfirst_take_roundtrips = 0u;
     unsigned int active_teleporters = 0u;
+    unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
@@ -2249,6 +2303,8 @@ static void test_all_dungeons(
                 world, (unsigned int)result.teleporters_placed, &chained);
             assert(assert_real_active_to_inactive_teleporter_links(world) ==
                    chained);
+            active_teleporter_destinations +=
+                assert_real_active_teleporter_destinations_are_loaded(world);
             active_to_inactive += chained;
         }
         assert_real_door_source_gate_survives_save(world);
@@ -2296,6 +2352,9 @@ static void test_all_dungeons(
            carryable_not_first);
     printf("  US active teleporters=%u active-to-inactive targets=%u\n",
            active_teleporters, active_to_inactive);
+    assert(active_teleporter_destinations == active_teleporters);
+    printf("  US active teleporter destinations on loaded maps=%u\n",
+           active_teleporter_destinations);
     printf("  US source pits: closed/passable=%u open/fail-closed=%u\n",
            closed_pits, open_pits);
     print_real_actuator_census(
@@ -2326,6 +2385,7 @@ static void test_all_jp_dungeons(
     unsigned int carryable_not_first = 0u;
     unsigned int nonfirst_take_roundtrips = 0u;
     unsigned int active_teleporters = 0u;
+    unsigned int active_teleporter_destinations = 0u;
     unsigned int active_to_inactive = 0u;
     unsigned int closed_pits = 0u;
     unsigned int open_pits = 0u;
@@ -2432,6 +2492,8 @@ static void test_all_jp_dungeons(
                 world, (unsigned int)result.teleporters_placed, &chained);
             assert(assert_real_active_to_inactive_teleporter_links(world) ==
                    chained);
+            active_teleporter_destinations +=
+                assert_real_active_teleporter_destinations_are_loaded(world);
             active_to_inactive += chained;
         }
         assert_real_door_source_gate_survives_save(world);
@@ -2462,6 +2524,9 @@ static void test_all_jp_dungeons(
            carryable_not_first);
     printf("  JP active teleporters=%u active-to-inactive targets=%u\n",
            active_teleporters, active_to_inactive);
+    assert(active_teleporter_destinations == active_teleporters);
+    printf("  JP active teleporter destinations on loaded maps=%u\n",
+           active_teleporter_destinations);
     printf("  JP source pits: closed/passable=%u open/fail-closed=%u\n",
            closed_pits, open_pits);
     print_real_actuator_census(
