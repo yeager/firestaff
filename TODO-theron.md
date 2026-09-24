@@ -50,6 +50,16 @@ without an emulator, BIOS, extracted game tree or fallback graphics.
   CD-to-RAM receipts, and no dungeon-state handoff. Thus controller delivery
   is now evidenced, but menu selection and level loading are not; the private
   capture remains on trv2 and does not promote gameplay semantics.
+  Two additional 2026-09-24 JP Rev 1 cold-start captures used the authentic
+  regional CUE/Track 02 and System Card 3.0 with Mednafen's instrumented
+  frame-scheduled PCE input. The first valid four-event plan was applied over
+  131,072 input transactions; its real Xvfb frame showed the System Card UI,
+  not Theron gameplay. A second plan applied Run from frame 1 and held later
+  Run inputs; its captured frame was black. Both runs still produced 24 raw-
+  sector spans, one game-owned E009 dispatch/entry, zero E009 data reads, zero
+  authenticated CD-to-RAM receipts, and no dungeon-state handoff. These are
+  negative startup/input observations only. Their raw traces and screenshots
+  remain private on trv2 and are not promoted as public game captures.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. The production M11 Continue action is now verified
   against the authentic US Track 02 and 2 KiB Backup RAM artifact: startup
