@@ -63,6 +63,7 @@ void m12_update_game_availability(const FS_GameAvailability* avail);
 #ifdef _WIN32
 #include <direct.h>
 #define TEST_MKDIR(path) _mkdir(path)
+#define TEST_RMDIR(path) _rmdir(path)
 static int test_setenv(const char* name, const char* value) {
     return _putenv_s(name, value ? value : "") == 0;
 }
@@ -70,6 +71,7 @@ static int test_setenv(const char* name, const char* value) {
 #include <sys/stat.h>
 #include <unistd.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
+#define TEST_RMDIR(path) rmdir(path)
 static int test_setenv(const char* name, const char* value) {
     if (value) {
         return setenv(name, value, 1) == 0;
@@ -1332,11 +1334,47 @@ static void check_game_select_uses_asset_status_not_stale_global(
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
-int main(void) {
+static void check_mixed_case_atari_media_extensions(void) {
+    static const char* const extensions[] = {".St", ".sTx", ".MsA"};
+    const char* const mediaRoot = "firestaff_m12_atari_extension_case";
+    size_t i;
+
+    check_int(FSP_CreateDirectoryRecursive(mediaRoot),
+              "create isolated mixed-case Atari media root");
+    for (i = 0U; i < sizeof(extensions) / sizeof(extensions[0]); ++i) {
+        M12_AssetStatus status;
+        char mediaPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char leaf[64];
+        int rc = snprintf(leaf, sizeof(leaf), "selected%s", extensions[i]);
+        if (rc <= 0 || (size_t)rc >= sizeof(leaf) ||
+            !FSP_JoinPath(mediaPath, sizeof(mediaPath), mediaRoot, leaf) ||
+            !write_text(mediaPath, "test-only path classification payload")) {
+            check_int(0, "create mixed-case Atari media path probe");
+            continue;
+        }
+        M12_AssetStatus_ScanGameWithOptions(&status, mediaPath, "csb", NULL);
+        check_int(strcmp(M12_AssetStatus_GetDataDir(&status), mediaPath) == 0,
+                  "mixed-case Atari extension remains the selected media root");
+        remove(mediaPath);
+    }
+    TEST_RMDIR(mediaRoot);
+}
+
+int main(int argc, char** argv) {
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     char dirA[M12_ASSET_DATA_DIR_CAPACITY];
     char dirB[M12_ASSET_DATA_DIR_CAPACITY];
     char dirC[M12_ASSET_DATA_DIR_CAPACITY];
+
+    if (argc == 2 && strcmp(argv[1], "--mixed-case-atari-media") == 0) {
+        check_mixed_case_atari_media_extensions();
+        if (g_failures) {
+            fprintf(stderr, "%d failure(s)\n", g_failures);
+            return 1;
+        }
+        puts("ok: mixed-case Atari ST/STX/MSA paths retain the selected media root");
+        return 0;
+    }
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !FSP_JoinPath(dirA, sizeof(dirA), home, "dataA") ||

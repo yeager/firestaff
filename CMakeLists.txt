@@ -46356,6 +46356,11 @@ if(BUILD_TESTING)
         NAME asset_status_data_dir_change_cache_invalidation
         COMMAND test_asset_status_data_dir_change_cache_invalidation
     )
+    add_test(
+        NAME asset_status_mixed_case_atari_media_root
+        COMMAND test_asset_status_data_dir_change_cache_invalidation
+            --mixed-case-atari-media
+    )
 endif()
 
 # ── Theron V1 Phase 7 — Track 02 Bank Probe ───────────────────────

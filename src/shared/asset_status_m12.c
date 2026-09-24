@@ -85,6 +85,7 @@ static const M12_AssetVersionStatus* m12_first_matched_version(
     int gameIndex);
 static int m12_path_is_virtual_asset(const char* path);
 static void m12_copy_string(char* out, size_t outSize, const char* value);
+static int m12_ascii_equals_ignore_case(const char* a, const char* b);
 static int m12_read_file_bytes(const char* path,
                                unsigned char** outData,
                                size_t* outSize);
@@ -103,23 +104,23 @@ static int m12_explicit_path_is_archive(const char* path) {
         return 0;
     }
     extension = strrchr(path, '.');
-    return extension &&
-        (strcmp(extension, ".7z") == 0 || strcmp(extension, ".7Z") == 0 ||
-         /* A selected Atari disk image is already a precise media root.
-          * Promoting ST/STX/MSA to its parent can expand the single-game
-          * launch into every neighboring archive (including unrelated,
-          * multi-gigabyte editions) before the Atari-specific admission
-          * below has a chance to bind the requested image. */
-         strcmp(extension, ".st") == 0 || strcmp(extension, ".ST") == 0 ||
-         strcmp(extension, ".stx") == 0 || strcmp(extension, ".STX") == 0 ||
-         strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0 ||
-         /* The CSB FM Towns retail CD is commonly distributed as a RAR.
-          * A direct selection must remain that exact container: otherwise
-          * scanning its parent can silently bind a sibling PC/Amiga cache
-          * entry instead of the selected CDATA/CJDATA package. */
-         strcmp(extension, ".rar") == 0 || strcmp(extension, ".RAR") == 0 ||
-         strcmp(extension, ".zip") == 0 || strcmp(extension, ".ZIP") == 0 ||
-         strcmp(extension, ".iso") == 0 || strcmp(extension, ".ISO") == 0);
+    if (!extension) return 0;
+    /* A selected Atari disk image is already a precise media root.
+     * Promoting ST/STX/MSA to its parent can expand the single-game launch
+     * into every neighboring archive before Atari-specific admission binds
+     * the requested image. Match extensions case-insensitively because
+     * filenames from archives and removable-media tools vary in casing. */
+    if (m12_ascii_equals_ignore_case(extension, ".st") ||
+        m12_ascii_equals_ignore_case(extension, ".stx") ||
+        m12_ascii_equals_ignore_case(extension, ".msa")) {
+        return 1;
+    }
+    /* Direct container selections stay rooted at the selected package;
+     * parent scanning can otherwise bind an unrelated sibling edition. */
+    return m12_ascii_equals_ignore_case(extension, ".7z") ||
+           m12_ascii_equals_ignore_case(extension, ".rar") ||
+           m12_ascii_equals_ignore_case(extension, ".zip") ||
+           m12_ascii_equals_ignore_case(extension, ".iso");
 }
 
 typedef struct {
