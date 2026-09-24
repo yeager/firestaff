@@ -45,6 +45,14 @@ pose `(direction=2, x=3, y=0)` with three source-backed champions. This
 extends the bounded movement check to the real US launch route; it does not
 establish visual/gameplay parity or movement behavior in later dungeons.
 
+The registered `theron_v1_jp_later_dungeon_runtime` regression now binds and
+checks both authentic regional raw Track 02 files separately. On trv2, the JP
+and US sources each passed all seven source-dungeon handoffs (34 maps and
+2,269 source objects), including per-map header/property provenance and
+dungeon-local thing-directory verification. This closes a regional test-coverage
+gap only; the receipt still explicitly keeps visual capture, original
+transition, combat and item-action semantics gated.
+
 The local combined US/JP RAR passes its archive CRC test, but Firestaff does
 not accept RAR4 as a launch input. Its US CUE names `TQUS02.iso`, which is not
 an archive member; the archive has `TQUS02End.iso` instead. The separate
