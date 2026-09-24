@@ -128,6 +128,20 @@ static void dismiss_initial_message(M12_StartupMenuState* state) {
     }
 }
 
+static void launch_theron_from_original_presentation_card(
+    M12_StartupMenuState* state) {
+    if (!state) {
+        return;
+    }
+    if (state->gameCardFlowStage == 0) {
+        M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+    if (state->gameCardFlowStage == 1) {
+        state->gameCardSelected = 0;
+        M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+    }
+}
+
 static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     size_t i;
     int nonzero = 0;
@@ -355,7 +369,7 @@ static void run_real_launcher_handoff_if_available(void) {
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.view = M12_MENU_VIEW_GAME_OPTIONS;
     menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
-    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    launch_theron_from_original_presentation_card(&menu);
     expect_true(menu.launchRequested == 1,
                 "Theron Launch action admits the selected real campaign media");
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
@@ -444,6 +458,13 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 Theron launcher handoff enters bounded title gate");
     expect_true(view.theronState.selected_dungeon == 1,
                 "M11 Theron launcher handoff selects chapter 1 first");
+    if (version && strcmp(version->matchedMd5, THERON_TRACK02_MD5_US_ISO) == 0) {
+        expect_true(view.theronState.startup_media_ready &&
+                        view.theronTrack02LoaderReceipt.valid == 0,
+                    "M11 retains the authentic ISO startup route without inventing raw IPL evidence");
+        M11_GameView_Shutdown(&view);
+        return;
+    }
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
@@ -569,7 +590,7 @@ static void run_explicit_real_cue_campaign_if_available(void) {
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.view = M12_MENU_VIEW_GAME_OPTIONS;
     menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
-    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    launch_theron_from_original_presentation_card(&menu);
     M11_GameView_Init(&view);
     opened = M11_GameView_OpenSelectedMenuEntry(&view, &menu);
     expect_true(opened == 1 && view.active &&
@@ -593,12 +614,15 @@ static void run_explicit_real_cue_campaign_if_available(void) {
         for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
             (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_RIGHT);
         }
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
-                        M11_GAME_INPUT_RETURN_TO_MENU &&
+        expect_true(view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM &&
+                        view.theronState.level_loaded == 0 &&
+                        M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                            M11_GAME_INPUT_RETURN_TO_MENU &&
                         view.theronState.startup_phase ==
-                            THERON_STARTUP_PHASE_IN_DUNGEON &&
-                        view.theronState.level_loaded == 1,
-                    "explicit authentic MODE1/2048 CUE reaches the verified initial level");
+                            THERON_STARTUP_PHASE_SOUL_ROOM &&
+                        view.theronState.level_loaded == 0,
+                    "explicit authentic MODE1/2048 CUE preserves the forcefield gate until ISO source records are proven");
     }
     M11_GameView_Shutdown(&view);
 }

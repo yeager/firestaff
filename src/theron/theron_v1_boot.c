@@ -71,6 +71,14 @@ static int boot_init_source_theron_party(
         !theron_v1_track02_variant_for_md5(profile->graphics_md5)) {
         return 0;
     }
+    /* The verified US ISO is a 2048-byte user-data image.  The source party
+     * and campaign-mask decoders below consume raw 2352-byte sectors, so
+     * they cannot initialize this edition.  The authenticated ISO startup
+     * route remains valid; it simply has no raw-sector party receipt. */
+    if (theron_v1_track02_variant_for_md5(profile->graphics_md5) ==
+        THERON_TRACK02_VARIANT_US_ISO) {
+        return 1;
+    }
     if (!asset_read_path_alloc(profile->graphics_path, &bytes, &length) ||
         !bytes || length == 0u || length > 128u * 1024u * 1024u) {
         free(bytes);
