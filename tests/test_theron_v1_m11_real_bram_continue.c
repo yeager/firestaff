@@ -18,6 +18,9 @@ int main(int argc, char** argv) {
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     Theron_V1_World* world;
+    Theron_V1PceBramBodyReceipt source_body;
+    int source_body_ready;
+    int i;
     int failures = 0;
 
     if (argc != 4) {
@@ -43,6 +46,13 @@ int main(int argc, char** argv) {
         return fail("M11 starts with authenticated US Track 02 and Backup RAM");
     }
     world = (Theron_V1_World*)view.theronWorld;
+    source_body_ready = theron_v1_pce_bram_decode_original_body_path(
+        argv[3], &source_body) && source_body.layout_verified &&
+        source_body.semantics_verified;
+    if (!source_body_ready) {
+        ++failures;
+        fprintf(stderr, "FAIL: authentic Continue test decodes the source-verified Backup RAM body\n");
+    }
     if (!world || view.theronState.save_resume_claim !=
                       THERON_V1_STARTUP_RESUME_SRM ||
         view.theronState.save_resume_srm_active_slot != 0 ||
@@ -91,6 +101,34 @@ int main(int argc, char** argv) {
                 world->party.champions[0].max_stamina,
                 world->party.champions[0].max_mana,
                 world->object_count, world->timer_count);
+    }
+    if (source_body_ready) {
+        const Theron_V1_Champion *theron = &world->party.champions[0];
+        const int16_t attributes[7] = {
+            theron->luck, theron->strength, theron->dexterity,
+            theron->wisdom, theron->vitality, theron->anti_magic,
+            theron->anti_fire
+        };
+        int body_mismatches = 0;
+        for (i = 0; i < 7; ++i) {
+            if (attributes[i] != source_body.theron_max_attributes[i]) {
+                ++body_mismatches;
+            }
+        }
+        for (i = 0; i < 20; ++i) {
+            if (theron->skill_temporary_experience[i] !=
+                    source_body.theron_skill_temporary_experience[i] ||
+                theron->skill_experience[i] !=
+                    source_body.theron_skill_experience[i]) {
+                ++body_mismatches;
+            }
+        }
+        if (body_mismatches != 0) {
+            ++failures;
+            fprintf(stderr,
+                    "FAIL: authentic Continue restores all seven source attributes and 20 temporary/persistent skill-experience pairs (%d mismatches)\n",
+                    body_mismatches);
+        }
     }
     if (M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) !=
             M11_GAME_INPUT_REDRAW ||

@@ -85,9 +85,11 @@ acquired or verified.
   admits slot 0, the explicit menu action emits the original-slot receipt and
   restores Theron's captured stats. The real-media test then skips completed
   Akutuba, selects unlocked dungeon 2 and reaches its Soul Room without
-  claiming that a dungeon level is loaded. Forcefield admission and
-  authenticated dungeon entry remain open; JP Continue and separate US/JP
-  dungeon-entry runtime evidence remain unverified.
+  claiming that a dungeon level is loaded; it compares all seven attributes
+  and all 20 temporary/persistent skill-experience pairs with the decoded
+  authentic save body. Forcefield admission and authenticated dungeon entry
+  remain open; JP Continue and separate US/JP dungeon-entry runtime evidence
+  remain unverified.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound

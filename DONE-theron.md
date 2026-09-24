@@ -6,6 +6,9 @@
   Akutuba-complete 2 KiB Backup RAM capture (`ffabc8d19b0915d4d9632a7ae2e90a97`).
   After restoring the completed Akutuba chapter, the real progression skips
   that completed stage, focuses unlocked dungeon 2, and enters its Soul Room.
+  The integration now compares all seven restored attributes and all 20
+  temporary/persistent skill-experience pairs directly with the decoded,
+  source-verified real Backup RAM body.
   The test explicitly verifies that this remains before forcefield admission
   and does not claim a dungeon level is loaded. The real-media test passes on
   TRV2; JP Continue and authenticated dungeon entry remain open.
