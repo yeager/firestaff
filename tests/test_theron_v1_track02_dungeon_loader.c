@@ -466,6 +466,110 @@ static const char *find_track02(void) {
     return NULL;
 }
 
+static void test_real_us_iso_dungeons_against_raw(
+    const uint8_t *raw_user_data, size_t raw_user_data_size) {
+    static const unsigned int expected_maps[THERON_DUNGEON_COUNT] = {
+        4u, 8u, 5u, 6u, 3u, 4u, 4u
+    };
+    static const unsigned int expected_source_objects[THERON_DUNGEON_COUNT] = {
+        291u, 291u, 299u, 382u, 403u, 343u, 260u
+    };
+    const size_t pregap_bytes =
+        225u * THERON_TRACK02_RAW_USER_DATA_BYTES;
+    const char *home = getenv("HOME");
+    const char *path = getenv("FIRESTAFF_THERON_US_ISO");
+    char fallback[1024];
+    uint8_t *iso = NULL;
+    uint8_t *normalized = NULL;
+    size_t iso_size = 0u;
+
+    if ((!path || !path[0]) && home && home[0]) {
+        snprintf(fallback, sizeof(fallback),
+                 "%s/.firestaff/cache/theron/"
+                 "TQUS02-ceb02343868f80cec899e9b239aff2da.iso", home);
+        path = fallback;
+    }
+    if (!path || !(iso = load_raw_bytes(path, &iso_size))) {
+        printf("  SKIP: authentic assembled US Track 02 ISO unavailable\n");
+        return;
+    }
+    assert(iso_size == 6596608u);
+    assert(theron_v1_track02_raw_bytes_match_md5(
+        iso, iso_size, THERON_TRACK02_MD5_US_ISO));
+    assert(raw_user_data_size == pregap_bytes + iso_size);
+    assert(memcmp(raw_user_data + pregap_bytes, iso, iso_size) == 0);
+
+    /* This zero prefix restores only the raw image's absent 225-sector
+     * address space. All media bytes remain from the hash-verified ISO. */
+    normalized = (uint8_t *)calloc(raw_user_data_size, 1u);
+    assert(normalized != NULL);
+    memcpy(normalized + pregap_bytes, iso, iso_size);
+
+    for (int dungeon = 1; dungeon <= THERON_DUNGEON_COUNT; ++dungeon) {
+        Theron_V1_World *raw_world =
+            (Theron_V1_World *)calloc(1u, sizeof(*raw_world));
+        Theron_V1_World *iso_world =
+            (Theron_V1_World *)calloc(1u, sizeof(*iso_world));
+        Theron_DungeonLoadResult raw_result;
+        Theron_DungeonLoadResult iso_result;
+        assert(raw_world != NULL && iso_world != NULL);
+        theron_v1_world_init(raw_world);
+        theron_v1_world_init(iso_world);
+        raw_world->current_dungeon = dungeon;
+        iso_world->current_dungeon = dungeon;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   raw_world, dungeon, raw_user_data, raw_user_data_size,
+                   THERON_TRACK02_VARIANT_US_BIN, &raw_result) == 0);
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   iso_world, dungeon, normalized, raw_user_data_size,
+                   THERON_TRACK02_VARIANT_US_BIN, &iso_result) == 0);
+        assert((unsigned int)iso_result.levels_loaded ==
+               expected_maps[dungeon - 1]);
+        assert(iso_result.levels_loaded == raw_result.levels_loaded);
+        assert(iso_result.source_object_count ==
+               expected_source_objects[dungeon - 1]);
+        assert(iso_result.source_object_count == raw_result.source_object_count);
+        assert(iso_result.source_records_decoded ==
+               raw_result.source_records_decoded);
+        assert(iso_result.source_property_table_verified == 1);
+        assert(iso_result.source_property_table_offset ==
+               raw_result.source_property_table_offset);
+        assert(memcmp(iso_result.source_category_counts,
+                      raw_result.source_category_counts,
+                      sizeof(iso_result.source_category_counts)) == 0);
+        assert(memcmp(iso_world->source_objects, raw_world->source_objects,
+                      iso_result.source_object_count *
+                          sizeof(iso_world->source_objects[0])) == 0);
+        for (int level = 0; level < iso_result.levels_loaded; ++level) {
+            const Theron_V1_Level *raw_level =
+                &raw_world->levels[dungeon - 1][level];
+            const Theron_V1_Level *iso_level =
+                &iso_world->levels[dungeon - 1][level];
+            assert(iso_level->source_header_verified == 1);
+            assert(iso_level->source_header_level_index ==
+                   raw_level->source_header_level_index);
+            assert(iso_level->width == raw_level->width);
+            assert(iso_level->height == raw_level->height);
+            assert(iso_level->source_xp_modifier ==
+                   raw_level->source_xp_modifier);
+            assert(iso_level->source_door_type1 ==
+                   raw_level->source_door_type1);
+            assert(iso_level->source_door_type2 ==
+                   raw_level->source_door_type2);
+            assert(memcmp(iso_level->source_tiles, raw_level->source_tiles,
+                          sizeof(iso_level->source_tiles)) == 0);
+        }
+        printf("  authentic US ISO %s: %u maps and %u source objects match raw Track 02\n",
+               (const char *const[]) {"AKUTUBA", "DRATOR", "FORMICIA",
+                   "SARMON", "SHADODAN", "THIEVES", "DEMON"}[dungeon - 1],
+               iso_result.levels_loaded, iso_result.source_object_count);
+        free(raw_world);
+        free(iso_world);
+    }
+    free(normalized);
+    free(iso);
+}
+
 static void test_real_clonecd_dungeons(const char *path) {
     static const size_t us_property_offsets[THERON_DUNGEON_COUNT] = {
         0x099825u, 0x0d9dc5u, 0x11a4d4u, 0x159d1du,
@@ -4574,6 +4678,7 @@ int main(void) {
     raw = load_raw_bytes(path, &raw_size);
     assert(raw != NULL);
     test_all_dungeons(ud, ud_size, raw, raw_size);
+    test_real_us_iso_dungeons_against_raw(ud, ud_size);
     test_real_item_name_sources(ud, ud_size, 2);
     test_real_sarmon_track19_mapping(ud, ud_size, 2);
     test_authentic_coordinate_teleporter_without_endpoint(

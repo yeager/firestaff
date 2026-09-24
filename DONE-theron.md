@@ -14,6 +14,13 @@
 - Verification: `theron_v1_m11_launcher_handoff_boundary` with the authentic
   CUE/ISO under the isolated data root (49 passed, 0 failed, 1 media-optional
   skip).
+- The real-media dungeon-loader regression also compares the normalized ISO
+  against authentic raw Track 02 across all seven dungeons: 34 maps, exact
+  source tile grids, 2,269 source-object records, category counts and
+  property-table provenance match. It independently verifies that every ISO
+  byte equals the raw BIN's user-data stream after the 225-sector pregap.
+  This establishes data-layout equivalence, not campaign transitions or
+  gameplay semantics for later dungeons.
 
 ## 2026-09-24 — JP/US spawn consumer source comparison
 

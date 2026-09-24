@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-09. Only open work is listed here.
+Reviewed 2026-09-24. Only open work is listed here.
 
 Firestaff's product runtime is native. Emulator instrumentation may be used
 to acquire evidence, but emulator launch and BIOS/System Card dependencies
@@ -13,7 +13,10 @@ mutated bytes are rejected. The native source-dungeon test also loads all 34
 maps across those seven dungeons and requires their real map headers, thing
 directories and dungeon-local property tables. This is source-data
 verification only; it does not promote uncaptured transition, presentation,
-save or item-action logic.
+save or item-action logic. The assembled authentic US MODE1/2048 ISO is now
+byte-compared with the raw US user-data stream after its 225-sector pregap;
+the source-only loader reproduces all 34 maps and 2,269 source-object records
+across the seven dungeons with identical tile grids and property provenance.
 The supplied US CloneCD ZIP is also a native source owner: its `.ccd` and
 bounded `.img` Track 02 slice reach the title/startup route directly in memory
 without an emulator, BIOS, extracted game tree or fallback graphics.
