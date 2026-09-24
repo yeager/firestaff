@@ -101,15 +101,24 @@ int main(void) {
     }
     {
         const char *real_cue = getenv("FIRESTAFF_THERON_CUE");
+        int real_is_jp = real_cue && strstr(real_cue, "TQJP") != NULL;
+        const char *real_md5 = real_is_jp
+            ? THERON_TRACK02_MD5_JP_REV1_ISO : THERON_TRACK02_MD5_US_ISO;
+        const char *real_track02_tail = real_is_jp
+            ? "TQJP02End.iso" : "TQUS02End.iso";
         if (real_cue && real_cue[0] &&
             (theron_v1_track01_cdda_handoff_from_verified_media(
-                 real_cue, THERON_TRACK02_MD5_US_ISO, &handoff) !=
+                 real_cue, real_md5, &handoff) !=
                  THERON_TRACK01_CDDA_AVAILABLE ||
              !handoff.playback_handoff_ready || !handoff.original_cdda ||
              !handoff.audio_is_vorbis || strstr(handoff.audio_path, ".ogg") == NULL ||
-             strstr(handoff.track02_path, "TQUS02End.iso") == NULL)) {
+             strstr(handoff.track02_path, real_track02_tail) == NULL)) {
             fprintf(stderr, "real Track 01 OGG handoff rejected: %s\n",
                     handoff.unavailable_reason);
+            fprintf(stderr, "status=%d ready=%d cdda=%d vorbis=%d audio=%s track02=%s\n",
+                    handoff.status, handoff.playback_handoff_ready,
+                    handoff.original_cdda, handoff.audio_is_vorbis,
+                    handoff.audio_path, handoff.track02_path);
             failed = 1;
         } else if (real_cue && real_cue[0]) {
             Theron_Track01CddaStream real_stream = {0};

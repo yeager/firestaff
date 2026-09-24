@@ -576,6 +576,7 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     char current_file[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
     char audio_file[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
     char track02_file[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
+    char declared_track02_path[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
     unsigned int current_track = 0u, track01_count = 0u, track01_index_count = 0u,
                  track02_count = 0u;
     int current_is_track01 = 0, current_audio = 0, current_track02_mode1 = 0;
@@ -614,7 +615,7 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
             current_track = track;
             current_audio = audio;
             current_is_track01 = track == 1u;
-            current_track02_mode1 = track02_mode1;
+            current_track02_mode1 = track == 2u && track02_mode1;
             if (current_is_track01 && current_audio && current_file[0]) {
                 ++track01_count;
                 snprintf(audio_file, sizeof(audio_file), "%s", current_file);
@@ -634,12 +635,24 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
         }
     }
     fclose(cue);
+    if (track02_file[0] &&
+        (!tqr_cue_path_for_file(media_path, track02_file,
+                                declared_track02_path) ||
+         !tqr_path_is_readable(declared_track02_path))) {
+        if (!tqr_cue_known_split_track02_path(media_path, track02_file,
+                                              declared_track02_path) ||
+            !tqr_path_is_readable(declared_track02_path)) {
+            declared_track02_path[0] = '\0';
+        }
+    }
     if (track01_count != 1u || track01_index_count != 1u || track02_count != 1u ||
         !audio_file[0] || !track02_file[0] ||
         !tqr_cue_path_for_file(media_path, audio_file, out_handoff->audio_path) ||
         !tqr_path_is_readable(out_handoff->audio_path) ||
-        !theron_v1_track02_resolve_media_path(media_path,
-                                              out_handoff->track02_path) ||
+        !declared_track02_path[0] ||
+        snprintf(out_handoff->track02_path,
+                 sizeof(out_handoff->track02_path), "%s",
+                 declared_track02_path) < 0 ||
         !tqr_path_is_readable(out_handoff->track02_path)) {
         /* The supplied original corpus stores CUE-declared WAV names as
          * OGG transcodes.  Resolve only that exact sibling stem; do not
@@ -652,8 +665,10 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
                                         out_handoff->audio_path,
                                         sizeof(out_handoff->audio_path)) ||
             !tqr_path_is_readable(out_handoff->audio_path) ||
-            !theron_v1_track02_resolve_media_path(media_path,
-                                                  out_handoff->track02_path) ||
+            !declared_track02_path[0] ||
+            snprintf(out_handoff->track02_path,
+                     sizeof(out_handoff->track02_path), "%s",
+                     declared_track02_path) < 0 ||
             !tqr_path_is_readable(out_handoff->track02_path)) {
             snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
                      "CUE lacks one readable Track 01 AUDIO and Track 02 MODE1/2352 pair");
