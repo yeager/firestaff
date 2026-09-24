@@ -1046,6 +1046,9 @@ static unsigned int assert_real_teleporters_preserve_map_state(
         assert(((object->flags &
                  THERON_OBJ_F_SOURCE_TELEPORTER_SCOPE_MASK) >>
                 THERON_OBJ_F_SOURCE_TELEPORTER_SCOPE_SHIFT) == source.scope);
+        assert(object->quantity == source.rotation);
+        assert(((object->flags >> 8) & 1u) == source.absolute);
+        assert(((object->flags >> 9) & 1u) == source.sound);
         assert(world->levels[object->dungeon_id - 1][object->level]
                             .squares[object->y][object->x] ==
                THERON_SQUARE_TELEPORTER);
