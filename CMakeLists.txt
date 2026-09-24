@@ -12372,6 +12372,10 @@ if(BUILD_TESTING)
             COMMAND test_dm1_v1_f0128_scheduler_m11_wiring
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(dm1_v1_f0128_scheduler_m11_wiring PROPERTIES
+            LABELS "dm1;atari-st;real-media;native;skip-safe"
+            ENVIRONMENT "FIRESTAFF_DM1_ATARI_STX=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+        )
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_leader_hand_no_dm1_fallback.c")

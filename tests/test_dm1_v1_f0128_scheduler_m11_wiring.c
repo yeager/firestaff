@@ -15,14 +15,18 @@
  * GRAPHICS.DAT is not mounted. No pixels or substitute surfaces are used.
  */
 #include "m11_game_view.h"
+#include "menu_startup_m12.h"
 #include "dm1_v1_f0128_per_square_scheduler_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "render_sdl_m11.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_assertions = 0;
 static int g_failures = 0;
+static int g_skipped = 0;
 
 static void expect_int(const char *id, long got, long want, const char *anchor)
 {
@@ -33,6 +37,12 @@ static void expect_int(const char *id, long got, long want, const char *anchor)
     } else {
         printf("PASS %s == %ld anchor=%s\n", id, want, anchor);
     }
+}
+
+static void expect_skip(const char* message)
+{
+    ++g_skipped;
+    printf("SKIP %s\n", message);
 }
 
 #define TEST_MAP_W 11
@@ -231,6 +241,46 @@ static void test_door_front_scene_matches_contract_plan(void)
     M11_GameView_Shutdown(&state);
 }
 
+static void test_authentic_atari_st_view_receipt(void)
+{
+    const char* dataDir = getenv("FIRESTAFF_DM1_ATARI_STX");
+    M11_GameViewState state;
+    M12_StartupMenuState menu;
+    M12_LauncherRuntimeOptions options;
+    M11_Dm1F0128PerSquareSchedulerReceipt receipt;
+    unsigned char framebuffer[320 * 200];
+
+    if (!dataDir || !dataDir[0]) {
+        expect_skip("authentic Atari STX F0128 receipt requires FIRESTAFF_DM1_ATARI_STX");
+        return;
+    }
+    memset(&options, 0, sizeof(options));
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, "dm1");
+    menu.selectedIndex = 0;
+    menu.activatedIndex = 0;
+    menu.launchRequested = 1;
+    M11_GameView_Init(&state);
+    if (!M11_GameView_OpenSelectedMenuEntry(&state, &menu)) {
+        expect_int("authentic_atari.start", 0, 1,
+                   "mounted authentic Atari STX starts through normal game view");
+        M11_GameView_Shutdown(&state);
+        return;
+    }
+    expect_int("authentic_atari.level_loaded", state.world.dungeon != NULL, 1,
+               "authentic Atari STX owns a mounted dungeon");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    memset(&receipt, 0, sizeof(receipt));
+    M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(&receipt);
+    expect_int("authentic_atari.plan_valid", receipt.valid, 1,
+               "normal Atari runtime draw evaluates F0128");
+    expect_int("authentic_atari.plan_ready", receipt.planReady, 1,
+               "authentic Atari live view builds a source-verified F0128 schedule");
+    expect_int("authentic_atari.plan_dispatched", receipt.sourcePlanDispatched, 1,
+               "authentic Atari F0128 schedule dispatches source material");
+    M11_GameView_Shutdown(&state);
+}
+
 static void test_wall_scene_gates_center_content(void)
 {
     M11_GameViewState state;
@@ -275,11 +325,13 @@ static void test_wall_scene_gates_center_content(void)
 int main(void)
 {
     DM1_V1_F0128_PerSquareSchedulerInitPc34Compat();
+    test_authentic_atari_st_view_receipt();
     test_inactive_frame_publishes_no_plan();
     test_corridor_scene_matches_contract_plan();
     test_door_front_scene_matches_contract_plan();
     test_wall_scene_gates_center_content();
 
-    printf("SUMMARY assertions=%d failures=%d\n", g_assertions, g_failures);
+    printf("SUMMARY assertions=%d failures=%d skipped=%d\n",
+           g_assertions, g_failures, g_skipped);
     return g_failures == 0 ? 0 : 1;
 }

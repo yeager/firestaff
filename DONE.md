@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Extended the DM1 F0128 M11 wiring regression with an optional
+  authentic Atari ST v1.2 runtime path. It enters through the normal M12
+  launcher handoff and proves the source dungeon is mounted and its live
+  F0128 plan is valid, ready, and dispatched. The focused data-backed check
+  passes all 30 assertions; the CTest remains skip-safe without user media.
+  Atari palette ownership is still unverified, so this receipt does not claim
+  that the rendered viewport has authentic non-black pixels.
+
 - 2026-09-24: Corrected the real-media M11 launcher regression so it requires
   the full DM1 Hall-of-Champions pixel-capture chain only when a non-dummy
   presentation window exists. Headless runs now assert that unavailable
