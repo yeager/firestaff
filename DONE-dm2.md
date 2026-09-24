@@ -7,7 +7,17 @@
   runtime receipt for the retail initial party and requires a visible 320×200
   presented frame. The wait keeps the source menu keys from being consumed by
   the movie owner. Direct `--boot-probe` coverage remains a separate path.
-  Remaining DM2 editions/platforms still need equivalent first-runtime evidence.
+  The French DOS route is recorded below; remaining DM2 editions/platforms
+  still need equivalent first-runtime evidence.
+
+## 2026-09-24 — French DOS start-menu runtime
+
+- The authentic French DOS ZIP now follows the ordinary M12 → M11 path through
+  the retail MVE and New-Game inputs to the native runtime receipt at the
+  original party pose `(map=0,x=1,y=8,direction=0,count=1)`. The focused test
+  keeps direct boot-probe movement separate and confirms the French GDAT
+  identity there. This extends the DOS startup evidence only; it does not
+  claim French DOS presentation parity.
 
 ## 2026-09-24 — Amiga start-menu runtime handoff
 

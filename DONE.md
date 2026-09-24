@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: The authentic DM2 French DOS ZIP now passes the normal M12 menu
+  through its MVE and New-Game inputs to the native runtime receipt. Its
+  retail initial party is present at `(map=0,x=1,y=8,direction=0,count=1)`;
+  the separate direct probe retains the French GDAT hash and movement check.
+
 - 2026-09-24: Fixed the authentic CSB Atari ST test's invalid `--menu` plus
   `--boot-probe` combination. Its normal M12-to-M11 route now asserts the
   runtime receipt through `csb-entrance-4`; zero champions and active startup
