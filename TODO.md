@@ -7,7 +7,9 @@
   the platform card, and reaches M11 through that intent. It still needs to
   advance each remaining game from this same menu handoff to its first
   source-owned runtime frame; the separate boot-probe cases do not prove that
-  menu path.
+  menu path. Theron's authentic Japanese edition now reaches a source-owned
+  runtime receipt through the same M12-selected M11 menu handoff; verify that
+  path through its first presented runtime frame.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice. Authentic DM1 Atari ST v1.2 and DM2 DOS English now also
@@ -26,7 +28,7 @@
   that route. German Atari ST 1.2
   and French Atari ST 1.3 also reach DM1 runtime from M12, but their fresh
   receipts have no selected champions; prove the source Champion Hall flow
-  into a playable party. Rechecked against the installed Atari ST 1.2 ZIP in
+ into a playable party. Rechecked against the installed Atari ST 1.2 ZIP in
   `.firestaff/data/dm1`: the M12 boot probe reaches `dm1-runtime` with
   `champions=0`, `dm1StartupHandoffExecuted=0`, and
   `dm1CompleteEntranceToHoC=0`. This confirms that the generic runtime handoff
@@ -48,7 +50,8 @@
   and visual parity remains deferred.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
-  parity.
+  parity. Other DM1 editions, remaining DM2 platforms, Nexus and Theron still
+  need equivalent evidence. Keep this separate from visual parity.
 
 - Extend F0219 current-cell collision coverage to original-media encounters,
   half-square creature footprints, nonmaterial/Black Flame cases and inactive

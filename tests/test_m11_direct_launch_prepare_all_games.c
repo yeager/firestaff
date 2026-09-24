@@ -694,6 +694,33 @@ static void run_real_data_handoff_if_available(void) {
                         view.active && view.startedFromLauncher &&
                         strcmp(view.sourceId, kCases[i].gameId) == 0,
                     "real-data startup menu reaches the M11 game handoff");
+        if (strcmp(kCases[i].gameId, "theron") == 0) {
+            static const M12_MenuInput startupInputs[] = {
+                M12_MENU_INPUT_ACCEPT,
+                M12_MENU_INPUT_ACCEPT,
+                M12_MENU_INPUT_ACTION
+            };
+            M11_BootProbeReceipt receipt;
+            size_t inputIndex;
+
+            /* Use the ordinary M12-selected edition and M11 input facade;
+             * the equivalent authentic startup inputs are also exercised by
+             * the CLI probe below, but that separate route does not prove
+             * this menu handoff reaches source-owned runtime. */
+            for (inputIndex = 0;
+                 inputIndex < sizeof(startupInputs) / sizeof(startupInputs[0]);
+                 ++inputIndex) {
+                (void)M11_GameView_HandleInput(&view, startupInputs[inputIndex]);
+            }
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1,
+                        "Theron menu handoff exports its runtime receipt");
+            expect_true(strcmp(receipt.startupPhase, "theron-runtime") == 0 &&
+                            receipt.levelLoaded == 1 && receipt.mapIndex == 0 &&
+                            receipt.partyX == 1 && receipt.partyY == 0 &&
+                            receipt.partyDir == 0 && receipt.championCount == 1 &&
+                            receipt.startedFromLauncher == 1,
+                        "authentic Theron menu handoff reaches the JP runtime party");
+        }
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
 

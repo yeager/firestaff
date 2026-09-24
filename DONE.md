@@ -33,6 +33,14 @@
   ordinary M12 handoff cases pass for DM1 and CSB; DM1's zero-champion startup
   and CSB's zero-champion startup remain open gameplay gaps in TODO.
 
+- 2026-09-24: The all-games direct-launch integration now advances Theron's
+  authentic Japanese M12-selected edition through the ordinary M12-to-M11
+  handoff and source-owned startup inputs, then asserts its loaded runtime
+  party receipt. On TRV2 with authentic files under `.firestaff/data/theron`,
+  the full gate passed 207 assertions with 0 failures and 3 optional
+  media-specific skips. First presented runtime-frame coverage remains open
+  in TODO.
+
 - 2026-09-24: Fixed CSB Quick Resume dropping a validated save path unless an
   optional DSA-corpus identity had been bound. The M12 intent now carries the
   exact path for an ordinary CSB save after its native full-resume validation;
