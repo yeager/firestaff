@@ -8,7 +8,7 @@ int main(void) {
     DM2_V1_MacMedia media;
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Japanese Mac ZIP environment is not set");
-        return 0;
+        return 77;
     }
     if (dm2_v1_mac_media_read_zip(zip, &media) != 0) {
         fprintf(stderr, "authentic Japanese Mac ZIP could not be read: %s\n", zip);

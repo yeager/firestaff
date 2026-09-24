@@ -11911,6 +11911,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
         LABELS "dm2;macintosh;real-media;in-memory;skip-safe")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_japanese_media_real.c")
+    add_executable(test_dm2_v1_mac_japanese_media_real
+        tests/test_dm2_v1_mac_japanese_media_real.c
+        src/dm2/dm2_v1_mac_media.c)
+    target_include_directories(test_dm2_v1_mac_japanese_media_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_japanese_media_real PRIVATE
+        firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
+    add_test(NAME dm2_v1_mac_japanese_media_real
+        COMMAND test_dm2_v1_mac_japanese_media_real)
+    set_tests_properties(dm2_v1_mac_japanese_media_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_JA_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_JA.zip"
+        LABELS "dm2;macintosh;japanese;real-media;in-memory;skip-safe")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_real_media.c")
     add_executable(test_dm2_v1_four_platform_catalog_real_media
         tests/test_dm2_v1_four_platform_catalog_real_media.c)
