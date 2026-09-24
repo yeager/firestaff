@@ -399,6 +399,16 @@ static void test_real_sarmon_track19_mapping(
     assert(theron_v1_world_object_track19_item_name_raw(
                world, &wrong_dungeon, &name, &name_size) == 0);
     }
+    {
+        Theron_V1_Object wrong_property = *object;
+        wrong_property.source_property[0] ^= 1u;
+        assert(theron_v1_world_object_track19_item_name_raw(
+                   world, &wrong_property, &name, &name_size) == 0);
+        wrong_property = *object;
+        wrong_property.source_property_valid = 0u;
+        assert(theron_v1_world_object_track19_item_name_raw(
+                   world, &wrong_property, &name, &name_size) == 0);
+    }
     track19.raw_properties[0][0] ^= 1u;
     assert(theron_v1_world_bind_track19_item_name_bank(
                world, &track19, variant) == 0);
@@ -936,6 +946,17 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
                    [inventory_slot].source_x == source_x);
         assert(world->inventory_source[world->party.active_slot]
                    [inventory_slot].source_y == source_y);
+        assert(world->inventory_source[world->party.active_slot]
+                   [inventory_slot].source_raw_size == source_raw_size);
+        assert(memcmp(world->inventory_source[world->party.active_slot]
+                          [inventory_slot].source_raw,
+                      source_raw, source_raw_size) == 0);
+        assert(world->inventory_source[world->party.active_slot]
+                   [inventory_slot].property_valid);
+        assert(memcmp(world->inventory_source[world->party.active_slot]
+                          [inventory_slot].property,
+                      object->source_property,
+                      sizeof(object->source_property)) == 0);
         assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                    world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
                    &input_receipt) == 1);
@@ -965,6 +986,19 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
                        [inventory_slot].source_x == source_x);
             assert(restored->inventory_source[restored->party.active_slot]
                        [inventory_slot].source_y == source_y);
+            assert(restored->inventory_source[restored->party.active_slot]
+                       [inventory_slot].source_raw_size == source_raw_size);
+            assert(memcmp(
+                       restored->inventory_source[restored->party.active_slot]
+                           [inventory_slot].source_raw,
+                       source_raw, source_raw_size) == 0);
+            assert(restored->inventory_source[restored->party.active_slot]
+                       [inventory_slot].property_valid);
+            assert(memcmp(
+                       restored->inventory_source[restored->party.active_slot]
+                           [inventory_slot].property,
+                       object->source_property,
+                       sizeof(object->source_property)) == 0);
             assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                        restored, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
                        &restored_receipt) == 1);
@@ -2230,6 +2264,12 @@ static void test_all_dungeons(
             assert(dst->source_cumulative_column_items ==
                    source_maps.cumulative_column_items[m]);
             assert(dst->creature_budget == src->creature_count);
+            assert(dst->width == (int)src->x_dim + 1);
+            assert(dst->height == (int)src->y_dim + 1);
+            for (unsigned int x = 0u; x <= src->x_dim; ++x)
+                for (unsigned int y = 0u; y <= src->y_dim; ++y)
+                    assert(dst->source_tiles[y][x] ==
+                           source_maps.maps[m].tiles[x][y]);
         }
 
         printf("  %s: %d levels, %d things placed "
@@ -2585,6 +2625,7 @@ static void test_all_jp_dungeons(
     unsigned int target_actuator_types[8][128] = {{0}};
     for (int d = 0; d < 7; d++) {
         Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
+        Theron_DungeonData source_maps;
         assert(world);
         theron_v1_world_init(world);
         world->current_dungeon = d + 1;
@@ -2604,6 +2645,9 @@ static void test_all_jp_dungeons(
         assert(theron_v1_track02_load_full_dungeon_for_variant(
                    world, d + 1, ud, ud_size,
                    THERON_TRACK02_VARIANT_JP_BIN, &result) == 0);
+        assert(theron_v1_track02_dungeon_map_load_for_variant(
+                   ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN,
+                   (unsigned int)d, &source_maps) == 1);
         assert(result.levels_loaded > 0);
         assert(result.source_records_decoded > 0);
         assert(result.raw_only_item_refs == 0);
@@ -2616,6 +2660,21 @@ static void test_all_jp_dungeons(
         assert(result.source_text_data_count == 0);
         assert(result.source_object_count ==
                (unsigned int)result.source_occurrences_decoded);
+        assert(result.levels_loaded == source_maps.map_count);
+        for (unsigned int map_index = 0u;
+             map_index < source_maps.map_count; ++map_index) {
+            const Theron_Map *raw_map = &source_maps.maps[map_index];
+            const Theron_V1_Level *published = &world->levels[d][map_index];
+            const unsigned int width = (unsigned int)raw_map->header.x_dim + 1u;
+            const unsigned int height = (unsigned int)raw_map->header.y_dim + 1u;
+            assert(published->source_header_verified);
+            assert(published->width == (int)width);
+            assert(published->height == (int)height);
+            for (unsigned int x = 0u; x < width; ++x)
+                for (unsigned int y = 0u; y < height; ++y)
+                    assert(published->source_tiles[y][x] ==
+                           raw_map->tiles[x][y]);
+        }
         for (int oi = 0; oi < world->object_count; ++oi) {
             const Theron_V1_Object *object = &world->objects[oi];
             const uint8_t *raw_name = NULL;

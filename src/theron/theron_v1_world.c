@@ -2702,6 +2702,7 @@ int theron_v1_world_object_track19_item_name_raw(
     if (out_size) *out_size = 0u;
     if (!world || !object || !out_bytes || !out_size ||
         !object->source_origin_valid || object->source_dungeon != 4u ||
+        !object->source_property_valid ||
         !world->track19_item_names.valid ||
         !world->track19_item_names.item_mapping_proven ||
         !(world->track19_item_names.mapped_track02_dungeon_mask & (1u << 3)))
@@ -2711,7 +2712,14 @@ int theron_v1_world_object_track19_item_name_raw(
     if (!source->valid || index >= source->count ||
         index >= world->track19_item_names.count ||
         source->raw_type_codes[index] !=
-            world->track19_item_names.raw_type_codes[index]) return 0;
+            world->track19_item_names.raw_type_codes[index] ||
+        (index < THERON_TRACK19_ITEM_PROPERTY_TABLE_COUNT &&
+         (memcmp(object->source_property,
+                 source->raw_properties[index],
+                 THERON_TRACK02_ITEM_PROPERTY_SOURCE_SIZE) != 0 ||
+          memcmp(object->source_property,
+                 world->track19_item_names.raw_properties[index],
+                 THERON_TRACK19_ITEM_PROPERTY_RECORD_BYTES) != 0))) return 0;
     return theron_v1_world_track19_item_name_raw(
         world, index, out_bytes, out_size);
 }
