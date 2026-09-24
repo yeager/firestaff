@@ -561,32 +561,41 @@ static void run_real_data_handoff_if_available(void) {
                              receipt.dm1HoCRuntimeApplyReady &&
                              receipt.dm1HoCProductionConsumerReady),
                         "DM1 receipt consumes HoC full-graphics host render and capture proof");
-            expect_true(receipt.dm1HoCRealAssetCapture &&
-                            receipt.dm1HoCHoCAssetCapture &&
-                            (!hostWindowAvailable ||
-                             (receipt.dm1HoCNoHostFallbackVisuals &&
-                              receipt.dm1HoCMacWindowCapture &&
-                              receipt.dm1HoCReleaseAppCapture &&
-                              receipt.dm1HoCHostWindowCapture &&
-                              receipt.dm1HoCPresentedCapture &&
-                              receipt.dm1HoCPresentedCaptureGeometry &&
-                              receipt.dm1HoCPresentedCapturePixels &&
-                              receipt.dm1HoCPresentedCaptureWidth >= 320 &&
-                              receipt.dm1HoCPresentedCaptureHeight >= 200 &&
-                              receipt.dm1HoCPresentedCaptureBytes >=
-                                  receipt.dm1HoCPresentedCaptureWidth *
-                                  receipt.dm1HoCPresentedCaptureHeight * 4 &&
-                              receipt.dm1HoCPresentedCaptureHash != 0u &&
-                              receipt.dm1HoCHostCaptureRouteMatches &&
-                              receipt.dm1HoCReleaseCaptureOwnershipReady &&
-                              receipt.dm1HoCReceiptOnlyConsumerReady &&
-                              receipt.dm1HoCLowerLevelHelpersReady &&
-                              receipt.dm1HoCHostDrawRejectsBackingFallback &&
-                              receipt.dm1HoCOpenedEntranceFrame &&
-                              receipt.dm1HoCHallMirrorOverlay &&
-                              receipt.dm1HoCBlockedEnterUntilChampion &&
-                              receipt.dm1HoCRenderCommandCount == 3)),
-                        "DM1 HoC proof owns real asset capture, opened entrance, mirror overlay, input block, and no fallback visuals");
+            if (hostWindowAvailable) {
+                expect_true(receipt.dm1HoCRealAssetCapture &&
+                                receipt.dm1HoCHoCAssetCapture &&
+                                receipt.dm1HoCNoHostFallbackVisuals &&
+                                receipt.dm1HoCMacWindowCapture &&
+                                receipt.dm1HoCReleaseAppCapture &&
+                                receipt.dm1HoCHostWindowCapture &&
+                                receipt.dm1HoCPresentedCapture &&
+                                receipt.dm1HoCPresentedCaptureGeometry &&
+                                receipt.dm1HoCPresentedCapturePixels &&
+                                receipt.dm1HoCPresentedCaptureWidth >= 320 &&
+                                receipt.dm1HoCPresentedCaptureHeight >= 200 &&
+                                receipt.dm1HoCPresentedCaptureBytes >=
+                                    receipt.dm1HoCPresentedCaptureWidth *
+                                    receipt.dm1HoCPresentedCaptureHeight * 4 &&
+                                receipt.dm1HoCPresentedCaptureHash != 0u &&
+                                receipt.dm1HoCHostCaptureRouteMatches &&
+                                receipt.dm1HoCReleaseCaptureOwnershipReady &&
+                                receipt.dm1HoCReceiptOnlyConsumerReady &&
+                                receipt.dm1HoCLowerLevelHelpersReady &&
+                                receipt.dm1HoCHostDrawRejectsBackingFallback &&
+                                receipt.dm1HoCOpenedEntranceFrame &&
+                                receipt.dm1HoCHallMirrorOverlay &&
+                                receipt.dm1HoCBlockedEnterUntilChampion &&
+                                receipt.dm1HoCRenderCommandCount == 3,
+                            "DM1 HoC host proof owns real asset capture, opened entrance, mirror overlay, input block, and no fallback visuals");
+            } else {
+                expect_true(!receipt.dm1HoCRealAssetCapture &&
+                                !receipt.dm1HoCHoCAssetCapture &&
+                                !receipt.dm1HoCCaptureProofPassed &&
+                                !receipt.dm1HoCMacWindowCapture &&
+                                !receipt.dm1HoCReleaseAppCapture &&
+                                !receipt.dm1HoCHostWindowCapture,
+                            "DM1 headless handoff does not claim missing HoC capture evidence");
+            }
             expect_true(!hostWindowAvailable ||
                             (receipt.dm1HoCMapWidth > 0 &&
                              receipt.dm1HoCMapHeight > 0),

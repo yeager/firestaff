@@ -1,5 +1,12 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Corrected the real-media M11 launcher regression so it requires
+  the full DM1 Hall-of-Champions pixel-capture chain only when a non-dummy
+  presentation window exists. Headless runs now assert that unavailable
+  capture evidence stays unclaimed. The authentic Atari ST direct-launch and
+  ordinary M12 handoff cases pass for DM1 and CSB; DM1's zero-champion startup
+  and CSB's zero-champion startup remain open gameplay gaps in TODO.
+
 - 2026-09-24: Fixed CSB Quick Resume dropping a validated save path unless an
   optional DSA-corpus identity had been bound. The M12 intent now carries the
   exact path for an ordinary CSB save after its native full-resume validation;
