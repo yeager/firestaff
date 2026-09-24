@@ -104,6 +104,17 @@ no substitute game data has been generated.
   `transition=missing`. This improves the input-delivery diagnosis only; it
   does not establish title/menu selection or gameplay. The trace remains
   private on trv2.
+  Two further 2026-09-24 US captures used the authenticated full CUE, System
+  Card 3.0 and the original Akutuba-complete 2 KiB Backup RAM image
+  (`ffabc8d19b0915d4d9632a7ae2e90a97`). One enabled the opcode-gated Drator
+  menu route; the other also enabled the exact title-wait RUN hook. Neither
+  research hook logged a match. Both captures emitted 25 authentic raw-sector
+  spans and one game-owned `$E009` dispatch/entry, but zero `$E009` data reads,
+  zero authenticated CD-to-RAM receipts, and `transition=missing`. The output
+  BRAM remained byte-identical to the input. These runs confirm that the
+  authenticated save is present in Mednafen but do not establish original
+  title/menu selection, Continue, dungeon entry, or gameplay. The private
+  traces remain on trv2 and are not promoted as runtime evidence.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. The native M11 route is now verified with authentic
   US Track 02 and a 2 KiB Akutuba-complete Backup RAM artifact: it admits slot
