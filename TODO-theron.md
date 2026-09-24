@@ -98,10 +98,15 @@ no substitute game data has been generated.
   skill-experience pairs against the decoded body, skips completed Akutuba,
   selects the next available Track 02 champion and loads dungeon 2, level 0,
   through Soul Room and forcefield. The original-emulator transition has not
-  yet been captured for parity, and JP Continue and separate JP runtime
-  evidence remain unverified. The same authentic run also verifies a native
-  three-step native movement route through floor tiles in the real loaded
-  map; movement parity beyond that bounded route remains open.
+  yet been captured for parity. Japanese Rev. 1 CUE media now reaches its
+  source-backed Akutuba runtime on trv2, but JP Continue remains unverified.
+  A separate authentic 2 KiB JP HUBM/DMS-SG.001 save candidate was found
+  there (MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`); its selected slot's campaign
+  byte is zero, so it does not establish saved progression or qualify as the
+  progressed-save evidence needed for JP Continue. No progressed authentic JP
+  Backup RAM capture is currently staged. The same authentic run also
+  verifies a native three-step movement route through floor tiles in the real
+  loaded map; movement parity beyond that bounded route remains open.
   Production now ignores the Firestaff-only `.tqsv` container; it remains
   available solely to fixture/tooling targets and cannot substitute for the
   original T080/T800 save consumer. The original writer layout is now bound
