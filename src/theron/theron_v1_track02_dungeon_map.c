@@ -74,7 +74,8 @@ int theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
     Theron_QuestBlockOffsets *out)
 {
     if (!out || dungeon_index >= THERON_TRACK02_DUNGEON_COUNT) return 0;
-    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
         *out = g_quest_offsets[dungeon_index];
         return 1;
     }
@@ -121,7 +122,9 @@ int theron_v1_track02_dungeon_map_load_for_variant(
     if (!theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
             variant, dungeon_index, &qb)) return 0;
 
-    size_t dims_abs = UD_BASE + qb.dims_offset;
+    size_t user_data_base = variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+        ? 0u : UD_BASE;
+    size_t dims_abs = user_data_base + qb.dims_offset;
     if (!theron_map_range_fits(dims_abs, 9u * nmaps + 32u, ud_size)) return 0;
 
     const uint8_t *p = ud_data + dims_abs;
@@ -218,7 +221,7 @@ int theron_v1_track02_dungeon_map_load_for_variant(
     list_off += THERON_TRACK02_THING_TYPE_COUNT;
 
     /* Remaining bytes before map tile data are thing list records. */
-    size_t map_abs = UD_BASE + qb.map_data_offset;
+    size_t map_abs = user_data_base + qb.map_data_offset;
     out->thing_list_offset = list_off;
     out->thing_list_size = (list_off < map_abs) ? (map_abs - list_off) : 0;
 

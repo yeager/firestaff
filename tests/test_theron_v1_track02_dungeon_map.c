@@ -72,10 +72,14 @@ static void test_tile_helpers(void) {
 }
 
 static const char *find_track02(void) {
+    const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
     const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     const char *home = getenv("HOME");
     static char path[512];
-    const char *candidates[3] = { explicit_path, NULL, NULL };
+    const char *candidates[3] = {
+        clonecd_path && clonecd_path[0] ? clonecd_path : explicit_path,
+        NULL, NULL
+    };
     if (home && home[0]) {
         snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
         candidates[1] = path;
@@ -112,9 +116,11 @@ static const uint8_t akutuba_ydims[] = { 7, 12, 16, 11 };
 static const uint8_t drator_xdims[]  = { 5, 9, 13, 13, 13, 14, 13, 7 };
 static const uint8_t drator_ydims[]  = { 7, 10, 12, 8, 9, 12, 9, 9 };
 
-static void test_akutuba_maps(const uint8_t *ud, size_t ud_size) {
+static void test_akutuba_maps(const uint8_t *ud, size_t ud_size,
+                              Theron_Track02Variant variant) {
     Theron_DungeonData dd;
-    assert(theron_v1_track02_dungeon_map_load(ud, ud_size, 0, &dd));
+    assert(theron_v1_track02_dungeon_map_load_for_variant(
+        ud, ud_size, variant, 0, &dd));
     assert(dd.map_count == 4);
     assert(dd.dungeon_index == 0);
 
@@ -144,9 +150,11 @@ static void test_akutuba_maps(const uint8_t *ud, size_t ud_size) {
     printf("  AKUTUBA: 4 maps OK\n");
 }
 
-static void test_drator_maps(const uint8_t *ud, size_t ud_size) {
+static void test_drator_maps(const uint8_t *ud, size_t ud_size,
+                             Theron_Track02Variant variant) {
     Theron_DungeonData dd;
-    assert(theron_v1_track02_dungeon_map_load(ud, ud_size, 1, &dd));
+    assert(theron_v1_track02_dungeon_map_load_for_variant(
+        ud, ud_size, variant, 1, &dd));
     assert(dd.map_count == 8);
 
     for (int m = 0; m < 8; m++) {
@@ -160,7 +168,8 @@ static void test_drator_maps(const uint8_t *ud, size_t ud_size) {
     printf("  DRATOR: 8 maps OK\n");
 }
 
-static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
+static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
+                              Theron_Track02Variant variant) {
     const uint8_t expected_maps[] = { 4, 8, 5, 6, 3, 4, 4 };
     const char *names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
@@ -169,7 +178,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
-        int ok = theron_v1_track02_dungeon_map_load(ud, ud_size, d, &dd);
+        int ok = theron_v1_track02_dungeon_map_load_for_variant(
+            ud, ud_size, variant, d, &dd);
         assert(ok);
         assert(dd.map_count == expected_maps[d]);
 
@@ -226,6 +236,11 @@ int main(void) {
     printf("  Static tests OK\n");
 
     const char *track02_path = find_track02();
+    const char *clonecd_env = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
+    Theron_Track02Variant track02_variant =
+        clonecd_env && clonecd_env[0]
+            ? THERON_TRACK02_VARIANT_US_CLONECD_RAW
+            : THERON_TRACK02_VARIANT_US_BIN;
     if (!track02_path) {
         printf("  SKIP: Track 02 BIN not found\n");
         return 0;
@@ -238,9 +253,9 @@ int main(void) {
         return 0;
     }
 
-    test_akutuba_maps(ud, ud_size);
-    test_drator_maps(ud, ud_size);
-    test_all_dungeons(ud, ud_size);
+    test_akutuba_maps(ud, ud_size, track02_variant);
+    test_drator_maps(ud, ud_size, track02_variant);
+    test_all_dungeons(ud, ud_size, track02_variant);
 
     free(ud);
 
