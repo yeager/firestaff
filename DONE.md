@@ -12,7 +12,10 @@
   route now verifies the handoff through its first loaded runtime frame.
   Authentic DM1 PC 3.4 and Atari ST v1.2 start-menu routes now verify their
   first runtime frame. The authentic DM2 DOS English start menu also passes
-  through its source MVE intro to the first presented runtime frame.
+  through its source MVE intro to the first presented runtime frame. DM2 Amiga
+  now advances the complete original SWSH/TITL streams and selects New Game
+  through its authenticated GDAT pointer rectangle before verifying the
+  loaded retail party and presented runtime frame.
   PC 3.4 Original/Modern C040, C007 and the complete native input matrix
   still pass. The focused build and launcher
   contract test pass; the remote CSB test skips because that host has no game

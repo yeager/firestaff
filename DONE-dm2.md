@@ -7,7 +7,17 @@
   runtime receipt for the retail initial party and requires a visible 320×200
   presented frame. The wait keeps the source menu keys from being consumed by
   the movie owner. Direct `--boot-probe` coverage remains a separate path.
-  Other DM2 editions/platforms still need equivalent first-runtime evidence.
+  Remaining DM2 editions/platforms still need equivalent first-runtime evidence.
+
+## 2026-09-24 — Amiga start-menu runtime handoff
+
+- The authentic Amiga CLI regression now advances the original SWSH.DAT and
+  TITL.DAT streams through their 1,345 source-owned 50 Hz ticks, then clicks
+  the original GDAT New Game rectangle through the normal SDL input mapper.
+  It checks the loaded retail party at `(map=0,x=1,y=8,direction=0,count=1)`
+  and requires a visible 320×200 runtime capture. The direct boot-probe input
+  matrix remains a separate check. Initial dungeon frame acceptance and
+  broader Amiga gameplay/render parity remain open in `TODO-dm2.md`.
 
 ## 2026-09-16 — FM Towns New Game real-media revalidation
 

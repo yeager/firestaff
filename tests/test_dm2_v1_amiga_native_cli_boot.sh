@@ -27,6 +27,69 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:1645:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
+# Amiga startup is owned by the original SWSH.DAT -> TITL.DAT streams.
+# Their source tick waits total 1,345 50 Hz VBlanks for this archive.  The
+# retained GDAT then owns New Game at source point (115,65).  At the explicit
+# 1x scale in a 960x600 window, the 320x200 game surface is centered at
+# (320,200), so the SDL click must be sent at window point (435,265).  The
+# host loop also has work between source ticks, so reserve 2,000 loop frames
+# and a 90-second process limit rather than equating script frames with VBlanks.
+case "$app" in
+    */*) app_dir=${app%/*} ;;
+    *) app_dir=. ;;
+esac
+runtime_dir="$app_dir/test-dm2-amiga-startup"
+runtime_probe="$runtime_dir/runtime.json"
+runtime_capture="$runtime_dir/capture"
+mkdir -p "$runtime_capture"
+rm -f "$runtime_probe" "$runtime_capture"/*.bmp
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 960 --height 600 --scale-mode 0 --menu --game dm2 --platform amiga \
+    --data-dir "$archive" \
+    --script 'key:enter,key:enter,key:enter,wait:2000,click:435:265' \
+    --duration 90000 >/dev/null 2>&1
+python3 - "$runtime_probe" "$runtime_capture" <<'PY'
+import json
+from pathlib import Path
+import struct
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm2" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm2-runtime" or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 8, 0, 1)):
+    raise SystemExit(f"FAIL: authentic DM2 Amiga start menu did not reach runtime: {probe}")
+
+frames = list(Path(sys.argv[2]).glob("*.bmp"))
+if len(frames) != 1:
+    raise SystemExit("FAIL: expected one presented DM2 Amiga runtime frame")
+blob = frames[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM2 Amiga runtime screenshot is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if ((width, height, bits) != (320, 200, 24) or
+        offset + stride * height != len(blob)):
+    raise SystemExit("FAIL: invalid DM2 Amiga runtime screenshot geometry")
+pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
+          for y in range(height) for x in range(width)]
+if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 8:
+    raise SystemExit("FAIL: DM2 Amiga runtime frame was not visibly presented")
+print("PASS: authentic DM2 Amiga start menu reached and presented a runtime frame")
+PY
+
 probe_input() {
     input=$1
     expected_party=$2
