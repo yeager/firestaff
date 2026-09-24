@@ -53,7 +53,39 @@ probe_saved_pose() {
                   --boot-probe-expect-runtime-tick-min 195221
                   --boot-probe-expect-runtime-tick-max 195221 --duration 0)
     probe_resume "${common[@]}"
-    probe_resume --menu "${common[@]}" --script enter,enter,enter
+
+    # --boot-probe exercises direct launch and is rejected with --menu.
+    # Run M12's actual Quick Resume row, then verify the same authenticated
+    # F0435 pose through the runtime receipt.
+    case "$app" in
+        */*) app_dir=${app%/*} ;;
+        *) app_dir=. ;;
+    esac
+    runtime_probe="$app_dir/dm1-fr-save-menu-runtime-$$.json"
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm1 --platform pc --data-dir "$data_dir" \
+        --save "$selected_save" --script enter,enter,enter --duration 10000 \
+        >/dev/null 2>&1
+    python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (5, 4, 18, 2, 4) or
+        probe["gameTick"] != 195221):
+    raise SystemExit(f"FAIL: authentic French DM1 M12 Quick Resume failed: {probe}")
+print("PASS: authentic French DM1 M12 Quick Resume reached its saved runtime pose")
+PY
+    rm -f "$runtime_probe"
 }
 
 # Both supplied original files are independent on-disk recovery candidates.

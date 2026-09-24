@@ -14,7 +14,11 @@
   first runtime frame; authentic DM2 Amiga now does the same through its
   original SWSH/TITL and GDAT New Game pointer route. DM2 French DOS now also
   reaches its authenticated initial party through the normal M12 → MVE →
-  New-Game route, with direct-probe movement checked separately. German Atari ST 1.2
+  New-Game route, with direct-probe movement checked separately. The optional
+  French DOS original-save regression's M12 leg now uses normal Quick Resume
+  and a runtime receipt (not the rejected `--menu --boot-probe` pair), but this
+  local checkout lacks the authentic unpacked French EUDATA needed to execute
+  that route. German Atari ST 1.2
   and French Atari ST 1.3 also reach DM1 runtime from M12, but their fresh
   receipts have no selected champions; prove the source Champion Hall flow
   into a playable party. Other DM1 editions, remaining DM2 platforms, Nexus
