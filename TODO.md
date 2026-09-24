@@ -26,7 +26,12 @@
   that route. German Atari ST 1.2
   and French Atari ST 1.3 also reach DM1 runtime from M12, but their fresh
   receipts have no selected champions; prove the source Champion Hall flow
-  into a playable party. Other DM1 editions, remaining DM2 platforms, Nexus
+  into a playable party. Rechecked against the installed Atari ST 1.2 ZIP in
+  `.firestaff/data/dm1`: the M12 boot probe reaches `dm1-runtime` with
+  `champions=0`, `dm1StartupHandoffExecuted=0`, and
+  `dm1CompleteEntranceToHoC=0`. This confirms that the generic runtime handoff
+  is bypassing the source entrance-to-Hall route; it is not a missing-media or
+  rendering-only issue. Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.
 
