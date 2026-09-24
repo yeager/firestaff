@@ -87,6 +87,7 @@ int theron_v1_track02_decode_campaign_mask_source(
         0x00u,0xe3u,0x03u,0x02u
     };
     const size_t *offsets;
+    size_t clonecd_offsets[7];
     const uint32_t *hashes;
     const uint32_t *post_dungeon_hashes;
     size_t common_offset;
@@ -105,7 +106,7 @@ int theron_v1_track02_decode_campaign_mask_source(
 
     if (out) memset(out, 0, sizeof(*out));
     if (!user_data || !out) return 0;
-    if (variant == 2) {
+    if (variant == 2 || variant == 3) {
         common_offset = 0x071800u;
         offsets = g_us_offsets;
         hashes = g_us_hashes;
@@ -138,6 +139,14 @@ int theron_v1_track02_decode_campaign_mask_source(
         text_ordinal_advance_relative_offset = 0x1209u;
         text_ordinal_advance_hash = 0x69e37389u;
     } else return 0;
+    if (variant == 3) {
+        for (i = 0u; i < 7u; ++i)
+            clonecd_offsets[i] = g_us_offsets[i] - 0x70800u;
+        offsets = clonecd_offsets;
+        common_offset -= 0x70800u;
+        post_dungeon_first_offset -= 0x70800u;
+        post_dungeon_shared_program_offset -= 0x70800u;
+    }
     if (common_offset > user_data_size ||
         DESCRIPTOR_LOADER_BYTES > user_data_size - common_offset ||
         mask_fnv1a(user_data + common_offset, DESCRIPTOR_LOADER_BYTES) !=
@@ -311,7 +320,7 @@ int theron_v1_track02_decode_campaign_mask_source(
             text_ordinal_advance_hash;
     }
     out->valid = 1;
-    out->variant = variant;
+    out->variant = variant == 3 ? 2 : variant;
     out->common_source_offset = common_offset;
     out->common_source_bytes = CAMPAIGN_MASK_COMMON_BYTES;
     out->common_source_fnv1a = 0x72af456fu;

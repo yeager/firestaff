@@ -2332,6 +2332,7 @@ int theron_v1_world_bind_track02_retrieval_text_source(
     size_t expected_advance_offset;
     uint32_t expected_advance_fnv1a;
     uint16_t expected_message_relative_offset;
+    size_t expected_offset_shift = 0u;
     unsigned int i;
     if (!world) return 0;
     memset(&world->track02_retrieval_text, 0,
@@ -2366,6 +2367,10 @@ int theron_v1_world_bind_track02_retrieval_text_source(
         expected_advance_offset = 0x2651d2u;
         expected_advance_fnv1a = 0x5813b731u;
         expected_message_relative_offset = 0x013du;
+        /* The same authenticated US program stream appears 225 user-data
+         * sectors earlier when CloneCD omits the Track 02 pregap. */
+        if (source && source->resource_offset == 0x277000u - 0x70800u)
+            expected_offset_shift = 0x70800u;
     } else {
         return 0;
     }
@@ -2373,25 +2378,27 @@ int theron_v1_world_bind_track02_retrieval_text_source(
         !source->source_offset || !source->source_span_bytes ||
         !source->source_span_fnv1a || !source->resource_record_authenticated ||
         source->track02_resource_block != expected_block ||
-        source->resource_offset != expected_resource_offset ||
+        source->resource_offset != expected_resource_offset -
+            expected_offset_shift ||
         source->resource_bytes != 2048u ||
         source->resource_fnv1a != expected_resource_fnv1a ||
-        source->post_dungeon_shared_program_offset != expected_shared_offset ||
+        source->post_dungeon_shared_program_offset != expected_shared_offset -
+            expected_offset_shift ||
         source->post_dungeon_shared_program_fnv1a != expected_shared_fnv1a ||
         source->post_dungeon_ordinal_dispatch_offset !=
-            expected_dispatch_offset ||
+            expected_dispatch_offset - expected_offset_shift ||
         source->post_dungeon_ordinal_dispatch_fnv1a !=
             expected_dispatch_fnv1a ||
         source->post_dungeon_text_opcode_handler_offset !=
-            expected_handler_offset ||
+            expected_handler_offset - expected_offset_shift ||
         source->post_dungeon_text_opcode_handler_fnv1a !=
             expected_handler_fnv1a ||
         source->post_dungeon_text_selector_offset !=
-            expected_selector_offset ||
+            expected_selector_offset - expected_offset_shift ||
         source->post_dungeon_text_selector_fnv1a !=
             expected_selector_fnv1a ||
         source->post_dungeon_text_ordinal_advance_offset !=
-            expected_advance_offset ||
+            expected_advance_offset - expected_offset_shift ||
         source->post_dungeon_text_ordinal_advance_fnv1a !=
             expected_advance_fnv1a ||
         source->message_list_relative_offset !=

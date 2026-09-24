@@ -282,6 +282,9 @@ int theron_v1_track02_load_full_dungeon_for_variant(
 
     unsigned int di = (unsigned int)(dungeon_id - 1);
     int property_table_verified;
+    int source_variant = variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 :
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ? 3 : 2;
+    int world_variant = variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2;
     size_t property_table_offset = 0u;
     Theron_Track02ItemNameSource item_name_source;
     Theron_Track02RetrievalTextSource retrieval_text_source;
@@ -294,27 +297,24 @@ int theron_v1_track02_load_full_dungeon_for_variant(
      * table. */
     if (!theron_v1_track02_decode_item_name_source(
             ud_data, ud_size,
-            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2,
+            source_variant,
             (unsigned int)dungeon_id, &item_name_source) ||
         !theron_v1_world_bind_track02_item_name_source(
-            world, &item_name_source,
-            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2))
+            world, &item_name_source, world_variant))
         return -1;
     if (!theron_v1_track02_decode_retrieval_text_source(
             ud_data, ud_size,
-            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2,
+            source_variant,
             &retrieval_text_source) ||
         !theron_v1_world_bind_track02_retrieval_text_source(
-            world, &retrieval_text_source,
-            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2))
+            world, &retrieval_text_source, world_variant))
         return -1;
     if (!theron_v1_track02_decode_campaign_mask_source(
             ud_data, ud_size,
-            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2,
+            source_variant,
             &campaign_mask_source) ||
         !theron_v1_world_bind_track02_campaign_mask_source(
-            world, &campaign_mask_source,
-            variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2))
+            world, &campaign_mask_source, world_variant))
         return -1;
     property_table_verified = 1;
     property_table_offset = item_name_source.property_source_offset;

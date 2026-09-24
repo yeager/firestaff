@@ -20,6 +20,7 @@ typedef struct {
     const uint8_t *bytes;
     size_t size;
     size_t raw_offset;
+    size_t raw_end;
     unsigned int slot;
 } UsGlyphCursor;
 
@@ -36,7 +37,7 @@ static int read_glyph(UsGlyphCursor *cursor, uint8_t *out) {
     uint16_t word;
     unsigned int shift;
     if (!cursor || !out || cursor->raw_offset + 1u >= cursor->size ||
-        cursor->raw_offset >= THERON_US_ROSTER_RAW_END || cursor->slot > 2u) {
+        cursor->raw_offset >= cursor->raw_end || cursor->slot > 2u) {
         return 0;
     }
     word = (uint16_t)cursor->bytes[cursor->raw_offset] |
@@ -98,23 +99,31 @@ int theron_v1_track02_us_roster_read(
     Theron_Track02UsRosterReceipt out_records[
         THERON_TRACK02_US_ROSTER_COUNT]) {
     UsGlyphCursor cursor;
+    size_t offset_shift;
 
     if (!out_records) return 0;
     memset(out_records, 0,
            sizeof(*out_records) * THERON_TRACK02_US_ROSTER_COUNT);
     if (!track02_data || !md5_hex ||
-        strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) != 0 &&
+         strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0) ||
         !theron_v1_track02_raw_bytes_match_md5(
-            track02_data, track02_size, md5_hex) ||
-        track02_size < THERON_US_ROSTER_RAW_END ||
-        fnv1a32(track02_data + THERON_US_ROSTER_RAW_OFFSET,
+            track02_data, track02_size, md5_hex)) {
+        return 0;
+    }
+    offset_shift = strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0
+        ? 225u * THERON_TRACK02_RAW_SECTOR_BYTES : 0u;
+    if (THERON_US_ROSTER_RAW_OFFSET < offset_shift ||
+        track02_size < THERON_US_ROSTER_RAW_END - offset_shift ||
+        fnv1a32(track02_data + THERON_US_ROSTER_RAW_OFFSET - offset_shift,
                 THERON_US_ROSTER_RAW_END - THERON_US_ROSTER_RAW_OFFSET) !=
             THERON_US_ROSTER_FNV1A) {
         return 0;
     }
     cursor.bytes = track02_data;
     cursor.size = track02_size;
-    cursor.raw_offset = THERON_US_ROSTER_RAW_OFFSET;
+    cursor.raw_offset = THERON_US_ROSTER_RAW_OFFSET - offset_shift;
+    cursor.raw_end = THERON_US_ROSTER_RAW_END - offset_shift;
     cursor.slot = 0u;
 
     for (unsigned int index = 0u;
@@ -164,5 +173,5 @@ int theron_v1_track02_us_roster_read(
         record->next_raw_offset = (uint32_t)cursor.raw_offset;
         record->valid = 1;
     }
-    return cursor.raw_offset == THERON_US_ROSTER_RAW_END;
+    return cursor.raw_offset == cursor.raw_end;
 }

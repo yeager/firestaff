@@ -466,6 +466,56 @@ static const char *find_track02(void) {
     return NULL;
 }
 
+static void test_real_clonecd_dungeons(const char *path) {
+    static const size_t us_property_offsets[THERON_DUNGEON_COUNT] = {
+        0x099825u, 0x0d9dc5u, 0x11a4d4u, 0x159d1du,
+        0x19a64eu, 0x1d999fu, 0x21a32du
+    };
+    static const uint16_t text_words[THERON_DUNGEON_COUNT] = {
+        0x013cu, 208u, 224u, 232u, 224u, 217u, 232u
+    };
+    size_t track02_size = 0u, user_data_size = 0u;
+    uint8_t *track02 = load_raw_bytes(path, &track02_size);
+    uint8_t *user_data = load_track02_ud(path, &user_data_size);
+    assert(track02 != NULL && user_data != NULL);
+    for (int dungeon = 1; dungeon <= THERON_DUNGEON_COUNT; ++dungeon) {
+        Theron_V1_World *world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+        Theron_DungeonLoadResult result;
+        Theron_DungeonData maps;
+        assert(world != NULL);
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon;
+        bind_real_track02_party(world, track02, track02_size,
+                                THERON_TRACK02_MD5_US_CLONECD_BIN);
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   world, dungeon, user_data, user_data_size,
+                   THERON_TRACK02_VARIANT_US_CLONECD_RAW, &result) == 0);
+        assert(theron_v1_track02_dungeon_map_load_for_variant(
+                   user_data, user_data_size,
+                   THERON_TRACK02_VARIANT_US_CLONECD_RAW,
+                   (unsigned int)(dungeon - 1), &maps) == 1);
+        assert(result.levels_loaded == maps.map_count);
+        assert(result.source_records_decoded > 0);
+        assert(result.raw_only_item_refs == 0);
+        assert(result.source_property_table_verified == 1);
+        assert(result.source_property_table_offset ==
+               us_property_offsets[dungeon - 1] - 0x70800u);
+        assert(result.source_text_data_count == text_words[dungeon - 1]);
+        assert(result.source_object_count ==
+               (unsigned int)result.source_occurrences_decoded);
+        assert(result.source_item_properties_bound > 0);
+        printf("  authentic US CloneCD %s: %d maps, %u source objects, "
+               "%u text words OK\n",
+               (const char *const[]){"AKUTUBA", "DRATOR", "FORMICIA",
+                   "SARMON", "SHADODAN", "THIEVES", "DEMON"}[dungeon - 1],
+               result.levels_loaded, result.source_object_count,
+               result.source_text_data_count);
+        free(world);
+    }
+    free(track02);
+    free(user_data);
+}
+
 static const char *find_jp_track02(void) {
     const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
     const char *home = getenv("HOME");
@@ -4437,6 +4487,10 @@ int main(void) {
     test_generator_binding_rejects_non_source_records();
     test_world_load_rejects_invalid_directory_envelope();
     test_object_binding_rejects_unverified_locations();
+
+    const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
+    if (clonecd_path && clonecd_path[0])
+        test_real_clonecd_dungeons(clonecd_path);
 
     const char *path = find_track02();
     if (!path) {

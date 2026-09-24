@@ -57,6 +57,7 @@ int theron_v1_track02_decode_item_name_source(
     unsigned int dungeon_id,
     Theron_Track02ItemNameSource *out) {
     const Theron_Track02ItemNameSpan *span;
+    Theron_Track02ItemNameSpan clonecd_span;
     size_t cursor, end;
     unsigned int i;
 
@@ -64,6 +65,12 @@ int theron_v1_track02_decode_item_name_source(
     if (!out || !user_data || dungeon_id < 1u || dungeon_id > 7u)
         return 0;
     if (variant == 2) span = &g_us_spans[dungeon_id - 1u];
+    else if (variant == 3) {
+        clonecd_span = g_us_spans[dungeon_id - 1u];
+        clonecd_span.offset -= 0x70800u;
+        clonecd_span.property_offset -= 0x70800u;
+        span = &clonecd_span;
+    }
     else if (variant == 1) span = &g_jp_spans[dungeon_id - 1u];
     else return 0;
     if (span->count > THERON_TRACK02_ITEM_NAME_SOURCE_MAX_COUNT ||
@@ -108,7 +115,7 @@ int theron_v1_track02_decode_item_name_source(
         return 0;
     }
     out->valid = 1;
-    out->variant = variant;
+    out->variant = variant == 3 ? 2 : variant;
     out->dungeon_id = dungeon_id;
     out->count = span->count;
     out->source_offset = span->offset;

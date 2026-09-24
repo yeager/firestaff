@@ -114,12 +114,15 @@ load_dungeon:
      * region's labels. */
     for (i = 1u; i <= THERON_DUNGEON_COUNT; ++i) {
         int item_name_variant =
-            dungeon_data_variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2;
+            dungeon_data_variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 :
+            dungeon_data_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+                ? 3 : 2;
         if (!theron_v1_track02_decode_item_name_source(
                 user_data, user_size, item_name_variant, (unsigned int)i,
                 &item_name_source) ||
             !theron_v1_world_bind_track02_item_name_source(
-                world, &item_name_source, item_name_variant)) {
+                world, &item_name_source,
+                item_name_variant == 3 ? 2 : item_name_variant)) {
             free(user_data);
             return 0;
         }

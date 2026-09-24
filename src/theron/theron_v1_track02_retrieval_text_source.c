@@ -59,12 +59,20 @@ int theron_v1_track02_decode_retrieval_text_source(
     int variant,
     Theron_Track02RetrievalTextSource *out) {
     const Theron_RetrievalTextSpan *span;
+    Theron_RetrievalTextSpan clonecd_span;
     size_t cursor, end;
     unsigned int record;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!user_data || !out) return 0;
     if (variant == 2) span = &g_us_span;
+    else if (variant == 3) {
+        clonecd_span = g_us_span;
+        clonecd_span.resource_offset -= 0x70800u;
+        clonecd_span.offset -= 0x70800u;
+        clonecd_span.shared_program_offset -= 0x70800u;
+        span = &clonecd_span;
+    }
     else if (variant == 1) span = &g_jp_span;
     else return 0;
     if (span->resource_offset > user_data_size ||
@@ -108,7 +116,7 @@ int theron_v1_track02_decode_retrieval_text_source(
     for (record = 0u; record < THERON_TRACK02_RETRIEVAL_TEXT_COUNT; ++record) {
         size_t start = cursor;
         size_t size;
-        if (variant == 2) {
+        if (variant == 2 || variant == 3) {
             const uint8_t *terminator;
             if (end - cursor < 3u || user_data[cursor] != 0x05u ||
                 user_data[cursor + 1u] != 0x03u)
@@ -138,7 +146,7 @@ int theron_v1_track02_decode_retrieval_text_source(
     }
     if (cursor != end) goto reject;
     out->valid = 1;
-    out->variant = variant;
+    out->variant = variant == 3 ? 2 : variant;
     out->track02_resource_block = span->resource_block;
     out->resource_offset = span->resource_offset;
     out->resource_bytes = 2048u;

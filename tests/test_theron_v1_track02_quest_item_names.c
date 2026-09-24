@@ -70,7 +70,8 @@ static unsigned int count_carryable_records_with_item_index(
     unsigned int matches = 0u;
     unsigned int category;
     Theron_Track02Variant source_variant = variant == 1 ?
-        THERON_TRACK02_VARIANT_JP_BIN : THERON_TRACK02_VARIANT_US_BIN;
+        THERON_TRACK02_VARIANT_JP_BIN : variant == 3 ?
+        THERON_TRACK02_VARIANT_US_CLONECD_RAW : THERON_TRACK02_VARIANT_US_BIN;
 
     assert(theron_v1_track02_dungeon_map_load_for_variant(
                user_data, user_data_size, source_variant, dungeon - 1u,
@@ -135,6 +136,8 @@ static void verify_variant(const char *path, int variant) {
     };
     static const uint8_t jp_sizes[7] = {20u, 10u, 12u, 12u, 12u, 14u, 8u};
     size_t user_data_size = 0u;
+    size_t track_relative_shift = variant == 3 ? 0x70800u : 0u;
+    int regional_variant = variant == 3 ? 2 : variant;
     uint8_t *user_data = load_user_data(path, &user_data_size);
     Theron_Track02RetrievalTextSource retrieval;
     Theron_Track02CampaignMaskSource campaign_mask;
@@ -142,7 +145,8 @@ static void verify_variant(const char *path, int variant) {
     assert(user_data != NULL);
     assert(theron_v1_track02_decode_campaign_mask_source(
                user_data, user_data_size, variant, &campaign_mask) == 1);
-    assert(campaign_mask.valid == 1 && campaign_mask.variant == variant);
+    assert(campaign_mask.valid == 1 &&
+           campaign_mask.variant == regional_variant);
     assert(campaign_mask.runtime_address == 0x267cu);
     assert(campaign_mask.campaign_bits_mask == 0x7fu);
     assert(campaign_mask.serialized_campaign_byte_load_proven == 1);
@@ -248,17 +252,17 @@ static void verify_variant(const char *path, int variant) {
     }
     assert(theron_v1_track02_decode_retrieval_text_source(
                user_data, user_data_size, variant, &retrieval) == 1);
-    assert(retrieval.valid == 1 && retrieval.variant == variant);
+    assert(retrieval.valid == 1 && retrieval.variant == regional_variant);
     assert(retrieval.track02_resource_block ==
            (variant == 1 ? 0x040cu : 0x040du));
     assert(retrieval.resource_offset ==
-           (variant == 1 ? 0x276800u : 0x277000u));
+           (variant == 1 ? 0x276800u : 0x277000u - track_relative_shift));
     assert(retrieval.resource_bytes == 2048u);
     assert(retrieval.resource_fnv1a ==
            (variant == 1 ? 0x851c05b3u : 0xeeb43e74u));
     assert(retrieval.resource_record_authenticated == 1);
     assert(retrieval.source_offset ==
-           (variant == 1 ? 0x27696du : 0x27713du));
+           (variant == 1 ? 0x27696du : 0x27713du - track_relative_shift));
     assert(retrieval.source_span_bytes == (variant == 1 ? 364u : 331u));
     assert(retrieval.source_span_fnv1a ==
            (variant == 1 ? 0xcb874921u : 0x4777d500u));
@@ -276,7 +280,8 @@ static void verify_variant(const char *path, int variant) {
         user_data[retrieval.resource_offset] ^= 1u;
         assert(theron_v1_track02_decode_retrieval_text_source(
                    user_data, user_data_size, variant, &retrieval) == 0);
-        user_data[variant == 1 ? 0x276800u : 0x277000u] = saved;
+        user_data[variant == 1 ? 0x276800u :
+                  0x277000u - track_relative_shift] = saved;
     }
     assert(theron_v1_track02_decode_retrieval_text_source(
                user_data, user_data_size, variant, &retrieval) == 1);
@@ -285,7 +290,8 @@ static void verify_variant(const char *path, int variant) {
         user_data[retrieval.source_offset] ^= 1u;
         assert(theron_v1_track02_decode_retrieval_text_source(
                    user_data, user_data_size, variant, &retrieval) == 0);
-        user_data[variant == 1 ? 0x27696du : 0x27713du] = saved;
+        user_data[variant == 1 ? 0x27696du :
+                  0x27713du - track_relative_shift] = saved;
     }
     for (dungeon = 1u; dungeon <= 7u; ++dungeon) {
         Theron_Track02ItemNameSource source, rejected;
@@ -324,11 +330,13 @@ static void verify_variant(const char *path, int variant) {
 
 int main(void) {
     const char *home = getenv("HOME");
+    const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
     char us_path[1024], jp_path[1024];
     assert(home != NULL);
     snprintf(us_path, sizeof(us_path), "%s/.firestaff/data/theron/TQUS02.bin", home);
     snprintf(jp_path, sizeof(jp_path), "%s/.firestaff/data/theron/TQJP02.bin", home);
     verify_variant(us_path, 2);
     verify_variant(jp_path, 1);
+    if (clonecd_path && clonecd_path[0]) verify_variant(clonecd_path, 3);
     return 0;
 }

@@ -279,7 +279,8 @@ int theron_v1_party_refresh_us_source_records(
     int matches[THERON_MAX_CHAMPIONS];
 
     if (!party || !track02_data || !md5_hex ||
-        strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) != 0 &&
+         strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0) ||
         !theron_v1_track02_us_roster_read(
             track02_data, track02_size, md5_hex, records)) return 0;
     if (party->champion_count < 0 ||

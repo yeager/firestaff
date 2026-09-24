@@ -4414,6 +4414,7 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_track02_roster(
         !md5_hex || !md5_hex[0]) return THERON_STARTUP_ERR_NULL;
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     if (variant != THERON_TRACK02_VARIANT_US_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW &&
         variant != THERON_TRACK02_VARIANT_JP_BIN)
         return THERON_STARTUP_ERR_NOT_READY;
     saved_flow = *flow;
@@ -4421,7 +4422,8 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_track02_roster(
     result = startup_enter_forcefield_with_roster_base(
         flow, party, roster_names, roster_name_count);
     if (result != THERON_STARTUP_OK) return result;
-    if ((variant == THERON_TRACK02_VARIANT_US_BIN &&
+    if (((variant == THERON_TRACK02_VARIANT_US_BIN ||
+          variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) &&
          !theron_v1_party_refresh_us_source_records(
              party, track02_data, track02_size, md5_hex)) ||
         (variant == THERON_TRACK02_VARIANT_JP_BIN &&
