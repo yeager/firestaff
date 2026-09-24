@@ -56,7 +56,10 @@ Reviewed 2026-09-05. Only open work is listed here.
   FS-UAE/Kickstart 1.3 title route; retain as open only a same-source-VBlank
   image pair plus the remaining HUD/viewport/door/audio comparisons. A
   genuine TOS 1.62 capture boot reaches the protected Atari retail Entrance;
-  it does not substitute for an authentic CSB save or a campaign capture.
+  the ordinary M12-to-M11 Atari ST menu route now also reaches the recorded
+  `csb-entrance-4` runtime boundary with the retail STX, but its party has zero
+  champions and startup remains active. Neither proves a playable campaign
+  entry, an authentic CSB save, or a campaign capture.
   Legacy loose-file capture tests that labeled CSB as PC3.4 have been removed;
   replacements must name and authenticate one of the three supported retail
   platforms.

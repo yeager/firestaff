@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-24: Fixed the Atari ST real-media test so it no longer combines
+  incompatible `--menu` and `--boot-probe` modes. Direct CLI probes still
+  verify Original/Modern presentation; the normal menu route now verifies its
+  runtime receipt against the authentic STX through `csb-entrance-4`. The
+  receipt has a loaded level but zero champions and active startup, so this
+  remains an entrance boundary, not proof of a playable campaign party.
+
 - 2026-09-16: Revalidated native launch coverage against the supplied retail
   Atari STX, Amiga ZIP/ADF, and FM Towns ZIP without external runtime
   emulators or extraction. Atari passed campaign title, input matrix and

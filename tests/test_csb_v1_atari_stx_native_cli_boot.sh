@@ -147,24 +147,49 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
 
 for mode in v1 v21; do
     case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
-    for route in cli menu; do
-        if [ "$route" = menu ]; then
-            set -- --menu --script enter,enter,enter,enter
-        else
-            set -- --script enter
-        fi
-        mode_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-            --game csb --platform atari-st --data-dir "$media_path" "$@" \
-            --presentation-mode "$mode" --boot-probe --boot-probe-frames 180 \
-            --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
-            --duration 0 2>&1)" || {
-            printf '%s\n' "$mode_output" >&2; exit 1;
-        }
-        if ! printf '%s\n' "$mode_output" | grep -Fq "presentationMode=$expected_mode "; then
-            printf '%s\n' "$mode_output" >&2
-            printf 'FAIL: CSB Atari %s did not preserve %s\n' "$route" "$mode" >&2
-            exit 1
-        fi
-    done
+    mode_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --platform atari-st --data-dir "$media_path" --script enter \
+        --presentation-mode "$mode" --boot-probe --boot-probe-frames 180 \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1)" || {
+        printf '%s\n' "$mode_output" >&2; exit 1;
+    }
+    if ! printf '%s\n' "$mode_output" | grep -Fq "presentationMode=$expected_mode "; then
+        printf '%s\n' "$mode_output" >&2
+        printf 'FAIL: CSB Atari CLI did not preserve %s\n' "$mode" >&2
+        exit 1
+    fi
 done
-echo "PASS: native CSB Atari ST campaign title, input matrix, and Original/Modern CLI/menu launch"
+
+# --boot-probe intentionally rejects --menu. Verify the normal M12 -> M11
+# path with the runtime receipt instead, retaining the authentic startup
+# boundary even though Atari ST still has no champion-bearing source state.
+case "$firestaff_cli" in
+    */*) app_dir=${firestaff_cli%/*} ;;
+    *) app_dir=. ;;
+esac
+menu_probe="$app_dir/csb-atari-menu-runtime-$$.json"
+trap 'rm -f "$menu_probe"' EXIT HUP INT TERM
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    --menu --game csb --platform atari-st --data-dir "$media_path" \
+    --script 'enter,enter,enter,wait30,enter' --duration 5000 >/dev/null 2>&1
+python3 - "$menu_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "csb" or startup["receiptReady"] != 1 or
+        startup["phase"] != "csb-entrance-4" or startup["active"] != 1 or
+        startup["startupActive"] != 1 or startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
+    raise SystemExit(f"FAIL: authentic CSB Atari start menu left its recorded startup boundary: {probe}")
+print("PASS: authentic CSB Atari start menu reached its source entrance runtime boundary")
+PY
+echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu runtime boundary"

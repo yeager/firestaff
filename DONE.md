@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Fixed the authentic CSB Atari ST test's invalid `--menu` plus
+  `--boot-probe` combination. Its normal M12-to-M11 route now asserts the
+  runtime receipt through `csb-entrance-4`; zero champions and active startup
+  remain explicit evidence limits.
+
 - 2026-09-24: Fixed the two standalone Theron roster test targets to link
   `firestaff_theron`, which supplies the production Track 02 MD5-to-variant
   resolver required by the champion initialization path. Both focused roster
