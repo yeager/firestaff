@@ -296,7 +296,7 @@ int main(void) {
                                      THERON_TRACK02_VARIANT_US_CLONECD_RAW,
                                      "US CloneCD");
     verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_JP_RAW",
-                                     "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin",
+                                     "TQJP02.bin",
                                      THERON_TRACK02_VARIANT_JP_BIN, "JP");
     assert(theron_v1_track02_level_data_block_for_variant(
                THERON_TRACK02_VARIANT_US_ISO, 0)->ud_offset == 0x02E800);
