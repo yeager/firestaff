@@ -5,8 +5,9 @@
   verified-platform and custom-options screens with installed original media,
   checks that the launch intent retains the authenticated edition selected on
   the platform card, and reaches M11 through that intent. It still needs to
-  advance each game from this same menu handoff to its first source-owned
-  runtime frame; the separate boot-probe cases do not prove that menu path.
+  advance each remaining game from this same menu handoff to its first
+  source-owned runtime frame; the separate boot-probe cases do not prove that
+  menu path.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice. Authentic DM1 Atari ST v1.2 and DM2 DOS English now also
@@ -15,6 +16,10 @@
   original SWSH/TITL and GDAT New Game pointer route. DM2 French DOS now also
   reaches its authenticated initial party through the normal M12 → MVE →
   New-Game route, with direct-probe movement checked separately. The optional
+  authentic CSB Atari ST 2.0 route now likewise completes ordinary M12
+  selection, ANIMATE.SCR/FTLCODE startup and reaches live source runtime at
+  map 0, (9,0), south. Its initial state has zero champions, so this does not
+  prove a playable campaign party. The optional
   French DOS original-save regression's M12 leg now uses normal Quick Resume
   and a runtime receipt (not the rejected `--menu --boot-probe` pair), but this
   local checkout lacks the authentic unpacked French EUDATA needed to execute
