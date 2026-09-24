@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — JP Track 02 källkartor verifierade på trv2
+
+- Byggde aktuell `main`-arbetskopia i en isolerad Linux-katalog på trv2 och
+  körde `theron_v1_jp_later_dungeon_runtime` mot den befintliga, autentiska
+  japanska Rev. 1 Track 02-filen. Testet band samtliga sju käll-dungeons:
+  34 kartor och 2 269 källobjekt. Detta verifierar kart- och objektdata, inte
+  JP-fortsättning, kampanjövergångar eller visuell paritet.
+
 ## 2026-09-24 — Authentic Continue to the next unlocked chapter
 
 - Extended the M11 Continue regression with the authentic US Track 02 and
