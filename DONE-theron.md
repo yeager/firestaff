@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-24 — JP Rev. 1 ISO dungeon-data boundary
+
+- The hash-identified 305,152-byte `TQJP02End.iso`
+  (`397039af02d50d15c70b74088eb8a1cb`) is now exercised by the dungeon-loader
+  regression. The supplied bytes are all zero, so this is an identity/negative-
+  boundary check only; the image is not accepted as source dungeon content or
+  startable campaign media. File-backed Track 02 intake retains its identity
+  for diagnostics but rejects it with `source_content_empty`.
+- The same test run loads all seven authentic JP raw-BIN dungeons and binds
+  their local item-name/type-code tables. This is source-data coverage, not
+  JP Continue, campaign, presentation, or gameplay parity.
+
 ## 2026-09-24 — US MODE1/2048 ISO forcefield source handoff
 
 - The authentic split-image US Track 02 ISO now binds the same source-defined

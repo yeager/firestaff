@@ -77,6 +77,35 @@ static const char *theron_v1_track02_media_extension(const char *path) {
     return dot ? dot : "";
 }
 
+/* A known digest establishes identity, not that supplied bytes contain usable
+ * source data. The known JP Rev. 1 ISO digest currently identifies an
+ * all-zero payload. Check only this exact edition; other variants keep their
+ * source-specific admission rules. Returns -1 on I/O failure, 0 if any byte
+ * is nonzero, and 1 for a nonempty all-zero payload. */
+static int theron_v1_track02_media_is_all_zero(const char *path) {
+    unsigned char buffer[4096];
+    FILE *file;
+    int saw_byte = 0;
+    size_t count;
+
+    if (!path || !(file = fopen(path, "rb"))) return -1;
+    while ((count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
+        saw_byte = 1;
+        for (size_t i = 0u; i < count; ++i) {
+            if (buffer[i] != 0u) {
+                fclose(file);
+                return 0;
+            }
+        }
+    }
+    if (ferror(file)) {
+        fclose(file);
+        return -1;
+    }
+    fclose(file);
+    return saw_byte ? 1 : -1;
+}
+
 const char *theron_v1_track02_media_failure_reason_id(
     Theron_V1Track02MediaFailureReason reason) {
     switch (reason) {
@@ -90,6 +119,7 @@ const char *theron_v1_track02_media_failure_reason_id(
     case THERON_V1_TRACK02_MEDIA_REASON_CUE_INDEX_INVALID: return "cue_index_invalid";
     case THERON_V1_TRACK02_MEDIA_REASON_USER_DATA_WINDOW_INVALID: return "user_data_window_invalid";
     case THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH: return "expected_hash_mismatch";
+    case THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY: return "source_content_empty";
     default: return "none";
     }
 }
@@ -379,9 +409,10 @@ static int theron_v1_track02_media_materialize_us_split(
     return 1;
 }
 
-/* The JP distribution is different: TQJP02End.iso is already the complete
- * canonical ISO.  Its CUE retains the older TQJP02.iso leaf, so admit that
- * one alias only after proving the sibling's complete original hash. */
+/* The JP distribution is different: its CUE retains the older TQJP02.iso
+ * leaf while the sibling is named TQJP02End.iso. Resolve that explicit alias
+ * only after the sibling's known hash is verified. Payload usability is
+ * checked separately; the supplied digest currently identifies zero-fill. */
 static int theron_v1_track02_media_resolve_jp_complete_alias(
     char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
     char *leaf;
@@ -541,13 +572,14 @@ int theron_v1_track02_raw_media_intake_discover(
         }
     }
 
-    receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_READY;
+    /* Preserve the recognized identity in the receipt, but do not promote
+     * the known zero-filled JP Rev. 1 image to playable campaign media. */
     receipt.mode1_2352 = sector_bytes == 2352;
     receipt.mode1_2048 = sector_bytes == 2048;
-    receipt.raw_trace_preparation_allowed = receipt.cue_consumed &&
-        receipt.mode1_2352 && theron_v1_track02_expected_raw_index01(variant) != 0u;
     receipt.variant = variant;
     snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", md5);
+    receipt.raw_trace_preparation_allowed = receipt.cue_consumed &&
+        receipt.mode1_2352 && theron_v1_track02_expected_raw_index01(variant) != 0u;
     receipt.cue_index01_sector = index01_sector;
     receipt.payload_bytes = payload_bytes;
     receipt.sector_count = payload_bytes / (size_t)sector_bytes;
@@ -556,6 +588,20 @@ int theron_v1_track02_raw_media_intake_discover(
         (size_t)payload_index01_sector * 2048u;
     receipt.logical_user_data_window_bytes =
         (receipt.sector_count - (size_t)payload_index01_sector) * 2048u;
+    if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        int all_zero = theron_v1_track02_media_is_all_zero(
+            receipt.payload_path);
+        if (all_zero != 0) {
+            theron_v1_track02_media_reject(
+                &receipt, all_zero > 0
+                    ? THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY
+                    : THERON_V1_TRACK02_MEDIA_REASON_PAYLOAD_UNAVAILABLE);
+            *out = receipt;
+            return 1;
+        }
+    }
+
+    receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_READY;
     *out = receipt;
     return 1;
 }

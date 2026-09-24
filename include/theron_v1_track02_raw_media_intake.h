@@ -25,12 +25,14 @@ typedef enum {
     THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH,
     THERON_V1_TRACK02_MEDIA_REASON_CUE_INDEX_INVALID,
     THERON_V1_TRACK02_MEDIA_REASON_USER_DATA_WINDOW_INVALID,
-    THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH
+    THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH,
+    THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY
 } Theron_V1Track02MediaFailureReason;
 
 /* File-backed, hash-authenticated Track 02 container receipt. It exposes
- * only CUE/sector coordinates and never reads a level, object, bitmap, or
- * palette payload. */
+ * only CUE/sector coordinates and never decodes a level, object, bitmap, or
+ * palette payload. Known hash identities whose supplied payload is entirely
+ * zero-filled are retained for diagnostics but rejected as launch media. */
 typedef struct {
     Theron_V1Track02MediaIntakeStatus status;
     Theron_V1Track02MediaFailureReason failure_reason;

@@ -159,10 +159,11 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     }
 
     /* Track 02 media ownership is centralized in raw-media intake. It
-     * hash-verifies and materializes only the documented US split image;
-     * JP's similarly named End file is already a complete ISO. Do not
-     * reconstruct bytes here: a second, path-only implementation can accept
-     * a truncated US tail or duplicate JP media. */
+     * hash-verifies and materializes only the documented US split image.
+     * JP's similarly named End payload has a known digest but is zero-filled
+     * in the supplied data set and is rejected as launch media by intake. Do
+     * not reconstruct bytes here: a second path-only implementation could
+     * accept a truncated US tail or unusable JP payload. */
 
     /* Scan for Track 03/04 magic signatures */
     TrAssetResult r = find_tracks_in_buffer(bundle, data, (size_t)file_size);

@@ -148,6 +148,9 @@ static void test_real_jp_cue_path(void) {
         CHECK(strstr(receipt.payload_path, "(Track 02).bin") != NULL);
     } else {
         CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
+        CHECK(receipt.failure_reason ==
+              THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);
         CHECK(receipt.cue_consumed && receipt.mode1_2048 && !receipt.mode1_2352);
         CHECK(receipt.payload_bytes == 305152u);
         CHECK(receipt.sector_count == 149u);
@@ -390,11 +393,18 @@ int main(void) {
 
     if (media && media[0]) {
         CHECK(theron_v1_track02_raw_media_intake_discover(media, &receipt));
-        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
         CHECK(receipt.variant == THERON_TRACK02_VARIANT_US_BIN ||
               receipt.variant == THERON_TRACK02_VARIANT_JP_BIN ||
               receipt.variant == THERON_TRACK02_VARIANT_US_ISO ||
               receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+        if (receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+            CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
+            CHECK(receipt.failure_reason ==
+                  THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);
+            CHECK(!receipt.raw_trace_preparation_allowed);
+        } else {
+            CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
+        }
         CHECK(receipt.sector_count > 0u);
         CHECK(receipt.logical_user_data_window_bytes >= 2048u);
         if (receipt.raw_trace_preparation_allowed) {
@@ -408,6 +418,26 @@ int main(void) {
         }
     } else {
         printf("test_theron_v1_track02_raw_media_intake: SKIP (no local Track 02 media)\n");
+    }
+    if (home && home[0]) {
+        char jp_iso[512];
+        if (snprintf(jp_iso, sizeof(jp_iso),
+                     "%s/.firestaff/data/theron/TQJP02End.iso", home) <
+            (int)sizeof(jp_iso)) {
+            FILE *jp = fopen(jp_iso, "rb");
+            if (jp) {
+                fclose(jp);
+                CHECK(theron_v1_track02_raw_media_intake_discover(
+                    jp_iso, &receipt));
+                CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
+                CHECK(receipt.failure_reason ==
+                      THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);
+                CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+                CHECK(!strcmp(receipt.track02_md5,
+                              THERON_TRACK02_MD5_JP_REV1_ISO));
+                CHECK(receipt.payload_bytes == 305152u);
+            }
+        }
     }
     test_real_us_cue_path();
     test_real_split_us_cue_path();

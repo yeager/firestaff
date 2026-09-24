@@ -20,6 +20,12 @@ across the seven dungeons with identical tile grids and property provenance.
 The supplied US CloneCD ZIP is also a native source owner: its `.ccd` and
 bounded `.img` Track 02 slice reach the title/startup route directly in memory
 without an emulator, BIOS, extracted game tree or fallback graphics.
+The 149-sector JP Rev. 1 `TQJP02End.iso` matches its known hash but the
+supplied bytes are entirely zero-filled. It is not usable dungeon content;
+both the source loader and campaign-media launch intake explicitly reject it.
+The authentic JP raw BIN remains the source for all seven dungeon maps and
+their local item tables. The actual JP Rev. 1 ISO dungeon banks are not yet
+acquired or verified.
 
 - Bind the verified Japanese Rev 1 Track 02 source dungeons to captured
   transition and save consumers. Regional champion records and source-backed

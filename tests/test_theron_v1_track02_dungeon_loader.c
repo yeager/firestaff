@@ -634,6 +634,55 @@ static const char *find_jp_track02(void) {
     return path;
 }
 
+/* JP Rev. 1's supplied Track 02 ISO is a distinct, tiny 149-sector payload.
+ * Its current real-media contract authenticates seven framed level blocks,
+ * not the dungeon-local map/thing/property tables. Keep this negative source
+ * boundary explicit so it cannot accidentally inherit raw-BIN offsets or
+ * be mistaken for the complete JP raw disc. */
+static void test_jp_rev1_iso_dungeon_boundary(void) {
+    const char *home = getenv("HOME");
+    const char *path = getenv("FIRESTAFF_THERON_JP_TRACK02_ISO");
+    char fallback[1024];
+    uint8_t *iso;
+    size_t iso_size = 0u;
+    Theron_DungeonData maps;
+    Theron_Track02ItemNameSource names;
+    Theron_ThingData things;
+    Theron_V1_World *world;
+    Theron_DungeonLoadResult result;
+
+    if ((!path || !path[0]) && home && home[0]) {
+        snprintf(fallback, sizeof(fallback),
+                 "%s/.firestaff/data/theron/TQJP02End.iso", home);
+        path = fallback;
+    }
+    if (!path || !(iso = load_raw_bytes(path, &iso_size))) {
+        puts("  SKIP: authentic JP Rev. 1 Track 02 ISO unavailable");
+        return;
+    }
+    assert(iso_size == 305152u);
+    assert(theron_v1_track02_raw_bytes_match_md5(
+        iso, iso_size, "397039af02d50d15c70b74088eb8a1cb"));
+    for (size_t i = 0u; i < iso_size; ++i) assert(iso[i] == 0u);
+    assert(!theron_v1_track02_dungeon_map_load_for_variant(
+        iso, iso_size, THERON_TRACK02_VARIANT_JP_REV1_ISO, 0u, &maps));
+    assert(!theron_v1_track02_decode_item_name_source(
+        iso, iso_size, 1, 1u, &names));
+    assert(!theron_v1_track02_thing_data_load_for_variant(
+        iso, iso_size, THERON_TRACK02_VARIANT_JP_REV1_ISO, 0u,
+        (const uint16_t[THERON_ITEM_CATEGORY_COUNT]){0}, 0u, &things));
+
+    world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+    assert(world != NULL);
+    theron_v1_world_init(world);
+    assert(theron_v1_track02_load_full_dungeon_for_variant(
+        world, 1, iso, iso_size, THERON_TRACK02_VARIANT_JP_REV1_ISO,
+        &result) == -1);
+    free(world);
+    free(iso);
+    puts("  authentic JP Rev. 1 Track 02 ISO is hash-authenticated but correctly rejected for dungeon maps and thing tables");
+}
+
 static void assert_source_category_census(
     const Theron_DungeonLoadResult *result) {
     unsigned int total = 0;
@@ -4659,6 +4708,7 @@ int main(void) {
     test_generator_binding_rejects_non_source_records();
     test_world_load_rejects_invalid_directory_envelope();
     test_object_binding_rejects_unverified_locations();
+    test_jp_rev1_iso_dungeon_boundary();
 
     const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW");
     if (clonecd_path && clonecd_path[0])

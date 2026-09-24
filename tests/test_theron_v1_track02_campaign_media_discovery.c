@@ -92,6 +92,33 @@ int main(void)
         }
     }
 
+    {
+        const char *jp_iso = getenv("FIRESTAFF_THERON_JP_TRACK02_ISO");
+        const char *home = getenv("HOME");
+        char fallback[1024];
+        FILE *file = NULL;
+        if ((!jp_iso || !jp_iso[0]) && home && home[0] &&
+            snprintf(fallback, sizeof(fallback),
+                     "%s/.firestaff/data/theron/TQJP02End.iso", home) <
+                (int)sizeof(fallback)) {
+            jp_iso = fallback;
+        }
+        if (jp_iso && jp_iso[0]) file = fopen(jp_iso, "rb");
+        if (file) {
+            fclose(file);
+            if (!theron_v1_track02_campaign_media_discover(
+                    jp_iso, "397039af02d50d15c70b74088eb8a1cb", 0, &media) ||
+                media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED ||
+                media.failure_reason !=
+                    THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY ||
+                media.launchable_direct_media ||
+                media.direct_media.status !=
+                    THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED ||
+                strcmp(media.track02_md5,
+                       "397039af02d50d15c70b74088eb8a1cb")) return 9;
+        }
+    }
+
     puts("test_theron_v1_track02_campaign_media_discovery: PASS");
     return 0;
 }
