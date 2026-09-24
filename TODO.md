@@ -31,7 +31,12 @@
   `champions=0`, `dm1StartupHandoffExecuted=0`, and
   `dm1CompleteEntranceToHoC=0`. This confirms that the generic runtime handoff
   is bypassing the source entrance-to-Hall route; it is not a missing-media or
-  rendering-only issue. Other DM1 editions, remaining DM2 platforms, Nexus
+  rendering-only issue. Removing the Atari route override experimentally
+  makes the PC34 path report `dm1StartupHandoffExecuted=1`, but the same
+  authentic-media probe still has `dm1CompleteEntranceToHoC=0` and no HoC
+  capture/runtime receipts. Keep the override until an Atari-specific source
+  receipt actually reaches the Hall; the PC34 transaction is not a substitute.
+  Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.
 
