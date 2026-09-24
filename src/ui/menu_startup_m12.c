@@ -21,6 +21,8 @@
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_game.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "entrance_frontend_pc34_compat.h"
@@ -363,6 +365,7 @@ static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
 static void m12_probe_quick_resume(M12_StartupMenuState* state);
+static int m12_is_csb_original_save_basename(const char* name);
 static void m12_save_config(M12_StartupMenuState* state);
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
@@ -3214,6 +3217,74 @@ static int m12_is_valid_csb_quick_resume_path(const char* path) {
     return csb_v1_runtime_can_load_resume_path(path);
 }
 
+static int m12_is_valid_csb_fmtowns_quick_resume_path(
+    const M12_StartupMenuState* state, const char* path)
+{
+    const M12_AssetVersionStatus* version;
+    CSB_V1_BootStartupLaunch_PC34 launch;
+    CSB_V1_FmtownsGameHandoffReceipt game;
+    CSB_V1_FmtownsUserSaveReceipt save;
+    char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    size_t version_index;
+    CSB_V1_FmtownsSwitchLanguage language;
+    const char* basename;
+
+    if (!state || !path || !path[0]) {
+        return 0;
+    }
+    basename = strrchr(path, '/');
+    if (!basename || (strrchr(path, '\\') && strrchr(path, '\\') > basename))
+        basename = strrchr(path, '\\');
+    basename = basename ? basename + 1 : path;
+    if (strcmp(basename, "CSBGAME.DAT") != 0 &&
+        strcmp(basename, "CSBGAME-JP.DAT") != 0) {
+        return 0;
+    }
+    version_index = (size_t)state->gameOptions[1].versionIndex;
+    version = M12_AssetStatus_GetVersion(&state->assetStatus, "csb",
+                                         version_index);
+    if (!version || !version->matched || !version->versionId ||
+        (strcmp(version->versionId, "fmtowns-en") != 0 &&
+         strcmp(version->versionId, "fmtowns-ja") != 0) ||
+        !M12_AssetStatus_PrepareCSBRuntimeVersion(
+            &state->assetStatus, version->versionId, runtime_dir,
+            sizeof(runtime_dir))) {
+        return 0;
+    }
+    language = strcmp(version->versionId, "fmtowns-ja") == 0
+        ? CSB_FMTOWNS_SWITCH_JAPANESE : CSB_FMTOWNS_SWITCH_ENGLISH;
+    if ((language == CSB_FMTOWNS_SWITCH_JAPANESE &&
+         strcmp(basename, "CSBGAME-JP.DAT") != 0) ||
+        (language == CSB_FMTOWNS_SWITCH_ENGLISH &&
+         strcmp(basename, "CSBGAME.DAT") != 0)) {
+        return 0;
+    }
+    /* ReDMCSB STARTUP1.C F0435 and LOADSAVE.C F0435 make the selected
+     * language-owned C03 program the authority for the C5 save transaction.
+     * Reuse that native reader so a recognized filename alone cannot expose
+     * an incoherent slot as Quick Resume. */
+    memset(&launch, 0, sizeof(launch));
+    memset(&game, 0, sizeof(game));
+    memset(&save, 0, sizeof(save));
+    if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+            runtime_dir, NULL, NULL, NULL, NULL,
+            language == CSB_FMTOWNS_SWITCH_JAPANESE
+                ? CSB_V1_VARIANT_FMTOWNS_JA : CSB_V1_VARIANT_FMTOWNS_EN,
+            &launch)) {
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return 0;
+    }
+    if (!launch.profile ||
+        !csb_v1_fmtowns_game_handoff_open(launch.profile, language, &game) ||
+        !csb_v1_fmtowns_game_user_save_open(launch.profile, &game, path,
+                                            &save)) {
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return 0;
+    }
+    csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+    return save.valid;
+}
+
 static int m12_is_valid_nexus_quick_resume_path(const char* path) {
     Nexus_V1_SaveHeader header;
     unsigned char* champion_buf;
@@ -3436,7 +3507,9 @@ static int m12_is_quick_resume_game_supported(const char* gameId) {
                       );
 }
 
-static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
+static int m12_is_valid_quick_resume_path_for_game(
+                                                   const M12_StartupMenuState* state,
+                                                   const char* gameId,
                                                    const char* path) {
     if (!m12_is_quick_resume_game_supported(gameId)) {
         return 0;
@@ -3445,6 +3518,12 @@ static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
         return m12_is_valid_dm1_quicksave_path(path);
     }
     if (strcmp(gameId, "csb") == 0) {
+        /* F31's C5 save must be checked against the exact language-owned
+         * C03 program selected by M12. The legacy CSB gate covers its native
+         * Firestaff/Atari/CSBWin containers, not F31E/F31J. */
+        if (m12_is_valid_csb_fmtowns_quick_resume_path(state, path)) {
+            return 1;
+        }
         return m12_is_valid_csb_quick_resume_path(path);
     }
     if (strcmp(gameId, "dm2") == 0) {
@@ -3484,7 +3563,7 @@ static int m12_is_csb_original_save_basename(const char* name) {
          * names its original campaign saves MINIF.DAT and MINIG.DAT.  They
          * use the same authenticated native save path as MINI.DAT. */
         "MINI.DAT", "MINIF.DAT", "MINIG.DAT",
-        "CSBGAME.DAT", "CSBGAME.BAK",
+        "CSBGAME.DAT", "CSBGAME.BAK", "CSBGAME-JP.DAT",
         "CSBGAME1.DAT", "CSBGAME1.BAK",
         "CSBGAME2.DAT", "CSBGAME2.BAK",
         "CSBGAME3.DAT", "CSBGAME3.BAK",
@@ -3562,14 +3641,15 @@ static int m12_parse_firestaff_save_game_id(const char* base,
     return 1;
 }
 
-static int m12_try_quick_resume_candidate(const char* gameId,
+static int m12_try_quick_resume_candidate(const M12_StartupMenuState* state,
+                                          const char* gameId,
                                           const char* path,
                                           char* outId,
                                           int outSize) {
     if (!gameId || !path || !outId || outSize <= 0) {
         return 0;
     }
-    if (!m12_is_valid_quick_resume_path_for_game(gameId, path)) {
+    if (!m12_is_valid_quick_resume_path_for_game(state, gameId, path)) {
         return 0;
     }
     snprintf(outId, (size_t)outSize, "%s", gameId);
@@ -3584,7 +3664,8 @@ static int m12_is_known_firestaff_game_id(const char* gameId) {
                       strcmp(gameId, "theron") == 0);
 }
 
-static int m12_infer_quick_resume_game_id(const char* path,
+static int m12_infer_quick_resume_game_id(const M12_StartupMenuState* state,
+                                          const char* path,
                                           char* outId,
                                           int outSize) {
     const char* base;
@@ -3604,7 +3685,7 @@ static int m12_infer_quick_resume_game_id(const char* path,
     if (m12_parse_firestaff_save_game_id(base, firestaffId,
                                          (int)sizeof(firestaffId))) {
         if (m12_is_quick_resume_game_supported(firestaffId)) {
-            return m12_try_quick_resume_candidate(firestaffId, path,
+            return m12_try_quick_resume_candidate(state, firestaffId, path,
                                                   outId, outSize);
         }
         if (m12_is_known_firestaff_game_id(firestaffId)) {
@@ -3613,11 +3694,11 @@ static int m12_infer_quick_resume_game_id(const char* path,
     }
 
     if (m12_is_csb_original_save_basename(base) &&
-        m12_try_quick_resume_candidate("csb", path, outId, outSize)) {
+        m12_try_quick_resume_candidate(state, "csb", path, outId, outSize)) {
         return 1;
     }
     if (m12_is_nexus_save_slot_basename(base) &&
-        m12_try_quick_resume_candidate("nexus", path, outId, outSize)) {
+        m12_try_quick_resume_candidate(state, "nexus", path, outId, outSize)) {
         return 1;
     }
 #if !defined(FIRESTAFF_THERON_PRODUCTION)
@@ -3628,7 +3709,7 @@ static int m12_infer_quick_resume_game_id(const char* path,
                                                    tqsvRoot,
                                                    sizeof(tqsvRoot),
                                                    &tqsvSlot) &&
-            m12_try_quick_resume_candidate("theron", path, outId, outSize)) {
+            m12_try_quick_resume_candidate(state, "theron", path, outId, outSize)) {
             (void)tqsvRoot;
             (void)tqsvSlot;
             return 1;
@@ -3641,23 +3722,23 @@ static int m12_infer_quick_resume_game_id(const char* path,
                                                   srmRoot,
                                                   sizeof(srmRoot),
                                                   &srmSlot) &&
-            m12_try_quick_resume_candidate("theron", path, outId, outSize)) {
+            m12_try_quick_resume_candidate(state, "theron", path, outId, outSize)) {
             (void)srmRoot;
             (void)srmSlot;
             return 1;
         }
     }
 #endif
-    if (m12_try_quick_resume_candidate("dm1", path, outId, outSize)) {
+    if (m12_try_quick_resume_candidate(state, "dm1", path, outId, outSize)) {
         return 1;
     }
-    if (m12_try_quick_resume_candidate("csb", path, outId, outSize)) {
+    if (m12_try_quick_resume_candidate(state, "csb", path, outId, outSize)) {
         return 1;
     }
-    if (m12_try_quick_resume_candidate("dm2", path, outId, outSize)) {
+    if (m12_try_quick_resume_candidate(state, "dm2", path, outId, outSize)) {
         return 1;
     }
-    return m12_try_quick_resume_candidate("nexus", path, outId, outSize);
+    return m12_try_quick_resume_candidate(state, "nexus", path, outId, outSize);
 }
 
 static int m12_discover_dm2_download_save(
@@ -3724,13 +3805,13 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
         return;
     }
 
-    if (!m12_infer_quick_resume_game_id(config.lastSavePath,
+    if (!m12_infer_quick_resume_game_id(state, config.lastSavePath,
                                        state->quickResumeGameId,
                                        (int)sizeof(state->quickResumeGameId))) {
         if (!m12_discover_dm2_download_save(
                 state,
                 discovered_dm2_path, sizeof(discovered_dm2_path)) ||
-            !m12_infer_quick_resume_game_id(
+            !m12_infer_quick_resume_game_id(state,
                 discovered_dm2_path, state->quickResumeGameId,
                 (int)sizeof(state->quickResumeGameId))) {
             return;

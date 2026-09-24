@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-24: M12's Quick Resume gate now validates an external FM Towns
+  `CSBGAME-JP.DAT` against the selected, hash-verified F31J C03 program using
+  the native F0435 reader. A real-media regression confirms the Japanese save
+  path reaches the M12 launch intent, while the incoherent English candidate
+  remains rejected. This covers the launcher handoff; Atari/Amiga DSA-bearing
+  saves and CSBWin extended saves remain unavailable, as recorded in TODO.
+
 - 2026-09-24: Fixed normal CSB Quick Resume so an authenticated save admitted
   by the complete native resume predicate crosses M12's launch intent without
   requiring the separate optional CSBWin DSA-corpus identity. The regression

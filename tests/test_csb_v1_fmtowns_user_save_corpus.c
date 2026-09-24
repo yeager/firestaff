@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 /* FM Towns F0435 user-save corpus boundary.
  *
  * This is deliberately opt-in: it consumes only user-supplied licensed F31
@@ -9,10 +11,14 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_game.h"
 #include "asset_status_m12.h"
+#include "config_m12.h"
+#include "menu_startup_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static int failures;
 
@@ -114,6 +120,72 @@ static void check_candidate(const char *data_dir, const char *corpus_dir,
     csb_v1_boot_startup_launch_cleanup_pc34(&launch);
 }
 
+static void check_launcher_quick_resume(const char *data_dir,
+                                        const char *corpus_dir)
+{
+    char home_template[1024];
+    char cwd[512];
+    const char* cwd_leaf;
+    char config_dir[1024];
+    char save_path[1024];
+    M12_Config config;
+    M12_StartupMenuState menu;
+    M12_LaunchIntent intent;
+
+    if (!getcwd(cwd, sizeof(cwd))) {
+        CHECK(0, "test working directory is readable");
+        return;
+    }
+    cwd_leaf = strrchr(cwd, '/');
+    cwd_leaf = cwd_leaf ? cwd_leaf + 1 : cwd;
+    if (snprintf(home_template, sizeof(home_template),
+                 "%s%s/firestaff-fmtowns-quick-resume-%ld-%u", cwd,
+                 strcmp(cwd_leaf, "build") == 0 ? "" : "/build",
+                 (long)getpid(), (unsigned int)rand()) <= 0 ||
+        mkdir(home_template, 0700) != 0) {
+        CHECK(0, "isolated launcher HOME is created in the build directory");
+        return;
+    }
+    CHECK(setenv("HOME", home_template, 1) == 0,
+          "launcher test redirects configuration to its private HOME");
+    if (snprintf(config_dir, sizeof(config_dir), "%s/.firestaff",
+                 home_template) <= 0 ||
+        mkdir(config_dir, 0700) != 0 ||
+        snprintf(save_path, sizeof(save_path), "%s/CSBGAME-JP.DAT",
+                 corpus_dir) <= 0) {
+        CHECK(0, "private launcher config and save paths are prepared");
+        return;
+    }
+    M12_Config_Load(&config, data_dir);
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", data_dir);
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", save_path);
+    config.gameArchitectureIndex[1] = M12_ARCH_FM_TOWNS;
+    config.gameVersionIndex[1] = M12_AssetStatus_FindVersionIndex(
+        "csb", "fmtowns-ja");
+    M12_Config_Save(&config);
+    M12_StartupMenu_InitWithDataDir(&menu, data_dir, "csb");
+    CHECK(menu.quickResumeAvailable &&
+              strcmp(menu.quickResumeGameId, "csb") == 0 &&
+              strcmp(menu.quickResumeSavePath, save_path) == 0,
+          "M12 offers the authentic language-matched F31J save as Quick Resume");
+    menu.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    CHECK(intent.valid && intent.gameId && strcmp(intent.gameId, "csb") == 0 &&
+              intent.savePath && strcmp(intent.savePath, save_path) == 0,
+          "M12 Quick Resume carries the exact F31J save path to M11");
+
+    M12_Config_Load(&config, data_dir);
+    snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s/CSBGAME.DAT",
+             corpus_dir);
+    config.gameVersionIndex[1] = M12_AssetStatus_FindVersionIndex(
+        "csb", "fmtowns-en");
+    M12_Config_Save(&config);
+    M12_StartupMenu_InitWithDataDir(&menu, data_dir, "csb");
+    CHECK(!menu.quickResumeAvailable,
+          "M12 continues to reject the incoherent F31E candidate");
+}
+
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
@@ -129,11 +201,11 @@ int main(void)
         printf("SKIP: set FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR or "
                "FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR, and "
                "FIRESTAFF_CSB_FMTOWNS_SAVE_CORPUS_DIR\n");
-        return 0;
+        return 77;
     }
     if (!corpus_dir || !corpus_dir[0]) {
         printf("SKIP: set FIRESTAFF_CSB_FMTOWNS_SAVE_CORPUS_DIR\n");
-        return 0;
+        return 77;
     }
     if (loose_data_dir && loose_data_dir[0]) {
         memset(&asset_status, 0, sizeof(asset_status));
@@ -148,7 +220,7 @@ int main(void)
                 sizeof(japanese_data_dir))) {
             printf("SKIP: verified English and Japanese F31 packages are "
                    "unavailable under FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR\n");
-            return 0;
+            return 77;
         }
         check_candidate(english_data_dir, corpus_dir, "CSBGAME.DAT",
                         CSB_FMTOWNS_SWITCH_ENGLISH,
@@ -162,5 +234,6 @@ int main(void)
                     CSB_FMTOWNS_SWITCH_ENGLISH, CSB_V1_VARIANT_FMTOWNS_EN, 0);
     check_candidate(data_dir, corpus_dir, "CSBGAME-JP.DAT",
                     CSB_FMTOWNS_SWITCH_JAPANESE, CSB_V1_VARIANT_FMTOWNS_JA, 1);
+    check_launcher_quick_resume(data_dir, corpus_dir);
     return failures == 0 ? 0 : 1;
 }
