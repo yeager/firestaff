@@ -16,7 +16,7 @@ fi
 # Direct CLI and the menu hand --save to DM2's source GAME_LOAD path; no user
 # media may be materialized beside the archive.
 save_path="$archive::data/sksave1.dat"
-probe_resume() {
+probe_resume_direct() {
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" \
     --boot-probe --boot-probe-frames 5000 \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
@@ -29,8 +29,38 @@ probe_resume() {
     esac
 }
 
-probe_resume --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
-probe_resume --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
+probe_resume_direct --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
+
+# --boot-probe is a direct-launch contract and cannot be combined with M12.
+# Exercise the real Quick Resume row through one normal menu Enter and inspect
+# M11's runtime receipt instead of asserting a boot-probe from an invalid route.
+case "$app" in
+    */*) app_dir=${app%/*} ;;
+    *) app_dir=. ;;
+esac
+runtime_probe="$app_dir/dm2-sksave-menu-runtime-$$.json"
+trap 'rm -f "$runtime_probe"' EXIT HUP INT TERM
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
+    --script enter --duration 3000 >/dev/null 2>&1
+python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm2" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm2-runtime" or
+        (party["mapIndex"], party["mapX"], party["mapY"], party["direction"])
+        != (11, 15, 10, 2)):
+    raise SystemExit(f"FAIL: authentic DM2 SKSAVE1 M12 Quick Resume failed: {probe}")
+print("PASS: authentic DM2 SKSAVE1 M12 Quick Resume reached its saved runtime pose")
+PY
 
 # Modern/V2.2 changes presentation geometry only here.  With real GDAT
 # material present it must retain the source-owned runtime frame and report no

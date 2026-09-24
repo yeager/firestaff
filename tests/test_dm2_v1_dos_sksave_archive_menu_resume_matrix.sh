@@ -13,10 +13,14 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
-# Every direct/menu GAME_LOAD below reads archive::SKSAVE into process memory.
-# Preserve the outer original hash across the complete primary/backup matrix
-# so a future resume path cannot silently write, unpack, or replace media.
+# Every direct and M12 Quick Resume GAME_LOAD below reads archive::SKSAVE into
+# process memory. Preserve the outer original hash across the complete
+# primary/backup matrix so a resume path cannot write or unpack game media.
 archive_hash_before=$(sha256sum "$archive")
+case "$app" in
+    */*) app_dir=${app%/*} ;;
+    *) app_dir=. ;;
+esac
 
 # Original slots and backups are intentionally distinct evidence.  The values
 # below are observed source positions from the mounted retail archive, not a
@@ -25,28 +29,45 @@ archive_hash_before=$(sha256sum "$archive")
 while IFS='|' read -r member map party; do
     [ -n "$member" ] || continue
     save_path="$archive::$member"
-    for launch_route in direct menu; do
-        if [ "$launch_route" = menu ]; then
-            menu_arg=--menu
-        else
-            menu_arg=
-        fi
-        output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-            $menu_arg --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+            --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
             --boot-probe --boot-probe-frames 5000 \
             --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
             --boot-probe-expect-map "$map" --boot-probe-expect-party "$party" \
             --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
-        case "$output" in
-        # A resume receipt proves source GAME_LOAD restored this exact original
-        # slot.  Do not require a frame-acceptance bit here: some authentic save
-        # poses need a later source-owned viewport transaction before their first
-        # scene frame can be admitted, and treating that presentation boundary as
-        # a failed load would erase valid read-only archive-save coverage.
-        *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*"map=$map"*"party=$party"*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*'startedFromLauncher=1'*) ;;
-            *) printf '%s\n' "$output" >&2; exit 1 ;;
-        esac
-    done
+    case "$output" in
+    # A direct resume receipt proves source GAME_LOAD restored this exact
+    # original slot. Some save poses need a later viewport transaction before
+    # their first scene frame; this state check does not claim frame parity.
+    *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*"map=$map"*"party=$party"*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+
+    # Verify each original primary/backup through ordinary M12 Quick Resume.
+    probe_file="$app_dir/dm2-sksave-menu-${member##*/}-$$.json"
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe_file" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
+        --script enter --duration 3000 >/dev/null 2>&1
+    python3 - "$probe_file" "$map" "$party" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+expected_map, expected_pose = int(sys.argv[2]), tuple(
+    int(value) for value in sys.argv[3].split(","))
+actual_pose = (party["mapX"], party["mapY"], party["direction"])
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm2" or startup["receiptReady"] != 1 or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["phase"] != "dm2-runtime" or
+        party["mapIndex"] != expected_map or actual_pose != expected_pose):
+    raise SystemExit(f"FAIL: DM2 M12 Quick Resume state mismatch: {probe}")
+PY
+    rm -f "$probe_file"
 done <<'EOF'
 data/sksave0.dat|11|15,2,3
 data/sksave0.bak|11|15,3,0

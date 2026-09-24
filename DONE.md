@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: Fixed DM2's explicit `--menu --game dm2 --save` path so Enter
+  selects M12 Quick Resume instead of discarding the path on a new-game row.
+  Against the authentic DOS ZIP, direct resume and M12 resume now verify all
+  eight `SKSAVE0–3` primary/backup slots at their original saved poses.
+
 - 2026-09-24: The authentic DM2 French DOS ZIP now passes the normal M12 menu
   through its MVE and New-Game inputs to the native runtime receipt. Its
   retail initial party is present at `(map=0,x=1,y=8,direction=0,count=1)`;

@@ -7672,6 +7672,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                  "%s", o->gameId ? o->gameId : "");
         menuState.quickResumeAvailable = 1;
         menuState.quickResumeLaunchRequested = 1;
+        if (o->menuRequested) {
+            /* An explicit --save with --menu --game is a Quick Resume
+             * request.  Leaving --game's highlighted row selected makes the
+             * first Enter call m12_activate_selected(), which clears the
+             * resume request and launches a fresh game instead.  Start on
+             * the launcher's Quick Resume row so the supplied original path
+             * remains the selected M12 intent. */
+            menuState.selectedIndex = -1;
+        }
         if (o->gameId && strcmp(o->gameId, "csb") == 0) {
             /* The menu discovery identity is mandatory for an implicit
              * CSBWin corpus choice.  `--save` is an explicit user path; let

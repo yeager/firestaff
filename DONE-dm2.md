@@ -1,5 +1,14 @@
 # Firestaff DONE — DM2
 
+## 2026-09-24 — Original DOS save Quick Resume
+
+- Fixed the explicit `--menu --game dm2 --save <path>` route: the M12 row now
+  selects Quick Resume rather than consuming Enter as a fresh-game selection
+  and dropping the supplied save. The real DOS archive regression passes both
+  direct `--boot-probe` resume and ordinary M12 Quick Resume for all eight
+  `SKSAVE0–3` primary/backup files, checking each saved map and party pose.
+  The archive remains unchanged; full save/write ownership remains open.
+
 ## 2026-09-24 — DOS start-menu runtime handoff
 
 - The authentic DOS English ZIP now has a normal M12→M11 regression through
