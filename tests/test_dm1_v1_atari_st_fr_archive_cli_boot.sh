@@ -54,6 +54,38 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+# Follow the same normal M12 -> M11 title/entrance handoff as the English
+# Atari ST v1.2 route; a separate boot probe cannot satisfy this receipt.
+case "$app" in
+    */*) app_dir=${app%/*} ;;
+    *) app_dir=. ;;
+esac
+runtime_probe="$app_dir/dm1-atari-st-fr-runtime-$$.json"
+trap 'rm -f "$runtime_probe"' EXIT
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform atari-st --data-dir "$archive" \
+    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
+    --duration 20000 >/dev/null 2>&1
+python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(f"FAIL: authentic French DM1 Atari start menu did not reach its source runtime state: {probe}")
+print("PASS: authentic French DM1 Atari start menu reached its source runtime state")
+PY
+
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {

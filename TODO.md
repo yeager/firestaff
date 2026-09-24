@@ -12,9 +12,12 @@
   language choice. Authentic DM1 Atari ST v1.2 and DM2 DOS English now also
   follow normal M12 selection and source-owned startup input to a presented
   first runtime frame; authentic DM2 Amiga now does the same through its
-  original SWSH/TITL and GDAT New Game pointer route. Other DM1 editions and
-  remaining DM2 platforms, Nexus and Theron still need equivalent evidence.
-  Keep this separate from visual parity.
+  original SWSH/TITL and GDAT New Game pointer route. German Atari ST 1.2
+  and French Atari ST 1.3 also reach DM1 runtime from M12, but their fresh
+  receipts have no selected champions; prove the source Champion Hall flow
+  into a playable party. Other DM1 editions, remaining DM2 platforms, Nexus
+  and Theron still need equivalent evidence. Keep this separate from visual
+  parity.
 
 - Extend F0219 current-cell collision coverage to original-media encounters,
   half-square creature footprints, nonmaterial/Black Flame cases and inactive

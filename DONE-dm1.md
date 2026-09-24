@@ -8,6 +8,14 @@
   supplied ZIP→ZIP→STX original media; broader Atari editions and pixel parity
   remain open.
 
+- 2026-09-24: Authentic German Atari ST v1.2 and French Atari ST v1.3 now
+  follow their normal M12 start-menu selection, source-owned title/entrance
+  input and M11 runtime handoff. Their receipts bind the selected original
+  STX and report the source start pose `(map=0,x=1,y=3,direction=2)` with no
+  selected champions. This verifies edition-specific runtime admission, not
+  a playable party; continue with the source Champion Hall flow before
+  claiming that boundary complete.
+
 - 2026-09-24: Extended the authentic PC 3.4 launcher regression to inspect
   M11's source-owned startup receipt after the actual game-card → PC → Original
   menu route. It now proves that launch handed off to `dm1-runtime` with the

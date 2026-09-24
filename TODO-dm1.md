@@ -204,6 +204,9 @@
   the XP batch. Paired fatal/nonfatal RAM tests do not replace an authentic
   fight capture. Extend startup sentinel proof to remaining editions and
   actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
+  German Atari ST 1.2 and French Atari ST 1.3 now reach `dm1-runtime` through
+  M12, but both source receipts have `championCount=0`; verify the original
+  Champion Hall selection route into a playable party before closing that gap.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,
