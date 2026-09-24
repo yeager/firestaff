@@ -4,6 +4,8 @@
 
 - Extended the M11 Continue regression with the authentic US Track 02 and
   Akutuba-complete 2 KiB Backup RAM capture (`ffabc8d19b0915d4d9632a7ae2e90a97`).
+  Its test wrapper verifies both exact media hashes before launching the
+  probe, so a synthetic or substituted 2 KiB save cannot count as evidence.
   After restoring the completed Akutuba chapter, the real progression skips
   it, focuses unlocked dungeon 2, selects a source-backed Track 02 champion,
   and enters that dungeon through the Soul Room and forcefield.
