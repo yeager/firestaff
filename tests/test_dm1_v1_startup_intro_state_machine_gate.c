@@ -415,6 +415,7 @@ static void check_title_to_menu_boundary(void) {
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 badMedia;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 atariMedia;
     DM1_V1_StartupTitleRuntimeSourceReceipt_PC34 titleSource;
     DM1_V1_StartupEntranceRenderAudioCommand_PC34 entranceCommand;
     EntranceCompatSourceAnimationStep entranceStep;
@@ -440,6 +441,7 @@ static void check_title_to_menu_boundary(void) {
     memset(&entranceCommand, 0, sizeof(entranceCommand));
     memset(&media, 0, sizeof(media));
     memset(&badMedia, 0, sizeof(badMedia));
+    memset(&atariMedia, 0, sizeof(atariMedia));
     memset(&titleSource, 0, sizeof(titleSource));
     (void)V1_TitleFrontend_GetStepPalette(
         V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS,
@@ -501,6 +503,25 @@ static void check_title_to_menu_boundary(void) {
              0);
     expect_i("DM1 full graphics media receipt plays swsh/title/entrance",
              media.play_swsh && media.play_title && media.play_entrance,
+             1);
+    expect_i("DM1 PC34 media receipt identifies its platform profile",
+             media.platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34,
+             1);
+    expect_i("DM1 Atari ST media receipt builds from common original entrance evidence",
+             dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
+                 "dm1", &atariMedia) &&
+                 atariMedia.handled &&
+                 atariMedia.platform ==
+                     DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
+                 !atariMedia.play_swsh && !atariMedia.play_title &&
+                 atariMedia.play_entrance &&
+                 atariMedia.entrance_palette == -1 &&
+                 atariMedia.entrance_palette_entry_count == 0U &&
+                 atariMedia.entrance_palette_fingerprint == 0U &&
+                 atariMedia.source_evidence &&
+                 strstr(atariMedia.source_evidence, "STARTUP1.C:160-170") != NULL &&
+                 dm1_v1_startup_entrance_timing_receipt_valid_pc34(
+                     &atariMedia),
              1);
     expect_u("DM1 full graphics media receipt keeps SWSH logo hold",
              media.swsh_initial_logo_hold_ms,
@@ -665,6 +686,24 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.entrance_palette_fingerprint ==
                      media.entrance_palette_fingerprint,
              1);
+    expect_i("DM1 Atari entrance renders without the PC34 entrance palette",
+             dm1_v1_startup_entrance_render_audio_command_pc34(
+                 &atariMedia,
+                 closedStep.sourceStepOrdinal,
+                 (int)closedStep.kind,
+                 closedStep.delayTicks,
+                 closedStep.vblankLoopCount,
+                 &entranceCommand) &&
+                 entranceCommand.handled &&
+                 !entranceCommand.present_entrance_palette &&
+                 entranceCommand.entrance_palette == -1 &&
+                 entranceCommand.entrance_palette_fingerprint == 0U,
+             1);
+    badMedia = atariMedia;
+    badMedia.play_title = 1;
+    expect_i("DM1 Atari media validator rejects a fabricated PC title phase",
+             dm1_v1_startup_entrance_timing_receipt_valid_pc34(&badMedia),
+             0);
     expect_i("DM1 entrance command builds rattle door render",
              dm1_v1_startup_entrance_render_audio_command_pc34(
                  &media,
@@ -843,6 +882,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
     DM1_V1_StartupDungeonLoadReceipt_PC34 load_receipt;
     DM1_V1_StartupRuntimeReadyFacts_PC34 ready_facts;
     DM1_V1_StartupRuntimeReadyReceipt_PC34 ready_receipt;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 atari_media;
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 runtime_handoff;
     DM1_V1_StartupSaveResumeCaptureFacts_PC34 save_resume_facts;
     DM1_V1_StartupSaveResumeCaptureReceipt_PC34 save_resume_capture;
@@ -3176,6 +3216,42 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  runtime_handoff.runtime_first_frame_ready &&
                  runtime_handoff.draw_opened_runtime &&
                  !runtime_handoff.suppress_draw_opened,
+             1);
+    expect_i("DM1 Atari handoff does not claim HoC before entrance command",
+             dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
+                 "dm1", &atari_media) &&
+                 ((outcome.title_played = 0,
+                   outcome.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_NONE,
+                   outcome.action =
+                       DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34,
+                   apply_result.handled = 1,
+                   dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+                       "dm1", "dm1", &atari_media, &outcome,
+                       &apply_result, &runtime_handoff)) &&
+                  !runtime_handoff.full_graphics_consumed &&
+                  !runtime_handoff.hoc_runtime_ready),
+             1);
+    expect_i("DM1 Atari C200 handoff reaches Hall without PC title or SWSH",
+             ((outcome.title_played = 0,
+               outcome.entrance_command = ENTRANCE_COMPAT_COMMAND_PATH_ENTER,
+               outcome.action =
+                   DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34,
+               apply_result.handled = 1,
+               dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+                   "dm1", "dm1", &atari_media, &outcome,
+                   &apply_result, &runtime_handoff)) &&
+              runtime_handoff.full_graphics_consumed &&
+              !runtime_handoff.swsh_consumed &&
+              runtime_handoff.title_consumed &&
+              runtime_handoff.entrance_consumed &&
+              runtime_handoff.hoc_runtime_ready &&
+             runtime_handoff.hoc_first_frame_ready),
+             1);
+    atari_media.play_title = 1;
+    expect_i("DM1 Atari runtime handoff rejects a forged PC title phase",
+             !dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+                 "dm1", "dm1", &atari_media, &outcome,
+                 &apply_result, &runtime_handoff),
              1);
     hoc_enter_handoff = runtime_handoff;
 

@@ -87,6 +87,8 @@ startup = probe["startup"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime"):
     raise SystemExit(f"FAIL: authentic DM1 Atari start menu did not reach runtime: {probe}")
 print("PASS: authentic DM1 Atari ST start menu reached its source-owned runtime frame")

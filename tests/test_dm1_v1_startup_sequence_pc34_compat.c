@@ -197,6 +197,17 @@ static void test_entrance_credits_uses_credits_palette(void)
     assert(command.present_credits_frame == 1);
     assert(command.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS);
     assert(command.special_palette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+
+    assert(dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
+        "dm1", &media) == 1);
+    memset(&command, 0, sizeof(command));
+    assert(dm1_v1_startup_entrance_credits_presentation_command_pc34(
+        &media, c005, 320, 200, &command) == 1);
+    assert(command.present_credits_frame == 1);
+    assert(command.special_palette == -1);
+    assert(command.source_asset_receipt_consumed == 1);
+    assert(command.source_timing_receipt_consumed == 1);
+    assert(command.source_palette_receipt_consumed == 0);
 }
 
 static void test_handoff_prelude_plan_null_rejected(void)

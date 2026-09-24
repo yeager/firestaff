@@ -1895,6 +1895,41 @@ static int m11_present_dm1_startup_special_palette(
     return result == M11_RENDER_OK;
 }
 
+static int m11_present_dm1_startup_base_palette(
+    const M11_GameViewState* gameView,
+    const unsigned char* framebuffer) {
+    int targetW = M11_FB_WIDTH;
+    int targetH = M11_FB_HEIGHT;
+    int result;
+    if (!gameView || !framebuffer) return 0;
+    M11_Render_SetV2PresentationActive(
+        m11_dm1_v20_presentation_active(gameView));
+    M11_Render_SetModernPresentationActive(
+        gameView->presentationMode != M12_PRESENTATION_V1_ORIGINAL);
+    if (gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        (void)M11_GameView_PresentationTarget(
+            gameView->presentationMode,
+            gameView->presentationWidth,
+            gameView->presentationHeight,
+            &targetW,
+            &targetH);
+        result = M11_Render_PresentEpxIndexedToResolution(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, targetW, targetH);
+    } else if (M11_GameView_PresentationTarget(
+            gameView->presentationMode,
+            gameView->presentationWidth,
+            gameView->presentationHeight,
+            &targetW,
+            &targetH)) {
+        result = M11_Render_PresentIndexedToResolution(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT, targetW, targetH);
+    } else {
+        result = M11_Render_PresentIndexed(
+            framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    }
+    return result == M11_RENDER_OK;
+}
+
 static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
                                              unsigned char* framebuffer,
                                              const DM1_V1_StartupFullGraphicsMediaReceipt_PC34*
@@ -1918,8 +1953,10 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     M11_AssetLoader_Blit(credits, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
                          0, 0, -1);
     presentationStartedMs = SDL_GetTicks();
-    if (!m11_present_dm1_startup_special_palette(
-            gameView, framebuffer, command.special_palette)) {
+    if (command.special_palette >= 0
+            ? !m11_present_dm1_startup_special_palette(
+                  gameView, framebuffer, command.special_palette)
+            : !m11_present_dm1_startup_base_palette(gameView, framebuffer)) {
         return M11_ENTRANCE_COMMAND_NONE;
     }
     waitResult = m11_wait_for_entrance_credits_done(command.credits_wait_ticks,
@@ -1966,7 +2003,9 @@ static int m11_draw_entrance_opening_doors_asset(M11_GameViewState* gameView,
                                                      door);
 }
 
-static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs);
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
+    int autoEnterAfterMs,
+    int mouseOnly);
 static int m11_delay_ms_with_intro_event_pump(unsigned int delayMs);
 static M12_MenuInput m11_next_script_input(const char** cursor,
                                           int* outWaitFrames);
@@ -2032,7 +2071,10 @@ static int m11_play_redmcsb_entrance_transition(
     M11_Render_SetV2PresentationActive(
         m11_dm1_v20_presentation_active(gameView));
     entrancePalette = mediaReceipt->entrance_palette;
-    if (entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE) {
+    if (entrancePalette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+        !(mediaReceipt->platform ==
+              DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
+          entrancePalette == -1)) {
         return 0;
     }
     if (!DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
@@ -2143,9 +2185,16 @@ static int m11_play_redmcsb_entrance_transition(
                 free(dungeonFrame);
                 return 0;
             }
+        } else if (!m11_present_dm1_startup_base_palette(
+                       gameView, framebuffer)) {
+            free(dungeonFrame);
+            return 0;
         }
         if (step.kind == ENTRANCE_COMPAT_SOURCE_EVENT_WAIT_FOR_INPUT) {
-            M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(autoEnterAfterMs);
+            M11_EntranceCommand cmd = m11_wait_for_redmcsb_entrance_command(
+                autoEnterAfterMs,
+                mediaReceipt->platform ==
+                    DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST);
             if (cmd == M11_ENTRANCE_COMMAND_QUIT) {
                 free(dungeonFrame);
                 return M11_ENTRANCE_COMMAND_QUIT;
@@ -2176,7 +2225,7 @@ static int m11_play_redmcsb_entrance_transition(
         if (M11_Render_PumpEvents()) break;
     }
     memcpy(framebuffer, dungeonFrame, (size_t)M11_FB_BYTES);
-    M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    (void)m11_present_dm1_startup_base_palette(gameView, framebuffer);
     free(dungeonFrame);
     return 1;
 }
@@ -2244,7 +2293,9 @@ static M11_EntranceCommand m11_entrance_route_normalized_touch(float normalizedX
                                              ENTRANCE_MOUSE_BUTTON_LEFT_COMPAT);
 }
 
-static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAfterMs) {
+static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(
+    int autoEnterAfterMs,
+    int mouseOnly) {
     /* ReDMCSB ENTRANCE.C:850-883 redraws the entrance, discards previous
      * input, then waits in the entrance command loop until a fresh command
      * changes G0298_B_NewGame away from C099_MODE_WAITING_ON_ENTRANCE.
@@ -2280,7 +2331,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_EVENT_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
             /* ReDMCSB ENTRANCE.C:850-883 accepts a fresh Return while waiting
              * at the entrance; Space remains inert on the PC/F20 path. */
-            if (ev.type == SDL_EVENT_KEY_DOWN) {
+            if (!mouseOnly && ev.type == SDL_EVENT_KEY_DOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
                         m11_entrance_dispatch_source_locked_key_command((int)ev.key.key));
@@ -2311,7 +2362,7 @@ static M11_EntranceCommand m11_wait_for_redmcsb_entrance_command(int autoEnterAf
             if (ev.type == SDL_QUIT) return M11_ENTRANCE_COMMAND_QUIT;
             /* ReDMCSB ENTRANCE.C:850-883 accepts a fresh Return while waiting
              * at the entrance; Space remains inert on the PC/F20 path. */
-            if (ev.type == SDL_KEYDOWN) {
+            if (!mouseOnly && ev.type == SDL_KEYDOWN) {
                 M11_EntranceCommand keyCommand =
                     m11_entrance_command_path_from_source_command(
                         m11_entrance_dispatch_source_locked_key_command((int)ev.key.keysym.sym));
@@ -3711,6 +3762,72 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         /* Theron's Quest has no source -- no intro needed. */
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
+        if (m11_selected_dm1_is_atari(menuState, launchEntry)) {
+            if (!getenv("FIRESTAFF_EXIT_AFTER_LAUNCH")) {
+                DM1_V1_StartupHandoffPostLaunchPlan_PC34 entrancePlan;
+                DM1_V1_StartupHandoffOutcome_PC34 entranceOutcome;
+                DM1_V1_StartupHostApplyResult_PC34 entranceHostResult;
+                DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34
+                    entranceRuntimeHandoff;
+                M11_EntranceCommand entranceCommand =
+                    M11_ENTRANCE_COMMAND_NONE;
+                int oldFastForward = g_m11_intro_delay_fast_forward;
+
+                memset(&entrancePlan, 0, sizeof(entrancePlan));
+                memset(&entranceOutcome, 0, sizeof(entranceOutcome));
+                memset(&entranceHostResult, 0, sizeof(entranceHostResult));
+                memset(&entranceRuntimeHandoff, 0,
+                       sizeof(entranceRuntimeHandoff));
+                if (!dm1_v1_startup_handoff_post_launch_plan_pc34(
+                        "dm1", &entrancePlan) ||
+                    !entrancePlan.play_entrance ||
+                    !entrancePlan.entrance_full_start_receipt.valid ||
+                    !dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
+                        "dm1", &entrancePlan.media_receipt)) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+
+                /* Atari STARTUP1.C enters the common ENTRANCE.C path without
+                 * the PC SWSH/title phases. A headless boot probe may
+                 * synthesize its bounded C200 handoff; interactive play only
+                 * accepts the source mouse rectangle in COMMAND.C. */
+                if (bootProbe) {
+                    g_m11_intro_delay_fast_forward = 1;
+                }
+                entranceCommand = m11_play_redmcsb_entrance_transition(
+                    gameView, -1,
+                    &entrancePlan.entrance_full_start_receipt,
+                    &entrancePlan.media_receipt);
+                g_m11_intro_delay_fast_forward = oldFastForward;
+                if (entranceCommand != M11_ENTRANCE_COMMAND_ENTER) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+
+                entranceOutcome.title_played = 0;
+                entranceOutcome.entrance_command = (int)entranceCommand;
+                entranceOutcome.action =
+                    DM1_V1_STARTUP_HANDOFF_ACTION_ENTER_GAME_PC34;
+                entranceOutcome.status = "ATARI ST ENTRANCE C200";
+                entranceHostResult.handled = 1;
+                if (!dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+                        "dm1", "dm1", &entrancePlan.media_receipt,
+                        &entranceOutcome, &entranceHostResult,
+                        &entranceRuntimeHandoff) ||
+                    !M11_GameView_ApplyDm1StartupRuntimeHandoff(
+                        gameView, &entranceRuntimeHandoff)) {
+                    M11_GameView_Shutdown(gameView);
+                    M11_GameView_Init(gameView);
+                    m11_set_launch_failed_message(menuState);
+                    return 0;
+                }
+            }
+        }
         if (launchEntry && launchEntry->gameId &&
             strcmp(launchEntry->gameId, "dm1") == 0 &&
             menuState->quickResumeAvailable &&
@@ -4814,7 +4931,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
-            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d},\n"
+            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d},\n"
             "  \"lastAction\": \"%s\",\n"
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
@@ -4834,6 +4951,13 @@ static void m11_write_autotest_runtime_probe(const char* path,
             startupReceipt.active,
             startupReceipt.startupActive,
             startupReceipt.levelLoaded,
+            gameView ? gameView->dm1StartupHandoffExecuted : 0,
+            gameView && gameView->dm1StartupRuntimeHandoffValid &&
+                    gameView->dm1StartupRuntimeHandoffReceipt
+                        .hoc_first_frame_ready
+                ? 1
+                : 0,
+            startupReceipt.dm1CompleteEntranceToHoC,
             gameView ? gameView->lastAction : "",
             lastOutcome,
             gameTick,

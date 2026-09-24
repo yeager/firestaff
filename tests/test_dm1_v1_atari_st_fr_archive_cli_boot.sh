@@ -79,6 +79,8 @@ party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):

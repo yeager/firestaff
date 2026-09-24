@@ -45,8 +45,14 @@ enum {
         DM1_V1_HOC_CAPTURE_CONSUMER_M12_STARTUP_PC34
 };
 
+typedef enum DM1_V1_StartupMediaPlatform_PC34 {
+    DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 = 0,
+    DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST = 1
+} DM1_V1_StartupMediaPlatform_PC34;
+
 typedef struct DM1_V1_StartupFullGraphicsMediaReceipt_PC34 {
     int handled;
+    DM1_V1_StartupMediaPlatform_PC34 platform;
     int play_swsh;
     int play_title;
     int play_entrance;
@@ -1694,6 +1700,13 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     const DM1_V1_StartupHandoffOutcome_PC34* outcome,
     const DM1_V1_StartupHostApplyResult_PC34* host_result,
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt);
+int dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+    const char* selected_game_id,
+    const char* opened_source_id,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    const DM1_V1_StartupHostApplyResult_PC34* host_result,
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt);
 int dm1_v1_startup_save_resume_capture_receipt_pc34(
     const DM1_V1_StartupSaveResumeCaptureFacts_PC34* facts,
     DM1_V1_StartupSaveResumeCaptureReceipt_PC34* out_receipt);
@@ -1862,6 +1875,9 @@ int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
     const DM1_V1_StartupTitleMenuEligibilityFacts_PC34* facts,
     DM1_V1_StartupTitleMenuEligibilityReceipt_PC34* out_receipt);
 int dm1_v1_startup_full_graphics_media_receipt_pc34(
+    const char* source_id,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
+int dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
     const char* source_id,
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt);
 int dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(

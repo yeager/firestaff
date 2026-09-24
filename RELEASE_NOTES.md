@@ -12,6 +12,9 @@
   only through that game's normal launch gate.
 - `Game options`: the modern launcher view now reads the selected title's own
   options for Nexus and Theron's Quest instead of reusing DM2's options.
+- `DM1 Atari ST`: the start menu now follows the Atari source entrance route
+  into the Hall of Champions instead of opening a party-less dungeon through
+  the generic launch path.
 
 # Firestaff v3.0.347
 

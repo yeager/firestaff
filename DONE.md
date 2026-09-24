@@ -1,5 +1,17 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-24: DM1 Atari ST now has a platform-specific M12-to-HoC handoff.
+  Its receipt follows STARTUP1.C's direct entrance route, excludes the PC34
+  SWSH/title and special-palette phases, and requires the common entrance
+  command before creating the HoC first-frame runtime receipt. The interactive
+  entrance accepts the Atari source mouse route and ignores keyboard entrance
+  shortcuts. Authentic Atari ST v1.2 English, German and French start-menu
+  regressions, the DM1 PC34 start regression, the startup state-machine gate,
+  HiDPI pointer mapping and entrance command dispatch tests pass. Headless
+  media tests use the bounded test handoff and do not claim host-window capture
+  completeness. Atari's F0437 title presentation and recruitable champions
+  remain open.
+
 - 2026-09-24: Extended the DM1 F0128 M11 wiring regression with an optional
   authentic Atari ST v1.2 runtime path. It enters through the normal M12
   launcher handoff and proves the source dungeon is mounted and its live

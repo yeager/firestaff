@@ -1246,44 +1246,69 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     const DM1_V1_StartupHandoffOutcome_PC34* outcome,
     const DM1_V1_StartupHostApplyResult_PC34* host_result,
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt) {
-    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 receipt;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    if (!out_receipt || !outcome || !host_result) {
+        return 0;
+    }
+    if (!dm1_v1_startup_full_graphics_media_receipt_pc34(opened_source_id,
+                                                         &media)) {
+        return 0;
+    }
+    return dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+        selected_game_id, opened_source_id, &media, outcome, host_result,
+        out_receipt);
+}
+
+int dm1_v1_startup_full_graphics_runtime_handoff_receipt_for_media_pc34(
+    const char* selected_game_id,
+    const char* opened_source_id,
+    const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,
+    const DM1_V1_StartupHandoffOutcome_PC34* outcome,
+    const DM1_V1_StartupHostApplyResult_PC34* host_result,
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* out_receipt) {
+    DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 receipt;
     DM1_V1_EntranceCtxPc34 entrance_ctx;
 
     if (!out_receipt || !outcome || !host_result) {
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
-    memset(&media, 0, sizeof(media));
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(
             selected_game_id)) {
         *out_receipt = receipt;
         return 1;
     }
-    if (!dm1_v1_startup_full_graphics_media_receipt_pc34(opened_source_id,
-                                                         &media)) {
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(
+            opened_source_id) ||
+        !media_receipt || !media_receipt->handled ||
+        media_receipt->platform < DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 ||
+        media_receipt->platform > DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST ||
+        !media_receipt->play_entrance ||
+        !dm1_v1_startup_entrance_timing_receipt_valid_pc34(media_receipt) ||
+        (media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
+         (!media_receipt->play_swsh || !media_receipt->play_title ||
+          !dm1_v1_startup_title_timing_receipt_valid_pc34(media_receipt)))) {
         return 0;
     }
 
-    /* ReDMCSB source order:
-     * SWSH.C runs START.PRG, TITLE.C F0437 lines 319-409 completes
-     * PRESENTS/title/guard, and ENTRANCE.C F0441 lines 850-883 returns an
-     * entrance command before the dungeon/HoC runtime is redrawn.  This
-     * receipt is the DM1-owned boundary from full-graphics startup media to
-     * the live Hall of Champions/runtime frame. */
+    /* ReDMCSB's startup prefix is platform-specific: the PC route consumes
+     * SWSH.C and TITLE.C F0437 before ENTRANCE.C F0441, while Atari
+     * STARTUP1.C:160-170 calls F0437 then F0441 directly. The media receipt
+     * determines which phases are required before this DM1-owned boundary
+     * can expose the Hall/runtime frame. */
     receipt.handled = 1;
-    receipt.full_graphics_required = media.handled ? 1 : 0;
-    receipt.swsh_consumed = media.play_swsh ? 1 : 0;
+    receipt.full_graphics_required = media_receipt->handled ? 1 : 0;
+    receipt.swsh_consumed = media_receipt->play_swsh ? 1 : 0;
     receipt.title_consumed =
-        (media.play_title && outcome->title_played) ? 1 : 0;
+        (!media_receipt->play_title || outcome->title_played) ? 1 : 0;
     receipt.entrance_consumed =
-        (media.play_entrance &&
+        (!media_receipt->play_entrance ||
          outcome->action != DM1_V1_STARTUP_HANDOFF_ACTION_NONE_PC34)
             ? 1
             : 0;
     receipt.full_graphics_consumed =
         receipt.full_graphics_required &&
-        receipt.swsh_consumed &&
+        (!media_receipt->play_swsh || receipt.swsh_consumed) &&
         receipt.title_consumed &&
         receipt.entrance_consumed;
     receipt.entrance_command = outcome->entrance_command;
@@ -4850,6 +4875,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         &title_palette);
 
     receipt.handled = 1;
+    receipt.platform = DM1_V1_STARTUP_MEDIA_PLATFORM_PC34;
     receipt.play_swsh = 1;
     receipt.play_title = 1;
     receipt.play_entrance = 1;
@@ -4920,6 +4946,40 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
      * zoom, STRIKES BACK, and final guard before ENTRANCE.C F0441. */
     receipt.source_evidence =
         "ReDMCSB NECIO.C:3592-3609; TITLE.C:319-409; ENTRANCE.C:850-883";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_full_graphics_media_receipt_atari_st_pc34(
+    const char* source_id,
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34* out_receipt) {
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 receipt;
+
+    if (!out_receipt ||
+        !dm1_v1_startup_full_graphics_media_receipt_pc34(source_id,
+                                                         &receipt)) {
+        return 0;
+    }
+    if (receipt.handled) {
+        /* ReDMCSB STARTUP1.C:160-170 enters F0437/F0441 directly for Atari
+         * ST.  ENTRANCE.C F0441:850-883 consumes C200 from the Atari mouse
+         * command queue; COMMAND.C:64 maps the source rectangle. The PC
+         * SWSH/title and PC34 palette receipts do not apply to this route. */
+        receipt.platform = DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST;
+        receipt.play_swsh = 0;
+        receipt.play_title = 0;
+        receipt.play_entrance = 1;
+        receipt.entrance_auto_enter_ms = 0;
+        receipt.entrance_palette = -1;
+        receipt.entrance_palette_entry_count = 0;
+        receipt.entrance_palette_fingerprint = 0U;
+        receipt.entrance_credits_palette = 0;
+        receipt.entrance_credits_palette_entry_count = 0;
+        receipt.entrance_credits_palette_fingerprint = 0U;
+        receipt.source_evidence =
+            "ReDMCSB STARTUP1.C:160-170; ENTRANCE.C:850-883; "
+            "COMMAND.C:64,2438";
+    }
     *out_receipt = receipt;
     return 1;
 }
@@ -5010,8 +5070,7 @@ int dm1_v1_startup_title_timing_receipt_valid_pc34(
     /* ReDMCSB TITLE.C F0437:312-327 selects C12_PRESENTS only for the
      * PRESENTS strip. F0437:362-409 then selects C13_DUNGEON + C14_MASTER
      * for zoom/reveal and waits one VBlank per zoom blit, followed by two
-     * post-zoom and one final-guard VBlanks. A stale receipt must not
-     * override those palette/timing facts merely because it is handled. */
+     * post-zoom and one final-guard VBlanks. */
     return
         media_receipt->title_presents_hold_ms ==
             V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing) &&
@@ -5331,6 +5390,33 @@ int dm1_v1_startup_entrance_timing_receipt_valid_pc34(
         pre_open_step.kind != ENTRANCE_COMPAT_SOURCE_EVENT_PRE_OPEN_DELAY) {
         return 0;
     }
+    if (media_receipt->platform ==
+        DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST) {
+        return media_receipt->play_entrance &&
+                       !media_receipt->play_swsh &&
+                       !media_receipt->play_title &&
+                       media_receipt->entrance_palette == -1 &&
+                       media_receipt->entrance_palette_entry_count == 0U &&
+                       media_receipt->entrance_palette_fingerprint == 0U &&
+                       media_receipt->entrance_credits_palette == 0 &&
+                       media_receipt->entrance_credits_palette_entry_count ==
+                           0U &&
+                       media_receipt->entrance_credits_palette_fingerprint ==
+                           0U &&
+                       media_receipt->entrance_source_animation_steps ==
+                           ENTRANCE_Compat_GetSourceAnimationStepCount() &&
+                       media_receipt->entrance_door_step_count ==
+                           ENTRANCE_Compat_GetDoorAnimationStepCount() &&
+                       media_receipt->entrance_vblank_ms ==
+                           ENTRANCE_Compat_GetVblankDelayMs() &&
+                       media_receipt->entrance_pre_open_delay_ms ==
+                           ENTRANCE_Compat_GetRuntimeDelayMs(&pre_open_step)
+                   ? 1
+                   : 0;
+    }
+    if (media_receipt->platform != DM1_V1_STARTUP_MEDIA_PLATFORM_PC34) {
+        return 0;
+    }
     return
         media_receipt->entrance_source_animation_steps ==
             ENTRANCE_Compat_GetSourceAnimationStepCount() &&
@@ -5374,7 +5460,8 @@ int dm1_v1_startup_entrance_render_audio_command_pc34(
     command.lower_level_renderer_helper_owned = 1;
     command.lower_level_audio_helper_owned = 1;
     command.source_step = source_step;
-    command.present_entrance_palette = 1;
+    command.present_entrance_palette =
+        media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34;
     command.entrance_palette = media_receipt->entrance_palette;
     command.entrance_palette_fingerprint =
         media_receipt->entrance_palette_fingerprint;
@@ -5467,11 +5554,16 @@ int dm1_v1_startup_entrance_credits_presentation_command_pc34(
         !graphics_c005_pixels ||
         graphics_c005_width != 320U ||
         graphics_c005_height != 200U ||
-        media_receipt->entrance_credits_palette != 1 ||
-        media_receipt->entrance_credits_palette_entry_count !=
-            DM1_V1_PALETTE_CREDITS_PC34_COMPAT_SIZE ||
-        media_receipt->entrance_credits_palette_fingerprint !=
-            dm1_v1_startup_credits_palette_fingerprint_pc34()) {
+        (media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34 &&
+         (media_receipt->entrance_credits_palette != 1 ||
+          media_receipt->entrance_credits_palette_entry_count !=
+              DM1_V1_PALETTE_CREDITS_PC34_COMPAT_SIZE ||
+          media_receipt->entrance_credits_palette_fingerprint !=
+              dm1_v1_startup_credits_palette_fingerprint_pc34())) ||
+        (media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
+         (media_receipt->entrance_credits_palette != 0 ||
+          media_receipt->entrance_credits_palette_entry_count != 0U ||
+          media_receipt->entrance_credits_palette_fingerprint != 0U))) {
         return 0;
     }
     pixel_hash = dm1_v1_startup_pixel_fingerprint_pc34(
@@ -5486,20 +5578,27 @@ int dm1_v1_startup_entrance_credits_presentation_command_pc34(
     command.handled = 1;
     command.present_credits_frame = 1;
     command.source_asset_receipt_consumed = 1;
-    command.source_palette_receipt_consumed = 1;
+    command.source_palette_receipt_consumed =
+        media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34;
     command.source_timing_receipt_consumed = 1;
     /* entrance_credits_palette is the media receipt's availability flag.
      * F0442 selects G0019 (the credits row), not the entrance palette. */
-    command.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
+    command.special_palette =
+        media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34
+            ? VGA_PALETTE_PC34_SPECIAL_CREDITS
+            : -1;
     command.credits_wait_ticks = media_receipt->entrance_credits_wait_ticks;
     command.vblank_delay_ms =
         media_receipt->entrance_vblank_ms *
         media_receipt->entrance_credits_wait_ticks;
     command.graphics_c005_pixel_fingerprint = pixel_hash;
     command.source_evidence =
-        "ReDMCSB ENTRANCE.C F0442:993 and 1067-1091 presents decoded C005 "
-        "credits pixels, selects the PC34 credits palette, and waits "
-        "L1406=1800 VBlanks before returning to F0441.";
+        media_receipt->platform == DM1_V1_STARTUP_MEDIA_PLATFORM_PC34
+            ? "ReDMCSB ENTRANCE.C F0442:993 and 1067-1091 presents decoded "
+              "C005 credits pixels, selects the PC34 credits palette, and "
+              "waits L1406=1800 VBlanks before returning to F0441."
+            : "ReDMCSB ENTRANCE.C F0442 presents decoded C005 credits pixels "
+              "before returning to F0441.";
     *out_command = command;
     return 1;
 }
