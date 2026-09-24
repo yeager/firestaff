@@ -129,6 +129,19 @@ no substitute game data has been generated.
   authenticated save is present in Mednafen but do not establish original
   title/menu selection, Continue, dungeon entry, or gameplay. The private
   traces remain on trv2 and are not promoted as runtime evidence.
+  Two further 2026-09-24 cold US replays scheduled their only scripted RUN at
+  the documented System Card wait frame 9600, using the same authenticated
+  CUE, System Card 3.0 and 2 KiB BRAM
+  (`ffabc8d19b0915d4d9632a7ae2e90a97`). The 240-second run emitted the input
+  event at line 196,615 of 196,618, so it ended immediately after RUN and did
+  not test the follow-on menu. A 600-second follow-up confirms the event was
+  applied and continues emulator execution to its timeout; its output BRAM is
+  byte-identical to input, yet it still emits only 25 raw-sector spans and
+  115 CD IRQ callbacks, with zero authenticated CD-to-RAM receipts, one
+  `$E009` dispatch/entry but zero `$E009` data reads, no Drator-route hook
+  matches, and `transition=missing`. Extending capture time past the scheduled
+  input therefore does not recover the route. Neither run establishes title
+  selection, dungeon entry, or gameplay. The private traces remain on trv2.
 - Validate the production Continue action end-to-end with authenticated
   dungeon-entry capture. The native M11 route is now verified with authentic
   US Track 02 and a 2 KiB Akutuba-complete Backup RAM artifact: it admits slot
