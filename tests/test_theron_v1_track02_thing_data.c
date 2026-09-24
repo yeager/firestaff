@@ -40,11 +40,34 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     return ud;
 }
 
+static uint8_t *load_track02_ud_at_sector(const char *path, size_t start_sector,
+                                          size_t *out_size) {
+    uint8_t *whole = load_track02_ud(path, out_size);
+    if (!whole) return NULL;
+    if (start_sector > *out_size / UD_PER_SECTOR) {
+        free(whole);
+        return NULL;
+    }
+    size_t skip = start_sector * UD_PER_SECTOR;
+    size_t remaining = *out_size - skip;
+    uint8_t *track = malloc(remaining ? remaining : 1u);
+    if (!track) {
+        free(whole);
+        return NULL;
+    }
+    memcpy(track, whole + skip, remaining);
+    free(whole);
+    *out_size = remaining;
+    return track;
+}
+
 static const char *find_track02_variant(Theron_Track02Variant variant) {
     const char *home = getenv("HOME");
-    const char *explicit_path = (variant == THERON_TRACK02_VARIANT_JP_BIN)
+    const char *explicit_path = variant == THERON_TRACK02_VARIANT_JP_BIN
         ? getenv("FIRESTAFF_THERON_TRACK02_JP_RAW")
-        : getenv("FIRESTAFF_THERON_TRACK02_RAW");
+        : variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+            ? getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW")
+            : getenv("FIRESTAFF_THERON_TRACK02_RAW");
     static char path[512];
     const char *candidates[2];
 
@@ -344,7 +367,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
             ud, ud_size, variant, d, dd.object_counts, gref_count, td);
         assert(ok);
 
-        if (variant == THERON_TRACK02_VARIANT_US_BIN && d == 0) {
+        if ((variant == THERON_TRACK02_VARIANT_US_BIN ||
+             variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) && d == 0) {
             static const uint8_t real_control_rows[4][8] = {
                 {0xfe, 0xff, 0x21, 0x00},
                 {0x00, 0x08, 0x62, 0x74, 0x00, 0x00},
@@ -378,7 +402,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
 
         assert(td->ground_ref_count == gref_count);
         test_real_item_records(td, d,
-                               variant == THERON_TRACK02_VARIANT_US_BIN);
+            variant == THERON_TRACK02_VARIANT_US_BIN ||
+            variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW);
 
         unsigned int total_items = 0;
         for (int c = 0; c < 16; c++)
@@ -387,7 +412,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
         printf("  %s %s: %u ground_refs, %u items, %u text_words OK\n",
                label, names[d], gref_count, total_items, td->text_data_count);
 
-        if (variant == THERON_TRACK02_VARIANT_US_BIN && d == 0) {
+        if ((variant == THERON_TRACK02_VARIANT_US_BIN ||
+             variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) && d == 0) {
             assert(td->object_counts[THERON_CAT_DOOR] == 31);
             assert(td->object_counts[THERON_CAT_TELEPORTER] == 68);
             assert(td->object_counts[THERON_CAT_ACTUATOR] == 180);
@@ -409,6 +435,22 @@ int main(void) {
     test_source_projectile_records();
     test_source_control_record_fields();
     test_source_monster_chested_field();
+
+    /* CloneCD is opt-in because its user-data origin differs from BIN.
+     * This keeps the normal CTest invocation independent of local media. */
+    const char *clonecd_path = getenv("FIRESTAFF_THERON_TRACK02_CLONECD_RAW")
+        ? find_track02_variant(THERON_TRACK02_VARIANT_US_CLONECD_RAW) : NULL;
+    if (clonecd_path) {
+        size_t clonecd_ud_size = 0;
+        /* The authentic raw test fixture contains only Track 02's 2352-byte
+         * sectors, so its track-relative user-data origin is sector zero. */
+        uint8_t *clonecd_ud = load_track02_ud_at_sector(
+            clonecd_path, 0u, &clonecd_ud_size);
+        assert(clonecd_ud);
+        test_all_dungeons(clonecd_ud, clonecd_ud_size,
+                          THERON_TRACK02_VARIANT_US_CLONECD_RAW, "US CloneCD");
+        free(clonecd_ud);
+    }
 
     const char *path = find_track02_variant(THERON_TRACK02_VARIANT_US_BIN);
     if (!path) {

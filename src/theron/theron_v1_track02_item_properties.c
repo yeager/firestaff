@@ -86,7 +86,10 @@ size_t theron_v1_track02_item_property_count(void) {
 
 static int find_source_property_table(
     const uint8_t *ud_data, size_t ud_size, int jp_bin, size_t *out_offset) {
-    static const size_t us_offsets[] = { 0x099825u };
+    /* CloneCD omits the US BIN's 225-sector pregap, so its identical
+     * authenticated table appears 225*2048 bytes earlier in track-relative
+     * user data.  Both candidates still require a full byte-for-byte match. */
+    static const size_t us_offsets[] = { 0x099825u, 0x029025u };
     static const size_t jp_offsets[] = {
         0x0990a2u, 0x119d4du, 0x15955du, 0x1d91d9u, 0x219b13u
     };

@@ -247,14 +247,19 @@ int theron_v1_track02_thing_data_load_for_variant(
             variant, dungeon_index, &qb))
         return 0;
 
-    size_t gref_abs = UD_BASE + qb.ground_refs_offset;
+    /* CloneCD's authenticated US Track 02 starts at INDEX 01, without the
+     * 225-sector pregap that the legacy US BIN keeps before user data. */
+    size_t user_data_base = variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+        ? 0u : UD_BASE;
+
+    size_t gref_abs = user_data_base + qb.ground_refs_offset;
     size_t gref_bytes = (size_t)ground_ref_count * 2;
     if (!theron_range_fits(gref_abs, gref_bytes, ud_size)) return 0;
     memcpy(out->ground_refs, ud_data + gref_abs, gref_bytes);
 
     unsigned int split = get_items_split_index(dungeon_index);
 
-    size_t pos = UD_BASE + qb.items_part1_offset;
+    size_t pos = user_data_base + qb.items_part1_offset;
     for (unsigned int cat = 0; cat < split; cat++) {
         size_t item_size = theron_item_bytes[cat];
         size_t n = object_counts[cat];
@@ -266,7 +271,7 @@ int theron_v1_track02_thing_data_load_for_variant(
         pos += total;
     }
 
-    pos = UD_BASE + qb.items_part2_offset;
+    pos = user_data_base + qb.items_part2_offset;
     for (unsigned int cat = split; cat < THERON_ITEM_CATEGORY_COUNT; cat++) {
         size_t item_size = theron_item_bytes[cat];
         size_t n = object_counts[cat];
@@ -279,9 +284,10 @@ int theron_v1_track02_thing_data_load_for_variant(
     }
 
     uint16_t text_size = theron_v1_track02_dungeon_text_data_size(dungeon_index);
-    if (variant != THERON_TRACK02_VARIANT_US_BIN) text_size = 0;
+    if (variant != THERON_TRACK02_VARIANT_US_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW) text_size = 0;
     if (text_size > 0 && qb.text_data_offset != 0) {
-        size_t text_abs = UD_BASE + qb.text_data_offset;
+        size_t text_abs = user_data_base + qb.text_data_offset;
         size_t text_bytes = (size_t)text_size * 2;
         if (!theron_range_fits(text_abs, text_bytes, ud_size)) return 0;
         if (text_size > 1024) return 0;
