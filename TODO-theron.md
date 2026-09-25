@@ -2717,7 +2717,11 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   BRAM/code page, zero non-System-Card reads and zero game-owned `$E009`
   dispatches keep the admission strictly screen-space; no room, transition,
   UI-widget or gameplay semantics are claimed. Raw bytes and rendered
-  screenshot remain local under ignored `.codex-scratch/`.
+  screenshot remain local under ignored `.codex-scratch/`. Its main-RAM read
+  trace also records 18 reads in `$271b..$2724` from 18 executing PCs in
+  `$c2d8..$c450`, plus two reads at `$278c` and `$279f`; without the matching
+  executed-code/source-sector join these remain address observations only,
+  not field semantics or a loader-consumer witness.
 
 - [ ] THERON-V1-HUC6280-RAM-CONSUMER: the real US/JP bank-$1f static support
   fragment at `$243e` is now byte-verified in both retail ISO projections.
