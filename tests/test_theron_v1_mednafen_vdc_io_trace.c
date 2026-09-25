@@ -146,6 +146,20 @@ int main(int argc, char **argv) {
     assert(write_fixture(path,
         "FIRESTAFF_THERON_VDC_IO_TRACE_V1\n"
         "source=mednafen-pce-instrumented-vdc-io\n"
+        "vdc_io_write sequence=0 source_sequence=65536 timestamp=10 logical_address=21ef physical_address=801fe000 value=01 writer_pc=c6ee writer_physical_pc=0d26ee a=01 x=00 y=1f\n"
+        "vdc_io_write sequence=1 source_sequence=65538 timestamp=11 logical_address=0002 physical_address=1fe002 value=7f writer_pc=1a12 writer_physical_pc=0e1a12 a=7f x=03 y=04\n"));
+    assert(!theron_v1_mednafen_vdc_io_trace_parse_file(path, &receipt));
+    assert(receipt.status == THERON_V1_VDC_IO_TRACE_REJECTED);
+    unlink(path);
+
+    assert(snprintf(path, sizeof(path), "%s/firestaff-theron-vdc-XXXXXX",
+                    tmpdir) > 0);
+    fd = mkstemp(path);
+    assert(fd >= 0);
+    close(fd);
+    assert(write_fixture(path,
+        "FIRESTAFF_THERON_VDC_IO_TRACE_V1\n"
+        "source=mednafen-pce-instrumented-vdc-io\n"
         "vdc_io_write sequence=1 timestamp=10 logical_address=0000 physical_address=1fe000 value=02 writer_pc=1a10 writer_physical_pc=0e1a10 a=02 x=03 y=04\n"));
     assert(!theron_v1_mednafen_vdc_io_trace_parse_file(path, &receipt));
     assert(receipt.status == THERON_V1_VDC_IO_TRACE_REJECTED);
