@@ -164,6 +164,32 @@ int main(void) {
                 failed = 1;
             }
             theron_v1_track01_cdda_stream_stop(&real_stream);
+            if (!failed && handoff.audio_is_vorbis) {
+                FILE *audio_file = fopen(handoff.audio_path, "rb");
+                uint8_t *audio_bytes = NULL;
+                Theron_Track01CddaStream memory_stream = {0};
+                if (!audio_file || handoff.audio_file_bytes == 0u ||
+                    fseek(audio_file, 0L, SEEK_END) != 0 ||
+                    ftell(audio_file) < 0L ||
+                    (size_t)ftell(audio_file) != handoff.audio_file_bytes ||
+                    fseek(audio_file, 0L, SEEK_SET) != 0 ||
+                    !(audio_bytes = (uint8_t *)malloc(handoff.audio_file_bytes)) ||
+                    fread(audio_bytes, 1u, handoff.audio_file_bytes, audio_file) !=
+                        handoff.audio_file_bytes) {
+                    fprintf(stderr, "could not load authentic OGG into test memory\n");
+                    failed = 1;
+                } else if (!theron_v1_track01_cdda_stream_start_memory(
+                               &handoff, audio_bytes,
+                               handoff.audio_file_bytes, &memory_stream) ||
+                           !theron_v1_track01_cdda_stream_pump(&memory_stream) ||
+                           memory_stream.sectors_queued == 0u) {
+                    fprintf(stderr, "authentic in-memory OGG stream did not start\n");
+                    failed = 1;
+                }
+                theron_v1_track01_cdda_stream_stop(&memory_stream);
+                free(audio_bytes);
+                if (audio_file) fclose(audio_file);
+            }
         }
     }
     remove(cue);

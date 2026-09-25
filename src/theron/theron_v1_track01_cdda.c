@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #ifndef FIRESTAFF_NO_SDL_AUDIO
 #include <SDL3/SDL.h>
@@ -16,6 +17,62 @@
 #define THERON_HAVE_VORBISFILE 1
 #else
 #define THERON_HAVE_VORBISFILE 0
+#endif
+
+#if THERON_HAVE_VORBISFILE
+static size_t theron_cdda_memory_read(void *destination, size_t item_size,
+                                      size_t item_count, void *source) {
+    Theron_Track01CddaStream *stream = (Theron_Track01CddaStream *)source;
+    size_t remaining, bytes, items;
+    if (!stream || !destination || item_size == 0u ||
+        stream->memory_audio_offset > stream->memory_audio_size) return 0u;
+    remaining = stream->memory_audio_size - stream->memory_audio_offset;
+    items = item_count > remaining / item_size
+        ? remaining / item_size : item_count;
+    bytes = items * item_size;
+    if (bytes != 0u) {
+        memcpy(destination,
+               stream->memory_audio_bytes + stream->memory_audio_offset,
+               bytes);
+        stream->memory_audio_offset += bytes;
+    }
+    return items;
+}
+
+static int theron_cdda_memory_seek(void *source, ogg_int64_t offset,
+                                   int origin) {
+    Theron_Track01CddaStream *stream = (Theron_Track01CddaStream *)source;
+    size_t base, target;
+    uint64_t distance;
+    if (!stream || stream->memory_audio_offset > stream->memory_audio_size)
+        return -1;
+    if (origin == SEEK_SET) base = 0u;
+    else if (origin == SEEK_CUR) base = stream->memory_audio_offset;
+    else if (origin == SEEK_END) base = stream->memory_audio_size;
+    else return -1;
+    if (offset < 0) {
+        distance = (uint64_t)(-(offset + 1)) + 1u;
+        if (distance > base) return -1;
+        target = base - (size_t)distance;
+    } else {
+        distance = (uint64_t)offset;
+        if (distance > stream->memory_audio_size - base) return -1;
+        target = base + (size_t)distance;
+    }
+    stream->memory_audio_offset = target;
+    return 0;
+}
+
+static int theron_cdda_memory_close(void *source) {
+    (void)source;
+    return 0;
+}
+
+static long theron_cdda_memory_tell(void *source) {
+    Theron_Track01CddaStream *stream = (Theron_Track01CddaStream *)source;
+    if (!stream || stream->memory_audio_offset > (size_t)LONG_MAX) return -1L;
+    return (long)stream->memory_audio_offset;
+}
 #endif
 
 int theron_v1_track01_cdda_stream_start(
@@ -104,6 +161,78 @@ int theron_v1_track01_cdda_stream_start(
     return 1;
 #else
     (void)handoff;
+    (void)out_stream;
+    return 0;
+#endif
+}
+
+int theron_v1_track01_cdda_stream_start_memory(
+    const Theron_Track01CddaHandoff *handoff,
+    const uint8_t *audio_bytes,
+    size_t audio_size,
+    Theron_Track01CddaStream *out_stream) {
+#if THERON_HAVE_SDL_AUDIO && THERON_HAVE_VORBISFILE
+    OggVorbis_File *vorbis;
+    vorbis_info *info;
+    ov_callbacks callbacks;
+    SDL_AudioSpec spec;
+    SDL_AudioStream *sdl_stream;
+
+    if (!handoff || !out_stream || !audio_bytes || audio_size < 4u ||
+        handoff->status != THERON_TRACK01_CDDA_AVAILABLE ||
+        !handoff->original_cdda || !handoff->playback_handoff_ready ||
+        !handoff->audio_is_vorbis || handoff->audio_file_bytes != audio_size ||
+        memcmp(audio_bytes, "OggS", 4u) != 0) return 0;
+    memset(out_stream, 0, sizeof(*out_stream));
+    out_stream->memory_audio_bytes = audio_bytes;
+    out_stream->memory_audio_size = audio_size;
+    vorbis = (OggVorbis_File *)calloc(1u, sizeof(*vorbis));
+    if (!vorbis) return 0;
+    callbacks.read_func = theron_cdda_memory_read;
+    callbacks.seek_func = theron_cdda_memory_seek;
+    callbacks.close_func = theron_cdda_memory_close;
+    callbacks.tell_func = theron_cdda_memory_tell;
+    if (ov_open_callbacks(out_stream, vorbis, NULL, 0u, callbacks) != 0) {
+        free(vorbis);
+        memset(out_stream, 0, sizeof(*out_stream));
+        return 0;
+    }
+    info = ov_info(vorbis, -1);
+    if (!info || info->rate != THERON_TRACK01_CDDA_SAMPLE_RATE ||
+        info->channels != THERON_TRACK01_CDDA_CHANNELS) {
+        ov_clear(vorbis);
+        free(vorbis);
+        memset(out_stream, 0, sizeof(*out_stream));
+        return 0;
+    }
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        ov_clear(vorbis);
+        free(vorbis);
+        memset(out_stream, 0, sizeof(*out_stream));
+        return 0;
+    }
+    spec.format = SDL_AUDIO_S16LE;
+    spec.channels = THERON_TRACK01_CDDA_CHANNELS;
+    spec.freq = THERON_TRACK01_CDDA_SAMPLE_RATE;
+    sdl_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+                                           &spec, NULL, NULL);
+    if (!sdl_stream) {
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        ov_clear(vorbis);
+        free(vorbis);
+        memset(out_stream, 0, sizeof(*out_stream));
+        return 0;
+    }
+    out_stream->audio_file = vorbis;
+    out_stream->sdl_stream = sdl_stream;
+    out_stream->audio_is_vorbis = 1;
+    out_stream->output_started = 1;
+    SDL_ResumeAudioStreamDevice(sdl_stream);
+    return 1;
+#else
+    (void)handoff;
+    (void)audio_bytes;
+    (void)audio_size;
     (void)out_stream;
     return 0;
 #endif

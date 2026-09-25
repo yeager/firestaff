@@ -142,6 +142,9 @@ typedef struct {
 typedef struct {
     void *audio_file;
     void *sdl_stream;
+    const uint8_t *memory_audio_bytes;
+    size_t memory_audio_size;
+    size_t memory_audio_offset;
     size_t audio_start_byte;
     size_t audio_sector_count;
     size_t sectors_read;
@@ -157,6 +160,14 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     Theron_Track01CddaHandoff *out_handoff);
 int theron_v1_track01_cdda_stream_start(
     const Theron_Track01CddaHandoff *handoff,
+    Theron_Track01CddaStream *out_stream);
+/* Start an OGG-backed CDDA stream from caller-owned bounded memory. The byte
+ * buffer is borrowed until theron_v1_track01_cdda_stream_stop(); it is never
+ * copied to or materialized on disk. */
+int theron_v1_track01_cdda_stream_start_memory(
+    const Theron_Track01CddaHandoff *handoff,
+    const uint8_t *audio_bytes,
+    size_t audio_size,
     Theron_Track01CddaStream *out_stream);
 int theron_v1_track01_cdda_stream_pump(Theron_Track01CddaStream *stream);
 void theron_v1_track01_cdda_stream_stop(Theron_Track01CddaStream *stream);
