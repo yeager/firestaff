@@ -3530,3 +3530,11 @@ av bankladdningen. Se
   `theronTrack01CddaReady=1`. Add bounded in-memory CUE/Track 01 archive
   reading to the runtime handoff before claiming direct archive CDDA support;
   do not materialize media into the user's data folder.
+- 🔒 The local combined US/JP RAR listing contains source-named `TQUS.cue` and
+  `TQJP.cue`, US/JP Track 01 OGG members, and OGG members for tracks 03–18.
+  This establishes that the archive advertises original per-track audio, not
+  that every title/gameplay command selects those tracks. The installed 7zz
+  can list the RAR but reports `Unsupported Method` for every listed member,
+  including both CUE files; member bytes therefore remain unverified by this
+  extractor. Normal runtime must not depend on that host program. Native
+  multi-member RAR decoding plus byte-verified CUE/audio binding remains open.
