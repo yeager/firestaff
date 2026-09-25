@@ -3491,3 +3491,28 @@ av bankladdningen. Se
   Akutuba-complete US BRAM and the hash-verified empty JP save. The test keeps
   the JP original outside Git and symlinks it into a temporary `.bram` path so
   the production Continue route is exercised against the exact source bytes.
+
+## 2026-09-25 — capture-only CDDA command trace
+
+- ✅ Added a Mednafen capture patch for accepted PC Engine CDDA play, MSF play,
+  NEC pause and end-position commands. Each record keeps the
+  original LBA interval, Mednafen clock timestamp, command state and mode; it
+  does not choose tracks or change Firestaff playback behavior. The complete
+  patch sequence applies to an isolated copy of the available Mednafen 1.32.1
+  source in patch-only mode. It has not yet been rebuilt or run with this new
+  command trace.
+- 🔒 No positive Theron gameplay CDDA command has been captured yet. Existing
+  authenticated traces show System Card loading/menu activity, not a
+  game-owned track selection. Check that trv2 is free before building or
+  capturing, since another agent may be using it;
+  bind any resulting LBA interval to the authenticated disc TOC before adding
+  playback behavior.
+- ✅ Independently validated the existing Track 01 handoff against the
+  authentic full Japanese 7z disc: its CUE declares 19 tracks, Track 01 is
+  7,916,832 bytes of AUDIO, and Track 02 is MODE1/2352 at 8,102,640 bytes.
+  The archive's Track 02 SHA-256 equals the supplied `TQJP02.bin`
+  (`d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb`).
+  `FIRESTAFF_THERON_CUE=<authentic Japanese CUE> ctest --test-dir build -R
+  '^theron_v1_track01_cdda_handoff$' --output-on-failure` passes, including
+  actual CDDA stream startup. This proves the authentic JP Track 01 handoff,
+  not which gameplay tracks the original executes.
