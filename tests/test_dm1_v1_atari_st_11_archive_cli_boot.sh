@@ -9,9 +9,11 @@ if [[ $# -ne 1 ]]; then
 fi
 
 app=$1
-source_archive=${FIRESTAFF_DM1_ATARI_ST_11_SOURCE:-"$HOME/.firestaff/data/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"}
+source_archive=${FIRESTAFF_DM1_ATARI_ST_SOURCE:-"$HOME/.firestaff/data/dm1/Game,Dungeon_Master,Atari_ST,Software.7z"}
 extractor=${FIRESTAFF_7ZZ:-7zz}
-member='Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx'
+member=${FIRESTAFF_DM1_ATARI_ST_MEMBER:-'Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx'}
+expected_graphics_md5=${FIRESTAFF_DM1_ATARI_ST_GRAPHICS_MD5:-5095a13692702235d2e74f6b2b1367a9}
+edition=${FIRESTAFF_DM1_ATARI_ST_EDITION:-'1.1'}
 if [[ ! -x "$app" || ! -f "$source_archive" ]] || ! command -v "$extractor" >/dev/null 2>&1; then
     printf '%s\n' 'SKIP: authentic DM1 Atari ST 1.1 STX source or 7zz is not staged'
     exit 77
@@ -39,11 +41,11 @@ probe=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     exit 1
 }
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$probe" ||
-   ! grep -Fq 'assetMd5=5095a13692702235d2e74f6b2b1367a9' <<<"$probe" ||
+   ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$probe" ||
    ! grep -Fq 'phase=dm1-runtime' <<<"$probe" ||
    ! grep -Fq 'levelLoaded=1' <<<"$probe"; then
     printf '%s\n' "$probe" >&2
-    echo 'FAIL: authentic Atari ST 1.1 CLI boot did not select its authenticated graphics' >&2
+    echo "FAIL: authentic Atari ST $edition CLI boot did not select its authenticated graphics" >&2
     exit 1
 fi
 
@@ -58,7 +60,7 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu" ||
    ! grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu" ||
    ! grep -Fq 'GRAPHICS.DAT' <<<"$menu"; then
     printf '%s\n' "$menu" >&2
-    echo 'FAIL: authentic Atari ST 1.1 media did not reach the M12 start-menu handoff' >&2
+    echo "FAIL: authentic Atari ST $edition media did not reach the M12 start-menu handoff" >&2
     exit 1
 fi
 
@@ -69,7 +71,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$outer" \
     --script 'enter,enter,enter,wait30,enter,wait60,enter' \
     --duration 20000 >/dev/null 2>&1
-python3 - "$runtime_probe" <<'PY'
+python3 - "$runtime_probe" "$edition" <<'PY'
 import json
 import sys
 
@@ -85,8 +87,8 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
-    raise SystemExit(f"FAIL: authentic DM1 Atari ST 1.1 menu did not reach its runtime state: {probe}")
-print("PASS: authentic DM1 Atari ST 1.1 M12 menu reached the source runtime state")
+    raise SystemExit(f"FAIL: authentic DM1 Atari ST {sys.argv[2]} menu did not reach its runtime state: {probe}")
+print(f"PASS: authentic DM1 Atari ST {sys.argv[2]} M12 menu reached the source runtime state")
 PY
 
-echo 'PASS: authentic DM1 Atari ST 1.1 source reaches CLI and normal M12-to-M11 menu runtime'
+echo "PASS: authentic DM1 Atari ST $edition source reaches CLI and normal M12-to-M11 menu runtime"
