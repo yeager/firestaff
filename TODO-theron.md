@@ -12,6 +12,12 @@ substituted. This proves complete-disc file/layout availability only. Track
 01 is the only integrated CDDA stream, and original event-to-later-CDDA/ADPCM/
 SFX routing is still unbound.
 
+The rebuilt local Firestaff executable also passes
+`test_theron_v1_jp_cue_runtime_boot.sh` against this complete authentic JP
+CUE: it reaches the native Akutuba runtime and accepts six movement inputs.
+This verifies that specific source-backed JP startup/runtime path, not later
+dungeon transitions or full original-game parity.
+
 The CD availability parser also rejects duplicate track numbers and any
 missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
 regression and the authentic JP Rev. 1 receipt both pass; malformed CUEs can
