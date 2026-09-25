@@ -91,6 +91,14 @@ static uint8_t *load_file(const char *path, size_t *out_size) {
     return bytes;
 }
 
+static int set_test_env(const char *name, const char *value) {
+#if defined(_WIN32) || defined(_WIN64)
+    return _putenv_s(name, value ? value : "") == 0;
+#else
+    return value ? setenv(name, value, 1) == 0 : unsetenv(name) == 0;
+#endif
+}
+
 int main(int argc, char **argv) {
     Theron_V1PceBramReceipt receipt;
     Theron_V1PceBramBodyReceipt body;
@@ -300,7 +308,17 @@ int main(int argc, char **argv) {
     };
     size_t field;
     size_t index;
-    if (argc != 7) return 2;
+    if (argc != 7 && argc != 8) return 2;
+    if (theron_v1_pce_bram_campaign_byte_restorable(0u) ||
+        !theron_v1_pce_bram_campaign_byte_restorable(1u) ||
+        !theron_v1_pce_bram_campaign_byte_restorable(6u) ||
+        theron_v1_pce_bram_campaign_byte_restorable(7u) ||
+        !theron_v1_pce_bram_campaign_byte_restorable(0x80u) ||
+        !theron_v1_pce_bram_campaign_byte_restorable(0x86u) ||
+        theron_v1_pce_bram_campaign_byte_restorable(0x87u)) {
+        fputs("original campaign-byte admission boundary drifted\n", stderr);
+        return 1;
+    }
     if (theron_v1_pce_bram_classify_path(argv[1], &receipt) != THERON_V1_PCE_BRAM_READY ||
         receipt.size_bytes != THERON_V1_PCE_BRAM_BYTES || !receipt.hubm_header_seen ||
         !receipt.theron_save_disk_marker_seen || receipt.theron_save_disk_marker_offset != 0x16u ||
@@ -320,6 +338,7 @@ int main(int argc, char **argv) {
         receipt.save_body_bytes != 0x86u ||
         receipt.serialized_campaign_byte_offset != 0x20u ||
         receipt.serialized_campaign_byte != 0x01u ||
+        !receipt.save_body_campaign_valid ||
         receipt.bytes_fnv1a == 0u) {
         fprintf(stderr, "progressed real Theron PC Engine SRAM was not admitted\n");
         return 1;
@@ -654,6 +673,65 @@ int main(int argc, char **argv) {
         fputs("authentic campaign source did not bind to the world\n", stderr);
         return 1;
     }
+    if (argc == 8) {
+        Theron_V1PceBramReceipt empty_receipt;
+        Theron_V1PceBramBodyReceipt empty_body;
+        Theron_V1StartupSaveResume empty_snapshot;
+        Theron_V1StartupContinueAvailability empty_availability;
+        Theron_V1_World unchanged_world = world;
+        char empty_continue_receipt[160];
+
+        if (theron_v1_pce_bram_classify_path(argv[7], &empty_receipt) !=
+                THERON_V1_PCE_BRAM_READY ||
+            !empty_receipt.save_body_layout_proven ||
+            empty_receipt.save_body_campaign_valid ||
+            empty_receipt.serialized_campaign_byte != 0u ||
+            !theron_v1_pce_bram_decode_original_body_path(argv[7],
+                                                           &empty_body) ||
+            !empty_body.layout_verified || !empty_body.semantics_verified ||
+            empty_body.ram_267c_campaign_byte != 0u ||
+            !set_test_env("FIRESTAFF_THERON_BRAM_PATH", argv[7]) ||
+            !theron_v1_startup_save_resume_evaluate(NULL, &empty_snapshot) ||
+            empty_snapshot.resume_claim != THERON_V1_STARTUP_RESUME_NONE ||
+            empty_snapshot.srm_recognized_slots != 0 ||
+            empty_snapshot.srm_first_decoded_slot != -1 ||
+            !set_test_env("FIRESTAFF_THERON_BRAM_PATH", argv[1]) ||
+            !theron_v1_startup_continue_availability_from_state(
+                empty_snapshot.resume_claim,
+                empty_snapshot.tqsv_active_slot,
+                empty_snapshot.srm_first_decoded_slot,
+                empty_snapshot.srm_progress_import_status,
+                &empty_availability) ||
+            empty_availability.has_srm_continue ||
+            empty_availability.has_any_continue) {
+            fputs("authentic empty JP Backup RAM was advertised as Continue\n",
+                  stderr);
+            return 1;
+        }
+
+        memset(&empty_snapshot, 0, sizeof(empty_snapshot));
+        empty_snapshot.tqsv_active_slot = -1;
+        empty_snapshot.srm_first_recognized_slot = -1;
+        empty_snapshot.srm_first_decoded_slot = -1;
+        if (theron_v1_startup_save_resume_apply_explicit_path(
+                &empty_snapshot, argv[7], NULL) ||
+            empty_snapshot.resume_claim != THERON_V1_STARTUP_RESUME_NONE ||
+            theron_v1_startup_restore_pce_bram_campaign_path(
+                &world, argv[7], &empty_receipt) ||
+            theron_v1_startup_restore_pce_bram_theron_path(
+                &world, argv[7], &empty_receipt, &empty_body) ||
+            theron_v1_startup_continue_srm_apply(
+                &world, argv[7], 0, empty_continue_receipt,
+                sizeof(empty_continue_receipt)) ||
+            world.progression.quest_items_collected !=
+                unchanged_world.progression.quest_items_collected ||
+            world.party.champions[0].health !=
+                unchanged_world.party.champions[0].health) {
+            fputs("empty JP Backup RAM changed world state or accepted Continue\n",
+                  stderr);
+            return 1;
+        }
+    }
     if (!theron_v1_startup_save_resume_evaluate(NULL, &startup_save) ||
         startup_save.resume_claim != THERON_V1_STARTUP_RESUME_SRM ||
         startup_save.srm_first_decoded_slot != 0 ||
@@ -806,6 +884,9 @@ int main(int argc, char **argv) {
                   stderr);
             return 1;
         }
+    }
+    if (argc == 8) {
+        puts("PASS: authentic empty JP Backup RAM is rejected as Continue");
     }
     puts("PASS: authentic three-slot Backup RAM record matches original read/write code and writer RAM");
     return 0;

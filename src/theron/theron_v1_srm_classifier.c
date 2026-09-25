@@ -84,6 +84,12 @@ static uint32_t pce_bram_fnv1a(const uint8_t *data, size_t size) {
     return hash;
 }
 
+int theron_v1_pce_bram_campaign_byte_restorable(uint8_t campaign_byte) {
+    /* Both authenticated regional restore routines return immediately for
+     * zero, then mask to seven campaign bits and reject values >= 7. */
+    return campaign_byte != 0u && (campaign_byte & 0x7fu) < 7u;
+}
+
 Theron_V1PceBramStatus theron_v1_pce_bram_classify(
     const uint8_t *data, size_t size, Theron_V1PceBramReceipt *out) {
     static const uint8_t marker[] = {'D', 'M', 'S', '-', 'S', 'G', '.'};
@@ -138,6 +144,9 @@ Theron_V1PceBramStatus theron_v1_pce_bram_classify(
                     out->serialized_campaign_byte =
                         data[out->selected_slot_offset];
                     out->save_body_layout_proven = 1;
+                    out->save_body_campaign_valid =
+                        theron_v1_pce_bram_campaign_byte_restorable(
+                            out->serialized_campaign_byte);
                 }
             }
             out->status = THERON_V1_PCE_BRAM_READY;

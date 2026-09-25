@@ -202,12 +202,16 @@ static void resolve_srm_root(char out[THERON_V1_SRM_PATH_MAX]) {
     out[0] = '\0';
 #if defined(FIRESTAFF_THERON_PRODUCTION)
     override_path = getenv("FIRESTAFF_THERON_BRAM_PATH");
-    if (override_path && override_path[0] &&
-        theron_v1_pce_bram_classify_path(override_path, &receipt) ==
-            THERON_V1_PCE_BRAM_READY &&
-        receipt.save_body_layout_proven &&
-        receipt.save_slot_tail_unconsumed_padding) {
-        copy_name(out, THERON_V1_SRM_PATH_MAX, override_path);
+    if (override_path && override_path[0]) {
+        if (theron_v1_pce_bram_classify_path(override_path, &receipt) ==
+                THERON_V1_PCE_BRAM_READY &&
+            receipt.save_body_layout_proven &&
+            receipt.save_body_campaign_valid &&
+            receipt.save_slot_tail_unconsumed_padding) {
+            copy_name(out, THERON_V1_SRM_PATH_MAX, override_path);
+        }
+        /* An explicit original save is authoritative. Never fall back to a
+         * different default save if its selected slot is not restorable. */
         return;
     }
     home = getenv("HOME");
@@ -219,6 +223,7 @@ static void resolve_srm_root(char out[THERON_V1_SRM_PATH_MAX]) {
         if (theron_v1_pce_bram_classify_path(out, &receipt) ==
                 THERON_V1_PCE_BRAM_READY &&
             receipt.save_body_layout_proven &&
+            receipt.save_body_campaign_valid &&
             receipt.save_slot_tail_unconsumed_padding) {
             return;
         }
@@ -355,6 +360,7 @@ static void scan_srm_slots(Theron_V1StartupSaveResume *snap) {
         theron_v1_pce_bram_classify_path(snap->srm_root, &bram) ==
             THERON_V1_PCE_BRAM_READY &&
         bram.save_body_layout_proven &&
+        bram.save_body_campaign_valid &&
         bram.save_slot_tail_unconsumed_padding &&
         bram.selected_slot_index < THERON_V1_PCE_BRAM_SLOT_COUNT &&
         theron_v1_pce_bram_decode_original_body_path(snap->srm_root, &body) &&
@@ -532,6 +538,7 @@ int theron_v1_startup_save_resume_apply_explicit_path(
         if (theron_v1_pce_bram_classify_path(save_path, &bram) !=
                 THERON_V1_PCE_BRAM_READY ||
             !bram.save_body_layout_proven ||
+            !bram.save_body_campaign_valid ||
             !bram.save_slot_tail_unconsumed_padding ||
             bram.selected_slot_index >= THERON_V1_PCE_BRAM_SLOT_COUNT ||
             !theron_v1_pce_bram_decode_original_body_path(save_path, &body) ||
@@ -724,6 +731,7 @@ int theron_v1_startup_restore_pce_bram_campaign_path(
     if (out_receipt) *out_receipt = receipt;
     if (status != THERON_V1_PCE_BRAM_READY ||
         !receipt.save_body_layout_proven ||
+        !receipt.save_body_campaign_valid ||
         !receipt.selected_slot_layout_proven ||
         receipt.selected_slot_index >= THERON_V1_PCE_BRAM_SLOT_COUNT ||
         receipt.save_body_offset != receipt.selected_slot_offset ||
@@ -754,6 +762,7 @@ int theron_v1_startup_restore_pce_bram_theron_path(
         theron_v1_pce_bram_classify_path(save_path, &receipt) !=
             THERON_V1_PCE_BRAM_READY ||
         !receipt.save_body_layout_proven ||
+        !receipt.save_body_campaign_valid ||
         !receipt.selected_slot_layout_proven ||
         !receipt.save_slot_tail_unconsumed_padding ||
         receipt.selected_slot_index >= THERON_V1_PCE_BRAM_SLOT_COUNT ||

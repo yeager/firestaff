@@ -3397,3 +3397,18 @@ av bankladdningen. Se
   felsökning ska följa BIOS-/CD-kommandovägen efter inputläsningen och
   jämföra den med en positiv host-inputsession. Ingen semantik får öppnas
   från dessa negativa körningar.
+
+## 2026-09-25 — authentic empty JP Backup RAM stays out of Continue
+
+- ✅ The user's real JP Mednafen SRAM (`MD5 dbdedb0ec809227b289c2bc5b18b9c9d`)
+  is a structurally valid 2 KiB HUBM / `DMS-SG.001` record, but the selected
+  slot's campaign byte is zero. The original US and JP restore routine returns
+  immediately for zero, then rejects masked campaign values `>= 7`. The save
+  classifier now reports this gameplay boundary separately from container
+  layout. Production startup no longer advertises the empty slot, explicit
+  invalid BRAM paths do not fall back to another save, and campaign/party
+  restore rejects the empty slot without changing world state.
+- ✅ `theron_v1_pce_bram_real_artifact` passes using both the authentic
+  Akutuba-complete US BRAM and the hash-verified empty JP save. The test keeps
+  the JP original outside Git and symlinks it into a temporary `.bram` path so
+  the production Continue route is exercised against the exact source bytes.

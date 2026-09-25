@@ -159,3 +159,24 @@ envelopes remain disabled in production.
 The checked-in capture hook is
 `scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch`. The copyrighted
 8 KiB page remains operator-owned data and is not committed to the repository.
+
+## Empty selected-slot gate — authentic JP Backup RAM
+
+The original US and JP restore body begins with `LDA $267C; BEQ return`, then
+masks the campaign byte with `$7F` and returns when that value is at least 7.
+Therefore a structurally valid `DMS-SG.001` container is not necessarily a
+restorable Continue slot. Firestaff now retains the container/body-layout
+receipt separately from `save_body_campaign_valid`, and only advertises or
+applies Continue when the selected byte satisfies that original branch.
+An explicit invalid `FIRESTAFF_THERON_BRAM_PATH` is also authoritative and no
+longer falls through to a different default save.
+
+The negative regression uses the operator's actual JP Mednafen SRAM file
+`Dungeon Master - Theron's Quest (Japan).0daf24b401cbe8c84e88114eab6a3625.sav`
+(2,048 bytes, MD5 `dbdedb0ec809227b289c2bc5b18b9c9d`). It has a valid HUBM and
+`DMS-SG.001` record, selected slot 0 and campaign byte 0. The test confirms
+that classification preserves its valid structural receipt while startup
+shows no recognized/decoded save, Continue is unavailable and both campaign
+and Theron-body restore reject it without mutating the world. The regression
+checks the authentic file's hash before making a temporary `.bram` symlink;
+the save and emulator media remain local and unmodified.

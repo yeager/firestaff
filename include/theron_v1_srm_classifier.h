@@ -119,6 +119,9 @@ typedef struct {
     size_t serialized_campaign_byte_offset;
     uint8_t serialized_campaign_byte;
     int save_body_layout_proven;
+    /* The original US/JP restore consumer returns without restoring when
+     * campaign byte $267C is zero or its masked campaign is >= 7. */
+    int save_body_campaign_valid;
 } Theron_V1PceBramReceipt;
 
 /* Byte-exact projection of the original DMS-SG.001 writer.  The authentic
@@ -166,6 +169,7 @@ Theron_V1PceBramStatus theron_v1_pce_bram_classify(
     const uint8_t *data, size_t size, Theron_V1PceBramReceipt *out);
 Theron_V1PceBramStatus theron_v1_pce_bram_classify_path(
     const char *path, Theron_V1PceBramReceipt *out);
+int theron_v1_pce_bram_campaign_byte_restorable(uint8_t campaign_byte);
 int theron_v1_pce_bram_decode_original_body(
     const uint8_t *data, size_t size, Theron_V1PceBramBodyReceipt *out);
 int theron_v1_pce_bram_decode_original_body_path(
