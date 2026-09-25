@@ -83,8 +83,11 @@ int main(void) {
     Theron_ChapterMarker marker;
     Theron_V1_World *world;
     const char *home = getenv("HOME");
-    char path[1024];
+    char us_path[1024];
+    char jp_path[1024];
     char formatted[THERON_CHAPTER_MARKER_REPORT_MAX];
+    int have_us;
+    int have_jp;
 
     memset(&profile, 0, sizeof(profile));
     profile.assets_verified = 1;
@@ -105,43 +108,55 @@ int main(void) {
         return 1;
     world->progression = progression;
     world->progression.quest_items_collected = 0u;
-    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+    snprintf(us_path, sizeof(us_path),
+             "%s/.firestaff/data/theron/TQUS02.bin", home);
+    snprintf(jp_path, sizeof(jp_path),
+             "%s/.firestaff/data/theron/TQJP02.bin", home);
     {
-        FILE *source = fopen(path, "rb");
-        if (!source) {
-            free(world);
-            puts("SKIP: authentic US and JP Track 02 files are not staged");
-            return 77;
-        }
-        fclose(source);
+        FILE *source = fopen(us_path, "rb");
+        have_us = source != NULL;
+        if (source) fclose(source);
     }
-    if (!bind_real_bank(world, path, 2, 1u) ||
-        theron_v1_chapter_marker_compute_world(
-            &profile, world, NULL, &marker) != 0 ||
-        strstr(marker.quest_summary, "next: SHIELD DEFIANT") == NULL) {
-        fputs("FAIL: production marker did not publish authentic US name\n",
-              stderr);
+    {
+        FILE *source = fopen(jp_path, "rb");
+        have_jp = source != NULL;
+        if (source) fclose(source);
+    }
+    if (!have_jp) {
+        snprintf(jp_path, sizeof(jp_path),
+                 "%s/.firestaff/data/theron/"
+                 "Dungeon Master - Theron's Quest (Japan) (Rev 1) "
+                 "(Track 02).bin", home);
+        FILE *source = fopen(jp_path, "rb");
+        have_jp = source != NULL;
+        if (source) fclose(source);
+    }
+    if (!have_us && !have_jp) {
         free(world);
-        return 1;
+        puts("SKIP: authentic US and JP Track 02 sources are not staged");
+        return 77;
     }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQJP02.bin", home);
-    {
-        FILE *source = fopen(path, "rb");
-        if (!source) {
+    if (have_us) {
+        if (!bind_real_bank(world, us_path, 2, 1u) ||
+            theron_v1_chapter_marker_compute_world(
+                &profile, world, NULL, &marker) != 0 ||
+            strstr(marker.quest_summary, "next: SHIELD DEFIANT") == NULL) {
+            fputs("FAIL: production marker did not publish authentic US name\n",
+                  stderr);
             free(world);
-            puts("SKIP: authentic US and JP Track 02 files are not staged");
-            return 77;
+            return 1;
         }
-        fclose(source);
+    } else {
+        puts("SKIP: authentic US Track 02 name bank is not staged");
     }
-    {
+    if (have_jp) {
         static const char *const expected[] = {
             "デフィアントシールド", "タザブーツ", "タザグリーブ",
             "ソウルケージ", "タザアーマー", "タザヘルメット", "復讐の剣"
         };
         unsigned int i;
         for (i = 0u; i < 7u; ++i) {
-            if (!bind_real_bank(world, path, 1, i + 1u)) {
+            if (!bind_real_bank(world, jp_path, 1, i + 1u)) {
                 fputs("FAIL: could not bind authentic JP name bank\n", stderr);
                 free(world);
                 return 1;
@@ -169,8 +184,16 @@ int main(void) {
                 return 1;
             }
         }
+    } else {
+        puts("SKIP: authentic JP Track 02 name banks are not staged");
     }
     free(world);
-    puts("PASS: production marker uses real US text and converts all seven authentic JP names");
+    if (have_us && have_jp) {
+        puts("PASS: production marker uses real US text and converts all seven authentic JP names");
+    } else if (have_jp) {
+        puts("PASS: production marker converts all seven authentic JP names");
+    } else {
+        puts("PASS: production marker uses authentic US text");
+    }
     return 0;
 }

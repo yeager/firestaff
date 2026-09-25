@@ -18,15 +18,17 @@
 
 - The regional source-loader and startup/combat tests now discover the
   authentic Rev. 1 CUE Track 02 under its preserved archival filename when
-  the canonical `TQJP02.bin` name is absent. CMake selects that real file for the test
-  instead of injecting a nonexistent canonical path. The production roster
-  test likewise binds the actual JP roster and reports the absent US source
-  separately. The trv2 regressions pass against the installed Track 02 hash;
-  the source-loader test verifies all seven JP source dungeons (34 maps,
-  2,269 source objects), and both runtime-entry tests exercise the authentic JP
-  roster. No media was copied, generated, or substituted. This remains
-  source-loader/roster evidence, not original transition or gameplay parity.
-  The full trv2 Theron suite then reported 45 passed and 16 skipped out of 61
+  the canonical `TQJP02.bin` name is absent. CMake selects that real file for
+  the test instead of injecting a nonexistent canonical path. The production
+  roster test likewise binds the actual JP roster and reports the absent US
+  source separately. The chapter-marker test translates all seven authentic
+  JP quest-item names and reports the missing US bank separately. The trv2
+  regressions pass against the installed Track 02 hash; the source-loader test
+  verifies all seven JP source dungeons (34 maps, 2,269 source objects), while
+  the runtime-entry tests exercise the authentic JP roster. No media was
+  copied, generated, or substituted. This remains source-loader, roster and
+  text evidence, not original transition or gameplay parity. The full trv2
+  Theron suite then reported 46 passed and 15 skipped out of 61
   tests, with no failures; skips are the specific absent BIN, capture, save or
   archive inputs.
 
