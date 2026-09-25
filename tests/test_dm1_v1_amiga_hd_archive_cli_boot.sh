@@ -76,23 +76,19 @@ probe_runtime_input action 1,3,2
 
 for mode in v1 v20 v21; do
     case "$mode" in v1) mode_index=0;; v20) mode_index=1;; v21) mode_index=2;; esac
-    for route in cli menu; do
-        route_args=()
-        if [[ "$route" == menu ]]; then route_args=(--menu --script enter,enter,enter); fi
-        mode_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-            --game dm1 --platform amiga --data-dir "$archive" \
-            "${route_args[@]}" --presentation-mode "$mode" \
-            --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
-            printf '%s\n' "$mode_output" >&2; exit 1;
-        }
-        if ! grep -Fq "presentationMode=$mode_index " <<<"$mode_output" ||
-           ! grep -Fq "assetMd5=$expected_md5" <<<"$mode_output" ||
-           ! grep -Fq 'phase=dm1-runtime' <<<"$mode_output" ||
-           ! grep -Fq 'levelLoaded=1' <<<"$mode_output"; then
-            printf '%s\n' "$mode_output" >&2
-            printf 'FAIL: Amiga %s did not retain requested %s presentation\n' "$route" "$mode" >&2
-            exit 1
-        fi
-    done
+    mode_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform amiga --data-dir "$archive" \
+        --presentation-mode "$mode" \
+        --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
+        printf '%s\n' "$mode_output" >&2; exit 1;
+    }
+    if ! grep -Fq "presentationMode=$mode_index " <<<"$mode_output" ||
+       ! grep -Fq "assetMd5=$expected_md5" <<<"$mode_output" ||
+       ! grep -Fq 'phase=dm1-runtime' <<<"$mode_output" ||
+       ! grep -Fq 'levelLoaded=1' <<<"$mode_output"; then
+        printf '%s\n' "$mode_output" >&2
+        printf 'FAIL: Amiga CLI did not retain requested %s presentation\n' "$mode" >&2
+        exit 1
+    fi
 done
-printf '%s\n' 'PASS: authentic DM1 Amiga ZIP reaches CLI/menu in Original, Filtered and Upscaled modes, plus native input matrix in memory'
+printf '%s\n' 'PASS: authentic DM1 Amiga ZIP reaches CLI/menu, retains three CLI presentation modes, and accepts the native input matrix in memory'

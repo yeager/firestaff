@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-25: Fixed the authentic Amiga HD regression's command matrix. It
+  previously requested `--boot-probe` together with `--menu`, a combination
+  that the CLI rejects, and expanded an empty Bash array under `set -u` on the
+  supported system shell. The menu launch is now checked in its normal M12
+  route, while all three presentation probes use direct CLI launch. Both the
+  Amiga HD and nested Amiga v2.0 original-media tests pass.
+
 - 2026-09-25: Completed authentic Atari ST 1.0a/1.0b/1.1 `DUNGEON.DAT`
   admission. ST 1.0b's missing MD5/SHA256 identity was authenticated from its
   original 1987-12-11 STX; ST 1.0a's already admitted M12 profile also needed
