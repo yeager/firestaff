@@ -252,6 +252,49 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
+    /* A partial explicit override must not silently fall back to a different
+     * otherwise-valid bundle discovered under the data directory. */
+    if (capture_root && capture_root[0]) {
+        Theron_V1_Viewport partial_override;
+        char partial_vram_path[4096];
+        const char *partial_vram = vram_path;
+        int initialized;
+        if (!partial_vram || !partial_vram[0]) {
+            if (snprintf(partial_vram_path, sizeof(partial_vram_path),
+                         "%s/capture/trace.vram", capture_root) >=
+                (int)sizeof(partial_vram_path)) {
+                fprintf(stderr, "FAIL: capture root path is too long\n");
+                theron_vp_free(&viewport);
+                return 1;
+            }
+            partial_vram = partial_vram_path;
+        }
+#ifdef _WIN32
+        _putenv_s("FIRESTAFF_THERON_VRAM_SNAPSHOT", partial_vram);
+        _putenv_s("FIRESTAFF_THERON_VCE_SNAPSHOT", "");
+        _putenv_s("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", "");
+        _putenv_s("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", "");
+        _putenv_s("FIRESTAFF_THERON_VDC_IO_TRACE", "");
+#else
+        setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", partial_vram, 1);
+        unsetenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
+        unsetenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT");
+        unsetenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT");
+        unsetenv("FIRESTAFF_THERON_VDC_IO_TRACE");
+#endif
+        memset(&partial_override, 0, sizeof(partial_override));
+        initialized = theron_vp_init_from_data_dir(
+            &partial_override, capture_root);
+        if (initialized) {
+            fprintf(stderr,
+                    "FAIL: partial explicit capture silently fell back to data directory\n");
+            theron_vp_free(&partial_override);
+            theron_vp_free(&viewport);
+            return 1;
+        }
+        /* Failed initialization still owns its core framebuffer. */
+        theron_vp_free(&partial_override);
+    }
     printf("PASS: vram_nonzero=%zu vce_nonzero=%zu bat_tiles=%d "
            "preview_cells=%d preview_nonzero=%zu presented_nonzero=%zu "
            "boot_presented_nonzero=%zu palette_entries=512 "
