@@ -28,6 +28,23 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:1645:262,wait20,click:410:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
+# The direct CLI route must also finish the authentic Towns TWANIM before
+# its source-coordinate New Game and mirror clicks. Keep the probe surface at
+# the original 320x200 coordinates and require the first real map-0 party.
+probe_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --game dm2 --platform fm-towns \
+    --data-dir "$archive" --boot-probe --boot-probe-frames 0 \
+    --script 'wait:8000,click:115:65,click:100:60' \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+    --boot-probe-expect-map 0 --boot-probe-expect-party 1,8,0 \
+    --boot-probe-expect-champions 1 --duration 0 2>&1) || {
+    printf '%s\n' "$probe_output" >&2
+    exit 1
+}
+printf '%s\n' "$probe_output" | grep -q \
+    'dm2FrameAccepted=1 dm2RealAssets=1 dm2NoCoreFallbacks=1 dm2FallbackDraws=0'
+
 if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
     echo 'FAIL: DM2 FM Towns archive changed during native launch' >&2
     exit 1
