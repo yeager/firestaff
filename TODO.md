@@ -29,10 +29,9 @@
   local checkout lacks the authentic unpacked French EUDATA needed to execute
   that route. German Atari ST 1.2 and French Atari ST 1.3 also reach DM1 runtime
   from M12 with no selected champions. German Atari ST 1.2 now has verified
-  direct CLI movement to the adjacent tile for C127 ordinal 14. A direct M11
-  API harness selects it, but the CLI Enter route does not yet invoke selection;
-  verify player-input recruitment through CLI and M12, then repeat on French
-  Atari media.
+  direct CLI movement and pointer-based recruitment of C127 ordinal 14.
+  The normal M12 menu route still reaches runtime with no selected champions;
+  verify recruitment through M12, then repeat on French Atari media.
   Atari now uses a distinct STARTUP1.C/F0437/F0441 media receipt, skips PC
   SWSH and PC34 special palettes, and routes entrance input through Atari's
   source mouse command. Authentic English, German and French Atari ST M12
@@ -40,9 +39,9 @@
   receipt before accepting the live runtime state. Source review of ReDMCSB
   STARTUP1.C:160-173 shows the Atari path continues after F0441 through the
   F0435 load loop and F0462_StartGame before runtime. Firestaff's M12 handoff
-  still begins with zero champions. The direct CLI route reaches C127, and a
-  direct M11 API harness recruits from authentic Hall data; player-input
-  recruitment still needs proof. `DUNGEON.FTL` is
+  still begins with zero champions. The direct CLI route reaches C127 and
+  recruits through a source-coordinate pointer click against authentic Hall
+  data; M12 recruitment still needs proof. `DUNGEON.FTL` is
   only an optional custom-dungeon path in ReDMCSB LOADSAVE.C; its absence from
   clean retail STX disks does not block built-in new-game startup. Verify the
   source-owned F0435/F0462 transition and recruitment through M12. The Atari

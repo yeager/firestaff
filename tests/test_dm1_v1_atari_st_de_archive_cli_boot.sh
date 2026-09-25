@@ -63,7 +63,8 @@ runtime_probe="$app_dir/dm1-atari-st-de-runtime-$$.json"
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 capture_dir=$(mktemp -d "$scratch_root/dm1-atari-runtime.XXXXXX")
-trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir"' EXIT
+recruitment_home=
+trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir"; if [[ -n "$recruitment_home" ]]; then rm -rf "$recruitment_home"; fi' EXIT
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
@@ -139,21 +140,29 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
 fi
 
 # This route follows authentic map 0 to C127 ordinal 14 at (10,3), then
-# opens it from the adjacent source tile (10,4) with the source inspect command.
-recruitment_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+# opens it from the adjacent source tile (10,4) with the source pointer command.
+# Isolate the window configuration so the scripted window point is stable even
+# when a developer's saved display size differs from the default 960x540.
+recruitment_home="$scratch_root/dm1-atari-st-de-home-$$"
+mkdir -p "$recruitment_home"
+recruitment_output=$(HOME="$recruitment_home" SDL_VIDEODRIVER=dummy \
+    SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 1000 \
-    --script 'up,up,up,up,turn-left,up,up,up,turn-left,up,up,up,up,up,turn-right,up,up,turn-right,up,turn-left,up,up,turn-right,up,turn-left,up,up,turn-left' \
+    --script 'up,up,up,up,turn-left,up,up,up,turn-left,up,up,up,up,up,turn-right,up,up,turn-right,up,turn-left,up,up,turn-right,up,turn-left,up,up,turn-left,click:350:224' \
     --duration 0 2>&1) || {
     printf '%s\n' "$recruitment_output" >&2
     exit 1
 }
 if ! grep -Fq 'phase=dm1-runtime' <<<"$recruitment_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$recruitment_output" ||
-   ! grep -Fq 'map=0 party=10,4,0 champions=0' <<<"$recruitment_output"; then
+   ! grep -Fq 'map=0 party=10,4,0 champions=1' <<<"$recruitment_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=1' <<<"$recruitment_output" ||
+   ! grep -Fq 'dm1HocCandidateOrdinal=14' <<<"$recruitment_output" ||
+   ! grep -Fq 'dm1HocCandidatePartyIndex=0' <<<"$recruitment_output"; then
     printf '%s\n' "$recruitment_output" >&2
-    printf '%s\n' 'FAIL: authentic German DM1 Atari ST CLI did not recruit the C127 Hall champion' >&2
+    printf '%s\n' 'FAIL: authentic German DM1 Atari ST CLI did not open and recruit C127 ordinal 14' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic German DM1 Atari ST 1.2 ZIP -> STX reaches CLI, menu, native movement, and C127 approach runtime'
+printf '%s\n' 'PASS: authentic German DM1 Atari ST 1.2 ZIP -> STX reaches CLI, menu, native movement, and C127 recruitment'

@@ -207,7 +207,7 @@
   German Atari ST 1.2 and French Atari ST 1.3 now reach `dm1-runtime` through
   M12, but both source receipts have `championCount=0`; verify the original
   Champion Hall selection route through M12. German Atari ST 1.2 recruitment is
-  already verified through direct CLI with authentic Hall data.
+  verified through the direct CLI pointer route with authentic Hall data.
 - Complete Atari ST campaign start through the source-owned Champion Hall
   selection on the normal M12 route. German Atari ST 1.2 presents authentic
   source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
@@ -215,11 +215,10 @@
   A captured 320x200 first runtime frame has 17,773 nonblack pixels in six
   colours; this is a visible-frame smoke check, not visual parity. The M12
   handoff still reports `championCount=0`. Direct CLI movement reaches the
-  adjacent tile for C127 ordinal 14 on authentic Atari map data. A direct M11
-  API harness selects that candidate and appends it to the party, but the CLI
-  Enter route did not invoke that selection; verify player input and normal
-  M12 recruitment without inventing champions or treating the partial floor
-  view as complete visual parity.
+  adjacent tile for C127 ordinal 14 on authentic Atari map data, and a source
+  pointer click opens its candidate panel and recruits it. Verify the same
+  selection through normal M12 startup without inventing champions or treating
+  the partial floor view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

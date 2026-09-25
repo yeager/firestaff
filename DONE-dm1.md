@@ -1,13 +1,13 @@
 # Firestaff DONE — DM1
 
 - 2026-09-25: Extended the authentic German Atari ST 1.2 CLI regression to
-  follow the source map to the adjacent tile for C127 ordinal 14. A direct
-  M11 harness with the same retail ZIP→STX data selects that candidate and
-  adds it to the party; the CLI input probe does not yet expose the same
-  candidate selection through its Enter route. Corrected the campaign-start
-  notes: ReDMCSB LOADSAVE.C uses `DUNGEON.FTL` for an optional custom dungeon;
-  it is not required to start the built-in Atari campaign. Recruitment through
-  player input and the M12 route remains open.
+  follow the source map to C127 ordinal 14, click it through the normal host
+  pointer-coordinate mapper, and assert that the candidate panel opens and the
+  champion joins the party. The probe uses a clean default window profile so
+  the pointer location is stable across developer settings. Corrected the
+  campaign-start notes: ReDMCSB LOADSAVE.C uses `DUNGEON.FTL` for an optional
+  custom dungeon; it is not required to start the built-in Atari campaign.
+  Recruitment through normal M12 startup and French Atari media remains open.
 
 - 2026-09-25: Re-ran authentic Atari ST archive launch tests for English
   1.0a/1.0b/1.1, German 1.2 and French 1.3. All five passed their CLI and M12
