@@ -217,7 +217,18 @@
   reports `championCount=0`, and the live view lacks a verified recruitment
   route to a playable party. Implement and verify the authentic F0435/F0462
   start path for Atari without inventing champions or treating the black
-  exterior/partial floor view as a complete game start.
+  exterior/partial floor view as a complete game start. ReDMCSB STARTUP1.C:
+  162-174 runs F0441, retries F0435, then calls F0462 and places the party only
+  when `G0298_B_NewGame` is set. LOADSAVE.C:2437-2447 and 2583-2611 admit a
+  new Atari dungeon only from `A:\DUNGEON.FTL` after no saved game was found.
+  The authenticated English v1.2 STX used by the launch tests has only
+  BOOTER, SWOOSH.IMG, START.PRG, GRAPHICS.DAT, START.PAK and DUNGEON.DAT in
+  its root; the supplied German v1.2 and French v1.3 STX roots likewise
+  contain no `DUNGEON.FTL`, and no Atari `ADMGAME.DAT`/`ADMGAME.BAK` is
+  present in the staged corpus. Current Atari start-menu tests therefore prove
+  native media admission and first-frame presentation only. Locate an
+  authentic Atari `DUNGEON.FTL` or saved campaign corpus before wiring
+  F0435/F0462; do not promote the zero-champion admission frame as playable.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,
