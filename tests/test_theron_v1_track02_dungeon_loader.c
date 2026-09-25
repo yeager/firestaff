@@ -4912,14 +4912,13 @@ int main(void) {
     const char *path = find_track02();
     if (!path) {
         printf("  SKIP: US Track 02 BIN not found\n");
-        printf("PASS\n");
-        return 0;
+        return 77;
     }
     size_t ud_size = 0;
     uint8_t *ud = load_track02_ud(path, &ud_size);
     if (!ud) {
         printf("  SKIP: could not load Track 02\n");
-        return 0;
+        return 77;
     }
     raw = load_raw_bytes(path, &raw_size);
     assert(raw != NULL);

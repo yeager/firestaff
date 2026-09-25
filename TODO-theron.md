@@ -3268,3 +3268,7 @@ av bankladdningen. Se
   media ger CTest-skip och `assert()`-kontroller förblir aktiva i Release.
   Detta verifierar källposter och dekodning, inte oinfångade knapp-, nyckel-
   eller teleporterhändelser.
+- ✅ De äldre Track 02-proven för föremål, dungeonkartor/-objekt, text,
+  aktuatorer och ground-referenser använder nu CTest-skipstatus när deras
+  obligatoriska riktiga BIN saknas eller inte kan normaliseras. Deras
+  `assert()`-baserade källkontroller är också kvar i Release/NDEBUG-byggen.

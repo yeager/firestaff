@@ -53036,11 +53036,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_thing_data.c
     target_include_directories(test_theron_v1_track02_thing_data PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_thing_data PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_thing_data PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_thing_data PRIVATE /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_track02_thing_data
         COMMAND test_theron_v1_track02_thing_data
+    )
+    set_tests_properties(theron_v1_track02_thing_data PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;thing-data"
     )
 endif()
 
@@ -53055,11 +53062,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_decode.
     target_include_directories(test_theron_v1_track02_text_decode PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_text_decode PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_text_decode PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_text_decode PRIVATE /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_track02_text_decode
         COMMAND test_theron_v1_track02_text_decode
+    )
+    set_tests_properties(theron_v1_track02_text_decode PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;dungeon-text"
     )
 endif()
 
@@ -53086,6 +53100,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
     add_test(
         NAME theron_v1_track02_actuator
         COMMAND test_theron_v1_track02_actuator
+    )
+    set_tests_properties(theron_v1_track02_actuator PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;actuators"
     )
 endif()
 
@@ -53144,6 +53162,10 @@ add_executable(test_theron_v1_track02_dungeon_loader
     add_test(
         NAME theron_v1_track02_dungeon_loader
         COMMAND test_theron_v1_track02_dungeon_loader
+    )
+    set_tests_properties(theron_v1_track02_dungeon_loader PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;dungeon;runtime-data"
     )
 endif()
 
@@ -53292,11 +53314,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_ground_ref.c
     target_include_directories(test_theron_v1_track02_ground_ref PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_ground_ref PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_ground_ref PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_ground_ref PRIVATE /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_track02_ground_ref
         COMMAND test_theron_v1_track02_ground_ref
+    )
+    set_tests_properties(theron_v1_track02_ground_ref PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;ground-references"
     )
 endif()
 
