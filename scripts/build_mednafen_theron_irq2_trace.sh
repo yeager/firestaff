@@ -48,6 +48,11 @@ if [[ -e "$build_root" ]]; then
 fi
 mkdir -p "$build_root"
 cp -R "$source_root/." "$build_root/source"
+# The supplied Mednafen release source is an exported source tree, not a Git
+# checkout. git apply silently skips patches when their paths are absent from
+# an index, so create one inside this disposable copy before applying hooks.
+git -C "$build_root/source" init --quiet
+git -C "$build_root/source" add --all --force
 # macOS's BSD patch rejects the large debugger hunk despite a clean 1.32.1
 # source tree; git apply validates that hunk exactly. The smaller trace
 # patches retain their original BSD-patch format.
@@ -136,8 +141,9 @@ sed \
     > "$ram_provenance_rendered"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$ram_provenance_rendered"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
+git -C "$build_root/source" apply --recount --ignore-space-change \
+    --whitespace=nowarn \
+    "$repo/scripts/mednafen_1.32.1_theron_single_logical_write_fix.patch"
 vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
 vdc_io_rendered="$build_root/theron-vdc-io-trace.rendered.patch"
 sed \
@@ -184,7 +190,10 @@ cd "$build_root/source"
 if [[ "$(uname -s)" == Darwin && -n "$sdl2_prefix" ]]; then
     export LDFLAGS="${LDFLAGS:-} -Wl,-rpath,$sdl2_prefix/lib"
 fi
-CXXFLAGS="${CXXFLAGS:-}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
+# The PCE interpreter's unoptimized frame exceeds the default macOS emulator
+# thread stack and faults in the stack probe on Apple Silicon. Keep an
+# explicit caller-provided CXXFLAGS, but make ordinary capture builds usable.
+CXXFLAGS="${CXXFLAGS:--O2}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
     --disable-lynx --disable-md --disable-nes --disable-ngp --disable-pce-fast \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
     --disable-snes-faust --disable-ss --disable-ssfplay --disable-vb --disable-wswan \

@@ -88,6 +88,10 @@ if [[ ! -x "$runtime_verifier" ]] ||
     exit 1
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
+   ! grep -Fq 'CXXFLAGS="${CXXFLAGS:--O2}" ./configure' "$build_script" ||
+   ! grep -Fq 'git -C "$build_root/source" init --quiet' "$build_script" ||
+   ! grep -Fq 'git -C "$build_root/source" add --all --force' "$build_script" ||
+   ! grep -Fq 'apply --recount --ignore-space-change' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_grab_trace.patch' "$build_script" ||
