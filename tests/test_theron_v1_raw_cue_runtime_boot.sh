@@ -12,22 +12,41 @@ cue="$media_root/Dungeon Master - Theron's Quest (USA).cue"
 track02="$media_root/Dungeon Master - Theron's Quest (USA) (Track 02).bin"
 expected_md5=f23601102138f87c33025877767ebf76
 test_temp_dir=${FIRESTAFF_TEST_TEMP_DIR:-"$(dirname "$app")"}
+extracted_media_root=
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable is unavailable: %s\n' "$app" >&2
     exit 1
-fi
-if [[ ! -f "$cue" || ! -f "$track02" ]]; then
-    printf 'SKIP: authentic Theron USA raw CUE/BIN is not staged\n'
-    exit 77
 fi
 if [[ ! -d "$test_temp_dir" ]]; then
     printf 'FAIL: test temporary directory is unavailable: %s\n' "$test_temp_dir" >&2
     exit 1
 fi
 
+if [[ ! -f "$cue" || ! -f "$track02" ]]; then
+    archive="$HOME/.firestaff/data/theron/Dungeon Master - Theron's Quest (USA).7z"
+    extractor=$(command -v 7zz || command -v 7z || true)
+    if [[ -f "$archive" && -n "$extractor" ]]; then
+        extracted_media_root=$(mktemp -d "$test_temp_dir/firestaff-theron-raw-cue-media.XXXXXX")
+        if ! "$extractor" e "$archive" "-o$extracted_media_root" \
+            "Dungeon Master - Theron's Quest (USA).cue" \
+            "Dungeon Master - Theron's Quest (USA) (Track 02).bin" >/dev/null; then
+            rm -rf "$extracted_media_root"
+            printf 'FAIL: authentic Theron USA archive could not provide its CUE and Track 02\n' >&2
+            exit 1
+        fi
+        media_root=$extracted_media_root
+        cue="$media_root/Dungeon Master - Theron's Quest (USA).cue"
+        track02="$media_root/Dungeon Master - Theron's Quest (USA) (Track 02).bin"
+    fi
+fi
+if [[ ! -f "$cue" || ! -f "$track02" ]]; then
+    printf 'SKIP: authentic Theron USA raw CUE/BIN is not staged\n'
+    exit 77
+fi
+
 output=$(mktemp "$test_temp_dir/firestaff-theron-raw-cue.XXXXXX")
-trap 'rm -f "$output"' EXIT
+trap 'rm -f "$output"; if [[ -n "$extracted_media_root" ]]; then rm -rf "$extracted_media_root"; fi' EXIT
 
 assert_startup_route() {
     local data_source=$1
