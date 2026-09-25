@@ -2,6 +2,11 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25: Removed the data-free synthetic first-room probe and its fabricated
+stair assertion. Current dungeon evidence comes from the authenticated
+regional source-dungeon and mechanics regressions; those pass with the real
+US/JP Track 02 files. No product behavior was enabled by removing the probe.
+
 2026-09-25 local regression audit: all 278 tests selected by the `theron_`
 CTest name prefix completed without a failure; 18 returned the configured
 skip status because their original-runtime captures or other required local
