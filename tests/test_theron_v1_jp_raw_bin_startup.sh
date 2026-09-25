@@ -17,6 +17,8 @@ if [[ ! -f "$track02" ]]; then
     fi
 fi
 expected_md5=b7afb338ad31be1025b53f9aff12d73a
+track19_raw="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin"
+track19_iso="$data_root/TQJP19.iso"
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable is unavailable: %s\n' "$app" >&2
@@ -30,13 +32,8 @@ fi
 output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-raw-bin.XXXXXX")
 audio_cache=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-jp-audio.XXXXXX")
 trap 'rm -f "$output"; rm -rf "$audio_cache"' EXIT
-jp_archive="$data_root/Dungeon Master - Theron's Quest (Japan).7z"
-if [[ ! -f "$jp_archive" ]]; then
-    jp_archive="$data_root/Dungeon Master - Theron's Quest (Japan) (1).7z"
-fi
-if [[ ! -f "$jp_archive" &&
-      ! -f "$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue" ]]; then
-    printf 'SKIP: authentic Theron JP full-disc archive or CUE is not staged\n'
+if [[ ! -f "$track19_raw" && ! -f "$track19_iso" ]]; then
+    printf 'SKIP: authentic Theron JP Track 19 is not staged\n'
     exit 77
 fi
 FIRESTAFF_THERON_MEDNAFEN_CACHE="$audio_cache" \

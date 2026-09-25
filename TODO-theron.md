@@ -1792,6 +1792,10 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   Sarmon mapping bound. Seven focused JP runtime/data CTests passed against
   those same local files. `theronTrack01CddaReady` remained zero because no
   complete JP CUE/audio set is currently available in that directory.
+  `theron_v1_jp_raw_bin_startup` now tests this supported raw-media route
+  without requiring the unavailable full-disc CUE/archive; it requires the
+  authentic Track 19 bank as well, and its real-media CTest passes against the
+  local files. This does not claim JP CD-DA readiness.
 
 - [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest replay against the
   authenticated US Track 02 ISO now gives a real HuC6280 loader witness
