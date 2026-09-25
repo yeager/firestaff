@@ -211,8 +211,12 @@ static unsigned int report_authentic_stair_candidates(
     for (unsigned int dungeon = 0u; dungeon < THERON_TRACK02_DUNGEON_COUNT;
          ++dungeon) {
         Theron_DungeonData data;
-        assert(theron_v1_track02_dungeon_map_load_for_variant(
-            ud, ud_size, variant, dungeon, &data));
+        if (!theron_v1_track02_dungeon_map_load_for_variant(
+                ud, ud_size, variant, dungeon, &data)) {
+            fprintf(stderr, "FAIL: %s authenticated dungeon %u failed to load\n",
+                    region, dungeon);
+            exit(1);
+        }
         for (unsigned int map = 0u; map < data.map_count; ++map) {
             const unsigned int width =
                 (unsigned int)data.maps[map].header.x_dim + 1u;
@@ -232,7 +236,6 @@ static unsigned int report_authentic_stair_candidates(
             }
         }
     }
-    assert(total > 0u);
     const unsigned int expected =
         variant == THERON_TRACK02_VARIANT_JP_BIN ? 170u : 171u;
     if (total != expected) {
@@ -258,8 +261,11 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
-        assert(theron_v1_track02_dungeon_map_load_for_variant(
-            ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, d, &dd));
+        if (!theron_v1_track02_dungeon_map_load_for_variant(
+                ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, d, &dd)) {
+            fprintf(stderr, "FAIL: JP authenticated dungeon %u failed to load\n", d);
+            exit(1);
+        }
         assert(dd.map_count == expected_maps[d]);
         assert(dd.maps[0].header.x_dim == 5);
         assert(dd.maps[0].header.y_dim == 7);
