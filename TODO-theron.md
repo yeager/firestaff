@@ -2,6 +2,19 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25 authentic JP full-disc replay audit: the private
+`theron-authentic-jp-full-disc-20260925` capture uses the hash-locked Rev. 1
+Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) and System Card
+(`ff1a674273fe3540ccef576376407d1d`). Its transition receipt records 131,072
+input transactions, 24 raw-sector spans, 25 CD IRQ callbacks, one game-main
+`$E009` dispatch, zero authenticated CD-to-RAM receipts, no transition, and a
+65,536-byte VDC snapshot plus 65,536 VDC I/O writes. The paired main-RAM
+consumer sidecar has 512 reads in `$2600-$27FF`; all are zero-valued BIOS
+`$CB22` reads. This is authentic-media negative evidence, not a gameplay or
+dungeon handoff. The local Mednafen save directory contains no JP non-empty
+BRAM/save artifact, so a JP continue-state replay is not presently available.
+Capture and sidecars remain ignored local scratch and are not tracked.
+
 2026-09-25: Fixed the production M11 boot path so explicit CLI-provided
 VRAM/VCE/VDC-state/SAT/VDC-I/O files are passed as one authenticated bundle to
 the native viewport. Previously the CLI accepted the five paths but
@@ -1804,7 +1817,7 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   authentic Track 19 bank as well, and its real-media CTest passes against the
   local files.
 
-- [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest replay against the
+- [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest US replay against the
   authenticated US Track 02 ISO now gives a real HuC6280 loader witness
   (`$2286` `TIA` followed by 13 block transfers, 24 RTS and 24 post-RTS rows)
   plus 4,096 static-bank consumer reads and an executed `$2c54–$2c69`
