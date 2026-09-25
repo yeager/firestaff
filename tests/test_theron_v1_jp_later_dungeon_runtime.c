@@ -10,7 +10,12 @@
 static const char *find_track02(const char *environment_name,
                                 const char *filename) {
     const char *configured = getenv(environment_name);
+    const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
+    const char *workspace_root = getenv("FIRESTAFF_WORKSPACE_DATA_DIR");
     const char *home;
+    char root_paths[3][1024];
+    const char *roots[3];
+    size_t root_count = 0u;
     static char standard_path[1024];
     if (configured && configured[0]) {
         FILE *f = fopen(configured, "rb");
@@ -18,11 +23,42 @@ static const char *find_track02(const char *environment_name,
         return NULL;
     }
     home = getenv("HOME");
-    if (home && home[0] &&
-        snprintf(standard_path, sizeof(standard_path),
-                 "%s/.firestaff/data/theron/%s", home, filename) > 0) {
+    if (theron_root && theron_root[0]) roots[root_count++] = theron_root;
+    if (workspace_root && workspace_root[0]) {
+        int length = snprintf(root_paths[root_count],
+                              sizeof(root_paths[root_count]),
+                              "%s/theron", workspace_root);
+        if (length > 0 && (size_t)length < sizeof(root_paths[root_count])) {
+            roots[root_count] = root_paths[root_count];
+            ++root_count;
+        }
+    }
+    if (home && home[0] && root_count < 3u) {
+        int length = snprintf(root_paths[root_count],
+                              sizeof(root_paths[root_count]),
+                              "%s/.firestaff/data/theron", home);
+        if (length > 0 && (size_t)length < sizeof(root_paths[root_count])) {
+            roots[root_count] = root_paths[root_count];
+            ++root_count;
+        }
+    }
+    for (size_t i = 0u; i < root_count; ++i) {
+        int length = snprintf(standard_path, sizeof(standard_path), "%s/%s",
+                              roots[i], filename);
+        if (length <= 0 || (size_t)length >= sizeof(standard_path)) continue;
         FILE *f = fopen(standard_path, "rb");
         if (f) { fclose(f); return standard_path; }
+    }
+    if (strcmp(filename, "TQJP02.bin") == 0) {
+        static const char jp_cue_track02[] =
+            "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin";
+        for (size_t i = 0u; i < root_count; ++i) {
+            int length = snprintf(standard_path, sizeof(standard_path),
+                                  "%s/%s", roots[i], jp_cue_track02);
+            if (length <= 0 || (size_t)length >= sizeof(standard_path)) continue;
+            FILE *f = fopen(standard_path, "rb");
+            if (f) { fclose(f); return standard_path; }
+        }
     }
     return NULL;
 }

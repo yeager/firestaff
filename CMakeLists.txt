@@ -46159,11 +46159,19 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
         endif()
         add_test(NAME theron_v1_jp_later_dungeon_runtime
             COMMAND test_theron_v1_jp_later_dungeon_runtime)
+        set(THERON_JP_TRACK02_TEST_PATH
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin")
+        set(THERON_JP_TRACK02_CUE_PATH
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin")
+        if(NOT EXISTS "${THERON_JP_TRACK02_TEST_PATH}" AND
+           EXISTS "${THERON_JP_TRACK02_CUE_PATH}")
+            set(THERON_JP_TRACK02_TEST_PATH "${THERON_JP_TRACK02_CUE_PATH}")
+        endif()
         set_tests_properties(theron_v1_jp_later_dungeon_runtime PROPERTIES
             SKIP_RETURN_CODE 77
             LABELS "theron;real-media;runtime;source-only;regional"
             ENVIRONMENT
-                "FIRESTAFF_THERON_JP_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin;FIRESTAFF_THERON_US_TRACK02_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin;FIRESTAFF_THERON_JP_TRACK02_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02-rebuilt.iso")
+                "FIRESTAFF_THERON_JP_TRACK02=${THERON_JP_TRACK02_TEST_PATH};FIRESTAFF_THERON_US_TRACK02_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin;FIRESTAFF_THERON_JP_TRACK02_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02-rebuilt.iso")
     endif()
     add_test(
         NAME theron_v1_jp_raw_bin_startup

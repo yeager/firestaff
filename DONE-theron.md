@@ -12,6 +12,17 @@
   are present, as verified locally. This repairs test behavior for supported
   authentic media layouts; it does not claim new gameplay parity.
 
+## 2026-09-25 — JP CUE Track 02 auto-runs the seven-dungeon source regression
+
+- The regional source-loader test now discovers the authentic Rev. 1 CUE
+  Track 02 under its preserved archival filename when the canonical
+  `TQJP02.bin` name is absent. CMake selects that real file for the test
+  instead of injecting a nonexistent canonical path. The trv2 CTest run now
+  passes the test against the installed Track 02 hash and verifies all seven
+  JP source dungeons (34 maps, 2,269 source objects); no media was copied,
+  generated, or substituted. This remains source-loader evidence, not
+  original transition or gameplay parity.
+
 ## 2026-09-25 — JP CUE ISO loads authentic source dungeons
 
 - Byte-compared the authentic JP CUE-projected Track 02 ISO with the
