@@ -3411,56 +3411,58 @@ static int m11_dm1_selected_launch_mark_failed(void* user) {
     return 1;
 }
 
-/* The HMA-240 FM Towns executable owns DO_TITLE_ANIMATION and DYNAMENU.
- * It must never enter the PC34 SWSH -> TITLE -> ENTRANCE transaction merely
- * because both releases share the dm1 catalog slot.  The selected Towns
- * data is opened through the native route. Both EDM and JDM title frames use
- * their hash/fingerprint-admitted executable owners; the selected edition's
- * DATA/JDATA dungeon is then consumed directly from the same ZIP-held disc.
- * See dm1_v1_fmtowns_startup.c and the FM Towns parity evidence. */
-static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
-                                       const M12_MenuEntry* entry) {
+/* Resolve edition-specific startup routing from the launch intent rather
+ * than the persisted menu row. A data-directory change or a repaired AUTO
+ * selection can make that row stale while the intent already points to a
+ * different authenticated edition. */
+static int m11_selected_dm1_launch_version_index(
+    const M12_StartupMenuState* menuState,
+    const M12_MenuEntry* entry) {
     const M12_AssetVersionStatus* version;
+    M12_LaunchIntent intent;
     int versionIndex;
-
     if (!menuState || !entry || !entry->gameId ||
         strcmp(entry->gameId, "dm1") != 0) {
-        return 0;
+        return -1;
     }
-    versionIndex = menuState->gameOptions[0].versionIndex;
+    /* Startup routing must follow the same authenticated edition as the
+     * launch transaction. GetLaunchIntent can repair stale persisted version
+     * selections against the current scan; reading gameOptions directly here
+     * can send a valid DOS launch through an unrelated Atari/Towns path. */
+    intent = M12_StartupMenu_GetLaunchIntent(menuState);
+    versionIndex = intent.valid && intent.options.versionIndex >= 0
+        ? intent.options.versionIndex : menuState->gameOptions[0].versionIndex;
     if (versionIndex < 0) {
-        return 0;
+        return -1;
     }
     version = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
                                          (size_t)versionIndex);
-    /* asset_status_m12.c lists DM1 versions in catalogue order
-     * fmtowns-en (0), fmtowns-ja (1), pc34-en (2), so a fresh install
-     * whose gameOptions[0].versionIndex has never been touched defaults
-     * to index 0 = fmtowns-en.  If the user has ONLY DOS data at
-     * --data-dir, that version's asset scan leaves version->matched=0.
-     * Treating that unmatched fmtowns row as "FM Towns selected" flips
-     * dm1RouteReceipt.use_dm1_transaction off and steers the launch
-     * into the FM Towns title path (m11_play_dm1_fmtowns_title_if_available),
-     * which then fails because no FM Towns data exists, calls
-     * M11_GameView_Shutdown, and leaves gameView.active=0 -- exactly
-     * the "launch smoke failed: no launch reached before exit" pass373
-     * launcher_route_runtime_probe observed on a canonical DOS DM1 tree.
-     * Require version->matched=1 so an unmatched fmtowns default falls
-     * through to the DOS transaction path (which then correctly locates
-     * pc34-en data via the launch gate). */
-    return version && version->versionId && version->matched &&
+    return version && version->matched ? versionIndex : -1;
+}
+
+static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
+                                       const M12_MenuEntry* entry) {
+    /* The HMA-240 executable owns DO_TITLE_ANIMATION and DYNAMENU. Never send
+     * this edition through PC34 SWSH -> TITLE -> ENTRANCE: its title frames
+     * use the matched EDM/JDM program, and DATA/JDATA stays on the same disc.
+     * See dm1_v1_fmtowns_startup.c and the FM Towns parity evidence. */
+    int versionIndex =
+        m11_selected_dm1_launch_version_index(menuState, entry);
+    const M12_AssetVersionStatus* version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                     (size_t)versionIndex)
+        : NULL;
+    return version && version->versionId &&
            (strcmp(version->versionId, "fmtowns-en") == 0 ||
             strcmp(version->versionId, "fmtowns-ja") == 0);
 }
 
 static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
                                      const M12_MenuEntry* entry) {
-    int versionIndex;
-    if (!menuState || !entry || !entry->gameId ||
-        strcmp(entry->gameId, "dm1") != 0) return 0;
-    versionIndex = menuState->gameOptions[0].versionIndex;
-    if (versionIndex < 0) return 0;
-    return M12_AssetStatus_GetVersionArchitecture("dm1",
+    int versionIndex =
+        m11_selected_dm1_launch_version_index(menuState, entry);
+    return versionIndex >= 0 &&
+           M12_AssetStatus_GetVersionArchitecture("dm1",
                                                    (size_t)versionIndex) ==
            M12_ARCH_ATARI_ST;
 }
