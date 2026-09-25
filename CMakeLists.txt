@@ -4395,7 +4395,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_v1_fmtowns_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-fmtowns"
         TIMEOUT 120
     )
     add_test(
@@ -4603,7 +4603,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_v1_amiga_v20_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;amiga;real-media;native;cli;menu;startup;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga-v20;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga-v20;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm1-amiga-v20"
         # This route intentionally performs fresh native ZIP -> ZIP -> ADF
         # launches for CLI, card flow, save resume and seven input rows.
         # A complete verified run is about 62 seconds on the reference host;
@@ -18136,7 +18136,7 @@ endif()
     set_tests_properties(csb_v1_fmtowns_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;startup;cli;real_data;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/csb-fmtowns"
         # This real-media route covers TITLE.ANM, SWITCHTW, C004, three
         # presentation modes, and screenshot measurements.  Keep enough
         # wall-clock room for all source-owned Entrance checks on CI hosts.
