@@ -20,6 +20,9 @@ dungeon transitions or full original-game parity.
 The same executable passes `test_theron_v1_jp_raw_bin_startup.sh` against the
 original JP Track 02 and Track 19 files in `.firestaff/data/theron`, including
 the source-backed movement and JP Track 19 item-name checks.
+`theron_v1_jp_later_dungeon_runtime` also passes locally against the authentic
+regional Track 02 files, checking source-backed records across all seven JP
+dungeons. Original game-owned transition semantics remain unverified.
 
 The CD availability parser also rejects duplicate track numbers and any
 missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
