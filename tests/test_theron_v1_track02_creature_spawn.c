@@ -274,10 +274,27 @@ int main(void) {
     {
         const char *us = getenv("THERON_TRACK02_US_BIN");
         const char *jp = getenv("THERON_TRACK02_JP_BIN");
-        if (!us) us = "<local-home>/.firestaff/data/theron/TQUS02.bin";
-        if (!jp) jp = "<local-home>/.firestaff/data/theron/TQJP02.bin";
-        FILE *us_file = fopen(us, "rb");
-        FILE *jp_file = fopen(jp, "rb");
+        const char *home = getenv("HOME");
+        char us_default[4096];
+        char jp_default[4096];
+        if (!us || !us[0]) {
+            int length = home && home[0]
+                ? snprintf(us_default, sizeof(us_default),
+                           "%s/.firestaff/data/theron/TQUS02.bin", home)
+                : -1;
+            us = length >= 0 && (size_t)length < sizeof(us_default)
+                ? us_default : NULL;
+        }
+        if (!jp || !jp[0]) {
+            int length = home && home[0]
+                ? snprintf(jp_default, sizeof(jp_default),
+                           "%s/.firestaff/data/theron/TQJP02.bin", home)
+                : -1;
+            jp = length >= 0 && (size_t)length < sizeof(jp_default)
+                ? jp_default : NULL;
+        }
+        FILE *us_file = us ? fopen(us, "rb") : NULL;
+        FILE *jp_file = jp ? fopen(jp, "rb") : NULL;
         if (!us_file) {
             if (jp_file) fclose(jp_file);
             puts("SKIP: authentic US Theron Track 02 BIN not present");
