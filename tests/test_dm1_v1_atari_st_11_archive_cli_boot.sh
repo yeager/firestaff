@@ -62,4 +62,31 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu" ||
     exit 1
 fi
 
-echo 'PASS: authentic DM1 Atari ST 1.1 source reaches CLI runtime and M12 menu handoff'
+runtime_probe="$stage/runtime.json"
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform atari-st --data-dir "$outer" \
+    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
+    --duration 20000 >/dev/null 2>&1
+python3 - "$runtime_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(f"FAIL: authentic DM1 Atari ST 1.1 menu did not reach its runtime state: {probe}")
+print("PASS: authentic DM1 Atari ST 1.1 M12 menu reached the source runtime state")
+PY
+
+echo 'PASS: authentic DM1 Atari ST 1.1 source reaches CLI and normal M12-to-M11 menu runtime'
