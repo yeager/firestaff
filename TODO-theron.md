@@ -25,7 +25,9 @@ regional Track 02 files, checking source-backed records across all seven JP
 dungeons. Original game-owned transition semantics remain unverified.
 The authentic combined USA RAR direct-boot regression passes locally as well;
 it resolves the original `TQUS19.iso` + `TQUS02End.iso` Track 02 members in
-memory without extracting the archive.
+memory without extracting the archive. Its CUE handoff regression also passes
+against the original RAR and starts the original Track 01 audio stream through
+SDL's dummy output.
 
 The CD availability parser also rejects duplicate track numbers and any
 missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
