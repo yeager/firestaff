@@ -101,7 +101,10 @@ width, signed_height = struct.unpack_from("<Ii", bitmap, 18)
 height = abs(signed_height)
 bits = struct.unpack_from("<H", bitmap, 28)[0]
 stride = ((width * bits + 31) // 32) * 4
-if (width, height, bits) != (320, 200, 24) or offset + stride * height > len(bitmap):
+if (bits != 24 or width < 320 or height < 200 or
+        width % 320 != 0 or height % 200 != 0 or
+        width // 320 != height // 200 or
+        offset + stride * height > len(bitmap)):
     raise SystemExit("FAIL: unexpected Atari runtime capture geometry")
 nonblack = 0
 colours = set()
@@ -112,7 +115,8 @@ for row in range(height):
         if pixel != b"\0\0\0":
             nonblack += 1
             colours.add(pixel)
-if nonblack < 10000 or len(colours) < 4:
+scale = width // 320
+if nonblack < 10000 * scale * scale or len(colours) < 4:
     raise SystemExit(
         "FAIL: authentic Atari start-menu runtime remains black "
         f"(nonblack={nonblack}, colours={len(colours)})")

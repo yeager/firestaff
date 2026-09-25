@@ -103,7 +103,8 @@ inte den tidigare normaliserade ISO-layouten. CUE-hashen var
 `ff1a674273fe3540ccef576376407d1d`. BRAM:ens hash var
 `ffabc8d19b0915d4d9632a7ae2e90a97` både före och efter körningen.
 
-Mednafen tog emot en PCE RUN-inmatning vid bildruta 9600 (`raw=0008`). Den
+Mednafen applicerade RUN-masken `$0008` vid input-frame 9600, men CPU-spåret
+innehåller ingen `$1000`-läsning med `raw=0008` i den körningen. Den
 autentiska CD:n utförde fyra SCSI-läsningar och levererade 25 råsektorer,
 men körningen nådde inte den signerade Drator-menykoden: inga Drator-rutinsteg
 eller title-wait-injektion loggades, ingen CD-till-RAM-destination kunde
@@ -123,8 +124,9 @@ Samma råa USA-CUE, Track 02, System Card 3.0 och oförändrade BRAM återspelad
 med RUN vid frame 9600. Alla fyra källhashar matchade ovanstående. Den
 konfigurerbara inmatningsgränsen höjdes till 262144 läsningar och 262144
 skrivningar; övergångskvittot rapporterar 524288 sammanlagda
-PCE-indatatransaktioner. RUN-händelsen och de två applicerade bildrutorna
-loggades, varefter kontrollern fortsatte ge nollvärde.
+PCE-indatatransaktioner. CPU-spåret visar noll `$1000`-resultat med
+`raw=0008`; RUN-masken applicerades alltså i inputproducenten men nådde inte
+den observerade CPU-läsningen före avslut.
 
 Fångsten nådde fortfarande endast 25 råsektorer i fyra SCSI-läsningar. Den
 observerade speläga `$E009`-dispatchen returnerade utan dataläsning: noll
@@ -134,11 +136,39 @@ spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer och
 loggklippningen runt RUN men ändrade inte menyutfallet. Resultatet är fortsatt
 negativt och öppnar ingen Drator-, nivå-, objekt- eller generatorsemantik.
 
-En andra rå-CUE-körning använde den redan dokumenterade replayplanen
-`run@1:1,run@480:30,i@900:30` i stället för ett ensamt sent RUN. Alla tre
-knapparna applicerades på rätt bildrutor, men kvittot gav samma fyra
+En andra rå-CUE-körning använde replayplanen
+`run@1:1,run@480:30,i@900:30`. CPU-läsningar vid `$E4B7/$E4C8` observerade
+RUN (`raw=0008`) och I (`raw=0001`), men CD-kvittot gav samma fyra
 SCSI-läsningar, 25 råsektorer, noll autentiserade CD→RAM-destinationer och
-`$20DB=00`. BRAM-hashen var oförändrad. Denna plan har tidigare gett 240
-råsektorer och 256 origin-RAM-kvitton med den normaliserade Track 02-vägen;
-skillnaden visar att knappsekvensen ensam inte förklarar rå-CUE-avvikelsen.
-Se ignorerad trace under `.codex-scratch/theron-raw-cue-known-input-20260925/`.
+`$20DB=00`. BRAM-hashen var oförändrad. Se ignorerad trace under
+`.codex-scratch/theron-raw-cue-known-input-20260925/`.
+
+Körningen upprepades sedan i 230 sekunder med samma plan och maximalt
+trace-tak 1048576 per read/write-källa. Alla tre händelser inklusive I:s
+release vid frame 930 finns i trace; det längre tidsfönstret tillförde ingen
+ytterligare CD-läsning. Kvittot nådde exakt 2097152 sammanlagda
+PCE-indatatransaktioner. CPU:n läste RUN 24963 gånger och I 25029 gånger;
+samtliga tre händelser inklusive släpp nådde därmed BIOS-läsningarna.
+Trots det registrerades endast de fyra kommandona ovan, 25 sektorer, noll
+CD→RAM-kvitton och noll `$E009`-dataläsningar. BRAM var oförändrad. Se
+`.codex-scratch/theron-raw-cue-known-input-long-20260925/`.
+
+### Kontroll med MODE1/2048-projektionen, 2026-09-25
+
+Samma emulator, BRAM och inputplan kördes 90 sekunder med den autentiserade
+US Track 02 ISO:n (`ceb02343868f80cec899e9b239aff2da`) i stället för rå
+MODE1/2352 (`f23601102138f87c33025877767ebf76`). CPU:n läste RUN 24988 gånger
+och I 25023 gånger, men kvittot gav fortfarande fyra SCSI-kommandon, 25 råa
+sektorer, noll CD→RAM-kvitton och noll `$E009`-dataläsningar. BRAM förblev
+oförändrad. Inom denna aktuella headless/scripted-input-konfiguration ändrade
+alltså sektorformatet inte det negativa utfallet; historiska positiva fångster
+har andra input-/körmiljöer och kan inte tillskrivas formatet ensamt. Trace:
+`.codex-scratch/theron-normalized-cue-ab-20260925/`.
+
+Som kontroll försökte en separat rå-CUE-körning använda PID-bunden
+Cocoa/Quartz-inmatning (`run@8,run@20,i@30`). Mednafen kunde inte starta:
+SDL rapporterade `The video driver did not add any displays`, och fångstskriptet
+avslutade innan någon host-tangent skickades. Detta är inte ett negativt
+spelresultat och ger inget inmatningskvitto. Nästa reproducerbara steg kräver
+en faktisk SDL-display/GUI-session; därefter bör BIOS-resultatet följas framåt
+genom CD-kommandovägen och jämföras med den tidigare positiva Cocoa-fångsten.

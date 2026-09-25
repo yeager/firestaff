@@ -3313,15 +3313,17 @@ av bankladdningen. Se
 
 - ✅ Samma autentiska USA-CUE, Track 02, System Card 3.0 och oförändrade BRAM
   återspelades med RUN vid frame 9600 och en controllertracegräns på 262144
-  läsningar plus 262144 skrivningar. Kvittot bekräftar att RUN applicerades;
+  läsningar plus 262144 skrivningar. RUN-masken applicerades, men inga
+  `$1000`-CPU-läsresultat med `raw=0008` förekom i just den sena körningen.
   BRAM-hashen före/efter är identisk.
 - 🔒 Resultatet är fortfarande negativt: 25 råsektorer i fyra SCSI-läsningar,
   noll spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer,
   noll `$E009`-dataläsningar och `$20DB=00`. Den råa kallstarten når inte den
   tidigare signerade Drator-menykoden. Ökad logggräns löste avklippningen men
-  inte övergången. Även den tidigare fungerande planen
-  `run@1:1,run@480:30,i@900:30` gav samma negativa resultat på rå-CUE:n,
-  trots att den tidigare gav 240 råsektorer och 256 origin-RAM-kvitton via den
-  normaliserade Track 02-vägen. Nästa felsökning jämför därför CD-layoutens
-  uppstarts-/lässekvens och inte bara inputtimingen. Ingen semantik får öppnas
+  inte övergången. Den tidigare planen
+  `run@1:1,run@480:30,i@900:30` når faktiskt BIOS: CPU-läsningar observerar
+  RUN=`0008` och I=`0001`. Ändå gav både rå MODE1/2352 och en kontrollerad
+  MODE1/2048-körning samma 25 sektorer och inga CD→RAM-kvitton. Nästa
+  felsökning ska följa BIOS-/CD-kommandovägen efter inputläsningen och
+  jämföra den med en positiv host-inputsession. Ingen semantik får öppnas
   från dessa negativa körningar.
