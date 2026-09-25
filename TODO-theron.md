@@ -11,6 +11,8 @@ against an operator-supplied authentic CUE; no media is created or
 substituted. This proves complete-disc file/layout availability only. Track
 01 is the only integrated CDDA stream, and original event-to-later-CDDA/ADPCM/
 SFX routing is still unbound.
+`theron_v1_track01_cdda_handoff` also passes locally with this JP CUE and starts
+the original raw Track 01 through SDL's dummy output.
 
 The rebuilt local Firestaff executable also passes
 `test_theron_v1_jp_cue_runtime_boot.sh` against this complete authentic JP
