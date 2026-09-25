@@ -116,3 +116,20 @@ inmatningsidentiteterna, men de ersätter inte den tidigare positiva
 Drator-fångsten och ger inget nytt stöd för nivå-, objekt- eller
 generatorsemantik. Orsaken till att denna kallstartsuppspelning inte når
 menygrenen är fortfarande olöst.
+
+### Längre återspelning med full controller-trace, 2026-09-25
+
+Samma råa USA-CUE, Track 02, System Card 3.0 och oförändrade BRAM återspelades
+med RUN vid frame 9600. Alla fyra källhashar matchade ovanstående. Den
+konfigurerbara inmatningsgränsen höjdes till 262144 läsningar och 262144
+skrivningar; övergångskvittot rapporterar 524288 sammanlagda
+PCE-indatatransaktioner. RUN-händelsen och de två applicerade bildrutorna
+loggades, varefter kontrollern fortsatte ge nollvärde.
+
+Fångsten nådde fortfarande endast 25 råsektorer i fyra SCSI-läsningar. Den
+observerade speläga `$E009`-dispatchen returnerade utan dataläsning: noll
+spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer och
+`$20DB=00`. BRAM före och efter var MD5
+`ffabc8d19b0915d4d9632a7ae2e90a97`. Den större trace-gränsen löste alltså
+loggklippningen runt RUN men ändrade inte menyutfallet. Resultatet är fortsatt
+negativt och öppnar ingen Drator-, nivå-, objekt- eller generatorsemantik.

@@ -3308,3 +3308,17 @@ av bankladdningen. Se
   aktuatorer och ground-referenser använder nu CTest-skipstatus när deras
   obligatoriska riktiga BIN saknas eller inte kan normaliseras. Deras
   `assert()`-baserade källkontroller är också kvar i Release/NDEBUG-byggen.
+
+## 2026-09-25 — rå kallstart återspelad med full controller-trace
+
+- ✅ Samma autentiska USA-CUE, Track 02, System Card 3.0 och oförändrade BRAM
+  återspelades med RUN vid frame 9600 och en controllertracegräns på 262144
+  läsningar plus 262144 skrivningar. Kvittot bekräftar att RUN applicerades;
+  BRAM-hashen före/efter är identisk.
+- 🔒 Resultatet är fortfarande negativt: 25 råsektorer i fyra SCSI-läsningar,
+  noll spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer,
+  noll `$E009`-dataläsningar och `$20DB=00`. Den råa kallstarten når inte den
+  tidigare signerade Drator-menykoden. Ökad logggräns löste avklippningen men
+  inte övergången; nästa steg är att korrelera det fortsatta BIOS-indatapollandet
+  med en autentisk kallstarts-/menyväg. Ingen semantik får öppnas från denna
+  negativa körning.

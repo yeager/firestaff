@@ -183,8 +183,9 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
 fi
 if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit"' "$script" ||
+   ! grep -Fq 'input_trace_limit < 65536 || input_trace_limit > 1048576' "$script" ||
    ! grep -Fq 'input_trace_limit=%s' "$script"; then
-    printf 'FAIL: live capture must expose and receipt its bounded controller input trace limit\n' >&2
+    printf 'FAIL: live capture must expose, bound, and receipt its controller input trace limit\n' >&2
     exit 1
 fi
 if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$build_script" ||
