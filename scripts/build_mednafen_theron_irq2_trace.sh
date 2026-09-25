@@ -204,6 +204,13 @@ fi
 if [[ ! ${build_jobs:-} =~ ^[1-9][0-9]*$ ]] && command -v sysctl >/dev/null 2>&1; then
     build_jobs=$(sysctl -n hw.ncpu 2>/dev/null || true)
 fi
+if [[ -n ${FIRESTAFF_MEDNAFEN_BUILD_JOBS:-} ]]; then
+    if [[ ! $FIRESTAFF_MEDNAFEN_BUILD_JOBS =~ ^[1-9][0-9]*$ ]]; then
+        printf 'FAIL: FIRESTAFF_MEDNAFEN_BUILD_JOBS must be a positive integer\n' >&2
+        exit 2
+    fi
+    build_jobs=$FIRESTAFF_MEDNAFEN_BUILD_JOBS
+fi
 build_jobs=${build_jobs:-1}
 make -j"$build_jobs"
 make install

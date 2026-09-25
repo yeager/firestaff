@@ -390,6 +390,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patc
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_MEDNAFEN_BUILD_JOBS' "$build_script" ||
+   ! grep -Fq 'make -j"$build_jobs"' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script" ||
    ! grep -Fq 'fifo_origin_main_ram_consumer_v2.patch' "$build_script" ||
    ! grep -Fq 'TheronSCSIQueueDataOrigin' "$fifo_origin_v2_patch_file" ||
