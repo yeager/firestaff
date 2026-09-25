@@ -2670,9 +2670,12 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   pairs and 512 palette entries. This remains a screen-space capture binding:
   `$2600` source-LBA joins, object/level records, square-to-tile semantics,
   and production dungeon/UI admission remain blocked until the HuC6280
-  consumer is disassembled and tied to Track 02. The current instrumented
-  build uses SDL 2.32.70 through `sdl2-compat` with dummy video, so it does
-  not claim native Quartz/SDL2 capture parity.
+  consumer is disassembled and tied to Track 02. On 2026-09-25, an isolated
+  Mednafen build against official SDL 2.32.10 headers/runtime passed a startup
+  version check and produced authentic US CUE/state VDC traces locally. The
+  corresponding VDC replay matched its captured VRAM writes but still emitted
+  no authenticated CD-to-RAM consumer receipt or dungeon transition; it does
+  not open the source-semantic gate.
 
 - [ ] THERON-V1-HUC6280-RAM-CONSUMER: the real US/JP bank-$1f static support
   fragment at `$243e` is now byte-verified in both retail ISO projections.
