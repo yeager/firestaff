@@ -1767,6 +1767,18 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
 
 ## Theron Track 02 remaining evidence
 
+- 2026-09-25 authentic JP Track 02 regression: copied the supplied JP Rev. 1
+  Track 02 BIN from the user's trv2 data directory into ignored local scratch
+  and verified its MD5 against the locked identity
+  (`b7afb338ad31be1025b53f9aff12d73a`). The JP later-dungeon runtime,
+  champion roster, dungeon loader, door, dungeon map, level-data-block and
+  thing-data tests all pass against that real BIN. This verifies source-data
+  intake and the currently implemented source-only world routes; it does not
+  establish JP text decoding, original graphics consumption, gameplay parity,
+  or complete JP-disc availability. A JP startup-script attempt with only the
+  CUE, Track 01 and Track 02 staged correctly remained fail-closed because the
+  original CUE also references the absent remaining disc tracks and Track 19.
+
 - [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest replay against the
   authenticated US Track 02 ISO now gives a real HuC6280 loader witness
   (`$2286` `TIA` followed by 13 block transfers, 24 RTS and 24 post-RTS rows)
