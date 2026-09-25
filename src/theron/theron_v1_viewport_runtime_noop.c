@@ -46,10 +46,16 @@ static int theron_vp_try_capture_paths(Theron_V1_Viewport *vp,
             theron_v1_vram_trace_load_known_atomic_capture_bundle(
                 vp, vram_snapshot, vce_snapshot, vdc_state_snapshot,
                 vdc_sat_snapshot, vdc_io_trace) != 0)
+        {
+            fprintf(stderr,
+                    "THERON capture rejected: atomic source bundle did not match a verified capture\n");
             return 0;
+        }
     } else if (theron_v1_vram_trace_load_known_atomic_capture_bundle(
                    vp, vram_snapshot, vce_snapshot, vdc_state_snapshot,
                    vdc_sat_snapshot, vdc_io_trace) != 0) {
+        fprintf(stderr,
+                "THERON capture rejected: atomic source bundle did not match a verified capture\n");
         return 0;
     }
     frame = (uint8_t *)realloc(
@@ -67,6 +73,9 @@ static int theron_vp_try_capture_paths(Theron_V1_Viewport *vp,
     if (!vp->vdc_state_loaded ||
         theron_v1_vram_trace_populate_tiles(
             vp, 0, vp->vdc_bat_width, vp->vdc_bat_height) <= 0) {
+        fprintf(stderr,
+                "THERON capture rejected: authenticated BAT geometry %ux%u has no admitted tile data\n",
+                vp->vdc_bat_width, vp->vdc_bat_height);
         theron_v1_vram_trace_unload(vp);
         return 0;
     }
@@ -257,6 +266,29 @@ THERON_FIXTURE_OVERRIDEABLE void theron_vp_present(const Theron_V1_Viewport *vp,
      * is indexed too, so preserve the real BAT/VCE group index rather than
      * folding it through a procedural palette or inventing a color map. */
     {
+        /* The hash-authenticated JP capture is 256x240. Center-crop 24
+         * vertical pixels at each edge to preserve the 256x192 (4:3)
+         * source-screen area in M11's 320x200 surface. This is screen-space
+         * presentation only; no dungeon or UI semantics are inferred. */
+        if (vp->fb.w == 256 && vp->fb.h == 240 &&
+            m11_fb_w >= 256 && m11_fb_h >= 192) {
+            const int dst_w = 256;
+            const int dst_h = 192;
+            const int dst_x = (m11_fb_w - dst_w) / 2;
+            const int dst_y = (m11_fb_h - dst_h) / 2;
+            for (int y = 0; y < m11_fb_h; ++y) {
+                memset(m11_fb + y * m11_fb_w, 0, (size_t)m11_fb_w);
+            }
+            for (int y = 0; y < dst_h; ++y) {
+                int src_y = y + 24;
+                const uint8_t *src = vp->fb.data + src_y * vp->fb.stride;
+                unsigned char *dst = m11_fb + (dst_y + y) * m11_fb_w + dst_x;
+                for (int x = 0; x < dst_w; ++x) {
+                    dst[x] = src[x * vp->fb.w / dst_w];
+                }
+            }
+            return;
+        }
         int dst_x = (m11_fb_w - vp->fb.w) / 2;
         int dst_y = (m11_fb_h - vp->fb.h) / 2;
         if (dst_x < 0) dst_x = 0;

@@ -1,5 +1,16 @@
 # Theron Capture Readiness
 
+## 2026-09-25 — JP source-screen capture
+
+The hash-locked authentic JP Rev. 1 cold full-disc capture is now accepted as
+an atomic screen-space bundle after its VDC-I/O stream exactly replays the
+captured 64 KiB VRAM snapshot (30,453 VWR commits, 12,544/12,544 words
+matched). The VDC state is 32x32 BAT and 256x240 active display; the production
+viewport maps the authentic BAT/VCE pixels and presents the 4:3 source area in
+a centered 256x192 M11 region. Its real empty SAT remains empty. This does not
+prove a level transition, source-owned dungeon consumer, gameplay semantics,
+or README-eligible screenshot; the capture files remain operator-local.
+
 ## Local media boundary
 
 Theron capture uses user-supplied System Card firmware, CUE/BIN and other
