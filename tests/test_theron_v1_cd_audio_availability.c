@@ -21,7 +21,7 @@ int main(void) {
     printf("test_theron_v1_cd_audio_availability: SKIP (fixture path)\n");
     return 0;
 #else
-    char directory[] = "/tmp/firestaff_theron_cd_audio_unit_XXXXXX";
+    char directory[] = "firestaff_theron_cd_audio_unit_XXXXXX";
     char cue_path[1024];
     char track_path[1024];
     Theron_V1CdAudioReceipt receipt;

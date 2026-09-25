@@ -24,7 +24,7 @@ int main(void) {
     printf("test_theron_v1_track01_cdda_handoff: SKIP (fixture path)\n");
     return 0;
 #else
-    char directory[] = "/tmp/firestaff_theron_track01_XXXXXX";
+    char directory[] = "firestaff_theron_track01_XXXXXX";
     char cue[512];
     char audio[512];
     char data[512];
