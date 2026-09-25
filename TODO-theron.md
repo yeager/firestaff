@@ -3535,6 +3535,13 @@ av bankladdningen. Se
   This establishes that the archive advertises original per-track audio, not
   that every title/gameplay command selects those tracks. The installed 7zz
   can list the RAR but reports `Unsupported Method` for every listed member,
-  including both CUE files; member bytes therefore remain unverified by this
-  extractor. Normal runtime must not depend on that host program. Native
-  multi-member RAR decoding plus byte-verified CUE/audio binding remains open.
+  including both CUE files; `unrar` is also installed and its real-media
+  `theron_v1_combined_rar_cue_handoff` test passes. The no-extraction
+  `theron_v1_combined_rar_direct_boot` test also passes from the authentic
+  RAR, but its boot receipt reports `theronTrack01CddaReady=0`. The remaining
+  gap is in the CDDA bridge: archive classification creates a virtual
+  `archive.rar::TQUS.cue` path, while Track 01 handoff still opens CUE/audio
+  through `fopen` and resolves members as loose sibling paths. Add bounded
+  virtual-member reads and byte-verified Track 02 provenance through the CDDA
+  handoff/stream before claiming archive audio readiness; normal runtime must
+  not depend on host extraction or materialize media to disk.
