@@ -162,9 +162,9 @@ for mode in v1 v21; do
 done
 
 # --boot-probe intentionally rejects --menu. Verify that the normal M12 ->
-# M11 path reaches the authentic Atari ST entrance and retains its source
-# startup state. ReDMCSB COMMAND.C routes C200 through the Atari mouse table;
-# the script's Enter token must not be mistaken for this source-owned click.
+# M11 path advances through the authentic Atari ST animation and reaches its
+# dungeon entrance. The retained ANIMATE.SCR sequence takes about 30 seconds
+# in the normal loop; a short probe would only prove that the title appeared.
 case "$firestaff_cli" in
     */*) app_dir=${firestaff_cli%/*} ;;
     *) app_dir=. ;;
@@ -175,7 +175,7 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --platform atari-st --data-dir "$media_path" \
-    --script 'enter,enter,enter,wait30,enter' --duration 5000 >/dev/null 2>&1
+    --script 'enter,enter,enter' --duration 30000 >/dev/null 2>&1
 python3 - "$menu_probe" <<'PY'
 import json
 import sys
@@ -190,7 +190,7 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["startupActive"] != 1 or startup["levelLoaded"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
-    raise SystemExit(f"FAIL: authentic CSB Atari start menu did not retain its source entrance state: {probe}")
-print("PASS: authentic CSB Atari start menu reached its source entrance state")
+    raise SystemExit(f"FAIL: authentic CSB Atari start menu did not reach its source dungeon entrance: {probe}")
+print("PASS: authentic CSB Atari start menu advanced through ANIMATE.SCR to its source dungeon entrance")
 PY
-echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu entrance state"
+echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu dungeon entrance"

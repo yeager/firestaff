@@ -200,3 +200,7 @@ Reviewed 2026-08-29. Completed work only.
   frame acceptance as a separate presentation boundary, so a valid source
   load is not rejected merely because its initial saved pose has not yet
   supplied a renderable viewport transaction.
+- DM2 Macintosh real-media tests now select retail and First Chapter archives
+  by their locked SHA-256 identities across the original and duplicate-suffixed
+  filenames. This keeps retail boot coverage on the full archive and the
+  negative admission test on the demo when both share a basename.
