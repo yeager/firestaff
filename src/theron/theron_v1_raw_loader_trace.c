@@ -614,7 +614,7 @@ int theron_v1_raw_loader_trace_bind_game_e009_destination(
     unsigned int return_logical_pc = 0u;
     unsigned int return_physical_pc = 0u;
     unsigned int return_matched = 0u;
-    uint8_t cdb[6];
+    uint8_t cdb[6] = {0};
     uint32_t raw_record;
     size_t user_offset;
     size_t i;
@@ -1104,7 +1104,7 @@ int theron_v1_raw_loader_trace_bind_game_e009_vdc_payload(
     unsigned int boundary_timestamp, boundary_first, boundary_last;
     unsigned int boundary_words, boundary_hash;
     unsigned int previous_sequence = 0u;
-    uint8_t cdb[6], parsed_cdb[6];
+    uint8_t cdb[6] = {0}, parsed_cdb[6] = {0};
     uint32_t first_record;
     uint32_t hash = 2166136261u;
     int consumed = 0;
@@ -1542,7 +1542,7 @@ int theron_v1_raw_loader_trace_bind_game_generation49_graphics(
     unsigned int boundary_generation, boundary_rows, boundary_sequence;
     unsigned int boundary_timestamp, boundary_first, boundary_last;
     unsigned int boundary_words, boundary_hash;
-    uint8_t cdb[6], parsed_cdb[6];
+    uint8_t cdb[6] = {0}, parsed_cdb[6] = {0};
     uint32_t first_record, hash = 2166136261u;
     int consumed = 0;
 
@@ -4211,7 +4211,7 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     unsigned int writer_pc;
     unsigned int writer_physical_pc;
     unsigned int value;
-    uint8_t cdb[6];
+    uint8_t cdb[6] = {0};
     int consumed;
     int jsr_seen = 0;
     int register_seen = 0;
