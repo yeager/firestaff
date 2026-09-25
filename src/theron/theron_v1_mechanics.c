@@ -560,7 +560,8 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         /* Phase 5 pit logic: fall through */
         return THERON_MOVE_PIT_FALL;
     }
-    if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN) {
+    if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN ||
+        tile == THERON_SQUARE_STAIRS_UNRESOLVED) {
         /* The preview must not promise a transition that the mutating route
          * deliberately rejects for authenticated Track 02 until the original
          * stairs consumer is bound. */
@@ -723,7 +724,8 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     }
 
     /* ── Special squares: stairs ── */
-    if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN) {
+    if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN ||
+        tile == THERON_SQUARE_STAIRS_UNRESOLVED) {
         /* Track 02 currently establishes that this is a stairs-class tile,
          * but not its direction, destination map, or destination position.
          * The old host model inferred +/- one level and reused the source

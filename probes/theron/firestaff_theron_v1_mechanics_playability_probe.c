@@ -585,7 +585,8 @@ static void test_real_full_dungeon_and_stairs(
             for (int x = 0; x < level->width && stair_level < 0; ++x) {
                 uint8_t tile = level->squares[y][x];
                 if ((tile == THERON_SQUARE_STAIRS_UP ||
-                     tile == THERON_SQUARE_STAIRS_DOWN) &&
+                     tile == THERON_SQUARE_STAIRS_DOWN ||
+                     tile == THERON_SQUARE_STAIRS_UNRESOLVED) &&
                     find_adjacent_floor(level, x, y,
                                         &approach_x, &approach_y)) {
                     stair_level = level_index;

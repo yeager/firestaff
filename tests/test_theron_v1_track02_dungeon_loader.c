@@ -2267,9 +2267,15 @@ static void test_all_dungeons(
             assert(dst->width == (int)src->x_dim + 1);
             assert(dst->height == (int)src->y_dim + 1);
             for (unsigned int x = 0u; x <= src->x_dim; ++x)
-                for (unsigned int y = 0u; y <= src->y_dim; ++y)
+                for (unsigned int y = 0u; y <= src->y_dim; ++y) {
                     assert(dst->source_tiles[y][x] ==
                            source_maps.maps[m].tiles[x][y]);
+                    if ((source_maps.maps[m].tiles[x][y] >> 5) ==
+                        THERON_TILE_STAIRS) {
+                        assert(dst->squares[y][x] ==
+                               THERON_SQUARE_STAIRS_UNRESOLVED);
+                    }
+                }
         }
 
         printf("  %s: %d levels, %d things placed "

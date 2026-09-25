@@ -972,7 +972,7 @@ static uint8_t track02_tile_to_square(uint8_t tile_byte) {
         case THERON_TILE_WALL:       return THERON_SQUARE_WALL;
         case THERON_TILE_OPEN:       return THERON_SQUARE_FLOOR;
         case THERON_TILE_PIT:        return THERON_SQUARE_PIT;
-        case THERON_TILE_STAIRS:     return THERON_SQUARE_STAIRS_DOWN;
+        case THERON_TILE_STAIRS:     return THERON_SQUARE_STAIRS_UNRESOLVED;
         case THERON_TILE_DOOR:       return THERON_SQUARE_DOOR;
         case THERON_TILE_TELEPORTER: return THERON_SQUARE_TELEPORTER;
         case THERON_TILE_FAKEWALL:   return THERON_SQUARE_SECRET;

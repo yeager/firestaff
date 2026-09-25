@@ -274,6 +274,31 @@ static void test_authentic_stairs_transition_helper_fails_closed(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: unresolved source stair tiles are not assigned a direction
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_unresolved_stair_square_blocks(void) {
+    printf("[test:unresolved_stair_square_blocks]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    w.levels[0][0].source_header_verified = 1;
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_STAIRS_UNRESOLVED;
+    w.party.leader_dir = THERON_DIR_EAST;
+    w.transition_pending = 0;
+
+    CHECK_INT("unresolved stair query blocks",
+              theron_v1_get_move_result(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("unresolved stair move blocks",
+              theron_v1_move_party(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("unresolved stair preserves party x", w.party.leader_x, 8);
+    CHECK_INT("unresolved stair preserves party y", w.party.leader_y, 8);
+    CHECK_INT("unresolved stair does not queue transition",
+              w.transition_pending, 0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: incomplete dungeon exit fails closed
  * ═══════════════════════════════════════════════════════════════ */
 static void test_incomplete_exit_blocks(void) {
@@ -793,6 +818,7 @@ int main(void) {
     test_unresolved_teleporter_blocks();
     test_unloaded_stairs_block();
     test_authentic_stairs_transition_helper_fails_closed();
+    test_unresolved_stair_square_blocks();
     test_incomplete_exit_blocks();
     test_source_pit_blocks();
     test_click_route_move();

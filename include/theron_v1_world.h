@@ -218,6 +218,7 @@ typedef struct {
 #define THERON_SQUARE_PIT            2   /* trap — wounds champion */
 #define THERON_SQUARE_STAIRS_UP      3   /* level N → level N-1 */
 #define THERON_SQUARE_STAIRS_DOWN    13  /* level N → level N+1 */
+#define THERON_SQUARE_STAIRS_UNRESOLVED 14 /* source says stairs; direction unknown */
 #define THERON_SQUARE_TELEPORTER     5   /* warp to linked target */
 #define THERON_SQUARE_ALARM          6   /* alert all creatures */
 #define THERON_SQUARE_EXIT           8   /* quest-complete exit */
