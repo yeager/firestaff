@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last full review: 2026-09-12; Theron's Quest updated: 2026-09-24.** This page
+**Last full review: 2026-09-12; Theron's Quest updated: 2026-09-25.** This page
 is the concise status source for the README and wiki. The full documentation
 map is in [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -13,7 +13,7 @@ source audits and capture receipts remain in the linked game documentation.
 | Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX 50 Hz title-to-FTLCODE/runtime route, start-menu CLI, Amiga and FM Towns bounded native routes; FM Towns C28 entrance palette and MINI.DAT bootstrap state | DSA/save corpus and wider campaign/capture evidence |
 | Dungeon Master II: Skullkeep | Verified bounded real-media routes; active hardening | M12 source-owner selection, English/French DOS menu-to-runtime routes, Amiga title/New Game/runtime, FM Towns in-memory title/menu/runtime slices, source-owned viewport/HUD and focused mechanics | Edition-matched title palette/timing, input, audio and dungeon-composition parity across editions |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA and STABG source selection, native retail MAPD title rendering, captured NBG1 palette-bank/origin and raw bitmap/CRAM decode receipts, world/render/save/mechanics slices and V2 presentation | Menu/face, HUD and dungeon source-to-VDP material semantics, native event/audio playback and full playability |
-| Theron's Quest | Verified bounded JP runtime and US routes; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime; source-only loading of all seven JP dungeons (2,266 source-object records); US CloneCD ZIP startup and MODE1/2048 ISO Akutuba forcefield handoff; raw/assembled-ISO equivalence for all 34 maps and 2,269 source-object records; JP/US media identity and level framing | Later campaign progression, save-body semantics, original presentation and end-to-end gameplay |
+| Theron's Quest | Verified bounded JP runtime and US routes; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime; source-only loading of all seven JP dungeons from authentic raw BIN and CUE-projected ISO; US CloneCD ZIP startup and MODE1/2048 ISO Akutuba forcefield handoff; raw/assembled-ISO equivalence for all 34 maps and 2,269 source-object records in each region; JP/US media identity and level framing | Later campaign progression, save-body semantics, original presentation and end-to-end gameplay |
 
 ## Completion reporting
 
