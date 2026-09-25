@@ -1640,7 +1640,7 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
 
   - 2026-07-08 update: Theron boot now owns runtime ownership release for profile/world/viewport/assets, and M11 shutdown no longer frees those Track 02 objects directly.
 
-- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. Remaining work is a real Track 02 save artifact import/export pass when such a save is available.
+- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. An authentic US Track 02 Backup RAM Continue import now passes through M11 into source-backed dungeon 2 (Soul Room); original-format Firestaff-to-BRAM export remains unimplemented because the complete save-record field consumers are not yet source/runtime-bound. Do not synthesize the unclassified fields.
 
 ### Theron V2.0 / V2.1 / V2.2
 
