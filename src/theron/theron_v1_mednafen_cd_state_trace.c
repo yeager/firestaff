@@ -325,9 +325,13 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
     }
     fclose(file);
 
+    /* The state, register, SCSI-read, and raw-CD markers are the baseline
+     * capture contract.  CD-transfer is emitted only alongside a destination
+     * candidate, and ADPCM is optional; a negative transport observation must
+     * not need either optional source marker to be admitted. */
     if (first_line || pending.active || pending_adpcm.active ||
         !receipt.source_header_verified ||
-        (receipt.source_marker_rows != 5u && receipt.source_marker_rows != 6u) ||
+        receipt.source_marker_rows < 4u || receipt.source_marker_rows > 6u ||
         !receipt.scsi_command_count ||
         receipt.requested_sector_count != receipt.raw_sector_count ||
         receipt.raw_sector_count != receipt.sector_binding_count ||

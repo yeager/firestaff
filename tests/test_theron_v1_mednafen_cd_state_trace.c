@@ -26,10 +26,11 @@ int main(void) {
         fprintf(stderr, "FAIL: real Mednafen CD state trace was not accepted\n");
         return 1;
     }
-    printf("PASS: md5=%s commands=%u requested=%u raw_sectors=%u bindings=%u "
+    printf("PASS: md5=%s markers=%u commands=%u requested=%u raw_sectors=%u bindings=%u "
            "lba=%u..%u irq=%u adpcm_fifo=%u adpcm_ram=%u destinations=%u "
            "origins=%u semantic_publication=blocked\n",
-           receipt.source_trace_md5, receipt.scsi_command_count,
+           receipt.source_trace_md5, receipt.source_marker_rows,
+           receipt.scsi_command_count,
            receipt.requested_sector_count, receipt.raw_sector_count,
            receipt.sector_binding_count, receipt.first_lba, receipt.last_lba,
            receipt.cd_irq_count, receipt.adpcm_fifo_read_count,

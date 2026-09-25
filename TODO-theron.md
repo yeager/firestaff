@@ -14,6 +14,17 @@ consumer sidecar has 512 reads in `$2600-$27FF`; all are zero-valued BIOS
 dungeon handoff. The local Mednafen save directory contains no JP non-empty
 BRAM/save artifact, so a JP continue-state replay is not presently available.
 Capture and sidecars remain ignored local scratch and are not tracked.
+The Mednafen CD-state parser now accepts this negative replay's four mandatory
+instrumentation markers: the optional CD-transfer marker is emitted only when
+a destination candidate exists, so requiring it rejected captures precisely
+when no such candidate was observed. The parser still requires every requested
+raw sector and SCSI binding to match and keeps semantic publication blocked;
+the real JP sidecar passes at 24/24 sectors and bindings. The authenticated
+VDC-I/O verifier independently replays the exact snapshot boundary: 30,453
+VWR commits write 12,544 words, all 12,544 match the captured 64 KiB VRAM
+snapshot, with zero mismatches. This admits the capture as a coherent screen
+snapshot only; its 512 init-only `$2600` reads still do not prove a game-owned
+dungeon consumer or transition.
 
 2026-09-25: Fixed the production M11 boot path so explicit CLI-provided
 VRAM/VCE/VDC-state/SAT/VDC-I/O files are passed as one authenticated bundle to
