@@ -6296,7 +6296,20 @@ static int asset_find_all_by_md5_list_internal(
     }
     if (normalizedCount > 0) {
         for (i = 0; i < normalizedCount; ++i) {
-            if (scache_inventory_lookup(s_scan_cache, searchDir,
+            int duplicateHash = 0;
+            int priorIndex;
+            /* A cached inventory stores one path per lookup.  Reusing that
+             * same path for repeated hashes defeats callers that use a
+             * repeated hash list to enumerate distinct matching files. */
+            for (priorIndex = 0; priorIndex < normalizedCount; ++priorIndex) {
+                if (priorIndex != i &&
+                    strcmp(normalizedPtrs[priorIndex], normalizedPtrs[i]) == 0) {
+                    duplicateHash = 1;
+                    break;
+                }
+            }
+            if (!duplicateHash &&
+                scache_inventory_lookup(s_scan_cache, searchDir,
                                         normalizedPtrs[i], normalizedPaths[i],
                                         ASSET_PATH_MAX)) {
                 normalizedMatched[i] = 1;

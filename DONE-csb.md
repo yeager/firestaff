@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-09-25: The A31M title-package search now bypasses single-path inventory
+  hits when its batched MD5 request repeats the same hash. The recursive scan
+  can therefore return distinct files instead of filling every slot with one
+  cached path. The hash-scanner regression passes, and a scanner probe against
+  the supplied Amiga 3.1 English/French/German 7z locates authentic `TITL.DAT`
+  and `Graphics.DAT` in the same ADF. The archive is read in memory; no game
+  data is extracted or written to disk.
+
 - 2026-09-24: Kept explicitly selected Atari ST, STX, and MSA media as the M12
   search root instead of widening the scan to its parent directory. A parent
   scan had spent 23.6 seconds inflating and hashing unrelated neighboring

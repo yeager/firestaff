@@ -552,6 +552,7 @@ static int write_cue_fixture(const char* path,
 
 static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
+    remove("asset_find_by_hash_test_tmp/nested/duplicate.asset");
     remove("asset_find_by_hash_test_tmp/extracted.dat");
     remove("asset_find_by_hash_test_tmp/archive.zip");
     remove("asset_find_by_hash_test_tmp/archive.apk");
@@ -727,6 +728,31 @@ int main(void) {
         fprintf(stderr, "ordinary-file all-list lookup failed: matched=%d,%d path=%s\n",
                 matched[0], matched[1], outPaths[1]);
         return 1;
+    }
+
+    /* Duplicate hashes are used by CSB A31M admission to enumerate distinct
+     * TITL.DAT files. A previously populated inventory must not repeat one
+     * cached path into every slot. */
+    {
+        const char* duplicateHashes[] = { md5Upper, md5Upper, NULL };
+        if (!write_fixture("asset_find_by_hash_test_tmp/nested/duplicate.asset")) {
+            cleanup_fixture();
+            fprintf(stderr, "duplicate hash fixture setup failed\n");
+            return 1;
+        }
+        memset(outPaths, 0, sizeof(outPaths));
+        memset(matched, 0, sizeof(matched));
+        if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp",
+                                       duplicateHashes, outPaths, matched,
+                                       2, 2) != 2 ||
+            !matched[0] || !matched[1] ||
+            strcmp(outPaths[0], outPaths[1]) == 0) {
+            cleanup_fixture();
+            fprintf(stderr, "duplicate MD5 paths were not enumerated distinctly: %s | %s\n",
+                    outPaths[0], outPaths[1]);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/nested/duplicate.asset");
     }
 
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
