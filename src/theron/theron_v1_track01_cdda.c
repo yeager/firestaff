@@ -179,6 +179,7 @@ int theron_v1_track01_cdda_stream_start_memory(
     SDL_AudioStream *sdl_stream;
 
     if (!handoff || !out_stream || !audio_bytes || audio_size < 4u ||
+        audio_size > 16u * 1024u * 1024u ||
         handoff->status != THERON_TRACK01_CDDA_AVAILABLE ||
         !handoff->original_cdda || !handoff->playback_handoff_ready ||
         !handoff->audio_is_vorbis || handoff->audio_file_bytes != audio_size ||

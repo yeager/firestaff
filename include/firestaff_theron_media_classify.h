@@ -66,6 +66,14 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
 int FirestaffTheronMedia_ClassifyPath(const char* path,
                                       FirestaffTheronMediaStatus* status);
 
+/* Classify one path while binding a multi-edition container to the caller's
+ * already verified Track 02 identity. This avoids choosing a region by
+ * archive member order. */
+int FirestaffTheronMedia_ClassifyPathForTrack02(
+    const char* path,
+    const char* verified_track02_md5,
+    FirestaffTheronMediaStatus* status);
+
 /* Classify a CUE/BIN or CUE/ISO package stored in one ZIP archive.  Members
  * are retained as archive::member virtual paths and are never extracted to
  * disk. */

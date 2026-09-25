@@ -86,6 +86,7 @@
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
 #include "firestaff_theron_media_classify.h"
+#include "firestaff_x68k_media_receipt.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
@@ -24307,6 +24308,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
     }
     theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
+    free(state->theronTrack01CddaAudioBytes);
+    state->theronTrack01CddaAudioBytes = NULL;
+    state->theronTrack01CddaAudioSize = 0u;
     m11_nexus_release_title(state);
     /* FM Towns TITLE/SWOOSH is copied only into this state-owned RAM buffer
      * from the selected HME-242 IMG.  Release it before its boot profile
@@ -27962,10 +27966,145 @@ static void m11_theron_update_track01_cdda_lifecycle(M11_GameViewState *state)
     }
     title_active = state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
         state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE;
+    if (state->theronTrack01CddaAudioBytes) {
+        if (!title_active) {
+            theron_v1_track01_cdda_stream_stop(
+                &state->theronTrack01CddaStream);
+            return;
+        }
+        if (!state->theronTrack01CddaStream.output_started &&
+            !theron_v1_track01_cdda_stream_start_memory(
+                &state->theronTrack01CddaHandoff,
+                state->theronTrack01CddaAudioBytes,
+                state->theronTrack01CddaAudioSize,
+                &state->theronTrack01CddaStream)) {
+            return;
+        }
+        (void)theron_v1_track01_cdda_stream_pump(
+            &state->theronTrack01CddaStream);
+        return;
+    }
     (void)theron_v1_track01_cdda_lifecycle_update(
         &state->theronTrack01CddaHandoff,
         title_active,
         &state->theronTrack01CddaStream);
+}
+
+static void m11_theron_clear_track01_cdda_handoff(M11_GameViewState *state)
+{
+    if (!state) return;
+    theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
+    free(state->theronTrack01CddaAudioBytes);
+    state->theronTrack01CddaAudioBytes = NULL;
+    state->theronTrack01CddaAudioSize = 0u;
+    memset(&state->theronTrack01CddaHandoff, 0,
+           sizeof(state->theronTrack01CddaHandoff));
+}
+
+/* The combined preservation RAR has a strict regional CUE and an authenticated
+ * Track 02 composition. Read only that selected CUE and its exact same-stem
+ * OGG transcode into bounded memory; never extract archive members to disk. */
+static int m11_theron_bind_archive_track01_cdda(
+    M11_GameViewState *state,
+    const char *verified_track02_path,
+    const char *verified_track02_md5)
+{
+    static const char us_track01_sha256[] =
+        "c2b296a82898a749503b10edab2523cbb5e7e165ef8c95abafe348fe36bc9c3e";
+    static const char jp_track01_sha256[] =
+        "bfac627f0e1ee7debd5bb356065d11f1b3542402e8831b1634d1eab3e119a619";
+    const char *separator;
+    const char *expected_audio_sha256;
+    char archive_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char audio_member[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char audio_path[THERON_TRACK02_MOUNT_PATH_CAPACITY];
+    char audio_sha256[65];
+    uint8_t *cue_bytes = NULL;
+    size_t cue_size = 0u;
+    uint8_t *audio_bytes = NULL;
+    size_t audio_size = 0u;
+    FirestaffTheronMediaStatus media;
+    FirestaffTheronMediaStatus cue;
+    size_t archive_path_size;
+
+    if (!state || !verified_track02_path || !verified_track02_md5 ||
+        theron_v1_track02_variant_for_md5(verified_track02_md5) ==
+            THERON_TRACK02_VARIANT_UNKNOWN ||
+        !(separator = strstr(verified_track02_path, "::"))) return 0;
+    archive_path_size = (size_t)(separator - verified_track02_path);
+    if (archive_path_size == 0u || archive_path_size >= sizeof(archive_path))
+        return 0;
+    memcpy(archive_path, verified_track02_path, archive_path_size);
+    archive_path[archive_path_size] = '\0';
+    if (!m11_path_has_extension(archive_path, ".rar") ||
+        FirestaffTheronMedia_ClassifyPathForTrack02(
+            archive_path, verified_track02_md5, &media) != 0 ||
+        strcmp(media.candidate_path, verified_track02_path) != 0 ||
+        strcmp(media.track02_path, verified_track02_path) != 0 ||
+        !media.paired_track01_track02 || !media.track01_path[0] ||
+        !media.cue_path[0]) return 0;
+
+    if (!asset_read_path_alloc(media.cue_path, &cue_bytes, &cue_size) ||
+        !cue_bytes || cue_size == 0u || cue_size > 64u * 1024u ||
+        FirestaffTheronMedia_ParseCue((const char *)cue_bytes, cue_size,
+                                      &cue) != 0 ||
+        !cue.paired_track01_track02 ||
+        cue.track02_mode1_sector_bytes != 2048 ||
+        strcmp(cue.track01_path, media.track01_path) != 0) {
+        free(cue_bytes);
+        return 0;
+    }
+    free(cue_bytes);
+    cue_bytes = NULL;
+
+    if (strcmp(cue.track01_path, "TQUS01.wav") == 0 &&
+        strcmp(verified_track02_md5, THERON_TRACK02_MD5_US_ISO) == 0) {
+        expected_audio_sha256 = us_track01_sha256;
+    } else if (strcmp(cue.track01_path, "TQJP01.wav") == 0 &&
+               strcmp(verified_track02_md5, THERON_TRACK02_MD5_JP_ISO) == 0) {
+        expected_audio_sha256 = jp_track01_sha256;
+    } else {
+        return 0;
+    }
+    snprintf(audio_member, sizeof(audio_member), "%s",
+             cue.track01_path);
+    {
+        char *extension = strrchr(audio_member, '.');
+        if (!extension || strcmp(extension, ".wav") != 0) return 0;
+        memcpy(extension, ".ogg", sizeof(".ogg"));
+    }
+    if (snprintf(audio_path, sizeof(audio_path), "%s::%s", archive_path,
+                 audio_member) >= (int)sizeof(audio_path) ||
+        !asset_read_path_alloc(audio_path, &audio_bytes, &audio_size) ||
+        !audio_bytes || audio_size == 0u || audio_size > 16u * 1024u * 1024u ||
+        firestaff_x68k_media_receipt_sha256_hex(
+            audio_bytes, audio_size, audio_sha256, sizeof(audio_sha256)) != 0 ||
+        strcmp(audio_sha256, expected_audio_sha256) != 0) {
+        free(audio_bytes);
+        return 0;
+    }
+
+    m11_theron_clear_track01_cdda_handoff(state);
+    state->theronTrack01CddaAudioBytes = audio_bytes;
+    state->theronTrack01CddaAudioSize = audio_size;
+    state->theronTrack01CddaHandoff.status = THERON_TRACK01_CDDA_AVAILABLE;
+    state->theronTrack01CddaHandoff.track02_variant =
+        theron_v1_track02_variant_for_md5(verified_track02_md5);
+    snprintf(state->theronTrack01CddaHandoff.cue_path,
+             sizeof(state->theronTrack01CddaHandoff.cue_path), "%s",
+             media.cue_path);
+    snprintf(state->theronTrack01CddaHandoff.audio_path,
+             sizeof(state->theronTrack01CddaHandoff.audio_path), "%s",
+             audio_path);
+    snprintf(state->theronTrack01CddaHandoff.track02_path,
+             sizeof(state->theronTrack01CddaHandoff.track02_path), "%s",
+             verified_track02_path);
+    state->theronTrack01CddaHandoff.audio_file_bytes = audio_size;
+    state->theronTrack01CddaHandoff.audio_is_vorbis = 1;
+    state->theronTrack01CddaHandoff.original_cdda = 1;
+    state->theronTrack01CddaHandoff.playback_handoff_ready = 1;
+    state->theronTrack01CddaHandoff.track_number = 1u;
+    return 1;
 }
 
 /* Title music is admitted only from the same hash-verified CUE provenance
@@ -27979,9 +28118,7 @@ static void m11_theron_bind_track01_cdda_handoff(
     if (!state) {
         return;
     }
-    theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
-    memset(&state->theronTrack01CddaHandoff, 0,
-           sizeof(state->theronTrack01CddaHandoff));
+    m11_theron_clear_track01_cdda_handoff(state);
     if (!cue_path || !m11_path_has_extension(cue_path, ".cue") ||
         !verified_track02_md5 || !verified_track02_md5[0]) {
         return;
@@ -28018,9 +28155,7 @@ static int m11_theron_apply_boot_runtime_receipt(
     state->theronWorld = receipt->world;
     state->theronViewport = receipt->viewport;
     state->theronAssets = receipt->assets;
-    memset(&state->theronTrack01CddaHandoff,
-           0,
-           sizeof(state->theronTrack01CddaHandoff));
+    m11_theron_clear_track01_cdda_handoff(state);
     /* THQUEST.ASM T400 startup handoff: boot owns the fresh Track 02
      * title-gate receipts through runtime detach. Accept then advances to
      * stage-select; the next explicit input opens the Soul Room. */
@@ -29770,7 +29905,13 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             cdda_cue_path = discovered_cdda_cue_path;
         }
     }
-    m11_theron_bind_track01_cdda_handoff(state, cdda_cue_path, verifiedMd5);
+    if (cdda_cue_path) {
+        m11_theron_bind_track01_cdda_handoff(
+            state, cdda_cue_path, verifiedMd5);
+    } else if (!m11_theron_bind_archive_track01_cdda(
+                   state, verifiedPath, verifiedMd5)) {
+        m11_theron_bind_track01_cdda_handoff(state, NULL, verifiedMd5);
+    }
     m11_theron_update_track01_cdda_lifecycle(state);
     if (sectorRecordCorpus &&
         !M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(

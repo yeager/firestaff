@@ -1358,6 +1358,10 @@ typedef struct {
     Theron_Track02StartupLoaderReceipt theronTrack02LoaderReceipt;
     Theron_Track01CddaHandoff theronTrack01CddaHandoff;
     Theron_Track01CddaStream theronTrack01CddaStream;
+    /* Bounded Track 01 bytes loaded from the selected virtual archive member.
+     * M11 owns this buffer for the lifetime of the CDDA handoff. */
+    uint8_t *theronTrack01CddaAudioBytes;
+    size_t theronTrack01CddaAudioSize;
     struct {
         int level_loaded;
         int party_x, party_y, party_dir;

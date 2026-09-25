@@ -362,7 +362,9 @@ int theron_v1_party_init_theron_from_track02(
                sizeof(common.attributes));
         memcpy(common.skills, source->skills, sizeof(common.skills));
         apply_jp_record_to_champion(&champion, &common);
-    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
+               (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+                strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0)) {
         Theron_Track02JpRosterReceipt records[THERON_TRACK02_JP_ROSTER_COUNT];
         if (!theron_v1_track02_jp_roster_read(
                 track02_data, track02_size, md5_hex, records) ||

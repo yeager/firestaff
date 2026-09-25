@@ -510,6 +510,20 @@ Reviewed 2026-08-29. Completed work only.
   riktig Track 01-CDDA när motsvarande hashkända fullskivearkiv finns i den
   valda Theron-dataroten. Kallcachetesterna kräver
   `theronTrack01CddaReady=1` för båda regionerna.
+- Authentic combined-RAR startup now binds the selected regional CUE to its
+  exact same-stem Track 01 OGG without extracting archive members. The
+  bounded in-memory stream admits only the authenticated US/JP OGG SHA-256 and
+  decodes it through the existing Vorbis CDDA path. Real-media tests hash and
+  decode both original OGG members from the user-provided RAR, require queued
+  audio sectors, and verify direct US and JP archive startup with
+  `theronTrack01CddaReady=1`. This establishes title Track 01 audio only; no
+  gameplay track-selection command has been inferred.
+- Authentic JP CUE-projected ISO support now normalizes the exact verified
+  source bytes after its 224-sector INDEX 01 offset for roster and startup
+  readers, and admits the three-anchor source-backed startup bitmap sampling
+  route. The real JP ISO regression byte-compares against the original raw
+  Track 02 and verifies the seven source dungeon banks and required startup
+  bitmap routes. The legacy zero-filled JP ISO stub remains rejected.
 - Native `USE_ITEM` når nu den befintliga Theron-kommandovägen för en dörr i
   rutan framför gruppen. Verifierade låsta Track 02-dörrar förblir stängda
   utan den saknade T900-nyckelkonsumenten; inga kompatibilitetsnycklar eller

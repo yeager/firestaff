@@ -535,67 +535,91 @@ static int th_resolve_cue_candidate_path(const char* cue_path,
     return 1;
 }
 
-int FirestaffTheronMedia_ClassifyPath(const char* path,
-                                      FirestaffTheronMediaStatus* status) {
+static int th_classify_path_for_track02(const char *path,
+                                        const char *verified_track02_md5,
+                                        FirestaffTheronMediaStatus *status) {
     if (!path || !status) {
         return -1;
     }
     FirestaffTheronMedia_Init(status);
     if (th_has_ext(path, ".rar")) {
-        char cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-        char virtual_track02[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-        uint8_t* cue_bytes = NULL;
-        size_t cue_size = 0U;
-        char* cue_text;
-        int parsed;
+        static const struct {
+            const char *cue_member;
+            const char *track02_member;
+            const char *track19_member;
+            const char *track02_tail_member;
+            const char *track02_md5;
+        } editions[] = {
+            {"TQUS.cue", "TQUS02.iso", "TQUS19.iso", "TQUS02End.iso",
+             THERON_TRACK02_MD5_US_ISO},
+            {"TQJP.cue", "TQJP02.iso", "TQJP19.iso", "TQJP02End.iso",
+             THERON_TRACK02_MD5_JP_ISO}
+        };
+        size_t edition_index;
 
-        /* This combined RAR's authentic US CUE names TQUS02.iso, while the
-         * archive stores that same complete ISO as two adjacent extents.
-         * Admit only the exact, hash-verified composition; all other RARs
-         * remain unsupported instead of guessing from filenames. */
-        if (snprintf(cue_path, sizeof(cue_path), "%s::TQUS.cue", path) >=
-                (int)sizeof(cue_path) ||
-            !asset_read_path_alloc(cue_path, &cue_bytes, &cue_size) ||
-            !cue_bytes || cue_size == 0U || cue_size > THERON_CUE_MAX_BYTES) {
+        /* The combined preservation RAR stores each regional Track 02 as
+         * two ISO extents. Admit only the CUE whose exact composition hashes
+         * to a known Track 02 identity; do not pick a region by archive order. */
+        for (edition_index = 0U;
+             edition_index < sizeof(editions) / sizeof(editions[0]);
+             ++edition_index) {
+            char cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+            char virtual_track02[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+            uint8_t *cue_bytes = NULL;
+            size_t cue_size = 0U;
+            FirestaffTheronMediaStatus parsed_media;
+            int parsed;
+
+            if (verified_track02_md5 &&
+                strcmp(verified_track02_md5,
+                       editions[edition_index].track02_md5) != 0) {
+                continue;
+            }
+
+            if (snprintf(cue_path, sizeof(cue_path), "%s::%s", path,
+                         editions[edition_index].cue_member) >=
+                    (int)sizeof(cue_path) ||
+                !asset_read_path_alloc(cue_path, &cue_bytes, &cue_size) ||
+                !cue_bytes || cue_size == 0U ||
+                cue_size > THERON_CUE_MAX_BYTES) {
+                free(cue_bytes);
+                continue;
+            }
+            parsed = FirestaffTheronMedia_ParseCue((const char *)cue_bytes,
+                                                    cue_size, &parsed_media);
             free(cue_bytes);
-            return -1;
+            if (parsed != 0 || !parsed_media.has_valid_track02_mode1 ||
+                parsed_media.track02_mode1_sector_bytes != 2048 ||
+                !th_ieq(parsed_media.track02_path,
+                        editions[edition_index].track02_member) ||
+                snprintf(virtual_track02, sizeof(virtual_track02),
+                         "%s::@concat(%s,%s)", path,
+                         editions[edition_index].track19_member,
+                         editions[edition_index].track02_tail_member) >=
+                    (int)sizeof(virtual_track02) ||
+                !asset_file_matches_md5(virtual_track02,
+                                        editions[edition_index].track02_md5)) {
+                continue;
+            }
+            *status = parsed_media;
+            status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_ISO;
+            status->has_cue = 1;
+            status->has_track02_data = 1;
+            status->data_track_number = 2;
+            status->track02_mode1_sector_bytes = 2048;
+            status->has_valid_track02_mode1 = 1;
+            status->iso_file_count = 1;
+            status->launch_candidate = 1;
+            status->has_iso9660_pvd = 0;
+            th_copy(status->cue_path, sizeof(status->cue_path), cue_path);
+            th_copy(status->track02_path, sizeof(status->track02_path),
+                    virtual_track02);
+            th_copy(status->candidate_path, sizeof(status->candidate_path),
+                    virtual_track02);
+            return 0;
         }
-        cue_text = (char*)malloc(cue_size + 1U);
-        if (!cue_text) {
-            free(cue_bytes);
-            return -1;
-        }
-        memcpy(cue_text, cue_bytes, cue_size);
-        cue_text[cue_size] = '\0';
-        parsed = FirestaffTheronMedia_ParseCue(cue_text, cue_size, status);
-        free(cue_text);
-        free(cue_bytes);
-        if (parsed != 0 || !status->has_valid_track02_mode1 ||
-            status->track02_mode1_sector_bytes != 2048 ||
-            !th_ieq(status->track02_path, "TQUS02.iso") ||
-            snprintf(virtual_track02, sizeof(virtual_track02),
-                     "%s::@concat(TQUS19.iso,TQUS02End.iso)", path) >=
-                (int)sizeof(virtual_track02) ||
-            !asset_file_matches_md5(virtual_track02,
-                                    THERON_TRACK02_MD5_US_ISO)) {
-            FirestaffTheronMedia_Init(status);
-            return -1;
-        }
-        status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_ISO;
-        status->has_cue = 1;
-        status->has_track02_data = 1;
-        status->data_track_number = 2;
-        status->track02_mode1_sector_bytes = 2048;
-        status->has_valid_track02_mode1 = 1;
-        status->iso_file_count = 1;
-        status->launch_candidate = 1;
-        status->has_iso9660_pvd = 0;
-        th_copy(status->cue_path, sizeof(status->cue_path), cue_path);
-        th_copy(status->track02_path, sizeof(status->track02_path),
-                virtual_track02);
-        th_copy(status->candidate_path, sizeof(status->candidate_path),
-                virtual_track02);
-        return 0;
+        FirestaffTheronMedia_Init(status);
+        return -1;
     }
     if (th_has_ext(path, ".zip")) {
         return FirestaffTheronMedia_ClassifyZip(path, status);
@@ -643,6 +667,24 @@ int FirestaffTheronMedia_ClassifyPath(const char* path,
         return 0;
     }
     return -1;
+}
+
+int FirestaffTheronMedia_ClassifyPath(const char *path,
+                                      FirestaffTheronMediaStatus *status) {
+    return th_classify_path_for_track02(path, NULL, status);
+}
+
+int FirestaffTheronMedia_ClassifyPathForTrack02(
+    const char *path,
+    const char *verified_track02_md5,
+    FirestaffTheronMediaStatus *status) {
+    if (!verified_track02_md5 ||
+        (strcmp(verified_track02_md5, THERON_TRACK02_MD5_US_ISO) != 0 &&
+         strcmp(verified_track02_md5, THERON_TRACK02_MD5_JP_ISO) != 0)) {
+        if (status) FirestaffTheronMedia_Init(status);
+        return -1;
+    }
+    return th_classify_path_for_track02(path, verified_track02_md5, status);
 }
 
 int FirestaffTheronMedia_ClassifyZip(const char* zip_path,

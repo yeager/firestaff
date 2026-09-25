@@ -78,7 +78,10 @@ static int boot_init_source_theron_party(
         return 0;
     }
     variant = theron_v1_track02_variant_for_md5(profile->graphics_md5);
-    regional_variant = variant == THERON_TRACK02_VARIANT_JP_BIN ? 1 : 2;
+    regional_variant = variant == THERON_TRACK02_VARIANT_JP_BIN ||
+        (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+         strcmp(profile->graphics_md5, THERON_TRACK02_MD5_JP_ISO) == 0)
+            ? 1 : 2;
     /* The CloneCD Track 02 slice omits its 225-sector pregap. Its source
      * decoders need that compact layout variant to relocate offsets; the
      * decoded receipts themselves are then bound under the normalized US
@@ -93,6 +96,26 @@ static int boot_init_source_theron_party(
             &world->party, bytes, length, profile->graphics_md5);
     if (initialized && variant == THERON_TRACK02_VARIANT_US_ISO) {
         initialized = length % THERON_TRACK02_RAW_USER_DATA_BYTES == 0u;
+    } else if (initialized &&
+               variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+               strcmp(profile->graphics_md5, THERON_TRACK02_MD5_JP_ISO) == 0) {
+        /* The authentic JP Rev. 1 CUE's Track 02 INDEX 01 begins 224 sectors
+         * into the raw BIN address space. Normalize this exact ISO projection
+         * into that source layout before reading campaign data; the offset is
+         * also consumed by theron_v1_track02_jp_roster_read(). */
+        const size_t cue_pregap_bytes =
+            224u * THERON_TRACK02_RAW_USER_DATA_BYTES;
+        if (length > SIZE_MAX - cue_pregap_bytes) {
+            initialized = 0;
+        } else {
+            user_data_size = cue_pregap_bytes + length;
+            user_data = (uint8_t *)calloc(user_data_size, 1u);
+            if (user_data) {
+                memcpy(user_data + cue_pregap_bytes, bytes, length);
+            } else {
+                initialized = 0;
+            }
+        }
     } else if (initialized) {
         initialized = theron_v1_track02_raw_user_data_size(
             length, profile->graphics_md5, &sector_count,
@@ -117,8 +140,18 @@ static int boot_init_source_theron_party(
                     initialized = 0;
                 }
             }
+        } else if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+                   strcmp(profile->graphics_md5,
+                          THERON_TRACK02_MD5_JP_ISO) == 0) {
+            /* user_data was normalized at the JP CUE's 224-sector INDEX 01
+             * above; it is already in the JP raw-user-data address space. */
         } else {
             user_data = (uint8_t *)malloc(user_data_size);
+        }
+        if (variant != THERON_TRACK02_VARIANT_US_ISO &&
+            !(variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+              strcmp(profile->graphics_md5,
+                     THERON_TRACK02_MD5_JP_ISO) == 0)) {
             initialized = user_data != NULL &&
                 theron_v1_track02_copy_raw_user_data(
                     bytes, length, profile->graphics_md5,

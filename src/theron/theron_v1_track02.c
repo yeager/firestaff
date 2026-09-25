@@ -1140,7 +1140,8 @@ static Theron_Track02SignalStatus track02_copy_startup_bitmap_bytes(
             out_bytes_capacity,
             out_user_data_offset);
     }
-    if (!variant_has_plain_user_data(variant)) {
+    if (!variant_has_plain_user_data(variant) &&
+        !variant_is_jp_cue_iso(variant, md5_hex)) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
@@ -2373,7 +2374,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
     if (!variant_is_raw_bin(variant) &&
-        !variant_has_plain_user_data(variant)) {
+        !variant_has_plain_user_data(variant) &&
+        !variant_is_jp_cue_iso(variant, md5_hex)) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
@@ -2464,15 +2466,13 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
         }
     }
 
-    if (variant == THERON_TRACK02_VARIANT_US_ISO &&
+    if ((variant == THERON_TRACK02_VARIANT_US_ISO ||
+         variant_is_jp_cue_iso(variant, md5_hex)) &&
         signal.anchor_count == TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT) {
-        /* The authenticated full US ISO has three byte-identical 2 KiB
-         * windows at its three observed span anchors.  The raw-BIN catalog
-         * already samples this exact byte sequence across three anchors;
-         * apply that same bounded sampling plan to the retail ISO rather
-         * than falling through with only the first 20 samples.  This is a
-         * transport equivalence only: it does not assign a loader, palette,
-         * or display destination to the bytes. */
+        /* Both authenticated ISO layouts expose the same three verified
+         * post-boundary windows. Sample the full bounded raw-BIN plan from
+         * those exact source bytes; this does not assign a loader, palette,
+         * or display destination to them. */
         for (size_t i = 0u;
              i < sizeof(raw_tail_sample_specs) /
                      sizeof(raw_tail_sample_specs[0]);

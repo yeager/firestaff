@@ -10,6 +10,7 @@
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_world.h"
 #include "menu_input_m12.h"
+#include "asset_find_by_hash.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -66,6 +67,14 @@ static uint8_t *load_raw_bytes(const char *path, size_t *out_size) {
     uint8_t *raw;
 
     if (!path || !out_size) return NULL;
+    if (strstr(path, "::") != NULL) {
+        if (!asset_read_path_alloc(path, &raw, out_size) || !raw ||
+            *out_size == 0u) {
+            free(raw);
+            return NULL;
+        }
+        return raw;
+    }
     fp = fopen(path, "rb");
     if (!fp) return NULL;
     if (fseek(fp, 0, SEEK_END) != 0 ||
@@ -778,7 +787,18 @@ static void test_jp_cue_iso_map_source(void) {
     }
     assert(theron_v1_track02_catalog_startup_bitmap_samples(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &bitmaps) ==
-        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+        THERON_TRACK02_SIGNAL_OK);
+    assert(bitmaps.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+    assert(bitmaps.sample_count > 0u);
+    assert((bitmaps.route_mask &
+            (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+             THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+             THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+             THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD)) ==
+           (THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+            THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD));
     assert(theron_v1_track02_extract_font_tiles(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &font) ==
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);

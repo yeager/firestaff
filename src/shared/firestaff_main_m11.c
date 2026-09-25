@@ -20,6 +20,7 @@
 #include "render_sdl_m11.h"
 #include "firestaff_nexus_mednafen.h"
 #include "theron_v1_track02.h"
+#include "firestaff_theron_media_classify.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -163,6 +164,14 @@ static int parse_scale_mode(const char* value, int* out_mode) {
     return 1;
 }
 
+static int theron_path_has_rar_extension(const char *path) {
+    const char *extension = path ? strrchr(path, '.') : NULL;
+    if (!extension || strlen(extension) != 4u) return 0;
+    return (extension[1] == 'r' || extension[1] == 'R') &&
+           (extension[2] == 'a' || extension[2] == 'A') &&
+           (extension[3] == 'r' || extension[3] == 'R');
+}
+
 static int resolve_theron_native_track02(
     const char* requestedDataDir,
     const char* region,
@@ -170,6 +179,7 @@ static int resolve_theron_native_track02(
     char root[FSP_PATH_MAX];
     char direct_md5[33];
     const char* expected_md5;
+    const char* expected_archive_md5;
 
     if (!region || !outPath ||
         (strcmp(region, "us") != 0 && strcmp(region, "jp") != 0) ||
@@ -178,6 +188,23 @@ static int resolve_theron_native_track02(
     }
     expected_md5 = strcmp(region, "jp") == 0
         ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
+    expected_archive_md5 = strcmp(region, "jp") == 0
+        ? THERON_TRACK02_MD5_JP_ISO : THERON_TRACK02_MD5_US_ISO;
+    if (FSP_FileExists(requestedDataDir) &&
+        theron_path_has_rar_extension(requestedDataDir)) {
+        FirestaffTheronMediaStatus media;
+        if (FirestaffTheronMedia_ClassifyPathForTrack02(
+                requestedDataDir, expected_archive_md5, &media) == 0 &&
+            snprintf(outPath, FSP_PATH_MAX, "%s", media.candidate_path) <
+                FSP_PATH_MAX) {
+            return 1;
+        }
+        /* An explicitly selected preservation archive is a pinned source.
+         * If its regional member cannot be verified, do not silently replace
+         * it with a loose sibling Track 02 found elsewhere in the data root. */
+        outPath[0] = '\0';
+        return 0;
+    }
     /* An explicitly selected virtual or loose media file can be admitted by
      * its exact regional digest before directory scanning. JP Rev. 1 has a
      * second authentic representation: the CUE's INDEX 01 ISO, byte-bound

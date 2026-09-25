@@ -3527,9 +3527,9 @@ av bankladdningen. Se
   authentic Track 02, but reports `theronTrack01CddaReady=0`; the user's
   ordinary data directory has the same result. Booting from the authentic
   full-disc files in an isolated extracted copy reports
-  `theronTrack01CddaReady=1`. Add bounded in-memory CUE/Track 01 archive
-  reading to the runtime handoff before claiming direct archive CDDA support;
-  do not materialize media into the user's data folder.
+  `theronTrack01CddaReady=1`. The bounded archive bridge below resolves this
+  gap for the supplied combined RAR's title Track 01 audio only; this does not
+  establish gameplay track selection or support for other archive formats.
 - 🔒 The local combined US/JP RAR listing contains source-named `TQUS.cue` and
   `TQJP.cue`, US/JP Track 01 OGG members, and OGG members for tracks 03–18.
   This establishes that the archive advertises original per-track audio, not
@@ -3541,10 +3541,9 @@ av bankladdningen. Se
   RAR, but its boot receipt reports `theronTrack01CddaReady=0`. The remaining
   gap is in the CDDA bridge: archive classification creates a virtual
   `archive.rar::TQUS.cue` path, while Track 01 handoff still opens CUE/audio
-  through `fopen` and resolves members as loose sibling paths. Add bounded
-  virtual-member reads and byte-verified Track 02 provenance through the CDDA
-  handoff/stream before claiming archive audio readiness; normal runtime must
-  not depend on host extraction or materialize media to disk.
+  through `fopen` and resolves members as loose sibling paths. This gap is
+  resolved for the supplied combined RAR by the bounded authenticated bridge;
+  normal runtime does not extract or materialize its game media.
 - ✅ The archive's actual US/JP CUE bytes were streamed from `unrar` to stdout.
   Each declares Track 01 as its exact original-stem WAVE (`TQUS01.wav` or
   `TQJP01.wav`); the archive instead carries the corresponding OGG transcode.
@@ -3553,4 +3552,13 @@ av bankladdningen. Se
   `bfac627f0e1ee7debd5bb356065d11f1b3542402e8831b1634d1eab3e119a619`.
   Preserve only the exact same-stem `.ogg` fallback already used for loose
   media, and bind it to the selected regional CUE and verified Track 02; do
-  not infer a track from the archive's broad member list.
+  not infer a track from the archive's broad member list. Both authentic OGG
+  members now pass SHA-256 admission and decode through the bounded in-memory
+  stream.
+- ✅ Authentic JP CUE-projected ISO startup now normalizes its verified source
+  bytes at the 224-sector INDEX 01 offset and catalogs three source-backed
+  startup bitmap anchors. Local real-media tests compare this JP projection
+  byte-for-byte with raw Track 02 and validate all seven dungeon banks plus
+  title/stage/soul-room/forcefield routes. The old hash-listed zero-filled JP
+  ISO stub remains rejected. The ISO projection is not staged on trv2, so its
+  host build did not run this specific split-ISO test.
