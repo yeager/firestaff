@@ -5,10 +5,12 @@ Reviewed 2026-09-25. Only open work is listed here.
 2026-09-25 local regression audit: all 278 tests selected by the `theron_`
 CTest name prefix completed without a failure; 18 returned the configured
 skip status because their original-runtime captures or other required local
-inputs were not configured. The authentic US Track 02 file-select text-source
-test was then rerun with the locally available hash-verified US Track 02 BIN
-and passed. These source-data tests do not prove that the original game renders
-or consumes those strings.
+inputs were not configured. With the authentic US/JP Track 02 files in the
+local data directory, the regional level-descriptor, level-block, dungeon-map
+and thing-data checks passed, covering all seven map groups and their source
+records. The US Track 02 file-select text-source test was also rerun against
+the locally available hash-verified BIN and passed. These source-data tests do
+not prove that the original game renders or consumes those strings.
 
 2026-09-25 local revalidation: the supported instrumented Mednafen build now
 uses the official SDL 2.32.10 headers/runtime pair and starts against the
