@@ -14,6 +14,7 @@
  */
 
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_jp_roster_receipt.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1818,6 +1819,25 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
          * consumer, so this route publishes names only. */
         return tqr_catalog_us_roster_names(
             track02_data, track02_size, md5_hex, out_catalog);
+    }
+    if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+        md5_hex && strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0) {
+        Theron_Track02JpRosterReceipt records[
+            THERON_TRACK02_JP_ROSTER_COUNT];
+        if (!theron_v1_track02_jp_roster_read(
+                track02_data, track02_size, md5_hex, records)) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        for (size_t i = 0u; i < THERON_TRACK02_JP_ROSTER_COUNT; ++i) {
+            Theron_Track02StartupRosterName *name =
+                &out_catalog->names[i];
+            snprintf(name->name, sizeof(name->name), "%s", records[i].name);
+            snprintf(name->title, sizeof(name->title), "%s", records[i].title);
+            name->raw_offset = records[i].raw_offset;
+            name->title_raw_offset = records[i].raw_offset;
+            out_catalog->name_count += 1u;
+        }
+        return THERON_TRACK02_SIGNAL_OK;
     }
     if (variant != THERON_TRACK02_VARIANT_JP_BIN) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;

@@ -27,9 +27,11 @@ typedef struct {
     uint8_t skills[16];
 } Theron_Track02JpRosterReceipt;
 
-/* Reads all eight records from the authenticated raw JP MODE1/2352 BIN.
- * The expected cluster is at raw offset 0xB3D98 and every field is bounded
- * by its newline/NUL framing before it is admitted to the receipt. */
+/* Reads all eight records from either the authenticated raw JP MODE1/2352
+ * BIN or the exact authentic CUE INDEX 01 ISO projection. For the ISO, the
+ * known 224-sector pregap and 16-byte raw-sector header are removed only to
+ * locate these records; receipt offsets remain in original raw-BIN space.
+ * Every field is bounded by its newline/NUL framing. */
 int theron_v1_track02_jp_roster_read(
     const uint8_t *track02_data,
     size_t track02_size,

@@ -4413,10 +4413,14 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_track02_roster(
     if (!flow || !party || !track02_data || track02_size == 0u ||
         !md5_hex || !md5_hex[0]) return THERON_STARTUP_ERR_NULL;
     variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+        strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) != 0)
+        return THERON_STARTUP_ERR_NOT_READY;
     if (variant != THERON_TRACK02_VARIANT_US_BIN &&
         variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW &&
         variant != THERON_TRACK02_VARIANT_JP_BIN &&
-        variant != THERON_TRACK02_VARIANT_US_ISO)
+        variant != THERON_TRACK02_VARIANT_US_ISO &&
+        variant != THERON_TRACK02_VARIANT_JP_REV1_ISO)
         return THERON_STARTUP_ERR_NOT_READY;
     saved_flow = *flow;
     saved_party = *party;
@@ -4428,7 +4432,8 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_track02_roster(
           variant == THERON_TRACK02_VARIANT_US_ISO) &&
          !theron_v1_party_refresh_us_source_records(
              party, track02_data, track02_size, md5_hex)) ||
-        (variant == THERON_TRACK02_VARIANT_JP_BIN &&
+        ((variant == THERON_TRACK02_VARIANT_JP_BIN ||
+          variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) &&
          !theron_v1_party_refresh_jp_source_records(
              party, track02_data, track02_size, md5_hex))) {
         *flow = saved_flow;

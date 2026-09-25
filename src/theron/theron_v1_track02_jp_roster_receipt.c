@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define THERON_JP_ROSTER_RAW_OFFSET 0x0b3d98u
+#define THERON_JP_CUE_INDEX01_SECTORS 224u
 
 static const char *const g_names[THERON_TRACK02_JP_ROSTER_COUNT] = {
     "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN",
@@ -63,16 +64,46 @@ int theron_v1_track02_jp_roster_read(
     Theron_Track02JpRosterReceipt out_records[
         THERON_TRACK02_JP_ROSTER_COUNT]) {
     size_t cursor = THERON_JP_ROSTER_RAW_OFFSET;
+    size_t raw_cursor = THERON_JP_ROSTER_RAW_OFFSET;
+    size_t raw_sector = THERON_JP_ROSTER_RAW_OFFSET /
+        THERON_TRACK02_RAW_SECTOR_BYTES;
+    size_t raw_sector_offset = THERON_JP_ROSTER_RAW_OFFSET %
+        THERON_TRACK02_RAW_SECTOR_BYTES;
+    int cue_iso = md5_hex &&
+        strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0;
 
     if (!out_records) return 0;
     memset(out_records, 0,
            sizeof(Theron_Track02JpRosterReceipt) *
                THERON_TRACK02_JP_ROSTER_COUNT);
     if (!track02_data || !md5_hex ||
-        strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) != 0 ||
+        (strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) != 0 && !cue_iso) ||
         !theron_v1_track02_raw_bytes_match_md5(
-            track02_data, track02_size, md5_hex) ||
-        track02_size <= THERON_JP_ROSTER_RAW_OFFSET) {
+            track02_data, track02_size, md5_hex)) {
+        return 0;
+    }
+    if (cue_iso) {
+        size_t cue_sector;
+        size_t cue_sector_offset;
+        if (raw_sector < THERON_JP_CUE_INDEX01_SECTORS ||
+            raw_sector_offset < THERON_TRACK02_RAW_USER_DATA_OFFSET) {
+            return 0;
+        }
+        cue_sector = raw_sector - THERON_JP_CUE_INDEX01_SECTORS;
+        cue_sector_offset = raw_sector_offset -
+            THERON_TRACK02_RAW_USER_DATA_OFFSET;
+        if (cue_sector > SIZE_MAX / THERON_TRACK02_RAW_USER_DATA_BYTES ||
+            cue_sector * THERON_TRACK02_RAW_USER_DATA_BYTES >
+                SIZE_MAX - cue_sector_offset) {
+            return 0;
+        }
+        cursor = cue_sector * THERON_TRACK02_RAW_USER_DATA_BYTES +
+            cue_sector_offset;
+        if (cursor >= track02_size ||
+            raw_sector_offset >= THERON_TRACK02_RAW_SECTOR_BYTES) {
+            return 0;
+        }
+    } else if (track02_size <= THERON_JP_ROSTER_RAW_OFFSET) {
         return 0;
     }
 
@@ -81,9 +112,10 @@ int theron_v1_track02_jp_roster_read(
         Theron_Track02JpRosterReceipt *record = &out_records[index];
         char line[64];
         uint8_t decoded[7];
+        size_t view_record_start = cursor;
 
         record->index = index;
-        record->raw_offset = (uint32_t)cursor;
+        record->raw_offset = (uint32_t)raw_cursor;
         if (!read_line(track02_data, track02_size, &cursor,
                        record->name, sizeof(record->name)) ||
             strcmp(record->name, g_names[index]) != 0) {
@@ -122,7 +154,19 @@ int theron_v1_track02_jp_roster_read(
             cursor >= track02_size || track02_data[cursor++] != 0u) {
             return 0;
         }
-        record->next_raw_offset = (uint32_t)cursor;
+        if (cue_iso) {
+            size_t consumed = cursor - view_record_start;
+            size_t raw_sector_end =
+                (raw_sector + 1u) * THERON_TRACK02_RAW_SECTOR_BYTES;
+            if (consumed > raw_sector_end - raw_cursor ||
+                cursor > track02_size) {
+                return 0;
+            }
+            raw_cursor += consumed;
+        } else {
+            raw_cursor = cursor;
+        }
+        record->next_raw_offset = (uint32_t)raw_cursor;
         record->valid = 1;
     }
     return 1;

@@ -1694,6 +1694,9 @@ int theron_v1_startup_runtime_enter_from_forcefield(
              THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
          theron_v1_track02_variant_for_md5(request->md5_hex) ==
              THERON_TRACK02_VARIANT_JP_BIN ||
+         (theron_v1_track02_variant_for_md5(request->md5_hex) ==
+              THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+          strcmp(request->md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0) ||
          theron_v1_track02_variant_for_md5(request->md5_hex) ==
              THERON_TRACK02_VARIANT_US_ISO)) {
         memset(&source_roster_catalog, 0, sizeof(source_roster_catalog));
@@ -2637,12 +2640,19 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         theron_v1_track02_variant_for_md5(md5_hex);
     Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
     Theron_V1_World candidate_world;
+    int jp_cue_iso_source =
+        variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+        md5_hex && strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0;
 
     /* Capture admission controls visual presentation. Verified raw BINs may
-     * still use the source-only map/thing handoff in the common route. */
+     * still use the source-only map/thing handoff in the common route. The
+     * complete JP CUE ISO has the same authenticated user-data bytes after
+     * INDEX 01, so it can use that source handoff without inventing a raw
+     * sector spawn witness. */
     if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
         variant == THERON_TRACK02_VARIANT_US_BIN ||
-        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
+        jp_cue_iso_source) {
         if (theron_v1_boot_track02_capture_admission_allows_initial_level(
                 profile, hucard_rom, hucard_rom_size,
                 flow ? flow->selected_dungeon : 0, 0)) {
@@ -2681,8 +2691,7 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
                 return 0;
             }
         }
-    } else if (variant != THERON_TRACK02_VARIANT_JP_REV1_ISO &&
-               variant != THERON_TRACK02_VARIANT_US_ISO) {
+    } else if (variant != THERON_TRACK02_VARIANT_US_ISO) {
         return 0;
     }
 

@@ -720,6 +720,10 @@ static void test_jp_cue_iso_map_source(void) {
     static const unsigned int expected_objects[THERON_DUNGEON_COUNT] = {
         291u, 291u, 299u, 382u, 403u, 343u, 260u
     };
+    static const char *const expected_roster_names[8] = {
+        "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN",
+        "PENTAI"
+    };
     Theron_DungeonData maps;
     Theron_Track02UserDataWindowCatalog windows;
     Theron_Track02StartupTextMarkerCatalog text;
@@ -753,7 +757,16 @@ static void test_jp_cue_iso_map_source(void) {
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
     assert(theron_v1_track02_catalog_startup_roster_names(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &roster) ==
-        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+        THERON_TRACK02_SIGNAL_OK);
+    assert(roster.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+    assert(roster.name_count == 8u);
+    assert(strcmp(roster.names[0].name, "THERON") == 0);
+    assert(roster.names[0].raw_offset == 0x0b3d98u);
+    for (size_t i = 0u; i < roster.name_count; ++i) {
+        assert(strcmp(roster.names[i].name, expected_roster_names[i]) == 0);
+        assert(roster.names[i].raw_offset >= 0x0b3d98u);
+        assert(roster.names[i].raw_offset < 0x0b3d98u + 2352u);
+    }
     assert(theron_v1_track02_catalog_startup_bitmap_samples(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &bitmaps) ==
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);

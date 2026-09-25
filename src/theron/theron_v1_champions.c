@@ -237,7 +237,8 @@ int theron_v1_party_refresh_jp_source_records(
     int matches[THERON_MAX_CHAMPIONS];
 
     if (!party || !track02_data || !md5_hex ||
-        strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) != 0 ||
+        (strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) != 0 &&
+         strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) != 0) ||
         !theron_v1_track02_jp_roster_read(
             track02_data, track02_size, md5_hex, records)) {
         return 0;
