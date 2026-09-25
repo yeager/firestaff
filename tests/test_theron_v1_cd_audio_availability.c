@@ -27,6 +27,40 @@ int main(void) {
     Theron_V1CdAudioReceipt receipt;
     int failed = 0;
     size_t i;
+    const char *real_cue;
+
+    /* Optional integration check against an authentic dump.  This branch
+     * never creates or substitutes media: callers must provide the real CUE
+     * and its sibling files explicitly. */
+    real_cue = getenv("FIRESTAFF_THERON_REAL_CD_CUE");
+    if (real_cue && real_cue[0]) {
+        receipt = theron_v1_cd_audio_availability(real_cue, NULL);
+        if (receipt.availability != THERON_V1_CD_AUDIO_READY ||
+            !receipt.playback_allowed || receipt.track_count != 19u ||
+            receipt.audio_track_count != 17u ||
+            receipt.data_track_count != 2u) {
+            fprintf(stderr,
+                    "real Theron CD receipt failed: status=%d tracks=%u "
+                    "audio=%u data=%u reason=%s\n",
+                    (int)receipt.availability, receipt.track_count,
+                    receipt.audio_track_count, receipt.data_track_count,
+                    receipt.unavailable_reason);
+            return 1;
+        }
+        for (i = 1u; i <= THERON_V1_CD_AUDIO_TRACK_COUNT; ++i) {
+            int expected_audio = i == 1u || (i >= 3u && i <= 18u);
+            if (!receipt.track_present[i] ||
+                receipt.track_is_audio[i] != expected_audio) {
+                fprintf(stderr,
+                        "real Theron CD track %zu failed: present=%d audio=%d\n",
+                        i, receipt.track_present[i],
+                        receipt.track_is_audio[i]);
+                return 1;
+            }
+        }
+        printf("PASS: authentic Theron CUE resolves all 19 original tracks "
+               "(17 audio, 2 data)\n");
+    }
 
     if (!mkdtemp(directory)) return 1;
 
