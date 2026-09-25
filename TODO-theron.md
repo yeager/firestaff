@@ -2714,7 +2714,10 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   matches all 9,360 written words with no mismatches, and the source-only
   renderer presents the authentic 320x200 frame through the boot facade,
   which now preserves the capture byte-for-byte instead of overlaying the
-  unauthenticated legacy UI compositor.
+  unauthenticated legacy UI compositor. The capture regression now links the
+  production viewport implementation directly (rather than satisfying those
+  calls with weak no-op symbols); with the authentic capture root it passes,
+  and the full Theron suite remains 68/68 with six fixture-dependent skips.
   The capture's 27,556 VDC commits, 40,980 input polls, unchanged authentic
   BRAM/code page, zero non-System-Card reads and zero game-owned `$E009`
   dispatches keep the admission strictly screen-space; no room, transition,
