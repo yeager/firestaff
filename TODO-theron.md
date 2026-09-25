@@ -2,6 +2,16 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
+was run on trv2 against the complete user-provided CUE and its nineteen
+original sibling BIN files. It verified the canonical layout (17 AUDIO and
+two MODE1/2352 data tracks) and readable backing files for all 19 tracks. The
+availability regression can now optionally run the same receipt against an
+operator-supplied authentic CUE; no media is created or substituted. This
+proves complete-disc file/layout availability only. Track 01 is the only
+integrated CDDA stream, and original event-to-later-CDDA/ADPCM/SFX routing is
+still unbound.
+
 2026-09-25 authentic JP full-disc replay audit: the private
 `theron-authentic-jp-full-disc-20260925` capture uses the hash-locked Rev. 1
 Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) and System Card
