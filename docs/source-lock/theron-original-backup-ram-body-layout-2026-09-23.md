@@ -180,3 +180,19 @@ shows no recognized/decoded save, Continue is unavailable and both campaign
 and Theron-body restore reject it without mutating the world. The regression
 checks the authentic file's hash before making a temporary `.bram` symlink;
 the save and emulator media remain local and unmodified.
+
+## Authenticated completion values outside the restore range
+
+The original completion dispatcher capture separately records `$267C` values
+`01`, `02`, `04`, `08`, `10`, and `20` for bounded ordinals 0 through 5
+(`docs/source-lock/theron-original-akutuba-completion-capture-2026-08-21.md`).
+The US and JP dungeon restore routines are independently byte-locked above;
+both reject zero and every value whose low seven bits are at least 7 before
+copying the remaining 133 body bytes. Consequently the authentic later
+completion values `08`, `10`, and `20` are rejected by the currently proven
+Continue route. This is an observed original-code compatibility limitation,
+not permission for Firestaff to bypass the gate or reinterpret the campaign
+field. Continue behavior for later original save states remains unresolved
+until a real later-progress BRAM capture and its original restore control-flow
+context are tied together. The BRAM admission regression locks this distinction
+so a future change cannot accidentally broaden the accepted values.

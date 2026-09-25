@@ -313,6 +313,13 @@ int main(int argc, char **argv) {
         !theron_v1_pce_bram_campaign_byte_restorable(1u) ||
         !theron_v1_pce_bram_campaign_byte_restorable(6u) ||
         theron_v1_pce_bram_campaign_byte_restorable(7u) ||
+        /* The authentic completion dispatcher records these later bits,
+         * but the separately authenticated dungeon restore consumer rejects
+         * every masked value >= 7. Keep that original incompatibility
+         * visible instead of silently broadening Continue in Firestaff. */
+        theron_v1_pce_bram_campaign_byte_restorable(0x08u) ||
+        theron_v1_pce_bram_campaign_byte_restorable(0x10u) ||
+        theron_v1_pce_bram_campaign_byte_restorable(0x20u) ||
         !theron_v1_pce_bram_campaign_byte_restorable(0x80u) ||
         !theron_v1_pce_bram_campaign_byte_restorable(0x86u) ||
         theron_v1_pce_bram_campaign_byte_restorable(0x87u)) {
