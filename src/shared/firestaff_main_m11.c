@@ -19,6 +19,7 @@
 #include "fs_portable_compat.h"
 #include "render_sdl_m11.h"
 #include "firestaff_nexus_mednafen.h"
+#include "theron_v1_track02.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,6 +41,7 @@ static void usage(const char* prog) {
             "  --lang <code>      Set launcher/game UI language (en, sv, fr, de, ja, zh, cs, da, es, fi, hu, it, ko, nl, no, pl, pt, ru, tr, id)\n"
             "  --script <cmds>     Comma-separated inputs; click:x:y presses and releases, waitN delays later inputs\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --enable-external-archive-tools  Allow installed host tools to read external archives\n"
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
             "  --theron-vram-snapshot <path>  Authenticated 64 KiB Theron VDC VRAM capture (requires --theron-vce-snapshot)\n"
             "  --theron-vce-snapshot <path>   Authenticated 1 KiB Theron VCE palette capture (requires --theron-vram-snapshot)\n"
@@ -166,22 +168,19 @@ static int resolve_theron_native_track02(
     const char* region,
     char outPath[FSP_PATH_MAX]) {
     char root[FSP_PATH_MAX];
-    char theronRoot[FSP_PATH_MAX];
-    const char* filename;
+    const char* expected_md5;
 
     if (!region || !outPath ||
         (strcmp(region, "us") != 0 && strcmp(region, "jp") != 0) ||
         !FSP_ResolveDataDir(root, sizeof(root), requestedDataDir)) {
         return 0;
     }
-    filename = strcmp(region, "jp") == 0 ? "TQJP02.bin" : "TQUS02.bin";
-    if (FSP_JoinPath(outPath, FSP_PATH_MAX, root, filename) &&
-        FSP_FileExists(outPath)) {
-        return 1;
-    }
-    if (FSP_JoinPath(theronRoot, sizeof(theronRoot), root, "theron") &&
-        FSP_JoinPath(outPath, FSP_PATH_MAX, theronRoot, filename) &&
-        FSP_FileExists(outPath)) {
+    expected_md5 = strcmp(region, "jp") == 0
+        ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
+    /* Resolve loose files and explicitly enabled preservation archives by
+     * the registered digest. Never trust a regional filename by itself; the
+     * returned archive::member path is consumed in bounded memory. */
+    if (asset_find_by_md5(root, expected_md5, outPath, FSP_PATH_MAX, 3)) {
         return 1;
     }
     outPath[0] = '\0';
@@ -572,6 +571,7 @@ int main(int argc, char** argv) {
     int scanData = 0;
     int verbose = 0;
     int theronAuthenticatedFallback = 0;
+    int enableExternalArchiveTools = 0;
     const char* theronVramSnapshot = NULL;
     const char* theronVceSnapshot = NULL;
     const char* theronVdcStateSnapshot = NULL;
@@ -643,6 +643,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--theron-authenticated-fallback") == 0) {
             theronAuthenticatedFallback = 1;
+            continue;
+        }
+        if (strcmp(a, "--enable-external-archive-tools") == 0) {
+            enableExternalArchiveTools = 1;
             continue;
         }
         if (strcmp(a, "--theron-vram-snapshot") == 0 && i + 1 < argc) {
@@ -962,6 +966,14 @@ int main(int argc, char** argv) {
 #endif
     }
 
+    if (enableExternalArchiveTools) {
+#if defined(_WIN32)
+        _putenv_s("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS", "1");
+#else
+        setenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS", "1", 1);
+#endif
+    }
+
     if (scanData) {
         return run_data_scan(opts.dataDir, verbose);
     }
@@ -973,7 +985,7 @@ int main(int argc, char** argv) {
             !resolve_theron_native_track02(
                 opts.dataDir, theronNative, theronNativePath)) {
             fprintf(stderr,
-                    "firestaff: --theron-native requires us|jp and that region's TQUS02.bin/TQJP02.bin below the selected data directory\n");
+                    "firestaff: --theron-native requires us|jp and that region's hash-verified Track 02; external archives require --enable-external-archive-tools\n");
             return 2;
         }
         /* Pass the exact regional file into the existing hash-first scanner.

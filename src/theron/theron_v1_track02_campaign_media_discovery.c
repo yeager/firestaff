@@ -79,21 +79,27 @@ int theron_v1_track02_campaign_media_discover(
     snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
              expected_track02_md5);
     if (is_virtual_path(search_path)) {
-        /* M12 has already read and hash-pinned this ZIP member in memory.
-         * Preserve that source locator; do not route it through stat(), a
-         * temporary extraction, or an external CD runtime. */
+        /* Preserve a hash-pinned archive locator and validate its logical
+         * Track 02 layout directly from bounded in-memory bytes. */
+        if (!theron_v1_track02_raw_media_intake_discover(
+                search_path, &receipt.direct_media) ||
+            receipt.direct_media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+            receipt.direct_media.variant != variant ||
+            strcmp(receipt.direct_media.track02_md5, expected_track02_md5)) {
+            receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED;
+            receipt.failure_reason = receipt.direct_media.failure_reason !=
+                THERON_V1_TRACK02_MEDIA_REASON_NONE
+                ? receipt.direct_media.failure_reason
+                : THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
+            *out = receipt;
+            return 1;
+        }
         receipt.candidate_count = 1;
         receipt.virtual_container = 1;
         receipt.no_media_extracted = 1;
         receipt.source = THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CONTAINER;
         receipt.exact_layout_bound = 1;
         receipt.launchable_direct_media = 1;
-        receipt.direct_media.status = THERON_V1_TRACK02_MEDIA_INTAKE_READY;
-        receipt.direct_media.variant = variant;
-        snprintf(receipt.direct_media.payload_path,
-                 sizeof(receipt.direct_media.payload_path), "%s", search_path);
-        snprintf(receipt.direct_media.track02_md5,
-                 sizeof(receipt.direct_media.track02_md5), "%s", expected_track02_md5);
         snprintf(receipt.candidate_path, sizeof(receipt.candidate_path), "%s", search_path);
         receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
         *out = receipt;
@@ -172,11 +178,21 @@ int theron_v1_track02_campaign_media_discover(
         ? THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CONTAINER
         : THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_LOOSE;
     if (receipt.virtual_container) {
-        /* Hash scanner owns container decompression. The known Track 02 MD5
-         * identifies the exact supported raw layout, but this path never
-         * materializes bytes for an emulator launch. */
-        receipt.exact_layout_bound = 1;
-        receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
+        if (theron_v1_track02_raw_media_intake_discover(found,
+                                                         &receipt.direct_media) &&
+            receipt.direct_media.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+            receipt.direct_media.variant == variant &&
+            !strcmp(receipt.direct_media.track02_md5, expected_track02_md5)) {
+            receipt.exact_layout_bound = 1;
+            receipt.launchable_direct_media = 1;
+            receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
+        } else {
+            receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_REJECTED;
+            receipt.failure_reason = receipt.direct_media.failure_reason !=
+                THERON_V1_TRACK02_MEDIA_REASON_NONE
+                ? receipt.direct_media.failure_reason
+                : THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
+        }
     } else if (theron_v1_track02_raw_media_intake_discover(found,
                                                              &receipt.direct_media) &&
                receipt.direct_media.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
@@ -219,7 +235,6 @@ int theron_v1_track02_campaign_media_direct_layout_current(
 
     if (!media || !refreshed || !plan || media->status !=
             THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY || media->ambiguous ||
-        media->virtual_container || media->no_media_extracted ||
         !media->launchable_direct_media || !media->exact_layout_bound ||
         !plan_matches_media(plan, media)) return 0;
     bound = &media->direct_media;

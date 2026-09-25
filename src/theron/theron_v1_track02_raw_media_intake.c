@@ -17,6 +17,7 @@
 #endif
 
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
 #include "theron_v1_track02_raw_media_intake.h"
 
 #define THERON_V1_TRACK02_CUE_MAX_BYTES (1024u * 1024u)
@@ -88,6 +89,24 @@ static int theron_v1_track02_media_is_all_zero(const char *path) {
     int saw_byte = 0;
     size_t count;
 
+    if (path && strstr(path, "::") != NULL) {
+        unsigned char *bytes = NULL;
+        size_t byte_count = 0U;
+        size_t i;
+        if (!asset_read_path_alloc(path, &bytes, &byte_count) ||
+            !bytes || !byte_count) {
+            free(bytes);
+            return -1;
+        }
+        for (i = 0U; i < byte_count; ++i) {
+            if (bytes[i] != 0U) {
+                free(bytes);
+                return 0;
+            }
+        }
+        free(bytes);
+        return 1;
+    }
     if (!path || !(file = fopen(path, "rb"))) return -1;
     while ((count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
         saw_byte = 1;
@@ -132,6 +151,16 @@ static void theron_v1_track02_media_reject(
 }
 
 static int theron_v1_track02_media_file_size(const char *path, size_t *out) {
+    if (path && strstr(path, "::") != NULL) {
+        uint8_t *bytes = NULL;
+        size_t byte_count = 0U;
+        int ok = asset_read_path_alloc(path, &bytes, &byte_count) &&
+                 bytes && byte_count > 0U;
+        free(bytes);
+        if (!ok || !out) return 0;
+        *out = byte_count;
+        return 1;
+    }
     FILE *file;
     long size;
 
@@ -512,7 +541,13 @@ int theron_v1_track02_raw_media_intake_discover(
         return 1;
     }
     snprintf(receipt.media_path, sizeof(receipt.media_path), "%s", media_path);
-    if (theron_v1_track02_media_ieq(
+    if (strstr(media_path, "::@concat(") != NULL) {
+        /* This locator composes original archive members as one bounded,
+         * hash-verified MODE1/2048 ISO. No file is extracted or synthesized. */
+        sector_bytes = 2048;
+        snprintf(receipt.payload_path, sizeof(receipt.payload_path), "%s",
+                 media_path);
+    } else if (theron_v1_track02_media_ieq(
             theron_v1_track02_media_extension(media_path), ".cue")) {
         receipt.cue_consumed = 1;
         if (!theron_v1_track02_media_file_size(media_path, &payload_bytes)) {
@@ -545,8 +580,10 @@ int theron_v1_track02_raw_media_intake_discover(
         *out = receipt;
         return 1;
     }
-    (void)theron_v1_track02_media_materialize_us_split(receipt.payload_path);
-    (void)theron_v1_track02_media_resolve_jp_complete_alias(receipt.payload_path);
+    if (strstr(receipt.payload_path, "::") == NULL) {
+        (void)theron_v1_track02_media_materialize_us_split(receipt.payload_path);
+        (void)theron_v1_track02_media_resolve_jp_complete_alias(receipt.payload_path);
+    }
     if (!theron_v1_track02_media_file_size(receipt.payload_path,
                                             &payload_bytes)) {
         receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE;

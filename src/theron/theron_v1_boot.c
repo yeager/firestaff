@@ -933,7 +933,15 @@ int theron_v1_boot_load_verified_path(Theron_V1_BootProfile *profile,
      * way tests prove the rest of the function still skips the data
      * root.  Bumping the counter via file_exists() (rather than open-
      * coding stat()) keeps the count consistent with the scan path. */
-    if (!file_exists(resolved_path)) {
+    if (strstr(resolved_path, "::") != NULL) {
+        uint8_t *source_bytes = NULL;
+        size_t source_size = 0U;
+        int source_available = asset_read_path_alloc(
+            resolved_path, &source_bytes, &source_size) && source_bytes &&
+            source_size > 0U;
+        free(source_bytes);
+        if (!source_available) return -1;
+    } else if (!file_exists(resolved_path)) {
         return -1;
     }
 
@@ -6774,7 +6782,7 @@ int theron_v1_boot_startup_launch_bind_campaign_media(
     }
     launch->campaign_media_discovery = *media;
     if (!launch->profile || media->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
-        media->ambiguous || media->virtual_container || media->no_media_extracted ||
+        media->ambiguous ||
         !media->launchable_direct_media || !media->exact_layout_bound ||
         media->track02_variant == THERON_TRACK02_VARIANT_UNKNOWN ||
         !media->candidate_path[0] || !media->direct_media.payload_path[0] ||
@@ -6807,7 +6815,7 @@ int theron_v1_boot_startup_launch_alloc_from_campaign_media(
     }
     out_launch->campaign_media_discovery = media;
     if (media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
-        media.virtual_container || !media.launchable_direct_media ||
+        !media.launchable_direct_media ||
         !theron_v1_track02_campaign_media_bind_capture_plan(&media, plan) ||
         !theron_v1_boot_startup_launch_alloc(data_dir, media.candidate_path,
                                              expected_track02_md5, save_path,

@@ -28250,8 +28250,7 @@ int M11_GameView_TheronBindTrack02StartupCaptureRequired(
 
     if (!state || !campaignMedia || !campaignPlan || !campaignMediaScanEpoch ||
         campaignMedia->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
-        campaignMedia->ambiguous || campaignMedia->virtual_container ||
-        campaignMedia->no_media_extracted || !campaignMedia->exact_layout_bound ||
+        campaignMedia->ambiguous || !campaignMedia->exact_layout_bound ||
         !campaignMedia->launchable_direct_media ||
         !theron_v1_track02_campaign_media_bind_capture_plan(
             campaignMedia, campaignPlan) ||
@@ -29618,7 +29617,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if ((campaignMedia || campaignPlan) &&
         (!campaignMedia || !campaignPlan || !campaignMediaScanEpoch ||
          campaignMedia->status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
-         campaignMedia->virtual_container || !campaignMedia->launchable_direct_media ||
+         !campaignMedia->launchable_direct_media ||
          strcmp(campaignMedia->direct_media.payload_path, verifiedPath) != 0 ||
          strcmp(campaignMedia->track02_md5, verifiedMd5) != 0 ||
          campaignMedia->direct_media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||

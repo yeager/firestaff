@@ -1,6 +1,8 @@
 #include "firestaff_theron_media_classify.h"
 #include "firestaff_zip_extract.h"
 #include "fs_portable_compat.h"
+#include "asset_find_by_hash.h"
+#include "theron_v1_track02.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -539,6 +541,62 @@ int FirestaffTheronMedia_ClassifyPath(const char* path,
         return -1;
     }
     FirestaffTheronMedia_Init(status);
+    if (th_has_ext(path, ".rar")) {
+        char cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        char virtual_track02[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        uint8_t* cue_bytes = NULL;
+        size_t cue_size = 0U;
+        char* cue_text;
+        int parsed;
+
+        /* This combined RAR's authentic US CUE names TQUS02.iso, while the
+         * archive stores that same complete ISO as two adjacent extents.
+         * Admit only the exact, hash-verified composition; all other RARs
+         * remain unsupported instead of guessing from filenames. */
+        if (snprintf(cue_path, sizeof(cue_path), "%s::TQUS.cue", path) >=
+                (int)sizeof(cue_path) ||
+            !asset_read_path_alloc(cue_path, &cue_bytes, &cue_size) ||
+            !cue_bytes || cue_size == 0U || cue_size > THERON_CUE_MAX_BYTES) {
+            free(cue_bytes);
+            return -1;
+        }
+        cue_text = (char*)malloc(cue_size + 1U);
+        if (!cue_text) {
+            free(cue_bytes);
+            return -1;
+        }
+        memcpy(cue_text, cue_bytes, cue_size);
+        cue_text[cue_size] = '\0';
+        parsed = FirestaffTheronMedia_ParseCue(cue_text, cue_size, status);
+        free(cue_text);
+        free(cue_bytes);
+        if (parsed != 0 || !status->has_valid_track02_mode1 ||
+            status->track02_mode1_sector_bytes != 2048 ||
+            !th_ieq(status->track02_path, "TQUS02.iso") ||
+            snprintf(virtual_track02, sizeof(virtual_track02),
+                     "%s::@concat(TQUS19.iso,TQUS02End.iso)", path) >=
+                (int)sizeof(virtual_track02) ||
+            !asset_file_matches_md5(virtual_track02,
+                                    THERON_TRACK02_MD5_US_ISO)) {
+            FirestaffTheronMedia_Init(status);
+            return -1;
+        }
+        status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_ISO;
+        status->has_cue = 1;
+        status->has_track02_data = 1;
+        status->data_track_number = 2;
+        status->track02_mode1_sector_bytes = 2048;
+        status->has_valid_track02_mode1 = 1;
+        status->iso_file_count = 1;
+        status->launch_candidate = 1;
+        status->has_iso9660_pvd = 0;
+        th_copy(status->cue_path, sizeof(status->cue_path), cue_path);
+        th_copy(status->track02_path, sizeof(status->track02_path),
+                virtual_track02);
+        th_copy(status->candidate_path, sizeof(status->candidate_path),
+                virtual_track02);
+        return 0;
+    }
     if (th_has_ext(path, ".zip")) {
         return FirestaffTheronMedia_ClassifyZip(path, status);
     }

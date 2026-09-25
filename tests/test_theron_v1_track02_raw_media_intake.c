@@ -160,6 +160,32 @@ static void test_real_jp_cue_path(void) {
 #endif
 }
 
+static void test_authentic_rar_virtual_iso(void) {
+    const char *archive = getenv("FIRESTAFF_THERON_RAR");
+    char path[1024];
+    Theron_V1Track02RawMediaIntakeReceipt receipt;
+
+    if (!archive || !archive[0]) return;
+    if (snprintf(path, sizeof(path),
+                 "%s::@concat(TQUS19.iso,TQUS02End.iso)", archive) >=
+        (int)sizeof(path)) {
+        CHECK(0);
+        return;
+    }
+    CHECK(theron_v1_track02_raw_media_intake_discover(path, &receipt));
+    CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
+    CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_NONE);
+    CHECK(receipt.mode1_2048 && !receipt.mode1_2352 && !receipt.cue_consumed);
+    CHECK(receipt.variant == THERON_TRACK02_VARIANT_US_ISO);
+    CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_US_ISO));
+    CHECK(!strcmp(receipt.media_path, path));
+    CHECK(!strcmp(receipt.payload_path, path));
+    CHECK(receipt.payload_bytes == 6596608u);
+    CHECK(receipt.sector_count == 3221u);
+    CHECK(receipt.first_user_data_offset == 0u);
+    CHECK(receipt.logical_user_data_window_bytes == 6596608u);
+}
+
 static void test_real_us_cue_path(void) {
 #if defined(_WIN32)
     (void)find_standard_us_bin;
@@ -442,5 +468,6 @@ int main(void) {
     test_real_us_cue_path();
     test_real_split_us_cue_path();
     test_real_jp_cue_path();
+    test_authentic_rar_virtual_iso();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }

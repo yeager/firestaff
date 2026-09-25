@@ -3992,11 +3992,23 @@ static int m12_path_is_nexus_specific_dir(const char* path) {
 static int m12_derive_theron_runtime_root_for_file(
     const char* filePath,
     char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY]) {
+    char containerPath[M12_ASSET_DATA_DIR_CAPACITY];
     char parent[M12_ASSET_DATA_DIR_CAPACITY];
     char grandparent[M12_ASSET_DATA_DIR_CAPACITY];
     char greatgrandparent[M12_ASSET_DATA_DIR_CAPACITY];
-    if (!filePath || !runtimeRoot ||
-        !FSP_ParentDir(parent, sizeof(parent), filePath)) {
+    const char* separator = filePath ? strstr(filePath, "::") : NULL;
+    const char* path = filePath;
+    if (!filePath || !runtimeRoot) return 0;
+    if (separator) {
+        size_t containerLength = (size_t)(separator - filePath);
+        if (containerLength == 0u || containerLength >= sizeof(containerPath)) {
+            return 0;
+        }
+        memcpy(containerPath, filePath, containerLength);
+        containerPath[containerLength] = '\0';
+        path = containerPath;
+    }
+    if (!FSP_ParentDir(parent, sizeof(parent), path)) {
         return 0;
     }
     if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
@@ -4031,7 +4043,8 @@ static int m12_try_match_direct_theron_request(
     if (!requestedDataDir || requestedDataDir[0] == '\0') {
         return 0;
     }
-    if (FSP_FileExists(requestedDataDir)) {
+    if (FSP_FileExists(requestedDataDir) ||
+        m12_path_is_virtual_asset(requestedDataDir)) {
         const char* payloadPath = requestedDataDir;
         const char* extension = strrchr(requestedDataDir, '.');
         FirestaffTheronMediaStatus cueMedia;

@@ -530,9 +530,18 @@ static int tqr_path_is_readable(const char *path) {
 
 static int tqr_path_has_extension_ci(const char *path, const char *extension) {
     const char *dot = path ? strrchr(path, '.') : NULL;
+    const char *expected = extension;
     if (!dot || !extension) return 0;
-    return (strcmp(dot, extension) == 0 ||
-            (strcmp(extension, ".ogg") == 0 && strcmp(dot, ".OGG") == 0));
+    while (*dot && *expected) {
+        unsigned char actual = (unsigned char)*dot++;
+        unsigned char wanted = (unsigned char)*expected++;
+        if (actual >= 'A' && actual <= 'Z')
+            actual = (unsigned char)(actual + ('a' - 'A'));
+        if (wanted >= 'A' && wanted <= 'Z')
+            wanted = (unsigned char)(wanted + ('a' - 'A'));
+        if (actual != wanted) return 0;
+    }
+    return *dot == '\0' && *expected == '\0';
 }
 
 static int tqr_path_replace_extension(const char *path, const char *extension,
@@ -548,6 +557,93 @@ static int tqr_path_replace_extension(const char *path, const char *extension,
     if (stem + extension_len >= out_cap) return 0;
     memcpy(out, path, stem);
     memcpy(out + stem, extension, extension_len + 1u);
+    return 1;
+}
+
+static uint16_t tqr_wave_le16(const uint8_t *bytes) {
+    return (uint16_t)bytes[0] | (uint16_t)((uint16_t)bytes[1] << 8);
+}
+
+static uint32_t tqr_wave_le32(const uint8_t *bytes) {
+    return (uint32_t)bytes[0] | ((uint32_t)bytes[1] << 8) |
+        ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[3] << 24);
+}
+
+/* Accept only the exact PCM format that the CDDA SDL stream consumes. WAV
+ * container/header bytes must never be sent to the DAC as audio samples. */
+static int tqr_pcm_wave_data_span(const char *path, size_t file_size,
+                                  size_t *out_data_offset,
+                                  size_t *out_data_size) {
+    FILE *file;
+    uint8_t header[12];
+    size_t riff_end;
+    size_t offset;
+    size_t data_offset = 0u;
+    size_t data_size = 0u;
+    int have_format = 0;
+    int have_data = 0;
+    int valid = 0;
+
+    if (!path || !out_data_offset || !out_data_size || file_size < 12u)
+        return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fread(header, 1u, sizeof(header), file) != sizeof(header) ||
+        memcmp(header, "RIFF", 4u) != 0 ||
+        memcmp(header + 8u, "WAVE", 4u) != 0) {
+        fclose(file);
+        return 0;
+    }
+    riff_end = (size_t)tqr_wave_le32(header + 4u) + 8u;
+    if (riff_end > file_size || riff_end < sizeof(header)) {
+        fclose(file);
+        return 0;
+    }
+    offset = sizeof(header);
+    while (offset <= riff_end && riff_end - offset >= 8u) {
+        uint8_t chunk[8];
+        size_t chunk_size;
+        size_t payload_offset = offset + sizeof(chunk);
+        size_t padded_size;
+        if (fseek(file, (long)offset, SEEK_SET) != 0 ||
+            fread(chunk, 1u, sizeof(chunk), file) != sizeof(chunk))
+            goto done;
+        chunk_size = (size_t)tqr_wave_le32(chunk + 4u);
+        if (chunk_size > riff_end - payload_offset) goto done;
+        if (memcmp(chunk, "fmt ", 4u) == 0) {
+            uint8_t format[16];
+            if (have_format || chunk_size < sizeof(format) ||
+                fseek(file, (long)payload_offset, SEEK_SET) != 0 ||
+                fread(format, 1u, sizeof(format), file) != sizeof(format) ||
+                tqr_wave_le16(format) != 1u ||
+                tqr_wave_le16(format + 2u) != THERON_TRACK01_CDDA_CHANNELS ||
+                tqr_wave_le32(format + 4u) != THERON_TRACK01_CDDA_SAMPLE_RATE ||
+                tqr_wave_le32(format + 8u) !=
+                    THERON_TRACK01_CDDA_SAMPLE_RATE *
+                    THERON_TRACK01_CDDA_CHANNELS * 2u ||
+                tqr_wave_le16(format + 12u) !=
+                    THERON_TRACK01_CDDA_CHANNELS * 2u ||
+                tqr_wave_le16(format + 14u) != 16u)
+                goto done;
+            have_format = 1;
+        } else if (memcmp(chunk, "data", 4u) == 0) {
+            if (have_data || chunk_size == 0u || chunk_size % 4u != 0u ||
+                chunk_size % THERON_TRACK01_CDDA_SECTOR_BYTES != 0u)
+                goto done;
+            data_offset = payload_offset;
+            data_size = chunk_size;
+            have_data = 1;
+        }
+        padded_size = chunk_size + (chunk_size & 1u);
+        if (padded_size > riff_end - payload_offset) goto done;
+        offset = payload_offset + padded_size;
+    }
+    valid = have_format && have_data && offset == riff_end;
+done:
+    fclose(file);
+    if (!valid) return 0;
+    *out_data_offset = data_offset;
+    *out_data_size = data_size;
     return 1;
 }
 
@@ -685,6 +781,30 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     if (out_handoff->audio_is_vorbis) {
         out_handoff->audio_start_byte = 0u;
         out_handoff->audio_sector_count = 0u;
+        out_handoff->status = THERON_TRACK01_CDDA_AVAILABLE;
+        out_handoff->track_number = 1u;
+        out_handoff->original_cdda = 1;
+        out_handoff->playback_handoff_ready = 1;
+        return out_handoff->status;
+    }
+    if (tqr_path_has_extension_ci(out_handoff->audio_path, ".wav")) {
+        size_t pcm_offset;
+        size_t pcm_size;
+        /* CUE WAVE files are complete PCM streams, not raw 2352-byte sectors.
+         * INDEX 01 must therefore name the stream origin, and the RIFF parser
+         * must prove the exact CDDA-compatible PCM representation. */
+        if (out_handoff->index_lba != 0u ||
+            !tqr_pcm_wave_data_span(out_handoff->audio_path,
+                                    out_handoff->audio_file_bytes,
+                                    &pcm_offset, &pcm_size)) {
+            snprintf(out_handoff->unavailable_reason,
+                     sizeof(out_handoff->unavailable_reason),
+                     "Track 01 WAVE is not bounded 44.1 kHz stereo PCM CDDA");
+            return out_handoff->status;
+        }
+        out_handoff->audio_start_byte = pcm_offset;
+        out_handoff->audio_sector_count =
+            pcm_size / THERON_TRACK01_CDDA_SECTOR_BYTES;
         out_handoff->status = THERON_TRACK01_CDDA_AVAILABLE;
         out_handoff->track_number = 1u;
         out_handoff->original_cdda = 1;

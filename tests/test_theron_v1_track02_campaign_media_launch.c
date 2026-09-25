@@ -79,9 +79,8 @@ int main(void)
              media.track02_md5);
     media.virtual_container = 1;
     media.no_media_extracted = 1;
-    media.launchable_direct_media = 0;
-    if (theron_v1_boot_startup_launch_bind_campaign_media(&launch, &media, &plan) ||
-        launch.campaign_media_launchable ||
+    if (!theron_v1_boot_startup_launch_bind_campaign_media(&launch, &media, &plan) ||
+        !launch.campaign_media_launchable ||
         !launch.campaign_media_discovery.virtual_container) return 3;
 
     fixture(&media, &plan);

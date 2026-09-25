@@ -121,6 +121,41 @@ int main(void)
         }
     }
 
+    {
+        const char *archive = getenv("FIRESTAFF_THERON_RAR");
+        char virtual_iso[1024];
+        Theron_V1Track02CampaignMediaDiscoveryReceipt verified_media;
+        if (archive && archive[0]) {
+            if (snprintf(virtual_iso, sizeof(virtual_iso),
+                         "%s::@concat(TQUS19.iso,TQUS02End.iso)", archive) >=
+                (int)sizeof(virtual_iso) ||
+                !theron_v1_track02_campaign_media_discover(
+                    virtual_iso, THERON_TRACK02_MD5_US_ISO, 0, &media) ||
+                media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+                !media.virtual_container || !media.no_media_extracted ||
+                !media.launchable_direct_media || !media.exact_layout_bound ||
+                media.direct_media.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+                media.direct_media.variant != THERON_TRACK02_VARIANT_US_ISO ||
+                strcmp(media.candidate_path, virtual_iso) ||
+                strcmp(media.direct_media.payload_path, virtual_iso) ||
+                strcmp(media.track02_md5, THERON_TRACK02_MD5_US_ISO)) return 10;
+            verified_media = media;
+            memset(&plan, 0, sizeof(plan));
+            plan.valid = 1;
+            for (size_t i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
+                plan.targets[i].route = (Theron_V1Track02CaptureTargetRoute)i;
+                plan.targets[i].track02_variant = THERON_TRACK02_VARIANT_US_ISO;
+                snprintf(plan.targets[i].track02_md5,
+                         sizeof(plan.targets[i].track02_md5), "%s",
+                         THERON_TRACK02_MD5_US_ISO);
+            }
+            if (!theron_v1_track02_campaign_media_bind_capture_plan(
+                    &verified_media, &plan) ||
+                !theron_v1_track02_campaign_media_direct_layout_current(
+                    &verified_media, &verified_media.direct_media, &plan)) return 11;
+        }
+    }
+
     puts("test_theron_v1_track02_campaign_media_discovery: PASS");
     return 0;
 }

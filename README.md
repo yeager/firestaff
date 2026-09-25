@@ -272,6 +272,19 @@ select either one without moving files:
 ./build/firestaff --theron-native jp --data-dir "$HOME/.firestaff/data"
 ```
 
+Hash-verified Track 02 members in external archives can also be read directly
+in memory when the installed host archive tool is explicitly enabled:
+
+```bash
+./build/firestaff --theron-native jp \
+  --enable-external-archive-tools \
+  --data-dir "$HOME/.firestaff/data/theron"
+```
+
+When both a loose regional BIN and an archive member are present, the loose
+BIN is preferred. Archive-only Japanese 7z startup is covered by the
+`theron_v1_jp_7z_direct_boot` real-media test when that corpus is installed.
+
 When a complete CUE is present, native startup may bind matching original
 Track 01 CDDA. A loose Track 02 never borrows audio from an unrelated file.
 

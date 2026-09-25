@@ -46068,7 +46068,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
     if(TARGET test_theron_v1_m11_launcher_handoff_boundary)
         add_test(
             NAME theron_v1_combined_rar_cue_handoff
-            COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_combined_rar_cue_handoff.sh
+            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_combined_rar_cue_handoff.sh
                     $<TARGET_FILE:test_theron_v1_m11_launcher_handoff_boundary>
         )
         set_tests_properties(theron_v1_combined_rar_cue_handoff PROPERTIES
@@ -46076,6 +46076,24 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
             LABELS "theron;real-media;archive;cue;startup;native;no-synthetic"
         )
     endif()
+    add_test(
+        NAME theron_v1_combined_rar_direct_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_combined_rar_direct_boot.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_combined_rar_direct_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;archive;cue;startup;native;no-extraction;no-synthetic"
+    )
+    add_test(
+        NAME theron_v1_jp_7z_direct_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_7z_direct_boot.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_jp_7z_direct_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;archive;startup;native;no-extraction;no-synthetic"
+    )
     add_test(
         NAME theron_v1_raw_bin_runtime_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_raw_bin_runtime_boot.sh

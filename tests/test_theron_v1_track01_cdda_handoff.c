@@ -19,6 +19,22 @@ static int write_file(const char *path, const void *contents, size_t length) {
     return 1;
 }
 
+static int cue_declares_raw_track02(const char *path) {
+    char line[2048];
+    FILE *cue = path ? fopen(path, "rb") : NULL;
+    int raw = 0;
+    if (!cue) return 0;
+    while (fgets(line, sizeof(line), cue)) {
+        if (strstr(line, "TRACK 02 MODE1/2352")) {
+            raw = 1;
+            break;
+        }
+        if (strstr(line, "TRACK 02 MODE1/2048")) break;
+    }
+    fclose(cue);
+    return raw;
+}
+
 int main(void) {
 #if defined(_WIN32)
     printf("test_theron_v1_track01_cdda_handoff: SKIP (fixture path)\n");
@@ -101,19 +117,38 @@ int main(void) {
     }
     {
         const char *real_cue = getenv("FIRESTAFF_THERON_CUE");
-        int real_is_jp = real_cue && strstr(real_cue, "TQJP") != NULL;
-        const char *real_md5 = real_is_jp
-            ? THERON_TRACK02_MD5_JP_REV1_ISO : THERON_TRACK02_MD5_US_ISO;
-        const char *real_track02_tail = real_is_jp
-            ? "TQJP02End.iso" : "TQUS02End.iso";
+        int real_is_jp = real_cue &&
+            (strstr(real_cue, "TQJP") != NULL ||
+             strstr(real_cue, "Japan") != NULL);
+        int real_raw_track = cue_declares_raw_track02(real_cue);
+        const char *real_md5 = real_raw_track
+            ? (real_is_jp ? THERON_TRACK02_MD5_JP_BIN
+                          : THERON_TRACK02_MD5_US_BIN)
+            : (real_is_jp ? THERON_TRACK02_MD5_JP_REV1_ISO
+                          : THERON_TRACK02_MD5_US_ISO);
+        const char *real_track02_marker = real_raw_track ? ".bin"
+            : (real_is_jp ? "TQJP02" : "TQUS02");
         if (real_cue && real_cue[0] &&
             (theron_v1_track01_cdda_handoff_from_verified_media(
                  real_cue, real_md5, &handoff) !=
                  THERON_TRACK01_CDDA_AVAILABLE ||
              !handoff.playback_handoff_ready || !handoff.original_cdda ||
-             !handoff.audio_is_vorbis || strstr(handoff.audio_path, ".ogg") == NULL ||
-             strstr(handoff.track02_path, real_track02_tail) == NULL)) {
-            fprintf(stderr, "real Track 01 OGG handoff rejected: %s\n",
+             (real_raw_track
+                 ? (handoff.audio_is_vorbis ||
+                    handoff.audio_sector_count == 0u ||
+                    strstr(handoff.audio_path, ".bin") == NULL)
+                 : (strstr(handoff.audio_path, ".wav")
+                     ? (handoff.audio_is_vorbis ||
+                        handoff.audio_start_byte == 0u ||
+                        handoff.audio_sector_count == 0u ||
+                        handoff.audio_start_byte > handoff.audio_file_bytes ||
+                        handoff.audio_file_bytes - handoff.audio_start_byte !=
+                            handoff.audio_sector_count *
+                                THERON_TRACK01_CDDA_SECTOR_BYTES)
+                     : (!handoff.audio_is_vorbis ||
+                        strstr(handoff.audio_path, ".ogg") == NULL))) ||
+             strstr(handoff.track02_path, real_track02_marker) == NULL)) {
+            fprintf(stderr, "real Track 01 CDDA handoff rejected: %s\n",
                     handoff.unavailable_reason);
             fprintf(stderr, "status=%d ready=%d cdda=%d vorbis=%d audio=%s track02=%s\n",
                     handoff.status, handoff.playback_handoff_ready,
@@ -123,8 +158,9 @@ int main(void) {
         } else if (real_cue && real_cue[0]) {
             Theron_Track01CddaStream real_stream = {0};
             if (!theron_v1_track01_cdda_lifecycle_update(
-                    &handoff, 1, &real_stream) || !real_stream.output_started) {
-                fprintf(stderr, "real Track 01 OGG stream did not start\n");
+                    &handoff, 1, &real_stream) ||
+                !real_stream.output_started || real_stream.sectors_queued == 0u) {
+                fprintf(stderr, "real Track 01 CDDA stream did not start\n");
                 failed = 1;
             }
             theron_v1_track01_cdda_stream_stop(&real_stream);

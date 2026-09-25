@@ -3,13 +3,31 @@
 Reviewed 2026-09-25. Only open work is listed here.
 
 2026-09-25: The authentic US CUE from the combined local archive now retains
-its hash-bound CUE provenance through M12→M11, binds the exact sibling OGG for
-Track 01 title music, and loads the regional Track 19 metadata bank from that
-source directory even when Track 02 was materialized into cache. The real US
-CUE M12→M11 handoff passes; the lower-level authentic US and JP CUE CDDA
-checks also pass with archive members extracted to a temporary directory.
-Direct RAR selection/extraction is still unsupported; the successful test does
-not claim RAR as a launch input.
+its hash-bound CUE provenance through M12→M11, binds the exact sibling Track 01
+audio and loads the regional Track 19 metadata bank from that source directory
+even when Track 02 was materialized into cache. The CDDA handoff accepts the
+original 44.1 kHz stereo PCM inside a validated RIFF/WAVE container and starts
+the bounded SDL stream without queuing container bytes; authentic JP raw BIN
+CDDA and the archive's OGG transcode are also covered. The real US CUE M12→M11
+handoff passes; lower-level authentic CUE checks use real media, not substitute
+audio.
+The combined US/JP RAR now launches directly when external archive tools are
+explicitly enabled: Firestaff reads the authentic `TQUS19.iso` and
+`TQUS02End.iso` members in bounded memory, verifies their concatenated
+Track 02 digest, and extracts no game data. The authentic Japanese 7z also
+launches by member hash, even when a different real ISO is placed under the
+expected loose-file name. These real-media startup tests prove media admission
+and the title/startup route only; they do not prove dungeon runtime or parity.
+
+The full authentic Japanese Rev. 1 CUE from trv2 was exercised locally without
+changing that checkout: Firestaff reaches its bounded Akutuba route, the
+source-only loader accepts all seven dungeons (34 maps, 2,269 objects), and
+Track 01's original raw CDDA starts through the SDL audio stream. The complete
+authentic US CUE also starts its original PCM/WAVE Track 01 stream. The CDDA
+regression recognizes source layouts from the CUE-declared Track 02 sector
+width and validates RIFF/WAVE format and data bounds before playback. This does
+not establish the original emulator's game transition or full
+audio/presentation parity.
 
 2026-09-25: The broad M12 inventory no longer treats the catalogued JP Rev. 1
 Track 02 ISO digest as launchable. The supplied file is a hash-matching,
@@ -82,12 +100,12 @@ dungeon-local thing-directory verification. This closes a regional test-coverage
 gap only; the receipt still explicitly keeps visual capture, original
 transition, combat and item-action semantics gated.
 
-The local combined US/JP RAR passes its archive CRC test, but Firestaff does
-not accept RAR4 as a launch input. Its US CUE names `TQUS02.iso`, which is not
-an archive member; the archive has `TQUS02End.iso` instead. The separate
-authentic `TQUS02.bin` is hash-verified and currently supplies the working US
-route. Direct RAR ingestion or a complete authentic CUE package remains open;
-no substitute game data has been generated.
+The combined US/JP RAR's CUE names `TQUS02.iso`, while the archive carries the
+authentic US logical Track 02 across `TQUS19.iso` and `TQUS02End.iso`. The
+native resolver now recognizes that exact source composition by content hash;
+the separate authentic `TQUS02.bin` remains preferred when present. Original
+CD-runtime transition, presentation, combat and later-dungeon parity remain
+open. No substitute game data has been generated.
 
 - Bind the verified Japanese Rev 1 Track 02 source dungeons to captured
   transition and save consumers. Regional champion records and source-backed
@@ -199,8 +217,9 @@ no substitute game data has been generated.
   the verified real Backup RAM artifact (or an explicit
   `FIRESTAFF_THERON_BRAM_PATH`) and the explicit Continue action uses this
   transactional route.
-- Capture and decode original bitmap, palette, text and audio ownership for
-  production presentation; fallback visuals remain disabled.
+- Capture and decode original bitmap, palette, text, ADPCM and remaining audio
+  ownership for production presentation; Track 01 raw CDDA/WAVE/OGG is now covered,
+  while fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. The
   authentic US MODE1/2048 ISO now reaches the source-backed Akutuba
   forcefield handoff; this does not establish complete campaign, gameplay,

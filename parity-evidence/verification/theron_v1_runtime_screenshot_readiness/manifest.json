@@ -1,113 +1,16 @@
 {
   "cases": [
     {
-      "command": {
-        "cmd": [
-          "<build-firestaff>",
-          "--game",
-          "theron",
-          "--width",
-          "320",
-          "--height",
-          "200",
-          "--data-dir",
-          "<canonical_pcengine_root-data-dir>",
-          "--boot-probe",
-          "--boot-probe-frames",
-          "0",
-          "--script",
-          "enter,enter,down,down,down,down,down,down,enter,down,enter",
-          "--duration",
-          "0"
-        ],
-        "ok": true,
-        "returncode": 0,
-        "stderr": "FIRESTAFF BOOT PROBE READY: gameId=theron sourceKind=4 sourceId=theron assetMd5=f23601102138f87c33025877767ebf76 dataDir=<canonical_pcengine_root-data-dir> frames=0 inputs=11 scriptFrames=0 window=320x200 windowMode=0 presentationMode=0 presentation=320x200 phase=theron-runtime startupActive=0 startupFrame=0 startupAnimation=theron-runtime startupAnimationActive=0 titleFrame=0 titleFrameMax=0 titleReady=1 levelLoaded=1 map=0 party=1,0,0 champions=2 runtimeTick=0 dm2FrameAccepted=0 dm2RealAssets=0 dm2NoCoreFallbacks=0 dm2FallbackDraws=0 dm2SceneReady=0 dm2GraphicsSet=0 dm2SceneHash=0 dm2SceneColorKey=0 dm2SceneFlags=0 dm2ScenePaletteHash=0 theronSourceObjects=291 theronDungeonLevelsLoaded=4 theronDungeonSourceHeaders=4 theronDungeonSourceNonzeroTiles=455 theronActiveChampion=0 theronTrack01CddaReady=0 theronSpawnSourceAuthenticated=1 theronSpawnSourceVariant=2 theronTrack02ItemNameBanks=7 theronTrack02ItemNameVariant=2 theronSelectedItemNameBytes=0 theronSelectedItemNameFnv1a=0 theronTrack19NameBankReady=1 theronTrack19NameVariant=2 theronTrack19ItemMappingProven=1 csbViewportHash=0 csbV22CellsPainted=0 dm1WorldTick=0 dm1HocCandidatePanel=0 dm1HocCandidateOrdinal=-1 dm1HocCandidatePartyIndex=-1 dm1InventoryPanel=0 dm1FoodWaterPanel=0 dm1FmtownsCddaPlaying=0 dm1FmtownsCddaTrack=0 startedFromLauncher=1 introBypassed=0 dm1StartupHandoffExecuted=0 platformHandoff=none fmtownsProgram= fmtownsProgramMd5= fmtownsMenuSelectsProgram=0 dm1FmtownsMenuFontLoaded=0 dm1HoCBootSummary=missing\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260925-021007.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260925-021007.bmp",
-        "stdout": "[TQR] Verified Track 02 accepted: <canonical_pcengine_root-data-dir>/TQUS02.bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)",
-        "timed_out": false
-      },
-      "fallback_assets_used": false,
       "id": "canonical_pcengine_root",
       "label": "Theron canonical PC Engine root",
-      "marker_found": true,
+      "marker_found": false,
       "ok": false,
       "present": true,
-      "presented_screenshots": [
-        {
-          "bit_count": 24,
-          "height": 200,
-          "name": "firestaff-presented-20260925-021007.bmp",
-          "non_black_pixels": 0,
-          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
-          "size": 192054,
-          "valid": true,
-          "width": 320
-        }
-      ],
-      "probe": {
-        "active": 1,
-        "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
-        "launchedEver": 1,
-        "party": {
-          "championCount": 2,
-          "direction": 0,
-          "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 0
-        },
-        "pipeline": {
-          "anyMovementOccurred": 0,
-          "anyTurnOccurred": 0,
-          "command": 0,
-          "dequeued": 0,
-          "movementBlocked": 0,
-          "stepApplied": 0,
-          "turnApplied": 0,
-          "viewportDirty": 0
-        },
-        "presentation": {
-          "height": 200,
-          "mode": 0,
-          "width": 320
-        },
-        "redraw": {
-          "inputRedrawAfterViewportDirtyCount": 0,
-          "inputRedrawDrawCount": 0,
-          "lastInputRedrawAfterViewportDirty": 0
-        },
-        "schema": "firestaff_m11_autotest_runtime_probe.v1",
-        "sourceId": "theron",
-        "startup": {
-          "active": 1,
-          "dm1CompleteEntranceToHoC": 0,
-          "dm1StartupHandoffExecuted": 0,
-          "dm1StartupHoCFirstFrameReady": 0,
-          "levelLoaded": 1,
-          "phase": "theron-runtime",
-          "receiptReady": 1,
-          "startupActive": 0
-        },
-        "title": "THERON'S QUEST"
-      },
-      "retained_screenshots": [
-        "/private/tmp/firestaff-theron-authentic-disc/firestaff-render/canonical_pcengine_root/source-firestaff-20260925-021007.bmp",
-        "/private/tmp/firestaff-theron-authentic-disc/firestaff-render/canonical_pcengine_root/presented-firestaff-presented-20260925-021007.bmp"
-      ],
-      "screenshots": [
-        {
-          "bit_count": 24,
-          "height": 200,
-          "name": "firestaff-20260925-021007.bmp",
-          "non_black_pixels": 0,
-          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
-          "size": 192054,
-          "valid": true,
-          "width": 320
-        }
-      ],
-      "status": "FAIL"
+      "presented_screenshots": [],
+      "probe": null,
+      "reason": "authenticated VDC/VCE pair not supplied",
+      "screenshots": [],
+      "status": "SKIP"
     },
     {
       "id": "jp_extras_track02_bin",
@@ -132,124 +35,16 @@
       "reason": "data directory missing",
       "screenshots": [],
       "status": "SKIP"
-    },
-    {
-      "command": {
-        "cmd": [
-          "<build-firestaff>",
-          "--game",
-          "theron",
-          "--width",
-          "320",
-          "--height",
-          "200",
-          "--data-dir",
-          "<live_authentic-data-dir>",
-          "--boot-probe",
-          "--boot-probe-frames",
-          "0",
-          "--script",
-          "enter,enter,down,down,down,down,down,down,enter,down,enter",
-          "--duration",
-          "0"
-        ],
-        "ok": true,
-        "returncode": 0,
-        "stderr": "FIRESTAFF BOOT PROBE READY: gameId=theron sourceKind=4 sourceId=theron assetMd5=f23601102138f87c33025877767ebf76 dataDir=<live_authentic-data-dir> frames=0 inputs=11 scriptFrames=0 window=320x200 windowMode=0 presentationMode=0 presentation=320x200 phase=theron-runtime startupActive=0 startupFrame=0 startupAnimation=theron-runtime startupAnimationActive=0 titleFrame=0 titleFrameMax=0 titleReady=1 levelLoaded=1 map=0 party=1,0,0 champions=2 runtimeTick=0 dm2FrameAccepted=0 dm2RealAssets=0 dm2NoCoreFallbacks=0 dm2FallbackDraws=0 dm2SceneReady=0 dm2GraphicsSet=0 dm2SceneHash=0 dm2SceneColorKey=0 dm2SceneFlags=0 dm2ScenePaletteHash=0 theronSourceObjects=291 theronDungeonLevelsLoaded=4 theronDungeonSourceHeaders=4 theronDungeonSourceNonzeroTiles=455 theronActiveChampion=0 theronTrack01CddaReady=0 theronSpawnSourceAuthenticated=1 theronSpawnSourceVariant=2 theronTrack02ItemNameBanks=7 theronTrack02ItemNameVariant=2 theronSelectedItemNameBytes=0 theronSelectedItemNameFnv1a=0 theronTrack19NameBankReady=1 theronTrack19NameVariant=2 theronTrack19ItemMappingProven=1 csbViewportHash=0 csbV22CellsPainted=0 dm1WorldTick=0 dm1HocCandidatePanel=0 dm1HocCandidateOrdinal=-1 dm1HocCandidatePartyIndex=-1 dm1InventoryPanel=0 dm1FoodWaterPanel=0 dm1FmtownsCddaPlaying=0 dm1FmtownsCddaTrack=0 startedFromLauncher=1 introBypassed=0 dm1StartupHandoffExecuted=0 platformHandoff=none fmtownsProgram= fmtownsProgramMd5= fmtownsMenuSelectsProgram=0 dm1FmtownsMenuFontLoaded=0 dm1HoCBootSummary=missing\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260925-021008.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260925-021008.bmp",
-        "stdout": "[TQR] Verified Track 02 accepted: <live_authentic-data-dir>/TQUS02.bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)",
-        "timed_out": false
-      },
-      "fallback_assets_used": false,
-      "id": "live_authentic",
-      "label": "live authentic",
-      "marker_found": true,
-      "ok": false,
-      "present": true,
-      "presented_screenshots": [
-        {
-          "bit_count": 24,
-          "height": 200,
-          "name": "firestaff-presented-20260925-021008.bmp",
-          "non_black_pixels": 0,
-          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
-          "size": 192054,
-          "valid": true,
-          "width": 320
-        }
-      ],
-      "probe": {
-        "active": 1,
-        "gameTick": 0,
-        "lastAction": "BOOT",
-        "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
-        "launchedEver": 1,
-        "party": {
-          "championCount": 2,
-          "direction": 0,
-          "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 0
-        },
-        "pipeline": {
-          "anyMovementOccurred": 0,
-          "anyTurnOccurred": 0,
-          "command": 0,
-          "dequeued": 0,
-          "movementBlocked": 0,
-          "stepApplied": 0,
-          "turnApplied": 0,
-          "viewportDirty": 0
-        },
-        "presentation": {
-          "height": 200,
-          "mode": 0,
-          "width": 320
-        },
-        "redraw": {
-          "inputRedrawAfterViewportDirtyCount": 0,
-          "inputRedrawDrawCount": 0,
-          "lastInputRedrawAfterViewportDirty": 0
-        },
-        "schema": "firestaff_m11_autotest_runtime_probe.v1",
-        "sourceId": "theron",
-        "startup": {
-          "active": 1,
-          "dm1CompleteEntranceToHoC": 0,
-          "dm1StartupHandoffExecuted": 0,
-          "dm1StartupHoCFirstFrameReady": 0,
-          "levelLoaded": 1,
-          "phase": "theron-runtime",
-          "receiptReady": 1,
-          "startupActive": 0
-        },
-        "title": "THERON'S QUEST"
-      },
-      "retained_screenshots": [
-        "/private/tmp/firestaff-theron-authentic-disc/firestaff-render/live_authentic/source-firestaff-20260925-021008.bmp",
-        "/private/tmp/firestaff-theron-authentic-disc/firestaff-render/live_authentic/presented-firestaff-presented-20260925-021008.bmp"
-      ],
-      "screenshots": [
-        {
-          "bit_count": 24,
-          "height": 200,
-          "name": "firestaff-20260925-021008.bmp",
-          "non_black_pixels": 0,
-          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
-          "size": 192054,
-          "valid": true,
-          "width": 320
-        }
-      ],
-      "status": "FAIL"
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-09-25T00:10:07.301583+00:00",
+  "generated_at": "2026-09-25T05:13:21.317578+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",
     "No claim of full Theron runtime playability or semantic Track 02 loader parity."
   ],
+  "reason": "authenticated VDC/VCE pair not supplied",
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_readiness.v1",
-  "status": "FAIL"
+  "status": "SKIP"
 }

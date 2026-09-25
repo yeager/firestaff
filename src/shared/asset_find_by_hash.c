@@ -58,6 +58,8 @@
 #define ASSET_ISO_RAW_DATA_OFFSET 16U
 #define ASSET_ISO_MAX_DIR_DEPTH 8
 
+static int external_tool_available_for_path(const char *path);
+
 /* ── Embedded MD5 (same as asset_status_m12.c) ────────────────── */
 
 typedef struct {
@@ -1415,6 +1417,9 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
     *outSize = 0U;
     separator = strstr(path, "::");
     if (separator) {
+        if (strncmp(separator + 2, "@concat(", 8U) == 0) {
+            return asset_read_virtual_path_alloc(path, outBytes, outSize);
+        }
         const char *slice = strstr(separator + 2, "::slice@");
         if (!slice && strncmp(separator, "::slice@", 8U) == 0) {
             /* A raw single-BIN CUE has no archive member component. */
@@ -1535,7 +1540,7 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
                     return 1;
                 }
                 free(member);
-                return 0;
+                if (!external_tool_available_for_path(container)) return 0;
             }
 #endif
 #ifdef _WIN32
@@ -6568,6 +6573,77 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
         }
         memcpy(container, virtualPath, containerLength);
         container[containerLength] = '\0';
+        /* A small number of authenticated CD packages split one logical
+         * source image across adjacent archive members.  Keep that source
+         * layout virtual and compose it in bounded RAM rather than writing a
+         * reconstructed game-data file.  The locator accepts exactly two
+         * simple member names: archive::@concat(first,second). */
+        if (strncmp(first + 2, "@concat(", 8U) == 0) {
+            const char *members = first + 10;
+            const char *close = strrchr(members, ')');
+            const char *comma = strchr(members, ',');
+            char left[ASSET_PATH_MAX];
+            char right[ASSET_PATH_MAX];
+            char leftPath[ASSET_PATH_MAX];
+            char rightPath[ASSET_PATH_MAX];
+            size_t leftLength;
+            size_t rightLength;
+            uint8_t *leftBytes = NULL;
+            uint8_t *rightBytes = NULL;
+            size_t leftSize = 0U;
+            size_t rightSize = 0U;
+            uint8_t *joined;
+            size_t i;
+            if (!close || close[1] != '\0' || !comma || comma >= close ||
+                strchr(comma + 1, ',') ||
+                (leftLength = (size_t)(comma - members)) == 0U ||
+                (rightLength = (size_t)(close - comma - 1)) == 0U ||
+                leftLength >= sizeof(left) || rightLength >= sizeof(right)) {
+                return 0;
+            }
+            memcpy(left, members, leftLength);
+            left[leftLength] = '\0';
+            memcpy(right, comma + 1, rightLength);
+            right[rightLength] = '\0';
+            /* Member selectors are deliberately basenames.  Do not let a
+             * virtual composition escape its selected archive or introduce
+             * another path grammar. */
+            for (i = 0U; i < leftLength; ++i) {
+                if (left[i] == '/' || left[i] == '\\' || left[i] == ':' ||
+                    left[i] == '(' || left[i] == ')') return 0;
+            }
+            for (i = 0U; i < rightLength; ++i) {
+                if (right[i] == '/' || right[i] == '\\' || right[i] == ':' ||
+                    right[i] == '(' || right[i] == ')') return 0;
+            }
+            if (strstr(left, "..") || strstr(right, "..") ||
+                snprintf(leftPath, sizeof(leftPath), "%s::%s", container,
+                         left) >= (int)sizeof(leftPath) ||
+                snprintf(rightPath, sizeof(rightPath), "%s::%s", container,
+                         right) >= (int)sizeof(rightPath) ||
+                !asset_read_path_alloc(leftPath, &leftBytes, &leftSize) ||
+                !asset_read_path_alloc(rightPath, &rightBytes, &rightSize) ||
+                !leftSize || !rightSize ||
+                rightSize > (size_t)ASSET_VIRTUAL_DISC_MAX_BYTES ||
+                leftSize > (size_t)ASSET_VIRTUAL_DISC_MAX_BYTES - rightSize) {
+                free(leftBytes);
+                free(rightBytes);
+                return 0;
+            }
+            joined = (uint8_t *)malloc(leftSize + rightSize);
+            if (!joined) {
+                free(leftBytes);
+                free(rightBytes);
+                return 0;
+            }
+            memcpy(joined, leftBytes, leftSize);
+            memcpy(joined + leftSize, rightBytes, rightSize);
+            free(leftBytes);
+            free(rightBytes);
+            *outBytes = joined;
+            *outSize = leftSize + rightSize;
+            return 1;
+        }
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
             uint8_t *member = zip_load_entry_bytes(container, first + 2,
                                                    outSize);
@@ -6586,11 +6662,12 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
                         sizeof(member_name)) ||
                     asset_casecmp(member_name, first + 2) != 0) {
                     free(member);
-                    return 0;
+                    if (!external_tool_available_for_path(container)) return 0;
+                } else {
+                    *outBytes = member;
+                    *outSize = member_size;
+                    return 1;
                 }
-                *outBytes = member;
-                *outSize = member_size;
-                return 1;
             }
 #endif
 #ifdef _WIN32
