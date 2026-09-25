@@ -3516,3 +3516,9 @@ av bankladdningen. Se
   '^theron_v1_track01_cdda_handoff$' --output-on-failure` passes, including
   actual CDDA stream startup. This proves the authentic JP Track 01 handoff,
   not which gameplay tracks the original executes.
+- ✅ The equivalent US original 7z disc also passes the same real-media test.
+  Its CUE declares the authentic Track 01 AUDIO and Track 02 MODE1/2352 pair;
+  the archive Track 02 is 8,104,992 bytes and its SHA-256 matches the supplied
+  `TQUS02.bin` (`f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565`).
+  This proves Track 01 startup for both supplied editions,
+  but still does not establish any gameplay CDDA selection.
