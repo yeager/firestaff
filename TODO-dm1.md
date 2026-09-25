@@ -228,8 +228,9 @@
   verified without that campaign file. Atari ST 1.0b and 1.1 now both have
   authenticated `DUNGEON.DAT` admission and reach the ordinary M12-to-M11
   runtime route, but each receipt still reports zero champions. The matched
-  v1.0a STX remains outside M11's dungeon resolver. The Atari v1.0 software
-  archive also contains an authentic MSA Automation Disk whose root has
+  v1.0a STX now does so as well after its existing M12 profile's
+  `ebccb5f99c4437adcb34d9228b57eb6a` hash was added to M11. The Atari v1.0
+  software archive also contains an authentic MSA Automation Disk whose root has
   `DMGAME.DAT` and `DMGAME.BAK`
   (47,710 bytes each). Both pass the original-save header checksum and classify
   as FormatID 1 / `ORIGINAL_DM1`. The primary `DMGAME.DAT` also authenticates

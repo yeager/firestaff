@@ -16256,6 +16256,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
      * search so renamed files and arbitrary user layouts boot first. */
     {
         static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
+            { "dm1",  "ebccb5f99c4437adcb34d9228b57eb6a" },
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
             { "dm1",  "050fb2cfded1b502ec2c53956b94c5bd" },
             { "dm1",  "c4a54af4284f40bc3d53fe2c7ef5195b" },
