@@ -88,10 +88,13 @@ MODE1/2352 initial Akutuba runtime handoff, level envelope and multi-level
 object tables. The JP runtime proof is bounded; it does not claim later-level
 or full gameplay parity.
 
-The same real Track 02 is also bound by a source-only public consumer to all
-seven campaign dungeons (2,266 source objects total), including
-Drator/dungeon 2 (eight maps and 291 objects). It deliberately does not infer
-the transition, presentation, AI, combat or item-action semantics.
+The same authentic Track 02 data is also bound by a source-only public
+consumer to all seven campaign dungeons (34 maps and 2,269 linked source-object
+records), including Drator/dungeon 2 (eight maps and 291 records). The separate
+world ledger retains 2,266 ground-reference occurrences. The Japanese CUE
+projection is byte-matched against its raw BIN source after INDEX 01 and uses
+the same JP decoders. This deliberately does not infer transition,
+presentation, AI, combat or item-action semantics.
 
 ### Nexus
 

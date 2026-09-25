@@ -228,9 +228,10 @@ Reviewed 2026-08-29. Completed work only.
   `theron-runtime`: it loads the source Akutuba level and publishes party
   position `1,0,0` without treating Japanese raw sectors as US ISO media.
 - A bounded public native Track 02 consumer now binds the same authentic JP
-  source to all seven campaign dungeons, retaining their source maps and
-  2,266 objects in total. This includes Drator (dungeon 2: eight maps and
-  291 objects). Transfer semantics, graphics capture and gameplay behavior
+  source to all seven campaign dungeons, retaining 34 maps and 2,269 linked
+  source-object records. This includes Drator (dungeon 2: eight maps and 291
+  records). The separate world ledger retains 2,266 ground-reference
+  occurrences. Transfer semantics, graphics capture and gameplay behavior
   remain independently gated.
 - Track 02 intake preserves original media identity and blocks uncaptured
   graphics/palette fallback from production presentation.
