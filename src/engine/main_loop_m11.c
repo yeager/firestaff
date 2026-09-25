@@ -4954,6 +4954,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
             "  \"party\": {\"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d, \"direction\": %d, \"championCount\": %d},\n"
+            "  \"dm1HoC\": {\"candidatePanel\": %d, \"candidateOrdinal\": %d, \"candidatePartyIndex\": %d},\n"
             "  \"pipeline\": {\"dequeued\": %d, \"command\": %d, \"turnApplied\": %d, \"stepApplied\": %d, \"movementBlocked\": %d, \"anyMovementOccurred\": %d, \"anyTurnOccurred\": %d, \"viewportDirty\": %d},\n"
             "  \"redraw\": {\"inputRedrawDrawCount\": %d, \"inputRedrawAfterViewportDirtyCount\": %d, \"lastInputRedrawAfterViewportDirty\": %d}\n"
             "}\n",
@@ -4984,6 +4985,9 @@ static void m11_write_autotest_runtime_probe(const char* path,
             mapY,
             direction,
             championCount,
+            gameView ? gameView->candidateMirrorPanelActive : 0,
+            gameView ? gameView->candidateMirrorOrdinal : -1,
+            gameView ? gameView->candidateMirrorPartyIndex : -1,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.dequeued : 0,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.command : 0,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.turnApplied : 0,

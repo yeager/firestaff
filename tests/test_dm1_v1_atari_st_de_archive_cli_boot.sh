@@ -54,7 +54,7 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
 fi
 
 # Follow the same normal M12 -> M11 title/entrance handoff as the English
-# Atari ST v1.2 route; a separate boot probe cannot satisfy this receipt.
+# Atari ST v1.2 route, then recruit from the authentic Hall through live input.
 case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
@@ -63,15 +63,25 @@ runtime_probe="$app_dir/dm1-atari-st-de-runtime-$$.json"
 scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch_root"
 capture_dir=$(mktemp -d "$scratch_root/dm1-atari-runtime.XXXXXX")
+menu_home="$scratch_root/dm1-atari-st-de-menu-home-$$"
+mkdir -p "$menu_home"
 recruitment_home=
-trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir"; if [[ -n "$recruitment_home" ]]; then rm -rf "$recruitment_home"; fi' EXIT
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir" "$menu_home"; if [[ -n "$recruitment_home" ]]; then rm -rf "$recruitment_home"; fi' EXIT
+# The default 960x540 host view presents a centered 640x400 game image. This
+# point maps to the source C127 portrait hit point (112,83).
+m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
+for token in up up up up turn-left up up up turn-left \
+    up up up up up turn-right up up turn-right up turn-left \
+    up up turn-right up turn-left up up turn-left; do
+    m12_hoc_route+=",wait30,$token"
+done
+m12_hoc_route+=',wait30,click:384:236,wait10'
+HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$archive" \
-    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
-    --duration 20000 >/dev/null 2>&1
+    --script "$m12_hoc_route" --duration 45000 >/dev/null 2>&1
 python3 - "$runtime_probe" "$capture_dir" <<'PY'
 import json
 import pathlib
@@ -89,8 +99,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
-         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
-    raise SystemExit(f"FAIL: authentic German DM1 Atari start menu did not reach its source runtime state: {probe}")
+         party["direction"], party["championCount"]) != (0, 10, 4, 0, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
+                           "candidatePartyIndex": 0}):
+    raise SystemExit(f"FAIL: authentic German DM1 Atari start menu did not reach and recruit from C127 ordinal 14: {probe}")
 captures = list(pathlib.Path(sys.argv[2]).glob("*.bmp"))
 if len(captures) != 1:
     raise SystemExit(f"FAIL: expected one presented Atari runtime frame, got {len(captures)}")
@@ -103,8 +115,6 @@ height = abs(signed_height)
 bits = struct.unpack_from("<H", bitmap, 28)[0]
 stride = ((width * bits + 31) // 32) * 4
 if (bits != 24 or width < 320 or height < 200 or
-        width % 320 != 0 or height % 200 != 0 or
-        width // 320 != height // 200 or
         offset + stride * height > len(bitmap)):
     raise SystemExit("FAIL: unexpected Atari runtime capture geometry")
 nonblack = 0
@@ -116,13 +126,13 @@ for row in range(height):
         if pixel != b"\0\0\0":
             nonblack += 1
             colours.add(pixel)
-scale = width // 320
+scale = min(width // 320, height // 200)
 if nonblack < 10000 * scale * scale or len(colours) < 4:
     raise SystemExit(
         "FAIL: authentic Atari start-menu runtime remains black "
         f"(nonblack={nonblack}, colours={len(colours)})")
-print("PASS: authentic German DM1 Atari start menu reached runtime and presented "
-      f"nonblack source pixels={nonblack} colours={len(colours)}")
+print("PASS: authentic German DM1 Atari start menu recruited C127 ordinal 14 and "
+      f"presented nonblack runtime pixels={nonblack} colours={len(colours)}")
 PY
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

@@ -7,7 +7,8 @@
   the pointer location is stable across developer settings. Corrected the
   campaign-start notes: ReDMCSB LOADSAVE.C uses `DUNGEON.FTL` for an optional
   custom dungeon; it is not required to start the built-in Atari campaign.
-  Recruitment through normal M12 startup and French Atari media remains open.
+  The same recruitment now passes through normal M12 startup. French Atari
+  media and other Atari editions remain open.
 
 - 2026-09-25: Re-ran authentic Atari ST archive launch tests for English
   1.0a/1.0b/1.1, German 1.2 and French 1.3. All five passed their CLI and M12

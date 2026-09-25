@@ -29,9 +29,9 @@
   local checkout lacks the authentic unpacked French EUDATA needed to execute
   that route. German Atari ST 1.2 and French Atari ST 1.3 also reach DM1 runtime
   from M12 with no selected champions. German Atari ST 1.2 now has verified
-  direct CLI movement and pointer-based recruitment of C127 ordinal 14.
-  The normal M12 menu route still reaches runtime with no selected champions;
-  verify recruitment through M12, then repeat on French Atari media.
+  movement and pointer recruitment of C127 ordinal 14 through direct CLI and
+  the normal M12 route. Repeat menu-based recruitment on French Atari media
+  and other Atari editions.
   Atari now uses a distinct STARTUP1.C/F0437/F0441 media receipt, skips PC
   SWSH and PC34 special palettes, and routes entrance input through Atari's
   source mouse command. Authentic English, German and French Atari ST M12
@@ -39,12 +39,12 @@
   receipt before accepting the live runtime state. Source review of ReDMCSB
   STARTUP1.C:160-173 shows the Atari path continues after F0441 through the
   F0435 load loop and F0462_StartGame before runtime. Firestaff's M12 handoff
-  still begins with zero champions. The direct CLI route reaches C127 and
-  recruits through a source-coordinate pointer click against authentic Hall
-  data; M12 recruitment still needs proof. `DUNGEON.FTL` is
+  begins with zero champions. Direct CLI and normal M12 routes reach C127 and
+  recruit through source-coordinate pointer input against authentic Hall data
+  on German v1.2. Repeat the route on other Atari editions. `DUNGEON.FTL` is
   only an optional custom-dungeon path in ReDMCSB LOADSAVE.C; its absence from
   clean retail STX disks does not block built-in new-game startup. Verify the
-  source-owned F0435/F0462 transition and recruitment through M12. The Atari
+  source-owned F0435/F0462 transition on remaining Atari editions. The Atari
   receipt covers title/entrance; its F0437 presentation/palette remains open.
   Headless receipts do not claim host capture, and visual parity remains
   deferred.
