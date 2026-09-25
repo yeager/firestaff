@@ -82,25 +82,28 @@ int main(void) {
     size_t vce_nonzero;
     size_t sprite_pixels = 0u;
 
-    if (!vram_path || !vram_path[0] || !vce_path || !vce_path[0] ||
-        !vdc_path || !vdc_path[0] || !sat_path || !sat_path[0] ||
-        !vdc_io_path || !vdc_io_path[0]) {
+    if ((!capture_root || !capture_root[0]) &&
+        (!vram_path || !vram_path[0] || !vce_path || !vce_path[0] ||
+         !vdc_path || !vdc_path[0] || !sat_path || !sat_path[0] ||
+         !vdc_io_path || !vdc_io_path[0])) {
         puts("SKIP: atomic Theron VRAM/VCE/VDC-state/SAT/VDC-I/O bundle is not set");
         return 77;
     }
+    if (!capture_root || !capture_root[0]) {
 #ifdef _WIN32
-    _putenv_s("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path);
-    _putenv_s("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path);
-    _putenv_s("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", vdc_path);
-    _putenv_s("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", sat_path);
-    _putenv_s("FIRESTAFF_THERON_VDC_IO_TRACE", vdc_io_path);
+        _putenv_s("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path);
+        _putenv_s("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path);
+        _putenv_s("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", vdc_path);
+        _putenv_s("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", sat_path);
+        _putenv_s("FIRESTAFF_THERON_VDC_IO_TRACE", vdc_io_path);
 #else
-    setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path, 1);
-    setenv("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path, 1);
-    setenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", vdc_path, 1);
-    setenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", sat_path, 1);
-    setenv("FIRESTAFF_THERON_VDC_IO_TRACE", vdc_io_path, 1);
+        setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path, 1);
+        setenv("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path, 1);
+        setenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT", vdc_path, 1);
+        setenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT", sat_path, 1);
+        setenv("FIRESTAFF_THERON_VDC_IO_TRACE", vdc_io_path, 1);
 #endif
+    }
     memset(&viewport, 0, sizeof(viewport));
     if (!(capture_root && capture_root[0]
               ? theron_vp_init_from_data_dir(&viewport, capture_root)
