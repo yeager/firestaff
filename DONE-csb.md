@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-09-25: Removed the manual loose-file prerequisite from the native Atari
+  STX CLI/menu regression. When the default raw STX is absent, the test stages
+  only the authentic English v2.1 STX member from the supplied Atari 7z into a
+  temporary directory, then passes those raw bytes to Firestaff's native
+  reader. The archive remains untouched and CI still skips cleanly when no
+  original corpus is present. The full test now waits through the source
+  `ANIMATE.SCR` sequence in the normal M12 loop and verifies the M11 dungeon
+  entrance; it passed with automatic staging. The source state has zero
+  champions, so it does not establish a playable campaign party.
+
 - 2026-09-25: The A31M title-package search now bypasses single-path inventory
   hits when its batched MD5 request repeats the same hash. The recursive scan
   can therefore return distinct files instead of filling every slot with one

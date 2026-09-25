@@ -18017,10 +18017,11 @@ endif()
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
         # This test deliberately performs ten independent starts from the
         # original STX image (title, runtime, input matrix, keyboard menu and
-        # pointer menu).  Archive hashing can legitimately exceed 90 seconds
-        # on a cold or contended CI worker; keep the functional assertions but
-        # give the real-media route a bounded, non-flaky budget.
-        TIMEOUT 180
+        # pointer menu), then lets the retained ANIMATE.SCR sequence run to
+        # its source handoff in the normal menu loop. Archive hashing can
+        # exceed 90 seconds on a cold or contended worker; keep the functional
+        # assertions but give the real-media route a bounded budget.
+        TIMEOUT 300
     )
     add_test(
         NAME csb_v1_atari_utility_mini_cli_resume
