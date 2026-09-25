@@ -2238,6 +2238,7 @@ int theron_v1_world_bind_track19_item_name_bank(
         expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_JP_OFFSET;
     } else if (variant == THERON_V1_TRACK02_VARIANT_US_BIN) {
         expected_md5 = "51b40a17b92a30339957ba564aa0015c";
+        expected_raw_md5 = THERON_V1_TRACK19_US_RAW_MD5;
         expected_span = 0x5be5602du;
         expected_type_codes = THERON_V1_TRACK19_ITEM_TYPE_CODE_US_FNV1A;
         expected_type_offset = THERON_V1_TRACK19_ITEM_TYPE_CODE_US_OFFSET;

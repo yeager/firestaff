@@ -52,6 +52,11 @@ typedef struct {
     "27d54f58154662885bb67d5967e5111e"
 #define THERON_V1_TRACK19_JP_REV1_RAW_BYTES 7752192u
 #define THERON_V1_TRACK19_JP_REV1_PREGAP_SECTORS 224u
+#define THERON_V1_TRACK19_US_RAW_MD5 \
+    "fd45d13690a214b17b48a6b7c05b93b4"
+#define THERON_V1_TRACK19_US_RAW_BYTES 7754544u
+#define THERON_V1_TRACK19_US_RAW_PREGAP_SECTORS 225u
+#define THERON_V1_TRACK19_US_RAW_PAYLOAD_SECTORS 2922u
 
 /* Lossless runtime bank for the authenticated Track 19 name/type/property
  * tables. JP names remain Shift-JIS bytes. The file reader asserts no Track
@@ -79,8 +84,8 @@ int theron_v1_track19_inventory(const char *md5,
                                 size_t bytes,
                                 Theron_V1Track19InventoryReceipt *out);
 
-/* Read a real Track 19 ISO, authenticate its known hash/size, and validate
- * the source-owned US item and level-label spans when applicable. */
+/* Read an authenticated Track 19 ISO or supported raw transport, then
+ * validate the source-owned item and level-label spans where applicable. */
 int theron_v1_track19_inventory_file(
     const char *path, Theron_V1Track19InventoryReceipt *out);
 

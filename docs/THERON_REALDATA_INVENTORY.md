@@ -12,6 +12,7 @@ ISO files so a valid-looking image cannot be attached to the wrong loader.
 | `TQJP02.bin` | 8,102,640 | `b7afb338ad31be1025b53f9aff12d73a` | JP Track 02, raw MODE1/2352 |
 | `TQJP02End.iso` | 305,152 | `397039af02d50d15c70b74088eb8a1cb` | Hash-identified 149-sector JP Rev. 1 payload; supplied bytes are zero-filled and rejected as launch media |
 | `TQUS19.iso` | 5,984,256 | `51b40a17b92a30339957ba564aa0015c` | US Track 19 ISO |
+| `Dungeon Master - Theron's Quest (USA) (Track 19).bin` | 7,754,544 | `fd45d13690a214b17b48a6b7c05b93b4` | US Track 19 raw MODE1/2352; 225-sector pregap, 2,922 ISO-equivalent payload sectors, 150-sector tail |
 | `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | JP Track 19 ISO |
 | `Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin` | 7,752,192 | `27d54f58154662885bb67d5967e5111e` | JP Rev. 1 Track 19, raw MODE1/2352 with 224-sector CUE pregap |
 | `TQUS02-ceb02343868f80cec899e9b239aff2da.iso` | 6,596,608 | `ceb02343868f80cec899e9b239aff2da` | Materialized US split Track 02 ISO |
@@ -34,6 +35,11 @@ the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
   metadata receipts. The raw form retains its CUE-defined 224-sector pregap;
   only its following user-data sectors are normalized in memory for these
   ISO-addressed readers.
+- The authentic US raw Track 19 BIN is now also staged locally. Its complete
+  2,922-sector post-pregap payload was compared sector-by-sector with
+  `TQUS19.iso`; the probe also bound its decoded name/property bank against
+  the authenticated US Track 02 dungeon-4 item source. The trailing 150 raw
+  sectors are retained in the source file but are not part of the ISO view.
 - The raw BIN palette windows are copied only after the exact regional hash and
   MODE1/2352 user-data mapping pass. The US assembled ISO has a separate
   direct-ISO palette path.

@@ -29482,12 +29482,13 @@ static void m11_theron_bind_track19_item_names(
     M11_GameViewState *state,
     const char *data_dir,
     const char *verified_track02_path,
-    const char *verified_track02_md5) {
+    const char *verified_track02_md5,
+    const char *source_cue_path) {
     Theron_V1_World *world;
     Theron_V1Track19ItemNameBank bank;
     char sibling_root[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
     char candidate[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
-    const char *leaves[2];
+    const char *leaves[3];
     size_t leaf_count = 0u;
     int variant;
     int loaded = 0;
@@ -29505,8 +29506,15 @@ static void m11_theron_bind_track19_item_names(
             "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin";
         leaves[leaf_count++] = "TQJP19.iso";
     } else if (strcmp(verified_track02_md5,
-                      "f23601102138f87c33025877767ebf76") == 0) {
+                      "f23601102138f87c33025877767ebf76") == 0 ||
+               strcmp(verified_track02_md5,
+                      THERON_TRACK02_MD5_US_ISO) == 0) {
         variant = THERON_TRACK02_VARIANT_US_BIN;
+        /* Authentic US CloneCD Track 19 is MODE1/2352. The raw inventory
+         * reader authenticates the whole file and bounds the payload to the
+         * exact ISO-equivalent span before exposing its regional tables. */
+        leaves[leaf_count++] =
+            "Dungeon Master - Theron's Quest (USA) (Track 19).bin";
         leaves[leaf_count++] = "TQUS19.iso";
     } else {
         return;
@@ -29514,6 +29522,22 @@ static void m11_theron_bind_track19_item_names(
     world = (Theron_V1_World *)state->theronWorld;
     if (FSP_ParentDir(sibling_root, sizeof(sibling_root),
                       verified_track02_path)) {
+        size_t i;
+        for (i = 0u; i < leaf_count && !loaded; ++i) {
+            if (FSP_JoinPath(candidate, sizeof(candidate), sibling_root,
+                             leaves[i])) {
+                loaded = theron_v1_track19_item_name_bank_file(candidate,
+                                                                &bank);
+            }
+        }
+    }
+    /* CUE intake may materialize Track 02 into the cache. In that case the
+     * authentic split Track 19 stays beside the source CUE, not the cache
+     * payload. Only search this source directory when the selected campaign
+     * receipt explicitly identifies a CUE. */
+    if (!loaded && source_cue_path &&
+        m11_path_has_extension(source_cue_path, ".cue") &&
+        FSP_ParentDir(sibling_root, sizeof(sibling_root), source_cue_path)) {
         size_t i;
         for (i = 0u; i < leaf_count && !loaded; ++i) {
             if (FSP_JoinPath(candidate, sizeof(candidate), sibling_root,
@@ -29694,7 +29718,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         goto fail;
     }
     m11_theron_bind_track19_item_names(
-        state, dataDir, verifiedPath, verifiedMd5);
+        state, dataDir, verifiedPath, verifiedMd5,
+        campaignMedia && campaignMedia->source ==
+                THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CUE
+            ? campaignMedia->candidate_path : NULL);
     /* Source kind records Track 02 media. Keep the launcher game identity
      * stable across raw BIN/CUE and converted ISO paths so startup receipts,
      * saves, and direct boot probes all refer to the selected game. */
@@ -29704,9 +29731,10 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
              launcherSourceId && launcherSourceId[0]
                  ? launcherSourceId
                  : "theron");
-    if (campaignMedia && campaignMedia->direct_media.cue_consumed &&
-        m11_path_has_extension(campaignMedia->direct_media.media_path, ".cue")) {
-        cdda_cue_path = campaignMedia->direct_media.media_path;
+    if (campaignMedia && campaignMedia->source ==
+            THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CUE &&
+        m11_path_has_extension(campaignMedia->candidate_path, ".cue")) {
+        cdda_cue_path = campaignMedia->candidate_path;
     } else if (m11_path_has_extension(verifiedPath, ".cue")) {
         cdda_cue_path = verifiedPath;
     } else {

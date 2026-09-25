@@ -30,6 +30,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_track19_inventory.h"
 #include "theron_v1_track02_raw_media_intake.h"
 
 #include <stdio.h>
@@ -584,6 +585,9 @@ static void run_explicit_real_cue_campaign_if_available(void) {
      * by the obsolete capture-required page.  This asserts the real M12→M11
      * handoff, not just the lower-level media scanner. */
     init_menu_without_gallery(&menu, cue_path, "theron");
+    expect_true(M12_StartupMenu_ScanTheronCampaignMedia(
+                    &menu, cue_path, intake.track02_md5, NULL) == 1,
+                "explicit CUE selection is retained in the launch menu receipt");
     dismiss_initial_message(&menu);
     menu.selectedIndex = 4;
     menu.activatedIndex = 4;
@@ -599,6 +603,14 @@ static void run_explicit_real_cue_campaign_if_available(void) {
                     view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
                     view.theronState.startup_media_ready,
                 "explicit authentic MODE1/2048 CUE opens the source-backed Theron title gate");
+    expect_true(opened == 1 &&
+                    view.theronTrack01CddaHandoff.status ==
+                        THERON_TRACK01_CDDA_AVAILABLE &&
+                    view.theronTrack01CddaHandoff.playback_handoff_ready &&
+                    view.theronTrack01CddaHandoff.original_cdda &&
+                    view.theronTrack01CddaHandoff.audio_is_vorbis &&
+                    strstr(view.theronTrack01CddaHandoff.audio_path, ".ogg") != NULL,
+                "authentic CUE title music binds its exact source-stem OGG");
     if (strcmp(intake.track02_md5, THERON_TRACK02_MD5_JP_BIN) == 0) {
         const Theron_V1_World *world =
             (const Theron_V1_World *)view.theronWorld;
@@ -607,6 +619,19 @@ static void run_explicit_real_cue_campaign_if_available(void) {
                         strcmp(world->track19_item_names.source_md5,
                                "27d54f58154662885bb67d5967e5111e") == 0,
                     "authentic JP CUE binds the hash-verified raw Track 19 name bank");
+    } else if (strcmp(intake.track02_md5,
+                      "f23601102138f87c33025877767ebf76") == 0 ||
+               strcmp(intake.track02_md5,
+                      THERON_TRACK02_MD5_US_ISO) == 0) {
+        const Theron_V1_World *world =
+            (const Theron_V1_World *)view.theronWorld;
+        expect_true(world && world->track19_item_names.valid &&
+                        world->track19_item_names.variant == 2 &&
+                        (strcmp(world->track19_item_names.source_md5,
+                                THERON_V1_TRACK19_US_RAW_MD5) == 0 ||
+                         strcmp(world->track19_item_names.source_md5,
+                                "51b40a17b92a30339957ba564aa0015c") == 0),
+                    "authentic US CUE binds the hash-verified Track 19 name bank");
     }
     if (opened == 1 && !view.theronState.dungeon_capture_required) {
         int i;

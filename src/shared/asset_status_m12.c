@@ -7724,6 +7724,24 @@ const char* M12_AssetStatus_GetTheronLaunchMediaPathForVersion(
     if (!version || !version->matched || version->matchedPath[0] == '\0') {
         return NULL;
     }
+    /* Preserve an explicitly selected, hash-bound CUE across menu rescans.
+     * The catalogue may match its materialized Track 02 payload instead of
+     * the CUE itself; losing this receipt here also loses authentic Track 01
+     * CDDA and other sibling-disc provenance at the M12→M11 handoff. */
+    if (status->theronCampaignMedia.status ==
+            THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY &&
+        status->theronCampaignMedia.source ==
+            THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CUE &&
+        status->theronCampaignMedia.direct_media.cue_consumed &&
+        status->theronCampaignMedia.direct_media.media_path[0] &&
+        strcmp(status->theronCampaignMedia.track02_md5,
+               version->matchedMd5) == 0) {
+        const char* extension = strrchr(
+            status->theronCampaignMedia.direct_media.media_path, '.');
+        if (extension && m12_ascii_equals_ignore_case(extension, ".cue")) {
+            return status->theronCampaignMedia.direct_media.media_path;
+        }
+    }
     /* A paired, hash-verified CUE stays the launch provenance; the boot
      * handoff resolves it back to the verified payload. 1750ad9ea dropped
      * this and leaked the raw payload path as the launch media. */

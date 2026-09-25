@@ -2,6 +2,15 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25: The authentic US CUE from the combined local archive now retains
+its hash-bound CUE provenance through M12→M11, binds the exact sibling OGG for
+Track 01 title music, and loads the regional Track 19 metadata bank from that
+source directory even when Track 02 was materialized into cache. The real US
+CUE M12→M11 handoff passes; the lower-level authentic US and JP CUE CDDA
+checks also pass with archive members extracted to a temporary directory.
+Direct RAR selection/extraction is still unsupported; the successful test does
+not claim RAR as a launch input.
+
 2026-09-25: The broad M12 inventory no longer treats the catalogued JP Rev. 1
 Track 02 ISO digest as launchable. The supplied file is a hash-matching,
 zero-filled 149-sector stub and the strict Track 02 intake already rejects it

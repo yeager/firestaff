@@ -15,7 +15,7 @@
  *
  * This gate exercises:
  *
- *   1. The hash-table contract: Theron still exposes 4 known hashes
+ *   1. The hash-table contract: Theron exposes all 5 authenticated known hashes
  *      (JP/US BIN + JP/US ISO) and exactly one required-file role
  *      (Track 02 JP/US BIN/ISO marker).
  *   2. Asset-availability negative test: with no real Theron data,
@@ -264,17 +264,18 @@ static void seed_dm1_available_only(M12_StartupMenuState* state) {
 }
 
 static void check_hash_set_contract(void) {
-    /* Hash set: 4 known hashes, 1 required role. These are the static
+    /* Hash set: 5 known hashes, 1 required role. These are the static
      * numbers the popup gate relies on to produce a user-facing
      * Track 02 hint without consulting docs. */
     CHECK(M12_AssetStatus_GameHasCompleteHashSet("theron") == 1);
-    CHECK(M12_AssetStatus_GameKnownHashCount("theron") == 4U);
+    CHECK(M12_AssetStatus_GameKnownHashCount("theron") == 5U);
     CHECK(M12_AssetStatus_GameRequiredFileCount("theron") == 1U);
     CHECK(M12_AssetStatus_GameVerifiedFileCount("theron") == 1U);
     CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 0);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 1);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 2);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 3);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-clonecd") == 1);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 2);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 3);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 4);
 }
 
 static void check_scan_no_data_marks_theron_unavailable(char* dataDir) {
@@ -313,7 +314,11 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     seed_theron_unavailable_with_metadata(&state, 0);
     state.selectedIndex = theronIndex;
 
-    /* Selection event on the unavailable Theron card. */
+    /* Selecting the game opens its platform cards. A second accept on the
+     * unavailable JP/US platform card must surface the missing-media hint. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.gameCardFlowStage == 0);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
 
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
@@ -343,10 +348,12 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
 
     CHECK(render_smoke_nonblank(&state, "theron card click Track 02 popup"));
 
-    /* Dismissal returns to MAIN with cleared message lines and no
-     * leaked launch request. */
+    /* Dismissal returns to the platform cards with no leaked launch request. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    CHECK(launcher_in_clean_main(&state));
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.quickResumeLaunchRequested == 0);
+    CHECK(popup_lines_cleared(&state));
 }
 
 static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
@@ -471,6 +478,8 @@ static void check_unrelated_games_unaffected_by_theron_gate(char* dataDir) {
 
     state.selectedIndex = 0;  /* DM1 card */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, "dm1") == 0);
@@ -486,9 +495,11 @@ static void check_unrelated_games_unaffected_by_theron_gate(char* dataDir) {
                 line2);
         ++g_failures;
     }
-    /* Dismissal returns to MAIN. */
+    /* Dismissal returns to the unavailable DM1 platform card. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    CHECK(launcher_in_clean_main(&state));
+    CHECK(state.view == M12_MENU_VIEW_GAME_OPTIONS);
+    CHECK(state.launchRequested == 0);
+    CHECK(popup_lines_cleared(&state));
 }
 
 int main(void) {

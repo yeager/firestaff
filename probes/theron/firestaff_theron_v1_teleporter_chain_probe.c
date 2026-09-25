@@ -291,6 +291,7 @@ int main(void)
             .id = 1, .type = THERON_OBJTYPE_TELEPORTER,
             .x = 1, .y = 1, .level = 0, .dungeon_id = 1,
             .linked_id = (1 << 10) | (3 << 5) | 4,
+            .state = 1,
             .flags = THERON_OBJ_F_TRACK02_COORD_LINK
         };
         world.objects[1] = (Theron_V1_Object){
@@ -299,6 +300,9 @@ int main(void)
         };
         world.object_count = 2;
         world.levels[0][0].squares[1][1] = THERON_SQUARE_TELEPORTER;
+        /* A packed coordinate link lands on the target map tile itself; the
+         * target needs real passable map geometry, not a zeroed wall byte. */
+        world.levels[0][1].squares[3][4] = THERON_SQUARE_FLOOR;
 
         printf("[test:track02-packed-level-link]\n");
         check_int("packed link resolves",

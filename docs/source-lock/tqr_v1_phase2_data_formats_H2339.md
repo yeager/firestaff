@@ -20,17 +20,14 @@ CD-ROM Track 02 BIN hashes locked:
 - JP: `b7afb338ad31be1025b53f9aff12d73a` (cdromance.org)
 - US: `f23601102138f87c33025877767ebf76` (cdromance.org)
 
-**"Light" version constraint:** Theron's Quest contains a subset of DM1's items,
-creatures, and spells. The exact subset is documented per category below. Where
-the subset boundary is unknown, the full DM1 superset is listed as a working
-hypothesis, explicitly marked `STUB / LIKELY SUBSET`.
+**Data policy:** DM1, CSB, and Nexus structures are not assumed to describe
+Theron. Only data verified against authenticated Theron media or a source-owned
+consumer is promoted; all other boundaries remain explicitly unresolved.
 
-**Source-lock rule:** Every format claim cites a source reference. The JP and
-US Track 02 images are now present as hash-verified local inputs
-(`TQJP02.bin`, `TQUS02.bin`) and the initial Hall of Records candidate plus
-startup bitmap atlas are decoded from those files. Any format or record not
-covered by that evidence remains explicitly marked `STUB / INFERRED` and is
-not promoted to runtime data.
+**Source-lock rule:** Every promoted format claim cites authenticated Theron
+media or a source-owned consumer. Hash-verified Track 02 and Track 19 evidence
+is used for the records described below. Other data remains explicitly
+unresolved and is not promoted to runtime data.
 
 ---
 
@@ -45,34 +42,18 @@ not promoted to runtime data.
 | Word size | 8-bit bytes; 16-bit words stored low-byte first |
 | Alignments | No alignment restrictions; HuC6280 allows unaligned access |
 
-This matters for dungeon grid parsing: TQ uint16 grid cells follow the same
-little-endian byte order as DM1 (Intel 8088 is also little-endian). The same
-`rb16()` / little-endian uint16 reader used for DM1 applies to TQ.
+The authenticated map decoder uses one-byte tile records (§2.3). The CPU
+platform is documented here for context only; its general byte order does not
+prove the representation of every multi-byte Track 02 field.
 
-Source: Phase 0 provenance gate §5.1 · HuC6280 datasheet · DM1 DUNGEON.DAT format
+Source: Phase 0 provenance gate §5.1 and HuC6280 platform reference.
 
 ### 1.2 Track 02 Binary Layout (CD-ROM Data Track)
 
-Track 02 is the single data track containing the entire game binary.
-Unlike DM1's dual-file structure (GRAPHICS.DAT + DUNGEON.DAT), TQ stores
-everything in one blob:
-
-```
-Offset 0x0000: HuC6280 executable code (entry point at ~0xE000 in memory map)
-Offset ???:    Dungeon data block 1 (Hall of Records — 2 levels)
-Offset ???:    Dungeon data block 2 (Crypt of Shadows — 2 levels)
-Offset ???:    Dungeon data block 3 (Abyss of Flames — 3 levels)
-Offset ???:    Dungeon data block 4 (Tomb of Woe — 3 levels)
-Offset ???:    Dungeon data block 5 (Vault of Secrets — 2 levels)
-Offset ???:    Dungeon data block 6 (Castle of Fate — 3 levels)
-Offset ???:    Dungeon data block 7 (Tower of Epilogue — 3 levels)
-Offset ???:    Graphics tile data (PC Engine tile/sprite format)
-Offset ???:    Font data (PC Engine tile font)
-Offset ???:    ADPCM audio data (non-CD-DA SFX)
-```
-
-Dungeon loading: `THQUEST.ASM T560` — header parsing, `dungeon_seed` extraction.
-Bank loading: `THQUEST.ASM T400` — HuCard ROM mapping.
+Track 02 is the authenticated data-track input used by the parser. Its full
+executable/data memory map and graphics/audio section boundaries are not
+established by this source-lock. Do not infer a linear layout or section
+offsets from the host's extracted user-data view.
 
 **Current evidence:** The authenticated US and JP Track 02 inputs now provide
 seven source-bound map groups, object-count tables, ground-reference tables,
@@ -82,13 +63,13 @@ HuC6280 consumer handoff, tile/material ownership, dungeon-square rendering,
 palette ownership, or JP text ownership. Do not infer those semantics from the
 startup candidate.
 
-Source: Phase 0 provenance gate §2.3 · theron_v1_boot.c:24-33
+Source: authenticated US/JP Track 02 inputs and current source-bound parsers.
 
-### 1.3 Track 02 Size Estimate
+### 1.3 Track 02 input identity
 
-JP Track 02 (~231 MB compressed CD-ROM image). The actual data track within
-the CUE/BIN is a fraction of that — on PC Engine CD games, the data track
-contains compressed audio + video, typically 100–200 MB for a full game.
+Use the exact hash-verified Track 02 input identities recorded in the
+provenance manifest. Disc-image size is not a Track 02 data-format property;
+no estimate is used to infer its layout.
 
 ---
 
@@ -96,89 +77,91 @@ contains compressed audio + video, typically 100–200 MB for a full game.
 
 ### 2.1 Dungeon Block Header
 
-Each of the 7 mini-dungeons occupies a separate data block within Track 02.
-The header layout (inferred from `theron_v1_boot.c:318-345`, mirroring DM2):
+The authenticated loader recognizes seven dungeon map groups in each real
+Track 02 variant. The current source decoder binds their map counts to
+`{4, 8, 5, 6, 3, 4, 4}` and retains each map header and source span. This is a
+map-group index, not evidence for the historical dungeon header struct or for
+a per-dungeon random-seed table. The verified US/JP startup candidate carries
+the 32-bit initial-level seed `0x0108e938`; later seed semantics remain
+unresolved.
 
-```c
-// Historical working shape only; not a promoted TQ runtime header.
-struct TQR_DungeonHeader {
-    uint16_t reserved;       // offset 0-1  — 0x0000
-    uint16_t magic;          // offset 2-3  — "T1" (TQ magic; needs confirmation)
-    uint16_t level_data_offset;   // offset 4-5  — first level data offset
-    uint16_t dungeon_count;      // offset 6-7  — 7 (TQ)
-    uint16_t dungeon_seed;       // offset 8-9  — RNG seed per dungeon
-    uint16_t metadata;          // offset 10-11 — TBD
-};
-```
-
-No dungeon-seed table is promoted from the current Track 02 evidence.
-The former values (313, 414, 527, 632, 749, 856, 967) were Firestaff
-working placeholders and must not be presented as original data. The
-verified raw US/JP Track 02 startup candidate instead carries the real
-32-bit initial-level seed `0x0108e938`; later dungeon headers remain
-unresolved until their records are decoded.
-
-Source: theron_v1_boot.c:318-345 · theron_v1_dungeon_progression.c:38-110
+Source: `src/theron/theron_v1_track02_dungeon_map.c`,
+`src/theron/theron_v1_world.c:theron_v1_world_load_track02_dungeon`, and the
+hash-verified US/JP Track 02 inputs.
 
 ### 2.2 Dungeon Grid
 
-| Property | DM1 (PC) | Theron's Quest (PCE) |
-|-----------|-----------|----------------------|
-| Grid shape | 16×16 per level | **STUB** — likely smaller (8×8 or 9×9) |
-| Bytes per cell | 2 (uint16 little-endian) | 2 (uint16 little-endian) |
-| Cell encoding | 5-bit tile type + attributes | 5-bit tile type + attributes (same scheme) |
-| Level count | 14–16 | 2–3 per mini-dungeon |
-| Total levels | ~16 | ~15–21 (7 dungeons × 2–3 levels) |
+Authentic Track 02 map headers store maximum X/Y indices, so the decoded
+dimensions are each stored index plus one. Dimensions vary by map; there is no
+single fixed grid size. Each tile occupies one packed byte, not a two-byte
+DM1-style cell. The seven authentic groups contain 34 maps in total, using
+the loader's group counts `{4, 8, 5, 6, 3, 4, 4}`. These map counts are not a
+claim about campaign floor count or reachable-level topology.
 
-**Unverified hypothesis:** TQ mini-dungeons may use smaller grids (8×8 or 9×9) because:
-1. PC Engine resolution is 256×224 — smaller visible area
-2. Each mini-dungeon must fit in less ROM space
-3. The 7-dungeon structure requires more levels but smaller maps
+The map decoder retains offsets, map IDs, unknown header bytes, creature
+count, XP modifier, door types and tile bytes. A complete execution-side
+binding for every header field, tile attribute and reachable-level graph is
+not established. DM1/Nexus cell layouts and display-resolution arguments do
+not define Theron data.
 
-**Grid cell encoding:** Same 5-bit tile type scheme as DM1 (proven by
-`& 0x1F` mask in `nexus_v1_level_get_square()`, which inherits from the same
-DM1 format lineage). The remaining bits encode square attributes (wall type,
-door state, trap, etc.).
-
-Source: nexus_v1_phase2_data_formats_H2321.md §3.3 · DM1 DUNGEON.C F0001 · STUB
+Source: `include/theron_v1_track02_dungeon_map.h`,
+`src/theron/theron_v1_track02_dungeon_map.c`, and hash-verified US/JP Track 02
+inputs.
 
 ### 2.3 Square Type Table
 
-The current loader retains the authenticated one-byte map records, but no
-source-backed equivalence to DM1's square bit layout has been proven. The
-following comparison is therefore reference material, not a TQ binding:
+The authenticated Track 02 map parser reads one packed byte per tile. Its
+layout is confirmed by the real US and JP Track 02 map groups and the retained
+source-byte ledger:
 
-| Bits | Meaning | TQ Status |
-|------|---------|-----------|
-| 0–3 | Tile type index | STUB — likely a subset |
-| 4 | Wall present (1) / open (0) | STUB — same |
-| 5 | Door present | STUB — same |
+| Bits | Meaning | Evidence/status |
+|------|---------|-----------------|
+| 7–5 | Tile family: 0 wall, 1 open, 2 pit, 3 stairs, 4 door, 5 teleporter, 6 fake wall, 7 type-7 | `Theron_TileType` in `include/theron_v1_track02_dungeon_map.h`; family values decoded from authentic Track 02 bytes |
+| 4 | Tile has a linked thing list | Exposed by `theron_tile_has_things`; raw value retained with each tile |
+| 3–0 | Tile attributes | Exposed by `theron_tile_attributes`; meaning remains unresolved and must not be treated as stair direction, destination, or gameplay state without a source consumer |
 
-Full TQ tile type table will be documented after Track 02 extraction.
-**Unverified hypothesis:** TQ may use approximately the same 20–30 tile types as DM1,
-possibly with additional animated tile variants for PC Engine sprites.
+Map headers retain dimensions, offsets, map ID, two unknown bytes, creature
+count, XP modifier, and door-type fields. Dimensions are stored as maximum
+indices; runtime width and height are each the stored value plus one. These
+fields and packed tile bytes are decoded from the seven real dungeon groups by
+`theron_v1_track02_dungeon_map_load_for_variant`; they are not generated map
+content.
 
-Source: DM1 DUNGEON.C · STUB for TQ-specific types
+**Still unresolved:** the low-nibble attributes' consumer semantics, including
+stair direction and destination rules. Authentic Akutuba maps contain multiple
+stairs with distinct attribute values, while the destination level need not
+contain a stair at the same tile. The host transition therefore remains gated
+until the original consumer or an authenticated runtime capture binds those
+fields. DM1's `MASK0x0004_STAIRS_UP` and
+`F0154_DUNGEON_GetLocationAfterLevelChange` are research leads, not proof that
+Theron uses the same packed attribute or transition contract.
+
+Source: `include/theron_v1_track02_dungeon_map.h`,
+`src/theron/theron_v1_track02_dungeon_map.c`,
+`src/theron/theron_v1_world.c:theron_v1_world_load_track02_dungeon`, and the
+hash-verified JP/US Track 02 inputs.
 
 ### 2.4 Object Placement Records
 
-Each dungeon level contains object placement records appended after the grid.
-Format (inferred from DM1):
+Track 02 placement data is retained as authentic source occurrences, not as a
+DM1-style synthetic `pos_x/pos_y/object_id/attributes` record. The current
+decoder keeps the source reference, next reference, category, source index,
+position byte, raw record size and bytes, map, and coordinates. Category
+descriptor sizes and linked-list traversal come from the selected real
+dungeon block. Unrecognized fields remain raw; they are not assigned host
+inventory or object meanings.
 
-```c
-struct TQR_ObjectRecord {
-    uint16_t pos_x;         // grid X coordinate
-    uint16_t pos_y;         // grid Y coordinate
-    uint16_t object_id;     // DM1 object type index (TQ subset)
-    uint16_t attributes;    // charges, cursed flag, etc.
-};
-```
+The source-owned property table and the separate 69-row item-name/type tables
+are independently authenticated. A subset of known records can be decoded,
+but placement and item semantics are published only behind their own verified
+consumer bindings. Remaining raw occurrence counts describe the source stream;
+they are not a count of supported gameplay objects.
 
-**TQ subset of DM1 objects:** The 7 quest items are unique objects not in DM1.
-The remaining objects (weapons, armor, potions, food, keys, scrolls) are DM1
-subset. Exact item count unknown — estimated 30–50 types (vs DM1's ~200).
-
-Source: DM1 DUNGEON.C F0217 · theron_v1_dungeon_progression.c:103-114 (quest items)
+Source: `include/theron_v1_track02_dungeon_loader.h`,
+`src/theron/theron_v1_track02_dungeon_loader.c`,
+`src/theron/theron_v1_track02_item_name_source.c`, and the real JP/US Track 02
+inputs. See also the source-lock entries for the Track 19 property and name
+tables.
 
 ---
 
@@ -186,66 +169,46 @@ Source: DM1 DUNGEON.C F0217 · theron_v1_dungeon_progression.c:103-114 (quest it
 
 ### 3.1 Item Type Subset
 
-TQ is a "light" version with only a subset of DM1 items. Based on the dmweb
-description and TQ game design:
+The real US and JP Track 19 images contain source-owned 69-entry item-name
+and type-code tables. Their exact offsets and hashes are checked by the
+inventory reader; Japanese names remain raw Shift-JIS bytes. The authenticated
+property table contains 66 six-byte records. These are concrete table sizes,
+not estimates of the number of distinct retail item categories.
 
-| Category | DM1 Count | TQ Estimate | Notes |
-|----------|-----------|-------------|-------|
-| Weapons | ~40 | **STUB ~15** | Subset; all basic weapon types present |
-| Armor/Clothing | ~30 | **STUB ~10** | Subset; helmets, armor, shields |
-| Potions | ~12 | **STUB ~8** | Health, mana, stamina, etc. |
-| Food | ~5 | **STUB ~3** | Bread, cheese, wine, etc. |
-| Keys | ~8 | **STUB ~4** | Dungeon-specific keys |
-| Scrolls | ~3 | **STUB ~1** | Identify scroll likely present |
-| Containers | ~4 | **STUB ~2** | Chests, barrels |
-| Quest items | 0 | **7 unique** | One per dungeon, not in DM1 |
-| Junk/Misc | ~100 | **STUB ~20** | Torches, ropes, poles, etc. |
+**Still unresolved:** a complete mapping from every source type code and
+property row to player-visible item names, shop behavior, and runtime object
+semantics. No DM1 category counts or guessed TQ subset counts are used as
+gameplay data. Quest-item names and their dungeon associations must be
+published only where the authentic Track 02 / Track 19 record binding proves
+them.
 
-**Quest items (7 unique, not in DM1):**
-1. Shield Defiant (Hall of Records)
-2. Taza Poleyn (Crypt of Shadows)
-3. Tazahelm (Abyss of Flames)
-4. Taza Boots (Tomb of Woe)
-5. Taza Armor (Vault of Secrets)
-6. Soulcage (Castle of Fate)
-7. The Retaliator (Tower of Epilogue)
-
-Source: theron_v1_dungeon_progression.c:103-114 · dmweb game description · STUB
+Source: `include/theron_v1_track19_inventory.h`,
+`include/theron_v1_track19_item_names.h`,
+`src/theron/theron_v1_track19_inventory.c`, and the hash-verified US/JP
+Track 19 images.
 
 ### 3.2 Object Record Format
 
-In the dungeon binary, objects are placed as records. The format mirrors DM1:
+Track 02 object bytes use the source-occurrence model described in §2.4.
+Their raw category records and references are retained, but fields whose
+consumer has not been authenticated are not reinterpreted as DM1 charge,
+curse, or used-bit fields. The decoder exposes category-specific raw spans;
+only independently proven tables and consumers may promote a record into a
+runtime item or object.
 
-```c
-struct TQR_DungeonObject {
-    uint16_t  grid_x;      // position in dungeon grid
-    uint16_t  grid_y;
-    uint16_t  object_id;   // index into TQ object table (subset of DM1 IDs)
-    uint16_t  attributes; // charges:7, cursed:1, used:1, reserved:7
-    // Lower 7 bits = charges (0–127)
-    // Bit 7 = cursed flag
-    // Bit 8 = "used" flag (for single-use items)
-};
-```
-
-Item charges encoding: `(attributes & 0x7F)` — same as DM1 `objAttr0_charges`.
-
-**STUB:** Exact attribute field layout needs Track 02 extraction to confirm.
-The 7 quest items have special object IDs outside the DM1 range.
-
-Source: DM1 DUNGEON.C F0217 · theron_v1_dungeon_progression.c:103-114 · STUB
+Source: `include/theron_v1_track02_dungeon_loader.h` and
+`src/theron/theron_v1_track02_dungeon_loader.c`.
 
 ### 3.3 Item Icon / Sprite Mapping
 
-Item icons in TQ use the **same icon index system as DM1** (icon indices 0–197).
-The icon sprites are stored in PC Engine tile format (8×8 planar tiles) in the
-graphics data block of Track 02.
+The retail icon-index mapping and item-sprite consumer have not been proven
+from the authenticated Theron data. DM1 icon constants and tile counts are
+reference material only; no DM1 icon ID or synthesized sprite is treated as a
+Theron asset. Keep item imagery unavailable until a Track 02/graphics capture
+binds the source indices and renderer consumer.
 
-Icon table source: `C000_ICON_*` through `C197_ICON_*` — same as DM1.
-**STUB:** Which icons are actually used in TQ (the subset) is unknown until
-Track 02 extraction.
-
-Source: ReDMCSB DEFS.H:1887–1951 · Phase 0 provenance gate · STUB
+Source boundary: authenticated Theron Track 02 maps and Track 19 item tables;
+the graphics index/consumer mapping remains unresolved.
 
 ---
 
@@ -256,8 +219,8 @@ Source: ReDMCSB DEFS.H:1887–1951 · Phase 0 provenance gate · STUB
 | Property | Value |
 |----------|-------|
 | Languages | English (US), Japanese (JP) |
-| Encoding | PC Engine tile font (8×8 tiles, 1bpp or 2bpp planar) |
-| Text storage | Tile index arrays in Track 02 (not ASCII) |
+| Encoding | Candidate source encoding not yet tied to an executing consumer |
+| Text storage | Authenticated candidate records only; interpretation unresolved |
 | UI text | Track 02 candidate records exist; executing consumer/control codes unresolved |
 
 The authenticated US text codon stream remains available to diagnostics and
@@ -269,41 +232,22 @@ receipt, including its source titles. Neither regional candidate is promoted
 to a plaque, scroll, HUD or translated text surface until the original
 HuC6280 text consumer is tied to the bytes by disassembly or capture.
 
-PC Engine CD-ROM uses a custom text/font path, but the exact Theron's Quest
-consumer and control-code semantics are not yet source-locked:
-- Each character = 8×8 tile from the game font
-- Text rendered by sending tile indices to the VDC (video display controller)
-- Japanese version uses a larger font tile set (more tiles for kanji)
-- English version uses ASCII-range tile indices
+The text/font consumer, character mapping, and control-code semantics are not
+source-locked for Theron's Quest.
 
-### 4.2 String Format
+### 4.2 String format
 
-Dungeon names, UI text, and messages: candidate byte/word regions are retained
-where their source offsets are authenticated; they are not promoted as a
-generic tile-index stream.
-No null-terminator convention visible — string length is implicit (known
-from the game code). This is the same approach used in DM1 (byte sequences
-read until a sentinel value).
+Candidate byte/word regions are retained only where their source offsets are
+authenticated; they are not promoted to a generic string or tile-index
+stream. Terminators, lengths, control codes, and JP/US ownership require a
+game-owned executing consumer or equivalent capture. Host progression labels
+are not proof of the retail dungeon-name mapping.
 
-**STUB:** The exact consumer, control-code expansion, and JP/US string storage
-need a game-owned post-startup read with executing PC and source LBA/span.
-The dungeon names (Hall of Records, Crypt of Shadows, etc.) are confirmed from
-Lighthouse's RTC conversion documentation.
+### 4.3 Quest-item name boundary
 
-Source: theron_v1_dungeon_progression.c:38-110 (dungeon names) · STUB
-
-### 4.3 Seven Quest Item Names
-
-Confirmed from `theron_v1_dungeon_progression.c:103-114`:
-- "Shield Defiant" — Hall of Records
-- "Taza Poleyn" — Crypt of Shadows
-- "Tazahelm" — Abyss of Flames
-- "Taza Boots" — Tomb of Woe
-- "Taza Armor" — Vault of Secrets
-- "Soulcage" — Castle of Fate
-- "The Retaliator" — Tower of Epilogue
-
-Source: theron_v1_dungeon_progression.c:103-114
+The Track 19 source-owned name/type table is documented in §3.1. No complete
+retail binding from each quest-item name to a dungeon, placement, or runtime
+consumer is claimed based solely on the host progression table.
 
 ---
 
@@ -311,15 +255,8 @@ Source: theron_v1_dungeon_progression.c:103-114
 
 ### 5.1 Party Structure
 
-| Slot | Character | Persistence |
-|------|-----------|-------------|
-| 0 | **Theron** (fixed main character) | Stats/skills persist between dungeons; items reset |
-| 1 | Champion 1 (hired or preset) | Resets each dungeon (stats, skills, items) |
-| 2 | Champion 2 (hired or preset) | Resets each dungeon (stats, skills, items) |
-| 3 | Champion 3 (hired or preset) | Resets each dungeon (stats, skills, items) |
-
-**No in-dungeon saves.** Between-dungeon saves store Theron's stats and quest
-progress. Champion roster resets per dungeon.
+Firestaff's host model supports Theron and up to three companions. This does
+not establish the retail party size, character slots, or persistence rules.
 
 Firestaff's keyboard quicksave keys follow this boundary as well: while a
 Theron Track 02 dungeon is active, F5/F9 do not route through the generic DM1
@@ -327,76 +264,24 @@ world serializer. They report that saving belongs after stage clear and that
 loading belongs at the start-menu file selector. This is a safety boundary,
 not proof that Firestaff's stage-clear writer or slot selector is complete.
 
-Source: Phase 0 provenance gate §3.3 · theron_v1_dungeon_progression.c:22-28
+Source: Firestaff host party/save APIs; original-game party semantics remain
+unresolved.
 
 ### 5.2 Champion Record Format
 
-Champion data in TQ follows the **same base structure as DM1**, with
-simplifications:
-
-```c
-struct TQR_Champion {
-    // Identity
-    uint8_t  name[16];     // null-terminated string (up to 15 chars)
-    uint8_t  class;        // 0=Fighter, 1=Ninja, 2=Priest, 3=Wizard (same as DM1)
-    uint8_t  level;        // 1–99
-
-    // Stats (current / maximum pairs)
-    uint8_t  health_cur;   // current health
-    uint8_t  health_max;   // maximum health
-    uint8_t  mana_cur;
-    uint8_t  mana_max;
-    uint8_t  stamina_cur;
-    uint8_t  stamina_max;
-
-    // Attributes (0–99, current and max)
-    uint8_t  strength_cur,    strength_max;
-    uint8_t  dexterity_cur,    dexterity_max;
-    uint8_t  wisdom_cur,       wisdom_max;
-    uint8_t  anti_magic_cur,   anti_magic_max;
-    uint8_t  anti_fire_cur,    anti_fire_max;
-    uint8_t  luck_cur,         luck_max;
-
-    // Skills (4 per class = 16 total)
-    uint8_t  skills[16];    // 0=NEOPHYTE..17=MASTER (same rank system as DM1)
-
-    // Condition flags
-    uint16_t condition;    // poisoned, silent, etc. (same as DM1 bit flags)
-
-    // Inventory (STUB — size unknown)
-    uint8_t  inventory[24];  // object IDs (TQ subset of DM1 objects)
-    uint8_t  gold;           // gold carried
-
-    // Champion-specific (TQ adds Theron flag)
-    uint8_t  is_theron;     // 1 if this slot is Theron
-};
-```
-
-**Note:** Theron does not use the standard character generation process.
-He is a pre-built character with fixed starting stats and special equipment
-(he has a spellbook from the beginning — confirmed from Lighthouse's RTC
-conversion notes).
-
-**Skill levels (same as DM1, with STUB):**
-- TQ likely uses the same 18-rank skill system (NEOPHYTE through  MASTER)
-- **STUB:** NEOPHYTE rank (rank 0) — CSB added this; TQ may include it
-- Skill level is 0–17 (0=lowest, 17=highest)
-
-Source: DM1 CHAMPION.C · theron_v1_dungeon_progression.c:22-28 · STUB for TQ-specific fields
+No source-backed retail champion binary record layout is claimed here. The
+host champion structures and reset/persistence rules are application-side
+contracts; they are not evidence of Theron's retail field widths, skill ranks,
+inventory encoding, starting equipment, or champion-selection semantics.
+Those retail bindings remain unresolved pending authenticated source or
+runtime capture.
 
 ### 5.3 Theron-Specific Data
 
-Theron's stats and skills persist across all 7 dungeons. This is handled
-differently from the companion champions.
-
-**Theron starts with:** Spellbook, some starting equipment (dagger? torch?)
-Default stats: TBD after Track 02 extraction.
-
-**Champion reset per dungeon:** Each dungeon start, champions 1–3 are
-replaced with new hires (or preset characters for the dungeon). Their
-inventory and stats are reset. This is the "light version" design constraint.
-
-Source: Phase 0 provenance gate §3.3 · theron_v1_dungeon_progression.c:22-28
+Theron-specific retail initialization, persistence, and companion reset
+semantics remain unresolved by the authenticated media bindings in this
+document. Host save and progression behavior is documented separately as
+application behavior (§9), not as original-game proof.
 
 ---
 
@@ -404,347 +289,149 @@ Source: Phase 0 provenance gate §3.3 · theron_v1_dungeon_progression.c:22-28
 
 ### 6.1 Creature Type Subset
 
-Theron's Quest uses a **subset of DM1's 27 creature types** (indices 0x00–0x1A).
-The exact subset is unknown until Track 02 extraction.
+No source-backed mapping from Theron creature IDs to retail creature names or
+DM1/CSB indices has been established here. The Track 02 map header's creature
+count and the loader's creature-bank/source spans are retained as authentic
+records, but neither is a name or behavior table. No DM1 creature roster,
+absence claim, or spawn-rate comparison is promoted as Theron data.
 
-| DM1 Creature Index | Name | In TQ? |
-|---------------------|------|--------|
-| 0x00 | Giant Scorpion | STUB — likely yes |
-| 0x01 | Swamp Slime | STUB |
-| 0x02 | Giggler | STUB |
-| 0x03 | Wizard Eye | STUB |
-| 0x04 | Pain Rat / Hellhound | STUB |
-| 0x05 | Ruster | STUB |
-| 0x06 | Screamer | STUB |
-| 0x07 | Rock Rockpile | STUB |
-| 0x08 | Ghost Rive | STUB |
-| 0x09 | Stone Golem | STUB |
-| 0x0A | Mummy | STUB |
-| 0x0B | Black Flame | STUB |
-| 0x0C | Skeleton | STUB |
-| 0x0D | Couatl | STUB |
-| 0x0E | Vexirk | STUB |
-| 0x0F | Magenta Worm | STUB |
-| 0x10 | Trolin / Ant Man | STUB |
-| 0x11 | Giant Wasp / Muncher | STUB |
-| 0x12 | Animated Armour / Deth Knight | STUB |
-| 0x13 | Materializer Zytaz | STUB |
-| 0x14 | Water Elemental | STUB |
-| 0x15 | Oitu | STUB |
-| 0x16 | Demon | STUB |
-| 0x17 | Lord Chaos | STUB — likely no (end-game is different) |
-| 0x18 | Red Dragon | STUB — likely yes (final dungeon boss?) |
-| 0x19 | unused/placeholder | **No** |
-| 0x1A | Grey Lord (CSB-only) | **No** — CSB creature, not in TQ |
-
-**Key constraint:** TQ has fewer creatures than DM1 — the game is "easier"
-with reduced monster frequency. The creature spawn tables in each dungeon
-use a reduced subset and lower spawn rates.
-
-Source: csb_creatures.md (DM1/CSB creature list) · Phase 0 provenance gate §3.1 · STUB
+Source: `include/theron_v1_track02_dungeon_map.h`,
+`include/theron_v1_track02_dungeon_loader.h`, and
+`src/theron/theron_v1_track02_dungeon_loader.c`; creature names and runtime
+semantics remain unresolved.
 
 ### 6.2 Creature Record Format (In-Dungeon)
 
-In the dungeon binary, creatures are spawned based on spawn point data:
+The current Track 02 decoder retains source creature occurrences and bank
+references where the source category parser identifies them. It does not
+decode them into the hypothetical DM1-shaped spawn struct above. Health,
+behavior, combat values, and AI semantics need an authenticated consumer
+binding and are not inferred from DM1.
 
-```c
-struct TQR_CreatureSpawn {
-    uint16_t grid_x;       // spawn position X
-    uint16_t grid_y;       // spawn position Y
-    uint16_t creature_type; // DM1 creature type index (TQ subset)
-    uint16_t behavior;     // attack pattern flags (same as DM1)
-    uint16_t health;       // hit points
-    uint16_t attack_power; // base damage
-    uint16_t armor_class;  // defense
-    uint16_t experience;   // XP awarded on death
-};
-```
-
-**Creature AI:** TQ uses a **simplified AI** compared to DM1/CSB. The
-dungeon is smaller and creatures are fewer, so complex multi-step AI
-behaviors are likely reduced. The exact AI differences are unknown.
-
-Source: DM1 MOVESENS.C · STUB for TQ-specific AI differences
+Source: `src/theron/theron_v1_track02_dungeon_loader.c` and
+`include/theron_v1_track02_dungeon_loader.h`.
 
 ### 6.3 Creature Graphics
 
-PC Engine sprites use the **HuC6270 sprite system**:
-- Sprite size: 16×16 or 32×32 (composite of 8×8 tiles)
-- Colors per sprite: 16 (4-bit planar)
-- Sprite palette: shared 512-color palette
-- Max sprites on screen: 64
+The Theron creature-to-sprite index, sprite dimensions, palette selection,
+and source span have not been bound to a verified Track 02 graphics consumer.
+The host's creature presentation therefore cannot use an assumed DM1 mapping
+or a synthetic sprite-attribute record.
 
-Creature sprite data is stored as **sprite attribute entries** in Track 02:
-```c
-struct TQR_SpriteAttribute {
-    uint16_t tile_index;   // VRAM tile index for sprite's first tile
-    uint8_t  palette;      // palette group (0–15)
-    uint8_t  priority;     // sprite vs background priority
-    uint16_t size;         // 0=8x8, 1=16x16, 2=32x32, 3=64x64
-};
-```
-
-**STUB:** Which sprite sizes are used for creature rendering needs Track 02
-extraction. Typical DM-style games use 16×16 or 32×32 for creatures.
-
-Source: Phase 0 provenance gate §5.1 · STUB
+Source boundary: authenticated Track 02 creature-bank/source spans; graphics
+mapping and runtime consumer remain unresolved.
 
 ---
 
 ## 7. Graphics / Tile Format
 
-### 7.1 PC Engine Tile Format
+### 7.1 Graphics evidence boundary
 
-PC Engine graphics use an **8×8 tile-based system** (HuC6260 VDC):
+This source-lock phase has not bound the Theron graphics source spans to an
+executing tile, sprite, palette, or viewport consumer. Consequently it does
+not assert a Track 02 graphics block layout, bits-per-pixel format, tile
+counts, sprite dimensions, or OAM record. General PC Engine hardware facts
+do not establish which graphics formats or assets Theron uses.
 
-| Property | Value |
-|----------|-------|
-| Tile size | 8×8 pixels |
-| Color depth | 2 bits/pixel (4 colors per tile) **OR** 4 bits/pixel (16 colors per tile) |
-| Tile data | Planar: pixel rows stored consecutively |
-| Palette | 512 colors total; 16 colors per sprite/tile palette |
-| VRAM size | 64 KB dual-port video RAM |
+DM1 VGA/planar graphics and Nexus Saturn geometry are unrelated references,
+not substitutes for authentic Theron assets. The authenticated map tile
+family in §2.3 is a map-data classification only; it does not identify the
+rendered graphic.
 
-**TQ tile format hypothesis (STUB):**
-- Walls/floors: 2bpp tiles (4 colors per tile, 16 bytes per tile)
-- Sprites/creatures: 4bpp tiles (16 colors per tile, 32 bytes per tile)
-- Font: 2bpp tiles (8×8, ASCII range)
-
-DM1 VGA graphics (320×200, 16 colors planar EGA) are fundamentally different.
-TQ uses a completely different tile/sprite system appropriate for the
-HuC6280/HuC6270 hardware.
-
-Source: Phase 0 provenance gate §4.3 · HuC6270 datasheet · STUB
-
-### 7.2 Graphics Data Block Layout (STUB)
-
-Within Track 02, the graphics section contains:
-
-```
-Offset G:        Tile set 1 (wall tiles — 8×8, 2bpp, ~50–100 tiles)
-Offset G+N1:      Tile set 2 (floor tiles — 8×8, 2bpp, ~30–50 tiles)
-Offset G+N1+N2:   Tile set 3 (object tiles — 8×8, 4bpp, ~100–200 tiles)
-Offset G+N1+N2+N3: Sprite set (creature sprites — 16×16 or 32×32, 4bpp)
-Offset G+N1+N2+N3+N4: Font tiles (8×8, 2bpp or 4bpp, 256 chars)
-Offset G+N1+N2+N3+N4+N5: Sprite attribute table (OAM)
-```
-
-**STUB:** Exact offsets and tile counts need Track 02 extraction.
-
-### 7.3 Viewport Rendering Pipeline (STUB)
-
-TQ renders the first-person dungeon view using PC Engine tiles:
-1. Decompose viewport into wall/floor strips (6 walls + 1 floor + ceiling)
-2. Select appropriate tile index for each strip (based on direction + distance)
-3. Send tile indices + palette to VDC
-4. Composite sprite layer (creatures, objects, projectiles) on top
-
-**Note:** TQ has no VDP1 3D geometry (unlike Nexus Saturn). TQ is a pure
-tile-renderer like DM1. The rendering pipeline is hardware tile-based,
-not polygon-based.
-
-Source: Phase 0 provenance gate §4.3 · STUB for TQ-specific render pipeline
-
-### 7.4 Sprite Attribute Table (OAM)
-
-PC Engine OAM (Object Attribute Memory) format:
-```c
-struct PCE_OAMEntry {
-    uint16_t y;         // Y position (0–239)
-    uint16_t sprite;    // Sprite number (tile index in VRAM)
-    uint16_t attr;      // Attributes: palette, priority, flip
-    uint16_t x;         // X position (0–319)
-};
-```
-
-Source: HuC6270 datasheet · STUB for TQ-specific OAM layout
+**Unresolved:** source offsets and hashes, decoding format, palette ownership,
+asset-index bindings, and the runtime renderer consumer. Keep graphics
+unavailable rather than synthesizing artwork or mappings.
 
 ---
 
-## 8. Spell Format (Light Subset)
+## 8. Spell format and runtime subset
 
-### 8.1 Spell Subset
+No authenticated Theron spell index/name table or executing spell consumer
+has been bound in this phase. DM1/CSB spell indices and spellbook assumptions
+are not used as Theron data. Spell names, incantations, requirements,
+effects, and party-pool behavior remain unresolved; do not expose a guessed
+spell list as supported content.
 
-TQ contains a **subset of DM1's 25 spells** (indices 0–24). Exact subset
-unknown until Track 02 extraction.
+### 8.1 Spell data record
 
-**STUB — likely spells present (based on core gameplay):**
-| Spell | DM1 Index | TQ Likely? |
-|-------|-----------|------------|
-| Light | 0 | Yes — basic dungeon utility |
-| Torch | 1 | Yes |
-| Fireball (Ful Ir) | 2 | Yes — combat essential |
-| Strength Potion | 3 | Yes |
-| Shield | 4 | Yes |
-| Heal | 5 | Yes |
-| Identify | 6 | Yes |
-| Open Door | 7 | Yes |
-| Lightning Bolt | 8 | Yes |
-| Stamina Potion | 9 | Yes |
-| Magic Footprints | 10 | Probably |
-| Invisibility | 11 | Probably |
-| Poison Cloud | 12 | Probably |
-| ... | ... | STUB |
-
-**STUB:** ZOKATHRA (DM1 spell index 24, Zo Kath Ra) — uncertain if in TQ.
-ZOKATHRA was added in CSB; TQ predates CSB and may not include it.
-
-**Spell book:** Theron starts with a spellbook (confirmed from Lighthouse's
-conversion notes). The spell list is pre-defined; champions can cast
-spells from the party's shared spell pool.
-
-Source: DM1/Firestaff spell table · csb_items.md · theron_v1_dungeon_progression.c (Theron has spellbook) · STUB
-
-### 8.2 Spell Data Record
-
-```c
-struct TQR_SpellRecord {
-    uint8_t  rune_1;    // First rune of incantation
-    uint8_t  rune_2;
-    uint8_t  rune_3;
-    uint8_t  skill;     // Required skill (WIZARD etc.)
-    uint16_t power;     // Spell power (STUB — may differ from DM1)
-    uint16_t type;      // Spell type (fireball, healing, etc.)
-};
-```
-
-Source: DM1 DUNGEON.C · STUB for TQ spell table
+No source-backed Theron spell record layout has been established. A record
+shape must not be inferred from DM1 or from host-side casting structures.
+The format remains unresolved; no field layout is claimed.
 
 ---
 
-## 9. Save Format (Between-Dungeon Only)
+## 9. Firestaff host save format
 
 ### 9.1 Save Slot Layout
 
-Save files: `saves/theron/slot0.tqsv` through `slot7.tqsv` (8 slots).
+The host implementation has eight slots; that is an application policy, not
+an established original-game save-slot count.
 
-```
-[64-byte header][champion data][32-byte progression][4-byte footer]
-```
+The host format is defined by the application serializer and must not be
+presented as a reverse-engineered retail save format. Retail save ownership,
+encoding, offsets, checksum, and in-dungeon restrictions remain unverified in
+the authenticated evidence reviewed here.
 
-Header (64 bytes):
-```
-Offset 0-3:   magic — 'TQR ' (0x54515220)
-Offset 4-5:   version — 1.0 (uint16 little-endian)
-Offset 6:      quest_items (7-bit bitfield, 1 bit per quest item)
-Offset 7:      current_dungeon (1–7)
-Offset 8:      dungeon_state (locked/available/complete)
-Offset 9:      current_level (1–3)
-Offset 10-37:  dungeon_seeds (7 × 4 bytes = 28 bytes, uint32 LE)
-Offset 38-44:  dungeon_states (7 × 1 byte)
-Offset 45-48:  champion_gold (uint32)
-Offset 49-52:  playtime_secs (uint32)
-Offset 53-56:  timestamp (uint32, Unix time)
-Offset 57-63:  label (null-terminated string, max 31 chars)
-```
-
-Champion data block: Theron + 3 champion records (same structure as in-memory).
-
-Footer (4 bytes): checksum (uint16) + magic repeat (uint16).
-
-Source: theron_v1_save_load.c:130-190 · theron_v1_save_load.h
+Source: `include/theron_v1_save_load.h` and
+`src/theron/theron_v1_save_load.c` (Firestaff host format only).
 
 ### 9.2 Obfuscation
 
-TQ save files use **light XOR obfuscation** (simpler than CSB's 16-entry key table):
-- Per-slot seed derived from slot index + magic constant
-- Each byte XORed with `(seed + byte_index)`
-- Checksum: 16-bit sum of all 16-bit words in the data block
+The host serializer applies its own reversible encoding and validation. No
+retail save obfuscation or checksum has been established; host implementation
+details are not evidence of the original format.
 
-Source: theron_v1_save_load.c:56-76
+Source: `src/theron/theron_v1_save_load.c` (host-side implementation only).
 
 ### 9.3 What Persists vs Resets
 
-| Data | Persists (Between Dungeons) | Resets (Each Dungeon) |
-|------|---------------------------|----------------------|
-| Theron stats/skills | ✅ Yes | |
-| Theron inventory | | ❌ Reset |
-| Champion 1–3 stats | | ❌ Reset |
-| Champion 1–3 inventory | | ❌ Reset |
-| Champion 1–3 skills | | ❌ Reset |
-| Gold | ✅ Yes (party-wide) | |
-| Quest items collected | ✅ Yes (7-bit bitfield) | |
-| Dungeon completion states | ✅ Yes | |
+| Host data field | Firestaff application behavior | Retail behavior |
+|-----------------|-----------------------------------|------------------------------|
+| Theron state | Serializer-defined | Not fully authenticated |
+| Companion champions | Serializer-defined | Not fully authenticated |
+| Gold | Serializer-defined | Not fully authenticated |
+| Quest progress | Serializer-defined | Not fully authenticated |
+| Dungeon completion | Serializer-defined | Not fully authenticated |
 
-Source: Phase 0 provenance gate §3.3 · theron_v1_dungeon_progression.c:22-28
+Source: `include/theron_v1_save_load.h` and
+`src/theron/theron_v1_save_load.c` (host-side behavior only).
 
 ---
 
 ## 10. CD-ROM Audio Format
 
-### 10.1 Track Structure
+### 10.1 Track structure evidence boundary
 
-| Track | Type | Content | Notes |
-|-------|------|---------|-------|
-| 1 | CD-DA Audio | Spoken intro | JP = Japanese, US = English |
-| 2 | **DATA** | Game binary + graphics | Track 02 (main data track) |
-| 3 | CD-DA Audio | Spoken dialogue/music | JP/EN variant |
-| 4 | CD-DA Audio | Spoken dialogue/music | JP/EN variant |
-| 5–16 | CD-DA Audio | Music tracks | Unknown count |
-| 17 | CD-DA Audio | Ending music | JP: static noise at 1:04, 7 sec longer than US |
-| 18 | CD-DA Audio | Final audio | Unknown |
+This document's authenticated data input is CD track 02. It does not lock the
+complete CD-DA track catalog, regional spoken content, or audio timings.
+Consult a hash-verified CUE/TOC and direct audio inspection before asserting
+those properties.
 
-Source: Phase 0 provenance gate §1.5 · dmweb game page
+### 10.2 ADPCM audio boundary
 
-### 10.2 ADPCM Audio (Non-CD-DA)
-
-In addition to Red Book CD-DA audio tracks, TQ uses **ADPCM audio** for
-sound effects and non-CD-DA audio:
-- 5-channel ADPCM for CD-ROM XA audio
-- Additional PSG (square wave) channels for sound effects
-- ADPCM samples embedded in Track 02 binary
-
-**STUB:** ADPCM data block location and format unknown.
-
-Source: Phase 0 provenance gate §4.4 · STUB
+An ADPCM/SFX block, its location, codec parameters, and runtime consumer have
+not been bound to the authenticated Track 02 records in this phase. No audio
+format or channel count is assumed from the platform or host implementation.
 
 ---
 
-## 11. Seven Mini-Dungeons — Summary Table
+## 11. Source inventory and unresolved runtime subsets
 
-| # | Name | Levels | Quest Item | Dungeon Seed (STUB) |
-|---|------|--------|------------|---------------------|
-| 1 | Hall of Records | 2 | Shield Defiant | `0x0108e938` (verified initial level) |
-| 2 | Crypt of Shadows | 2 | Taza Poleyn | unresolved |
-| 3 | Abyss of Flames | 3 | Tazahelm | unresolved |
-| 4 | Tomb of Woe | 3 | Taza Boots | unresolved |
-| 5 | Vault of Secrets | 2 | Taza Armor | unresolved |
-| 6 | Castle of Fate | 3 | Soulcage | unresolved |
-| 7 | Tower of Epilogue | 3 | The Retaliator | unresolved |
+The authenticated Track 02 parser reports seven dungeon map groups with
+34 source maps in total. These counts describe decoded map records, not
+campaign floor count or reachable progression. Dungeon names, quest-item
+associations and seed values are not inferred from the group count.
 
-Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
+The authenticated Track 19 inventory source contains 69 item-name/type rows
+and a 66-row, six-byte property table. Those table dimensions do not prove
+how many distinct retail items are reachable or how the game interprets each
+row. See §3.1 for the exact boundary.
 
----
-
-## 12. "Light" Subset Summary — Items / Creatures / Spells
-
-### 12.1 Items
-
-- **Approximate TQ item count:** 30–50 types (vs DM1's ~200)
-- **Weapons:** ~15 types (subset of DM1's ~40)
-- **Armor:** ~10 types (subset of DM1's ~30)
-- **Potions:** ~8 types (subset of DM1's ~12)
-- **Keys:** ~4 types (dungeon-specific)
-- **Quest items:** 7 unique (not in DM1)
-- **Junk/other:** ~20 types
-
-### 12.2 Creatures
-
-- **Approximate TQ creature count:** 15–20 types (vs DM1's 27)
-- **No CSB-only creatures** (Grey Lord 0x1A not in TQ)
-- **No unused placeholder** (mon_25 0x19 not in TQ)
-- **Likely present:** Core DM1 creatures (Scorpion, Slime, Giggler, Wizard Eye,
-  Stone Golem, Skeleton, Demon, Dragon, etc.)
-- **Reduced spawn rates:** Each dungeon has fewer creatures than DM1
-
-### 12.3 Spells
-
-- **Approximate TQ spell count:** 15–20 spells (vs DM1's 25)
-- **Core spells present:** Light, Torch, Fireball, Heal, Identify, Open Door,
-  Strength Potion, Shield, Stamina Potion, Mana Potion
-- **STUB:** Which additional spells are included
-- **ZOKATHRA:** Uncertain — was added in CSB; may or may not be in TQ
-- **Theron spellbook:** Starts with spellbook; party shares spell pool
+Creature and spell subsets, their retail indices, names, and executing
+consumers remain unresolved in the source material reviewed for this phase.
+DM1/CSB/Nexus rosters and spell lists are not Theron evidence and are not
+used as substitute game data. No creature or spell is marked supported from
+those lists.
 
 ---
 
@@ -754,27 +441,25 @@ Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
 [x] Track 02 provenance — authenticated US and JP Track 02 inputs
 [x] Track 02 records — seven source-bound map groups and object-count tables
 [x] Track 02 records — ground, door, teleporter, creature-bank and item spans
-[x] Quest item names — source-bound strings/labels where independently verified
+[ ] Quest item names — complete dungeon/placement/runtime binding
 [ ] Dungeon format — HuC6280 loader handoff and level-record consumer
 [ ] Dungeon format — TQ grid encoding and square-to-material mapping
 [ ] Item format — object-record ownership in the executing game loader
-[x] Item format — quest item names confirmed
 [ ] Text format — executing text consumer and control-code semantics
 [ ] Text format — JP text ownership and translated string storage
-[x] Champion format — party structure (Theron + 3, per-dungeon reset)
-[x] Champion format — champion record fields (STUB, mirrors DM1)
-[x] Champion format — Theron persistence (stats/skills, not inventory)
+[ ] Champion format — retail party structure and reset rules
+[ ] Champion format — retail champion record fields
+[ ] Champion format — Theron persistence and initialization
 [ ] Creature format — source-backed TQ creature subset and spawn semantics
-[x] Graphics hardware — PC Engine VDC/VCE snapshot format is retained
+[ ] Graphics hardware — PC Engine VDC/VCE snapshot format is retained
 [ ] Graphics format — dungeon tile/material bindings and palette ownership
 [ ] Graphics format — sprite attribute table (OAM) semantics
 [ ] Spell format — source-backed spell subset and indices
 [ ] Spell format — executing spellbook consumer
-[x] Save format — between-dungeon save layout (64-byte header + data + footer)
-[x] Save format — XOR obfuscation scheme (light, per-slot seed)
-[x] Save format — persistence table (Theron stats, quest items, gold)
-[x] Audio format — CD-ROM Track 02 identity and CUE/BIN/ISO intake gates
-[ ] Audio format — ADPCM data block offset and format
+[x] Host save format — Firestaff serializer documented separately from retail
+[ ] Retail save format — encoding, layout, checksum, and persistence semantics
+[x] Audio source identity — authenticated Track 02 inputs
+[ ] Audio format — CD-DA catalog and ADPCM block/consumer
 [ ] Track 02 — executing post-startup consumer read with source LBA/span
 [ ] Verify TQ dungeon grid size and square-to-tile mapping
 [ ] Confirm TQ level-record decompression and object ownership
@@ -788,18 +473,12 @@ Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
 
 | Source | Content |
 |--------|---------|
-| Phase 0 gate | `docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md` |
-| Boot profile | `src/theron/theron_v1_boot.c:318-345` (dungeon header layout) |
-| Dungeon progression | `src/theron/theron_v1_dungeon_progression.c:38-114` (7 dungeons) |
-| Save format | `src/theron/theron_v1_save_load.c:130-190` |
-| DM1 dungeon format | ReDMCSB DUNGEON.C F0001, F0217 |
-| DM1 champion format | ReDMCSB CHAMPION.C |
-| DM1 item format | ReDMCSB DEFS.H:1887–1951 (icon enum) |
-| DM1 creature format | ReDMCSB DEFS.H:1339–1366 (creature enum) |
-| DM1 spell format | dm1_v1_spell_casting_pc34_compat.c:41–100 |
-| DM web game page | http://dmweb.free.fr/games/therons-quest/ |
-| TQ RTC conversion | dungeon-master.com forum t=29286 (Lighthouse TQ source) |
-| Platform ref | Phase 0 gate §5.1 (HuC6280 specs) |
+| Track 02 map parser | `include/theron_v1_track02_dungeon_map.h`, `src/theron/theron_v1_track02_dungeon_map.c` |
+| Track 02 occurrence loader | `include/theron_v1_track02_dungeon_loader.h`, `src/theron/theron_v1_track02_dungeon_loader.c` |
+| Track 19 inventory | `include/theron_v1_track19_inventory.h`, `src/theron/theron_v1_track19_inventory.c` |
+| Track 19 item names | `include/theron_v1_track19_item_names.h` |
+| Host save implementation only | `include/theron_v1_save_load.h`, `src/theron/theron_v1_save_load.c` |
+| Authenticated media | US/JP Track 02 and Track 19, identified by their manifests and hashes |
 
 ---
 
@@ -816,6 +495,6 @@ Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
 
 ---
 
-*Generated by cron job `Theron_V1_Phase2_DataFormats_0527`*
+*Originally generated by cron job `Theron_V1_Phase2_DataFormats_0527`; revised to remove unverified retail-format assumptions.*
 *Supersedes: tqr_v1_phase0_provenance_gate_H2339.md §4 (data format hypotheses)*
 *Next: Phase 3 — Core world model, or Phase 8 verification suite*

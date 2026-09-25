@@ -1,10 +1,12 @@
 #include "theron_v1_track19_inventory.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_track19_item_names.h"
 #include "theron_v1_track19_jp_item_names.h"
 #include "theron_v1_track19_jp_level_labels.h"
 #include "theron_v1_track19_level_labels.h"
 #include "theron_v1_track19_record_window.h"
 #include "theron_v1_world.h"
+#include "asset_status_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,10 +70,163 @@ static const char *resolve_track19_iso(const char *env_name,
     return NULL;
 }
 
+static const char *resolve_us_track02_bin(char *fallback,
+                                          size_t fallback_capacity) {
+    const char *configured = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
+    const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
+    const char *root = getenv("FIRESTAFF_DATA_DIR");
+    const char *home;
+    int length;
+    if (configured && configured[0]) return configured;
+    if (find_track19_at_root(theron_root, "TQUS02.bin", NULL, fallback,
+                             fallback_capacity)) return fallback;
+    if (root && root[0]) {
+        char root_theron[512];
+        length = snprintf(root_theron, sizeof(root_theron), "%s/theron", root);
+        if (length >= 0 && (size_t)length < sizeof(root_theron) &&
+            find_track19_at_root(root_theron, "TQUS02.bin", NULL, fallback,
+                                 fallback_capacity)) return fallback;
+    }
+    home = getenv("HOME");
+    if (!home || !home[0]) return NULL;
+    {
+        char home_theron[512];
+        length = snprintf(home_theron, sizeof(home_theron),
+                          "%s/.firestaff/data/theron", home);
+        if (length >= 0 && (size_t)length < sizeof(home_theron) &&
+            find_track19_at_root(home_theron, "TQUS02.bin", NULL, fallback,
+                                 fallback_capacity)) return fallback;
+    }
+    return NULL;
+}
+
+static int verify_real_us_raw_track19(const char *path,
+                                     const char *iso_path) {
+    char track02_fallback[512];
+    const char *track02_path = resolve_us_track02_bin(
+        track02_fallback, sizeof(track02_fallback));
+    FILE *raw_file = fopen(path, "rb");
+    FILE *iso_file = NULL;
+    FILE *track02_file = NULL;
+    Theron_V1Track19InventoryReceipt receipt;
+    Theron_V1Track19ItemNameBank bank;
+    Theron_Track02ItemNameSource track02_names;
+    Theron_V1_World *world = NULL;
+    uint8_t raw_sector[2048];
+    uint8_t iso_sector[2048];
+    uint8_t *track02_raw = NULL;
+    uint8_t *track02_ud = NULL;
+    size_t track02_size = 0u;
+    size_t track02_sector_count = 0u;
+    size_t track02_ud_size = 0u;
+    size_t track02_user_data_size = 0u;
+    long track02_file_size;
+    char track02_md5[33];
+    unsigned int sector;
+    int valid = 0;
+
+    if (!track02_path || !track02_path[0] || !iso_path || !iso_path[0] ||
+        !raw_file ||
+        !theron_v1_track19_inventory_file(path, &receipt) ||
+        !receipt.mode1_2352 || receipt.sector_count != 3297u ||
+        !receipt.item_name_table_verified ||
+        !receipt.level_label_table_verified ||
+        !receipt.item_property_table_verified ||
+        !receipt.startup_level_envelope_verified ||
+        !theron_v1_track19_item_name_bank_file(path, &bank)) {
+        if (raw_file) fclose(raw_file);
+        return 0;
+    }
+    if (!(iso_file = fopen(iso_path, "rb")) ||
+        !(track02_file = fopen(track02_path, "rb")) ||
+        fseek(track02_file, 0L, SEEK_END) != 0 ||
+        (track02_file_size = ftell(track02_file)) <= 0 ||
+        fseek(track02_file, 0L, SEEK_SET) != 0) {
+        if (iso_file) fclose(iso_file);
+        if (track02_file) fclose(track02_file);
+        fclose(raw_file);
+        return 0;
+    }
+    track02_size = (size_t)track02_file_size;
+    track02_raw = (uint8_t *)malloc(track02_size);
+    if (!track02_raw ||
+        fread(track02_raw, 1u, track02_size, track02_file) != track02_size ||
+        !m12_file_md5_hex(track02_path, track02_md5) ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_US_BIN) != 0 ||
+        theron_v1_track02_raw_user_data_size(
+            track02_size, track02_md5, &track02_sector_count,
+            &track02_ud_size) !=
+            THERON_TRACK02_SIGNAL_OK) {
+        fclose(track02_file);
+        fclose(iso_file);
+        fclose(raw_file);
+        free(track02_raw);
+        return 0;
+    }
+    fclose(track02_file);
+    track02_ud = (uint8_t *)malloc(track02_ud_size);
+    if (!track02_ud ||
+        theron_v1_track02_copy_raw_user_data(
+            track02_raw, track02_size, track02_md5, track02_ud,
+            track02_ud_size, &track02_user_data_size) !=
+            THERON_TRACK02_SIGNAL_OK ||
+        !theron_v1_track02_decode_item_name_source(
+            track02_ud, track02_user_data_size, 2, 4u, &track02_names)) {
+        fclose(iso_file);
+        fclose(raw_file);
+        free(track02_ud);
+        free(track02_raw);
+        return 0;
+    }
+    valid = 1;
+    for (sector = 0u; sector < THERON_V1_TRACK19_US_RAW_PAYLOAD_SECTORS;
+         ++sector) {
+        if (fseek(raw_file,
+                  (long)((sector + THERON_V1_TRACK19_US_RAW_PREGAP_SECTORS) *
+                         2352u + 16u), SEEK_SET) != 0 ||
+            fread(raw_sector, 1u, sizeof(raw_sector), raw_file) !=
+                sizeof(raw_sector) ||
+            fread(iso_sector, 1u, sizeof(iso_sector), iso_file) !=
+                sizeof(iso_sector) ||
+            memcmp(raw_sector, iso_sector, sizeof(iso_sector)) != 0) {
+            valid = 0;
+            break;
+        }
+    }
+    if (valid && fgetc(iso_file) != EOF) valid = 0;
+    fclose(raw_file);
+    fclose(iso_file);
+    world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+    if (!world) {
+        free(track02_ud);
+        free(track02_raw);
+        return 0;
+    }
+    theron_v1_world_init(world);
+    valid = valid &&
+        theron_v1_world_bind_track19_item_name_bank(
+            world, &bank, THERON_TRACK02_VARIANT_US_BIN) &&
+        theron_v1_world_bind_track02_item_name_source(
+            world, &track02_names, THERON_TRACK02_VARIANT_US_BIN) &&
+        world->track19_item_names.item_mapping_proven &&
+        world->track19_item_names.mapped_track02_dungeon_mask == (1u << 3);
+    free(world);
+    free(track02_ud);
+    free(track02_raw);
+    if (!valid) {
+        fprintf(stderr,
+                "FAIL: raw US Track 19 or authenticated Track 02 dungeon-4 binding rejected\n");
+    }
+    return valid;
+}
+
 static int verify_real_us_item_table(void) {
     char fallback[512];
+    const char *raw_configured = getenv("THERON_TRACK19_US_RAW_BIN");
     const char *path = resolve_track19_iso(
-        "THERON_TRACK19_US_ISO", "TQUS19.iso", NULL, fallback, sizeof(fallback));
+        "THERON_TRACK19_US_ISO", "TQUS19.iso",
+        "Dungeon Master - Theron's Quest (USA) (Track 19).bin",
+        fallback, sizeof(fallback));
     FILE *file;
     long size;
     uint8_t *bytes;
@@ -84,7 +239,21 @@ static int verify_real_us_item_table(void) {
     char name[64];
     uint8_t type_codes[THERON_V1_TRACK19_ITEM_TYPE_CODE_COUNT];
 
+    if (raw_configured && raw_configured[0]) {
+        char iso_fallback[512];
+        const char *iso_path = resolve_track19_iso(
+            "THERON_TRACK19_US_ISO", "TQUS19.iso", NULL,
+            iso_fallback, sizeof(iso_fallback));
+        return verify_real_us_raw_track19(raw_configured, iso_path);
+    }
     if (!path || !path[0]) return 1; /* CI remains data-free by default. */
+    if (strstr(path, "(Track 19).bin") != NULL) {
+        char iso_fallback[512];
+        const char *iso_path = resolve_track19_iso(
+            "THERON_TRACK19_US_ISO", "TQUS19.iso", NULL,
+            iso_fallback, sizeof(iso_fallback));
+        return verify_real_us_raw_track19(path, iso_path);
+    }
     file = fopen(path, "rb");
     if (!file || fseek(file, 0L, SEEK_END) != 0 ||
         (size = ftell(file)) <= 0 || size > 64L * 1024L * 1024L ||
@@ -367,23 +536,16 @@ int main(void) {
     char us_fallback[512];
     char jp_fallback[512];
     const char *real_iso = resolve_track19_iso(
-        "THERON_TRACK19_US_ISO", "TQUS19.iso", NULL, us_fallback,
+        "THERON_TRACK19_US_ISO", "TQUS19.iso",
+        "Dungeon Master - Theron's Quest (USA) (Track 19).bin", us_fallback,
         sizeof(us_fallback));
     const char *real_jp_iso = resolve_track19_iso(
         "THERON_TRACK19_JP_ISO", "TQJP19.iso",
         "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin", jp_fallback,
         sizeof(jp_fallback));
 
-    if (!theron_v1_track19_inventory(
-            "51b40a17b92a30339957ba564aa0015c",
-            5983488u,
-            &receipt)) {
-        return 1;
-    }
-    if (!receipt.mode1_2352 || receipt.mode1_2048 ||
-        receipt.sector_count != 2544u ||
-        !receipt.container_format_unproven || receipt.startup_usable ||
-        receipt.level_usable || receipt.bitmap_usable) {
+    if (theron_v1_track19_inventory(
+            "51b40a17b92a30339957ba564aa0015c", 5983488u, &receipt)) {
         return 1;
     }
     if (!theron_v1_track19_inventory(
@@ -404,6 +566,17 @@ int main(void) {
         !receipt.mode1_2352 || receipt.mode1_2048 ||
         receipt.sector_count != 3296u || !receipt.container_format_unproven ||
         strcmp(receipt.variant, "jp") != 0) {
+        return 1;
+    }
+    if (!theron_v1_track19_inventory(
+            THERON_V1_TRACK19_US_RAW_MD5, THERON_V1_TRACK19_US_RAW_BYTES,
+            &receipt) ||
+        !receipt.mode1_2352 || receipt.mode1_2048 ||
+        receipt.sector_count != 3297u || !receipt.container_format_unproven ||
+        strcmp(receipt.variant, "us") != 0 ||
+        theron_v1_track19_inventory(THERON_V1_TRACK19_US_RAW_MD5,
+                                    THERON_V1_TRACK19_US_RAW_BYTES - 2352u,
+                                    &receipt)) {
         return 1;
     }
     if (!verify_real_us_item_table()) return 1;

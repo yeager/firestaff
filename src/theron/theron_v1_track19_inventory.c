@@ -10,17 +10,31 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Japanese Rev 1 CUE: Track 19 is MODE1/2352 with INDEX 01 at 00:02:74.
- * The raw file therefore retains 224 pregap sectors before the same
- * 3072-sector MODE1/2048 payload authenticated by the ISO receipt. */
-static size_t theron_v1_track19_pregap_sectors(const char *md5,
-                                                size_t bytes)
+/* Hash-bound raw CUE transports. US Track 19 has 225 INDEX 00 sectors,
+ * followed by the exact 2922-sector TQUS19.iso payload; the raw dump also
+ * contains a 150-sector authenticated tail not present in that ISO split. */
+static int theron_v1_track19_raw_layout(const char *md5, size_t bytes,
+                                        size_t *pregap_sectors,
+                                        size_t *payload_sector_count)
 {
+    if (pregap_sectors) *pregap_sectors = 0u;
+    if (payload_sector_count) *payload_sector_count = 0u;
     if (md5 && strcmp(md5, THERON_V1_TRACK19_JP_REV1_RAW_MD5) == 0 &&
         bytes == THERON_V1_TRACK19_JP_REV1_RAW_BYTES) {
-        return THERON_V1_TRACK19_JP_REV1_PREGAP_SECTORS;
+        if (pregap_sectors)
+            *pregap_sectors = THERON_V1_TRACK19_JP_REV1_PREGAP_SECTORS;
+        if (payload_sector_count) *payload_sector_count = 3072u;
+        return 1;
     }
-    return 0u;
+    if (md5 && strcmp(md5, THERON_V1_TRACK19_US_RAW_MD5) == 0 &&
+        bytes == THERON_V1_TRACK19_US_RAW_BYTES) {
+        if (pregap_sectors)
+            *pregap_sectors = THERON_V1_TRACK19_US_RAW_PREGAP_SECTORS;
+        if (payload_sector_count)
+            *payload_sector_count = THERON_V1_TRACK19_US_RAW_PAYLOAD_SECTORS;
+        return 1;
+    }
+    return 0;
 }
 
 int theron_v1_track19_item_type_codes_from_iso(
@@ -66,8 +80,10 @@ int theron_v1_track19_inventory(const char *md5,
     if (strcmp(md5, "51b40a17b92a30339957ba564aa0015c") == 0) {
         variant = "us";
     } else if (strcmp(md5, "f9f069a5e489b91207f3156059b756f1") == 0 ||
-               strcmp(md5, THERON_V1_TRACK19_JP_REV1_RAW_MD5) == 0) {
-        variant = "jp";
+               strcmp(md5, THERON_V1_TRACK19_JP_REV1_RAW_MD5) == 0 ||
+               strcmp(md5, THERON_V1_TRACK19_US_RAW_MD5) == 0) {
+        variant = strcmp(md5, THERON_V1_TRACK19_US_RAW_MD5) == 0
+            ? "us" : "jp";
     }
     if (!variant) {
         return 0;
@@ -82,7 +98,11 @@ int theron_v1_track19_inventory(const char *md5,
          (strcmp(md5, "f9f069a5e489b91207f3156059b756f1") == 0 &&
           bytes == 6291456u))) {
         sector_bytes = 2048u;
-    } else if (bytes % 2352u == 0u) {
+    } else if (bytes % 2352u == 0u &&
+               ((strcmp(md5, THERON_V1_TRACK19_JP_REV1_RAW_MD5) == 0 &&
+                 bytes == THERON_V1_TRACK19_JP_REV1_RAW_BYTES) ||
+                (strcmp(md5, THERON_V1_TRACK19_US_RAW_MD5) == 0 &&
+                 bytes == THERON_V1_TRACK19_US_RAW_BYTES))) {
         sector_bytes = 2352u;
     } else {
         return 0;
@@ -112,7 +132,7 @@ int theron_v1_track19_inventory_file(
     size_t normalized_bytes;
     size_t sector_bytes;
     size_t sector_count;
-    size_t pregap_sectors;
+    size_t pregap_sectors = 0u;
     size_t payload_sector_count;
     uint8_t *data;
     char md5[33];
@@ -136,13 +156,18 @@ int theron_v1_track19_inventory_file(
     }
     sector_bytes = out->mode1_2352 ? 2352u : 2048u;
     sector_count = bytes / sector_bytes;
-    pregap_sectors = out->mode1_2352
-        ? theron_v1_track19_pregap_sectors(md5, bytes) : 0u;
-    if (pregap_sectors > sector_count) {
+    payload_sector_count = sector_count;
+    if (out->mode1_2352 &&
+        !theron_v1_track19_raw_layout(md5, bytes, &pregap_sectors,
+                                      &payload_sector_count)) {
         fclose(file);
         return 0;
     }
-    payload_sector_count = sector_count - pregap_sectors;
+    if (pregap_sectors > sector_count ||
+        payload_sector_count > sector_count - pregap_sectors) {
+        fclose(file);
+        return 0;
+    }
     normalized_bytes = payload_sector_count * 2048u;
     data = (uint8_t *)malloc(normalized_bytes);
     if (!data) {
@@ -266,7 +291,7 @@ int theron_v1_track19_item_name_bank_file(
     Theron_V1Track19InventoryReceipt inventory;
     FILE *file;
     long file_size;
-    size_t source_bytes, sector_bytes, sector_count, pregap_sectors;
+    size_t source_bytes, sector_bytes, sector_count, pregap_sectors = 0u;
     size_t payload_sector_count, normalized_bytes;
     uint8_t *data;
     unsigned int i;
@@ -286,14 +311,19 @@ int theron_v1_track19_item_name_bank_file(
     sector_count = source_bytes / sector_bytes;
     /* Match the inventory reader's hash-bound CUE pregap handling so every
      * ISO-addressed Track 19 table has the same source-relative offsets. */
-    pregap_sectors = inventory.mode1_2352
-        ? theron_v1_track19_pregap_sectors(inventory.source_md5, source_bytes)
-        : 0u;
-    if (pregap_sectors > sector_count) {
+    payload_sector_count = sector_count;
+    if (inventory.mode1_2352 &&
+        !theron_v1_track19_raw_layout(inventory.source_md5, source_bytes,
+                                      &pregap_sectors,
+                                      &payload_sector_count)) {
         fclose(file);
         return 0;
     }
-    payload_sector_count = sector_count - pregap_sectors;
+    if (pregap_sectors > sector_count ||
+        payload_sector_count > sector_count - pregap_sectors) {
+        fclose(file);
+        return 0;
+    }
     normalized_bytes = payload_sector_count * 2048u;
     data = (uint8_t *)malloc(normalized_bytes);
     if (!data) { fclose(file); return 0; }
