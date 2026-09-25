@@ -2,11 +2,12 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
-2026-09-25: The fixture-only viewport lookup no longer assigns guessed tiles
-to stair-up, stair-down, or unresolved stair squares. Production drawing was
-already fail-closed; this keeps fixture inspection from implying original
-stair artwork. Real US/JP Track 02 loader checks and the US raw/ISO comparison
-pass, but original stair rendering and transition semantics remain open.
+2026-09-25: Removed the entire inferred square-to-tile table from the viewport,
+including fixture-only wall, floor, door, portal, pool and stair indices.
+Both production and tests now refuse to infer atlas ownership from a Track 02
+square type. Real US/JP Track 02 loader checks and the US raw/ISO comparison
+pass; the authentic square/material consumer and original stair transitions
+remain open.
 
 Firestaff's product runtime is native. Emulator instrumentation may be used
 to acquire evidence, but emulator launch and BIOS/System Card dependencies

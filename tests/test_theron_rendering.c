@@ -13,7 +13,7 @@
  * Run:     ./build/test_theron_rendering
  *
  * Source references:
- *   THQUEST.ASM T520   — viewport tile selection
+ *   THQUEST.ASM T520   — party placement/start position
  *   THQUEST.ASM T600   — UI overlay zones
  *   THQUEST.ASM T800   — champion panel rendering
  *   THQUEST.ASM T900   — message bar
@@ -260,7 +260,7 @@ static int test_vp_clear(void) {
 }
 
 static int test_vp_tile_for_square(void) {
-    TEST("Runtime: vp_tile_for_square — range and wall/floor");
+    TEST("Runtime: vp_tile_for_square fails closed without a real tile mapping");
 
     /* Out-of-range depth → fallback (-1) */
     ASSERT(theron_vp_tile_for_square(0, -1, 1) == -1,
@@ -268,25 +268,13 @@ static int test_vp_tile_for_square(void) {
     ASSERT(theron_vp_tile_for_square(0, TQR_VP_DEPTH, 1) == -1,
            "depth >= TQR_VP_DEPTH should return fallback");
 
-    /* WALL always returns non-negative wall tile */
-    for (int d = 0; d < TQR_VP_DEPTH; d++) {
-        int idx = theron_vp_tile_for_square(THERON_SQUARE_WALL, d, 1);
-        ASSERT(idx >= 0, "WALL tile should be >= 0");
-    }
-
-    /* FLOOR always returns non-negative floor tile */
-    for (int d = 0; d < TQR_VP_DEPTH; d++) {
-        int idx = theron_vp_tile_for_square(THERON_SQUARE_FLOOR, d, 0);
-        ASSERT(idx >= 0, "FLOOR tile should be >= 0");
-    }
-
-    /* All square types × all depths return in-range values */
+    /* The authenticated square alone does not identify a retail atlas tile. */
     for (int sq = 0; sq < 16; sq++) {
         for (int d = 0; d < TQR_VP_DEPTH; d++) {
             int wall  = theron_vp_tile_for_square(sq, d, 1);
             int floor = theron_vp_tile_for_square(sq, d, 0);
-            ASSERT(wall  >= -1 && wall  < TQR_MAX_TILES, "wall idx out of range");
-            ASSERT(floor >= -1 && floor < TQR_MAX_TILES, "floor idx out of range");
+            ASSERT(wall == -1, "wall tile must wait for authenticated mapping");
+            ASSERT(floor == -1, "floor tile must wait for authenticated mapping");
         }
     }
 
@@ -581,41 +569,17 @@ static int test_vp_present_with_custom_palette(void) {
  * ══════════════════════════════════════════════════════════════════════ */
 
 static int test_asset_selection_wiring(void) {
-    TEST("Runtime: asset selection — tile index for all square types");
+    TEST("Runtime: no square-to-tile guesses without authenticated material records");
 
-    /* Every square type × every depth → in-range tile index */
-    int valid_count = 0;
+    /* Track 02 has source square types, but no admitted square-to-atlas map. */
     for (int sq = 0; sq < 16; sq++) {
         for (int d = 0; d < TQR_VP_DEPTH; d++) {
             int wall  = theron_vp_tile_for_square(sq, d, 1);
             int floor = theron_vp_tile_for_square(sq, d, 0);
-            ASSERT(wall  >= -1 && wall  < TQR_MAX_TILES, "wall out of range");
-            ASSERT(floor >= -1 && floor < TQR_MAX_TILES, "floor out of range");
-            if (wall >= 0 || floor >= 0) valid_count++;
+            ASSERT(wall == -1, "wall tile requires a source-owned mapping");
+            ASSERT(floor == -1, "floor tile requires a source-owned mapping");
         }
     }
-    ASSERT(valid_count > 0, "At least some tile indices should be valid");
-
-    /* Tile table at D0: WALL→wall, FLOOR→floor, TELEPORTER→tile, EXIT→tile */
-    int wall_d0  = theron_vp_tile_for_square(0, 0, 1);
-    int floor_d0 = theron_vp_tile_for_square(1, 0, 0);
-    int tele_d0  = theron_vp_tile_for_square(5, 0, 0);  /* TELEPORTER */
-    int exit_d0  = theron_vp_tile_for_square(8, 0, 0);  /* EXIT */
-    int pool_d0  = theron_vp_tile_for_square(10, 0, 0); /* POOL */
-
-    ASSERT(wall_d0  >= 0, "WALL D0 tile should be >= 0");
-    ASSERT(floor_d0 >= 0, "FLOOR D0 tile should be >= 0");
-    ASSERT(tele_d0  >= 0, "TELEPORTER D0 tile should be >= 0");
-    ASSERT(exit_d0  >= 0, "EXIT D0 tile should be >= 0");
-    ASSERT(pool_d0  >= 0, "POOL D0 tile should be >= 0");
-
-    /* Depth progression: D0..D3 should return different (or same) valid tiles */
-    int wall_d0_tile  = theron_vp_tile_for_square(0, 0, 1);
-    int wall_d1_tile  = theron_vp_tile_for_square(0, 1, 1);
-    int wall_d2_tile  = theron_vp_tile_for_square(0, 2, 1);
-    int wall_d3_tile  = theron_vp_tile_for_square(0, 3, 1);
-    (void)wall_d1_tile; (void)wall_d2_tile; (void)wall_d3_tile;
-    ASSERT(wall_d0_tile >= 0, "WALL D0 tile still out of range");
 
     PASS();
     return 1;

@@ -45643,8 +45643,6 @@ if(BUILD_TESTING AND THERON_SOURCES)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
     )
-    target_compile_definitions(firestaff_theron_v1_viewport_renderer_probe PRIVATE
-        THERON_VIEWPORT_FIXTURE_RENDER=1)
     if(NOT MSVC)
         target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
@@ -45667,10 +45665,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
     target_link_libraries(test_theron_rendering PRIVATE
         firestaff_theron firestaff_m12 firestaff_m10 m
     )
-    # This fixture deliberately supplies the source-faithful viewport ahead
-    # of the production archive's fail-closed viewport seam.  Some static
-    # linkers rescan firestaff_theron through M11/M12 and see both providers;
-    # keep that override local to this non-production rendering test.
+    # Keep the viewport implementation local to this test target. Some static
+    # linkers rescan firestaff_theron through M11/M12 and see both providers.
     if(MSVC)
         target_link_options(test_theron_rendering PRIVATE /FORCE:MULTIPLE)
     endif()
@@ -45681,7 +45677,6 @@ if(BUILD_TESTING AND THERON_SOURCES)
     if(NOT MSVC)
         target_compile_options(test_theron_rendering PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
-    target_compile_definitions(test_theron_rendering PRIVATE THERON_VIEWPORT_FIXTURE_RENDER=1)
     add_test(
         NAME theron_v1_rendering
         COMMAND test_theron_rendering

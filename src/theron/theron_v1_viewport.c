@@ -4,19 +4,18 @@
  * Fixture implementations for:
  *   1. Theron viewport rendering (PC Engine 256×224 planar framebuffer)
  *   2. UI chrome rendering (top bar, right panel, bottom champion slots, message)
- *   3. Historical asset-selection experiments (not Track 02 provenance)
+ *   3. Historical UI experiments (not Track 02 provenance)
  *   4. Planar-to-M11 framebuffer presentation
  *
  * This file is intentionally excluded from the production Theron archive.
- * Its tables and chrome are retained only for bounded fixture probes; none
- * of its inferred tile indices, fallback colors, or draw geometry establish
- * retail parity. Production uses theron_v1_viewport_runtime_noop.c until
- * the original consumer/capture route is decoded.
+ * No square-to-atlas mapping is admitted: dungeon cells stay undrawn until
+ * an original consumer/capture route binds their material data. Remaining
+ * UI helper experiments are fixture-only and do not establish retail parity.
  *
  * Historical fixture architecture:
  *   - Local planar framebuffer (indexed pixels)
- *   - View cone rendering (D0..D3 depth, left/center/right columns)
- *   - TQR tile/palette system for dungeon graphics
+ *   - View-cone scaffold (D0..D3 depth, left/center/right columns)
+ *   - TQR palette system; no unauthenticated tile assignments
  *   - UI chrome composited from world state
  *
  * Candidate source references (not semantic proof):
@@ -47,165 +46,7 @@ static const int8_t g_dir_dy[4] = {-1,  0,  1,  0};
 static const int8_t g_left_dx[4] = {-1,  0,  1,  0};
 static const int8_t g_left_dy[4] = { 0, -1,  0,  1};
 
-/* ── Tile index tables ───────────────────────────────────────────── */
-/*
- * Deterministic tile selection per square type + depth.
- * Index: tile_index = g_tile_table[square_type][depth][is_wall]
- *
- * tile_index meanings:
- *   >= 0:  tile index into TQR_PaletteState tile atlas
- *   -1:    unavailable fixture tile
- *
- * This is an inferred fixture mapping only. It is deliberately not part of
- * the production build and must not be described as a T520 decode.
- *
- * Historical fixture tile layout (not a verified retail bank layout):
- *   tiles 0-127:    wall tiles (2bpp, palette group 0)
- *   tiles 128-255:  floor tiles (2bpp, palette group 0)
- *   tiles 256-383:  object tiles (2bpp, palette group 2)
- *   tiles 384-511:  creature tiles (4bpp, palette group 1)
- *   tiles 512-639:  UI tile set (2bpp, palette group 3)
- *   tiles 640-767:  font tiles (2bpp, palette group 4)
- *
- * For squares at depth d in direction dir, the wall tile index
- * formula:  base_wall + (d % 4) * 8 + side_offset
- * For floors: base_floor + (d % 4) * 8
- */
-
 #define TILE_FALLBACK  (-1)
-
-/* Square type → base tile index table.
- * Layout: [THERON_SQUARE_MAX][TQR_VP_DEPTH][2]
- * Last dimension: [not_wall=0, is_wall=1]
- *
- * Key:
- *   WALL    = 0  → wall tile
- *   FLOOR   = 1  → floor tile
- *   DOOR    = 4  → door tile (uses wall tile when closed, floor when open)
- *   PIT     = 2  → floor tile (pit trap)
- *   STAIRS  = 3,13,14 → no tile until original material is authenticated
- *   TELEPORT= 5  → floor tile (teleporter pad)
- *   ALARM   = 6  → floor tile
- *   EXIT    = 8  → exit portal tile
- *   TRIGGER = 9  → floor tile
- *   POOL    = 10 → pool tile
- *   SECRET  = 11 → wall tile (hidden door)
- */
-static const int g_tile_table[16][TQR_VP_DEPTH][2] = {
-    /* 0: WALL */
-    [0] = {
-        [0] = { 0,  0},   /* D0: closest wall — base wall tile 0 */
-        [1] = { 8,  8},   /* D1: wall tile 8 */
-        [2] = {16, 16},   /* D2: wall tile 16 */
-        [3] = {24, 24},   /* D3: farthest wall — tile 24 */
-    },
-    /* 1: FLOOR */
-    [1] = {
-        [0] = {128, TILE_FALLBACK},  /* D0: base floor 128 */
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
-    },
-    /* 2: PIT */
-    [2] = {
-        [0] = {130, TILE_FALLBACK},  /* D0: pit floor 130 */
-        [1] = {138, TILE_FALLBACK},
-        [2] = {146, TILE_FALLBACK},
-        [3] = {154, TILE_FALLBACK},
-    },
-    /* 3: STAIRS_UP — no authenticated material binding */
-    [3] = {
-        [0] = {TILE_FALLBACK, TILE_FALLBACK},
-        [1] = {TILE_FALLBACK, TILE_FALLBACK},
-        [2] = {TILE_FALLBACK, TILE_FALLBACK},
-        [3] = {TILE_FALLBACK, TILE_FALLBACK},
-    },
-    /* 4: DOOR — closed uses wall tile, open uses floor tile */
-    [4] = {
-        [0] = {128, 32},   /* D0: floor 128 / wall tile 32 */
-        [1] = {136, 40},
-        [2] = {144, 48},
-        [3] = {152, 56},
-    },
-    /* 5: TELEPORTER */
-    [5] = {
-        [0] = {170, TILE_FALLBACK},  /* D0: teleporter pad */
-        [1] = {171, TILE_FALLBACK},
-        [2] = {172, TILE_FALLBACK},
-        [3] = {173, TILE_FALLBACK},
-    },
-    /* 6: ALARM */
-    [6] = {
-        [0] = {128, TILE_FALLBACK},
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
-    },
-    /* 7: unknown */
-    [7] = {
-        [0] = {128, TILE_FALLBACK},
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
-    },
-    /* 8: EXIT */
-    [8] = {
-        [0] = {180, TILE_FALLBACK},  /* D0: exit portal */
-        [1] = {181, TILE_FALLBACK},
-        [2] = {182, TILE_FALLBACK},
-        [3] = {183, TILE_FALLBACK},
-    },
-    /* 9: TRIGGER */
-    [9] = {
-        [0] = {128, TILE_FALLBACK},
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
-    },
-    /* 10: POOL */
-    [10] = {
-        [0] = {160, TILE_FALLBACK},  /* D0: recovery pool */
-        [1] = {161, TILE_FALLBACK},
-        [2] = {162, TILE_FALLBACK},
-        [3] = {163, TILE_FALLBACK},
-    },
-    /* 11: SECRET */
-    [11] = {
-        [0] = { 0,  0},   /* D0: secret — looks like wall */
-        [1] = { 8,  8},
-        [2] = {16, 16},
-        [3] = {24, 24},
-    },
-    /* 12-15: unknown / future */
-    [12] = {
-        [0] = {128, TILE_FALLBACK},
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
-    },
-    /* 13: STAIRS_DOWN — no authenticated material binding */
-    [13] = {
-        [0] = {TILE_FALLBACK, TILE_FALLBACK},
-        [1] = {TILE_FALLBACK, TILE_FALLBACK},
-        [2] = {TILE_FALLBACK, TILE_FALLBACK},
-        [3] = {TILE_FALLBACK, TILE_FALLBACK},
-    },
-    [14] = {
-        /* Authenticated source identifies a stair-class square, but its
-         * direction and original material consumer are not bound. Do not
-         * paint it as ordinary floor in fixture rendering. */
-        [0] = {TILE_FALLBACK, TILE_FALLBACK},
-        [1] = {TILE_FALLBACK, TILE_FALLBACK},
-        [2] = {TILE_FALLBACK, TILE_FALLBACK},
-        [3] = {TILE_FALLBACK, TILE_FALLBACK},
-    },
-    [15] = {
-        [0] = {128, TILE_FALLBACK},
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
-    },
-};
 
 /* -- Track 02 UI font -------------------------------------------------
  *
@@ -400,13 +241,11 @@ void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
     vp->synthetic_rendering_blocked = blocked ? 1 : 0;
 }
 
-#ifndef THERON_VIEWPORT_FIXTURE_RENDER
 static int theron_vp_source_tile_mapping_ready(const Theron_V1_Viewport *vp) {
     if (!vp) return 0;
     if (vp->vram_trace_loaded && vp->palette.tile_count > 0) return 1;
     return 0;
 }
-#endif
 
 /* ══════════════════════════════════════════════════════════════════════
  * Dungeon rendering
@@ -423,11 +262,9 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     if (vp->synthetic_rendering_blocked || vp->palette.tile_count <= 0) {
         return;
     }
-#ifndef THERON_VIEWPORT_FIXTURE_RENDER
     if (!theron_vp_source_tile_mapping_ready(vp)) {
         return;
     }
-#endif
 
     /* A tile bank alone is not a level handoff.  Do not fall back to the
      * historical (0,0,north) pose when the real dungeon record has not been
@@ -529,7 +366,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
             (void)is_open;
 
             /* Look up tile for this square at this depth */
-            int tile_idx = g_tile_table[sq_type & 0xF][d][is_wall];
+            int tile_idx = theron_vp_tile_for_square(sq_type, d, is_wall);
 
             if (tile_idx != TILE_FALLBACK && tile_idx >= 0) {
                 /* Try to decode and blt the tile */
@@ -908,18 +745,12 @@ void theron_vp_present(const Theron_V1_Viewport *vp,
  * ══════════════════════════════════════════════════════════════════════ */
 
 int theron_vp_tile_for_square(int square_type, int depth, int is_wall) {
-#ifndef THERON_VIEWPORT_FIXTURE_RENDER
-    /* The table below is an inferred fixture mapping.  A production caller
-     * must wait for an authenticated Track 02 tile/material binding. */
+    /* Track 02 map squares are authenticated, but their retail tile/material
+     * mapping has not been bound. Never guess atlas indices from square type. */
     (void)square_type;
     (void)depth;
     (void)is_wall;
     return TILE_FALLBACK;
-#else
-    if (depth < 0 || depth >= TQR_VP_DEPTH) return TILE_FALLBACK;
-    int st = square_type & 0xF;
-    return g_tile_table[st][depth][is_wall ? 1 : 0];
-#endif
 }
 
 void theron_vp_clear(Theron_V1_Viewport *vp, uint8_t color_index) {

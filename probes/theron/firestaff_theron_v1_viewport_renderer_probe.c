@@ -3,14 +3,14 @@
  *
  * Theron's Quest V1 Phase 4 — Viewport renderer probe.
  *
- * Tests: viewport lifecycle, planar framebuffer, UI chrome zones,
- * asset selection (tile/palette wiring), M11 presentation blt,
- * viewport clear and present pipeline.
+ * Tests: viewport lifecycle, unbound square-to-tile rejection, no-draw
+ * behavior without an authenticated material route, UI chrome gates,
+ * M11 presentation, and viewport clearing.
  *
  * Compile: see CMakeLists.txt
  * Run:     ./probe
  *
- * Source: THQUEST.ASM T520 (viewport tile selection), T600 (UI overlay zones)
+ * Source: THQUEST.ASM T520 (party placement), T600 (UI overlay zones)
  *         HuC6260/HuC6270 datasheet (VDC/VCE rendering)
  *         tqr_v1_phase2_data_formats_H2339.md §7
  */
@@ -118,29 +118,18 @@ static void test_vp_init_free(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
- * TEST: viewport tile index per square type
+ * TEST: viewport refuses guessed tile indices without an authentic mapping
  * ═══════════════════════════════════════════════════════════════ */
 static void test_vp_tile_for_square(void) {
     printf("[test:vp_tile_for_square]\n");
 
-    /* WALL always returns valid tile index (not FALLBACK) */
-    for (int d = 0; d < 4; d++) {
-        int idx = theron_vp_tile_for_square(THERON_SQUARE_WALL, d, 1);
-        CHECK(idx >= 0, "WALL tile index is non-negative at all depths");
-    }
-
-    /* FLOOR always returns valid tile index */
-    for (int d = 0; d < 4; d++) {
-        int idx = theron_vp_tile_for_square(THERON_SQUARE_FLOOR, d, 0);
-        CHECK(idx >= 0, "FLOOR tile index is non-negative at all depths");
-    }
-
-    /* DOOR closed=wall, open=floor */
-    for (int d = 0; d < 4; d++) {
-        int idx_wall = theron_vp_tile_for_square(THERON_SQUARE_DOOR, d, 1);
-        int idx_open = theron_vp_tile_for_square(THERON_SQUARE_DOOR, d, 0);
-        CHECK(idx_wall >= 0, "DOOR (closed) tile index is non-negative");
-        CHECK(idx_open >= 0, "DOOR (open) tile index is non-negative");
+    for (int square = 0; square < 16; ++square) {
+        for (int depth = 0; depth < TQR_VP_DEPTH; ++depth) {
+            CHECK_INT("unbound square type has no inferred atlas index",
+                      theron_vp_tile_for_square(square, depth, 0), -1);
+            CHECK_INT("unbound wall variant has no inferred atlas index",
+                      theron_vp_tile_for_square(square, depth, 1), -1);
+        }
     }
 
     /* Invalid depth → FALLBACK (-1) */
@@ -411,54 +400,6 @@ static void test_vp_present_with_palette(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
- * TEST: asset selection — tile atlas wiring
- * ═══════════════════════════════════════════════════════════════ */
-static void test_vp_asset_selection(void) {
-    printf("[test:vp_asset_selection]\n");
-
-    Theron_V1_Viewport vp;
-    memset(&vp, 0, sizeof(vp));
-    theron_vp_init(&vp);
-
-    TQR_PaletteState pal;
-    tqr_palette_init_defaults(&pal);
-
-    /* Load a test tile (16 bytes, 2bpp) */
-    uint8_t tile_raw[16] = {0};
-    for (int row = 0; row < 8; row++) {
-        tile_raw[row * 2 + 0] = 0xFF; /* bitplane 0 */
-        tile_raw[row * 2 + 1] = 0xFF; /* bitplane 1 */
-    }
-    int tile_idx = tqr_tile_load_from_data(&pal, tile_raw, 2, 0, "test_wall");
-    CHECK_INT("test tile loaded as tile_idx 0", tile_idx, 0);
-
-    /* Wire palette into viewport */
-    theron_vp_set_palette(&vp, &pal);
-
-    /* Palette should be wired */
-    CHECK(vp.palette.tile_count >= 1, "viewport palette has at least 1 tile");
-
-    /* Load more tiles to test atlas */
-    uint8_t floor_raw[16] = {0};
-    for (int row = 0; row < 8; row++) {
-        floor_raw[row * 2 + 0] = 0x00;
-        floor_raw[row * 2 + 1] = 0x0F; /* bitplane 1 only → palette index 2 */
-    }
-    int floor_idx = tqr_tile_load_from_data(&pal, floor_raw, 2, 0, "test_floor");
-    CHECK(floor_idx >= 0, "floor tile loaded");
-
-    /* With tiles loaded, rendering should use them (or fallback if wrong index) */
-    Theron_V1_World w;
-    make_world(&w);
-    theron_vp_render_dungeon(&vp, &w);
-
-    /* Should complete without crashing */
-    CHECK(vp.fb.data != NULL, "fb still valid after tile-wired render");
-
-    theron_vp_free(&vp);
-}
-
-/* ═══════════════════════════════════════════════════════════════
  * TEST: viewport clear
  * ═══════════════════════════════════════════════════════════════ */
 static void test_vp_clear(void) {
@@ -505,13 +446,12 @@ int main(void) {
     test_vp_ui_all_zones();
     test_vp_present();
     test_vp_present_with_palette();
-    test_vp_asset_selection();
     test_vp_clear();
     test_source_evidence();
 
     printf("\n=========================================\n");
     printf("Results: %d passed, %d failed\n", g_pass, g_fail);
-    printf("Source: THQUEST.ASM T520 (viewport tile)  "
+    printf("Source: THQUEST.ASM T520 (party placement)  "
            "+ T600 (UI overlay zones)  "
            "+ HuC6260/HuC6270 datasheet  "
            "+ tqr_v1_phase2_data_formats_H2339.md §7\n");
