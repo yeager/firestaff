@@ -46065,6 +46065,17 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;startup;native"
     )
+    if(TARGET test_theron_v1_m11_launcher_handoff_boundary)
+        add_test(
+            NAME theron_v1_combined_rar_cue_handoff
+            COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_combined_rar_cue_handoff.sh
+                    $<TARGET_FILE:test_theron_v1_m11_launcher_handoff_boundary>
+        )
+        set_tests_properties(theron_v1_combined_rar_cue_handoff PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;archive;cue;startup;native;no-synthetic"
+        )
+    endif()
     add_test(
         NAME theron_v1_raw_bin_runtime_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_raw_bin_runtime_boot.sh
