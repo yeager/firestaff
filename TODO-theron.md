@@ -1,6 +1,6 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-24. Only open work is listed here.
+Reviewed 2026-09-25. Only open work is listed here.
 
 2026-09-25: The fixture-only viewport lookup no longer assigns guessed tiles
 to stair-up, stair-down, or unresolved stair squares. Production drawing was
