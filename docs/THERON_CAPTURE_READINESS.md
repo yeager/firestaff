@@ -9,7 +9,9 @@ matched). The VDC state is 32x32 BAT and 256x240 active display; the production
 viewport maps the authentic BAT/VCE pixels and presents the 4:3 source area in
 a centered 256x192 M11 region. Its real empty SAT remains empty. This does not
 prove a level transition, source-owned dungeon consumer, gameplay semantics,
-or README-eligible screenshot; the capture files remain operator-local.
+or README-eligible screenshot; the capture files remain operator-local. The
+Firestaff CLI's atomic-bundle test also passes with this authentic JP bundle
+and `TQJP02.bin`, including fail-closed rejection of an incomplete bundle.
 
 ## Local media boundary
 

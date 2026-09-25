@@ -33,7 +33,9 @@ region, producing the same 4,529 nonzero pixels. The real JP cold-start capture
 has no SAT sprites, which is accepted as an observed empty SAT rather than
 inventing sprite data. This remains a screenshot/screen-space receipt only;
 the JP gameplay and post-CD consumer gates stay closed. The source BMP stays in
-ignored local scratch.
+ignored local scratch. The end-to-end CLI capture test also passes with this
+JP bundle and the authentic `TQJP02.bin`: the app binds the bundle and reports
+the Theron boot probe ready; its incomplete-bundle rejection remains enforced.
 
 2026-09-25: Fixed the production M11 boot path so explicit CLI-provided
 VRAM/VCE/VDC-state/SAT/VDC-I/O files are passed as one authenticated bundle to
