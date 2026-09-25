@@ -204,10 +204,11 @@
   the XP batch. Paired fatal/nonfatal RAM tests do not replace an authentic
   fight capture. Extend startup sentinel proof to remaining editions and
   actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
-  English and German Atari ST 1.2 and French Atari ST 1.3 now reach
-  `dm1-runtime` through M12 with first-runtime receipts at `championCount=0`.
-  All three editions have verified recruitment through the normal M12 pointer
-  route with authentic Hall data; repeat it on other editions.
+  English and German Atari ST 1.2, French Atari ST 1.3, and English Atari ST
+  1.0a, 1.0b and 1.1 reach `dm1-runtime` through M12 with first-runtime
+  receipts at `championCount=0`. All six source packages have verified
+  recruitment through the normal M12 pointer route with authentic Hall data;
+  repeat it on any other admitted edition.
 - Complete Atari ST campaign start through the source-owned Champion Hall
   selection on the normal M12 route. German Atari ST 1.2 presents authentic
   source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
@@ -216,9 +217,10 @@
   colours; this is a visible-frame smoke check, not visual parity. M12's first
   runtime receipt starts with `championCount=0`; its normal menu route then
   reaches the adjacent tile for C127 ordinal 14 and a source pointer click
-  opens its candidate panel and recruits it on English v1.2, German v1.2 and
-  French v1.3. Repeat this route on other editions without inventing champions
-  or treating the partial floor view as complete visual parity.
+  opens its candidate panel and recruits it on English v1.2, German v1.2,
+  French v1.3 and English v1.0a, v1.0b and v1.1. Repeat this route on any other
+  admitted edition without inventing champions or treating the partial floor
+  view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX
@@ -227,10 +229,10 @@
   BOOTER, SWOOSH.IMG, START.PRG, GRAPHICS.DAT, START.PAK and DUNGEON.DAT in
   its root; the supplied German v1.2 and French v1.3 STX roots likewise
   contain no `DUNGEON.FTL`. Clean v1.0a/v1.0b and v1.1 STX roots were also
-  verified without that campaign file. Atari ST 1.0b and 1.1 now both have
-  authenticated `DUNGEON.DAT` admission and reach the ordinary M12-to-M11
-  runtime route, but each receipt still reports zero champions. The matched
-  v1.0a STX now does so as well after its existing M12 profile's
+  verified without that campaign file. Atari ST 1.0b and 1.1 have authenticated
+  `DUNGEON.DAT` admission and now recruit C127 ordinal 14 through normal M12
+  input after their zero-champion first-runtime receipt. The matched v1.0a STX
+  does the same after its existing M12 profile's
   `ebccb5f99c4437adcb34d9228b57eb6a` hash was added to M11. The Atari v1.0
   software archive also contains an authentic MSA Automation Disk whose root has
   `DMGAME.DAT` and `DMGAME.BAK`

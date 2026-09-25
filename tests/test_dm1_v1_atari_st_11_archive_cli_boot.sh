@@ -65,12 +65,22 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu" ||
 fi
 
 runtime_probe="$stage/runtime.json"
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+menu_home="$stage/menu-home"
+mkdir -p "$menu_home"
+# The default 960x540 host view presents a centered 640x400 game image. This
+# point maps to the source C127 portrait hit point (112,83).
+m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
+for token in up up up up turn-left up up up turn-left \
+    up up up up up turn-right up up turn-right up turn-left \
+    up up turn-right up turn-left up up turn-left; do
+    m12_hoc_route+=",wait30,$token"
+done
+m12_hoc_route+=',wait30,click:384:236,wait10'
+HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$outer" \
-    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
-    --duration 20000 >/dev/null 2>&1
+    --script "$m12_hoc_route" --duration 45000 >/dev/null 2>&1
 python3 - "$runtime_probe" "$edition" <<'PY'
 import json
 import sys
@@ -86,9 +96,11 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
-         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
-    raise SystemExit(f"FAIL: authentic DM1 Atari ST {sys.argv[2]} menu did not reach its runtime state: {probe}")
-print(f"PASS: authentic DM1 Atari ST {sys.argv[2]} M12 menu reached the source runtime state")
+         party["direction"], party["championCount"]) != (0, 10, 4, 0, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
+                           "candidatePartyIndex": 0}):
+    raise SystemExit(f"FAIL: authentic DM1 Atari ST {sys.argv[2]} menu did not recruit C127 ordinal 14: {probe}")
+print(f"PASS: authentic DM1 Atari ST {sys.argv[2]} M12 menu recruited C127 ordinal 14")
 PY
 
-echo "PASS: authentic DM1 Atari ST $edition source reaches CLI and normal M12-to-M11 menu runtime"
+echo "PASS: authentic DM1 Atari ST $edition source reaches CLI and recruits through M12"
