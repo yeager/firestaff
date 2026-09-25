@@ -1,5 +1,26 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-25 — Full local Theron suite with operator-owned media and trace
+
+- The complete focused Theron CTest selection passed locally: 56 passed, 5
+  skipped, and no failures. In addition to the Linux run recorded below, this
+  run used the locally installed authentic US and Japanese Track 02 media and
+  operator-owned captures. The real Backup RAM decoder and M11 Continue tests
+  discovered their authentic defaults and passed; the authentic US and JP
+  CUE boot paths, seven-dungeon JP source loader, regional text/roster checks,
+  and Mednafen CD-state verifier also passed. The latter consumed the existing
+  authentic split-CUE capture (`theron.trace.cd`, MD5
+  `c767c4af870c5fd0b527ba0cb0c8a8a0`): 51 SCSI commands, all 161 requested
+  raw sectors bound, 2,048 ADPCM FIFO reads paired with RAM writes, and 87
+  origin receipts. The verifier still blocks semantic publication.
+- The five skips remain explicit evidence gaps: the atomic VRAM/VCE/VDC-state/
+  SAT/VDC-I/O capture bundle is unavailable; the US CloneCD ZIP and its
+  CloneCD-derived raw CUE are not staged; the authenticated CLI capture lacks
+  its required bundle; and original-command capture inputs were not
+  configured. No synthetic media was substituted. This suite result does not
+  establish original-runtime transition, visual, combat, or full-campaign
+  parity.
+
 ## 2026-09-25 — Missing loose BINs no longer fail unrelated startup probes
 
 - The startup-flow probe skips its optional authentic US loose-Track-02-BIN
