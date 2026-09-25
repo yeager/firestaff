@@ -1834,7 +1834,7 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
             snprintf(name->name, sizeof(name->name), "%s", records[i].name);
             snprintf(name->title, sizeof(name->title), "%s", records[i].title);
             name->raw_offset = records[i].raw_offset;
-            name->title_raw_offset = records[i].raw_offset;
+            name->title_raw_offset = records[i].title_raw_offset;
             out_catalog->name_count += 1u;
         }
         return THERON_TRACK02_SIGNAL_OK;

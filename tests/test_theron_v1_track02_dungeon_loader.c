@@ -724,6 +724,11 @@ static void test_jp_cue_iso_map_source(void) {
         "THERON", "MARA", "LINOS", "HEXA", "HAKAR", "TIRAN", "DOTAN",
         "PENTAI"
     };
+    static const char *const expected_roster_titles[8] = {
+        "", "GUARDIAN OF WISDO", "THE RESOLUTE", "LORD OF FEALTY",
+        "THE BRAVE", "KNIGHT OF STRENGT", "MASTER OF THE WIN",
+        "THE SURVIVOR"
+    };
     Theron_DungeonData maps;
     Theron_Track02UserDataWindowCatalog windows;
     Theron_Track02StartupTextMarkerCatalog text;
@@ -764,8 +769,12 @@ static void test_jp_cue_iso_map_source(void) {
     assert(roster.names[0].raw_offset == 0x0b3d98u);
     for (size_t i = 0u; i < roster.name_count; ++i) {
         assert(strcmp(roster.names[i].name, expected_roster_names[i]) == 0);
+        assert(strcmp(roster.names[i].title, expected_roster_titles[i]) == 0);
         assert(roster.names[i].raw_offset >= 0x0b3d98u);
         assert(roster.names[i].raw_offset < 0x0b3d98u + 2352u);
+        assert(roster.names[i].title_raw_offset ==
+               roster.names[i].raw_offset + strlen(expected_roster_names[i]) +
+                   1u);
     }
     assert(theron_v1_track02_catalog_startup_bitmap_samples(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &bitmaps) ==

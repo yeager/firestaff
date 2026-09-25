@@ -15,6 +15,7 @@ typedef struct {
     int valid;
     unsigned int index;
     uint32_t raw_offset;
+    uint32_t title_raw_offset;
     uint32_t next_raw_offset;
     char name[THERON_TRACK02_JP_ROSTER_NAME_CAPACITY];
     char title[THERON_TRACK02_JP_ROSTER_TITLE_CAPACITY];

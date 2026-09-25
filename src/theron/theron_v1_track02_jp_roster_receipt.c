@@ -121,6 +121,8 @@ int theron_v1_track02_jp_roster_read(
             strcmp(record->name, g_names[index]) != 0) {
             return 0;
         }
+        record->title_raw_offset = record->raw_offset +
+            (uint32_t)strlen(record->name) + 1u;
         if (!read_line(track02_data, track02_size, &cursor,
                        record->title, sizeof(record->title)) ||
             !read_line(track02_data, track02_size, &cursor,
