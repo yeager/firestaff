@@ -4387,7 +4387,9 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;amiga;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
-        TIMEOUT 120
+        # The nested ZIP -> ADF route performs several fresh archive-backed
+        # sessions; one authentic run took 102 seconds under parallel load.
+        TIMEOUT 300
     )
     add_test(
         NAME dm2_v1_fmtowns_native_cli_boot

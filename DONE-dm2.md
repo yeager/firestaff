@@ -7,7 +7,9 @@
   probe. With the original French ZIP supplied, the menu reaches the native
   runtime receipt and the CLI reaches `party=1,7,0`; the shell regression
   passes when allowed to finish. The previous 45-second CTest cap expired
-  before that second result, despite no functional failure.
+  before that second result, despite no functional failure. The Amiga
+  ZIP-to-ADF CLI/menu matrix also passes on authentic media; its observed
+  102-second parallel run motivated a larger CTest margin.
 
 ## 2026-09-24 — Original DOS save Quick Resume
 
