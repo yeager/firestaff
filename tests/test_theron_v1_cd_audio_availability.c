@@ -120,6 +120,45 @@ int main(void) {
         failed = 1;
     }
 
+    /* Raw CDDA BINs may not claim availability with a partial sector. */
+    if (!failed) {
+        char raw_cue[1024];
+        char raw_audio[1024];
+        unsigned char partial_sector[THERON_TRACK01_CDDA_SECTOR_BYTES - 1u] = {0};
+        FILE *cue;
+        snprintf(raw_cue, sizeof(raw_cue), "%s/raw-audio.cue", directory);
+        snprintf(raw_audio, sizeof(raw_audio), "%s/raw-track01.bin", directory);
+        cue = fopen(raw_cue, "wb");
+        if (!cue) { failed = 1; }
+        else {
+            fprintf(cue,
+                "FILE raw-track01.bin BINARY\n"
+                "  TRACK 01 AUDIO\n"
+                "FILE track02.iso BINARY\n"
+                "  TRACK 02 MODE1/2048\n");
+            for (i = 3u; i <= 18u; ++i) {
+                fprintf(cue,
+                    "FILE track%02zu.wav WAVE\n"
+                    "  TRACK %02zu AUDIO\n", i, i);
+            }
+            fprintf(cue,
+                "FILE track19.iso BINARY\n"
+                "  TRACK 19 MODE1/2048\n");
+            fclose(cue);
+        }
+        if (!failed &&
+            !write_file(raw_audio, partial_sector, sizeof(partial_sector))) {
+            failed = 1;
+        }
+        if (!failed) {
+            receipt = theron_v1_cd_audio_availability(raw_cue, directory);
+            if (receipt.availability != THERON_V1_CD_AUDIO_TRACK_FILE_MISSING ||
+                receipt.playback_allowed || receipt.track_present[1]) {
+                failed = 1;
+            }
+        }
+    }
+
     /* CUE input rejection. */
     if (!failed) {
         receipt = theron_v1_cd_audio_availability(NULL, directory);
@@ -211,6 +250,10 @@ int main(void) {
     snprintf(track_path, sizeof(track_path), "%s/short.cue", directory);
     remove(track_path);
     snprintf(track_path, sizeof(track_path), "%s/duplicate.cue", directory);
+    remove(track_path);
+    snprintf(track_path, sizeof(track_path), "%s/raw-audio.cue", directory);
+    remove(track_path);
+    snprintf(track_path, sizeof(track_path), "%s/raw-track01.bin", directory);
     remove(track_path);
     rmdir(directory);
 

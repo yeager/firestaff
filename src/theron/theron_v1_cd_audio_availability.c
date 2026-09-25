@@ -111,6 +111,21 @@ static int tqr_path_is_readable(const char *path) {
     return 1;
 }
 
+static int tqr_raw_audio_file_has_complete_sectors(const char *path) {
+    const char *dot = path ? strrchr(path, '.') : NULL;
+    FILE *file;
+    long end;
+    int valid;
+    if (!dot || !tqr_ascii_equal_ci(dot, ".bin")) return 1;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    valid = fseek(file, 0L, SEEK_END) == 0 &&
+            (end = ftell(file)) > 0 &&
+            (unsigned long)end % THERON_TRACK01_CDDA_SECTOR_BYTES == 0u;
+    fclose(file);
+    return valid;
+}
+
 /* Replace the extension of basename with .ogg.  out_ogg must have capacity
  * THERON_TRACK02_MOUNT_PATH_CAPACITY.  Returns 0 if the source has no
  * extension or the result would not fit. */
@@ -336,6 +351,11 @@ Theron_V1CdAudioReceipt theron_v1_cd_audio_availability(
                         tqr_resolve_audio_file(cue_path, data_root,
                                                current_file,
                                                receipt.track_paths[track]);
+                    if (audio && receipt.track_present[track] &&
+                        !tqr_raw_audio_file_has_complete_sectors(
+                            receipt.track_paths[track])) {
+                        receipt.track_present[track] = 0;
+                    }
                 }
             }
             continue;
@@ -385,7 +405,7 @@ Theron_V1CdAudioReceipt theron_v1_cd_audio_availability(
         if (receipt.track_is_audio[i] && !receipt.track_present[i]) {
             tqr_copy_string(receipt.unavailable_reason,
                             sizeof(receipt.unavailable_reason),
-                            "Original CD-DA track file missing on disk");
+                            "Original CD-DA track file is missing or incomplete");
             receipt.availability = THERON_V1_CD_AUDIO_TRACK_FILE_MISSING;
             return receipt;
         }
