@@ -143,6 +143,8 @@ static int test_compile_square_constants(void) {
     ASSERT(THERON_SQUARE_IS_PASSABLE(0) == 0,  "WALL should not be passable");
     ASSERT(THERON_SQUARE_IS_PASSABLE(1) == 1,  "FLOOR should be passable");
     ASSERT(THERON_SQUARE_IS_PASSABLE(11) == 0, "SECRET should not be passable");
+    ASSERT(THERON_SQUARE_IS_PASSABLE(THERON_SQUARE_STAIRS_UNRESOLVED) == 0,
+           "unresolved authentic stairs should not be passable");
 
     PASS();
     return 1;
