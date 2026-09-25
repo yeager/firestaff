@@ -19,6 +19,11 @@ with no failures (21 capture/media-dependent skips in that host's staged data
 view). Its authentic USA CloneCD ZIP startup/runtime route, USA raw-CUE route,
 and JP CUE route passed there. The larger skip count reflects that host's
 distinct data staging and is not a synthetic-data substitution.
+After explicitly staging the same five authentic, hash-locked capture files
+in a temporary `trv2` test directory and pointing the CLI test at the actual
+US Track 02 BIN in that host's data view, both
+`theron_v1_vram_trace_real_capture` and
+`theron_v1_cli_authenticated_capture` passed on Linux as well.
 
 2026-09-25: Removed the data-free synthetic first-room probe and its fabricated
 stair assertion. Current dungeon evidence comes from the authenticated
