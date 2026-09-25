@@ -1776,8 +1776,16 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   intake and the currently implemented source-only world routes; it does not
   establish JP text decoding, original graphics consumption, gameplay parity,
   or complete JP-disc availability. A JP startup-script attempt with only the
-  CUE, Track 01 and Track 02 staged correctly remained fail-closed because the
-  original CUE also references the absent remaining disc tracks and Track 19.
+  CUE, Track 01 and Track 02 staged remained fail-closed because the JP Track
+  19 bank was absent. Follow-up with the authentic Rev. 1 raw Track 19
+  (`27d54f58154662885bb67d5967e5111e`) passes
+  `test_theron_v1_jp_raw_bin_startup.sh`: the native JP route reaches the real
+  runtime, reports all seven Track 02 item-name banks, binds the JP Track 19
+  name bank and proves its Sarmon item mapping, and accepts the movement
+  sequence. This closes the Track 19 staging gap for that route; the staged
+  CUE still lacks its remaining tracks, so CD-DA readiness and complete-disc
+  audio remain unverified. Original graphics consumption and broad gameplay
+  parity remain open.
 
 - [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest replay against the
   authenticated US Track 02 ISO now gives a real HuC6280 loader witness
