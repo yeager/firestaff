@@ -136,6 +136,13 @@ the same session, `$CB22` writes zeroes across `$2600–$2EFF` and then reads th
 area back. That observation does not classify bytes as level, object, square,
 HUD, T700, or T900, so all such semantic gates remain closed.
 
+The capture's 65,536-row `ram.trace.vdc-io` sidecar uses the older
+`sequence=<local> source_sequence=<producer>` row form, with producer
+sequences 65,536–131,071. The bounded parser accepts this form and verifies its
+constant offset and continuity alongside the newer row form. This sidecar has
+no `vdc_snapshot_boundary` footer, so it remains transport provenance only:
+the atomic VWR-to-VRAM snapshot replay gate correctly stays closed.
+
 ## 2026-08-13 — `$2600` read is retained in the parser
 
 The `main_ram_consumer` parser no longer clears `target_2600_bytes_present`
