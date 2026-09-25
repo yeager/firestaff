@@ -206,22 +206,25 @@
   actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
   German Atari ST 1.2 and French Atari ST 1.3 now reach `dm1-runtime` through
   M12, but both source receipts have `championCount=0`; verify the original
-  Champion Hall selection route into a playable party before closing that gap.
+  Champion Hall selection route through M12. German Atari ST 1.2 recruitment is
+  already verified through direct CLI with authentic Hall data.
 - Complete Atari ST campaign start through the source-owned Champion Hall
-  selection before claiming a playable start. German Atari ST 1.2 now presents
-  authentic source pixels through the normal M12 menu: ReDMCSB DEFS.H
-  MEDIA020 binds floor/ceiling records 75/76, and DATA.C's six Atari RGB3
-  dungeon palettes are installed in the M11 indexed renderer. A captured
-  320x200 first runtime frame has 17,773 nonblack pixels in six colours; this
-  is a visible-frame smoke check, not visual parity. The M12 handoff still
-  reports `championCount=0`, and the live view lacks a verified recruitment
-  route to a playable party. Implement and verify the authentic F0435/F0462
-  start path for Atari without inventing champions or treating the black
-  exterior/partial floor view as a complete game start. ReDMCSB STARTUP1.C:
-  162-174 runs F0441, retries F0435, then calls F0462 and places the party only
-  when `G0298_B_NewGame` is set. LOADSAVE.C:2437-2447 and 2583-2611 admit a
-  new Atari dungeon only from `A:\DUNGEON.FTL` after no saved game was found.
-  The authenticated English v1.2 STX used by the launch tests has only
+  selection on the normal M12 route. German Atari ST 1.2 presents authentic
+  source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
+  75/76, and DATA.C's six Atari RGB3 dungeon palettes are installed in M11.
+  A captured 320x200 first runtime frame has 17,773 nonblack pixels in six
+  colours; this is a visible-frame smoke check, not visual parity. The M12
+  handoff still reports `championCount=0`. Direct CLI movement reaches the
+  adjacent tile for C127 ordinal 14 on authentic Atari map data. A direct M11
+  API harness selects that candidate and appends it to the party, but the CLI
+  Enter route did not invoke that selection; verify player input and normal
+  M12 recruitment without inventing champions or treating the partial floor
+  view as complete visual parity.
+  ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
+  places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
+  LOADSAVE.C's optional custom-dungeon path; its absence from standard STX
+  disks does not block built-in new-game startup. The authenticated English
+  v1.2 STX used by launch tests has only
   BOOTER, SWOOSH.IMG, START.PRG, GRAPHICS.DAT, START.PAK and DUNGEON.DAT in
   its root; the supplied German v1.2 and French v1.3 STX roots likewise
   contain no `DUNGEON.FTL`. Clean v1.0a/v1.0b and v1.1 STX roots were also
@@ -240,10 +243,9 @@
   direction 3. F0434's 37,226-byte dungeon tail is not yet authenticated, and
   the Atari runtime importer is not implemented. Passing the original save to
   admitted v1.2 STX yields the same zero-champion fresh start as no save. Keep
-  the save as a verified source-part candidate, not a verified playable runtime.
-  Complete
-  F0435/F0434/F0436 and F0462's source-owned Atari load/start path before
-  promoting it to playable.
+  this save as a verified source-part candidate, not a verified playable
+  runtime; F0435/F0434/F0436 Atari save import remains separate from new-game
+  campaign startup.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,

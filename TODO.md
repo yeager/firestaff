@@ -27,32 +27,28 @@
   French DOS original-save regression's M12 leg now uses normal Quick Resume
   and a runtime receipt (not the rejected `--menu --boot-probe` pair), but this
   local checkout lacks the authentic unpacked French EUDATA needed to execute
-  that route. German Atari ST 1.2
-  and French Atari ST 1.3 also reach DM1 runtime from M12, but their fresh
-  receipts have no selected champions; prove the source Champion Hall flow
-  into a playable party. Rechecked against the installed Atari ST 1.2 ZIP in
-  `.firestaff/data/dm1`: the M12 boot probe reaches `dm1-runtime` with
-  `champions=0`, `dm1StartupHandoffExecuted=0`, and
-  `dm1CompleteEntranceToHoC=0`. This confirms that the generic runtime handoff
-  is bypassing the source entrance-to-Hall route; it is not a missing-media or
-  rendering-only issue. Removing the Atari route override experimentally
-  makes the PC34 path report `dm1StartupHandoffExecuted=1`, but the same
-  authentic-media probe still has `dm1CompleteEntranceToHoC=0` because that
-  aggregate also requires a real host-window/presented-pixel capture chain.
+  that route. German Atari ST 1.2 and French Atari ST 1.3 also reach DM1 runtime
+  from M12 with no selected champions. German Atari ST 1.2 now has verified
+  direct CLI movement to the adjacent tile for C127 ordinal 14. A direct M11
+  API harness selects it, but the CLI Enter route does not yet invoke selection;
+  verify player-input recruitment through CLI and M12, then repeat on French
+  Atari media.
   Atari now uses a distinct STARTUP1.C/F0437/F0441 media receipt, skips PC
   SWSH and PC34 special palettes, and routes entrance input through Atari's
   source mouse command. Authentic English, German and French Atari ST M12
   regressions now require the applied startup handoff and HoC first-frame
   receipt before accepting the live runtime state. Source review of ReDMCSB
   STARTUP1.C:160-173 shows the Atari path continues after F0441 through the
-  F0435 load loop and F0462_StartGame before runtime. Firestaff currently
-  hands off to the dungeon runtime immediately after F0441, so its HoC first
-  frame is not proof of a source-owned campaign start; fresh Atari launches
-  still have zero champions. Implement the authenticated F0435/F0462 new-game
-  transition and candidate recruitment into a playable party. The Atari
-  receipt covers title/entrance only; its F0437 presentation/palette and the
-  post-entrance campaign handoff remain open. Headless receipts do not claim
-  host capture, and visual parity remains deferred.
+  F0435 load loop and F0462_StartGame before runtime. Firestaff's M12 handoff
+  still begins with zero champions. The direct CLI route reaches C127, and a
+  direct M11 API harness recruits from authentic Hall data; player-input
+  recruitment still needs proof. `DUNGEON.FTL` is
+  only an optional custom-dungeon path in ReDMCSB LOADSAVE.C; its absence from
+  clean retail STX disks does not block built-in new-game startup. Verify the
+  source-owned F0435/F0462 transition and recruitment through M12. The Atari
+  receipt covers title/entrance; its F0437 presentation/palette remains open.
+  Headless receipts do not claim host capture, and visual parity remains
+  deferred.
   Other DM1 editions, remaining DM2 platforms, Nexus
   and Theron still need equivalent evidence. Keep this separate from visual
   parity.

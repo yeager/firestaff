@@ -138,4 +138,22 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic German DM1 Atari ST 1.2 ZIP -> STX reaches CLI, menu, and native movement runtime'
+# This route follows authentic map 0 to C127 ordinal 14 at (10,3), then
+# opens it from the adjacent source tile (10,4) with the source inspect command.
+recruitment_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform atari-st --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 1000 \
+    --script 'up,up,up,up,turn-left,up,up,up,turn-left,up,up,up,up,up,turn-right,up,up,turn-right,up,turn-left,up,up,turn-right,up,turn-left,up,up,turn-left' \
+    --duration 0 2>&1) || {
+    printf '%s\n' "$recruitment_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$recruitment_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$recruitment_output" ||
+   ! grep -Fq 'map=0 party=10,4,0 champions=0' <<<"$recruitment_output"; then
+    printf '%s\n' "$recruitment_output" >&2
+    printf '%s\n' 'FAIL: authentic German DM1 Atari ST CLI did not recruit the C127 Hall champion' >&2
+    exit 1
+fi
+
+printf '%s\n' 'PASS: authentic German DM1 Atari ST 1.2 ZIP -> STX reaches CLI, menu, native movement, and C127 approach runtime'
