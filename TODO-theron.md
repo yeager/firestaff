@@ -3262,3 +3262,9 @@ av bankladdningen. Se
   rå källinformation för framtida fångstmål; provet tillskriver inte
   attributen riktning eller destinationsnivå. Utan US-källdata rapporteras
   CTest-skip i stället för ett falskt godkänt resultat.
+- ✅ Det separata dörr-/teleportertestet binder nu både US- och JP-filerna till
+  sina publicerade rå-BIN-hashar innan det laddar alla sju dungeonernas
+  tabeller. Båda regionerna verifierar samma dörr-/teleporterantal; saknad US-
+  media ger CTest-skip och `assert()`-kontroller förblir aktiva i Release.
+  Detta verifierar källposter och dekodning, inte oinfångade knapp-, nyckel-
+  eller teleporterhändelser.

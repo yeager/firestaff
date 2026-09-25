@@ -53100,12 +53100,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_door.c"
     )
     target_include_directories(test_theron_v1_track02_door PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_theron_v1_track02_door PRIVATE firestaff_m12)
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_track02_door PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_track02_door PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_track02_door PRIVATE /UNDEBUG)
     endif()
     add_test(
         NAME theron_v1_track02_door
         COMMAND test_theron_v1_track02_door
+    )
+    set_tests_properties(theron_v1_track02_door PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;doors;teleporters"
     )
 endif()
 

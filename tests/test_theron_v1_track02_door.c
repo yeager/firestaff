@@ -1,6 +1,8 @@
 #include "theron_v1_track02_door.h"
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02.h"
+#include "asset_status_m12.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,10 +18,17 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     fseek(fp, 0, SEEK_END);
     long fsize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    if (fsize <= 0) { fclose(fp); return NULL; }
+    if (fsize <= 0 || fsize % SECTOR_SIZE != 0) {
+        fclose(fp);
+        return NULL;
+    }
     uint8_t *raw = malloc((size_t)fsize);
     if (!raw) { fclose(fp); return NULL; }
-    fread(raw, 1, (size_t)fsize, fp);
+    if (fread(raw, 1, (size_t)fsize, fp) != (size_t)fsize) {
+        free(raw);
+        fclose(fp);
+        return NULL;
+    }
     fclose(fp);
     size_t sectors = (size_t)fsize / SECTOR_SIZE;
     size_t ud_size = sectors * UD_PER_SECTOR;
@@ -61,20 +70,20 @@ static void test_teleporter_level_destination_uses_six_bits(void) {
     assert(tp.level_dest == 42u);
 }
 
-static const char *find_track02(void) {
-    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+static const char *find_track02(const char *environment,
+                                const char *filename) {
+    const char *explicit_path = getenv(environment);
     const char *home = getenv("HOME");
-    static char path[512];
+    static char paths[2][512];
+    static unsigned int path_index;
+    char *path = paths[path_index++ % 2u];
     const char *candidates[3] = { explicit_path, NULL, NULL };
     if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+        snprintf(path, sizeof(paths[0]), "%s/.firestaff/data/theron/%s",
+                 home, filename);
         candidates[1] = path;
-        snprintf(path + 256, sizeof(path) - 256,
-                 "%s/.firestaff/data/theron/raw-us/"
-                 "Dungeon Master - Theron's Quest (USA) (Track 02).bin", home);
-        candidates[2] = path + 256;
     }
-    for (unsigned int i = 0; i < 3u; ++i) {
+    for (unsigned int i = 0; i < 2u; ++i) {
         FILE *fp;
         if (!candidates[i] || !candidates[i][0]) continue;
         fp = fopen(candidates[i], "rb");
@@ -83,14 +92,19 @@ static const char *find_track02(void) {
     return NULL;
 }
 
-static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
+static int test_all_dungeons(const uint8_t *ud, size_t ud_size,
+                             Theron_Track02Variant variant) {
     const char *names[] = {
         "AKUTUBA","DRATOR","FORMICIA","SARMON","SHADODAN","THIEVES","DEMON"
     };
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
-        assert(theron_v1_track02_dungeon_map_load(ud, ud_size, d, &dd));
+        if (!theron_v1_track02_dungeon_map_load_for_variant(
+                ud, ud_size, variant, d, &dd)) {
+            fprintf(stderr, "FAIL: dungeon %s map data did not load\n", names[d]);
+            return 0;
+        }
 
         unsigned int total_tiles = 0;
         uint8_t flat_tiles[8192];
@@ -107,9 +121,13 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         unsigned int gref_count =
             theron_v1_track02_compute_ground_ref_count(flat_tiles, total_tiles);
         Theron_ThingData *td = calloc(1, sizeof(Theron_ThingData));
-        assert(td);
-        assert(theron_v1_track02_thing_data_load(
-            ud, ud_size, d, dd.object_counts, gref_count, td));
+        if (!td) return 0;
+        if (!theron_v1_track02_thing_data_load_for_variant(
+                ud, ud_size, variant, d, dd.object_counts, gref_count, td)) {
+            fprintf(stderr, "FAIL: dungeon %s thing data did not load\n", names[d]);
+            free(td);
+            return 0;
+        }
 
         unsigned int num_doors = dd.object_counts[0];
         unsigned int num_telep = dd.object_counts[1];
@@ -143,6 +161,33 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
 
         free(td);
     }
+    return 1;
+}
+
+static int test_real_variant(const char *label, const char *path,
+                             const char *expected_md5,
+                             Theron_Track02Variant variant) {
+    char actual_md5[33] = {0};
+    size_t ud_size = 0;
+    uint8_t *ud;
+
+    if (!path) return 77;
+    if (!m12_file_md5_hex(path, actual_md5) ||
+        strcmp(actual_md5, expected_md5) != 0) {
+        fprintf(stderr, "FAIL: %s Track 02 identity is not authenticated: %s\n",
+                label, actual_md5);
+        return 1;
+    }
+    ud = load_track02_ud(path, &ud_size);
+    if (!ud) {
+        fprintf(stderr, "FAIL: could not normalize authenticated %s Track 02\n",
+                label);
+        return 1;
+    }
+    printf("  %s Track 02 hash verified: %s\n", label, actual_md5);
+    int ok = test_all_dungeons(ud, ud_size, variant);
+    free(ud);
+    return ok ? 0 : 1;
 }
 
 int main(void) {
@@ -151,19 +196,22 @@ int main(void) {
     test_teleporter_decode_basic();
     test_teleporter_level_destination_uses_six_bits();
 
-    const char *path = find_track02();
-    if (!path) {
-        printf("  SKIP: Track 02 BIN not found\n");
-        return 0;
+    const char *us_path = find_track02("FIRESTAFF_THERON_TRACK02_RAW",
+                                       "TQUS02.bin");
+    const char *jp_path = find_track02("FIRESTAFF_THERON_TRACK02_JP_RAW",
+                                       "TQJP02.bin");
+    int us_result = test_real_variant("US", us_path,
+                                      THERON_TRACK02_MD5_US_BIN,
+                                      THERON_TRACK02_VARIANT_US_BIN);
+    if (us_result != 0) return us_result;
+    if (jp_path) {
+        int jp_result = test_real_variant("JP", jp_path,
+                                          THERON_TRACK02_MD5_JP_BIN,
+                                          THERON_TRACK02_VARIANT_JP_BIN);
+        if (jp_result != 0) return jp_result;
+    } else {
+        printf("  SKIP: Japanese Track 02 BIN not found\n");
     }
-    size_t ud_size = 0;
-    uint8_t *ud = load_track02_ud(path, &ud_size);
-    if (!ud) {
-        printf("  SKIP: could not load Track 02\n");
-        return 0;
-    }
-    test_all_dungeons(ud, ud_size);
-    free(ud);
     printf("PASS\n");
     return 0;
 }
