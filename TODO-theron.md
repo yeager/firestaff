@@ -23,6 +23,9 @@ the source-backed movement and JP Track 19 item-name checks.
 `theron_v1_jp_later_dungeon_runtime` also passes locally against the authentic
 regional Track 02 files, checking source-backed records across all seven JP
 dungeons. Original game-owned transition semantics remain unverified.
+The authentic combined USA RAR direct-boot regression passes locally as well;
+it resolves the original `TQUS19.iso` + `TQUS02End.iso` Track 02 members in
+memory without extracting the archive.
 
 The CD availability parser also rejects duplicate track numbers and any
 missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
