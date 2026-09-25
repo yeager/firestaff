@@ -92,3 +92,27 @@ den Drator-specifika LBA-kedjan, den efterföljande Track 02-laddningen och den
 renderade dungeonvyn bevisar nu Drators verkliga dungeoninträde på nivå 2,
 position `(2,3)`, riktning 1/öst. `$2038` behålls som rå arbetsbyte och får
 inte användas som nivånummer.
+
+## Kallstartsretur med den råa USA-skivan, 2026-09-25
+
+En ny lokal körning använde den fullständiga råa USA-CD:n och BRAM-filen ovan,
+inte den tidigare normaliserade ISO-layouten. CUE-hashen var
+`63dbd2fab613b2e8030ff4e44b978a39`, Track 02 hade MD5
+`f23601102138f87c33025877767ebf76`, CD-layout-ID:t var
+`bee0988239a817f20a64cd38fc8caeac` och System Card 3.0 hade MD5
+`ff1a674273fe3540ccef576376407d1d`. BRAM:ens hash var
+`ffabc8d19b0915d4d9632a7ae2e90a97` både före och efter körningen.
+
+Mednafen tog emot en PCE RUN-inmatning vid bildruta 9600 (`raw=0008`). Den
+autentiska CD:n utförde fyra SCSI-läsningar och levererade 25 råsektorer,
+men körningen nådde inte den signerade Drator-menykoden: inga Drator-rutinsteg
+eller title-wait-injektion loggades, ingen CD-till-RAM-destination kunde
+bindas och `$20DB` förblev `00`. En separat körning med samma medier och
+`THERON_CAPTURE_TITLE_WAIT_INPUT=run` nådde inte heller den signerade
+title-wait-rutinen.
+
+De lokala spåren ligger i ignorerad `.codex-scratch`. De bekräftar medie- och
+inmatningsidentiteterna, men de ersätter inte den tidigare positiva
+Drator-fångsten och ger inget nytt stöd för nivå-, objekt- eller
+generatorsemantik. Orsaken till att denna kallstartsuppspelning inte når
+menygrenen är fortfarande olöst.
