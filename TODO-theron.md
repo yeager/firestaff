@@ -2,6 +2,13 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25: The broad M12 inventory no longer treats the catalogued JP Rev. 1
+Track 02 ISO digest as launchable. The supplied file is a hash-matching,
+zero-filled 149-sector stub and the strict Track 02 intake already rejects it
+as empty source content. A real-media regression covers the inventory gate;
+the authenticated US and JP raw-BIN startup routes and seven-dungeon loader
+remain green. This does not close Japanese ISO acquisition or runtime parity.
+
 2026-09-25: Removed the entire inferred square-to-tile table from the viewport,
 including fixture-only wall, floor, door, portal, pool and stair indices.
 Both production and tests now refuse to infer atlas ownership from a Track 02

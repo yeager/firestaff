@@ -4398,6 +4398,16 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         if (!md5 || md5[0] == '\0') {
             continue;
         }
+        /* This catalogued JP Rev. 1 ISO digest identifies the supplied
+         * zero-filled 149-sector stub, not usable dungeon media. The strict
+         * Track 02 intake rejects it as SOURCE_CONTENT_EMPTY; do not let the
+         * broader inventory promote the same known bytes to a launchable
+         * edition merely because their digest is recognized. The authentic
+         * JP raw BIN remains an independently verified runtime source. */
+        if (strcmp(gameSpec->gameId, "theron") == 0 &&
+            strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
+            continue;
+        }
         for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
             if (rootMatched[rootIndex][i]) {
                 version->matched = 1;
