@@ -1,5 +1,14 @@
 # Firestaff DONE — DM2
 
+## 2026-09-25 — French DOS runtime regression timeout
+
+- Increased the French DOS CTest allowance to cover both fresh sessions in the
+  regression: the M12 source-menu runtime handoff and the direct CLI movement
+  probe. With the original French ZIP supplied, the menu reaches the native
+  runtime receipt and the CLI reaches `party=1,7,0`; the shell regression
+  passes when allowed to finish. The previous 45-second CTest cap expired
+  before that second result, despite no functional failure.
+
 ## 2026-09-24 — Original DOS save Quick Resume
 
 - Fixed the explicit `--menu --game dm2 --save <path>` route: the M12 row now

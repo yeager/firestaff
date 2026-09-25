@@ -4352,7 +4352,9 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;french;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_FR_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip"
-        TIMEOUT 45
+        # Two independent sessions traverse the authentic French archive:
+        # one M12 menu runtime route and one direct input/runtime probe.
+        TIMEOUT 120
     )
     add_test(
         NAME dm2_v1_mac_native_cli_boot
