@@ -53321,12 +53321,17 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_map.
     )
     target_include_directories(test_theron_v1_track02_dungeon_map PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    target_link_libraries(test_theron_v1_track02_dungeon_map PRIVATE firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_theron_v1_track02_dungeon_map PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME theron_v1_track02_dungeon_map
         COMMAND test_theron_v1_track02_dungeon_map
+    )
+    set_tests_properties(theron_v1_track02_dungeon_map PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;dungeon;source-data"
     )
 endif()
 

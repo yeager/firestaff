@@ -1,10 +1,11 @@
 #include "theron_v1_track02_dungeon_map.h"
+#include "theron_v1_track02.h"
+#include "asset_status_m12.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define TRACK02_MD5 "f23601102138f87c33025877767ebf76"
 #define SECTOR_SIZE 2352
 #define UD_PER_SECTOR 2048
 #define SYNC_OFFSET 16
@@ -192,17 +193,56 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
             unsigned int w = dd.maps[m].header.x_dim + 1u;
             unsigned int h = dd.maps[m].header.y_dim + 1u;
             total_tiles += w * h;
-
-            for (unsigned int x = 0; x < w; x++) {
-                for (unsigned int y = 0; y < h; y++) {
-                    uint8_t t = dd.maps[m].tiles[x][y];
-                    (void)t;
-                }
-            }
         }
 
         printf("  %s: %u maps, %u tiles OK\n", names[d], dd.map_count, total_tiles);
     }
+}
+
+static unsigned int report_authentic_stair_candidates(
+    const char *region, const uint8_t *ud, size_t ud_size,
+    Theron_Track02Variant variant) {
+    static const char *const names[] = {
+        "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
+        "SHADODAN", "THIEVES", "DEMON"
+    };
+    unsigned int total = 0u;
+
+    for (unsigned int dungeon = 0u; dungeon < THERON_TRACK02_DUNGEON_COUNT;
+         ++dungeon) {
+        Theron_DungeonData data;
+        assert(theron_v1_track02_dungeon_map_load_for_variant(
+            ud, ud_size, variant, dungeon, &data));
+        for (unsigned int map = 0u; map < data.map_count; ++map) {
+            const unsigned int width =
+                (unsigned int)data.maps[map].header.x_dim + 1u;
+            const unsigned int height =
+                (unsigned int)data.maps[map].header.y_dim + 1u;
+            for (unsigned int x = 0u; x < width; ++x) {
+                for (unsigned int y = 0u; y < height; ++y) {
+                    const uint8_t raw = data.maps[map].tiles[x][y];
+                    if (theron_tile_type(raw) != THERON_TILE_STAIRS) continue;
+                    ++total;
+                    printf("  source-only stair candidate region=%s dungeon=%s "
+                           "map=%u x=%u y=%u raw=%02x attributes=%x\n",
+                           region, names[dungeon], map, x, y,
+                           (unsigned int)raw,
+                           (unsigned int)theron_tile_attributes(raw));
+                }
+            }
+        }
+    }
+    assert(total > 0u);
+    const unsigned int expected =
+        variant == THERON_TRACK02_VARIANT_JP_BIN ? 170u : 171u;
+    if (total != expected) {
+        fprintf(stderr, "FAIL: %s authentic stair-class tile count %u, expected %u\n",
+                region, total, expected);
+        exit(1);
+    }
+    printf("  %s: %u authentic stair-class tiles; direction and destination unresolved\n",
+           region, total);
+    return total;
 }
 
 static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
@@ -225,6 +265,8 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
         assert(dd.maps[0].header.y_dim == 7);
     }
     printf("  JP Track 02: all dungeon maps OK\n");
+    (void)report_authentic_stair_candidates(
+        "JP", ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN);
 }
 
 int main(void) {
@@ -241,26 +283,45 @@ int main(void) {
         clonecd_env && clonecd_env[0]
             ? THERON_TRACK02_VARIANT_US_CLONECD_RAW
             : THERON_TRACK02_VARIANT_US_BIN;
+    const char *expected_us_md5 =
+        track02_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+            ? THERON_TRACK02_MD5_US_CLONECD_BIN
+            : THERON_TRACK02_MD5_US_BIN;
     if (!track02_path) {
         printf("  SKIP: Track 02 BIN not found\n");
-        return 0;
+        return 77;
+    }
+    char actual_md5[33] = {0};
+    if (!m12_file_md5_hex(track02_path, actual_md5) ||
+        strcmp(actual_md5, expected_us_md5) != 0) {
+        fprintf(stderr, "FAIL: US Track 02 identity is not authenticated: %s\n",
+                actual_md5);
+        return 1;
     }
 
     size_t ud_size = 0;
     uint8_t *ud = load_track02_ud(track02_path, &ud_size);
     if (!ud) {
         printf("  SKIP: could not load Track 02\n");
-        return 0;
+        return 77;
     }
 
     test_akutuba_maps(ud, ud_size, track02_variant);
     test_drator_maps(ud, ud_size, track02_variant);
     test_all_dungeons(ud, ud_size, track02_variant);
+    (void)report_authentic_stair_candidates(
+        "US", ud, ud_size, track02_variant);
 
     free(ud);
 
     const char *jp_path = find_jp_track02();
     if (jp_path) {
+        if (!m12_file_md5_hex(jp_path, actual_md5) ||
+            strcmp(actual_md5, THERON_TRACK02_MD5_JP_BIN) != 0) {
+            fprintf(stderr, "FAIL: JP Track 02 identity is not authenticated: %s\n",
+                    actual_md5);
+            return 1;
+        }
         size_t jp_ud_size = 0;
         uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);
         if (jp_ud) {

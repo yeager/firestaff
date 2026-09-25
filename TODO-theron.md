@@ -3256,3 +3256,9 @@ av bankladdningen. Se
   hjältar, godtyckliga 50-värden eller 1 000 guld. Rörelse-, vägg- och
   trappbevisen kör med endast den autentiska kartan och källans startpose;
   regional roster och sparstatus förblir separata riktiga datakonsumenter.
+- ✅ Dungeonkartornas källprov verifierar nu US- och JP-Track 02-identitet
+  med de publicerade rå-BIN-hasharna innan det räknar trappfamiljens byte i
+  alla sju dungeons: 171 US och 170 JP. Kandidatkoordinaterna skrivs ut som
+  rå källinformation för framtida fångstmål; provet tillskriver inte
+  attributen riktning eller destinationsnivå. Utan US-källdata rapporteras
+  CTest-skip i stället för ett falskt godkänt resultat.
