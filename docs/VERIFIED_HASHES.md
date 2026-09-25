@@ -9,6 +9,7 @@ SHA256 checksums for known-good original game data files.
 | dm1 | GRAPHICS.DAT | `2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e` | 363,417 |
 | dm1 | DUNGEON.DAT | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | 33,357 |
 | dm1-atari-st-1.1-en | DUNGEON.DAT | `a26f0edc4fb13e3d38551d91ad7c24f517257cfc689affe72d657f4e423853b2` | 33,442 |
+| dm1-atari-st-1.0b-en | DUNGEON.DAT | `a43a07834444d868a6b67bbc414b1f2618973635caf505696ba86c1d30894ee8` | 33,314 |
 | dm1-multilingual | GRAPHICS.DAT | `291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc` | 398,925 |
 | dm1-multilingual | DUNGEON.DAT | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | 33,357 |
 | dm1-multilingual | DUNGEONF.DAT | `290543621ae7c465fee9651c4d3c44f5dc268f5e16fffc75da82a440274c0571` | 33,687 |

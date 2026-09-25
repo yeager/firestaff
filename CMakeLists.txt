@@ -4537,7 +4537,18 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_v1_atari_st_11_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;atari;real-media;native;cli;menu;startup;skip-safe;english"
-        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_11_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Atari_ST,Software.7z"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Atari_ST,Software.7z;FIRESTAFF_DM1_ATARI_ST_MEMBER=Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx;FIRESTAFF_DM1_ATARI_ST_GRAPHICS_MD5=5095a13692702235d2e74f6b2b1367a9;FIRESTAFF_DM1_ATARI_ST_EDITION=1.1"
+        TIMEOUT 45
+    )
+    add_test(
+        NAME dm1_v1_atari_st_10b_archive_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_11_archive_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_atari_st_10b_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;atari;real-media;native;cli;menu;startup;skip-safe;english"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Game,Dungeon_Master,Atari_ST,Software.7z;FIRESTAFF_DM1_ATARI_ST_MEMBER=Floppy Disks STX/Dungeon Master for Atati ST v1.0 (English) 1987-12-11.stx;FIRESTAFF_DM1_ATARI_ST_GRAPHICS_MD5=7eee396993745e8af212f44d75ff6c1a;FIRESTAFF_DM1_ATARI_ST_EDITION=1.0b"
         TIMEOUT 45
     )
     add_test(

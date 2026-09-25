@@ -471,7 +471,7 @@ static const M12_GameVersionSpec g_games[] = {
 
 static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm1", "graphics", "GRAPHICS.DAT", NULL, 1},
-    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;e0333c81c52e957dacd3b45739d077c9;30028fb6a301ecb20127ef0b3af32b05;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a", 0},
+    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;e0333c81c52e957dacd3b45739d077c9;30028fb6a301ecb20127ef0b3af32b05;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a;c4a54af4284f40bc3d53fe2c7ef5195b", 0},
     {"csb", "graphics", "GRAPHICS.DAT", NULL, 1},
     /* The three hashes are PC/Atari/Amiga, FM Towns CDATA and FM Towns
      * CJDATA respectively.  A required-file MD5 can be a semicolon-separated

@@ -16258,6 +16258,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
         static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
             { "dm1",  "050fb2cfded1b502ec2c53956b94c5bd" },
+            { "dm1",  "c4a54af4284f40bc3d53fe2c7ef5195b" },
             { "dm1",  "e0333c81c52e957dacd3b45739d077c9" },
             { "csb",  "6695d2acebce49f95db1d8f3a5c733de" },
             { "dm2",  "6caccd7875009e82fe2e28e7f6d6adc0" },
