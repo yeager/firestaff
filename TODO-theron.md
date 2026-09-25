@@ -1785,7 +1785,13 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   sequence. This closes the Track 19 staging gap for that route; the staged
   CUE still lacks its remaining tracks, so CD-DA readiness and complete-disc
   audio remain unverified. Original graphics consumption and broad gameplay
-  parity remain open.
+  parity remain open. The same native JP boot probe also passed directly
+  against the user's `.firestaff/data/theron` files (`TQJP02.bin` and
+  `TQJP19.iso`): it loaded four authenticated dungeon levels, 291 source
+  objects and the two-champion party, with the JP Track 19 name bank and
+  Sarmon mapping bound. Seven focused JP runtime/data CTests passed against
+  those same local files. `theronTrack01CddaReady` remained zero because no
+  complete JP CUE/audio set is currently available in that directory.
 
 - [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest replay against the
   authenticated US Track 02 ISO now gives a real HuC6280 loader witness
