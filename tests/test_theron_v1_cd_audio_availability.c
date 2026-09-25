@@ -102,7 +102,7 @@ int main(void) {
     /* Layout mismatch: only two tracks. */
     if (!failed) {
         char short_cue[1024];
-        FILE *cue = fopen(short_cue, "wb");
+        FILE *cue;
         snprintf(short_cue, sizeof(short_cue), "%s/short.cue", directory);
         cue = fopen(short_cue, "wb");
         if (!cue) { failed = 1; }
