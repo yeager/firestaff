@@ -213,6 +213,15 @@ int main(void) {
 
         theron_v1_world_init(&world);
         memset(&assets, 0, sizeof(assets));
+        theron_vp_set_synthetic_rendering_blocked(&viewport, 0);
+        theron_vp_render_ui(&viewport, &world, TQR_UI_ALL);
+        if (memcmp(expected_screen, viewport.fb.data,
+                   (size_t)viewport.fb.stride * (size_t)viewport.fb.h) != 0) {
+            fprintf(stderr,
+                    "FAIL: VDC pixels were mistaken for an authenticated UI bank\n");
+            theron_vp_free(&viewport);
+            return 1;
+        }
         if (!theron_v1_boot_runtime_render_frame(
                 &world, &viewport, &assets, 0, 0,
                 boot_framebuffer, 320, 200)) {

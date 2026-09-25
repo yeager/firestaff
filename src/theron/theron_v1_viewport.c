@@ -610,8 +610,10 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb,
 }
 
 static int theron_vp_source_ui_bank_ready(const Theron_V1_Viewport *vp) {
-    if (!vp) return 0;
-    if (vp->vram_trace_loaded) return 1;
+    /* A captured VDC frame authenticates pixels, not the original UI's
+     * layout/state relation or chrome-bank ownership.  Until those are
+     * independently bound, never let the legacy host compositor redraw it. */
+    (void)vp;
     return 0;
 }
 
