@@ -224,11 +224,17 @@
   The authenticated English v1.2 STX used by the launch tests has only
   BOOTER, SWOOSH.IMG, START.PRG, GRAPHICS.DAT, START.PAK and DUNGEON.DAT in
   its root; the supplied German v1.2 and French v1.3 STX roots likewise
-  contain no `DUNGEON.FTL`, and no Atari `ADMGAME.DAT`/`ADMGAME.BAK` is
-  present in the staged corpus. Current Atari start-menu tests therefore prove
-  native media admission and first-frame presentation only. Locate an
-  authentic Atari `DUNGEON.FTL` or saved campaign corpus before wiring
-  F0435/F0462; do not promote the zero-champion admission frame as playable.
+  contain no `DUNGEON.FTL`. The Atari v1.0 software archive also contains an
+  authentic MSA Automation Disk whose root has `DMGAME.DAT` and `DMGAME.BAK`
+  (47,710 bytes each). Both pass the original-save header checksum and classify
+  as FormatID 1 / `ORIGINAL_DM1`, but remain header-only: the original Atari
+  importer is not implemented. The matched v1.0 STX is not admitted by the
+  current runtime, and passing either save to the admitted v1.2 STX still
+  produces the same zero-champion map-0 start as no save. Treat these as
+  promising original save candidates, not a verified campaign corpus. Current
+  Atari start-menu tests prove M11 runtime admission, not a playable party.
+  Complete F0435/F0462's source-owned Atari save/new-game path and verify it
+  against a matching authentic campaign before promoting the start to playable.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,
