@@ -83,8 +83,12 @@ if grep -Eq '/tmp|TMPDIR' "$script" ||
 fi
 if [[ ! -x "$runtime_verifier" ]] ||
    ! grep -Fq 'sdl2-compat' "$runtime_verifier" ||
-   ! grep -Fq 'use a real SDL2 runtime for authentic Quartz/SDL capture' "$runtime_verifier"; then
-    printf 'FAIL: live capture build must reject the SDL2-compat event bridge\n' >&2
+   ! grep -Fq 'use a real SDL2 runtime for authentic Quartz/SDL capture' "$runtime_verifier" ||
+   ! grep -Fq 'Compiled against SDL' "$runtime_verifier" ||
+   ! grep -Fq 'running with SDL' "$runtime_verifier" ||
+   ! grep -Fq 'version_is_at_least' "$runtime_verifier" ||
+   ! grep -Fq 'isolated SDL startup probe' "$runtime_verifier"; then
+    printf 'FAIL: live capture build must reject SDL2-compat and verify an isolated runtime/version match\n' >&2
     exit 1
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
