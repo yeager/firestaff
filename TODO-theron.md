@@ -2,6 +2,18 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25: Fixed the production M11 boot path so explicit CLI-provided
+VRAM/VCE/VDC-state/SAT/VDC-I/O files are passed as one authenticated bundle to
+the native viewport. Previously the CLI accepted the five paths but
+`theron_vp_init_from_data_dir()` ignored them and booted without the capture.
+The viewport now prefers that explicit bundle and fails closed on a partial or
+invalid override rather than discovering an unrelated screen. The CLI
+real-capture regression and the real VDC viewport regression both pass against
+the locally supplied authentic Track 02 BIN and hash-locked capture. The full
+Theron label suite also passes (68 tests, six skipped for unavailable
+capture/media inputs); this is capture wiring only and does not close the open
+dungeon, UI, or gameplay semantics.
+
 2026-09-25: Removed the data-free synthetic first-room probe and its fabricated
 stair assertion. Current dungeon evidence comes from the authenticated
 regional source-dungeon and mechanics regressions; those pass with the real

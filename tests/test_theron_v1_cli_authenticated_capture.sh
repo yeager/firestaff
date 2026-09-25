@@ -59,7 +59,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --boot-probe-frames 1 \
     --duration 0 >"$output" 2>&1
 
-if ! grep -Fq 'THERON AUTHENTICATED ATOMIC VDC/VCE/STATE/SAT CAPTURE LOADED:' "$output" ||
+if ! grep -Fq 'THERON AUTHENTICATED ATOMIC VDC CAPTURE:' "$output" ||
    ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output"; then
     cat "$output" >&2
     printf '%s\n' 'FAIL: CLI did not bind the authenticated Theron VDC/VCE capture' >&2

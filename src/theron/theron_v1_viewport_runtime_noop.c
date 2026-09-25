@@ -125,8 +125,36 @@ THERON_FIXTURE_OVERRIDEABLE int theron_vp_init_from_data_dir(Theron_V1_Viewport 
     static const char *subdirs[] = {"capture", ""};
     char vram[4096], vce[4096], vdc[4096], sat[4096], io[4096];
     char input[4096], transition[4096];
+    const char *configured_vram;
+    const char *configured_vce;
+    const char *configured_vdc;
+    const char *configured_sat;
+    const char *configured_io;
+    int configured_capture;
     size_t i;
     if (!theron_vp_init_core(vp)) return 0;
+
+    /* The CLI supplies an explicit atomic source capture through these
+     * variables. Prefer that complete bundle over directory discovery, and
+     * reject partial or unauthenticated overrides instead of silently
+     * continuing with an unrelated screen or an unbound viewport. */
+    configured_vram = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
+    configured_vce = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
+    configured_vdc = getenv("FIRESTAFF_THERON_VDC_STATE_SNAPSHOT");
+    configured_sat = getenv("FIRESTAFF_THERON_VDC_SAT_SNAPSHOT");
+    configured_io = getenv("FIRESTAFF_THERON_VDC_IO_TRACE");
+    configured_capture =
+        (configured_vram && configured_vram[0]) ||
+        (configured_vce && configured_vce[0]) ||
+        (configured_vdc && configured_vdc[0]) ||
+        (configured_sat && configured_sat[0]) ||
+        (configured_io && configured_io[0]);
+    if (configured_capture) {
+        return theron_vp_try_capture_paths(
+            vp, configured_vram, configured_vce, configured_vdc,
+            configured_sat, configured_io, NULL, NULL);
+    }
+
     if (!data_dir || !data_dir[0]) return 1;
     for (i = 0u; i < sizeof(subdirs) / sizeof(subdirs[0]); ++i) {
         const char *sep = subdirs[i][0] ? "/" : "";
