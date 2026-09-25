@@ -81,28 +81,43 @@ static int verify_variant(const char *path, const char *md5_hex, int jp) {
 
 int main(void) {
     const char *home = getenv("HOME");
-    char us[512];
-    char jp[512];
+    char us[1024];
+    char jp[1024];
+    FILE *us_file;
+    FILE *jp_file;
+    int have_us;
+    int have_jp;
     if (!home || !home[0]) return 77;
     snprintf(us, sizeof(us), "%s/.firestaff/data/theron/TQUS02.bin", home);
     snprintf(jp, sizeof(jp), "%s/.firestaff/data/theron/TQJP02.bin", home);
-    {
-        FILE *us_file = fopen(us, "rb");
-        FILE *jp_file = fopen(jp, "rb");
-        if (!us_file || !jp_file) {
-            if (us_file) fclose(us_file);
-            if (jp_file) fclose(jp_file);
-            puts("SKIP: authentic US and JP Track 02 files are not staged");
-            return 77;
-        }
-        fclose(us_file);
-        fclose(jp_file);
+    us_file = fopen(us, "rb");
+    jp_file = fopen(jp, "rb");
+    if (!jp_file) {
+        snprintf(jp, sizeof(jp),
+                 "%s/.firestaff/data/theron/"
+                 "Dungeon Master - Theron's Quest (Japan) (Rev 1) "
+                 "(Track 02).bin", home);
+        jp_file = fopen(jp, "rb");
     }
-    if (!verify_variant(us, THERON_TRACK02_MD5_US_BIN, 0) ||
-        !verify_variant(jp, THERON_TRACK02_MD5_JP_BIN, 1)) {
+    have_us = us_file != NULL;
+    have_jp = jp_file != NULL;
+    if (us_file) fclose(us_file);
+    if (jp_file) fclose(jp_file);
+    if (!have_us && !have_jp) {
+        puts("SKIP: authentic US and JP Track 02 sources are not staged");
+        return 77;
+    }
+    if ((have_us && !verify_variant(us, THERON_TRACK02_MD5_US_BIN, 0)) ||
+        (have_jp && !verify_variant(jp, THERON_TRACK02_MD5_JP_BIN, 1))) {
         fputs("FAIL: regional production roster bind\n", stderr);
         return 1;
     }
-    puts("PASS: production party is empty until US/JP source records bind");
+    if (have_us && have_jp) {
+        puts("PASS: production party is empty until US/JP source records bind");
+    } else if (have_jp) {
+        puts("PASS: authentic JP production roster records bind; US source is not staged");
+    } else {
+        puts("PASS: authentic US production roster records bind; JP source is not staged");
+    }
     return 0;
 }

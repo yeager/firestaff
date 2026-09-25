@@ -20,7 +20,11 @@ static int failures;
 
 static uint8_t *load_real_track02(const char *env_name, const char *leaf,
                                   size_t *out_size) {
-    const char *path = getenv(env_name);
+    const char *path = env_name ? getenv(env_name) : NULL;
+    const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
+    const char *workspace_root = getenv("FIRESTAFF_WORKSPACE_DATA_DIR");
+    const char *home = getenv("HOME");
+    const int explicit_path = path && path[0];
     char default_path[1024];
     FILE *file;
     long length;
@@ -29,9 +33,6 @@ static uint8_t *load_real_track02(const char *env_name, const char *leaf,
     if (out_size) *out_size = 0u;
     if (!env_name || !leaf || !out_size) return NULL;
     if (!path || !path[0]) {
-        const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
-        const char *workspace_root = getenv("FIRESTAFF_WORKSPACE_DATA_DIR");
-        const char *home = getenv("HOME");
         if (theron_root && theron_root[0]) {
             snprintf(default_path, sizeof(default_path), "%s/%s",
                      theron_root, leaf);
@@ -47,6 +48,24 @@ static uint8_t *load_real_track02(const char *env_name, const char *leaf,
         path = default_path;
     }
     file = fopen(path, "rb");
+    if (!file && !explicit_path && strcmp(leaf, "TQJP02.bin") == 0) {
+        static const char jp_cue_track02[] =
+            "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin";
+        if (theron_root && theron_root[0]) {
+            snprintf(default_path, sizeof(default_path), "%s/%s",
+                     theron_root, jp_cue_track02);
+        } else if (workspace_root && workspace_root[0]) {
+            snprintf(default_path, sizeof(default_path), "%s/theron/%s",
+                     workspace_root, jp_cue_track02);
+        } else if (home && home[0]) {
+            snprintf(default_path, sizeof(default_path),
+                     "%s/.firestaff/data/theron/%s", home, jp_cue_track02);
+        } else {
+            return NULL;
+        }
+        path = default_path;
+        file = fopen(path, "rb");
+    }
     if (!file) return NULL;
     if (fseek(file, 0L, SEEK_END) != 0 ||
         (length = ftell(file)) <= 0 ||
@@ -67,6 +86,7 @@ static uint8_t *load_real_track02(const char *env_name, const char *leaf,
 
 static void check_real_startup_region(const char *env_name, const char *leaf,
                                       const char *md5_hex) {
+    const int initial_failures = failures;
     Theron_StartupFlow flow;
     Theron_DungeonProgression progression;
     Theron_V1_World startup_world;
@@ -220,6 +240,10 @@ static void check_real_startup_region(const char *env_name, const char *leaf,
         track02[track02_size - 1u] ^= 1u;
     }
     free(track02);
+    if (failures == initial_failures) {
+        printf("PASS: authentic %s Track 02 completed startup/combat integration\n",
+               env_name);
+    }
 }
 
 int main(void) {

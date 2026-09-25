@@ -2,28 +2,33 @@
 
 ## 2026-09-25 — Missing loose BINs no longer fail unrelated startup probes
 
-- The startup-flow and combat-source probes now skip only their optional
-  authentic loose-Track-02-BIN integrations when those exact regional files
-  are not staged. They never substitute fixture bytes for missing game media.
-  On trv2, the two probes pass with explicit skip output; authentic US
-  CloneCD ZIP, US CUE and JP CUE runtime-boot tests also pass against the
-  installed original media. The raw-US-BIN boot test remains an explicit
-  media skip. The loose-BIN regional integrations still run when the files
-  are present, as verified locally. This repairs test behavior for supported
-  authentic media layouts; it does not claim new gameplay parity.
+- The startup-flow probe skips its optional authentic US loose-Track-02-BIN
+  integration when that exact file is absent. The combat-source test resolves
+  the authenticated JP Rev. 1 Track 02 under its original CUE filename and
+  runs its real regional startup/combat integration; it skips only the absent
+  US loose BIN on trv2. Neither probe substitutes fixture bytes for missing
+  game media. Authentic US CloneCD ZIP, US CUE and JP CUE runtime-boot tests
+  also pass against the installed original media. The raw-US-BIN boot test
+  remains a media skip. The canonical loose-BIN integrations still run when
+  those files are present, as verified locally. This repairs test behavior
+  for supported authentic media layouts; it does not claim new gameplay
+  parity.
 
 ## 2026-09-25 — JP CUE Track 02 auto-runs the seven-dungeon source regression
 
-- The regional source-loader test now discovers the authentic Rev. 1 CUE
-  Track 02 under its preserved archival filename when the canonical
-  `TQJP02.bin` name is absent. CMake selects that real file for the test
-  instead of injecting a nonexistent canonical path. The trv2 CTest run now
-  passes the test against the installed Track 02 hash and verifies all seven
-  JP source dungeons (34 maps, 2,269 source objects); no media was copied,
-  generated, or substituted. This remains source-loader evidence, not
-  original transition or gameplay parity. The full trv2 Theron suite then
-  reported 44 passed and 17 skipped out of 61 tests, with no failures; skips
-  are the specific absent BIN, capture, save or archive inputs.
+- The regional source-loader and startup/combat tests now discover the
+  authentic Rev. 1 CUE Track 02 under its preserved archival filename when
+  the canonical `TQJP02.bin` name is absent. CMake selects that real file for the test
+  instead of injecting a nonexistent canonical path. The production roster
+  test likewise binds the actual JP roster and reports the absent US source
+  separately. The trv2 regressions pass against the installed Track 02 hash;
+  the source-loader test verifies all seven JP source dungeons (34 maps,
+  2,269 source objects), and both runtime-entry tests exercise the authentic JP
+  roster. No media was copied, generated, or substituted. This remains
+  source-loader/roster evidence, not original transition or gameplay parity.
+  The full trv2 Theron suite then reported 45 passed and 16 skipped out of 61
+  tests, with no failures; skips are the specific absent BIN, capture, save or
+  archive inputs.
 
 ## 2026-09-25 — JP CUE ISO loads authentic source dungeons
 
