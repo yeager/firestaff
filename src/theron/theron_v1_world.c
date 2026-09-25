@@ -1894,6 +1894,22 @@ Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world,
         return 0;
     }
 
+    /* Track 02 authenticates stair-class tiles, but the original transition
+     * consumer that supplies the target level and spawn pose is still
+     * unbound. Do not let this generic host helper manufacture +/-1 and
+     * same-coordinate destinations for a source-backed level. */
+    if (tt == THERON_TRANSITION_STAIRS &&
+        world->current_dungeon >= 1 &&
+        world->current_dungeon <= (int)THERON_DUNGEON_COUNT &&
+        world->current_level >= 0 &&
+        world->current_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+        world->level_loaded[world->current_dungeon - 1]
+                           [world->current_level] &&
+        world->levels[world->current_dungeon - 1]
+                     [world->current_level].source_header_verified) {
+        return 0;
+    }
+
     world->transition_pending = 1;
     world->transition_type    = tt;
 

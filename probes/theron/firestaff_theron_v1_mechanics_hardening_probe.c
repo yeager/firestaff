@@ -244,6 +244,36 @@ static void test_unloaded_stairs_block(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: generic transition helper must not guess authentic stair targets
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_authentic_stairs_transition_helper_fails_closed(void) {
+    printf("[test:authentic_stairs_transition_helper_fails_closed]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    w.levels[0][0].source_header_verified = 1;
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_STAIRS_DOWN;
+    w.transition_pending = 0;
+    w.transition_type = THERON_TRANSITION_EXIT;
+    w.transition_target_level = 77;
+    w.transition_spawn_x = 66;
+    w.transition_spawn_y = 55;
+
+    CHECK_INT("authentic stairs helper stays unresolved",
+              theron_v1_check_transition(&w, 9, 8), 0);
+    CHECK_INT("authentic stairs helper leaves queue clear",
+              w.transition_pending, 0);
+    CHECK_INT("authentic stairs helper preserves prior type",
+              w.transition_type, THERON_TRANSITION_EXIT);
+    CHECK_INT("authentic stairs helper does not invent target level",
+              w.transition_target_level, 77);
+    CHECK_INT("authentic stairs helper does not invent spawn x",
+              w.transition_spawn_x, 66);
+    CHECK_INT("authentic stairs helper does not invent spawn y",
+              w.transition_spawn_y, 55);
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: incomplete dungeon exit fails closed
  * ═══════════════════════════════════════════════════════════════ */
 static void test_incomplete_exit_blocks(void) {
@@ -762,6 +792,7 @@ int main(void) {
     test_pit_fall();
     test_unresolved_teleporter_blocks();
     test_unloaded_stairs_block();
+    test_authentic_stairs_transition_helper_fails_closed();
     test_incomplete_exit_blocks();
     test_source_pit_blocks();
     test_click_route_move();
