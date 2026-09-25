@@ -1,5 +1,13 @@
 # Firestaff DONE — DM2
 
+- 2026-09-25: Re-ran the authentic-media native launch matrix against the
+  supplied DOS English, DOS French, Macintosh, Amiga and FM Towns archives.
+  All five CTest routes passed. The DOS and Amiga start-menu tests reached a
+  presented runtime frame; the Macintosh, French DOS and FM Towns tests
+  passed their existing CLI and launcher route checks. This verifies the
+  bounded start paths exercised by those tests, not the open original-frame
+  parity or full gameplay items in `TODO-dm2.md`.
+
 ## 2026-09-25 — French DOS runtime regression timeout
 
 - Increased the French DOS CTest allowance to cover both fresh sessions in the
