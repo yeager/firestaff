@@ -2,6 +2,13 @@
 
 Reviewed 2026-09-24. Only open work is listed here.
 
+2026-09-25: The fixture-only viewport lookup no longer assigns an ordinary
+floor tile to authenticated stair-class squares whose direction/material
+consumer is unknown. Production drawing was already fail-closed; this keeps
+fixture inspection from implying original stair artwork. Real US/JP Track 02
+loader checks and the US raw/ISO comparison pass, but original stair rendering
+and transition semantics remain open.
+
 Firestaff's product runtime is native. Emulator instrumentation may be used
 to acquire evidence, but emulator launch and BIOS/System Card dependencies
 are not product features.

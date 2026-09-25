@@ -190,10 +190,13 @@ static const int g_tile_table[16][TQR_VP_DEPTH][2] = {
         [3] = {213, TILE_FALLBACK},
     },
     [14] = {
-        [0] = {128, TILE_FALLBACK},
-        [1] = {136, TILE_FALLBACK},
-        [2] = {144, TILE_FALLBACK},
-        [3] = {152, TILE_FALLBACK},
+        /* Authenticated source identifies a stair-class square, but its
+         * direction and original material consumer are not bound. Do not
+         * paint it as ordinary floor in fixture rendering. */
+        [0] = {TILE_FALLBACK, TILE_FALLBACK},
+        [1] = {TILE_FALLBACK, TILE_FALLBACK},
+        [2] = {TILE_FALLBACK, TILE_FALLBACK},
+        [3] = {TILE_FALLBACK, TILE_FALLBACK},
     },
     [15] = {
         [0] = {128, TILE_FALLBACK},
