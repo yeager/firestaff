@@ -1,5 +1,11 @@
 # Firestaff DONE — DM1
 
+- 2026-09-25: Re-ran authentic Atari ST archive launch tests for English
+  1.0a/1.0b/1.1, German 1.2 and French 1.3. All five passed their CLI and M12
+  start-menu checks against original STX files. The receipts still start
+  without a recruited champion; this does not close the documented playable
+  Atari campaign-start gap.
+
 - 2026-09-25: Fixed the authentic Amiga HD regression's command matrix. It
   previously requested `--boot-probe` together with `--menu`, a combination
   that the CLI rejects, and expanded an empty Bash array under `set -u` on the
