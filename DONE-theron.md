@@ -9,10 +9,12 @@
   US loose BIN on trv2. Neither probe substitutes fixture bytes for missing
   game media. Authentic US CloneCD ZIP, US CUE and JP CUE runtime-boot tests
   also pass against the installed original media. The raw-US-BIN boot test
-  remains a media skip. The canonical loose-BIN integrations still run when
-  those files are present, as verified locally. This repairs test behavior
-  for supported authentic media layouts; it does not claim new gameplay
-  parity.
+  remains a media skip. The JP raw-start test accepts the Rev. 1 Track 02
+  archive filename and verifies its exact CUE pairing, original Track 01 audio
+  availability, source-backed start and movement. Canonical loose-BIN
+  integrations still run when those files are present, as verified locally.
+  This repairs test behavior for supported authentic media layouts; it does
+  not claim new gameplay parity.
 
 ## 2026-09-25 — JP CUE Track 02 auto-runs the seven-dungeon source regression
 
@@ -28,7 +30,7 @@
   the runtime-entry tests exercise the authentic JP roster. No media was
   copied, generated, or substituted. This remains source-loader, roster and
   text evidence, not original transition or gameplay parity. The full trv2
-  Theron suite then reported 46 passed and 15 skipped out of 61
+  Theron suite then reported 47 passed and 14 skipped out of 61
   tests, with no failures; skips are the specific absent BIN, capture, save or
   archive inputs.
 

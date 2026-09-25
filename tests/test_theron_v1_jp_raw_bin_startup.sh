@@ -9,6 +9,13 @@ fi
 app=$1
 data_root=${FIRESTAFF_THERON_JP_RAW_BIN_ROOT:-"$HOME/.firestaff/data/theron"}
 track02="$data_root/TQJP02.bin"
+expected_track01_cdda=0
+if [[ ! -f "$track02" ]]; then
+    track02="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin"
+    if [[ -f "$track02" ]]; then
+        expected_track01_cdda=1
+    fi
+fi
 expected_md5=b7afb338ad31be1025b53f9aff12d73a
 
 if [[ ! -x "$app" ]]; then
@@ -16,7 +23,7 @@ if [[ ! -x "$app" ]]; then
     exit 1
 fi
 if [[ ! -f "$track02" ]]; then
-    printf 'SKIP: authentic Theron JP raw Track 02 BIN is not staged\n'
+    printf 'SKIP: authentic Theron JP Rev. 1 Track 02 BIN is not staged\n'
     exit 77
 fi
 
@@ -59,10 +66,9 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq 'theronDungeonSourceHeaders=4' "$output" ||
    ! grep -Eq 'theronDungeonSourceNonzeroTiles=[1-9][0-9]*' "$output" ||
    ! grep -Fq 'theronActiveChampion=1' "$output" ||
-   # The selected source is the loose, hash-verified Track 02 BIN.  A staged
-   # archive elsewhere in the directory must not be inferred as its Track 01
-   # companion; CDDA is admitted only through an exact CUE pairing.
-   ! grep -Fq 'theronTrack01CddaReady=0' "$output" ||
+   # A loose BIN has no inferred Track 01 companion. The archival CUE-split
+   # Track 02 file may bind CDDA only through its exact authentic CUE pairing.
+   ! grep -Fq "theronTrack01CddaReady=$expected_track01_cdda" "$output" ||
    ! grep -Fq 'theronSpawnSourceAuthenticated=1' "$output" ||
    ! grep -Fq 'theronSpawnSourceVariant=1' "$output" ||
    ! grep -Fq 'theronTrack02ItemNameBanks=7' "$output" ||
