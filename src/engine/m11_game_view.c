@@ -13644,9 +13644,15 @@ static int m11_csb_apply_boot_runtime_receipt(
              * ReDMCSB STARTUP1.C:163; LOADSAVE.C F0435. */
             state->csbStartupExpectedPackageIdentity =
                 package_identity ? package_identity : 1u;
-            if (!m11_csb_bind_fmtowns_switch(state, language) ||
-                !m11_csb_enter_fmtowns_game(state, language) ||
-                !m11_csb_fmtowns_load_user_save_path(state, spec->savePath)) {
+            if (!m11_csb_bind_fmtowns_switch(state, language)) {
+                m11_set_status(state, "CSB FM TOWNS", "SAVE HANDOFF FAILED");
+                return 0;
+            }
+            if (!m11_csb_enter_fmtowns_game(state, language)) {
+                m11_set_status(state, "CSB FM TOWNS", "SAVE HANDOFF FAILED");
+                return 0;
+            }
+            if (!m11_csb_fmtowns_load_user_save_path(state, spec->savePath)) {
                 m11_set_status(state, "CSB FM TOWNS", "SAVE HANDOFF FAILED");
                 return 0;
             }
@@ -30179,6 +30185,7 @@ static int m11_csb_fmtowns_load_user_save_path(M11_GameViewState *state,
     CSB_V1_FmtownsUserSaveReceipt user_save;
     CSB_V1_FmtownsStartupState startup_state;
     CSB_V1_BootProfile *profile;
+    int loaded;
 
     if (!state || !path || !path[0] || !state->csbBootProfile) {
         return 0;
@@ -30190,17 +30197,20 @@ static int m11_csb_fmtowns_load_user_save_path(M11_GameViewState *state,
      * header, five obfuscated save parts and dungeon tail as one
      * transaction.  A genuine user slot can therefore resume, while F0433
      * remains closed until byte-correct native writing is proven. */
-    if (((state->csbFmtownsGameHandoffReceipt.startup_mini_bytes &&
-          state->csbFmtownsGameHandoffReceipt.startup_mini_bytes_size != 0u &&
-          strcmp(path,
-                 state->csbFmtownsGameHandoffReceipt.startup_mini_path) == 0)
-             ? csb_v1_fmtowns_game_load_startup_state(
-                   &state->csbFmtownsGameHandoffReceipt, &startup_state)
-             : (csb_v1_fmtowns_game_user_save_open_or_restore_backup(
-                    profile, &state->csbFmtownsGameHandoffReceipt, path,
-                    &user_save) &&
-                csb_v1_fmtowns_game_load_user_save_state(
-                    &user_save, &startup_state))) ||
+    if (state->csbFmtownsGameHandoffReceipt.startup_mini_bytes &&
+        state->csbFmtownsGameHandoffReceipt.startup_mini_bytes_size != 0u &&
+        strcmp(path,
+               state->csbFmtownsGameHandoffReceipt.startup_mini_path) == 0) {
+        loaded = csb_v1_fmtowns_game_load_startup_state(
+            &state->csbFmtownsGameHandoffReceipt, &startup_state);
+    } else {
+        loaded = csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                     profile, &state->csbFmtownsGameHandoffReceipt, path,
+                     &user_save) &&
+                 csb_v1_fmtowns_game_load_user_save_state(
+                     &user_save, &startup_state);
+    }
+    if (!loaded ||
         !csb_v1_fmtowns_game_apply_startup_state(&startup_state,
                                                   &profile->runtime)) {
         csb_v1_fmtowns_game_startup_state_free(&startup_state);
