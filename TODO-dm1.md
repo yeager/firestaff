@@ -227,14 +227,17 @@
   contain no `DUNGEON.FTL`. The Atari v1.0 software archive also contains an
   authentic MSA Automation Disk whose root has `DMGAME.DAT` and `DMGAME.BAK`
   (47,710 bytes each). Both pass the original-save header checksum and classify
-  as FormatID 1 / `ORIGINAL_DM1`, but remain header-only: the original Atari
-  importer is not implemented. The matched v1.0 STX is not admitted by the
-  current runtime, and passing either save to the admitted v1.2 STX still
-  produces the same zero-champion map-0 start as no save. Treat these as
-  promising original save candidates, not a verified campaign corpus. Current
-  Atari start-menu tests prove M11 runtime admission, not a playable party.
-  Complete F0435/F0462's source-owned Atari save/new-game path and verify it
-  against a matching authentic campaign before promoting the start to playable.
+  as FormatID 1 / `ORIGINAL_DM1`. The primary `DMGAME.DAT` also authenticates
+  all five F0435 save parts: 128-byte GLOBAL_DATA, 60 x 16-byte active groups,
+  a 3,328-byte four-champion PARTY, 463 x 10-byte events and a 926-byte
+  timeline. Its source state is four champions on map 2 at (11,14), facing
+  direction 3. F0434's 37,226-byte dungeon tail is not yet authenticated, and
+  the Atari runtime importer is not implemented. The matched v1.0 STX is not
+  admitted by the current runtime; passing the original save to admitted v1.2
+  STX yields the same zero-champion fresh start as no save. Keep the save as a
+  verified source-part candidate, not a verified playable runtime. Complete
+  F0435/F0434/F0436 and F0462's source-owned Atari load/start path before
+  promoting it to playable.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,
