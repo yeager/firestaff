@@ -55,19 +55,31 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
 fi
 
 # Follow the same normal M12 -> M11 title/entrance handoff as the English
-# Atari ST v1.2 route; a separate boot probe cannot satisfy this receipt.
+# Atari ST v1.2 route, then recruit from the authentic Hall through live input.
 case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
 esac
 runtime_probe="$app_dir/dm1-atari-st-fr-runtime-$$.json"
-trap 'rm -f "$runtime_probe"' EXIT
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+scratch_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$scratch_root"
+menu_home="$scratch_root/dm1-atari-st-fr-menu-home-$$"
+mkdir -p "$menu_home"
+trap 'rm -f "$runtime_probe"; rm -rf "$menu_home"' EXIT
+# The default 960x540 host view presents a centered 640x400 game image. This
+# point maps to the source C127 portrait hit point (112,83).
+m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
+for token in up up up up turn-left up up up turn-left \
+    up up up up up turn-right up up turn-right up turn-left \
+    up up turn-right up turn-left up up turn-left; do
+    m12_hoc_route+=",wait30,$token"
+done
+m12_hoc_route+=',wait30,click:384:236,wait10'
+HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$archive" \
-    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
-    --duration 20000 >/dev/null 2>&1
+    --script "$m12_hoc_route" --duration 45000 >/dev/null 2>&1
 python3 - "$runtime_probe" <<'PY'
 import json
 import sys
@@ -83,9 +95,11 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
-         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
-    raise SystemExit(f"FAIL: authentic French DM1 Atari start menu did not reach its source runtime state: {probe}")
-print("PASS: authentic French DM1 Atari start menu reached its source runtime state")
+         party["direction"], party["championCount"]) != (0, 10, 4, 0, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
+                           "candidatePartyIndex": 0}):
+    raise SystemExit(f"FAIL: authentic French DM1 Atari start menu did not reach and recruit from C127 ordinal 14: {probe}")
+print("PASS: authentic French DM1 Atari start menu recruited C127 ordinal 14")
 PY
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

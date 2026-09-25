@@ -70,13 +70,23 @@ grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu_output"
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/dm1-atari-menu-runtime-$$.json"
-trap 'rm -f "$menu_probe_json"' EXIT
-FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+menu_home="$test_scratch/dm1-atari-menu-home-$$"
+mkdir -p "$menu_home"
+trap 'rm -f "$menu_probe_json"; rm -rf "$menu_home"' EXIT
+# The default 960x540 host view presents a centered 640x400 game image. This
+# point maps to the source C127 portrait hit point (112,83).
+m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
+for token in up up up up turn-left up up up turn-left \
+    up up up up up turn-right up up turn-right up turn-left \
+    up up turn-right up turn-left up up turn-left; do
+    m12_hoc_route+=",wait30,$token"
+done
+m12_hoc_route+=',wait30,click:384:236,wait10'
+HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform atari-st --data-dir "$archive" \
-    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
-    --duration 20000 >/dev/null 2>&1
+    --script "$m12_hoc_route" --duration 45000 >/dev/null 2>&1
 python3 - "$menu_probe_json" <<'PY'
 import json
 import sys
@@ -89,9 +99,14 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["active"] != 1 or startup["startupActive"] != 0 or
         startup["dm1StartupHandoffExecuted"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
-        startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime"):
-    raise SystemExit(f"FAIL: authentic DM1 Atari start menu did not reach runtime: {probe}")
-print("PASS: authentic DM1 Atari ST start menu reached its source-owned runtime frame")
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
+        (probe["party"]["mapIndex"], probe["party"]["mapX"],
+         probe["party"]["mapY"], probe["party"]["direction"],
+         probe["party"]["championCount"]) != (0, 10, 4, 0, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
+                           "candidatePartyIndex": 0}):
+    raise SystemExit(f"FAIL: authentic DM1 Atari start menu did not recruit C127 ordinal 14: {probe}")
+print("PASS: authentic DM1 Atari ST start menu recruited C127 ordinal 14")
 PY
 
 # The third platform card is Atari ST.  This verifies pointer-only card
@@ -142,4 +157,4 @@ probe_runtime_input strafe-left 1,3,2
 probe_runtime_input strafe-right 1,3,2
 probe_runtime_input action 1,3,2
 
-printf '%s\n' 'PASS: authentic DM1 nested Atari ZIP -> ZIP -> STX reaches CLI, menu, and complete native input matrix'
+printf '%s\n' 'PASS: authentic DM1 nested Atari ZIP -> ZIP -> STX reaches CLI, M12 Hall recruitment, and complete native input matrix'
