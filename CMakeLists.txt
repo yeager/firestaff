@@ -45889,6 +45889,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_vram_trace_real_capture
         tests/test_theron_v1_vram_trace_real_capture.c
         src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_viewport.c
+        src/theron/theron_v1_track02_font_glyphs.c
         src/theron/theron_v1_viewport_runtime_noop.c
         src/theron/theron_v1_palette.c)
     target_link_libraries(test_theron_v1_vram_trace_real_capture PRIVATE

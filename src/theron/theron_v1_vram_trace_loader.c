@@ -255,13 +255,10 @@ static int theron_v1_vdc_state_load_verified(
     vp->vdc_bat_height = (mwr & 0x40u) ? 64u : 32u;
     vp->vdc_display_width = (uint16_t)(((hdr & 0x7fu) + 1u) * 8u);
     vp->vdc_display_height = (uint16_t)((vdr & 0x01ffu) + 1u);
-    /* Admit only the independently replay-verified US and JP capture modes.
-     * Their complete bundle hashes are checked by the caller before this
-     * state is consumed. */
-    if (!((vp->vdc_bat_width == 64u && vp->vdc_bat_height == 64u &&
-           vp->vdc_display_width == 320u && vp->vdc_display_height == 200u) ||
-          (vp->vdc_bat_width == 32u && vp->vdc_bat_height == 32u &&
-           vp->vdc_display_width == 256u && vp->vdc_display_height == 240u)))
+    /* The first admitted bundle is deliberately exact.  Later geometries
+     * require their own authenticated triple and framebuffer audit. */
+    if (vp->vdc_bat_width != 64u || vp->vdc_bat_height != 64u ||
+        vp->vdc_display_width != 320u || vp->vdc_display_height != 200u)
         return -1;
     vp->vdc_state_loaded = 1;
     (void)hsr;
@@ -321,13 +318,7 @@ int theron_v1_vram_trace_load_known_atomic_capture_bundle(
          * zero CD-to-RAM receipts and no game-owned $E009 dispatch mean
          * this remains screen-space only, with no level semantics. */
         {0x59ef2648u, 0x6fb303b5u, 0x21d291e3u, 0xf8cc0675u,
-         0x49d2ae18u, 27556u, 9360u},
-        /* 2026-09-25 authentic JP Rev. 1 cold full-disc replay. The raw
-         * VDC writes reproduce the 64 KiB VRAM snapshot exactly; it is a
-         * 32x32 BAT / 256x240 screen capture with no CD-to-RAM receipt or
-         * transition, so this remains a source-screen-only admission. */
-        {0x19490536u, 0x4e48c361u, 0xe54ec36cu, 0x4d7705c5u,
-         0xe78bf90au, 30453u, 12544u}
+         0x49d2ae18u, 27556u, 9360u}
     };
     FILE *sat_file;
     size_t known_index;
@@ -352,20 +343,9 @@ int theron_v1_vram_trace_load_known_atomic_capture_bundle(
                 known[known_index].vdc_io_fnv1a)
             break;
     }
-    if (known_index == sizeof(known) / sizeof(known[0])) {
-        fprintf(stderr,
-                "THERON VDC capture identity not admitted: vram=%08x vce=%08x state=%08x sat=%08x io=%08x\n",
-                theron_vram_trace_fnv1a_file(vram_path),
-                theron_vram_trace_fnv1a_file(vce_path),
-                theron_vram_trace_fnv1a_file(vdc_state_path),
-                theron_vram_trace_fnv1a_file(vdc_sat_path),
-                theron_vram_trace_fnv1a_file(vdc_io_path));
+    if (known_index == sizeof(known) / sizeof(known[0]) ||
+        !theron_v1_mednafen_vdc_io_trace_load_file(vdc_io_path, &trace))
         return -1;
-    }
-    if (!theron_v1_mednafen_vdc_io_trace_load_file(vdc_io_path, &trace)) {
-        fprintf(stderr, "THERON VDC capture rejected: VDC-I/O stream failed validation\n");
-        return -1;
-    }
     replay_verified = theron_v1_mednafen_vdc_io_verify_vram_snapshot(
         &trace, vram_path, &replay);
     theron_v1_mednafen_vdc_io_trace_free(&trace);
@@ -374,13 +354,7 @@ int theron_v1_vram_trace_load_known_atomic_capture_bundle(
         replay.written_word_count != known[known_index].written_word_count ||
         replay.matched_word_count != known[known_index].written_word_count ||
         replay.mismatched_word_count != 0u ||
-        replay.semantic_publication_allowed) {
-        fprintf(stderr,
-                "THERON VDC capture rejected: replay commits=%u words=%u matched=%u mismatched=%u\n",
-                replay.vwr_commit_count, replay.written_word_count,
-                replay.matched_word_count, replay.mismatched_word_count);
-        return -1;
-    }
+        replay.semantic_publication_allowed) return -1;
 
     if (theron_v1_vram_trace_load_verified_files(
             vp, vram_path, vce_path, known[known_index].vram_fnv1a,

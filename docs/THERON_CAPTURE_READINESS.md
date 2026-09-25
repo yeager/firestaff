@@ -1,17 +1,16 @@
 # Theron Capture Readiness
 
-## 2026-09-25 — JP source-screen capture
+## 2026-09-25 — JP cold-start capture is System Card-only
 
-The hash-locked authentic JP Rev. 1 cold full-disc capture is now accepted as
-an atomic screen-space bundle after its VDC-I/O stream exactly replays the
-captured 64 KiB VRAM snapshot (30,453 VWR commits, 12,544/12,544 words
-matched). The VDC state is 32x32 BAT and 256x240 active display; the production
-viewport maps the authentic BAT/VCE pixels and presents the 4:3 source area in
-a centered 256x192 M11 region. Its real empty SAT remains empty. This does not
-prove a level transition, source-owned dungeon consumer, gameplay semantics,
-or README-eligible screenshot; the capture files remain operator-local. The
-Firestaff CLI's atomic-bundle test also passes with this authentic JP bundle
-and `TQJP02.bin`, including fail-closed rejection of an incomplete bundle.
+The hash-locked authentic JP Rev. 1 cold full-disc capture has a VDC-I/O stream
+that exactly replays its captured 64 KiB VRAM snapshot (30,453 VWR commits,
+12,544/12,544 words matched). However, visual inspection shows the PC Engine
+CD-ROM System Card screen, not Theron game graphics. Its 512 `$2600-$27FF`
+reads are zero-valued BIOS `$CB22` reads, with no authenticated CD-to-RAM
+receipt and no game transition. The bundle is deliberately not admitted by the
+Theron production viewport, and it is not a Theron screenshot. A temporary
+admission/CLI test was reverted after this source mismatch was identified.
+Keep capture files operator-local; game-owned JP rendering remains blocked.
 
 ## Local media boundary
 

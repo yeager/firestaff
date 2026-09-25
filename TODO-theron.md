@@ -22,20 +22,14 @@ raw sector and SCSI binding to match and keeps semantic publication blocked;
 the real JP sidecar passes at 24/24 sectors and bindings. The authenticated
 VDC-I/O verifier independently replays the exact snapshot boundary: 30,453
 VWR commits write 12,544 words, all 12,544 match the captured 64 KiB VRAM
-snapshot, with zero mismatches. This admits the capture as a coherent screen
-snapshot only; its 512 init-only `$2600` reads still do not prove a game-owned
-dungeon consumer or transition.
-The same hash-locked JP bundle is now admitted by the production source-screen
-viewport using its actual 32x32 BAT and 256x240 VDC geometry. The authentic
-VCE palette and 139 BAT cells render to 4,529 nonzero source pixels; the
-production M11 presenter preserves the 4:3 screen area in a centered 256x192
-region, producing the same 4,529 nonzero pixels. The real JP cold-start capture
-has no SAT sprites, which is accepted as an observed empty SAT rather than
-inventing sprite data. This remains a screenshot/screen-space receipt only;
-the JP gameplay and post-CD consumer gates stay closed. The source BMP stays in
-ignored local scratch. The end-to-end CLI capture test also passes with this
-JP bundle and the authentic `TQJP02.bin`: the app binds the bundle and reports
-the Theron boot probe ready; its incomplete-bundle rejection remains enforced.
+snapshot, with zero mismatches. Visual inspection of the captured 256x240 VDC
+frame shows the PC Engine CD-ROM System Card screen, not Theron game graphics.
+Its 512 init-only `$2600` reads are zero-valued BIOS `$CB22` reads; the capture
+has no authenticated CD-to-RAM receipt and no game transition. Do not promote
+this bundle into the Theron runtime or a game screenshot. A trial admission
+and CLI pass were reverted after the visual check exposed this source mismatch.
+The correct production boundary remains fail-closed until a game-owned capture
+is joined to the Theron media and consumer. Capture and sidecars remain local.
 
 2026-09-25: Fixed the production M11 boot path so explicit CLI-provided
 VRAM/VCE/VDC-state/SAT/VDC-I/O files are passed as one authenticated bundle to
