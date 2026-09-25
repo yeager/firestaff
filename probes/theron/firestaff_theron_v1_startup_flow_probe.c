@@ -2671,9 +2671,6 @@ int main(void) {
             uint8_t *authentic_track02 =
                 read_authentic_us_track02(&authentic_track02_size);
 
-            check_int("authentic runtime Track02 available",
-                      authentic_track02 != NULL,
-                      1);
             if (authentic_track02) {
                 for (Theron_DungeonID authentic_dungeon =
                          THERON_DUNGEON_1_AKUTUBA;
@@ -2711,6 +2708,9 @@ int main(void) {
                               1);
                 }
                 free(authentic_track02);
+            } else {
+                puts("SKIP authentic runtime Track 02 BIN integration: "
+                     "authentic loose US BIN is not staged");
             }
             goto after_track02_fixture_runtime_checks;
 

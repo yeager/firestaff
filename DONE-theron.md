@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-25 — Missing loose BINs no longer fail unrelated startup probes
+
+- The startup-flow and combat-source probes now skip only their optional
+  authentic loose-Track-02-BIN integrations when those exact regional files
+  are not staged. They never substitute fixture bytes for missing game media.
+  On trv2, the two probes pass with explicit skip output; authentic US
+  CloneCD ZIP, US CUE and JP CUE runtime-boot tests also pass against the
+  installed original media. The raw-US-BIN boot test remains an explicit
+  media skip. The loose-BIN regional integrations still run when the files
+  are present, as verified locally. This repairs test behavior for supported
+  authentic media layouts; it does not claim new gameplay parity.
+
 ## 2026-09-25 — JP CUE ISO loads authentic source dungeons
 
 - Byte-compared the authentic JP CUE-projected Track 02 ISO with the
