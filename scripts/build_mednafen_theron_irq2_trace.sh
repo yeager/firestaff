@@ -11,6 +11,7 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 # explicitly instead of silently assuming a shared temporary directory.
 source_root=${1:-${FIRESTAFF_MEDNAFEN_SOURCE_ROOT:-}}
 sdl2_prefix=${FIRESTAFF_MEDNAFEN_SDL2_PREFIX:-}
+patch_only=${FIRESTAFF_MEDNAFEN_PATCH_ONLY:-0}
 # An explicit build root keeps parallel local investigations from reusing an
 # instrumented binary produced from a different patch revision.
 build_root=${FIRESTAFF_MEDNAFEN_BUILD_ROOT:-"$repo/.codex-scratch/mednafen-firestaff-irq2-trace"}
@@ -18,6 +19,10 @@ prefix="$build_root/install"
 
 if [[ -z "$source_root" ]]; then
     printf 'FAIL: provide MEDNAFEN_1.32.1_SOURCE or FIRESTAFF_MEDNAFEN_SOURCE_ROOT\n' >&2
+    exit 2
+fi
+if [[ "$patch_only" != 0 && "$patch_only" != 1 ]]; then
+    printf 'FAIL: FIRESTAFF_MEDNAFEN_PATCH_ONLY must be 0 or 1\n' >&2
     exit 2
 fi
 if [ ! -f "$source_root/src/drivers/debugger.cpp" ] ||
@@ -170,6 +175,12 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
+
+if [[ "$patch_only" == 1 ]]; then
+    # Tests use the exact production patch order without paying for a rebuild.
+    printf 'PASS: complete Theron Mednafen patch set applied to isolated source copy\n'
+    exit 0
+fi
 
 # The FIFO-origin extension is capture-only. It carries raw LBA/offset/FIFO
 # provenance into the CD-transfer receipt; it does not assign level, object,

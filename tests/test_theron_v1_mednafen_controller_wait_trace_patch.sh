@@ -391,6 +391,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_COMMAND_CONSUMER_TRACE' "$main_ram_consumer_patc
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
    ! grep -Fq 'FIRESTAFF_MEDNAFEN_BUILD_JOBS' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_MEDNAFEN_PATCH_ONLY' "$build_script" ||
+   ! grep -Fq 'PASS: complete Theron Mednafen patch set applied' "$build_script" ||
    ! grep -Fq 'make -j"$build_jobs"' "$build_script" ||
    ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script" ||
    ! grep -Fq 'fifo_origin_main_ram_consumer_v2.patch' "$build_script" ||
@@ -406,36 +408,10 @@ if [[ -z ${MEDNAFEN_SOURCE:-} ]]; then
     exit 0
 fi
 
-scratch=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-controller-patch.XXXXXX")
+scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$repo/.codex-scratch"}
+mkdir -p "$scratch_root"
+scratch=$(mktemp -d "$scratch_root/firestaff-theron-controller-patch.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT
-cp -R "$MEDNAFEN_SOURCE/." "$scratch/source"
-git -C "$scratch/source" apply --recount --whitespace=nowarn "$patch_file"
-main_ram_consumer_rendered="$scratch/theron-main-ram-consumer-read.rendered.patch"
-sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
-    "$main_ram_consumer_patch_file" >"$main_ram_consumer_rendered"
-patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$cd_register_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"
-patch -d "$scratch/source" -p1 --batch --forward <"$scripted_input_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$host_input_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$transfer_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$transfer_owner_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$caller_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_window_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_critical_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_register_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_consumer_rendered"
-patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_v2_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_ram_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_direct_read_patch_file"
-vdc_io_rendered="$scratch/theron-vdc-io-trace.rendered.patch"
-sed \
-    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
-    -e $'s/^FIRESTAFF_PATCH_VDC_WRITE_CONTEXT$/ \t       vce->WriteVDC(A \\& 0x80001FFF, V);/' \
-    -e $'s/^FIRESTAFF_PATCH_VDC_BREAK_CONTEXT$/ \t       break;/' \
-    "$vdc_io_patch_file" >"$vdc_io_rendered"
-patch -d "$scratch/source" -p1 --batch --forward <"$vdc_io_rendered"
-printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, FIFO-origin, and bounded e009 evidence\n'
+FIRESTAFF_MEDNAFEN_BUILD_ROOT="$scratch/build" \
+FIRESTAFF_MEDNAFEN_PATCH_ONLY=1 \
+    "$build_script" "$MEDNAFEN_SOURCE"
