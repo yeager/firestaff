@@ -27,9 +27,12 @@ static int parse_file_internal(
     FILE *file;
     char line[512];
     uint32_t expected_sequence = 0u;
+    uint32_t expected_source_sequence = 0u;
+    uint32_t source_sequence_base = 0u;
     uint32_t previous_timestamp = 0u;
     int saw_record = 0;
     int saw_snapshot_boundary = 0;
+    int source_sequence_mode = -1;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -54,7 +57,8 @@ static int parse_file_internal(
     out->register_bounds_verified = 1;
 
     while (1) {
-        unsigned int sequence, timestamp, logical, physical, value;
+        unsigned int sequence, source_sequence = 0u;
+        unsigned int timestamp, logical, physical, value;
         unsigned int writer_pc, writer_physical_pc;
         unsigned int a, x, y;
         int consumed = 0;
@@ -87,16 +91,41 @@ static int parse_file_internal(
         if (saw_snapshot_boundary) return reject(out, file);
         parsed = sscanf(
             line,
-            "vdc_io_write sequence=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x a=%x x=%x y=%x%n",
-            &sequence, &timestamp, &logical, &physical, &value, &writer_pc,
-            &writer_physical_pc, &a, &x, &y, &consumed);
+            "vdc_io_write sequence=%u source_sequence=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x a=%x x=%x y=%x%n",
+            &sequence, &source_sequence, &timestamp, &logical, &physical,
+            &value, &writer_pc, &writer_physical_pc, &a, &x, &y, &consumed);
+        if (parsed == 11) {
+            if (source_sequence_mode == 0 || source_sequence < sequence ||
+                (saw_record &&
+                 (source_sequence - sequence != source_sequence_base ||
+                  source_sequence != expected_source_sequence))) {
+                return reject(out, file);
+            }
+            if (!saw_record) {
+                source_sequence_base = source_sequence - sequence;
+                expected_source_sequence = source_sequence;
+                out->source_sequence_verified = 1;
+                out->source_sequence_base = source_sequence_base;
+                out->first_source_sequence = source_sequence;
+            }
+            source_sequence_mode = 1;
+        } else {
+            if (source_sequence_mode == 1) return reject(out, file);
+            source_sequence_mode = 0;
+            consumed = 0;
+            parsed = sscanf(
+                line,
+                "vdc_io_write sequence=%u timestamp=%u logical_address=%x physical_address=%x value=%x writer_pc=%x writer_physical_pc=%x a=%x x=%x y=%x%n",
+                &sequence, &timestamp, &logical, &physical, &value,
+                &writer_pc, &writer_physical_pc, &a, &x, &y, &consumed);
+        }
         /* HuCPU.Timestamp() is a diagnostic, epoch-local clock.  A real
          * same-session capture proves that it can move backwards by a few
          * cycles as well as wrap to a new execution epoch.  Sequence is the
          * producer-order authority; retain and count timestamp regressions
          * without inventing a monotonicity contract. */
         timestamp_discontinuity = saw_record && timestamp < previous_timestamp;
-        if (parsed != 10 || line[consumed] != '\0' ||
+        if ((parsed != 11 && parsed != 10) || line[consumed] != '\0' ||
             sequence >= THERON_V1_VDC_IO_TRACE_MAX_WRITES ||
             timestamp > UINT32_MAX || logical > 0xffffu ||
             (physical & 0x7f000000u) != 0u ||
@@ -146,6 +175,10 @@ static int parse_file_internal(
             out->timestamp_epoch_count++;
         }
         out->last_timestamp = timestamp;
+        if (source_sequence_mode == 1) {
+            out->last_source_sequence = source_sequence;
+            expected_source_sequence++;
+        }
         out->last_logical_address = logical;
         out->last_physical_address = physical;
         out->last_normalized_physical_address = physical & 0x7fffffffu;

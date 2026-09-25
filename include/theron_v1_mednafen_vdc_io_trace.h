@@ -27,7 +27,11 @@ typedef struct {
     int register_bounds_verified;
     int semantic_publication_allowed;
     int snapshot_boundary_verified;
+    int source_sequence_verified;
     uint32_t write_count;
+    uint32_t source_sequence_base;
+    uint32_t first_source_sequence;
+    uint32_t last_source_sequence;
     uint32_t first_timestamp;
     uint32_t last_timestamp;
     /* Compatibility names: these count observed timestamp runs/regressions,
