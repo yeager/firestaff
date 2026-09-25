@@ -3545,3 +3545,12 @@ av bankladdningen. Se
   virtual-member reads and byte-verified Track 02 provenance through the CDDA
   handoff/stream before claiming archive audio readiness; normal runtime must
   not depend on host extraction or materialize media to disk.
+- ✅ The archive's actual US/JP CUE bytes were streamed from `unrar` to stdout.
+  Each declares Track 01 as its exact original-stem WAVE (`TQUS01.wav` or
+  `TQJP01.wav`); the archive instead carries the corresponding OGG transcode.
+  Streaming those authentic OGG members directly through SHA-256 produced US
+  `c2b296a82898a749503b10edab2523cbb5e7e165ef8c95abafe348fe36bc9c3e` and JP
+  `bfac627f0e1ee7debd5bb356065d11f1b3542402e8831b1634d1eab3e119a619`.
+  Preserve only the exact same-stem `.ogg` fallback already used for loose
+  media, and bind it to the selected regional CUE and verified Track 02; do
+  not infer a track from the archive's broad member list.
