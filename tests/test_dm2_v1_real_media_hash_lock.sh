@@ -8,20 +8,27 @@ check_media() {
     expected_size=$2
     expected_sha256=$3
     path="$root/$name"
-
-    if [ ! -f "$path" ]; then
-        echo "SKIP: DM2 real-media corpus is not staged: $path"
+    duplicate_path="${path%.zip} (1).zip"
+    found=0
+    for candidate in "$path" "$duplicate_path"; do
+        if [ ! -f "$candidate" ]; then
+            continue
+        fi
+        found=1
+        if [ "$(wc -c < "$candidate")" -ne "$expected_size" ]; then
+            continue
+        fi
+        actual_sha256=$(sha256sum "$candidate" | awk '{print $1}')
+        if [ "$actual_sha256" = "$expected_sha256" ]; then
+            return 0
+        fi
+    done
+    if [ "$found" -eq 0 ]; then
+        echo "SKIP: DM2 real-media corpus is not staged: $path (or duplicate-suffixed archive)"
         exit 77
     fi
-    if [ "$(wc -c < "$path")" -ne "$expected_size" ]; then
-        echo "FAIL: DM2 real-media size drift: $path" >&2
-        exit 1
-    fi
-    actual_sha256=$(sha256sum "$path" | awk '{print $1}')
-    if [ "$actual_sha256" != "$expected_sha256" ]; then
-        echo "FAIL: DM2 real-media identity drift: $path" >&2
-        exit 1
-    fi
+    echo "FAIL: DM2 real-media identity not found as $path or $duplicate_path" >&2
+    exit 1
 }
 
 # Exact local original-media inputs used by the native launch tests. Archives

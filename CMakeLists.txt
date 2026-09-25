@@ -32,6 +32,33 @@ if("${FIRESTAFF_WORKSPACE_DATA_DIR}" STREQUAL "")
     message(FATAL_ERROR "FIRESTAFF_WORKSPACE_DATA_DIR must not be empty")
 endif()
 
+# The DM2 Macintosh retail archive and First Chapter demo are often saved
+# with the same basename; file managers append " (1)" to the duplicate.
+# Bind real-media tests by their published SHA-256 identity instead of
+# assuming which filename the user kept for each archive.
+set(FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE
+    "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip")
+set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE
+    "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip")
+set(_firestaff_dm2_mac_candidates
+    "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    "${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip")
+foreach(_candidate IN LISTS _firestaff_dm2_mac_candidates)
+    if(EXISTS "${_candidate}")
+        file(SHA256 "${_candidate}" _candidate_sha256)
+        if(_candidate_sha256 STREQUAL
+           "dfea2fe53988784bc1525d6ad90ab881d260b74cd6a855e0eb35d04001ecfe5b")
+            set(FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE "${_candidate}")
+        elseif(_candidate_sha256 STREQUAL
+               "c9e875967f9eb1be654fc05b6bf335bb118bcdb38933fbef056857a63d69a723")
+            set(FIRESTAFF_DM2_MAC_DEMO_ARCHIVE "${_candidate}")
+        endif()
+    endif()
+endforeach()
+unset(_firestaff_dm2_mac_candidates)
+unset(_candidate)
+unset(_candidate_sha256)
+
 # The first optional Nexus test targets are declared before the historical
 # CTest include later in this file. Initialize CTest here so their add_test()
 # calls are registered instead of silently disappearing from the test plan.
@@ -4335,7 +4362,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_v1_mac_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         TIMEOUT 120
     )
     add_test(
@@ -4346,7 +4373,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_v1_mac_demo_archive_rejected PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;demo;negative;real-media;preservation;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_DEMO_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_DEMO_ARCHIVE=${FIRESTAFF_DM2_MAC_DEMO_ARCHIVE}"
         TIMEOUT 45
     )
     add_test(
@@ -11865,7 +11892,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
     set_tests_properties(dm2_v1_mac_media_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;real-media;in-memory;skip-safe")
 endif()
 
@@ -11917,7 +11944,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.
         COMMAND test_dm2_v1_mac_movie_decoder_real)
     set_tests_properties(dm2_v1_mac_movie_decoder_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;movie;real-media;in-memory;skip-safe")
 endif()
 
@@ -11938,7 +11965,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_quicktime_real.c")
         COMMAND test_dm2_v1_mac_quicktime_real)
     set_tests_properties(dm2_v1_mac_quicktime_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;quicktime;real-media;in-memory;native;skip-safe")
 endif()
 
@@ -11956,7 +11983,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_swoosh_native_real.
         COMMAND test_dm2_v1_mac_swoosh_native_real)
     set_tests_properties(dm2_v1_mac_swoosh_native_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;movie;quicktime;real-media;in-memory;native;skip-safe")
 endif()
 
@@ -11974,7 +12001,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_r
         COMMAND test_dm2_v1_mac_m11_movie_runtime_real)
     set_tests_properties(dm2_v1_mac_m11_movie_runtime_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;movie;real-media;in-memory;skip-safe")
 endif()
 
@@ -11993,7 +12020,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
     add_test(NAME dm2_v1_mac_sound_real COMMAND test_dm2_v1_mac_sound_real)
     set_tests_properties(dm2_v1_mac_sound_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
 endif()
 
@@ -12013,7 +12040,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c"
         COMMAND test_dm2_v1_mac_sound_audio_real)
     set_tests_properties(dm2_v1_mac_sound_audio_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
 endif()
 
@@ -12031,7 +12058,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sfx_queue_real.c")
         COMMAND test_dm2_v1_mac_sfx_queue_real)
     set_tests_properties(dm2_v1_mac_sfx_queue_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
 endif()
 
@@ -12050,7 +12077,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_pointer_source_real
         COMMAND test_dm2_v1_mac_pointer_source_real)
     set_tests_properties(dm2_v1_mac_pointer_source_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;input;real-media;in-memory;skip-safe")
 endif()
 
@@ -12069,7 +12096,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_resource_types_real
         COMMAND test_dm2_v1_mac_resource_types_real)
     set_tests_properties(dm2_v1_mac_resource_types_real PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
         LABELS "dm2;macintosh;resource;real-media;in-memory;skip-safe")
 endif()
 
@@ -59965,7 +59992,7 @@ set_tests_properties(test_dm2_v1_mac_boot_real_media PROPERTIES
     SKIP_RETURN_CODE 77
     LABELS "dm2;macintosh;real-media;native;boot"
     ENVIRONMENT
-        "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
 )
 
 add_executable(test_dm2_v1_mac_new_game_real_media
@@ -59979,7 +60006,7 @@ endif()
 add_test(NAME test_dm2_v1_mac_new_game_real_media
     COMMAND test_dm2_v1_mac_new_game_real_media)
 set_tests_properties(test_dm2_v1_mac_new_game_real_media PROPERTIES
-    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
     LABELS "dm2;macintosh;new-game;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_mac_m11_new_game_real_media
@@ -59994,7 +60021,7 @@ endif()
 add_test(NAME test_dm2_v1_mac_m11_new_game_real_media
     COMMAND test_dm2_v1_mac_m11_new_game_real_media)
 set_tests_properties(test_dm2_v1_mac_m11_new_game_real_media PROPERTIES
-    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip;SDL_AUDIODRIVER=dummy"
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};SDL_AUDIODRIVER=dummy"
     LABELS "dm2;macintosh;new-game;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_dos_m11_spell_cast_real_media
@@ -60027,7 +60054,7 @@ endif()
 add_test(NAME test_dm2_v1_mac_wall_source_census_real
     COMMAND test_dm2_v1_mac_wall_source_census_real)
 set_tests_properties(test_dm2_v1_mac_wall_source_census_real PROPERTIES
-    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
     LABELS "dm2;macintosh;render;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_fmtowns_disc
