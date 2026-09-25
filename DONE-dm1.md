@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-25: Authenticated the missing Atari ST 1.0b English `DUNGEON.DAT`
+  hash from its original 1987-12-11 STX and added it to M12 admission, the M11
+  dungeon resolver and the verified SHA registry. The authentic ST 1.0b and
+  ST 1.1 source-media regressions both reach `dm1-runtime` through the normal
+  launcher route. Both currently start with zero champions. The clean STX
+  roots for v1.0a/v1.0b and v1.1/v1.2/v1.3 lack `DUNGEON.FTL`; v1.0a/v1.0b
+  STX roots also lack `DMGAME.DAT`. This closes data/runtime recognition for
+  two editions, not playable Atari campaign startup.
+
 - 2026-09-24: Fixed the all-black Atari ST runtime presentation by binding
   MEDIA020 floor/ceiling graphics 75/76 and the six Atari RGB3 dungeon
   palettes from ReDMCSB `DEFS.H` and `DATA.C` to M11. The authentic German

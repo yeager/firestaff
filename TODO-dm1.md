@@ -224,18 +224,23 @@
   The authenticated English v1.2 STX used by the launch tests has only
   BOOTER, SWOOSH.IMG, START.PRG, GRAPHICS.DAT, START.PAK and DUNGEON.DAT in
   its root; the supplied German v1.2 and French v1.3 STX roots likewise
-  contain no `DUNGEON.FTL`. The Atari v1.0 software archive also contains an
-  authentic MSA Automation Disk whose root has `DMGAME.DAT` and `DMGAME.BAK`
+  contain no `DUNGEON.FTL`. Clean v1.0a/v1.0b and v1.1 STX roots were also
+  verified without that campaign file. Atari ST 1.0b and 1.1 now both have
+  authenticated `DUNGEON.DAT` admission and reach the ordinary M12-to-M11
+  runtime route, but each receipt still reports zero champions. The matched
+  v1.0a STX remains outside M11's dungeon resolver. The Atari v1.0 software
+  archive also contains an authentic MSA Automation Disk whose root has
+  `DMGAME.DAT` and `DMGAME.BAK`
   (47,710 bytes each). Both pass the original-save header checksum and classify
   as FormatID 1 / `ORIGINAL_DM1`. The primary `DMGAME.DAT` also authenticates
   all five F0435 save parts: 128-byte GLOBAL_DATA, 60 x 16-byte active groups,
   a 3,328-byte four-champion PARTY, 463 x 10-byte events and a 926-byte
   timeline. Its source state is four champions on map 2 at (11,14), facing
   direction 3. F0434's 37,226-byte dungeon tail is not yet authenticated, and
-  the Atari runtime importer is not implemented. The matched v1.0 STX is not
-  admitted by the current runtime; passing the original save to admitted v1.2
-  STX yields the same zero-champion fresh start as no save. Keep the save as a
-  verified source-part candidate, not a verified playable runtime. Complete
+  the Atari runtime importer is not implemented. Passing the original save to
+  admitted v1.2 STX yields the same zero-champion fresh start as no save. Keep
+  the save as a verified source-part candidate, not a verified playable runtime.
+  Complete
   F0435/F0434/F0436 and F0462's source-owned Atari load/start path before
   promoting it to playable.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
