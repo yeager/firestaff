@@ -546,7 +546,6 @@ static void test_real_full_dungeon_and_stairs(
     size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
     int stair_level = -1, stair_x = -1, stair_y = -1;
     int approach_x = -1, approach_y = -1;
-    int expected_level = -1;
     Theron_V1_World *door_world = NULL;
     Theron_V1_Object *door = NULL;
     int door_approach_x = -1, door_approach_y = -1;
@@ -585,17 +584,13 @@ static void test_real_full_dungeon_and_stairs(
         for (int y = 0; y < level->height && stair_level < 0; ++y) {
             for (int x = 0; x < level->width && stair_level < 0; ++x) {
                 uint8_t tile = level->squares[y][x];
-                int destination = tile == THERON_SQUARE_STAIRS_UP
-                    ? level_index - 1 : level_index + 1;
                 if ((tile == THERON_SQUARE_STAIRS_UP ||
                      tile == THERON_SQUARE_STAIRS_DOWN) &&
-                    destination >= 0 && destination < result.levels_loaded &&
                     find_adjacent_floor(level, x, y,
                                         &approach_x, &approach_y)) {
                     stair_level = level_index;
                     stair_x = x;
                     stair_y = y;
-                    expected_level = destination;
                 }
             }
         }
@@ -667,12 +662,23 @@ static void test_real_full_dungeon_and_stairs(
     world->party.leader_y = approach_y;
     world->party.leader_dir = direction_from_delta(
         stair_x - approach_x, stair_y - approach_y);
-    CHECK_INT("original forward command traverses real stairs",
+    {
+        int before_level = world->current_level;
+        int before_x = world->party.leader_x;
+        int before_y = world->party.leader_y;
+        CHECK_INT("authentic stairs block without source-owned destination",
               theron_v1_move_party_original_command(
                   world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD),
-              THERON_MOVE_STAIRS);
-    CHECK_INT("real stairs select loaded destination level",
-              world->current_level, expected_level);
+              THERON_MOVE_BLOCKED);
+        CHECK_INT("unresolved authentic stairs preserve level",
+                  world->current_level, before_level);
+        CHECK_INT("unresolved authentic stairs preserve party x",
+                  world->party.leader_x, before_x);
+        CHECK_INT("unresolved authentic stairs preserve party y",
+                  world->party.leader_y, before_y);
+        CHECK_INT("unresolved authentic stairs leave no queued transition",
+                  world->transition_pending, 0);
+    }
     free(door_world);
     free(user_data);
     free(world);
