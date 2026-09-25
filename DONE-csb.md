@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-25: Re-ran the authentic native startup checks for the Atari STX,
+  Amiga 3.1 and FM Towns original packages. All three CTest routes passed;
+  the Atari route covers title, runtime, input and keyboard/pointer launcher
+  selection, while the Amiga and FM Towns checks cover their source-owned
+  startup phases and native campaign handoff. This run does not establish
+  missing save-corpus or original-frame parity items.
+
 - 2026-09-25: Fixed the F31 FM Towns direct CLI save handoff to retain the
   source-owned switch/game bind and apply the selected F0435 startup state in
   explicit sequential steps. The authenticated Japanese `CSBGAME-JP.DAT`
