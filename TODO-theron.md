@@ -17,6 +17,9 @@ The rebuilt local Firestaff executable also passes
 CUE: it reaches the native Akutuba runtime and accepts six movement inputs.
 This verifies that specific source-backed JP startup/runtime path, not later
 dungeon transitions or full original-game parity.
+The same executable passes `test_theron_v1_jp_raw_bin_startup.sh` against the
+original JP Track 02 and Track 19 files in `.firestaff/data/theron`, including
+the source-backed movement and JP Track 19 item-name checks.
 
 The CD availability parser also rejects duplicate track numbers and any
 missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
