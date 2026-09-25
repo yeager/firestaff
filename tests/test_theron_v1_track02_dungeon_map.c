@@ -248,6 +248,17 @@ static unsigned int report_authentic_stair_candidates(
     return total;
 }
 
+static int quest_offsets_equal(const Theron_QuestBlockOffsets *left,
+                               const Theron_QuestBlockOffsets *right) {
+    return left && right &&
+        left->dims_offset == right->dims_offset &&
+        left->map_data_offset == right->map_data_offset &&
+        left->ground_refs_offset == right->ground_refs_offset &&
+        left->items_part1_offset == right->items_part1_offset &&
+        left->items_part2_offset == right->items_part2_offset &&
+        left->text_data_offset == right->text_data_offset;
+}
+
 static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
     const uint8_t expected_maps[] = { 4, 8, 5, 6, 3, 4, 4 };
     static const Theron_QuestBlockOffsets expected_offsets[] = {
@@ -272,7 +283,7 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
         Theron_DungeonData dd;
         assert(theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
             THERON_TRACK02_VARIANT_JP_BIN, d, &qb));
-        assert(memcmp(&qb, &expected_offsets[d], sizeof(qb)) == 0);
+        assert(quest_offsets_equal(&qb, &expected_offsets[d]));
         /* JP text ownership is unresolved. A zero offset is a deliberate
          * admission barrier, not a license to decode an adjacent table. */
         assert(qb.text_data_offset == 0);
