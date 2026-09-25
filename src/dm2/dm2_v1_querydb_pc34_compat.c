@@ -597,17 +597,15 @@ int32_t dm2_v1_querydb_compute_player_attack_or_throw_strength(int32_t player_id
 int32_t dm2_v1_query_player_load(int32_t player_idx,
                                  const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:1700 */
-    (void)player_idx; (void)cb; (void)ctx;
-    return 0;
+    if (!cb || !cb->get_player_weight) return 0;
+    return (int32_t)cb->get_player_weight(ctx, player_idx);
 }
 
 int32_t dm2_v1_query_player_max_load(int32_t player_idx,
                                      const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:1720 */
-    (void)player_idx; (void)cb; (void)ctx;
-    return 0;
+    if (!cb || !cb->get_hero_max_load) return 0;
+    return (int32_t)cb->get_hero_max_load(ctx, player_idx);
 }
 
 int32_t dm2_v1_query_player_stamina(int32_t player_idx,

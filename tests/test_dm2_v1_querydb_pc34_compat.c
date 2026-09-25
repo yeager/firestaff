@@ -44,6 +44,21 @@ static uint8_t mock_query_cls1_from_record(void *ctx __attribute__((unused)),
 
 static void *mock_ai_spec_ptr = NULL;
 
+static int16_t mock_hero_max_load;
+static int16_t mock_player_weight;
+
+static int16_t mock_get_hero_max_load(void *ctx __attribute__((unused)),
+                                     int hero __attribute__((unused)))
+{
+    return mock_hero_max_load;
+}
+
+static int16_t mock_get_player_weight(void *ctx __attribute__((unused)),
+                                      int hero __attribute__((unused)))
+{
+    return mock_player_weight;
+}
+
 static void *mock_query_creature_ai_spec_from_type(void *ctx __attribute__((unused)),
     int32_t type __attribute__((unused)))
 {
@@ -456,6 +471,22 @@ static void test_source_gdat_item_word_fields(void)
     printf("  PASS: test_source_gdat_item_word_fields\n");
 }
 
+static void test_player_load_queries(void)
+{
+    DM2_V1_QueryDbCallbacks cb = null_callbacks();
+    cb.get_hero_max_load = mock_get_hero_max_load;
+    cb.get_player_weight = mock_get_player_weight;
+
+    mock_hero_max_load = 83;
+    mock_player_weight = 97;
+    assert(dm2_v1_query_player_max_load(2, &cb, NULL) == 83);
+    assert(dm2_v1_query_player_load(2, &cb, NULL) == 97);
+    assert(dm2_v1_query_player_max_load(2, NULL, NULL) == 0);
+    assert(dm2_v1_query_player_load(2, NULL, NULL) == 0);
+
+    printf("  PASS: test_player_load_queries\n");
+}
+
 /* ================================================================ */
 /* Main                                                              */
 /* ================================================================ */
@@ -476,6 +507,7 @@ int main(void)
     test_query_gdat_text();
     test_query_actuator_type_from_record();
     test_source_gdat_item_word_fields();
+    test_player_load_queries();
 
     printf("All dm2_v1_querydb tests passed.\n");
     return 0;

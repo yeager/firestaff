@@ -375,10 +375,16 @@ int32_t dm2_v1_query_gdat_potion_behaviour_from_record(int32_t record,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 /* -------------------------------------------------------------------------- */
-/* Player / hero queries (8)                                                  */
+/* Player / hero queries (10)                                                 */
 /* -------------------------------------------------------------------------- */
 
 int16_t dm2_v1_query_player_skill_lv(int16_t hero, int16_t skill, int32_t include_bonus,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_player_load(int32_t player_idx,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_player_max_load(int32_t player_idx,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
 int32_t dm2_v1_querydb_get_player_at_position(int32_t pos,
