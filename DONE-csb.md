@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+- 2026-09-25: Fixed the F31 FM Towns direct CLI save handoff to retain the
+  source-owned switch/game bind and apply the selected F0435 startup state in
+  explicit sequential steps. The authenticated Japanese `CSBGAME-JP.DAT`
+  passes the native M11 handoff test, and the complete FM Towns CLI/menu
+  regression confirms both direct launch and M12 Quick Resume restore it. The
+  same regression verifies v20/v21 entrance routes; the save corpus is
+  external and remains unchanged. No save-writing or other-edition parity is
+  implied.
+
 - 2026-09-25: Removed the manual loose-file prerequisite from the native Atari
   STX CLI/menu regression. When the default raw STX is absent, the test stages
   only the authentic English v2.1 STX member from the supplied Atari 7z into a

@@ -93,10 +93,12 @@ DSA-bearing saves and visual/audio captures are deferred while native Atari,
 Amiga and FM Towns media paths continue to be improved from the supplied
 original packages. The external FM Towns corpus contains an authenticated,
 language-matched F31J `CSBGAME-JP.DAT`, which passes the full native reader and
-now crosses M12 Quick Resume into M11. Its English `CSBGAME.DAT` candidate is
-incoherent and remains rejected. The original archives themselves contain no
-save disk/member; no authentic Atari/Amiga DSA-bearing campaign save or
-CSBWin extended save is currently available. A real Atari TOS 1.62 + protected
+now restores into M11 through both direct CLI launch and M12 Quick Resume.
+The authentic-media FM Towns regression passes with that corpus supplied.
+Its English `CSBGAME.DAT` candidate is incoherent and remains rejected. The
+original archives themselves contain no save disk/member; no authentic
+Atari/Amiga DSA-bearing campaign save or CSBWin extended save is currently
+available. A real Atari TOS 1.62 + protected
 campaign-disk run reaches the `PRISON / RESUME` Entrance but cannot establish
 a champion-bearing dungeon state without that missing source material. Later
 work must record media hashes and provenance before using newly supplied
