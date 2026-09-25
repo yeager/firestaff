@@ -3522,3 +3522,10 @@ av bankladdningen. Se
   `TQUS02.bin` (`f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565`).
   This proves Track 01 startup for both supplied editions,
   but still does not establish any gameplay CDDA selection.
+- 🔒 Runtime archive gap confirmed: booting from the supplied JP `.7z` with
+  external archive tools enabled accepts its authentic Track 02 directly, but
+  reports `theronTrack01CddaReady=0`; the user's ordinary data directory has
+  the same result. Booting from the authentic full-disc files in an isolated
+  extracted copy reports `theronTrack01CddaReady=1`. Add bounded in-memory
+  CUE/Track 01 archive reading to the runtime handoff before claiming direct
+  archive CDDA support; do not materialize media into the user's data folder.
