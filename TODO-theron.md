@@ -2,6 +2,17 @@
 
 Reviewed 2026-09-25. Only open work is listed here.
 
+2026-09-25 local revalidation: the supported instrumented Mednafen build now
+uses the official SDL 2.32.10 headers/runtime pair and starts against the
+authentic US full CUE, System Card 3.0 and local Mednafen state. The
+signature-bound research hook reaches the original post-dungeon dispatcher at
+`$DE38` and records the injected ordinal, but the 45-second run ends with one
+unmatched RNG entry at `$4667`; the capture verifier rejects it and emits no
+transition receipt. This is source-execution evidence only, not proof that the
+game selected that ordinal or completed a dungeon transition. The isolated
+VDC-I/O replay parser accepts the authentic trace and exactly matches 9,728
+written VRAM words, while semantic publication remains blocked.
+
 2026-09-25: The authentic US CUE from the combined local archive now retains
 its hash-bound CUE provenance through M12→M11, binds the exact sibling Track 01
 audio and loads the regional Track 19 metadata bank from that source directory
