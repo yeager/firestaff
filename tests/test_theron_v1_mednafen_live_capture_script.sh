@@ -181,6 +181,12 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
     printf 'FAIL: live capture must retain the side-effect-free VDC I/O writer trace\n' >&2
     exit 1
 fi
+if ! grep -Fq 'THERON_CAPTURE_INPUT_TRACE_LIMIT' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit"' "$script" ||
+   ! grep -Fq 'input_trace_limit=%s' "$script"; then
+    printf 'FAIL: live capture must expose and receipt its bounded controller input trace limit\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$build_script" ||
    ! grep -Fq 'main_ram_e009_register_writes=%s' "$script"; then
     printf 'FAIL: capture must retain bounded main-RAM e009 register-write provenance\n' >&2

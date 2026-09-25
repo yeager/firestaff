@@ -50,6 +50,7 @@ rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
 rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 vdc_io_trace_limit=${THERON_CAPTURE_VDC_IO_TRACE_LIMIT:-65536}
+input_trace_limit=${THERON_CAPTURE_INPUT_TRACE_LIMIT:-65536}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -87,6 +88,11 @@ fi
 if [[ ! "$vdc_io_trace_limit" =~ ^[0-9]+$ ]] ||
    (( vdc_io_trace_limit < 65536 || vdc_io_trace_limit > 2097152 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_VDC_IO_TRACE_LIMIT must be an integer from 65536 through 2097152' >&2
+    exit 1
+fi
+if [[ ! "$input_trace_limit" =~ ^[0-9]+$ ]] ||
+   (( input_trace_limit < 65536 || input_trace_limit > 1048576 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_TRACE_LIMIT must be an integer from 65536 through 1048576' >&2
     exit 1
 fi
 
@@ -936,6 +942,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
     FIRESTAFF_THERON_ADPCM_PLAYBACK_TRACE="$adpcm_playback_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
+    FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_AUTOLOAD_STATE="$autoload_state" \
     FIRESTAFF_THERON_AUTOLOAD_MOVIE="$autoload_movie" \
@@ -1440,6 +1447,7 @@ fi
     printf 'autoload_state_md5=%s\n' "$autoload_state_md5"
     printf 'post_dungeon_overlay_replay=%s\n' "$replay_post_dungeon_overlay"
     printf 'input_transactions=%s\n' "$transition_input_count"
+    printf 'input_trace_limit=%s\n' "$input_trace_limit"
     printf 'host_key_events=%s\n' "$transition_host_key_count"
     printf 'host_sdl_events=%s\n' "$transition_host_sdl_event_count"
     printf 'host_sdl_event_types=%s\n' "$transition_host_sdl_event_types"
