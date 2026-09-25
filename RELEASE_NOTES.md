@@ -10,6 +10,8 @@
   launcher language.
 - `Quick Resume`: follows the saved game's presentation mode and admits V2.2
   only through that game's normal launch gate.
+- `CSB FM Towns`: direct F31 Japanese save launch now applies the authenticated
+  F0435 state through the source-owned M11 game handoff.
 - `Game options`: the modern launcher view now reads the selected title's own
   options for Nexus and Theron's Quest instead of reusing DM2's options.
 - `DM1 Atari ST`: the start menu now follows the Atari source entrance route
