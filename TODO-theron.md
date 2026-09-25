@@ -17,8 +17,9 @@ missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
 regression and the authentic JP Rev. 1 receipt both pass; malformed CUEs can
 no longer receive a ready receipt solely because their maximum track number
 is 19. Raw `.bin` audio extents must also be non-empty and divisible into
-complete 2,352-byte CDDA sectors; the partial-sector rejection test and the
-authentic 19-track JP receipt both pass.
+complete 2,352-byte CDDA sectors, and no track may resolve to an empty file.
+The duplicate, empty-file and partial-sector rejection tests and the authentic
+19-track JP receipt all pass.
 
 2026-09-25 authentic JP full-disc replay audit: the private
 `theron-authentic-jp-full-disc-20260925` capture uses the hash-locked Rev. 1

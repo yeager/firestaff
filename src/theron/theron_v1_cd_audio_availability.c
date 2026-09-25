@@ -106,9 +106,11 @@ static int tqr_parent_directory(
 
 static int tqr_path_is_readable(const char *path) {
     FILE *file = path ? fopen(path, "rb") : NULL;
+    int readable;
     if (!file) return 0;
+    readable = fseek(file, 0L, SEEK_END) == 0 && ftell(file) > 0;
     fclose(file);
-    return 1;
+    return readable;
 }
 
 static int tqr_raw_audio_file_has_complete_sectors(const char *path) {

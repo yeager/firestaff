@@ -120,6 +120,21 @@ int main(void) {
         failed = 1;
     }
 
+    /* An empty extent is not a present game-media track. */
+    if (!failed) {
+        snprintf(track_path, sizeof(track_path), "%s/track19.iso", directory);
+        if (!write_file(track_path, NULL, 0u)) {
+            failed = 1;
+        } else {
+            receipt = theron_v1_cd_audio_availability(cue_path, directory);
+            if (receipt.availability != THERON_V1_CD_AUDIO_TRACK_FILE_MISSING ||
+                receipt.playback_allowed || receipt.track_present[19]) {
+                failed = 1;
+            }
+        }
+        if (!write_file(track_path, "iso", 3u)) failed = 1;
+    }
+
     /* Raw CDDA BINs may not claim availability with a partial sector. */
     if (!failed) {
         char raw_cue[1024];
