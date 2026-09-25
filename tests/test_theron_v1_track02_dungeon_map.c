@@ -250,17 +250,32 @@ static unsigned int report_authentic_stair_candidates(
 
 static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
     const uint8_t expected_maps[] = { 4, 8, 5, 6, 3, 4, 4 };
+    static const Theron_QuestBlockOffsets expected_offsets[] = {
+        { 0x0002991D, 0x00029B03, 0x0002A05D, 0x0002A53B,
+          0x0002B000, 0 },
+        { 0x00069D50, 0x0006A006, 0x0006A5C2, 0x0006AA4E,
+          0x0006B000, 0 },
+        { 0x000AA261, 0x000AA422, 0x000AA8DA, 0x000AAD6E,
+          0x000AB000, 0 },
+        { 0x000E9B47, 0x000E9CD4, 0x000EA188, 0x000EA5FA,
+          0x000EB000, 0 },
+        { 0x0012A3CB, 0x0012A544, 0x0012AABE, 0x0012AF6C,
+          0x0012B000, 0 },
+        { 0x00169860, 0x00169A4C, 0x0016A118, 0x0016A618,
+          0x0016B000, 0 },
+        { 0x001AA043, 0x001AA1FE, 0x001AA857, 0x001AACCF,
+          0x001AB000, 0 },
+    };
     Theron_QuestBlockOffsets qb;
-    assert(theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
-        THERON_TRACK02_VARIANT_JP_BIN, 4, &qb));
-    assert(qb.dims_offset == 0x0012A3CB);
-    assert(qb.map_data_offset == 0x0012A544);
-    assert(qb.items_part1_offset == 0x0012AF6C);
-    assert(qb.items_part2_offset == 0x0012B000);
-    assert(qb.text_data_offset == 0);
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
+        assert(theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+            THERON_TRACK02_VARIANT_JP_BIN, d, &qb));
+        assert(memcmp(&qb, &expected_offsets[d], sizeof(qb)) == 0);
+        /* JP text ownership is unresolved. A zero offset is a deliberate
+         * admission barrier, not a license to decode an adjacent table. */
+        assert(qb.text_data_offset == 0);
         if (!theron_v1_track02_dungeon_map_load_for_variant(
                 ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, d, &dd)) {
             fprintf(stderr, "FAIL: JP authenticated dungeon %u failed to load\n", d);
@@ -269,6 +284,11 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
         assert(dd.map_count == expected_maps[d]);
         assert(dd.maps[0].header.x_dim == 5);
         assert(dd.maps[0].header.y_dim == 7);
+        printf("  JP dungeon %u authentic layout: dims=%06x maps=%06x "
+               "grefs=%06x items=%06x/%06x text=unbound\n",
+               d + 1u, qb.dims_offset, qb.map_data_offset,
+               qb.ground_refs_offset, qb.items_part1_offset,
+               qb.items_part2_offset);
     }
     printf("  JP Track 02: all dungeon maps OK\n");
     (void)report_authentic_stair_candidates(
