@@ -59964,6 +59964,23 @@ set_tests_properties(test_dm2_v1_amiga_new_game_real_media PROPERTIES
     ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
     LABELS "dm2;amiga;new-game;real-media;in-memory;skip-safe")
 
+add_executable(test_dm2_v1_fmtowns_m11_new_game_real_media
+    tests/test_dm2_v1_fmtowns_m11_new_game_real_media.c)
+target_include_directories(test_dm2_v1_fmtowns_m11_new_game_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_fmtowns_m11_new_game_real_media PRIVATE
+    firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_fmtowns_m11_new_game_real_media PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_fmtowns_m11_new_game_real_media
+    COMMAND test_dm2_v1_fmtowns_m11_new_game_real_media)
+set_tests_properties(test_dm2_v1_fmtowns_m11_new_game_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;SDL_AUDIODRIVER=dummy"
+    LABELS "dm2;fmtowns;new-game;real-media;in-memory;native;skip-safe")
+
 add_executable(test_dm2_v1_dos_pit_runtime_real_media
     tests/test_dm2_v1_dos_pit_runtime_real_media.c)
 target_include_directories(test_dm2_v1_dos_pit_runtime_real_media PRIVATE
