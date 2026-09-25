@@ -12,6 +12,12 @@ substituted. This proves complete-disc file/layout availability only. Track
 01 is the only integrated CDDA stream, and original event-to-later-CDDA/ADPCM/
 SFX routing is still unbound.
 
+The CD availability parser also rejects duplicate track numbers and any
+missing number in the canonical 1..19 CUE sequence. Its duplicate-declaration
+regression and the authentic JP Rev. 1 receipt both pass; malformed CUEs can
+no longer receive a ready receipt solely because their maximum track number
+is 19.
+
 2026-09-25 authentic JP full-disc replay audit: the private
 `theron-authentic-jp-full-disc-20260925` capture uses the hash-locked Rev. 1
 Track 02 (`b7afb338ad31be1025b53f9aff12d73a`) and System Card

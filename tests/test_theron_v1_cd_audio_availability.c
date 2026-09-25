@@ -157,6 +157,44 @@ int main(void) {
         }
     }
 
+    /* A duplicate track number must never authorize an otherwise readable
+     * disc.  All media below is only parser input; the authentic-media
+     * branch above remains the source of real Theron disc evidence. */
+    if (!failed) {
+        char duplicate_cue[1024];
+        FILE *cue;
+        snprintf(duplicate_cue, sizeof(duplicate_cue),
+                 "%s/duplicate.cue", directory);
+        cue = fopen(duplicate_cue, "wb");
+        if (!cue) { failed = 1; }
+        else {
+            fprintf(cue,
+                "FILE track01.wav WAVE\n"
+                "  TRACK 01 AUDIO\n"
+                "FILE track02.iso BINARY\n"
+                "  TRACK 02 MODE1/2048\n");
+            for (i = 3u; i <= 18u; ++i) {
+                fprintf(cue,
+                    "FILE track%02zu.wav WAVE\n"
+                    "  TRACK %02zu AUDIO\n", i, i);
+            }
+            fprintf(cue,
+                "FILE track19.iso BINARY\n"
+                "  TRACK 19 MODE1/2048\n"
+                "FILE duplicate-track18.wav WAVE\n"
+                "  TRACK 18 AUDIO\n");
+            fclose(cue);
+        }
+        if (!failed) {
+            receipt = theron_v1_cd_audio_availability(duplicate_cue,
+                                                      directory);
+            if (receipt.availability != THERON_V1_CD_AUDIO_CUE_PARSE_ERROR ||
+                receipt.playback_allowed) {
+                failed = 1;
+            }
+        }
+    }
+
     /* Cleanup. */
     for (i = 1u; i <= 18u; ++i) {
         if (i == 2u) continue;
@@ -171,6 +209,8 @@ int main(void) {
     snprintf(track_path, sizeof(track_path), "%s/canonical.cue", directory);
     remove(track_path);
     snprintf(track_path, sizeof(track_path), "%s/short.cue", directory);
+    remove(track_path);
+    snprintf(track_path, sizeof(track_path), "%s/duplicate.cue", directory);
     remove(track_path);
     rmdir(directory);
 

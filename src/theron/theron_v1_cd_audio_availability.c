@@ -276,6 +276,7 @@ Theron_V1CdAudioReceipt theron_v1_cd_audio_availability(
     char line[2048];
     char current_file[THERON_TRACK02_MOUNT_PATH_CAPACITY] = {0};
     unsigned int max_track = 0u;
+    int track_seen[THERON_V1_CD_AUDIO_TRACK_COUNT + 1u] = {0};
     int parse_error = 0;
     size_t i;
 
@@ -317,6 +318,11 @@ Theron_V1CdAudioReceipt theron_v1_cd_audio_availability(
                 parse_error = 1;
                 break;
             }
+            if (track_seen[track]) {
+                parse_error = 1;
+                break;
+            }
+            track_seen[track] = 1;
             if (track > max_track) max_track = track;
             receipt.track_is_audio[track] = audio;
             if (audio) ++receipt.audio_track_count;
@@ -352,9 +358,19 @@ Theron_V1CdAudioReceipt theron_v1_cd_audio_availability(
     if (parse_error) {
         tqr_copy_string(receipt.unavailable_reason,
                         sizeof(receipt.unavailable_reason),
-                        "CUE track number out of canonical 1..19 range");
+                        "CUE has duplicate or out-of-range canonical track number");
         receipt.availability = THERON_V1_CD_AUDIO_CUE_PARSE_ERROR;
         return receipt;
+    }
+
+    for (i = 1u; i <= THERON_V1_CD_AUDIO_TRACK_COUNT; ++i) {
+        if (!track_seen[i]) {
+            tqr_copy_string(receipt.unavailable_reason,
+                            sizeof(receipt.unavailable_reason),
+                            "CUE omits a canonical Theron CD track");
+            receipt.availability = THERON_V1_CD_AUDIO_LAYOUT_MISMATCH;
+            return receipt;
+        }
     }
 
     if (!tqr_is_canonical_layout(&receipt)) {
