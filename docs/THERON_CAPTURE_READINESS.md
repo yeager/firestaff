@@ -20,6 +20,16 @@ may be committed to GitHub. The repository check is
 `scripts/verify_no_original_media_tracked.sh`, and `.gitignore` provides the
 same protection for normal local work.
 
+For an exact US Akutuba source-frame comparison, provide the five authenticated
+VDC bundle paths through `THERON_VRAM_SNAPSHOT`, `THERON_VCE_SNAPSHOT`,
+`THERON_VDC_STATE_SNAPSHOT`, `THERON_VDC_SAT_SNAPSHOT`, and
+`THERON_VDC_IO_TRACE`. Set `THERON_VRAM_CAPTURE_BMP` to Firestaff's temporary
+output path and `THERON_EXPECTED_SOURCE_BMP` to the corresponding
+operator-local original-Mednafen BMP. The optional real-capture test compares
+the two BMP files byte-for-byte. The verified US Akutuba frame currently
+matches exactly; neither that screen-space receipt nor its local reference
+promotes dungeon/gameplay semantics or a public screenshot.
+
 **Update 2026-08-09:** an authenticated VDC/VCE pair now reaches the
 production Theron boot presenter. M11 installs the captured VCE palette before
 presenting the indexed frame, and the boot facade admits this source-only

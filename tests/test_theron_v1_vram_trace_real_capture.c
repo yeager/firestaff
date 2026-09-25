@@ -14,6 +14,33 @@ static size_t nonzero_bytes(const unsigned char *data, size_t count) {
     return nonzero;
 }
 
+static int files_equal(const char *left_path, const char *right_path) {
+    FILE *left = fopen(left_path, "rb");
+    FILE *right = fopen(right_path, "rb");
+    unsigned char left_bytes[4096];
+    unsigned char right_bytes[4096];
+    int equal = 1;
+
+    if (!left || !right) equal = 0;
+    while (equal) {
+        size_t left_count = fread(left_bytes, 1, sizeof(left_bytes), left);
+        size_t right_count = fread(right_bytes, 1, sizeof(right_bytes), right);
+        if (left_count != right_count ||
+            memcmp(left_bytes, right_bytes, left_count) != 0) {
+            equal = 0;
+            break;
+        }
+        if (left_count < sizeof(left_bytes)) {
+            if (ferror(left) || ferror(right) || !feof(left) || !feof(right))
+                equal = 0;
+            break;
+        }
+    }
+    if (left) fclose(left);
+    if (right) fclose(right);
+    return equal;
+}
+
 static int write_source_bmp(const char *path,
                             const Theron_V1_Viewport *viewport) {
     FILE *file;
@@ -69,6 +96,8 @@ int main(void) {
     const char *sat_path = getenv("THERON_VDC_SAT_SNAPSHOT");
     const char *vdc_io_path = getenv("THERON_VDC_IO_TRACE");
     const char *capture_root = getenv("THERON_CAPTURE_ROOT");
+    const char *reference_bmp = getenv("THERON_EXPECTED_SOURCE_BMP");
+    const char *output_bmp = getenv("THERON_VRAM_CAPTURE_BMP");
     Theron_V1_Viewport viewport;
     int loaded;
     int preview_cells;
@@ -105,9 +134,8 @@ int main(void) {
 #endif
     }
     memset(&viewport, 0, sizeof(viewport));
-    if (!(capture_root && capture_root[0]
-              ? theron_vp_init_from_data_dir(&viewport, capture_root)
-              : theron_vp_init(&viewport)) ||
+    if (!theron_vp_init_from_data_dir(
+            &viewport, capture_root && capture_root[0] ? capture_root : NULL) ||
         !viewport.vram_trace_loaded ||
         !viewport.vram_trace_data || !viewport.vce_trace_data) {
         fprintf(stderr, "FAIL: production viewport did not initialize or bind real VRAM/VCE\n");
@@ -252,6 +280,14 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
+    if (reference_bmp && reference_bmp[0] &&
+        (!output_bmp || !output_bmp[0] ||
+         !files_equal(output_bmp, reference_bmp))) {
+        fprintf(stderr,
+                "FAIL: Firestaff source-screen BMP does not match the operator-supplied original-emulator reference\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
     /* A partial explicit override must not silently fall back to a different
      * otherwise-valid bundle discovered under the data directory. */
     if (capture_root && capture_root[0]) {
@@ -299,10 +335,11 @@ int main(void) {
            "preview_cells=%d preview_nonzero=%zu presented_nonzero=%zu "
            "boot_presented_nonzero=%zu palette_entries=512 "
            "host_entries=%u sprite_pixels=%zu "
-           "pixels=source_only\n",
+           "pixels=source_only reference_bmp=%s\n",
            vram_nonzero, vce_nonzero, loaded, preview_cells, preview_nonzero,
            presented_nonzero, boot_presented_nonzero,
-           viewport.host_palette_source_count, sprite_pixels);
+           viewport.host_palette_source_count, sprite_pixels,
+           reference_bmp && reference_bmp[0] ? "matched" : "not_requested");
     theron_vp_free(&viewport);
     return 0;
 }

@@ -14,6 +14,18 @@ consumer sidecar has 512 reads in `$2600-$27FF`; all are zero-valued BIOS
 dungeon handoff. The local Mednafen save directory contains no JP non-empty
 BRAM/save artifact, so a JP continue-state replay is not presently available.
 Capture and sidecars remain ignored local scratch and are not tracked.
+
+2026-09-25 authentic US viewport parity: the real Akutuba VDC/VCE bundle
+replays to Firestaff's 320x200 source-only frame. The optional real-capture
+test now calls the same `theron_vp_init_from_data_dir()` admission route as
+M11; it previously called the generic unbound initializer and never exercised
+the bundle. With `THERON_EXPECTED_SOURCE_BMP` pointing at the operator-local
+original Mednafen frame and `THERON_VRAM_CAPTURE_BMP` at Firestaff's output,
+the two BMPs match byte-for-byte (SHA-256
+`b6fc9a8c0ade4a92716ef2514dacf9337eb2cf585d62f36ac91382d4cf766d16`). This
+proves only this captured US screen, not gameplay semantics or JP rendering;
+the reference image remains local.
+
 The Mednafen CD-state parser now accepts this negative replay's four mandatory
 instrumentation markers: the optional CD-transfer marker is emitted only when
 a destination candidate exists, so requiring it rejected captures precisely
