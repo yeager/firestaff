@@ -28,6 +28,24 @@ game selected that ordinal or completed a dungeon transition. The isolated
 VDC-I/O replay parser accepts the authentic trace and exactly matches 9,728
 written VRAM words, while semantic publication remains blocked.
 
+2026-09-25 local authentic-state replay: rebuilt a temporary full US CUE from
+the supplied archive's original track order, its original OGG CDDA members,
+the hash-verified Track 02 ISO (`ceb02343868f80cec899e9b239aff2da`), and the
+user's authentic Track 19 ISO. With System Card 3.0, the hash-verified
+Akutuba-complete Mednafen state (`f17f377df210b4a3ae904a13fb85a7f0`), and
+instrumented Mednafen (`f3fa332485bc3074e70ffbc3c4bf9a9d`), the 45-second
+capture records 40,980 input transactions, one CD IRQ, no non-System-Card CD
+reads, no raw-sector spans, no authenticated CD-to-RAM receipts, and no
+game-owned `$E009` dispatch. Its same-session 8 KiB save-manager code page
+matches the previously authenticated page byte-for-byte (MD5
+`6b520314faa729149a91556488a421c4`); the captured 2 KiB BRAM remains identical
+to the original artifact (`ffabc8d19b0915d4d9632a7ae2e90a97`). The real-BRAM
+regression passes when supplied this capture's main RAM and code page. This
+revalidates save-field/source correspondence only; the state replay has no
+source-sector join or level transition and does not open gameplay semantics.
+Raw captures and the temporary normalized CUE stay local under ignored
+`.codex-scratch/`.
+
 2026-09-25: The authentic US CUE from the combined local archive now retains
 its hash-bound CUE provenance through M12→M11, binds the exact sibling Track 01
 audio and loads the regional Track 19 metadata bank from that source directory
