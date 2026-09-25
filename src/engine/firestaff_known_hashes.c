@@ -13,6 +13,7 @@ static const FS_KnownHash g_known_hashes[] = {
     {"dm1-multilingual/SONG.DAT", "71e1ba82b7f3cfeb99ae181bd9d685201bdc2b11f42643460120ddcb3470c177", 162482},
     {"dm1/DUNGEON.DAT", "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85", 33357},
     {"dm1/GRAPHICS.DAT", "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e", 363417},
+    {"dm1-atari-st-1.1-en/DUNGEON.DAT", "a26f0edc4fb13e3d38551d91ad7c24f517257cfc689affe72d657f4e423853b2", 33442},
     {"dm2/DUNGEON.DAT", "cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef", 39437},
     {"dm2/GRAPHICS.DAT", "c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346", 8639757},
     {"nexus/0DMSTRT.BIN", "8a026f155af27cfd43a33b29f7da5b75ee7b09b2c4f016fc3be1ebb4787d20b6", 39516},

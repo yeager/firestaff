@@ -195,6 +195,7 @@ static const M12_KnownChecksum g_knownChecksums[] = {
     {"dm1", "GRAPHICS.DAT", "9ce2eaf7a9e78620e3f17594437caffa", "DM Atari ST 1.2 English GRAPHICS.DAT"},
     {"dm1", "GRAPHICS.DAT", "2bdc5f431f84c0ece738f54dbd787c3b", "DM Atari ST 1.2 German GRAPHICS.DAT"},
     {"dm1", "GRAPHICS.DAT", "0d7af44dd14f383464288abdcec76afc", "DM Atari ST 1.3 French GRAPHICS.DAT"},
+    {"dm1", "DUNGEON.DAT", "e0333c81c52e957dacd3b45739d077c9", "DM Atari ST 1.1 English DUNGEON.DAT"},
     {"dm1", "DUNGEON.DAT", "3dc0a932d0e0adfe59878f07c51700c5", "DM FM-Towns English DUNGEON.DAT"},
     {"dm1", "DUNGEON.DAT", "fe098f70ce83cfe3f2333565093daf35", "DM FM-Towns Japanese DUNGEON.DAT"},
     {"dm1", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6", "DM PC 3.4 English DUNGEON.DAT"},
