@@ -133,3 +133,12 @@ spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer och
 `ffabc8d19b0915d4d9632a7ae2e90a97`. Den större trace-gränsen löste alltså
 loggklippningen runt RUN men ändrade inte menyutfallet. Resultatet är fortsatt
 negativt och öppnar ingen Drator-, nivå-, objekt- eller generatorsemantik.
+
+En andra rå-CUE-körning använde den redan dokumenterade replayplanen
+`run@1:1,run@480:30,i@900:30` i stället för ett ensamt sent RUN. Alla tre
+knapparna applicerades på rätt bildrutor, men kvittot gav samma fyra
+SCSI-läsningar, 25 råsektorer, noll autentiserade CD→RAM-destinationer och
+`$20DB=00`. BRAM-hashen var oförändrad. Denna plan har tidigare gett 240
+råsektorer och 256 origin-RAM-kvitton med den normaliserade Track 02-vägen;
+skillnaden visar att knappsekvensen ensam inte förklarar rå-CUE-avvikelsen.
+Se ignorerad trace under `.codex-scratch/theron-raw-cue-known-input-20260925/`.

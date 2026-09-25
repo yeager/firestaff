@@ -3319,6 +3319,9 @@ av bankladdningen. Se
   noll spelägda CD→RAM-kvitton, noll autentiserade CD→RAM-destinationer,
   noll `$E009`-dataläsningar och `$20DB=00`. Den råa kallstarten når inte den
   tidigare signerade Drator-menykoden. Ökad logggräns löste avklippningen men
-  inte övergången; nästa steg är att korrelera det fortsatta BIOS-indatapollandet
-  med en autentisk kallstarts-/menyväg. Ingen semantik får öppnas från denna
-  negativa körning.
+  inte övergången. Även den tidigare fungerande planen
+  `run@1:1,run@480:30,i@900:30` gav samma negativa resultat på rå-CUE:n,
+  trots att den tidigare gav 240 råsektorer och 256 origin-RAM-kvitton via den
+  normaliserade Track 02-vägen. Nästa felsökning jämför därför CD-layoutens
+  uppstarts-/lässekvens och inte bara inputtimingen. Ingen semantik får öppnas
+  från dessa negativa körningar.
