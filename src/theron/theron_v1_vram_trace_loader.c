@@ -198,7 +198,12 @@ int theron_v1_vram_trace_load_known_capture_files(
         /* 2026-08-14 r30 state replay.  The runtime spawn/level join is
          * negative, but the complete VDC/VCE pair is still an authenticated
          * screen-space frame and may be replayed without semantic promotion. */
-        {0xee9374fau, 0xc17c0a95u}
+        {0xee9374fau, 0xc17c0a95u},
+        /* 2026-09-25 authentic US Akutuba-save replay. The original BRAM,
+         * Track 02, System Card, and instrumented emulator produced this
+         * complete screen pair; its receipt has no CD-to-RAM join or level
+         * transition, so this admits pixels only. */
+        {0x59ef2648u, 0x6fb303b5u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;
@@ -307,7 +312,13 @@ int theron_v1_vram_trace_load_known_atomic_capture_bundle(
          0xb96a56e5u, 25890u, 8784u},
         /* Same source state with LEFT $0080 / nibble $37. */
         {0xe4261226u, 0x6fb303b5u, 0x61478026u, 0x484aaf93u,
-         0x2e37df95u, 25890u, 8784u}
+         0x2e37df95u, 25890u, 8784u},
+        /* 2026-09-25 authentic US Akutuba-save replay. Exact final VDC
+         * snapshot boundary and write replay match the source VRAM image;
+         * zero CD-to-RAM receipts and no game-owned $E009 dispatch mean
+         * this remains screen-space only, with no level semantics. */
+        {0x59ef2648u, 0x6fb303b5u, 0x21d291e3u, 0xf8cc0675u,
+         0x49d2ae18u, 27556u, 9360u}
     };
     FILE *sat_file;
     size_t known_index;

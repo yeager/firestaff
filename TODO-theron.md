@@ -2708,7 +2708,16 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   version check and produced authentic US CUE/state VDC traces locally. The
   corresponding VDC replay matched its captured VRAM writes but still emitted
   no authenticated CD-to-RAM consumer receipt or dungeon transition; it does
-  not open the source-semantic gate.
+  not open the source-semantic gate. The exact VRAM/VCE/VDC-state/SAT/VDC-I/O
+  bundle is now admitted by production's atomic screen-capture allowlist: the
+  receipt's final sequence-65,536 bus marker matches the snapshot, replay
+  matches all 9,360 written words with no mismatches, and the source-only
+  renderer presents the authentic 320x200 frame through the boot facade.
+  The capture's 27,556 VDC commits, 40,980 input polls, unchanged authentic
+  BRAM/code page, zero non-System-Card reads and zero game-owned `$E009`
+  dispatches keep the admission strictly screen-space; no room, transition,
+  UI-widget or gameplay semantics are claimed. Raw bytes and rendered
+  screenshot remain local under ignored `.codex-scratch/`.
 
 - [ ] THERON-V1-HUC6280-RAM-CONSUMER: the real US/JP bank-$1f static support
   fragment at `$243e` is now byte-verified in both retail ISO projections.
