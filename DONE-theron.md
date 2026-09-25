@@ -21,7 +21,9 @@
   passes the test against the installed Track 02 hash and verifies all seven
   JP source dungeons (34 maps, 2,269 source objects); no media was copied,
   generated, or substituted. This remains source-loader evidence, not
-  original transition or gameplay parity.
+  original transition or gameplay parity. The full trv2 Theron suite then
+  reported 44 passed and 17 skipped out of 61 tests, with no failures; skips
+  are the specific absent BIN, capture, save or archive inputs.
 
 ## 2026-09-25 — JP CUE ISO loads authentic source dungeons
 
