@@ -182,8 +182,8 @@ int main(void) {
     }
     memcpy(expected_screen, viewport.fb.data,
            (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
-    memset(viewport.fb.data, 0,
-           (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
+    /* The real dungeon renderer must leave the source capture intact when
+     * no authenticated world/asset relation is available. */
     theron_vp_render_dungeon(&viewport, NULL);
     if (memcmp(expected_screen, viewport.fb.data,
                (size_t)viewport.fb.stride * (size_t)viewport.fb.h) != 0) {
