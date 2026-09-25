@@ -1662,13 +1662,21 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
     };
     size_t r, n, vi;
     int admitted = 0;
+    static const char macArchiveFamily[] =
+        "Dungeon-Master-II-Skullkeep_Mac_EN";
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
     for (r = 0; r < (rootCount ? rootCount : 1u); ++r) {
         char candidate[M12_ASSET_DATA_DIR_CAPACITY];
         for (n = 0; n < sizeof(names) / sizeof(names[0]); ++n) {
+            /* Respect an explicitly selected archive from this edition
+             * family even when the user's file manager added a duplicate
+             * suffix, e.g. " (1)". The DM2 boot scanner below authenticates
+             * the complete retail image; the filename only selects which
+             * candidate gets checked and must not make a valid chosen file
+             * fall through to an unrelated sibling archive. */
             if (preferredArchive && preferredArchive[0] &&
-                strstr(preferredArchive, names[n]) != NULL) {
+                strstr(preferredArchive, macArchiveFamily) != NULL) {
                 snprintf(candidate, sizeof(candidate), "%s", preferredArchive);
             } else {
                 if (r >= rootCount) continue;
