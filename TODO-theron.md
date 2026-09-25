@@ -69,6 +69,16 @@ source-sector join or level transition and does not open gameplay semantics.
 Raw captures and the temporary normalized CUE stay local under ignored
 `.codex-scratch/`.
 
+2026-09-25 cold-start input replay: a 120-second run against the authentic US
+MODE1/2048 CUE, hash-verified Track 02 ISO and System Card 3.0 applied five
+scripted controller events and confirmed their wire masks (`RUN=0x0008`,
+`I=0x0001`) in the original HuC6280 input reads. It read 25 authentic raw
+sectors across four SCSI commands and entered `$E009` once, with 24 register
+writes but zero game-owned E009 data reads, zero authenticated CD-to-RAM
+receipts, and no level/party publication. Repeating I later in the same cold
+boot did not advance the source loader. This is negative transport evidence;
+the capture and its raw sidecars remain local under ignored `.codex-scratch/`.
+
 2026-09-25: The authentic US CUE from the combined local archive now retains
 its hash-bound CUE provenance through M12→M11, binds the exact sibling Track 01
 audio and loads the regional Track 19 metadata bank from that source directory
