@@ -46163,7 +46163,7 @@ if(BUILD_TESTING AND TARGET firestaff_theron)
             SKIP_RETURN_CODE 77
             LABELS "theron;real-media;runtime;source-only;regional"
             ENVIRONMENT
-                "FIRESTAFF_THERON_JP_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin;FIRESTAFF_THERON_US_TRACK02_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin")
+                "FIRESTAFF_THERON_JP_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02.bin;FIRESTAFF_THERON_US_TRACK02_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQUS02.bin;FIRESTAFF_THERON_JP_TRACK02_ISO=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/TQJP02-rebuilt.iso")
     endif()
     add_test(
         NAME theron_v1_jp_raw_bin_startup

@@ -51,7 +51,9 @@ int theron_v1_startup_runtime_load_source_dungeon(
     if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
         variant != THERON_TRACK02_VARIANT_US_BIN &&
         variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW &&
-        variant != THERON_TRACK02_VARIANT_US_ISO) return 0;
+        variant != THERON_TRACK02_VARIANT_US_ISO &&
+        !(variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+          strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0)) return 0;
     /* Bind the regional raw spawn records before converting the BIN into a
      * user-data view.  This is the source-record -> live-world boundary;
      * RNG, AI, combat, generator, T700 and T900 consumers remain separate
@@ -80,6 +82,21 @@ int theron_v1_startup_runtime_load_source_dungeon(
         if (!user_data) return 0;
         memcpy(user_data + pregap_bytes, track02, track02_size);
         dungeon_data_variant = THERON_TRACK02_VARIANT_US_BIN;
+        iso_pregap_normalized = 1;
+        goto load_dungeon;
+    } else if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        /* The authenticated full JP CUE projection is byte-identical to
+         * JP raw Track 02 after INDEX 01 at sector 224. Restore only that
+         * omitted address prefix; source decoders then run as JP BIN against
+         * the verified original bytes. This projection carries no raw-sector
+         * spawn witness, so do not manufacture or bind one here. */
+        const size_t pregap_bytes = 224u * THERON_TRACK02_RAW_USER_DATA_BYTES;
+        if (track02_size > SIZE_MAX - pregap_bytes) return 0;
+        user_size = pregap_bytes + track02_size;
+        user_data = (uint8_t *)calloc(user_size, 1u);
+        if (!user_data) return 0;
+        memcpy(user_data + pregap_bytes, track02, track02_size);
+        dungeon_data_variant = THERON_TRACK02_VARIANT_JP_BIN;
         iso_pregap_normalized = 1;
         goto load_dungeon;
     }

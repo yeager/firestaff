@@ -139,6 +139,71 @@ static int verify_region(const char *region, const char *path,
     return 0;
 }
 
+static int verify_jp_cue_iso(const char *path) {
+    static const unsigned int expected_map_counts[THERON_DUNGEON_COUNT] = {
+        4u, 8u, 5u, 6u, 3u, 4u, 4u
+    };
+    unsigned char *track02;
+    size_t track02_size;
+    char md5[33];
+    if (!path || !path[0]) {
+        puts("SKIP: authentic Theron JP CUE Track 02 ISO is not staged");
+        return 77;
+    }
+    track02 = read_file(path, &track02_size);
+    if (!track02) return 1;
+    if (!m12_file_md5_hex(path, md5) ||
+        strcmp(md5, THERON_TRACK02_MD5_JP_ISO) != 0) {
+        fprintf(stderr, "FAIL: JP CUE Track 02 ISO identity is not authentic\n");
+        free(track02);
+        return 1;
+    }
+    for (Theron_DungeonID dungeon = THERON_DUNGEON_1_AKUTUBA;
+         dungeon <= THERON_DUNGEON_7_DEMON;
+         dungeon = (Theron_DungeonID)(dungeon + 1)) {
+        Theron_V1_World world;
+        char receipt[256];
+        unsigned int loaded_maps = 0u;
+        const int slot = (int)dungeon - 1;
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        if (!theron_v1_startup_runtime_load_source_dungeon(
+                &world, track02, track02_size, md5, dungeon,
+                receipt, sizeof(receipt)) ||
+            world.current_dungeon != (int)dungeon ||
+            world.source_object_count == 0u ||
+            !strstr(receipt, "ISO user-data")) {
+            fprintf(stderr, "FAIL: authentic JP CUE ISO handoff: %s\n", receipt);
+            free(track02);
+            return 1;
+        }
+        for (unsigned int level = 0u;
+             level < THERON_MAX_LEVELS_PER_DUNGEON; ++level) {
+            const Theron_V1_Level *source_level = &world.levels[slot][level];
+            if (!world.level_loaded[slot][level]) continue;
+            if (!source_level->source_header_verified ||
+                !source_level->source_item_property_table_verified) {
+                fprintf(stderr,
+                        "FAIL: JP CUE ISO dungeon %d level %u lacks JP source verification\n",
+                        (int)dungeon, level);
+                free(track02);
+                return 1;
+            }
+            ++loaded_maps;
+        }
+        if (loaded_maps != expected_map_counts[slot]) {
+            fprintf(stderr,
+                    "FAIL: JP CUE ISO dungeon %d loaded %u maps, expected %u\n",
+                    (int)dungeon, loaded_maps, expected_map_counts[slot]);
+            free(track02);
+            return 1;
+        }
+    }
+    puts("PASS: authentic JP CUE ISO reaches the native source-dungeon runtime for all seven JP dungeons (no fabricated spawn witness)");
+    free(track02);
+    return 0;
+}
+
 int main(void) {
     int jp_result = verify_region(
         "JP", find_track02("FIRESTAFF_THERON_JP_TRACK02", "TQJP02.bin"),
@@ -146,7 +211,10 @@ int main(void) {
     int us_result = verify_region(
         "US", find_track02("FIRESTAFF_THERON_US_TRACK02_BIN", "TQUS02.bin"),
         THERON_TRACK02_MD5_US_BIN);
+    int jp_iso_result = verify_jp_cue_iso(
+        find_track02("FIRESTAFF_THERON_JP_TRACK02_ISO", "TQJP02End.iso"));
     if (jp_result != 0 && jp_result != 77) return jp_result;
     if (us_result != 0 && us_result != 77) return us_result;
-    return jp_result == 77 && us_result == 77 ? 77 : 0;
+    if (jp_iso_result != 0 && jp_iso_result != 77) return jp_iso_result;
+    return jp_result == 77 && us_result == 77 && jp_iso_result == 77 ? 77 : 0;
 }

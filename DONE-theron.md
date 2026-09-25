@@ -1,5 +1,17 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-25 — JP CUE ISO loads authentic source dungeons
+
+- Byte-compared the authentic JP CUE-projected Track 02 ISO with the
+  authentic JP raw BIN user-data stream after the CUE's 224-sector INDEX 01
+  prefix. The startup source-dungeon handoff now restores only that absent
+  coordinate prefix and passes the same original bytes through the verified
+  JP BIN map/thing/property decoders. Real-media regressions verify all seven
+  dungeons (34 maps, 2,269 source objects) through both the source loader and
+  production handoff. ISO media does not supply the missing raw-sector spawn
+  witness, which is deliberately not fabricated. This does not establish
+  original dungeon-transition, visual, combat or item-action parity.
+
 ## 2026-09-24 — Native movement through the authentic JP CUE route
 
 - Extended the full Japanese Rev. 1 CUE boot regression with six native

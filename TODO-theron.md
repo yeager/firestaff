@@ -69,9 +69,13 @@ or fallback was involved.
 The 149-sector JP Rev. 1 `TQJP02End.iso` matches its known hash but the
 supplied bytes are entirely zero-filled. It is not usable dungeon content;
 both the source loader and campaign-media launch intake explicitly reject it.
-The authentic JP raw BIN remains the source for all seven dungeon maps and
-their local item tables. The actual JP Rev. 1 ISO dungeon banks are not yet
-acquired or verified.
+The authentic JP CUE-projected ISO is byte-identical to the authentic raw
+Track 02 user-data stream after its 224-sector INDEX 01 prefix. The native
+runtime restores only that zeroed coordinate prefix and loads all seven
+source dungeon banks using the existing JP BIN decoder; the CUE ISO test
+verifies 34 maps and 2,269 source objects without manufacturing raw-sector
+spawn records. Dungeon-transition, visual, combat and item-action parity
+remain open.
 
 The JP raw-BIN M11 and full-CUE startup regressions now send six native
 movement commands through authentic Akutuba and require the resulting party

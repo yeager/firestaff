@@ -708,8 +708,18 @@ static void test_jp_rev1_iso_stub_dungeon_boundary(void) {
 
 static void test_jp_cue_iso_map_source(void) {
     const char *path = getenv("FIRESTAFF_THERON_JP_TRACK02_ISO");
+    const char *raw_path = find_jp_track02();
     uint8_t *iso;
+    uint8_t *raw_user_data;
+    uint8_t *normalized;
     size_t iso_size = 0u;
+    size_t raw_user_data_size = 0u;
+    static const unsigned int expected_maps[THERON_DUNGEON_COUNT] = {
+        4u, 8u, 5u, 6u, 3u, 4u, 4u
+    };
+    static const unsigned int expected_objects[THERON_DUNGEON_COUNT] = {
+        291u, 291u, 299u, 382u, 403u, 343u, 260u
+    };
     Theron_DungeonData maps;
     Theron_Track02UserDataWindowCatalog windows;
     Theron_Track02StartupTextMarkerCatalog text;
@@ -724,6 +734,15 @@ static void test_jp_cue_iso_map_source(void) {
     assert(iso_size == 6596608u);
     assert(theron_v1_track02_raw_bytes_match_md5(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO));
+    assert(raw_path != NULL);
+    raw_user_data = load_track02_ud(raw_path, &raw_user_data_size);
+    assert(raw_user_data != NULL);
+    assert(raw_user_data_size >= 224u * UD_PER_SECTOR + iso_size);
+    assert(memcmp(iso, raw_user_data + 224u * UD_PER_SECTOR, iso_size) == 0);
+    normalized = (uint8_t *)calloc(raw_user_data_size, 1u);
+    assert(normalized != NULL);
+    memcpy(normalized + 224u * UD_PER_SECTOR, iso, iso_size);
+    free(raw_user_data);
     assert(!theron_v1_track02_dungeon_map_load_for_variant(
         iso, iso_size, THERON_TRACK02_VARIANT_JP_REV1_ISO, 0u, &maps));
     assert(theron_v1_track02_catalog_user_data_windows(
@@ -744,8 +763,24 @@ static void test_jp_cue_iso_map_source(void) {
     assert(theron_v1_track02_inspect_4bpp_palette_window(
         iso, iso_size, THERON_TRACK02_MD5_JP_ISO, 0u, &palette) ==
         THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    for (int dungeon = 1; dungeon <= THERON_DUNGEON_COUNT; ++dungeon) {
+        Theron_V1_World *world =
+            (Theron_V1_World *)calloc(1u, sizeof(*world));
+        Theron_DungeonLoadResult result;
+        assert(world != NULL);
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+            world, dungeon, normalized, raw_user_data_size,
+            THERON_TRACK02_VARIANT_JP_BIN, &result) == 0);
+        assert((unsigned int)result.levels_loaded == expected_maps[dungeon - 1]);
+        assert(result.source_object_count == expected_objects[dungeon - 1]);
+        assert(result.source_property_table_verified == 1);
+        free(world);
+    }
+    free(normalized);
     free(iso);
-    puts("  authentic JP CUE ISO bank anchors are verified; US-derived map, text, roster, bitmap, font, and palette semantics remain fail-closed");
+    puts("  authentic JP CUE ISO matches raw Track 02 after INDEX 01 and loads all seven source dungeon banks through the JP decoder");
 }
 
 static void assert_source_category_census(
