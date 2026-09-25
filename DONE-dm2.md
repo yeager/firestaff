@@ -72,6 +72,19 @@
   its source-owned New Game pointer route is required. All game data remains
   archive-backed and in memory.
 
+## 2026-09-25 — FM Towns title-to-map CLI regression
+
+- Added an M11 regression against the authentic HME-242 ZIP that advances the
+  source Timer-A title sequence to SKULL, selects New Game from the decoded
+  GDAT rectangle, then commits the preselected mirror into the map-0 runtime.
+  It requires a real-asset frame with zero core fallback draws.
+- Extended `dm2_v1_fmtowns_native_cli_boot` to cover the direct CLI route with
+  the same source-coordinate New Game and mirror clicks at 320×200. The
+  regression requires a loaded map-0 party and a receipt showing real assets
+  with zero fallback draws. The registered CTest passed with the installed
+  original media. This proves the CLI start path, not original-renderer pixel
+  parity.
+
 ## 2026-09-08 — FM Towns IMG2/IMG6 palette binding
 
 - Corrected the FM Towns HME-242 image-palette route. Its `0x8004` GDAT
