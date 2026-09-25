@@ -171,9 +171,19 @@ capture gates remain open until an authentic capture exists.
 
 ### Real source
 
-Authentic JP Rev 1 Track 02 BIN/CUE and the US CloneCD ZIP container are under
-`~/.firestaff/data/theron`. Their Track 02 payload is the only basis for
-production claims about levels, items, champions, and bitmaps.
+The current local corpus under `~/.firestaff/data/theron` contains the
+authentic US Track 02 BIN (`TQUS02.bin`, MD5
+`f23601102138f87c33025877767ebf76`), the authentic JP Rev. 1 Track 02 BIN
+(`TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a`), and a combined US/JP
+RAR with regional CUE and ISO/audio members. Real-data CTest coverage confirms
+the JP raw BIN loads all seven source dungeons; the US and JP raw media also
+reach their bounded startup routes. The supplied JP `TQJP02End.iso` is only a
+149-sector, zero-filled stub and is rejected as dungeon content. The US
+CloneCD ZIP and the authentic original-runtime transition/presentation
+captures are not present in this local corpus; tests requiring those external
+artifacts skip rather than falling back to fixtures. Production claims about
+levels, items, champions, and bitmaps must remain bound to authenticated
+Track 02 records.
 
 ### Decision
 
