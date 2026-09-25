@@ -14,6 +14,12 @@ Theron label suite also passes (68 tests, six skipped for unavailable
 capture/media inputs); this is capture wiring only and does not close the open
 dungeon, UI, or gameplay semantics.
 
+The same build and 68-test Theron label suite also completed on Linux `trv2`
+with no failures (21 capture/media-dependent skips in that host's staged data
+view). Its authentic USA CloneCD ZIP startup/runtime route, USA raw-CUE route,
+and JP CUE route passed there. The larger skip count reflects that host's
+distinct data staging and is not a synthetic-data substitution.
+
 2026-09-25: Removed the data-free synthetic first-room probe and its fabricated
 stair assertion. Current dungeon evidence comes from the authenticated
 regional source-dungeon and mechanics regressions; those pass with the real
