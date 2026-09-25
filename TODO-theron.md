@@ -1671,6 +1671,19 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
   meanings. Next evidence is a capture that reaches the game-owned post-CD
   consumer and closes the VDC snapshot on clean exit.
 
+  - 2026-08-14 direct source-to-record capture verified locally on
+    2026-09-25 with `scripts/verify_theron_record_table_provenance.py`:
+    29,914 direct provenance rows, four complete ten-byte runtime records
+    from authenticated Track 02 LBAs 4880, 4886, 4896 and 4901, 40 exact
+    `theron_record_watch` write matches, and 7,100 executing `$C3A0–$C429`
+    caller-window rows. This closes source-sector → game-owned RAM write →
+    runtime-record mutation → executing-caller provenance. It still does not
+    identify the records as levels, squares, objects, creatures, or gameplay
+    transactions; level/object, rendering, AI, loot and gameplay gates remain
+    closed pending an original semantic consumer and reproducible transaction.
+    The large raw traces remain local on the external disk and are not added
+    to the repository.
+
   - 2026-08-14 update: an authentic Mednafen savestate execution-window
     capture now identifies a mutable 10-byte runtime record-table chain:
     `$C9BD` derives a base from `$6000,X`, `$CB89` scans `$611D` records, and
