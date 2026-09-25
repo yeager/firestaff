@@ -60,12 +60,13 @@ static int startup_receipt_is_cue_path(const char *path) {
 /* ── Known Track 02 MD5 set (mirrors g_theronVersions in ─────────────
  * src/shared/asset_status_m12.c, kept inline so the receipt module is
  * self-contained and does not pull the full M12 asset catalog just to
- * recognise four hash strings. */
+ * recognise the hash-verified Track 02 representations. */
 static const char *const g_known_track02_md5s[] = {
     "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN              */
     "f23601102138f87c33025877767ebf76", /* US Track 02 BIN              */
     THERON_TRACK02_MD5_US_CLONECD_BIN,  /* US CloneCD Track 02 slice     */
     "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 Track 02 ISO        */
+    THERON_TRACK02_MD5_JP_ISO,          /* JP Rev 1 CUE ISO             */
     "ceb02343868f80cec899e9b239aff2da", /* US Track 02 ISO              */
     NULL
 };
@@ -349,6 +350,7 @@ void theron_v1_startup_receipt_set_placeholder(Theron_V1_StartupReceipt *receipt
                   THERON_TRACK02_MD5_JP_BIN ", "
                   THERON_TRACK02_MD5_US_BIN ", "
                   THERON_TRACK02_MD5_JP_REV1_ISO ", "
+                  THERON_TRACK02_MD5_JP_ISO ", "
                   THERON_TRACK02_MD5_US_ISO);
 
     /* M11 dispatch is intentionally not populated for the placeholder;
@@ -604,9 +606,8 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     receipt->m11_view_active = 0;       /* would flip to 1 inside M11_GameView_Start */
     receipt->m11_world_present = 0;     /* would flip to 1 alongside world init */
 
-    /* Bank-signal decoder — only for raw BIN / ISO variants that actually
-     * carry the known anchors.  JP Rev 1 ISO is allowed to be a zero-fill
-     * (the receipt still surfaces the deterministic skip contract). */
+    /* Bank-signal decoder — only for representations with hash-bound source
+     * anchors, or the one legacy zero-stub contract. */
     if (receipt->variant == THERON_TRACK02_VARIANT_UNKNOWN) {
         /* Variant should already be set; defensive guard. */
         receipt->variant = theron_v1_track02_variant_for_md5(expected_md5);
@@ -631,9 +632,9 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     signal_status = theron_v1_track02_find_bank_signal(
         data, size, expected_md5, &signal);
     bank_signal_ok = (signal_status == THERON_TRACK02_SIGNAL_OK) ||
-                     (receipt->variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
-                      (signal_status == THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE ||
-                       signal_status == THERON_TRACK02_SIGNAL_OK));
+                     (strcmp(expected_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0 &&
+                      signal_status ==
+                          THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE);
 
     if (!bank_signal_ok) {
         free(data);
@@ -648,9 +649,9 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         return 0;
     }
 
-    /* Populate the bank-signal summary fields.  For JP Rev 1 ISO the
-     * offsets remain zero (the decoder intentionally reports
-     * INSUFFICIENT_ZERO_IMAGE without claiming an offset). */
+    /* Populate bank-signal summary fields from the digest-bound decoder.
+     * The legacy JP zero stub has no anchors; the complete CUE ISO carries
+     * its own verified byte-layout anchors. */
     receipt->descriptor_offset         = (uint64_t)signal.descriptor_offset;
     receipt->descriptor_size           = (uint64_t)signal.descriptor_size;
     receipt->descriptor_value_count    = (uint64_t)signal.value_count;
@@ -665,7 +666,11 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     receipt->post_boundary_span_size   = (uint64_t)signal.post_boundary_span_size;
     receipt->next_nonzero_offset       = (uint64_t)signal.next_nonzero_offset;
 
-    if (signal.descriptor_offset != 0u &&
+    /* The complete JP CUE ISO proves repeated byte anchors only. Its matching
+     * descriptor shape does not prove US BIN/ISO semantic window roles or
+     * dungeon seeds, so do not run those edition-specific promotions here. */
+    if (strcmp(expected_md5, THERON_TRACK02_MD5_JP_ISO) != 0 &&
+        signal.descriptor_offset != 0u &&
         signal.descriptor_size >=
             THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES * 2u &&
         signal.descriptor_offset < size) {
@@ -720,7 +725,8 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         }
     }
 
-    if (signal.descriptor_offset != 0u &&
+    if (strcmp(expected_md5, THERON_TRACK02_MD5_JP_ISO) != 0 &&
+        signal.descriptor_offset != 0u &&
         signal.descriptor_size >=
             THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES * 2u &&
         signal.descriptor_offset < size) {
@@ -1437,10 +1443,11 @@ const char *theron_v1_startup_receipt_source_evidence(void) {
            "src/theron/theron_v1_track02.c (Track 02 bank-signal decoder), "
            "src/theron/theron_v1_boot.c (boot profile + direct launch), "
            "include/asset_status_m12.h m12_file_md5_hex (file MD5 helper), "
-           "and the four known TQ Track 02 MD5s "
+           "and the known TQ Track 02 MD5s "
            THERON_TRACK02_MD5_JP_BIN " / "
            THERON_TRACK02_MD5_US_BIN " / "
            THERON_TRACK02_MD5_JP_REV1_ISO " / "
+           THERON_TRACK02_MD5_JP_ISO " / "
            THERON_TRACK02_MD5_US_ISO
            " (mirrored from src/shared/asset_status_m12.c g_theronVersions). "
            "ReDMCSB has no Theron code; the Theron-side evidence is local "

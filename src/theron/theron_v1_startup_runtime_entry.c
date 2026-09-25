@@ -71,16 +71,10 @@ int theron_v1_startup_runtime_load_source_dungeon(
                 world, &spawn_source, (int)variant)) return 0;
     } else if (variant == THERON_TRACK02_VARIANT_US_ISO) {
         /* Retail US ISO is the byte-identical raw user-data stream after
-         * raw Track 02's 225-sector pregap.  The source dungeon decoders
-         * retain raw-user-data coordinates, so give them a zeroed address
-         * prefix and copy the authenticated ISO bytes unchanged after it.
-         * The prefix is never source content or a fallback; it is solely the
-         * absent physical pregap coordinate space.  Spawn-source decoding
-         * stays closed here because its physical-sector record has only been
-         * proven for raw MODE1/2352 media. */
+         * raw Track 02's 225-sector pregap. The prefix below restores only
+         * that absent raw-BIN coordinate space. */
         const size_t pregap_bytes = 225u * THERON_TRACK02_RAW_USER_DATA_BYTES;
-        if (variant != THERON_TRACK02_VARIANT_US_ISO ||
-            track02_size > SIZE_MAX - pregap_bytes) return 0;
+        if (track02_size > SIZE_MAX - pregap_bytes) return 0;
         user_size = pregap_bytes + track02_size;
         user_data = (uint8_t *)calloc(user_size, 1u);
         if (!user_data) return 0;

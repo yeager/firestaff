@@ -393,7 +393,8 @@ int theron_v1_boot_track02_capture_admission_allows_initial_level(
  *
  * JP Track 02 MD5: b7afb338ad31be1025b53f9aff12d73a
  * US Track 02 MD5: f23601102138f87c33025877767ebf76
- * JP Rev 1 Track 02 ISO MD5: 397039af02d50d15c70b74088eb8a1cb
+ * JP CUE Track 02 ISO MD5: 62a39bbf43415c9739c41c2481080a49
+ * JP Rev 1 zero stub MD5:   397039af02d50d15c70b74088eb8a1cb
  * US Track 02 ISO MD5:       ceb02343868f80cec899e9b239aff2da
  * Source: cdromance.org (2026-05-27)
  * Additional ISO names: MyAbandonware TG-CD English/Japanese Rev 1 page
@@ -429,13 +430,14 @@ static const char *const g_theron_track02_candidates[] = {
     NULL
 };
 
-/* Recognised Track 02 MD5s for Theron's Quest.  Mirrors the four hashes
+/* Recognised Track 02 MD5s for Theron's Quest.  Mirrors the registered hashes
  * in asset_status_m12.c::g_theronVersions. */
 static const char *const g_theron_known_md5s[] = {
     "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN */
     "f23601102138f87c33025877767ebf76", /* US Track 02 BIN */
     "168bd6a63784e91885df8c47be62ab5a", /* US CloneCD Track 02 slice */
     "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 ISO */
+    THERON_TRACK02_MD5_JP_ISO,          /* JP Rev 1 CUE ISO */
     "ceb02343868f80cec899e9b239aff2da", /* US ISO */
     NULL
 };
@@ -525,6 +527,7 @@ static void theron_v1_boot_apply_known_md5_identity(
         return;
     }
     if (strcmp(md5, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
+        strcmp(md5, THERON_TRACK02_MD5_JP_ISO) == 0 ||
         strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
         profile->platform = THERON_PLATFORM_PCE_JP;
         strncpy(profile->platform_label,
@@ -540,6 +543,9 @@ static void theron_v1_boot_apply_known_md5_identity(
     }
     if (strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
         strncpy(profile->version_id, "pce-jp-rev1-iso",
+                sizeof(profile->version_id) - 1);
+    } else if (strcmp(md5, THERON_TRACK02_MD5_JP_ISO) == 0) {
+        strncpy(profile->version_id, "pce-jp-cue-iso",
                 sizeof(profile->version_id) - 1);
     } else if (strcmp(md5, "ceb02343868f80cec899e9b239aff2da") == 0) {
         strncpy(profile->version_id, "pce-en-iso",
@@ -757,7 +763,8 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
     /* Phase 0 gate: verify Track 02 MD5 against known hashes.
      * JP: b7afb338ad31be1025b53f9aff12d73a
      * US: f23601102138f87c33025877767ebf76
-     * JP Rev 1 ISO: 397039af02d50d15c70b74088eb8a1cb
+     * JP CUE ISO: 62a39bbf43415c9739c41c2481080a49
+     * JP stub:    397039af02d50d15c70b74088eb8a1cb
      * US ISO:       ceb02343868f80cec899e9b239aff2da */
     if (profile->graphics_path[0]) {
         char md5hex[33] = {0};
@@ -765,6 +772,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
             if (strcmp(md5hex, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
                 strcmp(md5hex, "f23601102138f87c33025877767ebf76") == 0 ||
                 strcmp(md5hex, "168bd6a63784e91885df8c47be62ab5a") == 0 ||
+                strcmp(md5hex, THERON_TRACK02_MD5_JP_ISO) == 0 ||
                 strcmp(md5hex, "397039af02d50d15c70b74088eb8a1cb") == 0 ||
                 strcmp(md5hex, "ceb02343868f80cec899e9b239aff2da") == 0) {
                 profile->assets_verified = 1;

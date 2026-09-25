@@ -8,6 +8,9 @@
 #endif
 
 #include "theron_v1_track02_raw_media_intake.h"
+#include "theron_v1_track02.h"
+#include "asset_find_by_hash.h"
+#include "asset_status_m12.h"
 
 static int failures;
 
@@ -140,14 +143,15 @@ static void test_real_jp_cue_path(void) {
         return;
     }
     CHECK(theron_v1_track02_raw_media_intake_discover(cue, &receipt));
-    CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
     if (receipt.variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
         CHECK(receipt.cue_consumed && receipt.mode1_2352);
         CHECK(receipt.cue_index01_sector == 224u);
         CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_BIN));
         CHECK(strstr(receipt.payload_path, "(Track 02).bin") != NULL);
     } else {
-        CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+        CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+              strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0);
         CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
         CHECK(receipt.failure_reason ==
               THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);
@@ -156,6 +160,8 @@ static void test_real_jp_cue_path(void) {
         CHECK(receipt.sector_count == 149u);
         CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO));
         CHECK(strstr(receipt.payload_path, "TQJP02End.iso") != NULL);
+        /* This is an older zero-filled edition, not the separate full JP
+         * Track 02 ISO recovered from a different CUE/archive source. */
     }
 #endif
 }
@@ -280,6 +286,13 @@ int main(void) {
               THERON_TRACK02_MD5_US_ISO, 2048, 0, 0u, 0u, 2048u,
               &variant) == THERON_V1_TRACK02_MEDIA_REASON_NONE);
     CHECK(variant == THERON_TRACK02_VARIANT_US_ISO);
+    CHECK(theron_v1_track02_raw_media_intake_validate_verified_layout(
+              THERON_TRACK02_MD5_JP_ISO, 2048, 0, 0u, 0u, 2048u,
+              &variant) == THERON_V1_TRACK02_MEDIA_REASON_NONE);
+    CHECK(variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+    CHECK(theron_v1_track02_raw_media_intake_validate_verified_layout(
+              THERON_TRACK02_MD5_JP_ISO, 2352, 0, 0u, 0u, 2352u,
+              &variant) == THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH);
     CHECK(theron_v1_track02_raw_media_intake_validate_verified_layout(
               THERON_TRACK02_MD5_US_BIN, 2352, 0, 0u, 0u, 2352u,
               &variant) == THERON_V1_TRACK02_MEDIA_REASON_NONE);
@@ -423,7 +436,8 @@ int main(void) {
               receipt.variant == THERON_TRACK02_VARIANT_JP_BIN ||
               receipt.variant == THERON_TRACK02_VARIANT_US_ISO ||
               receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
-        if (receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        if (strcmp(receipt.track02_md5,
+                   THERON_TRACK02_MD5_JP_REV1_ISO) == 0) {
             CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
             CHECK(receipt.failure_reason ==
                   THERON_V1_TRACK02_MEDIA_REASON_SOURCE_CONTENT_EMPTY);

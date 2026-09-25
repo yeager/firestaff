@@ -652,7 +652,11 @@ int theron_v1_startup_media_consume_raw_bitmap_route(
     if (variant == THERON_TRACK02_VARIANT_UNKNOWN ||
         receipt->track02_variant != (int)variant ||
         receipt->startup_bitmap_atlas.variant != variant ||
-        (receipt->startup_bitmap_raw_route_mask & route_bit) == 0u) {
+        ((variant == THERON_TRACK02_VARIANT_US_ISO ||
+          (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+           strcmp(receipt->track02_md5, THERON_TRACK02_MD5_JP_ISO) == 0))
+             ? (receipt->startup_bitmap_iso_route_mask & route_bit) == 0u
+             : (receipt->startup_bitmap_raw_route_mask & route_bit) == 0u)) {
         return 0;
     }
     for (i = 0u; i < receipt->startup_bitmap_atlas.route_count; ++i) {

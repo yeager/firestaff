@@ -168,6 +168,7 @@ static int resolve_theron_native_track02(
     const char* region,
     char outPath[FSP_PATH_MAX]) {
     char root[FSP_PATH_MAX];
+    char direct_md5[33];
     const char* expected_md5;
 
     if (!region || !outPath ||
@@ -177,6 +178,20 @@ static int resolve_theron_native_track02(
     }
     expected_md5 = strcmp(region, "jp") == 0
         ? THERON_TRACK02_MD5_JP_BIN : THERON_TRACK02_MD5_US_BIN;
+    /* An explicitly selected virtual or loose media file can be admitted by
+     * its exact regional digest before directory scanning. JP Rev. 1 has a
+     * second authentic representation: the CUE's INDEX 01 ISO, byte-bound
+     * against the raw BIN and its original split archive members. */
+    if ((FSP_FileExists(requestedDataDir) ||
+         strstr(requestedDataDir, "::") != NULL) &&
+        m12_file_md5_hex(requestedDataDir, direct_md5) &&
+        (strcmp(direct_md5, expected_md5) == 0 ||
+         (strcmp(region, "jp") == 0 &&
+          strcmp(direct_md5, THERON_TRACK02_MD5_JP_ISO) == 0))) {
+        if (snprintf(outPath, FSP_PATH_MAX, "%s", requestedDataDir) >=
+            FSP_PATH_MAX) return 0;
+        return 1;
+    }
     /* Resolve loose files and explicitly enabled preservation archives by
      * the registered digest. Never trust a regional filename by itself; the
      * returned archive::member path is consumed in bounded memory. */

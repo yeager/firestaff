@@ -35,7 +35,8 @@
  * Provenance (Phase 0 — PASSED, docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md):
  *   JP MD5: b7afb338ad31be1025b53f9aff12d73a (Track 02 BIN, cdromance.org)
  *   US MD5: f23601102138f87c33025877767ebf76 (Track 02 BIN, cdromance.org)
- *   JP Rev 1 ISO MD5: 397039af02d50d15c70b74088eb8a1cb (Track 02 ISO)
+ *   JP CUE ISO MD5: 62a39bbf43415c9739c41c2481080a49 (complete INDEX 01)
+ *   JP Rev 1 stub:  397039af02d50d15c70b74088eb8a1cb (zero-filled payload)
  *   US ISO MD5:       ceb02343868f80cec899e9b239aff2da (Track 02 ISO)
  *   g_theronVersions[] version slots (pce-jp, pce-en) are wired in
  *   asset_status_m12.c with Track 02 MD5s.

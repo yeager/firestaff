@@ -3,8 +3,8 @@
  * launch path.
  *
  * Verifies that theron_v1_boot_load_verified_path():
- *   1. Produces a usable boot profile for any of the four known TQ
- *      Track 02 MD5s (JP/US BIN and JP/US ISO).
+ *   1. Produces a usable boot profile for each hash-verified TQ Track 02
+ *      representation (JP/US BIN and the region-specific ISO variants).
  *   2. Performs zero stat() probes in the success path — the whole
  *      point of the slice is to skip the data-dir fallback walk when
  *      the upstream catalog has already proven the path.
@@ -12,7 +12,7 @@
  *   4. Refuses to accept a path the caller did not pre-verify, so the
  *      boot module never silently launches against an unrelated blob.
  *   5. Sets platform / version_id correctly for each MD5, including
- *      the JP/US ISO version ids (pce-jp-rev1-iso / pce-en-iso).
+ *      the JP/US ISO version ids.
  *
  * Also re-checks the scan-path behaviour: a full theron_v1_boot_scan
  * _assets() call against a fake data dir must do at least one stat
@@ -216,6 +216,7 @@ int main(void) {
     char us_path[512];
     char jp_iso_path[512];
     char us_iso_path[512];
+    char jp_cue_iso_path[512];
     char fake_track[512];
     char theron_subdir[512];
 
@@ -250,6 +251,10 @@ int main(void) {
              "%s%s%s", theron_subdir, PATH_SEP, "TQUS02End.iso");
     expect_true(write_file(us_iso_path, "fake-us-iso"),
                 "fake US Track 02 ISO written");
+    snprintf(jp_cue_iso_path, sizeof(jp_cue_iso_path),
+             "%s%s%s", theron_subdir, PATH_SEP, "TQJP-CUE-Track02.iso");
+    expect_true(write_file(jp_cue_iso_path, "fake-jp-cue-iso"),
+                "fake JP CUE Track 02 ISO written");
 
     /* A decoy Track 02 candidate that must NOT be probed by the
      * direct-launch path.  We assert the rescan counter stays flat
@@ -285,6 +290,12 @@ int main(void) {
                         THERON_PLATFORM_PCE_US,
                         "pce-en-iso",
                         "TurboGrafx-16 HuCard (US)");
+    check_one_known_md5("JP CUE ISO MD5 accepted",
+                        jp_cue_iso_path,
+                        THERON_TRACK02_MD5_JP_ISO,
+                        THERON_PLATFORM_PCE_JP,
+                        "pce-jp-cue-iso",
+                        "PC Engine HuCard (JP)");
 
     check_refuses_unknown_md5(jp_path);
     check_refuses_bad_inputs();

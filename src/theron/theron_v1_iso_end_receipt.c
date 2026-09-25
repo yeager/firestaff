@@ -30,7 +30,8 @@ static int theron_v1_iso_end_spans_valid(size_t total_bytes,
 static int theron_v1_iso_end_md5_supported(const char *track02_md5) {
     return track02_md5 &&
         (strcmp(track02_md5, THERON_TRACK02_MD5_US_ISO) == 0 ||
-         strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0);
+         strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0 ||
+         strcmp(track02_md5, THERON_TRACK02_MD5_JP_ISO) == 0);
 }
 
 int theron_v1_iso_end_receipt(const char *track02_md5,

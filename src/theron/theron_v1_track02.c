@@ -285,7 +285,8 @@ Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex) {
     if (strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) == 0) {
         return THERON_TRACK02_VARIANT_US_ISO;
     }
-    if (strcmp(md5_hex, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) {
+    if (strcmp(md5_hex, THERON_TRACK02_MD5_JP_REV1_ISO) == 0 ||
+        strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0) {
         return THERON_TRACK02_VARIANT_JP_REV1_ISO;
     }
     return THERON_TRACK02_VARIANT_UNKNOWN;
@@ -307,6 +308,16 @@ static int variant_is_raw_bin(Theron_Track02Variant variant) {
 
 static int variant_has_plain_user_data(Theron_Track02Variant variant) {
     return variant == THERON_TRACK02_VARIANT_US_ISO;
+}
+
+static int md5_is_jp_cue_iso(const char *md5_hex) {
+    return md5_hex && strcmp(md5_hex, THERON_TRACK02_MD5_JP_ISO) == 0;
+}
+
+static int variant_is_jp_cue_iso(Theron_Track02Variant variant,
+                                 const char *md5_hex) {
+    return variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+           md5_is_jp_cue_iso(md5_hex);
 }
 
 /* The supplied retail US ISO carries the source level header at a distinct
@@ -1057,10 +1068,8 @@ Theron_Track02SignalStatus theron_v1_track02_copy_raw_user_data_range(
         size_t chunk;
         size_t user_offset = 0u;
 
-        status = theron_v1_track02_raw_offset_to_user_offset(raw_offset,
-                                                             track02_size,
-                                                             md5_hex,
-                                                             &user_offset);
+        status = theron_v1_track02_raw_offset_to_user_offset(
+            raw_offset, track02_size, md5_hex, &user_offset);
         if (status != THERON_TRACK02_SIGNAL_OK) {
             return status;
         }
@@ -1370,7 +1379,7 @@ static Theron_Track02SignalStatus tqr_catalog_us_roster_names(
             names[i], &raw_offset);
         Theron_Track02SignalStatus offset_status = found
             ? theron_v1_track02_raw_offset_to_user_offset(
-                raw_offset, track02_size, md5_hex, &user_offset)
+                  raw_offset, track02_size, md5_hex, &user_offset)
             : THERON_TRACK02_SIGNAL_NOT_FOUND;
         if (!found || offset_status != THERON_TRACK02_SIGNAL_OK ||
             !tqr_decode_us_roster_codon_name(
@@ -1524,15 +1533,10 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
 
     for (size_t i = 0u; i < signal.anchor_count; ++i) {
         size_t user_offset = 0u;
-        signal_status = theron_v1_track02_copy_raw_user_data_range(
-            track02_data,
-            track02_size,
-            md5_hex,
-            signal.descriptor_offsets[i],
-            TQR_US_ISO_BANK_STRIDE_BYTES,
-            scratch,
-            sizeof(scratch),
-            &user_offset);
+        signal_status = track02_copy_startup_bitmap_bytes(
+            track02_data, track02_size, md5_hex,
+            signal.descriptor_offsets[i], TQR_US_ISO_BANK_STRIDE_BYTES,
+            scratch, sizeof(scratch), &user_offset);
         if (signal_status != THERON_TRACK02_SIGNAL_OK) {
             return signal_status;
         }
@@ -1545,15 +1549,11 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_user_data_windows(
             i,
             (size_t)-1);
 
-        signal_status = theron_v1_track02_copy_raw_user_data_range(
-            track02_data,
-            track02_size,
-            md5_hex,
+        signal_status = track02_copy_startup_bitmap_bytes(
+            track02_data, track02_size, md5_hex,
             signal.post_boundary_span_offsets[i],
             TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES,
-            scratch,
-            sizeof(scratch),
-            &user_offset);
+            scratch, sizeof(scratch), &user_offset);
         if (signal_status != THERON_TRACK02_SIGNAL_OK) {
             return signal_status;
         }
@@ -1690,11 +1690,9 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_text_markers(
         }
 
         marker_raw_offset = (size_t)(found - track02_data);
-        if (theron_v1_track02_raw_offset_to_user_offset(marker_raw_offset,
-                                                         track02_size,
-                                                         md5_hex,
-                                                         &marker_user_offset) ==
-            THERON_TRACK02_SIGNAL_OK) {
+        if (theron_v1_track02_raw_offset_to_user_offset(
+                marker_raw_offset, track02_size, md5_hex,
+                &marker_user_offset) == THERON_TRACK02_SIGNAL_OK) {
             catalog_add_startup_text_marker(out_catalog,
                                             kind,
                                             marker_raw_offset,
@@ -1761,14 +1759,9 @@ Theron_Track02SignalStatus theron_v1_track02_copy_startup_text_marker(
             return THERON_TRACK02_SIGNAL_BAD_INPUT;
         }
         status = theron_v1_track02_copy_raw_user_data_range(
-            track02_data,
-            track02_size,
-            md5_hex,
-            marker->raw_offset,
-            marker->byte_count,
-            (uint8_t *)out_text,
-            out_text_capacity - 1u,
-            &user_data_offset);
+            track02_data, track02_size, md5_hex, marker->raw_offset,
+            marker->byte_count, (uint8_t *)out_text,
+            out_text_capacity - 1u, &user_data_offset);
         if (status != THERON_TRACK02_SIGNAL_OK) {
             out_text[0] = '\0';
             return status;
@@ -1871,10 +1864,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
             return THERON_TRACK02_SIGNAL_NOT_FOUND;
         }
         status = theron_v1_track02_raw_offset_to_user_offset(
-            marker->raw_offset + name_offset,
-            track02_size,
-            md5_hex,
-            &user_offset);
+            marker->raw_offset + name_offset, track02_size,
+            md5_hex, &user_offset);
         if (status != THERON_TRACK02_SIGNAL_OK) {
             return status;
         }
@@ -1887,10 +1878,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
                 return THERON_TRACK02_SIGNAL_NOT_FOUND;
             }
             status = theron_v1_track02_raw_offset_to_user_offset(
-                marker->raw_offset + title_offset,
-                track02_size,
-                md5_hex,
-                &title_user_offset);
+                marker->raw_offset + title_offset, track02_size,
+                md5_hex, &title_user_offset);
             if (status != THERON_TRACK02_SIGNAL_OK) {
                 return status;
             }
@@ -2849,16 +2838,19 @@ Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
-    if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
-        variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
         ud_offset = TQR_JP_FONT_TILE_USER_DATA_OFFSET;
-    } else {
+    } else if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+               variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
+               variant == THERON_TRACK02_VARIANT_US_ISO) {
         ud_offset = TQR_US_FONT_TILE_USER_DATA_OFFSET;
+    } else {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
-    if (!tqr_read_user_data_contiguous(
-            track02_data, track02_size,
-            ud_offset, raw_tiles, sizeof(raw_tiles))) {
+    if (!tqr_read_user_data_contiguous(track02_data, track02_size,
+                                       ud_offset, raw_tiles,
+                                       sizeof(raw_tiles))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
 
@@ -3195,6 +3187,62 @@ static Theron_Track02SignalStatus find_us_iso_retail_bank_signal(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+static Theron_Track02SignalStatus find_jp_cue_iso_bank_signal(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    Theron_Track02BankSignal *out_signal) {
+    static const size_t descriptor_offsets[] = {
+        0x5b2406u, 0x5b4406u, 0x5b6584u
+    };
+    static const size_t span_offsets[] = {
+        0x207000u, 0x378000u, 0x5b8000u
+    };
+    size_t descriptor_occurrences;
+    size_t span_occurrences;
+
+    if (!track02_data || !out_signal ||
+        span_offsets[2] + TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES > track02_size) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    descriptor_occurrences = count_pattern_occurrences(
+        track02_data, track02_size, g_us_iso_bank_stride_descriptor,
+        TQR_US_ISO_BANK_STRIDE_BYTES);
+    span_occurrences = count_pattern_occurrences(
+        track02_data, track02_size, g_us_iso_post_boundary_span,
+        TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES);
+    if (descriptor_occurrences != 3u || span_occurrences != 3u ||
+        !pattern_matches_at_offsets(track02_data, track02_size,
+            g_us_iso_bank_stride_descriptor, TQR_US_ISO_BANK_STRIDE_BYTES,
+            descriptor_offsets, 3u) ||
+        !pattern_matches_at_offsets(track02_data, track02_size,
+            g_us_iso_post_boundary_span,
+            TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES, span_offsets, 3u)) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_signal->anchor_count = 3u;
+    out_signal->descriptor_offset = descriptor_offsets[0];
+    out_signal->descriptor_size = TQR_US_ISO_BANK_STRIDE_BYTES;
+    copy_offsets(out_signal->descriptor_offsets, descriptor_offsets, 3u);
+    out_signal->occurrence_count = descriptor_occurrences;
+    out_signal->first_value = rd16le(g_us_iso_bank_stride_descriptor);
+    out_signal->last_value = rd16le(g_us_iso_bank_stride_descriptor +
+                                    TQR_US_ISO_BANK_STRIDE_BYTES - 2u);
+    out_signal->stride = TQR_US_ISO_BANK_STRIDE_STEP;
+    out_signal->value_count = TQR_US_ISO_BANK_STRIDE_COUNT;
+    out_signal->next_nonzero_offset = span_offsets[0];
+    out_signal->boundary_prefix_size = TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES;
+    out_signal->boundary_prefix_occurrence_count = span_occurrences;
+    out_signal->post_boundary_span_size = TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES;
+    copy_offsets(out_signal->post_boundary_span_offsets, span_offsets, 3u);
+    out_signal->post_boundary_span_occurrence_count = span_occurrences;
+    out_signal->post_boundary_span_first_word =
+        rd16le(g_us_iso_post_boundary_span);
+    out_signal->post_boundary_span_last_word = rd16le(
+        g_us_iso_post_boundary_span + TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES - 2u);
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -3219,6 +3267,10 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
     out_signal->variant = variant;
 
     if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        if (variant_is_jp_cue_iso(variant, md5_hex)) {
+            return find_jp_cue_iso_bank_signal(track02_data, track02_size,
+                                               out_signal);
+        }
         return track_is_all_zero(track02_data, track02_size)
             ? THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE
             : THERON_TRACK02_SIGNAL_NOT_FOUND;
@@ -3419,8 +3471,14 @@ const char *theron_v1_track02_source_evidence(void) {
            "earlier at descriptor offsets 0x70b4d6, 0x70d996, 0x70ffd4 "
            "and span offsets 0x2d4ab0, 0x47c710, 0x711f10; JP Rev 1 ISO "
            THERON_TRACK02_MD5_JP_REV1_ISO
-           " is hash-verified but zero-filled in the available image, so no "
-           "JP Rev 1 ISO dungeon-bank offset is claimed.  Audio-bank marker: "
+           " identifies a legacy zero-filled stub, so no "
+           "dungeon-bank offset is claimed for that representation. The full "
+           "CUE projection " THERON_TRACK02_MD5_JP_ISO
+           " authenticates three bank-stride descriptor anchors at offsets "
+           "0x5b2406, 0x5b4406, 0x5b6584 and opaque spans at "
+           "0x207000, 0x378000, 0x5b8000; dungeon map tables still require "
+           "independent source-bound decoding before runtime admission. "
+           "Audio-bank marker: "
            "raw US/JP BINs each carry a 12-byte `00 ff*10 00` sentinel "
            "immediately preceding the 4-byte little-endian audio-bank id word "
            "at every post-boundary span anchor; US ids are 0x01725800, "
@@ -4332,9 +4390,7 @@ Theron_Track02SignalStatus theron_v1_track02_bind_level_candidate_user_offsets(
         size_t user_offset = 0u;
         Theron_Track02SignalStatus offset_status =
             theron_v1_track02_raw_offset_to_user_offset(
-                candidate->absolute_offset,
-                track02_size,
-                md5_hex,
+                candidate->absolute_offset, track02_size, md5_hex,
                 &user_offset);
         if (offset_status == THERON_TRACK02_SIGNAL_OK) {
             candidate->user_data_offset = user_offset;
@@ -4394,7 +4450,7 @@ static int tqr_bind_split_initial_level_candidate(
         Theron_Track02Variant variant =
             theron_v1_track02_variant_for_md5(md5_hex);
         if (!tqr_initial_candidate_expected_offset_for_media(
-                descriptor_offset, md5_hex, &candidate_offset) ||
+            descriptor_offset, md5_hex, &candidate_offset) ||
             (!variant_is_raw_bin(variant) &&
              !(variant == THERON_TRACK02_VARIANT_US_ISO &&
                candidate_offset == TQR_US_ISO_RETAIL_INITIAL_LEVEL_OFFSET)) ||

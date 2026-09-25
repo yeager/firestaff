@@ -79,10 +79,10 @@ static const char *theron_v1_track02_media_extension(const char *path) {
 }
 
 /* A known digest establishes identity, not that supplied bytes contain usable
- * source data. The known JP Rev. 1 ISO digest currently identifies an
- * all-zero payload. Check only this exact edition; other variants keep their
- * source-specific admission rules. Returns -1 on I/O failure, 0 if any byte
- * is nonzero, and 1 for a nonempty all-zero payload. */
+ * source data. The legacy JP Rev. 1 ISO digest identifies an all-zero stub;
+ * the separate full CUE projection has its own authenticated identity. Check
+ * only the legacy exact edition here. Returns -1 on I/O failure, 0 if any
+ * byte is nonzero, and 1 for a nonempty all-zero payload. */
 static int theron_v1_track02_media_is_all_zero(const char *path) {
     unsigned char buffer[4096];
     FILE *file;
@@ -438,10 +438,10 @@ static int theron_v1_track02_media_materialize_us_split(
     return 1;
 }
 
-/* The JP distribution is different: its CUE retains the older TQJP02.iso
- * leaf while the sibling is named TQJP02End.iso. Resolve that explicit alias
- * only after the sibling's known hash is verified. Payload usability is
- * checked separately; the supplied digest currently identifies zero-fill. */
+/* Legacy JP archive naming may retain TQJP02.iso while the split tail is
+ * named TQJP02End.iso. The tail is the source-owned Track 02 member; the
+ * separate TQJP19.iso is Track 19 and must never be concatenated into Track
+ * 02. Accept only exact known complete/stub member digests. */
 static int theron_v1_track02_media_resolve_jp_complete_alias(
     char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
     char *leaf;
@@ -453,13 +453,15 @@ static int theron_v1_track02_media_resolve_jp_complete_alias(
     leaf = strrchr(payload_path, '/');
     if (!leaf) leaf = strrchr(payload_path, '\\');
     leaf = leaf ? leaf + 1 : payload_path;
-    if (!theron_v1_track02_media_ieq(leaf, "TQJP02.iso")) return 0;
+    if (!theron_v1_track02_media_ieq(leaf, "TQJP02.iso") &&
+        !theron_v1_track02_media_ieq(leaf, "TQJP02End.iso")) return 0;
     prefix = (size_t)(leaf - payload_path);
     if (prefix == 0u || prefix >= sizeof(sibling) ||
         snprintf(sibling, sizeof(sibling), "%.*sTQJP02End.iso", (int)prefix,
                  payload_path) >= (int)sizeof(sibling) ||
         !m12_file_md5_hex(sibling, md5) ||
-        strcmp(md5, THERON_TRACK02_MD5_JP_REV1_ISO) != 0) return 0;
+        (strcmp(md5, THERON_TRACK02_MD5_JP_REV1_ISO) != 0 &&
+         strcmp(md5, THERON_TRACK02_MD5_JP_ISO) != 0)) return 0;
     snprintf(payload_path, THERON_V1_TRACK02_MEDIA_PATH_CAPACITY, "%s", sibling);
     return 1;
 }
@@ -499,7 +501,10 @@ theron_v1_track02_raw_media_intake_validate_verified_layout(
     if (((variant == THERON_TRACK02_VARIANT_JP_BIN ||
           variant == THERON_TRACK02_VARIANT_US_BIN) && sector_bytes != 2352) ||
         ((variant == THERON_TRACK02_VARIANT_US_ISO ||
-          variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) && sector_bytes != 2048)) {
+          (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
+           strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) ||
+          strcmp(track02_md5, THERON_TRACK02_MD5_JP_ISO) == 0) &&
+         sector_bytes != 2048)) {
         return THERON_V1_TRACK02_MEDIA_REASON_LAYOUT_HASH_MISMATCH;
     }
     if (cue_consumed && sector_bytes == 2352 &&
@@ -610,7 +615,7 @@ int theron_v1_track02_raw_media_intake_discover(
     }
 
     /* Preserve the recognized identity in the receipt, but do not promote
-     * the known zero-filled JP Rev. 1 image to playable campaign media. */
+     * the known zero-filled legacy JP Rev. 1 image to playable media. */
     receipt.mode1_2352 = sector_bytes == 2352;
     receipt.mode1_2048 = sector_bytes == 2048;
     receipt.variant = variant;
@@ -625,7 +630,7 @@ int theron_v1_track02_raw_media_intake_discover(
         (size_t)payload_index01_sector * 2048u;
     receipt.logical_user_data_window_bytes =
         (receipt.sector_count - (size_t)payload_index01_sector) * 2048u;
-    if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+    if (strcmp(md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) {
         int all_zero = theron_v1_track02_media_is_all_zero(
             receipt.payload_path);
         if (all_zero != 0) {

@@ -93,7 +93,7 @@ int main(void)
     }
 
     {
-        const char *jp_iso = getenv("FIRESTAFF_THERON_JP_TRACK02_ISO");
+        const char *jp_iso = getenv("FIRESTAFF_THERON_JP_STUB_ISO");
         const char *home = getenv("HOME");
         char fallback[1024];
         FILE *file = NULL;

@@ -416,11 +416,13 @@ static const M12_VersionSpec g_nexusVersions[] = {
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
  * Phase 0 gate PASSED (2026-05-27): CD-ROM Track 02 hashes confirmed from cdromance.org.
- * Data track is Track 02 from CUE/BIN or CUE/ISO disc images.
+ * Data track is Track 02 from CUE/BIN or CUE/ISO disc images. The full JP
+ * CUE INDEX 01 projection is tracked separately from the legacy zero stub.
  * JP: MD5 b7afb338ad31be1025b53f9aff12d73a (Track 02 .bin)
  * US: MD5 f23601102138f87c33025877767ebf76 (Track 02 .bin)
  * MyAbandonware TG-CD English/Japanese Rev 1 downloads (page checked 2026-06-03):
- * JP Rev 1 Track 02 ISO: 397039af02d50d15c70b74088eb8a1cb
+ * JP CUE Track 02 ISO:  62a39bbf43415c9739c41c2481080a49
+ * JP Rev 1 zero stub:   397039af02d50d15c70b74088eb8a1cb
  * US Track 02 ISO:       ceb02343868f80cec899e9b239aff2da
  * OneDrive: 1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8 (DMFiles/Games folder)
  * Subdir candidates: theron/jp/, theron/us/, theron/ */
@@ -435,6 +437,7 @@ static const char* const g_theronTrack02Names[] = {
     "Theron's Quest (US) (Track 02).iso",
     "TQJP02.bin",
     "TQJP02.iso",
+    "TQJP02-Track02.iso",
     "TQJP02End.iso",
     "TQUS02.bin",
     "TQUS02.iso",
@@ -452,8 +455,10 @@ static const M12_VersionSpec g_theronVersions[] = {
      g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a", M12_ARCH_PCE},
     {"theron", "pce-en-iso", "TurboGrafx-16 US (Track 02 ISO)", "TG16 US ISO",
      g_theronTrack02Names, "ceb02343868f80cec899e9b239aff2da", M12_ARCH_PCE},
+    {"theron", "pce-jp-cue-iso", "PC Engine JP Rev 1 (Track 02 CUE ISO)", "PCE JP Rev1 ISO",
+     g_theronTrack02Names, THERON_TRACK02_MD5_JP_ISO, M12_ARCH_PCE},
     {"theron", "pce-jp-rev1-iso", "PC Engine JP Rev 1 (Track 02 ISO)", "PCE JP Rev1",
-     g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb", M12_ARCH_PCE}
+     g_theronTrack02Names, THERON_TRACK02_MD5_JP_REV1_ISO, M12_ARCH_PCE}
 };
 
 static const M12_GameVersionSpec g_games[] = {
@@ -4411,12 +4416,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
         if (!md5 || md5[0] == '\0') {
             continue;
         }
-        /* This catalogued JP Rev. 1 ISO digest identifies the supplied
-         * zero-filled 149-sector stub, not usable dungeon media. The strict
-         * Track 02 intake rejects it as SOURCE_CONTENT_EMPTY; do not let the
-         * broader inventory promote the same known bytes to a launchable
-         * edition merely because their digest is recognized. The authentic
-         * JP raw BIN remains an independently verified runtime source. */
+        /* This one specific JP Rev. 1 digest identifies a zero-filled
+         * 149-sector stub, not usable dungeon media. Other JP representations
+         * are independently admitted by their own hashes. */
         if (strcmp(gameSpec->gameId, "theron") == 0 &&
             strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
             continue;

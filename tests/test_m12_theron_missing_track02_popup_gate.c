@@ -268,14 +268,15 @@ static void check_hash_set_contract(void) {
      * numbers the popup gate relies on to produce a user-facing
      * Track 02 hint without consulting docs. */
     CHECK(M12_AssetStatus_GameHasCompleteHashSet("theron") == 1);
-    CHECK(M12_AssetStatus_GameKnownHashCount("theron") == 5U);
+    CHECK(M12_AssetStatus_GameKnownHashCount("theron") == 6U);
     CHECK(M12_AssetStatus_GameRequiredFileCount("theron") == 1U);
     CHECK(M12_AssetStatus_GameVerifiedFileCount("theron") == 1U);
     CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 0);
     CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-clonecd") == 1);
     CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 2);
     CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 3);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 4);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-cue-iso") == 4);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 5);
 }
 
 static void check_scan_no_data_marks_theron_unavailable(char* dataDir) {

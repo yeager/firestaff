@@ -24,6 +24,10 @@
  * bounded by CCD Point 02 LBA 3234 and Point 03 LBA 6605. */
 #define THERON_TRACK02_MD5_US_CLONECD_BIN "168bd6a63784e91885df8c47be62ab5a"
 #define THERON_TRACK02_MD5_JP_REV1_ISO "397039af02d50d15c70b74088eb8a1cb"
+/* The authentic JP CUE's MODE1/2352 Track 02 user sectors from INDEX 01
+ * (224-sector pregap removed), also preserved as TQJP19.iso followed by
+ * TQJP02End.iso in the combined archive. */
+#define THERON_TRACK02_MD5_JP_ISO      "62a39bbf43415c9739c41c2481080a49"
 /* MyAbandonware's US dump splits this exact ISO into TQUS19.iso followed by
  * TQUS02End.iso.  The latter is only the tail, never a standalone Track 02.
  * TQUS02End.iso alone has MD5 THERON_TRACK02_MD5_US_ISO_TAIL; the full
@@ -194,9 +198,8 @@ typedef struct {
      * which we have observed to encode a 2352-byte CD sector pointer at all
      * three anchors in both US and JP raw Track 02 BINs.  Populated only for
      * raw BIN variants (THERON_TRACK02_VARIANT_US_BIN / JP_BIN); zeroed for
-     * the legacy US Track 02 ISO profile and for the JP Rev 1 ISO
-     * (zero-filled image).  Retail US ISO anchors are byte-layout evidence
-     * only and likewise carry no raw-sector audio marker.
+     * ISO profiles. The JP CUE ISO and retail US ISO anchors are byte-layout
+     * evidence only; the legacy JP Rev 1 ISO is a zero-filled stub.
      *
      * Source/evidence:
      *   src/theron/theron_v1_track02.c (this module, post-boundary span

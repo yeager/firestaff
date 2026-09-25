@@ -21,7 +21,7 @@ if [[ -z "$cue" ]]; then
     done
 fi
 expected_md5_raw=b7afb338ad31be1025b53f9aff12d73a
-expected_md5_iso=397039af02d50d15c70b74088eb8a1cb
+expected_md5_iso=62a39bbf43415c9739c41c2481080a49
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable is unavailable: %s\n' "$app" >&2

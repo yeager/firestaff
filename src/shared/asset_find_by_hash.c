@@ -12,6 +12,7 @@
  */
 
 #include "asset_find_by_hash.h"
+#include "theron_v1_track02.h"
 #include "firestaff_zip_extract.h"
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
 #include "firestaff_7z_extract.h"
@@ -885,6 +886,7 @@ static int is_known_large_whole_file_hash(const char *expectedMd5) {
         "b7afb338ad31be1025b53f9aff12d73a", /* Theron's Quest JP Track 02 */
         "f23601102138f87c33025877767ebf76", /* Theron's Quest US Track 02 */
         "397039af02d50d15c70b74088eb8a1cb", /* Theron's Quest JP Rev 1 Track 02 ISO */
+        THERON_TRACK02_MD5_JP_ISO, /* Theron's Quest JP CUE Track 02 ISO */
         "ceb02343868f80cec899e9b239aff2da", /* Theron's Quest US Track 02 ISO */
         NULL
     };

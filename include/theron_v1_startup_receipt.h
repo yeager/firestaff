@@ -60,10 +60,10 @@ extern "C" {
  *      file was supplied.  Used by CI / no-data hosts as the green path.
  *
  *   REAL_ASSET_RECEIPT  — a hash-verified Track 02 file matched one of the
- *      four known MD5s, the boot-profile direct launch succeeded, and the
+ *      hash-verified MD5, the boot-profile direct launch succeeded, and the
  *      Track 02 bank-signal decoder either confirmed the known
- *      descriptor/span anchors (raw BIN variants) or the JP Rev 1 zero-fill
- *      contract (zero-filled ISO variant).  Never set without an actual
+ *      descriptor/span anchors (raw BIN / full JP CUE ISO variants) or the
+ *      JP Rev 1 zero-fill contract (legacy stub variant). Never set without an actual
  *      file/MD5 round-trip.
  *
  *   SKIPPED             — caller asked to probe a file that does not exist,

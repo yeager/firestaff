@@ -1,4 +1,5 @@
 #include "theron_v1_raw_loader_trace.h"
+#include "theron_v1_track02.h"
 
 #include "theron_v1_irq2_live_trace_gate.h"
 #include "theron_v1_later_record_correlation.h"
@@ -61,7 +62,8 @@ int theron_v1_raw_loader_trace_track02_byte_for_scsi_source(
         byte_offset = (size_t)record * THERON_TRACK02_RAW_SECTOR_BYTES +
             source_offset;
     } else if (strcmp(track02_md5, THERON_TRACK02_MD5_US_ISO) == 0 ||
-               strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) {
+               strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0 ||
+               strcmp(track02_md5, THERON_TRACK02_MD5_JP_ISO) == 0) {
         if (track02_size % THERON_TRACK02_RAW_USER_DATA_BYTES != 0u ||
             source_offset >= THERON_TRACK02_RAW_USER_DATA_BYTES ||
             (size_t)record >= track02_size / THERON_TRACK02_RAW_USER_DATA_BYTES) {

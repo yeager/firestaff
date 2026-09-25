@@ -1,4 +1,5 @@
 #include "theron_v1_trace_v3_schema.h"
+#include "theron_v1_track02.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +41,8 @@ const char *theron_v1_trace_v3_raw_track02_status(const char *track02_md5,
         return "raw_track02_ready";
     }
     if (strcmp(track02_md5, THERON_TRACK02_MD5_US_ISO) == 0 ||
-        strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) {
+        strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0 ||
+        strcmp(track02_md5, THERON_TRACK02_MD5_JP_ISO) == 0) {
         return "raw_track02_iso_end_variant";
     }
     return "raw_track02_missing";

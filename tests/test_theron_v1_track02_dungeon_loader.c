@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #define SECTOR_SIZE 2352
 #define UD_PER_SECTOR 2048
@@ -659,15 +660,10 @@ static const char *find_jp_track02(void) {
     return path;
 }
 
-/* JP Rev. 1's supplied Track 02 ISO is a distinct, tiny 149-sector payload.
- * Its current real-media contract authenticates seven framed level blocks,
- * not the dungeon-local map/thing/property tables. Keep this negative source
- * boundary explicit so it cannot accidentally inherit raw-BIN offsets or
- * be mistaken for the complete JP raw disc. */
-static void test_jp_rev1_iso_dungeon_boundary(void) {
-    const char *home = getenv("HOME");
-    const char *path = getenv("FIRESTAFF_THERON_JP_TRACK02_ISO");
-    char fallback[1024];
+/* The old JP Rev. 1 ISO file remains a zero-filled stub. Keep its negative
+ * contract separate from the full CUE projection recovered from Track 02. */
+static void test_jp_rev1_iso_stub_dungeon_boundary(void) {
+    const char *path = getenv("FIRESTAFF_THERON_JP_STUB_ISO");
     uint8_t *iso;
     size_t iso_size = 0u;
     Theron_DungeonData maps;
@@ -676,13 +672,15 @@ static void test_jp_rev1_iso_dungeon_boundary(void) {
     Theron_V1_World *world;
     Theron_DungeonLoadResult result;
 
-    if ((!path || !path[0]) && home && home[0]) {
-        snprintf(fallback, sizeof(fallback),
-                 "%s/.firestaff/data/theron/TQJP02End.iso", home);
-        path = fallback;
+    if (!path || !path[0]) {
+        path = NULL;
+    }
+    if (path && path[0]) {
+        struct stat st;
+        if (stat(path, &st) != 0 || st.st_size != 305152) path = NULL;
     }
     if (!path || !(iso = load_raw_bytes(path, &iso_size))) {
-        puts("  SKIP: authentic JP Rev. 1 Track 02 ISO unavailable");
+        puts("  SKIP: legacy JP Rev. 1 zero ISO stub unavailable");
         return;
     }
     assert(iso_size == 305152u);
@@ -705,7 +703,49 @@ static void test_jp_rev1_iso_dungeon_boundary(void) {
         &result) == -1);
     free(world);
     free(iso);
-    puts("  authentic JP Rev. 1 Track 02 ISO is hash-authenticated but correctly rejected for dungeon maps and thing tables");
+    puts("  legacy JP Rev. 1 zero ISO stub is rejected for dungeon maps and thing tables");
+}
+
+static void test_jp_cue_iso_map_source(void) {
+    const char *path = getenv("FIRESTAFF_THERON_JP_TRACK02_ISO");
+    uint8_t *iso;
+    size_t iso_size = 0u;
+    Theron_DungeonData maps;
+    Theron_Track02UserDataWindowCatalog windows;
+    Theron_Track02StartupTextMarkerCatalog text;
+    Theron_Track02StartupRosterNameCatalog roster;
+    Theron_Track02StartupBitmapCatalog bitmaps;
+    Theron_Track02FontTileReceipt font;
+    Theron_Track02PaletteWindowEvidence palette;
+    if (!path || !path[0] || !(iso = load_raw_bytes(path, &iso_size))) {
+        puts("  SKIP: authentic JP CUE-projected ISO unavailable");
+        return;
+    }
+    assert(iso_size == 6596608u);
+    assert(theron_v1_track02_raw_bytes_match_md5(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO));
+    assert(!theron_v1_track02_dungeon_map_load_for_variant(
+        iso, iso_size, THERON_TRACK02_VARIANT_JP_REV1_ISO, 0u, &maps));
+    assert(theron_v1_track02_catalog_user_data_windows(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &windows) ==
+        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    assert(theron_v1_track02_catalog_startup_text_markers(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &text) ==
+        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    assert(theron_v1_track02_catalog_startup_roster_names(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &roster) ==
+        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    assert(theron_v1_track02_catalog_startup_bitmap_samples(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &bitmaps) ==
+        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    assert(theron_v1_track02_extract_font_tiles(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO, &font) ==
+        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    assert(theron_v1_track02_inspect_4bpp_palette_window(
+        iso, iso_size, THERON_TRACK02_MD5_JP_ISO, 0u, &palette) ==
+        THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+    free(iso);
+    puts("  authentic JP CUE ISO bank anchors are verified; US-derived map, text, roster, bitmap, font, and palette semantics remain fail-closed");
 }
 
 static void assert_source_category_census(
@@ -4788,7 +4828,8 @@ int main(void) {
     test_generator_binding_rejects_non_source_records();
     test_world_load_rejects_invalid_directory_envelope();
     test_object_binding_rejects_unverified_locations();
-    test_jp_rev1_iso_dungeon_boundary();
+    test_jp_rev1_iso_stub_dungeon_boundary();
+    test_jp_cue_iso_map_source();
 
     const char *jp_path = find_jp_track02();
     if (jp_path) {
