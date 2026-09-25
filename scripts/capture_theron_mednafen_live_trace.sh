@@ -893,13 +893,19 @@ link_capture_cue_members() {
 if [[ "$capture_cue_needs_split_iso" == 1 ]]; then
     capture_cue="$home_dir/theron-capture.cue"
     # Accept both the quoted and unquoted FILE spelling used by the supplied
-    # retail CUE sheets. Only the authenticated Track 02 member is replaced;
-    # audio and Track 19 references retain the user's original layout.
-    sed \
-        -e "s#^FILE \\\"${track02_member}\\\" BINARY[[:space:]]*\$#FILE \\\"$capture_split_iso_cache\\\" BINARY#" \
-        -e "s#^FILE ${track02_member} BINARY[[:space:]]*\$#FILE \\\"$capture_split_iso_cache\\\" BINARY#" \
-        "$cue" >"$capture_cue"
+    # retail CUE sheets. Keep Track 02 relative in the private CUE: Mednafen's
+    # filesys.untrusted_fip_check rejects absolute paths even when the source
+    # ISO has already been authenticated. Link only the hash-verified ISO into
+    # this disposable home; audio and Track 19 references retain their layout.
+    cp "$cue" "$capture_cue"
     link_capture_cue_members "$cue" "$home_dir" || exit 1
+    track02_capture_member="$home_dir/$track02_member"
+    if [[ -e "$track02_capture_member" || -L "$track02_capture_member" ]]; then
+        printf 'FAIL: capture-home Track 02 member collides with another file: %s\n' \
+            "$track02_capture_member" >&2
+        exit 1
+    fi
+    ln -s "$capture_split_iso_cache" "$track02_capture_member"
 fi
 cleanup_capture() {
     local exit_status=$?

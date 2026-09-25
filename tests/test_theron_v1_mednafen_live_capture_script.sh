@@ -331,6 +331,9 @@ fi
 if ! grep -Fq 'capture_split_iso_cache=' "$script" ||
    ! grep -Fq 'ceb02343868f80cec899e9b239aff2da' "$script" ||
    ! grep -Fq 'theron-capture.cue' "$script" ||
+   ! grep -Fq 'cp "$cue" "$capture_cue"' "$script" ||
+   ! grep -Fq 'ln -s "$capture_split_iso_cache" "$track02_capture_member"' "$script" ||
+   ! grep -Fq 'filesys.untrusted_fip_check rejects absolute paths' "$script" ||
    ! grep -Fq 'production intake assembles and hashes this exact ISO' "$script" ||
    ! grep -Fq '"$capture_cue"' "$script"; then
     printf 'FAIL: live capture must reuse the authenticated split-ISO materialization path\n' >&2
