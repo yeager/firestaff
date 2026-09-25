@@ -221,6 +221,13 @@ int main(void) {
             theron_vp_free(&viewport);
             return 1;
         }
+        if (memcmp(expected_screen, viewport.fb.data,
+                   (size_t)viewport.fb.stride * (size_t)viewport.fb.h) != 0) {
+            fprintf(stderr,
+                    "FAIL: boot facade overlaid unverified UI on authentic screen\n");
+            theron_vp_free(&viewport);
+            return 1;
+        }
         boot_presented_nonzero = nonzero_bytes(boot_framebuffer,
                                                 sizeof(boot_framebuffer));
         if (boot_presented_nonzero == 0u) {

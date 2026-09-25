@@ -6323,8 +6323,9 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
      * palette route; a default deterministic palette is not source-locked. */
     theron_vp_set_synthetic_rendering_blocked(
         viewport,
-        assets->synthetic_rendering_blocked &&
-            !tr_asset_generated_v1_rendering_allowed(assets));
+        authenticated_viewport_capture ||
+            (assets->synthetic_rendering_blocked &&
+             !tr_asset_generated_v1_rendering_allowed(assets)));
     /* A verified screen-space VDC/VCE replay is a separate source-owned
      * render route.  It does not make the Track 02 asset bundle's unbound
      * tile/material bank usable; it only permits the capture consumer to
