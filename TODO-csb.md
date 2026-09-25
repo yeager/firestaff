@@ -96,9 +96,13 @@ language-matched F31J `CSBGAME-JP.DAT`, which passes the full native reader and
 now restores into M11 through both direct CLI launch and M12 Quick Resume.
 The authentic-media FM Towns regression passes with that corpus supplied.
 Its English `CSBGAME.DAT` candidate is incoherent and remains rejected. The
-original archives themselves contain no save disk/member; no authentic
-Atari/Amiga DSA-bearing campaign save or CSBWin extended save is currently
-available. A real Atari TOS 1.62 + protected
+Atari ST preservation archive does include
+`Floppy Disks MSA/Chaos Strikes Back for Atari ST Save Disk.msa`, but that
+authentic 720 KiB MSA decodes to a formatted disk with zero root files; its
+SHA-256 is `bca3db90f795c633fcb0cc7a10a4811dae616b7d8e7eb8b65b4f59af10598d29`.
+The real-media `csb_v1_atari_msa` decoder regression confirms it contains no
+campaign save. No Atari/Amiga DSA-bearing campaign save or CSBWin extended
+save is currently available. A real Atari TOS 1.62 + protected
 campaign-disk run reaches the `PRISON / RESUME` Entrance but cannot establish
 a champion-bearing dungeon state without that missing source material. Later
 work must record media hashes and provenance before using newly supplied

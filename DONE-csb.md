@@ -1,5 +1,12 @@
 # Firestaff DONE — CSB
 
+- 2026-09-26: Verified the Atari ST software archive's original save-disk MSA
+  using `csb_v1_atari_msa`. The preserved image is a valid 720 KiB disk with
+  an empty root directory (SHA-256
+  `bca3db90f795c633fcb0cc7a10a4811dae616b7d8e7eb8b65b4f59af10598d29`), so
+  it is not an authentic DSA-bearing campaign save. `TODO-csb.md` now
+  distinguishes that blank formatted medium from the still-missing save corpus.
+
 - 2026-09-25: Re-ran the authentic native startup checks for the Atari STX,
   Amiga 3.1 and FM Towns original packages. All three CTest routes passed;
   the Atari route covers title, runtime, input and keyboard/pointer launcher
