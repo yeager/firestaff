@@ -83,7 +83,7 @@ static const int8_t g_left_dy[4] = { 0, -1,  0,  1};
  *   FLOOR   = 1  → floor tile
  *   DOOR    = 4  → door tile (uses wall tile when closed, floor when open)
  *   PIT     = 2  → floor tile (pit trap)
- *   STAIRS  = 3,13 → stairs up/down tile
+ *   STAIRS  = 3,13,14 → no tile until original material is authenticated
  *   TELEPORT= 5  → floor tile (teleporter pad)
  *   ALARM   = 6  → floor tile
  *   EXIT    = 8  → exit portal tile
@@ -113,12 +113,12 @@ static const int g_tile_table[16][TQR_VP_DEPTH][2] = {
         [2] = {146, TILE_FALLBACK},
         [3] = {154, TILE_FALLBACK},
     },
-    /* 3: STAIRS_UP */
+    /* 3: STAIRS_UP — no authenticated material binding */
     [3] = {
-        [0] = {200, TILE_FALLBACK},  /* D0: stairs up */
-        [1] = {201, TILE_FALLBACK},
-        [2] = {202, TILE_FALLBACK},
-        [3] = {203, TILE_FALLBACK},
+        [0] = {TILE_FALLBACK, TILE_FALLBACK},
+        [1] = {TILE_FALLBACK, TILE_FALLBACK},
+        [2] = {TILE_FALLBACK, TILE_FALLBACK},
+        [3] = {TILE_FALLBACK, TILE_FALLBACK},
     },
     /* 4: DOOR — closed uses wall tile, open uses floor tile */
     [4] = {
@@ -183,11 +183,12 @@ static const int g_tile_table[16][TQR_VP_DEPTH][2] = {
         [2] = {144, TILE_FALLBACK},
         [3] = {152, TILE_FALLBACK},
     },
+    /* 13: STAIRS_DOWN — no authenticated material binding */
     [13] = {
-        [0] = {210, TILE_FALLBACK},  /* D0: stairs down */
-        [1] = {211, TILE_FALLBACK},
-        [2] = {212, TILE_FALLBACK},
-        [3] = {213, TILE_FALLBACK},
+        [0] = {TILE_FALLBACK, TILE_FALLBACK},
+        [1] = {TILE_FALLBACK, TILE_FALLBACK},
+        [2] = {TILE_FALLBACK, TILE_FALLBACK},
+        [3] = {TILE_FALLBACK, TILE_FALLBACK},
     },
     [14] = {
         /* Authenticated source identifies a stair-class square, but its
