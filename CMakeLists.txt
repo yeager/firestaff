@@ -13566,7 +13566,8 @@ if(BUILD_TESTING)
             probes/theron/firestaff_theron_v1_srm_real_artifact_readiness_probe.c
             src/theron/theron_v1_srm_classifier.c
             src/theron/theron_v1_save_load.c)
-        target_link_libraries(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE firestaff_theron)
+        target_link_libraries(firestaff_theron_v1_srm_real_artifact_readiness_probe
+            PRIVATE firestaff_theron firestaff_m10 firestaff_m12)
         target_include_directories(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         if(NOT MSVC)
             target_compile_options(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE -Wall -Wextra -O2)
