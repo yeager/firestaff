@@ -1,5 +1,11 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-26: DM1's authentic DOS English, Amiga HD and FM Towns CLI/start-menu
+  regressions pass from installed original archives. The nested DOS archive
+  also passes the full PC-34 M12 Hall-of-Champions and input/capture matrix;
+  this rerun passed after an earlier attempt was interrupted by host disk
+  exhaustion. FM Towns passed its two original-program input matrices.
+
 - 2026-09-26: Verified authentic DM1 Atari ST M12-to-runtime routes and C127
   Hall-of-Champions recruitment on all six admitted editions: English v1.0a,
   v1.0b, v1.1 and v1.2, German v1.2, and French v1.3. The edition-specific

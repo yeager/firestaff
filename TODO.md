@@ -12,9 +12,11 @@
   path through its first presented runtime frame.
   Authentic DM1 PC 3.4 and CSB Amiga A31M now have this runtime-frame
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
-  language choice. Authentic DM1 Atari ST v1.2 and DM2 DOS English now also
-  follow normal M12 selection and source-owned startup input to a presented
-  first runtime frame; authentic DM2 Amiga now does the same through its
+  language choice. Authentic DM1 DOS English (including the nested PC-34
+  archive), Amiga HD, and FM Towns now also pass their original-media CLI/menu
+  startup routes. Authentic DM1 Atari ST v1.2 and DM2 DOS English follow normal
+  M12 selection and source-owned startup input to a presented first runtime
+  frame; authentic DM2 Amiga now does the same through its
   original SWSH/TITL and GDAT New Game pointer route. DM2 French DOS now also
   reaches its authenticated initial party through the normal M12 → MVE →
   New-Game route, with direct-probe movement checked separately. The optional
