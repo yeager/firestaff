@@ -3727,3 +3727,11 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   not prove the combined-RAR route. No archive was extracted or modified. Keep
   this route open until a supported extractor is available and the real-media
   direct-boot and Track 01 handoff tests pass again.
+- ✅ 2026-09-26 local real-media follow-up: the existing configured build had
+  the application target up to date but lacked the small launcher-handoff test
+  helper. After building that helper, both registered combined-RAR tests pass
+  against the authentic archive in `~/.firestaff/data/theron`: US and JP
+  direct boot authenticate the original concatenated Track 02 members without
+  extraction, and the Track 01 CDDA handoff test passes. This confirms both
+  routes on this host; it does not remove the separate trv2 extractor gap or
+  establish complete gameplay/audio parity.
