@@ -2833,6 +2833,12 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
 - Theron teleporter resolution now rejects unresolved object-ID links and
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.
+  The 2026-09-26 real-data mechanics census now exercises 335 coordinate-linked
+  records in each region. Of 170 enabled pads, 72 resolve, 89 target wall
+  squares, and nine continue to another enabled pad; all level references and
+  teleporter endpoints are present. Keep wall-target and chained routes
+  fail-closed until a source consumer or authenticated movement capture binds
+  their exact outcomes.
 
 - [ ] THERON-V1-TRACK02-JP-LEVEL-DATA: the authenticated Japanese Track 02
   framing and bounded HuC6280 resource admission are verified for all seven

@@ -833,6 +833,174 @@ static void test_real_campaign_movement(
     free(user_data);
 }
 
+/* Run the production teleporter resolver over the coordinate-linked records
+ * loaded from every authentic dungeon. Valid chains must publish a bounded
+ * destination; closed, incomplete, or cyclic routes must leave party and
+ * transition state untouched. */
+static void test_real_campaign_teleporters(
+    const uint8_t *data, size_t size, const char *md5,
+    Theron_Track02Variant variant) {
+    uint8_t *user_data = NULL;
+    size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
+    Theron_V1_World *world = NULL;
+    int source_teleporters = 0;
+    int resolved = 0;
+    int blocked = 0;
+    int disabled = 0;
+    int enabled = 0;
+    int enabled_blocked = 0;
+    int blocked_bad_level = 0;
+    int blocked_bad_coordinate = 0;
+    int blocked_wall_target = 0;
+    int blocked_missing_endpoint = 0;
+    int blocked_active_chain = 0;
+    int blocked_other = 0;
+
+    printf("[test:real_campaign_teleporter_resolution]\n");
+    if (theron_v1_track02_raw_user_data_size(
+            size, md5, &sector_count, &user_data_size) !=
+            THERON_TRACK02_SIGNAL_OK || sector_count == 0u ||
+        !(user_data = (uint8_t *)malloc(user_data_size)) ||
+        theron_v1_track02_copy_raw_user_data(
+            data, size, md5, user_data, user_data_size, &copied_size) !=
+            THERON_TRACK02_SIGNAL_OK || copied_size != user_data_size) {
+        printf("  [FAIL] normalize authentic teleporter sectors\n");
+        g_fail++;
+        free(user_data);
+        return;
+    }
+    world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+    if (!world) {
+        printf("  [FAIL] allocate authentic teleporter world\n");
+        g_fail++;
+        free(user_data);
+        return;
+    }
+
+    for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
+         ++dungeon_id) {
+        Theron_DungeonLoadResult result;
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon_id;
+        if (theron_v1_track02_load_full_dungeon_for_variant(
+                world, dungeon_id, user_data, user_data_size,
+                variant, &result) != 0 || result.levels_loaded <= 0) {
+            printf("  [FAIL] load authentic dungeon %d teleporters\n",
+                   dungeon_id);
+            g_fail++;
+            continue;
+        }
+        for (int i = 0; i < world->object_count; ++i) {
+            Theron_V1_Object *source = &world->objects[i];
+            int before_x, before_y, before_level, status;
+            if (source->dungeon_id != dungeon_id ||
+                source->type != THERON_OBJTYPE_TELEPORTER ||
+                !(source->flags & THERON_OBJ_F_TRACK02_COORD_LINK))
+                continue;
+            source_teleporters++;
+            if (source->state == 0u) disabled++;
+            else enabled++;
+            world->current_level = source->level;
+            before_x = world->party.leader_x;
+            before_y = world->party.leader_y;
+            before_level = world->current_level;
+            world->transition_pending = 0;
+            world->transition_type = 0;
+            world->transition_target_level = -1;
+            status = theron_v1_teleporter_resolve(
+                world, source->x, source->y);
+            if (status == 0 && world->transition_pending &&
+                world->transition_type == THERON_TRANSITION_TELEPORTER &&
+                world->transition_target_level >= 0 &&
+                world->transition_target_level < THERON_MAX_LEVELS_PER_DUNGEON &&
+                world->level_loaded[dungeon_id - 1]
+                                   [world->transition_target_level] &&
+                world->party.leader_x == world->transition_spawn_x &&
+                world->party.leader_y == world->transition_spawn_y) {
+                resolved++;
+            } else if (status < 0 && !world->transition_pending &&
+                       world->transition_type == 0 &&
+                       world->transition_target_level == -1 &&
+                       world->party.leader_x == before_x &&
+                       world->party.leader_y == before_y &&
+                       world->current_level == before_level) {
+                blocked++;
+                if (source->state != 0u) {
+                    int target_level = (source->linked_id >> 10) & 0x3f;
+                    int target_x = source->linked_id & 0x1f;
+                    int target_y = (source->linked_id >> 5) & 0x1f;
+                    const Theron_V1_Level *target_level_data = NULL;
+                    const Theron_V1_Object *target = NULL;
+                    enabled_blocked++;
+                    if (target_level < 0 ||
+                        target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+                        !world->level_loaded[dungeon_id - 1][target_level]) {
+                        blocked_bad_level++;
+                    } else {
+                        target_level_data =
+                            &world->levels[dungeon_id - 1][target_level];
+                        if (target_x < 0 || target_x >= target_level_data->width ||
+                            target_y < 0 || target_y >= target_level_data->height) {
+                            blocked_bad_coordinate++;
+                        } else if (target_level_data->squares[target_y][target_x] ==
+                                   THERON_SQUARE_WALL) {
+                            blocked_wall_target++;
+                        } else if (target_level_data->squares[target_y][target_x] ==
+                                   THERON_SQUARE_TELEPORTER) {
+                            for (int j = 0; j < world->object_count; ++j) {
+                                const Theron_V1_Object *candidate =
+                                    &world->objects[j];
+                                if (candidate->type == THERON_OBJTYPE_TELEPORTER &&
+                                    candidate->dungeon_id == dungeon_id &&
+                                    candidate->level == target_level &&
+                                    candidate->x == target_x &&
+                                    candidate->y == target_y) {
+                                    target = candidate;
+                                    break;
+                                }
+                            }
+                            if (!target || !(target->flags &
+                                    THERON_OBJ_F_TRACK02_COORD_LINK)) {
+                                blocked_missing_endpoint++;
+                            } else if (target->state != 0u) {
+                                blocked_active_chain++;
+                            } else {
+                                blocked_other++;
+                            }
+                        } else {
+                            blocked_other++;
+                        }
+                    }
+                }
+            } else {
+                printf("  [FAIL] dungeon %d teleporter at %d,%d violated commit/rollback boundary (status=%d)\n",
+                       dungeon_id, source->x, source->y, status);
+                g_fail++;
+            }
+        }
+    }
+    CHECK_INT("authentic campaign has coordinate-linked teleporters",
+              source_teleporters, 335);
+    CHECK_INT("authentic campaign disabled teleporter count",
+              disabled, 165);
+    CHECK_INT("authentic campaign enabled teleporter count", enabled, 170);
+    CHECK_INT("authentic campaign resolver commits", resolved, 72);
+    CHECK_INT("authentic campaign resolver fails closed", enabled_blocked, 98);
+    CHECK_INT("authentic open links targeting walls remain blocked",
+              blocked_wall_target, 89);
+    CHECK_INT("authentic active-link chains remain blocked",
+              blocked_active_chain, 9);
+    CHECK_INT("every authentic teleporter commits or rolls back",
+              resolved + blocked, source_teleporters);
+    printf("  teleporter records=%d disabled=%d enabled=%d resolved=%d fail-closed=%d enabled-fail-closed=%d [bad-level=%d bad-coordinate=%d wall=%d missing-endpoint=%d active-chain=%d other=%d]\n",
+           source_teleporters, disabled, enabled, resolved, blocked,
+           enabled_blocked, blocked_bad_level, blocked_bad_coordinate,
+           blocked_wall_target, blocked_missing_endpoint,
+           blocked_active_chain, blocked_other);
+    free(world);
+    free(user_data);
+}
+
 /* ── Probe one real Track 02 image ─────────────────────────────────── */
 static void probe_real_track02(const char *label,
                                const char *path,
@@ -956,6 +1124,7 @@ static void probe_real_track02(const char *label,
 
     test_real_full_dungeon_and_stairs(data, size, local_md5, variant);
     test_real_campaign_movement(data, size, local_md5, variant);
+    test_real_campaign_teleporters(data, size, local_md5, variant);
 
     free(data);
 }

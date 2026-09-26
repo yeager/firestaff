@@ -4,7 +4,7 @@
 
 - Extended the real-data mechanics probe to load every dungeon and test one
   source-backed floor move and wall block wherever the authentic level layout
-  contains those edges. US and JP Track 02 runs both passed all 199 checks
+  contains those edges. US and JP Track 02 runs both passed all 215 checks
   without skips; each region covers 34 levels (68 authentic level loads total)
   and exercises movement and wall blocking in each of the seven dungeons.
   Some levels lack one of these sample edges; the probe neither creates tiles
@@ -12,7 +12,16 @@
   gameplay semantics, and other unresolved source consumers remain gated.
 - Verification: `theron_v1_mechanics_playability` CTest passed against the
   operator's authentic regional BIN files; direct US and JP probe runs each
-  reported `PASS: 199  FAIL: 0  SKIP: 0`.
+  reported `PASS: 215  FAIL: 0  SKIP: 0`.
+- The same hash-verified runs now execute the resolver against all 335
+  coordinate-linked teleporter records per region: 165 are disabled and 170
+  enabled. The resolver commits 72 enabled routes and keeps 98 fail-closed;
+  89 of those point to a wall and nine continue into another enabled pad. No
+  missing level, out-of-bounds coordinate, or missing endpoint was found.
+  This is a real-data boundary audit, not proof of original wall-target or
+  chained-teleporter semantics, so those routes remain fail-closed.
+- The expanded direct probe reports `PASS: 215  FAIL: 0  SKIP: 0` for each
+  region; the registered CTest also passes.
 
 ## 2026-09-25 — Direct authenticated US and JP Track 02 boot
 
