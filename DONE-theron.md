@@ -2,11 +2,27 @@
 
 ## 2026-09-26 — SRM readiness probe target dependencies
 
-- Fixed the real-artifact SRM readiness probe's standalone CMake link list;
-  its Theron intake path also needs the M10 asset reader and M12 hash helper.
-- The probe now builds and its registered CTest passes. A full all-target
-  build still exposes the same missing M10/M12 links in other standalone
-  targets, so this change does not claim the complete build is green.
+- The Theron Track 02 media-intake code uses the shared M10 asset reader and
+  M12 digest helper. Those dependencies are now published by the owning
+  `firestaff_theron` target, rather than repeated selectively by each
+  standalone probe.
+- Formerly failing SRM-readiness, combat-mechanics, hardening, champion-roster,
+  text-decode and runtime-level-receipt targets now link successfully; the
+  focused link-regression tests pass 9/9. On `trv2`, the complete Theron CTest
+  label set now reports 65 passed, three configured skips, and no failures.
+  Authentic US/JP BINs, the combined RAR, JP/US 7z archives, BRAM captures,
+  Mednafen save files and trace sidecars were staged outside the repository
+  and checked against their local SHA-256 digests. Both archive boot routes,
+  both BRAM checks, and authentic Main-RAM/CD-state trace receipts pass. The
+  remaining skips require the missing VDC-state/SAT capture pair or an
+  original command-capture corpus; no substitute capture was used. A
+  byte-exact ISO reassembled from the RAR's original Track 19 and end-member
+  hashes to the registered US Track 02 identity and passes direct ISO boot.
+  A Theron/M12 static-link cycle is covered by the library interface
+  multiplicity so standalone M11 probes link. A later local repository-wide
+  all-target build was attempted, but a standalone linker failed with
+  `No space left on device`; it therefore did not verify all targets. The
+  remote all-target build was not rerun after that local resource failure.
 
 ## 2026-09-26 — Authentic movement checks across the seven-dungeon campaign
 
@@ -5667,3 +5683,11 @@ metadata and locally staged CD-DA tracks.
   posthashen `0ce6b7ba`, den tidigare bevisade `$86`-byteskrivaren och samma
   sessions huvudminne. Endast kampanjbyten har gameplaysemantik; övriga fält
   förblir stängda.
+- ✅ Den kompletta realdata-regressionen för originalets Backup RAM kördes
+  separat mot installerat `TQUS02.bin`, `TQJP02.bin`, den autentiska Akutuba-
+  `.bram`-filen, samma sessions 8 KiB huvud-RAM och den riktiga Save Manager-
+  kodsidan. Den verifierade layout, avkodade Therons maxvärden och alla 20
+  färdighetsvärden samt korsband tre-slotsposten med originalets läs/skrivkod.
+  Körningen passerade utan att ändra speldata. Den visar fortfarande inte att
+  en riktig gzip-baserad Save Disk `.srm` kan importeras; det formatet är
+  separat och kvarstår som öppet arbete.

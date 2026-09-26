@@ -7957,10 +7957,10 @@ target_compile_definitions(firestaff_m12 PRIVATE
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Keep static-library dependencies acyclic and order them after their
-# definitions. Theron's raw-media intake uses M12's asset reader and MD5
-# helpers; M11's startup and view code uses M12's menu and config helpers.
+# definitions. Theron's raw-media intake uses the shared M10 asset reader and
+# M12 asset reader/MD5 helpers; M11 startup/view uses M12 menu/config helpers.
 if(TARGET firestaff_theron)
-    target_link_libraries(firestaff_theron PUBLIC firestaff_m12)
+    target_link_libraries(firestaff_theron PUBLIC firestaff_m10 firestaff_m12)
 endif()
 # The M11 startup and view objects also call M12 helpers. Propagate that
 # dependency through M11 so every final executable resolves it after M11.
@@ -13573,8 +13573,7 @@ if(BUILD_TESTING)
             probes/theron/firestaff_theron_v1_srm_real_artifact_readiness_probe.c
             src/theron/theron_v1_srm_classifier.c
             src/theron/theron_v1_save_load.c)
-        target_link_libraries(firestaff_theron_v1_srm_real_artifact_readiness_probe
-            PRIVATE firestaff_theron firestaff_m10 firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE firestaff_theron)
         target_include_directories(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         if(NOT MSVC)
             target_compile_options(firestaff_theron_v1_srm_real_artifact_readiness_probe PRIVATE -Wall -Wextra -O2)
