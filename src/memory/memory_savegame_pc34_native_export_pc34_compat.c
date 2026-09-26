@@ -1738,8 +1738,20 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             write_u16_le(dst + 8u, motion);
         } else if (type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
                    type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            int has_original_c3c4_receipt = sourceReceiptWorld &&
+                sourceReceiptWorld->pc34OriginalC3C4ReceiptValid == 1;
+
+            /* A fresh F0195 startup has no imported C3/C4 save receipt, but
+             * F0180 itself creates a source-shaped C37 at GameTime+1 with
+             * C.Ticks=0. It is safe to serialize that one form when its
+             * group still resolves uniquely through the original square
+             * chain below. Keep every other generated reaction fail-closed;
+             * imported C29..C41 events continue to require their C3/C4
+             * receipt so their original C payload is not reconstructed. */
             if (!sourceReceiptWorld ||
-                sourceReceiptWorld->pc34OriginalC3C4ReceiptValid != 1 ||
+                (!has_original_c3c4_receipt &&
+                 (type != DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
+                  src->aux4 != 0x100 || src->aux3 != 0)) ||
                 src->kind != TIMELINE_EVENT_CREATURE_REACTION ||
                 src->aux2 != type || (src->aux4 & 0x100) == 0 ||
                 src->aux0 < 0 || !things || !things->groups ||

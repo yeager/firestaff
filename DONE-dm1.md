@@ -1,5 +1,17 @@
 # Firestaff DONE — DM1
 
+- 2026-09-26: Fixed the fresh-start native save rejection for F0195/F0180's
+  initial C37. When there is no imported C3/C4 save receipt, export now accepts
+  only the source-shaped `C37`, `C.Ticks=0` event whose group resolves exactly
+  once through the original square Thing chain. Other generated C29-C41 events
+  remain fail-closed without their save receipt. Corrected the regression's
+  dungeon column/SFT base setup, then verified G0377 plus GLOBAL_DATA and
+  ACTIVE_GROUP round-trip, negative C36 rejection, and the broader original
+  save handoff test. The local original-data directory has no staged
+  `DMSAVE.DAT`/`DMSAVE.BAK`, so no authentic save/resume claim is made. The
+  authentic English DOS archive CLI/menu and first-input regression also
+  passes with the changed build.
+
 - 2026-09-25: Extended the authentic German Atari ST 1.2 CLI regression to
   follow the source map to C127 ordinal 14, click it through the normal host
   pointer-coordinate mapper, and assert that the candidate panel opens and the

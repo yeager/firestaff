@@ -74,13 +74,15 @@
   - Obtain original traces for approach entry and zero-tick chained dispatch.
     Preserve off-map handling and the separate priority gap.
 
-- Deferred savegame regression: `dm1_v1_g0377_active_group_count_pc34_compat`
-  passes F0196 initialization and F0195 live-count admission, then fails
-  "PC34 export accepts the bounded G0377 live count". Observed after rebuilding
-  at a8ada3b50 on 2026-09-06. Its constructed world lacks raw C04 data and
-  invokes native save export/handoff; the exact export rejection and its
-  introduction have not been established. Keep this test enabled and investigate
-  when savegame work resumes; do not weaken export validation to satisfy it.
+- Extend native-save coverage from a fresh F0195/F0180 C37 admission to an
+  authenticated original-media save-and-resume route. The G0377 regression now
+  verifies the exact source-shaped C37 case, unique C04 ownership through the
+  square chain, GLOBAL_DATA/ACTIVE_GROUP round-trip, and rejection of an
+  unauthenticated C36 reaction. Other runtime-generated C29-C41 events still
+  require an imported C3/C4 receipt; audit their original union ownership
+  individually before widening export. The staged French DOS save corpus is
+  absent here, so the focused regression does not establish original-media
+  save/resume parity.
 
 - Complete F0183/F0180 admission fidelity beyond the implemented F0179 aspect/RNG
   initialization and successful staged RNG publication. Obtain original traces

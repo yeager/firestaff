@@ -38,10 +38,12 @@ int main(void)
     struct PartyState_Compat imported_party;
     struct TimelineQueue_Compat imported_timeline;
     DM1OriginalSavePC34HandoffReport report;
+    unsigned short cumulative_square_first_thing_count = 0;
     unsigned char square = 0x10;
     unsigned short square_first_thing;
     unsigned char save[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
+    int successful_written = 0;
     int result;
 
     _Static_assert(sizeof(world.creatureAICount) == sizeof(int32_t),
@@ -72,6 +74,9 @@ int main(void)
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount =
+        &cumulative_square_first_thing_count;
+    dungeon.dungeonColumnCount = 1;
 
     square_first_thing = thing_ref(THING_TYPE_GROUP, 0);
     group.next = THING_ENDOFLIST;
@@ -98,13 +103,25 @@ int main(void)
 
     result = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
         &world, 0x47303737u, save, (int)sizeof(save), &written);
+    if (result != SAVEGAME_PC34_OK) {
+        fprintf(stderr, "PC34 export failed: result=%d written=%d\n",
+                result, written);
+    }
     CHECK(result == SAVEGAME_PC34_OK && written > 0,
           "PC34 export accepts the bounded G0377 live count");
+    successful_written = written;
+
+    world.timeline.events[0].aux2 = DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_2;
+    result = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &world, 0x47303737u, save, (int)sizeof(save), &written);
+    CHECK(result == SAVEGAME_PC34_ERROR_INTERNAL && written == 0,
+          "PC34 export still rejects an unauthenticated non-C37 reaction");
+    world.timeline.events[0].aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
 
     imported.party = &imported_party;
     imported.timeline = &imported_timeline;
     result = dm1_v1_original_save_pc34_handoff_bytes(
-        save, (size_t)written, &imported, &report);
+        save, (size_t)successful_written, &imported, &report);
     CHECK(result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "PC34 handoff reads exported GLOBAL_DATA");
     CHECK(report.original_current_active_group_count == 1 &&
