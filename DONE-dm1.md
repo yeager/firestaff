@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-26: Extended the authentic FM Towns M12 mouse-launch regression
+  beyond its launch receipt. Both English EDM and Japanese JDM now complete
+  their original title and Entrance sequence through the ordinary launcher
+  and reach `dm1-runtime` with the first Hall frame ready. The original ZIP
+  supplies the selected executable and graphics; only the headless Entrance
+  input is bounded by the test harness. The source start has zero champions,
+  so this confirms the menu-to-runtime route, not a playable campaign party.
+
 - 2026-09-26: Extended the authentic Amiga v2.0 save-disk regression through
   M12 Quick Resume. The ZIP → ZIP → ADF `DMGAMEG.DAT` member now reaches the
   same `dm1-runtime` receipt from the actual launcher row as from direct CLI,

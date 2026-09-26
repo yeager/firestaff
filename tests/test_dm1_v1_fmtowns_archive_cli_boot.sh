@@ -85,6 +85,51 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
+# The pointer-only check above stops at the launch receipt. Also keep the
+# ordinary M12 handoff alive through the original EDM/JDM title and Entrance
+# so a selected card cannot pass while its first runtime frame remains
+# unreachable. The dummy display's bounded headless Entrance input is the
+# test-only path used after the authentic title sequence.
+expect_menu_runtime() {
+    local language=$1 probe_root probe_file
+    local -a edition_args=(--width 1920 --height 1080 --menu --game dm1
+                          --platform fm-towns)
+    if [[ $language == ja ]]; then
+        edition_args+=(--dm1-fmtowns-ja)
+    fi
+    probe_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+    mkdir -p "$probe_root"
+    probe_file="$probe_root/dm1-fmtowns-menu-runtime-$language-$$.json"
+    FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe_file" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        "${edition_args[@]}" --data-dir "$archive" \
+        --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
+        --duration 10000 >/dev/null 2>&1
+    python3 - "$probe_file" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["phase"] != "dm1-runtime" or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(f"FAIL: authentic DM1 FM Towns M12 {sys.argv[1]} did not reach its first runtime frame: {probe}")
+print("PASS: authentic DM1 FM Towns M12 reached the first runtime frame")
+PY
+    rm -f "$probe_file"
+}
+expect_menu_runtime en
+expect_menu_runtime ja
+
 expect_gameplay_input() {
     local input=$1 expected_party=$2 gameplay_output
     local language=${3:-en} program=EDM.EXP handoff=fmtowns-tmenu-edm
