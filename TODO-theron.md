@@ -3925,3 +3925,30 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   admission check also supplied the authentic JP CUE through the US CloneCD
   override and confirmed it was rejected on its real, non-US CUE MD5 before
   any temporary slice was created.
+
+## 2026-09-27 — authenticated VRAM replay and Drator route boundary
+
+- ✅ The atomic real trv2 capture
+  `/home/trv2/firestaff-theron-evidence/capture/selection.trace.*` was admitted
+  with its matching VRAM, VCE, VDC-state, SAT and VDC-I/O sidecars. The full
+  Theron CTest selection ran with these inputs: 70 tests, 63 passed, seven
+  fixture-dependent skips, zero failures. Hardware-state replay produced
+  1,704 BAT tiles and 220 sprite pixels at 320x200; this remains a
+  screen-space capture, not game-owned room or tile semantics.
+- 🔒 Follow-up cold-start captures used the authentic US CloneCD CUE and
+  Track 02 digest `168bd6a63784e91885df8c47be62ab5a`. The corrected isolated
+  profile used the authentic 2 KiB campaign BRAM (MD5
+  `ffabc8d19b0915d4d9632a7ae2e90a97`); a subsequent run scheduled original
+  controller input `run@9600:90`. It recorded 25 raw-sector spans, four SCSI
+  commands, 115 CD IRQ callbacks, one game-owned `$E009` dispatch, five loader
+  TII transfers, no `$E009` data reads, no authenticated CD-to-RAM receipt and
+  no Drator route-hook match. The post-run BRAM remained byte-identical.
+- 🔒 At frame 9600 the capture producer recorded `RUN=0x0008`, but the
+  configured 65,536-read input trace limit ended at that same boundary. The
+  trace has the producer-side input marker but no subsequent original CPU
+  read receipt, so it cannot prove that System Card/game code consumed RUN.
+  Raw traces remain outside the repository under
+  `/home/trv2/firestaff-theron-evidence/capture/drator-generator-authentic-bram-run9600-goal-20260927`.
+  Next capture must increase that bound and require a post-event CPU read
+  before testing the signed menu route. Do not infer a dungeon transition from
+  raw-sector reads or `$E009` dispatch alone.
