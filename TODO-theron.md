@@ -3551,9 +3551,14 @@ av bankladdningen. Se
   without replacing another edition or unpacking the source. The collector
   now checks every bounded CUE candidate below each scan root, rather than
   letting one earlier edition hide another in the same directory tree. A
-  real-media regression checks the USA CloneCD CUE against the staged source when
-  `FIRESTAFF_THERON_US_CUE` is configured; the ordinary local run skips this
-  assertion when that original is not staged.
+  real-media regression checks an authentic CUE against the staged source when
+  `FIRESTAFF_THERON_CUE` is configured; the ordinary local run skips this
+  assertion when no authentic CUE is staged.
+- ✅ Ran that regression with the original Japanese Rev. 1 cue and its Track 01
+  and Track 02 extracted unchanged from the supplied 7z into a temporary test
+  directory. The real Track 02 MD5 is `b7afb338ad31be1025b53f9aff12d73a`, and
+  the full asset-status scan passed; the source archive and user data tree were
+  left untouched.
 - ✅ Independently validated the existing Track 01 handoff against the
   authentic full Japanese 7z disc: its CUE declares 19 tracks, Track 01 is
   7,916,832 bytes of AUDIO, and Track 02 is MODE1/2352 at 8,102,640 bytes.
