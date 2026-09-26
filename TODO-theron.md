@@ -3873,3 +3873,8 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   encoder rejects it without touching the caller's output buffer. Focused
   test and the full 68-test local Theron suite passed (62 passed, six
   configured skips, zero failures).
+- ✅ M11 no longer lets Theron's in-dungeon Save Game input fall through as
+  ignored gameplay or route toward the shared DM1 save-disk dialog. It reports
+  that the original game has no in-dungeon save transaction; the authenticated
+  M11 Continue regression verifies the route, and the full Theron suite still
+  passes (62 passed, six configured skips, zero failures).

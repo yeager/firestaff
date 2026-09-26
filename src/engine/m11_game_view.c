@@ -34929,6 +34929,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!world) {
             return M11_GAME_INPUT_IGNORED;
         }
+        if (input == M12_MENU_INPUT_SAVE_GAME) {
+            /* THQUEST.ASM T080 exposes persistence at the stage boundary,
+             * not as an in-dungeon Save Game transaction. */
+            m11_set_status(state, "SAVE", "NO IN-DUNGEON SAVES");
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
             Theron_V1_BootStartupFullStartReceipt full_start;

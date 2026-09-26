@@ -206,6 +206,19 @@ int main(int argc, char** argv) {
                     world->object_count,
                     world->party.champion_count);
         } else {
+            M11_GameInputResult save_result;
+            M11_GameView_DismissDialogOverlay(&view);
+            save_result = M11_GameView_HandleInput(
+                &view, M12_MENU_INPUT_SAVE_GAME);
+            if (save_result != M11_GAME_INPUT_REDRAW ||
+                view.dialogOverlayActive) {
+                ++failures;
+                fprintf(stderr,
+                        "FAIL: in-dungeon Theron save input result=%d dialog=%d phase=%d level=%d\n",
+                        save_result, view.dialogOverlayActive,
+                        view.theronState.startup_phase,
+                        view.theronState.level_loaded);
+            }
             static const int movement_inputs[4] = {
                 M12_MENU_INPUT_UP,
                 M12_MENU_INPUT_STRAFE_RIGHT,
