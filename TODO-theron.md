@@ -3709,3 +3709,21 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `theronTrack01CddaReady=0`; authenticated CDDA selection and gameplay
   commands, dungeon transitions, and the remaining gameplay mechanics are
   still open. Do not substitute generated audio, graphics, or world data.
+
+## 2026-09-26 trv2 full Theron suite and RAR extractor availability
+
+- ✅ Rebuilt the Theron-named targets and `firestaff` in the isolated trv2
+  build directory. The complete Theron CTest label selection then ran all 68
+  registered tests: 60 passed, seven capture/media-dependent tests skipped,
+  and the authentic combined-RAR direct-boot test failed before game startup.
+  The authentic JP CUE/raw-BIN runtime, seven-dungeon source loader, real BRAM
+  Continue, US raw CUE and ZIP startup, and source-data/mechanics tests passed.
+- 🔒 The remaining RAR test is currently an environment limitation on trv2:
+  its original archive is present (MD5
+  `ac34e0f1482416e9728255dcb25d8234`), but `unrar` and `bsdtar` are absent.
+  The installed `7zz`/`7z` can list the archive yet report `Unsupported Method`
+  for its RAR members. Consequently Firestaff cannot authenticate the selected
+  Track 02 member in this host, and the test fails before boot; this run does
+  not prove the combined-RAR route. No archive was extracted or modified. Keep
+  this route open until a supported extractor is available and the real-media
+  direct-boot and Track 01 handoff tests pass again.
