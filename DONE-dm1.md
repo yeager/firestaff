@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-27: Added an authentic Atari ST v1.2 M12 first-runtime assertion for
+  the fresh-game party handoff. The original nested STX archive now reaches
+  the first Hall frame through the normal launcher with map 0 (1,3), facing
+  south, zero champions, and `dm1StartupHandoffExecuted=1`, before the separate
+  Hall selection and gameplay-input checks. The complete nested Atari ST
+  launch regression passes. This verifies the initial handoff and party tuple;
+  source-square sensor effects and other editions remain open in TODO-dm1.md.
+
 - 2026-09-27: Corrected stale downward-movement expectations in the authentic
   Amiga, nested Atari ST, and FM Towns English/Japanese launch regressions.
   Each original-media route moves from the initial party coordinate (1,3) to

@@ -70,9 +70,42 @@ grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu_output"
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/dm1-atari-menu-runtime-$$.json"
+first_runtime_probe_json="$test_scratch/dm1-atari-first-runtime-$$.json"
 menu_home="$test_scratch/dm1-atari-menu-home-$$"
 mkdir -p "$menu_home"
-trap 'rm -f "$menu_probe_json"; rm -rf "$menu_home"' EXIT
+trap 'rm -f "$menu_probe_json" "$first_runtime_probe_json"; rm -rf "$menu_home"' EXIT
+
+# ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435 and calls F0462. Its
+# fresh-game path then places the party via MOVESENS.C F0267 from the
+# off-square PARTY sentinel. Verify that the ordinary launcher reaches the
+# first original Hall frame with that source party tuple before selecting a
+# champion; this is distinct from the later champion-selection/gameplay route.
+HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$first_runtime_probe_json" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform atari-st --data-dir "$archive" \
+    --script 'enter,enter,enter,wait30,enter,wait60,enter' \
+    --duration 15000 >/dev/null 2>&1
+python3 - "$first_runtime_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
+        startup["startupActive"] != 0 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(f"FAIL: authentic Atari ST new-game handoff missed its initial party placement: {probe}")
+print("PASS: authentic DM1 Atari ST first Hall frame confirms F0267 new-game party placement")
+PY
+
 # The default 960x540 host view presents a centered 640x400 game image. This
 # point maps to the source C127 portrait hit point (112,83).
 m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
