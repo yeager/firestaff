@@ -3547,6 +3547,19 @@ av bankladdningen. Se
   `$EA9E`); they do not establish gameplay commands or data provenance. The
   capture remains blocked and fail-closed; its trace bundle is isolated on
   trv2 under `firestaff-theron-evidence/capture/attempt-long-input-20260926/`.
+- 🔒 Follow-up distinguishes host-input failure from game progression: a
+  65-second replay scheduled authentic PCE `RUN` holds at polls 1, 600, and
+  1200, while enabling the signature-gated Drator research route. The input
+  trace confirms all three events were delivered, but no source-signature
+  route event fired; the receipt still reports 25 raw-sector bindings, one
+  `$E009` entry/return, zero `$E009` data-window reads, zero authenticated
+  CD-to-RAM receipts, and zero CDDA commands. A separate host-key attempt was
+  rejected before launch because host-key capture requires macOS accessibility
+  input and an explicit PCE profile; it is not evidence about the game. Do not
+  repeat the same cold-start route without new evidence about System Card
+  startup or a source-proven in-game launch path. The replay trace bundle is
+  isolated on trv2 under
+  `firestaff-theron-evidence/capture/attempt-long-input-20260926/`.
 - ✅ The existing real-media startup/runtime regressions also pass on trv2
   against the staged originals: US CloneCD ZIP (direct boot, original/modern
   cards, mouse-only cards and six movement inputs through native dungeon
