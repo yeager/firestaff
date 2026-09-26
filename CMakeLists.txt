@@ -7406,10 +7406,6 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_champion_roster\\.c$
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_text\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
-        # The production startup menu validates candidate indexes from the
-        # authenticated Track 02 campaign. This implementation is required
-        # by menu_startup_m12.c and intentionally belongs to the runtime.
-        src/theron/theron_v1_track02_later_route_candidate_campaign_index.c
         src/theron/theron_v1_combat_runtime_source.c
         src/theron/theron_v1_track02_text_decode.c
         src/theron/theron_v1_track02_creature_spawn.c
@@ -7968,6 +7964,12 @@ if(TARGET firestaff_theron)
 endif()
 # The M11 startup and view objects also call M12 helpers. Propagate that
 # dependency through M11 so every final executable resolves it after M11.
+# GNU ld needs multiple archive passes to resolve the production cycle:
+# M11 calls M12, M12 calls M11 and Theron, and Theron calls M12.
+# Raise CMake's static-library cycle multiplicity for every member so all
+# consumers (tests, probes, and the launcher) receive a complete link closure.
+set_target_properties(firestaff_theron firestaff_m11 firestaff_m12 PROPERTIES
+    LINK_INTERFACE_MULTIPLICITY 3)
 target_link_libraries(firestaff_m11 PUBLIC firestaff_m12)
 # Asset-status test hooks are deliberately excluded from the production M12
 # archive. Data-free scanner tests compile asset_status_m12.c themselves with
