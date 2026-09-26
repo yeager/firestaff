@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-26 — Authentic movement checks across the seven-dungeon campaign
+
+- Extended the real-data mechanics probe to load every dungeon and test one
+  source-backed floor move and wall block wherever the authentic level layout
+  contains those edges. US and JP Track 02 runs both passed all 199 checks
+  without skips; each region covers 34 levels (68 authentic level loads total)
+  and exercises movement and wall blocking in each of the seven dungeons.
+  Some levels lack one of these sample edges; the probe neither creates tiles
+  nor claims coverage for an edge absent from the map. Stair destinations,
+  gameplay semantics, and other unresolved source consumers remain gated.
+- Verification: `theron_v1_mechanics_playability` CTest passed against the
+  operator's authentic regional BIN files; direct US and JP probe runs each
+  reported `PASS: 199  FAIL: 0  SKIP: 0`.
+
 ## 2026-09-25 — Direct authenticated US and JP Track 02 boot
 
 - The current Release executable boots directly from each supplied original

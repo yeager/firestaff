@@ -685,6 +685,154 @@ static void test_real_full_dungeon_and_stairs(
     free(world);
 }
 
+/* Exercise the source-backed movement rules across every authenticated
+ * dungeon level, not just Akutuba's startup map.  The source loader supplies
+ * every grid; this routine selects existing floor/wall neighbours and never
+ * creates map tiles, objects, or a transition destination. */
+static void test_real_campaign_movement(
+    const uint8_t *data, size_t size, const char *md5,
+    Theron_Track02Variant variant) {
+    uint8_t *user_data = NULL;
+    size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
+    Theron_V1_World *world = NULL;
+    int verified_levels = 0;
+    int floor_level_checks = 0;
+    int wall_level_checks = 0;
+    int failed_dungeons = 0;
+
+    printf("[test:real_campaign_movement]\n");
+    if (theron_v1_track02_raw_user_data_size(
+            size, md5, &sector_count, &user_data_size) !=
+            THERON_TRACK02_SIGNAL_OK || sector_count == 0u ||
+        !(user_data = (uint8_t *)malloc(user_data_size)) ||
+        theron_v1_track02_copy_raw_user_data(
+            data, size, md5, user_data, user_data_size, &copied_size) !=
+            THERON_TRACK02_SIGNAL_OK || copied_size != user_data_size) {
+        printf("  [FAIL] normalize authentic campaign sectors\n");
+        g_fail++;
+        free(user_data);
+        return;
+    }
+    world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+    if (!world) {
+        printf("  [FAIL] allocate authentic campaign world\n");
+        g_fail++;
+        free(user_data);
+        return;
+    }
+
+    for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
+         ++dungeon_id) {
+        Theron_DungeonLoadResult result;
+        int dungeon_levels = 0;
+        int dungeon_floor_moves = 0;
+        int dungeon_wall_blocks = 0;
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon_id;
+        if (theron_v1_track02_load_full_dungeon_for_variant(
+                world, dungeon_id, user_data, user_data_size,
+                variant, &result) != 0 || result.levels_loaded <= 0) {
+            printf("  [FAIL] load authentic dungeon %d\n", dungeon_id);
+            g_fail++;
+            failed_dungeons++;
+            continue;
+        }
+
+        for (int level_index = 0; level_index < result.levels_loaded;
+             ++level_index) {
+            const Theron_V1_Level *level =
+                &world->levels[dungeon_id - 1][level_index];
+            int floor_x = -1, floor_y = -1;
+            int floor_to_x = -1, floor_to_y = -1;
+            int wall_x = -1, wall_y = -1;
+            int wall_to_x = -1, wall_to_y = -1;
+            if (!level->source_header_verified) {
+                printf("  [FAIL] dungeon %d level %d lacks verified header\n",
+                       dungeon_id, level_index);
+                g_fail++;
+                continue;
+            }
+            verified_levels++;
+            dungeon_levels++;
+            for (int y = 1; y < level->height - 1; ++y) {
+                for (int x = 1; x < level->width - 1; ++x) {
+                    if (level->squares[y][x] != THERON_SQUARE_FLOOR) continue;
+                    if (floor_x < 0 && find_adjacent_floor(
+                            level, x, y, &floor_to_x, &floor_to_y)) {
+                        floor_x = x;
+                        floor_y = y;
+                    }
+                    if (wall_x < 0 && find_adjacent_wall(
+                            level, x, y, &wall_to_x, &wall_to_y)) {
+                        wall_x = x;
+                        wall_y = y;
+                    }
+                }
+            }
+
+            world->current_level = level_index;
+            if (floor_x >= 0) {
+                world->party.leader_x = floor_x;
+                world->party.leader_y = floor_y;
+                world->party.leader_dir = direction_from_delta(
+                    floor_to_x - floor_x, floor_to_y - floor_y);
+                if (theron_v1_move_party_original_command(
+                        world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) !=
+                        THERON_MOVE_OK ||
+                    world->party.leader_x != floor_to_x ||
+                    world->party.leader_y != floor_to_y) {
+                    printf("  [FAIL] dungeon %d level %d real floor movement\n",
+                           dungeon_id, level_index);
+                    g_fail++;
+                } else {
+                    floor_level_checks++;
+                    dungeon_floor_moves++;
+                }
+            }
+
+            if (wall_x >= 0) {
+                world->party.leader_x = wall_x;
+                world->party.leader_y = wall_y;
+                world->party.leader_dir = direction_from_delta(
+                    wall_to_x - wall_x, wall_to_y - wall_y);
+                if (theron_v1_move_party_original_command(
+                        world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) !=
+                        THERON_MOVE_BLOCKED ||
+                    world->party.leader_x != wall_x ||
+                    world->party.leader_y != wall_y) {
+                    printf("  [FAIL] dungeon %d level %d real wall blocking\n",
+                           dungeon_id, level_index);
+                    g_fail++;
+                } else {
+                    wall_level_checks++;
+                    dungeon_wall_blocks++;
+                }
+            }
+        }
+        if (dungeon_levels > 0 && dungeon_floor_moves > 0 &&
+            dungeon_wall_blocks > 0) {
+            printf("  [PASS] dungeon %d: %d authentic levels; %d floor moves, %d wall blocks\n",
+                   dungeon_id, dungeon_levels, dungeon_floor_moves,
+                   dungeon_wall_blocks);
+            g_pass++;
+        } else {
+            printf("  [FAIL] dungeon %d movement coverage: levels=%d floor=%d wall=%d\n",
+                   dungeon_id, dungeon_levels, dungeon_floor_moves,
+                   dungeon_wall_blocks);
+            g_fail++;
+            failed_dungeons++;
+        }
+    }
+    CHECK_INT("all seven authentic dungeons load", failed_dungeons, 0);
+    CHECK_INT("authentic campaign has verified levels", verified_levels > 0, 1);
+    CHECK_INT("all seven dungeons exercise authentic floor movement",
+              floor_level_checks > 0, 1);
+    CHECK_INT("all seven dungeons exercise authentic wall blocking",
+              wall_level_checks > 0, 1);
+    free(world);
+    free(user_data);
+}
+
 /* ── Probe one real Track 02 image ─────────────────────────────────── */
 static void probe_real_track02(const char *label,
                                const char *path,
@@ -807,6 +955,7 @@ static void probe_real_track02(const char *label,
     test_object_table_decode_and_apply_real_data(data, size, local_md5, &world);
 
     test_real_full_dungeon_and_stairs(data, size, local_md5, variant);
+    test_real_campaign_movement(data, size, local_md5, variant);
 
     free(data);
 }
