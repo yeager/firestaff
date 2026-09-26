@@ -1,5 +1,18 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-26: The M12 launcher-options regression now pins its audio `OFF`
+  assertion to explicit English rather than inheriting the host's AUTO
+  locale. This prevents a Swedish host from incorrectly failing the test on
+  the correct localized value `AV`; the options-handoff, M12 direct-click, and
+  CLI option-form tests pass together.
+
+- 2026-09-26: The active M11 CLI now rejects invalid `--game` values and
+  malformed, missing, zero, negative, and out-of-range `--width`/`--height`
+  values before game-data scanning or renderer initialization. Dimensions from
+  1 through 4096 remain accepted. The CLI option regression passes; the former
+  `--width nonsense` case now exits with code 2 instead of `rc=-6`. The
+  authentic CSB Atari STX menu-to-C200 runtime regression still passes.
+
 - 2026-09-26: DM1's authentic DOS English, Amiga HD and FM Towns CLI/start-menu
   regressions pass from installed original archives. The nested DOS archive
   also passes the full PC-34 M12 Hall-of-Champions and input/capture matrix;

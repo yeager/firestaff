@@ -250,6 +250,10 @@ static void test_music_off_preference(void) {
 
     memset(&state, 0, sizeof(state));
     seed_dm1_state(&state);
+    /* This assertion checks the English label. Do not inherit the host's
+     * AUTO locale (for example Swedish "AV") from the test environment. */
+    state.languageExplicit = 1;
+    state.settings.languageIndex = 0;
     state.settings.audioMusicVolume = 0;
     check(strcmp(M12_StartupMenu_GetSettingsValue(
                      &state, M12_STARTUP_SETTINGS_ROW_AUDIO_MUSIC),

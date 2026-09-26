@@ -139,6 +139,22 @@ static int parse_ui_language(const char* value, int* out_index) {
     return 0;
 }
 
+static int parse_window_dimension(const char* value, int* out_dimension) {
+    const char* cursor;
+    char* end = NULL;
+    long parsed;
+    if (!value || !value[0] || !out_dimension) return 0;
+    for (cursor = value; *cursor; ++cursor) {
+        if (*cursor < '0' || *cursor > '9') return 0;
+    }
+    parsed = strtol(value, &end, 10);
+    if (end == value || *end != '\0' || parsed < 1 || parsed > 4096) {
+        return 0;
+    }
+    *out_dimension = (int)parsed;
+    return 1;
+}
+
 static int parse_scale_mode(const char* value, int* out_mode) {
     static const char* const names[] = {
         "1x", "2x", "3x", "4x", "fit", "stretch"
@@ -637,16 +653,26 @@ int main(int argc, char** argv) {
             opts.durationMs = atoi(argv[++i]);
             continue;
         }
-        if (strcmp(a, "--width") == 0 && i + 1 < argc) {
-            opts.windowWidth = atoi(argv[++i]);
+        if (strcmp(a, "--width") == 0) {
+            if (i + 1 >= argc ||
+                !parse_window_dimension(argv[++i], &opts.windowWidth)) {
+                fprintf(stderr,
+                        "firestaff: --width must be an integer from 1 through 4096\n");
+                return 2;
+            }
             /* An explicit size describes a windowed presentation.  The
              * launcher may still be maximized by the saved default, but a
              * requested small/large Mac window must not be silently lost. */
             opts.windowModeOverride = M11_WINDOW_MODE_WINDOWED;
             continue;
         }
-        if (strcmp(a, "--height") == 0 && i + 1 < argc) {
-            opts.windowHeight = atoi(argv[++i]);
+        if (strcmp(a, "--height") == 0) {
+            if (i + 1 >= argc ||
+                !parse_window_dimension(argv[++i], &opts.windowHeight)) {
+                fprintf(stderr,
+                        "firestaff: --height must be an integer from 1 through 4096\n");
+                return 2;
+            }
             opts.windowModeOverride = M11_WINDOW_MODE_WINDOWED;
             continue;
         }
@@ -833,12 +859,23 @@ int main(int argc, char** argv) {
             continue;
         }
         if (is_game_option_name(a) && i + 1 < argc) {
-            opts.gameId = argv[++i];
+            const char* gameId = argv[++i];
+            if (!is_game_id(gameId)) {
+                fprintf(stderr,
+                        "firestaff: --game requires dm1, csb, dm2, nexus, or theron\n");
+                return 2;
+            }
+            opts.gameId = gameId;
             opts.directLaunch = 1;
             continue;
         }
         inlineGameId = game_option_inline_value(a);
         if (inlineGameId) {
+            if (!is_game_id(inlineGameId)) {
+                fprintf(stderr,
+                        "firestaff: --game requires dm1, csb, dm2, nexus, or theron\n");
+                return 2;
+            }
             opts.gameId = inlineGameId;
             opts.directLaunch = 1;
             continue;
