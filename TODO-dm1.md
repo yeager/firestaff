@@ -208,25 +208,26 @@
   actual launcher UI routes; completed regression evidence is in DONE-dm1.md.
   English and German Atari ST 1.2, French Atari ST 1.3, and English Atari ST
   1.0a, 1.0b and 1.1 reach `dm1-runtime` through M12 with first-runtime
-  receipts at `championCount=0`. All six Atari ST source packages have verified
-  that the normal M12 pointer route opens authentic C127 candidate panels;
-  these checks stop before confirming the C040 choice, so they do not prove
-  recruitment. The PC 3.4 route confirms its C040 choice and a following
-  gameplay turn, as recorded in DONE-dm1.md. Repeat that confirmation and
-  post-Hall route on the other admitted editions.
-- Complete Atari ST campaign start through the source-owned Champion Hall
-  selection on the normal M12 route. German Atari ST 1.2 presents authentic
+  receipts at `championCount=0`. All six Atari ST editions now follow the
+  normal M12 route to authentic C127 ordinal 14, confirm its C040 choice, and
+  accept a gameplay turn after the panel closes. Authentic-media checks cover
+  English 1.0a, 1.0b, 1.1 and 1.2, German 1.2, and French 1.3; the PC 3.4
+  choice and gameplay route is also verified. See DONE-dm1.md. The remaining
+  gap below is proving the complete source-owned campaign-start transition,
+  not Hall selection or immediate gameplay input.
+- Complete the Atari ST source-owned new-game campaign-start transition after
+  the now-verified Champion Hall selection on the normal M12 route. German Atari ST 1.2 presents authentic
   source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
   75/76, and DATA.C's six Atari RGB3 dungeon palettes are installed in M11.
   A captured 320x200 first runtime frame has 17,773 nonblack pixels in six
   colours; this is a visible-frame smoke check, not visual parity. M12's first
   runtime receipt starts with `championCount=0`; its normal menu route then
-  reaches the adjacent tile for C127 ordinal 14 and a source pointer click
-  opens its candidate panel on English v1.2, German v1.2, French v1.3 and
-  English v1.0a, v1.0b and v1.1. These tests do not yet confirm C040 or prove
-  campaign start. Repeat the full confirmation and post-Hall route on any other
-  admitted edition without inventing champions or treating the partial floor
-  view as complete visual parity.
+  reaches the adjacent tile for C127 ordinal 14, opens its source candidate
+  panel, confirms C040, and accepts a following gameplay turn on English v1.2,
+  German v1.2, French v1.3 and English v1.0a, v1.0b and v1.1. The source-owned
+  campaign-start transition remains open; these M12-to-M11 tests do not yet
+  prove the complete F0441/F0435/F0462 new-game path. Do not invent champions
+  or treat the partial floor view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX

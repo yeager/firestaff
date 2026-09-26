@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+- 2026-09-26: Corrected Atari Hall regression tests that treated opening a
+  C127 candidate panel and provisionally incrementing `championCount` as a
+  completed recruitment. The normal M12 route now clicks the source C040
+  confirmation, asserts that the candidate panel closes, and sends a keypad
+  turn to verify gameplay input in the same session. Authentic media tests
+  pass for English ST 1.0a, 1.0b, 1.1 and 1.2, German ST 1.2, and French ST
+  1.3. The separate German CLI check also confirms C040 and the subsequent
+  turn. This proves Hall choice and immediate runtime input on these editions;
+  it does not claim the complete F0441/F0435/F0462 campaign-start transition
+  or visual parity.
+
 - 2026-09-26: Fixed scripted keypad keydown events to include their SDL
   scancode. The live PC-34 input router selects movement commands by scancode,
   while direct boot-probe scripts translate key names themselves; scripted

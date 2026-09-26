@@ -55,7 +55,7 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
 fi
 
 # Follow the same normal M12 -> M11 title/entrance handoff as the English
-# Atari ST v1.2 route, then recruit from the authentic Hall through live input.
+# Atari ST v1.2 route, confirm the authentic Hall choice, then exercise input.
 case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
@@ -74,7 +74,7 @@ for token in up up up up turn-left up up up turn-left \
     up up turn-right up turn-left up up turn-left; do
     m12_hoc_route+=",wait30,$token"
 done
-m12_hoc_route+=',wait30,click:384:236,wait10'
+m12_hoc_route+=',wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60'
 HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
@@ -95,11 +95,11 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
-         party["direction"], party["championCount"]) != (0, 10, 4, 0, 1) or
-        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
-                           "candidatePartyIndex": 0}):
-    raise SystemExit(f"FAIL: authentic French DM1 Atari start menu did not reach and recruit from C127 ordinal 14: {probe}")
-print("PASS: authentic French DM1 Atari start menu recruited C127 ordinal 14")
+         party["direction"], party["championCount"]) != (0, 10, 4, 1, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 0, "candidateOrdinal": -1,
+                           "candidatePartyIndex": -1}):
+    raise SystemExit(f"FAIL: authentic French DM1 Atari start menu did not confirm C127 ordinal 14 and route live input: {probe}")
+print("PASS: authentic French DM1 Atari M12 confirms C127 ordinal 14 and routes live input")
 PY
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

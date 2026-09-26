@@ -54,7 +54,7 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
 fi
 
 # Follow the same normal M12 -> M11 title/entrance handoff as the English
-# Atari ST v1.2 route, then recruit from the authentic Hall through live input.
+# Atari ST v1.2 route, confirm the authentic Hall choice, then exercise input.
 case "$app" in
     */*) app_dir=${app%/*} ;;
     *) app_dir=. ;;
@@ -65,8 +65,8 @@ mkdir -p "$scratch_root"
 capture_dir=$(mktemp -d "$scratch_root/dm1-atari-runtime.XXXXXX")
 menu_home="$scratch_root/dm1-atari-st-de-menu-home-$$"
 mkdir -p "$menu_home"
-recruitment_home=
-trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir" "$menu_home"; if [[ -n "$recruitment_home" ]]; then rm -rf "$recruitment_home"; fi' EXIT
+hall_route_home=
+trap 'rm -f "$runtime_probe"; rm -rf "$capture_dir" "$menu_home"; if [[ -n "$hall_route_home" ]]; then rm -rf "$hall_route_home"; fi' EXIT
 # The default 960x540 host view presents a centered 640x400 game image. This
 # point maps to the source C127 portrait hit point (112,83).
 m12_hoc_route='enter,enter,enter,wait30,enter,wait60,enter'
@@ -75,7 +75,7 @@ for token in up up up up turn-left up up up turn-left \
     up up turn-right up turn-left up up turn-left; do
     m12_hoc_route+=",wait30,$token"
 done
-m12_hoc_route+=',wait30,click:384:236,wait10'
+m12_hoc_route+=',wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60'
 HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$runtime_probe" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir" \
@@ -99,10 +99,10 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (party["mapIndex"], party["mapX"], party["mapY"],
-         party["direction"], party["championCount"]) != (0, 10, 4, 0, 1) or
-        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
-                           "candidatePartyIndex": 0}):
-    raise SystemExit(f"FAIL: authentic German DM1 Atari start menu did not reach and recruit from C127 ordinal 14: {probe}")
+         party["direction"], party["championCount"]) != (0, 10, 4, 1, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 0, "candidateOrdinal": -1,
+                           "candidatePartyIndex": -1}):
+    raise SystemExit(f"FAIL: authentic German DM1 Atari start menu did not confirm C127 ordinal 14 and route live input: {probe}")
 captures = list(pathlib.Path(sys.argv[2]).glob("*.bmp"))
 if len(captures) != 1:
     raise SystemExit(f"FAIL: expected one presented Atari runtime frame, got {len(captures)}")
@@ -131,7 +131,7 @@ if nonblack < 10000 * scale * scale or len(colours) < 4:
     raise SystemExit(
         "FAIL: authentic Atari start-menu runtime remains black "
         f"(nonblack={nonblack}, colours={len(colours)})")
-print("PASS: authentic German DM1 Atari start menu recruited C127 ordinal 14 and "
+print("PASS: authentic German DM1 Atari start menu confirmed C127 ordinal 14 and "
       f"presented nonblack runtime pixels={nonblack} colours={len(colours)}")
 PY
 
@@ -153,26 +153,26 @@ fi
 # opens it from the adjacent source tile (10,4) with the source pointer command.
 # Isolate the window configuration so the scripted window point is stable even
 # when a developer's saved display size differs from the default 960x540.
-recruitment_home="$scratch_root/dm1-atari-st-de-home-$$"
-mkdir -p "$recruitment_home"
-recruitment_output=$(HOME="$recruitment_home" SDL_VIDEODRIVER=dummy \
+hall_route_home="$scratch_root/dm1-atari-st-de-home-$$"
+mkdir -p "$hall_route_home"
+hall_route_output=$(HOME="$hall_route_home" SDL_VIDEODRIVER=dummy \
     SDL_AUDIODRIVER=dummy "$app" \
     --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 1000 \
-    --script 'up,up,up,up,turn-left,up,up,up,turn-left,up,up,up,up,up,turn-right,up,up,turn-right,up,turn-left,up,up,turn-right,up,turn-left,up,up,turn-left,click:350:224' \
+    --script 'up,up,up,up,turn-left,up,up,up,turn-left,up,up,up,up,up,turn-right,up,up,turn-right,up,turn-left,up,up,turn-right,up,turn-left,up,up,turn-left,click:350:224,click:420:300,key:kp6' \
     --duration 0 2>&1) || {
-    printf '%s\n' "$recruitment_output" >&2
+    printf '%s\n' "$hall_route_output" >&2
     exit 1
 }
-if ! grep -Fq 'phase=dm1-runtime' <<<"$recruitment_output" ||
-   ! grep -Fq 'levelLoaded=1' <<<"$recruitment_output" ||
-   ! grep -Fq 'map=0 party=10,4,0 champions=1' <<<"$recruitment_output" ||
-   ! grep -Fq 'dm1HocCandidatePanel=1' <<<"$recruitment_output" ||
-   ! grep -Fq 'dm1HocCandidateOrdinal=14' <<<"$recruitment_output" ||
-   ! grep -Fq 'dm1HocCandidatePartyIndex=0' <<<"$recruitment_output"; then
-    printf '%s\n' "$recruitment_output" >&2
-    printf '%s\n' 'FAIL: authentic German DM1 Atari ST CLI did not open and recruit C127 ordinal 14' >&2
+if ! grep -Fq 'phase=dm1-runtime' <<<"$hall_route_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$hall_route_output" ||
+   ! grep -Fq 'map=0 party=10,4,1 champions=1' <<<"$hall_route_output" ||
+   ! grep -Fq 'dm1HocCandidatePanel=0' <<<"$hall_route_output" ||
+   ! grep -Fq 'dm1HocCandidateOrdinal=-1' <<<"$hall_route_output" ||
+   ! grep -Fq 'dm1HocCandidatePartyIndex=-1' <<<"$hall_route_output"; then
+    printf '%s\n' "$hall_route_output" >&2
+    printf '%s\n' 'FAIL: authentic German DM1 Atari ST CLI did not confirm C127 ordinal 14 or route live input' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic German DM1 Atari ST 1.2 ZIP -> STX reaches CLI, menu, native movement, and C127 recruitment'
+printf '%s\n' 'PASS: authentic German DM1 Atari ST 1.2 ZIP -> STX reaches CLI, menu, confirmed C127 choice, and native movement'

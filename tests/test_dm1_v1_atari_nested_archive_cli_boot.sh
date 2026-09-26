@@ -81,7 +81,7 @@ for token in up up up up turn-left up up up turn-left \
     up up turn-right up turn-left up up turn-left; do
     m12_hoc_route+=",wait30,$token"
 done
-m12_hoc_route+=',wait30,click:384:236,wait10'
+m12_hoc_route+=',wait30,click:384:236,wait10,click:420:300,wait30,key:kp6,wait60'
 HOME="$menu_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
@@ -102,11 +102,11 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["levelLoaded"] != 1 or startup["phase"] != "dm1-runtime" or
         (probe["party"]["mapIndex"], probe["party"]["mapX"],
          probe["party"]["mapY"], probe["party"]["direction"],
-         probe["party"]["championCount"]) != (0, 10, 4, 0, 1) or
-        probe["dm1HoC"] != {"candidatePanel": 1, "candidateOrdinal": 14,
-                           "candidatePartyIndex": 0}):
-    raise SystemExit(f"FAIL: authentic DM1 Atari start menu did not recruit C127 ordinal 14: {probe}")
-print("PASS: authentic DM1 Atari ST start menu recruited C127 ordinal 14")
+         probe["party"]["championCount"]) != (0, 10, 4, 1, 1) or
+        probe["dm1HoC"] != {"candidatePanel": 0, "candidateOrdinal": -1,
+                           "candidatePartyIndex": -1}):
+    raise SystemExit(f"FAIL: authentic DM1 Atari start menu did not confirm C127 ordinal 14 and route input: {probe}")
+print("PASS: authentic DM1 Atari ST start menu confirms C127 ordinal 14 and routes live input")
 PY
 
 # The third platform card is Atari ST.  This verifies pointer-only card
@@ -157,4 +157,4 @@ probe_runtime_input strafe-left 1,3,2
 probe_runtime_input strafe-right 1,3,2
 probe_runtime_input action 1,3,2
 
-printf '%s\n' 'PASS: authentic DM1 nested Atari ZIP -> ZIP -> STX reaches CLI, M12 Hall recruitment, and complete native input matrix'
+printf '%s\n' 'PASS: authentic DM1 nested Atari ZIP -> ZIP -> STX reaches CLI, confirms M12 Hall choice, and passes native input matrix'
