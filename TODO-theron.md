@@ -42,6 +42,19 @@ data.
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.
 
+2026-09-26 trv2 clean-tree verification: a fresh archive of source commit
+`2756e9800aadb23d26b39d853921bf71021d3658` contained tracked project files
+only; no game media was copied to the build host. The project, `firestaff`,
+and the selected Theron test targets configured and built successfully on
+trv2. Six CTest cases passed against the authentic media already present in
+trv2's user data directory: `theron_v1_pce_bram_real_artifact`,
+`theron_v1_m11_real_bram_continue`, `theron_v1_track02_full_item_names`,
+`theron_v1_combat_runtime_source`, `theron_v1_jp_later_dungeon_runtime`, and
+`theron_v1_startup_real_asset_receipt`. This verifies those save/import,
+source-name, combat-boundary, JP-record and startup-receipt gates on the
+current source snapshot; it does not prove a complete campaign, original
+quest-item transactions, or original-format BRAM export.
+
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its
 nineteen original sibling BIN files. It verifies the canonical layout (17
