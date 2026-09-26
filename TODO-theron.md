@@ -309,6 +309,13 @@ open. No substitute game data has been generated.
   authenticated CD-to-RAM receipts, and no dungeon-state handoff. These are
   negative startup/input observations only. Their raw traces and screenshots
   remain private on trv2 and are not promoted as public game captures.
+  A 2026-09-26 recheck of the authentic `jp-scripted.trace` bundle confirmed
+  the same boundary: its transition sidecar binds the real JP Rev. 1 Track 02
+  and System Card hashes, but records zero non-System-Card reads and zero
+  authenticated CD-to-RAM receipts. Its VDC state is a 32×32 BAT at 320×240,
+  outside the currently admitted 64×64/320×200 screen contract; the real
+  capture viewport test rejects it. Do not admit this boot/System Card screen
+  as Theron graphics or infer JP gameplay from its pixel data.
   A further 2026-09-24 JP Rev 1 X11 capture used the Linux profile's actual
   `command.toggle_grab` binding (Ctrl+Shift+E; the earlier attempt incorrectly
   sent Ctrl+Shift+G) and waited through the documented eight-second BIOS
