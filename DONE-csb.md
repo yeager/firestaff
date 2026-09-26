@@ -1,5 +1,15 @@
 # Firestaff DONE — CSB
 
+- 2026-09-26: The authentic Atari STX M12 launch regression now continues past
+  ANIMATE.SCR to the source-owned C004 entrance, sends a primary click at the
+  original C200 hit box, and requires the startup receipt to reach the
+  inactive/runtime phase. The 1,800-frame script delay lets the retained
+  animation finish before input; the 960x600 test surface maps window point
+  `(813,156)` to source point `(271,52)`, inside the documented
+  `(244,45,55,14)` rectangle. `csb_v1_atari_stx_native_cli_boot` passes against
+  the original STX archive. The retail initial party still has zero champions,
+  so this proves the entrance-to-runtime transition, not a playable party.
+
 - 2026-09-26: Verified the Atari ST software archive's original save-disk MSA
   using `csb_v1_atari_msa`. The preserved image is a valid 720 KiB disk with
   an empty root directory (SHA-256

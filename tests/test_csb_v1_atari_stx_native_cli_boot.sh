@@ -198,8 +198,10 @@ menu_probe="$app_dir/csb-atari-menu-runtime-$$.json"
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --menu --game csb --platform atari-st --data-dir "$media_path" \
-    --script 'enter,enter,enter' --duration 30000 >/dev/null 2>&1
+    --width 960 --height 600 --menu --game csb --platform atari-st \
+    --data-dir "$media_path" \
+    --script 'enter,enter,enter,wait:1800,click:813:156' \
+    --duration 60000 >/dev/null 2>&1
 python3 - "$menu_probe" <<'PY'
 import json
 import sys
@@ -209,12 +211,13 @@ with open(sys.argv[1], encoding="utf-8") as probe_file:
 startup = probe["startup"]
 party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
-        probe["sourceId"] != "csb" or startup["receiptReady"] != 1 or
-        startup["phase"] != "csb-entrance-4" or startup["active"] != 1 or
-        startup["startupActive"] != 1 or startup["levelLoaded"] != 1 or
+        probe["sourceId"] != "csb" or
+        startup["receiptReady"] != 1 or startup["phase"] != "inactive" or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
-    raise SystemExit(f"FAIL: authentic CSB Atari start menu did not reach its source dungeon entrance: {probe}")
-print("PASS: authentic CSB Atari start menu advanced through ANIMATE.SCR to its source dungeon entrance")
+    raise SystemExit(f"FAIL: authentic CSB Atari start menu did not accept source C200 and reach runtime: {probe}")
+print("PASS: authentic CSB Atari start menu accepted the source C200 pointer command and reached runtime")
 PY
-echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu dungeon entrance"
+echo "PASS: native CSB Atari ST campaign title, input matrix, Original/Modern CLI, and menu-to-runtime C200 route"
