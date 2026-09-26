@@ -1,5 +1,6 @@
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
+#include "dm1_v1_original_save_atari_handoff.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "asset_find_by_hash.h"
 #include "firestaff_amiga_adf.h"
@@ -14,6 +15,8 @@
 #include <string.h>
 
 static int g_pass = 0, g_fail = 0;
+static const char *g_atari_v10_save_path;
+static int g_atari_v10_expect_part_rejection;
 #define CHECK(cond, msg) do { \
     if (cond) { g_pass++; } \
     else { g_fail++; printf("FAIL %s\n", msg); } \
@@ -785,7 +788,94 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
     free(receipt.primary_bytes);
 }
 
-int main(void) {
+static void test_real_atari_v10_save_receipt(void) {
+    const char *path = g_atari_v10_save_path;
+    FILE *file;
+    long file_size;
+    uint8_t *bytes;
+    Dm1V1AtariSaveF0435Receipt receipt;
+    int rc;
+    size_t i;
+
+    if (!path || !path[0]) return;
+    file = fopen(path, "rb");
+    CHECK(file != NULL, "real_atari_save_open");
+    if (!file) return;
+    CHECK(fseek(file, 0, SEEK_END) == 0, "real_atari_save_seek_end");
+    file_size = ftell(file);
+    CHECK(file_size > 0 && fseek(file, 0, SEEK_SET) == 0,
+          "real_atari_save_size_and_rewind");
+    if (file_size <= 0) { fclose(file); return; }
+    bytes = (uint8_t *)malloc((size_t)file_size);
+    CHECK(bytes != NULL, "real_atari_save_alloc");
+    if (!bytes) { fclose(file); return; }
+    CHECK(fread(bytes, 1u, (size_t)file_size, file) == (size_t)file_size,
+          "real_atari_save_read");
+    CHECK(fclose(file) == 0, "real_atari_save_close");
+
+    memset(&receipt, 0, sizeof(receipt));
+    rc = dm1_v1_original_save_atari_f0435_receipt_bytes(
+        bytes, (size_t)file_size, &receipt);
+    if (g_atari_v10_expect_part_rejection) {
+        CHECK(rc == DM1_V1_ATARI_SAVE_ERR_PART &&
+              receipt.parts_authenticated == 2u &&
+              receipt.actual_checksums[2] != receipt.expected_checksums[2],
+              "real_atari_backup_corrupt_party_part_rejected");
+        free(bytes);
+        return;
+    }
+    CHECK(rc == DM1_V1_ATARI_SAVE_OK, "real_atari_save_full_receipt");
+    CHECK(receipt.header_authenticated && receipt.body_authenticated &&
+          receipt.dungeon_layout_authenticated &&
+          receipt.parts_authenticated == DM1_V1_ATARI_SAVE_PART_COUNT,
+          "real_atari_save_all_f0435_f0434_sections");
+    CHECK(receipt.classify.format_id == 1u &&
+          receipt.part_byte_counts[0] == 128u &&
+          receipt.part_byte_counts[1] == 960u &&
+          receipt.part_byte_counts[2] == 3328u &&
+          receipt.part_byte_counts[3] == 4630u &&
+          receipt.part_byte_counts[4] == 926u,
+          "real_atari_save_source_part_lengths");
+    for (i = 0u; i < DM1_V1_ATARI_SAVE_PART_COUNT; ++i) {
+        CHECK(receipt.expected_checksums[i] == receipt.actual_checksums[i],
+              "real_atari_save_part_checksum");
+    }
+    CHECK(receipt.party_champion_count == 4u &&
+          receipt.event_count == 23u && receipt.event_capacity == 463u &&
+          receipt.current_active_group_count == 17u &&
+          receipt.maximum_active_group_count == 60u,
+          "real_atari_save_global_state_counts");
+    CHECK(receipt.dungeon_offset == 10484u &&
+          receipt.dungeon_byte_count == 37226u &&
+          receipt.dungeon_map_count == 14u &&
+          receipt.dungeon_ornament_seed == 99u &&
+          receipt.dungeon_column_count == 412u,
+          "real_atari_save_f0434_exact_tail_layout");
+
+    /* A bit flip in an original save part or a different-campaign dungeon
+     * header must not survive its corresponding receipt gate. */
+    if ((size_t)file_size > receipt.part_offsets[3] + 20u) {
+        uint8_t saved = bytes[receipt.part_offsets[3] + 20u];
+        bytes[receipt.part_offsets[3] + 20u] ^= 1u;
+        CHECK(dm1_v1_original_save_atari_f0435_receipt_bytes(
+                  bytes, (size_t)file_size, &receipt) ==
+                  DM1_V1_ATARI_SAVE_ERR_PART,
+              "real_atari_save_corrupt_part_rejected");
+        bytes[receipt.part_offsets[3] + 20u] = saved;
+    }
+    bytes[10484u + 1u] ^= 1u;
+    CHECK(dm1_v1_original_save_atari_f0435_receipt_bytes(
+              bytes, (size_t)file_size, &receipt) ==
+              DM1_V1_ATARI_SAVE_ERR_DUNGEON,
+          "real_atari_save_wrong_campaign_tail_rejected");
+    free(bytes);
+}
+
+int main(int argc, char **argv) {
+    g_atari_v10_save_path = argc > 1 ? argv[1]
+                                     : getenv("FIRESTAFF_DM1_ATARI_V10_SAVE");
+    g_atari_v10_expect_part_rejection = argc > 2 &&
+        strcmp(argv[2], "--expect-part-rejection") == 0;
     test_null_rejection();
     test_small_rejection();
     test_wrong_count();
@@ -795,6 +885,7 @@ int main(void) {
     test_compressed_rejection();
     test_real_amiga_v20_graphics_receipt();
     test_real_amiga_v20_save_disk_receipt();
+    test_real_atari_v10_save_receipt();
     printf("dm1_v1_amiga_graphics_dat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

@@ -250,7 +250,10 @@
   using the original thing-record widths, those sections account for exactly
   37,226 bytes. This structurally authenticates the v1.0 F0434 stream; this
   early edition has no appended F0422 dungeon checksum. The Atari runtime
-  importer is not implemented. Passing the original save to
+  runtime adapter is not implemented. The new read-only Atari F0435/F0434
+  receipt authenticates all five primary-save parts, DM1 campaign identity,
+  the saved party coordinate against its map dimensions, and the exact v1.0
+  tail length. Passing the original save to
   admitted v1.2 STX yields the same zero-champion fresh start as no save. Keep
   this save as a verified source-part candidate, not a verified playable
   runtime; F0435/F0434/F0436 Atari save import remains separate from new-game
@@ -264,6 +267,9 @@
   Save hashes: DAT
   `728682a977fa49a8a3dd9e3afc77afb2a90e02604234edfc19b8495e937e0fa7`, BAK
   `ad009d608ae843ca3e014af2f5bb291ee9e76002824c5c1af6a12c0606aa3353`.
+  The backup passes its header, GLOBAL_DATA, ACTIVE_GROUP, and TIMELINE
+  checksums, but its PARTY and EVENTS checksums do not match; the Atari receipt
+  rejects it at PARTY. Do not offer it as a playable fallback.
   ReDMCSB LOADSAVE.C F0435 reads FormatID 1 without platform or dungeon ID,
   authenticates the five parts, then reads the Atari F0434 tail; the legacy
   DM1 detection uses 14 maps and ornament seed 99. The existing Firestaff Amiga

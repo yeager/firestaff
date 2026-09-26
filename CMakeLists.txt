@@ -6916,6 +6916,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_title.c
     src/shared/graphics_dat_snd3_loader_v1.c
     src/dm1/dm1_v1_original_save_classifier.c
+    src/dm1/dm1_v1_original_save_atari_handoff.c
     src/dm1/dm1_v1_original_save_amiga_handoff.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
     src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
@@ -61364,6 +61365,7 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_original_save_amiga_handoff.c
+    src/dm1/dm1_v1_original_save_atari_handoff.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/memory/memory_timeline_pc34_compat.c
