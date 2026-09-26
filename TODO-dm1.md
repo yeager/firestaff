@@ -248,7 +248,21 @@
   admitted v1.2 STX yields the same zero-champion fresh start as no save. Keep
   this save as a verified source-part candidate, not a verified playable
   runtime; F0435/F0434/F0436 Atari save import remains separate from new-game
-  campaign startup.
+  campaign startup. The authentic automation-disk MSA SHA256 is
+  `b11ca8a124b574738a243fbeabc30567071e63e640b6289bc55315cc27c4d859`; its
+  matched v1.0 retail STX SHA256 is
+  `d9588480091d3aca753d86efedf0f2336871c817138a7eaf900d1afb4ed0f9ed`.
+  Save hashes: DAT
+  `728682a977fa49a8a3dd9e3afc77afb2a90e02604234edfc19b8495e937e0fa7`, BAK
+  `ad009d608ae843ca3e014af2f5bb291ee9e76002824c5c1af6a12c0606aa3353`.
+  ReDMCSB LOADSAVE.C F0435 reads FormatID 1 without platform or dungeon ID,
+  authenticates the five parts, then the Atari F0434 tail; the legacy DM1
+  detection uses 14 maps and ornament seed 99. The existing Firestaff Amiga
+  format-5 adapter is not interchangeable: Atari v1.0 uses different champion
+  records and does not preserve the Amiga header metadata. Until the actual
+  Atari tail, four champions and runtime queues all pass an Atari-specific
+  transactional adapter, resume must fail closed rather than silently starting
+  a fresh party.
 - Resolve the C006 generated-group cross-map teleporter path before promoting
   it as full parity. The source fixture contains raw C01
   (`00 0c 22 a0 00 01`) and now reaches the correct target map 1 / 2,1,
