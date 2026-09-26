@@ -1,5 +1,14 @@
 # Firestaff DONE — DM2
 
+## 2026-09-26 — Native CLI/start-menu matrix revalidation
+
+- Re-ran all five authenticated native CLI routes against the installed
+  original DOS English, DOS French, Macintosh, Amiga and FM Towns media. All
+  five passed; the normal M12/startup checks remain distinct from the direct
+  CLI probes. The all-games M12→M11 launch-preparation gate also passed
+  (207 passed, 0 failed, 3 skipped). This revalidates the exercised launch
+  paths and does not close the original-frame or full-gameplay gaps below.
+
 ## 2026-09-26 — DOS map-zero ownership and M12/M11 launch coverage
 
 - Corrected the authenticated DOS New-Game regression: SKProject's
