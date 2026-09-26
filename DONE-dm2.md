@@ -1,5 +1,26 @@
 # Firestaff DONE — DM2
 
+## 2026-09-26 — DOS map-zero ownership and M12/M11 launch coverage
+
+- Corrected the authenticated DOS New-Game regression: SKProject's
+  `IS_MAP_INSIDE` derives scene ownership from the active GRAPHICSSET flags;
+  the initial map-zero Skullkeep cave is indoor (graphics set 2, flags
+  `0x000b`). The stale expectation that it must use T600 outdoor rendering
+  was wrong. The corrected test passes against the supplied DOS ZIP and admits
+  the map-zero runtime frame with real assets and zero core fallback draws.
+- Re-ran the M12→M11 direct-launch boundary with an isolated data root that
+  exposed only the authentic DM2 media. Its DM2 route passed, retaining the
+  hash-matched data owner and the source startup-menu boundary; other games
+  were unavailable and skipped. The overall boundary reported 86 passed,
+  zero failed, and five skipped. Repeated it with an Amiga-only data root; M12
+  selected the verified Amiga archive hash and the M11 handoff passed with the
+  source startup menu active.
+- The authentic Amiga M11 route passed SWSH/TITL, selected the original
+  New-Game rectangle, started its source party and opened the native inventory
+  panel. FM Towns and Macintosh M11 New-Game routes also passed through their
+  source-owned mirror selections into map-zero runtime. The Mac test used the
+  full Mac archive, not the similarly named Mega CD ZIP.
+
 - 2026-09-25: Re-ran the authentic-media native launch matrix against the
   supplied DOS English, DOS French, Macintosh, Amiga and FM Towns archives.
   All five CTest routes passed. The DOS and Amiga start-menu tests reached a
