@@ -7666,14 +7666,6 @@ list(REMOVE_ITEM M11_SOURCES
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron firestaff_retroachievements SDL3::SDL3 m)
-# main_loop_m11.c + m11_game_view.c reference M12_* startup-menu and
-# config helpers that live in firestaff_m12.a. Expose that link
-# requirement through firestaff_m11's PUBLIC interface so every
-# consumer (the firestaff executable and every probe that links
-# firestaff_m11) gets firestaff_m12 in its final link line. The
-# reverse circular link from m12 back to m11 is harmless because
-# CMake deduplicates static-lib pulls when both are listed.
-target_link_libraries(firestaff_m11 PUBLIC firestaff_m12)
 if(DM2_SOURCES)
     # 2026-06-17: DM2 V1 hand-off added in M11_GameView_Start (see
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
@@ -7964,12 +7956,15 @@ target_compile_definitions(firestaff_m12 PRIVATE
     FIRESTAFF_THERON_PRODUCTION=1)
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
-# Theron's production raw-media intake uses M12's native asset reader and
-# file-MD5 helpers. Propagate M12 through the static-library interface so
-# standalone Theron tests and probes receive those symbols too.
+# Keep static-library dependencies acyclic and order them after their
+# definitions. Theron's raw-media intake uses M12's asset reader and MD5
+# helpers; M11's startup and view code uses M12's menu and config helpers.
 if(TARGET firestaff_theron)
     target_link_libraries(firestaff_theron PUBLIC firestaff_m12)
 endif()
+# The M11 startup and view objects also call M12 helpers. Propagate that
+# dependency through M11 so every final executable resolves it after M11.
+target_link_libraries(firestaff_m11 PUBLIC firestaff_m12)
 # Asset-status test hooks are deliberately excluded from the production M12
 # archive. Data-free scanner tests compile asset_status_m12.c themselves with
 # FIRESTAFF_ASSET_STATUS_TESTING; a launcher binary must use only the checked-in
