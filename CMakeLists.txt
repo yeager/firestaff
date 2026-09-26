@@ -7406,6 +7406,10 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_champion_roster\\.c$
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_dungeon_text\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
+        # The production startup menu validates candidate indexes from the
+        # authenticated Track 02 campaign. This implementation is required
+        # by menu_startup_m12.c and intentionally belongs to the runtime.
+        src/theron/theron_v1_track02_later_route_candidate_campaign_index.c
         src/theron/theron_v1_combat_runtime_source.c
         src/theron/theron_v1_track02_text_decode.c
         src/theron/theron_v1_track02_creature_spawn.c
