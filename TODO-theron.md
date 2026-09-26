@@ -17,11 +17,15 @@ data.
    bounded routes, but stairs, quest artifacts, pickups/use, creatures, combat,
    and chapter completion still lack their corresponding original consumers.
 2. **Complete a real dungeon transaction and progress save.** Bind the quest
-   artifact's name, object occurrence, pickup, exit, next-chapter handoff, and
-   original Backup RAM write/read fields from retail evidence. Existing US
-   Continue proves only import from an authentic Akutuba-complete save into
-   Drator; it does not prove that Firestaff can complete the dungeon or write
-   the next original-format save. The available authentic JP SRAM is empty, so
+   artifact's name, object occurrence, pickup, exit, and next-chapter handoff
+   to original gameplay consumers. The authentic US DMS-SG.001 container,
+   134-byte writer body, restore direction, and current/max-stat and skill
+   experience meanings are already byte-bound in
+   `docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`.
+   Firestaff imports the authentic Akutuba-complete body but has no production
+   writer that exports updated runtime progress to the original BRAM format;
+   implement and verify that path against the real artifact before claiming
+   original-format save support. The available authentic JP SRAM is empty, so
    JP Continue with progress remains unverified.
 3. **Original presentation and event output.** Join game-owned Track 02 bytes
    and consumers to VDC/VCE screen ownership, text, portraits, CDDA selection,
@@ -1871,7 +1875,7 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
 
   - 2026-07-08 update: Theron boot now owns runtime ownership release for profile/world/viewport/assets, and M11 shutdown no longer frees those Track 02 objects directly.
 
-- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. An authentic US Track 02 Backup RAM Continue import now passes through M11 into source-backed dungeon 2 (Soul Room), then admits the authentic Drator forcefield handoff and three movement steps on that loaded map. This is a bounded native route, not a completed original dungeon transition; original-format Firestaff-to-BRAM export and JP progressed Continue remain unverified because the required authentic consumers/artifact are absent. Do not synthesize save fields.
+- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. An authentic US Track 02 Backup RAM Continue import now passes through M11 into source-backed dungeon 2 (Soul Room), then admits the authentic Drator forcefield handoff and three movement steps on that loaded map. This is a bounded native route, not a completed original dungeon transition. The authentic US BRAM container and all 134 writer-body bytes have source-bound layout and field semantics, but Firestaff has no production original-format BRAM export path; JP progressed Continue is also unverified because its available authentic SRAM is empty. Do not synthesize save fields.
 
 ### Theron V2.0 / V2.1 / V2.2
 
