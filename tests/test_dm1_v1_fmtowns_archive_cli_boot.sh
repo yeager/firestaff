@@ -172,7 +172,7 @@ expect_gameplay_input() {
 # prior movement from changing the map context for the next source-backed
 # assertion, while covering the complete public directional input contract.
 expect_gameplay_input up           1,4,2
-expect_gameplay_input down         1,3,2
+expect_gameplay_input down         1,2,2
 expect_gameplay_input left         1,3,1
 expect_gameplay_input right        1,3,3
 expect_gameplay_input strafe-left  1,3,2
@@ -182,7 +182,7 @@ expect_gameplay_input action       1,3,2
 # Independently reload the Japanese JDATA route for each input. Its own
 # graphics/program fingerprints prevent an English fallback from passing.
 expect_gameplay_input up           1,4,2 ja
-expect_gameplay_input down         1,3,2 ja
+expect_gameplay_input down         1,2,2 ja
 expect_gameplay_input left         1,3,1 ja
 expect_gameplay_input right        1,3,3 ja
 expect_gameplay_input strafe-left  1,3,2 ja

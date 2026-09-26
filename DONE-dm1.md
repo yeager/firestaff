@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-27: Corrected stale downward-movement expectations in the authentic
+  Amiga, nested Atari ST, and FM Towns English/Japanese launch regressions.
+  Each original-media route moves from the initial party coordinate (1,3) to
+  (1,2) on `down`; the tests had incorrectly expected no movement. The complete
+  Amiga, Atari ST, and FM Towns CLI/start-menu matrices now pass against the
+  original archives. No runtime or visual-parity claim changed.
+
 - 2026-09-26: Extended the authentic Amiga v2.0 M12 New Game mouse route
   through its normal IMG2 handoff to the first Hall runtime frame. The probe
   requires the source startup handoff, a loaded runtime level, and the original
