@@ -3907,3 +3907,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   that the original game has no in-dungeon save transaction; the authenticated
   M11 Continue regression verifies the route, and the full Theron suite still
   passes (62 passed, six configured skips, zero failures).
+
+## 2026-09-27 — authentic quest-artifact test joins Theron suite
+
+- ✅ Registered `theron_v1_track02_quest_item_names` with the `theron`,
+  `track02`, and `real-data` CTest labels. Previously the test passed on the
+  authentic US and JP Track 02 BINs but was absent from `ctest -L theron`.
+  The complete trv2 Theron selection now runs 69 tests: 61 passed, eight
+  configured capture/media-dependent skips, zero failures. The optional raw
+  US CloneCD Track 02 file is not staged as a standalone file on trv2, so that
+  optional third variant was not asserted; US BIN and JP BIN both passed.

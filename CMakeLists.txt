@@ -84,6 +84,8 @@ if(BUILD_TESTING AND
     endif()
     add_test(NAME theron_v1_track02_quest_item_names
         COMMAND test_theron_v1_track02_quest_item_names)
+    set_tests_properties(theron_v1_track02_quest_item_names PROPERTIES
+        LABELS "theron;track02;real-data")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_text.c")
