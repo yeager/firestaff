@@ -96,6 +96,43 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+# The ordinary New Game route above proves the selected virtual disk owns the
+# launch. Also drive M12's Quick Resume row with the authenticated save-disk
+# member and require the exact F0435 pose that the direct CLI path restored.
+# This closes the menu-to-save handoff without manufacturing or extracting a
+# save file.
+resume_probe_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
+mkdir -p "$resume_probe_root"
+resume_probe="$resume_probe_root/dm1-amiga-save-menu-runtime-$$.json"
+cleanup_resume_probe() {
+    rm -f "$resume_probe"
+}
+trap cleanup_resume_probe EXIT HUP INT TERM
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$resume_probe" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform amiga --data-dir "$archive" \
+    --save "$selected_save" --script enter,enter,enter --duration 3000 \
+    >/dev/null 2>&1
+python3 - "$resume_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 4, 15, 2, 4) or
+        probe["gameTick"] != 292):
+    raise SystemExit(f"FAIL: authentic DM1 Amiga M12 Quick Resume failed: {probe}")
+print("PASS: authentic DM1 Amiga M12 Quick Resume restored the saved runtime pose")
+PY
+
 # Amiga is the first card on the platform picker's second row.  The nested
 # ZIP -> ADF route must remain launchable with pointer input alone.
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \

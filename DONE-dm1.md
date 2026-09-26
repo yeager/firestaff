@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+- 2026-09-26: Extended the authentic Amiga v2.0 save-disk regression through
+  M12 Quick Resume. The ZIP → ZIP → ADF `DMGAMEG.DAT` member now reaches the
+  same `dm1-runtime` receipt from the actual launcher row as from direct CLI,
+  restoring map 0 at (4,15), facing south, with four champions and game tick
+  292. The check exits at launch so elapsed host time cannot change the saved
+  tick; the original archive stays unmodified and no save is extracted. This
+  supplied save has zero active groups, so the route does not prove a living
+  Amiga group or complete save parity.
+
 - 2026-09-26: Corrected Atari Hall regression tests that treated opening a
   C127 candidate panel and provisionally incrementing `championCount` as a
   completed recruitment. The normal M12 route now clicks the source C040
