@@ -3735,3 +3735,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   extraction, and the Track 01 CDDA handoff test passes. This confirms both
   routes on this host; it does not remove the separate trv2 extractor gap or
   establish complete gameplay/audio parity.
+- ✅ 2026-09-26 local full Theron regression: built all Theron/test targets
+  (828 Ninja steps) from the same source tree as `bb0030158`, then ran all 68
+  registered `theron` CTests against the installed authentic Theron data. Result:
+  62 passed, six skipped, zero failed. Both combined-RAR routes, raw US/JP
+  startup, JP CUE and later-dungeon runtime, seven-dungeon data/mechanics,
+  BRAM Continue, archive/source boundaries, and V2 gate probes passed. The
+  skips are the missing real VDC capture, US CloneCD ZIP/CUE media, authenticated
+  CLI/original-command capture corpus, and Mednafen CD-state capture. No
+  synthetic game media was introduced. This local run supersedes the earlier
+  local partial-build result; the trv2 RAR-tool limitation remains host-specific.
