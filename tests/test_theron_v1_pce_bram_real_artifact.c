@@ -74,6 +74,19 @@ static int load_exact(const char *path, uint8_t *bytes, size_t size) {
     return ok;
 }
 
+static int write_bytes_exact(const char *path,
+                             const uint8_t *bytes,
+                             size_t size) {
+    FILE *file;
+    int ok;
+    if (!path || (!bytes && size != 0u)) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    ok = size == 0u || fwrite(bytes, 1u, size, file) == size;
+    if (fclose(file) != 0) ok = 0;
+    return ok;
+}
+
 static uint8_t *load_file(const char *path, size_t *out_size) {
     FILE *file = fopen(path, "rb");
     long size;
@@ -146,6 +159,7 @@ int main(int argc, char **argv) {
     char bram_export_path[THERON_V1_SRM_PATH_MAX];
 #if !defined(_WIN32) && !defined(_WIN64)
     char bram_export_alias_path[THERON_V1_SRM_PATH_MAX];
+    char bram_user_save_path[THERON_V1_SRM_PATH_MAX];
 #endif
     uint8_t main_ram[8192];
     uint8_t save_manager_code[8192];
@@ -963,6 +977,48 @@ int main(int argc, char **argv) {
             fputs("atomic original Backup RAM path writer did not persist and replace the authentic round-trip image\n",
                   stderr);
             return 1;
+        }
+        {
+            Theron_V1StartupSaveResume saved_snapshot;
+            if (!theron_v1_startup_pce_bram_save_path(
+                    bram_export_directory, bram_user_save_path,
+                    sizeof(bram_user_save_path)) ||
+                !theron_v1_startup_write_pce_bram_theron_record(
+                    &world, argv[1], bram_user_save_path) ||
+                !load_exact(bram_user_save_path, encoded_bram,
+                            sizeof(encoded_bram)) ||
+                memcmp(encoded_bram, authentic_bram,
+                       sizeof(authentic_bram)) != 0 ||
+                !set_test_env("FIRESTAFF_THERON_BRAM_PATH", NULL) ||
+                !theron_v1_startup_save_resume_evaluate(
+                    bram_export_directory, &saved_snapshot) ||
+                strcmp(saved_snapshot.srm_root, bram_user_save_path) != 0 ||
+                saved_snapshot.resume_claim !=
+                    THERON_V1_STARTUP_RESUME_SRM ||
+                saved_snapshot.srm_first_decoded_slot != 0) {
+                fputs("production Continue resolver did not select the authentic user Backup RAM save\n",
+                      stderr);
+                remove(bram_user_save_path);
+                remove(bram_export_path);
+                rmdir(bram_export_directory);
+                return 1;
+            }
+            if (!write_bytes_exact(bram_user_save_path, NULL, 0u) ||
+                !theron_v1_startup_save_resume_evaluate(
+                    bram_export_directory, &saved_snapshot) ||
+                saved_snapshot.srm_root[0] != '\0' ||
+                saved_snapshot.srm_present_slots != 0 ||
+                saved_snapshot.resume_claim ==
+                    THERON_V1_STARTUP_RESUME_SRM ||
+                !set_test_env("FIRESTAFF_THERON_BRAM_PATH", argv[1])) {
+                fputs("production Continue resolver fell back from a corrupt user save to baseline game data\n",
+                      stderr);
+                remove(bram_user_save_path);
+                remove(bram_export_path);
+                rmdir(bram_export_directory);
+                return 1;
+            }
+            remove(bram_user_save_path);
         }
         if (theron_v1_startup_write_pce_bram_theron_record(
                 &world, argv[1], argv[1]) ||

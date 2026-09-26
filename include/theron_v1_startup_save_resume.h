@@ -297,6 +297,12 @@ int theron_v1_startup_write_pce_bram_theron_record(
     const char *template_path,
     const char *destination_path);
 
+/* Build the canonical user-save path below a configured Theron save root. */
+int theron_v1_startup_pce_bram_save_path(
+    const char *save_root,
+    char *out_path,
+    size_t out_path_capacity);
+
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;
  * the caller still owns UI state, status text, and subsequent level load. */

@@ -26,11 +26,13 @@ data.
    runtime fields and the selected original record. An unchanged Continue
    round-trips the authentic Akutuba-complete artifact byte for byte. There is
    now also an atomic explicit-path writer, tested against that artifact, but
-   no authenticated stage-completion transaction calls it yet. Wire that
-   writer to proven gameplay progress and verify the changed result by
-   reopening it in the original runtime before claiming original-format save
-   support. The available authentic JP SRAM is empty, so JP Continue with
-   progress remains unverified.
+   no authenticated stage-completion transaction calls it yet. Production
+   Continue now discovers `theron-original.bram` in the selected save root
+   ahead of the untouched baseline and fails closed if that user file exists
+   but is corrupt. Wire the writer to proven gameplay progress and verify the
+   changed result by reopening it in the original runtime before claiming an
+   in-game original-format save workflow. The available authentic JP SRAM is
+   empty, so JP Continue with progress remains unverified.
 3. **Original presentation and event output.** Join game-owned Track 02 bytes
    and consumers to VDC/VCE screen ownership, text, portraits, CDDA selection,
    and ADPCM/SFX events. The admitted US capture is a bounded screen-space
@@ -3883,6 +3885,13 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   confirms both direct and symlink aliases of the authentic source remain
   byte-identical. The full Theron suite passed again (62 passed, six
   configured skips, zero failures); Gitleaks found no leaks in changed files.
+- ✅ Production Continue now searches the selected save root for
+  `theron-original.bram` before considering the untouched bundled/authentic
+  baseline. The real-artifact test writes the original bytes through the new
+  writer, resolves that file with the production startup library, then makes
+  the user save invalid and confirms startup does not silently fall back to
+  baseline progress. The full 68-test suite passed (62 passed, six configured
+  skips, zero failures).
 - ✅ M11 no longer lets Theron's in-dungeon Save Game input fall through as
   ignored gameplay or route toward the shared DM1 save-disk dialog. It reports
   that the original game has no in-dungeon save transaction; the authenticated

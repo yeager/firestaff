@@ -205,12 +205,28 @@ static void resolve_tqsv_root(const char *boot_save_root,
 #endif
 }
 
+int theron_v1_startup_pce_bram_save_path(
+    const char *save_root,
+    char *out_path,
+    size_t out_path_capacity) {
+    if (!save_root || !save_root[0] || !out_path ||
+        out_path_capacity == 0u) {
+        if (out_path && out_path_capacity > 0u) out_path[0] = '\0';
+        return 0;
+    }
+    return FSP_JoinPath(out_path, out_path_capacity, save_root,
+                        "theron-original.bram");
+}
+
 /* Fixture SRM roots retain their existing resolver. Production resolves only
  * a classifier-verified original Backup RAM image. */
-static void resolve_srm_root(char out[THERON_V1_SRM_PATH_MAX]) {
+static void resolve_srm_root(
+    const char *boot_save_root,
+    char out[THERON_V1_SRM_PATH_MAX]) {
 #if defined(FIRESTAFF_THERON_PRODUCTION)
     const char *override_path;
     const char *home;
+    char user_save_path[THERON_V1_SRM_PATH_MAX];
     Theron_V1PceBramReceipt receipt;
 #endif
     if (!out) return;
@@ -229,6 +245,24 @@ static void resolve_srm_root(char out[THERON_V1_SRM_PATH_MAX]) {
          * different default save if its selected slot is not restorable. */
         return;
     }
+    if (boot_save_root && boot_save_root[0]) {
+        if (!theron_v1_startup_pce_bram_save_path(
+                boot_save_root, user_save_path, sizeof(user_save_path))) {
+            return;
+        }
+        if (FSP_FileExists(user_save_path)) {
+            if (theron_v1_pce_bram_classify_path(user_save_path, &receipt) ==
+                    THERON_V1_PCE_BRAM_READY &&
+                receipt.save_body_layout_proven &&
+                receipt.save_body_campaign_valid &&
+                receipt.save_slot_tail_unconsumed_padding) {
+                copy_name(out, THERON_V1_SRM_PATH_MAX, user_save_path);
+            }
+            /* An existing user save is authoritative even if corrupt. Do not
+             * silently continue from the untouched baseline artifact. */
+            return;
+        }
+    }
     home = getenv("HOME");
     if (home && home[0]) {
         snprintf(out, THERON_V1_SRM_PATH_MAX,
@@ -245,6 +279,7 @@ static void resolve_srm_root(char out[THERON_V1_SRM_PATH_MAX]) {
         out[0] = '\0';
     }
 #else
+    (void)boot_save_root;
     if (!theron_v1_srm_default_root(out)) {
         out[0] = '\0';
     }
@@ -513,7 +548,7 @@ int theron_v1_startup_save_resume_evaluate(
     out_snapshot->srm_progress_quest_mask = -1;
 
     resolve_tqsv_root(boot_save_root, out_snapshot->tqsv_root);
-    resolve_srm_root(out_snapshot->srm_root);
+    resolve_srm_root(boot_save_root, out_snapshot->srm_root);
 
     scan_tqsv_slots(out_snapshot);
     scan_srm_slots(out_snapshot);
