@@ -2667,12 +2667,55 @@ static void m12_refresh_theron_media_status(
     int theronIndex = m12_game_index_from_id("theron");
     const M12_AssetVersionStatus* version;
     size_t rootIndex;
-    if (!status) {
+    if (!status || theronIndex < 0) {
         return;
     }
     FirestaffTheronMedia_Init(&status->theronMedia);
     version = m12_first_matched_version(status, theronIndex);
     if (version && version->matchedPath[0] != '\0') {
+        const M12_AssetRequiredFileStatus* track02Required = NULL;
+        size_t requiredIndex;
+        for (requiredIndex = 0U;
+             requiredIndex < status->requiredFileCounts[theronIndex];
+             ++requiredIndex) {
+            const M12_AssetRequiredFileStatus* candidate =
+                &status->requiredFiles[theronIndex][requiredIndex];
+            if (candidate->roleId &&
+                strcmp(candidate->roleId, "track02") == 0 &&
+                candidate->matched && candidate->sourcePath[0] != '\0') {
+                track02Required = candidate;
+                break;
+            }
+        }
+        /* A full-disc CloneCD CUE names the original BIN as Track 02 while
+         * strict intake publishes a hash-verified Track 02-only virtual slice.
+         * Rebind the original CUE metadata only after revalidating that its
+         * Track 02 slice still hashes to the selected catalogue edition. */
+        if (track02Required) {
+            const char* sourceExtension = strrchr(track02Required->sourcePath,
+                                                  '.');
+            Theron_V1Track02RawMediaIntakeReceipt sourceIntake;
+            FirestaffTheronMediaStatus sourceMedia;
+            if (sourceExtension &&
+                m12_ascii_equals_ignore_case(sourceExtension, ".cue") &&
+                theron_v1_track02_raw_media_intake_discover(
+                    track02Required->sourcePath, &sourceIntake) &&
+                sourceIntake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+                strcmp(sourceIntake.track02_md5, version->matchedMd5) == 0 &&
+                FirestaffTheronMedia_ClassifyPath(
+                    track02Required->sourcePath, &sourceMedia) == 0 &&
+                sourceMedia.paired_track01_track02 &&
+                sourceMedia.has_valid_track02_mode1) {
+                m12_copy_string(sourceMedia.track02_path,
+                                sizeof(sourceMedia.track02_path),
+                                sourceIntake.payload_path);
+                m12_copy_string(sourceMedia.candidate_path,
+                                sizeof(sourceMedia.candidate_path),
+                                sourceIntake.payload_path);
+                status->theronMedia = sourceMedia;
+                return;
+            }
+        }
         /* Prefer the strict CUE that declares the hash-verified payload
          * (provenance match in the payload's own directory first, then the
          * scan roots); only then fall back to classifying the payload
@@ -2714,10 +2757,10 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
 
 /* CUE-backed Theron releases may store Track 02 under a filename that is
  * intentionally not a canonical loose-file candidate (for example a full
- * CloneCD disc image). Admit only media that passes the same strict intake
- * used by direct launch, then publish its original payload locator into the
- * matching catalogue row. Never unpack an archive or replace another
- * already-discovered edition. */
+ * CloneCD disc image). Admit only media that passes strict, hash-bound intake,
+ * retain the original CUE as immutable source provenance, and publish the
+ * verified Track 02 payload into its catalogue row. Never unpack an archive
+ * or replace another already-discovered edition. */
 static void m12_scan_theron_cue_packages(
     M12_AssetStatus* status,
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -2765,6 +2808,9 @@ static void m12_scan_theron_cue_packages(
                         m12_copy_string(required->matchedPath,
                                         sizeof(required->matchedPath),
                                         intake.payload_path);
+                        m12_copy_string(required->sourcePath,
+                                        sizeof(required->sourcePath),
+                                        cuePaths[cueIndex]);
                         m12_copy_string(required->matchedHash,
                                         sizeof(required->matchedHash),
                                         intake.track02_md5);
@@ -2781,12 +2827,14 @@ static void m12_scan_theron_cue_packages(
 
 /* The scanner is the sole authority that pairs a CUE declaration with the
  * hash-matched payload.  Keep the IPL receipt bounded to the bootstrap span;
- * this is provenance, not a synthetic extracted Track 02 cache. */
+ * a full-disc CloneCD CUE resolves to a byte-exact virtual slice of the
+ * authenticated source BIN, not generated or copied game content. */
 static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
     const M12_AssetVersionStatus* version;
     unsigned char* bytes;
     size_t byteCount = 0U;
     size_t required;
+    size_t raw_index01_sector;
     Theron_Track02StartupLoaderReceipt* receipt;
     int theronIndex = m12_game_index_from_id("theron");
 
@@ -2802,6 +2850,19 @@ static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
         strcmp(version->matchedPath, status->theronMedia.track02_path) != 0 ||
         theron_v1_track02_variant_for_md5(version->matchedMd5) ==
             THERON_TRACK02_VARIANT_UNKNOWN) return;
+    {
+        Theron_Track02Variant variant =
+            theron_v1_track02_variant_for_md5(version->matchedMd5);
+        if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+            raw_index01_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR;
+        } else if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+            raw_index01_sector = 0U;
+        } else if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+            raw_index01_sector = THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
+        } else {
+            return;
+        }
+    }
 
     /* This receipt is exclusively the raw MODE1/2352 IPL path. A valid
      * MODE1/2048 CUE payload is still a launchable hash-verified Track 02,
@@ -2810,7 +2871,7 @@ static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
      * IPL records are relative to Track 02 INDEX 01. The
      * verified JP/US CUEs place that index at raw sectors 224/225, so the
      * scanner must retain the pregap as well as the stage-two body. */
-    required = ((size_t)THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+    required = (raw_index01_sector +
                 (size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
                 (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
                THERON_TRACK02_RAW_SECTOR_BYTES;

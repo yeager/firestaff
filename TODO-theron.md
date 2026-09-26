@@ -3657,3 +3657,27 @@ JP CUE runtime, the seven-dungeon source loader and CDDA availability/handoff
 passed 7/7 locally. Standalone BIN paths correctly report no Track 01 CDDA
 because the matching full-disc cue/audio set is absent beside these two files;
 this is distinct from the authenticated combined-RAR title-audio path above.
+
+## 2026-09-26 authentic full-disc US CloneCD CUE admission
+
+- ✅ The authentic full-disc US CloneCD CUE stores all 19 tracks in one
+  MODE1/2352 BIN. Strict intake now bounds Track 02 between its CUE `INDEX 01`
+  and the immediately following track's `INDEX 01` in that same member, then
+  exposes only that range as a virtual `BIN::slice@offset:length` locator.
+  Admission still requires the exact CloneCD Track 02 digest
+  `168bd6a63784e91885df8c47be62ab5a`; the source BIN is read in place, not
+  unpacked, copied, or rewritten. Full asset scans retain the original CUE as
+  immutable `sourcePath`, restore its paired-media metadata only after
+  revalidating the slice hash, and return the original CUE as the launch path.
+- ✅ Verification used the originals on trv2 in an isolated build directory.
+  CUE MD5 `46bebca37c7c1a18375e6e1ca32c3090`, full-disc BIN MD5
+  `45d0593e3574ac92bd5a2d0170eb5383`, and the virtual Track 02 slice MD5
+  `168bd6a63784e91885df8c47be62ab5a` were checked. The pre/post CUE and BIN
+  hashes are identical. The actual-media asset-inventory test and native
+  `test_theron_v1_us_clonecd_raw_cue_runtime_boot.sh` both pass on trv2; local
+  unit/intake and authentic JP Rev. 1 CUE inventory tests also pass.
+- 🔒 This proves authentic Track 02 discovery, provenance, and native startup,
+  not full campaign parity. The raw US whole-disc CUE boot still reports
+  `theronTrack01CddaReady=0`; authenticated CDDA selection and gameplay
+  commands, dungeon transitions, and the remaining gameplay mechanics are
+  still open. Do not substitute generated audio, graphics, or world data.

@@ -15,6 +15,7 @@
 
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_jp_roster_receipt.h"
+#include "theron_v1_track02_raw_media_intake.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -866,6 +867,20 @@ Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(
         }
         memcpy(out_payload_path, media_path, strlen(media_path) + 1u);
         return THERON_TRACK02_SIGNAL_OK;
+    }
+    {
+        Theron_V1Track02RawMediaIntakeReceipt intake;
+        if (theron_v1_track02_raw_media_intake_discover(media_path, &intake) &&
+            intake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+            intake.variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+            if (strlen(intake.payload_path) >=
+                THERON_TRACK02_MOUNT_PATH_CAPACITY) {
+                return THERON_TRACK02_SIGNAL_BAD_INPUT;
+            }
+            memcpy(out_payload_path, intake.payload_path,
+                   strlen(intake.payload_path) + 1u);
+            return THERON_TRACK02_SIGNAL_OK;
+        }
     }
     cue = fopen(media_path, "rb");
     if (!cue) return THERON_TRACK02_SIGNAL_NOT_FOUND;

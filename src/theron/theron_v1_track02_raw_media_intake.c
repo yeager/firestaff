@@ -235,7 +235,9 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
                                                char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY],
                                                int *out_sector_bytes,
                                                uint32_t *out_index01_sector,
-                                               uint32_t *out_payload_index01_sector) {
+                                               uint32_t *out_payload_index01_sector,
+                                               uint32_t *out_track02_file_start,
+                                               uint32_t *out_track02_file_end) {
     FILE *file;
     char line[1024];
     char current_member[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY] = {0};
@@ -243,10 +245,14 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
     int track02_count = 0;
     int index01_count = 0;
     int pregap_count = 0;
+    int next_track_candidate = 0;
     int sector_bytes = 0;
     unsigned int current_track = 0u;
     uint32_t index01_sector = 0u;
     uint32_t pregap_sector = 0u;
+    uint32_t track02_file_start = 0u;
+    uint32_t track02_file_end = 0u;
+    char track02_member[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY] = {0};
     long cue_bytes;
 
     if (!cue_path || !payload_path || !out_sector_bytes ||
@@ -327,6 +333,16 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
                     fclose(file);
                     return 0;
                 }
+                snprintf(track02_member, sizeof(track02_member), "%s",
+                         current_member);
+            } else if (track02_count == 1 && index01_count == 1 &&
+                       track02_file_end == 0u && track > 2u) {
+                /* A full-disc CUE may store Track 02 and the following track
+                 * in one MODE1/2352 BIN. Record only the immediately following
+                 * INDEX 01 in that same member; the extracted bytes are later
+                 * admitted by their complete, known retail Track 02 hash. */
+                next_track_candidate =
+                    strcmp(current_member, track02_member) == 0;
             }
         } else if (current_track == 2u &&
                    theron_v1_track02_media_starts_with_i(p, "INDEX 01 ")) {
@@ -334,6 +350,20 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
             if (!theron_v1_track02_media_parse_index01(p, &index01_sector)) {
                 fclose(file);
                 return 0;
+            }
+            track02_file_start = index01_sector;
+        } else if (next_track_candidate &&
+                   current_track > 2u &&
+                   theron_v1_track02_media_starts_with_i(p, "INDEX 01 ")) {
+            if (strcmp(current_member, track02_member) == 0 &&
+                theron_v1_track02_media_parse_index01(
+                    p, &track02_file_end)) {
+                next_track_candidate = 0;
+            } else {
+                /* A different FILE layout is an ordinary multi-file CUE, not
+                 * a contiguous full-disc span. */
+                next_track_candidate = 0;
+                track02_file_end = 0u;
             }
         } else if (current_track == 2u &&
                    theron_v1_track02_media_starts_with_i(p, "PREGAP ")) {
@@ -353,6 +383,8 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
     *out_sector_bytes = sector_bytes;
     *out_index01_sector = pregap_sector + index01_sector;
     *out_payload_index01_sector = index01_sector;
+    if (out_track02_file_start) *out_track02_file_start = track02_file_start;
+    if (out_track02_file_end) *out_track02_file_end = track02_file_end;
     return 1;
 }
 
@@ -499,7 +531,9 @@ theron_v1_track02_raw_media_intake_validate_verified_layout(
         return THERON_V1_TRACK02_MEDIA_REASON_SECTOR_ALIGNMENT_INVALID;
     }
     if (((variant == THERON_TRACK02_VARIANT_JP_BIN ||
-          variant == THERON_TRACK02_VARIANT_US_BIN) && sector_bytes != 2352) ||
+          variant == THERON_TRACK02_VARIANT_US_BIN ||
+          variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) &&
+         sector_bytes != 2352) ||
         ((variant == THERON_TRACK02_VARIANT_US_ISO ||
           (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO &&
            strcmp(track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO) == 0) ||
@@ -534,8 +568,11 @@ int theron_v1_track02_raw_media_intake_discover(
     int sector_bytes;
     uint32_t index01_sector = 0u;
     uint32_t payload_index01_sector = 0u;
+    uint32_t track02_file_start_sector = 0u;
+    uint32_t track02_file_end_sector = 0u;
     size_t payload_bytes;
     Theron_Track02Variant variant;
+    int clonecd_span_projected = 0;
 
     if (!out) return 0;
     *out = receipt;
@@ -563,11 +600,50 @@ int theron_v1_track02_raw_media_intake_discover(
         }
         if (!theron_v1_track02_media_parse_cue(media_path, receipt.payload_path,
                                                 &sector_bytes, &index01_sector,
-                                                &payload_index01_sector)) {
+                                                &payload_index01_sector,
+                                                &track02_file_start_sector,
+                                                &track02_file_end_sector)) {
             theron_v1_track02_media_reject(&receipt,
                                             THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID);
             *out = receipt;
             return 1;
+        }
+        if (sector_bytes == 2352 &&
+            track02_file_end_sector > track02_file_start_sector &&
+            (size_t)(track02_file_end_sector - track02_file_start_sector) <=
+                50000u) {
+            char source_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+            uint64_t slice_offset64 = (uint64_t)track02_file_start_sector * 2352u;
+            uint64_t slice_bytes64 =
+                (uint64_t)(track02_file_end_sector - track02_file_start_sector) *
+                2352u;
+            size_t slice_offset;
+            size_t slice_bytes;
+            if (slice_offset64 > SIZE_MAX || slice_bytes64 > SIZE_MAX) {
+                theron_v1_track02_media_reject(
+                    &receipt, THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID);
+                *out = receipt;
+                return 1;
+            }
+            slice_offset = (size_t)slice_offset64;
+            slice_bytes = (size_t)slice_bytes64;
+            snprintf(source_path, sizeof(source_path), "%s", receipt.payload_path);
+            if (snprintf(receipt.payload_path, sizeof(receipt.payload_path),
+                         "%s::slice@%zu:%zu", source_path,
+                         slice_offset, slice_bytes) >=
+                (int)sizeof(receipt.payload_path)) {
+                theron_v1_track02_media_reject(
+                    &receipt, THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID);
+                *out = receipt;
+                return 1;
+            }
+            /* The CUE's INDEX 01 is the start of this raw Track 02 span, so its
+             * payload-local index is zero. The virtual slice reads
+             * original bytes in place and is hash-bound as the known CloneCD
+             * edition below. */
+            index01_sector = 0u;
+            payload_index01_sector = 0u;
+            clonecd_span_projected = 1;
         }
     } else if (theron_v1_track02_media_ieq(
                    theron_v1_track02_media_extension(media_path), ".bin")) {
@@ -621,7 +697,9 @@ int theron_v1_track02_raw_media_intake_discover(
     receipt.variant = variant;
     snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", md5);
     receipt.raw_trace_preparation_allowed = receipt.cue_consumed &&
-        receipt.mode1_2352 && theron_v1_track02_expected_raw_index01(variant) != 0u;
+        receipt.mode1_2352 &&
+        (clonecd_span_projected ||
+         theron_v1_track02_expected_raw_index01(variant) != 0u);
     receipt.cue_index01_sector = index01_sector;
     receipt.payload_bytes = payload_bytes;
     receipt.sector_count = payload_bytes / (size_t)sector_bytes;

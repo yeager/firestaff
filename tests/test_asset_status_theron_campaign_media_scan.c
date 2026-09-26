@@ -127,6 +127,8 @@ static int check_authentic_cue_is_in_full_inventory(void)
     M12_AssetStatus status;
     M12_AssetStatusScanOptions options;
     Theron_V1Track02RawMediaIntakeReceipt intake;
+    Theron_V1Track02RawTraceMediaInput traceInput;
+    const Theron_Track02StartupLoaderReceipt *loaderReceipt;
     const M12_AssetVersionStatus *version = NULL;
     const M12_AssetRequiredFileStatus *required;
     char cuePaths[64][FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
@@ -141,6 +143,23 @@ static int check_authentic_cue_is_in_full_inventory(void)
     if (!FSP_ParentDir(root, sizeof(root), cue) ||
         !theron_v1_track02_raw_media_intake_discover(cue, &intake) ||
         intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY) return 1;
+    if (strcmp(intake.track02_md5, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0 &&
+        (!intake.cue_consumed ||
+         intake.variant != THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
+         !intake.mode1_2352 || intake.cue_index01_sector != 0u ||
+         intake.first_user_data_offset != THERON_TRACK02_RAW_USER_DATA_OFFSET ||
+         !strstr(intake.payload_path, "::slice@") ||
+         !intake.raw_trace_preparation_allowed ||
+         !theron_v1_track02_raw_media_intake_prepare_trace_input(
+             &intake, &traceInput) ||
+         !traceInput.valid ||
+         strcmp(traceInput.track02_md5, THERON_TRACK02_MD5_US_CLONECD_BIN) != 0 ||
+         strcmp(traceInput.payload_path, intake.payload_path) != 0)) {
+        fprintf(stderr,
+                "FAIL: authentic whole-disc CloneCD CUE did not retain its "
+                "verified Track 02 slice provenance\n");
+        return 1;
+    }
     cueCount = FirestaffTheronMedia_CollectCuePaths(root, cuePaths, 64);
     for (i = 0U; i < (size_t)cueCount; ++i) {
         if (strcmp(cuePaths[i], cue) == 0) foundCue = 1;
@@ -162,14 +181,33 @@ static int check_authentic_cue_is_in_full_inventory(void)
         }
     }
     required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0U);
+    loaderReceipt = M12_AssetStatus_GetTheronTrack02LoaderReceipt(&status);
     if (!version || !version->matched ||
         strcmp(version->matchedPath, intake.payload_path) != 0 ||
         !required || !required->matched ||
         strcmp(required->matchedHash, version->matchedMd5) != 0 ||
+        (strcmp(intake.track02_md5, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0 &&
+         strcmp(required->sourcePath, cue) != 0) ||
         !status.theronMedia.paired_track01_track02 ||
         strcmp(status.theronMedia.cue_path, cue) != 0 ||
+        (strcmp(intake.track02_md5, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0 &&
+         (!loaderReceipt || !loaderReceipt->valid ||
+          !loaderReceipt->cue_backed || !loaderReceipt->no_synthetic_cache ||
+          strcmp(loaderReceipt->track02_path, intake.payload_path) != 0 ||
+          !M12_AssetStatus_GetTheronLaunchMediaPath(&status) ||
+          strcmp(M12_AssetStatus_GetTheronLaunchMediaPath(&status), cue) != 0)) ||
         !M12_AssetStatus_GameAvailable(&status, "theron")) {
-        fprintf(stderr, "FAIL: authentic Track 02 CUE provenance absent from full scan\n");
+        fprintf(stderr,
+                "FAIL: authentic Track 02 CUE provenance absent from full scan "
+                "(version=%d required=%d pair=%d cue=%s expected=%s available=%d "
+                "md5=%s matched=%s required_hash=%s)\n",
+                version != NULL, required && required->matched,
+                status.theronMedia.paired_track01_track02,
+                status.theronMedia.cue_path, cue,
+                M12_AssetStatus_GameAvailable(&status, "theron"),
+                version ? version->matchedMd5 : "",
+                version ? version->matchedPath : "",
+                required ? required->matchedHash : "");
         return 4;
     }
     return 0;
