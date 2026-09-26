@@ -8184,6 +8184,12 @@ target_include_directories(firestaff_theron_v1_mechanics_champions_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(firestaff_theron_v1_mechanics_champions_probe
     PRIVATE firestaff_theron firestaff_m10 m)
+# theron_v1_track02_raw_media_intake.c (pulled in by firestaff_theron)
+# uses the shared file-MD5 helper from firestaff_m12.
+if(TARGET firestaff_m12)
+    target_link_libraries(firestaff_theron_v1_mechanics_champions_probe
+        PRIVATE firestaff_m12)
+endif()
 if(NOT MSVC)
     target_compile_options(firestaff_theron_v1_mechanics_champions_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -45415,6 +45421,12 @@ if(BUILD_TESTING AND THERON_SOURCES)
     target_include_directories(test_theron_v1_dungeon_progression PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    # The production Theron archive's raw-media intake uses M12's asset
+    # reader and file-MD5 helpers; this standalone fixture links that archive.
+    if(TARGET firestaff_m12)
+        target_link_libraries(test_theron_v1_dungeon_progression PRIVATE
+            firestaff_m12)
+    endif()
     if(NOT MSVC)
         target_compile_options(test_theron_v1_dungeon_progression PRIVATE -Wall -Wextra -O2)
     endif()
