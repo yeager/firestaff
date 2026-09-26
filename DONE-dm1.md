@@ -5,10 +5,12 @@
   while direct boot-probe scripts translate key names themselves; scripted
   `key:kp*` events therefore failed to exercise the ordinary M12-to-M11 input
   path. Added an authentic PC 3.4 regression that starts from the M12 menu,
-  follows the Hall route and recruits C127 ordinal 5 into the party. The full
-  PC-34 native CLI test passes, including the C040/C007 presentation checks and
-  input matrix. This proves the tested PC 3.4 route, not visual parity or other
-  DM1 editions.
+  follows the Hall route, confirms C127 ordinal 5 through the C040 choice, and
+  sends a keypad turn in the same M12 session. The test asserts the candidate
+  panel closes, the party count is one, and facing changes from north to east.
+  The full PC-34 native CLI test passes, including the C040/C007 presentation
+  checks and input matrix. This proves the tested PC 3.4 route, not campaign
+  start, visual parity or other DM1 editions.
 
 - 2026-09-26: Fixed the fresh-start native save rejection for F0195/F0180's
   initial C37. When there is no imported C3/C4 save receipt, export now accepts

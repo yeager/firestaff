@@ -81,7 +81,7 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_hoc_probe_json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 --menu --game dm1 --platform pc --data-dir "$archive" \
-    --presentation-mode v1 --script "enter,enter,enter,$menu_hoc_route" \
+    --presentation-mode v1 --script "enter,enter,enter,$menu_hoc_route,click:130:115,wait:30,key:kp6,wait:60" \
     --duration 30000 >/dev/null
 python3 - "$menu_hoc_probe_json" <<'PY'
 import json
@@ -93,11 +93,14 @@ party = probe["party"]
 candidate = probe["dm1HoC"]
 if (probe["sourceId"] != "dm1" or probe["active"] != 1 or
         party["mapIndex"] != 0 or party["mapX"] != 14 or
-        party["mapY"] != 3 or party["direction"] != 0 or
-        party["championCount"] != 1 or candidate["candidatePanel"] != 1 or
-        candidate["candidateOrdinal"] != 5 or candidate["candidatePartyIndex"] != 0):
-    raise SystemExit(f"FAIL: authentic DM1 M12 Hall route did not recruit C127 ordinal 5: {probe}")
-print("PASS: authentic DM1 M12 Hall route recruits C127 ordinal 5")
+        party["mapY"] != 3 or party["direction"] != 1 or
+        party["championCount"] != 1 or candidate != {
+            "candidatePanel": 0,
+            "candidateOrdinal": -1,
+            "candidatePartyIndex": -1,
+        }):
+    raise SystemExit(f"FAIL: authentic DM1 M12 Hall route did not confirm C127 ordinal 5: {probe}")
+print("PASS: authentic DM1 M12 Hall route confirms C127 ordinal 5")
 PY
 
 # Physical card coordinates use the explicit launcher canvas, making this a

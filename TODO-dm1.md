@@ -209,9 +209,11 @@
   English and German Atari ST 1.2, French Atari ST 1.3, and English Atari ST
   1.0a, 1.0b and 1.1 reach `dm1-runtime` through M12 with first-runtime
   receipts at `championCount=0`. All six Atari ST source packages have verified
-  recruitment through the normal M12 pointer route with authentic Hall data;
-  the authentic PC 3.4 M12 Hall route is now verified in DONE-dm1.md. Repeat
-  it on any other admitted edition.
+  that the normal M12 pointer route opens authentic C127 candidate panels;
+  these checks stop before confirming the C040 choice, so they do not prove
+  recruitment. The PC 3.4 route confirms its C040 choice and a following
+  gameplay turn, as recorded in DONE-dm1.md. Repeat that confirmation and
+  post-Hall route on the other admitted editions.
 - Complete Atari ST campaign start through the source-owned Champion Hall
   selection on the normal M12 route. German Atari ST 1.2 presents authentic
   source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
@@ -220,8 +222,9 @@
   colours; this is a visible-frame smoke check, not visual parity. M12's first
   runtime receipt starts with `championCount=0`; its normal menu route then
   reaches the adjacent tile for C127 ordinal 14 and a source pointer click
-  opens its candidate panel and recruits it on English v1.2, German v1.2,
-  French v1.3 and English v1.0a, v1.0b and v1.1. Repeat this route on any other
+  opens its candidate panel on English v1.2, German v1.2, French v1.3 and
+  English v1.0a, v1.0b and v1.1. These tests do not yet confirm C040 or prove
+  campaign start. Repeat the full confirmation and post-Hall route on any other
   admitted edition without inventing champions or treating the partial floor
   view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
