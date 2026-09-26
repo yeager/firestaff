@@ -1,6 +1,42 @@
 # Firestaff TODO — Theron's Quest
 
-Reviewed 2026-09-25. Only open work is listed here.
+Reviewed 2026-09-26. Only open work is listed here.
+
+## Remaining work, ordered by the end-to-end playability dependency
+
+The repository has real-media startup, source-data loaders, bounded mechanics,
+and an authenticated US Continue-to-Drator route. That is not complete Theron
+support: the original game-owned Track 02 consumer and quest-item transaction
+remain the upstream blockers. Continue the following work in order; do not
+replace absent original evidence with fabricated item, map, visual, or save
+data.
+
+1. **Track 02 runtime and object consumers (US and JP).** Close the source-LBA
+   → game-owned RAM → executing consumer → source-record → reproducible input
+   transaction chain. Current loaders and mechanics expose authentic bytes and
+   bounded routes, but stairs, quest artifacts, pickups/use, creatures, combat,
+   and chapter completion still lack their corresponding original consumers.
+2. **Complete a real dungeon transaction and progress save.** Bind the quest
+   artifact's name, object occurrence, pickup, exit, next-chapter handoff, and
+   original Backup RAM write/read fields from retail evidence. Existing US
+   Continue proves only import from an authentic Akutuba-complete save into
+   Drator; it does not prove that Firestaff can complete the dungeon or write
+   the next original-format save. The available authentic JP SRAM is empty, so
+   JP Continue with progress remains unverified.
+3. **Original presentation and event output.** Join game-owned Track 02 bytes
+   and consumers to VDC/VCE screen ownership, text, portraits, CDDA selection,
+   and ADPCM/SFX events. The admitted US capture is a bounded screen-space
+   frame, while JP boot captures remain System Card/startup evidence; neither
+   proves gameplay presentation. Track 01 playback alone does not establish
+   gameplay audio selection.
+4. **Broader mechanics and completion tests.** Once each original consumer is
+   bound, verify later-level transitions, objects, doors/actuators, combat,
+   spells, inventory, chapter progression, and save/resume against both
+   authentic regional media. V2 asset/effect/movement verification follows
+   source-backed V1 gameplay and must use real assets when available.
+
+The sequence is dependency guidance, not a smaller completion target: the user
+requested complete Theron support.
 
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its
@@ -1835,7 +1871,7 @@ efter ett separat stabilt RAM-fält som skiljer höger och vänster efter att
 
   - 2026-07-08 update: Theron boot now owns runtime ownership release for profile/world/viewport/assets, and M11 shutdown no longer frees those Track 02 objects directly.
 
-- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. An authentic US Track 02 Backup RAM Continue import now passes through M11 into source-backed dungeon 2 (Soul Room); original-format Firestaff-to-BRAM export remains unimplemented because the complete save-record field consumers are not yet source/runtime-bound. Do not synthesize the unclassified fields.
+- 🔧 Phase 7 - Save/import compatibility: round-trip, header-rejection, world-serialize-purchase-state, shop price-table regressions, and data-free cross-slot export/import are green. An authentic US Track 02 Backup RAM Continue import now passes through M11 into source-backed dungeon 2 (Soul Room), then admits the authentic Drator forcefield handoff and three movement steps on that loaded map. This is a bounded native route, not a completed original dungeon transition; original-format Firestaff-to-BRAM export and JP progressed Continue remain unverified because the required authentic consumers/artifact are absent. Do not synthesize save fields.
 
 ### Theron V2.0 / V2.1 / V2.2
 
