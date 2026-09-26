@@ -3538,6 +3538,15 @@ av bankladdningen. Se
   and therefore adds no negative evidence about gameplay CDDA. Its trace bundle
   remains private on trv2 under
   `firestaff-theron-evidence/capture/us-clonecd-authentic-state-cdda-20260926.trace*`.
+- 🔒 2026-09-26 longer cold-start replay: the authentic US CloneCD CUE and
+  System Card were replayed with six 60-frame PCE button holds over 65 seconds.
+  Mednafen recorded all six scheduled inputs, 25 Track 02 raw-sector bindings,
+  and one `$E009` entry/return, but zero reads from `$E009`'s data window, zero
+  authenticated CD-to-RAM receipts, and zero CDDA commands. Only four input
+  buffer writes were observed (two reset writes at `$CB22`, two writes at
+  `$EA9E`); they do not establish gameplay commands or data provenance. The
+  capture remains blocked and fail-closed; its trace bundle is isolated on
+  trv2 under `firestaff-theron-evidence/capture/attempt-long-input-20260926/`.
 - ✅ The existing real-media startup/runtime regressions also pass on trv2
   against the staged originals: US CloneCD ZIP (direct boot, original/modern
   cards, mouse-only cards and six movement inputs through native dungeon
