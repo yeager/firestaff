@@ -89,8 +89,8 @@ int main(void)
     if (!dm2_v1_boot_runtime_capture(
             (DM2_V1_BootProfile *)view.dm2BootProfile, &runtime) ||
         !runtime.runtime_ready || runtime.current_level != 0 ||
-        !runtime.outdoor) {
-        fputs("FAIL: DM2 DOS New Game did not retain map-0 T600 outdoor ownership\n",
+        runtime.outdoor) {
+        fputs("FAIL: DM2 DOS New Game did not retain map-0 indoor scene ownership\n",
               stderr);
         M11_GameView_Shutdown(&view);
         return 1;
@@ -102,7 +102,7 @@ int main(void)
         !view.dm2LastRuntimeNoCoreFallbacks ||
         view.dm2LastRuntimeFallbackDrawCount != 0) {
         fprintf(stderr,
-                "FAIL: DM2 DOS map-0 outdoor frame was not admitted "
+                "FAIL: DM2 DOS map-0 indoor frame was not admitted "
                 "(accepted=%d real=%d noFallbacks=%d fallbackDraws=%d)\n",
                 view.dm2LastRuntimeFrameAccepted,
                 view.dm2LastRuntimeRealAssetsReady,
@@ -112,6 +112,6 @@ int main(void)
         return 1;
     }
     M11_GameView_Shutdown(&view);
-    puts("PASS: DM2 DOS M11 New Game admits real-media map-0 outdoor runtime");
+    puts("PASS: DM2 DOS M11 New Game admits real-media map-0 indoor runtime");
     return 0;
 }

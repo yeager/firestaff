@@ -10,13 +10,16 @@ Reviewed 2026-08-29. Only open work is listed here.
   to that 224x136 pass; canonical retail GDAT regression tests compare every
   plane byte there and guard both buffer boundaries. The private allocation
   remains full logical size as a defensive guard while remaining special
-  passes are audited. Native real-media New Game now proves map 0's T600
-  outdoor route is admitted by M11 with real assets and zero fallback draws
-  on the PC-DOS archive; the Amiga, FM Towns, and Mac real-media New Game
-  routes are also covered. This establishes runtime admission, not
-  original-vs-Firestaff pixel parity. Remaining work is outdoor's distinct
-  composition, transition stretching and same-tuple original-capture
-  comparison; retain only GDAT-owned pixels.
+  passes are audited. Native real-media New Game routes are covered for
+  PC-DOS, Amiga, FM Towns, and Mac. The PC-DOS start is map 0's indoor Skullkeep
+  cave: SKProject `IS_MAP_INSIDE` reads the active map's GRAPHICSSET scene flag
+  (map 0 uses graphics set 2 with flags `0x000b`), rather than treating map 0
+  as outdoor. A previous real-media test incorrectly required the T600 outdoor
+  route at this start and has been corrected. The PC-DOS launch and indoor
+  runtime frame are admitted with real assets and zero fallback draws; this
+  establishes runtime admission, not original-vs-Firestaff pixel parity.
+  Remaining work is outdoor's distinct composition, transition stretching
+  and same-tuple original-capture comparison; retain only GDAT-owned pixels.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
   Firestaff at the same game state. The retired H2313 crops remain
   non-promotable because they are byte-identical and lack route labels; they
