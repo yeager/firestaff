@@ -3921,4 +3921,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   remains unchanged and the temporary slice is removed after the test. The
   complete trv2 Theron selection now runs 70 tests: 62 passed, eight
   configured capture/media-dependent skips, zero failures. US BIN, JP BIN,
-  and authentic US CloneCD quest-artifact name checks all passed.
+  and authentic US CloneCD quest-artifact name checks all passed. A negative
+  admission check also supplied the authentic JP CUE through the US CloneCD
+  override and confirmed it was rejected on its real, non-US CUE MD5 before
+  any temporary slice was created.
