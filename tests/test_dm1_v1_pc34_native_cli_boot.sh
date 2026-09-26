@@ -10,6 +10,7 @@ app=$1
 archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 # Card startup flow: game card -> verified PC card -> Original card.
 menu_original=enter,enter,enter
+hoc_route='wait5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1,key:kp2,key:kp2,key:kp2,key:kp2,key:kp2,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp1,key:kp1,key:kp1,key:kp2,key:kp1,key:kp6,key:kp6,wait5,click:112:83,wait5'
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 PC-34 archive is not staged'
@@ -67,6 +68,36 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         startup["levelLoaded"] != 1):
     raise SystemExit(f"FAIL: authentic DM1 menu did not reach its first runtime frame: {probe}")
 print("PASS: authentic DM1 PC-34 start menu reached the source-owned runtime frame")
+PY
+
+# Exercise the complete authentic Hall route through the real M12->M11
+# handoff. Scripted key events carry SDL scancodes just like host key presses;
+# paced input preserves the PC-34 command cadence while the selected original
+# archive supplies the Hall, portrait and candidate data.
+menu_hoc_probe_json="$test_scratch/dm1-menu-hoc-$$.json"
+menu_hoc_route=$(python3 -c 'import sys; tokens=sys.argv[1].split(","); print(",".join(token+(",wait:30" if token.startswith("key:") else "") for token in tokens))' \
+    "$hoc_route")
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_hoc_probe_json" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --menu --game dm1 --platform pc --data-dir "$archive" \
+    --presentation-mode v1 --script "enter,enter,enter,$menu_hoc_route" \
+    --duration 30000 >/dev/null
+python3 - "$menu_hoc_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+party = probe["party"]
+candidate = probe["dm1HoC"]
+if (probe["sourceId"] != "dm1" or probe["active"] != 1 or
+        party["mapIndex"] != 0 or party["mapX"] != 14 or
+        party["mapY"] != 3 or party["direction"] != 0 or
+        party["championCount"] != 1 or candidate["candidatePanel"] != 1 or
+        candidate["candidateOrdinal"] != 5 or candidate["candidatePartyIndex"] != 0):
+    raise SystemExit(f"FAIL: authentic DM1 M12 Hall route did not recruit C127 ordinal 5: {probe}")
+print("PASS: authentic DM1 M12 Hall route recruits C127 ordinal 5")
 PY
 
 # Physical card coordinates use the explicit launcher canvas, making this a
@@ -127,7 +158,6 @@ probe_runtime_input action 1,3,2
 # A click at its source centre must run REVIVE.C F0280 and append exactly one
 # pending candidate.  Keeping this at CLI level catches presentation/input
 # scaling regressions that a direct M11-state probe cannot see.
-hoc_route='wait5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp5,key:kp1,key:kp1,key:kp1,key:kp2,key:kp2,key:kp2,key:kp2,key:kp2,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp5,key:kp1,key:kp1,key:kp1,key:kp1,key:kp1,key:kp2,key:kp1,key:kp6,key:kp6,wait5,click:112:83,wait5'
 hoc_capture_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$hoc_capture_root"
 hoc_capture_dir=$(mktemp -d "$hoc_capture_root/dm1-hoc-c040.XXXXXX")

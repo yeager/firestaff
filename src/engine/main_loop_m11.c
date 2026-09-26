@@ -5467,9 +5467,11 @@ static int m11_push_script_event_token(const char* token, size_t len) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
         ev.type = SDL_EVENT_KEY_DOWN;
         ev.key.key = (SDL_Keycode)m11_script_keycode_from_name(buffer + 4);
+        ev.key.scancode = SDL_GetScancodeFromKey(ev.key.key, NULL);
 #else
         ev.type = SDL_KEYDOWN;
         ev.key.keysym.sym = (SDL_Keycode)m11_script_keycode_from_name(buffer + 4);
+        ev.key.keysym.scancode = SDL_GetScancodeFromKey(ev.key.keysym.sym);
 #endif
         SDL_PushEvent(&ev);
         return 1;
