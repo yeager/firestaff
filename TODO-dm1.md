@@ -215,8 +215,9 @@
   choice and gameplay route is also verified. See DONE-dm1.md. The remaining
   gap below is proving the complete source-owned campaign-start transition,
   not Hall selection or immediate gameplay input.
-- Complete the Atari ST source-owned new-game campaign-start transition after
-  the now-verified Champion Hall selection on the normal M12 route. German Atari ST 1.2 presents authentic
+- Verify the Atari ST source-owned new-game campaign-start transition beyond
+  the current Champion Hall selection and first-turn checks on the normal M12
+  route. German Atari ST 1.2 presents authentic
   source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
   75/76, and DATA.C's six Atari RGB3 dungeon palettes are installed in M11.
   A captured 320x200 first runtime frame has 17,773 nonblack pixels in six
@@ -226,8 +227,12 @@
   panel, confirms C040, and accepts a following gameplay turn on English v1.2,
   German v1.2, French v1.3 and English v1.0a, v1.0b and v1.1. The source-owned
   campaign-start transition remains open; these M12-to-M11 tests do not yet
-  prove the complete F0441/F0435/F0462 new-game path. Do not invent champions
-  or treat the partial floor view as complete visual parity.
+  prove the complete F0441/F0435/F0462 new-game path or F0267 party-Thing
+  placement onto the authenticated start square. World initialization already
+  decodes the DUNGEON.DAT initial party location, so add a runtime assertion
+  for the live map, coordinates, direction and Thing chain before claiming the
+  campaign start complete. Do not invent champions or treat the partial floor
+  view as complete visual parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX
