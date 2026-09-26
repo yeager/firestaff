@@ -3782,11 +3782,11 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   its original archive is present (MD5
   `ac34e0f1482416e9728255dcb25d8234`), but `unrar` and `bsdtar` are absent.
   The installed `7zz`/`7z` can list the archive yet report `Unsupported Method`
-  for its RAR members. Consequently Firestaff cannot authenticate the selected
-  Track 02 member in this host, and the test fails before boot; this run does
-  not prove the combined-RAR route. No archive was extracted or modified. Keep
-  this route open until a supported extractor is available and the real-media
-  direct-boot and Track 01 handoff tests pass again.
+  for its RAR members. Firestaff consequently cannot authenticate the selected
+  Track 02 member on this host, so this does not prove the combined-RAR route.
+  No archive was extracted or modified. Keep this runtime route open until a
+  supported extractor is available and the real-media direct-boot and Track 01
+  handoff tests pass again.
 - ✅ 2026-09-26 local real-media follow-up: the existing configured build had
   the application target up to date but lacked the small launcher-handoff test
   helper. After building that helper, both registered combined-RAR tests pass
@@ -3805,3 +3805,10 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   CLI/original-command capture corpus, and Mednafen CD-state capture. No
   synthetic game media was introduced. This local run supersedes the earlier
   local partial-build result; the trv2 RAR-tool limitation remains host-specific.
+- ✅ The combined-RAR direct-boot test now checks whether the host's first
+  available RAR extractor can actually decode the archive's authentic US CUE
+  before launching Firestaff. Local US/JP direct boot still passes against the
+  original archive; trv2 now reports a clear CTest skip because its available
+  7z cannot decode this RAR compression method, rather than misreporting a
+  Firestaff startup regression. The real-media route remains unverified on
+  trv2 and no game data is extracted or changed.

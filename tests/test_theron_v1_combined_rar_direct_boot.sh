@@ -11,6 +11,42 @@ if [[ ! -f "$rar" ]]; then
     exit 77
 fi
 
+# Finding an extractor executable is not enough: this authentic archive uses
+# a RAR compression method that some 7-Zip builds can list but cannot decode.
+# Mirror Firestaff's extractor priority and probe one real CUE member before
+# treating an unreadable host archive as a product regression.
+rar_tool=
+for candidate in unrar 7zz 7z bsdtar; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        rar_tool=$candidate
+        break
+    fi
+done
+if [[ -z "$rar_tool" ]]; then
+    printf 'test_theron_v1_combined_rar_direct_boot: SKIP (no RAR extractor installed)\n'
+    exit 77
+fi
+case "$rar_tool" in
+    unrar)
+        if ! unrar p -inul "$rar" TQUS.cue >/dev/null 2>&1; then
+            printf 'test_theron_v1_combined_rar_direct_boot: SKIP (installed unrar cannot decode authentic CUE member)\n'
+            exit 77
+        fi
+        ;;
+    bsdtar)
+        if ! bsdtar -xOf "$rar" TQUS.cue >/dev/null 2>&1; then
+            printf 'test_theron_v1_combined_rar_direct_boot: SKIP (installed bsdtar cannot decode authentic CUE member)\n'
+            exit 77
+        fi
+        ;;
+    *)
+        if ! "$rar_tool" x -so -- "$rar" TQUS.cue >/dev/null 2>&1; then
+            printf 'test_theron_v1_combined_rar_direct_boot: SKIP (installed %s cannot decode authentic CUE member)\n' "$rar_tool"
+            exit 77
+        fi
+        ;;
+esac
+
 for region in us jp; do
     if [[ "$region" == us ]]; then
         expected_md5=ceb02343868f80cec899e9b239aff2da
