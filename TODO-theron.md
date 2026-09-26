@@ -3812,3 +3812,30 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   7z cannot decode this RAR compression method, rather than misreporting a
   Firestaff startup regression. The real-media route remains unverified on
   trv2 and no game data is extracted or changed.
+
+## 2026-09-26 trv2 rebuilt full-suite result
+
+- ✅ After rebuilding the Theron test targets on trv2, the complete
+  `ctest -L theron -j2 --output-on-failure` run against
+  `/home/trv2/.firestaff/data/theron` completed all 68 registered tests:
+  60 passed, eight returned their configured CTest skip status, and none
+  failed. Authentic US CloneCD ZIP/CUE and raw-CUE startup, JP 7z/CUE/raw-BIN
+  startup, the seven-dungeon JP runtime, real BRAM Continue, and the available
+  source/mechanics probes passed.
+- 🔒 The eight skips are evidence gaps or host-tool limitations, not passed
+  gameplay routes: authentic RAR CUE handoff and direct boot (no `unrar`, and
+  installed `7z` cannot decode the archive's CUE member), US converted ISO
+  startup (ISO not staged), authenticated CLI capture (the required atomic VDC
+  bundle is not staged), original-command capture (its capture-directory
+  variable is unset), real VRAM capture (atomic VDC/VCE/SAT bundle unset),
+  Main-RAM loader capture (no capture supplied), and Mednafen CD-state trace
+  (trace environment variable unset). Within the passing JP later-dungeon
+  test, its optional CUE-projected ISO subcheck also skipped because neither
+  the legacy stub nor authentic projection is staged on trv2. The complete
+  campaign, original gameplay consumers and presentation remain open as
+  described above; this regression run does not establish them.
+- ✅ Before that full run, synced only the save-progress test file whose local
+  fix keeps its buffers alive through the malformed-save rejection check,
+  confirmed the remote SHA-256 matched the current branch, rebuilt the test,
+  and passed its focused CTest. The subsequent 68-test run therefore includes
+  that verified test fix. No game-data files were copied or changed.
