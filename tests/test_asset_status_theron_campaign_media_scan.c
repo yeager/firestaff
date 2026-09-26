@@ -129,6 +129,9 @@ static int check_authentic_cue_is_in_full_inventory(void)
     Theron_V1Track02RawMediaIntakeReceipt intake;
     const M12_AssetVersionStatus *version = NULL;
     const M12_AssetRequiredFileStatus *required;
+    char cuePaths[64][FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    int cueCount;
+    int foundCue = 0;
     size_t i;
 
     if (!cue || !cue[0]) {
@@ -138,9 +141,17 @@ static int check_authentic_cue_is_in_full_inventory(void)
     if (!FSP_ParentDir(root, sizeof(root), cue) ||
         !theron_v1_track02_raw_media_intake_discover(cue, &intake) ||
         intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY) return 1;
+    cueCount = FirestaffTheronMedia_CollectCuePaths(root, cuePaths, 64);
+    for (i = 0U; i < (size_t)cueCount; ++i) {
+        if (strcmp(cuePaths[i], cue) == 0) foundCue = 1;
+    }
+    if (!foundCue) {
+        fprintf(stderr, "FAIL: authentic CUE missing from bounded package inventory\n");
+        return 2;
+    }
     memset(&options, 0, sizeof(options));
     options.honorRequestedDataDir = 1;
-    if (!M12_AssetStatus_ScanWithOptions(&status, root, &options)) return 2;
+    if (!M12_AssetStatus_ScanWithOptions(&status, root, &options)) return 3;
     for (i = 0U; i < M12_AssetStatus_GetVersionCount("theron"); ++i) {
         const M12_AssetVersionStatus *candidate =
             M12_AssetStatus_GetVersion(&status, "theron", i);
@@ -159,7 +170,7 @@ static int check_authentic_cue_is_in_full_inventory(void)
         strcmp(status.theronMedia.cue_path, cue) != 0 ||
         !M12_AssetStatus_GameAvailable(&status, "theron")) {
         fprintf(stderr, "FAIL: authentic Track 02 CUE provenance absent from full scan\n");
-        return 3;
+        return 4;
     }
     return 0;
 }
