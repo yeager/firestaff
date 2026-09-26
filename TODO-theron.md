@@ -52,10 +52,11 @@ requested complete Theron support.
 Theron changes onto GitHub `main` at `ecf45acbe`, a clean macOS CMake
 configuration and the application plus save-path targets build successfully.
 The complete Theron-labelled CTest set finishes with 62 passed and six
-skipped because this checkout has no operator-owned original media/capture
-inputs staged. No media was synthesized. This validates the current local
-source and regression suite only; it does not close the remaining gameplay or
-original-runtime gaps listed above.
+skipped because those tests' specific operator-owned capture or regional-media
+inputs are not staged in this local data view. Authentic media-backed routes
+that are staged passed; no media was synthesized. This validates the current
+local source and regression suite only; it does not close the remaining
+gameplay or original-runtime gaps listed above.
 
 2026-09-26 trv2 clean-tree verification: a fresh archive of source commit
 `2756e9800aadb23d26b39d853921bf71021d3658` contained tracked project files
