@@ -32,7 +32,9 @@ static char* test_mkdtemp(char* templ) {
 #else
 #include <unistd.h>
 static int test_mkdir(const char* path) { return mkdir(path, 0777) == 0; }
-static int test_setenv(const char* name, const char* value) { return setenv(name, value, 1) == 0; }
+static int test_setenv(const char* name, const char* value) {
+    return value ? setenv(name, value, 1) == 0 : unsetenv(name) == 0;
+}
 static char* test_mkdtemp(char* templ) { return mkdtemp(templ); }
 #endif
 
@@ -102,6 +104,7 @@ int main(void) {
     const int gameTileY = 190 + 220;
 
     if (!homeDir || !test_setenv("HOME", homeDir) ||
+        !test_setenv("FIRESTAFF_DATA", NULL) ||
         !test_setenv("SDL_VIDEODRIVER", "dummy")) {
         fprintf(stderr, "FAIL: temporary HOME setup failed\n");
         return 1;
