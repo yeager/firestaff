@@ -211,6 +211,11 @@
   receipts at `championCount=0`. All six source packages have verified
   recruitment through the normal M12 pointer route with authentic Hall data;
   repeat it on any other admitted edition.
+- Complete PC 3.4 Hall recruitment through the normal M12 route. The authentic
+  PC 3.4 menu smoke reaches its first runtime frame with no champions, while
+  C127 ordinal 5 recruitment is currently verified by the separate CLI route;
+  the two receipts do not prove that an M12 launch can recruit a champion
+  before gameplay.
 - Complete Atari ST campaign start through the source-owned Champion Hall
   selection on the normal M12 route. German Atari ST 1.2 presents authentic
   source pixels through M12: ReDMCSB DEFS.H MEDIA020 binds floor/ceiling records
