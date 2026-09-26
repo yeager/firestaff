@@ -2809,7 +2809,12 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
         memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
     }
     titleDatPath[0] = '\0';
-    if (V1_TitleIntro_FindTitleDatPath(menuState, NULL, titleDatPath,
+    /* ReDMCSB STARTUP1.C:160-170 selects Atari's C001 title graphic, and
+     * TITLE.C:309-409 renders that graphic directly. TITLE.DAT is optional
+     * PC/F20 provenance; searching it recursively on Atari startup can scan
+     * every mounted archive even though this route never consumes it. */
+    if (dm1Media.platform != DM1_V1_STARTUP_MEDIA_PLATFORM_ATARI_ST &&
+        V1_TitleIntro_FindTitleDatPath(menuState, NULL, titleDatPath,
                                        sizeof(titleDatPath))) {
         titleDatProvenancePath = titleDatPath;
     }

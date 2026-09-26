@@ -2110,3 +2110,12 @@ Reviewed 2026-08-29. Completed work only.
   Reference: ReDMCSB MENU.C F0412:1837,1853. The focused
   `test_dm1_v1_f0412_failure_xp_pc34_compat` passes. This is bounded
   source-contract evidence, not original emulator or complete RNG-stream parity.
+
+- Fixed a normal M12 → M11 DM1 Atari ST launch stall. The Atari title path
+  already renders authenticated GRAPHICS.DAT C001, but then recursively
+  searched for optional PC/F20 TITLE.DAT provenance. Skipping that irrelevant
+  scan for Atari follows ReDMCSB STARTUP1.C:160-170 and TITLE.C:309-409.
+  A real Atari STX title reaches `dm1-runtime` in the normal start-menu path,
+  loads level 0 and accepts turn/movement input; a 60-second menu launch
+  completes in under seven seconds. This verifies that authentic launch
+  route and its gameplay receipt, not all Atari campaigns or editions.
