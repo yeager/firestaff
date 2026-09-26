@@ -228,11 +228,18 @@
   German v1.2, French v1.3 and English v1.0a, v1.0b and v1.1. The source-owned
   campaign-start transition remains open; these M12-to-M11 tests do not yet
   prove the complete F0441/F0435/F0462 new-game path or F0267 party-Thing
-  placement onto the authenticated start square. World initialization already
-  decodes the DUNGEON.DAT initial party location, so add a runtime assertion
-  for the live map, coordinates, direction and Thing chain before claiming the
-  campaign start complete. Do not invent champions or treat the partial floor
-  view as complete visual parity.
+  placement onto the authenticated start square. A local read of the authentic
+  English ST 1.2 STX, normalized using MEDIA240's Motorola word order and
+  loaded through F0882, reports the Hall location as map 0, (1,3), facing
+  south, with C04 at the source square. That proves initial-location decode,
+  not New Game placement: STARTUP1.C:173 calls party-specific F0267 from
+  `CM1_MAPX_NOT_ON_A_SQUARE` to the campaign coordinates. The current ordinary
+  F0267 loaded-chain helper explicitly rejects PARTY and GROUP; no live M11
+  handoff currently asserts the post-New-Game coordinates or campaign-square
+  sensor effects. Implement and verify that separate source-owned party branch
+  on authentic Atari ST data before claiming the campaign start complete. Do
+  not invent champions or treat the partial floor view as complete visual
+  parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
   places the party when `G0298_B_NewGame` is set. `DUNGEON.FTL` is only used by
   LOADSAVE.C's optional custom-dungeon path; its absence from standard STX
