@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-26 — SRM readiness probe target dependencies
+
+- Fixed the real-artifact SRM readiness probe's standalone CMake link list;
+  its Theron intake path also needs the M10 asset reader and M12 hash helper.
+- The probe now builds and its registered CTest passes. A full all-target
+  build still exposes the same missing M10/M12 links in other standalone
+  targets, so this change does not claim the complete build is green.
+
 ## 2026-09-26 — Authentic movement checks across the seven-dungeon campaign
 
 - Extended the real-data mechanics probe to load every dungeon and test one
