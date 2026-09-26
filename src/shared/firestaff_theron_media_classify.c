@@ -1002,6 +1002,90 @@ int FirestaffTheronMedia_ClassifyDirectory(const char* root,
     return th_scan_dir(root, 0, &visited, status, &best_rank) && best_rank > 0 ? 0 : -1;
 }
 
+static void th_collect_cue_paths_dir(
+    const char* root,
+    int depth,
+    int* visited,
+    char cuePaths[][FIRESTAFF_THERON_MEDIA_PATH_CAPACITY],
+    int maxCuePaths,
+    int* cueCount) {
+#if defined(_WIN32)
+    char pattern[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    intptr_t handle;
+    struct _finddata_t ent;
+#else
+    DIR* dir;
+    struct dirent* ent;
+#endif
+    if (!root || !visited || !cueCount || depth > THERON_SCAN_MAX_DEPTH ||
+        *visited >= THERON_SCAN_MAX_FILES || *cueCount >= maxCuePaths) return;
+#if defined(_WIN32)
+    if (!FSP_JoinPath(pattern, sizeof(pattern), root, "*")) return;
+    handle = _findfirst(pattern, &ent);
+    if (handle == -1) return;
+    do {
+        char child[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        if (strcmp(ent.name, ".") == 0 || strcmp(ent.name, "..") == 0 ||
+            !FSP_JoinPath(child, sizeof(child), root, ent.name)) continue;
+        if (ent.attrib & _A_SUBDIR) {
+            th_collect_cue_paths_dir(child, depth + 1, visited, cuePaths,
+                                     maxCuePaths, cueCount);
+        } else {
+            ++(*visited);
+            if (th_has_ext(child, ".cue")) {
+                FirestaffTheronMediaStatus candidate;
+                if (FirestaffTheronMedia_ClassifyPath(child, &candidate) == 0 &&
+                    candidate.has_valid_track02_mode1 &&
+                    candidate.track02_path[0] != '\0') {
+                    snprintf(cuePaths[*cueCount],
+                             FIRESTAFF_THERON_MEDIA_PATH_CAPACITY, "%s", child);
+                    ++(*cueCount);
+                }
+            }
+        }
+    } while (*visited < THERON_SCAN_MAX_FILES &&
+             *cueCount < maxCuePaths && _findnext(handle, &ent) == 0);
+    _findclose(handle);
+#else
+    dir = opendir(root);
+    if (!dir) return;
+    while (*visited < THERON_SCAN_MAX_FILES && *cueCount < maxCuePaths &&
+           (ent = readdir(dir)) != NULL) {
+        char child[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0 ||
+            !FSP_JoinPath(child, sizeof(child), root, ent->d_name)) continue;
+        if (FSP_DirExists(child)) {
+            th_collect_cue_paths_dir(child, depth + 1, visited, cuePaths,
+                                     maxCuePaths, cueCount);
+        } else {
+            ++(*visited);
+            if (th_has_ext(child, ".cue")) {
+                FirestaffTheronMediaStatus candidate;
+                if (FirestaffTheronMedia_ClassifyPath(child, &candidate) == 0 &&
+                    candidate.has_valid_track02_mode1 &&
+                    candidate.track02_path[0] != '\0') {
+                    snprintf(cuePaths[*cueCount],
+                             FIRESTAFF_THERON_MEDIA_PATH_CAPACITY, "%s", child);
+                    ++(*cueCount);
+                }
+            }
+        }
+    }
+    closedir(dir);
+#endif
+}
+
+int FirestaffTheronMedia_CollectCuePaths(
+    const char* root,
+    char cuePaths[][FIRESTAFF_THERON_MEDIA_PATH_CAPACITY],
+    int maxCuePaths) {
+    int visited = 0;
+    int cueCount = 0;
+    if (!root || !cuePaths || maxCuePaths <= 0 || !FSP_DirExists(root)) return 0;
+    th_collect_cue_paths_dir(root, 0, &visited, cuePaths, maxCuePaths, &cueCount);
+    return cueCount;
+}
+
 int FirestaffTheronMedia_FindCuePairForTrack02(
     const char* root,
     const char* verified_track02_path,

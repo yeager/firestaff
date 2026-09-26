@@ -3548,8 +3548,10 @@ av bankladdningen. Se
 - ✅ Full inventory scanning now also passes strict Track 02 media intake on
   CUE-backed packages after the generic filename/hash pass. It publishes the
   original payload path and edition hash into the corresponding Theron row
-  without replacing another edition or unpacking the source. A real-media
-  regression checks the USA CloneCD CUE against the staged source when
+  without replacing another edition or unpacking the source. The collector
+  now checks every bounded CUE candidate below each scan root, rather than
+  letting one earlier edition hide another in the same directory tree. A
+  real-media regression checks the USA CloneCD CUE against the staged source when
   `FIRESTAFF_THERON_US_CUE` is configured; the ordinary local run skips this
   assertion when that original is not staged.
 - ✅ Independently validated the existing Track 01 handoff against the

@@ -2726,53 +2726,55 @@ static void m12_scan_theron_cue_packages(
     size_t rootIndex;
     if (!status || gameIndex < 0) return;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        FirestaffTheronMediaStatus media;
-        if (FirestaffTheronMedia_ClassifyDirectory(roots[rootIndex], &media) != 0 ||
-            !media.paired_track01_track02 || media.cue_path[0] == '\0') {
-            continue;
-        }
         {
-            Theron_V1Track02RawMediaIntakeReceipt intake;
-            int versionIndex;
-            M12_AssetVersionStatus* version;
-            size_t requiredIndex;
-            if (!theron_v1_track02_raw_media_intake_discover(media.cue_path,
-                                                              &intake) ||
-                intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY) {
-                continue;
-            }
-            versionIndex = m12_theron_version_index_for_md5(intake.track02_md5);
-            if (versionIndex < 0 ||
-                (size_t)versionIndex >= M12_ASSET_MAX_VERSIONS_PER_GAME) {
-                continue;
-            }
-            version = &status->versions[gameIndex][versionIndex];
-            if (version->matched) continue;
-            version->matched = 1;
-            m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
-                            intake.payload_path);
-            m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
-                            intake.track02_md5);
-            for (requiredIndex = 0U;
-                 requiredIndex < status->requiredFileCounts[gameIndex];
-                 ++requiredIndex) {
-                M12_AssetRequiredFileStatus* required =
-                    &status->requiredFiles[gameIndex][requiredIndex];
-                if (required->roleId && strcmp(required->roleId, "track02") == 0 &&
-                    !required->matched) {
-                    required->matched = 1;
-                    m12_copy_string(required->matchedPath,
-                                    sizeof(required->matchedPath),
-                                    intake.payload_path);
-                    m12_copy_string(required->matchedHash,
-                                    sizeof(required->matchedHash),
-                                    intake.track02_md5);
-                    break;
+            char cuePaths[64][FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+            int cueCount = FirestaffTheronMedia_CollectCuePaths(
+                roots[rootIndex], cuePaths, (int)(sizeof(cuePaths) / sizeof(cuePaths[0])));
+            int cueIndex;
+            for (cueIndex = 0; cueIndex < cueCount; ++cueIndex) {
+                Theron_V1Track02RawMediaIntakeReceipt intake;
+                int versionIndex;
+                M12_AssetVersionStatus* version;
+                size_t requiredIndex;
+                if (!theron_v1_track02_raw_media_intake_discover(
+                        cuePaths[cueIndex], &intake) ||
+                    intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY) {
+                    continue;
                 }
+                versionIndex = m12_theron_version_index_for_md5(intake.track02_md5);
+                if (versionIndex < 0 ||
+                    (size_t)versionIndex >= M12_ASSET_MAX_VERSIONS_PER_GAME) {
+                    continue;
+                }
+                version = &status->versions[gameIndex][versionIndex];
+                if (version->matched) continue;
+                version->matched = 1;
+                m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                                intake.payload_path);
+                m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
+                                intake.track02_md5);
+                for (requiredIndex = 0U;
+                     requiredIndex < status->requiredFileCounts[gameIndex];
+                     ++requiredIndex) {
+                    M12_AssetRequiredFileStatus* required =
+                        &status->requiredFiles[gameIndex][requiredIndex];
+                    if (required->roleId &&
+                        strcmp(required->roleId, "track02") == 0 &&
+                        !required->matched) {
+                        required->matched = 1;
+                        m12_copy_string(required->matchedPath,
+                                        sizeof(required->matchedPath),
+                                        intake.payload_path);
+                        m12_copy_string(required->matchedHash,
+                                        sizeof(required->matchedHash),
+                                        intake.track02_md5);
+                        break;
+                    }
+                }
+                status->originalFileCandidateFound = 1;
+                (void)m12_materialize_runtime_cache_for_game(status, gameIndex);
+                m12_apply_required_game_availability(status, gameIndex, 1);
             }
-            status->originalFileCandidateFound = 1;
-            (void)m12_materialize_runtime_cache_for_game(status, gameIndex);
-            m12_apply_required_game_availability(status, gameIndex, 1);
         }
     }
 }

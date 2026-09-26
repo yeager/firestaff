@@ -83,6 +83,13 @@ int FirestaffTheronMedia_ClassifyZip(const char* zip_path,
 int FirestaffTheronMedia_ClassifyDirectory(const char* root,
                                            FirestaffTheronMediaStatus* status);
 
+/* Collect every readable strict CUE Track 02 declaration below one directory
+ * (bounded to the same depth/file budget as directory classification). */
+int FirestaffTheronMedia_CollectCuePaths(
+    const char* root,
+    char cuePaths[][FIRESTAFF_THERON_MEDIA_PATH_CAPACITY],
+    int maxCuePaths);
+
 /* Finds a strict CUE Track 01 AUDIO + Track 02 MODE1 pair whose
  * canonical Track 02 path is exactly the already hash-verified payload.
  * This is provenance matching, not filename-based discovery or extraction. */
