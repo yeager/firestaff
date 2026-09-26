@@ -10376,7 +10376,7 @@ set_tests_properties(theron_v2_touch_runtime_probe PROPERTIES
 # widget-assets gate pattern (dm2_v2_hud_widget_assets_pc34) but for
 # Theron-specific slots (compass_rose, quest_items, dungeon_progress,
 # relic_counter, rune_indicator, champion_bars, action_strip). Synthetic
-# manifests under /tmp/scratch exercise NO_MANIFEST / PLACEHOLDER /
+# manifests in a private build-tree temp directory exercise NO_MANIFEST /
 # PARTIAL / COMPLETE gate states. Source-lock: THQUEST.ASM T520/T560/
 # T600/T700/T800/T900 + HuC6260/HuC6270 + ReDMCSB PANEL.C F0354 +
 # DUNGEON.C F0260 + dmweb Theron overview + sibling DM2 widget assets.
@@ -10396,10 +10396,11 @@ endif()
 add_test(
     NAME firestaff_theron_v2_hud_widget_assets_probe
     COMMAND firestaff_theron_v2_hud_widget_assets_probe
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 set_tests_properties(firestaff_theron_v2_hud_widget_assets_probe PROPERTIES
     LABELS "tier2;theron;v2;phase3;hud;widget-assets;presentation-only"
+    ENVIRONMENT "FIRESTAFF_TEST_TEMP_DIR=${CMAKE_BINARY_DIR}"
     RESOURCE_LOCK "theron_v2_hud_widget_assets_manifest"
 )
 
@@ -30854,6 +30855,8 @@ endif()
     )
     set_tests_properties(theron_v2_hud_widget_assets_pc34 PROPERTIES
         RESOURCE_LOCK "theron_v2_hud_widget_assets_manifest"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        ENVIRONMENT "FIRESTAFF_TEST_TEMP_DIR=${CMAKE_BINARY_DIR}"
     )
 
     # ── Theron V2 Phase 0/1 probe ctest entries ──────────────────

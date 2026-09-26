@@ -41,6 +41,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -48,6 +50,49 @@
 
 static int s_pass = 0;
 static int s_fail = 0;
+static char s_scratch[1024];
+static char s_data_dir[1200];
+
+#define DATA_DIR s_data_dir
+
+static int remove_owned_tree(const char* path) {
+    DIR* dir = opendir(path);
+    if (!dir) return errno == ENOENT;
+    struct dirent* entry;
+    int ok = 1;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        char child[1400];
+        int n = snprintf(child, sizeof(child), "%s/%s", path, entry->d_name);
+        if (n < 0 || (size_t)n >= sizeof(child)) { ok = 0; continue; }
+        struct stat st;
+        if (lstat(child, &st) != 0) { ok = 0; continue; }
+        if (S_ISDIR(st.st_mode)) ok = remove_owned_tree(child) && ok;
+        else if (unlink(child) != 0) ok = 0;
+    }
+    if (closedir(dir) != 0) ok = 0;
+    if (rmdir(path) != 0) ok = 0;
+    return ok;
+}
+
+static int make_dir(const char* path) {
+    return mkdir(path, 0700) == 0 || errno == EEXIST;
+}
+
+static int make_dirs(const char* path) {
+    char copy[1400];
+    size_t len = strlen(path);
+    if (len >= sizeof(copy)) return 0;
+    memcpy(copy, path, len + 1U);
+    for (char* p = copy + 1; *p; ++p) {
+        if (*p == '/') {
+            *p = '\0';
+            if (!make_dir(copy)) return 0;
+            *p = '/';
+        }
+    }
+    return make_dir(copy);
+}
 
 #define CHECK(expr, msg)                                                  \
     do {                                                                  \
@@ -90,14 +135,25 @@ static void build_expected_manifest_path(char* out, size_t outSize,
     snprintf(out, outSize, "%s/assets/theron/hud/hud_widget_manifest.json", b);
 }
 
-/* Helper: clean a scratch dir before each scenario. We also remove
- * the asset tree the module looks at (~/.firestaff/assets/theron/hud/…)
- * so that running the test suite twice in a row produces identical
- * results — the all-REAL and other tests write files there that
- * would otherwise leak across runs. */
+/* Replace only this test's private scratch directory before each scenario. */
 static void clean_scratch(void) {
-    system("rm -rf /tmp/scratch/theron_hwa_test");
-    system("rm -rf /tmp/scratch/assets /tmp/scratch/firestaff-data");
+    if (s_scratch[0]) remove_owned_tree(s_scratch);
+    char template_path[1200];
+    const char* base = getenv("FIRESTAFF_TEST_TEMP_DIR");
+    if (!base || !base[0]) base = ".";
+    int n = snprintf(template_path, sizeof(template_path), "%s/theron-hwa-test-XXXXXX", base);
+    if (n < 0 || (size_t)n >= sizeof(template_path) || !mkdtemp(template_path)) {
+        fprintf(stderr, "unable to create private Theron test directory\n");
+        s_fail++;
+        s_scratch[0] = '\0';
+        return;
+    }
+    snprintf(s_scratch, sizeof(s_scratch), "%s", template_path);
+    snprintf(s_data_dir, sizeof(s_data_dir), "%s/firestaff-data/theron", s_scratch);
+    char data_root[1400];
+    snprintf(data_root, sizeof(data_root), "%s/firestaff-data", s_scratch);
+    make_dir(data_root);
+    make_dir(s_data_dir);
 }
 
 /* ── Tests ──────────────────────────────────────────────────────── */
@@ -129,18 +185,21 @@ static void test_unset_path_is_safe(void) {
 }
 
 static void test_set_path_resolves_correctly(void) {
-    theron_v2_hud_widget_assets_set_manifest_path("/tmp/scratch/firestaff-data/theron");
+    theron_v2_hud_widget_assets_set_manifest_path(DATA_DIR);
     char expected[1024];
     build_expected_manifest_path(expected, sizeof(expected),
-                                  "/tmp/scratch/firestaff-data/theron");
+                                  DATA_DIR);
     const char* actual = theron_v2_hud_widget_assets_get_manifest_path();
     CHECK(actual && strcmp(actual, expected) == 0,
           "manifest path resolves correctly under assets/theron/hud/");
 }
 
 static void test_missing_manifest_file_yields_no_manifest(void) {
-    clean_scratch();
-    theron_v2_hud_widget_assets_set_manifest_path("/tmp/scratch/firestaff-data/theron");
+    if (s_scratch[0]) {
+        remove_owned_tree(s_scratch);
+        s_scratch[0] = '\0';
+    }
+    theron_v2_hud_widget_assets_set_manifest_path(DATA_DIR);
     /* Don't actually create the manifest path */
     Theron_V2_HudWidgetGate gate = theron_v2_hud_widget_assets_gate();
     CHECK(gate == THERON_V2_HUD_WIDGET_GATE_NO_MANIFEST,
@@ -156,15 +215,13 @@ static void test_missing_manifest_file_yields_no_manifest(void) {
 static void test_empty_manifest_yields_placeholder_gate(void) {
     clean_scratch();
     /* Build the directory structure the module looks for. */
-    const char* dataDir = "/tmp/scratch/firestaff-data/theron";
+    const char* dataDir = DATA_DIR;
     char manifest[1024];
     build_expected_manifest_path(manifest, sizeof(manifest), dataDir);
     /* Strip filename to get the parent dir. */
     char* slash = strrchr(manifest, '/');
     if (slash) *slash = '\0';
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", manifest);
-    CHECK(system(mkdir_cmd) == 0, "mkdir hud dir");
+    CHECK(make_dirs(manifest), "mkdir hud dir");
     /* Write empty manifest */
     char manifest_path[1024];
     snprintf(manifest_path, sizeof(manifest_path),
@@ -188,14 +245,12 @@ static void test_empty_manifest_yields_placeholder_gate(void) {
 
 static void test_placeholder_slot_classifies_as_placeholder(void) {
     clean_scratch();
-    const char* dataDir = "/tmp/scratch/firestaff-data/theron";
+    const char* dataDir = DATA_DIR;
     char manifest_path[1024];
     char pdir[1024];
     build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
     snprintf(pdir, sizeof(pdir), "%s/../../assets/theron/hud", dataDir);
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", pdir);
-    system(mkdir_cmd);
+    CHECK(make_dirs(pdir), "mkdir placeholder asset dir");
 
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"theron-hwa-test\","
@@ -238,7 +293,7 @@ static void test_placeholder_slot_classifies_as_placeholder(void) {
 
 static void test_real_slot_classifies_as_real(void) {
     clean_scratch();
-    const char* dataDir = "/tmp/scratch/firestaff-data/theron";
+    const char* dataDir = DATA_DIR;
     char manifest_path[1024];
     build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
 
@@ -251,10 +306,7 @@ static void test_real_slot_classifies_as_real(void) {
              "%s/../../assets/theron/hud/hud_widgets", dataDir);
     snprintf(chrome_dir, sizeof(chrome_dir),
              "%s/../../assets/theron/hud/hud_chrome", dataDir);
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s' '%s'",
-             widgets_dir, chrome_dir);
-    system(mkdir_cmd);
+    CHECK(make_dirs(widgets_dir) && make_dirs(chrome_dir), "mkdir asset dirs");
 
     /* Create the actual file on disk so source_file resolves. */
     char real_file[1024];
@@ -327,7 +379,7 @@ static void test_real_slot_classifies_as_real(void) {
 
 static void test_mixed_manifest_yields_partial_gate(void) {
     clean_scratch();
-    const char* dataDir = "/tmp/scratch/firestaff-data/theron";
+    const char* dataDir = DATA_DIR;
     char manifest_path[1024];
     build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
 
@@ -337,10 +389,7 @@ static void test_mixed_manifest_yields_partial_gate(void) {
              "%s/../../assets/theron/hud/hud_widgets", dataDir);
     snprintf(chrome_dir, sizeof(chrome_dir),
              "%s/../../assets/theron/hud/hud_chrome", dataDir);
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s' '%s'",
-             widgets_dir, chrome_dir);
-    system(mkdir_cmd);
+    CHECK(make_dirs(widgets_dir) && make_dirs(chrome_dir), "mkdir asset dirs");
 
     /* One REAL (compass_rose with file on disk), one PLACEHOLDER,
      * remaining declared but invalid → PARTIAL. */
@@ -386,15 +435,13 @@ static void test_mixed_manifest_yields_partial_gate(void) {
 
 static void test_partial_source_file_missing(void) {
     clean_scratch();
-    const char* dataDir = "/tmp/scratch/firestaff-data/theron";
+    const char* dataDir = DATA_DIR;
     char manifest_path[1024];
     build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
     char widgets_dir[1024];
     snprintf(widgets_dir, sizeof(widgets_dir),
              "%s/../../assets/theron/hud/hud_widgets", dataDir);
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", widgets_dir);
-    system(mkdir_cmd);
+    CHECK(make_dirs(widgets_dir), "mkdir widget asset dir");
 
     /* All fields present, but source_file does NOT exist on disk →
      * PARTIAL classification. */
@@ -415,15 +462,13 @@ static void test_partial_source_file_missing(void) {
 
 static void test_slot_info_populates_fields(void) {
     clean_scratch();
-    const char* dataDir = "/tmp/scratch/firestaff-data/theron";
+    const char* dataDir = DATA_DIR;
     char manifest_path[1024];
     build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
     char widgets_dir[1024];
     snprintf(widgets_dir, sizeof(widgets_dir),
              "%s/../../assets/theron/hud/hud_widgets", dataDir);
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", widgets_dir);
-    system(mkdir_cmd);
+    CHECK(make_dirs(widgets_dir), "mkdir widget asset dir");
 
     char real_file[1024];
     snprintf(real_file, sizeof(real_file), "%s/compass_rose.png", widgets_dir);
@@ -574,6 +619,8 @@ static void test_source_evidence_citations(void) {
 int main(void) {
     printf("=== Theron V2 HUD Widget Asset Manifest gate ===\n\n");
 
+    clean_scratch();
+
     test_unset_path_is_safe();
     test_set_path_resolves_correctly();
     test_missing_manifest_file_yields_no_manifest();
@@ -587,7 +634,10 @@ int main(void) {
     test_out_of_range_inputs_safe();
     test_source_evidence_citations();
 
-    clean_scratch();
+    if (s_scratch[0]) {
+        remove_owned_tree(s_scratch);
+        s_scratch[0] = '\0';
+    }
     theron_v2_hud_widget_assets_set_manifest_path(NULL);
 
     printf("\n=== Results: %d passed, %d failed ===\n", s_pass, s_fail);

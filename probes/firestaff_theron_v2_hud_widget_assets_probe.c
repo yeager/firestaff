@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -63,6 +64,11 @@ static int write_file(const char* path, const char* content) {
     size_t w = fwrite(content, 1, strlen(content), fp);
     fclose(fp);
     return w == strlen(content);
+}
+
+static int make_dir(const char *path) {
+    if (mkdir(path, 0700) == 0) return 1;
+    return errno == EEXIST;
 }
 
 /* Helper: build expected manifest path. */
@@ -94,6 +100,54 @@ static void expected_manifest_path(char* out, size_t outSize,
 int main(void) {
     printf("=== Theron V2 HUD Widget Asset Gate probe ===\n");
 
+    const char *temp_root = getenv("FIRESTAFF_TEST_TEMP_DIR");
+    char scratch_template[1024];
+    char scratch_root[1024];
+    char data_root[1024];
+    char data_dir[1024];
+    char assets_root[1024];
+    char assets_theron[1024];
+    char resolved_mdir[1024];
+    char manifest_file[1024];
+    char widget_dir[1024];
+    char chrome_dir[1024];
+    if (!temp_root || !temp_root[0]) temp_root = ".";
+    if (snprintf(scratch_template, sizeof(scratch_template),
+                 "%s/firestaff-theron-hwa-probe-XXXXXX", temp_root) >=
+        (int)sizeof(scratch_template)) {
+        fprintf(stderr, "FAIL: test temporary path is too long\n");
+        return 1;
+    }
+    char *created_scratch = mkdtemp(scratch_template);
+    if (!created_scratch) {
+        perror("FAIL: could not create private Theron HUD probe directory");
+        return 1;
+    }
+    snprintf(scratch_root, sizeof(scratch_root), "%s", created_scratch);
+    if (snprintf(data_root, sizeof(data_root), "%s/firestaff-data",
+                 scratch_root) >= (int)sizeof(data_root) ||
+        snprintf(data_dir, sizeof(data_dir), "%s/theron", data_root) >=
+            (int)sizeof(data_dir) ||
+        snprintf(assets_root, sizeof(assets_root), "%s/assets", scratch_root) >=
+            (int)sizeof(assets_root) ||
+        snprintf(assets_theron, sizeof(assets_theron), "%s/theron",
+                 assets_root) >= (int)sizeof(assets_theron) ||
+        snprintf(resolved_mdir, sizeof(resolved_mdir), "%s/hud",
+                 assets_theron) >= (int)sizeof(resolved_mdir) ||
+        snprintf(manifest_file, sizeof(manifest_file),
+                 "%s/hud_widget_manifest.json", resolved_mdir) >=
+            (int)sizeof(manifest_file) ||
+        snprintf(widget_dir, sizeof(widget_dir), "%s/hud_widgets",
+                 resolved_mdir) >= (int)sizeof(widget_dir) ||
+        snprintf(chrome_dir, sizeof(chrome_dir), "%s/hud_chrome",
+                 resolved_mdir) >= (int)sizeof(chrome_dir) ||
+        !make_dir(data_root) || !make_dir(data_dir) ||
+        !make_dir(assets_root) || !make_dir(assets_theron) ||
+        !make_dir(resolved_mdir)) {
+        fprintf(stderr, "FAIL: could not initialize private probe directories\n");
+        return 1;
+    }
+
     /* ── Scenario 1: unset path ───────────────────────────────────── */
     printf("\n[ Scenario 1: unset manifest path ]\n");
     theron_v2_hud_widget_assets_set_manifest_path(NULL);
@@ -121,17 +175,11 @@ int main(void) {
 
     /* ── Scenario 2: set path but no manifest file ───────────────── */
     printf("\n[ Scenario 2: set path, file missing ]\n");
-    /* Wipe any leftover scratch so this scenario really starts with
-     * no manifest file. The earlier Scenario 1 may have left g_state,
-     * and previous test runs may have left the asset tree. */
-    system("rm -rf /tmp/scratch/theron_hwa_probe");
-    system("rm -rf /tmp/scratch/assets /tmp/scratch/firestaff-data");
-    system("mkdir -p /tmp/scratch/firestaff-data/theron");
-    theron_v2_hud_widget_assets_set_manifest_path(
-        "/tmp/scratch/firestaff-data/theron");
+    /* The private mkdtemp tree is fresh, so this path has no manifest and
+     * cannot overlap another test or the user's game-data directories. */
+    theron_v2_hud_widget_assets_set_manifest_path(data_dir);
     char mpath[1024];
-    expected_manifest_path(mpath, sizeof(mpath),
-                            "/tmp/scratch/firestaff-data/theron");
+    expected_manifest_path(mpath, sizeof(mpath), data_dir);
     /* Verify path resolved to the expected location */
     const char* got = theron_v2_hud_widget_assets_get_manifest_path();
     check("manifest path matches expected (assets/theron/hud/...)",
@@ -146,26 +194,6 @@ int main(void) {
     printf("\n[ Scenario 3: empty manifest ]\n");
     /* Walk up two parents from dataDir to land on the resolved
      * manifest's parent directory. */
-    char resolved_mdir[1024];
-    {
-        const char* dd = "/tmp/scratch/firestaff-data/theron";
-        char a[1024], b[1024];
-        const char* slash = strrchr(dd, '/');
-        size_t la = (size_t)(slash - dd);
-        if (la >= sizeof(a)) la = sizeof(a) - 1U;
-        memcpy(a, dd, la); a[la] = '\0';
-        slash = strrchr(a, '/');
-        size_t lb = (size_t)(slash - a);
-        if (lb >= sizeof(b)) lb = sizeof(b) - 1U;
-        memcpy(b, a, lb); b[lb] = '\0';
-        snprintf(resolved_mdir, sizeof(resolved_mdir), "%s/assets/theron/hud", b);
-    }
-    char mkdir_cmd[1100];
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", resolved_mdir);
-    system(mkdir_cmd);
-    char manifest_file[1024];
-    snprintf(manifest_file, sizeof(manifest_file), "%s/hud_widget_manifest.json",
-             resolved_mdir);
     check("wrote empty manifest", write_file(manifest_file, "{}"));
     check("empty manifest → PLACEHOLDER gate",
           theron_v2_hud_widget_assets_gate() ==
@@ -211,10 +239,7 @@ int main(void) {
     /* ── Scenario 5: PARTIAL gate (some real, some placeholder) ───── */
     printf("\n[ Scenario 5: PARTIAL gate ]\n");
     /* Create the real asset file so source_file resolves */
-    char widget_dir[1024];
-    snprintf(widget_dir, sizeof(widget_dir), "%s/hud_widgets", resolved_mdir);
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", widget_dir);
-    system(mkdir_cmd);
+    check("created private widget directory", make_dir(widget_dir));
     char real_file[1024];
     snprintf(real_file, sizeof(real_file),
              "%s/compass_rose.png", widget_dir);
@@ -258,10 +283,7 @@ int main(void) {
     /* Create both category directories. Theron slots 0..4 are in
      * hud_widgets/, slots 5..6 in hud_chrome/ — matching the
      * k_slot_table categorisation that drives source_file resolution. */
-    char chrome_dir[1024];
-    snprintf(chrome_dir, sizeof(chrome_dir), "%s/hud_chrome", resolved_mdir);
-    snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", chrome_dir);
-    system(mkdir_cmd);
+    check("created private chrome directory", make_dir(chrome_dir));
     /* Create all 7 source files on disk — slots 0..4 in hud_widgets/,
      * slots 5..6 in hud_chrome/. */
     for (size_t i = 0; i < THERON_V2_HUD_WIDGET_COUNT; ++i) {
@@ -397,9 +419,28 @@ int main(void) {
     check("source_evidence mentions sibling Theron V2.2 modern assets",
           ev != NULL && strstr(ev, "theron_v22_modern_assets") != NULL);
 
-    /* ── Clean up ──────────────────────────────────────────────────── */
-    system("rm -rf /tmp/scratch/theron_hwa_probe");
-    system("rm -rf /tmp/scratch/firestaff-data");
+    /* ── Clean up only files and directories owned by this probe. ── */
+    int cleanup_ok = unlink(manifest_file) == 0;
+    for (size_t i = 0u; i < THERON_V2_HUD_WIDGET_COUNT; ++i) {
+        char asset_file[1024];
+        const char *category = i <= 4u ? widget_dir : chrome_dir;
+        if (snprintf(asset_file, sizeof(asset_file), "%s/%s.png", category,
+                     theron_v2_hud_widget_assets_slot_name(
+                         (Theron_V2_HudWidgetSlot)i)) >=
+            (int)sizeof(asset_file) ||
+            (unlink(asset_file) != 0 && errno != ENOENT)) {
+            cleanup_ok = 0;
+        }
+    }
+    cleanup_ok = (rmdir(widget_dir) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(chrome_dir) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(resolved_mdir) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(assets_theron) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(assets_root) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(data_dir) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(data_root) == 0) && cleanup_ok;
+    cleanup_ok = (rmdir(scratch_root) == 0) && cleanup_ok;
+    check("removed only this probe's private temporary tree", cleanup_ok);
     theron_v2_hud_widget_assets_set_manifest_path(NULL);
 
     printf("\n=== Results: %d passed, %d failed ===\n", s_pass, s_fail);
