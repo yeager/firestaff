@@ -53,6 +53,9 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+bash "$(dirname "${BASH_SOURCE[0]}")/verify_dm1_atari_first_hall_handoff.sh" \
+    "$app" "$archive" 'German v1.2'
+
 # Follow the same normal M12 -> M11 title/entrance handoff as the English
 # Atari ST v1.2 route, confirm the authentic Hall choice, then exercise input.
 case "$app" in

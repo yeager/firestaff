@@ -234,8 +234,9 @@
   ordinary Thing-chain F0267 helper's rejection of PARTY/GROUP does not apply
   to that branch. A local read of the authentic English ST 1.2 STX, normalized
   using MEDIA240's Motorola word order and loaded through F0882, reports C04 at
-  that initial square. Remaining evidence must show the actual campaign-square
-  sensor effects and the same fresh-start receipt across Atari ST editions.
+  that initial square. The fresh-start receipt and party tuple now pass on all
+  six authenticated Atari ST editions. Remaining evidence must trace the
+  actual campaign-square sensor effects through the source-owned startup path.
   Do not invent champions or treat the partial floor view as complete visual
   parity.
   ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435, then calls F0462 and
