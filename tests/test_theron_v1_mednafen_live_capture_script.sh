@@ -63,6 +63,13 @@ if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
     printf 'FAIL: live capture must support the authenticated Japanese CUE/ISO route\n' >&2
     exit 1
 fi
+if ! grep -Fq 'capture_clonecd_track02=0' "$script" ||
+   ! grep -Fq 'clonecd_start" == 3234' "$script" ||
+   ! grep -Fq 'clonecd_count" == 3371' "$script" ||
+   ! grep -Fq '168bd6a63784e91885df8c47be62ab5a' "$script"; then
+    printf '%s\n' 'FAIL: live capture must authenticate the bounded US CloneCD Track 02 range' >&2
+    exit 1
+fi
 if ! grep -Fq 'capture_force_kill_seconds=5' "$script" ||
    ! grep -Fq 'gtimeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal"' "$script" ||
    ! grep -Fq 'timeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal"' "$script"; then

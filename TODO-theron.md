@@ -3517,6 +3517,19 @@ av bankladdningen. Se
   and bind any accepted LBA interval to the authenticated disc TOC before
   adding playback behavior. The trv2 work ran in isolated build/capture roots;
   do not modify another agent's shared checkout.
+- ✅ The live capture now also admits the authentic US CloneCD single-BIN CUE
+  without rewriting its media: it bounds Track 02 from CUE `INDEX 01` sector
+  3234 to the next track at sector 6605, extracts only that range in its
+  disposable capture home, and verifies MD5
+  `168bd6a63784e91885df8c47be62ab5a` before Mednafen starts. A real US capture
+  on trv2 recorded that Track 02 identity, authentic System Card MD5
+  `ff1a674273fe3540ccef576376407d1d`, 25 raw-sector spans, four SCSI reads and
+  115 CD IRQ callbacks. It still produced no authenticated CD-to-RAM receipt,
+  no `$E009` data reads, and no dungeon transition; no gameplay CDDA command
+  was observed. Preserve the fail-closed boundary; this capture proves the
+  real CUE/BIN intake and sector provenance only, not gameplay progression.
+  Trace artifacts remain private on trv2 under
+  `firestaff-theron-evidence/capture/us-clonecd-cdda-command-range-20260926-0826.trace*`.
 - ✅ Independently validated the existing Track 01 handoff against the
   authentic full Japanese 7z disc: its CUE declares 19 tracks, Track 01 is
   7,916,832 bytes of AUDIO, and Track 02 is MODE1/2352 at 8,102,640 bytes.

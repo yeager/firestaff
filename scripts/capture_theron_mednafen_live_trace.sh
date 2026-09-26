@@ -203,17 +203,17 @@ if [[ "$track02_mode" != 'MODE1/2352' && "$track02_mode" != 'MODE1/2048' ]]; the
     exit 1
 fi
 track02_member=$(awk '
-    /^FILE "/ {
-        line = $0
-        sub(/^FILE "/, "", line)
-        sub(/" BINARY[[:space:]]*$/, "", line)
-        file = line
-        next
-    }
-    /^[[:space:]]*FILE[[:space:]]+[^\"]+[[:space:]]+BINARY[[:space:]]*$/ {
+    BEGIN { quote = sprintf("%c", 34) }
+    /^[[:space:]]*FILE[[:space:]]+/ {
         line = $0
         sub(/^[[:space:]]*FILE[[:space:]]+/, "", line)
-        sub(/[[:space:]]+BINARY[[:space:]]*$/, "", line)
+        if (substr(line, 1, 1) == quote) {
+            line = substr(line, 2)
+            sub(/[[:space:]]+(BINARY|WAVE)[[:space:]]*$/, "", line)
+            sub(quote "$", "", line)
+        } else {
+            sub(/[[:space:]]+(BINARY|WAVE)[[:space:]]*$/, "", line)
+        }
         file = line
         next
     }
@@ -227,6 +227,58 @@ if [[ -z "$track02_member" || "$track02_member" == */* || "$track02_member" == *
     exit 1
 fi
 track02_path="$(dirname -- "$cue")/$track02_member"
+capture_clonecd_track02=0
+clonecd_start=
+clonecd_count=
+if [[ "$track02_mode" == 'MODE1/2352' && -f "$track02_path" ]]; then
+    # The authentic US CloneCD cue stores all tracks in one BIN. Accept only
+    # the known Track 02 span, bounded by Track 02 INDEX 01 and the next track's
+    # INDEX 01 in the same source file.
+    clonecd_range=$(awk '
+        BEGIN { quote = sprintf("%c", 34) }
+        /^[[:space:]]*FILE[[:space:]]+/ {
+            line = $0
+            sub(/^[[:space:]]*FILE[[:space:]]+/, "", line)
+            if (substr(line, 1, 1) == quote) {
+                line = substr(line, 2)
+                sub(/[[:space:]]+(BINARY|WAVE)[[:space:]]*$/, "", line)
+                sub(quote "$", "", line)
+            } else {
+                sub(/[[:space:]]+(BINARY|WAVE)[[:space:]]*$/, "", line)
+            }
+            current_file = line
+            if (expect_next_track02_index && current_file != track02_file) invalid_range = 1
+        }
+        /^[[:space:]]*TRACK[[:space:]]+/ {
+            if ($2 == "02" && $3 == "MODE1/2352") {
+                track02_file = current_file
+                in_track02 = 1
+            } else if (in_track02) {
+                in_track02 = 0
+                expect_next_track02_index = 1
+            } else if (expect_next_track02_index) {
+                invalid_range = 1
+            }
+        }
+        /^[[:space:]]*INDEX[[:space:]]+01[[:space:]]+[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/ {
+            split($3, time, ":")
+            sector = (time[1] * 60 + time[2]) * 75 + time[3]
+            if (in_track02 && current_file == track02_file && !have_start) {
+                start = sector
+                have_start = 1
+            } else if (expect_next_track02_index && have_start && !have_end && current_file == track02_file) {
+                end = sector
+                have_end = 1
+                expect_next_track02_index = 0
+            }
+        }
+        END { if (!invalid_range && have_start && have_end && end > start) print start, end - start }
+    ' "$cue")
+    read -r clonecd_start clonecd_count <<<"$clonecd_range"
+    if [[ "$clonecd_start" == 3234 && "$clonecd_count" == 3371 ]]; then
+        capture_clonecd_track02=1
+    fi
+fi
 capture_cue="$cue"
 capture_cue_needs_split_iso=0
 capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso"
@@ -268,10 +320,13 @@ system_card_md5=$(md5_file "$system_card") || {
     printf '%s\n' 'FAIL: md5 or md5sum is required for authentic media capture' >&2
     exit 1
 }
-track02_md5=$(md5_file "$track02_path") || {
-    printf '%s\n' 'FAIL: could not hash CUE TRACK 02 payload' >&2
-    exit 1
-}
+track02_md5=unverified
+if [[ "$capture_clonecd_track02" == 0 ]]; then
+    track02_md5=$(md5_file "$track02_path") || {
+        printf '%s\n' 'FAIL: could not hash CUE TRACK 02 payload' >&2
+        exit 1
+    }
+fi
 mednafen_binary_md5=$(md5_file "$mednafen_bin") || {
     printf '%s\n' 'FAIL: could not hash the instrumented Mednafen binary' >&2
     exit 1
@@ -279,26 +334,6 @@ mednafen_binary_md5=$(md5_file "$mednafen_bin") || {
 if [[ "$system_card_md5" != ff1a674273fe3540ccef576376407d1d ]]; then
     printf '%s\n' 'FAIL: System Card 3.0 MD5 mismatch' >&2
     exit 1
-fi
-if [[ "$track02_mode" == 'MODE1/2352' ]]; then
-    case "$track02_md5" in
-        b7afb338ad31be1025b53f9aff12d73a|f23601102138f87c33025877767ebf76) ;;
-        *)
-            printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US raw BIN' >&2
-            exit 1
-            ;;
-    esac
-else
-    # The retail CUE sheets also carry a MODE1/2048 data track. These are the
-    # complete canonical ISO identities admitted by the runtime intake; they
-    # are not interchangeable with the raw BIN identities above.
-    case "$track02_md5" in
-        397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da) ;;
-        *)
-            printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US ISO' >&2
-            exit 1
-            ;;
-    esac
 fi
 if [[ ! "$seconds" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SECONDS must be a positive integer' >&2
@@ -822,6 +857,41 @@ mkdir -p "$trace_dir" "$capture_scratch_root"
 rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
+if [[ "$capture_clonecd_track02" == 1 ]]; then
+    track02_hash_path="$home_dir/theron-track02-clonecd.raw"
+    if ! dd if="$track02_path" of="$track02_hash_path" bs=2352 skip="$clonecd_start" count="$clonecd_count" 2>/dev/null; then
+        printf '%s\n' 'FAIL: could not isolate US CloneCD Track 02 range' >&2
+        exit 1
+    fi
+    track02_md5=$(md5_file "$track02_hash_path") || {
+        printf '%s\n' 'FAIL: could not hash isolated US CloneCD Track 02 range' >&2
+        exit 1
+    }
+    if [[ "$track02_md5" != 168bd6a63784e91885df8c47be62ab5a ]]; then
+        printf '%s\n' 'FAIL: US CloneCD Track 02 range does not match its authenticated identity' >&2
+        exit 1
+    fi
+fi
+if [[ "$track02_mode" == 'MODE1/2352' ]]; then
+    case "$track02_md5" in
+        b7afb338ad31be1025b53f9aff12d73a|f23601102138f87c33025877767ebf76|168bd6a63784e91885df8c47be62ab5a) ;;
+        *)
+            printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US raw BIN' >&2
+            exit 1
+            ;;
+    esac
+else
+    # The retail CUE sheets also carry a MODE1/2048 data track. These are the
+    # complete canonical ISO identities admitted by the runtime intake; they
+    # are not interchangeable with the raw BIN identities above.
+    case "$track02_md5" in
+        397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da) ;;
+        *)
+            printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US ISO' >&2
+            exit 1
+            ;;
+    esac
+fi
 if [[ -n "$configured_home" ]]; then
     # The configured home is an input-map template, never the live capture
     # home. A private copy prevents an interrupted or concurrent capture from
