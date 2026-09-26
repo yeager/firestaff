@@ -511,9 +511,6 @@ int main(void) {
         }
     }
 
-    free(champion_buffer);
-    free(champion_read);
-
     /* ── 8. Cross-check: enum + verify + load-from-slot produces
      *      exactly one valid entry on the same slot. */
     {
@@ -541,6 +538,9 @@ int main(void) {
         expect_true(theron_v1_save_verify_slot(temp_dir, 5) == 0,
                     "rejected malformed save does not create a slot");
     }
+
+    free(champion_buffer);
+    free(champion_read);
 
     /* ── 9. Re-save (overwrite) round-trip: a second save with new
      *      progress must replace the old slot's champion data and
