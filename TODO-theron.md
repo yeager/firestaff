@@ -3530,6 +3530,14 @@ av bankladdningen. Se
   real CUE/BIN intake and sector provenance only, not gameplay progression.
   Trace artifacts remain private on trv2 under
   `firestaff-theron-evidence/capture/us-clonecd-cdda-command-range-20260926-0826.trace*`.
+- 🔒 A follow-up loaded the authentic post-Akutuba Mednafen state
+  (`f17f377df210b4a3ae904a13fb85a7f0`) with the same US CloneCD CUE and replayed
+  `i, up, run, i, ii, left, right`. The state-load receipt matches its source
+  hash, but the session produced only one CD IRQ and zero command-RAM or
+  command-input-buffer writes. This replay did not deliver a gameplay command
+  and therefore adds no negative evidence about gameplay CDDA. Its trace bundle
+  remains private on trv2 under
+  `firestaff-theron-evidence/capture/us-clonecd-authentic-state-cdda-20260926.trace*`.
 - ✅ Independently validated the existing Track 01 handoff against the
   authentic full Japanese 7z disc: its CUE declares 19 tracks, Track 01 is
   7,916,832 bytes of AUDIO, and Track 02 is MODE1/2352 at 8,102,640 bytes.
