@@ -86,6 +86,16 @@ if(BUILD_TESTING AND
         COMMAND test_theron_v1_track02_quest_item_names)
     set_tests_properties(theron_v1_track02_quest_item_names PROPERTIES
         LABELS "theron;track02;real-data")
+    find_program(_THERON_BASH_EXECUTABLE NAMES bash)
+    if(_THERON_BASH_EXECUTABLE)
+        add_test(NAME theron_v1_track02_quest_item_names_us_clonecd
+            COMMAND "${_THERON_BASH_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_quest_item_names_clonecd.sh"
+                "$<TARGET_FILE:test_theron_v1_track02_quest_item_names>")
+        set_tests_properties(theron_v1_track02_quest_item_names_us_clonecd
+            PROPERTIES LABELS "theron;track02;real-data;clonecd"
+                       SKIP_RETURN_CODE 77)
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_text.c")

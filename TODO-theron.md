@@ -3913,10 +3913,12 @@ this is distinct from the authenticated combined-RAR title-audio path above.
 - ✅ Registered `theron_v1_track02_quest_item_names` with the `theron`,
   `track02`, and `real-data` CTest labels. Previously the test passed on the
   authentic US and JP Track 02 BINs but was absent from `ctest -L theron`.
-  The complete trv2 Theron selection now runs 69 tests: 61 passed, eight
-  configured capture/media-dependent skips, zero failures. The focused test
-  also passed all three authentic variants: US BIN, JP BIN, and US CloneCD.
-  For the latter, Track 02 was bounded by the original CUE indices 3234–6605,
-  written only into a temporary trv2 directory, and verified against MD5
-  `168bd6a63784e91885df8c47be62ab5a` before CTest ran. The source disc was
-  unchanged and the temporary slice was removed after the test.
+  A companion CTest now discovers the original US CloneCD CUE, checks its MD5,
+  slices only Track 02 between original CUE indices 3234–6605 in a disposable
+  build-directory temporary folder, then verifies the slice MD5
+  `168bd6a63784e91885df8c47be62ab5a` before running the same real-data test.
+  Missing media skips; mismatched CUE or slice bytes fail. The original disc
+  remains unchanged and the temporary slice is removed after the test. The
+  complete trv2 Theron selection now runs 70 tests: 62 passed, eight
+  configured capture/media-dependent skips, zero failures. US BIN, JP BIN,
+  and authentic US CloneCD quest-artifact name checks all passed.
