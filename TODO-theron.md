@@ -3914,6 +3914,9 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   `track02`, and `real-data` CTest labels. Previously the test passed on the
   authentic US and JP Track 02 BINs but was absent from `ctest -L theron`.
   The complete trv2 Theron selection now runs 69 tests: 61 passed, eight
-  configured capture/media-dependent skips, zero failures. The optional raw
-  US CloneCD Track 02 file is not staged as a standalone file on trv2, so that
-  optional third variant was not asserted; US BIN and JP BIN both passed.
+  configured capture/media-dependent skips, zero failures. The focused test
+  also passed all three authentic variants: US BIN, JP BIN, and US CloneCD.
+  For the latter, Track 02 was bounded by the original CUE indices 3234–6605,
+  written only into a temporary trv2 directory, and verified against MD5
+  `168bd6a63784e91885df8c47be62ab5a` before CTest ran. The source disc was
+  unchanged and the temporary slice was removed after the test.
