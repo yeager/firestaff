@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+- 2026-09-26: Extended the authentic Amiga v2.0 M12 New Game mouse route
+  through its normal IMG2 handoff to the first Hall runtime frame. The probe
+  requires the source startup handoff, a loaded runtime level, and the original
+  zero-champion pose at map 0 (1,3), facing south. Together with the separate
+  authentic Amiga M12 Quick Resume assertion, this covers both New Game and
+  saved-game start-menu paths. A playable campaign party remains unproven.
+
 - 2026-09-26: Extended the authentic FM Towns M12 mouse-launch regression
   beyond its launch receipt. Both English EDM and Japanese JDM now complete
   their original title and Entrance sequence through the ordinary launcher

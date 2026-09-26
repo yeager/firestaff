@@ -104,8 +104,9 @@ fi
 resume_probe_root=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$resume_probe_root"
 resume_probe="$resume_probe_root/dm1-amiga-save-menu-runtime-$$.json"
+menu_probe="$resume_probe_root/dm1-amiga-new-game-menu-runtime-$$.json"
 cleanup_resume_probe() {
-    rm -f "$resume_probe"
+    rm -f "$resume_probe" "$menu_probe"
 }
 trap cleanup_resume_probe EXIT HUP INT TERM
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
@@ -131,6 +132,36 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["gameTick"] != 292):
     raise SystemExit(f"FAIL: authentic DM1 Amiga M12 Quick Resume failed: {probe}")
 print("PASS: authentic DM1 Amiga M12 Quick Resume restored the saved runtime pose")
+PY
+
+# The New Game pointer route above currently stops at the launch receipt. Keep
+# M12 active through the native IMG2 handoff and require its first source-owned
+# Hall frame before accepting the selected edition as a runtime launch.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm1 --platform amiga \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:410:679,wait20,click:450:405,wait20' \
+    --duration 8000 >/dev/null 2>&1
+python3 - "$menu_probe" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
+        startup["phase"] != "dm1-runtime" or startup["active"] != 1 or
+        startup["startupActive"] != 0 or startup["levelLoaded"] != 1 or
+        startup["dm1StartupHandoffExecuted"] != 1 or
+        startup["dm1StartupHoCFirstFrameReady"] != 1 or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
+    raise SystemExit(f"FAIL: authentic DM1 Amiga M12 failed to reach first runtime frame: {probe}")
+print("PASS: authentic DM1 Amiga M12 reached the first runtime frame")
 PY
 
 # Amiga is the first card on the platform picker's second row.  The nested

@@ -14,7 +14,10 @@
   assertion. The CSB route waits through TITL.DAT and uses the native AppB
   language choice. Authentic DM1 DOS English (including the nested PC-34
   archive), Amiga HD, and FM Towns now also pass their original-media CLI/menu
-  startup routes. Authentic DM1 Atari ST v1.2 and DM2 DOS English follow normal
+  startup routes. DM1 Amiga v2.0 now also reaches its first Hall runtime frame
+  through the pointer-driven M12 IMG2 route, and the same menu test restores
+  its authentic save-disk state through Quick Resume; the new-game start has
+  zero champions. Authentic DM1 Atari ST v1.2 and DM2 DOS English follow normal
   M12 selection and source-owned startup input to a presented first runtime
   frame; authentic DM2 Amiga now does the same through its
   original SWSH/TITL and GDAT New Game pointer route. DM2 French DOS now also
