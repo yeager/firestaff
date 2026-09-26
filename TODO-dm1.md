@@ -243,12 +243,21 @@
   all five F0435 save parts: 128-byte GLOBAL_DATA, 60 x 16-byte active groups,
   a 3,328-byte four-champion PARTY, 463 x 10-byte events and a 926-byte
   timeline. Its source state is four champions on map 2 at (11,14), facing
-  direction 3. F0434's 37,226-byte dungeon tail is not yet authenticated, and
-  the Atari runtime importer is not implemented. Passing the original save to
+  direction 3. The Atari tail starts at byte 10,484 and is 37,226 bytes. Its
+  big-endian F0434 header reports 14 maps, ornament seed 99, 12,366 raw-map
+  bytes, 1,750 text words, 1,968 square-first-thing words, and the original
+  thing counts. The 14 Atari map descriptors yield 412 cumulative columns;
+  using the original thing-record widths, those sections account for exactly
+  37,226 bytes. This structurally authenticates the v1.0 F0434 stream; this
+  early edition has no appended F0422 dungeon checksum. The Atari runtime
+  importer is not implemented. Passing the original save to
   admitted v1.2 STX yields the same zero-champion fresh start as no save. Keep
   this save as a verified source-part candidate, not a verified playable
   runtime; F0435/F0434/F0436 Atari save import remains separate from new-game
-  campaign startup. The authentic automation-disk MSA SHA256 is
+  campaign startup. Independent F0435 part checksum matches are 128-byte
+  GLOBAL_DATA, 960-byte ACTIVE_GROUP, 3,328-byte PARTY, 4,630-byte EVENTS,
+  and 926-byte TIMELINE (the Atari v1.0 EVENT record is 10 bytes). The
+  authentic automation-disk MSA SHA256 is
   `b11ca8a124b574738a243fbeabc30567071e63e640b6289bc55315cc27c4d859`; its
   matched v1.0 retail STX SHA256 is
   `d9588480091d3aca753d86efedf0f2336871c817138a7eaf900d1afb4ed0f9ed`.
@@ -256,8 +265,8 @@
   `728682a977fa49a8a3dd9e3afc77afb2a90e02604234edfc19b8495e937e0fa7`, BAK
   `ad009d608ae843ca3e014af2f5bb291ee9e76002824c5c1af6a12c0606aa3353`.
   ReDMCSB LOADSAVE.C F0435 reads FormatID 1 without platform or dungeon ID,
-  authenticates the five parts, then the Atari F0434 tail; the legacy DM1
-  detection uses 14 maps and ornament seed 99. The existing Firestaff Amiga
+  authenticates the five parts, then reads the Atari F0434 tail; the legacy
+  DM1 detection uses 14 maps and ornament seed 99. The existing Firestaff Amiga
   format-5 adapter is not interchangeable: Atari v1.0 uses different champion
   records and does not preserve the Amiga header metadata. Until the actual
   Atari tail, four champions and runtime queues all pass an Atari-specific
