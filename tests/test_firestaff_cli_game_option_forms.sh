@@ -27,6 +27,86 @@ check_form --game=dm1 --version
 check_form '—game' dm1 --version
 check_form '–game=dm1' --version
 check_form --width 1 --height 4096 --version
+check_form --duration -1 --version
+check_form --duration 0 --version
+check_form --boot-probe-frames 0 --version
+
+check_invalid_integer_value() {
+    option=$1
+    value=$2
+    diagnostic=$3
+    output=$("$firestaff_bin" "$option" "$value" --version 2>&1) && {
+        printf 'fail: invalid %s value was accepted: %s\n%s\n' "$option" "$value" "$output" >&2
+        exit 1
+    }
+    case "$output" in
+        *"$diagnostic"*) ;;
+        *)
+            printf 'fail: invalid %s value did not produce the expected diagnostic: %s\n%s\n' "$option" "$value" "$output" >&2
+            exit 1
+            ;;
+    esac
+}
+
+check_missing_integer_option() {
+    option=$1
+    diagnostic=$2
+    output=$("$firestaff_bin" "$option" --version 2>&1) && {
+        printf 'fail: missing %s value was accepted\n%s\n' "$option" "$output" >&2
+        exit 1
+    }
+    case "$output" in
+        *"$diagnostic"*) ;;
+        *)
+            printf 'fail: missing %s value did not produce the expected diagnostic\n%s\n' "$option" "$output" >&2
+            exit 1
+            ;;
+    esac
+}
+
+for value in '' abc 1.5 2147483648; do
+    check_invalid_integer_value --duration "$value" '--duration must be an integer'
+    check_invalid_integer_value --boot-probe-frames "$value" '--boot-probe-frames must be an integer'
+done
+check_invalid_integer_value --duration -2 '--duration must be an integer'
+check_invalid_integer_value --boot-probe-frames -1 '--boot-probe-frames must be an integer'
+check_missing_integer_option --duration '--duration requires an integer'
+check_missing_integer_option --boot-probe-frames '--boot-probe-frames requires an integer'
+
+for option in \
+    --boot-probe-expect-champions \
+    --boot-probe-expect-level-loaded \
+    --boot-probe-expect-map \
+    --boot-probe-expect-runtime-tick-min \
+    --boot-probe-expect-runtime-tick-max \
+    --boot-probe-expect-startup-active \
+    --boot-probe-expect-startup-frame-min \
+    --boot-probe-expect-startup-frame-max \
+    --boot-probe-expect-startup-animation-active \
+    --boot-probe-expect-title-frame-min \
+    --boot-probe-expect-title-frame-max \
+    --boot-probe-expect-title-frame-boundary \
+    --boot-probe-expect-title-ready \
+    --ra-hardcore; do
+    case "$option" in
+        --boot-probe-expect-level-loaded|--boot-probe-expect-startup-active|\
+        --boot-probe-expect-startup-animation-active|\
+        --boot-probe-expect-title-ready|--ra-hardcore)
+            check_invalid_integer_value "$option" 2 'requires an integer from 0 through 1'
+            check_invalid_integer_value "$option" abc 'requires an integer from 0 through 1'
+            check_form "$option" 1 --version
+            ;;
+        *)
+            check_invalid_integer_value "$option" abc 'requires an integer from 0 through'
+            check_invalid_integer_value "$option" 2147483648 'requires an integer from 0 through'
+            ;;
+    esac
+    check_missing_integer_option "$option" 'requires an integer from 0 through'
+done
+check_invalid_integer_value --boot-probe-expect-champions -1 'requires an integer from 0 through'
+check_invalid_integer_value --boot-probe-expect-map -1 'requires an integer from 0 through'
+check_invalid_integer_value --duration --version '--duration requires an integer'
+check_invalid_integer_value --boot-probe-frames --version '--boot-probe-frames requires an integer'
 
 check_invalid_game() {
     output=$("$firestaff_bin" "$@" --version 2>&1) && {

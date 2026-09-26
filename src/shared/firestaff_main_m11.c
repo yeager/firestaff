@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <limits.h>
 
 /* IMG3 global state required by the GRAPHICS.DAT image decompressor */
 unsigned short G2157_;
@@ -35,6 +37,7 @@ static void usage(const char* prog) {
     fprintf(stderr,
             "Usage: %s [options]\n"
             "  --duration <ms>    Run for specified milliseconds (-1 = run until exit, 0 = single frame)\n"
+            "                     Requires a whole number of -1 or greater\n"
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
             "  --scale-mode <mode> Window scaling: 0..5 or 1x, 2x, 3x, 4x, fit, stretch\n"
@@ -58,6 +61,7 @@ static void usage(const char* prog) {
             "  --scan-game-data    Alias for --scan-data\n"
             "  --boot-probe        With --game, verify selected-entry boot handoff and exit\n"
             "  --boot-probe-frames <n> Advance n M11 idle frames before probe receipt\n"
+            "                       Requires a whole number of 0 or greater\n"
             "                       In boot-probe mode, --script input is applied after those frames\n"
             "                       Boot-probe waitN / wait:N tokens advance N source frames\n"
             "  --boot-probe-expect-phase <name> Fail unless the boot receipt phase matches\n"
@@ -177,6 +181,48 @@ static int parse_scale_mode(const char* value, int* out_mode) {
         return 0;
     }
     *out_mode = (int)parsed;
+    return 1;
+}
+
+static int parse_integer_argument(const char* value,
+                                  int minimum,
+                                  int maximum,
+                                  int* out_value) {
+    const char* cursor;
+    char* end = NULL;
+    long parsed;
+    if (!value || !value[0] || !out_value) return 0;
+    cursor = value;
+    if (*cursor == '-') ++cursor;
+    if (!*cursor) return 0;
+    for (; *cursor; ++cursor) {
+        if (*cursor < '0' || *cursor > '9') return 0;
+    }
+    errno = 0;
+    parsed = strtol(value, &end, 10);
+    if (errno == ERANGE || end == value || *end != '\0' ||
+        parsed < minimum || parsed > maximum) {
+        return 0;
+    }
+    *out_value = (int)parsed;
+    return 1;
+}
+
+static int parse_option_integer(int argc,
+                               char** argv,
+                               int* index,
+                               const char* option,
+                               int minimum,
+                               int maximum,
+                               int* out_value) {
+    if (!index || *index + 1 >= argc ||
+        !parse_integer_argument(argv[*index + 1], minimum, maximum,
+                                out_value)) {
+        fprintf(stderr, "firestaff: %s requires an integer from %d through %d\n",
+                option, minimum, maximum);
+        return 0;
+    }
+    ++*index;
     return 1;
 }
 
@@ -649,8 +695,25 @@ int main(int argc, char** argv) {
             usage(argv[0]);
             return 0;
         }
-        if (strcmp(a, "--duration") == 0 && i + 1 < argc) {
-            opts.durationMs = atoi(argv[++i]);
+        if (strcmp(a, "--duration") == 0) {
+            char* end = NULL;
+            long duration;
+            const char* value;
+            if (i + 1 >= argc || strcmp(argv[i + 1], "--version") == 0) {
+                fprintf(stderr,
+                        "firestaff: --duration requires an integer >= -1\n");
+                return 2;
+            }
+            value = argv[++i];
+            errno = 0;
+            duration = strtol(value, &end, 10);
+            if (errno == ERANGE || end == value || *end != '\0' ||
+                duration < -1 || duration > INT_MAX) {
+                fprintf(stderr,
+                        "firestaff: --duration must be an integer >= -1\n");
+                return 2;
+            }
+            opts.durationMs = (int)duration;
             continue;
         }
         if (strcmp(a, "--width") == 0) {
@@ -751,8 +814,26 @@ int main(int argc, char** argv) {
             opts.directLaunch = 1;
             continue;
         }
-        if (strcmp(a, "--boot-probe-frames") == 0 && i + 1 < argc) {
-            opts.bootProbeFrames = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-frames") == 0) {
+            char* end = NULL;
+            long frames;
+            const char* value;
+            if (i + 1 >= argc ||
+                strcmp(argv[i + 1], "--version") == 0) {
+                fprintf(stderr,
+                        "firestaff: --boot-probe-frames requires an integer >= 0\n");
+                return 2;
+            }
+            value = argv[++i];
+            errno = 0;
+            frames = strtol(value, &end, 10);
+            if (errno == ERANGE || end == value || *end != '\0' ||
+                frames < 0 || frames > INT_MAX) {
+                fprintf(stderr,
+                        "firestaff: --boot-probe-frames must be an integer >= 0\n");
+                return 2;
+            }
+            opts.bootProbeFrames = (int)frames;
             continue;
         }
         if (strcmp(a, "--boot-probe-expect-phase") == 0 && i + 1 < argc) {
@@ -775,48 +856,51 @@ int main(int argc, char** argv) {
             opts.bootProbeExpectParty = 1;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-champions") == 0 && i + 1 < argc) {
-            opts.bootProbeExpectChampionCount = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-champions") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectChampionCount)) return 2;
             opts.bootProbeExpectChampions = 1;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-level-loaded") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectLevelLoaded = atoi(argv[++i]) ? 1 : 0;
+        if (strcmp(a, "--boot-probe-expect-level-loaded") == 0) {
+            int value;
+            if (!parse_option_integer(argc, argv, &i, a, 0, 1, &value)) return 2;
+            opts.bootProbeExpectLevelLoaded = value;
             continue;
         }
         if (strcmp(a, "--boot-probe-expect-asset-md5") == 0 && i + 1 < argc) {
             opts.bootProbeExpectAssetMd5 = argv[++i];
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-map") == 0 && i + 1 < argc) {
-            opts.bootProbeExpectMapIndex = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-map") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectMapIndex)) return 2;
             opts.bootProbeExpectMap = 1;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-runtime-tick-min") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectRuntimeTickMin = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-runtime-tick-min") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectRuntimeTickMin)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-runtime-tick-max") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectRuntimeTickMax = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-runtime-tick-max") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectRuntimeTickMax)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-startup-active") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectStartupActive = atoi(argv[++i]) ? 1 : 0;
+        if (strcmp(a, "--boot-probe-expect-startup-active") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, 1,
+                                      &opts.bootProbeExpectStartupActive)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-startup-frame-min") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectStartupFrameMin = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-startup-frame-min") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectStartupFrameMin)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-startup-frame-max") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectStartupFrameMax = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-startup-frame-max") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectStartupFrameMax)) return 2;
             continue;
         }
         if (strcmp(a, "--boot-probe-expect-startup-animation") == 0 &&
@@ -824,30 +908,29 @@ int main(int argc, char** argv) {
             opts.bootProbeExpectStartupAnimation = argv[++i];
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-startup-animation-active") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectStartupAnimationActive =
-                atoi(argv[++i]) ? 1 : 0;
+        if (strcmp(a, "--boot-probe-expect-startup-animation-active") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, 1,
+                                      &opts.bootProbeExpectStartupAnimationActive)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-title-frame-min") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectTitleFrameMin = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-title-frame-min") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectTitleFrameMin)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-title-frame-max") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectTitleFrameMax = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-title-frame-max") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectTitleFrameMax)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-title-frame-boundary") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectTitleFrameBoundary = atoi(argv[++i]);
+        if (strcmp(a, "--boot-probe-expect-title-frame-boundary") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, INT_MAX,
+                                      &opts.bootProbeExpectTitleFrameBoundary)) return 2;
             continue;
         }
-        if (strcmp(a, "--boot-probe-expect-title-ready") == 0 &&
-            i + 1 < argc) {
-            opts.bootProbeExpectTitleReady = atoi(argv[++i]) ? 1 : 0;
+        if (strcmp(a, "--boot-probe-expect-title-ready") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, 1,
+                                      &opts.bootProbeExpectTitleReady)) return 2;
             continue;
         }
         if (strcmp(a, "--boot-probe-expect-dm1-hoc-full-graphics") == 0) {
@@ -926,8 +1009,9 @@ int main(int argc, char** argv) {
             opts.retroAchievementsToken = argv[++i];
             continue;
         }
-        if (strcmp(a, "--ra-hardcore") == 0 && i + 1 < argc) {
-            opts.retroAchievementsHardcore = atoi(argv[++i]) ? 1 : 0;
+        if (strcmp(a, "--ra-hardcore") == 0) {
+            if (!parse_option_integer(argc, argv, &i, a, 0, 1,
+                                      &opts.retroAchievementsHardcore)) return 2;
             continue;
         }
         if (strcmp(a, "--menu") == 0) {

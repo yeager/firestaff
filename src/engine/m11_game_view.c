@@ -26191,7 +26191,7 @@ int M11_GameView_ApplyDm1StartupRuntimeHandoff(
         state->candidateMirrorRenameActive = 0;
         state->inventoryPanelActive = 0;
     }
-    state->dm1StartupRuntimeHandoffReceipt = *receipt;
+    if (!M11_GameView_ApplyDm1StartupF0267PartyPlacement(state, receipt)) return 0;
     state->dm1StartupRuntimeHandoffValid = 1;
     state->dm1StartupHandoffExecuted = 1;
     return 1;
@@ -72203,4 +72203,124 @@ int M11_GameView_GetV1ViewportBaseGraphic(int layer,
         default:
             return 0;
     }
+}
+
+int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
+    M11_GameViewState* state,
+    const DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34* receipt)
+{
+    if (!state || !receipt || !state->active ||
+        strcmp(state->sourceId, "dm1") != 0 || !receipt->handled ||
+        !receipt->runtime_first_frame_ready || receipt->return_to_launcher) {
+        return 0;
+    }
+
+        /* ReDMCSB COMMAND.C maps C200 to LOAD_DUNGEON and M566 to
+         * LOAD_SAVED_GAME. STARTUP1.C F0462 calls F0267 from the off-square
+         * PARTY sentinel only for LOAD_DUNGEON. A resume keeps the coordinates
+         * and sensors restored from its save. */
+    if (receipt->hoc_runtime_ready &&
+        !state->dm1StartupPartyPlacementExecuted) {
+        struct GameWorld_Compat* world = &state->world;
+        struct PostMoveResolution_Compat resolution;
+        struct PartyState_Compat placedParty;
+        struct SensorEffectList_Compat enterEffects;
+        unsigned char sourceSquare = 0;
+        unsigned short thing;
+        int safety = 0;
+        int destinationGroupDeleted = 0;
+        int i;
+
+        if (!world->dungeon || !world->dungeon->loaded ||
+            !world->dungeon->tilesLoaded || !world->things ||
+            !world->things->loaded ||
+            !m11_get_square_byte(world, world->party.mapIndex,
+                                 world->party.mapX, world->party.mapY,
+                                 &sourceSquare)) {
+            return 0;
+        }
+        (void)sourceSquare;
+        memset(&resolution, 0, sizeof(resolution));
+        if (!F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                world->dungeon, world->things, &world->party,
+                world->gameTick, &resolution)) {
+            return 0;
+        }
+        placedParty = world->party;
+        placedParty.mapIndex = resolution.finalMapIndex;
+        placedParty.mapX = resolution.finalMapX;
+        placedParty.mapY = resolution.finalMapY;
+        placedParty.direction = resolution.finalDirection;
+        {
+            unsigned char destinationSquare = 0;
+            if (!m11_get_square_byte(world, placedParty.mapIndex,
+                                     placedParty.mapX, placedParty.mapY,
+                                     &destinationSquare)) {
+                return 0;
+            }
+        }
+
+        /* MOVESENS.C F0267:810-818 removes the first group on the final
+         * party square before F0276 enter sensors. F0515 preserves the
+         * compact F0160/F0161 SquareFirstThings table and raw Generic.Next. */
+        thing = m11_square_chain_head(world, placedParty.mapIndex,
+                                      placedParty.mapX, placedParty.mapY);
+        while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+               safety++ < 64) {
+            unsigned short next = m11_raw_next_thing(world->things, thing);
+            if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
+                if (!F0515_DUNGEON_UnlinkThingFromList_Compat(
+                        world->dungeon, world->things, thing,
+                        THING_ENDOFLIST, placedParty.mapIndex,
+                        placedParty.mapX, placedParty.mapY)) {
+                    return 0;
+                }
+                destinationGroupDeleted = 1;
+                break;
+            }
+            thing = next;
+        }
+        if (thing != THING_NONE && thing != THING_ENDOFLIST && safety >= 64) {
+            return 0;
+        }
+
+        /* The party starts off-square: there is no walk-off sensor pass.
+         * Resolve F0276's destination pass after pit/teleporter traversal and
+         * group removal, before publishing the new logical party tuple. The
+         * current compatibility layer only models WALK_ON teleport/text
+         * effects; unsupported source sensor types remain conservative. */
+        if (!F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                world->dungeon, world->things, placedParty.mapIndex,
+                placedParty.mapX, placedParty.mapY, SENSOR_EVENT_WALK_ON,
+                &enterEffects)) {
+            return 0;
+        }
+        world->party = placedParty;
+        world->partyMapIndex = placedParty.mapIndex;
+        world->newPartyMapIndex = -1;
+        for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+            if (resolution.championFallDamage[i] > 0 &&
+                world->party.champions[i].present &&
+                world->party.champions[i].hp.current > 0) {
+                int hp = (int)world->party.champions[i].hp.current -
+                    resolution.championFallDamage[i];
+                world->party.champions[i].hp.current =
+                    (int16_t)(hp > 0 ? hp : 0);
+            }
+        }
+
+        state->dm1StartupPartyPlacementExecuted = 1;
+        state->dm1StartupPartyPlacementDestinationGroupDeleted =
+            destinationGroupDeleted;
+        state->dm1StartupPartyPlacementSensorEffectCount = enterEffects.count;
+        state->dm1StartupPartyPlacementMapIndex = placedParty.mapIndex;
+        state->dm1StartupPartyPlacementMapX = placedParty.mapX;
+        state->dm1StartupPartyPlacementMapY = placedParty.mapY;
+        m11_apply_sensor_effects(state, &enterEffects);
+        m11_mark_explored(state);
+        m11_refresh_hash(state);
+    }
+
+    state->dm1StartupRuntimeHandoffReceipt = *receipt;
+    return 1;
 }
