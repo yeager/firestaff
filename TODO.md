@@ -39,14 +39,14 @@
   receipt before accepting the live runtime state. Source review of ReDMCSB
   STARTUP1.C:160-173 shows the Atari path continues after F0441 through the
   F0435 load loop and F0462_StartGame before runtime. Firestaff's M12 handoff
-  begins with zero champions. Direct CLI and normal M12 routes reach C127 and
-  recruit through source-coordinate pointer input against authentic Hall data
-  on English v1.2, German v1.2, French v1.3 and English v1.0a/1.0b/1.1. Repeat
-  the route on any other admitted Atari profile. `DUNGEON.FTL` is
-  only an optional custom-dungeon path in ReDMCSB LOADSAVE.C; its absence from
-  clean retail STX disks does not block built-in new-game startup. Verify the
-  source-owned F0435/F0462 transition on remaining Atari editions. The Atari
-  receipt covers title/entrance; its F0437 presentation/palette remains open.
+  begins with zero champions. Normal M12-to-runtime routes and C127 pointer
+  recruitment now pass against authentic Hall data on all six admitted Atari
+  editions: English v1.0a, v1.0b, v1.1 and v1.2, German v1.2, and French
+  v1.3. Their live runtime receipts require the startup handoff and HoC first
+  frame. `DUNGEON.FTL` is only an optional custom-dungeon path in ReDMCSB
+  LOADSAVE.C; its absence from clean retail STX disks does not block built-in
+  new-game startup. The Atari receipt covers title/entrance; its F0437
+  presentation/palette remains open.
   Headless receipts do not claim host capture, and visual parity remains
   deferred.
   Other DM1 editions, remaining DM2 platforms, Nexus

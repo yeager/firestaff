@@ -1,5 +1,15 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-26: Verified authentic DM1 Atari ST M12-to-runtime routes and C127
+  Hall-of-Champions recruitment on all six admitted editions: English v1.0a,
+  v1.0b, v1.1 and v1.2, German v1.2, and French v1.3. The edition-specific
+  CLI checks use the original archives/STX, require the menu startup handoff
+  and HoC first-frame runtime receipt, then confirm source-coordinate pointer
+  recruitment. The nested English v1.2 archive also passes its movement/input
+  checks; German and French pass their native movement checks. The local CI
+  production/source-boundary CTest selection also passes all 48 tests after
+  building its missing test executables.
+
 - 2026-09-24: Made M11's `--scale-mode` parser reject malformed and out-of-range
   values before renderer initialization. It accepts the documented numeric
   modes 0..5 and equivalent `1x`, `2x`, `3x`, `4x`, `fit`, and `stretch`
