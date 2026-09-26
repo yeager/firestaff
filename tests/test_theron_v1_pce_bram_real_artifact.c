@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <unistd.h>
+#endif
 
 #define RAW_SECTOR_BYTES 2352u
 #define USER_SECTOR_BYTES 2048u
@@ -99,6 +102,30 @@ static int set_test_env(const char *name, const char *value) {
 #endif
 }
 
+#if !defined(_WIN32) && !defined(_WIN64)
+static int make_bram_export_test_path(char *directory,
+                                      size_t directory_capacity,
+                                      char *output_path,
+                                      size_t output_capacity) {
+    const char *tmpdir = getenv("TMPDIR");
+    int length;
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    length = snprintf(directory, directory_capacity,
+                      "%s/firestaff-theron-bram-export-XXXXXX", tmpdir);
+    if (length <= 0 || (size_t)length >= directory_capacity ||
+        !mkdtemp(directory)) {
+        return 0;
+    }
+    length = snprintf(output_path, output_capacity, "%s/continue.bram",
+                      directory);
+    if (length <= 0 || (size_t)length >= output_capacity) {
+        rmdir(directory);
+        return 0;
+    }
+    return 1;
+}
+#endif
+
 int main(int argc, char **argv) {
     Theron_V1PceBramReceipt receipt;
     Theron_V1PceBramReceipt writer_template_receipt;
@@ -115,6 +142,11 @@ int main(int argc, char **argv) {
     uint8_t authentic_bram[THERON_V1_PCE_BRAM_BYTES];
     uint8_t encoded_bram[THERON_V1_PCE_BRAM_BYTES];
     uint8_t encoded_body[0x86u];
+    char bram_export_directory[THERON_V1_SRM_PATH_MAX];
+    char bram_export_path[THERON_V1_SRM_PATH_MAX];
+#if !defined(_WIN32) && !defined(_WIN64)
+    char bram_export_alias_path[THERON_V1_SRM_PATH_MAX];
+#endif
     uint8_t main_ram[8192];
     uint8_t save_manager_code[8192];
     size_t user_data_size = 0u;
@@ -912,6 +944,61 @@ int main(int argc, char **argv) {
                   stderr);
             return 1;
         }
+#if !defined(_WIN32) && !defined(_WIN64)
+        if (!make_bram_export_test_path(
+                bram_export_directory, sizeof(bram_export_directory),
+                bram_export_path, sizeof(bram_export_path)) ||
+            !theron_v1_startup_write_pce_bram_theron_record(
+                &world, argv[1], bram_export_path) ||
+            !load_exact(bram_export_path, encoded_bram,
+                        sizeof(encoded_bram)) ||
+            memcmp(encoded_bram, authentic_bram, sizeof(authentic_bram)) !=
+                0 ||
+            !theron_v1_startup_write_pce_bram_theron_record(
+                &world, argv[1], bram_export_path) ||
+            !load_exact(bram_export_path, encoded_bram,
+                        sizeof(encoded_bram)) ||
+            memcmp(encoded_bram, authentic_bram, sizeof(authentic_bram)) !=
+                0) {
+            fputs("atomic original Backup RAM path writer did not persist and replace the authentic round-trip image\n",
+                  stderr);
+            return 1;
+        }
+        if (theron_v1_startup_write_pce_bram_theron_record(
+                &world, argv[1], argv[1]) ||
+            !load_exact(argv[1], encoded_bram, sizeof(encoded_bram)) ||
+            memcmp(encoded_bram, authentic_bram, sizeof(authentic_bram)) !=
+                0) {
+            fputs("original Backup RAM path writer overwrote its authentic input template\n",
+                  stderr);
+            remove(bram_export_path);
+            rmdir(bram_export_directory);
+            return 1;
+        }
+        {
+            int alias_path_length = snprintf(
+            bram_export_alias_path, sizeof(bram_export_alias_path),
+                "%s/input-alias.bram", bram_export_directory);
+            if (alias_path_length <= 0 ||
+                (size_t)alias_path_length >= sizeof(bram_export_alias_path) ||
+                symlink(argv[1], bram_export_alias_path) != 0 ||
+                theron_v1_startup_write_pce_bram_theron_record(
+                    &world, argv[1], bram_export_alias_path) ||
+                !load_exact(argv[1], encoded_bram, sizeof(encoded_bram)) ||
+                memcmp(encoded_bram, authentic_bram,
+                       sizeof(authentic_bram)) != 0) {
+                fputs("original Backup RAM path writer accepted an alias to its authentic input template\n",
+                      stderr);
+                remove(bram_export_alias_path);
+                remove(bram_export_path);
+                rmdir(bram_export_directory);
+                return 1;
+            }
+        }
+        remove(bram_export_alias_path);
+        remove(bram_export_path);
+        rmdir(bram_export_directory);
+#endif
         memcpy(world.party.champions[0].name, "NOT-THERON", 11u);
         memset(encoded_bram, 0xa5, sizeof(encoded_bram));
         if (theron_v1_startup_encode_pce_bram_theron_record(

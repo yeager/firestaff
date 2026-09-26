@@ -287,6 +287,16 @@ int theron_v1_startup_encode_pce_bram_theron_record(
     uint8_t *out_data,
     size_t out_capacity);
 
+/* Persist an encoded original Backup RAM image to an explicit destination.
+ * The authenticated template is read-only and must not resolve to the target.
+ * The destination's parent directory must already exist. A verified temporary
+ * file is atomically moved into place only after the complete 2 KiB image has
+ * been written and reclassified. */
+int theron_v1_startup_write_pce_bram_theron_record(
+    const Theron_V1_World *world,
+    const char *template_path,
+    const char *destination_path);
+
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;
  * the caller still owns UI state, status text, and subsequent level load. */

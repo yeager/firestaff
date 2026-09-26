@@ -24,12 +24,13 @@ data.
    `docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`.
    Firestaff now has a source-gated in-memory encoder for Theron's persistent
    runtime fields and the selected original record. An unchanged Continue
-   round-trips the authentic Akutuba-complete artifact byte for byte. It does
-   not yet persist the returned image to disk or prove an updated gameplay
-   state by reopening it in the original runtime. Add and verify that durable
-   save path before claiming original-format save support. The available
-   authentic JP SRAM is empty, so JP Continue with progress remains
-   unverified.
+   round-trips the authentic Akutuba-complete artifact byte for byte. There is
+   now also an atomic explicit-path writer, tested against that artifact, but
+   no authenticated stage-completion transaction calls it yet. Wire that
+   writer to proven gameplay progress and verify the changed result by
+   reopening it in the original runtime before claiming original-format save
+   support. The available authentic JP SRAM is empty, so JP Continue with
+   progress remains unverified.
 3. **Original presentation and event output.** Join game-owned Track 02 bytes
    and consumers to VDC/VCE screen ownership, text, portraits, CDDA selection,
    and ADPCM/SFX events. The admitted US capture is a bounded screen-space
@@ -3850,8 +3851,12 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   writer's exact 134-byte layout, requires the bound Track 02 campaign source
   and Theron in party slot zero, preserves the template's unclassified
   campaign high bit, the two transport-padding bytes, other slots, selected
-  slot, and unrelated Backup RAM bytes. The API returns an in-memory 2 KiB
-  image and does not write or replace files.
+  slot, and unrelated Backup RAM bytes. The in-memory API returns a 2 KiB
+  image without filesystem effects. A separate explicit-path writer now
+  stages to a unique sibling file, flushes it, verifies the exact bytes and
+  original container again, then atomically replaces the requested target.
+  It rejects the source path and a symlink alias to that authentic input; the
+  caller must provide an existing destination directory.
 - ✅ Against the authentic US Akutuba-complete Backup RAM file
   (MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`), Firestaff decoded the original
   body, restored its persistent fields into the real campaign world, encoded
@@ -3863,16 +3868,21 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   skipped, zero failed. Both authentic combined-RAR regions, BRAM Continue,
   JP CUE/runtime and projected-ISO paths, and available Track 02/media tests
   passed.
-- 🔒 This proves a lossless unchanged-state encoder, not a durable save
-  workflow or persistence of changed dungeon progress. File writing, updated
-  progress from authenticated gameplay consumers, and reopening a changed
-  save in original Theron remain open. No synthetic game state was used as
-  evidence.
+- 🔒 This proves a lossless unchanged-state encoder and an atomic, explicit-
+  destination file write, not an in-game save workflow or persistence of
+  changed dungeon progress. Binding gameplay progress to the writer and
+  reopening a changed save in original Theron remain open. No synthetic game
+  state was used as evidence.
 - ✅ Follow-up guard: the authentic-artifact test now also changes the
   in-memory party leader to a non-Theron identity and confirms the production
   encoder rejects it without touching the caller's output buffer. Focused
   test and the full 68-test local Theron suite passed (62 passed, six
   configured skips, zero failures).
+- ✅ The same authentic-artifact test exercises the explicit-path writer in a
+  temporary user-owned directory, verifies a second atomic replacement, and
+  confirms both direct and symlink aliases of the authentic source remain
+  byte-identical. The full Theron suite passed again (62 passed, six
+  configured skips, zero failures); Gitleaks found no leaks in changed files.
 - ✅ M11 no longer lets Theron's in-dungeon Save Game input fall through as
   ignored gameplay or route toward the shared DM1 save-disk dialog. It reports
   that the original game has no in-dungeon save transaction; the authenticated

@@ -36,10 +36,25 @@
 
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32) || defined(_WIN64)
+#if !defined(WIN32_LEAN_AND_MEAN)
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <fcntl.h>
+#include <io.h>
+#include <share.h>
+#include <sys/stat.h>
+#else
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 #if defined(_WIN32) || defined(_WIN64)
 #define TSR_PATH_SEP '\\'
@@ -876,6 +891,152 @@ int theron_v1_startup_encode_pce_bram_theron_record(
 
     return theron_v1_pce_bram_encode_original_record(
         template_data, template_size, &body, out_data, out_capacity);
+}
+
+static int theron_v1_startup_bram_read_exact(
+    const char *path,
+    uint8_t bytes[THERON_V1_PCE_BRAM_BYTES]) {
+    FILE *file;
+    int valid;
+    if (!path || !path[0] || !bytes) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    valid = fread(bytes, 1u, THERON_V1_PCE_BRAM_BYTES, file) ==
+                THERON_V1_PCE_BRAM_BYTES &&
+            fgetc(file) == EOF && !ferror(file);
+    if (fclose(file) != 0) valid = 0;
+    return valid;
+}
+
+static int theron_v1_startup_bram_open_unique_temp(
+    char *path,
+    size_t path_capacity,
+    const char *destination_path,
+    FILE **out_file) {
+    int length;
+    if (!path || !destination_path || !out_file) return 0;
+    *out_file = NULL;
+    length = snprintf(path, path_capacity, "%s.tmp.XXXXXX", destination_path);
+    if (length <= 0 || (size_t)length >= path_capacity) return 0;
+#if defined(_WIN32) || defined(_WIN64)
+    {
+        int descriptor;
+        if (_mktemp_s(path, path_capacity) != 0 ||
+            _sopen_s(&descriptor, path,
+                     _O_CREAT | _O_EXCL | _O_WRONLY | _O_BINARY,
+                     _SH_DENYRW, _S_IREAD | _S_IWRITE) != 0) {
+            return 0;
+        }
+        *out_file = _fdopen(descriptor, "wb");
+        if (!*out_file) {
+            _close(descriptor);
+            remove(path);
+            return 0;
+        }
+    }
+#else
+    {
+        int descriptor = mkstemp(path);
+        if (descriptor < 0) return 0;
+        *out_file = fdopen(descriptor, "wb");
+        if (!*out_file) {
+            close(descriptor);
+            remove(path);
+            return 0;
+        }
+    }
+#endif
+    return 1;
+}
+
+static int theron_v1_startup_bram_atomic_replace(
+    const char *temporary_path,
+    const char *destination_path) {
+#if defined(_WIN32) || defined(_WIN64)
+    return MoveFileExA(temporary_path, destination_path,
+                       MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)
+        ? 1 : 0;
+#else
+    return rename(temporary_path, destination_path) == 0;
+#endif
+}
+
+int theron_v1_startup_write_pce_bram_theron_record(
+    const Theron_V1_World *world,
+    const char *template_path,
+    const char *destination_path) {
+    uint8_t template_data[THERON_V1_PCE_BRAM_BYTES];
+    uint8_t encoded_data[THERON_V1_PCE_BRAM_BYTES];
+    uint8_t verify_data[THERON_V1_PCE_BRAM_BYTES];
+    Theron_V1PceBramReceipt receipt;
+    char template_physical[THERON_V1_SRM_PATH_MAX];
+    char destination_physical[THERON_V1_SRM_PATH_MAX];
+    char temporary_path[THERON_V1_SRM_PATH_MAX + 16u];
+    FILE *file = NULL;
+    int ok = 0;
+
+    if (!world || !template_path || !template_path[0] ||
+        !destination_path || !destination_path[0] ||
+        strlen(template_path) >= sizeof(template_physical) ||
+        strlen(destination_path) >= sizeof(destination_physical) ||
+        strcmp(template_path, destination_path) == 0 ||
+        !theron_v1_startup_bram_read_exact(template_path, template_data) ||
+        theron_v1_pce_bram_classify(
+            template_data, sizeof(template_data), &receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !theron_v1_startup_encode_pce_bram_theron_record(
+            world, template_data, sizeof(template_data), encoded_data,
+            sizeof(encoded_data))) {
+        return 0;
+    }
+
+    /* Existing aliases of the authentic input are never write targets. */
+    if (FSP_ResolvePhysicalPath(template_physical,
+                                sizeof(template_physical), template_path) &&
+        FSP_ResolvePhysicalPath(destination_physical,
+                                sizeof(destination_physical),
+                                destination_path) &&
+        strcmp(template_physical, destination_physical) == 0) {
+        return 0;
+    }
+
+    if (!theron_v1_startup_bram_open_unique_temp(
+            temporary_path, sizeof(temporary_path), destination_path, &file)) {
+        return 0;
+    }
+    if (fwrite(encoded_data, 1u, sizeof(encoded_data), file) !=
+            sizeof(encoded_data) || fflush(file) != 0) {
+        goto cleanup;
+    }
+#if defined(_WIN32) || defined(_WIN64)
+    if (_commit(_fileno(file)) != 0) goto cleanup;
+#else
+    if (fsync(fileno(file)) != 0) goto cleanup;
+#endif
+    if (fclose(file) != 0) {
+        file = NULL;
+        goto cleanup;
+    }
+    file = NULL;
+
+    if (!theron_v1_startup_bram_read_exact(temporary_path, verify_data) ||
+        memcmp(verify_data, encoded_data, sizeof(verify_data)) != 0 ||
+        theron_v1_pce_bram_classify(
+            verify_data, sizeof(verify_data), &receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !receipt.save_body_layout_proven ||
+        !receipt.save_body_campaign_valid ||
+        !receipt.save_slot_tail_unconsumed_padding ||
+        !theron_v1_startup_bram_atomic_replace(
+            temporary_path, destination_path)) {
+        goto cleanup;
+    }
+    ok = 1;
+
+cleanup:
+    if (file) fclose(file);
+    if (!ok) remove(temporary_path);
+    return ok;
 }
 
 static void theron_v1_startup_continue_reset_world_runtime(
