@@ -3521,8 +3521,15 @@ av bankladdningen. Se
   selection from either run. Further capture needs a verified real resume
   state or source-supported input path; preserve fail-closed transition checks
   and bind any accepted LBA interval to the authenticated disc TOC before
-  adding playback behavior. The trv2 work ran in isolated build/capture roots;
-  do not modify another agent's shared checkout.
+  adding playback behavior. A 2026-09-26 authentic JP CUE replay then exercised
+  the instrumented controller script (`run@1`, `run@500`, `ii@700`,
+  `up@800`, `up@900`); all five input events were observed, but the run again
+  stopped at 24 raw-sector spans, four SCSI reads, one `$E009` dispatch, zero
+  `$E009` data reads, zero CD-to-RAM receipts and `transition=missing`. This
+  confirms input delivery only, not an in-game response. The authentic CUE,
+  Track 02 and System Card were unchanged; capture artifacts remain in the
+  isolated trv2 work root and are not tracked. Do not modify another agent's
+  shared checkout.
 - ✅ The live capture now also admits the authentic US CloneCD single-BIN CUE
   without rewriting its media: it bounds Track 02 from CUE `INDEX 01` sector
   3234 to the next track at sector 6605, extracts only that range in its
