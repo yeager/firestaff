@@ -3528,8 +3528,11 @@ av bankladdningen. Se
   `$E009` data reads, zero CD-to-RAM receipts and `transition=missing`. This
   confirms input delivery only, not an in-game response. The authentic CUE,
   Track 02 and System Card were unchanged; capture artifacts remain in the
-  isolated trv2 work root and are not tracked. Do not modify another agent's
-  shared checkout.
+  isolated trv2 work root and are not tracked. A second JP replay used the
+  Mednafen title-wait input, which is gated on the original opcode signature;
+  that signature never fired for this JP run, and the capture ended with the
+  same negative transfer counts. The title-wait hook is therefore not yet a
+  JP input route. Do not modify another agent's shared checkout.
 - ✅ The live capture now also admits the authentic US CloneCD single-BIN CUE
   without rewriting its media: it bounds Track 02 from CUE `INDEX 01` sector
   3234 to the next track at sector 6605, extracts only that range in its
