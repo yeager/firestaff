@@ -3952,3 +3952,18 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   Next capture must increase that bound and require a post-event CPU read
   before testing the signed menu route. Do not infer a dungeon transition from
   raw-sector reads or `$E009` dispatch alone.
+
+- 🔒 A 360-second follow-up raised the input limit to 262,144 reads while
+  retaining the same authentic US media, unchanged campaign BRAM and
+  `run@9600:90` input. The producer applied RUN through frame 9689, but that
+  boundary again coincided with the end of the bounded input trace: 262,143
+  CPU results were retained, with no subsequent original CPU read of
+  `0x0008`. The receipt still reports 25 raw-sector spans, four SCSI commands,
+  one `$E009` dispatch, five TII transfers, zero `$E009` data reads and zero
+  authenticated CD-to-RAM receipts; the Drator hooks did not fire and the
+  BRAM snapshot still matches its authentic input hash. The raw bundle is at
+  `/home/trv2/firestaff-theron-evidence/capture/drator-generator-authentic-bram-run9600-input262144-goal-20260927`.
+  Next attempt needs the maximum 1,048,576-read bound and at least 600 seconds
+  of emulation, so the pre-event trace ceiling cannot hide the post-RUN read.
+  No additional capture was started because another agent had resumed using
+  trv2.
