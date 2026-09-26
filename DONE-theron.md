@@ -1,5 +1,20 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-25 — Direct authenticated US and JP Track 02 boot
+
+- The current Release executable boots directly from each supplied original
+  Track 02 BIN (`TQUS02.bin` and `TQJP02.bin`) and reaches `theron-runtime`
+  with the source-backed initial level loaded, both source champions present,
+  all seven regional Track 02 item-name banks, and the matching Track 19 name
+  bank and item mapping. Both runs accepted the scripted native movement input.
+  The probes report 291 source objects and four loaded dungeon levels for
+  these shared early routes. `theronTrack01CddaReady=0` is expected for these
+  standalone Track 02 paths because no regional full-disc CUE/audio set is
+  present in the supplied data directory; the combined RAR path has its
+  separate authenticated in-memory title-audio support. This establishes
+  startup and the exercised source-backed runtime routes only, not complete
+  visual, gameplay, save/export, or campaign parity.
+
 ## 2026-09-25 — Full local Theron suite with operator-owned media and trace
 
 - The complete focused Theron CTest selection passed locally: 56 passed, 5

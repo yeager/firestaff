@@ -3537,13 +3537,15 @@ av bankladdningen. Se
   can list the RAR but reports `Unsupported Method` for every listed member,
   including both CUE files; `unrar` is also installed and its real-media
   `theron_v1_combined_rar_cue_handoff` test passes. The no-extraction
-  `theron_v1_combined_rar_direct_boot` test also passes from the authentic
-  RAR, but its boot receipt reports `theronTrack01CddaReady=0`. The remaining
-  gap is in the CDDA bridge: archive classification creates a virtual
-  `archive.rar::TQUS.cue` path, while Track 01 handoff still opens CUE/audio
-  through `fopen` and resolves members as loose sibling paths. This gap is
-  resolved for the supplied combined RAR by the bounded authenticated bridge;
-  normal runtime does not extract or materialize its game media.
+  `theron_v1_combined_rar_direct_boot` test passes for both authentic regions,
+  verifies the selected Track 02 digests and reports
+  `theronTrack01CddaReady=1`. The production bridge reads only the selected
+  regional CUE and its exact same-stem OGG member into bounded memory,
+  authenticates the OGG SHA-256 and decodes it through the existing Vorbis
+  stream. The real-media CDDA regression independently verifies both archive
+  OGG hashes and requires decoded sectors to be queued. This proves the title
+  Track 01 stream, not any gameplay selection among the archive's other audio
+  tracks. Runtime does not extract or materialize game media.
 - ✅ The archive's actual US/JP CUE bytes were streamed from `unrar` to stdout.
   Each declares Track 01 as its exact original-stem WAVE (`TQUS01.wav` or
   `TQJP01.wav`); the archive instead carries the corresponding OGG transcode.
@@ -3562,3 +3564,22 @@ av bankladdningen. Se
   title/stage/soul-room/forcefield routes. The old hash-listed zero-filled JP
   ISO stub remains rejected. The ISO projection is not staged on trv2, so its
   host build did not run this specific split-ISO test.
+
+2026-09-25 trv2 Linux Release verification: the complete Theron CTest label
+suite passed all 68 tests with no failures. Twenty-one tests returned their
+configured skip status because required RAR/ISO projections, raw-file names,
+BRAM or capture sidecars are not staged on that host; real-media JP CUE runtime,
+USA CloneCD startup and the remaining available probes passed. The authentic
+combined RAR and JP CUE-projected ISO paths were instead tested locally against
+the supplied original archive, with all six focused real-media regressions
+passing after integration with current `main`.
+
+2026-09-25 direct real-media follow-up: the current Release executable also
+boots directly from the supplied authentic US and JP Track 02 BIN files, reaches
+`theron-runtime`, and accepts the scripted native movement input for both
+regions. Each boot receipt binds its matching regional roster/name banks and
+Track 19 name bank. The focused CTest selection including both RAR regions,
+JP CUE runtime, the seven-dungeon source loader and CDDA availability/handoff
+passed 7/7 locally. Standalone BIN paths correctly report no Track 01 CDDA
+because the matching full-disc cue/audio set is absent beside these two files;
+this is distinct from the authenticated combined-RAR title-audio path above.
