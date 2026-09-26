@@ -1,0 +1,49 @@
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -597,1 +597,40 @@
+-static void SendStatusAndMessage(uint8 status, uint8 message)
++static void TheronTracePCECDDACommand(uint8 status)
++{
++ static FILE *trace = NULL;
++ static unsigned trace_count = 0;
++ const uint8 opcode = cd.command_buffer[0];
++ int start_track = 0;
++
++ if(WhichSystem != SCSICD_PCE || status != STATUS_GOOD ||
++    trace_count >= 4096 ||
++    (opcode != 0xD8 && opcode != 0xD9 && opcode != 0xDA))
++  return;
++
++ if(!trace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_CDDA_COMMAND_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "a");
++  if(!trace)
++   return;
++  fputs("source=mednafen-pce-instrumented-cdda-command-v1\n", trace);
++ }
++
++ if(read_sec_start >= toc.tracks[toc.first_track].lba &&
++    read_sec_start < toc.tracks[100].lba)
++  start_track = toc.FindTrackByLBA(read_sec_start);
++
++ fprintf(trace,
++         "pce_cdda_command seq=%u timestamp=%lld system_clock=%u opcode=%02x status=good cdb1=%02x cdb2=%02x cdb3=%02x cdb4=%02x cdb5=%02x cdb6=%02x cdb7=%02x cdb8=%02x cdb9=%02x start_lba=%u end_lba=%u start_track=%d cdda_status=%d play_mode=%u\n",
++         trace_count + 1, (long long)monotonic_timestamp, System_Clock,
++         opcode, cd.command_buffer[1], cd.command_buffer[2],
++         cd.command_buffer[3], cd.command_buffer[4], cd.command_buffer[5],
++         cd.command_buffer[6], cd.command_buffer[7], cd.command_buffer[8],
++         cd.command_buffer[9], read_sec_start, read_sec_end, start_track,
++         cdda.CDDAStatus, cdda.PlayMode);
++ fflush(trace);
++ trace_count++;
++}
++
++static void SendStatusAndMessage(uint8 status, uint8 message)
+@@ -597,3 +636,4 @@
+ static void SendStatusAndMessage(uint8 status, uint8 message)
+ {
++ TheronTracePCECDDACommand(status);
+  // This should never ever happen, but that doesn't mean it won't. ;)

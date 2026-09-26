@@ -9,6 +9,7 @@ runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 adpcm_context_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace_context.patch
 adpcm_playback_patch=$repo/scripts/mednafen_1.32.1_theron_adpcm_playback_trace.patch
+cdda_command_patch=$repo/scripts/mednafen_1.32.1_theron_cdda_command_trace.patch
 state_autoload_patch=$repo/scripts/mednafen_1.32.1_theron_state_autoload.patch
 post_dungeon_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_dungeon_ordinal_research.patch
 save_manager_dump_patch=$repo/scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch
@@ -136,6 +137,16 @@ if [[ ! -f "$adpcm_playback_patch" ]] ||
    ! grep -Fq 'adpcm_control_result cpu_pc=%04x physical_pc=%06x' "$adpcm_playback_patch" ||
    ! grep -Fq 'playback_start=%u' "$adpcm_playback_patch"; then
     printf 'FAIL: Theron capture no longer retains CPU/MPR-bound ADPCM playback starts\n' >&2
+    exit 1
+fi
+if [[ ! -f "$cdda_command_patch" ]] ||
+   ! grep -Fq 'FIRESTAFF_THERON_CDDA_COMMAND_TRACE' "$script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_cdda_command_trace.patch' "$build_script" ||
+   ! grep -Fq 'source=mednafen-pce-instrumented-cdda-command-v1' "$cdda_command_patch" ||
+   ! grep -Fq 'opcode != 0xD8 && opcode != 0xD9 && opcode != 0xDA' "$cdda_command_patch" ||
+   grep -Fq 'cd.command_buffer_pos != 10' "$cdda_command_patch" ||
+   ! grep -Fq 'status=good' "$cdda_command_patch"; then
+    printf 'FAIL: authentic accepted PCE CDDA commands must be captured with command and status provenance\n' >&2
     exit 1
 fi
 if [[ ! -f "$input_grab_patch" ]] ||

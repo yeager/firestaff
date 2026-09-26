@@ -779,6 +779,7 @@ capture_scratch_root=${THERON_CAPTURE_SCRATCH_ROOT:-"$script_dir/../.codex-scrat
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 adpcm_playback_trace="${trace}.adpcm-playback"
+cdda_command_trace="${trace}.cdda-command"
 input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
@@ -818,7 +819,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir" "$capture_scratch_root"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$selected_record_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vram_snapshot" "$vce_snapshot" "$vdc_state_snapshot" "$vdc_sat_snapshot" "$vdc_io_trace" "$main_ram_snapshot" "$bram_snapshot" "$command_ram_trace" "$command_code_snapshot" "$command_ram_before_snapshot" "$command_ram_after_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "$capture_scratch_root/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
@@ -941,6 +942,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
     FIRESTAFF_THERON_ADPCM_PLAYBACK_TRACE="$adpcm_playback_trace" \
+    FIRESTAFF_THERON_CDDA_COMMAND_TRACE="$cdda_command_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
     FIRESTAFF_THERON_INPUT_TRACE_LIMIT="$input_trace_limit" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
@@ -1193,7 +1195,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$adpcm_playback_trace" "$cdda_command_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$ram_provenance_trace" "$record_watch_trace" "$spawn_consumer_trace" "$spawn_register_trace" "$rng_consumer_trace" "$rng_code_trace" "$rng_state_trace" "$rng_generator_context_trace" "$vdc_io_trace" "$command_ram_trace" "$command_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -1340,6 +1342,7 @@ transition_non_system_card_count=$(trace_count '^pce_cd_register_read cpu_pc=[0-
 transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trace")
 transition_scsi_read_command_count=$(trace_count '^scsi_read_command ' "$cd_trace")
 transition_scsi_sector_binding_count=$(trace_count '^scsi_read_sector_binding ' "$cd_trace")
+transition_cdda_command_count=$(trace_count '^pce_cdda_command ' "$cdda_command_trace")
 transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candidate ' "$cd_trace")
 transition_adpcm_fifo_read_count=$(trace_count '^pce_cd_fifo_read transport=adpcm ' "$cd_trace")
 transition_adpcm_ram_write_count=$(trace_count '^pce_cd_adpcm_ram_write ' "$cd_trace")
@@ -1459,6 +1462,7 @@ fi
     printf 'raw_sector_spans=%s\n' "$transition_sector_count"
     printf 'scsi_read_commands=%s\n' "$transition_scsi_read_command_count"
     printf 'scsi_read_sector_bindings=%s\n' "$transition_scsi_sector_binding_count"
+    printf 'cdda_commands=%s\n' "$transition_cdda_command_count"
     printf 'byte_exact_fifo_ram_destinations=%s\n' "$transition_data_destination_count"
     printf 'adpcm_fifo_reads=%s\n' "$transition_adpcm_fifo_read_count"
     printf 'adpcm_ram_writes=%s\n' "$transition_adpcm_ram_write_count"

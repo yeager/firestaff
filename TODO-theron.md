@@ -3492,21 +3492,31 @@ av bankladdningen. Se
   the JP original outside Git and symlinks it into a temporary `.bram` path so
   the production Continue route is exercised against the exact source bytes.
 
-## 2026-09-25 — capture-only CDDA command trace
+## 2026-09-26 — capture-only CDDA command trace
 
 - ✅ Added a Mednafen capture patch for accepted PC Engine CDDA play, MSF play,
   NEC pause and end-position commands. Each record keeps the
   original LBA interval, Mednafen clock timestamp, command state and mode; it
   does not choose tracks or change Firestaff playback behavior. The complete
   patch sequence applies to an isolated copy of the available Mednafen 1.32.1
-  source in patch-only mode. It has not yet been rebuilt or run with this new
-  command trace.
+  source in patch-only mode and the complete instrumented binary builds on
+  trv2. A first real-media capture exposed that command-buffer position is
+  reset before the status callback; the trace now reads the completed command
+  at that status boundary instead of testing the already-reset position.
 - 🔒 No positive Theron gameplay CDDA command has been captured yet. Existing
   authenticated traces show System Card loading/menu activity, not a
-  game-owned track selection. Check that trv2 is free before building or
-  capturing, since another agent may be using it;
-  bind any resulting LBA interval to the authenticated disc TOC before adding
-  playback behavior.
+  game-owned track selection. A cold-start capture with the authentic JP
+  MODE1/2352 Track 02 (MD5 `b7afb338ad31be1025b53f9aff12d73a`) and System Card
+  3.0 (MD5 `ff1a674273fe3540ccef576376407d1d`) recorded 24 raw-sector spans and
+  4 SCSI read commands, but no CD->RAM origin receipt; the production capture
+  correctly remained blocked. After fixing the trace boundary, a fresh build
+  and capture had valid provenance but reached only one CD IRQ and no raw
+  sectors, CDDA commands, or game transition. Do not infer gameplay track
+  selection from either run. Further capture needs a verified real resume
+  state or source-supported input path; preserve fail-closed transition checks
+  and bind any accepted LBA interval to the authenticated disc TOC before
+  adding playback behavior. The trv2 work ran in isolated build/capture roots;
+  do not modify another agent's shared checkout.
 - ✅ Independently validated the existing Track 01 handoff against the
   authentic full Japanese 7z disc: its CUE declares 19 tracks, Track 01 is
   7,916,832 bytes of AUDIO, and Track 02 is MODE1/2352 at 8,102,640 bytes.

@@ -175,6 +175,8 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_save_manager_code_dump.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_selected_record_consumer_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_cdda_command_trace.patch"
 
 if [[ "$patch_only" == 1 ]]; then
     # Tests use the exact production patch order without paying for a rebuild.
@@ -192,6 +194,12 @@ fi
 # into a fresh trace root can make make try to regenerate them, which would
 # require the historical automake-1.16 toolchain. Keep the shipped generated
 # inputs authoritative for this instrumented build.
+# cp -R assigns the copy timestamp to every source file. In the shipped
+# release tree that can make aclocal.m4 appear older than acinclude.m4, so
+# make tries to regenerate both Autotools outputs even though this build has
+# no Autotools toolchain installed. Treat the release-generated aclocal file
+# as authoritative, then advance Makefile.in after its dependencies.
+touch "$build_root/source/aclocal.m4"
 find "$build_root/source" -name Makefile.in -exec touch {} +
 
 cd "$build_root/source"
