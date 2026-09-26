@@ -3868,3 +3868,8 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   progress from authenticated gameplay consumers, and reopening a changed
   save in original Theron remain open. No synthetic game state was used as
   evidence.
+- ✅ Follow-up guard: the authentic-artifact test now also changes the
+  in-memory party leader to a non-Theron identity and confirms the production
+  encoder rejects it without touching the caller's output buffer. Focused
+  test and the full 68-test local Theron suite passed (62 passed, six
+  configured skips, zero failures).

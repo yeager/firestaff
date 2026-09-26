@@ -913,6 +913,16 @@ int main(int argc, char **argv) {
             return 1;
         }
         memcpy(world.party.champions[0].name, "NOT-THERON", 11u);
+        memset(encoded_bram, 0xa5, sizeof(encoded_bram));
+        if (theron_v1_startup_encode_pce_bram_theron_record(
+                &world, authentic_bram, sizeof(authentic_bram), encoded_bram,
+                sizeof(encoded_bram)) ||
+            encoded_bram[0] != 0xa5u ||
+            encoded_bram[sizeof(encoded_bram) - 1u] != 0xa5u) {
+            fputs("original Backup RAM writer accepted a non-Theron party or modified output on rejection\n",
+                  stderr);
+            return 1;
+        }
         before_party = world.party;
         if (theron_v1_startup_restore_pce_bram_theron_path(
                 &world, argv[1], &receipt, &restored_body) ||
