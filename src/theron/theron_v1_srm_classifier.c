@@ -235,6 +235,106 @@ int theron_v1_pce_bram_decode_original_body_path(
     return theron_v1_pce_bram_decode_original_body(data, size, out);
 }
 
+int theron_v1_pce_bram_encode_original_body(
+    const Theron_V1PceBramBodyReceipt *body,
+    uint8_t *out_bytes,
+    size_t out_capacity) {
+    uint8_t encoded[0x86u];
+    size_t index;
+
+    if (!body || !out_bytes || out_capacity < sizeof(encoded) ||
+        !body->layout_verified || !body->semantics_verified ||
+        !theron_v1_pce_bram_campaign_byte_restorable(
+            body->ram_267c_campaign_byte)) {
+        return 0;
+    }
+
+    encoded[0] = body->ram_267c_campaign_byte;
+    encoded[1] = (uint8_t)(body->theron_max_health & 0xffu);
+    encoded[2] = (uint8_t)(body->theron_max_health >> 8);
+    encoded[3] = (uint8_t)(body->theron_max_stamina & 0xffu);
+    encoded[4] = (uint8_t)(body->theron_max_stamina >> 8);
+    encoded[5] = (uint8_t)(body->theron_max_mana & 0xffu);
+    encoded[6] = (uint8_t)(body->theron_max_mana >> 8);
+    memcpy(encoded + 7u, body->theron_max_attributes,
+           sizeof(body->theron_max_attributes));
+
+    for (index = 0u; index < 20u; ++index) {
+        uint16_t temporary =
+            body->theron_skill_temporary_experience[index];
+        uint32_t experience = body->theron_skill_experience[index];
+        encoded[14u + index] = (uint8_t)(temporary & 0xffu);
+        encoded[34u + index] = (uint8_t)(temporary >> 8);
+        encoded[54u + index] = (uint8_t)(experience & 0xffu);
+        encoded[74u + index] = (uint8_t)(experience >> 8);
+        encoded[94u + index] = (uint8_t)(experience >> 16);
+        encoded[114u + index] = (uint8_t)(experience >> 24);
+    }
+
+    memcpy(out_bytes, encoded, sizeof(encoded));
+    return 1;
+}
+
+int theron_v1_pce_bram_encode_original_record(
+    const uint8_t *template_data,
+    size_t template_size,
+    const Theron_V1PceBramBodyReceipt *body,
+    uint8_t *out_data,
+    size_t out_capacity) {
+    Theron_V1PceBramReceipt template_receipt;
+    Theron_V1PceBramBodyReceipt verified_body;
+    uint8_t encoded[THERON_V1_PCE_BRAM_BYTES];
+    uint8_t encoded_body[0x86u];
+
+    if (!template_data || !body || !out_data ||
+        template_size != sizeof(encoded) || out_capacity < sizeof(encoded) ||
+        theron_v1_pce_bram_classify(template_data, template_size,
+                                    &template_receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !template_receipt.save_record_layout_proven ||
+        !template_receipt.selected_slot_layout_proven ||
+        !template_receipt.save_body_layout_proven ||
+        !template_receipt.save_slot_tail_unconsumed_padding ||
+        !template_receipt.save_body_campaign_valid ||
+        template_receipt.save_body_bytes != sizeof(encoded_body) ||
+        !theron_v1_pce_bram_decode_original_body(
+            template_data, template_size, &verified_body) ||
+        !verified_body.layout_verified || !verified_body.semantics_verified ||
+        !theron_v1_pce_bram_encode_original_body(
+            body, encoded_body, sizeof(encoded_body))) {
+        return 0;
+    }
+
+    memcpy(encoded, template_data, sizeof(encoded));
+    memcpy(encoded + template_receipt.save_body_offset, encoded_body,
+           sizeof(encoded_body));
+    if (theron_v1_pce_bram_classify(encoded, sizeof(encoded),
+                                    &template_receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !theron_v1_pce_bram_decode_original_body(
+            encoded, sizeof(encoded), &verified_body) ||
+        !verified_body.layout_verified || !verified_body.semantics_verified ||
+        verified_body.ram_267c_campaign_byte !=
+            body->ram_267c_campaign_byte ||
+        verified_body.theron_max_health != body->theron_max_health ||
+        verified_body.theron_max_stamina != body->theron_max_stamina ||
+        verified_body.theron_max_mana != body->theron_max_mana ||
+        memcmp(verified_body.theron_max_attributes,
+               body->theron_max_attributes,
+               sizeof(body->theron_max_attributes)) != 0 ||
+        memcmp(verified_body.theron_skill_temporary_experience,
+               body->theron_skill_temporary_experience,
+               sizeof(body->theron_skill_temporary_experience)) != 0 ||
+        memcmp(verified_body.theron_skill_experience,
+               body->theron_skill_experience,
+               sizeof(body->theron_skill_experience)) != 0) {
+        return 0;
+    }
+
+    memcpy(out_data, encoded, sizeof(encoded));
+    return 1;
+}
+
 int theron_v1_pce_bram_decode_original_record(
     const uint8_t *data, size_t size, Theron_V1PceBramRecordReceipt *out) {
     Theron_V1PceBramReceipt container;

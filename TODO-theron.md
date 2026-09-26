@@ -22,11 +22,14 @@ data.
    134-byte writer body, restore direction, and current/max-stat and skill
    experience meanings are already byte-bound in
    `docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`.
-   Firestaff imports the authentic Akutuba-complete body but has no production
-   writer that exports updated runtime progress to the original BRAM format;
-   implement and verify that path against the real artifact before claiming
-   original-format save support. The available authentic JP SRAM is empty, so
-   JP Continue with progress remains unverified.
+   Firestaff now has a source-gated in-memory encoder for Theron's persistent
+   runtime fields and the selected original record. An unchanged Continue
+   round-trips the authentic Akutuba-complete artifact byte for byte. It does
+   not yet persist the returned image to disk or prove an updated gameplay
+   state by reopening it in the original runtime. Add and verify that durable
+   save path before claiming original-format save support. The available
+   authentic JP SRAM is empty, so JP Continue with progress remains
+   unverified.
 3. **Original presentation and event output.** Join game-owned Track 02 bytes
    and consumers to VDC/VCE screen ownership, text, portraits, CDDA selection,
    and ADPCM/SFX events. The admitted US capture is a bounded screen-space
@@ -3839,3 +3842,29 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   confirmed the remote SHA-256 matched the current branch, rebuilt the test,
   and passed its focused CTest. The subsequent 68-test run therefore includes
   that verified test fix. No game-data files were copied or changed.
+
+## 2026-09-26 — authentic original Backup RAM export encoding
+
+- ✅ Added a source-gated encoder from the live Theron champion and campaign
+  state to the original DMS-SG.001 selected slot. It follows the authenticated
+  writer's exact 134-byte layout, requires the bound Track 02 campaign source
+  and Theron in party slot zero, preserves the template's unclassified
+  campaign high bit, the two transport-padding bytes, other slots, selected
+  slot, and unrelated Backup RAM bytes. The API returns an in-memory 2 KiB
+  image and does not write or replace files.
+- ✅ Against the authentic US Akutuba-complete Backup RAM file
+  (MD5 `ffabc8d19b0915d4d9632a7ae2e90a97`), Firestaff decoded the original
+  body, restored its persistent fields into the real campaign world, encoded
+  them back, and reproduced all 2,048 bytes exactly. The focused authentic
+  `theron_v1_pce_bram_real_artifact` test passed; no game data was generated or
+  modified.
+- ✅ Rebuilt the Theron targets and ran all 68 local Theron CTests against the
+  available authentic data: 62 passed, six configured media/capture tests
+  skipped, zero failed. Both authentic combined-RAR regions, BRAM Continue,
+  JP CUE/runtime and projected-ISO paths, and available Track 02/media tests
+  passed.
+- 🔒 This proves a lossless unchanged-state encoder, not a durable save
+  workflow or persistence of changed dungeon progress. File writing, updated
+  progress from authenticated gameplay consumers, and reopening a changed
+  save in original Theron remain open. No synthetic game state was used as
+  evidence.

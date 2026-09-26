@@ -276,6 +276,17 @@ int theron_v1_startup_restore_pce_bram_theron_path(
     Theron_V1PceBramReceipt *out_receipt,
     Theron_V1PceBramBodyReceipt *out_body);
 
+/* Encode the source-proven persistent Theron state back into the selected
+ * slot of an authentic original Backup RAM template. This returns a complete
+ * 2 KiB image for the caller to persist; it does not write or replace files.
+ * Only the original writer-owned 134 body bytes change. */
+int theron_v1_startup_encode_pce_bram_theron_record(
+    const Theron_V1_World *world,
+    const uint8_t *template_data,
+    size_t template_size,
+    uint8_t *out_data,
+    size_t out_capacity);
+
 /* Apply an explicit startup Continue request into a Theron world.
  * These helpers own the save/SRM decode and between-dungeon world reset;
  * the caller still owns UI state, status text, and subsequent level load. */

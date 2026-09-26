@@ -174,10 +174,27 @@ int theron_v1_pce_bram_decode_original_body(
     const uint8_t *data, size_t size, Theron_V1PceBramBodyReceipt *out);
 int theron_v1_pce_bram_decode_original_body_path(
     const char *path, Theron_V1PceBramBodyReceipt *out);
+/* Encode the byte-bound original DMS-SG.001 writer body. The typed fields
+ * are serialized in the authenticated 134-byte column layout; the body must
+ * carry a verified layout/semantics receipt and a campaign byte accepted by
+ * the original restore consumer. */
+int theron_v1_pce_bram_encode_original_body(
+    const Theron_V1PceBramBodyReceipt *body,
+    uint8_t *out_bytes,
+    size_t out_capacity);
 int theron_v1_pce_bram_decode_original_record(
     const uint8_t *data, size_t size, Theron_V1PceBramRecordReceipt *out);
 int theron_v1_pce_bram_decode_original_record_path(
     const char *path, Theron_V1PceBramRecordReceipt *out);
+/* Replace only the selected slot's 134 writer-owned bytes in an authentic
+ * 2 KiB Backup RAM template. Both transport-padding bytes, other slots,
+ * selected-slot index and all unrelated container bytes are preserved. */
+int theron_v1_pce_bram_encode_original_record(
+    const uint8_t *template_data,
+    size_t template_size,
+    const Theron_V1PceBramBodyReceipt *body,
+    uint8_t *out_data,
+    size_t out_capacity);
 
 /* Bounded gzip header receipt for one .srm buffer: validates the magic,
  * deflate method, reserved flag bits and the optional

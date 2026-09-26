@@ -101,6 +101,7 @@ static int set_test_env(const char *name, const char *value) {
 
 int main(int argc, char **argv) {
     Theron_V1PceBramReceipt receipt;
+    Theron_V1PceBramReceipt writer_template_receipt;
     Theron_V1PceBramBodyReceipt body;
     Theron_V1PceBramBodyReceipt rejected_body;
     Theron_V1PceBramRecordReceipt record;
@@ -111,6 +112,9 @@ int main(int argc, char **argv) {
     Theron_V1StartupContinueAvailability availability;
     Theron_V1_World world;
     uint8_t *user_data;
+    uint8_t authentic_bram[THERON_V1_PCE_BRAM_BYTES];
+    uint8_t encoded_bram[THERON_V1_PCE_BRAM_BYTES];
+    uint8_t encoded_body[0x86u];
     uint8_t main_ram[8192];
     uint8_t save_manager_code[8192];
     size_t user_data_size = 0u;
@@ -366,6 +370,23 @@ int main(int argc, char **argv) {
         body.ram_268a_2701[2][0] != 0xe8u ||
         body.ram_268a_2701[3][0] != 0x03u) {
         fputs("authentic Backup RAM body did not match original writer layout\n",
+              stderr);
+        return 1;
+    }
+    if (!load_exact(argv[1], authentic_bram, sizeof(authentic_bram)) ||
+        theron_v1_pce_bram_classify(
+            authentic_bram, sizeof(authentic_bram),
+            &writer_template_receipt) != THERON_V1_PCE_BRAM_READY ||
+        !theron_v1_pce_bram_encode_original_body(
+            &body, encoded_body, sizeof(encoded_body)) ||
+        memcmp(encoded_body,
+               authentic_bram + writer_template_receipt.save_body_offset,
+               sizeof(encoded_body)) != 0 ||
+        !theron_v1_pce_bram_encode_original_record(
+            authentic_bram, sizeof(authentic_bram), &body, encoded_bram,
+            sizeof(encoded_bram)) ||
+        memcmp(encoded_bram, authentic_bram, sizeof(authentic_bram)) != 0) {
+        fputs("original Backup RAM writer did not reproduce the authentic artifact byte-for-byte\n",
               stderr);
         return 1;
     }
@@ -879,6 +900,15 @@ int main(int argc, char **argv) {
             memcmp(before_seeds, world.progression.dungeon_seeds,
                    sizeof(before_seeds)) != 0) {
             fputs("authentic Theron body was not transactionally restored\n",
+                  stderr);
+            return 1;
+        }
+        if (!theron_v1_startup_encode_pce_bram_theron_record(
+                &world, authentic_bram, sizeof(authentic_bram), encoded_bram,
+                sizeof(encoded_bram)) ||
+            memcmp(encoded_bram, authentic_bram, sizeof(authentic_bram)) !=
+                0) {
+            fputs("authentic restored runtime did not round-trip to the original Backup RAM image\n",
                   stderr);
             return 1;
         }

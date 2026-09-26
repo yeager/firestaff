@@ -805,6 +805,79 @@ int theron_v1_startup_restore_pce_bram_theron_path(
     return 1;
 }
 
+int theron_v1_startup_encode_pce_bram_theron_record(
+    const Theron_V1_World *world,
+    const uint8_t *template_data,
+    size_t template_size,
+    uint8_t *out_data,
+    size_t out_capacity) {
+    Theron_V1PceBramReceipt template_receipt;
+    Theron_V1PceBramBodyReceipt body;
+    const Theron_V1_Champion *theron;
+    uint8_t artifact_mask;
+
+    memset(&template_receipt, 0, sizeof(template_receipt));
+    memset(&body, 0, sizeof(body));
+    if (!world || !template_data || !out_data ||
+        world->party.champion_count < 1 ||
+        strcmp(world->party.champions[0].name, "THERON") != 0 ||
+        !world->track02_campaign_mask.valid ||
+        !world->track02_campaign_mask.artifact_collection_relation_proven ||
+        world->track02_campaign_mask.runtime_address != 0x267cu ||
+        world->track02_campaign_mask.campaign_bits_mask != 0x7fu ||
+        (world->progression.quest_items_collected & 0x80u) != 0u ||
+        theron_v1_pce_bram_classify(
+            template_data, template_size, &template_receipt) !=
+            THERON_V1_PCE_BRAM_READY ||
+        !template_receipt.save_body_layout_proven ||
+        !template_receipt.save_body_campaign_valid ||
+        !template_receipt.save_slot_tail_unconsumed_padding ||
+        !template_receipt.selected_slot_layout_proven ||
+        template_receipt.save_body_bytes != 0x86u ||
+        !theron_v1_world_campaign_artifact_mask(
+            world, world->progression.quest_items_collected,
+            &artifact_mask) ||
+        artifact_mask != world->progression.quest_items_collected) {
+        return 0;
+    }
+
+    theron = &world->party.champions[0];
+    if (theron->max_health < 0 || theron->max_stamina < 0 ||
+        theron->max_mana < 0 || theron->luck < 0 || theron->luck > 255 ||
+        theron->strength < 0 || theron->strength > 255 ||
+        theron->dexterity < 0 || theron->dexterity > 255 ||
+        theron->wisdom < 0 || theron->wisdom > 255 ||
+        theron->vitality < 0 || theron->vitality > 255 ||
+        theron->anti_magic < 0 || theron->anti_magic > 255 ||
+        theron->anti_fire < 0 || theron->anti_fire > 255) {
+        return 0;
+    }
+
+    body.layout_verified = 1;
+    body.semantics_verified = 1;
+    body.ram_267c_campaign_byte =
+        (uint8_t)((template_receipt.serialized_campaign_byte & 0x80u) |
+                  artifact_mask);
+    body.theron_max_health = (uint16_t)theron->max_health;
+    body.theron_max_stamina = (uint16_t)theron->max_stamina;
+    body.theron_max_mana = (uint16_t)theron->max_mana;
+    body.theron_max_attributes[0] = (uint8_t)theron->luck;
+    body.theron_max_attributes[1] = (uint8_t)theron->strength;
+    body.theron_max_attributes[2] = (uint8_t)theron->dexterity;
+    body.theron_max_attributes[3] = (uint8_t)theron->wisdom;
+    body.theron_max_attributes[4] = (uint8_t)theron->vitality;
+    body.theron_max_attributes[5] = (uint8_t)theron->anti_magic;
+    body.theron_max_attributes[6] = (uint8_t)theron->anti_fire;
+    memcpy(body.theron_skill_temporary_experience,
+           theron->skill_temporary_experience,
+           sizeof(body.theron_skill_temporary_experience));
+    memcpy(body.theron_skill_experience, theron->skill_experience,
+           sizeof(body.theron_skill_experience));
+
+    return theron_v1_pce_bram_encode_original_record(
+        template_data, template_size, &body, out_data, out_capacity);
+}
+
 static void theron_v1_startup_continue_reset_world_runtime(
     Theron_V1_World *world) {
 
