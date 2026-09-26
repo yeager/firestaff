@@ -3536,12 +3536,15 @@ av bankladdningen. Se
 - A longer authentic JP replay then scheduled RUN at frame 9600 and ran for
   230 seconds against the unchanged Rev. 1 CUE and System Card. Mednafen ended
   at its configured timeout (`exit=124`) after 524,288 controller transactions;
-  the capture reported 115 CD IRQs, 24 raw-sector spans, one game-owned
-  `$E009` dispatch/entry, zero `$E009` data reads and zero authenticated
-  CD-to-RAM receipts. No dungeon transition was published. This run therefore
-  does not establish that the scheduled input reached a game-owned consumer,
-  and it does not change the earlier negative JP result. Raw capture artifacts
-  remain outside Git and the user's save/media files were not modified.
+  the sidecar records one scripted event applied at frame 9600 and the PCE
+  controller-port read `$1000=$0008`. This confirms hardware-level input
+  delivery, not a game-owned response. The receipt also reports zero host-key
+  events, 115 CD IRQs, 24 raw-sector spans, one game-owned `$E009`
+  dispatch/entry, zero `$E009` data reads and zero authenticated CD-to-RAM
+  receipts; no dungeon transition was published. The isolated output BRAM has
+  MD5 `2c063b192787ac9e7528c0e2096fc034`, distinct from the untouched JP user
+  save (`dbdedb0ec809227b289c2bc5b18b9c9d`). Raw capture artifacts remain
+  outside Git. The run does not change the earlier negative gameplay result.
 - ✅ The live capture now also admits the authentic US CloneCD single-BIN CUE
   without rewriting its media: it bounds Track 02 from CUE `INDEX 01` sector
   3234 to the next track at sector 6605, extracts only that range in its
