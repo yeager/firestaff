@@ -297,7 +297,12 @@ static void test_orch_source_spell_projectile_publishes_c14_c49_atomically(void)
     assert(F0888_ORCH_ApplyPlayerInput_Compat(&world, &input, &result) == 1);
     assert(world.projectiles.count == 1 && world.timeline.count == 1);
     assert(projectile.next == THING_ENDOFLIST);
-    assert(projectile.slot == (unsigned short)world.projectiles.entries[0].reserved1);
+    /* ReDMCSB PROJEXPL.C:F0212 stores the spell's explosion Thing in
+     * C14.Slot. The host projection's reserved1 instead records a carried
+     * object, which spell projectiles do not have. */
+    assert(THING_GET_TYPE(projectile.slot) == THING_TYPE_EXPLOSION);
+    assert((unsigned short)world.projectiles.entries[0].reserved1 == THING_NONE);
+    assert(read_u16_le_for_test(rawProjectile + 2) == projectile.slot);
     assert(projectile.kineticEnergy == world.projectiles.entries[0].kineticEnergy);
     assert(projectile.attack == world.projectiles.entries[0].attack);
     assert(projectile.eventIndex == 0 && rawProjectile[6] == 0 && rawProjectile[7] == 0);
@@ -1754,7 +1759,9 @@ static void test_orch_projectile_wall_impact_creates_explosion(void) {
     assert(world.explosions.entries[0].explosionType == C000_EXPLOSION_FIREBALL);
     assert(world.explosions.entries[0].attack == 80);
     assert(world.explosions.entries[0].mapIndex == 0);
-    assert(world.explosions.entries[0].mapX == 2);
+    /* ReDMCSB PROJEXPL.C:F0219's wall branch calls F0217 with the source
+     * square (L0525/L0526), where the impact explosion is created. */
+    assert(world.explosions.entries[0].mapX == 1);
     assert(world.explosions.entries[0].mapY == 1);
     assert(world.explosions.entries[0].cell == 2);
     assert(world.timeline.count == 1);
@@ -1934,7 +1941,8 @@ static void run_orch_magical_wall_nonzero_adjusted_explosion_case(
     assert(world.explosions.entries[0].explosionType == expectedExplosionType);
     assert(world.explosions.entries[0].attack == expectedAttack);
     assert(world.explosions.entries[0].mapIndex == 0);
-    assert(world.explosions.entries[0].mapX == 2);
+    /* The wall impact is dispatched on the source square per F0219/F0217. */
+    assert(world.explosions.entries[0].mapX == 1);
     assert(world.explosions.entries[0].mapY == 1);
     assert(world.explosions.entries[0].cell == expectedCell);
     assert(world.explosions.entries[0].centered ==
@@ -1974,8 +1982,8 @@ static void test_orch_magical_wall_impact_nonzero_adjusted_explosion_spawns(void
         PROJECTILE_SUBTYPE_LIGHTNING_BOLT, 6, C002_EXPLOSION_LIGHTNING_BOLT,
         3, 2);
     run_orch_magical_wall_nonzero_adjusted_explosion_case(
-        PROJECTILE_SUBTYPE_POISON_BOLT, 8, C007_EXPLOSION_POISON_CLOUD,
-        2, EXPLOSION_CELL_CENTERED);
+        PROJECTILE_SUBTYPE_POISON_BOLT, 8, C006_EXPLOSION_POISON_BOLT,
+        2, 2);
     run_orch_magical_wall_nonzero_adjusted_explosion_case(
         PROJECTILE_SUBTYPE_POISON_CLOUD, 13, C007_EXPLOSION_POISON_CLOUD,
         13, EXPLOSION_CELL_CENTERED);
@@ -3010,8 +3018,8 @@ static void test_orch_magical_door_impact_zero_adjusted_explosion_skips_spawn(vo
         PROJECTILE_SUBTYPE_LIGHTNING_BOLT, 1, 0, C002_EXPLOSION_LIGHTNING_BOLT,
         0, 2);
     run_orch_magical_door_adjusted_explosion_case(
-        PROJECTILE_SUBTYPE_POISON_BOLT, 3, 0, C007_EXPLOSION_POISON_CLOUD,
-        0, EXPLOSION_CELL_CENTERED);
+        PROJECTILE_SUBTYPE_POISON_BOLT, 3, 0, C006_EXPLOSION_POISON_BOLT,
+        0, 2);
 }
 
 static void test_orch_magical_door_impact_nonzero_adjusted_explosion_spawns(void) {
@@ -3019,8 +3027,8 @@ static void test_orch_magical_door_impact_nonzero_adjusted_explosion_spawns(void
         PROJECTILE_SUBTYPE_LIGHTNING_BOLT, 4, 1, C002_EXPLOSION_LIGHTNING_BOLT,
         2, 2);
     run_orch_magical_door_adjusted_explosion_case(
-        PROJECTILE_SUBTYPE_POISON_BOLT, 8, 1, C007_EXPLOSION_POISON_CLOUD,
-        2, EXPLOSION_CELL_CENTERED);
+        PROJECTILE_SUBTYPE_POISON_BOLT, 8, 1, C006_EXPLOSION_POISON_BOLT,
+        2, 2);
 }
 
 static void run_orch_thrown_potion_door_impact_case(
@@ -3841,10 +3849,10 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
     assert(world.party.champions[1].poisonDose == 12);
     assert(world.lifecycle.champions[1].poisonEventCount == 255);
     assert(world.explosions.count == 1);
-    assert(world.explosions.entries[0].explosionType == C007_EXPLOSION_POISON_CLOUD);
+    assert(world.explosions.entries[0].explosionType == C006_EXPLOSION_POISON_BOLT);
     assert(world.explosions.entries[0].attack == 20);
-    assert(world.explosions.entries[0].cell == EXPLOSION_CELL_CENTERED);
-    assert(world.explosions.entries[0].centered == 1);
+    assert(world.explosions.entries[0].cell == 1);
+    assert(world.explosions.entries[0].centered == 0);
 
     for (i = 0; i < world.timeline.count; ++i) {
         if (world.timeline.events[i].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
@@ -4572,8 +4580,20 @@ static void test_orch_projectile_group_hit_all_kill_cleans_up_group(void) {
     assert(world.explosions.entries[0].mapY == 1);
     assert(world.explosions.entries[0].cell == EXPLOSION_CELL_CENTERED);
     assert(world.explosions.entries[0].attack == 110);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE);
+    assert(world.timeline.count == 2);
+    {
+        int sawExplosionAdvance = 0;
+        int sawImpactSound = 0;
+        for (i = 0; i < world.timeline.count; ++i) {
+            if (world.timeline.events[i].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE) {
+                sawExplosionAdvance = 1;
+            } else if (world.timeline.events[i].kind == TIMELINE_EVENT_PLAY_SOUND) {
+                sawImpactSound = 1;
+            }
+        }
+        assert(sawExplosionAdvance);
+        assert(sawImpactSound);
+    }
     for (i = 0; i < result.emissionCount; ++i) {
         if (result.emissions[i].kind == EMIT_KILL_NOTIFY &&
             result.emissions[i].payload[0] == 0 &&
@@ -4700,6 +4720,22 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     groups[0].health[0] = 1;
     groups[0].health[1] = 200;
     groups[0].cells = 0x09u; /* creature 0 in cell 1, creature 1 in cell 2. */
+    /* F0514 follows the raw DUNGEON group Next word when appending fixed
+     * possessions to this existing square Thing chain. */
+    write_u16_le_for_test(rawGroupData, groups[0].next);
+    dungeon.loaded = 1;
+    {
+        static unsigned short columnFirstThingCounts[4];
+        /* Only (x=2,y=1) owns a Thing list; column bases count lists in
+         * preceding columns, giving [0, 0, 0, 1] for this 4x3 map. */
+        columnFirstThingCounts[0] = 0;
+        columnFirstThingCounts[1] = 0;
+        columnFirstThingCounts[2] = 0;
+        columnFirstThingCounts[3] = 1;
+        dungeon.columnsCumulativeSquareFirstThingCount =
+            columnFirstThingCounts;
+        dungeon.dungeonColumnCount = 4;
+    }
     groups[0].behavior = DM1_BEHAVIOR_ATTACK;
     world.creatureAICount = 1;
     world.creatureAI[0].stateKind = AI_STATE_ATTACK;
@@ -6183,7 +6219,11 @@ static __attribute__((unused)) int run_live_cmd_attack_reaction_schedule_attempt
     memset(&result, 0, sizeof(result));
     world.gameTick = 41;
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
-    assert(world.timeline.count == 0);
+    assert(world.timeline.count == 1);
+    assert(world.timeline.events[0].kind == TIMELINE_EVENT_CREATURE_REACTION);
+    assert(world.timeline.events[0].fireAtTick == 50);
+    assert(world.timeline.events[0].aux0 == 0);
+    assert(world.timeline.events[0].aux2 == DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0);
     assert(world.creatureAI[0].stateKind == AI_STATE_ATTACK);
     assert(world.creatureAI[0].lastSeenPartyMapX == 1);
     assert(world.creatureAI[0].lastSeenPartyMapY == 1);
@@ -6321,6 +6361,10 @@ static int run_live_cmd_attack_killed_some_smoke_attempt(unsigned int seed) {
     struct DungeonWeapon_Compat weapons[8];
     struct DungeonArmour_Compat armours[8];
     struct DungeonJunk_Compat junks[8];
+    unsigned char rawGroupData[16];
+    unsigned char rawWeaponData[8 * 4];
+    unsigned char rawArmourData[8 * 4];
+    unsigned char rawJunkData[8 * 4];
     struct DungeonGroup_Compat groups[1];
     struct TickInput_Compat input;
     struct TickResult_Compat result;
@@ -6341,16 +6385,35 @@ static int run_live_cmd_attack_killed_some_smoke_attempt(unsigned int seed) {
     memset(weapons, 0, sizeof(weapons));
     memset(armours, 0, sizeof(armours));
     memset(junks, 0, sizeof(junks));
+    memset(rawGroupData, 0, sizeof(rawGroupData));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawArmourData, 0, sizeof(rawArmourData));
+    memset(rawJunkData, 0, sizeof(rawJunkData));
     for (e = 1; e < 8; ++e) weapons[e].next = THING_NONE;
     for (e = 0; e < 8; ++e) armours[e].next = THING_NONE;
     for (e = 0; e < 8; ++e) junks[e].next = THING_NONE;
+    for (e = 0; e < 8; ++e) {
+        write_u16_le_for_test(rawWeaponData + e * 4, THING_NONE);
+        rawWeaponData[e * 4 + 2] = 0x7e;
+        write_u16_le_for_test(rawArmourData + e * 4, THING_NONE);
+        rawArmourData[e * 4 + 2] = 0x7d;
+        write_u16_le_for_test(rawJunkData + e * 4, THING_NONE);
+        rawJunkData[e * 4 + 2] = 0x7c;
+    }
     weapons[0].type = 8;
+    rawWeaponData[2] = 8;
     things.weapons = weapons;
     things.weaponCount = 8;
+    things.thingCounts[THING_TYPE_WEAPON] = 8;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
     things.armours = armours;
     things.armourCount = 8;
+    things.thingCounts[THING_TYPE_ARMOUR] = 8;
+    things.rawThingData[THING_TYPE_ARMOUR] = rawArmourData;
     things.junks = junks;
     things.junkCount = 8;
+    things.thingCounts[THING_TYPE_JUNK] = 8;
+    things.rawThingData[THING_TYPE_JUNK] = rawJunkData;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
@@ -6408,14 +6471,10 @@ static int run_live_cmd_attack_killed_some_smoke_attempt(unsigned int seed) {
     things.groups = groups;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
-    {
-        static unsigned char rawGroup2[16];
-        memset(rawGroup2, 0, sizeof(rawGroup2));
-        rawGroup2[0] = (unsigned char)(THING_ENDOFLIST & 0xFF);
-        rawGroup2[1] = (unsigned char)(THING_ENDOFLIST >> 8);
-        rawGroup2[4] = 18;
-        things.rawThingData[THING_TYPE_GROUP] = rawGroup2;
-    }
+    rawGroupData[0] = (unsigned char)(THING_ENDOFLIST & 0xFF);
+    rawGroupData[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawGroupData[4] = 18;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
     world.creatureAICount = 1;
     world.pc34ActiveGroupSourceCount = 1;
     world.creatureAI[0].stateKind = AI_STATE_WANDER;
