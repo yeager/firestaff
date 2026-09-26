@@ -1,4 +1,5 @@
 #include "asset_status_m12.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,6 +119,36 @@ static int check_known_empty_jp_iso_is_not_launchable(void)
 #endif
 }
 
+static int check_authentic_us_cue_is_in_full_inventory(void)
+{
+    const char *cue = getenv("FIRESTAFF_THERON_US_CUE");
+    char root[1024];
+    M12_AssetStatus status;
+    M12_AssetStatusScanOptions options;
+    const M12_AssetVersionStatus *version;
+    const M12_AssetRequiredFileStatus *required;
+
+    if (!cue || !cue[0]) {
+        puts("SKIP: authentic US CloneCD CUE path is not configured");
+        return 0;
+    }
+    if (!FSP_ParentDir(root, sizeof(root), cue)) return 1;
+    memset(&options, 0, sizeof(options));
+    options.honorRequestedDataDir = 1;
+    if (!M12_AssetStatus_ScanWithOptions(&status, root, &options)) return 2;
+    version = M12_AssetStatus_GetVersion(&status, "theron", 1U);
+    required = M12_AssetStatus_GetRequiredFile(&status, "theron", 0U);
+    if (!version || !version->matched ||
+        strcmp(version->matchedMd5, "168bd6a63784e91885df8c47be62ab5a") != 0 ||
+        !required || !required->matched ||
+        strcmp(required->matchedHash, version->matchedMd5) != 0 ||
+        !M12_AssetStatus_GameAvailable(&status, "theron")) {
+        fprintf(stderr, "FAIL: authentic US CloneCD CUE absent from full scan\n");
+        return 3;
+    }
+    return 0;
+}
+
 int main(void)
 {
     int result = check_missing_media_is_diagnostic_only();
@@ -128,6 +159,8 @@ int main(void)
     if (result) return 20 + result;
     result = check_known_empty_jp_iso_is_not_launchable();
     if (result) return 30 + result;
+    result = check_authentic_us_cue_is_in_full_inventory();
+    if (result) return 40 + result;
     puts("test_asset_status_theron_campaign_media_scan: PASS");
     return 0;
 }

@@ -2705,6 +2705,78 @@ static void m12_refresh_theron_media_status(
     }
 }
 
+static int m12_theron_version_index_for_md5(const char* md5);
+static void m12_apply_required_game_availability(M12_AssetStatus* status,
+                                                 int gameIndex,
+                                                 int available);
+static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
+                                                   int gameIndex);
+
+/* CUE-backed Theron releases may store Track 02 under a filename that is
+ * intentionally not a canonical loose-file candidate (for example a full
+ * CloneCD disc image). Admit only media that passes the same strict intake
+ * used by direct launch, then publish its original payload locator into the
+ * matching catalogue row. Never unpack an archive or replace another
+ * already-discovered edition. */
+static void m12_scan_theron_cue_packages(
+    M12_AssetStatus* status,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    int gameIndex = m12_game_index_from_id("theron");
+    size_t rootIndex;
+    if (!status || gameIndex < 0) return;
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        FirestaffTheronMediaStatus media;
+        if (FirestaffTheronMedia_ClassifyDirectory(roots[rootIndex], &media) != 0 ||
+            !media.paired_track01_track02 || media.cue_path[0] == '\0') {
+            continue;
+        }
+        {
+            Theron_V1Track02RawMediaIntakeReceipt intake;
+            int versionIndex;
+            M12_AssetVersionStatus* version;
+            size_t requiredIndex;
+            if (!theron_v1_track02_raw_media_intake_discover(media.cue_path,
+                                                              &intake) ||
+                intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY) {
+                continue;
+            }
+            versionIndex = m12_theron_version_index_for_md5(intake.track02_md5);
+            if (versionIndex < 0 ||
+                (size_t)versionIndex >= M12_ASSET_MAX_VERSIONS_PER_GAME) {
+                continue;
+            }
+            version = &status->versions[gameIndex][versionIndex];
+            if (version->matched) continue;
+            version->matched = 1;
+            m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                            intake.payload_path);
+            m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
+                            intake.track02_md5);
+            for (requiredIndex = 0U;
+                 requiredIndex < status->requiredFileCounts[gameIndex];
+                 ++requiredIndex) {
+                M12_AssetRequiredFileStatus* required =
+                    &status->requiredFiles[gameIndex][requiredIndex];
+                if (required->roleId && strcmp(required->roleId, "track02") == 0 &&
+                    !required->matched) {
+                    required->matched = 1;
+                    m12_copy_string(required->matchedPath,
+                                    sizeof(required->matchedPath),
+                                    intake.payload_path);
+                    m12_copy_string(required->matchedHash,
+                                    sizeof(required->matchedHash),
+                                    intake.track02_md5);
+                    break;
+                }
+            }
+            status->originalFileCandidateFound = 1;
+            (void)m12_materialize_runtime_cache_for_game(status, gameIndex);
+            m12_apply_required_game_availability(status, gameIndex, 1);
+        }
+    }
+}
+
 /* The scanner is the sole authority that pairs a CUE declaration with the
  * hash-matched payload.  Keep the IPL receipt bounded to the bootstrap span;
  * this is provenance, not a synthetic extracted Track 02 cache. */
@@ -6729,6 +6801,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                                           legacyFallbackSnapshot);
         return 0;
     }
+    m12_scan_theron_cue_packages(status, roots, rootCount);
     m12_refresh_theron_media_status(status, roots, rootCount);
     m12_refresh_theron_track02_loader_receipt(status);
 

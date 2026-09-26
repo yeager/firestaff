@@ -3538,6 +3538,20 @@ av bankladdningen. Se
   and therefore adds no negative evidence about gameplay CDDA. Its trace bundle
   remains private on trv2 under
   `firestaff-theron-evidence/capture/us-clonecd-authentic-state-cdda-20260926.trace*`.
+- ✅ The existing real-media startup/runtime regressions also pass on trv2
+  against the staged originals: US CloneCD ZIP (direct boot, original/modern
+  cards, mouse-only cards and six movement inputs through native dungeon
+  startup), US CloneCD raw CUE Track 02, Japanese Rev. 1 CUE, Japanese later
+  dungeon runtime, and Japanese raw Track 02 startup. These prove the listed
+  authentic intake/startup routes, not CD-origin parity for savestate gameplay
+  or completion of every Theron mechanic.
+- ✅ Full inventory scanning now also passes strict Track 02 media intake on
+  CUE-backed packages after the generic filename/hash pass. It publishes the
+  original payload path and edition hash into the corresponding Theron row
+  without replacing another edition or unpacking the source. A real-media
+  regression checks the USA CloneCD CUE against the staged source when
+  `FIRESTAFF_THERON_US_CUE` is configured; the ordinary local run skips this
+  assertion when that original is not staged.
 - ✅ Independently validated the existing Track 01 handoff against the
   authentic full Japanese 7z disc: its CUE declares 19 tracks, Track 01 is
   7,916,832 bytes of AUDIO, and Track 02 is MODE1/2352 at 8,102,640 bytes.
