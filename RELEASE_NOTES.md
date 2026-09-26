@@ -1,25 +1,41 @@
 # Firestaff — Unreleased
 
+# Firestaff v3.0.348
+
 ## User-facing changes
 
-- `Launcher`: `--menu --game` now keeps an explicitly selected archive or data
-  file as the launch source even when a sibling loose copy of that edition is
+- `Launcher`: `--menu --game` changes source selection to keep an explicitly
+  selected archive or data file when a sibling loose copy of that edition is
   also installed.
 - `Launcher`: start failures for DM1, CSB, Nexus and Theron's Quest, including
   CSB's FM Towns Utility Disk and Atari R1 Hint Oracle, now use the selected
   launcher language.
-- `Quick Resume`: follows the saved game's presentation mode and admits V2.2
+- `Quick Resume`: uses the saved game's presentation mode and admits V2.2
   only through that game's normal launch gate.
-- `CSB FM Towns`: direct F31 Japanese save launch now applies the authenticated
+- `CSB FM Towns`: direct F31 Japanese save launch now uses the authenticated
   F0435 state through the source-owned M11 game handoff.
 - `Game options`: the modern launcher view now reads the selected title's own
   options for Nexus and Theron's Quest instead of reusing DM2's options.
-- `DM1 Atari ST`: the start menu now follows the Atari source entrance route
+- `DM1 Atari ST`: the start menu now uses the Atari source entrance route
   into the Hall of Champions instead of opening a party-less dungeon through
   the generic launch path.
-- `DM1 Atari ST`: its startup media receipt now requires the source F0437
-  title boundary before F0441 entrance processing; authentic Atari F0437
-  pixel and palette presentation remains in progress.
+- `DM1 Atari ST`: its startup media receipt now rejects any launch that lacks
+  the source F0437 title boundary before F0441 entrance processing; authentic
+  Atari F0437 pixel and palette presentation remains in progress.
+
+## Developer changes
+
+- `Native startup verification`: adds authentic Amiga v2.0 and FM Towns
+  start-menu routes through the first DM1 runtime frame, and verifies
+  Quick Resume from the original Amiga save disk without extracting game data.
+- `Launcher regression coverage`: verifies authentic English and Japanese
+  FM Towns DM1 menu startup and records the verified cross-platform Actions
+  build on Linux, Windows, and macOS.
+
+## Release metadata
+
+- `Release packaging`: changes the project version to 3.0.348 and refreshes
+  the deterministic SPDX source inventory.
 
 # Firestaff v3.0.347
 
