@@ -7964,6 +7964,12 @@ target_compile_definitions(firestaff_m12 PRIVATE
     FIRESTAFF_THERON_PRODUCTION=1)
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
+# Theron's production raw-media intake uses M12's native asset reader and
+# file-MD5 helpers. Propagate M12 through the static-library interface so
+# standalone Theron tests and probes receive those symbols too.
+if(TARGET firestaff_theron)
+    target_link_libraries(firestaff_theron PUBLIC firestaff_m12)
+endif()
 # Asset-status test hooks are deliberately excluded from the production M12
 # archive. Data-free scanner tests compile asset_status_m12.c themselves with
 # FIRESTAFF_ASSET_STATUS_TESTING; a launcher binary must use only the checked-in
@@ -8184,12 +8190,6 @@ target_include_directories(firestaff_theron_v1_mechanics_champions_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(firestaff_theron_v1_mechanics_champions_probe
     PRIVATE firestaff_theron firestaff_m10 m)
-# theron_v1_track02_raw_media_intake.c (pulled in by firestaff_theron)
-# uses the shared file-MD5 helper from firestaff_m12.
-if(TARGET firestaff_m12)
-    target_link_libraries(firestaff_theron_v1_mechanics_champions_probe
-        PRIVATE firestaff_m12)
-endif()
 if(NOT MSVC)
     target_compile_options(firestaff_theron_v1_mechanics_champions_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -45421,12 +45421,6 @@ if(BUILD_TESTING AND THERON_SOURCES)
     target_include_directories(test_theron_v1_dungeon_progression PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    # The production Theron archive's raw-media intake uses M12's asset
-    # reader and file-MD5 helpers; this standalone fixture links that archive.
-    if(TARGET firestaff_m12)
-        target_link_libraries(test_theron_v1_dungeon_progression PRIVATE
-            firestaff_m12)
-    endif()
     if(NOT MSVC)
         target_compile_options(test_theron_v1_dungeon_progression PRIVATE -Wall -Wextra -O2)
     endif()
