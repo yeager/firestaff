@@ -64,6 +64,14 @@ source-map-backed runtime state and respects that source-map boundary for both
 editions; it is not an original-game comparison and does not establish full
 movement, collision, transition, rendering, or gameplay parity.
 
+2026-09-27 authentic US raw-BIN movement extension: the USA regression now
+isolates left turn and blocked forward movement at the same authentic spawn,
+matching the JP checks. Both keep pose `(1,0,0)` with tick unchanged when the
+forward destination is blocked; left turn changes facing to `(1,0,3)` without
+advancing the tick. `theron_v1_raw_bin_runtime_boot` passes against the real
+hash-verified `TQUS02.bin`. This closes a regional test gap only; it does not
+prove original-game movement parity or later-level behavior.
+
 2026-09-27 local fresh-build verification: after rebasing the verified
 Theron changes onto GitHub `main` at `ecf45acbe`, a clean macOS CMake
 configuration and the application plus save-path targets build successfully.
