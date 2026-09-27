@@ -655,6 +655,12 @@ open. No substitute game data has been generated.
   gör verkliga carried items åtkomliga för P/DROP även när M11:s tillfälliga
   selection har försvunnit vid resume; generiska ID-only-slots hoppas över
   och själva DROP-mutationen kräver fortfarande exakt Track 02-ledgerpost.
+- 🔒 The compact champion inventory uses item ID 0 as its empty-slot sentinel,
+  but authentic category-local type 0 is present in Track 02 records. The
+  current TAKE path therefore rejects those real records; do not remap them or
+  treat the synthetic/legacy item catalog as evidence. Resolve slot occupancy
+  against the original T900 consumer (or an authenticated runtime capture),
+  then cover type-0 TAKE/swap/drop against both authentic regional corpora.
 - ✅ Det autentiska kombinerade ISO/OGG-RAR-paketet stöds nu som komplett
   extern originalmedia för både US och JP; regionsval och återbyggd Track 02
   är hash-låsta.
