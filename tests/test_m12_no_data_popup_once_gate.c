@@ -42,6 +42,7 @@
 #endif
 
 #define FIRESTAFF_ASSET_STATUS_TESTING 1
+#include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
@@ -408,6 +409,68 @@ static void check_missing_archive_tool_popup(void) {
           strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
     dismiss_message(&state);
     CHECK(launcher_has_clean_main_view(&state));
+}
+
+/* Use authentic CSB Atari ST software media to verify the actionable opt-in
+ * message. The source archive is linked into an isolated data directory so
+ * the test neither copies nor rewrites licensed media. */
+static int check_external_archive_opt_in_popup(void) {
+#ifdef _WIN32
+    puts("SKIP: authentic archive opt-in popup test requires POSIX symlinks");
+    return 77;
+#else
+    const char* archive = getenv("FIRESTAFF_CSB_ATARI_ARCHIVE");
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char linkedArchive[M12_ASSET_DATA_DIR_CAPACITY];
+
+    if (!archive || !archive[0] || access(archive, R_OK) != 0 ||
+        !asset_external_archive_tool_available(archive)) {
+        puts("SKIP: authentic CSB Atari archive or host 7z reader unavailable");
+        return 77;
+    }
+    reset_dialog_stub();
+    if (!isolate_home_and_data_root(dataRoot)) {
+        CHECK(0);
+        return 1;
+    }
+    if (snprintf(linkedArchive, sizeof(linkedArchive), "%s/%s", dataRoot,
+                 "Chaos Strikes Back Atari ST original.7z") >=
+        (int)sizeof(linkedArchive) || symlink(archive, linkedArchive) != 0) {
+        puts("SKIP: could not link authentic CSB Atari archive into isolated data root");
+        return 77;
+    }
+    CHECK(test_unsetenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS"));
+    CHECK(test_unsetenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS"));
+    CHECK(test_setenv("FIRESTAFF_DATA", dataRoot));
+    CHECK(test_setenv("FIRESTAFF_DATA_DIR", dataRoot));
+    asset_scan_clear_missing_extractor_diagnostics();
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.launchRequested == 0);
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1,
+                 M12_StartupMenu_TranslateForLocale(
+                     state.settings.languageIndex,
+                     "ARCHIVE SCANNING IS DISABLED")) == 0);
+    CHECK(state.messageLine2 &&
+          strstr(state.messageLine2,
+                 "Chaos Strikes Back Atari ST original.7z") != NULL &&
+          strstr(state.messageLine2, "--enable-external-archive-tools") != NULL);
+    CHECK(state.messageLine3 &&
+          strcmp(state.messageLine3,
+                 M12_StartupMenu_TranslateForLocale(
+                     state.settings.languageIndex,
+                     "RESTART WITH THE OPTION, THEN RESCAN GAME DATA")) == 0);
+    CHECK(asset_scan_missing_extractor_count() == 1);
+    dismiss_message(&state);
+    CHECK(launcher_has_clean_main_view(&state));
+
+    unlink(linkedArchive);
+    asset_scan_clear_missing_extractor_diagnostics();
+    return 0;
+#endif
 }
 
 /* RAR offers `unrar` first, then compatible archive readers. A supplied RAR
@@ -822,8 +885,19 @@ static void check_data_root_switch_partial_required_pairs_for_dm1_dm2(void) {
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
 }
 
-int main(void) {
+int main(int argc, char** argv) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
+
+    if (argc == 2 && strcmp(argv[1], "--csb-authentic-archive-opt-in") == 0) {
+        int result = check_external_archive_opt_in_popup();
+        if (result != 0) return result;
+        if (failures) {
+            fprintf(stderr, "%d failure(s)\n", failures);
+            return 1;
+        }
+        puts("PASS: authentic CSB archive displays the external-tool opt-in popup");
+        return 0;
+    }
 
     check_initial_no_data_popup_appears_once();
     check_missing_archive_tool_popup();

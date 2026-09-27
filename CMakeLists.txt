@@ -54327,6 +54327,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_no_data_popup_once_gate.c"
         NAME m12_no_data_popup_once_gate
         COMMAND test_m12_no_data_popup_once_gate
     )
+    set_tests_properties(m12_no_data_popup_once_gate PROPERTIES
+        LABELS "m12;startup;regression"
+    )
+    add_test(
+        NAME m12_csb_authentic_archive_opt_in_popup
+        COMMAND test_m12_no_data_popup_once_gate --csb-authentic-archive-opt-in
+    )
+    set_tests_properties(m12_csb_authentic_archive_opt_in_popup PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "m12;csb;startup;real_media;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
+    )
 endif()
 
 # M12 data-directory picker/scan cancel gate: regression for cancelling the
