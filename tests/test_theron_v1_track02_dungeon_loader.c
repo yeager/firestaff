@@ -4927,6 +4927,197 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
     }
 }
 
+static void test_authentic_take_requires_matching_item_record(
+    const uint8_t *ud, size_t ud_size,
+    const uint8_t *track02, size_t track02_size, int variant) {
+    Theron_V1_World *world = calloc(1u, sizeof(*world));
+    Theron_DungeonLoadResult result;
+    Theron_Track02ItemNameSource item_name_source;
+    unsigned int tested = 0u;
+    unsigned int zero_id_items = 0u;
+    assert(world != NULL);
+    theron_v1_world_init(world);
+    world->current_dungeon = 1;
+    assert(theron_v1_track02_load_full_dungeon_for_variant(
+               world, 1, ud, ud_size,
+               variant == 1 ? THERON_TRACK02_VARIANT_JP_BIN
+                            : THERON_TRACK02_VARIANT_US_BIN,
+               &result) == 0);
+    assert(result.source_property_table_verified == 1);
+    bind_real_track02_party(
+        world, track02, track02_size,
+        variant == 1 ? THERON_TRACK02_MD5_JP_BIN
+                     : THERON_TRACK02_MD5_US_BIN);
+    assert(theron_v1_track02_decode_item_name_source(
+               ud, ud_size, variant, 1u, &item_name_source) == 1);
+    assert(theron_v1_world_bind_track02_item_name_source(
+               world, &item_name_source, variant) == 1);
+
+    for (int i = 0; i < world->object_count; ++i) {
+        Theron_V1_Object *object = &world->objects[i];
+        Theron_V1_Object saved_object;
+        Theron_V1_InventorySourceRecord saved_inventory_source;
+        Theron_V1_Champion *champion;
+        uint8_t saved_inventory[THERON_INVENTORY_SLOTS];
+        int saved_x, saved_y, saved_dir, saved_level;
+        int approach_found = 0;
+        int earlier_carryable = 0;
+
+        if (object->dungeon_id != 1 ||
+            !object->source_origin_valid || !object->source_property_valid ||
+            (object->source_category != THERON_CAT_WEAPON &&
+             object->source_category != THERON_CAT_CLOTHING &&
+             object->source_category != THERON_CAT_SCROLL &&
+             object->source_category != THERON_CAT_POTION &&
+             object->source_category != THERON_CAT_MISC) ||
+            (object->flags & (THERON_OBJ_F_PICKED_UP |
+                              THERON_OBJ_F_DESTROYED)))
+            continue;
+        /* The current compact inventory sentinel is zero. Preserve this real
+         * source item as an explicit open mapping gap rather than pretending
+         * its category-local type zero is a valid global carried-item ID. */
+        if (object->item_index == THERON_ITEM_NONE) {
+            ++zero_id_items;
+            continue;
+        }
+        for (int j = 0; j < i; ++j) {
+            const Theron_V1_Object *earlier = &world->objects[j];
+            if (earlier->dungeon_id == object->dungeon_id &&
+                earlier->level == object->level &&
+                earlier->x == object->x && earlier->y == object->y &&
+                !(earlier->flags & (THERON_OBJ_F_PICKED_UP |
+                                    THERON_OBJ_F_DESTROYED)) &&
+                (earlier->source_category == THERON_CAT_WEAPON ||
+                 earlier->source_category == THERON_CAT_CLOTHING ||
+                 earlier->source_category == THERON_CAT_SCROLL ||
+                 earlier->source_category == THERON_CAT_POTION ||
+                 earlier->source_category == THERON_CAT_MISC)) {
+                earlier_carryable = 1;
+                break;
+            }
+        }
+        if (earlier_carryable) continue;
+
+        saved_object = *object;
+        saved_x = world->party.leader_x;
+        saved_y = world->party.leader_y;
+        saved_dir = world->party.leader_dir;
+        saved_level = world->current_level;
+        world->current_level = object->level;
+        for (int dir = 0; dir < THERON_DIR_COUNT; ++dir) {
+            int px = object->x - g_theron_dir_dx[dir];
+            int py = object->y - g_theron_dir_dy[dir];
+            const Theron_V1_Level *level =
+                &world->levels[0][object->level];
+            if (px >= 0 && py >= 0 && px < level->width &&
+                py < level->height &&
+                level->squares[py][px] == THERON_SQUARE_FLOOR) {
+                theron_v1_party_place(world, px, py, dir);
+                approach_found = 1;
+                break;
+            }
+        }
+        if (!approach_found) {
+            world->current_level = saved_level;
+            continue;
+        }
+
+        champion = &world->party.champions[world->party.active_slot];
+        memcpy(saved_inventory, champion->inventory, sizeof(saved_inventory));
+        memset(&saved_inventory_source, 0, sizeof(saved_inventory_source));
+        {
+            uint8_t saved_raw_byte = object->source_raw[0];
+            object->source_raw[0] ^= 1u;
+            assert(theron_v1_click_route(world, object->x, object->y,
+                                         THERON_CMD_TAKE) == -1);
+            assert(memcmp(champion->inventory, saved_inventory,
+                          sizeof(saved_inventory)) == 0);
+            assert(!(object->flags & THERON_OBJ_F_PICKED_UP));
+            object->source_raw[0] = saved_raw_byte;
+        }
+        {
+            uint8_t saved_property_byte = object->source_property[0];
+            object->source_property[0] ^= 1u;
+            assert(theron_v1_click_route(world, object->x, object->y,
+                                         THERON_CMD_TAKE) == -1);
+            assert(memcmp(champion->inventory, saved_inventory,
+                          sizeof(saved_inventory)) == 0);
+            assert(!(object->flags & THERON_OBJ_F_PICKED_UP));
+            object->source_property[0] = saved_property_byte;
+        }
+        assert(theron_v1_click_route(world, object->x, object->y,
+                                     THERON_CMD_TAKE) == 0);
+        {
+            int inventory_slot = -1;
+            for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+                if (saved_inventory[slot] == THERON_ITEM_NONE &&
+                    champion->inventory[slot] == object->source_item_type &&
+                    world->inventory_source[world->party.active_slot][slot]
+                        .valid) {
+                    inventory_slot = slot;
+                    break;
+                }
+            }
+            assert(inventory_slot >= 0);
+            saved_inventory_source =
+                world->inventory_source[world->party.active_slot]
+                                       [inventory_slot];
+            assert(saved_inventory_source.source_origin_valid);
+            assert(saved_inventory_source.source_dungeon ==
+                   object->source_dungeon);
+            assert(saved_inventory_source.source_level ==
+                   object->source_level);
+            assert(saved_inventory_source.source_x == object->source_x);
+            assert(saved_inventory_source.source_y == object->source_y);
+            assert(saved_inventory_source.source_ref == object->source_ref);
+            assert(saved_inventory_source.source_raw_size ==
+                   object->source_raw_size);
+            assert(memcmp(saved_inventory_source.source_raw,
+                          object->source_raw, object->source_raw_size) == 0);
+            assert(saved_inventory_source.property_valid);
+            assert(memcmp(saved_inventory_source.property,
+                          object->source_property,
+                          sizeof(object->source_property)) == 0);
+
+            /* A changed authentic property row must prevent reinsertion into
+             * the live inventory and leave the source occurrence untouched. */
+            world->inventory_source[world->party.active_slot]
+                                   [inventory_slot].property[0] ^= 1u;
+            assert(theron_v1_swap_inventory_source_slots(
+                       world, world->party.active_slot, inventory_slot,
+                       (inventory_slot + 1) % THERON_INVENTORY_SLOTS) == -1);
+            assert(theron_v1_drop_inventory_source_item(
+                       world, world->party.active_slot, inventory_slot,
+                       object->x, object->y) == -1);
+            assert(object->flags & THERON_OBJ_F_PICKED_UP);
+            world->inventory_source[world->party.active_slot]
+                                   [inventory_slot] = saved_inventory_source;
+            assert(theron_v1_drop_inventory_source_item(
+                       world, world->party.active_slot, inventory_slot,
+                       object->x, object->y) >= 0);
+            assert(!(object->flags & THERON_OBJ_F_PICKED_UP));
+            assert(object->source_ref == saved_object.source_ref);
+            assert(object->source_raw_size == saved_object.source_raw_size);
+            assert(memcmp(object->source_raw, saved_object.source_raw,
+                          saved_object.source_raw_size) == 0);
+            memcpy(champion->inventory, saved_inventory,
+                   sizeof(saved_inventory));
+            memset(&world->inventory_source[world->party.active_slot]
+                                            [inventory_slot],
+                   0, sizeof(world->inventory_source[0][0]));
+            ++tested;
+        }
+        *object = saved_object;
+        world->current_level = saved_level;
+        theron_v1_party_place(world, saved_x, saved_y, saved_dir);
+    }
+    assert(tested > 0u);
+    printf("  authentic %s Akutuba TAKE/DROP property-integrity cases: %u "
+           "(type-zero inventory mappings left closed: %u)\n",
+           variant == 1 ? "JP" : "US", tested, zero_id_items);
+    free(world);
+}
+
 int main(void) {
     uint8_t *raw;
     size_t raw_size = 0u;
@@ -4947,6 +5138,8 @@ int main(void) {
             assert(raw != NULL);
             test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
             test_real_item_name_sources(jp_ud, jp_ud_size, 1);
+            test_authentic_take_requires_matching_item_record(
+                jp_ud, jp_ud_size, raw, raw_size, 1);
             test_real_sarmon_track19_mapping(jp_ud, jp_ud_size, 1);
             free(raw);
             free(jp_ud);
@@ -4975,6 +5168,8 @@ int main(void) {
     test_all_dungeons(ud, ud_size, raw, raw_size);
     test_real_us_iso_dungeons_against_raw(ud, ud_size);
     test_real_item_name_sources(ud, ud_size, 2);
+    test_authentic_take_requires_matching_item_record(
+        ud, ud_size, raw, raw_size, 2);
     test_real_sarmon_track19_mapping(ud, ud_size, 2);
     test_authentic_coordinate_teleporter_without_endpoint(
         ud, ud_size, raw, raw_size);

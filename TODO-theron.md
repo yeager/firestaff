@@ -114,6 +114,17 @@ source-name, combat-boundary, JP-record and startup-receipt gates on the
 current source snapshot; it does not prove a complete campaign, original
 quest-item transactions, or original-format BRAM export.
 
+2026-09-27 authentic inventory transaction regression: the focused Track 02
+loader test now executes source-backed TAKE and DROP against real Akutuba
+objects in both US and JP media. Each region verifies 22 representable carried
+items preserve their exact source occurrence, origin and property row through
+inventory transfer, while mutations to the raw object or property row are
+rejected without changing inventory. Six category-local type-zero items per
+region remain untested because the current compact inventory reserves zero as
+`THERON_ITEM_NONE`; no global item mapping is inferred. This proves Firestaff's
+bounded inventory handoff only, not the original T900 pickup/UI semantics or
+quest-item collection transaction.
+
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its
 nineteen original sibling BIN files. It verifies the canonical layout (17

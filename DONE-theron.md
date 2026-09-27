@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-27 — Authentic inventory record-integrity regression
+
+- The Track 02 dungeon-loader test now executes source-backed TAKE and DROP
+  on real Akutuba items from both authentic US and JP Track 02 media. It
+  verifies 22 representable item transactions per region preserve the exact
+  source occurrence, origin and property row; altered source or property
+  bytes are rejected before inventory mutation.
+- Verification: a clean trv2 configure and target build succeeded, and
+  `theron_v1_track02_dungeon_loader` passed 1/1 against the installed original
+  media. The direct test run reported 22 cases per region. Six category-local
+  type-zero objects per region remain outside this regression because zero is
+  the current compact inventory's empty-slot sentinel. This does not prove
+  original T900 pickup semantics or quest-item collection.
+
 ## 2026-09-26 — SRM readiness probe target dependencies
 
 - The Theron Track 02 media-intake code uses the shared M10 asset reader and
