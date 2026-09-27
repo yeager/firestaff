@@ -98,9 +98,14 @@ int nexus_v1_vdp1_dgn_material_resolver(
     int terminator_found = 0;
     int image_matches = 0;
     int palette_matches = 0;
+    int image_palette_matches = 0;
+    int matched_image_id_verified = 0;
     const uint8_t *matched_image = NULL;
     const uint8_t *matched_palette = NULL;
     uint16_t matched_image_id = 0;
+    const uint8_t *matched_joined_image = NULL;
+    const uint8_t *matched_joined_palette = NULL;
+    uint16_t matched_joined_image_id = 0;
 
     (void)command;
     (void)command_size;
@@ -134,10 +139,12 @@ int nexus_v1_vdp1_dgn_material_resolver(
         uint32_t image_offset;
         uint32_t dgn_palette_offset;
         uint32_t image_size;
-        const uint8_t *image;
-        const uint8_t *palette;
-        int image_match;
-        int palette_match;
+        const uint8_t *image = NULL;
+        const uint8_t *palette = NULL;
+        int image_match = 0;
+        int palette_match = 0;
+        int image_range_valid;
+        int palette_range_valid;
 
         if (image_id == 0xffffU) {
             terminator_found = 1;
@@ -156,23 +163,26 @@ int nexus_v1_vdp1_dgn_material_resolver(
         image_size = parsed->colour_mode == 5U
             ? (uint32_t)width * (uint32_t)height * 2U
             : ((uint32_t)width * (uint32_t)height + 1U) / 2U;
-        if (image_size != parsed->texture_byte_count ||
-            image_offset < cursor + 22U ||
-            image_offset > useful || image_size > useful - image_offset ||
-            (parsed->colour_mode == 1U &&
-             (dgn_palette_offset < cursor + 22U ||
-              dgn_palette_offset > useful ||
-              32U > useful - dgn_palette_offset))) {
-            continue;
+        image_range_valid = image_offset >= cursor + 22U &&
+            image_offset <= useful && image_size <= useful - image_offset;
+        if (image_range_valid && image_size == parsed->texture_byte_count) {
+            image = data + base + image_offset;
+            image_match = swapped_words_equal(
+                vdp1_vram + parsed->texture_source_byte_offset,
+                (int)parsed->texture_byte_count, image, (int)image_size);
         }
-        image = data + base + image_offset;
-        palette = parsed->colour_mode == 1U
-            ? data + base + dgn_palette_offset : NULL;
-        image_match = swapped_words_equal(
-            vdp1_vram + parsed->texture_source_byte_offset,
-            (int)parsed->texture_byte_count, image, (int)image_size);
-        palette_match = parsed->colour_mode == 1U &&
-            swapped_words_equal(vdp1_vram + palette_offset, 32, palette, 32);
+        /* CMDCOLR selects a frame-local CLUT independently from CMDSRCA.
+         * A DGN palette remains a valid source candidate even when its image
+         * descriptor has a different size from the captured pixel span. */
+        palette_range_valid = parsed->colour_mode == 1U &&
+            dgn_palette_offset >= cursor + 22U &&
+            dgn_palette_offset <= useful &&
+            32U <= useful - dgn_palette_offset;
+        if (palette_range_valid) {
+            palette = data + base + dgn_palette_offset;
+            palette_match = swapped_words_equal(
+                vdp1_vram + palette_offset, 32, palette, 32);
+        }
         if (image_match) {
             ++image_matches;
             matched_image = image;
@@ -185,6 +195,18 @@ int nexus_v1_vdp1_dgn_material_resolver(
         if (palette_match) {
             ++palette_matches;
             matched_palette = palette;
+        }
+        /* Identical pixel payloads can be stored under several Structure2
+         * IDs while each descriptor carries a different CLUT.  The unique
+         * pair of captured image bytes and captured palette bytes is then a
+         * stronger source join than requiring the image bytes to be unique
+         * in isolation.  Keep the independently unique fallback below for
+         * Nexus commands that reuse a canonical palette across descriptors. */
+        if (image_match && palette_match) {
+            ++image_palette_matches;
+            matched_joined_image = image;
+            matched_joined_palette = palette;
+            matched_joined_image_id = image_id;
         }
     }
     if (!terminator_found || !out_input) return 0;
@@ -206,17 +228,33 @@ int nexus_v1_vdp1_dgn_material_resolver(
         out_input->transparent_capture_noop_verified = 1;
         return 1;
     }
-    if (image_matches != 1 || palette_matches != 1 || !matched_image ||
-        !matched_palette) return 0;
+    if (image_palette_matches == 1) {
+        matched_image = matched_joined_image;
+        matched_palette = matched_joined_palette;
+        matched_image_id = matched_joined_image_id;
+        matched_image_id_verified = 1;
+    } else if (image_palette_matches == 0 && image_matches > 0 &&
+               palette_matches == 1 && matched_image && matched_palette) {
+        /* Several Structure2 records may carry byte-identical pixels under
+         * different image IDs. If there is no unique image+palette record
+         * pair but the captured palette itself has one unique owner, the
+         * rendered pixels are still byte-exact and the palette is still
+         * independently source-bound. Do not claim a face owner unless the
+         * image ID is unique. */
+        if (image_matches == 1) matched_image_id_verified = 1;
+    } else {
+        return 0;
+    }
     memset(out_input, 0, sizeof(*out_input));
     out_input->dgn_image = matched_image;
     out_input->dgn_image_size = (int)parsed->texture_byte_count;
     out_input->dgn_palette = matched_palette;
     out_input->dgn_palette_size = 32;
     out_input->dgn_source_hash_verified = 1;
-    out_input->dgn_structure3_face_owner_count =
-        structure3_face_owner_count(data, input->dgn_byte_count,
-                                     matched_image_id);
+    out_input->dgn_structure3_face_owner_count = matched_image_id_verified
+        ? structure3_face_owner_count(data, input->dgn_byte_count,
+                                      matched_image_id)
+        : 0;
     out_input->dgn_structure3_face_owner_verified =
         out_input->dgn_structure3_face_owner_count > 0;
     out_input->palette_slot_base = input->palette_slot_base;

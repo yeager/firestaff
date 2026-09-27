@@ -196,6 +196,15 @@ static int run_external_dgn_mode1_capture(void)
           replay.draw_commands_resolved == 219 &&
           replay.unowned_non_mode1_draw_commands == 3 &&
           replay.unowned_mode1_draw_commands == 15 &&
+          replay.skipped_non_draw_commands == 7) ||
+         /* The retained 701-frame retail window ends on this verified frame.
+          * It resolves byte-identical Structure2 aliases through a unique
+          * CLUT join; 17 records remain capture-only and semantic admission
+          * must remain blocked. */
+         (replay.draw_commands_seen == 242 &&
+          replay.draw_commands_resolved == 225 &&
+          replay.unowned_non_mode1_draw_commands == 0 &&
+          replay.unowned_mode1_draw_commands == 17 &&
           replay.skipped_non_draw_commands == 7)) &&
         replay.replay.valid &&
          ((replay.replay.source_joins_verified == 218 &&
@@ -203,14 +212,18 @@ static int run_external_dgn_mode1_capture(void)
          (replay.replay.source_joins_verified == 194 &&
           replay.replay.palette_joins_verified == 194) ||
          (replay.replay.source_joins_verified == 219 &&
-          replay.replay.palette_joins_verified == 219)) &&
+          replay.replay.palette_joins_verified == 219) ||
+         (replay.replay.source_joins_verified == 225 &&
+          replay.replay.palette_joins_verified == 225)) &&
+        replay.semantic_admission_blocked &&
         !replay.system_clip_state_missing &&
         replay.system_clip_state_verified && replay.system_clip_x == 319 &&
         replay.system_clip_y == 223 && replay.replay.renderer_permitted;
     known_capture_window =
         (replay.draw_commands_seen == 235 && replay.draw_commands_resolved == 218) ||
         (replay.draw_commands_seen == 212 && replay.draw_commands_resolved == 194) ||
-        (replay.draw_commands_seen == 237 && replay.draw_commands_resolved == 219);
+        (replay.draw_commands_seen == 237 && replay.draw_commands_resolved == 219) ||
+        (replay.draw_commands_seen == 242 && replay.draw_commands_resolved == 225);
     if (ok && !known_capture_window) ok = 0;
     if (!ok) {
         fprintf(stderr,

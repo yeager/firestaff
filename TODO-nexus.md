@@ -56,7 +56,21 @@ presentation boundary.
   beyond this window for the first input-correlated presentation change.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
-  unbound bytes and generated fixtures out of production gameplay.
+  unbound bytes and generated fixtures out of production gameplay. In the
+  retained authentic 701-frame JP Saturn window, frame 700 has 249 linked
+  VDP1 records; the current compositor resolves 225 of 242 draw commands and
+  correctly keeps semantic admission blocked for the 17 unowned draws. The two
+  nonzero mode-1 spans at VRAM offsets `0x58b58` (344x177) and `0x58c58`
+  (88x177) have no exact or word-byte-swapped match in the 156 files under the
+  TRV2 user's `.firestaff/data/nexus` directory. The Japanese retail
+  `MENU.BPK` there matches its verified SHA-256
+  `740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636`; the
+  real-media surface-class test passes and the PRS3 decoder succeeds on all
+  162 PRS3 surfaces, but a capture-CLUT/palette-color remap and 4-bpp repacking
+  still produce no exact join for either span. Thus neither source ownership
+  nor palette, placement, or the original Saturn consumer is established.
+  Keep both spans blocked until upload provenance or an exact transformed
+  retail-surface join is captured.
 - Implement native Saturn runtime semantics only after each dispatcher,
   material, event, save or audio consumer has a captured, hash-verified
   contract.
