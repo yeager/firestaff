@@ -17,6 +17,16 @@ BIN media. `test_nexus_v1_title_mapd_real`, `test_m11_nexus_startup_gate` and
 `test_m11_nexus_startup_runtime_handoff` cover this bounded path. The renderer
 does not authorise the separate menu, face, HUD or dungeon compositors.
 
+An end-to-end check against the installed English Saturn CUE on 2026-09-27
+confirms that `--game nexus --platform saturn` opens the original disc and
+reaches `phase=nexus-title` with `titleReady=1` after 140 frames. Sending Enter
+after 500 title frames still leaves the process at `nexus-title`, with no menu
+or level loaded; the startup receipt reports `blocker=faces`. The separate
+retail `FACE.BIN` decoder passes for all 20 authenticated portraits, so this
+is a missing runtime/start-menu consumer or readiness binding, not missing
+user media or failed portrait decoding. CLI launch to the title is therefore
+verified, but the interactive Nexus start-menu handoff is not.
+
 A same-revision, media-immutable title-session receipt now joins retail CD
 FIFO records for LBA 6063--6089 to SH-2 RAM source writes for the same range,
 cached SH-2 reads, and frame-stamped VDP2 writes/registers for frames
