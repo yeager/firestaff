@@ -18173,6 +18173,17 @@ endif()
         # wall-clock room for all source-owned Entrance checks on CI hosts.
         TIMEOUT 300
     )
+    add_test(
+        NAME csb_v1_fmtowns_rar_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_rar_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_fmtowns_rar_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;fmtowns;rar;startup;cli;menu;real_media;in_memory;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_RAR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back for FM-Towns.rar;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        TIMEOUT 180
+    )
     # Keep both language-private F31 program chains independently runnable.
     # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
     # original media; these rows add only the selected language and therefore

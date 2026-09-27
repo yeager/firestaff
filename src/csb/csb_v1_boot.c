@@ -2733,6 +2733,46 @@ void csb_v1_boot_startup_launch_cleanup_pc34(
     memset(launch, 0, sizeof(*launch));
 }
 
+static int csb_v1_boot_read_fmtowns_archive_member_pc34(
+    const char *archive_path, const char *member_name,
+    uint8_t **out_bytes, size_t *out_size)
+{
+    char virtual_path[ASSET_PATH_MAX];
+    char alternate_name[ASSET_PATH_MAX];
+    char *extension;
+    int path_length;
+    if (!archive_path || !member_name || !out_bytes || !out_size ||
+        snprintf(virtual_path, sizeof(virtual_path), "%s::%s", archive_path,
+                 member_name) >= (int)sizeof(virtual_path)) {
+        return 0;
+    }
+    if (firestaff_zip_extract_by_name(archive_path, member_name, out_bytes,
+                                      out_size) == 0) {
+        return 1;
+    }
+    if (asset_read_virtual_path_alloc(virtual_path, out_bytes, out_size)) {
+        return 1;
+    }
+    /* F31's RAR stores the CUE-referenced BIN suffix in lowercase while the
+     * original CUE spells it uppercase.  Retry only that suffix. */
+    if (snprintf(alternate_name, sizeof(alternate_name), "%s", member_name) >=
+        (int)sizeof(alternate_name)) {
+        return 0;
+    }
+    extension = strrchr(alternate_name, '.');
+    if (!extension || strlen(extension) != 4U) return 0;
+    if (extension[1] >= 'A' && extension[1] <= 'Z') extension[1] += 'a' - 'A';
+    if (extension[2] >= 'A' && extension[2] <= 'Z') extension[2] += 'a' - 'A';
+    if (extension[3] >= 'A' && extension[3] <= 'Z') extension[3] += 'a' - 'A';
+    if (strcmp(alternate_name, member_name) == 0 ||
+        (path_length = snprintf(virtual_path, sizeof(virtual_path), "%s::%s",
+                                archive_path, alternate_name)) < 0 ||
+        (size_t)path_length >= sizeof(virtual_path)) {
+        return 0;
+    }
+    return asset_read_virtual_path_alloc(virtual_path, out_bytes, out_size);
+}
+
 static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     CSB_V1_BootProfile *profile,
     const char *data_dir,
@@ -2755,6 +2795,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         uint8_t *cue = NULL;
         size_t cue_size = 0u;
         char image_member[ASSET_PATH_MAX];
+        char cue_member[ASSET_PATH_MAX];
         CSB_V1_FmtownsCdLayout layout;
         const char *directory;
         const char *graphics_md5;
@@ -2770,15 +2811,24 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         const CSB_V1_FmtownsCdFile *utility_entry;
         const char *executable_name;
         const char *mini_name;
-        if ((requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
-             requested_variant != CSB_V1_VARIANT_FMTOWNS_JA) ||
-            firestaff_zip_extract_by_suffix(data_dir, ".cue", &cue,
-                                             &cue_size) != 0 ||
-            !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+        if (requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
+            requested_variant != CSB_V1_VARIANT_FMTOWNS_JA) {
+            return 0;
+        }
+        if (firestaff_zip_extract_by_suffix(data_dir, ".cue", &cue,
+                                            &cue_size) != 0) {
+            snprintf(cue_member, sizeof(cue_member),
+                     "Chaos Strikes Back for FM-Towns.cue");
+            if (!csb_v1_boot_read_fmtowns_archive_member_pc34(
+                    data_dir, cue_member, &cue, &cue_size)) {
+                return 0;
+            }
+        }
+        if (!fmtowns_cue_parse_image_member((const char *)cue, cue_size,
                                             image_member,
                                             sizeof(image_member)) ||
-            firestaff_zip_extract_by_name(data_dir, image_member, &image,
-                                          &image_size) != 0 ||
+            !csb_v1_boot_read_fmtowns_archive_member_pc34(
+                data_dir, image_member, &image, &image_size) ||
             csb_v1_fmtowns_cd_parse(image, image_size, &layout) != 0) {
             free(cue);
             free(image);

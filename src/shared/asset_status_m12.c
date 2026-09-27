@@ -1955,12 +1955,11 @@ static int m12_csb_fmtowns_archive_read_image(
     uint8_t* cue = NULL;
     size_t cueSize = 0U;
     char imageMember[M12_ASSET_DATA_DIR_CAPACITY];
-#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
-    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char stagingDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char stagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
-#endif
+    char cuePath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
+    char imagePath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
+    char alternateImageMember[M12_ASSET_DATA_DIR_CAPACITY];
+    char* extension;
+    int pathLength;
     if (!archivePath || !outImage || !outImageSize || !layout) return 0;
     *outImage = NULL;
     *outImageSize = 0U;
@@ -1968,37 +1967,51 @@ static int m12_csb_fmtowns_archive_read_image(
      * member: multi-track archives also carry CDDA files and archive order
      * is not a source-owned boot contract. */
     if (firestaff_zip_extract_by_suffix(archivePath, ".cue", &cue,
-                                        &cueSize) != 0 ||
-        !fmtowns_cue_parse_image_member((const char*)cue, cueSize,
-                                        imageMember, sizeof(imageMember)) ||
-        firestaff_zip_extract_by_name(archivePath, imageMember, &image,
-                                      &imageSize) != 0) {
-        free(cue);
-#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
-        /* An external RAR reader can only hand us a member through a host
-         * path.  Production must not turn the user's original disc into a
-         * transient game-data file: reject that format until it has an
-         * in-memory reader, just as other unsupported virtual media does. */
-        return 0;
-#else
-        /* RAR needs the shared external extractor, whose path API writes a
-         * file.  Keep that short-lived file under Firestaff's cache, then
-         * return to the same bounded in-memory scanner used for ZIP. */
-        if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
-            !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
-                          "asset-cache") ||
-            !FSP_JoinPath(stagingDir, sizeof(stagingDir), cacheRoot,
-                          "scan-staging") ||
-            !m12_csb_fmtowns_archive_stage(archivePath, stagingDir,
-                                             stagePath, sizeof(stagePath),
-                                             layout) ||
-            !m12_read_csb_fmtowns_staged_image(stagePath, &image,
-                                                &imageSize)) {
-            if (stagePath[0] != '\0') remove(stagePath);
+                                        &cueSize) != 0) {
+        /* The retail RAR uses a source-named CUE.  The generic virtual reader
+         * keeps an explicitly enabled external extractor on a bounded-memory
+         * pipe; unlike the retired staging route, it never writes the disc to
+         * Firestaff's cache. */
+        if (snprintf(cuePath, sizeof(cuePath),
+                     "%s::Chaos Strikes Back for FM-Towns.cue",
+                     archivePath) >= (int)sizeof(cuePath) ||
+            !asset_read_virtual_path_alloc(cuePath, &cue, &cueSize)) {
             return 0;
         }
-        remove(stagePath);
-#endif
+    }
+    if (!fmtowns_cue_parse_image_member((const char*)cue, cueSize,
+                                        imageMember, sizeof(imageMember)) ||
+        (pathLength = snprintf(imagePath, sizeof(imagePath), "%s::%s",
+                                archivePath, imageMember)) < 0 ||
+        (size_t)pathLength >= sizeof(imagePath)) {
+        free(cue);
+        return 0;
+    }
+    if (firestaff_zip_extract_by_name(archivePath, imageMember, &image,
+                                     &imageSize) != 0 &&
+        !asset_read_virtual_path_alloc(imagePath, &image, &imageSize)) {
+        /* CUE filenames are case-insensitive on the source DOS filesystem.
+         * The preserved RAR spells the BIN suffix in lowercase while its CUE
+         * uses uppercase; retry that source-equivalent spelling. */
+        snprintf(alternateImageMember, sizeof(alternateImageMember), "%s",
+                 imageMember);
+        extension = strrchr(alternateImageMember, '.');
+        if (!extension || strlen(extension) != 4U) {
+            free(cue);
+            return 0;
+        }
+        if (extension[1] >= 'A' && extension[1] <= 'Z') extension[1] += 'a' - 'A';
+        if (extension[2] >= 'A' && extension[2] <= 'Z') extension[2] += 'a' - 'A';
+        if (extension[3] >= 'A' && extension[3] <= 'Z') extension[3] += 'a' - 'A';
+        if (strcmp(alternateImageMember, imageMember) == 0 ||
+            (pathLength = snprintf(imagePath, sizeof(imagePath), "%s::%s",
+                                   archivePath, alternateImageMember)) < 0 ||
+            (size_t)pathLength >= sizeof(imagePath) ||
+            !asset_read_virtual_path_alloc(imagePath, &image, &imageSize)) {
+            free(cue);
+            free(image);
+            return 0;
+        }
     }
     free(cue);
     if (csb_v1_fmtowns_cd_parse(image, imageSize, layout) != 0) {

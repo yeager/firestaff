@@ -606,3 +606,11 @@ Reviewed 2026-08-29. Completed work only.
   selected dungeon, catalogued without the adjacent encoded champion-stat
   payloads, and translated only at the CSB PO presentation boundary. The
   real ZIP → ADF → M11 test proves the Swedish result and original fallback.
+
+- 2026-09-27: Added in-memory support for the authentic FM Towns retail RAR
+  in the CSB M12 admission and M11 startup handoff. The CUE-selected BIN is
+  read through the explicitly enabled external archive reader; its uppercase
+  CUE suffix is reconciled with the lowercase suffix in the preserved RAR.
+  The new `csb_v1_fmtowns_rar_cli_boot` regression verifies the authentic
+  title probe and startup-menu handoff, and confirms the original archive
+  hash is unchanged. This verifies startup ownership, not a playable campaign.
