@@ -32,9 +32,11 @@ fi
 baseline_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-baseline.XXXXXX")
 turn_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-turn.XXXXXX")
 move_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-move.XXXXXX")
+forward_blocked_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-forward-blocked.XXXXXX")
+turn_left_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-turn-left.XXXXXX")
 output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-raw-bin.XXXXXX")
 audio_cache=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-jp-audio.XXXXXX")
-trap 'rm -f "$baseline_output" "$turn_output" "$move_output" "$output"; rm -rf "$audio_cache"' EXIT
+trap 'rm -f "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$output"; rm -rf "$audio_cache"' EXIT
 if [[ ! -f "$track19_raw" && ! -f "$track19_iso" ]]; then
     printf 'SKIP: authentic Theron JP Track 19 is not staged\n'
     exit 77
@@ -64,13 +66,18 @@ startup_script='enter,enter,enter,action,tab'
 run_probe "$baseline_output" "$startup_script" '1,0,0'
 run_probe "$turn_output" "$startup_script,right" '1,0,1'
 run_probe "$move_output" "$startup_script,down" '1,1,0'
+run_probe "$forward_blocked_output" "$startup_script,up" '1,0,0'
+run_probe "$turn_left_output" "$startup_script,left" '1,0,3'
 run_probe "$output" "$startup_script,up,right,down,left,up,up" '2,3,0'
 
 if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
    ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_output" ||
-   ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$move_output"; then
-    cat "$baseline_output" "$turn_output" "$move_output" >&2
-    printf '%s\n' 'FAIL: authentic Theron JP input did not change the source-owned party pose/tick' >&2
+   ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$move_output" ||
+   ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$forward_blocked_output" ||
+   ! grep -Fq 'party=1,0,3 champions=2 runtimeTick=0' "$turn_left_output"; then
+    cat "$baseline_output" "$turn_output" "$move_output" \
+        "$forward_blocked_output" "$turn_left_output" >&2
+    printf '%s\n' 'FAIL: authentic Theron JP movement-panel inputs did not match source-owned pose/tick behavior' >&2
     exit 1
 fi
 
@@ -101,4 +108,4 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime; native turn and movement inputs update party pose and tick'
+printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime; isolated turns, one-step movement, and blocked boundary movement match source-owned pose/tick behavior'
