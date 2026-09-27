@@ -14926,6 +14926,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_menu_pro
     endif()
 endif()
 
+# Current hierarchical menu behavior probe. The older flat-menu probe above
+# remains buildable for legacy API work, but it is not the active launcher flow.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/m12/firestaff_m12_startup_flow_probe.c")
+    add_executable(firestaff_m12_startup_flow_probe
+        probes/m12/firestaff_m12_startup_flow_probe.c)
+    target_link_libraries(firestaff_m12_startup_flow_probe PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_m12_startup_flow_probe PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+endif()
+
 # M12 launcher screen-reader / state manifest probe (gap: "Screen reader
 # launcher state manifest"). Exercises m12_launcher_a11y_emit against the
 # public M12_StartupMenuState and asserts the JSON manifest at
@@ -34614,10 +34627,10 @@ endif()
         )
     endif()
 
-    if(TARGET firestaff_m12_startup_menu_probe)
+    if(TARGET firestaff_m12_startup_flow_probe)
         add_test(
             NAME m12_startup_menu
-            COMMAND firestaff_m12_startup_menu_probe
+            COMMAND firestaff_m12_startup_flow_probe
         )
     endif()
 

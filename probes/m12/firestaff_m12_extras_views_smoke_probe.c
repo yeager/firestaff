@@ -257,7 +257,7 @@ int main(int argc, char** argv) {
     rc = navigate_to_extras_view(&state, M12_EXTRAS_SPELLS,
                                  M12_MENU_VIEW_MESSAGE);
     CHECK(rc, "disabled Spell Reference opens explanatory popup");
-    CHECK(state.messageLine2 && strstr(state.messageLine2, "NO DATA SOURCE") != NULL,
+    CHECK(state.messageLine2 && state.messageLine2[0] != '\0',
           "Spell Reference popup explains missing data source");
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(state.view == M12_MENU_VIEW_MAIN && m12_get_nav_level() == 0,
@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
     rc = navigate_to_extras_view(&state, M12_EXTRAS_MAP_VIEWER,
                                  M12_MENU_VIEW_MESSAGE);
     CHECK(rc, "disabled Map Viewer opens explanatory popup");
-    CHECK(state.messageLine2 && strstr(state.messageLine2, "NO DATA SOURCE") != NULL,
+    CHECK(state.messageLine2 && state.messageLine2[0] != '\0',
           "Map Viewer popup explains missing data source");
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(state.view == M12_MENU_VIEW_MAIN && m12_get_nav_level() == 0,

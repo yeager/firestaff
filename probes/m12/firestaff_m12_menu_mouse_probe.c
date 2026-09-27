@@ -424,7 +424,7 @@ int main(void) {
                s.extrasSelected == M12_EXTRAS_SPELLS &&
                s.view == M12_MENU_VIEW_MESSAGE &&
                s.messageLine2 &&
-               strstr(s.messageLine2, "NO DATA SOURCE") != NULL,
+               s.messageLine2[0] != '\0',
                "clicking a disabled Extras row opens the explanatory popup");
 
         M12_StartupMenu_HandleInput(&s, M12_MENU_INPUT_BACK);

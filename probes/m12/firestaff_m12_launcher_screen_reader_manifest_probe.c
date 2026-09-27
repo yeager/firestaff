@@ -1306,8 +1306,8 @@ static void subtest_settings_data_dir_privacy(void)
     portable_remove(g_tmp_path);
     fs_ax_set_enabled(1);
 
-    M12_StartupMenu_Init(&state);
-    M12_AssetStatus_Scan(&state.assetStatus, dataRoot);
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    state.settings.streamerMode = 0;
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = PROBE_SETTINGS_ROW_DATA_DIR;
 
@@ -1334,8 +1334,8 @@ static void subtest_settings_data_dir_privacy(void)
     portable_remove(g_tmp_path);
     fs_ax_set_enabled(1);
 
-    M12_StartupMenu_Init(&state);
-    M12_AssetStatus_Scan(&state.assetStatus, dataRoot);
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    state.settings.streamerMode = 0;
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = PROBE_SETTINGS_ROW_DATA_DIR;
 
