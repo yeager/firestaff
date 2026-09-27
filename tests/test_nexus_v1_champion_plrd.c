@@ -1,6 +1,7 @@
 #include "nexus_v1_champions.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_inventory.h"
+#include "nexus_v1_res.h"
 #include "nexus_v1_rlowfix_text.h"
 #include "nexus_v1_startup_menu.h"
 
@@ -9,6 +10,11 @@
 #include <string.h>
 
 int main(void) {
+    static const uint8_t retail_portrait_types[
+        NEXUS_NEXUS_PLRD_CHAMPION_COUNT] = {
+        0, 1, 1, 2, 0, 0, 0, 0, 2, 0,
+        1, 0, 0, 1, 1, 1, 1, 2, 1, 0
+    };
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     char path[1024];
     char item_path[1024];
@@ -20,6 +26,10 @@ int main(void) {
     Nexus_V1_RlowfixText text;
     Nexus_V1_RlowfixText menu_text;
     Nexus_V1_RlowfixTabl tabl;
+    Nexus_V1_ResDecodeResult resources;
+    const Nexus_V1_ResEntry *text0_entry;
+    const Nexus_V1_ResEntry *text4_entry;
+    const Nexus_V1_ResEntry *tabl0_entry;
     {
         static const uint8_t truncated_text[9] = {
             'T', 'E', 'X', 'T', 0, 0, 0, 0, 0
@@ -44,14 +54,29 @@ int main(void) {
     bytes = (uint8_t *)malloc((size_t)size);
     if (!bytes || fread(bytes, 1, (size_t)size, f) != (size_t)size) return 1;
     fclose(f);
+    if (!nexus_v1_res_decode(bytes, (int)size, &resources) ||
+        !resources.valid || resources.entry_count != 14) return 1;
+    text0_entry = nexus_v1_res_find(&resources, "TEXT", 0);
+    text4_entry = nexus_v1_res_find(&resources, "TEXT", 4);
+    tabl0_entry = nexus_v1_res_find(&resources, "TABL", 0);
+    if (!text0_entry || !text4_entry || !tabl0_entry) return 1;
     if (!nexus_v1_champions_init_from_rlowfix(&pool, bytes, (size_t)size)) return 1;
     if (pool.champions[0].alive != 0 ||
         pool.champions[0].roster_row_available != 1 ||
         pool.champions[0].portrait_index != -1) return 1;
-    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xa374, &text) ||
-        text.resource_index != 0 || text.string_count != 450) return 1;
-    /* European RLOWFIX.BIN: TEXT resource 4 at 0xF270. */
-    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xf270,
+    {
+        int row;
+        for (row = 0; row < NEXUS_NEXUS_PLRD_CHAMPION_COUNT; ++row) {
+            if (pool.champions[row].portrait_type !=
+                    retail_portrait_types[row] ||
+                pool.champions[row].portrait_index != -1) return 1;
+        }
+    }
+    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size,
+                                     text0_entry->offset, &text) ||
+        text.resource_index != 0 || text.string_count != 449) return 1;
+    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size,
+                                     text4_entry->offset,
                                      &menu_text) ||
         menu_text.resource_index != 4 || menu_text.string_count != 15) return 1;
     {
@@ -66,26 +91,27 @@ int main(void) {
                 !menu_bytes || menu_size == 0) return 1;
         }
     }
-    /* European RLOWFIX.BIN: TABL directory record at 0x1232C. */
-    if (!nexus_v1_rlowfix_tabl_parse(bytes, (size_t)size, 0x1232c, &tabl) ||
+    if (tabl0_entry->size != 440 ||
+        !nexus_v1_rlowfix_tabl_parse(bytes, (size_t)size,
+                                     tabl0_entry->offset, &tabl) ||
         tabl.entry_count != 216 || tabl.code[0] != 0x05 ||
         tabl.code[1] != 0xe16e) return 1;
     {
         const uint8_t *span;
         size_t span_size;
-    if (!nexus_v1_rlowfix_text_span(bytes, (size_t)size, &text, 0,
+        if (!nexus_v1_rlowfix_text_span(bytes, (size_t)size, &text, 0,
                                         &span, &span_size) || !span ||
-            span_size == 0) { fprintf(stderr,"span\\n"); return 1; }
+            span_size == 0) { fprintf(stderr, "span\n"); return 1; }
     }
     {
         uint8_t *tampered = (uint8_t *)malloc((size_t)size);
         if (!tampered) return 1;
         memcpy(tampered, bytes, (size_t)size);
         /* TEXT#0 string 1 offset is relative to the eight-byte header. */
-        tampered[0xa374U + 10U + 2U] = 0U;
-        tampered[0xa374U + 10U + 3U] = 0U;
+        tampered[text0_entry->offset + 10U + 2U] = 0U;
+        tampered[text0_entry->offset + 10U + 3U] = 0U;
         if (nexus_v1_rlowfix_text_parse(tampered, (size_t)size,
-                                        0xa374U, &text)) {
+                                        text0_entry->offset, &text)) {
             free(tampered);
             return 1;
         }
@@ -102,8 +128,8 @@ int main(void) {
         pool.champions[19].anti_magic != 34 ||
         pool.champions[19].anti_fire != 50 ||
         pool.champions[0].food != 0 || pool.champions[0].water != 0 ||
-        pool.champions[0].name_tabl_index[0] != 0x21 ||
-        pool.champions[0].name_tabl_code[0] != 0x00c1) return 1;
+        pool.champions[0].name_tabl_index[0] != 0x91 ||
+        pool.champions[0].name_tabl_code[0] != 0x0064) return 1;
     {
         Nexus_V1_StartupChampionRenderRow row;
         Nexus_V1_StartupChampionRenderRow rows[2];
@@ -118,9 +144,9 @@ int main(void) {
         if (nexus_v1_startup_menu_build_champion_render_rows(
                 &pool, 0, &row, 1, &footer) != 1 ||
             !row.source_name_glyphs_valid ||
-            row.source_name_glyph_count != 4 ||
-            row.source_name_glyphs[0] != 0x00c1U ||
-            row.source_name_glyphs[3] != 0x00d8U ||
+            row.source_name_glyph_count != 5 ||
+            row.source_name_glyphs[0] != 0x0064U ||
+            row.source_name_glyphs[4] != 0x007bU ||
             row.highlight_visible != 0 ||
             row.text_color != 0 ||
             row.portrait_border_color != 0 ||
@@ -151,7 +177,7 @@ int main(void) {
             rows[1].portrait_border_color != 0 || footer.label[0] != '\0') {
             return 1;
         }
-        pool.champions[0].name_tabl_code[0] = 0x00c1U;
+        pool.champions[0].name_tabl_code[0] = 0x0064U;
 
         memset(&snapshot, 0, sizeof(snapshot));
         memset(commands, 0, sizeof(commands));
@@ -166,9 +192,9 @@ int main(void) {
                 &commands[command_index];
             if (command->kind == NEXUS_V1_STARTUP_DRAW_NONE &&
                 command->source_text_glyphs_valid &&
-                command->source_text_glyph_count == 4 &&
-                command->source_text_glyphs[0] == 0x00c1U &&
-                command->source_text_glyphs[3] == 0x00d8U) {
+                command->source_text_glyph_count == 5 &&
+                command->source_text_glyphs[0] == 0x0064U &&
+                command->source_text_glyphs[4] == 0x007bU) {
                 if (command->source_row != 0 || command->source_slot != -1 ||
                     command->source_rect.x != row.rect.x ||
                     command->source_rect.y != row.rect.y ||
