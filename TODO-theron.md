@@ -4028,6 +4028,34 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   No additional capture was started because another agent had resumed using
   trv2.
 
+- 🔒 A 600-second authentic US CloneCD cold-start replay then used the maximum
+  1,048,576-read trace bound, original System Card 3.0, and the unchanged
+  2 KiB campaign BRAM (`ffabc8d19b0915d4d9632a7ae2e90a97`), with `RUN` held
+  from frame 9600 for 90 frames. The input trace contains 37,580 subsequent
+  CPU results with `raw=0008 value=37` at `$E4C8`, establishing that the
+  authentic input reached an original CPU polling path. The receipt still has
+  zero authenticated CD-to-RAM receipts, zero `$E009` data reads, one `$E009`
+  dispatch and 25 raw-sector spans; the post-run BRAM digest remains unchanged.
+  The strict Stage 2 System Card call verifier rejects this trace because its
+  exact expected call receipt is absent. This closes the earlier input-trace
+  ceiling gap only; it does not establish Stage 2 completion, menu selection,
+  dungeon entry, `$2600` T900 consumption, or inventory semantics. Raw output
+  remains outside Git at
+  `/home/trv2/work/theron-t900-evidence-run-20260927/capture/authentic-us-bram-run9600-input1048576-600s.trace*`.
+
+- 🔒 A follow-up cold-start used the same authentic US CloneCD, System Card
+  3.0 and unchanged campaign BRAM with the signature-gated
+  `drator-generator` research route and a scripted PCE `run@1:5` controller
+  event. The event was recorded, but none of the route poll PCs or route-hook
+  receipts appeared before the bounded input trace reached 2,097,152
+  transactions, and the harness was stopped after the trace filled. The final
+  receipt reports 25 raw-sector spans, four SCSI READs, 115 CD IRQ callbacks,
+  one `$E009` dispatch, five TII transfers, zero `$E009` data reads and zero
+  authenticated CD-to-RAM receipts; BRAM remains byte-identical. This is a
+  route-instrumentation/startup boundary, not menu or gameplay evidence. The
+  private trace is under
+  `/home/trv2/work/theron-t900-evidence-run-20260927/capture/authentic-us-bram-drator-generator-run1-5-maxinput-600s-20260927*`.
+
 - ✅ Local harness regression: `test_theron_v1_mednafen_live_capture_script.sh`
   passes and verifies that the live capture accepts an operator-selected input
   trace limit from 65,536 through 1,048,576 reads. Its temporary files were
