@@ -946,6 +946,12 @@ int theron_v1_world_inventory_source_track19_item_name_raw(
     int inventory_slot,
     const uint8_t **out_bytes,
     size_t *out_size);
+int theron_v1_world_inventory_source_track02_item_name_raw(
+    const Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    const uint8_t **out_bytes,
+    size_t *out_size);
 uint8_t theron_v1_world_track02_spawn_category(
     const Theron_V1_World *world,
     unsigned int creature_index);

@@ -2774,6 +2774,38 @@ int theron_v1_world_inventory_source_track19_item_name_raw(
         world, index, out_bytes, out_size);
 }
 
+int theron_v1_world_inventory_source_track02_item_name_raw(
+    const Theron_V1_World *world,
+    int champion_slot,
+    int inventory_slot,
+    const uint8_t **out_bytes,
+    size_t *out_size) {
+    /* Keep the boot-probe receipt tied to the carried source record. A slot
+     * number alone is insufficient: source origin and the exact property
+     * bytes must still match an authentic Track 02 occurrence. */
+    const Theron_V1_InventorySourceRecord *item;
+    if (out_bytes) *out_bytes = NULL;
+    if (out_size) *out_size = 0u;
+    if (!world || !out_bytes || !out_size || champion_slot < 0 ||
+        champion_slot >= THERON_MAX_CHAMPIONS || inventory_slot < 0 ||
+        inventory_slot >= THERON_INVENTORY_SLOTS) {
+        return 0;
+    }
+    item = &world->inventory_source[champion_slot][inventory_slot];
+    if (!item->valid || !item->source_origin_valid ||
+        item->source_dungeon < 1u ||
+        item->source_dungeon > THERON_DUNGEON_COUNT ||
+        item->item_type >= THERON_TRACK02_ITEM_SLOT_COUNT ||
+        world->party.champions[champion_slot].inventory[inventory_slot] !=
+            item->item_type ||
+        !theron_v1_inventory_source_record_matches(world, item)) {
+        return 0;
+    }
+    return theron_v1_world_track02_item_name_raw(
+        world, item->source_dungeon, item->item_type,
+        out_bytes, out_size);
+}
+
 uint8_t theron_v1_world_track02_spawn_category(
     const Theron_V1_World *world,
     unsigned int creature_index) {

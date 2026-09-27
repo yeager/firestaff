@@ -4735,9 +4735,9 @@ static void m11_phase_a_print_boot_probe_receipt(
                 (theron_v1_world_inventory_source_track19_item_name_raw(
                      world, world->party.active_slot,
                      gameView->inventorySelectedSlot, &name, &name_size) ||
-                 theron_v1_world_track02_item_name_raw(
-                     world, item->source_dungeon, item->item_type,
-                     &name, &name_size))) {
+                 theron_v1_world_inventory_source_track02_item_name_raw(
+                     world, world->party.active_slot,
+                     gameView->inventorySelectedSlot, &name, &name_size))) {
                 uint32_t hash = 2166136261u;
                 size_t at;
                 for (at = 0u; at < name_size; ++at) {

@@ -985,6 +985,8 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
         uint8_t source_y;
         uint8_t source_raw_size;
         uint8_t source_raw[16];
+        const uint8_t *source_item_name = NULL;
+        size_t source_item_name_size = 0u;
         Theron_V1_BootRuntimeInputReceipt input_receipt;
         if (object->level != world->current_level ||
             !object->source_ref || !object->source_property_valid ||
@@ -1045,6 +1047,9 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
         source_y = object->source_y;
         source_raw_size = object->source_raw_size;
         memcpy(source_raw, object->source_raw, sizeof(source_raw));
+        assert(theron_v1_world_object_item_name_raw(
+            world, object, &source_item_name, &source_item_name_size));
+        assert(source_item_name_size > 0u);
         assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                    world, NULL, M12_MENU_INPUT_PICKUP_ITEM, -1,
                    &input_receipt) == 1);
@@ -1076,6 +1081,29 @@ static int assert_real_item_roundtrip(Theron_V1_World *world) {
                           [inventory_slot].property,
                       object->source_property,
                       sizeof(object->source_property)) == 0);
+        {
+            const uint8_t *inventory_item_name = NULL;
+            size_t inventory_item_name_size = 0u;
+            Theron_V1_InventorySourceRecord *carried =
+                &world->inventory_source[world->party.active_slot]
+                                        [inventory_slot];
+            uint8_t saved_property_byte = carried->property[0];
+            assert(theron_v1_world_inventory_source_track02_item_name_raw(
+                world, world->party.active_slot, inventory_slot,
+                &inventory_item_name, &inventory_item_name_size));
+            assert(inventory_item_name_size == source_item_name_size);
+            assert(memcmp(inventory_item_name, source_item_name,
+                          source_item_name_size) == 0);
+            carried->property[0] ^= 0x01u;
+            inventory_item_name = source_item_name;
+            inventory_item_name_size = 1u;
+            assert(!theron_v1_world_inventory_source_track02_item_name_raw(
+                world, world->party.active_slot, inventory_slot,
+                &inventory_item_name, &inventory_item_name_size));
+            assert(inventory_item_name == NULL &&
+                   inventory_item_name_size == 0u);
+            carried->property[0] = saved_property_byte;
+        }
         assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                    world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
                    &input_receipt) == 1);

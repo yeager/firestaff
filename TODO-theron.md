@@ -74,6 +74,18 @@ that are staged passed; no media was synthesized. This validates the current
 local source and regression suite only; it does not close the remaining
 gameplay or original-runtime gaps listed above.
 
+2026-09-27 source-backed inventory-name receipt: selected carried Track 02
+items now resolve their raw name only when champion/slot identity, source
+origin, inventory type and the exact source property record still validate.
+The authentic US/JP dungeon-loader test confirms the name is preserved by a
+real-data pickup and rejects a mutated property record. `firestaff` and the
+dungeon-loader target build locally; the real-media dungeon-loader and JP
+raw-BIN startup CTests pass. This lookup currently feeds the M11 boot-probe
+receipt only. It does not render item names or establish original inventory
+UI/gameplay semantics, which remain open under the runtime-consumer and
+presentation gaps above. The broader configured Theron selection was not
+counted as passing because its build directory lacked several probe binaries.
+
 2026-09-26 trv2 clean-tree verification: a fresh archive of source commit
 `2756e9800aadb23d26b39d853921bf71021d3658` contained tracked project files
 only; no game media was copied to the build host. The project, `firestaff`,
