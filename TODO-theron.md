@@ -48,6 +48,17 @@ data.
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.
 
+2026-09-27 authentic regional runtime input-state regression: the JP Rev. 1
+and USA raw-BIN startup tests now compare a no-motion baseline with individual
+native commands against the hash-locked regional Track 02 files; JP also
+checks its Track 19 bank. Both editions enter Akutuba at party pose `(1,0,0)`;
+`right` changes facing to `(1,0,1)`, and `down` moves to `(1,1,0)` while
+advancing the Theron source tick from 0 to 1. The existing multi-input runs
+remain covered. This proves Firestaff's input path mutates source-map-backed
+runtime state for both editions; it is not an original-game comparison and
+does not establish full movement, collision, transition, rendering, or
+gameplay parity.
+
 2026-09-27 local fresh-build verification: after rebasing the verified
 Theron changes onto GitHub `main` at `ecf45acbe`, a clean macOS CMake
 configuration and the application plus save-path targets build successfully.

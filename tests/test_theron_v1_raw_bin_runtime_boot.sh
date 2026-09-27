@@ -67,6 +67,42 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
+startup_script='enter,enter,down,down,down,down,down,down,enter,down,enter,tab'
+run_pose_probe() {
+    local destination=$1
+    local script=$2
+    local expected_party=$3
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game theron \
+        --theron-native us \
+        --data-dir "$data_root" \
+        --boot-probe \
+        --boot-probe-frames 0 \
+        --script "$script" \
+        --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-party "$expected_party" \
+        --boot-probe-expect-champions 2 \
+        --boot-probe-expect-asset-md5 "$expected_md5" \
+        --boot-probe-expect-startup-active 0 \
+        --duration 0 >"$destination" 2>&1
+}
+
+baseline_output=$(mktemp "$scratch_root/firestaff-theron-us-baseline.XXXXXX")
+turn_output=$(mktemp "$scratch_root/firestaff-theron-us-turn.XXXXXX")
+move_output=$(mktemp "$scratch_root/firestaff-theron-us-move.XXXXXX")
+trap 'rm -f "$output" "$baseline_output" "$turn_output" "$move_output"; rm -rf "$us_only_root"' EXIT
+run_pose_probe "$baseline_output" "$startup_script" '1,0,0'
+run_pose_probe "$turn_output" "$startup_script,right" '1,0,1'
+run_pose_probe "$move_output" "$startup_script,down" '1,1,0'
+if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
+   ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_output" ||
+   ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$move_output"; then
+    cat "$baseline_output" "$turn_output" "$move_output" >&2
+    printf '%s\n' 'FAIL: authentic Theron USA input did not change the source-owned party pose/tick' >&2
+    exit 1
+fi
+
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 1920 --height 1080 --menu --game theron --platform pce \
@@ -97,4 +133,4 @@ if [[ $wrong_region_rc -ne 2 ]] ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron USA raw BIN reaches runtime with source map, party and object records'
+printf '%s\n' 'PASS: authentic Theron USA raw BIN reaches runtime; native turn and movement inputs update party pose and tick'

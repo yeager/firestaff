@@ -29,28 +29,50 @@ if [[ ! -f "$track02" ]]; then
     exit 77
 fi
 
+baseline_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-baseline.XXXXXX")
+turn_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-turn.XXXXXX")
+move_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-move.XXXXXX")
 output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-raw-bin.XXXXXX")
 audio_cache=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-jp-audio.XXXXXX")
-trap 'rm -f "$output"; rm -rf "$audio_cache"' EXIT
+trap 'rm -f "$baseline_output" "$turn_output" "$move_output" "$output"; rm -rf "$audio_cache"' EXIT
 if [[ ! -f "$track19_raw" && ! -f "$track19_iso" ]]; then
     printf 'SKIP: authentic Theron JP Track 19 is not staged\n'
     exit 77
 fi
-FIRESTAFF_THERON_MEDNAFEN_CACHE="$audio_cache" \
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game theron \
-    --theron-native jp \
-    --data-dir "$data_root" \
-    --boot-probe \
-    --boot-probe-frames 0 \
-    --script 'enter,enter,enter,action,tab,up,right,down,left,up,up' \
-    --boot-probe-expect-runtime \
-    --boot-probe-expect-level-loaded 1 \
-    --boot-probe-expect-party 2,3,0 \
-    --boot-probe-expect-champions 2 \
-    --boot-probe-expect-asset-md5 "$expected_md5" \
-    --boot-probe-expect-startup-active 0 \
-    --duration 0 >"$output" 2>&1
+run_probe() {
+    local destination=$1
+    local script=$2
+    local expected_party=$3
+    FIRESTAFF_THERON_MEDNAFEN_CACHE="$audio_cache" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game theron \
+        --theron-native jp \
+        --data-dir "$data_root" \
+        --boot-probe \
+        --boot-probe-frames 0 \
+        --script "$script" \
+        --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-party "$expected_party" \
+        --boot-probe-expect-champions 2 \
+        --boot-probe-expect-asset-md5 "$expected_md5" \
+        --boot-probe-expect-startup-active 0 \
+        --duration 0 >"$destination" 2>&1
+}
+
+startup_script='enter,enter,enter,action,tab'
+run_probe "$baseline_output" "$startup_script" '1,0,0'
+run_probe "$turn_output" "$startup_script,right" '1,0,1'
+run_probe "$move_output" "$startup_script,down" '1,1,0'
+run_probe "$output" "$startup_script,up,right,down,left,up,up" '2,3,0'
+
+if ! grep -Fq 'party=1,0,0 champions=2 runtimeTick=0' "$baseline_output" ||
+   ! grep -Fq 'party=1,0,1 champions=2 runtimeTick=0' "$turn_output" ||
+   ! grep -Fq 'party=1,1,0 champions=2 runtimeTick=1' "$move_output"; then
+    cat "$baseline_output" "$turn_output" "$move_output" >&2
+    printf '%s\n' 'FAIL: authentic Theron JP input did not change the source-owned party pose/tick' >&2
+    exit 1
+fi
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq "assetMd5=$expected_md5" "$output" ||
@@ -79,4 +101,4 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime and accepts six native movement inputs across its source map'
+printf '%s\n' 'PASS: authentic Theron JP raw BIN reaches runtime; native turn and movement inputs update party pose and tick'
