@@ -789,7 +789,7 @@ int theron_v1_startup_restore_pce_bram_campaign_path(
         receipt.serialized_campaign_byte_offset != receipt.selected_slot_offset)
         return 0;
 
-    return theron_v1_world_apply_campaign_artifact_byte(
+    return theron_v1_world_apply_campaign_completion_byte(
         world, receipt.serialized_campaign_byte);
 }
 
@@ -843,7 +843,7 @@ int theron_v1_startup_restore_pce_bram_theron_path(
     memcpy(restored.skill_experience, body.theron_skill_experience,
            sizeof(restored.skill_experience));
 
-    if (!theron_v1_world_apply_campaign_artifact_byte(
+    if (!theron_v1_world_apply_campaign_completion_byte(
             world, body.ram_267c_campaign_byte)) {
         if (out_receipt) *out_receipt = receipt;
         if (out_body) *out_body = body;
@@ -864,7 +864,7 @@ int theron_v1_startup_encode_pce_bram_theron_record(
     Theron_V1PceBramReceipt template_receipt;
     Theron_V1PceBramBodyReceipt body;
     const Theron_V1_Champion *theron;
-    uint8_t artifact_mask;
+    uint8_t completion_mask;
 
     memset(&template_receipt, 0, sizeof(template_receipt));
     memset(&body, 0, sizeof(body));
@@ -872,10 +872,10 @@ int theron_v1_startup_encode_pce_bram_theron_record(
         world->party.champion_count < 1 ||
         strcmp(world->party.champions[0].name, "THERON") != 0 ||
         !world->track02_campaign_mask.valid ||
-        !world->track02_campaign_mask.artifact_collection_relation_proven ||
+        world->track02_campaign_mask.artifact_collection_relation_proven ||
         world->track02_campaign_mask.runtime_address != 0x267cu ||
         world->track02_campaign_mask.campaign_bits_mask != 0x7fu ||
-        (world->progression.quest_items_collected & 0x80u) != 0u ||
+        (world->campaign_completion_mask & 0x80u) != 0u ||
         theron_v1_pce_bram_classify(
             template_data, template_size, &template_receipt) !=
             THERON_V1_PCE_BRAM_READY ||
@@ -884,10 +884,10 @@ int theron_v1_startup_encode_pce_bram_theron_record(
         !template_receipt.save_slot_tail_unconsumed_padding ||
         !template_receipt.selected_slot_layout_proven ||
         template_receipt.save_body_bytes != 0x86u ||
-        !theron_v1_world_campaign_artifact_mask(
-            world, world->progression.quest_items_collected,
-            &artifact_mask) ||
-        artifact_mask != world->progression.quest_items_collected) {
+        !theron_v1_world_campaign_completion_mask(
+            world, world->campaign_completion_mask,
+            &completion_mask) ||
+        completion_mask != world->campaign_completion_mask) {
         return 0;
     }
 
@@ -907,7 +907,7 @@ int theron_v1_startup_encode_pce_bram_theron_record(
     body.semantics_verified = 1;
     body.ram_267c_campaign_byte =
         (uint8_t)((template_receipt.serialized_campaign_byte & 0x80u) |
-                  artifact_mask);
+                  completion_mask);
     body.theron_max_health = (uint16_t)theron->max_health;
     body.theron_max_stamina = (uint16_t)theron->max_stamina;
     body.theron_max_mana = (uint16_t)theron->max_mana;

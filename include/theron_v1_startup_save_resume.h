@@ -257,10 +257,10 @@ int theron_v1_startup_save_resume_state_receipt(
     int snapshot_ready,
     Theron_StartupStateReceipt *out_receipt);
 
-/* Restore only the campaign artifact bits whose original Save Disk mapping
- * is proven.  This is intentionally not a Continue operation: the remaining
- * original body fields do not yet prove current dungeon, party or inventory.
- * The world must already carry the hash-bound Track 02 campaign source. */
+/* Restore only campaign/dungeon completion bits whose original Save Disk
+ * mapping is proven. This is intentionally not a Continue operation: the
+ * remaining original body fields do not yet prove current dungeon, party or
+ * inventory. The world must carry the hash-bound Track 02 campaign source. */
 int theron_v1_startup_restore_pce_bram_campaign_path(
     Theron_V1_World *world,
     const char *save_path,

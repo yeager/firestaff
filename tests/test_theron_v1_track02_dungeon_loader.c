@@ -230,30 +230,32 @@ static void test_real_item_name_sources(
         assert(world->track02_campaign_mask.runtime_address == 0x267cu);
         assert(world->track02_campaign_mask.campaign_bits_mask == 0x7fu);
         assert(world->track02_campaign_mask
-                   .artifact_collection_relation_proven == 1);
+                   .artifact_collection_relation_proven == 0);
         {
-            uint8_t artifact_mask = 0u;
+            uint8_t completion_mask = 0u;
             Theron_DungeonProgression saved_progression = world->progression;
-            assert(theron_v1_world_campaign_artifact_mask(
-                       world, 0xd5u, &artifact_mask) == 1);
-            assert(artifact_mask == 0x55u);
-            world->progression.current_dungeon = THERON_DUNGEON_5_SHADO;
+            uint8_t saved_completion_mask = world->campaign_completion_mask;
+            assert(theron_v1_world_campaign_completion_mask(
+                       world, 0x01u, &completion_mask) == 1);
+            assert(completion_mask == 0x01u);
+            world->progression.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
             world->progression.current_level = 2u;
             world->progression.dungeon_playtime_seconds = 321u;
-            assert(theron_v1_world_apply_campaign_artifact_byte(
-                       world, 0xd5u) == 1);
-            assert(world->progression.quest_items_collected == 0x55u);
+            assert(theron_v1_world_apply_campaign_completion_byte(
+                       world, 0x01u) == 1);
+            assert(world->campaign_completion_mask == 0x01u);
+            assert(world->progression.quest_items_collected ==
+                   saved_progression.quest_items_collected);
             assert(world->progression.quest_complete == 0u);
             assert(world->progression.current_dungeon ==
-                   THERON_DUNGEON_5_SHADO);
+                   THERON_DUNGEON_1_AKUTUBA);
             assert(world->progression.current_level == 2u);
             assert(world->progression.dungeon_playtime_seconds == 321u);
             assert(world->progression.dungeon_states[0] ==
                    THERON_DUNGEON_STATE_COMPLETE);
-            assert(world->progression.dungeon_states[4] ==
-                   THERON_DUNGEON_STATE_COMPLETE);
             assert(world->dungeon_complete == 1);
             world->progression = saved_progression;
+            world->campaign_completion_mask = saved_completion_mask;
             world->dungeon_complete = 0;
         }
         {
@@ -282,7 +284,7 @@ static void test_real_item_name_sources(
         assert(theron_v1_world_bind_track02_campaign_mask_source(
                    world, &campaign_mask, variant) == 1);
         assert(world->track02_campaign_mask
-                   .artifact_collection_relation_proven == 1);
+                   .artifact_collection_relation_proven == 0);
     }
     for (dungeon = 1u; dungeon <= THERON_DUNGEON_COUNT; ++dungeon) {
         Theron_Track02ItemNameSource source;

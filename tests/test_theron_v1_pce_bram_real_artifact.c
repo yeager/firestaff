@@ -165,6 +165,7 @@ int main(int argc, char **argv) {
     uint8_t save_manager_code[8192];
     size_t user_data_size = 0u;
     uint32_t saved_seeds[THERON_DUNGEON_COUNT];
+    uint8_t saved_quest_items;
     Theron_V1_Party saved_party;
     static const uint16_t field_bases[6] = {
         0x2a2cu, 0x2a7cu, 0x2accu, 0x2b1cu, 0x2b6cu, 0x2bbcu
@@ -747,6 +748,11 @@ int main(int argc, char **argv) {
         fputs("authentic campaign source did not bind to the world\n", stderr);
         return 1;
     }
+    if (world.track02_campaign_mask.artifact_collection_relation_proven != 0) {
+        fputs("authentic campaign source was misidentified as quest-item data\n",
+              stderr);
+        return 1;
+    }
     if (argc == 8) {
         Theron_V1PceBramReceipt empty_receipt;
         Theron_V1PceBramBodyReceipt empty_body;
@@ -845,6 +851,9 @@ int main(int argc, char **argv) {
                 continue_receipt,
                 sizeof(continue_receipt)) ||
             strstr(continue_receipt, "original Backup RAM") == NULL ||
+            continued_world.campaign_completion_mask != 0x01u ||
+            continued_world.progression.quest_items_collected !=
+                world.progression.quest_items_collected ||
             continued_world.party.champions[0].max_health != 175 ||
             continued_world.party.champions[0].max_stamina != 1500 ||
             continued_world.party.champions[0].max_mana != 50 ||
@@ -861,11 +870,16 @@ int main(int argc, char **argv) {
     world.object_count = 17;
     world.party.gold = 73u;
     memcpy(saved_seeds, world.progression.dungeon_seeds, sizeof(saved_seeds));
+    saved_quest_items = world.progression.quest_items_collected;
     saved_party = world.party;
     if (!theron_v1_startup_restore_pce_bram_campaign_path(
             &world, argv[1], &receipt) ||
         world.progression.quest_items_collected !=
-            (uint8_t)(receipt.serialized_campaign_byte & 0x7fu) ||
+            saved_quest_items || world.campaign_completion_mask != 0x01u ||
+        world.progression.dungeon_states[0] !=
+            THERON_DUNGEON_STATE_COMPLETE ||
+        world.progression.dungeon_states[4] !=
+            THERON_DUNGEON_STATE_AVAILABLE ||
         world.progression.current_dungeon != THERON_DUNGEON_5_SHADO ||
         world.progression.current_level != 2u ||
         world.progression.dungeon_playtime_seconds != 321u ||
@@ -917,6 +931,8 @@ int main(int argc, char **argv) {
         if (!theron_v1_startup_restore_pce_bram_theron_path(
                 &world, argv[1], &receipt, &restored_body) ||
             !restored_body.semantics_verified ||
+            world.progression.quest_items_collected != saved_quest_items ||
+            world.campaign_completion_mask != 0x01u ||
             world.party.champions[0].health != 175 ||
             world.party.champions[0].max_health != 175 ||
             world.party.champions[0].stamina != 1500 ||

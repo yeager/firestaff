@@ -2586,49 +2586,47 @@ int theron_v1_world_bind_track02_campaign_mask_source(
             source->post_dungeon_text_group)
         return 0;
     world->track02_campaign_mask = *source;
-    world->track02_campaign_mask.artifact_collection_relation_proven = 1;
     return 1;
 }
 
-int theron_v1_world_campaign_artifact_mask(
+int theron_v1_world_campaign_completion_mask(
     const Theron_V1_World *world,
     uint8_t serialized_campaign_byte,
-    uint8_t *out_artifact_mask) {
-    if (out_artifact_mask) *out_artifact_mask = 0u;
-    if (!world || !out_artifact_mask ||
+    uint8_t *out_completion_mask) {
+    if (out_completion_mask) *out_completion_mask = 0u;
+    if (!world || !out_completion_mask ||
         !world->track02_campaign_mask.valid ||
-        !world->track02_campaign_mask.artifact_collection_relation_proven ||
+        world->track02_campaign_mask.artifact_collection_relation_proven ||
         world->track02_campaign_mask.runtime_address != 0x267cu ||
         world->track02_campaign_mask.campaign_bits_mask != 0x7fu)
         return 0;
-    *out_artifact_mask =
+    *out_completion_mask =
         (uint8_t)(serialized_campaign_byte &
                   world->track02_campaign_mask.campaign_bits_mask);
     return 1;
 }
 
-int theron_v1_world_apply_campaign_artifact_byte(
+int theron_v1_world_apply_campaign_completion_byte(
     Theron_V1_World *world,
     uint8_t serialized_campaign_byte) {
     Theron_DungeonProgression restored;
-    uint8_t artifact_mask;
+    uint8_t completion_mask;
     Theron_DungeonID current;
-    if (!world || !theron_v1_world_campaign_artifact_mask(
-            world, serialized_campaign_byte, &artifact_mask))
+    if (!world || !theron_v1_world_campaign_completion_mask(
+            world, serialized_campaign_byte, &completion_mask))
         return 0;
     current = world->progression.current_dungeon;
     if (current < THERON_DUNGEON_1_AKUTUBA ||
         current > THERON_DUNGEON_7_DEMON)
         return 0;
     theron_v1_dungeon_progression_restore(
-        &restored, artifact_mask, current,
+        &restored, completion_mask, current,
         world->progression.dungeon_seeds);
     memcpy(world->progression.dungeon_states, restored.dungeon_states,
            sizeof(world->progression.dungeon_states));
-    world->progression.quest_items_collected = artifact_mask;
-    world->progression.quest_complete = restored.quest_complete;
+    world->campaign_completion_mask = completion_mask;
     world->dungeon_complete =
-        (artifact_mask &
+        (completion_mask &
          (uint8_t)THERON_QUEST_ITEM_MASK_FROM_DUNGEON(current)) != 0u;
     return 1;
 }
@@ -4309,6 +4307,7 @@ uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
     /* Seed: dungeon state */
     h = fnv64_word(h, THERON_HASH_SEED_DUNG);
     h = fnv64_word(h, (uint64_t)world->progression.quest_items_collected);
+    h = fnv64_word(h, (uint64_t)world->campaign_completion_mask);
     h = fnv64_word(h, (uint64_t)world->progression.current_dungeon);
     h = fnv64_word(h, (uint64_t)world->progression.quest_complete);
 
@@ -4364,13 +4363,14 @@ static size_t serialize_size(const Theron_V1_World *world) {
         world->source_square_state_count >
             THERON_MAX_SOURCE_SQUARE_STATES ||
         world->source_object_state_count >
-            THERON_MAX_SOURCE_OBJECT_STATES) {
+            THERON_MAX_SOURCE_OBJECT_STATES ||
+        (world->campaign_completion_mask & 0x80u) != 0u) {
         return 0;
     }
     size_t n = 0;
     n += sizeof(uint32_t); /* magic */
     n += sizeof(uint16_t); /* version */
-    n += sizeof(uint16_t); /* pad */
+    n += sizeof(uint16_t); /* reserved flags (campaign mask in v19) */
     n += sizeof(uint8_t);  /* current_dungeon */
     n += sizeof(uint8_t);  /* current_level */
     n += sizeof(uint8_t);  /* quest_items_in_dungeon */
@@ -4428,6 +4428,7 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     out += sizeof(uint32_t);
     out[0] = (uint8_t)THERON_WORLD_SAVE_VERSION;
     out[1] = 0;
+    out[2] = world->campaign_completion_mask;
     out += sizeof(uint16_t) * 2;
     *out++ = (uint8_t)world->current_dungeon;
     *out++ = (uint8_t)world->current_level;
@@ -4534,11 +4535,13 @@ static int theron_v1_world_deserialize_into(Theron_V1_World *world,
     in += sizeof(uint32_t);
 
     uint16_t ver = rw16(in);
+    uint16_t header_flags = rw16(in + sizeof(uint16_t));
     if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
         ver != 6u && ver != 7u && ver != 8u &&
         ver != 9u && ver != 10u && ver != 11u && ver != 12u && ver != 13u &&
-        ver != 14u && ver != 15u && ver != 16u && ver != 17u &&
+        ver != 14u && ver != 15u && ver != 16u && ver != 17u && ver != 18u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
+    if (ver >= 19u && (header_flags & 0xff80u) != 0u) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
 
@@ -4549,6 +4552,8 @@ static int theron_v1_world_deserialize_into(Theron_V1_World *world,
 
     memcpy(&world->progression, in, sizeof(world->progression));
     in += sizeof(world->progression);
+    world->campaign_completion_mask = ver >= 19u
+        ? (uint8_t)(header_flags & 0x7fu) : 0u;
 
     if (_tqw_party_unpack(&world->party, in,
                          bufsize - (in - (const uint8_t *)buf), ver) != 0) {

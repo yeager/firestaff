@@ -271,6 +271,8 @@ static void test_round_trip_keeps_purchase_state(void) {
     fflush(stdout);
 
     seed_world(&original);
+    original.campaign_completion_mask = 0x01u;
+    original.progression.quest_items_collected = 0u;
     size = theron_v1_world_serialize_size(&original);
     expect_true(size > 0, "serialize size should be non-zero");
     buffer = (uint8_t *)malloc(size);
@@ -299,6 +301,18 @@ static void test_round_trip_keeps_purchase_state(void) {
     memset(&restored, 0, sizeof(restored));
     expect_true(theron_v1_world_deserialize(&restored, buffer, size) == 0,
                 "deserialize succeeds");
+    expect_true(restored.campaign_completion_mask == 0x01u &&
+                restored.progression.quest_items_collected == 0u,
+                "campaign completion and quest-item state round-trip separately");
+    buffer[4] = 18u;
+    buffer[5] = 0u;
+    buffer[6] = 0u;
+    buffer[7] = 0u;
+    memset(&restored, 0, sizeof(restored));
+    expect_true(theron_v1_world_deserialize(&restored, buffer, size) == 0 &&
+                restored.campaign_completion_mask == 0u &&
+                restored.progression.quest_items_collected == 0u,
+                "version-18 saves remain readable without campaign-mask data");
     expect_true(restored.party.gold == original.party.gold,
                 "party gold survives round-trip");
     expect_true(restored.party.champion_count == 3 &&

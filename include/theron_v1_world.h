@@ -651,6 +651,10 @@ struct Theron_V1_World {
      * evidence only and must remain detached from artifact collection until
      * an original event consumer proves that relation. */
     Theron_Track02CampaignMaskSource track02_campaign_mask;
+    /* Original campaign/dungeon completion bits from BRAM $267c. These are
+     * not quest-item collection bits; the original pickup consumer remains
+     * unproven. */
+    uint8_t campaign_completion_mask;
     Theron_V1_SourceGeneratorRecord
         source_generators[THERON_MAX_SOURCE_GENERATORS];
     unsigned int source_generator_count;
@@ -898,19 +902,18 @@ int theron_v1_world_bind_track02_campaign_mask_source(
     const Theron_Track02CampaignMaskSource *source,
     int variant);
 
-/* Decode the seven artifact-completion bits from original RAM $267C only
- * after the world has cross-bound the campaign writer and retrieval-message
- * selector. Bit 7 is preserved by the original serializer but is not part of
- * the artifact mask. */
-int theron_v1_world_campaign_artifact_mask(
+/* Decode the original campaign/dungeon completion bits from RAM $267C after
+ * binding its writer and retrieval-message selector. Bit 7 is outside the
+ * seven-bit campaign mask. This does not decode collected quest items. */
+int theron_v1_world_campaign_completion_mask(
     const Theron_V1_World *world,
     uint8_t serialized_campaign_byte,
-    uint8_t *out_artifact_mask);
+    uint8_t *out_completion_mask);
 
 /* Apply an original DMS-SG.001 byte loaded at RAM $267C to the live
- * progression. The current dungeon, level, timers and seeds remain owned by
- * the existing world; only source-proven completion states are refreshed. */
-int theron_v1_world_apply_campaign_artifact_byte(
+ * progression. Refreshes campaign completion/stage state without changing
+ * the independently unproven quest-item collection state. */
+int theron_v1_world_apply_campaign_completion_byte(
     Theron_V1_World *world,
     uint8_t serialized_campaign_byte);
 int theron_v1_world_object_item_name_raw(
@@ -1186,7 +1189,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
  * It is separate from the user-facing between-dungeon slotN.tqsv format in
  * theron_v1_save_load.h; changing this version does not change TQSV. */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 18
+#define THERON_WORLD_SAVE_VERSION 19
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

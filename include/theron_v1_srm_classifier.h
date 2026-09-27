@@ -571,7 +571,7 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
  * layout.  Unknown real bodies still return UNSUPPORTED_BODY.  The imported
  * champion body fields deliberately exclude inventory/equipment because the
  * most of the real Save Disk body is not decoded yet.  Its first byte is now
- * independently bound to RAM $267C and the seven campaign artifact bits, but
+ * independently bound to RAM $267C and the seven campaign completion bits, but
  * THQUEST.ASM T080/T800 still does not prove the party record layout used by
  * the original body. */
 Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(

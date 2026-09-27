@@ -22,6 +22,9 @@ data.
    134-byte writer body, restore direction, and current/max-stat and skill
    experience meanings are already byte-bound in
    `docs/source-lock/theron-original-backup-ram-body-layout-2026-09-23.md`.
+   The `$267C` campaign-completion mask is kept separate from quest-item
+   collection; the original pickup consumer and a changed in-game save
+   transaction remain unproven.
    Firestaff now has a source-gated in-memory encoder for Theron's persistent
    runtime fields and the selected original record. An unchanged Continue
    round-trips the authentic Akutuba-complete artifact byte for byte. There is
