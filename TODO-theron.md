@@ -72,6 +72,13 @@ advancing the tick. `theron_v1_raw_bin_runtime_boot` passes against the real
 hash-verified `TQUS02.bin`. This closes a regional test gap only; it does not
 prove original-game movement parity or later-level behavior.
 
+The same workspace also rebuilt and reran `theron_v1_mechanics_playability`
+against the installed authentic US and JP Track 02 BINs: 215 checks passed,
+with no failures or skips. Each region exercised source-backed floor movement
+and wall blocking in all seven dungeons. The probe explicitly keeps unresolved
+stairs and real door interactions blocked; this is a regression check of the
+bounded native mechanics, not original-game semantic evidence.
+
 2026-09-27 local fresh-build verification: after rebasing the verified
 Theron changes onto GitHub `main` at `ecf45acbe`, a clean macOS CMake
 configuration and the application plus save-path targets build successfully.
