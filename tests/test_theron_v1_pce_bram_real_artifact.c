@@ -437,6 +437,26 @@ int main(int argc, char **argv) {
               stderr);
         return 1;
     }
+    {
+        Theron_V1PceBramBodyReceipt unverified_body = body;
+        Theron_V1PceBramBodyReceipt invalid_campaign_body = body;
+
+        unverified_body.semantics_verified = 0;
+        invalid_campaign_body.ram_267c_campaign_byte = 0x08u;
+        if (theron_v1_pce_bram_encode_original_record(
+                authentic_bram, sizeof(authentic_bram), &unverified_body,
+                encoded_bram, sizeof(encoded_bram)) ||
+            theron_v1_pce_bram_encode_original_record(
+                authentic_bram, sizeof(authentic_bram),
+                &invalid_campaign_body, encoded_bram,
+                sizeof(encoded_bram)) ||
+            memcmp(encoded_bram, authentic_bram, sizeof(authentic_bram)) !=
+                0) {
+            fputs("original Backup RAM writer accepted an unverified or non-restorable body\n",
+                  stderr);
+            return 1;
+        }
+    }
     if (body.theron_max_health != 175u ||
         body.theron_max_stamina != 1500u ||
         body.theron_max_mana != 50u ||

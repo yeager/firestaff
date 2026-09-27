@@ -285,6 +285,7 @@ int theron_v1_pce_bram_encode_original_record(
     Theron_V1PceBramBodyReceipt verified_body;
     uint8_t encoded[THERON_V1_PCE_BRAM_BYTES];
     uint8_t encoded_body[0x86u];
+    uint8_t verified_body_bytes[0x86u];
 
     if (!template_data || !body || !out_data ||
         template_size != sizeof(encoded) || out_capacity < sizeof(encoded) ||
@@ -301,6 +302,11 @@ int theron_v1_pce_bram_encode_original_record(
             template_data, template_size, &verified_body) ||
         !verified_body.layout_verified || !verified_body.semantics_verified ||
         !theron_v1_pce_bram_encode_original_body(
+            &verified_body, verified_body_bytes, sizeof(verified_body_bytes)) ||
+        memcmp(verified_body_bytes,
+               template_data + template_receipt.save_body_offset,
+               sizeof(verified_body_bytes)) != 0 ||
+        !theron_v1_pce_bram_encode_original_body(
             body, encoded_body, sizeof(encoded_body))) {
         return 0;
     }
@@ -314,6 +320,10 @@ int theron_v1_pce_bram_encode_original_record(
         !theron_v1_pce_bram_decode_original_body(
             encoded, sizeof(encoded), &verified_body) ||
         !verified_body.layout_verified || !verified_body.semantics_verified ||
+        !theron_v1_pce_bram_encode_original_body(
+            &verified_body, verified_body_bytes, sizeof(verified_body_bytes)) ||
+        memcmp(verified_body_bytes, encoded + template_receipt.save_body_offset,
+               sizeof(verified_body_bytes)) != 0 ||
         verified_body.ram_267c_campaign_byte !=
             body->ram_267c_campaign_byte ||
         verified_body.theron_max_health != body->theron_max_health ||
