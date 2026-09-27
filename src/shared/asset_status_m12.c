@@ -1658,7 +1658,8 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
                                       size_t rootCount,
                                       const char* preferredArchive) {
     static const char *names[] = {
-        "Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        "Dungeon-Master-II-Skullkeep_Mac_EN.zip",
+        "Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"
     };
     size_t r, n, vi;
     int admitted = 0;
@@ -1667,45 +1668,72 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
     for (r = 0; r < (rootCount ? rootCount : 1u); ++r) {
-        char candidate[M12_ASSET_DATA_DIR_CAPACITY];
-        for (n = 0; n < sizeof(names) / sizeof(names[0]); ++n) {
-            /* Respect an explicitly selected archive from this edition
-             * family even when the user's file manager added a duplicate
-             * suffix, e.g. " (1)". The DM2 boot scanner below authenticates
-             * the complete retail image; the filename only selects which
-             * candidate gets checked and must not make a valid chosen file
-             * fall through to an unrelated sibling archive. */
-            if (preferredArchive && preferredArchive[0] &&
-                strstr(preferredArchive, macArchiveFamily) != NULL) {
-                snprintf(candidate, sizeof(candidate), "%s", preferredArchive);
-            } else {
-                if (r >= rootCount) continue;
-                snprintf(candidate, sizeof(candidate), "%s/%s", roots[r], names[n]);
-            }
-            if (!FSP_FileExists(candidate)) continue;
-            DM2_V1_BootProfile profile;
-            dm2_v1_boot_profile_init(&profile);
-            if (dm2_v1_boot_scan_assets(&profile, candidate) == 0 &&
-                profile.assets_verified && profile.platform == DM2_PLATFORM_MAC_EN) {
-                const char *version_id = "mac-en-retail";
-                for (vi = 0; vi < g_games[gameIndex].versionCount; ++vi) {
-                    M12_AssetVersionStatus *v = &status->versions[gameIndex][vi];
-                    if (strcmp(v->versionId, version_id) != 0) continue;
-                    v->matched = 1;
-                    snprintf(v->matchedPath, sizeof(v->matchedPath),
-                             "%s::HFS/DMFiles/Graphics.dat", candidate);
-                    snprintf(v->matchedMd5, sizeof(v->matchedMd5), "%s",
-                             profile.graphics_md5);
-                    m12_copy_string(status->runtimeDataDirs[gameIndex],
-                                    sizeof(status->runtimeDataDirs[gameIndex]), candidate);
-                    admitted = 1;
+        char candidateRoots[2][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateRootCount = 0U;
+        size_t candidateRootIndex;
+        if (r >= rootCount) continue;
+        m12_copy_string(candidateRoots[candidateRootCount++],
+                        sizeof(candidateRoots[0]), roots[r]);
+        /* Retail archives use the documented per-game layout below the
+         * shared ~/.firestaff/data root. The general hash scan descends into
+         * it, but this HFS container admission is edition-specific and must
+         * check the same dm2 child explicitly. */
+        if (FSP_DirExists(roots[r]) &&
+            FSP_JoinPath(candidateRoots[candidateRootCount],
+                         sizeof(candidateRoots[0]), roots[r], "dm2") &&
+            FSP_DirExists(candidateRoots[candidateRootCount])) {
+            ++candidateRootCount;
+        }
+        for (candidateRootIndex = 0U;
+             candidateRootIndex < candidateRootCount;
+             ++candidateRootIndex) {
+            for (n = 0; n < sizeof(names) / sizeof(names[0]); ++n) {
+                char candidate[M12_ASSET_DATA_DIR_CAPACITY];
+                /* Respect an explicitly selected archive from this edition
+                 * family even when the user's file manager added a duplicate
+                 * suffix, e.g. " (1)". The DM2 boot scanner below authenticates
+                 * the complete retail image; the filename only selects which
+                 * candidate gets checked and must not make a valid chosen file
+                 * fall through to an unrelated sibling archive. When scanning
+                 * a data directory, check that same common duplicate name so
+                 * a retail archive remains discoverable beside a demo using
+                 * the canonical basename. */
+                if (preferredArchive && preferredArchive[0] &&
+                    strstr(preferredArchive, macArchiveFamily) != NULL) {
+                    if (n > 0U) continue;
+                    snprintf(candidate, sizeof(candidate), "%s", preferredArchive);
+                } else {
+                    snprintf(candidate, sizeof(candidate), "%s/%s",
+                             candidateRoots[candidateRootIndex], names[n]);
+                }
+                if (!FSP_FileExists(candidate)) continue;
+                DM2_V1_BootProfile profile;
+                dm2_v1_boot_profile_init(&profile);
+                if (dm2_v1_boot_scan_assets(&profile, candidate) == 0 &&
+                    profile.assets_verified &&
+                    profile.platform == DM2_PLATFORM_MAC_EN) {
+                    const char *version_id = "mac-en-retail";
+                    for (vi = 0; vi < g_games[gameIndex].versionCount; ++vi) {
+                        M12_AssetVersionStatus *v =
+                            &status->versions[gameIndex][vi];
+                        if (strcmp(v->versionId, version_id) != 0) continue;
+                        v->matched = 1;
+                        snprintf(v->matchedPath, sizeof(v->matchedPath),
+                                 "%s::HFS/DMFiles/Graphics.dat", candidate);
+                        snprintf(v->matchedMd5, sizeof(v->matchedMd5), "%s",
+                                 profile.graphics_md5);
+                        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                        sizeof(status->runtimeDataDirs[gameIndex]),
+                                        candidate);
+                        admitted = 1;
+                    }
+                    dm2_v1_boot_cleanup(&profile);
+                    /* Continue scanning in case another copy of the supported
+                     * retail archive is present under a sibling data root. */
+                    continue;
                 }
                 dm2_v1_boot_cleanup(&profile);
-                /* Continue scanning in case another copy of the supported
-                 * retail archive is present under a sibling data root. */
-                continue;
             }
-            dm2_v1_boot_cleanup(&profile);
         }
     }
     return admitted;

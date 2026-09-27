@@ -4382,7 +4382,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm2_v1_mac_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;startup;cli;real-media;native;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE}"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_DM2_MAC_RETAIL_ARCHIVE};FIRESTAFF_DM2_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR};FIRESTAFF_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}"
         TIMEOUT 120
     )
     add_test(
@@ -11991,7 +11991,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_r
     set_tests_properties(dm2_v1_four_platform_catalog_real_media PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm2;dos;amiga;fmtowns;macintosh;real-media;in-memory;catalog;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM2_SHARED_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2")
+        ENVIRONMENT "FIRESTAFF_DM2_SHARED_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.c")

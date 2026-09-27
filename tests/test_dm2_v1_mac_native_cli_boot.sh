@@ -3,6 +3,7 @@ set -eu
 
 app=${1:?usage: test_dm2_v1_mac_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"}
+data_root=${FIRESTAFF_DM2_DATA_ROOT:-"$HOME/.firestaff/data"}
 
 # The CUE/BIN archive is a production-native reader path, never an external
 # extractor wrapper.
@@ -19,6 +20,15 @@ FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform mac --data-dir "$archive" \
     --width 320 --height 200 \
+    --script 'key:enter,key:enter,click:100:60' --duration 1000 >/dev/null 2>&1
+
+# The normal install layout keeps originals under dm2/ below the shared data
+# root. Verify that menu launch discovers the authenticated Mac retail archive
+# from that root even when the user's file manager added a duplicate suffix.
+FIRESTAFF_DATA="$data_root" \
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --platform mac --width 320 --height 200 \
     --script 'key:enter,key:enter,click:100:60' --duration 1000 >/dev/null 2>&1
 
 # Macintosh is the first card on the second platform row.  This remains a
@@ -51,6 +61,19 @@ probe_input() {
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
 }
+
+default_root_output=$(FIRESTAFF_DATA="$data_root" \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --platform mac --boot-probe --boot-probe-frames 2000 \
+    --width 320 --height 200 \
+    --script 'key:enter,key:enter,click:100:60,up' \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+    --duration 0 2>&1) || { printf '%s\n' "$default_root_output" >&2; exit 1; }
+case "$default_root_output" in
+    *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*) ;;
+    *) printf '%s\n' "$default_root_output" >&2; exit 1 ;;
+esac
+
 for case_item in up:1,7,0 down:1,9,2 left:1,8,3 right:1,8,1 \
                  strafe-left:0,8,3 strafe-right:2,8,1 action:1,8,0; do
     probe_input "${case_item%%:*}" "${case_item#*:}"

@@ -1,8 +1,9 @@
-/* Shared DM2 data-root catalog receipt.
+/* Shared game-data-root DM2 catalog receipt.
  *
  * This is deliberately a launcher-level test: each edition must remain
- * selectable from one .firestaff/data/dm2 root, and the resolver must return
- * that edition's original owner instead of the scan's first match. */
+ * selectable when DM2 originals live in ~/.firestaff/data/dm2 below the
+ * shared ~/.firestaff/data root, and the resolver must return that edition's
+ * original owner instead of the scan's first match. */
 
 #include "asset_status_m12.h"
 

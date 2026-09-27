@@ -1,5 +1,18 @@
 # Firestaff DONE — DM2
 
+## 2026-09-27 — Macintosh retail discovery from the shared data root
+
+- Fixed DM2 Macintosh retail admission for the documented
+  `~/.firestaff/data/dm2/` layout. The explicit HFS archive check now searches
+  the `dm2/` child of the shared data root and checks the common downloader
+  duplicate name `Dungeon-Master-II-Skullkeep_Mac_EN (1).zip`; the DM2 boot
+  scanner still verifies the original retail contents before admitting it.
+- The authentic four-platform catalog test now scans the shared
+  `~/.firestaff/data/` root and passes for DOS, Amiga, FM Towns and Macintosh.
+  The normal no-`--data-dir` Mac CLI route also reached map-zero runtime and
+  consumed its first UP input from the supplied original archive. This closes
+  a source-discovery gap only; visual parity remains open.
+
 ## 2026-09-26 — Native CLI/start-menu matrix revalidation
 
 - Re-ran all five authenticated native CLI routes against the installed
