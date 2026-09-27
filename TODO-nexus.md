@@ -23,9 +23,12 @@ reaches `phase=nexus-title` with `titleReady=1` after 140 frames. Sending Enter
 after 500 title frames still leaves the process at `nexus-title`, with no menu
 or level loaded; the startup receipt reports `blocker=faces`. The separate
 retail `FACE.BIN` decoder passes for all 20 authenticated portraits, so this
-is a missing runtime/start-menu consumer or readiness binding, not missing
-user media or failed portrait decoding. CLI launch to the title is therefore
-verified, but the interactive Nexus start-menu handoff is not.
+is not missing user media or failed portrait decoding. The remaining join is
+PLRD roster row to FACE.BIN ordinal: `nexus_v1_champions.c` deliberately leaves
+each `portrait_index` unknown (`-1`) because no Saturn consumer trace proves
+the ordinal mapping. CLI launch to the title is therefore verified, but the
+interactive Nexus start-menu handoff remains blocked until that real-media
+mapping and the corresponding menu consumer are captured.
 
 A same-revision, media-immutable title-session receipt now joins retail CD
 FIFO records for LBA 6063--6089 to SH-2 RAM source writes for the same range,
