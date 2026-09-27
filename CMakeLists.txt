@@ -21474,15 +21474,18 @@ endif()
     )
     # The Atari ST title is a separate ANIMATE.SCR/DAT owner.  Keep its
     # original-media M12 selection, 50 Hz VBlank handoff, and first native
-    # runtime frame independently runnable when FIRESTAFF_CSB_ATARI_ST_ROOT
-    # is supplied; CI without that corpus remains explicitly skip-safe.
+    # runtime frame independently runnable from the paired game/utility disks
+    # in Greatstone's authentic Atari package; CI without that corpus remains
+    # explicitly skip-safe.
     add_test(
         NAME csb_v1_atari_st_m12_m11_real_media_handoff
-        COMMAND test_csb_v1_m11_launcher_handoff_boundary
+        COMMAND sh
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_st_m12_m11_real_media_handoff.sh"
+            "$<TARGET_FILE:test_csb_v1_m11_launcher_handoff_boundary>"
     )
     set_tests_properties(csb_v1_atari_st_m12_m11_real_media_handoff PROPERTIES
         LABELS "tier2;csb;atari-st;m12;m11;launcher;startup;real_data;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ONLY=1;FIRESTAFF_CSB_ATARI_ST_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
         TIMEOUT 180
     )
 

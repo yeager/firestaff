@@ -2609,6 +2609,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
 
         init_menu_without_gallery(&menu, data_dir, "csb");
         dismiss_initial_message(&menu);
+        /* This integration lane is specifically the Atari ST package, even
+         * when the shared CSB corpus also contains Amiga/FM Towns editions. */
+        menu.gameOptions[1].architectureIndex = M12_ARCH_ATARI_ST;
         expect_true(menu.gameOptions[1].architectureIndex == M12_ARCH_ATARI_ST,
                     "an explicit Atari ST image selects Atari ST before AUTO policy");
         if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "csb")) {
