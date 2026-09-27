@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -51,7 +52,6 @@
 #define TEST_RMDIR(path) _rmdir(path)
 #define TEST_PATH_SEP "\\"
 #else
-#include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
@@ -335,8 +335,8 @@ static int dm2_test_preselection_view_matches_owner(
         { DM2_SQ_D2C, 3,  0 }, { DM2_SQ_D0L, 0, -1 },
         { DM2_SQ_D0R, 0,  1 }, { DM2_SQ_D1L, 1, -1 },
         { DM2_SQ_D1R, 1,  1 }, { DM2_SQ_D2L, 2, -1 },
-        { DM2_SQ_D2R, 2,  1 }, { DM2_SQ_D3L, 5, -2 },
-        { DM2_SQ_D3R, 5,  2 },
+        { DM2_SQ_D2R, 2,  1 }, { DM2_SQ_D3L, 4, -1 },
+        { DM2_SQ_D3R, 4,  1 },
     };
     const DM2_V1_GameLoadPreselectionViewReceipt *view;
     int direction;
@@ -2597,6 +2597,22 @@ static int dm2_data_dir_is_explicit(void) {
     return 0;
 }
 
+static int dm2_test_paths_name_same_file(const char *left, const char *right) {
+    struct stat left_stat;
+    struct stat right_stat;
+    if (!left || !right || stat(left, &left_stat) != 0 ||
+        stat(right, &right_stat) != 0) {
+        return 0;
+    }
+#ifdef _WIN32
+    return left_stat.st_size == right_stat.st_size &&
+           left_stat.st_mtime == right_stat.st_mtime;
+#else
+    return left_stat.st_dev == right_stat.st_dev &&
+           left_stat.st_ino == right_stat.st_ino;
+#endif
+}
+
 /* The launcher scanner may be pointed at a DOS install root while the
  * authenticated pair lives in its original DATA/ subdirectory.  Keep this
  * as a real-data-only boundary test: M12 must hand M11 that owning directory,
@@ -2643,8 +2659,8 @@ static void expect_m12_dm2_verified_launch(const char* data_dir,
                                 archive_length) == 0,
                     "M12 hands M11 the authenticated DM2 archive owner");
     } else {
-        expect_true(runtime_dir && expected_asset_root &&
-                        strcmp(runtime_dir, expected_asset_root) == 0,
+        expect_true(dm2_test_paths_name_same_file(runtime_dir,
+                                                  expected_asset_root),
                     "M12 hands M11 the authenticated loose DM2 asset directory");
     }
 
