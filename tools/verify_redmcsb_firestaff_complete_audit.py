@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from pathlib import Path
+from redmcsb_source import find_source_root
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/parity/REDMCSB_FIRESTAFF_COMPLETE_AUDIT.md"
-RED = Path.home() / ".firestaff/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 
 REQUIRED_DOC_TOKENS = [
     "movement_input",
@@ -51,15 +51,20 @@ def require(condition: bool, message: str, failures: list[str]) -> None:
 
 def main() -> int:
     failures: list[str] = []
+    redmcsb_source = find_source_root(REQUIRED_REDMCSB_FILES)
     require(DOC.exists(), f"missing audit document: {DOC}", failures)
     text = DOC.read_text(encoding="utf-8") if DOC.exists() else ""
 
     for token in REQUIRED_DOC_TOKENS:
         require(token in text, f"audit document missing token: {token}", failures)
 
-    require(RED.is_dir(), f"missing ReDMCSB source directory: {RED}", failures)
-    for name in REQUIRED_REDMCSB_FILES:
-        require((RED / name).is_file(), f"missing ReDMCSB source file: {name}", failures)
+    require(redmcsb_source is not None,
+            "missing ReDMCSB Common/Source reference; set "
+            "FIRESTAFF_REDMCSB_SOURCE to its directory", failures)
+    if redmcsb_source is not None:
+        for name in REQUIRED_REDMCSB_FILES:
+            require((redmcsb_source / name).is_file(),
+                    f"missing ReDMCSB source file: {name}", failures)
 
     for rel in REQUIRED_FIRESTAFF_FILES:
         require((ROOT / rel).is_file(), f"missing Firestaff file: {rel}", failures)

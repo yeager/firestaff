@@ -41,7 +41,7 @@ bounded before DM1 V1 can be called complete:
 
 | Gap | Evidence | Required action |
 |---|---|---|
-| Creature AI stubs | memory_creature_ai_pc34_compat.c still labels most creature profiles as stubs. | Replace source-proven simple cases first; create MISSING gates for complex spellcaster/archenemy behavior. |
+| Creature AI stubs | `src/memory/memory_creature_ai_pc34_compat.c` still labels most creature profiles as stubs. | Replace source-proven simple cases first; create MISSING gates for complex spellcaster/archenemy behavior. |
 | Magic/combat defence stubs | memory_magic_pc34_compat.h and combat probes still describe fire/magic/psychic defence paths as stubbed. | Audit CASTER.C plus combat/champion source, then fix or gate missing semantics. |
 | Sensor execution unsupported types | Sensor probes still classify rare/complex sensors as unsupported. | Audit MOVESENS.C sensor sections; implement safe source-backed sensor classes or gate each missing type. |
 | Original overlay regression absent | docs/parity/COMPLETION_MATRIX.md gives DM1 V1 original_overlay_regression 0/10. | Keep source fixes separate from pixel claims until representative original overlay frames exist. |
