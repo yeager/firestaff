@@ -2167,3 +2167,18 @@ Reviewed 2026-08-29. Completed work only.
   loads level 0 and accepts turn/movement input; a 60-second menu launch
   completes in under seven seconds. This verifies that authentic launch
   route and its gameplay receipt, not all Atari campaigns or editions.
+
+- Preserved the selected DM1 data root in M12→M11 launch handoff when the
+  authenticated files use the canonical `<data-root>/dm1/GRAPHICS.DAT` layout.
+  The version scanner had replaced the root with the inner `dm1` directory,
+  causing four data-directory cache-invalidation contract assertions to fail,
+  including saved game-leaf promotion and symlink roots. A narrow normalization
+  now applies only when the matched asset directory is exactly one level below
+  the selected root; explicit DM1 leaf paths, other layouts, and virtual
+  archives retain their own owner. The focused cache-invalidation regression
+  and the `firestaff` target build pass. Its synthetic hash fixtures exercise
+  path ownership only; original-media runtime behavior was not exercised.
+  Follow-up original-media verification: `dm1_v1_pc34_native_cli_boot` passes
+  with the retail DOS EN 3.4 ZIP through CLI, start-menu launch, and native
+  runtime input. The same shared-path change leaves the CSB FM Towns RAR and
+  DM2 Mac retail CLI/start-menu regressions passing.

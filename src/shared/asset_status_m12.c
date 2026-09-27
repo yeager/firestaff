@@ -5412,6 +5412,30 @@ static void m12_prefer_dm2_loose_graphics_runtime_dir(M12_AssetStatus* status,
     }
 }
 
+static void m12_preserve_dm1_game_data_root(M12_AssetStatus* status,
+                                             int gameIndex) {
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* runtimeDir;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm1") != 0 ||
+        status->dataDir[0] == '\0') {
+        return;
+    }
+    runtimeDir = status->runtimeDataDirs[gameIndex];
+    if (!runtimeDir[0] || m12_path_is_virtual_asset(runtimeDir) ||
+        !FSP_ParentDir(parent, sizeof(parent), runtimeDir) ||
+        strcmp(parent, status->dataDir) != 0) {
+        return;
+    }
+    /* The canonical data tree stores DM1 under <data-root>/dm1.  The
+     * authenticated GRAPHICS.DAT owner is that leaf, but M11's DM1 loader
+     * receives the selected data root and resolves the leaf itself.  Keep
+     * that root stable for launcher and CLI handoff, including symlink roots. */
+    m12_copy_string(status->runtimeDataDirs[gameIndex],
+                    sizeof(status->runtimeDataDirs[gameIndex]),
+                    status->dataDir);
+}
+
 static void m12_normalize_dm2_runtime_owner(M12_AssetStatus* status,
                                             int gameIndex) {
     char physicalAssetDir[M12_ASSET_DATA_DIR_CAPACITY];
@@ -6895,6 +6919,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         }
         m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
+        m12_preserve_dm1_game_data_root(status, i);
     }
     if (!m12_scan_progress_update(&progressCtx,
                                   "refreshing media metadata",
@@ -7296,6 +7321,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
     m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
+    m12_preserve_dm1_game_data_root(status, gameIndex);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);
         m12_refresh_theron_track02_loader_receipt(status);
