@@ -20,9 +20,10 @@ probe_root=$(mktemp -d "$scratch/dm1-atari-first-hall.XXXXXX")
 trap 'rm -rf "$probe_root"' EXIT
 mkdir -p "$probe_root/home"
 
-# ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435 and calls F0462. A
-# fresh game places the party via MOVESENS.C F0267 from the off-square PARTY
-# sentinel before presenting the first Hall frame.
+# ReDMCSB STARTUP1.C:162-174 runs F0441, retries F0435 and calls F0462;
+# STARTUP1.C:170-174 then calls MOVESENS.C:F0267 with PARTY at the off-square
+# sentinel for a new game. Firestaff applies the corresponding startup-party
+# placement before presenting the first Hall frame.
 HOME="$probe_root/home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$probe_root/runtime.json" \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \

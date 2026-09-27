@@ -1,5 +1,13 @@
 # Firestaff DONE — DM1
 
+- 2026-09-27: The fresh Atari startup-party handoff now preserves ReDMCSB
+  MOVESENS.C:F0276's C003 guard: an empty new-game party does not fire a
+  floor-party sensor, while a non-empty party still can. A focused fixture
+  covers both champion counts, and the rebuilt game still passes the authentic
+  English Atari ST v1.2 M12 first-Hall route. That media route confirms startup
+  only; it does not claim that its initial square contains a C003 sensor or
+  prove the complete campaign-square sensor sequence.
+
 - 2026-09-27: Added an authentic first-runtime assertion for the fresh-game
   Atari ST party handoff and ran it against English v1.0a, v1.0b, v1.1 and
   v1.2, German v1.2, and French v1.3 original media. All six full CLI/menu

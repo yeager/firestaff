@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +70,7 @@ int main(void) {
     struct DungeonThings_Compat things;
     unsigned char squares[4];
     unsigned short sft[4];
+    struct DungeonSensor_Compat sensors[1];
     DM1_V1_StartupFullGraphicsRuntimeHandoffReceipt_PC34 receipt;
     if (!state) return 2;
 
@@ -91,6 +93,38 @@ int main(void) {
              M11_GameView_ApplyDm1StartupF0267PartyPlacement(state, &receipt), 1);
     expect_i("resume does not execute F0267", state->dm1StartupPartyPlacementExecuted, 0);
     expect_i("resume preserves loaded coordinates", state->world.party.mapY, 1);
+
+    /* Fresh Atari F0462 enters from the off-square PARTY sentinel. F0276
+     * suppresses C003 when there are no champions. See MOVESENS.C:1675-1689. */
+    make_state(state, &dungeon, &map, &tiles, &things, squares, sft);
+    memset(sensors, 0, sizeof(sensors));
+    squares[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    sft[0] = (unsigned short)(THING_TYPE_SENSOR << 10);
+    sensors[0].sensorType = DM1_SENSOR_FLOOR_PARTY;
+    sensors[0].targetMapX = 0;
+    sensors[0].targetMapY = 0;
+    sensors[0].next = THING_ENDOFLIST;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    receipt = make_receipt(1);
+    expect_i("empty-party startup handoff accepted",
+             M11_GameView_ApplyDm1StartupF0267PartyPlacement(state, &receipt), 1);
+    expect_i("empty-party C003 plate remains inactive",
+             state->dm1StartupPartyPlacementSensorEffectCount, 0);
+
+    make_state(state, &dungeon, &map, &tiles, &things, squares, sft);
+    squares[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    sft[0] = (unsigned short)(THING_TYPE_SENSOR << 10);
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    state->world.party.championCount = 1;
+    receipt = make_receipt(1);
+    expect_i("occupied-party startup handoff accepted",
+             M11_GameView_ApplyDm1StartupF0267PartyPlacement(state, &receipt), 1);
+    expect_i("C003 plate still fires for a nonempty party",
+             state->dm1StartupPartyPlacementSensorEffectCount, 1);
 
     receipt = make_receipt(1);
     receipt.return_to_launcher = 1;

@@ -72295,6 +72295,25 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
                 &enterEffects)) {
             return 0;
         }
+        /* ReDMCSB MOVESENS.C:F0276:1675-1689 suppresses C003 floor-party
+         * sensors when the party has no champions. The general F0718 adapter
+         * has no party-state input, so enforce the source gate at this
+         * new-game boundary before applying any remote effect. */
+        if (placedParty.championCount == 0) {
+            int kept = 0;
+            for (i = 0; i < enterEffects.count &&
+                        i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
+                if (enterEffects.effects[i].sensorType ==
+                    DM1_SENSOR_FLOOR_PARTY) {
+                    continue;
+                }
+                if (kept != i) {
+                    enterEffects.effects[kept] = enterEffects.effects[i];
+                }
+                ++kept;
+            }
+            enterEffects.count = kept;
+        }
         world->party = placedParty;
         world->partyMapIndex = placedParty.mapIndex;
         world->newPartyMapIndex = -1;
