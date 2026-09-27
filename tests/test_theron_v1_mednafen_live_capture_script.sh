@@ -26,6 +26,30 @@ if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
     exit 1
 fi
+if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
+    bash "$script" 2>&1); then
+    printf 'FAIL: drator-generator capture accepted a missing replay script\n' >&2
+    exit 1
+fi
+if [[ "$route_output" != *'requires THERON_CAPTURE_REPLAY_INPUT_SCRIPT'* ]]; then
+    printf 'FAIL: drator-generator capture did not reject a stalled input-frame clock\n' >&2
+    exit 1
+fi
+if route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
+    THERON_CAPTURE_REPLAY_INPUT_SCRIPT=run@1:5 bash "$script" 2>&1); then
+    printf 'FAIL: cold-start drator-generator accepted RUN at the wrong frame\n' >&2
+    exit 1
+fi
+if [[ "$route_output" != *'RUN replay event at frame 9600'* ]]; then
+    printf 'FAIL: cold-start drator-generator did not enforce the authentic RUN handoff frame\n' >&2
+    exit 1
+fi
+route_output=$(THERON_CAPTURE_MENU_ROUTE=drator-generator \
+    THERON_CAPTURE_REPLAY_INPUT_SCRIPT=run@9600:90 bash "$script" 2>&1)
+if [[ "$route_output" != *'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'* ]]; then
+    printf 'FAIL: valid cold-start route preflight did not reach normal capture argument validation\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mkdir -p "$home_dir/sav"' "$script" ||
    ! grep -Fq -- '-filesys.path_sav "$home_dir/sav"' "$script"; then
     printf '%s\n' 'FAIL: isolated captures must bind Mednafen backup RAM to the private capture home' >&2

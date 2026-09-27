@@ -62,6 +62,21 @@ fi
 quartz_keypair_script="$script_dir/send_theron_macos_quartz_keypair.swift"
 quartz_grab_script="$script_dir/send_theron_macos_quartz_chord.swift"
 
+# The research generator route clocks its controller pulses from
+# TheronScriptInputFrame(); without replay input that frame counter stays at
+# zero. A cold-start also needs the source-verified System Card RUN handoff.
+if [[ "$menu_route" == drator-generator ]]; then
+    if [[ -z "$replay_input_script" ]]; then
+        printf '%s\n' 'FAIL: drator-generator requires THERON_CAPTURE_REPLAY_INPUT_SCRIPT to advance its input-frame clock' >&2
+        exit 1
+    fi
+    if [[ -z "$autoload_state" &&
+          ! "$replay_input_script" =~ (^|,)run@9600(:[1-9][0-9]*)?(,|$) ]]; then
+        printf '%s\n' 'FAIL: cold-start drator-generator requires a RUN replay event at frame 9600' >&2
+        exit 1
+    fi
+fi
+
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
     printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
     exit 0

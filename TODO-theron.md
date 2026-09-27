@@ -4056,6 +4056,18 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   private trace is under
   `/home/trv2/work/theron-t900-evidence-run-20260927/capture/authentic-us-bram-drator-generator-run1-5-maxinput-600s-20260927*`.
 
+- 🔒 A 600-second cold-start then combined the correct authentic controller
+  replay `run@9600:90` with `drator-generator`. It reproduced 37,580 original
+  CPU reads of the RUN mask at `$E4C8`, but no signature-bound menu poll PC or
+  route-hook receipt was reached. The 1,048,576-read bound filled; the final
+  receipt reports 25 raw-sector spans, four SCSI READs, 115 CD IRQ callbacks,
+  one `$E009` dispatch, five TII transfers, zero `$E009` data reads and zero
+  authenticated CD-to-RAM receipts. The strict Stage 2 verifier also rejects
+  the missing original call receipt. The authentic BRAM digest remains
+  `ffabc8d19b0915d4d9632a7ae2e90a97`. This does not establish menu selection,
+  dungeon entry or T900 semantics. The timed-out capture remains private at
+  `/home/trv2/work/theron-t900-evidence-run-20260927/capture/authentic-us-bram-drator-generator-run9600-replay-600s-20260927*`.
+
 - ✅ Local harness regression: `test_theron_v1_mednafen_live_capture_script.sh`
   passes and verifies that the live capture accepts an operator-selected input
   trace limit from 65,536 through 1,048,576 reads. Its temporary files were
