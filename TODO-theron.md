@@ -4010,3 +4010,10 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   of emulation, so the pre-event trace ceiling cannot hide the post-RUN read.
   No additional capture was started because another agent had resumed using
   trv2.
+
+- ✅ Local harness regression: `test_theron_v1_mednafen_live_capture_script.sh`
+  passes and verifies that the live capture accepts an operator-selected input
+  trace limit from 65,536 through 1,048,576 reads. Its temporary files were
+  directed to the task scratch directory. This checks capture configuration
+  only; it starts no emulator and adds no original-game evidence. The next
+  authentic replay still requires an available trv2 session.
