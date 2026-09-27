@@ -4017,3 +4017,16 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   directed to the task scratch directory. This checks capture configuration
   only; it starts no emulator and adds no original-game evidence. The next
   authentic replay still requires an available trv2 session.
+
+## 2026-09-27 — authentic closed-door boundary coverage
+
+- ✅ The real-data mechanics probe now classifies every source-backed door in
+  all seven US and JP dungeons, requires exact source provenance and a decoded
+  door tile, and uses only ordinary floor approaches without active creatures
+  on either square. On trv2, the focused CTest passed with 225 checks, zero
+  failures and zero skips. Each region loaded 105 doors: 93 had an isolated
+  approach and remained blocked by the bounded runtime; 12 had no adjacent
+  floor approach; none had an active-creature overlap. This validates the
+  current fail-closed boundary against authentic media only. It does not prove
+  original door-opening, locking, key, button or movement semantics, so the
+  missing original T900 consumer remains open.

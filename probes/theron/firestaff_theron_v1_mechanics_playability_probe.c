@@ -204,8 +204,10 @@ static int find_adjacent_door_approach(const Theron_V1_Level *level,
         if (nx < 0 || nx >= level->width || ny < 0 || ny >= level->height)
             continue;
         tile = level->squares[ny][nx];
-        if (tile != THERON_SQUARE_WALL && tile != THERON_SQUARE_SECRET &&
-            tile != THERON_SQUARE_DOOR) {
+        /* Start only on ordinary floor.  A stair, pit, teleporter, or other
+         * special square would confound a door-blocking observation with a
+         * second mechanic. */
+        if (tile == THERON_SQUARE_FLOOR) {
             *out_x = nx;
             *out_y = ny;
             return 1;
@@ -220,6 +222,149 @@ static int direction_from_delta(int dx, int dy) {
     if (dx > 0) return THERON_DIR_EAST;
     if (dx < 0) return THERON_DIR_WEST;
     return THERON_DIR_NORTH;
+}
+
+static void test_authentic_door_boundaries(
+    const uint8_t *user_data, size_t user_data_size,
+    Theron_Track02Variant variant) {
+    Theron_V1_World *world = (Theron_V1_World *)calloc(1u, sizeof(*world));
+    int dungeon_door_records[THERON_DUNGEON_COUNT] = {0};
+    int dungeon_doors_with_approach[THERON_DUNGEON_COUNT] = {0};
+    int dungeon_rejected_interactions[THERON_DUNGEON_COUNT] = {0};
+    int loaded_dungeons = 0;
+    int door_records = 0;
+    int invalid_source_doors = 0;
+    int doors_without_floor_approach = 0;
+    int doors_overlapped_by_active_creature = 0;
+    int doors_with_approach = 0;
+    int rejected_interactions = 0;
+
+    if (!world) {
+        CHECK_INT("allocate authentic door boundary world", 0, 1);
+        return;
+    }
+    for (int dungeon_id = 1; dungeon_id <= THERON_DUNGEON_COUNT;
+         ++dungeon_id) {
+        Theron_DungeonLoadResult result;
+        theron_v1_world_init(world);
+        world->current_dungeon = dungeon_id;
+        if (theron_v1_track02_load_full_dungeon_for_variant(
+                world, dungeon_id, user_data, user_data_size,
+                variant, &result) != 0) {
+            continue;
+        }
+        ++loaded_dungeons;
+        for (int i = 0; i < world->object_count; ++i) {
+            Theron_V1_Object *door = &world->objects[i];
+            const Theron_V1_Level *level;
+            int approach_x = -1;
+            int approach_y = -1;
+            int occupied_by_active_creature = 0;
+            int door_x;
+            int door_y;
+            int door_level;
+            int valid;
+
+            if (door->type != THERON_OBJTYPE_DOOR) continue;
+            ++door_records;
+            ++dungeon_door_records[dungeon_id - 1];
+            if (!door->source_origin_valid ||
+                door->source_category != THERON_CAT_DOOR ||
+                door->source_raw_size != 4u ||
+                door->dungeon_id != dungeon_id ||
+                door->source_dungeon != dungeon_id ||
+                door->level < 0 || door->level >= result.levels_loaded ||
+                door->source_level != door->level ||
+                door->source_x != door->x || door->source_y != door->y) {
+                ++invalid_source_doors;
+                continue;
+            }
+            level = &world->levels[dungeon_id - 1][door->level];
+            if (door->x < 0 || door->x >= level->width ||
+                door->y < 0 || door->y >= level->height ||
+                level->squares[door->y][door->x] != THERON_SQUARE_DOOR) {
+                ++invalid_source_doors;
+                continue;
+            }
+            if (!find_adjacent_door_approach(
+                    level, door->x, door->y, &approach_x, &approach_y)) {
+                ++doors_without_floor_approach;
+                continue;
+            }
+            /* Movement resolves active creatures before door collision.  Do
+             * not let an unrelated combat route masquerade as door evidence,
+             * or place the test party on a creature's occupied approach. */
+            for (int creature_index = 0;
+                 creature_index < world->creature_count; ++creature_index) {
+                const Theron_V1_Creature *creature =
+                    &world->creatures[creature_index];
+                if (creature->dungeon_id == dungeon_id &&
+                    creature->level == door->level &&
+                    ((creature->x == door->x && creature->y == door->y) ||
+                     (creature->x == approach_x &&
+                      creature->y == approach_y)) &&
+                    (creature->flags & THERON_CF_ACTIVE)) {
+                    occupied_by_active_creature = 1;
+                    break;
+                }
+            }
+            if (occupied_by_active_creature) {
+                ++doors_overlapped_by_active_creature;
+                continue;
+            }
+            ++doors_with_approach;
+            ++dungeon_doors_with_approach[dungeon_id - 1];
+            door_x = door->x;
+            door_y = door->y;
+            door_level = door->level;
+            world->current_level = door_level;
+            world->party.leader_x = approach_x;
+            world->party.leader_y = approach_y;
+            world->party.leader_dir = direction_from_delta(
+                door_x - approach_x, door_y - approach_y);
+            valid = door->state == THERON_DOOR_STATE_CLOSED &&
+                theron_v1_move_party_original_command(
+                    world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD) ==
+                    THERON_MOVE_BLOCKED &&
+                world->party.leader_x == approach_x &&
+                world->party.leader_y == approach_y &&
+                theron_v1_door_open(world, door_x, door_y) == -1 &&
+                theron_v1_click_route(world, door_x, door_y,
+                                      THERON_CMD_USE) == -1 &&
+                door->state == THERON_DOOR_STATE_CLOSED;
+            if (valid) {
+                ++rejected_interactions;
+                ++dungeon_rejected_interactions[dungeon_id - 1];
+            }
+        }
+    }
+    CHECK_INT("all seven authentic dungeons load for door checks",
+              loaded_dungeons, THERON_DUNGEON_COUNT);
+    CHECK_INT("authentic door objects retain exact source provenance",
+              invalid_source_doors, 0);
+    CHECK_INT("authentic source doors have adjacent approaches",
+              doors_with_approach > 0 &&
+                  doors_with_approach <= door_records, 1);
+    CHECK_INT("authentic door records are fully classified",
+              invalid_source_doors + doors_without_floor_approach +
+                  doors_overlapped_by_active_creature + doors_with_approach,
+              door_records);
+    CHECK_INT("each approached authentic door blocks movement and rejects unbound interaction",
+              rejected_interactions, doors_with_approach);
+    printf("  authentic doors: records=%d invalid=%d no-floor-approach=%d active-creature-overlap=%d approached=%d fail-closed=%d\n",
+           door_records, invalid_source_doors, doors_without_floor_approach,
+           doors_overlapped_by_active_creature, doors_with_approach,
+           rejected_interactions);
+    for (int dungeon = 0; dungeon < THERON_DUNGEON_COUNT; ++dungeon) {
+        printf("  dungeon %d authentic doors: records=%d approached=%d fail-closed=%d\n",
+               dungeon + 1, dungeon_door_records[dungeon],
+               dungeon_doors_with_approach[dungeon],
+               dungeon_rejected_interactions[dungeon]);
+        CHECK_INT("each dungeon's approached authentic doors fail closed",
+                  dungeon_rejected_interactions[dungeon],
+                  dungeon_doors_with_approach[dungeon]);
+    }
+    free(world);
 }
 
 /* ── World setup ───────────────────────────────────────────────────── */
@@ -546,9 +691,6 @@ static void test_real_full_dungeon_and_stairs(
     size_t sector_count = 0u, user_data_size = 0u, copied_size = 0u;
     int stair_level = -1, stair_x = -1, stair_y = -1;
     int approach_x = -1, approach_y = -1;
-    Theron_V1_World *door_world = NULL;
-    Theron_V1_Object *door = NULL;
-    int door_approach_x = -1, door_approach_y = -1;
 
     printf("[test:real_full_dungeon_and_stairs]\n");
     world = (Theron_V1_World *)calloc(1u, sizeof(*world));
@@ -596,64 +738,10 @@ static void test_real_full_dungeon_and_stairs(
             }
         }
     }
-    door_world = (Theron_V1_World *)calloc(1u, sizeof(*door_world));
-    for (int dungeon_id = 1;
-         door_world && dungeon_id <= THERON_DUNGEON_COUNT && !door;
-         ++dungeon_id) {
-        Theron_DungeonLoadResult door_result;
-        theron_v1_world_init(door_world);
-        door_world->current_dungeon = dungeon_id;
-        if (theron_v1_track02_load_full_dungeon_for_variant(
-                door_world, dungeon_id, user_data, user_data_size,
-                variant, &door_result) != 0) {
-            continue;
-        }
-        for (int i = 0; i < door_world->object_count && !door; ++i) {
-            Theron_V1_Object *candidate = &door_world->objects[i];
-            if (candidate->type == THERON_OBJTYPE_DOOR &&
-                candidate->source_origin_valid &&
-                candidate->source_category == THERON_CAT_DOOR &&
-                candidate->source_raw_size == 4u &&
-                candidate->level >= 0 &&
-                candidate->level < door_result.levels_loaded &&
-                find_adjacent_door_approach(
-                    &door_world->levels[dungeon_id - 1][candidate->level],
-                    candidate->x, candidate->y,
-                    &door_approach_x, &door_approach_y)) {
-                door = candidate;
-            }
-        }
-    }
-    CHECK_INT("real dungeon exposes a source-backed door edge", door != NULL, 1);
-    if (door) {
-        int door_x = door->x;
-        int door_y = door->y;
-        int door_level = door->level;
-        door_world->current_level = door_level;
-        door_world->party.leader_x = door_approach_x;
-        door_world->party.leader_y = door_approach_y;
-        door_world->party.leader_dir = direction_from_delta(
-            door_x - door_approach_x, door_y - door_approach_y);
-        CHECK_INT("real closed door blocks original forward command",
-                  theron_v1_move_party_original_command(
-                      door_world, THERON_ORIGINAL_COMMAND_MOVE_FORWARD),
-                  THERON_MOVE_BLOCKED);
-        CHECK_INT("blocked real door preserves party x",
-                  door_world->party.leader_x, door_approach_x);
-        CHECK_INT("blocked real door preserves party y",
-                  door_world->party.leader_y, door_approach_y);
-        CHECK_INT("uncaptured direct open rejects real door",
-                  theron_v1_door_open(door_world, door_x, door_y), -1);
-        CHECK_INT("uncaptured USE rejects real door",
-                  theron_v1_click_route(door_world, door_x, door_y,
-                                        THERON_CMD_USE), -1);
-        CHECK_INT("rejected real door interactions preserve closed state",
-                  door->state, THERON_DOOR_STATE_CLOSED);
-    }
+    test_authentic_door_boundaries(user_data, user_data_size, variant);
     if (stair_level < 0) {
         printf("  [FAIL] no traversable authentic stair edge\n");
         g_fail++;
-        free(door_world);
         free(user_data);
         free(world);
         return;
@@ -680,7 +768,6 @@ static void test_real_full_dungeon_and_stairs(
         CHECK_INT("unresolved authentic stairs leave no queued transition",
                   world->transition_pending, 0);
     }
-    free(door_world);
     free(user_data);
     free(world);
 }
