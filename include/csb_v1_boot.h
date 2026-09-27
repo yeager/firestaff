@@ -1940,6 +1940,16 @@ int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
     const char *resume_save_path,
     int requested_variant,
     CSB_V1_BootStartupLaunch_PC34 *out_launch);
+int csb_v1_boot_startup_launch_alloc_with_verified_graphics_pc34(
+    const char *data_dir,
+    const char *utility_search_dir,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    int requested_variant,
+    const char *verified_graphics_path,
+    const char *verified_graphics_md5,
+    CSB_V1_BootStartupLaunch_PC34 *out_launch);
 int csb_v1_boot_startup_launch_detach_runtime_pc34(
     CSB_V1_BootStartupLaunch_PC34 *launch,
     CSB_V1_BootStartupRuntimeReceipt_PC34 *out_receipt);

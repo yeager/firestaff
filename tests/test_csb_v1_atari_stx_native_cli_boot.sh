@@ -4,6 +4,7 @@ set -eu
 firestaff_cli="${1:?Firestaff executable is required}"
 media_path="${FIRESTAFF_CSB_ATARI_STX:-$HOME/.firestaff/data/csb/Chaos Strikes Back.stx}"
 archive_path="${FIRESTAFF_CSB_ATARI_STX_ARCHIVE:-$HOME/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z}"
+archive_data_root="${FIRESTAFF_CSB_ATARI_ARCHIVE_DATA_ROOT:-}"
 staged_media_dir=""
 menu_probe=""
 
@@ -157,6 +158,28 @@ if printf '%s\n' "$menu_output" | grep -q 'handoffHash=00000000'; then
     echo "FAIL: CSB Atari ST start-menu launch did not retain a source package identity"
     printf '%s\n' "$menu_output" >&2
     exit 1
+fi
+
+# Also exercise the real M12 -> M11 route against the original outer 7z
+# package. This catches mismatches where M12 can identify a disk member but
+# native startup cannot read its sibling DUNGEON.DAT from the same package.
+if [ -n "$archive_data_root" ] && [ -e "$archive_path" ]; then
+    archive_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --enable-external-archive-tools --game csb --platform atari-st \
+        --data-dir "$archive_data_root" --boot-probe --boot-probe-frames 180 \
+        --script enter --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
+        printf '%s\n' "$archive_output" >&2
+        exit 1
+    }
+    case "$archive_output" in
+        *variant=csb-st20-21-en*phase=inactive*levelLoaded=1*runtimeTick=*) ;;
+        *)
+            echo "FAIL: CSB Atari ST archive member did not reach native runtime"
+            printf '%s\n' "$archive_output" >&2
+            exit 1
+            ;;
+    esac
 fi
 
 # With the nonexistent PC edition removed, Atari ST is the third card on the

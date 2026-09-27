@@ -18078,7 +18078,7 @@ endif()
     set_tests_properties(csb_v1_atari_stx_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;skip_safe"
-        ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_ARCHIVE_DATA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
         # This test deliberately performs ten independent starts from the
         # original STX image (title, runtime, input matrix, keyboard menu and
         # pointer menu), then lets the retained ANIMATE.SCR sequence run to

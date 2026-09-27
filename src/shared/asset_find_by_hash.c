@@ -6789,17 +6789,24 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
         if (has_case_suffix(container, ".7z")) {
             char member_name[ASSET_PATH_MAX];
-            if (!firestaff_7z_extract_single_lzma2_file(
+            if (firestaff_7z_extract_single_lzma2_file(
                     container, &image, &imageSize, member_name,
-                    sizeof(member_name)) || asset_casecmp(member_name, disk) != 0) {
+                    sizeof(member_name)) && asset_casecmp(member_name, disk) == 0) {
+                /* The native reader intentionally supports only the bounded
+                 * single-file form. A selected member from a solid, multi-file
+                 * 7z must still reach the explicitly opted-in host reader. */
+            } else {
                 free(image);
-                return 0;
+                image = NULL;
+                imageSize = 0U;
             }
-        } else
+        }
 #endif
-        {
+        if (!image) {
 #ifndef _WIN32
-            image = external_read_entry_bytes(container, disk, &imageSize);
+            if (external_tool_available_for_path(container)) {
+                image = external_read_entry_bytes(container, disk, &imageSize);
+            }
 #else
             return 0;
 #endif

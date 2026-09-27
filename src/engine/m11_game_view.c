@@ -25414,14 +25414,20 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
              * direct STX file is not mistaken for an FM Towns archive. */
             requestedCsbVariant = CSB_V1_VARIANT_ST21_EN;
         }
-        if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
-                dd,
-                utility_search_dir,
-                spec->savePath,
-                spec->csbImportDm1SavePath,
-                spec->entranceResumeSavePath,
-                requestedCsbVariant,
-                &launch)) {
+        if (!(spec->verifiedAssetPath && spec->verifiedAssetMd5 &&
+              (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
+               requestedCsbVariant == CSB_V1_VARIANT_ST21_EN)
+                  ? csb_v1_boot_startup_launch_alloc_with_verified_graphics_pc34(
+                        dd, utility_search_dir, spec->savePath,
+                        spec->csbImportDm1SavePath,
+                        spec->entranceResumeSavePath, requestedCsbVariant,
+                        spec->verifiedAssetPath, spec->verifiedAssetMd5,
+                        &launch)
+                  : csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+                        dd, utility_search_dir, spec->savePath,
+                        spec->csbImportDm1SavePath,
+                        spec->entranceResumeSavePath, requestedCsbVariant,
+                        &launch))) {
             fprintf(stderr, "firestaff: CSB boot rejected: %s\n",
                     launch.failure_host_receipt.status
                         ? launch.failure_host_receipt.status

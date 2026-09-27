@@ -3055,13 +3055,39 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
     return 1;
 }
 
-int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+static int csb_v1_boot_scan_selected_atari_graphics_pc34(
+    CSB_V1_BootProfile *profile, const char *data_dir,
+    const char *graphics_path, const char *graphics_md5);
+
+static int csb_v1_boot_has_suffix_pc34(const char *path, const char *suffix)
+{
+    size_t path_length;
+    size_t suffix_length;
+    size_t index;
+    if (!path || !suffix) return 0;
+    path_length = strlen(path);
+    suffix_length = strlen(suffix);
+    if (suffix_length > path_length) return 0;
+    path += path_length - suffix_length;
+    for (index = 0; index < suffix_length; ++index) {
+        char left = path[index];
+        char right = suffix[index];
+        if (left >= 'A' && left <= 'Z') left = (char)(left + ('a' - 'A'));
+        if (right >= 'A' && right <= 'Z') right = (char)(right + ('a' - 'A'));
+        if (left != right) return 0;
+    }
+    return 1;
+}
+
+static int csb_v1_boot_startup_launch_alloc_internal_pc34(
     const char *data_dir,
     const char *utility_search_dir,
     const char *save_path,
     const char *import_dm1_save_path,
     const char *resume_save_path,
     int requested_variant,
+    const char *verified_graphics_path,
+    const char *verified_graphics_md5,
     CSB_V1_BootStartupLaunch_PC34 *out_launch)
 {
     CSB_V1_StartupHostReceipt_PC34 failure_receipt;
@@ -3088,7 +3114,14 @@ int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
         return 0;
     }
     csb_v1_boot_profile_init(out_launch->profile);
-    if (csb_v1_boot_scan_assets(out_launch->profile, data_dir) != 0 &&
+    if (((verified_graphics_path && verified_graphics_path[0] &&
+          verified_graphics_md5 && verified_graphics_md5[0] &&
+          (effective_variant == CSB_V1_VARIANT_ST20_EN ||
+           effective_variant == CSB_V1_VARIANT_ST21_EN))
+             ? !csb_v1_boot_scan_selected_atari_graphics_pc34(
+                   out_launch->profile, data_dir, verified_graphics_path,
+                   verified_graphics_md5)
+             : csb_v1_boot_scan_assets(out_launch->profile, data_dir) != 0) &&
         !(effective_variant == CSB_V1_VARIANT_FMTOWNS_EN ||
           effective_variant == CSB_V1_VARIANT_FMTOWNS_JA)) {
         csb_v1_boot_startup_failure_host_receipt_pc34(
@@ -3160,6 +3193,37 @@ int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
         return 0;
     }
     return 1;
+}
+
+int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+    const char *data_dir,
+    const char *utility_search_dir,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    int requested_variant,
+    CSB_V1_BootStartupLaunch_PC34 *out_launch)
+{
+    return csb_v1_boot_startup_launch_alloc_internal_pc34(
+        data_dir, utility_search_dir, save_path, import_dm1_save_path,
+        resume_save_path, requested_variant, NULL, NULL, out_launch);
+}
+
+int csb_v1_boot_startup_launch_alloc_with_verified_graphics_pc34(
+    const char *data_dir,
+    const char *utility_search_dir,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    int requested_variant,
+    const char *verified_graphics_path,
+    const char *verified_graphics_md5,
+    CSB_V1_BootStartupLaunch_PC34 *out_launch)
+{
+    return csb_v1_boot_startup_launch_alloc_internal_pc34(
+        data_dir, utility_search_dir, save_path, import_dm1_save_path,
+        resume_save_path, requested_variant, verified_graphics_path,
+        verified_graphics_md5, out_launch);
 }
 
 int csb_v1_boot_startup_launch_alloc_pc34(
@@ -9454,6 +9518,128 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     }
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;
     return -1;
+}
+
+static int csb_v1_boot_selected_atari_dungeon_path_pc34(
+    const char *graphics_path, char *dungeon_path, size_t dungeon_path_size)
+{
+    const char *last_separator;
+    const char *previous_separator = NULL;
+    const char *cursor;
+    size_t prefix_length;
+    const char *entry;
+    const char *slash;
+    int written;
+
+    if (!graphics_path || !graphics_path[0] || !dungeon_path ||
+        dungeon_path_size == 0u) return 0;
+    dungeon_path[0] = '\0';
+    last_separator = NULL;
+    for (cursor = graphics_path;
+         (cursor = strstr(cursor, "::")) != NULL; cursor += 2) {
+        previous_separator = last_separator;
+        last_separator = cursor;
+    }
+    if (last_separator && previous_separator) {
+        size_t disk_length = (size_t)(last_separator - previous_separator - 2);
+        char disk_name[ASSET_PATH_MAX];
+        if (disk_length == 0u || disk_length >= sizeof(disk_name)) return 0;
+        memcpy(disk_name, previous_separator + 2, disk_length);
+        disk_name[disk_length] = '\0';
+        if (csb_v1_boot_has_suffix_pc34(disk_name, ".st") ||
+            csb_v1_boot_has_suffix_pc34(disk_name, ".stx") ||
+            csb_v1_boot_has_suffix_pc34(disk_name, ".msa")) {
+            prefix_length = (size_t)(last_separator - graphics_path);
+            if (prefix_length + sizeof("::DUNGEON.DAT") > dungeon_path_size)
+                return 0;
+            memcpy(dungeon_path, graphics_path, prefix_length);
+            memcpy(dungeon_path + prefix_length, "::DUNGEON.DAT",
+                   sizeof("::DUNGEON.DAT"));
+            return 1;
+        }
+    }
+    if (last_separator) {
+        entry = last_separator + 2;
+        slash = strrchr(entry, '/');
+        prefix_length = slash
+            ? (size_t)(slash + 1 - graphics_path)
+            : (size_t)(last_separator + 2 - graphics_path);
+    } else {
+        slash = strrchr(graphics_path, '/');
+#if defined(_WIN32)
+        {
+            const char *backslash = strrchr(graphics_path, '\\');
+            if (backslash && (!slash || backslash > slash)) slash = backslash;
+        }
+#endif
+        prefix_length = slash ? (size_t)(slash + 1 - graphics_path) : 0u;
+    }
+    written = snprintf(dungeon_path, dungeon_path_size, "%.*sDUNGEON.DAT",
+                       (int)prefix_length, graphics_path);
+    return written > 0 && (size_t)written < dungeon_path_size;
+}
+
+static int csb_v1_boot_scan_selected_atari_graphics_pc34(
+    CSB_V1_BootProfile *profile, const char *data_dir,
+    const char *graphics_path, const char *graphics_md5)
+{
+    const CSB_V1_VariantInfo *variant;
+    char dungeon_path[ASSET_PATH_MAX];
+    const char *expected_dungeon_md5 = "6695d2acebce49f95db1d8f3a5c733de";
+    int graphics_index;
+    int dungeon_index;
+
+    if (!profile || !data_dir || !graphics_path || !graphics_md5 ||
+        !csb_v1_boot_selected_atari_dungeon_path_pc34(
+            graphics_path, dungeon_path, sizeof(dungeon_path))) return 0;
+    for (graphics_index = 0;
+         g_csb_boot_graphics_hashes[graphics_index] != NULL;
+         ++graphics_index) {
+        if (strcmp(g_csb_boot_graphics_hashes[graphics_index],
+                   graphics_md5) == 0) break;
+    }
+    if (!g_csb_boot_graphics_hashes[graphics_index] ||
+        (g_csb_boot_graphics_variants[graphics_index] !=
+             CSB_V1_VARIANT_ST20_EN &&
+         g_csb_boot_graphics_variants[graphics_index] !=
+             CSB_V1_VARIANT_ST21_EN) ||
+        !asset_file_matches_md5(graphics_path, graphics_md5)) return 0;
+    variant = csb_v1_runtime_get_variant_info(
+        g_csb_boot_graphics_variants[graphics_index]);
+    if (!variant || !variant->md5_dungeon) return 0;
+    expected_dungeon_md5 = variant->md5_dungeon;
+    for (dungeon_index = 0; g_csb_boot_dungeon_hashes[dungeon_index] != NULL;
+         ++dungeon_index) {
+        if (strcmp(g_csb_boot_dungeon_hashes[dungeon_index],
+                   expected_dungeon_md5) == 0) break;
+    }
+    if (!g_csb_boot_dungeon_hashes[dungeon_index] ||
+        !asset_file_matches_md5(dungeon_path, expected_dungeon_md5)) return 0;
+
+    csb_v1_boot_copy(profile->asset_root, sizeof(profile->asset_root), data_dir);
+    csb_v1_boot_copy(profile->graphics_path, sizeof(profile->graphics_path),
+                     graphics_path);
+    csb_v1_boot_copy(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     dungeon_path);
+    csb_v1_boot_copy(profile->graphics_md5, sizeof(profile->graphics_md5),
+                     graphics_md5);
+    csb_v1_boot_copy(profile->dungeon_md5, sizeof(profile->dungeon_md5),
+                     expected_dungeon_md5);
+    profile->graphics_kind = csb_v1_boot_graphics_kind(graphics_path);
+    profile->variant_id = g_csb_boot_graphics_variants[graphics_index];
+    profile->graphics_verified = 1;
+    profile->dungeon_verified = 1;
+    profile->assets_verified =
+        csb_v1_boot_load_native_runtime_pair_pc34(profile);
+    if (!profile->assets_verified) {
+        profile->graphics_verified = 0;
+        profile->dungeon_verified = 0;
+        return 0;
+    }
+    csb_v1_boot_copy(profile->version_id, sizeof(profile->version_id),
+                     graphics_md5);
+    profile->state = CSB_V1_BOOT_STATE_ASSETS_READY;
+    return 1;
 }
 
 int csb_v1_boot_probe_available(const char *data_dir)
