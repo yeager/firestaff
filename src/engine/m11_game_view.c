@@ -72225,10 +72225,13 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
         struct PostMoveResolution_Compat resolution;
         struct PartyState_Compat placedParty;
         struct SensorEffectList_Compat enterEffects;
+        struct SensorOnSquare_Compat startupSensors[SENSOR_ENUM_CAPACITY];
         unsigned char sourceSquare = 0;
         unsigned short thing;
         int safety = 0;
         int destinationGroupDeleted = 0;
+        int startupSensorCount;
+        int startupSensorCursor = 0;
         int i;
 
         if (!world->dungeon || !world->dungeon->loaded ||
@@ -72295,17 +72298,35 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
                 &enterEffects)) {
             return 0;
         }
+        startupSensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
+            world->dungeon, world->things, placedParty.mapIndex,
+            placedParty.mapX, placedParty.mapY, startupSensors);
         /* ReDMCSB MOVESENS.C:F0276:1675-1689 suppresses C003 floor-party
-         * sensors when the party has no champions. The general F0718 adapter
-         * has no party-state input, so enforce the source gate at this
-         * new-game boundary before applying any remote effect. */
-        if (placedParty.championCount == 0) {
+         * sensors for an empty party and applies nonzero sensor data as a
+         * facing filter.  DEFS.H:M000_INDEX_TO_ORDINAL maps direction to
+         * 1..4. F0718 lacks party context, so enforce both source gates here
+         * before applying any remote effect. */
+        {
             int kept = 0;
             for (i = 0; i < enterEffects.count &&
                         i < SENSOR_EFFECT_LIST_MAX_COUNT; ++i) {
-                if (enterEffects.effects[i].sensorType ==
-                    DM1_SENSOR_FLOOR_PARTY) {
-                    continue;
+                if (enterEffects.effects[i].sensorType == DM1_SENSOR_FLOOR_PARTY) {
+                    const struct SensorOnSquare_Compat* sourceSensor = NULL;
+                    int sensorIndex;
+                    while (startupSensorCursor < startupSensorCount) {
+                        sensorIndex = startupSensorCursor++;
+                        if (startupSensors[sensorIndex].sensorType ==
+                            DM1_SENSOR_FLOOR_PARTY) {
+                            sourceSensor = &startupSensors[sensorIndex];
+                            break;
+                        }
+                    }
+                    if (placedParty.championCount == 0 || !sourceSensor ||
+                        (sourceSensor->sensorData != 0 &&
+                         sourceSensor->sensorData !=
+                             placedParty.direction + 1)) {
+                        continue;
+                    }
                 }
                 if (kept != i) {
                     enterEffects.effects[kept] = enterEffects.effects[i];

@@ -120,10 +120,25 @@ int main(void) {
     things.sensors = sensors;
     things.sensorCount = 1;
     state->world.party.championCount = 1;
+    sensors[0].sensorData = 1;
     receipt = make_receipt(1);
     expect_i("occupied-party startup handoff accepted",
              M11_GameView_ApplyDm1StartupF0267PartyPlacement(state, &receipt), 1);
-    expect_i("C003 plate still fires for a nonempty party",
+    expect_i("C003 rejects a nonmatching party facing",
+             state->dm1StartupPartyPlacementSensorEffectCount, 0);
+
+    make_state(state, &dungeon, &map, &tiles, &things, squares, sft);
+    squares[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST);
+    sft[0] = (unsigned short)(THING_TYPE_SENSOR << 10);
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    state->world.party.championCount = 1;
+    sensors[0].sensorData = DIR_SOUTH + 1;
+    receipt = make_receipt(1);
+    expect_i("matching-party startup handoff accepted",
+             M11_GameView_ApplyDm1StartupF0267PartyPlacement(state, &receipt), 1);
+    expect_i("C003 plate fires for matching nonempty party",
              state->dm1StartupPartyPlacementSensorEffectCount, 1);
 
     receipt = make_receipt(1);
