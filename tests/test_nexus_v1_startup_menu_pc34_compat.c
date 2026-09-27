@@ -942,6 +942,9 @@ int main(void)
                strcmp(champion_execution.status, "NEXUS START REQUESTED") == 0,
            "Nexus champion execution resolves start-dungeon handoff");
     memset(&synthetic_engine, 0, sizeof(synthetic_engine));
+    /* Test-only witness for a ready route. This does not assign a retail
+     * PLRD-to-FACE ordinal; production bindings remain capture-gated. */
+    synthetic_engine.source = NEXUS_SRC_EXTRACTED;
     synthetic_engine.level_loaded = 1;
     /* Explicit fixture-only admission for the positive receipt path. */
     synthetic_engine.startup_warning_vdp_capture_verified = 1;
@@ -961,6 +964,11 @@ int main(void)
         &synthetic_surface_pixel;
     synthetic_engine.ui.surfaces[NEXUS_SURFACE_GAMEOVER].w = 320;
     synthetic_engine.ui.surfaces[NEXUS_SURFACE_GAMEOVER].h = 200;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_FACE0].data =
+        &synthetic_surface_pixel;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_FACE0].w = 56;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_FACE0].h = 56;
+    synthetic_engine.ui.surfaces[NEXUS_SURFACE_FACE0].source_palette_loaded = 1;
     synthetic_engine.ui_startup_surfaces_expected = 1;
     synthetic_engine.ui_startup_surfaces_loaded = 1;
     synthetic_engine.ui_faces_expected = NEXUS_MAX_CHAMPIONS;
@@ -1047,6 +1055,8 @@ int main(void)
                           &synthetic_wall_pixel,
                           0xff806040U);
     nexus_v1_champions_init(&synthetic_engine.champions);
+    synthetic_engine.champions.champion_count = 1;
+    synthetic_engine.champions.champions[0].portrait_index = 0;
     expect(nexus_v1_champion_recruit(&synthetic_engine.champions, 0) == 0,
            "Nexus synthetic runtime has a party for menu-to-runtime route");
     nexus_v1_launcher_runtime_receipt_clear(&synthetic_runtime_receipt);

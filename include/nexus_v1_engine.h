@@ -3246,6 +3246,8 @@ int nexus_v1_startup_faces_loaded_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_faces_expected_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_faces_fallback_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine);
+int nexus_v1_startup_champion_face_bindings_ready(
+    const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_loaded_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_expected_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_fallback_count(const Nexus_V1_Engine *engine);

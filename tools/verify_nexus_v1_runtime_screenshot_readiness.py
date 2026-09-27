@@ -231,7 +231,10 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
     )
     lev00_refused = "Saturn start pose is not source-bound" in combined
     title_boot_blocked = (
-        "blocker=title-vdp-capture-required" in combined
+        (
+            "blocker=title-vdp-capture-required" in combined
+            or "blocker=menu-bpk-prs3-capture-required" in combined
+        )
         and probe.get("lastOutcome") == "NEXUS TITLE"
         and bool(row.get("command", {}).get("ok"))
         and probe.get("schema") == "firestaff_m11_autotest_runtime_probe.v1"
@@ -276,8 +279,9 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
     elif title_boot_blocked:
         row["status"] = "BLOCKED"
         row["reason"] = (
-            "real Nexus title and asset boot succeeded, but the authenticated "
-            "Saturn LEV01 start pose and presentation handoff are still required"
+            "real Nexus title and asset boot succeeded, but authenticated "
+            "Saturn title/menu VDP capture and the PRS3 output proof needed "
+            "to admit the menu payload are still required"
         )
     elif startup_proof_missing:
         row["status"] = "BLOCKED"

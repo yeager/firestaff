@@ -3317,9 +3317,6 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     } else if (!nexus_v1_startup_surfaces_ready(engine)) {
         receipt->real_menu_surface_blocker = "startup-surfaces";
         receipt->startup_menu_asset_route = "blocked-startup-surfaces";
-    } else if (!nexus_v1_startup_faces_ready(engine)) {
-        receipt->real_menu_surface_blocker = "faces";
-        receipt->startup_menu_asset_route = "blocked-faces";
     } else if (!receipt->menu_bpk_upload_receipt_valid) {
         receipt->real_menu_surface_blocker = "menu-bpk";
         receipt->startup_menu_asset_route = "blocked-menu-bpk";
@@ -3362,7 +3359,7 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->menu_text_consumer_bound;
     receipt->champion_menu_route_ready =
         receipt->save_menu_route_ready &&
-        nexus_v1_startup_faces_ready(engine);
+        nexus_v1_startup_champion_face_bindings_ready(engine);
     receipt->main_menu_route_ready =
         engine->level_loaded &&
         receipt->startup_assets_ready &&

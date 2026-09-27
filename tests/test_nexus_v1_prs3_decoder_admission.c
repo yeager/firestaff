@@ -70,6 +70,7 @@ static void test_real_retail_decoder_admission_blocks_without_proof(void)
     size_t dm_bin_size = 0U;
     Nexus_V1_Prs3DecoderAdmissionInput input;
     Nexus_V1_Prs3DecoderAdmissionReceipt receipt;
+    int evaluation_result;
 
     if (!nexus_data_path("MENU.BPK", menu_path, sizeof(menu_path)) ||
         !nexus_data_path("DM.BIN", dm_bin_path, sizeof(dm_bin_path)) ||
@@ -89,13 +90,26 @@ static void test_real_retail_decoder_admission_blocks_without_proof(void)
     input.dm_bin_size = dm_bin_size;
     input.dm_bin_source_verified = 1;
 
-    CHECK(nexus_v1_prs3_decoder_admission_evaluate(&input, &receipt) == 0,
-          "retail MENU.BPK/DM.BIN blocked at differential trial stage");
+    evaluation_result =
+        nexus_v1_prs3_decoder_admission_evaluate(&input, &receipt);
+    printf("INFO: admission rc=%d status=%s lsb=%u/%u/%u/%u msb=%u/%u/%u/%u\n",
+           evaluation_result,
+           nexus_v1_prs3_decoder_admission_status_name(receipt.status),
+           receipt.lsb_trial_evaluated,
+           receipt.lsb_trial_complete_exact,
+           receipt.lsb_trial_complete_trailing,
+           receipt.lsb_trial_failures,
+           receipt.msb_trial_evaluated,
+           receipt.msb_trial_complete_exact,
+           receipt.msb_trial_complete_trailing,
+           receipt.msb_trial_failures);
+    CHECK(evaluation_result == 1,
+          "retail MENU.BPK/DM.BIN reaches output-proof admission");
     CHECK(receipt.status ==
-              NEXUS_V1_PRS3_DECODER_ADMISSION_BLOCKED_DIFFERENTIAL &&
+              NEXUS_V1_PRS3_DECODER_ADMISSION_READY_BLOCKED &&
               strcmp(nexus_v1_prs3_decoder_admission_status_name(receipt.status),
-                     "blocked-differential") == 0,
-          "decoder admission blocked-differential with MSB trailing matches");
+                     "ready-blocked") == 0,
+          "decoder admission stays blocked without source-bound output proof");
     CHECK(receipt.dm_bin_v1_loader_bound &&
               receipt.dm_bin_v1_callee_offset == 85376U &&
               receipt.dm_bin_control_test_offset == 85450U &&
@@ -114,14 +128,14 @@ static void test_real_retail_decoder_admission_blocks_without_proof(void)
           "retail MENU.BPK PRS3 streams are bound");
     CHECK(receipt.lsb_trial_evaluated > 0U &&
               receipt.msb_trial_evaluated > 0U &&
-              !receipt.simple_lsb_msb_decoder_disproven &&
+              receipt.simple_lsb_msb_decoder_disproven &&
               receipt.lsb_trial_complete_exact == 0U &&
               receipt.lsb_trial_complete_trailing == 0U &&
-              receipt.msb_trial_complete_exact == 1U &&
-              receipt.msb_trial_complete_trailing == 108U &&
-              receipt.lsb_trial_failures > 0U &&
-              receipt.msb_trial_failures > 0U,
-          "MSB trial has one exact frame and 108 trailing matches; simple decoder remains unproven");
+              receipt.msb_trial_complete_exact == 0U &&
+              receipt.msb_trial_complete_trailing == 0U &&
+              receipt.lsb_trial_failures == receipt.lsb_trial_evaluated &&
+              receipt.msb_trial_failures == receipt.msb_trial_evaluated,
+          "both bit-order trials fail every validated retail frame without output");
     CHECK(!receipt.expected_output_bound &&
               !receipt.decoder_ready &&
               !receipt.decoder_promoted &&

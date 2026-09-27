@@ -3665,6 +3665,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_sh2_subset_trace
         NAME nexus_v1_prs3_sh2_subset_trace
         COMMAND test_nexus_v1_prs3_sh2_subset_trace
     )
+    set_tests_properties(nexus_v1_prs3_sh2_subset_trace PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    )
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c")
@@ -3693,6 +3696,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c
     add_test(
         NAME nexus_v1_prs3_structure2_abi
         COMMAND test_nexus_v1_prs3_structure2_abi
+    )
+    set_tests_properties(nexus_v1_prs3_structure2_abi PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     )
 endif()
 
@@ -32055,7 +32061,12 @@ endif()
     )
     add_test(
         NAME nexus_v1_runtime_screenshot_readiness
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_v1_runtime_screenshot_readiness.py --build-dir ${CMAKE_BINARY_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_v1_runtime_screenshot_readiness.py
+            --build-dir ${CMAKE_BINARY_DIR}
+            --case "english_iso=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (English).cue"
+    )
+    set_tests_properties(nexus_v1_runtime_screenshot_readiness PROPERTIES
+        ENVIRONMENT "HOME=${CMAKE_BINARY_DIR}/test-home/nexus-readiness;FIRESTAFF_NEXUS_DATA_DIR="
     )
     add_test(
         NAME nexus_v1_vdp1_write_trace_frame_contract
@@ -40281,6 +40292,9 @@ add_executable(test_nexus_v1_dgn_material_raster
         NAME nexus_v1_prs3_capture_trace_schema
         COMMAND test_nexus_v1_prs3_capture_trace_schema
     )
+    set_tests_properties(nexus_v1_prs3_capture_trace_schema PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    )
 
     add_executable(test_nexus_v1_structure3_capture_manifest
         tests/test_nexus_v1_structure3_capture_manifest.c
@@ -42521,6 +42535,9 @@ if(BUILD_TESTING)
             NAME nexus_v2_verification_suite_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_v2_verification_suite_source_lock.py
         )
+        set_tests_properties(nexus_v2_verification_suite_source_lock PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "nexus;source_lock;skip_safe")
     endif()
 
     # ── Nexus V2 Phase 5 Smooth Movement smoke test ──────────────
@@ -43340,6 +43357,7 @@ add_test(
     COMMAND firestaff_nexus_v1_bpk_prs3_payload_evidence_probe
 )
 set_tests_properties(nexus_v1_bpk_prs3_payload_evidence_probe PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "tier4;nexus;bpx_bpk;archive;skip_safe"
 )
 
@@ -43592,7 +43610,10 @@ add_executable(test_nexus_v1_item_ibs
 target_include_directories(test_nexus_v1_item_ibs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_item_ibs PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_item_ibs COMMAND test_nexus_v1_item_ibs)
-set_tests_properties(nexus_v1_item_ibs PROPERTIES LABELS "nexus;saturn;items;skip_safe")
+set_tests_properties(nexus_v1_item_ibs PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;saturn;items;skip_safe"
+)
 add_executable(test_nexus_v1_mns
     tests/test_nexus_v1_mns.c
     src/nexus/nexus_v1_mns.c
@@ -43601,6 +43622,7 @@ target_include_directories(test_nexus_v1_mns PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(test_nexus_v1_mns PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_mns COMMAND test_nexus_v1_mns)
 set_tests_properties(nexus_v1_mns PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;saturn;creatures;skip_safe"
     SKIP_RETURN_CODE 77)
 add_executable(test_nexus_v1_dgn tests/test_nexus_v1_dgn.c)
@@ -43782,10 +43804,12 @@ foreach(_nexus_member_target test_nexus_v1_stmp test_nexus_v1_mns)
     target_include_directories(${_nexus_member_target} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 endforeach()
-set_property(TEST nexus_v1_stmp_real APPEND PROPERTY ENVIRONMENT
-    "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
-set_property(TEST nexus_v1_mns APPEND PROPERTY ENVIRONMENT
-    "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+if(EXISTS "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+    set_property(TEST nexus_v1_stmp_real APPEND PROPERTY ENVIRONMENT
+        "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+    set_property(TEST nexus_v1_mns APPEND PROPERTY ENVIRONMENT
+        "FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue")
+endif()
 foreach(_nexus_warning_target
         test_nexus_v1_warning_dgt2_source_admission
         test_nexus_v1_warning_dgt2_descriptor_admission

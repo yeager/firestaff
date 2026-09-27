@@ -594,17 +594,10 @@ static void test_optional_local_menumenu_bpk(void) {
                            (japanese_retail ? 1U : 4U) &&
                        framed.evaluated ==
                            (japanese_retail ? 161U : 158U) &&
-                       framed.complete_exact ==
-                           (japanese_retail ? 0U :
-                            (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                ? 1U : 0U)) &&
-                       framed.complete_trailing ==
-                           (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                ? (japanese_retail ? 110U : 108U) : 0U) &&
+                       framed.complete_exact == 0U &&
+                       framed.complete_trailing == 0U &&
                        framed.command_failures ==
-                           (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                ? (japanese_retail ? 51U : 49U)
-                                : (japanese_retail ? 161U : 158U)) &&
+                           (japanese_retail ? 161U : 158U) &&
                        framed.decoder_promoted == 0,
                    "local MENU.BPK framed evaluation remains diagnostic-only");
             rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(

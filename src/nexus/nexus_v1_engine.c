@@ -57,6 +57,7 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"WARNING.BIN", "9002866163ad733a75346547a4c7e0b5"},
     {"GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"},
     {"LOGOBG.DG2", "a1677f9abb3b25d88747ee7f82b86ec1"},
+    {"LOGOBG.DG2", "53916e61c9f1c19eb65dd5e8950f37ea"},
     {"STABG.BIN", "e77d4dd48dd280ec299cfc8ee8851114"},
     {"SMAP00.BIN", "6e8e582d6ceb4b482dc994e7faa448d6"},
     {"SMAP01.BIN", "7d8379ea25ef2c4f4f591c5b0fc96a47"},
@@ -2868,6 +2869,7 @@ static int has_extracted(const char *dir) {
 static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     int face_size = 0;
     Nexus_UI_FaceLayout face_layout;
+    Nexus_V1_LevelAuxSourceReceipt face_source;
     int i;
     uint8_t *face_data;
     if (!engine) return;
@@ -2876,21 +2878,28 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     engine->ui_faces_fallback = 0;
     face_data = nexus_v1_read_file(engine, "FACE.BIN", &face_size);
     if (!face_data) return;
-    (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
+    memset(&face_source, 0, sizeof(face_source));
+    (void)nexus_v1_named_asset_source_receipt(engine, "FACE.BIN",
+                                               &face_source);
+    if (!face_source.exact_source_entry_observed ||
+        !face_source.canonical_hash_verified ||
+        !nexus_ui_face_layout_detect(face_data, face_size, &face_layout) ||
+        !face_layout.valid ||
+        face_layout.entry_count != NEXUS_FACE_BIN_PORTRAIT_COUNT ||
+        face_layout.portrait_w != 56 || face_layout.portrait_h != 56) {
+        free(face_data);
+        return;
+    }
 
     /* DMWeb defines the canonical FACE.BIN records as 20 56x56 portraits:
      * each has a 64-entry BGR555 palette and a PRS3 pixel stream. The loader
      * retains those source pixels; presentation remains no-draw until VDP1
      * placement and command order are captured. */
-    for (i = 0; i < engine->champions.champion_count; ++i) {
-        const int portrait_index = engine->champions.champions[i].portrait_index;
+    engine->ui_faces_expected = NEXUS_FACE_BIN_PORTRAIT_COUNT;
+    for (i = 0; i < NEXUS_FACE_BIN_PORTRAIT_COUNT; ++i) {
+        const int portrait_index = i;
         int load_result;
-        if (portrait_index < 0 ||
-            portrait_index >= NEXUS_FACE_BIN_PORTRAIT_COUNT) continue;
-        if (face_layout.valid && portrait_index >= face_layout.entry_count)
-            continue;
-        engine->ui_faces_expected++;
-        if (face_layout.valid && portrait_index < face_layout.entry_count) {
+        if (portrait_index < face_layout.entry_count) {
             Nexus_UI_FaceCompactRecordDescriptor descriptor;
             if (!nexus_ui_face_compact_record_descriptor(face_data, face_size,
                                                          portrait_index,
@@ -11190,6 +11199,30 @@ int nexus_v1_startup_faces_ready(const Nexus_V1_Engine *engine) {
     return engine->ui_faces_expected > 0 &&
            engine->ui_faces_fallback == 0 &&
            engine->ui_faces_loaded == engine->ui_faces_expected;
+}
+
+int nexus_v1_startup_champion_face_bindings_ready(
+    const Nexus_V1_Engine *engine) {
+    int i;
+    if (!engine || engine->source == NEXUS_SRC_NONE ||
+        engine->champions.champion_count <= 0 ||
+        !nexus_v1_startup_faces_ready(engine)) {
+        return 0;
+    }
+    for (i = 0; i < engine->champions.champion_count; ++i) {
+        int portrait_index = engine->champions.champions[i].portrait_index;
+        const Nexus_UI_Surface *surface;
+        if (portrait_index < 0 ||
+            portrait_index >= NEXUS_FACE_BIN_PORTRAIT_COUNT) {
+            return 0;
+        }
+        surface = &engine->ui.surfaces[NEXUS_SURFACE_FACE0 + portrait_index];
+        if (!surface->data || surface->w != 56 || surface->h != 56 ||
+            !surface->source_palette_loaded) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 int nexus_v1_startup_surfaces_loaded_count(const Nexus_V1_Engine *engine) {

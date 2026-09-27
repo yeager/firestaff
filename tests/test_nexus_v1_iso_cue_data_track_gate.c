@@ -205,10 +205,10 @@ int main(void)
         snprintf(real_cue, sizeof(real_cue), "%s/Dungeon Master Nexus (English).cue",
                  real_root);
         if (access(real_cue, R_OK) == 0) {
-            CHECK("real European CUE exposes missing external CDDA media",
-                  nexus_iso_cue_media_receipt(real_cue, &media) == 1 &&
-                  !media.valid && media.declared_file_count == 9 &&
-                  media.present_file_count == 1 && media.missing_file_count == 8);
+            CHECK("real European CUE binds all retail CDDA media",
+                  nexus_iso_cue_media_receipt(real_cue, &media) == 0 &&
+                  media.valid && media.declared_file_count == 9 &&
+                  media.present_file_count == 9 && media.missing_file_count == 0);
         }
     }
 

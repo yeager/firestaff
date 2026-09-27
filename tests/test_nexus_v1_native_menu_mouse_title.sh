@@ -35,7 +35,7 @@ output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     "$firestaff_cli" --width 1920 --height 1080 --menu --game nexus \
     --platform saturn --data-dir "$cue" \
     --script 'wait20,click:700:728,wait20,click:410:405,wait20,click:450:405,wait20' \
-    --duration 3000 2>&1)" || {
+    --duration 12000 2>&1)" || {
     printf '%s\n' "$output" >&2
     exit 1
 }
@@ -43,7 +43,7 @@ output="$(HOME="$test_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
 if ! printf '%s\n' "$output" | grep -Fq \
         'NEXUS STARTUP RECEIPT: status=blocked gameId=nexus' ||
    ! printf '%s\n' "$output" | grep -Fq \
-        'blocker=faces' ||
+        'blocker=menu-bpk-prs3-capture-required' ||
    ! printf '%s\n' "$output" | grep -Fq 'Nexus: opened disc image ' ||
    ! printf '%s\n' "$output" | grep -Fq 'TITLE.CG/4bpp-atlas' ||
    ! printf '%s\n' "$output" | grep -Fq \

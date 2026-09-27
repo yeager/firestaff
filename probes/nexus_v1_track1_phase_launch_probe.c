@@ -450,8 +450,8 @@ static void probe_real_data_launch(const char *data_dir)
           "startup FACE.BIN source surfaces cover the real roster");
     CHECK(nexus_v1_startup_faces_fallback_count(&engine) == 0,
           "startup FACE.BIN source coverage has no fallback records");
-    CHECK(nexus_v1_startup_faces_ready(&engine) == 0,
-          "startup FACE.BIN VDP1 consumer remains capture-gated");
+    CHECK(nexus_v1_startup_champion_face_bindings_ready(&engine) == 0,
+          "startup FACE.BIN portrait consumer remains capture-gated");
 
     /* Phase 2: real file reader rejects a non-existent file. */
     int non_size = 0;

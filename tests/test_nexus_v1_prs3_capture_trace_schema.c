@@ -1043,6 +1043,7 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
 }
 
 static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
+    const char *configured_data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char data_dir[1024];
     char menu_path[1200];
@@ -1072,11 +1073,14 @@ static void test_real_v3_raw_sidecar_provenance_no_runtime(void) {
     Nexus_V1_Prs3Vdp1ProducerAttestationReceipt producer_attestation;
     Nexus_V1_Prs3Vdp1ReviewedUploadReceipt reviewed_upload;
 
-    if (!home) {
-        puts("SKIP: HOME is unset; no local Nexus PRS3 V3 sidecar provenance check");
+    if (configured_data_dir && configured_data_dir[0]) {
+        snprintf(data_dir, sizeof(data_dir), "%s", configured_data_dir);
+    } else if (home) {
+        snprintf(data_dir, sizeof(data_dir), "%s/.firestaff/data/nexus", home);
+    } else {
+        puts("SKIP: no local Nexus data root; no PRS3 V3 sidecar provenance check");
         return;
     }
-    snprintf(data_dir, sizeof(data_dir), "%s/.firestaff/data/nexus", home);
     snprintf(menu_path, sizeof(menu_path), "%s/MENU.BPK", data_dir);
     snprintf(dm_path, sizeof(dm_path), "%s/DM.BIN", data_dir);
     menu = read_asset(data_dir, "MENU.BPK", &menu_size);

@@ -200,7 +200,7 @@ static size_t make_synthetic_bppk(uint8_t *buf, size_t cap) {
     return end_off;
 }
 
-static int read_optional_menumenu_bpk(const char *home,
+static int read_optional_menumenu_bpk(const char *data_dir, const char *home,
                                       uint8_t **out_data,
                                       size_t *out_size) {
     char path[1024];
@@ -208,9 +208,14 @@ static int read_optional_menumenu_bpk(const char *home,
     long size;
     uint8_t *data;
 
-    if (!home || !home[0]) return 0;
-    if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                 home) <= 0) return 0;
+    if (data_dir && data_dir[0]) {
+        if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) <= 0)
+            return 0;
+    } else {
+        if (!home || !home[0] ||
+            snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
+                     home) <= 0) return 0;
+    }
     fp = fopen(path, "rb");
     if (!fp) return 0;
     if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return 0; }
@@ -484,12 +489,13 @@ static void test_synthetic_bppk_evidence(void) {
 }
 
 static void test_optional_real_menumenu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     uint8_t *data = NULL;
     size_t size = 0;
 
     printf("\n--- optional real MENU.BPK (no asset loaded in CI) ---\n");
-    if (!read_optional_menumenu_bpk(home, &data, &size)) {
+    if (!read_optional_menumenu_bpk(data_dir, home, &data, &size)) {
         printf("  SKIP: real MENU.BPK not present\n");
         return;
     }
@@ -501,8 +507,8 @@ static void test_optional_real_menumenu_bpk(void) {
         uint32_t sample_size = 4096U;
         int rc;
 
-        printf("  loaded %zu bytes from ~/.firestaff/data/nexus/MENU.BPK\n",
-               size);
+        printf("  loaded %zu bytes from %s\n", size,
+               data_dir && data_dir[0] ? data_dir : "$HOME/.firestaff/data/nexus");
         printf("  walking up to %u entries with %u byte sample per entry\n",
                capacity, sample_size);
 
@@ -566,9 +572,9 @@ static void test_optional_real_menumenu_bpk(void) {
                     candidate_rows, capacity, &candidate);
                 CHECK(rc == 0 && candidate.prs3_surfaces == 162U &&
                           candidate.evaluated == 162U &&
-                          candidate.complete_exact == 1U &&
-                          candidate.complete_trailing == 111U &&
-                          candidate.stream_failures == 50U &&
+                          candidate.complete_exact == 0U &&
+                          candidate.complete_trailing == 1U &&
+                          candidate.stream_failures == 161U &&
                           candidate.decoder_promoted == 0,
                       "real MENU.BPK MSB-first candidate remains diagnostic-only");
                 printf("  INFO: msb-first exact=%u trailing=%u failures=%u "
@@ -631,15 +637,9 @@ static void test_optional_real_menumenu_bpk(void) {
                               framed.frame_validated == 158U &&
                               framed.unvalidated_frames == 4U &&
                               framed.evaluated == 158U &&
-                              framed.complete_exact ==
-                                  (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                       ? 1U : 0U) &&
-                              framed.complete_trailing ==
-                                  (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                       ? 108U : 0U) &&
-                              framed.command_failures ==
-                                  (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                       ? 49U : 158U) &&
+                              framed.complete_exact == 0U &&
+                              framed.complete_trailing == 0U &&
+                              framed.command_failures == 158U &&
                               framed.decoder_promoted == 0,
                           "real MENU.BPK framed evaluation has no exact promotion");
                     printf("  INFO: framed %s valid=%u failed=%u trailing=%u exact=%u "

@@ -37,6 +37,19 @@ REQUIRED_FIRESTAFF = [
     (ROOT / "CMakeLists.txt", "nexus_v2_verification_suite_probe"),
 ]
 
+missing_reference = [path for path, _, _ in REQUIRED_SOURCE if not path.is_file()]
+if missing_reference:
+    print("SKIP: authentic ReDMCSB reference source is unavailable:")
+    for path in missing_reference:
+        print(f"  {path}")
+    EVIDENCE.parent.mkdir(parents=True, exist_ok=True)
+    EVIDENCE.write_text(json.dumps({
+        "status": "skipped",
+        "scope": "nexus_v2_verification_suite source-lock",
+        "missingAuthenticReferenceSource": [str(path) for path in missing_reference],
+    }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    raise SystemExit(77)
+
 errors: list[str] = []
 anchors: list[dict[str, str]] = []
 
