@@ -3,7 +3,9 @@ set -euo pipefail
 
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 verify=$repo/scripts/verify_theron_stage2_system_card_call_trace.sh
-trace=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-stage2-call.XXXXXX")
+scratch_root=${FIRESTAFF_TEST_SCRATCH_ROOT:-"$repo/build/test-scratch"}
+mkdir -p "$scratch_root"
+trace=$(mktemp "$scratch_root/firestaff-theron-stage2-call.XXXXXX")
 trap 'rm -f "$trace"' EXIT
 
 cat >"$trace" <<'EOF'

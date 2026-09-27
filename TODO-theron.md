@@ -4097,6 +4097,8 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   does not list Y as an input. The strict receipt verifier now admits these two
   observed Y values while preserving exact checks on all other fields; its
   focused test passes with both variants and verifies the local authentic trace
-  when available. The trace remains private and is not committed. This
-  establishes the call receipt only, not successful stage-two handoff, menu
-  selection, dungeon entry or T900 semantics.
+  when available. The test is registered with CTest and passes from the
+  generated CMake test inventory; its temporary fixture stays in the build
+  tree. The trace remains private and is not committed. This establishes the
+  call receipt only, not successful stage-two handoff, menu selection, dungeon
+  entry or T900 semantics.

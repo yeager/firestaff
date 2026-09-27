@@ -98,6 +98,20 @@ if(BUILD_TESTING AND
     endif()
 endif()
 
+if(BUILD_TESTING AND
+   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_stage2_system_card_call_trace.sh")
+    find_program(_THERON_STAGE2_BASH_EXECUTABLE NAMES bash)
+    if(_THERON_STAGE2_BASH_EXECUTABLE)
+        add_test(NAME theron_v1_stage2_system_card_call_trace
+            COMMAND "${_THERON_STAGE2_BASH_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_stage2_system_card_call_trace.sh")
+        set_tests_properties(theron_v1_stage2_system_card_call_trace PROPERTIES
+            LABELS "theron;capture;receipt"
+            ENVIRONMENT
+                "FIRESTAFF_TEST_SCRATCH_ROOT=${CMAKE_CURRENT_BINARY_DIR}/test-scratch")
+    endif()
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_text.c")
     add_executable(test_nexus_v1_text
         tests/test_nexus_v1_text.c
