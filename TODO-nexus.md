@@ -69,6 +69,13 @@ presentation boundary.
   162 PRS3 surfaces, but a capture-CLUT/palette-color remap and 4-bpp repacking
   still produce no exact join for either span. Thus neither source ownership
   nor palette, placement, or the original Saturn consumer is established.
+  A frame-by-frame pass finds the `0x58c58` source in 287 command lists and
+  the `0x58b58` source in 289, spanning relative frames 97--700; each pixel
+  span has exactly one SHA-256 across the window, and both commands share one
+  stable captured CLUT hash. Their raw signed command coordinates are
+  `(-3701,-3701)` and `(-3733,-3733)`; local-coordinate transforms and actual
+  visible placement remain unverified. This proves recurring stable runtime
+  bytes only, not retail provenance or composition.
   Keep both spans blocked until upload provenance or an exact transformed
   retail-surface join is captured.
 - Implement native Saturn runtime semantics only after each dispatcher,
