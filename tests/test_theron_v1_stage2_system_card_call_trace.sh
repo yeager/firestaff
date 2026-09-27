@@ -25,6 +25,21 @@ if "$verify" "$trace"; then
 fi
 sed -i.bak 's/y=98 p=00 mpr0=ff table=00e30302/y=99 p=00 mpr0=ff table=00e30302/' "$trace"
 rm -f "$trace.bak"
+authentic_trace=${THERON_STAGE2_SYSTEM_CARD_TRACE:-}
+if [[ -n "$authentic_trace" ]]; then
+    if [[ ! -f "$authentic_trace" ]]; then
+        printf 'FAIL: configured authentic Theron trace is unavailable: %s\n' \
+            "$authentic_trace" >&2
+        exit 1
+    fi
+else
+    authentic_trace="${HOME:-}/.firestaff/firestaff-probe-screenshots/theron-live-20260727-172740.trace"
+fi
+if [[ -f "$authentic_trace" ]]; then
+    "$verify" "$authentic_trace"
+else
+    printf '%s\n' 'SKIP: no authentic Theron System Card trace is available'
+fi
 sed -i.bak 's/table=00e70311/table=00e70310/' "$trace"
 rm -f "$trace.bak"
 if "$verify" "$trace"; then

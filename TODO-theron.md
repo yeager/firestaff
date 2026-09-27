@@ -4096,6 +4096,7 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   The System Card API reference lists the `$f8..$ff` zero-page call inputs and
   does not list Y as an input. The strict receipt verifier now admits these two
   observed Y values while preserving exact checks on all other fields; its
-  focused test passes with both variants. This establishes the call receipt
-  only, not successful stage-two handoff, menu selection, dungeon entry or
-  T900 semantics. The original trace remains in the user's private data tree.
+  focused test passes with both variants and verifies the local authentic trace
+  when available. The trace remains private and is not committed. This
+  establishes the call receipt only, not successful stage-two handoff, menu
+  selection, dungeon entry or T900 semantics.
