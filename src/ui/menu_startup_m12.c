@@ -993,6 +993,9 @@ typedef enum {
     M12_TEXT_ARCHIVE_TOOL_REQUIRED,
     M12_TEXT_ARCHIVE_TOOL_DETAILS,
     M12_TEXT_RESCAN_GAME_DATA,
+    M12_TEXT_ARCHIVE_SCAN_DISABLED,
+    M12_TEXT_ARCHIVE_SCAN_DISABLED_DETAILS,
+    M12_TEXT_ARCHIVE_SCAN_DISABLED_RESTART,
     M12_TEXT_COUNT
 } M12_TextId;
 
@@ -1054,7 +1057,10 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     _("CARD ART SLOT"),
     _("GAME DATA ARCHIVE NEEDS A TOOL"),
     _("ARCHIVE: %s  INSTALL: %s"),
-    _("INSTALL IT, THEN RESCAN GAME DATA")
+    _("INSTALL IT, THEN RESCAN GAME DATA"),
+    _("ARCHIVE SCANNING IS DISABLED"),
+    _("ARCHIVE: %s  OPTION: %s"),
+    _("RESTART WITH THE OPTION, THEN RESCAN GAME DATA")
 };
 
 static M12_RuntimeCatalog g_runtimeCatalogs[M12_UI_LANGUAGE_COUNT];
@@ -2131,6 +2137,17 @@ static int m12_show_missing_archive_tool_popup(M12_StartupMenuState* state) {
         return 0;
     }
     archivePath = asset_scan_missing_extractor_path(0);
+    if (asset_external_archive_tool_available(archivePath)) {
+        snprintf(line2, sizeof(line2),
+                 m12_text(state, M12_TEXT_ARCHIVE_SCAN_DISABLED_DETAILS),
+                 m12_path_basename_local(archivePath),
+                 "--enable-external-archive-tools");
+        m12_enter_message_view(state);
+        m12_set_buffered_message(
+            state, m12_text(state, M12_TEXT_ARCHIVE_SCAN_DISABLED), line2,
+            m12_text(state, M12_TEXT_ARCHIVE_SCAN_DISABLED_RESTART));
+        return 1;
+    }
     snprintf(line2, sizeof(line2),
              m12_text(state, M12_TEXT_ARCHIVE_TOOL_DETAILS),
              m12_path_basename_local(archivePath), tools);

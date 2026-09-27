@@ -6879,10 +6879,18 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         if (missingExtractors > 0) {
             int diagIndex;
             for (diagIndex = 0; diagIndex < missingExtractors; ++diagIndex) {
-                fprintf(stderr,
-                        "asset scan: external archive skipped (install one of %s): %s\n",
-                        asset_scan_missing_extractor_tools(diagIndex),
-                        asset_scan_missing_extractor_path(diagIndex));
+                const char* archivePath =
+                    asset_scan_missing_extractor_path(diagIndex);
+                if (asset_external_archive_tool_available(archivePath)) {
+                    fprintf(stderr,
+                            "asset scan: external archive skipped (restart with --enable-external-archive-tools to scan): %s\n",
+                            archivePath);
+                } else {
+                    fprintf(stderr,
+                            "asset scan: external archive skipped (install one of %s): %s\n",
+                            asset_scan_missing_extractor_tools(diagIndex),
+                            archivePath);
+                }
             }
         }
     }

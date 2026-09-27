@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+- 2026-09-27: Corrected the M12 diagnostic for an authentic Atari ST archive
+  when 7zz is installed but external archive scanning has not been opted in.
+  The launcher now explains that scanning is disabled and names
+  `--enable-external-archive-tools`; it no longer tells the user to install a
+  reader that is already present. The focused opt-in-popup CTest passes with
+  the supplied original archive, and the Atari ST CLI/start-menu regression
+  still reaches the original C200 runtime handoff.
+
 - 2026-09-26: The authentic Atari STX M12 launch regression now continues past
   ANIMATE.SCR to the source-owned C004 entrance, sends a primary click at the
   original C200 hit box, and requires the startup receipt to reach the

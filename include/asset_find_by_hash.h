@@ -114,6 +114,10 @@ void asset_scan_clear_missing_extractor_diagnostics(void);
 int asset_scan_missing_extractor_count(void);
 const char *asset_scan_missing_extractor_path(int index);
 const char *asset_scan_missing_extractor_tools(int index);
+/* Report whether this external archive type can be read by an installed
+ * host extractor. This probes availability only; it does not opt scanning
+ * into external tools or read the archive. */
+int asset_external_archive_tool_available(const char *archivePath);
 
 /*
  * Scoped scan-cache batching.

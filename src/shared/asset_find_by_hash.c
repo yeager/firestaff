@@ -3478,6 +3478,16 @@ static const char *external_archive_tool_for_path(const char *archivePath) {
     return NULL;
 }
 
+int asset_external_archive_tool_available(const char *archivePath) {
+    if (!archivePath || !is_external_archive_path(archivePath)) return 0;
+#ifdef _WIN32
+    /* External archive scanning shells out through a POSIX-only path. */
+    return 0;
+#else
+    return external_archive_tool_for_path(archivePath) != NULL;
+#endif
+}
+
 static int external_entry_command(char *cmd,
                                   size_t cmdSize,
                                   const char *tool,
