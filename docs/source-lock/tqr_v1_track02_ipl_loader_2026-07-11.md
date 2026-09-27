@@ -63,6 +63,20 @@ bank state but does not assign any game-data role to those calls. The
 fail-closed `verify_theron_stage2_system_card_call_trace.sh` verifier locks
 these exact observed rows.
 
+An additional authenticated original US CUE/System Card 3.0 run is retained
+locally as `~/.firestaff/firestaff-probe-screenshots/theron-live-20260727-172740.trace`.
+Its transition receipt identifies Track 02 MD5
+`f23601102138f87c33025877767ebf76` and System Card MD5
+`ff1a674273fe3540ccef576376407d1d`. At `$40cd` it records the same call PC,
+return PC, target and live table `00 e3 03 02`, but Y is `$99` rather than
+`$03`; the paired return and the later `$40a4 -> $e00f` call match the rows
+above. The cited System Card reference documents the `$e009` CD_READ inputs as
+zero-page fields `$f8..$ff` and does not list Y as an input. The trace verifier
+therefore accepts only these two observed Y values while retaining exact
+matches for every other field. This admits the authentic call/return receipt;
+it does not prove that the later stage-two transition, game menus, or gameplay
+loaded successfully.
+
 On 2026-07-12, source-built Mednafen with the PCE/HuC6280 debugger and a
 minimal CD READ trace ran the authenticated original CUEs. The first read
 immediately after the 17-sector stage-two transfer was:

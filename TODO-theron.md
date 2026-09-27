@@ -4087,3 +4087,15 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   current fail-closed boundary against authentic media only. It does not prove
   original door-opening, locking, key, button or movement semantics, so the
   missing original T900 consumer remains open.
+
+## 2026-09-27 — authenticated System Card call-register variance
+
+- ✅ Verified the existing local original US CUE/System Card 3.0 trace against
+  the current Track 02 and firmware digests. It records the `$40cd -> $e009`
+  call with the expected table and return path, but Y=`$99` instead of `$03`.
+  The System Card API reference lists the `$f8..$ff` zero-page call inputs and
+  does not list Y as an input. The strict receipt verifier now admits these two
+  observed Y values while preserving exact checks on all other fields; its
+  focused test passes with both variants. This establishes the call receipt
+  only, not successful stage-two handoff, menu selection, dungeon entry or
+  T900 semantics. The original trace remains in the user's private data tree.

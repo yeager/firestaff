@@ -16,9 +16,23 @@ require_row() {
     fi
 }
 
+require_one_of_rows() {
+    local row
+    for row in "$@"; do
+        if grep -Fqx -- "$row" "$trace"; then
+            return 0
+        fi
+    done
+    printf 'FAIL: missing authentic stage-two receipt (none of the allowed rows matched):\n' >&2
+    printf '  %s\n' "$@" >&2
+    exit 1
+}
+
 # These rows establish only the observed System Card call/return boundary and
 # loader table bytes. They intentionally do not assign game-data semantics.
-require_row 'stage2_system_card_call pc=40cd return_pc=40d0 target=e009 a=01 x=03 y=03 p=00 mpr0=ff table=00e30302 fc=00 physical_fc=00 fd=00 fe=ff f8=00 fa=ff fb=ff ff=ff'
+require_one_of_rows \
+    'stage2_system_card_call pc=40cd return_pc=40d0 target=e009 a=01 x=03 y=03 p=00 mpr0=ff table=00e30302 fc=00 physical_fc=00 fd=00 fe=ff f8=00 fa=ff fb=ff ff=ff' \
+    'stage2_system_card_call pc=40cd return_pc=40d0 target=e009 a=01 x=03 y=99 p=00 mpr0=ff table=00e30302 fc=00 physical_fc=00 fd=00 fe=ff f8=00 fa=ff fb=ff ff=ff'
 require_row 'stage2_system_card_return pc=40d0 call_pc=40cd a=00 x=01 y=ff p=03 mpr0=ff fc=00 physical_fc=00 fd=00 fe=ff f8=00 fa=ff fb=ff ff=ff'
 require_row 'stage2_system_card_call pc=40a4 return_pc=40a7 target=e00f a=01 x=03 y=ff p=01 mpr0=ff table=00e70311 fc=00 physical_fc=00 fd=00 fe=ff f8=00 fa=ff fb=ff ff=ff'
 require_row 'stage2_system_card_return pc=40a7 call_pc=40a4 a=78 x=00 y=03 p=00 mpr0=ff fc=00 physical_fc=00 fd=00 fe=ff f8=00 fa=ff fb=ff ff=ff'

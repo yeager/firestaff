@@ -14,6 +14,17 @@ stage2_system_card_return pc=40a7 call_pc=40a4 a=78 x=00 y=03 p=00 mpr0=ff fc=00
 EOF
 
 "$verify" "$trace"
+sed -i.bak 's/y=03 p=00 mpr0=ff table=00e30302/y=99 p=00 mpr0=ff table=00e30302/' "$trace"
+rm -f "$trace.bak"
+"$verify" "$trace"
+sed -i.bak 's/y=99 p=00 mpr0=ff table=00e30302/y=98 p=00 mpr0=ff table=00e30302/' "$trace"
+rm -f "$trace.bak"
+if "$verify" "$trace"; then
+    printf 'FAIL: an unobserved Y register value was accepted\n' >&2
+    exit 1
+fi
+sed -i.bak 's/y=98 p=00 mpr0=ff table=00e30302/y=99 p=00 mpr0=ff table=00e30302/' "$trace"
+rm -f "$trace.bak"
 sed -i.bak 's/table=00e70311/table=00e70310/' "$trace"
 rm -f "$trace.bak"
 if "$verify" "$trace"; then
