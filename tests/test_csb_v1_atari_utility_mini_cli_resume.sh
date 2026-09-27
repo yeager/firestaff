@@ -8,6 +8,39 @@ data_root=${FIRESTAFF_CSB_REAL_MEDIA_ROOT:-"$HOME/.firestaff/data/csb"}
 campaign=${FIRESTAFF_CSB_ATARI_STX:-"$data_root/Chaos Strikes Back.stx"}
 utility=${FIRESTAFF_CSB_ATARI_UTILITY_STX:-"$data_root/Chaos Strikes Back Utility.stx"}
 save=${FIRESTAFF_CSB_ATARI_MINI:-"$utility::MINI.DAT"}
+media_temp_dir=""
+
+cleanup() {
+    if [ -n "$media_temp_dir" ]; then rm -rf "$media_temp_dir"; fi
+}
+trap cleanup EXIT HUP INT TERM
+
+if [ -x "$firestaff" ] && { [ ! -f "$campaign" ] || [ ! -f "$utility" ]; }; then
+    media_archive="${FIRESTAFF_CSB_ATARI_ARCHIVE:-$data_root/Game,Chaos_Strikes_Back,Atari_ST,Software.7z}"
+    extractor=""
+    if command -v 7zz >/dev/null 2>&1; then
+        extractor=$(command -v 7zz)
+    elif command -v 7z >/dev/null 2>&1; then
+        extractor=$(command -v 7z)
+    fi
+    if [ -f "$media_archive" ] && [ -n "$extractor" ]; then
+        media_temp_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-atari-utility.XXXXXX")
+        if "$extractor" e -y "-o$media_temp_dir" "$media_archive" \
+            'Floppy Disks STX/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx' \
+            'Floppy Disks STX/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx' \
+            >/dev/null 2>&1; then
+            extracted_campaign="$media_temp_dir/Chaos Strikes Back for Atari ST Game Disk v2.1 (English).stx"
+            extracted_utility="$media_temp_dir/Chaos Strikes Back for Atari ST Utility Disk v2.1 (English).stx"
+            if [ -f "$extracted_campaign" ] && [ -f "$extracted_utility" ]; then
+                campaign=$extracted_campaign
+                utility=$extracted_utility
+                if [ -z "${FIRESTAFF_CSB_ATARI_MINI:-}" ]; then
+                    save="$utility::MINI.DAT"
+                fi
+            fi
+        fi
+    fi
+fi
 
 if [ ! -x "$firestaff" ] || [ ! -f "$campaign" ] || [ ! -f "$utility" ]; then
     printf '%s\n' 'SKIP: authentic CSB Atari campaign and Utility STX media are unavailable'
