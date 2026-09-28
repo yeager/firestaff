@@ -2,14 +2,49 @@
 set -eu
 
 app=${1:?usage: test_dm2_v1_mac_native_cli_boot.sh <firestaff>}
-archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"}
 data_root=${FIRESTAFF_DM2_DATA_ROOT:-"$HOME/.firestaff/data"}
 
 # The CUE/BIN archive is a production-native reader path, never an external
 # extractor wrapper.
 unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
 
-if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
+if [ ! -x "$app" ]; then
+    echo 'SKIP: authentic DM2 Macintosh retail archive is not staged'
+    exit 77
+fi
+
+if [ "${FIRESTAFF_DM2_MAC_ARCHIVE+x}" = x ]; then
+    archive=$FIRESTAFF_DM2_MAC_ARCHIVE
+else
+    archive=''
+    canonical="$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    duplicate="$data_root/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"
+    try_candidate() {
+        candidate=$1
+        [ -f "$candidate" ] || return 1
+        if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+            --game dm2 --platform mac --data-dir "$candidate" --boot-probe \
+            --boot-probe-frames 1 --duration 0 2>&1); then
+            case "$output" in
+                *'sourceId=dm2'*'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*)
+                    archive=$candidate
+                    return 0
+                    ;;
+            esac
+        fi
+        return 1
+    }
+    if ! try_candidate "$canonical" && ! try_candidate "$duplicate"; then
+        if [ ! -f "$canonical" ] && [ ! -f "$duplicate" ]; then
+            echo 'SKIP: authentic DM2 Macintosh retail archive is not staged'
+            exit 77
+        fi
+        echo 'FAIL: no staged DM2 Macintosh archive passed the retail hash gate' >&2
+        exit 1
+    fi
+fi
+
+if [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 Macintosh retail archive is not staged'
     exit 77
 fi

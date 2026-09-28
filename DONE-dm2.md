@@ -1,5 +1,16 @@
 # Firestaff DONE — DM2
 
+## 2026-09-28 — Mac retail archive selection in native CLI test
+
+- The supplied data root contains two files named as DM2 Macintosh English
+  archives; the smaller “First Chapter” BIN does not contain admitted retail
+  game data, while the second ZIP contains the complete authentic HFS retail
+  image. The Mac CLI regression now probes candidate archives through the
+  production boot scanner and selects only the one matching the retail
+  `GRAPHICS.DAT` hash. The full title/movie, mirror selection, start-menu and
+  gameplay input matrix passes with that authentic archive and also checks
+  discovery from the shared data root.
+
 ## 2026-09-28 — DM2 AUTO start-menu route
 
 - The ordinary DM2 start-menu AUTO route discovers the authentic DOS edition
