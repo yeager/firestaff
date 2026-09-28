@@ -21,6 +21,23 @@
   Firestaff's bounded inventory handoff and lossless source provenance only;
   it does not prove original T900 pickup/UI semantics or quest-item collection.
 
+## 2026-09-28 — Type-zero item through M12 pickup and inventory selection
+
+- Extended the same authentic US/JP Akutuba regression through the public M12
+  pickup input, carried Track 02 name lookup, inventory-toggle selection, and
+  drop input.
+  Each selected raw type-zero record must produce a valid compact inventory
+  slot, expose the same authentic item-name bytes while carried, and select
+  that exact slot through the M12 input route, then return the same source
+  occurrence to the party's floor position through M12 drop. This verifies
+  Firestaff's input and source-name plumbing only; it does not infer the
+  original game's T900 behavior or quest-item transaction.
+- Verification on trv2: the loader target rebuilt and both the authentic
+  `theron_v1_track02_dungeon_loader` and
+  `theron_v1_inventory_id_mapping` tests passed (2/2) against US and JP media.
+  The loader reported all six raw type-zero objects tested and none deferred
+  in each regional edition.
+
 ## 2026-09-26 — SRM readiness probe target dependencies
 
 - The Theron Track 02 media-intake code uses the shared M10 asset reader and

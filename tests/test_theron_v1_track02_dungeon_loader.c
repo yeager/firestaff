@@ -4973,6 +4973,7 @@ static void test_authentic_take_requires_matching_item_record(
         Theron_V1_InventorySourceRecord saved_inventory_source;
         Theron_V1_Champion *champion;
         uint8_t saved_inventory[THERON_INVENTORY_SLOTS];
+        Theron_V1_BootRuntimeInputReceipt input_receipt;
         int saved_x, saved_y, saved_dir, saved_level;
         int approach_found = 0;
         int suppressed_count = 0;
@@ -5063,21 +5064,39 @@ static void test_authentic_take_requires_matching_item_record(
             assert(!(object->flags & THERON_OBJ_F_PICKED_UP));
             object->source_property[0] = saved_property_byte;
         }
-        assert(theron_v1_click_route(world, object->x, object->y,
-                                     THERON_CMD_TAKE) == 0);
+        assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+                   world, NULL, M12_MENU_INPUT_PICKUP_ITEM, -1,
+                   &input_receipt) == 1);
+        assert(input_receipt.picked_up == 1);
         {
-            int inventory_slot = -1;
+            int inventory_slot = input_receipt.inventory_slot;
+            const uint8_t *object_name = NULL;
+            const uint8_t *inventory_name = NULL;
+            size_t object_name_size = 0u;
+            size_t inventory_name_size = 0u;
+            assert(inventory_slot >= 0 &&
+                   inventory_slot < THERON_INVENTORY_SLOTS);
             for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
-                if (saved_inventory[slot] == THERON_ITEM_NONE &&
-                    theron_v1_inventory_id_matches_source_type(
-                        champion->inventory[slot], object->source_item_type) &&
-                    world->inventory_source[world->party.active_slot][slot]
-                        .valid) {
-                    inventory_slot = slot;
-                    break;
-                }
+                if (slot != inventory_slot)
+                    assert(champion->inventory[slot] == saved_inventory[slot]);
             }
-            assert(inventory_slot >= 0);
+            assert(theron_v1_inventory_id_matches_source_type(
+                champion->inventory[inventory_slot],
+                object->source_item_type));
+            assert(world->inventory_source[world->party.active_slot]
+                       [inventory_slot].valid);
+            assert(theron_v1_world_object_item_name_raw(
+                world, object, &object_name, &object_name_size));
+            assert(theron_v1_world_inventory_source_track02_item_name_raw(
+                world, world->party.active_slot, inventory_slot,
+                &inventory_name, &inventory_name_size));
+            assert(object_name_size == inventory_name_size);
+            assert(memcmp(object_name, inventory_name, object_name_size) == 0);
+            assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+                       world, NULL, M12_MENU_INPUT_INVENTORY_TOGGLE, -1,
+                       &input_receipt) == 1);
+            assert(input_receipt.inventory_selected == 1);
+            assert(input_receipt.inventory_slot == inventory_slot);
             saved_inventory_source =
                 world->inventory_source[world->party.active_slot]
                                        [inventory_slot];
@@ -5111,10 +5130,13 @@ static void test_authentic_take_requires_matching_item_record(
             assert(object->flags & THERON_OBJ_F_PICKED_UP);
             world->inventory_source[world->party.active_slot]
                                    [inventory_slot] = saved_inventory_source;
-            assert(theron_v1_drop_inventory_source_item(
-                       world, world->party.active_slot, inventory_slot,
-                       object->x, object->y) >= 0);
+            assert(theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
+                       world, NULL, M12_MENU_INPUT_DROP_ITEM, inventory_slot,
+                       &input_receipt) == 1);
+            assert(input_receipt.dropped == 1);
             assert(!(object->flags & THERON_OBJ_F_PICKED_UP));
+            assert(object->x == world->party.leader_x &&
+                   object->y == world->party.leader_y);
             assert(object->source_ref == saved_object.source_ref);
             assert(object->source_raw_size == saved_object.source_raw_size);
             assert(memcmp(object->source_raw, saved_object.source_raw,

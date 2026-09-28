@@ -126,7 +126,10 @@ inventory mutation. On trv2, the focused loader target built and both
 2/2 against hash-verified TQUS02/TQJP02; verbose output reported
 `type-zero records tested/deferred: 6/0` for each edition. The test temporarily
 suppresses earlier co-located occurrences only to select each authentic object
-and restores their flags afterward. This verifies Firestaff's bounded
+and restores their flags afterward. The test also routes all six type-zero
+records through M12 pickup, carried Track 02 name lookup, inventory-slot
+selection and drop, verifying the input/name plumbing and same-occurrence
+return against the authentic US/JP objects. This verifies Firestaff's bounded
 inventory handoff, not original T900 pickup/UI semantics or quest-item
 collection transaction.
 
