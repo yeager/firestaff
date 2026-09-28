@@ -1,7 +1,7 @@
 diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
 --- a/src/pce/huc6280.cpp
 +++ b/src/pce/huc6280.cpp
-@@ -42,4 +42,53 @@ namespace MDFN_IEN_PCE
+@@ -42,4 +42,50 @@ namespace MDFN_IEN_PCE
  static bool TheronPostDungeonOrdinalInjected;
  static bool TheronPostDungeonEntryInjected;
  static bool TheronTitleWaitInputInjected;
@@ -14,13 +14,10 @@ diff --git a/src/pce/huc6280.cpp b/src/pce/huc6280.cpp
 +static unsigned TheronDratorGeneratorRouteDelay;
 +static unsigned TheronDratorGeneratorInputStartFrame;
 +unsigned TheronScriptInputFrame(void);
++/* The authentic cold-start RUN is supplied by the replay script. Avoid
++ * periodic startup presses that can skip or alter the menu handoff. */
 +uint16 TheronDratorGeneratorInputMask(void)
 +{
-+ if(TheronDratorGeneratorRouteStage == 0 && TheronDratorMenuStage == 0)
-+ {
-+  const unsigned phase = TheronScriptInputFrame() % 300u;
-+  if(phase >= 1u && phase <= 5u) return 0x0008;
-+ }
 + if(TheronDratorGeneratorRouteStage == 1 || TheronDratorGeneratorRouteStage == 3)
 + {
 +  const unsigned route_frame = TheronScriptInputFrame() - TheronDratorGeneratorInputStartFrame;

@@ -35,6 +35,22 @@
   Firestaff's bounded inventory handoff and lossless source provenance only;
   it does not prove original T900 pickup/UI semantics or quest-item collection.
 
+## 2026-09-28 — Source-backed inventory swap identity gate
+
+- A source-level inventory swap now verifies that each non-empty compact
+  champion ID maps back to the raw item type in its authenticated Track 02
+  occurrence before moving the item and provenance record. The authentic
+  Akutuba US/JP loader regression changes the compact ID without altering the
+  original occurrence, confirms the swap is rejected, and byte-compares both
+  inventory slots and both source-provenance records to prove rejection is
+  atomic.
+- The production `firestaff` and focused dungeon-loader targets built on
+  macOS; `theron_v1_track02_dungeon_loader` and
+  `theron_v1_inventory_id_mapping` passed 2/2 against authentic US and JP
+  Track 02 media, with 71 TAKE/DROP cases and all six type-zero records tested
+  per edition. This proves Firestaff's source-integrity boundary, not the
+  original T900 inventory-swap consumer.
+
 ## 2026-09-28 — Type-zero item through M12 pickup and inventory selection
 
 - Extended the same authentic US/JP Akutuba regression through the public M12

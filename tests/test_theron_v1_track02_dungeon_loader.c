@@ -5117,6 +5117,44 @@ static void test_authentic_take_requires_matching_item_record(
                           object->source_property,
                           sizeof(object->source_property)) == 0);
 
+            /* A compact ID detached from its source occurrence must not be
+             * moved together with that occurrence into another inventory
+             * slot. */
+            {
+                uint8_t saved_compact_id = champion->inventory[inventory_slot];
+                int other_slot =
+                    (inventory_slot + 1) % THERON_INVENTORY_SLOTS;
+                uint8_t saved_other_id = champion->inventory[other_slot];
+                Theron_V1_InventorySourceRecord saved_compact_source =
+                    world->inventory_source[world->party.active_slot]
+                                           [inventory_slot];
+                Theron_V1_InventorySourceRecord saved_other_source =
+                    world->inventory_source[world->party.active_slot]
+                                           [other_slot];
+                uint8_t mismatched_compact_id;
+
+                champion->inventory[inventory_slot] =
+                    saved_compact_id == THERON_ITEM_SOURCE_TYPE_ZERO
+                        ? (uint8_t)(THERON_ITEM_SOURCE_TYPE_ZERO - 1)
+                        : (uint8_t)(saved_compact_id + 1u);
+                mismatched_compact_id = champion->inventory[inventory_slot];
+                assert(theron_v1_swap_inventory_source_slots(
+                           world, world->party.active_slot, inventory_slot,
+                           other_slot) == -1);
+                assert(champion->inventory[inventory_slot] ==
+                       mismatched_compact_id);
+                assert(champion->inventory[other_slot] == saved_other_id);
+                assert(memcmp(&world->inventory_source[world->party.active_slot]
+                                                      [inventory_slot],
+                              &saved_compact_source,
+                              sizeof(saved_compact_source)) == 0);
+                assert(memcmp(&world->inventory_source[world->party.active_slot]
+                                                      [other_slot],
+                              &saved_other_source,
+                              sizeof(saved_other_source)) == 0);
+                champion->inventory[inventory_slot] = saved_compact_id;
+            }
+
             /* A changed authentic property row must prevent reinsertion into
              * the live inventory and leave the source occurrence untouched. */
             world->inventory_source[world->party.active_slot]

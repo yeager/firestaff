@@ -70,8 +70,9 @@ if ! grep -Fq 'FIRESTAFF_THERON_MENU_ROUTE="$menu_route"' "$script" ||
     exit 1
 fi
 if ! grep -Fq '!strcmp(route, "drator-generator")' "$drator_menu_patch" ||
-   ! grep -Fq 'TheronDratorGeneratorRouteStage == 0 && TheronDratorMenuStage == 0' "$drator_menu_patch" ||
-   ! grep -Fq 'if(phase >= 1u && phase <= 5u) return 0x0008' "$drator_menu_patch" ||
+   ! grep -Fq 'The authentic cold-start RUN is supplied by the replay script' "$drator_menu_patch" ||
+   grep -Fq 'TheronScriptInputFrame() % 300u' "$drator_menu_patch" ||
+   grep -Fq 'return 0x0008' "$drator_menu_patch" ||
    ! grep -Fq 'const unsigned row = scan_frame / 270' "$drator_menu_patch" ||
    ! grep -Fq 'if(row < 10)' "$drator_menu_patch" ||
    ! grep -Fq 'if(TheronDratorGeneratorRouteStage == 3 && frame <= 240)' "$drator_menu_patch" ||

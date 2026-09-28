@@ -1486,9 +1486,13 @@ int theron_v1_swap_inventory_source_slots(
          * empty slot. Never carry a compact ID without its authenticated row. */
         if (!theron_v1_world_source_item_table_verified(world) ||
             (champion->inventory[inventory_slot_a] != THERON_ITEM_NONE &&
-             !theron_v1_inventory_source_record_matches(world, a)) ||
+             (!theron_v1_inventory_source_record_matches(world, a) ||
+              !theron_v1_inventory_id_matches_source_type(
+                  champion->inventory[inventory_slot_a], a->item_type))) ||
             (champion->inventory[inventory_slot_b] != THERON_ITEM_NONE &&
-             !theron_v1_inventory_source_record_matches(world, b)) ||
+             (!theron_v1_inventory_source_record_matches(world, b) ||
+              !theron_v1_inventory_id_matches_source_type(
+                  champion->inventory[inventory_slot_b], b->item_type))) ||
             (champion->inventory[inventory_slot_a] == THERON_ITEM_NONE &&
              a->valid) ||
             (champion->inventory[inventory_slot_b] == THERON_ITEM_NONE &&

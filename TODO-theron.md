@@ -142,6 +142,21 @@ Track 02 when available; both fall back to authentic standalone media. This
 is broad Firestaff test coverage, not original-runtime gameplay or complete
 campaign parity.
 
+2026-09-28 source-backed inventory swap integrity: source-level inventory
+swaps now require each compact champion ID to match the raw type in its
+authenticated Track 02 occurrence, in addition to the existing record and
+property checks. A mismatch is rejected before either slot or provenance can
+move. The real-media dungeon-loader regression corrupts the compact ID and
+checks rejection for authentic Akutuba occurrences in both regions, then
+byte-compares both slot values and provenance records to verify that the
+rejected swap changes neither. On macOS, the app and focused loader targets
+built successfully; CTest passed both
+`theron_v1_track02_dungeon_loader` and `theron_v1_inventory_id_mapping`. The
+loader reports 71 TAKE/DROP cases per region, with all six type-zero records
+tested and none deferred. This is Firestaff source-integrity coverage, not
+evidence for the original T900 inventory-swap consumer or complete gameplay
+parity.
+
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its
 nineteen original sibling BIN files. It verifies the canonical layout (17
@@ -4091,6 +4106,21 @@ this is distinct from the authenticated combined-RAR title-audio path above.
   directed to the task scratch directory. This checks capture configuration
   only; it starts no emulator and adds no original-game evidence. The next
   authentic replay still requires an available trv2 session.
+
+- 🔒 2026-09-28 controlled no-periodic-RUN replay on `trv2`: the capture
+  template was seeded with the authentic 2 KiB US campaign BRAM (MD5
+  `ffabc8d19b0915d4d9632a7ae2e90a97`), and the original US CUE, Track 02 and
+  System Card hashes were checked. The replay applied `run@9600:90`; the
+  bounded input trace records 37,600 original CPU results with `raw=0008` at
+  `$E4C8`, but no signed Drator menu-route hook or Track 02 loader sidecar
+  appeared. Only 49,380 VDC writes were captured, below the required 65,536
+  snapshot boundary, so the harness rejected the run and emitted no transition
+  receipt. Its private final BRAM snapshot differs from the authentic seed
+  (`dbdedb0ec809227b289c2bc5b18b9c9d`), so the run does not qualify as an
+  unchanged-BRAM replay. The extra periodic RUN pulses were absent; their
+  removal did not establish a route or gameplay consumer. Raw traces and the
+  seeded copy remain outside Git under
+  `/home/trv2/work/firestaff-theron-inventory-id-integrity-20260928/.codex-scratch/`.
 
 ## 2026-09-27 — authentic closed-door boundary coverage
 
