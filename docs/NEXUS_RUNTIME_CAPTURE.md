@@ -920,6 +920,46 @@ sampling may miss the reader's scan cadence. Semantic admission remains
 blocked. A useful next capture needs longer button dwell and finer-grained
 RAM samples, still paired with a forced-no-button control.
 
+A higher-resolution matched pair was captured on TRV2 at frames 10500--10694
+with the same authenticated Japanese BIOS and retail CUE. The control run
+forced no buttons; the input run scheduled Start, A/B/C, Up/Down/Left/Right,
+X/Y/Z/L/R in that order, each held for 12 frames followed by three release
+frames. Each run completed with `capture_exit_status=0`, a 195-frame raw VDP
+capture and 195 exact 1 MiB WorkRAMH snapshots. Their raw VDP captures have
+the same SHA-256
+`144d7a92c54a046d76be666ab735fb6e2c2d03a5502281f15af5424f4c75ea3c`; the
+comparator confirms all eight VDP1/VDP2 regions are identical across all 195
+frames. The input event receipt contains 312 rows for the 13 scheduled masks.
+
+The memory-stream comparison reports a difference in all 195 frame pairs,
+including all 39 frames with no active mask in the input run. The recurring
+two-byte spans at `0x0602c8f9..0x0602c8fa` and
+`0x0602c900..0x0602c901` drift through several values over the run rather
+than uniquely following each mask. Two other bytes (`0x0602c90c` and
+`0x0602c910`) show `00` versus `10` during Start/A windows and `00` versus
+`20` during B/C windows; the other nine masks do not produce those same-byte
+deltas. This is an observed byte pattern, not a decoded controller structure
+or action mapping: the input schedule is sequential, deltas persist during
+release frames, and the raw presentation never changes. The capture therefore
+does not authorize a title/menu transition or gameplay input semantics.
+
+The bounded comparison tool is
+`scripts/compare_nexus_sh2_memory_snapshots.py`; it reads one 1 MiB snapshot
+from each stream at a time and emits address/value deltas without treating
+synthetic fixtures as game data. Its CTest parser regression is
+`nexus_sh2_memory_snapshot_compare`. On TRV2 the matched inputs remain under
+`/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/button-map-fine-10500-20260928/`.
+Control WorkRAMH SHA-256:
+`90d4380bce8115607a6f85e80bfbfcece5da0a163782be88f6ce0d3c15ddbf53`;
+input WorkRAMH SHA-256:
+`7fb3f54321e56cc73e8442c9d58a6c69e3c9e2f2d824362ca45353ef9f0e7ab1`;
+input event SHA-256:
+`e34cbbfc8ecb5ad6d84b2880ef04d70845f46f32f9fcab3caef91002098888e2`.
+The comparator's complete textual receipt has SHA-256
+`d557e3011d2eaae940e2488c634611d208c89662b47db8c26967ed04f1e3ae6f`.
+The next useful input experiment is one mask per independently reset matched
+pair, joined to the retail consumer's exact state reads and later presentation.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the

@@ -4850,6 +4850,11 @@ if(Python3_EXECUTABLE)
                 ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_vdp1_source_to_vram.py)
     set_tests_properties(nexus_vdp1_source_to_vram PROPERTIES
         LABELS "nexus;vdp1;capture;parser;regression")
+    add_test(NAME nexus_sh2_memory_snapshot_compare
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_compare_nexus_sh2_memory_snapshots.py)
+    set_tests_properties(nexus_sh2_memory_snapshot_compare PROPERTIES
+        LABELS "nexus;sh2;capture;parser;regression")
 endif()
 
 # -- zlib discovery (optional, used by asset-scanner ZIP/gzip paths) --

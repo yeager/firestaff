@@ -91,8 +91,11 @@ presentation boundary.
   and sampled WorkRAMH every four frames. All eight VDP1/VDP2 regions remained
   byte-identical. Two corresponding RAM ranges differed, but their values did
   not uniquely track the 13 masks; this is not a button/action mapping. Repeat
-  with longer dwell and per-frame RAM snapshots before claiming individual
-  button semantics. Interactive menu admission remains blocked.
+  A later 195-frame pair used 12-frame holds, three-frame releases and a
+  WorkRAMH snapshot every frame. It still produced no VDP1/VDP2 presentation
+  change; RAM differences persisted through release frames and did not bind all
+  masks to actions. Continue with independently reset, source-bound input
+  cases before opening interactive menu admission.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the
