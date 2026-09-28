@@ -48,6 +48,15 @@ data.
    authentic regional media. V2 asset/effect/movement verification follows
    source-backed V1 gameplay and must use real assets when available.
 
+   Firestaff's bounded inventory-input regression now exercises 431 authentic
+   TAKE/DROP cases in each regional edition across all seven dungeons. Of 23
+   authentic category-local raw-type-zero objects per region, 18 had an
+   adjacent source floor for this route and five remain unexercised because
+   that approach square is unavailable. This tests Firestaff's source
+   provenance and input plumbing only; it does not establish original T900
+   selection, reachability, or quest-item semantics. See the corresponding
+   `DONE-theron.md` entry for the per-dungeon counts.
+
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.
 

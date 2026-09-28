@@ -4930,7 +4930,8 @@ static void test_authentic_coordinate_teleporter_without_endpoint(
 
 static void test_authentic_take_requires_matching_item_record(
     const uint8_t *ud, size_t ud_size,
-    const uint8_t *track02, size_t track02_size, int variant) {
+    const uint8_t *track02, size_t track02_size, int variant,
+    int dungeon_id) {
     Theron_V1_World *world = calloc(1u, sizeof(*world));
     Theron_DungeonLoadResult result;
     Theron_Track02ItemNameSource item_name_source;
@@ -4948,9 +4949,10 @@ static void test_authentic_take_requires_matching_item_record(
     assert(!THERON_IS_QUEST_ITEM(THERON_ITEM_SOURCE_TYPE_ZERO));
     assert(world != NULL);
     theron_v1_world_init(world);
-    world->current_dungeon = 1;
+    assert(dungeon_id >= 1 && dungeon_id <= THERON_DUNGEON_COUNT);
+    world->current_dungeon = dungeon_id;
     assert(theron_v1_track02_load_full_dungeon_for_variant(
-               world, 1, ud, ud_size,
+               world, dungeon_id, ud, ud_size,
                variant == 1 ? THERON_TRACK02_VARIANT_JP_BIN
                             : THERON_TRACK02_VARIANT_US_BIN,
                &result) == 0);
@@ -4963,7 +4965,8 @@ static void test_authentic_take_requires_matching_item_record(
         variant == 1 ? THERON_TRACK02_MD5_JP_BIN
                      : THERON_TRACK02_MD5_US_BIN);
     assert(theron_v1_track02_decode_item_name_source(
-               ud, ud_size, variant, 1u, &item_name_source) == 1);
+               ud, ud_size, variant, (unsigned int)dungeon_id,
+               &item_name_source) == 1);
     assert(theron_v1_world_bind_track02_item_name_source(
                world, &item_name_source, variant) == 1);
 
@@ -4978,7 +4981,7 @@ static void test_authentic_take_requires_matching_item_record(
         int approach_found = 0;
         int suppressed_count = 0;
 
-        if (object->dungeon_id != 1 ||
+        if (object->dungeon_id != dungeon_id ||
             !object->source_origin_valid || !object->source_property_valid ||
             (object->source_category != THERON_CAT_WEAPON &&
              object->source_category != THERON_CAT_CLOTHING &&
@@ -5003,7 +5006,7 @@ static void test_authentic_take_requires_matching_item_record(
             int px = object->x - g_theron_dir_dx[dir];
             int py = object->y - g_theron_dir_dy[dir];
             const Theron_V1_Level *level =
-                &world->levels[0][object->level];
+                &world->levels[dungeon_id - 1][object->level];
             if (px >= 0 && py >= 0 && px < level->width &&
                 py < level->height &&
                 level->squares[py][px] == THERON_SQUARE_FLOOR) {
@@ -5197,9 +5200,9 @@ static void test_authentic_take_requires_matching_item_record(
     }
     assert(tested > 0u);
     assert(zero_id_tested + zero_id_deferred == zero_id_records);
-    printf("  authentic %s Akutuba TAKE/DROP property-integrity cases: %u "
+    printf("  authentic %s dungeon %d TAKE/DROP property-integrity cases: %u "
            "(type-zero records tested/deferred: %u/%u)\n",
-           variant == 1 ? "JP" : "US", tested,
+           variant == 1 ? "JP" : "US", dungeon_id, tested,
            zero_id_tested, zero_id_deferred);
     free(suppressed_indices);
     free(world);
@@ -5225,8 +5228,11 @@ int main(void) {
             assert(raw != NULL);
             test_all_jp_dungeons(jp_ud, jp_ud_size, raw, raw_size);
             test_real_item_name_sources(jp_ud, jp_ud_size, 1);
-            test_authentic_take_requires_matching_item_record(
-                jp_ud, jp_ud_size, raw, raw_size, 1);
+            for (int dungeon_id = 1;
+                 dungeon_id <= THERON_DUNGEON_COUNT; ++dungeon_id) {
+                test_authentic_take_requires_matching_item_record(
+                    jp_ud, jp_ud_size, raw, raw_size, 1, dungeon_id);
+            }
             test_real_sarmon_track19_mapping(jp_ud, jp_ud_size, 1);
             free(raw);
             free(jp_ud);
@@ -5255,8 +5261,11 @@ int main(void) {
     test_all_dungeons(ud, ud_size, raw, raw_size);
     test_real_us_iso_dungeons_against_raw(ud, ud_size);
     test_real_item_name_sources(ud, ud_size, 2);
-    test_authentic_take_requires_matching_item_record(
-        ud, ud_size, raw, raw_size, 2);
+    for (int dungeon_id = 1;
+         dungeon_id <= THERON_DUNGEON_COUNT; ++dungeon_id) {
+        test_authentic_take_requires_matching_item_record(
+            ud, ud_size, raw, raw_size, 2, dungeon_id);
+    }
     test_real_sarmon_track19_mapping(ud, ud_size, 2);
     test_authentic_coordinate_teleporter_without_endpoint(
         ud, ud_size, raw, raw_size);

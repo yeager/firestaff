@@ -1,5 +1,24 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-28 — Authentic inventory transaction regression across all dungeons
+
+- Expanded the authentic Track 02 loader regression from Akutuba alone to all
+  seven US and JP dungeons. Each authentic carryable occurrence with an
+  adjacent floor approach is exercised through the public M12 pickup route,
+  source-backed inventory/name receipt, inventory selection and drop route;
+  altered source records, altered property rows and compact-ID/source swaps
+  must still reject atomically.
+- On `trv2`, the focused loader target built with `-j1` and its CTest passed
+  against the installed authentic regional media. The test reported 431
+  TAKE/DROP cases in each region. Raw category-local type-zero records were
+  tested/deferred per dungeon as `6/0, 2/0, 1/0, 3/1, 3/2, 1/2, 2/0` for
+  both editions: 18 tested and five deferred of 23 per region. Deferred cases
+  have no adjacent source floor in this input route; no source/map bytes were
+  fabricated or changed to force access.
+- This verifies Firestaff's source-provenance and input plumbing on authentic
+  data across all seven dungeons. It does not prove original T900 selection,
+  object reachability, quest-item semantics, or full gameplay parity.
+
 ## 2026-09-28 — Complete registered Theron CTest selection on authentic media
 
 - Built the missing Theron test targets and production executable on `trv2`,
