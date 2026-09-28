@@ -94,6 +94,36 @@ int main(void)
               "missing-data popup returns to the selected game card");
     }
 
+    /* The product's active launcher is the card -> platform -> presentation
+     * flow in M12_StartupMenu_HandleInput.  Exercise its real missing-media
+     * boundary separately from the older hierarchical navigation helper
+     * above, so an available-looking card can never launch on partial or
+     * absent originals. */
+    for (index = 0; index < 3; ++index) {
+        state.view = M12_MENU_VIEW_MAIN;
+        state.selectedIndex = index;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        check(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                  state.activatedIndex == index &&
+                  state.gameCardFlowStage == 0 &&
+                  state.launchRequested == 0,
+              "active game card opens platform selection without launching");
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        check(state.view == M12_MENU_VIEW_MESSAGE &&
+                  state.messageIsMissingGameData == 1 &&
+                  strcmp(state.messageGameId, game_ids[index]) == 0 &&
+                  state.launchRequested == 0,
+              "active platform selection blocks launch without original media");
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+        check(state.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                  state.activatedIndex == index,
+              "active missing-media popup returns to the selected game's platform card");
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+        check(state.view == M12_MENU_VIEW_MAIN &&
+                  state.selectedIndex == index,
+              "active platform card returns to its selected game entry");
+    }
+
     m12_redesigned_handle_input(&state, 0, 0, 0, 0, 0, 1);
     check(state.view == M12_MENU_VIEW_MAIN &&
               m12_get_nav_level() == M12_NAV_MAIN,
