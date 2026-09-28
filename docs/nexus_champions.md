@@ -18,6 +18,12 @@ treated as an index into FACE.BIN. It does not establish which portrait
 belongs to each champion row. Keep `portrait_index` unknown until a Saturn
 consumer trace proves that join.
 
+Each PLRD row is 64 bytes, with a 40-byte tail after offset 24. The current
+four-byte-stride equipment reads are therefore bounded to ten values; the
+eleventh slot and any separate backpack offsets are not established by that
+row layout and remain empty. Do not read across the next PLRD row or the
+following `CRET` resource to populate runtime inventory.
+
 The Japanese, English and French Track 1 `RLOWFIX.BIN` revisions are
 recognized by exact MD5 identities, with Japanese and English CUE regressions
 checking their source receipts and RES* envelopes. English and French

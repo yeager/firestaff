@@ -277,20 +277,20 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
          * binds the two resources. */
         c->portrait_index = -1;
         for (j = 0; j < 30; ++j) c->inventory[j] = 0xffU;
-        for (j = 0; j < NEXUS_SLOT_COUNT; ++j) {
+        for (j = 0; j < NEXUS_SLOT_COUNT; ++j) c->slots[j] = -1;
+        /* The 64-byte PLRD row has only 40 bytes after offset 24. The
+         * existing four-byte-stride item reads therefore fit ten entries;
+         * the eleventh slot would read the next row (or CRET on the final
+         * row). Keep that destination empty until a source-bound mapping is
+         * available. */
+        for (j = 0; j < (64U - 24U) / 4U && j < NEXUS_SLOT_COUNT; ++j) {
             uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U * (unsigned)j] << 8) |
                                        r[25U + 4U * (unsigned)j]);
             c->slots[j] = item == 0xffffU ? -1 : (int)item;
         }
-        /* DMWeb's final three PLRD equipment words are backpack entries;
-         * retain their real item ordinals without inventing item metadata. */
-        for (j = 0; j < 3 && NEXUS_SLOT_COUNT + j < 30; ++j) {
-            uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U *
-                                       (unsigned)(NEXUS_SLOT_COUNT + j)] << 8) |
-                                       r[25U + 4U *
-                                       (unsigned)(NEXUS_SLOT_COUNT + j)]);
-            c->inventory[j] = item == 0xffffU ? 0xffU : (uint8_t)item;
-        }
+        /* The 40-byte tail does not establish separate backpack offsets.
+         * Leave inventory empty rather than leaking bytes from the next
+         * champion/resource into runtime state. */
         c->load = 0; c->max_load = nexus_champion_get_maximum_load(c);
         c->attributes = NEXUS_ATTR_STATISTICS;
     }

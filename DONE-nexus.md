@@ -1,5 +1,16 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Bound PLRD equipment reads to authentic rows
+
+- Corrected the RLOWFIX champion parser so equipment reads stay within the
+  40-byte tail of each 64-byte PLRD row. The unsupported eleventh slot and
+  backpack offsets remain empty instead of inheriting bytes from the next row
+  or `CRET` resource.
+- Added a regression against the authenticated Japanese RLOWFIX SHA-256 that
+  checks the last champion row's slots and inventory remain empty. The
+  pre-fix test passed on TRV2 but did not cover this boundary; the authentic
+  source bytes confirm the final PLRD row meets `CRET` exactly.
+
 ## 2026-09-28 — Japanese retail title corpus gate
 
 - Added a dedicated CTest entry for the authentic Japanese `RLOWFIX.BIN` in

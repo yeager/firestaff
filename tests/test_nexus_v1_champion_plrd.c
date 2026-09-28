@@ -114,6 +114,21 @@ int main(void) {
                 pool.champions[row].portrait_index != -1) return 1;
         }
     }
+    if (!english_source) {
+        int slot;
+        int inventory_slot;
+        const Nexus_V1_Champion *last =
+            &pool.champions[NEXUS_NEXUS_PLRD_CHAMPION_COUNT - 1];
+        /* The pinned Japanese PLRD has 20 64-byte records ending exactly at
+         * CRET. Do not let the following resource tag become an equipment
+         * value, or invent backpack offsets beyond the 40-byte row tail. */
+        for (slot = 0; slot < NEXUS_SLOT_COUNT; ++slot) {
+            if (last->slots[slot] != -1) return 1;
+        }
+        for (inventory_slot = 0; inventory_slot < 30; ++inventory_slot) {
+            if (last->inventory[inventory_slot] != 0xffU) return 1;
+        }
+    }
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size,
                                      text0_entry->offset, &text) ||
         text.resource_index != 0 ||
