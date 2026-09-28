@@ -21,16 +21,30 @@ from analyze_nexus_vdp1_command_sequence import find_chain, parse_copr
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 
 
-# The mounted European corpus uses these extracted-file identities for the
-# startup assets; the broader disc manifest retains the other retail member
-# identities. Both are authenticated inputs, never filename-only admission.
+# These extracted-file identities supplement the Japanese disc manifest.
+# MENU.BPK has three authenticated regional hashes; the same named resource is
+# not byte-identical across the Japanese, English, and French retail discs.
+# All are authenticated inputs, never filename-only admission.
 STARTUP_ASSET_HASHES = {
-    "MENU.BPK": "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
-    "FONT256.S2D": "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb",
-    "TITLE.BIN": "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44",
-    "TITLE.CG": "fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580",
-    "STABG.BIN": "7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913",
+    "MENU.BPK": {
+        "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636",  # Japanese
+        "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",  # English
+        "c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543",  # French
+    },
+    "FONT256.S2D": {"764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb"},
+    "TITLE.BIN": {"a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44"},
+    "TITLE.CG": {"fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580"},
+    "STABG.BIN": {"7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913"},
 }
+
+
+def accepted_retail_hashes(name: str) -> frozenset[str]:
+    """Return only verified regional identities for one extracted resource."""
+    accepted = set(STARTUP_ASSET_HASHES.get(name, ()))
+    disc_hash = DISC_HASH.get(name)
+    if disc_hash is not None:
+        accepted.add(disc_hash)
+    return frozenset(accepted)
 
 
 def be16(data: bytes, offset: int) -> int:
@@ -141,15 +155,14 @@ def retail_file_matches(data_dir: Path, source: bytes) -> tuple[list[str], list[
     # are still authenticated retail inputs and must be in the same negative
     # source-join search; otherwise a TITLE/MENU VDP1 upload can be reported
     # as unbound merely because it is not a Structure2 file.
-    expected_hashes = dict(DISC_HASH)
-    expected_hashes.update(STARTUP_ASSET_HASHES)
-    for name, expected in sorted(expected_hashes.items()):
+    expected_names = set(DISC_HASH) | set(STARTUP_ASSET_HASHES)
+    for name in sorted(expected_names):
         path = data_dir / name
         if not path.is_file():
             continue
         data = path.read_bytes()
         actual_hash = hashlib.sha256(data).hexdigest()
-        if actual_hash not in {expected, STARTUP_ASSET_HASHES.get(name)}:
+        if actual_hash not in accepted_retail_hashes(name):
             rejected += 1
             continue
         scanned += 1

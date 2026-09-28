@@ -44,6 +44,13 @@ jobs:
       - name: Reject BIOS, firmware and original game media
         run: bash scripts/verify_no_original_media_tracked.sh
 
+  nexus-tooling-regressions:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify regional retail identities in VDP1 source scans
+        run: python3 scripts/test_analyze_nexus_vdp1_source_join.py
+
   release-notes-policy:
     runs-on: ubuntu-24.04
     steps:

@@ -1,5 +1,15 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Regional MENU.BPK source-scan identity
+
+- Corrected the VDP1 retail source-join scanner to accept the independently
+  verified Japanese, English and French `MENU.BPK` SHA-256 identities. This
+  prevents the Japanese retail member from being rejected merely because the
+  scanner previously preferred the English alternate hash. Added a regression
+  test and a dedicated CI check; unknown filenames still grant no identity.
+  This improves source investigation only and does not identify either
+  recurring VDP1 span, authorize a menu compositor or widen runtime output.
+
 ## 2026-09-28 — Retail MAPD CD-to-RAM capture integration
 
 - Captured a fresh, hash-bound 162-frame JP retail receipt on TRV2. The real
