@@ -21108,7 +21108,8 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
      * F0412 report a lone power symbol as meaningless through F0410. */
     if (state->sourceKind != M11_GAME_SOURCE_DM2_BOOT &&
         state->spellBuffer.runeCount <
-            (m11_is_dm1_source_kind(state->sourceKind) ? 1 : 2)) {
+            ((m11_is_dm1_source_kind(state->sourceKind) ||
+              state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) ? 1 : 2)) {
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: NEED AT LEAST 2 RUNES",
                       (unsigned int)state->world.gameTick);
         m11_set_status(state, "CAST", "NOT ENOUGH RUNES");
@@ -21127,13 +21128,22 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
          * mutate the world through DM1's F0750--F0754 route. */
         int csb_spell_known = -1;
 
+        /* MENU.C F0409:1685-1690 returns NULL without consulting G0487 when
+         * Symbols[1] is empty, so a lone power rune is always meaningless.
+         * F0408:1655-1659 then clears it while retaining the panel/caster. */
+        if (state->spellBuffer.runeCount == 1) {
+            csb_spell_known = 0;
+        }
+
         /* The F31 table is retained from the exact CHTWE/CHTWJ executable.
          * It lets Firestaff complete only the non-mutating F0409/F0408
          * failure path.  Do not promote a known spell to DM1's executor. */
-        if (F0750_MAGIC_EncodeRuneSequence_Compat(&state->spellBuffer,
+        if (csb_spell_known != 0 &&
+            F0750_MAGIC_EncodeRuneSequence_Compat(&state->spellBuffer,
                                                    &packed)) {
             csb_spell_known = m11_csb_fmtowns_spell_table_contains(state, packed);
-        } else if (state->csbFmtownsGameHandoffReceipt.valid &&
+        } else if (csb_spell_known != 0 &&
+                   state->csbFmtownsGameHandoffReceipt.valid &&
                    state->csbFmtownsGameHandoffReceipt.spell_table_verified) {
             csb_spell_known = 0;
         }

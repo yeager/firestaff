@@ -2742,6 +2742,22 @@ int main(void)
                               mutable_profile->runtime.csbwin_random_seed == rng_before,
                           "F31 F0409-invalid cast clears only source symbols through authenticated G0487");
 
+                    /* F31 F0409 checks Symbols[1] before reading G0487, so
+                     * one power rune follows the same F0408 clear path. */
+                    view.spellBuffer.runes[0] = 0x60u;
+                    view.spellBuffer.runeCount = 1;
+                    memset(source_champion->Incantation, 0,
+                           sizeof(source_champion->Incantation));
+                    source_champion->Incantation[0] = 0x60;
+                    source_champion->SymbolStep = 1u;
+                    rng_before = mutable_profile->runtime.csbwin_random_seed;
+                    CHECK(M11_GameView_CastSpell(&view) == 1 &&
+                              view.spellPanelOpen && view.spellBuffer.runeCount == 0 &&
+                              source_champion->Incantation[0] == 0 &&
+                              source_champion->SymbolStep == 0u &&
+                              mutable_profile->runtime.csbwin_random_seed == rng_before,
+                          "F31 lone power rune follows F0409/F0408 meaningless-spell path");
+
                     /* The source table's Zokathra definition has a zero
                      * high byte, so F0409 compares its lower three spell
                      * symbols and accepts every valid power rune.  F0412's

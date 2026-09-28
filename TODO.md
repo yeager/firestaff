@@ -105,9 +105,10 @@
 
 - Complete CSB's source-owned cast execution. For authenticated FM Towns
   media, M11 now performs F0409's G0487 lookup and F0408's meaningless-spell
-  clear without touching RNG, effects, XP or the timeline; a valid source
-  spell remains fail-closed rather than executing DM1 effects against CSB
-  state. Spell-panel raster/input verification does not close this gap.
+  clear, including the lone-power-symbol path, without touching RNG, effects,
+  XP or the timeline; a valid source spell remains fail-closed rather than
+  executing DM1 effects against CSB state. Spell-panel raster/input
+  verification does not close this gap.
   Verify Japanese caster names through their authentic
   whole-string glyph path and compare spell-panel timing with an emulator.
   Follow [the original cast contract](docs/parity/CSB_ORIGINAL_CAST_CONTRACT.md)
