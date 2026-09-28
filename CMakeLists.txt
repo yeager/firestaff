@@ -142,10 +142,14 @@ set_tests_properties(csb_v1_startup_package_identity_pc34 PROPERTIES
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_executable(test_nexus_v1_champion_plrd
-    tests/test_nexus_v1_champion_plrd.c)
+    tests/test_nexus_v1_champion_plrd.c
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c
+    src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_champion_plrd PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_nexus_v1_champion_plrd PRIVATE firestaff_nexus)
+target_link_libraries(test_nexus_v1_champion_plrd PRIVATE
+    firestaff_nexus firestaff_zip_extract)
 add_test(NAME nexus_v1_champion_plrd COMMAND test_nexus_v1_champion_plrd)
 set_tests_properties(nexus_v1_champion_plrd PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"

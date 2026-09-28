@@ -17,6 +17,17 @@ treated as an index into FACE.BIN. It does not establish which portrait
 belongs to each champion row. Keep `portrait_index` unknown until a Saturn
 consumer trace proves that join.
 
+The separately hash-verified English Saturn ISO revision
+`e5cce2db884320541f91c22c1ec1ffac6efea30b2b7c3c206a442980f241a833`
+(74,980 bytes) also decodes as a 14-entry RLOWFIX resource with 20 PLRD rows.
+Its first champion's TABL index is `0x21` and its five stored codes are
+`00c1 00cc 00c5 00d8 0005`; the trailing `0005` is not emitted as a name
+glyph, so the retained row has four glyph codes. Its TEXT#0 table has 450
+strings rather than 449. The real-media test now keys these structural
+expectations by the exact European or English file hash; it preserves the raw
+regional codes and does not translate or present them. This does not change
+the unresolved Saturn text consumer or PLRD-to-FACE ordinal join.
+
 The earlier eight-character table and the hard-coded 24-record roster list are
 not Nexus source. They may only be used by explicit legacy fixture tests.
 Twenty-four is storage capacity, not the verified number of retail champions.

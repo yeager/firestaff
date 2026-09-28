@@ -165,6 +165,25 @@ requires the captured pipeline opcode to match the authenticated `DM.BIN`
 word. The first JP smoke receipt populated nonzero PCs but failed that match,
 so it remains rejected rather than being reinterpreted as an input consumer.
 
+A follow-up JP capture at frames 1000--1079 enabled the version-locked
+WorkRAMH snapshot hook for frame 1020, during the same 20-frame START pulse.
+The 1 MiB snapshot is hash-bound in the run manifest, and
+`analyze_nexus_smpc_read_trace.py --frame-min 1020 --frame-max 1020
+--ram-snapshot ... --expect-read 1020:0x10:0x10` validates all 21 master-SH-2
+SMPC reads against their `PC_ID` words in that same-session runtime snapshot.
+The previously captured `0x0601456c` fetch is `0xd223` in WorkRAMH, confirming
+the sampled pipeline bytes even though the direct retail `DM.BIN` address does
+not match. The analyzer reports `retirement_unavailable` and
+`input_consumer_semantics=unbound`: this establishes the live low-level SMPC
+read path, not a START-to-menu/gameplay interpretation. Its raw capture SHA is
+still `c1996a2b2fab4599d275945fd98194f894941d541e992593d98ef31b6cb246db`, and
+its rendered frames 1000, 1020, and 1079 retain the previously recorded hashes,
+so the input pulse still has no observed presentation effect in this window.
+The snapshot SHA-256 is
+`90f4db8b94246570e3c6902e451b1f01e4ea9eba81620ee9a54601b8cfe05fee` and the
+debug SMPC-read trace SHA-256 is
+`6af9979cb99776e705b65a2330ea4e18ecac04fe4810010d42745c2540a2b6e0`.
+
 When the input must be observed inside the raw capture, pass
 `--require-input-window`. The launcher then rejects a plan unless the complete
 button interval lies between `skip_frames` and

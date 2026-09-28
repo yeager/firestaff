@@ -1,6 +1,30 @@
 {
   "cases": [
     {
+      "id": "canonical_extracted_root",
+      "label": "Nexus canonical extracted Track 1 root",
+      "marker_found": false,
+      "ok": false,
+      "present": false,
+      "presented_screenshots": [],
+      "probe": null,
+      "reason": "data directory missing",
+      "screenshots": [],
+      "status": "SKIP"
+    },
+    {
+      "id": "saturn_ja_track1_iso",
+      "label": "Nexus Saturn JA Track 1 ISO/CUE root",
+      "marker_found": false,
+      "ok": false,
+      "present": false,
+      "presented_screenshots": [],
+      "probe": null,
+      "reason": "data directory missing",
+      "screenshots": [],
+      "status": "SKIP"
+    },
+    {
       "capture_gate": null,
       "command": {
         "cmd": [
@@ -8,27 +32,27 @@
           "--game",
           "nexus",
           "--data-dir",
-          "<canonical_extracted_root-data-dir>",
+          "<english_iso-data-dir>",
           "--duration",
           "1500"
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "NEXUS STARTUP RECEIPT: status=blocked gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue title=1 levelLoaded=0 menu=0 blocker=faces\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260910-062136.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260910-062136.bmp",
-        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus sound: initialized (event dispatch capture-gated, SAL PCM diagnostic decode enabled, playback capture-gated)\nNexus font: FONT256.S2D CG source retained (242 tiles); text consumer gated\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (Japan).cue')",
+        "stderr": "NEXUS STARTUP RECEIPT: status=blocked gameId=nexus dataDir=<english_iso-data-dir> title=1 levelLoaded=0 menu=0 blocker=menu-bpk-prs3-capture-required\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260928-043512.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260928-043512.bmp",
+        "stdout": "Nexus: opened disc image <english_iso-data-dir> with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus UI: surface 24 [LOGOBG.DG2/PP] loaded 320x224 (palette 0-255) own=1 size=71680\nNexus UI: surface 3 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 4 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 5 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 6 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 7 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 8 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 9 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 10 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 11 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 12 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 13 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 14 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 15 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 16 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 17 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 18 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 19 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 20 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 21 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus UI: surface 22 [FACE.BIN] loaded 56x56 (palette 0-63) own=1 size=3136\nNexus sound: initialized (event dispatch capture-gated, SAL PCM diagnostic decode enabled, playback capture-gated)\nNexus font: FONT256.S2D CG source retained (242 tiles); text consumer gated\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<english_iso-data-dir>')",
         "timed_out": false
       },
       "geometry_ok": true,
-      "id": "canonical_extracted_root",
-      "label": "Nexus canonical extracted Track 1 root",
+      "id": "english_iso",
+      "label": "english iso",
       "marker_found": false,
-      "ok": false,
+      "ok": true,
       "present": true,
       "presented_screenshots": [
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260910-062136.bmp",
+          "name": "firestaff-presented-20260928-043512.bmp",
           "non_black_pixels": 454258,
           "sha256": "4ec9cf074b6fdeaedb0af8107ce17774687713e540492512a61e6a63747014d8",
           "size": 1399734,
@@ -38,6 +62,11 @@
       ],
       "probe": {
         "active": 1,
+        "dm1HoC": {
+          "candidateOrdinal": -1,
+          "candidatePanel": 0,
+          "candidatePartyIndex": -1
+        },
         "gameTick": 0,
         "lastAction": "STARTUP",
         "lastOutcome": "NEXUS TITLE",
@@ -71,14 +100,25 @@
         },
         "schema": "firestaff_m11_autotest_runtime_probe.v1",
         "sourceId": "nexus",
+        "startup": {
+          "active": 1,
+          "dm1CompleteEntranceToHoC": 0,
+          "dm1StartupHandoffExecuted": 0,
+          "dm1StartupHoCFirstFrameReady": 0,
+          "levelLoaded": 0,
+          "phase": "nexus-title",
+          "receiptReady": 1,
+          "startupActive": 1
+        },
         "title": "DUNGEON MASTER NEXUS"
       },
+      "reason": "real Nexus title and asset boot succeeded, but authenticated Saturn title/menu VDP capture and the PRS3 output proof needed to admit the menu payload are still required",
       "runtime_ok": false,
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260910-062136.bmp",
+          "name": "firestaff-20260928-043512.bmp",
           "non_black_pixels": 62314,
           "sha256": "c2f740482572b91366cec835b3312b42fc71fb1201580bcf620b86ce3b5fb490",
           "size": 192054,
@@ -86,31 +126,19 @@
           "width": 320
         }
       ],
-      "status": "FAIL",
+      "status": "BLOCKED",
       "uses_extracted_source": false,
       "uses_iso_source": true,
       "visual_ok": true
-    },
-    {
-      "id": "saturn_ja_track1_iso",
-      "label": "Nexus Saturn JA Track 1 ISO/CUE root",
-      "marker_found": false,
-      "ok": false,
-      "present": false,
-      "presented_screenshots": [],
-      "probe": null,
-      "reason": "data directory missing",
-      "screenshots": [],
-      "status": "SKIP"
     }
   ],
-  "firestaff": ".codex-scratch/release-build/firestaff",
-  "generated_at": "2026-09-10T06:21:32.306520+00:00",
+  "firestaff": "build/firestaff",
+  "generated_at": "2026-09-28T02:35:10.020693+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",
     "No claim of full Nexus runtime playability or final text/3D/BPK rendering parity."
   ],
   "schema": "firestaff.parity.nexus_v1_runtime_screenshot_readiness.v1",
-  "status": "FAIL"
+  "status": "BLOCKED_CAPTURE"
 }

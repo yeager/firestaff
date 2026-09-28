@@ -4,6 +4,7 @@
 #include "nexus_v1_res.h"
 #include "nexus_v1_rlowfix_text.h"
 #include "nexus_v1_startup_menu.h"
+#include "firestaff_x68k_media_receipt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +15,9 @@ int main(void) {
         NEXUS_NEXUS_PLRD_CHAMPION_COUNT] = {
         0, 1, 1, 2, 0, 0, 0, 0, 2, 0,
         1, 0, 0, 1, 1, 1, 1, 2, 1, 0
+    };
+    static const uint16_t english_name_glyphs[5] = {
+        0x00c1, 0x00cc, 0x00c5, 0x00d8, 0x0005
     };
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     char path[1024];
@@ -30,6 +34,15 @@ int main(void) {
     const Nexus_V1_ResEntry *text0_entry;
     const Nexus_V1_ResEntry *text4_entry;
     const Nexus_V1_ResEntry *tabl0_entry;
+    char rlowfix_sha256[65];
+    uint16_t expected_text0_count;
+    uint16_t expected_name_index0;
+    uint16_t expected_name_code0;
+    uint16_t expected_name_glyph0;
+    uint16_t expected_name_glyph4;
+    uint16_t expected_name_glyph_count;
+    int english_source;
+    int glyph;
     {
         static const uint8_t truncated_text[9] = {
             'T', 'E', 'X', 'T', 0, 0, 0, 0, 0
@@ -54,6 +67,35 @@ int main(void) {
     bytes = (uint8_t *)malloc((size_t)size);
     if (!bytes || fread(bytes, 1, (size_t)size, f) != (size_t)size) return 1;
     fclose(f);
+    if (firestaff_x68k_media_receipt_sha256_hex(
+            bytes, (size_t)size, rlowfix_sha256, sizeof(rlowfix_sha256)) != 0) {
+        free(bytes);
+        return 1;
+    }
+    if (strcmp(rlowfix_sha256,
+               "f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0") == 0) {
+        english_source = 0;
+        expected_text0_count = 449;
+        expected_name_index0 = 0x91;
+        expected_name_code0 = 0x0064;
+        expected_name_glyph0 = 0x0064;
+        expected_name_glyph4 = 0x007b;
+        expected_name_glyph_count = 5;
+    } else if (strcmp(rlowfix_sha256,
+                      "e5cce2db884320541f91c22c1ec1ffac6efea30b2b7c3c206a442980f241a833") == 0) {
+        english_source = 1;
+        expected_text0_count = 450;
+        expected_name_index0 = 0x21;
+        expected_name_code0 = english_name_glyphs[0];
+        expected_name_glyph0 = english_name_glyphs[0];
+        expected_name_glyph4 = english_name_glyphs[3];
+        expected_name_glyph_count = 4;
+    } else {
+        fprintf(stderr, "unrecognized retail RLOWFIX.BIN SHA-256: %s\n",
+                rlowfix_sha256);
+        free(bytes);
+        return 1;
+    }
     if (!nexus_v1_res_decode(bytes, (int)size, &resources) ||
         !resources.valid || resources.entry_count != 14) return 1;
     text0_entry = nexus_v1_res_find(&resources, "TEXT", 0);
@@ -74,7 +116,8 @@ int main(void) {
     }
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size,
                                      text0_entry->offset, &text) ||
-        text.resource_index != 0 || text.string_count != 449) return 1;
+        text.resource_index != 0 ||
+        text.string_count != expected_text0_count) return 1;
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size,
                                      text4_entry->offset,
                                      &menu_text) ||
@@ -128,8 +171,14 @@ int main(void) {
         pool.champions[19].anti_magic != 34 ||
         pool.champions[19].anti_fire != 50 ||
         pool.champions[0].food != 0 || pool.champions[0].water != 0 ||
-        pool.champions[0].name_tabl_index[0] != 0x91 ||
-        pool.champions[0].name_tabl_code[0] != 0x0064) return 1;
+        pool.champions[0].name_tabl_index[0] != expected_name_index0 ||
+        pool.champions[0].name_tabl_code[0] != expected_name_code0) return 1;
+    if (english_source) {
+        for (glyph = 0; glyph < 5; ++glyph) {
+            if (pool.champions[0].name_tabl_code[glyph] !=
+                    english_name_glyphs[glyph]) return 1;
+        }
+    }
     {
         Nexus_V1_StartupChampionRenderRow row;
         Nexus_V1_StartupChampionRenderRow rows[2];
@@ -141,12 +190,14 @@ int main(void) {
         int source_token_found = 0;
         memset(&row, 0, sizeof(row));
         memset(&footer, 0, sizeof(footer));
-        if (nexus_v1_startup_menu_build_champion_render_rows(
-                &pool, 0, &row, 1, &footer) != 1 ||
+        command_count = nexus_v1_startup_menu_build_champion_render_rows(
+                &pool, 0, &row, 1, &footer);
+        if (command_count != 1 ||
             !row.source_name_glyphs_valid ||
-            row.source_name_glyph_count != 5 ||
-            row.source_name_glyphs[0] != 0x0064U ||
-            row.source_name_glyphs[4] != 0x007bU ||
+            row.source_name_glyph_count != expected_name_glyph_count ||
+            row.source_name_glyphs[0] != expected_name_glyph0 ||
+            row.source_name_glyphs[expected_name_glyph_count - 1] !=
+                expected_name_glyph4 ||
             row.highlight_visible != 0 ||
             row.text_color != 0 ||
             row.portrait_border_color != 0 ||
@@ -177,7 +228,7 @@ int main(void) {
             rows[1].portrait_border_color != 0 || footer.label[0] != '\0') {
             return 1;
         }
-        pool.champions[0].name_tabl_code[0] = 0x0064U;
+        pool.champions[0].name_tabl_code[0] = expected_name_code0;
 
         memset(&snapshot, 0, sizeof(snapshot));
         memset(commands, 0, sizeof(commands));
@@ -192,9 +243,10 @@ int main(void) {
                 &commands[command_index];
             if (command->kind == NEXUS_V1_STARTUP_DRAW_NONE &&
                 command->source_text_glyphs_valid &&
-                command->source_text_glyph_count == 5 &&
-                command->source_text_glyphs[0] == 0x0064U &&
-                command->source_text_glyphs[4] == 0x007bU) {
+                command->source_text_glyph_count == expected_name_glyph_count &&
+                command->source_text_glyphs[0] == expected_name_glyph0 &&
+                command->source_text_glyphs[expected_name_glyph_count - 1] ==
+                    expected_name_glyph4) {
                 if (command->source_row != 0 || command->source_slot != -1 ||
                     command->source_rect.x != row.rect.x ||
                     command->source_rect.y != row.rect.y ||
