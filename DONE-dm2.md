@@ -1,5 +1,16 @@
 # Firestaff DONE — DM2
 
+## 2026-09-28 — DM2 AUTO start-menu route
+
+- The ordinary DM2 start-menu AUTO route discovers the authentic DOS edition
+  from the installed data root without a `--platform` override, follows the
+  retail MVE → SKULL → New Game sequence, and reaches the first loaded runtime
+  frame at map 0, position (1,8), facing south, with one champion. The local
+  receipt and visible 320x200 presentation were verified from the supplied
+  retail data. The DOS integration script now preserves this as an explicit
+  regression; its full long-running suite still requires verification on the
+  dedicated test host.
+
 ## 2026-09-27 — Macintosh retail discovery from the shared data root
 
 - Fixed DM2 Macintosh retail admission for the documented

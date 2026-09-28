@@ -23,12 +23,18 @@ mkdir -p "$scratch_root"
 menu_capture=$(mktemp -d "$scratch_root/dm2-dos-menu.XXXXXX")
 intro_capture=$(mktemp -d "$scratch_root/dm2-dos-intro.XXXXXX")
 runtime_capture=$(mktemp -d "$scratch_root/dm2-dos-runtime.XXXXXX")
+auto_runtime_capture=$(mktemp -d "$scratch_root/dm2-dos-auto-runtime.XXXXXX")
+auto_home=$(mktemp -d "$scratch_root/dm2-dos-auto-home.XXXXXX")
 runtime_probe="$scratch_root/dm2-dos-menu-runtime-$$.json"
+auto_runtime_probe="$scratch_root/dm2-dos-auto-menu-runtime-$$.json"
 cleanup_menu_capture() {
     find "$menu_capture" -depth -delete
     find "$intro_capture" -depth -delete
     find "$runtime_capture" -depth -delete
+    find "$auto_runtime_capture" -depth -delete
+    find "$auto_home" -depth -delete
     rm -f "$runtime_probe"
+    rm -f "$auto_runtime_probe"
 }
 trap cleanup_menu_capture EXIT HUP INT TERM
 
@@ -190,6 +196,58 @@ pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
 if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 32:
     raise SystemExit("FAIL: DM2 DOS runtime frame was not visibly presented")
 print("PASS: authentic DM2 DOS start menu reached and presented its first runtime frame")
+PY
+
+# The ordinary AUTO route must choose the authenticated DOS edition from the
+# installation data root and reach the same first dungeon state without an
+# explicit --platform override. This keeps menu card readiness and the runtime
+# handoff under test together instead of proving only that a card can launch.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_runtime_probe" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$auto_runtime_capture" \
+HOME="$auto_home" XDG_CONFIG_HOME="$auto_home" APPDATA="$auto_home" \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 320 --height 200 --menu --game dm2 \
+    --data-dir "$(dirname "$(dirname "$archive")")" \
+    --script 'key:enter,key:enter,key:enter,wait:1000,key:enter,key:enter' \
+    --duration 30000 >/dev/null 2>&1
+python3 - "$auto_runtime_probe" "$auto_runtime_capture" <<'PY'
+import json
+from pathlib import Path
+import struct
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "dm2" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "dm2-runtime" or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 1, 8, 0, 1)):
+    raise SystemExit(f"FAIL: authentic DM2 AUTO start menu did not reach runtime: {probe}")
+
+frames = list(Path(sys.argv[2]).glob("*.bmp"))
+if len(frames) != 1:
+    raise SystemExit("FAIL: expected one presented DM2 AUTO runtime frame")
+blob = frames[0].read_bytes()
+if len(blob) < 54 or blob[:2] != b"BM":
+    raise SystemExit("FAIL: DM2 AUTO runtime screenshot is not BMP")
+offset = struct.unpack_from("<I", blob, 10)[0]
+width, signed_height = struct.unpack_from("<Ii", blob, 18)
+height = abs(signed_height)
+bits = struct.unpack_from("<H", blob, 28)[0]
+stride = ((width * bits + 31) // 32) * 4
+if ((width, height, bits) != (320, 200, 24) or
+        offset + stride * height != len(blob)):
+    raise SystemExit("FAIL: invalid DM2 AUTO runtime screenshot geometry")
+pixels = [blob[offset + y * stride + x * 3:offset + y * stride + x * 3 + 3]
+          for y in range(height) for x in range(width)]
+if sum(pixel != b"\0\0\0" for pixel in pixels) < 10000 or len(set(pixels)) < 32:
+    raise SystemExit("FAIL: DM2 AUTO runtime frame was not visibly presented")
+print("PASS: authentic DM2 AUTO start menu discovered DOS media and presented the first runtime frame")
 PY
 
 probe_input() {
