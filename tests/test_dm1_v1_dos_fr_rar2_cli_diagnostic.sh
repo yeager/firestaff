@@ -9,25 +9,33 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
-if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --data-dir "$archive" --duration 0 2>&1); then
-    printf '%s\n' "$output" >&2
-    echo 'FAIL: RAR2 package unexpectedly launched' >&2
-    exit 1
-fi
+check_rar2_diagnostic() {
+    mode=$1
+    shift
 
-case "$output" in
-    *'RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE'*) ;;
-    *)
+    if output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" \
+        --game dm1 --data-dir "$archive" --duration 0 2>&1); then
         printf '%s\n' "$output" >&2
-        echo 'FAIL: French DOS package was not diagnosed as unsupported RAR2' >&2
+        echo "FAIL: French DOS RAR2 package unexpectedly launched through $mode" >&2
         exit 1
-        ;;
-esac
+    fi
 
-if printf '%s\n' "$output" | grep -Fq 'MISSING: GAME DATA'; then
-    printf '%s\n' "$output" >&2
-    echo 'FAIL: French DOS RAR2 package was misdiagnosed as missing data' >&2
-    exit 1
-fi
-echo 'PASS: authentic DM1 French DOS RAR2 package reports its native limitation'
+    case "$output" in
+        *'RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE'*) ;;
+        *)
+            printf '%s\n' "$output" >&2
+            echo "FAIL: French DOS package was not diagnosed as unsupported RAR2 through $mode" >&2
+            exit 1
+            ;;
+    esac
+
+    if printf '%s\n' "$output" | grep -Fq 'MISSING: GAME DATA'; then
+        printf '%s\n' "$output" >&2
+        echo "FAIL: French DOS RAR2 package was misdiagnosed as missing data through $mode" >&2
+        exit 1
+    fi
+}
+
+check_rar2_diagnostic 'direct CLI'
+check_rar2_diagnostic 'start menu' --menu
+echo 'PASS: authentic DM1 French DOS RAR2 package reports its native limitation through CLI and start menu'
