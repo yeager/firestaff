@@ -907,6 +907,19 @@ attempted retail-to-runtime join against `DM.BIN` was invalid because this
 routine is loaded from `TM.BIN`; do not reuse that earlier static disassembly
 as the reader's source.
 
+A follow-up matched pair at frames 10500--10551 sampled WorkRAMH every four
+frames while scheduling 13 two-frame button pulses in the input run (Start,
+A/B/C, the four directions, X/Y/Z, L and R). Both captures completed with
+status 0, and all eight captured VDP1/VDP2 regions were byte-identical. The
+sampled RAM deltas were limited to two corresponding two-byte ranges
+(`0x0602c8f9..0x0602c8fa` and `0x0602c900..0x0602c901`): control `09 33` versus
+input `29 38` through frame 10528, then control `10 33` versus input `30 38`
+from frame 10532 onward. This sampling does not distinguish the individual
+masks or establish a button-to-action mapping; short pulses and four-frame
+sampling may miss the reader's scan cadence. Semantic admission remains
+blocked. A useful next capture needs longer button dwell and finer-grained
+RAM samples, still paired with a forced-no-button control.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the

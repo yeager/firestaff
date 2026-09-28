@@ -87,6 +87,12 @@ presentation boundary.
   the matched input/control memory snapshots. It still does not map those
   bytes to a Start action or menu transition; see the JP controller-reader
   section in `docs/NEXUS_RUNTIME_CAPTURE.md`.
+  A complete 52-frame matched pair then scheduled 13 two-frame button pulses
+  and sampled WorkRAMH every four frames. All eight VDP1/VDP2 regions remained
+  byte-identical. Two corresponding RAM ranges differed, but their values did
+  not uniquely track the 13 masks; this is not a button/action mapping. Repeat
+  with longer dwell and per-frame RAM snapshots before claiming individual
+  button semantics. Interactive menu admission remains blocked.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the
