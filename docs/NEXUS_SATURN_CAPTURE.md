@@ -102,6 +102,18 @@ python3 scripts/analyze_nexus_vdp1_write_trace.py \
 V1 traces without frame markers remain supported but cannot be selected with
 `--frame`. A missing or duplicate marker invalidates the analysis.
 
+The producer can also bound trace generation by the emulator's absolute
+runtime frame counter. Set the inclusive
+`FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_FRAME_MIN` and
+`FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_FRAME_MAX` to the requested interval before
+launch. For a capture with `skip_frames=13197` and `frame_limit=701`, use
+`13197` through `13897`. This filter runs before VDP1 writer-code, register,
+snapshot, and write-trace hooks, so pre-capture activity cannot consume the
+selected window's write budget. The raw capture's frame markers remain
+zero-based relative to the selected window; the launcher manifest records the
+absolute filter bounds. Leave both variables unset to preserve unbounded
+diagnostic tracing.
+
 ### Stable startup witness, 2026-08-11
 
 The external J-BIOS/English capture run

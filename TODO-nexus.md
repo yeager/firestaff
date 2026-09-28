@@ -128,7 +128,10 @@ presentation boundary.
   only one mode-0 source at `0x415a0`. Its ten-million-row VDP1 write-trace
   budget filled before frame 0, so that run cannot bind writes to the captured
   window. Recover or reproduce the exact retained runtime window before using
-  a fresh writer trace to claim source upload provenance.
+  a fresh writer trace to claim source upload provenance. The external
+  producer now supports inclusive absolute-frame bounds; set them to
+  `skip_frames` through `skip_frames + frame_limit - 1` so earlier startup
+  writes do not consume the selected capture window's trace budget.
   The bound pre-capture prefix did record one write at each target start from
   PC `0x0601307c`, but the corresponding 96-byte live code window has no exact
   native- or word-swapped match in the authentic 156-file corpus, including

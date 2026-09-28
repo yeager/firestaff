@@ -1,0 +1,22 @@
+--- src/ss/vdp1.cpp
++++ src/ss/vdp1.cpp
+@@ -50,0 +51,1 @@
++#include "smpc.h"
+@@ -1248,0 +1250,2 @@
++static uint64 FirestaffVramWriteTraceFrameMin;
++static uint64 FirestaffVramWriteTraceFrameMax = ~0ULL;
+@@ -1260,5 +1262,9 @@
+   const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_LIMIT");
++  const char *frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_FRAME_MIN");
++  const char *frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITE_FRAME_MAX");
+   if(min_text && *min_text) FirestaffVramWriteTraceMin = strtoul(min_text, NULL, 0);
+   if(max_text && *max_text) FirestaffVramWriteTraceMax = strtoul(max_text, NULL, 0);
+   if(limit_text && *limit_text) FirestaffVramWriteTraceLimit = strtoul(limit_text, NULL, 10);
++  if(frame_min_text && *frame_min_text) FirestaffVramWriteTraceFrameMin = strtoull(frame_min_text, NULL, 0);
++  if(frame_max_text && *frame_max_text) FirestaffVramWriteTraceFrameMax = strtoull(frame_max_text, NULL, 0);
+   FirestaffVramWriteTraceConfigured = true;
+@@ -1272,2 +1279,4 @@
+   return;
++ if(SMPC_FirestaffCurrentFrame() < FirestaffVramWriteTraceFrameMin ||
++    SMPC_FirestaffCurrentFrame() > FirestaffVramWriteTraceFrameMax) return;
+  FirestaffTraceVramWriterCode(address);

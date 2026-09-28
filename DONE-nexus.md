@@ -1,5 +1,15 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Absolute-frame-bounded VDP1 trace generation
+
+- Added inclusive absolute-runtime-frame filters for the external Mednafen
+  VDP1 write, writer-code, writer-register and snapshot diagnostics. The raw
+  capture's VDP1 markers remain relative to its selected window; the launcher
+  passes and records the absolute bounds. A source-copy build on TRV2 compiled
+  successfully, and the launcher regression passes with an explicitly bounded
+  interval. This is capture tooling only; it proves no Nexus asset owner,
+  consumer, or presentation behavior.
+
 ## 2026-09-28 — Bounded VDP1 pre-capture writer corridor
 
 - The hash-bound 701-frame JP capture beginning at runtime frame 13197 has a
