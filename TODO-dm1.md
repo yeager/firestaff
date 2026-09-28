@@ -239,9 +239,10 @@
   actual campaign-square sensor effects through the source-owned startup path.
   M11 now preserves the source F0276 C003 party-floor-sensor gates: empty
   parties do not trigger it, and nonzero sensor data must match the party
-  direction. F0276's floor C006 group-generator sensor is also skipped during
-  party walk-on; its timed generator event remains separately dispatched.
-  Focused regressions cover these gates. The authentic English v1.2 menu-to-HoC
+  direction. F0276's C006 group-generator and C007 floor-creature sensors are
+  skipped during party walk-on; the timed C006 generator event remains
+  separately dispatched. Focused regressions cover these gates. The authentic
+  English v1.2 menu-to-HoC
   route passes after the changes, but does not claim its initial tile contains
   either sensor or verify every sensor type/effect. Do not invent champions or
   treat the partial floor view as complete visual parity.

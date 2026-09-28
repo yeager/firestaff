@@ -473,6 +473,12 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         if (sensors[i].sensorType == 1 && squareHasExistingFloorWeight) {
             continue;
         }
+        /* ReDMCSB MOVESENS.C F0276:1695-1702, case C007 at 1703-1705:
+         * floor-creature sensors do not fire for the party. This wrapper
+         * only processes party enter/leave, so C007 is never applicable. */
+        if (sensors[i].sensorType == 7) {
+            continue;
+        }
         if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],
                                          triggerEvent, &tmp)) {
             continue;

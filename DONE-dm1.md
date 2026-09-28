@@ -1,5 +1,12 @@
 # Firestaff DONE — DM1
 
+## 2026-09-28 — Ignore creature-only floor sensors on party entry
+
+- Aligned party enter/leave processing with ReDMCSB MOVESENS.C F0276
+  (C007, lines 1703-1705): the floor-creature sensor does not trigger for the
+  party. The focused runtime regression passes. Group movement remains handled
+  by its separate F0267 path.
+
 ## 2026-09-28 — Do not fire floor group generators on party entry
 
 - Aligned `F0710_SENSOR_Execute_Compat` with ReDMCSB MOVESENS.C F0276:1704-1705:
