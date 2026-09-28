@@ -813,6 +813,22 @@ add_test(NAME nexus_v1_title_mapd_real COMMAND test_nexus_v1_title_mapd_real)
 set_tests_properties(nexus_v1_title_mapd_real PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     SKIP_RETURN_CODE 77)
+foreach(_nexus_title_region IN ITEMS English French)
+    if(_nexus_title_region STREQUAL "English")
+        set(_nexus_title_bin_md5 "0b293be24d06eb550b27442ac9e8924c")
+    else()
+        set(_nexus_title_bin_md5 "5c917a7db5bb0409d5d84086886c9aa6")
+    endif()
+    add_test(NAME nexus_v1_title_mapd_real_${_nexus_title_region}
+        COMMAND test_nexus_v1_title_mapd_real)
+    set_tests_properties(nexus_v1_title_mapd_real_${_nexus_title_region}
+        PROPERTIES
+        ENVIRONMENT
+            "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (${_nexus_title_region}).cue;FIRESTAFF_NEXUS_TITLE_BIN_MD5=${_nexus_title_bin_md5};FIRESTAFF_NEXUS_TITLE_CG_MD5=80fa961fa95d7a0cb57e9a62f48786c8"
+        SKIP_RETURN_CODE 77)
+endforeach()
+unset(_nexus_title_region)
+unset(_nexus_title_bin_md5)
 add_executable(test_nexus_v1_saturn_card_m11_no_draw_startup tests/test_nexus_v1_saturn_card_m11_no_draw_startup.c src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE firestaff_nexus)

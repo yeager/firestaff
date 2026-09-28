@@ -97,6 +97,25 @@ static void check(int condition, const char *message)
     if (!condition) { fprintf(stderr, "FAIL: %s\n", message); ++failures; }
 }
 
+static void check_canonical_member_hash(const unsigned char *data,
+                                        size_t size,
+                                        const char *environment_name,
+                                        const char *member_name)
+{
+    const char *expected = getenv(environment_name);
+    char message[160];
+    int matches;
+
+    if (!expected || !expected[0]) return;
+    snprintf(message, sizeof(message), "retail %s matches canonical MD5",
+             member_name);
+    matches = size <= (size_t)INT_MAX &&
+        nexus_v1_dgn_bytes_match_canonical_md5(data, (int)size, expected);
+    check(matches, message);
+    if (matches)
+        printf("  PASS retail %s md5=%s\n", member_name, expected);
+}
+
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
@@ -114,6 +133,10 @@ int main(void)
         puts("SKIP: Nexus TITLE.BIN/TITLE.CG corpus unavailable");
         return 77;
     }
+    check_canonical_member_hash(title_bin, bin_size,
+                                "FIRESTAFF_NEXUS_TITLE_BIN_MD5", "TITLE.BIN");
+    check_canonical_member_hash(title_cg, cg_size,
+                                "FIRESTAFF_NEXUS_TITLE_CG_MD5", "TITLE.CG");
     memset(&title, 0, sizeof(title));
     check(nexus_v1_title_decode_mapd(
               title_bin + 0x0e278U, 0x8c70U,
