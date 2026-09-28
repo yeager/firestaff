@@ -133,6 +133,15 @@ return against the authentic US/JP objects. This verifies Firestaff's bounded
 inventory handoff, not original T900 pickup/UI semantics or quest-item
 collection transaction.
 
+2026-09-28 full registered Theron CTest selection on `trv2`: all 71 Theron
+tests passed after building the missing test executables and `firestaff`.
+Eight optional tests skipped for unavailable capture/archive/ISO inputs. The
+regional edition scanner accepts the hash-verified JP Track 02 BIN chosen from
+its CUE sibling set, and the JP runtime regression prefers that CUE-paired
+Track 02 when available; both fall back to authentic standalone media. This
+is broad Firestaff test coverage, not original-runtime gameplay or complete
+campaign parity.
+
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its
 nineteen original sibling BIN files. It verifies the canonical layout (17

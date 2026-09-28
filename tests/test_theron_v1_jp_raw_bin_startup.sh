@@ -8,13 +8,11 @@ fi
 
 app=$1
 data_root=${FIRESTAFF_THERON_JP_RAW_BIN_ROOT:-"$HOME/.firestaff/data/theron"}
-track02="$data_root/TQJP02.bin"
-expected_track01_cdda=0
+track02="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin"
+expected_track01_cdda=1
 if [[ ! -f "$track02" ]]; then
-    track02="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin"
-    if [[ -f "$track02" ]]; then
-        expected_track01_cdda=1
-    fi
+    track02="$data_root/TQJP02.bin"
+    expected_track01_cdda=0
 fi
 expected_md5=b7afb338ad31be1025b53f9aff12d73a
 track19_raw="$data_root/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin"
@@ -29,13 +27,13 @@ if [[ ! -f "$track02" ]]; then
     exit 77
 fi
 
-baseline_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-baseline.XXXXXX")
-turn_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-turn.XXXXXX")
-move_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-move.XXXXXX")
-forward_blocked_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-forward-blocked.XXXXXX")
-turn_left_output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-turn-left.XXXXXX")
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-raw-bin.XXXXXX")
-audio_cache=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-jp-audio.XXXXXX")
+baseline_output=$(mktemp "./firestaff-theron-jp-baseline.XXXXXX")
+turn_output=$(mktemp "./firestaff-theron-jp-turn.XXXXXX")
+move_output=$(mktemp "./firestaff-theron-jp-move.XXXXXX")
+forward_blocked_output=$(mktemp "./firestaff-theron-jp-forward-blocked.XXXXXX")
+turn_left_output=$(mktemp "./firestaff-theron-jp-turn-left.XXXXXX")
+output=$(mktemp "./firestaff-theron-jp-raw-bin.XXXXXX")
+audio_cache=$(mktemp -d "./firestaff-theron-jp-audio.XXXXXX")
 trap 'rm -f "$baseline_output" "$turn_output" "$move_output" "$forward_blocked_output" "$turn_left_output" "$output"; rm -rf "$audio_cache"' EXIT
 if [[ ! -f "$track19_raw" && ! -f "$track19_iso" ]]; then
     printf 'SKIP: authentic Theron JP Track 19 is not staged\n'

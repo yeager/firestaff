@@ -1,5 +1,19 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-28 — Complete registered Theron CTest selection on authentic media
+
+- Built the missing Theron test targets and production executable on `trv2`,
+  then ran all 71 Theron-labelled CTests with `-j2`: 71 passed, zero failed.
+  Eight tests skipped because their optional operator-owned captures or
+  media layouts are unavailable; no synthetic data substituted for them.
+- The regional scan test now accepts the authentic, hash-verified JP Track 02
+  file selected from its CUE sibling set while still requiring the US launch
+  path to remain selected. The JP startup test prefers that exact CUE-paired
+  Track 02 file when present and falls back to the standalone authentic BIN.
+  Their temporary receipts now stay in CTest's build working directory.
+- This verifies registered Firestaff probes and media routes, not full
+  original-runtime gameplay, T900 item semantics, or complete campaign parity.
+
 ## 2026-09-28 — Authentic type-zero inventory record-integrity regression
 
 - The Track 02 dungeon-loader test now executes source-backed TAKE and DROP
