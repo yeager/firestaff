@@ -9,6 +9,14 @@
   test and a dedicated CI check; unknown filenames still grant no identity.
   This improves source investigation only and does not identify either
   recurring VDP1 span, authorize a menu compositor or widen runtime output.
+- The analyzer now authenticates and prepares retail members once per run,
+  rather than rereading and word-swapping the full corpus for every draw. On
+  TRV2, the 701-frame authentic Japanese capture completed its frame-700 join
+  against 137 hash-verified retail members with zero rejected files. The
+  recurring `0x58c58` and `0x58b58` source spans still have no exact or
+  word-swapped retail join; other DGN surfaces did join. Menu ownership and
+  semantic admission therefore remain blocked. The capture and game data stay
+  on TRV2.
 
 ## 2026-09-28 — Retail MAPD CD-to-RAM capture integration
 

@@ -12,6 +12,7 @@ their pixel and palette semantics remain unproven.
 from __future__ import annotations
 
 import argparse
+import array
 import hashlib
 import struct
 from pathlib import Path
@@ -141,20 +142,18 @@ def dgn_structure2_surfaces(data_dir: Path) -> list[tuple[str, bytes]]:
 
 
 def swapped_words(data: bytes) -> bytes:
-    return b"".join(data[offset:offset + 2][::-1]
-                    for offset in range(0, len(data), 2))
+    words = array.array("H")
+    even_size = len(data) & ~1
+    words.frombytes(data[:even_size])
+    words.byteswap()
+    return words.tobytes() + data[even_size:]
 
 
-def retail_file_matches(data_dir: Path, source: bytes) -> tuple[list[str], list[str], int, int]:
-    """Scan hash-verified extracted retail files for an exact source window."""
-    exact: list[str] = []
-    word_swap: list[str] = []
-    scanned = 0
+def authenticated_retail_files(
+        data_dir: Path) -> tuple[list[tuple[str, bytes, bytes]], int]:
+    """Read and byte-swap verified retail resources once per analyzer run."""
+    files: list[tuple[str, bytes, bytes]] = []
     rejected = 0
-    # Startup resources are separate from the LEV/DGN disc-file table.  They
-    # are still authenticated retail inputs and must be in the same negative
-    # source-join search; otherwise a TITLE/MENU VDP1 upload can be reported
-    # as unbound merely because it is not a Structure2 file.
     expected_names = set(DISC_HASH) | set(STARTUP_ASSET_HASHES)
     for name in sorted(expected_names):
         path = data_dir / name
@@ -165,12 +164,23 @@ def retail_file_matches(data_dir: Path, source: bytes) -> tuple[list[str], list[
         if actual_hash not in accepted_retail_hashes(name):
             rejected += 1
             continue
-        scanned += 1
+        swapped = swapped_words(data)
+        files.append((name, data, swapped))
+    return files, rejected
+
+
+def retail_file_matches(
+        retail_files: list[tuple[str, bytes, bytes]],
+        source: bytes) -> tuple[list[str], list[str]]:
+    """Find exact byte and word-swapped joins in authenticated retail files."""
+    exact: list[str] = []
+    word_swap: list[str] = []
+    for name, data, swapped in retail_files:
         if data.find(source) >= 0:
             exact.append(name)
-        if len(data) % 2 == 0 and swapped_words(data).find(source) >= 0:
+        if swapped and swapped.find(source) >= 0:
             word_swap.append(name)
-    return exact, word_swap, scanned, rejected
+    return exact, word_swap
 
 
 def main() -> int:
@@ -233,6 +243,7 @@ def main() -> int:
         f"frame={args.frame} draw_commands={len(draws)} "
         f"mns_surfaces={len(mns)} dgn_structure2_surfaces={len(dgn)}"
     )
+    retail_files, rejected_files = authenticated_retail_files(args.data_dir)
     retail_join = False
     for offset, colour_mode, source_offset, source in draws:
         source_hash = hashlib.sha256(source).hexdigest()
@@ -250,9 +261,7 @@ def main() -> int:
                 dgn_exact.append(name)
             if swapped_words(surface) == source:
                 dgn_swapped_exact.append(name)
-        file_exact, file_word_swap, scanned_files, rejected_files = retail_file_matches(
-            args.data_dir, source
-        )
+        file_exact, file_word_swap = retail_file_matches(retail_files, source)
         retail_join = retail_join or bool(file_exact or file_word_swap)
         print(
             f"command_offset=0x{offset:05x} colour_mode={colour_mode} "
@@ -269,7 +278,7 @@ def main() -> int:
         print("retail_file_exact=" + ("|".join(file_exact) if file_exact else "none"))
         print("retail_file_word_swap_exact=" +
               ("|".join(file_word_swap) if file_word_swap else "none"))
-        print(f"retail_files_scanned={scanned_files}")
+        print(f"retail_files_scanned={len(retail_files)}")
         print(f"retail_files_hash_rejected={rejected_files}")
     print("source_join=verified" if any(
         surface == source or swapped_words(surface) == source

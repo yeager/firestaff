@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import unittest
 
-from analyze_nexus_vdp1_source_join import accepted_retail_hashes
+from analyze_nexus_vdp1_source_join import accepted_retail_hashes, swapped_words
 
 
 class AcceptedRetailHashesTests(unittest.TestCase):
@@ -31,6 +31,11 @@ class AcceptedRetailHashesTests(unittest.TestCase):
 
     def test_unknown_resource_has_no_filename_only_identity(self) -> None:
         self.assertEqual(accepted_retail_hashes("UNLISTED.BIN"), frozenset())
+
+    def test_word_swap_reverses_words_and_preserves_a_trailing_byte(self) -> None:
+        self.assertEqual(swapped_words(b"\x12\x34\xab\xcd"),
+                         b"\x34\x12\xcd\xab")
+        self.assertEqual(swapped_words(b"\x12\x34\xab"), b"\x34\x12\xab")
 
 
 if __name__ == "__main__":
