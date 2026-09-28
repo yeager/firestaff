@@ -1594,6 +1594,18 @@ msgstr "This authentic Saturn card image is read-only. The Nexus payload schema 
 msgid "Comment"
 msgstr "Comment"
 
+#: scripts/firestaff_savegame_editor.py:866
+msgid "Language byte (raw)"
+msgstr "Nyelvi bájt (nyers)"
+
+#: scripts/firestaff_savegame_editor.py:867
+msgid "Timestamp field (raw)"
+msgstr "Időbélyegmező (nyers)"
+
+#: scripts/firestaff_savegame_editor.py:870
+msgid "Allocated block IDs"
+msgstr "Lefoglalt blokkok azonosítói"
+
 
 #: scripts/firestaff_savegame_editor.py:832
 msgid "Payload size"

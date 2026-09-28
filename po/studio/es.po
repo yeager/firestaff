@@ -1594,6 +1594,18 @@ msgstr "This authentic Saturn card image is read-only. The Nexus payload schema 
 msgid "Comment"
 msgstr "Comment"
 
+#: scripts/firestaff_savegame_editor.py:866
+msgid "Language byte (raw)"
+msgstr "Byte de idioma (sin procesar)"
+
+#: scripts/firestaff_savegame_editor.py:867
+msgid "Timestamp field (raw)"
+msgstr "Campo de marca de tiempo (sin procesar)"
+
+#: scripts/firestaff_savegame_editor.py:870
+msgid "Allocated block IDs"
+msgstr "Identificadores de bloques asignados"
+
 
 #: scripts/firestaff_savegame_editor.py:832
 msgid "Payload size"
