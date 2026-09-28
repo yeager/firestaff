@@ -28,8 +28,9 @@ proprietary layout. The exact game-state fields and load consumer are not
 source-locked in this codebase. Four authentic 32 KiB Mednafen Backup RAM
 images in the private real-data corpus contain a `DMNEXUS__01` entry. The
 savegame editor reads their block chains and exposes each exact 20,480-byte
-payload as read-only hex. This verifies container extraction, not payload
-semantics.
+payload as read-only hex. It also exposes the raw language/timestamp header
+fields and exact allocated block IDs as read-only container metadata. This
+verifies container extraction, not payload semantics.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the

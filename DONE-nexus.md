@@ -1,5 +1,20 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Authentic Saturn card metadata inspection
+
+- Extended the read-only BKR overview to show the raw language and timestamp
+  bytes plus every allocated block ID. The authentic-corpus self-test checks
+  those displayed values against the original header bytes, validates unique
+  in-range block IDs, and keeps the payload read-only and uninterpreted.
+- On TRV2, rebuilt the editor script in an isolated temporary directory and
+  ran `--self-test-bkr` against authentic two- and three-champion retail-written
+  BKR images. Both images are 32 KiB, each contains the 20,480-byte
+  `DMNEXUS__01` payload using 354 blocks, and both passed. Their SHA-256 values
+  are `3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634` and
+  `d9c86de3b0c668f9961a16529b1d5fd72f3e095823f8f0021cf8db8bfba48e9b`. The
+  authentic images remain in TRV2 capture storage; no card or game data was
+  copied into Git. This does not decode Saturn save fields or enable import.
+
 ## 2026-09-28 — Regional real-media test discovery
 
 - The regional title/RES tests now share the normal media-root lookup and fall

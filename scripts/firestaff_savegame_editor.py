@@ -251,6 +251,19 @@ def parse_saturn_bkr(data: bytes) -> list[dict[str, Any]]:
                       "timestamp_minutes": timestamp, "payload": payload,
                       "blocks": tuple(stream_blocks)})
     return saves
+
+
+def saturn_bkr_display_metadata(entry: dict[str, Any]) -> list[tuple[str, str]]:
+    """Format only container metadata; keep the Nexus payload uninterpreted."""
+    blocks = tuple(entry["blocks"])
+    return [
+        ("comment", str(entry["comment"])),
+        ("language_raw", f"0x{int(entry['language']):02X}"),
+        ("timestamp_raw", f"0x{int(entry['timestamp_minutes']):08X}"),
+        ("payload_size", f"{len(entry['payload']):,} bytes"),
+        ("allocated_block_count", f"{len(blocks):,}"),
+        ("allocated_block_ids", ", ".join(str(block) for block in blocks)),
+    ]
 CHAMPION_NAMES_DM1 = [
     "Halk", "Stamm", "Zed", "Leyla", "Mophus", "Wuuf",
     "Sonja", "Iaido", "Nabi", "Linflas", "Elija", "Chani",
@@ -572,6 +585,26 @@ def self_test_saturn_bkr(require_real_corpus: bool) -> int:
         assert entry["name"] == "DMNEXUS__01"
         assert len(entry["payload"]) == 20480
         assert len(entry["blocks"]) == 354
+        repeats = 0
+        while raw_bkr[repeats * len(SATURN_BKR_MAGIC):
+                       (repeats + 1) * len(SATURN_BKR_MAGIC)] == SATURN_BKR_MAGIC:
+            repeats += 1
+        block_size = repeats * 16
+        block_count = len(raw_bkr) // block_size
+        assert block_size in (64, 512) and len(raw_bkr) % block_size == 0
+        first_block_offset = entry["blocks"][0] * block_size
+        assert entry["language"] == raw_bkr[first_block_offset + 15]
+        assert entry["timestamp_minutes"] == int.from_bytes(
+            raw_bkr[first_block_offset + 26:first_block_offset + 30], "big")
+        assert len(set(entry["blocks"])) == len(entry["blocks"])
+        assert all(2 <= block < block_count for block in entry["blocks"])
+        metadata = dict(saturn_bkr_display_metadata(entry))
+        assert metadata["language_raw"] == f"0x{entry['language']:02X}"
+        assert metadata["timestamp_raw"] == f"0x{entry['timestamp_minutes']:08X}"
+        assert metadata["payload_size"] == "20,480 bytes"
+        assert metadata["allocated_block_count"] == "354"
+        assert metadata["allocated_block_ids"] == ", ".join(
+            str(block) for block in entry["blocks"])
         broken_bkr = bytearray(raw_bkr)
         broken_bkr[0xA2:0xA4] = b"\xFF\xFF"
         assert detect_game(broken_bkr, bkr_path.name) is None
@@ -828,10 +861,18 @@ class SavegameEditor(tk.Tk):
             for entry in sg.bkr_entries:
                 entry_frame = ttk.LabelFrame(card, text=entry["name"], padding=6)
                 entry_frame.pack(fill="x", pady=3)
-                for key, value in ((_("Comment"), entry["comment"]),
-                                   (_("Payload size"), f"{len(entry['payload']):,} bytes"),
-                                   (_("Allocated blocks"), len(entry["blocks"]))):
-                    ttk.Label(entry_frame, text=f"{key}: {value}").pack(anchor="w")
+                labels = {
+                    "comment": _("Comment"),
+                    "language_raw": _("Language byte (raw)"),
+                    "timestamp_raw": _("Timestamp field (raw)"),
+                    "payload_size": _("Payload size"),
+                    "allocated_block_count": _("Allocated blocks"),
+                    "allocated_block_ids": _("Allocated block IDs"),
+                }
+                for key, value in saturn_bkr_display_metadata(entry):
+                    ttk.Label(entry_frame,
+                              text=f"{labels[key]}: {value}",
+                              wraplength=680, justify="left").pack(anchor="w")
                 preview = entry["payload"][:64].hex(" ").upper()
                 ttk.Label(entry_frame, text=_("Payload starts (hex): {}…").format(preview),
                           wraplength=680, justify="left").pack(anchor="w")

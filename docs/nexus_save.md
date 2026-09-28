@@ -28,5 +28,7 @@ The original Dungeon Master Nexus stored saves in Saturn backup RAM or
 memory-card storage. Four authentic Mednafen BKR images with the
 `DMNEXUS__01` save entry are available in the private real-data corpus. The
 savegame editor reads their block chains and displays the exact 20,480-byte
-payload as read-only hex. Its game-state schema and source-owned load consumer
+payload as read-only hex. Read-only container inspection also shows the raw
+language and timestamp fields and exact allocated block IDs; it assigns no
+meaning to those fields. The game-state schema and source-owned load consumer
 remain unverified, so original Saturn save import remains capture-gated.

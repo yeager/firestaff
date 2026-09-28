@@ -1296,12 +1296,24 @@ msgstr ""
 msgid "Comment"
 msgstr ""
 
+#: scripts/firestaff_savegame_editor.py:866
+msgid "Language byte (raw)"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:867
+msgid "Timestamp field (raw)"
+msgstr ""
+
 #: scripts/firestaff_savegame_editor.py:832
 msgid "Payload size"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:833
 msgid "Allocated blocks"
+msgstr ""
+
+#: scripts/firestaff_savegame_editor.py:870
+msgid "Allocated block IDs"
 msgstr ""
 
 #: scripts/firestaff_savegame_editor.py:836
