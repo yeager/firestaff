@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+## 2026-09-28 — Read the authentic Atari Utility Disk 7z in memory
+
+- The bounded native 7z reader now handles the multi-member preservation
+  archive used by CSB Utility Disk discovery. Authentic `HCSB.DAT`,
+  `HCSB.HTC`, and `MINI.DAT` identities are read without unpacking the archive
+  or enabling host extraction tools.
+- `csb_v1_hint_oracle_native_7z_cli_boot` passes against the installed archive
+  through both `--csb-hint-oracle` CLI startup and the normal M12 start-menu
+  handoff. This verifies the Utility Disk/Hint Oracle route; it does not claim
+  that the separate Atari campaign archive has native 7z startup support.
+
 ## 2026-09-28 — Installed-root AUTO start-menu route
 
 - With a clean configuration and the authentic installed data root, AUTO
