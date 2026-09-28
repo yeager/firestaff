@@ -5005,9 +5005,9 @@ static int native_7z_member_md5_visitor(const char *name,
         visit_result = native_7z_atari_disk_visit(
             name, bytes, byte_count, adf_find_single_visitor, &nested);
         if (visit_result >= 0 && nested.found &&
-            copy_nested_virtual_match_path(match->archive_path, name,
-                                           nested.name, candidate,
-                                           (int)sizeof(candidate))) {
+            native_7z_copy_nested_virtual_match_path(
+                match->archive_path, name, nested.name, candidate,
+                (int)sizeof(candidate))) {
             native_7z_record_candidate(match, candidate);
         }
     }

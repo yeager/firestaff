@@ -4304,6 +4304,7 @@ if(BUILD_TESTING)
         third_party/lzma_sdk/7zArcIn.c
         third_party/lzma_sdk/7zBuf.c
         third_party/lzma_sdk/7zCrc.c
+        third_party/lzma_sdk/7zCrcOpt.c
         third_party/lzma_sdk/7zDec.c
         third_party/lzma_sdk/7zStream.c
         third_party/lzma_sdk/Bcj2.c
@@ -7976,6 +7977,7 @@ set(M12_SOURCES
     third_party/lzma_sdk/7zArcIn.c
     third_party/lzma_sdk/7zBuf.c
     third_party/lzma_sdk/7zCrc.c
+    third_party/lzma_sdk/7zCrcOpt.c
     third_party/lzma_sdk/7zDec.c
     third_party/lzma_sdk/7zStream.c
     third_party/lzma_sdk/Bcj2.c

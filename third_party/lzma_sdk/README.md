@@ -19,7 +19,7 @@ Included decoder files:
 The bounded native 7z container reader also uses these unmodified SDK files:
 
 - `7z.h`, `7zArcIn.c`
-- `7zBuf.h`, `7zBuf.c`, `7zCrc.h`, `7zCrc.c`, `7zStream.c`
+- `7zBuf.h`, `7zBuf.c`, `7zCrc.h`, `7zCrc.c`, `7zCrcOpt.c`, `7zStream.c`
 - `Bcj2.h`, `Bcj2.c`, `Bra.h`, `Delta.h`, `CpuArch.h`, `CpuArch.c`
 - `7zWindows.h` for the SDK's Windows architecture declarations
 
