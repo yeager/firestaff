@@ -14,202 +14,166 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-
 #: scripts/firestaff_artpack_studio.py:1775
 msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
-
 #: scripts/firestaff_artpack_studio.py:1789
-#: scripts/firestaff_savegame_editor.py:633
+#: scripts/firestaff_savegame_editor.py:739
 msgid "Ready"
 msgstr "Valmis"
-
 
 #: scripts/firestaff_artpack_studio.py:1790
 msgid "No game data imported"
 msgstr "Pelidataa ei tuotu"
 
-
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
-#: scripts/firestaff_savegame_editor.py:689
+#: scripts/firestaff_savegame_editor.py:795
 msgid "Settings..."
 msgstr "Kartta-asetukset"
 
-
 #: scripts/firestaff_artpack_studio.py:1813
 #: scripts/firestaff_dungeon_studio.py:445
-#: scripts/firestaff_savegame_editor.py:847
+#: scripts/firestaff_savegame_editor.py:966
 msgid "Game"
 msgstr "Peli"
-
 
 #: scripts/firestaff_artpack_studio.py:1817
 msgid "Pack"
 msgstr "Paketti"
-
 
 #: scripts/firestaff_artpack_studio.py:1819
 #: scripts/firestaff_artpack_studio.py:1856
 msgid "Browse"
 msgstr "Selaa"
 
-
 #: scripts/firestaff_artpack_studio.py:1820
 msgid "Open/Create"
 msgstr "Avaa/Luo"
-
 
 #: scripts/firestaff_artpack_studio.py:1821
 #: scripts/firestaff_dungeon_studio.py:462
 msgid "Validate"
 msgstr "Vahvista"
 
-
 #: scripts/firestaff_artpack_studio.py:1822
 msgid "Build Runtime Cache"
 msgstr "Rakenna ajonaikainen välimuisti"
-
 
 #: scripts/firestaff_artpack_studio.py:1823
 msgid "Write Receipt"
 msgstr "Kirjoita kuitti"
 
-
 #: scripts/firestaff_artpack_studio.py:1824
 msgid "Import .fsart"
 msgstr "Tuo .fsart"
-
 
 #: scripts/firestaff_artpack_studio.py:1825
 msgid "Export .fsart"
 msgstr "Vie .fsart"
 
-
 #: scripts/firestaff_artpack_studio.py:1826
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
-#: scripts/firestaff_savegame_editor.py:1202
+#: scripts/firestaff_savegame_editor.py:1397
 msgid "Settings"
 msgstr "Kartta-asetukset"
 
-
 #: scripts/firestaff_artpack_studio.py:1834
 #: scripts/firestaff_dungeon_studio.py:473
-#: scripts/firestaff_savegame_editor.py:693
+#: scripts/firestaff_savegame_editor.py:799
 msgid "Auto (System Language)"
 msgstr "Automaattinen (järjestelmän kieli)"
-
 
 #: scripts/firestaff_artpack_studio.py:1850
 msgid "V1 assets / V2.2 targets"
 msgstr "V1-resurssit / V2.2-kohteet"
 
-
 #: scripts/firestaff_artpack_studio.py:1851
 msgid "Rescan"
 msgstr "Skannaa uudelleen"
-
 
 #: scripts/firestaff_artpack_studio.py:1854
 msgid "V1 root"
 msgstr "V1-juuri"
 
-
 #: scripts/firestaff_artpack_studio.py:1859
 msgid "Import game data"
 msgstr "Tuo pelidata"
-
 
 #: scripts/firestaff_artpack_studio.py:1860
 #: scripts/firestaff_artpack_studio.py:2246
 msgid "Warnings"
 msgstr "Varoitukset"
 
-
 #: scripts/firestaff_artpack_studio.py:1878
 msgid "Current asset"
 msgstr "Nykyinen resurssi"
-
 
 #: scripts/firestaff_artpack_studio.py:1880
 msgid "Category"
 msgstr "Luokka"
 
-
 #: scripts/firestaff_artpack_studio.py:1883
 msgid "Asset id"
 msgstr "Resurssi-ID"
-
 
 #: scripts/firestaff_artpack_studio.py:1885
 msgid "Generator"
 msgstr "Generaattori"
 
-
 #: scripts/firestaff_artpack_studio.py:1891
 msgid "Load V1/ref"
 msgstr "Lataa V1/viite"
-
 
 #: scripts/firestaff_artpack_studio.py:1892
 msgid "Load V2.2 target"
 msgstr "Lataa V2.2-kohde"
 
-
 #: scripts/firestaff_artpack_studio.py:1893
 msgid "Import target to pack"
 msgstr "Tuo kohde pakettiin"
-
 
 #: scripts/firestaff_artpack_studio.py:1894
 msgid "Save edited target"
 msgstr "Tallenna muokattu kohde"
 
-
 #: scripts/firestaff_artpack_studio.py:1896
 msgid "AI generation hook"
 msgstr "Tekoälyluontikoukku"
-
 
 #: scripts/firestaff_artpack_studio.py:1900
 msgid "Write prompt"
 msgstr "Kirjoita kehote"
 
-
 #: scripts/firestaff_artpack_studio.py:1901
 msgid "Run AI command"
 msgstr "Suorita tekoälykomento"
-
 
 #: scripts/firestaff_artpack_studio.py:1904
 msgid "AI selected"
 msgstr "Tekoäly valittu"
 
-
 #: scripts/firestaff_artpack_studio.py:1905
 msgid "AI missing/all"
 msgstr "Tekoäly puuttuvat/kaikki"
-
 
 #: scripts/firestaff_artpack_studio.py:1935
 msgid "Drag-and-drop enabled"
 msgstr "Vedä ja pudota käytössä"
 
-
 #: scripts/firestaff_artpack_studio.py:1946
 #: scripts/firestaff_dungeon_studio.py:1010
-#: scripts/firestaff_savegame_editor.py:697
-#: scripts/firestaff_savegame_editor.py:1193
-#: scripts/firestaff_savegame_editor.py:1207
+#: scripts/firestaff_savegame_editor.py:803
+#: scripts/firestaff_savegame_editor.py:1388
+#: scripts/firestaff_savegame_editor.py:1402
 msgid "Language"
 msgstr "Kieli"
 
-
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
-#: scripts/firestaff_savegame_editor.py:1194
+#: scripts/firestaff_savegame_editor.py:1389
 #, python-brace-format
 msgid ""
 "Language set to {}.\n"
@@ -218,65 +182,53 @@ msgstr ""
 "Kieli asetettu: {}.\n"
 "Käynnistä sovellus uudelleen."
 
-
 #: scripts/firestaff_artpack_studio.py:1964
 msgid "AI Command Template"
 msgstr "Syötä ensin tekoälykomentomalli."
-
 
 #: scripts/firestaff_artpack_studio.py:1966
 #, python-brace-format
 msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
 msgstr "Paikkamerkit: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
 
-
 #: scripts/firestaff_artpack_studio.py:1970
 msgid "Command"
 msgstr "komento"
-
 
 #: scripts/firestaff_artpack_studio.py:1973
 msgid "API Key"
 msgstr "API-avain"
 
-
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored in ~/.firestaff/studio_settings.json"
 msgstr "Tallennettu tiedostoon ~/.firestaff/studio_settings.json"
-
 
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored securely in system keychain"
 msgstr "Säilytetty turvallisesti järjestelmän avainnipussa"
 
-
 #: scripts/firestaff_artpack_studio.py:1982
-#: scripts/firestaff_savegame_editor.py:949
+#: scripts/firestaff_savegame_editor.py:1144
 msgid "Key"
 msgstr "Avain"
-
 
 #: scripts/firestaff_artpack_studio.py:1986
 msgid "API Provider"
 msgstr "API-palveluntarjoaja"
 
-
 #: scripts/firestaff_artpack_studio.py:2002
 msgid "Settings saved"
 msgstr "Kartta-asetukset"
 
-
 #: scripts/firestaff_artpack_studio.py:2006
-#: scripts/firestaff_savegame_editor.py:681
-#: scripts/firestaff_savegame_editor.py:707
+#: scripts/firestaff_savegame_editor.py:787
+#: scripts/firestaff_savegame_editor.py:813
 msgid "Save"
 msgstr "Tallennettu: {}"
-
 
 #: scripts/firestaff_artpack_studio.py:2007
 msgid "Cancel"
 msgstr "Peruuta"
-
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
@@ -284,44 +236,36 @@ msgstr "Peruuta"
 msgid "Imported .fsart: {}"
 msgstr "Tuotu .fsart: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2024
 #, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "Ladattu pudotettu kohde: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2055
 msgid "Select V2.2 modern artpack directory"
 msgstr "Valitse V2.2 moderni artpack-hakemisto"
 
-
 #: scripts/firestaff_artpack_studio.py:2061
 msgid "Select V1/reference asset root"
 msgstr "Valitse V1/viite resurssijuuri"
-
 
 #: scripts/firestaff_artpack_studio.py:2073
 #, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "Avattu {} artpack: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2075
 msgid "Open artpack failed"
 msgstr "Artpackin avaaminen epäonnistui"
-
 
 #: scripts/firestaff_artpack_studio.py:2122
 #, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "Skannattu {} V1/viiteresurssia"
 
-
 #: scripts/firestaff_artpack_studio.py:2189
 msgid "Load V1/reference image"
 msgstr "Lataa V1/viitekuva"
-
 
 #: scripts/firestaff_artpack_studio.py:2190
 #: scripts/firestaff_artpack_studio.py:2200
@@ -333,180 +277,147 @@ msgstr "Lataa V1/viitekuva"
 msgid "All files"
 msgstr "Kaikki tiedostot"
 
-
 #: scripts/firestaff_artpack_studio.py:2190
 #: scripts/firestaff_artpack_studio.py:2200
 #: scripts/firestaff_artpack_studio.py:2212
 msgid "Images"
 msgstr "Kuvat"
 
-
 #: scripts/firestaff_artpack_studio.py:2195
 #, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "Viite ladattu: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2199
 msgid "Load V2.2 target image"
 msgstr "Lataa V2.2-kohdekuva"
-
 
 #: scripts/firestaff_artpack_studio.py:2205
 #, python-brace-format
 msgid "Loaded target: {}"
 msgstr "Kohde ladattu: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2209
 msgid "Import original game data"
 msgstr "Tuo alkuperäinen pelidata"
 
-
 #: scripts/firestaff_artpack_studio.py:2211
 msgid "Game data"
 msgstr "Pelidata"
-
 
 #: scripts/firestaff_artpack_studio.py:2238
 #, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "Tuotu pelidata: {} ({})"
 
-
 #: scripts/firestaff_artpack_studio.py:2240
 #, python-brace-format
 msgid "Warnings: {}"
 msgstr "Varoitukset: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2242
 msgid "Game data import failed"
 msgstr "Pelidatan tuonti epäonnistui"
-
 
 #: scripts/firestaff_artpack_studio.py:2246
 msgid "No game data imported."
 msgstr "Pelidataa ei tuotu."
 
-
 #: scripts/firestaff_artpack_studio.py:2251
 msgid "No warnings."
 msgstr "Ei varoituksia."
-
 
 #: scripts/firestaff_artpack_studio.py:2252
 msgid "Game data warnings"
 msgstr "Pelidatan varoitukset"
 
-
 #: scripts/firestaff_artpack_studio.py:2277
 msgid "Load or generate a V2.2 target first."
 msgstr "Lataa tai luo ensin V2.2-kohde."
 
-
 #: scripts/firestaff_artpack_studio.py:2277
 msgid "No target image"
 msgstr "Ei kohdekuvaa"
-
 
 #: scripts/firestaff_artpack_studio.py:2292
 #, python-brace-format
 msgid "Imported {}/{}"
 msgstr "Tuotu {}/{}"
 
-
 #: scripts/firestaff_artpack_studio.py:2294
 #: scripts/firestaff_artpack_studio.py:2476
 msgid "Import failed"
 msgstr "Tuonti epäonnistui"
-
 
 #: scripts/firestaff_artpack_studio.py:2307
 #, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "Muokattu kuva tallennettu: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2335
 #, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "Tekoälykehote kirjoitettu: {}"
-
 
 #: scripts/firestaff_artpack_studio.py:2341
 #: scripts/firestaff_artpack_studio.py:2381
 msgid "AI command not configured"
 msgstr "Tekoälykomentoa ei ole määritetty"
 
-
 #: scripts/firestaff_artpack_studio.py:2342
 msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
 msgstr "Aseta FIRESTAFF_ARTPACK_AI_COMMAND tai syötä ensin komentomalli."
-
 
 #: scripts/firestaff_artpack_studio.py:2372
 msgid "AI command generated target image"
 msgstr "Tekoälykomento loi kohdekuvan"
 
-
 #: scripts/firestaff_artpack_studio.py:2374
 msgid "AI generation failed"
 msgstr "Tekoälyluonti epäonnistui"
-
 
 #: scripts/firestaff_artpack_studio.py:2381
 msgid "Enter an AI command template first."
 msgstr "Syötä ensin tekoälykomentomalli."
 
-
 #: scripts/firestaff_artpack_studio.py:2389
 msgid "AI batch"
 msgstr "Tekoälyerä"
-
 
 #: scripts/firestaff_artpack_studio.py:2390
 #, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "Kuinka monta resurssia luodaan? {} saatavilla."
 
-
 #: scripts/firestaff_artpack_studio.py:2413
 #, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "Tekoälyerä loi/toi {} resurssia"
 
-
 #: scripts/firestaff_artpack_studio.py:2420
 msgid "Validation failed:"
 msgstr "Validointi epäonnistui:"
-
 
 #: scripts/firestaff_artpack_studio.py:2421
 msgid "Validation failed"
 msgstr "Validointi epäonnistui"
 
-
 #: scripts/firestaff_artpack_studio.py:2423
 msgid "Validation passed for required slots"
 msgstr "Validointi hyväksytty vaadituille paikoille"
-
 
 #: scripts/firestaff_artpack_studio.py:2424
 msgid "Required slots are complete."
 msgstr "Vaaditut paikat ovat valmiit."
 
-
 #: scripts/firestaff_artpack_studio.py:2424
 msgid "Validation passed"
 msgstr "Validointi hyväksytty"
-
 
 #: scripts/firestaff_artpack_studio.py:2431
 #, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Rakennettu V2.2 ajonaikainen välimuisti: {} ({} tavua)"
-
 
 #: scripts/firestaff_artpack_studio.py:2432
 #, python-brace-format
@@ -517,423 +428,347 @@ msgstr ""
 "Rakennettu {}\n"
 "{} tavua"
 
-
 #: scripts/firestaff_artpack_studio.py:2432
 msgid "Runtime cache"
 msgstr "Ajonaikainen välimuisti"
-
 
 #: scripts/firestaff_artpack_studio.py:2434
 msgid "Runtime cache failed"
 msgstr "Ajonaikainen välimuisti epäonnistui"
 
-
 #: scripts/firestaff_artpack_studio.py:2439
 msgid "Reviewer"
 msgstr "Arvioija"
 
-
 #: scripts/firestaff_artpack_studio.py:2439
 msgid "Reviewer name:"
 msgstr "Arvioijan nimi:"
-
 
 #: scripts/firestaff_artpack_studio.py:2442
 #, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "Kuitti kirjoitettu: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2444
 msgid "Receipt failed"
 msgstr "Kuitti epäonnistui"
 
-
 #: scripts/firestaff_artpack_studio.py:2450
 msgid "Export Firestaff artpack"
 msgstr "Vie Firestaff artpack"
-
 
 #: scripts/firestaff_artpack_studio.py:2452
 #: scripts/firestaff_artpack_studio.py:2467
 msgid "Firestaff artpack"
 msgstr "Firestaff artpack"
 
-
 #: scripts/firestaff_artpack_studio.py:2458
 #, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr "Viety .fsart: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2460
 msgid "Export failed"
 msgstr "Vienti epäonnistui"
-
 
 #: scripts/firestaff_artpack_studio.py:2466
 msgid "Import Firestaff artpack"
 msgstr "Tuo Firestaff artpack"
 
-
 #: scripts/firestaff_dungeon_studio.py:452
 msgid "New"
 msgstr "Uusi"
-
 
 #: scripts/firestaff_dungeon_studio.py:453
 #: scripts/firestaff_dungeon_studio.py:1046
 msgid "Open .fsdung"
 msgstr "Avaa .fsdung"
 
-
 #: scripts/firestaff_dungeon_studio.py:454
 #: scripts/firestaff_dungeon_studio.py:1076
 msgid "Save .fsdung"
 msgstr "Tallenna .fsdung"
 
-
 #: scripts/firestaff_dungeon_studio.py:455
-#: scripts/firestaff_savegame_editor.py:682
+#: scripts/firestaff_savegame_editor.py:788
 msgid "Save As..."
 msgstr "Tallenna nimellä..."
-
 
 #: scripts/firestaff_dungeon_studio.py:459
 msgid "Add Level"
 msgstr "Lisää taso"
-
 
 #: scripts/firestaff_dungeon_studio.py:460
 #: scripts/firestaff_dungeon_studio.py:1094
 msgid "Map Settings"
 msgstr "Kartta-asetukset"
 
-
 #: scripts/firestaff_dungeon_studio.py:461
 msgid "Statistics"
 msgstr "Tilastot"
-
 
 #: scripts/firestaff_dungeon_studio.py:464
 #: scripts/firestaff_dungeon_studio.py:1238
 msgid "Test View"
 msgstr "Testinäkymä"
 
-
 #: scripts/firestaff_dungeon_studio.py:488
 msgid "Tools"
 msgstr "Työkalut"
-
 
 #: scripts/firestaff_dungeon_studio.py:490
 msgid "Paint"
 msgstr "Maalaa"
 
-
 #: scripts/firestaff_dungeon_studio.py:490
 msgid "Place Thing"
 msgstr "Aseta esine"
-
 
 #: scripts/firestaff_dungeon_studio.py:490
 msgid "Select"
 msgstr "Valitse"
 
-
 #: scripts/firestaff_dungeon_studio.py:491
 msgid "Erase"
 msgstr "Pyyhi"
-
 
 #: scripts/firestaff_dungeon_studio.py:491
 msgid "Fill"
 msgstr "Täytä"
 
-
 #: scripts/firestaff_dungeon_studio.py:491
 msgid "Set Party Start"
 msgstr "Aseta ryhmän aloitus"
-
 
 #: scripts/firestaff_dungeon_studio.py:499
 msgid "Tile Types"
 msgstr "Ruututyypit"
 
-
 #: scripts/firestaff_dungeon_studio.py:510
 msgid "Thing Type"
 msgstr "Esinetyyppi"
-
 
 #: scripts/firestaff_dungeon_studio.py:517
 msgid "View"
 msgstr "Näkymä"
 
-
 #: scripts/firestaff_dungeon_studio.py:519
 msgid "Show Grid"
 msgstr "Näytä ruudukko"
-
 
 #: scripts/firestaff_dungeon_studio.py:521
 msgid "Show Things"
 msgstr "Näytä esineet"
 
-
 #: scripts/firestaff_dungeon_studio.py:525
 msgid "Zoom"
 msgstr "Zoom"
-
 
 #: scripts/firestaff_dungeon_studio.py:528
 msgid "Fit"
 msgstr "Sovita"
 
-
 #: scripts/firestaff_dungeon_studio.py:554
 msgid "Map Properties"
 msgstr "Kartan ominaisuudet"
 
-
 #: scripts/firestaff_dungeon_studio.py:558
-#: scripts/firestaff_savegame_editor.py:322
+#: scripts/firestaff_savegame_editor.py:365
 msgid "Name"
 msgstr "Nimi"
 
-
 #: scripts/firestaff_dungeon_studio.py:561
-#: scripts/firestaff_savegame_editor.py:857
-#: scripts/firestaff_savegame_editor.py:948
+#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:1066
+#: scripts/firestaff_savegame_editor.py:1143
 msgid "Size"
 msgstr "Koko"
-
 
 #: scripts/firestaff_dungeon_studio.py:567
 msgid "Wall Set"
 msgstr "Seinäsarja"
 
-
 #: scripts/firestaff_dungeon_studio.py:570
 msgid "Floor Set"
 msgstr "Lattiasarja"
-
 
 #: scripts/firestaff_dungeon_studio.py:573
 msgid "Difficulty"
 msgstr "Vaikeustaso"
 
-
 #: scripts/firestaff_dungeon_studio.py:579
 msgid "Tile"
 msgstr "Ruutu"
 
-
 #: scripts/firestaff_dungeon_studio.py:583
 msgid "Position"
 msgstr "Sijainti"
-
 
 #: scripts/firestaff_dungeon_studio.py:585
 #: scripts/firestaff_dungeon_studio.py:608
 msgid "Type"
 msgstr "Tyyppi"
 
-
 #: scripts/firestaff_dungeon_studio.py:589
 msgid "Things at Tile"
 msgstr "Ruudun esineet"
-
 
 #: scripts/firestaff_dungeon_studio.py:601
 msgid "Delete Thing"
 msgstr "Poista esine"
 
-
 #: scripts/firestaff_dungeon_studio.py:604
 msgid "Thing Properties"
 msgstr "Esineen ominaisuudet"
-
 
 #: scripts/firestaff_dungeon_studio.py:610
 msgid "Cell"
 msgstr "Solu"
 
-
 #: scripts/firestaff_dungeon_studio.py:617
 msgid "Graphics Override"
 msgstr "Grafiikan ohitus"
-
 
 #: scripts/firestaff_dungeon_studio.py:623
 #, python-brace-format
 msgid "Import {}..."
 msgstr "Tuo {}..."
 
-
 #: scripts/firestaff_dungeon_studio.py:687
 msgid "Level name:"
 msgstr "Tason nimi:"
-
 
 #: scripts/firestaff_dungeon_studio.py:687
 msgid "New Level"
 msgstr "Uusi taso"
 
-
 #: scripts/firestaff_dungeon_studio.py:1024
 msgid "Show grid"
 msgstr "Näytä ruudukko"
-
 
 #: scripts/firestaff_dungeon_studio.py:1026
 msgid "Show things"
 msgstr "Näytä esineet"
 
-
 #: scripts/firestaff_dungeon_studio.py:1028
-#: scripts/firestaff_savegame_editor.py:1208
+#: scripts/firestaff_savegame_editor.py:1403
 msgid "Use system language"
 msgstr "Käytä järjestelmän kieltä"
 
-
 #: scripts/firestaff_dungeon_studio.py:1030
-#: scripts/firestaff_savegame_editor.py:1210
+#: scripts/firestaff_savegame_editor.py:1405
 msgid "Close"
 msgstr "Sulje"
-
 
 #: scripts/firestaff_dungeon_studio.py:1042
 msgid "New dungeon created"
 msgstr "Uusi luolasto luotu"
-
 
 #: scripts/firestaff_dungeon_studio.py:1060
 #, python-brace-format
 msgid "Opened: {}"
 msgstr "Avattu: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1062
 #: scripts/firestaff_dungeon_studio.py:1072
 #: scripts/firestaff_dungeon_studio.py:1195
 #: scripts/firestaff_dungeon_studio.py:1200
-#: scripts/firestaff_savegame_editor.py:744
-#: scripts/firestaff_savegame_editor.py:747
-#: scripts/firestaff_savegame_editor.py:760
-#: scripts/firestaff_savegame_editor.py:772
+#: scripts/firestaff_savegame_editor.py:850
+#: scripts/firestaff_savegame_editor.py:853
+#: scripts/firestaff_savegame_editor.py:866
+#: scripts/firestaff_savegame_editor.py:878
+#: scripts/firestaff_savegame_editor.py:1038
 msgid "Error"
 msgstr "Virhe"
 
-
 #: scripts/firestaff_dungeon_studio.py:1070
-#: scripts/firestaff_savegame_editor.py:759
+#: scripts/firestaff_savegame_editor.py:865
 #, python-brace-format
 msgid "Saved: {}"
 msgstr "Tallennettu: {}"
-
 
 #: scripts/firestaff_dungeon_studio.py:1106
 msgid "Width (1-64)"
 msgstr "Leveys (1-64)"
 
-
 #: scripts/firestaff_dungeon_studio.py:1108
 msgid "Height (1-64)"
 msgstr "Korkeus (1-64)"
 
-
 #: scripts/firestaff_dungeon_studio.py:1130
 msgid "Apply"
 msgstr "Käytä"
-
 
 #: scripts/firestaff_dungeon_studio.py:1148
 #, python-brace-format
 msgid "Maps: {}"
 msgstr "Kartat: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1149
 #, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "Nykyinen: {} ({}×{})"
 
-
 #: scripts/firestaff_dungeon_studio.py:1151
 msgid "Tiles:"
 msgstr "Ruudut:"
-
 
 #: scripts/firestaff_dungeon_studio.py:1155
 #, python-brace-format
 msgid "Things: {}"
 msgstr "Esineet: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1160
 msgid "Dungeon Statistics"
 msgstr "Luolaston tilastot"
-
 
 #: scripts/firestaff_dungeon_studio.py:1169
 #, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "Kartta {} \"{}\": kaikki seiniä"
 
-
 #: scripts/firestaff_dungeon_studio.py:1175
 msgid "Party start is inside a wall"
 msgstr "Ryhmän aloitus on seinän sisällä"
-
 
 #: scripts/firestaff_dungeon_studio.py:1177
 msgid "Party start is outside map bounds"
 msgstr "Ryhmän aloitus on kartan rajojen ulkopuolella"
 
-
 #: scripts/firestaff_dungeon_studio.py:1180
 msgid "Issues found:"
 msgstr "Ongelmia löytyi:"
-
 
 #: scripts/firestaff_dungeon_studio.py:1180
 #: scripts/firestaff_dungeon_studio.py:1182
 msgid "Validation"
 msgstr "Vahvistus"
 
-
 #: scripts/firestaff_dungeon_studio.py:1182
 msgid "Dungeon is valid!"
 msgstr "Luolasto on kelvollinen!"
-
 
 #: scripts/firestaff_dungeon_studio.py:1189
 #, python-brace-format
 msgid "Import {}"
 msgstr "Tuo {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1190
 msgid "All"
 msgstr "Kaikki"
 
-
 #: scripts/firestaff_dungeon_studio.py:1195
 msgid "Pillow is required for graphics import"
 msgstr "Pillow vaaditaan grafiikan tuontiin"
-
 
 #: scripts/firestaff_dungeon_studio.py:1200
 #, python-brace-format
 msgid "Could not load image: {}"
 msgstr "Kuvaa ei voitu ladata: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1203
 msgid "Resize?"
 msgstr "Muuta kokoa?"
-
 
 #: scripts/firestaff_dungeon_studio.py:1204
 #, python-brace-format
@@ -944,860 +779,742 @@ msgstr ""
 "Kuva on {}×{}, odotettu {}×{}.\n"
 "Muuta kokoa sopivaksi?"
 
-
 #: scripts/firestaff_dungeon_studio.py:1216
 #, python-brace-format
 msgid "{} imported from {}"
 msgstr "{} tuotu kohteesta {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "East"
 msgstr "Itä"
-
 
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "North"
 msgstr "Pohjoinen"
 
-
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "South"
 msgstr "Etelä"
-
 
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "West"
 msgstr "Länsi"
 
-
 #: scripts/firestaff_dungeon_studio.py:1257
 msgid "Turn L"
 msgstr "Vasen"
-
 
 #: scripts/firestaff_dungeon_studio.py:1259
 msgid "Fwd"
 msgstr "Eteen"
 
-
 #: scripts/firestaff_dungeon_studio.py:1261
 msgid "Back"
 msgstr "Taakse"
-
 
 #: scripts/firestaff_dungeon_studio.py:1263
 msgid "Turn R"
 msgstr "Oikea"
 
-
 #: scripts/firestaff_savegame_editor.py:141
 msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
 msgstr "Globaali luolaston tila: tapahtumien määrä, aktiivisten ryhmien rajat, RNG-siemen. Kiinteä 128 tavua."
-
 
 #: scripts/firestaff_savegame_editor.py:142
 msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
 msgstr "Aktiiviset olento/esineryhmät vankityrmässä. Muuttuva koko alkaen GLOBAL_DATA @46."
 
-
 #: scripts/firestaff_savegame_editor.py:143
 msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
 msgstr "Mestariennätykset (4 x 319 tavua) + puoluetiedot (128 tavua). HP, tilastot, taidot, inventaario."
-
 
 #: scripts/firestaff_savegame_editor.py:144
 msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
 msgstr "Dungeon-tapahtumaluettelo: ajastimet, liipaisimet, anturit. Muuttuva koko alkaen GLOBAL_DATA @28."
 
-
 #: scripts/firestaff_savegame_editor.py:145
 msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
 msgstr "Aikajana/ajastin jono ajoitetuille tapahtumille. Tiedoston loput muiden osien jälkeen."
 
-
-#: scripts/firestaff_savegame_editor.py:288
+#: scripts/firestaff_savegame_editor.py:331
 msgid "Random Words [0-148]"
 msgstr "Satunnaiset sanat [0-148]"
 
-
-#: scripts/firestaff_savegame_editor.py:289
+#: scripts/firestaff_savegame_editor.py:332
 msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
 msgstr "XOR-obfuskaatiotyyny — 149 satunnaista 16-bittistä sanaa (298 tavua)"
 
-
-#: scripts/firestaff_savegame_editor.py:290
+#: scripts/firestaff_savegame_editor.py:333
 msgid "Format Version"
 msgstr "Muotoile versio"
 
-
-#: scripts/firestaff_savegame_editor.py:291
+#: scripts/firestaff_savegame_editor.py:334
 msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
 msgstr "Tallenna muotoversio. 5 = PC 3.4, 4 = PC 3.3, 3 = Amiga 3.6"
 
-
-#: scripts/firestaff_savegame_editor.py:292
+#: scripts/firestaff_savegame_editor.py:335
 msgid "Game ID"
 msgstr "Peli"
 
-
-#: scripts/firestaff_savegame_editor.py:293
+#: scripts/firestaff_savegame_editor.py:336
 msgid "Identifies which game created this save"
 msgstr "Tunnistaa, mikä peli loi tämän tallennuksen"
 
-
-#: scripts/firestaff_savegame_editor.py:294
+#: scripts/firestaff_savegame_editor.py:337
 msgid "Key: GLOBAL_DATA"
 msgstr "Avain: GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:295
+#: scripts/firestaff_savegame_editor.py:338
 msgid "XOR deobfuscation key for GLOBAL_DATA"
 msgstr "XOR-deobfuskointiavain kohteelle GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:296
+#: scripts/firestaff_savegame_editor.py:339
 msgid "Key: ACTIVE_GROUP"
 msgstr "Avain: ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:297
+#: scripts/firestaff_savegame_editor.py:340
 msgid "XOR deobfuscation key for ACTIVE_GROUP"
 msgstr "XOR-deobfuskointiavain ryhmälle ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:298
+#: scripts/firestaff_savegame_editor.py:341
 msgid "Key: PARTY"
 msgstr "Avain: PARTY"
 
-
-#: scripts/firestaff_savegame_editor.py:299
+#: scripts/firestaff_savegame_editor.py:342
 msgid "XOR deobfuscation key for PARTY"
 msgstr "PARTY:n XOR-deobfuskointiavain"
 
-
-#: scripts/firestaff_savegame_editor.py:300
+#: scripts/firestaff_savegame_editor.py:343
 msgid "Key: EVENTS"
 msgstr "Avain: TAPAHTUMAT"
 
-
-#: scripts/firestaff_savegame_editor.py:301
+#: scripts/firestaff_savegame_editor.py:344
 msgid "XOR deobfuscation key for EVENTS"
 msgstr "XOR-deobfuskointiavain tapahtumalle EVENTS"
 
-
-#: scripts/firestaff_savegame_editor.py:302
+#: scripts/firestaff_savegame_editor.py:345
 msgid "Key: TIMELINE"
 msgstr "Avain: TIMELINE"
 
-
-#: scripts/firestaff_savegame_editor.py:303
+#: scripts/firestaff_savegame_editor.py:346
 msgid "XOR deobfuscation key for TIMELINE"
 msgstr "XOR-deobfuskointiavain aikajanalle"
 
-
-#: scripts/firestaff_savegame_editor.py:304
+#: scripts/firestaff_savegame_editor.py:347
 msgid "Checksum: GLOBAL_DATA"
 msgstr "Tarkistussumma: GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:305
+#: scripts/firestaff_savegame_editor.py:348
 msgid "F0418 checksum for GLOBAL_DATA validation"
 msgstr "F0418 tarkistussumma GLOBAL_DATA-tarkistukseen"
 
-
-#: scripts/firestaff_savegame_editor.py:306
+#: scripts/firestaff_savegame_editor.py:349
 msgid "Checksum: ACTIVE_GROUP"
 msgstr "Tarkistussumma: ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:307
+#: scripts/firestaff_savegame_editor.py:350
 msgid "F0418 checksum for ACTIVE_GROUP validation"
 msgstr "F0418 tarkistussumma ACTIVE_GROUP-vahvistusta varten"
 
-
-#: scripts/firestaff_savegame_editor.py:308
+#: scripts/firestaff_savegame_editor.py:351
 msgid "Checksum: PARTY"
 msgstr "Tarkistussumma: PARTY"
 
-
-#: scripts/firestaff_savegame_editor.py:309
+#: scripts/firestaff_savegame_editor.py:352
 msgid "F0418 checksum for PARTY validation"
 msgstr "F0418 tarkistussumma PARTY-vahvistusta varten"
 
-
-#: scripts/firestaff_savegame_editor.py:310
+#: scripts/firestaff_savegame_editor.py:353
 msgid "Checksum: EVENTS"
 msgstr "Tarkistussumma: TAPAHTUMAT"
 
-
-#: scripts/firestaff_savegame_editor.py:311
+#: scripts/firestaff_savegame_editor.py:354
 msgid "F0418 checksum for EVENTS validation"
 msgstr "F0418 tarkistussumma TAPAHTUMAT vahvistusta varten"
 
-
-#: scripts/firestaff_savegame_editor.py:312
+#: scripts/firestaff_savegame_editor.py:355
 msgid "Checksum: TIMELINE"
 msgstr "Tarkistussumma: TIMELINE"
 
-
-#: scripts/firestaff_savegame_editor.py:313
+#: scripts/firestaff_savegame_editor.py:356
 msgid "F0418 checksum for TIMELINE validation"
 msgstr "F0418 tarkistussumma TIMELINE vahvistusta varten"
 
-
-#: scripts/firestaff_savegame_editor.py:314
-#: scripts/firestaff_savegame_editor.py:849
+#: scripts/firestaff_savegame_editor.py:357
+#: scripts/firestaff_savegame_editor.py:968
 msgid "Platform"
 msgstr "Alusta"
 
-
-#: scripts/firestaff_savegame_editor.py:315
+#: scripts/firestaff_savegame_editor.py:358
 msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
 msgstr "Kohdealusta. 1 = PC, 2 = Amiga, 9 = PC Engine jne."
 
-
-#: scripts/firestaff_savegame_editor.py:316
+#: scripts/firestaff_savegame_editor.py:359
 msgid "Dungeon ID"
 msgstr "Dungeon ID"
 
-
-#: scripts/firestaff_savegame_editor.py:317
+#: scripts/firestaff_savegame_editor.py:360
 msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
 msgstr "Dungeon. 0 = DM1, 1 = CSB, 10 = Theron"
 
-
-#: scripts/firestaff_savegame_editor.py:323
+#: scripts/firestaff_savegame_editor.py:366
 msgid "Title"
 msgstr "Otsikko"
 
-
-#: scripts/firestaff_savegame_editor.py:324
+#: scripts/firestaff_savegame_editor.py:367
 msgid "Direction"
 msgstr "Sijainti"
 
-
-#: scripts/firestaff_savegame_editor.py:325
+#: scripts/firestaff_savegame_editor.py:368
 msgid "Action Index"
 msgstr "Toimintaindeksi"
 
-
-#: scripts/firestaff_savegame_editor.py:326
+#: scripts/firestaff_savegame_editor.py:369
 msgid "Poison"
 msgstr "Myrkkyä"
 
-
-#: scripts/firestaff_savegame_editor.py:327
+#: scripts/firestaff_savegame_editor.py:370
 msgid "HP Current"
 msgstr "Nykyinen resurssi"
 
-
-#: scripts/firestaff_savegame_editor.py:328
+#: scripts/firestaff_savegame_editor.py:371
 msgid "HP Max"
 msgstr "HP Max"
 
-
-#: scripts/firestaff_savegame_editor.py:329
+#: scripts/firestaff_savegame_editor.py:372
 msgid "Stamina Current"
 msgstr "Nykyinen resurssi"
 
-
-#: scripts/firestaff_savegame_editor.py:330
+#: scripts/firestaff_savegame_editor.py:373
 msgid "Stamina Max"
 msgstr "Kestävyys max"
 
-
-#: scripts/firestaff_savegame_editor.py:331
+#: scripts/firestaff_savegame_editor.py:374
 msgid "Mana Current"
 msgstr "Nykyinen resurssi"
 
-
-#: scripts/firestaff_savegame_editor.py:332
+#: scripts/firestaff_savegame_editor.py:375
 msgid "Mana Max"
 msgstr "Mana Max"
 
-
-#: scripts/firestaff_savegame_editor.py:333
-#: scripts/firestaff_savegame_editor.py:886
+#: scripts/firestaff_savegame_editor.py:376
+#: scripts/firestaff_savegame_editor.py:1005
 msgid "Food"
 msgstr "Ruokaa"
 
-
-#: scripts/firestaff_savegame_editor.py:334
-#: scripts/firestaff_savegame_editor.py:886
+#: scripts/firestaff_savegame_editor.py:377
+#: scripts/firestaff_savegame_editor.py:1005
 msgid "Water"
 msgstr "Vesi"
 
-
-#: scripts/firestaff_savegame_editor.py:335
+#: scripts/firestaff_savegame_editor.py:378
 msgid "Load"
 msgstr "Lataa"
 
-
-#: scripts/firestaff_savegame_editor.py:339
+#: scripts/firestaff_savegame_editor.py:382
 msgid "Fighter"
 msgstr "Taistelija"
 
-
-#: scripts/firestaff_savegame_editor.py:340
+#: scripts/firestaff_savegame_editor.py:383
 msgid "Ninja"
 msgstr "Ninja"
 
-
-#: scripts/firestaff_savegame_editor.py:341
+#: scripts/firestaff_savegame_editor.py:384
 msgid "Priest"
 msgstr "Pappi"
 
-
-#: scripts/firestaff_savegame_editor.py:342
+#: scripts/firestaff_savegame_editor.py:385
 msgid "Wizard"
 msgstr "Ohjattu toiminto"
 
-
-#: scripts/firestaff_savegame_editor.py:343
+#: scripts/firestaff_savegame_editor.py:386
 msgid "Swing"
 msgstr "Swing"
 
-
-#: scripts/firestaff_savegame_editor.py:344
+#: scripts/firestaff_savegame_editor.py:387
 msgid "Thrust"
 msgstr "Työntövoima"
 
-
-#: scripts/firestaff_savegame_editor.py:345
+#: scripts/firestaff_savegame_editor.py:388
 msgid "Club"
 msgstr "Club"
 
-
-#: scripts/firestaff_savegame_editor.py:346
+#: scripts/firestaff_savegame_editor.py:389
 msgid "Parry"
 msgstr "Parry"
 
-
-#: scripts/firestaff_savegame_editor.py:347
+#: scripts/firestaff_savegame_editor.py:390
 msgid "Steal"
 msgstr "Varasta"
 
-
-#: scripts/firestaff_savegame_editor.py:348
+#: scripts/firestaff_savegame_editor.py:391
 msgid "Fight"
 msgstr "Taistella"
 
-
-#: scripts/firestaff_savegame_editor.py:349
+#: scripts/firestaff_savegame_editor.py:392
 msgid "Throw"
 msgstr "Heitä"
 
-
-#: scripts/firestaff_savegame_editor.py:350
+#: scripts/firestaff_savegame_editor.py:393
 msgid "Shoot"
 msgstr "Ammu"
 
-
-#: scripts/firestaff_savegame_editor.py:351
+#: scripts/firestaff_savegame_editor.py:394
 msgid "Identify"
 msgstr "Tunnista"
 
-
-#: scripts/firestaff_savegame_editor.py:352
+#: scripts/firestaff_savegame_editor.py:395
 msgid "Heal"
 msgstr "Parantua"
 
-
-#: scripts/firestaff_savegame_editor.py:353
+#: scripts/firestaff_savegame_editor.py:396
 msgid "Influence"
 msgstr "Vaikuttaa"
 
-
-#: scripts/firestaff_savegame_editor.py:354
+#: scripts/firestaff_savegame_editor.py:397
 msgid "Defend"
 msgstr "Puolusta"
 
-
-#: scripts/firestaff_savegame_editor.py:355
+#: scripts/firestaff_savegame_editor.py:398
 msgid "Fire"
 msgstr "Tuli"
 
-
-#: scripts/firestaff_savegame_editor.py:356
+#: scripts/firestaff_savegame_editor.py:399
 msgid "Air"
 msgstr "ilmaa"
 
-
-#: scripts/firestaff_savegame_editor.py:357
+#: scripts/firestaff_savegame_editor.py:400
 msgid "Earth"
 msgstr "Maapallo"
 
-
-#: scripts/firestaff_savegame_editor.py:358
+#: scripts/firestaff_savegame_editor.py:401
 msgid "Water (spell)"
 msgstr "Vesi (loitsu)"
 
-
-#: scripts/firestaff_savegame_editor.py:362
+#: scripts/firestaff_savegame_editor.py:405
 msgid "Event Count"
 msgstr "Tapahtumien määrä"
 
-
-#: scripts/firestaff_savegame_editor.py:363
+#: scripts/firestaff_savegame_editor.py:406
 msgid "Number of active events"
 msgstr "Aktiivisten tapahtumien määrä"
 
-
-#: scripts/firestaff_savegame_editor.py:364
+#: scripts/firestaff_savegame_editor.py:407
 msgid "First Unused Event"
 msgstr "Ensimmäinen käyttämätön tapahtuma"
 
-
-#: scripts/firestaff_savegame_editor.py:365
+#: scripts/firestaff_savegame_editor.py:408
 msgid "Index of first free event slot"
 msgstr "Ensimmäisen ilmaisen tapahtumapaikan indeksi"
 
-
-#: scripts/firestaff_savegame_editor.py:366
+#: scripts/firestaff_savegame_editor.py:409
 msgid "Event Max Count"
 msgstr "Tapahtuman enimmäismäärä"
 
-
-#: scripts/firestaff_savegame_editor.py:367
+#: scripts/firestaff_savegame_editor.py:410
 msgid "Max events (determines EVENTS part size)"
 msgstr "Tapahtumien enimmäismäärä (määrittää EVENTS-osan koon)"
 
-
-#: scripts/firestaff_savegame_editor.py:368
+#: scripts/firestaff_savegame_editor.py:411
 msgid "Active Group Count"
 msgstr "Aktiivisten ryhmien määrä"
 
-
-#: scripts/firestaff_savegame_editor.py:369
+#: scripts/firestaff_savegame_editor.py:412
 msgid "Number of active creature/item groups"
 msgstr "Aktiivisten olentojen/esineryhmien määrä"
 
-
-#: scripts/firestaff_savegame_editor.py:370
+#: scripts/firestaff_savegame_editor.py:413
 msgid "Max Active Group Count"
 msgstr "Aktiivisten ryhmien enimmäismäärä"
 
-
-#: scripts/firestaff_savegame_editor.py:371
+#: scripts/firestaff_savegame_editor.py:414
 msgid "Max active groups (determines ACTIVE_GROUP size)"
 msgstr "Aktiivisten ryhmien enimmäismäärä (määrittää ryhmän ACTIVE_GROUP koon)"
 
-
-#: scripts/firestaff_savegame_editor.py:375
+#: scripts/firestaff_savegame_editor.py:418
 msgid "Magical Light"
 msgstr "Maaginen valo"
 
-
-#: scripts/firestaff_savegame_editor.py:376
+#: scripts/firestaff_savegame_editor.py:419
 msgid "Light spell intensity (0=dark)"
 msgstr "Valon loitsujen voimakkuus (0 = tumma)"
 
-
-#: scripts/firestaff_savegame_editor.py:377
+#: scripts/firestaff_savegame_editor.py:420
 msgid "Thief's Eye"
 msgstr "Varkaan silmä"
 
-
-#: scripts/firestaff_savegame_editor.py:378
+#: scripts/firestaff_savegame_editor.py:421
 msgid "Thief's Eye active (0/1)"
 msgstr "Thief's Eye aktiivinen (0/1)"
 
-
-#: scripts/firestaff_savegame_editor.py:379
+#: scripts/firestaff_savegame_editor.py:422
 msgid "Footprints"
 msgstr "Jalanjäljet"
 
-
-#: scripts/firestaff_savegame_editor.py:380
+#: scripts/firestaff_savegame_editor.py:423
 msgid "Footprints active (0/1)"
 msgstr "Jalanjäljet aktiiviset (0/1)"
 
-
-#: scripts/firestaff_savegame_editor.py:381
+#: scripts/firestaff_savegame_editor.py:424
 msgid "Shield"
 msgstr "Kilpi"
 
-
-#: scripts/firestaff_savegame_editor.py:382
+#: scripts/firestaff_savegame_editor.py:425
 msgid "Shield spell strength"
 msgstr "Suojan loitsun vahvuus"
 
-
-#: scripts/firestaff_savegame_editor.py:383
+#: scripts/firestaff_savegame_editor.py:426
 msgid "Fire Shield"
 msgstr "Palokilpi"
 
-
-#: scripts/firestaff_savegame_editor.py:384
+#: scripts/firestaff_savegame_editor.py:427
 msgid "Fire Shield strength"
 msgstr "Palosuojan vahvuus"
 
-
-#: scripts/firestaff_savegame_editor.py:385
+#: scripts/firestaff_savegame_editor.py:428
 msgid "Spell Shield"
 msgstr "Spell Shield"
 
-
-#: scripts/firestaff_savegame_editor.py:386
+#: scripts/firestaff_savegame_editor.py:429
 msgid "Spell Shield (Antimagic) strength"
 msgstr "Spell Shield (Antimagic) vahvuus"
 
-
-#: scripts/firestaff_savegame_editor.py:387
+#: scripts/firestaff_savegame_editor.py:430
 msgid "Calming Scent"
 msgstr "Rauhoittava Tuoksu"
 
-
-#: scripts/firestaff_savegame_editor.py:388
+#: scripts/firestaff_savegame_editor.py:431
 msgid "Calming influence active"
 msgstr "Rauhoittava vaikutus aktiivinen"
 
-
-#: scripts/firestaff_savegame_editor.py:389
+#: scripts/firestaff_savegame_editor.py:432
 msgid "Freeze Life"
 msgstr "Jäädyttää elämä"
 
-
-#: scripts/firestaff_savegame_editor.py:390
+#: scripts/firestaff_savegame_editor.py:433
 msgid "Freeze Life active (0/1)"
 msgstr "Freeze Life aktiivinen (0/1)"
 
-
-#: scripts/firestaff_savegame_editor.py:489
-#: scripts/firestaff_savegame_editor.py:492
-#: scripts/firestaff_savegame_editor.py:984
+#: scripts/firestaff_savegame_editor.py:532
+#: scripts/firestaff_savegame_editor.py:535
+#: scripts/firestaff_savegame_editor.py:1179
 #, python-brace-format
 msgid "Champion {}"
 msgstr "Mestari {}"
 
-
-#: scripts/firestaff_savegame_editor.py:629
+#: scripts/firestaff_savegame_editor.py:735
 msgid "Firestaff Savegame Editor 0.2"
 msgstr "Firestaff Savegame Editor 0.2"
 
-
-#: scripts/firestaff_savegame_editor.py:680
+#: scripts/firestaff_savegame_editor.py:786
 msgid "Open..."
 msgstr "Avaa..."
 
-
-#: scripts/firestaff_savegame_editor.py:684
+#: scripts/firestaff_savegame_editor.py:790
 msgid "Quit"
 msgstr "Lopeta"
 
-
-#: scripts/firestaff_savegame_editor.py:685
-#: scripts/firestaff_savegame_editor.py:846
+#: scripts/firestaff_savegame_editor.py:791
+#: scripts/firestaff_savegame_editor.py:965
 msgid "File"
 msgstr "Kaikki tiedostot"
 
-
-#: scripts/firestaff_savegame_editor.py:706
+#: scripts/firestaff_savegame_editor.py:812
 msgid "Open"
 msgstr "Avaa"
 
-
-#: scripts/firestaff_savegame_editor.py:708
-#: scripts/firestaff_savegame_editor.py:768
+#: scripts/firestaff_savegame_editor.py:814
+#: scripts/firestaff_savegame_editor.py:874
 msgid "Save As"
 msgstr "Tallenna nimellä..."
 
-
-#: scripts/firestaff_savegame_editor.py:710
+#: scripts/firestaff_savegame_editor.py:816
 msgid "No file loaded"
 msgstr "Tiedostoa ei ladattu"
 
-
-#: scripts/firestaff_savegame_editor.py:737
+#: scripts/firestaff_savegame_editor.py:843
 msgid "Open Savegame"
 msgstr "Avaa Savegame"
 
-
-#: scripts/firestaff_savegame_editor.py:738
+#: scripts/firestaff_savegame_editor.py:844
+#: scripts/firestaff_savegame_editor.py:1016
 msgid "All Savegames"
 msgstr "Kaikki tallennuspelit"
 
-
-#: scripts/firestaff_savegame_editor.py:739
+#: scripts/firestaff_savegame_editor.py:845
+#: scripts/firestaff_savegame_editor.py:1015
 msgid "All Files"
 msgstr "Kaikki tiedostot"
 
-
-#: scripts/firestaff_savegame_editor.py:747
+#: scripts/firestaff_savegame_editor.py:853
+#: scripts/firestaff_savegame_editor.py:1026
 msgid "Unrecognized savegame format."
 msgstr "Tuntematon tallennusmuoto."
 
-
-#: scripts/firestaff_savegame_editor.py:750
+#: scripts/firestaff_savegame_editor.py:856
 #, python-brace-format
 msgid "Loaded: {}"
 msgstr "Kohde ladattu: {}"
 
-
-#: scripts/firestaff_savegame_editor.py:755
-#: scripts/firestaff_savegame_editor.py:764
+#: scripts/firestaff_savegame_editor.py:861
+#: scripts/firestaff_savegame_editor.py:870
 msgid "No savegame loaded"
 msgstr "Tallennuspeliä ei ladattu"
 
-
-#: scripts/firestaff_savegame_editor.py:755
-#: scripts/firestaff_savegame_editor.py:764
+#: scripts/firestaff_savegame_editor.py:861
+#: scripts/firestaff_savegame_editor.py:870
 msgid "Warning"
 msgstr "Varoitukset"
 
-
-#: scripts/firestaff_savegame_editor.py:757
-#: scripts/firestaff_savegame_editor.py:766
+#: scripts/firestaff_savegame_editor.py:863
+#: scripts/firestaff_savegame_editor.py:872
 msgid "Read only"
 msgstr "Read only"
 
-
-#: scripts/firestaff_savegame_editor.py:758
-#: scripts/firestaff_savegame_editor.py:767
+#: scripts/firestaff_savegame_editor.py:864
+#: scripts/firestaff_savegame_editor.py:873
 msgid "Saturn Backup RAM images can be inspected but not edited or rewritten."
 msgstr "Saturn Backup RAM images can be inspected but not edited or rewritten."
 
-
-#: scripts/firestaff_savegame_editor.py:771
+#: scripts/firestaff_savegame_editor.py:877
 #, python-brace-format
 msgid "Saved as: {}"
 msgstr "Tallennettu: {}"
 
-
-#: scripts/firestaff_savegame_editor.py:781
+#: scripts/firestaff_savegame_editor.py:887
 msgid "Game-specific Nexus payload fields are not yet verified."
 msgstr "Game-specific Nexus payload fields are not yet verified."
 
-
-#: scripts/firestaff_savegame_editor.py:788
+#: scripts/firestaff_savegame_editor.py:894
 msgid "Only available for Saturn Backup RAM images."
 msgstr "Only available for Saturn Backup RAM images."
 
-
-#: scripts/firestaff_savegame_editor.py:821
+#: scripts/firestaff_savegame_editor.py:927
 msgid "File Overview"
 msgstr "Tiedoston yleiskatsaus"
 
-
-#: scripts/firestaff_savegame_editor.py:824
+#: scripts/firestaff_savegame_editor.py:930
 msgid "Saturn Backup RAM"
 msgstr "Saturn Backup RAM"
 
-
-#: scripts/firestaff_savegame_editor.py:826
+#: scripts/firestaff_savegame_editor.py:932
 msgid "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 msgstr "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 
-
-#: scripts/firestaff_savegame_editor.py:831
+#: scripts/firestaff_savegame_editor.py:938
 msgid "Comment"
 msgstr "Comment"
 
-#: scripts/firestaff_savegame_editor.py:866
+#: scripts/firestaff_savegame_editor.py:939
 msgid "Language byte (raw)"
 msgstr "Kielitavu (raaka)"
 
-#: scripts/firestaff_savegame_editor.py:867
+#: scripts/firestaff_savegame_editor.py:940
 msgid "Timestamp field (raw)"
 msgstr "Aikaleimakenttä (raaka)"
 
-#: scripts/firestaff_savegame_editor.py:870
-msgid "Allocated block IDs"
-msgstr "Varattujen lohkojen tunnukset"
-
-
-#: scripts/firestaff_savegame_editor.py:832
+#: scripts/firestaff_savegame_editor.py:941
 msgid "Payload size"
 msgstr "Payload size"
 
-
-#: scripts/firestaff_savegame_editor.py:833
+#: scripts/firestaff_savegame_editor.py:942
 msgid "Allocated blocks"
 msgstr "Allocated blocks"
 
+#: scripts/firestaff_savegame_editor.py:943
+msgid "Allocated block IDs"
+msgstr "Varattujen lohkojen tunnukset"
 
-#: scripts/firestaff_savegame_editor.py:836
+#: scripts/firestaff_savegame_editor.py:950
+msgid "Compare with another card…"
+msgstr "Vertaa toiseen korttiin…"
+
+#: scripts/firestaff_savegame_editor.py:955
 #, python-brace-format
 msgid "Payload starts (hex): {}…"
 msgstr "Payload starts (hex): {}…"
 
-
-#: scripts/firestaff_savegame_editor.py:840
+#: scripts/firestaff_savegame_editor.py:959
 msgid "File Information"
 msgstr "Tiedoston tiedot"
 
-
-#: scripts/firestaff_savegame_editor.py:848
+#: scripts/firestaff_savegame_editor.py:967
 msgid "Format"
 msgstr "Muoto"
 
-
-#: scripts/firestaff_savegame_editor.py:848
-#: scripts/firestaff_savegame_editor.py:849
-#: scripts/firestaff_savegame_editor.py:850
-#: scripts/firestaff_savegame_editor.py:917
-#: scripts/firestaff_savegame_editor.py:919
-#: scripts/firestaff_savegame_editor.py:921
+#: scripts/firestaff_savegame_editor.py:967
+#: scripts/firestaff_savegame_editor.py:968
+#: scripts/firestaff_savegame_editor.py:969
+#: scripts/firestaff_savegame_editor.py:1112
+#: scripts/firestaff_savegame_editor.py:1114
+#: scripts/firestaff_savegame_editor.py:1116
 msgid "Unknown"
 msgstr "Tuntematon"
 
-
-#: scripts/firestaff_savegame_editor.py:850
+#: scripts/firestaff_savegame_editor.py:969
 msgid "Dungeon"
 msgstr "Dungeon"
 
-
-#: scripts/firestaff_savegame_editor.py:855
+#: scripts/firestaff_savegame_editor.py:974
 msgid "Save Parts"
 msgstr "Tallenna nimellä..."
 
-
-#: scripts/firestaff_savegame_editor.py:857
-#: scripts/firestaff_savegame_editor.py:947
+#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:1142
 msgid "Offset"
 msgstr "Offset"
 
-
-#: scripts/firestaff_savegame_editor.py:857
+#: scripts/firestaff_savegame_editor.py:976
 msgid "Part"
 msgstr "osa"
 
-
-#: scripts/firestaff_savegame_editor.py:857
+#: scripts/firestaff_savegame_editor.py:976
 msgid "Status"
 msgstr "Tilastot"
 
-
-#: scripts/firestaff_savegame_editor.py:867
-#: scripts/firestaff_savegame_editor.py:956
+#: scripts/firestaff_savegame_editor.py:986
+#: scripts/firestaff_savegame_editor.py:1151
 msgid "MISMATCH"
 msgstr "ERITTÄIN"
 
-
-#: scripts/firestaff_savegame_editor.py:867
+#: scripts/firestaff_savegame_editor.py:986
 msgid "Valid"
 msgstr "Vahvista"
 
-
-#: scripts/firestaff_savegame_editor.py:871
+#: scripts/firestaff_savegame_editor.py:990
 msgid "Champions"
 msgstr "Mestarit"
 
+#: scripts/firestaff_savegame_editor.py:1013
+msgid "Select another Saturn card"
+msgstr "Valitse toinen Saturn-kortti"
 
-#: scripts/firestaff_savegame_editor.py:898
+#: scripts/firestaff_savegame_editor.py:1014
+msgid "Saturn Backup RAM images"
+msgstr "Saturn Backup RAM -kuvat"
+
+#: scripts/firestaff_savegame_editor.py:1023
+msgid "Choose a different Saturn card image."
+msgstr "Valitse toinen Saturn-muistikorttikuva."
+
+#: scripts/firestaff_savegame_editor.py:1033
+msgid "Saturn payload entries do not match or have different lengths."
+msgstr "Saturn-merkinnät eivät täsmää tai ovat eripituisia."
+
+#: scripts/firestaff_savegame_editor.py:1042
+msgid "Payload differences"
+msgstr "Pelitietojen erot"
+
+#: scripts/firestaff_savegame_editor.py:1054
+msgid "Only raw byte offsets and values are shown; payload field meanings remain unverified."
+msgstr "Vain tavujen sijainnit ja arvot näytetään; tietokenttien merkitystä ei ole vielä varmistettu."
+
+#: scripts/firestaff_savegame_editor.py:1058
+msgid "No byte differences found."
+msgstr "Tavueroja ei löytynyt."
+
+#: scripts/firestaff_savegame_editor.py:1065
+msgid "Payload offset"
+msgstr "Pelitietojen sijainti"
+
+#: scripts/firestaff_savegame_editor.py:1067
+msgid "Current bytes"
+msgstr "Nykyiset tavut"
+
+#: scripts/firestaff_savegame_editor.py:1068
+msgid "Compared bytes"
+msgstr "Vertailtavat tavut"
+
+#: scripts/firestaff_savegame_editor.py:1093
 msgid "Header Fields"
 msgstr "Otsikkokentät"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Description"
 msgstr "Sijainti"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Field"
 msgstr "Kenttä"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Hex"
 msgstr "Hex"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Value"
 msgstr "Arvo"
 
-
-#: scripts/firestaff_savegame_editor.py:933
+#: scripts/firestaff_savegame_editor.py:1128
 msgid "DM1 PC34 Save Parts (F0417/F0418)"
 msgstr "DM1 PC34 Tallenna osat (F0417/F0418)"
 
-
-#: scripts/firestaff_savegame_editor.py:950
+#: scripts/firestaff_savegame_editor.py:1145
 msgid "Expected"
 msgstr "Odotettu"
 
-
-#: scripts/firestaff_savegame_editor.py:951
+#: scripts/firestaff_savegame_editor.py:1146
 msgid "Actual"
 msgstr "Todellinen"
 
-
-#: scripts/firestaff_savegame_editor.py:956
+#: scripts/firestaff_savegame_editor.py:1151
 msgid "VALID"
 msgstr "VOIMASSA"
 
-
-#: scripts/firestaff_savegame_editor.py:979
+#: scripts/firestaff_savegame_editor.py:1174
 msgid "No champion data"
 msgstr "Tuo pelidata"
 
-
-#: scripts/firestaff_savegame_editor.py:1004
+#: scripts/firestaff_savegame_editor.py:1199
 msgid "Combat & Vitals"
 msgstr "Combat & Vitals"
 
-
-#: scripts/firestaff_savegame_editor.py:1020
+#: scripts/firestaff_savegame_editor.py:1215
 msgid "Skills"
 msgstr "Taidot"
 
-
-#: scripts/firestaff_savegame_editor.py:1041
+#: scripts/firestaff_savegame_editor.py:1236
 msgid "No party info available"
 msgstr "Juhlatietoja ei ole saatavilla"
 
-
-#: scripts/firestaff_savegame_editor.py:1044
+#: scripts/firestaff_savegame_editor.py:1239
 msgid "Party Info"
 msgstr "Juhlatiedot"
 
-
-#: scripts/firestaff_savegame_editor.py:1067
+#: scripts/firestaff_savegame_editor.py:1262
 msgid "No global data"
 msgstr "Tuo pelidata"
 
-
-#: scripts/firestaff_savegame_editor.py:1070
+#: scripts/firestaff_savegame_editor.py:1265
 msgid "Global Data"
 msgstr "Tuo pelidata"
 
-
-#: scripts/firestaff_savegame_editor.py:1084
+#: scripts/firestaff_savegame_editor.py:1279
 msgid "Raw Data"
 msgstr "Raaka data"
 
-
-#: scripts/firestaff_savegame_editor.py:1104
+#: scripts/firestaff_savegame_editor.py:1299
 msgid "Header Words"
 msgstr "Otsikkosanat"
 
-
-#: scripts/firestaff_savegame_editor.py:1110
+#: scripts/firestaff_savegame_editor.py:1305
 msgid "Random Words"
 msgstr "Satunnaiset sanat"
 
-
-#: scripts/firestaff_savegame_editor.py:1111
+#: scripts/firestaff_savegame_editor.py:1306
 msgid "Part Keys"
 msgstr "Osaavaimet"
 
-
-#: scripts/firestaff_savegame_editor.py:1112
+#: scripts/firestaff_savegame_editor.py:1307
 msgid "Checksums"
 msgstr "Tarkistussummat"
 
-
-#: scripts/firestaff_savegame_editor.py:1113
+#: scripts/firestaff_savegame_editor.py:1308
 msgid "Format/Platform/Dungeon"
 msgstr "Muoto/Alusta/Dungeon"
 
-
 #~ msgid "Coming soon"
 #~ msgstr "Tulossa pian"
-
 
 #~ msgid "{} support coming in a future update"
 #~ msgstr "{}-tuki tulossa tulevassa päivityksessä"

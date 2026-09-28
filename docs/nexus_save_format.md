@@ -30,7 +30,12 @@ images in the private real-data corpus contain a `DMNEXUS__01` entry. The
 savegame editor reads their block chains and exposes each exact 20,480-byte
 payload as read-only hex. It also exposes the raw language/timestamp header
 fields and exact allocated block IDs as read-only container metadata. This
-verifies container extraction, not payload semantics.
+verifies container extraction, not payload semantics. A read-only comparison
+view reports contiguous payload-relative byte ranges and bounded raw-byte
+previews for two images. Its self-test admits only the four captured files by
+exact filename and SHA-256; other or incomplete corpora cannot be reported as
+authentic-corpus passes. Neither the view nor the test assigns meaning to
+changed bytes, and neither can write or convert a Saturn image.
 
 The authentic `DM.BIN` does contain save-related diagnostic strings in the
 retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the

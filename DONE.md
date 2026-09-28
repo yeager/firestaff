@@ -1,5 +1,13 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-28: Added a read-only comparison view for two authentic Saturn
+  Backup RAM images. It shows payload-relative changed ranges and bounded raw
+  byte previews without assigning field meanings or writing either image.
+  The BKR self-test now requires exactly the four captured samples with their
+  recorded SHA-256 digests; the regression passed on TRV2 against those real
+  files. The remaining Saturn payload schema and native save/load consumer are
+  still unresolved.
+
 - 2026-09-28: Added the authenticated Japanese Saturn `RLOWFIX.BIN` MD5 to
   Nexus's shared canonical asset table. The prior boot-profile gate accepted
   this real 72,332-byte roster archive, but the engine's named-file reader

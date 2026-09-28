@@ -17,7 +17,7 @@ from __future__ import annotations
 
 SAVEGAME_EDITOR_VERSION = "0.2"
 
-import gettext, os, struct, sys
+import gettext, hashlib, os, struct, sys
 from firestaff_studio_preferences import resolve_language, save_language
 from pathlib import Path
 from typing import Any
@@ -264,6 +264,36 @@ def saturn_bkr_display_metadata(entry: dict[str, Any]) -> list[tuple[str, str]]:
         ("allocated_block_count", f"{len(blocks):,}"),
         ("allocated_block_ids", ", ".join(str(block) for block in blocks)),
     ]
+
+
+def saturn_bkr_payload_diff_ranges(left: bytes, right: bytes) -> tuple[tuple[int, int], ...]:
+    """Return half-open ranges of differing payload bytes, without decoding them."""
+    if len(left) != len(right):
+        raise ValueError("Saturn payloads must have equal lengths to compare")
+    ranges = []
+    start = None
+    for offset, (left_byte, right_byte) in enumerate(zip(left, right)):
+        if left_byte != right_byte:
+            if start is None:
+                start = offset
+        elif start is not None:
+            ranges.append((start, offset))
+            start = None
+    if start is not None:
+        ranges.append((start, len(left)))
+    return tuple(ranges)
+
+
+def saturn_bkr_diff_preview(payload: bytes, start: int, end: int,
+                            edge_bytes: int = 8) -> str:
+    """Render a bounded raw-byte preview for one changed offset range."""
+    if not 0 <= start <= end <= len(payload) or edge_bytes < 1:
+        raise ValueError("invalid Saturn payload diff range")
+    span = payload[start:end]
+    if len(span) <= edge_bytes * 2:
+        return span.hex(" ").upper()
+    return (span[:edge_bytes].hex(" ").upper() + " … " +
+            span[-edge_bytes:].hex(" ").upper())
 CHAMPION_NAMES_DM1 = [
     "Halk", "Stamm", "Zed", "Leyla", "Mophus", "Wuuf",
     "Sonja", "Iaido", "Nabi", "Linflas", "Elija", "Chani",
@@ -560,6 +590,16 @@ def detect_game(data: bytes, filename: str = "") -> str | None:
 
 
 def self_test_saturn_bkr(require_real_corpus: bool) -> int:
+    authentic_corpus = {
+        "nexus-two-champion-retail-written-20260926.bkr":
+            "3d60856119df55ffa4937d13b5dc7487157c7c6b131a999a2e61683316679634",
+        "nexus-three-champion-retail-written-20260926.bkr":
+            "d9c86de3b0c668f9961a16529b1d5fd72f3e095823f8f0021cf8db8bfba48e9b",
+        "nexus-four-champion-retail-written-20260926.bkr":
+            "87d041baecca76a629b18b34e13b47adca1d5995a69bcac769aaca54c8f34035",
+        "nexus-four-champion-leader-3-retail-written-20260926.bkr":
+            "319ed84080a90eaeafb1bfa85ca4405a0153f4c85fda76ee7c557b34ac276867",
+    }
     nexus_data_dir = os.environ.get("FIRESTAFF_NEXUS_DATA_DIR")
     if not nexus_data_dir:
         if require_real_corpus:
@@ -567,11 +607,23 @@ def self_test_saturn_bkr(require_real_corpus: bool) -> int:
             return 77
         return 0
     bkr_files = sorted(Path(nexus_data_dir).glob("*.bkr"))
+    if require_real_corpus:
+        bkr_files = [path for path in bkr_files if path.name in authentic_corpus]
     if not bkr_files:
         if require_real_corpus:
-            print("SKIP: no real Nexus Saturn Backup RAM images found")
+            print("SKIP: no pinned authentic Nexus BKR samples found")
             return 77
         return 0
+
+    if require_real_corpus:
+        observed_names = {path.name for path in bkr_files}
+        if observed_names != set(authentic_corpus):
+            print("SKIP: pinned authentic Nexus BKR corpus is incomplete")
+            return 77
+        for bkr_path in bkr_files:
+            digest = hashlib.sha256(bkr_path.read_bytes()).hexdigest()
+            assert digest == authentic_corpus[bkr_path.name], (
+                f"authentic Nexus BKR digest mismatch: {bkr_path.name}")
 
     corpus = []
     payloads_by_name = {}
@@ -619,6 +671,27 @@ def self_test_saturn_bkr(require_real_corpus: bool) -> int:
         payloads_by_name[bkr_path.name] = entry["payload"]
 
     assert len(set(corpus)) == len(corpus), "real Nexus BKR saves should remain distinct"
+    for left_index, left_payload in enumerate(corpus):
+        for right_payload in corpus[left_index + 1:]:
+            changed_offsets = [
+                offset for offset, (left_byte, right_byte) in
+                enumerate(zip(left_payload, right_payload))
+                if left_byte != right_byte
+            ]
+            ranges = saturn_bkr_payload_diff_ranges(left_payload, right_payload)
+            ranged_offsets = [
+                offset for start, end in ranges for offset in range(start, end)
+            ]
+            assert ranged_offsets == changed_offsets
+            assert all(
+                0 <= start < end <= len(left_payload) and
+                (previous_end is None or start > previous_end)
+                for previous_end, (start, end) in zip(
+                    [None] + [end for _, end in ranges[:-1]], ranges)
+            )
+            for start, end in ranges:
+                assert saturn_bkr_diff_preview(left_payload, start, end)
+                assert saturn_bkr_diff_preview(right_payload, start, end)
     named_samples = {
         "nexus-two-champion-retail-written-20260926.bkr": 0x0434,
         "nexus-three-champion-retail-written-20260926.bkr": 0x0514,
@@ -873,6 +946,11 @@ class SavegameEditor(tk.Tk):
                     ttk.Label(entry_frame,
                               text=f"{labels[key]}: {value}",
                               wraplength=680, justify="left").pack(anchor="w")
+                ttk.Button(
+                    entry_frame, text=_("Compare with another card…"),
+                    command=lambda current=entry:
+                        self.compare_saturn_bkr(current),
+                ).pack(anchor="w", pady=(4, 0))
                 preview = entry["payload"][:64].hex(" ").upper()
                 ttk.Label(entry_frame, text=_("Payload starts (hex): {}…").format(preview),
                           wraplength=680, justify="left").pack(anchor="w")
@@ -926,6 +1004,82 @@ class SavegameEditor(tk.Tk):
                     ttk.Progressbar(card, length=120, maximum=max(mx,1), value=min(cur,mx)).pack(fill="x", pady=(0,2))
                 ttk.Label(card, text="{}: {}  {}: {}".format(_("Food"), food, _("Water"), water),
                           font=("",9), foreground="gray").pack(anchor="w")
+
+    def compare_saturn_bkr(self, current_entry: dict[str, Any]) -> None:
+        """Compare one selected authentic BKR payload to another read-only image."""
+        if not self.savegame or self.savegame.game != "nexus_bkr":
+            return
+        selected = filedialog.askopenfilename(
+            title=_("Select another Saturn card"),
+            filetypes=[(_("Saturn Backup RAM images"), "*.bkr"),
+                       (_("All Files"), "*"),
+                       (_("All Savegames"), "*.DAT *.dat *.tqsv *.fnxs *.bkr *.sav")],
+        )
+        if not selected:
+            return
+        other_path = Path(selected)
+        try:
+            if other_path.resolve() == self.savegame.path.resolve():
+                raise ValueError(_("Choose a different Saturn card image."))
+            other_raw = other_path.read_bytes()
+            if detect_game(other_raw, other_path.name) != "nexus_bkr":
+                raise ValueError(_("Unrecognized savegame format."))
+            other_entries = [
+                entry for entry in parse_saturn_bkr(other_raw)
+                if entry["name"] == current_entry["name"]
+            ]
+            if len(other_entries) != 1:
+                raise ValueError(
+                    _("Saturn payload entries do not match or have different lengths."))
+            other_entry = other_entries[0]
+            ranges = saturn_bkr_payload_diff_ranges(
+                current_entry["payload"], other_entry["payload"])
+        except (OSError, ValueError) as exc:
+            messagebox.showerror(_("Error"), str(exc))
+            return
+
+        dialog = tk.Toplevel(self)
+        dialog.title(_("Payload differences"))
+        dialog.geometry("920x520")
+        dialog.minsize(720, 360)
+        content = ttk.Frame(dialog, padding=10)
+        content.pack(fill="both", expand=True)
+        ttk.Label(
+            content,
+            text=f"{self.savegame.path.name}  ↔  {other_path.name}",
+            font=("", 11, "bold"),
+        ).pack(anchor="w", pady=(0, 6))
+        ttk.Label(
+            content,
+            text=_("Only raw byte offsets and values are shown; payload field meanings remain unverified."),
+            wraplength=880, justify="left",
+        ).pack(anchor="w", pady=(0, 8))
+        if not ranges:
+            ttk.Label(content, text=_("No byte differences found.")).pack(anchor="w")
+            return
+
+        tree = ttk.Treeview(
+            content, columns=("offset", "size", "current", "compared"),
+            show="headings",
+        )
+        tree.heading("offset", text=_("Payload offset"))
+        tree.heading("size", text=_("Size"))
+        tree.heading("current", text=_("Current bytes"))
+        tree.heading("compared", text=_("Compared bytes"))
+        tree.column("offset", width=130, minwidth=110, stretch=False)
+        tree.column("size", width=80, minwidth=70, stretch=False, anchor="e")
+        tree.column("current", width=300, minwidth=180, stretch=True)
+        tree.column("compared", width=300, minwidth=180, stretch=True)
+        scrollbar = ttk.Scrollbar(content, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        tree.pack(fill="both", expand=True)
+        for start, end in ranges:
+            tree.insert("", "end", values=(
+                f"0x{start:04X}–0x{end - 1:04X}", end - start,
+                saturn_bkr_diff_preview(current_entry["payload"], start, end),
+                saturn_bkr_diff_preview(other_entry["payload"], start, end),
+            ))
 
     # ── Header ───────────────────────────────────────────────────────────
 

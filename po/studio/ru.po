@@ -14,202 +14,166 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-
 #: scripts/firestaff_artpack_studio.py:1775
 msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
-
 #: scripts/firestaff_artpack_studio.py:1789
-#: scripts/firestaff_savegame_editor.py:633
+#: scripts/firestaff_savegame_editor.py:739
 msgid "Ready"
 msgstr "Готово"
-
 
 #: scripts/firestaff_artpack_studio.py:1790
 msgid "No game data imported"
 msgstr "Игровые данные не импортированы"
 
-
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
-#: scripts/firestaff_savegame_editor.py:689
+#: scripts/firestaff_savegame_editor.py:795
 msgid "Settings..."
 msgstr "Настройки карты"
 
-
 #: scripts/firestaff_artpack_studio.py:1813
 #: scripts/firestaff_dungeon_studio.py:445
-#: scripts/firestaff_savegame_editor.py:847
+#: scripts/firestaff_savegame_editor.py:966
 msgid "Game"
 msgstr "Игра"
-
 
 #: scripts/firestaff_artpack_studio.py:1817
 msgid "Pack"
 msgstr "Пакет"
-
 
 #: scripts/firestaff_artpack_studio.py:1819
 #: scripts/firestaff_artpack_studio.py:1856
 msgid "Browse"
 msgstr "Обзор"
 
-
 #: scripts/firestaff_artpack_studio.py:1820
 msgid "Open/Create"
 msgstr "Открыть/Создать"
-
 
 #: scripts/firestaff_artpack_studio.py:1821
 #: scripts/firestaff_dungeon_studio.py:462
 msgid "Validate"
 msgstr "Проверить"
 
-
 #: scripts/firestaff_artpack_studio.py:1822
 msgid "Build Runtime Cache"
 msgstr "Собрать кеш времени выполнения"
-
 
 #: scripts/firestaff_artpack_studio.py:1823
 msgid "Write Receipt"
 msgstr "Записать квитанцию"
 
-
 #: scripts/firestaff_artpack_studio.py:1824
 msgid "Import .fsart"
 msgstr "Импорт .fsart"
-
 
 #: scripts/firestaff_artpack_studio.py:1825
 msgid "Export .fsart"
 msgstr "Экспорт .fsart"
 
-
 #: scripts/firestaff_artpack_studio.py:1826
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
-#: scripts/firestaff_savegame_editor.py:1202
+#: scripts/firestaff_savegame_editor.py:1397
 msgid "Settings"
 msgstr "Настройки карты"
 
-
 #: scripts/firestaff_artpack_studio.py:1834
 #: scripts/firestaff_dungeon_studio.py:473
-#: scripts/firestaff_savegame_editor.py:693
+#: scripts/firestaff_savegame_editor.py:799
 msgid "Auto (System Language)"
 msgstr "Авто (язык системы)"
-
 
 #: scripts/firestaff_artpack_studio.py:1850
 msgid "V1 assets / V2.2 targets"
 msgstr "Ресурсы V1 / Цели V2.2"
 
-
 #: scripts/firestaff_artpack_studio.py:1851
 msgid "Rescan"
 msgstr "Пересканировать"
-
 
 #: scripts/firestaff_artpack_studio.py:1854
 msgid "V1 root"
 msgstr "Корень V1"
 
-
 #: scripts/firestaff_artpack_studio.py:1859
 msgid "Import game data"
 msgstr "Импорт игровых данных"
-
 
 #: scripts/firestaff_artpack_studio.py:1860
 #: scripts/firestaff_artpack_studio.py:2246
 msgid "Warnings"
 msgstr "Предупреждения"
 
-
 #: scripts/firestaff_artpack_studio.py:1878
 msgid "Current asset"
 msgstr "Текущий ресурс"
-
 
 #: scripts/firestaff_artpack_studio.py:1880
 msgid "Category"
 msgstr "Категория"
 
-
 #: scripts/firestaff_artpack_studio.py:1883
 msgid "Asset id"
 msgstr "ID ресурса"
-
 
 #: scripts/firestaff_artpack_studio.py:1885
 msgid "Generator"
 msgstr "Генератор"
 
-
 #: scripts/firestaff_artpack_studio.py:1891
 msgid "Load V1/ref"
 msgstr "Загрузить V1/ref"
-
 
 #: scripts/firestaff_artpack_studio.py:1892
 msgid "Load V2.2 target"
 msgstr "Загрузить цель V2.2"
 
-
 #: scripts/firestaff_artpack_studio.py:1893
 msgid "Import target to pack"
 msgstr "Импорт цели в пакет"
-
 
 #: scripts/firestaff_artpack_studio.py:1894
 msgid "Save edited target"
 msgstr "Сохранить отредактированную цель"
 
-
 #: scripts/firestaff_artpack_studio.py:1896
 msgid "AI generation hook"
 msgstr "Хук генерации ИИ"
-
 
 #: scripts/firestaff_artpack_studio.py:1900
 msgid "Write prompt"
 msgstr "Записать промпт"
 
-
 #: scripts/firestaff_artpack_studio.py:1901
 msgid "Run AI command"
 msgstr "Выполнить команду ИИ"
-
 
 #: scripts/firestaff_artpack_studio.py:1904
 msgid "AI selected"
 msgstr "ИИ выбрано"
 
-
 #: scripts/firestaff_artpack_studio.py:1905
 msgid "AI missing/all"
 msgstr "ИИ отсутствующие/все"
-
 
 #: scripts/firestaff_artpack_studio.py:1935
 msgid "Drag-and-drop enabled"
 msgstr "Перетаскивание включено"
 
-
 #: scripts/firestaff_artpack_studio.py:1946
 #: scripts/firestaff_dungeon_studio.py:1010
-#: scripts/firestaff_savegame_editor.py:697
-#: scripts/firestaff_savegame_editor.py:1193
-#: scripts/firestaff_savegame_editor.py:1207
+#: scripts/firestaff_savegame_editor.py:803
+#: scripts/firestaff_savegame_editor.py:1388
+#: scripts/firestaff_savegame_editor.py:1402
 msgid "Language"
 msgstr "Язык"
 
-
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
-#: scripts/firestaff_savegame_editor.py:1194
+#: scripts/firestaff_savegame_editor.py:1389
 #, python-brace-format
 msgid ""
 "Language set to {}.\n"
@@ -218,65 +182,53 @@ msgstr ""
 "Язык установлен: {}.\n"
 "Перезапустите приложение для полного эффекта."
 
-
 #: scripts/firestaff_artpack_studio.py:1964
 msgid "AI Command Template"
 msgstr "Сначала введите шаблон команды ИИ."
-
 
 #: scripts/firestaff_artpack_studio.py:1966
 #, python-brace-format
 msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
 msgstr "Заполнители: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
 
-
 #: scripts/firestaff_artpack_studio.py:1970
 msgid "Command"
 msgstr "Команда"
-
 
 #: scripts/firestaff_artpack_studio.py:1973
 msgid "API Key"
 msgstr "API-ключ"
 
-
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored in ~/.firestaff/studio_settings.json"
 msgstr "Хранится в ~/.firestaff/studio_settings.json."
-
 
 #: scripts/firestaff_artpack_studio.py:1977
 msgid "Stored securely in system keychain"
 msgstr "Надежно хранится в системном брелке"
 
-
 #: scripts/firestaff_artpack_studio.py:1982
-#: scripts/firestaff_savegame_editor.py:949
+#: scripts/firestaff_savegame_editor.py:1144
 msgid "Key"
 msgstr "Ключ"
-
 
 #: scripts/firestaff_artpack_studio.py:1986
 msgid "API Provider"
 msgstr "Поставщик API"
 
-
 #: scripts/firestaff_artpack_studio.py:2002
 msgid "Settings saved"
 msgstr "Настройки карты"
 
-
 #: scripts/firestaff_artpack_studio.py:2006
-#: scripts/firestaff_savegame_editor.py:681
-#: scripts/firestaff_savegame_editor.py:707
+#: scripts/firestaff_savegame_editor.py:787
+#: scripts/firestaff_savegame_editor.py:813
 msgid "Save"
 msgstr "Сохранено: {}"
-
 
 #: scripts/firestaff_artpack_studio.py:2007
 msgid "Cancel"
 msgstr "Отмена"
-
 
 #: scripts/firestaff_artpack_studio.py:2019
 #: scripts/firestaff_artpack_studio.py:2474
@@ -284,44 +236,36 @@ msgstr "Отмена"
 msgid "Imported .fsart: {}"
 msgstr "Импортирован .fsart: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2024
 #, python-brace-format
 msgid "Loaded dropped target: {}"
 msgstr "Загружена сброшенная цель: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2055
 msgid "Select V2.2 modern artpack directory"
 msgstr "Выбрать каталог artpack V2.2"
 
-
 #: scripts/firestaff_artpack_studio.py:2061
 msgid "Select V1/reference asset root"
 msgstr "Выбрать корень ресурсов V1/справочник"
-
 
 #: scripts/firestaff_artpack_studio.py:2073
 #, python-brace-format
 msgid "Opened {} artpack: {}"
 msgstr "Открыт {} artpack: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2075
 msgid "Open artpack failed"
 msgstr "Не удалось открыть artpack"
-
 
 #: scripts/firestaff_artpack_studio.py:2122
 #, python-brace-format
 msgid "Scanned {} V1/reference assets"
 msgstr "Просканировано {} ресурсов V1/справочник"
 
-
 #: scripts/firestaff_artpack_studio.py:2189
 msgid "Load V1/reference image"
 msgstr "Загрузить изображение V1/справочник"
-
 
 #: scripts/firestaff_artpack_studio.py:2190
 #: scripts/firestaff_artpack_studio.py:2200
@@ -333,180 +277,147 @@ msgstr "Загрузить изображение V1/справочник"
 msgid "All files"
 msgstr "Все файлы"
 
-
 #: scripts/firestaff_artpack_studio.py:2190
 #: scripts/firestaff_artpack_studio.py:2200
 #: scripts/firestaff_artpack_studio.py:2212
 msgid "Images"
 msgstr "Изображения"
 
-
 #: scripts/firestaff_artpack_studio.py:2195
 #, python-brace-format
 msgid "Loaded reference: {}"
 msgstr "Загружена ссылка: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2199
 msgid "Load V2.2 target image"
 msgstr "Загрузить целевое изображение V2.2"
-
 
 #: scripts/firestaff_artpack_studio.py:2205
 #, python-brace-format
 msgid "Loaded target: {}"
 msgstr "Загружена цель: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2209
 msgid "Import original game data"
 msgstr "Импорт оригинальных игровых данных"
 
-
 #: scripts/firestaff_artpack_studio.py:2211
 msgid "Game data"
 msgstr "Игровые данные"
-
 
 #: scripts/firestaff_artpack_studio.py:2238
 #, python-brace-format
 msgid "Imported game data: {} ({})"
 msgstr "Импортированы игровые данные: {} ({})"
 
-
 #: scripts/firestaff_artpack_studio.py:2240
 #, python-brace-format
 msgid "Warnings: {}"
 msgstr "Предупреждения: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2242
 msgid "Game data import failed"
 msgstr "Не удалось импортировать игровые данные"
-
 
 #: scripts/firestaff_artpack_studio.py:2246
 msgid "No game data imported."
 msgstr "Игровые данные не импортированы."
 
-
 #: scripts/firestaff_artpack_studio.py:2251
 msgid "No warnings."
 msgstr "Нет предупреждений."
-
 
 #: scripts/firestaff_artpack_studio.py:2252
 msgid "Game data warnings"
 msgstr "Предупреждения игровых данных"
 
-
 #: scripts/firestaff_artpack_studio.py:2277
 msgid "Load or generate a V2.2 target first."
 msgstr "Сначала загрузите или сгенерируйте цель V2.2."
 
-
 #: scripts/firestaff_artpack_studio.py:2277
 msgid "No target image"
 msgstr "Нет целевого изображения"
-
 
 #: scripts/firestaff_artpack_studio.py:2292
 #, python-brace-format
 msgid "Imported {}/{}"
 msgstr "Импортировано {}/{}"
 
-
 #: scripts/firestaff_artpack_studio.py:2294
 #: scripts/firestaff_artpack_studio.py:2476
 msgid "Import failed"
 msgstr "Импорт не удался"
-
 
 #: scripts/firestaff_artpack_studio.py:2307
 #, python-brace-format
 msgid "Saved edited image: {}"
 msgstr "Сохранено отредактированное изображение: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2335
 #, python-brace-format
 msgid "Wrote AI prompt: {}"
 msgstr "Записан промпт ИИ: {}"
-
 
 #: scripts/firestaff_artpack_studio.py:2341
 #: scripts/firestaff_artpack_studio.py:2381
 msgid "AI command not configured"
 msgstr "Команда ИИ не настроена"
 
-
 #: scripts/firestaff_artpack_studio.py:2342
 msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
 msgstr "Установите FIRESTAFF_ARTPACK_AI_COMMAND или сначала введите шаблон команды."
-
 
 #: scripts/firestaff_artpack_studio.py:2372
 msgid "AI command generated target image"
 msgstr "Команда ИИ сгенерировала целевое изображение"
 
-
 #: scripts/firestaff_artpack_studio.py:2374
 msgid "AI generation failed"
 msgstr "Генерация ИИ не удалась"
-
 
 #: scripts/firestaff_artpack_studio.py:2381
 msgid "Enter an AI command template first."
 msgstr "Сначала введите шаблон команды ИИ."
 
-
 #: scripts/firestaff_artpack_studio.py:2389
 msgid "AI batch"
 msgstr "Пакет ИИ"
-
 
 #: scripts/firestaff_artpack_studio.py:2390
 #, python-brace-format
 msgid "Generate how many assets? {} available."
 msgstr "Сколько ресурсов сгенерировать? {} доступно."
 
-
 #: scripts/firestaff_artpack_studio.py:2413
 #, python-brace-format
 msgid "AI batch generated/imported {} assets"
 msgstr "Пакет ИИ сгенерировал/импортировал {} ресурсов"
 
-
 #: scripts/firestaff_artpack_studio.py:2420
 msgid "Validation failed:"
 msgstr "Проверка не пройдена:"
-
 
 #: scripts/firestaff_artpack_studio.py:2421
 msgid "Validation failed"
 msgstr "Проверка не пройдена"
 
-
 #: scripts/firestaff_artpack_studio.py:2423
 msgid "Validation passed for required slots"
 msgstr "Проверка пройдена для обязательных слотов"
-
 
 #: scripts/firestaff_artpack_studio.py:2424
 msgid "Required slots are complete."
 msgstr "Обязательные слоты заполнены."
 
-
 #: scripts/firestaff_artpack_studio.py:2424
 msgid "Validation passed"
 msgstr "Проверка пройдена"
-
 
 #: scripts/firestaff_artpack_studio.py:2431
 #, python-brace-format
 msgid "Built V2.2 runtime cache: {} ({} bytes)"
 msgstr "Собран кеш V2.2: {} ({} байт)"
-
 
 #: scripts/firestaff_artpack_studio.py:2432
 #, python-brace-format
@@ -517,423 +428,347 @@ msgstr ""
 "Собрано {}\n"
 "{} байт"
 
-
 #: scripts/firestaff_artpack_studio.py:2432
 msgid "Runtime cache"
 msgstr "Кеш времени выполнения"
-
 
 #: scripts/firestaff_artpack_studio.py:2434
 msgid "Runtime cache failed"
 msgstr "Кеш времени выполнения не удался"
 
-
 #: scripts/firestaff_artpack_studio.py:2439
 msgid "Reviewer"
 msgstr "Рецензент"
 
-
 #: scripts/firestaff_artpack_studio.py:2439
 msgid "Reviewer name:"
 msgstr "Имя рецензента:"
-
 
 #: scripts/firestaff_artpack_studio.py:2442
 #, python-brace-format
 msgid "Wrote receipt: {}"
 msgstr "Записана квитанция: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2444
 msgid "Receipt failed"
 msgstr "Квитанция не удалась"
 
-
 #: scripts/firestaff_artpack_studio.py:2450
 msgid "Export Firestaff artpack"
 msgstr "Экспорт artpack Firestaff"
-
 
 #: scripts/firestaff_artpack_studio.py:2452
 #: scripts/firestaff_artpack_studio.py:2467
 msgid "Firestaff artpack"
 msgstr "Artpack Firestaff"
 
-
 #: scripts/firestaff_artpack_studio.py:2458
 #, python-brace-format
 msgid "Exported .fsart: {}"
 msgstr "Экспортирован .fsart: {}"
 
-
 #: scripts/firestaff_artpack_studio.py:2460
 msgid "Export failed"
 msgstr "Экспорт не удался"
-
 
 #: scripts/firestaff_artpack_studio.py:2466
 msgid "Import Firestaff artpack"
 msgstr "Импорт artpack Firestaff"
 
-
 #: scripts/firestaff_dungeon_studio.py:452
 msgid "New"
 msgstr "Новый"
-
 
 #: scripts/firestaff_dungeon_studio.py:453
 #: scripts/firestaff_dungeon_studio.py:1046
 msgid "Open .fsdung"
 msgstr "Открыть .fsdung"
 
-
 #: scripts/firestaff_dungeon_studio.py:454
 #: scripts/firestaff_dungeon_studio.py:1076
 msgid "Save .fsdung"
 msgstr "Сохранить .fsdung"
 
-
 #: scripts/firestaff_dungeon_studio.py:455
-#: scripts/firestaff_savegame_editor.py:682
+#: scripts/firestaff_savegame_editor.py:788
 msgid "Save As..."
 msgstr "Сохранить как..."
-
 
 #: scripts/firestaff_dungeon_studio.py:459
 msgid "Add Level"
 msgstr "Добавить уровень"
-
 
 #: scripts/firestaff_dungeon_studio.py:460
 #: scripts/firestaff_dungeon_studio.py:1094
 msgid "Map Settings"
 msgstr "Настройки карты"
 
-
 #: scripts/firestaff_dungeon_studio.py:461
 msgid "Statistics"
 msgstr "Статистика"
-
 
 #: scripts/firestaff_dungeon_studio.py:464
 #: scripts/firestaff_dungeon_studio.py:1238
 msgid "Test View"
 msgstr "Тестовый вид"
 
-
 #: scripts/firestaff_dungeon_studio.py:488
 msgid "Tools"
 msgstr "Инструменты"
-
 
 #: scripts/firestaff_dungeon_studio.py:490
 msgid "Paint"
 msgstr "Рисовать"
 
-
 #: scripts/firestaff_dungeon_studio.py:490
 msgid "Place Thing"
 msgstr "Разместить объект"
-
 
 #: scripts/firestaff_dungeon_studio.py:490
 msgid "Select"
 msgstr "Выбрать"
 
-
 #: scripts/firestaff_dungeon_studio.py:491
 msgid "Erase"
 msgstr "Стереть"
-
 
 #: scripts/firestaff_dungeon_studio.py:491
 msgid "Fill"
 msgstr "Заполнить"
 
-
 #: scripts/firestaff_dungeon_studio.py:491
 msgid "Set Party Start"
 msgstr "Установить старт группы"
-
 
 #: scripts/firestaff_dungeon_studio.py:499
 msgid "Tile Types"
 msgstr "Типы плиток"
 
-
 #: scripts/firestaff_dungeon_studio.py:510
 msgid "Thing Type"
 msgstr "Тип объекта"
-
 
 #: scripts/firestaff_dungeon_studio.py:517
 msgid "View"
 msgstr "Вид"
 
-
 #: scripts/firestaff_dungeon_studio.py:519
 msgid "Show Grid"
 msgstr "Показать сетку"
-
 
 #: scripts/firestaff_dungeon_studio.py:521
 msgid "Show Things"
 msgstr "Показать объекты"
 
-
 #: scripts/firestaff_dungeon_studio.py:525
 msgid "Zoom"
 msgstr "Масштаб"
-
 
 #: scripts/firestaff_dungeon_studio.py:528
 msgid "Fit"
 msgstr "Вписать"
 
-
 #: scripts/firestaff_dungeon_studio.py:554
 msgid "Map Properties"
 msgstr "Свойства карты"
 
-
 #: scripts/firestaff_dungeon_studio.py:558
-#: scripts/firestaff_savegame_editor.py:322
+#: scripts/firestaff_savegame_editor.py:365
 msgid "Name"
 msgstr "Имя"
 
-
 #: scripts/firestaff_dungeon_studio.py:561
-#: scripts/firestaff_savegame_editor.py:857
-#: scripts/firestaff_savegame_editor.py:948
+#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:1066
+#: scripts/firestaff_savegame_editor.py:1143
 msgid "Size"
 msgstr "Размер"
-
 
 #: scripts/firestaff_dungeon_studio.py:567
 msgid "Wall Set"
 msgstr "Набор стен"
 
-
 #: scripts/firestaff_dungeon_studio.py:570
 msgid "Floor Set"
 msgstr "Набор полов"
-
 
 #: scripts/firestaff_dungeon_studio.py:573
 msgid "Difficulty"
 msgstr "Сложность"
 
-
 #: scripts/firestaff_dungeon_studio.py:579
 msgid "Tile"
 msgstr "Плитка"
 
-
 #: scripts/firestaff_dungeon_studio.py:583
 msgid "Position"
 msgstr "Позиция"
-
 
 #: scripts/firestaff_dungeon_studio.py:585
 #: scripts/firestaff_dungeon_studio.py:608
 msgid "Type"
 msgstr "Тип"
 
-
 #: scripts/firestaff_dungeon_studio.py:589
 msgid "Things at Tile"
 msgstr "Объекты на плитке"
-
 
 #: scripts/firestaff_dungeon_studio.py:601
 msgid "Delete Thing"
 msgstr "Удалить объект"
 
-
 #: scripts/firestaff_dungeon_studio.py:604
 msgid "Thing Properties"
 msgstr "Свойства объекта"
-
 
 #: scripts/firestaff_dungeon_studio.py:610
 msgid "Cell"
 msgstr "Ячейка"
 
-
 #: scripts/firestaff_dungeon_studio.py:617
 msgid "Graphics Override"
 msgstr "Переопределение графики"
-
 
 #: scripts/firestaff_dungeon_studio.py:623
 #, python-brace-format
 msgid "Import {}..."
 msgstr "Импортировать {}..."
 
-
 #: scripts/firestaff_dungeon_studio.py:687
 msgid "Level name:"
 msgstr "Название уровня:"
-
 
 #: scripts/firestaff_dungeon_studio.py:687
 msgid "New Level"
 msgstr "Новый уровень"
 
-
 #: scripts/firestaff_dungeon_studio.py:1024
 msgid "Show grid"
 msgstr "Показать сетку"
-
 
 #: scripts/firestaff_dungeon_studio.py:1026
 msgid "Show things"
 msgstr "Показать объекты"
 
-
 #: scripts/firestaff_dungeon_studio.py:1028
-#: scripts/firestaff_savegame_editor.py:1208
+#: scripts/firestaff_savegame_editor.py:1403
 msgid "Use system language"
 msgstr "Использовать системный язык"
 
-
 #: scripts/firestaff_dungeon_studio.py:1030
-#: scripts/firestaff_savegame_editor.py:1210
+#: scripts/firestaff_savegame_editor.py:1405
 msgid "Close"
 msgstr "Закрыть"
-
 
 #: scripts/firestaff_dungeon_studio.py:1042
 msgid "New dungeon created"
 msgstr "Новое подземелье создано"
-
 
 #: scripts/firestaff_dungeon_studio.py:1060
 #, python-brace-format
 msgid "Opened: {}"
 msgstr "Открыто: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1062
 #: scripts/firestaff_dungeon_studio.py:1072
 #: scripts/firestaff_dungeon_studio.py:1195
 #: scripts/firestaff_dungeon_studio.py:1200
-#: scripts/firestaff_savegame_editor.py:744
-#: scripts/firestaff_savegame_editor.py:747
-#: scripts/firestaff_savegame_editor.py:760
-#: scripts/firestaff_savegame_editor.py:772
+#: scripts/firestaff_savegame_editor.py:850
+#: scripts/firestaff_savegame_editor.py:853
+#: scripts/firestaff_savegame_editor.py:866
+#: scripts/firestaff_savegame_editor.py:878
+#: scripts/firestaff_savegame_editor.py:1038
 msgid "Error"
 msgstr "Ошибка"
 
-
 #: scripts/firestaff_dungeon_studio.py:1070
-#: scripts/firestaff_savegame_editor.py:759
+#: scripts/firestaff_savegame_editor.py:865
 #, python-brace-format
 msgid "Saved: {}"
 msgstr "Сохранено: {}"
-
 
 #: scripts/firestaff_dungeon_studio.py:1106
 msgid "Width (1-64)"
 msgstr "Ширина (1-64)"
 
-
 #: scripts/firestaff_dungeon_studio.py:1108
 msgid "Height (1-64)"
 msgstr "Высота (1-64)"
 
-
 #: scripts/firestaff_dungeon_studio.py:1130
 msgid "Apply"
 msgstr "Применить"
-
 
 #: scripts/firestaff_dungeon_studio.py:1148
 #, python-brace-format
 msgid "Maps: {}"
 msgstr "Карты: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1149
 #, python-brace-format
 msgid "Current: {} ({}×{})"
 msgstr "Текущая: {} ({}×{})"
 
-
 #: scripts/firestaff_dungeon_studio.py:1151
 msgid "Tiles:"
 msgstr "Плитки:"
-
 
 #: scripts/firestaff_dungeon_studio.py:1155
 #, python-brace-format
 msgid "Things: {}"
 msgstr "Объекты: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1160
 msgid "Dungeon Statistics"
 msgstr "Статистика подземелья"
-
 
 #: scripts/firestaff_dungeon_studio.py:1169
 #, python-brace-format
 msgid "Map {} \"{}\": all walls"
 msgstr "Карта {} \"{}\": все стены"
 
-
 #: scripts/firestaff_dungeon_studio.py:1175
 msgid "Party start is inside a wall"
 msgstr "Старт группы внутри стены"
-
 
 #: scripts/firestaff_dungeon_studio.py:1177
 msgid "Party start is outside map bounds"
 msgstr "Старт группы за пределами карты"
 
-
 #: scripts/firestaff_dungeon_studio.py:1180
 msgid "Issues found:"
 msgstr "Обнаружены проблемы:"
-
 
 #: scripts/firestaff_dungeon_studio.py:1180
 #: scripts/firestaff_dungeon_studio.py:1182
 msgid "Validation"
 msgstr "Проверка"
 
-
 #: scripts/firestaff_dungeon_studio.py:1182
 msgid "Dungeon is valid!"
 msgstr "Подземелье корректно!"
-
 
 #: scripts/firestaff_dungeon_studio.py:1189
 #, python-brace-format
 msgid "Import {}"
 msgstr "Импортировать {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1190
 msgid "All"
 msgstr "Все"
 
-
 #: scripts/firestaff_dungeon_studio.py:1195
 msgid "Pillow is required for graphics import"
 msgstr "Для импорта графики требуется Pillow"
-
 
 #: scripts/firestaff_dungeon_studio.py:1200
 #, python-brace-format
 msgid "Could not load image: {}"
 msgstr "Не удалось загрузить изображение: {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1203
 msgid "Resize?"
 msgstr "Изменить размер?"
-
 
 #: scripts/firestaff_dungeon_studio.py:1204
 #, python-brace-format
@@ -944,860 +779,742 @@ msgstr ""
 "Изображение {}×{}, ожидается {}×{}.\n"
 "Изменить размер?"
 
-
 #: scripts/firestaff_dungeon_studio.py:1216
 #, python-brace-format
 msgid "{} imported from {}"
 msgstr "{} импортировано из {}"
 
-
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "East"
 msgstr "Восток"
-
 
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "North"
 msgstr "Север"
 
-
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "South"
 msgstr "Юг"
-
 
 #: scripts/firestaff_dungeon_studio.py:1251
 msgid "West"
 msgstr "Запад"
 
-
 #: scripts/firestaff_dungeon_studio.py:1257
 msgid "Turn L"
 msgstr "Влево"
-
 
 #: scripts/firestaff_dungeon_studio.py:1259
 msgid "Fwd"
 msgstr "Вперёд"
 
-
 #: scripts/firestaff_dungeon_studio.py:1261
 msgid "Back"
 msgstr "Назад"
-
 
 #: scripts/firestaff_dungeon_studio.py:1263
 msgid "Turn R"
 msgstr "Вправо"
 
-
 #: scripts/firestaff_savegame_editor.py:141
 msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
 msgstr "Глобальное состояние подземелий: количество событий, ограничения активных групп, начальное число RNG. Фиксированные 128 байт."
-
 
 #: scripts/firestaff_savegame_editor.py:142
 msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
 msgstr "Активные группы существ/предметов в подземелье. Размер переменной из GLOBAL_DATA @46."
 
-
 #: scripts/firestaff_savegame_editor.py:143
 msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
 msgstr "Записи чемпионов (4 x 319 байт) + информация о группе (128 байт). HP, статистика, навыки, инвентарь."
-
 
 #: scripts/firestaff_savegame_editor.py:144
 msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
 msgstr "Список событий подземелья: таймеры, триггеры, датчики. Размер переменной из GLOBAL_DATA @28."
 
-
 #: scripts/firestaff_savegame_editor.py:145
 msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
 msgstr "Очередь временной шкалы/таймера для запланированных событий. Остаток файла после других частей."
 
-
-#: scripts/firestaff_savegame_editor.py:288
+#: scripts/firestaff_savegame_editor.py:331
 msgid "Random Words [0-148]"
 msgstr "Случайные слова [0-148]"
 
-
-#: scripts/firestaff_savegame_editor.py:289
+#: scripts/firestaff_savegame_editor.py:332
 msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
 msgstr "Панель обфускации XOR — 149 случайных 16-битных слов (298 байт)"
 
-
-#: scripts/firestaff_savegame_editor.py:290
+#: scripts/firestaff_savegame_editor.py:333
 msgid "Format Version"
 msgstr "Версия формата"
 
-
-#: scripts/firestaff_savegame_editor.py:291
+#: scripts/firestaff_savegame_editor.py:334
 msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
 msgstr "Сохранить версию формата. 5=ПК 3.4, 4=ПК 3.3, 3=Амига 3.6"
 
-
-#: scripts/firestaff_savegame_editor.py:292
+#: scripts/firestaff_savegame_editor.py:335
 msgid "Game ID"
 msgstr "Игра"
 
-
-#: scripts/firestaff_savegame_editor.py:293
+#: scripts/firestaff_savegame_editor.py:336
 msgid "Identifies which game created this save"
 msgstr "Определяет, какая игра создала это сохранение."
 
-
-#: scripts/firestaff_savegame_editor.py:294
+#: scripts/firestaff_savegame_editor.py:337
 msgid "Key: GLOBAL_DATA"
 msgstr "Ключ: GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:295
+#: scripts/firestaff_savegame_editor.py:338
 msgid "XOR deobfuscation key for GLOBAL_DATA"
 msgstr "Ключ деобфускации XOR для GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:296
+#: scripts/firestaff_savegame_editor.py:339
 msgid "Key: ACTIVE_GROUP"
 msgstr "Ключ: ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:297
+#: scripts/firestaff_savegame_editor.py:340
 msgid "XOR deobfuscation key for ACTIVE_GROUP"
 msgstr "Ключ деобфускации XOR для ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:298
+#: scripts/firestaff_savegame_editor.py:341
 msgid "Key: PARTY"
 msgstr "Ключ: ВЕЧЕРИНКА"
 
-
-#: scripts/firestaff_savegame_editor.py:299
+#: scripts/firestaff_savegame_editor.py:342
 msgid "XOR deobfuscation key for PARTY"
 msgstr "Ключ деобфускации XOR для PARTY"
 
-
-#: scripts/firestaff_savegame_editor.py:300
+#: scripts/firestaff_savegame_editor.py:343
 msgid "Key: EVENTS"
 msgstr "Ключ: СОБЫТИЯ"
 
-
-#: scripts/firestaff_savegame_editor.py:301
+#: scripts/firestaff_savegame_editor.py:344
 msgid "XOR deobfuscation key for EVENTS"
 msgstr "Ключ деобфускации XOR для EVENTS"
 
-
-#: scripts/firestaff_savegame_editor.py:302
+#: scripts/firestaff_savegame_editor.py:345
 msgid "Key: TIMELINE"
 msgstr "Ключ: Хронология"
 
-
-#: scripts/firestaff_savegame_editor.py:303
+#: scripts/firestaff_savegame_editor.py:346
 msgid "XOR deobfuscation key for TIMELINE"
 msgstr "Ключ деобфускации XOR для TIMELINE"
 
-
-#: scripts/firestaff_savegame_editor.py:304
+#: scripts/firestaff_savegame_editor.py:347
 msgid "Checksum: GLOBAL_DATA"
 msgstr "Контрольная сумма: GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:305
+#: scripts/firestaff_savegame_editor.py:348
 msgid "F0418 checksum for GLOBAL_DATA validation"
 msgstr "Контрольная сумма F0418 для проверки GLOBAL_DATA"
 
-
-#: scripts/firestaff_savegame_editor.py:306
+#: scripts/firestaff_savegame_editor.py:349
 msgid "Checksum: ACTIVE_GROUP"
 msgstr "Контрольная сумма: ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:307
+#: scripts/firestaff_savegame_editor.py:350
 msgid "F0418 checksum for ACTIVE_GROUP validation"
 msgstr "Контрольная сумма F0418 для проверки ACTIVE_GROUP"
 
-
-#: scripts/firestaff_savegame_editor.py:308
+#: scripts/firestaff_savegame_editor.py:351
 msgid "Checksum: PARTY"
 msgstr "Контрольная сумма: СТОРОНА"
 
-
-#: scripts/firestaff_savegame_editor.py:309
+#: scripts/firestaff_savegame_editor.py:352
 msgid "F0418 checksum for PARTY validation"
 msgstr "Контрольная сумма F0418 для проверки PARTY"
 
-
-#: scripts/firestaff_savegame_editor.py:310
+#: scripts/firestaff_savegame_editor.py:353
 msgid "Checksum: EVENTS"
 msgstr "Контрольная сумма: СОБЫТИЯ"
 
-
-#: scripts/firestaff_savegame_editor.py:311
+#: scripts/firestaff_savegame_editor.py:354
 msgid "F0418 checksum for EVENTS validation"
 msgstr "Контрольная сумма F0418 для проверки СОБЫТИЙ"
 
-
-#: scripts/firestaff_savegame_editor.py:312
+#: scripts/firestaff_savegame_editor.py:355
 msgid "Checksum: TIMELINE"
 msgstr "Контрольная сумма: ВРЕМЯ"
 
-
-#: scripts/firestaff_savegame_editor.py:313
+#: scripts/firestaff_savegame_editor.py:356
 msgid "F0418 checksum for TIMELINE validation"
 msgstr "Контрольная сумма F0418 для проверки TIMELINE"
 
-
-#: scripts/firestaff_savegame_editor.py:314
-#: scripts/firestaff_savegame_editor.py:849
+#: scripts/firestaff_savegame_editor.py:357
+#: scripts/firestaff_savegame_editor.py:968
 msgid "Platform"
 msgstr "Платформа"
 
-
-#: scripts/firestaff_savegame_editor.py:315
+#: scripts/firestaff_savegame_editor.py:358
 msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
 msgstr "Целевая платформа. 1=ПК, 2=Amiga, 9=движок ПК и т. д."
 
-
-#: scripts/firestaff_savegame_editor.py:316
+#: scripts/firestaff_savegame_editor.py:359
 msgid "Dungeon ID"
 msgstr "Идентификатор подземелья"
 
-
-#: scripts/firestaff_savegame_editor.py:317
+#: scripts/firestaff_savegame_editor.py:360
 msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
 msgstr "Подземелье. 0=DM1, 1=ЦСБ, 10=Терон"
 
-
-#: scripts/firestaff_savegame_editor.py:323
+#: scripts/firestaff_savegame_editor.py:366
 msgid "Title"
 msgstr "Название"
 
-
-#: scripts/firestaff_savegame_editor.py:324
+#: scripts/firestaff_savegame_editor.py:367
 msgid "Direction"
 msgstr "Позиция"
 
-
-#: scripts/firestaff_savegame_editor.py:325
+#: scripts/firestaff_savegame_editor.py:368
 msgid "Action Index"
 msgstr "Индекс действий"
 
-
-#: scripts/firestaff_savegame_editor.py:326
+#: scripts/firestaff_savegame_editor.py:369
 msgid "Poison"
 msgstr "Яд"
 
-
-#: scripts/firestaff_savegame_editor.py:327
+#: scripts/firestaff_savegame_editor.py:370
 msgid "HP Current"
 msgstr "Текущий ресурс"
 
-
-#: scripts/firestaff_savegame_editor.py:328
+#: scripts/firestaff_savegame_editor.py:371
 msgid "HP Max"
 msgstr "HP Макс."
 
-
-#: scripts/firestaff_savegame_editor.py:329
+#: scripts/firestaff_savegame_editor.py:372
 msgid "Stamina Current"
 msgstr "Текущий ресурс"
 
-
-#: scripts/firestaff_savegame_editor.py:330
+#: scripts/firestaff_savegame_editor.py:373
 msgid "Stamina Max"
 msgstr "Выносливость Макс."
 
-
-#: scripts/firestaff_savegame_editor.py:331
+#: scripts/firestaff_savegame_editor.py:374
 msgid "Mana Current"
 msgstr "Текущий ресурс"
 
-
-#: scripts/firestaff_savegame_editor.py:332
+#: scripts/firestaff_savegame_editor.py:375
 msgid "Mana Max"
 msgstr "Мана Макс"
 
-
-#: scripts/firestaff_savegame_editor.py:333
-#: scripts/firestaff_savegame_editor.py:886
+#: scripts/firestaff_savegame_editor.py:376
+#: scripts/firestaff_savegame_editor.py:1005
 msgid "Food"
 msgstr "Еда"
 
-
-#: scripts/firestaff_savegame_editor.py:334
-#: scripts/firestaff_savegame_editor.py:886
+#: scripts/firestaff_savegame_editor.py:377
+#: scripts/firestaff_savegame_editor.py:1005
 msgid "Water"
 msgstr "Вода"
 
-
-#: scripts/firestaff_savegame_editor.py:335
+#: scripts/firestaff_savegame_editor.py:378
 msgid "Load"
 msgstr "Загрузить"
 
-
-#: scripts/firestaff_savegame_editor.py:339
+#: scripts/firestaff_savegame_editor.py:382
 msgid "Fighter"
 msgstr "боец"
 
-
-#: scripts/firestaff_savegame_editor.py:340
+#: scripts/firestaff_savegame_editor.py:383
 msgid "Ninja"
 msgstr "Ниндзя"
 
-
-#: scripts/firestaff_savegame_editor.py:341
+#: scripts/firestaff_savegame_editor.py:384
 msgid "Priest"
 msgstr "Священник"
 
-
-#: scripts/firestaff_savegame_editor.py:342
+#: scripts/firestaff_savegame_editor.py:385
 msgid "Wizard"
 msgstr "Волшебник"
 
-
-#: scripts/firestaff_savegame_editor.py:343
+#: scripts/firestaff_savegame_editor.py:386
 msgid "Swing"
 msgstr "Качели"
 
-
-#: scripts/firestaff_savegame_editor.py:344
+#: scripts/firestaff_savegame_editor.py:387
 msgid "Thrust"
 msgstr "Упор"
 
-
-#: scripts/firestaff_savegame_editor.py:345
+#: scripts/firestaff_savegame_editor.py:388
 msgid "Club"
 msgstr "Клуб"
 
-
-#: scripts/firestaff_savegame_editor.py:346
+#: scripts/firestaff_savegame_editor.py:389
 msgid "Parry"
 msgstr "парировать"
 
-
-#: scripts/firestaff_savegame_editor.py:347
+#: scripts/firestaff_savegame_editor.py:390
 msgid "Steal"
 msgstr "Украсть"
 
-
-#: scripts/firestaff_savegame_editor.py:348
+#: scripts/firestaff_savegame_editor.py:391
 msgid "Fight"
 msgstr "бой"
 
-
-#: scripts/firestaff_savegame_editor.py:349
+#: scripts/firestaff_savegame_editor.py:392
 msgid "Throw"
 msgstr "Бросок"
 
-
-#: scripts/firestaff_savegame_editor.py:350
+#: scripts/firestaff_savegame_editor.py:393
 msgid "Shoot"
 msgstr "Стрелять"
 
-
-#: scripts/firestaff_savegame_editor.py:351
+#: scripts/firestaff_savegame_editor.py:394
 msgid "Identify"
 msgstr "Определить"
 
-
-#: scripts/firestaff_savegame_editor.py:352
+#: scripts/firestaff_savegame_editor.py:395
 msgid "Heal"
 msgstr "Исцелить"
 
-
-#: scripts/firestaff_savegame_editor.py:353
+#: scripts/firestaff_savegame_editor.py:396
 msgid "Influence"
 msgstr "Влияние"
 
-
-#: scripts/firestaff_savegame_editor.py:354
+#: scripts/firestaff_savegame_editor.py:397
 msgid "Defend"
 msgstr "Защита"
 
-
-#: scripts/firestaff_savegame_editor.py:355
+#: scripts/firestaff_savegame_editor.py:398
 msgid "Fire"
 msgstr "Огонь"
 
-
-#: scripts/firestaff_savegame_editor.py:356
+#: scripts/firestaff_savegame_editor.py:399
 msgid "Air"
 msgstr "Воздух"
 
-
-#: scripts/firestaff_savegame_editor.py:357
+#: scripts/firestaff_savegame_editor.py:400
 msgid "Earth"
 msgstr "Земля"
 
-
-#: scripts/firestaff_savegame_editor.py:358
+#: scripts/firestaff_savegame_editor.py:401
 msgid "Water (spell)"
 msgstr "Вода (заклинание)"
 
-
-#: scripts/firestaff_savegame_editor.py:362
+#: scripts/firestaff_savegame_editor.py:405
 msgid "Event Count"
 msgstr "Количество событий"
 
-
-#: scripts/firestaff_savegame_editor.py:363
+#: scripts/firestaff_savegame_editor.py:406
 msgid "Number of active events"
 msgstr "Количество активных событий"
 
-
-#: scripts/firestaff_savegame_editor.py:364
+#: scripts/firestaff_savegame_editor.py:407
 msgid "First Unused Event"
 msgstr "Первое неиспользованное событие"
 
-
-#: scripts/firestaff_savegame_editor.py:365
+#: scripts/firestaff_savegame_editor.py:408
 msgid "Index of first free event slot"
 msgstr "Указатель первого бесплатного слота мероприятия"
 
-
-#: scripts/firestaff_savegame_editor.py:366
+#: scripts/firestaff_savegame_editor.py:409
 msgid "Event Max Count"
 msgstr "Максимальное количество событий"
 
-
-#: scripts/firestaff_savegame_editor.py:367
+#: scripts/firestaff_savegame_editor.py:410
 msgid "Max events (determines EVENTS part size)"
 msgstr "Макс. событий (определяет размер части EVENTS)"
 
-
-#: scripts/firestaff_savegame_editor.py:368
+#: scripts/firestaff_savegame_editor.py:411
 msgid "Active Group Count"
 msgstr "Количество активных групп"
 
-
-#: scripts/firestaff_savegame_editor.py:369
+#: scripts/firestaff_savegame_editor.py:412
 msgid "Number of active creature/item groups"
 msgstr "Количество активных групп существ/предметов"
 
-
-#: scripts/firestaff_savegame_editor.py:370
+#: scripts/firestaff_savegame_editor.py:413
 msgid "Max Active Group Count"
 msgstr "Максимальное количество активных групп"
 
-
-#: scripts/firestaff_savegame_editor.py:371
+#: scripts/firestaff_savegame_editor.py:414
 msgid "Max active groups (determines ACTIVE_GROUP size)"
 msgstr "Максимальное количество активных групп (определяет размер ACTIVE_GROUP)"
 
-
-#: scripts/firestaff_savegame_editor.py:375
+#: scripts/firestaff_savegame_editor.py:418
 msgid "Magical Light"
 msgstr "Волшебный свет"
 
-
-#: scripts/firestaff_savegame_editor.py:376
+#: scripts/firestaff_savegame_editor.py:419
 msgid "Light spell intensity (0=dark)"
 msgstr "Интенсивность заклинания света (0 = темнота)"
 
-
-#: scripts/firestaff_savegame_editor.py:377
+#: scripts/firestaff_savegame_editor.py:420
 msgid "Thief's Eye"
 msgstr "Глаз вора"
 
-
-#: scripts/firestaff_savegame_editor.py:378
+#: scripts/firestaff_savegame_editor.py:421
 msgid "Thief's Eye active (0/1)"
 msgstr "Глаз вора активен (0/1)"
 
-
-#: scripts/firestaff_savegame_editor.py:379
+#: scripts/firestaff_savegame_editor.py:422
 msgid "Footprints"
 msgstr "Следы"
 
-
-#: scripts/firestaff_savegame_editor.py:380
+#: scripts/firestaff_savegame_editor.py:423
 msgid "Footprints active (0/1)"
 msgstr "Следы активны (0/1)"
 
-
-#: scripts/firestaff_savegame_editor.py:381
+#: scripts/firestaff_savegame_editor.py:424
 msgid "Shield"
 msgstr "Щит"
 
-
-#: scripts/firestaff_savegame_editor.py:382
+#: scripts/firestaff_savegame_editor.py:425
 msgid "Shield spell strength"
 msgstr "Сила заклинания щита"
 
-
-#: scripts/firestaff_savegame_editor.py:383
+#: scripts/firestaff_savegame_editor.py:426
 msgid "Fire Shield"
 msgstr "Огненный Щит"
 
-
-#: scripts/firestaff_savegame_editor.py:384
+#: scripts/firestaff_savegame_editor.py:427
 msgid "Fire Shield strength"
 msgstr "Сила огненного щита"
 
-
-#: scripts/firestaff_savegame_editor.py:385
+#: scripts/firestaff_savegame_editor.py:428
 msgid "Spell Shield"
 msgstr "Магический щит"
 
-
-#: scripts/firestaff_savegame_editor.py:386
+#: scripts/firestaff_savegame_editor.py:429
 msgid "Spell Shield (Antimagic) strength"
 msgstr "Сила магического щита (Антимагия)"
 
-
-#: scripts/firestaff_savegame_editor.py:387
+#: scripts/firestaff_savegame_editor.py:430
 msgid "Calming Scent"
 msgstr "Успокаивающий аромат"
 
-
-#: scripts/firestaff_savegame_editor.py:388
+#: scripts/firestaff_savegame_editor.py:431
 msgid "Calming influence active"
 msgstr "Успокаивающее воздействие активное"
 
-
-#: scripts/firestaff_savegame_editor.py:389
+#: scripts/firestaff_savegame_editor.py:432
 msgid "Freeze Life"
 msgstr "Заморозить жизнь"
 
-
-#: scripts/firestaff_savegame_editor.py:390
+#: scripts/firestaff_savegame_editor.py:433
 msgid "Freeze Life active (0/1)"
 msgstr "Замораживание жизни активно (0/1)"
 
-
-#: scripts/firestaff_savegame_editor.py:489
-#: scripts/firestaff_savegame_editor.py:492
-#: scripts/firestaff_savegame_editor.py:984
+#: scripts/firestaff_savegame_editor.py:532
+#: scripts/firestaff_savegame_editor.py:535
+#: scripts/firestaff_savegame_editor.py:1179
 #, python-brace-format
 msgid "Champion {}"
 msgstr "Чемпион {}"
 
-
-#: scripts/firestaff_savegame_editor.py:629
+#: scripts/firestaff_savegame_editor.py:735
 msgid "Firestaff Savegame Editor 0.2"
 msgstr "Редактор сохранений Firestaff 0.2"
 
-
-#: scripts/firestaff_savegame_editor.py:680
+#: scripts/firestaff_savegame_editor.py:786
 msgid "Open..."
 msgstr "Открыть..."
 
-
-#: scripts/firestaff_savegame_editor.py:684
+#: scripts/firestaff_savegame_editor.py:790
 msgid "Quit"
 msgstr "Выйти"
 
-
-#: scripts/firestaff_savegame_editor.py:685
-#: scripts/firestaff_savegame_editor.py:846
+#: scripts/firestaff_savegame_editor.py:791
+#: scripts/firestaff_savegame_editor.py:965
 msgid "File"
 msgstr "Все файлы"
 
-
-#: scripts/firestaff_savegame_editor.py:706
+#: scripts/firestaff_savegame_editor.py:812
 msgid "Open"
 msgstr "Открыть"
 
-
-#: scripts/firestaff_savegame_editor.py:708
-#: scripts/firestaff_savegame_editor.py:768
+#: scripts/firestaff_savegame_editor.py:814
+#: scripts/firestaff_savegame_editor.py:874
 msgid "Save As"
 msgstr "Сохранить как..."
 
-
-#: scripts/firestaff_savegame_editor.py:710
+#: scripts/firestaff_savegame_editor.py:816
 msgid "No file loaded"
 msgstr "Ни один файл не загружен"
 
-
-#: scripts/firestaff_savegame_editor.py:737
+#: scripts/firestaff_savegame_editor.py:843
 msgid "Open Savegame"
 msgstr "Открыть сохранение"
 
-
-#: scripts/firestaff_savegame_editor.py:738
+#: scripts/firestaff_savegame_editor.py:844
+#: scripts/firestaff_savegame_editor.py:1016
 msgid "All Savegames"
 msgstr "Все сохранения"
 
-
-#: scripts/firestaff_savegame_editor.py:739
+#: scripts/firestaff_savegame_editor.py:845
+#: scripts/firestaff_savegame_editor.py:1015
 msgid "All Files"
 msgstr "Все файлы"
 
-
-#: scripts/firestaff_savegame_editor.py:747
+#: scripts/firestaff_savegame_editor.py:853
+#: scripts/firestaff_savegame_editor.py:1026
 msgid "Unrecognized savegame format."
 msgstr "Неизвестный формат сохранения."
 
-
-#: scripts/firestaff_savegame_editor.py:750
+#: scripts/firestaff_savegame_editor.py:856
 #, python-brace-format
 msgid "Loaded: {}"
 msgstr "Загружена цель: {}"
 
-
-#: scripts/firestaff_savegame_editor.py:755
-#: scripts/firestaff_savegame_editor.py:764
+#: scripts/firestaff_savegame_editor.py:861
+#: scripts/firestaff_savegame_editor.py:870
 msgid "No savegame loaded"
 msgstr "Сохранения не загружены"
 
-
-#: scripts/firestaff_savegame_editor.py:755
-#: scripts/firestaff_savegame_editor.py:764
+#: scripts/firestaff_savegame_editor.py:861
+#: scripts/firestaff_savegame_editor.py:870
 msgid "Warning"
 msgstr "Предупреждения"
 
-
-#: scripts/firestaff_savegame_editor.py:757
-#: scripts/firestaff_savegame_editor.py:766
+#: scripts/firestaff_savegame_editor.py:863
+#: scripts/firestaff_savegame_editor.py:872
 msgid "Read only"
 msgstr "Read only"
 
-
-#: scripts/firestaff_savegame_editor.py:758
-#: scripts/firestaff_savegame_editor.py:767
+#: scripts/firestaff_savegame_editor.py:864
+#: scripts/firestaff_savegame_editor.py:873
 msgid "Saturn Backup RAM images can be inspected but not edited or rewritten."
 msgstr "Saturn Backup RAM images can be inspected but not edited or rewritten."
 
-
-#: scripts/firestaff_savegame_editor.py:771
+#: scripts/firestaff_savegame_editor.py:877
 #, python-brace-format
 msgid "Saved as: {}"
 msgstr "Сохранено: {}"
 
-
-#: scripts/firestaff_savegame_editor.py:781
+#: scripts/firestaff_savegame_editor.py:887
 msgid "Game-specific Nexus payload fields are not yet verified."
 msgstr "Game-specific Nexus payload fields are not yet verified."
 
-
-#: scripts/firestaff_savegame_editor.py:788
+#: scripts/firestaff_savegame_editor.py:894
 msgid "Only available for Saturn Backup RAM images."
 msgstr "Only available for Saturn Backup RAM images."
 
-
-#: scripts/firestaff_savegame_editor.py:821
+#: scripts/firestaff_savegame_editor.py:927
 msgid "File Overview"
 msgstr "Обзор файла"
 
-
-#: scripts/firestaff_savegame_editor.py:824
+#: scripts/firestaff_savegame_editor.py:930
 msgid "Saturn Backup RAM"
 msgstr "Saturn Backup RAM"
 
-
-#: scripts/firestaff_savegame_editor.py:826
+#: scripts/firestaff_savegame_editor.py:932
 msgid "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 msgstr "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 
-
-#: scripts/firestaff_savegame_editor.py:831
+#: scripts/firestaff_savegame_editor.py:938
 msgid "Comment"
 msgstr "Comment"
 
-#: scripts/firestaff_savegame_editor.py:866
+#: scripts/firestaff_savegame_editor.py:939
 msgid "Language byte (raw)"
 msgstr "Байт языка (исходный)"
 
-#: scripts/firestaff_savegame_editor.py:867
+#: scripts/firestaff_savegame_editor.py:940
 msgid "Timestamp field (raw)"
 msgstr "Поле временной метки (исходное значение)"
 
-#: scripts/firestaff_savegame_editor.py:870
-msgid "Allocated block IDs"
-msgstr "Идентификаторы выделенных блоков"
-
-
-#: scripts/firestaff_savegame_editor.py:832
+#: scripts/firestaff_savegame_editor.py:941
 msgid "Payload size"
 msgstr "Payload size"
 
-
-#: scripts/firestaff_savegame_editor.py:833
+#: scripts/firestaff_savegame_editor.py:942
 msgid "Allocated blocks"
 msgstr "Allocated blocks"
 
+#: scripts/firestaff_savegame_editor.py:943
+msgid "Allocated block IDs"
+msgstr "Идентификаторы выделенных блоков"
 
-#: scripts/firestaff_savegame_editor.py:836
+#: scripts/firestaff_savegame_editor.py:950
+msgid "Compare with another card…"
+msgstr "Сравнить с другой картой…"
+
+#: scripts/firestaff_savegame_editor.py:955
 #, python-brace-format
 msgid "Payload starts (hex): {}…"
 msgstr "Payload starts (hex): {}…"
 
-
-#: scripts/firestaff_savegame_editor.py:840
+#: scripts/firestaff_savegame_editor.py:959
 msgid "File Information"
 msgstr "Информация о файле"
 
-
-#: scripts/firestaff_savegame_editor.py:848
+#: scripts/firestaff_savegame_editor.py:967
 msgid "Format"
 msgstr "Формат"
 
-
-#: scripts/firestaff_savegame_editor.py:848
-#: scripts/firestaff_savegame_editor.py:849
-#: scripts/firestaff_savegame_editor.py:850
-#: scripts/firestaff_savegame_editor.py:917
-#: scripts/firestaff_savegame_editor.py:919
-#: scripts/firestaff_savegame_editor.py:921
+#: scripts/firestaff_savegame_editor.py:967
+#: scripts/firestaff_savegame_editor.py:968
+#: scripts/firestaff_savegame_editor.py:969
+#: scripts/firestaff_savegame_editor.py:1112
+#: scripts/firestaff_savegame_editor.py:1114
+#: scripts/firestaff_savegame_editor.py:1116
 msgid "Unknown"
 msgstr "Неизвестно"
 
-
-#: scripts/firestaff_savegame_editor.py:850
+#: scripts/firestaff_savegame_editor.py:969
 msgid "Dungeon"
 msgstr "Подземелье"
 
-
-#: scripts/firestaff_savegame_editor.py:855
+#: scripts/firestaff_savegame_editor.py:974
 msgid "Save Parts"
 msgstr "Сохранить как..."
 
-
-#: scripts/firestaff_savegame_editor.py:857
-#: scripts/firestaff_savegame_editor.py:947
+#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:1142
 msgid "Offset"
 msgstr "Смещение"
 
-
-#: scripts/firestaff_savegame_editor.py:857
+#: scripts/firestaff_savegame_editor.py:976
 msgid "Part"
 msgstr "Часть"
 
-
-#: scripts/firestaff_savegame_editor.py:857
+#: scripts/firestaff_savegame_editor.py:976
 msgid "Status"
 msgstr "Статистика"
 
-
-#: scripts/firestaff_savegame_editor.py:867
-#: scripts/firestaff_savegame_editor.py:956
+#: scripts/firestaff_savegame_editor.py:986
+#: scripts/firestaff_savegame_editor.py:1151
 msgid "MISMATCH"
 msgstr "НЕСООТВЕТСТВИЕ"
 
-
-#: scripts/firestaff_savegame_editor.py:867
+#: scripts/firestaff_savegame_editor.py:986
 msgid "Valid"
 msgstr "Проверить"
 
-
-#: scripts/firestaff_savegame_editor.py:871
+#: scripts/firestaff_savegame_editor.py:990
 msgid "Champions"
 msgstr "Чемпионы"
 
+#: scripts/firestaff_savegame_editor.py:1013
+msgid "Select another Saturn card"
+msgstr "Выберите другую карту Saturn"
 
-#: scripts/firestaff_savegame_editor.py:898
+#: scripts/firestaff_savegame_editor.py:1014
+msgid "Saturn Backup RAM images"
+msgstr "Образы памяти Saturn Backup RAM"
+
+#: scripts/firestaff_savegame_editor.py:1023
+msgid "Choose a different Saturn card image."
+msgstr "Выберите другой образ карты памяти Saturn."
+
+#: scripts/firestaff_savegame_editor.py:1033
+msgid "Saturn payload entries do not match or have different lengths."
+msgstr "Записи Saturn не совпадают или имеют разную длину."
+
+#: scripts/firestaff_savegame_editor.py:1042
+msgid "Payload differences"
+msgstr "Различия в данных"
+
+#: scripts/firestaff_savegame_editor.py:1054
+msgid "Only raw byte offsets and values are shown; payload field meanings remain unverified."
+msgstr "Показаны только позиции и значения байтов; назначение полей данных пока не подтверждено."
+
+#: scripts/firestaff_savegame_editor.py:1058
+msgid "No byte differences found."
+msgstr "Различий между байтами не найдено."
+
+#: scripts/firestaff_savegame_editor.py:1065
+msgid "Payload offset"
+msgstr "Позиция в данных"
+
+#: scripts/firestaff_savegame_editor.py:1067
+msgid "Current bytes"
+msgstr "Текущие байты"
+
+#: scripts/firestaff_savegame_editor.py:1068
+msgid "Compared bytes"
+msgstr "Сравниваемые байты"
+
+#: scripts/firestaff_savegame_editor.py:1093
 msgid "Header Fields"
 msgstr "Поля заголовка"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Description"
 msgstr "Позиция"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Field"
 msgstr "Поле"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Hex"
 msgstr "Шестигранник"
 
-
-#: scripts/firestaff_savegame_editor.py:900
+#: scripts/firestaff_savegame_editor.py:1095
 msgid "Value"
 msgstr "Значение"
 
-
-#: scripts/firestaff_savegame_editor.py:933
+#: scripts/firestaff_savegame_editor.py:1128
 msgid "DM1 PC34 Save Parts (F0417/F0418)"
 msgstr "DM1 PC34 Сохранение деталей (F0417/F0418)"
 
-
-#: scripts/firestaff_savegame_editor.py:950
+#: scripts/firestaff_savegame_editor.py:1145
 msgid "Expected"
 msgstr "Ожидается"
 
-
-#: scripts/firestaff_savegame_editor.py:951
+#: scripts/firestaff_savegame_editor.py:1146
 msgid "Actual"
 msgstr "Фактический"
 
-
-#: scripts/firestaff_savegame_editor.py:956
+#: scripts/firestaff_savegame_editor.py:1151
 msgid "VALID"
 msgstr "ДЕЙСТВИТЕЛЬНО"
 
-
-#: scripts/firestaff_savegame_editor.py:979
+#: scripts/firestaff_savegame_editor.py:1174
 msgid "No champion data"
 msgstr "Импорт игровых данных"
 
-
-#: scripts/firestaff_savegame_editor.py:1004
+#: scripts/firestaff_savegame_editor.py:1199
 msgid "Combat & Vitals"
 msgstr "Бой и жизненно важные органы"
 
-
-#: scripts/firestaff_savegame_editor.py:1020
+#: scripts/firestaff_savegame_editor.py:1215
 msgid "Skills"
 msgstr "Навыки"
 
-
-#: scripts/firestaff_savegame_editor.py:1041
+#: scripts/firestaff_savegame_editor.py:1236
 msgid "No party info available"
 msgstr "Информация о вечеринке отсутствует."
 
-
-#: scripts/firestaff_savegame_editor.py:1044
+#: scripts/firestaff_savegame_editor.py:1239
 msgid "Party Info"
 msgstr "Информация о вечеринке"
 
-
-#: scripts/firestaff_savegame_editor.py:1067
+#: scripts/firestaff_savegame_editor.py:1262
 msgid "No global data"
 msgstr "Импорт игровых данных"
 
-
-#: scripts/firestaff_savegame_editor.py:1070
+#: scripts/firestaff_savegame_editor.py:1265
 msgid "Global Data"
 msgstr "Импорт игровых данных"
 
-
-#: scripts/firestaff_savegame_editor.py:1084
+#: scripts/firestaff_savegame_editor.py:1279
 msgid "Raw Data"
 msgstr "Необработанные данные"
 
-
-#: scripts/firestaff_savegame_editor.py:1104
+#: scripts/firestaff_savegame_editor.py:1299
 msgid "Header Words"
 msgstr "Слова заголовка"
 
-
-#: scripts/firestaff_savegame_editor.py:1110
+#: scripts/firestaff_savegame_editor.py:1305
 msgid "Random Words"
 msgstr "Случайные слова"
 
-
-#: scripts/firestaff_savegame_editor.py:1111
+#: scripts/firestaff_savegame_editor.py:1306
 msgid "Part Keys"
 msgstr "Ключи к деталям"
 
-
-#: scripts/firestaff_savegame_editor.py:1112
+#: scripts/firestaff_savegame_editor.py:1307
 msgid "Checksums"
 msgstr "Контрольные суммы"
 
-
-#: scripts/firestaff_savegame_editor.py:1113
+#: scripts/firestaff_savegame_editor.py:1308
 msgid "Format/Platform/Dungeon"
 msgstr "Формат/Платформа/Подземелье"
 
-
 #~ msgid "Coming soon"
 #~ msgstr "Скоро"
-
 
 #~ msgid "{} support coming in a future update"
 #~ msgstr "Поддержка {} в будущем обновлении"
