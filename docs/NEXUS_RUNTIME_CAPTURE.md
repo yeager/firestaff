@@ -1036,6 +1036,14 @@ observed live register, not an action code. The nearby branch remains an
 unidentified TM.BIN state dispatch until its compared field and downstream
 state/presentation consumer are independently bound.
 
+The operator capture launcher now forwards the SH-2 WorkRAMH write producer's
+inclusive absolute-frame bounds and records them in its manifest. A follow-up
+input/control pass can therefore pair a narrow WorkRAM address window and row
+limit with the exact captured interval, without letting unrelated earlier
+startup writes consume the trace budget. Such writes remain observations until
+they are joined to the authentic TM.BIN consumer and a downstream state or
+presentation effect.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the

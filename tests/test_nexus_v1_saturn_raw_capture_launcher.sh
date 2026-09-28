@@ -308,12 +308,14 @@ from pathlib import Path
 
 Path(sys.argv[1]).write_text(
     "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
-    "printf '%s,%s,%s,%s,%s' "
+    "printf '%s,%s,%s,%s,%s,%s,%s' "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT\" "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES\" "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS\" "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN\" "
-    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MAX\" > "
     "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
     "printf 'memory-snapshot' > \"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT\"\n"
     "printf 'ram-read' > \"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS\"\n"
@@ -332,12 +334,14 @@ FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES="$sh2_ram_writes" \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN=0x06064500 \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX=0x060646ff \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT=4000 \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MIN=12596 \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MAX=12597 \
 "$launcher" --operator-only --launch --mednafen "$sh2_memory_fake" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-sh2-memory.raw" --validator /usr/bin/true \
   --manifest "$tmp_dir/manifest-sh2-memory.txt" >/dev/null
-grep -Fq "$sh2_memory_snapshot,,12,13,,$sh2_ram_reads,0x06064500,0x060646ff" \
+grep -Fq "$sh2_memory_snapshot,,12,13,,$sh2_ram_reads,0x06064500,0x060646ff,12596,12597" \
   "$tmp_dir/trace-sh2-memory.raw"
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_sha256=$(shasum -a 256 "$sh2_memory_snapshot" | awk '{print $1}')" \
   "$tmp_dir/manifest-sh2-memory.txt"
@@ -345,6 +349,8 @@ grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS_sha256=$(shasum -a 256 "$sh2_ram_r
   "$tmp_dir/manifest-sh2-memory.txt"
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES_sha256=$(shasum -a 256 "$sh2_ram_writes" | awk '{print $1}')" \
   "$tmp_dir/manifest-sh2-memory.txt"
+grep -Fq 'sh2_ram_write_frame_min=12596' "$tmp_dir/manifest-sh2-memory.txt"
+grep -Fq 'sh2_ram_write_frame_max=12597' "$tmp_dir/manifest-sh2-memory.txt"
 instruction_byte_fake="$tmp_dir/fake-mednafen-instruction-byte"
 python3 - "$instruction_byte_fake" <<'PY'
 import os

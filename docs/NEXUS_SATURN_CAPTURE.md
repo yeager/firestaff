@@ -45,6 +45,15 @@ build remain before submission.
 The capture script hash-checks BIOS and disc before Mednafen starts. It writes
 only the manifest, trace, and raw dump to the specified external directory.
 
+For SH-2 WorkRAMH write traces, the external producer accepts the inclusive
+`FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MIN` and
+`FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MAX` bounds. The capture launcher
+passes both through and records them as `sh2_ram_write_frame_min` and
+`sh2_ram_write_frame_max` in the manifest. Pair these with the write-address
+range and row limit so a short input/control capture records writes only in
+the selected emulation frames; the trace remains diagnostic and does not
+assign meaning to a field or state transition.
+
 ## Build the Mednafen capture tool
 
 ```sh
