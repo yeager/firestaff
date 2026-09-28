@@ -102,6 +102,7 @@ static int test_regional_member_identity(const char *cue_name,
     FILE *cue_file;
 
     if (!data_dir || !data_dir[0]) return 0;
+    memset(&receipt, 0, sizeof(receipt));
     written = snprintf(cue_path, sizeof(cue_path), "%s/%s", data_dir,
                        cue_name);
     if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
