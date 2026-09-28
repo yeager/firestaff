@@ -123,6 +123,12 @@ presentation boundary.
   `(-3701,-3701)` and `(-3733,-3733)`; local-coordinate transforms and actual
   visible placement remain unverified. This proves recurring stable runtime
   bytes only, not retail provenance or composition.
+  A separate hash-bound cold-start capture at runtime frames 13197--13897 did
+  not reproduce either source offset in any of its 701 frames; frame 700 has
+  only one mode-0 source at `0x415a0`. Its ten-million-row VDP1 write-trace
+  budget filled before frame 0, so that run cannot bind writes to the captured
+  window. Recover or reproduce the exact retained runtime window before using
+  a fresh writer trace to claim source upload provenance.
   Keep both spans blocked until upload provenance or an exact transformed
   retail-surface join is captured.
 - Implement native Saturn runtime semantics only after each dispatcher,

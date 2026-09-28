@@ -1,5 +1,21 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Fresh JP VDP1 window did not reproduce the retained sources
+
+- Captured a no-input, hash-bound JP retail window on TRV2 with
+  `skip_frames=13197` and 701 frames. The raw SHA-256 is
+  `43b8979b79fb69ebe2bad08ae1090e42b784f0a3b700fbdf2bb99a6af130b80c`; the
+  VDP1 write-trace SHA-256 is
+  `2d169758e5fad0ca1783e68224f56a0a2aa18d92c861a8a0aa17da6bd50ce73f`.
+  Scanning every captured frame found neither recurring source offset
+  `0x58b58` nor `0x58c58`; frame 700 instead has one 1,008-byte mode-0 source
+  at `0x415a0`. The ten-million-record VDP1 trace budget was reached before
+  frame 0, so its writes are a pre-capture prefix and cannot be joined to
+  this frame window. This fresh cold-start capture does not reproduce or
+  replace the earlier retained window and does not identify a retail owner.
+  Keep the existing source-ownership and presentation blockers open. The raw
+  capture, traces, BIOS, disc and private game data remain on TRV2.
+
 ## 2026-09-28 — Regional MENU.BPK source-scan identity
 
 - Corrected the VDP1 retail source-join scanner to accept the independently
