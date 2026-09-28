@@ -1,5 +1,14 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Regional real-media test discovery
+
+- The regional title/RES tests now share the normal media-root lookup and fall
+  back to `~/.firestaff/data/nexus` when `FIRESTAFF_NEXUS_DATA_DIR` is unset.
+  On TRV2, the title/RES test was rebuilt and run with that variable explicitly
+  unset; it opened the authentic Japanese CUE, verified the pinned
+  `RLOWFIX.BIN` identity and real PLRD rows, and reported absent English and
+  French CUEs as skips. No synthetic media was used.
+
 ## 2026-09-28 — Absolute-frame-bounded VDP1 trace generation
 
 - Added inclusive absolute-runtime-frame filters for the external Mednafen

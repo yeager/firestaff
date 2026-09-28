@@ -90,7 +90,8 @@ static const char *retail_root(char *out, size_t out_size) {
 static int test_regional_member_identity(const char *cue_name,
                                          const char *member_name,
                                          const char *expected_md5) {
-    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char data_dir[1024];
+    const char *root = retail_root(data_dir, sizeof(data_dir));
     char cue_path[1024];
     Nexus_V1_Engine engine;
     Nexus_V1_LevelAuxSourceReceipt receipt;
@@ -101,9 +102,13 @@ static int test_regional_member_identity(const char *cue_name,
     int result;
     FILE *cue_file;
 
-    if (!data_dir || !data_dir[0]) return 0;
+    if (!root) {
+        printf("  SKIP regional %s::%s (data directory unavailable)\n",
+               cue_name, member_name);
+        return 0;
+    }
     memset(&receipt, 0, sizeof(receipt));
-    written = snprintf(cue_path, sizeof(cue_path), "%s/%s", data_dir,
+    written = snprintf(cue_path, sizeof(cue_path), "%s/%s", root,
                        cue_name);
     if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
     cue_file = fopen(cue_path, "rb");
@@ -158,7 +163,8 @@ static int test_regional_member_identity(const char *cue_name,
 }
 
 static int test_french_logobg_identity(void) {
-    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char data_dir[1024];
+    const char *root = retail_root(data_dir, sizeof(data_dir));
     const char *expected_md5 = "c594ac2c06e07a9e26a9945668a7b08a";
     char cue_path[1024];
     Nexus_V1_Engine engine;
@@ -170,9 +176,12 @@ static int test_french_logobg_identity(void) {
     int result;
     FILE *cue_file;
 
-    if (!data_dir || !data_dir[0]) return 0;
+    if (!root) {
+        puts("  SKIP regional French::LOGOBG.DG2 (data directory unavailable)");
+        return 0;
+    }
     written = snprintf(cue_path, sizeof(cue_path),
-                       "%s/Dungeon Master Nexus (French).cue", data_dir);
+                       "%s/Dungeon Master Nexus (French).cue", root);
     if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
     cue_file = fopen(cue_path, "rb");
     if (!cue_file) {
