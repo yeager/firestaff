@@ -99,11 +99,10 @@ int main(void)
         size_t version_index;
         size_t game_index;
 
-        /* Recognition is retained for preservation diagnostics, but every
-         * registered PC-9801/PC-9821 route must remain non-launchable even
-         * when its own media fingerprint matched.  The same policy excludes
-         * X68000 for every game: no game is allowed to grow a selectable
-         * preservation-only platform route by catalogue accident. */
+        /* The PC-9801 demo remains preservation-only. PC-9821 retail is
+         * launchable only when its authenticated original ZIP owns the
+         * virtual data paths. Neither version may enter AUTO priority.
+         * X68000 remains preservation-only for every game. */
         for (version_index = 0u;
              version_index < sizeof(pc98_versions) / sizeof(pc98_versions[0]);
              ++version_index) {
@@ -116,24 +115,39 @@ int main(void)
                         pc98_versions[version_index]);
                 return 1;
             }
+            status.versions[2][pc98].versionId = pc98_versions[version_index];
             status.versions[2][pc98].matched = 1;
             selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
                 &status, "dm2", M12_ARCH_PC98);
-            if (selected >= 0) {
+            if (strcmp(pc98_versions[version_index], "pc98-ja-demo") == 0 &&
+                selected >= 0) {
                 fprintf(stderr,
-                        "FAIL: matched PC-98 media became launchable: %s\n",
+                        "FAIL: PC-9801 demo became launchable: %s\n",
                         pc98_versions[version_index]);
                 return 1;
+            }
+            if (strcmp(pc98_versions[version_index], "pc9821-ja") == 0) {
+                snprintf(status.versions[2][pc98].matchedPath,
+                         sizeof(status.versions[2][pc98].matchedPath),
+                         "/media/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip::DATA/GRAPHICS.DAT");
+                selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                    &status, "dm2", M12_ARCH_PC98);
+                if (selected != pc98) {
+                    fprintf(stderr,
+                            "FAIL: authenticated PC-9821 source did not become launchable\n");
+                    return 1;
+                }
             }
             selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
                 &status, "dm2", M12_ARCH_AUTO);
             if (selected >= 0) {
                 fprintf(stderr,
-                        "FAIL: AUTO selected unsupported PC-98 media: %s\n",
+                        "FAIL: AUTO selected PC-98 media: %s\n",
                         pc98_versions[version_index]);
                 return 1;
             }
         }
+        memset(&status, 0, sizeof(status));
         for (game_index = 0u;
              game_index < sizeof(game_ids) / sizeof(game_ids[0]);
              ++game_index) {
@@ -148,6 +162,6 @@ int main(void)
             }
         }
     }
-    puts("PASS: PC-9801/PC-9821 and X68000 media remain non-launchable");
+    puts("PASS: PC-9801 demo stays blocked; PC-9821 requires its original ZIP; AUTO excludes both");
     return 0;
 }

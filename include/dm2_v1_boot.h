@@ -516,6 +516,13 @@ typedef struct {
     size_t   fmtowns_end_byte_count;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
+    /* Original PC-9821 CUE/BIN remains the selected CDDA owner.  Runtime
+     * game data is separately retained in graphics_mem/dungeon_mem. */
+    char     pc9821_zip_path[512];
+    uint8_t *pc9821_disc_image;
+    size_t   pc9821_disc_image_size;
+    uint32_t pc9821_cdda_track_starts[9];
+    int      pc9821_cdda_track_count;
     /* Phar Lap P3 executable receipts for the selected native programs.
      * They record only bounded header facts from in-memory disc members; no
      * program image is unpacked or executed by either receipt. */

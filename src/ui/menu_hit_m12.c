@@ -166,7 +166,12 @@ static int m12_hit_game_platform_card_count(const M12_StartupMenuState* state) {
          * The result was a visible Atari/Amiga/FM Towns card that keyboard
          * navigation could select but whose mouse click chose the wrong
          * platform index. */
-        if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
+        if (architecture <= M12_ARCH_AUTO ||
+            (architecture == M12_ARCH_PC98 &&
+             !(strcmp(entry->gameId, "dm2") == 0 &&
+               M12_AssetStatus_GetVersionId(entry->gameId, i) &&
+               strcmp(M12_AssetStatus_GetVersionId(entry->gameId, i),
+                      "pc9821-ja") == 0)) ||
             architecture == M12_ARCH_X68000 ||
             (strcmp(entry->gameId, "csb") == 0 &&
              architecture == M12_ARCH_PC)) continue;

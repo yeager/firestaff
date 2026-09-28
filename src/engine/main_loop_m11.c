@@ -4353,7 +4353,8 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
 
     if (!menuState || architecture <= M12_ARCH_AUTO ||
         architecture >= M12_ARCH_COUNT ||
-        architecture == M12_ARCH_PC98 ||
+        (architecture == M12_ARCH_PC98 &&
+         (!gameId || strcmp(gameId, "dm2") != 0)) ||
         architecture == M12_ARCH_X68000 ||
         (gameId && strcmp(gameId, "csb") == 0 &&
          architecture == M12_ARCH_PC)) {

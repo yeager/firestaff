@@ -214,6 +214,7 @@ const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
     const M12_AssetStatus* status);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
 int M12_AssetStatus_GetVersionArchitecture(const char* gameId, size_t index);
+const char* M12_AssetStatus_GetVersionId(const char* gameId, size_t index);
 const char* M12_Architecture_Label(int architecture);
 const char* M12_Architecture_ShortLabel(int architecture);
 int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(

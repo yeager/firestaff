@@ -4723,6 +4723,16 @@ int dm2_v1_asset_loader_verify(const DM2_V1_AssetLoader *loader) {
         w0 == DM2_FMTOWNS_GDAT_CONTAINER_WORD) {
         return 1;
     }
+    /* PC-9821 Japanese also uses GDAT v5, but its authentic retail graphics
+     * set is smaller than the DOS PC window. The boot profile has already
+     * authenticated the exact edition hash before this format check. */
+    if (!loader->big_endian &&
+        loader->gdat_version == 5u &&
+        loader->data_size >= DM2_PC9821_GRAPHICS_MIN_SIZE &&
+        loader->data_size <= DM2_PC9821_GRAPHICS_MAX_SIZE &&
+        w0 == DM2_PC_GDAT_CONTAINER_WORD) {
+        return 1;
+    }
     if (loader->big_endian && w0 == DM2_PC_GDAT_CONTAINER_WORD &&
         loader->data_size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE) {
         return 1;

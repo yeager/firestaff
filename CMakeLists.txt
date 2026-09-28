@@ -4487,6 +4487,17 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME dm2_v1_pc9821_native_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_pc9821_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(dm2_v1_pc9821_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;pc9821;startup;cli;real-media;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_PC9821_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip;HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-pc9821;XDG_CONFIG_HOME=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-pc9821;APPDATA=${CMAKE_CURRENT_BINARY_DIR}/test-home/dm2-pc9821"
+        TIMEOUT 180
+    )
+    add_test(
         NAME dm1_v1_pc34_native_cli_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_native_cli_boot.sh
             $<TARGET_FILE:firestaff>
@@ -20496,6 +20507,31 @@ endif()
     add_test(
         NAME dm2_v1_boot_music_dispatch
         COMMAND test_dm2_v1_boot_music_dispatch
+    )
+
+    add_executable(test_dm2_v1_pc9821_cdda_real_media
+        tests/test_dm2_v1_pc9821_cdda_real_media.c
+    )
+    target_include_directories(test_dm2_v1_pc9821_cdda_real_media PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_pc9821_cdda_real_media PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_m12 m
+    )
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_pc9821_cdda_real_media PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_pc9821_cdda_real_media
+        COMMAND test_dm2_v1_pc9821_cdda_real_media
+    )
+    set_tests_properties(dm2_v1_pc9821_cdda_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;pc9821;cdda;real-media;no-synthesis;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_PC9821_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_PC-9821_JA.zip"
+        TIMEOUT 120
     )
 
     add_executable(test_dm2_v1_i18n_real_data

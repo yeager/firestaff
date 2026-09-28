@@ -16,11 +16,11 @@
 This document does not replace the active per-game TODO files. It remains a
 source-cited technical index for historical context and future research.
 
-2026-08-11 platform boundary: PC-9801 and X68000 are preservation-only for
-every Firestaff game. Existing classifier, parser and media-receipt entries
-for either platform remain read-only archival work. They must not be extended
-into data selection, cache materialization, startup, game-view, input or
-emulator/runtime routes; this rule overrides older open-import wording below.
+2026-09-28 platform boundary correction: DM1 PC-9801, DM2's separate PC-9801
+demo, and X68000 remain preservation-only. DM2 PC-9821 retail is a distinct
+Japanese release; its source-owned ZIP/CUE/BIN admission and launch route are
+under implementation and must not be described as playable until the
+real-media startup and first-map test passes.
 
 2026-08-12 Hint Oracle graphics correction: original `HCSB.DAT` is now
 strictly indexed as a four-segment archive from the real Utility Disk
@@ -321,7 +321,7 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
 | DM2 Amiga 1.0 (en-fr-ge) | EXTRACTED — `dm2-extras/amiga-en/`; DMWeb's Amiga edition page identifies the release as Europe-only v1.0 with Germany/UK edition pages, six ADF/IPF floppy images that cannot be played directly from floppy and require hard-disk installation, MOD music files keyed by `CD.DAT`, WinUAE-captured Smacker videos, 68020+ / OCS/ECS hardware reality notes, and an undocumented Ctrl-S / Del-Help / keypad wall-ornate command table |
 | DM2 MegaCD/SegaCD 1.0 (jp/en) | EXTRACTED — `dm2-extras/mega-cd-jp/`; DMWeb's Sega CD / Mega CD edition page identifies Europe/USA English and Japan Japanese v1.0 releases as redump BIN/CUE CD images, lists DMFiles CD-content archives for USA/JP, documents a data-track ISO plus audio-track MP3 split, and notes that track 7 is replaced by 15 seconds of silence |
 | DM2 Macintosh 1.0 (retail EN) — uses QuickTime `.moov` | PARTIAL — the large retail ZIP (`mac-en-retail`) is read from its HFS media in RAM and is the only supported Macintosh English edition. Its keyboard/menu table, sound queue, QuickTime resources and bounded game routes are source-locked. Japanese and French remain preservation inputs. Remaining: complete original QuickTime timing/presentation ownership, remote wall owners, menu owners, MIDI scheduling, balloon help, save corpus, and JP/FR runtime proof. |
-| DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | EXTRACTED — `dm2-extras/pc9821-jp/`; PC-9801 media is preservation-only and must not gain a cache, startup, game-view or input route. DMWeb's PC-9821 page identifies the separate JP v1.0 BIN/CUE CD line with six CD.DAT music tracks, while the IBM PS/V page documents its distinct floppy media and input/protection facts. |
+| DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | PC-9801 demo remains preservation-only. PC-9821 retail reaches the original title from CLI/launcher and verifies original CDDA tracks, but New Game fails at CAII map-candidate preparation before the first playable map. IBM PS/V remains preservation-only pending its distinct floppy media, input and protection audit. |
 | DM2 FM-Towns 1.0 (jp) | EXTRACTED — `dm2-extras/fm-towns-ja/`; DMWeb's FM Towns edition page identifies the JP v1.0 release as a redump BIN/CUE CD image with CD-audio differences (tracks 2-6 slightly quieter, extra silent track 8) and a distinct Ctrl-Shift-S / shifted-arrow command table |
 
 **DM2 Macintosh status correction (reviewed 2026-08-27):** the English retail
