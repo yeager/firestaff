@@ -90,8 +90,8 @@ presentation boundary.
   A complete 52-frame matched pair then scheduled 13 two-frame button pulses
   and sampled WorkRAMH every four frames. All eight VDP1/VDP2 regions remained
   byte-identical. Two corresponding RAM ranges differed, but their values did
-  not uniquely track the 13 masks; this is not a button/action mapping. Repeat
-  A later 195-frame pair used 12-frame holds, three-frame releases and a
+  not uniquely track the 13 masks; this is not a button/action mapping. A later
+  195-frame pair used 12-frame holds, three-frame releases and a
   WorkRAMH snapshot every frame. It still produced no VDP1/VDP2 presentation
   change; RAM differences persisted through release frames and did not bind all
   masks to actions. Continue with independently reset, source-bound input
