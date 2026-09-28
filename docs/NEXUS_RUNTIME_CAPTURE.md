@@ -237,6 +237,17 @@ multi-frame receipt. Its only positive result is
 `workram_input_consumer_chain=verified`; it always keeps semantic admission
 blocked.
 
+The same producer hook also accepts an optional inclusive
+`FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC_MIN`/`_PC_MAX` filter. This bounds a
+follow-up scan to a selected SH-2 code corridor while retaining master/slave
+PC and register ownership. The analysis script accepts `--pc-min` and
+`--pc-max` (half-open range) and defaults to master reads in the observed
+retail `TM.BIN` code corridor (`0x06014000..0x060147ff`) before validating
+its known five-read chain. A different range can be selected when following a
+captured transfer into another retail code owner. Reads outside the selected
+corridor remain raw observations and cannot be promoted to menu semantics by
+this filter.
+
 `scripts/compare_nexus_render_frames.py` compares specified external P6 PPM
 render receipts byte-for-byte. It rejects missing, malformed, or non-identical
 frames. An identical sequence proves only that the injected input has no

@@ -23,6 +23,8 @@ FIELDS_BY_VERSION = {
     "v1": COMMON_FIELDS + ("pr",),
     "v2": COMMON_FIELDS + ("cpu",),
 }
+READ_PC_MIN = 0x06014000
+READ_PC_MAX = 0x06014800
 ROW = re.compile(r"(?:^|\s)([a-z0-9]+)=(0x[0-9a-fA-F]+|[0-9]+)")
 
 
@@ -104,14 +106,29 @@ def summarize_table_reader(rows):
     return row["r4"]
 
 
+def select_pipeline_rows(rows, pc_min=READ_PC_MIN, pc_max=READ_PC_MAX):
+    """Keep master reads in a caller-selected, half-open SH-2 PC range."""
+    if pc_min < 0 or pc_max <= pc_min:
+        fail("invalid SH-2 PC filter range")
+    return [row for row in rows
+            if pc_min <= row["pc0"] < pc_max and row["pc1"] == 0]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace", type=Path)
     parser.add_argument(
         "--frame", type=int,
         help="select one frame from a multi-frame trace receipt")
+    parser.add_argument(
+        "--pc-min", type=lambda value: int(value, 0), default=READ_PC_MIN,
+        help="inclusive SH-2 PC filter (default: observed TM.BIN corridor)")
+    parser.add_argument(
+        "--pc-max", type=lambda value: int(value, 0), default=READ_PC_MAX,
+        help="exclusive SH-2 PC filter (default: end of observed corridor)")
     args = parser.parse_args()
     rows = parse(args.trace, args.frame)
+    rows = select_pipeline_rows(rows, args.pc_min, args.pc_max)
     frame = validate_controller_consumer_chain(rows)
     table_state = summarize_table_reader(rows)
 

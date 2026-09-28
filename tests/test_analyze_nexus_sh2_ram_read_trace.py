@@ -48,6 +48,21 @@ class NexusSh2RamReadTraceTests(unittest.TestCase):
             [line + " pr=0x06014500" for line in chain_rows(10511)])
         self.assertEqual(MODULE.validate_controller_consumer_chain(rows), 10511)
 
+    def test_pipeline_filter_keeps_only_master_reads_in_retail_corridor(self):
+        rows = [
+            {"pc0": 0x06014388, "pc1": 0},
+            {"pc0": 0x0601462C, "pc1": 0},
+            {"pc0": 0x06015100, "pc1": 0},
+            {"pc0": 0x06014388, "pc1": 0x06014000},
+        ]
+        self.assertEqual(MODULE.select_pipeline_rows(rows), rows[:2])
+        self.assertEqual(MODULE.select_pipeline_rows(
+            rows, 0x06015000, 0x06015200), rows[2:3])
+
+    def test_pipeline_filter_rejects_invalid_pc_ranges(self):
+        with self.assertRaises(SystemExit):
+            MODULE.select_pipeline_rows([], 0x06015000, 0x06015000)
+
     def test_table_reader_state_is_reported_without_assuming_button_value(self):
         for state in (0, 0x10):
             with self.subTest(state=state):
