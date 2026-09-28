@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-app=${1:?usage: test_dm1_v1_dos_fr_unpacked_cli_boot.sh <firestaff-binary>}
-data_source=${FIRESTAFF_DM1_DOS_FR_SOURCE:-${FIRESTAFF_DM1_DOS_FR_UNPACKED_DIR:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master/EUDATA"}}
+app=${1:?usage: test_dm1_v1_dos_fr_zip_cli_boot.sh <firestaff-binary>}
+data_source=${FIRESTAFF_DM1_DOS_FR_SOURCE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_FR_EUDATA.zip"}
 expected_graphics_md5=f934d97e43e1ba6e5159839acbcd0611
 
 if [[ ! -x "$app" ]]; then
@@ -13,7 +13,7 @@ fi
 if [[ -f "$data_source" ]]; then
     case "${data_source##*.}" in
         [zZ][iI][pP]) ;;
-        *) printf 'FAIL: expected a ZIP archive or unpacked EUDATA directory: %s\n' "$data_source" >&2; exit 1 ;;
+        *) printf 'FAIL: expected a ZIP archive: %s\n' "$data_source" >&2; exit 1 ;;
     esac
     archive_listing=$(unzip -Z1 "$data_source") || {
         printf 'FAIL: cannot read ZIP archive: %s\n' "$data_source" >&2
@@ -24,12 +24,17 @@ if [[ -f "$data_source" ]]; then
         printf 'SKIP: authentic DM1 French DOS ZIP is not staged: %s\n' "$data_source"
         exit 77
     fi
-elif [[ -d "$data_source" && -f "$data_source/GRAPHICS.DAT" && -f "$data_source/DUNGEON.DAT" ]]; then
-    :
 else
-    printf '%s\n' 'SKIP: authentic DM1 French DOS EUDATA directory or ZIP is not staged'
+    printf '%s\n' 'SKIP: repacked authentic DM1 French DOS ZIP is not staged'
     exit 77
 fi
+
+# Exercise the historical filename as well as ZIP contents: launch must be
+# determined by archive members, never by the filename chosen by the user.
+named_archive_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-dm1-fr-zip.XXXXXX")
+trap 'rm -rf "$named_archive_dir"' EXIT
+cp "$data_source" "$named_archive_dir/Dungeon-Master_DOS_FR.zip"
+data_source="$named_archive_dir/Dungeon-Master_DOS_FR.zip"
 
 probe() {
     local output
@@ -58,7 +63,7 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
    ! grep -Fq "dataDir=$data_source" <<<"$menu_output" ||
    ! grep -Fq 'handoff=pc-img3' <<<"$menu_output"; then
     printf '%s\n' "$menu_output" >&2
-    printf '%s\n' 'FAIL: authentic unpacked DM1 French DOS start menu did not bind IMG3 source media' >&2
+    printf '%s\n' 'FAIL: authentic DM1 French DOS ZIP start menu did not bind IMG3 source media' >&2
     exit 1
 fi
 
@@ -75,8 +80,8 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
    ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
     printf '%s\n' "$gameplay_output" >&2
-    printf '%s\n' 'FAIL: authentic unpacked DM1 French DOS input did not reach native movement' >&2
+    printf '%s\n' 'FAIL: authentic DM1 French DOS ZIP input did not reach native movement' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic DM1 French DOS media reaches CLI, menu, IMG3 handoff, and native movement'
+printf '%s\n' 'PASS: authentic DM1 French DOS ZIP reaches CLI, menu, IMG3 handoff, and native movement'
