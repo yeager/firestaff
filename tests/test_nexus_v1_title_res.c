@@ -99,11 +99,19 @@ static int test_regional_member_identity(const char *cue_name,
     int member_size = 0;
     int written;
     int result;
+    FILE *cue_file;
 
     if (!data_dir || !data_dir[0]) return 0;
     written = snprintf(cue_path, sizeof(cue_path), "%s/%s", data_dir,
                        cue_name);
     if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
+    cue_file = fopen(cue_path, "rb");
+    if (!cue_file) {
+        printf("  SKIP regional %s::%s (CUE not staged)\n", cue_name,
+               member_name);
+        return 0;
+    }
+    fclose(cue_file);
     memset(&engine, 0, sizeof(engine));
     result = nexus_v1_init(&engine, cue_path);
     if (result != 0 || engine.source != NEXUS_SRC_ISO ||
@@ -131,6 +139,16 @@ static int test_regional_member_identity(const char *cue_name,
         nexus_v1_shutdown(&engine);
         return 1;
     }
+    if (strcmp(member_name, "RLOWFIX.BIN") == 0 &&
+        (engine.champions.champion_count !=
+             NEXUS_NEXUS_PLRD_CHAMPION_COUNT ||
+         !engine.champions.champions[0].roster_row_available)) {
+        fprintf(stderr, "FAIL: %s::RLOWFIX.BIN did not seed real PLRD rows\n",
+                cue_name);
+        free(member_data);
+        nexus_v1_shutdown(&engine);
+        return 1;
+    }
     free(member_data);
     printf("  PASS regional %s::%s md5=%s RES* entries=%u\n", cue_name,
            member_name, receipt.canonical_md5, decoded.entry_count);
@@ -149,11 +167,18 @@ static int test_french_logobg_identity(void) {
     int member_size = 0;
     int written;
     int result;
+    FILE *cue_file;
 
     if (!data_dir || !data_dir[0]) return 0;
     written = snprintf(cue_path, sizeof(cue_path),
                        "%s/Dungeon Master Nexus (French).cue", data_dir);
     if (written < 0 || (size_t)written >= sizeof(cue_path)) return 1;
+    cue_file = fopen(cue_path, "rb");
+    if (!cue_file) {
+        puts("  SKIP regional French::LOGOBG.DG2 (CUE not staged)");
+        return 0;
+    }
+    fclose(cue_file);
     memset(&engine, 0, sizeof(engine));
     result = nexus_v1_init(&engine, cue_path);
     if (result != 0 || engine.source != NEXUS_SRC_ISO ||
@@ -313,6 +338,9 @@ int main(void) {
     fail += test_title_cg();
     fail += test_res_file("TITLE.BIN");
     fail += test_res_file("RLOWFIX.BIN");
+    fail += test_regional_member_identity(
+        "Dungeon Master Nexus (Japan).cue", "RLOWFIX.BIN",
+        "bb650a4e6f7b6374ba8aa86a61f8f523");
     fail += test_regional_member_identity(
         "Dungeon Master Nexus (English).cue", "RLOWFIX.BIN",
         "14c3a7e6fed2dc9e53a727640d4c9348");

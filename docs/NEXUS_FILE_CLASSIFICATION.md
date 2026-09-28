@@ -47,7 +47,10 @@ STONE.BIN (4 KB): stone/wall texture base.
 NBG3.BIN (7 KB): VDP2 background layer.
 POTEFT.BIN (3 KB): potion effects.
 RHIFIX.BIN (5 KB): unknown fix data.
-RLOWFIX.BIN (71 KB): unknown fix data.
+RLOWFIX.BIN (71 KB): RES* archive with source-bound champion PLRD, creature
+CRET, and text/TABL resources; Japanese, English, and French identities are
+recorded separately where verified. Runtime semantics remain gated by their
+individual consumers.
 STABG.BIN (52 KB): status area background.
 SWTCHR.BIN (38 KB): switch/lever graphics.
 

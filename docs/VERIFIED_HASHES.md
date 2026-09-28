@@ -69,6 +69,14 @@ identities when the canonical capture corpus is not the selected source.
 | English Saturn ISO | `nexus/TITLE.BIN` | `0b293be24d06eb550b27442ac9e8924c` | `a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44` | 112,216 |
 | English Saturn ISO | `nexus/WARNING.BIN` | `eb246b67f7758f23310221ac9b9efe2d` | `78cebe5c8a7728119b47d6ed86982f4b25fba79d0a06aca02e6f18999e4bb83d` | 101,256 |
 
+The configured Japanese Nexus corpus includes the following separately
+authenticated `RLOWFIX.BIN` revision, whose RES* roster is used by the JP
+startup route:
+
+| Region/source | File | MD5 | SHA256 | Size |
+|---|---|---|---|---:|
+| Japanese Saturn retail | `RLOWFIX.BIN` | `bb650a4e6f7b6374ba8aa86a61f8f523` | `f2686bf3d6b971c5eaa613b2619b7e1bb7958a8045876296a83509f137be18b0` | 72,332 |
+
 ## All Files
 
 - `csb/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`

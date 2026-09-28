@@ -56,6 +56,10 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
      * presentation gates remain revision-specific. */
     {"RLOWFIX.BIN", "14c3a7e6fed2dc9e53a727640d4c9348"},
     {"RLOWFIX.BIN", "ecbecff383d6ee8330e68e38417be9c8"},
+    /* Authenticated Japanese Saturn RLOWFIX revision used by the configured
+     * .firestaff/data/nexus corpus. Keep it in the shared identity table so
+     * reads, source receipts and the PLRD/CRET startup route agree. */
+    {"RLOWFIX.BIN", "bb650a4e6f7b6374ba8aa86a61f8f523"},
     {"TITLE.BIN", "0b293be24d06eb550b27442ac9e8924c"},
     {"TITLE.BIN", "5c917a7db5bb0409d5d84086886c9aa6"},
     {"GAMEOVER.BIN", "d692c8f25400cdcd44559194873c1e12"},

@@ -1,5 +1,14 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-28: Added the authenticated Japanese Saturn `RLOWFIX.BIN` MD5 to
+  Nexus's shared canonical asset table. The prior boot-profile gate accepted
+  this real 72,332-byte roster archive, but the engine's named-file reader
+  rejected it when seeding PLRD champions. A regional CUE regression now
+  verifies the Japanese source receipt, RES* decode and 20-row champion pool;
+  it passes on TRV2 against `.firestaff/data/nexus`. Regional checks skip only
+  when that region's real CUE is absent. English and French hashes remain
+  independently authenticated.
+
 - 2026-09-26: The M12 launcher-options regression now pins its audio `OFF`
   assertion to explicit English rather than inheriting the host's AUTO
   locale. This prevents a Swedish host from incorrectly failing the test on
