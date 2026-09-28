@@ -94,8 +94,13 @@ presentation boundary.
   195-frame pair used 12-frame holds, three-frame releases and a
   WorkRAMH snapshot every frame. It still produced no VDP1/VDP2 presentation
   change; RAM differences persisted through release frames and did not bind all
-  masks to actions. Continue with independently reset, source-bound input
-  cases before opening interactive menu admission.
+  masks to actions. A later independent 60-frame Start-only pair joins the
+  mask to transient controller-state bytes (`0x0602c90c`) and still yields no
+  VDP1/VDP2 change; two other RAM bytes remain different through all release
+  frames. This is transport evidence, not menu semantics. Continue by tracing
+  the packet past the bounded read region into the retail event consumer and
+  capture an actually interactive title/menu interval before opening menu
+  admission; see `docs/NEXUS_RUNTIME_CAPTURE.md`.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the

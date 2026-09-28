@@ -960,6 +960,39 @@ The comparator's complete textual receipt has SHA-256
 The next useful input experiment is one mask per independently reset matched
 pair, joined to the retail consumer's exact state reads and later presentation.
 
+A one-mask independent-start pair was then captured on TRV2 at frames
+10500--10559 with the same JP BIOS and retail CUE. The input run scheduled only
+mask `0x0010` for 12 frames; its input receipt has 24 rows (two observations
+per active frame) and no other mask. Both cold-start runs completed with
+`capture_exit_status=0`, 60 WorkRAMH snapshots and 60 raw VDP frames. All eight
+VDP1/VDP2 regions are identical across the pair, and the rendered PPMs for
+frames 10500, 10512 and 10559 are byte-identical. The shared raw capture SHA-256
+is `b64c09d0ac4a677bb10ec68f2058dca27b07d37e4d949a526bce870cc5c28c63`.
+
+At the instrumented SH-2 WorkRAMH read site, address `0x0602c90c` is observed
+as `0x1000f001` in the Start-input run during frames 10507--10511, while the
+matched forced-no-button run reads `0x0000f001`; after release, the input run
+also reads `0x0000f001` by frame 10559. This joins the external Start mask to a
+transient controller-state byte pattern, not to a menu command. Separately,
+the memory comparator reports two differing byte spans at
+`0x0602c8f9..0x0602c8fa` and `0x0602c900..0x0602c901` in all 60 snapshots,
+including all 48 input-release frames; their bytes are `13 22` in control and
+`56 27` in input. Those persistent differences do not identify button/action
+semantics. The memory receipt SHA-256 is
+`e29a35b834d4b792112f9513e1427f94aace281b57bcf9b81933ec0dacf6265d`.
+
+The control and input WorkRAMH stream SHA-256 values are
+`2df0204269388d817632b78939ee6450cb9798bfc80f4bdd81a8a7c9e78237f9` and
+`ddd1554a9ec3ab7554a12b356c39af4b4aa38cd7869234896ee424888c05041e`;
+the input event trace SHA-256 is
+`446caae2da8e1c0848c8922a828d834c99de2e66aaa67787ab26e3f492fe57ed`.
+Original BIOS, disc and all capture artifacts remain on TRV2 under
+`/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/button-start-independent-10500-20260928/`.
+This independently reset pair narrows controller transport evidence but
+still does not show a title/menu transition or authorize interactive startup.
+The next capture must follow the packet past the bounded read region into the
+retail event consumer and sample an actually interactive title/menu interval.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the
