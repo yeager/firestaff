@@ -47,11 +47,11 @@ msgstr "VERIFIED FM TOWNS CSB MEDIA REQUIRED"
 msgid "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 msgstr "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED"
 
-#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5408
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5377
 msgid "ACCESSIBILITY"
 msgstr "无障碍"
 
-#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5405
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5374
 msgid "AUDIO"
 msgstr "音频"
 
@@ -64,12 +64,12 @@ msgstr "操作"
 msgid "GAME"
 msgstr "游戏"
 
-#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5390
-#: src/ui/menu_startup_m12.c:10408
+#: src/ui/menu_startup_m12.c:237 src/ui/menu_startup_m12.c:5359
+#: src/ui/menu_startup_m12.c:10377
 msgid "GRAPHICS"
 msgstr "画面"
 
-#: src/ui/menu_startup_m12.c:238 src/ui/menu_startup_m12.c:5411
+#: src/ui/menu_startup_m12.c:238 src/ui/menu_startup_m12.c:5380
 msgid "ONLINE"
 msgstr "在线"
 
@@ -253,7 +253,7 @@ msgstr "TR"
 
 #: src/ui/menu_startup_m12.c:443 src/ui/menu_startup_m12.c:449
 #: src/ui/menu_startup_m12.c:471 src/ui/menu_startup_m12.c:474
-#: src/ui/menu_startup_m12.c:4855 src/ui/menu_startup_m12.c:4999
+#: src/ui/menu_startup_m12.c:4824 src/ui/menu_startup_m12.c:4968
 msgid "AUTO"
 msgstr "自动"
 
@@ -340,7 +340,7 @@ msgstr "RUSSKY"
 #: src/ui/menu_startup_m12.c:453 src/ui/menu_startup_m12.c:469
 #: src/ui/menu_startup_m12.c:475 src/ui/menu_startup_m12.c:477
 #: src/ui/menu_startup_m12.c:478 src/ui/menu_startup_m12.c:479
-#: src/ui/menu_startup_m12.c:4985 src/ui/menu_startup_m12.c:5090
+#: src/ui/menu_startup_m12.c:4954 src/ui/menu_startup_m12.c:5059
 msgid "OFF"
 msgstr "关"
 
@@ -510,14 +510,14 @@ msgid "REMASTERED"
 msgstr "重制版"
 
 #: src/ui/menu_startup_m12.c:758 src/ui/menu_startup_m12.c:779
-#: src/ui/menu_startup_m12.c:9873 src/ui/menu_startup_m12.c:10316
+#: src/ui/menu_startup_m12.c:9842 src/ui/menu_startup_m12.c:10285
 #: src/ui/menu_startup_render_modern_m12.c:1474
 #: src/ui/menu_startup_render_modern_m12.c:2647
 msgid "DUNGEON MASTER"
 msgstr "DUNGEON MASTER"
 
 #: src/ui/menu_startup_m12.c:759 src/ui/menu_startup_m12.c:789
-#: src/ui/menu_startup_m12.c:9875 src/ui/menu_startup_m12.c:10330
+#: src/ui/menu_startup_m12.c:9844 src/ui/menu_startup_m12.c:10299
 #: src/ui/menu_startup_render_modern_m12.c:1475
 #: src/ui/menu_startup_render_modern_m12.c:2650
 msgid "CHAOS STRIKES BACK"
@@ -544,16 +544,16 @@ msgstr "CSB UTILITY DISK (FM TOWNS)"
 msgid "CSB UTILITY DISK — HINT ORACLE"
 msgstr "CSB UTILITY DISK — HINT ORACLE"
 
-#: src/ui/menu_startup_m12.c:766 src/ui/menu_startup_m12.c:11250
-#: src/ui/menu_startup_m12.c:11253 src/ui/menu_startup_render_modern_m12.c:1753
+#: src/ui/menu_startup_m12.c:766 src/ui/menu_startup_m12.c:11219
+#: src/ui/menu_startup_m12.c:11222 src/ui/menu_startup_render_modern_m12.c:1753
 #: src/ui/menu_startup_render_modern_m12.c:2026
 msgid "MUSEUM OF LORE"
 msgstr "传说博物馆"
 
-#: src/ui/menu_startup_m12.c:767 src/ui/menu_startup_m12.c:8228
-#: src/ui/menu_startup_m12.c:8797 src/ui/menu_startup_m12.c:10069
-#: src/ui/menu_startup_m12.c:11285 src/ui/menu_startup_m12.c:11288
-#: src/ui/menu_startup_m12.c:11433
+#: src/ui/menu_startup_m12.c:767 src/ui/menu_startup_m12.c:8197
+#: src/ui/menu_startup_m12.c:8766 src/ui/menu_startup_m12.c:10038
+#: src/ui/menu_startup_m12.c:11254 src/ui/menu_startup_m12.c:11257
+#: src/ui/menu_startup_m12.c:11402
 msgid "SETTINGS"
 msgstr "设置"
 
@@ -773,8 +773,8 @@ msgstr "V1 保留基准行为"
 msgid "CHRISTOPHE FONTANEL DOCUMENTED VITAL HISTORY"
 msgstr "CHRISTOPHE FONTANEL 记录了重要历史"
 
-#: src/ui/menu_startup_m12.c:813 src/ui/menu_startup_m12.c:11267
-#: src/ui/menu_startup_m12.c:11270
+#: src/ui/menu_startup_m12.c:813 src/ui/menu_startup_m12.c:11236
+#: src/ui/menu_startup_m12.c:11239
 msgid "CREDITS"
 msgstr "制作人员"
 
@@ -918,8 +918,8 @@ msgstr "上下移动   ENTER打开   ESC退出"
 msgid "PERSISTED OPTIONS"
 msgstr "持久化选项"
 
-#: src/ui/menu_startup_m12.c:1037 src/ui/menu_startup_m12.c:10406
-#: src/ui/menu_startup_m12.c:12477
+#: src/ui/menu_startup_m12.c:1037 src/ui/menu_startup_m12.c:10375
+#: src/ui/menu_startup_m12.c:12446
 msgid "LANGUAGE"
 msgstr "语言"
 
@@ -951,7 +951,7 @@ msgstr "左右循环   ENTER前进   ESC返回"
 msgid "ENTER OR ESC RETURNS TO MENU"
 msgstr "ENTER 或 ESC 返回菜单"
 
-#: src/ui/menu_startup_m12.c:1045 src/ui/menu_startup_m12.c:8238
+#: src/ui/menu_startup_m12.c:1045 src/ui/menu_startup_m12.c:8207
 msgid "READY TO LAUNCH"
 msgstr "准备启动"
 
@@ -1025,11 +1025,11 @@ msgstr "ARCHIVE: %s  OPTION: %s"
 msgid "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 msgstr "RESTART WITH THE OPTION, THEN RESCAN GAME DATA"
 
-#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8808
+#: src/ui/menu_startup_m12.c:1874 src/ui/menu_startup_m12.c:8777
 msgid "Dungeon Master"
 msgstr "地下城领主"
 
-#: src/ui/menu_startup_m12.c:1876 src/ui/menu_startup_m12.c:8808
+#: src/ui/menu_startup_m12.c:1876 src/ui/menu_startup_m12.c:8777
 msgid "Chaos Strikes Back"
 msgstr "混沌反击"
 
@@ -1041,12 +1041,12 @@ msgstr "Dungeon Master II: The Legend of Skullkeep"
 msgid "Dungeon Master Nexus"
 msgstr "Dungeon Master Nexus"
 
-#: src/ui/menu_startup_m12.c:1883 src/ui/menu_startup_m12.c:8809
+#: src/ui/menu_startup_m12.c:1883 src/ui/menu_startup_m12.c:8778
 msgid "Theron's Quest"
 msgstr "Theron's Quest"
 
-#: src/ui/menu_startup_m12.c:1904 src/ui/menu_startup_m12.c:2542
-#: src/ui/menu_startup_m12.c:2593
+#: src/ui/menu_startup_m12.c:1904 src/ui/menu_startup_m12.c:2511
+#: src/ui/menu_startup_m12.c:2562
 msgid "STARTING"
 msgstr "正在启动"
 
@@ -1086,718 +1086,718 @@ msgstr "MATERIALIZING LAUNCH CACHE"
 msgid "REFRESHING MEDIA METADATA"
 msgstr "REFRESHING MEDIA METADATA"
 
-#: src/ui/menu_startup_m12.c:1976 src/ui/menu_startup_m12.c:5106
-#: src/ui/menu_startup_m12.c:5346
+#: src/ui/menu_startup_m12.c:1976 src/ui/menu_startup_m12.c:5075
+#: src/ui/menu_startup_m12.c:5315
 msgid "NOT SET"
 msgstr "NOT SET"
 
-#: src/ui/menu_startup_m12.c:2100
+#: src/ui/menu_startup_m12.c:2069
 msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
 msgstr "请使用文件管理器将游戏文件复制到 Documents/Firestaff/data"
 
-#: src/ui/menu_startup_m12.c:2102
+#: src/ui/menu_startup_m12.c:2071
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "请使用“文件”应用将游戏文件复制到本应用的 Firestaff/data"
 
-#: src/ui/menu_startup_m12.c:2104
+#: src/ui/menu_startup_m12.c:2073
 msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
 msgstr "请将正版游戏文件复制到："
 
-#: src/ui/menu_startup_m12.c:2123
+#: src/ui/menu_startup_m12.c:2092
 msgid "NO GAME DATA FOUND"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_m12.c:2187 src/ui/menu_startup_m12.c:9561
-#: src/ui/menu_startup_m12.c:9676
+#: src/ui/menu_startup_m12.c:2156 src/ui/menu_startup_m12.c:9530
+#: src/ui/menu_startup_m12.c:9645
 msgid "TITLE START AVAILABLE"
 msgstr "TITLE START AVAILABLE"
 
-#: src/ui/menu_startup_m12.c:2234
+#: src/ui/menu_startup_m12.c:2203
 msgid "DATA DIRECTORY UPDATED"
 msgstr "DATA DIRECTORY UPDATED"
 
-#: src/ui/menu_startup_m12.c:2235 src/ui/menu_startup_m12.c:2999
+#: src/ui/menu_startup_m12.c:2204 src/ui/menu_startup_m12.c:2968
 msgid "DATA DIRECTORY UNCHANGED"
 msgstr "DATA DIRECTORY UNCHANGED"
 
-#: src/ui/menu_startup_m12.c:2277 src/ui/menu_startup_m12.c:2375
-#: src/ui/menu_startup_m12.c:2541 src/ui/menu_startup_m12.c:2592
-#: src/ui/menu_startup_m12.c:13061
+#: src/ui/menu_startup_m12.c:2246 src/ui/menu_startup_m12.c:2344
+#: src/ui/menu_startup_m12.c:2510 src/ui/menu_startup_m12.c:2561
+#: src/ui/menu_startup_m12.c:13030
 msgid "SCANNING GAME DATA"
 msgstr "正在扫描游戏数据"
 
-#: src/ui/menu_startup_m12.c:2374
+#: src/ui/menu_startup_m12.c:2343
 msgid "CANCELLING DATA SCAN"
 msgstr "CANCELLING DATA SCAN"
 
-#: src/ui/menu_startup_m12.c:2377
+#: src/ui/menu_startup_m12.c:2346
 msgid "WAITING FOR CURRENT FILE CHECK TO FINISH"
 msgstr "WAITING FOR CURRENT FILE CHECK TO FINISH"
 
-#: src/ui/menu_startup_m12.c:2506 src/ui/menu_startup_m12.c:2576
+#: src/ui/menu_startup_m12.c:2475 src/ui/menu_startup_m12.c:2545
 msgid "DATA DIRECTORY NOT FOUND"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_m12.c:2507 src/ui/menu_startup_m12.c:2577
-#: src/ui/menu_startup_m12.c:2623 src/ui/menu_startup_m12.c:13030
+#: src/ui/menu_startup_m12.c:2476 src/ui/menu_startup_m12.c:2546
+#: src/ui/menu_startup_m12.c:2592 src/ui/menu_startup_m12.c:12999
 msgid "CHOOSE AN EXISTING FOLDER"
 msgstr "CHOOSE AN EXISTING FOLDER"
 
-#: src/ui/menu_startup_m12.c:2619 src/ui/menu_startup_m12.c:13026
+#: src/ui/menu_startup_m12.c:2588 src/ui/menu_startup_m12.c:12995
 msgid "DATA SCAN CANCELLED"
 msgstr "DATA SCAN CANCELLED"
 
-#: src/ui/menu_startup_m12.c:2620 src/ui/menu_startup_m12.c:13027
+#: src/ui/menu_startup_m12.c:2589 src/ui/menu_startup_m12.c:12996
 msgid "DATA SCAN FAILED"
 msgstr "DATA SCAN FAILED"
 
-#: src/ui/menu_startup_m12.c:2622 src/ui/menu_startup_m12.c:13029
+#: src/ui/menu_startup_m12.c:2591 src/ui/menu_startup_m12.c:12998
 msgid "GAME AVAILABILITY WAS NOT UPDATED"
 msgstr "GAME AVAILABILITY WAS NOT UPDATED"
 
-#: src/ui/menu_startup_m12.c:2646
+#: src/ui/menu_startup_m12.c:2615
 msgid "SAVE MANIFEST EXPORTED"
 msgstr "SAVE MANIFEST EXPORTED"
 
-#: src/ui/menu_startup_m12.c:2647
+#: src/ui/menu_startup_m12.c:2616
 msgid "SAVE FILES ARE NOT COPIED"
 msgstr "SAVE FILES ARE NOT COPIED"
 
-#: src/ui/menu_startup_m12.c:2651
+#: src/ui/menu_startup_m12.c:2620
 msgid "EXPORT FAILED"
 msgstr "EXPORT FAILED"
 
-#: src/ui/menu_startup_m12.c:2652
+#: src/ui/menu_startup_m12.c:2621
 msgid "CHECK YOUR SETTINGS FOLDER"
 msgstr "CHECK YOUR SETTINGS FOLDER"
 
-#: src/ui/menu_startup_m12.c:2766 src/ui/menu_startup_m12.c:2905
+#: src/ui/menu_startup_m12.c:2735 src/ui/menu_startup_m12.c:2874
 msgid "DM1 PC34 SAVE EXPORTED"
 msgstr "DM1 PC34 SAVE EXPORTED"
 
-#: src/ui/menu_startup_m12.c:2772 src/ui/menu_startup_m12.c:2912
+#: src/ui/menu_startup_m12.c:2741 src/ui/menu_startup_m12.c:2881
 msgid "PC34 EXPORT FAILED"
 msgstr "PC34 EXPORT FAILED"
 
-#: src/ui/menu_startup_m12.c:2773
+#: src/ui/menu_startup_m12.c:2742
 msgid "CHECK QUICK RESUME SAVE"
 msgstr "CHECK QUICK RESUME SAVE"
 
-#: src/ui/menu_startup_m12.c:2800 src/ui/menu_startup_m12.c:12766
+#: src/ui/menu_startup_m12.c:2769 src/ui/menu_startup_m12.c:12735
 msgid "NO SAVES FOUND"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_m12.c:2801
+#: src/ui/menu_startup_m12.c:2770
 msgid "SAVE A GAME FIRST"
 msgstr "SAVE A GAME FIRST"
 
-#: src/ui/menu_startup_m12.c:2913
+#: src/ui/menu_startup_m12.c:2882
 msgid "SELECT A VALID DM1 SAVE"
 msgstr "SELECT A VALID DM1 SAVE"
 
-#: src/ui/menu_startup_m12.c:2938
+#: src/ui/menu_startup_m12.c:2907
 msgid "SAVE MANIFEST IMPORTED"
 msgstr "SAVE MANIFEST IMPORTED"
 
-#: src/ui/menu_startup_m12.c:2939
+#: src/ui/menu_startup_m12.c:2908
 msgid "QUICK RESUME PATH UPDATED"
 msgstr "QUICK RESUME PATH UPDATED"
 
-#: src/ui/menu_startup_m12.c:2943
+#: src/ui/menu_startup_m12.c:2912
 msgid "IMPORT FAILED"
 msgstr "IMPORT FAILED"
 
-#: src/ui/menu_startup_m12.c:2944
+#: src/ui/menu_startup_m12.c:2913
 msgid "EXPORT A SAVE MANIFEST FIRST"
 msgstr "EXPORT A SAVE MANIFEST FIRST"
 
-#: src/ui/menu_startup_m12.c:2987
+#: src/ui/menu_startup_m12.c:2956
 msgid "CHOOSE GAME DATA FOLDER"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_m12.c:2988
+#: src/ui/menu_startup_m12.c:2957
 msgid "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 msgstr "THE LAUNCHER WILL RESCAN AFTER SELECTION"
 
-#: src/ui/menu_startup_m12.c:3033
+#: src/ui/menu_startup_m12.c:3002
 msgid "UNICODE FONT SELECTED"
 msgstr "UNICODE FONT SELECTED"
 
-#: src/ui/menu_startup_m12.c:3039 src/ui/menu_startup_m12.c:3061
+#: src/ui/menu_startup_m12.c:3008 src/ui/menu_startup_m12.c:3030
 msgid "UNICODE FONT UNCHANGED"
 msgstr "UNICODE FONT UNCHANGED"
 
-#: src/ui/menu_startup_m12.c:3040 src/ui/menu_startup_m12.c:3102
+#: src/ui/menu_startup_m12.c:3009 src/ui/menu_startup_m12.c:3071
 msgid "NO FILE SELECTED"
 msgstr "NO FILE SELECTED"
 
-#: src/ui/menu_startup_m12.c:3055
+#: src/ui/menu_startup_m12.c:3024
 msgid "CHOOSE UNICODE FONT"
 msgstr "CHOOSE UNICODE FONT"
 
-#: src/ui/menu_startup_m12.c:3056
+#: src/ui/menu_startup_m12.c:3025
 msgid "SELECT A BROAD TTF OR OTF FONT"
 msgstr "SELECT A BROAD TTF OR OTF FONT"
 
-#: src/ui/menu_startup_m12.c:3062 src/ui/menu_startup_m12.c:3124
+#: src/ui/menu_startup_m12.c:3031 src/ui/menu_startup_m12.c:3093
 msgid "NATIVE FILE DIALOG DISABLED"
 msgstr "NATIVE FILE DIALOG DISABLED"
 
-#: src/ui/menu_startup_m12.c:3089
+#: src/ui/menu_startup_m12.c:3058
 msgid "V2.2 ARTPACK SELECTED"
 msgstr "V2.2 ARTPACK SELECTED"
 
-#: src/ui/menu_startup_m12.c:3094
+#: src/ui/menu_startup_m12.c:3063
 msgid "V2.2 ARTPACK REJECTED"
 msgstr "V2.2 ARTPACK REJECTED"
 
-#: src/ui/menu_startup_m12.c:3101 src/ui/menu_startup_m12.c:3123
+#: src/ui/menu_startup_m12.c:3070 src/ui/menu_startup_m12.c:3092
 msgid "V2.2 ARTPACK UNCHANGED"
 msgstr "V2.2 ARTPACK UNCHANGED"
 
-#: src/ui/menu_startup_m12.c:3117
+#: src/ui/menu_startup_m12.c:3086
 msgid "CHOOSE V2.2 ARTPACK"
 msgstr "CHOOSE V2.2 ARTPACK"
 
-#: src/ui/menu_startup_m12.c:3118
+#: src/ui/menu_startup_m12.c:3087
 msgid "SELECT A .FSART FILE"
 msgstr "选择目的地"
 
-#: src/ui/menu_startup_m12.c:5083
+#: src/ui/menu_startup_m12.c:5052
 msgid "NEEDS LOGIN"
 msgstr "NEEDS LOGIN"
 
-#: src/ui/menu_startup_m12.c:5085
+#: src/ui/menu_startup_m12.c:5054
 msgid "READY"
 msgstr "就绪"
 
-#: src/ui/menu_startup_m12.c:5087
+#: src/ui/menu_startup_m12.c:5056
 msgid "BACKEND PENDING"
 msgstr "BACKEND PENDING"
 
-#: src/ui/menu_startup_m12.c:5112
+#: src/ui/menu_startup_m12.c:5081
 msgid "SET"
 msgstr "拉伸"
 
-#: src/ui/menu_startup_m12.c:5129 src/ui/menu_startup_m12.c:5342
+#: src/ui/menu_startup_m12.c:5098 src/ui/menu_startup_m12.c:5311
 msgid "EDITING"
 msgstr "设置"
 
-#: src/ui/menu_startup_m12.c:5234
+#: src/ui/menu_startup_m12.c:5203
 msgid "SCALE"
 msgstr "缩放"
 
-#: src/ui/menu_startup_m12.c:5235 src/ui/menu_startup_m12.c:12525
+#: src/ui/menu_startup_m12.c:5204 src/ui/menu_startup_m12.c:12494
 msgid "ASPECT RATIO"
 msgstr "宽高比"
 
-#: src/ui/menu_startup_m12.c:5236
+#: src/ui/menu_startup_m12.c:5205
 msgid "PIXEL SNAP"
 msgstr "像素捕捉"
 
-#: src/ui/menu_startup_m12.c:5237
+#: src/ui/menu_startup_m12.c:5206
 msgid "FILTER"
 msgstr "过滤器"
 
-#: src/ui/menu_startup_m12.c:5238
+#: src/ui/menu_startup_m12.c:5207
 msgid "VSYNC"
 msgstr "VSYNC"
 
-#: src/ui/menu_startup_m12.c:5239
+#: src/ui/menu_startup_m12.c:5208
 msgid "FPS OVERLAY"
 msgstr "FPS OVERLAY"
 
-#: src/ui/menu_startup_m12.c:5240
+#: src/ui/menu_startup_m12.c:5209
 msgid "VIEWPORT STYLE"
 msgstr "VIEWPORT STYLE"
 
-#: src/ui/menu_startup_m12.c:5241
+#: src/ui/menu_startup_m12.c:5210
 msgid "INPUT MODE"
 msgstr "窗口模式"
 
-#: src/ui/menu_startup_m12.c:5243
+#: src/ui/menu_startup_m12.c:5212
 msgid "TOUCH CONTROLS"
 msgstr "操作"
 
-#: src/ui/menu_startup_m12.c:5244
+#: src/ui/menu_startup_m12.c:5213
 msgid "MOVEMENT MODE"
 msgstr "MOVEMENT MODE"
 
-#: src/ui/menu_startup_m12.c:5245
+#: src/ui/menu_startup_m12.c:5214
 msgid "SMOOTH TURN PAN"
 msgstr "SMOOTH TURN PAN"
 
-#: src/ui/menu_startup_m12.c:5246
+#: src/ui/menu_startup_m12.c:5215
 msgid "DATA DIRECTORY"
 msgstr "数据目录"
 
-#: src/ui/menu_startup_m12.c:5247
+#: src/ui/menu_startup_m12.c:5216
 msgid "ORIGINAL DATA"
 msgstr "原版"
 
-#: src/ui/menu_startup_m12.c:5248
+#: src/ui/menu_startup_m12.c:5217
 msgid "DEBUG OVERLAY"
 msgstr "DEBUG OVERLAY"
 
-#: src/ui/menu_startup_m12.c:5249
+#: src/ui/menu_startup_m12.c:5218
 msgid "DEVELOPER GATES"
 msgstr "DEVELOPER GATES"
 
-#: src/ui/menu_startup_m12.c:5250
+#: src/ui/menu_startup_m12.c:5219
 msgid "MASTER VOLUME"
 msgstr "重制版"
 
-#: src/ui/menu_startup_m12.c:5251
+#: src/ui/menu_startup_m12.c:5220
 msgid "MUSIC VOLUME"
 msgstr "MUSIC VOLUME"
 
-#: src/ui/menu_startup_m12.c:5252
+#: src/ui/menu_startup_m12.c:5221
 msgid "SFX VOLUME"
 msgstr "SFX VOLUME"
 
-#: src/ui/menu_startup_m12.c:5253
+#: src/ui/menu_startup_m12.c:5222
 msgid "MUTE AUDIO"
 msgstr "音频"
 
-#: src/ui/menu_startup_m12.c:5254
+#: src/ui/menu_startup_m12.c:5223
 msgid "AUDIO DEVICE"
 msgstr "AUDIO DEVICE"
 
-#: src/ui/menu_startup_m12.c:5255
+#: src/ui/menu_startup_m12.c:5224
 msgid "BRIGHTNESS"
 msgstr "BRIGHTNESS"
 
-#: src/ui/menu_startup_m12.c:5256
+#: src/ui/menu_startup_m12.c:5225
 msgid "FONT SCALE"
 msgstr "缩放"
 
-#: src/ui/menu_startup_m12.c:5257
+#: src/ui/menu_startup_m12.c:5226
 msgid "UNICODE FONT"
 msgstr "UNICODE FONT"
 
-#: src/ui/menu_startup_m12.c:5258
+#: src/ui/menu_startup_m12.c:5227
 msgid "HIGH CONTRAST"
 msgstr "HIGH CONTRAST"
 
-#: src/ui/menu_startup_m12.c:5259
+#: src/ui/menu_startup_m12.c:5228
 msgid "COLORBLIND"
 msgstr "COLORBLIND"
 
-#: src/ui/menu_startup_m12.c:5260
+#: src/ui/menu_startup_m12.c:5229
 msgid "AUTO PAUSE"
 msgstr "AUTO PAUSE"
 
-#: src/ui/menu_startup_m12.c:5261
+#: src/ui/menu_startup_m12.c:5230
 msgid "THEME"
 msgstr "THEME"
 
-#: src/ui/menu_startup_m12.c:5262
+#: src/ui/menu_startup_m12.c:5231
 msgid "BACKGROUND"
 msgstr "BACKGROUND"
 
-#: src/ui/menu_startup_m12.c:5263
+#: src/ui/menu_startup_m12.c:5232
 msgid "QUICK RESUME"
 msgstr "QUICK RESUME"
 
-#: src/ui/menu_startup_m12.c:5264
+#: src/ui/menu_startup_m12.c:5233
 msgid "V2.2 ARTPACK"
 msgstr "V2.2 ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5265
+#: src/ui/menu_startup_m12.c:5234
 msgid "RETROACHIEVEMENTS"
 msgstr "RETROACHIEVEMENTS"
 
-#: src/ui/menu_startup_m12.c:5266
+#: src/ui/menu_startup_m12.c:5235
 msgid "RETROACHIEVEMENTS HARDCORE"
 msgstr "RETROACHIEVEMENTS HARDCORE"
 
-#: src/ui/menu_startup_m12.c:5267
+#: src/ui/menu_startup_m12.c:5236
 msgid "RETROACHIEVEMENTS USER"
 msgstr "RETROACHIEVEMENTS USER"
 
-#: src/ui/menu_startup_m12.c:5268
+#: src/ui/menu_startup_m12.c:5237
 msgid "RETROACHIEVEMENTS API TOKEN"
 msgstr "RETROACHIEVEMENTS API TOKEN"
 
-#: src/ui/menu_startup_m12.c:5269
+#: src/ui/menu_startup_m12.c:5238
 msgid "RETROACHIEVEMENTS SERVER"
 msgstr "RETROACHIEVEMENTS SERVER"
 
-#: src/ui/menu_startup_m12.c:5270 src/ui/menu_startup_m12.c:12721
+#: src/ui/menu_startup_m12.c:5239 src/ui/menu_startup_m12.c:12690
 msgid "SAVE BROWSER"
 msgstr "SAVE BROWSER"
 
-#: src/ui/menu_startup_m12.c:5271
+#: src/ui/menu_startup_m12.c:5240
 msgid "SESSION TIMER"
 msgstr "SESSION TIMER"
 
-#: src/ui/menu_startup_m12.c:5272
+#: src/ui/menu_startup_m12.c:5241
 msgid "MINIMAP"
 msgstr "最小"
 
-#: src/ui/menu_startup_m12.c:5273
+#: src/ui/menu_startup_m12.c:5242
 msgid "AUTOMAP"
 msgstr "自动"
 
-#: src/ui/menu_startup_m12.c:5274
+#: src/ui/menu_startup_m12.c:5243
 msgid "COMBAT LOG"
 msgstr "COMBAT LOG"
 
-#: src/ui/menu_startup_m12.c:5275
+#: src/ui/menu_startup_m12.c:5244
 msgid "SOUNDTRACK"
 msgstr "SOUNDTRACK"
 
-#: src/ui/menu_startup_m12.c:5276
+#: src/ui/menu_startup_m12.c:5245
 msgid "AMBIENT SOUND"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_m12.c:5277
+#: src/ui/menu_startup_m12.c:5246
 msgid "AMBIENT VOLUME"
 msgstr "AMBIENT VOLUME"
 
-#: src/ui/menu_startup_m12.c:5278
+#: src/ui/menu_startup_m12.c:5247
 msgid "UI SCALE"
 msgstr "缩放"
 
-#: src/ui/menu_startup_m12.c:5279
+#: src/ui/menu_startup_m12.c:5248
 msgid "UI FONT"
 msgstr "UI FONT"
 
-#: src/ui/menu_startup_m12.c:5280
+#: src/ui/menu_startup_m12.c:5249
 msgid "CUSTOM MUSIC"
 msgstr "自定义"
 
-#: src/ui/menu_startup_m12.c:5281
+#: src/ui/menu_startup_m12.c:5250
 msgid "CUSTOM DUNGEONS"
 msgstr "地牢"
 
-#: src/ui/menu_startup_m12.c:5282
+#: src/ui/menu_startup_m12.c:5251
 msgid "SCREENSHOTS"
 msgstr "SCREENSHOTS"
 
-#: src/ui/menu_startup_m12.c:5283
+#: src/ui/menu_startup_m12.c:5252
 msgid "ARTPACK"
 msgstr "ARTPACK"
 
-#: src/ui/menu_startup_m12.c:5284
+#: src/ui/menu_startup_m12.c:5253
 msgid "STREAMER MODE"
 msgstr "STREAMER MODE"
 
-#: src/ui/menu_startup_m12.c:5288
+#: src/ui/menu_startup_m12.c:5257
 msgid "EXPORT DM1 PC34 SAVE"
 msgstr "EXPORT DM1 PC34 SAVE"
 
-#: src/ui/menu_startup_m12.c:5289
+#: src/ui/menu_startup_m12.c:5258
 msgid "EXPORT SAVE MANIFEST"
 msgstr "EXPORT SAVE MANIFEST"
 
-#: src/ui/menu_startup_m12.c:5290
+#: src/ui/menu_startup_m12.c:5259
 msgid "IMPORT SAVE MANIFEST"
 msgstr "IMPORT SAVE MANIFEST"
 
-#: src/ui/menu_startup_m12.c:5351
+#: src/ui/menu_startup_m12.c:5320
 msgid "OPEN..."
 msgstr "OPENGL"
 
-#: src/ui/menu_startup_m12.c:5369
+#: src/ui/menu_startup_m12.c:5338
 msgid "WRITE PC34..."
 msgstr "WRITE PC34..."
 
-#: src/ui/menu_startup_m12.c:5370
+#: src/ui/menu_startup_m12.c:5339
 msgid "WRITE..."
 msgstr "WRITE..."
 
-#: src/ui/menu_startup_m12.c:5371
+#: src/ui/menu_startup_m12.c:5340
 msgid "READ..."
 msgstr "READ..."
 
-#: src/ui/menu_startup_m12.c:5387
+#: src/ui/menu_startup_m12.c:5356
 msgid "GENERAL"
 msgstr "GENERAL"
 
-#: src/ui/menu_startup_m12.c:5393 src/ui/menu_startup_m12.c:12416
+#: src/ui/menu_startup_m12.c:5362 src/ui/menu_startup_m12.c:12385
 msgid "RENDERER"
 msgstr "渲染器"
 
-#: src/ui/menu_startup_m12.c:5396
+#: src/ui/menu_startup_m12.c:5365
 msgid "INPUT"
 msgstr "INPUT"
 
-#: src/ui/menu_startup_m12.c:5399
+#: src/ui/menu_startup_m12.c:5368
 msgid "DATA"
 msgstr "数据目录"
 
-#: src/ui/menu_startup_m12.c:5402
+#: src/ui/menu_startup_m12.c:5371
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: src/ui/menu_startup_m12.c:5413
+#: src/ui/menu_startup_m12.c:5382
 msgid "APPEARANCE"
 msgstr "APPEARANCE"
 
-#: src/ui/menu_startup_m12.c:5874 src/ui/menu_startup_m12.c:5928
+#: src/ui/menu_startup_m12.c:5843 src/ui/menu_startup_m12.c:5897
 msgid "DATA FILES NOT FOUND"
 msgstr "未找到原始文件"
 
-#: src/ui/menu_startup_m12.c:5928
+#: src/ui/menu_startup_m12.c:5897
 msgid "ENTER FOR GAME MENU"
 msgstr "按 ENTER 或 ESC 返回菜单"
 
-#: src/ui/menu_startup_m12.c:5929
+#: src/ui/menu_startup_m12.c:5898
 msgid "THIS GAME IS NOT SUPPORTED YET"
 msgstr "THIS GAME IS NOT SUPPORTED YET"
 
-#: src/ui/menu_startup_m12.c:6063
+#: src/ui/menu_startup_m12.c:6032
 msgid "NO DM1 SAVES FOUND"
 msgstr "未找到游戏数据"
 
-#: src/ui/menu_startup_m12.c:6064
+#: src/ui/menu_startup_m12.c:6033
 msgid "SAVE OR IMPORT DM1 FIRST"
 msgstr "SAVE OR IMPORT DM1 FIRST"
 
-#: src/ui/menu_startup_m12.c:6486
+#: src/ui/menu_startup_m12.c:6455
 msgid "LOADING SAVE"
 msgstr "LOADING SAVE"
 
-#: src/ui/menu_startup_m12.c:6526
+#: src/ui/menu_startup_m12.c:6495
 msgid "IMPORTING PARTY"
 msgstr "IMPORTING PARTY"
 
-#: src/ui/menu_startup_m12.c:6565
+#: src/ui/menu_startup_m12.c:6534
 msgid "IMPORT DM1 PARTY TO CSB?"
 msgstr "IMPORT DM1 PARTY TO CSB?"
 
-#: src/ui/menu_startup_m12.c:6567
+#: src/ui/menu_startup_m12.c:6536
 msgid "ENTER IMPORTS / ESC CANCELS"
 msgstr "ENTER IMPORTS / ESC CANCELS"
 
-#: src/ui/menu_startup_m12.c:6579
+#: src/ui/menu_startup_m12.c:6548
 msgid "ESC SETTINGS"
 msgstr "设置"
 
-#: src/ui/menu_startup_m12.c:6583
+#: src/ui/menu_startup_m12.c:6552
 msgid "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 msgstr "ENTER LOAD   ACTION IMPORTS TO CSB   SAVE EXPORTS PC34   ESC SETTINGS"
 
-#: src/ui/menu_startup_m12.c:6585
+#: src/ui/menu_startup_m12.c:6554
 msgid "ENTER LOAD   ESC SETTINGS"
 msgstr "按 ENTER 或 ESC 返回菜单"
 
-#: src/ui/menu_startup_m12.c:8023 src/ui/menu_startup_m12.c:8235
+#: src/ui/menu_startup_m12.c:7992 src/ui/menu_startup_m12.c:8204
 msgid "NO SOURCE"
 msgstr "无来源"
 
-#: src/ui/menu_startup_m12.c:8231
+#: src/ui/menu_startup_m12.c:8200
 msgid "SELECT TO VERIFY ORIGINAL DATA"
 msgstr "原版"
 
-#: src/ui/menu_startup_m12.c:8240
+#: src/ui/menu_startup_m12.c:8209
 msgid "MISSING OR MISMATCHED"
 msgstr "缺失或不匹配"
 
-#: src/ui/menu_startup_m12.c:8797 src/ui/menu_startup_render_modern_m12.c:1954
+#: src/ui/menu_startup_m12.c:8766 src/ui/menu_startup_render_modern_m12.c:1954
 msgid "EXTRAS"
 msgstr "额外内容"
 
-#: src/ui/menu_startup_m12.c:8797
+#: src/ui/menu_startup_m12.c:8766
 msgid "PLAY"
 msgstr "开始游戏"
 
-#: src/ui/menu_startup_m12.c:8797
+#: src/ui/menu_startup_m12.c:8766
 msgid "QUIT"
 msgstr "退出"
 
-#: src/ui/menu_startup_m12.c:8801
+#: src/ui/menu_startup_m12.c:8770
 msgid "Start or continue a game"
 msgstr "开始新游戏或继续游戏"
 
-#: src/ui/menu_startup_m12.c:8802
+#: src/ui/menu_startup_m12.c:8771
 msgid "Display, video, audio and controls"
 msgstr "显示、画面、音频与操作设置"
 
-#: src/ui/menu_startup_m12.c:8803
+#: src/ui/menu_startup_m12.c:8772
 msgid "Museum, bestiary, spell reference and more"
 msgstr "博物馆、怪物图鉴、法术参考等"
 
-#: src/ui/menu_startup_m12.c:8804
+#: src/ui/menu_startup_m12.c:8773
 msgid "Exit Firestaff"
 msgstr "退出 Firestaff"
 
-#: src/ui/menu_startup_m12.c:8809
+#: src/ui/menu_startup_m12.c:8778
 msgid "DM Nexus"
 msgstr "DM Nexus"
 
-#: src/ui/menu_startup_m12.c:8809
+#: src/ui/menu_startup_m12.c:8778
 msgid "Dungeon Master II"
 msgstr "地下城领主 II"
 
-#: src/ui/menu_startup_m12.c:8818
+#: src/ui/menu_startup_m12.c:8787
 msgid "V1 / V2.0 / V2.1 / V2.2"
 msgstr "V1 / V2.0 / V2.1 / V2.2"
 
-#: src/ui/menu_startup_m12.c:8819 src/ui/menu_startup_m12.c:8820
+#: src/ui/menu_startup_m12.c:8788 src/ui/menu_startup_m12.c:8789
 msgid "V1 / V2"
 msgstr "V1 / V2"
 
-#: src/ui/menu_startup_m12.c:8821
+#: src/ui/menu_startup_m12.c:8790
 msgid "V1 / SATURN CAPTURE GATED"
 msgstr "V1／SATURN 采集受限"
 
-#: src/ui/menu_startup_m12.c:8822
+#: src/ui/menu_startup_m12.c:8791
 msgid "V1 Only (Phase 1)"
 msgstr "仅支持 V1（第一阶段）"
 
-#: src/ui/menu_startup_m12.c:8825 src/ui/menu_startup_m12.c:8826
-#: src/ui/menu_startup_m12.c:8827 src/ui/menu_startup_m12.c:8828
-#: src/ui/menu_startup_m12.c:8829
+#: src/ui/menu_startup_m12.c:8794 src/ui/menu_startup_m12.c:8795
+#: src/ui/menu_startup_m12.c:8796 src/ui/menu_startup_m12.c:8797
+#: src/ui/menu_startup_m12.c:8798
 msgid "No data files"
 msgstr "没有数据文件"
 
-#: src/ui/menu_startup_m12.c:9562
+#: src/ui/menu_startup_m12.c:9531
 msgid "MENU AND CAPTURE PROOFS NOT READY"
 msgstr "MENU AND CAPTURE PROOFS NOT READY"
 
-#: src/ui/menu_startup_m12.c:9563
+#: src/ui/menu_startup_m12.c:9532
 msgid "TITLE START"
 msgstr "启动标题"
 
-#: src/ui/menu_startup_m12.c:9564
+#: src/ui/menu_startup_m12.c:9533
 msgid "VERIFIED SOURCE DATA"
 msgstr "已验证的游戏数据"
 
-#: src/ui/menu_startup_m12.c:9680
+#: src/ui/menu_startup_m12.c:9649
 msgid "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 msgstr "VERIFIED TITLE START; MENU AND CAPTURE STILL GATED"
 
-#: src/ui/menu_startup_m12.c:9718
+#: src/ui/menu_startup_m12.c:9687
 msgid "New Game (Original)"
 msgstr "新游戏（原版）"
 
-#: src/ui/menu_startup_m12.c:9719
+#: src/ui/menu_startup_m12.c:9688
 msgid "New Game (Original + Filters)"
 msgstr "新游戏（原版＋滤镜）"
 
-#: src/ui/menu_startup_m12.c:9720
+#: src/ui/menu_startup_m12.c:9689
 msgid "New Game (Original 10x Upscale)"
 msgstr "新游戏（原版 10 倍放大）"
 
-#: src/ui/menu_startup_m12.c:9721
+#: src/ui/menu_startup_m12.c:9690
 msgid "Continue Saved Game"
 msgstr "继续存档游戏"
 
-#: src/ui/menu_startup_m12.c:9722
+#: src/ui/menu_startup_m12.c:9691
 msgid "New Game (Modern Graphics)"
 msgstr "新游戏（现代画面）"
 
-#: src/ui/menu_startup_m12.c:9730
+#: src/ui/menu_startup_m12.c:9699
 msgid "Museum of Lore"
 msgstr "传说博物馆"
 
-#: src/ui/menu_startup_m12.c:9731
+#: src/ui/menu_startup_m12.c:9700
 msgid "Manual / Docs"
 msgstr "手册／文档"
 
-#: src/ui/menu_startup_m12.c:9732
+#: src/ui/menu_startup_m12.c:9701
 msgid "Bestiary"
 msgstr "怪物图鉴"
 
-#: src/ui/menu_startup_m12.c:9733
+#: src/ui/menu_startup_m12.c:9702
 msgid "Spell Reference"
 msgstr "法术参考"
 
-#: src/ui/menu_startup_m12.c:9734
+#: src/ui/menu_startup_m12.c:9703
 msgid "Map Viewer"
 msgstr "地图查看器"
 
-#: src/ui/menu_startup_m12.c:9735
+#: src/ui/menu_startup_m12.c:9704
 msgid "Item Encyclopedia"
 msgstr "物品百科"
 
-#: src/ui/menu_startup_m12.c:9736
+#: src/ui/menu_startup_m12.c:9705
 msgid "Changelog"
 msgstr "更新日志"
 
-#: src/ui/menu_startup_m12.c:9737
+#: src/ui/menu_startup_m12.c:9706
 msgid "Screenshot Gallery"
 msgstr "截图库"
 
-#: src/ui/menu_startup_m12.c:9766
+#: src/ui/menu_startup_m12.c:9735
 msgid "NO DATA SOURCE YET"
 msgstr "无来源"
 
-#: src/ui/menu_startup_m12.c:9839
+#: src/ui/menu_startup_m12.c:9808
 msgid "Up/Down Navigate  |  Enter Select"
 msgstr "上/下 导航  |  Enter 选择"
 
-#: src/ui/menu_startup_m12.c:9863
+#: src/ui/menu_startup_m12.c:9832
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Select"
 msgstr "Escape 返回  |  上/下 导航  |  Enter 选择"
 
-#: src/ui/menu_startup_m12.c:9892
+#: src/ui/menu_startup_m12.c:9861
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Start"
 msgstr "Escape 返回  |  上/下 导航  |  Enter 开始"
 
-#: src/ui/menu_startup_m12.c:9916
+#: src/ui/menu_startup_m12.c:9885
 msgid "Escape Back  |  Up/Down Navigate  |  Enter Open"
 msgstr "Escape 返回  |  上/下 导航  |  Enter 打开"
 
-#: src/ui/menu_startup_m12.c:10060
+#: src/ui/menu_startup_m12.c:10029
 msgid "< > Switch tab   Up/Down Navigate   Enter Change"
 msgstr "< > 切换标签   上/下 导航   Enter 更改"
 
-#: src/ui/menu_startup_m12.c:12393
+#: src/ui/menu_startup_m12.c:12362
 msgid "GAME OPTIONS"
 msgstr "游戏选项"
 
-#: src/ui/menu_startup_m12.c:12430
+#: src/ui/menu_startup_m12.c:12399
 msgid "ARCHITECTURE"
 msgstr "档案状态"
 
-#: src/ui/menu_startup_m12.c:12443
+#: src/ui/menu_startup_m12.c:12412
 msgid "VERSION"
 msgstr "VERSION"
 
-#: src/ui/menu_startup_m12.c:12464
+#: src/ui/menu_startup_m12.c:12433
 msgid "PATCH"
 msgstr "补丁"
 
-#: src/ui/menu_startup_m12.c:12490
+#: src/ui/menu_startup_m12.c:12459
 msgid "CHEATS"
 msgstr "秘籍"
 
-#: src/ui/menu_startup_m12.c:12503
+#: src/ui/menu_startup_m12.c:12472
 msgid "SPEED"
 msgstr "速度"
 
-#: src/ui/menu_startup_m12.c:12515
+#: src/ui/menu_startup_m12.c:12484
 msgid "ENABLE CHEATS TO UNLOCK SPEED / HOTKEYS"
 msgstr "启用作弊以解锁速度／快捷键"
 
-#: src/ui/menu_startup_m12.c:12537
+#: src/ui/menu_startup_m12.c:12506
 msgid "LOCKED BY V1 ORIGINAL MODE"
 msgstr "已被 V1 原版模式锁定"
 
-#: src/ui/menu_startup_m12.c:12547
+#: src/ui/menu_startup_m12.c:12516
 msgid "RESOLUTION"
 msgstr "分辨率"
 
-#: src/ui/menu_startup_m12.c:12561
+#: src/ui/menu_startup_m12.c:12530
 msgid "LOCKED BY V2.0 FILTERED MODE"
 msgstr "已被 V1 原版模式锁定"
 
-#: src/ui/menu_startup_m12.c:12582
+#: src/ui/menu_startup_m12.c:12551
 msgid "> DATA FILES NOT FOUND"
 msgstr "未找到原始文件"
 
-#: src/ui/menu_startup_m12.c:12584
+#: src/ui/menu_startup_m12.c:12553
 msgid "> RENDERER UNAVAILABLE"
 msgstr "渲染后端不可用"
 
-#: src/ui/menu_startup_m12.c:12585
+#: src/ui/menu_startup_m12.c:12554
 msgid "> LAUNCH"
 msgstr "> 启动"
 
-#: src/ui/menu_startup_m12.c:12598
+#: src/ui/menu_startup_m12.c:12567
 msgid "ESC: BACK  ARROWS: NAVIGATE  ENTER: SELECT"
 msgstr "ESC：返回  方向键：导航  ENTER：选择"
 
