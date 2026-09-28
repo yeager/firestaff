@@ -135,7 +135,14 @@ echo "PASS: native CSB Amiga CLI title input reaches the complete runtime input 
 test_scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$test_scratch"
 menu_probe_json="$test_scratch/csb-menu-runtime-$$.json"
-trap 'rm -f "$menu_probe_json"' EXIT
+auto_home=""
+cleanup_menu_temps() {
+    rm -f "$menu_probe_json"
+    if [ -n "$auto_home" ] && [ -d "$auto_home" ]; then
+        find "$auto_home" -depth -delete
+    fi
+}
+trap cleanup_menu_temps EXIT HUP INT TERM
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
     FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$menu_probe_json" \
     SDL_VIDEODRIVER=dummy "$firestaff_cli" \
@@ -171,3 +178,52 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
     raise SystemExit(f"FAIL: authentic CSB Amiga menu did not reach runtime: {probe}")
 print("PASS: authentic CSB Amiga start menu reached its source-owned runtime frame")
 PY
+
+# Verify the ordinary AUTO route against the installed data root when the
+# authentic FTL Amiga archive is present. A fresh configuration ensures the
+# selected A31E program owner comes from source discovery rather than a saved
+# platform preference.
+auto_data_root=$(dirname "$(dirname "$data_dir")")
+auto_archive="$auto_data_root/csb/Chaos Strikes Back (FTL).zip"
+if [ -f "$auto_archive" ]; then
+    auto_home=$(mktemp -d "$test_scratch/csb-amiga-auto-home.XXXXXX")
+    auto_probe_json="$auto_home/runtime.json"
+    auto_output="$(HOME="$auto_home" XDG_CONFIG_HOME="$auto_home" \
+        APPDATA="$auto_home" FIRESTAFF_FAIL_IF_NO_LAUNCH=1 \
+        FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_probe_json" \
+        SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --width 320 --height 200 --menu --game csb \
+        --data-dir "$auto_data_root" \
+        --script 'enter,enter,enter,wait:1000,click:100:100,key:enter,up' \
+        --duration 30000 2>&1)" || {
+        printf '%s\n' "$auto_output" >&2
+        exit 1
+    }
+    case "$auto_output" in
+        *"CSB READY: gameId=csb"*"dataDir=$auto_archive"*"variant=csb-amiga-a31e"*"handoff=a31e-appb-bjeload-c03"*) ;;
+        *)
+            echo "FAIL: CSB AUTO did not select the installed authentic A31E package" >&2
+            printf '%s\n' "$auto_output" >&2
+            exit 1
+            ;;
+    esac
+    python3 - "$auto_probe_json" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as probe_file:
+    probe = json.load(probe_file)
+startup = probe["startup"]
+party = probe["party"]
+if (probe["launchedEver"] != 1 or probe["active"] != 1 or
+        probe["sourceId"] != "csb" or startup["receiptReady"] != 1 or
+        startup["active"] != 1 or startup["startupActive"] != 0 or
+        startup["levelLoaded"] != 1 or startup["phase"] != "inactive" or
+        (party["mapIndex"], party["mapX"], party["mapY"],
+         party["direction"], party["championCount"]) != (0, 9, 0, 2, 0)):
+    raise SystemExit(f"FAIL: authentic CSB AUTO Amiga menu did not reach runtime: {probe}")
+print("PASS: clean-config CSB AUTO menu discovered A31E and reached its runtime")
+PY
+else
+    echo "SKIP: CSB AUTO Amiga route requires the authentic FTL archive at $auto_archive"
+fi

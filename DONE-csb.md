@@ -1,5 +1,14 @@
 # Firestaff DONE — CSB
 
+## 2026-09-28 — Installed-root AUTO start-menu route
+
+- With a clean configuration and the authentic installed data root, AUTO
+  selected the Amiga A31E FTL archive, reported its `a31e-appb-bjeload-c03`
+  handoff, and the M12 start menu reached the source-owned runtime at map 0,
+  position (9,0), facing south, with zero champions. The Amiga real-media CLI
+  test now preserves this no-platform route when the original FTL archive is
+  available, separately from its curated explicit-platform check.
+
 - 2026-09-27: Corrected the M12 diagnostic for an authentic Atari ST archive
   when 7zz is installed but external archive scanning has not been opted in.
   The launcher now explains that scanning is disabled and names
