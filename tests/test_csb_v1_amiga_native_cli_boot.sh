@@ -179,10 +179,9 @@ if (probe["launchedEver"] != 1 or probe["active"] != 1 or
 print("PASS: authentic CSB Amiga start menu reached its source-owned runtime frame")
 PY
 
-# Verify the ordinary AUTO route against the installed data root when the
-# authentic FTL Amiga archive is present. A fresh configuration ensures the
-# selected A31E program owner comes from source discovery rather than a saved
-# platform preference.
+# Verify the ordinary AUTO platform route against the authentic FTL Amiga
+# archive when it is present. Passing the single original archive keeps this
+# assertion independent of other retail variants a test library may contain.
 auto_data_root=$(dirname "$(dirname "$data_dir")")
 auto_archive="$auto_data_root/csb/Chaos Strikes Back (FTL).zip"
 if [ -f "$auto_archive" ]; then
@@ -193,7 +192,7 @@ if [ -f "$auto_archive" ]; then
         FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON="$auto_probe_json" \
         SDL_VIDEODRIVER=dummy "$firestaff_cli" \
         --width 320 --height 200 --menu --game csb \
-        --data-dir "$auto_data_root" \
+        --data-dir "$auto_archive" \
         --script 'enter,enter,enter,wait:1000,click:100:100,key:enter,up' \
         --duration 30000 2>&1)" || {
         printf '%s\n' "$auto_output" >&2
