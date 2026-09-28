@@ -138,6 +138,26 @@ matching rendered-frame hashes are `ef488068746129d499325a1ff8f301f7768d36a5af86
 (1020), and `f316d3c4410475102b15b185ed24b35f22e63668059631e7622bdd96848df4e8`
 (1079).
 
+A second matched JP retail pair at frames 40000--40079 applies START at
+40020--40039. Its read trace records SMPC address `0x10` returning `0x10`
+during the pulse and `0x00` at frame 40040. Despite that observed register
+value, the complete raw VDP1/VDP2 capture is byte-identical to the no-input
+control, as are rendered frames 40000, 40020, and 40079. The consumer analyzer
+again rejects frame 40020 (`RPC=0x06014514`, captured `PIF=0x2310`, retail word
+`0x0009`, `PC_ID=PC_IF=0`), so this is negative transition evidence only; it
+does not establish what code owns or interprets the input.
+
+The shared raw SHA-256 is
+`627a1055274abbd164bc1bab7a9253ae2760e0a1a039ef0c587748ff10083681`; the
+START-run input-event trace is
+`5884585948e08780a276ea709ccfd611c1c5f3b2a71485fed532536bc061f799` and its
+SMPC-read trace is
+`1ae8be3f310a03e35ac0886f70fd5b7d779a4d5442cf46d456f241d910b64c52`. The
+matching rendered-frame hashes are `99fd3ff47bf58af36c021be7695edb78498805df5346a80a70bd70f72e1870d0`
+(40000), `206ac085bc5e2e0f56f2f621c28abd81fdd5a4fa451f57016d1de9ac542ad50d`
+(40020), and `fd2ecae82077ad19818ad4de1e9d86278d71a0519667a05621651cfab2ea5eb5`
+(40079).
+
 For a diagnostic pass, `FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1` selects
 Mednafen's debugger CPU loop in the external capture build so `PC_ID` and
 `PC_IF` are populated. This is not an admission override: the analyzer still
