@@ -15110,6 +15110,38 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
         !dm2_v1_boot_prepared_new_game_mirror_roster(profile, &roster)) {
         return 0;
     }
+    /* PC-9821 follows GAME_LOAD's scripted INIT_CHAMPIONS first member from
+     * the File_header (0,0) chain. A viewport click confirms that already
+     * selected source hero; it must not append the next roster member or
+     * require a nonexistent D0C mirror. Admit only that exact released DB3
+     * record and its retained single-member selection. */
+    if (profile->platform == DM2_PLATFORM_PC9821_JA &&
+        owner->source_startend_first_champion_released &&
+        owner->source_startend_first_champion_tick == 0u &&
+        owner->source_startend_first_champion_object_id == mirror_object_id &&
+        owner->selected_mirror_count == 1u &&
+        owner->selected_mirrors[0].mirror_object_id == mirror_object_id &&
+        owner->champion_selection_materialized &&
+        owner->selected_party.heros_in_party == 1 &&
+        (owner->selected_party.hero[0].heroflag & 0x4000) != 0) {
+        uint16_t source_first_mirror_object = 0u;
+        if (!dm2_v1_boot_startend_first_mirror_from_file_header(
+                owner, &source_first_mirror_object) ||
+            source_first_mirror_object != mirror_object_id) {
+            return 0;
+        }
+        for (i = 0; i < roster.candidate_count; ++i) {
+            const DM2_V1_BootChampionSelectionCandidate *candidate =
+                &roster.candidates[i];
+            if (candidate->valid &&
+                candidate->mirror.object_id == mirror_object_id &&
+                candidate->mirror.map == owner->current_map &&
+                candidate->mirror.x == 0u && candidate->mirror.y == 0u) {
+                return 1;
+            }
+        }
+        return 0;
+    }
     /* STARTEND has already admitted its first File_header-rooted champion
      * before presenting the FM Towns viewport.  The visible mirror event is
      * its confirmation, not a request to append an unrelated next roster
@@ -15237,6 +15269,22 @@ int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
             front = cell;
             break;
         }
+    }
+    /* The PC-9821 STARTEND route has already selected the authentic first
+     * champion from map (0,0) before the preselection viewport appears. Its
+     * explicit viewport click confirms that retained member; it is not a
+     * click on a second, forward-facing D0C mirror. The by-mirror admission
+     * below rechecks the File_header chain and selected roster identity. */
+    if (profile->platform == DM2_PLATFORM_PC9821_JA &&
+        owner->source_startend_first_champion_released &&
+        owner->source_startend_first_champion_object_id != 0u &&
+        owner->selected_mirror_count == 1u &&
+        owner->selected_mirrors[0].mirror_object_id ==
+            owner->source_startend_first_champion_object_id &&
+        owner->champion_selection_materialized &&
+        owner->selected_party.heros_in_party == 1) {
+        return dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
+            profile, owner->source_startend_first_champion_object_id);
     }
     if (!front && !owner->dungeon.source_words_big_endian &&
         !fmtowns_startend) return 0;

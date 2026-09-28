@@ -1,4 +1,7 @@
 #include "dm2_v1_boot.h"
+#include "dm2_v1_game_load_world_owner.h"
+#include "m11_game_view.h"
+
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_cdda_cd_dat.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -14,6 +17,7 @@ int main(void) {
     DM2_V1_CddaCdDat cd;
     DM2_V1_BootStartupLaunch launch;
     DM2_V1_StartupMenuPointerLayout new_game_layout;
+    M11_GameViewState view;
     DM2_V1_DungeonData dungeon;
     DM2_V1_AssetLoader graphics;
     M12_AssetStatus status;
@@ -160,8 +164,69 @@ int main(void) {
         dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
+    {
+        DM2_V1_BootRuntimeReceipt runtime;
+        M11_GameInputResult click_result;
+        if (!dm2_v1_boot_prepare_new_game_world(launch.profile) ||
+            !launch.profile->game_load_runtime_session_candidate) {
+            fputs("FAIL: authentic PC-9821 New Game did not prepare its source-owned runtime candidate\n", stderr);
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+            return 1;
+        }
+        M11_GameView_Init(&view);
+        view.active = 1;
+        view.sourceKind = M11_GAME_SOURCE_DM2_BOOT;
+        view.dm2BootProfile = launch.profile;
+        view.dm2World = launch.profile->dm2_state;
+        view.dm2State.startup_menu_active = 1;
+        click_result = M11_GameView_HandlePointerButton(
+            &view, 100, 100, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        if (click_result != M11_GAME_INPUT_REDRAW ||
+            view.dm2State.startup_menu_active ||
+            !launch.profile->source_game_load_session_ready) {
+            const DM2_V1_GameLoadWorldOwner *owner =
+                (const DM2_V1_GameLoadWorldOwner *)
+                    launch.profile->game_load_world_owner;
+            fprintf(stderr,
+                    "FAIL: PC-9821 click result=%d menu=%d session=%d released=%d object=%u selected=%u party=%d champion=%d\n",
+                    (int)click_result, view.dm2State.startup_menu_active,
+                    launch.profile->source_game_load_session_ready,
+                    owner ? owner->source_startend_first_champion_released : -1,
+                    owner ? owner->source_startend_first_champion_object_id : 0u,
+                    owner && owner->selected_mirror_count
+                        ? owner->selected_mirrors[0].mirror_object_id : 0u,
+                    owner ? owner->selected_party.heros_in_party : -1,
+                    owner ? owner->champion_selection_materialized : -1);
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+            return 1;
+        }
+        memset(&runtime, 0, sizeof(runtime));
+        {
+            int captured = dm2_v1_boot_runtime_capture(
+                launch.profile, &runtime);
+            M11_GameInputResult move_result = M11_GameView_HandleInput(
+                &view, M12_MENU_INPUT_UP);
+            DM2_V1_BootRuntimeReceipt moved_runtime;
+            memset(&moved_runtime, 0, sizeof(moved_runtime));
+            if (!captured || !runtime.runtime_ready ||
+                move_result != M11_GAME_INPUT_REDRAW ||
+                !dm2_v1_boot_runtime_capture(launch.profile, &moved_runtime) ||
+                !moved_runtime.runtime_ready ||
+                (moved_runtime.party_x == runtime.party_x &&
+                 moved_runtime.party_y == runtime.party_y)) {
+                fprintf(stderr,
+                        "FAIL: PC-9821 movement captured=%d ready=%d result=%d before=%d,%d after=%d,%d level_loaded=%d\n",
+                        captured, runtime.runtime_ready, (int)move_result,
+                        runtime.party_x, runtime.party_y,
+                        moved_runtime.party_x, moved_runtime.party_y,
+                        view.dm2State.level_loaded);
+                dm2_v1_boot_startup_launch_cleanup(&launch);
+                return 1;
+            }
+        }
+    }
     dm2_v1_boot_startup_launch_cleanup(&launch);
-    printf("PASS: selected PC-9821 ZIP retained; %d authentic CDDA track(s) extracted; DM2 runtime mounted\n",
+    printf("PASS: selected PC-9821 ZIP retained; %d authentic CDDA track(s) extracted; viewport click confirmed GAME_LOAD and M11 movement was accepted\n",
            extracted);
     return 0;
 }

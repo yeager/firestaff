@@ -21,10 +21,15 @@ Reviewed 2026-08-29. Only open work is listed here.
   A separate PC-9821 retail CUE/BIN-in-ZIP reader is wired through the DM2
   source owner and explicit `pc98` launcher choice. The authentic archive is
   now hash-verified, selectable in the launcher, and reaches the original
-  title with its CDDA tracks available. The source GAME_LOAD preparation still
-  fails while materializing CAII map candidates, so New Game does not reach the
-  first playable map. Keep the PC-9801 demo and IBM PS/V floppy inputs
-  preservation-only.
+  title with its CDDA tracks available. New Game now prepares the authentic
+  source-owned world and runtime-session candidate; the PC-9821 GDAT's missing
+  static-animation entry for creature 41 is retained as the no-frame state
+  returned by the original getter. The in-viewport M11 click now confirms the
+  File_header-rooted first champion already selected by STARTEND, commits
+  GAME_LOAD, and an M11 movement command is checked against the changed
+  runtime pose. Additional party-selection cycles, sustained gameplay and
+  audible CDDA output are not yet verified. Keep the PC-9801 demo and IBM
+  PS/V floppy inputs preservation-only.
   Remaining work is outdoor's distinct composition, transition stretching
   and same-tuple original-capture comparison; retain only GDAT-owned pixels.
 - Pair the newly captured, labelled PC 1.0 EN original New Game route with
