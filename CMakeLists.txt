@@ -4300,8 +4300,18 @@ if(BUILD_TESTING)
     add_executable(test_firestaff_7z_extract
         tests/test_firestaff_7z_extract.c
         src/shared/firestaff_7z_extract.c
+        src/shared/firestaff_7z_sdk.c
+        third_party/lzma_sdk/7zArcIn.c
+        third_party/lzma_sdk/7zBuf.c
+        third_party/lzma_sdk/7zCrc.c
+        third_party/lzma_sdk/7zDec.c
+        third_party/lzma_sdk/7zStream.c
+        third_party/lzma_sdk/Bcj2.c
+        third_party/lzma_sdk/CpuArch.c
         third_party/lzma_sdk/LzmaDec.c
         third_party/lzma_sdk/Lzma2Dec.c)
+    set_source_files_properties(third_party/lzma_sdk/7zDec.c PROPERTIES
+        COMPILE_DEFINITIONS Z7_NO_METHODS_FILTERS)
     target_include_directories(test_firestaff_7z_extract PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lzma_sdk)
@@ -4319,13 +4329,26 @@ if(BUILD_TESTING)
     set_tests_properties(asset_7z_virtual_read_m12 PROPERTIES
         ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
         SKIP_RETURN_CODE 77)
+    add_executable(test_asset_multi_member_7z_virtual_read_m12
+        tests/test_asset_multi_member_7z_virtual_read_m12.c)
+    target_link_libraries(test_asset_multi_member_7z_virtual_read_m12 PRIVATE
+        firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_asset_multi_member_7z_virtual_read_m12
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME asset_multi_member_7z_virtual_read_m12
+        COMMAND test_asset_multi_member_7z_virtual_read_m12)
+    set_tests_properties(asset_multi_member_7z_virtual_read_m12 PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MULTI_7Z=$ENV{HOME}/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
+        SKIP_RETURN_CODE 77)
     add_test(
         NAME csb_v1_hint_oracle_native_7z_cli_boot
         COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_hint_oracle_native_7z_cli_boot.sh
             $<TARGET_FILE:firestaff>
     )
     set_tests_properties(csb_v1_hint_oracle_native_7z_cli_boot PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MULTI_7Z=$ENV{HOME}/.firestaff/data/csb/Game,Chaos_Strikes_Back,Atari_ST,Software.7z"
         SKIP_RETURN_CODE 77
         LABELS "csb;atari-st;utility;real-media;archive;7z;native;cli;no-extract;skip-safe"
         TIMEOUT 30)
@@ -7949,6 +7972,14 @@ set(M12_SOURCES
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
     src/shared/firestaff_7z_extract.c
+    src/shared/firestaff_7z_sdk.c
+    third_party/lzma_sdk/7zArcIn.c
+    third_party/lzma_sdk/7zBuf.c
+    third_party/lzma_sdk/7zCrc.c
+    third_party/lzma_sdk/7zDec.c
+    third_party/lzma_sdk/7zStream.c
+    third_party/lzma_sdk/Bcj2.c
+    third_party/lzma_sdk/CpuArch.c
     third_party/lzma_sdk/LzmaDec.c
     third_party/lzma_sdk/Lzma2Dec.c
     src/nexus/nexus_v1_bpk_archive.c

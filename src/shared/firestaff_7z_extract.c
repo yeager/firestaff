@@ -19,7 +19,6 @@ static int fs7z_num(Fs7zReader *r, uint64_t *v) {
  uint8_t b,mask; unsigned extra,i; uint64_t n;
  if(!fs7z_byte(r,&b))return 0; mask=0x80; for(extra=0;extra<8;extra++,mask>>=1){if(!(b&mask)){n=(uint64_t)(b&(mask-1))<<(extra*8);for(i=0;i<extra;i++){if(!fs7z_byte(r,&b))return 0;n|=(uint64_t)b<<(i*8);}*v=n;return 1;}} n=0;for(i=0;i<8;i++){if(!fs7z_byte(r,&b))return 0;n|=(uint64_t)b<<(i*8);}*v=n;return 1;
 }
-static int fs7z_skip(Fs7zReader *r, uint64_t n) { if(n>(uint64_t)(r->end-r->p))return 0;r->p+=(size_t)n;return 1; }
 static void *fs7z_alloc(ISzAllocPtr p, size_t n) { (void)p; return malloc(n?n:1); }
 static void fs7z_free(ISzAllocPtr p, void *m) { (void)p; free(m); }
 

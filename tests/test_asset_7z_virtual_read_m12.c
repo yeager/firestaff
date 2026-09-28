@@ -7,6 +7,7 @@
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_CSB_UTILITY_7Z");
+    FILE *archive_file;
     const char *member = "Chaos Strikes Back Utility.stx";
     const char *nonmatching_md5[] = {
         "00000000000000000000000000000000", NULL
@@ -21,6 +22,12 @@ int main(void)
         puts("SKIP: FIRESTAFF_CSB_UTILITY_7Z is not configured");
         return 77;
     }
+    archive_file = fopen(archive, "rb");
+    if (!archive_file) {
+        puts("SKIP: original one-member CSB utility 7z is not staged");
+        return 77;
+    }
+    fclose(archive_file);
     if (snprintf(virtual_path, sizeof(virtual_path), "%s::%s", archive,
                  member) < 0 ||
         !asset_read_path_alloc(virtual_path, &bytes, &size) ||

@@ -124,6 +124,22 @@ static void md5_final(AssetMd5Ctx *ctx, char outHex[33]) {
     outHex[32] = 0;
 }
 
+#ifdef FIRESTAFF_HAS_NATIVE_7Z
+static void asset_memory_md5_hex(const uint8_t *bytes, size_t byte_count,
+                                 char outHex[33]) {
+    AssetMd5Ctx ctx;
+    size_t offset = 0U;
+    md5_init(&ctx);
+    while (offset < byte_count) {
+        size_t chunk = byte_count - offset;
+        if (chunk > 0xffffffffU) chunk = 0xffffffffU;
+        md5_update(&ctx, bytes + offset, (unsigned int)chunk);
+        offset += chunk;
+    }
+    md5_final(&ctx, outHex);
+}
+#endif
+
 static void md5_body(AssetMd5Ctx *ctx, const unsigned char *block) {
     unsigned int a = ctx->state[0], b = ctx->state[1];
     unsigned int c = ctx->state[2], d = ctx->state[3];
@@ -1530,13 +1546,10 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
             if (has_case_suffix(container, ".7z")) {
-                char member_name[ASSET_PATH_MAX];
                 uint8_t *member = NULL;
                 size_t member_size = 0U;
-                if (firestaff_7z_extract_single_lzma2_file(
-                        container, &member, &member_size, member_name,
-                        sizeof(member_name)) &&
-                    asset_casecmp(member_name, separator + 2) == 0) {
+                if (firestaff_7z_read_member(container, separator + 2,
+                                             &member, &member_size)) {
                     *outBytes = member;
                     *outSize = member_size;
                     return 1;
@@ -4950,6 +4963,157 @@ static int native_7z_atari_disk_visit(const char *member_name,
     return result;
 }
 
+typedef struct {
+    const char *archive_path;
+    const char *expected_md5;
+    char candidate[ASSET_PATH_MAX];
+    int found;
+} Native7zMd5Match;
+
+static void native_7z_record_candidate(Native7zMd5Match *match,
+                                      const char *candidate) {
+    if (!match || !candidate || !candidate[0] ||
+        (match->found && strcmp(candidate, match->candidate) >= 0)) {
+        return;
+    }
+    if (copy_match_path(candidate, match->candidate,
+                        (int)sizeof(match->candidate))) {
+        match->found = 1;
+    }
+}
+
+static int native_7z_member_md5_visitor(const char *name,
+                                        const uint8_t *bytes,
+                                        size_t byte_count,
+                                        void *user_data) {
+    Native7zMd5Match *match = (Native7zMd5Match *)user_data;
+    char actual_md5[33];
+    char candidate[ASSET_PATH_MAX];
+    if (!match || !name || !bytes || byte_count == 0u) return -1;
+    asset_memory_md5_hex(bytes, byte_count, actual_md5);
+    if (strcmp(actual_md5, match->expected_md5) == 0 &&
+        copy_virtual_match_path(match->archive_path, name, candidate,
+                                (int)sizeof(candidate))) {
+        native_7z_record_candidate(match, candidate);
+    }
+    if (is_atari_stx_path(name) || is_atari_st_path(name) ||
+        is_atari_msa_path(name)) {
+        AdfSingleMatch nested;
+        int visit_result;
+        memset(&nested, 0, sizeof(nested));
+        nested.expected_md5 = match->expected_md5;
+        visit_result = native_7z_atari_disk_visit(
+            name, bytes, byte_count, adf_find_single_visitor, &nested);
+        if (visit_result >= 0 && nested.found &&
+            copy_nested_virtual_match_path(match->archive_path, name,
+                                           nested.name, candidate,
+                                           (int)sizeof(candidate))) {
+            native_7z_record_candidate(match, candidate);
+        }
+    }
+    return 0;
+}
+
+static int scan_native_7z_members_by_md5(const char *archive_path,
+                                         const char *expected_md5,
+                                         char *out_path, int out_path_len,
+                                         int *archive_supported) {
+    Native7zMd5Match match;
+    if (archive_supported) *archive_supported = 0;
+    if (!archive_path || !expected_md5 || !out_path || out_path_len <= 0) {
+        return 0;
+    }
+    memset(&match, 0, sizeof(match));
+    match.archive_path = archive_path;
+    match.expected_md5 = expected_md5;
+    if (!firestaff_7z_visit_files(archive_path, native_7z_member_md5_visitor,
+                                  &match)) {
+        return 0;
+    }
+    if (archive_supported) *archive_supported = 1;
+    return match.found && copy_match_path(match.candidate, out_path,
+                                          out_path_len);
+}
+
+typedef struct {
+    const char *archive_path;
+    const char *const *md5_list;
+    int md5_count;
+    char (*out_paths)[ASSET_PATH_MAX];
+    int *matched;
+    int found_count;
+} Native7zListMatch;
+
+static int native_7z_member_list_visitor(const char *name,
+                                         const uint8_t *bytes,
+                                         size_t byte_count,
+                                         void *user_data) {
+    Native7zListMatch *matches = (Native7zListMatch *)user_data;
+    char actual_md5[33];
+    int index;
+    if (!matches || !name || !bytes || byte_count == 0u) return -1;
+    asset_memory_md5_hex(bytes, byte_count, actual_md5);
+    index = md5_list_match_index(actual_md5, matches->md5_list, NULL,
+                                 matches->md5_count);
+    if (index >= 0 && !matches->matched[index]) {
+        if (copy_virtual_match_path(matches->archive_path, name,
+                                    matches->out_paths[index], ASSET_PATH_MAX)) {
+            matches->matched[index] = 1;
+            ++matches->found_count;
+        }
+    }
+    if (matches->found_count < matches->md5_count &&
+        (is_atari_stx_path(name) || is_atari_st_path(name) ||
+         is_atari_msa_path(name))) {
+        AdfListMatch nested;
+        char disk_path[ASSET_PATH_MAX];
+        int visit_result;
+        if (!copy_virtual_match_path(matches->archive_path, name, disk_path,
+                                     (int)sizeof(disk_path))) {
+            return -1;
+        }
+        memset(&nested, 0, sizeof(nested));
+        nested.container = disk_path;
+        nested.md5_list = matches->md5_list;
+        nested.md5_count = matches->md5_count;
+        nested.out_paths = matches->out_paths;
+        nested.matched = matches->matched;
+        visit_result = native_7z_atari_disk_visit(
+            name, bytes, byte_count, adf_find_list_visitor, &nested);
+        if (visit_result >= 0) {
+            matches->found_count += nested.found_count;
+        }
+    }
+    return matches->found_count >= matches->md5_count ? 1 : 0;
+}
+
+static int scan_native_7z_members_by_md5_list(
+    const char *archive_path, const char *const *md5_list, int md5_count,
+    char out_paths[][ASSET_PATH_MAX], int matched[], int *archive_supported) {
+    Native7zListMatch matches;
+    int i;
+    if (archive_supported) *archive_supported = 0;
+    if (!archive_path || !md5_list || md5_count <= 0 || md5_count > 64 ||
+        !out_paths || !matched) {
+        return 0;
+    }
+    memset(&matches, 0, sizeof(matches));
+    matches.archive_path = archive_path;
+    matches.md5_list = md5_list;
+    matches.md5_count = md5_count;
+    matches.out_paths = out_paths;
+    matches.matched = matched;
+    for (i = 0; i < md5_count; ++i) {
+        if (matched[i]) ++matches.found_count;
+    }
+    if (!firestaff_7z_visit_files(archive_path, native_7z_member_list_visitor,
+                                  &matches)) {
+        return 0;
+    }
+    if (archive_supported) *archive_supported = 1;
+    return matches.found_count;
+}
+
 /* A successful visit proves that both layers of the preservation transport
  * are handled in-process: the admitted one-member LZMA2 7z and its Atari
  * disk image.  Keep this separate from an MD5 match: a scan can legitimately
@@ -5700,13 +5864,20 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     if (kind == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
         if (has_case_suffix(path, ".7z")) {
-            if (scan_native_7z_atari_stx_by_md5(path, expectedMd5,
-                                                 outPath, outPathLen)) {
+            int archive_supported = 0;
+            if (scan_native_7z_members_by_md5(path, expectedMd5, outPath,
+                                               outPathLen,
+                                               &archive_supported)) {
                 return 1;
             }
-            if (native_7z_atari_disk_supported(path)) {
-                return 0;
+            if (!archive_supported) {
+                if (scan_native_7z_atari_stx_by_md5(path, expectedMd5,
+                                                     outPath, outPathLen)) {
+                    return 1;
+                }
+                if (native_7z_atari_disk_supported(path)) return 0;
             }
+            if (archive_supported) return 0;
         }
 #endif
         if (!external_tool_available_for_path(path)) {
@@ -5776,12 +5947,20 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     if (kind == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
         if (has_case_suffix(path, ".7z")) {
-            int found = scan_native_7z_atari_stx_by_md5_list(
-                path, md5List, md5Count, outPaths, matched);
+            int archive_supported = 0;
+            int found = scan_native_7z_members_by_md5_list(
+                path, md5List, md5Count, outPaths, matched,
+                &archive_supported);
             if (found >= md5Count) {
                 return found;
             }
-            if (native_7z_atari_disk_supported(path)) {
+            if (!archive_supported) {
+                found += scan_native_7z_atari_stx_by_md5_list(
+                    path, md5List, md5Count, outPaths, matched);
+                if (found >= md5Count) return found;
+                if (native_7z_atari_disk_supported(path)) return found;
+            }
+            if (archive_supported) {
                 return found;
             }
             if (!external_tool_available_for_path(path)) {
@@ -6678,13 +6857,10 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
             if (has_case_suffix(container, ".7z")) {
-                char member_name[ASSET_PATH_MAX];
                 uint8_t *member = NULL;
                 size_t member_size = 0U;
-                if (!firestaff_7z_extract_single_lzma2_file(
-                        container, &member, &member_size, member_name,
-                        sizeof(member_name)) ||
-                    asset_casecmp(member_name, first + 2) != 0) {
+                if (!firestaff_7z_read_member(container, first + 2,
+                                              &member, &member_size)) {
                     free(member);
                     if (!external_tool_available_for_path(container)) return 0;
                 } else {
@@ -6788,14 +6964,8 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     } else if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
         if (has_case_suffix(container, ".7z")) {
-            char member_name[ASSET_PATH_MAX];
-            if (firestaff_7z_extract_single_lzma2_file(
-                    container, &image, &imageSize, member_name,
-                    sizeof(member_name)) && asset_casecmp(member_name, disk) == 0) {
-                /* The native reader intentionally supports only the bounded
-                 * single-file form. A selected member from a solid, multi-file
-                 * 7z must still reach the explicitly opted-in host reader. */
-            } else {
+            if (!firestaff_7z_read_member(container, disk,
+                                          &image, &imageSize)) {
                 free(image);
                 image = NULL;
                 imageSize = 0U;
