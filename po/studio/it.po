@@ -19,7 +19,7 @@ msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
 #: scripts/firestaff_artpack_studio.py:1789
-#: scripts/firestaff_savegame_editor.py:739
+#: scripts/firestaff_savegame_editor.py:750
 msgid "Ready"
 msgstr "Pronto"
 
@@ -29,13 +29,13 @@ msgstr "Nessun dato di gioco importato"
 
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
-#: scripts/firestaff_savegame_editor.py:795
+#: scripts/firestaff_savegame_editor.py:806
 msgid "Settings..."
 msgstr "Impostazioni mappa"
 
 #: scripts/firestaff_artpack_studio.py:1813
 #: scripts/firestaff_dungeon_studio.py:445
-#: scripts/firestaff_savegame_editor.py:966
+#: scripts/firestaff_savegame_editor.py:977
 msgid "Game"
 msgstr "Gioco"
 
@@ -76,13 +76,13 @@ msgstr "Esporta .fsart"
 #: scripts/firestaff_artpack_studio.py:1826
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
-#: scripts/firestaff_savegame_editor.py:1397
+#: scripts/firestaff_savegame_editor.py:1408
 msgid "Settings"
 msgstr "Impostazioni mappa"
 
 #: scripts/firestaff_artpack_studio.py:1834
 #: scripts/firestaff_dungeon_studio.py:473
-#: scripts/firestaff_savegame_editor.py:799
+#: scripts/firestaff_savegame_editor.py:810
 msgid "Auto (System Language)"
 msgstr "Automatico (lingua del sistema)"
 
@@ -165,15 +165,15 @@ msgstr "Trascina e rilascia attivato"
 
 #: scripts/firestaff_artpack_studio.py:1946
 #: scripts/firestaff_dungeon_studio.py:1010
-#: scripts/firestaff_savegame_editor.py:803
-#: scripts/firestaff_savegame_editor.py:1388
-#: scripts/firestaff_savegame_editor.py:1402
+#: scripts/firestaff_savegame_editor.py:814
+#: scripts/firestaff_savegame_editor.py:1399
+#: scripts/firestaff_savegame_editor.py:1413
 msgid "Language"
 msgstr "Lingua"
 
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
-#: scripts/firestaff_savegame_editor.py:1389
+#: scripts/firestaff_savegame_editor.py:1400
 #, python-brace-format
 msgid ""
 "Language set to {}.\n"
@@ -208,7 +208,7 @@ msgid "Stored securely in system keychain"
 msgstr "Conservato in modo sicuro nel portachiavi del sistema"
 
 #: scripts/firestaff_artpack_studio.py:1982
-#: scripts/firestaff_savegame_editor.py:1144
+#: scripts/firestaff_savegame_editor.py:1155
 msgid "Key"
 msgstr "Chiave"
 
@@ -221,8 +221,8 @@ msgid "Settings saved"
 msgstr "Impostazioni mappa"
 
 #: scripts/firestaff_artpack_studio.py:2006
-#: scripts/firestaff_savegame_editor.py:787
-#: scripts/firestaff_savegame_editor.py:813
+#: scripts/firestaff_savegame_editor.py:798
+#: scripts/firestaff_savegame_editor.py:824
 msgid "Save"
 msgstr "Salvato: {}"
 
@@ -490,7 +490,7 @@ msgid "Save .fsdung"
 msgstr "Salva .fsdung"
 
 #: scripts/firestaff_dungeon_studio.py:455
-#: scripts/firestaff_savegame_editor.py:788
+#: scripts/firestaff_savegame_editor.py:799
 msgid "Save As..."
 msgstr "Salva come..."
 
@@ -578,9 +578,9 @@ msgid "Name"
 msgstr "Nome"
 
 #: scripts/firestaff_dungeon_studio.py:561
-#: scripts/firestaff_savegame_editor.py:976
-#: scripts/firestaff_savegame_editor.py:1066
-#: scripts/firestaff_savegame_editor.py:1143
+#: scripts/firestaff_savegame_editor.py:987
+#: scripts/firestaff_savegame_editor.py:1077
+#: scripts/firestaff_savegame_editor.py:1154
 msgid "Size"
 msgstr "Dimensione"
 
@@ -651,12 +651,12 @@ msgid "Show things"
 msgstr "Mostra oggetti"
 
 #: scripts/firestaff_dungeon_studio.py:1028
-#: scripts/firestaff_savegame_editor.py:1403
+#: scripts/firestaff_savegame_editor.py:1414
 msgid "Use system language"
 msgstr "Utilizza la lingua del sistema"
 
 #: scripts/firestaff_dungeon_studio.py:1030
-#: scripts/firestaff_savegame_editor.py:1405
+#: scripts/firestaff_savegame_editor.py:1416
 msgid "Close"
 msgstr "Chiudi"
 
@@ -673,16 +673,16 @@ msgstr "Aperto: {}"
 #: scripts/firestaff_dungeon_studio.py:1072
 #: scripts/firestaff_dungeon_studio.py:1195
 #: scripts/firestaff_dungeon_studio.py:1200
-#: scripts/firestaff_savegame_editor.py:850
-#: scripts/firestaff_savegame_editor.py:853
-#: scripts/firestaff_savegame_editor.py:866
-#: scripts/firestaff_savegame_editor.py:878
-#: scripts/firestaff_savegame_editor.py:1038
+#: scripts/firestaff_savegame_editor.py:861
+#: scripts/firestaff_savegame_editor.py:864
+#: scripts/firestaff_savegame_editor.py:877
+#: scripts/firestaff_savegame_editor.py:889
+#: scripts/firestaff_savegame_editor.py:1049
 msgid "Error"
 msgstr "Errore"
 
 #: scripts/firestaff_dungeon_studio.py:1070
-#: scripts/firestaff_savegame_editor.py:865
+#: scripts/firestaff_savegame_editor.py:876
 #, python-brace-format
 msgid "Saved: {}"
 msgstr "Salvato: {}"
@@ -941,7 +941,7 @@ msgid "F0418 checksum for TIMELINE validation"
 msgstr "Checksum F0418 per la convalida TIMELINE"
 
 #: scripts/firestaff_savegame_editor.py:357
-#: scripts/firestaff_savegame_editor.py:968
+#: scripts/firestaff_savegame_editor.py:979
 msgid "Platform"
 msgstr "Piattaforma"
 
@@ -998,12 +998,12 @@ msgid "Mana Max"
 msgstr "Manà Max"
 
 #: scripts/firestaff_savegame_editor.py:376
-#: scripts/firestaff_savegame_editor.py:1005
+#: scripts/firestaff_savegame_editor.py:1016
 msgid "Food"
 msgstr "Cibo"
 
 #: scripts/firestaff_savegame_editor.py:377
-#: scripts/firestaff_savegame_editor.py:1005
+#: scripts/firestaff_savegame_editor.py:1016
 msgid "Water"
 msgstr "Acqua"
 
@@ -1197,319 +1197,319 @@ msgstr "Vita Congelante attiva (0/1)"
 
 #: scripts/firestaff_savegame_editor.py:532
 #: scripts/firestaff_savegame_editor.py:535
-#: scripts/firestaff_savegame_editor.py:1179
+#: scripts/firestaff_savegame_editor.py:1190
 #, python-brace-format
 msgid "Champion {}"
 msgstr "Campione {}"
 
-#: scripts/firestaff_savegame_editor.py:735
+#: scripts/firestaff_savegame_editor.py:746
 msgid "Firestaff Savegame Editor 0.2"
 msgstr "Editor dei salvataggi dei vigili del fuoco 0.2"
 
-#: scripts/firestaff_savegame_editor.py:786
+#: scripts/firestaff_savegame_editor.py:797
 msgid "Open..."
 msgstr "Aperto..."
 
-#: scripts/firestaff_savegame_editor.py:790
+#: scripts/firestaff_savegame_editor.py:801
 msgid "Quit"
 msgstr "Esci"
 
-#: scripts/firestaff_savegame_editor.py:791
-#: scripts/firestaff_savegame_editor.py:965
+#: scripts/firestaff_savegame_editor.py:802
+#: scripts/firestaff_savegame_editor.py:976
 msgid "File"
 msgstr "Tutti i file"
 
-#: scripts/firestaff_savegame_editor.py:812
+#: scripts/firestaff_savegame_editor.py:823
 msgid "Open"
 msgstr "Aperto"
 
-#: scripts/firestaff_savegame_editor.py:814
-#: scripts/firestaff_savegame_editor.py:874
+#: scripts/firestaff_savegame_editor.py:825
+#: scripts/firestaff_savegame_editor.py:885
 msgid "Save As"
 msgstr "Salva come..."
 
-#: scripts/firestaff_savegame_editor.py:816
+#: scripts/firestaff_savegame_editor.py:827
 msgid "No file loaded"
 msgstr "Nessun file caricato"
 
-#: scripts/firestaff_savegame_editor.py:843
+#: scripts/firestaff_savegame_editor.py:854
 msgid "Open Savegame"
 msgstr "Apri Salvataggio"
 
-#: scripts/firestaff_savegame_editor.py:844
-#: scripts/firestaff_savegame_editor.py:1016
+#: scripts/firestaff_savegame_editor.py:855
+#: scripts/firestaff_savegame_editor.py:1027
 msgid "All Savegames"
 msgstr "Tutti i salvataggi"
 
-#: scripts/firestaff_savegame_editor.py:845
-#: scripts/firestaff_savegame_editor.py:1015
+#: scripts/firestaff_savegame_editor.py:856
+#: scripts/firestaff_savegame_editor.py:1026
 msgid "All Files"
 msgstr "Tutti i file"
 
-#: scripts/firestaff_savegame_editor.py:853
-#: scripts/firestaff_savegame_editor.py:1026
+#: scripts/firestaff_savegame_editor.py:864
+#: scripts/firestaff_savegame_editor.py:1037
 msgid "Unrecognized savegame format."
 msgstr "Formato di salvataggio non riconosciuto."
 
-#: scripts/firestaff_savegame_editor.py:856
+#: scripts/firestaff_savegame_editor.py:867
 #, python-brace-format
 msgid "Loaded: {}"
 msgstr "Obiettivo caricato: {}"
 
-#: scripts/firestaff_savegame_editor.py:861
-#: scripts/firestaff_savegame_editor.py:870
+#: scripts/firestaff_savegame_editor.py:872
+#: scripts/firestaff_savegame_editor.py:881
 msgid "No savegame loaded"
 msgstr "Nessun salvataggio caricato"
 
-#: scripts/firestaff_savegame_editor.py:861
-#: scripts/firestaff_savegame_editor.py:870
+#: scripts/firestaff_savegame_editor.py:872
+#: scripts/firestaff_savegame_editor.py:881
 msgid "Warning"
 msgstr "Avvisi"
 
-#: scripts/firestaff_savegame_editor.py:863
-#: scripts/firestaff_savegame_editor.py:872
+#: scripts/firestaff_savegame_editor.py:874
+#: scripts/firestaff_savegame_editor.py:883
 msgid "Read only"
 msgstr "Read only"
 
-#: scripts/firestaff_savegame_editor.py:864
-#: scripts/firestaff_savegame_editor.py:873
+#: scripts/firestaff_savegame_editor.py:875
+#: scripts/firestaff_savegame_editor.py:884
 msgid "Saturn Backup RAM images can be inspected but not edited or rewritten."
 msgstr "Saturn Backup RAM images can be inspected but not edited or rewritten."
 
-#: scripts/firestaff_savegame_editor.py:877
+#: scripts/firestaff_savegame_editor.py:888
 #, python-brace-format
 msgid "Saved as: {}"
 msgstr "Salvato: {}"
 
-#: scripts/firestaff_savegame_editor.py:887
+#: scripts/firestaff_savegame_editor.py:898
 msgid "Game-specific Nexus payload fields are not yet verified."
 msgstr "Game-specific Nexus payload fields are not yet verified."
 
-#: scripts/firestaff_savegame_editor.py:894
+#: scripts/firestaff_savegame_editor.py:905
 msgid "Only available for Saturn Backup RAM images."
 msgstr "Only available for Saturn Backup RAM images."
 
-#: scripts/firestaff_savegame_editor.py:927
+#: scripts/firestaff_savegame_editor.py:938
 msgid "File Overview"
 msgstr "Panoramica dei file"
 
-#: scripts/firestaff_savegame_editor.py:930
+#: scripts/firestaff_savegame_editor.py:941
 msgid "Saturn Backup RAM"
 msgstr "Saturn Backup RAM"
 
-#: scripts/firestaff_savegame_editor.py:932
+#: scripts/firestaff_savegame_editor.py:943
 msgid "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 msgstr "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 
-#: scripts/firestaff_savegame_editor.py:938
+#: scripts/firestaff_savegame_editor.py:949
 msgid "Comment"
 msgstr "Comment"
 
-#: scripts/firestaff_savegame_editor.py:939
+#: scripts/firestaff_savegame_editor.py:950
 msgid "Language byte (raw)"
 msgstr "Byte della lingua (grezzo)"
 
-#: scripts/firestaff_savegame_editor.py:940
+#: scripts/firestaff_savegame_editor.py:951
 msgid "Timestamp field (raw)"
 msgstr "Campo data e ora (grezzo)"
 
-#: scripts/firestaff_savegame_editor.py:941
+#: scripts/firestaff_savegame_editor.py:952
 msgid "Payload size"
 msgstr "Payload size"
 
-#: scripts/firestaff_savegame_editor.py:942
+#: scripts/firestaff_savegame_editor.py:953
 msgid "Allocated blocks"
 msgstr "Allocated blocks"
 
-#: scripts/firestaff_savegame_editor.py:943
+#: scripts/firestaff_savegame_editor.py:954
 msgid "Allocated block IDs"
 msgstr "ID dei blocchi allocati"
 
-#: scripts/firestaff_savegame_editor.py:950
+#: scripts/firestaff_savegame_editor.py:961
 msgid "Compare with another card…"
 msgstr "Confronta con un'altra scheda…"
 
-#: scripts/firestaff_savegame_editor.py:955
+#: scripts/firestaff_savegame_editor.py:966
 #, python-brace-format
 msgid "Payload starts (hex): {}…"
 msgstr "Payload starts (hex): {}…"
 
-#: scripts/firestaff_savegame_editor.py:959
+#: scripts/firestaff_savegame_editor.py:970
 msgid "File Information"
 msgstr "Informazioni sul file"
 
-#: scripts/firestaff_savegame_editor.py:967
+#: scripts/firestaff_savegame_editor.py:978
 msgid "Format"
 msgstr "Formato"
 
-#: scripts/firestaff_savegame_editor.py:967
-#: scripts/firestaff_savegame_editor.py:968
-#: scripts/firestaff_savegame_editor.py:969
-#: scripts/firestaff_savegame_editor.py:1112
-#: scripts/firestaff_savegame_editor.py:1114
-#: scripts/firestaff_savegame_editor.py:1116
+#: scripts/firestaff_savegame_editor.py:978
+#: scripts/firestaff_savegame_editor.py:979
+#: scripts/firestaff_savegame_editor.py:980
+#: scripts/firestaff_savegame_editor.py:1123
+#: scripts/firestaff_savegame_editor.py:1125
+#: scripts/firestaff_savegame_editor.py:1127
 msgid "Unknown"
 msgstr "Sconosciuto"
 
-#: scripts/firestaff_savegame_editor.py:969
+#: scripts/firestaff_savegame_editor.py:980
 msgid "Dungeon"
 msgstr "Dungeon"
 
-#: scripts/firestaff_savegame_editor.py:974
+#: scripts/firestaff_savegame_editor.py:985
 msgid "Save Parts"
 msgstr "Salva come..."
 
-#: scripts/firestaff_savegame_editor.py:976
-#: scripts/firestaff_savegame_editor.py:1142
+#: scripts/firestaff_savegame_editor.py:987
+#: scripts/firestaff_savegame_editor.py:1153
 msgid "Offset"
 msgstr "Compensazione"
 
-#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:987
 msgid "Part"
 msgstr "Parte"
 
-#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:987
 msgid "Status"
 msgstr "Statistiche"
 
-#: scripts/firestaff_savegame_editor.py:986
-#: scripts/firestaff_savegame_editor.py:1151
+#: scripts/firestaff_savegame_editor.py:997
+#: scripts/firestaff_savegame_editor.py:1162
 msgid "MISMATCH"
 msgstr "NON CORRISPONDENZA"
 
-#: scripts/firestaff_savegame_editor.py:986
+#: scripts/firestaff_savegame_editor.py:997
 msgid "Valid"
 msgstr "Convalida"
 
-#: scripts/firestaff_savegame_editor.py:990
+#: scripts/firestaff_savegame_editor.py:1001
 msgid "Champions"
 msgstr "Campioni"
 
-#: scripts/firestaff_savegame_editor.py:1013
+#: scripts/firestaff_savegame_editor.py:1024
 msgid "Select another Saturn card"
 msgstr "Seleziona un'altra scheda Saturn"
 
-#: scripts/firestaff_savegame_editor.py:1014
+#: scripts/firestaff_savegame_editor.py:1025
 msgid "Saturn Backup RAM images"
 msgstr "Immagini Backup RAM Saturn"
 
-#: scripts/firestaff_savegame_editor.py:1023
+#: scripts/firestaff_savegame_editor.py:1034
 msgid "Choose a different Saturn card image."
 msgstr "Scegli un'altra immagine della scheda di memoria Saturn."
 
-#: scripts/firestaff_savegame_editor.py:1033
+#: scripts/firestaff_savegame_editor.py:1044
 msgid "Saturn payload entries do not match or have different lengths."
 msgstr "Le voci Saturn non corrispondono o hanno lunghezze diverse."
 
-#: scripts/firestaff_savegame_editor.py:1042
+#: scripts/firestaff_savegame_editor.py:1053
 msgid "Payload differences"
 msgstr "Differenze nei dati"
 
-#: scripts/firestaff_savegame_editor.py:1054
+#: scripts/firestaff_savegame_editor.py:1065
 msgid "Only raw byte offsets and values are shown; payload field meanings remain unverified."
 msgstr "Sono mostrate solo le posizioni e i valori grezzi dei byte; il significato dei campi dati non è ancora verificato."
 
-#: scripts/firestaff_savegame_editor.py:1058
+#: scripts/firestaff_savegame_editor.py:1069
 msgid "No byte differences found."
 msgstr "Non sono state trovate differenze tra i byte."
 
-#: scripts/firestaff_savegame_editor.py:1065
+#: scripts/firestaff_savegame_editor.py:1076
 msgid "Payload offset"
 msgstr "Posizione nei dati"
 
-#: scripts/firestaff_savegame_editor.py:1067
+#: scripts/firestaff_savegame_editor.py:1078
 msgid "Current bytes"
 msgstr "Byte attuali"
 
-#: scripts/firestaff_savegame_editor.py:1068
+#: scripts/firestaff_savegame_editor.py:1079
 msgid "Compared bytes"
 msgstr "Byte confrontati"
 
-#: scripts/firestaff_savegame_editor.py:1093
+#: scripts/firestaff_savegame_editor.py:1104
 msgid "Header Fields"
 msgstr "Campi di intestazione"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Description"
 msgstr "Posizione"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Field"
 msgstr "Campo"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Hex"
 msgstr "Esadecimale"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Value"
 msgstr "Valore"
 
-#: scripts/firestaff_savegame_editor.py:1128
+#: scripts/firestaff_savegame_editor.py:1139
 msgid "DM1 PC34 Save Parts (F0417/F0418)"
 msgstr "DM1 PC34 Salva parti (F0417/F0418)"
 
-#: scripts/firestaff_savegame_editor.py:1145
+#: scripts/firestaff_savegame_editor.py:1156
 msgid "Expected"
 msgstr "Previsto"
 
-#: scripts/firestaff_savegame_editor.py:1146
+#: scripts/firestaff_savegame_editor.py:1157
 msgid "Actual"
 msgstr "Reale"
 
-#: scripts/firestaff_savegame_editor.py:1151
+#: scripts/firestaff_savegame_editor.py:1162
 msgid "VALID"
 msgstr "VALIDO"
 
-#: scripts/firestaff_savegame_editor.py:1174
+#: scripts/firestaff_savegame_editor.py:1185
 msgid "No champion data"
 msgstr "Importa dati di gioco"
 
-#: scripts/firestaff_savegame_editor.py:1199
+#: scripts/firestaff_savegame_editor.py:1210
 msgid "Combat & Vitals"
 msgstr "Combattimento e parametri vitali"
 
-#: scripts/firestaff_savegame_editor.py:1215
+#: scripts/firestaff_savegame_editor.py:1226
 msgid "Skills"
 msgstr "Abilità"
 
-#: scripts/firestaff_savegame_editor.py:1236
+#: scripts/firestaff_savegame_editor.py:1247
 msgid "No party info available"
 msgstr "Nessuna informazione sulla festa disponibile"
 
-#: scripts/firestaff_savegame_editor.py:1239
+#: scripts/firestaff_savegame_editor.py:1250
 msgid "Party Info"
 msgstr "Informazioni sulla festa"
 
-#: scripts/firestaff_savegame_editor.py:1262
+#: scripts/firestaff_savegame_editor.py:1273
 msgid "No global data"
 msgstr "Importa dati di gioco"
 
-#: scripts/firestaff_savegame_editor.py:1265
+#: scripts/firestaff_savegame_editor.py:1276
 msgid "Global Data"
 msgstr "Importa dati di gioco"
 
-#: scripts/firestaff_savegame_editor.py:1279
+#: scripts/firestaff_savegame_editor.py:1290
 msgid "Raw Data"
 msgstr "Dati grezzi"
 
-#: scripts/firestaff_savegame_editor.py:1299
+#: scripts/firestaff_savegame_editor.py:1310
 msgid "Header Words"
 msgstr "Parole di intestazione"
 
-#: scripts/firestaff_savegame_editor.py:1305
+#: scripts/firestaff_savegame_editor.py:1316
 msgid "Random Words"
 msgstr "Parole casuali"
 
-#: scripts/firestaff_savegame_editor.py:1306
+#: scripts/firestaff_savegame_editor.py:1317
 msgid "Part Keys"
 msgstr "Chiavi della parte"
 
-#: scripts/firestaff_savegame_editor.py:1307
+#: scripts/firestaff_savegame_editor.py:1318
 msgid "Checksums"
 msgstr "Checksum"
 
-#: scripts/firestaff_savegame_editor.py:1308
+#: scripts/firestaff_savegame_editor.py:1319
 msgid "Format/Platform/Dungeon"
 msgstr "Formato/Piattaforma/Dungeon"
 

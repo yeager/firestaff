@@ -19,7 +19,7 @@ msgid "Firestaff Artpack Studio 0.2"
 msgstr "Firestaff V2.2 Artpack Studio"
 
 #: scripts/firestaff_artpack_studio.py:1789
-#: scripts/firestaff_savegame_editor.py:739
+#: scripts/firestaff_savegame_editor.py:750
 msgid "Ready"
 msgstr "준비됨"
 
@@ -29,13 +29,13 @@ msgstr "게임 데이터 미가져오기"
 
 #: scripts/firestaff_artpack_studio.py:1808
 #: scripts/firestaff_dungeon_studio.py:438
-#: scripts/firestaff_savegame_editor.py:795
+#: scripts/firestaff_savegame_editor.py:806
 msgid "Settings..."
 msgstr "맵 설정"
 
 #: scripts/firestaff_artpack_studio.py:1813
 #: scripts/firestaff_dungeon_studio.py:445
-#: scripts/firestaff_savegame_editor.py:966
+#: scripts/firestaff_savegame_editor.py:977
 msgid "Game"
 msgstr "게임"
 
@@ -76,13 +76,13 @@ msgstr ".fsart 내보내기"
 #: scripts/firestaff_artpack_studio.py:1826
 #: scripts/firestaff_artpack_studio.py:1955
 #: scripts/firestaff_dungeon_studio.py:1019
-#: scripts/firestaff_savegame_editor.py:1397
+#: scripts/firestaff_savegame_editor.py:1408
 msgid "Settings"
 msgstr "맵 설정"
 
 #: scripts/firestaff_artpack_studio.py:1834
 #: scripts/firestaff_dungeon_studio.py:473
-#: scripts/firestaff_savegame_editor.py:799
+#: scripts/firestaff_savegame_editor.py:810
 msgid "Auto (System Language)"
 msgstr "자동(시스템 언어)"
 
@@ -165,15 +165,15 @@ msgstr "드래그 앤 드롭 활성화됨"
 
 #: scripts/firestaff_artpack_studio.py:1946
 #: scripts/firestaff_dungeon_studio.py:1010
-#: scripts/firestaff_savegame_editor.py:803
-#: scripts/firestaff_savegame_editor.py:1388
-#: scripts/firestaff_savegame_editor.py:1402
+#: scripts/firestaff_savegame_editor.py:814
+#: scripts/firestaff_savegame_editor.py:1399
+#: scripts/firestaff_savegame_editor.py:1413
 msgid "Language"
 msgstr "언어"
 
 #: scripts/firestaff_artpack_studio.py:1947
 #: scripts/firestaff_dungeon_studio.py:1011
-#: scripts/firestaff_savegame_editor.py:1389
+#: scripts/firestaff_savegame_editor.py:1400
 #, python-brace-format
 msgid ""
 "Language set to {}.\n"
@@ -208,7 +208,7 @@ msgid "Stored securely in system keychain"
 msgstr "시스템 키체인에 안전하게 저장됨"
 
 #: scripts/firestaff_artpack_studio.py:1982
-#: scripts/firestaff_savegame_editor.py:1144
+#: scripts/firestaff_savegame_editor.py:1155
 msgid "Key"
 msgstr "열쇠"
 
@@ -221,8 +221,8 @@ msgid "Settings saved"
 msgstr "맵 설정"
 
 #: scripts/firestaff_artpack_studio.py:2006
-#: scripts/firestaff_savegame_editor.py:787
-#: scripts/firestaff_savegame_editor.py:813
+#: scripts/firestaff_savegame_editor.py:798
+#: scripts/firestaff_savegame_editor.py:824
 msgid "Save"
 msgstr "저장됨: {}"
 
@@ -490,7 +490,7 @@ msgid "Save .fsdung"
 msgstr ".fsdung 저장"
 
 #: scripts/firestaff_dungeon_studio.py:455
-#: scripts/firestaff_savegame_editor.py:788
+#: scripts/firestaff_savegame_editor.py:799
 msgid "Save As..."
 msgstr "다른 이름으로 저장..."
 
@@ -578,9 +578,9 @@ msgid "Name"
 msgstr "이름"
 
 #: scripts/firestaff_dungeon_studio.py:561
-#: scripts/firestaff_savegame_editor.py:976
-#: scripts/firestaff_savegame_editor.py:1066
-#: scripts/firestaff_savegame_editor.py:1143
+#: scripts/firestaff_savegame_editor.py:987
+#: scripts/firestaff_savegame_editor.py:1077
+#: scripts/firestaff_savegame_editor.py:1154
 msgid "Size"
 msgstr "크기"
 
@@ -651,12 +651,12 @@ msgid "Show things"
 msgstr "오브젝트 표시"
 
 #: scripts/firestaff_dungeon_studio.py:1028
-#: scripts/firestaff_savegame_editor.py:1403
+#: scripts/firestaff_savegame_editor.py:1414
 msgid "Use system language"
 msgstr "시스템 언어 사용"
 
 #: scripts/firestaff_dungeon_studio.py:1030
-#: scripts/firestaff_savegame_editor.py:1405
+#: scripts/firestaff_savegame_editor.py:1416
 msgid "Close"
 msgstr "닫기"
 
@@ -673,16 +673,16 @@ msgstr "열림: {}"
 #: scripts/firestaff_dungeon_studio.py:1072
 #: scripts/firestaff_dungeon_studio.py:1195
 #: scripts/firestaff_dungeon_studio.py:1200
-#: scripts/firestaff_savegame_editor.py:850
-#: scripts/firestaff_savegame_editor.py:853
-#: scripts/firestaff_savegame_editor.py:866
-#: scripts/firestaff_savegame_editor.py:878
-#: scripts/firestaff_savegame_editor.py:1038
+#: scripts/firestaff_savegame_editor.py:861
+#: scripts/firestaff_savegame_editor.py:864
+#: scripts/firestaff_savegame_editor.py:877
+#: scripts/firestaff_savegame_editor.py:889
+#: scripts/firestaff_savegame_editor.py:1049
 msgid "Error"
 msgstr "오류"
 
 #: scripts/firestaff_dungeon_studio.py:1070
-#: scripts/firestaff_savegame_editor.py:865
+#: scripts/firestaff_savegame_editor.py:876
 #, python-brace-format
 msgid "Saved: {}"
 msgstr "저장됨: {}"
@@ -941,7 +941,7 @@ msgid "F0418 checksum for TIMELINE validation"
 msgstr "TIMELINE 검증을 위한 F0418 체크섬"
 
 #: scripts/firestaff_savegame_editor.py:357
-#: scripts/firestaff_savegame_editor.py:968
+#: scripts/firestaff_savegame_editor.py:979
 msgid "Platform"
 msgstr "플랫폼"
 
@@ -998,12 +998,12 @@ msgid "Mana Max"
 msgstr "마나맥스"
 
 #: scripts/firestaff_savegame_editor.py:376
-#: scripts/firestaff_savegame_editor.py:1005
+#: scripts/firestaff_savegame_editor.py:1016
 msgid "Food"
 msgstr "음식"
 
 #: scripts/firestaff_savegame_editor.py:377
-#: scripts/firestaff_savegame_editor.py:1005
+#: scripts/firestaff_savegame_editor.py:1016
 msgid "Water"
 msgstr "물"
 
@@ -1197,319 +1197,319 @@ msgstr "생명 동결 활성(0/1)"
 
 #: scripts/firestaff_savegame_editor.py:532
 #: scripts/firestaff_savegame_editor.py:535
-#: scripts/firestaff_savegame_editor.py:1179
+#: scripts/firestaff_savegame_editor.py:1190
 #, python-brace-format
 msgid "Champion {}"
 msgstr "챔피언 {}"
 
-#: scripts/firestaff_savegame_editor.py:735
+#: scripts/firestaff_savegame_editor.py:746
 msgid "Firestaff Savegame Editor 0.2"
 msgstr "Firestaff 저장 게임 편집기 0.2"
 
-#: scripts/firestaff_savegame_editor.py:786
+#: scripts/firestaff_savegame_editor.py:797
 msgid "Open..."
 msgstr "열어..."
 
-#: scripts/firestaff_savegame_editor.py:790
+#: scripts/firestaff_savegame_editor.py:801
 msgid "Quit"
 msgstr "종료"
 
-#: scripts/firestaff_savegame_editor.py:791
-#: scripts/firestaff_savegame_editor.py:965
+#: scripts/firestaff_savegame_editor.py:802
+#: scripts/firestaff_savegame_editor.py:976
 msgid "File"
 msgstr "모든 파일"
 
-#: scripts/firestaff_savegame_editor.py:812
+#: scripts/firestaff_savegame_editor.py:823
 msgid "Open"
 msgstr "열기"
 
-#: scripts/firestaff_savegame_editor.py:814
-#: scripts/firestaff_savegame_editor.py:874
+#: scripts/firestaff_savegame_editor.py:825
+#: scripts/firestaff_savegame_editor.py:885
 msgid "Save As"
 msgstr "다른 이름으로 저장..."
 
-#: scripts/firestaff_savegame_editor.py:816
+#: scripts/firestaff_savegame_editor.py:827
 msgid "No file loaded"
 msgstr "로드된 파일이 없습니다."
 
-#: scripts/firestaff_savegame_editor.py:843
+#: scripts/firestaff_savegame_editor.py:854
 msgid "Open Savegame"
 msgstr "저장 게임 열기"
 
-#: scripts/firestaff_savegame_editor.py:844
-#: scripts/firestaff_savegame_editor.py:1016
+#: scripts/firestaff_savegame_editor.py:855
+#: scripts/firestaff_savegame_editor.py:1027
 msgid "All Savegames"
 msgstr "모든 저장 게임"
 
-#: scripts/firestaff_savegame_editor.py:845
-#: scripts/firestaff_savegame_editor.py:1015
+#: scripts/firestaff_savegame_editor.py:856
+#: scripts/firestaff_savegame_editor.py:1026
 msgid "All Files"
 msgstr "모든 파일"
 
-#: scripts/firestaff_savegame_editor.py:853
-#: scripts/firestaff_savegame_editor.py:1026
+#: scripts/firestaff_savegame_editor.py:864
+#: scripts/firestaff_savegame_editor.py:1037
 msgid "Unrecognized savegame format."
 msgstr "인식할 수 없는 저장 게임 형식입니다."
 
-#: scripts/firestaff_savegame_editor.py:856
+#: scripts/firestaff_savegame_editor.py:867
 #, python-brace-format
 msgid "Loaded: {}"
 msgstr "타겟 로드됨: {}"
 
-#: scripts/firestaff_savegame_editor.py:861
-#: scripts/firestaff_savegame_editor.py:870
+#: scripts/firestaff_savegame_editor.py:872
+#: scripts/firestaff_savegame_editor.py:881
 msgid "No savegame loaded"
 msgstr "저장 게임이 로드되지 않았습니다."
 
-#: scripts/firestaff_savegame_editor.py:861
-#: scripts/firestaff_savegame_editor.py:870
+#: scripts/firestaff_savegame_editor.py:872
+#: scripts/firestaff_savegame_editor.py:881
 msgid "Warning"
 msgstr "경고"
 
-#: scripts/firestaff_savegame_editor.py:863
-#: scripts/firestaff_savegame_editor.py:872
+#: scripts/firestaff_savegame_editor.py:874
+#: scripts/firestaff_savegame_editor.py:883
 msgid "Read only"
 msgstr "Read only"
 
-#: scripts/firestaff_savegame_editor.py:864
-#: scripts/firestaff_savegame_editor.py:873
+#: scripts/firestaff_savegame_editor.py:875
+#: scripts/firestaff_savegame_editor.py:884
 msgid "Saturn Backup RAM images can be inspected but not edited or rewritten."
 msgstr "Saturn Backup RAM images can be inspected but not edited or rewritten."
 
-#: scripts/firestaff_savegame_editor.py:877
+#: scripts/firestaff_savegame_editor.py:888
 #, python-brace-format
 msgid "Saved as: {}"
 msgstr "저장됨: {}"
 
-#: scripts/firestaff_savegame_editor.py:887
+#: scripts/firestaff_savegame_editor.py:898
 msgid "Game-specific Nexus payload fields are not yet verified."
 msgstr "Game-specific Nexus payload fields are not yet verified."
 
-#: scripts/firestaff_savegame_editor.py:894
+#: scripts/firestaff_savegame_editor.py:905
 msgid "Only available for Saturn Backup RAM images."
 msgstr "Only available for Saturn Backup RAM images."
 
-#: scripts/firestaff_savegame_editor.py:927
+#: scripts/firestaff_savegame_editor.py:938
 msgid "File Overview"
 msgstr "파일 개요"
 
-#: scripts/firestaff_savegame_editor.py:930
+#: scripts/firestaff_savegame_editor.py:941
 msgid "Saturn Backup RAM"
 msgstr "Saturn Backup RAM"
 
-#: scripts/firestaff_savegame_editor.py:932
+#: scripts/firestaff_savegame_editor.py:943
 msgid "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 msgstr "This authentic Saturn card image is read-only. The Nexus payload schema is not yet verified, so payload bytes are shown without editing or conversion."
 
-#: scripts/firestaff_savegame_editor.py:938
+#: scripts/firestaff_savegame_editor.py:949
 msgid "Comment"
 msgstr "Comment"
 
-#: scripts/firestaff_savegame_editor.py:939
+#: scripts/firestaff_savegame_editor.py:950
 msgid "Language byte (raw)"
 msgstr "언어 바이트(원시)"
 
-#: scripts/firestaff_savegame_editor.py:940
+#: scripts/firestaff_savegame_editor.py:951
 msgid "Timestamp field (raw)"
 msgstr "타임스탬프 필드(원시)"
 
-#: scripts/firestaff_savegame_editor.py:941
+#: scripts/firestaff_savegame_editor.py:952
 msgid "Payload size"
 msgstr "Payload size"
 
-#: scripts/firestaff_savegame_editor.py:942
+#: scripts/firestaff_savegame_editor.py:953
 msgid "Allocated blocks"
 msgstr "Allocated blocks"
 
-#: scripts/firestaff_savegame_editor.py:943
+#: scripts/firestaff_savegame_editor.py:954
 msgid "Allocated block IDs"
 msgstr "할당된 블록 ID"
 
-#: scripts/firestaff_savegame_editor.py:950
+#: scripts/firestaff_savegame_editor.py:961
 msgid "Compare with another card…"
 msgstr "다른 카드와 비교…"
 
-#: scripts/firestaff_savegame_editor.py:955
+#: scripts/firestaff_savegame_editor.py:966
 #, python-brace-format
 msgid "Payload starts (hex): {}…"
 msgstr "Payload starts (hex): {}…"
 
-#: scripts/firestaff_savegame_editor.py:959
+#: scripts/firestaff_savegame_editor.py:970
 msgid "File Information"
 msgstr "파일 정보"
 
-#: scripts/firestaff_savegame_editor.py:967
+#: scripts/firestaff_savegame_editor.py:978
 msgid "Format"
 msgstr "형식"
 
-#: scripts/firestaff_savegame_editor.py:967
-#: scripts/firestaff_savegame_editor.py:968
-#: scripts/firestaff_savegame_editor.py:969
-#: scripts/firestaff_savegame_editor.py:1112
-#: scripts/firestaff_savegame_editor.py:1114
-#: scripts/firestaff_savegame_editor.py:1116
+#: scripts/firestaff_savegame_editor.py:978
+#: scripts/firestaff_savegame_editor.py:979
+#: scripts/firestaff_savegame_editor.py:980
+#: scripts/firestaff_savegame_editor.py:1123
+#: scripts/firestaff_savegame_editor.py:1125
+#: scripts/firestaff_savegame_editor.py:1127
 msgid "Unknown"
 msgstr "알 수 없음"
 
-#: scripts/firestaff_savegame_editor.py:969
+#: scripts/firestaff_savegame_editor.py:980
 msgid "Dungeon"
 msgstr "던전"
 
-#: scripts/firestaff_savegame_editor.py:974
+#: scripts/firestaff_savegame_editor.py:985
 msgid "Save Parts"
 msgstr "다른 이름으로 저장..."
 
-#: scripts/firestaff_savegame_editor.py:976
-#: scripts/firestaff_savegame_editor.py:1142
+#: scripts/firestaff_savegame_editor.py:987
+#: scripts/firestaff_savegame_editor.py:1153
 msgid "Offset"
 msgstr "오프셋"
 
-#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:987
 msgid "Part"
 msgstr "부품"
 
-#: scripts/firestaff_savegame_editor.py:976
+#: scripts/firestaff_savegame_editor.py:987
 msgid "Status"
 msgstr "통계"
 
-#: scripts/firestaff_savegame_editor.py:986
-#: scripts/firestaff_savegame_editor.py:1151
+#: scripts/firestaff_savegame_editor.py:997
+#: scripts/firestaff_savegame_editor.py:1162
 msgid "MISMATCH"
 msgstr "불일치"
 
-#: scripts/firestaff_savegame_editor.py:986
+#: scripts/firestaff_savegame_editor.py:997
 msgid "Valid"
 msgstr "검증"
 
-#: scripts/firestaff_savegame_editor.py:990
+#: scripts/firestaff_savegame_editor.py:1001
 msgid "Champions"
 msgstr "챔피언"
 
-#: scripts/firestaff_savegame_editor.py:1013
+#: scripts/firestaff_savegame_editor.py:1024
 msgid "Select another Saturn card"
 msgstr "다른 Saturn 카드 선택"
 
-#: scripts/firestaff_savegame_editor.py:1014
+#: scripts/firestaff_savegame_editor.py:1025
 msgid "Saturn Backup RAM images"
 msgstr "Saturn Backup RAM 이미지"
 
-#: scripts/firestaff_savegame_editor.py:1023
+#: scripts/firestaff_savegame_editor.py:1034
 msgid "Choose a different Saturn card image."
 msgstr "다른 Saturn 메모리 카드 이미지를 선택하세요."
 
-#: scripts/firestaff_savegame_editor.py:1033
+#: scripts/firestaff_savegame_editor.py:1044
 msgid "Saturn payload entries do not match or have different lengths."
 msgstr "Saturn 항목이 일치하지 않거나 길이가 다릅니다."
 
-#: scripts/firestaff_savegame_editor.py:1042
+#: scripts/firestaff_savegame_editor.py:1053
 msgid "Payload differences"
 msgstr "데이터 차이"
 
-#: scripts/firestaff_savegame_editor.py:1054
+#: scripts/firestaff_savegame_editor.py:1065
 msgid "Only raw byte offsets and values are shown; payload field meanings remain unverified."
 msgstr "해석되지 않은 바이트 위치와 값만 표시합니다. 데이터 필드의 의미는 아직 확인되지 않았습니다."
 
-#: scripts/firestaff_savegame_editor.py:1058
+#: scripts/firestaff_savegame_editor.py:1069
 msgid "No byte differences found."
 msgstr "바이트 차이가 없습니다."
 
-#: scripts/firestaff_savegame_editor.py:1065
+#: scripts/firestaff_savegame_editor.py:1076
 msgid "Payload offset"
 msgstr "데이터 내 위치"
 
-#: scripts/firestaff_savegame_editor.py:1067
+#: scripts/firestaff_savegame_editor.py:1078
 msgid "Current bytes"
 msgstr "현재 바이트 값"
 
-#: scripts/firestaff_savegame_editor.py:1068
+#: scripts/firestaff_savegame_editor.py:1079
 msgid "Compared bytes"
 msgstr "비교한 바이트 값"
 
-#: scripts/firestaff_savegame_editor.py:1093
+#: scripts/firestaff_savegame_editor.py:1104
 msgid "Header Fields"
 msgstr "헤더 필드"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Description"
 msgstr "위치"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Field"
 msgstr "필드"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Hex"
 msgstr "16진수"
 
-#: scripts/firestaff_savegame_editor.py:1095
+#: scripts/firestaff_savegame_editor.py:1106
 msgid "Value"
 msgstr "가치"
 
-#: scripts/firestaff_savegame_editor.py:1128
+#: scripts/firestaff_savegame_editor.py:1139
 msgid "DM1 PC34 Save Parts (F0417/F0418)"
 msgstr "DM1 PC34 부품 저장 (F0417/F0418)"
 
-#: scripts/firestaff_savegame_editor.py:1145
+#: scripts/firestaff_savegame_editor.py:1156
 msgid "Expected"
 msgstr "예상"
 
-#: scripts/firestaff_savegame_editor.py:1146
+#: scripts/firestaff_savegame_editor.py:1157
 msgid "Actual"
 msgstr "실제"
 
-#: scripts/firestaff_savegame_editor.py:1151
+#: scripts/firestaff_savegame_editor.py:1162
 msgid "VALID"
 msgstr "유효함"
 
-#: scripts/firestaff_savegame_editor.py:1174
+#: scripts/firestaff_savegame_editor.py:1185
 msgid "No champion data"
 msgstr "게임 데이터 가져오기"
 
-#: scripts/firestaff_savegame_editor.py:1199
+#: scripts/firestaff_savegame_editor.py:1210
 msgid "Combat & Vitals"
 msgstr "전투 및 필수품"
 
-#: scripts/firestaff_savegame_editor.py:1215
+#: scripts/firestaff_savegame_editor.py:1226
 msgid "Skills"
 msgstr "기술"
 
-#: scripts/firestaff_savegame_editor.py:1236
+#: scripts/firestaff_savegame_editor.py:1247
 msgid "No party info available"
 msgstr "파티 정보가 없습니다."
 
-#: scripts/firestaff_savegame_editor.py:1239
+#: scripts/firestaff_savegame_editor.py:1250
 msgid "Party Info"
 msgstr "파티 정보"
 
-#: scripts/firestaff_savegame_editor.py:1262
+#: scripts/firestaff_savegame_editor.py:1273
 msgid "No global data"
 msgstr "게임 데이터 가져오기"
 
-#: scripts/firestaff_savegame_editor.py:1265
+#: scripts/firestaff_savegame_editor.py:1276
 msgid "Global Data"
 msgstr "게임 데이터 가져오기"
 
-#: scripts/firestaff_savegame_editor.py:1279
+#: scripts/firestaff_savegame_editor.py:1290
 msgid "Raw Data"
 msgstr "원시 데이터"
 
-#: scripts/firestaff_savegame_editor.py:1299
+#: scripts/firestaff_savegame_editor.py:1310
 msgid "Header Words"
 msgstr "헤더 단어"
 
-#: scripts/firestaff_savegame_editor.py:1305
+#: scripts/firestaff_savegame_editor.py:1316
 msgid "Random Words"
 msgstr "무작위 단어"
 
-#: scripts/firestaff_savegame_editor.py:1306
+#: scripts/firestaff_savegame_editor.py:1317
 msgid "Part Keys"
 msgstr "부품 키"
 
-#: scripts/firestaff_savegame_editor.py:1307
+#: scripts/firestaff_savegame_editor.py:1318
 msgid "Checksums"
 msgstr "체크섬"
 
-#: scripts/firestaff_savegame_editor.py:1308
+#: scripts/firestaff_savegame_editor.py:1319
 msgid "Format/Platform/Dungeon"
 msgstr "포맷/플랫폼/던전"
 
