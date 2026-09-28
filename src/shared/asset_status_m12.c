@@ -1294,8 +1294,12 @@ static int m12_admit_dm1_atari_st_nested_archive(
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
     size_t rootCount, const char* preferredArchive) {
     static const char outerName[] = "Dungeon-Master_Atari-ST_EN.zip";
+    static const char sevenZipName[] =
+        "Game,Dungeon_Master,Atari_ST,Software.7z";
     static const char innerName[] = "Dungeon Master (1987)(FTL)[!].zip";
     static const char stxName[] = "Dungeon Master (1987)(FTL)[!].stx";
+    static const char sevenZipStxName[] =
+        "Floppy Disks STX/Dungeon Master for Atati ST v1.1 (English).stx";
     size_t rootIndex;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
@@ -1303,7 +1307,7 @@ static int m12_admit_dm1_atari_st_nested_archive(
                               (rootIndex == 0U && preferredArchive &&
                                preferredArchive[0] != '\0');
          ++rootIndex) {
-        char candidates[3][M12_ASSET_DATA_DIR_CAPACITY];
+        char candidates[5][M12_ASSET_DATA_DIR_CAPACITY];
         size_t candidateCount = 0U, candidateIndex;
         if (rootIndex == 0U && preferredArchive && preferredArchive[0] != '\0') {
             m12_copy_string(candidates[candidateCount++], sizeof(candidates[0]),
@@ -1317,6 +1321,10 @@ static int m12_admit_dm1_atari_st_nested_archive(
                      roots[rootIndex], outerName);
             snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
                      roots[rootIndex], outerName);
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
+                     roots[rootIndex], sevenZipName);
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
+                     roots[rootIndex], sevenZipName);
         }
         for (candidateIndex = 0U; candidateIndex < candidateCount;
              ++candidateIndex) {
@@ -1327,10 +1335,19 @@ static int m12_admit_dm1_atari_st_nested_archive(
             uint8_t* graphics = NULL;
             uint8_t* dungeon = NULL;
             size_t graphicsSize = 0U, dungeonSize = 0U, versionIndex;
+            const char* stxMember =
+                m12_ascii_equals_ignore_case(
+                    strrchr(candidates[candidateIndex], '.'), ".7z")
+                    ? sevenZipStxName : stxName;
             if (!FSP_FileExists(candidates[candidateIndex]) ||
-                snprintf(virtualGraphics, sizeof(virtualGraphics),
-                         "%s::%s::%s::GRAPHICS.DAT",
-                         candidates[candidateIndex], innerName, stxName) >=
+                (m12_ascii_equals_ignore_case(
+                     strrchr(candidates[candidateIndex], '.'), ".7z")
+                     ? snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                "%s::%s::GRAPHICS.DAT",
+                                candidates[candidateIndex], stxMember)
+                     : snprintf(virtualGraphics, sizeof(virtualGraphics),
+                                "%s::%s::%s::GRAPHICS.DAT",
+                                candidates[candidateIndex], innerName, stxMember)) >=
                     (int)sizeof(virtualGraphics) ||
                 !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
                                                &graphicsSize) ||
@@ -8068,6 +8085,34 @@ static int m12_version_is_launchable(const char *gameId,
            version->architecture != M12_ARCH_X68000;
 }
 
+/* The DMWeb preservation collection selected as one source contains several
+ * Atari releases, including a cracked MSA image alongside the catalogued
+ * English STX release. Prefer the explicitly authenticated ST 1.1 STX when
+ * that collection is the selected source. This keeps AUTO/platform fallback
+ * from binding the neighboring cracked disk merely because its catalogue row
+ * appears first. */
+static int m12_dm1_atari_st_reference_version_index(
+    const M12_AssetStatus *status, const M12_GameVersionSpec *spec,
+    int gameIndex) {
+    size_t i;
+    if (!status || !spec || gameIndex < 0 ||
+        strcmp(spec->gameId, "dm1") != 0) return -1;
+    for (i = 0U; i < spec->versionCount &&
+                  i < M12_ASSET_MAX_VERSIONS_PER_GAME; ++i) {
+        const M12_AssetVersionStatus *version = &status->versions[gameIndex][i];
+        if (spec->versions[i].versionId &&
+            strcmp(spec->versions[i].versionId, "st11-en") == 0 &&
+            version->matched &&
+            strstr(version->matchedPath,
+                   "Game,Dungeon_Master,Atari_ST,Software.7z::Floppy Disks STX/") &&
+            strstr(version->matchedPath,
+                   "Dungeon Master for Atati ST v1.1 (English).stx::GRAPHICS.DAT")) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
 int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     const M12_AssetStatus* status, const char* gameId, int architecture) {
     const M12_GameVersionSpec* spec;
@@ -8106,6 +8151,11 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
                                 sizeof(csbAutoPriority[0]);
         }
         for (p = 0U; p < autoPriorityCount; ++p) {
+            if (autoPriority[p] == M12_ARCH_ATARI_ST) {
+                int preferred = m12_dm1_atari_st_reference_version_index(
+                    status, spec, gameIndex);
+                if (preferred >= 0) return preferred;
+            }
             for (i = 0U; i < spec->versionCount; ++i) {
                 if (spec->versions[i].architecture == autoPriority[p] &&
                     i < M12_ASSET_MAX_VERSIONS_PER_GAME &&
@@ -8116,6 +8166,12 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             }
         }
         return -1;
+    }
+
+    if (architecture == M12_ARCH_ATARI_ST) {
+        int preferred = m12_dm1_atari_st_reference_version_index(
+            status, spec, gameIndex);
+        if (preferred >= 0) return preferred;
     }
 
     for (i = 0U; i < spec->versionCount; ++i) {

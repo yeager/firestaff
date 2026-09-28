@@ -1,5 +1,19 @@
 # Firestaff DONE — DM1
 
+## 2026-09-28 — Launch authentic Atari ST 1.1 directly from the DMWeb 7z
+
+- Firestaff now reads the selected original STX and its required files from the
+  multi-member DMWeb archive in bounded memory. When that collection also
+  exposes an earlier cracked MSA image, Atari ST fallback selects the
+  authenticated English 1.1 STX instead of the neighboring image.
+- Authentic-media verification confirms the CLI boot reaches
+  `dm1-runtime`, loads the level and reports graphics MD5
+  `5095a13692702235d2e74f6b2b1367a9`. The ordinary M12 start-menu handoff
+  reaches the Atari ST DMCSB1 runtime using the original archive path. The
+  complete authentic 1.1 menu/startup/Hall/gameplay route and virtual-member
+  selection regression pass; this does not claim full campaign or visual
+  parity.
+
 ## 2026-09-28 — Resolve party-possession floor sensors with live inventory
 
 - Connected ReDMCSB MOVESENS.C F0276 C008 to the live party-enter paths.

@@ -21,6 +21,45 @@ fi
 
 scratch=${FIRESTAFF_TEST_SCRATCH:-"$PWD/.codex-scratch"}
 mkdir -p "$scratch"
+
+# The complete DMWeb preservation archive also contains earlier Atari images.
+# The direct archive launch must select the original v1.1 STX, rather than the
+# neighboring cracked MSA image that happens to appear first in catalogue
+# order. Keep this check on the v1.1 selection used by the archive package;
+# the two edition-specific tests below deliberately stage their requested
+# member into a one-edition fixture before launch.
+if [[ "$edition" == '1.1' ]]; then
+    direct_probe=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --data-dir "$source_archive" \
+        --boot-probe --boot-probe-frames 2 --duration 0 2>&1) || {
+        printf '%s\n' "$direct_probe" >&2
+        exit 1
+    }
+    if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$direct_probe" ||
+       ! grep -Fq "assetMd5=$expected_graphics_md5" <<<"$direct_probe" ||
+       ! grep -Fq 'phase=dm1-runtime' <<<"$direct_probe" ||
+       ! grep -Fq 'levelLoaded=1' <<<"$direct_probe"; then
+        printf '%s\n' "$direct_probe" >&2
+        echo 'FAIL: authentic Atari ST 1.1 7z CLI launch selected another edition' >&2
+        exit 1
+    fi
+
+    direct_menu=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu \
+        --game dm1 --data-dir "$source_archive" \
+        --script enter,enter,enter --duration 1000 2>&1) || {
+        printf '%s\n' "$direct_menu" >&2
+        exit 1
+    }
+    if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$direct_menu" ||
+       ! grep -Fq 'handoff=atari-st-dmcsb1' <<<"$direct_menu" ||
+       ! grep -Fq "$source_archive::" <<<"$direct_menu"; then
+        printf '%s\n' "$direct_menu" >&2
+        echo 'FAIL: authentic Atari ST 1.1 7z did not reach the start-menu handoff' >&2
+        exit 1
+    fi
+fi
+
 stage=$(mktemp -d "$scratch/dm1-atari-st-11.XXXXXX")
 trap 'rm -rf "$stage"' EXIT
 inner="$stage/Dungeon Master (1987)(FTL)[!].zip"
