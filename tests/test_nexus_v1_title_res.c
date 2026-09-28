@@ -4,6 +4,7 @@
 #include "nexus_v1_iso_reader.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_ui_surfaces.h"
+#include "nexus_v1_champions.h"
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,115 @@ static const char *retail_root(char *out, size_t out_size) {
     return NULL;
 }
 
+static uint16_t read_be16(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+/* Compare the production PLRD projection against the exact bytes read from
+ * each hash-authenticated regional retail member.  This checks format
+ * preservation only; it does not assign gameplay meaning to equipment words
+ * or PLRD's unlabelled fields. */
+static int verify_retail_plrd_rows(const char *cue_name,
+                                   const uint8_t *member_data,
+                                   int member_size,
+                                   const Nexus_V1_Engine *engine) {
+    size_t plrd = 0U;
+    Nexus_V1_ResDecodeResult resources;
+    const Nexus_V1_ResEntry *tabl;
+    int row;
+    size_t offset;
+
+    if (!cue_name || !member_data || member_size <= 0 || !engine ||
+        engine->champions.champion_count != NEXUS_NEXUS_PLRD_CHAMPION_COUNT ||
+        !nexus_v1_res_decode(member_data, member_size, &resources) ||
+        !resources.valid || !(tabl = nexus_v1_res_find(&resources, "TABL", 0)) ||
+        tabl->size < 8U + 216U * 2U)
+        return 0;
+    for (offset = 0; offset + 8U +
+             NEXUS_NEXUS_PLRD_CHAMPION_COUNT * 64U + 4U <=
+             (size_t)member_size; ++offset) {
+        if (memcmp(member_data + offset, "PLRD", 4U) == 0 &&
+            memcmp(member_data + offset + 8U +
+                   NEXUS_NEXUS_PLRD_CHAMPION_COUNT * 64U,
+                   "CRET", 4U) == 0) {
+            plrd = offset + 8U;
+            break;
+        }
+    }
+    if (!plrd) {
+        fprintf(stderr, "FAIL: %s::RLOWFIX.BIN PLRD/CRET row bounds\n",
+                cue_name);
+        return 0;
+    }
+    for (row = 0; row < NEXUS_NEXUS_PLRD_CHAMPION_COUNT; ++row) {
+        const uint8_t *source = member_data + plrd + (size_t)row * 64U;
+        const Nexus_V1_Champion *champion = &engine->champions.champions[row];
+        int slot;
+        int inventory_slot;
+        if (!champion->roster_row_available || champion->health !=
+                read_be16(source + 6U) || champion->stamina !=
+                read_be16(source + 8U) || champion->mana !=
+                read_be16(source + 10U) || champion->max_health !=
+                read_be16(source + 6U) || champion->max_stamina !=
+                read_be16(source + 8U) || champion->max_mana !=
+                read_be16(source + 10U) || champion->luck != source[12] ||
+            champion->strength != source[13] ||
+            champion->dexterity != source[14] ||
+            champion->wisdom != source[15] || champion->vitality != source[16] ||
+            champion->anti_magic != source[17] ||
+            champion->anti_fire != source[18] ||
+            champion->fighter_level != source[19] ||
+            champion->ninja_level != source[20] ||
+            champion->priest_level != source[21] ||
+            champion->wizard_level != source[22] ||
+            champion->portrait_type != source[23] || champion->food != 0 ||
+            champion->water != 0 || champion->gold != 0 || champion->alive != 0 ||
+            champion->portrait_index != -1 || champion->name_ascii[0] != '\0' ||
+            champion->name_jp[0] != '\0') {
+            fprintf(stderr,
+                    "FAIL: %s::RLOWFIX.BIN PLRD row %d field/source mismatch\n",
+                    cue_name, row);
+            return 0;
+        }
+        for (slot = 0; slot < 6; ++slot) {
+            uint32_t code_offset = tabl->offset + 8U +
+                (uint32_t)source[slot] * 2U;
+            if (champion->name_tabl_index[slot] != source[slot] ||
+                code_offset + 2U > tabl->offset + tabl->size ||
+                champion->name_tabl_code[slot] !=
+                    read_be16(member_data + code_offset)) {
+                fprintf(stderr,
+                        "FAIL: %s::RLOWFIX.BIN PLRD row %d TABL reference %d\n",
+                        cue_name, row, slot);
+                return 0;
+            }
+        }
+        for (slot = 0; slot < NEXUS_SLOT_COUNT; ++slot) {
+            int expected = -1;
+            if (slot < 10) {
+                uint16_t item = read_be16(source + 24U + 4U * (unsigned)slot);
+                expected = item == 0xffffU ? -1 : (int)item;
+            }
+            if (champion->slots[slot] != expected) {
+                fprintf(stderr,
+                        "FAIL: %s::RLOWFIX.BIN PLRD row %d equipment word %d\n",
+                        cue_name, row, slot);
+                return 0;
+            }
+        }
+        for (inventory_slot = 0; inventory_slot < 30; ++inventory_slot) {
+            if (champion->inventory[inventory_slot] != 0xffU) {
+                fprintf(stderr,
+                        "FAIL: %s::RLOWFIX.BIN PLRD row %d unbound inventory\n",
+                        cue_name, row);
+                return 0;
+            }
+        }
+    }
+    printf("  PASS %s::RLOWFIX.BIN all 20 PLRD source rows\n", cue_name);
+    return 1;
+}
+
 static int test_regional_member_identity(const char *cue_name,
                                          const char *member_name,
                                          const char *expected_md5) {
@@ -154,15 +264,13 @@ static int test_regional_member_identity(const char *cue_name,
         nexus_v1_shutdown(&engine);
         return 1;
     }
-    if (strcmp(member_name, "RLOWFIX.BIN") == 0 &&
-        (engine.champions.champion_count !=
-             NEXUS_NEXUS_PLRD_CHAMPION_COUNT ||
-         !engine.champions.champions[0].roster_row_available)) {
-        fprintf(stderr, "FAIL: %s::RLOWFIX.BIN did not seed real PLRD rows\n",
-                cue_name);
-        free(member_data);
-        nexus_v1_shutdown(&engine);
-        return 1;
+    if (strcmp(member_name, "RLOWFIX.BIN") == 0) {
+        if (!verify_retail_plrd_rows(cue_name, member_data, member_size,
+                                     &engine)) {
+            free(member_data);
+            nexus_v1_shutdown(&engine);
+            return 1;
+        }
     }
     free(member_data);
     printf("  PASS regional %s::%s md5=%s RES* entries=%u\n", cue_name,

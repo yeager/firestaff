@@ -1,5 +1,20 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Verify English and French retail PLRD rows
+
+- Extended the regional CUE real-media regression to compare all 20 parsed
+  PLRD rows against each authenticated member's own bytes: current/max
+  statistics, raw class levels and portrait type, six TABL indices and codes,
+  ten row-local equipment words, the unbound eleventh slot, and empty
+  inventory. It also asserts that unsupported labels/provisions/portrait
+  identity remain unset. The check verifies byte preservation, not gameplay
+  meanings for regional values.
+- The English retail `RLOWFIX.BIN` (MD5
+  `14c3a7e6fed2dc9e53a727640d4c9348`) and French retail `RLOWFIX.BIN` (MD5
+  `ecbecff383d6ee8330e68e38417be9c8`) both passed all 20 rows from their
+  original CUEs. `nexus_v1_title_res` passed with `fail=0`; no synthetic game
+  data or emulation was used.
+
 ## 2026-09-28 — Round-trip authentic ITEM.IBS floor images
 
 - Extended the ITEM.IBS real-media test to render every decoded floor image
