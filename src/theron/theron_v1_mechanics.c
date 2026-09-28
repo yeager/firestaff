@@ -83,6 +83,15 @@ static int theron_v1_door_state_is_passable(int state) {
  * object ids remain unclaimed until the Track 02 object table is decoded. */
 static int object_item_id(const Theron_V1_Object *object) {
     if (!object) return THERON_ITEM_NONE;
+    if (object->item_index == 0 && object->source_ref != 0u &&
+        object->source_property_valid &&
+        (object->source_category == THERON_CAT_WEAPON ||
+         object->source_category == THERON_CAT_CLOTHING ||
+         object->source_category == THERON_CAT_SCROLL ||
+         object->source_category == THERON_CAT_POTION ||
+         object->source_category == THERON_CAT_MISC)) {
+        return THERON_ITEM_SOURCE_TYPE_ZERO;
+    }
     if (object->item_index >= 0)
         return object->item_index;
     switch (object->type) {
@@ -360,7 +369,8 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
              !theron_v1_source_item_category_is_carryable(
                  o->source_category) ||
              !o->source_property_valid ||
-             o->source_item_type != (uint8_t)item_id ||
+             !theron_v1_inventory_id_matches_source_type(
+                 (uint8_t)item_id, o->source_item_type) ||
              !theron_v1_source_item_record_matches_object(world, o) ||
              !theron_v1_source_item_occurrence_exists(world, o))) {
             /* ReDMCSB THQUEST T900 owns the object/category transition. A

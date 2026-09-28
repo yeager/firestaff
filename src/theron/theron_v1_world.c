@@ -37,6 +37,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+_Static_assert(THERON_TRACK02_ITEM_SLOT_COUNT <= THERON_ITEM_SOURCE_TYPE_ZERO,
+               "source-type-zero inventory ID must be outside Track 02 bank");
+
 /* ── Compile-time sanity check ──────────────────────────────────── */
 /* 128 bytes per champion block (matches DM1 v1 champion layout) */
 _Static_assert(sizeof(Theron_V1_Champion) >= 128,
@@ -1527,8 +1530,9 @@ int theron_v1_drop_inventory_source_item(
         (!carried->property_valid ||
          !theron_v1_inventory_source_record_matches(world, carried) ||
          !theron_v1_world_source_item_table_verified(world) ||
-         carried->item_type !=
-             world->party.champions[champion_slot].inventory[inventory_slot])) {
+         !theron_v1_inventory_id_matches_source_type(
+             world->party.champions[champion_slot].inventory[inventory_slot],
+             carried->item_type))) {
         /* Mirror the source pickup gate: a real T900 drop cannot recreate
          * an object whose authenticated property/category/type payload is
          * incomplete. */
@@ -2796,8 +2800,9 @@ int theron_v1_world_inventory_source_track02_item_name_raw(
         item->source_dungeon < 1u ||
         item->source_dungeon > THERON_DUNGEON_COUNT ||
         item->item_type >= THERON_TRACK02_ITEM_SLOT_COUNT ||
-        world->party.champions[champion_slot].inventory[inventory_slot] !=
-            item->item_type ||
+        !theron_v1_inventory_id_matches_source_type(
+            world->party.champions[champion_slot].inventory[inventory_slot],
+            item->item_type) ||
         !theron_v1_inventory_source_record_matches(world, item)) {
         return 0;
     }

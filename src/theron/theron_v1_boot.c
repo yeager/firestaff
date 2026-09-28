@@ -5983,10 +5983,9 @@ int theron_v1_boot_runtime_handle_m12_input_with_inventory_slot(
                 const Theron_V1_InventorySourceRecord *source =
                     &world->inventory_source[champion_slot][slot];
                 if (source->valid &&
-                    world->party.champions[champion_slot].inventory[slot] !=
-                        THERON_ITEM_NONE &&
-                    source->item_type ==
-                        world->party.champions[champion_slot].inventory[slot]) {
+                    theron_v1_inventory_id_matches_source_type(
+                        world->party.champions[champion_slot].inventory[slot],
+                        source->item_type)) {
                     selected = slot;
                     break;
                 }

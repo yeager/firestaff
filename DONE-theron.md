@@ -1,18 +1,25 @@
 # Firestaff DONE — Theron's Quest
 
-## 2026-09-27 — Authentic inventory record-integrity regression
+## 2026-09-28 — Authentic type-zero inventory record-integrity regression
 
 - The Track 02 dungeon-loader test now executes source-backed TAKE and DROP
   on real Akutuba items from both authentic US and JP Track 02 media. It
-  verifies 22 representable item transactions per region preserve the exact
-  source occurrence, origin and property row; altered source or property
-  bytes are rejected before inventory mutation.
-- Verification: a clean trv2 configure and target build succeeded, and
-  `theron_v1_track02_dungeon_loader` passed 1/1 against the installed original
-  media. The direct test run reported 22 cases per region. Six category-local
-  type-zero objects per region remain outside this regression because zero is
-  the current compact inventory's empty-slot sentinel. This does not prove
-  original T900 pickup semantics or quest-item collection.
+  verifies 71 item transactions per region, including all six authentic
+  category-local type-zero records, preserving the exact source occurrence,
+  origin and property row. The compact inventory represents raw type zero as
+  internal ID 126 while the inventory-source receipt retains the authentic
+  raw zero. Altered source or property bytes are rejected before inventory
+  mutation. Co-located earlier authentic items are temporarily marked as
+  carried only to select the specific source occurrence; their flags and all
+  source bytes are restored after each case.
+- Verification: on trv2, the focused loader target built successfully;
+  `theron_v1_track02_dungeon_loader` and
+  `theron_v1_inventory_id_mapping` passed 2/2 against the authentic US and JP
+  BINs (`TQUS02.bin` MD5 `f23601102138f87c33025877767ebf76`, `TQJP02.bin` MD5
+  `b7afb338ad31be1025b53f9aff12d73a`). The verbose loader output reported
+  `type-zero records tested/deferred: 6/0` for both editions. This verifies
+  Firestaff's bounded inventory handoff and lossless source provenance only;
+  it does not prove original T900 pickup/UI semantics or quest-item collection.
 
 ## 2026-09-26 — SRM readiness probe target dependencies
 

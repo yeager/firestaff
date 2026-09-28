@@ -1263,8 +1263,9 @@ static void assert_real_misc_roundtrip(Theron_V1_World *world) {
         assert(theron_v1_click_route(world, object->x, object->y,
                                      THERON_CMD_TAKE) == 0);
         for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
-            if (world->party.champions[world->party.active_slot]
-                    .inventory[slot] == object->source_item_type &&
+            if (theron_v1_inventory_id_matches_source_type(
+                    world->party.champions[world->party.active_slot]
+                        .inventory[slot], object->source_item_type) &&
                 world->inventory_source[world->party.active_slot][slot]
                     .valid) {
                 inventory_slot = slot;
@@ -4933,8 +4934,18 @@ static void test_authentic_take_requires_matching_item_record(
     Theron_V1_World *world = calloc(1u, sizeof(*world));
     Theron_DungeonLoadResult result;
     Theron_Track02ItemNameSource item_name_source;
+    int *suppressed_indices = NULL;
     unsigned int tested = 0u;
-    unsigned int zero_id_items = 0u;
+    unsigned int zero_id_records = 0u;
+    unsigned int zero_id_tested = 0u;
+    unsigned int zero_id_deferred = 0u;
+    assert(theron_v1_inventory_id_from_source_type(0u) ==
+           THERON_ITEM_SOURCE_TYPE_ZERO);
+    assert(theron_v1_inventory_id_from_source_type(1u) == 1u);
+    assert(theron_v1_inventory_id_from_source_type(
+               THERON_TRACK02_ITEM_SLOT_COUNT - 1u) ==
+           THERON_TRACK02_ITEM_SLOT_COUNT - 1u);
+    assert(!THERON_IS_QUEST_ITEM(THERON_ITEM_SOURCE_TYPE_ZERO));
     assert(world != NULL);
     theron_v1_world_init(world);
     world->current_dungeon = 1;
@@ -4943,6 +4954,9 @@ static void test_authentic_take_requires_matching_item_record(
                variant == 1 ? THERON_TRACK02_VARIANT_JP_BIN
                             : THERON_TRACK02_VARIANT_US_BIN,
                &result) == 0);
+    suppressed_indices = malloc((size_t)world->object_count *
+                                sizeof(*suppressed_indices));
+    assert(suppressed_indices != NULL || world->object_count == 0);
     assert(result.source_property_table_verified == 1);
     bind_real_track02_party(
         world, track02, track02_size,
@@ -4961,7 +4975,7 @@ static void test_authentic_take_requires_matching_item_record(
         uint8_t saved_inventory[THERON_INVENTORY_SLOTS];
         int saved_x, saved_y, saved_dir, saved_level;
         int approach_found = 0;
-        int earlier_carryable = 0;
+        int suppressed_count = 0;
 
         if (object->dungeon_id != 1 ||
             !object->source_origin_valid || !object->source_property_valid ||
@@ -4973,31 +4987,11 @@ static void test_authentic_take_requires_matching_item_record(
             (object->flags & (THERON_OBJ_F_PICKED_UP |
                               THERON_OBJ_F_DESTROYED)))
             continue;
-        /* The current compact inventory sentinel is zero. Preserve this real
-         * source item as an explicit open mapping gap rather than pretending
-         * its category-local type zero is a valid global carried-item ID. */
+        /* Count category-local type zero and exercise it using the dedicated
+         * compact ID, while keeping its raw value in the source receipt. */
         if (object->item_index == THERON_ITEM_NONE) {
-            ++zero_id_items;
-            continue;
+            ++zero_id_records;
         }
-        for (int j = 0; j < i; ++j) {
-            const Theron_V1_Object *earlier = &world->objects[j];
-            if (earlier->dungeon_id == object->dungeon_id &&
-                earlier->level == object->level &&
-                earlier->x == object->x && earlier->y == object->y &&
-                !(earlier->flags & (THERON_OBJ_F_PICKED_UP |
-                                    THERON_OBJ_F_DESTROYED)) &&
-                (earlier->source_category == THERON_CAT_WEAPON ||
-                 earlier->source_category == THERON_CAT_CLOTHING ||
-                 earlier->source_category == THERON_CAT_SCROLL ||
-                 earlier->source_category == THERON_CAT_POTION ||
-                 earlier->source_category == THERON_CAT_MISC)) {
-                earlier_carryable = 1;
-                break;
-            }
-        }
-        if (earlier_carryable) continue;
-
         saved_object = *object;
         saved_x = world->party.leader_x;
         saved_y = world->party.leader_y;
@@ -5019,7 +5013,31 @@ static void test_authentic_take_requires_matching_item_record(
         }
         if (!approach_found) {
             world->current_level = saved_level;
+            if (object->item_index == THERON_ITEM_NONE) ++zero_id_deferred;
             continue;
+        }
+
+        /* TAKE walks carryable occurrences in authentic object-table order.
+         * Temporarily treat preceding co-located occurrences as already
+         * carried so this test reaches the selected authentic source record;
+         * restore every flag before leaving the case. The source records,
+         * item bytes, property rows and target coordinates remain untouched. */
+        for (int j = 0; j < i; ++j) {
+            Theron_V1_Object *earlier = &world->objects[j];
+            if (earlier->dungeon_id == object->dungeon_id &&
+                earlier->level == object->level &&
+                earlier->x == object->x && earlier->y == object->y &&
+                !(earlier->flags & (THERON_OBJ_F_PICKED_UP |
+                                    THERON_OBJ_F_DESTROYED)) &&
+                (earlier->source_category == THERON_CAT_WEAPON ||
+                 earlier->source_category == THERON_CAT_CLOTHING ||
+                 earlier->source_category == THERON_CAT_SCROLL ||
+                 earlier->source_category == THERON_CAT_POTION ||
+                 earlier->source_category == THERON_CAT_MISC)) {
+                assert(suppressed_count < world->object_count);
+                suppressed_indices[suppressed_count++] = j;
+                earlier->flags |= THERON_OBJ_F_PICKED_UP;
+            }
         }
 
         champion = &world->party.champions[world->party.active_slot];
@@ -5051,7 +5069,8 @@ static void test_authentic_take_requires_matching_item_record(
             int inventory_slot = -1;
             for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
                 if (saved_inventory[slot] == THERON_ITEM_NONE &&
-                    champion->inventory[slot] == object->source_item_type &&
+                    theron_v1_inventory_id_matches_source_type(
+                        champion->inventory[slot], object->source_item_type) &&
                     world->inventory_source[world->party.active_slot][slot]
                         .valid) {
                     inventory_slot = slot;
@@ -5106,15 +5125,23 @@ static void test_authentic_take_requires_matching_item_record(
                                             [inventory_slot],
                    0, sizeof(world->inventory_source[0][0]));
             ++tested;
+            if (object->item_index == THERON_ITEM_NONE) ++zero_id_tested;
         }
         *object = saved_object;
+        for (int j = 0; j < suppressed_count; ++j) {
+            world->objects[suppressed_indices[j]].flags &=
+                ~THERON_OBJ_F_PICKED_UP;
+        }
         world->current_level = saved_level;
         theron_v1_party_place(world, saved_x, saved_y, saved_dir);
     }
     assert(tested > 0u);
+    assert(zero_id_tested + zero_id_deferred == zero_id_records);
     printf("  authentic %s Akutuba TAKE/DROP property-integrity cases: %u "
-           "(type-zero inventory mappings left closed: %u)\n",
-           variant == 1 ? "JP" : "US", tested, zero_id_items);
+           "(type-zero records tested/deferred: %u/%u)\n",
+           variant == 1 ? "JP" : "US", tested,
+           zero_id_tested, zero_id_deferred);
+    free(suppressed_indices);
     free(world);
 }
 

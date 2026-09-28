@@ -53548,6 +53548,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_map.
 endif()
 
 # Theron Track 02 item categories (66-byte type table from UD 0x21A046)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_inventory_id_mapping.c")
+    add_executable(test_theron_v1_inventory_id_mapping
+        tests/test_theron_v1_inventory_id_mapping.c)
+    target_include_directories(test_theron_v1_inventory_id_mapping PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_inventory_id_mapping PRIVATE
+            -UNDEBUG -Wall -Wextra -O2)
+    else()
+        target_compile_options(test_theron_v1_inventory_id_mapping PRIVATE /UNDEBUG)
+    endif()
+    add_test(NAME theron_v1_inventory_id_mapping
+        COMMAND test_theron_v1_inventory_id_mapping)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_categories.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_item_categories.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_item_categories.h")

@@ -114,16 +114,21 @@ source-name, combat-boundary, JP-record and startup-receipt gates on the
 current source snapshot; it does not prove a complete campaign, original
 quest-item transactions, or original-format BRAM export.
 
-2026-09-27 authentic inventory transaction regression: the focused Track 02
-loader test now executes source-backed TAKE and DROP against real Akutuba
-objects in both US and JP media. Each region verifies 22 representable carried
-items preserve their exact source occurrence, origin and property row through
-inventory transfer, while mutations to the raw object or property row are
-rejected without changing inventory. Six category-local type-zero items per
-region remain untested because the current compact inventory reserves zero as
-`THERON_ITEM_NONE`; no global item mapping is inferred. This proves Firestaff's
-bounded inventory handoff only, not the original T900 pickup/UI semantics or
-quest-item collection transaction.
+2026-09-28 authentic inventory transaction regression: the focused Track 02
+loader test executes source-backed TAKE and DROP against real Akutuba objects
+in both US and JP media. Each region verifies 71 item transactions, including
+all six category-local type-zero records, preserving source occurrence, origin
+and property-row bytes through inventory transfer. Raw type zero is represented
+as internal compact inventory ID 126; the provenance receipt retains its
+authentic raw zero. Altered source or property bytes are rejected before
+inventory mutation. On trv2, the focused loader target built and both
+`theron_v1_track02_dungeon_loader` and `theron_v1_inventory_id_mapping` passed
+2/2 against hash-verified TQUS02/TQJP02; verbose output reported
+`type-zero records tested/deferred: 6/0` for each edition. The test temporarily
+suppresses earlier co-located occurrences only to select each authentic object
+and restores their flags afterward. This verifies Firestaff's bounded
+inventory handoff, not original T900 pickup/UI semantics or quest-item
+collection transaction.
 
 2026-09-25 authentic JP Rev. 1 CD availability: the production CUE receipt
 passes locally and on trv2 against the complete user-provided CUE and its

@@ -38,6 +38,7 @@ extern "C" {
  * First-party items are the quest items; the rest are supplies.
  * Source: THQUEST.ASM T560 item table; TQR is a "light" version. */
 #define THERON_ITEM_NONE          0
+#define THERON_ITEM_SOURCE_TYPE_ZERO 126
 #define THERON_ITEM_POTION        1   /* healing potion (common) */
 #define THERON_ITEM_ANTIDOTE      2   /* cure poison */
 #define THERON_ITEM_PHOENIX_DOWN  3   /* revival at temple */
@@ -65,6 +66,26 @@ extern "C" {
 
 #define THERON_IS_QUEST_ITEM(id) ((id) >= THERON_ITEM_QUEST_BASE)
 #define THERON_INVENTORY_SLOTS   30   /* same as DM1 champion inventory */
+
+/* Track 02 item types are category-local raw indices, where zero is a real
+ * source value. The compact champion inventory reserves zero for an empty
+ * slot, so preserve authenticated source type zero under this reserved compact
+ * ID and retain its original value in Theron_V1_InventorySourceRecord. ID 126
+ * is outside the 66-entry Track 02 item banks and below the quest-ID range.
+ * The Track 02 decoder is the byte authority
+ * (src/theron/theron_v1_track02_thing_data.c:40,
+ * theron_v1_track02_item_record_decode); this assigns no T900 meaning. */
+static inline uint8_t theron_v1_inventory_id_from_source_type(
+    uint8_t source_item_type) {
+    return source_item_type == 0u
+        ? THERON_ITEM_SOURCE_TYPE_ZERO : source_item_type;
+}
+
+static inline int theron_v1_inventory_id_matches_source_type(
+    uint8_t inventory_id, uint8_t source_item_type) {
+    return inventory_id ==
+           theron_v1_inventory_id_from_source_type(source_item_type);
+}
 
 /* ── Champion classes ─────────────────────────────────────────────── */
 typedef enum {
