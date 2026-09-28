@@ -2,11 +2,32 @@
 set -euo pipefail
 
 app=${1:?usage: test_dm1_v1_dos_fr_unpacked_cli_boot.sh <firestaff-binary>}
-data_dir=${FIRESTAFF_DM1_DOS_FR_UNPACKED_DIR:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master/EUDATA"}
+data_source=${FIRESTAFF_DM1_DOS_FR_SOURCE:-${FIRESTAFF_DM1_DOS_FR_UNPACKED_DIR:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master/EUDATA"}}
 expected_graphics_md5=f934d97e43e1ba6e5159839acbcd0611
 
-if [[ ! -x "$app" || ! -f "$data_dir/GRAPHICS.DAT" || ! -f "$data_dir/DUNGEON.DAT" ]]; then
-    printf '%s\n' 'SKIP: manually unpacked authentic DM1 French DOS RAR2 media is not staged'
+if [[ ! -x "$app" ]]; then
+    printf 'FAIL: Firestaff executable not found: %s\n' "$app" >&2
+    exit 1
+fi
+
+if [[ -f "$data_source" ]]; then
+    case "${data_source##*.}" in
+        [zZ][iI][pP]) ;;
+        *) printf 'FAIL: expected a ZIP archive or unpacked EUDATA directory: %s\n' "$data_source" >&2; exit 1 ;;
+    esac
+    archive_listing=$(unzip -Z1 "$data_source") || {
+        printf 'FAIL: cannot read ZIP archive: %s\n' "$data_source" >&2
+        exit 1
+    }
+    if ! grep -Fxq 'GRAPHICS.DAT' <<<"$archive_listing" ||
+       ! grep -Fxq 'DUNGEON.DAT' <<<"$archive_listing"; then
+        printf 'SKIP: authentic DM1 French DOS ZIP is not staged: %s\n' "$data_source"
+        exit 77
+    fi
+elif [[ -d "$data_source" && -f "$data_source/GRAPHICS.DAT" && -f "$data_source/DUNGEON.DAT" ]]; then
+    :
+else
+    printf '%s\n' 'SKIP: authentic DM1 French DOS EUDATA directory or ZIP is not staged'
     exit 77
 fi
 
@@ -22,19 +43,19 @@ probe() {
     grep -Fq 'levelLoaded=1' <<<"$output"
 }
 
-probe --game dm1 --platform pc --data-dir "$data_dir" \
+probe --game dm1 --platform pc --data-dir "$data_source" \
     --boot-probe --boot-probe-frames 2 --duration 0
-probe --game dm1 --platform pc --data-dir "$data_dir" \
+probe --game dm1 --platform pc --data-dir "$data_source" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --platform pc --data-dir "$data_dir" --script enter,enter,enter --duration 1000 2>&1)" || {
+    --platform pc --data-dir "$data_source" --script enter,enter,enter --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
 if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
-   ! grep -Fq "dataDir=$data_dir" <<<"$menu_output" ||
+   ! grep -Fq "dataDir=$data_source" <<<"$menu_output" ||
    ! grep -Fq 'handoff=pc-img3' <<<"$menu_output"; then
     printf '%s\n' "$menu_output" >&2
     printf '%s\n' 'FAIL: authentic unpacked DM1 French DOS start menu did not bind IMG3 source media' >&2
@@ -45,7 +66,7 @@ fi
 # native forward input lands at y=4. Check that source-owned movement after the
 # launcher handoff rather than only accepting a title/runtime receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --platform pc --data-dir "$data_dir" \
+    --game dm1 --platform pc --data-dir "$data_source" \
     --script up --boot-probe --boot-probe-frames 500 --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
@@ -58,4 +79,4 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: manually unpacked authentic DM1 French DOS media reaches CLI, menu, IMG3 handoff, and native movement'
+printf '%s\n' 'PASS: authentic DM1 French DOS media reaches CLI, menu, IMG3 handoff, and native movement'

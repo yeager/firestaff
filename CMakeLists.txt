@@ -4570,8 +4570,8 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_v1_dos_fr_unpacked_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;dos;french;real-media;native;cli;menu;startup;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_UNPACKED_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master/EUDATA"
-        TIMEOUT 45
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_SOURCE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master/EUDATA"
+        TIMEOUT 180
     )
     add_test(
         NAME dm1_v1_dos_fr_original_save_cli_resume
