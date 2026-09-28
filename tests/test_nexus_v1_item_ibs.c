@@ -52,7 +52,7 @@ static int test_real_decode(void) {
     uint8_t *data;
     int size = 0;
     Nexus_V1_ItemIbsDecodeResult result;
-    int i, unique_img, unique_floor;
+    int i, unique_img, unique_floor, renderable_floor;
     int reused_palette_index = -1;
     uint32_t seen[256];
     uint32_t floor_rgba[16384];
@@ -143,6 +143,37 @@ static int test_real_decode(void) {
         free(data);
         return 1;
     }
+
+    /* Exercise the renderer against every renderable retail floor descriptor,
+     * not just the first palette-reuse example.  The decode receipt hashes
+     * each source image with its declared palette; independently materialize
+     * that same authentic descriptor and compare its output hash. */
+    renderable_floor = 0;
+    for (i = 0; i < result.floor_images_decoded; ++i) {
+        const Nexus_V1_ItemIbsFloorDesc *floor = &result.floor_descs[i];
+        uint32_t pixel_count = (uint32_t)floor->width * floor->height;
+        if (result.floor_image_hashes[i] == 0U) continue;
+        if (pixel_count == 0U || pixel_count >
+                sizeof(floor_rgba) / sizeof(floor_rgba[0]) ||
+            nexus_v1_item_ibs_render_floor_image(
+                data, size, i, &result, floor_rgba,
+                (int)(sizeof(floor_rgba) / sizeof(floor_rgba[0]))) != 1 ||
+            fnv1a_rgba(floor_rgba, (int)pixel_count) !=
+                result.floor_image_hashes[i]) {
+            fprintf(stderr,
+                    "  FAIL authentic floor image %d did not round-trip\n",
+                    i);
+            free(data);
+            return 1;
+        }
+        renderable_floor++;
+    }
+    if (renderable_floor == 0) {
+        fprintf(stderr, "  FAIL retail corpus had no renderable floor images\n");
+        free(data);
+        return 1;
+    }
+    printf("  round-tripped floor images: %d\n", renderable_floor);
 
     unique_img = 0;
     memset(seen, 0, sizeof(seen));

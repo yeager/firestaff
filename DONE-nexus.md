@@ -1,5 +1,16 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Round-trip authentic ITEM.IBS floor images
+
+- Extended the ITEM.IBS real-media test to render every decoded floor image
+  with an admitted pixel hash and compare the materialized RGBA pixels against
+  the source decoder's hash, including all 109 descriptors in the installed
+  retail bank. The authentic `ITEM.IBS` SHA-256 on TRV2 is
+  `fc32ca5875906e6e0dc69e0b5edfa5d00cb1f4401b7d497397c699be7c4530c1`.
+- The targeted ITEM.IBS CTest passed on TRV2 and reported 109/109 source
+  floor images round-tripped. This validates source decoding/materialization
+  only; it does not infer item semantics or open the Saturn item-use route.
+
 ## 2026-09-28 — Bound PLRD equipment reads to authentic rows
 
 - Corrected the RLOWFIX champion parser so equipment reads stay within the
