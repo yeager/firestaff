@@ -31465,6 +31465,37 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         &state->lastDm1V1MovementPipelineResult.core.leaveEffects);
     m11_apply_sensor_effects(state,
         &state->lastDm1V1MovementPipelineResult.core.enterEffects);
+    /* The movement pipeline owns ordinary floor effects. C008 additionally
+     * reads G4055's leader-hand object, which is held outside PartyState in
+     * the live M11 view, so resolve that sensor at this source boundary. */
+    if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred &&
+        state->world.things) {
+        struct SensorEffectList_Compat possessionEffects;
+        struct SensorEffectList_Compat filteredEffects;
+        int effectIndex;
+        memset(&possessionEffects, 0, sizeof(possessionEffects));
+        memset(&filteredEffects, 0, sizeof(filteredEffects));
+        if (F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+                state->world.dungeon, state->world.things,
+                state->world.party.mapIndex, state->world.party.mapX,
+                state->world.party.mapY, SENSOR_EVENT_WALK_ON,
+                &state->world.party,
+                state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
+                &possessionEffects)) {
+            for (effectIndex = 0;
+                 effectIndex < possessionEffects.count &&
+                     effectIndex < SENSOR_EFFECT_LIST_MAX_COUNT;
+                 ++effectIndex) {
+                const struct SensorEffect_Compat* effect =
+                    &possessionEffects.effects[effectIndex];
+                if (effect->sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION &&
+                    filteredEffects.count < SENSOR_EFFECT_LIST_MAX_COUNT) {
+                    filteredEffects.effects[filteredEffects.count++] = *effect;
+                }
+            }
+            m11_apply_sensor_effects(state, &filteredEffects);
+        }
+    }
 
     if (state->lastDm1V1MovementPipelineResult.core.queue.movementDisabledGate) {
         m11_set_status(state, actionLabel, "MOVEMENT COOLDOWN");
@@ -72304,9 +72335,11 @@ int M11_GameView_ApplyDm1StartupF0267PartyPlacement(
          * group removal, before publishing the new logical party tuple. The
          * current compatibility layer only models WALK_ON teleport/text
          * effects; unsupported source sensor types remain conservative. */
-        if (!F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+        if (!F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                 world->dungeon, world->things, placedParty.mapIndex,
                 placedParty.mapX, placedParty.mapY, SENSOR_EVENT_WALK_ON,
+                &placedParty,
+                state->leaderHandObjectPresent ? state->leaderHandThing : THING_NONE,
                 &enterEffects)) {
             return 0;
         }

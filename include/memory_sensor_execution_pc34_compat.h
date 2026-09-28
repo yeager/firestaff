@@ -171,4 +171,19 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     int triggerEvent,
     struct SensorEffectList_Compat* outList);
 
+/* Party-context version used by live DM1 routes. F0276 C008 requires the
+ * actual champion inventory and G4055 leader-hand object; without that
+ * context the legacy F0718 wrapper safely skips C008 instead of firing it
+ * unconditionally. */
+int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int triggerEvent,
+    const struct PartyState_Compat* party,
+    unsigned short leaderHandThing,
+    struct SensorEffectList_Compat* outList);
+
 #endif

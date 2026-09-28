@@ -1,5 +1,16 @@
 # Firestaff DONE — DM1
 
+## 2026-09-28 — Resolve party-possession floor sensors with live inventory
+
+- Connected ReDMCSB MOVESENS.C F0276 C008 to the live party-enter paths.
+  The runtime now checks living champions' inventory, closed chests through
+  F0274, and M11's separate G4055 leader-hand object before emitting the
+  remote effect. The legacy context-free wrapper safely skips C008.
+- Regression coverage verifies absent and carried icons, HOLD set/clear, and
+  the separate leader hand. The focused sensor test and native program build
+  pass; the full PC-34 scripted input matrix remains unverified because its
+  later `down` movement probe did not move the party in this run.
+
 ## 2026-09-28 — Ignore creature-only floor sensors on party entry
 
 - Aligned party enter/leave processing with ReDMCSB MOVESENS.C F0276

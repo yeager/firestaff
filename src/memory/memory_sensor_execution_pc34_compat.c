@@ -4,6 +4,7 @@
  */
 
 #include <string.h>
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "memory_sensor_execution_pc34_compat.h"
 
 /* ---- LE int32 helpers (MEDIA016 / PC LSB-first) ---- */
@@ -422,16 +423,50 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
     return (count > SENSOR_ENUM_CAPACITY) ? SENSOR_ENUM_CAPACITY : count;
 }
 
-int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+static int sensor_build_party_possession_context(
+    const struct DungeonThings_Compat* things,
+    const struct PartyState_Compat* party,
+    unsigned short leaderHandThing,
+    struct PartyPossessionContext_Compat* outContext)
+{
+    int champion;
+    int slot;
+
+    if (!things || !party || !outContext ||
+        party->championCount < 0 ||
+        party->championCount > DM1_SENSOR_POSSESSION_MAX_CHAMPIONS) {
+        return 0;
+    }
+    memset(outContext, 0, sizeof(*outContext));
+    outContext->championCount = party->championCount;
+    outContext->things = things;
+    outContext->leaderHandThing = leaderHandThing;
+    for (champion = 0; champion < DM1_SENSOR_POSSESSION_MAX_CHAMPIONS;
+         ++champion) {
+        const struct ChampionState_Compat* source = &party->champions[champion];
+        outContext->championAlive[champion] =
+            source->present && source->hp.current > 0;
+        for (slot = 0; slot < DM1_SENSOR_POSSESSION_SLOT_LAST; ++slot) {
+            outContext->championSlots[champion][slot] = source->inventory[slot];
+        }
+    }
+    return 1;
+}
+
+static int sensor_process_party_enter_leave(
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things,
     int mapIndex,
     int mapX,
     int mapY,
     int triggerEvent,
+    const struct PartyState_Compat* party,
+    unsigned short leaderHandThing,
     struct SensorEffectList_Compat* outList)
 {
     struct SensorOnSquare_Compat sensors[SENSOR_ENUM_CAPACITY];
+    struct PartyPossessionContext_Compat possessionContext;
+    int possessionContextValid;
     int sensorCount, i;
     int squareType = -1;
     int squareHasExistingFloorWeight = 0;
@@ -443,6 +478,9 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
     /* Only WALK_ON / WALK_OFF are meaningful for party enter/leave in
      * v1.  Other events are accepted but produce no effects. */
     if (triggerEvent < 0 || triggerEvent >= SENSOR_EVENT_COUNT) return 0;
+
+    possessionContextValid = sensor_build_party_possession_context(
+        things, party, leaderHandThing, &possessionContext);
 
     sensorCount = F0717_SENSOR_EnumerateOnSquare_Compat(
         dungeon, things, mapIndex, mapX, mapY, sensors);
@@ -479,6 +517,48 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         if (sensors[i].sensorType == 7) {
             continue;
         }
+        if (sensors[i].sensorType == DM1_SENSOR_FLOOR_PARTY_POSSESSION) {
+            struct FloorSensorContext_Compat floorContext;
+            struct SensorTriggerResult_Compat triggerResult;
+            const struct DungeonSensor_Compat* sourceSensor;
+            int hasObject;
+            if (triggerEvent != SENSOR_EVENT_WALK_ON ||
+                !possessionContextValid || !things->sensors ||
+                sensors[i].sensorIndex < 0 ||
+                sensors[i].sensorIndex >= things->sensorCount) {
+                continue;
+            }
+            sourceSensor = &things->sensors[sensors[i].sensorIndex];
+            hasObject = F0274_SENSOR_IsObjectInPartyPossession_Compat(
+                sourceSensor->sensorData, &possessionContext);
+            memset(&floorContext, 0, sizeof(floorContext));
+            floorContext.mapX = mapX;
+            floorContext.mapY = mapY;
+            floorContext.thingType = DM1_TRIGGER_SOURCE_PARTY;
+            floorContext.objectType = -1;
+            floorContext.partyDirection = party->direction;
+            floorContext.partyChampionCount = party->championCount;
+            floorContext.partyHasObjectType = hasObject;
+            floorContext.isAddition = 1;
+            if (!F0722_SENSOR_EvaluateFloor_Compat(
+                    sourceSensor, &floorContext, &triggerResult) ||
+                !triggerResult.triggered) {
+                continue;
+            }
+            if (outList->count < SENSOR_EFFECT_LIST_MAX_COUNT) {
+                struct SensorEffect_Compat* effect =
+                    &outList->effects[outList->count++];
+                effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
+                effect->sensorType = sensors[i].sensorType;
+                effect->destMapIndex = -1;
+                effect->destMapX = sensors[i].targetMapX;
+                effect->destMapY = sensors[i].targetMapY;
+                effect->destCell = sensors[i].targetCell;
+                effect->textIndex = triggerResult.resolvedEffect;
+                effect->delayTicks = sensors[i].value;
+            }
+            continue;
+        }
         if (!F0710_SENSOR_Execute_Compat(dungeon, things, &sensors[i],
                                          triggerEvent, &tmp)) {
             continue;
@@ -494,6 +574,36 @@ int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         if (outList->count >= SENSOR_EFFECT_LIST_MAX_COUNT) break;
     }
     return 1;
+}
+
+int F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int triggerEvent,
+    struct SensorEffectList_Compat* outList)
+{
+    return sensor_process_party_enter_leave(
+        dungeon, things, mapIndex, mapX, mapY, triggerEvent, NULL,
+        THING_NONE, outList);
+}
+
+int F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int triggerEvent,
+    const struct PartyState_Compat* party,
+    unsigned short leaderHandThing,
+    struct SensorEffectList_Compat* outList)
+{
+    return sensor_process_party_enter_leave(
+        dungeon, things, mapIndex, mapX, mapY, triggerEvent, party,
+        leaderHandThing, outList);
 }
 
 int F0714_SENSOR_ListDeserialize_Compat(

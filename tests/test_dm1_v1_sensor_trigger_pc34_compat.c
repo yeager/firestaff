@@ -852,6 +852,97 @@ static void test_floor_creature_sensor_skips_party_runtime(void) {
           "Runtime C007: creature-only sensor ignores party walk-on");
 }
 
+/* F0276 C008 uses F0274 party possession, including G4055's separate hand. */
+static void test_floor_party_possession_runtime_uses_party_context(void) {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct PartyState_Compat party;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char squares[4];
+    unsigned short squareFirstThings[4];
+    struct DungeonSensor_Compat sensors[1];
+    struct SensorEffectList_Compat effects;
+    unsigned short carried = make_thing(THING_TYPE_WEAPON, 0, 0);
+    int i;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(&party, 0, sizeof(party));
+    memset(weapons, 0, sizeof(weapons));
+    memset(sensors, 0, sizeof(sensors));
+    for (i = 0; i < 4; ++i) {
+        squares[i] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+        squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    map.width = 2;
+    map.height = 2;
+    tiles.squareData = squares;
+    tiles.squareCount = 4;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    squares[2] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                  DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0, 0);
+    sensors[0] = make_sensor(DM1_SENSOR_FLOOR_PARTY_POSSESSION, 9,
+                             DM1_EFFECT_TOGGLE, 0, 0, 0, 0,
+                             0, 1, 1, 2);
+    sensors[0].next = THING_ENDOFLIST;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 4;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    things.loaded = 1;
+    party.championCount = 1;
+    party.champions[0].present = 1;
+    party.champions[0].hp.current = 10;
+    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        party.champions[0].inventory[i] = THING_NONE;
+    }
+    weapons[0].type = 9;
+    weapons[0].next = THING_ENDOFLIST;
+
+    CHECK(F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &effects) == 1 && effects.count == 0,
+          "Runtime C008: context-free wrapper fails closed");
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &party, THING_NONE, &effects) == 1 && effects.count == 0,
+          "Runtime C008: missing icon does not trigger TOGGLE");
+
+    party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] = carried;
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &party, THING_NONE, &effects) == 1 && effects.count == 1,
+          "Runtime C008: carried icon triggers remote effect");
+    CHECK(effects.effects[0].textIndex == DM1_EFFECT_TOGGLE &&
+              effects.effects[0].destMapX == 1 &&
+              effects.effects[0].destMapY == 1,
+          "Runtime C008: carried icon preserves sensor effect and target");
+
+    party.champions[0].inventory[CHAMPION_SLOT_BACKPACK_1] = THING_NONE;
+    sensors[0].effect = DM1_EFFECT_HOLD;
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &party, THING_NONE, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].textIndex == DM1_EFFECT_CLEAR,
+          "Runtime C008: HOLD clears when icon is absent");
+    CHECK(F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
+              &dungeon, &things, 0, 1, 0, SENSOR_EVENT_WALK_ON,
+              &party, carried, &effects) == 1 && effects.count == 1 &&
+              effects.effects[0].textIndex == DM1_EFFECT_SET,
+          "Runtime C008: G4055 leader-hand icon resolves HOLD as SET");
+}
+
 /* ----------------------------------------------------------------
  *  Test F0718: Runtime floor C001 gate -- party does not retrigger
  *  a pressure pad already held down by object weight.
@@ -1989,6 +2080,7 @@ int main(void) {
     test_floor_party_on_stairs();
     test_floor_party_on_stairs_runtime_gate();
     test_floor_creature_sensor_skips_party_runtime();
+    test_floor_party_possession_runtime_uses_party_context();
     test_floor_pressure_plate_runtime_party_object_weight_gate();
     test_floor_pressure_plate_runtime_multi_item_weight_gate();
     test_floor_party_plate_runtime_door_event_gate();

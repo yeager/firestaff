@@ -13832,11 +13832,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                              SENSOR_EVENT_WALK_OFF, p3);
                     }
 
-                    (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
+                    (void)F0719_SENSOR_ProcessPartyEnterLeaveWithParty_Compat(
                         world->dungeon, world->things,
                         world->party.mapIndex,
                         world->party.mapX, world->party.mapY,
-                        SENSOR_EVENT_WALK_ON, &walkOn);
+                        SENSOR_EVENT_WALK_ON, &world->party,
+                        THING_NONE, &walkOn);
                     for (s = 0; s < walkOn.count; ++s) {
                         const struct SensorEffect_Compat* ef = &walkOn.effects[s];
                         int32_t p3 = (ef->kind == SENSOR_EFFECT_TELEPORT)
