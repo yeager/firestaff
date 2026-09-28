@@ -67,8 +67,11 @@ probe_runtime_input() {
     grep -Fq "map=0 party=$expected_party" <<<"$output"
 }
 
+# A fresh south input is blocked at the authentic initial position.  The
+# north-then-south sequence verifies backing up from the open tile.
 probe_runtime_input up 1,4,2
-probe_runtime_input down 1,2,2
+probe_runtime_input down 1,3,2
+probe_runtime_input up,down 1,3,2
 probe_runtime_input left 1,3,1
 probe_runtime_input right 1,3,3
 probe_runtime_input strafe-left 1,3,2

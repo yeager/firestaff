@@ -189,9 +189,11 @@ probe_runtime_input() {
     grep -Fq "map=0 party=$expected_party" <<<"$output"
 }
 
-# The authentic PC-3.4 spawn faces along +Y at (1,3); backing up with DOWN
-# enters the source-verified open square at (1,2) and turns south.
-probe_runtime_input down 1,2,2
+# The authentic PC-3.4 spawn is (1,3), and the south neighbor (1,2) is a
+# closed door in DUNGEON.DAT. DOWN must leave the party in place; moving north
+# and then backing up verifies the same control can return from an open tile.
+probe_runtime_input down 1,3,2
+probe_runtime_input up,down 1,3,2
 probe_runtime_input left 1,3,1
 probe_runtime_input right 1,3,3
 probe_runtime_input strafe-left 1,3,2

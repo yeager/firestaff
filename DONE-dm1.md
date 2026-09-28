@@ -1943,6 +1943,13 @@ Reviewed 2026-08-29. Completed work only.
   matrix through fresh native archive sessions. Its authenticated IMG3 title,
   dungeon and party state are retained in memory for every direction, strafe
   and action check; no extracted fixture or generated save is used.
+- Corrected the four authentic PC34, Amiga HD, Atari ST and FM Towns input
+  matrices: DOWN at the initial party position leaves the party in place, and
+  the earlier expectation of entering (1,2) was false. PC34's original
+  DUNGEON.DAT identifies (1,2) as a door. Added an UP-then-DOWN sequence to
+  prove backward movement from the open neighboring tile. All four complete
+  original-media CLI/start-menu tests pass, including FM Towns English and
+  Japanese routes.
 - The complete PC34 `F0381_MENUS_PrintMessageAfterReplacements` producer set is
   now closed. ReDMCSB `MENU.C` has exactly two calls for `C005_ACTION_FLIP`;
   the bounded F0407 plan owns their exact HEADS/TAILS source strings, rejects
