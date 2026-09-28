@@ -97,10 +97,14 @@ presentation boundary.
   masks to actions. A later independent 60-frame Start-only pair joins the
   mask to transient controller-state bytes (`0x0602c90c`) and still yields no
   VDP1/VDP2 change; two other RAM bytes remain different through all release
-  frames. This is transport evidence, not menu semantics. Continue by tracing
-  the packet past the bounded read region into the retail event consumer and
-  capture an actually interactive title/menu interval before opening menu
-  admission; see `docs/NEXUS_RUNTIME_CAPTURE.md`.
+  frames. A widened one-frame pair also reaches TM.BIN state code at
+  `0x0601462c`: authentic JP TM.BIN compares the byte read at `0x0602c940`
+  with `1`, but that fetched value is identical in Start and control; only a
+  sampled register differs, while raw video remains identical. This is not a
+  Start-dependent dispatch or menu receipt. Continue tracing the controller
+  state into a source-bound event consumer and capture an actually interactive
+  title/menu interval before opening menu admission; see
+  `docs/NEXUS_RUNTIME_CAPTURE.md`.
 - Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
   clipping, animation and composition ownership with real captures. Keep
   unbound bytes and generated fixtures out of production gameplay. In the

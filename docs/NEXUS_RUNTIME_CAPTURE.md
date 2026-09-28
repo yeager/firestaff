@@ -1022,6 +1022,20 @@ a menu transition; semantic admission remains blocked. Both capture receipts
 and original media remain on TRV2 under
 `/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/button-start-consumer-frame-10507-20260928/`.
 
+The Japanese retail `TM.BIN` was read directly from the authenticated CUE on
+TRV2 and has SHA-256
+`d87485fe6eba1f6e9fbbf487f5fcdd994911136905e6172e5bb5bc0122407eb6`.
+Its bytes at runtime `0x0601462c` (TM.BIN offset `0x462c`, with the observed
+load base `0x06010000`) decode as `CMP/EQ #1,R0`; the following instruction
+branches to `0x060146e8` when that comparison is false. In the same-session
+input and control read receipts, the fetched value at `0x0602c940` is
+`0x01000000` in both runs. Only the sampled `R4` differs (`0x10` versus `0`),
+and the rendered/raw VDP outputs are identical. Therefore this receipt does
+not show a Start-dependent condition or presentation transition: `R4` is an
+observed live register, not an action code. The nearby branch remains an
+unidentified TM.BIN state dispatch until its compared field and downstream
+state/presentation consumer are independently bound.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the
