@@ -95,9 +95,12 @@ presentation boundary.
   WorkRAMH snapshot every frame. It still produced no VDP1/VDP2 presentation
   change; RAM differences persisted through release frames and did not bind all
   masks to actions. A later independent 60-frame Start-only pair joins the
-  mask to transient controller-state bytes (`0x0602c90c`) and still yields no
-  VDP1/VDP2 change; two other RAM bytes remain different through all release
-  frames. A widened one-frame pair also reaches TM.BIN state code at
+  mask to transient controller-state bytes (`0x0602c90c`); a frame-stamped
+  SH-2 read/write follow-up observes `0x1000f001` versus `0x0000f001` at
+  `0x0602c90c` and related byte writes, but the raw VDP streams and all four
+  sampled renders remain identical. This is controller-state evidence, not an
+  action or menu dispatch; two other RAM bytes remain different through all
+  release frames. A widened one-frame pair also reaches TM.BIN state code at
   `0x0601462c`: authentic JP TM.BIN compares the byte read at `0x0602c940`
   with `1`, but that fetched value is identical in Start and control; only a
   sampled register differs, while raw video remains identical. This is not a

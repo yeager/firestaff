@@ -1003,6 +1003,33 @@ This independently reset pair narrows controller transport evidence but
 still does not show a title/menu transition or authorize interactive startup.
 The next capture must follow the packet past the bounded read region into the
 retail event consumer and sample an actually interactive title/menu interval.
+
+A source-bounded follow-up reused this exact 10500--10559 cold-start window
+with frame-stamped SH-2 WorkRAMH reads/writes for addresses
+`0x0602c8f0..0x0602ca00` and runtime PCs `0x06014000..0x06014a20`. Both runs
+completed with `capture_exit_status=0`; their 60-frame VDP streams have the
+same SHA-256
+`b64c09d0ac4a677bb10ec68f2058dca27b07d37e4d949a526bce870cc5c28c63`, and all
+four rendered frames (10507, 10512, 10520 and 10559) are byte-identical. The
+input-event trace records Start mask `0x0010` twice per active frame from
+10500 through 10511. In the SH-2 read trace, `0x0602c90c` at reported PC
+`0x06014388` is observed as `0x1000f001` in the input run versus
+`0x0000f001` in control on 11 sampled reads; reads from `0x0602c910` show the
+same difference on six samples. The write trace also records input/control
+deltas in the `0x0602c90c..0x0602c911` area. This strengthens the evidence
+that the external Start pulse reaches transient controller-related WorkRAMH
+state, but does not identify an action, menu dispatch, or presentation
+consumer. Raw VDP output remains unchanged. Control/input read-trace SHA-256:
+`7497dfc02ad7833335178eae1a3c90a47138d11f992d32e894606b8732e73f8a` /
+`431a6b33fa1da3f0862617ba63d770908142db1d61b9caa98c75db96f505f4b5`; write
+trace SHA-256:
+`f0d6b7b130ce62247be1198e4a3a0d444c9c604cecd10e5c2a7c242613134ba9` /
+`985f6cddd253c6e7d17a1130bd5e557997fa617f41b49871d75b4a97de5bb2c1`. The
+input-event SHA-256 is
+`446caae2da8e1c0848c8922a828d834c99de2e66aaa67787ab26e3f492fe57ed`. BIOS,
+disc and capture artifacts remain on TRV2 under
+`/home/trv2/work/firestaff-nexus-menu-transition-20260928/runs/controller-state-depth-10500-20260928/`.
+
 The analyzer now accepts both the older V1 receipt and the instrumented
 producer's V2 register-owner receipt; `--frame` selects a single frame from a
 bounded multi-frame trace. The captures above intentionally stop their read
