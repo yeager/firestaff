@@ -43740,6 +43740,12 @@ target_include_directories(test_nexus_v1_title_res PRIVATE ${CMAKE_CURRENT_SOURC
 target_link_libraries(test_nexus_v1_title_res PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_res COMMAND test_nexus_v1_title_res)
 set_tests_properties(nexus_v1_title_res PROPERTIES LABELS "nexus;saturn;title;skip_safe")
+add_test(NAME nexus_v1_title_res_real_japan
+    COMMAND test_nexus_v1_title_res --real-japan-only)
+set_tests_properties(nexus_v1_title_res_real_japan PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;saturn;title;real_media;skip_safe"
+    SKIP_RETURN_CODE 77)
 add_executable(test_nexus_v1_bppk tests/test_nexus_v1_bppk.c)
 target_include_directories(test_nexus_v1_bppk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_bppk PRIVATE firestaff_nexus)

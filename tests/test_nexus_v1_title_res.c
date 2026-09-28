@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+static unsigned int g_japan_real_passed;
+static unsigned int g_japan_real_skipped;
+
 static uint8_t *load_file(const char *path, int *out_size) {
     FILE *f = fopen(path, "rb");
     uint8_t *buf;
@@ -105,6 +108,9 @@ static int test_regional_member_identity(const char *cue_name,
     if (!root) {
         printf("  SKIP regional %s::%s (data directory unavailable)\n",
                cue_name, member_name);
+        if (strcmp(cue_name, "Dungeon Master Nexus (Japan).cue") == 0 &&
+            strcmp(member_name, "RLOWFIX.BIN") == 0)
+            ++g_japan_real_skipped;
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
@@ -115,6 +121,9 @@ static int test_regional_member_identity(const char *cue_name,
     if (!cue_file) {
         printf("  SKIP regional %s::%s (CUE not staged)\n", cue_name,
                member_name);
+        if (strcmp(cue_name, "Dungeon Master Nexus (Japan).cue") == 0 &&
+            strcmp(member_name, "RLOWFIX.BIN") == 0)
+            ++g_japan_real_skipped;
         return 0;
     }
     fclose(cue_file);
@@ -158,6 +167,9 @@ static int test_regional_member_identity(const char *cue_name,
     free(member_data);
     printf("  PASS regional %s::%s md5=%s RES* entries=%u\n", cue_name,
            member_name, receipt.canonical_md5, decoded.entry_count);
+    if (strcmp(cue_name, "Dungeon Master Nexus (Japan).cue") == 0 &&
+        strcmp(member_name, "RLOWFIX.BIN") == 0)
+        ++g_japan_real_passed;
     nexus_v1_shutdown(&engine);
     return 0;
 }
@@ -342,34 +354,49 @@ static int test_font012_headers(void) {
     return 0;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     int fail = 0;
+    int real_japan_only = argc == 2 &&
+        strcmp(argv[1], "--real-japan-only") == 0;
+    if (argc > 1 && !real_japan_only) {
+        fprintf(stderr, "usage: %s [--real-japan-only]\n", argv[0]);
+        return 2;
+    }
     printf("=== Nexus V1 TITLE.CG & RES* Decoder ===\n");
-    fail += test_title_cg();
-    fail += test_res_file("TITLE.BIN");
-    fail += test_res_file("RLOWFIX.BIN");
+    if (!real_japan_only) {
+        fail += test_title_cg();
+        fail += test_res_file("TITLE.BIN");
+        fail += test_res_file("RLOWFIX.BIN");
+    }
     fail += test_regional_member_identity(
         "Dungeon Master Nexus (Japan).cue", "RLOWFIX.BIN",
         "bb650a4e6f7b6374ba8aa86a61f8f523");
-    fail += test_regional_member_identity(
-        "Dungeon Master Nexus (English).cue", "RLOWFIX.BIN",
-        "14c3a7e6fed2dc9e53a727640d4c9348");
-    fail += test_regional_member_identity(
-        "Dungeon Master Nexus (English).cue", "TITLE.BIN",
-        "0b293be24d06eb550b27442ac9e8924c");
-    fail += test_regional_member_identity(
-        "Dungeon Master Nexus (French).cue", "RLOWFIX.BIN",
-        "ecbecff383d6ee8330e68e38417be9c8");
-    fail += test_regional_member_identity(
-        "Dungeon Master Nexus (French).cue", "TITLE.BIN",
-        "5c917a7db5bb0409d5d84086886c9aa6");
-    fail += test_regional_member_identity(
-        "Dungeon Master Nexus (French).cue", "GAMEOVER.BIN",
-        "d692c8f25400cdcd44559194873c1e12");
-    fail += test_french_logobg_identity();
-    fail += test_res_file("RHIFIX.BIN");
-    fail += test_res_file("POTEFT.BIN");
-    fail += test_font012_headers();
+    if (!real_japan_only) {
+        fail += test_regional_member_identity(
+            "Dungeon Master Nexus (English).cue", "RLOWFIX.BIN",
+            "14c3a7e6fed2dc9e53a727640d4c9348");
+        fail += test_regional_member_identity(
+            "Dungeon Master Nexus (English).cue", "TITLE.BIN",
+            "0b293be24d06eb550b27442ac9e8924c");
+        fail += test_regional_member_identity(
+            "Dungeon Master Nexus (French).cue", "RLOWFIX.BIN",
+            "ecbecff383d6ee8330e68e38417be9c8");
+        fail += test_regional_member_identity(
+            "Dungeon Master Nexus (French).cue", "TITLE.BIN",
+            "5c917a7db5bb0409d5d84086886c9aa6");
+        fail += test_regional_member_identity(
+            "Dungeon Master Nexus (French).cue", "GAMEOVER.BIN",
+            "d692c8f25400cdcd44559194873c1e12");
+        fail += test_french_logobg_identity();
+        fail += test_res_file("RHIFIX.BIN");
+        fail += test_res_file("POTEFT.BIN");
+        fail += test_font012_headers();
+    }
     printf("summary: fail=%d\n", fail);
+    if (real_japan_only && fail == 0 && g_japan_real_passed == 0U &&
+        g_japan_real_skipped != 0U) {
+        puts("SKIP: authentic Japanese Nexus CUE/RLOWFIX.BIN was unavailable");
+        return 77;
+    }
     return fail ? 1 : 0;
 }

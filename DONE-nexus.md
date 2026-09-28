@@ -1,5 +1,17 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Japanese retail title corpus gate
+
+- Added a dedicated CTest entry for the authentic Japanese `RLOWFIX.BIN` in
+  the retail CUE. It reports CTest skip (return code 77) when the Japanese
+  CUE is absent, and fails on identity, engine-open, or RES decode errors;
+  English/French media cannot accidentally satisfy this Japanese gate.
+- Built and ran `nexus_v1_title_res_real_japan` on TRV2 against the installed
+  Japanese retail CUE. The engine opened its 137-file disc and verified
+  `RLOWFIX.BIN` MD5 `bb650a4e6f7b6374ba8aa86a61f8f523`; all 14 RES entries
+  decoded and the authentic champion roster seeded. CTest passed. No game
+  data was copied into the checkout or Git.
+
 ## 2026-09-28 — Authentic Saturn card metadata inspection
 
 - Extended the read-only BKR overview to show the raw language and timestamp
