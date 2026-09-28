@@ -38,13 +38,18 @@ runtime_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$runtime_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*runtimeTick=*) ;;
+    *phase=inactive*startupActive=0*levelLoaded=1*runtimeTick=*csbViewportHash=*) ;;
     *)
         echo "FAIL: nested CSB Atari title Enter did not reach runtime"
         printf '%s\n' "$runtime_output" >&2
         exit 1
         ;;
 esac
+if ! printf '%s\n' "$runtime_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
+    echo "FAIL: nested CSB Atari runtime did not render a dungeon viewport" >&2
+    printf '%s\n' "$runtime_output" >&2
+    exit 1
+fi
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
@@ -54,13 +59,18 @@ movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" 
     exit 1
 }
 case "$movement_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*) ;;
+    *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*csbViewportHash=*) ;;
     *)
         echo "FAIL: nested CSB Atari start menu/title input did not consume first UP movement"
         printf '%s\n' "$movement_output" >&2
         exit 1
         ;;
 esac
+if ! printf '%s\n' "$movement_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
+    echo "FAIL: nested CSB Atari movement did not render a dungeon viewport" >&2
+    printf '%s\n' "$movement_output" >&2
+    exit 1
+fi
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
