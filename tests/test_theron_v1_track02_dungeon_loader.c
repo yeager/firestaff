@@ -5017,7 +5017,38 @@ static void test_authentic_take_requires_matching_item_record(
         }
         if (!approach_found) {
             world->current_level = saved_level;
-            if (object->item_index == THERON_ITEM_NONE) ++zero_id_deferred;
+            if (object->item_index == THERON_ITEM_NONE) {
+                const Theron_V1_Level *level =
+                    &world->levels[dungeon_id - 1][object->level];
+                const uint8_t north = object->y > 0
+                    ? level->source_tiles[object->y - 1][object->x] : 0xffu;
+                const uint8_t east = object->x + 1 < level->width
+                    ? level->source_tiles[object->y][object->x + 1] : 0xffu;
+                const uint8_t south = object->y + 1 < level->height
+                    ? level->source_tiles[object->y + 1][object->x] : 0xffu;
+                const uint8_t west = object->x > 0
+                    ? level->source_tiles[object->y][object->x - 1] : 0xffu;
+                const uint8_t north_square = object->y > 0
+                    ? level->squares[object->y - 1][object->x] : 0xffu;
+                const uint8_t east_square = object->x + 1 < level->width
+                    ? level->squares[object->y][object->x + 1] : 0xffu;
+                const uint8_t south_square = object->y + 1 < level->height
+                    ? level->squares[object->y + 1][object->x] : 0xffu;
+                const uint8_t west_square = object->x > 0
+                    ? level->squares[object->y][object->x - 1] : 0xffu;
+                printf("  %s deferred raw-type-zero source: dungeon=%d "
+                       "level=%d pos=(%d,%d) ref=%04x category=%u "
+                       "tile=%02x N/E/S/W=%02x/%02x/%02x/%02x "
+                       "square=%u N/E/S/W=%u/%u/%u/%u\n",
+                       variant == 1 ? "JP" : "US", dungeon_id,
+                       object->level, object->x, object->y,
+                       object->source_ref, object->source_category,
+                       level->source_tiles[object->y][object->x],
+                       north, east, south, west,
+                       level->squares[object->y][object->x],
+                       north_square, east_square, south_square, west_square);
+                ++zero_id_deferred;
+            }
             continue;
         }
 

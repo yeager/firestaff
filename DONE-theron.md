@@ -15,6 +15,13 @@
   both editions: 18 tested and five deferred of 23 per region. Deferred cases
   have no adjacent source floor in this input route; no source/map bytes were
   fabricated or changed to force access.
+- The deferred records are all raw-type-zero scroll occurrences and have
+  matching US/JP source refs and coordinates: D4/L1 `(2,18)` ref `5c00`,
+  D5/L1 `(6,6)` ref `1c02`, D5/L2 `(1,12)` ref `5c03`, D6/L2 `(8,12)` ref
+  `1c02`, and D6/L2 `(8,15)` ref `dc00`. The test prints both raw source-tile
+  bytes and the loader's projected square classes around them. Those
+  projections show nearby pits, walls, a secret wall, a door and teleporters;
+  they do not prove the original item's reachability or its T900 pickup path.
 - This verifies Firestaff's source-provenance and input plumbing on authentic
   data across all seven dungeons. It does not prove original T900 selection,
   object reachability, quest-item semantics, or full gameplay parity.

@@ -57,6 +57,15 @@ data.
    selection, reachability, or quest-item semantics. See the corresponding
    `DONE-theron.md` entry for the per-dungeon counts.
 
+   The five deferred raw-type-zero scrolls share the same authentic source
+   refs and coordinates in both regions (`5c00`, `1c02`, `5c03`, `1c02`,
+   `dc00`). Their current Firestaff map projection places them next to only
+   pits, walls, a secret wall, a door, or teleporters—not an ordinary floor
+   approach. The original selection and movement/input sequence for these
+   special-square occurrences remains unbound; do not mark them unreachable
+   or make them collectible by assuming the projected tile enums are original
+   T900 behavior.
+
 The sequence is dependency guidance, not a smaller completion target: the user
 requested complete Theron support.
 
