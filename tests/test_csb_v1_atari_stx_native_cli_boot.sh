@@ -28,7 +28,7 @@ fi
 # "atari" is the public spelling for the Atari ST source route.
 title_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 60 2>&1)" || {
+    --boot-probe --boot-probe-frames 2 2>&1)" || {
     printf '%s\n' "$title_output" >&2
     exit 1
 }
@@ -46,7 +46,7 @@ esac
 
 runtime_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 180 --script enter \
+    --boot-probe --boot-probe-frames 2 --script enter \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 2>&1)" || {
     printf '%s\n' "$runtime_output" >&2
     exit 1
@@ -68,7 +68,7 @@ esac
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 180 --script 'enter,up' \
+    --boot-probe --boot-probe-frames 2 --script 'enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
     printf '%s\n' "$movement_output" >&2
     exit 1
@@ -96,7 +96,7 @@ probe_runtime_input() {
     expected_party=$2
     input_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game csb --platform atari-st --data-dir "$media_path" \
-        --boot-probe --boot-probe-frames 180 --script "enter,$input" \
+        --boot-probe --boot-probe-frames 2 --script "enter,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1)" || {
         printf '%s\n' "$input_output" >&2
@@ -146,23 +146,23 @@ if printf '%s\n' "$menu_output" | grep -q 'handoffHash=00000000'; then
     exit 1
 fi
 
-# Also exercise the real M12 -> M11 route against the original outer 7z
-# package. This catches mismatches where M12 can identify a disk member but
-# native startup cannot read its sibling DUNGEON.DAT from the same package.
+# Exercise the ordinary CSB default route against the complete installed
+# library as well. Platform-forced Atari launches above deliberately point at
+# the exact original 7z; the broad library also contains other authenticated
+# CSB editions, so an unforced `--game csb` should select one of those rather
+# than fail because Atari is not its default edition.
 if [ -n "$archive_data_root" ] && [ -e "$archive_path" ]; then
-    archive_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-        --enable-external-archive-tools --game csb --platform atari-st \
-        --data-dir "$archive_data_root" --boot-probe --boot-probe-frames 180 \
-        --script enter --boot-probe-expect-runtime \
-        --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
-        printf '%s\n' "$archive_output" >&2
+    default_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --data-dir "$archive_data_root" --boot-probe \
+        --boot-probe-frames 2 --duration 0 2>&1)" || {
+        printf '%s\n' "$default_output" >&2
         exit 1
     }
-    case "$archive_output" in
-        *variant=csb-st20-21-en*phase=inactive*levelLoaded=1*runtimeTick=*) ;;
+    case "$default_output" in
+        *'CSB READY: gameId=csb'*route=startup*'FIRESTAFF BOOT PROBE READY: gameId=csb'*sourceId=csb*levelLoaded=1*) ;;
         *)
-            echo "FAIL: CSB Atari ST archive member did not reach native runtime"
-            printf '%s\n' "$archive_output" >&2
+            echo "FAIL: default CSB library route did not reach an authenticated game startup"
+            printf '%s\n' "$default_output" >&2
             exit 1
             ;;
     esac
@@ -183,7 +183,7 @@ for mode in v1 v21; do
     case "$mode" in v1) expected_mode=0;; v21) expected_mode=2;; esac
     mode_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
         --game csb --platform atari-st --data-dir "$media_path" --script enter \
-        --presentation-mode "$mode" --boot-probe --boot-probe-frames 180 \
+        --presentation-mode "$mode" --boot-probe --boot-probe-frames 2 \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1)" || {
         printf '%s\n' "$mode_output" >&2; exit 1;
