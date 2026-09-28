@@ -38,15 +38,19 @@ import sys
 with open(sys.argv[1], encoding="utf-8") as probe_file:
     probe = json.load(probe_file)
 startup = probe["startup"]
+placement = startup["dm1StartupPartyPlacement"]
 party = probe["party"]
 if (probe["launchedEver"] != 1 or probe["active"] != 1 or
         probe["sourceId"] != "dm1" or startup["receiptReady"] != 1 or
         startup["phase"] != "dm1-runtime" or startup["levelLoaded"] != 1 or
         startup["startupActive"] != 0 or
         startup["dm1StartupHandoffExecuted"] != 1 or
+        placement["executed"] != 1 or
+        placement["sensorEffectCount"] != 0 or
+        (placement["mapIndex"], placement["mapX"], placement["mapY"]) != (0, 1, 3) or
         startup["dm1StartupHoCFirstFrameReady"] != 1 or
         (party["mapIndex"], party["mapX"], party["mapY"],
          party["direction"], party["championCount"]) != (0, 1, 3, 2, 0)):
-    raise SystemExit(f"FAIL: authentic Atari ST {sys.argv[2]} missed its fresh-game party handoff: {probe}")
-print(f"PASS: authentic DM1 Atari ST {sys.argv[2]} first Hall frame confirms F0267 party placement")
+    raise SystemExit(f"FAIL: authentic Atari ST {sys.argv[2]} missed its fresh-game F0267 party placement: {probe}")
+print(f"PASS: authentic DM1 Atari ST {sys.argv[2]} F0267 placement reached map 0 (1,3), sensor effects={placement['sensorEffectCount']}")
 PY

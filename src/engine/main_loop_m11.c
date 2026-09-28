@@ -4955,7 +4955,7 @@ static void m11_write_autotest_runtime_probe(const char* path,
             "  \"title\": \"%s\",\n"
             "  \"sourceId\": \"%s\",\n"
             "  \"presentation\": {\"mode\": %d, \"width\": %d, \"height\": %d},\n"
-            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d},\n"
+            "  \"startup\": {\"receiptReady\": %d, \"phase\": \"%s\", \"active\": %d, \"startupActive\": %d, \"levelLoaded\": %d, \"dm1StartupHandoffExecuted\": %d, \"dm1StartupHoCFirstFrameReady\": %d, \"dm1CompleteEntranceToHoC\": %d, \"dm1StartupPartyPlacement\": {\"executed\": %d, \"destinationGroupDeleted\": %d, \"sensorEffectCount\": %d, \"mapIndex\": %d, \"mapX\": %d, \"mapY\": %d}},\n"
             "  \"lastAction\": \"%s\",\n"
             "  \"lastOutcome\": \"%s\",\n"
             "  \"gameTick\": %u,\n"
@@ -4983,6 +4983,12 @@ static void m11_write_autotest_runtime_probe(const char* path,
                 ? 1
                 : 0,
             startupReceipt.dm1CompleteEntranceToHoC,
+            gameView ? gameView->dm1StartupPartyPlacementExecuted : 0,
+            gameView ? gameView->dm1StartupPartyPlacementDestinationGroupDeleted : 0,
+            gameView ? gameView->dm1StartupPartyPlacementSensorEffectCount : 0,
+            gameView ? gameView->dm1StartupPartyPlacementMapIndex : 0,
+            gameView ? gameView->dm1StartupPartyPlacementMapX : 0,
+            gameView ? gameView->dm1StartupPartyPlacementMapY : 0,
             gameView ? gameView->lastAction : "",
             lastOutcome,
             gameTick,

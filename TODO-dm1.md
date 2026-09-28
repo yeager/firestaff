@@ -235,8 +235,13 @@
   to that branch. A local read of the authentic English ST 1.2 STX, normalized
   using MEDIA240's Motorola word order and loaded through F0882, reports C04 at
   that initial square. The fresh-start receipt and party tuple now pass on all
-  six authenticated Atari ST editions. Remaining evidence must trace the
-  actual campaign-square sensor effects through the source-owned startup path.
+  six authenticated Atari ST editions. The real-media M12 probe now records
+  the production F0267 placement receipt and its F0276 sensor-effect count;
+  all six editions reach map 0 (1,3) with zero applied startup sensor effects.
+  This does not prove that the square has no sensors. The raw C04 sensor chain
+  and any non-effect sensor handling still need source-backed inspection.
+  Remaining evidence must trace campaign-square sensor effects through the
+  source-owned startup path.
   M11 now preserves the source F0276 C003 party-floor-sensor gates: empty
   parties do not trigger it, and nonzero sensor data must match the party
   direction. F0276's C006 group-generator and C007 floor-creature sensors are
