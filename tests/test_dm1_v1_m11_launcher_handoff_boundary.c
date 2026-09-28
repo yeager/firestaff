@@ -330,8 +330,11 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameViewState direct_view;
     M11_GameLaunchSpec direct_spec;
     const M12_MenuEntry* entry;
+    const M12_AssetVersionStatus* direct_version;
     char real_dir[512];
+    char direct_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
     const char* data_dir = default_data_root(real_dir);
+    int direct_version_index;
 
     if (!data_dir || !data_dir[0]) {
         expect_skip("HOME is unset; no default Firestaff data root");
@@ -353,11 +356,28 @@ static void run_real_launcher_handoff_if_available(void) {
     run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V21_UPSCALED);
     run_launcher_handoff_for_mode(&menu, M12_PRESENTATION_V22_MODERN);
 
+    direct_version_index = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        &menu.assetStatus, "dm1", M12_ARCH_AUTO);
+    direct_version = direct_version_index >= 0
+        ? M12_AssetStatus_GetVersion(&menu.assetStatus, "dm1",
+                                     (size_t)direct_version_index)
+        : NULL;
+    if (!direct_version || !direct_version->versionId ||
+        !M12_AssetStatus_PrepareDM1RuntimeVersion(
+            &menu.assetStatus, direct_version->versionId, direct_data_dir,
+            sizeof(direct_data_dir))) {
+        M12_StartupMenu_Destroy(&menu);
+        expect_skip("selected DM1 edition has no direct runtime source path");
+        return;
+    }
+
     memset(&direct_spec, 0, sizeof(direct_spec));
     direct_spec.title = "DUNGEON MASTER";
     direct_spec.gameId = "dm1";
     direct_spec.sourceId = "dm1";
-    direct_spec.dataDir = data_dir;
+    direct_spec.dataDir = direct_data_dir;
+    direct_spec.verifiedAssetPath = direct_version->matchedPath;
+    direct_spec.verifiedAssetMd5 = direct_version->matchedMd5;
     direct_spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     direct_spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     direct_spec.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
