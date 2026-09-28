@@ -129,6 +129,12 @@ presentation boundary.
   budget filled before frame 0, so that run cannot bind writes to the captured
   window. Recover or reproduce the exact retained runtime window before using
   a fresh writer trace to claim source upload provenance.
+  The bound pre-capture prefix did record one write at each target start from
+  PC `0x0601307c`, but the corresponding 96-byte live code window has no exact
+  native- or word-swapped match in the authentic 156-file corpus, including
+  `DM.BIN` at its verified load base. Trace the helper's SH-2 RAM reads and
+  inspect its runtime caller in a frame-aligned session before assigning that
+  writer or either span to a retail resource.
   Keep both spans blocked until upload provenance or an exact transformed
   retail-surface join is captured.
 - Implement native Saturn runtime semantics only after each dispatcher,

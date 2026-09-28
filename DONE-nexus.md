@@ -1,5 +1,26 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-28 — Bounded VDP1 pre-capture writer corridor
+
+- The hash-bound 701-frame JP capture beginning at runtime frame 13197 has a
+  VDP1 write trace capped at ten million records before captured frame 0.
+  In that distinct pre-capture prefix, the exact starts `0x58b58` and
+  `0x58c58` are each written once by master-SH-2 PC `0x0601307c`; later rows
+  at the same addresses come from PC `0x06026260`. The trace is bound to raw
+  SHA-256 `43b8979b79fb69ebe2bad08ae1090e42b784f0a3b700fbdf2bb99a6af130b80c`
+  and trace SHA-256
+  `2d169758e5fad0ca1783e68224f56a0a2aa18d92c861a8a0aa17da6bd50ce73f`.
+  This is a writer-PC observation only; the prefix cannot be joined to the
+  701 captured frames, and it does not prove an asset or display consumer.
+- The same-session code receipt at PC `0x0601307c` is manifest-hash-bound, but
+  its 96-byte instruction window has no exact match in either byte order in
+  the 156 authentic files under `.firestaff/data/nexus`. The supplied
+  `DM.BIN` is SHA-256
+  `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`;
+  the code window also does not match that file at the documented
+  `0x06010040` load base. Do not infer a `DM.BIN` routine or source owner from
+  the runtime PC alone. Traces and all game data remain on TRV2.
+
 ## 2026-09-28 — Fresh JP VDP1 window did not reproduce the retained sources
 
 - Captured a no-input, hash-bound JP retail window on TRV2 with
